@@ -3476,8 +3476,76 @@ function CONTROLLABLE:OptionKeepWeaponsOnThreat()
   return nil
 end
 
+--- Prohibit Afterburner.
+-- @param #CONTROLLABLE self
+-- @param #boolean Prohibit If true or nil, prohibit. If false, do not prohibit.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionProhibitAfterburner(Prohibit)
+  self:F2( { self.ControllableName } )
+  
+  if Prohibit==nil then
+    Prohibit=true
+  end
+
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.PROHIBIT_AB, Prohibit)      
+  end
+
+  return self
+end
+
+--- Defines the usage of Electronic Counter Measures by airborne forces. Disables the ability for AI to use their ECM.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionECM_Never()
+  self:F2( { self.ControllableName } )
+  
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.ECM_USING, 0)      
+  end
+
+  return self
+end
+
+--- Defines the usage of Electronic Counter Measures by airborne forces. If the AI is actively being locked by an enemy radar they will enable their ECM jammer.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionECM_OnlyLockByRadar()
+  self:F2( { self.ControllableName } )
+  
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.ECM_USING, 1)      
+  end
+
+  return self
+end
 
 
+--- Defines the usage of Electronic Counter Measures by airborne forces. If the AI is being detected by a radar they will enable their ECM.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionECM_DetectedLockByRadar()
+  self:F2( { self.ControllableName } )
+  
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.ECM_USING, 2)      
+  end
+
+  return self
+end
+
+--- Defines the usage of Electronic Counter Measures by airborne forces. AI will leave their ECM on all the time.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionECM_AlwaysOn()
+  self:F2( { self.ControllableName } )
+  
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.ECM_USING, 3)      
+  end
+
+  return self
+end
 
 --- Retrieve the controllable mission and allow to place function hooks within the mission waypoint plan.
 -- Use the method @{Wrapper.Controllable#CONTROLLABLE:WayPointFunction} to define the hook functions for specific waypoints.

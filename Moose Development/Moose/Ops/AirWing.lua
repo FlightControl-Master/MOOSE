@@ -879,7 +879,7 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
   
   -- Debug text.
   local text=string.format("New asset %s with assignment %s and request assignment %s", asset.spawngroupname, tostring(asset.assignment), tostring(assignment))
-  self:I(self.lid..text)
+  self:T3(self.lid..text)
   
   -- Get squadron.
   local squad=self:GetSquadron(asset.assignment)
@@ -892,6 +892,8 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
       -- Debug text.
       local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s", squad.name, assignment, asset.unittype, asset.attribute)
       self:I(self.lid..text)
+      
+      asset.terminalType=AIRBASE.TerminalType.OpenBig
       
       -- Add asset to squadron.
       table.insert(squad.assets, asset)
@@ -928,6 +930,8 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   
   -- Set RTB on fuel critical.
   flightgroup:SetFuelCriticalThreshold(nil, true)
+  
+  --flightgroup.group:OptionProhibitAfterburner(true)
   
   -- Set asset flightgroup.
   asset.flightgroup=flightgroup

@@ -6704,8 +6704,8 @@ function WAREHOUSE:_CheckRequestValid(request)
         -- TODO: maybe only check if spots > 0 for the necessary terminal type? At least for FARPS.
 
         -- Get necessary terminal type.
-        local termtype_dep=self:_GetTerminal(asset.attribute, self:GetAirbaseCategory())
-        local termtype_des=self:_GetTerminal(asset.attribute, request.warehouse:GetAirbaseCategory())
+        local termtype_dep=asset.terminalType or self:_GetTerminal(asset.attribute, self:GetAirbaseCategory())
+        local termtype_des=asset.terminalType or self:_GetTerminal(asset.attribute, request.warehouse:GetAirbaseCategory())
 
         -- Get number of parking spots.
         local np_departure=self.airbase:GetParkingSpotsNumber(termtype_dep)
@@ -7495,7 +7495,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
     local _asset=asset --#WAREHOUSE.Assetitem
 
     -- Get terminal type of this asset
-    local terminaltype=self:_GetTerminal(asset.attribute, self:GetAirbaseCategory())
+    local terminaltype=asset.terminalType or self:_GetTerminal(asset.attribute, self:GetAirbaseCategory())
 
     -- Asset specific parking.
     parking[_asset.uid]={}

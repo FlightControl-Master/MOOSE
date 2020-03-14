@@ -479,9 +479,12 @@ function AUFTRAG:NewBAI(TargetGroupSet)
   mission.engageTargetGroupset=TargetGroupSet  
   mission.engageTargetGroupset:FilterDeads():FilterCrashes()
   
-  mission.DCStask=mission:GetDCSMissionTask()
-  
   mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
+  
+  mission.engageWeaponType=2956984318
+  mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  
+  mission.DCStask=mission:GetDCSMissionTask()  
   
   return mission
 end
@@ -498,9 +501,13 @@ function AUFTRAG:NewSTRIKE(TargetCoordinate, Altitude)
   mission.engageCoord=TargetCoordinate
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 1000)
   
-  mission.DCStask=mission:GetDCSMissionTask()
   
   mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
+  
+  mission.engageWeaponType=2956984318
+  mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  
+  mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
 end
@@ -1430,6 +1437,8 @@ function AUFTRAG:GetTargetCoordinate()
     return self.engageCoord
   elseif self.orbitCoord then
     return self.orbitCoord
+  elseif self.escortGroup then
+    return self.escortGroup:GetCoordinate()
   end
 
   return nil
