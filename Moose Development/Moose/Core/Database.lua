@@ -187,7 +187,7 @@ end
 function DATABASE:AddUnit( DCSUnitName )
 
   if not  self.UNITS[DCSUnitName] then
-    self:T( { "Add UNIT:", DCSUnitName } )
+    self:I( { "Add UNIT:", DCSUnitName } )
     local UnitRegister = UNIT:Register( DCSUnitName )
     self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
     
@@ -512,7 +512,7 @@ end
 function DATABASE:AddGroup( GroupName )
 
   if not self.GROUPS[GroupName] then
-    self:T( { "Add GROUP:", GroupName } )
+    self:I( { "Add GROUP:", GroupName } )
     self.GROUPS[GroupName] = GROUP:Register( GroupName )
   end  
   
