@@ -1435,9 +1435,6 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
 			--if self.Repeat then
 			--	_DATABASE:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
 			--end
-			
-		--else
-		 -- self:E("ERROR: No spawn template.")
 		end
 		
 		
