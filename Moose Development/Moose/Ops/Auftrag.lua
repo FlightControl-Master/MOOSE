@@ -311,7 +311,7 @@ end
 
 --- Create an ANTI-SHIP mission.
 -- @param #AUFTRAG self
--- @param Core.Set#SET_UNIT TargetGroupSet The set of target units.
+-- @param Core.Set#SET_UNIT TargetUnitSet The set of target units.
 -- @return #AUFTRAG self
 function AUFTRAG:NewANTISHIP(TargetUnitSet)
   
@@ -466,7 +466,7 @@ end
 
 --- Create a BAI mission.
 -- @param #AUFTRAG self
--- @param Core.Set#SET_GROUP TargetGroupSet The set of target groups to attack. Instead of a SET an ordinary GROUP object can also be given if only a single group needs to be attacked.
+-- @param Core.Set#SET_Unit TargetGroupSet The set of target groups to attack. Instead of a SET an ordinary GROUP object can also be given if only a single group needs to be attacked.
 -- @return #AUFTRAG self
 function AUFTRAG:NewBAI(TargetGroupSet)
   
@@ -476,8 +476,8 @@ function AUFTRAG:NewBAI(TargetGroupSet)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BAI)
 
-  mission.engageTargetGroupset=TargetGroupSet  
-  mission.engageTargetGroupset:FilterDeads():FilterCrashes()
+  mission.engageTargetUnitset=TargetGroupSet  
+  mission.engageTargetUnitset:FilterDeads()
   
   mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
   
@@ -1397,7 +1397,7 @@ function AUFTRAG:CountMissionTargets()
   end
 
   if self.engageTargetUnitset then
-    local n=self.engageTargetUnitset:Count()
+    local n=self.engageTargetUnitset:CountAlive()
     N=N+n
   end
   
@@ -1475,6 +1475,7 @@ function AUFTRAG:GetDCSMissionTask()
       local TargetUnit=_unit
 
       local DCStask=CONTROLLABLE.TaskAttackUnit(nil, TargetUnit, self.engageAltitude, self.WeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+      local DCStask=CONTROLLABLE.TaskAttackUnit(self,AttackUnit,GroupAttack,WeaponExpend,AttackQty,Direction,Altitude,WeaponType)
       
       table.insert(DCStasks, DCStask)
       
@@ -1496,13 +1497,25 @@ function AUFTRAG:GetDCSMissionTask()
     -- BAI Mission --
     -----------------  
 
+    --[[
     for _,_group in pairs(self.engageTargetGroupset:GetSet()) do
       local TargetGroup=_group
   
       local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude)
+      local DCSTask=
       
       table.insert(DCStasks, DCStask)
     end
+    ]]
+    
+    for _,_unit in pairs(self.engageTargetUnitset:GetSet()) do
+      local TargetUnit=_unit
+
+      local DCStask=CONTROLLABLE.TaskAttackUnit(self, TargetUnit, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+      
+      table.insert(DCStasks, DCStask)
+      
+    end    
 
   elseif self.type==AUFTRAG.Type.BOMBING then
   
@@ -1512,7 +1525,7 @@ function AUFTRAG:GetDCSMissionTask()
   
     local Vec2=self.engageCoord:GetVec2()
   
-    local DCStask=CONTROLLABLE.TaskBombing(self, Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, Divebomb)
+    local DCStask=CONTROLLABLE.TaskBombing(nil, Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, Divebomb)
   
     table.insert(DCStasks, DCStask)
   
@@ -1522,7 +1535,7 @@ function AUFTRAG:GetDCSMissionTask()
     -- CAP Mission --
     -----------------  
 
-    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
+    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(nil, self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
     
     table.insert(DCStasks, DCStask)
   
@@ -1532,7 +1545,7 @@ function AUFTRAG:GetDCSMissionTask()
     -- CAS Mission --
     -----------------
 
-    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
+    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(nil, self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
     
     table.insert(DCStasks, DCStask)
 

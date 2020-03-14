@@ -40,7 +40,11 @@ ENUMS.ROT = {
 --- Weapon types
 -- @type ENUMS.WeaponFlag
 ENUMS.WeaponFlag={
-  Auto=1073741822, --Auto
+  Auto=3221225470, --AnyWeapon (AnyBomb + AnyRocket + AnyMissile + Cannons)
+  AnyAG=2956984318,
+  AnyAA=264241152,
+  AnyUnguided=2952822768,
+  AnyGuided=268402702, 
   LGB=2,
   TvGB=4,
   SNSGB=8,

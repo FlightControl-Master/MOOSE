@@ -94,6 +94,10 @@ function INTEL:New(DetectionSet)
   -- Detection set.
   self.detectionset=DetectionSet
   
+  local alias="SPECTRE"
+  
+  --[[
+  
   -- Determine coalition from first group in set.
   self.coalition=DetectionSet:GetFirst():GetCoalition()
   
@@ -103,6 +107,8 @@ function INTEL:New(DetectionSet)
   elseif self.coalition==coalition.side.BLUE then
     alias="CIA"
   end
+  
+  ]]
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("INTEL %s | ", alias)

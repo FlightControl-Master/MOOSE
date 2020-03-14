@@ -2175,7 +2175,23 @@ do -- SET_UNIT
     return self
   end
   
-  
+  --- Iterate the SET_UNIT and count how many UNITs are alive.
+  -- @param #SET_UNIT self
+  -- @return #number The number of UNITs alive.
+  function SET_UNIT:CountAlive()
+
+    local Set = self:GetSet()
+    
+    local CountU = 0    
+    for UnitID, UnitData in pairs(Set) do -- For each GROUP in SET_GROUP
+      if UnitData and UnitData:IsAlive() then      
+        CountU = CountU + 1        
+      end
+      
+    end
+    
+    return CountU
+  end  
   
   --- Starts the filtering.
   -- @param #SET_UNIT self
@@ -3193,6 +3209,24 @@ do -- SET_STATIC
     
     return self
   end
+  
+  --- Iterate the SET_STATIC and count how many STATICSs are alive.
+  -- @param #SET_STATIC self
+  -- @return #number The number of UNITs alive.
+  function SET_STATIC:CountAlive()
+
+    local Set = self:GetSet()
+    
+    local CountU = 0    
+    for UnitID, UnitData in pairs(Set) do
+      if UnitData and UnitData:IsAlive() then      
+        CountU = CountU + 1        
+      end
+      
+    end
+    
+    return CountU
+  end    
   
   --- Handles the Database to check on an event (birth) that the Object was added in the Database.
   -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
