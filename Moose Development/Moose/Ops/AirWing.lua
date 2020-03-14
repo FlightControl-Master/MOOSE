@@ -193,41 +193,6 @@ function AIRWING:AddSquadron(Squadron)
   return self
 end
 
---[[
-
---- Add a squadron to the air wing.
--- @param #AIRWING self
--- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
--- @param #table MissionTypes Table of mission types this squadron is able to perform.
--- @param #string Livery The livery for all added flight group. Default is the livery of the template group.
--- @param #string Skill The skill of all squadron members.
--- @return #AIRWING.Squadron The squadron object.
-function AIRWING:AddSquadron(SquadronName, MissionTypes, Livery, Skill)
-
-  -- Ensure Missiontypes is a table.
-  if MissionTypes and type(MissionTypes)~="table" then
-    MissionTypes={MissionTypes}
-  end
-  
-  -- TODO: Mission types that anyone can do! ORBIT, Ferry, ???
-  if not self:CheckMissionType(AUFTRAG.Type.ORBIT, MissionTypes) then
-    table.insert(MissionTypes, AUFTRAG.Type.ORBIT)
-  end
-
-  -- Set up new squadron data.
-  local squadron={} --#AIRWING.Squadron
-  squadron.name=SquadronName
-  squadron.assets={}
-  squadron.missiontypes=MissionTypes
-  squadron.livery=Livery
-  squadron.skill=Skill
-
-  self.squadrons[SquadronName]=squadron
-  
-  return squadron
-end
-]]
-
 --- Add a **new** payload to air wing resources.
 -- @param #AIRWING self
 -- @param Wrapper.Unit#UNIT Unit The unit, the payload is extracted from. Can also be given as *#string* name of the unit.
@@ -854,9 +819,11 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
       -- Set asset to requested! Important so that new requests do not use this asset!
       asset.requested=true
       
-      --text=text..string.format("\n[%d] %s spawned=%s type=%s payload=%s", i, asset.spawngroupname, tostring(asset.spawned), asset.unittype, asset.payload and table.concat(asset.payload.missiontypes, ", ") or "no payload!")
+      if Mission.missionTask then
+        asset.missionTask=Mission.missionTask
+      end
+      
     end
-    --self:I(self.lid..text)
   
     -- Add request to airwing warehouse.
     -- TODO: better Assignment string.

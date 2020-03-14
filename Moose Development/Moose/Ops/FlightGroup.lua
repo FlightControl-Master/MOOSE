@@ -2592,7 +2592,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   SpeedLand=SpeedLand or 170
 
   -- Debug message.
-  local text=string.format("Flight group set to hold at airbase %s", airbase:GetName())
+  local text=string.format("Flight group set to hold at airbase %s. SpeedTo=%d, SpeedHold=%d, SpeedLand=%d", airbase:GetName(), SpeedTo, SpeedHold, SpeedLand)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.lid..text)
  
@@ -3390,11 +3390,12 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     -- Create waypoint coordinate half way between us and the target.
     local targetcoord=mission:GetTargetCoordinate()
     local flightcoord=self.group:GetCoordinate()
-    local waypointcoord=flightcoord:GetIntermediateCoordinate(targetcoord, 0.5)
+    local waypointcoord=flightcoord:GetIntermediateCoordinate(targetcoord, mission.missionFraction)
     
     -- Set altitude of mission waypoint.
     if mission.missionAltitude then
       waypointcoord.y=mission.missionAltitude
+      env.info("FF mission altitude [m]="..waypointcoord.y)
     end
   
     -- Add waypoint.

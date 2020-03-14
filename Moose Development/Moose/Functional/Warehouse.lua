@@ -5665,9 +5665,6 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
     -- Debug info.
     self:T2({airtemplate=template})
 
-    -- Create a flight group.
-    --FLIGHTGROUP:New(template.name)
-
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
 
@@ -5701,13 +5698,17 @@ function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, alias)
   -- Nillify the group ID.
   template.groupId=nil
 
-  -- For group units, visible needs to be false.
-  if asset.category==Group.Category.GROUND then
-    --template.visible=false
-  end
 
   -- No late activation.
   template.lateActivation=false
+  
+  if asset.missionTask then
+    env.info("FF setting mission task to "..tostring(asset.missionTask))
+    template.task=asset.missionTask
+  end
+  
+  -- No predefined task.
+  --template.taskSelected=false
 
   -- Set and empty route.
   template.route = {}

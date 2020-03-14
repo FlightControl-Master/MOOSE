@@ -62,7 +62,9 @@
 -- @field #number requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
 -- @field #boolean cancelContactLost If true, cancel mission if the contact is lost.
 -- 
+-- @field #string missionTask Mission task. Seed ENUMS.MissionTask.
 -- @field #number missionAltitude Mission altitude in meters.
+-- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
 -- 
 -- @field #number missionRepeated Number of times mission was repeated.
 -- @field #number missionRepeatMax Number of times mission is repeated if failed.
@@ -105,6 +107,7 @@ AUFTRAG = {
   auftragsnummer     =   nil,
   flightdata         =    {},
   assets             =    {},
+  missionFraction    =   0.5,
 }
 
 --- Global mission counter.
@@ -117,6 +120,8 @@ _AUFTRAGSNR=0
 -- @field #string AWACS AWACS mission.
 -- @field #string BAI Battlefield Air Interdiction.
 -- @field #string BOMBING Bombing mission.
+-- @field #string BOMBRUNWAY Bomb runway of an airbase.
+-- @field #string BOMBCARPET Carpet bombing.
 -- @field #string CAP Combat Air Patrol.
 -- @field #string CAS Close Air Support.
 -- @field #string ESCORT Escort mission.
@@ -135,6 +140,8 @@ AUFTRAG.Type={
   AWACS="AWACS",  
   BAI="BAI",
   BOMBING="Bombing",
+  BOMBRUNWAY="Bomb Runway",
+  BOMBCARPET="Carpet Bombing",
   CAP="CAP",
   CAS="CAS",
   ESCORT="Escort",
@@ -219,8 +226,8 @@ AUFTRAG.version="0.0.7"
 -- TODO: Mission formation, etc.
 -- DONE: FSM events.
 -- TODO: F10 marker functions that are updated on Status event.
--- TODO: Evaluate mission result ==> SUCCESS/FAILURE
--- TODO: NewAUTO() NewA2G NewA2A
+-- DONE: Evaluate mission result ==> SUCCESS/FAILURE
+-- DONE: NewAUTO() NewA2G NewA2A
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -317,6 +324,8 @@ function AUFTRAG:NewANTISHIP(TargetUnitSet)
   mission.engageTargetUnitset=TargetUnitSet
   mission.engageTargetUnitset:FilterDeads():FilterCrashes()
   
+  mission.missionTask=ENUMS.MissionTask.ANTISHIPSTRIKE
+  
   mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
@@ -369,6 +378,26 @@ function AUFTRAG:NewPATROL(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
   return mission
 end
 
+--- Create an INTERCEPT mission.
+-- @param #AUFTRAG self
+-- @param Core.Set#SET_GROUP TargetGroupSet The set of target groups to intercept. Can also be passed as a simple @{Wrapper.Group#GROUP} object.
+-- @return #AUFTRAG self
+function AUFTRAG:NewINTERCEPT(TargetGroupSet)
+  
+  if TargetGroupSet:IsInstanceOf("GROUP") then
+    TargetGroupSet=SET_GROUP:New():AddGroup(TargetGroupSet)
+  end
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.INTERCEPT)
+  
+  mission.engageTargetGroupset=TargetGroupSet  
+  mission.engageTargetGroupset:FilterDeads():FilterCrashes()
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  return mission
+end
+
 --- Create a CAP mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
@@ -396,6 +425,8 @@ function AUFTRAG:NewCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAP, Targ
   mission.engageTargetTypes=TargetTypes or {"Air"}
   
   mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.missionTask=ENUMS.MissionTask.CAP
   
   return mission
 end
@@ -428,45 +459,7 @@ function AUFTRAG:NewCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, Targ
   
   mission.DCStask=mission:GetDCSMissionTask()
   
-  return mission
-end
-
-
-
---- Create a STRIKE mission. Flight will attack a specified coordinate.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Target Coordinate.
--- @param #number Altitude Engage altitude in feet. Default 1000.
--- @return #AUFTRAG self
-function AUFTRAG:NewSTRIKE(TargetCoordinate, Altitude)
-
-  local mission=AUFTRAG:New(AUFTRAG.Type.STRIKE)
-  
-  mission.engageCoord=TargetCoordinate
-  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 1000)
-  
-  mission.DCStask=mission:GetDCSMissionTask()
-  
-  return mission
-end
-
---- Create an INTERCEPT mission.
--- @param #AUFTRAG self
--- @param Core.Set#SET_GROUP TargetGroupSet The set of target groups to intercept.
--- @return #AUFTRAG self
-function AUFTRAG:NewINTERCEPT(TargetGroupSet)
-  
-  if TargetGroupSet:IsInstanceOf("GROUP") then
-    env.info("Converting group to set!")
-    TargetGroupSet=SET_GROUP:New():AddGroup(TargetGroupSet)
-  end
-
-  local mission=AUFTRAG:New(AUFTRAG.Type.INTERCEPT)
-  
-  mission.engageTargetGroupset=TargetGroupSet  
-  mission.engageTargetGroupset:FilterDeads():FilterCrashes()
-  
-  mission.DCStask=mission:GetDCSMissionTask()
+  mission.missionTask=ENUMS.MissionTask.CAS
   
   return mission
 end
@@ -478,7 +471,6 @@ end
 function AUFTRAG:NewBAI(TargetGroupSet)
   
   if TargetGroupSet:IsInstanceOf("GROUP") then
-    env.info("Converting group to set!")
     TargetGroupSet=SET_GROUP:New():AddGroup(TargetGroupSet)
   end
 
@@ -489,8 +481,82 @@ function AUFTRAG:NewBAI(TargetGroupSet)
   
   mission.DCStask=mission:GetDCSMissionTask()
   
+  mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
+  
   return mission
 end
+
+--- Create a STRIKE mission. Flight will attack a specified coordinate.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE TargetCoordinate Target coordinate.
+-- @param #number Altitude Engage altitude in feet. Default 1000.
+-- @return #AUFTRAG self
+function AUFTRAG:NewSTRIKE(TargetCoordinate, Altitude)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.STRIKE)
+  
+  mission.engageCoord=TargetCoordinate
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 1000)
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
+  
+  return mission
+end
+
+--- Create a BOMBING mission. Flight will attack a specified coordinate.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE TargetCoordinate Target coordinate.
+-- @param #number Altitude Engage altitude in feet. Default 25000.
+-- @return #AUFTRAG self
+function AUFTRAG:NewBOMBING(TargetCoordinate, Altitude)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.BOMBING)
+  
+  mission.engageCoord=TargetCoordinate
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
+  
+  mission.missionAltitude=mission.engageAltitude
+  
+  mission.missionFraction=0.3
+  
+  mission.engageWeaponType=4030478 --2956984318 --ENUMS.WeaponFlag.AnyBomb
+  mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
+  
+  return mission
+end
+
+
+--- Create an ESCORT mission. Flight will escort another group and automatically engage certain target types.
+-- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP EscortGroup The group to escort.
+-- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=200, y=0, z=-100} for 200 meters to the right, same alitude, 100 meters behind.
+-- @param #number EngageMaxDistance Max engage distance of targets in meters. Default auto (*nil*).
+-- @param #table TargetTypes Types of targets to engage automatically. Default is {"Air"}, i.e. all enemy airborne units. 
+-- @return #AUFTRAG self
+function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetTypes)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.ESCORT)
+  
+  mission.escortGroup=EscortGroup
+  mission.escortVec3=OffsetVector or {x=200, y=0, z=-100}
+  mission.engageMaxDistance=EngageMaxDistance
+  mission.engageTargetTypes=TargetTypes or {"Air"}
+  
+  mission.missionFraction=0.1
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.missionTask=ENUMS.MissionTask.ESCORT
+  
+  return mission
+end
+
 
 --- Create a mission to attack a group. Mission type is automatically chosen from the group category.
 -- @param #AUFTRAG self
@@ -1437,7 +1503,7 @@ function AUFTRAG:GetDCSMissionTask()
   
     local Vec2=self.engageCoord:GetVec2()
   
-    local DCStask=CONTROLLABLE.TaskBombing(self,Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, Divebomb)
+    local DCStask=CONTROLLABLE.TaskBombing(self, Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, Divebomb)
   
     table.insert(DCStasks, DCStask)
   
