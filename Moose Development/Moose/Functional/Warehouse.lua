@@ -5637,14 +5637,8 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
       end
 
       if asset.payload then
-        unit.payload=asset.payload.pylons
-        env.info("FF payload")
-        self:I({playload=unit.payload})        
-      else
-        env.info("FF No payload for asset!")
+        unit.payload=asset.payload.pylons        
       end
-      env.info("FF Asset info")
-      self:I(asset)
 
     end
 
@@ -5667,9 +5661,6 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
 
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
-
-    -- Activate group - should only be necessary for late activated groups.
-    --group:Activate()
 
     return group
   end

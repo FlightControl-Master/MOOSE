@@ -378,6 +378,50 @@ function AUFTRAG:NewPATROL(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
   return mission
 end
 
+--- Create a TANKER mission.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
+-- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 10 NM.
+-- @param #number Altitude Orbit altitude in feet.
+-- @return #AUFTRAG self
+function AUFTRAG:NewTANKER(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
+
+  -- Create ORBIT first.
+  local mission=self:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
+    
+  -- Mission type PATROL.
+  mission.type=AUFTRAG.Type.TANKER
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  return mission
+end
+
+--- Create a AWACS mission.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
+-- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 10 NM.
+-- @param #number Altitude Orbit altitude in feet.
+-- @return #AUFTRAG self
+function AUFTRAG:NewAWACS(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
+
+  -- Create ORBIT first.
+  local mission=self:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
+    
+  -- Mission type PATROL.
+  mission.type=AUFTRAG.Type.AWACS
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  return mission
+end
+
+
+
 --- Create an INTERCEPT mission.
 -- @param #AUFTRAG self
 -- @param Core.Set#SET_GROUP TargetGroupSet The set of target groups to intercept. Can also be passed as a simple @{Wrapper.Group#GROUP} object.
@@ -483,6 +527,10 @@ function AUFTRAG:NewBAI(TargetGroupSet)
   
   mission.engageWeaponType=2956984318
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  
+  mission.engageAsGroup=true
+  
+  mission.missionFraction=0.75
   
   mission.DCStask=mission:GetDCSMissionTask()  
   
@@ -1442,6 +1490,18 @@ function AUFTRAG:GetTargetCoordinate()
   end
 
   return nil
+end
+
+--- Get distance to target.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE FromCoord The coordinate from which the distance is measured.
+-- @return #number Distance in meters.
+function AUFTRAG:GetTargetDistance(FromCoord)
+  local TargetCoord=self:GetTargetCoordinate()
+  if TargetCoord then
+    return TargetCoord:Get2DDistance(FromCoord)
+  end
+  return 0
 end
 
 --- Get coordinate of target. First unit/group of the set is used.

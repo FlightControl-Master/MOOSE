@@ -432,8 +432,8 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("*",             "RTZ",               "Inbound")     -- Group is returning to destination zone. Not implemented yet!
   self:AddTransition("Inbound",       "Holding",           "Holding")     -- Group is in holding pattern.
   
-  self:AddTransition("*",             "Refuel",            "Going2Refuel")-- Group is send to refuel at a tanker. Not implemented yet!
-  self:AddTransition("Going2Refuel",  "Refueling",         "Refueling")   -- Group is send to refuel at a tanker. Not implemented yet!
+  self:AddTransition("*",             "Refuel",            "Going4Fuel")  -- Group is send to refuel at a tanker. Not implemented yet!
+  self:AddTransition("Going4Fuel",    "Refueled",          "Airborne")    -- Group is send to refuel at a tanker. Not implemented yet!
   
   self:AddTransition("*",             "LandAt",            "LandingAt")   -- Helo group is ordered to land at a specific point.
   self:AddTransition("LandingAt",     "LandedAt",          "LandedAt")    -- Helo group landed landed at a specific point.
@@ -2754,6 +2754,51 @@ function FLIGHTGROUP:onafterWait(From, Event, To, Coord, Altitude, Speed)
   self:SetTask(TaskOrbit)
 end
 
+
+--- On after "Refuel" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterRefuel(From, Event, To)
+  
+  -- Debug message.
+  local text=string.format("Flight group set to refuel at the nearest tanker")
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
+  self:I(self.lid..text)
+
+  --TODO: set ROE passive. introduce roe event/state/variable.
+
+  --TODO: cancel current task
+
+  -- Orbit task.  
+  local TaskRefuel=self.group:TaskRefueling()
+  local TaskFunction=self.group:TaskFunction("FLIGHTGROUP._FinishedRefuelling", self)
+  
+  local TaskCombo=self.group:TaskCombo({TaskFunction, TaskRefuel, TaskFunction})
+
+  -- Set task.
+  --self:SetTask(TaskCombo)
+  self:PushTask(TaskCombo)
+  
+end
+
+--- On after "Refueled" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterRefueled(From, Event, To)
+  -- Debug message.
+  local text=string.format("Flight group finished refuelling")
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
+  self:I(self.lid..text)
+  
+  self:__UpdateRoute(-1)
+  
+end
+
+
 --- On after "Holding" event. Flight arrived at the holding point.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -3397,6 +3442,8 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
       waypointcoord.y=mission.missionAltitude
       env.info("FF mission altitude [m]="..waypointcoord.y)
     end
+    
+    local speed=UTILS.KmphToKnots(math.min(self.speedmax*0.8, 1000))
   
     -- Add waypoint.
     self:AddWaypointAir(waypointcoord, nextwaypoint, self.speedmax*0.8, false)
@@ -3408,7 +3455,8 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     mission:SetFlightWaypointTask(self, waypointtask)
     
     -- TODO: better marker text, mission.maker
-    mission.marker=waypointcoord:MarkToCoalition(mission.name, self:GetCoalition(), true)
+    --mission.marker=waypointcoord:MarkToCoalition(mission.name, self:GetCoalition(), true)
+    mission.marker=waypointcoord:MarkToAll(mission.name, true)
     
     
     --self:SetROE(mission.optionROE)
@@ -3480,6 +3528,16 @@ function FLIGHTGROUP._ReachedHolding(group, flightgroup)
 
   -- Trigger Holding event.
   flightgroup:__Holding(-1)
+end
+
+--- Function called when flight finished refuelling.
+-- @param Wrapper.Group#GROUP group Group object.
+-- @param #FLIGHTGROUP flightgroup Flight group object.
+function FLIGHTGROUP._FinishedRefuelling(group, flightgroup)
+  flightgroup:T(flightgroup.lid..string.format("Group finished refueling"))
+
+  -- Trigger Holding event.
+  flightgroup:__Refueled(-1)
 end
 
 --- Update route of group, e.g after new waypoints and/or waypoint tasks have been added.

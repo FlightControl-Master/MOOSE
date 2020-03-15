@@ -337,7 +337,7 @@ function WINGCOMMANDER:GetAirwingForMission(Mission)
     local airwing=_airwing --Ops.AirWing#AIRWING
     
     -- Check if airwing can do this mission.
-    local can,assets=airwing:CanMission(Mission.type, Mission.nassets)
+    local can,assets=airwing:CanMission(Mission)
     
     -- Can it?
     if can then        
