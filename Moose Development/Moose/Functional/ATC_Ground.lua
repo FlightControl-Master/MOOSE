@@ -2456,7 +2456,7 @@ end
 ATC_GROUND_PERSIANGULF = {
   ClassName = "ATC_GROUND_PERSIANGULF",
   Airbases = {
-    [AIRBASE.PersianGulf.Al_Dhafra_AB] = { ---FIX by Wingthor Changed from Abu_Musa_Island_Airport
+    [AIRBASE.PersianGulf.Abu_Musa_Island_Airport] = {
       PointsRunways = {
         [1] = {
           [1]={["y"]=-122813.71002344,["x"]=-31689.936027827,},
@@ -2475,7 +2475,7 @@ ATC_GROUND_PERSIANGULF = {
         },
       },
     },
-    [AIRBASE.PersianGulf.Abu_Musa_Island_Airport] = {
+    [AIRBASE.PersianGulf.Al_Dhafra_AB] = {
       PointsRunways = {
         [1] = {
           [1]={["y"]=-174672.06004916,["x"]=-209880.97145616,},
