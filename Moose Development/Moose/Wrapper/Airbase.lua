@@ -576,7 +576,7 @@ function AIRBASE:GetParkingSpotsNumber(termtype)
   local parkingdata=self:GetParkingData(false)
 
   local nspots=0
-  for _,parkingspot in pairs(parkingdata) do
+  for _,parkingspot in pairs(self.parking) do
     if AIRBASE._CheckTerminalType(parkingspot.Term_Type, termtype) then
       nspots=nspots+1
     end

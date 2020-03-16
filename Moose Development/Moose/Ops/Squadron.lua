@@ -26,6 +26,7 @@
 -- @field Ops.AirWing#AIRWING airwing The AIRWING object the squadron belongs to.
 -- @field #number Ngroups Number of asset flight groups this squadron has. 
 -- @field #number engageRange Engagement range in meters.
+-- @field #string attribute Generalized attribute of the squadron template group.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -88,13 +89,20 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
 
   -- Name of the template group.
   self.templatename=TemplateGroupName
+
+  -- Squadron name.
+  self.name=tostring(SquadronName or TemplateGroupName)
+  
+  -- Set some string id for output to DCS.log file.
+  self.lid=string.format("SQUADRON %s | ", self.name)
+
   
   -- Template group.
   self.templategroup=GROUP:FindByName(self.templatename)
   
   -- Check if template group exists.
   if not self.templategroup then
-    self:E("ERROR: Template group %s does not exist!", tostring(self.templatename))
+    self:E(self.lid.."ERROR: Template group %s does not exist!", tostring(self.templatename))
     return nil
   end
   
@@ -104,11 +112,6 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   
   self.attribute=self.templategroup:GetAttribute()
 
-  --self.flightgroup=AIGroup
-  self.name=tostring(SquadronName or TemplateGroupName)
-  
-  -- Set some string id for output to DCS.log file.
-  self.lid=string.format("SQUADRON %s | ", self.name)
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -178,7 +181,7 @@ end
 
 --- Set skill.
 -- @param #SQUADRON self
--- @param #string skill Skill of all flights.
+-- @param #string Skill Skill of all flights.
 -- @return #SQUADRON self
 function SQUADRON:SetSkill(Skill)
   self.skill=Skill

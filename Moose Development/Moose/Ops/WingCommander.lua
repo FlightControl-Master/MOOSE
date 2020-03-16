@@ -39,14 +39,6 @@ WINGCOMMANDER = {
   missionqueue   =    {},
 }
 
---- Mission resources.
--- @type WINGCOMMANDER.Recourses
--- 
--- @field #string missiontype Mission Type.
--- @field #number Ntot Total number of assets for this task.
--- @field #number Navail Number of available assets
--- @field #number Nonmission Number of assets currently on mission.
-
 --- Contact details.
 -- @type WINGCOMMANDER.Contact
 -- @field Ops.Auftrag#AUFTRAG mission The assigned mission.

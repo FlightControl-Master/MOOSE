@@ -102,11 +102,11 @@ AIRWING.version="0.1.5"
 -- TODO: Make special request to transfer squadrons to anther airwing (or warehouse).
 -- DONE: Build mission queue.
 -- DONE: Find way to start missions.
--- TODO: Check if missions are done/cancelled.
+-- DONE: Check if missions are done/cancelled.
 -- DONE: Payloads as resources.
 -- TODO: Spawn in air or hot.
--- TODO: Define CAP zones.
--- TODO: Define TANKER zones for refuelling.
+-- DONE: Define CAP zones.
+-- DONE: Define TANKER zones for refuelling.
 -- TODO: Border zone or even multiple zones.
 -- TODO: Check that airbase has enough parking spots if a request is BIG. Alternatively, split requests.
 
@@ -373,17 +373,10 @@ end
 --- Remove asset from squadron.
 -- @param #AIRWING self
 -- @param #AIRWING.SquadronAsset Asset
--- @return #AIRWING.Squadron Squadron table.
 function AIRWING:RemoveAssetFromSquadron(Asset)
   local squad=self:GetSquadronOfAsset(Asset)
   if squad then
-    for i,_asset in pairs(squad.assets) do
-      local asset=_asset --#AIRWING.SquadronAsset
-      if asset.uid==Asset.uid then
-        table.remove(squad.assets, i)
-        return
-      end
-    end
+    squad:DelAsset(Asset)
   end
 end
 
@@ -578,13 +571,21 @@ function AIRWING:onafterStatus(From, Event, To)
       local mission=self:GetAssetCurrentMission(asset)
       local missiontext=""
       if mission then
-        local distance=UTILS.MetersToNM(mission:GetTargetDistance(asset.flightgroup.group:GetCoordinate()))
+        local distance=asset.flightgroup and UTILS.MetersToNM(mission:GetTargetDistance(asset.flightgroup.group:GetCoordinate())) or 0
         missiontext=string.format(" [%s (%s): status=%s, distance=%.1f NM]", mission.type, mission.name, mission.status, distance)
       end
             
       text=text..string.format("\n  -[%d] %s*%d \"%s\": spawned=%s, mission=%s%s", j, typename, asset.nunits, asset.spawngroupname, spawned, tostring(self:IsAssetOnMission(asset)), missiontext)
       local payload=asset.payload and table.concat(asset.payload.missiontypes, ", ") or "None"
       text=text.." payload="..payload
+      
+      text=text.." flight="
+      if asset.flightgroup and asset.flightgroup:IsAlive() then
+        local status=asset.flightgroup:GetState()
+        local fuel=asset.flightgroup:IsFuelLow()
+      else
+        text=text.."N/A"
+      end
       
     end
   end
@@ -630,11 +631,10 @@ function AIRWING:_GetPatrolData(PatrolPoints)
     local Altitude=math.random(10,15)*1000
     local Speed=math.random(250, 350)
     
-    return self:NewPatrolPoint(Coordinate,Heading,LegLength,Altitude,Speed)
+    return self:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
       
   end
-
-
+  
 end
 
 --- Check how many CAP missions are assigned and add number of missing missions.
@@ -701,6 +701,37 @@ function AIRWING:CheckAWACS()
   end
   
   return self
+end
+
+--- Check how many AWACS missions are assigned and add number of missing missions.
+-- @param #AIRWING self
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flightgroup.
+-- @return #AIRWING.SquadronAsset The tanker asset.
+function AIRWING:GetTankerForFlight(flightgroup)
+
+  local tankers=self:GetAssetsOnMission(AUFTRAG.Type.TANKER)
+  
+  if #tankers>0 then
+  
+    local tankeropt={}
+    for _,_tanker in pairs(tankers) do
+      local tanker=_tanker --#AIRWING.SquadronAsset
+      
+      local tankercoord=tanker.flightgroup.group:GetCoordinate()
+      local assetcoord=Asset.flightgroup.group:GetCoordinate()
+      
+      local dist=assetcoord:Get2DDistance(tankercoord)
+      
+      table.insert(tankeropt, {tanker=tanker, dist=dist})
+    end
+    
+    table.sort(tankeropt, function(a,b) return a.dist<b.dist end)
+    
+    return tankeropt[1]
+  
+  end
+
+  return nil
 end
 
 
@@ -992,6 +1023,9 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   -- Set RTB on fuel critical.
   flightgroup:SetFuelCriticalThreshold(nil, true)
   
+  -- Set airwing.
+  flightgroup:SetAirwing(self)
+  
   --flightgroup.group:OptionProhibitAfterburner(true)
   
   -- Set asset flightgroup.
@@ -1039,10 +1073,8 @@ function AIRWING:onafterAssetDead(From, Event, To, asset, request)
     self.wingcommander.detectionset:RemoveGroupsByName({asset.spawngroupname})
   end
   
-  --TODO: remove asset from mission.
-  --local mission=self:GetAssetCurrentMission(asset)
-  
-  --TODO: remove asset from squadron.
+  -- Remove asset from mission is done via Mission:AssetDead() call from flightgroup onafterFlightDead function
+  -- Remove asset from squadron same
 end
 
 
@@ -1131,19 +1163,13 @@ function AIRWING:_CreateFlightGroup(asset)
   --- Mission started.
   function flightgroup:OnAfterMissionStart(From, Event, To, Mission)
     local airwing=flightgroup:GetAirWing()
-
-    -- TODO: Add event? Set mission status!
-    --airwing:MissionStart(Mission)
   
   end
   
   --- Flight is DEAD.
   function flightgroup:OnAfterFlightDead(From, Event, To)  
     local airwing=flightgroup:GetAirWing()
-    
-    -- TODO
-    -- Mission failed ==> launch new mission?
-    
+        
   end
   
   return flightgroup
@@ -1168,7 +1194,7 @@ function AIRWING:IsAssetOnMission(asset, MissionTypes)
     MissionTypes=AUFTRAG.Type
   end
 
-  if asset.flightgroup then
+  if asset.flightgroup and asset.flightgroup:IsAlive() then
   
     -- Loop over mission queue.
     for _,_mission in pairs(asset.flightgroup.missionqueue or {}) do
@@ -1276,6 +1302,34 @@ function AIRWING:CountAssetsOnMission(MissionTypes)
 
   return Np+Nq, Np, Nq
 end
+
+--- Count assets on mission.
+-- @param #AIRWING self
+-- @param #table MissionTypes Types on mission to be checked. Default all.
+-- @return #table Assets on pending requests.
+function AIRWING:GetAssetsOnMission(MissionTypes)
+  
+  local assets={}
+  local Np=0
+
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    -- Check if this mission type is requested.
+    if self:CheckMissionType(mission.type, MissionTypes) then
+    
+      for _,_asset in pairs(mission.assets or {}) do
+        local asset=_asset --#AIRWING.SquadronAsset
+
+        table.insert(assets, asset)        
+        
+      end      
+    end
+  end
+
+  return assets
+end
+
 
 --- Check if assets for a given mission type are available.
 -- @param #AIRWING self

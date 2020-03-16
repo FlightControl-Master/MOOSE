@@ -316,7 +316,7 @@ end
 function AUFTRAG:NewANTISHIP(TargetUnitSet)
   
   if TargetUnitSet:IsInstanceOf("UNIT") then
-    TargetUnitSet=SET_UNIT:New():AddGroup(TargetUnitSet)
+    TargetUnitSet=SET_UNIT:New():AddUnit(TargetUnitSet)
   end
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ANTISHIP)
@@ -986,6 +986,16 @@ function AUFTRAG:Evaluate()
   return self
 end
 
+--- Get flight data table.
+-- @param #AUFTRAG self
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
+-- @return #AUFTRAG.FlightData Flight data or nil if flightgroup does not exist.
+function AUFTRAG:GetFlightData(flightgroup)
+  if flightgroup and self.flightdata then
+    return self.flightdata[flightgroup.groupname]
+  end
+  return nil
+end
 
 --- Set flightgroup mission status.
 -- @param #AUFTRAG self
@@ -996,7 +1006,13 @@ function AUFTRAG:SetFlightStatus(flightgroup, status)
   if self:GetFlightStatus(flightgroup)==AUFTRAG.FlightStatus.CANCELLED and status==AUFTRAG.FlightStatus.DONE then
     -- Do not overwrite a CANCELLED status with a DONE status.
   else
-    self.flightdata[flightgroup.groupname].status=status
+    local flightdata=self:GetFlightData(flightgroup)
+    if flightdata then
+      flightdata.status=status
+    else
+      self:E(self.lid.."WARNING: Could not SET flight data for flight group. Setting status to DONE.")
+      flightdata.status=AUFTRAG.FlightStatus.DONE
+    end
   end
   
   self:I(self.lid..string.format("Setting flight %s status to %s. IsNotOver=%s  CheckFlightsDone=%s", flightgroup.groupname, self:GetFlightStatus(flightgroup), tostring(self:IsNotOver()), tostring(self:CheckFlightsDone())))
@@ -1015,9 +1031,11 @@ end
 -- @param #AUFTRAG self
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
 function AUFTRAG:GetFlightStatus(flightgroup)
-  if flightgroup then
-    return self.flightdata[flightgroup.groupname].status
+  local flightdata=self:GetFlightData(flightgroup)
+  if flightdata then
+    return flightdata.status
   else
+    self:E(self.lid.."WARNING: Could not get flight data for flight group. Returning status DONE.")
     return AUFTRAG.FlightStatus.DONE
   end
 end
@@ -1028,14 +1046,20 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
 -- @param Core.Point#COORDINATE coordinate Waypoint Coordinate.
 function AUFTRAG:SetFlightWaypointCoordinate(flightgroup, coordinate)
-  self.flightdata[flightgroup.groupname].waypointcoordinate=coordinate
+  local flightdata=self:GetFlightData(flightgroup)
+  if flightdata then
+    flightdata.waypointcoordinate=coordinate
+  end
 end
 
 --- Get flightgroup waypoint coordinate.
 -- @param #AUFTRAG self
 -- @return Core.Point#COORDINATE Waypoint Coordinate.
 function AUFTRAG:GetFlightWaypointCoordinate(flightgroup)
-  return self.flightdata[flightgroup.groupname].waypointcoordinate
+  local flightdata=self:GetFlightData(flightgroup)
+  if flightdata then
+    return flightdata.waypointcoordinate
+  end
 end
 
 
@@ -1045,7 +1069,10 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP.Task task Waypoint task.
 function AUFTRAG:SetFlightWaypointTask(flightgroup, task)
   self:I(self.lid..string.format("Setting waypoint task %s", task and task.description or "WTF"))
-  self.flightdata[flightgroup.groupname].waypointtask=task
+  local flightdata=self:GetFlightData(flightgroup)
+  if flightdata then
+    flightdata.waypointtask=task
+  end
 end
 
 --- Get flightgroup waypoint task.
@@ -1053,11 +1080,14 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
 -- @return Ops.FlightGroup#FLIGHTGROUP.Task task Waypoint task. Waypoint task.
 function AUFTRAG:GetFlightWaypointTask(flightgroup)
-  return self.flightdata[flightgroup.groupname].waypointtask
+  local flightdata=self:GetFlightData(flightgroup)
+  if flightdata then
+    return flightdata.waypointtask
+  end
 end
 
 
---- Get flightgroup mission status.
+--- Check if all flights are done with their mission (or dead).
 -- @param #AUFTRAG self
 -- @return #boolean If true, all flights are done with the mission.
 function AUFTRAG:CheckFlightsDone()
@@ -1071,11 +1101,13 @@ function AUFTRAG:CheckFlightsDone()
   -- Check status of all flight groups.
   for groupname,data in pairs(self.flightdata) do
     local flightdata=data --#AUFTRAG.FlightData
-    if flightdata.status==AUFTRAG.FlightStatus.DONE or flightdata.status==AUFTRAG.FlightStatus.CANCELLED then
-      -- This one is done or cancelled.
-    else
-      -- At least this flight is not DONE or CANCELLED.
-      return false      
+    if flightdata then
+      if flightdata.status==AUFTRAG.FlightStatus.DONE or flightdata.status==AUFTRAG.FlightStatus.CANCELLED then
+        -- This one is done or cancelled.
+      else
+        -- At least this flight is not DONE or CANCELLED.
+        return false      
+      end
     end
   end
 
@@ -1245,9 +1277,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterCancel(From, Event, To)
 
-  --self.status=AUFTRAG.Status.CANCELLED
-  --self:I(self.lid..string.format("New mission status=%s", self.status))
-
+  -- Debug info.
   self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for flights to report mission DONE before evaluation.", self.status))
 
   if self.airwing then

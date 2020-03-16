@@ -51,7 +51,7 @@
 -- @field #number fuelcriticalthresh Critical fuel threshold in percent.
 -- @field #boolean fuelcriticalrtb RTB on critical fuel switch.
 -- @field #boolean passedfinalwp Group has passed the final waypoint.
--- @field Ops.Airwing#AIRWING airwing The airwing the flight group belongs to.
+-- @field Ops.AirWing#AIRWING airwing The airwing the flight group belongs to.
 -- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol handling this group.
 -- @field Core.UserFlag#USERFLAG flaghold Flag for holding.
 -- @field #number Tholding Abs. mission time stamp when the group reached the holding point.
@@ -349,7 +349,7 @@ FLIGHTGROUP.ROT={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.3.5"
+FLIGHTGROUP.version="0.3.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1161,7 +1161,28 @@ function FLIGHTGROUP:Route(waypoints)
   return self
 end
 
+--- Route group along waypoints. Enroute tasks are also applied.
+-- @param #FLIGHTGROUP self
+-- @return #number Fuel in percent.
+function FLIGHTGROUP:GetFuelMin()
 
+  local fuelmin=math.huge
+  for i,_element in pairs(self.elements) do
+    local element=_element --#FLIGHTGROUP.Element
+    
+    local unit=element.unit
+    
+    if unit and unit:IsAlive() then
+      local fuel=unit:GetFuel()
+      if fuel<fuelmin then
+        fuelmin=fuel
+      end
+    end
+    
+  end
+  
+  return fuelmin*100
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -1324,7 +1345,6 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
 
   -- Element status.
   text="Elements:"
-  local fuelmin=math.huge
   for i,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
     
@@ -1334,11 +1354,6 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     local fuel=unit:GetFuel() or 0
     local life=unit:GetLifeRelative() or 0
     local parking=element.parking and tostring(element.parking.TerminalID) or "X"
-    
-    -- Used later for low fuel thresh.
-    if fuel*100<fuelmin then
-      fuelmin=fuel*100
-    end
 
     -- Check if element is not dead and we missed an event.
     if life<0 and element.status~=FLIGHTGROUP.ElementStatus.DEAD and element.status~=FLIGHTGROUP.ElementStatus.INUTERO then
@@ -1417,6 +1432,8 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   ---
   -- Fuel State
   ---
+
+  local fuelmin=self:GetFuelMin()
 
   -- Low fuel?
   if fuelmin<self.fuellowthresh and not self.fuellow then
@@ -2760,7 +2777,8 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FLIGHTGROUP:onafterRefuel(From, Event, To)
+-- @param Core.Point#COORDINATE Coordinate The coordinate.
+function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
   
   -- Debug message.
   local text=string.format("Flight group set to refuel at the nearest tanker")
@@ -2771,15 +2789,22 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To)
 
   --TODO: cancel current task
 
+
   -- Orbit task.  
   local TaskRefuel=self.group:TaskRefueling()
   local TaskFunction=self.group:TaskFunction("FLIGHTGROUP._FinishedRefuelling", self)
+  local DCSTasks={TaskRefuel, TaskFunction}
+
+  local wp0=self.group:GetCoordinate():WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORINATE.WaypointAction.TurningPoint, Speed, true)
+  local wp9=Coordinate:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, "Refuel")
+    
+  --local TaskCombo=self.group:TaskCombo({TaskFunction, TaskRefuel, TaskFunction})
   
-  local TaskCombo=self.group:TaskCombo({TaskFunction, TaskRefuel, TaskFunction})
+  self:Route({wp0, wp9})
 
   -- Set task.
   --self:SetTask(TaskCombo)
-  self:PushTask(TaskCombo)
+  --self:PushTask(TaskCombo)
   
 end
 
@@ -2909,8 +2934,15 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
   -- Set switch to true.
   self.fuellow=true
 
-  -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
+  -- Back to destination or home.
   local airbase=self.destbase or self.homebase
+  
+  if self.airwing then
+    local tanker=self.airwing:GetTankerForFlight(self)
+    
+    self:Refuel(tanker.flightgroup.group:GetCoordinate())
+    
+  end
   
   if airbase and self.fuellowrtb then
     self:RTB(airbase)
