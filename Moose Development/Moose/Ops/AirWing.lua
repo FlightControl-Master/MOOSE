@@ -718,7 +718,7 @@ function AIRWING:GetTankerForFlight(flightgroup)
       local tanker=_tanker --#AIRWING.SquadronAsset
       
       local tankercoord=tanker.flightgroup.group:GetCoordinate()
-      local assetcoord=Asset.flightgroup.group:GetCoordinate()
+      local assetcoord=flightgroup.group:GetCoordinate()
       
       local dist=assetcoord:Get2DDistance(tankercoord)
       

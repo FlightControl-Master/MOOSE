@@ -2794,6 +2794,8 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
   local TaskRefuel=self.group:TaskRefueling()
   local TaskFunction=self.group:TaskFunction("FLIGHTGROUP._FinishedRefuelling", self)
   local DCSTasks={TaskRefuel, TaskFunction}
+  
+  local Speed=UTILS.KnotsToKmph(500)
 
   local wp0=self.group:GetCoordinate():WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORINATE.WaypointAction.TurningPoint, Speed, true)
   local wp9=Coordinate:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, "Refuel")
@@ -2940,14 +2942,25 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
   if self.airwing then
     local tanker=self.airwing:GetTankerForFlight(self)
     
-    self:Refuel(tanker.flightgroup.group:GetCoordinate())
+    if tanker then
+      self:Refuel(tanker.flightgroup.group:GetCoordinate())
+      
+    else
+      if airbase and self.fuellowrtb then
+        self:RTB(airbase)
+        --TODO: RTZ
+      end      
+    end
+    
+  else
+  
+    if airbase and self.fuellowrtb then
+      self:RTB(airbase)
+      --TODO: RTZ
+    end
     
   end
   
-  if airbase and self.fuellowrtb then
-    self:RTB(airbase)
-    --TODO: RTZ
-  end
 end
 
 --- On after "FuelCritical" event.

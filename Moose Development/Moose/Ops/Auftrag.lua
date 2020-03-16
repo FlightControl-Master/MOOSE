@@ -394,6 +394,8 @@ function AUFTRAG:NewTANKER(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
   -- Mission type PATROL.
   mission.type=AUFTRAG.Type.TANKER
   
+  mission.missionTask=ENUMS.MissionTask.REFUELING
+  
   mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
@@ -414,6 +416,8 @@ function AUFTRAG:NewAWACS(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
     
   -- Mission type PATROL.
   mission.type=AUFTRAG.Type.AWACS
+  
+  mission.missionTask=ENUMS.MissionTask.AWACS
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -1719,9 +1723,9 @@ function AUFTRAG:GetDCSMissionTask()
     -- TANKER Mission --
     -------------------- 
 
-    local DCStask=CONTROLLABLE.EnRouteTaskTanker(nil)
+    --local DCStask=CONTROLLABLE.EnRouteTaskTanker(nil)
     
-    table.insert(DCStasks, DCStask)
+    --table.insert(DCStasks, DCStask)
   
   elseif self.type==AUFTRAG.Type.TRANSPORT then
 
@@ -1757,6 +1761,8 @@ function AUFTRAG:GetDCSMissionTask()
   
   -- Count mission targets.
   self.Ntargets=self:CountMissionTargets()
+  
+  self:I({missiontask=DCStasks})
 
   -- Return the task.
   if #DCStasks==1 then

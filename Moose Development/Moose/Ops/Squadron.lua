@@ -102,7 +102,7 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   
   -- Check if template group exists.
   if not self.templategroup then
-    self:E(self.lid.."ERROR: Template group %s does not exist!", tostring(self.templatename))
+    self:E(self.lid..string.format("ERROR: Template group %s does not exist!", tostring(self.templatename)))
     return nil
   end
   

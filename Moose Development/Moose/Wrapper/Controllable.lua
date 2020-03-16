@@ -1559,7 +1559,7 @@ function CONTROLLABLE:EnRouteTaskAWACS( )
 
   local DCSTask = {
     id = 'AWACS',
-    params = {}
+    params = {},
   }
 
   return DCSTask
@@ -1573,7 +1573,7 @@ function CONTROLLABLE:EnRouteTaskTanker( )
 
   local DCSTask = {
     id = 'Tanker',
-    params = {}
+    params = {},
   }
 
   return DCSTask
@@ -1589,7 +1589,7 @@ function CONTROLLABLE:EnRouteTaskEWR( )
 
   local DCSTask = {
     id = 'EWR',
-    params = {}
+    params = {},
   }
 
   return DCSTask
