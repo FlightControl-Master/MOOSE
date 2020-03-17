@@ -27,6 +27,7 @@
 -- @field #number Ngroups Number of asset flight groups this squadron has. 
 -- @field #number engageRange Engagement range in meters.
 -- @field #string attribute Generalized attribute of the squadron template group.
+-- @field #number refuelSystem For tanker squads, the refuel system used.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -53,6 +54,7 @@ SQUADRON = {
   airwing        =   nil,
   Ngroups        =   nil,
   engageRange    =   nil,
+  refuelSystem   =   nil,
 }
 
 --- Flight group element.
@@ -111,6 +113,8 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   self:SetEngagementRange()
   
   self.attribute=self.templategroup:GetAttribute()
+  
+  _,self.refuelSystem=self.templategroup:GetUnit(1):IsTanker()
 
 
   -- Start State.
@@ -327,6 +331,17 @@ function SQUADRON:CanMission(Mission)
   -- WARNING: This assumes that all assets of the squad can do the same mission types!
   local cando=self:CheckMissionType(Mission.type, self.missiontypes)
   
+  -- Check that tanker mission
+  if cando and Mission.type==AUFTRAG.Type.TANKER then
+  
+    if Mission.refuelSystem and Mission.refuelSystem==self.refuelSystem then
+      -- Correct refueling system.
+    else
+      cando=false
+    end
+  
+  end
+  
   if cando then
       
     local TargetDistance=Mission:GetTargetDistance(self.airwing:GetCoordinate())
@@ -337,7 +352,7 @@ function SQUADRON:CanMission(Mission)
       -- Set range is valid.
       if TargetDistance<=self.engageRange then
       
-        -- Check if has already any missions in the queue.
+        -- Check if asset is currently on a mission (STARTED or QUEUED).
         if self.airwing:IsAssetOnMission(asset) then
   
           ---

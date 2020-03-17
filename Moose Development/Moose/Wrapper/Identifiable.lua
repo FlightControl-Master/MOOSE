@@ -90,7 +90,6 @@ end
 --- Returns the type name of the DCS Identifiable.
 -- @param #IDENTIFIABLE self
 -- @return #string The type name of the DCS Identifiable.
--- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetTypeName()
   self:F2( self.IdentifiableName )
   

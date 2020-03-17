@@ -25,8 +25,9 @@
 -- @field Core.Set#SET_ZONE zonesetTANKER Set of TANKER zones.
 -- @field Core.Set#SET_ZONE zonesetAWACS Set of AWACS zones.
 -- @field #number nflightsCAP Number of CAP flights constantly in the air.
--- @field #number nflightsTANKER Number of TANKER flights constantly in the air.
 -- @field #number nflightsAWACS Number of AWACS flights constantly in the air.
+-- @field #number nflightsTANKERboom Number of TANKER flights with BOOM constantly in the air.
+-- @field #number nflightsTANKERprobe Number of TANKER flights with PROBE constantly in the air. 
 -- @field #table pointsCAP Table of CAP points.
 -- @field #table pointsTANKER Table of Tanker points.
 -- @field #table pointsAWACS Table of AWACS points.
@@ -140,7 +141,8 @@ function AIRWING:New(warehousename, airwingname)
   -- Defaults:
   self.nflightsCAP=0
   self.nflightsAWACS=0
-  self.nflightsTANKER=0
+  self.nflightsTANKERboom=0
+  self.nflightsTANKERprobe=0
 
   ------------------------
   --- Pseudo Functions ---
@@ -430,10 +432,12 @@ end
 
 --- Set number of TANKER flights constantly in the air.
 -- @param #AIRWING self
--- @param #number n Number of flights. Default 1.
+-- @param #number Nboom Number of flights. Default 1.
+-- @param #number Nprobe Number of flights. Default 1.
 -- @return #AIRWING self
-function AIRWING:SetNumberTANKER(n)
-  self.nflightsTANKER=n or 1
+function AIRWING:SetNumberTANKER(Nboom, Nprobe)
+  self.nflightsTANKERboom=Nboom or 1
+  self.nflightsTANKERprobe=Nprobe or 1
   return self
 end
 
@@ -652,6 +656,8 @@ function AIRWING:CheckCAP()
     
     missionCAP.patroldata=patrol
     
+    patrol.noccupied=patrol.noccupied+1
+    
     self:AddMission(missionCAP)
       
   end
@@ -664,19 +670,54 @@ end
 -- @return #AIRWING self
 function AIRWING:CheckTANKER()
 
-  local N=self:CountMissionsInQueue({AUFTRAG.Type.TANKER})
+  --local N=self:CountMissionsInQueue({AUFTRAG.Type.TANKER})
+  --local N=self:CountAssetsOnMission({AUFTRAG.Type.TANKER})
   
-  for i=1,self.nflightsTANKER-N do
+  local Nboom=0
+  local Nprob=0
+  
+  -- Count tanker mission.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    if mission:IsNotOver() and self:CheckMissionType(mission.type, AUFTRAG.Type.TANKER) then
+      if mission.refuelSystem==0 then
+        Nboom=Nboom+1
+      elseif mission.refuelSystem==1 then
+        Nprob=Nprob+1
+      end
+    
+    end
+  
+  end
+  
+  for i=1,self.nflightsTANKERboom-Nboom do
   
     local patrol=self:_GetPatrolData(self.pointsTANKER)
     
-    local mission=AUFTRAG:NewTANKER(patrol.coord, patrol.speed, patrol.heading, patrol.leg, patrol.altitude)
+    local mission=AUFTRAG:NewTANKER(patrol.coord, patrol.speed, patrol.heading, patrol.leg, patrol.altitude, 0)
     
     mission.patroldata=patrol
+    
+    patrol.noccupied=patrol.noccupied+1
     
     self:AddMission(mission)
       
   end
+  
+  for i=1,self.nflightsTANKERprobe-Nprob do
+  
+    local patrol=self:_GetPatrolData(self.pointsTANKER)
+    
+    local mission=AUFTRAG:NewTANKER(patrol.coord, patrol.speed, patrol.heading, patrol.leg, patrol.altitude, 1)
+    
+    mission.patroldata=patrol
+    
+    patrol.noccupied=patrol.noccupied+1
+    
+    self:AddMission(mission)
+      
+  end  
   
   return self
 end
@@ -695,6 +736,8 @@ function AIRWING:CheckAWACS()
     local mission=AUFTRAG:NewAWACS(patrol.coord, patrol.speed, patrol.heading, patrol.leg, patrol.altitude)
     
     mission.patroldata=patrol
+    
+    patrol.noccupied=patrol.noccupied+1
     
     self:AddMission(mission)
       
@@ -717,17 +760,23 @@ function AIRWING:GetTankerForFlight(flightgroup)
     for _,_tanker in pairs(tankers) do
       local tanker=_tanker --#AIRWING.SquadronAsset
       
-      local tankercoord=tanker.flightgroup.group:GetCoordinate()
-      local assetcoord=flightgroup.group:GetCoordinate()
+      -- Check that donor and acceptor use the same refuelling system.
+      if flightgroup.refueltype and flightgroup.refueltype==tanker.flightgroup.tankertype then
       
-      local dist=assetcoord:Get2DDistance(tankercoord)
-      
-      table.insert(tankeropt, {tanker=tanker, dist=dist})
+        local tankercoord=tanker.flightgroup.group:GetCoordinate()
+        local assetcoord=flightgroup.group:GetCoordinate()
+        
+        local dist=assetcoord:Get2DDistance(tankercoord)
+        
+        table.insert(tankeropt, {tanker=tanker, dist=dist})
+      end
     end
     
+    -- Sort tankers wrt to distance.
     table.sort(tankeropt, function(a,b) return a.dist<b.dist end)
     
-    return tankeropt[1]
+    -- Return tanker asset.
+    return tankeropt[1].tanker
   
   end
 
@@ -1307,7 +1356,7 @@ end
 -- @param #AIRWING self
 -- @param #table MissionTypes Types on mission to be checked. Default all.
 -- @return #table Assets on pending requests.
-function AIRWING:GetAssetsOnMission(MissionTypes)
+function AIRWING:GetAssetsOnMission(MissionTypes, IncludeQueued)
   
   local assets={}
   local Np=0

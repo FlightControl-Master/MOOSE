@@ -1898,7 +1898,7 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   -- Remove flight from waiting queue.
   self:_RemoveFlightFromQueue(self.Qholding, flight, "holding")
  
-   -- Altitude above ground for a glide slope of 3�.
+   -- Altitude above ground for a glide slope of 3 degrees..
   local alpha=math.rad(3)
   local x1=UTILS.NMToMeters(10)
   local x2=UTILS.NMToMeters(5)

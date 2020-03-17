@@ -50,6 +50,7 @@
 -- @field #number engageWeaponExpend How many weapons are used.
 -- @field #boolean engageAsGroup Group attack.
 -- @field #number engageMaxDistance Max engage distance.
+-- @field #number refuelSystem For refuel type for TANKER missions.
 -- 
 -- @field Wrapper.Group#GROUP escortGroup The group to be escorted.
 -- @field DCS#Vec3 escortVec3 The 3D offset vector from the escorted group to the escort group.
@@ -65,6 +66,7 @@
 -- @field #string missionTask Mission task. Seed ENUMS.MissionTask.
 -- @field #number missionAltitude Mission altitude in meters.
 -- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
+-- @field #table enrouteTasks Mission enroute tasks.
 -- 
 -- @field #number missionRepeated Number of times mission was repeated.
 -- @field #number missionRepeatMax Number of times mission is repeated if failed.
@@ -108,6 +110,7 @@ AUFTRAG = {
   flightdata         =    {},
   assets             =    {},
   missionFraction    =   0.5,
+  enrouteTasks       =    {},
 }
 
 --- Global mission counter.
@@ -385,8 +388,9 @@ end
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @param #number Altitude Orbit altitude in feet.
+-- @param #number RefuelSystem Refueling system.
 -- @return #AUFTRAG self
-function AUFTRAG:NewTANKER(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
+function AUFTRAG:NewTANKER(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude, RefuelSystem)
 
   -- Create ORBIT first.
   local mission=self:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
@@ -395,6 +399,8 @@ function AUFTRAG:NewTANKER(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
   mission.type=AUFTRAG.Type.TANKER
   
   mission.missionTask=ENUMS.MissionTask.REFUELING
+  
+  mission.refuelSystem=RefuelSystem
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -1583,7 +1589,8 @@ function AUFTRAG:GetDCSMissionTask()
 
     local DCStask=CONTROLLABLE.EnRouteTaskAWACS(nil)
     
-    table.insert(DCStasks, DCStask)
+    table.insert(self.enrouteTasks, DCStask)
+    --table.insert(DCStasks, DCStask)
     
   elseif self.type==AUFTRAG.Type.BAI then
   
@@ -1631,7 +1638,8 @@ function AUFTRAG:GetDCSMissionTask()
 
     local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(nil, self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
     
-    table.insert(DCStasks, DCStask)
+    table.insert(self.enrouteTasks, DCStask)
+    --table.insert(DCStasks, DCStask)
   
   elseif self.type==AUFTRAG.Type.CAS then
   
@@ -1641,7 +1649,8 @@ function AUFTRAG:GetDCSMissionTask()
 
     local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(nil, self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
     
-    table.insert(DCStasks, DCStask)
+    table.insert(self.enrouteTasks, DCStask)
+    --table.insert(DCStasks, DCStask)
 
   elseif self.type==AUFTRAG.Type.ESCORT then
   
@@ -1723,8 +1732,9 @@ function AUFTRAG:GetDCSMissionTask()
     -- TANKER Mission --
     -------------------- 
 
-    --local DCStask=CONTROLLABLE.EnRouteTaskTanker(nil)
+    local DCStask=CONTROLLABLE.EnRouteTaskTanker(nil)
     
+    table.insert(self.enrouteTasks, DCStask)    
     --table.insert(DCStasks, DCStask)
   
   elseif self.type==AUFTRAG.Type.TRANSPORT then

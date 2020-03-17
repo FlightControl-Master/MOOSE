@@ -43,6 +43,8 @@
 -- @field #number speedmax Max speed in km/h.
 -- @field #number rangemax Max range in km.
 -- @field #number ceiling Max altitude the aircraft can fly at in meters.
+-- @field #number tankertype The refueling system type (0=boom, 1=probe), if the group is a tanker.
+-- @field #number refueltype The refueling system type (0=boom, 1=probe), if the group can refuel from a tanker.
 -- @field #boolean ai If true, flight is purely AI. If false, flight contains at least one human player.
 -- @field #boolean fuellow Fuel low switch.
 -- @field #number fuellowthresh Low fuel threshold in percent.
@@ -2940,9 +2942,13 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
   local airbase=self.destbase or self.homebase
   
   if self.airwing then
+  
+    -- Get closest tanker from airwing that can refuel this flight.
     local tanker=self.airwing:GetTankerForFlight(self)
     
     if tanker then
+    
+      -- Send flight to tanker with refueling task.
       self:Refuel(tanker.flightgroup.group:GetCoordinate())
       
     else
@@ -3488,6 +3494,12 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
       env.info("FF mission altitude [m]="..waypointcoord.y)
     end
     
+    -- Add enroute tasks.
+    for _,task in mission.enrouteTasks do
+      self:AddTaskEnroute(task)
+    end
+    
+    -- Some speed.
     local speed=UTILS.KmphToKnots(math.min(self.speedmax*0.8, 1000))
   
     -- Add waypoint.
@@ -3648,6 +3660,9 @@ function FLIGHTGROUP:_InitGroup()
     
     self.ceiling=self.descriptors.Hmax
     
+    _,self.tankertype=unit:IsTanker()
+    _,self.refueltype=unit:IsRefuelable()
+    
     self.ai=not self:_IsHuman(self.group)
     
     for _,_element in pairs(self.elements) do
@@ -3666,6 +3681,8 @@ function FLIGHTGROUP:_InitGroup()
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
     text=text..string.format("Range max    = %.1f km\n", self.rangemax/1000)
     text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
+    text=text..string.format("Tanker type  = %s\n", tostring(self.tankertype))
+    text=text..string.format("Refuel type  = %s\n", tostring(self.refueltype))
     text=text..string.format("AI           = %s\n", tostring(self.ai))
     text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
     text=text..string.format("Elements     = %d\n", #self.elements)
