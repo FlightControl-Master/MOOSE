@@ -3495,7 +3495,7 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     end
     
     -- Add enroute tasks.
-    for _,task in mission.enrouteTasks do
+    for _,task in pairs(mission.enrouteTasks) do
       self:AddTaskEnroute(task)
     end
     
@@ -3503,7 +3503,7 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     local speed=UTILS.KmphToKnots(math.min(self.speedmax*0.8, 1000))
   
     -- Add waypoint.
-    self:AddWaypointAir(waypointcoord, nextwaypoint, self.speedmax*0.8, false)
+    self:AddWaypointAir(waypointcoord, nextwaypoint, speed, false)
     
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, nextwaypoint, mission.name, mission.prio, mission.duration)

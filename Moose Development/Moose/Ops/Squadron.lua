@@ -27,7 +27,8 @@
 -- @field #number Ngroups Number of asset flight groups this squadron has. 
 -- @field #number engageRange Engagement range in meters.
 -- @field #string attribute Generalized attribute of the squadron template group.
--- @field #number refuelSystem For tanker squads, the refuel system used.
+-- @field #number tankerSystem For tanker squads, the refuel system used (boom=0 or probpe=1). Default nil.
+-- @field #number refuelSystem For refuelable squads, the refuel system used (boom=0 or probpe=1). Default nil.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -54,6 +55,7 @@ SQUADRON = {
   airwing        =   nil,
   Ngroups        =   nil,
   engageRange    =   nil,
+  tankerSystem   =   nil,
   refuelSystem   =   nil,
 }
 
@@ -70,7 +72,7 @@ SQUADRON.version="0.0.3"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Engage radius.
+-- DONE: Engage radius.
 -- TODO: Modex.
 -- TODO: Call signs.
 
@@ -114,7 +116,8 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   
   self.attribute=self.templategroup:GetAttribute()
   
-  _,self.refuelSystem=self.templategroup:GetUnit(1):IsTanker()
+  _,self.refuelSystem=self.templategroup:GetUnit(1):IsRefuelable()
+  _,self.tankerSystem=self.templategroup:GetUnit(1):IsTanker()
 
 
   -- Start State.
@@ -216,12 +219,19 @@ function SQUADRON:SetMissonTypes(MissionTypes)
   return self
 end
 
+--- Get mission types this squadron is able to perform.
+-- @param #SQUADRON self
+-- @param #table MissionTypes Table of mission types.
+function SQUADRON:GetMissonTypes()
+  return self.missiontypes
+end
+
 --- Set max engagement range.
 -- @param #SQUADRON self
--- @param #number EngageRange Engagement range in NM. Default 250 NM.
+-- @param #number EngageRange Engagement range in NM. Default 80 NM.
 -- @return #SQUADRON self
 function SQUADRON:SetEngagementRange(EngageRange)
-  self.engageRange=UTILS.NMToMeters(EngageRange or 250)
+  self.engageRange=UTILS.NMToMeters(EngageRange or 80)
   return self
 end
 
@@ -334,9 +344,10 @@ function SQUADRON:CanMission(Mission)
   -- Check that tanker mission
   if cando and Mission.type==AUFTRAG.Type.TANKER then
   
-    if Mission.refuelSystem and Mission.refuelSystem==self.refuelSystem then
+    if Mission.refuelSystem and Mission.refuelSystem==self.tankerSystem then
       -- Correct refueling system.
     else
+      env.info(string.format("wrong refuling system mi=%s ta=%s", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
       cando=false
     end
   

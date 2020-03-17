@@ -453,19 +453,19 @@ end
 
 --- Create a new generic patrol point.
 -- @param #AIRWING self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
--- @param #number Heading Heading in degrees.
--- @param #number LegLength Length of race-track orbit in NM.
--- @param #number Altitude Orbit altitude in feet.
--- @param #number Speed Orbit speed in knots.
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point. Default 10-15 NM away from the location of the airwing.
+-- @param #number Heading Heading in degrees. Default random (0, 360] degrees.
+-- @param #number LegLength Length of race-track orbit in NM. Default 15 NM.
+-- @param #number Altitude Orbit altitude in feet. Default random between Angels 10 and 20.
+-- @param #number Speed Orbit speed in knots. Default 350 knots.
 -- @return #AIRWING.PatrolData Patrol point table.
 function AIRWING:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
 
   local cappoint={}  --#AIRWING.PatrolData
-  cappoint.coord=Coordinate
-  cappoint.heading=Heading or 090
+  cappoint.coord=Coordinate or self:GetCoordinate():Translate(UTILS.NMToMeters(math.random(10, 15)), math.random(360))
+  cappoint.heading=Heading or math.random(360)
   cappoint.leg=LegLength or 15
-  cappoint.altitude=Altitude
+  cappoint.altitude=Altitude or math.random(10,20)*1000
   cappoint.speed=Speed or 350
   cappoint.noccupied=0
 
@@ -627,15 +627,8 @@ function AIRWING:_GetPatrolData(PatrolPoints)
     return PatrolPoints[1]
 
   else
-  
-
-    local Coordinate=self:GetCoordinate()
-    local Heading=math.random(360)
-    local LegLength=math.random(10, 15)
-    local Altitude=math.random(10,15)*1000
-    local Speed=math.random(250, 350)
     
-    return self:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
+    return self:NewPatrolPoint()
       
   end
   
@@ -695,6 +688,8 @@ function AIRWING:CheckTANKER()
   
     local patrol=self:_GetPatrolData(self.pointsTANKER)
     
+    patrol.coord:MarkToAll("Patrol point boom")
+    
     local mission=AUFTRAG:NewTANKER(patrol.coord, patrol.speed, patrol.heading, patrol.leg, patrol.altitude, 0)
     
     mission.patroldata=patrol
@@ -708,6 +703,8 @@ function AIRWING:CheckTANKER()
   for i=1,self.nflightsTANKERprobe-Nprob do
   
     local patrol=self:_GetPatrolData(self.pointsTANKER)
+    
+    patrol.coord:MarkToAll("Patrol point probe")
     
     local mission=AUFTRAG:NewTANKER(patrol.coord, patrol.speed, patrol.heading, patrol.leg, patrol.altitude, 1)
     

@@ -2589,6 +2589,34 @@ function WAREHOUSE:SetAutoDefenceOff()
   return self
 end
 
+--- Set valid parking spot IDs.
+-- @param #WAREHOUSE self
+-- @param #table ParkingIDs Table of numbers.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetParkingIDs(ParkingIDs)
+  self.parkingIDs=ParkingIDs
+  return self
+end
+
+--- Check parking ID.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot Parking spot.
+-- @return #boolean If true, parking is valid.
+function WAREHOUSE:_CheckParkingValid(spot)
+  if self.parkingIDs==nil then
+    return true
+  end
+
+  for _,id in pairs(self.parkingIDs or {}) do
+    if spot.TerminalID==id then
+      return true
+    end
+  end
+
+  return false
+end
+
+
 --- Enable auto save of warehouse assets at mission end event.
 -- @param #WAREHOUSE self
 -- @param #string path Path where to save the asset data file.
@@ -7500,7 +7528,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
         local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
 
         -- Check correct terminal type for asset. We don't want helos in shelters etc.
-        if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
+        if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) and self:_CheckParkingValid(parkingspot) then
 
           -- Coordinate of the parking spot.
           local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE

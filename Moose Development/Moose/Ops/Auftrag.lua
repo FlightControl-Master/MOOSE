@@ -356,6 +356,8 @@ function AUFTRAG:NewORBIT(Coordinate, Speed, Heading, Leg, Altitude)
   end  
   
   auftrag.missionAltitude=auftrag.orbitCoord.y*0.9
+  
+  auftrag.missionFraction=0.9
 
   auftrag.DCStask=auftrag:GetDCSMissionTask()
 
@@ -602,7 +604,7 @@ end
 -- @param Wrapper.Group#GROUP EscortGroup The group to escort.
 -- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=200, y=0, z=-100} for 200 meters to the right, same alitude, 100 meters behind.
 -- @param #number EngageMaxDistance Max engage distance of targets in meters. Default auto (*nil*).
--- @param #table TargetTypes Types of targets to engage automatically. Default is {"Air"}, i.e. all enemy airborne units. 
+-- @param #table TargetTypes Types of targets to engage automatically. Default is {"Air"}, i.e. all enemy airborne units. Set to {} for a simple "FOLLOW" mission.
 -- @return #AUFTRAG self
 function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetTypes)
 
