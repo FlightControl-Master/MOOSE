@@ -466,23 +466,27 @@ function UNIT:IsTanker()
   
   local system=nil
   
-  local Desc=self:GetDesc()
-  if Desc and Desc.tankerType then
-    system=Desc.tankerType
-  end
+  if tanker then
   
-  local typename=self:GetTypeName()
-  
-  if typename=="IL-78M" then
-    system=1 --probe
-  elseif typename=="KC130" then
-    system=1 --probe
-  elseif typename=="KC135BDA" then
-    system=1 --probe
-  elseif typename=="KC135MPRS" then
-    system=1 --probe
-  elseif typename=="S-3B Tanker" then
-    system=1 --probe
+    local Desc=self:GetDesc()
+    if Desc and Desc.tankerType then
+      system=Desc.tankerType
+    end
+    
+    local typename=self:GetTypeName()
+    
+    if typename=="IL-78M" then
+      system=1 --probe
+    elseif typename=="KC130" then
+      system=1 --probe
+    elseif typename=="KC135BDA" then
+      system=1 --probe
+    elseif typename=="KC135MPRS" then
+      system=1 --probe
+    elseif typename=="S-3B Tanker" then
+      system=1 --probe
+    end
+    
   end
   
   env.info(string.format("unit %s type=%s: tanker=%s system=%s", tostring(self.UnitName), tostring(typename), tostring(tanker), tostring(system)))

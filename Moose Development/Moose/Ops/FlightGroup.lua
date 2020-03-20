@@ -614,7 +614,7 @@ end
 --- Add a *waypoint* task.
 -- @param #FLIGHTGROUP self
 -- @param #table task DCS task table structure.
--- @param #number waypointindex Number of waypoint. Counting starts at one!
+-- @param #number waypointindex Number of waypoint. Counting starts at one! Default is the as *next* waypoint.
 -- @param #string description Brief text describing the task, e.g. "Attack SAM". 
 -- @param #number prio Priority of the task. Number between 1 and 100. Default is 50.
 -- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
@@ -655,10 +655,26 @@ end
 -- @param #FLIGHTGROUP self
 -- @param #table task DCS task table structure.
 function FLIGHTGROUP:AddTaskEnroute(task)
+
+
   if not self.taskenroute then
     self.taskenroute={}
   end
-  table.insert(self.taskenroute, task)
+  
+  -- Check not to add the same task twice!
+  local gotit=false
+  for _,Task in pairs(self.taskenroute) do
+    if Task.id==task.id then
+      gotit=true
+      break
+    end
+  end
+  
+  if not gotit then
+    table.insert(self.taskenroute, task)
+  end
+  
+  
 end
 
 --- Add an *enroute* task to attack targets in a certain **circular** zone.
@@ -1090,6 +1106,12 @@ end
 function FLIGHTGROUP:SetTask(DCSTask)
   if self:IsAlive() then
   
+    if self.taskcurrent>0 then
+      local task=self:GetTaskCurrent()
+      self:RemoveTask(task)
+      self.taskcurrent=0
+    end
+  
     -- Inject enroute tasks.
     if self.taskenroute and #self.taskenroute>0 then
       if tostring(DCSTask.id)=="ComboTask" then
@@ -1366,43 +1388,43 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local nMissions=self:CountRemainingMissison()
 
   -- Short info.
-  local text=string.format("Status %s [%d/%d]: Tasks=%d (%d,%d) Current=%d. Missions=%s. Waypoint=%d/%d. Detected=%d. Destination=%s, FC=%s",
-  fsmstate, #self.elements, #self.elements, nTaskTot, nTaskSched, nTaskWP, self.taskcurrent, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0, 
-  self.detectedunits:Count(), self.destbase and self.destbase:GetName() or "unknown", self.flightcontrol and self.flightcontrol.airbasename or "none")
-  if self.verbose>0 then
+  if self.verbose>0 then  
+    local text=string.format("Status %s [%d/%d]: Tasks=%d (%d,%d) Current=%d. Missions=%s. Waypoint=%d/%d. Detected=%d. Destination=%s, FC=%s",
+    fsmstate, #self.elements, #self.elements, nTaskTot, nTaskSched, nTaskWP, self.taskcurrent, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0, 
+    self.detectedunits:Count(), self.destbase and self.destbase:GetName() or "unknown", self.flightcontrol and self.flightcontrol.airbasename or "none")
     self:I(self.lid..text)
   end
 
   -- Element status.
-  text="Elements:"
-  for i,_element in pairs(self.elements) do
-    local element=_element --#FLIGHTGROUP.Element
-    
-    local name=element.name
-    local status=element.status
-    local unit=element.unit
-    local fuel=unit:GetFuel() or 0
-    local life=unit:GetLifeRelative() or 0
-    local parking=element.parking and tostring(element.parking.TerminalID) or "X"
-
-    -- Check if element is not dead and we missed an event.
-    if life<0 and element.status~=FLIGHTGROUP.ElementStatus.DEAD and element.status~=FLIGHTGROUP.ElementStatus.INUTERO then
-      self:ElementDead(element)
+  if self.verbose>1 then  
+    local text="Elements:"
+    for i,_element in pairs(self.elements) do
+      local element=_element --#FLIGHTGROUP.Element
+      
+      local name=element.name
+      local status=element.status
+      local unit=element.unit
+      local fuel=unit:GetFuel() or 0
+      local life=unit:GetLifeRelative() or 0
+      local parking=element.parking and tostring(element.parking.TerminalID) or "X"
+  
+      -- Check if element is not dead and we missed an event.
+      if life<0 and element.status~=FLIGHTGROUP.ElementStatus.DEAD and element.status~=FLIGHTGROUP.ElementStatus.INUTERO then
+        self:ElementDead(element)
+      end
+      
+      -- Get ammo.
+      local nammo=0; local nshells=0 ; local nrockets=0; local nbombs=0; local nmissiles=0
+      if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
+        nammo, nshells, nrockets, nbombs, nmissiles=self:GetAmmoElement(element)
+      end
+  
+      -- Output text for element.
+      text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f, shells=%d, rockets=%d, bombs=%d, missiles=%d, parking=%s", i, name, status, fuel*100, life*100, nshells, nrockets, nbombs, nmissiles, parking)
     end
-    
-    -- Get ammo.
-    local nammo=0; local nshells=0 ; local nrockets=0; local nbombs=0; local nmissiles=0
-    if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
-      nammo, nshells, nrockets, nbombs, nmissiles=self:GetAmmoElement(element)
+    if #self.elements==0 then
+      text=text.." none!"
     end
-
-    -- Output text for element.
-    text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f, shells=%d, rockets=%d, bombs=%d, missiles=%d, parking=%s", i, name, status, fuel*100, life*100, nshells, nrockets, nbombs, nmissiles, parking)
-  end
-  if #self.elements==0 then
-    text=text.." none!"
-  end
-  if self.verbose>1 then
     self:I(self.lid..text)
   end
 
@@ -1411,34 +1433,34 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   ---
 
   -- Task queue.
-  text=string.format("Tasks #%d", #self.taskqueue)
-  for i,_task in pairs(self.taskqueue) do
-    local task=_task --#FLIGHTGROUP.Task
-    local name=task.description
-    local taskid=task.dcstask.id or "unknown"
-    local status=task.status
-    local clock=UTILS.SecondsToClock(task.time, true)
-    local eta=task.time-timer.getAbsTime()
-    local started=task.timestamp and UTILS.SecondsToClock(task.timestamp, true) or "N/A"
-    local duration=-1
-    if task.duration then
-      duration=task.duration
-      if task.timestamp then
-        -- Time the task is running.
-        duration=task.duration-(timer.getAbsTime()-task.timestamp)
-      else
-        -- Time the task is supposed to run.
+  if #self.taskqueue>0 and self.verbose>1 then  
+    local text=string.format("Tasks #%d", #self.taskqueue)
+    for i,_task in pairs(self.taskqueue) do
+      local task=_task --#FLIGHTGROUP.Task
+      local name=task.description
+      local taskid=task.dcstask.id or "unknown"
+      local status=task.status
+      local clock=UTILS.SecondsToClock(task.time, true)
+      local eta=task.time-timer.getAbsTime()
+      local started=task.timestamp and UTILS.SecondsToClock(task.timestamp, true) or "N/A"
+      local duration=-1
+      if task.duration then
         duration=task.duration
+        if task.timestamp then
+          -- Time the task is running.
+          duration=task.duration-(timer.getAbsTime()-task.timestamp)
+        else
+          -- Time the task is supposed to run.
+          duration=task.duration
+        end
+      end
+      -- Output text for element.
+      if task.type==FLIGHTGROUP.TaskType.SCHEDULED then
+        text=text..string.format("\n[%d] %s (%s): status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
+      elseif task.type==FLIGHTGROUP.TaskType.WAYPOINT then
+        text=text..string.format("\n[%d] %s (%s): status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
       end
     end
-    -- Output text for element.
-    if task.type==FLIGHTGROUP.TaskType.SCHEDULED then
-      text=text..string.format("\n[%d] %s (%s): status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
-    elseif task.type==FLIGHTGROUP.TaskType.WAYPOINT then
-      text=text..string.format("\n[%d] %s (%s): status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
-    end
-  end
-  if #self.taskqueue>0 and self.verbose>1 then
     self:I(self.lid..text)
   end
   
@@ -1447,18 +1469,18 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   ---
   
   -- Current mission name.
-  local Mission=self:GetMissionByID(self.currentmission)
-  
-  -- Current status.
-  local text=string.format("Missions %d, Current: %s", self:CountRemainingMissison(), Mission and Mission.name or "none")
-  for i,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-    local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
-    local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
-    text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d targets=%d", 
-    i, tostring(mission.name), mission.type, mission:GetFlightStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, mission:CountMissionTargets())
-  end
-  if self.verbose>0 then
+  if self.verbose>0 then  
+    local Mission=self:GetMissionByID(self.currentmission)
+    
+    -- Current status.
+    local text=string.format("Missions %d, Current: %s", self:CountRemainingMissison(), Mission and Mission.name or "none")
+    for i,_mission in pairs(self.missionqueue) do
+      local mission=_mission --Ops.Auftrag#AUFTRAG
+      local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
+      local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
+      text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d targets=%d", 
+      i, tostring(mission.name), mission.type, mission:GetFlightStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, mission:CountMissionTargets())
+    end
     self:I(self.lid..text)
   end
 
@@ -2544,7 +2566,8 @@ function FLIGHTGROUP:_CheckFlightDone(delay)
         self:I(self.lid..string.format("Passed Final WP but still have current Tasks (%s) or Missions (%s) left to do", tostring(self.taskcurrent), tostring(self.currentmission)))
       end  
     else
-      self:I(self.lid.."Did NOT pass the final waypoint yet")
+      self:I(self.lid.."Did NOT pass the final waypoint yet ==> update route")
+      self:UpdateRoute()
     end  
   end
 end
@@ -3357,9 +3380,10 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   -- Check if this task was the task of the current mission ==> Mission Done!
   local Mission=self:GetMissionByTaskID(Task.id)
   
-  local status=Mission:GetFlightStatus(self)
-  
   if Mission then
+  
+    local status=Mission:GetFlightStatus(self)  
+  
     if status~=AUFTRAG.FlightStatus.PAUSED then
       env.info("FF Task Done ==> Mission Done!")
       self:MissionDone(Mission)
@@ -3496,7 +3520,11 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterUnpauseMission(From, Event, To)
 
-  self:MissionStart(self.missionpaused)
+  self:I(self.lid..string.format("Unpausing mission"))
+  
+  local mission=self:GetMissionByID(self.missionpaused.auftragsnummer)
+  
+  self:MissionStart(mission)
   
   self.missionpaused=nil
 

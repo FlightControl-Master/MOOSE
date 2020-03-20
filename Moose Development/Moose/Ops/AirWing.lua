@@ -510,6 +510,25 @@ function AIRWING:AddPatrolPointTANKER(Coordinate, Heading, LegLength, Altitude, 
   return self
 end
 
+--- Add a patrol Point for AWACS missions.
+-- @param #AIRWING self
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
+-- @param #number Heading Heading in degrees.
+-- @param #number LegLength Length of race-track orbit in NM.
+-- @param #number Altitude Orbit altitude in feet.
+-- @param #number Speed Orbit speed in knots.
+-- @return #AIRWING self
+function AIRWING:AddPatrolPointAWACS(Coordinate, Heading, LegLength, Altitude, Speed)
+  
+  local cappoint=self:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
+  
+  cappoint.coord:MarkToAll(string.format("AWACS Point alt=%d", cappoint.altitude))
+
+  table.insert(self.pointsAWACS, cappoint)
+
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
