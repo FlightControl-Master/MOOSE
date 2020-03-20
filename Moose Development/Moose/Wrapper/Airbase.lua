@@ -469,6 +469,7 @@ function AIRBASE:GetID(unique)
       --env.info(string.format("FF airbase=%s id=%s category=%s", tostring(AirbaseName), tostring(airbaseID), tostring(airbaseCategory)))
       
       -- No way AFIK to get the DCS version. So we check if the event exists. That should tell us if we are on DCS 2.5.6 or prior to that.
+      --[[
       if world.event.S_EVENT_KILL and world.event.S_EVENT_KILL>0 and airbaseCategory==Airbase.Category.AIRDROME then
       
         -- We have to take the key value of this loop!
@@ -479,6 +480,7 @@ function AIRBASE:GetID(unique)
           airbaseID=airbaseID+11        
         end
       end
+      ]]
       
       if AirbaseName==self.AirbaseName then
         if airbaseCategory==Airbase.Category.SHIP then
