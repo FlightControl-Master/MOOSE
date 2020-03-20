@@ -126,7 +126,10 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   -- Add FSM transitions.
   --                 From State  -->   Event        -->     To State
   self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
-  self:AddTransition("*",             "Status",             "*")           -- SQUADRON status update
+  self:AddTransition("*",             "Status",             "*")           -- Status update.
+  self:AddTransition("Running",       "Pause",              "Paused")      -- Pause squadron.
+  self:AddTransition("Paused",        "Unpause",            "Running")     -- Unpause squadron.
+  self:AddTransition("*",             "Stop",               "Stopped")     -- Stop squadron.
 
 
   ------------------------
@@ -315,7 +318,7 @@ end
 -- @param #SQUADRON self
 function SQUADRON:_CheckAssetStatus()
 
-  for _,_assets in pairs(self.assets) do
+  for _,_asset in pairs(self.assets) do
     local asset=_asset --#SQUADRON.Flight
     
     flight.flightgroup:IsSpawned()
@@ -347,7 +350,7 @@ function SQUADRON:CanMission(Mission)
     if Mission.refuelSystem and Mission.refuelSystem==self.tankerSystem then
       -- Correct refueling system.
     else
-      env.info(string.format("wrong refuling system mi=%s ta=%s", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
+      self:I(self.lid..string.format("wrong refuling system mi=%s ta=%s", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
       cando=false
     end
   

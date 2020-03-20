@@ -208,6 +208,32 @@ function INTEL:SetForgetTime(TimeInterval)
   return self
 end
 
+--- Filter unit categories. Valid categories are:
+-- 
+-- * Unit.Category.AIRPLANE
+-- * Unit.Category.HELICOPTER
+-- * Unit.Category.GROUND_UNIT
+-- * Unit.Category.SHIP
+-- * Unit.Category.STRUCTURE
+-- 
+-- @param #INTEL self
+-- @param #table Categories Filter categories, e.g. {Unit.Category.AIRPLANE, Unit.Category.HELICOPTER}.
+-- @return #INTEL self
+function INTEL:SetFilterCategory(Categories)
+  if type(Categories)~="table" then
+    Categories={Categories}
+  end
+  self.filterCategory=Categories
+  
+  local text="Filter categories: "
+  for _,category in pairs(self.filterCategory) do
+    text=text..string.format("%d,", category)
+  end
+  self:I(self.lid..text)
+  
+  return self
+end
+
 --- Filter group categories. Valid categories are:
 -- 
 -- * Group.Category.AIRPLANE
@@ -219,14 +245,15 @@ end
 -- @param #INTEL self
 -- @param #table Categories Filter categories, e.g. {Group.Category.AIRPLANE, Group.Category.HELICOPTER}.
 -- @return #INTEL self
-function INTEL:SetFilterCategory(Categories)
-  if type(Categories)~="table" then
-    Categories={Categories}
+function INTEL:FilterCategoryGroup(GroupCategories)
+  if type(GroupCategories)~="table" then
+    GroupCategories={GroupCategories}
   end
-  self.filterCategory=Categories
+    
+  self.filterCategoryGroup=GroupCategories
   
-  local text="Filter categories: "
-  for _,category in pairs(self.filterCategory) do
+  local text="Filter group categories: "
+  for _,category in pairs(self.filterCategoryGroup) do
     text=text..string.format("%d,", category)
   end
   self:I(self.lid..text)

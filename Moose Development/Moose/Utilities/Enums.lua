@@ -7,9 +7,6 @@
 
 --- [DCS Enum world](https://wiki.hoggitworld.com/view/DCS_enum_world)
 -- @type ENUMS
--- @field #ENUMS.ROE Rules Of Engagement.
--- @field #ENUMS.ROT Reation On Threat.
--- @field #ENUMS.WeaponFlag Weapon flags.
 
 --- The world singleton contains functions centered around two different but extremely useful functions.
 -- * Events and event handlers are all governed within world.
@@ -22,22 +19,24 @@ ENUMS = {}
 --- Rules of Engagement.
 -- @type ENUMS.ROE
 ENUMS.ROE = {
-  HoldFire = 1,
-  ReturnFire = 2,
-  OpenFire = 3,
-  WeaponFree = 4
+  WeaponFree=0,
+  OpenFireWeaponFree=1,
+  OpenFire=2,
+  ReturnFire=3,
+  WeaponHold=4,
   }
 
---- Reaction On Thrat.
+--- Reaction On Threat.
 -- @type ENUMS.ROT
 ENUMS.ROT = {
-  NoReaction = 1,
-  PassiveDefense = 2,
-  EvadeFire = 3,
-  Vertical = 4
+  NoReaction=0,
+  PassiveDefense=1,
+  EvadeFire=2,
+  ByPassAndEscape=3,
+  AllowAbortMission=4,
 }
 
---- Weapon types
+--- Weapon types.
 -- @type ENUMS.WeaponFlag
 ENUMS.WeaponFlag={
   Auto=3221225470, --AnyWeapon (AnyBomb + AnyRocket + AnyMissile + Cannons)
@@ -67,6 +66,8 @@ ENUMS.WeaponFlag={
   AnyRocket=30720  -- (LightRocket + MarkerRocket + CandleRocket + HeavyRocket)  
 }
 
+--- Mission tasks.
+-- @type ENUMS.MissionTask
 ENUMS.MissionTask={
   NOTHING="Nothing",
   AFAC="AFAC",

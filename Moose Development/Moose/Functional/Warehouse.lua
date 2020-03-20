@@ -1773,7 +1773,7 @@ WAREHOUSE.version="1.0.0"
 
 -- TODO: Add check if assets "on the move" are stationary. Can happen if ground units get stuck in buildings. If stationary auto complete transport by adding assets to request warehouse? Time?
 -- TODO: Optimize findpathonroad. Do it only once (first time) and safe paths between warehouses similar to off-road paths.
--- TODO: Spawn assets only virtually, i.e. remove requested assets from stock but do NOT spawn them ==> Interface to A2A dispatcher! Maybe do a negative sign on asset number?
+-- NOGO: Spawn assets only virtually, i.e. remove requested assets from stock but do NOT spawn them ==> Interface to A2A dispatcher! Maybe do a negative sign on asset number?
 -- TODO: Make more examples: ARTY, CAP, ...
 -- TODO: Check also general requests like all ground. Is this a problem for self propelled if immobile units are among the assets? Check if transport.
 -- TODO: Handle the case when units of a group die during the transfer.
@@ -2594,6 +2594,9 @@ end
 -- @param #table ParkingIDs Table of numbers.
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetParkingIDs(ParkingIDs)
+  if type(ParkingIDs)~="table" then
+    ParkingIDs={ParkingIDs}
+  end
   self.parkingIDs=ParkingIDs
   return self
 end
@@ -5168,7 +5171,14 @@ function WAREHOUSE:onafterDestroyed(From, Event, To)
     for k,_ in pairs(self.queue) do
       self.queue[k]=nil
     end
+    
     for k,_ in pairs(self.stock) do
+      --self.stock[k]=nil
+    end
+    
+    for k=#self.stock,1,-1 do
+      --local asset=self.stock[k] --#WAREHOUSE.Assetitem
+      --self:AssetDead(asset, nil)
       self.stock[k]=nil
     end
 

@@ -18,6 +18,7 @@
 -- @type FLIGHTGROUP
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #number verbose Verbosity level. 0=silent.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string groupname Name of flight group.
 -- @field Wrapper.Group#GROUP group Flight group object.
@@ -72,10 +73,12 @@
 -- @field #number CallsignNumber Call sign number.
 -- @field #boolean EPLRS If true, turn EPLRS data link on.
 -- 
--- @field #string ROEdefault Default ROE setting.
--- @field #string ROTdefault Default ROT setting.
--- @field #string ROEcurrent Current ROE setting.
--- @field #string ROTcurrent Current ROT setting.
+-- @field #string optionROEdefault Default ROE setting.
+-- @field #string optionROTdefault Default ROT setting.
+-- @field #string optionROEcurrent Current ROE setting.
+-- @field #string optionROTcurrent Current ROT setting.
+-- 
+-- @field Ops.Auftrag#AUFTRAG missionpaused Paused mission.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -166,6 +169,7 @@
 FLIGHTGROUP = {
   ClassName          = "FLIGHTGROUP",
   Debug              = false,
+  verbose            =     0,
   lid                =   nil,
   groupname          =   nil,
   group              =   nil,
@@ -351,7 +355,7 @@ FLIGHTGROUP.ROT={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.3.6"
+FLIGHTGROUP.version="0.3.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -412,6 +416,8 @@ function FLIGHTGROUP:New(groupname, autostart)
   -- Defaults
   self:SetFuelLowThreshold()
   self:SetFuelCriticalThreshold()
+  self:SetDefaultROE()
+  self:SetDefaultROT()
 
 
   -- Add FSM transitions.
@@ -463,6 +469,8 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("*",             "MissionStart",     "*")           -- Mission is started.
   self:AddTransition("*",             "MissionExecute",   "*")           -- Mission execution began.
   self:AddTransition("*",             "MissionCancel",     "*")          -- Cancel current mission.
+  self:AddTransition("*",             "PauseMission",     "*")           -- Pause the current mission.
+  self:AddTransition("*",             "UnpauseMission",   "*")           -- Unpause the the paused mission.
   self:AddTransition("*",             "MissionDone",      "*")           -- Mission is over.
 
   self:AddTransition("Airborne",      "EngageTargets",    "Engaging")    -- Engage targets.
@@ -581,16 +589,16 @@ function FLIGHTGROUP:AddTask(task, clock, description, prio, duration)
 
   -- Task data structure.
   local newtask={} --#FLIGHTGROUP.Task
-  newtask.description=description
   newtask.status=FLIGHTGROUP.TaskStatus.SCHEDULED
   newtask.dcstask=task
+  newtask.description=description or task.id  
   newtask.prio=prio or 50
   newtask.time=time
   newtask.id=self.taskcounter
   newtask.duration=duration
   newtask.waypoint=-1
   newtask.type=FLIGHTGROUP.TaskType.SCHEDULED
-  newtask.stopflag=USERFLAG:New(string.format("StopTaskFlag %d", newtask.id))  
+  newtask.stopflag=USERFLAG:New(string.format("%s StopTaskFlag %d", self.groupname, newtask.id))  
   newtask.stopflag:Set(0)
 
   -- Add to table.
@@ -627,7 +635,7 @@ function FLIGHTGROUP:AddTaskWaypoint(task, waypointindex, description, prio, dur
   newtask.time=0
   newtask.waypoint=waypointindex or (self.currentwp and self.currentwp+1 or 2)
   newtask.type=FLIGHTGROUP.TaskType.WAYPOINT
-  newtask.stopflag=USERFLAG:New(string.format("StopTaskFlag %d", newtask.id))  
+  newtask.stopflag=USERFLAG:New(string.format("%s StopTaskFlag %d", self.groupname, newtask.id))  
   newtask.stopflag:Set(0)
 
   -- Add to table.
@@ -976,11 +984,11 @@ function FLIGHTGROUP:IsHolding()
   return self:Is("Holding")
 end
 
---- Check if flight is refueling.
+--- Check if flight is going for fuel.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is refueling.
-function FLIGHTGROUP:IsRefueling()
-  return self:Is("Refueling")
+function FLIGHTGROUP:IsGoing4Fuel()
+  return self:Is("Going4Fuel")
 end
 
 --- Check if helo(!) flight is ordered to land at a specific point.
@@ -1045,10 +1053,10 @@ function FLIGHTGROUP:Activate(delay)
 
   if self:IsAlive()==false then
     if delay then
-      self:I(self.lid..string.format("Activating late activated group in %d seconds", delay))
+      self:T2(self.lid..string.format("Activating late activated group in %d seconds", delay))
       self:ScheduleOnce(delay, FLIGHTGROUP.Activate, self)
     else
-      self:I(self.lid.."Activating late activated group")
+      self:T(self.lid.."Activating late activated group")
       self.group:Activate()
     end
   else
@@ -1066,7 +1074,7 @@ function FLIGHTGROUP:StartUncontrolled(delay)
 
   if self:IsAlive() then
     --TODO: check Alive==true and Alive==false ==> Activate first
-    self:I(self.lid.."Starting uncontrolled group")
+    self:T(self.lid.."Starting uncontrolled group")
     self.group:StartUncontrolled(delay)
   else
     self:E(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive (yet)!")
@@ -1081,7 +1089,25 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetTask(DCSTask)
   if self:IsAlive() then
-    self.group:SetTask(DCSTask, 1)
+  
+    -- Inject enroute tasks.
+    if self.taskenroute and #self.taskenroute>0 then
+      if tostring(DCSTask.id)=="ComboTask" then
+        for _,task in pairs(self.taskenroute) do
+          table.insert(DCSTask.params.tasks, 1, task)
+        end
+      else
+        local tasks=UTILS.DeepCopy(self.taskenroute)
+        table.insert(tasks, DCSTask)
+        
+        DCSTask=self.group.TaskCombo(self, tasks)
+      end
+    end
+  
+    -- Set task
+    self.group:SetTask(DCSTask)
+    
+    -- Debug info.
     local text=string.format("SETTING Task %s", tostring(DCSTask.id))
     if tostring(DCSTask.id)=="ComboTask" then
       for i,task in pairs(DCSTask.params.tasks) do
@@ -1138,7 +1164,7 @@ function FLIGHTGROUP:Route(waypoints)
     -- Enroute tasks.
     if self.taskenroute then
       for _,TaskEnroute in pairs(self.taskenroute) do
-        table.insert(Tasks, TaskEnroute)
+        --table.insert(Tasks, TaskEnroute)
       end
     end
 
@@ -1227,7 +1253,7 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
     if group:IsAlive() then
       
       -- Debug info.    
-      self:I(self.lid..string.format("Found EXISTING and ALIVE group %s at start with %d/%d units/elements", group:GetName(), #units, #self.elements))
+      self:T(self.lid..string.format("Found EXISTING and ALIVE group %s at start with %d/%d units/elements", group:GetName(), #units, #self.elements))
                      
       -- Trigger spawned event for all elements.
       for _,element in pairs(self.elements) do
@@ -1237,7 +1263,7 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
       
     else
       -- Debug info.    
-      self:I(self.lid..string.format("Found EXISTING but LATE ACTIVATED group %s at start with %d/%d units/elements", group:GetName(), #units, #self.elements))
+      self:T(self.lid..string.format("Found EXISTING but LATE ACTIVATED group %s at start with %d/%d units/elements", group:GetName(), #units, #self.elements))
     end
     
   end    
@@ -1343,7 +1369,9 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local text=string.format("Status %s [%d/%d]: Tasks=%d (%d,%d) Current=%d. Missions=%s. Waypoint=%d/%d. Detected=%d. Destination=%s, FC=%s",
   fsmstate, #self.elements, #self.elements, nTaskTot, nTaskSched, nTaskWP, self.taskcurrent, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0, 
   self.detectedunits:Count(), self.destbase and self.destbase:GetName() or "unknown", self.flightcontrol and self.flightcontrol.airbasename or "none")
-  self:I(self.lid..text)
+  if self.verbose>0 then
+    self:I(self.lid..text)
+  end
 
   -- Element status.
   text="Elements:"
@@ -1374,7 +1402,9 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   if #self.elements==0 then
     text=text.." none!"
   end
-  self:I(self.lid..text)
+  if self.verbose>1 then
+    self:I(self.lid..text)
+  end
 
   ---
   -- Tasks
@@ -1408,7 +1438,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
       text=text..string.format("\n[%d] %s (%s): status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
     end
   end
-  if #self.taskqueue>0 then
+  if #self.taskqueue>0 and self.verbose>1 then
     self:I(self.lid..text)
   end
   
@@ -1418,10 +1448,9 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   
   -- Current mission name.
   local Mission=self:GetMissionByID(self.currentmission)
-  local mymission=Mission and Mission.name or "none"
   
   -- Current status.
-  local text=string.format("Missions %d, Current: %s", self:CountRemainingMissison(), mymission)
+  local text=string.format("Missions %d, Current: %s", self:CountRemainingMissison(), Mission and Mission.name or "none")
   for i,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
@@ -1429,7 +1458,9 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d targets=%d", 
     i, tostring(mission.name), mission.type, mission:GetFlightStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, mission:CountMissionTargets())
   end
-  self:I(self.lid..text)
+  if self.verbose>0 then
+    self:I(self.lid..text)
+  end
 
   ---
   -- Fuel State
@@ -1779,7 +1810,7 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
         
       else
       
-        self:T2(self.lid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
+        self:I(self.lid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
 
       end
       
@@ -1931,7 +1962,7 @@ function FLIGHTGROUP:onafterElementTaxiing(From, Event, To, Element)
   end
 
   -- Debug info.
-  self:I(self.lid..string.format("Element taxiing %s. Parking spot %s is now free", Element.name, TerminalID))
+  self:T(self.lid..string.format("Element taxiing %s. Parking spot %s is now free", Element.name, TerminalID))
   
   -- Not parking any more.
   Element.parking=nil
@@ -1993,7 +2024,7 @@ end
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase, where the element arrived.
 -- @param Wrapper.Airbase#AIRBASE.ParkingSpot Parking The Parking spot the element has.
 function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element, airbase, Parking)
-  self:I(self.lid..string.format("Element arrived %s at %s airbase using parking spot %d", Element.name, airbase and airbase:GetName() or "unknown", Parking and Parking.TerminalID or -99))  
+  self:T(self.lid..string.format("Element arrived %s at %s airbase using parking spot %d", Element.name, airbase and airbase:GetName() or "unknown", Parking and Parking.TerminalID or -99))  
 
 
   -- Get parking spot  
@@ -2005,7 +2036,7 @@ function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element, airbase, Pa
   if Parking then
     if self.flightcontrol then
       local spot=self.flightcontrol.parking[Parking.TerminalID] --Wrapper.Airbase#AIRBASE.ParkingSpot
-      self:I(self.lid..string.format("Element arrived %s at %s on parking spot %s reserved for %s", Element.name, Parking.AirbaseName, Parking.TerminalID, tostring(spot.Reserved)))
+      self:T(self.lid..string.format("Element arrived %s at %s on parking spot %s reserved for %s", Element.name, Parking.AirbaseName, Parking.TerminalID, tostring(spot.Reserved)))
       if spot.Reserved then
         if spot.Reserved==Element.name then
           spot.Reserved=nil
@@ -2027,7 +2058,7 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
-  self:I(self.lid..string.format("Element dead %s.", Element.name))
+  self:T(self.lid..string.format("Element dead %s.", Element.name))
   
   -- Not parking any more.
   Element.parking=nil
@@ -2045,10 +2076,19 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
   self:T(self.lid..string.format("Flight spawned!"))
+  
 
   -- F10 menu.
   if self.ai then
   
+    -- Set default options.
+    self:SetOptionROE()
+    self:SetOptionROT()
+    
+    self.group:SetOption(AI.Option.Air.id.PROHIBIT_JETT, true)
+    self.group:SetOption(AI.Option.Air.id.PROHIBIT_AB, true)
+    self.group:SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
+    --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)
     
   
   
@@ -2345,7 +2385,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destbase and self.destbase:GetName() or "unknown"
-  self:I(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
+  self:T(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
 
   
   if #wp>1 then
@@ -2373,7 +2413,7 @@ end
 -- @param #table Template The template used to respawn the group.
 function FLIGHTGROUP:onafterRespawn(From, Event, To, Template)
 
-  self:I(self.lid.."Respawning group!")
+  self:T(self.lid.."Respawning group!")
 
   local template=UTILS.DeepCopy(Template or self.template)
   
@@ -2394,7 +2434,7 @@ end
 -- @param #number N Final waypoint number.
 function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   local text=string.format("Flight passed waypoint %d/%d", n, N)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   
   -- Get all waypoint tasks.
@@ -2437,7 +2477,8 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
 
   -- Execute waypoint tasks.
   if #taskswp>0 then
-    self:PushTask(self.group:TaskCombo(taskswp))
+    --self:PushTask(self.group:TaskCombo(taskswp))
+    self:SetTask(self.group:TaskCombo(taskswp))
   end
   
   -- Final AIR waypoint reached?
@@ -2613,7 +2654,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   -- Debug message.
   local text=string.format("Flight group set to hold at airbase %s. SpeedTo=%d, SpeedHold=%d, SpeedLand=%d", airbase:GetName(), SpeedTo, SpeedHold, SpeedLand)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
  
   
   -- Holding points.
@@ -2762,7 +2803,7 @@ function FLIGHTGROUP:onafterWait(From, Event, To, Coord, Altitude, Speed)
   -- Debug message.
   local text=string.format("Flight group set to wait/orbit at altitude %d m and speed %.1f km/h", Altitude, Speed)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   --TODO: set ROE passive. introduce roe event/state/variable.
 
@@ -2791,24 +2832,23 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
 
   --TODO: cancel current task
 
+  self:PauseMission()
 
-  -- Orbit task.  
+  -- Refueling task.
   local TaskRefuel=self.group:TaskRefueling()
   local TaskFunction=self.group:TaskFunction("FLIGHTGROUP._FinishedRefuelling", self)
   local DCSTasks={TaskRefuel, TaskFunction}
   
-  local Speed=UTILS.KnotsToKmph(500)
+  local Speed=UTILS.KnotsToKmph(300)
 
-  local wp0=self.group:GetCoordinate():WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORINATE.WaypointAction.TurningPoint, Speed, true)
-  local wp9=Coordinate:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, "Refuel")
-    
-  --local TaskCombo=self.group:TaskCombo({TaskFunction, TaskRefuel, TaskFunction})
+  local coordinate=self.group:GetCoordinate()
+  
+  Coordinate=Coordinate or coordinate:Translate(UTILS.NMToMeters(5), self.group:GetHeading(), true)
+
+  local wp0=coordinate:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed, true)
+  local wp9=Coordinate:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, "Refuel")
   
   self:Route({wp0, wp9})
-
-  -- Set task.
-  --self:SetTask(TaskCombo)
-  --self:PushTask(TaskCombo)
   
 end
 
@@ -2823,7 +2863,11 @@ function FLIGHTGROUP:onafterRefueled(From, Event, To)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.lid..text)
   
-  self:__UpdateRoute(-1)
+  if self.missionpaused then
+    self:UnpauseMission()
+  else
+    self:__UpdateRoute(-1)
+  end
   
 end
 
@@ -2908,7 +2952,7 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Unit#UNIT Unit The detected unit.
 function FLIGHTGROUP:onafterDetectedUnit(From, Event, To, Unit)
-  self:T(self.lid..string.format("Detected unit %s", Unit:GetName()))
+  self:T2(self.lid..string.format("Detected unit %s", Unit:GetName()))
   self.detectedunits:AddUnit(Unit)
 end
 
@@ -2987,7 +3031,7 @@ function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
   -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
   local airbase=self.destbase or self.homebase
   
-  if airbase and self.fuelcriticalrtb then
+  if airbase and self.fuelcriticalrtb and not self:IsGoing4Fuel() then
     self:RTB(airbase)
     --TODO: RTZ
   end
@@ -3002,7 +3046,7 @@ end
 -- @param Core.Zone#ZONE Zone The zone that the group entered.
 function FLIGHTGROUP:onafterEnterZone(From, Event, To, Zone)
   local zonename=Zone and Zone:GetName() or "unknown"
-  self:I(self.lid..string.format("Entered Zone %s", zonename))
+  self:T2(self.lid..string.format("Entered Zone %s", zonename))
   self.inzones:Add(Zone:GetName(), Zone)
 end
 
@@ -3014,7 +3058,7 @@ end
 -- @param Core.Zone#ZONE Zone The zone that the group entered.
 function FLIGHTGROUP:onafterLeaveZone(From, Event, To, Zone)
   local zonename=Zone and Zone:GetName() or "unknown"
-  self:I(self.lid..string.format("Left Zone %s", zonename))
+  self:T2(self.lid..string.format("Left Zone %s", zonename))
   self.inzones:Remove(zonename, true)
 end
 
@@ -3174,7 +3218,8 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
     local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
       
     -- Set task for group.
-    self:PushTask(TaskFinal, 1)
+    --self:PushTask(TaskFinal, 1)
+    self:SetTask(TaskFinal, 1)
         
   end
 
@@ -3267,7 +3312,7 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
   
     local text=string.format("WARNING: No (current) task to cancel!")
     MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-    self:I(self.lid..text)
+    self:E(self.lid..text)
     
   end
   
@@ -3312,10 +3357,15 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   -- Check if this task was the task of the current mission ==> Mission Done!
   local Mission=self:GetMissionByTaskID(Task.id)
   
+  local status=Mission:GetFlightStatus(self)
   
   if Mission then
-    env.info("FF Task Done ==> Mission Done!")
-    self:MissionDone(Mission)
+    if status~=AUFTRAG.FlightStatus.PAUSED then
+      env.info("FF Task Done ==> Mission Done!")
+      self:MissionDone(Mission)
+    else
+      --Mission paused. Do nothing!
+    end
   else
     env.info("FF Task Done but NO mission found ==> _CheckFlightDone in 1 sec")
     self:_CheckFlightDone(1)
@@ -3339,7 +3389,8 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission table.
 function FLIGHTGROUP:onbeforeMissionStart(From, Event, To, Mission)
 
-  self:I(self.lid..string.format("Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
+  -- Debug info.
+  self:T(self.lid..string.format("Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
 
   -- Delay for route to mission. Group needs to be activated and controlled.
   local delay=0
@@ -3372,8 +3423,8 @@ end
 function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
 
   local text=string.format("Starting Mission %s", tostring(Mission.name))
-  self:I(self.lid..text)
-  MESSAGE:New(text, 120, "DEBUG"):ToAllIf(true)
+  self:T(self.lid..text)
+  MESSAGE:New(text, 120, self.lid):ToAllIf(true)
 
   -- Set current mission.
   self.currentmission=Mission.auftragsnummer
@@ -3398,8 +3449,8 @@ end
 function FLIGHTGROUP:onafterMissionExecute(From, Event, To, Mission)
 
   local text=string.format("Executing Mission %s", tostring(Mission.name))
-  self:I(self.lid..text)
-  MESSAGE:New(text, 120, "DEBUG"):ToAllIf(true)
+  self:T(self.lid..text)
+  MESSAGE:New(text, 120, self.lid):ToAllIf(true)
   
   -- Set flight mission status to EXECUTING.
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.EXECUTING)
@@ -3408,6 +3459,49 @@ function FLIGHTGROUP:onafterMissionExecute(From, Event, To, Mission)
   Mission:Executing()
   
 end
+
+--- On after "PauseMission" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterPauseMission(From, Event, To)
+
+  local Mission=self:GetMissionCurrent()
+  
+  if Mission then
+
+    -- Set flight mission status to EXECUTING.
+    Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.PAUSED)
+  
+    -- Get mission waypoint task.
+    local Task=Mission:GetFlightWaypointTask(self)
+    
+    env.info(string.format("FF pausing current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+  
+    -- Cancelling the mission is actually cancelling the current task.
+    self:TaskCancel(Task)
+    
+    -- Set mission to pause so we can unpause it later.
+    self.missionpaused=Mission
+    
+  end
+
+end
+
+--- On after "UnpauseMission" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterUnpauseMission(From, Event, To)
+
+  self:MissionStart(self.missionpaused)
+  
+  self.missionpaused=nil
+
+end
+
 
 --- On after "MissionCancel" event. Cancels the mission.
 -- @param #FLIGHTGROUP self
@@ -3456,7 +3550,10 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission
 function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
 
-  self:I(self.lid..string.format("Mission %s DONE!", Mission.name))
+  -- Debug info.
+  local text=string.format("Mission %s DONE!", Mission.name)
+  self:I(self.lid..text)
+  MESSAGE:New(text, 120, self.lid):ToAllIf(true)
   
   -- Set Flight status.
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.DONE)
@@ -3491,7 +3588,7 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     -- Set altitude of mission waypoint.
     if mission.missionAltitude then
       waypointcoord.y=mission.missionAltitude
-      env.info("FF mission altitude [m]="..waypointcoord.y)
+      env.info(string.format("FF mission altitude %d m = %d ft", waypointcoord.y, UTILS.MetersToFeet(waypointcoord.y)))
     end
     
     -- Add enroute tasks.
@@ -3513,10 +3610,15 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     
     -- TODO: better marker text, mission.maker
     --mission.marker=waypointcoord:MarkToCoalition(mission.name, self:GetCoalition(), true)
-    mission.marker=waypointcoord:MarkToAll(mission.name, true)
+    mission.marker=waypointcoord:MarkToAll(string.format("%s %s %s", mission.name, mission.type, self.groupname), true)
     
     
-    --self:SetROE(mission.optionROE)
+    if mission.optionROE then
+      self:SetOptionROE(mission.optionROE)
+    end
+    if mission.optionROT then
+      self:SetOptionROT(mission.optionROT)
+    end
     
   end
 end
@@ -3608,23 +3710,6 @@ function FLIGHTGROUP._DestinationOverhead(group, flightgroup, destination)
   flightgroup:__RTB(-1, destination)
 
 end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Option functions
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Set ROE.
--- @param #FLIGHTGROUP self
--- @param #number roe ROE value.
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetOptionROE(roe)
-
-  if self:IsAlive() then  
-    self.group:SetOption(AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD)
-  end
-
-end
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc functions
@@ -3740,7 +3825,7 @@ function FLIGHTGROUP:AddElementByName(unitname)
     
     local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f, category=%d, categoryname=%s, callsign=%s, ai=%s",
     element.name, element.status, element.skill, element.modex, element.fuelmass, element.category, element.categoryname, element.callsign, tostring(element.ai))
-    self:I(self.lid..text)
+    self:T(self.lid..text)
 
     -- Add element to table.
     table.insert(self.elements, element)
@@ -4204,7 +4289,7 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
   end
   
   -- Debug info.
-  self:I(self.lid..string.format("Initializing %d waypoints. Homebase %s ==> %s Destination", #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "uknown"))
+  self:T(self.lid..string.format("Initializing %d waypoints. Homebase %s ==> %s Destination", #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "uknown"))
   
   -- Update route.
   if #self.waypoints>0 then
@@ -4251,7 +4336,7 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
   table.insert(self.waypoints, wpnumber, wp)
   
   -- Debug info.
-  self:I(self.lid..string.format("Adding AIR waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, speed, self.currentwp, #self.waypoints))
+  self:T(self.lid..string.format("Adding AIR waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, speed, self.currentwp, #self.waypoints))
   
   -- Shift all waypoint tasks after the inserted waypoint.
   for _,_task in pairs(self.taskqueue) do
@@ -5201,7 +5286,7 @@ function FLIGHTGROUP:GetParking(airbase)
         -- Safe parking using TO_AC from DCS result.
         if verysafe and parkingspot.TOAC then
           free=false
-          self:I(self.lid..string.format("Parking spot %d is occupied by other aircraft taking off (TOAC).", parkingspot.TerminalID))
+          self:T2(self.lid..string.format("Parking spot %d is occupied by other aircraft taking off (TOAC).", parkingspot.TerminalID))
         end
 
         -- Loop over all obstacles.
@@ -5235,7 +5320,7 @@ function FLIGHTGROUP:GetParking(airbase)
           -- Add parkingspot for this element.
           table.insert(parking, parkingspot)
 
-          self:I(self.lid..string.format("Parking spot %d is free for element %s!", parkingspot.TerminalID, element.name))
+          self:T2(self.lid..string.format("Parking spot %d is free for element %s!", parkingspot.TerminalID, element.name))
 
           -- Add the unit as obstacle so that this spot will not be available for the next unit.
           table.insert(obstacles, {coord=parkingspot.Coordinate, size=element.size, name=element.name, type="element"})
@@ -5246,7 +5331,7 @@ function FLIGHTGROUP:GetParking(airbase)
         else
 
           -- Debug output for occupied spots.
-          self:I(self.lid..string.format("Parking spot %d is occupied or not big enough!", parkingspot.TerminalID))
+          self:T2(self.lid..string.format("Parking spot %d is occupied or not big enough!", parkingspot.TerminalID))
           --if self.Debug then
           --  local coord=problem.coord --Core.Point#COORDINATE
           --  local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
@@ -5260,7 +5345,7 @@ function FLIGHTGROUP:GetParking(airbase)
 
     -- No parking spot for at least one asset :(
     if not gotit then
-      self:I(self.lid..string.format("WARNING: No free parking spot for element %s", element.name))
+      self:E(self.lid..string.format("WARNING: No free parking spot for element %s", element.name))
       return nil
     end
     
@@ -5371,32 +5456,54 @@ end
 -- OPTION FUNCTIONS
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set ROE for a group.
+--- Set the default ROE for the group. This is the ROE state gets when the group is spawned or to which it defaults back after a mission.
 -- @param #FLIGHTGROUP self
--- @param #string roe ROE of group. Default is FLIGHTGROUP.ROE.HOLDFIRE.
-function FLIGHTGROUP:SetOptionROE(roe)
-  if roe==FLIGHTGROUP.ROE.RETURNFIRE then
-    self.group:OptionROEReturnFire()
-  elseif roe==FLIGHTGROUP.ROE.WEAPONFREE then
-    self.group:OptionROEWeaponFree()
-  else
-    self.group:OptionROEHoldFire()
-  end
-  self.ROEcurrent=roe
+-- @param #number roe ROE of group. Default is ENUMS.ROE.ReturnFire.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetDefaultROE(roe)
+  self.optionROEdefault=roe or ENUMS.ROE.ReturnFire
+  return self
 end
 
-
---- Set ROT for a group.
+--- Set current ROE for the group.
 -- @param #FLIGHTGROUP self
--- @param #string rot ROT of group.
-function FLIGHTGROUP:SetOptionROT(rot)
-  if rot==FLIGHTGROUP.ROT.PASSIVE then
-    self.group:OptionROTPassiveDefense()
-  elseif self.rot==FLIGHTGROUP.ROT.NOREACT then
-    self.group:OptionROTEvadeFire()
+-- @param #string roe ROE of group. Default is the value defined by :SetDefaultROE().
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionROE(roe)
+  roe=roe or self.optionROEdefault
+  if self:IsAlive() then
+    self.group:OptionROE(roe)
+    self.optionROEcurrent=roe
+    self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.optionROEcurrent))
   else
-    self.group:OptionROTNoReaction()
+    -- WARNING
   end
+  return self
+end
+
+--- Set the default ROT for the group. This is the ROT state gets when the group is spawned or to which it defaults back after a mission.
+-- @param #FLIGHTGROUP self
+-- @param #number roe ROE of group. Default is ENUMS.ROT.PassiveDefense.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetDefaultROT(roe)
+  self.optionROTdefault=roe or ENUMS.ROT.PassiveDefense
+  return self
+end
+
+--- Set ROT for the group.
+-- @param #FLIGHTGROUP self
+-- @param #string rot ROT of group. Default is the value defined by :SetDefaultROT().
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionROT(rot)
+  rot=rot or self.optionROTdefault
+  if self:IsAlive() then
+    self.group:OptionROT(rot)
+    self.optionROTcurrent=rot
+    self:I(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.optionROTcurrent))
+  else
+    -- WARNING
+  end
+  return self
 end
 
 

@@ -482,9 +482,30 @@ end
 -- @return #AIRWING self
 function AIRWING:AddPatrolPointCAP(Coordinate, Heading, LegLength, Altitude, Speed)
   
-  local cappoint=self:NewPatrolPoint(Coordinate, Heading, LegLength, Speed, Altitude, LegLength)
+  local cappoint=self:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
+  
+  cappoint.coord:MarkToAll(string.format("CAP Point alt=%d", cappoint.altitude))
 
   table.insert(self.pointsCAP, cappoint)
+
+  return self
+end
+
+--- Add a patrol Point for TANKER missions.
+-- @param #AIRWING self
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
+-- @param #number Heading Heading in degrees.
+-- @param #number LegLength Length of race-track orbit in NM.
+-- @param #number Altitude Orbit altitude in feet.
+-- @param #number Speed Orbit speed in knots.
+-- @return #AIRWING self
+function AIRWING:AddPatrolPointTANKER(Coordinate, Heading, LegLength, Altitude, Speed)
+  
+  local cappoint=self:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
+  
+  cappoint.coord:MarkToAll(string.format("Tanker Point alt=%d", cappoint.altitude))
+
+  table.insert(self.pointsTANKER, cappoint)
 
   return self
 end
@@ -583,10 +604,13 @@ function AIRWING:onafterStatus(From, Event, To)
       local payload=asset.payload and table.concat(asset.payload.missiontypes, ", ") or "None"
       text=text.." payload="..payload
       
-      text=text.." flight="
+      text=text..", flight: "
       if asset.flightgroup and asset.flightgroup:IsAlive() then
         local status=asset.flightgroup:GetState()
-        local fuel=asset.flightgroup:IsFuelLow()
+        local fuelmin=asset.flightgroup:GetFuelMin()
+        local fuellow=asset.flightgroup:IsFuelLow()
+        
+        text=text..string.format("%s fuel=%d (low=%s)", status, fuelmin, tostring(fuellow))
       else
         text=text.."N/A"
       end
@@ -1121,6 +1145,27 @@ function AIRWING:onafterAssetDead(From, Event, To, asset, request)
   
   -- Remove asset from mission is done via Mission:AssetDead() call from flightgroup onafterFlightDead function
   -- Remove asset from squadron same
+end
+
+--- On after "Destroyed" event. Remove assets from squadrons. Stop squadrons. Remove airwing from wingcommander.
+-- @param #AIRWING self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AIRWING:onafterDestroyed(From, Event, To)
+
+  for _,_squadron in pairs(self.squadrons) do
+    local squadron=_squadron --Ops.Squadron#SQUADRON
+    for _,_asset in pairs(squadron.assets) do
+      local asset=_asset
+      squadron:DelAsset(asset)
+    end
+    squadron:Stop()    
+  end
+
+  -- Call parent warehouse function first.
+  self:GetParent(self).onafterDestroyed(self, From, Event, To)
+
 end
 
 

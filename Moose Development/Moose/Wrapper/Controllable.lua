@@ -822,15 +822,16 @@ end
 
 --- (AIR) Attack a Controllable.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Controllable#CONTROLLABLE AttackGroup The Controllable to be attacked.
+-- @param Wrapper.Group#GROUP AttackGroup The Group to be attacked.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param DCS#Distance Altitude (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.
 -- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
+-- @param #boolean GroupAttack (Optional) If true, attack as group.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit )
+function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack )
   --self:F2( { self.ControllableName, AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
 
   --  AttackGroup = {
@@ -857,9 +858,10 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
       attackQtyLimit   = AttackQty and true or false,      
       attackQty        = AttackQty,
       directionEnabled = Direction and true or false,
-      direction        = Direction and math.rad(Direction) or nil,
+      direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,
       altitude         = Altitude,
+      groupAttack      = GroupAttack and true or false,
     },
   }
 
@@ -885,7 +887,7 @@ function CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, Atta
       groupAttack      = GroupAttack and GroupAttack or false,
       expend           = WeaponExpend or "Auto",
       directionEnabled = Direction and true or false,
-      direction        = Direction and math.rad(Direction) or nil,
+      direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,
       altitude         = Altitude,
       attackQtyLimit   = AttackQty and true or false,
@@ -956,7 +958,7 @@ function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, Atta
       attackQtyLimit   = AttackQty and true or false,
       attackQty        = AttackQty,
       directionEnabled = Direction and true or false,
-      direction        = Direction,
+      direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,
       altitude         = Altitude,
       weaponType       = WeaponType or 1073741822,
@@ -996,7 +998,7 @@ function CONTROLLABLE:TaskCarpetBombing(Vec2, GroupAttack, WeaponExpend, AttackQ
       attackQtyLimit   = AttackQty and true or false,
       attackQty        = AttackQty,
       directionEnabled = Direction and true or false,
-      direction        = Direction and math.rad(Direction) or nil,
+      direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,
       altitude         = Altitude,
       }
@@ -2956,6 +2958,32 @@ function CONTROLLABLE:SetOption(OptionID, OptionValue)
   return nil
 end
 
+--- Set option for Rules of Engagement (ROE).
+-- @param Wrapper.Controllable#CONTROLLABLE self
+-- @param #number ROEvalue ROE value. See ENUMS.ROE.
+-- @return Wrapper.Controllable#CONTROLLABLE self
+function CONTROLLABLE:OptionROE(ROEvalue)
+
+  local DCSControllable = self:GetDCSObject()
+  
+  if DCSControllable then
+  
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption(AI.Option.Air.id.ROE, ROEvalue )
+    elseif self:IsGround() then
+      Controller:setOption(AI.Option.Ground.id.ROE, ROEvalue )
+    elseif self:IsShip() then
+      Controller:setOption(AI.Option.Naval.id.ROE, ROEvalue )
+    end
+
+    return self
+  end
+
+  return nil
+end
+
 --- Can the CONTROLLABLE hold their weapons?
 -- @param #CONTROLLABLE self
 -- @return #boolean
@@ -3190,6 +3218,27 @@ function CONTROLLABLE:OptionROTNoReaction()
 
     if self:IsAir() then
       Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+--- Set Reation On Threat behaviour.
+-- @param #CONTROLLABLE self
+-- @param #number ROTvalue ROT value. See ENUMS.ROT.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionROT(ROTvalue)
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, ROTvalue )
     end
 
     return self
