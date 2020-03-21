@@ -380,6 +380,7 @@ function AUFTRAG:NewORBIT(Coordinate, Speed, Heading, Leg, Altitude)
   auftrag.missionAltitude=auftrag.orbitCoord.y*0.9  
   auftrag.missionFraction=0.9  
   auftrag.optionROE=ENUMS.ROE.ReturnFire
+  auftrag.optionROT=ENUMS.ROT.PassiveDefense
 
   auftrag.DCStask=auftrag:GetDCSMissionTask()
 
@@ -401,6 +402,9 @@ function AUFTRAG:NewPATROL(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
     
   -- Mission type PATROL.
   mission.type=AUFTRAG.Type.PATROL
+  
+  mission.missionTask=ENUMS.MissionTask.INTERCEPT
+  mission.optionROT=ENUMS.ROT.PassiveDefense
   
   return mission
 end
@@ -426,6 +430,7 @@ function AUFTRAG:NewTANKER(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude, 
   
   mission.missionTask=ENUMS.MissionTask.REFUELING 
   mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionROT=ENUMS.ROT.PassiveDefense
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -450,6 +455,7 @@ function AUFTRAG:NewAWACS(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
   
   mission.missionTask=ENUMS.MissionTask.AWACS  
   mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionROT=ENUMS.ROT.PassiveDefense
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -471,6 +477,7 @@ function AUFTRAG:NewINTERCEPT(Target)
   mission.missionTask=ENUMS.MissionTask.INTERCEPT    
   mission.missionFraction=0.1  
   mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.EvadeFire
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -505,6 +512,7 @@ function AUFTRAG:NewCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAP, Targ
 
   mission.missionTask=ENUMS.MissionTask.CAP    
   mission.optionROE=ENUMS.ROE.WeaponFree
+  mission.optionROT=ENUMS.ROT.EvadeFire
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -539,6 +547,7 @@ function AUFTRAG:NewCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, Targ
 
   mission.missionTask=ENUMS.MissionTask.CAS  
   mission.optionROE=ENUMS.ROE.WeaponFree
+  mission.optionROT=ENUMS.ROT.EvadeFire
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -568,6 +577,7 @@ function AUFTRAG:NewBAI(Target)
   mission.missionAltitude=nil
   mission.missionFraction=0.75
   mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
   
   mission.DCStask=mission:GetDCSMissionTask()  
   
@@ -592,6 +602,7 @@ function AUFTRAG:NewSTRIKE(TargetCoordinate, Altitude)
   mission.missionAltitude=mission.engageAltitude
   mission.missionFraction=0.75
   mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -618,6 +629,7 @@ function AUFTRAG:NewBOMBING(TargetCoordinate, Altitude)
   mission.missionAltitude=mission.engageAltitude*0.8  
   mission.missionFraction=0.3
   mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
   
   -- Get DCS task.
   mission.DCStask=mission:GetDCSMissionTask()
@@ -647,6 +659,7 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   
   -- TODO: what's the best ROE here?
   mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
   
   mission.DCStask=mission:GetDCSMissionTask()
   
