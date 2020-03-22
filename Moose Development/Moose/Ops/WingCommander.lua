@@ -136,7 +136,6 @@ function WINGCOMMANDER:AddAirwing(Airwing)
   Airwing.wingcommander=self
 
   table.insert(self.airwings, Airwing)  
-  --self.airwings[Airwing.alias]=Airwing
   
   return self
 end

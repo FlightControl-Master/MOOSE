@@ -2290,7 +2290,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightDead(From, Event, To)
-  self:T(self.lid..string.format("Flight dead"))
+  self:I(self.lid..string.format("Flight dead!"))
 
   -- Delete waypoints so they are re-initialized at the next spawn.
   self.waypoints=nil

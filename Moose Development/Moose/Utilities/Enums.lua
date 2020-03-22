@@ -68,6 +68,21 @@ ENUMS.WeaponFlag={
 
 --- Mission tasks.
 -- @type ENUMS.MissionTask
+-- @field #string NOTHING No special task. Group can perform the minimal tasks: Orbit, Refuelling, Follow and Aerobatics.
+-- @field #string AFAC Forward Air Controller Air. Can perform the tasks: Attack Group, Attack Unit, FAC assign group, Bombing, Attack Map Object.
+-- @field #string ANTISHIPSTRIKE Naval ops. Can perform the tasks: Attack Group, Attack Unit.
+-- @field #string AWACS AWACS.
+-- @field #string CAP Combat Air Patrol.
+-- @field #string CAS Close Air Support.
+-- @field #string ESCORT Escort another group.
+-- @field #string FIGHTERSWEEP Fighter sweep.
+-- @field #string INTERCEPT Intercept.
+-- @field #string PINPOINTSTRIKE Pinpoint strike.
+-- @field #string RECONNAISSANCE Reconnaissance mission.
+-- @field #string REFUELLING Refuelling mission.
+-- @field #string RUNWAYATTAC Attack the runway of an airdrome.
+-- @field #string SEAD Suppression of Enemy Air Defenses.
+-- @field #string TRANSPORT Troop transport.
 ENUMS.MissionTask={
   NOTHING="Nothing",
   AFAC="AFAC",
