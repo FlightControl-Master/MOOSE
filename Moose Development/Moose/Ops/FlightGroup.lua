@@ -2305,10 +2305,7 @@ function FLIGHTGROUP:onafterFlightDead(From, Event, To)
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
-    local asset=mission:GetAssetByName(self.groupname)
-    if asset then
-      mission:AssetDead(asset)
-    end
+    mission:FlightDead(self)
   
   end
   

@@ -232,6 +232,7 @@ AUFTRAG.TargetType={
 -- @field #number waypointindex Waypoint index.
 -- @field Ops.FlightGroup#FLIGHTGROUP.Task waypointtask Waypoint task.
 -- @field #string status Flight mission status.
+-- @field Ops.AirWing#AIRWING.SquadronAsset asset The squadron asset.
 
 
 --- AUFTRAG class version.
@@ -312,7 +313,8 @@ function AUFTRAG:New(Type)
   self:AddTransition("*",                      "Stop",          "*")
   
   self:AddTransition("*",                      "Repeat",        AUFTRAG.Status.PLANNED)
-  
+
+  self:AddTransition("*",                      "FlightDead",    "*")  
   self:AddTransition("*",                      "AssetDead",     "*")
 
   --[[
@@ -1061,6 +1063,11 @@ function AUFTRAG:onafterStatus(From, Event, To)
   if fsmstate~=self.status then
     self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
+  
+  for _,_flightdata in pairs(self.flightdata) do
+    local flightdata=_flightdata --#AUFTRAG.FlightData
+    string.format("%s", flightdata.status)
+  end
 
   -- Check if mission is OVER (done or cancelled).
   if self:IsOver() then
@@ -1100,6 +1107,32 @@ function AUFTRAG:Evaluate()
   return self
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Asset Data
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get asset data table.
+-- @param #AUFTRAG self
+-- @param #string AssetName Name of the asset.
+-- @return #AUFTRAG.FlightData Flight data or nil if flightgroup does not exist.
+function AUFTRAG:GetAssetDataByName(AssetName)
+  return self.flightdata[tostring(AssetName)]
+end
+
+--- Get asset data table.
+-- @param #AUFTRAG self
+-- @param #string AssetName Name of the asset.
+-- @return #AUFTRAG.FlightData Flight data or nil if flightgroup does not exist.
+function AUFTRAG:NewMissionAsset(AssetName)
+
+  local assetdata={} --#AUFTRAG.FlightData
+  
+  --assetdata.status==AUFTRAG.FlightStatus.SCHEDULED
+
+  return self.flightdata[tostring(AssetName)]
+end
+
+
 --- Get flight data table.
 -- @param #AUFTRAG self
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
@@ -1129,6 +1162,7 @@ function AUFTRAG:SetFlightStatus(flightgroup, status)
     end
   end
   
+  -- Debug info.
   self:I(self.lid..string.format("Setting flight %s status to %s. IsNotOver=%s  CheckFlightsDone=%s", flightgroup.groupname, self:GetFlightStatus(flightgroup), tostring(self:IsNotOver()), tostring(self:CheckFlightsDone())))
 
   -- Check if ALL flights are done with their mission.
@@ -1325,6 +1359,24 @@ function AUFTRAG:onafterDone(From, Event, To)
   self:I(self.lid..string.format("New mission status=%s", self.status))
 end
 
+
+--- On after "FlightDead" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The flightgroup that is dead now.
+function AUFTRAG:onafterFlightDead(From, Event, To, FlightGroup)
+
+  self:SetFlightStatus(FlightGroup, AUFTRAG.FlightStatus.DONE)
+
+  local asset=self:GetAssetByName(FlightGroup.groupname)
+  if asset then
+    self:AssetDead(asset)
+  end
+  
+end
+
 --- On after "AssetDead" event.
 -- @param #AUFTRAG self
 -- @param #string From From state.
@@ -1332,15 +1384,14 @@ end
 -- @param #string To To state.
 -- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
 function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
-  
-  -- Delete asset from mission.
-  self:DelAsset(Asset)
-  
+    
   -- Remove flightgroup from mission.
-  self:DelFlightGroup(Asset.flightgroup)
+  --self:DelFlightGroup(Asset.flightgroup)
+  
+  local N=self:CountFlightGroups()
   
   -- All assets dead?
-  if #self.assets==0 then
+  if N==0 then
   
     if self:IsNotOver() then
     
@@ -1350,13 +1401,18 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
     else
       
       self:E(self.lid.."ERROR: All assets are dead not but mission was already over... Investigate!")
+      -- Now this can happen, because when a flightgroup dies (sometimes!), the mission is DONE
       
     end
   end
   
+  -- Remove asset from airwing.
   if self.airwing then
     self.airwing:RemoveAssetFromSquadron(Asset)
   end
+
+  -- Delete asset from mission.
+  self:DelAsset(Asset)
 
 end
 
@@ -1595,7 +1651,7 @@ function AUFTRAG:CountFlightGroups()
   return N
 end
 
---- Get coordinate of target. First unit/group of the set is used.
+--- Get coordinate of target.
 -- @param #AUFTRAG self
 -- @return Core.Point#COORDINATE The target coordinate or nil.
 function AUFTRAG:GetTargetCoordinate()

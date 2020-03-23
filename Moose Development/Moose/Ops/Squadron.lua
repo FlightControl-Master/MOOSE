@@ -264,6 +264,7 @@ function SQUADRON:DelAsset(Asset)
   for i,_asset in pairs(self.assets) do
     local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
     if Asset.uid==asset.uid then
+      self:T2(self.lid..string.format("Removing asset %s", asset.spawngroupname))
       table.remove(self.assets, i)
       break
     end
@@ -277,7 +278,6 @@ end
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
 -- @param #SQUADRON self
--- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
@@ -293,7 +293,6 @@ end
 
 --- On after "Status" event.
 -- @param #SQUADRON self
--- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
@@ -323,6 +322,21 @@ function SQUADRON:_CheckAssetStatus()
     
     flight.flightgroup:IsSpawned()
     
+  end
+
+end
+
+--- On after "Stop" event.
+-- @param #SQUADRON self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function SQUADRON:onafterStop(From, Event, To)
+
+  -- Remove all assets.
+  for i=#self.assets,1,-1 do
+    local asset=self.assets[i]
+    self:DelAsqsset(asset)
   end
 
 end
@@ -374,13 +388,14 @@ function SQUADRON:CanMission(Mission)
           ---
   
           -- Check if this asset is currently on a PATROL mission (STARTED or EXECUTING).
-          if self.airwing:IsAssetOnMission(asset, AUFTRAG.Type.PATROL) and Mission.type~=AUFTRAG.Type.PATROL then
+          if self.airwing:IsAssetOnMission(asset, AUFTRAG.Type.PATROL) and Mission.type==AUFTRAG.Type.INTERCEPT then
   
             -- Check if the payload of this asset is compatible with the mission.
-            if self:CheckMissionType(Mission.type, asset.payload.missiontypes) then
+            -- Note: we do not check the payload as an asset that is on a PATROL mission should be able to do an intercept as well!
+            --if self:CheckMissionType(Mission.type, asset.payload.missiontypes) then
               -- TODO: Check if asset actually has weapons left. Difficult!
               table.insert(assets, asset)
-            end
+            --end
             
           end      
         

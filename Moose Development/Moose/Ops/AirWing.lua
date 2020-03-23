@@ -579,7 +579,7 @@ function AIRWING:onafterStatus(From, Event, To)
   -- Count missions not over yet.
   local nmissions=self:CountMissionsInQueue()
   
-  -- TODO: count payloads, count squadrons, count missions
+  -- TODO: count payloads, assets total
   local text=string.format("Status %s: missions=%d, payloads=%d, squads=%d", fsmstate, nmissions, #self.payloads, #self.squadrons)
   self:I(self.lid..text)
   
@@ -598,10 +598,10 @@ function AIRWING:onafterStatus(From, Event, To)
   -------------------
   local text="Squadrons:"
   for i,_squadron in pairs(self.squadrons) do
-    local squadron=_squadron --#AIRWING.Squadron
+    local squadron=_squadron --Ops.Squadron#SQUADRON
     
     -- Squadron text
-    text=text..string.format("\n* %s", squadron.name)
+    text=text..string.format("\n* %s %s", squadron.name, squadron:GetState())
     
     -- Loop over all assets.
     for j,_asset in pairs(squadron.assets) do
@@ -1026,17 +1026,25 @@ function AIRWING:onafterMissionCancel(From, Event, To, Mission)
   
   self:I(self.lid..string.format("Cancel mission %s", Mission.name))
   
-  for _,_asset in pairs(Mission.assets) do
-    local asset=_asset --#AIRWING.SquadronAsset
-    
-    local flightgroup=asset.flightgroup
-    
-    if flightgroup then
-      flightgroup:MissionCancel(Mission)
+  if Mission:IsPlanned() or Mission:IsQueued() or Mission:IsRequested() then
+  
+    Mission:Done()
+  
+  else
+  
+    for _,_asset in pairs(Mission.assets) do
+      local asset=_asset --#AIRWING.SquadronAsset
+      
+      local flightgroup=asset.flightgroup
+      
+      if flightgroup then
+        flightgroup:MissionCancel(Mission)
+      end
+      
+      -- Not requested any more (if it was).
+      asset.requested=nil
     end
     
-    -- Not requested any more (if it was).
-    asset.requested=nil
   end
   
   -- Remove queued request (if any).
@@ -1173,13 +1181,19 @@ end
 -- @param #string To To state.
 function AIRWING:onafterDestroyed(From, Event, To)
 
+  self:I(self.lid.."Airwing warehouse destroyed!")
+
+  -- Cancel all missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    mission:Cancel()
+  end
+
+  -- Remove all squadron assets.
   for _,_squadron in pairs(self.squadrons) do
     local squadron=_squadron --Ops.Squadron#SQUADRON
-    for _,_asset in pairs(squadron.assets) do
-      local asset=_asset
-      squadron:DelAsset(asset)
-    end
-    squadron:Stop()    
+    -- Stop Squadron. This also removes all assets.
+    squadron:Stop()
   end
 
   -- Call parent warehouse function first.

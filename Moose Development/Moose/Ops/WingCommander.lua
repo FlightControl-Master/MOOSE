@@ -243,7 +243,11 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
     
     -- Add mission to queue.
     if mission then
+    
+      --TODO: Better amount of necessary assets. Count units in asset and in contact. Might need nassetMin/Max.
       mission.nassets=1
+      
+      -- Set mission contact.
       contact.mission=mission
       
       -- Add mission to queue.

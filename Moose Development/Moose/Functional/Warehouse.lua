@@ -6000,6 +6000,22 @@ function WAREHOUSE:GetAssetByID(id)
   end
 end
 
+--- Get a warehouse asset from its name.
+-- @param #WAREHOUSE self
+-- @param #string GroupName Spawn group name.
+-- @return #WAREHOUSE.Assetitem The warehouse asset.
+function WAREHOUSE:GetAssetByName(GroupName)
+
+  local name=self:_GetNameWithOut(GroupName)
+  local _,aid,_=self:_GetIDsFromGroup(GROUP:FindByName(name))
+
+  if aid then
+    return _WAREHOUSEDB.Assets[aid]
+  else
+    return nil
+  end
+end
+
 --- Get a warehouse request from its unique id.
 -- @param #WAREHOUSE self
 -- @param #number id Request ID.
