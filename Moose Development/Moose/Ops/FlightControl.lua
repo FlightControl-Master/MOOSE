@@ -149,6 +149,12 @@ function FLIGHTCONTROL:New(airbasename)
   -- Try to get the airbase.
   self.airbase=AIRBASE:FindByName(airbasename)
   
+  -- Name of the airbase.
+  self.airbasename=airbasename  
+  
+  -- Set some string id for output to DCS.log file.
+  self.lid=string.format("FLIGHTCONTROL %s | ", airbasename)  
+  
   -- Check if the airbase exists.
   if not self.airbase then
     self:E(string.format("ERROR: Could not find airbase %s!", tostring(airbasename)))
@@ -160,14 +166,10 @@ function FLIGHTCONTROL:New(airbasename)
     return nil
   end
   
-  -- Name of the airbase.
-  self.airbasename=airbasename
+
   
   -- Airbase category airdrome, FARP, SHIP.
   self.airbasetype=self.airbase:GetAirbaseCategory()
-  
-  -- Set some string id for output to DCS.log file.
-  self.lid=string.format("FLIGHTCONTROL %s | ", airbasename)
   
   -- Current map.
   self.theatre=env.mission.theatre    
@@ -1075,49 +1077,33 @@ function FLIGHTCONTROL:_InitParkingSpots()
   -- Init parking spots table.
   self.parking={}
   
-  -- Get client coordinates.
-  local function _clients()
-    local clients=_DATABASE.CLIENTS
-    local coords={}
-    for clientname, client in pairs(clients) do
-      local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
-      local units=template.units
-      for i,unit in pairs(units) do
-        local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
-        coords[unit.name]=coord
-
-        local _,TermID, dist, spot=coord:GetClosestParkingSpot(self.airbase)
-        if dist<=10 then
-          self:I(self.lid..string.format("Found client %s on parking spot %d", tostring(unit.name), TermID))
-          self.parking[TermID].Reserved=tostring(unit.name)
-        end
-        
-      end
-    end
-  end  
-  
   self.Nparkingspots=0
   for _,_spot in pairs(parkingdata) do
     local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
-    
-    local parking=spot --#FLIGHTCONTROL.ParkingSpot
     
     --TODO: reserve client spots.
     --TODO: scan spot for objects.
     
     
     -- Mark position.
-    local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.TerminalID, parking.TerminalType, tostring(parking.Free), tostring(parking.Reserved), parking.DistToRwy)
+    local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Client=%s, Dist=%.1f", spot.TerminalID, spot.TerminalType, tostring(spot.Free), tostring(spot.Reserved), tostring(spot.ClientSpot), spot.DistToRwy)
+    self:I(self.lid..text)
     
     -- Add to table.
-    self.parking[parking.TerminalID]=parking
+    self.parking[spot.TerminalID]=spot
     
     self.Nparkingspots=self.Nparkingspots+1
   end
   
-  -- Check clients.
-  _clients()
-  
+end
+
+--- Get free parking spots.
+-- @param #FLIGHTCONTROL self
+-- @param #number terminal Terminal type or nil.
+-- @return #number Number of free spots. Total if terminal=nil or of the requested terminal type.
+-- @return #table Table of free parking spots of data type #FLIGHCONTROL.ParkingSpot.
+function FLIGHTCONTROL:IsParkingFree(spot)
+
 end
 
 

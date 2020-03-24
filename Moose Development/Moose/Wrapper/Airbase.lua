@@ -312,6 +312,7 @@ AIRBASE.PersianGulf = {
 -- @field #string AirbaseName Name of the airbase.
 -- @field #number MarkerID Numerical ID of marker placed at parking spot.
 -- @field #boolean Reserved If true, parking spot is reserved for an aircraft.
+-- @field #boolean ClientSpot If true, a client unit sits at this parking spot (spawned or not).
 
 --- Terminal Types of parking spots. See also https://wiki.hoggitworld.com/view/DCS_func_getParking
 --
@@ -683,6 +684,29 @@ function AIRBASE:GetParkingSpotsTable(termtype)
     end
     return false
   end
+  
+  -- Get client coordinates.
+  local function _isclient(_coord)
+    
+    for clientname, client in pairs(_DATABASE.CLIENTS) do
+      local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
+      local units=template.units
+      for i,unit in pairs(units) do
+      
+        -- Unit coordinate.
+        local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
+
+        -- Distance to parking spot.
+        local dist=coord:Get2DDistance(_coord)
+        
+        if dist<=5 then
+          return true
+        end
+        
+      end
+    end
+    return false
+  end    
 
   -- Put coordinates of parking spots into table.
   local spots={}
@@ -691,7 +715,8 @@ function AIRBASE:GetParkingSpotsTable(termtype)
       self:T2({_spot=_spot})
       local _free=_isfree(_spot)
       local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
-      table.insert(spots, {AirbaseName=self.AirbaseName, Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=_free, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
+      local _client=_isclient(_coord)
+      table.insert(spots, {AirbaseName=self.AirbaseName, Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=_free, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW, ClientSpot=_client})
     end
   end
 
