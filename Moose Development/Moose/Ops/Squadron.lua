@@ -116,8 +116,8 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   
   self.attribute=self.templategroup:GetAttribute()
   
-  _,self.refuelSystem=self.templategroup:GetUnit(1):IsRefuelable()
-  _,self.tankerSystem=self.templategroup:GetUnit(1):IsTanker()
+  self.refuelSystem=select(2, self.templategroup:GetUnit(1):IsRefuelable())
+  self.tankerSystem=select(2, self.templategroup:GetUnit(1):IsTanker())
 
 
   -- Start State.

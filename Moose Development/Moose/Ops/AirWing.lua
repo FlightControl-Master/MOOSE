@@ -628,8 +628,17 @@ function AIRWING:onafterStatus(From, Event, To)
         local status=asset.flightgroup:GetState()
         local fuelmin=asset.flightgroup:GetFuelMin()
         local fuellow=asset.flightgroup:IsFuelLow()
+        local fuelcri=asset.flightgroup:IsFuelCritical()
         
-        text=text..string.format("%s fuel=%d (low=%s)", status, fuelmin, tostring(fuellow))
+        text=text..string.format("%s fuel=%d", status, fuelmin)
+        if fuelcri then
+          text=text.." (critical!)"
+        elseif fuellow then
+          text=text.." (low)"
+        end
+        
+        local lifept, lifept0=asset.flightgroup:GetLifePoints()
+        text=text..string.format(" life=%d/%d", lifept, lifept0)
       else
         text=text.."N/A"
       end

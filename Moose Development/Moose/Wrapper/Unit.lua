@@ -424,9 +424,9 @@ function UNIT:GetRange()
   local Desc = self:GetDesc()
   
   if Desc then
-    local Range = Desc.range --This is in nautical miles for some reason. But should check again!
+    local Range = Desc.range --This is in kilometers (not meters) for some reason. But should check again!
     if Range then
-      Range=UTILS.NMToMeters(Range)
+      Range=Range*1000 -- convert to meters.
     else
       Range=10000000 --10.000 km if no range
     end
@@ -475,6 +475,7 @@ function UNIT:IsTanker()
     
     local typename=self:GetTypeName()
     
+    -- Some hard coded data as this is not in the descriptors...
     if typename=="IL-78M" then
       system=1 --probe
     elseif typename=="KC130" then
@@ -488,8 +489,6 @@ function UNIT:IsTanker()
     end
     
   end
-  
-  env.info(string.format("unit %s type=%s: tanker=%s system=%s", tostring(self.UnitName), tostring(typename), tostring(tanker), tostring(system)))
 
   return tanker, system
 end

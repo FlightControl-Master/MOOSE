@@ -2325,18 +2325,19 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
 
   -- Is transition allowed? We assume yes until proven otherwise.
   local allowed=true
+  local trepeat=nil
 
-  if self.group and self.group:IsAlive() and (self:IsAirborne() or self:IsWaiting()) then
+  if self:IsAlive() and (self:IsAirborne() or self:IsWaiting() or self:IsInbound() or self:IsHolding()) then
     -- Alive & Airborne ==> Update route possible.
-    self:T3(self.lid.."Update route possible. Group is ALIVE and AIRBORNE")
-  elseif self:IsDead() then
+    self:T3(self.lid.."Update route possible. Group is ALIVE and AIRBORNE or WAITING or INBOUND or HOLDING")
+  elseif self:IsDead()  then
     -- Group is dead! No more updates.
     self:E(self.lid.."Update route denied. Group is DEAD!")
     allowed=false
   else
     -- Not airborne yet. Try again in 1 sec.
-    self:T3(self.lid.."FF update route denied ==> checking back in 1 sec")
-    self:__UpdateRoute(-1, n)
+    self:T3(self.lid.."FF update route denied ==> checking back in 5 sec")
+    trepeat=-5    
     allowed=false
   end
   
@@ -2353,7 +2354,7 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
   local N=n or self.currentwp+1
   if not N or N<1 then
     self:E(self.lid.."FF update route denied because N=nil or N<1")
-    self:__UpdateRoute(-1, n)
+    trepeat=-5
     allowed=false    
   end
   
@@ -2366,6 +2367,13 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
   if self.currentmission then
     --self:I(self.lid.."FF update route denied because currentmission~=nil")
     --allowed=false
+  end
+  
+  -- Debug info.
+  self:T2(self.lid..string.format("Onbefore Updateroute allowed=%s state=%s repeat in %s", tostring(allowed), self:GetState(), tostring(trepeat)))
+  
+  if trepeat then
+    self:__UpdateRoute(trepeat, n)
   end
   
   return allowed
@@ -2562,7 +2570,7 @@ function FLIGHTGROUP:_CheckFlightDone(delay)
       end  
     else
       self:I(self.lid.."Did NOT pass the final waypoint yet ==> update route")
-      self:UpdateRoute()
+      self:__UpdateRoute(-1)
     end  
   end
 end
@@ -5100,6 +5108,16 @@ end
 -- @return #number Coalition side number.
 function FLIGHTGROUP:GetCoalition()
   return self.group:GetCoalition()
+end
+
+--- Returns the absolute (average) life points of the group.
+-- @param #FLIGHTGROUP self
+-- @return #number Life points. If group contains more than one element, the average is given.
+-- @return #number Initial life points.
+function FLIGHTGROUP:GetLifePoints()
+  if self.group then
+    return self.group:GetLife(), self.group:GetLife0()
+  end
 end
 
 --- Returns the parking spot of the element.

@@ -1064,10 +1064,12 @@ function AUFTRAG:onafterStatus(From, Event, To)
     self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
   
-  for _,_flightdata in pairs(self.flightdata) do
+  local text="Flight data:"
+  for groupname,_flightdata in pairs(self.flightdata) do
     local flightdata=_flightdata --#AUFTRAG.FlightData
-    string.format("%s", flightdata.status)
+    text=text..string.format("\n- %s: status mission=%s flightgroup=%s", groupname, flightdata.status, flightdata.flightgroup and flightdata.flightgroup:GetState() or "N/A")
   end
+  self:I(self.lid..text)
 
   -- Check if mission is OVER (done or cancelled).
   if self:IsOver() then
@@ -1158,7 +1160,6 @@ function AUFTRAG:SetFlightStatus(flightgroup, status)
       flightdata.status=status
     else
       self:E(self.lid.."WARNING: Could not SET flight data for flight group. Setting status to DONE.")
-      flightdata.status=AUFTRAG.FlightStatus.DONE
     end
   end
   
@@ -1183,7 +1184,7 @@ function AUFTRAG:GetFlightStatus(flightgroup)
   if flightdata then
     return flightdata.status
   else
-    self:E(self.lid.."WARNING: Could not get flight data for flight group. Returning status DONE.")
+    self:E(self.lid.."WARNING: Could not GET flightdata for flight group. Returning status DONE.")
     return AUFTRAG.FlightStatus.DONE
   end
 end
@@ -1490,20 +1491,23 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterRepeat(From, Event, To)
 
+  -- Set mission status to PLANNED.
   self.status=AUFTRAG.Status.PLANNED
-  self:I(self.lid..string.format("New mission status=%s (on Repeat)", self.status))  
+  
+  self:I(self.lid..string.format("New mission status=%s (on Repeat)", self.status))
 
   -- Increase repeat counter.
   self.missionRepeated=self.missionRepeated+1
   
   if self.wingcommander then
-  
+    
   elseif self.airwing then
-  
-  
+    -- Already at the airwing ==> Queued()
+    self:Queued(self.airwing)  
   else
   
   end
+  
   
   -- No mission assets.
   self.assets={}
