@@ -1091,6 +1091,11 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
       local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s", squad.name, assignment, asset.unittype, asset.attribute)
       self:I(self.lid..text)
       
+      -- Create callsign and modex.
+      squad:GetCallsign(asset)
+      squad:GetModex(asset)
+      
+      
       asset.terminalType=AIRBASE.TerminalType.OpenBig
       
       -- Add asset to squadron.

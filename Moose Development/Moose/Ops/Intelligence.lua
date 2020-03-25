@@ -85,8 +85,9 @@ INTEL.version="0.0.3"
 --- Create a new INTEL object and start the FSM.
 -- @param #INTEL self
 -- @param Core.Set#SET_GROUP DetectionSet Set of detection groups.
+-- @param #number Coalition Coalition side. Can also be passed as a string "red", "blue" or "neutral".
 -- @return #INTEL self
-function INTEL:New(DetectionSet)
+function INTEL:New(DetectionSet, Coalition)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #INTEL
@@ -499,7 +500,7 @@ end
 -- @param #INTEL.DetectedItem Contact Detected contact.
 function INTEL:onafterNewContact(From, Event, To, Contact)
   self:I(self.lid..string.format("NEW contact %s", Contact.groupname))
-  table.insert(self.ContactsUnknown, Contact)
+  table.insert(self.ContactsUnknown, Contact) 
 end
 
 --- On after "LostContact" event.

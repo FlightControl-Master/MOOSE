@@ -23,6 +23,10 @@
 -- @field #table missiontypes Mission types the squadron can perform.
 -- @field #string livery Livery of the squadron.
 -- @field #number skill Skill of squadron members.
+-- @field #number modex Modex.
+-- @field #number modexcounter Counter to incease modex number for assets.
+-- @field #string callsignName Callsign name.
+-- @field #number callsigncounter Counter to increase callsign names for new assets.
 -- @field Ops.AirWing#AIRWING airwing The AIRWING object the squadron belongs to.
 -- @field #number Ngroups Number of asset flight groups this squadron has. 
 -- @field #number engageRange Engagement range in meters.
@@ -52,6 +56,10 @@ SQUADRON = {
   missiontypes   =    {},
   livery         =   nil,
   skill          =   nil,
+  modex          =   nil,
+  modexcounter   =     0,
+  callsignName   =   nil,
+  callsigncounter=    11,
   airwing        =   nil,
   Ngroups        =   nil,
   engageRange    =   nil,
@@ -238,6 +246,15 @@ function SQUADRON:SetEngagementRange(EngageRange)
   return self
 end
 
+--- Set call sign.
+-- @param #SQUADRON self
+-- @param #string Callsign
+-- @return #SQUADRON self
+function SQUADRON:SetCallsign(Callsign, Index)
+  self.callsignName=Callsign
+  return self
+end
+
 --- Set airwing.
 -- @param #SQUADRON self
 -- @param Ops.AirWing#AIRWING Airwing The airwing.
@@ -270,6 +287,61 @@ function SQUADRON:DelAsset(Asset)
     end
   end
   return self
+end
+
+--- Create a callsign for the asset.
+-- @param #SQUADRON self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
+-- @return #SQUADRON self
+function SQUADRON:GetCallsign(Asset)
+
+  if self.callsignName then
+  
+    Asset.callsign={}
+  
+    for i=1,Asset.nunits do
+    
+      local callsign={}
+      callsign[1]=self.callsignName
+      callsign[2]=self.callsigncounter / 10
+      callsign[3]=self.callsigncounter % 10
+      if callsign[3]==0 then
+        callsign[3]=1
+        self.callsigncounter=self.callsigncounter+2
+      else
+        self.callsigncounter=self.callsigncounter+1
+      end
+    
+      Asset.callsign[i]=callsign
+    
+      --TODO: there is also a table entry .name, which is a string.
+    end
+  
+  
+  end
+
+end
+
+--- Create a modex for the asset.
+-- @param #SQUADRON self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
+-- @return #SQUADRON self
+function SQUADRON:GetModex(Asset)
+
+  if self.callsignName then
+  
+    Asset.modex={}
+  
+    for i=1,Asset.nunits do
+    
+      Asset.modex[i]=tostring(self.modex+self.modexcounter)
+      
+      self.modexcounter=self.modexcounter+1
+    
+    end
+    
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

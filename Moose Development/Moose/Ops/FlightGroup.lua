@@ -1992,17 +1992,14 @@ function FLIGHTGROUP:onafterElementTaxiing(From, Event, To, Element)
 
   -- Get terminal ID.
   local TerminalID=Element.parking and tostring(Element.parking.TerminalID) or "N/A"
-  
-  -- Remove marker.
-  if self.flightcontrol and Element.parking then
-    local parking=self.flightcontrol.parking[Element.parking.TerminalID]  --Wrapper.Airbase#AIRBASE.ParkingSpot
-    if parking and parking.MarkerID then
-      parking.Coordinate:RemoveMark(parking.MarkerID)
-    end
-  end
 
   -- Debug info.
   self:T(self.lid..string.format("Element taxiing %s. Parking spot %s is now free", Element.name, TerminalID))
+  
+  -- Set parking to FREE.
+  if self.flightcontrol and Element.parking then
+    self.flightcontrol:SetParkingFree(Element.parking)
+  end
   
   -- Not parking any more.
   Element.parking=nil
@@ -2075,15 +2072,10 @@ function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element, airbase, Pa
   
   if Parking then
     if self.flightcontrol then
-      local spot=self.flightcontrol.parking[Parking.TerminalID] --Wrapper.Airbase#AIRBASE.ParkingSpot
-      self:T(self.lid..string.format("Element arrived %s at %s on parking spot %s reserved for %s", Element.name, Parking.AirbaseName, Parking.TerminalID, tostring(spot.Reserved)))
-      if spot.Reserved then
-        if spot.Reserved==Element.name then
-          spot.Reserved=nil
-        else
-          self:E(self.lid..string.format("WARNING: Parking spot was not reserved for this element!"))
-        end
-      end
+      
+      -- Set parking spot to OCCUPIED.
+      self.flightcontrol:SetParkingOccupied(Element.parking, Element.name)
+      
     end
   end
 

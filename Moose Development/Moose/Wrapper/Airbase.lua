@@ -301,6 +301,17 @@ AIRBASE.PersianGulf = {
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
+-- @type AIRBASE.SpotStatus
+-- @field #string FREE Spot is free.
+-- @field #string OCCUPIED Spot is occupied.
+-- @field #string RESERVED Spot is reserved.
+AIRBASE.SpotStatus = {
+  FREE="Free",
+  OCCUPIED="Occupied",
+  RESERVED="Reserved",
+}
+
+--- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 -- @type AIRBASE.ParkingSpot
 -- @field Core.Point#COORDINATE Coordinate Coordinate of the parking spot.
 -- @field #number TerminalID Terminal ID of the spot. Generally, this is not the same number as displayed in the mission editor.
@@ -311,8 +322,10 @@ AIRBASE.PersianGulf = {
 -- @field #number DistToRwy Distance to runway in meters. Currently bugged and giving the same number as the TerminalID.
 -- @field #string AirbaseName Name of the airbase.
 -- @field #number MarkerID Numerical ID of marker placed at parking spot.
--- @field #boolean Reserved If true, parking spot is reserved for an aircraft.
 -- @field #boolean ClientSpot If true, a client unit sits at this parking spot (spawned or not).
+-- @field #string Status Status of spot e.g. AIRBASE.SpotStatus.FREE.
+-- @field #string OccupiedBy Name of the aircraft occupying the spot or "unknown". Can be nil if spot is not occupied.
+-- @field #string ReservedBy Name of the aircraft for which this spot is reserved. Can be nil if spot is not reserved.
 
 --- Terminal Types of parking spots. See also https://wiki.hoggitworld.com/view/DCS_func_getParking
 --

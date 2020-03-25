@@ -119,19 +119,20 @@ FLIGHTCONTROL = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.2.4"
+FLIGHTCONTROL.version="0.2.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
+-- TODO: Accept and forbit parking spots.
 -- TODO: Add FARPS?
 -- TODO: Add helos.
 -- TODO: Talk me down option.
 -- TODO: ATIS option.
 -- TODO: ATC voice overs.
 -- TODO: Check runways and clean up.
--- TODO: Interface with FLIGHTGROUP.
+-- DONE: Interface with FLIGHTGROUP.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -382,7 +383,9 @@ function FLIGHTCONTROL:OnEventBirth(EventData)
 
   
     -- We delay this, to have all elements of the group in the game.
-    self:ScheduleOnce(0.1, self._CreateFlightGroup, self, EventData.IniGroup)
+    if EventData.IniUnit:IsAir() then
+      self:ScheduleOnce(0.1, self._CreateFlightGroup, self, EventData.IniGroup)
+    end
   
   end
   
@@ -1081,96 +1084,118 @@ function FLIGHTCONTROL:_InitParkingSpots()
   for _,_spot in pairs(parkingdata) do
     local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
     
-    --TODO: reserve client spots.
-    --TODO: scan spot for objects.
-    
     
     -- Mark position.
-    local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Client=%s, Dist=%.1f", spot.TerminalID, spot.TerminalType, tostring(spot.Free), tostring(spot.Reserved), tostring(spot.ClientSpot), spot.DistToRwy)
+    local text=string.format("Parking ID=%d, Terminal=%d: Free=%s, Client=%s, Dist=%.1f", spot.TerminalID, spot.TerminalType, tostring(spot.Free), tostring(spot.ClientSpot), spot.DistToRwy)
     self:I(self.lid..text)
+    
+    -- Set spot to occupied.
+    if spot.Free then
+      self:SetParkingFree(spot)
+    else
+      self:SetParkingOccupied(spot, "unknown")
+    end
+    
+    --TODO: scan spot for objects.
     
     -- Add to table.
     self.parking[spot.TerminalID]=spot
     
+    -- Increase counter
     self.Nparkingspots=self.Nparkingspots+1
   end
   
 end
 
+--- Get parking spot by its Terminal ID.
+-- @param #FLIGHTCONTROL self
+-- @param #number TerminalID
+-- @return Wrapper.Airbase#AIRBASE Parking spot data table.
+function FLIGHTCONTROL:GetParkingSpotByID(TerminalID)
+  return self.parking[TerminalID]
+end
+
+--- Set parking spot to FREE and update F10 marker.
+-- @param #FLIGHTCONTROL self
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot The parking spot data table.
+function FLIGHTCONTROL:SetParkingFree(spot)
+
+  spot.Status=AIRBASE.SpotStatus.FREE
+  spot.OccupiedBy=nil
+  spot.ReservedBy=nil
+  
+  self:UpdateParkingMarker(spot)
+
+end
+
+--- Set parking spot to RESERVED and update F10 marker.
+-- @param #FLIGHTCONTROL self
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot The parking spot data table.
+-- @param #string unitname Name of the unit occupying the spot. Default "unknown". 
+function FLIGHTCONTROL:SetParkingReserved(spot, unitname)
+
+  spot.Status=AIRBASE.SpotStatus.RESERVED
+  spot.ReservedBy=unitname or "unknown"
+  
+  self:UpdateParkingMarker(spot)
+
+end
+
+--- Set parking spot to OCCUPIED and update F10 marker.
+-- @param #FLIGHTCONTROL self
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot The parking spot data table.
+-- @param #string unitname Name of the unit occupying the spot. Default "unknown".
+function FLIGHTCONTROL:SetParkingOccupied(spot, unitname)
+
+  spot.Status=AIRBASE.SpotStatus.OCCUPIED
+  spot.OccupiedBy=unitname or "unknown"
+  
+  self:UpdateParkingMarker(spot)
+
+end
+
 --- Get free parking spots.
 -- @param #FLIGHTCONTROL self
--- @param #number terminal Terminal type or nil.
--- @return #number Number of free spots. Total if terminal=nil or of the requested terminal type.
--- @return #table Table of free parking spots of data type #FLIGHCONTROL.ParkingSpot.
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot The parking spot data table.
+function FLIGHTCONTROL:UpdateParkingMarker(spot)
+
+  if spot.MarkerID then
+    spot.Coordinate:RemoveMark(spot.MarkerID)
+  end
+  
+  local text=string.format("Spot %d (type %d) status=%s", spot.TerminalID, spot.TerminalType, spot.Status)
+  if spot.OccupiedBy then
+    text=text..string.format("Occupied by %s", spot.OccupiedBy)
+  end
+  if spot.ReservedBy then
+    text=text..string.format("Reserved for %s", spot.ReservedBy)
+  end  
+  if spot.ClientSpot then
+    text=text..string.format("Client %s", spot.ClientSpot)
+  end
+
+  spot.MarkerID=spot.Coordinate:MarkToAll(text, true)
+end
+
+--- Check if parking spot is free.
+-- @param #FLIGHTCONTROL self
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot Parking spot data.
+-- @return #boolean If true, parking spot is free.
 function FLIGHTCONTROL:IsParkingFree(spot)
-
+  return spot.Status==AIRBASE.SpotStatus.FREE
 end
 
-
---- Get free parking spots.
+--- Check if a parking spot is reserved by a flight group.
 -- @param #FLIGHTCONTROL self
--- @param #number terminal Terminal type or nil.
--- @return #number Number of free spots. Total if terminal=nil or of the requested terminal type.
--- @return #table Table of free parking spots of data type #FLIGHCONTROL.ParkingSpot.
-function FLIGHTCONTROL:_GetFreeParkingSpots(terminal)
-  
-  local freespots={}
-  
-  local n=0
-  for _,_parking in pairs(self.parking) do
-    local parking=_parking --#FLIGHTCONTROL.ParkingSpot
-    
-    if parking.Free and parking.TOAC==false and not parking.Reserved then
-      if terminal==nil or terminal==parking.terminal then
-        n=n+1
-        table.insert(freespots, parking)
-      end
-    end
-  end
-  
-  return n,freespots
-end
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot Parking spot to check.
+-- @return #string Name of element or nil.
+function FLIGHTCONTROL:IsParkingOccupied(spot)
 
---- Update parking spots.
--- @param #FLIGHTCONTROL self
-function FLIGHTCONTROL:_UpdateParkingSpots()
-
-  -- Parking spots of airbase.
-  local parkingdata=self.airbase:GetParkingSpotsTable()
-  
-  for _,_parking in pairs(self.parking) do
-    local parking=_parking --#FLIGHTCONTROL.ParkingSpot
-    if parking.markerid then
-      parking.Coordinate:RemoveMark(parking.markerid)
-      parking.markerid=nil    
-    end
+  if spot.Status==AIRBASE.SpotStatus.OCCUPIED then
+    return tostring(spot.OccupiedBy)
+  else
+    return false
   end
-  
-  -- Loop over all spots.
-  local message="Parking Spots:"    
-  for _,_spot in pairs(parkingdata) do
-    local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
-    
-    -- Parking.
-    local parking=self.parking[spot.TerminalID] --#FLIGHTCONTROL.ParkingSpot
-    
-    -- Check if any known flight has reserved this spot.
-    local reserved=self:IsParkingReserved(spot)
-
-    -- Message text.    
-    --local text=string.format("ID=%03d, Terminal=%03d, Free=%s, TOAC=%s, reserved=%s", parking.TerminalID, parking.TerminalType, tostring(parking.Free), tostring(parking.TOAC), tostring(reserved))
-    local text=string.format("ID=%03d, Terminal=%03d, Free=%s, TOAC=%s, reserved=%s", spot.TerminalID, spot.TerminalType, tostring(spot.Free), tostring(spot.TOAC), tostring(reserved))
-    
-    -- Place marker on non-free spots.
-    if parking.Free==false or parking.TOAC or reserved~=nil then
-      parking.markerid=parking.Coordinate:MarkToAll(text)
-      message=message.."\n"..text
-    end
-    
-  end
-  
-  -- Debug message.
-  self:I(self.lid..message)
 end
 
 --- Check if a parking spot is reserved by a flight group.
@@ -1179,9 +1204,10 @@ end
 -- @return #string Name of element or nil.
 function FLIGHTCONTROL:IsParkingReserved(spot)
 
-  local park=self.parking[spot.TerminalID] --Wrapper.Airbase#AIRBASE.ParkingSpot
-  if park.Reserved then
-    return tostring(park.Reserved)
+  if spot.Status==AIRBASE.SpotStatus.RESERVED then
+    return tostring(spot.ReservedBy)
+  else
+    return false
   end
 
   -- Init all elements as NOT parking anywhere.
@@ -1200,6 +1226,30 @@ function FLIGHTCONTROL:IsParkingReserved(spot)
   return nil
 end
 
+--- Get free parking spots.
+-- @param #FLIGHTCONTROL self
+-- @param #number terminal Terminal type or nil.
+-- @return #number Number of free spots. Total if terminal=nil or of the requested terminal type.
+-- @return #table Table of free parking spots of data type #FLIGHCONTROL.ParkingSpot.
+function FLIGHTCONTROL:_GetFreeParkingSpots(terminal)
+  
+  local freespots={}
+  
+  local n=0
+  for _,_parking in pairs(self.parking) do
+    local parking=_parking --Wrapper.Airbase#AIRBASE.ParkingSpot
+    
+    if self:IsParkingFree(parking) then
+      if terminal==nil or terminal==parking.terminal then
+        n=n+1
+        table.insert(freespots, parking)
+      end
+    end
+  end
+  
+  return n,freespots
+end
+
 --- Get closest parking spot.
 -- @param #FLIGHTCONTROL self
 -- @param Core.Point#COORDINATE coordinate Reference coordinate.
@@ -1214,7 +1264,7 @@ function FLIGHTCONTROL:GetClosestParkingSpot(coordinate, terminaltype, free)
   for TerminalID, Spot in pairs(self.parking) do
     local spot=Spot --Wrapper.Airbase#AIRBASE.ParkingSpot
     
-    if (not free) or free==true and not (self:IsParkingReserved(spot) or spot.Reserved) then 
+    if (not free) or (free==true and not (self:IsParkingReserved(spot) or self:IsParkingOccupied(spot))) then 
       if terminaltype==nil or terminaltype==spot.TerminalType then
       
         -- Get distance from coordinate to spot.
@@ -1637,10 +1687,7 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   if flight.homebase and flight.homebase:GetName()==self.airbasename then
     flight:SetFlightControl(self)
   end
-    
-  -- Add to known flights.
-  --table.insert(self.flights, flight)
-    
+
   return flight
 end
 
@@ -1746,32 +1793,6 @@ function FLIGHTCONTROL:_CheckFlights()
   
   --TODO: check parking?
   
-  -- NOTE: This is now done in FLIGHTGROUP!
-  -- Check if parking flights started to taxi.
-  for _,_flight in pairs(self.Qparking) do
-    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
-    for _,_element in pairs(flight.elements) do
-      local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
-      if element.parking then
-        -- Get distance to assigned parking spot.
-        local dist=element.unit:GetCoordinate():Get2DDistance(element.parking.Coordinate)
-        
-        -- If distance >10 meters or velocity of unit is >0, we consider the unit as taxiing.
-        -- TODO: Check distance threshold! If element is taxiing, the parking spot is free again.
-        --       When the next plane is spawned on this spot, collisions should be avoided!
-        if dist>10 or element.unit:GetVelocityMPS()>0 then
-          if element.status==FLIGHTGROUP.ElementStatus.ENGINEON then
-            self.flight:ElementTaxiing(element)
-          end
-        end
-        
-      else
-        self:E(self.lid..string.format("Element %s is in PARKING queue but has no parking spot assigned!", element.name))
-      end
-    end
-    
-  end
-
 end
 
 --- Check status of all registered flights and do some sanity checks.
@@ -1805,64 +1826,6 @@ function FLIGHTCONTROL:_CheckParking()
   end  
   
 
-end
-
---- Scan airbase zone for units, statics and scenery.
--- @param #FLIGHTCONTROL self
--- @return Core.Set#SET_UNIT Set of scanned units.
--- @return Core.Set#SET_STATIC Set of scanned static objects.
-function FLIGHTCONTROL:_CheckAirbase()
-  
-  -- Airbase position.
-  local coord=self:GetCoordinate()
-  
-  -- Scan radius = 5 NM.
-  local RCCZ=UTILS.NMToMeters(1)
-  
-  self.scenery=self.scenery or {}
-  
-  local scanscenery=true
-  if #self.scenery>0 then
-    scanscenery=false
-  end
-  
-  -- Debug info.
-  self:T(self.lid..string.format("Scanning airbase zone. Radius=%.1f NM.", UTILS.MetersToNM(RCCZ)))
-  
-  -- Scan units in carrier zone.
-  local _,_,_,unitscan,staticscan,sceneryscan=coord:ScanObjects(RCCZ, true, true, scanscenery)
-  
-  local su=SET_UNIT:New():FilterActive(true)
-  for _,_unit in pairs(unitscan) do
-    local unit=_unit --Wrapper.Unit#UNIT
-    if unit and unit:IsAlive() and unit:InAir()==false then
-      su:AddUnit(unit)
-      
-    end  
-  end
-  
-  local setstatic=SET_STATIC:New()
-  for _,static in pairs(staticscan) do
-    local static=STATIC:Find(static)
-    setstatic:AddStatic(static)
-    static:GetCoordinate():MarkToAll("Static")    
-  end
-  
-  
-  if scanscenery then
-    for _,scen in pairs(sceneryscan) do
-      --local static=SCENERY:
-      local s=SCENERY:Register(scen:getName(), scen)
-      --s:GetCoordinate():MarkToAll("Scenery")
-      table.insert(self.scenery, s)
-    end
-  end
-    
-  -- Debug info.
-  local text=string.format("Scan found: units=%d, statics=%d, scenery=%d", su:Count(), setstatic:Count(), #self.scenery)
-  self:I(self.lid..text)
-  
-  return su,setstatic  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1915,35 +1878,51 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
     pland:MarkToAll(string.format("Landing: d=%d m, h=%d m", x2, h2))
   end      
   
-  -- Give signal to land.
-  flight.flaghold:Set(1)
   
-  -- Get group template.
-  local Template=flight.group:GetTemplate()
-
-  -- Set route points.
-  Template.route.points=wp
-  
-  for i,unit in pairs(Template.units) do
-    local spot=parking[i] --Wrapper.Airbase#AIRBASE.ParkingSpot
+  local respawn=false
     
-    local element=flight:GetElementByName(unit.name)
-    if element then
-      --element.parking=spot      
-      unit.parking_landing=spot.TerminalID
-      local text=string.format("FF Reserving parking spot %d for unit %s", spot.TerminalID, tostring(unit.name))
-      self:I(self.lid..text)
-      self.parking[spot.TerminalID].Reserved=element.name
-    else
-      env.info("FF error could not get element to assign parking!")      
-    end
-  end      
+  if respawn then
   
-  -- Debug message.
-  MESSAGE:New(string.format("Respawning group %s", flight.groupname)):ToAll()
-
-  --Respawn the group.
-  flight.group=flight.group:Respawn(Template, true)
+    -- Get group template.
+    local Template=flight.group:GetTemplate()
+  
+    -- Set route points.
+    Template.route.points=wp
+    
+    for i,unit in pairs(Template.units) do
+      local spot=parking[i] --Wrapper.Airbase#AIRBASE.ParkingSpot
+      
+      local element=flight:GetElementByName(unit.name)
+      if element then
+      
+        -- Set the parking spot at the destination airbase.
+        unit.parking_landing=spot.TerminalID
+        
+        local text=string.format("FF Reserving parking spot %d for unit %s", spot.TerminalID, tostring(unit.name))
+        self:I(self.lid..text)
+        
+        -- Set parking to RESERVED.
+        self:SetParkingReserved(spot, element.name)
+        
+      else
+        env.info("FF error could not get element to assign parking!")      
+      end
+    end
+         
+    -- Debug message.
+    MESSAGE:New(string.format("Respawning group %s", flight.groupname)):ToAll()
+  
+    --Respawn the group.
+    flight:Respawn(Template)
+    --flight.group=flight.group:Respawn(Template, true)
+    
+  else
+    
+    
+    -- Give signal to land.
+    flight:ClearToLand()
+    
+  end
       
   -- Route the group.
   --flight.group:Route(wp, 1)

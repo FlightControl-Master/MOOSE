@@ -5539,7 +5539,7 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aiof
       end
       if asset.skill then
         unit.skill= asset.skill
-      end
+      end      
 
     end
 
@@ -5677,6 +5677,13 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
       if asset.payload then
         unit.payload=asset.payload.pylons        
       end
+      
+      if asset.modex then
+        unit.onboard_num=asset.modex[i]
+      end
+      if asset.callsign then
+        unit.callsign=asset.callsign[i]
+      end      
 
     end
 
