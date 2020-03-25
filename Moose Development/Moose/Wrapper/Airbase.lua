@@ -322,10 +322,10 @@ AIRBASE.SpotStatus = {
 -- @field #number DistToRwy Distance to runway in meters. Currently bugged and giving the same number as the TerminalID.
 -- @field #string AirbaseName Name of the airbase.
 -- @field #number MarkerID Numerical ID of marker placed at parking spot.
--- @field #boolean ClientSpot If true, a client unit sits at this parking spot (spawned or not).
+-- @field #string ClientSpot Client unit sitting at this spot or *nil*.
 -- @field #string Status Status of spot e.g. AIRBASE.SpotStatus.FREE.
--- @field #string OccupiedBy Name of the aircraft occupying the spot or "unknown". Can be nil if spot is not occupied.
--- @field #string ReservedBy Name of the aircraft for which this spot is reserved. Can be nil if spot is not reserved.
+-- @field #string OccupiedBy Name of the aircraft occupying the spot or "unknown". Can be *nil* if spot is not occupied.
+-- @field #string ReservedBy Name of the aircraft for which this spot is reserved. Can be *nil* if spot is not reserved.
 
 --- Terminal Types of parking spots. See also https://wiki.hoggitworld.com/view/DCS_func_getParking
 --
@@ -713,12 +713,12 @@ function AIRBASE:GetParkingSpotsTable(termtype)
         local dist=coord:Get2DDistance(_coord)
         
         if dist<=5 then
-          return true
+          return clientname
         end
         
       end
     end
-    return false
+    return nil
   end    
 
   -- Put coordinates of parking spots into table.

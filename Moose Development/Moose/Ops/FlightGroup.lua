@@ -799,14 +799,19 @@ end
 -- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol The FLIGHTCONTROL object.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetFlightControl(flightcontrol)
-  self:I(self.lid..string.format("Setting FLIGHTCONTROL to airbase %s", flightcontrol.airbasename))
   
   -- Remove flight from previous FC.
-  if self.flightcontrol and self.flightcontrol.airbasename~=flightcontrol.airbasename then
-    self.flightcontrol:_RemoveFlight(self)
+  if self.flightcontrol then
+    if self.flightcontrol.airbasename==flightcontrol.airbasename then
+      -- Flight control is already controlling this flight!
+      return
+    else
+      self.flightcontrol:_RemoveFlight(self)
+    end
   end
   
   -- Set FC.
+  self:I(self.lid..string.format("Setting FLIGHTCONTROL to airbase %s", flightcontrol.airbasename))
   self.flightcontrol=flightcontrol
   
   -- Add flight to all flights.
@@ -1331,6 +1336,23 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterStop(From, Event, To)
+
+  -- Check if group is still alive.
+  if self:IsAlive() then
+  
+    -- Set element parking spot to FREE (after arrived for example).
+    if self.flightcontrol then
+      for _,_element in pairs(self.elements) do
+        local element=_element --#FLIGHTGROUP.Element
+        if element.parking then
+          self.flightcontrol:SetParkingFree(element.parking)
+        end
+      end
+    end
+      
+    -- Destroy group.
+    self.group:Destroy()
+  end
 
   -- Handle events:
   self:UnHandleEvent(EVENTS.Birth)
@@ -1902,7 +1924,7 @@ function FLIGHTGROUP:OnEventRemoveUnit(EventData)
 
     if element then
       self:T3(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
-      self:ElementDead(element)
+      --self:ElementDead(element)
     end
 
   end
@@ -1994,7 +2016,7 @@ function FLIGHTGROUP:onafterElementTaxiing(From, Event, To, Element)
   local TerminalID=Element.parking and tostring(Element.parking.TerminalID) or "N/A"
 
   -- Debug info.
-  self:T(self.lid..string.format("Element taxiing %s. Parking spot %s is now free", Element.name, TerminalID))
+  self:I(self.lid..string.format("Element taxiing %s. Parking spot %s is now free", Element.name, TerminalID))
   
   -- Set parking to FREE.
   if self.flightcontrol and Element.parking then
@@ -2273,6 +2295,8 @@ function FLIGHTGROUP:onafterFlightArrived(From, Event, To)
     -- Add flight to arrived queue.
     self.flightcontrol:_AddFlightToArrivedQueue(self)
   end
+  
+  self:__Stop(5*60)
   
 end
 

@@ -335,10 +335,17 @@ function FLIGHTCONTROL:onafterStatus()
   --TODO: get and substract number of reserved parking spots.
   local nfree=self.Nparkingspots-NQarrived-NQparking
 
+  local Nfree=self:CountParking(AIRBASE.SpotStatus.FREE)
+  local Noccu=self:CountParking(AIRBASE.SpotStatus.OCCUPIED)
+  local Nresv=self:CountParking(AIRBASE.SpotStatus.RESERVED)
+  
+  if Nfree+Noccu+Nresv~=self.Nparkingspots then
+    self:E(self.lid..string.format("WARNING: Number of parking spots does not match! Nfree=%d, Noccu=%d, Nreserved=%d %d != %d total"), Nfree, Noccu, Nresv, self.Nparkingspots)
+  end
 
   -- Info text.
-  local text=string.format("State %s - Runway %s - Parking %d/%d - Flights=%s: Qpark=%d Qtxout=%d Qready=%d Qto=%d | Qinbound=%d Qhold=%d Qland=%d Qtxinb=%d Qarr=%d", 
-  self:GetState(), runway.idx, nfree, self.Nparkingspots, #self.flights, #self.Qparking, #self.Qtaxiout, #self.Qreadyto, #self.Qtakeoff, #self.Qinbound, #self.Qholding, #self.Qlanding, #self.Qtaxiinb, #self.Qarrived)
+  local text=string.format("State %s - Runway %s - Parking %d/%d/%d of %d - Flights=%s: Qpark=%d Qtxout=%d Qready=%d Qto=%d | Qinbound=%d Qhold=%d Qland=%d Qtxinb=%d Qarr=%d", 
+  self:GetState(), runway.idx, Nfree, Noccu, Nresv, self.Nparkingspots, #self.flights, #self.Qparking, #self.Qtaxiout, #self.Qreadyto, #self.Qtakeoff, #self.Qinbound, #self.Qholding, #self.Qlanding, #self.Qtaxiinb, #self.Qarrived)
   self:I(self.lid..text)
   
   if Nflights==Nqueues then
@@ -1088,6 +1095,9 @@ function FLIGHTCONTROL:_InitParkingSpots()
     -- Mark position.
     local text=string.format("Parking ID=%d, Terminal=%d: Free=%s, Client=%s, Dist=%.1f", spot.TerminalID, spot.TerminalType, tostring(spot.Free), tostring(spot.ClientSpot), spot.DistToRwy)
     self:I(self.lid..text)
+
+    -- Add to table.
+    self.parking[spot.TerminalID]=spot
     
     -- Set spot to occupied.
     if spot.Free then
@@ -1098,9 +1108,6 @@ function FLIGHTCONTROL:_InitParkingSpots()
     
     --TODO: scan spot for objects.
     
-    -- Add to table.
-    self.parking[spot.TerminalID]=spot
-    
     -- Increase counter
     self.Nparkingspots=self.Nparkingspots+1
   end
@@ -1110,7 +1117,7 @@ end
 --- Get parking spot by its Terminal ID.
 -- @param #FLIGHTCONTROL self
 -- @param #number TerminalID
--- @return Wrapper.Airbase#AIRBASE Parking spot data table.
+-- @return Wrapper.Airbase#AIRBASE.ParkingSpot Parking spot data table.
 function FLIGHTCONTROL:GetParkingSpotByID(TerminalID)
   return self.parking[TerminalID]
 end
@@ -1120,6 +1127,7 @@ end
 -- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot The parking spot data table.
 function FLIGHTCONTROL:SetParkingFree(spot)
 
+  local spot=self:GetParkingSpotByID(spot.TerminalID)
   spot.Status=AIRBASE.SpotStatus.FREE
   spot.OccupiedBy=nil
   spot.ReservedBy=nil
@@ -1134,6 +1142,7 @@ end
 -- @param #string unitname Name of the unit occupying the spot. Default "unknown". 
 function FLIGHTCONTROL:SetParkingReserved(spot, unitname)
 
+  local spot=self:GetParkingSpotByID(spot.TerminalID)
   spot.Status=AIRBASE.SpotStatus.RESERVED
   spot.ReservedBy=unitname or "unknown"
   
@@ -1147,6 +1156,7 @@ end
 -- @param #string unitname Name of the unit occupying the spot. Default "unknown".
 function FLIGHTCONTROL:SetParkingOccupied(spot, unitname)
 
+  local spot=self:GetParkingSpotByID(spot.TerminalID)
   spot.Status=AIRBASE.SpotStatus.OCCUPIED
   spot.OccupiedBy=unitname or "unknown"
   
@@ -1159,22 +1169,29 @@ end
 -- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot The parking spot data table.
 function FLIGHTCONTROL:UpdateParkingMarker(spot)
 
+  local spot=self:GetParkingSpotByID(spot.TerminalID)
+
   if spot.MarkerID then
     spot.Coordinate:RemoveMark(spot.MarkerID)
   end
   
-  local text=string.format("Spot %d (type %d) status=%s", spot.TerminalID, spot.TerminalType, spot.Status)
-  if spot.OccupiedBy then
-    text=text..string.format("Occupied by %s", spot.OccupiedBy)
+  -- Only mark OCCUPIED and RESERVED spots.
+  if spot.Status~=AIRBASE.SpotStatus.FREE then
+  
+    local text=string.format("Spot %d (type %d): %s", spot.TerminalID, spot.TerminalType, spot.Status:upper())
+    if spot.OccupiedBy then
+      text=text..string.format("\nOccupied by %s", spot.OccupiedBy)
+    end
+    if spot.ReservedBy then
+      text=text..string.format("\nReserved for %s", spot.ReservedBy)
+    end  
+    if spot.ClientSpot then
+      text=text..string.format("\nClient %s", tostring(spot.ClientSpot))
+    end
+  
+    spot.MarkerID=spot.Coordinate:MarkToAll(text, true)
+    
   end
-  if spot.ReservedBy then
-    text=text..string.format("Reserved for %s", spot.ReservedBy)
-  end  
-  if spot.ClientSpot then
-    text=text..string.format("Client %s", spot.ClientSpot)
-  end
-
-  spot.MarkerID=spot.Coordinate:MarkToAll(text, true)
 end
 
 --- Check if parking spot is free.
@@ -1201,7 +1218,7 @@ end
 --- Check if a parking spot is reserved by a flight group.
 -- @param #FLIGHTCONTROL self
 -- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot Parking spot to check.
--- @return #string Name of element or nil.
+-- @return #string Name of element or *nil*.
 function FLIGHTCONTROL:IsParkingReserved(spot)
 
   if spot.Status==AIRBASE.SpotStatus.RESERVED then
@@ -1281,6 +1298,24 @@ function FLIGHTCONTROL:GetClosestParkingSpot(coordinate, terminaltype, free)
   end
   
   return spotmin
+end
+
+--- Count number of parking spots.
+-- @param #FLIGHTCONTROL self
+-- @param #string SpotStatus (Optional) Status of spot.
+-- @return #number Number of parking spots.
+function FLIGHTCONTROL:CountParking(SpotStatus)
+
+  local n=0
+  for _,_spot in pairs(self.parking) do
+    local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
+    if SpotStatus==nil or SpotStatus==spot.Status then
+      n=n+1
+    end
+  
+  end
+
+  return n
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1879,7 +1914,7 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   end      
   
   
-  local respawn=false
+  local respawn=true
     
   if respawn then
   
