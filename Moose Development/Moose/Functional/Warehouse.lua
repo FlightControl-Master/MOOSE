@@ -3846,7 +3846,9 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     if group:IsAlive()==true then
       self:_DebugMessage(string.format("Removing group %s.", group:GetName()), 5)
       -- Setting parameter to false, i.e. creating NO dead or remove unit event, seems to not confuse the dispatcher logic.
-      group:Destroy(false)
+      -- Create a RemoveUnit event to let the FLIGHTCONTROL now, the parking is now free.
+      -- TODO: Need to check if my above comment not to confuse the dispatcher logic is broken by this!
+      group:Destroy()
     end
 
   else

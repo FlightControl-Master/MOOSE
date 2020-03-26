@@ -126,7 +126,7 @@ FLIGHTCONTROL.version="0.2.5"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
 -- TODO: Accept and forbit parking spots.
--- TODO: Add FARPS?
+-- NOGO: Add FARPS?
 -- TODO: Add helos.
 -- TODO: Talk me down option.
 -- TODO: ATIS option.
@@ -546,8 +546,7 @@ function FLIGHTCONTROL:_CheckQueues()
     
           -- Give AI the landing signal.
           -- TODO: Humans have to confirm via F10 menu.
-          if flight.ai then      
-            flight:FlightLanding()
+          if flight.ai then
             self:_LandAI(flight, parking)
           end
         
@@ -689,7 +688,7 @@ function FLIGHTCONTROL:_GetNextFightHolding()
   local function _sortByTholding(a, b)
     local flightA=a --Ops.FlightGroup#FLIGHTGROUP
     local flightB=b --Ops.FlightGroup#FLIGHTGROUP
-    return flightA.Tholding>flightB.Tholding
+    return flightA.Tholding<flightB.Tholding  -- Tholding is the abs. timestamp. So the one with the smallest time is holding the longest.
   end
 
 
@@ -739,11 +738,17 @@ function FLIGHTCONTROL:_GetNextFightParking()
   local function _sortByTparking(a, b)
     local flightA=a --Ops.FlightGroup#FLIGHTGROUP
     local flightB=b --Ops.FlightGroup#FLIGHTGROUP
-    return flightA.Tparking>flightB.Tparking
+    return flightA.Tparking<flightB.Tparking -- Tholding is the abs. timestamp. So the one with the smallest time is holding the longest.
   end
 
   -- Return flight waiting longest.
-  table.sort(self.Qparking, _sortByTparking)  
+  table.sort(self.Qparking, _sortByTparking)
+  
+  for i,_flight in pairs(self.Qparking) do
+    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
+    env.info(string.format("%d %s %.1f", i, flight.groupname, flight.Tparking))
+  end
+  
   return self.Qparking[1]
 end
 
@@ -1914,7 +1919,7 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   end      
   
   
-  local respawn=true
+  local respawn=false
     
   if respawn then
   
@@ -1949,18 +1954,13 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   
     --Respawn the group.
     flight:Respawn(Template)
-    --flight.group=flight.group:Respawn(Template, true)
     
   else
-    
-    
+       
     -- Give signal to land.
     flight:ClearToLand()
     
   end
-      
-  -- Route the group.
-  --flight.group:Route(wp, 1)
   
 end
 

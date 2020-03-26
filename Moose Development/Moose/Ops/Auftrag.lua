@@ -281,7 +281,7 @@ function AUFTRAG:New(Type)
   -- Defaults
   self:SetName()
   self:SetPriority()
-  self:SetMissionTime()
+  self:SetTime()
   self.engageAsGroup=true
   
   self.missionRepeated=0
@@ -778,7 +778,7 @@ end
 -- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
 -- @param #string ClockStop (Optional) Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
 -- @return #AUFTRAG self
-function AUFTRAG:SetMissionTime(ClockStart, ClockStop)
+function AUFTRAG:SetTime(ClockStart, ClockStop)
 
   -- Current mission time.
   local Tnow=timer.getAbsTime()
@@ -826,6 +826,15 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:SetRepeatOnFailure(Nrepeat)
   self.missionRepeatMax=Nrepeat or 0
+  return self
+end
+
+--- Define how many assets are required to do the job.
+-- @param #AUFTRAG self
+-- @param #number Nassets Number of asset groups. Default 1.
+-- @return #AUFTRAG self
+function AUFTRAG:SetRequiredAssets(Nassets)
+  self.nassets=Nassets or 1
   return self
 end
 

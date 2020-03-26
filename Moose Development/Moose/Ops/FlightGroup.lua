@@ -1338,7 +1338,7 @@ end
 function FLIGHTGROUP:onafterStop(From, Event, To)
 
   -- Check if group is still alive.
-  if self:IsAlive() then
+  if self:IsAlive() and false then
   
     -- Set element parking spot to FREE (after arrived for example).
     if self.flightcontrol then
@@ -1923,8 +1923,8 @@ function FLIGHTGROUP:OnEventRemoveUnit(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:T3(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
-      --self:ElementDead(element)
+      self:I(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
+      self:ElementDead(element)            
     end
 
   end
@@ -2113,6 +2113,10 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
   self:T(self.lid..string.format("Element dead %s.", Element.name))
+
+  if self.flightcontrol and Element.parking then
+    self.flightcontrol:SetParkingFree(Element.parking)
+  end      
   
   -- Not parking any more.
   Element.parking=nil
@@ -2313,7 +2317,7 @@ function FLIGHTGROUP:onafterFlightDead(From, Event, To)
   self.groupinitialized=false
   
   -- Remove flight from all FC queues.
-  if self.flightcontrol then
+  if self.flightcontrol then  
     self.flightcontrol:_RemoveFlight(self)
     self.flightcontrol=nil
   end
@@ -2738,21 +2742,22 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   -- Clear all tasks.
   self:ClearTasks()
   
-  -- Set holding flag to 333.
-  self.flaghold:Set(333)
+  -- Set holding flag to 0=false.
+  self.flaghold:Set(0)
   
   -- Task fuction when reached holding point.
   local TaskArrived=self.group:TaskFunction("FLIGHTGROUP._ReachedHolding", self)
 
-  -- Orbit until flaghold=1 (true) but max 10 min.
+  -- Orbit until flaghold=1 (true) but max 10 min if no FC is giving the landing clearance.
   local TaskOrbit=self.group:TaskOrbit(p0, nil, UTILS.KnotsToMps(SpeedHold), p1)
-  local TaskLand=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, 10*60)
+  local TaskLand=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, fc and nil or 10*60)
   local TaskHold=self.group:TaskControlled(TaskOrbit, TaskLand)
+  local TaskKlar=self.group:TaskFunction("FLIGHTGROUP._ClearedToLand", self)  -- Once the holding flag becomes true, set trigger FLIGHTLANDING, i.e. set flight STATUS to LANDING.
   
   -- Waypoints from current position to holding point.
   local wp={}
   wp[#wp+1]=c0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
-  wp[#wp+1]=p0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskHold}, "Holding Point")
+  wp[#wp+1]=p0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskHold, TaskKlar}, "Holding Point")
   
    -- Approach point: 10 NN in direction of runway.
   local papp=airbase:GetCoordinate():Translate(x1, runway.heading-180):SetAltitude(h1)
@@ -2921,8 +2926,8 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterHolding(From, Event, To)
 
-  -- Set holding flag to 666.
-  self.flaghold:Set(666)
+  -- Set holding flag to 0 (just in case).
+  self.flaghold:Set(0)
 
   local text=string.format("Flight group %s is HOLDING now", self.groupname)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
@@ -3739,6 +3744,16 @@ function FLIGHTGROUP._ReachedHolding(group, flightgroup)
 
   -- Trigger Holding event.
   flightgroup:__Holding(-1)
+end
+
+--- Function called when flight has reached the holding point.
+-- @param Wrapper.Group#GROUP group Group object.
+-- @param #FLIGHTGROUP flightgroup Flight group object.
+function FLIGHTGROUP._ClearedToLand(group, flightgroup)
+  flightgroup:I(flightgroup.lid..string.format("Group was cleared to land"))
+
+  -- Trigger FlightLanding event.
+  flightgroup:__FlightLanding(-1)
 end
 
 --- Function called when flight finished refuelling.

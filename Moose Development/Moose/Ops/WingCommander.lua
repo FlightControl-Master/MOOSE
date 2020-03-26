@@ -64,15 +64,18 @@ WINGCOMMANDER.version="0.0.3"
 
 --- Create a new WINGCOMMANDER object and start the FSM.
 -- @param #WINGCOMMANDER self
--- @param Core.Set#SET_UNITS AgentSet Set of agents (units) providing intel. 
+-- @param Core.Set#SET_GROUP AgentSet Set of agents (groups) providing intel. Default is an empty set.
+-- @param #number Coalition Coalition side, e.g. `coaliton.side.BLUE`. Can also be passed as a string "red", "blue" or "neutral".
 -- @return #WINGCOMMANDER self
-function WINGCOMMANDER:New(AgentSet)
+function WINGCOMMANDER:New(AgentSet, Coalition)
+
+  AgentSet=AgentSet or SET_GROUP:New()
 
   -- Inherit everything from INTEL class.
   local self=BASE:Inherit(self, INTEL:New(AgentSet)) --#WINGCOMMANDER
 
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("WINGCOMMANDER | ")
+  --self.lid=string.format("WINGCOMMANDER | ")
 
   -- Add FSM transitions.
   --                 From State   -->      Event           -->     To State

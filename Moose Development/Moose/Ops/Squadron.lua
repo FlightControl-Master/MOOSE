@@ -255,6 +255,15 @@ function SQUADRON:SetCallsign(Callsign, Index)
   return self
 end
 
+--- Set modex.
+-- @param #SQUADRON self
+-- @param #string Modex
+-- @return #SQUADRON self
+function SQUADRON:SetModex(Modex)
+  self.modex=Modex
+  return self
+end
+
 --- Set airwing.
 -- @param #SQUADRON self
 -- @param Ops.AirWing#AIRWING Airwing The airwing.
@@ -303,7 +312,7 @@ function SQUADRON:GetCallsign(Asset)
     
       local callsign={}
       callsign[1]=self.callsignName
-      callsign[2]=self.callsigncounter / 10
+      callsign[2]=math.floor(self.callsigncounter / 10)
       callsign[3]=self.callsigncounter % 10
       if callsign[3]==0 then
         callsign[3]=1
@@ -313,6 +322,8 @@ function SQUADRON:GetCallsign(Asset)
       end
     
       Asset.callsign[i]=callsign
+      
+      self:I({callsign=callsign})
     
       --TODO: there is also a table entry .name, which is a string.
     end
@@ -328,15 +339,17 @@ end
 -- @return #SQUADRON self
 function SQUADRON:GetModex(Asset)
 
-  if self.callsignName then
+  if self.modex then
   
     Asset.modex={}
   
     for i=1,Asset.nunits do
     
-      Asset.modex[i]=tostring(self.modex+self.modexcounter)
+      Asset.modex[i]=string.format("%03d", self.modex+self.modexcounter)
       
       self.modexcounter=self.modexcounter+1
+      
+      self:I({modex=Asset.modex[i]})
     
     end
     

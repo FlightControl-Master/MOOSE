@@ -73,6 +73,7 @@ INTEL.version="0.0.3"
 
 -- DONE: Accept zones.
 -- TODO: Reject zones.
+-- TODO: Filter detection methods.
 -- NOGO: SetAttributeZone --> return groups of generalized attributes in a zone.
 -- DONE: Loose units only if they remain undetected for a given time interval. We want to avoid fast oscillation between detected/lost states. Maybe 1-5 min would be a good time interval?!
 -- DONE: Combine units to groups for all, new and lost.
@@ -93,23 +94,20 @@ function INTEL:New(DetectionSet, Coalition)
   local self=BASE:Inherit(self, FSM:New()) -- #INTEL
 
   -- Detection set.
-  self.detectionset=DetectionSet
-  
-  local alias="SPECTRE"
-  
-  --[[
+  self.detectionset=DetectionSet or SET_GROUP:New()
   
   -- Determine coalition from first group in set.
-  self.coalition=DetectionSet:GetFirst():GetCoalition()
+  self.coalition=Coalition or DetectionSet:CountAlive()>0 and DetectionSet:GetFirst():GetCoalition() or nil
   
-  local alias="SPECTRE"
-  if self.coalition==coalition.side.RED then
-    alias="KGB"
-  elseif self.coalition==coalition.side.BLUE then
-    alias="CIA"
+  -- Set alias.
+  local alias="SPECTRE"  
+  if self.coalition then
+    if self.coalition==coalition.side.RED then
+      alias="KGB"
+    elseif self.coalition==coalition.side.BLUE then
+      alias="CIA"
+    end
   end
-  
-  ]]
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("INTEL %s | ", alias)
@@ -122,7 +120,7 @@ function INTEL:New(DetectionSet, Coalition)
   self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
   self:AddTransition("*",             "Status",             "*")           -- INTEL status update
   
-  self:AddTransition("*",             "Detect",             "*")           -- INTEL status update
+  self:AddTransition("*",             "Detect",             "*")           -- Start detection run. Not implemented yet!
   
   self:AddTransition("*",             "NewContact",         "*")           -- New contact has been detected.
   self:AddTransition("*",             "LostContact",        "*")           -- Contact could not be detected any more.
