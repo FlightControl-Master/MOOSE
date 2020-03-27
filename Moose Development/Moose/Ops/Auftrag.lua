@@ -1,8 +1,14 @@
---- **Ops** - Auftrag (mission) for Ops.
+--- **Ops** - Auftrag (mission) for Air to Air and Air to Surface Ops.
 --
 -- **Main Features:**
 --
---    * Create mission for ops.
+--    * Simplifies setting DCS tasks.
+--    * Handy events.
+--    * Set mission start/stop times.
+--    * Set mission priority and urgency (can cancel running missions).
+--    * Interface to FLIGHTGROUP, AIRWING and WINGCOMMANDER classes.
+--    
+--    
 --
 --
 -- ===
@@ -60,7 +66,7 @@
 -- @field #number requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
 -- @field #boolean cancelContactLost If true, cancel mission if the contact is lost.
 -- 
--- @field #string missionTask Mission task. Seed ENUMS.MissionTask.
+-- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
 -- @field #number missionAltitude Mission altitude in meters.
 -- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
 -- @field #table enrouteTasks Mission enroute tasks.
@@ -85,6 +91,9 @@
 -- ![Banner Image](..\Presentations\CarrierAirWing\AUFTRAG_Main.jpg)
 --
 -- # The AUFTRAG Concept
+-- 
+-- As you probably know, setting tasks in DCS is often tedious. The AUFTRAG class significantly simplifies the necessary workflow by using optimized default parameters.
+-- Also, a lot of additional useful events are created.
 --
 -- # Events
 -- 
@@ -201,23 +210,25 @@ AUFTRAG.FlightStatus={
   CANCELLED="cancelled",
 }
 
---- 
+--- Target type.
 -- @type AUFTRAG.TargetType
--- @field #string GROUP Group target.
--- @field #string UNIT Unit target.
--- @field #string STATIC Static target.
--- @field #string COORDINATE Target coordinates.
+-- @field #string GROUP Target is a GROUP object.
+-- @field #string UNIT Target is a UNIT object.
+-- @field #string STATIC Target is a STATIC object.
+-- @field #string COORDINATE Target is a COORDINATE.
+-- @field #string AIRBASE Target is an AIRBASE.
 AUFTRAG.TargetType={
   GROUP="Group",
   UNIT="Unit",
   STATIC="Static",
   COORDINATE="Coordinate",
+  AIRBASE="Airbase",
 }
 
 --- 
 -- @type AUFTRAG.TargetData
 -- @field Wrapper.Positionable#POSITIONABLE Target Target Object.
--- @field #string Type Target type: "Group", "Unit", "Static", "Coordinate"
+-- @field #string Type Target type: "Group", "Unit", "Static", "Coordinate", "Airbase.
 
 --- Mission success.
 -- @type AUFTRAG.Success
@@ -243,6 +254,7 @@ AUFTRAG.version="0.0.9"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Mission success options damaged, destroyed.
 -- DONE: Mission ROE and ROT.
 -- TODO: Mission formation, etc.
 -- DONE: FSM events.
@@ -515,7 +527,7 @@ function AUFTRAG:NewCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAP, Targ
   mission:_SetLogID()
 
   mission.missionTask=ENUMS.MissionTask.CAP    
-  mission.optionROE=ENUMS.ROE.WeaponFree
+  mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
   
   mission.DCStask=mission:GetDCSMissionTask()
@@ -546,15 +558,16 @@ function AUFTRAG:NewCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, Targ
 
   -- CAS paramters.
   mission.type=AUFTRAG.Type.CAS
+  
   mission.engageZone=ZoneCAS or ZONE_RADIUS:New("CAS Zone", OrbitCoordinate:GetVec2(), Leg)
   mission.engageTargetTypes=TargetTypes or {"Helicopters", "Ground Units", "Light armed ships"}
   
   mission:_SetLogID()
-
-  --mission.missionTask=ENUMS.MissionTask.CAS  
-  mission.optionROE=ENUMS.ROE.WeaponFree
-  mission.optionROT=ENUMS.ROT.EvadeFire
   
+  mission.missionTask=ENUMS.MissionTask.CAS  
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.EvadeFire
+
   mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
@@ -653,7 +666,7 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
   local mission=AUFTRAG:New(AUFTRAG.Type.BOMBRUNWAY)
   
   -- DCS task options:
-  mission.engageAirbase=Airdrome
+  mission.engageTarget=mission:_TargetFromObject(Airdrome)
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyBomb
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
@@ -904,7 +917,7 @@ end
 
 --- Set Rules of Engagement (ROE) for this mission.
 -- @param #AUFTRAG self
--- @param #string roe Mision ROE.
+-- @param #string roe Mission ROE.
 -- @return #AUFTRAG self
 function AUFTRAG:SetROE(roe)
   
@@ -916,7 +929,7 @@ end
 
 --- Set Reaction on Threat (ROT) for this mission.
 -- @param #AUFTRAG self
--- @param #string roe Mision ROT.
+-- @param #string roe Mission ROT.
 -- @return #AUFTRAG self
 function AUFTRAG:SetROE(rot)
   
@@ -1767,7 +1780,29 @@ function AUFTRAG:GetDCSMissionTask()
     local DCStask=CONTROLLABLE.TaskBombing(nil, Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, Divebomb)
   
     table.insert(DCStasks, DCStask)
+    
+  elseif self.type==AUFTRAG.Type.BOMBRUNWAY then
   
+    ------------------------
+    -- BOMBRUNWAY Mission --
+    ------------------------
+    
+    local DCStask=CONTROLLABLE.TaskBombingRunway(nil, self.engageTarget.Target, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAsGroup)
+  
+    table.insert(DCStasks, DCStask)    
+
+  elseif self.type==AUFTRAG.Type.BOMBCARPET then
+  
+    ------------------------
+    -- BOMBCARPET Mission --
+    ------------------------
+    
+    local Vec2=self:GetTargetCoordinate():GetVec2()
+    
+    local DCStask=CONTROLLABLE.TaskCarpetBombing(nil, Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, CarpetLength)
+  
+    table.insert(DCStasks, DCStask)    
+
   elseif self.type==AUFTRAG.Type.CAP then
   
     -----------------
@@ -1776,8 +1811,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(nil, self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
     
-    --table.insert(self.enrouteTasks, DCStask)
-    --table.insert(DCStasks, DCStask)
+    table.insert(self.enrouteTasks, DCStask)
   
   elseif self.type==AUFTRAG.Type.CAS then
   
@@ -1788,7 +1822,6 @@ function AUFTRAG:GetDCSMissionTask()
     local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(nil, self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
     
     table.insert(self.enrouteTasks, DCStask)
-    --table.insert(DCStasks, DCStask)
 
   elseif self.type==AUFTRAG.Type.ESCORT then
   
@@ -1915,7 +1948,7 @@ function AUFTRAG:GetDCSMissionTask()
   -- Count mission targets.
   self.Ntargets=self:CountMissionTargets()
   
-  self:I({missiontask=DCStasks})
+  self:I({Ntargets=self.Ntargets, missiontask=DCStasks})
 
   -- Return the task.
   if #DCStasks==1 then
@@ -1973,9 +2006,13 @@ function AUFTRAG:_TargetFromObject(Object)
   elseif Object:IsInstanceOf("COORDINATE") then
   
     target.Type=AUFTRAG.TargetType.COORDINATE
+    
+  elseif Object:IsInstanceOf("AIRBASE") then
+  
+    target.Type=AUFTRAG.TargetType.AIRBASE
   
   else
-    self:E(self.lid.."ERROR: Unknown object given as target. Needs to be a GROUP, UNIT, STATIC or COORDINATE")
+    self:E(self.lid.."ERROR: Unknown object given as target. Needs to be a GROUP, UNIT, STATIC, COORDINATE")
     return nil
   end
   

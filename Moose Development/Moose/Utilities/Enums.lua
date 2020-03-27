@@ -18,6 +18,11 @@ ENUMS = {}
 
 --- Rules of Engagement.
 -- @type ENUMS.ROE
+-- @field #number WeaponFree AI will engage any enemy group it detects. Target prioritization is based based on the threat of the target.
+-- @field #number OpenFireWeaponFree AI will engage any enemy group it detects, but will prioritize targets specified in the groups tasking.
+-- @field #number OpenFire AI will engage only targets specified in its taskings.
+-- @field #number ReturnFire AI will only engage threats that shoot first.
+-- @field #number WeaponHold AI will hold fire under all circumstances.
 ENUMS.ROE = {
   WeaponFree=0,
   OpenFireWeaponFree=1,
@@ -28,11 +33,16 @@ ENUMS.ROE = {
 
 --- Reaction On Threat.
 -- @type ENUMS.ROT
+-- @field #number NoReaction No defensive actions will take place to counter threats.
+-- @field #number PassiveDefense AI will use jammers and other countermeasures in an attempt to defeat the threat. AI will not attempt a maneuver to defeat a threat.
+-- @field #number EvadeFire AI will react by performing defensive maneuvers against incoming threats. AI will also use passive defense.
+-- @field #number BypassAndEscape AI will attempt to avoid enemy threat zones all together. This includes attempting to fly above or around threats.
+-- @field #number AllowAbortMission If a threat is deemed severe enough the AI will abort its mission and return to base.
 ENUMS.ROT = {
   NoReaction=0,
   PassiveDefense=1,
   EvadeFire=2,
-  ByPassAndEscape=3,
+  BypassAndEscape=3,
   AllowAbortMission=4,
 }
 
