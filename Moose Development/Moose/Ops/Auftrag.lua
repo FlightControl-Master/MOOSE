@@ -551,7 +551,7 @@ function AUFTRAG:NewCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, Targ
   
   mission:_SetLogID()
 
-  mission.missionTask=ENUMS.MissionTask.CAS  
+  --mission.missionTask=ENUMS.MissionTask.CAS  
   mission.optionROE=ENUMS.ROE.WeaponFree
   mission.optionROT=ENUMS.ROT.EvadeFire
   
@@ -1776,7 +1776,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(nil, self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
     
-    table.insert(self.enrouteTasks, DCStask)
+    --table.insert(self.enrouteTasks, DCStask)
     --table.insert(DCStasks, DCStask)
   
   elseif self.type==AUFTRAG.Type.CAS then
