@@ -1043,6 +1043,7 @@ end
 
 --- Makes the groups visible before start (like a batallion).
 -- The method will take the position of the group as the first position in the array.
+-- CAUTION: this directive will NOT work with OnSpawnGroup function.
 -- @param #SPAWN self
 -- @param #number SpawnAngle The angle in degrees how the groups and each unit of the group will be positioned.
 -- @param #number SpawnWidth The amount of Groups that will be positioned on the X axis.
