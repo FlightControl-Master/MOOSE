@@ -80,7 +80,7 @@ ENUMS.WeaponFlag={
 -- @field #string PINPOINTSTRIKE Pinpoint strike.
 -- @field #string RECONNAISSANCE Reconnaissance mission.
 -- @field #string REFUELLING Refuelling mission.
--- @field #string RUNWAYATTAC Attack the runway of an airdrome.
+-- @field #string RUNWAYATTACK Attack the runway of an airdrome.
 -- @field #string SEAD Suppression of Enemy Air Defenses.
 -- @field #string TRANSPORT Troop transport.
 ENUMS.MissionTask={

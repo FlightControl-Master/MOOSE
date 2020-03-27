@@ -18,6 +18,9 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table airwings Table of airwings.
 -- @field #table missionqueue Mission queue.
+-- @field Core.Set#SET_ZONE borderzoneset Set of zones defining the border of our territory.
+-- @field Core.Set#SET_ZONE yellowzoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
+-- @field Core.Set#SET_ZONE engagezoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
 -- @extends Ops.Intelligence#INTEL
 
 --- Be surprised!
@@ -37,12 +40,26 @@ WINGCOMMANDER = {
   lid            =   nil,
   airwings       =    {},
   missionqueue   =    {},
+  borderzoneset  =   nil,
+  yellowzoneset  =   nil,
+  engagezoneset  =   nil,
 }
 
 --- Contact details.
 -- @type WINGCOMMANDER.Contact
 -- @field Ops.Auftrag#AUFTRAG mission The assigned mission.
 -- @extends Ops.Intelligence#INTEL.DetectedItem
+
+--- Defence condition.
+-- @type WINGCOMMANDER.DefCon
+-- @field #string GREEN No enemy activities detected.
+-- @field #string YELLOW Enemy near our border.
+-- @field #string RED Enemy within our border.
+WINGCOMMANDER.DefCon = {
+  GREEN="Green",
+  YELLOW="Yellow",
+  RED="Red",
+}
 
 --- WINGCOMMANDER class version.
 -- @field #string version
@@ -76,6 +93,8 @@ function WINGCOMMANDER:New(AgentSet, Coalition)
 
   -- Set some string id for output to DCS.log file.
   --self.lid=string.format("WINGCOMMANDER | ")
+
+  self:SetBorderZones()
 
   -- Add FSM transitions.
   --                 From State   -->      Event           -->     To State
@@ -170,6 +189,30 @@ function WINGCOMMANDER:RemoveMission(Mission)
     
   end
 
+  return self
+end
+
+--- Set accept zones. Only contacts detected in this/these zone(s) are considered. 
+-- @param #WINGCOMMANDER self
+-- @param Core.Set#SET_ZONE BorderZoneSet Set of zones, defining our borders.
+-- @return #WINGCOMMANDER self
+function WINGCOMMANDER:SetBorderZones(BorderZoneSet)
+  self.borderzoneset=BorderZoneSet or SET_ZONE:New()
+  
+  for _,zone in pairs(self.borderzoneset.Set) do
+    self:AddAcceptZone(zone)
+  end
+  return self
+end
+
+--- Set accept zones. Only contacts detected in this zone are considered. 
+-- @param #WINGCOMMANDER self
+-- @param Core.Zone#ZONEBorderZone Add a zone to the accept zone set.
+-- @return #WINGCOMMANDER self
+function WINGCOMMANDER:AddBorderZone(BorderZone)
+  self.borderzoneset:AddZone(BorderZone)
+  
+  self:AddAcceptZone(BorderZone)
   return self
 end
 
@@ -346,10 +389,10 @@ function WINGCOMMANDER:GetAirwingForMission(Mission)
       if coord then
       
         -- Distance from airwing to target.
-        local dist=coord:Get2DDistance(airwing:GetCoordinate())
+        local dist=UTILS.MetersToNM(coord:Get2DDistance(airwing:GetCoordinate()))
       
         -- Add airwing to table of airwings that can.
-        table.insert(airwings, {airwing=airwing, dist=dist, targetcoord=coord})
+        table.insert(airwings, {airwing=airwing, dist=dist, targetcoord=coord, nassets=#assets})
         
       end
       
@@ -360,9 +403,19 @@ function WINGCOMMANDER:GetAirwingForMission(Mission)
   -- Can anyone?
   if #airwings>0 then
   
-    -- Sort table wrt distace
+    --- Something like:
+    -- * Closest airwing that can should be first prio.
+    -- * However, there should be a certain "quantization". if wing is 50 or 60 NM way should not really matter. In that case, the airwing with more resources should get the job.
+    local function score(a)
+      local d=math.round(a.dist/10)
+    end
+  
+    -- Sort table wrt distance and number of assets.
+    -- Distances within 10 NM are equal and the airwing with more assets is preferred.
     local function sortdist(a,b)
-      return a.dist<b.dist
+      local ad=math.round(a.dist/10)  -- dist 55 NM ==> 5.5 ==> 6
+      local bd=math.round(b.dist/10)  -- dist 63 NM ==> 6.3 ==> 6
+      return ad<bd or (ad==bd and a.nassets>b.nassets)
     end
     table.sort(airwings, sortdist)    
   

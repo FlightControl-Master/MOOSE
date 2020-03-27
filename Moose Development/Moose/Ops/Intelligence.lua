@@ -19,7 +19,7 @@
 -- @field #number coalition Coalition side number, e.g. coalition.side.RED.
 -- @field #table filterCategory Category filters.
 -- @field Core.Set#SET_ZONE acceptzoneset Set of accept zones. If defined, only contacts in these zones are considered.
--- @field Core.Set#SET_ZONE rejectzoneset Set of reject zones. Contacts in these zones are not considered.
+-- @field Core.Set#SET_ZONE rejectzoneset Set of reject zones. Contacts in these zones are not considered, even if they are in accept zones.
 -- @field #table Contacts Table of detected items.
 -- @field #table ContactsLost Table of lost detected items.
 -- @field #table ContactsUnknown Table of new detected items.

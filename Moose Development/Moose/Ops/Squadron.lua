@@ -74,15 +74,15 @@ SQUADRON = {
 
 --- SQUADRON class version.
 -- @field #string version
-SQUADRON.version="0.0.3"
+SQUADRON.version="0.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- DONE: Engage radius.
--- TODO: Modex.
--- TODO: Call signs.
+-- DONE: Modex.
+-- DONE: Call signs.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -463,7 +463,7 @@ function SQUADRON:CanMission(Mission)
       local asset=_asset --#AIRWING.SquadronAsset
       
       -- Set range is valid.
-      if TargetDistance<=self.engageRange then
+      if TargetDistance<=self.engageRange or (Mission.engageMaxDistance and TargetDistance<=Mission.engageMaxDistance) then
       
         -- Check if asset is currently on a mission (STARTED or QUEUED).
         if self.airwing:IsAssetOnMission(asset) then
