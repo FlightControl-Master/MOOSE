@@ -313,6 +313,10 @@ function INTEL:onafterStatus(From, Event, To)
       local contact=_contact --#INTEL.DetectedItem
       local dT=timer.getAbsTime()-contact.Tdetected
       text=text..string.format("\n- %s (%s): %s, units=%d, T=%d sec", contact.categoryname, contact.attribute, contact.groupname, contact.group:CountAliveUnits(), dT)
+      if contact.mission then
+        local mission=contact.mission --Ops.Auftrag#AUFTRAG
+        text=text..string.format(" mission name=%s type=%s target=%s", mission.name, mission.type, mission:GetTargetName() or "unkown")
+      end
     end
     self:I(self.lid..text)
   end  

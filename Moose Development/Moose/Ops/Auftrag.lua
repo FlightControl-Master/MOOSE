@@ -1078,9 +1078,11 @@ function AUFTRAG:onafterStatus(From, Event, To)
   -- Mission start stop time.
   local Cstart=UTILS.SecondsToClock(self.Tstart, true)
   local Cstop=self.Tstop and UTILS.SecondsToClock(self.Tstop, true) or "INF"
+  
+  local targetname=self:GetTargetName() or "unknown"
 
   -- Info message.
-  self:I(self.lid..string.format("Status \"%s\": T=%s-%s assets=%d, flights=%d, targets=%d", self.status, Cstart, Cstop, #self.assets, Nflights, Ntargets))
+  self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, flights=%d, targets=%d", targetname, self.status, Cstart, Cstop, #self.assets, Nflights, Ntargets))
 
   -- Check for error.  
   if fsmstate~=self.status then
@@ -1697,6 +1699,28 @@ function AUFTRAG:GetTargetCoordinate()
 
   return nil
 end
+
+--- Get coordinate of target.
+-- @param #AUFTRAG self
+-- @return #string
+function AUFTRAG:GetTargetName()
+
+  if self.engageTarget then
+    if self.engageTarget.Type==AUFTRAG.TargetType.COORDINATE then
+      local coord=self.engageTarget.Target --Core.Point#COORDINATE
+      return coord:ToStringLLDMS()
+    else
+      return self.engageTarget.Target:GetName()
+    end
+  elseif self.orbitCoord then
+    return self.orbitCoord:ToStringLLDMS()
+  elseif self.escortGroup then
+    return self.escortGroup:GetName()
+  end  
+
+  return nil
+end
+
 
 --- Get distance to target.
 -- @param #AUFTRAG self

@@ -895,14 +895,19 @@ end
 -- @param #FLIGHTGROUP self
 -- @return #string Group name.
 function FLIGHTGROUP:GetName()
-  return self.group:GetName()
+  return self.groupname
 end
 
 --- Get current coordinate of the group.
 -- @param #FLIGHTGROUP self
 -- @return Core.Point#COORDINATE The coordinate (of the first unit) of the group.
 function FLIGHTGROUP:GetCoordinate()
-  return self.group:GetCoordinate()
+  if self:IsAlive() then
+    return self.group:GetCoordinate()    
+  else
+    self:E(self.lid.."WARNING: Group is not alive. Cannot get coordinate!")
+  end
+  return nil
 end
 
 --- Get waypoint.

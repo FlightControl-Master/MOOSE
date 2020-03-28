@@ -248,19 +248,25 @@ end
 
 --- Set call sign.
 -- @param #SQUADRON self
--- @param #string Callsign
+-- @param #number Callsign Callsign from CALLSIGN.Aircraft, e.g. "Chevy" for CALLSIGN.Aircraft.CHEVY.
+-- @param #number Index Callsign index, Chevy-**1**.
 -- @return #SQUADRON self
 function SQUADRON:SetCallsign(Callsign, Index)
   self.callsignName=Callsign
+  self.callsignIndex=Index
   return self
 end
 
 --- Set modex.
 -- @param #SQUADRON self
--- @param #string Modex
+-- @param #number Modex A number like 100.
+-- @param #string Prefix A prefix string, which is put before the `Modex` number.
+-- @param #string Suffix A suffix string, which is put after the `Modex` number. 
 -- @return #SQUADRON self
-function SQUADRON:SetModex(Modex)
+function SQUADRON:SetModex(Modex, Prefix, Suffix)
   self.modex=Modex
+  self.modexPrefix=Prefix
+  self.modexSuffix=Suffix
   return self
 end
 
