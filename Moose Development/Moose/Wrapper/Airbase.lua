@@ -193,7 +193,7 @@ AIRBASE.Nevada = {
 --   * AIRBASE.Normandy.Needs_Oar_Point
 --   * AIRBASE.Normandy.Funtington
 --   * AIRBASE.Normandy.Tangmere
---   * AIRBASE.Normandy.Ford
+--   * AIRBASE.Normandy.Ford_AF
 -- @field Normandy
 AIRBASE.Normandy = {
   ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
@@ -226,7 +226,7 @@ AIRBASE.Normandy = {
   ["Needs_Oar_Point"] = "Needs Oar Point",
   ["Funtington"] = "Funtington",
   ["Tangmere"] = "Tangmere",
-  ["Ford"] = "Ford",
+  ["Ford_AF"] = "Ford_AF",
   ["Goulet"] = "Goulet",
   ["Argentan"] = "Argentan",
   ["Vrigny"] = "Vrigny",
