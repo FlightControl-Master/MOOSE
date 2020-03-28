@@ -6,6 +6,7 @@
 --    * Handy events.
 --    * Set mission start/stop times.
 --    * Set mission priority and urgency (can cancel running missions).
+--    * Specific mission options for ROE, ROT, formation, etc.
 --    * Interface to FLIGHTGROUP, AIRWING and WINGCOMMANDER classes.
 --    
 --    
@@ -674,7 +675,7 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.RUNWAYATTACK
   mission.missionAltitude=mission.engageAltitude*0.8  
-  mission.missionFraction=0.5
+  mission.missionFraction=0.2
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
@@ -1703,8 +1704,10 @@ end
 -- @return #number Distance in meters.
 function AUFTRAG:GetTargetDistance(FromCoord)
   local TargetCoord=self:GetTargetCoordinate()
-  if TargetCoord then
+  if TargetCoord and FromCoord then
     return TargetCoord:Get2DDistance(FromCoord)
+  else
+    self:E(self.lid.."ERROR: TargetCoord or FromCoord does not exist in AUFTRAG:GetTargetDistance() function! Returning 0")
   end
   return 0
 end

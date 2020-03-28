@@ -1195,8 +1195,8 @@ function CONTROLLABLE:TaskBombingRunway(Airbase, WeaponType, WeaponExpend, Attac
     weaponType  = WeaponType or ENUMS.WeaponFlag.AnyBomb,
     expend      = WeaponExpend or AI.Task.WeaponExpend.ALL,
     attackQty   = AttackQty or 1,
-    direction   = Direction and math.rad(Direction) or nil,
-    groupAttack = GroupAttack and GroupAttack or false,
+    direction   = Direction and math.rad(Direction) or 0,
+    groupAttack = GroupAttack and true or false,
     },
   }
 
