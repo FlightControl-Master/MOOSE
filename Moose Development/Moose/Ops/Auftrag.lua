@@ -1080,21 +1080,26 @@ function AUFTRAG:onafterStatus(From, Event, To)
   local Cstop=self.Tstop and UTILS.SecondsToClock(self.Tstop, true) or "INF"
   
   local targetname=self:GetTargetName() or "unknown"
+  
+  local airwing=self.airwing and self.airwing.alias or "N/A"
+  local commander=self.wingcommander and tosting(self.wingcommander.coalition) or "N/A"
 
   -- Info message.
-  self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, flights=%d, targets=%d", targetname, self.status, Cstart, Cstop, #self.assets, Nflights, Ntargets))
+  self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, flights=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Nflights, Ntargets, airwing, commander))
 
   -- Check for error.  
   if fsmstate~=self.status then
     self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
   
-  local text="Flight data:"
-  for groupname,_flightdata in pairs(self.flightdata) do
-    local flightdata=_flightdata --#AUFTRAG.FlightData
-    text=text..string.format("\n- %s: status mission=%s flightgroup=%s", groupname, flightdata.status, flightdata.flightgroup and flightdata.flightgroup:GetState() or "N/A")
+  if #self.flightdata>0 then
+    local text="Flight data:"
+    for groupname,_flightdata in pairs(self.flightdata) do
+      local flightdata=_flightdata --#AUFTRAG.FlightData
+      text=text..string.format("\n- %s: status mission=%s flightgroup=%s", groupname, flightdata.status, flightdata.flightgroup and flightdata.flightgroup:GetState() or "N/A")
+    end
+    self:I(self.lid..text)
   end
-  self:I(self.lid..text)
 
   -- Check if mission is OVER (done or cancelled).
   if self:IsOver() then
@@ -1469,10 +1474,14 @@ function AUFTRAG:onafterCancel(From, Event, To)
 
   if self.airwing then
     
+    env.info(string.format("FF calling MissionCancel() for airwing %s", self.airwing.alias))
+    
     -- Airwing will cancel all flight missions and remove queued request from warehouse queue.
     self.airwing:MissionCancel(self)
   
   else
+  
+    env.info(string.format("FF no airwing. cancelling flihgts"))
   
     for _,_flightdata in pairs(self.flightdata) do
       local flightdata=_flightdata --#AUFTRAG.FlightData

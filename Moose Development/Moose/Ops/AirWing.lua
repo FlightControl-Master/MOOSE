@@ -395,8 +395,8 @@ function AIRWING:AddMission(Mission)
   table.insert(self.missionqueue, Mission)
   
   -- Info text.
-  local text=string.format("Added %s mission %s. Starting at %s. Stopping at %s", 
-  tostring(Mission.type), tostring(Mission.name), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "INF")
+  local text=string.format("Added mission %s (type=%s). Starting at %s. Stopping at %s", 
+  tostring(Mission.name), tostring(Mission.type), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "INF")
   self:I(self.lid..text)
   
   return self
