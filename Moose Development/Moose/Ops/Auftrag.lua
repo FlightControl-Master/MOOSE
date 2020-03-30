@@ -34,7 +34,7 @@
 -- @field #number Tstart Mission start time in seconds.
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
--- @field #number marker F10 map marker ID.
+-- @field #number markerID F10 map marker ID.
 -- @field #table DCStask DCS task structure.
 -- @field #number Ntargets Number of mission targets.
 -- 
@@ -118,6 +118,7 @@ AUFTRAG = {
   assets             =    {},
   missionFraction    =   0.5,
   enrouteTasks       =    {},
+  markerID           =   nil,
 }
 
 --- Global mission counter.
@@ -230,6 +231,7 @@ AUFTRAG.TargetType={
 -- @type AUFTRAG.TargetData
 -- @field Wrapper.Positionable#POSITIONABLE Target Target Object.
 -- @field #string Type Target type: "Group", "Unit", "Static", "Coordinate", "Airbase.
+-- @field #number Ninital Number of initial targets.
 
 --- Mission success.
 -- @type AUFTRAG.Success
@@ -257,11 +259,14 @@ AUFTRAG.version="0.0.9"
 
 -- TODO: Mission success options damaged, destroyed.
 -- DONE: Mission ROE and ROT.
--- TODO: Mission formation, etc.
+-- TODO: Mission frequency, formation, etc.
 -- DONE: FSM events.
 -- TODO: F10 marker functions that are updated on Status event.
+-- TODO: F10 marker for new missions.
 -- DONE: Evaluate mission result ==> SUCCESS/FAILURE
 -- DONE: NewAUTO() NewA2G NewA2A
+-- TODO: Transport mission.
+-- TODO: Recon mission.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -354,9 +359,10 @@ function AUFTRAG:NewANTISHIP(Target)
   local mission=AUFTRAG:New(AUFTRAG.Type.ANTISHIP)
   
   mission.engageTarget=mission:_TargetFromObject(Target)
+  mission.engageWeaponType=ENUMS.WeaponFlag.Auto
   
   mission.missionTask=ENUMS.MissionTask.ANTISHIPSTRIKE
-  mission.missionFraction=0.5
+  mission.missionFraction=0.4
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
   
@@ -600,6 +606,30 @@ function AUFTRAG:NewBAI(Target)
   return mission
 end
 
+--- Create a SEAD mission.
+-- @param #AUFTRAG self
+-- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP or UNIT object.
+-- @return #AUFTRAG self
+function AUFTRAG:NewSEAD(Target)
+  
+  local mission=AUFTRAG:New(AUFTRAG.Type.SEAD)
+
+  mission.engageTarget=mission:_TargetFromObject(Target)
+  mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG
+  mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  mission.engageAsGroup=true
+  
+  mission.missionTask=ENUMS.MissionTask.SEAD
+  mission.missionAltitude=nil
+  mission.missionFraction=0.4
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.AllowAbortMission
+  
+  mission.DCStask=mission:GetDCSMissionTask()  
+  
+  return mission
+end
+
 --- Create a STRIKE mission. Flight will attack the closest map object to the specified coordinate.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT or STATIC object.
@@ -754,20 +784,31 @@ function AUFTRAG:NewAUTO(EngageGroup)
               
       if attribute==GROUP.Attribute.GROUND_AAA or attribute==GROUP.Attribute.GROUND_SAM then
           
-          --TODO: SEAD/DEAD
+        -- SEAD/DEAD
+        
+        -- TODO: Attack radars first? Attack launchers?  
+          
+        mission=AUFTRAG:NewSEAD(group)
+        
+      elseif attribute==GROUP.Attribute.GROUND_ARTILLERY then
+      
+        mission=AUFTRAG:NewBAI(group)
+      
+      elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
+      
+        mission=AUFTRAG:NewBAI(group)
+          
+      else
+
+        mission=AUFTRAG:NewBAI(group)
       
       end
       
-      mission=AUFTRAG:NewBAI(group)
-      
-    
     elseif category==Group.Category.SHIP then
     
       ---
       -- NAVAL
       ---
-    
-      --TODO: ANTISHIP
       
        mission=AUFTRAG:NewANTISHIP(group)
             
@@ -961,9 +1002,16 @@ end
 -- @param #AUFTRAG self
 -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FLIGHTGROUP object.
 function AUFTRAG:DelFlightGroup(FlightGroup)
-  self:I(self.lid..string.format("Removing flight group %s", FlightGroup.groupname))
+  self:I(self.lid..string.format("Removing flight group %s", FlightGroup and FlightGroup.groupname or "nil (ERROR)!"))
 
-  self.flightdata[FlightGroup.groupname]=nil
+  if FlightGroup then
+    
+    -- Remove mission form flightgroup queue.
+    FlightGroup:RemoveMission(self)
+  
+    self.flightdata[FlightGroup.groupname]=nil
+    
+  end
 
 end
 
@@ -1082,7 +1130,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
   local targetname=self:GetTargetName() or "unknown"
   
   local airwing=self.airwing and self.airwing.alias or "N/A"
-  local commander=self.wingcommander and tosting(self.wingcommander.coalition) or "N/A"
+  local commander=self.wingcommander and tostring(self.wingcommander.coalition) or "N/A"
 
   -- Info message.
   self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, flights=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Nflights, Ntargets, airwing, commander))
@@ -1108,6 +1156,9 @@ function AUFTRAG:onafterStatus(From, Event, To)
   else
     self:__Status(-30)
   end
+  
+  -- Update F10 marker.
+  self:UpdateMarker()
 end
 
 --- Evaluate mission outcome - success or failure.
@@ -1181,7 +1232,9 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
 -- @param #string status New status.
 function AUFTRAG:SetFlightStatus(flightgroup, status)
+  self:I(self.lid..string.format("Setting flight %s to status %s", flightgroup and flightgroup.groupname or "nil", tostring(status)))
 
+  env.info("FF trying to get flight status in AUFTRAG:GetFlightStatus")
   if self:GetFlightStatus(flightgroup)==AUFTRAG.FlightStatus.CANCELLED and status==AUFTRAG.FlightStatus.DONE then
     -- Do not overwrite a CANCELLED status with a DONE status.
   else
@@ -1189,7 +1242,7 @@ function AUFTRAG:SetFlightStatus(flightgroup, status)
     if flightdata then
       flightdata.status=status
     else
-      self:E(self.lid.."WARNING: Could not SET flight data for flight group. Setting status to DONE.")
+      self:E(self.lid.."WARNING: Could not SET flight data for flight group. Setting status to DONE")
     end
   end
   
@@ -1210,12 +1263,17 @@ end
 -- @param #AUFTRAG self
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
 function AUFTRAG:GetFlightStatus(flightgroup)
+  self:T3(self.lid..string.format("Trying to get Flight status for flight group %s", flightgroup and flightgroup.groupname or "nil"))
+  
   local flightdata=self:GetFlightData(flightgroup)
+  
   if flightdata then
     return flightdata.status
   else
-    self:E(self.lid.."WARNING: Could not GET flightdata for flight group. Returning status DONE.")
+  
+    self:E(self.lid..string.format("WARNING: Could not GET flightdata for flightgroup %s. Returning status DONE.", flightgroup and flightgroup.groupname or "nil"))
     return AUFTRAG.FlightStatus.DONE
+    
   end
 end
 
@@ -1471,8 +1529,14 @@ function AUFTRAG:onafterCancel(From, Event, To)
 
   -- Debug info.
   self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for flights to report mission DONE before evaluation.", self.status))
+  
+  if self.wingcommander then
+  
+    env.info(string.format("FF calling CancelMission() for wingcommander"))
+    
+    self.wingcommander:CancelMission(self)
 
-  if self.airwing then
+  elseif self.airwing then
     
     env.info(string.format("FF calling MissionCancel() for airwing %s", self.airwing.alias))
     
@@ -1488,6 +1552,12 @@ function AUFTRAG:onafterCancel(From, Event, To)
       flightdata.flightgroup:MissionCancel(self)
     end
     
+  end
+  
+  -- Special mission states.
+  if self.status==AUFTRAG.Status.PLANNED then
+    self:I(self.lid..string.format("Cancelled mission was in planned stage. Call it done!"))
+    self:Done()
   end
 
 end
@@ -1536,8 +1606,10 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   if self.wingcommander then
     
   elseif self.airwing then
+  
     -- Already at the airwing ==> Queued()
     self:Queued(self.airwing)  
+    
   else
   
   end
@@ -1546,6 +1618,14 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   -- No mission assets.
   self.assets={}
   
+  for _,_flightdata in pairs(self.flightdata) do
+    local flightdata=_flightdata --#AUFTRAG.FlightData
+    local flightgroup=flightdata.flightgroup
+    if flightgroup then
+      self:DelFlightGroup(flightgroup)
+    end
+    
+  end  
   -- No flight data.
   self.flightdata={}
   
@@ -1569,7 +1649,7 @@ function AUFTRAG:onafterStop(From, Event, To)
   -- TODO: Mission should be OVER! we dont want to remove running missions from any queues.
   
   if self.wingcommander then
-    
+    self.wingcommander:RemoveMission(self)
   end
   
   if self.airwing then
@@ -1656,19 +1736,42 @@ function AUFTRAG:CountMissionTargets()
   local N=0
   
   if self.engageTarget then
+  
     if self.engageTarget.Type==AUFTRAG.TargetType.GROUP then
+    
       local target=self.engageTarget.Target --Wrapper.Group#GROUP
-      N=N+target:CountAliveUnits()
+      
+      local units=target:GetUnits()
+      for _,_unit in pairs(units) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        
+        -- We check that unit is "alive" and has health >1. Somtimes units get heavily damanged but are still alive.
+        -- TODO: here I could introduce and count that if units have only health < 50% if mission objective is to just "damage" the units.
+        if unit and unit:IsAlive() and unit:GetLife()>1 then
+          N=N+1
+        end
+      end      
+      
     elseif self.engageTarget.Type==AUFTRAG.TargetType.UNIT then
+    
       local target=self.engageTarget.Target --Wrapper.Unit#UNIT        
-      if target and target:IsAlive() then
+      
+      if target and target:IsAlive() and target:GetLife()>1 then
         N=N+1
       end
+      
     elseif self.engageTarget.Type==AUFTRAG.TargetType.STATIC then
+    
       local target=self.engageTarget.Target --Wrapper.Static#STATIC
+      
       if target and target:IsAlive() then
         N=N+1
       end
+      
+    elseif self.engageTarget.Type==AUFTRAG.TargetType.AIRBASE then
+    
+      -- TODO: any (good) way to tell whether an airbase was "destroyed" or at least damaged? Is :GetLive() working?
+      
     end
   end
   
@@ -1763,6 +1866,24 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:_SetLogID()
   self.lid=string.format("Auftrag #%d %s | ", self.auftragsnummer, tostring(self.type))
+  return self
+end
+
+--- Update mission F10 map marker.
+-- @param #AUFTRAG self
+-- @return #AUFTRAG self
+function AUFTRAG:UpdateMarker()
+
+  local text=string.format("%s %s", self.name, self.status)
+  text=text..string.format("Targets=%d", self:CountMissionTargets())
+
+  
+  if self.markerID then
+    COORDINATE.RemoveMark(nil, self.markerID)
+  end
+  
+  self.markerID=self:GetTargetCoordinate():MarkToAll(text, true)
+
   return self
 end
 
@@ -1917,6 +2038,8 @@ function AUFTRAG:GetDCSMissionTask()
     -- RECON Mission --
     -------------------  
 
+    -- TODO: What?
+
   elseif self.type==AUFTRAG.Type.SEAD then
   
     ------------------
@@ -1954,6 +2077,8 @@ function AUFTRAG:GetDCSMissionTask()
     -----------------------
     -- TRANSPORT Mission --
     ----------------------- 
+  
+    -- TODO: What?
   
   else
     self:E(self.lid..string.format("ERROR: Unknown mission task!"))

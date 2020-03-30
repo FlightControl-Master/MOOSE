@@ -1533,17 +1533,22 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   -- Fuel State
   ---
 
-  local fuelmin=self:GetFuelMin()
+  -- Only if group is in air.
+  if self:IsAlive() and self.group:IsAirborne() then
 
-  -- Low fuel?
-  if fuelmin<self.fuellowthresh and not self.fuellow then
-    self:FuelLow()
-  end
+    local fuelmin=self:GetFuelMin()
   
-  -- Critical fuel?
-  if fuelmin<self.fuelcriticalthresh and not self.fuelcritical then
-    self:FuelCritical()
-  end  
+    -- Low fuel?
+    if fuelmin<self.fuellowthresh and not self.fuellow then
+      self:FuelLow()
+    end
+    
+    -- Critical fuel?
+    if fuelmin<self.fuelcriticalthresh and not self.fuelcritical then
+      self:FuelCritical()
+    end
+    
+  end
 
 
   -- Next check in ~30 seconds.
@@ -1688,6 +1693,7 @@ function FLIGHTGROUP:_GetNextMission()
   -- Look for first mission that is SCHEDULED.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
+    
     if mission:GetFlightStatus(self)==AUFTRAG.Status.SCHEDULED and time>=mission.Tstart then
       return mission
     end
@@ -2389,10 +2395,8 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
   end
   
   -- Not good, because mission will never start. Better only check if there is a current task!
-  if self.currentmission then
-    --self:I(self.lid.."FF update route denied because currentmission~=nil")
-    --allowed=false
-  end
+  --if self.currentmission then
+  --end
   
   -- Debug info.
   self:T2(self.lid..string.format("Onbefore Updateroute allowed=%s state=%s repeat in %s", tostring(allowed), self:GetState(), tostring(trepeat)))
@@ -2594,7 +2598,7 @@ function FLIGHTGROUP:_CheckFlightDone(delay)
         self:I(self.lid..string.format("Passed Final WP but still have current Tasks (%s) or Missions (%s) left to do", tostring(self.taskcurrent), tostring(self.currentmission)))
       end  
     else
-      self:I(self.lid.."Did NOT pass the final waypoint yet ==> update route")
+      self:I(self.lid..string.format("Flight (status=%s) did NOT pass the final waypoint yet ==> update route", self:GetState()))
       self:__UpdateRoute(-1)
     end  
   end
@@ -2775,13 +2779,14 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   -- Respawn?
   if fc or world.event.S_EVENT_KILL then
   
-    -- Just route the group. Respawn will happen when going from holding to final.
-    env.info("FF route (not repawn)")
+    self:T(self.lid.."FF route (not repawn)")
+    
+    -- Just route the group. Respawn might happen when going from holding to final.
     self:Route(wp, 1)
  
   else 
   
-    env.info("FF respawn (not route)")
+    self:T(self.lid.."FF respawn (not route)")
   
     -- Get group template.
     local Template=self.group:GetTemplate()
@@ -3204,10 +3209,15 @@ function FLIGHTGROUP:CountRemainingMissison()
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
-    local status=mission:GetFlightStatus(self)
+    if mission and mission:IsNotOver() then
     
-    if status~=AUFTRAG.FlightStatus.DONE and status~=AUFTRAG.FlightStatus.CANCELLED then
-      N=N+1
+      -- Get flight status.
+      local status=mission:GetFlightStatus(self)
+      
+      if status~=AUFTRAG.FlightStatus.DONE and status~=AUFTRAG.FlightStatus.CANCELLED then
+        N=N+1
+      end
+      
     end
   end
   
@@ -3409,18 +3419,18 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   -- Check if this task was the task of the current mission ==> Mission Done!
   local Mission=self:GetMissionByTaskID(Task.id)
   
-  if Mission then
+  if Mission and Mission:IsNotOver() then
   
     local status=Mission:GetFlightStatus(self)  
   
     if status~=AUFTRAG.FlightStatus.PAUSED then
-      env.info("FF Task Done ==> Mission Done!")
+      self:I(self.lid.."FF Task Done ==> Mission Done!")
       self:MissionDone(Mission)
     else
       --Mission paused. Do nothing!
     end
   else
-    env.info("FF Task Done but NO mission found ==> _CheckFlightDone in 1 sec")
+    self:I(self.lid.."FF Task Done but NO mission found ==> _CheckFlightDone in 1 sec")
     self:_CheckFlightDone(1)
   end
   
@@ -3524,13 +3534,14 @@ function FLIGHTGROUP:onafterPauseMission(From, Event, To)
   
   if Mission then
 
-    -- Set flight mission status to EXECUTING.
+    -- Set flight mission status to PAUSED.
     Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.PAUSED)
   
     -- Get mission waypoint task.
     local Task=Mission:GetFlightWaypointTask(self)
     
-    env.info(string.format("FF pausing current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+    -- Debug message.
+    self:I(self.lid..string.format("FF pausing current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
   
     -- Cancelling the mission is actually cancelling the current task.
     self:TaskCancel(Task)
@@ -3578,7 +3589,8 @@ function FLIGHTGROUP:onafterMissionCancel(From, Event, To, Mission)
     -- Get mission waypoint task.
     local Task=Mission:GetFlightWaypointTask(self)
     
-    env.info(string.format("FF Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+    -- Debug info.
+    self:I(self.lid..string.format("FF Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
 
     -- Cancelling the mission is actually cancelling the current task.
     -- Note that two things can happen.
@@ -3650,7 +3662,6 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     -- Set altitude of mission waypoint.
     if mission.missionAltitude then
       waypointcoord.y=mission.missionAltitude
-      env.info(string.format("FF mission altitude %d m = %d ft", waypointcoord.y, UTILS.MetersToFeet(waypointcoord.y)))
     end
     
     -- Add enroute tasks.

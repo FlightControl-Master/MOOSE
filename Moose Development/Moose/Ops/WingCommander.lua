@@ -89,7 +89,7 @@ function WINGCOMMANDER:New(AgentSet, Coalition)
   AgentSet=AgentSet or SET_GROUP:New()
 
   -- Inherit everything from INTEL class.
-  local self=BASE:Inherit(self, INTEL:New(AgentSet)) --#WINGCOMMANDER
+  local self=BASE:Inherit(self, INTEL:New(AgentSet, Coalition)) --#WINGCOMMANDER
 
   -- Set some string id for output to DCS.log file.
   --self.lid=string.format("WINGCOMMANDER | ")
@@ -99,6 +99,7 @@ function WINGCOMMANDER:New(AgentSet, Coalition)
   -- Add FSM transitions.
   --                 From State   -->      Event           -->     To State
   self:AddTransition("*",              "MissionAssign",            "*")           -- Mission was assigned to an AIRWING.
+  self:AddTransition("*",              "CancelMission",            "*")           -- Cancel mission.
 
   ------------------------
   --- Pseudo Functions ---
@@ -168,6 +169,8 @@ end
 -- @return #WINGCOMMANDER self
 function WINGCOMMANDER:AddMission(Mission)
 
+  Mission.wingcommander=self
+
   table.insert(self.missionqueue, Mission)
 
   return self
@@ -183,6 +186,7 @@ function WINGCOMMANDER:RemoveMission(Mission)
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     if mission.auftragsnummer==Mission.auftragsnummer then
+      self:I(self.lid..string.format("Removing mission %s (%s) status=%s from queue", Mission.name, Mission.type, Mission.status))
       table.remove(self.missionqueue, i)
       break
     end
@@ -210,9 +214,13 @@ end
 -- @param Core.Zone#ZONEBorderZone Add a zone to the accept zone set.
 -- @return #WINGCOMMANDER self
 function WINGCOMMANDER:AddBorderZone(BorderZone)
+
+  -- Add a border zone.
   self.borderzoneset:AddZone(BorderZone)
   
+  -- Set accept zone.
   self:AddAcceptZone(BorderZone)
+  
   return self
 end
 
@@ -304,6 +312,18 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
   
   -- Check mission queue and assign one PLANNED mission.
   self:CheckMissionQueue()
+  
+  if #self.missionqueue>0 then
+    local text="Mission queue:"
+    for i,_mission in pairs(self.missionqueue) do
+      local mission=_mission --Ops.Auftrag#AUFTRAG
+      
+      local target=mission:GetTargetName() or "unknown"
+      
+      text=text..string.format("\n[%d] %s (%s): status=%s, target=%s", i, mission.name, mission.type, mission.status, target)
+    end
+    self:I(self.lid..text)
+  end  
 
 end
 
@@ -320,7 +340,34 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 function WINGCOMMANDER:onafterMissionAssign(From, Event, To, Airwing, Mission)
 
+  self:I(self.lid..string.format("Assigning mission %s (%s) to airwing %s", Mission.name, Mission.type, Airwing.alias))
   Airwing:AddMission(Mission)
+
+end
+
+--- On after "CancelMission" event.
+-- @param #WINGCOMMANDER self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+function WINGCOMMANDER:onafterCancelMission(From, Event, To, Mission)
+
+  self:I(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
+  
+  if Mission.status==AUFTRAG.Status.PLANNED then
+  
+    -- Mission is still in planning stage. Should not have an airbase assigned ==> Just remove it form the queue.
+    self:RemoveMission(Mission)
+    
+  else
+  
+    -- Airwing will cancel mission.
+    if Mission.airwing then
+      Mission.airwing:MissionCancel(Mission)
+    end
+    
+  end
 
 end
 

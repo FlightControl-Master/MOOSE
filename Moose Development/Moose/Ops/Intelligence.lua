@@ -16,7 +16,8 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
--- @field #number coalition Coalition side number, e.g. coalition.side.RED.
+-- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
+-- @field #string alias Name of the agency.
 -- @field #table filterCategory Category filters.
 -- @field Core.Set#SET_ZONE acceptzoneset Set of accept zones. If defined, only contacts in these zones are considered.
 -- @field Core.Set#SET_ZONE rejectzoneset Set of reject zones. Contacts in these zones are not considered, even if they are in accept zones.
@@ -41,6 +42,7 @@ INTEL = {
   ClassName       = "INTEL",
   Debug           =   nil,
   lid             =   nil,
+  alias           =   nil,
   filterCategory  =    {},
   detectionset    =   nil,
   Contacts        =    {},
@@ -100,17 +102,17 @@ function INTEL:New(DetectionSet, Coalition)
   self.coalition=Coalition or DetectionSet:CountAlive()>0 and DetectionSet:GetFirst():GetCoalition() or nil
   
   -- Set alias.
-  local alias="SPECTRE"  
+  self.alias="SPECTRE"  
   if self.coalition then
     if self.coalition==coalition.side.RED then
-      alias="KGB"
+      self.alias="KGB"
     elseif self.coalition==coalition.side.BLUE then
-      alias="CIA"
+      self.alias="CIA"
     end
   end
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("INTEL %s | ", alias)
+  self.lid=string.format("INTEL %s | ", self.alias)
 
   -- Start State.
   self:SetStartState("Stopped")

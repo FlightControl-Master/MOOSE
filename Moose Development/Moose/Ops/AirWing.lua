@@ -329,8 +329,9 @@ function AIRWING:AddAssetToSquadron(Squadron, Nassets)
   
     if Group then
   
-      local text=string.format("FF Adding asset %s to squadron %s", Group:GetName(), Squadron.name)
-      env.info(text)
+      -- Debug text.
+      local text=string.format("Adding asset %s to squadron %s", Group:GetName(), Squadron.name)
+      self:T(self.lid..text)
       
       -- Add assets to airwing warehouse.
       self:AddAsset(Group, Nassets, nil, nil, nil, nil, Squadron.skill, Squadron.livery, Squadron.name)
@@ -1338,11 +1339,16 @@ function AIRWING:IsAssetOnMission(asset, MissionTypes)
     for _,_mission in pairs(asset.flightgroup.missionqueue or {}) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
       
-      local status=mission:GetFlightStatus(asset.flightgroup)
+      if mission:IsNotOver() then
       
-      -- Only if mission is started or executing.
-      if (status==AUFTRAG.FlightStatus.STARTED or status==AUFTRAG.FlightStatus.EXECUTING) and self:CheckMissionType(mission.type, MissionTypes) then
-        return true
+        -- Get flight status.
+        local status=mission:GetFlightStatus(asset.flightgroup)
+        
+        -- Only if mission is started or executing.
+        if (status==AUFTRAG.FlightStatus.STARTED or status==AUFTRAG.FlightStatus.EXECUTING) and self:CheckMissionType(mission.type, MissionTypes) then
+          return true
+        end
+        
       end
       
     end
@@ -1642,7 +1648,6 @@ function AIRWING:ReportSquadrons()
     local nstock=0
     for _,_asset in pairs(squadron.assets) do
       local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-      --env.info(string.format("Asset name=%s", asset.spawngroupname))
       
       local n=asset.nunits
       

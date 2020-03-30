@@ -134,7 +134,7 @@ function CLEANUP_AIRBASE:New( AirbaseNames )
   for UnitName, Unit in pairs( _DATABASE.UNITS ) do
     local Unit = Unit -- Wrapper.Unit#UNIT
     if Unit:IsAlive() ~= nil then
-      if self:IsInAirbase( Unit:GetVec2() ) then
+      if self.__:IsInAirbase( Unit:GetVec2() ) then
         self:F( { UnitName = UnitName } )
         self.CleanUpList[UnitName] = {}
         self.CleanUpList[UnitName].CleanUpUnit = Unit
@@ -187,6 +187,10 @@ function CLEANUP_AIRBASE:SetCleanMissiles( CleanMissiles )
   end
 end
 
+
+--- Check whether a Vec2 is in any cleanup airbase.
+-- @param #CLEANUP_AIRBASE self
+-- @param DCS#VEC2 Vec2 2D vector.
 function CLEANUP_AIRBASE.__:IsInAirbase( Vec2 )
 
   local InAirbase = false
@@ -194,7 +198,7 @@ function CLEANUP_AIRBASE.__:IsInAirbase( Vec2 )
     local Airbase = Airbase -- Wrapper.Airbase#AIRBASE
     if Airbase:GetZone():IsVec2InZone( Vec2 ) then
       InAirbase = true
-      break;
+      break
     end
   end
   
@@ -246,7 +250,7 @@ function CLEANUP_AIRBASE.__:OnEventBirth( EventData )
   self:F( { EventData } )
   
   if EventData.IniUnit:IsAlive() ~= nil then
-    if self:IsInAirbase( EventData.IniUnit:GetVec2() ) then
+    if self.__:IsInAirbase( EventData.IniUnit:GetVec2() ) then
       self.CleanUpList[EventData.IniDCSUnitName] = {}
       self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnit = EventData.IniUnit
       self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroup = EventData.IniGroup
@@ -291,7 +295,7 @@ function CLEANUP_AIRBASE.__:OnEventShot( Event )
 	self:F( { Event } )
 
 	-- Test if the missile was fired within one of the CLEANUP_AIRBASE.AirbaseNames.
-	if self:IsInAirbase( Event.IniUnit:GetVec2() ) then
+	if self.__:IsInAirbase( Event.IniUnit:GetVec2() ) then
 		-- Okay, the missile was fired within the CLEANUP_AIRBASE.AirbaseNames, destroy the fired weapon.
     self:DestroyMissile( Event.Weapon )
 	end
@@ -304,7 +308,7 @@ function CLEANUP_AIRBASE.__:OnEventHit( Event )
 	self:F( { Event } )
 
 	if Event.IniUnit then
-		if self:IsInAirbase( Event.IniUnit:GetVec2() ) then
+		if self.__:IsInAirbase( Event.IniUnit:GetVec2() ) then
 			self:T( { "Life: ", Event.IniDCSUnitName, ' = ',  Event.IniUnit:GetLife(), "/", Event.IniUnit:GetLife0() } )
 			if Event.IniUnit:GetLife() < Event.IniUnit:GetLife0() then
 				self:T( "CleanUp: Destroy: " .. Event.IniDCSUnitName )
@@ -314,7 +318,7 @@ function CLEANUP_AIRBASE.__:OnEventHit( Event )
 	end
 
 	if Event.TgtUnit then
-		if self:IsInAirbase( Event.TgtUnit:GetVec2() ) then
+		if self.__:IsInAirbase( Event.TgtUnit:GetVec2() ) then
 			self:T( { "Life: ", Event.TgtDCSUnitName, ' = ', Event.TgtUnit:GetLife(), "/", Event.TgtUnit:GetLife0() } )
 			if Event.TgtUnit:GetLife() < Event.TgtUnit:GetLife0() then
 				self:T( "CleanUp: Destroy: " .. Event.TgtDCSUnitName )
@@ -356,7 +360,7 @@ function CLEANUP_AIRBASE.__:EventAddForCleanUp( Event )
 
 	if Event.IniDCSUnit and Event.IniCategory == Object.Category.UNIT then
 		if self.CleanUpList[Event.IniDCSUnitName] == nil then
-			if self:IsInAirbase( Event.IniUnit:GetVec2() ) then
+			if self.__:IsInAirbase( Event.IniUnit:GetVec2() ) then
 				self:AddForCleanUp( Event.IniUnit, Event.IniDCSUnitName )
 			end
 		end
@@ -364,7 +368,7 @@ function CLEANUP_AIRBASE.__:EventAddForCleanUp( Event )
 
 	if Event.TgtDCSUnit and Event.TgtCategory == Object.Category.UNIT then
 		if self.CleanUpList[Event.TgtDCSUnitName] == nil then
-			if self:IsInAirbase( Event.TgtUnit:GetVec2() ) then
+			if self.__:IsInAirbase( Event.TgtUnit:GetVec2() ) then
 				self:AddForCleanUp( Event.TgtUnit, Event.TgtDCSUnitName )
 			end
 		end
@@ -386,7 +390,7 @@ function CLEANUP_AIRBASE.__:CleanUpSchedule()
 
 		if CleanUpUnit:IsAlive() ~= nil then
 		
-		  if self:IsInAirbase( CleanUpUnit:GetVec2() ) then
+		  if self.__:IsInAirbase( CleanUpUnit:GetVec2() ) then
 
   			if _DATABASE:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
   
