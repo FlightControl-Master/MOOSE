@@ -2,7 +2,10 @@
 --
 -- **Main Features:**
 --
---    * Stuff
+--    * Set parameters like livery, skill valid for all squadron members.
+--    * Define modex and callsigns.
+--    * Define mission types, this squadron can perform (see Ops.Auftrag#AUFTRAG).
+--    * Pause/unpause squadron operations.
 --
 -- ===
 --
@@ -67,11 +70,6 @@ SQUADRON = {
   refuelSystem   =   nil,
 }
 
---- Flight group element.
--- @type SQUADRON.Flight
--- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group object.
--- @field #string mission Mission assigned to the flight.
-
 --- SQUADRON class version.
 -- @field #string version
 SQUADRON.version="0.0.5"
@@ -133,10 +131,10 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   
   -- Add FSM transitions.
   --                 From State  -->   Event        -->     To State
-  self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
+  self:AddTransition("Stopped",       "Start",              "OnDuty")      -- Start FSM.
   self:AddTransition("*",             "Status",             "*")           -- Status update.
-  self:AddTransition("Running",       "Pause",              "Paused")      -- Pause squadron.
-  self:AddTransition("Paused",        "Unpause",            "Running")     -- Unpause squadron.
+  self:AddTransition("OnDuty",        "Pause",              "Paused")      -- Pause squadron.
+  self:AddTransition("Paused",        "Unpause",            "OnDuty")      -- Unpause squadron.
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop squadron.
 
 
@@ -329,7 +327,7 @@ function SQUADRON:GetCallsign(Asset)
     
       Asset.callsign[i]=callsign
       
-      self:I({callsign=callsign})
+      self:T3({callsign=callsign})
     
       --TODO: there is also a table entry .name, which is a string.
     end
@@ -355,13 +353,35 @@ function SQUADRON:GetModex(Asset)
       
       self.modexcounter=self.modexcounter+1
       
-      self:I({modex=Asset.modex[i]})
+      self:T3({modex=Asset.modex[i]})
     
     end
     
   end
   
 end
+
+--- Check if squadron is "OnDuty".
+-- @param #SQUADRON self
+-- @return #boolean If true, squdron is in state "OnDuty".
+function SQUADRON:IsOnDuty()
+  return self:Is("OnDuty")
+end
+
+--- Check if squadron is "Stopped".
+-- @param #SQUADRON self
+-- @return #boolean If true, squdron is in state "Stopped".
+function SQUADRON:IsStopped()
+  return self:Is("Stopped")
+end
+
+--- Check if squadron is "Paused".
+-- @param #SQUADRON self
+-- @return #boolean If true, squdron is in state "Paused".
+function SQUADRON:IsPaused()
+  return self:Is("Paused")
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -375,7 +395,7 @@ end
 function SQUADRON:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting SQUADRON %s.", self.name)
+  local text=string.format("Starting SQUADRON", self.name)
   self:I(self.lid..text)
 
   -- Start the status monitoring.
@@ -396,11 +416,12 @@ function SQUADRON:onafterStatus(From, Event, To)
   --self:_CheckAssetStatus()
 
   -- Short info.
-  local text=string.format("Status %s", fsmstate)
-  self:I(self.sid..text)
+  local text=string.format("Status %s: Assets %d", fsmstate, #self.assets)
+  self:I(self.lid..text)
   
-  
-  self:__Status(-30)
+  if not self:IsStopped() then
+    self:__Status(-30)
+  end
 end
 
 
@@ -424,10 +445,12 @@ end
 -- @param #string To To state.
 function SQUADRON:onafterStop(From, Event, To)
 
+  self:I(self.lid.."STOPPING Squadron!")
+
   -- Remove all assets.
   for i=#self.assets,1,-1 do
     local asset=self.assets[i]
-    self:DelAsqsset(asset)
+    self:DelAsset(asset)
   end
 
 end
@@ -466,16 +489,16 @@ function SQUADRON:CanMission(Mission)
     local TargetDistance=Mission:GetTargetDistance(self.airwing:GetCoordinate())
     
     for _,_asset in pairs(self.assets) do
-      local asset=_asset --#AIRWING.SquadronAsset
+      local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
       
-      -- Set range is valid.
+      -- Set range is valid. Mission engage distance can overrule the squad engage range.
       if TargetDistance<=self.engageRange or (Mission.engageMaxDistance and TargetDistance<=Mission.engageMaxDistance) then
       
         -- Check if asset is currently on a mission (STARTED or QUEUED).
         if self.airwing:IsAssetOnMission(asset) then
   
           ---
-          -- This asset is already on a mission
+          -- Asset is already on a mission
           ---
   
           -- Check if this asset is currently on a PATROL mission (STARTED or EXECUTING).
@@ -493,10 +516,14 @@ function SQUADRON:CanMission(Mission)
         else
         
           ---
-          -- This asset as no current mission
+          -- Asset as no current mission
           ---
   
           if asset.spawned then
+          
+            ---
+            -- Asset is already SPAWNED (could be uncontrolled on the airfield)
+            ---
           
             local combatready=false
             local flightgroup=asset.flightgroup
@@ -515,6 +542,11 @@ function SQUADRON:CanMission(Mission)
             
           else
           
+            ---
+            -- Asset is still in STOCK
+            ---          
+          
+            -- Check that asset is not already requeseted for another mission.
             if not asset.requested then
           
               -- Check if we got a payload and reserve it for this asset.

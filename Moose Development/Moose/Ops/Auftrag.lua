@@ -267,6 +267,7 @@ AUFTRAG.version="0.0.9"
 -- DONE: NewAUTO() NewA2G NewA2A
 -- TODO: Transport mission.
 -- TODO: Recon mission.
+-- TODO: Set mission coalition, e.g. for F10 markers.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -1874,15 +1875,22 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:UpdateMarker()
 
+  -- Marker text.
   local text=string.format("%s %s", self.name, self.status)
   text=text..string.format("Targets=%d", self:CountMissionTargets())
 
-  
+  -- Remove old marker.
   if self.markerID then
     COORDINATE.RemoveMark(nil, self.markerID)
   end
   
-  self.markerID=self:GetTargetCoordinate():MarkToAll(text, true)
+  -- Get target coordinates. Can be nil!
+  local targetcoord=self:GetTargetCoordinate()
+  
+  -- New marker!
+  if targetcoord then
+    self.markerID=targetcoord:MarkToAll(text, true)
+  end
 
   return self
 end

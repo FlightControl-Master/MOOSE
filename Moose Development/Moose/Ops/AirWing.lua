@@ -202,6 +202,11 @@ function AIRWING:AddSquadron(Squadron)
 
   -- Set airwing to squadron.
   Squadron:SetAirwing(self)
+  
+  -- Start squadron.
+  if Squadron:IsStopped() then
+    Squadron:Start()
+  end
 
   return self
 end

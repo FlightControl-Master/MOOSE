@@ -1262,6 +1262,31 @@ function FLIGHTGROUP:GetFuelMin()
   return fuelmin*100
 end
 
+--- Self destruction of group. An explosion is created at the position of each element.
+-- @param #FLIGHTGROUP self
+-- @param #number Delay Delay in seconds. Default now.
+-- @param #number ExplosionPower (Optional) Explosion power in kg TNT. Default 500 kg.
+-- @return #number Relative fuel in percent.
+function FLIGHTGROUP:SelfDestruction(Delay, ExplosionPower)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, FLIGHTGROUP.SelfDestruction, self, 0, ExplosionPower)
+  else
+  
+    -- Loop over all elements.
+    for i,_element in pairs(self.elements) do
+      local element=_element --#FLIGHTGROUP.Element
+      
+      local unit=element.unit
+      
+      if unit and unit:IsAlive() then
+        unit:Explode(ExplosionPower)
+      end
+    end
+  end
+
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
