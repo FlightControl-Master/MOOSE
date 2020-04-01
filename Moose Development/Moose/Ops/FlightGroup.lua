@@ -904,7 +904,7 @@ end
 -- @param #FLIGHTGROUP self
 -- @return Core.Point#COORDINATE The coordinate (of the first unit) of the group.
 function FLIGHTGROUP:GetCoordinate()
-  if self:IsAlive() then
+  if self:IsAlive()~=nil then
     return self.group:GetCoordinate()    
   else
     self:E(self.lid.."WARNING: Group is not alive. Cannot get coordinate!")
@@ -1376,9 +1376,7 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
     if self.flightcontrol then
       for _,_element in pairs(self.elements) do
         local element=_element --#FLIGHTGROUP.Element
-        if element.parking then
-          self.flightcontrol:SetParkingFree(element.parking)
-        end
+        self:_SetElementParkingFree(element)
       end
     end
       
@@ -1995,8 +1993,8 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
     
     if spot then
     
-      -- Set 
-      Element.parking=spot
+      -- Set
+      self:_SetElementParkingAt(Element, spot)
       
       -- Trigger ElementParking event. Add a little delay because spawn is also delayed!
       self:__ElementParking(0.11, Element)
@@ -2055,15 +2053,10 @@ function FLIGHTGROUP:onafterElementTaxiing(From, Event, To, Element)
 
   -- Debug info.
   self:I(self.lid..string.format("Element taxiing %s. Parking spot %s is now free", Element.name, TerminalID))
-  
-  -- Set parking to FREE.
-  if self.flightcontrol and Element.parking then
-    self.flightcontrol:SetParkingFree(Element.parking)
-  end
-  
-  -- Not parking any more.
-  Element.parking=nil
 
+  -- Set parking spot to free. Also for FC.
+  self:_SetElementParkingFree(Element)
+  
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.TAXIING)
 end
@@ -2076,11 +2069,16 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase if applicable or nil.
 function FLIGHTGROUP:onafterElementTakeoff(From, Event, To, Element, airbase)
-  self:T(self.lid..string.format("Element takeoff %s at %s airbase.", Element.name, airbase and airbase:GetName() or "unknown"))
+  self:I(self.lid..string.format("Element takeoff %s at %s airbase.", Element.name, airbase and airbase:GetName() or "unknown"))
+
+  -- Helos with skids just take off without taxiing!
+  if Element.parking then
+    self:_SetElementParkingFree(Element)
+  end
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.TAKEOFF, airbase)
-  
+    
   -- Trigger element airborne event.
   self:__ElementAirborne(10, Element)
 end
@@ -2122,23 +2120,9 @@ end
 -- @param Wrapper.Airbase#AIRBASE.ParkingSpot Parking The Parking spot the element has.
 function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element, airbase, Parking)
   self:T(self.lid..string.format("Element arrived %s at %s airbase using parking spot %d", Element.name, airbase and airbase:GetName() or "unknown", Parking and Parking.TerminalID or -99))  
-
-
-  -- Get parking spot  
-  --local parking=self:GetParkingSpot(Element, 10, self.flightcontrol and self.flightcontrol.airbase or nil)
   
-  -- Element is parking here.
-  Element.parking=Parking
+  self:_SetElementParkingAt(Element, Parking)
   
-  if Parking then
-    if self.flightcontrol then
-      
-      -- Set parking spot to OCCUPIED.
-      self.flightcontrol:SetParkingOccupied(Element.parking, Element.name)
-      
-    end
-  end
-
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.ARRIVED)
 end
@@ -4817,6 +4801,46 @@ function FLIGHTGROUP:_SetElementStatusAll(status)
   end
 
 end
+
+--- Set parking spot of element.
+-- @param #FLIGHTGROUP self
+-- @param #FLIGHTGROUP.FlightElement Element The element.
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot Spot Parking Spot.
+function FLIGHTGROUP:_SetElementParkingAt(Element, Spot)
+
+  -- Element is parking here.
+  Element.parking=Spot
+  
+  if Spot then
+    if self.flightcontrol then
+      
+      -- Set parking spot to OCCUPIED.
+      self.flightcontrol:SetParkingOccupied(Element.parking, Element.name)
+      
+    end
+  end
+
+end
+
+--- Set parking spot of element to free
+-- @param #FLIGHTGROUP self
+-- @param #FLIGHTGROUP.FlightElement Element The element.
+function FLIGHTGROUP:_SetElementParkingFree(Element)
+
+  if Element.parking then
+
+    -- Set parking to FREE.
+    if self.flightcontrol and Element.parking then
+      self.flightcontrol:SetParkingFree(Element.parking)
+    end
+    
+    -- Not parking any more.
+    Element.parking=nil
+
+  end
+  
+end
+
 
 --- Check if flight is in zones.
 -- @param #FLIGHTGROUP self
