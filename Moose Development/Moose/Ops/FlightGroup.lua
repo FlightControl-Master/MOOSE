@@ -63,6 +63,7 @@
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
+-- @field #boolean ishelo If true, the is a helicopter group.
 -- @field Core.Radio#BEACON beacon The beacon object.
 -- @field #number TACANchannel TACAN channel.
 -- @field #string TACANmode TACAN mode, i.e. "Y" (or "X").
@@ -211,6 +212,7 @@ FLIGHTGROUP = {
   checkzones         =   nil,
   inzones            =   nil,
   groupinitialized   =   nil,
+  ishelo             =   nil,
   beacon             =   nil,  
 }
 
@@ -3823,9 +3825,18 @@ function FLIGHTGROUP:_InitGroup()
 
   -- Get template of group.
   self.template=self.group:GetTemplate()
+
+  -- Helo group.
+  self.ishelo=self.group:IsHelicopter()
   
   -- Max speed in km/h.
   self.speedmax=self.group:GetSpeedMax()
+  
+  -- Cruise speed limit 350 kts for fixed and 80 knots for rotary wings.
+  local speedCruiseLimit=self.ishelo and UTILS.KnotsToKmph(80) or UTILS.KnotsToKmph(350)
+  
+  -- Cruise speed: 70% of max speed but within limit.
+  self.speedCruise=math.min(self.speedmax*0.7, speedCruiseLimit)
   
   local unit=self.group:GetUnit(1)
   
