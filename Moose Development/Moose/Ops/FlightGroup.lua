@@ -357,7 +357,7 @@ FLIGHTGROUP.ROT={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.3.7"
+FLIGHTGROUP.version="0.3.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -368,16 +368,17 @@ FLIGHTGROUP.version="0.3.7"
 -- DONE: Get ammo.
 -- DONE: Get pylons.
 -- DONE: Fuel threshhold ==> RTB.
--- TODO: ROE, Afterburner restrict.
--- TODO: Add EPLRS, TACAN.
--- NOGO: Respawn? With correct loadout, fuelstate. Solved in DCS 2.5.6
+-- TODO: ROE
+-- TODO: Options EPLRS, Afterburner restrict etc.
+-- TODO: Add TACAN beacon.
+-- NOGO: Respawn? With correct loadout, fuelstate. Solved in DCS 2.5.6!
 -- TODO: Damage?
 -- TODO: shot events?
 -- TODO: Marks to add waypoints/tasks on-the-fly.
 -- TODO: Mark assigned parking spot on F10 map.
 -- TODO: Let user request a parking spot via F10 marker :)
--- TODO: Get proper monitoring of parking spots! Try to avoid scan and getParking as much as possible for performance reasons.
--- TODO: Monitor traveled distance in air.
+-- TODO: Monitor traveled distance in air ==> calculate fuel consumption ==> calcuate range remaining. Will this give half way accurate results?
+-- TODO: Out of AG/AA missiles. Safe state of out-of-ammo.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -464,7 +465,7 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("*",             "OutOfMissilesA2G",  "*")          -- Group is out of A2G missiles. Not implemented yet!
 
   self:AddTransition("*",             "TaskExecute",      "*")           -- Group will execute a task.
-  self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task.
+  self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task. Not implemented yet!
   self:AddTransition("*",             "TaskCancel",       "*")           -- Cancel current task.
   self:AddTransition("*",             "TaskDone",         "*")           -- Task is over.
   
@@ -576,6 +577,28 @@ end
 -- @return #FLIGHTGROUP.Task The task structure.
 function FLIGHTGROUP:AddTask(task, clock, description, prio, duration)
 
+  local newtask=self:NewTaskScheduled(task, clock, description, prio, duration)
+
+  -- Add to table.
+  table.insert(self.taskqueue, newtask)
+  
+  -- Info.
+  self:I(self.lid..string.format("Adding SCHEDULED task %s starting at %s", newtask.description, UTILS.SecondsToClock(newtask.time, true)))
+  self:T3({newtask=newtask})
+
+  return newtask
+end
+
+--- Create a *scheduled* task.
+-- @param #FLIGHTGROUP self
+-- @param #table task DCS task table structure.
+-- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
+-- @param #string description Brief text describing the task, e.g. "Attack SAM".
+-- @param #number prio Priority of the task.
+-- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
+-- @return #FLIGHTGROUP.Task The task structure.
+function FLIGHTGROUP:NewTaskScheduled(task, clock, description, prio, duration)
+
   -- Increase counter.
   self.taskcounter=self.taskcounter+1
 
@@ -602,13 +625,6 @@ function FLIGHTGROUP:AddTask(task, clock, description, prio, duration)
   newtask.type=FLIGHTGROUP.TaskType.SCHEDULED
   newtask.stopflag=USERFLAG:New(string.format("%s StopTaskFlag %d", self.groupname, newtask.id))  
   newtask.stopflag:Set(0)
-
-  -- Add to table.
-  table.insert(self.taskqueue, newtask)  
-  
-  -- Info.
-  self:I(self.lid..string.format("Adding SCHEDULED task %s starting at %s", newtask.description, UTILS.SecondsToClock(time, true)))
-  self:T3({newtask=newtask})
 
   return newtask
 end
@@ -1123,12 +1139,16 @@ end
 -- @param #table DCSTask DCS task structure.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetTask(DCSTask)
+
   if self:IsAlive() then
   
     if self.taskcurrent>0 then
-      local task=self:GetTaskCurrent()
-      self:RemoveTask(task)
-      self.taskcurrent=0
+    
+      -- TODO: Why the hell did I do this? It breaks scheduled tasks. I comment it out for now to see where it fails.
+      --local task=self:GetTaskCurrent()
+      --self:RemoveTask(task)
+      --self.taskcurrent=0
+      
     end
   
     -- Inject enroute tasks.
@@ -2105,6 +2125,15 @@ end
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase if applicable or nil.
 function FLIGHTGROUP:onafterElementLanded(From, Event, To, Element, airbase)
   self:T2(self.lid..string.format("Element landed %s at %s airbase", Element.name, airbase and airbase:GetName() or "unknown"))
+  
+  -- Helos with skids land directly on parking spots.
+  if self.ishelo then
+  
+    local Spot=self:GetParkingSpot(Element, 10, airbase)
+   
+    self:_SetElementParkingAt(Element, Spot)
+    
+  end
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.LANDED, airbase)
@@ -2293,7 +2322,7 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
 function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
-  self:T(self.lid..string.format("Flight landed at %s.", airbase and airbase:GetName() or "unknown airbase"))
+  self:T(self.lid..string.format("Flight landed at %s.", airbase and airbase:GetName() or "unknown place"))
 
   if self:IsLandingAt() then
     self:LandedAt()
@@ -2750,10 +2779,10 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
     self.flightcontrol:_AddFlightToInboundQueue(self)
   end
   
-   -- Altitude above ground for a glide slope of 3ï¿½.
-  local alpha=math.rad(3)
-  local x1=UTILS.NMToMeters(10)
-  local x2=UTILS.NMToMeters(5)
+   -- Altitude above ground for a glide slope of 3°.
+  local x1=self.ishelo and UTILS.NMToMeters(5.0) or UTILS.NMToMeters(10)
+  local x2=self.ishelo and UTILS.NMToMeters(2.5) or UTILS.NMToMeters(5)
+  local alpha=math.rad(3)  
   local h1=x1*math.tan(alpha)
   local h2=x2*math.tan(alpha)
   
@@ -2768,9 +2797,9 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   -- Task fuction when reached holding point.
   local TaskArrived=self.group:TaskFunction("FLIGHTGROUP._ReachedHolding", self)
 
-  -- Orbit until flaghold=1 (true) but max 10 min if no FC is giving the landing clearance.
+  -- Orbit until flaghold=1 (true) but max 5 min if no FC is giving the landing clearance.
   local TaskOrbit=self.group:TaskOrbit(p0, nil, UTILS.KnotsToMps(SpeedHold), p1)
-  local TaskLand=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, fc and nil or 10*60)
+  local TaskLand=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, fc and nil or 5*60)
   local TaskHold=self.group:TaskControlled(TaskOrbit, TaskLand)
   local TaskKlar=self.group:TaskFunction("FLIGHTGROUP._ClearedToLand", self)  -- Once the holding flag becomes true, set trigger FLIGHTLANDING, i.e. set flight STATUS to LANDING.
   
@@ -2993,23 +3022,39 @@ function FLIGHTGROUP:onafterEngageTargets(From, Event, To, TargetUnitSet)
   
 end
 
+--- On before "LandAt" event. Check we have a helo group.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Coordinate The coordinate where to land. Default is current position.
+-- @param #number Duration The duration in seconds to remain on ground. Default 600 sec (10 min).
+function FLIGHTGROUP:onbeforeLandAt(From, Event, To, Coordinate, Duration)
+  return self.ishelo
+end
 
 --- On after "LandAt" event. Order helicopter to land at a specific point.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate The coordinate where to land.
+-- @param Core.Point#COORDINATE Coordinate The coordinate where to land. Default is current position.
 -- @param #number Duration The duration in seconds to remain on ground. Default 600 sec (10 min).
 function FLIGHTGROUP:onafterLandAt(From, Event, To, Coordinate, Duration)
 
   -- Duration.
   Duration=Duration or 600
+  
+  Coordinate=Coordinate or self:GetCoordinate()
 
-  local task=self.group:TaskLandAtVec2(Coordinate:GetVec2(), Duration)
+  local DCStask=self.group:TaskLandAtVec2(Coordinate:GetVec2(), Duration)
+  
+  local Task=self:NewTaskScheduled(DCStask, 1, "Task_Land_At", 0)
 
   -- Add task with high priority.
-  self:AddTask(task, 1, "Task_Land_At", 0)
+  --self:AddTask(task, 1, "Task_Land_At", 0)
+  
+  self:TaskExecute(Task)
   
 end
 
@@ -3061,7 +3106,7 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
     if tanker then
     
       -- Send flight to tanker with refueling task.
-      self:Refuel(tanker.flightgroup.group:GetCoordinate())
+      self:Refuel(tanker.flightgroup:GetCoordinate())
       
     else
       if airbase and self.fuellowrtb then
@@ -3291,7 +3336,6 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
     local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
       
     -- Set task for group.
-    --self:PushTask(TaskFinal, 1)
     self:SetTask(TaskFinal, 1)
         
   end

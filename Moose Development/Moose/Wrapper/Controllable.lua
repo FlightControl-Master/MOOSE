@@ -1220,7 +1220,7 @@ end
 
 --- (AIR HELICOPTER) Landing at the ground. For helicopters only.
 -- @param #CONTROLLABLE self
--- @param DCS#Vec2 Point The point where to land.
+-- @param DCS#Vec2 Vec2 The point where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:TaskLandAtVec2(Vec2, Duration)
