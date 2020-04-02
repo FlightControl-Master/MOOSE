@@ -581,6 +581,43 @@ function AUFTRAG:NewCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, Targ
   return mission
 end
 
+--- Create a CAS mission.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
+-- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 10 NM.
+-- @param Core.Zone#ZONE_RADIUS ZoneCAS Circular CAS zone. Detected targets in this zone will be engaged.
+-- @param #table TargetTypes Table of target types. Default {"Helicopters", "Ground Units", "Light armed ships"}.
+-- @return #AUFTRAG self
+function AUFTRAG:NewFACA(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, TargetTypes)
+
+  -- Ensure given TargetTypes parameter is a table.
+  if TargetTypes then
+    if type(TargetTypes)~="table" then
+      TargetTypes={TargetTypes}
+    end
+  end
+
+  -- Create ORBIT first.
+  local mission=self:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg)
+
+  -- CAS paramters.
+  mission.type=AUFTRAG.Type.FACA
+  
+  mission.engageZone=ZoneCAS or ZONE_RADIUS:New("CAS Zone", OrbitCoordinate:GetVec2(), Leg)
+  mission.engageTargetTypes=TargetTypes or {"Helicopters", "Ground Units", "Light armed ships"}
+  
+  mission:_SetLogID()
+  
+  mission.missionTask=ENUMS.MissionTask.AFAC
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  return mission
+end
 
 
 --- Create a BAI mission.
@@ -2004,7 +2041,7 @@ function AUFTRAG:GetDCSMissionTask()
     -- FAC Mission --
     -----------------  
 
-    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageAsGroup, self.engageWeaponType, Designation, Datalink)
+    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageAsGroup, self.engageWeaponType, self.facDesignation, self.facDatalink)
     
     table.insert(DCStasks, DCStask)
   
@@ -2087,6 +2124,8 @@ function AUFTRAG:GetDCSMissionTask()
     ----------------------- 
   
     -- TODO: What?
+    
+    local DCStask=CONTROLLABLE.TaskEmbarking(self,Vec2,GroupSetForEmbarking,Duration,DistributionGroupSet)
   
   else
     self:E(self.lid..string.format("ERROR: Unknown mission task!"))

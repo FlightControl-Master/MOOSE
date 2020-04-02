@@ -1888,11 +1888,12 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   self:_RemoveFlightFromQueue(self.Qholding, flight, "holding")
  
    -- Altitude above ground for a glide slope of 3 degrees..
-  local alpha=math.rad(3)
-  local x1=UTILS.NMToMeters(10)
-  local x2=UTILS.NMToMeters(5)
+  local x1=flight.ishelo and UTILS.NMToMeters(5.0) or UTILS.NMToMeters(10)
+  local x2=flight.ishelo and UTILS.NMToMeters(2.5) or UTILS.NMToMeters(5)
+  local alpha=math.rad(3)  
   local h1=x1*math.tan(alpha)
   local h2=x2*math.tan(alpha)
+  
   local SpeedLand=140
   local SpeedTo=180
   

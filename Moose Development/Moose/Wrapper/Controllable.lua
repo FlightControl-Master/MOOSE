@@ -785,12 +785,38 @@ function CONTROLLABLE:CommandEPLRS(SwitchOnOff, Delay)
   if Delay and Delay>0 then
     SCHEDULER:New(nil, self.CommandEPLRS, {self, SwitchOnOff}, Delay)
   else
-    self:T(string.format("EPLRS=%s for controllable %s (id=%s)", tostring(SwitchOnOff), tostring(self:GetName()), tostring(_id)))
+    self:T(string.format("EPLRS=%s for controllable %s (id=%s)", tostring(SwitchOnOff), tostring(self:GetName()), tostring(self:GetID())))
     self:SetCommand(CommandEPLRS)
   end
 
   return self
 end
+
+--- Set radio frequency. See [DCS command EPLRS](https://wiki.hoggitworld.com/view/DCS_command_setFrequency)
+-- @param #CONTROLLABLE self
+-- @param #number Frequency Radio frequency in MHz.
+-- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
+-- @param #number Delay (Optional) Delay in seconds before the frequncy is set. Default is immediately.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSetFrequency(Frequency, Modulation, Delay)
+
+  local CommandSetFrequency = { 
+    id = 'SetFrequency', 
+    params = { 
+      frequency = Frequency, 
+      modulation = Modulation or radio.modulation.AM, 
+    } 
+  }
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandSetFrequency, {self, Frequency, Modulation}, Delay)
+  else
+    self:SetCommand(CommandSetFrequency)
+  end
+
+  return self
+end
+
 
 --- Set EPLRS data link on/off.
 -- @param #CONTROLLABLE self
@@ -1034,9 +1060,9 @@ end
 --- (AIR) Move the controllable to a Vec2 Point, wait for a defined duration and embark a controllable.
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Vec2 The point where to wait. Needs to have x and y components.
--- @param Core.Set#SET_GROUP GroupSetForEmparking Set of groups to embark.
+-- @param Core.Set#SET_GROUP GroupSetForEmbarking Set of groups to embark.
 -- @param #number Duration (Optional) The maximum duration in seconds to wait until all groups have embarked.
--- @param Core.Set#SET_GROUP (Optional) DistributionGroupSet Set of groups identifying the groups needing to board specific helicopters.
+-- @param Core.Set#SET_GROUP DistributionGroupSet (Optional) Set of groups identifying the groups needing to board specific helicopters.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskEmbarking(Vec2, GroupSetForEmbarking, Duration, DistributionGroupSet)
 

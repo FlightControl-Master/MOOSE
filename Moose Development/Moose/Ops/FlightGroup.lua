@@ -68,8 +68,11 @@
 -- @field #number TACANchannel TACAN channel.
 -- @field #string TACANmode TACAN mode, i.e. "Y" (or "X").
 -- @field #string TACANmorse TACAN morse code.
--- @field #number RadioFreq Default Radio frequency in MHz.
--- @field #number RadioModu Default Radio modulation `radio.modulation.AM` or `radio.modulation.FM`.
+-- @field #number radioFreq Default Radio frequency in MHz.
+-- @field #number radioModu Default Radio modulation `radio.modulation.AM` or `radio.modulation.FM`.
+-- @field #boolean radioUse Use radio. If false, communications are turned off.
+-- @field #boolean radioOn If true, radio is currently turned on.
+-- @field Core.RadioQueue#RADIOQUEUE radioQueue Radio queue.
 -- @field #number CallsignName Call sign name.
 -- @field #number CallsignNumber Call sign number.
 -- @field #boolean EPLRS If true, turn EPLRS data link on.
@@ -80,6 +83,10 @@
 -- @field #string optionROTcurrent Current ROT setting.
 -- 
 -- @field Ops.Auftrag#AUFTRAG missionpaused Paused mission.
+-- 
+-- @field Core.Point#COORDINATE position Current position of the group.
+-- @field #number traveldist Distance traveled in meters. This is a lower bound!
+-- @field #number fuelmass Inital fuel in kg.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -213,7 +220,7 @@ FLIGHTGROUP = {
   inzones            =   nil,
   groupinitialized   =   nil,
   ishelo             =   nil,
-  beacon             =   nil,  
+  beacon             =   nil,
 }
 
 
@@ -368,7 +375,7 @@ FLIGHTGROUP.version="0.3.8"
 -- DONE: Get ammo.
 -- DONE: Get pylons.
 -- DONE: Fuel threshhold ==> RTB.
--- TODO: ROE
+-- DONE: ROE
 -- TODO: Options EPLRS, Afterburner restrict etc.
 -- TODO: Add TACAN beacon.
 -- NOGO: Respawn? With correct loadout, fuelstate. Solved in DCS 2.5.6!
@@ -811,6 +818,112 @@ function FLIGHTGROUP:SetParkingSpots(airbase, spots)
   self.parkingspots[airbase]=spots
   return self
 end
+
+--- Set TACAN parameters. AA TACANs are aleays on "Y" band.
+-- @param #FLIGHTGROUP self
+-- @param #number Channel TACAN channel.
+-- @param #string Morse Morse code. Default "XX".
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetTACAN(Channel, Morse)
+
+  self.TACANchannel=Channel
+  self.TACANmorse=Morse or "XXX"
+  self.TACANactive=false
+  self.TACANon=true
+  
+  return self
+end
+
+
+--- Set Radio parameters.
+-- @param #FLIGHTGROUP self
+-- @param #number Frequency Radio frequency in MHz. Default 305 MHz.
+-- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetRadio(Frequency, Modulation)
+
+  self.radioFreq=Frequency or 305
+  self.radioModu=Modulation or radio.modulation.AM
+
+  self.radioOn=false
+  
+  self.radioUse=true
+  
+  return self
+end
+
+
+
+--- Activate TACAN beacon.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SwitchTACANOn()
+
+  if self:IsAlive() then
+    
+    local unit=self.group:GetUnit(1)
+    
+    if unit and unit:IsAlive() then
+    
+      -- Create a new beacon and activate TACAN.
+      if not self.beacon then
+        self.beacon=BEACON:New(unit)
+      end
+      
+      self.beacon:ActivateTACAN(self.TACANchannel, "Y", self.TACANmorse, true)
+      
+      self.TACANactive=true      
+    
+    end
+    
+    
+  end
+
+  return self
+end
+
+--- Deactivate TACAN beacon.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SwitchTACANOff()
+
+  if self.beacon then
+    self.beacon:StopAATACAN()
+  end
+  
+  self.TACANactive=false
+
+end
+
+
+--- Turn radio on.
+-- @param #FLIGHTGROUP self
+-- @param #number Frequency Radio frequency in MHz. Default 305 MHz.
+-- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SwitchRadioOn()
+
+  self.group:SetOption(AI.Option.Air.id.SILENCE, false)
+
+  self.group:CommandSetFrequency(self.radioFreq, self.radioModu)
+  
+  self.radioOn=true
+  
+  return self
+end
+
+--- Turn radio off.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SwitchRadioOff()
+
+  self.group:SetOption(AI.Option.Air.id.SILENCE, true)
+
+  self.radioOn=false
+  
+  return self
+end
+
 
 --- Set the FLIGHTCONTROL controlling this flight group.
 -- @param #FLIGHTGROUP self
@@ -1578,8 +1691,13 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   -- Fuel State
   ---
 
+  local position=self:GetCoordinate()
+  local dist=self.position:Get3DDistance(position)
+  self.traveldist=self.traveldist+dist
+  
+
   -- Only if group is in air.
-  if self:IsAlive() and self.group:IsAirborne() then
+  if self:IsAlive() and self.group:IsAirborne(true) then
 
     local fuelmin=self:GetFuelMin()
   
@@ -2197,6 +2315,15 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
     self.group:SetOption(AI.Option.Air.id.PROHIBIT_JETT, true)
     self.group:SetOption(AI.Option.Air.id.PROHIBIT_AB, true)
     self.group:SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
+    
+    if self.TACANon then
+      self:SwitchTACANOn()
+    end
+    
+    if self.RadioOn then
+    
+    end
+    
     --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)
     
   
@@ -2743,18 +2870,19 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   
   -- Defaults:
   SpeedTo=SpeedTo or UTILS.KmphToKnots(self.speedmax*0.75)
-  SpeedHold=SpeedHold or 250
-  SpeedLand=SpeedLand or 170
+  SpeedHold=SpeedHold or (self.ishelo and 80 or 250)
+  SpeedLand=SpeedLand or (self.ishelo and 40 or 170)
 
   -- Debug message.
   local text=string.format("Flight group set to hold at airbase %s. SpeedTo=%d, SpeedHold=%d, SpeedLand=%d", airbase:GetName(), SpeedTo, SpeedHold, SpeedLand)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:T(self.lid..text)
- 
+
+  local althold=self.ishelo and 1000 or 6000
   
   -- Holding points.
   local c0=self.group:GetCoordinate()
-  local p0=airbase:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
+  local p0=airbase:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(althold))
   local p1=nil
   local wpap=nil
   
@@ -2779,7 +2907,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
     self.flightcontrol:_AddFlightToInboundQueue(self)
   end
   
-   -- Altitude above ground for a glide slope of 3°.
+   -- Altitude above ground for a glide slope of 3ï¿½.
   local x1=self.ishelo and UTILS.NMToMeters(5.0) or UTILS.NMToMeters(10)
   local x2=self.ishelo and UTILS.NMToMeters(2.5) or UTILS.NMToMeters(5)
   local alpha=math.rad(3)  
@@ -2876,7 +3004,7 @@ function FLIGHTGROUP:onafterWait(From, Event, To, Coord, Altitude, Speed)
   end
   
   if Tsuspend and not allowed then
-    self:__WAIT(Tsuspend, Coord, Altitude, Speed)
+    self:__Wait(Tsuspend, Coord, Altitude, Speed)
   end
   
   return allowed
@@ -2894,8 +3022,8 @@ end
 function FLIGHTGROUP:onafterWait(From, Event, To, Coord, Altitude, Speed)
   
   Coord=Coord or self.group:GetCoordinate()
-  Altitude=Altitude or 10000
-  Speed=Speed or 250
+  Altitude=Altitude or (self.ishelo and 1000 or 10000)
+  Speed=Speed or (self.ishelo and 80 or 250)
 
   -- Debug message.
   local text=string.format("Flight group set to wait/orbit at altitude %d m and speed %.1f km/h", Altitude, Speed)
@@ -2909,6 +3037,7 @@ function FLIGHTGROUP:onafterWait(From, Event, To, Coord, Altitude, Speed)
 
   -- Set task.
   self:SetTask(TaskOrbit)
+  
 end
 
 
@@ -3865,6 +3994,18 @@ function FLIGHTGROUP:_InitGroup()
   
   -- Cruise speed: 70% of max speed but within limit.
   self.speedCruise=math.min(self.speedmax*0.7, speedCruiseLimit)
+  
+  -- Initial fuel mass.
+  self.fuelmass=self.template.pylons.fuel
+  
+  self.traveldist=0
+  self.position=self:GetCoordinate()
+  
+  -- Radio parameters from template.
+  -- TODO: Need to check that I don't overwrite the settings from :SetRadio()
+  self.radioOn=self.template.communication
+  self.radioFreq=self.template.frequency
+  self.radioModu=self.template.modulation
   
   local unit=self.group:GetUnit(1)
   
@@ -4848,20 +4989,18 @@ end
 
 --- Set parking spot of element.
 -- @param #FLIGHTGROUP self
--- @param #FLIGHTGROUP.FlightElement Element The element.
+-- @param #FLIGHTGROUP.Element Element The element.
 -- @param Wrapper.Airbase#AIRBASE.ParkingSpot Spot Parking Spot.
 function FLIGHTGROUP:_SetElementParkingAt(Element, Spot)
 
   -- Element is parking here.
   Element.parking=Spot
   
-  if Spot then
-    if self.flightcontrol then
+  if Spot and self.flightcontrol then
       
-      -- Set parking spot to OCCUPIED.
-      self.flightcontrol:SetParkingOccupied(Element.parking, Element.name)
-      
-    end
+    -- Set parking spot to OCCUPIED.
+    self.flightcontrol:SetParkingOccupied(Element.parking, Element.name)
+    
   end
 
 end
@@ -4874,7 +5013,7 @@ function FLIGHTGROUP:_SetElementParkingFree(Element)
   if Element.parking then
 
     -- Set parking to FREE.
-    if self.flightcontrol and Element.parking then
+    if self.flightcontrol then
       self.flightcontrol:SetParkingFree(Element.parking)
     end
     

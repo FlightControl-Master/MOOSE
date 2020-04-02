@@ -1102,7 +1102,7 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
       squad:GetModex(asset)
       
       
-      asset.terminalType=AIRBASE.TerminalType.OpenBig
+      --asset.terminalType=AIRBASE.TerminalType.OpenBig
       
       -- Add asset to squadron.
       table.insert(squad.assets, asset)
@@ -1143,10 +1143,14 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   -- Set airwing.
   flightgroup:SetAirwing(self)
   
-  --flightgroup.group:OptionProhibitAfterburner(true)
-  
   -- Set asset flightgroup.
   asset.flightgroup=flightgroup
+  
+  local squadron=self:GetSquadronOfAsset(asset)
+  local Tacan=squadron:GetTACAN()
+  if Tacan then
+    flightgroup:SetTACAN(Tacan)
+  end
   
   -- Not requested any more.
   asset.requested=nil

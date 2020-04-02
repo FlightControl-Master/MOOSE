@@ -36,6 +36,9 @@
 -- @field #string attribute Generalized attribute of the squadron template group.
 -- @field #number tankerSystem For tanker squads, the refuel system used (boom=0 or probpe=1). Default nil.
 -- @field #number refuelSystem For refuelable squads, the refuel system used (boom=0 or probpe=1). Default nil.
+-- @field #number TACANmin TACAN min channel.
+-- @field #number TACANmax TACAN max channel.
+-- @field #table TACANused Table of used TACAN channels.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -68,6 +71,9 @@ SQUADRON = {
   engageRange    =   nil,
   tankerSystem   =   nil,
   refuelSystem   =   nil,
+  TACANmin       =   nil,
+  TACANmax       =   nil,
+  TACANused      =    {},
 }
 
 --- SQUADRON class version.
@@ -359,6 +365,35 @@ function SQUADRON:GetModex(Asset)
     
   end
   
+end
+
+--- Get an unused TACAN channel.
+-- @param #SQUADRON self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
+-- @return #number TACAN channel or *nil* if no channel is free.
+function SQUADRON:GetTACAN()
+
+  if self.TACANmin and self.TACANmax then
+  
+    for channel=self.TACANmin, self.TACANmax do
+    
+      if not self.TACANused[channel] then
+        self.TACANused[channel]=true
+        return channel
+      end
+    
+    end
+    
+  end
+
+  return nil
+end
+
+--- "Return" a used TACAN channel.
+-- @param #SQUADRON self
+-- @param #number channel The channel that is available again.
+function SQUADRON:ReturnTACAN(channel)
+  self.TACANused[channel]=false
 end
 
 --- Check if squadron is "OnDuty".
