@@ -3796,6 +3796,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
         asset.wid=self.uid
 
         -- No request associated with this asset.
+        env.info(string.format("FF asset=%s: setting rid=nil", asset.spawngroupname))
         asset.rid=nil
 
         -- Asset is not spawned.
@@ -3819,7 +3820,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       -------------------------
 
       -- Debug info.
-      self:_DebugMessage(string.format("Warehouse %s: Adding %d NEW assets of group %s to stock.", self.alias, n, tostring(group:GetName())), 5)
+      self:_DebugMessage(string.format("Warehouse %s: Adding %d NEW assets of group %s to stock", self.alias, n, tostring(group:GetName())), 5)
 
       -- This is a group that is not in the db yet. Add it n times.
       local assets=self:_RegisterAsset(group, n, forceattribute, forcecargobay, forceweight, loadradius, liveries, skill, assignment)
@@ -3844,11 +3845,11 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
 
     -- Destroy group if it is alive.
     if group:IsAlive()==true then
-      self:_DebugMessage(string.format("Removing group %s.", group:GetName()), 5)
+      self:_DebugMessage(string.format("Removing group %s", group:GetName()), 5)
       -- Setting parameter to false, i.e. creating NO dead or remove unit event, seems to not confuse the dispatcher logic.
       -- Create a RemoveUnit event to let the FLIGHTCONTROL know, the parking is now free.
       -- TODO: Need to check if my above comment not to confuse the dispatcher logic is broken by this!
-      group:Destroy()
+      group:Destroy(false)
     end
 
   else
@@ -4298,6 +4299,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     _assetitem.arrived=false
 
     local spawngroup=nil --Wrapper.Group#GROUP
+    
+    -- Add asset by id to all assets table.
+    Request.assets[_assetitem.uid]=_assetitem
 
     -- Spawn assets depending on type.
     if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
@@ -4309,9 +4313,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
       -- Spawn helos at airport in controlled state. They need to fly to the spawn zone.
       spawngroup=self:_SpawnAssetAircraft(_alias,_assetitem, Request, Parking[_assetitem.uid], false)
-
-      -- Activate helo randomly within the next 10 seconds.
-      --spawngroup:StartUncontrolled(math.random(10))
 
     elseif Request.transporttype==WAREHOUSE.TransportType.APC then
 
@@ -4337,9 +4338,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       self:_ErrorMessage("ERROR: Unknown transport type!")
       return
     end
-
-    -- Add asset by id to all assets table.
-    Request.assets[_assetitem.uid]=_assetitem
 
   end
 
@@ -5098,6 +5096,24 @@ function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 
 end
 
+--- On before "AssetSpawned" event. Checks whether the asset was already set to "spawned" for groups with multiple units. 
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP group The group spawned.
+-- @param #WAREHOUSE.Assetitem asset The asset that is dead.
+-- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
+function WAREHOUSE:onbeforeAssetSpawned(From, Event, To, group, asset, request)
+  if asset.spawned then
+    --return false
+  else
+    --return true
+  end
+  
+  return true
+end
+
 --- On after "AssetSpawned" event triggered when an asset group is spawned into the cruel world.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -5107,28 +5123,33 @@ end
 -- @param #WAREHOUSE.Assetitem asset The asset that is dead.
 -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
-  local text=string.format("Asset %s from request id=%d was spawned!", asset.templatename, request.uid)
+  local text=string.format("Asset %s from request id=%d was spawned!", asset.spawngroupname, request.uid)
   self:I(self.lid..text)
-  self:_DebugMessage(text)
 
   -- Sete asset state to spawned.
   asset.spawned=true
 
   -- Check if all assets groups are spawned and trigger events.
-  local allspawned=true
+  local n=0
   for _,_asset in pairs(request.assets) do
     local assetitem=_asset --#WAREHOUSE.Assetitem
 
-    --self:I(string.format("FF Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
-
-    if not assetitem.spawned then
-      allspawned=false
+    self:I(string.format("FF Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
+    
+    if assetitem.spawned then
+      n=n+1
+    else
+      self:E("FF What?! This should not happen!")
     end
+
   end
 
   -- Trigger event.
-  if allspawned then
+  if n==request.nasset+request.ntransport then
+    env.info(string.format("All assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned. Calling RequestSpawned", n, request.nasset, request.ntransport, request.uid))
     self:RequestSpawned(request, request.cargogroupset, request.transportgroupset)
+  else
+    env.info(string.format("Not all assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned YET", n, request.nasset, request.ntransport, request.uid))
   end
 
 end
@@ -5443,9 +5464,13 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     
     -- Set request ID.
     asset.rid=Request.uid
+    env.info(string.format("FF asset=%s: setting rid=%s", asset.spawngroupname, tostring(asset.rid)))    
 
     -- Spawn group name.
     local _alias=asset.spawngroupname
+    
+    --Request add asset by id.
+    Request.assets[asset.uid]=asset    
 
     -- Spawn an asset group.
     local _group=nil --Wrapper.Group#GROUP
@@ -5483,10 +5508,6 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     else
       self:E(self.lid.."ERROR: Unknown asset category!")
     end
-
-
-    --Request add asset by id.
-    Request.assets[asset.uid]=asset
 
   end
 
@@ -6066,11 +6087,14 @@ function WAREHOUSE:_OnEventBirth(EventData)
     local wid,aid,rid=self:_GetIDsFromGroup(group)
 
     if wid==self.uid then
-      self:T(self.lid..string.format("Warehouse %s captured event birth of its asset unit %s.", self.alias, EventData.IniUnitName))
-
+    
       -- Get asset and request from id.
       local asset=self:GetAssetByID(aid)
       local request=self:GetRequestByID(rid)
+      
+      -- Debug message.
+      self:I(self.lid..string.format("Warehouse %s captured event birth of its asset unit %s. spawned=%s", self.alias, EventData.IniUnitName, tostring(asset.spawned)))
+      
 
       -- Birth is triggered for each unit. We need to make sure not to call this too often!
       if not asset.spawned then
@@ -6095,7 +6119,8 @@ function WAREHOUSE:_OnEventBirth(EventData)
         group:SetState(group, "WAREHOUSE", self)
 
         -- Asset spawned FSM function.
-        self:__AssetSpawned(1, group, asset, request)
+        --self:__AssetSpawned(1, group, asset, request)
+        self:AssetSpawned(group, asset, request)
 
       end
 
@@ -7787,10 +7812,10 @@ function WAREHOUSE:_GetIDsFromGroup(group)
     end
 
     -- Debug info
-    self:T3(self.lid..string.format("Group Name   = %s", tostring(name)))
-    self:T3(self.lid..string.format("Warehouse ID = %s", tostring(wid)))
-    self:T3(self.lid..string.format("Asset     ID = %s", tostring(aid)))
-    self:T3(self.lid..string.format("Request   ID = %s", tostring(rid)))
+    self:T(self.lid..string.format("Group Name   = %s", tostring(name)))
+    self:T(self.lid..string.format("Warehouse ID = %s", tostring(wid)))
+    self:T(self.lid..string.format("Asset     ID = %s", tostring(aid)))
+    self:T(self.lid..string.format("Request   ID = %s", tostring(rid)))
 
     return wid,aid,rid
   else
@@ -8456,7 +8481,7 @@ function WAREHOUSE:_DebugMessage(text, duration)
   if duration>0 then
     MESSAGE:New(text, duration):ToAllIf(self.Debug)
   end
-  self:T(self.lid..text)
+  self:I(self.lid..text)
 end
 
 --- Error message. Message send to all (if duration > 0). Text self:E(text) added to DCS.log file.

@@ -3996,7 +3996,8 @@ function FLIGHTGROUP:_InitGroup()
   self.speedCruise=math.min(self.speedmax*0.7, speedCruiseLimit)
   
   -- Initial fuel mass.
-  self.fuelmass=self.template.pylons.fuel
+  -- TODO: this is a unit property?
+  self.fuelmass=0 --self.template.pylons.fuel
   
   self.traveldist=0
   self.position=self:GetCoordinate()

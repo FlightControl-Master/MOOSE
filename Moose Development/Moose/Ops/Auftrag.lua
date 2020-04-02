@@ -1780,7 +1780,8 @@ function AUFTRAG:CountMissionTargets()
       local target=self.engageTarget.Target --Wrapper.Group#GROUP
       
       local units=target:GetUnits()
-      for _,_unit in pairs(units) do
+      
+      for _,_unit in pairs(units or {}) do
         local unit=_unit --Wrapper.Unit#UNIT
         
         -- We check that unit is "alive" and has health >1. Somtimes units get heavily damanged but are still alive.
