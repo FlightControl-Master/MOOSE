@@ -4,19 +4,20 @@
 --
 -- **Main Features:**
 --
---    * Wind direction and speed,
---    * Visibility,
---    * Cloud coverage, base and ceiling,
---    * Temprature,
---    * Pressure QNH/QFE,
---    * Weather phenomena: rain, thunderstorm, fog, dust,
---    * Active runway based on wind direction,
---    * Tower frequencies,
---    * More than 180 voice overs,
---    * Airbase names pronounced in locale accent (russian, US, french, arabic),
---    * Option to present information in imperial or metric units,
---    * Runway length and airfield elevation (optional),
---    * Frequencies/channels of nav aids (ILS, VOR, NDB, TACAN, PRMG, RSBN) (optional).
+--    * Wind direction and speed
+--    * Visibility
+--    * Cloud coverage, base and ceiling
+--    * Temprature
+--    * Dew point (approximate as there is no relative humidity in DCS yet)    
+--    * Pressure QNH/QFE
+--    * Weather phenomena: rain, thunderstorm, fog, dust
+--    * Active runway based on wind direction
+--    * Tower frequencies
+--    * More than 180 voice overs
+--    * Airbase names pronounced in locale accent (russian, US, french, arabic)
+--    * Option to present information in imperial or metric units
+--    * Runway length and airfield elevation (optional)
+--    * Frequencies/channels of nav aids (ILS, VOR, NDB, TACAN, PRMG, RSBN) (optional)
 --
 -- ===
 --
@@ -84,6 +85,7 @@
 -- @field #boolean altimeterQNH Report altimeter QNH.
 -- @field #boolean usemarker Use mark on the F10 map.
 -- @field #number markerid Numerical ID of the F10 map mark point.
+-- @field #number relHumidity Relative humidity (used to approximately calculate the dew point).
 -- @extends Core.Fsm#FSM
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -318,6 +320,7 @@ ATIS = {
   altimeterQNH   =   nil,
   usemarker      =   nil,
   markerid       =   nil,
+  relHumidity    =   nil,
 }
 
 --- NATO alphabet.
@@ -380,6 +383,7 @@ ATIS.RunwayM2T={
 --- Sound files.
 -- @type ATIS.Sound
 -- @field #ATIS.Soundfile ActiveRunway
+-- @field #ATIS.Soundfile AdviceOnInitial
 -- @field #ATIS.Soundfile Airport
 -- @field #ATIS.Soundfile Altimeter
 -- @field #ATIS.Soundfile At
@@ -394,6 +398,7 @@ ATIS.RunwayM2T={
 -- @field #ATIS.Soundfile Decimal
 -- @field #ATIS.Soundfile DegreesCelsius
 -- @field #ATIS.Soundfile DegreesFahrenheit
+-- @field #ATIS.Soundfile DewPoint
 -- @field #ATIS.Soundfile Dust
 -- @field #ATIS.Soundfile Elevation
 -- @field #ATIS.Soundfile EndOfInformation
@@ -448,6 +453,7 @@ ATIS.RunwayM2T={
 -- @field #ATIS.Soundfile VORFrequency
 ATIS.Sound = {
   ActiveRunway={filename="ActiveRunway.ogg", duration=0.99},
+  AdviceOnInitial={filename="AdviceOnInital.ogg", duration=3.00},
   Airport={filename="Airport.ogg", duration=0.66},
   Altimeter={filename="Altimeter.ogg", duration=0.68},
   At={filename="At.ogg", duration=0.41},
@@ -462,6 +468,7 @@ ATIS.Sound = {
   Decimal={filename="Decimal.ogg", duration=0.54},
   DegreesCelsius={filename="DegreesCelsius.ogg", duration=1.27},
   DegreesFahrenheit={filename="DegreesFahrenheit.ogg", duration=1.23},
+  DewPoint={filename="DewPoint.ogg", duration=0.65},
   Dust={filename="Dust.ogg", duration=0.54},
   Elevation={filename="Elevation.ogg", duration=0.78},
   EndOfInformation={filename="EndOfInformation.ogg", duration=1.15},
@@ -524,15 +531,17 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.6.4"
+ATIS.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add stop/pause FMS functions.
 -- TODO: Correct fog for elevation.
--- TODO: Use local time.
+-- DONE: Add text report for output.
+-- DONE: Add stop FMS functions.
+-- NOGO: Use local time. Not realisitc!
+-- DONE: Dew point. Approx. done.
 -- DONE: Metric units.
 -- DONE: Set UTC correction.
 -- DONE: Set magnetic variation.
@@ -580,6 +589,7 @@ function ATIS:New(airbasename, frequency, modulation)
   self:SetRadioPower()
   self:SetAltimeterQNH(true)
   self:SetMapMarks(false)
+  self:SetRelativeHumidity()
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -587,9 +597,11 @@ function ATIS:New(airbasename, frequency, modulation)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("Stopped",       "Start",           "Running")     -- Start FSM.
-  self:AddTransition("*",             "Status",          "*")           -- Update status.
-  self:AddTransition("*",             "Broadcast",       "*")           -- Broadcast ATIS message.
-  self:AddTransition("*",             "CheckQueue",      "*")           -- Check if radio queue is empty.
+  self:AddTransition("Running",       "Status",          "Running")     -- Update status.
+  self:AddTransition("Running",       "Broadcast",       "Running")     -- Broadcast ATIS message.
+  self:AddTransition("Running",       "CheckQueue",      "Running")     -- Check if radio queue is empty.
+  self:AddTransition("Running",       "Report",          "Running")     -- Report ATIS text.
+  self:AddTransition("Running",       "Stop",            "Stopped")     -- Stop.
 
   ------------------------
   --- Pseudo Functions ---
@@ -604,13 +616,66 @@ function ATIS:New(airbasename, frequency, modulation)
   -- @param #ATIS self
   -- @param #number delay Delay in seconds.
 
+
   --- Triggers the FSM event "Stop". Stops the ATIS.
+  -- @function [parent=#ATIS] Stop
   -- @param #ATIS self
 
   --- Triggers the FSM event "Stop" after a delay.
   -- @function [parent=#ATIS] __Stop
   -- @param #ATIS self
   -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Status".
+  -- @function [parent=#ATIS] Status
+  -- @param #ATIS self
+
+  --- Triggers the FSM event "Status" after a delay.
+  -- @function [parent=#ATIS] __Status
+  -- @param #ATIS self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "BroadCast".
+  -- @function [parent=#ATIS] BroadCast
+  -- @param #ATIS self
+
+  --- Triggers the FSM event "BroadCast" after a delay.
+  -- @function [parent=#ATIS] __BroadCast
+  -- @param #ATIS self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "CheckQueue".
+  -- @function [parent=#ATIS] CheckQueue
+  -- @param #ATIS self
+
+  --- Triggers the FSM event "CheckQueue" after a delay.
+  -- @function [parent=#ATIS] __CheckQueue
+  -- @param #ATIS self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Report".
+  -- @function [parent=#ATIS] Report
+  -- @param #ATIS self
+  -- @param #string Text Report text.
+
+  --- Triggers the FSM event "Report" after a delay.
+  -- @function [parent=#ATIS] __Report
+  -- @param #ATIS self
+  -- @param #number delay Delay in seconds.
+  -- @param #string Text Report text.
+
+  --- On after "Report" event user function.
+  -- @function [parent=#ATIS] OnAfterReport
+  -- @param #ATIS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string Text Report text.
+
 
   -- Debug trace.
   if false then
@@ -801,6 +866,16 @@ function ATIS:SetTemperatureFahrenheit()
   return self
 end
 
+--- Set relative humidity. This is used to approximately calculate the dew point.
+-- Note that the dew point is only an artificial information as DCS does not have an atmospheric model that includes humidity (yet). 
+-- @param #ATIS self
+-- @param #number Humidity Relative Humidity, i.e. a number between 0 and 100 %. Default is 50 %. 
+-- @return #ATIS self
+function ATIS:SetRelativeHumidity(Humidity)
+  self.relHumidity=Humidity or 50  
+  return self
+end
+
 --- Report altimeter QNH.
 -- @param #ATIS self
 -- @param #boolean switch If true or nil, report altimeter QHN. If false, report QFF.
@@ -976,6 +1051,9 @@ end
 
 --- Start ATIS FSM.
 -- @param #ATIS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
 function ATIS:onafterStart(From, Event, To)
 
   -- Check that this is an airdrome.
@@ -1021,6 +1099,9 @@ end
 
 --- Update status.
 -- @param #ATIS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
 function ATIS:onafterStatus(From, Event, To)
 
   -- Get FSM state.
@@ -1047,6 +1128,9 @@ end
 
 --- Check if radio queue is empty. If so, start broadcasting the message again.
 -- @param #ATIS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
 function ATIS:onafterCheckQueue(From, Event, To)
 
   if #self.radioqueue.queue==0 then
@@ -1062,6 +1146,9 @@ end
 
 --- Broadcast ATIS radio message.
 -- @param #ATIS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
 function ATIS:onafterBroadcast(From, Event, To)
 
   -- Get current coordinate.
@@ -1194,19 +1281,24 @@ function ATIS:onafterBroadcast(From, Event, To)
   self:T3(string.format("ZULU =%s", tostring(ZULU)))
   self:T3(string.format("NATO =%s", tostring(NATO)))
 
-  -------------------
-  --- Temperature ---
-  -------------------
+  ---------------------------------
+  --- Temperature and Dew Point ---
+  ---------------------------------
 
-  -- Temperature in °C (or °F).
+  -- Temperature in °C.
   local temperature=coord:GetTemperature(height+5)
+  
+  -- Dew point in °C.
+  local dewpoint=temperature-(100-self.relHumidity)/5
 
   -- Convert to °F.
   if self.TDegF then
     temperature=UTILS.CelciusToFarenheit(temperature)
+    dewpoint=UTILS.CelciusToFarenheit(dewpoint)
   end
 
   local TEMPERATURE=string.format("%d", math.abs(temperature))
+  local DEWPOINT=string.format("%d", math.abs(dewpoint))
 
   ---------------
   --- Weather ---
@@ -1325,17 +1417,20 @@ function ATIS:onafterBroadcast(From, Event, To)
     subtitle=subtitle.." Airport"
   end
   self.radioqueue:NewTransmission(string.format("%s/%s.ogg", self.theatre, self.airbasename), 3.0, self.soundpath, nil, nil, subtitle, self.subduration)
+  local alltext=subtitle
 
   -- Information tag
   subtitle=string.format("Information %s", NATO)
   local _INFORMATION=subtitle
   self:Transmission(ATIS.Sound.Information, 0.5, subtitle)
   self.radioqueue:NewTransmission(string.format("NATO Alphabet/%s.ogg", NATO), 0.75, self.soundpath)
+  alltext=alltext..";\n"..subtitle
 
   -- Zulu Time
-  subtitle=string.format("%s Zulu Time", ZULU)
+  subtitle=string.format("%s Zulu", ZULU)
   self.radioqueue:Number2Transmission(ZULU, nil, 0.5)
   self:Transmission(ATIS.Sound.TimeZulu, 0.2, subtitle)
+  alltext=alltext..";\n"..subtitle
 
   -- Visibility
   if self.metric then
@@ -1350,6 +1445,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   else
     self:Transmission(ATIS.Sound.NauticalMiles, 0.2)
   end
+  alltext=alltext..";\n"..subtitle
 
   -- Cloud base
   self:Transmission(CloudCover, 1.0, CLOUDSsub)
@@ -1385,6 +1481,7 @@ function ATIS:onafterBroadcast(From, Event, To)
       self:Transmission(ATIS.Sound.Feet, 0.1)
     end
   end
+  alltext=alltext..";\n"..subtitle
 
   -- Weather phenomena
   local wp=false
@@ -1438,6 +1535,7 @@ function ATIS:onafterBroadcast(From, Event, To)
     if dust then
       self:Transmission(ATIS.Sound.Dust, 0.5)
     end
+    alltext=alltext..";\n"..subtitle
   end
 
   -- Altimeter QNH/QFE.
@@ -1469,6 +1567,7 @@ function ATIS:onafterBroadcast(From, Event, To)
       self:Transmission(ATIS.Sound.InchesOfMercury, 0.1)
     end
   end
+  alltext=alltext..";\n"..subtitle
 
   -- Temperature
   if self.TDegF then
@@ -1495,6 +1594,34 @@ function ATIS:onafterBroadcast(From, Event, To)
   else
     self:Transmission(ATIS.Sound.DegreesCelsius, 0.2)
   end
+  alltext=alltext..";\n"..subtitle
+
+  -- Dew point
+  if self.TDegF then
+    if dewpoint<0 then
+      subtitle=string.format("Dew point -%s °F", DEWPOINT)
+    else
+      subtitle=string.format("Dew point %s °F", DEWPOINT)
+    end
+  else
+    if dewpoint<0 then
+      subtitle=string.format("Dew point -%s °C", DEWPOINT)
+    else
+      subtitle=string.format("Dew point %s °C", DEWPOINT)
+    end
+  end
+  local _DEWPOINT=subtitle
+  self:Transmission(ATIS.Sound.DewPoint, 1.0, subtitle)
+  if dewpoint<0 then
+    self:Transmission(ATIS.Sound.Minus, 0.2)
+  end
+  self.radioqueue:Number2Transmission(DEWPOINT)
+  if self.TDegF then
+    self:Transmission(ATIS.Sound.DegreesFahrenheit, 0.2)
+  else
+    self:Transmission(ATIS.Sound.DegreesCelsius, 0.2)
+  end
+  alltext=alltext..";\n"..subtitle
 
   -- Wind
   if self.metric then
@@ -1518,6 +1645,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   if turbulence>0 then
     self:Transmission(ATIS.Sound.Gusting, 0.2)
   end
+  alltext=alltext..";\n"..subtitle
 
   -- Active runway.
   local subtitle=string.format("Active runway %s", runway)
@@ -1534,6 +1662,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   elseif rwyLeft==false then
     self:Transmission(ATIS.Sound.Right, 0.2)
   end
+  alltext=alltext..";\n"..subtitle
 
   -- Runway length.
   if self.rwylength then
@@ -1571,6 +1700,7 @@ function ATIS:onafterBroadcast(From, Event, To)
       self:Transmission(ATIS.Sound.Feet, 0.1)
     end
 
+    alltext=alltext..";\n"..subtitle
   end
 
   -- Airfield elevation
@@ -1608,6 +1738,7 @@ function ATIS:onafterBroadcast(From, Event, To)
       self:Transmission(ATIS.Sound.Feet, 0.1)
     end
 
+    alltext=alltext..";\n"..subtitle
   end
 
   -- Tower frequency.
@@ -1631,6 +1762,8 @@ function ATIS:onafterBroadcast(From, Event, To)
       end
       self:Transmission(ATIS.Sound.MegaHertz, 0.2)
     end
+    
+    alltext=alltext..";\n"..subtitle
   end
 
   -- ILS
@@ -1646,6 +1779,8 @@ function ATIS:onafterBroadcast(From, Event, To)
       self.radioqueue:Number2Transmission(f[2])
     end
     self:Transmission(ATIS.Sound.MegaHertz, 0.2)
+    
+    alltext=alltext..";\n"..subtitle
   end
 
   -- Outer NDB
@@ -1661,6 +1796,8 @@ function ATIS:onafterBroadcast(From, Event, To)
       self.radioqueue:Number2Transmission(f[2])
     end
     self:Transmission(ATIS.Sound.MegaHertz, 0.2)
+    
+    alltext=alltext..";\n"..subtitle
   end
 
   -- Inner NDB
@@ -1676,6 +1813,8 @@ function ATIS:onafterBroadcast(From, Event, To)
       self.radioqueue:Number2Transmission(f[2])
     end
     self:Transmission(ATIS.Sound.MegaHertz, 0.2)
+    
+    alltext=alltext..";\n"..subtitle
   end
 
   -- VOR
@@ -1690,6 +1829,8 @@ function ATIS:onafterBroadcast(From, Event, To)
       self.radioqueue:Number2Transmission(f[2])
     end
     self:Transmission(ATIS.Sound.MegaHertz, 0.2)
+    
+    alltext=alltext..";\n"..subtitle
   end
 
   -- TACAN
@@ -1698,6 +1839,8 @@ function ATIS:onafterBroadcast(From, Event, To)
     self:Transmission(ATIS.Sound.TACANChannel, 1.0, subtitle)
     self.radioqueue:Number2Transmission(tostring(self.tacan), nil, 0.2)
     self.radioqueue:NewTransmission("NATO Alphabet/Xray.ogg", 0.75, self.soundpath, nil, 0.2)
+    
+    alltext=alltext..";\n"..subtitle
   end
 
   -- RSBN
@@ -1705,6 +1848,8 @@ function ATIS:onafterBroadcast(From, Event, To)
     subtitle=string.format("RSBN channel %d", self.rsbn)
     self:Transmission(ATIS.Sound.RSBNChannel, 1.0, subtitle)
     self.radioqueue:Number2Transmission(tostring(self.rsbn), nil, 0.2)
+    
+    alltext=alltext..";\n"..subtitle
   end
 
   -- PRMG
@@ -1713,12 +1858,26 @@ function ATIS:onafterBroadcast(From, Event, To)
     subtitle=string.format("PRMG channel %d", ndb.frequency)
     self:Transmission(ATIS.Sound.PRMGChannel, 1.0, subtitle)
     self.radioqueue:Number2Transmission(tostring(ndb.frequency), nil, 0.5)
+    
+    alltext=alltext..";\n"..subtitle
   end
 
-  -- End of Information Alpha, Bravo, ...
+  --[[
+  -- End of Information Alpha, Bravo, ...  
   subtitle=string.format("End of information %s", NATO)
   self:Transmission(ATIS.Sound.EndOfInformation, 0.5, subtitle)
   self.radioqueue:NewTransmission(string.format("NATO Alphabet/%s.ogg", NATO), 0.75, self.soundpath)
+  --]]
+  
+  -- Advice on initial...
+  subtitle=string.format("Advise on initial contact, you have information %s", NATO)
+  self:Transmission(ATIS.Sound.AdviceOnInitial, 0.5, subtitle)
+  self.radioqueue:NewTransmission(string.format("NATO Alphabet/%s.ogg", NATO), 0.75, self.soundpath)
+  
+  alltext=alltext..";\n"..subtitle
+  
+  -- Report ATIS text.
+  self:Report(alltext)
 
   -- Update F10 marker.
   if self.usemarker then
@@ -1726,6 +1885,20 @@ function ATIS:onafterBroadcast(From, Event, To)
   end
 
 end
+
+--- Text report of ATIS information. Information delimitor is a semicolon ";" and a line break "\n".
+-- @param #ATIS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string Text Report text.
+function ATIS:onafterReport(From, Event, To, Text)
+  self:I(self.lid..string.format("Report:\n%s", Text))
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Misc Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Update F10 map marker.
 -- @param #ATIS self
@@ -1753,10 +1926,6 @@ function ATIS:UpdateMarker(information, runact, wind, altimeter, temperature)
 
   return self.markerid
 end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Misc Functions
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get active runway runway.
 -- @param #ATIS self

@@ -79,6 +79,7 @@
 -- @field #number lowfuelthresh Low fuel threshold. Triggers the event AssetLowFuel if for any unit fuel goes below this number.
 -- @field #boolean respawnafterdestroyed If true, warehouse is respawned after it was destroyed. Assets are kept.
 -- @field #number respawndelay Delay before respawn in seconds.
+-- @field #boolean markerOn If true, markers are displayed on the F10 map.
 -- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol for this airbase.
 -- @extends Core.Fsm#FSM
 
@@ -1881,6 +1882,9 @@ function WAREHOUSE:New(warehouse, alias)
   -- Define warehouse and default spawn zone.
   self.zone=ZONE_RADIUS:New(string.format("Warehouse zone %s", self.warehouse:GetName()), warehouse:GetVec2(), 500)
   self.spawnzone=ZONE_RADIUS:New(string.format("Warehouse %s spawn zone", self.warehouse:GetName()), warehouse:GetVec2(), 250)
+  
+  -- Defaults
+  self:SetMarker(true)
 
   -- Add warehouse to database.
   _WAREHOUSEDB.Warehouses[self.uid]=self
@@ -2632,6 +2636,19 @@ function WAREHOUSE:SetSaveOnMissionEnd(path, filename)
   return self
 end
 
+--- Show or don't show markers on the F10 map displaying the Warehouse stock and road/rail connections.
+-- @param #WAREHOUSE self
+-- @param #boolean switch If true (or nil), markers are on. If false, markers are not displayed.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetMarker(switch)
+  if switch==false then
+    self.markerOn=false
+  else
+    self.markerOn=true
+  end
+  return self
+end
+
 --- Set respawn after destroy.
 -- @param #WAREHOUSE self
 -- @return #WAREHOUSE self
@@ -3261,7 +3278,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
     end
   end
   -- Mark point at road connection.
-  if self.road then
+  if self.road and self.markerOn then
     self.markroad=self.road:MarkToCoalition(string.format("%s road connection.",self.alias), self:GetCoalition(), true)
   end
 
@@ -3275,7 +3292,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
     end
   end
   -- Mark point at rail connection.
-  if self.rail then
+  if self.rail and self.markerOn then
     self.markrail=self.rail:MarkToCoalition(string.format("%s rail connection.", self.alias), self:GetCoalition(), true)
   end
 
@@ -6094,9 +6111,8 @@ function WAREHOUSE:_OnEventBirth(EventData)
       local request=self:GetRequestByID(rid)
       
       -- Debug message.
-      self:I(self.lid..string.format("Warehouse %s captured event birth of its asset unit %s. spawned=%s", self.alias, EventData.IniUnitName, tostring(asset.spawned)))
+      self:T(self.lid..string.format("Warehouse %s captured event birth of its asset unit %s. spawned=%s", self.alias, EventData.IniUnitName, tostring(asset.spawned)))
       
-
       -- Birth is triggered for each unit. We need to make sure not to call this too often!
       if not asset.spawned then
 
@@ -8397,26 +8413,31 @@ end
 -- @return #string Text about warehouse stock
 function WAREHOUSE:_UpdateWarehouseMarkText()
 
-  -- Create a mark with the current assets in stock.
-  if self.markerid~=nil then
-    trigger.action.removeMark(self.markerid)
-  end
+  if self.makerOn then
 
-  -- Get assets in stock.
-  local _data=self:GetStockInfo(self.stock)
-
-  -- Text.
-  local text=string.format("Warehouse state: %s\nTotal assets in stock %d:\n", self:GetState(), #self.stock)
-
-  for _attribute,_count in pairs(_data) do
-    if _count>0 then
-      local attribute=tostring(UTILS.Split(_attribute, "_")[2])
-      text=text..string.format("%s=%d, ", attribute,_count)
+    -- Create a mark with the current assets in stock.
+    if self.markerid~=nil then
+      trigger.action.removeMark(self.markerid)
     end
+  
+    -- Get assets in stock.
+    local _data=self:GetStockInfo(self.stock)
+  
+    -- Text.
+    local text=string.format("Warehouse state: %s\nTotal assets in stock %d:\n", self:GetState(), #self.stock)
+  
+    for _attribute,_count in pairs(_data) do
+      if _count>0 then
+        local attribute=tostring(UTILS.Split(_attribute, "_")[2])
+        text=text..string.format("%s=%d, ", attribute,_count)
+      end
+    end
+  
+    -- Create/update marker at warehouse in F10 map.
+    self.markerid=self:GetCoordinate():MarkToCoalition(text, self:GetCoalition(), true)
+    
   end
-
-  -- Create/update marker at warehouse in F10 map.
-  self.markerid=self:GetCoordinate():MarkToCoalition(text, self:GetCoalition(), true)
+  
 end
 
 --- Display stock items of warehouse.
