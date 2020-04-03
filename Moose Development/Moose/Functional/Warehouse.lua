@@ -3173,7 +3173,7 @@ function WAREHOUSE:FindNearestWarehouse(MinAssets, Descriptor, DescriptorValue, 
         -- Get number of assets. Whole stock is returned if no descriptor/value is given.
         local nassets=warehouse:GetNumberOfAssets(Descriptor, DescriptorValue)
 
-        --env.info(string.format("   FF warehouse %s nassets = %d  for %s=%s", warehouse.alias, nassets, tostring(Descriptor), tostring(DescriptorValue)))
+        --env.info(string.format("FF warehouse %s nassets = %d  for %s=%s", warehouse.alias, nassets, tostring(Descriptor), tostring(DescriptorValue)))
 
         -- Assume we have enough.
         local enough=true
@@ -3551,7 +3551,7 @@ function WAREHOUSE:_JobDone()
 
             -- Debug text.
             local text=string.format("Group %s: speed=%d km/h, onground=%s , airbase=%s, spawnzone=%s ==> ishome=%s", group:GetName(), speed, tostring(onground), airbase, tostring(inspawnzone), tostring(ishome))
-            self:T(self.lid..text)
+            self:I(self.lid..text)
 
             if ishome then
 
@@ -3755,11 +3755,14 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
           if istransport==true then
             request.ntransporthome=request.ntransporthome+1
             request.transportgroupset:Remove(group:GetName(), true)
-            self:T3(warehouse.lid..string.format("Transport %d of %s returned home.", request.ntransporthome, tostring(request.ntransport)))
+            local ntrans=request.transportgroupset:Count()
+            self:T2(warehouse.lid..string.format("Transport %d of %s returned home. TransportSet=%d", request.ntransporthome, tostring(request.ntransport), ntrans))
           elseif istransport==false then
             request.ndelivered=request.ndelivered+1
-            request.cargogroupset:Remove(self:_GetNameWithOut(group), true)
-            self:T3(warehouse.lid..string.format("Cargo %d of %s delivered.", request.ndelivered, tostring(request.nasset)))
+            local namewo=self:_GetNameWithOut(group)
+            request.cargogroupset:Remove(namewo, true)
+            local ncargo=request.cargogroupset:Count()            
+            self:T2(warehouse.lid..string.format("Cargo %s: %d of %s delivered. CargoSet=%d", namewo, request.ndelivered, tostring(request.nasset), ncargo))
           else
             self:E(warehouse.lid..string.format("WARNING: Group %s is neither cargo nor transport! Need to investigate...", group:GetName()))
           end
@@ -3796,7 +3799,6 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
         asset.wid=self.uid
 
         -- No request associated with this asset.
-        env.info(string.format("FF asset=%s: setting rid=nil", asset.spawngroupname))
         asset.rid=nil
 
         -- Asset is not spawned.
@@ -4773,10 +4775,9 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     if group:IsGround() and group:GetSpeedMax()>1 then
       group:RouteGroundTo(warehouse:GetCoordinate(), group:GetSpeedMax()*0.3, "Off Road")
     end
-
-    -- Increase number of cargo delivered and transports home.
-    --local istransport=warehouse:_GroupIsTransport(group,request)
     
+    -- NOTE: This is done in the AddAsset() function. Dont know, why we do it also here.
+    --[[
     if istransport==true then
       request.ntransporthome=request.ntransporthome+1
       request.transportgroupset:Remove(group:GetName(), true)
@@ -4788,7 +4789,8 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     else
       self:E(warehouse.lid..string.format("ERROR: Group %s is neither cargo nor transport!", group:GetName()))
     end
-
+    ]]
+    
     -- Move asset from pending queue into new warehouse.
     warehouse:__AddAsset(60, group)
   end
@@ -5134,22 +5136,23 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   for _,_asset in pairs(request.assets) do
     local assetitem=_asset --#WAREHOUSE.Assetitem
 
-    self:I(string.format("FF Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
+    -- Debug info.
+    self:T2(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
     
     if assetitem.spawned then
       n=n+1
     else
-      self:E("FF What?! This should not happen!")
+      self:E(self.lid.."FF What?! This should not happen!")
     end
 
   end
 
   -- Trigger event.
   if n==request.nasset+request.ntransport then
-    env.info(string.format("All assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned. Calling RequestSpawned", n, request.nasset, request.ntransport, request.uid))
+    self:T3(self.lid..string.format("All assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned. Calling RequestSpawned", n, request.nasset, request.ntransport, request.uid))
     self:RequestSpawned(request, request.cargogroupset, request.transportgroupset)
   else
-    env.info(string.format("Not all assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned YET", n, request.nasset, request.ntransport, request.uid))
+    self:T3(self.lid..string.format("Not all assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned YET", n, request.nasset, request.ntransport, request.uid))
   end
 
 end
@@ -5464,7 +5467,6 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     
     -- Set request ID.
     asset.rid=Request.uid
-    env.info(string.format("FF asset=%s: setting rid=%s", asset.spawngroupname, tostring(asset.rid)))    
 
     -- Spawn group name.
     local _alias=asset.spawngroupname
@@ -5757,12 +5759,11 @@ function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, alias)
   -- Nillify the group ID.
   template.groupId=nil
 
-
   -- No late activation.
   template.lateActivation=false
   
   if asset.missionTask then
-    env.info("FF setting mission task to "..tostring(asset.missionTask))
+    self:I(self.lid..string.format("Setting mission task to %s", tostring(asset.missionTask)))
     template.task=asset.missionTask
   end
   
@@ -7749,7 +7750,8 @@ function WAREHOUSE:_GetNameWithOut(group)
   local groupname=type(group)=="string" and group or group:GetName()
   
   if groupname:find("CARGO") then
-    return UTILS.Split(groupname, "#CARGO")[1]
+    local name=groupname:gsub("#CARGO", "")
+    return name
   else
     return groupname
   end
