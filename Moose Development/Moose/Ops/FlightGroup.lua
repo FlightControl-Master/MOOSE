@@ -86,6 +86,7 @@
 -- 
 -- @field Core.Point#COORDINATE position Current position of the group.
 -- @field #number traveldist Distance traveled in meters. This is a lower bound!
+-- @field #number traveltime Time.
 -- @field #number fuelmass Inital fuel in kg.
 -- 
 -- @extends Core.Fsm#FSM
@@ -1632,9 +1633,26 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   end
 
   ---
-  -- Tasks
+  -- Distance travelled
   ---
 
+  
+  local position=self:GetCoordinate()
+  local dist=self.position:Get3DDistance(position)
+  local time=timer.getAbsTime()
+  
+  local vel=dist/(time-self.traveltime)
+  
+  self.traveldist=self.traveldist+dist
+  self.traveltime=time
+  self.position=position
+  
+  env.info(string.format("FF Distance travelled = %.1f km v=%.1f knots", self.traveldist/1000, UTILS.MpsToKnots(vel)))
+  
+  ---
+  -- Tasks
+  ---
+  
   -- Task queue.
   if #self.taskqueue>0 and self.verbose>1 then  
     local text=string.format("Tasks #%d", #self.taskqueue)
@@ -1690,10 +1708,6 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   ---
   -- Fuel State
   ---
-
-  local position=self:GetCoordinate()
-  local dist=self.position:Get3DDistance(position)
-  self.traveldist=self.traveldist+dist
   
 
   -- Only if group is in air.
@@ -2500,9 +2514,11 @@ function FLIGHTGROUP:onafterFlightDead(From, Event, To)
     self.flightcontrol=nil
   end
   
+  -- Cancel all mission.    
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
-    
+  
+    self:MissionCancel(mission)
     mission:FlightDead(self)
   
   end
@@ -2728,47 +2744,52 @@ end
 -- @param #number delay Delay in seconds.
 function FLIGHTGROUP:_CheckFlightDone(delay)
 
-  if delay and delay>0 then
-    -- Delayed call.
-    self:ScheduleOnce(delay, FLIGHTGROUP._CheckFlightDone, self)
-  else
-  
-    local nTasks=self:CountRemainingTasks()
-    local nMissions=self:CountRemainingMissison()
-  
-    -- Final waypoint passed?
-    if self.passedfinalwp then
-    
-      -- Got current mission or task?
-      if self.currentmission==nil and self.taskcurrent==0 then
-      
-        -- Number of remaining tasks/missions?
-        if nTasks==0 and nMissions==0 then
-    
-          -- Send flight to destination.
-          if self.destbase then
-            self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTB!")
-            self:__RTB(-1, self.destbase)
-          elseif self.destzone then
-            self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTZ!")
-            self:__RTZ(-1, self.destzone)
-          else
-            self:I(self.lid.."Passed Final WP and NO Tasks/Missions left. No DestBase or DestZone ==> Wait!")
-            self:__Wait(-1)        
-          end
-          
-        else
-            self:I(self.lid..string.format("Passed Final WP but Tasks=%d or Missions=%d left in the queue. Wait!", nTasks, nMissions))
-            self:__Wait(-1)              
-        end
-      else
-        self:I(self.lid..string.format("Passed Final WP but still have current Tasks (%s) or Missions (%s) left to do", tostring(self.taskcurrent), tostring(self.currentmission)))
-      end  
+  if self:IsAlive() then
+
+    if delay and delay>0 then
+      -- Delayed call.
+      self:ScheduleOnce(delay, FLIGHTGROUP._CheckFlightDone, self)
     else
-      self:I(self.lid..string.format("Flight (status=%s) did NOT pass the final waypoint yet ==> update route", self:GetState()))
-      self:__UpdateRoute(-1)
-    end  
+    
+      local nTasks=self:CountRemainingTasks()
+      local nMissions=self:CountRemainingMissison()
+    
+      -- Final waypoint passed?
+      if self.passedfinalwp then
+      
+        -- Got current mission or task?
+        if self.currentmission==nil and self.taskcurrent==0 then
+        
+          -- Number of remaining tasks/missions?
+          if nTasks==0 and nMissions==0 then
+      
+            -- Send flight to destination.
+            if self.destbase then
+              self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTB!")
+              self:__RTB(-1, self.destbase)
+            elseif self.destzone then
+              self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTZ!")
+              self:__RTZ(-1, self.destzone)
+            else
+              self:I(self.lid.."Passed Final WP and NO Tasks/Missions left. No DestBase or DestZone ==> Wait!")
+              self:__Wait(-1)        
+            end
+            
+          else
+              self:I(self.lid..string.format("Passed Final WP but Tasks=%d or Missions=%d left in the queue. Wait!", nTasks, nMissions))
+              self:__Wait(-1)              
+          end
+        else
+          self:I(self.lid..string.format("Passed Final WP but still have current Tasks (%s) or Missions (%s) left to do", tostring(self.taskcurrent), tostring(self.currentmission)))
+        end  
+      else
+        self:I(self.lid..string.format("Flight (status=%s) did NOT pass the final waypoint yet ==> update route", self:GetState()))
+        self:__UpdateRoute(-1)
+      end  
+    end
+    
   end
+  
 end
 
 --- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
@@ -3537,18 +3558,21 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
       Task.stopflag:Set(1)
   
     else
-      
-      -- Set task status to DONE (we have no CANCELLED defined yet).
-      Task.status=FLIGHTGROUP.TaskStatus.DONE
-      
+            
       -- Debug info.
       self:I(self.lid..string.format("TaskCancel: Setting task %s ID=%d to DONE", Task.description, Task.id))
+      
+      -- Call task done function.      
+      self:TaskDone(Task)
+      
+      
+      local mission=self:GetMissionByTaskID(Task.id)
       
       -- Is this a waypoint task?
       if Task.type==FLIGHTGROUP.TaskType.WAYPOINT and Task.waypoint then
 
         -- Check that this is a mission waypoint and no other tasks are defined here.      
-        if self:GetMissionByTaskID(Task.id) and #self:GetTasksWaypoint(Task.waypoint) then
+        if mission and #self:GetTasksWaypoint(Task.waypoint) then
           self:RemoveWaypoint(Task.waypoint)
         end
       end
@@ -3595,7 +3619,9 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   self:I(self.lid..text)
 
   -- No current task.
-  self.taskcurrent=0
+  if Task.id==self.taskcurrent then
+    self.taskcurrent=0
+  end
   
   -- Task status done.
   Task.status=FLIGHTGROUP.TaskStatus.DONE
@@ -4000,6 +4026,7 @@ function FLIGHTGROUP:_InitGroup()
   self.fuelmass=0 --self.template.pylons.fuel
   
   self.traveldist=0
+  self.traveltime=timer.getAbsTime()
   self.position=self:GetCoordinate()
   
   -- Radio parameters from template.
@@ -4645,29 +4672,33 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:RemoveWaypoint(wpindex)
 
-  -- Remove waypoint.
-  table.remove(self.waypoints, wpindex)
+  if self.waypoints then
 
-  -- Shift all waypoint tasks after the removed waypoint.
-  for _,_task in pairs(self.taskqueue) do
-    local task=_task --#FLIGHTGROUP.Task
-    if task.type==FLIGHTGROUP.TaskType.WAYPOINT and task.waypoint and task.waypoint>wpindex then
-      task.waypoint=task.waypoint-1
-    end
-  end  
-
-  -- Shift all mission waypoints after the removerd waypoint.
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-    if mission.waypointindex and mission.waypointindex>wpindex then
-      mission.waypointindex=mission.waypointindex-1
-    end
-  end  
-
-  --TODO update route?
-  -- no, if <= self.currentwaypoint or WP is landing.
-
-  self:__UpdateRoute(-1)
+    -- Remove waypoint.
+    table.remove(self.waypoints, wpindex)
+  
+    -- Shift all waypoint tasks after the removed waypoint.
+    for _,_task in pairs(self.taskqueue) do
+      local task=_task --#FLIGHTGROUP.Task
+      if task.type==FLIGHTGROUP.TaskType.WAYPOINT and task.waypoint and task.waypoint>wpindex then
+        task.waypoint=task.waypoint-1
+      end
+    end  
+  
+    -- Shift all mission waypoints after the removerd waypoint.
+    for _,_mission in pairs(self.missionqueue) do
+      local mission=_mission --Ops.Auftrag#AUFTRAG
+      if mission.waypointindex and mission.waypointindex>wpindex then
+        mission.waypointindex=mission.waypointindex-1
+      end
+    end  
+  
+    --TODO update route?
+    -- no, if <= self.currentwaypoint or WP is landing.
+  
+    self:__UpdateRoute(-1)
+    
+  end
 
 end
 

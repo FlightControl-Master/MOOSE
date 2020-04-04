@@ -1428,8 +1428,12 @@ end
 -- @param #number WeaponType Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCS#AI.Task.Designation Designation (optional) Designation type.
 -- @param #boolean Datalink (optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default.
+-- @param #number Frequency Frequency used to communicate with the FAC.
+-- @param #number Modulation Modulation of radio for communication.
+-- @param #number CallsignName Callsign enumerator name of the FAC.
+-- @param #number CallsignNumber Callsign number, e.g. Axeman-**1**.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation, Datalink )
+function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation, Datalink, Frequency, Modulation, CallsignName, CallsignNumber )
 
   local DCSTask = {
     id = 'FAC_AttackGroup',
@@ -1438,6 +1442,10 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
       weaponType  = WeaponType,
       designation = Designation,
       datalink    = Datalink,
+      frequency   = Frequency,
+      modulation  = Modulation,
+      callname    = CallsignName,
+      number      = CallsignNumber,
     }
   }
 
@@ -1776,29 +1784,6 @@ function CONTROLLABLE:TaskDisembarkFromTransport(Coordinate, Radius)
 end
 ]]
 
---- (AIR) Move the controllable to a Vec2 Point, wait for a defined duration and embark a controllable.
--- @param #CONTROLLABLE self
--- @param DCS#Vec2 Point The point where to wait.
--- @param #number Duration The duration in seconds to wait.
--- @param #CONTROLLABLE EmbarkingControllable The controllable to be embarked.
--- @return DCS#Task The DCS task structure
-function CONTROLLABLE:TaskEmbarking( Point, Duration, EmbarkingControllable )
-
-  local DCSTask =  {
-    id = 'Embarking',
-    params = {
-      x                         = Point.x,
-      y                         = Point.y,
-      duration                  = Duration,
-      controllablesForEmbarking = { EmbarkingControllable.ControllableID },
-      durationFlag              = true,
-      distributionFlag          = false,
-      distribution              = {},
-    }
-  }
-
-  return DCSTask
-end
 
 --- (GROUND) Embark to a Transport landed at a location.
 -- Move to a defined Vec2 Point, and embark to a controllable when arrived within a defined Radius.

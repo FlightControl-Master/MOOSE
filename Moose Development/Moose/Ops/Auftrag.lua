@@ -37,6 +37,8 @@
 -- @field #number markerID F10 map marker ID.
 -- @field #table DCStask DCS task structure.
 -- @field #number Ntargets Number of mission targets.
+-- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
+-- @field #number Tover Mission abs. time stamp, when mission was over. 
 -- 
 -- @field Core.Point#COORDINATE orbitCoord Coordinate where to orbit.
 -- @field #number orbitSpeed Orbit speed in m/s.
@@ -307,6 +309,8 @@ function AUFTRAG:New(Type)
   self.missionRepeatMax=0
   
   self.nassets=1
+  
+  self.dTevaluate=0
   
   -- FMS start state is PLANNED.
   self:SetStartState(self.status)
@@ -590,7 +594,7 @@ end
 -- @param Core.Zone#ZONE_RADIUS ZoneCAS Circular CAS zone. Detected targets in this zone will be engaged.
 -- @param #table TargetTypes Table of target types. Default {"Helicopters", "Ground Units", "Light armed ships"}.
 -- @return #AUFTRAG self
-function AUFTRAG:NewFACA(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, TargetTypes)
+function AUFTRAG:NewFACA(TargetGroup)
 
   -- Ensure given TargetTypes parameter is a table.
   if TargetTypes then
@@ -715,6 +719,9 @@ function AUFTRAG:NewBOMBING(Target, Altitude)
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
+  -- Evaluate result after 5 min. We might need time until the bombs have dropped and targets have been detroyed.
+  mission.dTevaluate=5*60
+  
   -- Get DCS task.
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -746,6 +753,9 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
   mission.missionFraction=0.2
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
+  
+  -- Evaluate result after 5 min.
+  mission.dTevaluate=5*60
   
   -- Get DCS task.
   mission.DCStask=mission:GetDCSMissionTask()
@@ -1160,6 +1170,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
   
   -- Current FSM state.
   local fsmstate=self:GetState()
+  local Tnow=timer.getAbsTime()
   
   -- Mission start stop time.
   local Cstart=UTILS.SecondsToClock(self.Tstart, true)
@@ -1187,8 +1198,10 @@ function AUFTRAG:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end
 
-  -- Check if mission is OVER (done or cancelled).
-  if self:IsOver() then
+  local ready2evaluate=self.Tover and Tnow-self.Tover>self.dTevaluate or false
+
+  -- Check if mission is OVER (done or cancelled) and enough time passed to evaluate the result.
+  if self:IsOver() and ready2evaluate then
     -- Evaluate success or failure of the mission.
     self:Evaluate()
   else
@@ -1484,6 +1497,9 @@ end
 function AUFTRAG:onafterDone(From, Event, To)
   self.status=AUFTRAG.Status.DONE
   self:I(self.lid..string.format("New mission status=%s", self.status))
+  
+  -- Set time stamp.
+  self.Tover=timer.getAbsTime()
 end
 
 
@@ -1495,7 +1511,7 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The flightgroup that is dead now.
 function AUFTRAG:onafterFlightDead(From, Event, To, FlightGroup)
 
-  self:SetFlightStatus(FlightGroup, AUFTRAG.FlightStatus.DONE)
+  --self:SetFlightStatus(FlightGroup, AUFTRAG.FlightStatus.DONE)
 
   local asset=self:GetAssetByName(FlightGroup.groupname)
   if asset then
@@ -1568,22 +1584,31 @@ function AUFTRAG:onafterCancel(From, Event, To)
   -- Debug info.
   self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for flights to report mission DONE before evaluation.", self.status))
   
+  -- Time stamp.
+  self.Tover=timer.getAbsTime()
+  
+  -- No more repeats.
+  self.missionRepeatMax=self.missionRepeated
+  
+  -- Not necessary to delay the evaluaton?!
+  self.dTevaluate=0
+  
   if self.wingcommander then
   
-    env.info(string.format("FF calling CancelMission() for wingcommander"))
+    self:I(self.lid..string.format("Wingcommander will cancel the mission. Will wait for mission DONE before evaluation!"))
     
     self.wingcommander:CancelMission(self)
 
   elseif self.airwing then
     
-    env.info(string.format("FF calling MissionCancel() for airwing %s", self.airwing.alias))
+    self:I(self.lid..string.format("Airwing %s will cancel the mission. Will wait for mission DONE before evaluation!", self.airwing.alias))
     
     -- Airwing will cancel all flight missions and remove queued request from warehouse queue.
     self.airwing:MissionCancel(self)
   
   else
   
-    env.info(string.format("FF no airwing. cancelling flihgts"))
+    self:I(self.lid..string.format("No airwing or wingcommander. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
   
     for _,_flightdata in pairs(self.flightdata) do
       local flightdata=_flightdata --#AUFTRAG.FlightData
@@ -1612,13 +1637,13 @@ function AUFTRAG:onafterFailed(From, Event, To)
   
   if self.missionRepeated>=self.missionRepeatMax then
   
-    self:I(self.lid..string.format("Mission failed! Number of max repeats reached %d>=%d ==> Stopping mission!", self.missionRepeated, self.missionRepeatMax))
+    self:I(self.lid..string.format("Mission FAILED! Number of max repeats reached [%d>=%d] ==> Stopping mission!", self.missionRepeated, self.missionRepeatMax))
     self:Stop()
     
   else
         
     -- Repeat mission.
-    self:I(self.lid..string.format("Mission failed! Repeating mission for the %d. time (max=%d) ==> Repeat mission!", self.missionRepeated+1, self.missionRepeatMax))
+    self:I(self.lid..string.format("Mission failed! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.missionRepeated+1, self.missionRepeatMax))
     self:Repeat()
     
   end  
