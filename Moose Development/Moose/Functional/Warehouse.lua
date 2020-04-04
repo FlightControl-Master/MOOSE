@@ -284,7 +284,7 @@
 --
 -- Assets of the warehouse can be requested by other MOOSE warehouses. A request will first be scrutinized to check if can be fulfilled at all. If the request is valid, it is
 -- put into the warehouse queue and processed as soon as possible.
--- 
+--
 -- Requested assets spawn in various "Rule of Engagement Rules" (ROE) and Alerts modes. If your assets will cross into dangerous areas, be sure to change these states. You can do this in @{#WAREHOUSE:OnAfterAssetSpawned}(*From, *Event, *To, *group, *asset, *request)) function.
 --
 -- Initial Spawn states is as follows:
@@ -1882,7 +1882,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- Define warehouse and default spawn zone.
   self.zone=ZONE_RADIUS:New(string.format("Warehouse zone %s", self.warehouse:GetName()), warehouse:GetVec2(), 500)
   self.spawnzone=ZONE_RADIUS:New(string.format("Warehouse %s spawn zone", self.warehouse:GetName()), warehouse:GetVec2(), 250)
-  
+
   -- Defaults
   self:SetMarker(true)
 
@@ -1900,26 +1900,26 @@ function WAREHOUSE:New(warehouse, alias)
   --                 From State   -->   Event        -->     To State
   self:AddTransition("NotReadyYet",     "Load",              "Loaded")      -- Load the warehouse state from scatch.
   self:AddTransition("Stopped",         "Load",              "Loaded")      -- Load the warehouse state stopped state.
-  
+
   self:AddTransition("NotReadyYet",     "Start",             "Running")     -- Start the warehouse from scratch.
   self:AddTransition("Loaded",          "Start",             "Running")     -- Start the warehouse when loaded from disk.
-  
+
   self:AddTransition("*",               "Status",            "*")           -- Status update.
-  
+
   self:AddTransition("*",               "AddAsset",          "*")           -- Add asset to warehouse stock.
   self:AddTransition("*",               "NewAsset",          "*")           -- New asset was added to warehouse stock.
-  
+
   self:AddTransition("*",               "AddRequest",        "*")           -- New request from other warehouse.
   self:AddTransition("Running",         "Request",           "*")           -- Process a request. Only in running mode.
   self:AddTransition("Running",         "RequestSpawned",    "*")           -- Assets of request were spawned.
   self:AddTransition("Attacked",        "Request",           "*")           -- Process a request. Only in running mode.
-  
+
   self:AddTransition("*",               "Unloaded",          "*")           -- Cargo has been unloaded from the carrier (unused ==> unnecessary?).
   self:AddTransition("*",               "AssetSpawned",      "*")           -- Asset has been spawned into the world.
   self:AddTransition("*",               "AssetLowFuel",      "*")           -- Asset is low on fuel.
-  
+
   self:AddTransition("*",               "Arrived",           "*")           -- Cargo or transport group has arrived.
-  
+
   self:AddTransition("*",               "Delivered",         "*")           -- All cargo groups of a request have been delivered to the requesting warehouse.
   self:AddTransition("Running",         "SelfRequest",       "*")           -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
   self:AddTransition("Attacked",        "SelfRequest",       "*")           -- Request to warehouse itself. Also possible when warehouse is under attack!
@@ -3752,7 +3752,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     local wid,aid,rid=self:_GetIDsFromGroup(group)
 
     if wid and aid and rid then
-    
+
       ---------------------------
       -- This is a KNOWN asset --
       ---------------------------
@@ -3768,7 +3768,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
 
           -- Increase number of cargo delivered and transports home.
           local istransport=warehouse:_GroupIsTransport(group,request)
-          
+
           if istransport==true then
             request.ntransporthome=request.ntransporthome+1
             request.transportgroupset:Remove(group:GetName(), true)
@@ -3778,7 +3778,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
             request.ndelivered=request.ndelivered+1
             local namewo=self:_GetNameWithOut(group)
             request.cargogroupset:Remove(namewo, true)
-            local ncargo=request.cargogroupset:Count()            
+            local ncargo=request.cargogroupset:Count()
             self:T2(warehouse.lid..string.format("Cargo %s: %d of %s delivered. CargoSet=%d", namewo, request.ndelivered, tostring(request.nasset), ncargo))
           else
             self:E(warehouse.lid..string.format("WARNING: Group %s is neither cargo nor transport! Need to investigate...", group:GetName()))
@@ -3808,10 +3808,10 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
             asset.livery=liveries
           end
         end
-        
+
         -- Set skill.
         asset.skill=skill or asset.skill
-        
+
         -- Asset now belongs to this warehouse. Set warehouse ID.
         asset.wid=self.uid
 
@@ -3833,7 +3833,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       end
 
     else
-    
+
       -------------------------
       -- This is a NEW asset --
       -------------------------
@@ -4116,7 +4116,7 @@ function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescripto
       self:_ErrorMessage("ERROR: Invalid request. Asset assignment type must be passed as a string!", 5)
       okay=false
     end
-    
+
   elseif AssetDescriptor==WAREHOUSE.Descriptor.ASSETLIST then
 
     if type(AssetDescriptorValue)~="table" then
@@ -4318,7 +4318,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     _assetitem.arrived=false
 
     local spawngroup=nil --Wrapper.Group#GROUP
-    
+
     -- Add asset by id to all assets table.
     Request.assets[_assetitem.uid]=_assetitem
 
@@ -4738,7 +4738,7 @@ end
 function WAREHOUSE:onbeforeArrived(From, Event, To, group)
 
   local asset=self:FindAssetInDB(group)
-  
+
   if asset then
     if asset.arrived==true then
       -- Asset already arrived (e.g. if multiple units trigger the event via landing).
@@ -4748,7 +4748,29 @@ function WAREHOUSE:onbeforeArrived(From, Event, To, group)
       return true
     end
   end
-  
+
+end
+
+--- On before "Arrived" event. Triggered when a group has arrived at its destination warehouse.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP group The group that was delivered.
+function WAREHOUSE:onbeforeArrived(From, Event, To, group)
+
+  local asset=self:FindAssetInDB(group)
+
+  if asset then
+    if asset.arrived==true then
+      -- Asset already arrived (e.g. if multiple units trigger the event via landing).
+      return false
+    else
+      asset.arrived=true  --ensure this is not called again from the same asset group.
+      return true
+    end
+  end
+
 end
 
 --- On after "Arrived" event. Triggered when a group has arrived at its destination warehouse.
@@ -4792,7 +4814,7 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     if group:IsGround() and group:GetSpeedMax()>1 then
       group:RouteGroundTo(warehouse:GetCoordinate(), group:GetSpeedMax()*0.3, "Off Road")
     end
-    
+
     -- NOTE: This is done in the AddAsset() function. Dont know, why we do it also here.
     --[[
     if istransport==true then
@@ -4807,7 +4829,7 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
       self:E(warehouse.lid..string.format("ERROR: Group %s is neither cargo nor transport!", group:GetName()))
     end
     ]]
-    
+
     -- Move asset from pending queue into new warehouse.
     warehouse:__AddAsset(60, group)
   end
@@ -5022,9 +5044,9 @@ function WAREHOUSE:onafterChangeCountry(From, Event, To, Country)
   local airbasecoaltion
   if self.airbase ~= nil then
     local airbase=AIRBASE:FindByName(self.airbasename)
-    airbasecoaltion=airbase:GetCoalition() 
+    airbasecoaltion=airbase:GetCoalition()
   else -- Warehouse has no airbase attached so just keep whatever, self.airbase will still be nil since CoalitionNew will not be nil if Warehouse have a airbse attacjed.
-    airbasecoaltion = nil  
+    airbasecoaltion = nil
   end
 
   if CoalitionNew==airbasecoaltion then
@@ -5115,7 +5137,7 @@ function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 
 end
 
---- On before "AssetSpawned" event. Checks whether the asset was already set to "spawned" for groups with multiple units. 
+--- On before "AssetSpawned" event. Checks whether the asset was already set to "spawned" for groups with multiple units.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -5129,7 +5151,7 @@ function WAREHOUSE:onbeforeAssetSpawned(From, Event, To, group, asset, request)
   else
     --return true
   end
-  
+
   return true
 end
 
@@ -5155,7 +5177,7 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
 
     -- Debug info.
     self:T2(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
-    
+
     if assetitem.spawned then
       n=n+1
     else
@@ -5214,11 +5236,11 @@ function WAREHOUSE:onafterDestroyed(From, Event, To)
     for k,_ in pairs(self.queue) do
       self.queue[k]=nil
     end
-    
+
     for k,_ in pairs(self.stock) do
       --self.stock[k]=nil
     end
-    
+
     for k=#self.stock,1,-1 do
       --local asset=self.stock[k] --#WAREHOUSE.Assetitem
       --self:AssetDead(asset, nil)
@@ -5481,15 +5503,15 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     -- Set asset status to not spawned until we capture its birth event.
     asset.spawned=false
     asset.iscargo=true
-    
+
     -- Set request ID.
     asset.rid=Request.uid
 
     -- Spawn group name.
     local _alias=asset.spawngroupname
-    
+
     --Request add asset by id.
-    Request.assets[asset.uid]=asset    
+    Request.assets[asset.uid]=asset
 
     -- Spawn an asset group.
     local _group=nil --Wrapper.Group#GROUP
@@ -5581,7 +5603,7 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aiof
       end
       if asset.skill then
         unit.skill= asset.skill
-      end      
+      end
 
     end
 
@@ -5717,15 +5739,15 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
       end
 
       if asset.payload then
-        unit.payload=asset.payload.pylons        
+        unit.payload=asset.payload.pylons
       end
-      
+
       if asset.modex then
         unit.onboard_num=asset.modex[i]
       end
       if asset.callsign then
         unit.callsign=asset.callsign[i]
-      end      
+      end
 
     end
 
@@ -5778,12 +5800,12 @@ function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, alias)
 
   -- No late activation.
   template.lateActivation=false
-  
+
   if asset.missionTask then
     self:I(self.lid..string.format("Setting mission task to %s", tostring(asset.missionTask)))
     template.task=asset.missionTask
   end
-  
+
   -- No predefined task.
   --template.taskSelected=false
 
@@ -6067,7 +6089,7 @@ end
 --- Get a warehouse request from its unique id.
 -- @param #WAREHOUSE self
 -- @param #number id Request ID.
--- @return #WAREHOUSE.Pendingitem The warehouse requested - either queued or pending. 
+-- @return #WAREHOUSE.Pendingitem The warehouse requested - either queued or pending.
 -- @return #boolean If *true*, request is queued, if *false*, request is pending, if *nil*, request could not be found.
 function WAREHOUSE:GetRequestByID(id)
 
@@ -6105,14 +6127,14 @@ function WAREHOUSE:_OnEventBirth(EventData)
     local wid,aid,rid=self:_GetIDsFromGroup(group)
 
     if wid==self.uid then
-    
+
       -- Get asset and request from id.
       local asset=self:GetAssetByID(aid)
       local request=self:GetRequestByID(rid)
-      
+
       -- Debug message.
       self:T(self.lid..string.format("Warehouse %s captured event birth of its asset unit %s. spawned=%s", self.alias, EventData.IniUnitName, tostring(asset.spawned)))
-      
+
       -- Birth is triggered for each unit. We need to make sure not to call this too often!
       if not asset.spawned then
 
@@ -6397,7 +6419,7 @@ function WAREHOUSE:_UnitDead(deadunit, request)
     -- Remove dead group from cargo group set.
     if groupdead==true then
       request.cargogroupset:Remove(groupname, NoTriggerEvent)
-      self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))      
+      self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
     end
 
   else
@@ -7724,27 +7746,27 @@ end
 function WAREHOUSE:_GroupIsTransport(group, request)
 
   local asset=self:FindAssetInDB(group)
-  
+
   if asset and asset.iscargo~=nil then
     return not asset.iscargo
   else
 
     -- Name of the group under question.
     local groupname=self:_GetNameWithOut(group)
-  
+
     if request.transportgroupset then
       local transporters=request.transportgroupset:GetSetObjects()
-  
+
       for _,transport in pairs(transporters) do
         if transport:GetName()==groupname then
           return true
         end
       end
     end
-  
+
     if request.cargogroupset then
       local cargos=request.cargogroupset:GetSetObjects()
-  
+
       for _,cargo in pairs(cargos) do
         if self:_GetNameWithOut(cargo)==groupname then
           return false
@@ -7764,14 +7786,14 @@ end
 function WAREHOUSE:_GetNameWithOut(group)
 
   local groupname=type(group)=="string" and group or group:GetName()
-  
+
   if groupname:find("CARGO") then
     local name=groupname:gsub("#CARGO", "")
     return name
   else
     return groupname
   end
-  
+
 end
 
 
@@ -7934,23 +7956,23 @@ function WAREHOUSE:_FilterStock(stock, descriptor, attribute, nmax, mobile)
 
   -- Filtered array.
   local filtered={}
-  
+
   -- A specific list of assets was required.
   if descriptor==WAREHOUSE.Descriptor.ASSETLIST then
 
     -- Count total number in stock.
     local ntot=0
     for _,_rasset in pairs(attribute) do
-      local rasset=_rasset --#WAREHOUSE.Assetitem      
+      local rasset=_rasset --#WAREHOUSE.Assetitem
       for _,_asset in ipairs(stock) do
-        local asset=_asset --#WAREHOUSE.Assetitem      
+        local asset=_asset --#WAREHOUSE.Assetitem
         if rasset.uid==asset.uid then
           table.insert(filtered, asset)
           break
         end
-      end      
+      end
     end
-    
+
     return filtered, #filtered, #filtered>=#attribute
   end
 
@@ -8419,25 +8441,25 @@ function WAREHOUSE:_UpdateWarehouseMarkText()
     if self.markerid~=nil then
       trigger.action.removeMark(self.markerid)
     end
-  
+
     -- Get assets in stock.
     local _data=self:GetStockInfo(self.stock)
-  
+
     -- Text.
     local text=string.format("Warehouse state: %s\nTotal assets in stock %d:\n", self:GetState(), #self.stock)
-  
+
     for _attribute,_count in pairs(_data) do
       if _count>0 then
         local attribute=tostring(UTILS.Split(_attribute, "_")[2])
         text=text..string.format("%s=%d, ", attribute,_count)
       end
     end
-  
+
     -- Create/update marker at warehouse in F10 map.
     self.markerid=self:GetCoordinate():MarkToCoalition(text, self:GetCoalition(), true)
-    
+
   end
-  
+
 end
 
 --- Display stock items of warehouse.
