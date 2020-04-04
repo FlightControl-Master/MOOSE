@@ -521,13 +521,16 @@ function SQUADRON:CanMission(Mission)
   
   if cando then
       
+    -- Distance to target.
     local TargetDistance=Mission:GetTargetDistance(self.airwing:GetCoordinate())
     
     for _,_asset in pairs(self.assets) do
       local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
       
+      local engagerange=Mission.engageMaxDistance and math.min(self.engageRange, Mission.engageMaxDistance) or self.engageRange
+      
       -- Set range is valid. Mission engage distance can overrule the squad engage range.
-      if TargetDistance<=self.engageRange or (Mission.engageMaxDistance and TargetDistance<=Mission.engageMaxDistance) then
+      if TargetDistance<=engagerange then
       
         -- Check if asset is currently on a mission (STARTED or QUEUED).
         if self.airwing:IsAssetOnMission(asset) then
@@ -596,12 +599,19 @@ function SQUADRON:CanMission(Mission)
           
         end
         
+      else
+        self:I(self.lid..string.format("INFO: Squad is not in range. Target dist=%d > %d NM max engage Range", UTILS.MetersToNM(TargetDistance), UTILS.MetersToNM(engagerange)))
       end
-    end
-  end
+      
+    end -- loop over assets
+    
+  else
+    self:I(self.lid..string.format("INFO: Squad cannot do mission type %s", Mission.type))    
+  end -- if cando mission type
   
   -- Check if required assets are present.
   if Mission.nassets and Mission.nassets > #assets then
+    self:I(self.lid.."Not enough assets available")
     cando=false
   end
 

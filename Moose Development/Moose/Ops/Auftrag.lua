@@ -1021,7 +1021,7 @@ end
 -- @param #AUFTRAG self
 -- @param #string roe Mission ROT.
 -- @return #AUFTRAG self
-function AUFTRAG:SetROE(rot)
+function AUFTRAG:SetROT(rot)
   
   self.optionROT=rot
   
