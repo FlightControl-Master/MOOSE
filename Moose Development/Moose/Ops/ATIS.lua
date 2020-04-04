@@ -453,7 +453,7 @@ ATIS.RunwayM2T={
 -- @field #ATIS.Soundfile VORFrequency
 ATIS.Sound = {
   ActiveRunway={filename="ActiveRunway.ogg", duration=0.99},
-  AdviceOnInitial={filename="AdviceOnInital.ogg", duration=3.00},
+  AdviceOnInitial={filename="AdviceOnInitial.ogg", duration=3.00},
   Airport={filename="Airport.ogg", duration=0.66},
   Altimeter={filename="Altimeter.ogg", duration=0.68},
   At={filename="At.ogg", duration=0.41},
@@ -537,6 +537,8 @@ ATIS.version="0.7.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Add new Normany airfields.
+-- TODO: Zulu time --> Zulu in output.
 -- TODO: Correct fog for elevation.
 -- DONE: Add text report for output.
 -- DONE: Add stop FMS functions.
@@ -554,7 +556,7 @@ ATIS.version="0.7.0"
 -- @param #ATIS self
 -- @param #string airbasename Name of the airbase.
 -- @param #number frequency Radio frequency in MHz. Default 143.00 MHz.
--- @param #number modulation 0=AM, 1=FM. Default 0=AM.
+-- @param #number modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators
 -- @return #ATIS self
 function ATIS:New(airbasename, frequency, modulation)
 
@@ -566,6 +568,7 @@ function ATIS:New(airbasename, frequency, modulation)
 
   if self.airbase==nil then
     self:E("ERROR: Airbase %s for ATIS could not be found!", tostring(airbasename))
+    return nil
   end
 
   -- Default freq and modulation.
@@ -597,11 +600,11 @@ function ATIS:New(airbasename, frequency, modulation)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("Stopped",       "Start",           "Running")     -- Start FSM.
-  self:AddTransition("Running",       "Status",          "Running")     -- Update status.
-  self:AddTransition("Running",       "Broadcast",       "Running")     -- Broadcast ATIS message.
-  self:AddTransition("Running",       "CheckQueue",      "Running")     -- Check if radio queue is empty.
-  self:AddTransition("Running",       "Report",          "Running")     -- Report ATIS text.
-  self:AddTransition("Running",       "Stop",            "Stopped")     -- Stop.
+  self:AddTransition("*",       "Status",          "*")     -- Update status.
+  self:AddTransition("*",       "Broadcast",       "*")     -- Broadcast ATIS message.
+  self:AddTransition("*",       "CheckQueue",      "*")     -- Check if radio queue is empty.
+  self:AddTransition("*",       "Report",          "*")     -- Report ATIS text.
+  self:AddTransition("*",       "Stop",            "Stopped")     -- Stop.
 
   ------------------------
   --- Pseudo Functions ---
@@ -637,12 +640,12 @@ function ATIS:New(airbasename, frequency, modulation)
   -- @param #number delay Delay in seconds.
 
 
-  --- Triggers the FSM event "BroadCast".
-  -- @function [parent=#ATIS] BroadCast
+  --- Triggers the FSM event "Broadcast".
+  -- @function [parent=#ATIS] Broadcast
   -- @param #ATIS self
 
-  --- Triggers the FSM event "BroadCast" after a delay.
-  -- @function [parent=#ATIS] __BroadCast
+  --- Triggers the FSM event "Broadcast" after a delay.
+  -- @function [parent=#ATIS] __Broadcast
   -- @param #ATIS self
   -- @param #number delay Delay in seconds.
 
@@ -1893,7 +1896,7 @@ end
 -- @param #string To To state.
 -- @param #string Text Report text.
 function ATIS:onafterReport(From, Event, To, Text)
-  self:I(self.lid..string.format("Report:\n%s", Text))
+  self:T(self.lid..string.format("Report:\n%s", Text))
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
