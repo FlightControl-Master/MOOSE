@@ -1424,10 +1424,10 @@ end
 -- The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
 -- If the task is assigned to the controllable lead unit will be a FAC.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Controllable#CONTROLLABLE AttackGroup Target CONTROLLABLE.
--- @param #number WeaponType Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
--- @param DCS#AI.Task.Designation Designation (optional) Designation type.
--- @param #boolean Datalink (optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default.
+-- @param Wrapper.Group#GROUP AttackGroup Target GROUP object.
+-- @param #number WeaponType Bitmask of weapon types, which are allowed to use.
+-- @param DCS#AI.Task.Designation Designation (Optional) Designation type.
+-- @param #boolean Datalink (Optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default.
 -- @param #number Frequency Frequency used to communicate with the FAC.
 -- @param #number Modulation Modulation of radio for communication.
 -- @param #number CallsignName Callsign enumerator name of the FAC.

@@ -49,11 +49,13 @@ ENUMS.ROT = {
 --- Weapon types.
 -- @type ENUMS.WeaponFlag
 ENUMS.WeaponFlag={
+  -- Combinations
   Auto=3221225470, --AnyWeapon (AnyBomb + AnyRocket + AnyMissile + Cannons)
   AnyAG=2956984318,
   AnyAA=264241152,
   AnyUnguided=2952822768,
   AnyGuided=268402702, 
+  -- Bombs
   LGB=2,
   TvGB=4,
   SNSGB=8,
@@ -73,7 +75,21 @@ ENUMS.WeaponFlag={
   MarkerRocket=4096,
   CandleRocket=8192,
   HeavyRocket=16384,
-  AnyRocket=30720  -- (LightRocket + MarkerRocket + CandleRocket + HeavyRocket)  
+  AnyRocket=30720,  -- LightRocket + MarkerRocket + CandleRocket + HeavyRocket
+  --- Air-To-Air Missiles
+  SRAM=4194304,
+  MRAAM=8388608, 
+  LRAaM=16777216,
+  IR_AAM=33554432,
+  SAR_AAM=67108864,
+  AR_AAM=134217728,
+  AnyAAM=264241152,     -- IR_AAM + SAR_AAM + AR_AAM + SRAAM + MRAAM + LRAAM
+  AnyMissile=268402688,  -- ASM + AnyAAM   
+  AnyAutonomousMissile=36012032, --IR_AAM + AntiRadarMissile + AntiShipMissile + FireAndForgetASM + CruiseMissile
+  --- Guns
+  GUN_POD=268435456,
+  BuiltInCannon=536870912,
+  Cannos=805306368,             --GUN_POD + BuiltInCannon)    
 }
 
 --- Mission tasks.

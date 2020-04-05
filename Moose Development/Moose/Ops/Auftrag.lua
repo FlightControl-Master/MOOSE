@@ -9,9 +9,6 @@
 --    * Specific mission options for ROE, ROT, formation, etc.
 --    * Interface to FLIGHTGROUP, AIRWING and WINGCOMMANDER classes.
 --    
---    
---
---
 -- ===
 --
 -- ### Author: **funkyfranky**
@@ -60,6 +57,14 @@
 -- 
 -- @field Wrapper.Group#GROUP escortGroup The group to be escorted.
 -- @field DCS#Vec3 escortVec3 The 3D offset vector from the escorted group to the escort group.
+-- 
+-- @field #number facDesignation FAC designation type.
+-- @field #boolean facDatalink FAC datalink enabled.
+-- @field #number facFreq FAC radio frequency in MHz.
+-- @field #number facModu FAC radio modulation 0=AM 1=FM.
+-- 
+-- @field Core.Set#SET_GROUP transportGroupSet Groups to be transported.
+-- @field Core.Point#COORDINATE transportPickup Coordinate where to pickup the cargo.
 -- 
 -- @field Ops.WingCommander#WINGCOMMANDER wingcommander The WINGCOMMANDER managing this mission.
 -- @field Ops.AirWing#AIRWING airwing The assigned airwing.
@@ -585,34 +590,26 @@ function AUFTRAG:NewCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, Targ
   return mission
 end
 
---- Create a CAS mission.
+--- Create a FACA mission.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
--- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 10 NM.
--- @param Core.Zone#ZONE_RADIUS ZoneCAS Circular CAS zone. Detected targets in this zone will be engaged.
--- @param #table TargetTypes Table of target types. Default {"Helicopters", "Ground Units", "Light armed ships"}.
+-- @param Wrapper.Group#GROUP Target Target group. Must be a GROUP object.
+-- @param #string Designation Designation of target. See `AI.Task.Designation`. Default `AI.Task.Designation.AUTO`.
+-- @param #boolean DataLink Enable data link. Default `true`.
+-- @param #number Frequency Radio frequency in MHz the FAC uses for communication. Default is 133 MHz.
+-- @param #number Modulation Radio modulation band. Default 0=AM. Use 1 for FM. See radio.modulation.AM or radio.modulaton.FM.
 -- @return #AUFTRAG self
-function AUFTRAG:NewFACA(TargetGroup)
+function AUFTRAG:NewFACA(Target, Designation, DataLink, Frequency, Modulation)
 
-  -- Ensure given TargetTypes parameter is a table.
-  if TargetTypes then
-    if type(TargetTypes)~="table" then
-      TargetTypes={TargetTypes}
-    end
-  end
+  local mission=AUFTRAG:New(AUFTRAG.Type.FACA)
 
-  -- Create ORBIT first.
-  local mission=self:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg)
-
-  -- CAS paramters.
-  mission.type=AUFTRAG.Type.FACA
+  mission.engageTarget=mission:_TargetFromObject(Target)
   
-  mission.engageZone=ZoneCAS or ZONE_RADIUS:New("CAS Zone", OrbitCoordinate:GetVec2(), Leg)
-  mission.engageTargetTypes=TargetTypes or {"Helicopters", "Ground Units", "Light armed ships"}
+  -- TODO: check that target is really a group object!
   
-  mission:_SetLogID()
+  mission.facDesignation=Designation
+  mission.facDatalink=true
+  mission.facFreq=Frequency or 133
+  mission.facModu=Modulation or radio.modulation.AM
   
   mission.missionTask=ENUMS.MissionTask.AFAC
   mission.optionROE=ENUMS.ROE.ReturnFire
@@ -789,6 +786,37 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   
   mission.DCStask=mission:GetDCSMissionTask()
   
+  return mission
+end
+
+--- Create an TRANSPORT mission.
+-- @param #AUFTRAG self
+-- @param Core.Set#SET_GROUP TransportGroupSet The set group(s) to be transported.
+-- @param Core.Point#COORDINATE PickupCoordinate Coordinate where the helo will land to pick up the the cargo. Default is the fist transport group.
+-- @return #AUFTRAG self
+function AUFTRAG:NewTRANSPORT(TransportGroupSet, PickupCoordinate)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.TRANSPORT)
+  
+  if TransportGroupSet:IsInstanceOf("GROUP") then
+    mission.transportGroupSet=SET_GROUP:New()
+    mission.transportGroupSet:AddGroup(TransportGroupSet)
+  elseif TransportGroupSet:IsInstanceOf("SET_GROUP") then
+    mission.transportGroupSet=TransportGroupSet
+  else
+    env.info("FF error in TRANSPORT auftrag")
+  end
+  
+  mission.transportPickup=PickupCoordinate or mission.transportGroupSet:GetFirst():GetCoordinate()
+  
+  mission.transportPickup:MarkToAll("Pickup")
+
+  -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
   return mission
 end
 
@@ -1198,7 +1226,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end
 
-  local ready2evaluate=self.Tover and Tnow-self.Tover>self.dTevaluate or false
+  local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
 
   -- Check if mission is OVER (done or cancelled) and enough time passed to evaluate the result.
   if self:IsOver() and ready2evaluate then
@@ -1871,6 +1899,8 @@ function AUFTRAG:GetTargetCoordinate()
     return self.orbitCoord
   elseif self.escortGroup then
     return self.escortGroup:GetCoordinate()
+  elseif self.transportPi1ckup then
+    return self.transportPickup
   end  
 
   return nil
@@ -1892,6 +1922,8 @@ function AUFTRAG:GetTargetName()
     return self.orbitCoord:ToStringLLDMS()
   elseif self.escortGroup then
     return self.escortGroup:GetName()
+  elseif self.transportPickup then
+    return self.transportPickup:ToStringLLDMS()
   end  
 
   return nil
@@ -2067,7 +2099,8 @@ function AUFTRAG:GetDCSMissionTask()
     -- FAC Mission --
     -----------------  
 
-    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageAsGroup, self.engageWeaponType, self.facDesignation, self.facDatalink)
+    -- TODO
+    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageTarget.Target, self.engageWeaponType, self.facDesignation, self.facDatalink, self.facFrequency, self.facModulation, CallsignName, CallsignNumber)
     
     table.insert(DCStasks, DCStask)
   
@@ -2149,9 +2182,11 @@ function AUFTRAG:GetDCSMissionTask()
     -- TRANSPORT Mission --
     ----------------------- 
   
-    -- TODO: What?
+    -- TODO: What about the groups to embark?
     
-    local DCStask=CONTROLLABLE.TaskEmbarking(self,Vec2,GroupSetForEmbarking,Duration,DistributionGroupSet)
+    local Vec2=self.transportPickup:GetVec2()
+    
+    local DCStask=CONTROLLABLE.TaskEmbarking(self, Vec2, self.transportGroupSet, Duration, DistributionGroupSet)
   
   else
     self:E(self.lid..string.format("ERROR: Unknown mission task!"))

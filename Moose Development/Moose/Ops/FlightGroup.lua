@@ -64,6 +64,7 @@
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
 -- @field #boolean ishelo If true, the is a helicopter group.
+-- 
 -- @field Core.Radio#BEACON beacon The beacon object.
 -- @field #number TACANchannel TACAN channel.
 -- @field #string TACANmode TACAN mode, i.e. "Y" (or "X").
@@ -371,15 +372,8 @@ FLIGHTGROUP.version="0.3.8"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- DONE: Add tasks.
--- DONE: Waypoints, read, add, insert, detour.
--- DONE: Get ammo.
--- DONE: Get pylons.
--- DONE: Fuel threshhold ==> RTB.
--- DONE: ROE
 -- TODO: Options EPLRS, Afterburner restrict etc.
 -- TODO: Add TACAN beacon.
--- NOGO: Respawn? With correct loadout, fuelstate. Solved in DCS 2.5.6!
 -- TODO: Damage?
 -- TODO: shot events?
 -- TODO: Marks to add waypoints/tasks on-the-fly.
@@ -387,6 +381,13 @@ FLIGHTGROUP.version="0.3.8"
 -- TODO: Let user request a parking spot via F10 marker :)
 -- TODO: Monitor traveled distance in air ==> calculate fuel consumption ==> calcuate range remaining. Will this give half way accurate results?
 -- TODO: Out of AG/AA missiles. Safe state of out-of-ammo.
+-- DONE: Add tasks.
+-- DONE: Waypoints, read, add, insert, detour.
+-- DONE: Get ammo.
+-- DONE: Get pylons.
+-- DONE: Fuel threshhold ==> RTB.
+-- DONE: ROE
+-- NOGO: Respawn? With correct loadout, fuelstate. Solved in DCS 2.5.6!
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -820,110 +821,7 @@ function FLIGHTGROUP:SetParkingSpots(airbase, spots)
   return self
 end
 
---- Set TACAN parameters. AA TACANs are aleays on "Y" band.
--- @param #FLIGHTGROUP self
--- @param #number Channel TACAN channel.
--- @param #string Morse Morse code. Default "XX".
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetTACAN(Channel, Morse)
 
-  self.TACANchannel=Channel
-  self.TACANmorse=Morse or "XXX"
-  self.TACANactive=false
-  self.TACANon=true
-  
-  return self
-end
-
-
---- Set Radio parameters.
--- @param #FLIGHTGROUP self
--- @param #number Frequency Radio frequency in MHz. Default 305 MHz.
--- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetRadio(Frequency, Modulation)
-
-  self.radioFreq=Frequency or 305
-  self.radioModu=Modulation or radio.modulation.AM
-
-  self.radioOn=false
-  
-  self.radioUse=true
-  
-  return self
-end
-
-
-
---- Activate TACAN beacon.
--- @param #FLIGHTGROUP self
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SwitchTACANOn()
-
-  if self:IsAlive() then
-    
-    local unit=self.group:GetUnit(1)
-    
-    if unit and unit:IsAlive() then
-    
-      -- Create a new beacon and activate TACAN.
-      if not self.beacon then
-        self.beacon=BEACON:New(unit)
-      end
-      
-      self.beacon:ActivateTACAN(self.TACANchannel, "Y", self.TACANmorse, true)
-      
-      self.TACANactive=true      
-    
-    end
-    
-    
-  end
-
-  return self
-end
-
---- Deactivate TACAN beacon.
--- @param #FLIGHTGROUP self
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SwitchTACANOff()
-
-  if self.beacon then
-    self.beacon:StopAATACAN()
-  end
-  
-  self.TACANactive=false
-
-end
-
-
---- Turn radio on.
--- @param #FLIGHTGROUP self
--- @param #number Frequency Radio frequency in MHz. Default 305 MHz.
--- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SwitchRadioOn()
-
-  self.group:SetOption(AI.Option.Air.id.SILENCE, false)
-
-  self.group:CommandSetFrequency(self.radioFreq, self.radioModu)
-  
-  self.radioOn=true
-  
-  return self
-end
-
---- Turn radio off.
--- @param #FLIGHTGROUP self
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SwitchRadioOff()
-
-  self.group:SetOption(AI.Option.Air.id.SILENCE, true)
-
-  self.radioOn=false
-  
-  return self
-end
 
 
 --- Set the FLIGHTCONTROL controlling this flight group.
@@ -1636,18 +1534,31 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   -- Distance travelled
   ---
 
-  
-  local position=self:GetCoordinate()
-  local dist=self.position:Get3DDistance(position)
   local time=timer.getAbsTime()
   
-  local vel=dist/(time-self.traveltime)
+  local position=self:GetCoordinate()
+  local ds=self.position:Get3DDistance(position)
+  local dt=time-self.traveltime
+  local v=ds/dt
   
-  self.traveldist=self.traveldist+dist
+  self.traveldist=self.traveldist+ds
   self.traveltime=time
   self.position=position
+    
+  local fuelmass=math.huge
+  for _,_element in pairs(self.elements) do
+    local element=_element --#FLIGHTGROUP.Element
+    
+    local fuel=element.unit:GetFuel() or 0
+    local fmass=element.fuelmass*fuel
+    
+    if fmass<fuelmass then
+      fuelmass=fmass
+    end
+    
+  end
   
-  env.info(string.format("FF Distance travelled = %.1f km v=%.1f knots", self.traveldist/1000, UTILS.MpsToKnots(vel)))
+  env.info(string.format("FF Distance travelled = %.1f km v=%.1f knots fuel=%d kg", self.traveldist/1000, UTILS.MpsToKnots(v), fuelmass))  
   
   ---
   -- Tasks
@@ -4053,11 +3964,6 @@ function FLIGHTGROUP:_InitGroup()
     self.refueltype=select(2, unit:IsRefuelable())
     
     self.ai=not self:_IsHuman(self.group)
-    
-    for _,_element in pairs(self.elements) do
-      local element=_element --#FLIGHTGROUP.Element
-      element.ai=not self:_IsHumanUnit(element.unit)
-    end
   
     -- Init waypoints.
     if not self.waypoints then
@@ -5847,6 +5753,107 @@ function FLIGHTGROUP:SetOptionROT(rot)
   else
     -- WARNING
   end
+  return self
+end
+
+--- Set TACAN parameters. AA TACANs are aleays on "Y" band.
+-- @param #FLIGHTGROUP self
+-- @param #number Channel TACAN channel.
+-- @param #string Morse Morse code. Default "XX".
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetTACAN(Channel, Morse)
+
+  self.TACANchannel=Channel
+  self.TACANmorse=Morse or "XXX"
+  self.TACANactive=false
+  self.TACANon=true
+  
+  return self
+end
+
+--- Activate TACAN beacon.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SwitchTACANOn()
+
+  if self:IsAlive() then
+    
+    local unit=self.group:GetUnit(1)
+    
+    if unit and unit:IsAlive() then
+    
+      -- Create a new beacon and activate TACAN.
+      if not self.beacon then
+        self.beacon=BEACON:New(unit)
+      end
+      
+      self.beacon:ActivateTACAN(self.TACANchannel, "Y", self.TACANmorse, true)
+      
+      self.TACANactive=true      
+    
+    end
+    
+    
+  end
+
+  return self
+end
+
+--- Deactivate TACAN beacon.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SwitchTACANOff()
+
+  if self.beacon then
+    self.beacon:StopAATACAN()
+  end
+  
+  self.TACANactive=false
+
+end
+
+--- Set Radio parameters.
+-- @param #FLIGHTGROUP self
+-- @param #number Frequency Radio frequency in MHz. Default 305 MHz.
+-- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetRadio(Frequency, Modulation)
+
+  self.radioFreq=Frequency or 305
+  self.radioModu=Modulation or radio.modulation.AM
+
+  self.radioOn=false
+  
+  self.radioUse=true
+  
+  return self
+end
+
+--- Turn radio on.
+-- @param #FLIGHTGROUP self
+-- @param #number Frequency Radio frequency in MHz. Default 305 MHz.
+-- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SwitchRadioOn()
+
+  self.group:SetOption(AI.Option.Air.id.SILENCE, false)
+
+  self.group:CommandSetFrequency(self.radioFreq, self.radioModu)
+  
+  self.radioOn=true
+  
+  return self
+end
+
+--- Turn radio off.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SwitchRadioOff()
+
+  self.group:SetOption(AI.Option.Air.id.SILENCE, true)
+
+  self.radioOn=false
+  
   return self
 end
 
