@@ -1971,8 +1971,9 @@ end
 function AUFTRAG:UpdateMarker()
 
   -- Marker text.
-  local text=string.format("%s %s", self.name, self.status)
-  text=text..string.format("Targets=%d", self:CountMissionTargets())
+  local text=string.format("%s %s", self.name, self.status:upper())
+  text=text..string.format("\nTargets=%d", self:CountMissionTargets())
+  text=text..string.format("\nFlights=%d", self:CountFlightGroups())
 
   -- Remove old marker.
   if self.markerID then

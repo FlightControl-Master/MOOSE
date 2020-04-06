@@ -1284,7 +1284,9 @@ function FLIGHTGROUP:GetFuelMin()
     
     local unit=element.unit
     
-    if unit and unit:IsAlive() then
+    local life=unit:GetLife()
+    
+    if unit and unit:IsAlive() and life>1 then
       local fuel=unit:GetFuel()
       if fuel<fuelmin then
         fuelmin=fuel
@@ -2997,7 +2999,7 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
   local TaskFunction=self.group:TaskFunction("FLIGHTGROUP._FinishedRefuelling", self)
   local DCSTasks={TaskRefuel, TaskFunction}
   
-  local Speed=UTILS.KnotsToKmph(300)
+  local Speed=self.speedCruise --UTILS.KnotsToKmph(300)
 
   local coordinate=self.group:GetCoordinate()
   

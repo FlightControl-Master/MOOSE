@@ -82,6 +82,7 @@ AIRWING = {
 -- @field #table pylons Pylon data extracted for the unit template.
 -- @field #number navail Number of available payloads of this type.
 -- @field #boolean unlimited If true, this payload is unlimited and does not get consumed.
+-- @field #number priority Priority of the payload.
 
 --- Patrol data.
 -- @type AIRWING.PatrolData
@@ -211,14 +212,15 @@ function AIRWING:AddSquadron(Squadron)
   return self
 end
 
---- Add a **new** payload to air wing resources.
+--- Add a **new** payload to the airwing resources.
 -- @param #AIRWING self
 -- @param Wrapper.Unit#UNIT Unit The unit, the payload is extracted from. Can also be given as *#string* name of the unit.
 -- @param #table MissionTypes Mission types this payload can be used for.
 -- @param #number Npayloads Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios).
 -- @param #boolean Unlimited If true, this payload is unlimited.
+-- @param #number Priority Priority of the loadout. Loadouts with higher priority (lower value) are used first. Default is 50.
 -- @return #AIRWING.Payload The payload table or nil if the unit does not exist.
-function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited)
+function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited, Priority)
 
   if type(Unit)=="string" then
     Unit=UNIT:FindByName(Unit)
@@ -255,6 +257,7 @@ function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited)
     if Unlimited then
       payload.navail=1
     end
+    payload.priority=Priority or 50
         
     -- Add payload
     table.insert(self.payloads, payload)
@@ -270,11 +273,20 @@ function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited)
 end
 
 --- Fetch a payload from the airwing resources for a given unit and mission type.
+-- The payload with the highest priority is preferred.
 -- @param #AIRWING self
 -- @param #string UnitType The type of the unit.
 -- @param #string MissionType The mission type.
 -- @return #AIRWING.Payload Payload table or *nil*.
 function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
+
+  local function sortpayloads(a,b)
+    local pA=a --#AIRWING.Payload
+    local pB=b --#AIRWING.Payload
+    return pA.priority<pB.priority
+  end
+  
+  table.sort(self.payloads, sortpayloads)
   
   for _,_payload in pairs(self.payloads) do
     local payload=_payload --#AIRWING.Payload

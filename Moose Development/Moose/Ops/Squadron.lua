@@ -504,7 +504,13 @@ function SQUADRON:CanMission(Mission)
   -- Assets available for this mission.
   local assets={}
 
-  -- WARNING: This assumes that all assets of the squad can do the same mission types!
+  -- On duty?=  
+  if not self:IsOnDuty() then
+    self:I(self.lid..string.format("Sqaud in not OnDuty but in state %s", self:GetState()))
+    return false, assets
+  end
+
+  -- Check mission type. WARNING: This assumes that all assets of the squad can do the same mission types!
   local cando=self:CheckMissionType(Mission.type, self.missiontypes)
   
   -- Check that tanker mission
@@ -513,7 +519,7 @@ function SQUADRON:CanMission(Mission)
     if Mission.refuelSystem and Mission.refuelSystem==self.tankerSystem then
       -- Correct refueling system.
     else
-      self:I(self.lid..string.format("wrong refuling system mi=%s ta=%s", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
+      self:I(self.lid..string.format("INFO: Wrong refueling system requested=%s != %s=available", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
       cando=false
     end
   
@@ -611,7 +617,7 @@ function SQUADRON:CanMission(Mission)
   
   -- Check if required assets are present.
   if Mission.nassets and Mission.nassets > #assets then
-    self:I(self.lid.."Not enough assets available")
+    self:I(self.lid.."INFO: Not enough assets available! Got %d but need at least %d", #assets, Mission.nassets)
     cando=false
   end
 
