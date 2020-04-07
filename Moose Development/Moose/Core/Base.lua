@@ -771,6 +771,8 @@ end
 function BASE:onEvent(event)
   --self:F( { BaseEventCodes[event.id], event } )
 
+  env.info("FF BASE:onEvent id="..event.id)
+
 	if self then
 		for EventID, EventObject in pairs( self.Events ) do
 			if EventObject.EventEnabled then
