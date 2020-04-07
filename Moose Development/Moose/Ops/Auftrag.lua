@@ -78,6 +78,11 @@
 -- @field #number missionAltitude Mission altitude in meters.
 -- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
 -- @field #table enrouteTasks Mission enroute tasks.
+-- @field #number missionRange Mission range in meters. Used in AIRWING class.
+-- @field #number missionFreq Mission radio frequency in MHz.
+-- @field #number missionModu Mission radio modulation. 0=AM and 1=FM.
+-- @field #number missionTACANchannel Mission TACAN channel.
+-- @field #number missionTACANmorse Mission TACAN morse code.
 -- 
 -- @field #number missionRepeated Number of times mission was repeated.
 -- @field #number missionRepeatMax Number of times mission is repeated if failed.
@@ -103,10 +108,38 @@
 -- As you probably know, setting tasks in DCS is often tedious. The AUFTRAG class significantly simplifies the necessary workflow by using optimized default parameters.
 -- Also, a lot of additional useful events are created.
 --
+-- # Mission Types
+-- 
+-- ## Anti-Ship
+-- 
+-- ## AWACS
+-- 
+-- ## Tanker
+-- 
+-- ## BAI
+-- 
+-- ## Bombing
+-- 
+-- ## Bombing Runway
+-- 
+-- ## Bombing Carpet
+-- 
+-- ## CAP
+-- 
+-- ## CAS
+-- 
+-- ## Escort
+-- 
+-- ## FACA
+-- 
+-- ## Ferry
+-- 
+-- ## Intercept
+-- 
+-- ##
+-- 
+-- 
 -- # Events
--- 
--- 
--- # Missions
 -- 
 -- 
 -- # Examples
@@ -269,7 +302,7 @@ AUFTRAG.version="0.0.9"
 -- TODO: Mission frequency, formation, etc.
 -- DONE: FSM events.
 -- TODO: F10 marker functions that are updated on Status event.
--- TODO: F10 marker for new missions.
+-- TODO: F10 marker to create new missions.
 -- DONE: Evaluate mission result ==> SUCCESS/FAILURE
 -- DONE: NewAUTO() NewA2G NewA2A
 -- TODO: Transport mission.
@@ -1313,7 +1346,7 @@ end
 function AUFTRAG:SetFlightStatus(flightgroup, status)
   self:I(self.lid..string.format("Setting flight %s to status %s", flightgroup and flightgroup.groupname or "nil", tostring(status)))
 
-  env.info("FF trying to get flight status in AUFTRAG:GetFlightStatus")
+  --env.info("FF trying to get flight status in AUFTRAG:GetFlightStatus")
   if self:GetFlightStatus(flightgroup)==AUFTRAG.FlightStatus.CANCELLED and status==AUFTRAG.FlightStatus.DONE then
     -- Do not overwrite a CANCELLED status with a DONE status.
   else
@@ -1330,7 +1363,7 @@ function AUFTRAG:SetFlightStatus(flightgroup, status)
 
   -- Check if ALL flights are done with their mission.
   if self:IsNotOver() and self:CheckFlightsDone() then
-    self:I(self.lid.."All flight done ==> mission DONE!")
+    self:I(self.lid.."All flights done ==> mission DONE!")
     self:Done()
   else
     self:T3(self.lid.."Mission NOT DONE yet!")
