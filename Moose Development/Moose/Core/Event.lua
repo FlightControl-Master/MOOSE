@@ -963,7 +963,7 @@ function EVENT:onEvent( Event )
         
         if Event.IniObjectCategory == Object.Category.STATIC then
           if Event.id==31 then
-            env.info("FF event 31")
+            --env.info("FF event 31")
             -- Event.initiator is a Static object representing the pilot. But getName() error due to DCS bug.
             Event.IniDCSUnit = Event.initiator
             local ID=Event.initiator.id_
@@ -971,7 +971,6 @@ function EVENT:onEvent( Event )
             Event.IniUnitName = Event.IniDCSUnitName
             Event.IniCoalition = 0
             Event.IniCategory  = 0
-            Event.IniUnit=STATIC:Register(Event.IniUnitName)
             Event.IniTypeName = "Ejected Pilot"
           else
             Event.IniDCSUnit = Event.initiator
@@ -1063,6 +1062,7 @@ function EVENT:onEvent( Event )
       if Event.place then   
         if Event.id==EVENTS.LandingAfterEjection then
           -- Place is here the UNIT of which the pilot ejected.
+          --local name=Event.place:getName()  -- This returns a DCS error "Airbase doesn't exit" :(
           --Event.Place=UNIT:Find(Event.place)
         else   
           Event.Place=AIRBASE:Find(Event.place)
@@ -1098,30 +1098,13 @@ function EVENT:onEvent( Event )
         self:F( { EventMeta.Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
       end
       
-      --self:E({Events=self.Events})
-      --self:E({Events31=self.Events[31]})
-      
-      env.info(string.format("FF %s all events:", EventMeta.Text))
-      for id,data in pairs(self.Events) do
-        self:E({id=id, data=data})      
-      end
-      
       for EventPriority = PriorityBegin, PriorityEnd, PriorityOrder do
-      
-        env.info("hallo 100 EventPriority="..EventPriority)
       
         if self.Events[Event.id][EventPriority] then
         
-          env.info("hallo 200")
-          self:E({blub=EventMeta.Text, bla=self.Events[Event.id][EventPriority]})
-        
           -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
           for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
-          
-            env.info("hallo 300")
-            self:E({eventclass=EventClass})
-            self:E({eventdata=EventData})
-          
+                    
             --if Event.IniObjectCategory ~= Object.Category.STATIC then
             --  self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
             --end
