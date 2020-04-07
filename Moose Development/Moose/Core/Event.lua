@@ -555,6 +555,8 @@ function EVENT:Init( EventID, EventClass )
   if not self.Events[EventID][EventPriority][EventClass] then
      self.Events[EventID][EventPriority][EventClass] = {}
   end
+  
+  
   return self.Events[EventID][EventPriority][EventClass]
 end
 
@@ -641,7 +643,7 @@ end
 -- @param EventID
 -- @return #EVENT
 function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
-  self:F2( { EventID } )
+  self:F2( { EventID, EventClass, EventFunction } )
 
   local EventData = self:Init( EventID, EventClass )
   EventData.EventFunction = EventFunction
@@ -960,13 +962,25 @@ function EVENT:onEvent( Event )
         end
         
         if Event.IniObjectCategory == Object.Category.STATIC then
-          Event.IniDCSUnit = Event.initiator
-          Event.IniDCSUnitName = Event.IniDCSUnit:getName()
-          Event.IniUnitName = Event.IniDCSUnitName
-          Event.IniUnit = STATIC:FindByName( Event.IniDCSUnitName, false )
-          Event.IniCoalition = Event.IniDCSUnit:getCoalition()
-          Event.IniCategory = Event.IniDCSUnit:getDesc().category
-          Event.IniTypeName = Event.IniDCSUnit:getTypeName()
+          if Event.id==31 then
+            --env.info("FF event 31")
+            -- Event.initiator is a Static object representing the pilot. But getName() error due to DCS bug.
+            Event.IniDCSUnit = Event.initiator
+            local ID=Event.initiator.id_
+            Event.IniDCSUnitName = string.format("Ejected Pilot ID %s", tostring(ID))
+            Event.IniUnitName = Event.IniDCSUnitName
+            Event.IniCoalition = 0
+            Event.IniCategory  = 0
+            Event.IniTypeName = "Ejected Pilot"
+          else
+            Event.IniDCSUnit = Event.initiator
+            Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+            Event.IniUnitName = Event.IniDCSUnitName
+            Event.IniUnit = STATIC:FindByName( Event.IniDCSUnitName, false )
+            Event.IniCoalition = Event.IniDCSUnit:getCoalition()
+            Event.IniCategory = Event.IniDCSUnit:getDesc().category
+            Event.IniTypeName = Event.IniDCSUnit:getTypeName()
+          end
         end
   
         if Event.IniObjectCategory == Object.Category.CARGO then
@@ -1048,7 +1062,8 @@ function EVENT:onEvent( Event )
       if Event.place then   
         if Event.id==EVENTS.LandingAfterEjection then
           -- Place is here the UNIT of which the pilot ejected.
-          Event.Place=UNIT:Find(Event.place)
+          --local name=Event.place:getName()  -- This returns a DCS error "Airbase doesn't exit" :(
+          --Event.Place=UNIT:Find(Event.place)
         else   
           Event.Place=AIRBASE:Find(Event.place)
           Event.PlaceName=Event.Place:GetName()
@@ -1089,7 +1104,7 @@ function EVENT:onEvent( Event )
         
           -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
           for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
-          
+                    
             --if Event.IniObjectCategory ~= Object.Category.STATIC then
             --  self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
             --end
@@ -1145,10 +1160,11 @@ function EVENT:onEvent( Event )
               else
                 -- The EventClass is not alive anymore, we remove it from the EventHandlers...
                 self:RemoveEvent( EventClass, Event.id )
-              end                      
+              end
+              
             else
   
-              -- If the EventData is for a GROUP, the call directly the EventClass EventFunction for the UNIT in that GROUP.
+              --- If the EventData is for a GROUP, the call directly the EventClass EventFunction for the UNIT in that GROUP.
               if EventData.EventGroup then
   
                 -- So now the EventClass must be a GROUP class!!! We check if it is still "Alive".
