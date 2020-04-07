@@ -2064,7 +2064,9 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
       -- Trigger ElementParking event. Add a little delay because spawn is also delayed!
       self:__ElementParking(0.11, Element)
     else
+      -- TODO: This can happen if spawned on deck of a carrier!
       self:E(self.lid..string.format("Element spawned not in air but not on any parking spot."))
+      self:__ElementParking(0.11, Element)
     end
   end
 end
@@ -2076,7 +2078,7 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
-  self:T(self.lid..string.format("Element parking %s at spot %s", Element.name, tostring(Element.parking.TerminalID)))
+  self:T(self.lid..string.format("Element parking %s at spot %s", Element.name, Element.parking and tostring(Element.parking.TerminalID) or "N/A"))
   
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.PARKING)
