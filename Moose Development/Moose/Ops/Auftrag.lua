@@ -159,6 +159,8 @@ AUFTRAG = {
   missionFraction    =   0.5,
   enrouteTasks       =    {},
   markerID           =   nil,
+  startconditions    =    {},
+  stopconditions     =    {},
 }
 
 --- Global mission counter.
@@ -182,6 +184,8 @@ _AUFTRAGSNR=0
 -- @field #string ORBIT Orbit mission.
 -- @field #string PATROL Similar to CAP but no auto engage targets.
 -- @field #string RECON Recon mission.
+-- @field #string RECOVERYTANKER Recovery tanker mission.
+-- @field #string RESCUEHELO Rescue helo.
 -- @field #string SEAD Suppression/destruction of enemy air defences.
 -- @field #string STRIKE Strike mission.
 -- @field #string TANKER Tanker mission.
@@ -202,6 +206,8 @@ AUFTRAG.Type={
   ORBIT="Orbit",
   PATROL="Patrol",
   RECON="Recon",
+  RECOVERYTANKER="Recovery Tanker",
+  RESCUEHELO="Rescue Helo",
   SEAD="SEAD",
   STRIKE="Strike",
   TANKER="Tanker",
@@ -272,6 +278,7 @@ AUFTRAG.TargetType={
 -- @field Wrapper.Positionable#POSITIONABLE Target Target Object.
 -- @field #string Type Target type: "Group", "Unit", "Static", "Coordinate", "Airbase.
 -- @field #number Ninital Number of initial targets.
+-- @field #number Lifepoints Total life points.
 
 --- Mission success.
 -- @type AUFTRAG.Success
@@ -297,6 +304,9 @@ AUFTRAG.version="0.0.9"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Add mission start conditions.
+-- TODO: Add recovery tanker mission for boat ops.
+-- TODO: Add rescue helo mission for boat ops.
 -- TODO: Mission success options damaged, destroyed.
 -- DONE: Mission ROE and ROT.
 -- TODO: Mission frequency, formation, etc.
@@ -313,7 +323,7 @@ AUFTRAG.version="0.0.9"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new AUFTRAG object.
+--- Create a new generic AUFTRAG object.
 -- @param #AUFTRAG self
 -- @param #string Type Mission type.
 -- @return #AUFTRAG self
@@ -342,12 +352,9 @@ function AUFTRAG:New(Type)
   self:SetPriority()
   self:SetTime()
   self.engageAsGroup=true
-  
   self.missionRepeated=0
   self.missionRepeatMax=0
-  
   self.nassets=1
-  
   self.dTevaluate=0
   
   -- FMS start state is PLANNED.
@@ -365,7 +372,8 @@ function AUFTRAG:New(Type)
   self:AddTransition(AUFTRAG.Status.STARTED,   "Executing",     AUFTRAG.Status.EXECUTING)   -- First asset is executing the mission.
   
   self:AddTransition("*",                      "Done",          AUFTRAG.Status.DONE)        -- All assets have reported that mission is done.
-  self:AddTransition("*",                      "Cancel",        "*") --AUFTRAG.Status.CANCELLED)   -- Command to cancel the mission.
+  
+  self:AddTransition("*",                      "Cancel",        "*")                        -- Command to cancel the mission.
   
   self:AddTransition("*",                      "Success",       AUFTRAG.Status.SUCCESS)
   self:AddTransition("*",                      "Failed",        AUFTRAG.Status.FAILED)
@@ -377,13 +385,9 @@ function AUFTRAG:New(Type)
 
   self:AddTransition("*",                      "FlightDead",    "*")  
   self:AddTransition("*",                      "AssetDead",     "*")
-
-  --[[
-  self:HandleEvent(EVENTS.PilotDead,      self._UnitDead)
-  self:HandleEvent(EVENTS.Ejection,       self._UnitDead)
-  self:HandleEvent(EVENTS.Crash,          self._UnitDead)
-  ]]
   
+  
+  -- Init status update.
   self:__Status(-1)
   
   return self
@@ -392,6 +396,27 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Create Missions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Create a RESCUE HELO mission.
+-- @param #AUFTRAG self
+-- @param Wrapper.UnitUNIT Carrier The carrier unit.
+-- @return #AUFTRAG self
+function AUFTRAG:NewRESCUEHELO(Carrier)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.RESCUEHELO)
+  
+  mission.engageTarget=mission:_TargetFromObject(Target)
+  mission.engageWeaponType=ENUMS.WeaponFlag.Auto
+  
+  mission.missionTask=ENUMS.MissionTask.NOTHING
+  mission.missionFraction=0.4
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.EvadeFire
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  return mission
+end
 
 --- Create an ANTI-SHIP mission.
 -- @param #AUFTRAG self
@@ -729,7 +754,7 @@ end
 
 --- Create a BOMBING mission. Flight will drop bombs a specified coordinate.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE TargetCoordinate Target coordinate. Can also be specified as a GROUP, UNIT or STATIC object.
+-- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT or STATIC object.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
 -- @return #AUFTRAG self
 function AUFTRAG:NewBOMBING(Target, Altitude)
@@ -1903,6 +1928,56 @@ function AUFTRAG:CountMissionTargets()
   return N
 end
 
+--- Get target life points.
+-- @param #AUFTRAG self
+-- @return #number Number of alive target units.
+function AUFTRAG:GetTargetLife()
+  
+  local N=0
+  
+  if self.engageTarget then
+  
+    if self.engageTarget.Type==AUFTRAG.TargetType.GROUP then
+    
+      local target=self.engageTarget.Target --Wrapper.Group#GROUP
+      
+      local units=target:GetUnits()
+      
+      for _,_unit in pairs(units or {}) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        
+        -- We check that unit is "alive".
+        if unit and unit:IsAlive() then
+          N=N+unit:GetLife()
+        end
+      end      
+      
+    elseif self.engageTarget.Type==AUFTRAG.TargetType.UNIT then
+    
+      local target=self.engageTarget.Target --Wrapper.Unit#UNIT        
+      
+      if target and target:IsAlive() then
+        N=N+target:GetLife()
+      end
+      
+    elseif self.engageTarget.Type==AUFTRAG.TargetType.STATIC then
+    
+      local target=self.engageTarget.Target --Wrapper.Static#STATIC
+      
+      if target and target:IsAlive() then
+        N=N+1 --target:GetLife()
+      end
+      
+    elseif self.engageTarget.Type==AUFTRAG.TargetType.AIRBASE then
+    
+      -- TODO: any (good) way to tell whether an airbase was "destroyed" or at least damaged? Is :GetLive() working?
+      
+    end
+  end
+  
+  return N
+end
+
 --- Count alive flight groups assigned for this mission.
 -- @param #AUFTRAG self
 -- @return #number Number of alive flight groups.
@@ -2251,7 +2326,7 @@ function AUFTRAG:GetDCSMissionTask()
   -- Count mission targets.
   self.Ntargets=self:CountMissionTargets()
   
-  self:I({Ntargets=self.Ntargets, missiontask=DCStasks})
+  self:T({Ntargets=self.Ntargets, missiontask=DCStasks})
 
   -- Return the task.
   if #DCStasks==1 then

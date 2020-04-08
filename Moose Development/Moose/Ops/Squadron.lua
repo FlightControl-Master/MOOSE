@@ -192,7 +192,16 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set livery.
+--- Set livery painted on all squadron aircraft.
+-- Note that the livery name in general is different from the name shown in the mission editor.
+-- 
+-- Valid names are the names of the **livery directories**. Check out the folder in your DCS installation:
+-- 
+-- * `DCS World OpenBeta\CoreMods\aircraft\<Aircraft Type>\<Livery Name>`
+-- * `DCS World OpenBeta\Bazar\Liveries\<Aircraft Type>\<Livery Name>`
+-- 
+-- Or personal liveries you have installed somewhere in your saved games folder.
+--  
 -- @param #SQUADRON self
 -- @param #string LiveryName Name of the livery.
 -- @return #SQUADRON self
@@ -201,9 +210,10 @@ function SQUADRON:SetLivery(LiveryName)
   return self
 end
 
---- Set skill.
+--- Set skill level of all squadron team members.
 -- @param #SQUADRON self
 -- @param #string Skill Skill of all flights.
+-- @usage mysquadron:SetSkill(AI.Skill.EXCELLENT)
 -- @return #SQUADRON self
 function SQUADRON:SetSkill(Skill)
   self.skill=Skill

@@ -48,6 +48,7 @@
 AIRWING = {
   ClassName      = "AIRWING",
   Debug          = false,
+  verbose        =     0,
   lid            =   nil,
   menu           =   nil,
   squadrons      =    {},
@@ -100,17 +101,17 @@ AIRWING.version="0.1.5"
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- DONE: Add squadrons to warehouse.
+-- TODO: Spawn in air or hot.
 -- TODO: Make special request to transfer squadrons to anther airwing (or warehouse).
+-- TODO: Border zone or even multiple zones.
+-- TODO: Check that airbase has enough parking spots if a request is BIG. Alternatively, split requests.
+-- DONE: Add squadrons to warehouse.
 -- DONE: Build mission queue.
 -- DONE: Find way to start missions.
 -- DONE: Check if missions are done/cancelled.
 -- DONE: Payloads as resources.
--- TODO: Spawn in air or hot.
 -- DONE: Define CAP zones.
 -- DONE: Define TANKER zones for refuelling.
--- TODO: Border zone or even multiple zones.
--- TODO: Check that airbase has enough parking spots if a request is BIG. Alternatively, split requests.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -263,8 +264,8 @@ function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited, Priority)
     table.insert(self.payloads, payload)
     
     -- Info
-    self:I(self.lid..string.format("Adding new payload from unit %s for aircraft type %s: N=%d (unlimited=%s), missions:", payload.unitname, payload.aircrafttype, payload.navail, tostring(payload.unlimited)))
-    self:I({MissionTypes=payload.missiontypes})
+    self:I(self.lid..string.format("Adding new payload from unit %s for aircraft type %s: N=%d (unlimited=%s), prio=%d, missions: %s", 
+    payload.unitname, payload.aircrafttype, payload.navail, tostring(payload.unlimited), payload.priority, table.concat(payload.missiontypes, ", ")))
     
     return payload
   end
@@ -280,15 +281,28 @@ end
 -- @return #AIRWING.Payload Payload table or *nil*.
 function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
 
+  --- Sort payload wrt the following criteria:
+  -- 1) Highest prio (lower value) is the main selection criterion.
+  -- 2) If payloads have the same prio, unlimited payloads are preferred over limited ones. 
+  -- 3) If payloads have the same prio _and_ are limited, the abundant one is preferred.
   local function sortpayloads(a,b)
     local pA=a --#AIRWING.Payload
     local pB=b --#AIRWING.Payload
-    return pA.priority<pB.priority
-  end
-  
+    return (pA.priority<pB.priority) or (pA.priority==pB.priority and pA.unlimited==true) or (pA.priority==pB.priority and pA.unlimited==true and pB.unlimited==true and pA.navail>pB.navail)
+  end  
   table.sort(self.payloads, sortpayloads)
+
+  --[[
+  env.info("FF sorted payloads for mission type X and aircraft type=Y:")
+  for _,_payload in ipairs(self.payloads) do
+    local payload=_payload --#AIRWING.Payload
+    if payload.aircrafttype==UnitType and self:CheckMissionType(MissionType, payload.missiontypes) then
+      self:I(string.format("FF %s payload for %s: avail=%d prio=%d", MissionType, payload.aircrafttype, payload.navail, payload.priority))
+    end
+  end
+  ]]
   
-  for _,_payload in pairs(self.payloads) do
+  for _,_payload in ipairs(self.payloads) do
     local payload=_payload --#AIRWING.Payload
     
     
@@ -299,6 +313,8 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
       if not payload.unlimited then
         payload.navail=payload.navail-1
       end
+      
+      --self:I(string.format("FETCHING %s payload for %s: avail=%d prio=%d", MissionType, payload.aircrafttype, payload.navail, payload.priority))
       
       -- Return a copy of the table.
       return payload
@@ -618,8 +634,12 @@ function AIRWING:onafterStatus(From, Event, To)
   for i,_squadron in pairs(self.squadrons) do
     local squadron=_squadron --Ops.Squadron#SQUADRON
     
+    local callsign=squadron.callsignName and squadron.callsignName or "N/A"
+    local modex=squadron.modex and squadron.modex or "N/A"
+    local skill=squadron.skill and tostring(squadron.skill) or "N/A"
+    
     -- Squadron text
-    text=text..string.format("\n* %s %s", squadron.name, squadron:GetState())
+    text=text..string.format("\n* %s %s: Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), callsign, modex, skill)
     
     -- Loop over all assets.
     for j,_asset in pairs(squadron.assets) do
