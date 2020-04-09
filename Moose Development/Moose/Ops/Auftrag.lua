@@ -273,12 +273,17 @@ AUFTRAG.TargetType={
   AIRBASE="Airbase",
 }
 
---- 
+--- Target data.
 -- @type AUFTRAG.TargetData
 -- @field Wrapper.Positionable#POSITIONABLE Target Target Object.
 -- @field #string Type Target type: "Group", "Unit", "Static", "Coordinate", "Airbase.
 -- @field #number Ninital Number of initial targets.
 -- @field #number Lifepoints Total life points.
+
+--- Mission capability.
+-- @type AUFTRAG.Capability
+-- @field #string MissionType Type of mission.
+-- @field #number Performance Number describing the performance level. The higher the better.
 
 --- Mission success.
 -- @type AUFTRAG.Success
@@ -2296,6 +2301,29 @@ function AUFTRAG:GetDCSMissionTask()
     local Vec2=self.transportPickup:GetVec2()
     
     local DCStask=CONTROLLABLE.TaskEmbarking(self, Vec2, self.transportGroupSet, Duration, DistributionGroupSet)
+    
+    table.insert(DCStasks, DCStask)
+
+  elseif self.type==AUFTRAG.Type.RESCUEHELO then
+
+    -------------------------
+    -- RESCUE HELO Mission --
+    -------------------------
+  
+    local DCStask={}
+    
+    DCStask.id="Formation"
+    
+    local param={}
+    param.unitname=""
+    param.offsetX=20
+    param.offsetY=20
+    param.offsetZ=20
+    param.alitude=70
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)
   
   else
     self:E(self.lid..string.format("ERROR: Unknown mission task!"))

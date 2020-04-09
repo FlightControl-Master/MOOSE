@@ -392,32 +392,6 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
     
   end
   
- 
-  -- Create missions for all new contacts.
-  --[[
-  for _,_contact in pairs(self.ContactsUnknown) do
-    local contact=_contact --#WINGCOMMANDER.Contact
-    local group=contact.group --Wrapper.Group#GROUP
-    
-    -- Create a mission based on group category.
-    local mission=AUFTRAG:NewAUTO(group)
-    
-    
-    -- Add mission to queue.
-    if mission then
-    
-      --TODO: Better amount of necessary assets. Count units in asset and in contact. Might need nassetMin/Max.
-      mission.nassets=1
-      
-      -- Set mission contact.
-      contact.mission=mission
-      
-      -- Add mission to queue.
-      self:AddMission(mission)
-    end
-  end
-  ]]
-  
   -- Create missions for all new contacts.
   local Nred=0
   local Nyellow=0

@@ -223,8 +223,9 @@ end
 --- Set mission types this squadron is able to perform.
 -- @param #SQUADRON self
 -- @param #table MissionTypes Table of mission types. Can also be passed as a #string if only one type.
+-- @param #number Performance Performance describing how good this mission can be performed. Higher is better. Default 50. Max 100.
 -- @return #SQUADRON self
-function SQUADRON:SetMissonTypes(MissionTypes)
+function SQUADRON:AddMissonCapability(MissionTypes, Performance)
 
   -- Ensure Missiontypes is a table.
   if MissionTypes and type(MissionTypes)~="table" then
@@ -233,11 +234,18 @@ function SQUADRON:SetMissonTypes(MissionTypes)
   
   -- Add ORBIT for all.  
   if not self:CheckMissionType(AUFTRAG.Type.ORBIT, MissionTypes) then
-    table.insert(MissionTypes, AUFTRAG.Type.ORBIT)
+    --table.insert(MissionTypes, AUFTRAG.Type.ORBIT)
   end
 
   -- Set table.
-  self.missiontypes=MissionTypes
+  self.missiontypes=self.missiontypes or {} --MissionTypes
+  
+  for _,missiontype in pairs(MissionTypes) do
+    local capability={} --Ops.Auftrag#AUFTRAG.Capability
+    capability.MissionType=missiontype
+    capability.Performance=Performance
+    table.insert(self.missiontypes, capability)
+  end
   
   self:I(self.missiontypes)
   
@@ -292,6 +300,23 @@ function SQUADRON:SetAirwing(Airwing)
   self.airwing=Airwing
   return self
 end
+
+--- This squadron can do recue helo operations for boat ops.
+-- @param #SQUADRON self
+-- @return #SQUADRON self
+function SQUADRON:SetCanRescueHelo()
+  self.canrescuehelo=true
+  return self
+end
+
+--- This squadron can do recovery tanker operations for boat ops. 
+-- @param #SQUADRON self
+-- @return #SQUADRON self
+function SQUADRON:SetCanRescueHelo()
+  self.canrecoverytanker=true
+  return self
+end
+
 
 --- Add airwing asset to squadron.
 -- @param #SQUADRON self
@@ -475,10 +500,8 @@ end
 function SQUADRON:_CheckAssetStatus()
 
   for _,_asset in pairs(self.assets) do
-    local asset=_asset --#SQUADRON.Flight
-    
-    flight.flightgroup:IsSpawned()
-    
+    local asset=_asset
+        
   end
 
 end
@@ -516,7 +539,7 @@ function SQUADRON:CanMission(Mission)
 
   -- On duty?=  
   if not self:IsOnDuty() then
-    self:I(self.lid..string.format("Sqaud in not OnDuty but in state %s", self:GetState()))
+    self:I(self.lid..string.format("Squad in not OnDuty but in state %s", self:GetState()))
     return false, assets
   end
 
@@ -560,10 +583,8 @@ function SQUADRON:CanMission(Mission)
   
             -- Check if the payload of this asset is compatible with the mission.
             -- Note: we do not check the payload as an asset that is on a PATROL mission should be able to do an intercept as well!
-            --if self:CheckMissionType(Mission.type, asset.payload.missiontypes) then
-              -- TODO: Check if asset actually has weapons left. Difficult!
-              table.insert(assets, asset)
-            --end
+            -- TODO: Check if asset actually has weapons left. Difficult!
+            table.insert(assets, asset)
             
           end      
         
@@ -600,7 +621,7 @@ function SQUADRON:CanMission(Mission)
             -- Asset is still in STOCK
             ---          
           
-            -- Check that asset is not already requeseted for another mission.
+            -- Check that asset is not already requested for another mission.
             if not asset.requested then
           
               -- Check if we got a payload and reserve it for this asset.

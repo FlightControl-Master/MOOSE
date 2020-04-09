@@ -2628,7 +2628,6 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
 
   -- Execute waypoint tasks.
   if #taskswp>0 then
-    --self:PushTask(self.group:TaskCombo(taskswp))
     self:SetTask(self.group:TaskCombo(taskswp))
   end
   
@@ -3389,38 +3388,64 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
 
   -- Task status executing.
   Task.status=FLIGHTGROUP.TaskStatus.EXECUTING
+  
+  if Task.dcstask.id=="Formation" then
 
-  -- If task is scheduled (not waypoint) set task.
-  if Task.type==FLIGHTGROUP.TaskType.SCHEDULED then
+    -- Set of group(s) to follow Mother.
+    local followset=SET_GROUP:New():AddGroup(self.group)
     
-    local DCStasks={}
-    if Task.dcstask.id=='ComboTask' then
-      -- Loop over all combo tasks.
-      for TaskID, Task in ipairs(Task.dcstask.params.tasks) do
-        table.insert(DCStasks, Task)
-      end    
-    else
-      table.insert(DCStasks, Task.dcstask)
-    end
+    local param=Task.dcstask.params
+    
+    -- Define AI Formation object.
+    Task.formation=AI_FORMATION:New(param.carrier, followset, "Formation", "Follow X at given parameters.")
+    
+    -- Formation parameters.
+    Task.formation:FormationCenterWing(-param.offsetX, 50, math.abs(param.altitude), 50, param.offsetZ, 50)
+    
+    -- Set follow time interval.
+    Task.formation:SetFollowTimeInterval(param.dtFollow)
+    
+    -- Formation mode.
+    Task.formation:SetFlightModeFormation(self.group)
+    
+    -- Start formation FSM.
+    Task.formation:Start()  
+  
+  else
 
-    -- Combo task.
-    local TaskCombo=self.group:TaskCombo(DCStasks)
-
-    -- Stop condition!    
-    local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
-    
-    -- Controlled task.      
-    local TaskControlled=self.group:TaskControlled(TaskCombo, TaskCondition)
-    
-    -- Task done.
-    local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
-    
-    -- Final task.
-    local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
+    -- If task is scheduled (not waypoint) set task.
+    if Task.type==FLIGHTGROUP.TaskType.SCHEDULED then
       
-    -- Set task for group.
-    self:SetTask(TaskFinal, 1)
+      local DCStasks={}
+      if Task.dcstask.id=='ComboTask' then
+        -- Loop over all combo tasks.
+        for TaskID, Task in ipairs(Task.dcstask.params.tasks) do
+          table.insert(DCStasks, Task)
+        end    
+      else
+        table.insert(DCStasks, Task.dcstask)
+      end
+  
+      -- Combo task.
+      local TaskCombo=self.group:TaskCombo(DCStasks)
+  
+      -- Stop condition!    
+      local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
+      
+      -- Controlled task.      
+      local TaskControlled=self.group:TaskControlled(TaskCombo, TaskCondition)
+      
+      -- Task done.
+      local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
+      
+      -- Final task.
+      local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
         
+      -- Set task for group.
+      self:SetTask(TaskFinal, 1)
+          
+    end
+    
   end
 
   -- Get mission of this task (if any).
@@ -3489,6 +3514,11 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
       
       -- Set stop flag. When the flag is true, the _TaskDone function is executed and calls :TaskDone()
       Task.stopflag:Set(1)
+      
+      if Task.dcstask.id=="Formation" then
+        Task.formation:Stop()
+        self:TaskDone(Task)
+      end
   
     else
             
@@ -3576,10 +3606,6 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
     self:I(self.lid.."FF Task Done but NO mission found ==> _CheckFlightDone in 1 sec")
     self:_CheckFlightDone(1)
   end
-  
-  -- Update route. This is necessary because of the route task being overwritten. But we want to fly to the remaining waypoints.
-  -- TODO: Since TaskExecute does use PushTask now, it should not be necessary to update the route, right?
-  --self:__UpdateRoute(-1)
   
 end
 
@@ -3739,11 +3765,9 @@ function FLIGHTGROUP:onafterMissionCancel(From, Event, To, Mission)
     -- Note that two things can happen.
     -- 1.) Flight is still on the way to the waypoint (status should be STARTED). In this case there would not be a current task!
     -- 2.) Flight already passed the mission waypoint (status should be EXECUTING).
+    
     self:TaskCancel(Task)
-    
-    -- Set current mission to nil.
-    --self.currentmission=nil
-    
+        
   else
   
     -- Not the current mission.
@@ -4450,35 +4474,7 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
     
       -- At each waypoint report passing.
       local TaskPassingWaypoint=self.group:TaskFunction("FLIGHTGROUP._PassingWaypoint", self, i)      
-      table.insert(taskswp, TaskPassingWaypoint)
-      
-      
-      -- For some reason THIS DOES NOT WORK if executed at the last waypoint if it is an AIR WAYPOINT.
-      -- I have moved it to the onafterpassingwaypoint function instead.
-      
-      if false then
-      
-        -- Get taks
-        local tasks=self:GetTasksWaypoint(i)
-        
-        for _,task in pairs(tasks) do
-          local Task=task --#FLIGHTGROUP.Task          
-          
-          -- Task execute.
-          table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))
-  
-          -- Stop condition if userflag is set to 1.    
-          local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
-          
-          -- Controlled task.      
-          table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
-          
-          -- Task done.
-          table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))    
-          
-        end
-      
-      end
+      table.insert(taskswp, TaskPassingWaypoint)      
           
       -- Waypoint task combo.
       wp.task=self.group:TaskCombo(taskswp)

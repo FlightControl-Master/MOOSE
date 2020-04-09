@@ -32,6 +32,10 @@
 -- @field #table pointsTANKER Table of Tanker points.
 -- @field #table pointsAWACS Table of AWACS points.
 -- @field Ops.WingCommander#WINGCOMMANDER wingcommander The wing commander responsible for this airwing.
+-- 
+-- @field Ops.RescueHelo#RESCUEHELO rescuehelo The rescue helo.
+-- @field Ops.RecoveryTanker#RECOVERYTANKER recoverytanker The recoverytanker.
+-- 
 -- @extends Functional.Warehouse#WAREHOUSE
 
 --- Be surprised!
@@ -79,11 +83,10 @@ AIRWING = {
 -- @type AIRWING.Payload
 -- @field #string unitname Name of the unit this pylon was extracted from.
 -- @field #string aircrafttype Type of aircraft, which can use this payload.
--- @field #table missiontypes Mission types for which this payload can be used.
+-- @field #table capabilities Mission types and performances for which this payload can be used.
 -- @field #table pylons Pylon data extracted for the unit template.
 -- @field #number navail Number of available payloads of this type.
 -- @field #boolean unlimited If true, this payload is unlimited and does not get consumed.
--- @field #number priority Priority of the payload.
 
 --- Patrol data.
 -- @type AIRWING.PatrolData
@@ -95,7 +98,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.1.5"
+AIRWING.version="0.1.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -103,7 +106,6 @@ AIRWING.version="0.1.5"
 
 -- TODO: Spawn in air or hot.
 -- TODO: Make special request to transfer squadrons to anther airwing (or warehouse).
--- TODO: Border zone or even multiple zones.
 -- TODO: Check that airbase has enough parking spots if a request is BIG. Alternatively, split requests.
 -- DONE: Add squadrons to warehouse.
 -- DONE: Build mission queue.
@@ -145,6 +147,9 @@ function AIRWING:New(warehousename, airwingname)
   self.nflightsAWACS=0
   self.nflightsTANKERboom=0
   self.nflightsTANKERprobe=0
+  
+  self.nflightsRecoveryTanker=0
+  self.nflightsRescuehelo=0
 
   ------------------------
   --- Pseudo Functions ---
@@ -240,32 +245,36 @@ function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited, Priority)
     MissionTypes={MissionTypes}
   end
   
-  -- Add ORBIT for all.  
-  if not self:CheckMissionType(AUFTRAG.Type.ORBIT, MissionTypes) then
-    table.insert(MissionTypes, AUFTRAG.Type.ORBIT)
-  end
-  
   if Unit then
     
     local payload={} --#AIRWING.Payload
     
+    --TODO: capability
+    
     payload.unitname=Unit:GetName()
     payload.aircrafttype=Unit:GetTypeName()
-    payload.missiontypes=MissionTypes or {}
+    payload.capabilities=MissionTypes or {}
     payload.pylons=Unit:GetTemplatePayload()
     payload.navail=Npayloads or 99
     payload.unlimited=Unlimited
     if Unlimited then
       payload.navail=1
     end
-    payload.priority=Priority or 50
         
     -- Add payload
     table.insert(self.payloads, payload)
     
+    -- Add ORBIT for all.  
+    if not self:CheckMissionType(AUFTRAG.Type.ORBIT, MissionTypes) then
+      local capability={}  --Ops.Auftrag#AUFTRAG.Capability
+      capability.MissionType=AUFTRAG.Type.ORBIT
+      capability.Performance=50
+      --table.insert(MissionTypes, capability)
+    end    
+    
     -- Info
     self:I(self.lid..string.format("Adding new payload from unit %s for aircraft type %s: N=%d (unlimited=%s), prio=%d, missions: %s", 
-    payload.unitname, payload.aircrafttype, payload.navail, tostring(payload.unlimited), payload.priority, table.concat(payload.missiontypes, ", ")))
+    payload.unitname, payload.aircrafttype, payload.navail, tostring(payload.unlimited), payload.priority, table.concat(MissionTypes, ", ")))
     
     return payload
   end
@@ -763,7 +772,7 @@ function AIRWING:CheckTANKER()
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
-    if mission:IsNotOver() and self:CheckMissionType(mission.type, AUFTRAG.Type.TANKER) then
+    if mission:IsNotOver() and mission.type==AUFTRAG.Type.TANKER then
       if mission.refuelSystem==0 then
         Nboom=Nboom+1
       elseif mission.refuelSystem==1 then
@@ -831,6 +840,13 @@ function AIRWING:CheckAWACS()
   end
   
   return self
+end
+
+--- Check how many AWACS missions are assigned and add number of missing missions.
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:CheckRecoveryTanker()
+
 end
 
 --- Check how many AWACS missions are assigned and add number of missing missions.
@@ -912,8 +928,7 @@ function AIRWING:_GetNextMission()
        if can then
        
         -- Optimize the asset selection. Most useful assets will come first.
-        -- TODO: This could be moved to AUFTRAG, right?
-        --self:_OptimizeAssetSelection(assets, mission)
+        self:_OptimizeAssetSelection(assets, mission)
       
         -- Check that mission.assets table is clean.
         if mission.assets and #mission.assets>0 then
@@ -966,6 +981,23 @@ function AIRWING:_OptimizeAssetSelection(assets, Mission)
       asset.dist=dStock
     end    
     
+  end
+  
+  local function score(Asset)
+    local asset=Asset --#AIRWING.SquadronAsset
+    
+    score=0
+    
+    -- Prefer highly skilled assets.
+    if asset.skill==AI.Skill.GOOD then
+      score=score+10
+    elseif asset.skill==AI.Skill.HIGH then
+      score=score+20
+    elseif asset.skill==AI.Skill.EXCELLENT then
+      score=score+30
+    end
+  
+  
   end
   
   -- Sort results table wrt distacance.
@@ -1563,7 +1595,7 @@ function AIRWING:CanMission(Mission)
 end
 
 
---- Returns the mission for a given mission ID (Autragsnummer).
+--- Check if a mission type is contained in a list of possible types.
 -- @param #AIRWING self
 -- @param #string MissionType The requested mission type.
 -- @param #table PossibleTypes A table with possible mission types.
@@ -1576,6 +1608,23 @@ function AIRWING:CheckMissionType(MissionType, PossibleTypes)
 
   for _,canmission in pairs(PossibleTypes) do
     if canmission==MissionType then
+      return true
+    end   
+  end
+
+  return false
+end
+
+--- Check if a mission type is contained in a list of possible capabilities.
+-- @param #AIRWING self
+-- @param #string MissionType The requested mission type.
+-- @param #table PossibleTypes A table with possible capabilities.
+-- @return #boolean If true, the requested mission type is part of the possible mission types.
+function AIRWING:CheckMissionCapability(MissionType, Capabilities)
+
+  for _,cap in pairs(Capabilities) do
+    local capability=cap --Ops.Auftrag#AUFTRAG.Capability
+    if capability.MissionType==MissionType then
       return true
     end   
   end
