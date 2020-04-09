@@ -254,9 +254,40 @@ end
 
 --- Get mission types this squadron is able to perform.
 -- @param #SQUADRON self
--- @param #table MissionTypes Table of mission types.
+-- @return #table Table of mission types. Could be empty {}.
 function SQUADRON:GetMissonTypes()
+
+  local missiontypes={}
+  
+  for _,Capability in pairs(self.missiontypes) do
+    local capability=Capability --Ops.Auftrag#AUFTRAG.Capability
+    table.insert(missiontypes, capability.MissionType)  
+  end
+
+  return missiontypes
+end
+
+--- Get mission capabilities of this squadron.
+-- @param #SQUADRON self
+-- @return #table Table of mission capabilities.
+function SQUADRON:GetMissonCapabilities()
   return self.missiontypes
+end
+
+--- Get mission performance for a given type of misson.
+-- @param #SQUADRON self
+-- @param #string MissionType Type of mission.
+-- @return #table Table of mission capabilities.
+function SQUADRON:GetMissonPeformance(MissionType)
+
+  for _,Capability in pairs(self.missiontypes) do
+    local capability=Capability --Ops.Auftrag#AUFTRAG.Capability
+    if capability.MissionType==MissionType then
+      return capability.Performance
+    end
+  end
+
+  return 0
 end
 
 --- Set max engagement range.
@@ -544,7 +575,7 @@ function SQUADRON:CanMission(Mission)
   end
 
   -- Check mission type. WARNING: This assumes that all assets of the squad can do the same mission types!
-  local cando=self:CheckMissionType(Mission.type, self.missiontypes)
+  local cando=self:CheckMissionType(Mission.type, self:GetMissonTypes())
   
   -- Check that tanker mission
   if cando and Mission.type==AUFTRAG.Type.TANKER then

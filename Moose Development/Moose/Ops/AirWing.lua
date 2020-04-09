@@ -224,9 +224,12 @@ end
 -- @param #table MissionTypes Mission types this payload can be used for.
 -- @param #number Npayloads Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios).
 -- @param #boolean Unlimited If true, this payload is unlimited.
--- @param #number Priority Priority of the loadout. Loadouts with higher priority (lower value) are used first. Default is 50.
+-- @param #number Performance A number between 0 (worst) and 100 (best) to describe the performance of the loadout for the given mission types. Default is 50.
 -- @return #AIRWING.Payload The payload table or nil if the unit does not exist.
-function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited, Priority)
+function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited, Performance)
+
+  -- Default performance.
+  Performance=Performance or 50
 
   if type(Unit)=="string" then
     Unit=UNIT:FindByName(Unit)
@@ -249,16 +252,21 @@ function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited, Priority)
     
     local payload={} --#AIRWING.Payload
     
-    --TODO: capability
-    
     payload.unitname=Unit:GetName()
-    payload.aircrafttype=Unit:GetTypeName()
-    payload.capabilities=MissionTypes or {}
+    payload.aircrafttype=Unit:GetTypeName()    
     payload.pylons=Unit:GetTemplatePayload()
     payload.navail=Npayloads or 99
     payload.unlimited=Unlimited
     if Unlimited then
       payload.navail=1
+    end
+    
+    payload.capabilities={}
+    for _,missiontype in pairs(MissionTypes) do
+      local capability={} --Ops.Auftrag#AUFTRAG.Capability
+      capability.MissionType=missiontype
+      capability.Performance=Performance
+      table.insert(payload.capabilities, capability)
     end
         
     -- Add payload
@@ -269,12 +277,12 @@ function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited, Priority)
       local capability={}  --Ops.Auftrag#AUFTRAG.Capability
       capability.MissionType=AUFTRAG.Type.ORBIT
       capability.Performance=50
-      --table.insert(MissionTypes, capability)
+      table.insert(payload.capabilities, capability)
     end    
     
     -- Info
-    self:I(self.lid..string.format("Adding new payload from unit %s for aircraft type %s: N=%d (unlimited=%s), prio=%d, missions: %s", 
-    payload.unitname, payload.aircrafttype, payload.navail, tostring(payload.unlimited), payload.priority, table.concat(MissionTypes, ", ")))
+    self:I(self.lid..string.format("Adding new payload from unit %s for aircraft type %s: N=%d (unlimited=%s), performance=%d, missions: %s", 
+    payload.unitname, payload.aircrafttype, payload.navail, tostring(payload.unlimited), Performance, table.concat(MissionTypes, ", ")))
     
     return payload
   end
@@ -291,32 +299,34 @@ end
 function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
 
   --- Sort payload wrt the following criteria:
-  -- 1) Highest prio (lower value) is the main selection criterion.
-  -- 2) If payloads have the same prio, unlimited payloads are preferred over limited ones. 
-  -- 3) If payloads have the same prio _and_ are limited, the abundant one is preferred.
+  -- 1) Highest performance is the main selection criterion.
+  -- 2) If payloads have the same performance, unlimited payloads are preferred over limited ones. 
+  -- 3) If payloads have the same performance _and_ are limited, the more abundant one is preferred.
   local function sortpayloads(a,b)
     local pA=a --#AIRWING.Payload
     local pB=b --#AIRWING.Payload
-    return (pA.priority<pB.priority) or (pA.priority==pB.priority and pA.unlimited==true) or (pA.priority==pB.priority and pA.unlimited==true and pB.unlimited==true and pA.navail>pB.navail)
+    local performanceA=1
+    local performanceB=1
+    return (performanceA>performanceB) or (performanceA==performanceB and pA.unlimited==true) or (performanceA==performanceB and pA.unlimited==true and pB.unlimited==true and pA.navail>pB.navail)
   end  
   table.sort(self.payloads, sortpayloads)
 
-  --[[
-  env.info("FF sorted payloads for mission type X and aircraft type=Y:")
-  for _,_payload in ipairs(self.payloads) do
-    local payload=_payload --#AIRWING.Payload
-    if payload.aircrafttype==UnitType and self:CheckMissionType(MissionType, payload.missiontypes) then
-      self:I(string.format("FF %s payload for %s: avail=%d prio=%d", MissionType, payload.aircrafttype, payload.navail, payload.priority))
+  if self.Debug then
+    env.info("FF Sorted payloads for mission type X and aircraft type=Y:")
+    for _,_payload in ipairs(self.payloads) do
+      local payload=_payload --#AIRWING.Payload
+      if payload.aircrafttype==UnitType and self:CheckMissionCapability(MissionType, payload.missiontypes) then
+        self:I(string.format("FF %s payload for %s: avail=%d prio=%d", MissionType, payload.aircrafttype, payload.navail, payload.capabilities))
+      end
     end
   end
-  ]]
   
   for _,_payload in ipairs(self.payloads) do
     local payload=_payload --#AIRWING.Payload
     
     
     -- Check right type, mission and available.
-    if payload.aircrafttype==UnitType and payload.navail>0 and self:CheckMissionType(MissionType, payload.missiontypes) then
+    if payload.aircrafttype==UnitType and payload.navail>0 and self:CheckMissionCapability(MissionType, payload.capabilities) then
     
       -- Consume if not unlimited.
       if not payload.unlimited then
@@ -667,8 +677,10 @@ function AIRWING:onafterStatus(From, Event, To)
       end
             
       text=text..string.format("\n  -[%d] %s*%d \"%s\": spawned=%s, mission=%s%s", j, typename, asset.nunits, asset.spawngroupname, spawned, tostring(self:IsAssetOnMission(asset)), missiontext)
-      local payload=asset.payload and table.concat(asset.payload.missiontypes, ", ") or "None"
-      text=text.." payload="..payload
+      
+      --TODO
+      --local payload=asset.payload and table.concat(asset.payload.missiontypes, ", ") or "None"
+      --text=text.." payload="..payload
       
       text=text..", flight: "
       if asset.flightgroup and asset.flightgroup:IsAlive() then
@@ -1371,7 +1383,6 @@ function AIRWING:_CreateFlightGroup(asset)
   
   end
 
-
   --- Mission started.
   function flightgroup:OnAfterMissionStart(From, Event, To, Mission)
     local airwing=flightgroup:GetAirWing()
@@ -1386,8 +1397,6 @@ function AIRWING:_CreateFlightGroup(asset)
   
   return flightgroup
 end
-
-
 
 
 --- Check if an asset is currently on a mission (STARTED or EXECUTING).
@@ -1618,7 +1627,7 @@ end
 --- Check if a mission type is contained in a list of possible capabilities.
 -- @param #AIRWING self
 -- @param #string MissionType The requested mission type.
--- @param #table PossibleTypes A table with possible capabilities.
+-- @param #table Capabilities A table with possible capabilities.
 -- @return #boolean If true, the requested mission type is part of the possible mission types.
 function AIRWING:CheckMissionCapability(MissionType, Capabilities)
 
