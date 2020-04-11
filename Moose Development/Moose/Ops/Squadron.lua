@@ -21,9 +21,10 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string name Name of the squadron.
 -- @field #string templatename Name of the template group.
+-- @field #string aircrafttype Type of the airframe the squadron is using.
 -- @field Wrapper.Group#GROUP templategroup Template group.
 -- @field #table assets Squadron assets.
--- @field #table missiontypes Mission types the squadron can perform.
+-- @field #table missiontypes Capabilities (mission types and performances) of the squadron.
 -- @field #string livery Livery of the squadron.
 -- @field #number skill Skill of squadron members.
 -- @field #number modex Modex.
@@ -58,6 +59,7 @@ SQUADRON = {
   lid            =   nil,
   name           =   nil,
   templatename   =   nil,
+  aircrafttype   =   nil,
   assets         =    {},
   missiontypes   =    {},
   livery         =   nil,
@@ -78,7 +80,7 @@ SQUADRON = {
 
 --- SQUADRON class version.
 -- @field #string version
-SQUADRON.version="0.0.5"
+SQUADRON.version="0.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -111,7 +113,6 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("SQUADRON %s | ", self.name)
-
   
   -- Template group.
   self.templategroup=GROUP:FindByName(self.templatename)
@@ -127,6 +128,8 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   self:SetEngagementRange()
   
   self.attribute=self.templategroup:GetAttribute()
+  
+  self.aircrafttype=self.templategroup:GetTypeName()
   
   self.refuelSystem=select(2, self.templategroup:GetUnit(1):IsRefuelable())
   self.tankerSystem=select(2, self.templategroup:GetUnit(1):IsTanker())
@@ -197,8 +200,10 @@ end
 -- 
 -- Valid names are the names of the **livery directories**. Check out the folder in your DCS installation:
 -- 
--- * `DCS World OpenBeta\CoreMods\aircraft\<Aircraft Type>\<Livery Name>`
--- * `DCS World OpenBeta\Bazar\Liveries\<Aircraft Type>\<Livery Name>`
+-- * For full modules: `DCS World OpenBeta\CoreMods\aircraft\<Aircraft Type>\Liveries\<Aircraft Type>\<Livery Name>`
+-- * For AI units: `DCS World OpenBeta\Bazar\Liveries\<Aircraft Type>\<Livery Name>`
+-- 
+-- The folder name `<Livery Name>` is the string you want.
 -- 
 -- Or personal liveries you have installed somewhere in your saved games folder.
 --  
@@ -238,12 +243,12 @@ function SQUADRON:AddMissonCapability(MissionTypes, Performance)
   end
 
   -- Set table.
-  self.missiontypes=self.missiontypes or {} --MissionTypes
+  self.missiontypes=self.missiontypes or {}
   
   for _,missiontype in pairs(MissionTypes) do
     local capability={} --Ops.Auftrag#AUFTRAG.Capability
     capability.MissionType=missiontype
-    capability.Performance=Performance
+    capability.Performance=Performance or 50
     table.insert(self.missiontypes, capability)
   end
   
@@ -255,7 +260,7 @@ end
 --- Get mission types this squadron is able to perform.
 -- @param #SQUADRON self
 -- @return #table Table of mission types. Could be empty {}.
-function SQUADRON:GetMissonTypes()
+function SQUADRON:GetMissionTypes()
 
   local missiontypes={}
   
@@ -270,15 +275,15 @@ end
 --- Get mission capabilities of this squadron.
 -- @param #SQUADRON self
 -- @return #table Table of mission capabilities.
-function SQUADRON:GetMissonCapabilities()
+function SQUADRON:GetMissionCapabilities()
   return self.missiontypes
 end
 
 --- Get mission performance for a given type of misson.
 -- @param #SQUADRON self
 -- @param #string MissionType Type of mission.
--- @return #table Table of mission capabilities.
-function SQUADRON:GetMissonPeformance(MissionType)
+-- @return #number Performance or -1.
+function SQUADRON:GetMissionPeformance(MissionType)
 
   for _,Capability in pairs(self.missiontypes) do
     local capability=Capability --Ops.Auftrag#AUFTRAG.Capability
@@ -287,7 +292,7 @@ function SQUADRON:GetMissonPeformance(MissionType)
     end
   end
 
-  return 0
+  return -1
 end
 
 --- Set max engagement range.
@@ -354,6 +359,8 @@ end
 -- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
 -- @return #SQUADRON self
 function SQUADRON:AddAsset(Asset)
+  self:T(self.lid..string.format("Adding asset %s of type %s", Asset.spawngroupname, Asset.unittype))
+  Asset.squadname=self.name
   table.insert(self.assets, Asset)
   return self
 end
@@ -558,132 +565,146 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Check if there is a squadron that can execute a given mission type. Optionally, the number of required assets can be specified.
+--- Check if there is a squadron that can execute a given mission.
+-- We check the mission type, the refuelling system, engagement range
 -- @param #SQUADRON self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 -- @return #boolean If true, Squadron can do that type of mission.
--- @return #table Assets that can do the required mission.
 function SQUADRON:CanMission(Mission)
   
-  -- Assets available for this mission.
-  local assets={}
-
+  local cando=true
+  
   -- On duty?=  
   if not self:IsOnDuty() then
     self:I(self.lid..string.format("Squad in not OnDuty but in state %s", self:GetState()))
-    return false, assets
+    return false
   end
 
   -- Check mission type. WARNING: This assumes that all assets of the squad can do the same mission types!
-  local cando=self:CheckMissionType(Mission.type, self:GetMissonTypes())
+  if not self:CheckMissionType(Mission.type, self:GetMissionTypes()) then
+    self:I(self.lid..string.format("INFO: Squad cannot do mission type %s", Mission.type))    
+  end
   
   -- Check that tanker mission
-  if cando and Mission.type==AUFTRAG.Type.TANKER then
+  if Mission.type==AUFTRAG.Type.TANKER then
   
     if Mission.refuelSystem and Mission.refuelSystem==self.tankerSystem then
       -- Correct refueling system.
     else
       self:I(self.lid..string.format("INFO: Wrong refueling system requested=%s != %s=available", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
-      cando=false
+      return false
     end
   
   end
   
-  if cando then
+  -- Distance to target.
+  local TargetDistance=Mission:GetTargetDistance(self.airwing:GetCoordinate())
+  
+  -- Max engage range.
+  local engagerange=Mission.engageMaxDistance and math.min(self.engageRange, Mission.engageMaxDistance) or self.engageRange
       
-    -- Distance to target.
-    local TargetDistance=Mission:GetTargetDistance(self.airwing:GetCoordinate())
+  -- Set range is valid. Mission engage distance can overrule the squad engage range.
+  if TargetDistance>engagerange then
+    self:I(self.lid..string.format("INFO: Squad is not in range. Target dist=%d > %d NM max engage Range", UTILS.MetersToNM(TargetDistance), UTILS.MetersToNM(engagerange)))
+    return false
+  end
+  
+  return true
+end
+
+--- Get assets for a mission.
+-- @param #SQUADRON self
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @return #table Assets that can do the required mission.
+function SQUADRON:RecruitAssets(Mission)
+
+  -- Number of payloads available.
+  local Npayloads=self.airwing:CountPayloadsInStock(Mission.type, self.aircrafttype)      
+
+  local assets={}
+
+  -- Loop over assets.
+  for _,_asset in pairs(self.assets) do  
+    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
     
-    for _,_asset in pairs(self.assets) do
-      local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
-      
-      local engagerange=Mission.engageMaxDistance and math.min(self.engageRange, Mission.engageMaxDistance) or self.engageRange
-      
-      -- Set range is valid. Mission engage distance can overrule the squad engage range.
-      if TargetDistance<=engagerange then
-      
-        -- Check if asset is currently on a mission (STARTED or QUEUED).
-        if self.airwing:IsAssetOnMission(asset) then
-  
-          ---
-          -- Asset is already on a mission
-          ---
-  
-          -- Check if this asset is currently on a PATROL mission (STARTED or EXECUTING).
-          if self.airwing:IsAssetOnMission(asset, AUFTRAG.Type.PATROL) and Mission.type==AUFTRAG.Type.INTERCEPT then
-  
-            -- Check if the payload of this asset is compatible with the mission.
-            -- Note: we do not check the payload as an asset that is on a PATROL mission should be able to do an intercept as well!
-            -- TODO: Check if asset actually has weapons left. Difficult!
-            table.insert(assets, asset)
-            
-          end      
+    
+    -- Check if asset is currently on a mission (STARTED or QUEUED).
+    if self.airwing:IsAssetOnMission(asset) then
+
+      ---
+      -- Asset is already on a mission
+      ---
+
+      -- Check if this asset is currently on a PATROL mission (STARTED or EXECUTING).
+      if self.airwing:IsAssetOnMission(asset, AUFTRAG.Type.PATROL) and Mission.type==AUFTRAG.Type.INTERCEPT then
+
+        -- Check if the payload of this asset is compatible with the mission.
+        -- Note: we do not check the payload as an asset that is on a PATROL mission should be able to do an INTERCEPT as well!
+        -- TODO: Check if asset actually has weapons left. Difficult!
+        table.insert(assets, asset)
         
-        else
+      end      
+    
+    else
+    
+      ---
+      -- Asset as no current mission
+      ---
+
+      if asset.spawned then
+      
+        ---
+        -- Asset is already SPAWNED (could be uncontrolled on the airfield)
+        ---
+      
+        local combatready=false
+        local flightgroup=asset.flightgroup
+        if flightgroup then
         
-          ---
-          -- Asset as no current mission
-          ---
-  
-          if asset.spawned then
-          
-            ---
-            -- Asset is already SPAWNED (could be uncontrolled on the airfield)
-            ---
-          
-            local combatready=false
-            local flightgroup=asset.flightgroup
-            if flightgroup then
-            
-              if (flightgroup:IsAirborne() or flightgroup:IsWaiting()) and not flightgroup:IsFuelLow() then
-                combatready=true
-              end
-            
-            end
-          
-            -- This asset is "combatready". Let's check if it has the right payload.
-            if combatready and self:CheckMissionType(Mission.type, asset.payload.missiontypes) then
-              table.insert(assets, asset)
-            end
-            
-          else
-          
-            ---
-            -- Asset is still in STOCK
-            ---          
-          
-            -- Check that asset is not already requested for another mission.
-            if not asset.requested then
-          
-              -- Check if we got a payload and reserve it for this asset.
-              local payload=self.airwing:FetchPayloadFromStock(asset.unittype, Mission.type)
-              if payload then
-                asset.payload=payload
-                table.insert(assets, asset)
-              end
-              
-            end
+          if (flightgroup:IsAirborne() or flightgroup:IsWaiting()) and not flightgroup:IsFuelLow() then
+            combatready=true
           end
-          
+        
+        end
+      
+        -- This asset is "combatready". Let's check if it has the right payload.
+        if combatready and self:CheckMissionCapability(Mission.type, asset.payload.capabilities) then
+          table.insert(assets, asset)
         end
         
       else
-        self:I(self.lid..string.format("INFO: Squad is not in range. Target dist=%d > %d NM max engage Range", UTILS.MetersToNM(TargetDistance), UTILS.MetersToNM(engagerange)))
-      end
       
-    end -- loop over assets
-    
-  else
-    self:I(self.lid..string.format("INFO: Squad cannot do mission type %s", Mission.type))    
-  end -- if cando mission type
-  
-  -- Check if required assets are present.
-  if Mission.nassets and Mission.nassets > #assets then
-    self:I(self.lid.."INFO: Not enough assets available! Got %d but need at least %d", #assets, Mission.nassets)
-    cando=false
-  end
+        ---
+        -- Asset is still in STOCK
+        ---          
+      
+        -- Check that asset is not already requested for another mission.
+        if not asset.requested then
+      
+          --[[
+          -- Check if we got a payload and reserve it for this asset.
+          local payload=self.airwing:FetchPayloadFromStock(asset.unittype, Mission.type)
+          if payload then
+            asset.payload=payload
+            table.insert(assets, asset)
+          end
+          ]]
+          
+          if Npayloads>0 then
+          
+            -- Add this asset to the selection.
+            table.insert(assets, asset)
+            
+            -- Reduce number of payloads so we only return the number of assets that could do the job.
+            Npayloads=Npayloads-1
+          end
+          
+        end
+      end      
+    end    
+  end -- loop over assets
 
-  return cando, assets
+  return assets
 end
 
 
@@ -700,6 +721,23 @@ function SQUADRON:CheckMissionType(MissionType, PossibleTypes)
 
   for _,canmission in pairs(PossibleTypes) do
     if canmission==MissionType then
+      return true
+    end   
+  end
+
+  return false
+end
+
+--- Check if a mission type is contained in a list of possible capabilities.
+-- @param #SQUADRON self
+-- @param #string MissionType The requested mission type.
+-- @param #table Capabilities A table with possible capabilities.
+-- @return #boolean If true, the requested mission type is part of the possible mission types.
+function SQUADRON:CheckMissionCapability(MissionType, Capabilities)
+
+  for _,cap in pairs(Capabilities) do
+    local capability=cap --Ops.Auftrag#AUFTRAG.Capability
+    if capability.MissionType==MissionType then
       return true
     end   
   end
