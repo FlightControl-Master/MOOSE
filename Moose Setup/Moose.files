@@ -33,6 +33,7 @@ Wrapper/Client.lua
 Wrapper/Static.lua
 Wrapper/Airbase.lua
 Wrapper/Scenery.lua
+Wrapper/Marker.lua
 
 Cargo/Cargo.lua
 Cargo/CargoUnit.lua
@@ -62,7 +63,6 @@ Functional/Fox.lua
 Functional/RAT2.lua
 Functional/RatCraft.lua
 Functional/FlightModelData.lua
-Functional/SWAPR.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua

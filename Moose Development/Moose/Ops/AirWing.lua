@@ -196,9 +196,9 @@ function AIRWING:AddSquadron(Squadron)
   
   -- Tanker and AWACS get unlimited payloads.
   if Squadron.attribute==GROUP.Attribute.AIR_AWACS then
-    self:NewPayload(Squadron.templategroup, AUFTRAG.Type.AWACS, 1, true)
+    self:NewPayload(Squadron.templategroup, -1, AUFTRAG.Type.AWACS)
   elseif Squadron.attribute==GROUP.Attribute.AIR_TANKER then
-    self:NewPayload(Squadron.templategroup, AUFTRAG.Type.TANKER, 1, true)
+    self:NewPayload(Squadron.templategroup, -1, AUFTRAG.Type.TANKER)
   end
 
   -- Set airwing to squadron.
@@ -215,12 +215,11 @@ end
 --- Add a **new** payload to the airwing resources.
 -- @param #AIRWING self
 -- @param Wrapper.Unit#UNIT Unit The unit, the payload is extracted from. Can also be given as *#string* name of the unit.
+-- @param #number Npayloads Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios). Set to -1 for unlimited.
 -- @param #table MissionTypes Mission types this payload can be used for.
--- @param #number Npayloads Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios).
--- @param #boolean Unlimited If true, this payload is unlimited.
 -- @param #number Performance A number between 0 (worst) and 100 (best) to describe the performance of the loadout for the given mission types. Default is 50.
 -- @return #AIRWING.Payload The payload table or nil if the unit does not exist.
-function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited, Performance)
+function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
 
   -- Default performance.
   Performance=Performance or 50
@@ -249,10 +248,11 @@ function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited, Performanc
     payload.unitname=Unit:GetName()
     payload.aircrafttype=Unit:GetTypeName()    
     payload.pylons=Unit:GetTemplatePayload()
-    payload.navail=Npayloads or 99
-    payload.unlimited=Unlimited
-    if Unlimited then
+    payload.unlimited=Npayloads<0
+    if payload.unlimited then
       payload.navail=1
+    else
+      payload.navail=Npayloads or 99
     end
     
     payload.capabilities={}
@@ -886,7 +886,19 @@ end
 --- Check how many AWACS missions are assigned and add number of missing missions.
 -- @param #AIRWING self
 -- @return #AIRWING self
-function AIRWING:CheckRecoveryTanker()
+function AIRWING:CheckRescuhelo()
+
+  local N=self:CountMissionsInQueue({AUFTRAG.Type.RESCUEHELO})
+  
+  for i=1,self.nflightsRescuehelo-N do
+    
+    local mission=AUFTRAG:NewRESCUEHELO(self.airbase)
+    
+    self:AddMission(mission)
+      
+  end
+  
+  return self
 
 end
 

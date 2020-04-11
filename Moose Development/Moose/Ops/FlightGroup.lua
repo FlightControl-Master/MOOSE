@@ -1138,10 +1138,11 @@ function FLIGHTGROUP:StartUncontrolled(delay)
 
   if self:IsAlive() then
     --TODO: check Alive==true and Alive==false ==> Activate first
-    self:T(self.lid.."Starting uncontrolled group")
+    self:I(self.lid.."Starting uncontrolled group")
     self.group:StartUncontrolled(delay)
   else
     self:E(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive (yet)!")
+    self.group:StartUncontrolled(delay)
   end
 
   return self
@@ -3641,6 +3642,9 @@ function FLIGHTGROUP:onbeforeMissionStart(From, Event, To, Mission)
   -- Startup group if it is uncontrolled.
   if self:IsParking() and self:IsUncontrolled() then
     self:StartUncontrolled(delay)
+  else
+    env.info("FF hallo!")
+    self:StartUncontrolled(1)
   end  
 
   return true

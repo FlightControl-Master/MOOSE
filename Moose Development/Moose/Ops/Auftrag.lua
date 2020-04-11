@@ -404,12 +404,15 @@ end
 
 --- Create a RESCUE HELO mission.
 -- @param #AUFTRAG self
--- @param Wrapper.UnitUNIT Carrier The carrier unit.
+-- @param Wrapper.Unit#UNIT Carrier The carrier unit.
 -- @return #AUFTRAG self
 function AUFTRAG:NewRESCUEHELO(Carrier)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RESCUEHELO)
   
+  mission.engageTarget=mission:_TargetFromObject(Carrier)
+  
+  --[[
   mission.engageTarget=mission:_TargetFromObject(Target)
   mission.engageWeaponType=ENUMS.WeaponFlag.Auto
   
@@ -417,6 +420,7 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
   mission.missionFraction=0.4
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
+  ]]
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -2027,7 +2031,8 @@ function AUFTRAG:GetTargetName()
   if self.engageTarget then
     if self.engageTarget.Type==AUFTRAG.TargetType.COORDINATE then
       local coord=self.engageTarget.Target --Core.Point#COORDINATE
-      return coord:ToStringLLDMS()
+      return coord:ToStringMGRS()
+      --return coord:ToStringLLDMS()
     else
       return self.engageTarget.Target:GetName()
     end
@@ -2315,11 +2320,11 @@ function AUFTRAG:GetDCSMissionTask()
     DCStask.id="Formation"
     
     local param={}
-    param.unitname=""
+    param.unitname=self:GetTargetName()
     param.offsetX=20
     param.offsetY=20
     param.offsetZ=20
-    param.alitude=70
+    param.altitude=70
     
     DCStask.params=param
     
