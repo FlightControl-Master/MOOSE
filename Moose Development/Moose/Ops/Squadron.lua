@@ -198,10 +198,10 @@ end
 --- Set livery painted on all squadron aircraft.
 -- Note that the livery name in general is different from the name shown in the mission editor.
 -- 
--- Valid names are the names of the **livery directories**. Check out the folder in your DCS installation:
+-- Valid names are the names of the **livery directories**. Check out the folder in your DCS installation for:
 -- 
--- * For full modules: `DCS World OpenBeta\CoreMods\aircraft\<Aircraft Type>\Liveries\<Aircraft Type>\<Livery Name>`
--- * For AI units: `DCS World OpenBeta\Bazar\Liveries\<Aircraft Type>\<Livery Name>`
+-- * Full modules: `DCS World OpenBeta\CoreMods\aircraft\<Aircraft Type>\Liveries\<Aircraft Type>\<Livery Name>`
+-- * AI units: `DCS World OpenBeta\Bazar\Liveries\<Aircraft Type>\<Livery Name>`
 -- 
 -- The folder name `<Livery Name>` is the string you want.
 -- 
@@ -252,6 +252,7 @@ function SQUADRON:AddMissonCapability(MissionTypes, Performance)
     table.insert(self.missiontypes, capability)
   end
   
+  -- Debug info.
   self:I(self.missiontypes)
   
   return self

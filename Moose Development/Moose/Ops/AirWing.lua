@@ -29,6 +29,7 @@
 -- @field #number nflightsAWACS Number of AWACS flights constantly in the air.
 -- @field #number nflightsTANKERboom Number of TANKER flights with BOOM constantly in the air.
 -- @field #number nflightsTANKERprobe Number of TANKER flights with PROBE constantly in the air. 
+-- @field #number nflightsRescueHelo Number of Rescue helo flights constantly in the air.
 -- @field #table pointsCAP Table of CAP points.
 -- @field #table pointsTANKER Table of Tanker points.
 -- @field #table pointsAWACS Table of AWACS points.
@@ -141,9 +142,8 @@ function AIRWING:New(warehousename, airwingname)
   self.nflightsAWACS=0
   self.nflightsTANKERboom=0
   self.nflightsTANKERprobe=0
-  
   self.nflightsRecoveryTanker=0
-  self.nflightsRescuehelo=0
+  self.nflightsRescueHelo=0
 
   ------------------------
   --- Pseudo Functions ---
@@ -529,6 +529,15 @@ function AIRWING:SetNumberAWACS(n)
   return self
 end
 
+--- Set number of Rescue helo flights constantly in the air.
+-- @param #AIRWING self
+-- @param #number n Number of flights. Default 1.
+-- @return #AIRWING self
+function AIRWING:SetNumberRescuehelo(n)
+  self.nflightsRescueHelo=n or 1
+  return self
+end
+
 
 --- Create a new generic patrol point.
 -- @param #AIRWING self
@@ -655,13 +664,17 @@ function AIRWING:onafterStatus(From, Event, To)
   -- Check AWACS missions.
   self:CheckAWACS()
   
+  -- Check Rescue Helo missions.
+  self:CheckRescuhelo()
+  
   -- Count missions not over yet.
   local nmissions=self:CountMissionsInQueue()
   
-  -- Count ALL payloads in stock
+  -- Count ALL payloads in stock. If any payload is unlimited, this gives 999.
   local Npayloads=self:CountPayloadsInStock(AUFTRAG.Type)
   
-  -- TODO: count payloads, assets total
+  -- General info:
+  -- TODO: assets total
   local text=string.format("Status %s: missions=%d, payloads=%d (%d), squads=%d", fsmstate, nmissions, #self.payloads, Npayloads, #self.squadrons)
   self:I(self.lid..text)
   
@@ -682,53 +695,55 @@ function AIRWING:onafterStatus(From, Event, To)
   for i,_squadron in pairs(self.squadrons) do
     local squadron=_squadron --Ops.Squadron#SQUADRON
     
-    local callsign=squadron.callsignName and squadron.callsignName or "N/A"
+    local callsign=squadron.callsignName and UTILS.GetCallsignName(squadron.callsignName) or "N/A"
     local modex=squadron.modex and squadron.modex or "N/A"
     local skill=squadron.skill and tostring(squadron.skill) or "N/A"
     
     -- Squadron text
-    text=text..string.format("\n* %s %s: Airframe=%s, Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, callsign, modex, skill)
+    text=text..string.format("\n* %s %s: %s*%d, Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, #squadron.assets, callsign, modex, skill)
     
     -- Loop over all assets.
-    for j,_asset in pairs(squadron.assets) do
-      local asset=_asset --#AIRWING.SquadronAsset
-      local assignment=asset.assignment or "none"
-      local name=asset.templatename
-      local spawned=tostring(asset.spawned)
-      local groupname=asset.spawngroupname
-      local typename=asset.unittype
-      
-      local mission=self:GetAssetCurrentMission(asset)
-      local missiontext=""
-      if mission then
-        local distance=asset.flightgroup and UTILS.MetersToNM(mission:GetTargetDistance(asset.flightgroup.group:GetCoordinate())) or 0
-        missiontext=string.format(" [%s (%s): status=%s, distance=%.1f NM]", mission.type, mission.name, mission.status, distance)
-      end
-            
-      text=text..string.format("\n  -[%d] %s*%d \"%s\": spawned=%s, mission=%s%s", j, typename, asset.nunits, asset.spawngroupname, spawned, tostring(self:IsAssetOnMission(asset)), missiontext)
-      
-      --TODO
-      --local payload=asset.payload and table.concat(asset.payload.missiontypes, ", ") or "None"
-      --text=text.." payload="..payload
-      
-      text=text..", flight: "
-      if asset.flightgroup and asset.flightgroup:IsAlive() then
-        local status=asset.flightgroup:GetState()
-        local fuelmin=asset.flightgroup:GetFuelMin()
-        local fuellow=asset.flightgroup:IsFuelLow()
-        local fuelcri=asset.flightgroup:IsFuelCritical()
+    if self.verbose>1 then
+      for j,_asset in pairs(squadron.assets) do
+        local asset=_asset --#AIRWING.SquadronAsset
+        local assignment=asset.assignment or "none"
+        local name=asset.templatename
+        local spawned=tostring(asset.spawned)
+        local groupname=asset.spawngroupname
+        local typename=asset.unittype
         
-        text=text..string.format("%s fuel=%d", status, fuelmin)
-        if fuelcri then
-          text=text.." (critical!)"
-        elseif fuellow then
-          text=text.." (low)"
+        local mission=self:GetAssetCurrentMission(asset)
+        local missiontext=""
+        if mission then
+          local distance=asset.flightgroup and UTILS.MetersToNM(mission:GetTargetDistance(asset.flightgroup.group:GetCoordinate())) or 0
+          missiontext=string.format(" [%s (%s): status=%s, distance=%.1f NM]", mission.type, mission.name, mission.status, distance)
         end
+              
+        text=text..string.format("\n  -[%d] %s*%d \"%s\": spawned=%s, mission=%s%s", j, typename, asset.nunits, asset.spawngroupname, spawned, tostring(self:IsAssetOnMission(asset)), missiontext)
         
-        local lifept, lifept0=asset.flightgroup:GetLifePoints()
-        text=text..string.format(" life=%d/%d", lifept, lifept0)
-      else
-        text=text.."N/A"
+        --TODO
+        --local payload=asset.payload and table.concat(asset.payload.missiontypes, ", ") or "None"
+        --text=text.." payload="..payload
+        
+        text=text..", flight: "
+        if asset.flightgroup and asset.flightgroup:IsAlive() then
+          local status=asset.flightgroup:GetState()
+          local fuelmin=asset.flightgroup:GetFuelMin()
+          local fuellow=asset.flightgroup:IsFuelLow()
+          local fuelcri=asset.flightgroup:IsFuelCritical()
+          
+          text=text..string.format("%s fuel=%d", status, fuelmin)
+          if fuelcri then
+            text=text.." (critical!)"
+          elseif fuellow then
+            text=text.." (low)"
+          end
+          
+          local lifept, lifept0=asset.flightgroup:GetLifePoints()
+          text=text..string.format(" life=%d/%d", lifept, lifept0)
+        else
+          text=text.."N/A"
+        end
       end
       
     end
@@ -883,14 +898,14 @@ function AIRWING:CheckAWACS()
   return self
 end
 
---- Check how many AWACS missions are assigned and add number of missing missions.
+--- Check how many Rescue helos are currently in the air.
 -- @param #AIRWING self
 -- @return #AIRWING self
 function AIRWING:CheckRescuhelo()
 
   local N=self:CountMissionsInQueue({AUFTRAG.Type.RESCUEHELO})
   
-  for i=1,self.nflightsRescuehelo-N do
+  for i=1,self.nflightsRescueHelo-N do
     
     local mission=AUFTRAG:NewRESCUEHELO(self.airbase)
     
@@ -899,7 +914,6 @@ function AIRWING:CheckRescuhelo()
   end
   
   return self
-
 end
 
 --- Check how many AWACS missions are assigned and add number of missing missions.
@@ -933,7 +947,6 @@ function AIRWING:GetTankerForFlight(flightgroup)
     
     -- Return tanker asset.
     return tankeropt[1].tanker
-  
   end
 
   return nil

@@ -366,7 +366,7 @@ FLIGHTGROUP.ROT={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.3.8"
+FLIGHTGROUP.version="0.3.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1538,31 +1538,36 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   -- Distance travelled
   ---
 
-  local time=timer.getAbsTime()
-  
-  local position=self:GetCoordinate()
-  local ds=self.position:Get3DDistance(position)
-  local dt=time-self.traveltime
-  local v=ds/dt
-  
-  self.traveldist=self.traveldist+ds
-  self.traveltime=time
-  self.position=position
+  if self.verbose>1 then
+
+    local time=timer.getAbsTime()
     
-  local fuelmass=math.huge
-  for _,_element in pairs(self.elements) do
-    local element=_element --#FLIGHTGROUP.Element
+    local position=self:GetCoordinate()
+    local ds=self.position:Get3DDistance(position)
+    local dt=time-self.traveltime
+    local v=ds/dt
     
-    local fuel=element.unit:GetFuel() or 0
-    local fmass=element.fuelmass*fuel
-    
-    if fmass<fuelmass then
-      fuelmass=fmass
+    self.traveldist=self.traveldist+ds
+    self.traveltime=time
+    self.position=position
+      
+    local fuelmass=math.huge
+    for _,_element in pairs(self.elements) do
+      local element=_element --#FLIGHTGROUP.Element
+      
+      local fuel=element.unit:GetFuel() or 0
+      local fmass=element.fuelmass*fuel
+      
+      if fmass<fuelmass then
+        fuelmass=fmass
+      end
+      
     end
     
-  end
-  
-  env.info(string.format("FF Distance travelled = %.1f km v=%.1f knots fuel=%d kg", self.traveldist/1000, UTILS.MpsToKnots(v), fuelmass))  
+    -- Log outut.
+    self:I(self.lid..string.format("FF Distance travelled = %.1f km v=%.1f knots fuel=%d kg", self.traveldist/1000, UTILS.MpsToKnots(v), fuelmass))
+    
+  end  
   
   ---
   -- Tasks
@@ -3393,12 +3398,14 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
   if Task.dcstask.id=="Formation" then
 
     -- Set of group(s) to follow Mother.
-    local followset=SET_GROUP:New():AddGroup(self.group)
+    local followSet=SET_GROUP:New():AddGroup(self.group)
     
     local param=Task.dcstask.params
     
+    local followUnit=UNIT:FindByName(param.unitname)
+    
     -- Define AI Formation object.
-    Task.formation=AI_FORMATION:New(param.carrier, followset, "Formation", "Follow X at given parameters.")
+    Task.formation=AI_FORMATION:New(followUnit, followSet, "Formation", "Follow X at given parameters.")
     
     -- Formation parameters.
     Task.formation:FormationCenterWing(-param.offsetX, 50, math.abs(param.altitude), 50, param.offsetZ, 50)
@@ -3644,7 +3651,7 @@ function FLIGHTGROUP:onbeforeMissionStart(From, Event, To, Mission)
     self:StartUncontrolled(delay)
   else
     env.info("FF hallo!")
-    self:StartUncontrolled(1)
+    self:StartUncontrolled(5)
   end  
 
   return true
@@ -5746,9 +5753,9 @@ function FLIGHTGROUP:SetOptionROE(roe)
   if self:IsAlive() then
     self.group:OptionROE(roe)
     self.optionROEcurrent=roe
-    self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.optionROEcurrent))
+    self:T2(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.optionROEcurrent))
   else
-    -- WARNING
+    -- TODO WARNING
   end
   return self
 end
@@ -5771,9 +5778,9 @@ function FLIGHTGROUP:SetOptionROT(rot)
   if self:IsAlive() then
     self.group:OptionROT(rot)
     self.optionROTcurrent=rot
-    self:I(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.optionROTcurrent))
+    self:T2(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.optionROTcurrent))
   else
-    -- WARNING
+    -- TODO WARNING
   end
   return self
 end
@@ -5781,7 +5788,7 @@ end
 --- Set TACAN parameters. AA TACANs are aleays on "Y" band.
 -- @param #FLIGHTGROUP self
 -- @param #number Channel TACAN channel.
--- @param #string Morse Morse code. Default "XX".
+-- @param #string Morse Morse code. Default "XXX".
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetTACAN(Channel, Morse)
 

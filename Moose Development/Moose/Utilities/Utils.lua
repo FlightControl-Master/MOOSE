@@ -1098,5 +1098,36 @@ function UTILS.GetModulationName(Modulation)
     
 end
 
+--- Get the callsign name from its enumerator value
+-- @param #number Callsign The enumerator callsign.
+-- @return #string The callsign name.
+function UTILS.GetCallsignName(Callsign)
+
+  for name, value in pairs(CALLSIGN.Aircraft) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.AWACS) do
+    if value==Callsign then
+      return name
+    end
+  end
+
+  for name, value in pairs(CALLSIGN.JTAC) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.Tanker) do
+    if value==Callsign then
+      return name
+    end
+  end
+
+  return "Unknown Calsing"
+end
 
 -- Just a test to see commits in new environment for Wingthor

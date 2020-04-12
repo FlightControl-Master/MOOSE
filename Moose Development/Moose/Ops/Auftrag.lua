@@ -303,12 +303,14 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.0.9"
+AUFTRAG.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Option to assign mission to a specific squadron.
+-- TODO: Option to assign a specific payload for the mission (requires an AIRWING).
 -- TODO: Add mission start conditions.
 -- TODO: Add recovery tanker mission for boat ops.
 -- TODO: Add rescue helo mission for boat ops.
@@ -412,15 +414,10 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
   
   mission.engageTarget=mission:_TargetFromObject(Carrier)
   
-  --[[
-  mission.engageTarget=mission:_TargetFromObject(Target)
-  mission.engageWeaponType=ENUMS.WeaponFlag.Auto
-  
   mission.missionTask=ENUMS.MissionTask.NOTHING
-  mission.missionFraction=0.4
-  mission.optionROE=ENUMS.ROE.OpenFire
-  mission.optionROT=ENUMS.ROT.EvadeFire
-  ]]
+  mission.missionFraction=0.5
+  mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionROT=ENUMS.ROT.NoReaction
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -1038,10 +1035,10 @@ end
 
 --- Set mission name.
 -- @param #AUFTRAG self
--- @param #string Name Name of the mission.
+-- @param #string Name Name of the mission. Default is "Auftrag Nr. X", where X is a running number, which is automatically increased.
 -- @return #AUFTRAG self
 function AUFTRAG:SetName(Name)
-  self.name=Name or string.format("Auftragsnummer %d", self.auftragsnummer)
+  self.name=Name or string.format("Auftrag Nr. %d", self.auftragsnummer)
   return self
 end
 
@@ -2003,7 +2000,7 @@ end
 
 --- Get coordinate of target.
 -- @param #AUFTRAG self
--- @return Core.Point#COORDINATE The target coordinate or nil.
+-- @return Core.Point#COORDINATE The target coordinate or *nil*.
 function AUFTRAG:GetTargetCoordinate()
 
   if self.engageTarget then
@@ -2025,7 +2022,7 @@ end
 
 --- Get coordinate of target.
 -- @param #AUFTRAG self
--- @return #string
+-- @return #string Name of the target or "N/A".
 function AUFTRAG:GetTargetName()
 
   if self.engageTarget then
@@ -2044,14 +2041,14 @@ function AUFTRAG:GetTargetName()
     return self.transportPickup:ToStringLLDMS()
   end  
 
-  return nil
+  return "N/A"
 end
 
 
 --- Get distance to target.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE FromCoord The coordinate from which the distance is measured.
--- @return #number Distance in meters.
+-- @return #number Distance in meters or 0.
 function AUFTRAG:GetTargetDistance(FromCoord)
   local TargetCoord=self:GetTargetCoordinate()
   if TargetCoord and FromCoord then
@@ -2321,10 +2318,11 @@ function AUFTRAG:GetDCSMissionTask()
     
     local param={}
     param.unitname=self:GetTargetName()
-    param.offsetX=20
-    param.offsetY=20
-    param.offsetZ=20
+    param.offsetX=200
+    param.offsetZ=240
+    --param.offsetY=20
     param.altitude=70
+    param.dtFollow=1.0
     
     DCStask.params=param
     
