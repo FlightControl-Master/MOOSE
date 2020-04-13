@@ -583,7 +583,8 @@ function SQUADRON:CanMission(Mission)
 
   -- Check mission type. WARNING: This assumes that all assets of the squad can do the same mission types!
   if not self:CheckMissionType(Mission.type, self:GetMissionTypes()) then
-    self:I(self.lid..string.format("INFO: Squad cannot do mission type %s", Mission.type))    
+    self:I(self.lid..string.format("INFO: Squad cannot do mission type %s", Mission.type))
+    return false
   end
   
   -- Check that tanker mission
@@ -602,7 +603,7 @@ function SQUADRON:CanMission(Mission)
   local TargetDistance=Mission:GetTargetDistance(self.airwing:GetCoordinate())
   
   -- Max engage range.
-  local engagerange=Mission.engageMaxDistance and math.min(self.engageRange, Mission.engageMaxDistance) or self.engageRange
+  local engagerange=Mission.engageRange and math.max(self.engageRange, Mission.engageRange) or self.engageRange
       
   -- Set range is valid. Mission engage distance can overrule the squad engage range.
   if TargetDistance>engagerange then

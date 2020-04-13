@@ -1097,6 +1097,15 @@ function AUFTRAG:SetMissionAltitude(Altitude)
   return self
 end
 
+--- Set max engage range.
+-- @param #AUFTRAG self
+-- @param #number Range Max range in NM. Default 100 NM.
+-- @return #AUFTRAG self
+function AUFTRAG:SetEngageRange(Range)
+  self.engageRange=UTILS.NMToMeters(Range or 100)
+  return self
+end
+
 --- Set Rules of Engagement (ROE) for this mission.
 -- @param #AUFTRAG self
 -- @param #string roe Mission ROE.

@@ -262,9 +262,6 @@ function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
       capability.Performance=Performance
       table.insert(payload.capabilities, capability)
     end
-        
-    -- Add payload
-    table.insert(self.payloads, payload)
     
     -- Add ORBIT for all.  
     if not self:CheckMissionType(AUFTRAG.Type.ORBIT, MissionTypes) then
@@ -277,6 +274,9 @@ function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
     -- Info
     self:I(self.lid..string.format("Adding new payload from unit %s for aircraft type %s: N=%d (unlimited=%s), performance=%d, missions: %s", 
     payload.unitname, payload.aircrafttype, payload.navail, tostring(payload.unlimited), Performance, table.concat(MissionTypes, ", ")))
+
+    -- Add payload
+    table.insert(self.payloads, payload)
     
     return payload
   end
@@ -321,6 +321,18 @@ end
 -- @return #AIRWING.Payload Payload table or *nil*.
 function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
 
+  if not self.payloads or #self.payloads==0 then
+    self:I(self.lid.."WARNING: No payloads in stock!")
+    return nil
+  end
+  
+  --[[
+  for i,_payload in pairs(self.payloads) do
+    local payload=_payload --#AIRWING.Payload
+    self:I(self.lid..string.format("%d Payload type=%s navail=%d", i, payload.aircrafttype, payload.navail))
+  end
+  ]]
+
   --- Sort payload wrt the following criteria:
   -- 1) Highest performance is the main selection criterion.
   -- 2) If payloads have the same performance, unlimited payloads are preferred over limited ones. 
@@ -328,9 +340,17 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
   local function sortpayloads(a,b)
     local pA=a --#AIRWING.Payload
     local pB=b --#AIRWING.Payload
-    local performanceA=self:GetPayloadPeformance(pA, MissionType)
-    local performanceB=self:GetPayloadPeformance(pB, MissionType)
-    return (performanceA>performanceB) or (performanceA==performanceB and pA.unlimited==true) or (performanceA==performanceB and pA.unlimited==true and pB.unlimited==true and pA.navail>pB.navail)
+    if a and b then  --TODO: Strangely, I had the case that a or b were nil even though the self.payloads table was looking okay. Very strange!
+      local performanceA=self:GetPayloadPeformance(a, MissionType)
+      local performanceB=self:GetPayloadPeformance(b, MissionType)
+      return (performanceA>performanceB) or (performanceA==performanceB and a.unlimited==true) or (performanceA==performanceB and a.unlimited==true and b.unlimited==true and a.navail>b.navail)
+    elseif not a then
+      return false
+    elseif not b then
+      return true
+    else
+      return true
+    end
   end  
   table.sort(self.payloads, sortpayloads)
 
@@ -696,7 +716,7 @@ function AIRWING:onafterStatus(From, Event, To)
     local squadron=_squadron --Ops.Squadron#SQUADRON
     
     local callsign=squadron.callsignName and UTILS.GetCallsignName(squadron.callsignName) or "N/A"
-    local modex=squadron.modex and squadron.modex or "N/A"
+    local modex=squadron.modex and squadron.modex or -1
     local skill=squadron.skill and tostring(squadron.skill) or "N/A"
     
     -- Squadron text
@@ -905,9 +925,11 @@ function AIRWING:CheckRescuhelo()
 
   local N=self:CountMissionsInQueue({AUFTRAG.Type.RESCUEHELO})
   
+  local carrier=UNIT:FindByName(self.airbase:GetName())
+  
   for i=1,self.nflightsRescueHelo-N do
     
-    local mission=AUFTRAG:NewRESCUEHELO(self.airbase)
+    local mission=AUFTRAG:NewRESCUEHELO(carrier)
     
     self:AddMission(mission)
       
@@ -966,7 +988,7 @@ function AIRWING:_GetNextMission()
     return nil
   end
 
-  -- Sort results table wrt times they have already been engaged.
+  -- Sort results table wrt prio and start time.
   local function _sort(a, b)
     local taskA=a --Ops.Auftrag#AUFTRAG
     local taskB=b --Ops.Auftrag#AUFTRAG
@@ -996,7 +1018,6 @@ function AIRWING:_GetNextMission()
         -- Assign assets to mission.
         local remove={}
         local gotpayload={}
-        local n=0
         for i=1,#assets do
           local asset=assets[i] --#AIRWING.SquadronAsset
           
@@ -1004,7 +1025,6 @@ function AIRWING:_GetNextMission()
           if not asset.payload then
             local payload=self:FetchPayloadFromStock(asset.unittype, mission.type)
             if payload then
-              n=n+1
               asset.payload=payload
               table.insert(gotpayload, asset.uid)
             else
@@ -1012,15 +1032,14 @@ function AIRWING:_GetNextMission()
             end
           end
         end        
-        self:T2(self.lid..string.format("Provided %d assets with payloads", n))
+        self:I(self.lid..string.format("Provided %d assets with payloads. Could not get payload for %d assets", #gotpayload, #remove))
         
         -- Now remove assets for which we don't have a payload.
         for i=#assets,1,-1 do
           local asset=assets[i] --#AIRWING.SquadronAsset
           for _,uid in pairs(remove) do
             if uid==asset.uid then
-              table.remove(assets,i)
-              break
+              table.remove(assets, i)
             end
           end
         end
@@ -1147,7 +1166,7 @@ function AIRWING:_OptimizeAssetSelection(assets, Mission, includePayload)
   -- Calculate the mission score of all assets.
   for _,_asset in pairs(assets) do
     local asset=_asset --#AIRWING.SquadronAsset
-    
+    --self:I(string.format("FF asset %s has payload %s", asset.spawngroupname, asset.payload and "yes" or "no!"))
     asset.score=self:CalculateAssetMissionScore(asset, Mission, includePayload)
   end
     
@@ -1155,7 +1174,10 @@ function AIRWING:_OptimizeAssetSelection(assets, Mission, includePayload)
   local function optimize(a, b)
     local assetA=a --#AIRWING.SquadronAsset
     local assetB=b --#AIRWING.SquadronAsset
-    return (assetA.score>assetB.score) --or (dA==dB and taskA.prio<taskB.prio)
+    
+    -- Higher score wins. If equal score ==> closer wins.
+    -- TODO: Need to include the distance in a smarter way!
+    return (assetA.score>assetB.score) or (assetA.score==assetB.score and assetA.dist<assetB.dist)
   end
   table.sort(assets, optimize)
   
@@ -1163,7 +1185,7 @@ function AIRWING:_OptimizeAssetSelection(assets, Mission, includePayload)
   local text=string.format("Optimized assets for mission (payload=%s):", tostring(includePayload))
   for i,Asset in pairs(assets) do
     local asset=Asset --#AIRWING.SquadronAsset
-    text=text..string.format("\n%s %s: score=%d, distance=%.1f", asset.squadname, asset.spawngroupname, asset.score, asset.dist)
+    text=text..string.format("\n%s %s: score=%d, distance=%.1f km", asset.squadname, asset.spawngroupname, asset.score, asset.dist/1000)
     asset.dist=nil
     asset.score=nil
   end
@@ -1882,11 +1904,17 @@ end
 -- @return #number Performance or -1.
 function AIRWING:GetPayloadPeformance(Payload, MissionType)
 
-  for _,Capability in pairs(Payload.capabilities) do
-    local capability=Capability --Ops.Auftrag#AUFTRAG.Capability
-    if capability.MissionType==MissionType then
-      return capability.Performance
+  if Payload then
+  
+    for _,Capability in pairs(Payload.capabilities) do
+      local capability=Capability --Ops.Auftrag#AUFTRAG.Capability
+      if capability.MissionType==MissionType then
+        return capability.Performance
+      end
     end
+
+  else
+    self:E(self.lid.."ERROR: Payload is nil!")
   end
 
   return -1
