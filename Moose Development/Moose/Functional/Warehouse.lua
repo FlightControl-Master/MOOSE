@@ -8491,7 +8491,7 @@ end
 
 --- Fireworks!
 -- @param #WAREHOUSE self
--- @param Core.Point#COORDINATE coord
+-- @param Core.Point#COORDINATE coord Coordinate where to ignite the fireworks. Default is at the warehouse position.
 function WAREHOUSE:_Fireworks(coord)
 
   -- Place.

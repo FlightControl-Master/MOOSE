@@ -1756,28 +1756,41 @@ function AIRWING:GetAssetsOnMission(MissionTypes, IncludeQueued)
   return assets
 end
 
+--- Check
+-- @param #AIRWING self
+-- @param #boolean onlyactive Count only the active ones.
+-- @return #table Table of unit types.
+function AIRWING:_CheckSquads(onlyactive)
+
+end
+
 --- Get the aircraft types of this airwing.
 -- @param #AIRWING self
--- @return #boolean onlyactive Count only the active ones.
+-- @param #boolean onlyactive Count only the active ones.
+-- @param #table squadrons Table of squadrons. Default all.
 -- @return #table Table of unit types.
-function AIRWING:GetAircraftTypes(onlyactive)
+function AIRWING:GetAircraftTypes(onlyactive, squadrons)
 
   -- Get all unit types that can do the job.
   local unittypes={}
   
   -- Loop over all squadrons.
-  for squadname,_squadron in pairs(self.squadrons) do
+  for _,_squadron in pairs(squadrons or self.squadrons) do
     local squadron=_squadron --Ops.Squadron#SQUADRON
     
-    local gotit=false
-    for _,unittype in pairs(unittypes) do
-      if squadron.aircrafttype==unittype then
-        gotit=true
-        break
+    if (not onlyactive) or squadron:IsOnDuty() then 
+    
+      local gotit=false
+      for _,unittype in pairs(unittypes) do
+        if squadron.aircrafttype==unittype then
+          gotit=true
+          break
+        end
       end
-    end
-    if not gotit then
-      table.insert(unittypes, squadron.aircrafttype)
+      if not gotit then
+        table.insert(unittypes, squadron.aircrafttype)
+      end
+      
     end
   end  
 
@@ -1794,9 +1807,14 @@ function AIRWING:CanMission(Mission)
   -- Assume we CAN and NO assets are available.
   local Can=true
   local Assets={}
-
-  local unittypes=self:GetAircraftTypes(true)
   
+  -- Squadrons for the job. If user assigned to mission or simply all.
+  local squadrons=Mission.squadrons or self.squadrons
+
+  -- Get aircraft unit types for the job.
+  local unittypes=self:GetAircraftTypes(true, squadrons)
+  
+  -- Count all payloads in stock.
   local Npayloads=self:CountPayloadsInStock(Mission.type, unittypes)
   
   if Npayloads<Mission.nassets then

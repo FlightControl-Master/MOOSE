@@ -577,13 +577,13 @@ function SQUADRON:CanMission(Mission)
   
   -- On duty?=  
   if not self:IsOnDuty() then
-    self:I(self.lid..string.format("Squad in not OnDuty but in state %s", self:GetState()))
+    self:I(self.lid..string.format("Squad in not OnDuty but in state %s. Cannot do mission %s with target %s", self:GetState(), Mission.name, Mission:GetTargetName()))
     return false
   end
 
   -- Check mission type. WARNING: This assumes that all assets of the squad can do the same mission types!
   if not self:CheckMissionType(Mission.type, self:GetMissionTypes()) then
-    self:I(self.lid..string.format("INFO: Squad cannot do mission type %s", Mission.type))
+    self:I(self.lid..string.format("INFO: Squad cannot do mission type %s (%s, %s)", Mission.type, Mission.name, Mission:GetTargetName()))
     return false
   end
   

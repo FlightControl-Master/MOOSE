@@ -68,11 +68,11 @@
 -- 
 -- @field Ops.WingCommander#WINGCOMMANDER wingcommander The WINGCOMMANDER managing this mission.
 -- @field Ops.AirWing#AIRWING airwing The assigned airwing.
--- @field #string squadname Name of the assigned Airwing squadron.
 -- @field #table assets Airwing Assets assigned for this mission.
 -- @field #number nassets Number of required assets by the Airwing.
 -- @field #number requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
 -- @field #boolean cancelContactLost If true, cancel mission if the contact is lost.
+-- @field #table squadrons User specifed airwing squadrons assigned for this mission. Only these will be considered for the job!
 -- 
 -- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
 -- @field #number missionAltitude Mission altitude in meters.
@@ -303,13 +303,13 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.1.0"
+AUFTRAG.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Option to assign mission to a specific squadron.
+-- TODO: Option to assign mission to specific squadrons (requires an AIRWING).
 -- TODO: Option to assign a specific payload for the mission (requires an AIRWING).
 -- TODO: Add mission start conditions.
 -- TODO: Add recovery tanker mission for boat ops.
@@ -1130,6 +1130,21 @@ function AUFTRAG:SetROT(rot)
 end
 
 
+--- Assign airwing squadron(s) to the mission. Only these squads will be considered for the job.
+-- @param #AUFTRAG self
+-- @param #table Squadrons A table of SQUADRONs or a single SQUADRON object. 
+-- @return #AUFTRAG self
+function AUFTRAG:AssignSquadrons(Squadrons)
+
+  if Squadrons:IsInstanceOf("SQUADRON") then
+    Squadrons={Squadrons}
+  end
+
+  self.squadrons=Squadrons
+
+end
+
+
 --- Add a flight group to the mission.
 -- @param #AUFTRAG self
 -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FLIGHTGROUP object.
@@ -1211,6 +1226,13 @@ end
 -- @return #boolean If true, mission is done.
 function AUFTRAG:IsDone()
   return self.status==AUFTRAG.Status.DONE
+end
+
+--- Check if mission was a success.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission was successful.
+function AUFTRAG:IsSuccess()
+  return self.status==AUFTRAG.Status.SUCCESS
 end
 
 --- Check if mission is over. This could be state DONE or CANCELLED.
