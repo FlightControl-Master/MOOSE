@@ -1538,7 +1538,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   -- Distance travelled
   ---
 
-  if self.verbose>1 then
+  if self.verbose>1 and self:IsAlive() and self.position then
 
     local time=timer.getAbsTime()
     
@@ -3665,9 +3665,9 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission table.
 function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
 
-  local text=string.format("Starting Mission %s", tostring(Mission.name))
+  local text=string.format("Starting %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
   self:T(self.lid..text)
-  MESSAGE:New(text, 120, self.lid):ToAllIf(true)
+  MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
 
   -- Set current mission.
   self.currentmission=Mission.auftragsnummer
@@ -3691,9 +3691,9 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission table.
 function FLIGHTGROUP:onafterMissionExecute(From, Event, To, Mission)
 
-  local text=string.format("Executing Mission %s", tostring(Mission.name))
+  local text=string.format("Executing %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
   self:T(self.lid..text)
-  MESSAGE:New(text, 120, self.lid):ToAllIf(true)
+  MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
   
   -- Set flight mission status to EXECUTING.
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.EXECUTING)
@@ -3805,7 +3805,7 @@ function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
   -- Debug info.
   local text=string.format("Mission %s DONE!", Mission.name)
   self:I(self.lid..text)
-  MESSAGE:New(text, 120, self.lid):ToAllIf(true)
+  MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
   
   -- Set Flight status.
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.DONE)
@@ -3861,7 +3861,7 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     
     -- TODO: better marker text, mission.maker
     --mission.marker=waypointcoord:MarkToCoalition(mission.name, self:GetCoalition(), true)
-    mission.marker=waypointcoord:MarkToAll(string.format("%s %s %s", mission.name, mission.type, self.groupname), true)
+    --mission.marker=waypointcoord:MarkToAll(string.format("%s %s %s", mission.name, mission.type, self.groupname), true)
     
     
     if mission.optionROE then

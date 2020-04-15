@@ -31,7 +31,7 @@
 -- @field #number Tstart Mission start time in seconds.
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
--- @field #number markerID F10 map marker ID.
+-- @field Wrapper.Marker#MARKER marker F10 map marker.
 -- @field #table DCStask DCS task structure.
 -- @field #number Ntargets Number of mission targets.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
@@ -158,7 +158,7 @@ AUFTRAG = {
   assets             =    {},
   missionFraction    =   0.5,
   enrouteTasks       =    {},
-  markerID           =   nil,
+  marker             =   nil,
   startconditions    =    {},
   stopconditions     =    {},
 }
@@ -184,7 +184,7 @@ _AUFTRAGSNR=0
 -- @field #string ORBIT Orbit mission.
 -- @field #string PATROL Similar to CAP but no auto engage targets.
 -- @field #string RECON Recon mission.
--- @field #string RECOVERYTANKER Recovery tanker mission.
+-- @field #string RECOVERYTANKER Recovery tanker mission. Not implemented yet.
 -- @field #string RESCUEHELO Rescue helo.
 -- @field #string SEAD Suppression/destruction of enemy air defences.
 -- @field #string STRIKE Strike mission.
@@ -219,7 +219,6 @@ AUFTRAG.Type={
 -- @field #string PLANNED Mission is at the early planning stage.
 -- @field #string QUEUED Mission is queued at an airwing.
 -- @field #string REQUESTED Mission assets were requested from the warehouse.
--- @field #string ASSIGNED Mission was assigned to somebody.
 -- @field #string SCHEDULED Mission is scheduled in a FLIGHGROUP queue waiting to be started.
 -- @field #string STARTED Mission has started but is not executed yet.
 -- @field #string EXECUTING Mission is being executed.
@@ -231,7 +230,6 @@ AUFTRAG.Status={
   PLANNED="planned",
   QUEUED="queued",
   REQUESTED="requested",
-  ASSIGNED="assigned",
   SCHEDULED="scheduled",
   STARTED="started",
   EXECUTING="executing",
@@ -265,18 +263,23 @@ AUFTRAG.FlightStatus={
 -- @field #string STATIC Target is a STATIC object.
 -- @field #string COORDINATE Target is a COORDINATE.
 -- @field #string AIRBASE Target is an AIRBASE.
+-- @field #string SETGROUP Target is a SET of GROUPs.
+-- @field #string SETUNIT Target is a SET of UNITs.
 AUFTRAG.TargetType={
   GROUP="Group",
   UNIT="Unit",
   STATIC="Static",
   COORDINATE="Coordinate",
   AIRBASE="Airbase",
+  SETGROUP="SetGroup",
+  SETUNIT="SetUnit",
 }
 
 --- Target data.
 -- @type AUFTRAG.TargetData
 -- @field Wrapper.Positionable#POSITIONABLE Target Target Object.
--- @field #string Type Target type: "Group", "Unit", "Static", "Coordinate", "Airbase.
+-- @field #string Type Target type: "Group", "Unit", "Static", "Coordinate", "Airbase", "SetGroup", "SetUnit".
+-- @field #string Name Target name.
 -- @field #number Ninital Number of initial targets.
 -- @field #number Lifepoints Total life points.
 
@@ -303,22 +306,23 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.1.1"
+AUFTRAG.version="0.1.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Clone mission. How? Deepcopy?
 -- TODO: Option to assign mission to specific squadrons (requires an AIRWING).
 -- TODO: Option to assign a specific payload for the mission (requires an AIRWING).
 -- TODO: Add mission start conditions.
 -- TODO: Add recovery tanker mission for boat ops.
--- TODO: Add rescue helo mission for boat ops.
+-- DONE: Add rescue helo mission for boat ops.
 -- TODO: Mission success options damaged, destroyed.
 -- DONE: Mission ROE and ROT.
 -- TODO: Mission frequency, formation, etc.
 -- DONE: FSM events.
--- TODO: F10 marker functions that are updated on Status event.
+-- DONE: F10 marker functions that are updated on Status event.
 -- TODO: F10 marker to create new missions.
 -- DONE: Evaluate mission result ==> SUCCESS/FAILURE
 -- DONE: NewAUTO() NewA2G NewA2A
@@ -448,46 +452,89 @@ end
 --- Create an ORBIT mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
--- @param #number Speed Orbit speed in knots. Default 350 KIAS. 
--- @param #number Heading Heading of race-track pattern in degrees. Default *random* in [1,360].
--- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
+-- @param #number Speed Orbit speed in knots. Default 350 KIAS. 
+-- @param #number Heading Heading of race-track pattern in degrees. If not specified, a circular orbit is performed.
+-- @param #number Leg Length of race-track in NM. If not specified, a circular orbit is performed.
 -- @return #AUFTRAG self
-function AUFTRAG:NewORBIT(Coordinate, Speed, Heading, Leg, Altitude)
+function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
 
-  local auftrag=AUFTRAG:New(AUFTRAG.Type.ORBIT)
+  local mission=AUFTRAG:New(AUFTRAG.Type.ORBIT)
   
-  auftrag.orbitCoord   = Coordinate
-  auftrag.orbitHeading = Heading or math.random(360)
-  auftrag.orbitLeg     = UTILS.NMToMeters(Leg or 10)
-  auftrag.orbitSpeed   = UTILS.KnotsToMps(Speed or 350)
+  --mission.orbitCoord   = Coordinate
   
   if Altitude then
-    auftrag.orbitCoord.y=UTILS.FeetToMeters(Altitude)
+    mission.orbitAltitude=UTILS.FeetToMeters(Altitude)
+  else
+    mission.orbitAltitude=Coordinate.y
   end  
+  Coordinate.y=mission.orbitAltitude
   
-  auftrag.missionAltitude=auftrag.orbitCoord.y*0.9  
-  auftrag.missionFraction=0.9  
-  auftrag.optionROE=ENUMS.ROE.ReturnFire
-  auftrag.optionROT=ENUMS.ROT.PassiveDefense
+  mission.engageTarget = mission:_TargetFromObject(Coordinate)
 
-  auftrag.DCStask=auftrag:GetDCSMissionTask()
+  mission.orbitSpeed = UTILS.KnotsToMps(Speed or 350)
 
-  return auftrag
+  if Heading and Leg then
+    self.orbitHeading=Heading
+    self.orbitLeg=Leg
+    self.orbitRaceTrack=Coordinate:Translate(self.orbitLeg, self.orbitHeading, true)
+  end
+
+  
+  mission.missionAltitude=mission.orbitAltitude*0.9  
+  mission.missionFraction=0.9  
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+--- Create an ORBIT mission, where the aircraft will go in a circle around the specified coordinate.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Where to orbit.
+-- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
+-- @param #number Speed Orbit speed in knots. Default 350 KIAS. 
+-- @return #AUFTRAG self
+function AUFTRAG:NewORBIT_CIRCLE(Coordinate, Altitude, Speed)
+
+  local mission=AUFTRAG:NewORBIT(Coordinate, Altitude, Speed)
+
+  return mission
+end
+
+--- Create an ORBIT mission, where the aircraft will fly a race-track pattern.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Where to orbit.
+-- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
+-- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+-- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
+-- @param #number Leg Length of race-track in NM. Default 10 NM.
+-- @param #number Altitude Orbit altitude in feet.
+-- @return #AUFTRAG self
+function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
+
+  Heading = Heading or math.random(360)
+  Leg     = UTILS.NMToMeters(Leg or 10)
+
+  local mission=AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
+  
+  return mission
 end
 
 --- Create a PATROL mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
 -- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @param #number Altitude Orbit altitude in feet.
 -- @return #AUFTRAG self
 function AUFTRAG:NewPATROL(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
 
   -- Create ORBIT first.
-  local mission=self:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
+  local mission=self:NewORBIT(OrbitCoordinate, Altitude, OrbitSpeed, Heading, Leg)
     
   -- Mission type PATROL.
   mission.type=AUFTRAG.Type.PATROL
@@ -618,14 +665,15 @@ end
 
 --- Create a CAS mission.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
--- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @param Core.Zone#ZONE_RADIUS ZoneCAS Circular CAS zone. Detected targets in this zone will be engaged.
--- @param #table TargetTypes Table of target types. Default {"Helicopters", "Ground Units", "Light armed ships"}.
+-- @param #number Altitude Altitude at which to orbit. Default is 10.000 ft.
+-- @param #number Speed Orbit speed in knots. Default 350 KIAS.
+-- @param Core.Point#COORDINATE Coordinate Where to orbit. Default is the center of the CAS zone.
+-- @param #number Heading Heading of race-track pattern in degrees. If not specified, a simple circular orbit is performed.
+-- @param #number Leg Length of race-track in NM. If not specified, a simple circular orbit is performed.
+-- @param #table TargetTypes (Optional) Table of target types. Default {"Helicopters", "Ground Units", "Light armed ships"}.
 -- @return #AUFTRAG self
-function AUFTRAG:NewCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, TargetTypes)
+function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, TargetTypes)
 
   -- Ensure given TargetTypes parameter is a table.
   if TargetTypes then
@@ -633,14 +681,17 @@ function AUFTRAG:NewCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, Targ
       TargetTypes={TargetTypes}
     end
   end
+  
+  Coordinate=Coordinate or ZoneCAS:GetCoordinate()
+  Altitude=Altitude or 10000
 
   -- Create ORBIT first.
-  local mission=self:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg)
+  local mission=self:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
 
   -- CAS paramters.
   mission.type=AUFTRAG.Type.CAS
   
-  mission.engageZone=ZoneCAS or ZONE_RADIUS:New("CAS Zone", OrbitCoordinate:GetVec2(), Leg)
+  mission.engageZone=ZoneCAS
   mission.engageTargetTypes=TargetTypes or {"Helicopters", "Ground Units", "Light armed ships"}
   
   mission:_SetLogID()
@@ -694,6 +745,7 @@ function AUFTRAG:NewBAI(Target)
   local mission=AUFTRAG:New(AUFTRAG.Type.BAI)
 
   mission.engageTarget=mission:_TargetFromObject(Target)
+  
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageAsGroup=true
@@ -718,6 +770,7 @@ function AUFTRAG:NewSEAD(Target)
   local mission=AUFTRAG:New(AUFTRAG.Type.SEAD)
 
   mission.engageTarget=mission:_TargetFromObject(Target)
+  
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageAsGroup=true
@@ -743,6 +796,7 @@ function AUFTRAG:NewSTRIKE(Target, Altitude)
   local mission=AUFTRAG:New(AUFTRAG.Type.STRIKE)
   
   mission.engageTarget=mission:_TargetFromObject(Target)
+  
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 1000)
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL  
@@ -767,8 +821,9 @@ function AUFTRAG:NewBOMBING(Target, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BOMBING)
   
-  -- DCS task options:
   mission.engageTarget=mission:_TargetFromObject(Target)
+  
+  -- DCS task options:
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyBomb
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
@@ -836,7 +891,10 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ESCORT)
   
-  mission.escortGroup=EscortGroup
+  --mission.escortGroup=EscortGroup
+  
+  mission.engageTarget=mission:_TargetFromObject(EscortGroup)
+  
   mission.escortVec3=OffsetVector or {x=200, y=0, z=-100}
   mission.engageMaxDistance=EngageMaxDistance
   mission.engageTargetTypes=TargetTypes or {"Air"}
@@ -871,11 +929,13 @@ function AUFTRAG:NewTRANSPORT(TransportGroupSet, PickupCoordinate)
     env.info("FF error in TRANSPORT auftrag")
   end
   
-  mission.transportPickup=PickupCoordinate or mission.transportGroupSet:GetFirst():GetCoordinate()
+  mission.engageTarget=mission:_TargetFromObject(mission.transportGroupSet)
+  
+  mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()
   
   mission.transportPickup:MarkToAll("Pickup")
 
-  -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
+  -- TODO: what's the best ROE here?
   mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
@@ -1916,16 +1976,19 @@ end
 
 --- Count alive mission targets.
 -- @param #AUFTRAG self
+-- @param #AUFTRAG.TargetData Target (Optional) The target object.
 -- @return #number Number of alive target units.
-function AUFTRAG:CountMissionTargets()
+function AUFTRAG:CountMissionTargets(Target)
   
   local N=0
   
-  if self.engageTarget then
+  Target=Target or self.engageTarget
   
-    if self.engageTarget.Type==AUFTRAG.TargetType.GROUP then
+  if Target then
+  
+    if Target.Type==AUFTRAG.TargetType.GROUP then
     
-      local target=self.engageTarget.Target --Wrapper.Group#GROUP
+      local target=Target.Target --Wrapper.Group#GROUP
       
       local units=target:GetUnits()
       
@@ -1939,26 +2002,58 @@ function AUFTRAG:CountMissionTargets()
         end
       end      
       
-    elseif self.engageTarget.Type==AUFTRAG.TargetType.UNIT then
+    elseif Target.Type==AUFTRAG.TargetType.UNIT then
     
-      local target=self.engageTarget.Target --Wrapper.Unit#UNIT        
+      local target=Target.Target --Wrapper.Unit#UNIT        
       
       if target and target:IsAlive() and target:GetLife()>1 then
         N=N+1
       end
       
-    elseif self.engageTarget.Type==AUFTRAG.TargetType.STATIC then
+    elseif Target.Type==AUFTRAG.TargetType.STATIC then
     
-      local target=self.engageTarget.Target --Wrapper.Static#STATIC
+      local target=Target.Target --Wrapper.Static#STATIC
       
       if target and target:IsAlive() then
         N=N+1
       end
       
-    elseif self.engageTarget.Type==AUFTRAG.TargetType.AIRBASE then
+    elseif Target.Type==AUFTRAG.TargetType.AIRBASE then
     
       -- TODO: any (good) way to tell whether an airbase was "destroyed" or at least damaged? Is :GetLive() working?
-      
+
+    elseif Target.Type==AUFTRAG.TargetType.SETGROUP then
+    
+      for _,_group in pairs(Target.Target.Set or {}) do
+        local group=_group --Wrapper.Group#GROUP
+        
+        local units=group:GetUnits()
+        
+        for _,_unit in pairs(units or {}) do
+          local unit=_unit --Wrapper.Unit#UNIT
+          
+          -- We check that unit is "alive".
+          if unit and unit:IsAlive() and unit:GetLife()>1 then
+            N=N+unit:GetLife()
+          end
+        end              
+        
+      end
+    
+    elseif Target.Type==AUFTRAG.TargetType.SETUNIT then
+
+      for _,_unit in pairs(Target.Target.Set or {}) do
+        local unit=_unit --Wrapper.Unit#UNIT
+
+        -- We check that unit is "alive".
+        if unit and unit:IsAlive() and unit:GetLife()>1 then
+          N=N+unit:GetLife()
+        end
+                
+      end
+
+    else
+      self:E("ERROR unknown target type")      
     end
   end
   
@@ -1967,16 +2062,19 @@ end
 
 --- Get target life points.
 -- @param #AUFTRAG self
+-- @param #AUFTRAG.TargetData Target (Optional) The target object.
 -- @return #number Number of alive target units.
-function AUFTRAG:GetTargetLife()
+function AUFTRAG:GetTargetLife(Target)
   
   local N=0
   
-  if self.engageTarget then
+  Target=Target or self.engageTarget
   
-    if self.engageTarget.Type==AUFTRAG.TargetType.GROUP then
+  if Target then
+  
+    if Target.Type==AUFTRAG.TargetType.GROUP then
     
-      local target=self.engageTarget.Target --Wrapper.Group#GROUP
+      local target=Target.Target --Wrapper.Group#GROUP
       
       local units=target:GetUnits()
       
@@ -1989,26 +2087,58 @@ function AUFTRAG:GetTargetLife()
         end
       end      
       
-    elseif self.engageTarget.Type==AUFTRAG.TargetType.UNIT then
+    elseif Target.Type==AUFTRAG.TargetType.UNIT then
     
-      local target=self.engageTarget.Target --Wrapper.Unit#UNIT        
+      local target=Target.Target --Wrapper.Unit#UNIT        
       
       if target and target:IsAlive() then
         N=N+target:GetLife()
       end
       
-    elseif self.engageTarget.Type==AUFTRAG.TargetType.STATIC then
+    elseif Target.Type==AUFTRAG.TargetType.STATIC then
     
-      local target=self.engageTarget.Target --Wrapper.Static#STATIC
+      local target=Target.Target --Wrapper.Static#STATIC
       
       if target and target:IsAlive() then
         N=N+1 --target:GetLife()
       end
       
-    elseif self.engageTarget.Type==AUFTRAG.TargetType.AIRBASE then
+    elseif Target.Type==AUFTRAG.TargetType.AIRBASE then
     
       -- TODO: any (good) way to tell whether an airbase was "destroyed" or at least damaged? Is :GetLive() working?
       
+    elseif Target.Type==AUFTRAG.TargetType.SETGROUP then
+    
+      for _,_group in pairs(Target.Target.Set or {}) do
+        local group=_group --Wrapper.Group#GROUP
+        
+        local units=group:GetUnits()
+        
+        for _,_unit in pairs(units or {}) do
+          local unit=_unit --Wrapper.Unit#UNIT
+          
+          -- We check that unit is "alive".
+          if unit and unit:IsAlive() then
+            N=N+unit:GetLife()
+          end
+        end              
+        
+      end
+    
+    elseif Target.Type==AUFTRAG.TargetType.SETUNIT then
+
+      for _,_unit in pairs(Target.Target.Set or {}) do
+        local unit=_unit --Wrapper.Unit#UNIT
+
+        -- We check that unit is "alive".
+        if unit and unit:IsAlive() then
+          N=N+unit:GetLife()
+        end
+                
+      end
+
+    else
+      self:E("ERROR unknown target type")      
     end
   end
   
@@ -2034,6 +2164,7 @@ end
 -- @return Core.Point#COORDINATE The target coordinate or *nil*.
 function AUFTRAG:GetTargetCoordinate()
 
+  --[[
   if self.engageTarget then
     if self.engageTarget.Type==AUFTRAG.TargetType.COORDINATE then
       return self.engageTarget.Target
@@ -2044,9 +2175,30 @@ function AUFTRAG:GetTargetCoordinate()
     return self.orbitCoord
   elseif self.escortGroup then
     return self.escortGroup:GetCoordinate()
-  elseif self.transportPi1ckup then
+  elseif self.transportPickup then
     return self.transportPickup
-  end  
+  end
+  ]]
+  
+  if self.transportPickup then
+    -- Special case where we defined a 
+    return self.transportPickup
+  elseif self.engageTarget then
+    if self.engageTarget.Type==AUFTRAG.TargetType.COORDINATE then
+      return self.engageTarget.Target
+    elseif self.engageTarget.Type==AUFTRAG.TargetType.SETGROUP then
+      -- Return the first group in the set.
+      -- TODO: does this only return ALIVE groups?!
+      return self.engageTarget.Target:GetFirst():GetCoordinate()
+    elseif self.engageTarget.Type==AUFTRAG.TargetType.SETUNIT then
+      -- Return the first unit in the set.
+      -- TODO: does this only return ALIVE units?!
+      return self.engageTarget.Target:GetFirst():GetCoordinate()
+    else
+      -- In all other cases the GetCoordinate() function should work.
+      return self.engageTarget.Target:GetCoordinate()
+    end  
+  end
 
   return nil
 end
@@ -2056,6 +2208,7 @@ end
 -- @return #string Name of the target or "N/A".
 function AUFTRAG:GetTargetName()
 
+  --[[
   if self.engageTarget then
     if self.engageTarget.Type==AUFTRAG.TargetType.COORDINATE then
       local coord=self.engageTarget.Target --Core.Point#COORDINATE
@@ -2070,7 +2223,13 @@ function AUFTRAG:GetTargetName()
     return self.escortGroup:GetName()
   elseif self.transportPickup then
     return self.transportPickup:ToStringLLDMS()
-  end  
+  end
+  ]]
+  
+  if self.engageTarget.Target then
+    return self.engageTarget.Name
+  end
+    
 
   return "N/A"
 end
@@ -2118,20 +2277,22 @@ function AUFTRAG:UpdateMarker()
 
   -- Marker text.
   local text=string.format("%s %s", self.name, self.status:upper())
-  text=text..string.format("\nTargets=%d", self:CountMissionTargets())
-  text=text..string.format("\nFlights=%d", self:CountFlightGroups())
+  text=text..string.format("\n%s %s * %d/%d", self.type:upper(), self:GetTargetName(), self:CountMissionTargets(), self.Ntargets)
+  text=text..string.format("\nFlights %d/%d", self:CountFlightGroups(), tostring(self.nassets))
 
-  -- Remove old marker.
-  if self.markerID then
-    COORDINATE.RemoveMark(nil, self.markerID)
-  end
+  if not self.marker then
   
-  -- Get target coordinates. Can be nil!
-  local targetcoord=self:GetTargetCoordinate()
+    -- Get target coordinates. Can be nil!
+    local targetcoord=self:GetTargetCoordinate()
+    
+    self.marker=MARKER:New(targetcoord, text):ReadOnly():ToAll()
+    
+  else
   
-  -- New marker!
-  if targetcoord then
-    self.markerID=targetcoord:MarkToAll(text, true)
+    if self.marker.text~=text then
+      self.marker:UpdateText(text)
+    end
+    
   end
 
   return self
@@ -2164,7 +2325,6 @@ function AUFTRAG:GetDCSMissionTask()
     local DCStask=CONTROLLABLE.EnRouteTaskAWACS(nil)
     
     table.insert(self.enrouteTasks, DCStask)
-    --table.insert(DCStasks, DCStask)
     
   elseif self.type==AUFTRAG.Type.BAI then
   
@@ -2236,7 +2396,7 @@ function AUFTRAG:GetDCSMissionTask()
     -- ESCORT Mission --
     --------------------
 
-    local DCStask=CONTROLLABLE.TaskEscort(nil, self.escortGroup, self.escortVec3, LastWaypointIndex, self.engageMaxDistance, self.engageTargetTypes)
+    local DCStask=CONTROLLABLE.TaskEscort(nil, self.engageTarget.Target, self.escortVec3, LastWaypointIndex, self.engageMaxDistance, self.engageTargetTypes)
     
     table.insert(DCStasks, DCStask)
 
@@ -2256,6 +2416,8 @@ function AUFTRAG:GetDCSMissionTask()
     -------------------
     -- FERRY Mission --
     -------------------
+  
+    -- TODO: Ferry mission type. How?
   
   elseif self.type==AUFTRAG.Type.INTERCEPT then
 
@@ -2303,9 +2465,9 @@ function AUFTRAG:GetDCSMissionTask()
   
   elseif self.type==AUFTRAG.Type.STRIKE then
   
-    -------------------
-    -- STIKE Mission --
-    -------------------  
+    --------------------
+    -- STRIKE Mission --
+    -------------------- 
 
     local Vec2=self:GetTargetCoordinate():GetVec2()
   
@@ -2329,11 +2491,11 @@ function AUFTRAG:GetDCSMissionTask()
     -- TRANSPORT Mission --
     ----------------------- 
   
-    -- TODO: What about the groups to embark?
+    -- TODO: What about the groups to embark? And where to go?
     
     local Vec2=self.transportPickup:GetVec2()
     
-    local DCStask=CONTROLLABLE.TaskEmbarking(self, Vec2, self.transportGroupSet, Duration, DistributionGroupSet)
+    local DCStask=CONTROLLABLE.TaskEmbarking(self, Vec2, self.transportGroupSet, 120, DistributionGroupSet)
     
     table.insert(DCStasks, DCStask)
 
@@ -2351,7 +2513,6 @@ function AUFTRAG:GetDCSMissionTask()
     param.unitname=self:GetTargetName()
     param.offsetX=200
     param.offsetZ=240
-    --param.offsetY=20
     param.altitude=70
     param.dtFollow=1.0
     
@@ -2376,10 +2537,8 @@ function AUFTRAG:GetDCSMissionTask()
     -------------------
     -- ORBIT Mission --
     -------------------
-          
-    local CoordRaceTrack=self.orbitCoord:Translate(self.orbitLeg, self.orbitHeading, true)
   
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.orbitCoord, self.orbitCoord.y, self.orbitSpeed, CoordRaceTrack)
+    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.engageTarget.Target, self.orbitAltitude, self.orbitSpeed, self.orbitRaceTrack)
     
     table.insert(DCStasks, DCStask)
   
@@ -2435,26 +2594,68 @@ function AUFTRAG:_TargetFromObject(Object)
   
     target.Type=AUFTRAG.TargetType.GROUP
     
+    local object=Object --Wrapper.Group#GROUP
+    
+    target.Name=object:GetName()
+    
   elseif Object:IsInstanceOf("UNIT") then
   
-    target.Type=AUFTRAG.TargetType.UNIT  
+    target.Type=AUFTRAG.TargetType.UNIT
+    
+    local object=Object --Wrapper.Unit#UNIT
+    
+    target.Name=object:GetName()  
   
   elseif Object:IsInstanceOf("STATIC") then
   
     target.Type=AUFTRAG.TargetType.STATIC
+    
+    target.Name=Object:GetName()
   
   elseif Object:IsInstanceOf("COORDINATE") then
   
     target.Type=AUFTRAG.TargetType.COORDINATE
     
+    local object=Object --Core.Point#COORDINATE
+    
+    target.Name=object:ToStringLLDMS()
+    
   elseif Object:IsInstanceOf("AIRBASE") then
   
     target.Type=AUFTRAG.TargetType.AIRBASE
+    
+    local object=Object --Wrapper.Airbase#AIRBASE
+    
+    target.Name=object:GetName()
+    
+    target.Nalive=1
+    
+  elseif Object:IsInstanceOf("SET_GROUP") then
+  
+    target.Type=AUFTRAG.TargetType.SETGROUP
+    
+    local object=Object --Core.Set#SET_GROUP
+    
+    target.Name=object:GetFirst():GetName()
+  
+  elseif Object:IsInstanceOf("SET_UNIT") then
+  
+    target.Type=AUFTRAG.TargetType.SETUNIT
+    
+    local object=Object --Core.Set#SET_UNIT
+    
+    target.Name=object:GetFirst():GetName()
   
   else
     self:E(self.lid.."ERROR: Unknown object given as target. Needs to be a GROUP, UNIT, STATIC, COORDINATE")
     return nil
   end
+  
+  
+  -- Set engage Target.
+  self.engageTarget=target
+  
+  self.engageTarget.Ninital=self:CountMissionTargets()
   
   self:I(self.lid..string.format("Mission Target Type=%s", target.Type))
   
