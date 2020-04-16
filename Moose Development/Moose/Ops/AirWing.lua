@@ -1004,7 +1004,7 @@ function AIRWING:_GetNextMission()
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     -- Firstly, check if mission is due?
-    if mission:IsQueued() and time>=mission.Tstart then
+    if mission:IsQueued() and mission:IsReadyToGo() then
         
       -- Check if airwing can do the mission and gather required assets.
       local can, assets=self:CanMission(mission)
@@ -1091,7 +1091,7 @@ function AIRWING:_GetNextMission()
   return nil
 end
 
---- Calcuate the mission score of an asset.
+--- Calculate the mission score of an asset.
 -- @param #AIRWING self
 -- @param #AIRWING.SquadronAsset asset Asset
 -- @param Ops.Auftrag#AUFTRAG Mission Mission for which the best assets are desired.

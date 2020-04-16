@@ -20,7 +20,7 @@
 -- @field #table missionqueue Mission queue.
 -- @field Core.Set#SET_ZONE borderzoneset Set of zones defining the border of our territory.
 -- @field Core.Set#SET_ZONE yellowzoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
--- @field Core.Set#SET_ZONE engagezoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
+-- @field Core.Set#SET_ZONE engagezoneset Set of zones where enemies are actively engaged.
 -- @field #string Defcon Defence condition.
 -- @extends Ops.Intelligence#INTEL
 
