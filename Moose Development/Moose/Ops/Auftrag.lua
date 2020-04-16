@@ -8,6 +8,7 @@
 --    * Set mission priority and urgency (can cancel running missions).
 --    * Specific mission options for ROE, ROT, formation, etc.
 --    * Interface to FLIGHTGROUP, AIRWING and WINGCOMMANDER classes.
+--    * FSM events when a mission is done, successful or failed.
 --    
 -- ===
 --
@@ -314,7 +315,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.1.6"
+AUFTRAG.version="0.1.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -425,7 +426,7 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RESCUEHELO)
   
-  mission.engageTarget=mission:_TargetFromObject(Carrier)
+  mission:_TargetFromObject(Carrier)
   
   mission.missionTask=ENUMS.MissionTask.NOTHING
   mission.missionFraction=0.5
@@ -445,7 +446,8 @@ function AUFTRAG:NewANTISHIP(Target)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ANTISHIP)
   
-  mission.engageTarget=mission:_TargetFromObject(Target)
+  mission:_TargetFromObject(Target)
+  
   mission.engageWeaponType=ENUMS.WeaponFlag.Auto
   
   mission.missionTask=ENUMS.MissionTask.ANTISHIPSTRIKE
@@ -478,7 +480,7 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
   end  
   Coordinate.y=mission.orbitAltitude
   
-  mission.engageTarget = mission:_TargetFromObject(Coordinate)
+  mission:_TargetFromObject(Coordinate)
 
   mission.orbitSpeed = UTILS.KnotsToMps(Speed or 350)
 
@@ -621,7 +623,7 @@ function AUFTRAG:NewINTERCEPT(Target)
   
   local mission=AUFTRAG:New(AUFTRAG.Type.INTERCEPT)
     
-  mission.engageTarget=mission:_TargetFromObject(Target)
+  mission:_TargetFromObject(Target)
   
   mission.missionTask=ENUMS.MissionTask.INTERCEPT    
   mission.missionFraction=0.1  
@@ -939,7 +941,7 @@ function AUFTRAG:NewTRANSPORT(TransportGroupSet, PickupCoordinate)
     env.info("FF error in TRANSPORT auftrag")
   end
   
-  mission.engageTarget=mission:_TargetFromObject(mission.transportGroupSet)
+  mission:_TargetFromObject(mission.transportGroupSet)
   
   mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()
   
@@ -1140,7 +1142,7 @@ function AUFTRAG:SetWeaponExpend(WeaponExpend)
   return self
 end
 
---- Set number of weapons to expend.
+--- Set whether target will be attack as group.
 -- @param #AUFTRAG self
 -- @param #boolean Switch If true or nil, engage as group. If false, not.
 -- @return #AUFTRAG self
@@ -1378,12 +1380,12 @@ function AUFTRAG:IsReadyToGo()
   local Tnow=timer.getAbsTime()
 
   -- Start time did not pass yet.
-  if Tnow<self.Tstart then
+  if self.Tstart and Tnow<self.Tstart or false then
     return false
   end
   
   -- Stop time already passed.
-  if Tnow>self.Tstop then
+  if self.Tstop and Tnow>self.Tstop or false then
     return false
   end
   
@@ -2062,7 +2064,7 @@ function AUFTRAG:CountMissionTargets(Target)
   
   local N=0
   
-  Target=Target or self.engageTarget
+  Target=Target or self:GetTargetData()
   
   if Target then
   
@@ -2101,6 +2103,10 @@ function AUFTRAG:CountMissionTargets(Target)
     elseif Target.Type==AUFTRAG.TargetType.AIRBASE then
     
       -- TODO: any (good) way to tell whether an airbase was "destroyed" or at least damaged? Is :GetLive() working?
+      
+    elseif Target.Type==AUFTRAG.TargetType.COORDINATE then
+    
+      -- No target!
 
     elseif Target.Type==AUFTRAG.TargetType.SETGROUP then
     
@@ -2114,7 +2120,7 @@ function AUFTRAG:CountMissionTargets(Target)
           
           -- We check that unit is "alive".
           if unit and unit:IsAlive() and unit:GetLife()>1 then
-            N=N+unit:GetLife()
+            N=N+1
           end
         end              
         
@@ -2127,7 +2133,7 @@ function AUFTRAG:CountMissionTargets(Target)
 
         -- We check that unit is "alive".
         if unit and unit:IsAlive() and unit:GetLife()>1 then
-          N=N+unit:GetLife()
+          N=N+1
         end
                 
       end
@@ -2148,7 +2154,7 @@ function AUFTRAG:GetTargetLife(Target)
   
   local N=0
   
-  Target=Target or self.engageTarget
+  Target=Target or self:GetTargetData()
   
   if Target then
   
@@ -2186,6 +2192,10 @@ function AUFTRAG:GetTargetLife(Target)
     elseif Target.Type==AUFTRAG.TargetType.AIRBASE then
     
       -- TODO: any (good) way to tell whether an airbase was "destroyed" or at least damaged? Is :GetLive() working?
+
+    elseif Target.Type==AUFTRAG.TargetType.COORDINATE then
+    
+      -- A coordinate does not live.
       
     elseif Target.Type==AUFTRAG.TargetType.SETGROUP then
     
@@ -2302,7 +2312,7 @@ function AUFTRAG:GetTargetCoordinate()
   return nil
 end
 
---- Get coordinate of target.
+--- Get name of the target.
 -- @param #AUFTRAG self
 -- @return #string Name of the target or "N/A".
 function AUFTRAG:GetTargetName()
@@ -2311,7 +2321,6 @@ function AUFTRAG:GetTargetName()
     return self.engageTarget.Name
   end
     
-
   return "N/A"
 end
 
@@ -2360,9 +2369,10 @@ end
 function AUFTRAG:UpdateMarker()
 
   -- Marker text.
-  local text=string.format("%s %s", self.name, self.status:upper())
-  text=text..string.format("\n%s %s * %d/%d", self.type:upper(), self:GetTargetName(), self:CountMissionTargets(), self.Ntargets)
-  text=text..string.format("\nFlights %d/%d", self:CountFlightGroups(), tostring(self.nassets))
+  local text=string.format("%s %s: %s", self.name, self.type:upper(), self.status:upper())
+  text=text..string.format("\n%s", self:GetTargetName())
+  text=text..string.format("\nTargets %d/%d, Life Points=%d", self:CountMissionTargets(), self.Ntargets, self:GetTargetLife())
+  text=text..string.format("\nFlights %d/%d", self:CountFlightGroups(), self.nassets)
 
   if not self.marker then
   
@@ -2634,7 +2644,7 @@ function AUFTRAG:GetDCSMissionTask()
 
 end
 
---- Get DCS task table for an attack task.
+--- Get DCS task table for an attack group or unit task.
 -- @param #AUFTRAG self
 -- @param #AUFTRAG.TargetData target Target data.
 -- @param #table DCStasks DCS DCS tasks table to which the task is added.
@@ -2761,7 +2771,8 @@ function AUFTRAG:_TargetFromObject(Object)
   -- TODO: get rid of this.
   self.Ntargets=Ninitial
   
-  self:I(self.lid..string.format("Mission Target Type=%s", target.Type))
+  env.info("FF check")
+  self:I(self.lid..string.format("Mission Target Type=%s, Ntargets=%d", target.Type, self.Ntargets))
   
   return target
 end

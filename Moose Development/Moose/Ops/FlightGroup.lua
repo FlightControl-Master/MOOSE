@@ -64,6 +64,7 @@
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
 -- @field #boolean ishelo If true, the is a helicopter group.
+-- @field #boolean detectionOn If true, detected units of the group are analyzed.
 -- 
 -- @field #number tacanChannelDefault The default TACAN channel.
 -- @field #string tacanMorseDefault The default TACAN morse code.
@@ -436,6 +437,7 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:SetFuelCriticalThreshold()
   self:SetDefaultROE()
   self:SetDefaultROT()
+  self:SetDetection()
 
 
   -- Add FSM transitions.
@@ -816,18 +818,14 @@ function FLIGHTGROUP:GetAirWing()
   return self.airwing
 end
 
---- Define parking spots to be used by the flight group.
--- This is valid only for the specified airbase.
+--- Set detection on or off.
 -- @param #FLIGHTGROUP self
--- @param #string airbasename Name of the airbase.
--- @param #table Table of parking spot numbers.
+-- @param #boolean Switch If true, detection is on. If false or nil, detection is off. Default is off.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetParkingSpots(airbase, spots)
-  self.parkingspots[airbase]=spots
+function FLIGHTGROUP:SetDetection(Switch)
+  self.detectionOn=Switch
   return self
 end
-
-
 
 
 --- Set the FLIGHTCONTROL controlling this flight group.
@@ -1231,11 +1229,19 @@ end
 
 --- Clear the group for landing when it is holding.
 -- @param #FLIGHTGROUP self
+-- @param #number Delay Delay in seconds before landing clearance is given.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:ClearToLand()
-  if self:IsHolding() then
-    self:I(self.lid..string.format("Clear to land ==> setting holding flag to 1 (true)")) 
-    self.flaghold:Set(1)
+function FLIGHTGROUP:ClearToLand(Delay)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, FLIGHTGROUP.ClearToLand, self)
+  else
+  
+    if self:IsHolding() then
+      self:I(self.lid..string.format("Clear to land ==> setting holding flag to 1 (true)")) 
+      self.flaghold:Set(1)
+    end
+    
   end
   return self
 end
@@ -1459,7 +1465,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   ---
   
   -- Check if group has detected any units.
-  if self.DetectionON then
+  if self.detectionOn then
     self:_CheckDetectedUnits()
   end
   
