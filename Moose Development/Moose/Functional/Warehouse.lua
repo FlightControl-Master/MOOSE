@@ -6135,36 +6135,42 @@ function WAREHOUSE:_OnEventBirth(EventData)
       -- Debug message.
       self:T(self.lid..string.format("Warehouse %s captured event birth of its asset unit %s. spawned=%s", self.alias, EventData.IniUnitName, tostring(asset.spawned)))
 
-      -- Birth is triggered for each unit. We need to make sure not to call this too often!
-      if not asset.spawned then
+      if request then
 
-        -- Remove asset from stock.
-        self:_DeleteStockItem(asset)
 
-        -- Set spawned switch.
-        asset.spawned=true
-        asset.spawngroupname=group:GetName()
-
-        -- Add group.
-        if asset.iscargo==true then
-          request.cargogroupset=request.cargogroupset or SET_GROUP:New()
-          request.cargogroupset:AddGroup(group)
-        else
-          request.transportgroupset=request.transportgroupset or SET_GROUP:New()
-          request.transportgroupset:AddGroup(group)
+        -- Birth is triggered for each unit. We need to make sure not to call this too often!
+        if not asset.spawned then
+  
+          -- Remove asset from stock.
+          self:_DeleteStockItem(asset)
+  
+          -- Set spawned switch.
+          asset.spawned=true
+          asset.spawngroupname=group:GetName()
+  
+          -- Add group.
+          if asset.iscargo==true then
+            request.cargogroupset=request.cargogroupset or SET_GROUP:New()
+            request.cargogroupset:AddGroup(group)
+          else
+            request.transportgroupset=request.transportgroupset or SET_GROUP:New()
+            request.transportgroupset:AddGroup(group)
+          end
+  
+          -- Set warehouse state.
+          group:SetState(group, "WAREHOUSE", self)
+  
+          -- Asset spawned FSM function.
+          --self:__AssetSpawned(1, group, asset, request)
+          self:AssetSpawned(group, asset, request)
+  
         end
-
-        -- Set warehouse state.
-        group:SetState(group, "WAREHOUSE", self)
-
-        -- Asset spawned FSM function.
-        --self:__AssetSpawned(1, group, asset, request)
-        self:AssetSpawned(group, asset, request)
-
+  
+      else
+        --self:T3({wid=wid, uid=self.uid, match=(wid==self.uid), tw=type(wid), tu=type(self.uid)})
       end
-
     else
-      --self:T3({wid=wid, uid=self.uid, match=(wid==self.uid), tw=type(wid), tu=type(self.uid)})
+      self:E(self.lid..string.format("ERROR: Could not get request when asset spawned! FF investigate!"))
     end
 
   end
