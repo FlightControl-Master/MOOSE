@@ -1,5 +1,9 @@
 --- **Utilities** Enumerators.
 -- 
+-- An enumerator is a variable that holds a constant value. Enumerators are very useful because  
+-- 
+-- https://wiki.hoggitworld.com/view/Category:Enumerators
+-- 
 -- See the [Simulator Scripting Engine Documentation](https://wiki.hoggitworld.com/view/Simulator_Scripting_Engine_Documentation) on Hoggit for further explanation and examples.
 -- 
 -- @module ENUMS
@@ -12,7 +16,7 @@
 -- * Events and event handlers are all governed within world.
 -- * A number of functions to get information about the game world.
 -- 
--- See [https://wiki.hoggitworld.com/view/DCS_singleton_world](https://wiki.hoggitworld.com/view/DCS_singleton_world)
+-- Enumerator
 -- @field #ENUMS
 ENUMS = {}
 
@@ -46,50 +50,73 @@ ENUMS.ROT = {
   AllowAbortMission=4,
 }
 
---- Weapon types.
+--- Weapon types. See https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag
 -- @type ENUMS.WeaponFlag
 ENUMS.WeaponFlag={
-  -- Combinations
-  Auto=3221225470, --AnyWeapon (AnyBomb + AnyRocket + AnyMissile + Cannons)
-  AnyAG=2956984318,
-  AnyAA=264241152,
-  AnyUnguided=2952822768,
-  AnyGuided=268402702, 
-  -- Bombs
-  LGB=2,
-  TvGB=4,
-  SNSGB=8,
-  HEBomb=16,
-  Penetrator=32,
-  NapalmBomb=64,
-  FAEBomb=128,
-  ClusterBomb=256,
-  Dispencer=512,
-  CandleBomb=1024,
-  ParachuteBomb=2147483648,
-  GuidedBomb=14, -- (LGB + TvGB + SNSGB)
-  AnyUnguidedBomb=2147485680, -- (HeBomb + Penetrator + NapalmBomb + FAEBomb + ClusterBomb + Dispencer + CandleBomb + ParachuteBomb)
-  AnyBomb=2147485694, -- (GuidedBomb + AnyUnguidedBomb)
-  -- Rockets
-  LightRocket=2048,
-  MarkerRocket=4096,
-  CandleRocket=8192,
-  HeavyRocket=16384,
-  AnyRocket=30720,  -- LightRocket + MarkerRocket + CandleRocket + HeavyRocket
+  --- Bombs
+  LGB                  =          2,
+  TvGB                 =          4,
+  SNSGB                =          8,
+  HEBomb               =         16,
+  Penetrator           =         32,
+  NapalmBomb           =         64,
+  FAEBomb              =        128,
+  ClusterBomb          =        256,
+  Dispencer            =        512,
+  CandleBomb           =       1024,
+  ParachuteBomb        = 2147483648,
+  --- Rockets
+  LightRocket          =       2048,
+  MarkerRocket         =       4096,
+  CandleRocket         =       8192,
+  HeavyRocket          =      16384,
+  --- Air-To-Surface Missiles
+  AntiRadarMissile     =      32768,
+  AntiShipMissile      =      65536,
+  AntiTankMissile      =     131072,
+  FireAndForgetASM     =     262144,
+  LaserASM             =     524288,
+  TeleASM              =    1048576,
+  CruiseMissile        =    2097152,
+  AntiRadarMissile2    = 1073741824,
   --- Air-To-Air Missiles
-  SRAM=4194304,
-  MRAAM=8388608, 
-  LRAaM=16777216,
-  IR_AAM=33554432,
-  SAR_AAM=67108864,
-  AR_AAM=134217728,
-  AnyAAM=264241152,     -- IR_AAM + SAR_AAM + AR_AAM + SRAAM + MRAAM + LRAAM
-  AnyMissile=268402688,  -- ASM + AnyAAM   
-  AnyAutonomousMissile=36012032, --IR_AAM + AntiRadarMissile + AntiShipMissile + FireAndForgetASM + CruiseMissile
+  SRAM                 =    4194304,
+  MRAAM                =    8388608, 
+  LRAAM                =   16777216,
+  IR_AAM               =   33554432,
+  SAR_AAM              =   67108864,
+  AR_AAM               =  134217728,
   --- Guns
-  GUN_POD=268435456,
-  BuiltInCannon=536870912,
-  Cannos=805306368,             --GUN_POD + BuiltInCannon)    
+  GUN_POD              =  268435456,
+  BuiltInCannon        =  536870912,
+  ---
+  -- Combinations
+  --
+  -- Bombs
+  GuidedBomb           =         14, -- (LGB + TvGB + SNSGB)
+  AnyUnguidedBomb      = 2147485680, -- (HeBomb + Penetrator + NapalmBomb + FAEBomb + ClusterBomb + Dispencer + CandleBomb + ParachuteBomb)
+  AnyBomb              = 2147485694, -- (GuidedBomb + AnyUnguidedBomb)
+  --- Rockets
+  AnyRocket            =      30720, -- LightRocket + MarkerRocket + CandleRocket + HeavyRocket
+  --- Air-To-Surface Missiles
+  GuidedASM            =    1572864, -- (LaserASM + TeleASM)
+  TacticalASM          =    1835008, -- (GuidedASM + FireAndForgetASM)
+  AnyASM               =    4161536, -- (AntiRadarMissile + AntiShipMissile + AntiTankMissile + FireAndForgetASM + GuidedASM + CruiseMissile)
+  AnyASM2              = 1077903360, -- 4161536+1073741824,
+  --- Air-To-Air Missiles
+  AnyAAM               =  264241152, -- IR_AAM + SAR_AAM + AR_AAM + SRAAM + MRAAM + LRAAM
+  AnyAutonomousMissile =   36012032, -- IR_AAM + AntiRadarMissile + AntiShipMissile + FireAndForgetASM + CruiseMissile
+  AnyMissile           =  268402688, -- AnyASM + AnyAAM   
+  --- Guns
+  Cannons              =  805306368, -- GUN_POD + BuiltInCannon
+  ---
+  -- Even More Genral  
+  Auto                 = 3221225470, -- Any Weapon (AnyBomb + AnyRocket + AnyMissile + Cannons)
+  AutoDCS              = 1073741822, -- Something if often see
+  AnyAG                = 2956984318, -- Any Air-To-Ground Weapon
+  AnyAA                =  264241152, -- Any Air-To-Air Weapon
+  AnyUnguided          = 2952822768, -- Any Unguided Weapon
+  AnyGuided            =  268402702, -- Any Guided Weapon   
 }
 
 --- Mission tasks.

@@ -286,6 +286,7 @@ AUFTRAG.TargetType={
 -- @field #string Name Target name.
 -- @field #number Ninital Number of initial targets.
 -- @field #number Lifepoints Total life points.
+-- @field #number Lifepoints0 Inital life points.
 
 --- Mission capability.
 -- @type AUFTRAG.Capability
@@ -783,15 +784,16 @@ function AUFTRAG:NewSEAD(Target)
 
   mission:_TargetFromObject(Target)
   
-  mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG
+  mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG  --ENUMS.WeaponFlag.Cannons
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageAsGroup=true
   
   mission.missionTask=ENUMS.MissionTask.SEAD
   mission.missionAltitude=nil
-  mission.missionFraction=0.25
+  mission.missionFraction=0.2
   mission.optionROE=ENUMS.ROE.OpenFire
-  mission.optionROT=ENUMS.ROT.AllowAbortMission
+  mission.optionROT=ENUMS.ROT.EvadeFire
+  --mission.optionROT=ENUMS.ROT.AllowAbortMission
   
   mission.DCStask=mission:GetDCSMissionTask()  
   
@@ -2148,8 +2150,25 @@ end
 
 --- Get target life points.
 -- @param #AUFTRAG self
+-- @return #number Number of initial life points when mission was planned.
+function AUFTRAG:GetTargetInitialLife()
+  return self:GetTargetData().Lifepoints
+end
+
+--- Get target damage.
+-- @param #AUFTRAG self
+-- @return #number Percent.
+function AUFTRAG:GetTargetDamage()
+  local target=self:GetTargetData()
+  local life=self:GetTargetLife()/self:GetTargetData().Lifepoints
+  local damage=1-life
+  return damage*100
+end
+
+--- Get target life points.
+-- @param #AUFTRAG self
 -- @param #AUFTRAG.TargetData Target (Optional) The target object.
--- @return #number Number of alive target units.
+-- @return #number Life points of target.
 function AUFTRAG:GetTargetLife(Target)
   
   local N=0
@@ -2192,10 +2211,12 @@ function AUFTRAG:GetTargetLife(Target)
     elseif Target.Type==AUFTRAG.TargetType.AIRBASE then
     
       -- TODO: any (good) way to tell whether an airbase was "destroyed" or at least damaged? Is :GetLive() working?
+      N=N+1
 
     elseif Target.Type==AUFTRAG.TargetType.COORDINATE then
     
       -- A coordinate does not live.
+      N=N+1
       
     elseif Target.Type==AUFTRAG.TargetType.SETGROUP then
     
@@ -2371,7 +2392,7 @@ function AUFTRAG:UpdateMarker()
   -- Marker text.
   local text=string.format("%s %s: %s", self.name, self.type:upper(), self.status:upper())
   text=text..string.format("\n%s", self:GetTargetName())
-  text=text..string.format("\nTargets %d/%d, Life Points=%d", self:CountMissionTargets(), self.Ntargets, self:GetTargetLife())
+  text=text..string.format("\nTargets %d/%d, Life Points=%d/%d", self:CountMissionTargets(), self.Ntargets, self:GetTargetLife(), self:GetTargetInitialLife())
   text=text..string.format("\nFlights %d/%d", self:CountFlightGroups(), self.nassets)
 
   if not self.marker then
@@ -2547,6 +2568,12 @@ function AUFTRAG:GetDCSMissionTask()
     -- SEAD Mission --
     ------------------  
 
+    --[[
+    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargets(nil, nil ,{"Air Defence"} , 0)
+    table.insert(self.enrouteTasks, DCStask)
+    DCStask.key="SEAD"
+    ]]
+    
     self:_GetDCSAttackTask(self.engageTarget, DCStasks)
   
   elseif self.type==AUFTRAG.Type.STRIKE then
@@ -2633,7 +2660,7 @@ function AUFTRAG:GetDCSMissionTask()
   
   end
   
-  self:T({missiontask=DCStasks})
+  self:I({missiontask=DCStasks})
 
   -- Return the task.
   if #DCStasks==1 then

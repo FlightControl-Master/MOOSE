@@ -723,7 +723,7 @@ function AIRWING:onafterStatus(From, Event, To)
     text=text..string.format("\n* %s %s: %s*%d, Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, #squadron.assets, callsign, modex, skill)
     
     -- Loop over all assets.
-    if self.verbose>1 then
+    if self.verbose>0 then
       for j,_asset in pairs(squadron.assets) do
         local asset=_asset --#AIRWING.SquadronAsset
         local assignment=asset.assignment or "none"
@@ -742,8 +742,8 @@ function AIRWING:onafterStatus(From, Event, To)
         text=text..string.format("\n  -[%d] %s*%d \"%s\": spawned=%s, mission=%s%s", j, typename, asset.nunits, asset.spawngroupname, spawned, tostring(self:IsAssetOnMission(asset)), missiontext)
         
         --TODO
-        --local payload=asset.payload and table.concat(asset.payload.missiontypes, ", ") or "None"
-        --text=text.." payload="..payload
+        local payload=asset.payload and table.concat(self:GetPayloadMissionTypes(asset.payload, MissionType), ", ") or "None"
+        text=text.." payload="..payload
         
         text=text..", flight: "
         if asset.flightgroup and asset.flightgroup:IsAlive() then
@@ -1941,8 +1941,7 @@ end
 --- Get mission types a payload can perform.
 -- @param #AIRWING self
 -- @param #AIRWING.Payload Payload The payload table.
--- @param #string MissionType Type of mission.
--- @return #number Performance or -1.
+-- @return #table Mission types.
 function AIRWING:GetPayloadMissionTypes(Payload)
 
   local missiontypes={}

@@ -5167,7 +5167,7 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   local text=string.format("Asset %s from request id=%d was spawned!", asset.spawngroupname, request.uid)
   self:I(self.lid..text)
 
-  -- Sete asset state to spawned.
+  -- Set asset state to spawned.
   asset.spawned=true
 
   -- Check if all assets groups are spawned and trigger events.

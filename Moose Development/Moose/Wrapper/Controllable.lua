@@ -880,7 +880,7 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
       weaponType       = WeaponType or 1073741822,
       expend           = WeaponExpend or "Auto",
       attackQtyLimit   = AttackQty and true or false,      
-      attackQty        = AttackQty,
+      attackQty        = AttackQty or 1,
       directionEnabled = Direction and true or false,
       direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,

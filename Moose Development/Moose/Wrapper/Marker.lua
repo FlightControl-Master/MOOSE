@@ -70,6 +70,10 @@
 -- 
 -- ## Removed
 -- 
+-- ## TextUpdate
+-- 
+-- ## CoordUpdate
+-- 
 -- 
 -- # Examples
 -- 
