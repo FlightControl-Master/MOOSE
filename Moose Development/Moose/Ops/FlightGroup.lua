@@ -2416,8 +2416,9 @@ end
 function FLIGHTGROUP:onafterFlightArrived(From, Event, To)
   self:T(self.lid..string.format("Flight arrived"))
 
-  -- Remove flight from landing queue.
+  -- Flight Control
   if self.flightcontrol then
+    -- Remove flight from landing queue.
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtaxiinb, self, "TAXI_INB")
     -- Add flight to arrived queue.
     self.flightcontrol:_AddFlightToArrivedQueue(self)
@@ -2829,7 +2830,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:T(self.lid..text)
 
-  local althold=self.ishelo and 1000 or 6000
+  local althold=self.ishelo and 1000+math.random(10)*100 or math.random(4,10)*1000
   
   -- Holding points.
   local c0=self.group:GetCoordinate()
@@ -2874,7 +2875,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   self.flaghold:Set(0)
   
   -- Task fuction when reached holding point.
-  local TaskArrived=self.group:TaskFunction("FLIGHTGROUP._ReachedHolding", self)
+  local TaskArrived=self.group:TaskFunction("FLIGHTGROUP.", self)
 
   -- Orbit until flaghold=1 (true) but max 5 min if no FC is giving the landing clearance.
   local TaskOrbit=self.group:TaskOrbit(p0, nil, UTILS.KnotsToMps(SpeedHold), p1)

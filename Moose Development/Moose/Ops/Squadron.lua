@@ -616,6 +616,24 @@ end
 
 --- Get assets for a mission.
 -- @param #SQUADRON self
+-- @return #number Assets not spawned.
+function SQUADRON:CountAssetsInStock()
+
+  local N=0
+  for _,_asset in pairs(self.assets) do
+    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    if asset.spawned then
+    
+    else
+      N=N+1
+    end
+  end
+
+  return N
+end
+
+--- Get assets for a mission.
+-- @param #SQUADRON self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 -- @return #table Assets that can do the required mission.
 function SQUADRON:RecruitAssets(Mission)

@@ -37,7 +37,9 @@
 -- @field #number Ntargets Number of mission targets.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
 -- @field #number Tover Mission abs. time stamp, when mission was over. 
--- @field #table startconditions Conditions that have to be true, before the mission is started.
+-- @field #table conditionStart Condition(s) that have to be true, before the mission will be started.
+-- @field #table conditionSuccess If all stop conditions are true, the mission is cancelled.
+-- @field #table conditionFailure If all stop conditions are true, the mission is cancelled.
 -- 
 -- @field #number orbitSpeed Orbit speed in m/s.
 -- @field #number orbitAltitude Orbit altitude in meters.
@@ -164,7 +166,9 @@ AUFTRAG = {
   missionFraction    =   0.5,
   enrouteTasks       =    {},
   marker             =   nil,
-  startconditions    =    {},
+  conditionStart     =    {},
+  conditionSuccess   =    {},
+  conditionFailure   =    {},
 }
 
 --- Global mission counter.
@@ -299,10 +303,10 @@ AUFTRAG.TargetType={
 -- @field #string DAMAGED Target was damaged.
 -- @field #string DESTROYED Target was destroyed.
 
---- Mission start condition.
--- @type AUFTRAG.ConditionStart
--- @field #function funcReady Callback function to check whether the mission can be started. Should return a #boolean.
--- @field #table argReady Arguments passed to the callback function.
+--- Generic mission condition.
+-- @type AUFTRAG.Condition
+-- @field #function func Callback function to check for a condition. Should return a #boolean.
+-- @field #table arg Optional arguments passed to the condition callback function.
 
 --- Flight specific data. Each flight subscribed to this mission has different data for this.
 -- @type AUFTRAG.FlightData
@@ -316,7 +320,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.1.7"
+AUFTRAG.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1235,17 +1239,57 @@ end
 -- @param #function ConditionFunction Function that needs to be true before the mission can be started. Must return a #boolean.
 -- @param ... Condition function arguments if any.
 -- @return #AUFTRAG self
-function AUFTRAG:AddStartCondition(ConditionFunction, ...)
+function AUFTRAG:AddConditionStart(ConditionFunction, ...)
   
-  local condition={} --#AUFTRAG.ConditionStart
+  local condition={} --#AUFTRAG.Condition
   
-  condition.funcReady=ConditionFunction
-  condition.argReady={}
+  condition.func=ConditionFunction
+  condition.arg={}
   if arg then
-    condition.argReady=arg
+    condition.arg=arg
   end
   
-  table.insert(self.startconditions, condition)
+  table.insert(self.conditionStart, condition)
+  
+  return self
+end
+
+--- Add success condition.
+-- @param #AUFTRAG self
+-- @param #function ConditionFunction If this function returns `true`, the mission is cancelled.
+-- @param ... Condition function arguments if any.
+-- @return #AUFTRAG self
+function AUFTRAG:AddConditionSuccess(ConditionFunction, ...)
+  
+  local condition={} --#AUFTRAG.Condition
+  
+  condition.func=ConditionFunction
+  condition.arg={}
+  if arg then
+    condition.arg=arg
+  end
+  
+  table.insert(self.conditionSuccess, condition)
+  
+  return self
+end
+
+--- Add failure condition.
+-- @param #AUFTRAG self
+-- @param #function ConditionFunction If this function returns `true`, the mission is cancelled.
+-- @param ... Condition function arguments if any.
+-- @return #AUFTRAG self
+function AUFTRAG:AddConditionFailure(ConditionFunction, ...)
+  
+  local condition={} --#AUFTRAG.Condition
+  
+  condition.func=ConditionFunction
+  condition.arg={}
+  if arg then
+    condition.arg=arg
+  end
+  
+  table.insert(self.conditionFailure, condition)
   
   return self
 end
@@ -1328,6 +1372,13 @@ function AUFTRAG:IsScheduled()
   return self.status==AUFTRAG.Status.SCHEDULED
 end
 
+--- Check if mission is STARTED, i.e. flight is on its way to the mission execution waypoint.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is started.
+function AUFTRAG:IsStarted()
+  return self.status==AUFTRAG.Status.STARTED
+end
+
 --- Check if mission is executing.
 -- @param #AUFTRAG self
 -- @return #boolean If true, mission is currently executing.
@@ -1374,7 +1425,7 @@ end
 --- Check if mission is ready to be started.
 -- * Mission start time passed.
 -- * Mission stop time did not pass already.
--- * Any start conditions are true.
+-- * All start conditions are true.
 -- @param #AUFTRAG self
 -- @return #boolean If true, mission can be started.
 function AUFTRAG:IsReadyToGo()
@@ -1391,21 +1442,98 @@ function AUFTRAG:IsReadyToGo()
     return false
   end
   
-  -- All start conditions must be true.
-  for _,_condition in pairs(self.startconditions or {}) do
-    local condition=_condition --#AUFTRAG.ConditionStart
+  -- All start conditions true?
+  local startme=self:EvalConditionsAll(self.conditionStart)
+  
+  if not startme then
+    return false
+  end
+  
+
+  -- We're good to go!
+  return true
+end
+
+--- Check if mission is ready to be started.
+-- * Mission stop already passed.
+-- * Any stop condition is true.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission should be cancelled.
+function AUFTRAG:IsReadyToCancel()
+  
+  local Tnow=timer.getAbsTime()
+
+  -- Stop time already passed.
+  if self.Tstop and Tnow>self.Tstop then
+    return true
+  end
+
+
+  local failure=self:EvalConditionsAny(self.conditionFailure)
+  
+  if failure then
+    self.failurecondition=true
+    return true
+  end  
+  
+  local success=self:EvalConditionsAny(self.conditionSuccess)
+  
+  if success then
+    self.successcondition=true
+    return true
+  end
+  
+  -- No criterion matched.
+  return false
+end
+
+--- Check if all given condition are true.
+-- @param #AUFTRAG self
+-- @param #table Conditions Table of conditions.
+-- @return #boolean If true, all conditions were true. Returns false if at least one condition returned false.
+function AUFTRAG:EvalConditionsAll(Conditions)
+
+  -- Any stop condition must be true.
+  for _,_condition in pairs(Conditions or {}) do
+    local condition=_condition --#AUFTRAG.Condition
   
     -- Call function.
-    local ready=condition.funcReady(unpack(condition.argReady))
+    local istrue=condition.func(unpack(condition.arg))
     
-    if not ready then
+    -- Any false will return false.
+    if not istrue then
       return false
     end
     
   end
 
-  -- We're good to go!
+  -- All conditions were true.
   return true
+end
+
+
+--- Check if any of the given conditions is true.
+-- @param #AUFTRAG self
+-- @param #table Conditions Table of conditions.
+-- @return #boolean If true, at least one condition is true.
+function AUFTRAG:EvalConditionsAny(Conditions)
+
+  -- Any stop condition must be true.
+  for _,_condition in pairs(Conditions or {}) do
+    local condition=_condition --#AUFTRAG.Condition
+  
+    -- Call function.
+    local istrue=condition.func(unpack(condition.arg))
+    
+    -- Any true will return true.
+    if istrue then
+      return true
+    end
+    
+  end
+
+  -- No condition was true.
+  return false
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1500,6 +1628,15 @@ function AUFTRAG:Evaluate()
 
   -- Assume success and check if any failed condition applies.
   local failed=false
+  
+  -- Any success condition true?
+  local successCondition=self:EvalConditionsAny(self.conditionSuccess)
+  
+  -- Any failure condition true?
+  local failureCondition=self:EvalConditionsAny(self.conditionFailure)
+  
+  -- Target damage in %.
+  local targetdamage=self:GetTargetDamage()
 
   -- Current number of mission targets.
   local Ntargets=self:CountMissionTargets()
@@ -1511,7 +1648,21 @@ function AUFTRAG:Evaluate()
   
   --TODO: all assets dead? Is this a FAILED criterion even if all targets have been destroyed? What if there are no initial targets (e.g. when ORBIT, PATROL, RECON missions).
   
-  self:I(self.lid..string.format("Evaluating mission: Initial Targets=%d, current targets=%d ==> success=%s", self.Ntargets, Ntargets, tostring(not failed)))
+  --self:I(self.lid..string.format("Evaluating mission: Initial Targets=%d, current targets=%d ==> success=%s", self.Ntargets, Ntargets, tostring(not failed)))
+  
+  if failureCondition then
+    failed=true
+  elseif successCondition then
+    failed=false
+  end  
+  
+  local text=string.format("Evaluating mission:\n")
+  text=text..string.format("Targets      = %d/%d\n", self.Ntargets, Ntargets)
+  text=text..string.format("Damage       = %.1f %%\n", targetdamage)
+  text=text..string.format("Success Cond = %s\n", tostring(successCondition))
+  text=text..string.format("Failure Cond = %s", tostring(failureCondition))
+  self:I(self.lid..text)
+  
   
   if failed then
     self:Failed()
@@ -1652,6 +1803,10 @@ function AUFTRAG:CheckFlightsDone()
     return false
   end
   
+  -- It could be that all flights were destroyed on the way to the mission execution waypoint.
+  if self:IsStarted() and self:CountFlightGroups()==0 then
+    return true
+  end
   
   -- Check status of all flight groups.
   for groupname,data in pairs(self.flightdata) do
@@ -2157,23 +2312,44 @@ end
 
 --- Get target damage.
 -- @param #AUFTRAG self
--- @return #number Percent.
+-- @return #number Damage in percent.
 function AUFTRAG:GetTargetDamage()
   local target=self:GetTargetData()
-  local life=self:GetTargetLife()/self:GetTargetData().Lifepoints
+  local life=self:GetTargetLife()/self:GetTargetInitialLife()
   local damage=1-life
   return damage*100
+end
+
+
+--- Get target life points.
+-- @param #AUFTRAG self
+-- @return #number Life points of target.
+function AUFTRAG:GetTargetLife()
+  return self:_GetTargetLife(nil, false)
 end
 
 --- Get target life points.
 -- @param #AUFTRAG self
 -- @param #AUFTRAG.TargetData Target (Optional) The target object.
+-- @param #boolean Healthy Get the life points of the healthy target. 
 -- @return #number Life points of target.
-function AUFTRAG:GetTargetLife(Target)
+function AUFTRAG:_GetTargetLife(Target, Healthy)
   
   local N=0
   
   Target=Target or self:GetTargetData()
+  
+  local function _GetLife(unit)
+    local unit=unit --Wrapper.Unit#UNIT
+    if Healthy then
+      local life=unit:GetLife()
+      local life0=unit:GetLife0()
+      
+      return math.max(life, life0)
+    else
+      return unit:GetLife()
+    end
+  end
   
   if Target then
   
@@ -2188,7 +2364,7 @@ function AUFTRAG:GetTargetLife(Target)
         
         -- We check that unit is "alive".
         if unit and unit:IsAlive() then
-          N=N+unit:GetLife()
+          N=N+_GetLife(unit)
         end
       end      
       
@@ -2197,15 +2373,18 @@ function AUFTRAG:GetTargetLife(Target)
       local target=Target.Target --Wrapper.Unit#UNIT        
       
       if target and target:IsAlive() then
-        N=N+target:GetLife()
+        N=N+_GetLife(target)
       end
       
     elseif Target.Type==AUFTRAG.TargetType.STATIC then
     
       local target=Target.Target --Wrapper.Static#STATIC
       
+      -- Statics are alive or not.
       if target and target:IsAlive() then
-        N=N+1 --target:GetLife()
+        N=N+1 --_GetLife(target)
+      else
+        N=N+0
       end
       
     elseif Target.Type==AUFTRAG.TargetType.AIRBASE then
@@ -2230,7 +2409,7 @@ function AUFTRAG:GetTargetLife(Target)
           
           -- We check that unit is "alive".
           if unit and unit:IsAlive() then
-            N=N+unit:GetLife()
+            N=N+_GetLife(unit)
           end
         end              
         
@@ -2243,13 +2422,13 @@ function AUFTRAG:GetTargetLife(Target)
 
         -- We check that unit is "alive".
         if unit and unit:IsAlive() then
-          N=N+unit:GetLife()
+          N=N+_GetLife(unit)
         end
                 
       end
 
     else
-      self:E("ERROR unknown target type")      
+      self:E(self.lid.."ERROR unknown target type")      
     end
   end
   
@@ -2788,7 +2967,7 @@ function AUFTRAG:_TargetFromObject(Object)
   local Ninitial=self:CountMissionTargets(target)
   
   -- Initial total life point.
-  local Lifepoints=self:GetTargetLife(target)
+  local Lifepoints=self:_GetTargetLife(target, true)
     
   -- Set engage Target.
   self.engageTarget=target  
@@ -2798,8 +2977,8 @@ function AUFTRAG:_TargetFromObject(Object)
   -- TODO: get rid of this.
   self.Ntargets=Ninitial
   
-  env.info("FF check")
-  self:I(self.lid..string.format("Mission Target Type=%s, Ntargets=%d", target.Type, self.Ntargets))
+  -- Debug info.
+  self:I(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", target.Name, target.Type, Ninitial, Lifepoints))
   
   return target
 end

@@ -5176,7 +5176,7 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
     local assetitem=_asset --#WAREHOUSE.Assetitem
 
     -- Debug info.
-    self:T2(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
+    self:I(self.lid..string.format("Asset %s spawned=%s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
 
     if assetitem.spawned then
       n=n+1
@@ -5680,7 +5680,9 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
     local AirbaseCategory = self:GetAirbaseCategory()
 
     -- Check enough parking spots.
-    if AirbaseCategory==Airbase.Category.HELIPAD or AirbaseCategory==Airbase.Category.SHIP then
+    if AirbaseCategory==Airbase.Category.HELIPAD then
+    
+    elseif AirbaseCategory==Airbase.Category.SHIP then
 
       --TODO Figure out what's necessary in this case.
 
@@ -7547,16 +7549,28 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       for i,unit in pairs(units) do
         local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
         coords[unit.name]=coord
-        --[[
-        local airbase=coord:GetClosestAirbase()
-        local _,TermID, dist, spot=coord:GetClosestParkingSpot(airbase)
-        if dist<=10 then
-          env.info(string.format("Found client %s on parking spot %d at airbase %s", unit.name, TermID, airbase:GetName()))
-        end
-        ]]
       end
     end
     return coords
+  end
+  
+  if airbase:GetAirbaseCategory()==Airbase.Category.SHIP then
+    -- Scan a radius of 100 meters around the spot.
+    local _,_,_,units=airbase:GetCoordinate():ScanObjects(200, true, false, false)
+    local N=0
+    for _,_unit in pairs(units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      if not unit:InAir() then
+        N=N+1
+      end
+    end
+    env.info(string.format("FF number of units on deck=%d", N))
+    if #assets>=6 and N==0 then
+      -- More than 6 is difficult. We need an empty deck.
+    elseif N+#assets>6 then
+      -- wait until max 6 ac are on deck.
+      return {}
+    end
   end
 
   -- Get parking spot data table. This contains all free and "non-free" spots.

@@ -720,7 +720,7 @@ function AIRWING:onafterStatus(From, Event, To)
     local skill=squadron.skill and tostring(squadron.skill) or "N/A"
     
     -- Squadron text
-    text=text..string.format("\n* %s %s: %s*%d, Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, #squadron.assets, callsign, modex, skill)
+    text=text..string.format("\n* %s %s: %s*%d (avail %d), Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, #squadron.assets, squadron:CountAssetsInStock(), callsign, modex, skill)
     
     -- Loop over all assets.
     if self.verbose>0 then
@@ -773,7 +773,10 @@ function AIRWING:onafterStatus(From, Event, To)
   --------------
   -- Mission ---
   --------------
-  
+
+  -- Check if any missions should be cancelled.
+  self:_CheckMissions()
+
   -- Get next mission.
   local mission=self:_GetNextMission()
 
@@ -975,6 +978,24 @@ function AIRWING:GetTankerForFlight(flightgroup)
 end
 
 
+--- Get next mission.
+-- @param #AIRWING self
+function AIRWING:_CheckMissions()
+
+  -- Loop over missions in queue.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    if mission:IsNotOver() then
+    
+      if mission:IsReadyToCancel() then
+        mission:Cancel()
+      end
+    
+    end
+  end
+  
+end
 --- Get next mission.
 -- @param #AIRWING self
 -- @return Ops.Auftrag#AUFTRAG Next mission or *nil*.
