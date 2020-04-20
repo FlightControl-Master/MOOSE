@@ -56,6 +56,7 @@
 -- @field #boolean passedfinalwp Group has passed the final waypoint.
 -- @field Ops.AirWing#AIRWING airwing The airwing the flight group belongs to.
 -- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol handling this group.
+-- @field Ops.Airboss#AIRBOSS airboss The airboss handling this group.
 -- @field Core.UserFlag#USERFLAG flaghold Flag for holding.
 -- @field #number Tholding Abs. mission time stamp when the group reached the holding point.
 -- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
@@ -864,6 +865,15 @@ end
 -- @return Ops.FlightControl#FLIGHTCONTROL The FLIGHTCONTROL object.
 function FLIGHTGROUP:GetFlightControl()
   return self.flightcontrol
+end
+
+
+--- Set the AIRBOSS controlling this flight group.
+-- @param #FLIGHTGROUP self
+-- @param Ops.Airboss#AIRBOSS airboss The AIRBOSS object.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetAirboss(airboss)
+  self.airboss=airboss
 end
 
 --- Set low fuel threshold. Triggers event "FuelLow" and calls event function "OnAfterFuelLow".
@@ -2528,10 +2538,10 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Waypoint number.
+-- @param #number n Waypoint number. Default is next waypoint.
 function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
 
-  -- TODO: what happens if currentwp=#waypoints
+  -- Update route from this waypoint number onwards.
   n=n or self.currentwp+1
   
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
@@ -2540,8 +2550,11 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   -- Waypoints.
   local wp={}
   
+  -- Current velocity.
+  local speed=self.group and self.group:GetVelocityKMH() or 100
+  
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
-  local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
+  local current=self.group:GetCoordinate():WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speed, true, nil, {}, "Current")
   table.insert(wp, current)
   
   -- Add remaining waypoints to route.
@@ -2875,7 +2888,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   self.flaghold:Set(0)
   
   -- Task fuction when reached holding point.
-  local TaskArrived=self.group:TaskFunction("FLIGHTGROUP.", self)
+  local TaskArrived=self.group:TaskFunction("FLIGHTGROUP._ReachedHolding", self)
 
   -- Orbit until flaghold=1 (true) but max 5 min if no FC is giving the landing clearance.
   local TaskOrbit=self.group:TaskOrbit(p0, nil, UTILS.KnotsToMps(SpeedHold), p1)
@@ -2913,17 +2926,22 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
       
   end 
  
-  -- Respawn?
+  local routeto=false
   if fc or world.event.S_EVENT_KILL then
+    routeto=true
+  end
+ 
+  -- Respawn?
+  if routeto then
   
-    self:T(self.lid.."FF route (not repawn)")
+    self:I(self.lid.."FF route (not repawn)")
     
     -- Just route the group. Respawn might happen when going from holding to final.
     self:Route(wp, 1)
  
   else 
   
-    self:T(self.lid.."FF respawn (not route)")
+    self:I(self.lid.."FF respawn (not route)")
   
     -- Get group template.
     local Template=self.group:GetTemplate()
@@ -3089,6 +3107,7 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
     if not self.ai then
       self:_UpdateMenu()
     end
+    
   end
 
 end
@@ -3553,7 +3572,7 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
       if Task.type==FLIGHTGROUP.TaskType.WAYPOINT and Task.waypoint then
 
         -- Check that this is a mission waypoint and no other tasks are defined here.      
-        if mission and #self:GetTasksWaypoint(Task.waypoint) then
+        if mission and #self:GetTasksWaypoint(Task.waypoint)==0 then
           self:RemoveWaypoint(Task.waypoint)
         end
       end
@@ -3901,7 +3920,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function called when a task is executed.
---@param Wrapper.Group#GROUP group Group that reached the holding zone.
+--@param Wrapper.Group#GROUP group Group which should execute the task.
 --@param #FLIGHTGROUP flightgroup Flight group.
 --@param #FLIGHTGROUP.Task task Task.
 function FLIGHTGROUP._TaskExecute(group, flightgroup, task)
@@ -3917,7 +3936,7 @@ function FLIGHTGROUP._TaskExecute(group, flightgroup, task)
 end
 
 --- Function called when a task is done.
---@param Wrapper.Group#GROUP group Group that reached the holding zone.
+--@param Wrapper.Group#GROUP group Group for which the task is done.
 --@param #FLIGHTGROUP flightgroup Flight group.
 --@param #FLIGHTGROUP.Task task Task.
 function FLIGHTGROUP._TaskDone(group, flightgroup, task)
@@ -4635,9 +4654,17 @@ end
 function FLIGHTGROUP:RemoveWaypoint(wpindex)
 
   if self.waypoints then
+  
+    -- Number of waypoints before delete.
+    local N=#self.waypoints
 
     -- Remove waypoint.
     table.remove(self.waypoints, wpindex)
+    
+    -- Number of waypoints after delete.
+    local n=#self.waypoints
+    
+    self:I(self.lid..string.format("Removing waypoint %d. N %d-->%d", wpindex, N, n))
   
     -- Shift all waypoint tasks after the removed waypoint.
     for _,_task in pairs(self.taskqueue) do
@@ -4650,16 +4677,34 @@ function FLIGHTGROUP:RemoveWaypoint(wpindex)
     -- Shift all mission waypoints after the removerd waypoint.
     for _,_mission in pairs(self.missionqueue) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
+      
+      -- TODO: This is not the waypoint index any more. Waypoint index is now for each FLIGHTGROUP.
       if mission.waypointindex and mission.waypointindex>wpindex then
         mission.waypointindex=mission.waypointindex-1
       end
     end  
   
-    --TODO update route?
-    -- no, if <= self.currentwaypoint or WP is landing.
-  
-    self:__UpdateRoute(-1)
     
+    -- Waypoint was not reached yet.
+    if wpindex > self.currentwp then
+    
+      -- Could be that we just removed the only remaining waypoint ==> passedfinalwp=true so we RTB or wait.
+      if self.currentwp>=n then
+        self.passedfinalwp=true
+      end
+
+      env.info("FF update route -1 after waypoint removed")
+      self:_CheckFlightDone()
+      
+    else
+    
+      -- If an already passed waypoint was deleted, we do not need to update the route.
+    
+      -- TODO: But what about the self.currentwp number. This is now incorrect!
+      self.currentwp=self.currentwp-1
+    
+    end
+        
   end
 
 end

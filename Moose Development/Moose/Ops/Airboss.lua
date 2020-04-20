@@ -11946,9 +11946,13 @@ function AIRBOSS:_LSOgrade(playerData)
   local nS=count(G, '%(')
   local nN=N-nS-nL
 
+  -- Groove time 16-18 sec for a unicorn.
+  local Tgroove=playerData.Tgroove
+  local TgrooveUnicorn=Tgroove and (Tgroove>=16.0 and Tgroove<=18.0) or false
+
   local grade
   local points
-  if N==0 then
+  if N==0 and TgrooveUnicorn then
     -- No deviations, should be REALLY RARE!
     grade="_OK_"
     points=5.0

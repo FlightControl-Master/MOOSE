@@ -127,6 +127,9 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   self.Ngroups=Ngroups or 3  
   self:SetEngagementRange()
   
+  -- Everyone can ORBIT.
+  self:AddMissonCapability(AUFTRAG.Type.ORBIT)
+  
   self.attribute=self.templategroup:GetAttribute()
   
   self.aircrafttype=self.templategroup:GetTypeName()
@@ -237,19 +240,22 @@ function SQUADRON:AddMissonCapability(MissionTypes, Performance)
     MissionTypes={MissionTypes}
   end
   
-  -- Add ORBIT for all.  
-  if not self:CheckMissionType(AUFTRAG.Type.ORBIT, MissionTypes) then
-    --table.insert(MissionTypes, AUFTRAG.Type.ORBIT)
-  end
-
   -- Set table.
   self.missiontypes=self.missiontypes or {}
   
   for _,missiontype in pairs(MissionTypes) do
-    local capability={} --Ops.Auftrag#AUFTRAG.Capability
-    capability.MissionType=missiontype
-    capability.Performance=Performance or 50
-    table.insert(self.missiontypes, capability)
+  
+    -- Check not to add the same twice.  
+    if self:CheckMissionCapability(missiontype, self.missiontypes) then
+      self:E(self.lid.."WARNING: Mission capability already present! No need to add it twice.")
+    else
+  
+      local capability={} --Ops.Auftrag#AUFTRAG.Capability
+      capability.MissionType=missiontype
+      capability.Performance=Performance or 50
+      table.insert(self.missiontypes, capability)
+      
+    end
   end
   
   -- Debug info.

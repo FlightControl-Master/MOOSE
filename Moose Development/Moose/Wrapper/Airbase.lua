@@ -377,9 +377,33 @@ AIRBASE.TerminalType = {
 function AIRBASE:Register( AirbaseName )
 
   local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) ) --#AIRBASE
+  
+  -- Airbase name.
   self.AirbaseName = AirbaseName
+  
+  -- Airbase unique ID.
   self.AirbaseID   = self:GetID(true)
-  self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, self:GetVec2(), 2500 )
+  
+  -- Airbase category.
+  local desc=self:GetDesc()
+  local category=Airbase.Category.AIRDROME
+  if desc and desc.category then
+    category=desc.category
+  else
+    self:E(string.format("ERROR: Cannot get category of airbase %s due to DCS 2.5.6 bug! Assuming it is an AIRDROME for now...", tostring(self.AirbaseName)))
+  end
+  self.AirbaseCategory=category
+  
+  -- Category name.
+  self.AirbaseCategoryName=AIRBASE.CategoryName[self.AirbaseCategory]
+  
+  -- Airbase zone.
+  if self.AirbaseCategory==Airbase.Category.SHIP then
+    local unit=UNIT:FindByName(AirbaseName)
+    self.AirbaseZone = ZONE_UNIT:New(AirbaseName, unit, 2500)
+  else
+    self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, self:GetVec2(), 2500 )
+  end
 
   -- Get Parking data.
   self.parking=self:GetParkingSpotsTable()
@@ -1112,15 +1136,7 @@ end
 -- @param #AIRBASE self
 -- @return #number Category of airbase from GetDesc().category.
 function AIRBASE:GetAirbaseCategory()
-  local desc=self:GetDesc()
-  local category=Airbase.Category.AIRDROME
-
-  if desc and desc.category then
-    category=desc.category
-  else
-    self:E(string.format("ERROR: Cannot get category of airbase %s due to DCS 2.5.6 bug! Assuming it is an AIRDROME for now...", tostring(self.AirbaseName)))
-  end
-  return category
+  return self.AirbaseCategory
 end
 
 

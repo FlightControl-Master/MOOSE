@@ -1843,7 +1843,7 @@ function AIRWING:CanMission(Mission)
     return false, Assets
   end
 
-  for squadname,_squadron in pairs(self.squadrons) do
+  for squadname,_squadron in pairs(squadrons) do
     local squadron=_squadron --Ops.Squadron#SQUADRON
 
     -- Check if this squadron can.

@@ -1304,9 +1304,13 @@ function AUFTRAG:AssignSquadrons(Squadrons)
   if Squadrons:IsInstanceOf("SQUADRON") then
     Squadrons={Squadrons}
   end
+  
+  for _,_squad in pairs(Squadrons) do
+    local squadron=_squad --Ops.Squadron#SQUADRON
+    self:I(self.lid..string.format("Assigning squadron %s", tostring(squadron.name)))
+  end
 
   self.squadrons=Squadrons
-
 end
 
 
