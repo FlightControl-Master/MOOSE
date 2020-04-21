@@ -1566,16 +1566,11 @@ function AUFTRAG:onafterStatus(From, Event, To)
       -- All flights have reported MISSON DONE.
       self:Done()
       
-    elseif self.Tstop and timer.getAbsTime()>self.Tstop+10 then
+    elseif (self.Tstop and timer.getAbsTime()>self.Tstop+10) or (self.Ntargets>0 and Ntargets==0) then
     
       -- Cancel mission if stop time passed.
       self:Cancel()
-      
-    elseif self.Ntargets>0 and Ntargets==0 then
-    
-      -- Cancel mission if all targets were destroyed.
-      self:Cancel()
-      
+            
     end
     
   end
@@ -1601,15 +1596,13 @@ function AUFTRAG:onafterStatus(From, Event, To)
   if fsmstate~=self.status then
     self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
-  
-  if #self.flightdata>0 then
-    local text="Flight data:"
-    for groupname,_flightdata in pairs(self.flightdata) do
-      local flightdata=_flightdata --#AUFTRAG.FlightData
-      text=text..string.format("\n- %s: status mission=%s flightgroup=%s", groupname, flightdata.status, flightdata.flightgroup and flightdata.flightgroup:GetState() or "N/A")
-    end
-    self:I(self.lid..text)
+
+  local text="Flight data:"  
+  for groupname,_flightdata in pairs(self.flightdata) do
+    local flightdata=_flightdata --#AUFTRAG.FlightData
+    text=text..string.format("\n- %s: status mission=%s flightgroup=%s", groupname, flightdata.status, flightdata.flightgroup and flightdata.flightgroup:GetState() or "N/A")
   end
+  self:I(self.lid..text)
 
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
 
@@ -1820,6 +1813,7 @@ function AUFTRAG:CheckFlightsDone()
         -- This one is done or cancelled.
       else
         -- At least this flight is not DONE or CANCELLED.
+        --flightdata.status
         return false      
       end
     end

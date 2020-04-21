@@ -1812,7 +1812,7 @@ function FLIGHTGROUP:_GetNextMission()
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
-    if mission:GetFlightStatus(self)==AUFTRAG.Status.SCHEDULED and mission:IsReadyToGo() then
+    if mission:GetFlightStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) then
       return mission
     end
   end
@@ -3544,8 +3544,11 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
     -- Check if the task is the current task?
     if currenttask and Task.id==currenttask.id then
     
+      -- Current stop flag value. I noticed cases, where setting the flag to 1 would not cancel the task, e.g. when firing HARMS on a dead ship.
+      local stopflag=Task.stopflag:Get()
+    
       -- Debug info.
-      local text=string.format("Current task %s ID=%d cancelled", Task.description, Task.id)
+      local text=string.format("Current task %s ID=%d cancelled (flag %s=%d)", Task.description, Task.id, Task.stopflag:GetName(), stopflag)
       MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)    
       self:I(self.lid..text)
       
@@ -3554,6 +3557,9 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
       
       if Task.dcstask.id=="Formation" then
         Task.formation:Stop()
+        self:TaskDone(Task)
+      elseif stopflag==1 then
+        -- Manuall call TaskDone if setting flag to one was not successful.
         self:TaskDone(Task)
       end
   
