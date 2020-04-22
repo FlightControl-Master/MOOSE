@@ -1668,6 +1668,15 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     
   end
 
+  ---
+  -- Airboss Helo
+  ---
+  if self.ishelo and self.airboss and self:IsHolding() then
+    if self.airboss:IsRecovering() or self:IsFuelCritical() then
+      self:ClearToLand()
+    end  
+  end
+
 
   -- Next check in ~30 seconds.
   if not self:IsStopped() then
@@ -2833,6 +2842,8 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
 
   self:I(self.lid..string.format("RTB: event=%s: %s --> %s", Event, From, To))
   
+  self.destbase=airbase
+  
   -- Defaults:
   SpeedTo=SpeedTo or UTILS.KmphToKnots(self.speedmax*0.75)
   SpeedHold=SpeedHold or (self.ishelo and 80 or 250)
@@ -2887,12 +2898,17 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   -- Set holding flag to 0=false.
   self.flaghold:Set(0)
   
+  local holdtime=5*60
+  if fc or self.airboss then
+    holdtime=nil
+  end
+  
   -- Task fuction when reached holding point.
   local TaskArrived=self.group:TaskFunction("FLIGHTGROUP._ReachedHolding", self)
 
   -- Orbit until flaghold=1 (true) but max 5 min if no FC is giving the landing clearance.
   local TaskOrbit=self.group:TaskOrbit(p0, nil, UTILS.KnotsToMps(SpeedHold), p1)
-  local TaskLand=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, fc and nil or 5*60)
+  local TaskLand=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, holdtime)
   local TaskHold=self.group:TaskControlled(TaskOrbit, TaskLand)
   local TaskKlar=self.group:TaskFunction("FLIGHTGROUP._ClearedToLand", self)  -- Once the holding flag becomes true, set trigger FLIGHTLANDING, i.e. set flight STATUS to LANDING.
   
@@ -2964,7 +2980,7 @@ end
 -- @param Core.Point#COORDINATE Coord Coordinate where to orbit. Default current position.
 -- @param #number Altitude Altitude in feet. Default 10000 ft.
 -- @param #number Speed Speed in knots. Default 250 kts.
-function FLIGHTGROUP:onafterWait(From, Event, To, Coord, Altitude, Speed)
+function FLIGHTGROUP:onbeforeWait(From, Event, To, Coord, Altitude, Speed)
 
   local allowed=true
   local Tsuspend=nil
@@ -3106,6 +3122,29 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
     self.flightcontrol:_AddFlightToHoldingQueue(self)
     if not self.ai then
       self:_UpdateMenu()
+    end
+    
+  elseif self.airboss then
+  
+    if self.ishelo then
+    
+      local carrierpos=self.airboss:GetCoordinate()
+      local carrierheading=self.airboss:GetHeading()
+      
+      local Distance=UTILS.NMToMeters(5)
+      local Angle=carrierheading+90
+      local altitude=math.random(12, 25)*100
+      local oc=carrierpos:Translate(Distance,Angle):SetAltitude(altitude, true)
+    
+      -- Orbit until flaghold=1 (true) but max 5 min if no FC is giving the landing clearance.
+      local TaskOrbit=self.group:TaskOrbit(oc, nil, UTILS.KnotsToMps(50))
+      local TaskLand=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1)
+      local TaskHold=self.group:TaskControlled(TaskOrbit, TaskLand)
+      local TaskKlar=self.group:TaskFunction("FLIGHTGROUP._ClearedToLand", self)  -- Once the holding flag becomes true, set trigger FLIGHTLANDING, i.e. set flight STATUS to LANDING.
+      
+      local DCSTask=self.group:TaskCombo({TaskOrbit, TaskHold, TaskKlar})
+    
+      self:SetTask(DCSTask)
     end
     
   end
@@ -3911,12 +3950,12 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
       self:SetOptionROT(mission.optionROT)
     end
     -- Radio
-    if mission.missionFreq then
-      self:SwitchRadioOn(mission.missionFreq, mission.missionModu)
+    if mission.radioFreq then
+      self:SwitchRadioOn(mission.radioFreq, mission.radioModu)
     end
     -- TACAN
-    if mission.missionTacanChannel then
-      self:SwitchTACANOn(mission.missionTacanChannel, mission.missionTacanMorse)
+    if mission.tacanChannel then
+      self:SwitchTACANOn(mission.tacanChannel, mission.tacanMorse)
     end
   end
 end
@@ -5925,12 +5964,12 @@ end
 
 --- Set default Radio frequency and modulation.
 -- @param #FLIGHTGROUP self
--- @param #number Frequency Radio frequency in MHz. Default 305 MHz.
+-- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
 -- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetDefaultRadio(Frequency, Modulation)
 
-  self.radioFreqDefault=Frequency or 305
+  self.radioFreqDefault=Frequency or 251
   self.radioModuDefault=Modulation or radio.modulation.AM
 
   self.radioOn=false

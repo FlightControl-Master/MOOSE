@@ -6002,6 +6002,7 @@ function AIRBOSS:_ScanCarrierZone()
     end
   end
 
+
   -- Find new flights that are inside CCA.
   for groupname,_group in pairs(insideCCA) do
     local group=_group --Wrapper.Group#GROUP
@@ -6015,32 +6016,66 @@ function AIRBOSS:_ScanCarrierZone()
     -- Create a new flight group
     if knownflight then
 
+      -- Debug output.
+      self:T2(self.lid..string.format("Known flight group %s of type %s in CCA.", groupname, actype))
+
       -- Check if flight is AI and if we want to handle it at all.
       if knownflight.ai and self.handleai then
 
-        local putintomarshal=false
+        -- Defines if AI group should be handled by the airboss.
+        local iscarriersquad=true
 
-        -- Get flight group.
-        local flight=_DATABASE:GetFlightGroup(groupname)
-  
-        if flight and flight:IsInBound() and flight.destbase:GetName()==self.carrier:GetName() then
-          if flight:IsHelo() then
+        -- Check if AI group is part of the group set if a set was defined.
+        if self.squadsetAI then
+          local group=self.squadsetAI:FindGroup(groupname)
+          if group then
+            iscarriersquad=true
           else
-            putintomarshal=true
+            iscarriersquad=false
           end
-          flight.airboss=self
+        end
+
+        -- Check if group was explicitly excluded.
+        if self.excludesetAI then
+          local group=self.excludesetAI:FindGroup(groupname)
+          if group then
+            iscarriersquad=false
+          end
         end
 
 
+        -- Get distance to carrier.
+        local dist=knownflight.group:GetCoordinate():Get2DDistance(self:GetCoordinate())
 
-        -- Send AI flight to marshal stack.
-        if putintomarshal then
+        -- Close in distance. Is >0 if AC comes closer wrt to first detected distance d0.
+        local closein=knownflight.dist0-dist
+
+        -- Debug info.
+        self:T3(self.lid..string.format("Known AI flight group %s closed in by %.1f NM", knownflight.groupname, UTILS.MetersToNM(closein)))
+
+        -- Is this group the tanker?
+        local istanker=self.tanker and self.tanker.tanker:GetName()==groupname
+
+        -- Is this group the AWACS?
+        local isawacs=self.awacs and self.awacs.tanker:GetName()==groupname
+
+        -- Send tanker to marshal stack?
+        local tanker2marshal = istanker and self.tanker:IsReturning() and self.tanker.airbase:GetName()==self.airbase:GetName() and knownflight.flag==-100 and self.tanker.recovery==true
+
+        -- Send AWACS to marhsal stack?
+        local awacs2marshal  = isawacs  and self.awacs:IsReturning()  and self.awacs.airbase:GetName()==self.airbase:GetName()  and knownflight.flag==-100 and self.awacs.recovery==true
+
+        -- Put flight into Marshal.
+        local putintomarshal=closein>UTILS.NMToMeters(5) and knownflight.flag==-100 and iscarriersquad and (not istanker) and (not isawacs)
+
+        -- Send AI flight to marshal stack if group closes in more than 5 and has initial flag value.
+        if putintomarshal or tanker2marshal or awacs2marshal then
 
           -- Get the next free stack for current recovery case.
           local stack=self:_GetFreeStack(knownflight.ai)
 
           -- Repawn.
-          local respawn=self.respawnAI
+          local respawn=self.respawnAI --or tanker2marshal
 
           if stack then
 
@@ -6059,9 +6094,8 @@ function AIRBOSS:_ScanCarrierZone()
           -- Break the loop to not have all flights at once! Spams the message screen.
           break
 
-        end   -- Closed in or tanker/AWACS        
-
-      end
+        end   -- Closed in or tanker/AWACS
+      end     -- AI
 
     else
 
@@ -6073,6 +6107,7 @@ function AIRBOSS:_ScanCarrierZone()
     end
 
   end
+
 
   -- Find flights that are not in CCA.
   local remove={}

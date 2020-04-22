@@ -86,10 +86,10 @@
 -- 
 -- @field #table enrouteTasks Mission enroute tasks.
 -- 
--- @field #number missionFreq Mission radio frequency in MHz.
--- @field #number missionModu Mission radio modulation (0=AM and 1=FM).
--- @field #number missionTacanChannel Mission TACAN channel.
--- @field #number missionTacanMorse Mission TACAN morse code.
+-- @field #number radioFreq Mission radio frequency in MHz.
+-- @field #number radioModu Mission radio modulation (0=AM and 1=FM).
+-- @field #number tacanChannel Mission TACAN channel.
+-- @field #number tacanMorse Mission TACAN morse code.
 -- 
 -- @field #number missionRepeated Number of times mission was repeated.
 -- @field #number missionRepeatMax Number of times mission is repeated if failed.
@@ -1214,8 +1214,8 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:SetRadio(Frequency, Modulation)
   
-  self.missionFreq=Frequency
-  self.missionModu=Modulation or 0
+  self.radioFreq=Frequency
+  self.radioModu=Modulation or 0
   
   return self
 end
@@ -1227,8 +1227,8 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:SetTACAN(Channel, Morse)
   
-  self.missionTacanChannel=Channel
-  self.missionTacanMorse=Morse or "XXX"
+  self.tacanChannel=Channel
+  self.tacanMorse=Morse or "XXX"
   
   return self
 end
@@ -2694,7 +2694,6 @@ function AUFTRAG:GetDCSMissionTask()
     -- FAC Mission --
     -----------------  
 
-    -- TODO
     local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageTarget.Target, self.engageWeaponType, self.facDesignation, self.facDatalink, self.facFrequency, self.facModulation, CallsignName, CallsignNumber)
     
     table.insert(DCStasks, DCStask)

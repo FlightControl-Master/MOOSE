@@ -663,7 +663,7 @@ function SCORE:onbeforeSave(From, Event, To, path, filename)
   
   -- Check default path.
   if path==nil and not lfs then
-    self:E(self.lid.."WARNING: lfs not desanitized. Results will be saved in DCS installation root directory rather than your \"Saved Games\DCS\" folder.")
+    self:E(self.lid.."WARNING: lfs not desanitized. Results will be saved in DCS installation root directory rather than your \"Saved Games/DCS\" folder.")
   end
 
   return true

@@ -40,6 +40,8 @@
 -- @field #number TACANmin TACAN min channel.
 -- @field #number TACANmax TACAN max channel.
 -- @field #table TACANused Table of used TACAN channels.
+-- @field #number radioFreq Radio frequency in MHz the squad uses.
+-- @field #number radioModu Radio modulation the squad uses.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -228,6 +230,18 @@ function SQUADRON:SetSkill(Skill)
   return self
 end
 
+--- Set radio frequency and modulation the squad uses.
+-- @param #SQUADRON self
+-- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
+-- @param #number Modulation Radio modulation. Default 0=AM.
+-- @usage mysquadron:SetSkill(AI.Skill.EXCELLENT)
+-- @return #SQUADRON self
+function SQUADRON:SetRadio(Frequency, Modulation)
+  self.radioFreq=Frequency or 251
+  self.radioModu=Modulation or radio.modulation.AM
+  return self
+end
+
 --- Set mission types this squadron is able to perform.
 -- @param #SQUADRON self
 -- @param #table MissionTypes Table of mission types. Can also be passed as a #string if only one type.
@@ -386,6 +400,14 @@ function SQUADRON:DelAsset(Asset)
     end
   end
   return self
+end
+
+--- Get radio frequency and modulation.
+-- @param #SQUADRON self
+-- @return #number Radio frequency in MHz.
+-- @return #number Radio Modulation (0=AM, 1=FM).
+function SQUADRON:GetRadio()
+  return self.radioFreq, self.radioModu
 end
 
 --- Create a callsign for the asset.

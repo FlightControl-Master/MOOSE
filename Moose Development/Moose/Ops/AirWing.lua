@@ -1396,17 +1396,26 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   -- Set asset flightgroup.
   asset.flightgroup=flightgroup
   
+  -- Get the SQUADRON of the asset.
   local squadron=self:GetSquadronOfAsset(asset)
+  
+  -- Set default TACAN channel.
   local Tacan=squadron:GetTACAN()
   if Tacan then
-    flightgroup:SetTACAN(Tacan)
+    flightgroup:SetDefaultTACAN(Tacan)
+  end
+  
+  -- Set radio frequency and modulation
+  local radioFreq, radioModu=squadron:GetRadio()
+  if radioFreq then
+    flightgroup:SetDefaultRadio(radioFreq, radioModu)
   end
   
   -- Not requested any more.
   asset.requested=nil
   
   -- Get Mission (if any).
-  local mission=self:GetMissionByID(request.assignment)  
+  local mission=self:GetMissionByID(request.assignment)
 
   -- Add mission to flightgroup queue.
   if mission then

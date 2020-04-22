@@ -31,7 +31,7 @@
 -- @field #table Qholding Queue of aircraft waiting for landing permission.
 -- @field #table Qlanding Queue of aircraft currently on final approach.
 -- @field #table Qtaxiinb Queue of aircraft taxiing to parking after landing.
--- @field #table Qarrived Queue of aircraft that have arrived at their parking spot after landing
+-- @field #table Qarrived Queue of aircraft that have arrived at their parking spot after landing.
 -- @field #table Qparking Queue of aircraft parking and waiting for taxi & takeoff clearance.
 -- @field #table Qtaxiout Queue of aircraft taxiing from parking to runway for takeoff.
 -- @field #table Qreadyto Queue of aircraft ready for takeoff. Only human players.
