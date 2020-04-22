@@ -898,6 +898,40 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
   return mission
 end
 
+--- Create a CARPET BOMBING mission.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT or STATIC object.
+-- @param #number Altitude Engage altitude in feet. Default 25000 ft.
+-- @param #number CarpetLength Length of bombing carpet in meters. Default 500 m.
+-- @return #AUFTRAG self
+function AUFTRAG:NewBOMBCARPET(Target, Altitude, CarpetLength)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.BOMBCARPET)
+  
+  mission:_TargetFromObject(Target)  
+  
+  -- DCS task options:
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
+  mission.engageWeaponType=ENUMS.WeaponFlag.AnyBomb
+  mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  mission.engageCarpetLength=CarpetLength or 500
+
+  -- Mission options:
+  mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
+  mission.missionAltitude=mission.engageAltitude*0.8  
+  mission.missionFraction=0.2
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+  
+  -- Evaluate result after 5 min.
+  mission.dTevaluate=5*60
+  
+  -- Get DCS task.
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  return mission
+end
+
 
 --- Create an ESCORT (or FOLLOW) mission. Flight will escort another group and automatically engage certain target types.
 -- @param #AUFTRAG self
@@ -2654,7 +2688,7 @@ function AUFTRAG:GetDCSMissionTask()
     
     local Vec2=self:GetTargetCoordinate():GetVec2()
     
-    local DCStask=CONTROLLABLE.TaskCarpetBombing(nil, Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, CarpetLength)
+    local DCStask=CONTROLLABLE.TaskCarpetBombing(nil, Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, self.engageCarpetLength)
   
     table.insert(DCStasks, DCStask)    
 

@@ -1005,7 +1005,6 @@ end
 -- @param #number CarpetLength (optional) default to 500 m.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskCarpetBombing(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, CarpetLength)
-  self:F2( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, CarpetLength } )
 
   -- Build Task Structure
   local DCSTask = {

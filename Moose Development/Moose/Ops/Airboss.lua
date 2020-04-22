@@ -2437,11 +2437,11 @@ function AIRBOSS:AddRecoveryWindow(starttime, stoptime, case, holdingoffset, tur
   local Tnow=timer.getAbsTime()
 
   if starttime and type(starttime)=="number" then
-    starttime=UTILS.SecondsToClock(starttime)
+    starttime=UTILS.SecondsToClock(Tnow+starttime)
   end
 
   if stoptime and type(stoptime)=="number" then
-    stoptime=UTILS.SecondsToClock(stoptime)
+    stoptime=UTILS.SecondsToClock(Tnow+stoptime)
   end
 
 
@@ -3250,17 +3250,21 @@ end
 --- Get next time the carrier will start recovering aircraft.
 -- @param #AIRBOSS self
 -- @param #boolean InSeconds If true, abs. mission time seconds is returned. Default is a clock #string.
--- @return #number Start time in abs. seconds.
--- @return #number Stop time in abs. seconds.
+-- @return #string Clock start (or start time in abs. seconds).
+-- @return #string Clock stop (or stop time in abs. seconds).
 function AIRBOSS:GetNextRecoveryTime(InSeconds)
   if self.recoverywindow then
     if InSeconds then
-      return UTILS.SecondsToClock(self.recoverywindow.START), UTILS.SecondsToClock(self.recverywindow.STOP)
+      return self.recoverywindow.START, self.recoverywindow.STOP
     else
-      return self.recoverywindow.START, self.recverywindow.STOP
+      return UTILS.SecondsToClock(self.recoverywindow.START), UTILS.SecondsToClock(self.recoverywindow.STOP)      
     end
   else
-    return InSeconds and -1,-1 or "?", "?"
+    if InSeconds then
+      return -1, -1
+    else
+      return "?", "?"
+    end
   end
 end
 
@@ -6016,15 +6020,15 @@ function AIRBOSS:_ScanCarrierZone()
     if knownflight then
 
       -- Check if flight is AI and if we want to handle it at all.
-      if knownflight.ai and self.handleai then
+      if knownflight.ai and knownflight.flag==-100 and self.handleai then
 
         local putintomarshal=false
 
         -- Get flight group.
         local flight=_DATABASE:GetFlightGroup(groupname)
   
-        if flight and flight:IsInBound() and flight.destbase:GetName()==self.carrier:GetName() then
-          if flight:IsHelo() then
+        if flight and flight:IsInbound() and flight.destbase:GetName()==self.carrier:GetName() then
+          if flight.ishelo then
           else
             putintomarshal=true
           end
@@ -10772,53 +10776,6 @@ function AIRBOSS:_GetZoneCorridor(case, l)
   local zone=ZONE_POLYGON_BASE:New("CASE II/III Approach Corridor", p)
 
   return zone
-
-  --[[
-  -- OLD
-
-  -- Angle between radial and offset in rad.
-  local alpha=math.rad(self.holdingoffset)
-
-  -- Some math...
-  local y1=d-w2
-  local x1=y1*math.tan(alpha)
-  local y2=d+w2
-  local x2=y2*math.tan(alpha)
-  local b=w2*(1/math.cos(alpha)-1)
-
-  -- This is what we need.
-  local P=x1+b
-  local Q=x2-b
-
-  -- Debug output.
-  self:T3(string.format("FF case %d radial = %d", case, radial))
-  self:T3(string.format("FF case %d offset = %d", case, offset))
-  self:T3(string.format("FF w  = %.1f NM", w))
-  self:T3(string.format("FF l  = %.1f NM", l))
-  self:T3(string.format("FF d  = %.1f NM", d))
-  self:T3(string.format("FF y1 = %.1f NM", y1))
-  self:T3(string.format("FF x1 = %.1f NM", x1))
-  self:T3(string.format("FF y2 = %.1f NM", y2))
-  self:T3(string.format("FF x2 = %.1f NM", x2))
-  self:T3(string.format("FF b  = %.1f NM", b))
-  self:T3(string.format("FF P  = %.1f NM", P))
-  self:T3(string.format("FF Q  = %.1f NM", Q))
-
-  -- Complicated case with an angle.
-  c[2]=c[1]:Translate( UTILS.NMToMeters(w2),      radial-90)     -- 1 Right of carrier.
-  c[3]=c[2]:Translate( UTILS.NMToMeters(d+dx+w2), radial)        -- 13 "south" @ 1 right
-  c[4]=c[3]:Translate( UTILS.NMToMeters(Q),       radial+90)     --
-  c[5]=c[4]:Translate( UTILS.NMToMeters(l),       offset)
-  c[6]=c[5]:Translate( UTILS.NMToMeters(w),       offset+90)     -- Back wall (angled)
-  c[9]=c[1]:Translate( UTILS.NMToMeters(w2),      radial+90)     -- 1 left of carrier.
-  c[8]=c[9]:Translate( UTILS.NMToMeters(d+dx-w2), radial)        -- 1 left and 11 behind of carrier.
-  c[7]=c[8]:Translate( UTILS.NMToMeters(P),       radial+90)
-
-  -- Translate these points a bit for a smoother turn.
-  --c[4]=c[4]:Translate(UTILS.NMToMeters(2), offset)
-  --c[7]=c[7]:Translate(UTILS.NMToMeters(2), offset)
-  ]]
-
 end
 
 
@@ -11316,20 +11273,6 @@ function AIRBOSS:_Lineup(unit, runway)
 
   ---
   local lineup=math.deg(math.atan2(z, x))
-
-  --[[
-  -- Position of the aircraft in the new coordinate system.
-  local a={x=x, y=0, z=z}
-
-  -- Stern position in the new coordinate system, which is simply the origin.
-  local b={x=0, y=0, z=0}
-
-  -- Vector from plane to ref point on the boat.
-  local c=UTILS.VecSubstract(a, b)
-
-  -- Current line up and error wrt to final heading of the runway.
-  local lineup=math.deg(math.atan2(c.z, c.x))
-  ]]
 
   return lineup
 end
@@ -13517,63 +13460,6 @@ function AIRBOSS:_InitWaypoints()
 
   return self
 end
-
---[[
-
---- Patrol carrier.
--- @param #AIRBOSS self
--- @param #number n Current waypoint.
--- @return #AIRBOSS self
-function AIRBOSS:_PatrolRoute(n)
-
-  -- Get carrier group.
-  local CarrierGroup=self.carrier:GetGroup()
-
-  -- Waypoints of group.
-  local Waypoints = CarrierGroup:GetTemplateRoutePoints()
-
-  -- Loop over waypoints.
-  for n=1,#Waypoints do
-
-    -- Passing waypoint taskfunction
-    local TaskPassingWP=CarrierGroup:TaskFunction("AIRBOSS._PassingWaypoint", self, n, #Waypoints)
-
-    -- Call task function when carrier arrives at waypoint.
-    CarrierGroup:SetTaskWaypoint(Waypoints[n], TaskPassingWP)
-  end
-
-  -- Init array.
-  self.waypoints={}
-
-  -- Set waypoint table.
-  for i,point in ipairs(Waypoints) do
-
-    -- Coordinate of the waypoint
-    local coord=COORDINATE:New(point.x, point.alt, point.y)
-
-    -- Set velocity of the coordinate.
-    coord:SetVelocity(point.speed)
-
-    -- Add to table.
-    table.insert(self.waypoints, coord)
-
-    -- Debug info.
-    if self.Debug then
-      coord:MarkToAll(string.format("Carrier Waypoint %d, Speed=%.1f knots", i, UTILS.MpsToKnots(point.speed)))
-    end
-
-  end
-
-  -- Current waypoint is 1.
-  self.currentwp=n or 1
-
-  -- Route carrier group.
-  CarrierGroup:Route(Waypoints)
-
-  return self
-end
-
-]]
 
 --- Patrol carrier.
 -- @param #AIRBOSS self
