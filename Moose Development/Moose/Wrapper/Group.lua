@@ -440,9 +440,16 @@ function GROUP:Destroy( GenerateEvent, delay )
 end
 
 
---- Returns category of the DCS Group.
+--- Returns category of the DCS Group. Returns one of
+-- 
+-- * Group.Category.AIRPLANE
+-- * Group.Category.HELICOPTER
+-- * Group.Category.GROUND
+-- * Group.Category.SHIP
+-- * Group.Category.TRAIN
+-- 
 -- @param #GROUP self
--- @return DCS#Group.Category The category ID
+-- @return DCS#Group.Category The category ID.
 function GROUP:GetCategory()
   self:F2( self.GroupName )
 
@@ -458,7 +465,7 @@ end
 
 --- Returns the category name of the #GROUP.
 -- @param #GROUP self
--- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship
+-- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship, Train.
 function GROUP:GetCategoryName()
   self:F2( self.GroupName )
 
@@ -469,6 +476,7 @@ function GROUP:GetCategoryName()
       [Group.Category.HELICOPTER] = "Helicopter",
       [Group.Category.GROUND] = "Ground Unit",
       [Group.Category.SHIP] = "Ship",
+      [Group.Category.TRAIN] = "Train",
     }
     local GroupCategory = DCSGroup:getCategory()
     self:T3( GroupCategory )

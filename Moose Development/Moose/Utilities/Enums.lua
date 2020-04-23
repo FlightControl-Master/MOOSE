@@ -1,10 +1,17 @@
 --- **Utilities** Enumerators.
 -- 
--- An enumerator is a variable that holds a constant value. Enumerators are very useful because  
+-- An enumerator is a variable that holds a constant value. Enumerators are very useful because they make the code easier to read and to change in general.
 -- 
--- https://wiki.hoggitworld.com/view/Category:Enumerators
+-- For example, instead of using the same value at multiple different places in your code, you should use a variable set to that value.
+-- If, for whatever reason, the value needs to be changed, you only have to change the variable once and do not have to search through you code and reset
+-- every value by hand.
 -- 
--- See the [Simulator Scripting Engine Documentation](https://wiki.hoggitworld.com/view/Simulator_Scripting_Engine_Documentation) on Hoggit for further explanation and examples.
+-- Another big advantage is that the LDT intellisense "knows" the enumerators. So you can use the autocompletion feature and do not have to keep all the
+-- values in your head or look them up in the docs. 
+-- 
+-- DCS itself provides a lot of enumerators for various things. See [Enumerators](https://wiki.hoggitworld.com/view/Category:Enumerators) on Hoggit.
+-- 
+-- Other Moose classe also have enumerators. For example, the AIRBASE class has enumerators for airbase names.
 -- 
 -- @module ENUMS
 -- @image MOOSE.JPG
@@ -12,11 +19,10 @@
 --- [DCS Enum world](https://wiki.hoggitworld.com/view/DCS_enum_world)
 -- @type ENUMS
 
---- The world singleton contains functions centered around two different but extremely useful functions.
--- * Events and event handlers are all governed within world.
--- * A number of functions to get information about the game world.
+--- Because ENUMS are just better practice.
 -- 
--- Enumerator
+--  The ENUMS class adds some handy variables, which help you to make your code better and more general.
+--
 -- @field #ENUMS
 ENUMS = {}
 
@@ -50,10 +56,10 @@ ENUMS.ROT = {
   AllowAbortMission=4,
 }
 
---- Weapon types. See https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag
+--- Weapon types. See the [Weapon Flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) enumerotor on hoggit wiki.
 -- @type ENUMS.WeaponFlag
 ENUMS.WeaponFlag={
-  --- Bombs
+  -- Bombs
   LGB                  =          2,
   TvGB                 =          4,
   SNSGB                =          8,
@@ -65,12 +71,12 @@ ENUMS.WeaponFlag={
   Dispencer            =        512,
   CandleBomb           =       1024,
   ParachuteBomb        = 2147483648,
-  --- Rockets
+  -- Rockets
   LightRocket          =       2048,
   MarkerRocket         =       4096,
   CandleRocket         =       8192,
   HeavyRocket          =      16384,
-  --- Air-To-Surface Missiles
+  -- Air-To-Surface Missiles
   AntiRadarMissile     =      32768,
   AntiShipMissile      =      65536,
   AntiTankMissile      =     131072,
@@ -79,7 +85,7 @@ ENUMS.WeaponFlag={
   TeleASM              =    1048576,
   CruiseMissile        =    2097152,
   AntiRadarMissile2    = 1073741824,
-  --- Air-To-Air Missiles
+  -- Air-To-Air Missiles
   SRAM                 =    4194304,
   MRAAM                =    8388608, 
   LRAAM                =   16777216,
@@ -87,7 +93,7 @@ ENUMS.WeaponFlag={
   SAR_AAM              =   67108864,
   AR_AAM               =  134217728,
   --- Guns
-  GUN_POD              =  268435456,
+  GunPod               =  268435456,
   BuiltInCannon        =  536870912,
   ---
   -- Combinations
@@ -129,10 +135,11 @@ ENUMS.WeaponFlag={
 -- @field #string CAS Close Air Support.
 -- @field #string ESCORT Escort another group.
 -- @field #string FIGHTERSWEEP Fighter sweep.
+-- @field #string GROUNDATTACK Ground attack.
 -- @field #string INTERCEPT Intercept.
 -- @field #string PINPOINTSTRIKE Pinpoint strike.
 -- @field #string RECONNAISSANCE Reconnaissance mission.
--- @field #string REFUELLING Refuelling mission.
+-- @field #string REFUELING Refueling mission.
 -- @field #string RUNWAYATTACK Attack the runway of an airdrome.
 -- @field #string SEAD Suppression of Enemy Air Defenses.
 -- @field #string TRANSPORT Troop transport.

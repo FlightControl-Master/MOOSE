@@ -814,10 +814,17 @@ function UNIT:GetDamageRelative()
   return 1
 end
 
---- Returns the category of the #UNIT.
+--- Returns the category of the #UNIT from descriptor. Returns one of
+-- 
+-- * Unit.Category.AIRPLANE
+-- * Unit.Category.HELICOPTER
+-- * Unit.Category.GROUND_UNIT
+-- * Unit.Category.SHIP
+-- * Unit.Category.STRUCTURE
+-- 
 -- @param #UNIT self
--- @return #number Unit category.
-function UNIT:GetCategory()
+-- @return #number Unit category from `getDesc().category`.
+function UNIT:GetUnitCategory()
   self:F3( self.UnitName )
 
   local DCSUnit = self:GetDCSObject()

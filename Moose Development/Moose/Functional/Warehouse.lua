@@ -3112,18 +3112,6 @@ function WAREHOUSE:GetAssignment(request)
   return tostring(request.assignment)
 end
 
---[[
---- Get warehouse unique ID from static warehouse object. This is the ID under which you find the @{#WAREHOUSE} object in the global data base.
--- @param #WAREHOUSE self
--- @param #string staticname Name of the warehouse static object.
--- @return #number Warehouse unique ID.
-function WAREHOUSE:GetWarehouseID(staticname)
-  local warehouse=STATIC:FindByName(staticname, true)
-  local uid=tonumber(warehouse:GetID())
-  return uid
-end
-]]
-
 --- Find a warehouse in the global warehouse data base.
 -- @param #WAREHOUSE self
 -- @param #number uid The unique ID of the warehouse.
@@ -4729,27 +4717,6 @@ function WAREHOUSE:onafterUnloaded(From, Event, To, group)
   end
 end
 
---- On before "Arrived" event. Triggered when a group has arrived at its destination warehouse.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP group The group that was delivered.
-function WAREHOUSE:onbeforeArrived(From, Event, To, group)
-
-  local asset=self:FindAssetInDB(group)
-
-  if asset then
-    if asset.arrived==true then
-      -- Asset already arrived (e.g. if multiple units trigger the event via landing).
-      return false
-    else
-      asset.arrived=true  --ensure this is not called again from the same asset group.
-      return true
-    end
-  end
-
-end
 
 --- On before "Arrived" event. Triggered when a group has arrived at its destination warehouse.
 -- @param #WAREHOUSE self
@@ -5146,6 +5113,7 @@ end
 -- @param #WAREHOUSE.Assetitem asset The asset that is dead.
 -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 function WAREHOUSE:onbeforeAssetSpawned(From, Event, To, group, asset, request)
+
   if asset.spawned then
     --return false
   else
@@ -5166,9 +5134,6 @@ end
 function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   local text=string.format("Asset %s from request id=%d was spawned!", asset.spawngroupname, request.uid)
   self:I(self.lid..text)
-
-  -- Set asset state to spawned.
-  asset.spawned=true
 
   -- Check if all assets groups are spawned and trigger events.
   local n=0
@@ -6162,9 +6127,8 @@ function WAREHOUSE:_OnEventBirth(EventData)
           -- Set warehouse state.
           group:SetState(group, "WAREHOUSE", self)
   
-          -- Asset spawned FSM function.
-          --self:__AssetSpawned(1, group, asset, request)
-          self:AssetSpawned(group, asset, request)
+          -- Asset spawned FSM function. We delay this a bit to have all units of the group in the game.
+          self:__AssetSpawned(1, group, asset, request)
   
         end
   
@@ -8546,7 +8510,7 @@ function WAREHOUSE:_DebugMessage(text, duration)
   if duration>0 then
     MESSAGE:New(text, duration):ToAllIf(self.Debug)
   end
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 end
 
 --- Error message. Message send to all (if duration > 0). Text self:E(text) added to DCS.log file.
