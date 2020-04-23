@@ -279,6 +279,10 @@ end
 -- @return #number Duration of the call in seconds.
 function RADIOQUEUE:Number2Transmission(number, delay, interval)
 
+  if not number then
+    self:E("ERROR: Number is nil!")
+  end
+
   --- Split string into characters.
   local function _split(str)
     local chars={}
