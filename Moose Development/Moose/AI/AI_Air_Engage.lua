@@ -374,7 +374,7 @@ end
 -- @param #string To The To State string.
 function AI_AIR_ENGAGE:onafterAccomplish( AIGroup, From, Event, To )
   self.Accomplished = true
-  self:SetDetectionOff()
+  --self:SetDetectionOff()
 end
 
 --- @param #AI_AIR_ENGAGE self
