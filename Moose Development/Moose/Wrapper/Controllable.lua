@@ -1176,7 +1176,6 @@ function CONTROLLABLE:TaskEmbarkToTransport(Coordinate, Radius)
      }
    }
 
-  self:E(EmbarkToTransport)
   return EmbarkToTransport
 end
 
@@ -1196,7 +1195,8 @@ function CONTROLLABLE:TaskDisembarkFromTransport(Coordinate, Radius)
      x=Coordinate.x,
      y=Coordinate.y,
      zoneRadius=Radius,
-   }}
+    }
+   }
 
   return DisembarkFromTransport
 end
