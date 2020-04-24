@@ -11969,7 +11969,7 @@ function AIRBOSS:_LSOgrade(playerData)
     -----------------
     grade="OWO"
     points=2.0
-    if G=="Unicorn" then
+    if N==0 then
       G="n/a"
     end
   elseif playerData.waveoff then
