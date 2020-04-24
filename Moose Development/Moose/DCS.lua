@@ -47,9 +47,13 @@ do -- world
   -- @field S_EVENT_PLAYER_COMMENT 
   -- @field S_EVENT_SHOOTING_START [https://wiki.hoggitworld.com/view/DCS_event_shooting_start](https://wiki.hoggitworld.com/view/DCS_event_shooting_start)
   -- @field S_EVENT_SHOOTING_END [https://wiki.hoggitworld.com/view/DCS_event_shooting_end](https://wiki.hoggitworld.com/view/DCS_event_shooting_end)
-  -- @field S_EVENT_MARK ADDED [https://wiki.hoggitworld.com/view/DCS_event_mark_added](https://wiki.hoggitworld.com/view/DCS_event_mark_added)
-  -- @field S_EVENT_MARK CHANGE [https://wiki.hoggitworld.com/view/DCS_event_mark_change](https://wiki.hoggitworld.com/view/DCS_event_mark_change)
-  -- @field S_EVENT_MARK REMOVE [https://wiki.hoggitworld.com/view/DCS_event_mark_remove](https://wiki.hoggitworld.com/view/DCS_event_mark_remove)
+  -- @field S_EVENT_MARK ADDED [https://wiki.hoggitworld.com/view/DCS_event_mark_added](https://wiki.hoggitworld.com/view/DCS_event_mark_added) DCS>=2.5.1
+  -- @field S_EVENT_MARK CHANGE [https://wiki.hoggitworld.com/view/DCS_event_mark_change](https://wiki.hoggitworld.com/view/DCS_event_mark_change) DCS>=2.5.1
+  -- @field S_EVENT_MARK REMOVE [https://wiki.hoggitworld.com/view/DCS_event_mark_remove](https://wiki.hoggitworld.com/view/DCS_event_mark_remove) DCS>=2.5.1
+  -- @field S_EVENT_KILL [https://wiki.hoggitworld.com/view/DCS_event_kill](https://wiki.hoggitworld.com/view/DCS_event_kill) DCS>=2.5.6
+  -- @field S_EVENT_SCORE [https://wiki.hoggitworld.com/view/DCS_event_score](https://wiki.hoggitworld.com/view/DCS_event_score) DCS>=2.5.6
+  -- @field S_EVENT_UNIT_LOST [https://wiki.hoggitworld.com/view/DCS_event_unit_lost](https://wiki.hoggitworld.com/view/DCS_event_unit_lost) DCS>=2.5.6
+  -- @field S_EVENT_LANDING_AFTER_EJECTION [https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection](https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection) DCS>=2.5.6
   -- @field S_EVENT_MAX
   
   --- The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.

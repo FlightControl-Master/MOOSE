@@ -1091,6 +1091,7 @@ function CONTROLLABLE:TaskEmbarking(Vec2, GroupSetForEmbarking, Duration, Distri
   local DCSTask = {
     id = 'Embarking',
     params = {
+      --selectedTransport  = self:GetID(),
       Vec2               = Vec2,
       x                  = Vec2.x,
       y                  = Vec2.y,
@@ -1099,6 +1100,123 @@ function CONTROLLABLE:TaskEmbarking(Vec2, GroupSetForEmbarking, Duration, Distri
       duration           = Duration,
       distributionFlag   = DistributionGroupSet and true or false,
       distribution       = Distribution,
+    }
+  }
+
+  return DCSTask
+end
+
+--- Used in conjunction with the EmbarkToTransport task for a ground infantry group, the controlled helicopter flight will land at the specified coordinates,
+-- pick up boarding troops and transport them to that groups DisembarkFromTransport task.
+-- The CONTROLLABLE has to be a helicopter group!
+-- @param #CONTROLLABLE self
+-- @param Core.Set#SET_GROUP GroupSet Set of groups to be embarked by the controllable.
+-- @param Core.Point#COORDINATE Coordinate Coordinate of embarking.
+-- @param #number Duration Duration of embarking in seconds.
+-- @return #table Embarking task.
+function CONTROLLABLE:TaskEmbarking(GroupSet, Coordinate, Duration)
+
+  -- Create table of group IDs.
+  local gids={}
+  for _,_group in pairs(GroupSet:GetAliveSet()) do
+    local group=_group --Wrapper.Group#GROUP
+    table.insert(gids, group:GetID())
+  end
+
+  -- Group ID of controllable.
+  local id=self:GetID()
+
+  -- Distribution
+  local distribution={}
+  distribution[id]=gids
+
+  local durationFlag=false
+  if Duration then
+    durationFlag=true
+  else
+    Duration=300
+  end
+
+  local DCStask={
+    id="Embarking",
+    params={
+      
+      distributionFlag=true,
+      distribution=distribution,
+      groupsForEmbarking=gids,
+      durationFlag=durationFlag,
+      distribution=distribution,
+      duration=Duration,
+      x=Coordinate.x,
+      y=Coordinate.z,
+    }
+  }
+
+  self:E(DCStask)
+
+  return DCStask
+end
+
+--- Used in conjunction with the embarking task for a transport helicopter group. The Ground units will move to the specified location and wait to be picked up by a helicopter.
+-- The helicopter will then fly them to their dropoff point defined by another task for the ground forces; DisembarkFromTransport task.
+-- The controllable has to be an infantry group!
+-- @param #CONTROLLABLE self
+-- @param Core.Point#COORDINATE Coordinate Coordinates where AI is expecting to be picked up.
+-- @param #number Radius Radius in meters.
+-- @return #table Embark to transport task.
+function CONTROLLABLE:TaskEmbarkToTransport(Coordinate, Radius)
+
+  local EmbarkToTransport = {
+   id="EmbarkToTransport",
+   params={
+       x=Coordinate.x,
+       y=Coordinate.z,
+       zoneRadius=Radius,
+       --selectedType="UH-1H",
+     }
+   }
+
+  self:E(EmbarkToTransport)
+  return EmbarkToTransport
+end
+
+
+
+--- Specifies the location an infantry group that is being transported by helicopters will be unloaded at. Used in conjunction with the EmbarkToTransport task.
+-- The CONTROLLABLE has to be an infantry group!
+-- @param #CONTROLLABLE self
+-- @param Core.Point#COORDINATE Coordinate Coordinates where AI is expecting to be picked up.
+-- @param #number Radius Radius in meters.
+-- @return #table Embark to transport task.
+function CONTROLLABLE:TaskDisembarkFromTransport(Coordinate, Radius)
+
+  local DisembarkFromTransport={
+   id="DisembarkFromTransport",
+   params = {
+     x=Coordinate.x,
+     y=Coordinate.y,
+     zoneRadius=Radius,
+   }}
+
+  return DisembarkFromTransport
+end
+
+
+--- (GROUND) Embark to a Transport landed at a location.
+-- Move to a defined Vec2 Point, and embark to a controllable when arrived within a defined Radius.
+-- @param #CONTROLLABLE self
+-- @param DCS#Vec2 Point The point where to wait.
+-- @param #number Radius The radius of the embarking zone around the Point.
+-- @return DCS#Task The DCS task structure.
+function CONTROLLABLE:TaskEmbarkToTransport( Point, Radius )
+
+  local DCSTask = {
+    id = 'EmbarkToTransport',
+    params = {
+      point      = Point,
+      x          = Point.x,
+      y          = Point.y,
+      zoneRadius = Radius,
     }
   }
 
@@ -1680,125 +1798,6 @@ function CONTROLLABLE:EnRouteTaskFAC( Radius, Priority )
     params = {
       radius = Radius,
       priority = Priority
-    }
-  }
-
-  return DCSTask
-end
-
-
-
---[[
---- Used in conjunction with the embarking task for a transport helicopter group. The Ground units will move to the specified location and wait to be picked up by a helicopter.
--- The helicopter will then fly them to their dropoff point defined by another task for the ground forces; DisembarkFromTransport task.
--- The controllable has to be an infantry group!
--- @param #CONTROLLABLE self
--- @param Core.Point#COORDINATE Coordinate Coordinates where AI is expecting to be picked up.
--- @param #number Radius Radius in meters.
--- @return #table Embark to transport task.
-function CONTROLLABLE:TaskEmbarkToTransport(Coordinate, Radius)
-
-  local EmbarkToTransport = {
-   id="EmbarkToTransport",
-   params={
-       x=Coordinate.x,
-       y=Coordinate.z,
-       zoneRadius=Radius,
-       --selectedType="UH-1H",
-     }
-   }
-
-  self:E(EmbarkToTransport)
-  return EmbarkToTransport
-end
-
---- Used in conjunction with the EmbarkToTransport task for a ground infantry group, the controlled helicopter flight will land at the specified coordinates,
--- pick up boarding troops and transport them to that groups DisembarkFromTransport task.
--- The CONTROLLABLE has to be a helicopter group!
--- @param #CONTROLLABLE self
--- @param Core.Set#SET_GROUP GroupSet Set of groups to be embarked by the controllable.
--- @param Core.Point#COORDINATE Coordinate Coordinate of embarking.
--- @param #number Duration Duration of embarking in seconds.
--- @return #table Embarking task.
-function CONTROLLABLE:TaskEmbarking(GroupSet, Coordinate, Duration)
-
-  -- Create table of group IDs.
-  local gids={}
-  for _,_group in pairs(GroupSet:GetAliveSet()) do
-    local group=_group --Wrapper.Group#GROUP
-    table.insert(gids, group:GetID())
-  end
-
-  -- Group ID of controllable.
-  local id=self:GetID()
-
-  -- Distribution
-  local distribution={}
-  distribution[id]=gids
-
-  local durationFlag=false
-  if Duration then
-    durationFlag=true
-  else
-    Duration=300
-  end
-
-  local DCStask={
-    id="Embarking",
-    params={
-      selectedTransport=self:GetID(),
-      distributionFlag=true,
-      distribution=distribution,
-      groupsForEmbarking=gids,
-      durationFlag=durationFlag,
-      distribution=distribution,
-      duration=Duration,
-      x=Coordinate.x,
-      y=Coordinate.z,
-    }
-  }
-
-  self:E(DCStask)
-
-  return DCStask
-end
-
---- Specifies the location an infantry group that is being transported by helicopters will be unloaded at. Used in conjunction with the EmbarkToTransport task.
--- The CONTROLLABLE has to be an infantry group!
--- @param #CONTROLLABLE self
--- @param Core.Point#COORDINATE Coordinate Coordinates where AI is expecting to be picked up.
--- @param #number Radius Radius in meters.
--- @return #table Embark to transport task.
-function CONTROLLABLE:TaskDisembarkFromTransport(Coordinate, Radius)
-
-  local DisembarkFromTransport={
-   id="DisembarkFromTransport",
-   params = {
-     x=Coordinate.x,
-     y=Coordinate.y,
-     zoneRadius=Radius,
-   }}
-
-  return DisembarkFromTransport
-end
-]]
-
-
---- (GROUND) Embark to a Transport landed at a location.
--- Move to a defined Vec2 Point, and embark to a controllable when arrived within a defined Radius.
--- @param #CONTROLLABLE self
--- @param DCS#Vec2 Point The point where to wait.
--- @param #number Radius The radius of the embarking zone around the Point.
--- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskEmbarkToTransport( Point, Radius )
-
-  local DCSTask = {
-    id = 'EmbarkToTransport',
-    params = {
-      point      = Point,
-      x          = Point.x,
-      y          = Point.y,
-      zoneRadius = Radius,
     }
   }
 
