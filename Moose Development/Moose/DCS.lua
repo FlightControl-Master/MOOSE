@@ -47,9 +47,13 @@ do -- world
   -- @field S_EVENT_PLAYER_COMMENT 
   -- @field S_EVENT_SHOOTING_START [https://wiki.hoggitworld.com/view/DCS_event_shooting_start](https://wiki.hoggitworld.com/view/DCS_event_shooting_start)
   -- @field S_EVENT_SHOOTING_END [https://wiki.hoggitworld.com/view/DCS_event_shooting_end](https://wiki.hoggitworld.com/view/DCS_event_shooting_end)
-  -- @field S_EVENT_MARK ADDED [https://wiki.hoggitworld.com/view/DCS_event_mark_added](https://wiki.hoggitworld.com/view/DCS_event_mark_added)
-  -- @field S_EVENT_MARK CHANGE [https://wiki.hoggitworld.com/view/DCS_event_mark_change](https://wiki.hoggitworld.com/view/DCS_event_mark_change)
-  -- @field S_EVENT_MARK REMOVE [https://wiki.hoggitworld.com/view/DCS_event_mark_remove](https://wiki.hoggitworld.com/view/DCS_event_mark_remove)
+  -- @field S_EVENT_MARK ADDED [https://wiki.hoggitworld.com/view/DCS_event_mark_added](https://wiki.hoggitworld.com/view/DCS_event_mark_added) DCS>=2.5.1
+  -- @field S_EVENT_MARK CHANGE [https://wiki.hoggitworld.com/view/DCS_event_mark_change](https://wiki.hoggitworld.com/view/DCS_event_mark_change) DCS>=2.5.1
+  -- @field S_EVENT_MARK REMOVE [https://wiki.hoggitworld.com/view/DCS_event_mark_remove](https://wiki.hoggitworld.com/view/DCS_event_mark_remove) DCS>=2.5.1
+  -- @field S_EVENT_KILL [https://wiki.hoggitworld.com/view/DCS_event_kill](https://wiki.hoggitworld.com/view/DCS_event_kill) DCS>=2.5.6
+  -- @field S_EVENT_SCORE [https://wiki.hoggitworld.com/view/DCS_event_score](https://wiki.hoggitworld.com/view/DCS_event_score) DCS>=2.5.6
+  -- @field S_EVENT_UNIT_LOST [https://wiki.hoggitworld.com/view/DCS_event_unit_lost](https://wiki.hoggitworld.com/view/DCS_event_unit_lost) DCS>=2.5.6
+  -- @field S_EVENT_LANDING_AFTER_EJECTION [https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection](https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection) DCS>=2.5.6
   -- @field S_EVENT_MAX
   
   --- The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
@@ -326,9 +330,27 @@ end -- coalition
 do -- Types
 
   --- @type Desc
-  -- @field #TypeName typeName type name
-  -- @field #string displayName localized display name
-  -- @field #table attributes object type attributes
+  -- @field #number speedMax0 Max speed in meters/second at zero altitude.
+  -- @field #number massEmpty Empty mass in kg.
+  -- @field #number tankerType Type of refueling system: 0=boom, 1=probe.
+  -- @field #number range Range in km(?).
+  -- @field #table box Bounding box.
+  -- @field #number Hmax Max height in meters.
+  -- @field #number Kmax ?
+  -- @field #number speedMax10K Max speed in meters/second at 10k altitude.
+  -- @field #number NyMin ?
+  -- @field #number NyMax ?
+  -- @field #number fuelMassMax Max fuel mass in kg.
+  -- @field #number speedMax10K Max speed in meters/second.
+  -- @field #number massMax Max mass of unit.
+  -- @field #number RCS ?
+  -- @field #number life Life points.
+  -- @field #number VyMax Max vertical velocity in m/s.
+  -- @field #number Kab ?
+  -- @field #table attributes Table of attributes.
+  -- @field #TypeName typeName Type Name.
+  -- @field #string displayName Localized display name.
+  -- @field #number category Unit category.
   
   --- A distance type
   -- @type Distance

@@ -90,7 +90,6 @@ end
 --- Returns the type name of the DCS Identifiable.
 -- @param #IDENTIFIABLE self
 -- @return #string The type name of the DCS Identifiable.
--- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetTypeName()
   self:F2( self.IdentifiableName )
   
@@ -107,9 +106,17 @@ function IDENTIFIABLE:GetTypeName()
 end
 
 
---- Returns category of the DCS Identifiable.
+--- Returns object category of the DCS Identifiable. One of
+-- 
+--  * Object.Category.UNIT = 1
+--  * Object.Category.WEAPON = 2
+--  * Object.Category.STATIC = 3
+--  * Object.Category.BASE = 4
+--  * Object.Category.SCENERY = 5
+--  * Object.Category.Cargo = 6
+--  
 -- @param #IDENTIFIABLE self
--- @return DCS#Object.Category The category ID
+-- @return DCS#Object.Category The category ID, i.e. a number.
 function IDENTIFIABLE:GetCategory()
   self:F2( self.ObjectName )
 

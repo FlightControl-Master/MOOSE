@@ -492,6 +492,7 @@ function AI_AIR:onafterStatus()
           OldAIControllable:SetTask( TimedOrbitTask, 10 )
     
           self:Fuel()
+          RTB = true
         end
       else
       end

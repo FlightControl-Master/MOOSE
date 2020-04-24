@@ -121,7 +121,7 @@ AI_A2A_PATROL = {
 
 --- Creates a new AI_A2A_PATROL object
 -- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol
+-- @param Wrapper.Group#GROUP AIPatrol The patrol group object.
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
@@ -137,7 +137,7 @@ AI_A2A_PATROL = {
 function AI_A2A_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   local AI_Air = AI_AIR:New( AIPatrol )
-  local AI_Air_Patrol = AI_A2A_PATROL:New( AI_Air, AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType  )
+  local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType  )
   local self = BASE:Inherit( self, AI_Air_Patrol ) -- #AI_A2A_PATROL
   
   self:SetFuelThreshold( .2, 60 )

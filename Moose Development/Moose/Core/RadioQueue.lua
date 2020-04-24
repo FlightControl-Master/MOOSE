@@ -113,18 +113,20 @@ end
 -- @param #number dt (Optional) Time step in seconds for checking the queue. Default 0.01 sec.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:Start(delay, dt)
-
+  
+  -- Delay before start.
   self.delay=delay or 1
   
+  -- Time interval for queue check.
   self.dt=dt or 0.01
   
+  -- Debug message.
   self:I(self.lid..string.format("Starting RADIOQUEUE %s on Frequency %.2f MHz [modulation=%d] in %.1f seconds (dt=%.3f sec)", self.alias, self.frequency/1000000, self.modulation, delay, dt))
 
-  
+  -- Start Scheduler.
   if self.schedonce then
-    self:_CheckRadioQueueDelayed(self.delta)
+    self:_CheckRadioQueueDelayed(delay)
   else
-    --self.RQid=self.scheduler:Schedule(self, self._CheckRadioQueue, {}, delay, dt)
     self.RQid=self.scheduler:Schedule(nil, RADIOQUEUE._CheckRadioQueue, {self}, delay, dt)
   end
   

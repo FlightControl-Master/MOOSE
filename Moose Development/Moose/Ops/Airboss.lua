@@ -1691,7 +1691,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.1.1"
+AIRBOSS.version="1.1.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1879,6 +1879,9 @@ function AIRBOSS:New(carriername, alias)
 
   -- Default recovery case. This sets self.defaultcase and self.case. Default Case I.
   self:SetRecoveryCase()
+
+  -- Set time the turn starts before the window opens.
+  self:SetRecoveryTurnTime()
 
   -- Set holding offset to 0 degrees. This set self.defaultoffset and self.holdingoffset.
   self:SetHoldingOffsetAngle()
@@ -2433,6 +2436,15 @@ function AIRBOSS:AddRecoveryWindow(starttime, stoptime, case, holdingoffset, tur
   -- Absolute mission time in seconds.
   local Tnow=timer.getAbsTime()
 
+  if starttime and type(starttime)=="number" then
+    starttime=UTILS.SecondsToClock(Tnow+starttime)
+  end
+
+  if stoptime and type(stoptime)=="number" then
+    stoptime=UTILS.SecondsToClock(Tnow+stoptime)
+  end
+
+
   -- Input or now.
   starttime=starttime or UTILS.SecondsToClock(Tnow)
 
@@ -2596,6 +2608,15 @@ function AIRBOSS:DeleteRecoveryWindow(window, delay)
       end
     end
   end
+end
+
+--- Set time before carrier turns and recovery window opens.
+-- @param #AIRBOSS self
+-- @param #number interval Time interval in seconds. Default 600 sec.
+-- @return #AIRBOSS self
+function AIRBOSS:SetRecoveryTurnTime(interval)
+  self.dTturn=interval or 600
+  return self
 end
 
 --- Set time interval for updating queues and other stuff.
@@ -3226,6 +3247,27 @@ function AIRBOSS:SetDebugModeOFF()
   return self
 end
 
+--- Get next time the carrier will start recovering aircraft.
+-- @param #AIRBOSS self
+-- @param #boolean InSeconds If true, abs. mission time seconds is returned. Default is a clock #string.
+-- @return #string Clock start (or start time in abs. seconds).
+-- @return #string Clock stop (or stop time in abs. seconds).
+function AIRBOSS:GetNextRecoveryTime(InSeconds)
+  if self.recoverywindow then
+    if InSeconds then
+      return self.recoverywindow.START, self.recoverywindow.STOP
+    else
+      return UTILS.SecondsToClock(self.recoverywindow.START), UTILS.SecondsToClock(self.recoverywindow.STOP)      
+    end
+  else
+    if InSeconds then
+      return -1, -1
+    else
+      return "?", "?"
+    end
+  end
+end
+
 --- Check if carrier is recovering aircraft.
 -- @param #AIRBOSS self
 -- @return #boolean If true, time slot for recovery is open.
@@ -3782,7 +3824,7 @@ function AIRBOSS:_CheckRecoveryTimes()
       self:RecoveryCase(nextwindow.CASE, nextwindow.OFFSET)
 
       -- Check if time is less than 5 minutes.
-      if nextwindow.WIND and nextwindow.START-time<5*60 and not self.turnintowind then
+      if nextwindow.WIND and nextwindow.START-time<self.dTturn and not self.turnintowind then
 
         -- Check that wind is blowing from a direction > 5° different from the current heading.
         local hdg=self:GetHeading()
@@ -3805,7 +3847,7 @@ function AIRBOSS:_CheckRecoveryTimes()
         self:T(self.lid..string.format("Heading=%03d°, Wind=%03d° %.1f kts, Delta=%03d° ==> U-turn=%s", hdg, wind,UTILS.MpsToKnots(vwind), delta, tostring(uturn)))
 
         -- Time into the wind 1 day or if longer recovery time + the 5 min early.
-        local t=math.max(nextwindow.STOP-nextwindow.START+300, 60*60*24)
+        local t=math.max(nextwindow.STOP-nextwindow.START+self.dTturn, 60*60*24)
 
         -- Recovery wind on deck in knots.
         local v=UTILS.KnotsToMps(nextwindow.SPEED)
@@ -5964,7 +6006,6 @@ function AIRBOSS:_ScanCarrierZone()
     end
   end
 
-
   -- Find new flights that are inside CCA.
   for groupname,_group in pairs(insideCCA) do
     local group=_group --Wrapper.Group#GROUP
@@ -6069,7 +6110,6 @@ function AIRBOSS:_ScanCarrierZone()
     end
 
   end
-
 
   -- Find flights that are not in CCA.
   local remove={}
@@ -10769,53 +10809,6 @@ function AIRBOSS:_GetZoneCorridor(case, l)
   local zone=ZONE_POLYGON_BASE:New("CASE II/III Approach Corridor", p)
 
   return zone
-
-  --[[
-  -- OLD
-
-  -- Angle between radial and offset in rad.
-  local alpha=math.rad(self.holdingoffset)
-
-  -- Some math...
-  local y1=d-w2
-  local x1=y1*math.tan(alpha)
-  local y2=d+w2
-  local x2=y2*math.tan(alpha)
-  local b=w2*(1/math.cos(alpha)-1)
-
-  -- This is what we need.
-  local P=x1+b
-  local Q=x2-b
-
-  -- Debug output.
-  self:T3(string.format("FF case %d radial = %d", case, radial))
-  self:T3(string.format("FF case %d offset = %d", case, offset))
-  self:T3(string.format("FF w  = %.1f NM", w))
-  self:T3(string.format("FF l  = %.1f NM", l))
-  self:T3(string.format("FF d  = %.1f NM", d))
-  self:T3(string.format("FF y1 = %.1f NM", y1))
-  self:T3(string.format("FF x1 = %.1f NM", x1))
-  self:T3(string.format("FF y2 = %.1f NM", y2))
-  self:T3(string.format("FF x2 = %.1f NM", x2))
-  self:T3(string.format("FF b  = %.1f NM", b))
-  self:T3(string.format("FF P  = %.1f NM", P))
-  self:T3(string.format("FF Q  = %.1f NM", Q))
-
-  -- Complicated case with an angle.
-  c[2]=c[1]:Translate( UTILS.NMToMeters(w2),      radial-90)     -- 1 Right of carrier.
-  c[3]=c[2]:Translate( UTILS.NMToMeters(d+dx+w2), radial)        -- 13 "south" @ 1 right
-  c[4]=c[3]:Translate( UTILS.NMToMeters(Q),       radial+90)     --
-  c[5]=c[4]:Translate( UTILS.NMToMeters(l),       offset)
-  c[6]=c[5]:Translate( UTILS.NMToMeters(w),       offset+90)     -- Back wall (angled)
-  c[9]=c[1]:Translate( UTILS.NMToMeters(w2),      radial+90)     -- 1 left of carrier.
-  c[8]=c[9]:Translate( UTILS.NMToMeters(d+dx-w2), radial)        -- 1 left and 11 behind of carrier.
-  c[7]=c[8]:Translate( UTILS.NMToMeters(P),       radial+90)
-
-  -- Translate these points a bit for a smoother turn.
-  --c[4]=c[4]:Translate(UTILS.NMToMeters(2), offset)
-  --c[7]=c[7]:Translate(UTILS.NMToMeters(2), offset)
-  ]]
-
 end
 
 
@@ -11313,20 +11306,6 @@ function AIRBOSS:_Lineup(unit, runway)
 
   ---
   local lineup=math.deg(math.atan2(z, x))
-
-  --[[
-  -- Position of the aircraft in the new coordinate system.
-  local a={x=x, y=0, z=z}
-
-  -- Stern position in the new coordinate system, which is simply the origin.
-  local b={x=0, y=0, z=0}
-
-  -- Vector from plane to ref point on the boat.
-  local c=UTILS.VecSubstract(a, b)
-
-  -- Current line up and error wrt to final heading of the runway.
-  local lineup=math.deg(math.atan2(c.z, c.x))
-  ]]
 
   return lineup
 end
@@ -11946,9 +11925,13 @@ function AIRBOSS:_LSOgrade(playerData)
   local nS=count(G, '%(')
   local nN=N-nS-nL
 
+  -- Groove time 16-18 sec for a unicorn.
+  local Tgroove=playerData.Tgroove
+  local TgrooveUnicorn=Tgroove and (Tgroove>=16.0 and Tgroove<=18.0) or false
+
   local grade
   local points
-  if N==0 then
+  if N==0 and TgrooveUnicorn then
     -- No deviations, should be REALLY RARE!
     grade="_OK_"
     points=5.0
@@ -12019,7 +12002,7 @@ function AIRBOSS:_LSOgrade(playerData)
     -----------------
     grade="OWO"
     points=2.0
-    if G=="Unicorn" then
+    if N==0 then
       G="n/a"
     end
   elseif playerData.waveoff then
@@ -13510,63 +13493,6 @@ function AIRBOSS:_InitWaypoints()
 
   return self
 end
-
---[[
-
---- Patrol carrier.
--- @param #AIRBOSS self
--- @param #number n Current waypoint.
--- @return #AIRBOSS self
-function AIRBOSS:_PatrolRoute(n)
-
-  -- Get carrier group.
-  local CarrierGroup=self.carrier:GetGroup()
-
-  -- Waypoints of group.
-  local Waypoints = CarrierGroup:GetTemplateRoutePoints()
-
-  -- Loop over waypoints.
-  for n=1,#Waypoints do
-
-    -- Passing waypoint taskfunction
-    local TaskPassingWP=CarrierGroup:TaskFunction("AIRBOSS._PassingWaypoint", self, n, #Waypoints)
-
-    -- Call task function when carrier arrives at waypoint.
-    CarrierGroup:SetTaskWaypoint(Waypoints[n], TaskPassingWP)
-  end
-
-  -- Init array.
-  self.waypoints={}
-
-  -- Set waypoint table.
-  for i,point in ipairs(Waypoints) do
-
-    -- Coordinate of the waypoint
-    local coord=COORDINATE:New(point.x, point.alt, point.y)
-
-    -- Set velocity of the coordinate.
-    coord:SetVelocity(point.speed)
-
-    -- Add to table.
-    table.insert(self.waypoints, coord)
-
-    -- Debug info.
-    if self.Debug then
-      coord:MarkToAll(string.format("Carrier Waypoint %d, Speed=%.1f knots", i, UTILS.MpsToKnots(point.speed)))
-    end
-
-  end
-
-  -- Current waypoint is 1.
-  self.currentwp=n or 1
-
-  -- Route carrier group.
-  CarrierGroup:Route(Waypoints)
-
-  return self
-end
-
-]]
 
 --- Patrol carrier.
 -- @param #AIRBOSS self
