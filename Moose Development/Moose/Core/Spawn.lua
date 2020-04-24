@@ -455,7 +455,8 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
 end
 
 
---- Limits the Maximum amount of Units that can be alive at the same time, and the maximum amount of groups that can be spawned.
+--- Stops any more repeat spawns from happening once the UNIT count of Alive units, spawned by the same SPAWN object, exceeds the first parameter. Also can stop spawns from happening once a total GROUP still alive is met.
+-- Exceptionally powerful when combined with SpawnSchedule for Respawning.
 -- Note that this method is exceptionally important to balance the performance of the mission. Depending on the machine etc, a mission can only process a maximum amount of units.
 -- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this method should be used...
 -- When a @{#SPAWN.New} is executed and the limit of the amount of units alive is reached, then no new spawn will happen of the group, until some of these units of the spawn object will be destroyed.
@@ -815,9 +816,9 @@ end
 -- Spawn_US_Platoon = { 'US Tank Platoon 1', 'US Tank Platoon 2', 'US Tank Platoon 3', 'US Tank Platoon 4', 'US Tank Platoon 5', 
 --                      'US Tank Platoon 6', 'US Tank Platoon 7', 'US Tank Platoon 8', 'US Tank Platoon 9', 'US Tank Platoon 10', 
 --                      'US Tank Platoon 11', 'US Tank Platoon 12', 'US Tank Platoon 13' }
--- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
--- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
--- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
 function SPAWN:InitRandomizeTemplate( SpawnTemplatePrefixTable )
 	self:F( { self.SpawnTemplatePrefix, SpawnTemplatePrefixTable } )
 
@@ -851,9 +852,9 @@ end
 -- Spawn_US_PlatoonSet = SET_GROUP:New():FilterPrefixes( "US Tank Platoon Templates" ):FilterOnce()
 -- 
 -- --- Now use the Spawn_US_PlatoonSet to define the templates using InitRandomizeTemplateSet.
--- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
--- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
--- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
 function SPAWN:InitRandomizeTemplateSet( SpawnTemplateSet ) -- R2.3
   self:F( { self.SpawnTemplatePrefix } )
 
@@ -884,9 +885,9 @@ end
 -- -- Each new SPAWN will randomize the route, with a defined time interval of 200 seconds with 40% time variation (randomization) and 
 -- -- with a limit set of maximum 12 Units alive simulteneously  and 150 Groups to be spawned during the whole mission.
 -- 
--- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
--- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
--- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
 function SPAWN:InitRandomizeTemplatePrefixes( SpawnTemplatePrefixes ) --R2.3
   self:F( { self.SpawnTemplatePrefix } )
 
@@ -978,11 +979,9 @@ end
 -- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
 -- SpawnRU_SU34 = SPAWN
 --   :New( 'Su-34' )
---   :Schedule( 2, 3, 1800, 0.4 )
---   :SpawnUncontrolled()
 --   :InitRandomizeRoute( 1, 1, 3000 )
 --   :InitRepeatOnLanding()
---   
+--   :Spawn()   
 function SPAWN:InitRepeatOnLanding()
 	self:F( { self.SpawnTemplatePrefix } )
 
@@ -1002,11 +1001,10 @@ end
 -- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
 -- SpawnRU_SU34 = SPAWN
 --   :New( 'Su-34' )
---   :Schedule( 2, 3, 1800, 0.4 )
 --   :SpawnUncontrolled()
 --   :InitRandomizeRoute( 1, 1, 3000 )
 --   :InitRepeatOnEngineShutDown()
---   
+--   :Spawn()
 function SPAWN:InitRepeatOnEngineShutDown()
 	self:F( { self.SpawnTemplatePrefix } )
 
@@ -1018,7 +1016,8 @@ function SPAWN:InitRepeatOnEngineShutDown()
 end
 
 
---- CleanUp groups when they are still alive, but inactive.
+--- Delete groups that have not moved for X seconds - AIR ONLY!!!
+-- DO NOT USE ON GROUPS THAT DO NOT MOVE OR YOUR SERVER WILL BURN IN HELL (Pikes - April 2020)
 -- When groups are still alive and have become inactive due to damage and are unable to contribute anything, then this group will be removed at defined intervals in seconds.
 -- @param #SPAWN self
 -- @param #string SpawnCleanUpInterval The interval to check for inactive groups within seconds.
@@ -1198,7 +1197,7 @@ function SPAWN:ReSpawn( SpawnIndex )
 		SpawnIndex = 1
 	end
 
--- TODO: This logic makes DCS crash and i don't know why (yet).
+-- TODO: This logic makes DCS crash and i don't know why (yet). -- ED (Pikes -- not in the least bit scary to see this, right?)
 	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
 	local WayPoints = SpawnGroup and SpawnGroup.WayPoints or nil
 	if SpawnGroup then
@@ -1463,7 +1462,7 @@ end
 -- --      Low limit:   600 * ( 1 - 0.5 / 2 ) = 450 
 -- --      High limit:  600 * ( 1 + 0.5 / 2 ) = 750
 -- -- Between these two values, a random amount of seconds will be choosen for each new spawn of the helicopters.
--- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
+-- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):SpawnScheduled( 600, 0.5 )
 function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	self:F( { SpawnTime, SpawnTimeVariation } )
 
@@ -2327,7 +2326,7 @@ function SPAWN:ParkAircraft( SpawnAirbase, TerminalType, Parkingdata, SpawnIndex
       end
     end
     
-    -- Set gereral spawnpoint position.
+    -- Set general spawnpoint position.
     SpawnPoint.x   = PointVec3.x
     SpawnPoint.y   = PointVec3.z
     SpawnPoint.alt = PointVec3.y

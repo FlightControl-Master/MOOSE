@@ -127,7 +127,7 @@ AI_A2A_PATROL = {
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
 -- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+-- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to BARO
 -- @return #AI_A2A_PATROL self
 -- @usage
 -- -- Define a new AI_A2A_PATROL Object. This PatrolArea will patrol a Group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
@@ -151,8 +151,8 @@ function AI_A2A_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCei
   self.PatrolMinSpeed = PatrolMinSpeed
   self.PatrolMaxSpeed = PatrolMaxSpeed
   
-  -- defafult PatrolAltType to "RADIO" if not specified
-  self.PatrolAltType = PatrolAltType or "RADIO"
+  -- defafult PatrolAltType to "BARO" if not specified
+  self.PatrolAltType = PatrolAltType or "BARO"
   
   self:AddTransition( { "Started", "Airborne", "Refuelling" }, "Patrol", "Patrolling" )
 

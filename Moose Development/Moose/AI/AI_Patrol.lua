@@ -178,8 +178,8 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   self.PatrolMinSpeed = PatrolMinSpeed
   self.PatrolMaxSpeed = PatrolMaxSpeed
   
-  -- defafult PatrolAltType to "RADIO" if not specified
-  self.PatrolAltType = PatrolAltType or "RADIO"
+  -- defafult PatrolAltType to "BARO" if not specified
+  self.PatrolAltType = PatrolAltType or "BARO"
   
   self:SetRefreshTimeInterval( 30 )
   
