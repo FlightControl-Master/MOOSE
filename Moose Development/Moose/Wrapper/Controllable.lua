@@ -1100,9 +1100,6 @@ function CONTROLLABLE:TaskEmbarking(Coordinate, GroupSetForEmbarking, Duration, 
       distribution       = Distribution,
     }
   }
-  
-  env.info("FF")
-  BASE:E(DCSTask)
 
   return DCSTask
 end
