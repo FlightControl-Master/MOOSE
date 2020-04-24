@@ -70,6 +70,7 @@
 -- 
 -- @field Core.Set#SET_GROUP transportGroupSet Groups to be transported.
 -- @field Core.Point#COORDINATE transportPickup Coordinate where to pickup the cargo.
+-- @field Core.Point#COORDINATE transportDropoff Coordinate where to drop off the cargo.
 -- 
 -- @field Ops.WingCommander#WINGCOMMANDER wingcommander The WINGCOMMANDER managing this mission.
 -- @field Ops.AirWing#AIRWING airwing The assigned airwing.
@@ -197,7 +198,7 @@ _AUFTRAGSNR=0
 -- @field #string SEAD Suppression/destruction of enemy air defences.
 -- @field #string STRIKE Strike mission.
 -- @field #string TANKER Tanker mission.
--- @field #string TRANSPORT Transport mission.
+-- @field #string TROOPTRANSPORT Troop transport mission.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -219,7 +220,7 @@ AUFTRAG.Type={
   SEAD="SEAD",
   STRIKE="Strike",
   TANKER="Tanker",
-  TRANSPORT="Transport",
+  TROOPTRANSPORT="Troop Transport",
 }
 
 --- Mission status.
@@ -963,14 +964,15 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   return mission
 end
 
---- Create an TRANSPORT mission.
+--- Create a TROOP TRANSPORT mission.
 -- @param #AUFTRAG self
 -- @param Core.Set#SET_GROUP TransportGroupSet The set group(s) to be transported.
+-- @param Core.Point#COORDINATE DropoffCoordinate Coordinate where the helo will land drop off the the troops.
 -- @param Core.Point#COORDINATE PickupCoordinate Coordinate where the helo will land to pick up the the cargo. Default is the fist transport group.
 -- @return #AUFTRAG self
-function AUFTRAG:NewTRANSPORT(TransportGroupSet, PickupCoordinate)
+function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupCoordinate)
 
-  local mission=AUFTRAG:New(AUFTRAG.Type.TRANSPORT)
+  local mission=AUFTRAG:New(AUFTRAG.Type.TROOPTRANSPORT)
   
   if TransportGroupSet:IsInstanceOf("GROUP") then
     mission.transportGroupSet=SET_GROUP:New()
@@ -978,14 +980,17 @@ function AUFTRAG:NewTRANSPORT(TransportGroupSet, PickupCoordinate)
   elseif TransportGroupSet:IsInstanceOf("SET_GROUP") then
     mission.transportGroupSet=TransportGroupSet
   else
-    env.info("FF error in TRANSPORT auftrag")
+    mission:E(mission.lid.."ERROR: TransportGroupSet must be a GROUP or SET_GROUP object!")
+    return nil
   end
   
   mission:_TargetFromObject(mission.transportGroupSet)
   
-  mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()
+  mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()  
+  mission.transportDropoff=DropoffCoordinate
   
   mission.transportPickup:MarkToAll("Pickup")
+  mission.transportDropoff:MarkToAll("Drop off")
 
   -- TODO: what's the best ROE here?
   mission.optionROE=ENUMS.ROE.ReturnFire
@@ -1673,8 +1678,18 @@ function AUFTRAG:Evaluate()
   local Ntargets=self:CountMissionTargets()
   
   -- Number of current targets is still >0 ==> Not everything was destroyed.
-  if self.Ntargets>0 and Ntargets>0 then
-    failed=true
+  if self.type==AUFTRAG.Type.TROOPTRANSPORT then
+
+    if self.Ntargets>0 and Ntargets<self.Ntargets then
+      failed=true
+    end
+  
+  else
+  
+    if self.Ntargets>0 and Ntargets>0 then
+      failed=true
+    end
+    
   end
   
   --TODO: all assets dead? Is this a FAILED criterion even if all targets have been destroyed? What if there are no initial targets (e.g. when ORBIT, PATROL, RECON missions).
@@ -2808,7 +2823,7 @@ function AUFTRAG:GetDCSMissionTask()
     
     table.insert(self.enrouteTasks, DCStask)    
   
-  elseif self.type==AUFTRAG.Type.TRANSPORT then
+  elseif self.type==AUFTRAG.Type.TROOPTRANSPORT then
 
     -----------------------
     -- TRANSPORT Mission --
@@ -2818,7 +2833,7 @@ function AUFTRAG:GetDCSMissionTask()
     
     local Vec2=self.transportPickup:GetVec2()
     
-    local DCStask=CONTROLLABLE.TaskEmbarking(self, Vec2, self.transportGroupSet, 120, DistributionGroupSet)
+    local DCStask=CONTROLLABLE.TaskEmbarking(nil, self.transportPickup, self.transportGroupSet, 120, DistributionGroupSet)
     
     table.insert(DCStasks, DCStask)
 

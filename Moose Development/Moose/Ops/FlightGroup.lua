@@ -1650,7 +1650,6 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   -- Fuel State
   ---
   
-
   -- Only if group is in air.
   if self:IsAlive() and self.group:IsAirborne(true) then
 
@@ -2796,6 +2795,12 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
     allowed=false
   end
   
+  if not self.group:IsAirborne(true) then
+    self:I(self.lid..string.format("WARNING: Group is not AIRBORNE  ==> RTB event is suspended for 10 sec."))
+    allowed=false
+    Tsuspend=-10  
+  end
+  
   -- Only if fuel is not low or critical.
   if not (self:IsFuelLow() or self:IsFuelCritical()) then
 
@@ -2840,7 +2845,7 @@ end
 -- @param #number SpeedLand Landing speed in knots. Default 170 kts.
 function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, SpeedLand)
 
-  self:I(self.lid..string.format("RTB: event=%s: %s --> %s", Event, From, To))
+  self:I(self.lid..string.format("RTB: event=%s: %s --> %s to %s", Event, From, To, airbase:GetName()))
   
   self.destbase=airbase
   
@@ -2907,10 +2912,10 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   local TaskArrived=self.group:TaskFunction("FLIGHTGROUP._ReachedHolding", self)
 
   -- Orbit until flaghold=1 (true) but max 5 min if no FC is giving the landing clearance.
-  local TaskOrbit=self.group:TaskOrbit(p0, nil, UTILS.KnotsToMps(SpeedHold), p1)
-  local TaskLand=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, holdtime)
-  local TaskHold=self.group:TaskControlled(TaskOrbit, TaskLand)
-  local TaskKlar=self.group:TaskFunction("FLIGHTGROUP._ClearedToLand", self)  -- Once the holding flag becomes true, set trigger FLIGHTLANDING, i.e. set flight STATUS to LANDING.
+  local TaskOrbit = self.group:TaskOrbit(p0, nil, UTILS.KnotsToMps(SpeedHold), p1)
+  local TaskLand  = self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, holdtime)
+  local TaskHold  = self.group:TaskControlled(TaskOrbit, TaskLand)
+  local TaskKlar  = self.group:TaskFunction("FLIGHTGROUP._ClearedToLand", self)  -- Once the holding flag becomes true, set trigger FLIGHTLANDING, i.e. set flight STATUS to LANDING.
   
   -- Waypoints from current position to holding point.
   local wp={}
@@ -2950,14 +2955,14 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   -- Respawn?
   if routeto then
   
-    self:I(self.lid.."FF route (not repawn)")
+    --self:I(self.lid.."FF route (not repawn)")
     
     -- Just route the group. Respawn might happen when going from holding to final.
     self:Route(wp, 1)
  
   else 
   
-    self:I(self.lid.."FF respawn (not route)")
+    --self:I(self.lid.."FF respawn (not route)")
   
     -- Get group template.
     local Template=self.group:GetTemplate()
@@ -3117,9 +3122,13 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
   
   -- Add flight to waiting/holding queue.
   if self.flightcontrol then
-    -- Add flight to holding queue.
+  
+    -- Remove flight from inbound queue.
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qinbound, self, "inbound")
+    
+    -- Add flight to holding queue.
     self.flightcontrol:_AddFlightToHoldingQueue(self)
+    
     if not self.ai then
       self:_UpdateMenu()
     end
@@ -3754,7 +3763,6 @@ function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
 
   -- Route flight to mission zone.
   self:RouteToMission(Mission, 5)
-
 end
 
 --- On after "MissionExecute" event. Mission execution began.
@@ -3926,6 +3934,26 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
   
     -- Add waypoint.
     self:AddWaypointAir(waypointcoord, nextwaypoint, speed, false)
+    
+    if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
+    
+      local Temb=self.group:TaskEmbarking(mission.transportPickup, mission.transportGroupSet, 300)
+      local Tdis=self.group:TaskDisembarking(mission.transportDropoff, mission.transportGroupSet)
+      
+      mission.DCStask=self.group:TaskCombo({Temb, Tdis})
+      
+      
+      for _,_group in pairs(mission.transportGroupSet.Set) do
+        local group=_group --Wrapper.Group#GROUP
+        
+        if group and group:IsAlive() then
+          local DCSTask=group:TaskEmbarkToTransport(mission.transportPickup, 500)
+          group:SetTask(DCSTask, 5)
+        end
+      
+      end
+    
+    end
     
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, nextwaypoint, mission.name, mission.prio, mission.duration)

@@ -1063,7 +1063,7 @@ end
 -- @param #number Duration (Optional) The maximum duration in seconds to wait until all groups have embarked.
 -- @param #table Distribution (Optional) Distribution used to put the infantry groups into specific carrier units.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskEmbarking(Vec2, GroupSetForEmbarking, Duration, Distribution)
+function CONTROLLABLE:TaskEmbarking(Coordinate, GroupSetForEmbarking, Duration, Distribution)
 
   -- Table of group IDs for embarking.
   local g4e={}
@@ -1091,9 +1091,8 @@ function CONTROLLABLE:TaskEmbarking(Vec2, GroupSetForEmbarking, Duration, Distri
     id = 'Embarking',
     params = {
       selectedTransport  = groupID,
-      Vec2               = Vec2,
-      x                  = Vec2.x,
-      y                  = Vec2.y,
+      x                  = Coordinate.x,
+      y                  = Coordinate.z,
       groupsForEmbarking = g4e,
       durationFlag       = Duration and true or false,
       duration           = Duration,
@@ -1101,6 +1100,9 @@ function CONTROLLABLE:TaskEmbarking(Vec2, GroupSetForEmbarking, Duration, Distri
       distribution       = Distribution,
     }
   }
+  
+  env.info("FF")
+  BASE:E(DCSTask)
 
   return DCSTask
 end
@@ -1149,8 +1151,8 @@ function CONTROLLABLE:TaskDisembarking(Coordinate, GroupSetToDisembark)
     return nil
   end
 
-  local DisembarkFromTransport={
-   id="DisembarkFromTransport",
+  local Disembarking={
+   id = "Disembarking",
    params = {
      x                  = Coordinate.x,
      y                  = Coordinate.z,
@@ -1158,7 +1160,7 @@ function CONTROLLABLE:TaskDisembarking(Coordinate, GroupSetToDisembark)
     }
    }
 
-  return DisembarkFromTransport
+  return Disembarking
 end
 
 
