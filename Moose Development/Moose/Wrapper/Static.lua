@@ -4,7 +4,7 @@
 -- 
 -- ### Author: **FlightControl**
 -- 
--- ### Contributions: 
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -48,6 +48,10 @@ STATIC = {
 }
 
 
+--- Register a static object.
+-- @param #STATIC self
+-- @param #string StaticName Name of the static object.
+-- @return #STATIC self
 function STATIC:Register( StaticName )
   local self = BASE:Inherit( self, POSITIONABLE:New( StaticName ) )
   self.StaticName = StaticName
@@ -71,19 +75,17 @@ end
 -- @param #STATIC self
 -- @param #string StaticName Name of the DCS **Static** as defined within the Mission Editor.
 -- @param #boolean RaiseError Raise an error if not found.
--- @return #STATIC
-function STATIC:FindByName( StaticName, RaiseError )
+-- @return #STATIC self or *nil*
+function STATIC:FindByName( StaticName )
+
+  -- Find static in DB.
   local StaticFound = _DATABASE:FindStatic( StaticName )
 
+  -- Set static name.
   self.StaticName = StaticName
   
   if StaticFound then
-    StaticFound:F3( { StaticName } )
   	return StaticFound
-  end
-
-  if RaiseError == nil or RaiseError == true then
-    error( "STATIC not found for: " .. StaticName )
   end
 
   return nil

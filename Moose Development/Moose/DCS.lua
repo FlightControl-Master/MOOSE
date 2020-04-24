@@ -326,9 +326,27 @@ end -- coalition
 do -- Types
 
   --- @type Desc
-  -- @field #TypeName typeName type name
-  -- @field #string displayName localized display name
-  -- @field #table attributes object type attributes
+  -- @field #number speedMax0 Max speed in meters/second at zero altitude.
+  -- @field #number massEmpty Empty mass in kg.
+  -- @field #number tankerType Type of refueling system: 0=boom, 1=probe.
+  -- @field #number range Range in km(?).
+  -- @field #table box Bounding box.
+  -- @field #number Hmax Max height in meters.
+  -- @field #number Kmax ?
+  -- @field #number speedMax10K Max speed in meters/second at 10k altitude.
+  -- @field #number NyMin ?
+  -- @field #number NyMax ?
+  -- @field #number fuelMassMax Max fuel mass in kg.
+  -- @field #number speedMax10K Max speed in meters/second.
+  -- @field #number massMax Max mass of unit.
+  -- @field #number RCS ?
+  -- @field #number life Life points.
+  -- @field #number VyMax Max vertical velocity in m/s.
+  -- @field #number Kab ?
+  -- @field #table attributes Table of attributes.
+  -- @field #TypeName typeName Type Name.
+  -- @field #string displayName Localized display name.
+  -- @field #number category Unit category.
   
   --- A distance type
   -- @type Distance
