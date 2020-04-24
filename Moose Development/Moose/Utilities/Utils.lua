@@ -65,7 +65,7 @@ CALLSIGN={
     Enfield=1,
     Springfield=2,
     Uzi=3,
-    Cold=4,
+    Colt=4,
     Dodge=5,
     Ford=6,
     Chevy=7,
@@ -437,8 +437,8 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
     end
 
     -- 024� 23' 12"N or 024� 23' 12.03"N
-    return string.format('%03d°', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
-        .. string.format('%03d°', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
+    return string.format('%03d°', latDeg)..string.format('%02d', latMin)..'\''..string.format(secFrmtStr, latSec)..'"'..latHemi..' '
+        .. string.format('%03d°', lonDeg)..string.format('%02d', lonMin)..'\''..string.format(secFrmtStr, lonSec)..'"'..lonHemi
 
   else  -- degrees, decimal minutes.
     latMin = UTILS.Round(latMin, acc)
@@ -1098,5 +1098,36 @@ function UTILS.GetModulationName(Modulation)
     
 end
 
+--- Get the callsign name from its enumerator value
+-- @param #number Callsign The enumerator callsign.
+-- @return #string The callsign name.
+function UTILS.GetCallsignName(Callsign)
+
+  for name, value in pairs(CALLSIGN.Aircraft) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.AWACS) do
+    if value==Callsign then
+      return name
+    end
+  end
+
+  for name, value in pairs(CALLSIGN.JTAC) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.Tanker) do
+    if value==Callsign then
+      return name
+    end
+  end
+
+  return "Unknown Calsing"
+end
 
 -- Just a test to see commits in new environment for Wingthor
