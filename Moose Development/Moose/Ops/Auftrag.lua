@@ -1205,6 +1205,20 @@ function AUFTRAG:SetEngageAsGroup(Switch)
   return self
 end
 
+--- Set engage altitude.
+-- @param #AUFTRAG self
+-- @param #string Altitude Altitude in feet. Default 6000 ft.
+-- @return #AUFTRAG self
+function AUFTRAG:SetEngageAltitude(Altitude)
+  
+  self.engageAltitude=UTILS.FeetToMeters(Altitude or 6000)
+  
+   -- Update the DCS task parameter.
+  self.DCStask=self:GetDCSMissionTask()
+   
+  return self
+end
+
 --- Set mission altitude.
 -- @param #AUFTRAG self
 -- @param #string Altitude Altitude in feet.
