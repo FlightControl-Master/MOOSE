@@ -3073,7 +3073,7 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
   local TaskFunction=self.group:TaskFunction("FLIGHTGROUP._FinishedRefuelling", self)
   local DCSTasks={TaskRefuel, TaskFunction}
   
-  local Speed=self.speedCruise --UTILS.KnotsToKmph(300)
+  local Speed=self.speedCruise
 
   local coordinate=self.group:GetCoordinate()
   
@@ -3937,12 +3937,10 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
     
-      local Temb=self.group:TaskEmbarking(mission.transportPickup, mission.transportGroupSet, 300)
-      local Tdis=self.group:TaskDisembarking(mission.transportDropoff, mission.transportGroupSet)
-      
-      mission.DCStask=self.group:TaskCombo({Temb, Tdis})
-      
-      
+      -- Refresh DCS task with the known controllable.  
+      mission.DCStask=mission:GetDCSMissionTask(self.group)
+            
+      -- Add task to embark for the troops.
       for _,_group in pairs(mission.transportGroupSet.Set) do
         local group=_group --Wrapper.Group#GROUP
         
@@ -3985,6 +3983,7 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     if mission.tacanChannel then
       self:SwitchTACANOn(mission.tacanChannel, mission.tacanMorse)
     end
+    
   end
 end
 

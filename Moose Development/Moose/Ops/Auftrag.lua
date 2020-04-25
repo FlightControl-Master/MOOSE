@@ -2517,6 +2517,17 @@ function AUFTRAG:GetTargetType()
   return self:GetTargetData().Type
 end
 
+--- Get 2D vector of target.
+-- @param #AUFTRAG self
+-- @return DCS#VEC2 The target 2D vector or *nil*.
+function AUFTRAG:GetTargetVec2()
+  local coord=self:GetTargetCoordinate()
+  if coord then
+    return coord:GetVec2()
+  end
+  return nil
+end
+
 --- Get coordinate of target.
 -- @param #AUFTRAG self
 -- @return Core.Point#COORDINATE The target coordinate or *nil*.
@@ -2641,8 +2652,9 @@ end
 
 --- Get DCS task table for the given mission.
 -- @param #AUFTRAG self
+-- @param Wrapper.Controllable#CONTROLLABLE TaskControllable The controllable for which this task is set. Most tasks don't need it.
 -- @return DCS#Task The DCS task table. If multiple tasks are necessary, this is returned as a combo task.
-function AUFTRAG:GetDCSMissionTask()
+function AUFTRAG:GetDCSMissionTask(TaskControllable)
 
   local DCStasks={}
 
@@ -2679,9 +2691,7 @@ function AUFTRAG:GetDCSMissionTask()
     -- BOMBING Mission --
     ---------------------
   
-    local Vec2=self:GetTargetCoordinate():GetVec2()
-  
-    local DCStask=CONTROLLABLE.TaskBombing(nil, Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, Divebomb)
+    local DCStask=CONTROLLABLE.TaskBombing(nil, self:GetTargetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, Divebomb)
   
     table.insert(DCStasks, DCStask)
     
@@ -2701,9 +2711,7 @@ function AUFTRAG:GetDCSMissionTask()
     -- BOMBCARPET Mission --
     ------------------------
     
-    local Vec2=self:GetTargetCoordinate():GetVec2()
-    
-    local DCStask=CONTROLLABLE.TaskCarpetBombing(nil, Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, self.engageCarpetLength)
+    local DCStask=CONTROLLABLE.TaskCarpetBombing(nil, self:GetTargetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, self.engageCarpetLength)
   
     table.insert(DCStasks, DCStask)    
 
@@ -2785,7 +2793,7 @@ function AUFTRAG:GetDCSMissionTask()
     -- RECON Mission --
     -------------------  
 
-    -- TODO: What?
+    -- TODO: What? Table of coordinates?
 
   elseif self.type==AUFTRAG.Type.SEAD then
   
@@ -2806,10 +2814,8 @@ function AUFTRAG:GetDCSMissionTask()
     --------------------
     -- STRIKE Mission --
     -------------------- 
-
-    local Vec2=self:GetTargetCoordinate():GetVec2()
   
-    local DCStask=CONTROLLABLE.TaskAttackMapObject(nil, Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+    local DCStask=CONTROLLABLE.TaskAttackMapObject(nil, self:GetTargetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
     
     table.insert(DCStasks, DCStask)
   
@@ -2825,17 +2831,18 @@ function AUFTRAG:GetDCSMissionTask()
   
   elseif self.type==AUFTRAG.Type.TROOPTRANSPORT then
 
-    -----------------------
-    -- TRANSPORT Mission --
-    ----------------------- 
+    ----------------------------
+    -- TROOPTRANSPORT Mission --
+    ----------------------------
   
-    -- TODO: What about the groups to embark? And where to go?
+    -- Task to embark the troops at the pick up point.
+    local TaskEmbark=CONTROLLABLE.TaskEmbarking(TaskControllable, self.transportPickup,  self.transportGroupSet, self.transportWaitForCargo)
     
-    local Vec2=self.transportPickup:GetVec2()
+    -- Task to disembark the troops at the drop off point.
+    local TaskDisEmbark=CONTROLLABLE.TaskDisembarking(TaskControllable, self.transportDropoff, self.transportGroupSet)    
     
-    local DCStask=CONTROLLABLE.TaskEmbarking(nil, self.transportPickup, self.transportGroupSet, 120, DistributionGroupSet)
-    
-    table.insert(DCStasks, DCStask)
+    table.insert(DCStasks, TaskEmbark)
+    table.insert(DCStasks, TaskDisEmbark)
 
   elseif self.type==AUFTRAG.Type.RESCUEHELO then
 
