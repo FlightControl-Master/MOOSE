@@ -852,7 +852,7 @@ function AUFTRAG:NewBOMBING(Target, Altitude)
   mission.missionAltitude=mission.engageAltitude*0.8  
   mission.missionFraction=0.5
   mission.optionROE=ENUMS.ROE.OpenFire
-  mission.optionROT=ENUMS.ROT.PassiveDefense
+  mission.optionROT=ENUMS.ROT.NoReaction   -- No reaction is better.
   
   -- Evaluate result after 5 min. We might need time until the bombs have dropped and targets have been detroyed.
   mission.dTevaluate=5*60
@@ -922,7 +922,7 @@ function AUFTRAG:NewBOMBCARPET(Target, Altitude, CarpetLength)
   mission.missionAltitude=mission.engageAltitude*0.8  
   mission.missionFraction=0.2
   mission.optionROE=ENUMS.ROE.OpenFire
-  mission.optionROT=ENUMS.ROT.PassiveDefense
+  mission.optionROT=ENUMS.ROT.NoReaction
   
   -- Evaluate result after 5 min.
   mission.dTevaluate=5*60
@@ -2655,7 +2655,7 @@ function AUFTRAG:UpdateMarker()
     
   else
   
-    if self.marker.text~=text then
+    if self.marker:GetText()~=text then
       self.marker:UpdateText(text)
     end
     

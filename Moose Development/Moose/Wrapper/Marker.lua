@@ -29,9 +29,7 @@
 -- @field #number coalition Coalition to which the marker is displayed.
 -- @extends Core.Fsm#FSM
 
---- **Ground Control**: Airliner X, Good news, you are clear to taxi to the active.
---  **Pilot**: Roger, What's the bad news?
---  **Ground Control**: No bad news at the moment, but you probably want to get gone before I find any.
+--- Just because...
 --
 -- ===
 --
@@ -39,30 +37,88 @@
 --
 -- # The MARKER Class Idea
 -- 
--- # Creat a Marker
+-- The MARKER class simplifies creating, updating and removing of markers on the F10 map.
+-- 
+-- # Create a Marker
+-- 
+--     -- Create a MARKER object at Batumi with a trivial text.
+--     local Coordinate=AIRBASE:FindByName("Batumi"):GetCoordinate()
+--     mymarker=MARKER:New(Coordinate, "I am Batumi Airfield")
+-- 
+-- Now this does **not** show the marker yet. We still need to specifiy to whom it is shown. There are several options, i.e. 
+-- show the marker to everyone, to a speficic coaliton only, or only to a specific group.
 -- 
 -- ## For Everyone
 -- 
+-- If the marker should be visible to everyone, you can use the :ToAll() function.
+--
+--     mymarker=MARKER:New(Coordinate, "I am Batumi Airfield"):ToAll()
+-- 
 -- ## For a Coaliton
+-- 
+-- If the maker should be visible to a specific coalition, you can use the :ToCoalition() function.
+-- 
+--     mymarker=MARKER:New(Coordinate, "I am Batumi Airfield"):ToCoaliton(coaliton.side.BLUE)
+--     
+-- ### To Blue Coaliton
+-- 
+-- ### To Red Coalition
+--     
+-- This would show the marker only to the Blue coaliton.
 -- 
 -- ## For a Group
 -- 
 -- 
--- # Update a Marker
+-- # Removing a Marker
+-- 
+-- 
+-- # Updating a Marker
+-- 
+-- The marker text and/coordinate can be updated easily as shown below.
+-- 
+-- However, note that updateing involves to remove and recreate the marker if either text or its coordinate is changed.
+-- This is a DCS scripting engine limitation. 
 -- 
 -- ## Update Text
 -- 
+-- If you created a marker "mymarker" as shown above, you can update the dispayed test by
+-- 
+--     mymarker:UpdateText("I am the new text at Batumi")
+--     
+-- The update can also be delayed by, e.g. 90 seconds, using
+-- 
+--     mymarker:UpdateText("I am the new text at Batumi", 90)
+-- 
 -- ## Update Coordinate
 -- 
+-- If you created a marker "mymarker" as shown above, you can update its coordinate on the F10 map by
+-- 
+--     mymarker:UpdateCoordinate(NewCoordinate)
+--     
+-- The update can also be delayed by, e.g. 60 seconds, using
+-- 
+--     mymarker:UpdateCoordinate(NewCoordinate, 60)
 -- 
 -- # Retrieve Data
 -- 
+-- The important data as the displayed text and the coordinate of the marker can be retrieved quite easily.
+-- 
 -- ## Text
+-- 
+--     local text=mymarker:GetText()
+--     env.info("Marker Text = " .. text)
 -- 
 -- ## Coordinate
 -- 
+--     local Coordinate=mymarker:GetCoordinate()
+--     env.info("Marker Coordinate LL DSM = " .. Coordinate:ToStringLLDMS())
+-- 
 -- 
 -- # FSM Events
+-- 
+-- Moose creates addditonal events, so called FSM event, when markers are added, changed, removed, and text or the coordianteis updated.
+-- 
+-- These events can be captured and used for processing via OnAfter functions as shown below.
 -- 
 -- ## Added
 -- 

@@ -874,17 +874,41 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetAirboss(airboss)
   self.airboss=airboss
+  return self
 end
 
 --- Set low fuel threshold. Triggers event "FuelLow" and calls event function "OnAfterFuelLow".
 -- @param #FLIGHTGROUP self
 -- @param #number threshold Fuel threshold in percent. Default 25 %.
--- @param #boolean rtb If true, RTB on fuel low event.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetFuelLowThreshold(threshold, rtb)
-  self.fuellow=false
+function FLIGHTGROUP:SetFuelLowThreshold(threshold)
   self.fuellowthresh=threshold or 25
-  self.fuellowrtb=rtb
+  return self
+end
+
+--- Set if low fuel threshold is reached, flight goes RTB.
+-- @param #FLIGHTGROUP self
+-- @param #boolean switch If true or nil, flight goes RTB. If false, turn this off.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetFuelLowRTB(switch)
+  if switch==false then
+    self.fuellowrtb=false
+  else
+    self.fuellowrtb=true
+  end
+  return self
+end
+
+--- Set if low fuel threshold is reached, flight tries to refuel at the neares tanker.
+-- @param #FLIGHTGROUP self
+-- @param #boolean switch If true or nil, flight goes for refuelling. If false, turn this off.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetFuelLowRefuel(switch)
+  if switch==false then
+    self.fuellowrefuel=false
+  else
+    self.fuellowrefuel=true
+  end
   return self
 end
 
@@ -894,7 +918,6 @@ end
 -- @param #boolean rtb If true, RTB on fuel critical event.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetFuelCriticalThreshold(threshold, rtb)
-  self.fuelcritical=false
   self.fuelcriticalthresh=threshold or 10
   self.fuelcriticalrtb=rtb
   return self
@@ -1563,31 +1586,54 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
 
     local time=timer.getAbsTime()
     
+    -- Current position.
     local position=self:GetCoordinate()
+    
+    -- Travelled distance since last check.
     local ds=self.position:Get3DDistance(position)
+    
+    -- Time interval.
     local dt=time-self.traveltime
+    
+    -- Speed.
     local v=ds/dt
     
+    -- Add up travelled distance.
     self.traveldist=self.traveldist+ds
-    self.traveltime=time
-    self.position=position
-      
+    
+    self:I(self.lid..string.format("FF Travelled ds=%.1f km dt=%.1f s ==> v=%.1f knots", self.traveldist/1000, dt, UTILS.MpsToKnots(v)))
+          
     local fuelmass=math.huge
     for _,_element in pairs(self.elements) do
       local element=_element --#FLIGHTGROUP.Element
       
       local fuel=element.unit:GetFuel() or 0
+      local df=element.fuelrel-fuel
+      
       local fmass=element.fuelmass*fuel
+            
+      
+      local dm=element.fuelmass-fmass
+      
+      local dmds=dm/ds
+      local dmdt=dm/dt
       
       if fmass<fuelmass then
         fuelmass=fmass
       end
       
+      self:I(self.lid..string.format("Fuel consumption %s: df=%.1f, dm=%.1f kg ==> dm/ds=%.1f kg/s   dm/dt=%.1f 1/s", element.name, df, dm, dmds, dmdt))
+      
+      element.fuelrel=fuel
+      element.fuelmass=fmass
     end
     
     -- Log outut.
-    self:I(self.lid..string.format("FF Distance travelled = %.1f km v=%.1f knots fuel=%d kg", self.traveldist/1000, UTILS.MpsToKnots(v), fuelmass))
-    
+    --self:I(self.lid..string.format("FF Distance travelled = %.1f km v=%.1f knots fuel=%d kg", self.traveldist/1000, UTILS.MpsToKnots(v), fuelmass))
+
+    -- Update parameters.
+    self.traveltime=time
+    self.position=position    
   end  
   
   ---
@@ -1654,6 +1700,15 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   if self:IsAlive() and self.group:IsAirborne(true) then
 
     local fuelmin=self:GetFuelMin()
+    
+    if fuelmin>=self.fuellowthresh then
+      self.fuellow=false
+    end
+    
+    if fuelmin>=self.fuelcriticalthresh then
+      self.fuelcritical=false
+    end
+    
   
     -- Low fuel?
     if fuelmin<self.fuellowthresh and not self.fuellow then
@@ -2888,7 +2943,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
     self.flightcontrol:_AddFlightToInboundQueue(self)
   end
   
-   -- Altitude above ground for a glide slope of 3�.
+   -- Altitude above ground for a glide slope of 3 degrees.
   local x1=self.ishelo and UTILS.NMToMeters(5.0) or UTILS.NMToMeters(10)
   local x2=self.ishelo and UTILS.NMToMeters(2.5) or UTILS.NMToMeters(5)
   local alpha=math.rad(3)  
@@ -3103,6 +3158,8 @@ function FLIGHTGROUP:onafterRefueled(From, Event, To)
     self:__UpdateRoute(-1)
   end
   
+  -- TODO: reset fuellow and fuelcrit to false if enough fuel was taken.
+  
 end
 
 
@@ -3274,13 +3331,29 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
       self:Refuel(tanker.flightgroup:GetCoordinate())
       
     else
+    
       if airbase and self.fuellowrtb then
         self:RTB(airbase)
         --TODO: RTZ
-      end      
+      end
+            
     end
     
   else
+  
+    if self.fuellowrefuel and self.refueltype then
+    
+      local tanker=self:FindNearestTanker(50)
+      
+      if tanker then
+      
+        self:I(self.lid..string.format("Send to refuel at tanker %s", tanker:GetName()))
+    
+        self:Refuel()
+        
+        return        
+      end
+    end
   
     if airbase and self.fuellowrtb then
       self:RTB(airbase)
@@ -3306,7 +3379,7 @@ function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
   -- Set switch to true.
   self.fuelcritical=true
 
-  -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
+  -- Airbase.
   local airbase=self.destbase or self.homebase
   
   if airbase and self.fuelcriticalrtb and not self:IsGoing4Fuel() then
@@ -4195,7 +4268,9 @@ function FLIGHTGROUP:AddElementByName(unitname)
     element.modex=element.unit:GetTemplate().onboard_num
     element.skill=element.unit:GetTemplate().skill
     element.pylons=element.unit:GetTemplatePylons()
-    element.fuelmass=element.unit:GetTemplatePayload().fuel
+    element.fuelmass0=element.unit:GetTemplatePayload().fuel
+    element.fuelmass=element.fuelmass0
+    element.fuelrel=element.unit:GetFuel()
     element.category=element.unit:GetCategory()
     element.categoryname=element.unit:GetCategoryName()
     element.callsign=element.unit:GetCallsign()
@@ -4208,8 +4283,8 @@ function FLIGHTGROUP:AddElementByName(unitname)
       element.ai=true
     end
     
-    local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f, category=%d, categoryname=%s, callsign=%s, ai=%s",
-    element.name, element.status, element.skill, element.modex, element.fuelmass, element.category, element.categoryname, element.callsign, tostring(element.ai))
+    local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f (%d %%), category=%d, categoryname=%s, callsign=%s, ai=%s",
+    element.name, element.status, element.skill, element.modex, element.fuelmass, element.fuelrel, element.category, element.categoryname, element.callsign, tostring(element.ai))
     self:I(self.lid..text)
 
     -- Add element to table.
@@ -4262,6 +4337,85 @@ function FLIGHTGROUP:GetHomebaseFromWaypoints()
     
     --TODO: Handle case where e.g. only one WP but that is not landing.
     --TODO: Probably other cases need to be taken care of.
+    
+  end
+
+  return nil
+end
+
+--- Find the nearest friendly airbase (same or neutral coalition).
+-- @param #FLIGHTGROUP self
+-- @param #number Radius Search radius in NM. Default 50 NM.
+-- @return Wrapper.Airbase#AIRBASE Closest tanker group #nil.
+function FLIGHTGROUP:FindNearestAirbase(Radius)
+
+  local coord=self:GetCoordinate()
+
+  local dmin=math.huge
+  local airbase=nil --Wrapper.Airbase#AIRBASE
+  for _,_airbase in pairs(AIRBASE.GetAllAirbases()) do
+    local ab=_airbase --Wrapper.Airbase#AIRBASE
+    
+    local coalitionAB=ab:GetCoalition()
+    
+    if coalitionAB==self:GetCoalition() or coalitionAB==coalition.side.NEUTRAL then
+    
+      if airbase then
+        local d=ab:GetCoordinate():Get2DDistance(coord)
+        
+        if d<dmin then
+          d=dmin
+          airbase=ab
+        end        
+        
+      end
+    
+    end
+    
+  
+  end
+
+  return airbase
+end
+
+--- Find the nearest tanker.
+-- @param #FLIGHTGROUP self
+-- @param #number Radius Search radius in NM. Default 50 NM.
+-- @return Wrapper.Group#GROUP Closest tanker group #nil.
+function FLIGHTGROUP:FindNearestTanker(Radius)
+
+  Radius=UTILS.NMToMeters(Radius or 50)
+  
+  if self.refueltype then
+
+    local coord=self:GetCoordinate()
+    
+    local units=coord:ScanUnits(Radius)
+    
+    local dmin=math.huge
+    local tanker=nil --Wrapper.Unit#UNIT
+    for _,_unit in pairs(units.Set) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      
+      local istanker, refuelsystem=unit:IsTanker()
+      
+      if istanker and self.refueltype==refuelsystem then
+      
+        -- Distance.
+        local d=unit:GetCoordinate():Get2DDistance(coord)
+        
+        if d<dmin then
+          d=dmin
+          tanker=unit
+        end
+        
+      end
+      
+    end
+     
+    if tanker then
+      return tanker:GetGroup()
+    end
     
   end
 

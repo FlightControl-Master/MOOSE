@@ -446,6 +446,23 @@ do -- COORDINATE
     
     return gotunits, gotstatics, gotscenery, Units, Statics, Scenery
   end
+  
+  --- Scan/find UNITS within a certain radius around the coordinate using the world.searchObjects() DCS API function.
+  -- @param #COORDINATE self
+  -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
+  -- @return Core.Set#SET_UNIT Set of units.
+  function COORDINATE:ScanUnits(radius)
+  
+    local _,_,_,units=self:ScanObjects(radius, true, false, false)
+        
+    local set=SET_UNIT:New()
+    
+    for _,unit in pairs(units) do
+      set:AddUnit(unit)
+    end
+  
+    return set
+  end  
  
   --- Calculate the distance from a reference @{#COORDINATE}.
   -- @param #COORDINATE self
