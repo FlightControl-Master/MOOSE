@@ -1011,7 +1011,6 @@ function CONTROLLABLE:TaskCarpetBombing(Vec2, GroupAttack, WeaponExpend, AttackQ
     id = 'CarpetBombing',
     params = {
       attackType       = "Carpet",
-      point            = Vec2,
       x                = Vec2.x,
       y                = Vec2.y,
       groupAttack      = GroupAttack and GroupAttack or false,
@@ -1019,7 +1018,7 @@ function CONTROLLABLE:TaskCarpetBombing(Vec2, GroupAttack, WeaponExpend, AttackQ
       weaponType       = WeaponType or ENUMS.WeaponFlag.AnyBomb,
       expend           = WeaponExpend or "All",
       attackQtyLimit   = AttackQty and true or false,
-      attackQty        = AttackQty,
+      attackQty        = AttackQty or 1,
       directionEnabled = Direction and true or false,
       direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,

@@ -342,7 +342,7 @@ AUFTRAG.version="0.2.0"
 -- TODO: F10 marker to create new missions.
 -- DONE: Evaluate mission result ==> SUCCESS/FAILURE
 -- DONE: NewAUTO() NewA2G NewA2A
--- TODO: Transport mission.
+-- DONE: Transport mission.
 -- TODO: Recon mission.
 -- TODO: Set mission coalition, e.g. for F10 markers.
 
@@ -916,11 +916,13 @@ function AUFTRAG:NewBOMBCARPET(Target, Altitude, CarpetLength)
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyBomb
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageCarpetLength=CarpetLength or 500
+  mission.engageAsGroup=false  -- Looks like this must be false or the task is not executed. It is not available in the ME anyway but in the task of the mission file.
+  mission.engageDirection=nil  -- This is also not available in the ME.
 
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
   mission.missionAltitude=mission.engageAltitude*0.8  
-  mission.missionFraction=0.2
+  mission.missionFraction=0.5
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.NoReaction
   
@@ -1852,6 +1854,29 @@ function AUFTRAG:GetFlightWaypointTask(flightgroup)
   end
 end
 
+--- Set flightgroup waypoint index.
+-- @param #AUFTRAG self
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
+-- @param #number waypointindex Waypoint index.
+function AUFTRAG:SetFlightWaypointIndex(flightgroup, waypointindex)
+  self:I(self.lid..string.format("Setting waypoint index %d", waypointindex))
+  local flightdata=self:GetFlightData(flightgroup)
+  if flightdata then
+    flightdata.waypointindex=waypointindex
+  end
+end
+
+--- Get flightgroup waypoint index.
+-- @param #AUFTRAG self
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
+-- @return #number Waypoint index
+function AUFTRAG:GetFlightWaypointIndex(flightgroup)
+  local flightdata=self:GetFlightData(flightgroup)
+  if flightdata then
+    return flightdata.waypointindex
+  end
+end
+
 
 --- Check if all flights are done with their mission (or dead).
 -- @param #AUFTRAG self
@@ -1864,6 +1889,7 @@ function AUFTRAG:CheckFlightsDone()
   end
   
   -- It could be that all flights were destroyed on the way to the mission execution waypoint.
+  -- TODO: would be better to check if everybody is dead by now.
   if self:IsStarted() and self:CountFlightGroups()==0 then
     return true
   end
@@ -1876,7 +1902,6 @@ function AUFTRAG:CheckFlightsDone()
         -- This one is done or cancelled.
       else
         -- At least this flight is not DONE or CANCELLED.
-        --flightdata.status
         return false      
       end
     end
@@ -1889,20 +1914,27 @@ end
 -- EVENT Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Flightgroup event function handling the crash of a unit.
+--- Unit lost event.
 -- @param #AUFTRAG self
 -- @param Core.Event#EVENTDATA EventData Event data.
-function AUFTRAG:OnEventCrash(EventData)
+function AUFTRAG:OnEventUnitLost(EventData)
 
   -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+  if EventData and EventData.IniGroup and EventData.IniUnit then
     local unit=EventData.IniUnit
     local group=EventData.IniGroup
     local unitname=EventData.IniUnitName
+    
+    for _,_flightdata in pairs(self.flightdata) do
+      local flightdata=_flightdata --#AUFTRAG.FlightData
+      if flightdata and flightdata.flightgroup and flightdata.flightgroup.groupname==EventData.IniGroupName then
+        self:I(self.lid..string.format("UNIT LOST event for flightgroup %s unit %s", flightdata.flightgroup.groupname, EventData.IniUnitName))
+      end
+    end
+    
   end
 
 end
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Functions

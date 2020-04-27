@@ -789,7 +789,10 @@ function FLIGHTGROUP:RemoveMission(Mission)
     
       -- Remove mission waypoint task.
       local Task=Mission:GetFlightWaypointTask(self)
-      self:RemoveTask(Task)
+      
+      if Task then
+        self:RemoveTask(Task)
+      end
       
       -- Remove mission from queue.
       table.remove(self.missionqueue, i)
@@ -1608,9 +1611,13 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
       local element=_element --#FLIGHTGROUP.Element
       
       local fuel=element.unit:GetFuel() or 0
-      local df=element.fuelrel-fuel
       
-      local fmass=element.fuelmass*fuel
+      -- Relative fuel used since last check.
+      local dFrel=element.fuelrel-fuel
+      
+      local dFabs=element.fuelmass
+      
+      local fmass=element.fuelmass0*fuel
             
       
       local dm=element.fuelmass-fmass
@@ -1622,7 +1629,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
         fuelmass=fmass
       end
       
-      self:I(self.lid..string.format("Fuel consumption %s: df=%.1f, dm=%.1f kg ==> dm/ds=%.1f kg/s   dm/dt=%.1f 1/s", element.name, df, dm, dmds, dmdt))
+      self:I(self.lid..string.format("Fuel consumption %s F=%.1f:  dF=%.3f, dm=%.1f kg ==> dm/ds=%.1f kg/min   dm/dt=%.1f 1/s", element.name, fuel*100, dFrel*100, dm, dmds*60, dmdt))
       
       element.fuelrel=fuel
       element.fuelmass=fmass
@@ -1686,8 +1693,8 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
       local mission=_mission --Ops.Auftrag#AUFTRAG
       local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
       local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
-      text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d targets=%d", 
-      i, tostring(mission.name), mission.type, mission:GetFlightStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, mission:CountMissionTargets())
+      text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d wp=%s targets=%d", 
+      i, tostring(mission.name), mission.type, mission:GetFlightStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, tostring(mission:GetFlightWaypointIndex(self)), mission:CountMissionTargets())
     end
     self:I(self.lid..text)
   end
@@ -3680,7 +3687,7 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
         Task.formation:Stop()
         self:TaskDone(Task)
       elseif stopflag==1 then
-        -- Manuall call TaskDone if setting flag to one was not successful.
+        -- Manual call TaskDone if setting flag to one was not successful.
         self:TaskDone(Task)
       end
   
@@ -3693,6 +3700,7 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
       self:TaskDone(Task)
       
       
+      --[[
       local mission=self:GetMissionByTaskID(Task.id)
       
       -- Is this a waypoint task?
@@ -3703,6 +3711,7 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
           self:RemoveWaypoint(Task.waypoint)
         end
       end
+      ]]
     end
     
   else
@@ -3966,7 +3975,17 @@ function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.DONE)
   
   -- Set current mission to nil.
-  self.currentmission=nil
+  if self.currentmission and Mission.auftragsnummer==self.currentmission then
+    self.currentmission=nil
+  end
+  
+  -- Remove mission waypoint.
+  local wpidx=Mission:GetFlightWaypointIndex(self)
+  if wpidx then
+    self:RemoveWaypoint(wpidx)
+  end
+
+  -- TODO: reset mission specific parameters like radio, ROE etc.  
   
   -- Check if flight is done.
   self:_CheckFlightDone(1)
@@ -3994,7 +4013,7 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     
     -- Set altitude of mission waypoint.
     if mission.missionAltitude then
-      waypointcoord.y=mission.missionAltitude
+      waypointcoord:SetAltitude(mission.missionAltitude, true)
     end
     
     -- Add enroute tasks.
@@ -4008,6 +4027,7 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     -- Add waypoint.
     self:AddWaypointAir(waypointcoord, nextwaypoint, speed, false)
     
+    -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
     
       -- Refresh DCS task with the known controllable.  
@@ -4032,9 +4052,8 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     -- Set waypoint task.
     mission:SetFlightWaypointTask(self, waypointtask)
     
-    -- TODO: better marker text, mission.maker
-    --mission.marker=waypointcoord:MarkToCoalition(mission.name, self:GetCoalition(), true)
-    --mission.marker=waypointcoord:MarkToAll(string.format("%s %s %s", mission.name, mission.type, self.groupname), true)
+    -- Set waypoint index.
+    mission:SetFlightWaypointIndex(self, nextwaypoint)
     
     ---
     -- Mission Specific Settings
@@ -4823,11 +4842,10 @@ end
 -- @param #number wpnumber Waypoint number. Default at the end.
 -- @param #number speed Speed in knots. Default 350 kts.
 -- @param #boolean updateroute If true or nil, call UpdateRoute. If false, no call.
--- @return #FLIGHTGROUP self
+-- @return #number Waypoint index.
 function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
 
-  -- Waypoint number.
-  --TODO: by default add after last AIR waypoint! Last WP could be landing...
+  -- Waypoint number. Default is at the end.
   wpnumber=wpnumber or #self.waypoints+1
   
   if wpnumber>self.currentwp then
@@ -4860,9 +4878,15 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
   -- Shift all mission waypoints after the inserted waypoint.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
-    if mission.waypointindex and mission.waypointindex>=wpnumber then
-      mission.waypointindex=mission.waypointindex+1
-    end
+
+    -- Get mission waypoint index.
+    local wpidx=mission:GetFlightWaypointIndex(self)
+    
+    -- Increase number if this waypoint lies in the future.
+    if wpidx and wpidx>=wpnumber then
+      mission:SetFlightWaypointIndex(self, wpidx+1)
+    end    
+    
   end
   
   -- Update route.
@@ -4870,7 +4894,7 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
     self:__UpdateRoute(-1)
   end
   
-  return self
+  return wpnumber
 end
 
 --- Remove a waypoint.
@@ -4904,9 +4928,12 @@ function FLIGHTGROUP:RemoveWaypoint(wpindex)
     for _,_mission in pairs(self.missionqueue) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
       
-      -- TODO: This is not the waypoint index any more. Waypoint index is now for each FLIGHTGROUP.
-      if mission.waypointindex and mission.waypointindex>wpindex then
-        mission.waypointindex=mission.waypointindex-1
+      -- Get mission waypoint index.
+      local wpidx=mission:GetFlightWaypointIndex(self)
+      
+      -- Reduce number if this waypoint lies in the future.
+      if wpidx and wpidx>wpindex then
+        mission:SetFlightWaypointIndex(self, wpidx-1)
       end
     end  
   
@@ -4933,36 +4960,9 @@ function FLIGHTGROUP:RemoveWaypoint(wpindex)
         
   end
 
-end
-
-
---- Set the landing waypoint.
--- @param #FLIGHTGROUP self
--- @param Wrapper.Airbase#AIRBASE airbase The destination airbase.
--- @param #number wpnumber Waypoint number. Default at the end.
--- @param #number speed Speed in knots. Default 350 kts.
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetWaypointLanding(airbase)
-
-  local wpnumber=#self.waypoints
-
-  local lastwp=self.waypoints[wpnumber]
-  
-  if self:IsLandingAirbase(lastwp) then
-    table.remove(self.waypoints, wpnumber)
-  end
-  
-  local wp=self.group:GetCoordinate():WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, self.speedmax*0.8, true, nil, {}, string.format("Landing Waypoint #%d", wpnumber))
-  
-  table.insert(self.waypoints, wp)
-  
-  self.destbase=airbase
-    
-  -- Update route.
-  self:__UpdateRoute(-1)
-  
   return self
 end
+
 
 --- Check if a unit is an element of the flightgroup.
 -- @param #FLIGHTGROUP self
