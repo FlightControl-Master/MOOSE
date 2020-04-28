@@ -358,22 +358,6 @@ function SQUADRON:SetAirwing(Airwing)
   return self
 end
 
---- This squadron can do recue helo operations for boat ops.
--- @param #SQUADRON self
--- @return #SQUADRON self
-function SQUADRON:SetCanRescueHelo()
-  self.canrescuehelo=true
-  return self
-end
-
---- This squadron can do recovery tanker operations for boat ops. 
--- @param #SQUADRON self
--- @return #SQUADRON self
-function SQUADRON:SetCanRescueHelo()
-  self.canrecoverytanker=true
-  return self
-end
-
 
 --- Add airwing asset to squadron.
 -- @param #SQUADRON self

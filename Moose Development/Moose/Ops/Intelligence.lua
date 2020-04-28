@@ -375,7 +375,7 @@ function INTEL:UpdateIntel()
     
     -- Filter unit categories.
     if #self.filterCategory>0 then
-      local unitcategory=unit:GetCategory()
+      local unitcategory=unit:GetUnitCategory()
       local keepit=false
       for _,filtercategory in pairs(self.filterCategory) do
         if unitcategory==filtercategory then

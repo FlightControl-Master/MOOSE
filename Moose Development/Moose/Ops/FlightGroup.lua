@@ -61,6 +61,7 @@
 -- @field #number Tholding Abs. mission time stamp when the group reached the holding point.
 -- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
 -- @field #table menu F10 radio menu.
+-- @field #string controlstatus Flight control status.
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
@@ -682,7 +683,8 @@ function FLIGHTGROUP:AddTaskWaypoint(task, waypointindex, description, prio, dur
   self:T3({newtask=newtask})
   
   -- Update route.
-  self:__UpdateRoute(-1)
+  self:_CheckFlightDone(1)
+  --self:__UpdateRoute(-1)
 
   return newtask
 end
@@ -740,7 +742,8 @@ function FLIGHTGROUP:RemoveTask(Task)
       
       -- Update route if this is a waypoint task.
       if task.type==FLIGHTGROUP.TaskType.WAYPOINT and task.status==FLIGHTGROUP.TaskStatus.SCHEDULED then
-        self:__UpdateRoute(-1)
+        self:_CheckFlightDone(1)
+        --self:__UpdateRoute(-1)
       end
       
       return true
@@ -2391,9 +2394,9 @@ function FLIGHTGROUP:onafterFlightParking(From, Event, To)
   
     if self.flightcontrol then
     
-      -- Add flight to parking queue, waiting for takeoff cleance.
-      self.flightcontrol:_AddFlightToParkingQueue(self)
-      
+      -- Set flight status.
+      self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.PARKING)
+            
     end
   end  
 end
@@ -2413,16 +2416,14 @@ function FLIGHTGROUP:onafterFlightTaxiing(From, Event, To)
   local airbase=self.group:GetCoordinate():GetClosestAirbase(nil, self.group:GetCoalition())
 
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then    
-    -- Remove flight from parking queue.
-    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qparking, self, "parking")
 
     -- Add AI flight to takeoff queue.
     if self.ai then
-      -- AI flights go directly to TAKEOFF as we don't know when they finished taxiing.
-      self.flightcontrol:_AddFlightToTakeoffQueue(self)
+      -- AI flights go directly to TAKEOFF as we don't know when they finished taxiing.      
+      self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAKEOFF)
     else
       -- Human flights go to TAXI OUT queue. They will go to the ready for takeoff queue when they request it.
-      self.flightcontrol:_AddFlightToTaxiOutQueue(self)    
+      self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIOUT)
     end
     
   end
@@ -2479,11 +2480,9 @@ function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
   if self:IsLandingAt() then
     self:LandedAt()
   else
-    -- Remove flight from landing queue.
     if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
-      self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qlanding, self, "LANDING")
       -- Add flight to taxiinb queue.
-      self.flightcontrol:_AddFlightToTaxiInboundQueue(self)
+      self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIINB)
     end
   end
 end
@@ -2498,14 +2497,12 @@ function FLIGHTGROUP:onafterFlightArrived(From, Event, To)
 
   -- Flight Control
   if self.flightcontrol then
-    -- Remove flight from landing queue.
-    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtaxiinb, self, "TAXI_INB")
     -- Add flight to arrived queue.
-    self.flightcontrol:_AddFlightToArrivedQueue(self)
+    self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.ARRIVED)    
   end
   
-  self:__Stop(5*60)
-  
+  -- Stop and despawn in 5 min.
+  self:__Stop(5*60)  
 end
 
 --- On after "FlightDead" event.
@@ -2765,6 +2762,13 @@ function FLIGHTGROUP:_CheckFlightDone(delay)
       self:ScheduleOnce(delay, FLIGHTGROUP._CheckFlightDone, self)
     else
     
+      -- First check if there is a paused mission that 
+      if self.missionpaused then
+        self:UnpauseMission()
+        return
+      end
+      
+    
       local nTasks=self:CountRemainingTasks()
       local nMissions=self:CountRemainingMissison()
     
@@ -2794,7 +2798,7 @@ function FLIGHTGROUP:_CheckFlightDone(delay)
               self:__Wait(-1)              
           end
         else
-          self:I(self.lid..string.format("Passed Final WP but still have current Tasks (%s) or Missions (%s) left to do", tostring(self.taskcurrent), tostring(self.currentmission)))
+          self:I(self.lid..string.format("Passed Final WP but still have current Task (#%s) or Mission (#%s) left to do", tostring(self.taskcurrent), tostring(self.currentmission)))
         end  
       else
         self:I(self.lid..string.format("Flight (status=%s) did NOT pass the final waypoint yet ==> update route", self:GetState()))
@@ -2909,10 +2913,14 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
 
   self:I(self.lid..string.format("RTB: event=%s: %s --> %s to %s", Event, From, To, airbase:GetName()))
   
+  -- Set the destination base.
   self.destbase=airbase
   
+  -- Clear holding time in any case.
+  self.Tholding=nil
+  
   -- Defaults:
-  SpeedTo=SpeedTo or UTILS.KmphToKnots(self.speedmax*0.75)
+  SpeedTo=SpeedTo or UTILS.KmphToKnots(self.speedCruise)
   SpeedHold=SpeedHold or (self.ishelo and 80 or 250)
   SpeedLand=SpeedLand or (self.ishelo and 40 or 170)
 
@@ -2947,7 +2955,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
     self:SetFlightControl(fc)
     
     -- Add flight to inbound queue.
-    self.flightcontrol:_AddFlightToInboundQueue(self)
+    self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.INBOUND)
   end
   
    -- Altitude above ground for a glide slope of 3 degrees.
@@ -3159,13 +3167,8 @@ function FLIGHTGROUP:onafterRefueled(From, Event, To)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.lid..text)
   
-  if self.missionpaused then
-    self:UnpauseMission()
-  else
-    self:__UpdateRoute(-1)
-  end
-  
-  -- TODO: reset fuellow and fuelcrit to false if enough fuel was taken.
+  -- Check if flight is done.
+  self:_CheckFlightDone(1)
   
 end
 
@@ -3179,6 +3182,9 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
 
   -- Set holding flag to 0 (just in case).
   self.flaghold:Set(0)
+  
+  -- Holding time stamp.
+  self.Tholding=timer.getAbsTime()  
 
   local text=string.format("Flight group %s is HOLDING now", self.groupname)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
@@ -3186,12 +3192,9 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
   
   -- Add flight to waiting/holding queue.
   if self.flightcontrol then
-  
-    -- Remove flight from inbound queue.
-    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qinbound, self, "inbound")
     
-    -- Add flight to holding queue.
-    self.flightcontrol:_AddFlightToHoldingQueue(self)
+    -- Set flight status to holding
+    self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.HOLDING)
     
     if not self.ai then
       self:_UpdateMenu()
@@ -4007,9 +4010,11 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     local nextwaypoint=self.currentwp+1
     
     -- Create waypoint coordinate half way between us and the target.
-    local targetcoord=mission:GetTargetCoordinate()
-    local flightcoord=self.group:GetCoordinate()
-    local waypointcoord=flightcoord:GetIntermediateCoordinate(targetcoord, mission.missionFraction)
+    local waypointcoord=self.group:GetCoordinate():GetIntermediateCoordinate(mission:GetTargetCoordinate(), mission.missionFraction)
+    
+    -- Add some randomization.
+    local zone=ZONE:New("Temp",waypointcoord:GetVec2(), 1000)
+    waypointcoord=zone:GetRandomCoordinate()
     
     -- Set altitude of mission waypoint.
     if mission.missionAltitude then
@@ -4074,6 +4079,10 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     -- TACAN
     if mission.tacanChannel then
       self:SwitchTACANOn(mission.tacanChannel, mission.tacanMorse)
+    end
+    -- Formation
+    if mission.optionFormation then
+    
     end
     
   end
@@ -4249,6 +4258,7 @@ function FLIGHTGROUP:_InitGroup()
     text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
+    text=text..string.format("Radio        = %.1f%d %s\n", self.radioFreq, self.radioModu, tostring(self.radioOn))
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
     text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
@@ -4797,21 +4807,12 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
 
   -- Waypoints of group as defined in the ME.
   self.waypoints=waypoints or UTILS.DeepCopy(self.waypoints0)
-
-  -- Set waypoint table.
-  for i,point in ipairs(self.waypoints or {}) do
-
-    -- Debug info.
-    if self.Debug then
-      --coord:MarkToAll(string.format("Flight %s waypoint %d, Speed=%.1f knots", self.groupname, i, UTILS.MpsToKnots(point.speed)))
-    end
-
-  end
   
   -- Get home and destination airbases from waypoints.
   self.homebase=self:GetHomebaseFromWaypoints()
   self.destbase=self:GetDestinationFromWaypoints()
   
+  -- Remove the landing waypoint. We use RTB for that.
   if self.destbase then
     table.remove(self.waypoints, #self.waypoints)
   else
@@ -4830,7 +4831,8 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
     end
     
     -- Update route (when airborne).
-    self:__UpdateRoute(-1)
+    self:_CheckFlightDone(1)
+    --self:__UpdateRoute(-1)
   end
 
   return self
@@ -4891,7 +4893,8 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
   
   -- Update route.
   if updateroute==nil or updateroute==true then
-    self:__UpdateRoute(-1)
+    self:_CheckFlightDone(1)
+    --self:__UpdateRoute(-1)
   end
   
   return wpnumber
@@ -6080,6 +6083,16 @@ function FLIGHTGROUP:SetOptionROT(rot)
   else
     -- TODO WARNING
   end
+  return self
+end
+
+--- Set the default formation for the group.
+-- @param #FLIGHTGROUP self
+-- @param #number Formation Formation of the group
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetDefaultFormation(Formation)
+  -- TODO!
+  self.optionFormationDefault=Formation or AI.Task.VehicleFormation.ECHELON_LEFT
   return self
 end
 

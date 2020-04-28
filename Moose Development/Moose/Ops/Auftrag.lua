@@ -1262,6 +1262,17 @@ function AUFTRAG:SetROT(rot)
   return self
 end
 
+--- Set formation for this mission.
+-- @param #AUFTRAG self
+-- @param #number Formation Formation.
+-- @return #AUFTRAG self
+function AUFTRAG:SetFormation(Formation)
+  
+  self.optionFormation=Formation
+  
+  return self
+end
+
 --- Set radio frequency and modulation for this mission.
 -- @param #AUFTRAG self
 -- @param #number Frequency Frequency in MHz.

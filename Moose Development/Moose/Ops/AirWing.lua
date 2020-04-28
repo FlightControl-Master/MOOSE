@@ -89,6 +89,7 @@ AIRWING = {
 -- @field #number leg Leg length in NM.
 -- @field #number speed Speed in knots.
 -- @field #number noccupied Number of flights on this patrol point.
+-- @field Wrapper.Marker#MARKER marker F10 marker.
 
 --- AIRWING class version.
 -- @field #string version
@@ -558,6 +559,18 @@ function AIRWING:SetNumberRescuehelo(n)
   return self
 end
 
+--- Create a new generic patrol point.
+-- @param #AIRWING self
+-- @param #AIRWING.PatrolData point Patrol point table.
+-- @param #string Text
+-- @return #string Marker text.
+function AIRWING:_PatrolPointMarkerText(point, Text)
+
+  local text=string.format("%s Occupied=%d, \nheading=%03d, leg=%d NM, alt=%d ft, speed=%d kts", 
+  Text, point.noccupied, point.heading, point.leg, point.alt, point.speed)
+
+  return text
+end
 
 --- Create a new generic patrol point.
 -- @param #AIRWING self
@@ -569,15 +582,16 @@ end
 -- @return #AIRWING.PatrolData Patrol point table.
 function AIRWING:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
 
-  local cappoint={}  --#AIRWING.PatrolData
-  cappoint.coord=Coordinate or self:GetCoordinate():Translate(UTILS.NMToMeters(math.random(10, 15)), math.random(360))
-  cappoint.heading=Heading or math.random(360)
-  cappoint.leg=LegLength or 15
-  cappoint.altitude=Altitude or math.random(10,20)*1000
-  cappoint.speed=Speed or 350
-  cappoint.noccupied=0
+  local patrolpoint={}  --#AIRWING.PatrolData
+  patrolpoint.coord=Coordinate or self:GetCoordinate():Translate(UTILS.NMToMeters(math.random(10, 15)), math.random(360))
+  patrolpoint.heading=Heading or math.random(360)
+  patrolpoint.leg=LegLength or 15
+  patrolpoint.altitude=Altitude or math.random(10,20)*1000
+  patrolpoint.speed=Speed or 350
+  patrolpoint.noccupied=0
+  patrolpoint.marker=MARKER:New(Coordinate, self:_PatrolPointMarkerText(patrolpoint, "New")):ToAll()
 
-  return cappoint
+  return patrolpoint
 end
 
 --- Add a patrol Point for CAP missions.
@@ -592,7 +606,8 @@ function AIRWING:AddPatrolPointCAP(Coordinate, Heading, LegLength, Altitude, Spe
   
   local cappoint=self:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
   
-  cappoint.coord:MarkToAll(string.format("CAP Point alt=%d", cappoint.altitude))
+  local text=self:_PatrolPointMarkerText(cappoint, "CAP")
+  cappoint.marker:UpdateText(text, 1)
 
   table.insert(self.pointsCAP, cappoint)
 
@@ -610,8 +625,9 @@ end
 function AIRWING:AddPatrolPointTANKER(Coordinate, Heading, LegLength, Altitude, Speed)
   
   local cappoint=self:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
-  
-  cappoint.coord:MarkToAll(string.format("Tanker Point alt=%d", cappoint.altitude))
+
+  local text=self:_PatrolPointMarkerText(cappoint, "Tanker")
+  cappoint.marker:UpdateText(text, 1)
 
   table.insert(self.pointsTANKER, cappoint)
 
@@ -629,8 +645,9 @@ end
 function AIRWING:AddPatrolPointAWACS(Coordinate, Heading, LegLength, Altitude, Speed)
   
   local cappoint=self:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
-  
-  cappoint.coord:MarkToAll(string.format("AWACS Point alt=%d", cappoint.altitude))
+
+  local text=self:_PatrolPointMarkerText(cappoint, "AWACS")
+  cappoint.marker:UpdateText(text, 1)
 
   table.insert(self.pointsAWACS, cappoint)
 
@@ -739,12 +756,14 @@ function AIRWING:onafterStatus(From, Event, To)
           missiontext=string.format(" [%s (%s): status=%s, distance=%.1f NM]", mission.type, mission.name, mission.status, distance)
         end
               
+        -- Mission info.
         text=text..string.format("\n  -[%d] %s*%d \"%s\": spawned=%s, mission=%s%s", j, typename, asset.nunits, asset.spawngroupname, spawned, tostring(self:IsAssetOnMission(asset)), missiontext)
         
-        --TODO
-        local payload=asset.payload and table.concat(self:GetPayloadMissionTypes(asset.payload, MissionType), ", ") or "None"
+        -- Payload info.
+        local payload=asset.payload and table.concat(self:GetPayloadMissionTypes(asset.payload), ", ") or "None"
         text=text.." payload="..payload
         
+        -- Flight status.
         text=text..", flight: "
         if asset.flightgroup and asset.flightgroup:IsAlive() then
           local status=asset.flightgroup:GetState()
@@ -841,9 +860,6 @@ end
 -- @return #AIRWING self
 function AIRWING:CheckTANKER()
 
-  --local N=self:CountMissionsInQueue({AUFTRAG.Type.TANKER})
-  --local N=self:CountAssetsOnMission({AUFTRAG.Type.TANKER})
-  
   local Nboom=0
   local Nprob=0
   

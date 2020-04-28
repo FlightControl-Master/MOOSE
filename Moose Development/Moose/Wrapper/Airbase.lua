@@ -322,6 +322,7 @@ AIRBASE.SpotStatus = {
 -- @field #number DistToRwy Distance to runway in meters. Currently bugged and giving the same number as the TerminalID.
 -- @field #string AirbaseName Name of the airbase.
 -- @field #number MarkerID Numerical ID of marker placed at parking spot.
+-- @field Wrapper.Marker#MARKER Marker The marker on the F10 map.
 -- @field #string ClientSpot Client unit sitting at this spot or *nil*.
 -- @field #string Status Status of spot e.g. AIRBASE.SpotStatus.FREE.
 -- @field #string OccupiedBy Name of the aircraft occupying the spot or "unknown". Can be *nil* if spot is not occupied.
