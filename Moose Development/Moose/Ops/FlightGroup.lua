@@ -4013,8 +4013,7 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     local waypointcoord=self.group:GetCoordinate():GetIntermediateCoordinate(mission:GetTargetCoordinate(), mission.missionFraction)
     
     -- Add some randomization.
-    local zone=ZONE:New("Temp",waypointcoord:GetVec2(), 1000)
-    waypointcoord=zone:GetRandomCoordinate()
+    waypointcoord=ZONE_RADIUS:New("Temp", waypointcoord:GetVec2(), 500):GetRandomCoordinate()
     
     -- Set altitude of mission waypoint.
     if mission.missionAltitude then
@@ -4025,12 +4024,9 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     for _,task in pairs(mission.enrouteTasks) do
       self:AddTaskEnroute(task)
     end
-    
-    -- Some speed.
-    local speed=UTILS.KmphToKnots(math.min(self.speedmax*0.8, 1000))
   
     -- Add waypoint.
-    self:AddWaypointAir(waypointcoord, nextwaypoint, speed, false)
+    self:AddWaypointAir(waypointcoord, nextwaypoint, UTILS.KmphToKnots(self.speedCruise), false)
     
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then

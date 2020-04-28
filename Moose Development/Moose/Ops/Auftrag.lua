@@ -321,7 +321,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.2.0"
+AUFTRAG.version="0.2.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -434,6 +434,7 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
   
   mission:_TargetFromObject(Carrier)
   
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.NOTHING
   mission.missionFraction=0.5
   mission.optionROE=ENUMS.ROE.WeaponHold
@@ -447,16 +448,22 @@ end
 --- Create an ANTI-SHIP mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be passed as a @{Wrapper.Group#GROUP} or @{Wrapper.Unit#UNIT} object.
+-- @param #number Altitude Engage altitude in feet. Default 2000 ft.
 -- @return #AUFTRAG self
-function AUFTRAG:NewANTISHIP(Target)
+function AUFTRAG:NewANTISHIP(Target, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ANTISHIP)
   
   mission:_TargetFromObject(Target)
   
+  -- DCS task parameters:
   mission.engageWeaponType=ENUMS.WeaponFlag.Auto
+  mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  mission.engageAltitude=Altitude or UTILS.FeetToMeters(2000)
   
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.ANTISHIPSTRIKE
+  mission.missionAltitude=mission.engageAltitude
   mission.missionFraction=0.4
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
@@ -478,7 +485,7 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ORBIT)
   
-
+  -- Altitude.
   if Altitude then
     mission.orbitAltitude=UTILS.FeetToMeters(Altitude)
   else
@@ -497,6 +504,7 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
   end
 
   
+  -- Mission options:
   mission.missionAltitude=mission.orbitAltitude*0.9  
   mission.missionFraction=0.9  
   mission.optionROE=ENUMS.ROE.ReturnFire
@@ -555,7 +563,8 @@ function AUFTRAG:NewPATROL(Coordinate, Speed, Heading, Leg, Altitude)
   mission.type=AUFTRAG.Type.PATROL
   
   mission:_SetLogID()
-  
+
+  -- Mission options:  
   mission.missionTask=ENUMS.MissionTask.INTERCEPT
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
@@ -583,6 +592,7 @@ function AUFTRAG:NewTANKER(Coordinate, Speed, Heading, Leg, Altitude, RefuelSyst
   
   mission.refuelSystem=RefuelSystem
   
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.REFUELING 
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.PassiveDefense
@@ -610,6 +620,7 @@ function AUFTRAG:NewAWACS(Coordinate, Speed, Heading, Leg, Altitude)
   
   mission:_SetLogID()
   
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.AWACS  
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.PassiveDefense
@@ -631,6 +642,7 @@ function AUFTRAG:NewINTERCEPT(Target)
     
   mission:_TargetFromObject(Target)
   
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.INTERCEPT    
   mission.missionFraction=0.1  
   mission.optionROE=ENUMS.ROE.OpenFire
@@ -644,7 +656,7 @@ end
 --- Create a CAP mission.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE_RADIUS ZoneCAP Circular CAP zone. Detected targets in this zone will be engaged.
--- @param #number Altitude Altitude at which to orbit in feet. Default is 10.000 ft.
+-- @param #number Altitude Altitude at which to orbit in feet. Default is 10,000 ft.
 -- @param #number Speed Orbit speed in knots. Default 350 kts.
 -- @param Core.Point#COORDINATE Coordinate Where to orbit. Default is the center of the CAP zone.
 -- @param #number Heading Heading of race-track pattern in degrees. If not specified, a simple circular orbit is performed.
@@ -660,19 +672,18 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
     end
   end
 
-  Coordinate=Coordinate or ZoneCAP:GetCoordinate()
-  Altitude=Altitude or 10000
-
   -- Create ORBIT first.
-  local mission=self:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
+  local mission=self:NewORBIT(Coordinate or ZoneCAP:GetCoordinate(), Altitude or 10000, Speed, Heading, Leg)
   
-  -- CAP paramters.
+  -- Mission type CAP.
   mission.type=AUFTRAG.Type.CAP
+  mission:_SetLogID()
+  
+  -- DCS task parameters:
   mission.engageZone=ZoneCAP
   mission.engageTargetTypes=TargetTypes or {"Air"}
-  
-  mission:_SetLogID()
 
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.CAP    
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
@@ -685,7 +696,7 @@ end
 --- Create a CAS mission.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE_RADIUS ZoneCAS Circular CAS zone. Detected targets in this zone will be engaged.
--- @param #number Altitude Altitude at which to orbit. Default is 10.000 ft.
+-- @param #number Altitude Altitude at which to orbit. Default is 10,000 ft.
 -- @param #number Speed Orbit speed in knots. Default 350 KIAS.
 -- @param Core.Point#COORDINATE Coordinate Where to orbit. Default is the center of the CAS zone.
 -- @param #number Heading Heading of race-track pattern in degrees. If not specified, a simple circular orbit is performed.
@@ -700,20 +711,19 @@ function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, Targ
       TargetTypes={TargetTypes}
     end
   end
-  
-  Coordinate=Coordinate or ZoneCAS:GetCoordinate()
-  Altitude=Altitude or 10000
 
   -- Create ORBIT first.
-  local mission=self:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
-
-  -- CAS paramters.
-  mission.type=AUFTRAG.Type.CAS  
+  local mission=self:NewORBIT(Coordinate or ZoneCAS:GetCoordinate(), Altitude or 10000, Speed, Heading, Leg)
+  
+  -- Mission type CAS.
+  mission.type=AUFTRAG.Type.CAS
+  mission:_SetLogID()
+  
+  -- DCS Task options:
   mission.engageZone=ZoneCAS
   mission.engageTargetTypes=TargetTypes or {"Helicopters", "Ground Units", "Light armed ships"}
   
-  mission:_SetLogID()
-  
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.CAS  
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
@@ -739,12 +749,16 @@ function AUFTRAG:NewFACA(Target, Designation, DataLink, Frequency, Modulation)
   
   -- TODO: check that target is really a group object!
   
-  mission.facDesignation=Designation
+  -- DCS Task options:
+  mission.facDesignation=Designation --or AI.Task.Designation.AUTO
   mission.facDatalink=true
   mission.facFreq=Frequency or 133
   mission.facModu=Modulation or radio.modulation.AM
   
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.AFAC
+  mission.missionAltitude=nil
+  mission.missionFraction=0.5
   mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
 
@@ -757,19 +771,22 @@ end
 --- Create a BAI mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
+-- @param #number Altitude Engage altitude in feet. Default 2000 ft.
 -- @return #AUFTRAG self
-function AUFTRAG:NewBAI(Target)
+function AUFTRAG:NewBAI(Target, Altitude)
   
   local mission=AUFTRAG:New(AUFTRAG.Type.BAI)
 
   mission:_TargetFromObject(Target)
   
+  -- DCS Task options:
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
-  mission.engageAsGroup=true
+  mission.engageAltitude=Altitude or UTILS.FeetToMeters(2000)
   
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
-  mission.missionAltitude=nil
+  mission.missionAltitude=mission.engageAltitude
   mission.missionFraction=0.75
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
@@ -782,19 +799,22 @@ end
 --- Create a SEAD mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP or UNIT object.
+-- @param #number Altitude Engage altitude in feet. Default 2000 ft.
 -- @return #AUFTRAG self
-function AUFTRAG:NewSEAD(Target)
+function AUFTRAG:NewSEAD(Target, Altitude)
   
   local mission=AUFTRAG:New(AUFTRAG.Type.SEAD)
 
   mission:_TargetFromObject(Target)
   
+  -- DCS Task options:
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG  --ENUMS.WeaponFlag.Cannons
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
-  mission.engageAsGroup=true
+  mission.engageAltitude=Altitude or UTILS.FeetToMeters(2000)
   
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.SEAD
-  mission.missionAltitude=nil
+  mission.missionAltitude=mission.engageAltitude
   mission.missionFraction=0.2
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
@@ -808,7 +828,7 @@ end
 --- Create a STRIKE mission. Flight will attack the closest map object to the specified coordinate.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT or STATIC object.
--- @param #number Altitude Engage altitude in feet. Default 1000 ft.
+-- @param #number Altitude Engage altitude in feet. Default 2000 ft.
 -- @return #AUFTRAG self
 function AUFTRAG:NewSTRIKE(Target, Altitude)
 
@@ -816,10 +836,12 @@ function AUFTRAG:NewSTRIKE(Target, Altitude)
   
   mission:_TargetFromObject(Target)
   
-  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 1000)
+  -- DCS Task options:
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG
-  mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL  
+  mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 2000)  
   
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
   mission.missionAltitude=mission.engageAltitude
   mission.missionFraction=0.75
@@ -843,9 +865,9 @@ function AUFTRAG:NewBOMBING(Target, Altitude)
   mission:_TargetFromObject(Target)
   
   -- DCS task options:
-  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyBomb
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
 
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
@@ -879,9 +901,9 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
   mission:_TargetFromObject(Airdrome)  
   
   -- DCS task options:
-  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyBomb
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
 
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.RUNWAYATTACK
@@ -912,9 +934,9 @@ function AUFTRAG:NewBOMBCARPET(Target, Altitude, CarpetLength)
   mission:_TargetFromObject(Target)  
   
   -- DCS task options:
-  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyBomb
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
   mission.engageCarpetLength=CarpetLength or 500
   mission.engageAsGroup=false  -- Looks like this must be false or the task is not executed. It is not available in the ME anyway but in the task of the mission file.
   mission.engageDirection=nil  -- This is also not available in the ME.
@@ -947,18 +969,17 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ESCORT)
   
-  
   mission:_TargetFromObject(EscortGroup)
   
+  -- DCS task parameters:
   mission.escortVec3=OffsetVector or {x=200, y=0, z=-100}
   mission.engageMaxDistance=EngageMaxDistance
   mission.engageTargetTypes=TargetTypes or {"Air"}
   
+  -- Mission options:
   mission.missionTask=ENUMS.MissionTask.ESCORT  
-  mission.missionFraction=0.1
-  
-  -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
-  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.missionFraction=0.1   
+  mission.optionROE=ENUMS.ROE.OpenFire       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
   mission.DCStask=mission:GetDCSMissionTask()
@@ -991,6 +1012,7 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
   mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()  
   mission.transportDropoff=DropoffCoordinate
   
+  -- Debug.
   mission.transportPickup:MarkToAll("Pickup")
   mission.transportDropoff:MarkToAll("Drop off")
 
