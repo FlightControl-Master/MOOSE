@@ -567,7 +567,7 @@ end
 function AIRWING:_PatrolPointMarkerText(point, Text)
 
   local text=string.format("%s Occupied=%d, \nheading=%03d, leg=%d NM, alt=%d ft, speed=%d kts", 
-  Text, point.noccupied, point.heading, point.leg, point.alt, point.speed)
+  Text, point.noccupied, point.heading, point.leg, point.altitude, point.speed)
 
   return text
 end
