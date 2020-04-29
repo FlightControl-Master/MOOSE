@@ -28,7 +28,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\CarrierAirWing\WINGCOMMANDER_Main.jpg)
+-- ![Banner Image](..\Presentations\WingCommander\WINGCOMMANDER_Main.jpg)
 --
 -- # The WINGCOMMANDER Concept
 --

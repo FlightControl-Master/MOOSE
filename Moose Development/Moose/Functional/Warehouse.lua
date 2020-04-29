@@ -6133,10 +6133,11 @@ function WAREHOUSE:_OnEventBirth(EventData)
         end
   
       else
-        --self:T3({wid=wid, uid=self.uid, match=(wid==self.uid), tw=type(wid), tu=type(self.uid)})
+        -- No request?!
+        self:E(self.lid..string.format("ERROR: Could not get request when asset spawned! FF investigate! Unit name=%s asset spawed=%s", EventData.IniUnitName, tostring(asset.spawned)))
       end
     else
-      self:E(self.lid..string.format("ERROR: Could not get request when asset spawned! FF investigate!"))
+      -- Born unit does not belong to this warehouse.
     end
 
   end

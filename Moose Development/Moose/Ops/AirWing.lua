@@ -44,7 +44,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\CarrierAirWing\AIRWING_Main.jpg)
+-- ![Banner Image](..\Presentations\AirWing\AIRWING_Main.jpg)
 --
 -- # The AIRWING Concept
 --
@@ -93,7 +93,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.1.7"
+AIRWING.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -322,15 +322,20 @@ end
 -- @return #AIRWING.Payload Payload table or *nil*.
 function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
 
+  -- Quick check if we have any payloads.
   if not self.payloads or #self.payloads==0 then
     self:I(self.lid.."WARNING: No payloads in stock!")
     return nil
   end
   
-  self:I(self.lid..string.format("Looking for payload for unit type=%s and mission type=%s", UnitType, MissionType))
-  for i,_payload in pairs(self.payloads) do
-    local payload=_payload --#AIRWING.Payload
-    self:I(self.lid..string.format("[%d] Payload type=%s navail=%d unlimited=%s", i, payload.aircrafttype, payload.navail, tostring(payload.unlimited)))
+  -- Debug.
+  if self.Debug then
+    self:I(self.lid..string.format("Looking for payload for unit type=%s and mission type=%s", UnitType, MissionType))
+    for i,_payload in pairs(self.payloads) do
+      local payload=_payload --#AIRWING.Payload
+      local performance=self:GetPayloadPeformance(payload, MissionType)
+      self:I(self.lid..string.format("[%d] Payload type=%s navail=%d unlimited=%s", i, payload.aircrafttype, payload.navail, tostring(payload.unlimited)))
+    end
   end
 
   --- Sort payload wrt the following criteria:
@@ -340,56 +345,57 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
   local function sortpayloads(a,b)
     local pA=a --#AIRWING.Payload
     local pB=b --#AIRWING.Payload
-    if a and b then  --TODO: Strangely, I had the case that a or b were nil even though the self.payloads table was looking okay. Very strange!
+    if a and b then  -- I had the case that a or b were nil even though the self.payloads table was looking okay. Very strange! Seems to be solved by pre-selecting valid payloads.
       local performanceA=self:GetPayloadPeformance(a, MissionType)
       local performanceB=self:GetPayloadPeformance(b, MissionType)
       return (performanceA>performanceB) or (performanceA==performanceB and a.unlimited==true) or (performanceA==performanceB and a.unlimited==true and b.unlimited==true and a.navail>b.navail)
     elseif not a then
-      env.info("FF ERROR in sortpayloads: a is nil")
+      self:I(self.lid..string.format("FF ERROR in sortpayloads: a is nil"))
       return false
     elseif not b then
-      env.info("FF ERROR in sortpayloads: b is nil")
+      self:I(self.lid..string.format("FF ERROR in sortpayloads: b is nil"))
       return true
     else
-      env.info("FF ERROR in sortpayloads: a and b are nil")
+      self:I(self.lid..string.format("FF ERROR in sortpayloads: a and b are nil"))
       return false
     end
   end
-  table.sort(self.payloads, sortpayloads)
 
+  -- Pre-selection: filter out only those payloads that are valid for the airframe and mission type and are available.
+  local payloads={}
+  for _,_payload in pairs(self.payloads) do
+    local payload=_payload --#AIRWING.Payload
+    if payload.aircrafttype==UnitType and self:CheckMissionCapability(MissionType, payload.capabilities) and payload.navail>0 then
+      table.insert(payloads, payload)
+    end
+  end
+  
+  -- Debug.
   if self.Debug then
-    env.info("FF Sorted payloads for mission type X and aircraft type=Y:")
+    self:I(self.lid..string.format("FF Sorted payloads for mission type X and aircraft type=Y:"))
     for _,_payload in ipairs(self.payloads) do
       local payload=_payload --#AIRWING.Payload
       if payload.aircrafttype==UnitType and self:CheckMissionCapability(MissionType, payload.capabilities) then
         local performace=self:GetPayloadPeformance(payload, MissionType)
-        self:I(string.format("FF %s payload for %s: avail=%d performace=%d", MissionType, payload.aircrafttype, payload.navail, performace))
+        self:I(self.lid..string.format("FF %s payload for %s: avail=%d performace=%d", MissionType, payload.aircrafttype, payload.navail, performace))
       end
     end
   end
   
-  for _,_payload in ipairs(self.payloads) do
-    local payload=_payload --#AIRWING.Payload
-    
-    
-    -- Check right type, mission and available.
-    if payload.aircrafttype==UnitType and payload.navail>0 and self:CheckMissionCapability(MissionType, payload.capabilities) then
-    
-      -- Consume if not unlimited.
-      if not payload.unlimited then
-        payload.navail=payload.navail-1
-      end
-      
-      self:T(string.format("FETCHING %s payload for %s: avail=%d performance=%d", MissionType, payload.aircrafttype, payload.navail, self:GetPayloadPeformance(payload, MissionType)))
-      
-      -- Return a copy of the table.
-      return payload
-    end
-    
+  -- Cases:
+  if #payloads==0 then
+    -- No payload available.
+    self:T(self.lid.."Warning could not find a payload for airframe X mission type Y!")
+    return nil
+  elseif #payloads==1 then
+    -- Only one payload anyway.
+    return payloads[1]
+  else
+    -- Sort payloads.
+    table.sort(payloads, sortpayloads)
+    return payloads[1]
   end
   
-  self:T(self.lid.."Warning could not find a payload for airframe X mission type Y!")
-  return nil
 end
 
 --- Return payload from asset back to stock.

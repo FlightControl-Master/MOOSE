@@ -104,7 +104,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\CarrierAirWing\FLIGHTGROUP_Main.jpg)
+-- ![Banner Image](..\Presentations\FlightGroup\FLIGHTGROUP_Main.jpg)
 --
 -- # The FLIGHTGROUP Concept
 --
@@ -374,7 +374,7 @@ FLIGHTGROUP.ROT={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.3.9"
+FLIGHTGROUP.version="0.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -683,8 +683,8 @@ function FLIGHTGROUP:AddTaskWaypoint(task, waypointindex, description, prio, dur
   self:T3({newtask=newtask})
   
   -- Update route.
-  self:_CheckFlightDone(1)
-  --self:__UpdateRoute(-1)
+  --self:_CheckFlightDone(1)
+  self:__UpdateRoute(-1)
 
   return newtask
 end
@@ -1157,16 +1157,23 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:Activate(delay)
 
-  if self:IsAlive()==false then
-    if delay then
+  if delay and delay>0 then
       self:T2(self.lid..string.format("Activating late activated group in %d seconds", delay))
-      self:ScheduleOnce(delay, FLIGHTGROUP.Activate, self)
-    else
+      self:ScheduleOnce(delay, FLIGHTGROUP.Activate, self)  
+  else
+  
+    if self:IsAlive()==false then
+    
       self:T(self.lid.."Activating late activated group")
       self.group:Activate()
+      self.isLateActivated=false
+      
+    elseif self:IsAlive()==true then
+      self:E(self.lid.."WARNING: Activating group that is already activated")
+    else
+      self:E(self.lid.."ERROR: Activating group that is does not exist!")
     end
-  else
-    self:E(self.lid..string.format("ERROR: Cannot activate group as IsAlive()==%s", tostring(self:IsAlive())))
+    
   end
 
   return self
@@ -1178,19 +1185,26 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:StartUncontrolled(delay)
 
-  if self:IsAlive() then
-    --TODO: check Alive==true and Alive==false ==> Activate first
-    self:I(self.lid.."Starting uncontrolled group")
-    self.group:StartUncontrolled(delay)
+  if delay and delay>0 then
+    self:T2(self.lid..string.format("Starting uncontrolled group in %d seconds", delay))
+    self:ScheduleOnce(delay, FLIGHTGROUP.StartUncontrolled, self)
   else
-    self:E(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive (yet)!")
-    self.group:StartUncontrolled(delay)
+
+    if self:IsAlive() then
+      --TODO: check Alive==true and Alive==false ==> Activate first
+      self:I(self.lid.."Starting uncontrolled group")
+      self.group:StartUncontrolled(delay)
+      self.isUncontrolled=true
+    else
+      self:E(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive!")
+    end
+    
   end
 
   return self
 end
 
---- Set DCS task.
+--- Set DCS task. Enroute tasks are injected automatically.
 -- @param #FLIGHTGROUP self
 -- @param #table DCSTask DCS task structure.
 -- @return #FLIGHTGROUP self
@@ -1221,7 +1235,7 @@ function FLIGHTGROUP:SetTask(DCSTask)
       end
     end
   
-    -- Set task
+    -- Set task.
     self.group:SetTask(DCSTask)
     
     -- Debug info.
@@ -1233,6 +1247,7 @@ function FLIGHTGROUP:SetTask(DCSTask)
     end
     self:I(self.lid..text)    
   end
+  
   return self
 end
 
@@ -1241,16 +1256,22 @@ end
 -- @param #table DCSTask DCS task structure.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:PushTask(DCSTask)
+
   if self:IsAlive() then
-    self.group:PushTask(DCSTask, 1)
+  
+    -- Push task.
+    self.group:PushTask(DCSTask)
+    
+    -- Debug info.
     local text=string.format("PUSHING Task %s", tostring(DCSTask.id))
     if tostring(DCSTask.id)=="ComboTask" then
       for i,task in pairs(DCSTask.params.tasks) do
         text=text..string.format("\n[%d] %s", i, tostring(task.id))
       end
     end
-    self:I(self.lid..text)
+    self:I(self.lid..text)    
   end
+  
   return self
 end
 
@@ -2769,7 +2790,10 @@ function FLIGHTGROUP:_CheckFlightDone(delay)
       end
       
     
+      -- Number of tasks remaining.
       local nTasks=self:CountRemainingTasks()
+      
+      -- Number of mission remaining.
       local nMissions=self:CountRemainingMissison()
     
       -- Final waypoint passed?
@@ -3227,7 +3251,7 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
 
 end
 
---- On after "Engage" event. Order to engage a set of units.
+--- On after "EngageTargets" event. Order to engage a set of units.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -3249,8 +3273,7 @@ function FLIGHTGROUP:onafterEngageTargets(From, Event, To, TargetUnitSet)
   --TODO needs a task function that calls EngageDone or so event and updates the route again.
   
   -- Lets try if pushtask actually leaves the remaining tasks untouched.
-  -- TODO: the problem is if UpdateRoute is called because it would destroy this task!
-  self:PushTask(DCSTask)
+  self:SetTask(DCSTask)
   
 end
 
@@ -3798,18 +3821,18 @@ end
 function FLIGHTGROUP:onbeforeMissionStart(From, Event, To, Mission)
 
   -- Debug info.
-  self:T(self.lid..string.format("Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
+  self:I(self.lid..string.format("Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
 
   -- Delay for route to mission. Group needs to be activated and controlled.
-  local delay=0
+  local delay=1
 
   -- Check if group is spawned.
   if self:IsInUtero() then
 
     -- Activate group if it is late activated.
     if self:IsLateActivated() then
-      self:Activate()
-      delay=delay+2
+      self:Activate(delay)
+      delay=delay+1
     end
   
   end
@@ -3818,8 +3841,8 @@ function FLIGHTGROUP:onbeforeMissionStart(From, Event, To, Mission)
   if self:IsParking() and self:IsUncontrolled() then
     self:StartUncontrolled(delay)
   else
-    env.info("FF hallo!")
-    self:StartUncontrolled(5)
+    --env.info("FF hallo!")
+    --self:StartUncontrolled(5)
   end  
 
   return true
@@ -3833,6 +3856,7 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission table.
 function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
 
+  -- Debug output.
   local text=string.format("Starting %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
   self:T(self.lid..text)
   MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
@@ -3847,7 +3871,8 @@ function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
   Mission:Started()
 
   -- Route flight to mission zone.
-  self:RouteToMission(Mission, 5)
+  self:RouteToMission(Mission, 3)
+  
 end
 
 --- On after "MissionExecute" event. Mission execution began.
@@ -4179,6 +4204,7 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:_InitGroup()
 
+  -- First check if group was already initialized.
   if self.groupinitialized then
     self:E(self.lid.."WARNING: Group was already initialized!")
     return
@@ -4189,6 +4215,12 @@ function FLIGHTGROUP:_InitGroup()
 
   -- Helo group.
   self.ishelo=self.group:IsHelicopter()
+  
+  -- Is (template) group uncontrolled.
+  self.isUncontrolled=self.template.uncontrolled
+  
+  -- Is (template) group late activated.
+  self.isLateActivated=self.template.lateActivation
   
   -- Max speed in km/h.
   self.speedmax=self.group:GetSpeedMax()
@@ -4201,7 +4233,7 @@ function FLIGHTGROUP:_InitGroup()
   
   -- Initial fuel mass.
   -- TODO: this is a unit property!
-  self.fuelmass=0 --self.template.pylons.fuel
+  self.fuelmass=0
   
   self.traveldist=0
   self.traveltime=timer.getAbsTime()
@@ -4218,11 +4250,10 @@ function FLIGHTGROUP:_InitGroup()
     self.radioModuDefault=self.radioModu
   end
   
+  -- Get first unit. This is used to extract other parameters.
   local unit=self.group:GetUnit(1)
   
   if unit then
-  
-    --local nunits=self.group:GetUnits()
     
     self.rangemax=unit:GetRange()
     
@@ -4254,7 +4285,7 @@ function FLIGHTGROUP:_InitGroup()
     text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f%d %s\n", self.radioFreq, self.radioModu, tostring(self.radioOn))
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radioFreq, UTILS.GetModulationName(self.radioModu), tostring(self.radioOn))
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
     text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
@@ -4597,44 +4628,18 @@ function FLIGHTGROUP:IsLandingAirbase(wp)
 end
 
 
---- Check if this group is "late activated" and needs to be "activated" to appear in the mission.
+--- Check if this group is currently "late activated" and needs to be "activated" to appear in the mission.
 -- @param #FLIGHTGROUP self
 -- @return #boolean Hot start?
 function FLIGHTGROUP:IsLateActivated()
-
-  local template=_DATABASE:GetGroupTemplate(self.groupname)
-  
-  if template then
-    
-    if template.lateActivation==true then
-      return true
-    else
-      return false
-    end
-    
-  end
-
-  return nil
+  return self.isLateActivated
 end
 
---- Check if this group is "uncontrolled" and needs to be "started" to begin its route.
+--- Check if this group is currently "uncontrolled" and needs to be "started" to begin its route.
 -- @param #FLIGHTGROUP self
 -- @return #boolean Hot start?
 function FLIGHTGROUP:IsUncontrolled()
-
-  local template=_DATABASE:GetGroupTemplate(self.groupname)
-  
-  if template then
-    
-    if template.uncontrolled==true then
-      return true
-    else
-      return false
-    end
-    
-  end
-
-  return nil
+  return self.isUncontrolled
 end
 
 --- Check if task description is unique.
@@ -4808,7 +4813,7 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
   self.homebase=self:GetHomebaseFromWaypoints()
   self.destbase=self:GetDestinationFromWaypoints()
   
-  -- Remove the landing waypoint. We use RTB for that.
+  -- Remove the landing waypoint. We use RTB for that. It makes adding new waypoints easier as we do not have to check if the last waypoint is the landing waypoint.
   if self.destbase then
     table.remove(self.waypoints, #self.waypoints)
   else
@@ -4827,8 +4832,8 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
     end
     
     -- Update route (when airborne).
-    self:_CheckFlightDone(1)
-    --self:__UpdateRoute(-1)
+    --self:_CheckFlightDone(1)
+    self:__UpdateRoute(-1)
   end
 
   return self

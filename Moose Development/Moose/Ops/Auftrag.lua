@@ -326,7 +326,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.2.1"
+AUFTRAG.version="0.2.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -348,8 +348,8 @@ AUFTRAG.version="0.2.1"
 -- DONE: Evaluate mission result ==> SUCCESS/FAILURE
 -- DONE: NewAUTO() NewA2G NewA2A
 -- DONE: Transport mission.
--- TODO: Recon mission.
--- TODO: Set mission coalition, e.g. for F10 markers.
+-- TODO: Recon mission. What input? Set of coordinates?
+-- TODO: Set mission coalition, e.g. for F10 markers. Could be derived from target if target has a coalition.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -429,27 +429,6 @@ end
 -- Create Missions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a RESCUE HELO mission.
--- @param #AUFTRAG self
--- @param Wrapper.Unit#UNIT Carrier The carrier unit.
--- @return #AUFTRAG self
-function AUFTRAG:NewRESCUEHELO(Carrier)
-
-  local mission=AUFTRAG:New(AUFTRAG.Type.RESCUEHELO)
-  
-  mission:_TargetFromObject(Carrier)
-  
-  -- Mission options:
-  mission.missionTask=ENUMS.MissionTask.NOTHING
-  mission.missionFraction=0.5
-  mission.optionROE=ENUMS.ROE.WeaponHold
-  mission.optionROT=ENUMS.ROT.NoReaction
-  
-  mission.DCStask=mission:GetDCSMissionTask()
-  
-  return mission
-end
-
 --- Create an ANTI-SHIP mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be passed as a @{Wrapper.Group#GROUP} or @{Wrapper.Unit#UNIT} object.
@@ -478,7 +457,7 @@ function AUFTRAG:NewANTISHIP(Target, Altitude)
   return mission
 end
 
---- Create an ORBIT mission.
+--- Create an ORBIT mission, which can be either a circular orbit or a race-track pattern.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
@@ -504,8 +483,10 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
 
   if Heading and Leg then
     self.orbitHeading=Heading
-    self.orbitLeg=Leg
+    self.orbitLeg=UTILS.NMToMeters(Leg)
     self.orbitRaceTrack=Coordinate:Translate(self.orbitLeg, self.orbitHeading, true)
+    Coordinate:MarkToAll("Orbit RT 1 ")
+    self.orbitRaceTrack:MarkToAll("Orbit RT 2")
   end
 
   
@@ -991,6 +972,28 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   
   return mission
 end
+
+--- Create a RESCUE HELO mission.
+-- @param #AUFTRAG self
+-- @param Wrapper.Unit#UNIT Carrier The carrier unit.
+-- @return #AUFTRAG self
+function AUFTRAG:NewRESCUEHELO(Carrier)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.RESCUEHELO)
+  
+  mission:_TargetFromObject(Carrier)
+  
+  -- Mission options:
+  mission.missionTask=ENUMS.MissionTask.NOTHING
+  mission.missionFraction=0.5
+  mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionROT=ENUMS.ROT.NoReaction
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  return mission
+end
+
 
 --- Create a TROOP TRANSPORT mission.
 -- @param #AUFTRAG self

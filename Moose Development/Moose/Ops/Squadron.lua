@@ -48,7 +48,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\CarrierAirWing\SQUADRON_Main.jpg)
+-- ![Banner Image](..\Presentations\Squadron\SQUADRON_Main.jpg)
 --
 -- # The SQUADRON Concept
 --

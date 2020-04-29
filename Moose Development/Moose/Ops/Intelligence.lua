@@ -27,7 +27,7 @@
 -- @field #number dTforget Time interval in seconds before a known contact which is not detected any more is forgotten.
 -- @extends Core.Fsm#FSM
 
---- Be surprised!
+--- Top Secret!
 --
 -- ===
 --
@@ -171,7 +171,6 @@ function INTEL:New(DetectionSet, Coalition)
     BASE:TraceLevel(1)
   end
   self.Debug=true
-
 
   return self
 end

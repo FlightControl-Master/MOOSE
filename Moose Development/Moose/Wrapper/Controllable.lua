@@ -751,7 +751,7 @@ end
 function CONTROLLABLE:CommandSetCallsign(CallName, CallNumber, Delay)
 
   -- Command to set the callsign.
-  local CommandSetCallsign={id='SetCallsign', params={callname=CallName, callnumber=CallNumber or 1}}
+  local CommandSetCallsign={id='SetCallsign', params={callname=CallName, number=CallNumber or 1}}
 
   if Delay and Delay>0 then
     SCHEDULER:New(nil, self.CommandSetCallsign, {self, CallName, CallNumber}, Delay)

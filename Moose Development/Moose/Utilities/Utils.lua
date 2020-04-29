@@ -1,5 +1,4 @@
---- This module contains derived utilities taken from the MIST framework, 
--- which are excellent tools to be reused in an OO environment!.
+--- This module contains derived utilities taken from the MIST framework, which are excellent tools to be reused in an OO environment.
 -- 
 -- ### Authors: 
 -- 
@@ -116,6 +115,7 @@ CALLSIGN={
 
 --- Utilities static class.
 -- @type UTILS
+-- @field #number _MarkID Marker index counter. Running number when marker is added.
 UTILS = {
   _MarkID = 1
 }
@@ -183,7 +183,9 @@ UTILS.IsInstanceOf = function( object, className )
 end
 
 
---from http://lua-users.org/wiki/CopyTable
+--- Deep copy a table. See http://lua-users.org/wiki/CopyTable
+-- @param #table object The input table.
+-- @return #table Copy of the input table.
 UTILS.DeepCopy = function(object)
   local lookup_table = {}
   local function _copy(object)
@@ -204,7 +206,8 @@ UTILS.DeepCopy = function(object)
 end
 
 
--- porting in Slmod's serialize_slmod2
+--- Porting in Slmod's serialize_slmod2.
+-- @param #table tbl Input table.
 UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
 
   lookup_table = {}
@@ -340,18 +343,30 @@ UTILS.MiphToMps = function( miph )
   return miph * 0.44704
 end
 
+--- Convert meters per second to miles per hour.
+-- @param #number mps Speed in m/s.
+-- @return #number Speed in miles per hour.
 UTILS.MpsToMiph = function( mps )
   return mps / 0.44704
 end
 
+--- Convert meters per second to knots.
+-- @param #number knots Speed in m/s.
+-- @return #number Speed in knots.
 UTILS.MpsToKnots = function( mps )
   return mps * 1.94384 --3600 / 1852
 end
 
+--- Convert knots to meters per second.
+-- @param #number knots Speed in knots.
+-- @return #number Speed in m/s.
 UTILS.KnotsToMps = function( knots )
   return knots / 1.94384 --* 1852 / 3600
 end
 
+--- Convert temperature from Celsius to Farenheit.
+-- @param #number Celcius Temperature in degrees Celsius.
+-- @return #number Temperature in degrees Farenheit.
 UTILS.CelciusToFarenheit = function( Celcius )
   return Celcius * 9/5 + 32 
 end
@@ -982,7 +997,7 @@ end
 
 
 --- Returns the DCS map/theatre as optained by env.mission.theatre
--- @return #string DCS map name .
+-- @return #string DCS map name.
 function UTILS.GetDCSMap()
   return env.mission.theatre
 end
@@ -1100,7 +1115,7 @@ end
 
 --- Get the callsign name from its enumerator value
 -- @param #number Callsign The enumerator callsign.
--- @return #string The callsign name.
+-- @return #string The callsign name or "Ghostrider".
 function UTILS.GetCallsignName(Callsign)
 
   for name, value in pairs(CALLSIGN.Aircraft) do
@@ -1127,7 +1142,5 @@ function UTILS.GetCallsignName(Callsign)
     end
   end
 
-  return "Unknown Calsing"
+  return "Ghostrider"
 end
-
--- Just a test to see commits in new environment for Wingthor
