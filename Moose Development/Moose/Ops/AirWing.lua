@@ -327,12 +327,11 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
     return nil
   end
   
-  --[[
+  self:I(self.lid..string.format("Looking for payload for unit type=%s and mission type=%s", UnitType, MissionType))
   for i,_payload in pairs(self.payloads) do
     local payload=_payload --#AIRWING.Payload
-    self:I(self.lid..string.format("%d Payload type=%s navail=%d", i, payload.aircrafttype, payload.navail))
+    self:I(self.lid..string.format("[%d] Payload type=%s navail=%d unlimited=%s", i, payload.aircrafttype, payload.navail, tostring(payload.unlimited)))
   end
-  ]]
 
   --- Sort payload wrt the following criteria:
   -- 1) Highest performance is the main selection criterion.
@@ -346,13 +345,16 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
       local performanceB=self:GetPayloadPeformance(b, MissionType)
       return (performanceA>performanceB) or (performanceA==performanceB and a.unlimited==true) or (performanceA==performanceB and a.unlimited==true and b.unlimited==true and a.navail>b.navail)
     elseif not a then
+      env.info("FF ERROR in sortpayloads: a is nil")
       return false
     elseif not b then
+      env.info("FF ERROR in sortpayloads: b is nil")
       return true
     else
-      return true
+      env.info("FF ERROR in sortpayloads: a and b are nil")
+      return false
     end
-  end  
+  end
   table.sort(self.payloads, sortpayloads)
 
   if self.Debug then
