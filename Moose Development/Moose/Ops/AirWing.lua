@@ -84,7 +84,9 @@ AIRWING = {
 
 --- Patrol data.
 -- @type AIRWING.PatrolData
+-- @field #string type Type name.
 -- @field Core.Point#COORDINATE coord Patrol coordinate.
+-- @field #number altitude Altitude in feet.
 -- @field #number heading Heading in degrees.
 -- @field #number leg Leg length in NM.
 -- @field #number speed Speed in knots.
@@ -93,7 +95,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.2.0"
+AIRWING.version="0.2.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -567,37 +569,52 @@ function AIRWING:SetNumberRescuehelo(n)
   return self
 end
 
---- Create a new generic patrol point.
+--- 
 -- @param #AIRWING self
 -- @param #AIRWING.PatrolData point Patrol point table.
--- @param #string Text
 -- @return #string Marker text.
-function AIRWING:_PatrolPointMarkerText(point, Text)
+function AIRWING:_PatrolPointMarkerText(point)
 
   local text=string.format("%s Occupied=%d, \nheading=%03d, leg=%d NM, alt=%d ft, speed=%d kts", 
-  Text, point.noccupied, point.heading, point.leg, point.altitude, point.speed)
+  point.type, point.noccupied, point.heading, point.leg, point.altitude, point.speed)
 
   return text
 end
 
+--- Update marker of the patrol point.
+-- @param #AIRWING.PatrolData point Patrol point table.
+function AIRWING.UpdatePatrolPointMarker(point)
+
+  local text=string.format("%s Occupied=%d\nheading=%03d, leg=%d NM, alt=%d ft, speed=%d kts", 
+  point.type, point.noccupied, point.heading, point.leg, point.altitude, point.speed)
+
+  point.marker:UpdateText(text, 1)
+
+end
+
+
 --- Create a new generic patrol point.
 -- @param #AIRWING self
+-- @param #string Type Patrol point type, e.g. "CAP" or "AWACS". Default "Unknown".
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point. Default 10-15 NM away from the location of the airwing.
+-- @param #number Altitude Orbit altitude in feet. Default random between Angels 10 and 20.
 -- @param #number Heading Heading in degrees. Default random (0, 360] degrees.
 -- @param #number LegLength Length of race-track orbit in NM. Default 15 NM.
--- @param #number Altitude Orbit altitude in feet. Default random between Angels 10 and 20.
 -- @param #number Speed Orbit speed in knots. Default 350 knots.
 -- @return #AIRWING.PatrolData Patrol point table.
-function AIRWING:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
+function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegLength)
 
   local patrolpoint={}  --#AIRWING.PatrolData
+  patrolpoint.type=Type or "Unknown"
   patrolpoint.coord=Coordinate or self:GetCoordinate():Translate(UTILS.NMToMeters(math.random(10, 15)), math.random(360))
   patrolpoint.heading=Heading or math.random(360)
   patrolpoint.leg=LegLength or 15
   patrolpoint.altitude=Altitude or math.random(10,20)*1000
   patrolpoint.speed=Speed or 350
   patrolpoint.noccupied=0
-  patrolpoint.marker=MARKER:New(Coordinate, self:_PatrolPointMarkerText(patrolpoint, "New")):ToAll()
+  patrolpoint.marker=MARKER:New(Coordinate, "New Patrol Point"):ToAll()
+  
+  AIRWING.UpdatePatrolPointMarker(patrolpoint)
 
   return patrolpoint
 end
@@ -605,19 +622,16 @@ end
 --- Add a patrol Point for CAP missions.
 -- @param #AIRWING self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
--- @param #number Heading Heading in degrees.
--- @param #number LegLength Length of race-track orbit in NM.
 -- @param #number Altitude Orbit altitude in feet.
 -- @param #number Speed Orbit speed in knots.
+-- @param #number Heading Heading in degrees.
+-- @param #number LegLength Length of race-track orbit in NM.
 -- @return #AIRWING self
-function AIRWING:AddPatrolPointCAP(Coordinate, Heading, LegLength, Altitude, Speed)
+function AIRWING:AddPatrolPointCAP(Coordinate, Altitude, Speed, Heading, LegLength)
   
-  local cappoint=self:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
-  
-  local text=self:_PatrolPointMarkerText(cappoint, "CAP")
-  cappoint.marker:UpdateText(text, 1)
+  local patrolpoint=self:NewPatrolPoint("CAP", Coordinate, Altitude, Speed, Heading, LegLength)
 
-  table.insert(self.pointsCAP, cappoint)
+  table.insert(self.pointsCAP, patrolpoint)
 
   return self
 end
@@ -625,19 +639,16 @@ end
 --- Add a patrol Point for TANKER missions.
 -- @param #AIRWING self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
--- @param #number Heading Heading in degrees.
--- @param #number LegLength Length of race-track orbit in NM.
 -- @param #number Altitude Orbit altitude in feet.
 -- @param #number Speed Orbit speed in knots.
+-- @param #number Heading Heading in degrees.
+-- @param #number LegLength Length of race-track orbit in NM.
 -- @return #AIRWING self
-function AIRWING:AddPatrolPointTANKER(Coordinate, Heading, LegLength, Altitude, Speed)
+function AIRWING:AddPatrolPointTANKER(Coordinate, Altitude, Speed, Heading, LegLength)
   
-  local cappoint=self:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
+  local patrolpoint=self:NewPatrolPoint("Tanker", Coordinate, Altitude, Speed, Heading, LegLength)
 
-  local text=self:_PatrolPointMarkerText(cappoint, "Tanker")
-  cappoint.marker:UpdateText(text, 1)
-
-  table.insert(self.pointsTANKER, cappoint)
+  table.insert(self.pointsTANKER, patrolpoint)
 
   return self
 end
@@ -645,19 +656,16 @@ end
 --- Add a patrol Point for AWACS missions.
 -- @param #AIRWING self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
--- @param #number Heading Heading in degrees.
--- @param #number LegLength Length of race-track orbit in NM.
 -- @param #number Altitude Orbit altitude in feet.
 -- @param #number Speed Orbit speed in knots.
+-- @param #number Heading Heading in degrees.
+-- @param #number LegLength Length of race-track orbit in NM.
 -- @return #AIRWING self
-function AIRWING:AddPatrolPointAWACS(Coordinate, Heading, LegLength, Altitude, Speed)
+function AIRWING:AddPatrolPointAWACS(Coordinate, Altitude, Speed, Heading, LegLength)
   
-  local cappoint=self:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
+  local patrolpoint=self:NewPatrolPoint("AWACS", Coordinate, Altitude, Speed, Heading, LegLength)
 
-  local text=self:_PatrolPointMarkerText(cappoint, "AWACS")
-  cappoint.marker:UpdateText(text, 1)
-
-  table.insert(self.pointsAWACS, cappoint)
+  table.insert(self.pointsAWACS, patrolpoint)
 
   return self
 end
@@ -850,11 +858,13 @@ function AIRWING:CheckCAP()
   
     local patrol=self:_GetPatrolData(self.pointsCAP)
     
-    local missionCAP=AUFTRAG:NewPATROL(patrol.coord, patrol.speed, patrol.heading, patrol.leg, patrol.altitude)
+    local missionCAP=AUFTRAG:NewPATROL(patrol.coord, patrol.altitude, patrol.speed, patrol.heading, patrol.leg)
     
     missionCAP.patroldata=patrol
     
     patrol.noccupied=patrol.noccupied+1
+    
+    AIRWING.UpdatePatrolPointMarker(patrol)
     
     self:AddMission(missionCAP)
       
@@ -890,13 +900,13 @@ function AIRWING:CheckTANKER()
   
     local patrol=self:_GetPatrolData(self.pointsTANKER)
     
-    patrol.coord:MarkToAll("Patrol point boom")
-    
-    local mission=AUFTRAG:NewTANKER(patrol.coord, patrol.speed, patrol.heading, patrol.leg, patrol.altitude, 0)
+    local mission=AUFTRAG:NewTANKER(patrol.coord, patrol.altitude, patrol.speed, patrol.heading, patrol.leg, 0)
     
     mission.patroldata=patrol
     
     patrol.noccupied=patrol.noccupied+1
+    
+    AIRWING.UpdatePatrolPointMarker(patrol)
     
     self:AddMission(mission)
       
@@ -906,13 +916,13 @@ function AIRWING:CheckTANKER()
   
     local patrol=self:_GetPatrolData(self.pointsTANKER)
     
-    patrol.coord:MarkToAll("Patrol point probe")
-    
-    local mission=AUFTRAG:NewTANKER(patrol.coord, patrol.speed, patrol.heading, patrol.leg, patrol.altitude, 1)
+    local mission=AUFTRAG:NewTANKER(patrol.coord, patrol.altitude, patrol.speed, patrol.heading, patrol.leg, 1)
     
     mission.patroldata=patrol
     
     patrol.noccupied=patrol.noccupied+1
+    
+    AIRWING.UpdatePatrolPointMarker(patrol)
     
     self:AddMission(mission)
       
@@ -932,11 +942,13 @@ function AIRWING:CheckAWACS()
   
     local patrol=self:_GetPatrolData(self.pointsAWACS)
     
-    local mission=AUFTRAG:NewAWACS(patrol.coord, patrol.speed, patrol.heading, patrol.leg, patrol.altitude)
+    local mission=AUFTRAG:NewAWACS(patrol.coord, patrol.altitude, patrol.speed, patrol.heading, patrol.leg)
     
     mission.patroldata=patrol
     
     patrol.noccupied=patrol.noccupied+1
+    
+    AIRWING.UpdatePatrolPointMarker(patrol)
     
     self:AddMission(mission)
       

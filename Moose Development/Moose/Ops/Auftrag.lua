@@ -79,6 +79,7 @@
 -- @field #number requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
 -- @field #boolean cancelContactLost If true, cancel mission if the contact is lost.
 -- @field #table squadrons User specifed airwing squadrons assigned for this mission. Only these will be considered for the job!
+-- @field Ops.AirWing#AIRWING.PatrolData patroldata Patrol data.
 -- 
 -- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
 -- @field #number missionAltitude Mission altitude in meters.
@@ -523,7 +524,7 @@ end
 function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
 
   Heading = Heading or math.random(360)
-  Leg     = UTILS.NMToMeters(Leg or 10)
+  Leg     = Leg or 10
 
   local mission=AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
   
@@ -532,16 +533,16 @@ end
 
 --- Create a PATROL mission.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Where to orbit. Altitude is also taken from the coordinate. 
+-- @param Core.Point#COORDINATE Coordinate Where to orbit.
+-- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
 -- @param #number Speed Orbit speed in knots. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
--- @param #number Altitude Orbit altitude in feet.
 -- @return #AUFTRAG self
-function AUFTRAG:NewPATROL(Coordinate, Speed, Heading, Leg, Altitude)
+function AUFTRAG:NewPATROL(Coordinate, Altitude, Speed, Heading, Leg)
 
   -- Create ORBIT first.
-  local mission=self:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
+  local mission=AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
     
   -- Mission type PATROL.
   mission.type=AUFTRAG.Type.PATROL
@@ -557,17 +558,17 @@ end
 
 --- Create a TANKER mission.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Where to orbit. Altitude is also taken from the coordinate. 
+-- @param Core.Point#COORDINATE Coordinate Where to orbit.
+-- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
 -- @param #number Speed Orbit speed in knots. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
--- @param #number Altitude Orbit altitude in feet.
 -- @param #number RefuelSystem Refueling system.
 -- @return #AUFTRAG self
-function AUFTRAG:NewTANKER(Coordinate, Speed, Heading, Leg, Altitude, RefuelSystem)
+function AUFTRAG:NewTANKER(Coordinate, Altitude, Speed, Heading, Leg, RefuelSystem)
 
   -- Create ORBIT first.
-  local mission=self:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
+  local mission=AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
     
   -- Mission type PATROL.
   mission.type=AUFTRAG.Type.TANKER
@@ -588,16 +589,16 @@ end
 
 --- Create a AWACS mission.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Where to orbit. Altitude is also taken from the coordinate. 
+-- @param Core.Point#COORDINATE Coordinate Where to orbit. Altitude is also taken from the coordinate.
+-- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
 -- @param #number Speed Orbit speed in knots. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
--- @param #number Altitude Orbit altitude in feet.
 -- @return #AUFTRAG self
-function AUFTRAG:NewAWACS(Coordinate, Speed, Heading, Leg, Altitude)
+function AUFTRAG:NewAWACS(Coordinate, Altitude, Speed, Heading, Leg)
 
   -- Create ORBIT first.
-  local mission=self:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
+  local mission=AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
     
   -- Mission type PATROL.
   mission.type=AUFTRAG.Type.AWACS
@@ -657,7 +658,7 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   end
 
   -- Create ORBIT first.
-  local mission=self:NewORBIT(Coordinate or ZoneCAP:GetCoordinate(), Altitude or 10000, Speed, Heading, Leg)
+  local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAP:GetCoordinate(), Altitude or 10000, Speed, Heading, Leg)
   
   -- Mission type CAP.
   mission.type=AUFTRAG.Type.CAP
@@ -697,7 +698,7 @@ function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, Targ
   end
 
   -- Create ORBIT first.
-  local mission=self:NewORBIT(Coordinate or ZoneCAS:GetCoordinate(), Altitude or 10000, Speed, Heading, Leg)
+  local mission=AUFTRAG:NewORBIT(Coordinate or ZoneCAS:GetCoordinate(), Altitude or 10000, Speed, Heading, Leg)
   
   -- Mission type CAS.
   mission.type=AUFTRAG.Type.CAS
@@ -2054,6 +2055,7 @@ function AUFTRAG:onafterDone(From, Event, To)
   
   -- Set time stamp.
   self.Tover=timer.getAbsTime()
+  
 end
 
 

@@ -4012,6 +4012,12 @@ function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
   if wpidx then
     self:RemoveWaypoint(wpidx)
   end
+  
+  -- Decrease patrol data.
+  if Mission.patroldata then
+    Mission.patroldata.noccupied=Mission.patroldata.noccupied-1
+    AIRWING.UpdatePatrolPointMarker(Mission.patroldata)
+  end
 
   -- TODO: reset mission specific parameters like radio, ROE etc.  
   
