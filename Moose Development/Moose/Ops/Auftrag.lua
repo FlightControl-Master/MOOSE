@@ -482,11 +482,9 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
   mission.orbitSpeed = UTILS.KnotsToMps(Speed or 350)
 
   if Heading and Leg then
-    self.orbitHeading=Heading
-    self.orbitLeg=UTILS.NMToMeters(Leg)
-    self.orbitRaceTrack=Coordinate:Translate(self.orbitLeg, self.orbitHeading, true)
-    Coordinate:MarkToAll("Orbit RT 1 ")
-    self.orbitRaceTrack:MarkToAll("Orbit RT 2")
+    mission.orbitHeading=Heading
+    mission.orbitLeg=UTILS.NMToMeters(Leg)
+    mission.orbitRaceTrack=Coordinate:Translate(mission.orbitLeg, mission.orbitHeading, true)
   end
 
   
