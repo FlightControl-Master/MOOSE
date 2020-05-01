@@ -262,6 +262,7 @@ function SQUADRON:AddMissonCapability(MissionTypes, Performance)
     -- Check not to add the same twice.  
     if self:CheckMissionCapability(missiontype, self.missiontypes) then
       self:E(self.lid.."WARNING: Mission capability already present! No need to add it twice.")
+      -- TODO: update performance.
     else
   
       local capability={} --Ops.Auftrag#AUFTRAG.Capability
@@ -664,7 +665,7 @@ function SQUADRON:RecruitAssets(Mission)
     if self.airwing:IsAssetOnMission(asset) then
 
       ---
-      -- Asset is already on a mission
+      -- Asset is already on a mission.
       ---
 
       -- Check if this asset is currently on a PATROL mission (STARTED or EXECUTING).
@@ -672,7 +673,7 @@ function SQUADRON:RecruitAssets(Mission)
 
         -- Check if the payload of this asset is compatible with the mission.
         -- Note: we do not check the payload as an asset that is on a PATROL mission should be able to do an INTERCEPT as well!
-        -- TODO: Check if asset actually has weapons left. Difficult!
+        self:I(self.lid.."Adding asset on PATROL mission for an INTERCEPT mission")
         table.insert(assets, asset)
         
       end      
@@ -686,22 +687,39 @@ function SQUADRON:RecruitAssets(Mission)
       if asset.spawned then
       
         ---
-        -- Asset is already SPAWNED (could be uncontrolled on the airfield)
+        -- Asset is already SPAWNED (could be uncontrolled on the airfield or inbound after another mission)
         ---
       
-        local combatready=false
         local flightgroup=asset.flightgroup
-        if flightgroup then
-        
-          if (flightgroup:IsAirborne() or flightgroup:IsWaiting()) and not flightgroup:IsFuelLow() then
-            combatready=true
+      
+        -- Firstly, check if it has the right payload.
+        if self:CheckMissionCapability(Mission.type, asset.payload.capabilities) and flightgroup and flightgroup:IsAlive() then
+      
+          -- Assume we are ready and check if any condition tells us we are not.
+          local combatready=true
+  
+          if Mission.type==AUFTRAG.Type.INTERCEPT then
+            combatready=flightgroup:CanAirToAir()
+          else
+            combatready=flightgroup:CanAirToGround()
+          end
+          
+          -- No more attacks if fuel is already low. Safety first!
+          if flightgroup:IsFuelLow() then
+            combatready=false
+          end
+          
+          -- Check if in a state where we really do not want to fight any more.
+          if flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() or flightgroup:IsDead() then
+            combatready=false
+          end
+      
+          -- This asset is "combatready".
+          if combatready then
+            self:I(self.lid.."Adding SPAWNED asset to ANOTHER mission as it is COMBATREADY")
+            table.insert(assets, asset)
           end
         
-        end
-      
-        -- This asset is "combatready". Let's check if it has the right payload.
-        if combatready and self:CheckMissionCapability(Mission.type, asset.payload.capabilities) then
-          table.insert(assets, asset)
         end
         
       else
@@ -711,27 +729,16 @@ function SQUADRON:RecruitAssets(Mission)
         ---          
       
         -- Check that asset is not already requested for another mission.
-        if not asset.requested then
-      
-          --[[
-          -- Check if we got a payload and reserve it for this asset.
-          local payload=self.airwing:FetchPayloadFromStock(asset.unittype, Mission.type)
-          if payload then
-            asset.payload=payload
-            table.insert(assets, asset)
-          end
-          ]]
+        if Npayloads>0 and not asset.requested then
+                    
+          -- Add this asset to the selection.
+          table.insert(assets, asset)
           
-          if Npayloads>0 then
-          
-            -- Add this asset to the selection.
-            table.insert(assets, asset)
-            
-            -- Reduce number of payloads so we only return the number of assets that could do the job.
-            Npayloads=Npayloads-1
-          end
+          -- Reduce number of payloads so we only return the number of assets that could do the job.
+          Npayloads=Npayloads-1
           
         end
+        
       end      
     end    
   end -- loop over assets

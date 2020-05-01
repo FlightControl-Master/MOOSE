@@ -306,6 +306,7 @@ AUFTRAG.TargetType={
 
 --- Mission success.
 -- @type AUFTRAG.Success
+-- @field #string SURVIVED Group did survive.
 -- @field #string ENGAGED Target was engaged.
 -- @field #string DAMAGED Target was damaged.
 -- @field #string DESTROYED Target was destroyed.

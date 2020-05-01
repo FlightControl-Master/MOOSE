@@ -1177,6 +1177,14 @@ function AIRWING:CalculateAssetMissionScore(asset, Mission, includePayload)
     score=score+self:GetPayloadPeformance(asset.payload, Mission.type)
   end
   
+  -- Intercepts need to be carried out quickly. We prefer spawned assets.
+  if Mission.type==AUFTRAG.Type.INTERCEPT then
+    if asset.spawned then
+      self:I("FF adding 25 to asset because it is spawned")
+      score=score+25
+    end
+  end
+  
   -- TODO: This could be vastly improved. Need to gather ideas during testing.
   -- Calculate ETA? Assets on orbit missions should arrive faster even if they are further away.
   -- Max speed of assets.
@@ -1239,7 +1247,7 @@ function AIRWING:_OptimizeAssetSelection(assets, Mission, includePayload)
   table.sort(assets, optimize)
   
   -- Remove distance parameter.
-  local text=string.format("Optimized assets for mission (payload=%s):", tostring(includePayload))
+  local text=string.format("Optimized assets for %s mission (payload=%s):", Mission.type, tostring(includePayload))
   for i,Asset in pairs(assets) do
     local asset=Asset --#AIRWING.SquadronAsset
     text=text..string.format("\n%s %s: score=%d, distance=%.1f km", asset.squadname, asset.spawngroupname, asset.score, asset.dist/1000)

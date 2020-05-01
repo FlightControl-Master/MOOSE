@@ -46,6 +46,7 @@
 -- @field #number ceiling Max altitude the aircraft can fly at in meters.
 -- @field #number tankertype The refueling system type (0=boom, 1=probe), if the group is a tanker.
 -- @field #number refueltype The refueling system type (0=boom, 1=probe), if the group can refuel from a tanker.
+-- @field #FLIGHTGROUP.Ammo ammo Ammunition data. Number of Guns, Rockets, Bombs, Missiles. 
 -- @field #boolean ai If true, flight is purely AI. If false, flight contains at least one human player.
 -- @field #boolean fuellow Fuel low switch.
 -- @field #number fuellowthresh Low fuel threshold in percent.
@@ -84,12 +85,17 @@
 -- 
 -- @field #number CallsignName Call sign name.
 -- @field #number CallsignNumber Call sign number.
--- @field #boolean EPLRS If true, turn EPLRS data link on.
 -- 
--- @field #string optionROEdefault Default ROE setting.
--- @field #string optionROTdefault Default ROT setting.
--- @field #string optionROEcurrent Current ROE setting.
--- @field #string optionROTcurrent Current ROT setting.
+-- @field #boolean eplrsDefault Default EPLRS data link setting.
+-- @field #boolean eplrs If true, EPLRS data link is on.
+-- 
+-- @field #string roeDefault Default ROE setting.
+-- @field #string rotDefault Default ROT setting.
+-- @field #string roe Current ROE setting.
+-- @field #string rot Current ROT setting.
+-- 
+-- @field #number formationDefault Default formation setting.
+-- @field #number formation Current formation setting.
 -- 
 -- @field Ops.Auftrag#AUFTRAG missionpaused Paused mission.
 -- 
@@ -343,38 +349,21 @@ FLIGHTGROUP.TaskType={
 -- @field DCS#Task DCStask DCS task structure table.
 -- @field #number WaypointIndex Waypoint number at which the enroute task is added.
 
+--- Ammo data.
+-- @type FLIGHTGROUP.Ammo
+-- @field #number Total Total amount of ammo.
+-- @field #number Guns Amount of gun shells.
+-- @field #number Bombs Amount of bombs.
+-- @field #number Rockets Amount of rockets.
+-- @field #number Missiles Amount of missiles.
+-- @field #number MissilesAA Amount of air-to-air missiles.
+-- @field #number MissilesAG Amount of air-to-ground missiles.
+-- @field #number MissilesAS Amount of anti-ship missiles.
 
---- Rules of Engagement (ROE).
--- @type FLIGHTGROUP.ROE
--- @field #string RETURNFIRE
--- @field #string WEAPONFREE
--- @field #string WEAPONHOLD
-FLIGHTGROUP.ROE={
-  WEAPONFREE="weapon_free",
-  OPENFIREPRIO="open_fire_prio_designated",
-  OPENFIREDESIG="open_fire_only_designated",
-  RETURNFIRE="return_fire",
-  WEAPONHOLD="weapon_hold",
-}
-
---- Reaction on Threat (ROT).
--- @type FLIGHTGROUP.ROT
--- @field #string NOREACT No defensive actions will take place to counter threats.
--- @field #string PASSIVE AI will use jammers and other countermeasures in an attempt to defeat the threat. AI will not attempt a maneuver to defeat a threat.
--- @field #string EVADE AI will react by performing defensive maneuvers against incoming threats, AI will also use passive defense.
--- @field #string BYPASS aI will attempt to avoid enemy threat zones all together. This includes attempting to fly above or around threats.
--- @field #string ABORT If a threat is deemed severe enough the AI will abort its mission and return to base.
-FLIGHTGROUP.ROT={
-  NOREACT="no_reaction",
-  PASSIVE="weapon_free",  
-  EVADE="return_fire",
-  BYPASS="bypass_and_escape",
-  ABORT="allow_abort_mission",
-}
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.4.0"
+FLIGHTGROUP.version="0.4.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -480,8 +469,9 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("*",             "OutOfRockets",      "*")          -- Group is out of rockets.
   self:AddTransition("*",             "OutOfBombs",        "*")          -- Group is out of bombs.
   self:AddTransition("*",             "OutOfMissiles",     "*")          -- Group is out of missiles.
-  self:AddTransition("*",             "OutOfMissilesA2A",  "*")          -- Group is out of A2A missiles. Not implemented yet!
-  self:AddTransition("*",             "OutOfMissilesA2G",  "*")          -- Group is out of A2G missiles. Not implemented yet!
+  self:AddTransition("*",             "OutOfMissilesAA",   "*")          -- Group is out of A2A missiles. Not implemented yet!
+  self:AddTransition("*",             "OutOfMissilesAG",   "*")          -- Group is out of A2G missiles. Not implemented yet!
+  self:AddTransition("*",             "OutOfMissilesAS",   "*")          -- Group is out of A2G missiles. Not implemented yet!
 
   self:AddTransition("*",             "TaskExecute",      "*")           -- Group will execute a task.
   self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task. Not implemented yet!
@@ -549,7 +539,7 @@ function FLIGHTGROUP:New(groupname, autostart)
   -- @function [parent=#FLIGHTGROUP] FlightStatus
   -- @param #FLIGHTGROUP self
 
-  --- Triggers the FSM event "SkipperStatus" after a delay.
+  --- Triggers the FSM event "FlightStatus" after a delay.
   -- @function [parent=#FLIGHTGROUP] __FlightStatus
   -- @param #FLIGHTGROUP self
   -- @param #number delay Delay in seconds.
@@ -1151,6 +1141,32 @@ function FLIGHTGROUP:IsAlive()
   return nil
 end
 
+--- Check if flight can do air-to-ground tasks.
+-- @param #FLIGHTGROUP self
+-- @param #boolean ExcludeGuns If true, exclude gun
+-- @return #boolean *true* if has air-to-ground weapons.
+function FLIGHTGROUP:CanAirToGround(ExcludeGuns)
+  local ammo=self:GetAmmoTot()
+  if ExcludeGuns then
+    return ammo.MissilesAG+ammo.Rockets+ammo.Bombs>0
+  else
+    return ammo.MissilesAG+ammo.Rockets+ammo.Bombs+ammo.Guns>0
+  end
+end
+
+--- Check if flight can do air-to-air attacks.
+-- @param #FLIGHTGROUP self
+-- @param #boolean ExcludeGuns If true, exclude available gun shells.
+-- @return #boolean *true* if has air-to-ground weapons.
+function FLIGHTGROUP:CanAirToAir(ExcludeGuns)
+  local ammo=self:GetAmmoTot()
+  if ExcludeGuns then
+    return ammo.MissilesAA>0
+  else
+    return ammo.MissilesAA+ammo.Guns>0
+  end
+end
+
 --- Activate a *late activated* group.
 -- @param #FLIGHTGROUP self
 -- @param #number delay (Optional) Delay in seconds before the group is activated. Default is immediately.
@@ -1591,13 +1607,11 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
       end
       
       -- Get ammo.
-      local nammo=0; local nshells=0 ; local nrockets=0; local nbombs=0; local nmissiles=0
-      if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
-        nammo, nshells, nrockets, nbombs, nmissiles=self:GetAmmoElement(element)
-      end
+      local ammo=self:GetAmmoElement(element)
   
       -- Output text for element.
-      text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f, shells=%d, rockets=%d, bombs=%d, missiles=%d, parking=%s", i, name, status, fuel*100, life*100, nshells, nrockets, nbombs, nmissiles, parking)
+      text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d (AA=%d, AG=%d, AS=%s), parking=%s",
+      i, name, status, fuel*100, life*100, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles, ammo.MissilesAA, ammo.MissilesAG, ammo.MissilesAS, parking)
     end
     if #self.elements==0 then
       text=text.." none!"
@@ -1628,39 +1642,39 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     -- Add up travelled distance.
     self.traveldist=self.traveldist+ds
     
-    self:I(self.lid..string.format("FF Travelled ds=%.1f km dt=%.1f s ==> v=%.1f knots", self.traveldist/1000, dt, UTILS.MpsToKnots(v)))
-          
-    local fuelmass=math.huge
+    
+    -- Max fuel time remaining.
+    local TmaxFuel=math.huge
+    
     for _,_element in pairs(self.elements) do
       local element=_element --#FLIGHTGROUP.Element
       
+      -- Get relative fuel of element.
       local fuel=element.unit:GetFuel() or 0
       
       -- Relative fuel used since last check.
       local dFrel=element.fuelrel-fuel
       
-      local dFabs=element.fuelmass
+      -- Relative fuel used per second.
+      local dFreldt=dFrel/dt
       
-      local fmass=element.fuelmass0*fuel
-            
+      -- Fuel remaining in seconds.
+      local Tfuel=fuel/dFreldt
       
-      local dm=element.fuelmass-fmass
-      
-      local dmds=dm/ds
-      local dmdt=dm/dt
-      
-      if fmass<fuelmass then
-        fuelmass=fmass
+      if Tfuel<TmaxFuel then
+        TmaxFuel=Tfuel
       end
       
-      self:I(self.lid..string.format("Fuel consumption %s F=%.1f:  dF=%.3f, dm=%.1f kg ==> dm/ds=%.1f kg/min   dm/dt=%.1f 1/s", element.name, fuel*100, dFrel*100, dm, dmds*60, dmdt))
+      -- Element consumption.
+      self:T3(self.lid..string.format("Fuel consumption %s F=%.1f: dF=%.3f  dF/min=%.3f ==> Tfuel=%.1f min", element.name, fuel*100, dFrel*100, dFreldt*100*60, Tfuel/60))
       
+      -- Store rel fuel.
       element.fuelrel=fuel
-      element.fuelmass=fmass
     end
     
     -- Log outut.
-    --self:I(self.lid..string.format("FF Distance travelled = %.1f km v=%.1f knots fuel=%d kg", self.traveldist/1000, UTILS.MpsToKnots(v), fuelmass))
+    self:I(self.lid..string.format("Travelled ds=%.1f km dt=%.1f s ==> v=%.1f knots. Fuel left for %.1f min", self.traveldist/1000, dt, UTILS.MpsToKnots(v), TmaxFuel/60))
+    
 
     -- Update parameters.
     self.traveltime=time
@@ -2870,58 +2884,66 @@ end
 -- @param #number SpeedTo Speed used for travelling from current position to holding point in knots.
 -- @param #number SpeedHold Holding speed in knots.
 function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
-
-  local allowed=true
-  local Tsuspend=nil
-
-  if airbase==nil then
-    self:E(self.lid.."ERROR: Airbase is nil in RTB() call!")
-    allowed=false
-  end
-
-  -- Check that coaliton is okay. We allow same (blue=blue, red=red) or landing on neutral bases.
-  if airbase and airbase:GetCoalition()~=self.group:GetCoalition() and airbase:GetCoalition()>0 then
-    self:E(self.lid.."ERROR: Wrong airbase coalition in RTB() call! We allow only same as group or neutral airbases.")
-    allowed=false
-  end
   
-  if not self.group:IsAirborne(true) then
-    self:I(self.lid..string.format("WARNING: Group is not AIRBORNE  ==> RTB event is suspended for 10 sec."))
-    allowed=false
-    Tsuspend=-10  
-  end
+  if self:IsAlive() then
   
-  -- Only if fuel is not low or critical.
-  if not (self:IsFuelLow() or self:IsFuelCritical()) then
+    local allowed=true
+    local Tsuspend=nil
 
-    -- Check if there are remaining tasks.
-    local Ntot,Nsched, Nwp=self:CountRemainingTasks()
-  
-    if self.taskcurrent>0 then
-      self:I(self.lid..string.format("WARNING: Got current task ==> RTB event is suspended for 10 sec."))
-      Tsuspend=-10
+    if airbase==nil then
+      self:E(self.lid.."ERROR: Airbase is nil in RTB() call!")
       allowed=false
+    end
+  
+    -- Check that coaliton is okay. We allow same (blue=blue, red=red) or landing on neutral bases.
+    if airbase and airbase:GetCoalition()~=self.group:GetCoalition() and airbase:GetCoalition()>0 then
+      self:E(self.lid..string.format("ERROR: Wrong airbase coalition %d in RTB() call! We allow only same as group %d or neutral airbases 0.", airbase:GetCoalition(), self.group:GetCoalition()))
+      allowed=false
+    end  
+    
+    if not self.group:IsAirborne(true) then
+      self:I(self.lid..string.format("WARNING: Group is not AIRBORNE  ==> RTB event is suspended for 10 sec."))
+      allowed=false
+      Tsuspend=-10  
     end
     
-    if Nsched>0 then
-      self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> RTB event is suspended for 10 sec.", Nsched))
-      Tsuspend=-10
-      allowed=false
-    end
+    -- Only if fuel is not low or critical.
+    if not (self:IsFuelLow() or self:IsFuelCritical()) then
   
-    if Nwp>0 then
-      self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> RTB event is suspended for 10 sec.", Nwp))
-      Tsuspend=-10
-      allowed=false
+      -- Check if there are remaining tasks.
+      local Ntot,Nsched, Nwp=self:CountRemainingTasks()
+    
+      if self.taskcurrent>0 then
+        self:I(self.lid..string.format("WARNING: Got current task ==> RTB event is suspended for 10 sec."))
+        Tsuspend=-10
+        allowed=false
+      end
+      
+      if Nsched>0 then
+        self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> RTB event is suspended for 10 sec.", Nsched))
+        Tsuspend=-10
+        allowed=false
+      end
+    
+      if Nwp>0 then
+        self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> RTB event is suspended for 10 sec.", Nwp))
+        Tsuspend=-10
+        allowed=false
+      end
+      
     end
     
+    if Tsuspend and not allowed then
+      self:__RTB(Tsuspend, airbase, SpeedTo, SpeedHold)  
+    end
+  
+    return allowed
+    
+  else
+    self:E(self.lid.."WARNING: Group is not alive! RTB call not allowed.")
+    return false
   end
   
-  if Tsuspend and not allowed then
-    self:__RTB(Tsuspend, airbase, SpeedTo, SpeedHold)  
-  end
-  
-  return allowed
 end
 
 --- On after "RTB" event. Order flight to hold at an airbase and wait for signal to land.
@@ -4237,6 +4259,9 @@ function FLIGHTGROUP:_InitGroup()
   -- Cruise speed: 70% of max speed but within limit.
   self.speedCruise=math.min(self.speedmax*0.7, speedCruiseLimit)
   
+  -- Group ammo.
+  self.ammo=self:GetAmmoTot()
+  
   -- Initial fuel mass.
   -- TODO: this is a unit property!
   self.fuelmass=0
@@ -4255,6 +4280,17 @@ function FLIGHTGROUP:_InitGroup()
     self.radioFreqDefault=self.radioFreq
     self.radioModuDefault=self.radioModu
   end
+  
+  -- Set default formation.
+  if not self.formationDefault then
+    if self.ishelo then
+      self.formationDefault=ENUMS.Formation.RotaryWing.EchelonLeft.D300
+    else
+      self.formationDefault=ENUMS.Formation.FixedWing.EchelonLeft.Group
+    end
+  end
+  
+  self:SwitchFormation(self.formationDefault)
   
   -- Get first unit. This is used to extract other parameters.
   local unit=self.group:GetUnit(1)
@@ -4292,6 +4328,7 @@ function FLIGHTGROUP:_InitGroup()
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
     text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radioFreq, UTILS.GetModulationName(self.radioModu), tostring(self.radioOn))
+    text=text..string.format("Ammo         = %d (G=%d/R=%d/B=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Bombs, self.ammo.Missiles)
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
     text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
@@ -4333,7 +4370,7 @@ function FLIGHTGROUP:AddElementByName(unitname)
     element.fuelmass0=element.unit:GetTemplatePayload().fuel
     element.fuelmass=element.fuelmass0
     element.fuelrel=element.unit:GetFuel()
-    element.category=element.unit:GetCategory()
+    element.category=element.unit:GetUnitCategory()
     element.categoryname=element.unit:GetCategoryName()
     element.callsign=element.unit:GetCallsign()
     element.size=element.unit:GetObjectSize()
@@ -5449,13 +5486,59 @@ end
 --- Get the number of shells a unit or group currently has. For a group the ammo count of all units is summed up.
 -- @param #FLIGHTGROUP self
 -- @param #FLIGHTGROUP.Element element The element.
+-- @return #FLIGHTGROUP.Ammo Ammo data.
+function FLIGHTGROUP:GetAmmoElement(element)
+  return self:GetAmmoUnit(element.unit)
+end
+
+--- Get total amount of ammunition of the whole group.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP.Ammo Ammo data.
+function FLIGHTGROUP:GetAmmoTot()
+
+  local units=self.group:GetUnits()
+  
+  local Ammo={} --#FLIGHTGROUP.Ammo
+  Ammo.Total=0
+  Ammo.Guns=0
+  Ammo.Rockets=0
+  Ammo.Bombs=0
+  Ammo.Missiles=0
+  Ammo.MissilesAA=0
+  Ammo.MissilesAG=0
+  Ammo.MissilesAS=0
+  
+  for _,_unit in pairs(units) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    if unit and unit:IsAlive()~=nil then
+      
+      -- Get ammo of the unit.
+      local ammo=self:GetAmmoUnit(unit)
+      
+      -- Add up total.
+      Ammo.Total=Ammo.Total+ammo.Total
+      Ammo.Guns=Ammo.Guns+ammo.Guns
+      Ammo.Rockets=Ammo.Rockets+ammo.Rockets
+      Ammo.Bombs=Ammo.Bombs+ammo.Bombs
+      Ammo.Missiles=Ammo.Missiles+ammo.Missiles
+      Ammo.MissilesAA=Ammo.MissilesAA+ammo.MissilesAA
+      Ammo.MissilesAG=Ammo.MissilesAG+ammo.MissilesAG
+      Ammo.MissilesAS=Ammo.MissilesAS+ammo.MissilesAS
+    
+    end
+    
+  end
+
+  return Ammo
+end
+
+--- Get the number of shells a unit or group currently has. For a group the ammo count of all units is summed up.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Unit#UNIT unit The unit object.
 -- @param #boolean display Display ammo table as message to all. Default false.
--- @return #number Total amount of ammo the whole group has left.
--- @return #number Number of shells left.
--- @return #number Number of rockets left.
--- @return #number Number of bombs left.
--- @return #number Number of missiles left.
-function FLIGHTGROUP:GetAmmoElement(element, display)
+-- @return #FLIGHTGROUP.Ammo Ammo data.
+function FLIGHTGROUP:GetAmmoUnit(unit, display)
 
   -- Default is display false.
   if display==nil then
@@ -5467,10 +5550,10 @@ function FLIGHTGROUP:GetAmmoElement(element, display)
   local nshells=0
   local nrockets=0
   local nmissiles=0
+  local nmissilesAA=0
+  local nmissilesAG=0
+  local nmissilesAS=0
   local nbombs=0
-
-  local unit=element.unit
-
 
   -- Output.
   local text=string.format("FLIGHTGROUP group %s - unit %s:\n", self.groupname, unit:GetName())
@@ -5481,16 +5564,6 @@ function FLIGHTGROUP:GetAmmoElement(element, display)
   if ammotable then
 
     local weapons=#ammotable
-
-    -- Display ammo table
-    if display then
-      self:E(FLIGHTGROUP.id..string.format("Number of weapons %d.", weapons))
-      self:E({ammotable=ammotable})
-      self:E(FLIGHTGROUP.id.."Ammotable:")
-      for id,bla in pairs(ammotable) do
-        self:E({id=id, ammo=bla})
-      end
-    end
 
     -- Loop over all weapons.
     for w=1,weapons do
@@ -5543,12 +5616,16 @@ function FLIGHTGROUP:GetAmmoElement(element, display)
         -- Add up all cruise missiles (category 5)
         if MissileCategory==Weapon.MissileCategory.AAM then
           nmissiles=nmissiles+Nammo
+          nmissilesAA=nmissilesAA+Nammo
         elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
           nmissiles=nmissiles+Nammo
+          nmissilesAS=nmissilesAS+Nammo
         elseif MissileCategory==Weapon.MissileCategory.BM then
           nmissiles=nmissiles+Nammo
+          nmissilesAG=nmissilesAG+Nammo
         elseif MissileCategory==Weapon.MissileCategory.OTHER then
           nmissiles=nmissiles+Nammo
+          nmissilesAG=nmissilesAG+Nammo
         end
 
         -- Debug info.
@@ -5575,7 +5652,17 @@ function FLIGHTGROUP:GetAmmoElement(element, display)
   -- Total amount of ammunition.
   nammo=nshells+nrockets+nmissiles+nbombs
 
-  return nammo, nshells, nrockets, nbombs, nmissiles
+  local ammo={} --#FLIGHTGROUP.Ammo
+  ammo.Total=nammo
+  ammo.Guns=nshells
+  ammo.Rockets=nrockets
+  ammo.Bombs=nbombs
+  ammo.Missiles=nmissiles
+  ammo.MissilesAA=nmissilesAA
+  ammo.MissilesAG=nmissilesAG
+  ammo.MissilesAS=nmissilesAS
+
+  return ammo
 end
 
 
@@ -6045,10 +6132,10 @@ end
 
 --- Set the default ROE for the group. This is the ROE state gets when the group is spawned or to which it defaults back after a mission.
 -- @param #FLIGHTGROUP self
--- @param #number roe ROE of group. Default is ENUMS.ROE.ReturnFire.
+-- @param #number roe ROE of group. Default is `ENUMS.ROE.ReturnFire`.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetDefaultROE(roe)
-  self.optionROEdefault=roe or ENUMS.ROE.ReturnFire
+  self.roeDefault=roe or ENUMS.ROE.ReturnFire
   return self
 end
 
@@ -6057,14 +6144,20 @@ end
 -- @param #string roe ROE of group. Default is the value defined by :SetDefaultROE().
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetOptionROE(roe)
-  roe=roe or self.optionROEdefault
+
+  roe=roe or self.roeDefault
+  
   if self:IsAlive() then
+  
     self.group:OptionROE(roe)
-    self.optionROEcurrent=roe
-    self:T2(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.optionROEcurrent))
+    
+    self.roe=roe
+    
+    self:T2(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.roe))
   else
     -- TODO WARNING
   end
+  
   return self
 end
 
@@ -6073,7 +6166,7 @@ end
 -- @param #number roe ROE of group. Default is ENUMS.ROT.PassiveDefense.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetDefaultROT(roe)
-  self.optionROTdefault=roe or ENUMS.ROT.PassiveDefense
+  self.rotDefault=roe or ENUMS.ROT.PassiveDefense
   return self
 end
 
@@ -6082,24 +6175,20 @@ end
 -- @param #string rot ROT of group. Default is the value defined by :SetDefaultROT().
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetOptionROT(rot)
-  rot=rot or self.optionROTdefault
+
+  rot=rot or self.rotDefault
+  
   if self:IsAlive() then
+  
     self.group:OptionROT(rot)
-    self.optionROTcurrent=rot
-    self:T2(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.optionROTcurrent))
+    
+    self.rot=rot
+    
+    self:T2(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.rot))
   else
     -- TODO WARNING
   end
-  return self
-end
-
---- Set the default formation for the group.
--- @param #FLIGHTGROUP self
--- @param #number Formation Formation of the group
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetDefaultFormation(Formation)
-  -- TODO!
-  self.optionFormationDefault=Formation or AI.Task.VehicleFormation.ECHELON_LEFT
+  
   return self
 end
 
@@ -6141,7 +6230,9 @@ function FLIGHTGROUP:SwitchTACANOn(TACANChannel, TACANMorse)
       self.tacanChannel=TACANChannel
       self.tacanMorse=TACANMorse
       
-      self.tacanOn=true      
+      self.tacanOn=true
+      
+      self:I(self.lid..string.format("Switching TACAN to Channel %dY Morse %s", self.tacanChannel, tostring(self.tacanMorse)))
     
     end
     
@@ -6158,6 +6249,8 @@ function FLIGHTGROUP:SwitchTACANOff()
   if self.tacanBeacon and self.tacanBeacon:IsAlive() then
     self.tacanBeacon:CommandDeactivateBeacon()  
   end
+  
+  self:I(self.lid..string.format("Switching TACAN OFF"))
   
   self.tacanOn=false
 
@@ -6195,7 +6288,7 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SwitchRadioOn(Frequency, Modulation)
 
-  if self:IsAlive() then
+  if self:IsAlive() and Frequency then
 
     Modulation=Modulation or radio.Modulation.AM
   
@@ -6206,6 +6299,8 @@ function FLIGHTGROUP:SwitchRadioOn(Frequency, Modulation)
     self.radioFreq=Frequency
     self.radioModu=Modulation
     self.radioOn=true
+    
+    self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radioFreq, UTILS.GetModulationName(self.radioModu)))
     
   end
   
@@ -6225,6 +6320,38 @@ function FLIGHTGROUP:SwitchRadioOff()
     self.radioModu=nil
     self.radioOn=false
     
+    self:I(self.lid..string.format("Switching radio OFF"))
+    
+  end
+  
+  return self
+end
+
+--- Set default formation.
+-- @param #FLIGHTGROUP self
+-- @param #number Formation The formation the groups flies in.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetDefaultFormation(Formation)
+
+  self.formationDefault=Formation
+  
+  return self
+end
+
+--- Switch to a specific formation.
+-- @param #FLIGHTGROUP self
+-- @param #number Formation New formation the group will fly in.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SwitchFormation(Formation)
+
+  if self:IsAlive() and Formation then
+    
+    self.group:SetOption(AI.Option.Air.id.FORMATION, Formation)
+
+    self.formation=Formation
+    
+    self:I(self.lid..string.format("Switching formation to %d", self.formation))
+  
   end
   
   return self
