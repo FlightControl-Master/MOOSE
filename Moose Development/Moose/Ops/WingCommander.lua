@@ -64,7 +64,7 @@ WINGCOMMANDER.DEFCON = {
 
 --- WINGCOMMANDER class version.
 -- @field #string version
-WINGCOMMANDER.version="0.0.3"
+WINGCOMMANDER.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -156,7 +156,7 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set this to be an air-to-any dispatcher, i.e. engaging air, ground and navel targets. This is the default anyway.
+--- Set this to be an air-to-any dispatcher, i.e. engaging air, ground and naval targets. This is the default anyway.
 -- @param #WINGCOMMANDER self
 -- @return #WINGCOMMANDER self
 function WINGCOMMANDER:SetAirToAny()
@@ -410,9 +410,15 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
       Nyellow=Nyellow+1
     end
     
+    -- Is this a threat?
     local threat=contact.threatlevel>=self.threatLevelMin and contact.threatlevel<=self.threatLevelMax
     
-    if not contact.mission then
+    local redalert=true
+    if self.borderzoneset:Count()>0 then
+      redalert=inred
+    end
+    
+    if redalert and threat and not contact.mission then
     
       -- Create a mission based on group category.
       local mission=AUFTRAG:NewAUTO(group)
