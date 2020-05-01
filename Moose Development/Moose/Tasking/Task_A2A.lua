@@ -292,7 +292,9 @@ do -- TASK_A2A
 
   --- Return the relative distance to the target vicinity from the player, in order to sort the targets in the reports per distance from the threats.
   -- @param #TASK_A2A self
-  function TASK_A2A:ReportOrder( ReportGroup ) 
+  function TASK_A2A:ReportOrder( ReportGroup )
+	self:UpdateTaskInfo( self.DetectedItem )
+  
     local Coordinate = self.TaskInfo:GetData( "Coordinate" )
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
