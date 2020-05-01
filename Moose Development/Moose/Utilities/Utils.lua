@@ -32,14 +32,14 @@ FLARECOLOR = trigger.flareColor -- #FLARECOLOR
 --- Big smoke preset enum.
 -- @type BIGSMOKEPRESET
 BIGSMOKEPRESET = {
-  SmallSmokeAndFire=0,
-  MediumSmokeAndFire=1,
-  LargeSmokeAndFire=2,
-  HugeSmokeAndFire=3,
-  SmallSmoke=4,
-  MediumSmoke=5,
-  LargeSmoke=6,
-  HugeSmoke=7,
+  SmallSmokeAndFire=1,
+  MediumSmokeAndFire=2,
+  LargeSmokeAndFire=3,
+  HugeSmokeAndFire=4,
+  SmallSmoke=5,
+  MediumSmoke=6,
+  LargeSmoke=7,
+  HugeSmoke=8,
 }
 
 --- DCS map as returned by env.mission.theatre.
