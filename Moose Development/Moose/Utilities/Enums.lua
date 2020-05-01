@@ -161,3 +161,86 @@ ENUMS.MissionTask={
   SEAD="SEAD",
   TRANSPORT="Transport",
 }
+
+--- Formations (new). See the [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) on hoggit wiki.
+-- @type ENUMS.Formation
+ENUMS.Formation={}
+ENUMS.Formation.FixedWing={}
+ENUMS.Formation.FixedWing.LineAbreast={}
+ENUMS.Formation.FixedWing.LineAbreast.Close = 65537
+ENUMS.Formation.FixedWing.LineAbreast.Open  = 65538
+ENUMS.Formation.FixedWing.LineAbreast.Group = 65539
+ENUMS.Formation.FixedWing.Trail={}
+ENUMS.Formation.FixedWing.Trail.Close = 131073
+ENUMS.Formation.FixedWing.Trail.Open  = 131074
+ENUMS.Formation.FixedWing.Trail.Group = 131075
+ENUMS.Formation.FixedWing.Wedge={}
+ENUMS.Formation.FixedWing.Wedge.Close = 196609
+ENUMS.Formation.FixedWing.Wedge.Open  = 196610
+ENUMS.Formation.FixedWing.Wedge.Group = 196611
+ENUMS.Formation.FixedWing.EchelonRight={}
+ENUMS.Formation.FixedWing.EchelonRight.Close = 262145
+ENUMS.Formation.FixedWing.EchelonRight.Open  = 262146
+ENUMS.Formation.FixedWing.EchelonRight.Group = 262147
+ENUMS.Formation.FixedWing.EchelonLeft={}
+ENUMS.Formation.FixedWing.EchelonLeft.Close = 327681
+ENUMS.Formation.FixedWing.EchelonLeft.Open  = 327682
+ENUMS.Formation.FixedWing.EchelonLeft.Group = 327683
+ENUMS.Formation.FixedWing.FingerFour={}
+ENUMS.Formation.FixedWing.FingerFour.Close = 393217
+ENUMS.Formation.FixedWing.FingerFour.Open  = 393218
+ENUMS.Formation.FixedWing.FingerFour.Group = 393219
+ENUMS.Formation.FixedWing.Spread={}
+ENUMS.Formation.FixedWing.Spread.Close = 458753
+ENUMS.Formation.FixedWing.Spread.Open  = 458754
+ENUMS.Formation.FixedWing.Spread.Group = 458755
+ENUMS.Formation.FixedWing.BomberElement={}
+ENUMS.Formation.FixedWing.BomberElement.Close = 786433
+ENUMS.Formation.FixedWing.BomberElement.Open  = 786434
+ENUMS.Formation.FixedWing.BomberElement.Group = 786435
+ENUMS.Formation.FixedWing.BomberElementHeight={}
+ENUMS.Formation.FixedWing.BomberElementHeight.Close = 851968
+ENUMS.Formation.FixedWing.FighterVic={}
+ENUMS.Formation.FixedWing.FighterVic.Close = 917505
+ENUMS.Formation.FixedWing.FighterVic.Open  = 917506
+ENUMS.Formation.RotaryWing={}
+ENUMS.Formation.RotaryWing.Column={}
+ENUMS.Formation.RotaryWing.Column.D70=720896
+ENUMS.Formation.RotaryWing.Wedge={}
+ENUMS.Formation.RotaryWing.Wedge.D70=8
+ENUMS.Formation.RotaryWing.FrontRight={}
+ENUMS.Formation.RotaryWing.FrontRight.D300=655361
+ENUMS.Formation.RotaryWing.FrontRight.D600=655362
+ENUMS.Formation.RotaryWing.FrontLeft={}
+ENUMS.Formation.RotaryWing.FrontLeft.D300=655617
+ENUMS.Formation.RotaryWing.FrontLeft.D600=655618
+ENUMS.Formation.RotaryWing.EchelonRight={}
+ENUMS.Formation.RotaryWing.EchelonRight.D70 =589825
+ENUMS.Formation.RotaryWing.EchelonRight.D300=589826
+ENUMS.Formation.RotaryWing.EchelonRight.D600=589827
+ENUMS.Formation.RotaryWing.EchelonLeft={}
+ENUMS.Formation.RotaryWing.EchelonLeft.D70 =590081
+ENUMS.Formation.RotaryWing.EchelonLeft.D300=590082
+ENUMS.Formation.RotaryWing.EchelonLeft.D600=590083
+
+--- Formations (old). The old format is a simplified version of the new formation enums, which allow more sophisticated settings.
+-- See the [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) on hoggit wiki.
+-- @type ENUMS.FormationOld
+ENUMS.FormationOld={}
+ENUMS.FormationOld.FixedWing={}
+ENUMS.FormationOld.FixedWing.LineAbreast=1
+ENUMS.FormationOld.FixedWing.Trail=2
+ENUMS.FormationOld.FixedWing.Wedge=3
+ENUMS.FormationOld.FixedWing.EchelonRight=4
+ENUMS.FormationOld.FixedWing.EchelonLeft=5
+ENUMS.FormationOld.FixedWing.FingerFour=6
+ENUMS.FormationOld.FixedWing.SpreadFour=7
+ENUMS.FormationOld.FixedWing.BomberElement=12
+ENUMS.FormationOld.FixedWing.BomberElementHeight=13
+ENUMS.FormationOld.FixedWing.FighterVic=14
+ENUMS.FormationOld={}
+ENUMS.FormationOld.RotaryWing={}
+ENUMS.FormationOld.RotaryWing.Wedge=8
+ENUMS.FormationOld.RotaryWing.Echelon=9
+ENUMS.FormationOld.RotaryWing.Front=10
+ENUMS.FormationOld.RotaryWing.Column=11
