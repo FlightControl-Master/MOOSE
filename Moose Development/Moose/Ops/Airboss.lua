@@ -1273,11 +1273,17 @@ AIRBOSS.AircraftCarrier={
 
 --- Carrier types.
 -- @type AIRBOSS.CarrierType
+-- @field #string ROOSEVELT USS Theodore Roosevelt (CVN-71)
+-- @field #string LINCOLN USS Abraham Lincoln (CVN-72)
+-- @field #string WASHINGTON USS George Washington (CVN-73)
 -- @field #string STENNIS USS John C. Stennis (CVN-74)
 -- @field #string VINSON USS Carl Vinson (CVN-70)
 -- @field #string TARAWA USS Tarawa (LHA-1)
 -- @field #string KUZNETSOV Admiral Kuznetsov (CV 1143.5)
 AIRBOSS.CarrierType={
+  ROOSEVELT="CVN_71",
+  LINCOLN="CVN_72",
+  WASHINGTON="CVN_73",
   STENNIS="Stennis",
   VINSON="VINSON",
   TARAWA="LHA_Tarawa",
@@ -1928,6 +1934,12 @@ function AIRBOSS:New(carriername, alias)
 
   -- Init carrier parameters.
   if self.carriertype==AIRBOSS.CarrierType.STENNIS then
+    self:_InitStennis()
+  elseif self.carriertype==AIRBOSS.CarrierType.ROOSEVELT then
+    self:_InitStennis()
+  elseif self.carriertype==AIRBOSS.CarrierType.LINCOLN then
+    self:_InitStennis()    
+  elseif self.carriertype==AIRBOSS.CarrierType.WASHINGTON then
     self:_InitStennis()
   elseif self.carriertype==AIRBOSS.CarrierType.VINSON then
     -- TODO: Carl Vinson parameters.

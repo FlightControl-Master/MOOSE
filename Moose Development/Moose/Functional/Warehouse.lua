@@ -4944,6 +4944,21 @@ function WAREHOUSE:onafterDefeated(From, Event, To)
   end
 end
 
+--- Respawn warehouse.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function WAREHOUSE:onafterRespawn(From, Event, To)
+
+  -- Info message.
+  local text=string.format("Respawning warehouse %s.", self.alias)
+  self:_InfoMessage(text)
+
+  -- Respawn warehouse.
+  self.warehouse:ReSpawn()
+
+end
 
 --- On before "ChangeCountry" event. Checks whether a change of country is necessary by comparing the actual country to the the requested one.
 -- @param #WAREHOUSE self
@@ -4967,22 +4982,6 @@ function WAREHOUSE:onbeforeChangeCountry(From, Event, To, Country)
   return false
 end
 
---- Respawn warehouse.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function WAREHOUSE:onafterRespawn(From, Event, To)
-
-  -- Info message.
-  local text=string.format("Respawning warehouse %s.", self.alias)
-  self:_InfoMessage(text)
-
-  -- Respawn warehouse.
-  self.warehouse:ReSpawn()
-
-end
-
 --- On after "ChangeCountry" event. Warehouse is respawned with the specified country. All queued requests are deleted and the owned airbase is reset if the coalition is changed by changing the
 -- country.
 -- @param #WAREHOUSE self
@@ -4995,19 +4994,21 @@ function WAREHOUSE:onafterChangeCountry(From, Event, To, Country)
   local CoalitionOld=self:GetCoalition()
 
   -- Respawn warehouse with new coalition/country.
-  self.warehouse:ReSpawn(Country)
+  self:Respawn(Country)
 
   local CoalitionNew=self:GetCoalition()
 
   -- Delete all waiting requests because they are not valid any more.
   self.queue=nil
   self.queue={}
+  
+  -- Get airbase of this warehouse.
+  local airbase=AIRBASE:FindByName(self.airbasename)
 
   -- Airbase could have been captured before and already belongs to the new coalition.
   -- Check if Warehouse has a arbiase atthached
   local airbasecoaltion
-  if self.airbase ~= nil then
-    local airbase=AIRBASE:FindByName(self.airbasename)
+  if self.airbase~=nil then    
     airbasecoaltion=airbase:GetCoalition() 
   else -- Warehouse has no airbase attached so just keep whatever, self.airbase will still be nil since CoalitionNew will not be nil if Warehouse have a airbse attacjed.
     airbasecoaltion = nil  
@@ -5032,6 +5033,20 @@ function WAREHOUSE:onafterChangeCountry(From, Event, To, Country)
 
 end
 
+--- On before "Captured" event. Warehouse has been captured by another coalition.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param DCS#coalition.side Coalition which captured the warehouse.
+-- @param DCS#country.id Country which has captured the warehouse.
+function WAREHOUSE:onbeforeCaptured(From, Event, To, Coalition, Country)
+
+  -- Warehouse respawned.
+  self:ChangeCountry(Country)
+
+end
+
 --- On after "Captured" event. Warehouse has been captured by another coalition.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -5044,9 +5059,7 @@ function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
   -- Message.
   local text=string.format("Warehouse %s: We were captured by enemy coalition (side=%d)!", self.alias, Coalition)
   self:_InfoMessage(text)
-
-  -- Warehouse respawned.
-  self:ChangeCountry(Country)
+  
 end
 
 
