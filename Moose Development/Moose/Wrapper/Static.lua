@@ -224,7 +224,7 @@ function STATIC:ReSpawn(countryid, Delay)
   else
 
     local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, countryid )
-  
+    
     SpawnStatic:ReSpawn()
     
   end
