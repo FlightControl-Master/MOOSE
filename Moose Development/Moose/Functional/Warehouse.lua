@@ -4960,16 +4960,11 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number CountryID The country ID (determines also the coaliton) of the respawned warehouse.
-function WAREHOUSE:onafterRespawn(From, Event, To, CountryID)
+function WAREHOUSE:onafterRespawn(From, Event, To)
 
   -- Info message.
   local text=string.format("Respawning warehouse %s", self.alias)
   self:_InfoMessage(text)
-  
-  if self.warehouse and self.warehouse:IsAlive() then
-    self.warehouse:Destroy()
-  end
 
   -- Respawn warehouse.
   self.warehouse:ReSpawn()
