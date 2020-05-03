@@ -1764,7 +1764,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="1.0.0"
+WAREHOUSE.version="1.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1870,6 +1870,12 @@ function WAREHOUSE:New(warehouse, alias)
 
   -- Set unique ID for this warehouse.
   self.uid=_WAREHOUSEDB.WarehouseID
+  
+  -- Coalition of the warehouse.
+  self.coalition=self.warehouse:GetCoalition()
+  
+  -- Country of the warehouse.
+  self.countryid=self.warehouse:GetCountry()
 
   -- Closest of the same coalition but within 5 km range.
   local _airbase=self:GetCoordinate():GetClosestAirbase(nil, self:GetCoalition())
@@ -3395,8 +3401,13 @@ end
 -- @param #string To To state.
 function WAREHOUSE:onafterStatus(From, Event, To)
 
+  local FSMstate=self:GetState()
+  
+  local coalition=self:GetCoalitionName()
+  local country=self:GetCountryName()
+
   -- Info.
-  self:I(self.lid..string.format("State=%s, Assets=%d,  Requests: waiting=%d, pending=%d", self:GetState(), #self.stock, #self.queue, #self.pending))
+  self:I(self.lid..string.format("State=%s %s [%s]: Assets=%d,  Requests: waiting=%d, pending=%d", FSMstate, country, coalition, #self.stock, #self.queue, #self.pending))
 
   -- Check if any pending jobs are done and can be deleted from the queue.
   self:_JobDone()
@@ -4944,6 +4955,21 @@ function WAREHOUSE:onafterDefeated(From, Event, To)
   end
 end
 
+--- Respawn warehouse.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function WAREHOUSE:onafterRespawn(From, Event, To)
+
+  -- Info message.
+  local text=string.format("Respawning warehouse %s", self.alias)
+  self:_InfoMessage(text)
+
+  -- Respawn warehouse.
+  self.warehouse:ReSpawn()
+
+end
 
 --- On before "ChangeCountry" event. Checks whether a change of country is necessary by comparing the actual country to the the requested one.
 -- @param #WAREHOUSE self
@@ -4967,34 +4993,17 @@ function WAREHOUSE:onbeforeChangeCountry(From, Event, To, Country)
   return false
 end
 
---- Respawn warehouse.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function WAREHOUSE:onafterRespawn(From, Event, To)
-
-  -- Info message.
-  local text=string.format("Respawning warehouse %s.", self.alias)
-  self:_InfoMessage(text)
-
-  -- Respawn warehouse.
-  self.warehouse:ReSpawn()
-
-end
-
 --- On after "ChangeCountry" event. Warehouse is respawned with the specified country. All queued requests are deleted and the owned airbase is reset if the coalition is changed by changing the
 -- country.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param DCS#country.id Country which has captured the warehouse.
+-- @param DCS#country.id Country Country which has captured the warehouse.
 function WAREHOUSE:onafterChangeCountry(From, Event, To, Country)
 
   local CoalitionOld=self:GetCoalition()
 
-  -- Respawn warehouse with new coalition/country.
   self.warehouse:ReSpawn(Country)
 
   local CoalitionNew=self:GetCoalition()
@@ -5002,23 +5011,23 @@ function WAREHOUSE:onafterChangeCountry(From, Event, To, Country)
   -- Delete all waiting requests because they are not valid any more.
   self.queue=nil
   self.queue={}
-
-  -- Airbase could have been captured before and already belongs to the new coalition.
-  -- Check if Warehouse has a arbiase atthached
-  local airbasecoaltion
-  if self.airbase ~= nil then
+  
+  if self.airbasename then
+  
+    -- Get airbase of this warehouse.
     local airbase=AIRBASE:FindByName(self.airbasename)
-    airbasecoaltion=airbase:GetCoalition() 
-  else -- Warehouse has no airbase attached so just keep whatever, self.airbase will still be nil since CoalitionNew will not be nil if Warehouse have a airbse attacjed.
-    airbasecoaltion = nil  
-  end
-
-  if CoalitionNew==airbasecoaltion then
-    -- Airbase already owned by the coalition that captured the warehouse. Airbase can be used by this warehouse.
-    self.airbase=airbase
-  else
-    -- Airbase is owned by other coalition. So this warehouse does not have an airbase unil it is captured.
-    self.airbase=nil
+    
+    -- Get coalition of the airbase.
+    local airbaseCoalition=airbase:GetCoalition() 
+  
+    if CoalitionNew==airbaseCoalition then
+      -- Airbase already owned by the coalition that captured the warehouse. Airbase can be used by this warehouse.
+      self.airbase=airbase
+    else
+      -- Airbase is owned by other coalition. So this warehouse does not have an airbase until it is captured.
+      self.airbase=nil
+    end
+    
   end
 
   -- Debug smoke.
@@ -5029,6 +5038,20 @@ function WAREHOUSE:onafterChangeCountry(From, Event, To, Country)
       self:GetCoordinate():SmokeBlue()
     end
   end
+
+end
+
+--- On before "Captured" event. Warehouse has been captured by another coalition.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param DCS#coalition.side Coalition which captured the warehouse.
+-- @param DCS#country.id Country which has captured the warehouse.
+function WAREHOUSE:onbeforeCaptured(From, Event, To, Coalition, Country)
+
+  -- Warehouse respawned.
+  self:ChangeCountry(Country)
 
 end
 
@@ -5044,9 +5067,7 @@ function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
   -- Message.
   local text=string.format("Warehouse %s: We were captured by enemy coalition (side=%d)!", self.alias, Coalition)
   self:_InfoMessage(text)
-
-  -- Warehouse respawned.
-  self:ChangeCountry(Country)
+  
 end
 
 
@@ -8474,7 +8495,7 @@ function WAREHOUSE:_DebugMessage(text, duration)
   if duration>0 then
     MESSAGE:New(text, duration):ToAllIf(self.Debug)
   end
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 end
 
 --- Error message. Message send to all (if duration > 0). Text self:E(text) added to DCS.log file.
