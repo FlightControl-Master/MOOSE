@@ -240,23 +240,31 @@ end
 
 --- Respawns the original @{Static}.
 -- @param #SPAWNSTATIC self
+-- @param #number delay Delay before respawn in seconds.
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:ReSpawn()
+function SPAWNSTATIC:ReSpawn(delay)
   
-  local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
+  if delay and delay>0 then
+    self:ScheduleOnce(delay, SPAWNSTATIC.ReSpawn, self)
+  else  
   
-  if StaticTemplate then
-
-    local StaticUnitTemplate = StaticTemplate.units[1]
-    StaticTemplate.route = nil
-    StaticTemplate.groupId = nil
+    local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
     
-    local Static = coalition.addStaticObject( self.CountryID or CountryID, StaticTemplate.units[1] )
+    if StaticTemplate then
+  
+      local StaticUnitTemplate = StaticTemplate.units[1]
+      StaticTemplate.route = nil
+      StaticTemplate.groupId = nil
+      
+      local Static = coalition.addStaticObject( self.CountryID or CountryID, StaticTemplate.units[1] )
+      
+      return _DATABASE:FindStatic(Static:getName())
+    end
     
-    return _DATABASE:FindStatic(Static:getName())
+    return nil
   end
   
-  return nil
+  return self
 end
 
 

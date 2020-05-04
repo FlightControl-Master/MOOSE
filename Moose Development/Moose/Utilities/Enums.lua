@@ -238,7 +238,6 @@ ENUMS.FormationOld.FixedWing.SpreadFour=7
 ENUMS.FormationOld.FixedWing.BomberElement=12
 ENUMS.FormationOld.FixedWing.BomberElementHeight=13
 ENUMS.FormationOld.FixedWing.FighterVic=14
-ENUMS.FormationOld={}
 ENUMS.FormationOld.RotaryWing={}
 ENUMS.FormationOld.RotaryWing.Wedge=8
 ENUMS.FormationOld.RotaryWing.Echelon=9
