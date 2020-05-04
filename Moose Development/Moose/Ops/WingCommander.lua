@@ -430,6 +430,9 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
         --TODO: Better amount of necessary assets. Count units in asset and in contact. Might need nassetMin/Max.
         mission.nassets=1
         
+        -- Missons are repeated max 3 times on failure.
+        mission.missionRepeatMax=3
+        
         -- Set mission contact.
         contact.mission=mission
         

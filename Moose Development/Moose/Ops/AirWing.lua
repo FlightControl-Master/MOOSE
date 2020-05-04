@@ -753,7 +753,7 @@ function AIRWING:onafterStatus(From, Event, To)
     local skill=squadron.skill and tostring(squadron.skill) or "N/A"
     
     -- Squadron text
-    text=text..string.format("\n* %s %s: %s*%d (avail %d), Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, #squadron.assets, squadron:CountAssetsInStock(), callsign, modex, skill)
+    text=text..string.format("\n* %s %s: %s*%d/%d, Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, squadron:CountAssetsInStock(), #squadron.assets, callsign, modex, skill)
     
     -- Loop over all assets.
     if self.verbose>0 then
@@ -796,6 +796,9 @@ function AIRWING:onafterStatus(From, Event, To)
           
           local lifept, lifept0=asset.flightgroup:GetLifePoints()
           text=text..string.format(" life=%d/%d", lifept, lifept0)
+          
+          local ammo=asset.flightgroup:GetAmmoTot()
+          text=text..string.format(" ammo=[G=%d, R=%d, B=%d, M=%d]", ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles)
         else
           text=text.."N/A"
         end
@@ -858,7 +861,9 @@ function AIRWING:CheckCAP()
   
     local patrol=self:_GetPatrolData(self.pointsCAP)
     
-    local missionCAP=AUFTRAG:NewPATROL(patrol.coord, patrol.altitude, patrol.speed, patrol.heading, patrol.leg)
+    local altitude=patrol.altitude+1000*patrol.noccupied
+    
+    local missionCAP=AUFTRAG:NewPATROL(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg)
     
     missionCAP.patroldata=patrol
     
@@ -900,7 +905,9 @@ function AIRWING:CheckTANKER()
   
     local patrol=self:_GetPatrolData(self.pointsTANKER)
     
-    local mission=AUFTRAG:NewTANKER(patrol.coord, patrol.altitude, patrol.speed, patrol.heading, patrol.leg, 0)
+    local altitude=patrol.altitude+1000*patrol.noccupied
+    
+    local mission=AUFTRAG:NewTANKER(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg, 0)
     
     mission.patroldata=patrol
     
@@ -916,7 +923,9 @@ function AIRWING:CheckTANKER()
   
     local patrol=self:_GetPatrolData(self.pointsTANKER)
     
-    local mission=AUFTRAG:NewTANKER(patrol.coord, patrol.altitude, patrol.speed, patrol.heading, patrol.leg, 1)
+    local altitude=patrol.altitude+1000*patrol.noccupied
+    
+    local mission=AUFTRAG:NewTANKER(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg, 1)
     
     mission.patroldata=patrol
     
@@ -942,7 +951,9 @@ function AIRWING:CheckAWACS()
   
     local patrol=self:_GetPatrolData(self.pointsAWACS)
     
-    local mission=AUFTRAG:NewAWACS(patrol.coord, patrol.altitude, patrol.speed, patrol.heading, patrol.leg)
+    local altitude=patrol.altitude+1000*patrol.noccupied
+    
+    local mission=AUFTRAG:NewAWACS(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg)
     
     mission.patroldata=patrol
     

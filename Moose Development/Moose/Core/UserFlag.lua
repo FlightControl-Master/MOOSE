@@ -59,14 +59,19 @@ do -- UserFlag
   --- Set the userflag to a given Number.
   -- @param #USERFLAG self
   -- @param #number Number The number value to be checked if it is the same as the userflag.
+  -- @param #number Delay Delay in seconds, before the flag is set.
   -- @return #USERFLAG The userflag instance.
   -- @usage
   --   local BlueVictory = USERFLAG:New( "VictoryBlue" )
   --   BlueVictory:Set( 100 ) -- Set the UserFlag VictoryBlue to 100.
   --   
-  function USERFLAG:Set( Number ) --R2.3
+  function USERFLAG:Set( Number, Delay ) --R2.3
   
-    trigger.action.setUserFlag( self.UserFlagName, Number )
+    if Delay and Delay>0 then
+      self:ScheduleOnce(Delay, USERFLAG.Set, self, Number)
+    else  
+      trigger.action.setUserFlag( self.UserFlagName, Number )
+    end
     
     return self
   end  

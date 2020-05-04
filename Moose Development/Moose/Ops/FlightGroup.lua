@@ -3915,6 +3915,11 @@ function FLIGHTGROUP:onafterMissionExecute(From, Event, To, Mission)
   -- Set mission status to EXECUTING.
   Mission:Executing()
   
+  -- Formation
+  if Mission.optionFormation then
+    self:SwitchFormation(Mission.optionFormation)
+  end  
+  
 end
 
 --- On after "PauseMission" event.
@@ -4064,14 +4069,16 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     
     -- Create waypoint coordinate half way between us and the target.
     local waypointcoord=self.group:GetCoordinate():GetIntermediateCoordinate(mission:GetTargetCoordinate(), mission.missionFraction)
+    local alt=waypointcoord.y
     
     -- Add some randomization.
-    waypointcoord=ZONE_RADIUS:New("Temp", waypointcoord:GetVec2(), 500):GetRandomCoordinate()
+    waypointcoord=ZONE_RADIUS:New("Temp", waypointcoord:GetVec2(), 1000):GetRandomCoordinate():SetAltitude(alt, false)
     
     -- Set altitude of mission waypoint.
     if mission.missionAltitude then
       waypointcoord:SetAltitude(mission.missionAltitude, true)
     end
+    env.info(string.format("FF mission alt=%d", waypointcoord.y))
     
     -- Add enroute tasks.
     for _,task in pairs(mission.enrouteTasks) do
@@ -4131,7 +4138,7 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     end
     -- Formation
     if mission.optionFormation then
-    
+      self:SwitchFormation(mission.optionFormation)
     end
     
   end
