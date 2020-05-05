@@ -850,7 +850,7 @@ function FLIGHTGROUP:SetFlightControl(flightcontrol)
   
   -- Update flight's F10 menu.
   if self.ai==false then
-    self:_UpdateMenu()
+    self:_UpdateMenu(0.5)
   end
   
   return self
@@ -2395,9 +2395,6 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
   else
   
     -- F10 other menu.
-    self.menu=self.menu or {}
-    self.menu.atc=self.menu.atc or {}
-    self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC")
     self:_UpdateMenu()
     
   end  
@@ -2410,7 +2407,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightParking(From, Event, To)
-  self:T(self.lid..string.format("Flight is parking"))
+  self:I(self.lid..string.format("Flight is parking"))
 
   local airbase=self.group:GetCoordinate():GetClosestAirbase()
   
@@ -2431,6 +2428,11 @@ function FLIGHTGROUP:onafterFlightParking(From, Event, To)
     
       -- Set flight status.
       self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.PARKING)
+      
+      -- Update player menu.
+      if not self.ai then
+        self:_UpdateMenu(0.5)
+      end
             
     end
   end  
@@ -4297,6 +4299,14 @@ function FLIGHTGROUP:_InitGroup()
     end
   end
   
+  self.ai=not self:_IsHuman(self.group)
+  
+  if not self.ai then
+    self.menu=self.menu or {}
+    self.menu.atc=self.menu.atc or {}
+    self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC")  
+  end
+  
   self:SwitchFormation(self.formationDefault)
   
   -- Get first unit. This is used to extract other parameters.
@@ -4314,8 +4324,6 @@ function FLIGHTGROUP:_InitGroup()
     
     self.tankertype=select(2, unit:IsTanker())
     self.refueltype=select(2, unit:IsRefuelable())
-    
-    self.ai=not self:_IsHuman(self.group)
   
     -- Init waypoints.
     if not self.waypoints then
@@ -6371,45 +6379,52 @@ end
 
 --- Get the proper terminal type based on generalized attribute of the group.
 --@param #FLIGHTGROUP self
-function FLIGHTGROUP:_UpdateMenu()
-  self:I(self.lid.."FF updating menu")
+--@param #number delay Delay in seconds.
+function FLIGHTGROUP:_UpdateMenu(delay)
 
-  -- Get current position of group.
-  local position=self.group:GetCoordinate()
+  if delay and delay>0 then
+    self:ScheduleOnce(delay, FLIGHTGROUP._UpdateMenu, self)
+  else
 
-  -- Get all FLIGHTCONTROLS
-  local fc={}
-  for airbasename,_flightcontrol in pairs(_DATABASE.FLIGHTCONTROLS) do
-    
-    local airbase=AIRBASE:FindByName(airbasename)
+    self:I(self.lid.."FF updating menu")
   
-    local coord=airbase:GetCoordinate()
-    
-    local dist=coord:Get2DDistance(position)
-    
-    local fcitem={airbasename=airbasename, dist=dist}
-    
-    table.insert(fc, fcitem)  
-  end
+    -- Get current position of group.
+    local position=self.group:GetCoordinate()
   
-  -- Sort table wrt distance to airbases.
-  local function _sort(a,b)
-    return a.dist<b.dist
-  end
-  table.sort(fc, _sort)
+    -- Get all FLIGHTCONTROLS
+    local fc={}
+    for airbasename,_flightcontrol in pairs(_DATABASE.FLIGHTCONTROLS) do
+      
+      local airbase=AIRBASE:FindByName(airbasename)
     
-  -- If there is a designated FC, we put it first.
-  local N=8
-  if self.flightcontrol then
-    self.flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
-    N=7
-  end
-  
-  -- Max 8 entries in F10 menu.
-  for i=1,math.min(#fc,N) do
-    local airbasename=fc[i].airbasename
-    local flightcontrol=_DATABASE:GetFlightControl(airbasename)
-    flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
+      local coord=airbase:GetCoordinate()
+      
+      local dist=coord:Get2DDistance(position)
+      
+      local fcitem={airbasename=airbasename, dist=dist}
+      
+      table.insert(fc, fcitem)  
+    end
+    
+    -- Sort table wrt distance to airbases.
+    local function _sort(a,b)
+      return a.dist<b.dist
+    end
+    table.sort(fc, _sort)
+      
+    -- If there is a designated FC, we put it first.
+    local N=8
+    if self.flightcontrol then
+      self.flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
+      N=7
+    end
+    
+    -- Max 8 entries in F10 menu.
+    for i=1,math.min(#fc,N) do
+      local airbasename=fc[i].airbasename
+      local flightcontrol=_DATABASE:GetFlightControl(airbasename)
+      flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
+    end
   end
 
 end

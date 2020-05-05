@@ -552,7 +552,7 @@ end
 
 --- Remove a marker.
 -- @param #MARKER self
--- @param #number Delay (Optional) Delay in seconds, before the marker is created.
+-- @param #number Delay (Optional) Delay in seconds, before the marker is removed.
 -- @return #MARKER self
 function MARKER:Remove(Delay)
 
@@ -560,8 +560,12 @@ function MARKER:Remove(Delay)
     self:ScheduleOnce(Delay, MARKER.Remove, self)
   else
 
-    -- Call DCS function.
-    trigger.action.removeMark(self.mid)
+    if self.shown then
+
+      -- Call DCS function.
+      trigger.action.removeMark(self.mid)
+      
+    end
     
   end
 
@@ -587,7 +591,7 @@ end
 -- @param #string Text Marker text.
 -- @return #MARKER self
 function MARKER:SetText(Text)
-  self.text=tostring(Text)
+  self.text=Text and tostring(Text) or ""
   return self
 end
 

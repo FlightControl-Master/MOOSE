@@ -462,7 +462,31 @@ do -- COORDINATE
     end
   
     return set
+  end
+  
+  --- Find the closest unit to the COORDINATE within a certain radius. 
+  -- @param #COORDINATE self
+  -- @param #number radius Scan radius in meters. Default 100 m.
+  -- @return Wrapper.Unit#UNIT The closest unit or #nil if no unit is inside the given radius.
+  function COORDINATE:FindClosestUnit(radius)
+  
+    local units=self:ScanUnits(radius)
+    
+    local umin=nil --Wrapper.Unit#UNIT
+    local dmin=math.huge
+    for _,_unit in pairs(units.Set) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      local coordinate=unit:GetCoordinate()
+      local d=self:Get2DDistance(coordinate)
+      if d<dmin then
+        dmin=d
+        umin=unit
+      end
+    end    
+  
+    return umin
   end  
+  
  
   --- Calculate the distance from a reference @{#COORDINATE}.
   -- @param #COORDINATE self

@@ -40,7 +40,6 @@
 -- @field #number activerwyno Number of active runway.
 -- @field #number atcfreq ATC radio frequency.
 -- @field Core.RadioQueue#RADIOQUEUE atcradio ATC radio queue.
--- @field #table playermenu Player Menu.
 -- @field #number Nlanding Max number of aircraft groups in the landing pattern.
 -- @field #number dTlanding Time interval in seconds between landing clearance.
 -- @field #number Nparkingspots Total number of parking spots.
@@ -87,7 +86,6 @@ FLIGHTCONTROL = {
   atcfreq        =   nil,
   atcradio       =   nil,
   atcradiounitname = nil,
-  playermenu       = nil,
   Nlanding         = nil,
   dTlanding        = nil,
   Nparkingspots    = nil,
@@ -155,12 +153,13 @@ FLIGHTCONTROL.Sound = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.3.0"
+FLIGHTCONTROL.version="0.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
+-- DONE: Add parking guard.
 -- TODO: Accept and forbit parking spots.
 -- NOGO: Add FARPS?
 -- TODO: Add helos.
@@ -213,18 +212,13 @@ function FLIGHTCONTROL:New(airbasename)
   -- 5 NM zone around the airbase.
   self.zoneAirbase=ZONE_RADIUS:New("FC", self:GetCoordinate():GetVec2(), UTILS.NMToMeters(5))
   
-  -- Defaults
+  -- Defaults:
   self:SetLandingMax()
   self:SetLandingInterval()
   
   
   -- Init runways.
   self:_InitRunwayData()
-  
-  -- Init parking spots.
-  self:_InitParkingSpots()  
-  
-  self.playermenu={}
   
   -- Start State.
   self:SetStartState("Stopped")
@@ -333,6 +327,9 @@ function FLIGHTCONTROL:onafterStart()
 
   -- Events are handled my MOOSE.
   self:I(self.lid..string.format("Starting FLIGHTCONTROL v%s for airbase %s of type %d on map %s", FLIGHTCONTROL.version, self.airbasename, self.airbasetype, self.theatre))
+  
+  -- Init parking spots.
+  self:_InitParkingSpots()  
 
   -- Handle events.
   self:HandleEvent(EVENTS.Birth)
@@ -387,7 +384,7 @@ function FLIGHTCONTROL:onafterStatus()
   local Nresv=self:CountParking(AIRBASE.SpotStatus.RESERVED)
   
   if Nfree+Noccu+Nresv~=self.Nparkingspots then
-    self:E(self.lid..string.format("WARNING: Number of parking spots does not match! Nfree=%d, Noccu=%d, Nreserved=%d %d != %d total"), Nfree, Noccu, Nresv, self.Nparkingspots)
+    self:E(self.lid..string.format("WARNING: Number of parking spots does not match! Nfree=%d, Noccu=%d, Nreserved=%d != %d total", Nfree, Noccu, Nresv, self.Nparkingspots))
   end
 
   -- Info text.
@@ -444,7 +441,7 @@ function FLIGHTCONTROL:OnEventBirth(EventData)
       -- Coordinate.
       local coordinate=unit:GetCoordinate()
     
-      self:ScheduleOnce(0.1, self._CreateFlightGroup, self, EventData.IniGroup)
+      self:ScheduleOnce(0.5, self._CreateFlightGroup, self, EventData.IniGroup)
       
       self:SpawnParkingGuard(unit)
 
@@ -777,6 +774,7 @@ end
 -- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
 function FLIGHTCONTROL:_GetNextFightParking()
 
+  -- Get flights taxiing to runway for takeoff.
   local Qtaxiout=self:GetFlights(FLIGHTCONTROL.FlightStatus.TAXIOUT)
 
   -- First check human players.
@@ -786,10 +784,9 @@ function FLIGHTCONTROL:_GetNextFightParking()
     -- First come, first serve.
     return Qtaxiout[1]
     
-  else
-    return nil
   end
   
+  -- Get flights parking.
   local Qparking=self:GetFlights(FLIGHTCONTROL.FlightStatus.PARKING)
 
   -- Check special cases where only up to one flight is waiting for takeoff.
@@ -1065,15 +1062,22 @@ function FLIGHTCONTROL:_InitParkingSpots()
     -- Add to table.
     self.parking[spot.TerminalID]=spot
     
+    spot.Marker=MARKER:New(spot.Coordinate, "Spot"):ReadOnly()
+    spot.Marker.tocoaliton=true
+    spot.Marker.coalition=self:GetCoalition()
+    
     -- Set spot to occupied.
     if spot.Free then
       self:SetParkingFree(spot)
     else
-      self:SetParkingOccupied(spot, "unknown")
+      local unit=spot.Coordinate:FindClosestUnit(20)
+      if unit and unit:IsAlive() then
+        local unitname=unit and unit:GetName() or "unknown"
+        self:SetParkingOccupied(spot, unitname)
+        self:SpawnParkingGuard(unit)
+      end
     end
-    
-    --TODO: scan spot for objects.
-    
+
     -- Increase counter
     self.Nparkingspots=self.Nparkingspots+1
   end
@@ -1319,7 +1323,7 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   local groupname=flight.groupname
   local gid=group:GetID()
   
-  self:I(self.lid..string.format("Creating ATC player menu for flight group %s (ID=%d)", tostring(flight.groupname), gid))  
+  self:I(self.lid..string.format("Creating ATC player menu for flight group %s (ID=%d) in state=%s", tostring(flight.groupname), gid, flight:GetState()))  
   
   
   local airbasename=self.airbasename
@@ -1352,7 +1356,7 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
     elseif flight:IsAirborne() then
     end
   
-    if flight:IsInbound() or flight:IsHolding() or flight:IsLanding() or flight:IsLanded() or true then
+    if flight:IsInbound() or flight:IsHolding() or flight:IsLanding() or flight:IsLanded() then
       MENU_GROUP_COMMAND_DELAYED:New(group, "Request Parking", rootmenu, self._PlayerRequestParking, self, groupname):SetTime(Tnow):SetTag(Tag)
     end
   else
@@ -1600,7 +1604,11 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
       
       for _,_element in pairs(flight.elements) do
         local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
-        flight:ElementTaxiing(element)
+        if element.parking then
+          local spot=self:GetParkingSpotByID(element.parking.TerminalID)
+          self:RemoveParkingGuard(spot)
+        end
+        flight:ElementTaxiing(element)        
       end
       
     else
@@ -1954,6 +1962,7 @@ function FLIGHTCONTROL:SpawnParkingGuard(unit)
   
   if unit and self.parkingGuard then
   
+    -- Position of the unit.
     local coordinate=unit:GetCoordinate()
 
     -- Parking spot.
@@ -1963,10 +1972,12 @@ function FLIGHTCONTROL:SpawnParkingGuard(unit)
     local heading=unit:GetHeading()
     
     -- Length of the unit + 3 meters.
-    local _,distance=unit:GetObjectSize()+3
+    local size, x, y, z=unit:GetObjectSize()
+    
+    self:I(self.lid..string.format("Parking guard for %s: heading=%d, distance size=%s x=%s y=%s z=%s", unit:GetName(), heading, tostring(size), tostring(x), tostring(y), tostring(z)))
     
     -- Coordinate for the guard.
-    local Coordinate=coordinate:Translate(distance, heading)
+    local Coordinate=coordinate:Translate(x+3, heading)
     
     -- Let him face the aircraft.
     local lookat=heading-180
