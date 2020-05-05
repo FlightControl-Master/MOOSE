@@ -8441,7 +8441,7 @@ end
 -- @return #string Text about warehouse stock
 function WAREHOUSE:_UpdateWarehouseMarkText()
 
-  if self.makerOn then
+  if self.markerOn then
 
     -- Create a mark with the current assets in stock.
     if self.markerid~=nil then

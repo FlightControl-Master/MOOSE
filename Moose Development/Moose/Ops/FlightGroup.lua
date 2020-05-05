@@ -4680,14 +4680,14 @@ end
 
 --- Check if this group is currently "late activated" and needs to be "activated" to appear in the mission.
 -- @param #FLIGHTGROUP self
--- @return #boolean Hot start?
+-- @return #boolean Is this the group late activated?
 function FLIGHTGROUP:IsLateActivated()
   return self.isLateActivated
 end
 
 --- Check if this group is currently "uncontrolled" and needs to be "started" to begin its route.
 -- @param #FLIGHTGROUP self
--- @return #boolean Hot start?
+-- @return #boolean If this group uncontrolled.
 function FLIGHTGROUP:IsUncontrolled()
   return self.isUncontrolled
 end
@@ -5835,7 +5835,7 @@ end
 --- Get number of elements alive.
 -- @param #FLIGHTGROUP self
 -- @param #string status (Optional) Only count number, which are in a special status.
--- @return #number Holding time in seconds or -1 if flight is not holding.
+-- @return #number Number of elements.
 function FLIGHTGROUP:GetNelements(status)
 
   local n=0

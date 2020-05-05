@@ -344,6 +344,11 @@ function MARKER:ToAll(Delay)
   else
 
     self.toall=true
+    self.tocoaliton=nil
+    self.coalition=nil
+    self.togroup=nil
+    self.groupname=nil
+    self.groupid=nil
   
     -- First remove an existing mark.
     if self.shown then    
@@ -374,6 +379,10 @@ function MARKER:ToCoalition(Coalition, Delay)
     self.coalition=Coalition
     
     self.tocoaliton=true
+    self.toall=false
+    self.togroup=false
+    self.groupname=nil
+    self.groupid=nil
     
     -- First remove an existing mark.
     if self.shown then    
@@ -439,6 +448,9 @@ function MARKER:ToGroup(Group, Delay)
         self.groupname=Group:GetName()
             
         self.togroup=true
+        self.tocoaliton=nil
+        self.coalition=nil
+        self.toall=nil
         
         -- First remove an existing mark.
         if self.shown then    
@@ -480,6 +492,7 @@ function MARKER:UpdateText(Text, Delay)
     
   end
 
+  return self
 end
 
 --- Update the coordinate where the marker is displayed.
@@ -501,6 +514,7 @@ function MARKER:UpdateCoordinate(Coordinate, Delay)
     
   end
 
+  return self
 end
 
 --- Refresh the marker.
@@ -533,6 +547,7 @@ function MARKER:Refresh(Delay)
     
   end
 
+  return self
 end
 
 --- Remove a marker.
@@ -550,6 +565,7 @@ function MARKER:Remove(Delay)
     
   end
 
+  return self
 end
 
 --- Get position of the marker.
@@ -559,11 +575,20 @@ function MARKER:GetCoordinate()
   return self.coordinate
 end
 
---- Get text that is dispayed in the marker panal.
+--- Get text that is displayed in the marker panel.
 -- @param #MARKER self
 -- @return #string Marker text.
 function MARKER:GetText()
   return self.text
+end
+
+--- Set text that is displayed in the marker panel. Note this does not show the marker.
+-- @param #MARKER self
+-- @param #string Text Marker text.
+-- @return #MARKER self
+function MARKER:SetText(Text)
+  self.text=tostring(Text)
+  return self
 end
 
 

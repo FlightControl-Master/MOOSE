@@ -44,6 +44,7 @@
 -- @field #number Nlanding Max number of aircraft groups in the landing pattern.
 -- @field #number dTlanding Time interval in seconds between landing clearance.
 -- @field #number Nparkingspots Total number of parking spots.
+-- @field Core.Spawn#SPAWN parkingGuard Parking guard spawner.
 -- @extends Core.Fsm#FSM
 
 --- **Ground Control**: Airliner X, Good news, you are clear to taxi to the active.
@@ -106,8 +107,7 @@ FLIGHTCONTROL = {
 
 --- Parking spot data.
 -- @type FLIGHTCONTROL.ParkingSpot
--- @field #boolean reserved If true, reserved.
--- @field #number markerid ID of the marker.
+-- @field Wrapper.Group#GROUP ParkingGuard Parking guard for this spot.
 -- @extends Wrapper.Airbase#AIRBASE.ParkingSpot
 
 --- Parking spot data.
@@ -139,6 +139,19 @@ FLIGHTCONTROL.FlightStatus={
 -- @field #number length Length of runway in meters.
 -- @field #number width Width of runway in meters.
 -- @field Core.Point#COORDINATE position Position of runway start.
+
+
+--- Sound file data.
+-- @type FLIGHTCONTROL.Soundfile
+-- @field #string filename Name of the file
+-- @field #number duration Duration in seconds.
+
+--- Sound files.
+-- @type FLIGHTCONTROL.Sound
+-- @field #FLIGHTCONTROL.Soundfile ActiveRunway
+FLIGHTCONTROL.Sound = {
+  ActiveRunway={filename="ActiveRunway.ogg", duration=0.99},
+}
 
 --- FlightControl class version.
 -- @field #string version
@@ -298,6 +311,18 @@ function FLIGHTCONTROL:SetActiveRunwayNumber(no)
   return self
 end
 
+
+--- Set the parking guard group.
+-- @param #FLIGHTCONTROL self
+-- @param #string TemplateGroupName Name of the template group.
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SetParkingGuard(TemplateGroupName)
+
+  self.parkingGuard=SPAWN:New(TemplateGroupName)
+
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -410,10 +435,19 @@ function FLIGHTCONTROL:OnEventBirth(EventData)
     self:I(self.lid..string.format("BIRTH: unit  = %s", tostring(EventData.IniUnitName)))
     self:T2(self.lid..string.format("BIRTH: group = %s", tostring(EventData.IniGroupName)))
 
+    -- Unit that was born.
+    local unit=EventData.IniUnit
   
     -- We delay this, to have all elements of the group in the game.
-    if EventData.IniUnit:IsAir() then
+    if unit:IsAir() then
+    
+      -- Coordinate.
+      local coordinate=unit:GetCoordinate()
+    
       self:ScheduleOnce(0.1, self._CreateFlightGroup, self, EventData.IniGroup)
+      
+      self:SpawnParkingGuard(unit)
+
     end
   
   end
@@ -591,18 +625,30 @@ function FLIGHTCONTROL:_CheckQueues()
           MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
           
           -- Start uncontrolled aircraft.
-          -- TODO: handle case with engines hot. That does not trigger a ENGINE_START event. More a FLIGHTGROUP issue.
-          flight.group:StartUncontrolled()
+          if flight:IsUncontrolled() then
+            flight:StartUncontrolled()
+          end
           
           -- Add flight to takeoff queue.
           self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAKEOFF)
           
         else
+        
           local text=string.format("HUMAN Flight %s, you are cleared for takeoff.", flight.groupname)
           self:I(self.lid..text)
           MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
           
         end
+        
+        -- Remove parking guards.
+        for _,_element in pairs(flight.elements) do
+          local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
+          if element and element.parking then
+            local spot=self:GetParkingSpotByID(element.parking.TerminalID)
+            self:RemoveParkingGuard(spot)
+          end
+        end
+        
       else
        self:I(self.lid..string.format("FYI: Take of for flight %s denied as other flights are taking off (N=%d) or landing (N=%d).", flight.groupname, ntakeoff, nlanding))
       end
@@ -739,6 +785,9 @@ function FLIGHTCONTROL:_GetNextFightParking()
     
     -- First come, first serve.
     return Qtaxiout[1]
+    
+  else
+    return nil
   end
   
   local Qparking=self:GetFlights(FLIGHTCONTROL.FlightStatus.PARKING)
@@ -1034,7 +1083,7 @@ end
 --- Get parking spot by its Terminal ID.
 -- @param #FLIGHTCONTROL self
 -- @param #number TerminalID
--- @return Wrapper.Airbase#AIRBASE.ParkingSpot Parking spot data table.
+-- @return #FLIGHTCONTROL.ParkingSpot Parking spot data table.
 function FLIGHTCONTROL:GetParkingSpotByID(TerminalID)
   return self.parking[TerminalID]
 end
@@ -1117,7 +1166,7 @@ function FLIGHTCONTROL:UpdateParkingMarker(spot)
       
     else
     
-      spot.Marker=MARKER:New(spot.Coordinate, text):ToAll(Delay)
+      spot.Marker=MARKER:New(spot.Coordinate, text):ToAll()
     
     end
     
@@ -1202,7 +1251,7 @@ end
 -- @param Core.Point#COORDINATE coordinate Reference coordinate.
 -- @param #number terminaltype (Optional) Check only this terminal type.
 -- @param #boolean free (Optional) If true, check only free spots.
--- @return Wrapper.Airbase#AIRBASE.ParkingSpot Closest parking spot.
+-- @return #FLIGHTCONTROL.ParkingSpot Closest parking spot.
 function FLIGHTCONTROL:GetClosestParkingSpot(coordinate, terminaltype, free)
 
   local distmin=math.huge
@@ -1348,10 +1397,10 @@ function FLIGHTCONTROL:_PlayerRequestParking(groupname)
     MESSAGE:New(text, 10, "FLIGHCONTROL", true):ToAll()
     
     -- Create mark on F10 map.
-    if spot.MarkerID then
-      coord:RemoveMark(spot.MarkerID)
+    if spot.Marker then
+      spot.Marker:Remove()
     end
-    spot.MarkerID=spot.Coordinate:MarkToGroup("Your assigned parking spot!", group)
+    spot.Marker:SetText("Your assigned parking spot!"):ToGroup(group)
         
     -- TODO: get element of human player.
     local element=flight.elements[1] --Ops.FlightGroup#FLIGHTGROUP.Element    
@@ -1881,8 +1930,69 @@ function FLIGHTCONTROL:_GetHoldingpoint(flight)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Radio Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Transmission via RADIOQUEUE.
+-- @param #FLIGHTCONTROL self
+-- @param #FLIGHTCONTROL.Soundfile sound FLIGHTCONTROL sound object.
+-- @param #number interval Interval in seconds after the last transmission finished.
+-- @param #string subtitle Subtitle of the transmission.
+-- @param #string path Path to sound file. Default self.soundpath.
+function FLIGHTCONTROL:Transmission(sound, interval, subtitle, path)
+  self.radioqueue:NewTransmission(sound.filename, sound.duration, path or self.soundpath, nil, interval, subtitle, self.subduration)
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Add parking guard in front of a parking aircraft.
+-- @param #FLIGHTCONTROL self
+-- @param Wrapper.Unit#UNIT Unit The aircraft.
+function FLIGHTCONTROL:SpawnParkingGuard(unit)
+  
+  if unit and self.parkingGuard then
+  
+    local coordinate=unit:GetCoordinate()
+
+    -- Parking spot.
+    local spot=self:GetClosestParkingSpot(coordinate)
+    
+    -- Current heading of the unit.
+    local heading=unit:GetHeading()
+    
+    -- Length of the unit + 3 meters.
+    local _,distance=unit:GetObjectSize()+3
+    
+    -- Coordinate for the guard.
+    local Coordinate=coordinate:Translate(distance, heading)
+    
+    -- Let him face the aircraft.
+    local lookat=heading-180
+    
+    -- Set heading and AI off to save resources.
+    self.parkingGuard:InitHeading(lookat,lookat):InitAIOff()
+    
+    -- Group that is spawned.
+    spot.ParkingGuard=self.parkingGuard:SpawnFromCoordinate(Coordinate)    
+    
+  end
+    
+end
+
+--- Remove parking guard.
+-- @param #FLIGHTCONTROL self
+-- @param #FLIGHTCONTROL.ParkingSpot spot
+function FLIGHTCONTROL:RemoveParkingGuard(spot)
+
+  if spot.ParkingGuard then
+    spot.ParkingGuard:Destroy()
+    spot.ParkingGuard=nil
+  end
+
+end
+
 
 --- Get coordinate of the airbase.
 -- @param #FLIGHTCONTROL self
