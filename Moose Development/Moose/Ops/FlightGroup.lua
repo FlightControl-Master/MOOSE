@@ -6383,10 +6383,11 @@ end
 function FLIGHTGROUP:_UpdateMenu(delay)
 
   if delay and delay>0 then
+    self:I(self.lid..string.format("FF updating menu in %.1f sec", delay))
     self:ScheduleOnce(delay, FLIGHTGROUP._UpdateMenu, self)
   else
 
-    self:I(self.lid.."FF updating menu")
+    self:I(self.lid.."FF updating menu NOW")
   
     -- Get current position of group.
     local position=self.group:GetCoordinate()

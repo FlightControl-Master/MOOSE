@@ -1425,7 +1425,8 @@ function FLIGHTCONTROL:_PlayerRequestInfo(groupname)
   
   if flight then
   
-    
+    local text="No info implemented yet"
+    MESSAGE:New(text, 5):ToGroup(flight.group)
   
   end
   
