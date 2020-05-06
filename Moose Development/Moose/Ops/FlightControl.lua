@@ -438,9 +438,6 @@ function FLIGHTCONTROL:OnEventBirth(EventData)
     -- We delay this, to have all elements of the group in the game.
     if unit:IsAir() then
     
-      -- Coordinate.
-      local coordinate=unit:GetCoordinate()
-    
       self:ScheduleOnce(0.5, self._CreateFlightGroup, self, EventData.IniGroup)
       
       self:SpawnParkingGuard(unit)
@@ -608,13 +605,15 @@ function FLIGHTCONTROL:_CheckQueues()
       -- Takeoff flight --
       --------------------    
       
-      -- No other flight is taking of or landing.
+      -- No other flight is taking off or landing.
       if ntakeoff==0 and nlanding==0 then
      
         -- Check if flight is AI. Humans have to request taxi via F10 menu.
         if flight.ai then
         
-          -- NOTE that AI will start taxiing once they started their engine.
+          ---
+          -- AI
+          ---
         
           -- Message.
           local text=string.format("Flight %s, you are cleared to taxi to runway.", flight.groupname)
@@ -628,22 +627,26 @@ function FLIGHTCONTROL:_CheckQueues()
           
           -- Add flight to takeoff queue.
           self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.TAKEOFF)
+
+          -- Remove parking guards.
+          for _,_element in pairs(flight.elements) do
+            local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
+            if element and element.parking then
+              local spot=self:GetParkingSpotByID(element.parking.TerminalID)
+              self:RemoveParkingGuard(spot)
+            end
+          end
           
         else
+
+          ---
+          -- PLAYER
+          ---
         
           local text=string.format("HUMAN Flight %s, you are cleared for takeoff.", flight.groupname)
           self:I(self.lid..text)
           MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
           
-        end
-        
-        -- Remove parking guards.
-        for _,_element in pairs(flight.elements) do
-          local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
-          if element and element.parking then
-            local spot=self:GetParkingSpotByID(element.parking.TerminalID)
-            self:RemoveParkingGuard(spot)
-          end
         end
         
       else
@@ -774,15 +777,16 @@ end
 -- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
 function FLIGHTCONTROL:_GetNextFightParking()
 
-  -- Get flights taxiing to runway for takeoff.
-  local Qtaxiout=self:GetFlights(FLIGHTCONTROL.FlightStatus.TAXIOUT)
+  -- Get flights ready for take off.
+  local QreadyTO=self:GetFlights(FLIGHTCONTROL.FlightStatus.READYTO)
 
   -- First check human players.
-  if #Qtaxiout>0 then
+  if #QreadyTO>0 then
+  
     -- TODO: Could be sorted by distance to active runway! Take the runway spawn point for distance measure.
     
     -- First come, first serve.
-    return Qtaxiout[1]
+    return QreadyTO[1]
     
   end
   
@@ -792,8 +796,6 @@ function FLIGHTCONTROL:_GetNextFightParking()
   -- Check special cases where only up to one flight is waiting for takeoff.
   if #Qparking==0 then
     return nil
-  elseif #Qparking==1 then
-    return Qparking[1]
   end
 
   -- Sort flights parking time.
@@ -806,12 +808,23 @@ function FLIGHTCONTROL:_GetNextFightParking()
   -- Return flight waiting longest.
   table.sort(Qparking, _sortByTparking)
   
+  -- Debug.
+  local text="Parking flights:"
   for i,_flight in pairs(Qparking) do
     local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
-    env.info(string.format("%d %s %.1f", i, flight.groupname, flight.Tparking))
+    text=text..string.format("\n[%d] %s %.1f", i, flight.groupname, flight.Tparking)
+  end
+  self:I(self.lid..text)
+
+  -- Get the first AI flight.
+  for i,_flight in pairs(Qparking) do
+    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
+    if flight.ai then
+      return flight
+    end
   end
   
-  return Qparking[1]
+  return nil
 end
 
 --- Print queue.
@@ -1066,15 +1079,45 @@ function FLIGHTCONTROL:_InitParkingSpots()
     spot.Marker.tocoaliton=true
     spot.Marker.coalition=self:GetCoalition()
     
-    -- Set spot to occupied.
+    -- Check if spot is initially free or occupied.
     if spot.Free then
+    
+      -- Parking spot is free.
       self:SetParkingFree(spot)
+      
     else
+    
+      -- Scan for the unit sitting here.
       local unit=spot.Coordinate:FindClosestUnit(20)
-      if unit and unit:IsAlive() then
+      
+      
+      if unit then
+
         local unitname=unit and unit:GetName() or "unknown"
-        self:SetParkingOccupied(spot, unitname)
-        self:SpawnParkingGuard(unit)
+      
+        local isalive=unit:IsAlive()
+      
+        env.info(string.format("FF parking spot %d is occupied by unit %s alive=%s", spot.TerminalID, unitname, tostring(isalive)))
+      
+        if isalive then
+      
+                  
+          self:SetParkingOccupied(spot, unitname)
+          
+          self:SpawnParkingGuard(unit)
+        
+        else
+        
+          -- TODO
+          env.info(string.format("FF parking spot %d is occupied by NOT ALIVE unit %s", spot.TerminalID, unitname))
+          
+          -- Parking spot is free.
+          self:SetParkingFree(spot)          
+          
+        end
+        
+      else
+        self:I(self.lid..string.format("ERROR: Parking spot is NOT FREE but no unit could be found there!"))
       end
     end
 
@@ -1337,7 +1380,7 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   
   local rootmenu=atcmenu[airbasename].root --Core.Menu#MENU_GROUP_DELAYED
 
-  -- Some info.
+  -- Help Menu.
   local helpmenu=MENU_GROUP_DELAYED:New(group, "Help",  rootmenu):SetTime(Tnow):SetTag(Tag)
 
   -- Some info.
@@ -1346,29 +1389,56 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   MENU_GROUP_COMMAND_DELAYED:New(group, "Queues",  infomenu, self._PlayerRequestInfoQueues, self, groupname):SetTime(Tnow):SetTag(Tag)
   MENU_GROUP_COMMAND_DELAYED:New(group, "ATIS",    infomenu, self._PlayerRequestInfoATIS,   self, groupname):SetTime(Tnow):SetTag(Tag)
 
-  -- Root Commands  
+  -- Root Commands.
   if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
+
+    ---
+    -- FC is controlling this flight
+    ---
+  
     if flight:IsParking() then
+      ---
+      -- Parking
+      ---
+      
       MENU_GROUP_COMMAND_DELAYED:New(group, "Request Taxi",    rootmenu, self._PlayerRequestTaxi,    self, groupname):SetTime(Tnow):SetTag(Tag)
+      
     elseif flight:IsTaxiing() then
+      ---
+      -- Taxiing
+      ---
+      
       MENU_GROUP_COMMAND_DELAYED:New(group, "Request Takeoff", rootmenu, self._PlayerRequestTakeoff, self, groupname):SetTime(Tnow):SetTag(Tag)
       MENU_GROUP_COMMAND_DELAYED:New(group, "Abort Takeoff",   rootmenu, self._PlayerAbortTakeoff,   self, groupname):SetTime(Tnow):SetTag(Tag)
+      
     elseif flight:IsAirborne() then
+      ---
+      -- Airborne
+      ---
     end
   
     if flight:IsInbound() or flight:IsHolding() or flight:IsLanding() or flight:IsLanded() then
       MENU_GROUP_COMMAND_DELAYED:New(group, "Request Parking", rootmenu, self._PlayerRequestParking, self, groupname):SetTime(Tnow):SetTag(Tag)
     end
+    
   else
+  
+    ---
+    -- FC is NOT controlling this flight
+    ---
+  
     if flight:IsAirborne() then
+    
       if self:GetFlightStatus(flight)==FLIGHTCONTROL.FlightStatus.INBOUND then
-        MENU_GROUP_COMMAND_DELAYED:New(group, "Holding", rootmenu, self._PlayerInbound, self, groupname):SetTime(Tnow):SetTag(Tag)
-        
+        MENU_GROUP_COMMAND_DELAYED:New(group, "Holding", rootmenu, self._PlayerInbound, self, groupname):SetTime(Tnow):SetTag(Tag)        
       else
         MENU_GROUP_COMMAND_DELAYED:New(group, "Inbound", rootmenu, self._PlayerHolding, self, groupname):SetTime(Tnow):SetTag(Tag)
       end
-    end  
+    end
+    
   end
+  
+  
   
   if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
     MENU_GROUP_COMMAND_DELAYED:New(group, "My Status",       rootmenu, self._PlayerMyStatus,       self, groupname):SetTime(Tnow):SetTag(Tag)
@@ -1572,11 +1642,13 @@ function FLIGHTCONTROL:_PlayerMyStatus(groupname)
   local flight=_DATABASE:GetFlightGroup(groupname)
   
   if flight then
+    
+    local fc=flight.flightcontrol
   
     local text=string.format("My Status:")
-    text=text..string.format("\nFlight control: %s", tostring(flight.flightcontrol and flight.flightcontrol.airbasename or "N/A"))
     text=text..string.format("\nFlight status: %s", tostring(flight:GetState()))
-
+    text=text..string.format("\nFlight control: %s status=%s", tostring(fc and fc.airbasename or "N/A"), tostring(fc and fc:GetFlightStatus(flight) or "N/A"))
+    
     MESSAGE:New(text, 5):ToGroup(flight.group)
   
   else
@@ -1607,9 +1679,13 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
         local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
         if element.parking then
           local spot=self:GetParkingSpotByID(element.parking.TerminalID)
-          self:RemoveParkingGuard(spot)
+          if element.ai then
+            self:RemoveParkingGuard(spot, 30)
+          else
+            self:RemoveParkingGuard(spot, 3)
+          end
         end
-        flight:ElementTaxiing(element)        
+        --flight:ElementTaxiing(element)        
       end
       
     else
@@ -1649,8 +1725,6 @@ function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
         self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.READYTO)
       end
       
-      
-    
     else
       MESSAGE:New(string.format("Negative, you must request TAXI before you can request TAKEOFF!"), 5):ToAll()  
     end
@@ -1958,7 +2032,7 @@ end
 
 --- Add parking guard in front of a parking aircraft.
 -- @param #FLIGHTCONTROL self
--- @param Wrapper.Unit#UNIT Unit The aircraft.
+-- @param Wrapper.Unit#UNIT unit The aircraft.
 function FLIGHTCONTROL:SpawnParkingGuard(unit)
   
   if unit and self.parkingGuard then
@@ -1975,10 +2049,10 @@ function FLIGHTCONTROL:SpawnParkingGuard(unit)
     -- Length of the unit + 3 meters.
     local size, x, y, z=unit:GetObjectSize()
     
-    self:I(self.lid..string.format("Parking guard for %s: heading=%d, distance size=%s x=%s y=%s z=%s", unit:GetName(), heading, tostring(size), tostring(x), tostring(y), tostring(z)))
+    self:I(self.lid..string.format("Parking guard for %s: heading=%d, distance x=%.1f m", unit:GetName(), heading, x))
     
     -- Coordinate for the guard.
-    local Coordinate=coordinate:Translate(x+3, heading)
+    local Coordinate=coordinate:Translate(0.75*x+3, heading)
     
     -- Let him face the aircraft.
     local lookat=heading-180
@@ -1996,11 +2070,18 @@ end
 --- Remove parking guard.
 -- @param #FLIGHTCONTROL self
 -- @param #FLIGHTCONTROL.ParkingSpot spot
-function FLIGHTCONTROL:RemoveParkingGuard(spot)
+-- @param #number delay Delay in seconds.
+function FLIGHTCONTROL:RemoveParkingGuard(spot, delay)
 
-  if spot.ParkingGuard then
-    spot.ParkingGuard:Destroy()
-    spot.ParkingGuard=nil
+  if delay and delay>0 then
+    self:ScheduleOnce(delay, FLIGHTCONTROL.RemoveParkingGuard, self, spot)
+  else
+  
+    if spot.ParkingGuard then
+      spot.ParkingGuard:Destroy()
+      spot.ParkingGuard=nil
+    end
+    
   end
 
 end

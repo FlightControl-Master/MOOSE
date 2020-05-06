@@ -831,12 +831,13 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetFlightControl(flightcontrol)
   
-  -- Remove flight from previous FC.
+  -- Check if there is already a FC.
   if self.flightcontrol then
     if self.flightcontrol.airbasename==flightcontrol.airbasename then
       -- Flight control is already controlling this flight!
       return
     else
+      -- Remove flight from previous FC.
       self.flightcontrol:_RemoveFlight(self)
     end
   end
@@ -2283,7 +2284,7 @@ function FLIGHTGROUP:onafterElementTakeoff(From, Event, To, Element, airbase)
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.TAKEOFF, airbase)
     
   -- Trigger element airborne event.
-  self:__ElementAirborne(10, Element)
+  self:__ElementAirborne(2, Element)
 end
 
 --- On after "ElementAirborne" event.
@@ -2367,9 +2368,8 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
-  self:T(self.lid..string.format("Flight spawned!"))
-  
-  
+  self:I(self.lid..string.format("Flight spawned!"))
+    
   if self.ai then
   
     -- Set default ROE and ROT options.
@@ -2461,6 +2461,8 @@ function FLIGHTGROUP:onafterFlightTaxiing(From, Event, To)
     else
       -- Human flights go to TAXI OUT queue. They will go to the ready for takeoff queue when they request it.
       self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIOUT)
+      -- Update menu.
+      self:_UpdateMenu()
     end
     
   end
@@ -2626,6 +2628,11 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
   -- Not good, because mission will never start. Better only check if there is a current task!
   --if self.currentmission then
   --end
+
+  -- Only AI flights.  
+  if not self.ai then
+    allowed=false
+  end
   
   -- Debug info.
   self:T2(self.lid..string.format("Onbefore Updateroute allowed=%s state=%s repeat in %s", tostring(allowed), self:GetState(), tostring(trepeat)))
@@ -2792,7 +2799,7 @@ end
 -- @param #number delay Delay in seconds.
 function FLIGHTGROUP:_CheckFlightDone(delay)
 
-  if self:IsAlive() then
+  if self:IsAlive() and not self.ai then
 
     if delay and delay>0 then
       -- Delayed call.
@@ -2824,10 +2831,10 @@ function FLIGHTGROUP:_CheckFlightDone(delay)
             -- Send flight to destination.
             if self.destbase then
               self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTB!")
-              self:__RTB(-1, self.destbase)
+              self:__RTB(-3, self.destbase)
             elseif self.destzone then
               self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTZ!")
-              self:__RTZ(-1, self.destzone)
+              self:__RTZ(-3, self.destzone)
             else
               self:I(self.lid.."Passed Final WP and NO Tasks/Missions left. No DestBase or DestZone ==> Wait!")
               self:__Wait(-1)        

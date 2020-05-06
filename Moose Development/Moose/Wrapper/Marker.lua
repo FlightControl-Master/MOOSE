@@ -74,10 +74,10 @@
 -- 
 -- # Updating a Marker
 -- 
--- The marker text and/coordinate can be updated easily as shown below.
+-- The marker text and coordinate can be updated easily as shown below.
 -- 
--- However, note that updateing involves to remove and recreate the marker if either text or its coordinate is changed.
--- This is a DCS scripting engine limitation. 
+-- However, note that **updateing involves to remove and recreate the marker if either text or its coordinate is changed**.
+-- *This is a DCS scripting engine limitation.* 
 -- 
 -- ## Update Text
 -- 
@@ -101,7 +101,7 @@
 -- 
 -- # Retrieve Data
 -- 
--- The important data as the displayed text and the coordinate of the marker can be retrieved quite easily.
+-- The important data as the displayed text and the coordinate of the marker can be retrieved easily.
 -- 
 -- ## Text
 -- 
@@ -588,7 +588,7 @@ end
 
 --- Set text that is displayed in the marker panel. Note this does not show the marker.
 -- @param #MARKER self
--- @param #string Text Marker text.
+-- @param #string Text Marker text. Default is an empty sting "".
 -- @return #MARKER self
 function MARKER:SetText(Text)
   self.text=Text and tostring(Text) or ""
