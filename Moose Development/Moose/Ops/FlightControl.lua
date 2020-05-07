@@ -1,4 +1,4 @@
---- **OPS** - (R2.5) - Manage recovery of aircraft at airdromes.
+--- **OPS** - Manage recovery of aircraft at airdromes.
 -- 
 -- 
 --
@@ -27,15 +27,6 @@
 -- @field #table runways Runway table.
 -- @field #table flights All flights table.
 -- @field #table clients Table with all clients spawning at this airbase.
--- @field #table Qinbound Queue of aircraft inbound and traveling to the holding position.
--- @field #table Qholding Queue of aircraft waiting for landing permission.
--- @field #table Qlanding Queue of aircraft currently on final approach.
--- @field #table Qtaxiinb Queue of aircraft taxiing to parking after landing.
--- @field #table Qarrived Queue of aircraft that have arrived at their parking spot after landing.
--- @field #table Qparking Queue of aircraft parking and waiting for taxi & takeoff clearance.
--- @field #table Qtaxiout Queue of aircraft taxiing from parking to runway for takeoff.
--- @field #table Qreadyto Queue of aircraft ready for takeoff. Only human players.
--- @field #table Qtakeoff Queue of aircraft about to takeoff.
 -- @field Ops.ATIS#ATIS atis ATIS object.
 -- @field #number activerwyno Number of active runway.
 -- @field #number atcfreq ATC radio frequency.
@@ -72,15 +63,6 @@ FLIGHTCONTROL = {
   runways        =    {},
   flights        =    {},
   clients        =    {},
-  Qinbound       =    {},
-  Qholding       =    {},
-  Qlanding       =    {},
-  Qtaxiinb       =    {},  
-  Qarrived       =    {},  
-  Qparking       =    {},
-  Qtaxiout       =    {},
-  Qreadyto       =    {},
-  Qtakeoff       =    {},  
   atis           =   nil,
   activerwyno    =     1,
   atcfreq        =   nil,
@@ -312,7 +294,11 @@ end
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetParkingGuard(TemplateGroupName)
 
-  self.parkingGuard=SPAWN:New(TemplateGroupName)
+  --self.parkingGuard=SPAWN:New(TemplateGroupName)
+  
+  local alias=string.format("Parking Guard %s", self.airbasename)
+  
+  self.parkingGuard=SPAWN:NewWithAlias(TemplateGroupName, alias)
 
   return self
 end
@@ -354,7 +340,7 @@ function FLIGHTCONTROL:onafterStatus()
   self:_CheckFlights()
   
   -- Check parking spots.
-  self:_CheckParking()
+  --self:_CheckParking()
   
   -- Check waiting and landing queue.
   self:_CheckQueues()
@@ -388,7 +374,7 @@ function FLIGHTCONTROL:onafterStatus()
   end
 
   -- Info text.
-  local text=string.format("State %s - Runway %s - Parking %d/%d/%d of %d - Flights=%s: Qpark=%d Qtxout=%d Qready=%d Qto=%d | Qinbound=%d Qhold=%d Qland=%d Qtxinb=%d Qarr=%d", 
+  local text=string.format("State %s - Runway %s - Parking F=%d/O=%d/R=%d of %d - Flights=%s: Qpark=%d Qtxout=%d Qready=%d Qto=%d | Qinbound=%d Qhold=%d Qland=%d Qtxinb=%d Qarr=%d", 
   self:GetState(), runway.idx, Nfree, Noccu, Nresv, self.Nparkingspots, Nflights, NQparking, NQtaxiout, NQreadyto, NQtakeoff, NQinbound, NQholding, NQlanding, NQtaxiinb, NQarrived)
   self:I(self.lid..text)
   
@@ -427,23 +413,35 @@ end
 function FLIGHTCONTROL:OnEventBirth(EventData)
   self:F3({EvendData=EventData})
     
-  if EventData and EventData.IniGroupName and EventData.Place and EventData.Place:GetName()==self.airbasename then
+  if EventData and EventData.IniGroupName and EventData.IniUnit then
   
     self:I(self.lid..string.format("BIRTH: unit  = %s", tostring(EventData.IniUnitName)))
     self:T2(self.lid..string.format("BIRTH: group = %s", tostring(EventData.IniGroupName)))
 
     -- Unit that was born.
-    local unit=EventData.IniUnit
+    local unit=EventData.IniUnit    
   
     -- We delay this, to have all elements of the group in the game.
     if unit:IsAir() then
     
-      self:ScheduleOnce(0.5, self._CreateFlightGroup, self, EventData.IniGroup)
+      local bornhere=EventData.Place and EventData.Place:GetName()==self.airbasename or false
+      env.info("FF born here ".. tostring(bornhere))
+    
+      -- We got a player?
+      local playerunit, playername=self:_GetPlayerUnitAndName(EventData.IniUnitName)
       
-      self:SpawnParkingGuard(unit)
+      if playername or bornhere then
+    
+        self:ScheduleOnce(0.5, self._CreateFlightGroup, self, EventData.IniGroup)
+        
+      end    
+      
+      if bornhere then
+        self:SpawnParkingGuard(unit)
+      end
 
     end
-  
+      
   end
   
 end
@@ -1366,8 +1364,10 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   local groupname=flight.groupname
   local gid=group:GetID()
   
-  self:I(self.lid..string.format("Creating ATC player menu for flight group %s (ID=%d) in state=%s", tostring(flight.groupname), gid, flight:GetState()))  
+  local flightstatus=self:GetFlightStatus(flight)
+  local gotcontrol=flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename or false
   
+  self:I(self.lid..string.format("Creating ATC player menu for flight %s: in state=%s status=%s, gotcontrol=%s", tostring(flight.groupname), flight:GetState(), flightstatus, tostring(gotcontrol)))
   
   local airbasename=self.airbasename
   local Tag=airbasename
@@ -1390,7 +1390,7 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   MENU_GROUP_COMMAND_DELAYED:New(group, "ATIS",    infomenu, self._PlayerRequestInfoATIS,   self, groupname):SetTime(Tnow):SetTag(Tag)
 
   -- Root Commands.
-  if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
+  if  gotcontrol then
 
     ---
     -- FC is controlling this flight
@@ -1415,6 +1415,11 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
       ---
       -- Airborne
       ---
+      
+    elseif flight:IsInbound() then
+
+      MENU_GROUP_COMMAND_DELAYED:New(group, "Holding", rootmenu, self._PlayerHolding, self, groupname):SetTime(Tnow):SetTag(Tag)
+      
     end
   
     if flight:IsInbound() or flight:IsHolding() or flight:IsLanding() or flight:IsLanded() then
@@ -1429,18 +1434,14 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   
     if flight:IsAirborne() then
     
-      if self:GetFlightStatus(flight)==FLIGHTCONTROL.FlightStatus.INBOUND then
-        MENU_GROUP_COMMAND_DELAYED:New(group, "Holding", rootmenu, self._PlayerInbound, self, groupname):SetTime(Tnow):SetTag(Tag)        
-      else
-        MENU_GROUP_COMMAND_DELAYED:New(group, "Inbound", rootmenu, self._PlayerHolding, self, groupname):SetTime(Tnow):SetTag(Tag)
-      end
+      MENU_GROUP_COMMAND_DELAYED:New(group, "Inbound", rootmenu, self._PlayerInbound, self, groupname):SetTime(Tnow):SetTag(Tag)
     end
     
   end
   
   
   
-  if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
+  if gotcontrol then
     MENU_GROUP_COMMAND_DELAYED:New(group, "My Status",       rootmenu, self._PlayerMyStatus,       self, groupname):SetTime(Tnow):SetTag(Tag)
   end
 
@@ -1464,7 +1465,7 @@ function FLIGHTCONTROL:_PlayerRequestParking(groupname)
     local coord=flight:GetGroup():GetCoordinate()
 
     --TODO: terminal type for helos!    
-    local spot=self:GetClosestParkingSpot(coord, AIRBASE.TerminalType.FighterAircraft, true)
+    local spot=self:GetClosestParkingSpot(coord, nil, true)
     
     --TODO: voice over.
     local text=string.format("Flight XYZ, tower, your assigned parking position is terminal ID %d.\nCheck your F10 map for details.", spot.TerminalID)
@@ -1575,7 +1576,10 @@ function FLIGHTCONTROL:_PlayerInbound(groupname)
         -- Set FC controlling this flight.
         flight:SetFlightControl(self)
       
-      end    
+      end
+      
+      -- Call RTB event.
+      flight:RTB(self.airbase)
 
       -- Add flight to inbound queue.
       self:SetFlightStatus(flight, FLIGHTCONTROL.FlightStatus.INBOUND)
@@ -1605,7 +1609,7 @@ function FLIGHTCONTROL:_PlayerHolding(groupname)
   
   if flight then
       
-    if flight:IsAirborne() then
+    if flight:IsInbound() then
 
       if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
         
@@ -1616,7 +1620,7 @@ function FLIGHTCONTROL:_PlayerHolding(groupname)
 
         -- Call holding event.        
         flight:Holding()
-        
+                
       else
       
         -- Error you are not airborne!
@@ -1626,7 +1630,7 @@ function FLIGHTCONTROL:_PlayerHolding(groupname)
       end
     else
       -- Error you are not airborne!
-      local text=string.format("Negative, you must be AIRBORNE to call HOLDING!")
+      local text=string.format("Negative, you must be INBOUND to call HOLDING!")
       MESSAGE:New(text, 5):ToGroup(flight.group)              
     end
   else
@@ -2099,6 +2103,40 @@ end
 -- @return #number Coalition ID.
 function FLIGHTCONTROL:GetCoalition()
   return self.airbase:GetCoalition()
+end
+
+--- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned.
+-- @param #FLIGHTCONTROL self
+-- @param #string unitName Name of the player unit.
+-- @return Wrapper.Unit#UNIT Unit of player or nil.
+-- @return #string Name of the player or nil.
+function FLIGHTCONTROL:_GetPlayerUnitAndName(unitName)
+
+  if unitName then
+
+    -- Get DCS unit from its name.
+    local DCSunit=Unit.getByName(unitName)
+
+    if DCSunit then
+
+      -- Get player name if any.
+      local playername=DCSunit:getPlayerName()
+
+      -- Unit object.
+      local unit=UNIT:Find(DCSunit)
+
+      -- Check if enverything is there.
+      if DCSunit and unit and playername then
+        self:T(self.lid..string.format("Found DCS unit %s with player %s", tostring(unitName), tostring(playername)))
+        return unit, playername
+      end
+
+    end
+
+  end
+
+  -- Return nil if we could not find a player.
+  return nil,nil
 end
 
 

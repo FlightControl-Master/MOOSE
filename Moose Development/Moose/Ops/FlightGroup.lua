@@ -2493,6 +2493,10 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightAirborne(From, Event, To)
   self:I(self.lid..string.format("Flight airborne"))
+  
+  if not self.ai then
+    self:_UpdateMenu()
+  end
 end
 
 --- On after "FlightLanding" event.
@@ -2799,7 +2803,7 @@ end
 -- @param #number delay Delay in seconds.
 function FLIGHTGROUP:_CheckFlightDone(delay)
 
-  if self:IsAlive() and not self.ai then
+  if self:IsAlive() and self.ai then
 
     if delay and delay>0 then
       -- Delayed call.
@@ -3022,9 +3026,6 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   
   local runway=airbase:GetActiveRunway()
   
-  -- Clear all tasks.
-  self:ClearTasks()
-  
   -- Set holding flag to 0=false.
   self.flaghold:Set(0)
   
@@ -3072,33 +3073,40 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
       
   end 
  
-  local routeto=false
-  if fc or world.event.S_EVENT_KILL then
-    routeto=true
-  end
+  if self.ai then
  
-  -- Respawn?
-  if routeto then
+    local routeto=false
+    if fc or world.event.S_EVENT_KILL then
+      routeto=true
+    end
   
-    --self:I(self.lid.."FF route (not repawn)")
+    -- Clear all tasks.
+    self:ClearTasks()
+   
+    -- Respawn?
+    if routeto then
     
-    -- Just route the group. Respawn might happen when going from holding to final.
-    self:Route(wp, 1)
- 
-  else 
+      --self:I(self.lid.."FF route (not repawn)")
+      
+      -- Just route the group. Respawn might happen when going from holding to final.
+      self:Route(wp, 1)
+   
+    else 
+    
+      --self:I(self.lid.."FF respawn (not route)")
+    
+      -- Get group template.
+      local Template=self.group:GetTemplate()
+    
+      -- Set route points.
+      Template.route.points=wp
   
-    --self:I(self.lid.."FF respawn (not route)")
-  
-    -- Get group template.
-    local Template=self.group:GetTemplate()
-  
-    -- Set route points.
-    Template.route.points=wp
-
-    --Respawn the group with new waypoints.
-    self:Respawn(Template)
-        
-  end  
+      --Respawn the group with new waypoints.
+      self:Respawn(Template)
+          
+    end  
+    
+  end
     
 end
 
