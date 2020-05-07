@@ -294,10 +294,9 @@ end
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetParkingGuard(TemplateGroupName)
 
-  --self.parkingGuard=SPAWN:New(TemplateGroupName)
-  
   local alias=string.format("Parking Guard %s", self.airbasename)
-  
+
+  -- Need spawn with alias for multiple FCs.  
   self.parkingGuard=SPAWN:NewWithAlias(TemplateGroupName, alias)
 
   return self
@@ -684,7 +683,7 @@ function FLIGHTCONTROL:_GetNextFlight()
     if parking then
       return flightholding, true, parking
     else
-      self:E(string.format("WARNING: No flight parking but no parking spots! nP=%d nH=%d", #parking, nH))
+      self:E(self.lid..string.format("WARNING: No flight parking but no parking spots! nP=%d nH=%d", #parking, nH))
       return nil, nil, nil
     end
   end
@@ -705,8 +704,8 @@ function FLIGHTCONTROL:_GetNextFlight()
       end
     end
        
-    -- Return the flight which is waiting longer.
-    if flightholding.Tholding>flightparking.Tparking and parking then
+    -- Return the flight which is waiting longer. NOTE that Tholding and Tparking are abs. mission time. So a smaller value means waiting longer.
+    if flightholding.Tholding<flightparking.Tparking and parking then
       return flightholding, true, parking
     else
       return flightparking, false, nil
@@ -878,8 +877,9 @@ function FLIGHTCONTROL:_PrintQueue(queue, name)
         local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
         local life=element.unit:GetLife()
         local life0=element.unit:GetLife0()
-        text=text..string.format("\n  (%d) %s (%s): status=%s, ai=%s, airborne=%s life=%.1f/%.1f",
-        j, tostring(element.modex), element.name, tostring(element.status), tostring(element.ai), tostring(element.unit:InAir()), life, life0)
+        local park=element.parking and tostring(element.parking.TerminalID) or "N/A"
+        text=text..string.format("\n  (%d) %s (%s): status=%s, ai=%s, airborne=%s life=%d/%d spot=%s",
+        j, tostring(element.modex), element.name, tostring(element.status), tostring(element.ai), tostring(element.unit:InAir()), life, life0, park)
       end
     end
   end
@@ -1185,6 +1185,8 @@ function FLIGHTCONTROL:UpdateParkingMarker(spot)
 
   local spot=self:GetParkingSpotByID(spot.TerminalID)
   
+  env.info(string.format("FF updateing spot %d  status=%s", spot.TerminalID, spot.Status))
+  
   -- Only mark OCCUPIED and RESERVED spots.
   if spot.Status==AIRBASE.SpotStatus.FREE then
   
@@ -1207,7 +1209,9 @@ function FLIGHTCONTROL:UpdateParkingMarker(spot)
     
     if spot.Marker then
     
-      spot.Marker:UpdateText(text)
+      if text~=spot.Marker.text then
+        spot.Marker:UpdateText(text)
+      end
       
     else
     
@@ -1370,13 +1374,17 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   self:I(self.lid..string.format("Creating ATC player menu for flight %s: in state=%s status=%s, gotcontrol=%s", tostring(flight.groupname), flight:GetState(), flightstatus, tostring(gotcontrol)))
   
   local airbasename=self.airbasename
+  local airbaseName=airbasename
+  if gotcontrol then
+    airbaseName=airbaseName.." *"
+  end
   local Tag=airbasename
   local Tnow=timer.getTime()
    
   atcmenu[airbasename] = atcmenu[airbasename] or {}
   
   -- Airbase root menu.
-  atcmenu[airbasename].root = MENU_GROUP_DELAYED:New(group, airbasename, atcmenu.root):SetTime(Tnow):SetTag(Tag)
+  atcmenu[airbasename].root = MENU_GROUP_DELAYED:New(group, airbaseName, atcmenu.root):SetTime(Tnow):SetTag(Tag)
   
   local rootmenu=atcmenu[airbasename].root --Core.Menu#MENU_GROUP_DELAYED
 
@@ -1390,7 +1398,7 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   MENU_GROUP_COMMAND_DELAYED:New(group, "ATIS",    infomenu, self._PlayerRequestInfoATIS,   self, groupname):SetTime(Tnow):SetTag(Tag)
 
   -- Root Commands.
-  if  gotcontrol then
+  if gotcontrol then
 
     ---
     -- FC is controlling this flight
@@ -1433,16 +1441,13 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
     ---
   
     if flight:IsAirborne() then
-    
       MENU_GROUP_COMMAND_DELAYED:New(group, "Inbound", rootmenu, self._PlayerInbound, self, groupname):SetTime(Tnow):SetTag(Tag)
     end
     
   end
   
-  
-  
   if gotcontrol then
-    MENU_GROUP_COMMAND_DELAYED:New(group, "My Status",       rootmenu, self._PlayerMyStatus,       self, groupname):SetTime(Tnow):SetTag(Tag)
+    MENU_GROUP_COMMAND_DELAYED:New(group, "My Status", rootmenu, self._PlayerMyStatus, self, groupname):SetTime(Tnow):SetTag(Tag)
   end
 
   -- Reset the menu.
@@ -1495,38 +1500,28 @@ function FLIGHTCONTROL:_PlayerRequestInfo(groupname)
   local flight=_DATABASE:GetFlightGroup(groupname)
   
   if flight then
-  
-    local text="No info implemented yet"
+ 
+    local text=string.format("Airbase %s Info:", self.airbasename) 
+    text=text..string.format("\nRunway %s", self:GetActiveRunwayText())
+
     MESSAGE:New(text, 5):ToGroup(flight.group)
   
   end
   
 end
 
-
 --- Player menu request info.
 -- @param #FLIGHTCONTROL self
 -- @param #string groupname Name of the flight group.
-function FLIGHTCONTROL:_PlayerRequestInfo(groupname)
+function FLIGHTCONTROL:_PlayerRequestInfoATIS(groupname)
 
   -- Get flight group.
   local flight=_DATABASE:GetFlightGroup(groupname)
   
   if flight then
   
-    --
-    local text=string.format("Airbase %s Status:", self.airbasename)
-    text=text..string.format("\nFlights %d", #self.flights)
-    text=text..string.format("\nQinbound %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.INBOUND))
-    text=text..string.format("\nQholding %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.HOLDING))
-    text=text..string.format("\nQlanding %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.LANDING))
-    text=text..string.format("\nQtaxiInb %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.TAXIINB))
-    text=text..string.format("\nQarrived %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.ARRIVED))
-    text=text..string.format("\nQparking %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.PARKING))
-    text=text..string.format("\nQtaxiOut %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.TAXIOUT))
-    text=text..string.format("\nQreadiTO %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.READYTO))    
-    text=text..string.format("\nQtakeoff %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.TAKEOFF))
-    text=text..string.format("\nRunway %s", self:GetActiveRunwayText())
+    local text=string.format("Airbase %s ATIS:", self.airbasename)
+    
     if self.atis then
       text=text..string.format("\nATIS %.3f MHz %s", self.atis.frequency, UTILS.GetModulationName(self.atis.modulation))
       if self.atis.towerfrequency then
@@ -1548,6 +1543,37 @@ function FLIGHTCONTROL:_PlayerRequestInfo(groupname)
       end
       
     end
+
+    MESSAGE:New(text, 5):ToGroup(flight.group)
+  
+  end
+  
+end
+
+
+--- Player menu request info.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerRequestInfoQueues(groupname)
+
+  -- Get flight group.
+  local flight=_DATABASE:GetFlightGroup(groupname)
+  
+  if flight then
+  
+    --
+    local text=string.format("Airbase %s Status:", self.airbasename)
+    text=text..string.format("\nFlights %d", #self.flights)
+    text=text..string.format("\nQinbound %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.INBOUND))
+    text=text..string.format("\nQholding %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.HOLDING))
+    text=text..string.format("\nQlanding %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.LANDING))
+    text=text..string.format("\nQtaxiInb %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.TAXIINB))
+    text=text..string.format("\nQarrived %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.ARRIVED))
+    text=text..string.format("\nQparking %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.PARKING))
+    text=text..string.format("\nQtaxiOut %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.TAXIOUT))
+    text=text..string.format("\nQreadiTO %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.READYTO))    
+    text=text..string.format("\nQtakeoff %d", self:CountFlights(FLIGHTCONTROL.FlightStatus.TAKEOFF))
+    text=text..string.format("\nRunway %s", self:GetActiveRunwayText())
 
     MESSAGE:New(text, 5):ToGroup(flight.group)
   

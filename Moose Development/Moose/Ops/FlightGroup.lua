@@ -1494,7 +1494,7 @@ end
 function FLIGHTGROUP:onafterStop(From, Event, To)
 
   -- Check if group is still alive.
-  if self:IsAlive() and false then
+  if self:IsAlive() then
   
     -- Set element parking spot to FREE (after arrived for example).
     if self.flightcontrol then
@@ -1504,8 +1504,8 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
       end
     end
       
-    -- Destroy group.
-    self.group:Destroy()
+    -- Destroy group. No event is generated.
+    self.group:Destroy(false)
   end
 
   -- Handle events:
@@ -2194,12 +2194,10 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
     local spot=self:GetParkingSpot(Element, 10)
     
     if spot then
-    
-      -- Set
-      self:_SetElementParkingAt(Element, spot)
       
       -- Trigger ElementParking event. Add a little delay because spawn is also delayed!
-      self:__ElementParking(0.11, Element)
+      self:__ElementParking(0.11, Element, spot)
+      
     else
       -- TODO: This can happen if spawned on deck of a carrier!
       self:E(self.lid..string.format("Element spawned not in air but not on any parking spot."))
@@ -2214,11 +2212,16 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
-function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
+-- @param #FLIGHTGROUP.ParkingSpot Spot Parking Spot.
+function FLIGHTGROUP:onafterElementParking(From, Event, To, Element, Spot)
   self:T(self.lid..string.format("Element parking %s at spot %s", Element.name, Element.parking and tostring(Element.parking.TerminalID) or "N/A"))
   
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.PARKING)
+  
+  if Spot then
+    self:_SetElementParkingAt(Element, Spot)
+  end
   
   if self:IsTakeoffCold() then
     -- Wait for engine startup event.
@@ -5337,11 +5340,16 @@ function FLIGHTGROUP:_SetElementParkingAt(Element, Spot)
 
   -- Element is parking here.
   Element.parking=Spot
+    
+  if Spot then
   
-  if Spot and self.flightcontrol then
-      
-    -- Set parking spot to OCCUPIED.
-    self.flightcontrol:SetParkingOccupied(Element.parking, Element.name)
+    env.info(string.format("FF Element %s is parking on spot %d", Element.name, Spot.TerminalID))  
+  
+    if self.flightcontrol then
+        
+      -- Set parking spot to OCCUPIED.
+      self.flightcontrol:SetParkingOccupied(Element.parking, Element.name)
+    end
     
   end
 
@@ -6012,7 +6020,7 @@ function FLIGHTGROUP:GetParking(airbase)
         
         -- Check flightcontrol data.
         if self.flightcontrol and self.flightcontrol.airbasename==airbase:GetName() then
-          local problem=self.flightcontrol:IsParkingReserved(parkingspot)
+          local problem=self.flightcontrol:IsParkingReserved(parkingspot) or self.flightcontrol:IsParkingOccupied(parkingspot)
           if problem then
             free=false
           end
