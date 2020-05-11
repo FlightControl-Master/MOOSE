@@ -245,7 +245,7 @@ end
 function CLEANUP_AIRBASE.__:OnEventBirth( EventData )
   self:F( { EventData } )
   
-  if EventData.IniUnit:IsAlive() ~= nil then
+  if EventData and EventData.IniUnit and EventData.IniUnit:IsAlive() ~= nil then
     if self:IsInAirbase( EventData.IniUnit:GetVec2() ) then
       self.CleanUpList[EventData.IniDCSUnitName] = {}
       self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnit = EventData.IniUnit
