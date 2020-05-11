@@ -319,7 +319,7 @@ do -- Zones
     for ZoneID, ZoneData in pairs( env.mission.triggers.zones ) do
       local ZoneName = ZoneData.name
 
-      self:I( { "Register ZONE:", Name = ZoneName } )
+      self:T( { "Register ZONE:", Name = ZoneName } )
       local Zone = ZONE:New( ZoneName )
       self.ZONENAMES[ZoneName] = ZoneName
       self:AddZone( ZoneName, Zone )
@@ -331,7 +331,7 @@ do -- Zones
         local ZoneName2 = ZoneGroupName:match(".*#ZONE_POLYGON(.*)")
         local ZoneName = ZoneName1 .. ( ZoneName2 or "" )
         
-        self:I( { "Register ZONE_POLYGON:", Name = ZoneName } )
+        self:T( { "Register ZONE_POLYGON:", Name = ZoneName } )
         local Zone_Polygon = ZONE_POLYGON:New( ZoneName, ZoneGroup )
         self.ZONENAMES[ZoneName] = ZoneName
         self:AddZone( ZoneName, Zone_Polygon )
@@ -429,7 +429,7 @@ do -- cargo
     local Groups = UTILS.DeepCopy( self.GROUPS ) -- This is a very important statement. CARGO_GROUP:New creates a new _DATABASE.GROUP entry, which will confuse the loop. I searched 4 hours on this to find the bug!
   
     for CargoGroupName, CargoGroup in pairs( Groups ) do
-      self:I( { Cargo = CargoGroupName } )
+      self:T( { Cargo = CargoGroupName } )
       if self:IsCargo( CargoGroupName ) then
         local CargoInfo = CargoGroupName:match("#CARGO(.*)")
         local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
@@ -441,7 +441,7 @@ do -- cargo
         local LoadRadius = CargoParam and tonumber( CargoParam:match( "RR=([%a%d]+),?") )
         local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
         
-        self:I({"Register CargoGroup:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+        self:T({"Register CargoGroup:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
         CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius, NearRadius )
       end
     end
@@ -458,11 +458,11 @@ do -- cargo
         local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
         
         if Category == "SLING" then
-          self:I({"Register CargoSlingload:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+          self:T({"Register CargoSlingload:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
           CARGO_SLINGLOAD:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
         else
           if Category == "CRATE" then
-            self:I({"Register CargoCrate:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+            self:T({"Register CargoCrate:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
             CARGO_CRATE:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
           end
         end
@@ -741,7 +741,7 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
   self.Templates.Statics[StaticTemplateName].CoalitionID = CoalitionID
   self.Templates.Statics[StaticTemplateName].CountryID = CountryID
 
-  self:I( { Static = self.Templates.Statics[StaticTemplateName].StaticName,
+  self:T( { Static = self.Templates.Statics[StaticTemplateName].StaticName,
             Coalition = self.Templates.Statics[StaticTemplateName].CoalitionID,
             Category = self.Templates.Statics[StaticTemplateName].CategoryID,
             Country = self.Templates.Statics[StaticTemplateName].CountryID 
@@ -811,7 +811,7 @@ function DATABASE:_RegisterPlayers()
         local UnitName = UnitData:getName()
         local PlayerName = UnitData:getPlayerName()
         if not self.PLAYERS[PlayerName] then
-          self:I( { "Add player for unit:", UnitName, PlayerName } )
+          self:T( { "Add player for unit:", UnitName, PlayerName } )
           self:AddPlayer( UnitName, PlayerName )
         end
       end
@@ -834,13 +834,13 @@ function DATABASE:_RegisterGroupsAndUnits()
       if DCSGroup:isExist() then
         local DCSGroupName = DCSGroup:getName()
   
-        self:I( { "Register Group:", DCSGroupName } )
+        self:T( { "Register Group:", DCSGroupName } )
         self:AddGroup( DCSGroupName )
 
         for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
   
           local DCSUnitName = DCSUnit:getName()
-          self:I( { "Register Unit:", DCSUnitName } )
+          self:T( { "Register Unit:", DCSUnitName } )
           self:AddUnit( DCSUnitName )
         end
       else
@@ -875,7 +875,7 @@ end
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ) }
-  self:I( { Statics = CoalitionsData } )
+  self:T( { Statics = CoalitionsData } )
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
     for DCSStaticId, DCSStatic in pairs( CoalitionData ) do
 
@@ -917,7 +917,7 @@ function DATABASE:_RegisterAirbases()
       
       local airbase=self:AddAirbase( DCSAirbaseName )
       
-      self:I(string.format("Register Airbase: %s, getID=%d, GetID=%d (unique=%d)", DCSAirbaseName, DCSAirbase:getID(), airbase:GetID(), airbase:GetID(true)))  
+      self:T(string.format("Register Airbase: %s, getID=%d, GetID=%d (unique=%d)", DCSAirbaseName, DCSAirbase:getID(), airbase:GetID(), airbase:GetID(true)))  
   end  
 
   return self
@@ -942,7 +942,7 @@ function DATABASE:_EventOnBirth( Event )
         -- Add airbase if it was spawned later in the mission.
         local DCSAirbase = Airbase.getByName(Event.IniDCSUnitName)
         if DCSAirbase then
-          self:I(string.format("Adding airbase %s", tostring(Event.IniDCSUnitName)))
+          self:T(string.format("Adding airbase %s", tostring(Event.IniDCSUnitName)))
           self:AddAirbase(Event.IniDCSUnitName)
         end
       end
@@ -952,7 +952,7 @@ function DATABASE:_EventOnBirth( Event )
       Event.IniGroup = self:FindGroup( Event.IniDCSGroupName )
       local PlayerName = Event.IniUnit:GetPlayerName()
       if PlayerName then
-        self:I( { "Player Joined:", PlayerName } )
+        self:T( { "Player Joined:", PlayerName } )
         self:AddClient( Event.IniDCSUnitName )
         if not self.PLAYERS[PlayerName] then
           self:AddPlayer( Event.IniUnitName, PlayerName )
@@ -1022,7 +1022,7 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
     if Event.IniObjectCategory == 1 then
       local PlayerName = Event.IniUnit:GetPlayerName()
       if PlayerName and self.PLAYERS[PlayerName] then
-        self:I( { "Player Left:", PlayerName } )
+        self:T( { "Player Left:", PlayerName } )
         local Settings = SETTINGS:Set( PlayerName )
         Settings:RemovePlayerMenu( Event.IniUnit )
         self:DeletePlayer( Event.IniUnit, PlayerName )
