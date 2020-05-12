@@ -18,10 +18,12 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string groupname The name of the NAVY group.
 -- @field Wrapper.Group#GROUP group The group object.
+-- @field #table elements Elements of the group.
 -- @field #number currentwp Last waypoint passed.
+-- @field #number speedCruise Cruising speed in km/h.
 -- @extends Core.Fsm#FSM
 
---- Be surprised!
+--- *Something must be left to chance; nothing is sure in a sea fight above all.* --- Horatio Nelson
 --
 -- ===
 --
@@ -39,7 +41,13 @@ NAVYGROUP = {
   group          =   nil,
   currentwp      =     1,
   elements       =    {},
+  taskqueue      =    {},
 }
+
+--- Navy group element.
+-- @type NAVYGROUP.Element
+-- @field #string name Name of the element, i.e. the unit.
+-- @field #string typename Type name.
 
 --- NavyGroup version.
 -- @field #string version
@@ -83,8 +91,14 @@ function NAVYGROUP:New(GroupName)
   
   self:AddTransition("*",             "PassingWaypoint",   "*")           -- Passing waypoint.
   self:AddTransition("*",             "UpdateRoute",       "*")           -- Passing waypoint.
-  self:AddTransition("*",             "Hold",              "Holding")     -- Hold position.
+  self:AddTransition("*",             "FullStop",          "Holding")     -- Hold position.
   self:AddTransition("*",             "TurnIntoWind",      "*")           -- Hold position.
+  self:AddTransition("*",             "Cruise",            "Cruising")    -- Hold position.
+  
+  self:AddTransition("*",             "Dive",              "Diving")      -- Hold position.
+  self:AddTransition("Diving",        "Surface",           "Cruising")    -- Hold position.
+  
+    
   
   ------------------------
   --- Pseudo Functions ---
@@ -149,6 +163,82 @@ function NAVYGROUP:GetCoordinate()
   return self.group:GetCoordinate()
 end
 
+--- Add a *scheduled* task.
+-- @param #NAVYGROUP self
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
+-- @param #number Nshots Number of shots to fire. Default 3.
+-- @param #number WeaponType Type of weapon. Default auto.
+-- @param #string Clock Time when to start the attack.
+-- @param #number Prio Priority of the task.
+function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Radius, Nshots, WeaponType, Clock, Prio)
+
+  local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
+
+  
+
+end
+
+--- Add a *scheduled* task.
+-- @param #NAVYGROUP self
+-- @param #table task DCS task table structure.
+-- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
+-- @param #string description Brief text describing the task, e.g. "Attack SAM".
+-- @param #number prio Priority of the task.
+-- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
+-- @return #NAVYGROUP.Task The task structure.
+function NAVYGROUP:AddTask(task, clock, description, prio, duration)
+
+  local newtask=self:NewTaskScheduled(task, clock, description, prio, duration)
+
+  -- Add to table.
+  table.insert(self.taskqueue, newtask)
+  
+  -- Info.
+  self:I(self.lid..string.format("Adding SCHEDULED task %s starting at %s", newtask.description, UTILS.SecondsToClock(newtask.time, true)))
+  self:T3({newtask=newtask})
+
+  return newtask
+end
+
+--- Create a *scheduled* task.
+-- @param #NAVYGROUP self
+-- @param #table task DCS task table structure.
+-- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
+-- @param #string description Brief text describing the task, e.g. "Attack SAM".
+-- @param #number prio Priority of the task.
+-- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
+-- @return #NAVYGROUP.Task The task structure.
+function NAVYGROUP:NewTaskScheduled(task, clock, description, prio, duration)
+
+  -- Increase counter.
+  self.taskcounter=self.taskcounter+1
+
+  -- Set time.
+  local time=timer.getAbsTime()+5
+  if clock then
+    if type(clock)=="string" then
+      time=UTILS.ClockToSeconds(clock)
+    elseif type(clock)=="number" then
+      time=timer.getAbsTime()+clock
+    end
+  end
+
+  -- Task data structure.
+  local newtask={} --#NAVYGROUP.Task
+  newtask.status=NAVYGROUP.TaskStatus.SCHEDULED
+  newtask.dcstask=task
+  newtask.description=description or task.id  
+  newtask.prio=prio or 50
+  newtask.time=time
+  newtask.id=self.taskcounter
+  newtask.duration=duration
+  newtask.waypoint=-1
+  newtask.type=NAVYGROUP.TaskType.SCHEDULED
+  newtask.stopflag=USERFLAG:New(string.format("%s StopTaskFlag %d", self.groupname, newtask.id))  
+  newtask.stopflag:Set(0)
+
+  return newtask
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
@@ -202,25 +292,31 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n)
   self:_UpdateWaypointTasks()
 
   -- Waypoints.
-  local wp={}
+  local waypoints={}
   
   -- Current velocity.
   local speed=self.group and self.group:GetVelocityKMH() or 100 
   
   
-  local current=self:GetCoordinate():WaypointNaval(speed, 0, {})
-  table.insert(wp, current)
+  local current=self:GetCoordinate():WaypointNaval(speed)
+  table.insert(waypoints, current)
   
   -- Add remaining waypoints to route.
   for i=n, #self.waypoints do
-    table.insert(wp, self.waypoints[i])
+    local wp=self.waypoints[i]
+    
+    -- Set speed.
+    wp.speed=UTILS.KmphToMps(self.speedCruise)
+    
+    -- Add waypoint.
+    table.insert(waypoints, wp)
   end
 
   
-  if #wp>1 then
+  if #waypoints>1 then
 
     -- Route group to all defined waypoints remaining.
-    self.group:Route(wp, 1)
+    self.group:Route(waypoints, 1)
     
   else
   
@@ -228,7 +324,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n)
     -- No waypoints left
     ---
   
-    --self:_CheckFlightDone()
+    self:UpdateRoute(1)
           
   end
 
@@ -239,12 +335,12 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number Duraction Duration in seconds.
+-- @param #number Duration Duration in seconds.
 -- @param #number Speed Speed in knots.
 -- @param #boolean Uturn Return to the place we came from.
 function NAVYGROUP:onafterTurnIntoWind(From, Event, To, Duration, Speed, Uturn)
 
-  self.turnintowind=true
+  self.turnintowind=timer.getAbsTime()
   
   local headingTo=self:GetCoordinate():GetWind(50)
   
@@ -257,35 +353,122 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, Duration, Speed, Uturn)
   
   wp[1]=coord:WaypointNaval(Speed)
   wp[2]=Coord:WaypointNaval(Speed)
-  if Uturn then
-    wp[3]=wp[1]
-  end
 
   self.group:Route(wp, 1)
   
 end
 
---- On after "Hold" event.
+--- On after "FullStop" event.
 -- @param #NAVYGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function NAVYGROUP:onafterHold(From, Event, To)
+function NAVYGROUP:onafterFullStop(From, Event, To)
 
   -- Get current position.
   local pos=self:GetCoordinate()
   
   -- Create a new waypoint.
-  local wp=pos:WaypointNaval(0, 0, {})
+  local wp=pos:WaypointNaval(0)
   
   -- Create new route consisting of only this position ==> Stop!
   self.group:Route({wp})
 
 end
 
+--- On after "Cruise" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterCruise(From, Event, To)
+
+  self:UpdateRoute()
+
+end
+
+--- On after "PassingWaypoint" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Waypoint passed.
+-- @param #number N Total number of waypoints.
+function NAVYGROUP:onafterPassingWaypoint(From, Event, To, n, N)
+  self:I(self.lid..string.format("Passed waypoint %d of %d", n, N))
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Routing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set DCS task. Enroute tasks are injected automatically.
+-- @param #NAVYGROUP self
+-- @param #table DCSTask DCS task structure.
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetTask(DCSTask)
+
+  if self:IsAlive() then
+  
+    -- Set task.
+    self.group:SetTask(DCSTask)
+    
+    -- Debug info.
+    local text=string.format("SETTING Task %s", tostring(DCSTask.id))
+    if tostring(DCSTask.id)=="ComboTask" then
+      for i,task in pairs(DCSTask.params.tasks) do
+        text=text..string.format("\n[%d] %s", i, tostring(task.id))
+      end
+    end
+    self:I(self.lid..text)    
+  end
+  
+  return self
+end
+
+--- Check if flight is alive.
+-- @param #NAVYGROUP self
+-- @return #boolean *true* if group is exists and is activated, *false* if group is exist but is NOT activated. *nil* otherwise, e.g. the GROUP object is *nil* or the group is not spawned yet.
+function NAVYGROUP:IsAlive()
+
+  if self.group then
+    return self.group:IsAlive()
+  end
+
+  return nil
+end
+
+--- Route group along waypoints. Enroute tasks are also applied.
+-- @param #NAVYGROUP self
+-- @param #table waypoints Table of waypoints.
+-- @return #NAVYGROUP self
+function NAVYGROUP:Route(waypoints)
+
+  if self:IsAlive() then
+
+    -- DCS task combo.
+    local Tasks={}
+    
+    -- Route (Mission) task.
+    local TaskRoute=self.group:TaskRoute(waypoints)
+    table.insert(Tasks, TaskRoute)
+    
+    -- TaskCombo of enroute and mission tasks.
+    local TaskCombo=self.group:TaskCombo(Tasks)
+        
+    -- Set tasks.
+    if #Tasks>1 then
+      self:SetTask(TaskCombo)
+    else
+      self:SetTask(TaskRoute)
+    end
+    
+  else
+    self:E(self.lid.."ERROR: Group is not alive!")
+  end
+  
+  return self
+end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #NAVYGROUP self
@@ -343,6 +526,15 @@ function NAVYGROUP:_InitGroup()
   -- Get first unit. This is used to extract other parameters.
   local unit=self.group:GetUnit(1)
   
+  local units=self.group:GetUnits()
+  for _,_unit in pairs(units) do
+    local element={} --#NAVYGROUP.Element
+    local unit=_unit --Wrapper.Unit#UNIT
+    element.name=unit:GetName()
+    element.typename=unit:GetTypeName()
+    table.insert(self.elements, element)
+  end
+  
   if unit then
     
     self.descriptors=unit:GetDesc()
@@ -388,7 +580,7 @@ function NAVYGROUP:InitWaypoints(waypoints)
   self.waypoints=waypoints or UTILS.DeepCopy(self.waypoints0)
   
   -- Debug info.
-  self:T(self.lid..string.format("Initializing %d waypoints. Homebase %s ==> %s Destination", #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "uknown"))
+  self:T(self.lid..string.format("Initializing %d waypoints", #self.waypoints))
   
   -- Update route.
   if #self.waypoints>0 then
@@ -493,36 +685,7 @@ function NAVYGROUP:_SetALS(state)
   MESSAGE:New(string.format("Alarm state set to %s", state), 5, self.ClassName):ToCoalition(self:GetCoalition())
 end
 
---- Function to stop the carrier.
--- @param #NAVYGROUP self
-function NAVYGROUP:CarrierHold()
-  env.info("Carrier Hold!")
 
-  -- Get current position.
-  local pos=self:GetCoordinate()
-  
-  -- Create a new waypoint.
-  local wp=pos:WaypointGround(0)
-  
-  -- Create new route consisting of only this position ==> Stop!
-  self.group:Route({wp})
-  
-  MESSAGE:New(string.format("Carrier is holding current position."), 5, self.ClassName):ToCoalition(self:GetCoalition())
-end
-
---- Function to stop the carrier.
--- @param #NAVYGROUP self
-function NAVYGROUP:CarrierResume()
-  env.info("Carrier Resume Route!")
-  
-  self:_InitWaypoints()
-  
-  local nextWP,n=self:_GetNextWaypoint()
-  
-  self:_PatrolRoute(n)
-  
-  MESSAGE:New(string.format("Carrier is resuming route to waypoint #%d.", n), 5, self.ClassName):ToCoalition(self:GetCoalition())
-end
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
