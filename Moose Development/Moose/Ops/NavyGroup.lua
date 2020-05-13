@@ -1,4 +1,4 @@
---- **Ops** - Control Naval Groups.
+--- **Ops** - Enhanced Naval Group.
 -- 
 -- **Main Features:**
 --
@@ -13,15 +13,7 @@
 
 --- NAVYGROUP class.
 -- @type NAVYGROUP
--- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string lid Class id string for output to DCS log file.
--- @field #string groupname The name of the NAVY group.
--- @field Wrapper.Group#GROUP group The group object.
--- @field #table elements Elements of the group.
--- @field #number currentwp Last waypoint passed.
--- @field #number speedCruise Cruising speed in km/h.
--- @extends Core.Fsm#FSM
+-- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
 --
@@ -36,12 +28,6 @@
 -- @field #NAVYGROUP
 NAVYGROUP = {
   ClassName      = "NAVYGROUP",
-  lid            =   nil,
-  groupname      =   nil,
-  group          =   nil,
-  currentwp      =     1,
-  elements       =    {},
-  taskqueue      =    {},
 }
 
 --- Navy group element.
@@ -72,33 +58,19 @@ NAVYGROUP.version="0.0.1"
 function NAVYGROUP:New(GroupName)
 
   -- Inherit everything from FSM class.
-  local self=BASE:Inherit(self, FSM:New()) -- #NAVYGROUP
-  
-  
-  self.groupname=GroupName
-  
-  self.group=GROUP:FindByName(self.groupname)
+  local self=BASE:Inherit(self, OPSGROUP:New(GroupName)) -- #NAVYGROUP
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("NAVYGROUP %s |", self.groupname)
-  
-  self:SetStartState("Stopped")
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
-  self:AddTransition("Stopped",       "Start",             "Cruising")    -- Status update.
-  self:AddTransition("*",             "Status",            "*")           -- Status update.
-  
-  self:AddTransition("*",             "PassingWaypoint",   "*")           -- Passing waypoint.
-  self:AddTransition("*",             "UpdateRoute",       "*")           -- Passing waypoint.
   self:AddTransition("*",             "FullStop",          "Holding")     -- Hold position.
   self:AddTransition("*",             "TurnIntoWind",      "*")           -- Hold position.
   self:AddTransition("*",             "Cruise",            "Cruising")    -- Hold position.
   
   self:AddTransition("*",             "Dive",              "Diving")      -- Hold position.
   self:AddTransition("Diving",        "Surface",           "Cruising")    -- Hold position.
-  
-    
   
   ------------------------
   --- Pseudo Functions ---
@@ -149,20 +121,6 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Get coalition.
--- @param #NAVYGROUP self
--- @return #number Coalition side of carrier.
-function NAVYGROUP:GetCoalition()
-  return self.group:GetCoalition()
-end
-
---- Get coordinate.
--- @param #NAVYGROUP self
--- @return Core.Point#COORDINATE Carrier coordinate.
-function NAVYGROUP:GetCoordinate()
-  return self.group:GetCoordinate()
-end
-
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
@@ -178,67 +136,6 @@ function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Radius, Nshots, WeaponType, Cl
 
 end
 
---- Add a *scheduled* task.
--- @param #NAVYGROUP self
--- @param #table task DCS task table structure.
--- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
--- @param #string description Brief text describing the task, e.g. "Attack SAM".
--- @param #number prio Priority of the task.
--- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
--- @return #NAVYGROUP.Task The task structure.
-function NAVYGROUP:AddTask(task, clock, description, prio, duration)
-
-  local newtask=self:NewTaskScheduled(task, clock, description, prio, duration)
-
-  -- Add to table.
-  table.insert(self.taskqueue, newtask)
-  
-  -- Info.
-  self:I(self.lid..string.format("Adding SCHEDULED task %s starting at %s", newtask.description, UTILS.SecondsToClock(newtask.time, true)))
-  self:T3({newtask=newtask})
-
-  return newtask
-end
-
---- Create a *scheduled* task.
--- @param #NAVYGROUP self
--- @param #table task DCS task table structure.
--- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
--- @param #string description Brief text describing the task, e.g. "Attack SAM".
--- @param #number prio Priority of the task.
--- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
--- @return #NAVYGROUP.Task The task structure.
-function NAVYGROUP:NewTaskScheduled(task, clock, description, prio, duration)
-
-  -- Increase counter.
-  self.taskcounter=self.taskcounter+1
-
-  -- Set time.
-  local time=timer.getAbsTime()+5
-  if clock then
-    if type(clock)=="string" then
-      time=UTILS.ClockToSeconds(clock)
-    elseif type(clock)=="number" then
-      time=timer.getAbsTime()+clock
-    end
-  end
-
-  -- Task data structure.
-  local newtask={} --#NAVYGROUP.Task
-  newtask.status=NAVYGROUP.TaskStatus.SCHEDULED
-  newtask.dcstask=task
-  newtask.description=description or task.id  
-  newtask.prio=prio or 50
-  newtask.time=time
-  newtask.id=self.taskcounter
-  newtask.duration=duration
-  newtask.waypoint=-1
-  newtask.type=NAVYGROUP.TaskType.SCHEDULED
-  newtask.stopflag=USERFLAG:New(string.format("%s StopTaskFlag %d", self.groupname, newtask.id))  
-  newtask.stopflag:Set(0)
-
-  return newtask
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
@@ -401,42 +298,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Routing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Set DCS task. Enroute tasks are injected automatically.
--- @param #NAVYGROUP self
--- @param #table DCSTask DCS task structure.
--- @return #NAVYGROUP self
-function NAVYGROUP:SetTask(DCSTask)
-
-  if self:IsAlive() then
-  
-    -- Set task.
-    self.group:SetTask(DCSTask)
-    
-    -- Debug info.
-    local text=string.format("SETTING Task %s", tostring(DCSTask.id))
-    if tostring(DCSTask.id)=="ComboTask" then
-      for i,task in pairs(DCSTask.params.tasks) do
-        text=text..string.format("\n[%d] %s", i, tostring(task.id))
-      end
-    end
-    self:I(self.lid..text)    
-  end
-  
-  return self
-end
-
---- Check if flight is alive.
--- @param #NAVYGROUP self
--- @return #boolean *true* if group is exists and is activated, *false* if group is exist but is NOT activated. *nil* otherwise, e.g. the GROUP object is *nil* or the group is not spawned yet.
-function NAVYGROUP:IsAlive()
-
-  if self.group then
-    return self.group:IsAlive()
-  end
-
-  return nil
-end
 
 --- Route group along waypoints. Enroute tasks are also applied.
 -- @param #NAVYGROUP self
@@ -629,29 +490,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Function called when a group is passing a waypoint.
---@param Wrapper.Group#GROUP group Group that passed the waypoint
---@param #NAVYGROUP navygroup Navy group object.
---@param #number i Waypoint number that has been reached.
-function NAVYGROUP._PassingWaypoint(group, navygroup, i)
-
-  local final=#navygroup.waypoints or 1
-
-  -- Debug message.
-  local text=string.format("Group passing waypoint %d of %d", i, final)
-  navygroup:T3(navygroup.lid..text)
-
-  -- Set current waypoint.
-  navygroup.currentwp=i
-
-  -- Trigger PassingWaypoint event.
-  navygroup:PassingWaypoint(i, final)
-
-end
-
-
-
 
 --- Set rules of engagement.
 -- @param #NAVYGROUP self
