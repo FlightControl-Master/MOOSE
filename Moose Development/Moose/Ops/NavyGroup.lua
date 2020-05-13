@@ -23,7 +23,7 @@
 -- @field #number speedCruise Cruising speed in km/h.
 -- @extends Core.Fsm#FSM
 
---- *Something must be left to chance; nothing is sure in a sea fight above all.* --- Horatio Nelson
+--- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
 --
 -- ===
 --
