@@ -205,6 +205,7 @@ _AUFTRAGSNR=0
 -- @field #string STRIKE Strike mission.
 -- @field #string TANKER Tanker mission.
 -- @field #string TROOPTRANSPORT Troop transport mission.
+-- @field #string ARTY Fire at point.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -227,6 +228,7 @@ AUFTRAG.Type={
   STRIKE="Strike",
   TANKER="Tanker",
   TROOPTRANSPORT="Troop Transport",
+  ARTY="Fire At Point",
 }
 
 --- Mission status.
@@ -1031,6 +1033,18 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
   mission.DCStask=mission:GetDCSMissionTask()
 
   return mission
+end
+
+--- Create an ARTY mission.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Center of the firing solution.
+-- @param #number Nshots Number of shots to be fired. Default 3.
+-- @param #number Radius Radius of the shells in meters. Default 100 meters.
+-- @return #AUFTRAG self
+function AUFTRAG:NewARTY(Coordinate, Nshots, Radius)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.ARTY)
+
 end
 
 
@@ -2953,6 +2967,16 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     DCStask.params=param
     
     table.insert(DCStasks, DCStask)
+
+  elseif self.type==AUFTRAG.Type.RESCUEHELO then
+
+    ------------------
+    -- ARTY Mission --
+    ------------------
+  
+    local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, self:GetTargetVec2(),self.engageRadius, self.engageShots, self.engageWeaponType)
+    
+    table.insert(DCStasks, DCStask)    
   
   else
     self:E(self.lid..string.format("ERROR: Unknown mission task!"))

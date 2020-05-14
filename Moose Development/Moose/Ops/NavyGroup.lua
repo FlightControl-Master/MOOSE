@@ -2,7 +2,10 @@
 -- 
 -- **Main Features:**
 --
---    * Nice stuff.
+--    * Dynamically add and remove waypoints
+--    * Let the group steam into the wind.
+--    * Command a full stop.
+--    * Let a submarine dive and surface.
 --     
 -- ===
 --
@@ -23,7 +26,7 @@
 --
 -- # The NAVYGROUP Concept
 -- 
--- 
+-- This class enhances naval groups.
 -- 
 -- @field #NAVYGROUP
 NAVYGROUP = {
@@ -61,7 +64,7 @@ function NAVYGROUP:New(GroupName)
   local self=BASE:Inherit(self, OPSGROUP:New(GroupName)) -- #NAVYGROUP
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("NAVYGROUP %s |", self.groupname)
+  self.lid=string.format("NAVYGROUP %s | ", self.groupname)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
@@ -201,6 +204,8 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n)
   -- Add remaining waypoints to route.
   for i=n, #self.waypoints do
     local wp=self.waypoints[i]
+    
+    self:E({wp=wp})
     
     -- Set speed.
     wp.speed=UTILS.KmphToMps(self.speedCruise)
@@ -401,16 +406,12 @@ function NAVYGROUP:_InitGroup()
     self.descriptors=unit:GetDesc()
     
     self.actype=unit:GetTypeName()
-  
-    -- Init waypoints.
-    if not self.waypoints then
-      self:InitWaypoints()
-    end
     
     -- Debug info.
     local text=string.format("Initialized Navy Group %s:\n", self.groupname)
     text=text..string.format("AC type      = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
+    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
     text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radioFreq, UTILS.GetModulationName(self.radioModu), tostring(self.radioOn))
@@ -441,7 +442,7 @@ function NAVYGROUP:InitWaypoints(waypoints)
   self.waypoints=waypoints or UTILS.DeepCopy(self.waypoints0)
   
   -- Debug info.
-  self:T(self.lid..string.format("Initializing %d waypoints", #self.waypoints))
+  self:I(self.lid..string.format("Initializing %d waypoints", #self.waypoints))
   
   -- Update route.
   if #self.waypoints>0 then

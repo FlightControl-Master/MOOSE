@@ -673,18 +673,6 @@ function FLIGHTGROUP:IsFuelCritical()
   return self.fuelcritical
 end
 
---- Check if flight is alive.
--- @param #FLIGHTGROUP self
--- @return #boolean *true* if group is exists and is activated, *false* if group is exist but is NOT activated. *nil* otherwise, e.g. the GROUP object is *nil* or the group is not spawned yet.
-function FLIGHTGROUP:IsAlive()
-
-  if self.group then
-    return self.group:IsAlive()
-  end
-
-  return nil
-end
-
 --- Check if flight can do air-to-ground tasks.
 -- @param #FLIGHTGROUP self
 -- @param #boolean ExcludeGuns If true, exclude gun
@@ -851,7 +839,7 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
 
   -- Start the status monitoring.
   self:__CheckZone(-1)
-  self:__FlightStatus(-2)
+  self:__Status(-2)
   self:__QueueUpdate(-3)
 end
 
@@ -896,12 +884,12 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
 end
 
 
---- On after "FlightStatus" event.
+--- On after "Status" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
+function FLIGHTGROUP:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
@@ -1149,23 +1137,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
 
   -- Next check in ~30 seconds.
   if not self:IsStopped() then
-    self:__FlightStatus(-30)
-  end
-end
-
---- On after "CheckZone" event.
--- @param #FLIGHTGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function FLIGHTGROUP:onafterCheckZone(From, Event, To)
-
-  if self:IsAlive()==true then
-    self:_CheckInZones()
-  end
-
-  if not self:IsStopped() then
-    self:__CheckZone(-1)
+    self:__Status(-30)
   end
 end
 
@@ -1229,73 +1201,6 @@ function FLIGHTGROUP:onafterQueueUpdate(From, Event, To)
   if not self:IsStopped() then
     self:__QueueUpdate(-5)
   end
-end
-
-
---- Get next task in queue. Task needs to be in state SCHEDULED and time must have passed.
--- @param #FLIGHTGROUP self
--- @return #FLIGHTGROUP.Task The next task in line or `nil`.
-function FLIGHTGROUP:_GetNextTask()
-
-  if self.taskpaused then
-    --return self.taskpaused
-  end
-
-  if #self.taskqueue==0 then
-    return nil
-  end
-
-  -- Sort queue wrt prio and start time.
-  self:_SortTaskQueue()
-
-  -- Current time.
-  local time=timer.getAbsTime()
-
-  -- Look for first task that is SCHEDULED.
-  for _,_task in pairs(self.taskqueue) do
-    local task=_task --#FLIGHTGROUP.Task
-    if task.type==FLIGHTGROUP.TaskType.SCHEDULED and task.status==FLIGHTGROUP.TaskStatus.SCHEDULED and time>=task.time then
-      return task
-    end
-  end
-  
-  return nil
-end
-
---- Get next mission.
--- @param #FLIGHTGROUP self
--- @return Ops.Auftrag#AUFTRAG Next mission or *nil*.
-function FLIGHTGROUP:_GetNextMission()
-
-  -- Number of missions.
-  local Nmissions=#self.missionqueue
-
-  -- Treat special cases.
-  if Nmissions==0 then
-    return nil
-  end
-
-  -- Sort results table wrt times they have already been engaged.
-  local function _sort(a, b)
-    local taskA=a --Ops.Auftrag#AUFTRAG
-    local taskB=b --Ops.Auftrag#AUFTRAG
-    return (taskA.prio<taskB.prio) or (taskA.prio==taskB.prio and taskA.Tstart<taskB.Tstart)
-  end
-  table.sort(self.missionqueue, _sort)
-  
-  -- Current time.
-  local time=timer.getAbsTime()
-
-  -- Look for first mission that is SCHEDULED.
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-    
-    if mission:GetFlightStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) then
-      return mission
-    end
-  end
-
-  return nil
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4825,23 +4730,6 @@ function FLIGHTGROUP:_GetPlayerUnitAndName(_unitName)
   
   -- Return nil if we could not find a player.
   return nil,nil
-end
-
---- Returns the coalition side.
--- @param #FLIGHTGROUP self
--- @return #number Coalition side number.
-function FLIGHTGROUP:GetCoalition()
-  return self.group:GetCoalition()
-end
-
---- Returns the absolute (average) life points of the group.
--- @param #FLIGHTGROUP self
--- @return #number Life points. If group contains more than one element, the average is given.
--- @return #number Initial life points.
-function FLIGHTGROUP:GetLifePoints()
-  if self.group then
-    return self.group:GetLife(), self.group:GetLife0()
-  end
 end
 
 --- Returns the parking spot of the element.
