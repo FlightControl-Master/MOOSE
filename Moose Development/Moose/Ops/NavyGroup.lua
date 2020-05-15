@@ -214,7 +214,7 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
   end
   
   -- Update route.
-  self:__UpdateRoute(-1)
+  self:__Cruise(-1)
   
 end
 
@@ -224,7 +224,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #number n Waypoint number. Default is next waypoint.
-function NAVYGROUP:onafterUpdateRoute(From, Event, To, n)
+-- @param #number Speed Speed in knots. Default cruise speed.
+-- @param #number Depth Depth in meters. Default 0 meters.
+function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
 
   -- Update route from this waypoint number onwards.
   n=n or self.currentwp+1
@@ -234,22 +236,22 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n)
 
   -- Waypoints.
   local waypoints={}
+    
+  -- Speed.
+  local speed=Speed and UTILS.KnotsToKmph(Speed) or self.speedCruise
   
-  -- Current velocity.
-  local speed=self.group and self.group:GetVelocityKMH() or 100 
+  -- Depth for submarines.
+  local depth=Depth or 0
   
-  
-  local current=self:GetCoordinate():WaypointNaval(speed)
+  local current=self:GetCoordinate():WaypointNaval(speed, depth)
   table.insert(waypoints, current)
   
   -- Add remaining waypoints to route.
   for i=n, #self.waypoints do
     local wp=self.waypoints[i]
     
-    self:E({wp=wp})
-    
     -- Set speed.
-    wp.speed=UTILS.KmphToMps(self.speedCruise)
+    wp.speed=UTILS.KmphToMps(speed)
     
     -- Add waypoint.
     table.insert(waypoints, wp)
@@ -327,6 +329,30 @@ end
 function NAVYGROUP:onafterCruise(From, Event, To)
 
   self:UpdateRoute()
+
+end
+
+--- On after "Dive" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number Depth Dive depth in meters.
+function NAVYGROUP:onafterDive(From, Event, To, Depth)
+
+  self:UpdateRoute(nil, nil, Depth)
+
+end
+
+--- On after "Surface" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number Depth Dive depth in meters.
+function NAVYGROUP:onafterSurface(From, Event, To)
+
+  self:UpdateRoute(nil, nil, 0)
 
 end
 
