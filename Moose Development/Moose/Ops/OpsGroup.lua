@@ -14,12 +14,14 @@
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #number verbose Verbosity level. 0=silent.
 -- @field #string lid Class id string for output to DCS log file.
--- @field #string groupname Name of flight group.
--- @field Wrapper.Group#GROUP group Flight group object.
+-- @field #string groupname Name of the group.
+-- @field Wrapper.Group#GROUP group Group object.
+-- @field #boolean isLateActivated Is the group late activated.
 -- @field #table elements Table of elements, i.e. units of the group.
+-- @field #boolean ai If true, group is purely AI.
 -- @field #table waypoints Table of waypoints.
 -- @field #table waypoints0 Table of initial waypoints.
--- @field #table currentwp Current waypoint.
+-- @field #number currentwp Current waypoint.
 -- @field #table taskqueue Queue of tasks.
 -- @field #number taskcounter Running number of task ids.
 -- @field #number taskcurrent ID of current task. If 0, there is no current task assigned.
@@ -41,6 +43,35 @@
 -- @field Core.Point#COORDINATE position Current position of the group.
 -- @field #number traveldist Distance traveled in meters. This is a lower bound!
 -- @field #number traveltime Time.
+-- 
+-- @field #number tacanChannelDefault The default TACAN channel.
+-- @field #string tacanMorseDefault The default TACAN morse code.
+-- @field #number tacanChannel The currenly used TACAN channel.
+-- @field #string tacanMorse The currently used TACAN morse code.
+-- @field #boolean tacanOn If true, TACAN is currently active.
+-- @field Wrapper.Unit#UNIT tacanBeacon The unit acting as TACAN beacon.
+-- 
+-- @field #number radioFreqDefault Default radio frequency in MHz.
+-- @field #number radioFreq Currently used radio frequency in MHz.
+-- @field #number radioModuDefault Default Radio modulation `radio.modulation.AM` or `radio.modulation.FM`.
+-- @field #number radioModu Currently used radio modulation `radio.modulation.AM` or `radio.modulation.FM`.
+-- @field #boolean radioOn If true, radio is currently turned on.
+-- @field Core.RadioQueue#RADIOQUEUE radioQueue Radio queue.
+-- 
+-- @field #number CallsignName Call sign name.
+-- @field #number CallsignNumber Call sign number.
+-- 
+-- @field #boolean eplrsDefault Default EPLRS data link setting.
+-- @field #boolean eplrs If true, EPLRS data link is on.
+-- 
+-- @field #string roeDefault Default ROE setting.
+-- @field #string rotDefault Default ROT setting.
+-- @field #string roe Current ROE setting.
+-- @field #string rot Current ROT setting.
+-- 
+-- @field #number formationDefault Default formation setting.
+-- @field #number formation Current formation setting.
+-- 
 -- @extends Core.Fsm#FSM
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* --- Horatio Nelson
@@ -65,6 +96,7 @@ OPSGROUP = {
   groupname          =   nil,
   group              =   nil,
   template           =   nil,
+  isLateActivated    =   nil,
   waypoints          =   nil,
   waypoints0         =   nil,
   currentwp          =     1,
@@ -81,6 +113,33 @@ OPSGROUP = {
   checkzones         =   nil,
   inzones            =   nil,
   groupinitialized   =   nil,
+}
+
+--- Status of group element.
+-- @type OPSGROUP.ElementStatus
+-- @field #string INUTERO Element was not spawned yet or its status is unknown so far.
+-- @field #string SPAWNED Element was spawned into the world.
+-- @field #string PARKING Element is parking after spawned on ramp.
+-- @field #string ENGINEON Element started its engines.
+-- @field #string TAXIING Element is taxiing after engine startup.
+-- @field #string TAKEOFF Element took of after takeoff event.
+-- @field #string AIRBORNE Element is airborne. Either after takeoff or after air start.
+-- @field #string LANDING Element is landing.
+-- @field #string LANDED Element landed and is taxiing to its parking spot.
+-- @field #string ARRIVED Element arrived at its parking spot and shut down its engines.
+-- @field #string DEAD Element is dead after it crashed, pilot ejected or pilot dead events.
+OPSGROUP.ElementStatus={
+  INUTERO="inutero",
+  SPAWNED="spawned",
+  PARKING="parking",
+  ENGINEON="engineon",
+  TAXIING="taxiing",
+  TAKEOFF="takeoff",
+  AIRBORNE="airborne",
+  LANDING="landing",
+  LANDED="landed",
+  ARRIVED="arrived",
+  DEAD="dead",
 }
 
 --- Flight group task status.
@@ -105,7 +164,7 @@ OPSGROUP.TaskType={
   WAYPOINT="waypoint",
 }
 
---- Flight group task structure.
+--- Task structure.
 -- @type OPSGROUP.Task
 -- @field #string type Type of task: either SCHEDULED or WAYPOINT.
 -- @field #number id Task ID. Running number to get the task.
@@ -171,11 +230,12 @@ function OPSGROUP:New(Group)
   self.taskcounter=0
   
   -- Start state.
-  self:SetStartState("Stopped")
+  self:SetStartState("InUtero")
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
-  self:AddTransition("Stopped",       "Start",            "InUtero")     -- Start FSM.
+  self:AddTransition("InUtero",       "Spawned",          "Spawned")     -- The whole group was spawned.
+  self:AddTransition("*",             "Dead",             "Dead")        -- The whole group is dead. 
   self:AddTransition("*",             "Stop",             "Stopped")     -- Stop FSM.
 
   self:AddTransition("*",             "Status",           "*")           -- Status update.
@@ -214,6 +274,11 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "PauseMission",     "*")           -- Pause the current mission.
   self:AddTransition("*",             "UnpauseMission",   "*")           -- Unpause the the paused mission.
   self:AddTransition("*",             "MissionDone",      "*")           -- Mission is over.
+
+  self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
+  self:AddTransition("*",             "ElementDead",      "*")           -- An element is dead.
+
+
 
   ------------------------
   --- Pseudo Functions ---
@@ -267,13 +332,6 @@ end
 -- @return #number Coalition side of carrier.
 function OPSGROUP:GetCoalition()
   return self.group:GetCoalition()
-end
-
---- Get coordinate.
--- @param #OPSGROUP self
--- @return Core.Point#COORDINATE Carrier coordinate.
-function OPSGROUP:GetCoordinate()
-  return self.group:GetCoordinate()
 end
 
 --- Returns the absolute (average) life points of the group.
@@ -345,6 +403,18 @@ function OPSGROUP:GetCoordinate()
     return self.group:GetCoordinate()    
   else
     self:E(self.lid.."WARNING: Group is not alive. Cannot get coordinate!")
+  end
+  return nil
+end
+
+--- Get current heading of the group.
+-- @param #OPSGROUP self
+-- @return #number Current heading of the group in degrees.
+function OPSGROUP:GetHeading()
+  if self:IsAlive()~=nil then
+    return self.group:GetHeading()
+  else
+    self:E(self.lid.."WARNING: Group is not alive. Cannot get heading!")
   end
   return nil
 end
@@ -443,6 +513,42 @@ function OPSGROUP:IsAlive()
 
   return nil
 end
+
+--- Check if this group is currently "late activated" and needs to be "activated" to appear in the mission.
+-- @param #OPSGROUP self
+-- @return #boolean Is this the group late activated?
+function OPSGROUP:IsLateActivated()
+  return self.isLateActivated
+end
+
+--- Check if flight is in state in utero.
+-- @param #OPSGROUP self
+-- @return #boolean If true, flight is not spawned yet.
+function OPSGROUP:IsInUtero()
+  return self:Is("InUtero")
+end
+
+--- Check if flight is in state spawned.
+-- @param #OPSGROUP self
+-- @return #boolean If true, flight is spawned.
+function OPSGROUP:IsSpawned()
+  return self:Is("Spawned")
+end
+
+--- Check if flight is dead.
+-- @param #OPSGROUP self
+-- @return #boolean If true, all units/elements of the flight are dead.
+function OPSGROUP:IsDead()
+  return self:Is("Dead")
+end
+
+--- Check if flight FSM is stopped.
+-- @param #OPSGROUP self
+-- @return #boolean If true, FSM state is stopped.
+function OPSGROUP:IsStopped()
+  return self:Is("Stopped")
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Waypoint Functions
@@ -889,6 +995,232 @@ function OPSGROUP:GetTaskByID(id, status)
   return nil
 end
 
+--- On after TaskExecute event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
+function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
+
+  -- Debug message.
+  local text=string.format("Task %s ID=%d execute.", tostring(Task.description), Task.id)
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:I(self.lid..text)
+  
+  -- Cancel current task if there is any.
+  if self.taskcurrent>0 then
+    self:TaskCancel()
+  end
+
+  -- Set current task.
+  self.taskcurrent=Task.id
+  
+  -- Set time stamp.
+  Task.timestamp=timer.getAbsTime()
+
+  -- Task status executing.
+  Task.status=OPSGROUP.TaskStatus.EXECUTING
+  
+  if Task.dcstask.id=="Formation" then
+
+    -- Set of group(s) to follow Mother.
+    local followSet=SET_GROUP:New():AddGroup(self.group)
+    
+    local param=Task.dcstask.params
+    
+    local followUnit=UNIT:FindByName(param.unitname)
+    
+    -- Define AI Formation object.
+    Task.formation=AI_FORMATION:New(followUnit, followSet, "Formation", "Follow X at given parameters.")
+    
+    -- Formation parameters.
+    Task.formation:FormationCenterWing(-param.offsetX, 50, math.abs(param.altitude), 50, param.offsetZ, 50)
+    
+    -- Set follow time interval.
+    Task.formation:SetFollowTimeInterval(param.dtFollow)
+    
+    -- Formation mode.
+    Task.formation:SetFlightModeFormation(self.group)
+    
+    -- Start formation FSM.
+    Task.formation:Start()  
+  
+  else
+
+    -- If task is scheduled (not waypoint) set task.
+    if Task.type==OPSGROUP.TaskType.SCHEDULED then
+      
+      local DCStasks={}
+      if Task.dcstask.id=='ComboTask' then
+        -- Loop over all combo tasks.
+        for TaskID, Task in ipairs(Task.dcstask.params.tasks) do
+          table.insert(DCStasks, Task)
+        end    
+      else
+        table.insert(DCStasks, Task.dcstask)
+      end
+  
+      -- Combo task.
+      local TaskCombo=self.group:TaskCombo(DCStasks)
+  
+      -- Stop condition!    
+      local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
+      
+      -- Controlled task.      
+      local TaskControlled=self.group:TaskControlled(TaskCombo, TaskCondition)
+      
+      -- Task done.
+      local TaskDone=self.group:TaskFunction("OPSGROUP._TaskDone", self, Task)
+      
+      -- Final task.
+      local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
+        
+      -- Set task for group.
+      self:SetTask(TaskFinal, 1)
+          
+    end
+    
+  end
+
+  -- Get mission of this task (if any).
+  local Mission=self:GetMissionByTaskID(self.taskcurrent)
+  if Mission then
+    -- Set AUFTRAG status.
+    self:MissionExecute(Mission)
+  end
+  
+end
+
+--- On after "TaskCancel" event. Cancels the current task or simply sets the status to DONE if the task is not the current one.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Task Task The task to cancel. Default is the current task (if any).
+function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
+  
+  -- Get current task.
+  local currenttask=self:GetTaskCurrent()
+  
+  -- If no task, we take the current task. But this could also be *nil*!
+  Task=Task or currenttask
+  
+  if Task then
+  
+    -- Check if the task is the current task?
+    if currenttask and Task.id==currenttask.id then
+    
+      -- Current stop flag value. I noticed cases, where setting the flag to 1 would not cancel the task, e.g. when firing HARMS on a dead ship.
+      local stopflag=Task.stopflag:Get()
+    
+      -- Debug info.
+      local text=string.format("Current task %s ID=%d cancelled (flag %s=%d)", Task.description, Task.id, Task.stopflag:GetName(), stopflag)
+      MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)    
+      self:I(self.lid..text)
+      
+      -- Set stop flag. When the flag is true, the _TaskDone function is executed and calls :TaskDone()
+      Task.stopflag:Set(1)
+      
+      if Task.dcstask.id=="Formation" then
+        Task.formation:Stop()
+        self:TaskDone(Task)
+      elseif stopflag==1 then
+        -- Manual call TaskDone if setting flag to one was not successful.
+        self:TaskDone(Task)
+      end
+  
+    else
+            
+      -- Debug info.
+      self:I(self.lid..string.format("TaskCancel: Setting task %s ID=%d to DONE", Task.description, Task.id))
+      
+      -- Call task done function.      
+      self:TaskDone(Task)
+      
+      
+      --[[
+      local mission=self:GetMissionByTaskID(Task.id)
+      
+      -- Is this a waypoint task?
+      if Task.type==OPSGROUP.TaskType.WAYPOINT and Task.waypoint then
+
+        -- Check that this is a mission waypoint and no other tasks are defined here.      
+        if mission and #self:GetTasksWaypoint(Task.waypoint)==0 then
+          self:RemoveWaypoint(Task.waypoint)
+        end
+      end
+      ]]
+    end
+    
+  else
+  
+    local text=string.format("WARNING: No (current) task to cancel!")
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+    self:E(self.lid..text)
+    
+  end
+  
+end
+
+--- On before "TaskDone" event. Deny transition if task status is PAUSED.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Task Task
+function OPSGROUP:onbeforeTaskDone(From, Event, To, Task)
+
+  local allowed=true
+
+  if Task.status==OPSGROUP.TaskStatus.PAUSED then
+    allowed=false
+  end
+
+  return allowed
+end
+
+--- On after "TaskDone" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Task Task
+function OPSGROUP:onafterTaskDone(From, Event, To, Task)
+
+  -- Debug message.
+  local text=string.format("Task done: %s ID=%d", Task.description, Task.id)
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:I(self.lid..text)
+
+  -- No current task.
+  if Task.id==self.taskcurrent then
+    self.taskcurrent=0
+  end
+  
+  -- Task status done.
+  Task.status=OPSGROUP.TaskStatus.DONE
+  
+  -- Check if this task was the task of the current mission ==> Mission Done!
+  local Mission=self:GetMissionByTaskID(Task.id)
+  
+  if Mission and Mission:IsNotOver() then
+  
+    local status=Mission:GetFlightStatus(self)  
+  
+    if status~=AUFTRAG.FlightStatus.PAUSED then
+      self:I(self.lid.."FF Task Done ==> Mission Done!")
+      self:MissionDone(Mission)
+    else
+      --Mission paused. Do nothing!
+    end
+  else
+    self:I(self.lid.."FF Task Done but NO mission found ==> _CheckFlightDone in 1 sec")
+    self:_CheckFlightDone(1)
+  end
+  
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Mission Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1061,6 +1393,316 @@ function OPSGROUP:GetMissionCurrent()
   return self:GetMissionByID(self.currentmission)
 end
 
+--- On before "MissionStart" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission table.
+function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
+
+  -- Delay for route to mission. Group needs to be activated and controlled.
+  local delay=1
+
+  -- Check if group is spawned.
+  if self:IsInUtero() then
+
+    -- Activate group if it is late activated.
+    if self:IsLateActivated() then
+      self:Activate(delay)
+      delay=delay+1
+    end
+  
+  end
+  
+  -- Startup group if it is uncontrolled.
+  if self:IsParking() and self:IsUncontrolled() then
+    self:StartUncontrolled(delay)
+  else
+    --env.info("FF hallo!")
+    --self:StartUncontrolled(5)
+  end  
+
+  return true
+end
+
+--- On after "MissionStart" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission table.
+function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
+
+  -- Debug output.
+  local text=string.format("Starting %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
+  self:T(self.lid..text)
+  MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
+
+  -- Set current mission.
+  self.currentmission=Mission.auftragsnummer
+    
+  -- Set flight mission status to STARTED.
+  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.STARTED)
+  
+  -- Set mission status to STARTED.
+  Mission:Started()
+
+  -- Route flight to mission zone.
+  self:RouteToMission(Mission, 3)
+  
+end
+
+--- On after "MissionExecute" event. Mission execution began.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission table.
+function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
+
+  local text=string.format("Executing %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
+  self:T(self.lid..text)
+  MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
+  
+  -- Set flight mission status to EXECUTING.
+  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.EXECUTING)
+  
+  -- Set mission status to EXECUTING.
+  Mission:Executing()
+  
+  -- Formation
+  if Mission.optionFormation then
+    self:SwitchFormation(Mission.optionFormation)
+  end  
+  
+end
+
+--- On after "PauseMission" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterPauseMission(From, Event, To)
+
+  local Mission=self:GetMissionCurrent()
+  
+  if Mission then
+
+    -- Set flight mission status to PAUSED.
+    Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.PAUSED)
+  
+    -- Get mission waypoint task.
+    local Task=Mission:GetFlightWaypointTask(self)
+    
+    -- Debug message.
+    self:I(self.lid..string.format("FF pausing current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+  
+    -- Cancelling the mission is actually cancelling the current task.
+    self:TaskCancel(Task)
+    
+    -- Set mission to pause so we can unpause it later.
+    self.missionpaused=Mission
+    
+  end
+
+end
+
+--- On after "UnpauseMission" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterUnpauseMission(From, Event, To)
+
+  self:I(self.lid..string.format("Unpausing mission"))
+  
+  if self.missionpaused then
+  
+    local mission=self:GetMissionByID(self.missionpaused.auftragsnummer)
+    
+    self:MissionStart(mission)
+    
+    self.missionpaused=nil
+  else
+    self:E(self.lid.."ERROR: No mission to unpause!")
+  end
+  
+end
+
+
+--- On after "MissionCancel" event. Cancels the mission.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
+function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
+
+  if self.currentmission and Mission.auftragsnummer==self.currentmission then
+    
+    -- Get mission waypoint task.
+    local Task=Mission:GetFlightWaypointTask(self)
+    
+    -- Debug info.
+    self:I(self.lid..string.format("FF Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+
+    -- Cancelling the mission is actually cancelling the current task.
+    -- Note that two things can happen.
+    -- 1.) Flight is still on the way to the waypoint (status should be STARTED). In this case there would not be a current task!
+    -- 2.) Flight already passed the mission waypoint (status should be EXECUTING).
+    
+    self:TaskCancel(Task)
+        
+  else
+  
+    -- Not the current mission.
+    -- TODO: remove mission from queue?
+ 
+    -- Set mission flight status.
+    Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.CANCELLED) 
+    
+    -- Send flight RTB or WAIT if nothing left to do.
+    self:_CheckFlightDone(1)
+    
+  end
+  
+end
+
+--- On after "MissionDone" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Auftrag#AUFTRAG Mission
+function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
+
+  -- Debug info.
+  local text=string.format("Mission %s DONE!", Mission.name)
+  self:I(self.lid..text)
+  MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
+  
+  -- Set Flight status.
+  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.DONE)
+  
+  -- Set current mission to nil.
+  if self.currentmission and Mission.auftragsnummer==self.currentmission then
+    self.currentmission=nil
+  end
+  
+  -- Remove mission waypoint.
+  local wpidx=Mission:GetFlightWaypointIndex(self)
+  if wpidx then
+    self:RemoveWaypoint(wpidx)
+  end
+  
+  -- Decrease patrol data.
+  if Mission.patroldata then
+    Mission.patroldata.noccupied=Mission.patroldata.noccupied-1
+    AIRWING.UpdatePatrolPointMarker(Mission.patroldata)
+  end
+
+  -- TODO: reset mission specific parameters like radio, ROE etc.  
+  
+  -- Check if flight is done.
+  self:_CheckFlightDone(1)
+
+end
+
+--- Route group to mission.
+-- @param #OPSGROUP self
+-- @param Ops.Auftrag#AUFTRAG mission The mission table.
+-- @param #number delay Delay in seconds.
+function OPSGROUP:RouteToMission(mission, delay)
+
+  if delay and delay>0 then
+    -- Delayed call.
+    self:ScheduleOnce(delay, OPSGROUP.RouteToMission, self, mission)
+  else
+        
+    -- Next waypoint.
+    local nextwaypoint=self.currentwp+1
+    
+    -- Create waypoint coordinate half way between us and the target.
+    local waypointcoord=self.group:GetCoordinate():GetIntermediateCoordinate(mission:GetTargetCoordinate(), mission.missionFraction)
+    local alt=waypointcoord.y
+    
+    -- Add some randomization.
+    waypointcoord=ZONE_RADIUS:New("Temp", waypointcoord:GetVec2(), 1000):GetRandomCoordinate():SetAltitude(alt, false)
+    
+    -- Set altitude of mission waypoint.
+    if mission.missionAltitude then
+      waypointcoord:SetAltitude(mission.missionAltitude, true)
+    end
+    env.info(string.format("FF mission alt=%d", waypointcoord.y))
+    
+    -- Add enroute tasks.
+    for _,task in pairs(mission.enrouteTasks) do
+      self:AddTaskEnroute(task)
+    end
+  
+    -- Add waypoint.
+    self:AddWaypointAir(waypointcoord, nextwaypoint, UTILS.KmphToKnots(self.speedCruise), false)
+    
+    -- Special for Troop transport.
+    if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
+    
+      -- Refresh DCS task with the known controllable.  
+      mission.DCStask=mission:GetDCSMissionTask(self.group)
+            
+      -- Add task to embark for the troops.
+      for _,_group in pairs(mission.transportGroupSet.Set) do
+        local group=_group --Wrapper.Group#GROUP
+        
+        if group and group:IsAlive() then
+          local DCSTask=group:TaskEmbarkToTransport(mission.transportPickup, 500)
+          group:SetTask(DCSTask, 5)
+        end
+      
+      end
+    
+    end
+    
+    -- Add waypoint task. UpdateRoute is called inside.
+    local waypointtask=self:AddTaskWaypoint(mission.DCStask, nextwaypoint, mission.name, mission.prio, mission.duration)
+    
+    -- Set waypoint task.
+    mission:SetFlightWaypointTask(self, waypointtask)
+    
+    -- Set waypoint index.
+    mission:SetFlightWaypointIndex(self, nextwaypoint)
+    
+    ---
+    -- Mission Specific Settings
+    ---
+    
+    -- ROE
+    if mission.optionROE then
+      self:SetOptionROE(mission.optionROE)
+    end
+    -- ROT
+    if mission.optionROT then
+      self:SetOptionROT(mission.optionROT)
+    end
+    -- Radio
+    if mission.radioFreq then
+      self:SwitchRadioOn(mission.radioFreq, mission.radioModu)
+    end
+    -- TACAN
+    if mission.tacanChannel then
+      self:SwitchTACANOn(mission.tacanChannel, mission.tacanMorse)
+    end
+    -- Formation
+    if mission.optionFormation then
+      self:SwitchFormation(mission.optionFormation)
+    end
+    
+  end
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1135,6 +1777,128 @@ function OPSGROUP:onafterCheckZone(From, Event, To)
   if not self:IsStopped() then
     self:__CheckZone(-1)
   end
+end
+
+--- Check if flight is in zones.
+-- @param #OPSGROUP self
+function OPSGROUP:_CheckInZones()
+
+  if self.checkzones then
+  
+    local Ncheck=self.checkzones:Count()
+    local Ninside=self.inzones:Count()
+    
+    -- Debug info.
+    self:T(self.lid..string.format("Check if flight is in %d zones. Currently it is in %d zones.", self.checkzones:Count(), self.inzones:Count()))
+
+    -- Firstly, check if group is still inside zone it was already in. If not, remove zones and trigger LeaveZone() event.
+    local leftzones={}
+    for inzonename, inzone in pairs(self.inzones:GetSet()) do
+        
+      -- Check if group is still inside the zone.
+      local isstillinzone=self.group:IsPartlyOrCompletelyInZone(inzone)
+      
+      -- If not, trigger, LeaveZone event.
+      if not isstillinzone then
+        table.insert(leftzones, inzone)
+      end      
+    end
+    
+    -- Trigger leave zone event.
+    for _,leftzone in pairs(leftzones) do
+      self:LeaveZone(leftzone)
+    end
+    
+    
+    -- Now, run of all check zones and see if the group entered a  zone.
+    local enterzones={}
+    for checkzonename,_checkzone in pairs(self.checkzones:GetSet()) do
+      local checkzone=_checkzone --Core.Zone#ZONE
+      
+      -- Is flight currtently in this check zone?
+      local isincheckzone=self.group:IsPartlyOrCompletelyInZone(checkzone)
+
+      if isincheckzone and not self.inzones:_Find(checkzonename) then
+        table.insert(enterzones, checkzone)
+      end
+    end
+    
+    -- Trigger enter zone event.
+    for _,enterzone in pairs(enterzones) do
+      self:EnterZone(enterzone)
+    end
+    
+    
+  end
+
+end
+
+--- Check detected units.
+-- @param #OPSGROUP self
+function OPSGROUP:_CheckDetectedUnits()
+
+  if self.group and not self:IsDead() then
+
+    -- Get detected DCS units.
+    local detectedtargets=self.group:GetDetectedTargets()
+
+    local detected={}
+    for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
+      local DetectedObject=Detection.object -- DCS#Object
+
+      if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
+        local unit=UNIT:Find(DetectedObject)
+        
+        if unit and unit:IsAlive() then
+        
+          -- Name of detected unit
+          local unitname=unit:GetName()
+
+          -- Add unit to detected table of this run.        
+          table.insert(detected, unit)
+          
+          -- Trigger detected unit event.
+          self:DetectedUnit(unit)
+          
+          if self.detectedunits:FindUnit(unitname) then
+            -- Unit is already in the detected unit set ==> Trigger "DetectedUnitKnown" event.
+            self:DetectedUnitKnown(unit)
+          else
+            -- Unit is was not detected ==> Trigger "DetectedUnitNew" event.
+            self:DetectedUnitNew(unit)
+          end
+          
+        end
+      end
+    end
+
+    -- Loop over units in detected set.
+    local lost={}
+    for _,_unit in pairs(self.detectedunits:GetSet()) do
+      local unit=_unit --Wrapper.Unit#UNIT
+
+      -- Loop over detected units
+      local gotit=false
+      for _,_du in pairs(detected) do
+        local du=_du --Wrapper.Unit#UNIT
+        if unit:GetName()==du:GetName() then
+          gotit=true
+        end
+      end
+
+      if not gotit then
+        table.insert(lost, unit:GetName())
+        self:DetectedUnitLost(unit)
+      end
+
+    end
+    
+    -- Remove lost units from detected set.
+    self.detectedunits:RemoveUnitsByName(lost)
+
+  end
+
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1215,7 +1979,7 @@ function OPSGROUP:_UpdateWaypointTasks()
     if i>self.currentwp or nwaypoints==1 then
     
       -- Debug info.
-      self:T2(self.lid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d.", i, nwaypoints, self.currentwp))
+      self:I(self.lid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d", i, nwaypoints, self.currentwp))
   
       -- Tasks of this waypoint
       local taskswp={}
@@ -1246,7 +2010,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, i)
 
   -- Debug message.
   local text=string.format("Group passing waypoint %d of %d", i, final)
-  opsgroup:T3(opsgroup.lid..text)
+  opsgroup:I(opsgroup.lid..text)
 
   -- Set current waypoint.
   opsgroup.currentwp=i
@@ -1286,6 +2050,386 @@ function OPSGROUP._TaskDone(group, flightgroup, task)
   if flightgroup then
     flightgroup:TaskDone(task)
   end
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- OPTION FUNCTIONS
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set the default ROE for the group. This is the ROE state gets when the group is spawned or to which it defaults back after a mission.
+-- @param #OPSGROUP self
+-- @param #number roe ROE of group. Default is `ENUMS.ROE.ReturnFire`.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultROE(roe)
+  self.roeDefault=roe or ENUMS.ROE.ReturnFire
+  return self
+end
+
+--- Set current ROE for the group.
+-- @param #OPSGROUP self
+-- @param #string roe ROE of group. Default is the value defined by :SetDefaultROE().
+-- @return #OPSGROUP self
+function OPSGROUP:SetOptionROE(roe)
+
+  roe=roe or self.roeDefault
+  
+  if self:IsAlive() then
+  
+    self.group:OptionROE(roe)
+    
+    self.roe=roe
+    
+    self:T2(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.roe))
+  else
+    -- TODO WARNING
+  end
+  
+  return self
+end
+
+--- Set the default ROT for the group. This is the ROT state gets when the group is spawned or to which it defaults back after a mission.
+-- @param #OPSGROUP self
+-- @param #number roe ROE of group. Default is ENUMS.ROT.PassiveDefense.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultROT(roe)
+  self.rotDefault=roe or ENUMS.ROT.PassiveDefense
+  return self
+end
+
+--- Set ROT for the group.
+-- @param #OPSGROUP self
+-- @param #string rot ROT of group. Default is the value defined by :SetDefaultROT().
+-- @return #OPSGROUP self
+function OPSGROUP:SetOptionROT(rot)
+
+  rot=rot or self.rotDefault
+  
+  if self:IsAlive() then
+  
+    self.group:OptionROT(rot)
+    
+    self.rot=rot
+    
+    self:T2(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.rot))
+  else
+    -- TODO WARNING
+  end
+  
+  return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Element and Group Status Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check if all elements of the flight group have the same status (or are dead).
+-- @param #OPSGROUP self
+-- @param #string unitname Name of unit.
+function OPSGROUP:_AllSameStatus(status)
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+
+    if element.status==OPSGROUP.ElementStatus.DEAD then
+      -- Do nothing. Element is already dead and does not count.
+    elseif element.status~=status then
+      -- At least this element has a different status.
+      return false
+    end
+
+  end
+
+  return true
+end
+
+--- Check if all elements of the flight group have the same status (or are dead).
+-- @param #OPSGROUP self
+-- @param #string status Status to check.
+-- @return #boolean If true, all elements have a similar status.
+function OPSGROUP:_AllSimilarStatus(status)
+
+  -- Check if all are dead.
+  if status==OPSGROUP.ElementStatus.DEAD then
+    for _,_element in pairs(self.elements) do
+      local element=_element --#OPSGROUP.Element
+      if element.status~=OPSGROUP.ElementStatus.DEAD then
+        -- At least one is still alive.
+        return false
+      end
+    end
+    return true
+  end
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    
+    self:T2(self.lid..string.format("Status=%s, element %s status=%s", status, element.name, element.status))
+
+    -- Dead units dont count ==> We wont return false for those.
+    if element.status~=OPSGROUP.ElementStatus.DEAD then
+    
+      ----------
+      -- ALIVE
+      ----------
+
+      if status==OPSGROUP.ElementStatus.SPAWNED then
+
+        -- Element SPAWNED: Check that others are not still IN UTERO
+        if element.status~=status and
+          element.status==OPSGROUP.ElementStatus.INUTERO  then
+          return false
+        end
+
+      elseif status==OPSGROUP.ElementStatus.PARKING then
+
+        -- Element PARKING: Check that the other are not still SPAWNED
+        if element.status~=status or
+         (element.status==OPSGROUP.ElementStatus.INUTERO or
+          element.status==OPSGROUP.ElementStatus.SPAWNED) then
+          return false
+        end
+
+      elseif status==OPSGROUP.ElementStatus.ENGINEON then
+
+        -- Element TAXIING: Check that the other are not still SPAWNED or PARKING
+        if element.status~=status and
+         (element.status==OPSGROUP.ElementStatus.INUTERO or
+          element.status==OPSGROUP.ElementStatus.SPAWNED or
+          element.status==OPSGROUP.ElementStatus.PARKING) then
+          return false
+        end
+
+      elseif status==OPSGROUP.ElementStatus.TAXIING then
+
+        -- Element TAXIING: Check that the other are not still SPAWNED or PARKING
+        if element.status~=status and
+         (element.status==OPSGROUP.ElementStatus.INUTERO or
+          element.status==OPSGROUP.ElementStatus.SPAWNED or
+          element.status==OPSGROUP.ElementStatus.PARKING or
+          element.status==OPSGROUP.ElementStatus.ENGINEON) then
+          return false
+        end        
+
+      elseif status==OPSGROUP.ElementStatus.TAKEOFF then
+
+        -- Element TAKEOFF: Check that the other are not still SPAWNED, PARKING or TAXIING
+        if element.status~=status and
+         (element.status==OPSGROUP.ElementStatus.INUTERO or
+          element.status==OPSGROUP.ElementStatus.SPAWNED or
+          element.status==OPSGROUP.ElementStatus.PARKING or
+          element.status==OPSGROUP.ElementStatus.ENGINEON or
+          element.status==OPSGROUP.ElementStatus.TAXIING) then
+          return false
+        end
+
+      elseif status==OPSGROUP.ElementStatus.AIRBORNE then
+
+        -- Element AIRBORNE: Check that the other are not still SPAWNED, PARKING, TAXIING or TAKEOFF
+        if element.status~=status and
+         (element.status==OPSGROUP.ElementStatus.INUTERO or
+          element.status==OPSGROUP.ElementStatus.SPAWNED or
+          element.status==OPSGROUP.ElementStatus.PARKING or
+          element.status==OPSGROUP.ElementStatus.ENGINEON or
+          element.status==OPSGROUP.ElementStatus.TAXIING or 
+          element.status==OPSGROUP.ElementStatus.TAKEOFF) then
+          return false
+        end
+
+      elseif status==OPSGROUP.ElementStatus.LANDED then
+
+        -- Element LANDED: check that the others are not still AIRBORNE or LANDING
+        if element.status~=status and
+         (element.status==OPSGROUP.ElementStatus.AIRBORNE or
+          element.status==OPSGROUP.ElementStatus.LANDING) then
+          return false
+        end
+
+      elseif status==OPSGROUP.ElementStatus.ARRIVED then
+
+        -- Element ARRIVED: check that the others are not still AIRBORNE, LANDING, or LANDED (taxiing).
+        if element.status~=status and
+         (element.status==OPSGROUP.ElementStatus.AIRBORNE or
+          element.status==OPSGROUP.ElementStatus.LANDING  or
+          element.status==OPSGROUP.ElementStatus.LANDED)  then
+          return false
+        end
+
+      end
+      
+    else
+      -- Element is dead. We don't care unless all are dead.
+    end --DEAD
+
+  end
+
+  -- Debug info.
+  self:T2(self.lid..string.format("All %d elements have similar status %s ==> returning TRUE", #self.elements, status))
+  
+  return true
+end
+
+--- Check if all elements of the flight group have the same status or are dead.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Element element Element.
+-- @param #string newstatus New status of element
+-- @param Wrapper.Airbase#AIRBASE airbase Airbase if applicable.
+function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
+
+  -- Old status.
+  local oldstatus=element.status
+
+  -- Update status of element.
+  element.status=newstatus
+  
+  -- Debug
+  self:T3(self.lid..string.format("UpdateStatus element=%s: %s --> %s", element.name, oldstatus, newstatus))  
+  for _,_element in pairs(self.elements) do
+    local Element=_element -- #OPSGROUP.Element
+    self:T3(self.lid..string.format("Element %s: %s", Element.name, Element.status))
+  end
+
+  if newstatus==OPSGROUP.ElementStatus.SPAWNED then
+    ---
+    -- SPAWNED
+    ---
+
+    if self:_AllSimilarStatus(newstatus) then
+      self:__Spawned(-0.5)
+    end
+    
+  elseif newstatus==OPSGROUP.ElementStatus.PARKING then
+    ---
+    -- PARKING
+    ---
+
+    if self:_AllSimilarStatus(newstatus) then
+      self:__FlightParking(-0.5)
+    end
+
+  elseif newstatus==OPSGROUP.ElementStatus.ENGINEON then
+    ---
+    -- ENGINEON
+    ---
+
+    -- No FLIGHT status. Waiting for taxiing.
+
+  elseif newstatus==OPSGROUP.ElementStatus.TAXIING then
+    ---
+    -- TAXIING
+    ---
+
+    if self:_AllSimilarStatus(newstatus) then
+      self:__FlightTaxiing(-0.5)
+    end
+    
+  elseif newstatus==OPSGROUP.ElementStatus.TAKEOFF then
+    ---
+    -- TAKEOFF
+    ---
+
+    if self:_AllSimilarStatus(newstatus) then
+      -- Trigger takeoff event. Also triggers airborne event.
+      self:__FlightTakeoff(-0.5, airbase)
+    end
+
+  elseif newstatus==OPSGROUP.ElementStatus.AIRBORNE then
+    ---
+    -- AIRBORNE
+    ---
+
+    if self:_AllSimilarStatus(newstatus) then
+      self:__FlightAirborne(-0.5)
+    end
+
+  elseif newstatus==OPSGROUP.ElementStatus.LANDED then
+    ---
+    -- LANDED
+    ---
+
+    if self:_AllSimilarStatus(newstatus) then
+      self:FlightLanded(airbase)
+    end
+
+  elseif newstatus==OPSGROUP.ElementStatus.ARRIVED then
+    ---
+    -- ARRIVED
+    ---
+
+    if self:_AllSimilarStatus(newstatus) then
+
+      if self:IsLanded() then
+        self:FlightArrived()
+      elseif self:IsAirborne() then
+        self:FlightLanded()
+        self:FlightArrived()
+      end
+
+    end
+
+  elseif newstatus==OPSGROUP.ElementStatus.DEAD then
+    ---
+    -- DEAD
+    ---
+
+    if self:_AllSimilarStatus(newstatus) then
+      self:Dead()
+    end
+
+  end
+end
+
+--- Set status for all elements (except dead ones).
+-- @param #OPSGROUP self
+-- @param #string status Element status.
+function OPSGROUP:_SetElementStatusAll(status)
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    if element.status~=OPSGROUP.ElementStatus.DEAD then
+      element.status=status
+    end
+  end
+
+end
+
+--- Get the element of a group.
+-- @param #OPSGROUP self
+-- @param #string unitname Name of unit.
+-- @return #OPSGROUP.Element The element.
+function OPSGROUP:GetElementByName(unitname)
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+
+    if element.name==unitname then
+      return element
+    end
+
+  end
+
+  return nil
+end
+
+--- Get number of elements alive.
+-- @param #OPSGROUP self
+-- @param #string status (Optional) Only count number, which are in a special status.
+-- @return #number Number of elements.
+function OPSGROUP:GetNelements(status)
+
+  local n=0
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    if element.status~=OPSGROUP.ElementStatus.DEAD then
+      if element.unit and element.unit:IsAlive() then
+        if status==nil or element.status==status then
+          n=n+1
+        end
+      end
+    end
+  end
+
+  
+  return n
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

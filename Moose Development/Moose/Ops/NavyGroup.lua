@@ -68,12 +68,12 @@ function NAVYGROUP:New(GroupName)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
-  self:AddTransition("*",             "FullStop",          "Holding")     -- Hold position.
-  self:AddTransition("*",             "TurnIntoWind",      "*")           -- Hold position.
-  self:AddTransition("*",             "Cruise",            "Cruising")    -- Hold position.
+  self:AddTransition("*",             "FullStop",         "Holding")     -- Hold position.
+  self:AddTransition("*",             "TurnIntoWind",     "*")           -- Hold position.
+  self:AddTransition("*",             "Cruise",           "Cruising")    -- Hold position.
   
-  self:AddTransition("*",             "Dive",              "Diving")      -- Hold position.
-  self:AddTransition("Diving",        "Surface",           "Cruising")    -- Hold position.
+  self:AddTransition("*",             "Dive",             "Diving")      -- Hold position.
+  self:AddTransition("Diving",        "Surface",          "Cruising")    -- Hold position.
   
   ------------------------
   --- Pseudo Functions ---
@@ -113,9 +113,22 @@ function NAVYGROUP:New(GroupName)
     BASE:TraceLevel(1)
   end
   
+  -- Handle events:
+  self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
+  self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
+  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
+  
+  -- Initialize the group.
   self:_InitGroup()
   
-  self:Start()
+  -- Defaults
+  self:SetDefaultROE()
+  self:SetDetection()
+  
+  -- Start the status monitoring.
+  self:__CheckZone(-1)
+  self:__Status(-2)
+  self:__QueueUpdate(-3)
    
   return self  
 end
@@ -144,30 +157,24 @@ end
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Start NAVYGROUP FSM. Handle events.
--- @param #NAVYGROUP self
-function NAVYGROUP:onafterStart(From, Event, To)
-
-  -- Info.
-  self:I(self.lid..string.format("Starting NAVYGROUP v%s for %s", NAVYGROUP.version, self.groupname))
-  
-  -- Update route.
-  --self:UpdateRoute()
-  
-  -- Init status updates.
-  self:__Status(-1)
-end
-
 --- Update status.
 -- @param #NAVYGROUP self
 function NAVYGROUP:onafterStatus(From, Event, To)
 
+  -- FSM state.
   local fsmstate=self:GetState()
   
+
+  -- Current heading and position of the carrier.
+  local hdg=self:GetHeading()
+  local pos=self:GetCoordinate()
   local speed=self.group:GetVelocityKNOTS()
 
+  -- Check water is ahead.
+  local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist or 5000, hdg))
+
     -- Info text.
-  local text=string.format("State %s: Speed=%.1f knots", fsmstate, speed)
+  local text=string.format("State %s: Speed=%.1f knots Heading=%03d collision=%s", fsmstate, speed, hdg, tostring(collision))
   self:I(self.lid..text)
 
   self:__Status(-30)
@@ -176,6 +183,40 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "ElementSpawned" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #NAVYGROUP.Element Element The group element.
+function NAVYGROUP:onafterElementSpawned(From, Event, To, Element)
+  self:I(self.lid..string.format("Element spawned %s", Element.name))
+
+  -- Set element status.
+  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.SPAWNED)
+
+end
+
+--- On after "Spawned" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterSpawned(From, Event, To)
+  self:I(self.lid..string.format("Group spawned!"))
+
+  if self.ai then
+  
+    -- Set default ROE and ROT options.
+    self:SetOptionROE()
+    
+  end
+  
+  -- Update route.
+  self:__UpdateRoute(-1)
+  
+end
 
 --- On after "UpdateRoute" event.
 -- @param #NAVYGROUP self
@@ -301,40 +342,48 @@ function NAVYGROUP:onafterPassingWaypoint(From, Event, To, n, N)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Routing
+-- Events DCS
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Route group along waypoints. Enroute tasks are also applied.
+--- Event function handling the birth of a unit.
 -- @param #NAVYGROUP self
--- @param #table waypoints Table of waypoints.
--- @return #NAVYGROUP self
-function NAVYGROUP:Route(waypoints)
+-- @param Core.Event#EVENTDATA EventData Event data.
+function NAVYGROUP:OnEventBirth(EventData)
 
-  if self:IsAlive() then
-
-    -- DCS task combo.
-    local Tasks={}
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
     
-    -- Route (Mission) task.
-    local TaskRoute=self.group:TaskRoute(waypoints)
-    table.insert(Tasks, TaskRoute)
+    if self.respawning then
     
-    -- TaskCombo of enroute and mission tasks.
-    local TaskCombo=self.group:TaskCombo(Tasks)
-        
-    -- Set tasks.
-    if #Tasks>1 then
-      self:SetTask(TaskCombo)
+      local function reset()
+        self.respawning=nil
+      end
+      
+      -- Reset switch in 1 sec. This should allow all birth events of n>1 groups to have passed.
+      -- TODO: Can I do this more rigorously?
+      self:ScheduleOnce(1, reset)
+    
     else
-      self:SetTask(TaskRoute)
-    end
+          
+      -- Get element.
+      local element=self:GetElementByName(unitname)
+
+      -- Set element to spawned state.
+      self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", element.name))            
+      self:ElementSpawned(element)
+      
+    end    
     
-  else
-    self:E(self.lid.."ERROR: Group is not alive!")
   end
-  
-  return self
+
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Routing
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #NAVYGROUP self
@@ -353,6 +402,9 @@ function NAVYGROUP:_InitGroup()
   -- Helo group.
   --self.isSubmarine=self.group:IsSubmarine()
   
+  -- Ships are always AI.
+  self.ai=true
+  
   -- Is (template) group late activated.
   self.isLateActivated=self.template.lateActivation
   
@@ -370,9 +422,9 @@ function NAVYGROUP:_InitGroup()
   self.position=self:GetCoordinate()
   
   -- Radio parameters from template.
-  --self.radioOn=self.template.communication
-  self.radioFreq=self.template.units[1].frequency
-  self.radioModu=self.template.units[1].modulation
+  self.radioOn=true  -- Radio is always on for ships.
+  self.radioFreq=tonumber(self.template.units[1].frequency)/1000000
+  self.radioModu=tonumber(self.template.units[1].modulation)/1000000
   
   -- If not set by the use explicitly yet, we take the template values as defaults.
   if not self.radioFreqDefault then
@@ -389,17 +441,25 @@ function NAVYGROUP:_InitGroup()
     end
   end
   
-  -- Get first unit. This is used to extract other parameters.
-  local unit=self.group:GetUnit(1)
-  
   local units=self.group:GetUnits()
+  
   for _,_unit in pairs(units) do
-    local element={} --#NAVYGROUP.Element
     local unit=_unit --Wrapper.Unit#UNIT
+    
+    local element={} --#NAVYGROUP.Element
     element.name=unit:GetName()
     element.typename=unit:GetTypeName()
+    element.status=OPSGROUP.ElementStatus.INUTERO
     table.insert(self.elements, element)
+    
+    if unit:IsAlive() then      
+      self:ElementSpawned(element)
+    end
+    
   end
+
+  -- Get first unit. This is used to extract other parameters.
+  local unit=self.group:GetUnit(1)
   
   if unit then
     
@@ -418,7 +478,7 @@ function NAVYGROUP:_InitGroup()
     --text=text..string.format("Ammo         = %d (G=%d/R=%d/B=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Bombs, self.ammo.Missiles)
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
-    --text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
+    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
     self:I(self.lid..text)
     
     -- Init done.
@@ -429,103 +489,129 @@ function NAVYGROUP:_InitGroup()
   return self
 end
 
---- Initialize Mission Editor waypoints.
--- @param #NAVYGROUP self
--- @param #table waypoints Table of waypoints. Default is from group template.
--- @return #NAVYGROUP self
-function NAVYGROUP:InitWaypoints(waypoints)
-
-  -- Template waypoints.
-  self.waypoints0=self.group:GetTemplateRoutePoints()
-
-  -- Waypoints of group as defined in the ME.
-  self.waypoints=waypoints or UTILS.DeepCopy(self.waypoints0)
-  
-  -- Debug info.
-  self:I(self.lid..string.format("Initializing %d waypoints", #self.waypoints))
-  
-  -- Update route.
-  if #self.waypoints>0 then
-  
-    -- Check if only 1 wp?
-    if #self.waypoints==1 then
-      self.passedfinalwp=true
-    end
-    
-    -- Update route (when airborne).
-    self:__UpdateRoute(-1)
-  end
-
-  return self
-end
-
---- Initialize Mission Editor waypoints.
--- @param #NAVYGROUP self
-function NAVYGROUP:_UpdateWaypointTasks()
-
-  local waypoints=self.waypoints
-  local nwaypoints=#waypoints
-
-  for i,wp in pairs(waypoints) do
-    
-    if i>self.currentwp or nwaypoints==1 then
-    
-      -- Debug info.
-      self:T2(self.lid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d.", i, nwaypoints, self.currentwp))
-  
-      -- Tasks of this waypoint
-      local taskswp={}
-    
-      -- At each waypoint report passing.
-      local TaskPassingWaypoint=self.group:TaskFunction("NAVYGROUP._PassingWaypoint", self, i)      
-      table.insert(taskswp, TaskPassingWaypoint)      
-          
-      -- Waypoint task combo.
-      wp.task=self.group:TaskCombo(taskswp)
-      
-    end
-  end
-
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set rules of engagement.
+--- Check for possible collisions between two coordinates.
 -- @param #NAVYGROUP self
--- @param #string roe "Hold", "Free", "Return".
-function NAVYGROUP:_SetROE(roe)
+-- @param Core.Point#COORDINATE coordto Coordinate to which the collision is check.
+-- @param Core.Point#COORDINATE coordfrom Coordinate from which the collision is check.
+-- @return #boolean If true, surface type ahead is not deep water.
+-- @return #number Max free distance in meters.
+function NAVYGROUP:_CheckCollisionCoord(coordto, coordfrom)
 
-  if roe=="Hold" then
-    self.group:OptionROEHoldFire()
-  elseif roe=="Free" then
-    self.group:OptionROEOpenFire()
-  elseif roe=="Return" then  
-    self.group:OptionROEReturnFire()
+  -- Increment in meters.
+  local dx=100
+
+  -- From coordinate. Default 500 in front of the carrier.
+  local d=0
+  if coordfrom then
+    d=0
+  else
+    d=250
+    coordfrom=self:GetCoordinate():Translate(d, self:GetHeading())
   end
 
-  MESSAGE:New(string.format("ROE set to %s", roe), 5, self.ClassName):ToCoalition(self:GetCoalition())
-end
+  -- Distance between the two coordinates.
+  local dmax=coordfrom:Get2DDistance(coordto)
 
---- Set alarm state. (Not useful/working for ships.)
--- @param #NAVYGROUP self
--- @param #string state "Green", "Red", "Auto".
-function NAVYGROUP:_SetALS(state)
+  -- Direction.
+  local direction=coordfrom:HeadingTo(coordto)
 
-  if state=="Green" then
-    self.group:OptionAlarmStateGreen()
-  elseif state=="Red" then
-    self.group:OptionAlarmStateRed()
-  elseif state=="Auto" then
-    self.group:OptionAlarmStateAuto()
+  -- Scan path between the two coordinates.
+  local clear=true
+  while d<=dmax do
+
+    -- Check point.
+    local cp=coordfrom:Translate(d, direction)
+
+    -- Check if surface type is water.
+    if not cp:IsSurfaceTypeWater() then
+
+      -- Debug mark points.
+      if self.Debug or true then
+        local st=cp:GetSurfaceType()
+        cp:MarkToAll(string.format("Collision check surface type %d", st))
+      end
+
+      -- Collision WARNING!
+      clear=false
+      break
+    end
+
+    -- Increase distance.
+    d=d+dx
   end
-  
-  MESSAGE:New(string.format("Alarm state set to %s", state), 5, self.ClassName):ToCoalition(self:GetCoalition())
+
+  local text=""
+  if clear then
+    text=string.format("Path into direction %03d° is clear for the next %.1f NM.", direction, UTILS.MetersToNM(d))
+  else
+    text=string.format("Detected obstacle at distance %.1f NM into direction %03d°.", UTILS.MetersToNM(d), direction)
+  end
+  self:T(self.lid..text)
+
+  return not clear, d
 end
 
+--- Check if group is turning.
+-- @param #NAVYGROUP self
+function NAVYGROUP:_CheckTurning()
 
+  -- Current orientation of carrier.
+  local vNew=self.group:GetOrientationX()
 
+  -- Last orientation from 30 seconds ago.
+  local vLast=self.Corientlast
+
+  -- We only need the X-Z plane.
+  vNew.y=0 ; vLast.y=0
+
+  -- Angle between current heading and last time we checked ~30 seconds ago.
+  local deltaLast=math.deg(math.acos(UTILS.VecDot(vNew,vLast)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vLast)))
+
+  -- Last orientation becomes new orientation
+  self.Corientlast=vNew
+
+  -- Carrier is turning when its heading changed by at least one degree since last check.
+  local turning=math.abs(deltaLast)>=1
+
+  -- Check if turning stopped. (Carrier was turning but is not any more.)
+  if self.turning and not turning then
+
+    -- Get final bearing.
+    local FB=self:GetFinalBearing(true)
+
+    -- Marshal radio call: "99, new final bearing XYZ degrees."
+    self:_MarshalCallNewFinalBearing(FB)
+
+  end
+
+  -- Check if turning started. (Carrier was not turning and is now.)
+  if turning and not self.turning then
+
+    -- Get heading.
+    local hdg
+    if self.turnintowind then
+      -- We are now steaming into the wind.
+      hdg=self:GetHeadingIntoWind(false)
+    else
+      -- We turn towards the next waypoint.
+      hdg=self:GetCoordinate():HeadingTo(self:_GetNextWaypoint())
+    end
+
+    -- Magnetic!
+    hdg=hdg-self.magvar
+    if hdg<0 then
+      hdg=360+hdg
+    end
+
+  end
+
+  -- Update turning.
+  self.turning=turning
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
