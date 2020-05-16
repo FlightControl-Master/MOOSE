@@ -121,7 +121,7 @@ function RADIOQUEUE:Start(delay, dt)
   self.dt=dt or 0.01
   
   -- Debug message.
-  self:I(self.lid..string.format("Starting RADIOQUEUE %s on Frequency %.2f MHz [modulation=%d] in %.1f seconds (dt=%.3f sec)", self.alias, self.frequency/1000000, self.modulation, delay, dt))
+  self:I(self.lid..string.format("Starting RADIOQUEUE %s on Frequency %.2f MHz [modulation=%d] in %.1f seconds (dt=%.3f sec)", self.alias, self.frequency/1000000, self.modulation, self.delay, self.dt))
 
   -- Start Scheduler.
   if self.schedonce then

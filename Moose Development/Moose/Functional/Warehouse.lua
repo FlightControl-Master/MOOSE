@@ -1764,7 +1764,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="1.0.1"
+WAREHOUSE.version="1.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -8404,7 +8404,7 @@ end
 -- @return #string Text about warehouse stock
 function WAREHOUSE:_UpdateWarehouseMarkText()
 
-  if self.makerOn then
+  if self.markerOn then
 
     -- Create a mark with the current assets in stock.
     if self.markerid~=nil then
