@@ -594,7 +594,17 @@ do -- FSM
       return errmsg
     end
     if self[handler] then
-      self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] )
+      if step == "onafter" or step == "OnAfter" then
+        self:T( ":::>" .. step .. params[2] .. " : " .. params[1] .. " >> " .. params[2] .. ">" .. step .. params[2] .. "()" .. " >> " .. params[3] )
+      elseif step == "onbefore" or step == "OnBefore" then
+        self:T( ":::>" .. step .. params[2] .. " : " .. params[1] .. " >> " .. step .. params[2] .. "()" .. ">" .. params[2] .. " >> " .. params[3] )
+      elseif step == "onenter" or step == "OnEnter" then
+        self:T( ":::>" .. step .. params[3] .. " : " .. params[1] .. " >> " .. params[2] .. " >> "  .. step .. params[3] .. "()" .. ">" .. params[3] )
+      elseif step == "onleave" or step == "OnLeave" then
+        self:T( ":::>" .. step .. params[1] .. " : " .. params[1] .. ">" .. step .. params[1] .. "()" .. " >> " .. params[2] .. " >> " .. params[3] )
+      else
+        self:T( ":::>" .. step .. " : " .. params[1] .. " >> " .. params[2] .. " >> " .. params[3] )
+      end      
       self._EventSchedules[EventName] = nil
       local Result, Value = xpcall( function() return self[handler]( self, unpack( params ) ) end, ErrorHandler )
       return Value
@@ -717,14 +727,17 @@ do -- FSM
       if DelaySeconds ~= nil then
         if DelaySeconds < 0 then -- Only call the event ONCE!
           DelaySeconds = math.abs( DelaySeconds )
-          if not self._EventSchedules[EventName] then
-            CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+          if not self._EventSchedules[EventName] then            
+            CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1, nil, nil, nil, 4, true )
             self._EventSchedules[EventName] = CallID
+            self:T2(string.format("NEGATIVE Event %s delayed by %.1f sec SCHEDULED with CallID=%s", EventName, DelaySeconds, tostring(CallID)))
           else
+            self:T2(string.format("NEGATIVE Event %s delayed by %.1f sec CANCELLED as we already have such an event in the queue.", EventName, DelaySeconds))
             -- reschedule
           end
         else
-          CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+          CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1, nil, nil, nil, 4, true )
+          self:T2(string.format("Event %s delayed by %.1f sec SCHEDULED with CallID=%s", EventName, DelaySeconds, tostring(CallID)))
         end
       else
         error( "FSM: An asynchronous event trigger requires a DelaySeconds parameter!!! This can be positive or negative! Sorry, but will not process this." )

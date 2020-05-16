@@ -1,5 +1,4 @@
---- This module contains derived utilities taken from the MIST framework, 
--- which are excellent tools to be reused in an OO environment!.
+--- This module contains derived utilities taken from the MIST framework, which are excellent tools to be reused in an OO environment.
 -- 
 -- ### Authors: 
 -- 
@@ -33,18 +32,90 @@ FLARECOLOR = trigger.flareColor -- #FLARECOLOR
 --- Big smoke preset enum.
 -- @type BIGSMOKEPRESET
 BIGSMOKEPRESET = {
-  SmallSmokeAndFire=0,
-  MediumSmokeAndFire=1,
-  LargeSmokeAndFire=2,
-  HugeSmokeAndFire=3,
-  SmallSmoke=4,
-  MediumSmoke=5,
-  LargeSmoke=6,
-  HugeSmoke=7,
+  SmallSmokeAndFire=1,
+  MediumSmokeAndFire=2,
+  LargeSmokeAndFire=3,
+  HugeSmokeAndFire=4,
+  SmallSmoke=5,
+  MediumSmoke=6,
+  LargeSmoke=7,
+  HugeSmoke=8,
 }
+
+--- DCS map as returned by env.mission.theatre.
+-- @type DCSMAP
+-- @field #string Caucasus Caucasus map.
+-- @field #string Normandy Normandy map.
+-- @field #string NTTR Nevada Test and Training Range map.
+-- @field #string PersianGulf Persian Gulf map.
+DCSMAP = {
+  Caucasus="Caucasus",
+  NTTR="Nevada",
+  Normandy="Normandy",
+  PersianGulf="PersianGulf"
+}
+
+
+--- See [DCS_enum_callsigns](https://wiki.hoggitworld.com/view/DCS_enum_callsigns)
+-- @type CALLSIGN
+CALLSIGN={
+  -- Aircraft
+  Aircraft={
+    Enfield=1,
+    Springfield=2,
+    Uzi=3,
+    Colt=4,
+    Dodge=5,
+    Ford=6,
+    Chevy=7,
+    Pontiac=8,
+    -- A-10A or A-10C
+    Hawg=9,
+    Boar=10,
+    Pig=11,
+    Tusk=12,
+  },
+  -- AWACS
+  AWACS={
+    Overlord=1,
+    Magic=2,
+    Wizard=3,
+    Focus=4,
+    Darkstar=5,
+  },
+  -- Tanker
+  Tanker={
+    Texaco=1,
+    Arco=2,
+    Shell=3,
+  }, 
+  -- JTAC
+  JTAC={
+    Axeman=1,
+    Darknight=2,
+    Warrier=3,
+    Pointer=4,
+    Eyeball=5,
+    Moonbeam=6,
+    Whiplash=7,
+    Finger=8,
+    Pinpoint=9,
+    Ferret=10,
+    Shaba=11,
+    Playboy=12,
+    Hammer=13,
+    Jaguar=14,
+    Deathstar=15,
+    Anvil=16,
+    Firefly=17,
+    Mantis=18,
+    Badger=19,
+  },
+} --#CALLSIGN
 
 --- Utilities static class.
 -- @type UTILS
+-- @field #number _MarkID Marker index counter. Running number when marker is added.
 UTILS = {
   _MarkID = 1
 }
@@ -112,7 +183,9 @@ UTILS.IsInstanceOf = function( object, className )
 end
 
 
---from http://lua-users.org/wiki/CopyTable
+--- Deep copy a table. See http://lua-users.org/wiki/CopyTable
+-- @param #table object The input table.
+-- @return #table Copy of the input table.
 UTILS.DeepCopy = function(object)
   local lookup_table = {}
   local function _copy(object)
@@ -133,7 +206,8 @@ UTILS.DeepCopy = function(object)
 end
 
 
--- porting in Slmod's serialize_slmod2
+--- Porting in Slmod's serialize_slmod2.
+-- @param #table tbl Input table.
 UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
 
   lookup_table = {}
@@ -250,7 +324,11 @@ UTILS.FeetToMeters = function(feet)
 end
 
 UTILS.KnotsToKmph = function(knots)
-  return knots* 1.852
+  return knots * 1.852
+end
+
+UTILS.KmphToKnots = function(knots)
+  return knots / 1.852
 end
 
 UTILS.KmphToMps = function( kmph )
@@ -265,23 +343,54 @@ UTILS.MiphToMps = function( miph )
   return miph * 0.44704
 end
 
+--- Convert meters per second to miles per hour.
+-- @param #number mps Speed in m/s.
+-- @return #number Speed in miles per hour.
 UTILS.MpsToMiph = function( mps )
   return mps / 0.44704
 end
 
+--- Convert meters per second to knots.
+-- @param #number knots Speed in m/s.
+-- @return #number Speed in knots.
 UTILS.MpsToKnots = function( mps )
-  return mps * 3600 / 1852
+  return mps * 1.94384 --3600 / 1852
 end
 
+--- Convert knots to meters per second.
+-- @param #number knots Speed in knots.
+-- @return #number Speed in m/s.
 UTILS.KnotsToMps = function( knots )
-  return knots * 1852 / 3600
+  return knots / 1.94384 --* 1852 / 3600
 end
 
+--- Convert temperature from Celsius to Farenheit.
+-- @param #number Celcius Temperature in degrees Celsius.
+-- @return #number Temperature in degrees Farenheit.
 UTILS.CelciusToFarenheit = function( Celcius )
   return Celcius * 9/5 + 32 
 end
 
+--- Convert pressure from hecto Pascal (hPa) to inches of mercury (inHg).
+-- @param #number hPa Pressure in hPa.
+-- @return #number Pressure in inHg.
+UTILS.hPa2inHg = function( hPa )
+  return hPa * 0.0295299830714
+end
 
+--- Convert pressure from hecto Pascal (hPa) to millimeters of mercury (mmHg).
+-- @param #number hPa Pressure in hPa.
+-- @return #number Pressure in mmHg.
+UTILS.hPa2mmHg = function( hPa )
+  return hPa * 0.7500615613030
+end
+
+--- Convert kilo gramms (kg) to pounds (lbs).
+-- @param #number kg Mass in kg.
+-- @return #number Mass in lbs.
+UTILS.kg2lbs = function( kg )
+  return kg * 2.20462
+end
 
 --[[acc:
 in DM: decimal point of minutes.
@@ -335,15 +444,16 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
 
     local secFrmtStr -- create the formatting string for the seconds place
     secFrmtStr = '%02d'
---    if acc <= 0 then  -- no decimal place.
---      secFrmtStr = '%02d'
---    else
---      local width = 3 + acc  -- 01.310 - that's a width of 6, for example.
---      secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
---    end
+    if acc <= 0 then  -- no decimal place.
+      secFrmtStr = '%02d'
+    else
+      local width = 3 + acc  -- 01.310 - that's a width of 6, for example. Acc is limited to 2 for DMS!
+      secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
+    end
 
-    return string.format('%03d', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
-           .. string.format('%03d', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
+    -- 024� 23' 12"N or 024� 23' 12.03"N
+    return string.format('%03d°', latDeg)..string.format('%02d', latMin)..'\''..string.format(secFrmtStr, latSec)..'"'..latHemi..' '
+        .. string.format('%03d°', lonDeg)..string.format('%02d', lonMin)..'\''..string.format(secFrmtStr, lonSec)..'"'..lonHemi
 
   else  -- degrees, decimal minutes.
     latMin = UTILS.Round(latMin, acc)
@@ -367,20 +477,40 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
       minFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
     end
 
-    return string.format('%03d', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
-     .. string.format('%03d', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
+    -- 024 23'N or 024 23.123'N
+    return string.format('%03d°', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
+        .. string.format('%03d°', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
 
   end
 end
 
 -- acc- the accuracy of each easting/northing.  0, 1, 2, 3, 4, or 5.
 UTILS.tostringMGRS = function(MGRS, acc) --R2.1
+
   if acc == 0 then
     return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph
   else
-    return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Easting/(10^(5-acc)), 0))
-           .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Northing/(10^(5-acc)), 0))
+
+    -- Test if Easting/Northing have less than 4 digits.
+    --MGRS.Easting=123    -- should be 00123
+    --MGRS.Northing=5432  -- should be 05432
+    
+    -- Truncate rather than round MGRS grid!
+    local Easting=tostring(MGRS.Easting)
+    local Northing=tostring(MGRS.Northing)
+    
+    -- Count number of missing digits. Easting/Northing should have 5 digits. However, it is passed as a number. Therefore, any leading zeros would not be displayed by lua.
+    local nE=5-string.len(Easting) 
+    local nN=5-string.len(Northing)
+    
+    -- Get leading zeros (if any).
+    for i=1,nE do Easting="0"..Easting end
+    for i=1,nN do Northing="0"..Northing end
+    
+    -- Return MGRS string.
+    return string.format("%s %s %s %s", MGRS.UTMZone, MGRS.MGRSDigraph, string.sub(Easting, 1, acc), string.sub(Northing, 1, acc))
   end
+  
 end
 
 
@@ -421,6 +551,57 @@ function UTILS.spairs( t, order )
         i = i + 1
         if keys[i] then
             return keys[i], t[keys[i]]
+        end
+    end
+end
+
+
+-- Here is a customized version of pairs, which I called kpairs because it iterates over the table in a sorted order, based on a function that will determine the keys as reference first.
+function UTILS.kpairs( t, getkey, order )
+    -- collect the keys
+    local keys = {}
+    local keyso = {}
+    for k, o in pairs(t) do keys[#keys+1] = k keyso[#keyso+1] = getkey( o ) end
+
+    -- if order function given, sort by it by passing the table and keys a, b,
+    -- otherwise just sort the keys 
+    if order then
+        table.sort(keys, function(a,b) return order(t, a, b) end)
+    else
+        table.sort(keys)
+    end
+
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if keys[i] then
+            return keyso[i], t[keys[i]]
+        end
+    end
+end
+
+-- Here is a customized version of pairs, which I called rpairs because it iterates over the table in a random order.
+function UTILS.rpairs( t )
+    -- collect the keys
+    
+    local keys = {}
+    for k in pairs(t) do keys[#keys+1] = k end
+
+    local random = {}
+    local j = #keys
+    for i = 1, j do
+      local k = math.random( 1, #keys )
+      random[i] = keys[k]
+      table.remove( keys, k )
+    end
+    
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if random[i] then
+            return random[i], t[random[i]]
         end
     end
 end
@@ -512,8 +693,9 @@ end
 
 --- Convert time in seconds to hours, minutes and seconds.
 -- @param #number seconds Time in seconds, e.g. from timer.getAbsTime() function.
+-- @param #boolean short (Optional) If true, use short output, i.e. (HH:)MM:SS without day.
 -- @return #string Time in format Hours:Minutes:Seconds+Days (HH:MM:SS+D).
-function UTILS.SecondsToClock(seconds)
+function UTILS.SecondsToClock(seconds, short)
   
   -- Nil check.
   if seconds==nil then
@@ -526,20 +708,28 @@ function UTILS.SecondsToClock(seconds)
   -- Seconds of this day.
   local _seconds=seconds%(60*60*24)
 
-  if seconds <= 0 then
+  if seconds<0 then
     return nil
   else
     local hours = string.format("%02.f", math.floor(_seconds/3600))
     local mins  = string.format("%02.f", math.floor(_seconds/60 - (hours*60)))
     local secs  = string.format("%02.f", math.floor(_seconds - hours*3600 - mins *60))
     local days  = string.format("%d", seconds/(60*60*24))
-    return hours..":"..mins..":"..secs.."+"..days
+    local clock=hours..":"..mins..":"..secs.."+"..days
+    if short then
+      if hours=="00" then
+        clock=mins..":"..secs
+      else
+        clock=hours..":"..mins..":"..secs
+      end
+    end
+    return clock
   end
 end
 
 --- Convert clock time from hours, minutes and seconds to seconds.
 -- @param #string clock String of clock time. E.g., "06:12:35" or "5:1:30+1". Format is (H)H:(M)M:((S)S)(+D) H=Hours, M=Minutes, S=Seconds, D=Days.
--- @param #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
+-- @return #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
 function UTILS.ClockToSeconds(clock)
   
   -- Nil check.
@@ -551,7 +741,7 @@ function UTILS.ClockToSeconds(clock)
   local seconds=0
   
   -- Split additional days.
-  local dsplit=UTILS.split(clock, "+")
+  local dsplit=UTILS.Split(clock, "+")
   
   -- Convert days to seconds.
   if #dsplit>1 then
@@ -680,3 +870,277 @@ function UTILS.VecCross(a, b)
   return {x=a.y*b.z - a.z*b.y, y=a.z*b.x - a.x*b.z, z=a.x*b.y - a.y*b.x}
 end
 
+--- Calculate the difference between two 3D vectors by substracting the x,y,z components from each other. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return DCS#Vec3 Vector c=a-b with c(i)=a(i)-b(i), i=x,y,z.
+function UTILS.VecSubstract(a, b)
+  return {x=a.x-b.x, y=a.y-b.y, z=a.z-b.z}
+end
+
+--- Calculate the total vector of two 3D vectors by adding the x,y,z components of each other. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return DCS#Vec3 Vector c=a+b with c(i)=a(i)+b(i), i=x,y,z.
+function UTILS.VecAdd(a, b)
+  return {x=a.x+b.x, y=a.y+b.y, z=a.z+b.z}
+end
+
+--- Calculate the angle between two 3D vectors. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return #number Angle alpha between and b in degrees. alpha=acos(a*b)/(|a||b|), (* denotes the dot product). 
+function UTILS.VecAngle(a, b)
+
+  local cosalpha=UTILS.VecDot(a,b)/(UTILS.VecNorm(a)*UTILS.VecNorm(b))
+  
+  local alpha=0
+  if cosalpha>=0.9999999999 then  --acos(1) is not defined.
+    alpha=0
+  elseif cosalpha<=-0.999999999 then --acos(-1) is not defined.
+    alpha=math.pi
+  else
+    alpha=math.acos(cosalpha)
+  end 
+  
+  return math.deg(alpha)
+end
+
+--- Calculate "heading" of a 3D vector in the X-Z plane.
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @return #number Heading in degrees in [0,360).
+function UTILS.VecHdg(a)
+  local h=math.deg(math.atan2(a.z, a.x))
+  if h<0 then
+    h=h+360
+  end
+  return h
+end
+
+--- Calculate the difference between two "heading", i.e. angles in [0,360) deg.
+-- @param #number h1 Heading one.
+-- @param #number h2 Heading two.
+-- @return #number Heading difference in degrees.
+function UTILS.HdgDiff(h1, h2)
+
+  -- Angle in rad.
+  local alpha= math.rad(tonumber(h1))
+  local beta = math.rad(tonumber(h2))
+      
+  -- Runway vector.
+  local v1={x=math.cos(alpha), y=0, z=math.sin(alpha)}
+  local v2={x=math.cos(beta),  y=0, z=math.sin(beta)}
+
+  local delta=UTILS.VecAngle(v1, v2)
+  
+  return math.abs(delta)
+end
+
+
+--- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param #number angle Rotation angle in degrees.
+-- @return DCS#Vec3 Vector rotated in the (x,z) plane.
+function UTILS.Rotate2D(a, angle)
+
+  local phi=math.rad(angle)
+  
+  local x=a.z
+  local y=a.x
+    
+  local Z=x*math.cos(phi)-y*math.sin(phi)
+  local X=x*math.sin(phi)+y*math.cos(phi)
+  local Y=a.y
+  
+  local A={x=X, y=Y, z=Z}
+
+  return A
+end
+
+
+
+--- Converts a TACAN Channel/Mode couple into a frequency in Hz.
+-- @param #number TACANChannel The TACAN channel, i.e. the 10 in "10X".
+-- @param #string TACANMode The TACAN mode, i.e. the "X" in "10X".
+-- @return #number Frequency in Hz or #nil if parameters are invalid.
+function UTILS.TACANToFrequency(TACANChannel, TACANMode)
+
+  if type(TACANChannel) ~= "number" then
+    return nil -- error in arguments
+  end
+  if TACANMode ~= "X" and TACANMode ~= "Y" then
+    return nil -- error in arguments
+  end  
+  
+-- This code is largely based on ED's code, in DCS World\Scripts\World\Radio\BeaconTypes.lua, line 137.
+-- I have no idea what it does but it seems to work
+  local A = 1151 -- 'X', channel >= 64
+  local B = 64   -- channel >= 64
+  
+  if TACANChannel < 64 then
+    B = 1
+  end
+  
+  if TACANMode == 'Y' then
+    A = 1025
+    if TACANChannel < 64 then
+      A = 1088
+    end
+  else -- 'X'
+    if TACANChannel < 64 then
+      A = 962
+    end
+  end
+  
+  return (A + TACANChannel - B) * 1000000
+end
+
+
+--- Returns the DCS map/theatre as optained by env.mission.theatre
+-- @return #string DCS map name.
+function UTILS.GetDCSMap()
+  return env.mission.theatre
+end
+
+--- Returns the mission date. This is the date the mission started.
+-- @return #string Mission date in yyyy/mm/dd format.
+function UTILS.GetDCSMissionDate()
+  local year=tostring(env.mission.date.Year)
+  local month=tostring(env.mission.date.Month)
+  local day=tostring(env.mission.date.Day)
+  return string.format("%s/%s/%s", year, month, day)
+end
+
+
+--- Returns the magnetic declination of the map.
+-- Returned values for the current maps are:
+-- 
+-- * Caucasus +6 (East), year ~ 2011
+-- * NTTR +12 (East), year ~ 2011
+-- * Normandy -10 (West), year ~ 1944
+-- * Persian Gulf +2 (East), year ~ 2011
+-- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
+-- @return #number Declination in degrees.
+function UTILS.GetMagneticDeclination(map)
+
+  -- Map.
+  map=map or UTILS.GetDCSMap()
+  
+  local declination=0
+  if map==DCSMAP.Caucasus then
+    declination=6
+  elseif map==DCSMAP.NTTR then
+    declination=12
+  elseif map==DCSMAP.Normandy then
+    declination=-10
+  elseif map==DCSMAP.PersianGulf then
+    declination=2
+  else
+    declination=0
+  end
+
+  return declination
+end
+
+--- Checks if a file exists or not. This requires **io** to be desanitized.
+-- @param #string file File that should be checked.
+-- @return #boolean True if the file exists, false if the file does not exist or nil if the io module is not available and the check could not be performed.
+function UTILS.FileExists(file)
+  if io then
+    local f=io.open(file, "r")
+    if f~=nil then
+      io.close(f)
+      return true
+    else
+      return false
+    end
+  else
+    return nil
+  end  
+end
+
+--- Checks the current memory usage collectgarbage("count"). Info is printed to the DCS log file. Time stamp is the current mission runtime.
+-- @param #boolean output If true, print to DCS log file. 
+-- @return #number Memory usage in kByte. 
+function UTILS.CheckMemory(output)
+  local time=timer.getTime()
+  local clock=UTILS.SecondsToClock(time)
+  local mem=collectgarbage("count")
+  if output then
+    env.info(string.format("T=%s  Memory usage %d kByte = %.2f MByte", clock, mem, mem/1024))
+  end
+  return mem
+end
+
+
+--- Get the coalition name from its numerical ID, e.g. coaliton.side.RED.
+-- @param #number Coalition The coalition ID.
+-- @return #string The coalition name, i.e. "Neutral", "Red" or "Blue" (or "Unknown").
+function UTILS.GetCoalitionName(Coalition)
+
+  if Coalition then
+    if Coalition==coalition.side.BLUE then
+      return "Blue"
+    elseif Coalition==coalition.side.RED then
+      return "Red"
+    elseif Coalition==coalition.side.NEUTRAL then
+      return "Neutral"
+    else
+      return "Unknown"
+    end
+  else
+    return "Unknown"
+  end
+    
+end
+
+--- Get the modulation name from its numerical value.
+-- @param #number Modulation The modulation enumerator number. Can be either 0 or 1.
+-- @return #string The modulation name, i.e. "AM"=0 or "FM"=1. Anything else will return "Unknown".
+function UTILS.GetModulationName(Modulation)
+
+  if Modulation then
+    if Modulation==0  then
+      return "AM"
+    elseif Modulation==1  then
+      return "FM"
+    else
+      return "Unknown"
+    end
+  else
+    return "Unknown"
+  end
+    
+end
+
+--- Get the callsign name from its enumerator value
+-- @param #number Callsign The enumerator callsign.
+-- @return #string The callsign name or "Ghostrider".
+function UTILS.GetCallsignName(Callsign)
+
+  for name, value in pairs(CALLSIGN.Aircraft) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.AWACS) do
+    if value==Callsign then
+      return name
+    end
+  end
+
+  for name, value in pairs(CALLSIGN.JTAC) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.Tanker) do
+    if value==Callsign then
+      return name
+    end
+  end
+
+  return "Ghostrider"
+end

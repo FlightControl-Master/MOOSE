@@ -1,6 +1,7 @@
---- DCS API prototypes
--- See [https://wiki.hoggitworld.com/view/Simulator_Scripting_Engine_Documentation](https://wiki.hoggitworld.com/view/Simulator_Scripting_Engine_Documentation) 
--- for further explanation and examples.
+--- **DCS API** Prototypes
+-- 
+-- See the [Simulator Scripting Engine Documentation](https://wiki.hoggitworld.com/view/Simulator_Scripting_Engine_Documentation) on Hoggit for further explanation and examples.
+-- 
 -- @module DCS
 -- @image MOOSE.JPG
 
@@ -46,9 +47,13 @@ do -- world
   -- @field S_EVENT_PLAYER_COMMENT 
   -- @field S_EVENT_SHOOTING_START [https://wiki.hoggitworld.com/view/DCS_event_shooting_start](https://wiki.hoggitworld.com/view/DCS_event_shooting_start)
   -- @field S_EVENT_SHOOTING_END [https://wiki.hoggitworld.com/view/DCS_event_shooting_end](https://wiki.hoggitworld.com/view/DCS_event_shooting_end)
-  -- @field S_EVENT_MARK ADDED [https://wiki.hoggitworld.com/view/DCS_event_mark_added](https://wiki.hoggitworld.com/view/DCS_event_mark_added)
-  -- @field S_EVENT_MARK CHANGE [https://wiki.hoggitworld.com/view/DCS_event_mark_change](https://wiki.hoggitworld.com/view/DCS_event_mark_change)
-  -- @field S_EVENT_MARK REMOVE [https://wiki.hoggitworld.com/view/DCS_event_mark_remove](https://wiki.hoggitworld.com/view/DCS_event_mark_remove)
+  -- @field S_EVENT_MARK ADDED [https://wiki.hoggitworld.com/view/DCS_event_mark_added](https://wiki.hoggitworld.com/view/DCS_event_mark_added) DCS>=2.5.1
+  -- @field S_EVENT_MARK CHANGE [https://wiki.hoggitworld.com/view/DCS_event_mark_change](https://wiki.hoggitworld.com/view/DCS_event_mark_change) DCS>=2.5.1
+  -- @field S_EVENT_MARK REMOVE [https://wiki.hoggitworld.com/view/DCS_event_mark_remove](https://wiki.hoggitworld.com/view/DCS_event_mark_remove) DCS>=2.5.1
+  -- @field S_EVENT_KILL [https://wiki.hoggitworld.com/view/DCS_event_kill](https://wiki.hoggitworld.com/view/DCS_event_kill) DCS>=2.5.6
+  -- @field S_EVENT_SCORE [https://wiki.hoggitworld.com/view/DCS_event_score](https://wiki.hoggitworld.com/view/DCS_event_score) DCS>=2.5.6
+  -- @field S_EVENT_UNIT_LOST [https://wiki.hoggitworld.com/view/DCS_event_unit_lost](https://wiki.hoggitworld.com/view/DCS_event_unit_lost) DCS>=2.5.6
+  -- @field S_EVENT_LANDING_AFTER_EJECTION [https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection](https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection) DCS>=2.5.6
   -- @field S_EVENT_MAX
   
   --- The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
@@ -325,9 +330,27 @@ end -- coalition
 do -- Types
 
   --- @type Desc
-  -- @field #TypeName typeName type name
-  -- @field #string displayName localized display name
-  -- @field #table attributes object type attributes
+  -- @field #number speedMax0 Max speed in meters/second at zero altitude.
+  -- @field #number massEmpty Empty mass in kg.
+  -- @field #number tankerType Type of refueling system: 0=boom, 1=probe.
+  -- @field #number range Range in km(?).
+  -- @field #table box Bounding box.
+  -- @field #number Hmax Max height in meters.
+  -- @field #number Kmax ?
+  -- @field #number speedMax10K Max speed in meters/second at 10k altitude.
+  -- @field #number NyMin ?
+  -- @field #number NyMax ?
+  -- @field #number fuelMassMax Max fuel mass in kg.
+  -- @field #number speedMax10K Max speed in meters/second.
+  -- @field #number massMax Max mass of unit.
+  -- @field #number RCS ?
+  -- @field #number life Life points.
+  -- @field #number VyMax Max vertical velocity in m/s.
+  -- @field #number Kab ?
+  -- @field #table attributes Table of attributes.
+  -- @field #TypeName typeName Type Name.
+  -- @field #string displayName Localized display name.
+  -- @field #number category Unit category.
   
   --- A distance type
   -- @type Distance
@@ -427,8 +450,14 @@ do -- Types
   -- @type TaskArray
   -- @list <#Task>
 
+  ---
+  --@type WaypointAir
+  --@field #boolean lateActivated
+  --@field #boolean uncontrolled
 
 end --
+
+
 
 do -- Object
 
@@ -525,6 +554,126 @@ do -- CoalitionObject
   CoalitionObject = {} --#CoalitionObject
 
 end -- CoalitionObject
+
+
+do -- Weapon
+
+  --- [DCS Class Weapon](https://wiki.hoggitworld.com/view/DCS_Class_Weapon)
+  -- @type Weapon
+  -- @extends #CoalitionObject
+  -- @field #Weapon.flag flag enum stores weapon flags. Some of them are combination of another flags.
+  -- @field #Weapon.Category Category enum that stores weapon categories.
+  -- @field #Weapon.GuidanceType GuidanceType enum that stores guidance methods. Available only for guided weapon (Weapon.Category.MISSILE and some Weapon.Category.BOMB).
+  -- @field #Weapon.MissileCategory MissileCategory enum that stores missile category. Available only for missiles (Weapon.Category.MISSILE). 
+  -- @field #Weapon.WarheadType WarheadType enum that stores warhead types.
+  -- @field #Weapon.Desc Desc The descriptor of a weapon.
+
+  --- enum stores weapon flags. Some of them are combination of another flags.
+  -- @type Weapon.flag
+  -- @field LGB
+  -- @field TvGB
+  -- @field SNSGB
+  -- @field HEBomb
+  -- @field Penetrator
+  -- @field NapalmBomb
+  -- @field FAEBomb
+  -- @field ClusterBomb
+  -- @field Dispencer
+  -- @field CandleBomb
+  -- @field ParachuteBomb
+  -- @field GuidedBomb = LGB + TvGB + SNSGB
+  -- @field AnyUnguidedBomb  = HEBomb + Penetrator + NapalmBomb + FAEBomb + ClusterBomb + Dispencer + CandleBomb + ParachuteBomb
+  -- @field AnyBomb = GuidedBomb + AnyUnguidedBomb
+  -- @field LightRocket
+  -- @field MarkerRocket
+  -- @field CandleRocket
+  -- @field HeavyRocket
+  -- @field AnyRocket = LightRocket + HeavyRocket + MarkerRocket + CandleRocket
+  -- @field AntiRadarMissile
+  -- @field AntiShipMissile
+  -- @field AntiTankMissile
+  -- @field FireAndForgetASM
+  -- @field LaserASM
+  -- @field TeleASM
+  -- @field CruiseMissile
+  -- @field GuidedASM = LaserASM + TeleASM
+  -- @field TacticASM = GuidedASM + FireAndForgetASM 
+  -- @field AnyASM = AntiRadarMissile + AntiShipMissile + AntiTankMissile + FireAndForgetASM + GuidedASM + CruiseMissile
+  -- @field SRAAM
+  -- @field MRAAM 
+  -- @field LRAAM 
+  -- @field IR_AAM 
+  -- @field SAR_AAM 
+  -- @field AR_AAM 
+  -- @field AnyAAM = IR_AAM + SAR_AAM + AR_AAM + SRAAM + MRAAM + LRAAM 
+  -- @field AnyMissile = AnyASM + AnyAAM
+  -- @field AnyAutonomousMissile = IR_AAM + AntiRadarMissile + AntiShipMissile + FireAndForgetASM + CruiseMissile
+  -- @field GUN_POD
+  -- @field BuiltInCannon
+  -- @field Cannons = GUN_POD + BuiltInCannon 
+  -- @field AnyAGWeapon = BuiltInCannon + GUN_POD + AnyBomb + AnyRocket + AnyASM
+  -- @field AnyAAWeapon = BuiltInCannon + GUN_POD + AnyAAM
+  -- @field UnguidedWeapon = Cannons + BuiltInCannon + GUN_POD + AnyUnguidedBomb + AnyRocket
+  -- @field GuidedWeapon = GuidedBomb + AnyASM + AnyAAM
+  -- @field AnyWeapon = AnyBomb + AnyRocket + AnyMissile + Cannons
+  -- @field MarkerWeapon = MarkerRocket + CandleRocket + CandleBomb
+  -- @field ArmWeapon = AnyWeapon - MarkerWeapon
+
+  --- Weapon.Category enum that stores weapon categories.
+  -- @type Weapon.Category
+  -- @field SHELL
+  -- @field MISSILE
+  -- @field ROCKET
+  -- @field BOMB
+  
+
+  --- Weapon.GuidanceType enum that stores guidance methods. Available only for guided weapon (Weapon.Category.MISSILE and some Weapon.Category.BOMB). 
+  -- @type Weapon.GuidanceType
+  -- @field INS
+  -- @field IR
+  -- @field RADAR_ACTIVE
+  -- @field RADAR_SEMI_ACTIVE
+  -- @field RADAR_PASSIVE
+  -- @field TV
+  -- @field LASER
+  -- @field TELE 
+
+  
+  --- Weapon.MissileCategory enum that stores missile category. Available only for missiles (Weapon.Category.MISSILE). 
+  -- @type Weapon.MissileCategory
+  -- @field AAM
+  -- @field SAM
+  -- @field BM
+  -- @field ANTI_SHIP
+  -- @field CRUISE
+  -- @field OTHER
+
+  --- Weapon.WarheadType enum that stores warhead types. 
+  -- @type Weapon.WarheadType
+  -- @field AP
+  -- @field HE
+  -- @field SHAPED_EXPLOSIVE
+  
+  --- Returns the unit that launched the weapon.
+  -- @function [parent=#Weapon] getLauncher
+  -- @param #Weapon self
+  -- @return #Unit
+  
+  --- returns target of the guided weapon. Unguided weapons and guided weapon that is targeted at the point on the ground will return nil. 
+  -- @function [parent=#Weapon] getTarget
+  -- @param #Weapon self
+  -- @return #Object
+  
+  --- returns weapon descriptor. Descriptor type depends on weapon category.  
+  -- @function [parent=#Weapon] getDesc
+  -- @param #Weapon self
+  -- @return #Weapon.Desc
+
+
+
+  Weapon = {} --#Weapon
+
+end -- Weapon
 
 
 do -- Airbase
@@ -1082,6 +1231,7 @@ do -- AI
   -- @field TAKEOFF
   -- @field TAKEOFF_PARKING
   -- @field TURNING_POINT
+  -- @field TAKEOFF_PARKING_HOT
   -- @field LAND
   
   --- @type AI.Task.TurnMethod
@@ -1118,8 +1268,8 @@ do -- AI
   --- @type AI.Option.Naval
   -- @field #AI.Option.Naval.id                     id
   -- @field #AI.Option.Naval.val                    val
-  
-  --TODO: work on formation
+ 
+ 
   --- @type AI.Option.Air.id
   -- @field NO_OPTION
   -- @field ROE
@@ -1128,7 +1278,34 @@ do -- AI
   -- @field FLARE_USING
   -- @field FORMATION
   -- @field RTB_ON_BINGO
-  -- @field SILENCE 
+  -- @field SILENCE
+  -- @field RTB_ON_OUT_OF_AMMO
+  -- @field ECM_USING
+  -- @field PROHIBIT_AA
+  -- @field PROHIBIT_JETT
+  -- @field PROHIBIT_AB
+  -- @field PROHIBIT_AG
+  -- @field MISSILE_ATTACK
+  -- @field PROHIBIT_WP_PASS_REPORT
+  
+  --- @type AI.Option.Air.id.FORMATION
+  -- @field LINE_ABREAST
+  -- @field TRAIL
+  -- @field WEDGE
+  -- @field ECHELON_RIGHT
+  -- @field ECHELON_LEFT
+  -- @field FINGER_FOUR
+  -- @field SPREAD_FOUR
+  -- @field WW2_BOMBER_ELEMENT
+  -- @field WW2_BOMBER_ELEMENT_HEIGHT
+  -- @field WW2_FIGHTER_VIC
+  -- @field HEL_WEDGE
+  -- @field HEL_ECHELON
+  -- @field HEL_FRONT
+  -- @field HEL_COLUMN
+  -- @field COMBAT_BOX
+  -- @field JAVELIN_DOWN
+
   
   --- @type AI.Option.Air.val
   -- @field #AI.Option.Air.val.ROE ROE
@@ -1161,12 +1338,27 @@ do -- AI
   -- @field AGAINST_FIRED_MISSILE
   -- @field WHEN_FLYING_IN_SAM_WEZ
   -- @field WHEN_FLYING_NEAR_ENEMIES
+
+  --- @type AI.Option.Air.val.ECM_USING
+  -- @field NEVER_USE
+  -- @field USE_IF_ONLY_LOCK_BY_RADAR
+  -- @field USE_IF_DETECTED_LOCK_BY_RADAR
+  -- @field ALWAYS_USE
+
+  --- @type AI.Option.Air.val.MISSILE_ATTACK
+  -- @field MAX_RANGE
+  -- @field NEZ_RANGE
+  -- @field HALF_WAY_RMAX_NEZ
+  -- @field TARGET_THREAT_EST
+  -- @field RANDOM_RANGE
+
   
   --- @type AI.Option.Ground.id
   -- @field NO_OPTION
   -- @field ROE @{#AI.Option.Ground.val.ROE}
   -- @field DISPERSE_ON_ATTACK true or false
   -- @field ALARM_STATE @{#AI.Option.Ground.val.ALARM_STATE}
+  -- @field ENGAGE_AIR_WEAPONS
   
   --- @type AI.Option.Ground.val
   -- @field #AI.Option.Ground.val.ROE               ROE
@@ -1197,6 +1389,3 @@ do -- AI
   AI = {} --#AI
 
 end -- AI
-
-
-

@@ -4,7 +4,7 @@
 -- 
 -- ### Author: **FlightControl**
 -- 
--- ### Contributions: 
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -48,6 +48,10 @@ STATIC = {
 }
 
 
+--- Register a static object.
+-- @param #STATIC self
+-- @param #string StaticName Name of the static object.
+-- @return #STATIC self
 function STATIC:Register( StaticName )
   local self = BASE:Inherit( self, POSITIONABLE:New( StaticName ) )
   self.StaticName = StaticName
@@ -71,19 +75,21 @@ end
 -- @param #STATIC self
 -- @param #string StaticName Name of the DCS **Static** as defined within the Mission Editor.
 -- @param #boolean RaiseError Raise an error if not found.
--- @return #STATIC
+-- @return #STATIC self or *nil*
 function STATIC:FindByName( StaticName, RaiseError )
+
+  -- Find static in DB.
   local StaticFound = _DATABASE:FindStatic( StaticName )
 
+  -- Set static name.
   self.StaticName = StaticName
   
   if StaticFound then
-    StaticFound:F3( { StaticName } )
   	return StaticFound
   end
-
-  if RaiseError == nil or RaiseError == true then
-    error( "STATIC not found for: " .. StaticName )
+  
+  if RaiseError == nil or RaiseError == true then 
+    error( "STATIC not found for: " .. StaticName ) 
   end
 
   return nil
@@ -136,13 +142,16 @@ function STATIC:Destroy( GenerateEvent )
     end
     
     DCSObject:destroy()
+    return true
   end
 
   return nil
 end
 
 
-
+--- Get DCS object of static of static.
+-- @param #STATIC self
+-- @return DCS static object
 function STATIC:GetDCSObject()
   local DCSStatic = StaticObject.getByName( self.StaticName )
   
@@ -172,77 +181,72 @@ function STATIC:GetUnits()
 end
 
 
-
-
+--- Get threat level of static.
+-- @param #STATIC self
+-- @return #number Threat level 1.
+-- @return #string "Static"
 function STATIC:GetThreatLevel()
-
   return 1, "Static"
 end
 
---- Respawn the @{Wrapper.Unit} using a (tweaked) template of the parent Group.
+--- Spawn the @{Wrapper.Static} at a specific coordinate and heading.
 -- @param #STATIC self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
--- @param #number Heading The heading of the unit respawn.
-function STATIC:SpawnAt( Coordinate, Heading )
+-- @param #number Heading The heading of the static respawn in degrees. Default is 0 deg.
+-- @param #number Delay Delay in seconds before the static is spawned.
+function STATIC:SpawnAt( Coordinate, Heading, Delay )
 
-  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
+  Heading=Heading or 0
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.SpawnAt, {self, Coordinate, Heading}, Delay)
+  else
+
+    local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
   
-  SpawnStatic:SpawnFromPointVec2( Coordinate, Heading, self.StaticName )
+    SpawnStatic:SpawnFromPointVec2( Coordinate, Heading, self.StaticName )
+    
+  end
 end
 
 
 --- Respawn the @{Wrapper.Unit} at the same location with the same properties.
 -- This is useful to respawn a cargo after it has been destroyed.
 -- @param #STATIC self
--- @param DCS#country.id countryid The country ID used for spawning the new static.
-function STATIC:ReSpawn(countryid)
+-- @param DCS#country.id countryid The country ID used for spawning the new static. Default is same as currently.
+-- @param #number Delay Delay in seconds before static is respawned.
+function STATIC:ReSpawn(countryid, Delay)
 
-  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, countryid )
-  
-  SpawnStatic:ReSpawn()
+  countryid=countryid or self:GetCountry()
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.ReSpawn, {self, countryid}, Delay)
+  else
+
+    local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, countryid )
+    
+    SpawnStatic:ReSpawn()
+    
+  end
 end
 
 
 --- Respawn the @{Wrapper.Unit} at a defined Coordinate with an optional heading.
 -- @param #STATIC self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
--- @param #number Heading The heading of the unit respawn.
-function STATIC:ReSpawnAt( Coordinate, Heading )
+-- @param #number Heading The heading of the static respawn in degrees. Default is 0 deg.
+-- @param #number Delay Delay in seconds before static is respawned.
+function STATIC:ReSpawnAt( Coordinate, Heading, Delay )
 
-  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
-  
-  SpawnStatic:ReSpawnAt( Coordinate, Heading )
-end
+  Heading=Heading or 0
 
-
---- Returns true if the unit is within a @{Zone}.
--- @param #STATIC self
--- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
-function STATIC:IsInZone( Zone )
-  self:F2( { self.StaticName, Zone } )
-
-  if self:IsAlive() then
-    local IsInZone = Zone:IsVec3InZone( self:GetVec3() )
-  
-    return IsInZone 
-  end
-  return false
-end
-
---- Returns true if the unit is not within a @{Zone}.
--- @param #STATIC self
--- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}
-function STATIC:IsNotInZone( Zone )
-  self:F2( { self.StaticName, Zone } )
-
-  if self:IsAlive() then
-    local IsInZone = not Zone:IsVec3InZone( self:GetVec3() )
-    
-    self:T( { IsInZone } )
-    return IsInZone 
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.ReSpawnAt, {self, Coordinate, Heading}, Delay)
   else
-    return false
+  
+    local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
+    
+    SpawnStatic:ReSpawnAt( Coordinate, Heading )
   end
 end
+

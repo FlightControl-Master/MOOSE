@@ -178,8 +178,8 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   self.PatrolMinSpeed = PatrolMinSpeed
   self.PatrolMaxSpeed = PatrolMaxSpeed
   
-  -- defafult PatrolAltType to "RADIO" if not specified
-  self.PatrolAltType = PatrolAltType or "RADIO"
+  -- defafult PatrolAltType to "BARO" if not specified
+  self.PatrolAltType = PatrolAltType or "BARO"
   
   self:SetRefreshTimeInterval( 30 )
   
@@ -636,7 +636,7 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
 
   self.Controllable:OnReSpawn(
     function( PatrolGroup )
-      self:E( "ReSpawn" )
+      self:T( "ReSpawn" )
       self:__Reset( 1 )
       self:__Route( 5 )
     end
@@ -667,21 +667,27 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
     if TargetObject and TargetObject:isExist() and TargetObject.id_ < 50000000 then
 
       local TargetUnit = UNIT:Find( TargetObject )
-      local TargetUnitName = TargetUnit:GetName()
       
-      if self.DetectionZone then
-        if TargetUnit:IsInZone( self.DetectionZone ) then
-          self:T( {"Detected ", TargetUnit } )
+      -- Check that target is alive due to issue https://github.com/FlightControl-Master/MOOSE/issues/1234
+      if TargetUnit and TargetUnit:IsAlive() then
+      
+        local TargetUnitName = TargetUnit:GetName()
+        
+        if self.DetectionZone then
+          if TargetUnit:IsInZone( self.DetectionZone ) then
+            self:T( {"Detected ", TargetUnit } )
+            if self.DetectedUnits[TargetUnit] == nil then
+              self.DetectedUnits[TargetUnit] = true
+            end
+            Detected = true 
+          end
+        else       
           if self.DetectedUnits[TargetUnit] == nil then
             self.DetectedUnits[TargetUnit] = true
           end
-          Detected = true 
+          Detected = true
         end
-      else       
-        if self.DetectedUnits[TargetUnit] == nil then
-          self.DetectedUnits[TargetUnit] = true
-        end
-        Detected = true
+        
       end
     end
   end
@@ -735,7 +741,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     -- This will make the plane fly immediately to the patrol zone.
     
     if self.Controllable:InAir() == false then
-      self:E( "Not in the air, finding route path within PatrolZone" )
+      self:T( "Not in the air, finding route path within PatrolZone" )
       local CurrentVec2 = self.Controllable:GetVec2()
       --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
       local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
@@ -750,7 +756,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
         )
       PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
     else
-      self:E( "In the air, finding route path within PatrolZone" )
+      self:T( "In the air, finding route path within PatrolZone" )
       local CurrentVec2 = self.Controllable:GetVec2()
       --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
       local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
@@ -825,7 +831,7 @@ function AI_PATROL_ZONE:onafterStatus()
     
     local Fuel = self.Controllable:GetFuelMin()
     if Fuel < self.PatrolFuelThresholdPercentage then
-      self:E( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
+      self:I( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
       local OldAIControllable = self.Controllable
       
       local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
@@ -839,7 +845,7 @@ function AI_PATROL_ZONE:onafterStatus()
     -- TODO: Check GROUP damage function.
     local Damage = self.Controllable:GetLife()
     if Damage <= self.PatrolDamageThreshold then
-      self:E( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
+      self:I( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
       RTB = true
     end
     
@@ -900,7 +906,6 @@ end
 function AI_PATROL_ZONE:OnCrash( EventData )
 
   if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
-    self:E( self.Controllable:GetUnits() )
     if #self.Controllable:GetUnits() == 1 then
       self:__Crash( 1, EventData )
     end

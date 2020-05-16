@@ -150,6 +150,8 @@
 -- @field #number  parkingscanradius Radius in meters until which parking spots are scanned for obstacles like other units, statics or scenery.
 -- @field #boolean parkingscanscenery If true, area around parking spots is scanned for scenery objects. Default is false.
 -- @field #boolean parkingverysafe If true, parking spots are considered as non-free until a possible aircraft has left and taken off. Default false.
+-- @field #boolean despawnair If true, aircraft are despawned when they reach their destination zone. Default.
+-- @field #boolean eplrs If true, turn on EPLSR datalink for the RAT group.
 -- @extends Core.Spawn#SPAWN
 
 --- Implements an easy to use way to randomly fill your map with AI aircraft.
@@ -240,7 +242,7 @@
 -- * AIRBASE.TerminalType.OpenMed: Open/Shelter air airplane only.
 -- * AIRBASE.TerminalType.OpenBig: Open air spawn points. Generally larger but does not guarantee large aircraft are capable of spawning there.
 -- * AIRBASE.TerminalType.OpenMedOrBig: Combines OpenMed and OpenBig spots.
--- * AIRBASE.TerminalType.HelicopterUnsable: Combines HelicopterOnly, OpenMed and OpenBig.
+-- * AIRBASE.TerminalType.HelicopterUsable: Combines HelicopterOnly, OpenMed and OpenBig.
 -- * AIRBASE.TerminalType.FighterAircraft: Combines Shelter, OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
 -- 
 -- So for example
@@ -428,6 +430,8 @@ RAT={
   parkingscanradius=40,     -- Scan radius.
   parkingscanscenery=false, -- Scan parking spots for scenery obstacles.
   parkingverysafe=false,    -- Very safe option.
+  despawnair=true,
+  eplrs=false,
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -546,7 +550,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.3.4",
+  version = "2.3.9",
   print = true,
 }
 
@@ -717,6 +721,11 @@ function RAT:Spawn(naircraft)
       self.FLcruise=005*RAT.unit.FL2m
     end
   end
+
+  -- Enable helos to go to destinations 100 meters away.  
+  if self.category==RAT.cat.heli then
+    self.mindist=50
+  end  
   
   -- Run consistency checks.
   self:_CheckConsistency()
@@ -1090,6 +1099,14 @@ end
 function RAT:SetParkingSpotSafeOFF()
   self:F2()
   self.parkingverysafe=false
+  return self
+end
+
+--- Aircraft that reach their destination zone are not despawned. They will probably go the the nearest airbase and try to land.
+-- @param #RAT self
+-- @return #RAT RAT self object.
+function RAT:SetDespawnAirOFF()
+  self.despawnair=false
   return self
 end
 
@@ -1627,6 +1644,19 @@ function RAT:Invisible()
   return self
 end
 
+--- Turn EPLRS datalink on/off. 
+-- @param #RAT self
+-- @param #boolean switch If true (or nil), turn EPLRS on.
+-- @return #RAT RAT self object.
+function RAT:SetEPLRS(switch)
+  if switch==nil or switch==true then
+    self.eplrs=true
+  else
+    self.eplrs=false
+  end
+  return self
+end
+
 --- Aircraft are immortal. 
 -- @param #RAT self
 -- @return #RAT RAT self object.
@@ -1812,14 +1842,14 @@ function RAT:ATC_Delay(time)
 end
 
 --- Set minimum distance between departure and destination. Default is 5 km.
--- Minimum distance should not be smaller than maybe ~500 meters to ensure that departure and destination are different.
+-- Minimum distance should not be smaller than maybe ~100 meters to ensure that departure and destination are different.
 -- @param #RAT self
 -- @param #number dist Distance in km.
 -- @return #RAT RAT self object.
 function RAT:SetMinDistance(dist)
   self:F2(dist)
   -- Distance in meters. Absolute minimum is 500 m.
-  self.mindist=math.max(500, dist*1000)
+  self.mindist=math.max(100, dist*1000)
   return self
 end
 
@@ -2149,6 +2179,11 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
     self:_CommandImmortal(group, true)
   end
   
+  -- Set group to be immortal.
+  if self.eplrs then
+    group:CommandEPLRS(true, 1)
+  end  
+  
   -- Set ROE, default is "weapon hold".
   self:_SetROE(group, self.roe)
   
@@ -2446,7 +2481,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   local VxCruiseMax
   if self.Vcruisemax then
     -- User input.
-    VxCruiseMax = min(self.Vcruisemax, self.aircraft.Vmax)
+    VxCruiseMax = math.min(self.Vcruisemax, self.aircraft.Vmax)
   else
     -- Max cruise speed 90% of Vmax or 900 km/h whichever is lower.
     VxCruiseMax = math.min(self.aircraft.Vmax*0.90, 250)
@@ -3357,11 +3392,19 @@ function RAT:_GetAirportsOfMap()
       local _name=airbase:getName()
       local _myab=AIRBASE:FindByName(_name)
       
-      -- Add airport to table.
-      table.insert(self.airports_map, _myab)
+      if _myab then
       
-      local text="MOOSE: Airport ID = ".._myab:GetID().." and Name = ".._myab:GetName()..", Category = ".._myab:GetCategory()..", TypeName = ".._myab:GetTypeName()
-      self:T(RAT.id..text)
+        -- Add airport to table.
+        table.insert(self.airports_map, _myab)
+        
+        local text="MOOSE: Airport ID = ".._myab:GetID().." and Name = ".._myab:GetName()..", Category = ".._myab:GetCategory()..", TypeName = ".._myab:GetTypeName()
+        self:T(RAT.id..text)
+        
+      else
+      
+        self:E(RAT.id..string.format("WARNING: Airbase %s does not exsist as MOOSE object!", tostring(_name)))
+      
+      end
     end
     
   end
@@ -3373,7 +3416,7 @@ function RAT:_GetAirportsOfCoalition()
   for _,coalition in pairs(self.ctable) do
     for _,_airport in pairs(self.airports_map) do
       local airport=_airport --Wrapper.Airbase#AIRBASE
-      local category=airport:GetDesc().category
+      local category=airport:GetAirbaseCategory()
       if airport:GetCoalition()==coalition then
         -- Planes cannot land on FARPs.
         --local condition1=self.category==RAT.cat.plane and airport:GetTypeName()=="FARP"
@@ -3599,13 +3642,18 @@ function RAT:Status(message, forID)
       
         local text=string.format("Flight %s will be despawned NOW!", self.alias)
         self:T(RAT.id..text)
-        -- Despawn old group.
+        
+        -- Respawn group
         if (not self.norespawn) and (not self.respawn_after_takeoff) then
           local idx=self:GetSpawnIndexFromGroup(group)
           local coord=group:GetCoordinate()  
           self:_Respawn(idx, coord, 0)
         end
-        self:_Despawn(group, 0)
+        
+        -- Despawn old group.
+        if self.despawnair then
+          self:_Despawn(group, 0)
+        end
         
       end
 
@@ -3799,7 +3847,7 @@ function RAT:_OnBirth(EventData)
         
         -- Check if any unit of the group was spawned on top of another unit in the MOOSE data base.
         local ontop=false
-        if self.checkontop and (_airbase and _airbase:GetDesc().category==Airbase.Category.AIRDROME) then
+        if self.checkontop and (_airbase and _airbase:GetAirbaseCategory()==Airbase.Category.AIRDROME) then
           ontop=self:_CheckOnTop(SpawnGroup, self.ontopradius)
         end
         
@@ -4409,7 +4457,7 @@ function RAT:_Waypoint(index, description, Type, Coord, Speed, Altitude, Airport
   
   if (Airport~=nil) and (Type~=RAT.wp.air) then
     local AirbaseID = Airport:GetID()
-    local AirbaseCategory = Airport:GetDesc().category
+    local AirbaseCategory = Airport:GetAirbaseCategory()
     if AirbaseCategory == Airbase.Category.SHIP then
       RoutePoint.linkUnit = AirbaseID
       RoutePoint.helipadId = AirbaseID
@@ -5093,7 +5141,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
   local spawnonrunway=false
   local spawnonairport=false
   if spawnonground then
-    local AirbaseCategory = departure:GetDesc().category      
+    local AirbaseCategory = departure:GetAirbaseCategory()  
     if AirbaseCategory == Airbase.Category.SHIP then
       spawnonship=true
     elseif AirbaseCategory == Airbase.Category.HELIPAD then
@@ -5125,6 +5173,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
       if self.uncontrolled then
         -- This is used in the SPAWN:SpawnWithIndex() function. Some values are overwritten there!
         self.SpawnUnControlled=true
+        SpawnTemplate.uncontrolled=true
       end
       
       -- Number of units in the group. With grouping this can actually differ from the template group size!
@@ -5435,7 +5484,7 @@ function RAT:_ATCInit(airports_map)
   if not RAT.ATC.init then
     local text
     text="Starting RAT ATC.\nSimultanious = "..RAT.ATC.Nclearance.."\n".."Delay        = "..RAT.ATC.delay
-	  self:T(RAT.id..text)
+	  BASE:T(RAT.id..text)
     RAT.ATC.init=true
     for _,ap in pairs(airports_map) do
       local name=ap:GetName()
@@ -5458,7 +5507,7 @@ end
 -- @param #string name Group name of the flight.
 -- @param #string dest Name of the destination airport.
 function RAT:_ATCAddFlight(name, dest)
-  self:T(string.format("%sATC %s: Adding flight %s with destination %s.", RAT.id, dest, name, dest))
+  BASE:T(string.format("%sATC %s: Adding flight %s with destination %s.", RAT.id, dest, name, dest))
   RAT.ATC.flight[name]={}
   RAT.ATC.flight[name].destination=dest
   RAT.ATC.flight[name].Tarrive=-1
@@ -5483,7 +5532,7 @@ end
 -- @param #string name Group name of the flight.
 -- @param #number time Time the fight first registered.
 function RAT:_ATCRegisterFlight(name, time)
-  self:T(RAT.id.."Flight ".. name.." registered at ATC for landing clearance.")
+  BASE:T(RAT.id.."Flight ".. name.." registered at ATC for landing clearance.")
   RAT.ATC.flight[name].Tarrive=time
   RAT.ATC.flight[name].holding=0
 end
@@ -5514,7 +5563,7 @@ function RAT:_ATCStatus()
       
       -- Aircraft is holding.
       local text=string.format("ATC %s: Flight %s is holding for %i:%02d. %s.", dest, name, hold/60, hold%60, busy)
-      self:T(RAT.id..text)
+      BASE:T(RAT.id..text)
       
     elseif hold==RAT.ATC.onfinal then
     
@@ -5522,7 +5571,7 @@ function RAT:_ATCStatus()
       local Tfinal=Tnow-RAT.ATC.flight[name].Tonfinal
       
       local text=string.format("ATC %s: Flight %s is on final. Waiting %i:%02d for landing event.", dest, name, Tfinal/60, Tfinal%60)
-      self:T(RAT.id..text)
+      BASE:T(RAT.id..text)
       
     elseif hold==RAT.ATC.unregistered then
     
@@ -5530,7 +5579,7 @@ function RAT:_ATCStatus()
       --self:T(string.format("ATC %s: Flight %s is not registered yet (hold %d).", dest, name, hold))
       
     else
-      self:E(RAT.id.."ERROR: Unknown holding time in RAT:_ATCStatus().")
+      BASE:E(RAT.id.."ERROR: Unknown holding time in RAT:_ATCStatus().")
     end
   end
   
@@ -5572,12 +5621,12 @@ function RAT:_ATCCheck()
         
         -- Debug message.
         local text=string.format("ATC %s: Flight %s runway is busy. You are #%d of %d in landing queue. Your holding time is %i:%02d.", name, flight,qID, nqueue, RAT.ATC.flight[flight].holding/60, RAT.ATC.flight[flight].holding%60)
-        self:T(RAT.id..text)
+        BASE:T(RAT.id..text)
         
       else
       
         local text=string.format("ATC %s: Flight %s was cleared for landing. Your holding time was %i:%02d.", name, flight, RAT.ATC.flight[flight].holding/60, RAT.ATC.flight[flight].holding%60)
-        self:T(RAT.id..text)
+        BASE:T(RAT.id..text)
       
         -- Clear flight for landing.
         RAT:_ATCClearForLanding(name, flight)
@@ -5705,12 +5754,7 @@ function RAT:_ATCQueue()
     for k,v in ipairs(_queue) do
       table.insert(RAT.ATC.airport[airport].queue, v[1])
     end
-    
-    --fvh
-    --for k,v in ipairs(RAT.ATC.airport[airport].queue) do
-      --print(string.format("queue #%02i flight \"%s\" holding %d seconds",k, v, RAT.ATC.flight[v].holding))
-    --end
-    
+
   end
 end
 

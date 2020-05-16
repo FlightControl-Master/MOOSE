@@ -121,13 +121,13 @@ AI_A2A_PATROL = {
 
 --- Creates a new AI_A2A_PATROL object
 -- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol
+-- @param Wrapper.Group#GROUP AIPatrol The patrol group object.
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
 -- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+-- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to BARO
 -- @return #AI_A2A_PATROL self
 -- @usage
 -- -- Define a new AI_A2A_PATROL Object. This PatrolArea will patrol a Group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
@@ -136,8 +136,14 @@ AI_A2A_PATROL = {
 -- PatrolArea = AI_A2A_PATROL:New( PatrolZone, 3000, 6000, 600, 900 )
 function AI_A2A_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
-  -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_A2A:New( AIPatrol ) ) -- #AI_A2A_PATROL
+  local AI_Air = AI_AIR:New( AIPatrol )
+  local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType  )
+  local self = BASE:Inherit( self, AI_Air_Patrol ) -- #AI_A2A_PATROL
+  
+  self:SetFuelThreshold( .2, 60 )
+  self:SetDamageThreshold( 0.4 )
+  self:SetDisengageRadius( 70000 )
+
   
   self.PatrolZone = PatrolZone
   self.PatrolFloorAltitude = PatrolFloorAltitude
@@ -145,8 +151,8 @@ function AI_A2A_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCei
   self.PatrolMinSpeed = PatrolMinSpeed
   self.PatrolMaxSpeed = PatrolMaxSpeed
   
-  -- defafult PatrolAltType to "RADIO" if not specified
-  self.PatrolAltType = PatrolAltType or "RADIO"
+  -- defafult PatrolAltType to "BARO" if not specified
+  self.PatrolAltType = PatrolAltType or "BARO"
   
   self:AddTransition( { "Started", "Airborne", "Refuelling" }, "Patrol", "Patrolling" )
 
@@ -281,15 +287,15 @@ function AI_A2A_PATROL:onafterPatrol( AIPatrol, From, Event, To )
 end
 
 
-
---- @param Wrapper.Group#GROUP AIPatrol
--- This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
+--- This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
 -- Note that this method is required, as triggers the next route when patrolling for the AIPatrol.
+-- @param Wrapper.Group#GROUP AIPatrol The AI group.
+-- @param #AI_A2A_PATROL Fsm The FSM.
 function AI_A2A_PATROL.PatrolRoute( AIPatrol, Fsm )
 
   AIPatrol:F( { "AI_A2A_PATROL.PatrolRoute:", AIPatrol:GetName() } )
 
-  if AIPatrol:IsAlive() then
+  if AIPatrol and AIPatrol:IsAlive() then
     Fsm:Route()
   end
   
@@ -303,7 +309,6 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
-
   self:F2()
 
   -- When RTB, don't allow anymore the routing.
@@ -312,7 +317,7 @@ function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
   end
 
   
-  if AIPatrol:IsAlive() then
+  if AIPatrol and AIPatrol:IsAlive() then
     
     local PatrolRoute = {}
 
@@ -320,43 +325,80 @@ function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
     
     local CurrentCoord = AIPatrol:GetCoordinate()
     
-    local ToTargetCoord = self.PatrolZone:GetRandomPointVec2()
-    ToTargetCoord:SetAlt( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ) )
-    self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
+    -- Random altitude.
+    local altitude=math.random(self.PatrolFloorAltitude, self.PatrolCeilingAltitude)
+      
+    -- Random speed in km/h.
+    local speedkmh = math.random(self.PatrolMinSpeed, self.PatrolMaxSpeed)
     
-    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+    -- First waypoint is current position.
+    PatrolRoute[1]=CurrentCoord:WaypointAirTurningPoint(nil, speedkmh, {}, "Current")    
     
-    --- Create a route point of type air.
-    local ToPatrolRoutePoint = ToTargetCoord:WaypointAir( 
-      self.PatrolAltType, 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      ToTargetSpeed, 
-      true 
-    )
+    if self.racetrack then
+      
+      -- Random heading.
+      local heading = math.random(self.racetrackheadingmin, self.racetrackheadingmax)
+      
+      -- Random leg length.
+      local leg=math.random(self.racetracklegmin, self.racetracklegmax)
+      
+      -- Random duration if any.
+      local duration = self.racetrackdurationmin
+      if self.racetrackdurationmax then
+        duration=math.random(self.racetrackdurationmin, self.racetrackdurationmax)
+      end
+      
+      -- CAP coordinate.
+      local c0=self.PatrolZone:GetRandomCoordinate()
+      if self.racetrackcapcoordinates and #self.racetrackcapcoordinates>0 then
+        c0=self.racetrackcapcoordinates[math.random(#self.racetrackcapcoordinates)]
+      end
+      
+      -- Race track points.
+      local c1=c0:SetAltitude(altitude) --Core.Point#COORDINATE
+      local c2=c1:Translate(leg, heading):SetAltitude(altitude)
+      
+      self:SetTargetDistance(c0) -- For RTB status check
+      
+      -- Debug:
+      self:T(string.format("Patrol zone race track: v=%.1f knots, h=%.1f ft, heading=%03d, leg=%d m, t=%s sec", UTILS.KmphToKnots(speedkmh), UTILS.MetersToFeet(altitude), heading, leg, tostring(duration)))
+      --c1:MarkToAll("Race track c1")
+      --c2:MarkToAll("Race track c2")
 
-    PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
-    PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
-    
-    local Tasks = {}
-    Tasks[#Tasks+1] = AIPatrol:TaskFunction( "AI_A2A_PATROL.PatrolRoute", self )
-    PatrolRoute[#PatrolRoute].task = AIPatrol:TaskCombo( Tasks )
-    
+      -- Task to orbit.              
+      local taskOrbit=AIPatrol:TaskOrbit(c1, altitude, UTILS.KmphToMps(speedkmh), c2)
+      
+      -- Task function to redo the patrol at other random position.
+      local taskPatrol=AIPatrol:TaskFunction("AI_A2A_PATROL.PatrolRoute", self)
+      
+      -- Controlled task with task condition.
+      local taskCond=AIPatrol:TaskCondition(nil, nil, nil, nil, duration, nil)
+      local taskCont=AIPatrol:TaskControlled(taskOrbit, taskCond)
+      
+      -- Second waypoint
+      PatrolRoute[2]=c1:WaypointAirTurningPoint(self.PatrolAltType, speedkmh, {taskCont, taskPatrol}, "CAP Orbit")
+
+    else
+
+      -- Target coordinate.        
+      local ToTargetCoord=self.PatrolZone:GetRandomCoordinate() --Core.Point#COORDINATE
+      ToTargetCoord:SetAltitude(altitude)
+      
+      self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
+      
+      local taskReRoute=AIPatrol:TaskFunction( "AI_A2A_PATROL.PatrolRoute", self )
+      
+      PatrolRoute[2]=ToTargetCoord:WaypointAirTurningPoint(self.PatrolAltType, speedkmh, {taskReRoute}, "Patrol Point")
+            
+    end
+
+    -- ROE    
     AIPatrol:OptionROEReturnFire()
     AIPatrol:OptionROTEvadeFire()
-
-    AIPatrol:Route( PatrolRoute, 0.5 )
-  end
-
-end
-
---- @param Wrapper.Group#GROUP AIPatrol
-function AI_A2A_PATROL.Resume( AIPatrol, Fsm )
-
-  AIPatrol:I( { "AI_A2A_PATROL.Resume:", AIPatrol:GetName() } )
-  if AIPatrol:IsAlive() then
-    Fsm:__Reset( 1 )
-    Fsm:__Route( 5 )
-  end
   
+    -- Patrol.
+    AIPatrol:Route( PatrolRoute, 0.5)
+  end
+
 end
+

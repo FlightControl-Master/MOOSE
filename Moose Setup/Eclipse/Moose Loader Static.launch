@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.ui.externaltools.ProgramLaunchConfigurationType">
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="C:\ProgramData\chocolatey\lib\lua51\tools\lua5.1.exe"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="&quot;Moose Setup\Moose_Create.lua&quot; &quot;S&quot; &quot;LOCAL&quot; &quot;${resource_loc:/MOOSE/Moose Development/Moose}&quot; &quot;${resource_loc:/MOOSE/Moose Setup}&quot;&#13;&#10;${resource_loc:/MOOSE_INCLUDE/Moose_Include_Static}"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/MOOSE}"/>
+</launchConfiguration>

@@ -4,7 +4,7 @@
 -- 
 -- ### Author: **FlightControl**
 -- 
--- ### Contributions: 
+-- ### Contributions: **Hardcard**, **funkyfranky**
 -- 
 -- ===
 -- 
@@ -63,7 +63,7 @@ POSITIONABLE.__.Cargo = {}
 -- @param #string PositionableName The POSITIONABLE name
 -- @return #POSITIONABLE self
 function POSITIONABLE:New( PositionableName )
-  local self = BASE:Inherit( self, IDENTIFIABLE:New( PositionableName ) )
+  local self = BASE:Inherit( self, IDENTIFIABLE:New( PositionableName ) ) -- #POSITIONABLE
 
   self.PositionableName = PositionableName
   return self
@@ -310,6 +310,44 @@ function POSITIONABLE:GetCoordinate()
   return nil
 end
 
+--- Returns a COORDINATE object, which is offset with respect to the orientation of the POSITIONABLE.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #number x Offset in the direction "the nose" of the unit is pointing in meters. Default 0 m.
+-- @param #number y Offset "above" the unit in meters. Default 0 m.
+-- @param #number z Offset in the direction "the wing" of the unit is pointing in meters. z>0 starboard, z<0 port. Default 0 m.
+-- @return Core.Point#COORDINATE The COORDINATE of the offset with respect to the orientation of the  POSITIONABLE.
+function POSITIONABLE:GetOffsetCoordinate(x,y,z)
+  
+  -- Default if nil.
+  x=x or 0
+  y=y or 0
+  z=z or 0
+
+  -- Vectors making up the coordinate system.
+  local X=self:GetOrientationX()
+  local Y=self:GetOrientationY()
+  local Z=self:GetOrientationZ()
+  
+  -- Offset vector: x meters ahead, z meters starboard, y meters above.
+  local A={x=x, y=y, z=z}
+  
+  -- Scale components of orthonormal coordinate vectors.
+  local x={x=X.x*A.x, y=X.y*A.x, z=X.z*A.x}
+  local y={x=Y.x*A.y, y=Y.y*A.y, z=Y.z*A.y}
+  local z={x=Z.x*A.z, y=Z.y*A.z, z=Z.z*A.z}
+  
+  -- Add up vectors in the unit coordinate system ==> this gives the offset vector relative the the origin of the map.
+  local a={x=x.x+y.x+z.x, y=x.y+y.y+z.y, z=x.z+y.z+z.z}
+  
+  -- Vector from the origin of the map to the unit.
+  local u=self:GetVec3()
+  
+  -- Translate offset vector from map origin to the unit: v=u+a.
+  local v={x=a.x+u.x, y=a.y+u.y, z=a.z+u.z}
+  
+  -- Return the offset coordinate.
+  return COORDINATE:NewFromVec3(v)
+end
 
 --- Returns a random @{DCS#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
@@ -389,6 +427,27 @@ function POSITIONABLE:GetBoundingBox() --R2.1
   return nil
 end
 
+
+--- Get the object size.
+-- @param #POSITIONABLE self 
+-- @return DCS#Distance Max size of object in x, z or 0 if bounding box could not be obtained.
+-- @return DCS#Distance Length x or 0 if bounding box could not be obtained.
+-- @return DCS#Distance Height y or 0 if bounding box could not be obtained.
+-- @return DCS#Distance Width z or 0 if bounding box could not be obtained.
+function POSITIONABLE:GetObjectSize()
+
+  -- Get bounding box.
+  local box=self:GetBoundingBox()
+  
+  if box then
+    local x=box.max.x+math.abs(box.min.x)  --length
+    local y=box.max.y+math.abs(box.min.y)  --height
+    local z=box.max.z+math.abs(box.min.z)  --width
+    return math.max(x,z), x , y, z
+  end
+  
+  return 0,0,0,0
+end
 
 --- Get the bounding radius of the underlying POSITIONABLE DCS Object.
 -- @param #POSITIONABLE self
@@ -543,6 +602,26 @@ function POSITIONABLE:IsGround()
 end
 
 
+--- Returns if the unit is of ship category.
+-- @param #POSITIONABLE self
+-- @return #boolean Ship category evaluation result.
+function POSITIONABLE:IsShip()
+  self:F2()
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+    
+    local IsShip = ( UnitDescriptor.category == Unit.Category.SHIP )
+  
+    return IsShip
+  end
+  
+  return nil
+end
+
+
 --- Returns true if the POSITIONABLE is in the air.
 -- Polymorphic, is overridden in GROUP and UNIT.
 -- @param Wrapper.Positionable#POSITIONABLE self
@@ -594,6 +673,21 @@ function POSITIONABLE:GetVelocityVec3()
   BASE:E( { "Cannot GetVelocityVec3", Positionable = self, Alive = self:IsAlive() } )
 
   return nil
+end
+
+--- Get relative velocity with respect to another POSITIONABLE.
+-- @param #POSITIONABLE self
+-- @param #POSITIONABLE positionable Other positionable.
+-- @return #number Relative velocity in m/s.
+function POSITIONABLE:GetRelativeVelocity(positionable)
+  self:F2( self.PositionableName )
+  
+  local v1=self:GetVelocityVec3()
+  local v2=positionable:GetVelocityVec3()
+  
+  local vtot=UTILS.VecAdd(v1,v2)
+  
+  return UTILS.VecNorm(vtot)
 end
 
 
@@ -656,6 +750,14 @@ function POSITIONABLE:GetVelocityMPS()
   return 0
 end
 
+--- Returns the POSITIONABLE velocity in knots.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return #number The velocity in knots.
+function POSITIONABLE:GetVelocityKNOTS()
+  self:F2( self.PositionableName )
+  return UTILS.MpsToKnots(self:GetVelocityMPS())
+end
+
 --- Returns the Angle of Attack of a positionable.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number Angle of attack in degrees.
@@ -706,8 +808,8 @@ end
 
 --- Returns the unit's climb or descent angle.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number Climb or descent angle in degrees.
-function POSITIONABLE:GetClimbAnge()
+-- @return #number Climb or descent angle in degrees. Or 0 if velocity vector norm is zero (or nil). Or nil, if the position of the POSITIONABLE returns nil.
+function POSITIONABLE:GetClimbAngle()
 
   -- Get position of the unit.
   local unitpos = self:GetPosition()
@@ -719,10 +821,17 @@ function POSITIONABLE:GetClimbAnge()
     
     if unitvel and UTILS.VecNorm(unitvel)~=0 then
 
-      return math.asin(unitvel.y/UTILS.VecNorm(unitvel))
-
+      -- Calculate climb angle.
+      local angle=math.asin(unitvel.y/UTILS.VecNorm(unitvel))
+      
+      -- Return angle in degrees.
+      return math.deg(angle)
+    else
+      return 0
     end
   end
+  
+  return nil
 end
 
 --- Returns the pitch angle of a unit.
@@ -1027,7 +1136,7 @@ function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Nam
   local DCSObject = self:GetDCSObject()
   if DCSObject then
     if DCSObject:isExist() then
-      MessageSetGroup:ForEachGroup(
+      MessageSetGroup:ForEachGroupAlive(
         function( MessageGroup )
           self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
         end 
@@ -1074,9 +1183,9 @@ end
 
 --- Start Lasing a POSITIONABLE
 -- @param #POSITIONABLE self
--- @param #POSITIONABLE Target
--- @param #number LaserCode
--- @param #number Duration
+-- @param #POSITIONABLE Target The target to lase.
+-- @param #number LaserCode Laser code or random number in [1000, 9999].
+-- @param #number Duration Duration of lasing in seconds.
 -- @return Core.Spot#SPOT
 function POSITIONABLE:LaseUnit( Target, LaserCode, Duration ) --R2.1
   self:F2()
@@ -1093,6 +1202,24 @@ function POSITIONABLE:LaseUnit( Target, LaserCode, Duration ) --R2.1
   
   return self.Spot
   
+end
+
+--- Start Lasing a COORDINATE.
+-- @param #POSITIONABLE self
+-- @param Core.Point#COORDIUNATE Coordinate The coordinate where the lase is pointing at.
+-- @param #number LaserCode Laser code or random number in [1000, 9999].
+-- @param #number Duration Duration of lasing in seconds.
+-- @return Core.Spot#SPOT
+function POSITIONABLE:LaseCoordinate(Coordinate, LaserCode, Duration)
+  self:F2()
+
+  LaserCode = LaserCode or math.random(1000, 9999)
+  
+  self.Spot = SPOT:New(self) -- Core.Spot#SPOT
+  self.Spot:LaseOnCoordinate(Coordinate, LaserCode, Duration)
+  self.LaserCode = LaserCode
+  
+  return self.Spot
 end
 
 --- Stop Lasing a POSITIONABLE
@@ -1405,3 +1532,33 @@ function POSITIONABLE:SmokeBlue()
 end
 
 
+--- Returns true if the unit is within a @{Zone}.
+-- @param #STPOSITIONABLEATIC self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
+function POSITIONABLE:IsInZone( Zone )
+  self:F2( { self.PositionableName, Zone } )
+
+  if self:IsAlive() then
+    local IsInZone = Zone:IsVec3InZone( self:GetVec3() )
+  
+    return IsInZone 
+  end
+  return false
+end
+
+--- Returns true if the unit is not within a @{Zone}.
+-- @param #POSITIONABLE self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}
+function POSITIONABLE:IsNotInZone( Zone )
+  self:F2( { self.PositionableName, Zone } )
+
+  if self:IsAlive() then
+    local IsNotInZone = not Zone:IsVec3InZone( self:GetVec3() )
+    
+    return IsNotInZone 
+  else
+    return false
+  end
+end

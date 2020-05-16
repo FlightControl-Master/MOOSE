@@ -292,7 +292,9 @@ do -- TASK_A2A
 
   --- Return the relative distance to the target vicinity from the player, in order to sort the targets in the reports per distance from the threats.
   -- @param #TASK_A2A self
-  function TASK_A2A:ReportOrder( ReportGroup ) 
+  function TASK_A2A:ReportOrder( ReportGroup )
+	self:UpdateTaskInfo( self.DetectedItem )
+  
     local Coordinate = self.TaskInfo:GetData( "Coordinate" )
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
@@ -349,6 +351,26 @@ do -- TASK_A2A
         self.TaskInfo:AddTargets( DetectedItemsCount, DetectedItemsTypes, 20, "D", true ) 
       end
     end
+  end
+
+  --- This function is called from the @{Tasking.CommandCenter#COMMANDCENTER} to determine the method of automatic task selection.
+  -- @param #TASK_A2A self
+  -- @param #number AutoAssignMethod The method to be applied to the task.
+  -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
+  -- @param Wrapper.Group#GROUP TaskGroup The player group.
+  function TASK_A2A:GetAutoAssignPriority( AutoAssignMethod, CommandCenter, TaskGroup )
+  
+    if     AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Random then
+      return math.random( 1, 9 )
+    elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Distance then
+      local Coordinate = self.TaskInfo:GetData( "Coordinate" )
+      local Distance = Coordinate:Get2DDistance( CommandCenter:GetPositionable():GetCoordinate() )
+      return math.floor( Distance )
+    elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Priority then
+      return 1
+    end
+
+    return 0
   end
 
 end 

@@ -141,6 +141,17 @@ function AI_CARGO:New( Carrier, CargoSet )
   -- @param #string From
   -- @param #string Event
   -- @param #string To
+
+  --- On after Deployed event.
+  -- @function [parent=#AI_CARGO] OnAfterDeployed
+  -- @param #AI_CARGO self
+  -- @param Wrapper.Group#GROUP Carrier
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+  -- @param #boolean Defend Defend for APCs.
+  
   
   for _, CarrierUnit in pairs( Carrier:GetUnits() ) do
     local CarrierUnit = CarrierUnit -- Wrapper.Unit#UNIT
@@ -256,9 +267,10 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
             self:F( { "In radius", CarrierUnit:GetName() } )
             
             local CargoWeight = Cargo:GetWeight()
+            local CarrierSpace=Carrier_Weight[CarrierUnit] 
   
             -- Only when there is space within the bay to load the next cargo item!
-            if Carrier_Weight[CarrierUnit] > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
+            if CarrierSpace > CargoWeight then
               Carrier:RouteStop()
               --Cargo:Ungroup()
               Cargo:__Board( -LoadDelay, CarrierUnit )
@@ -275,6 +287,8 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
               
               -- Ok, we loaded a cargo, now we can stop the loop.
               break
+            else
+              self:T(string.format("WARNING: Cargo too heavy for carrier %s. Cargo=%.1f > %.1f free space", tostring(CarrierUnit:GetName()), CargoWeight, CarrierSpace))
             end
           end
         end
@@ -554,6 +568,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+-- @param #boolean Defend Defend for APCs.
 function AI_CARGO:onafterDeployed( Carrier, From, Event, To, DeployZone, Defend )
   self:F( { Carrier, From, Event, To, DeployZone = DeployZone, Defend = Defend } )
 

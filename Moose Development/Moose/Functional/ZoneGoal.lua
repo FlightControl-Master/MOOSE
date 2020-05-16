@@ -8,6 +8,7 @@
 -- ===
 -- 
 -- ### Author: **FlightControl**
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -17,10 +18,16 @@
 do -- Zone
 
   --- @type ZONE_GOAL
-  -- @extends Core.Fsm#FSM
+  -- @field #string ClassName Name of the class.
+  -- @field Core.Goal#GOAL Goal The goal object.
+  -- @field #number SmokeTime Time stamp in seconds when the last smoke of the zone was triggered.
+  -- @field Core.Scheduler#SCHEDULER SmokeScheduler Scheduler responsible for smoking the zone.
+  -- @field #number SmokeColor Color of the smoke.
+  -- @field #boolean SmokeZone If true, smoke zone.
+  -- @extends Core.Zone#ZONE_RADIUS
 
 
-  -- Models processes that have a Goal with a defined achievement involving a Zone. 
+  --- Models processes that have a Goal with a defined achievement involving a Zone. 
   -- Derived classes implement the ways how the achievements can be realized.
   -- 
   -- ## 1. ZONE_GOAL constructor
@@ -39,24 +46,41 @@ do -- Zone
   -- 
   -- @field #ZONE_GOAL
   ZONE_GOAL = {
-    ClassName = "ZONE_GOAL",
+    ClassName      = "ZONE_GOAL",
+    Goal           = nil,
+    SmokeTime      = nil,
+    SmokeScheduler = nil,
+    SmokeColor     = nil,
+    SmokeZone      = nil,
   }
   
   --- ZONE_GOAL Constructor.
   -- @param #ZONE_GOAL self
-  -- @param Core.Zone#ZONE_BASE Zone A @{Zone} object with the goal to be achieved.
+  -- @param Core.Zone#ZONE_RADIUS Zone A @{Zone} object with the goal to be achieved.
   -- @return #ZONE_GOAL
   function ZONE_GOAL:New( Zone )
   
-    local self = BASE:Inherit( self, FSM:New() ) -- #ZONE_GOAL
+    local self = BASE:Inherit( self, ZONE_RADIUS:New( Zone:GetName(), Zone:GetVec2(), Zone:GetRadius() ) ) -- #ZONE_GOAL
     self:F( { Zone = Zone } )
 
-    self.Zone = Zone -- Core.Zone#ZONE_BASE
+    -- Goal object.
     self.Goal = GOAL:New()
 
     self.SmokeTime = nil
+    
+    -- Set smoke ON.
+    self:SetSmokeZone(true)
 
     self:AddTransition( "*", "DestroyedUnit", "*" )
+
+    --- DestroyedUnit event.
+    -- @function [parent=#ZONE_GOAL] DestroyedUnit
+    -- @param #ZONE_GOAL self
+
+    --- DestroyedUnit delayed event
+    -- @function [parent=#ZONE_GOAL] __DestroyedUnit
+    -- @param #ZONE_GOAL self
+    -- @param #number delay Delay in seconds.
   
     --- DestroyedUnit Handler OnAfter for ZONE_GOAL
     -- @function [parent=#ZONE_GOAL] OnAfterDestroyedUnit
@@ -70,52 +94,64 @@ do -- Zone
     return self
   end
   
-  --- Get the Zone
+  --- Get the Zone.
   -- @param #ZONE_GOAL self
-  -- @return Core.Zone#ZONE_BASE
+  -- @return #ZONE_GOAL
   function ZONE_GOAL:GetZone()
-    return self.Zone
+    return self
   end
   
   
-  --- Get the name of the ProtectZone
+  --- Get the name of the Zone.
   -- @param #ZONE_GOAL self
   -- @return #string
   function ZONE_GOAL:GetZoneName()
-    return self.Zone:GetName()
+    return self:GetName()
   end
 
 
-  --- Smoke the center of theh zone.
+  --- Activate smoking of zone with the color or the current owner.
   -- @param #ZONE_GOAL self
-  -- @param #SMOKECOLOR.Color SmokeColor
-  function ZONE_GOAL:Smoke( SmokeColor )
-  
+  -- @param #boolean switch If *true* or *nil* activate smoke. If *false* or *nil*, no smoke.
+  -- @return #ZONE_GOAL
+  function ZONE_GOAL:SetSmokeZone(switch)
+    self.SmokeZone=switch
+    --[[
+    if switch==nil or switch==true then
+      self.SmokeZone=true
+    else
+      self.SmokeZone=false
+    end
+    ]]
+    return self
+  end
+
+  --- Set the smoke color.
+  -- @param #ZONE_GOAL self
+  -- @param DCS#SMOKECOLOR.Color SmokeColor
+  function ZONE_GOAL:Smoke( SmokeColor ) 
     self:F( { SmokeColor = SmokeColor} )
   
     self.SmokeColor = SmokeColor
   end
     
   
-  --- Flare the center of the zone.
+  --- Flare the zone boundary.
   -- @param #ZONE_GOAL self
-  -- @param #SMOKECOLOR.Color FlareColor
+  -- @param DCS#SMOKECOLOR.Color FlareColor
   function ZONE_GOAL:Flare( FlareColor )
-    self.Zone:FlareZone( FlareColor, math.random( 1, 360 ) )
+    self:FlareZone( FlareColor, 30)
   end
 
 
   --- When started, check the Smoke and the Zone status.
   -- @param #ZONE_GOAL self
   function ZONE_GOAL:onafterGuard()
-  
-    --self:GetParent( self ):onafterStart()
-    
     self:F("Guard")
-  
-    --self:ScheduleRepeat( 15, 15, 0.1, nil, self.StatusZone, self )
-    if not self.SmokeScheduler then
-      self.SmokeScheduler = self:ScheduleRepeat( 1, 1, 0.1, nil, self.StatusSmoke, self )
+
+    -- Start smoke
+    if self.SmokeZone and not self.SmokeScheduler then
+      self.SmokeScheduler = self:ScheduleRepeat(1, 1, 0.1, nil, self.StatusSmoke, self)
     end
   end
 
@@ -123,44 +159,54 @@ do -- Zone
   --- Check status Smoke.
   -- @param #ZONE_GOAL self
   function ZONE_GOAL:StatusSmoke()
-  
     self:F({self.SmokeTime, self.SmokeColor})
     
-    local CurrentTime = timer.getTime()
-  
-    if self.SmokeTime == nil or self.SmokeTime + 300 <= CurrentTime then
-      if self.SmokeColor then
-        self.Zone:GetCoordinate():Smoke( self.SmokeColor )
-        --self.SmokeColor = nil
-        self.SmokeTime = CurrentTime
+    if self.SmokeZone then
+    
+      -- Current time.
+      local CurrentTime = timer.getTime()
+    
+      -- Restart smoke every 5 min.
+      if self.SmokeTime == nil or self.SmokeTime + 300 <= CurrentTime then
+        if self.SmokeColor then
+          self:GetCoordinate():Smoke( self.SmokeColor )
+          self.SmokeTime = CurrentTime
+        end
       end
+      
     end
+    
   end
 
 
   --- @param #ZONE_GOAL self
-  -- @param Core.Event#EVENTDATA EventData
+  -- @param Core.Event#EVENTDATA EventData Event data table.
   function ZONE_GOAL:__Destroyed( EventData )
     self:F( { "EventDead", EventData } )
 
     self:F( { EventData.IniUnit } )
     
-    local Vec3 = EventData.IniDCSUnit:getPosition().p
-    self:F( { Vec3 = Vec3 } )
-    local ZoneGoal = self:GetZone()
-    self:F({ZoneGoal})
-
     if EventData.IniDCSUnit then
-      if ZoneGoal:IsVec3InZone(Vec3)  then
+
+      local Vec3 = EventData.IniDCSUnit:getPosition().p
+      self:F( { Vec3 = Vec3 } )    
+    
+      if Vec3 and self:IsVec3InZone(Vec3)  then
+      
         local PlayerHits = _DATABASE.HITS[EventData.IniUnitName]
+        
         if PlayerHits then
+        
           for PlayerName, PlayerHit in pairs( PlayerHits.Players or {} ) do
             self.Goal:AddPlayerContribution( PlayerName )
             self:DestroyedUnit( EventData.IniUnitName, PlayerName )
           end
+          
         end
+        
       end
     end
+    
   end
   
   

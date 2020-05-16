@@ -21,6 +21,11 @@ routines.build = 22
 -- Utils- conversion, Lua utils, etc.
 routines.utils = {}
 
+routines.utils.round = function(number, decimals)
+    local power = 10^decimals
+    return math.floor(number * power) / power
+end
+
 --from http://lua-users.org/wiki/CopyTable
 routines.utils.deepCopy = function(object)
 	local lookup_table = {}
@@ -1626,6 +1631,11 @@ function routines.getGroupRoute(groupIdent, task)   -- same as getGroupPoints bu
 											
 											for point_num, point in pairs(group_data.route.points) do
 												local routeData = {}
+												if env.mission.version > 7 then
+													routeData.name = env.getValueDictByKey(point.name)
+												else
+													routeData.name = point.name
+												end
 												if not point.point then
 													routeData.x = point.x
 													routeData.y = point.y

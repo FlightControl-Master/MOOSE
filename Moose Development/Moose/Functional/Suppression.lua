@@ -5,6 +5,10 @@
 -- ## Features:
 -- 
 --   * Hold fire of attacked units when being fired upon.
+--   * Retreat to a user defined zone.
+--   * Fall back on hits.
+--   * Take cover on hits.
+--   * Gaussian distribution of suppression time.
 --
 -- ===
 -- 
@@ -18,7 +22,7 @@
 -- 
 -- The implementation is based on an idea and script by MBot. See the [DCS forum threat](https://forums.eagle.ru/showthread.php?t=107635) for details.
 -- 
--- In addition to suppressing the fire, conditions can be specified which let the group retreat to a defined zone, move away from the attacker
+-- In addition to suppressing the fire, conditions can be specified, which let the group retreat to a defined zone, move away from the attacker
 -- or hide at a nearby scenery object.
 -- 
 -- ====
@@ -44,6 +48,7 @@
 -- @type SUPPRESSION
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Write Debug messages to DCS log file and send Debug messages to all players.
+-- @field #string lid String for DCS log file.
 -- @field #boolean flare Flare units when they get hit or die.
 -- @field #boolean smoke Smoke places to which the group retreats, falls back or hides.
 -- @field #list DCSdesc Table containing all DCS descriptors of the group.
@@ -78,6 +83,8 @@
 -- @field #string DefaultAlarmState Alarm state the group will go to when it is changed back from another state. Default is "Auto".
 -- @field #string DefaultROE ROE the group will get once suppression is over. Default is "Free".
 -- @field #boolean eventmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler. Default true.
+-- @field Core.Zone#ZONE BattleZone 
+-- @field #boolean AutoEngage
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 -- 
 
@@ -222,45 +229,49 @@
 -- 
 -- @field #SUPPRESSION
 SUPPRESSION={
-  ClassName = "SUPPRESSION",
-  Debug = false,
-  flare = false,
-  smoke = false,
-  DCSdesc = nil,
-  Type = nil,
-  IsInfantry=nil,
-  SpeedMax = nil,
-  Tsuppress_ave = 15,
-  Tsuppress_min = 5,
-  Tsuppress_max = 25,
-  TsuppressOver = nil,
-  IniGroupStrength = nil,
-  Nhit = 0,
-  Formation = "Off road",
-  Speed = 4,
-  MenuON = false,
-  FallbackON = false,
-  FallbackWait = 60,
-  FallbackDist = 100,
-  FallbackHeading = nil,
-  TakecoverON = false,
-  TakecoverWait = 120,
-  TakecoverRange = 300,
-  hideout = nil,
-  PminFlee = 10,
-  PmaxFlee = 90,
-  RetreatZone = nil,
-  RetreatDamage = nil,
-  RetreatWait = 7200,
+  ClassName         = "SUPPRESSION",
+  Debug             = false,
+  lid               = nil,
+  flare             = false,
+  smoke             = false,
+  DCSdesc           = nil,
+  Type              = nil,
+  IsInfantry        = nil,
+  SpeedMax          = nil,
+  Tsuppress_ave     = 15,
+  Tsuppress_min     = 5,
+  Tsuppress_max     = 25,
+  TsuppressOver     = nil,
+  IniGroupStrength  = nil,
+  Nhit              = 0,
+  Formation         = "Off road",
+  Speed             = 4,
+  MenuON            = false,
+  FallbackON        = false,
+  FallbackWait      = 60,
+  FallbackDist      = 100,
+  FallbackHeading   = nil,
+  TakecoverON       = false,
+  TakecoverWait     = 120,
+  TakecoverRange    = 300,
+  hideout           = nil,
+  PminFlee          = 10,
+  PmaxFlee          = 90,
+  RetreatZone       = nil,
+  RetreatDamage     = nil,
+  RetreatWait       = 7200,
   CurrentAlarmState = "unknown",
-  CurrentROE = "unknown",
+  CurrentROE        = "unknown",
   DefaultAlarmState = "Auto",
-  DefaultROE = "Weapon Free",
-  eventmoose = true,
+  DefaultROE        = "Weapon Free",
+  eventmoose        = true,
 }
 
 --- Enumerator of possible rules of engagement.
--- @field #list ROE
+-- @type SUPPRESSION.ROE
+-- @field #string Hold Hold fire.
+-- @field #string Free Weapon fire.
+-- @field #string Return Return fire.
 SUPPRESSION.ROE={
   Hold="Weapon Hold",
   Free="Weapon Free",
@@ -268,7 +279,10 @@ SUPPRESSION.ROE={
 }
 
 --- Enumerator of possible alarm states.
--- @field #list AlarmState
+-- @type SUPPRESSION.AlarmState
+-- @field #string Auto Automatic.
+-- @field #string Green Green.
+-- @field #string Red Red.
 SUPPRESSION.AlarmState={
   Auto="Auto",
   Green="Green",
@@ -279,13 +293,9 @@ SUPPRESSION.AlarmState={
 -- @field #string MenuF10
 SUPPRESSION.MenuF10=nil
 
---- Some ID to identify who we are in output of the DCS.log file.
--- @field #string id
-SUPPRESSION.id="SUPPRESSION | "
-
 --- PSEUDOATC version.
 -- @field #number version
-SUPPRESSION.version="0.9.0"
+SUPPRESSION.version="0.9.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -299,25 +309,24 @@ SUPPRESSION.version="0.9.0"
 --- Creates a new AI_suppression object.
 -- @param #SUPPRESSION self
 -- @param Wrapper.Group#GROUP group The GROUP object for which suppression should be applied.
--- @return #SUPPRESSION SUPPRESSION object.
--- @return nil If group does not exist or is not a ground group.
+-- @return #SUPPRESSION SUPPRESSION object or *nil* if group does not exist or is not a ground group.
 function SUPPRESSION:New(group)
-  BASE:F2(group)
 
   -- Inherits from FSM_CONTROLLABLE
   local self=BASE:Inherit(self, FSM_CONTROLLABLE:New()) -- #SUPPRESSION
   
   -- Check that group is present.
   if group then
-    self:T(SUPPRESSION.id..string.format("SUPPRESSION version %s. Activating suppressive fire for group %s", SUPPRESSION.version, group:GetName()))
+    self.lid=string.format("SUPPRESSION %s | ", tostring(group:GetName()))
+    self:T(self.lid..string.format("SUPPRESSION version %s. Activating suppressive fire for group %s", SUPPRESSION.version, group:GetName()))
   else
-    self:E(SUPPRESSION.id.."Suppressive fire: Requested group does not exist! (Has to be a MOOSE group.)")
+    self:E(self.lid.."SUPPRESSION | Requested group does not exist! (Has to be a MOOSE group.)")
     return nil
   end
   
   -- Check that we actually have a GROUND group.
   if group:IsGround()==false then
-    self:E(SUPPRESSION.id..string.format("SUPPRESSION fire group %s has to be a GROUND group!", group:GetName()))
+    self:E(self.lid..string.format("SUPPRESSION fire group %s has to be a GROUND group!", group:GetName()))
     return nil
   end  
   
@@ -325,18 +334,16 @@ function SUPPRESSION:New(group)
   self:SetControllable(group)
   
   -- Get DCS descriptors of group.
-  local DCSgroup=Group.getByName(group:GetName())
-  local DCSunit=DCSgroup:getUnit(1)
-  self.DCSdesc=DCSunit:getDesc()
+  self.DCSdesc=group:GetDCSDesc(1)
   
   -- Get max speed the group can do and convert to km/h.
-  self.SpeedMax=self.DCSdesc.speedMaxOffRoad*3.6
+  self.SpeedMax=group:GetSpeedMax()
   
   -- Set speed to maximum.
   self.Speed=self.SpeedMax
   
   -- Is this infantry or not.
-  self.IsInfantry=DCSunit:hasAttribute("Infantry")
+  self.IsInfantry=group:GetUnit(1):HasAttribute("Infantry")
   
   -- Type of group.
   self.Type=group:GetTypeName()
@@ -350,6 +357,7 @@ function SUPPRESSION:New(group)
   
   -- Transitions 
   self:AddTransition("*",           "Start",     "CombatReady")
+  self:AddTransition("*",           "Status",    "*")
   self:AddTransition("CombatReady", "Hit",       "Suppressed")
   self:AddTransition("Suppressed",  "Hit",       "Suppressed") 
   self:AddTransition("Suppressed",  "Recovered", "CombatReady")
@@ -359,10 +367,44 @@ function SUPPRESSION:New(group)
   self:AddTransition("TakingCover", "FightBack", "CombatReady")
   self:AddTransition("FallingBack", "FightBack", "CombatReady")
   self:AddTransition("Retreating",  "Retreated", "Retreated")
+  self:AddTransition("*",           "OutOfAmmo", "*")
   self:AddTransition("*",           "Dead",      "*")
+  self:AddTransition("*",           "Stop",      "Stopped")
   
   self:AddTransition("TakingCover", "Hit",       "TakingCover")
   self:AddTransition("FallingBack", "Hit",       "FallingBack")
+
+
+  --- Trigger "Status" event.
+  -- @function [parent=#SUPPRESSION] Status
+  -- @param #SUPPRESSION self
+
+  --- Trigger "Status" event after a delay.
+  -- @function [parent=#SUPPRESSION] __Status
+  -- @param #SUPPRESSION self
+  -- @param #number Delay Delay in seconds.
+
+  --- User function for OnAfter "Status" event.
+  -- @function [parent=#SUPPRESSION] OnAfterStatus
+  -- @param #SUPPRESSION self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Trigger "Hit" event.
+  -- @function [parent=#SUPPRESSION] Hit
+  -- @param #SUPPRESSION self
+  -- @param Wrapper.Unit#UNIT Unit Unit that was hit.
+  -- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
+
+  --- Trigger "Hit" event after a delay.
+  -- @function [parent=#SUPPRESSION] __Hit
+  -- @param #SUPPRESSION self
+  -- @param #number Delay Delay in seconds. 
+  -- @param Wrapper.Unit#UNIT Unit Unit that was hit.
+  -- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
 
   --- User function for OnBefore "Hit" event.
   -- @function [parent=#SUPPRESSION] OnBeforeHit
@@ -375,7 +417,7 @@ function SUPPRESSION:New(group)
   -- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
   -- @return #boolean
 
-  --- User function for OnAfer "Hit" event.
+  --- User function for OnAfter "Hit" event.
   -- @function [parent=#SUPPRESSION] OnAfterHit
   -- @param #SUPPRESSION self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
@@ -384,7 +426,16 @@ function SUPPRESSION:New(group)
   -- @param #string To To state.
   -- @param Wrapper.Unit#UNIT Unit Unit that was hit.
   -- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
+
   
+  --- Trigger "Recovered" event.
+  -- @function [parent=#SUPPRESSION] Recovered
+  -- @param #SUPPRESSION self
+
+  --- Trigger "Recovered" event after a delay.
+  -- @function [parent=#SUPPRESSION] Recovered
+  -- @param #number Delay Delay in seconds. 
+  -- @param #SUPPRESSION self
 
   --- User function for OnBefore "Recovered" event.
   -- @function [parent=#SUPPRESSION] OnBeforeRecovered
@@ -403,6 +454,17 @@ function SUPPRESSION:New(group)
   -- @param #string Event Event.
   -- @param #string To To state.
 
+
+  --- Trigger "TakeCover" event.
+  -- @function [parent=#SUPPRESSION] TakeCover
+  -- @param #SUPPRESSION self
+  -- @param Core.Point#COORDINATE Hideout Place where the group will hide.
+
+  --- Trigger "TakeCover" event after a delay.
+  -- @function [parent=#SUPPRESSION] __TakeCover
+  -- @param #SUPPRESSION self
+  -- @param #number Delay Delay in seconds. 
+  -- @param Core.Point#COORDINATE Hideout Place where the group will hide.
 
   --- User function for OnBefore "TakeCover" event.
   -- @function [parent=#SUPPRESSION] OnBeforeTakeCover
@@ -424,6 +486,17 @@ function SUPPRESSION:New(group)
   -- @param Core.Point#COORDINATE Hideout Place where the group will hide.
 
 
+  --- Trigger "FallBack" event.
+  -- @function [parent=#SUPPRESSION] FallBack
+  -- @param #SUPPRESSION self
+  -- @param Wrapper.Unit#UNIT AttackUnit Attacking unit. We will move away from this.
+
+  --- Trigger "FallBack" event after a delay.
+  -- @function [parent=#SUPPRESSION] __FallBack
+  -- @param #SUPPRESSION self
+  -- @param #number Delay Delay in seconds. 
+  -- @param Wrapper.Unit#UNIT AttackUnit Attacking unit. We will move away from this.
+
   --- User function for OnBefore "FallBack" event.
   -- @function [parent=#SUPPRESSION] OnBeforeFallBack
   -- @param #SUPPRESSION self
@@ -444,6 +517,15 @@ function SUPPRESSION:New(group)
   -- @param Wrapper.Unit#UNIT AttackUnit Attacking unit. We will move away from this.
 
 
+  --- Trigger "Retreat" event.
+  -- @function [parent=#SUPPRESSION] Retreat
+  -- @param #SUPPRESSION self
+
+  --- Trigger "Retreat" event after a delay.
+  -- @function [parent=#SUPPRESSION] __Retreat
+  -- @param #SUPPRESSION self
+  -- @param #number Delay Delay in seconds. 
+
   --- User function for OnBefore "Retreat" event.
   -- @function [parent=#SUPPRESSION] OnBeforeRetreat
   -- @param #SUPPRESSION self
@@ -461,6 +543,15 @@ function SUPPRESSION:New(group)
   -- @param #string Event Event.
   -- @param #string To To state.
 
+
+  --- Trigger "Retreated" event.
+  -- @function [parent=#SUPPRESSION] Retreated
+  -- @param #SUPPRESSION self
+
+  --- Trigger "Retreated" event after a delay.
+  -- @function [parent=#SUPPRESSION] __Retreated
+  -- @param #SUPPRESSION self
+  -- @param #number Delay Delay in seconds. 
 
   --- User function for OnBefore "Retreated" event.
   -- @function [parent=#SUPPRESSION] OnBeforeRetreated
@@ -480,6 +571,15 @@ function SUPPRESSION:New(group)
   -- @param #string To To state.
 
 
+  --- Trigger "FightBack" event.
+  -- @function [parent=#SUPPRESSION] FightBack
+  -- @param #SUPPRESSION self
+
+  --- Trigger "FightBack" event after a delay.
+  -- @function [parent=#SUPPRESSION] __FightBack
+  -- @param #SUPPRESSION self
+  -- @param #number Delay Delay in seconds. 
+
   --- User function for OnBefore "FlightBack" event.
   -- @function [parent=#SUPPRESSION] OnBeforeFightBack
   -- @param #SUPPRESSION self
@@ -497,6 +597,41 @@ function SUPPRESSION:New(group)
   -- @param #string Event Event.
   -- @param #string To To state.
 
+
+  --- Trigger "OutOfAmmo" event.
+  -- @function [parent=#SUPPRESSION] OutOfAmmo
+  -- @param #SUPPRESSION self
+
+  --- Trigger "OutOfAmmo" event after a delay.
+  -- @function [parent=#SUPPRESSION] __OutOfAmmo
+  -- @param #SUPPRESSION self
+  -- @param #number Delay Delay in seconds. 
+
+  --- User function for OnAfter "OutOfAmmo" event.
+  -- @function [parent=#SUPPRESSION] OnAfterOutOfAmmo
+  -- @param #SUPPRESSION self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Trigger "Dead" event.
+  -- @function [parent=#SUPPRESSION] Dead
+  -- @param #SUPPRESSION self
+
+  --- Trigger "Dead" event after a delay.
+  -- @function [parent=#SUPPRESSION] __Dead
+  -- @param #SUPPRESSION self
+  -- @param #number Delay Delay in seconds. 
+
+  --- User function for OnAfter "Dead" event.
+  -- @function [parent=#SUPPRESSION] OnAfterDead
+  -- @param #SUPPRESSION self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
   return self
 end
@@ -524,9 +659,9 @@ function SUPPRESSION:SetSuppressionTime(Tave, Tmin, Tmax)
   self.Tsuppress_ave=math.max(self.Tsuppress_min)
   self.Tsuppress_ave=math.min(self.Tsuppress_max)
   
-  self:T(SUPPRESSION.id..string.format("Set ave suppression time to %d seconds.", self.Tsuppress_ave))
-  self:T(SUPPRESSION.id..string.format("Set min suppression time to %d seconds.", self.Tsuppress_min))
-  self:T(SUPPRESSION.id..string.format("Set max suppression time to %d seconds.", self.Tsuppress_max))
+  self:T(self.lid..string.format("Set ave suppression time to %d seconds.", self.Tsuppress_ave))
+  self:T(self.lid..string.format("Set min suppression time to %d seconds.", self.Tsuppress_min))
+  self:T(self.lid..string.format("Set max suppression time to %d seconds.", self.Tsuppress_max))
 end
 
 --- Set the zone to which a group retreats after being damaged too much.
@@ -756,28 +891,23 @@ end
 --- Status of group. Current ROE, alarm state, life.
 -- @param #SUPPRESSION self
 -- @param #boolean message Send message to all players.
-function SUPPRESSION:Status(message)
+function SUPPRESSION:StatusReport(message)
 
-  local name=self.Controllable:GetName()
-  local nunits=#self.Controllable:GetUnits()
+  local group=self.Controllable --Wrapper.Group#GROUP
+
+  local nunits=group:CountAliveUnits()
   local roe=self.CurrentROE
   local state=self.CurrentAlarmState
   local life_min, life_max, life_ave, life_ave0, groupstrength=self:_GetLife()
+  local ammotot=group:GetAmmunition()
+  local detectedG=group:GetDetectedGroupSet():CountAlive()
+  local detectedU=group:GetDetectedUnitSet():Count()
   
-  local text=string.format("Status of group %s\n", name)
-  text=text..string.format("Number of units: %d of %d\n", nunits, self.IniGroupStrength)
-  text=text..string.format("Current state: %s\n", self:GetState())
-  text=text..string.format("ROE: %s\n", roe)  
-  text=text..string.format("Alarm state: %s\n", state)
-  text=text..string.format("Hits taken: %d\n", self.Nhit)
-  text=text..string.format("Life min: %3.0f\n", life_min)
-  text=text..string.format("Life max: %3.0f\n", life_max)
-  text=text..string.format("Life ave: %3.0f\n", life_ave)
-  text=text..string.format("Life ave0: %3.0f\n", life_ave0)
-  text=text..string.format("Group strength: %3.0f", groupstrength)
+  local text=string.format("State %s, Units=%d/%d, ROE=%s, AlarmState=%s, Hits=%d, Life(min/max/ave/ave0)=%d/%d/%d/%d, Total Ammo=%d, Detected=%d/%d", 
+  self:GetState(), nunits, self.IniGroupStrength, self.CurrentROE, self.CurrentAlarmState, self.Nhit, life_min, life_max, life_ave, life_ave0, ammotot, detectedG, detectedU)
   
   MESSAGE:New(text, 10):ToAllIf(message or self.Debug)
-  self:T(SUPPRESSION.id.."\n"..text)
+  self:I(self.lid..text)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -794,6 +924,7 @@ function SUPPRESSION:onafterStart(Controllable, From, Event, To)
   self:_EventFromTo("onafterStart", Event, From, To)
   
   local text=string.format("Started SUPPRESSION for group %s.", Controllable:GetName())
+  self:I(self.lid..text)
   MESSAGE:New(text, 10):ToAllIf(self.Debug)
   
   local rzone="not defined"
@@ -854,7 +985,7 @@ function SUPPRESSION:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Speed max          = %5.1f km/h\n", self.SpeedMax)
   text=text..string.format("Formation          = %s\n", self.Formation)
   text=text..string.format("******************************************************\n")
-  self:T(SUPPRESSION.id..text)
+  self:T(self.lid..text)
     
   -- Add event handler.
   if self.eventmoose then
@@ -863,28 +994,56 @@ function SUPPRESSION:onafterStart(Controllable, From, Event, To)
   else
     world.addEventHandler(self)
   end
-
+  
+  self:__Status(-1)
 end
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Before "Hit" event. (Of course, this is not really before the group got hit.)
+--- After "Status" event.
 -- @param #SUPPRESSION self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Wrapper.Unit#UNIT Unit Unit that was hit.
--- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
--- @return boolean
-function SUPPRESSION:onbeforeHit(Controllable, From, Event, To, Unit, AttackUnit)
-  self:_EventFromTo("onbeforeHit", Event, From, To)
+function SUPPRESSION:onafterStatus(Controllable, From, Event, To)
+
+  -- Suppressed group.  
+  local group=self.Controllable --Wrapper.Group#GROUP
   
-  --local Tnow=timer.getTime()
-  --env.info(SUPPRESSION.id..string.format("Last hit = %s  %s", tostring(self.LastHit), tostring(Tnow)))
+  -- Check if group object exists.
+  if group then
   
-  return true
+    -- Number of alive units.
+    local nunits=group:CountAliveUnits()
+    
+    -- Check if there are units.
+    if nunits>0 then
+      
+      -- Retreat if completely out of ammo and retreat zone defined. 
+      local nammo=group:GetAmmunition()
+      if nammo==0 then
+        self:OutOfAmmo()
+      end
+
+      -- Status report.
+      self:StatusReport(false)
+    
+      -- Call status again if not "Stopped".
+      if self:GetState()~="Stopped" then
+        self:__Status(-30)
+      end
+      
+    else
+      -- Stop FSM as there are no units left.
+      self:Stop()
+    end
+    
+  else
+    -- Stop FSM as there group object does not exist.
+    self:Stop()
+  end
+  
 end
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- After "Hit" event.
 -- @param #SUPPRESSION self
@@ -925,7 +1084,7 @@ function SUPPRESSION:onafterHit(Controllable, From, Event, To, Unit, AttackUnit)
   text=string.format("\nGroup %s: Life min=%5.1f, max=%5.1f, ave=%5.1f, ave0=%5.1f group=%5.1f\n", Controllable:GetName(), life_min, life_max, life_ave, life_ave0, groupstrength)
   text=string.format("Group %s: Damage = %8.4f (%8.4f retreat threshold).\n", Controllable:GetName(), Damage, self.RetreatDamage)
   text=string.format("Group %s: P_Flee = %5.1f %5.1f=P_rand (P_Flee > Prand ==> Flee)\n", Controllable:GetName(), Pflee, P)
-  self:T(SUPPRESSION.id..text)
+  self:T(self.lid..text)
   
   -- Group is obviously destroyed.
   if Damage >= 99.9 then
@@ -957,11 +1116,6 @@ function SUPPRESSION:onafterHit(Controllable, From, Event, To, Unit, AttackUnit)
     end
   end
   
-  -- Give info on current status.
-  if self.Debug then
-    self:Status()
-  end
-  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -980,7 +1134,7 @@ function SUPPRESSION:onbeforeRecovered(Controllable, From, Event, To)
   local Tnow=timer.getTime()
   
   -- Debug info
-  self:T(SUPPRESSION.id..string.format("onbeforeRecovered: Time now: %d  - Time over: %d", Tnow, self.TsuppressionOver))
+  self:T(self.lid..string.format("onbeforeRecovered: Time now: %d  - Time over: %d", Tnow, self.TsuppressionOver))
   
   -- Recovery is only possible if enough time since the last hit has passed.
   if Tnow >= self.TsuppressionOver then
@@ -1005,7 +1159,7 @@ function SUPPRESSION:onafterRecovered(Controllable, From, Event, To)
     -- Debug message.
     local text=string.format("Group %s has recovered!", Controllable:GetName())
     MESSAGE:New(text, 10):ToAllIf(self.Debug)
-    self:T(SUPPRESSION.id..text)
+    self:T(self.lid..text)
     
     -- Set ROE back to default.
     self:_SetROE()
@@ -1066,7 +1220,7 @@ function SUPPRESSION:onafterFallBack(Controllable, From, Event, To, AttackUnit)
   self:_EventFromTo("onafterFallback", Event, From, To)
   
   -- Debug info
-  self:T(SUPPRESSION.id..string.format("Group %s is falling back after %d hits.", Controllable:GetName(), self.Nhit))
+  self:T(self.lid..string.format("Group %s is falling back after %d hits.", Controllable:GetName(), self.Nhit))
   
   -- Coordinate of the attacker and attacked unit.
   local ACoord=AttackUnit:GetCoordinate()
@@ -1161,6 +1315,25 @@ function SUPPRESSION:onafterTakeCover(Controllable, From, Event, To, Hideout)
     
 end
 
+--- After "OutOfAmmo" event. Triggered when group is completely out of ammo.
+-- @param #SUPPRESSION self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function SUPPRESSION:onafterOutOfAmmo(Controllable, From, Event, To)
+  self:_EventFromTo("onafterOutOfAmmo", Event, From, To)
+
+  -- Info to log.
+  self:I(self.lid..string.format("Out of ammo!"))
+    
+  -- Order retreat if retreat zone was specified.
+  if self.RetreatZone then
+    self:Retreat()
+  end
+  
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Before "Retreat" event. We check that the group is not already retreating.
@@ -1174,8 +1347,8 @@ function SUPPRESSION:onbeforeRetreat(Controllable, From, Event, To)
   self:_EventFromTo("onbeforeRetreat", Event, From, To)
   
   if From=="Retreating" then
-    local text=string.format("Group %s is already retreating.")
-    self:T2(SUPPRESSION.id..text)
+    local text=string.format("Group %s is already retreating.", tostring(Controllable:GetName()))
+    self:T2(self.lid..text)
     return false
   else
     return true
@@ -1195,7 +1368,7 @@ function SUPPRESSION:onafterRetreat(Controllable, From, Event, To)
   -- Route the group to a zone.
   local text=string.format("Group %s is retreating! Alarm state green.", Controllable:GetName())
   MESSAGE:New(text, 10):ToAllIf(self.Debug)
-  self:T(SUPPRESSION.id..text)
+  self:T(self.lid..text)
   
   -- Get a random point in the retreat zone.
   local ZoneCoord=self.RetreatZone:GetRandomCoordinate() -- Core.Point#COORDINATE
@@ -1267,26 +1440,53 @@ end
 function SUPPRESSION:onafterDead(Controllable, From, Event, To)
   self:_EventFromTo("onafterDead", Event, From, To)
   
-  -- Number of units left in the group.
-  local nunits=#self.Controllable:GetUnits()
-      
-  local text=string.format("Group %s: One of our units just died! %d units left.", self.Controllable:GetName(), nunits)
-  MESSAGE:New(text, 10):ToAllIf(self.Debug)
-  self:T(SUPPRESSION.id..text)
-      
-  -- Go to stop state.
-  if nunits==0 then
-    self:T(SUPPRESSION.id..string.format("Stopping SUPPRESSION for group %s.", Controllable:GetName()))
-    self:Stop()
-    if self.mooseevents then
-      self:UnHandleEvent(EVENTS.Dead)
-      self:UnHandleEvent(EVENTS.Hit)
-    else
-      world.removeEventHandler(self)
+  local group=self.Controllable --Wrapper.Group#GROUP
+  
+  if group then
+  
+    -- Number of units left in the group.
+    local nunits=group:CountAliveUnits()
+        
+    local text=string.format("Group %s: One of our units just died! %d units left.", self.Controllable:GetName(), nunits)
+    MESSAGE:New(text, 10):ToAllIf(self.Debug)
+    self:T(self.lid..text)
+        
+    -- Go to stop state.
+    if nunits==0 then
+      self:Stop()
     end
+    
+  else
+    self:Stop()
   end
   
 end
+
+--- After "Stop" event.
+-- @param #SUPPRESSION self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function SUPPRESSION:onafterStop(Controllable, From, Event, To)
+  self:_EventFromTo("onafterStop", Event, From, To)
+      
+  local text=string.format("Stopping SUPPRESSION for group %s", self.Controllable:GetName())
+  MESSAGE:New(text, 10):ToAllIf(self.Debug)
+  self:I(self.lid..text)
+      
+  -- Clear all pending schedules
+  self.CallScheduler:Clear()
+  
+  if self.mooseevents then
+    self:UnHandleEvent(EVENTS.Dead)
+    self:UnHandleEvent(EVENTS.Hit)
+  else
+    world.removeEventHandler(self)
+  end
+  
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- Event Handler
@@ -1348,7 +1548,7 @@ function SUPPRESSION:_OnEventHit(EventData)
   -- Check that correct group was hit.
   if GroupNameTgt == GroupNameSelf then
   
-    self:T(SUPPRESSION.id..string.format("Hit event at t = %5.1f", timer.getTime()))
+    self:T(self.lid..string.format("Hit event at t = %5.1f", timer.getTime()))
   
     -- Flare unit that was hit.
     if self.flare or self.Debug then
@@ -1359,11 +1559,11 @@ function SUPPRESSION:_OnEventHit(EventData)
     self.Nhit=self.Nhit+1
 
     -- Info on hit times.
-    self:T(SUPPRESSION.id..string.format("Group %s has just been hit %d times.", self.Controllable:GetName(), self.Nhit))
+    self:T(self.lid..string.format("Group %s has just been hit %d times.", self.Controllable:GetName(), self.Nhit))
     
     --self:Status()
     local life=tgt:getLife()/(tgt:getLife0()+1)*100
-    self:T2(SUPPRESSION.id..string.format("Target unit life = %5.1f", life))
+    self:T2(self.lid..string.format("Target unit life = %5.1f", life))
   
     -- FSM Hit event.
     self:__Hit(3, TgtUnit, IniUnit)
@@ -1380,35 +1580,35 @@ function SUPPRESSION:_OnEventDead(EventData)
   local GroupNameIni=EventData.IniGroupName
 
   -- Check for correct group.
-  if  GroupNameIni== GroupNameSelf then
+  if  GroupNameIni==GroupNameSelf then
     
     -- Dead Unit.
     local IniUnit=EventData.IniUnit --Wrapper.Unit#UNIT
     local IniUnitName=EventData.IniUnitName
     
     if EventData.IniUnit then
-      self:T2(SUPPRESSION.id..string.format("Group %s: Dead MOOSE unit DOES exist! Unit name %s.", GroupNameIni, IniUnitName))
+      self:T2(self.lid..string.format("Group %s: Dead MOOSE unit DOES exist! Unit name %s.", GroupNameIni, IniUnitName))
     else
-      self:T2(SUPPRESSION.id..string.format("Group %s: Dead MOOSE unit DOES NOT not exist! Unit name %s.", GroupNameIni, IniUnitName))
+      self:T2(self.lid..string.format("Group %s: Dead MOOSE unit DOES NOT not exist! Unit name %s.", GroupNameIni, IniUnitName))
     end
     
     if EventData.IniDCSUnit then
-      self:T2(SUPPRESSION.id..string.format("Group %s: Dead DCS unit DOES exist! Unit name %s.", GroupNameIni, IniUnitName))
+      self:T2(self.lid..string.format("Group %s: Dead DCS unit DOES exist! Unit name %s.", GroupNameIni, IniUnitName))
     else
-      self:T2(SUPPRESSION.id..string.format("Group %s: Dead DCS unit DOES NOT exist! Unit name %s.", GroupNameIni, IniUnitName))
+      self:T2(self.lid..string.format("Group %s: Dead DCS unit DOES NOT exist! Unit name %s.", GroupNameIni, IniUnitName))
     end
     
     -- Flare unit that died.
     if IniUnit and (self.flare or self.Debug) then
       IniUnit:FlareWhite()
-      self:T(SUPPRESSION.id..string.format("Flare Dead MOOSE unit."))
+      self:T(self.lid..string.format("Flare Dead MOOSE unit."))
     end
     
     -- Flare unit that died.
     if EventData.IniDCSUnit and (self.flare or self.Debug) then
       local p=EventData.IniDCSUnit:getPosition().p
       trigger.action.signalFlare(p, trigger.flareColor.Yellow , 0)
-      self:T(SUPPRESSION.id..string.format("Flare Dead DCS unit."))
+      self:T(self.lid..string.format("Flare Dead DCS unit."))
     end
        
     -- Get status.
@@ -1462,7 +1662,7 @@ function SUPPRESSION:_Suppress()
   -- Debug message.
   local text=string.format("Group %s is suppressed for %d seconds. Suppression ends at %d:%02d.", Controllable:GetName(), Tsuppress, self.TsuppressionOver/60, self.TsuppressionOver%60)
   MESSAGE:New(text, 10):ToAllIf(self.Debug)
-  self:T(SUPPRESSION.id..text)
+  self:T(self.lid..text)
 
 end
 
@@ -1481,95 +1681,101 @@ function SUPPRESSION:_Run(fin, speed, formation, wait)
 
   local group=self.Controllable -- Wrapper.Controllable#CONTROLLABLE
   
-  -- Clear all tasks.
-  group:ClearTasks()
+  if group and group:IsAlive() then
   
-  -- Current coordinates of group.
-  local ini=group:GetCoordinate()
-  
-  -- Distance between current and final point. 
-  local dist=ini:Get2DDistance(fin)
-  
-  -- Heading from ini to fin.
-  local heading=self:_Heading(ini, fin)
-  
-  -- Number of waypoints.
-  local nx
-  if dist <= 50 then
-    nx=2
-  elseif dist <= 100 then
-    nx=3
-  elseif dist <= 500 then
-    nx=4
-  else
-    nx=5
-  end
-  
-  -- Number of intermediate waypoints.
-  local dx=dist/(nx-1)
+    -- Clear all tasks.
+    group:ClearTasks()
     
-  -- Waypoint and task arrays.
-  local wp={}
-  local tasks={}
-  
-  -- First waypoint is the current position of the group.
-  wp[1]=ini:WaypointGround(speed, formation)
-  tasks[1]=group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, 1, false)
-
-  if self.Debug then  
-    local MarkerID=ini:MarkToAll(string.format("Waypoing %d of group %s (initial)", #wp, self.Controllable:GetName()))
-  end
-  
-  self:T2(SUPPRESSION.id..string.format("Number of waypoints %d", nx))
-  for i=1,nx-2 do
-  
-    local x=dx*i
-    local coord=ini:Translate(x, heading)
+    -- Current coordinates of group.
+    local ini=group:GetCoordinate()
     
-    wp[#wp+1]=coord:WaypointGround(speed, formation)
-    tasks[#tasks+1]=group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, #wp, false)
+    -- Distance between current and final point. 
+    local dist=ini:Get2DDistance(fin)
     
-    self:T2(SUPPRESSION.id..string.format("%d x = %4.1f", i, x))
-    if self.Debug then
-      local MarkerID=coord:MarkToAll(string.format("Waypoing %d of group %s", #wp, self.Controllable:GetName()))
+    -- Heading from ini to fin.
+    local heading=self:_Heading(ini, fin)
+    
+    -- Number of waypoints.
+    local nx
+    if dist <= 50 then
+      nx=2
+    elseif dist <= 100 then
+      nx=3
+    elseif dist <= 500 then
+      nx=4
+    else
+      nx=5
     end
     
+    -- Number of intermediate waypoints.
+    local dx=dist/(nx-1)
+      
+    -- Waypoint and task arrays.
+    local wp={}
+    local tasks={}
+    
+    -- First waypoint is the current position of the group.
+    wp[1]=ini:WaypointGround(speed, formation)
+    tasks[1]=group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, 1, false)
+  
+    if self.Debug then  
+      local MarkerID=ini:MarkToAll(string.format("Waypoing %d of group %s (initial)", #wp, self.Controllable:GetName()))
+    end
+    
+    self:T2(self.lid..string.format("Number of waypoints %d", nx))
+    for i=1,nx-2 do
+    
+      local x=dx*i
+      local coord=ini:Translate(x, heading)
+      
+      wp[#wp+1]=coord:WaypointGround(speed, formation)
+      tasks[#tasks+1]=group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, #wp, false)
+      
+      self:T2(self.lid..string.format("%d x = %4.1f", i, x))
+      if self.Debug then
+        local MarkerID=coord:MarkToAll(string.format("Waypoing %d of group %s", #wp, self.Controllable:GetName()))
+      end
+      
+    end
+    self:T2(self.lid..string.format("Total distance: %4.1f", dist))
+    
+    -- Final waypoint.
+    wp[#wp+1]=fin:WaypointGround(speed, formation)
+    if self.Debug then
+      local MarkerID=fin:MarkToAll(string.format("Waypoing %d of group %s (final)", #wp, self.Controllable:GetName()))
+    end
+    
+      -- Task to hold.
+    local ConditionWait=group:TaskCondition(nil, nil, nil, nil, wait, nil)
+    local TaskHold = group:TaskHold()
+    
+    -- Task combo to make group hold at final waypoint.
+    local TaskComboFin = {}
+    TaskComboFin[#TaskComboFin+1] = group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, #wp, true)
+    TaskComboFin[#TaskComboFin+1] = group:TaskControlled(TaskHold, ConditionWait)
+  
+    -- Add final task.  
+    tasks[#tasks+1]=group:TaskCombo(TaskComboFin)
+  
+    -- Original waypoints of the group.
+    local Waypoints = group:GetTemplateRoutePoints()
+    
+    -- New points are added to the default route.
+    for i,p in ipairs(wp) do
+      table.insert(Waypoints, i, wp[i])
+    end
+    
+    -- Set task for all waypoints.
+    for i,wp in ipairs(Waypoints) do
+      group:SetTaskWaypoint(Waypoints[i], tasks[i])
+    end
+    
+    -- Submit task and route group along waypoints.
+    group:Route(Waypoints)
+    
+  else
+    self:E(self.lid..string.format("ERROR: Group is not alive!"))
   end
-  self:T2(SUPPRESSION.id..string.format("Total distance: %4.1f", dist))
-  
-  -- Final waypoint.
-  wp[#wp+1]=fin:WaypointGround(speed, formation)
-  if self.Debug then
-    local MarkerID=fin:MarkToAll(string.format("Waypoing %d of group %s (final)", #wp, self.Controllable:GetName()))
-  end
-  
-    -- Task to hold.
-  local ConditionWait=group:TaskCondition(nil, nil, nil, nil, wait, nil)
-  local TaskHold = group:TaskHold()
-  
-  -- Task combo to make group hold at final waypoint.
-  local TaskComboFin = {}
-  TaskComboFin[#TaskComboFin+1] = group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, #wp, true)
-  TaskComboFin[#TaskComboFin+1] = group:TaskControlled(TaskHold, ConditionWait)
-
-  -- Add final task.  
-  tasks[#tasks+1]=group:TaskCombo(TaskComboFin)
-
-  -- Original waypoints of the group.
-  local Waypoints = group:GetTemplateRoutePoints()
-  
-  -- New points are added to the default route.
-  for i,p in ipairs(wp) do
-    table.insert(Waypoints, i, wp[i])
-  end
-  
-  -- Set task for all waypoints.
-  for i,wp in ipairs(Waypoints) do
-    group:SetTaskWaypoint(Waypoints[i], tasks[i])
-  end
-  
-  -- Submit task and route group along waypoints.
-  group:Route(Waypoints)
 
 end
 
@@ -1584,7 +1790,7 @@ function SUPPRESSION._Passing_Waypoint(group, Fsm, i, final)
   local text=string.format("Group %s passing waypoint %d (final=%s)", group:GetName(), i, tostring(final))
   MESSAGE:New(text,10):ToAllIf(Fsm.Debug)
   if Fsm.Debug then
-    env.info(SUPPRESSION.id..text)
+    env.info(self.lid..text)
   end
 
   if final then
@@ -1629,7 +1835,7 @@ function SUPPRESSION:_SearchHideout()
         -- Place markers on every possible scenery object.
         local MarkerID=SceneryObject:GetCoordinate():MarkToAll(string.format("%s scenery object %s", self.Controllable:GetName(),SceneryObject:GetTypeName()))
         local text=string.format("%s scenery: %s, Coord %s", self.Controllable:GetName(), SceneryObject:GetTypeName(), SceneryObject:GetCoordinate():ToStringLLDMS())
-        self:T2(SUPPRESSION.id..text)
+        self:T2(self.lid..text)
       end
       
       -- Add to table.
@@ -1642,7 +1848,7 @@ function SUPPRESSION:_SearchHideout()
   if #hideouts>0 then
   
     -- Debug info.
-    self:T(SUPPRESSION.id.."Number of hideouts "..#hideouts)
+    self:T(self.lid.."Number of hideouts "..#hideouts)
     
     -- Sort results table wrt number of hits.
     local _sort = function(a,b) return a.distance < b.distance end
@@ -1655,7 +1861,7 @@ function SUPPRESSION:_SearchHideout()
     Hideout=hideouts[1].object:GetCoordinate()
     
   else
-    self:E(SUPPRESSION.id.."No hideouts found!")
+    self:E(self.lid.."No hideouts found!")
   end
   
   return Hideout
@@ -1685,7 +1891,7 @@ function SUPPRESSION:_GetLife()
     
     local groupstrength=#units/self.IniGroupStrength*100
     
-    self.T2(SUPPRESSION.id..string.format("Group %s _GetLife nunits = %d", self.Controllable:GetName(), #units))
+    self.T2(self.lid..string.format("Group %s _GetLife nunits = %d", self.Controllable:GetName(), #units))
     
     for _,unit in pairs(units) do
     
@@ -1702,7 +1908,7 @@ function SUPPRESSION:_GetLife()
         life_ave=life_ave+life
         if self.Debug then
           local text=string.format("n=%02d: Life = %3.1f, Life0 = %3.1f, min=%3.1f, max=%3.1f, ave=%3.1f, group=%3.1f", n, unit:GetLife(), unit:GetLife0(), life_min, life_max, life_ave/n,groupstrength)
-          self:T2(SUPPRESSION.id..text)
+          self:T2(self.lid..text)
         end
       end
       
@@ -1795,13 +2001,13 @@ function SUPPRESSION:_SetROE(roe)
   elseif roe==SUPPRESSION.ROE.Return then
     group:OptionROEReturnFire()
   else
-    self:E(SUPPRESSION.id.."Unknown ROE requested: "..tostring(roe))
+    self:E(self.lid.."Unknown ROE requested: "..tostring(roe))
     group:OptionROEOpenFire()
     self.CurrentROE=SUPPRESSION.ROE.Free
   end
   
   local text=string.format("Group %s now has ROE %s.", self.Controllable:GetName(), self.CurrentROE)
-  self:T(SUPPRESSION.id..text)
+  self:T(self.lid..text)
 end
 
 --- Sets the alarm state of the group and updates the current alarm state variable.
@@ -1824,13 +2030,13 @@ function SUPPRESSION:_SetAlarmState(state)
   elseif state==SUPPRESSION.AlarmState.Red then
     group:OptionAlarmStateRed()
   else
-    self:E(SUPPRESSION.id.."Unknown alarm state requested: "..tostring(state))
+    self:E(self.lid.."Unknown alarm state requested: "..tostring(state))
     group:OptionAlarmStateAuto()
     self.CurrentAlarmState=SUPPRESSION.AlarmState.Auto
   end
   
   local text=string.format("Group %s now has Alarm State %s.", self.Controllable:GetName(), self.CurrentAlarmState)
-  self:T(SUPPRESSION.id..text)
+  self:T(self.lid..text)
 end
 
 --- Print event-from-to string to DCS log file. 
@@ -1841,7 +2047,7 @@ end
 -- @param #string To To state.
 function SUPPRESSION:_EventFromTo(BA, Event, From, To)
   local text=string.format("\n%s: %s EVENT %s: %s --> %s", BA, self.Controllable:GetName(), Event, From, To)
-  self:T2(SUPPRESSION.id..text)
+  self:T2(self.lid..text)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

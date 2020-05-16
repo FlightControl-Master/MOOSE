@@ -318,13 +318,37 @@ function UNIT:GetCallsign()
   return nil
 end
 
+--- Check if an (air) unit is a client or player slot. Information is retrieved from the group template.
+-- @param #UNIT self
+-- @return #boolean If true, unit is associated with a client or player slot.
+function UNIT:IsPlayer()
+  
+  -- Get group.
+  local group=self:GetGroup()
+    
+  -- Units of template group.
+  local units=group:GetTemplate().units
+  
+  -- Get numbers.
+  for _,unit in pairs(units) do
+      
+    -- Check if unit name matach and skill is Client or Player.
+    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
+      return true
+    end
+
+  end
+  
+  return false
+end
+
 
 --- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
 -- @param #UNIT self
 -- @return #string Player Name
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPlayerName()
-  self:F2( self.UnitName )
+  self:F( self.UnitName )
 
   local DCSUnit = self:GetDCSObject() -- DCS#Unit
   
@@ -400,9 +424,9 @@ function UNIT:GetRange()
   local Desc = self:GetDesc()
   
   if Desc then
-    local Range = Desc.range --This is in nautical miles for some reason. But should check again!
+    local Range = Desc.range --This is in kilometers (not meters) for some reason. But should check again!
     if Range then
-      Range=UTILS.NMToMeters(Range)
+      Range=Range*1000 -- convert to meters.
     else
       Range=10000000 --10.000 km if no range
     end
@@ -411,6 +435,64 @@ function UNIT:GetRange()
 
   return nil
 end
+
+--- Check if the unit is refuelable. Also retrieves the refuelling system (boom or probe) if applicable.
+-- @param #UNIT self
+-- @return #boolean If true, unit is refuelable (checks for the attribute "Refuelable").
+-- @return #number Refueling system (if any): 0=boom, 1=probe.
+function UNIT:IsRefuelable()
+  self:F2( self.UnitName )
+
+  local refuelable=self:HasAttribute("Refuelable")
+  
+  local system=nil
+  
+  local Desc=self:GetDesc()
+  if Desc and Desc.tankerType then
+    system=Desc.tankerType
+  end
+
+  return refuelable, system
+end
+
+--- Check if the unit is a tanker. Also retrieves the refuelling system (boom or probe) if applicable.
+-- @param #UNIT self
+-- @return #boolean If true, unit is refuelable (checks for the attribute "Refuelable").
+-- @return #number Refueling system (if any): 0=boom, 1=probe.
+function UNIT:IsTanker()
+  self:F2( self.UnitName )
+
+  local tanker=self:HasAttribute("Tankers")
+  
+  local system=nil
+  
+  if tanker then
+  
+    local Desc=self:GetDesc()
+    if Desc and Desc.tankerType then
+      system=Desc.tankerType
+    end
+    
+    local typename=self:GetTypeName()
+    
+    -- Some hard coded data as this is not in the descriptors...
+    if typename=="IL-78M" then
+      system=1 --probe
+    elseif typename=="KC130" then
+      system=1 --probe
+    elseif typename=="KC135BDA" then
+      system=1 --probe
+    elseif typename=="KC135MPRS" then
+      system=1 --probe
+    elseif typename=="S-3B Tanker" then
+      system=1 --probe
+    end
+    
+  end
+
+  return tanker, system
+end
+
 
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
@@ -454,8 +536,7 @@ end
 
 --- Returns the Unit's ammunition.
 -- @param #UNIT self
--- @return DCS#Unit.Ammo
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return DCS#Unit.Ammo Table with ammuntion of the unit (or nil). This can be a complex table!  
 function UNIT:GetAmmo()
   self:F2( self.UnitName )
 
@@ -468,6 +549,94 @@ function UNIT:GetAmmo()
   
   return nil
 end
+
+--- Get the number of ammunition and in particular the number of shells, rockets, bombs and missiles a unit currently has.
+-- @param #UNIT self
+-- @return #number Total amount of ammo the unit has left. This is the sum of shells, rockets, bombs and missiles.
+-- @return #number Number of shells left.
+-- @return #number Number of rockets left.
+-- @return #number Number of bombs left.
+-- @return #number Number of missiles left.
+function UNIT:GetAmmunition()
+
+  -- Init counter.
+  local nammo=0
+  local nshells=0
+  local nrockets=0
+  local nmissiles=0
+  local nbombs=0
+
+  local unit=self
+
+  -- Get ammo table.
+  local ammotable=unit:GetAmmo()
+
+  if ammotable then
+
+    local weapons=#ammotable
+    
+    -- Loop over all weapons.
+    for w=1,weapons do
+
+      -- Number of current weapon.
+      local Nammo=ammotable[w]["count"]
+
+      -- Type name of current weapon.
+      local Tammo=ammotable[w]["desc"]["typeName"]
+
+      local _weaponString = UTILS.Split(Tammo,"%.")
+      local _weaponName   = _weaponString[#_weaponString]
+
+      -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3
+      local Category=ammotable[w].desc.category
+
+      -- Get missile category: Weapon.MissileCategory AAM=1, SAM=2, BM=3, ANTI_SHIP=4, CRUISE=5, OTHER=6
+      local MissileCategory=nil
+      if Category==Weapon.Category.MISSILE then
+        MissileCategory=ammotable[w].desc.missileCategory
+      end
+
+      -- We are specifically looking for shells or rockets here.
+      if Category==Weapon.Category.SHELL then
+
+        -- Add up all shells.
+        nshells=nshells+Nammo
+
+      elseif Category==Weapon.Category.ROCKET then
+
+        -- Add up all rockets.
+        nrockets=nrockets+Nammo
+
+      elseif Category==Weapon.Category.BOMB then
+
+        -- Add up all rockets.
+        nbombs=nbombs+Nammo
+        
+      elseif Category==Weapon.Category.MISSILE then
+
+        -- Add up all cruise missiles (category 5)
+        if MissileCategory==Weapon.MissileCategory.AAM then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.BM then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.OTHER then
+          nmissiles=nmissiles+Nammo
+        end
+
+      end
+
+    end
+  end
+
+  -- Total amount of ammunition.
+  nammo=nshells+nrockets+nmissiles+nbombs
+
+  return nammo, nshells, nrockets, nbombs, nmissiles
+end
+
+
 
 --- Returns the unit sensors.
 -- @param #UNIT self
@@ -552,10 +721,9 @@ end
 
 --- Returns relative amount of fuel (from 0.0 to 1.0) the UNIT has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
 -- @param #UNIT self
--- @return #number The relative amount of fuel (from 0.0 to 1.0).
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return #number The relative amount of fuel (from 0.0 to 1.0) or *nil* if the DCS Unit is not existing or alive. 
 function UNIT:GetFuel()
-  self:F( self.UnitName )
+  self:F3( self.UnitName )
 
   local DCSUnit = self:GetDCSObject()
   
@@ -571,7 +739,7 @@ end
 -- @param #UNIT self
 -- @return #list<Wrapper.Unit#UNIT> A list of one @{Wrapper.Unit}.
 function UNIT:GetUnits()
-  self:F2( { self.UnitName } )
+  self:F3( { self.UnitName } )
   local DCSUnit = self:GetDCSObject()
 
   local Units = {}
@@ -588,8 +756,7 @@ end
 
 --- Returns the unit's health. Dead units has health <= 1.0.
 -- @param #UNIT self
--- @return #number The Unit's health value.
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return #number The Unit's health value or -1 if unit does not exist any more.
 function UNIT:GetLife()
   self:F2( self.UnitName )
 
@@ -605,8 +772,7 @@ end
 
 --- Returns the Unit's initial health.
 -- @param #UNIT self
--- @return #number The Unit's initial health value.
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return #number The Unit's initial health value or 0 if unit does not exist any more.  
 function UNIT:GetLife0()
   self:F2( self.UnitName )
 
@@ -618,6 +784,55 @@ function UNIT:GetLife0()
   end
   
   return 0
+end
+
+--- Returns the unit's relative health.
+-- @param #UNIT self
+-- @return #number The Unit's relative health value, i.e. a number in [0,1] or -1 if unit does not exist any more.
+function UNIT:GetLifeRelative()
+  self:F2(self.UnitName)
+
+  if self and self:IsAlive() then
+    local life0=self:GetLife0()
+    local lifeN=self:GetLife()
+    return lifeN/life0
+  end
+  
+  return -1
+end
+
+--- Returns the unit's relative damage, i.e. 1-life.
+-- @param #UNIT self
+-- @return #number The Unit's relative health value, i.e. a number in [0,1] or 1 if unit does not exist any more.
+function UNIT:GetDamageRelative()
+  self:F2(self.UnitName)
+
+  if self and self:IsAlive() then
+    return 1-self:GetLifeRelative()
+  end
+  
+  return 1
+end
+
+--- Returns the category of the #UNIT from descriptor. Returns one of
+-- 
+-- * Unit.Category.AIRPLANE
+-- * Unit.Category.HELICOPTER
+-- * Unit.Category.GROUND_UNIT
+-- * Unit.Category.SHIP
+-- * Unit.Category.STRUCTURE
+-- 
+-- @param #UNIT self
+-- @return #number Unit category from `getDesc().category`.
+function UNIT:GetUnitCategory()
+  self:F3( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  if DCSUnit then
+    return DCSUnit:getDesc().category    
+  end
+  
+  return nil
 end
 
 --- Returns the category name of the #UNIT.
@@ -646,7 +861,9 @@ end
 
 
 --- Returns the Unit's A2G threat level on a scale from 1 to 10 ...
--- The following threat levels are foreseen:
+-- Depending on the era and the type of unit, the following threat levels are foreseen:
+-- 
+-- **Modern**:
 -- 
 --   * Threat level  0: Unit is unarmed.
 --   * Threat level  1: Unit is infantry.
@@ -659,13 +876,51 @@ end
 --   * Threat level  8: Unit is a Short Range SAM, radar guided.
 --   * Threat level  9: Unit is a Medium Range SAM, radar guided.
 --   * Threat level 10: Unit is a Long Range SAM, radar guided.
---   @param #UNIT self
+-- 
+-- **Cold**:
+-- 
+--   * Threat level  0: Unit is unarmed.
+--   * Threat level  1: Unit is infantry.
+--   * Threat level  2: Unit is an infantry vehicle.
+--   * Threat level  3: Unit is ground artillery.
+--   * Threat level  4: Unit is a tank.
+--   * Threat level  5: Unit is a modern tank or ifv with ATGM.
+--   * Threat level  6: Unit is a AAA.
+--   * Threat level  7: Unit is a SAM or manpad, IR guided.
+--   * Threat level  8: Unit is a Short Range SAM, radar guided.
+--   * Threat level  10: Unit is a Medium Range SAM, radar guided.
+--  
+-- **Korea**:
+-- 
+--   * Threat level  0: Unit is unarmed.
+--   * Threat level  1: Unit is infantry.
+--   * Threat level  2: Unit is an infantry vehicle.
+--   * Threat level  3: Unit is ground artillery.
+--   * Threat level  5: Unit is a tank.
+--   * Threat level  6: Unit is a AAA.
+--   * Threat level  7: Unit is a SAM or manpad, IR guided.
+--   * Threat level  10: Unit is a Short Range SAM, radar guided.
+--  
+-- **WWII**:
+-- 
+--   * Threat level  0: Unit is unarmed.
+--   * Threat level  1: Unit is infantry.
+--   * Threat level  2: Unit is an infantry vehicle.
+--   * Threat level  3: Unit is ground artillery.
+--   * Threat level  5: Unit is a tank.
+--   * Threat level  7: Unit is FLAK.
+--   * Threat level  10: Unit is AAA.
+--  
+-- 
+-- @param #UNIT self
+-- @return #number Number between 0 (low threat level) and 10 (high threat level).
+-- @return #string Some text.
 function UNIT:GetThreatLevel()
 
 
   local ThreatLevel = 0
   local ThreatText = ""
-
+  
   local Descriptor = self:GetDesc()
   
   if Descriptor then 
@@ -783,40 +1038,36 @@ function UNIT:GetThreatLevel()
 
 end
 
+--- Triggers an explosion at the coordinates of the unit.
+-- @param #UNIT self
+-- @param #number power Power of the explosion in kg TNT. Default 100 kg TNT.
+-- @param #number delay (Optional) Delay of explosion in seconds.
+-- @return #UNIT self
+function UNIT:Explode(power, delay)
+
+  -- Default.
+  power=power or 100
+  
+  local DCSUnit = self:GetDCSObject()
+  if DCSUnit then
+  
+    -- Check if delay or not.
+    if delay and delay>0 then
+      -- Delayed call.
+      SCHEDULER:New(nil, self.Explode, {self, power}, delay)
+    else
+      -- Create an explotion at the coordinate of the unit.
+      self:GetCoordinate():Explosion(power)
+    end
+  
+    return self
+  end
+  
+  return nil
+end
 
 -- Is functions
 
---- Returns true if the unit is within a @{Zone}.
--- @param #UNIT self
--- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
-function UNIT:IsInZone( Zone )
-  self:F2( { self.UnitName, Zone } )
-
-  if self:IsAlive() then
-    local IsInZone = Zone:IsVec3InZone( self:GetVec3() )
-  
-    return IsInZone 
-  end
-  return false
-end
-
---- Returns true if the unit is not within a @{Zone}.
--- @param #UNIT self
--- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}
-function UNIT:IsNotInZone( Zone )
-  self:F2( { self.UnitName, Zone } )
-
-  if self:IsAlive() then
-    local IsInZone = not Zone:IsVec3InZone( self:GetVec3() )
-    
-    self:T( { IsInZone } )
-    return IsInZone 
-  else
-    return false
-  end
-end
 
 
 --- Returns true if there is an **other** DCS Unit within a radius of the current 2D point of the DCS Unit.
@@ -897,34 +1148,35 @@ end
 
 --- Returns true if the UNIT is in the air.
 -- @param #UNIT self
--- @return #boolean true if in the air.
--- @return #nil The UNIT is not existing or alive.  
+-- @return #boolean Return true if in the air or #nil if the UNIT is not existing or alive.   
 function UNIT:InAir()
   self:F2( self.UnitName )
 
+  -- Get DCS unit object.
   local DCSUnit = self:GetDCSObject() --DCS#Unit
   
   if DCSUnit then
---    Implementation of workaround. The original code is below.
---    This to simulate the landing on buildings.
 
-    local UnitInAir = true
-
+    -- Get DCS result of whether unit is in air or not.
+    local UnitInAir = DCSUnit:inAir()
+    
+    -- Get unit category.
     local UnitCategory = DCSUnit:getDesc().category
-    if UnitCategory == Unit.Category.HELICOPTER then
+
+    -- If DCS says that it is in air, check if this is really the case, since we might have landed on a building where inAir()=true but actually is not.
+    -- This is a workaround since DCS currently does not acknoledge that helos land on buildings.
+    -- Note however, that the velocity check will fail if the ground is moving, e.g. on an aircraft carrier!    
+    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER then
       local VelocityVec3 = DCSUnit:getVelocity()
-      local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
+      local Velocity = UTILS.VecNorm(VelocityVec3)
       local Coordinate = DCSUnit:getPoint()
       local LandHeight = land.getHeight( { x = Coordinate.x, y = Coordinate.z } )
       local Height = Coordinate.y - LandHeight
       if Velocity < 1 and Height <= 60   then
         UnitInAir = false
       end
-    else
-      UnitInAir = DCSUnit:inAir()
     end
-
-
+    
     self:T3( UnitInAir )
     return UnitInAir
   end
@@ -992,6 +1244,122 @@ do -- Detection
 
     return IsLOS
   end
-  
 
+  --- Forces the unit to become aware of the specified target, without the unit manually detecting the other unit itself.
+  -- Applies only to a Unit Controller. Cannot be used at the group level.
+  -- @param #UNIT self
+  -- @param #UNIT TargetUnit The unit to be known.
+  -- @param #boolean TypeKnown The target type is known. If *false*, the type is not known.
+  -- @param #boolean DistanceKnown The distance to the target is known. If *false*, distance is unknown.
+  function UNIT:KnowUnit(TargetUnit, TypeKnown, DistanceKnown)
+
+    -- Defaults.
+    if TypeKnown~=false then
+      TypeKnown=true
+    end
+    if DistanceKnown~=false then
+      DistanceKnown=true
+    end
+  
+    local DCSControllable = self:GetDCSObject()
+  
+    if DCSControllable then
+  
+      local Controller = DCSControllable:getController()  --self:_GetController()
+      
+      if Controller then
+      
+        local object=TargetUnit:GetDCSObject()
+        
+        if object then
+          
+          self:I(string.format("Unit %s now knows target unit %s. Type known=%s, distance known=%s", self:GetName(), TargetUnit:GetName(), tostring(TypeKnown), tostring(DistanceKnown)))
+      
+          Controller:knowTarget(object, TypeKnown, DistanceKnown)
+          
+        end
+        
+      end
+  
+    end
+    
+  end
+
+end
+
+--- Get the unit table from a unit's template.
+-- @param #UNIT self
+-- @return #table Table of the unit template (deep copy) or #nil.
+function UNIT:GetTemplate()
+
+  local group=self:GetGroup()
+  
+  local name=self:GetName()
+  
+  if group then
+    local template=group:GetTemplate()
+    
+    if template then
+    
+      for _,unit in pairs(template.units) do
+      
+        if unit.name==name then
+          return UTILS.DeepCopy(unit) 
+        end
+      end
+      
+    end     
+  end
+  
+  return nil
+end
+
+
+--- Get the payload table from a unit's template.
+-- The payload table has elements:
+-- 
+--    * pylons
+--    * fuel
+--    * chaff
+--    * gun
+--    
+-- @param #UNIT self
+-- @return #table Payload table (deep copy) or #nil.
+function UNIT:GetTemplatePayload()
+
+  local unit=self:GetTemplate()
+  
+  if unit then
+    return unit.payload
+  end
+  
+  return nil
+end
+
+--- Get the pylons table from a unit's template. This can be a complex table depending on the weapons the unit is carrying.
+-- @param #UNIT self
+-- @return #table Table of pylons (deepcopy) or #nil.
+function UNIT:GetTemplatePylons()
+
+  local payload=self:GetTemplatePayload()
+  
+  if payload then
+    return payload.pylons
+  end
+
+  return nil
+end
+
+--- Get the fuel of the unit from its template.
+-- @param #UNIT self
+-- @return #number Fuel of unit in kg.
+function UNIT:GetTemplateFuel()
+
+  local payload=self:GetTemplatePayload()
+  
+  if payload then
+    return payload.fuel
+  end
+
+  return nil
 end

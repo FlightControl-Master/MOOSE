@@ -19,6 +19,8 @@
 do -- UserFlag
 
   --- @type USERFLAG
+  -- @field #string ClassName Name of the class
+  -- @field #string UserFlagName Name of the flag.
   -- @extends Core.Base#BASE
 
 
@@ -30,7 +32,8 @@ do -- UserFlag
   -- 
   -- @field #USERFLAG
   USERFLAG = {
-    ClassName = "USERFLAG",
+    ClassName    = "USERFLAG",
+    UserFlagName = nil,
   }
   
   --- USERFLAG Constructor.
@@ -46,18 +49,29 @@ do -- UserFlag
     return self
   end
 
+  --- Get the userflag name.
+  -- @param #USERFLAG self
+  -- @return #string Name of the user flag.
+  function USERFLAG:GetName()    
+    return self.UserFlagName
+  end  
 
   --- Set the userflag to a given Number.
   -- @param #USERFLAG self
   -- @param #number Number The number value to be checked if it is the same as the userflag.
+  -- @param #number Delay Delay in seconds, before the flag is set.
   -- @return #USERFLAG The userflag instance.
   -- @usage
   --   local BlueVictory = USERFLAG:New( "VictoryBlue" )
   --   BlueVictory:Set( 100 ) -- Set the UserFlag VictoryBlue to 100.
   --   
-  function USERFLAG:Set( Number ) --R2.3
+  function USERFLAG:Set( Number, Delay ) --R2.3
   
-    trigger.action.setUserFlag( self.UserFlagName, Number )
+    if Delay and Delay>0 then
+      self:ScheduleOnce(Delay, USERFLAG.Set, self, Number)
+    else  
+      trigger.action.setUserFlag( self.UserFlagName, Number )
+    end
     
     return self
   end  
@@ -70,7 +84,7 @@ do -- UserFlag
   --   local BlueVictory = USERFLAG:New( "VictoryBlue" )
   --   local BlueVictoryValue = BlueVictory:Get() -- Get the UserFlag VictoryBlue value.
   --   
-  function USERFLAG:Get( Number ) --R2.3
+  function USERFLAG:Get() --R2.3
     
     return trigger.misc.getUserFlag( self.UserFlagName )
   end  

@@ -125,11 +125,25 @@ do -- SET_BASE
     self.Index = {}
     
     self.CallScheduler = SCHEDULER:New( self )
-  
+
     self:SetEventPriority( 2 )
   
     return self
   end
+
+  --- Clear the Objects in the Set.
+  -- @param #SET_BASE self
+  -- @return #SET_BASE self
+  function SET_BASE:Clear()
+    
+    for Name, Object in pairs( self.Set ) do
+      self:Remove( Name )
+    end
+    
+    return self
+  end
+  
+  
   
   --- Finds an @{Core.Base#BASE} object based on the object Name.
   -- @param #SET_BASE self
@@ -148,7 +162,7 @@ do -- SET_BASE
   function SET_BASE:GetSet()
     self:F2()
     
-    return self.Set
+    return self.Set or {}
   end
   
   --- Gets a list of the Names of the Objects in the Set.
@@ -327,6 +341,25 @@ do -- SET_BASE
     return self
   end
   
+  --- Define the SET iterator **"limit"**.
+  -- @param #SET_BASE self
+  -- @param #number Limit Defines how many objects are evaluated of the set as part of the Some iterators. The default is 1.
+  -- @return #SET_BASE self
+  function SET_BASE:SetSomeIteratorLimit( Limit )
+  
+    self.SomeIteratorLimit = Limit or 1
+    
+    return self
+  end
+  
+   --- Get the SET iterator **"limit"**.
+  -- @param #SET_BASE self
+  -- @return #number Defines how many objects are evaluated of the set as part of the Some iterators.
+  function SET_BASE:GetSomeIteratorLimit()
+  
+    return self.SomeIteratorLimit or self:Count()
+  end
+  
   
   --- Filters for the defined collection.
   -- @param #SET_BASE self
@@ -351,7 +384,6 @@ do -- SET_BASE
     for ObjectName, Object in pairs( self.Database ) do
   
       if self:IsIncludeObject( Object ) then
-        self:E( { "Adding Object:", ObjectName } )
         self:Add( ObjectName, Object )
       end
     end
@@ -409,9 +441,9 @@ do -- SET_BASE
     for ObjectID, ObjectData in pairs( self.Set ) do
       if NearestObject == nil then
         NearestObject = ObjectData
-        ClosestDistance = PointVec2:DistanceFromPointVec2( ObjectData:GetVec2() )
+        ClosestDistance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
       else
-        local Distance = PointVec2:DistanceFromPointVec2( ObjectData:GetVec2() )
+        local Distance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
         if Distance < ClosestDistance then
           NearestObject = ObjectData
           ClosestDistance = Distance
@@ -525,12 +557,73 @@ do -- SET_BASE
   --- Iterate the SET_BASE and derived classes and call an iterator function for the given SET_BASE, providing the Object for each element within the set and optional parameters.
   -- @param #SET_BASE self
   -- @param #function IteratorFunction The function that will be called.
+  -- @param #table arg Arguments of the IteratorFunction.
+  -- @param #SET_BASE Set (Optional) The set to use. Default self:GetSet().
+  -- @param #function Function (Optional) A function returning a #boolean true/false. Only if true, the IteratorFunction is called.
+  -- @param #table FunctionArguments (Optional) Function arguments.
   -- @return #SET_BASE self
   function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArguments )
     self:F3( arg )
     
     Set = Set or self:GetSet()
     arg = arg or {}
+    
+    local function CoRoutine()
+      local Count = 0
+      for ObjectID, ObjectData in pairs( Set ) do
+        local Object = ObjectData
+          self:T3( Object )
+          if Function then
+            if Function( unpack( FunctionArguments or {} ), Object ) == true then
+              IteratorFunction( Object, unpack( arg ) )
+            end
+          else
+            IteratorFunction( Object, unpack( arg ) )
+          end
+          Count = Count + 1
+  --        if Count % self.YieldInterval == 0 then
+  --          coroutine.yield( false )
+  --        end    
+      end
+      return true
+    end
+    
+  --  local co = coroutine.create( CoRoutine )
+    local co = CoRoutine
+    
+    local function Schedule()
+    
+  --    local status, res = coroutine.resume( co )
+      local status, res = co()
+      self:T3( { status, res } )
+      
+      if status == false then
+        error( res )
+      end
+      if res == false then
+        return true -- resume next time the loop
+      end
+      
+      return false
+    end
+  
+    --self.CallScheduler:Schedule( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
+    Schedule()
+    
+    return self
+  end
+
+  --- Iterate the SET_BASE and derived classes and call an iterator function for the given SET_BASE, providing the Object for each element within the set and optional parameters.
+  -- @param #SET_BASE self
+  -- @param #function IteratorFunction The function that will be called.
+  -- @return #SET_BASE self
+  function SET_BASE:ForSome( IteratorFunction, arg, Set, Function, FunctionArguments )
+    self:F3( arg )
+    
+    Set = Set or self:GetSet()
+    arg = arg or {}
+    
+    local Limit = self:GetSomeIteratorLimit()
     
     local function CoRoutine()
       local Count = 0
@@ -545,6 +638,9 @@ do -- SET_BASE
             IteratorFunction( Object, unpack( arg ) )
           end
           Count = Count + 1
+          if Count >= Limit then
+            break
+          end
   --        if Count % self.YieldInterval == 0 then
   --          coroutine.yield( false )
   --        end    
@@ -831,7 +927,40 @@ do -- SET_GROUP
     
     return AliveSet.Set or {}
   end
+
+  --- Returns a report of of unit types.
+  -- @param #SET_GROUP self
+  -- @return Core.Report#REPORT A report of the unit types found. The key is the UnitTypeName and the value is the amount of unit types found.
+  function SET_GROUP:GetUnitTypeNames()
+    self:F2()
   
+    local MT = {} -- Message Text
+    local UnitTypes = {}
+    
+    local ReportUnitTypes = REPORT:New()
+    
+    for GroupID, GroupData in pairs( self:GetSet() ) do
+      local Units = GroupData:GetUnits()
+      for UnitID, UnitData in pairs( Units ) do
+        if UnitData:IsAlive() then
+          local UnitType = UnitData:GetTypeName()
+      
+          if not UnitTypes[UnitType] then
+            UnitTypes[UnitType] = 1
+          else
+            UnitTypes[UnitType] = UnitTypes[UnitType] + 1
+          end
+        end
+      end
+    end
+  
+    for UnitTypeID, UnitType in pairs( UnitTypes ) do
+      ReportUnitTypes:Add( UnitType .. " of " .. UnitTypeID )
+    end
+  
+    return ReportUnitTypes
+  end
+
   --- Add a GROUP to SET_GROUP.
   -- Note that for each unit in the group that is set, a default cargo bay limit is initialized.
   -- @param Core.Set#SET_GROUP self
@@ -1130,12 +1259,24 @@ do -- SET_GROUP
   
   --- Iterate the SET_GROUP and call an iterator function for each GROUP object, providing the GROUP and optional parameters.
   -- @param #SET_GROUP self
-  -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+  -- @param #function IteratorFunction The function that will be called for all GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
   -- @return #SET_GROUP self
   function SET_GROUP:ForEachGroup( IteratorFunction, ... )
     self:F2( arg )
     
     self:ForEach( IteratorFunction, arg, self:GetSet() )
+  
+    return self
+  end
+  
+  --- Iterate the SET_GROUP and call an iterator function for some GROUP objects, providing the GROUP and optional parameters.
+  -- @param #SET_GROUP self
+  -- @param #function IteratorFunction The function that will be called for some GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+  -- @return #SET_GROUP self
+  function SET_GROUP:ForSomeGroup( IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForSome( IteratorFunction, arg, self:GetSet() )
   
     return self
   end
@@ -1148,6 +1289,18 @@ do -- SET_GROUP
     self:F2( arg )
     
     self:ForEach( IteratorFunction, arg, self:GetAliveSet() )
+  
+    return self
+  end
+  
+  --- Iterate the SET_GROUP and call an iterator function for some **alive** GROUP objects, providing the GROUP and optional parameters.
+  -- @param #SET_GROUP self
+  -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+  -- @return #SET_GROUP self
+  function SET_GROUP:ForSomeGroupAlive( IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForSome( IteratorFunction, arg, self:GetAliveSet() )
   
     return self
   end
@@ -1419,6 +1572,35 @@ do -- SET_GROUP
       Count = Count + GroupData:CountInZone(Zone)
     end
     return Count
+  end
+  
+  --- Iterate the SET_GROUP and count how many GROUPs and UNITs are alive.
+  -- @param #SET_GROUP self
+  -- @return #number The number of GROUPs alive.
+  -- @return #number The number of UNITs alive.
+  function SET_GROUP:CountAlive()
+    local CountG = 0
+    local CountU = 0
+    
+    local Set = self:GetSet()
+    
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      if GroupData and GroupData:IsAlive() then
+      
+        CountG = CountG + 1
+        
+        --Count Units.
+        for _,_unit in pairs(GroupData:GetUnits()) do
+          local unit=_unit --Wrapper.Unit#UNIT
+          if unit and unit:IsAlive() then
+            CountU=CountU+1
+          end
+        end
+      end
+      
+    end
+    
+    return CountG,CountU
   end
   
   ----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
@@ -2004,20 +2186,6 @@ do -- SET_UNIT
       return IsNotInZone
     end
     
-  
-    --- Check if minimal one element of the SET_UNIT is in the Zone.
-    -- @param #SET_UNIT self
-    -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
-    -- @return #SET_UNIT self
-    function SET_UNIT:ForEachUnitInZone( IteratorFunction, ... )
-      self:F2( arg )
-      
-      self:ForEach( IteratorFunction, arg, self:GetSet() )
-    
-      return self
-    end
-    
-  
   end
   
   
@@ -2032,6 +2200,54 @@ do -- SET_UNIT
   
     return self
   end
+  
+  
+  --- Get the SET of the SET_UNIT **sorted per Threat Level**.
+  -- 
+  -- @param #SET_UNIT self
+  -- @param #number FromThreatLevel The TreatLevel to start the evaluation **From** (this must be a value between 0 and 10).
+  -- @param #number ToThreatLevel The TreatLevel to stop the evaluation **To** (this must be a value between 0 and 10).
+  -- @return #SET_UNIT self
+  -- @usage
+  -- 
+  -- 
+  function SET_UNIT:GetSetPerThreatLevel( FromThreatLevel, ToThreatLevel )
+    self:F2( arg )
+    
+    local ThreatLevelSet = {}
+    
+    if self:Count() ~= 0 then
+      for UnitName, UnitObject in pairs( self.Set ) do
+        local Unit = UnitObject -- Wrapper.Unit#UNIT
+      
+        local ThreatLevel = Unit:GetThreatLevel()
+        ThreatLevelSet[ThreatLevel] = ThreatLevelSet[ThreatLevel] or {}
+        ThreatLevelSet[ThreatLevel].Set = ThreatLevelSet[ThreatLevel].Set or {}
+        ThreatLevelSet[ThreatLevel].Set[UnitName] = UnitObject
+        self:F( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
+      end
+      
+      
+      local OrderedPerThreatLevelSet = {}
+      
+      local ThreatLevelIncrement = FromThreatLevel <= ToThreatLevel and 1 or -1
+
+            
+      for ThreatLevel = FromThreatLevel, ToThreatLevel, ThreatLevelIncrement do
+        self:F( { ThreatLevel = ThreatLevel } )
+        local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
+        if ThreatLevelItem then
+          for UnitName, UnitObject in pairs( ThreatLevelItem.Set ) do
+            table.insert( OrderedPerThreatLevelSet, UnitObject )
+          end
+        end
+      end
+
+      return OrderedPerThreatLevelSet
+    end
+    
+  end
+  
   
   --- Iterate the SET_UNIT **sorted *per Threat Level** and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
   -- 
@@ -2391,6 +2607,23 @@ do -- SET_UNIT
     end
   
     return GroundUnitCount
+  end
+  
+  --- Returns if the @{Set} has air targets.
+  -- @param #SET_UNIT self
+  -- @return #number The amount of air targets in the Set.
+  function SET_UNIT:HasAirUnits()
+    self:F2()
+  
+    local AirUnitCount = 0
+    for UnitID, UnitData in pairs( self:GetSet() ) do
+      local UnitTest = UnitData -- Wrapper.Unit#UNIT
+      if UnitTest:IsAir() then
+        AirUnitCount = AirUnitCount + 1
+      end
+    end
+  
+    return AirUnitCount
   end
   
   --- Returns if the @{Set} has friendly ground units.
@@ -5238,6 +5471,326 @@ do -- SET_ZONE
   -- @return Core.Zone#ZONE_BASE The zone that validates the coordinate location.
   -- @return #nil No zone has been found.
   function SET_ZONE:IsCoordinateInZone( Coordinate )
+  
+    for _, Zone in pairs( self:GetSet() ) do
+      local Zone = Zone -- Core.Zone#ZONE_BASE
+      if Zone:IsCoordinateInZone( Coordinate ) then
+        return Zone
+      end
+    end
+  
+    return nil
+  end
+
+end
+
+do -- SET_ZONE_GOAL
+
+  --- @type SET_ZONE_GOAL
+  -- @extends Core.Set#SET_BASE
+  
+  --- Mission designers can use the @{Core.Set#SET_ZONE_GOAL} class to build sets of zones of various types.
+  -- 
+  -- ## SET_ZONE_GOAL constructor
+  -- 
+  -- Create a new SET_ZONE_GOAL object with the @{#SET_ZONE_GOAL.New} method:
+  -- 
+  --    * @{#SET_ZONE_GOAL.New}: Creates a new SET_ZONE_GOAL object.
+  --   
+  -- ## Add or Remove ZONEs from SET_ZONE_GOAL 
+  -- 
+  -- ZONEs can be added and removed using the @{Core.Set#SET_ZONE_GOAL.AddZonesByName} and @{Core.Set#SET_ZONE_GOAL.RemoveZonesByName} respectively. 
+  -- These methods take a single ZONE name or an array of ZONE names to be added or removed from SET_ZONE_GOAL.
+  -- 
+  -- ## SET_ZONE_GOAL filter criteria 
+  -- 
+  -- You can set filter criteria to build the collection of zones in SET_ZONE_GOAL.
+  -- Filter criteria are defined by:
+  -- 
+  --    * @{#SET_ZONE_GOAL.FilterPrefixes}: Builds the SET_ZONE_GOAL with the zones having a certain text pattern of prefix.
+  --   
+  -- Once the filter criteria have been set for the SET_ZONE_GOAL, you can start filtering using:
+  -- 
+  --   * @{#SET_ZONE_GOAL.FilterStart}: Starts the filtering of the zones within the SET_ZONE_GOAL.
+  -- 
+  -- ## SET_ZONE_GOAL iterators
+  -- 
+  -- Once the filters have been defined and the SET_ZONE_GOAL has been built, you can iterate the SET_ZONE_GOAL with the available iterator methods.
+  -- The iterator methods will walk the SET_ZONE_GOAL set, and call for each airbase within the set a function that you provide.
+  -- The following iterator methods are currently available within the SET_ZONE_GOAL:
+  -- 
+  --   * @{#SET_ZONE_GOAL.ForEachZone}: Calls a function for each zone it finds within the SET_ZONE_GOAL.
+  -- 
+  -- ===
+  -- @field #SET_ZONE_GOAL SET_ZONE_GOAL
+  SET_ZONE_GOAL = {
+    ClassName = "SET_ZONE_GOAL",
+    Zones = {},
+    Filter = {
+      Prefixes = nil,
+    },
+    FilterMeta = {
+    },
+  }
+  
+  
+  --- Creates a new SET_ZONE_GOAL object, building a set of zones.
+  -- @param #SET_ZONE_GOAL self
+  -- @return #SET_ZONE_GOAL self
+  -- @usage
+  -- -- Define a new SET_ZONE_GOAL Object. The DatabaseSet will contain a reference to all Zones.
+  -- DatabaseSet = SET_ZONE_GOAL:New()
+  function SET_ZONE_GOAL:New()
+    -- Inherits from BASE
+    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.ZONES_GOAL ) )
+  
+    return self
+  end
+  
+  --- Add ZONEs to SET_ZONE_GOAL.
+  -- @param Core.Set#SET_ZONE_GOAL self
+  -- @param Core.Zone#ZONE_BASE Zone A ZONE_BASE object.
+  -- @return self
+  function SET_ZONE_GOAL:AddZone( Zone )
+  
+    self:Add( Zone:GetName(), Zone )
+      
+    return self
+  end
+  
+  
+  --- Remove ZONEs from SET_ZONE_GOAL.
+  -- @param Core.Set#SET_ZONE_GOAL self
+  -- @param Core.Zone#ZONE_BASE RemoveZoneNames A single name or an array of ZONE_BASE names.
+  -- @return self
+  function SET_ZONE_GOAL:RemoveZonesByName( RemoveZoneNames )
+  
+    local RemoveZoneNamesArray = ( type( RemoveZoneNames ) == "table" ) and RemoveZoneNames or { RemoveZoneNames }
+    
+    for RemoveZoneID, RemoveZoneName in pairs( RemoveZoneNamesArray ) do
+      self:Remove( RemoveZoneName )
+    end
+      
+    return self
+  end
+  
+  
+  --- Finds a Zone based on the Zone Name.
+  -- @param #SET_ZONE_GOAL self
+  -- @param #string ZoneName
+  -- @return Core.Zone#ZONE_BASE The found Zone.
+  function SET_ZONE_GOAL:FindZone( ZoneName )
+  
+    local ZoneFound = self.Set[ZoneName]
+    return ZoneFound
+  end
+  
+  
+  --- Get a random zone from the set.
+  -- @param #SET_ZONE_GOAL self
+  -- @return Core.Zone#ZONE_BASE The random Zone.
+  -- @return #nil if no zone in the collection.
+  function SET_ZONE_GOAL:GetRandomZone()
+  
+    if self:Count() ~= 0 then
+  
+      local Index = self.Index
+      local ZoneFound = nil -- Core.Zone#ZONE_BASE
+  
+      -- Loop until a zone has been found.
+      -- The :GetZoneMaybe() call will evaluate the probability for the zone to be selected.
+      -- If the zone is not selected, then nil is returned by :GetZoneMaybe() and the loop continues!  
+      while not ZoneFound do
+        local ZoneRandom = math.random( 1, #Index )
+        ZoneFound = self.Set[Index[ZoneRandom]]:GetZoneMaybe() 
+      end
+    
+      return ZoneFound
+    end
+    
+    return nil
+  end
+  
+  
+  --- Set a zone probability.
+  -- @param #SET_ZONE_GOAL self
+  -- @param #string ZoneName The name of the zone.
+  function SET_ZONE_GOAL:SetZoneProbability( ZoneName, ZoneProbability )
+    local Zone = self:FindZone( ZoneName )
+    Zone:SetZoneProbability( ZoneProbability )
+  end
+  
+  
+  
+  
+  --- Builds a set of zones of defined zone prefixes.
+  -- All the zones starting with the given prefixes will be included within the set.
+  -- @param #SET_ZONE_GOAL self
+  -- @param #string Prefixes The prefix of which the zone name starts with.
+  -- @return #SET_ZONE_GOAL self
+  function SET_ZONE_GOAL:FilterPrefixes( Prefixes )
+    if not self.Filter.Prefixes then
+      self.Filter.Prefixes = {}
+    end
+    if type( Prefixes ) ~= "table" then
+      Prefixes = { Prefixes }
+    end
+    for PrefixID, Prefix in pairs( Prefixes ) do
+      self.Filter.Prefixes[Prefix] = Prefix
+    end
+    return self
+  end
+  
+  
+  --- Starts the filtering.
+  -- @param #SET_ZONE_GOAL self
+  -- @return #SET_ZONE_GOAL self
+  function SET_ZONE_GOAL:FilterStart()
+  
+    if _DATABASE then
+    
+      -- We initialize the first set.
+      for ObjectName, Object in pairs( self.Database ) do
+        if self:IsIncludeObject( Object ) then
+          self:Add( ObjectName, Object )
+        else
+          self:RemoveZonesByName( ObjectName )
+        end
+      end
+    end
+  
+    self:HandleEvent( EVENTS.NewZoneGoal )
+    self:HandleEvent( EVENTS.DeleteZoneGoal )
+    
+    return self
+  end
+  
+  --- Stops the filtering for the defined collection.
+  -- @param #SET_ZONE_GOAL self
+  -- @return #SET_ZONE_GOAL self
+  function SET_ZONE_GOAL:FilterStop()
+  
+    self:UnHandleEvent( EVENTS.NewZoneGoal )
+    self:UnHandleEvent( EVENTS.DeleteZoneGoal )
+    
+    return self
+  end
+  
+  --- Handles the Database to check on an event (birth) that the Object was added in the Database.
+  -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #string The name of the AIRBASE
+  -- @return #table The AIRBASE
+  function SET_ZONE_GOAL:AddInDatabase( Event )
+    self:F3( { Event } )
+  
+    return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+  end
+  
+  --- Handles the Database to check on any event that Object exists in the Database.
+  -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #string The name of the AIRBASE
+  -- @return #table The AIRBASE
+  function SET_ZONE_GOAL:FindInDatabase( Event )
+    self:F3( { Event } )
+  
+    return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+  end
+  
+  --- Iterate the SET_ZONE_GOAL and call an interator function for each ZONE, providing the ZONE and optional parameters.
+  -- @param #SET_ZONE_GOAL self
+  -- @param #function IteratorFunction The function that will be called when there is an alive ZONE in the SET_ZONE_GOAL. The function needs to accept a AIRBASE parameter.
+  -- @return #SET_ZONE_GOAL self
+  function SET_ZONE_GOAL:ForEachZone( IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForEach( IteratorFunction, arg, self:GetSet() )
+  
+    return self
+  end
+  
+  
+  ---
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Zone#ZONE_BASE MZone
+  -- @return #SET_ZONE_GOAL self
+  function SET_ZONE_GOAL:IsIncludeObject( MZone )
+    self:F2( MZone )
+  
+    local MZoneInclude = true
+  
+    if MZone then
+      local MZoneName = MZone:GetName()
+    
+      if self.Filter.Prefixes then
+        local MZonePrefix = false
+        for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
+          self:T3( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
+          if string.find( MZoneName, ZonePrefix, 1 ) then
+            MZonePrefix = true
+          end
+        end
+        self:T( { "Evaluated Prefix", MZonePrefix } )
+        MZoneInclude = MZoneInclude and MZonePrefix
+      end
+    end
+     
+    self:T2( MZoneInclude )
+    return MZoneInclude
+  end
+  
+  --- Handles the OnEventNewZone event for the Set.
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Event#EVENTDATA EventData
+  function SET_ZONE_GOAL:OnEventNewZoneGoal( EventData )
+  
+    self:I( { "New Zone Capture Coalition", EventData } )
+    self:I( { "Zone Capture Coalition", EventData.ZoneGoal } )
+  
+    if EventData.ZoneGoal then
+      if EventData.ZoneGoal and self:IsIncludeObject( EventData.ZoneGoal ) then
+        self:I( { "Adding Zone Capture Coalition", EventData.ZoneGoal.ZoneName, EventData.ZoneGoal } )
+        self:Add( EventData.ZoneGoal.ZoneName , EventData.ZoneGoal  )
+      end
+    end
+  end
+  
+  --- Handles the OnDead or OnCrash event for alive units set.
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Event#EVENTDATA EventData
+  function SET_ZONE_GOAL:OnEventDeleteZoneGoal( EventData ) --R2.1
+    self:F3( { EventData } )
+  
+    if EventData.ZoneGoal then
+      local Zone = _DATABASE:FindZone( EventData.ZoneGoal.ZoneName )
+      if Zone and Zone.ZoneName then
+  
+      -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
+      -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
+      -- And this is a problem because it will remove all entries from the SET_ZONE_GOALs.
+      -- To prevent this from happening, the Zone object has a flag NoDestroy.
+      -- When true, the SET_ZONE_GOAL won't Remove the Zone object from the set.
+      -- This flag is switched off after the event handlers have been called in the EVENT class.
+        self:F( { ZoneNoDestroy=Zone.NoDestroy } )
+        if Zone.NoDestroy then
+        else
+          self:Remove( Zone.ZoneName )
+        end
+      end
+    end
+  end
+  
+  --- Validate if a coordinate is in one of the zones in the set.
+  -- Returns the ZONE object where the coordiante is located.
+  -- If zones overlap, the first zone that validates the test is returned.
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Point#COORDINATE Coordinate The coordinate to be searched.
+  -- @return Core.Zone#ZONE_BASE The zone that validates the coordinate location.
+  -- @return #nil No zone has been found.
+  function SET_ZONE_GOAL:IsCoordinateInZone( Coordinate )
   
     for _, Zone in pairs( self:GetSet() ) do
       local Zone = Zone -- Core.Zone#ZONE_BASE

@@ -856,6 +856,8 @@ do -- Group Assignment
 
     CommandCenter:SetMenu()
     
+    self:MenuFlashTaskStatus( TaskGroup, self:GetMission():GetCommandCenter().FlashStatus )
+    
     return self
   end
   
@@ -1111,6 +1113,11 @@ function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
       end
       local MarkMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Mark Task Location on Map" ), TaskControl, self.MenuMarkToGroup, self, TaskGroup ):SetTime( MenuTime ):SetTag( "Tasking" )
       local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task Details" ), TaskControl, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetTag( "Tasking" )
+      if not self.FlashTaskStatus then
+        local TaskFlashStatusMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Flash Task Details" ), TaskControl, self.MenuFlashTaskStatus, self, TaskGroup, true ):SetTime( MenuTime ):SetTag( "Tasking" )
+      else
+        local TaskFlashStatusMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Stop Flash Task Details" ), TaskControl, self.MenuFlashTaskStatus, self, TaskGroup, nil ):SetTime( MenuTime ):SetTag( "Tasking" )
+      end      
     end
   end
 
@@ -1225,12 +1232,34 @@ end
 
 --- Report the task status.
 -- @param #TASK self
+-- @param Wrapper.Group#GROUP TaskGroup
 function TASK:MenuTaskStatus( TaskGroup )
 
-  local ReportText = self:ReportDetails( TaskGroup )
-  
-  self:T( ReportText )
-  self:GetMission():GetCommandCenter():MessageTypeToGroup( ReportText, TaskGroup, MESSAGE.Type.Detailed )
+  if TaskGroup:IsAlive() then
+
+    local ReportText = self:ReportDetails( TaskGroup )
+    
+    self:T( ReportText )
+    self:GetMission():GetCommandCenter():MessageTypeToGroup( ReportText, TaskGroup, MESSAGE.Type.Detailed )
+  end
+
+end
+
+--- Report the task status.
+-- @param #TASK self
+function TASK:MenuFlashTaskStatus( TaskGroup, Flash )
+
+  self.FlashTaskStatus = Flash
+
+  if self.FlashTaskStatus then
+    self.FlashTaskScheduler, self.FlashTaskScheduleID = SCHEDULER:New( self, self.MenuTaskStatus, { TaskGroup }, 0, 60 )
+  else
+    if self.FlashTaskScheduler then
+      self.FlashTaskScheduler:Stop( self.FlashTaskScheduleID )
+      self.FlashTaskScheduler = nil
+      self.FlashTaskScheduleID = nil
+    end
+  end
 
 end
 
@@ -1709,6 +1738,23 @@ end
 
 do -- Links
 
+  --- Set goal of a task
+  -- @param #TASK self
+  -- @param Core.Goal#GOAL Goal
+  -- @return #TASK
+  function TASK:SetGoal( Goal )
+    self.Goal = Goal
+  end
+
+
+  --- Get goal of a task
+  -- @param #TASK self
+  -- @return Core.Goal#GOAL The Goal
+  function TASK:GetGoal()
+    return self.Goal
+  end
+
+
   --- Set dispatcher of a task
   -- @param #TASK self
   -- @param Tasking.DetectionManager#DETECTION_MANAGER Dispatcher
@@ -1786,7 +1832,7 @@ function TASK:GetPlayerCount() --R2.1 Get a count of the players.
     if PlayerGroup:IsAlive() == true then
       if self:IsGroupAssigned( PlayerGroup ) then
         local PlayerNames = PlayerGroup:GetPlayerNames()
-          PlayerCount = PlayerCount + #PlayerNames
+        PlayerCount = PlayerCount + ((PlayerNames) and #PlayerNames or 0) -- PlayerNames can be nil when there are no players.
       end
     end
   end
@@ -1808,7 +1854,7 @@ function TASK:GetPlayerNames() --R2.1 Get a map of the players.
     if PlayerGroup:IsAlive() == true then
       if self:IsGroupAssigned( PlayerGroup ) then
         local PlayerNames = PlayerGroup:GetPlayerNames()
-        for PlayerNameID, PlayerName in pairs( PlayerNames ) do
+        for PlayerNameID, PlayerName in pairs( PlayerNames or {} ) do
           PlayerNameMap[PlayerName] = PlayerGroup
         end
       end

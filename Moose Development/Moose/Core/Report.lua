@@ -70,11 +70,12 @@ function REPORT:Add( Text )
   return self
 end
 
---- Add a new line to a REPORT.
+--- Add a new line to a REPORT, but indented. A separator character can be specified to separate the reported lines visually.
 -- @param #REPORT self
--- @param #string Text
+-- @param #string Text The report text.
+-- @param #string Separator (optional) The start of each report line can begin with an optional separator character. This can be a "-", or "#", or "*". You're free to choose what you find the best.
 -- @return #REPORT
-function REPORT:AddIndent( Text, Separator ) --R2.1
+function REPORT:AddIndent( Text, Separator )
   self.Report[#self.Report+1] = ( ( Separator and Separator .. string.rep( " ", self.Indent - 1 ) ) or string.rep(" ", self.Indent ) ) .. Text:gsub("\n","\n"..string.rep( " ", self.Indent ) )
   return self
 end

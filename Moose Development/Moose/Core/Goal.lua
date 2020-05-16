@@ -15,6 +15,7 @@
 -- ===
 -- 
 -- ### Author: **FlightControl**
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -142,6 +143,7 @@ do -- Goal
   -- @param #GOAL self
   -- @param #string PlayerName The name of the player.
   function GOAL:AddPlayerContribution( PlayerName )
+    self:F({PlayerName})
     self.Players[PlayerName] = self.Players[PlayerName] or 0
     self.Players[PlayerName] = self.Players[PlayerName] + 1
     self.TotalContributions = self.TotalContributions + 1

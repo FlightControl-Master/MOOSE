@@ -126,6 +126,39 @@ do
     -- @param Wrapper.Positionable#POSITIONABLE Target
     -- @param #number LaserCode Laser code.
     -- @param #number Duration Duration of lasing in seconds.
+
+    self:AddTransition( "Off", "LaseOnCoordinate", "On" )
+    
+    --- LaseOnCoordinate Handler OnBefore for SPOT.
+    -- @function [parent=#SPOT] OnBeforeLaseOnCoordinate
+    -- @param #SPOT self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @return #boolean
+    
+    --- LaseOnCoordinate Handler OnAfter for SPOT.
+    -- @function [parent=#SPOT] OnAfterLaseOnCoordinate
+    -- @param #SPOT self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    
+    --- LaseOnCoordinate Trigger for SPOT.
+    -- @function [parent=#SPOT] LaseOnCoordinate
+    -- @param #SPOT self
+    -- @param Core.Point#COORDINATE Coordinate The coordinate to lase.
+    -- @param #number LaserCode Laser code.
+    -- @param #number Duration Duration of lasing in seconds.
+    
+    --- LaseOn Asynchronous Trigger for SPOT
+    -- @function [parent=#SPOT] __LaseOn
+    -- @param #SPOT self
+    -- @param #number Delay
+    -- @param Wrapper.Positionable#POSITIONABLE Target
+    -- @param #number LaserCode Laser code.
+    -- @param #number Duration Duration of lasing in seconds.
+
     
     
     self:AddTransition( "On",  "Lasing", "On" )
@@ -194,7 +227,8 @@ do
     return self
   end
   
-  --- @param #SPOT self
+  --- On after LaseOn event. Activates the laser spot.
+  -- @param #SPOT self
   -- @param From
   -- @param Event
   -- @param To
@@ -226,6 +260,40 @@ do
     
     self:__Lasing( -1 )
   end
+  
+  
+  --- On after LaseOnCoordinate event. Activates the laser spot.
+  -- @param #SPOT self
+  -- @param From
+  -- @param Event
+  -- @param To
+  -- @param Core.Point#COORDINATE Coordinate The coordinate at which the laser is pointing.
+  -- @param #number LaserCode Laser code.
+  -- @param #number Duration Duration of lasing in seconds.
+  function SPOT:onafterLaseOnCoordinate(From, Event, To, Coordinate, LaserCode, Duration)
+    self:F( { "LaseOnCoordinate", Coordinate, LaserCode, Duration } )
+
+    local function StopLase( self )
+      self:LaseOff()
+    end
+    
+    self.Target = nil
+    self.TargetCoord=Coordinate
+    self.LaserCode = LaserCode
+    
+    self.Lasing = true
+    
+    local RecceDcsUnit = self.Recce:GetDCSObject()
+    
+    self.SpotIR = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 1, z = 0 }, Coordinate:GetVec3() )
+    self.SpotLaser = Spot.createLaser( RecceDcsUnit, { x = 0, y = 1, z = 0 }, Coordinate:GetVec3(), LaserCode )
+
+    if Duration then
+      self.ScheduleID = self.LaseScheduler:Schedule( self, StopLase, {self}, Duration )
+    end
+    
+    self:__Lasing(-1)
+  end  
 
   --- @param #SPOT self
   -- @param Core.Event#EVENTDATA EventData
@@ -246,10 +314,20 @@ do
   -- @param To
   function SPOT:onafterLasing( From, Event, To )
   
-    if self.Target:IsAlive() then
+    if self.Target and self.Target:IsAlive() then
       self.SpotIR:setPoint( self.Target:GetPointVec3():AddY(1):AddY(math.random(-100,100)/100):AddX(math.random(-100,100)/100):GetVec3() )
       self.SpotLaser:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
       self:__Lasing( -0.2 )
+    elseif self.TargetCoord then
+    
+      -- Wiggle the IR spot a bit.  
+      local irvec3={x=self.TargetCoord.x+math.random(-100,100)/100, y=self.TargetCoord.y+math.random(-100,100)/100, z=self.TargetCoord.z} --#DCS.Vec3
+      local lsvec3={x=self.TargetCoord.x, y=self.TargetCoord.y, z=self.TargetCoord.z} --#DCS.Vec3
+      
+      self.SpotIR:setPoint(irvec3)
+      self.SpotLaser:setPoint(lsvec3)
+      
+      self:__Lasing(-0.25)    
     else
       self:F( { "Target is not alive", self.Target:IsAlive() } )
     end

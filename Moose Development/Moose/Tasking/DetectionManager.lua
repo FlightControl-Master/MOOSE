@@ -46,6 +46,7 @@ do -- DETECTION MANAGER
   --- @type DETECTION_MANAGER
   -- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
   -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
+  -- @field Tasking.CommandCenter#COMMANDCENTER CC The command center that is used to communicate with the players.
   -- @extends Core.Fsm#FSM
 
   --- DETECTION_MANAGER class.
@@ -55,6 +56,9 @@ do -- DETECTION MANAGER
     SetGroup = nil,
     Detection = nil,
   }
+  
+  --- @field Tasking.CommandCenter#COMMANDCENTER
+  DETECTION_MANAGER.CC = nil
   
   --- FAC constructor.
   -- @param #DETECTION_MANAGER self
@@ -217,13 +221,95 @@ do -- DETECTION MANAGER
   
     return self._ReportDisplayTime
   end
+
+
+  --- Set a command center to communicate actions to the players reporting to the command center.
+  -- @param #DETECTION_MANAGER self
+  -- @return #DETECTION_MANGER self
+  function DETECTION_MANAGER:SetTacticalMenu( DispatcherMainMenuText, DispatcherMenuText )
+
+    local DispatcherMainMenu = MENU_MISSION:New( DispatcherMainMenuText, nil )
+    local DispatcherMenu = MENU_MISSION_COMMAND:New( DispatcherMenuText, DispatcherMainMenu,
+      function()
+        self:ShowTacticalDisplay( self.Detection )
+      end
+      )
+    
+    return self
+  end
+  
+  
+
+  
+  --- Set a command center to communicate actions to the players reporting to the command center.
+  -- @param #DETECTION_MANAGER self
+  -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
+  -- @return #DETECTION_MANGER self
+  function DETECTION_MANAGER:SetCommandCenter( CommandCenter )
+    
+    self.CC = CommandCenter
+    
+    return self
+  end
+  
+  
+  --- Get the command center to communicate actions to the players.
+  -- @param #DETECTION_MANAGER self
+  -- @return Tasking.CommandCenter#COMMANDCENTER The command center.
+  function DETECTION_MANAGER:GetCommandCenter()
+    
+    return self.CC
+  end
+ 
+  
+  --- Send an information message to the players reporting to the command center.
+  -- @param #DETECTION_MANAGER self
+  -- @param #table Squadron The squadron table.
+  -- @param #string Message The message to be sent.
+  -- @param #string SoundFile The name of the sound file .wav or .ogg.
+  -- @param #number SoundDuration The duration of the sound.
+  -- @param #string SoundPath The path pointing to the folder in the mission file.
+  -- @param Wrapper.Group#GROUP DefenderGroup The defender group sending the message.
+  -- @return #DETECTION_MANGER self
+  function DETECTION_MANAGER:MessageToPlayers( Squadron,  Message, DefenderGroup )
+  
+    self:F( { Message = Message } )
+    
+--    if not self.PreviousMessage or self.PreviousMessage ~= Message then
+--      self.PreviousMessage = Message
+--      if self.CC then
+--        self.CC:MessageToCoalition( Message )
+--      end
+--    end
+
+    if self.CC then
+      self.CC:MessageToCoalition( Message )
+    end
+    
+    Message = Message:gsub( "°", " degrees " )
+    Message = Message:gsub( "(%d)%.(%d)", "%1 dot %2" )
+    
+  -- Here we handle the transmission of the voice over.
+  -- If for a certain reason the Defender does not exist, we use the coordinate of the airbase to send the message from.
+    local RadioQueue = Squadron.RadioQueue -- Core.RadioSpeech#RADIOSPEECH
+    if RadioQueue then
+      local DefenderUnit = DefenderGroup:GetUnit(1)
+      if DefenderUnit and DefenderUnit:IsAlive() then
+        RadioQueue:SetSenderUnitName( DefenderUnit:GetName() )
+      end
+      RadioQueue:Speak( Message, Squadron.Language )
+    end
+    
+    return self
+  end
+  
+  
   
   --- Reports the detected items to the @{Core.Set#SET_GROUP}.
   -- @param #DETECTION_MANAGER self
   -- @param Functional.Detection#DETECTION_BASE Detection
   -- @return #DETECTION_MANAGER self
   function DETECTION_MANAGER:ProcessDetected( Detection )
-  	self:E()
   
   end
 

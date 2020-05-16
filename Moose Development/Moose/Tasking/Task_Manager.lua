@@ -185,7 +185,6 @@ do -- TASK_MANAGER
   -- @param #TASK_MANAGER self
   -- @return #TASK_MANAGER self
   function TASK_MANAGER:ManageTasks()
-    self:E()
   
   end
 
