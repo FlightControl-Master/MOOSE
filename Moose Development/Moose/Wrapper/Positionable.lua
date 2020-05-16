@@ -602,6 +602,26 @@ function POSITIONABLE:IsGround()
 end
 
 
+--- Returns if the unit is of ship category.
+-- @param #POSITIONABLE self
+-- @return #boolean Ship category evaluation result.
+function POSITIONABLE:IsShip()
+  self:F2()
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+    
+    local IsShip = ( UnitDescriptor.category == Unit.Category.SHIP )
+  
+    return IsShip
+  end
+  
+  return nil
+end
+
+
 --- Returns true if the POSITIONABLE is in the air.
 -- Polymorphic, is overridden in GROUP and UNIT.
 -- @param Wrapper.Positionable#POSITIONABLE self
