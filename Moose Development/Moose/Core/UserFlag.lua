@@ -69,7 +69,8 @@ do -- UserFlag
   
     if Delay and Delay>0 then
       self:ScheduleOnce(Delay, USERFLAG.Set, self, Number)
-    else  
+    else
+      --env.info(string.format("Setting flag \"%s\" to %d at T=%.1f", self.UserFlagName, Number, timer.getTime()))
       trigger.action.setUserFlag( self.UserFlagName, Number )
     end
     

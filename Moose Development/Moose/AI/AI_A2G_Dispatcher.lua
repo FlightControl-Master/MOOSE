@@ -4591,10 +4591,10 @@ do -- AI_A2G_DISPATCHER
         Report:Add( string.format( "   - %s - %s", DefenseQueueItem.SquadronName, DefenseQueueItem.DefenderSquadron.TakeoffTime, DefenseQueueItem.DefenderSquadron.TakeoffInterval) )
         
       end
-      
+
       Report:Add( string.format( "\n - Squadron Resources: ", #self.DefenseQueue ) )
       for DefenderSquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
-        Report:Add( string.format( "   - %s - %d", DefenderSquadronName, DefenderSquadron.ResourceCount and DefenderSquadron.ResourceCount or "n/a" ) )
+        Report:Add( string.format( "   - %s - %s", DefenderSquadronName, DefenderSquadron.ResourceCount and tostring(DefenderSquadron.ResourceCount) or "n/a" ) )
       end
   
       self:F( Report:Text( "\n" ) )
