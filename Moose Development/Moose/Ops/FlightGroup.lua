@@ -257,6 +257,12 @@ function FLIGHTGROUP:New(groupname, autostart)
   -- Holding flag.  
   self.flaghold=USERFLAG:New(string.format("%s_FlagHold", self.groupname))
   self.flaghold:Set(0)
+  
+  -- Init waypoints.
+  self:InitWaypoints()
+  
+  -- Initialize group.
+  self:_InitGroup()
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->      To State  
@@ -308,15 +314,6 @@ function FLIGHTGROUP:New(groupname, autostart)
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Start". Starts the FLIGHTGROUP. Initializes parameters and starts event handlers.
-  -- @function [parent=#FLIGHTGROUP] Start
-  -- @param #FLIGHTGROUP self
-
-  --- Triggers the FSM event "Start" after a delay. Starts the FLIGHTGROUP. Initializes parameters and starts event handlers.
-  -- @function [parent=#FLIGHTGROUP] __Start
-  -- @param #FLIGHTGROUP self
-  -- @param #number delay Delay in seconds.
-
   --- Triggers the FSM event "Stop". Stops the FLIGHTGROUP and all its event handlers.
   -- @param #FLIGHTGROUP self
 
@@ -325,15 +322,7 @@ function FLIGHTGROUP:New(groupname, autostart)
   -- @param #FLIGHTGROUP self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "FlightStatus".
-  -- @function [parent=#FLIGHTGROUP] FlightStatus
-  -- @param #FLIGHTGROUP self
-
-  --- Triggers the FSM event "FlightStatus" after a delay.
-  -- @function [parent=#FLIGHTGROUP] __FlightStatus
-  -- @param #FLIGHTGROUP self
-  -- @param #number delay Delay in seconds.
-
+  -- TODO: Add pseudo functions.
 
   -- Debug trace.
   if false then
@@ -687,104 +676,8 @@ function FLIGHTGROUP:GetFuelMin()
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Start & Status
+-- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #FLIGHTGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function FLIGHTGROUP:onafterStart(From, Event, To)
-
-  -- Short info.
-  local text=string.format("Starting flight group v%s", FLIGHTGROUP.version)
-  self:I(self.lid..text)
-
-  -- Set current waypoint. Counting starts a one.
-  self.currentwp=1
-  
-  -- Check if the group is already alive and if so, add its elements.
-  local group=GROUP:FindByName(self.groupname)
-  
-  if group then
-  
-    -- Set group object.
-    self.group=group
-
-    -- Get units of group.
-    local units=group:GetUnits() or {}
-
-    -- Add elemets.
-    for _,unit in pairs(units) do
-      local element=self:AddElementByName(unit:GetName())
-    end
-    
-    if not self.groupinitialized then
-      self:_InitGroup()
-    end
-  
-    if group:IsAlive() then
-      
-      -- Debug info.    
-      self:T(self.lid..string.format("Found EXISTING and ALIVE group %s at start with %d/%d units/elements", group:GetName(), #units, #self.elements))
-                     
-      -- Trigger spawned event for all elements.
-      for _,element in pairs(self.elements) do
-        -- Add a little delay or the OnAfterSpawned function is not even initialized and will not be called.
-        self:__ElementSpawned(0.1, element)    
-      end
-      
-    else
-      -- Debug info.    
-      self:T(self.lid..string.format("Found EXISTING but LATE ACTIVATED group %s at start with %d/%d units/elements", group:GetName(), #units, #self.elements))
-    end
-    
-  end    
-  
-
-end
-
---- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #FLIGHTGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function FLIGHTGROUP:onafterStop(From, Event, To)
-
-  -- Check if group is still alive.
-  if self:IsAlive() then
-  
-    -- Set element parking spot to FREE (after arrived for example).
-    if self.flightcontrol then
-      for _,_element in pairs(self.elements) do
-        local element=_element --#FLIGHTGROUP.Element
-        self:_SetElementParkingFree(element)
-      end
-    end
-      
-    -- Destroy group. No event is generated.
-    self.group:Destroy(false)
-  end
-
-  -- Handle events:
-  self:UnHandleEvent(EVENTS.Birth)
-  self:UnHandleEvent(EVENTS.EngineStartup)
-  self:UnHandleEvent(EVENTS.Takeoff)
-  self:UnHandleEvent(EVENTS.Land)
-  self:UnHandleEvent(EVENTS.EngineShutdown)
-  self:UnHandleEvent(EVENTS.PilotDead)
-  self:UnHandleEvent(EVENTS.Ejection)
-  self:UnHandleEvent(EVENTS.Crash)
-  self:UnHandleEvent(EVENTS.RemoveUnit)
-  
-  self.CallScheduler:Clear()
-  
-  _DATABASE.FLIGHTGROUPS[self.groupname]=nil
-
-  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
-end
-
 
 --- On after "Status" event.
 -- @param #FLIGHTGROUP self
@@ -1841,77 +1734,6 @@ function FLIGHTGROUP:onafterRespawn(From, Event, To, Template)
 
 end
 
---- On after "PassingWaypoint" event.
--- @param #FLIGHTGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number n Waypoint number passed.
--- @param #number N Final waypoint number.
-function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
-  local text=string.format("Flight passed waypoint %d/%d", n, N)
-  self:T(self.lid..text)
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
-  
-  -- Get all waypoint tasks.
-  local tasks=self:GetTasksWaypoint(n)
-  
-  -- Debug info.
-  local text=string.format("WP %d/%d tasks:", n, N)
-  if #tasks>0 then
-    for i,_task in pairs(tasks) do
-      local task=_task --#FLIGHTGROUP.Task
-      text=text..string.format("\n[%d] %s", i, task.description)
-    end
-  else
-    text=text.." None"
-  end
-  self:T(self.lid..text)
-  
-
-  -- Tasks at this waypoints.
-  local taskswp={}
-  
-  -- TODO: maybe set waypoint enroute tasks?
-    
-  for _,task in pairs(tasks) do
-    local Task=task --#FLIGHTGROUP.Task          
-    
-    -- Task execute.
-    table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))
-
-    -- Stop condition if userflag is set to 1 or task duration over.
-    local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
-    
-    -- Controlled task.      
-    table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
-   
-    -- Task done.
-    table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))
-    
-  end
-
-  -- Execute waypoint tasks.
-  if #taskswp>0 then
-    self:SetTask(self.group:TaskCombo(taskswp))
-  end
-  
-  -- Final AIR waypoint reached?
-  if n==N then
-
-    -- Set switch to true.    
-    self.passedfinalwp=true
-    
-    -- Check if all tasks/mission are done? If so, RTB or WAIT.
-    -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
-    if #taskswp==0 then
-      self:_CheckGroupDone(1)
-    end
-
-  end
-  
-end
-
 --- Check if flight is done, i.e.
 -- 
 --  * passed the final waypoint, 
@@ -1979,33 +1801,6 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
     end
     
   end
-  
-end
-
---- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
--- @param #FLIGHTGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number n The goto waypoint number.
-function FLIGHTGROUP:onafterGotoWaypoint(From, Event, To, n)
-
-  -- The last waypoint passed was n-1
-  self.currentwp=n-1
-  
-  -- TODO: switch to re-enable waypoint tasks.
-  if false then
-    local tasks=self:GetTasksWaypoint(n)
-    
-    for _,_task in pairs(tasks) do
-      local task=_task --#FLIGHTGROUP.Task
-      task.status=FLIGHTGROUP.TaskStatus.SCHEDULED
-    end
-    
-  end
-  
-  -- Update the route.
-  self:UpdateRoute()
   
 end
 
@@ -2559,6 +2354,45 @@ function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
   end
 end
 
+--- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterStop(From, Event, To)
+
+  -- Check if group is still alive.
+  if self:IsAlive() then
+  
+    -- Set element parking spot to FREE (after arrived for example).
+    if self.flightcontrol then
+      for _,_element in pairs(self.elements) do
+        local element=_element --#FLIGHTGROUP.Element
+        self:_SetElementParkingFree(element)
+      end
+    end
+      
+    -- Destroy group. No event is generated.
+    self.group:Destroy(false)
+  end
+
+  -- Handle events:
+  self:UnHandleEvent(EVENTS.Birth)
+  self:UnHandleEvent(EVENTS.EngineStartup)
+  self:UnHandleEvent(EVENTS.Takeoff)
+  self:UnHandleEvent(EVENTS.Land)
+  self:UnHandleEvent(EVENTS.EngineShutdown)
+  self:UnHandleEvent(EVENTS.PilotDead)
+  self:UnHandleEvent(EVENTS.Ejection)
+  self:UnHandleEvent(EVENTS.Crash)
+  self:UnHandleEvent(EVENTS.RemoveUnit)
+  
+  self.CallScheduler:Clear()
+  
+  _DATABASE.FLIGHTGROUPS[self.groupname]=nil
+
+  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Task functions
@@ -2623,6 +2457,11 @@ function FLIGHTGROUP:_InitGroup()
 
   -- Get template of group.
   self.template=self.group:GetTemplate()
+
+  -- Define category.
+  self.isAircraft=true
+  self.isNaval=false
+  self.isGround=false
 
   -- Helo group.
   self.ishelo=self.group:IsHelicopter()
@@ -2703,11 +2542,6 @@ function FLIGHTGROUP:_InitGroup()
     
     self.tankertype=select(2, unit:IsTanker())
     self.refueltype=select(2, unit:IsRefuelable())
-  
-    -- Init waypoints.
-    if not self.waypoints then
-      self:InitWaypoints()
-    end
     
     -- Debug info.
     local text=string.format("Initialized Flight Group %s:\n", self.groupname)

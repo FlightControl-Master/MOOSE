@@ -20,6 +20,9 @@
 -- @field #boolean isLateActivated Is the group late activated.
 -- @field #table elements Table of elements, i.e. units of the group.
 -- @field #boolean ai If true, group is purely AI.
+-- @field #boolean isAircraft If true, group is airplane or helicopter.
+-- @field #boolean isNaval If true, group is ships or submarine.
+-- @field #boolean isGround If true, group is some ground unit.
 -- @field #table waypoints Table of waypoints.
 -- @field #table waypoints0 Table of initial waypoints.
 -- @field #number currentwp Current waypoint.
@@ -294,20 +297,9 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementDead",      "*")           -- An element is dead.
 
-
-
   ------------------------
   --- Pseudo Functions ---
   ------------------------
-
-  --- Triggers the FSM event "Start". Starts the OPSGROUP. Initializes parameters and starts event handlers.
-  -- @function [parent=#OPSGROUP] Start
-  -- @param #OPSGROUP self
-
-  --- Triggers the FSM event "Start" after a delay. Starts the OPSGROUP. Initializes parameters and starts event handlers.
-  -- @function [parent=#OPSGROUP] __Start
-  -- @param #OPSGROUP self
-  -- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the OPSGROUP and all its event handlers.
   -- @param #OPSGROUP self
@@ -324,18 +316,10 @@ function OPSGROUP:New(Group)
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#OPSGROUP] __Status
   -- @param #OPSGROUP self
-  -- @param #number delay Delay in seconds.  
+  -- @param #number delay Delay in seconds.
 
-  -- Debug trace.
-  if false then
-    self.Debug=true
-    BASE:TraceOnOff(true)
-    BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
-  end
-  
-  self:InitWaypoints()
-   
+  -- TODO: Add pseudo functions.
+
   return self  
 end
 
@@ -1764,8 +1748,10 @@ function OPSGROUP:onafterQueueUpdate(From, Event, To)
 
   local ready=true
   
-  --TODO: For aircraft check airborne.
-  -- self:IsAirborne()
+  -- For aircraft check airborne.
+  if self.isAircraft then
+    ready=self:IsAirborne()
+  end
 
   -- Check no current task.
   if ready and self.taskcurrent<=0 then
@@ -1798,7 +1784,93 @@ end
 -- @param #number n Waypoint passed.
 -- @param #number N Total number of waypoints.
 function OPSGROUP:onafterPassingWaypoint(From, Event, To, n, N)
-  self:I(self.lid..string.format("Passed waypoint %d of %d", n, N))
+  local text=string.format("Group passed waypoint %d/%d", n, N)
+  self:T(self.lid..text)
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
+  
+  -- Get all waypoint tasks.
+  local tasks=self:GetTasksWaypoint(n)
+  
+  -- Debug info.
+  local text=string.format("WP %d/%d tasks:", n, N)
+  if #tasks>0 then
+    for i,_task in pairs(tasks) do
+      local task=_task --#OPSGROUP.Task
+      text=text..string.format("\n[%d] %s", i, task.description)
+    end
+  else
+    text=text.." None"
+  end
+  self:T(self.lid..text)
+  
+
+  -- Tasks at this waypoints.
+  local taskswp={}
+  
+  -- TODO: maybe set waypoint enroute tasks?
+    
+  for _,task in pairs(tasks) do
+    local Task=task --#FLIGHTGROUP.Task          
+    
+    -- Task execute.
+    table.insert(taskswp, self.group:TaskFunction("OPSGROUP._TaskExecute", self, Task))
+
+    -- Stop condition if userflag is set to 1 or task duration over.
+    local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
+    
+    -- Controlled task.      
+    table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
+   
+    -- Task done.
+    table.insert(taskswp, self.group:TaskFunction("OPSGROUP._TaskDone", self, Task))
+    
+  end
+
+  -- Execute waypoint tasks.
+  if #taskswp>0 then
+    self:SetTask(self.group:TaskCombo(taskswp))
+  end
+  
+  -- Final AIR waypoint reached?
+  if n==N then
+
+    -- Set switch to true.    
+    self.passedfinalwp=true
+    
+    -- Check if all tasks/mission are done? If so, RTB or WAIT.
+    -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
+    if #taskswp==0 then
+      self:_CheckGroupDone(1)
+    end
+
+  end
+end
+
+--- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n The goto waypoint number.
+function OPSGROUP:onafterGotoWaypoint(From, Event, To, n)
+
+  -- The last waypoint passed was n-1
+  self.currentwp=n-1
+  
+  -- TODO: switch to re-enable waypoint tasks.
+  if false then
+    local tasks=self:GetTasksWaypoint(n)
+    
+    for _,_task in pairs(tasks) do
+      local task=_task --#OPSGROUP.Task
+      task.status=OPSGROUP.TaskStatus.SCHEDULED
+    end
+    
+  end
+  
+  -- Update the route.
+  self:UpdateRoute()
+  
 end
 
 --- On after "DetectedUnit" event. Add newly detected unit to detected units set.

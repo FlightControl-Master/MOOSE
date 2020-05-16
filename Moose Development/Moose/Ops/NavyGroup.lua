@@ -66,6 +66,16 @@ function NAVYGROUP:New(GroupName)
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("NAVYGROUP %s | ", self.groupname)
+  
+  -- Init waypoints.
+  self:InitWaypoints()
+  
+  -- Initialize the group.
+  self:_InitGroup()
+  
+  -- Defaults
+  self:SetDefaultROE()
+  self:SetDetection()
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
@@ -80,15 +90,6 @@ function NAVYGROUP:New(GroupName)
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Start". Starts the NAVYGROUP. Initializes parameters and starts event handlers.
-  -- @function [parent=#NAVYGROUP] Start
-  -- @param #NAVYGROUP self
-
-  --- Triggers the FSM event "Start" after a delay. Starts the NAVYGROUP. Initializes parameters and starts event handlers.
-  -- @function [parent=#NAVYGROUP] __Start
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.
-
   --- Triggers the FSM event "Stop". Stops the NAVYGROUP and all its event handlers.
   -- @param #NAVYGROUP self
 
@@ -96,15 +97,8 @@ function NAVYGROUP:New(GroupName)
   -- @function [parent=#NAVYGROUP] __Stop
   -- @param #NAVYGROUP self
   -- @param #number delay Delay in seconds.
-
-  --- Triggers the FSM event "Status".
-  -- @function [parent=#NAVYGROUP] Status
-  -- @param #NAVYGROUP self
-
-  --- Triggers the FSM event "Status" after a delay.
-  -- @function [parent=#NAVYGROUP] __Status
-  -- @param #NAVYGROUP self
-  -- @param #number delay Delay in seconds.  
+  
+  -- TODO: Add pseudo functions.
 
   -- Debug trace.
   if false then
@@ -118,13 +112,6 @@ function NAVYGROUP:New(GroupName)
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
   self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
   self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
-  
-  -- Initialize the group.
-  self:_InitGroup()
-  
-  -- Defaults
-  self:SetDefaultROE()
-  self:SetDetection()
   
   -- Start the status monitoring.
   self:__CheckZone(-1)
@@ -454,17 +441,6 @@ function NAVYGROUP:onafterSurface(From, Event, To)
 
 end
 
---- On after "PassingWaypoint" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number n Waypoint passed.
--- @param #number N Total number of waypoints.
-function NAVYGROUP:onafterPassingWaypoint(From, Event, To, n, N)
-  self:I(self.lid..string.format("Passed waypoint %d of %d", n, N))
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Events DCS
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -522,6 +498,12 @@ function NAVYGROUP:_InitGroup()
 
   -- Get template of group.
   self.template=self.group:GetTemplate()
+
+  -- Define category.
+  self.isAircraft=false
+  self.isNaval=true
+  self.isGround=false
+
 
   -- Helo group.
   --self.isSubmarine=self.group:IsSubmarine()
