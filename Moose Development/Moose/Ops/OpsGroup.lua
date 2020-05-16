@@ -16,6 +16,7 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string groupname Name of the group.
 -- @field Wrapper.Group#GROUP group Group object.
+-- @field #table template Template of the group.
 -- @field #boolean isLateActivated Is the group late activated.
 -- @field #table elements Table of elements, i.e. units of the group.
 -- @field #boolean ai If true, group is purely AI.
@@ -34,6 +35,7 @@
 -- @field #number speedmax Max speed in km/h.
 -- @field #number speedCruise Cruising speed in km/h.
 -- @field #boolean passedfinalwp Group has passed the final waypoint.
+-- @field #boolean respawning Group is being respawned.
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
@@ -113,6 +115,7 @@ OPSGROUP = {
   checkzones         =   nil,
   inzones            =   nil,
   groupinitialized   =   nil,
+  respawning         =   nil,
 }
 
 --- Status of group element.
@@ -183,6 +186,19 @@ OPSGROUP.TaskType={
 -- @field DCS#Task DCStask DCS task structure table.
 -- @field #number WaypointIndex Waypoint number at which the enroute task is added.
 
+--- Ammo data.
+-- @type OPSGROUP.Ammo
+-- @field #number Total Total amount of ammo.
+-- @field #number Guns Amount of gun shells.
+-- @field #number Bombs Amount of bombs.
+-- @field #number Rockets Amount of rockets.
+-- @field #number Torpedos Amount of torpedos.
+-- @field #number Missiles Amount of missiles.
+-- @field #number MissilesAA Amount of air-to-air missiles.
+-- @field #number MissilesAG Amount of air-to-ground missiles.
+-- @field #number MissilesAS Amount of anti-ship missiles.
+-- @field #number MissilesCR Amount of cruise missiles.
+-- @field #number MissilesBM Amount of ballistic missiles.
 
 --- NavyGroup version.
 -- @field #string version
@@ -604,7 +620,7 @@ function OPSGROUP:RemoveWaypoint(wpindex)
       end
 
       env.info("FF update route -1 after waypoint removed")
-      self:_CheckFlightDone()
+      self:_CheckGroupDone()
       
     else
     
@@ -805,7 +821,7 @@ function OPSGROUP:AddTaskWaypoint(task, waypointindex, description, prio, durati
   self:T3({newtask=newtask})
   
   -- Update route.
-  --self:_CheckFlightDone(1)
+  --self:_CheckGroupDone(1)
   self:__UpdateRoute(-1)
 
   return newtask
@@ -926,7 +942,7 @@ function OPSGROUP:RemoveTask(Task)
       
       -- Update route if this is a waypoint task.
       if task.type==OPSGROUP.TaskType.WAYPOINT and task.status==OPSGROUP.TaskStatus.SCHEDULED then
-        self:_CheckFlightDone(1)
+        self:_CheckGroupDone(1)
         --self:__UpdateRoute(-1)
       end
       
@@ -1215,8 +1231,8 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       --Mission paused. Do nothing!
     end
   else
-    self:I(self.lid.."FF Task Done but NO mission found ==> _CheckFlightDone in 1 sec")
-    self:_CheckFlightDone(1)
+    self:I(self.lid.."FF Task Done but NO mission found ==> _CheckGroupDone in 1 sec")
+    self:_CheckGroupDone(1)
   end
   
 end
@@ -1566,7 +1582,7 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.CANCELLED) 
     
     -- Send flight RTB or WAIT if nothing left to do.
-    self:_CheckFlightDone(1)
+    self:_CheckGroupDone(1)
     
   end
   
@@ -1608,7 +1624,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   -- TODO: reset mission specific parameters like radio, ROE etc.  
   
   -- Check if flight is done.
-  self:_CheckFlightDone(1)
+  self:_CheckGroupDone(1)
 
 end
 
@@ -1700,6 +1716,73 @@ function OPSGROUP:RouteToMission(mission, delay)
       self:SwitchFormation(mission.optionFormation)
     end
     
+  end
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Queue Update: Missions & Tasks
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "QueueUpdate" event. 
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterQueueUpdate(From, Event, To)
+
+  ---
+  -- Mission
+  ---
+
+   -- First check if group is alive? Late activated groups are activated and uncontrolled units are started automatically.
+  if self:IsAlive()~=nil then
+  
+    local mission=self:_GetNextMission()
+    
+    if mission then
+    
+      local currentmission=self:GetMissionCurrent()
+      
+      if currentmission then
+      
+        -- Current mission but new mission is urgent with higher prio.
+        if mission.urgent and mission.prio<currentmission.prio then
+          self:MissionCancel(currentmission)
+          self:__MissionStart(1, mission)
+        end
+        
+      else
+        -- No current mission.
+        self:MissionStart(mission)        
+      end
+    end
+  end
+
+  ---
+  -- Tasks
+  ---
+
+  local ready=true
+  
+  --TODO: For aircraft check airborne.
+  -- self:IsAirborne()
+
+  -- Check no current task.
+  if ready and self.taskcurrent<=0 then
+
+    -- Get task from queue.
+    local task=self:_GetNextTask()
+
+    -- Execute task if any.
+    if task then
+      self:TaskExecute(task)
+    end
+    
+  end
+
+  -- Update queue every ~5 sec.
+  if not self:IsStopped() then
+    self:__QueueUpdate(-5)
   end
 end
 
@@ -1933,7 +2016,7 @@ function OPSGROUP:InitWaypoints(waypoints)
   return self
 end
 
---- Route group along waypoints. Enroute tasks are also applied.
+--- Route group along waypoints.
 -- @param #OPSGROUP self
 -- @param #table waypoints Table of waypoints.
 -- @return #OPSGROUP self
@@ -2071,20 +2154,25 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SetOptionROE(roe)
 
-  roe=roe or self.roeDefault
+  self.roe=roe or self.roeDefault
   
   if self:IsAlive() then
   
-    self.group:OptionROE(roe)
+    self.group:OptionROE(self.roe)
     
-    self.roe=roe
-    
-    self:T2(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.roe))
+    self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.roe))
   else
     -- TODO WARNING
   end
   
   return self
+end
+
+--- Get current ROE of the group.
+-- @param #OPSGROUP self
+-- @return #number Current ROE.
+function OPSGROUP:GetROE()
+  return self.roe
 end
 
 --- Set the default ROT for the group. This is the ROT state gets when the group is spawned or to which it defaults back after a mission.
@@ -2102,13 +2190,11 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SetOptionROT(rot)
 
-  rot=rot or self.rotDefault
+  self.rot=rot or self.rotDefault
   
   if self:IsAlive() then
   
-    self.group:OptionROT(rot)
-    
-    self.rot=rot
+    self.group:OptionROT(self.rot)
     
     self:T2(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.rot))
   else
@@ -2430,6 +2516,232 @@ function OPSGROUP:GetNelements(status)
 
   
   return n
+end
+
+--- Get the number of shells a unit or group currently has. For a group the ammo count of all units is summed up.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Element element The element.
+-- @return #OPSGROUP.Ammo Ammo data.
+function OPSGROUP:GetAmmoElement(element)
+  return self:GetAmmoUnit(element.unit)
+end
+
+--- Get total amount of ammunition of the whole group.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP.Ammo Ammo data.
+function OPSGROUP:GetAmmoTot()
+
+  local units=self.group:GetUnits()
+  
+  local Ammo={} --#OPSGROUP.Ammo
+  Ammo.Total=0
+  Ammo.Guns=0
+  Ammo.Rockets=0
+  Ammo.Bombs=0
+  Ammo.Missiles=0
+  Ammo.MissilesAA=0
+  Ammo.MissilesAG=0
+  Ammo.MissilesAS=0
+  
+  for _,_unit in pairs(units) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    if unit and unit:IsAlive()~=nil then
+      
+      -- Get ammo of the unit.
+      local ammo=self:GetAmmoUnit(unit)
+      
+      -- Add up total.
+      Ammo.Total=Ammo.Total+ammo.Total
+      Ammo.Guns=Ammo.Guns+ammo.Guns
+      Ammo.Rockets=Ammo.Rockets+ammo.Rockets
+      Ammo.Bombs=Ammo.Bombs+ammo.Bombs
+      Ammo.Missiles=Ammo.Missiles+ammo.Missiles
+      Ammo.MissilesAA=Ammo.MissilesAA+ammo.MissilesAA
+      Ammo.MissilesAG=Ammo.MissilesAG+ammo.MissilesAG
+      Ammo.MissilesAS=Ammo.MissilesAS+ammo.MissilesAS
+    
+    end
+    
+  end
+
+  return Ammo
+end
+
+--- Get the number of shells a unit or group currently has. For a group the ammo count of all units is summed up.
+-- @param #OPSGROUP self
+-- @param Wrapper.Unit#UNIT unit The unit object.
+-- @param #boolean display Display ammo table as message to all. Default false.
+-- @return #OPSGROUP.Ammo Ammo data.
+function OPSGROUP:GetAmmoUnit(unit, display)
+
+  -- Default is display false.
+  if display==nil then
+    display=false
+  end
+
+  -- Init counter.
+  local nammo=0
+  local nshells=0
+  local nrockets=0
+  local nmissiles=0
+  local nmissilesAA=0
+  local nmissilesAG=0
+  local nmissilesAS=0
+  local nmissilesSA=0
+  local nmissilesBM=0
+  local nmissilesCR=0
+  local ntorps=0
+  local nbombs=0
+
+  -- Output.
+  local text=string.format("OPSGROUP group %s - unit %s:\n", self.groupname, unit:GetName())
+
+  -- Get ammo table.
+  local ammotable=unit:GetAmmo()
+
+  if ammotable then
+
+    local weapons=#ammotable
+
+    -- Loop over all weapons.
+    for w=1,weapons do
+
+      -- Number of current weapon.
+      local Nammo=ammotable[w]["count"]
+
+      -- Type name of current weapon.
+      local Tammo=ammotable[w]["desc"]["typeName"]
+
+      local _weaponString = UTILS.Split(Tammo,"%.")
+      local _weaponName   = _weaponString[#_weaponString]
+
+      -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3, torpedo=4
+      local Category=ammotable[w].desc.category
+
+      -- Get missile category: Weapon.MissileCategory AAM=1, SAM=2, BM=3, ANTI_SHIP=4, CRUISE=5, OTHER=6
+      local MissileCategory=nil
+      if Category==Weapon.Category.MISSILE then
+        MissileCategory=ammotable[w].desc.missileCategory
+      end
+
+      -- We are specifically looking for shells or rockets here.
+      if Category==Weapon.Category.SHELL then
+
+        -- Add up all shells.
+        nshells=nshells+Nammo
+
+        -- Debug info.
+        text=text..string.format("- %d shells of type %s\n", Nammo, _weaponName)
+
+      elseif Category==Weapon.Category.ROCKET then
+
+        -- Add up all rockets.
+        nrockets=nrockets+Nammo
+
+        -- Debug info.
+        text=text..string.format("- %d rockets of type %s\n", Nammo, _weaponName)
+
+      elseif Category==Weapon.Category.BOMB then
+
+        -- Add up all rockets.
+        nbombs=nbombs+Nammo
+
+        -- Debug info.
+        text=text..string.format("- %d bombs of type %s\n", Nammo, _weaponName)
+
+      elseif Category==Weapon.Category.MISSILE then
+
+        -- Add up all cruise missiles (category 5)
+        if MissileCategory==Weapon.MissileCategory.AAM then
+          nmissiles=nmissiles+Nammo
+          nmissilesAA=nmissilesAA+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.SAM then
+          nmissiles=nmissiles+Nammo
+          nmissilesSA=nmissilesSA+Nammo          
+        elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
+          nmissiles=nmissiles+Nammo
+          nmissilesAS=nmissilesAS+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.BM then
+          nmissiles=nmissiles+Nammo
+          nmissilesAG=nmissilesAG+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.CRUISE then
+          nmissiles=nmissiles+Nammo
+          nmissilesCR=nmissilesCR+Nammo        
+        elseif MissileCategory==Weapon.MissileCategory.OTHER then
+          nmissiles=nmissiles+Nammo
+          nmissilesAG=nmissilesAG+Nammo
+        end
+
+        -- Debug info.
+        text=text..string.format("- %d %s missiles of type %s\n", Nammo, self:_MissileCategoryName(MissileCategory), _weaponName)
+        
+      elseif Category==Weapon.Category.TORPEDO then
+      
+        -- Add up all rockets.
+        ntorps=ntorps+Nammo      
+
+        -- Debug info.
+        text=text..string.format("- %d torpedos of type %s\n", Nammo, _weaponName)
+
+      else
+
+        -- Debug info.
+        text=text..string.format("- %d unknown ammo of type %s (category=%d, missile category=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
+
+      end
+
+    end
+  end
+
+  -- Debug text and send message.
+  if display then
+    self:I(self.lid..text)
+  else
+    self:T3(self.lid..text)
+  end
+  MESSAGE:New(text, 10):ToAllIf(display)
+
+  -- Total amount of ammunition.
+  nammo=nshells+nrockets+nmissiles+nbombs+ntorps
+
+  local ammo={} --#OPSGROUP.Ammo
+  ammo.Total=nammo
+  ammo.Guns=nshells
+  ammo.Rockets=nrockets
+  ammo.Bombs=nbombs
+  ammo.Torpedos=ntorps
+  ammo.Missiles=nmissiles
+  ammo.MissilesAA=nmissilesAA
+  ammo.MissilesAG=nmissilesAG
+  ammo.MissilesAS=nmissilesAS
+  ammo.MissilesCR=nmissilesCR
+  ammo.MissilesBM=nmissilesBM
+  ammo.MissilesSA=nmissilesSA
+
+  return ammo
+end
+
+--- Returns a name of a missile category.
+-- @param #OPSGROUP self
+-- @param #number categorynumber Number of missile category from weapon missile category enumerator. See https://wiki.hoggitworld.com/view/DCS_Class_Weapon
+-- @return #string Missile category name.
+function OPSGROUP:_MissileCategoryName(categorynumber)
+  local cat="unknown"
+  if categorynumber==Weapon.MissileCategory.AAM then
+    cat="air-to-air"
+  elseif categorynumber==Weapon.MissileCategory.SAM then
+    cat="surface-to-air"
+  elseif categorynumber==Weapon.MissileCategory.BM then
+    cat="ballistic"
+  elseif categorynumber==Weapon.MissileCategory.ANTI_SHIP then
+    cat="anti-ship"
+  elseif categorynumber==Weapon.MissileCategory.CRUISE then
+    cat="cruise"
+  elseif categorynumber==Weapon.MissileCategory.OTHER then
+    cat="other"
+  end
+  return cat
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -31,6 +31,7 @@
 -- @field #NAVYGROUP
 NAVYGROUP = {
   ClassName      = "NAVYGROUP",
+  verbose        = 2,
 }
 
 --- Navy group element.
@@ -140,6 +141,7 @@ end
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
+-- @param #number Radius Radius in meters. Default 100 m.
 -- @param #number Nshots Number of shots to fire. Default 3.
 -- @param #number WeaponType Type of weapon. Default auto.
 -- @param #string Clock Time when to start the attack.
@@ -148,10 +150,24 @@ function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Radius, Nshots, WeaponType, Cl
 
   local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
 
-  
+  self:AddTask(DCStask, Clock, nil, Prio)
 
 end
 
+--- Add a *scheduled* task.
+-- @param #NAVYGROUP self
+-- @param Wrapper.Group#GROUP TargetGroup Target group.
+-- @param #number WeaponExpend How much weapons does are used.
+-- @param #number WeaponType Type of weapon. Default auto.
+-- @param #string Clock Time when to start the attack.
+-- @param #number Prio Priority of the task.
+function NAVYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clock, Prio)
+
+  local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack)
+
+  self:AddTask(DCStask, Clock, nil, Prio)
+
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
@@ -163,6 +179,15 @@ function NAVYGROUP:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
+
+  ---
+  -- Detection
+  ---
+  
+  -- Check if group has detected any units.
+  if self.detectionOn then
+    self:_CheckDetectedUnits()
+  end
   
 
   -- Current heading and position of the carrier.
@@ -173,11 +198,76 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   -- Check water is ahead.
   local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist or 5000, hdg))
 
+  local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
+  local nMissions=self:CountRemainingMissison()
+
     -- Info text.
-  local text=string.format("State %s: Speed=%.1f knots Heading=%03d collision=%s", fsmstate, speed, hdg, tostring(collision))
+  local text=string.format("State %s: Speed=%.1f knots Heading=%03d collision=%s Tasks=%d Missions=%d", fsmstate, speed, hdg, tostring(collision), nTaskTot, nMissions)
   self:I(self.lid..text)
 
-  self:__Status(-30)
+
+  ---
+  -- Tasks
+  ---
+  
+  -- Task queue.
+  if #self.taskqueue>0 and self.verbose>1 then  
+    local text=string.format("Tasks #%d", #self.taskqueue)
+    for i,_task in pairs(self.taskqueue) do
+      local task=_task --#FLIGHTGROUP.Task
+      local name=task.description
+      local taskid=task.dcstask.id or "unknown"
+      local status=task.status
+      local clock=UTILS.SecondsToClock(task.time, true)
+      local eta=task.time-timer.getAbsTime()
+      local started=task.timestamp and UTILS.SecondsToClock(task.timestamp, true) or "N/A"
+      local duration=-1
+      if task.duration then
+        duration=task.duration
+        if task.timestamp then
+          -- Time the task is running.
+          duration=task.duration-(timer.getAbsTime()-task.timestamp)
+        else
+          -- Time the task is supposed to run.
+          duration=task.duration
+        end
+      end
+      -- Output text for element.
+      if task.type==OPSGROUP.TaskType.SCHEDULED then
+        text=text..string.format("\n[%d] %s (%s): status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
+      elseif task.type==OPSGROUP.TaskType.WAYPOINT then
+        text=text..string.format("\n[%d] %s (%s): status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
+      end
+    end
+    self:I(self.lid..text)
+  end
+  
+  ---
+  -- Missions
+  ---
+  
+  -- Current mission name.
+  if self.verbose>0 then  
+    local Mission=self:GetMissionByID(self.currentmission)
+    
+    -- Current status.
+    local text=string.format("Missions %d, Current: %s", self:CountRemainingMissison(), Mission and Mission.name or "none")
+    for i,_mission in pairs(self.missionqueue) do
+      local mission=_mission --Ops.Auftrag#AUFTRAG
+      local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
+      local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
+      text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d wp=%s targets=%d", 
+      i, tostring(mission.name), mission.type, mission:GetFlightStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, tostring(mission:GetFlightWaypointIndex(self)), mission:CountMissionTargets())
+    end
+    self:I(self.lid..text)
+  end
+
+
+
+  -- Next check in ~30 seconds.
+  if not self:IsStopped() then
+    self:__Status(-30)
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -209,7 +299,7 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
   if self.ai then
   
     -- Set default ROE and ROT options.
-    self:SetOptionROE()
+    self:SetOptionROE(self.roe)
     
   end
   
@@ -252,6 +342,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
     
     -- Set speed.
     wp.speed=UTILS.KmphToMps(speed)
+    wp.alt=-depth
     
     -- Add waypoint.
     table.insert(waypoints, wp)
@@ -259,9 +350,11 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
 
   
   if #waypoints>1 then
+  
+    self:I(self.lid..string.format("Updateing route: WP=%d, Speed=%.1f knots, depth=%d meters", #self.waypoints-n+1, UTILS.KmphToKnots(speed), depth))
 
     -- Route group to all defined waypoints remaining.
-    self.group:Route(waypoints, 1)
+    self:Route(waypoints)
     
   else
   
@@ -269,7 +362,11 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
     -- No waypoints left
     ---
   
-    self:UpdateRoute(1)
+    self:I(self.lid..string.format("No waypoints left"))
+  
+    -- TODO: Switch to waypoint 1
+  
+    --self:UpdateRoute(1)
           
   end
 
@@ -299,7 +396,7 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, Duration, Speed, Uturn)
   wp[1]=coord:WaypointNaval(Speed)
   wp[2]=Coord:WaypointNaval(Speed)
 
-  self.group:Route(wp, 1)
+  self:Route(wp)
   
 end
 
@@ -317,7 +414,7 @@ function NAVYGROUP:onafterFullStop(From, Event, To)
   local wp=pos:WaypointNaval(0)
   
   -- Create new route consisting of only this position ==> Stop!
-  self.group:Route({wp})
+  self:Route({wp})
 
 end
 
@@ -340,6 +437,7 @@ end
 -- @param #number Depth Dive depth in meters.
 function NAVYGROUP:onafterDive(From, Event, To, Depth)
 
+  env.info("FF Diving")
   self:UpdateRoute(nil, nil, Depth)
 
 end
@@ -477,6 +575,8 @@ function NAVYGROUP:_InitGroup()
     element.typename=unit:GetTypeName()
     element.status=OPSGROUP.ElementStatus.INUTERO
     table.insert(self.elements, element)
+    
+    self:GetAmmoUnit(unit, true)
     
     if unit:IsAlive() then      
       self:ElementSpawned(element)
@@ -637,6 +737,33 @@ function NAVYGROUP:_CheckTurning()
 
   -- Update turning.
   self.turning=turning
+end
+
+--- Check if group is done, i.e.
+-- 
+--  * passed the final waypoint, 
+--  * no current task
+--  * no current mission
+--  * number of remaining tasks is zero
+--  * number of remaining missions is zero
+--  
+-- @param #NAVYGROUP self
+-- @param #number delay Delay in seconds.
+function NAVYGROUP:_CheckGroupDone(delay)
+
+  if self:IsAlive() and self.ai then
+
+    if delay and delay>0 then
+      -- Delayed call.
+      self:ScheduleOnce(delay, NAVYGROUP._CheckGroupDone, self)
+    else
+    
+      -- TODO: What?
+    
+    end
+    
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

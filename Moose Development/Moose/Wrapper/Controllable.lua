@@ -1444,21 +1444,12 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
     params = {
       point            = Vec2,
       zoneRadius       = Radius,
-      expendQty        = 100, -- dummy value
-      expendQtyEnabled = false,
+      expendQty        = AmmoCount or 100,
+      expendQtyEnabled = AmmoCount and true or false,
+      weaponType       = WeaponType or ENUMS.WeaponFlag.Auto,
     }
   }
 
-  if AmmoCount then
-    DCSTask.params.expendQty = AmmoCount
-    DCSTask.params.expendQtyEnabled = true
-  end
-
-  if WeaponType then
-    DCSTask.params.weaponType=WeaponType
-  end
-
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
