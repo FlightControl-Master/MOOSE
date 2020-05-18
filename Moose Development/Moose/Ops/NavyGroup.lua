@@ -67,12 +67,6 @@ function NAVYGROUP:New(GroupName)
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("NAVYGROUP %s | ", self.groupname)
   
-  -- Init waypoints.
-  self:InitWaypoints()
-  
-  -- Initialize the group.
-  self:_InitGroup()
-  
   -- Defaults
   self:SetDefaultROE()
   self:SetDetection()
@@ -99,6 +93,13 @@ function NAVYGROUP:New(GroupName)
   -- @param #number delay Delay in seconds.
   
   -- TODO: Add pseudo functions.
+
+
+  -- Init waypoints.
+  self:InitWaypoints()
+  
+  -- Initialize the group.
+  self:_InitGroup()
 
   -- Debug trace.
   if false then

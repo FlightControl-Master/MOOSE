@@ -257,12 +257,6 @@ function FLIGHTGROUP:New(groupname, autostart)
   -- Holding flag.  
   self.flaghold=USERFLAG:New(string.format("%s_FlagHold", self.groupname))
   self.flaghold:Set(0)
-  
-  -- Init waypoints.
-  self:InitWaypoints()
-  
-  -- Initialize group.
-  self:_InitGroup()
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->      To State  
@@ -344,6 +338,12 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:HandleEvent(EVENTS.Ejection,       self.OnEventEjection)
   self:HandleEvent(EVENTS.Crash,          self.OnEventCrash)
   self:HandleEvent(EVENTS.RemoveUnit,     self.OnEventRemoveUnit)
+
+  -- Init waypoints.
+  self:InitWaypoints()
+  
+  -- Initialize group.
+  self:_InitGroup()
 
   -- Start the status monitoring.
   self:__CheckZone(-1)
@@ -2616,6 +2616,10 @@ function FLIGHTGROUP:AddElementByName(unitname)
 
     -- Add element to table.
     table.insert(self.elements, element)
+    
+    if unit:IsAlive() then
+      self:ElementSpawned(element)
+    end
 
     return element
   end
