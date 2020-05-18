@@ -72,6 +72,9 @@
 -- @field Core.Point#COORDINATE transportPickup Coordinate where to pickup the cargo.
 -- @field Core.Point#COORDINATE transportDropoff Coordinate where to drop off the cargo.
 -- 
+-- @field #number artyRadius Radius in meters.
+-- @field #number artyShots Number of shots fired.
+-- 
 -- @field Ops.WingCommander#WINGCOMMANDER wingcommander The WINGCOMMANDER managing this mission.
 -- @field Ops.AirWing#AIRWING airwing The assigned airwing.
 -- @field #table assets Airwing Assets assigned for this mission.
@@ -1037,14 +1040,25 @@ end
 
 --- Create an ARTY mission.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Center of the firing solution.
+-- @param Core.Point#COORDINATE Target Center of the firing solution.
 -- @param #number Nshots Number of shots to be fired. Default 3.
 -- @param #number Radius Radius of the shells in meters. Default 100 meters.
 -- @return #AUFTRAG self
-function AUFTRAG:NewARTY(Coordinate, Nshots, Radius)
+function AUFTRAG:NewARTY(Target, Nshots, Radius)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ARTY)
+  
+  mission:_TargetFromObject(Target)
+  
+  mission.artyShots=Nshots or 3
+  mission.artyRadius=Radius or 100
+  
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.missionFraction=0.1
+  
+  mission.DCStask=mission:GetDCSMissionTask()
 
+  return mission
 end
 
 
@@ -2968,13 +2982,13 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     
     table.insert(DCStasks, DCStask)
 
-  elseif self.type==AUFTRAG.Type.RESCUEHELO then
+  elseif self.type==AUFTRAG.Type.ARTY then
 
     ------------------
     -- ARTY Mission --
     ------------------
   
-    local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, self:GetTargetVec2(),self.engageRadius, self.engageShots, self.engageWeaponType)
+    local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, self:GetTargetVec2(), self.artyRadius, self.artyShots, self.engageWeaponType)
     
     table.insert(DCStasks, DCStask)    
   

@@ -18,6 +18,7 @@
 -- @field Wrapper.Group#GROUP group Group object.
 -- @field #table template Template of the group.
 -- @field #boolean isLateActivated Is the group late activated.
+-- @field #boolean isUncontrolled Is the group uncontrolled.
 -- @field #table elements Table of elements, i.e. units of the group.
 -- @field #boolean ai If true, group is purely AI.
 -- @field #boolean isAircraft If true, group is airplane or helicopter.
@@ -549,6 +550,12 @@ function OPSGROUP:IsStopped()
   return self:Is("Stopped")
 end
 
+--- Check if this group is currently "uncontrolled" and needs to be "started" to begin its route.
+-- @param #OPSGROUP self
+-- @return #boolean If this group uncontrolled.
+function OPSGROUP:IsUncontrolled()
+  return self.isUncontrolled
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Waypoint Functions
@@ -1419,11 +1426,8 @@ function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
   end
   
   -- Startup group if it is uncontrolled.
-  if self:IsParking() and self:IsUncontrolled() then
+  if self.isAircraft and self:IsParking() and self:IsUncontrolled() then
     self:StartUncontrolled(delay)
-  else
-    --env.info("FF hallo!")
-    --self:StartUncontrolled(5)
   end  
 
   return true
@@ -1637,7 +1641,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     if mission.missionAltitude then
       waypointcoord:SetAltitude(mission.missionAltitude, true)
     end
-    env.info(string.format("FF mission alt=%d", waypointcoord.y))
+    env.info(string.format("FF mission alt=%d meters", waypointcoord.y))
     
     -- Add enroute tasks.
     for _,task in pairs(mission.enrouteTasks) do
@@ -1645,7 +1649,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
   
     -- Add waypoint.
-    self:AddWaypointAir(waypointcoord, nextwaypoint, UTILS.KmphToKnots(self.speedCruise), false)
+    self:AddWaypoint(waypointcoord, nextwaypoint, UTILS.KmphToKnots(self.speedCruise), false)
     
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then

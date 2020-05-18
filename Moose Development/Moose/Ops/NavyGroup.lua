@@ -486,6 +486,67 @@ end
 -- Routing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Add an a waypoint to the route.
+-- @param #FLIGHTGROUP self
+-- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
+-- @param #number wpnumber Waypoint number. Default at the end.
+-- @param #number speed Speed in knots. Default 11 kts.
+-- @param #boolean updateroute If true or nil, call UpdateRoute. If false, no call.
+-- @return #number Waypoint index.
+function NAVYGROUP:AddWaypoint(coordinate, wpnumber, speed, updateroute)
+
+  -- Waypoint number. Default is at the end.
+  wpnumber=wpnumber or #self.waypoints+1
+  
+  if wpnumber>self.currentwp then
+    self.passedfinalwp=false
+  end
+  
+  -- Speed in knots.
+  speed=speed or 11
+
+  -- Speed at waypoint.
+  local speedkmh=UTILS.KnotsToKmph(speed)
+
+  -- Create a Naval waypoint.
+  local wp=coordinate:WaypointNaval(speedkmh)
+  
+  -- Add to table.
+  table.insert(self.waypoints, wpnumber, wp)
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Adding NAVAL waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, speed, self.currentwp, #self.waypoints))
+  
+  -- Shift all waypoint tasks after the inserted waypoint.
+  for _,_task in pairs(self.taskqueue) do
+    local task=_task --#FLIGHTGROUP.Task
+    if task.type==OPSGROUP.TaskType.WAYPOINT and task.waypoint and task.waypoint>=wpnumber then
+      task.waypoint=task.waypoint+1
+    end
+  end  
+
+  -- Shift all mission waypoints after the inserted waypoint.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    -- Get mission waypoint index.
+    local wpidx=mission:GetFlightWaypointIndex(self)
+    
+    -- Increase number if this waypoint lies in the future.
+    if wpidx and wpidx>=wpnumber then
+      mission:SetFlightWaypointIndex(self, wpidx+1)
+    end    
+    
+  end
+  
+  -- Update route.
+  if updateroute==nil or updateroute==true then
+    self:_CheckGroupDone(1)
+  end
+  
+  return wpnumber
+end
+
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #NAVYGROUP self
 -- @return #NAVYGROUP self
@@ -514,6 +575,9 @@ function NAVYGROUP:_InitGroup()
   
   -- Is (template) group late activated.
   self.isLateActivated=self.template.lateActivation
+  
+  -- Naval groups cannot be uncontrolled.
+  self.isUncontrolled=false
   
   -- Max speed in km/h.
   self.speedmax=self.group:GetSpeedMax()

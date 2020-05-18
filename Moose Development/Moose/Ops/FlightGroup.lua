@@ -2886,13 +2886,6 @@ function FLIGHTGROUP:IsLandingAirbase(wp)
 end
 
 
---- Check if this group is currently "uncontrolled" and needs to be "started" to begin its route.
--- @param #FLIGHTGROUP self
--- @return #boolean If this group uncontrolled.
-function FLIGHTGROUP:IsUncontrolled()
-  return self.isUncontrolled
-end
-
 --- Check if task description is unique.
 -- @param #FLIGHTGROUP self
 -- @param #string description Task destription
@@ -2982,14 +2975,14 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
   return self
 end
 
---- Add a waypoint to the flight plan.
+--- Add an AIR waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
 -- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
 -- @param #number wpnumber Waypoint number. Default at the end.
 -- @param #number speed Speed in knots. Default 350 kts.
 -- @param #boolean updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return #number Waypoint index.
-function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
+function FLIGHTGROUP:AddWaypoint(coordinate, wpnumber, speed, updateroute)
 
   -- Waypoint number. Default is at the end.
   wpnumber=wpnumber or #self.waypoints+1
