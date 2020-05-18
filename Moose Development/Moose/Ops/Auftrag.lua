@@ -1,9 +1,9 @@
---- **Ops** - Auftrag (mission) for Air to Air and Air to Surface Ops.
+--- **Ops** - Auftrag (mission) for Ops.
 --
 -- **Main Features:**
 --
---    * Simplifies setting DCS tasks.
---    * Handy events.
+--    * Simplifies defining and executing DCS tasks.
+--    * Additional useful events.
 --    * Set mission start/stop times.
 --    * Set mission priority and urgency (can cancel running missions).
 --    * Specific mission options for ROE, ROT, formation, etc.
@@ -259,15 +259,15 @@ AUFTRAG.Status={
   FAILED="failed",
 }
 
---- Flight status.
--- @type AUFTRAG.FlightStatus
+--- Mission status of an assigned group.
+-- @type AUFTRAG.GroupStatus
 -- @field #string SCHEDULED Mission is scheduled in a FLIGHGROUP queue waiting to be started.
 -- @field #string STARTED Flightgroup started this mission but it is not executed yet.
 -- @field #string EXECUTING Flightgroup is executing this mission.
 -- @field #string PAUSED Flightgroup has paused this mission, e.g. for refuelling.
 -- @field #string DONE Mission task of the flightgroup is done.
 -- @field #string CANCELLED Mission was cancelled.
-AUFTRAG.FlightStatus={
+AUFTRAG.GroupStatus={
   SCHEDULED="scheduled",
   STARTED="started",
   EXECUTING="executing",
@@ -1446,7 +1446,7 @@ function AUFTRAG:AddFlightGroup(FlightGroup)
 
   local flightdata={} --#AUFTRAG.FlightData
   flightdata.flightgroup=FlightGroup
-  flightdata.status=AUFTRAG.FlightStatus.SCHEDULED
+  flightdata.status=AUFTRAG.GroupStatus.SCHEDULED
   flightdata.waypointcoordinate=nil
   flightdata.waypointindex=nil
   flightdata.waypointtask=nil
@@ -1835,7 +1835,7 @@ function AUFTRAG:SetFlightStatus(flightgroup, status)
   self:I(self.lid..string.format("Setting flight %s to status %s", flightgroup and flightgroup.groupname or "nil", tostring(status)))
 
   --env.info("FF trying to get flight status in AUFTRAG:GetFlightStatus")
-  if self:GetFlightStatus(flightgroup)==AUFTRAG.FlightStatus.CANCELLED and status==AUFTRAG.FlightStatus.DONE then
+  if self:GetFlightStatus(flightgroup)==AUFTRAG.GroupStatus.CANCELLED and status==AUFTRAG.GroupStatus.DONE then
     -- Do not overwrite a CANCELLED status with a DONE status.
   else
     local flightdata=self:GetFlightData(flightgroup)
@@ -1872,7 +1872,7 @@ function AUFTRAG:GetFlightStatus(flightgroup)
   else
   
     self:E(self.lid..string.format("WARNING: Could not GET flightdata for flightgroup %s. Returning status DONE.", flightgroup and flightgroup.groupname or "nil"))
-    return AUFTRAG.FlightStatus.DONE
+    return AUFTRAG.GroupStatus.DONE
     
   end
 end
@@ -1967,7 +1967,7 @@ function AUFTRAG:CheckFlightsDone()
   for groupname,data in pairs(self.flightdata) do
     local flightdata=data --#AUFTRAG.FlightData
     if flightdata then
-      if flightdata.status==AUFTRAG.FlightStatus.DONE or flightdata.status==AUFTRAG.FlightStatus.CANCELLED then
+      if flightdata.status==AUFTRAG.GroupStatus.DONE or flightdata.status==AUFTRAG.GroupStatus.CANCELLED then
         -- This one is done or cancelled.
       else
         -- At least this flight is not DONE or CANCELLED.
@@ -2096,7 +2096,7 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The flightgroup that is dead now.
 function AUFTRAG:onafterFlightDead(From, Event, To, FlightGroup)
 
-  --self:SetFlightStatus(FlightGroup, AUFTRAG.FlightStatus.DONE)
+  --self:SetFlightStatus(FlightGroup, AUFTRAG.GroupStatus.DONE)
 
   local asset=self:GetAssetByName(FlightGroup.groupname)
   if asset then
