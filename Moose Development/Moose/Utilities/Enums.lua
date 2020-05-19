@@ -243,3 +243,51 @@ ENUMS.FormationOld.RotaryWing.Wedge=8
 ENUMS.FormationOld.RotaryWing.Echelon=9
 ENUMS.FormationOld.RotaryWing.Front=10
 ENUMS.FormationOld.RotaryWing.Column=11
+
+
+--- Morse Code. See the [Wikipedia](https://en.wikipedia.org/wiki/Morse_code).
+-- 
+-- * Short pulse "*"
+-- * Long pulse "-"
+-- 
+-- Pulses are separated by a blank character " ".
+-- 
+-- @type ENUMS.Morse
+ENUMS.Morse={}
+ENUMS.Morse.A="* -"
+ENUMS.Morse.B="- * * *"
+ENUMS.Morse.C="- * - *"
+ENUMS.Morse.D="- * *"
+ENUMS.Morse.E="*"
+ENUMS.Morse.F="* * - *"
+ENUMS.Morse.G="- - *"
+ENUMS.Morse.H="* * * *"
+ENUMS.Morse.I="* *"
+ENUMS.Morse.J="* - - -"
+ENUMS.Morse.K="- * -"
+ENUMS.Morse.L="* - * *"
+ENUMS.Morse.M="- -"
+ENUMS.Morse.N="- *"
+ENUMS.Morse.O="- - -"
+ENUMS.Morse.P="* - - *"
+ENUMS.Morse.Q="- - * -"
+ENUMS.Morse.R="* - *"
+ENUMS.Morse.S="* * *"
+ENUMS.Morse.T="-"
+ENUMS.Morse.U="* * -"
+ENUMS.Morse.V="* * * -"
+ENUMS.Morse.W="* - -"
+ENUMS.Morse.X="- * * -"
+ENUMS.Morse.Y="- * - -"
+ENUMS.Morse.Z="- - * *"
+ENUMS.Morse.N1="* - - - -"
+ENUMS.Morse.N2="* * - - -"
+ENUMS.Morse.N3="* * * - -"
+ENUMS.Morse.N4="* * * * -"
+ENUMS.Morse.N5="* * * * *"
+ENUMS.Morse.N6="- * * * *"
+ENUMS.Morse.N7="- - * * *"
+ENUMS.Morse.N8="- - - * *"
+ENUMS.Morse.N9="- - - - *"
+ENUMS.Morse.N0="- - - - -"
+ENUMS.Morse[" "]=" "
