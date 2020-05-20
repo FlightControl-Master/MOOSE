@@ -1215,7 +1215,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
   
     local status=Mission:GetFlightStatus(self)  
   
-    if status~=AUFTRAG.FlightStatus.PAUSED then
+    if status~=AUFTRAG.GroupStatus.PAUSED then
       self:I(self.lid.."FF Task Done ==> Mission Done!")
       self:MissionDone(Mission)
     else
@@ -1242,7 +1242,7 @@ function OPSGROUP:AddMission(Mission)
   Mission:AddFlightGroup(self)
   
   -- Set flight status to SCHEDULED..
-  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.SCHEDULED)
+  Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.SCHEDULED)
   
   -- Set mission status to SCHEDULED.
   Mission:Scheduled()
@@ -1303,7 +1303,7 @@ function OPSGROUP:CountRemainingMissison()
       -- Get flight status.
       local status=mission:GetFlightStatus(self)
       
-      if status~=AUFTRAG.FlightStatus.DONE and status~=AUFTRAG.FlightStatus.CANCELLED then
+      if status~=AUFTRAG.GroupStatus.DONE and status~=AUFTRAG.GroupStatus.CANCELLED then
         N=N+1
       end
       
@@ -1450,7 +1450,7 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
   self.currentmission=Mission.auftragsnummer
     
   -- Set flight mission status to STARTED.
-  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.STARTED)
+  Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.STARTED)
   
   -- Set mission status to STARTED.
   Mission:Started()
@@ -1473,7 +1473,7 @@ function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
   MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
   
   -- Set flight mission status to EXECUTING.
-  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.EXECUTING)
+  Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.EXECUTING)
   
   -- Set mission status to EXECUTING.
   Mission:Executing()
@@ -1497,7 +1497,7 @@ function OPSGROUP:onafterPauseMission(From, Event, To)
   if Mission then
 
     -- Set flight mission status to PAUSED.
-    Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.PAUSED)
+    Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.PAUSED)
   
     -- Get mission waypoint task.
     local Task=Mission:GetFlightWaypointTask(self)
@@ -1567,7 +1567,7 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     -- TODO: remove mission from queue?
  
     -- Set mission flight status.
-    Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.CANCELLED) 
+    Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.CANCELLED) 
     
     -- Send flight RTB or WAIT if nothing left to do.
     self:_CheckGroupDone(1)
@@ -1590,7 +1590,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
   
   -- Set Flight status.
-  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.DONE)
+  Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.DONE)
   
   -- Set current mission to nil.
   if self.currentmission and Mission.auftragsnummer==self.currentmission then
