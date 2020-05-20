@@ -1697,7 +1697,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.1.3"
+AIRBOSS.version="1.1.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1936,11 +1936,11 @@ function AIRBOSS:New(carriername, alias)
   if self.carriertype==AIRBOSS.CarrierType.STENNIS then
     self:_InitStennis()
   elseif self.carriertype==AIRBOSS.CarrierType.ROOSEVELT then
-    self:_InitStennis()
+    self:_InitNimitz()
   elseif self.carriertype==AIRBOSS.CarrierType.LINCOLN then
-    self:_InitStennis()    
+    self:_InitNimitz()    
   elseif self.carriertype==AIRBOSS.CarrierType.WASHINGTON then
-    self:_InitStennis()
+    self:_InitNimitz()
   elseif self.carriertype==AIRBOSS.CarrierType.VINSON then
     -- TODO: Carl Vinson parameters.
     self:_InitStennis()
@@ -2018,7 +2018,7 @@ function AIRBOSS:New(carriername, alias)
 
       -- Bow
       bow:FlareYellow()
-
+	  
       -- Runway half width = 10 m.
       local r1=stern:Translate(self.carrierparam.rwywidth*0.5, FB+90)
       local r2=stern:Translate(self.carrierparam.rwywidth*0.5, FB-90)
@@ -4292,7 +4292,36 @@ function AIRBOSS:_InitStennis()
 
 end
 
---- Init parameters for USS Stennis carrier.
+--- Init parameters for Nimitz class super carriers.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitNimitz()
+
+  -- Init Stennis as default.
+  self:_InitStennis()
+
+  -- Carrier Parameters.
+  self.carrierparam.sterndist  =-164
+  self.carrierparam.deckheight =  20
+
+  -- Total size of the carrier (approx as rectangle).
+  self.carrierparam.totlength=332.8         -- Wiki says 332.8 meters overall length.
+  self.carrierparam.totwidthport=45         -- Wiki says  76.8 meters overall beam.
+  self.carrierparam.totwidthstarboard=35
+
+  -- Landing runway.
+  self.carrierparam.rwyangle   =  -9
+  self.carrierparam.rwylength  = 250
+  self.carrierparam.rwywidth   =  25
+
+  -- Wires.
+  self.carrierparam.wire1      =  55        -- Distance from stern to first wire.
+  self.carrierparam.wire2      =  67
+  self.carrierparam.wire3      =  79
+  self.carrierparam.wire4      =  92
+
+end
+
+--- Init parameters for LHA-1 Tarawa carrier.
 -- @param #AIRBOSS self
 function AIRBOSS:_InitTarawa()
 
@@ -10297,9 +10326,12 @@ function AIRBOSS:_GetSternCoord()
   if self.carriertype==AIRBOSS.CarrierType.TARAWA then
     -- Tarawa: Translate 8 meters port.
     stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(8, FB-90)
-  else
+  elseif self.carriertype==AIRBOSS.CarrierType.STENNIS then
     -- Stennis: translate 7 meters starboard wrt Final bearing.
     stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(7, FB+90)
+  else
+    -- Nimitz SC: translate 8 meters starboard wrt Final bearing.
+    stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(8.5, FB+90)
   end
 
   -- Set altitude.
