@@ -1239,7 +1239,7 @@ end
 function OPSGROUP:AddMission(Mission)
   
   -- Add flight group to mission.
-  Mission:AddFlightGroup(self)
+  Mission:AddOpsGroup(self)
   
   -- Set flight status to SCHEDULED..
   Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.SCHEDULED)
