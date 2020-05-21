@@ -149,7 +149,7 @@ OPSGROUP.ElementStatus={
   DEAD="dead",
 }
 
---- Flight group task status.
+--- Ops group task status.
 -- @type OPSGROUP.TaskStatus
 -- @field #string SCHEDULED Task is scheduled.
 -- @field #string EXECUTING Task is being executed.
@@ -162,7 +162,7 @@ OPSGROUP.TaskStatus={
   DONE="done",
 }
 
---- Flight group task status.
+--- Ops group task status.
 -- @type OPSGROUP.TaskType
 -- @field #string SCHEDULED Task is scheduled and will be executed at a given time.
 -- @field #string WAYPOINT Task is executed at a specific waypoint.
@@ -279,9 +279,9 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "OutOfBombs",        "*")          -- Group is out of bombs.
   self:AddTransition("*",             "OutOfMissiles",     "*")          -- Group is out of missiles.
 
-  self:AddTransition("*",             "CheckZone",        "*")           -- Check if flight enters/leaves a certain zone.
-  self:AddTransition("*",             "EnterZone",        "*")           -- Flight entered a certain zone.
-  self:AddTransition("*",             "LeaveZone",        "*")           -- Flight leaves a certain zone.
+  self:AddTransition("*",             "CheckZone",        "*")           -- Check if group enters/leaves a certain zone.
+  self:AddTransition("*",             "EnterZone",        "*")           -- Group entered a certain zone.
+  self:AddTransition("*",             "LeaveZone",        "*")           -- Group leaves a certain zone.
 
   self:AddTransition("*",             "TaskExecute",      "*")           -- Group will execute a task.
   self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task. Not implemented yet!
@@ -503,7 +503,7 @@ function OPSGROUP:SelfDestruction(Delay, ExplosionPower)
 
 end
 
---- Check if flight is alive.
+--- Check if group is alive.
 -- @param #OPSGROUP self
 -- @return #boolean *true* if group is exists and is activated, *false* if group is exist but is NOT activated. *nil* otherwise, e.g. the GROUP object is *nil* or the group is not spawned yet.
 function OPSGROUP:IsAlive()
@@ -522,28 +522,28 @@ function OPSGROUP:IsLateActivated()
   return self.isLateActivated
 end
 
---- Check if flight is in state in utero.
+--- Check if group is in state in utero.
 -- @param #OPSGROUP self
--- @return #boolean If true, flight is not spawned yet.
+-- @return #boolean If true, group is not spawned yet.
 function OPSGROUP:IsInUtero()
   return self:Is("InUtero")
 end
 
---- Check if flight is in state spawned.
+--- Check if group is in state spawned.
 -- @param #OPSGROUP self
--- @return #boolean If true, flight is spawned.
+-- @return #boolean If true, group is spawned.
 function OPSGROUP:IsSpawned()
   return self:Is("Spawned")
 end
 
---- Check if flight is dead.
+--- Check if group is dead.
 -- @param #OPSGROUP self
--- @return #boolean If true, all units/elements of the flight are dead.
+-- @return #boolean If true, all units/elements of the group are dead.
 function OPSGROUP:IsDead()
   return self:Is("Dead")
 end
 
---- Check if flight FSM is stopped.
+--- Check if FSM is stopped.
 -- @param #OPSGROUP self
 -- @return #boolean If true, FSM state is stopped.
 function OPSGROUP:IsStopped()
@@ -593,11 +593,11 @@ function OPSGROUP:RemoveWaypoint(wpindex)
       local mission=_mission --Ops.Auftrag#AUFTRAG
       
       -- Get mission waypoint index.
-      local wpidx=mission:GetFlightWaypointIndex(self)
+      local wpidx=mission:GetGroupWaypointIndex(self)
       
       -- Reduce number if this waypoint lies in the future.
       if wpidx and wpidx>wpindex then
-        mission:SetFlightWaypointIndex(self, wpidx-1)
+        mission:SetGroupWaypointIndex(self, wpidx-1)
       end
     end  
   
@@ -1213,7 +1213,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
   
   if Mission and Mission:IsNotOver() then
   
-    local status=Mission:GetFlightStatus(self)  
+    local status=Mission:GetGroupStatus(self)  
   
     if status~=AUFTRAG.GroupStatus.PAUSED then
       self:I(self.lid.."FF Task Done ==> Mission Done!")
@@ -1238,11 +1238,11 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:AddMission(Mission)
   
-  -- Add flight group to mission.
+  -- Add group to mission.
   Mission:AddOpsGroup(self)
   
-  -- Set flight status to SCHEDULED..
-  Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.SCHEDULED)
+  -- Set group status to SCHEDULED..
+  Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.SCHEDULED)
   
   -- Set mission status to SCHEDULED.
   Mission:Scheduled()
@@ -1270,7 +1270,7 @@ function OPSGROUP:RemoveMission(Mission)
     if mission.auftragsnummer==Mission.auftragsnummer then
     
       -- Remove mission waypoint task.
-      local Task=Mission:GetFlightWaypointTask(self)
+      local Task=Mission:GetGroupWaypointTask(self)
       
       if Task then
         self:RemoveTask(Task)
@@ -1300,8 +1300,8 @@ function OPSGROUP:CountRemainingMissison()
     
     if mission and mission:IsNotOver() then
     
-      -- Get flight status.
-      local status=mission:GetFlightStatus(self)
+      -- Get group status.
+      local status=mission:GetGroupStatus(self)
       
       if status~=AUFTRAG.GroupStatus.DONE and status~=AUFTRAG.GroupStatus.CANCELLED then
         N=N+1
@@ -1341,7 +1341,7 @@ function OPSGROUP:_GetNextMission()
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
-    if mission:GetFlightStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) then
+    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) then
       return mission
     end
   end
@@ -1381,7 +1381,7 @@ function OPSGROUP:GetMissionByTaskID(taskid)
     for _,_mission in pairs(self.missionqueue) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
   
-      local task=mission:GetFlightWaypointTask(self)
+      local task=mission:GetGroupWaypointTask(self)
   
       if task and task.id and task.id==taskid then      
         return mission
@@ -1449,13 +1449,13 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
   -- Set current mission.
   self.currentmission=Mission.auftragsnummer
     
-  -- Set flight mission status to STARTED.
-  Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.STARTED)
+  -- Set group mission status to STARTED.
+  Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.STARTED)
   
   -- Set mission status to STARTED.
   Mission:Started()
 
-  -- Route flight to mission zone.
+  -- Route group to mission zone.
   self:RouteToMission(Mission, 3)
   
 end
@@ -1472,8 +1472,8 @@ function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
   self:T(self.lid..text)
   MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
   
-  -- Set flight mission status to EXECUTING.
-  Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.EXECUTING)
+  -- Set group mission status to EXECUTING.
+  Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.EXECUTING)
   
   -- Set mission status to EXECUTING.
   Mission:Executing()
@@ -1496,11 +1496,11 @@ function OPSGROUP:onafterPauseMission(From, Event, To)
   
   if Mission then
 
-    -- Set flight mission status to PAUSED.
-    Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.PAUSED)
+    -- Set group mission status to PAUSED.
+    Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.PAUSED)
   
     -- Get mission waypoint task.
-    local Task=Mission:GetFlightWaypointTask(self)
+    local Task=Mission:GetGroupWaypointTask(self)
     
     -- Debug message.
     self:I(self.lid..string.format("FF pausing current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
@@ -1549,15 +1549,15 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
   if self.currentmission and Mission.auftragsnummer==self.currentmission then
     
     -- Get mission waypoint task.
-    local Task=Mission:GetFlightWaypointTask(self)
+    local Task=Mission:GetGroupWaypointTask(self)
     
     -- Debug info.
     self:I(self.lid..string.format("FF Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
 
     -- Cancelling the mission is actually cancelling the current task.
     -- Note that two things can happen.
-    -- 1.) Flight is still on the way to the waypoint (status should be STARTED). In this case there would not be a current task!
-    -- 2.) Flight already passed the mission waypoint (status should be EXECUTING).
+    -- 1.) Group is still on the way to the waypoint (status should be STARTED). In this case there would not be a current task!
+    -- 2.) Group already passed the mission waypoint (status should be EXECUTING).
     
     self:TaskCancel(Task)
         
@@ -1566,10 +1566,10 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     -- Not the current mission.
     -- TODO: remove mission from queue?
  
-    -- Set mission flight status.
-    Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.CANCELLED) 
+    -- Set mission group status.
+    Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.CANCELLED) 
     
-    -- Send flight RTB or WAIT if nothing left to do.
+    -- Send group RTB or WAIT if nothing left to do.
     self:_CheckGroupDone(1)
     
   end
@@ -1589,8 +1589,8 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   self:I(self.lid..text)
   MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
   
-  -- Set Flight status.
-  Mission:SetFlightStatus(self, AUFTRAG.GroupStatus.DONE)
+  -- Set group status.
+  Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.DONE)
   
   -- Set current mission to nil.
   if self.currentmission and Mission.auftragsnummer==self.currentmission then
@@ -1598,7 +1598,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   end
   
   -- Remove mission waypoint.
-  local wpidx=Mission:GetFlightWaypointIndex(self)
+  local wpidx=Mission:GetGroupWaypointIndex(self)
   if wpidx then
     self:RemoveWaypoint(wpidx)
   end
@@ -1611,7 +1611,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
 
   -- TODO: reset mission specific parameters like radio, ROE etc.  
   
-  -- Check if flight is done.
+  -- Check if group is done.
   self:_CheckGroupDone(1)
 
 end
@@ -1674,10 +1674,10 @@ function OPSGROUP:RouteToMission(mission, delay)
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, nextwaypoint, mission.name, mission.prio, mission.duration)
     
     -- Set waypoint task.
-    mission:SetFlightWaypointTask(self, waypointtask)
+    mission:SetGroupWaypointTask(self, waypointtask)
     
     -- Set waypoint index.
-    mission:SetFlightWaypointIndex(self, nextwaypoint)
+    mission:SetGroupWaypointIndex(self, nextwaypoint)
     
     ---
     -- Mission Specific Settings
@@ -1814,7 +1814,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   -- TODO: maybe set waypoint enroute tasks?
     
   for _,task in pairs(tasks) do
-    local Task=task --#FLIGHTGROUP.Task          
+    local Task=task --Ops.OpsGroup#OPSGROUP.Task          
     
     -- Task execute.
     table.insert(taskswp, self.group:TaskFunction("OPSGROUP._TaskExecute", self, Task))
@@ -1938,7 +1938,7 @@ function OPSGROUP:onafterCheckZone(From, Event, To)
   end
 end
 
---- Check if flight is in zones.
+--- Check if group is in zones.
 -- @param #OPSGROUP self
 function OPSGROUP:_CheckInZones()
 
@@ -1948,7 +1948,7 @@ function OPSGROUP:_CheckInZones()
     local Ninside=self.inzones:Count()
     
     -- Debug info.
-    self:T(self.lid..string.format("Check if flight is in %d zones. Currently it is in %d zones.", self.checkzones:Count(), self.inzones:Count()))
+    self:T(self.lid..string.format("Check if group is in %d zones. Currently it is in %d zones.", self.checkzones:Count(), self.inzones:Count()))
 
     -- Firstly, check if group is still inside zone it was already in. If not, remove zones and trigger LeaveZone() event.
     local leftzones={}
@@ -1974,7 +1974,7 @@ function OPSGROUP:_CheckInZones()
     for checkzonename,_checkzone in pairs(self.checkzones:GetSet()) do
       local checkzone=_checkzone --Core.Zone#ZONE
       
-      -- Is flight currtently in this check zone?
+      -- Is group currtently in this check zone?
       local isincheckzone=self.group:IsPartlyOrCompletelyInZone(checkzone)
 
       if isincheckzone and not self.inzones:_Find(checkzonename) then
@@ -2181,33 +2181,33 @@ end
 
 --- Function called when a task is executed.
 --@param Wrapper.Group#GROUP group Group which should execute the task.
---@param #OPSGROUP flightgroup Flight group.
+--@param #OPSGROUP opsgroup Ops group.
 --@param #OPSGROUP.Task task Task.
-function OPSGROUP._TaskExecute(group, flightgroup, task)
+function OPSGROUP._TaskExecute(group, opsgroup, task)
 
   -- Debug message.
   local text=string.format("_TaskExecute %s", task.description)
-  flightgroup:T3(flightgroup.lid..text)
+  opsgroup:T3(opsgroup.lid..text)
 
   -- Set current task to nil so that the next in line can be executed.
-  if flightgroup then
-    flightgroup:TaskExecute(task)
+  if opsgroup then
+    opsgroup:TaskExecute(task)
   end
 end
 
 --- Function called when a task is done.
 --@param Wrapper.Group#GROUP group Group for which the task is done.
---@param #OPSGROUP flightgroup Flight group.
+--@param #OPSGROUP opsgroup Ops group.
 --@param #OPSGROUP.Task task Task.
-function OPSGROUP._TaskDone(group, flightgroup, task)
+function OPSGROUP._TaskDone(group, opsgroup, task)
 
   -- Debug message.
   local text=string.format("_TaskDone %s", task.description)
-  flightgroup:T3(flightgroup.lid..text)
+  opsgroup:T3(opsgroup.lid..text)
 
   -- Set current task to nil so that the next in line can be executed.
-  if flightgroup then
-    flightgroup:TaskDone(task)
+  if opsgroup then
+    opsgroup:TaskDone(task)
   end
 end
 
@@ -2284,7 +2284,7 @@ end
 -- Element and Group Status Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Check if all elements of the flight group have the same status (or are dead).
+--- Check if all elements of the group have the same status (or are dead).
 -- @param #OPSGROUP self
 -- @param #string unitname Name of unit.
 function OPSGROUP:_AllSameStatus(status)
@@ -2304,7 +2304,7 @@ function OPSGROUP:_AllSameStatus(status)
   return true
 end
 
---- Check if all elements of the flight group have the same status (or are dead).
+--- Check if all elements of the group have the same status (or are dead).
 -- @param #OPSGROUP self
 -- @param #string status Status to check.
 -- @return #boolean If true, all elements have a similar status.
@@ -2430,7 +2430,7 @@ function OPSGROUP:_AllSimilarStatus(status)
   return true
 end
 
---- Check if all elements of the flight group have the same status or are dead.
+--- Check if all elements of the group have the same status or are dead.
 -- @param #OPSGROUP self
 -- @param #OPSGROUP.Element element Element.
 -- @param #string newstatus New status of element

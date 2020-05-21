@@ -885,7 +885,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
       local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
       local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
       text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d wp=%s targets=%d", 
-      i, tostring(mission.name), mission.type, mission:GetFlightStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, tostring(mission:GetFlightWaypointIndex(self)), mission:CountMissionTargets())
+      i, tostring(mission.name), mission.type, mission:GetGroupStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, tostring(mission:GetGroupWaypointIndex(self)), mission:CountMissionTargets())
     end
     self:I(self.lid..text)
   end
@@ -3019,11 +3019,11 @@ function FLIGHTGROUP:AddWaypoint(coordinate, wpnumber, speed, updateroute)
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
     -- Get mission waypoint index.
-    local wpidx=mission:GetFlightWaypointIndex(self)
+    local wpidx=mission:GetGroupWaypointIndex(self)
     
     -- Increase number if this waypoint lies in the future.
     if wpidx and wpidx>=wpnumber then
-      mission:SetFlightWaypointIndex(self, wpidx+1)
+      mission:SetGroupWaypointIndex(self, wpidx+1)
     end    
     
   end

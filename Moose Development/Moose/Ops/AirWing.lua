@@ -1662,7 +1662,7 @@ function AIRWING:IsAssetOnMission(asset, MissionTypes)
       if mission:IsNotOver() then
       
         -- Get flight status.
-        local status=mission:GetFlightStatus(asset.flightgroup)
+        local status=mission:GetGroupStatus(asset.flightgroup)
         
         -- Only if mission is started or executing.
         if (status==AUFTRAG.GroupStatus.STARTED or status==AUFTRAG.GroupStatus.EXECUTING) and self:CheckMissionType(mission.type, MissionTypes) then

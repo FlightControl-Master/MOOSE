@@ -25,7 +25,7 @@
 -- @field #number auftragsnummer Auftragsnummer.
 -- @field #string type Mission type.
 -- @field #string status Mission status.
--- @field #table groupdata Flight specific data.
+-- @field #table groupdata Group specific data.
 -- @field #string name Mission name.
 -- @field #number prio Mission priority.
 -- @field #boolean urgent Mission is urgent. Running missions with lower prio might be cancelled.
@@ -262,10 +262,10 @@ AUFTRAG.Status={
 --- Mission status of an assigned group.
 -- @type AUFTRAG.GroupStatus
 -- @field #string SCHEDULED Mission is scheduled in a FLIGHGROUP queue waiting to be started.
--- @field #string STARTED Flightgroup started this mission but it is not executed yet.
--- @field #string EXECUTING Flightgroup is executing this mission.
--- @field #string PAUSED Flightgroup has paused this mission, e.g. for refuelling.
--- @field #string DONE Mission task of the flightgroup is done.
+-- @field #string STARTED Ops group started this mission but it is not executed yet.
+-- @field #string EXECUTING Ops group is executing this mission.
+-- @field #string PAUSED Ops group has paused this mission, e.g. for refuelling.
+-- @field #string DONE Mission task of the Ops group is done.
 -- @field #string CANCELLED Mission was cancelled.
 AUFTRAG.GroupStatus={
   SCHEDULED="scheduled",
@@ -422,7 +422,7 @@ function AUFTRAG:New(Type)
   
   self:AddTransition("*",                      "Repeat",        AUFTRAG.Status.PLANNED)
 
-  self:AddTransition("*",                      "FlightDead",    "*")  
+  self:AddTransition("*",                      "GroupDead",    "*")  
   self:AddTransition("*",                      "AssetDead",     "*")
   
   
@@ -1455,7 +1455,7 @@ function AUFTRAG:AddOpsGroup(OpsGroup)
 
 end
 
---- Remove a flight group to the mission.
+--- Remove an Ops  group from the mission.
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
 function AUFTRAG:DelOpsGroup(OpsGroup)
@@ -1463,7 +1463,7 @@ function AUFTRAG:DelOpsGroup(OpsGroup)
 
   if OpsGroup then
     
-    -- Remove mission form flightgroup queue.
+    -- Remove mission form queue.
     OpsGroup:RemoveMission(self)
   
     self.groupdata[OpsGroup.groupname]=nil
@@ -1684,7 +1684,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
   -- Check if mission is not OVER yet.
   if self:IsNotOver() then
 
-    if self:CheckFlightsDone() then
+    if self:CheckGroupsDone() then
     
       -- All groups have reported MISSON DONE.
       self:Done()
@@ -1810,34 +1810,34 @@ end
 --- Get asset data table.
 -- @param #AUFTRAG self
 -- @param #string AssetName Name of the asset.
--- @return #AUFTRAG.GroupData Flight data or nil if OPS group does not exist.
+-- @return #AUFTRAG.GroupData Group data or *nil* if OPS group does not exist.
 function AUFTRAG:GetAssetDataByName(AssetName)
   return self.groupdata[tostring(AssetName)]
 end
 
 --- Get flight data table.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP flightgroup The flight group.
--- @return #AUFTRAG.GroupData Flight data or nil if flightgroup does not exist.
-function AUFTRAG:GetFlightData(flightgroup)
-  if flightgroup and self.groupdata then
-    return self.groupdata[flightgroup.groupname]
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
+-- @return #AUFTRAG.GroupData Flight data or nil if opsgroup does not exist.
+function AUFTRAG:GetGroupData(opsgroup)
+  if opsgroup and self.groupdata then
+    return self.groupdata[opsgroup.groupname]
   end
   return nil
 end
 
---- Set flightgroup mission status.
+--- Set opsgroup mission status.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP flightgroup The flight group.
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @param #string status New status.
-function AUFTRAG:SetFlightStatus(flightgroup, status)
-  self:I(self.lid..string.format("Setting flight %s to status %s", flightgroup and flightgroup.groupname or "nil", tostring(status)))
+function AUFTRAG:SetGroupStatus(opsgroup, status)
+  self:I(self.lid..string.format("Setting flight %s to status %s", opsgroup and opsgroup.groupname or "nil", tostring(status)))
 
-  --env.info("FF trying to get flight status in AUFTRAG:GetFlightStatus")
-  if self:GetFlightStatus(flightgroup)==AUFTRAG.GroupStatus.CANCELLED and status==AUFTRAG.GroupStatus.DONE then
+  --env.info("FF trying to get flight status in AUFTRAG:GetGroupStatus")
+  if self:GetGroupStatus(opsgroup)==AUFTRAG.GroupStatus.CANCELLED and status==AUFTRAG.GroupStatus.DONE then
     -- Do not overwrite a CANCELLED status with a DONE status.
   else
-    local groupdata=self:GetFlightData(flightgroup)
+    local groupdata=self:GetGroupData(opsgroup)
     if groupdata then
       groupdata.status=status
     else
@@ -1846,10 +1846,10 @@ function AUFTRAG:SetFlightStatus(flightgroup, status)
   end
   
   -- Debug info.
-  self:I(self.lid..string.format("Setting flight %s status to %s. IsNotOver=%s  CheckFlightsDone=%s", flightgroup.groupname, self:GetFlightStatus(flightgroup), tostring(self:IsNotOver()), tostring(self:CheckFlightsDone())))
+  self:I(self.lid..string.format("Setting flight %s status to %s. IsNotOver=%s  CheckGroupsDone=%s", opsgroup.groupname, self:GetGroupStatus(opsgroup), tostring(self:IsNotOver()), tostring(self:CheckGroupsDone())))
 
   -- Check if ALL flights are done with their mission.
-  if self:IsNotOver() and self:CheckFlightsDone() then
+  if self:IsNotOver() and self:CheckGroupsDone() then
     self:I(self.lid.."All flights done ==> mission DONE!")
     self:Done()
   else
@@ -1858,88 +1858,88 @@ function AUFTRAG:SetFlightStatus(flightgroup, status)
   
 end
 
---- Get flightgroup mission status.
+--- Get ops group mission status.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP flightgroup The flight group.
-function AUFTRAG:GetFlightStatus(flightgroup)
-  self:T3(self.lid..string.format("Trying to get Flight status for flight group %s", flightgroup and flightgroup.groupname or "nil"))
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
+function AUFTRAG:GetGroupStatus(opsgroup)
+  self:T3(self.lid..string.format("Trying to get Flight status for flight group %s", opsgroup and opsgroup.groupname or "nil"))
   
-  local groupdata=self:GetFlightData(flightgroup)
+  local groupdata=self:GetGroupData(opsgroup)
   
   if groupdata then
     return groupdata.status
   else
   
-    self:E(self.lid..string.format("WARNING: Could not GET groupdata for flightgroup %s. Returning status DONE.", flightgroup and flightgroup.groupname or "nil"))
+    self:E(self.lid..string.format("WARNING: Could not GET groupdata for opsgroup %s. Returning status DONE.", opsgroup and opsgroup.groupname or "nil"))
     return AUFTRAG.GroupStatus.DONE
     
   end
 end
 
 
---- Set flightgroup waypoint coordinate.
+--- Set Ops group waypoint coordinate.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP flightgroup The flight group.
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @param Core.Point#COORDINATE coordinate Waypoint Coordinate.
-function AUFTRAG:SetFlightWaypointCoordinate(flightgroup, coordinate)
-  local groupdata=self:GetFlightData(flightgroup)
+function AUFTRAG:SetGroupWaypointCoordinate(opsgroup, coordinate)
+  local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     groupdata.waypointcoordinate=coordinate
   end
 end
 
---- Get flightgroup waypoint coordinate.
+--- Get opsgroup waypoint coordinate.
 -- @param #AUFTRAG self
 -- @return Core.Point#COORDINATE Waypoint Coordinate.
-function AUFTRAG:GetFlightWaypointCoordinate(flightgroup)
-  local groupdata=self:GetFlightData(flightgroup)
+function AUFTRAG:GetGroupWaypointCoordinate(opsgroup)
+  local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     return groupdata.waypointcoordinate
   end
 end
 
 
---- Set flightgroup waypoint task.
+--- Set Ops group waypoint task.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP flightgroup The flight group.
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @param Ops.OpsGroup#OPSGROUP.Task task Waypoint task.
-function AUFTRAG:SetFlightWaypointTask(flightgroup, task)
+function AUFTRAG:SetGroupWaypointTask(opsgroup, task)
   self:I(self.lid..string.format("Setting waypoint task %s", task and task.description or "WTF"))
-  local groupdata=self:GetFlightData(flightgroup)
+  local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     groupdata.waypointtask=task
   end
 end
 
---- Get flightgroup waypoint task.
+--- Get opsgroup waypoint task.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP flightgroup The flight group.
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @return Ops.OpsGroup#OPSGROUP.Task task Waypoint task. Waypoint task.
-function AUFTRAG:GetFlightWaypointTask(flightgroup)
-  local groupdata=self:GetFlightData(flightgroup)
+function AUFTRAG:GetGroupWaypointTask(opsgroup)
+  local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     return groupdata.waypointtask
   end
 end
 
---- Set flightgroup waypoint index.
+--- Set opsgroup waypoint index.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP flightgroup The flight group.
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @param #number waypointindex Waypoint index.
-function AUFTRAG:SetFlightWaypointIndex(flightgroup, waypointindex)
+function AUFTRAG:SetGroupWaypointIndex(opsgroup, waypointindex)
   self:I(self.lid..string.format("Setting waypoint index %d", waypointindex))
-  local groupdata=self:GetFlightData(flightgroup)
+  local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     groupdata.waypointindex=waypointindex
   end
 end
 
---- Get flightgroup waypoint index.
+--- Get opsgroup waypoint index.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP flightgroup The flight group.
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @return #number Waypoint index
-function AUFTRAG:GetFlightWaypointIndex(flightgroup)
-  local groupdata=self:GetFlightData(flightgroup)
+function AUFTRAG:GetGroupWaypointIndex(opsgroup)
+  local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     return groupdata.waypointindex
   end
@@ -1949,9 +1949,9 @@ end
 --- Check if all flights are done with their mission (or dead).
 -- @param #AUFTRAG self
 -- @return #boolean If true, all flights are done with the mission.
-function AUFTRAG:CheckFlightsDone()
+function AUFTRAG:CheckGroupsDone()
 
-  -- These are early stages, where we might not even have a flightgroup defined to be checked.
+  -- These are early stages, where we might not even have a opsgroup defined to be checked.
   if self:IsPlanned() or self:IsQueued() or self:IsRequested() then 
     return false
   end
@@ -1996,7 +1996,7 @@ function AUFTRAG:OnEventUnitLost(EventData)
     for _,_groupdata in pairs(self.groupdata) do
       local groupdata=_groupdata --#AUFTRAG.GroupData
       if groupdata and groupdata.opsgroup and groupdata.opsgroup.groupname==EventData.IniGroupName then
-        self:I(self.lid..string.format("UNIT LOST event for flightgroup %s unit %s", groupdata.opsgroup.groupname, EventData.IniUnitName))
+        self:I(self.lid..string.format("UNIT LOST event for opsgroup %s unit %s", groupdata.opsgroup.groupname, EventData.IniUnitName))
       end
     end
     
@@ -2087,13 +2087,13 @@ function AUFTRAG:onafterDone(From, Event, To)
 end
 
 
---- On after "FlightDead" event.
+--- On after "GroupDead" event.
 -- @param #AUFTRAG self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group that is dead now.
-function AUFTRAG:onafterFlightDead(From, Event, To, OpsGroup)
+function AUFTRAG:onafterGroupDead(From, Event, To, OpsGroup)
 
   local asset=self:GetAssetByName(OpsGroup.groupname)
   if asset then
@@ -2110,7 +2110,7 @@ end
 -- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
 function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
     
-  -- Remove flightgroup from mission.
+  -- Remove opsgroup from mission.
   --self:DelOpsGroup(Asset.opsgroup)
   
   local N=self:CountOpsGroups()
@@ -2126,7 +2126,7 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
     else
       
       self:E(self.lid.."ERROR: All assets are dead not but mission was already over... Investigate!")
-      -- Now this can happen, because when a flightgroup dies (sometimes!), the mission is DONE
+      -- Now this can happen, because when a opsgroup dies (sometimes!), the mission is DONE
       
     end
   end
@@ -2265,9 +2265,9 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   
   for _,_groupdata in pairs(self.groupdata) do
     local groupdata=_groupdata --#AUFTRAG.GroupData
-    local flightgroup=groupdata.opsgroup
-    if flightgroup then
-      self:DelOpsGroup(flightgroup)
+    local opsgroup=groupdata.opsgroup
+    if opsgroup then
+      self:DelOpsGroup(opsgroup)
     end
     
   end  

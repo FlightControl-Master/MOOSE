@@ -202,7 +202,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   if #self.taskqueue>0 and self.verbose>1 then  
     local text=string.format("Tasks #%d", #self.taskqueue)
     for i,_task in pairs(self.taskqueue) do
-      local task=_task --#FLIGHTGROUP.Task
+      local task=_task --Ops.OpsGroup#OPSGROUP.Task
       local name=task.description
       local taskid=task.dcstask.id or "unknown"
       local status=task.status
@@ -245,7 +245,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
       local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
       local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
       text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d wp=%s targets=%d", 
-      i, tostring(mission.name), mission.type, mission:GetFlightStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, tostring(mission:GetFlightWaypointIndex(self)), mission:CountMissionTargets())
+      i, tostring(mission.name), mission.type, mission:GetGroupStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, tostring(mission:GetGroupWaypointIndex(self)), mission:CountMissionTargets())
     end
     self:I(self.lid..text)
   end
@@ -487,7 +487,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add an a waypoint to the route.
--- @param #FLIGHTGROUP self
+-- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
 -- @param #number wpnumber Waypoint number. Default at the end.
 -- @param #number speed Speed in knots. Default 11 kts.
@@ -519,7 +519,7 @@ function NAVYGROUP:AddWaypoint(coordinate, wpnumber, speed, updateroute)
   
   -- Shift all waypoint tasks after the inserted waypoint.
   for _,_task in pairs(self.taskqueue) do
-    local task=_task --#FLIGHTGROUP.Task
+    local task=_task --Ops.OpsGroup#OPSGROUP.Task
     if task.type==OPSGROUP.TaskType.WAYPOINT and task.waypoint and task.waypoint>=wpnumber then
       task.waypoint=task.waypoint+1
     end
@@ -530,11 +530,11 @@ function NAVYGROUP:AddWaypoint(coordinate, wpnumber, speed, updateroute)
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
     -- Get mission waypoint index.
-    local wpidx=mission:GetFlightWaypointIndex(self)
+    local wpidx=mission:GetGroupWaypointIndex(self)
     
     -- Increase number if this waypoint lies in the future.
     if wpidx and wpidx>=wpnumber then
-      mission:SetFlightWaypointIndex(self, wpidx+1)
+      mission:SetGroupWaypointIndex(self, wpidx+1)
     end    
     
   end
