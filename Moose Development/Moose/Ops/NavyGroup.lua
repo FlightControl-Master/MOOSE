@@ -3,9 +3,9 @@
 -- **Main Features:**
 --
 --    * Dynamically add and remove waypoints
---    * Let the group steam into the wind.
---    * Command a full stop.
---    * Let a submarine dive and surface.
+--    * Let the group steam into the wind
+--    * Command a full stop
+--    * Let a submarine dive and surface
 --     
 -- ===
 --
@@ -16,6 +16,8 @@
 
 --- NAVYGROUP class.
 -- @type NAVYGROUP
+-- @field #boolean turning If true, group is currently turning.
+-- @field #NAVYGROUP.IntoWind intowind Into wind info.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -32,12 +34,22 @@
 NAVYGROUP = {
   ClassName      = "NAVYGROUP",
   verbose        = 2,
+  turning        = false,
+  intowind       = nil,
 }
 
 --- Navy group element.
 -- @type NAVYGROUP.Element
 -- @field #string name Name of the element, i.e. the unit.
 -- @field #string typename Type name.
+
+--- Navy group element.
+-- @type NAVYGROUP.IntoWind
+-- @field #number Tstart Time to start.
+-- @field #number Tstop Time to stop.
+-- @field #boolean Uturn U-turn.
+-- @field #number Speed Speed in knots.
+
 
 --- NavyGroup version.
 -- @field #string version
@@ -74,11 +86,14 @@ function NAVYGROUP:New(GroupName)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "FullStop",         "Holding")     -- Hold position.
-  self:AddTransition("*",             "TurnIntoWind",     "*")           -- Hold position.
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Hold position.
   
-  self:AddTransition("*",             "Dive",             "Diving")      -- Hold position.
-  self:AddTransition("Diving",        "Surface",          "Cruising")    -- Hold position.
+  self:AddTransition("*",             "TurnIntoWind",     "*")           -- Command the group to turn into the wind.
+  self:AddTransition("*",             "TurningStarted",   "*")           -- Group started turning.
+  self:AddTransition("*",             "TurningStopped",   "*")           -- Group stopped turning.
+  
+  self:AddTransition("*",             "Dive",             "Diving")      -- Command a submarine to dive.
+  self:AddTransition("Diving",        "Surface",          "Cruising")    -- Command a submarine to go to the surface.
   
   ------------------------
   --- Pseudo Functions ---
@@ -182,15 +197,38 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   local hdg=self:GetHeading()
   local pos=self:GetCoordinate()
   local speed=self.group:GetVelocityKNOTS()
-
+  
+  -- Check if group started or stopped turning.
+  self:_CheckTurning()
+  
   -- Check water is ahead.
   local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist or 5000, hdg))
 
+  local intowind=false
+  if self.intowind then
+  
+    if timer.getAbsTime()>=self.intowind.Tstop then
+    
+      if self.intowind.Uturn then
+        self:UpdateRoute(self.currentwp)
+      else
+        self:UpdateRoute()
+      end
+      
+      self.intowind=nil
+      
+    else
+      intowind=true    
+    end
+  
+  end
+
+  -- Get number of tasks and missions.
   local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
   local nMissions=self:CountRemainingMissison()
 
     -- Info text.
-  local text=string.format("State %s: Speed=%.1f knots Heading=%03d collision=%s Tasks=%d Missions=%d", fsmstate, speed, hdg, tostring(collision), nTaskTot, nMissions)
+  local text=string.format("State %s: Speed=%.1f knots Heading=%03d intowind=%s turning=%s collision=%s Tasks=%d Missions=%d", fsmstate, speed, hdg, tostring(intowind), tostring(self.turning), tostring(collision), nTaskTot, nMissions)
   self:I(self.lid..text)
 
 
@@ -254,7 +292,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
 
   -- Next check in ~30 seconds.
   if not self:IsStopped() then
-    self:__Status(-30)
+    self:__Status(-10)
   end
 end
 
@@ -290,6 +328,9 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     self:SetOptionROE(self.roe)
     
   end
+  
+  -- Get orientation.
+  self.Corientlast=self.group:GetUnit(1):GetOrientationX()
   
   -- Update route.
   self:__Cruise(-1)
@@ -370,9 +411,18 @@ end
 -- @param #boolean Uturn Return to the place we came from.
 function NAVYGROUP:onafterTurnIntoWind(From, Event, To, Duration, Speed, Uturn)
 
-  self.turnintowind=timer.getAbsTime()
-  
   local headingTo=self:GetCoordinate():GetWind(50)
+
+  local intowind={} --#NAVYGROUP.IntoWind
+  intowind.Speed=Speed
+  intowind.Tstart=timer.getAbsTime()
+  intowind.Tstop=intowind.Tstart+Duration
+  intowind.Uturn=Uturn or false
+  intowind.Heading=headingTo
+    
+  self.intowind=intowind
+
+  self:I(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f knots, Tstart=%d Tstop=%d", intowind.Heading, intowind.Speed, intowind.Tstart, intowind.Tstop))
   
   local distance=UTILS.NMToMeters(1000)
   
@@ -733,10 +783,10 @@ end
 function NAVYGROUP:_CheckTurning()
 
   -- Current orientation of carrier.
-  local vNew=self.group:GetOrientationX()
+  local vNew=self.group:GetUnit(1):GetOrientationX()
 
   -- Last orientation from 30 seconds ago.
-  local vLast=self.Corientlast
+  local vLast=self.Corientlast or vNew
 
   -- We only need the X-Z plane.
   vNew.y=0 ; vLast.y=0
@@ -747,43 +797,25 @@ function NAVYGROUP:_CheckTurning()
   -- Last orientation becomes new orientation
   self.Corientlast=vNew
 
-  -- Carrier is turning when its heading changed by at least one degree since last check.
-  local turning=math.abs(deltaLast)>=1
+  -- Carrier is turning when its heading changed by at least two degrees since last check.
+  local turning=math.abs(deltaLast)>=2
 
-  -- Check if turning stopped. (Carrier was turning but is not any more.)
+  -- Check if turning stopped.
   if self.turning and not turning then
 
-    -- Get final bearing.
-    local FB=self:GetFinalBearing(true)
+    -- Carrier was turning but is not any more.
+    self:TurningStopped()
+    
+  elseif turning and not self.turning then
 
-    -- Marshal radio call: "99, new final bearing XYZ degrees."
-    self:_MarshalCallNewFinalBearing(FB)
-
-  end
-
-  -- Check if turning started. (Carrier was not turning and is now.)
-  if turning and not self.turning then
-
-    -- Get heading.
-    local hdg
-    if self.turnintowind then
-      -- We are now steaming into the wind.
-      hdg=self:GetHeadingIntoWind(false)
-    else
-      -- We turn towards the next waypoint.
-      hdg=self:GetCoordinate():HeadingTo(self:_GetNextWaypoint())
-    end
-
-    -- Magnetic!
-    hdg=hdg-self.magvar
-    if hdg<0 then
-      hdg=360+hdg
-    end
+    -- Carrier was not turning but is now.
+    self:TurningStarted()    
 
   end
 
   -- Update turning.
   self.turning=turning
+  
 end
 
 --- Check if group is done, i.e.
@@ -805,7 +837,9 @@ function NAVYGROUP:_CheckGroupDone(delay)
       self:ScheduleOnce(delay, NAVYGROUP._CheckGroupDone, self)
     else
     
-      -- TODO: What?
+      if not self.passedfinalwp then
+        self:UpdateRoute()
+      end
     
     end
     
