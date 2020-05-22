@@ -2726,6 +2726,29 @@ function AUFTRAG:GetMissionTypesText(MissionTypes)
   return text
 end
 
+--- Get coordinate of target. First unit/group of the set is used.
+-- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP group Group.
+-- @return Core.Point#COORDINATE Coordinate where the mission is executed.
+function AUFTRAG:GetMissionWaypointCoord(group)
+
+  -- Create waypoint coordinate half way between us and the target.
+  local waypointcoord=group:GetCoordinate():GetIntermediateCoordinate(self:GetTargetCoordinate(), self.missionFraction)
+  local alt=waypointcoord.y
+  
+  -- Add some randomization.
+  waypointcoord=ZONE_RADIUS:New("Temp", waypointcoord:GetVec2(), 1000):GetRandomCoordinate():SetAltitude(alt, false)
+  
+  -- Set altitude of mission waypoint.
+  if self.missionAltitude then
+    waypointcoord:SetAltitude(self.missionAltitude, true)
+  end
+  env.info(string.format("FF mission alt=%d meters", waypointcoord.y))
+
+  return waypointcoord
+end
+
+
 --- Set log ID string.
 -- @param #AUFTRAG self
 -- @return #AUFTRAG self

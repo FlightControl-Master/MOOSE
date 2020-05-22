@@ -371,7 +371,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
     
     -- Set speed.
     wp.speed=UTILS.KmphToMps(speed)
-    wp.alt=-depth
+    wp.alt=-depth --Depth and -Depth or wp.alt
     
     -- Add waypoint.
     table.insert(waypoints, wp)
