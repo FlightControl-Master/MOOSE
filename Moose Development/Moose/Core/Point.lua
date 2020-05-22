@@ -2036,6 +2036,14 @@ do -- COORDINATE
     return ""
   end
 
+  --- Get Latitude and Longitude in Degree Minute Second.
+  -- @param #COORDINATE self
+  -- @return #number Latitude.
+  -- @return #number Lontitude.
+  function COORDINATE:GetLLDMS() 
+    return coord.LOtoLL( self:GetVec3() )
+  end
+
   --- Provides a Lat Lon string in Degree Minute Second format.
   -- @param #COORDINATE self
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
