@@ -1969,6 +1969,174 @@ do -- COORDINATE
     return InSphere
   end
 
+  --- Get sun rise time for a specific date at the coordinate.
+  -- @param #COORDINATE self
+  -- @param #number Day The day.
+  -- @param #number Month The month.
+  -- @param #number Year The year.
+  -- @param #boolean InSeconds If true, return the sun rise time in seconds. 
+  -- @return #string Sunrise time, e.g. "05:41".
+  function COORDINATE:GetSunriseAtDate(Day, Month, Year, InSeconds)
+      
+    -- Day of the year.    
+    local DayOfYear=UTILS.GetDayOfYear(Year, Month, Day)
+    
+    local Latitude, Longitude=self:GetLLDDM()
+    
+    local Tdiff=UTILS.GMTToLocalTimeDifference()
+  
+    local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
+
+    if InSeconds then
+      return sunrise
+    else
+      return UTILS.SecondsToClock(sunrise, true)
+    end
+  
+  end
+  
+  --- Get todays sun rise time.
+  -- @param #COORDINATE self
+  -- @param #boolean InSeconds If true, return the sun rise time in seconds. 
+  -- @return #string Sunrise time, e.g. "05:41".
+  function COORDINATE:GetSunrise(InSeconds)
+  
+    -- Get current day of the year.    
+    local DayOfYear=UTILS.GetMissionDayOfYear()
+  
+    -- Lat and long at this point.
+    local Latitude, Longitude=self:GetLLDDM()
+    
+    -- GMT time diff.
+    local Tdiff=UTILS.GMTToLocalTimeDifference()
+  
+    -- Sunrise in seconds of the day.
+    local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
+    
+    -- Debug output.
+    --self:I(string.format("Sun rise at lat=%.3f long=%.3f on %s + %d days (DayOfYear=%d): %s (GMT %d)", Latitude, Longitude, date, x, DayOfYear, UTILS.SecondsToClock(sunrise), Tdiff))
+    
+    if InSeconds then
+      return sunrise
+    else
+      return UTILS.SecondsToClock(sunrise, true)
+    end
+  
+  end
+
+  --- Get minutes until the next sun rise at this coordinate.
+  -- @param #COORDINATE self
+  -- @param OnlyToday If true, only calculate the sun rise of today. If sun has already risen, the time in negative minutes since sunrise is reported.
+  -- @return #number Minutes to the next sunrise.
+  function COORDINATE:GetMinutesToSunrise(OnlyToday)
+    
+    -- Seconds of today
+    local time=UTILS.SecondsOfToday()
+
+    -- Next Sunrise in seconds.
+    local sunrise=nil
+    
+    -- Time to sunrise.
+    local delta=nil
+    
+    if OnlyToday then
+    
+      ---
+      -- Sunrise of today
+      ---
+    
+      sunrise=self:GetSunrise(true)
+      
+      delta=sunrise-time
+      
+    else
+
+      ---
+      -- Sunrise of tomorrow
+      ---
+    
+      -- Tomorrows day of the year.
+      local DayOfYear=UTILS.GetMissionDayOfYear()+1
+
+      local Latitude, Longitude=self:GetLLDDM()
+      
+      local Tdiff=UTILS.GMTToLocalTimeDifference()
+    
+      sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
+      
+      delta=sunrise+UTILS.SecondsToMidnight()
+
+    end
+
+    return delta/60
+  end
+  
+  --- Check if it is day, i.e. if the sun has risen about the horizon at this coordinate.
+  -- @param #COORDINATE self 
+  -- @return #boolean If true, it is day. If false, it is night time.
+  function COORDINATE:IsDay()
+  
+    -- Todays sun rise in sec.
+    local sunrise=self:GetSunrise(true)
+    
+    -- Todays sun set in sec.
+    local sunset=self:GetSunset(true)
+    
+    local time=timer.getAbsTime()    
+    local clock=UTILS.SecondsToClock(time, true)    
+    time=UTILS.ClockToSeconds(clock)
+    
+    if time>sunrise and time<=sunset then
+      return true
+    else
+      return false
+    end  
+  
+  end
+  
+  --- Check if it is night, i.e. if the sun has set below the horizon at this coordinate.
+  -- @param #COORDINATE self 
+  -- @return #boolean If true, it is night. If false, it is day time.
+  function COORDINATE:IsNight()
+    return not self:IsDay()
+  end
+
+  --- Get todays sun set time.
+  -- @param #COORDINATE self
+  -- @param #boolean InSeconds If true, return the sun set time in seconds. 
+  -- @return #string Sunrise time, e.g. "20:41".
+  function COORDINATE:GetSunset(InSeconds)
+  
+    -- Mission start date
+    local date, Year, Month, Day=UTILS.GetDCSMissionDate()
+    
+    -- Day of the year.    
+    local DayOfYear=UTILS.GetDayOfYear(Year, Month, Day)
+    
+    -- Get the number of days that passed since mission start.
+    local time=timer.getAbsTime()    
+    local clock=UTILS.SecondsToClock(time, false)    
+    local x=tonumber(UTILS.Split(clock, "+")[2])
+  
+    DayOfYear=DayOfYear+x
+  
+    local Latitude, Longitude=self:GetLLDDM()
+    
+    local Tdiff=UTILS.GMTToLocalTimeDifference()
+  
+    local sunset=UTILS.GetSunRiseAndSet(DayOfYear,Latitude,Longitude, false, Tdiff)
+    
+    -- Debug output.
+    self:I(string.format("Sun rise at lat=%.3f long=%.3f on %s+%dd (DayOfYear=%d): %s", Latitude, Longitude, date, x, DayOfYear, UTILS.SecondsToClock(sunset)))
+
+    if InSeconds then
+      return sunset
+    else
+      return UTILS.SecondsToClock(sunset, true)
+    end
+
+  end
+
 
   --- Return a BR string from a COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
@@ -2036,11 +2204,11 @@ do -- COORDINATE
     return ""
   end
 
-  --- Get Latitude and Longitude in Degree Minute Second.
+  --- Get Latitude and Longitude in Degrees Decimal Minutes (DDM).
   -- @param #COORDINATE self
-  -- @return #number Latitude.
-  -- @return #number Lontitude.
-  function COORDINATE:GetLLDMS() 
+  -- @return #number Latitude in DDM.
+  -- @return #number Lontitude in DDM.
+  function COORDINATE:GetLLDDM() 
     return coord.LOtoLL( self:GetVec3() )
   end
 
