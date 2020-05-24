@@ -2082,10 +2082,10 @@ do -- COORDINATE
     -- Todays sun set in sec.
     local sunset=self:GetSunset(true)
     
-    local time=timer.getAbsTime()    
-    local clock=UTILS.SecondsToClock(time, true)    
-    time=UTILS.ClockToSeconds(clock)
-    
+    -- Seconds passed since midnight.
+    local time=UTILS.SecondsOfToday()
+        
+    -- Check if time is between sunrise and sunset.
     if time>sunrise and time<=sunset then
       return true
     else
@@ -2101,40 +2101,106 @@ do -- COORDINATE
     return not self:IsDay()
   end
 
-  --- Get todays sun set time.
+  --- Get sun set time for a specific date at the coordinate.
   -- @param #COORDINATE self
-  -- @param #boolean InSeconds If true, return the sun set time in seconds. 
-  -- @return #string Sunrise time, e.g. "20:41".
-  function COORDINATE:GetSunset(InSeconds)
-  
-    -- Mission start date
-    local date, Year, Month, Day=UTILS.GetDCSMissionDate()
-    
+  -- @param #number Day The day.
+  -- @param #number Month The month.
+  -- @param #number Year The year.
+  -- @param #boolean InSeconds If true, return the sun rise time in seconds. 
+  -- @return #string Sunset time, e.g. "20:41".
+  function COORDINATE:GetSunsetAtDate(Day, Month, Year, InSeconds)
+      
     -- Day of the year.    
     local DayOfYear=UTILS.GetDayOfYear(Year, Month, Day)
     
-    -- Get the number of days that passed since mission start.
-    local time=timer.getAbsTime()    
-    local clock=UTILS.SecondsToClock(time, false)    
-    local x=tonumber(UTILS.Split(clock, "+")[2])
-  
-    DayOfYear=DayOfYear+x
-  
     local Latitude, Longitude=self:GetLLDDM()
     
     local Tdiff=UTILS.GMTToLocalTimeDifference()
   
-    local sunset=UTILS.GetSunRiseAndSet(DayOfYear,Latitude,Longitude, false, Tdiff)
-    
-    -- Debug output.
-    self:I(string.format("Sun rise at lat=%.3f long=%.3f on %s+%dd (DayOfYear=%d): %s", Latitude, Longitude, date, x, DayOfYear, UTILS.SecondsToClock(sunset)))
+    local sunset=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
 
     if InSeconds then
       return sunset
     else
       return UTILS.SecondsToClock(sunset, true)
     end
+  
+  end
 
+  --- Get todays sun set time.
+  -- @param #COORDINATE self
+  -- @param #boolean InSeconds If true, return the sun set time in seconds. 
+  -- @return #string Sunrise time, e.g. "20:41".
+  function COORDINATE:GetSunset(InSeconds)
+  
+    -- Get current day of the year.    
+    local DayOfYear=UTILS.GetMissionDayOfYear()
+  
+    -- Lat and long at this point.
+    local Latitude, Longitude=self:GetLLDDM()
+    
+    -- GMT time diff.
+    local Tdiff=UTILS.GMTToLocalTimeDifference()
+  
+    -- Sunrise in seconds of the day.
+    local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
+    
+    -- Debug output.
+    --self:I(string.format("Sun rise at lat=%.3f long=%.3f on %s + %d days (DayOfYear=%d): %s (GMT %d)", Latitude, Longitude, date, x, DayOfYear, UTILS.SecondsToClock(sunrise), Tdiff))
+    
+    if InSeconds then
+      return sunrise
+    else
+      return UTILS.SecondsToClock(sunrise, true)
+    end
+  
+  end
+  
+  --- Get minutes until the next sun set at this coordinate.
+  -- @param #COORDINATE self
+  -- @param OnlyToday If true, only calculate the sun set of today. If sun has already set, the time in negative minutes since sunset is reported.
+  -- @return #number Minutes to the next sunrise.
+  function COORDINATE:GetMinutesToSunset(OnlyToday)
+    
+    -- Seconds of today
+    local time=UTILS.SecondsOfToday()
+
+    -- Next Sunset in seconds.
+    local sunset=nil
+    
+    -- Time to sunrise.
+    local delta=nil
+    
+    if OnlyToday then
+    
+      ---
+      -- Sunset of today
+      ---
+    
+      sunset=self:GetSunset(true)
+      
+      delta=sunset-time
+      
+    else
+
+      ---
+      -- Sunset of tomorrow
+      ---
+    
+      -- Tomorrows day of the year.
+      local DayOfYear=UTILS.GetMissionDayOfYear()+1
+
+      local Latitude, Longitude=self:GetLLDDM()
+      
+      local Tdiff=UTILS.GMTToLocalTimeDifference()
+    
+      sunset=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
+      
+      delta=sunset+UTILS.SecondsToMidnight()
+
+    end
+
+    return delta/60
   end
 
 
