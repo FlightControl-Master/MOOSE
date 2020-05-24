@@ -1697,7 +1697,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.1.4"
+AIRBOSS.version="1.1.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4094,7 +4094,7 @@ function AIRBOSS:onafterRecoveryUnpause(From, Event, To)
   self:T(self.lid..string.format("Unpausing aircraft recovery."))
 
   -- Resume recovery.
-  self:_MarshalCallRecoveryResume()
+  self:_MarshalCallResumeRecovery()
 
 end
 
@@ -17641,7 +17641,8 @@ function AIRBOSS:_SaveTrapSheet(playerData, grade)
 	if self.trapprefix then
 		filename=string.format("%s_%s-%04d.csv", self.trapprefix, playerData.actype, i)
 	else
-		filename=string.format("AIRBOSS-%s_Trapsheet-%s_%s-%04d.csv", self.alias, playerData.name, playerData.actype, i)
+		local name=UTILS.ReplaceIllegalCharacters(playerData.name, "_")
+		filename=string.format("AIRBOSS-%s_Trapsheet-%s_%s-%04d.csv", self.alias, name, playerData.actype, i)
 	end
 
     -- Set path.

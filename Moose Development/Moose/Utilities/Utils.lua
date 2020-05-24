@@ -718,13 +718,34 @@ function UTILS.SecondsToClock(seconds, short)
     local clock=hours..":"..mins..":"..secs.."+"..days
     if short then
       if hours=="00" then
-        clock=mins..":"..secs
+        --clock=mins..":"..secs
+        clock=hours..":"..mins..":"..secs
       else
         clock=hours..":"..mins..":"..secs
       end
     end
     return clock
   end
+end
+
+--- Seconds of today.
+-- @return #number Seconds passed since last midnight.
+function UTILS.SecondsOfToday()
+
+    -- Time in seconds.
+    local time=timer.getAbsTime()
+    
+    -- Short format without days since mission start.
+    local clock=UTILS.SecondsToClock(time, true)
+      
+    -- Time is now the seconds passed since last midnight.
+    return UTILS.ClockToSeconds(clock)
+end
+
+--- Cound seconds until next midnight.
+-- @return #number Seconds to midnight.
+function UTILS.SecondsToMidnight()
+  return 24*60*60-UTILS.SecondsOfToday()
 end
 
 --- Convert clock time from hours, minutes and seconds to seconds.
@@ -783,6 +804,15 @@ function UTILS.DisplayMissionTime(duration)
   MESSAGE:New(text, duration):ToAll()
 end
 
+--- Replace illegal characters [<>|/?*:\\] in a string. 
+-- @param #string Text Input text.
+-- @param #string ReplaceBy Replace illegal characters by this character or string. Default underscore "_".
+-- @return #string The input text with illegal chars replaced.
+function UTILS.ReplaceIllegalCharacters(Text, ReplaceBy)
+  ReplaceBy=ReplaceBy or "_"
+  local text=Text:gsub("[<>|/?*:\\]", ReplaceBy)
+  return text
+end
 
 --- Generate a Gaussian pseudo-random number.
 -- @param #number x0 Expectation value of distribution.
@@ -1002,15 +1032,62 @@ function UTILS.GetDCSMap()
   return env.mission.theatre
 end
 
---- Returns the mission date. This is the date the mission started.
+--- Returns the mission date. This is the date the mission **started**.
 -- @return #string Mission date in yyyy/mm/dd format.
+-- @return #number The year anno domini.
+-- @return #number The month.
+-- @return #number The day.
 function UTILS.GetDCSMissionDate()
   local year=tostring(env.mission.date.Year)
   local month=tostring(env.mission.date.Month)
   local day=tostring(env.mission.date.Day)
-  return string.format("%s/%s/%s", year, month, day)
+  return string.format("%s/%s/%s", year, month, day), tonumber(year), tonumber(month), tonumber(day)
 end
 
+--- Returns the day of the mission.
+-- @return #number Day of the mission. Mission starts on day 0.
+function UTILS.GetMissionDay()
+  
+  local time=timer.getAbsTime()
+  
+  local clock=UTILS.SecondsToClock(time, false)
+  
+  local x=tonumber(UTILS.Split(clock, "+")[2])
+  
+  return x
+end
+
+--- Returns the current day of the year of the mission.
+-- @return #number Current day of year of the mission. For example, January 1st returns 0, January 2nd returns 1 etc.
+function UTILS.GetMissionDayOfYear()
+
+  local Date, Year, Month, Day=UTILS.GetDCSMissionDate()
+  
+  local d=UTILS.GetMissionDay()
+  
+  return UTILS.GetDayOfYear(Year, Month, Day)+d
+  
+end
+
+--- Returns the current date.
+-- @return #string Mission date in yyyy/mm/dd format.
+-- @return #number The year anno domini.
+-- @return #number The month.
+-- @return #number The day.
+function UTILS.GetDate()
+
+  -- Mission start date
+  local date, year, month, day=UTILS.GetDCSMissionDate()
+  
+  local time=timer.getAbsTime()
+  
+  local clock=UTILS.SecondsToClock(time, false)
+  
+  local x=tonumber(UTILS.Split(clock, "+")[2])
+  
+  local day=day+x
+
+end
 
 --- Returns the magnetic declination of the map.
 -- Returned values for the current maps are:
@@ -1143,4 +1220,176 @@ function UTILS.GetCallsignName(Callsign)
   end
 
   return "Ghostrider"
+end
+
+--- Get the time difference between GMT and local time.
+-- @return #number Local time difference in hours compared to GMT. E.g. Dubai is GMT+4 ==> +4 is returned.
+function UTILS.GMTToLocalTimeDifference()
+
+  local theatre=UTILS.GetDCSMap()
+
+  if theatre==DCSMAP.Caucasus then
+    return 4   -- Caucasus UTC+4 hours
+  elseif theatre==DCSMAP.PersianGulf then
+    return 4   -- Abu Dhabi UTC+4 hours
+  elseif theatre==DCSMAP.NTTR then
+    return -7  -- Las Vegas UTC-7 hours
+  elseif theatre==DCSMAP.Normandy then
+    return 1  -- Calais UTC+1 hour
+  else
+    BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
+    return 0
+  end
+
+end
+
+
+--- Get the day of the year. Counting starts on 1st of January.
+-- @param #number Year The year.
+-- @param #number Month The month.
+-- @param #number Day The day.
+-- @return #number The day of the year.
+function UTILS.GetDayOfYear(Year, Month, Day)
+
+  local floor = math.floor
+  
+   local n1 = floor(275 * Month / 9)
+   local n2 = floor((Month + 9) / 12)
+   local n3 = (1 + floor((Year - 4 * floor(Year / 4) + 2) / 3))
+   
+   return n1 - (n2 * n3) + Day - 30
+end
+
+--- Get sunrise or sun set of a specific day of the year at a specific location.
+-- @param #number DayOfYear The day of the year.
+-- @param #number Latitude Latitude.
+-- @param #number Longitude Longitude.
+-- @param #boolean Rising If true, calc sun rise, or sun set otherwise.
+-- @param #number Tlocal Local time offset in hours. E.g. +4 for a location which has GMT+4.
+-- @return #number Sun rise/set in seconds of the day.
+function UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, Rising, Tlocal)
+
+  -- Defaults  
+  local zenith=90.83
+  local latitude=Latitude
+  local longitude=Longitude
+  local rising=Rising
+  local n=DayOfYear
+  Tlocal=Tlocal or 0
+  
+
+  -- Short cuts.
+  local rad = math.rad
+  local deg = math.deg
+  local floor = math.floor
+  local frac = function(n) return n - floor(n) end
+  local cos = function(d) return math.cos(rad(d)) end
+  local acos = function(d) return deg(math.acos(d)) end
+  local sin = function(d) return math.sin(rad(d)) end
+  local asin = function(d) return deg(math.asin(d)) end
+  local tan = function(d) return math.tan(rad(d)) end
+  local atan = function(d) return deg(math.atan(d)) end
+
+  local function fit_into_range(val, min, max)
+     local range = max - min
+     local count
+     if val < min then
+        count = floor((min - val) / range) + 1
+        return val + count * range
+     elseif val >= max then
+        count = floor((val - max) / range) + 1
+        return val - count * range
+     else
+        return val
+     end
+  end
+  
+   -- Convert the longitude to hour value and calculate an approximate time
+   local lng_hour = longitude / 15
+  
+   local t
+   if rising then -- Rising time is desired
+      t = n + ((6 - lng_hour) / 24)
+   else -- Setting time is desired
+      t = n + ((18 - lng_hour) / 24)
+   end
+  
+   -- Calculate the Sun's mean anomaly
+   local M = (0.9856 * t) - 3.289
+  
+   -- Calculate the Sun's true longitude
+   local L = fit_into_range(M + (1.916 * sin(M)) + (0.020 * sin(2 * M)) + 282.634, 0, 360)
+  
+   -- Calculate the Sun's right ascension
+   local RA = fit_into_range(atan(0.91764 * tan(L)), 0, 360)
+  
+   -- Right ascension value needs to be in the same quadrant as L
+   local Lquadrant  = floor(L / 90) * 90
+   local RAquadrant = floor(RA / 90) * 90
+   RA = RA + Lquadrant - RAquadrant
+  
+   -- Right ascension value needs to be converted into hours
+   RA = RA / 15
+  
+   -- Calculate the Sun's declination
+   local sinDec = 0.39782 * sin(L)
+   local cosDec = cos(asin(sinDec))
+  
+   -- Calculate the Sun's local hour angle
+   local cosH = (cos(zenith) - (sinDec * sin(latitude))) / (cosDec * cos(latitude))
+  
+   if rising and cosH > 1 then
+      return "N/R" -- The sun never rises on this location on the specified date
+   elseif cosH < -1 then
+      return "N/S" -- The sun never sets on this location on the specified date
+   end
+  
+   -- Finish calculating H and convert into hours
+   local H
+   if rising then
+      H = 360 - acos(cosH)
+   else
+      H = acos(cosH)
+   end
+   H = H / 15
+  
+   -- Calculate local mean time of rising/setting
+   local T = H + RA - (0.06571 * t) - 6.622
+
+   -- Adjust back to UTC
+   local UT = fit_into_range(T - lng_hour, 0, 24)
+   
+   return floor(UT)*60*60+frac(UT)*60*60+Tlocal*60*60
+ end
+
+--- Get sun rise of a specific day of the year at a specific location.
+-- @param #number Day Day of the year.
+-- @param #number Month Month of the year.
+-- @param #number Year Year.
+-- @param #number Latitude Latitude.
+-- @param #number Longitude Longitude.
+-- @param #boolean Rising If true, calc sun rise, or sun set otherwise.
+-- @param #number Tlocal Local time offset in hours. E.g. +4 for a location which has GMT+4. Default 0.
+-- @return #number Sun rise in seconds of the day.
+function UTILS.GetSunrise(Day, Month, Year, Latitude, Longitude, Tlocal)
+
+  local DayOfYear=UTILS.GetDayOfYear(Year, Month, Day)
+
+  return UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tlocal)
+end
+
+--- Get sun set of a specific day of the year at a specific location.
+-- @param #number Day Day of the year.
+-- @param #number Month Month of the year.
+-- @param #number Year Year.
+-- @param #number Latitude Latitude.
+-- @param #number Longitude Longitude.
+-- @param #boolean Rising If true, calc sun rise, or sun set otherwise.
+-- @param #number Tlocal Local time offset in hours. E.g. +4 for a location which has GMT+4. Default 0.
+-- @return #number Sun rise in seconds of the day.
+function UTILS.GetSunset(Day, Month, Year, Latitude, Longitude, Tlocal)
+
+  local DayOfYear=UTILS.GetDayOfYear(Year, Month, Day)
+
+  return UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tlocal)
 end
