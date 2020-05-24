@@ -804,6 +804,15 @@ function UTILS.DisplayMissionTime(duration)
   MESSAGE:New(text, duration):ToAll()
 end
 
+--- Replace illegal characters [<>|/?*:\\] in a string. 
+-- @param #string Text Input text.
+-- @param #string ReplaceBy Replace illegal characters by this character or string. Default underscore "_".
+-- @return #string The input text with illegal chars replaced.
+function UTILS.ReplaceIllegalCharacters(Text, ReplaceBy)
+  ReplaceBy=ReplaceBy or "_"
+  local text=Text:gsub("[<>|/?*:\\]", ReplaceBy)
+  return text
+end
 
 --- Generate a Gaussian pseudo-random number.
 -- @param #number x0 Expectation value of distribution.
