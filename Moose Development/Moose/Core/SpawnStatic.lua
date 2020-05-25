@@ -1,4 +1,4 @@
---- **Core** - Spawn new statics in your running missions.
+--- **Core** - Spawn statics.
 --  
 -- ===
 -- 
@@ -6,7 +6,6 @@
 -- 
 --   * Spawn new statics from a static already defined using the mission editor.
 --   * Spawn new statics from a given template.
---   * Spawn new statics from a given type.
 --   * Spawn with a custom heading and location.
 --   * Spawn within a zone.
 -- 
@@ -29,7 +28,7 @@
 -- ===
 -- 
 -- ### Author: **FlightControl**
--- ### Contributions: 
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -43,7 +42,13 @@
 -- @field #number CountryID Country ID.
 -- @field #number CoalitionID Coalition ID.
 -- @field #number CategoryID Category ID.
--- @field #number SpawnIndex Running number increased with each new Spawn. 
+-- @field #number SpawnIndex Running number increased with each new Spawn.
+-- @field Wrapper.Unit#UNIT InitLinkUnit The unit the static is liked to.
+-- @field #number InitOffsetX Link offset X coordinate.
+-- @field #number InitOffsetY Link offset Y coordinate.
+-- @field #number InitOffsetAngle Link offset angle in degrees.
+-- @field #number InitLivery Livery for aircraft.
+-- 
 -- @extends Core.Base#BASE
 
 
@@ -80,18 +85,13 @@ SPAWNSTATIC = {
   ClassName = "SPAWNSTATIC",
 }
 
-
---- @type SPAWNSTATIC.SpawnZoneTable
--- @list <Core.Zone#ZONE_BASE> SpawnZone
-
-
---- Creates the main object to spawn a @{Static} defined in the ME.
+--- Creates the main object to spawn a @{Static} defined in the mission editor (ME).
 -- @param #SPAWNSTATIC self
--- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.
--- @param DCS#country.id SpawnCountryID The ID of the country.
--- @param DCS#coalition.side SpawnCoalitionID The ID of the coalition.
+-- @param #string SpawnTemplateName Name of the static object in the ME. Each new static will have the name starting with SpawnTemplatePrefix.
+-- @param DCS#country.id SpawnCountryID (Optional) The ID of the country.
+-- @param DCS#coalition.side SpawnCoalitionID (Optional) The ID of the coalition.
 -- @return #SPAWNSTATIC self
-function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, SpawnCountryID, SpawnCoalitionID )
+function SPAWNSTATIC:NewFromStatic(SpawnTemplateName, SpawnCountryID)
 
 	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
 	self:F( { SpawnTemplatePrefix } )
@@ -100,6 +100,7 @@ function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, SpawnCountryID, SpawnCo
 	
 	if TemplateStatic then
 		self.SpawnTemplatePrefix = SpawnTemplatePrefix
+		self.TemplateStaticUnit  = UTILS.DeepCopy(TemplateStatic.units[1])
 		self.CountryID = SpawnCountryID or CountryID
 		self.CategoryID = CategoryID
 		self.CoalitionID = SpawnCoalitionID or CoalitionID
@@ -111,6 +112,20 @@ function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, SpawnCountryID, SpawnCo
   self:SetEventPriority( 5 )
 
 	return self
+end
+
+--- Init link to a unit.
+-- @param #SPAWNSTATIC self
+-- @param #number Heading (Optional) The heading of the static, which is a number in degrees from 0 to 360. Default is the heading of the template.
+-- @param #string NewName (Optional) The name of the new static.
+-- @return #SPAWNSTATIC
+function SPAWNSTATIC:InitLinkToUnit(Unit, OffsetX, OffsetY, OffsetAngle)
+
+  self.InitLinkUnit=Unit
+  self.InitOffsetX=OffsetX or 0
+  self.InitOffsetY=OffsetX or 0
+  self.InitOffsetAngle=OffsetAngle or 0
+
 end
 
 --- Spawn a new STATIC object.
@@ -143,11 +158,14 @@ function SPAWNSTATIC:Spawn( Heading, NewName ) --R2.3
   return nil
 end
 
---- Spawns a new static.
+--- Spawns a new static using a given template. Additionally, the country ID needs to be specified, which also determines the coalition of the spawned static.
 -- @param #SPAWNSTATIC self
--- @param #table Template Spawn template.
+-- @param #table Template Spawn unit template.
+-- @param #number CountryID The 
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:_Spawn(Template)
+function SPAWNSTATIC:_SpawnFromTemplate(Template, CountryID)
+
+  local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
 
 end
 
@@ -235,6 +253,20 @@ function SPAWNSTATIC:SpawnFromCoordinate(Coordinate, Heading, NewName) --R2.4
 end
 
 
+--- Creates a new @{Static} from a @{Zone}.
+-- @param #SPAWNSTATIC self
+-- @param Core.Zone#ZONE_BASE Zone The Zone where to spawn the static.
+-- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
+-- @param #string NewName (optional) The name of the new static.
+-- @return #SPAWNSTATIC
+function SPAWNSTATIC:SpawnFromZone( Zone, Heading, NewName ) --R2.1
+  self:F( { Zone, Heading, NewName  } )
+
+  local Static = self:SpawnFromPointVec2( Zone:GetPointVec2(), Heading, NewName )
+  
+  return Static
+end
+
 --- Respawns the original @{Static}.
 -- @param #SPAWNSTATIC self
 -- @param #number delay Delay before respawn in seconds.
@@ -289,20 +321,5 @@ function SPAWNSTATIC:ReSpawnAt( Coordinate, Heading )
   end
   
   return nil
-end
-
-
---- Creates a new @{Static} from a @{Zone}.
--- @param #SPAWNSTATIC self
--- @param Core.Zone#ZONE_BASE Zone The Zone where to spawn the static.
--- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
--- @param #string NewName (optional) The name of the new static.
--- @return #SPAWNSTATIC
-function SPAWNSTATIC:SpawnFromZone( Zone, Heading, NewName ) --R2.1
-  self:F( { Zone, Heading, NewName  } )
-
-  local Static = self:SpawnFromPointVec2( Zone:GetPointVec2(), Heading, NewName )
-  
-  return Static
 end
 
