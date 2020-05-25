@@ -4,7 +4,7 @@
 -- 
 -- ## Features:
 -- 
---   * Spawn new statics from a static already defined using the mission editor.
+--   * Spawn new statics from a static already defined in the mission editor.
 --   * Spawn new statics from a given template.
 --   * Spawn with a custom heading and location.
 --   * Spawn within a zone.
@@ -13,17 +13,14 @@
 -- 
 -- # Demo Missions
 -- 
--- ### [SPAWNSTATIC Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/SPS - Spawning Statics)
--- 
--- ### [SPAWNSTATIC Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SPS%20-%20Spawning%20Statics)
+-- ## [SPAWNSTATIC Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SPS%20-%20Spawning%20Statics)
 --
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
 -- ===
 -- 
 -- # YouTube Channel
 -- 
--- ### [SPAWNSTATIC YouTube Channel]()
+-- ## [SPAWNSTATIC YouTube Channel]() [No videos yet!]
 -- 
 -- ===
 -- 
@@ -73,40 +70,39 @@
 --
 -- ## **Spawn** methods
 -- 
--- Groups can be spawned at different times and methods:
+-- Statics can be spawned at different times and methods:
 -- 
---   * @{#SPAWNSTATIC.SpawnFromPointVec2}(): Spawn a new group from a POINT_VEC2 coordinate. 
---   (The group will be spawned at land height ).
+--   * @{#SPAWNSTATIC.SpawnFromPointVec2}(): Spawn a new group from a POINT_VEC2 coordinate. The group will be spawned at land height.
 --   * @{#SPAWNSTATIC.SpawnFromZone}(): Spawn a new group in a @{Zone}.
 --  
 -- @field #SPAWNSTATIC SPAWNSTATIC
 -- 
 SPAWNSTATIC = {
-  ClassName = "SPAWNSTATIC",
+  ClassName  = "SPAWNSTATIC",
+  SpawnIndex = 0,
 }
 
 --- Creates the main object to spawn a @{Static} defined in the mission editor (ME).
 -- @param #SPAWNSTATIC self
--- @param #string SpawnTemplateName Name of the static object in the ME. Each new static will have the name starting with SpawnTemplatePrefix.
+-- @param #string SpawnTemplateName Name of the static object in the ME. Each new static will have the name starting with this prefix.
 -- @param DCS#country.id SpawnCountryID (Optional) The ID of the country.
 -- @param DCS#coalition.side SpawnCoalitionID (Optional) The ID of the coalition.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:NewFromStatic(SpawnTemplateName, SpawnCountryID)
 
 	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
-	self:F( { SpawnTemplatePrefix } )
   
-	local TemplateStatic, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( SpawnTemplatePrefix )
+	local TemplateStatic, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate(SpawnTemplateName)
 	
 	if TemplateStatic then
-		self.SpawnTemplatePrefix = SpawnTemplatePrefix
+		self.SpawnTemplatePrefix = SpawnTemplateName
 		self.TemplateStaticUnit  = UTILS.DeepCopy(TemplateStatic.units[1])
-		self.CountryID = SpawnCountryID or CountryID
-		self.CategoryID = CategoryID
-		self.CoalitionID = SpawnCoalitionID or CoalitionID
-		self.SpawnIndex = 0
+		self.CountryID           = SpawnCountryID or CountryID
+		self.CategoryID          = CategoryID
+		self.CoalitionID         = CoalitionID
+		self.SpawnIndex          = 0
 	else
-		error( "SPAWNSTATIC:New: There is no static declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
+		error( "SPAWNSTATIC:New: There is no static declared in the mission editor with SpawnTemplatePrefix = '" .. tostring(SpawnTemplateName) .. "'" )
 	end
 
   self:SetEventPriority( 5 )
@@ -114,11 +110,22 @@ function SPAWNSTATIC:NewFromStatic(SpawnTemplateName, SpawnCountryID)
 	return self
 end
 
+--- Initialize heading of the spawned static.
+-- @param #SPAWNSTATIC self
+-- @param #number Heading The heading in degrees.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitHeading(Heading)
+  self.InitHeading=Heading
+  return self
+end
+
 --- Init link to a unit.
 -- @param #SPAWNSTATIC self
--- @param #number Heading (Optional) The heading of the static, which is a number in degrees from 0 to 360. Default is the heading of the template.
--- @param #string NewName (Optional) The name of the new static.
--- @return #SPAWNSTATIC
+-- @param Wrapper.Unit#UNIT Unit The unit to which the static is linked.
+-- @param #number OffsetX Offset in X.
+-- @param #number OffsetY Offset in Y.
+-- @param #number OffsetAngle Offset angle in degrees.
+-- @return #SPAWNSTATIC self
 function SPAWNSTATIC:InitLinkToUnit(Unit, OffsetX, OffsetY, OffsetAngle)
 
   self.InitLinkUnit=Unit
@@ -126,16 +133,20 @@ function SPAWNSTATIC:InitLinkToUnit(Unit, OffsetX, OffsetY, OffsetAngle)
   self.InitOffsetY=OffsetX or 0
   self.InitOffsetAngle=OffsetAngle or 0
 
+  return self
 end
 
 --- Spawn a new STATIC object.
 -- @param #SPAWNSTATIC self
 -- @param #number Heading (Optional) The heading of the static, which is a number in degrees from 0 to 360. Default is the heading of the template.
 -- @param #string NewName (Optional) The name of the new static.
--- @return #SPAWNSTATIC
+-- @return Wrapper.Static#STATIC The static spawned.
 function SPAWNSTATIC:Spawn( Heading, NewName ) --R2.3
-  self:F( { Heading, NewName  } )
+
+
+  return self:_SpawnStatic(self.TemplateStaticUnit, self.CountryID)
   
+  --[[
   local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
   
   if StaticTemplate then
@@ -156,19 +167,8 @@ function SPAWNSTATIC:Spawn( Heading, NewName ) --R2.3
   end
   
   return nil
+  ]]
 end
-
---- Spawns a new static using a given template. Additionally, the country ID needs to be specified, which also determines the coalition of the spawned static.
--- @param #SPAWNSTATIC self
--- @param #table Template Spawn unit template.
--- @param #number CountryID The 
--- @return #SPAWNSTATIC
-function SPAWNSTATIC:_SpawnFromTemplate(Template, CountryID)
-
-  local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
-
-end
-
 
 --- Creates a new @{Static} from a POINT_VEC2.
 -- @param #SPAWNSTATIC self
@@ -176,7 +176,7 @@ end
 -- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
 -- @param #string (optional) The name of the new static.
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, Heading, NewName ) --R2.1
+function SPAWNSTATIC:SpawnFromPointVec2(PointVec2, Heading, NewName)
   self:F( { PointVec2, Heading, NewName  } )
   
   local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
@@ -216,8 +216,22 @@ end
 -- @param #number Heading (Optional) Heading The heading of the static, which is a number in degrees from 0 to 360. Default is 0 degrees.
 -- @param #string NewName (Optional) The name of the new static.
 -- @return Wrapper.Static#STATIC The spawned STATIC object.
-function SPAWNSTATIC:SpawnFromCoordinate(Coordinate, Heading, NewName) --R2.4
-  self:F( { PointVec2, Heading, NewName  } )
+function SPAWNSTATIC:SpawnFromCoordinate(Coordinate, Heading, NewName)
+
+  -- Set up coordinate.
+  self.InitCoordinate=Coordinate
+  
+  if Heading then
+    self.InitHeading=Heading
+  end
+  
+  if NewName then
+    self.InitName=NewName
+  end
+
+  return self:_SpawnStatic(self.TemplateStaticUnit, self.CountryID)
+
+  --[[
   
   local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
   
@@ -250,6 +264,8 @@ function SPAWNSTATIC:SpawnFromCoordinate(Coordinate, Heading, NewName) --R2.4
   end
   
   return nil
+  
+  ]]
 end
 
 
@@ -259,12 +275,52 @@ end
 -- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
 -- @param #string NewName (optional) The name of the new static.
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:SpawnFromZone( Zone, Heading, NewName ) --R2.1
-  self:F( { Zone, Heading, NewName  } )
+function SPAWNSTATIC:SpawnFromZone(Zone, Heading, NewName)
 
+  -- Spawn the new static at the center of the zone.
   local Static = self:SpawnFromPointVec2( Zone:GetPointVec2(), Heading, NewName )
   
   return Static
+end
+
+--- Spawns a new static using a given template. Additionally, the country ID needs to be specified, which also determines the coalition of the spawned static.
+-- @param #SPAWNSTATIC self
+-- @param #table Template Spawn unit template.
+-- @param #number CountryID The country ID.
+-- @return Wrapper.Static#STATIC The static spawned.
+function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
+
+  local CountryID=CountryID or self.CountryID
+  
+  if self.InitCoordinate then  
+    Template.x   = self.InitCoordinate.x    
+    Template.y   = self.InitCoordinate.z
+    Template.alt = self.InitCoordinate.y  
+  end
+  
+  if self.InitHeading then
+    --Template.heading = math.rad(self.InitHeading)  
+  end
+  
+  if self.InitLinkUnit then
+    Template.linkUnit=self.InitLinkUnit:GetID()
+    Template.linkOffset=true
+    Template.offsets={}
+    Template.offsets.y=self.InitOffsetY
+    Template.offsets.x=self.InitOffsetX
+    Template.offsets.angle=self.InitOffsetAngle and math.rad(self.InitOffsetAngle) or 0
+  end
+
+  -- Register the new static.
+  --_DATABASE:_RegisterStaticTemplate(Template, self.CoalitionID, self.CategoryID, CountryID)
+  
+  -- Add static to the game.
+  local Static=coalition.addStaticObject(CountryID, Template)
+  
+  -- Increase spawn index counter.
+  self.SpawnIndex = self.SpawnIndex + 1
+  
+  return _DATABASE:FindStatic(Static:getName())
 end
 
 --- Respawns the original @{Static}.
