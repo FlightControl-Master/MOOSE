@@ -39,6 +39,11 @@
 
 
 --- @type SPAWNSTATIC
+-- @field #string SpawnTemplatePrefix Name of the template group.
+-- @field #number CountryID Country ID.
+-- @field #number CoalitionID Coalition ID.
+-- @field #number CategoryID Category ID.
+-- @field #number SpawnIndex Running number increased with each new Spawn. 
 -- @extends Core.Base#BASE
 
 
@@ -85,12 +90,14 @@ SPAWNSTATIC = {
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.
 -- @param DCS#country.id SpawnCountryID The ID of the country.
 -- @param DCS#coalition.side SpawnCoalitionID The ID of the coalition.
--- @return #SPAWNSTATIC
+-- @return #SPAWNSTATIC self
 function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, SpawnCountryID, SpawnCoalitionID )
+
 	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
 	self:F( { SpawnTemplatePrefix } )
   
 	local TemplateStatic, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( SpawnTemplatePrefix )
+	
 	if TemplateStatic then
 		self.SpawnTemplatePrefix = SpawnTemplatePrefix
 		self.CountryID = SpawnCountryID or CountryID
@@ -106,29 +113,10 @@ function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, SpawnCountryID, SpawnCo
 	return self
 end
 
---- Creates the main object to spawn a @{Static} based on a type name.
+--- Spawn a new STATIC object.
 -- @param #SPAWNSTATIC self
--- @param #string SpawnTypeName is the name of the type.
--- @return #SPAWNSTATIC
-function SPAWNSTATIC:NewFromType( SpawnTypeName, SpawnShapeName, SpawnCategory, SpawnCountryID, SpawnCoalitionID ) 
-  local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
-  self:F( { SpawnTypeName } )
-  
-  self.SpawnTypeName = SpawnTypeName
-  self.CountryID = SpawnCountryID
-  self.CoalitionID = SpawnCoalitionID
-  self.SpawnIndex = 0
-
-  self:SetEventPriority( 5 )
-
-  return self
-end
-
-
---- Creates a new @{Static} at the original position.
--- @param #SPAWNSTATIC self
--- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
--- @param #string (optional) The name of the new static.
+-- @param #number Heading (Optional) The heading of the static, which is a number in degrees from 0 to 360. Default is the heading of the template.
+-- @param #string NewName (Optional) The name of the new static.
 -- @return #SPAWNSTATIC
 function SPAWNSTATIC:Spawn( Heading, NewName ) --R2.3
   self:F( { Heading, NewName  } )
@@ -140,8 +128,9 @@ function SPAWNSTATIC:Spawn( Heading, NewName ) --R2.3
     local StaticUnitTemplate = StaticTemplate.units[1]
   
     StaticTemplate.name = NewName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex )
-    StaticTemplate.heading = ( Heading / 180 ) * math.pi
     
+    StaticTemplate.heading=Heading and math.rad(Heading) or StaticTemplate.heading
+        
     _DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, CategoryID, CountryID )
 
     local Static = coalition.addStaticObject( self.CountryID or CountryID, StaticTemplate.units[1] )
@@ -152,6 +141,14 @@ function SPAWNSTATIC:Spawn( Heading, NewName ) --R2.3
   end
   
   return nil
+end
+
+--- Spawns a new static.
+-- @param #SPAWNSTATIC self
+-- @param #table Template Spawn template.
+-- @return #SPAWNSTATIC
+function SPAWNSTATIC:_Spawn(Template)
+
 end
 
 
@@ -200,7 +197,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate The 3D coordinate where to spawn the static.
 -- @param #number Heading (Optional) Heading The heading of the static, which is a number in degrees from 0 to 360. Default is 0 degrees.
 -- @param #string NewName (Optional) The name of the new static.
--- @return #SPAWNSTATIC
+-- @return Wrapper.Static#STATIC The spawned STATIC object.
 function SPAWNSTATIC:SpawnFromCoordinate(Coordinate, Heading, NewName) --R2.4
   self:F( { PointVec2, Heading, NewName  } )
   
