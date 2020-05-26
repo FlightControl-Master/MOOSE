@@ -40,12 +40,17 @@
 -- @field #number CoalitionID Coalition ID.
 -- @field #number CategoryID Category ID.
 -- @field #number SpawnIndex Running number increased with each new Spawn.
--- @field Wrapper.Unit#UNIT InitLinkUnit The unit the static is liked to.
+-- @field Wrapper.Unit#UNIT InitLinkUnit The unit the static is linked to.
 -- @field #number InitOffsetX Link offset X coordinate.
 -- @field #number InitOffsetY Link offset Y coordinate.
 -- @field #number InitOffsetAngle Link offset angle in degrees.
--- @field #number InitLivery Livery for aircraft.
--- 
+-- @field #number InitStaticHeading Heading of the static.
+-- @field #string InitStaticLivery Livery for aircraft.
+-- @field #string InitStaticShape Shape of teh static.
+-- @field #string InitStaticType Type of the static.
+-- @field #string InitStaticName Name of the static.
+-- @field Core.Point#COORDINATE InitStaticCoordinate Coordinate where to spawn the static.
+-- @field #boolean InitDead Set static to be dead if true.
 -- @extends Core.Base#BASE
 
 
@@ -82,11 +87,24 @@ SPAWNSTATIC = {
   SpawnIndex = 0,
 }
 
+--- Static template table data.
+-- @type SPAWNSTATIC.TemplateData
+-- @field #string name Name of the static.
+-- @field #string type Type of the static.
+-- @field #string category Category of the static.
+-- @field #number x X-coordinate of the static.
+-- @field #number y Y-coordinate of teh static.
+-- @field #number heading Heading in rad.
+-- @field #boolean dead Static is dead if true.
+-- @field #string livery_id Livery name.
+-- @field #number unitId Unit ID.
+-- @field #number groupId Group ID.
+-- @field #table offsets Offset parameters when linked to a unit.
+
 --- Creates the main object to spawn a @{Static} defined in the mission editor (ME).
 -- @param #SPAWNSTATIC self
 -- @param #string SpawnTemplateName Name of the static object in the ME. Each new static will have the name starting with this prefix.
 -- @param DCS#country.id SpawnCountryID (Optional) The ID of the country.
--- @param DCS#coalition.side SpawnCoalitionID (Optional) The ID of the coalition.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:NewFromStatic(SpawnTemplateName, SpawnCountryID)
 
@@ -110,12 +128,91 @@ function SPAWNSTATIC:NewFromStatic(SpawnTemplateName, SpawnCountryID)
 	return self
 end
 
+--- Creates the main object to spawn a @{Static} given a template table.
+-- @param #SPAWNSTATIC self
+-- @param #table SpawnTemplate Template used for spawning.
+-- @param DCS#country.id CountryID The ID of the country. Default `country.id.USA`.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:NewFromTemplate(SpawnTemplate, CountryID)
+
+  local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
+  
+  self.TemplateStaticUnit  = UTILS.DeepCopy(SpawnTemplate)
+  self.SpawnTemplatePrefix = SpawnTemplate.name
+  self.CountryID           = CountryID or country.id.USA
+  
+  return self
+end
+
+--- Creates the main object to spawn a @{Static} from a given type.
+-- NOTE that you have to init many other parameters as spawn coordinate etc.
+-- @param #SPAWNSTATIC self
+-- @param #string StaticType Type of the static.
+-- @param #string StaticCategory Category of the static, e.g. "Planes".
+-- @param DCS#country.id CountryID The ID of the country. Default `country.id.USA`.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:NewFromType(StaticType, StaticCategory, CountryID)
+
+  self.InitStaticType=StaticType
+  self.InitStaticCategory=StaticCategory
+  self.CountryID=CountryID or country.id.USA
+  
+  self.InitStaticCoordinate=COORDINATE:New(0, 0, 0)
+
+  return self
+end
+
+--- Initialize heading of the spawned static.
+-- @param #SPAWNSTATIC self
+-- @param Core.Point#COORDINATE Coordinate Position where the static is spawned.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitCoordinate(Coordinate)
+  self.InitStaticCoordinate=Coordinate
+  return self
+end
+
 --- Initialize heading of the spawned static.
 -- @param #SPAWNSTATIC self
 -- @param #number Heading The heading in degrees.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:InitHeading(Heading)
-  self.InitHeading=Heading
+  self.InitStaticHeading=Heading
+  return self
+end
+
+--- Initialize livery of the spawned static.
+-- @param #SPAWNSTATIC self
+-- @param #string LiveryName Name of the livery to use.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitLivery(LiveryName)
+  self.InitStaticLivery=LiveryName
+  return self
+end
+
+--- Initialize type of the spawned static.
+-- @param #SPAWNSTATIC self
+-- @param #string StaticType Type of the static, e.g. "FA-18C_hornet".
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitType(StaticType)
+  self.InitStaticType=StaticType
+  return self
+end
+
+--- Initialize shape of the spawned static. Required by some but not all statics.
+-- @param #SPAWNSTATIC self
+-- @param #string StaticShape Shape of the static, e.g. "carrier_tech_USA".
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitShape(StaticType)
+  self.InitStaticShape=StaticType
+  return self
+end
+
+--- Initialize name prefix statics get. This will be appended by "#0001", "#0002" etc. 
+-- @param #SPAWNSTATIC self
+-- @param #string NamePrefix Name prefix of statics spawned. Will append #0001, etc to the name.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitNamePrefix(NamePrefix)
+  self.SpawnTemplatePrefix=NamePrefix
   return self
 end
 
@@ -174,7 +271,7 @@ end
 -- @param #SPAWNSTATIC self
 -- @param Core.Point#POINT_VEC2 PointVec2 The 2D coordinate where to spawn the static.
 -- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
--- @param #string (optional) The name of the new static.
+-- @param #string NewName (Optional) The name of the new static.
 -- @return #SPAWNSTATIC
 function SPAWNSTATIC:SpawnFromPointVec2(PointVec2, Heading, NewName)
   self:F( { PointVec2, Heading, NewName  } )
@@ -219,14 +316,14 @@ end
 function SPAWNSTATIC:SpawnFromCoordinate(Coordinate, Heading, NewName)
 
   -- Set up coordinate.
-  self.InitCoordinate=Coordinate
+  self.InitStaticCoordinate=Coordinate
   
   if Heading then
-    self.InitHeading=Heading
+    self.InitStaticHeading=Heading
   end
   
   if NewName then
-    self.InitName=NewName
+    self.InitStaticName=NewName
   end
 
   return self:_SpawnStatic(self.TemplateStaticUnit, self.CountryID)
@@ -285,21 +382,29 @@ end
 
 --- Spawns a new static using a given template. Additionally, the country ID needs to be specified, which also determines the coalition of the spawned static.
 -- @param #SPAWNSTATIC self
--- @param #table Template Spawn unit template.
+-- @param #SPAWNSTATIC.TemplateData Template Spawn unit template.
 -- @param #number CountryID The country ID.
 -- @return Wrapper.Static#STATIC The static spawned.
 function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
 
   local CountryID=CountryID or self.CountryID
   
-  if self.InitCoordinate then  
-    Template.x   = self.InitCoordinate.x    
-    Template.y   = self.InitCoordinate.z
-    Template.alt = self.InitCoordinate.y  
+  if self.InitStaticCoordinate then  
+    Template.x   = self.InitStaticCoordinate.x    
+    Template.y   = self.InitStaticCoordinate.z
+    Template.alt = self.InitStaticCoordinate.y  
   end
   
-  if self.InitHeading then
-    --Template.heading = math.rad(self.InitHeading)  
+  if self.InitStaticHeading then
+    Template.heading = math.rad(self.InitStaticHeading)  
+  end
+  
+  if self.InitStaticLivery then
+    Template.livery_id=self.InitStaticLivery
+  end
+  
+  if self.InitDead~=nil then
+    Template.dead=self.InitDead
   end
   
   if self.InitLinkUnit then
@@ -310,6 +415,9 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     Template.offsets.x=self.InitOffsetX
     Template.offsets.angle=self.InitOffsetAngle and math.rad(self.InitOffsetAngle) or 0
   end
+  
+  -- Name of the spawned static.
+  Template.name = self.InitStaticName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex)
 
   -- Register the new static.
   --_DATABASE:_RegisterStaticTemplate(Template, self.CoalitionID, self.CategoryID, CountryID)
