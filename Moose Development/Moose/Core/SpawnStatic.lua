@@ -9,7 +9,7 @@
 --   * Spawn new statics from a given type.
 --   * Spawn with a custom heading and location.
 --   * Spawn within a zone.
---   * Link statics to units.
+--   * Spawn statics linked to units, .e.g on aircraft carriers.
 -- 
 -- ===
 -- 
@@ -48,13 +48,15 @@
 -- @field #string InitStaticLivery Livery for aircraft.
 -- @field #string InitStaticShape Shape of teh static.
 -- @field #string InitStaticType Type of the static.
+-- @field #string InitStaticCategory Categrory of the static.
 -- @field #string InitStaticName Name of the static.
 -- @field Core.Point#COORDINATE InitStaticCoordinate Coordinate where to spawn the static.
 -- @field #boolean InitDead Set static to be dead if true.
 -- @extends Core.Base#BASE
 
 
---- Allows to spawn dynamically new @{Static}s.
+--- Allows to spawn dynamically new @{Static}s into your mission.
+-- 
 -- Through creating a copy of an existing static object template as defined in the Mission Editor (ME), SPAWNSTATIC can retireve the properties of the defined static object template (like type, category etc), 
 -- and "copy" these properties to create a new static object and place it at the desired coordinate.
 -- 
@@ -63,18 +65,46 @@
 -- 
 --   * Spawned @{Static}s will have the name _StaticName_#_nnn_, where _StaticName_ is the name of the **Template Static**, and _nnn_ is a **counter from 0 to 99999**.
 -- 
--- # SPAWNSTATIC construction methods
+-- # SPAWNSTATIC Constructors
 -- 
--- Create a new SPAWNSTATIC object with the @{#SPAWNSTATIC.NewFromStatic}():
+-- Firstly, we need to create a SPAWNSTATIC object that will be used to spawn new statics into the mission. There are three ways to do this.
 -- 
---   * @{#SPAWNSTATIC.NewFromStatic}(): Creates a new SPAWNSTATIC object given a name that is used as the base of the naming of each spawned Static.
+-- ## Use another Static
+-- 
+-- A new SPAWNSTATIC object can be created using another static by the @{#SPAWNSTATIC.NewFromStatic}() function. All parameters such as position, heading, country will be initialized
+-- from the static.
+-- 
+-- ## From a Template
+-- 
+-- A SPAWNSTATIC object can also be created from a template table using the @{#SPAWNSTATIC.NewFromTemplate}(SpawnTemplate, CountryID) function. All parameters are taken from the template.
+-- 
+-- ## From a Type
+-- 
+-- A very basic method is to create a SPAWNSTATIC object by just giving the type of the static. All parameters must be initialized from the InitXYZ functions described below. Otherwise default values
+-- are used. For example, if no spawn coordinate is given, the static will be created at the origin of the map.
+-- 
+-- # Setting Parameters
+-- 
+-- Parameters such as the spawn position, heading, country etc. can be set via :Init*XYZ* functions. Note that these functions must be given before the actual spawn command!
+-- 
+--   * @{#SPAWNSTATIC.InitCoordinate}(Coordinate) Sets the coordinate where the static is spawned. Statics are always spawnd on the ground.
+--   * @{#SPAWNSTATIC.InitHeading}(Heading) sets the orientation of the static.
+--   * @{#SPAWNSTATIC.InitLivery}(LiveryName) sets the livery of the static. Not all statics support this.
+--   * @{#SPAWNSTATIC.InitType}(StaticType) sets the type of the static.
+--   * @{#SPAWNSTATIC.InitShape}(StaticType) sets the shape of the static. Not all statics have this parameter.
+--   * @{#SPAWNSTATIC.InitNamePrefix}(NamePrefix) sets the name prefix of the spawned statics.
+--   * @{#SPAWNSTATIC.InitCountry}(CountryID) sets the country and therefore the coalition of the spawned statics.
+--   * @{#SPAWNSTATIC.InitLinkToUnit}(Unit, OffsetX, OffsetY, OffsetAngle) links the static to a unit, e.g. to an aircraft carrier.
 --
--- # **Spawn** methods
+-- # Spawning the Statics
 -- 
--- Statics can be spawned at different times and methods:
+-- Once the SPAWNSTATIC object is created and parameters are initialized, the spawn command can be given. There are different methods where some can be used to directly set parameters
+-- such as position and heading.
 -- 
---   * @{#SPAWNSTATIC.SpawnFromPointVec2}(): Spawn a new group from a POINT_VEC2 coordinate. The group will be spawned at land height.
---   * @{#SPAWNSTATIC.SpawnFromZone}(): Spawn a new group in a @{Zone}.
+--   * @{#SPAWNSTATIC.Spawn}(Heading, NewName) spawns the static with the set parameters. Optionally, heading and name can be given. The name **must be unique**!
+--   * @{#SPAWNSTATIC.SpawnFromCoordinate}(Coordinate, Heading, NewName) spawn the static at the given coordinate. Optionally, heading and name can be given. The name **must be unique**!
+--   * @{#SPAWNSTATIC.SpawnFromPointVec2}(PointVec2, Heading, NewName) spawns the static at a POINT_VEC2 coordinate. Optionally, heading and name can be given. The name **must be unique**!
+--   * @{#SPAWNSTATIC.SpawnFromZone}(Zone, Heading, NewName) spawns the static at the center of a @{Zone}. Optionally, heading and name can be given. The name **must be unique**!
 --  
 -- @field #SPAWNSTATIC SPAWNSTATIC
 -- 
@@ -204,6 +234,15 @@ end
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:InitShape(StaticType)
   self.InitStaticShape=StaticType
+  return self
+end
+
+--- Initialize country of the spawned static. This determines the category.
+-- @param #SPAWNSTATIC self
+-- @param #string CountryID The country ID, e.g. country.id.USA.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitCountry(CountryID)
+  self.CountryID=CountryID
   return self
 end
 
@@ -351,6 +390,9 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     Template.offsets.angle=self.InitOffsetAngle and math.rad(self.InitOffsetAngle) or 0
   end
   
+  -- Increase spawn index counter.
+  self.SpawnIndex = self.SpawnIndex + 1
+  
   -- Name of the spawned static.
   Template.name = self.InitStaticName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex)
 
@@ -362,9 +404,6 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   
   -- Add static to the game.
   local Static=coalition.addStaticObject(CountryID, Template)
-  
-  -- Increase spawn index counter.
-  self.SpawnIndex = self.SpawnIndex + 1
-  
+    
   return _DATABASE:FindStatic(Static:getName())
 end
