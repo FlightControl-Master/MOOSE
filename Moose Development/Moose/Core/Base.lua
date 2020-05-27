@@ -433,7 +433,7 @@ do -- Event Handling
   -- reflecting the order of the classes subscribed to the Event to be processed.
   -- @param #BASE self
   -- @param #number EventPriority The @{Event} processing Priority.
-  -- @return self
+  -- @return #BASE self
   function BASE:SetEventPriority( EventPriority )
     self._.EventPriority = EventPriority
   end

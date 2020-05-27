@@ -1995,6 +1995,27 @@ do -- COORDINATE
   
   end
   
+  --- Get sun rise time for a specific day of the year at the coordinate.
+  -- @param #COORDINATE self
+  -- @param #number DayOfYear The day of the year.
+  -- @param #boolean InSeconds If true, return the sun rise time in seconds. 
+  -- @return #string Sunrise time, e.g. "05:41".
+  function COORDINATE:GetSunriseAtDayOfYear(DayOfYear, InSeconds)
+    
+    local Latitude, Longitude=self:GetLLDDM()
+    
+    local Tdiff=UTILS.GMTToLocalTimeDifference()
+  
+    local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
+
+    if InSeconds then
+      return sunrise
+    else
+      return UTILS.SecondsToClock(sunrise, true)
+    end
+  
+  end
+  
   --- Get todays sun rise time.
   -- @param #COORDINATE self
   -- @param #boolean InSeconds If true, return the sun rise time in seconds. 
@@ -2072,33 +2093,64 @@ do -- COORDINATE
   end
   
   --- Check if it is day, i.e. if the sun has risen about the horizon at this coordinate.
-  -- @param #COORDINATE self 
+  -- @param #COORDINATE self
+  -- @param #string Clock (Optional) Time in format "HH:MM:SS+D", e.g. "05:40:00+3" to check if is day at 5:40 at third day after mission start. Default is to check right now.
   -- @return #boolean If true, it is day. If false, it is night time.
-  function COORDINATE:IsDay()
+  function COORDINATE:IsDay(Clock)
   
-    -- Todays sun rise in sec.
-    local sunrise=self:GetSunrise(true)
+    if Clock then
+ 
+      local Time=UTILS.ClockToSeconds(Clock)
+      
+      local clock=UTILS.Split(Clock, "+")[1]
+      
+      -- Tomorrows day of the year.
+      local DayOfYear=UTILS.GetMissionDayOfYear(Time)
+
+      local Latitude, Longitude=self:GetLLDDM()
+      
+      local Tdiff=UTILS.GMTToLocalTimeDifference()
     
-    -- Todays sun set in sec.
-    local sunset=self:GetSunset(true)
+      local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
+      local sunset=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
+      
+      local time=UTILS.ClockToSeconds(clock)
+      
+      -- Check if time is between sunrise and sunset.
+      if time>sunrise and time<=sunset then
+        return true
+      else
+        return false
+      end      
     
-    -- Seconds passed since midnight.
-    local time=UTILS.SecondsOfToday()
-        
-    -- Check if time is between sunrise and sunset.
-    if time>sunrise and time<=sunset then
-      return true
     else
-      return false
+  
+      -- Todays sun rise in sec.
+      local sunrise=self:GetSunrise(true)
+      
+      -- Todays sun set in sec.
+      local sunset=self:GetSunset(true)
+      
+      -- Seconds passed since midnight.
+      local time=UTILS.SecondsOfToday()
+          
+      -- Check if time is between sunrise and sunset.
+      if time>sunrise and time<=sunset then
+        return true
+      else
+        return false
+      end
+      
     end  
   
   end
   
   --- Check if it is night, i.e. if the sun has set below the horizon at this coordinate.
   -- @param #COORDINATE self 
+  -- @param #string Clock (Optional) Time in format "HH:MM:SS+D", e.g. "05:40:00+3" to check if is night at 5:40 at third day after mission start. Default is to check right now.
   -- @return #boolean If true, it is night. If false, it is day time.
-  function COORDINATE:IsNight()
-    return not self:IsDay()
+  function COORDINATE:IsNight(Clock)
+    return not self:IsDay(Clock)
   end
 
   --- Get sun set time for a specific date at the coordinate.

@@ -194,7 +194,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
 -- @param #number Heading The heading of the static respawn in degrees. Default is 0 deg.
 -- @param #number Delay Delay in seconds before the static is spawned.
-function STATIC:SpawnAt( Coordinate, Heading, Delay )
+function STATIC:SpawnAt(Coordinate, Heading, Delay)
 
   Heading=Heading or 0
 
@@ -202,51 +202,58 @@ function STATIC:SpawnAt( Coordinate, Heading, Delay )
     SCHEDULER:New(nil, self.SpawnAt, {self, Coordinate, Heading}, Delay)
   else
 
-    local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
+    local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName)
   
     SpawnStatic:SpawnFromPointVec2( Coordinate, Heading, self.StaticName )
     
   end
+  
+  return self
 end
 
 
 --- Respawn the @{Wrapper.Unit} at the same location with the same properties.
 -- This is useful to respawn a cargo after it has been destroyed.
 -- @param #STATIC self
--- @param DCS#country.id countryid The country ID used for spawning the new static. Default is same as currently.
--- @param #number Delay Delay in seconds before static is respawned.
-function STATIC:ReSpawn(countryid, Delay)
-
-  countryid=countryid or self:GetCountry()
+-- @param DCS#country.id CountryID (Optional) The country ID used for spawning the new static. Default is same as currently.
+-- @param #number Delay (Optional) Delay in seconds before static is respawned. Default now.
+function STATIC:ReSpawn(CountryID, Delay)
 
   if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.ReSpawn, {self, countryid}, Delay)
+    SCHEDULER:New(nil, self.ReSpawn, {self, CountryID}, Delay)
   else
 
-    local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, countryid )
+    CountryID=CountryID or self:GetCountry()  
+
+    local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName, CountryID)
     
-    SpawnStatic:ReSpawn()
+    SpawnStatic:Spawn(nil, self.StaticName)
     
   end
+  
+  return self
 end
 
 
 --- Respawn the @{Wrapper.Unit} at a defined Coordinate with an optional heading.
 -- @param #STATIC self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
--- @param #number Heading The heading of the static respawn in degrees. Default is 0 deg.
--- @param #number Delay Delay in seconds before static is respawned.
-function STATIC:ReSpawnAt( Coordinate, Heading, Delay )
+-- @param #number Heading (Optional) The heading of the static respawn in degrees. Default the current heading.
+-- @param #number Delay (Optional) Delay in seconds before static is respawned. Default now.
+function STATIC:ReSpawnAt(Coordinate, Heading, Delay)
 
-  Heading=Heading or 0
+  --Heading=Heading or 0
 
   if Delay and Delay>0 then
     SCHEDULER:New(nil, self.ReSpawnAt, {self, Coordinate, Heading}, Delay)
   else
   
-    local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
+    local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName, self:GetCountry())
     
-    SpawnStatic:ReSpawnAt( Coordinate, Heading )
+    SpawnStatic:SpawnFromCoordinate(Coordinate, Heading, self.StaticName)
+    
   end
+  
+  return self
 end
 
