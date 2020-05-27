@@ -2624,10 +2624,10 @@ end
 
 --- Set time before carrier turns and recovery window opens.
 -- @param #AIRBOSS self
--- @param #number interval Time interval in seconds. Default 600 sec.
+-- @param #number interval Time interval in seconds. Default 300 sec.
 -- @return #AIRBOSS self
 function AIRBOSS:SetRecoveryTurnTime(interval)
-  self.dTturn=interval or 600
+  self.dTturn=interval or 300
   return self
 end
 

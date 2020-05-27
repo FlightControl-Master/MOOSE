@@ -232,8 +232,8 @@ end
 -- @param #SPAWNSTATIC self
 -- @param #string StaticShape Shape of the static, e.g. "carrier_tech_USA".
 -- @return #SPAWNSTATIC self
-function SPAWNSTATIC:InitShape(StaticType)
-  self.InitStaticShape=StaticType
+function SPAWNSTATIC:InitShape(StaticShape)
+  self.InitStaticShape=StaticShape
   return self
 end
 
@@ -371,6 +371,10 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   
   if self.InitStaticHeading then
     Template.heading = math.rad(self.InitStaticHeading)  
+  end
+
+  if self.InitStaticShape then
+    Template.shape_name=self.InitStaticShape
   end
   
   if self.InitStaticLivery then

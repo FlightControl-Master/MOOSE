@@ -1045,12 +1045,13 @@ function UTILS.GetDCSMissionDate()
 end
 
 --- Returns the day of the mission.
+-- @param #number Time (Optional) Abs. time in seconds. Default now, i.e. the value return from timer.getAbsTime().
 -- @return #number Day of the mission. Mission starts on day 0.
-function UTILS.GetMissionDay()
+function UTILS.GetMissionDay(Time)
   
-  local time=timer.getAbsTime()
+  Time=Time or timer.getAbsTime()
   
-  local clock=UTILS.SecondsToClock(time, false)
+  local clock=UTILS.SecondsToClock(Time, false)
   
   local x=tonumber(UTILS.Split(clock, "+")[2])
   
@@ -1058,12 +1059,13 @@ function UTILS.GetMissionDay()
 end
 
 --- Returns the current day of the year of the mission.
+-- @param #number Time (Optional) Abs. time in seconds. Default now, i.e. the value return from timer.getAbsTime().
 -- @return #number Current day of year of the mission. For example, January 1st returns 0, January 2nd returns 1 etc.
-function UTILS.GetMissionDayOfYear()
+function UTILS.GetMissionDayOfYear(Time)
 
   local Date, Year, Month, Day=UTILS.GetDCSMissionDate()
   
-  local d=UTILS.GetMissionDay()
+  local d=UTILS.GetMissionDay(Time)
   
   return UTILS.GetDayOfYear(Year, Month, Day)+d
   
