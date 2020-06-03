@@ -120,43 +120,129 @@
 -- As you probably know, setting tasks in DCS is often tedious. The AUFTRAG class significantly simplifies the necessary workflow by using optimized default parameters.
 --
 -- You can think of an AUFTRAG as document, which contains the mission briefing, i.e. information about the target location, mission altitude, speed and various other parameters.
--- This document can be handed over directly to a pilot (or multiple pilots) via the
--- FLIGHTGROUP class. The pilots will then execute the mission. The AUFTRAG document can also be given to an AIRWING. The airwing will then determine the best assets
--- (pilots and payloads) available for the job. One more up the food chain, an AUFTRAG can be passed to a WINGCOMMANDER. The wing commander will find the best AIRWING
--- and pass the job over to it.
+-- This document can be handed over directly to a pilot (or multiple pilots) via the FLIGHTGROUP class. The pilots will then execute the mission.
+-- The AUFTRAG document can also be given to an AIRWING. The airwing will then determine the best assets (pilots and payloads) available for the job. 
+-- One more up the food chain, an AUFTRAG can be passed to a WINGCOMMANDER. The wing commander will find the best AIRWING and pass the job over to it.
 --
--- # Mission Types
+-- # Airborne Missions
+-- 
+-- Several mission types are supported by this class.
 -- 
 -- ## Anti-Ship
 -- 
+-- An anti-ship mission can be created with the @{#AUFTRAG.NewANTISHIP}(*Target, Altitude*) function.
+-- 
 -- ## AWACS
 -- 
--- ## Tanker
+-- An AWACS mission can be created with the @{#AUFTRAG.NewAWACS}() function.
 -- 
 -- ## BAI
 -- 
+-- A BAI mission can be created with the @{#AUFTRAG.NewBAI}() function.
+-- 
 -- ## Bombing
+-- 
+-- A bombing mission can be created with the @{#AUFTRAG.NewBOMBING}() function.
 -- 
 -- ## Bombing Runway
 -- 
+-- A bombing runway mission can be created with the @{#AUFTRAG.NewBOMBRUNWAY}() function.
+-- 
 -- ## Bombing Carpet
+-- 
+-- A carpet bombing mission can be created with the @{#AUFTRAG.NewBOMBCARPET}() function.
 -- 
 -- ## CAP
 -- 
+-- A CAP mission can be created with the @{#AUFTRAG.NewCAP}() function.
+-- 
 -- ## CAS
+-- 
+-- A CAS mission can be created with the @{#AUFTRAG.NewCAS}() function.
 -- 
 -- ## Escort
 -- 
+-- An escort mission can be created with the @{#AUFTRAG.NewESCORT}() function.
+-- 
 -- ## FACA
+-- 
+-- An FACA mission can be created with the @{#AUFTRAG.NewFACA}() function.
 -- 
 -- ## Ferry
 -- 
+-- Not implemented yet.
+-- 
 -- ## Intercept
 -- 
--- ##
+-- An intercept mission can be created with the @{#AUFTRAG.NewINTERCEPT}() function.
+-- 
+-- ## Orbit
+-- 
+-- An orbit mission can be created with the @{#AUFTRAG.NewORBIT}() function.
+-- 
+-- ## PATROL
+-- 
+-- An patrol mission can be created with the @{#AUFTRAG.NewPATROL}() function.
+-- 
+-- ## RECON
+-- 
+-- Not implemented yet.
+-- 
+-- ## RESCUE HELO
+-- 
+-- An rescue helo mission can be created with the @{#AUFTRAG.NewRESCUEHELO}() function.
+-- 
+-- ## SEAD
+-- 
+-- An SEAD mission can be created with the @{#AUFTRAG.NewSEAD}() function.
+-- 
+-- ## STRIKE
+-- 
+-- An strike mission can be created with the @{#AUFTRAG.NewSTRIKE}() function.
+-- 
+-- ## Tanker
+-- 
+-- A refueling tanker mission can be created with the @{#AUFTRAG.NewTANKER}() function.
+-- 
+-- ## TROOPTRANSPORT
+-- 
+-- A troop transport mission can be created with the @{#AUFTRAG.NewTROOPTRANSPORT}() function.
+-- 
+-- # Ground Missions
+-- 
+-- ## ARTY
+-- 
+-- An arty mission can be created with the @{#AUFTRAG.NewARTY}() function.
+-- 
+-- # Options and Parameters
+-- 
+-- 
+-- # Assigning Missions
+-- 
+-- An AUFTRAG can be assigned to groups, airwings or wingcommanders
+-- 
+-- ## Group Level
+-- 
+-- ### Flight Group
+-- 
+-- Assigning an AUFTRAG to a flight groups is done via the @{Ops.FlightGroup#FLIGHTGROUP.AddMission} function. See FLIGHTGROUP docs for details.
+-- 
+-- ### Navy Group
+-- 
+-- Assigning an AUFTRAG to a navy groups is done via the @{Ops.NavyGroup#NAVYGROUP.AddMission} function. See NAVYGROUP docs for details.
+-- 
+-- ## Airwing Level
+-- 
+-- Adding an AUFTRAG to an airwing is done via the @{Ops.AirWing#AIRWING.AddMission} function. See AIRWING docs for further details.
+-- 
+-- ## Wing Commander Level
+-- 
+-- Assigning an AUFTRAG to a wing commander is done via the @{Ops.WingCommander#WINGCOMMANDER.AddMission} function. See WINGCOMMADER docs for details. 
 -- 
 -- 
 -- # Events
+-- 
+-- The AUFTRAG class creates many useful (FSM) events, which can be used in the mission designers script.  
 -- 
 -- 
 -- # Examples

@@ -44,13 +44,15 @@
 -- @field #number radioModu Radio modulation the squad uses.
 -- @extends Core.Fsm#FSM
 
---- Be surprised!
+--- *It is unbelievable what a squadron of twelve aircraft did to tip the balance.* -- Adolf Galland
 --
 -- ===
 --
 -- ![Banner Image](..\Presentations\Squadron\SQUADRON_Main.jpg)
 --
 -- # The SQUADRON Concept
+-- 
+-- A SQUADRON is essential part of an AIRWING and consists of **one** type of aircraft. 
 --
 --
 --

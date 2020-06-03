@@ -47,7 +47,63 @@
 -- ![Banner Image](..\Presentations\AirWing\AIRWING_Main.jpg)
 --
 -- # The AIRWING Concept
---
+-- 
+-- An AIRWING consists of multiple SQUADRONS. These squadrons "live" in a WAREHOUSE, i.e. a physical structure that is connected to an airbase (airdrome, FRAP or ship).
+-- For an airwing to be operational, it needs airframes, weapons/fuel and an airbase.
+-- 
+-- # Create an Airwing
+-- 
+-- ## Constructing the Airwing
+-- 
+--     airwing=AIRWING:New("Warehouse Batumi", "8th Fighter Wing")
+--     airwing:Start()
+--     
+-- The first parameter specified the warehouse, i.e. the static building housing the airwing (or the name of the aircraft carrier). The second parameter is optional
+-- and sets an alias.
+-- 
+-- ## Adding Squadrons
+-- 
+-- At this point the airwing does not have any assets (aircraft). In order to add these, one needs to first define SQUADRONS.
+-- 
+--     VFA151=SQUADRON:New("F-14 Group", 8, "VFA-151 (Vigilantes)")
+--     VFA151:AddMissonCapability({AUFTRAG.Type.PATROL, AUFTRAG.Type.INTERCEPT})
+--     
+--     airwing:AddSquadron(VFA151)
+--     
+-- This adds eight Tomcat groups beloning to VFA-151 to the airwing. This squadron has the ability to perform combat air patrols and intercepts.
+-- 
+-- ## Adding Payloads
+-- 
+-- Adding pure airframes is not enough. The aircraft also need weapons (and fuel) for certain missions. These must be given to the airwing from template groups
+-- defined in the Mission Editor.
+-- 
+--     -- F-14 payloads for CAP and INTERCEPT. Phoenix are first, sparrows are second choice.
+--     airwing:NewPayload(GROUP:FindByName("F-14 Payload AIM-54C"), 2, {AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.PATROL}, 80)
+--     airwing:NewPayload(GROUP:FindByName("F-14 Payload AIM-7M"), 20, {AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.PATROL})
+-- 
+-- This will add two AIM-54C and 20 AIM-7M payloads.
+-- 
+-- If the airwing gets an intercept or patrol mission assigned, it will first use the AIM-54s. Once these are consumed, the AIM-7s are attached to the aircraft.
+-- 
+-- When an airwing does not have a payload for a certain mission type, the mission cannot be carried out.
+-- 
+-- You can set the number of payloads to "unlimited" by setting its quantity to -1.
+-- 
+-- # Adding Missions
+-- 
+-- Various mission types can be added easily via the AUFTRAG class.
+-- 
+-- Once you created an AUFTRAG you can add it to the AIRWING with the :AddMission(mission) function.
+-- 
+-- This mission will be put into the AIRWING queue. Once the mission start time is reached and all resources (airframes and pylons) are available, the mission is started.
+-- If the mission stop time is over (and the mission is not finished), it will be cancelled and removed from the queue. This applies also to mission that were not even
+-- started.
+-- 
+-- # Command an Airwing
+-- 
+-- An airwing can receive missions from a WINGCOMMANDER. See docs of that class for details.
+-- 
+-- However, you are still free to add missions at anytime.
 --
 --
 -- @field #AIRWING
