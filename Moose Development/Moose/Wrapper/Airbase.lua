@@ -311,7 +311,7 @@ AIRBASE.PersianGulf = {
 -- * AIRBASE.TheChannel.Lympne
 -- * AIRBASE.TheChannel.Detling
 -- * AIRBASE.TheChannel.High_Halden
--- 
+--
 -- @field TheChannel
 AIRBASE.TheChannel = {
   ["Abbeville_Drucat"] = "Abbeville Drucat",
@@ -403,13 +403,13 @@ AIRBASE.TerminalType = {
 function AIRBASE:Register( AirbaseName )
 
   local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) ) --#AIRBASE
-  
+
   -- Airbase name.
   self.AirbaseName = AirbaseName
-  
+
   -- Airbase unique ID.
   self.AirbaseID   = self:GetID(true)
-  
+
   -- Airbase category.
   local desc=self:GetDesc()
   local category=Airbase.Category.AIRDROME
@@ -419,10 +419,10 @@ function AIRBASE:Register( AirbaseName )
     self:E(string.format("ERROR: Cannot get category of airbase %s due to DCS 2.5.6 bug! Assuming it is an AIRDROME for now...", tostring(self.AirbaseName)))
   end
   self.AirbaseCategory=category
-  
+
   -- Category name.
   self.AirbaseCategoryName=AIRBASE.CategoryName[self.AirbaseCategory]
-  
+
   -- Airbase zone.
   if self.AirbaseCategory==Airbase.Category.SHIP then
     local unit=UNIT:FindByName(AirbaseName)
@@ -747,29 +747,29 @@ function AIRBASE:GetParkingSpotsTable(termtype)
     end
     return false
   end
-  
+
   -- Get client coordinates.
   local function _isclient(_coord)
-    
+
     for clientname, client in pairs(_DATABASE.CLIENTS) do
       local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
       local units=template.units
       for i,unit in pairs(units) do
-      
+
         -- Unit coordinate.
         local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
 
         -- Distance to parking spot.
         local dist=coord:Get2DDistance(_coord)
-        
+
         if dist<=5 then
           return clientname
         end
-        
+
       end
     end
     return nil
-  end    
+  end
 
   -- Put coordinates of parking spots into table.
   local spots={}
