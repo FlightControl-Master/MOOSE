@@ -300,6 +300,31 @@ AIRBASE.PersianGulf = {
   ["Tunb_Kochak"] = "Tunb Kochak",
 }
 
+--- These are all airbases of the The Channel Map:
+--
+-- * AIRBASE.TheChannel.Abbeville_Drucat
+-- * AIRBASE.TheChannel.Merville_Calonne
+-- * AIRBASE.TheChannel.Saint_Omer_Longuenesse
+-- * AIRBASE.TheChannel.Dunkirk_Mardyck
+-- * AIRBASE.TheChannel.Manston
+-- * AIRBASE.TheChannel.Hawkinge
+-- * AIRBASE.TheChannel.Lympne
+-- * AIRBASE.TheChannel.Detling
+-- * AIRBASE.TheChannel.High_Halden
+-- 
+-- @field TheChannel
+AIRBASE.TheChannel = {
+  ["Abbeville_Drucat"] = "Abbeville Drucat",
+  ["Merville_Calonne"] = "Merville Calonne",
+  ["Saint_Omer_Longuenesse"] = "Saint Omer Longuenesse",
+  ["Dunkirk_Mardyck"] = "Dunkirk Mardyck",
+  ["Manston"] = "Manston",
+  ["Hawkinge"] = "Hawkinge",
+  ["Lympne"] = "Lympne",
+  ["Detling"] = "Detling",
+  ["High_Halden"] = "High Halden",
+}
+
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 -- @type AIRBASE.SpotStatus
 -- @field #string FREE Spot is free.

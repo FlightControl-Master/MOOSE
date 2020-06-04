@@ -48,11 +48,13 @@ BIGSMOKEPRESET = {
 -- @field #string Normandy Normandy map.
 -- @field #string NTTR Nevada Test and Training Range map.
 -- @field #string PersianGulf Persian Gulf map.
+-- @field #string TheChannel The Channel map.
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
   Normandy="Normandy",
-  PersianGulf="PersianGulf"
+  PersianGulf="PersianGulf",
+  TheChannel="TheChannel",
 }
 
 
@@ -1114,6 +1116,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=-10
   elseif map==DCSMAP.PersianGulf then
     declination=2
+  elseif map==DCSMAP.TheChannel then
+    declination=-10    
   else
     declination=0
   end
@@ -1235,9 +1239,11 @@ function UTILS.GMTToLocalTimeDifference()
   elseif theatre==DCSMAP.PersianGulf then
     return 4   -- Abu Dhabi UTC+4 hours
   elseif theatre==DCSMAP.NTTR then
-    return -7  -- Las Vegas UTC-7 hours
+    return -8  -- Las Vegas UTC-8 hours
   elseif theatre==DCSMAP.Normandy then
-    return 1  -- Calais UTC+1 hour
+    return 0   -- Calais UTC+1 hour
+  elseif theatre==DCSMAP.TheChannel then
+    return 2   -- This map currently needs +2
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
@@ -1359,9 +1365,9 @@ function UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, Rising, Tlocal)
    local T = H + RA - (0.06571 * t) - 6.622
 
    -- Adjust back to UTC
-   local UT = fit_into_range(T - lng_hour, 0, 24)
+   local UT = fit_into_range(T - lng_hour +Tlocal, 0, 24)
    
-   return floor(UT)*60*60+frac(UT)*60*60+Tlocal*60*60
+   return floor(UT)*60*60+frac(UT)*60*60--+Tlocal*60*60
  end
 
 --- Get sun rise of a specific day of the year at a specific location.

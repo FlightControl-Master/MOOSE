@@ -434,6 +434,8 @@ ATIS.RunwayM2T={
 -- @field #ATIS.Soundfile Right
 -- @field #ATIS.Soundfile Snow
 -- @field #ATIS.Soundfile SnowStorm
+-- @field #ATIS.Soundfile SunriseAt
+-- @field #ATIS.Soundfile SunsetAt
 -- @field #ATIS.Soundfile Temperature
 -- @field #ATIS.Soundfile Thousand
 -- @field #ATIS.Soundfile ThunderStorm
@@ -505,6 +507,8 @@ ATIS.Sound = {
   Right={filename="Right.ogg", duration=0.44},
   Snow={filename="Snow.ogg", duration=0.48},
   SnowStorm={filename="SnowStorm.ogg", duration=0.82},
+  SunriseAt={filename="SunriseAt.ogg", duration=0.92},
+  SunsetAt={filename="SunsetAt.ogg", duration=0.95},
   Temperature={filename="Temperature.ogg", duration=0.64},
   Thousand={filename="Thousand.ogg", duration=0.55},
   ThunderStorm={filename="ThunderStorm.ogg", duration=0.81},
@@ -531,7 +535,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.7.1"
+ATIS.version="0.8.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -599,12 +603,12 @@ function ATIS:New(airbasename, frequency, modulation)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
-  self:AddTransition("Stopped",       "Start",           "Running")     -- Start FSM.
-  self:AddTransition("*",       "Status",          "*")     -- Update status.
-  self:AddTransition("*",       "Broadcast",       "*")     -- Broadcast ATIS message.
-  self:AddTransition("*",       "CheckQueue",      "*")     -- Check if radio queue is empty.
-  self:AddTransition("*",       "Report",          "*")     -- Report ATIS text.
-  self:AddTransition("*",       "Stop",            "Stopped")     -- Stop.
+  self:AddTransition("Stopped",       "Start",           "Running") -- Start FSM.
+  self:AddTransition("*",             "Status",          "*")       -- Update status.
+  self:AddTransition("*",             "Broadcast",       "*")       -- Broadcast ATIS message.
+  self:AddTransition("*",             "CheckQueue",      "*")       -- Check if radio queue is empty.
+  self:AddTransition("*",             "Report",          "*")       -- Report ATIS text.
+  self:AddTransition("*",             "Stop",            "Stopped") -- Stop.
 
   ------------------------
   --- Pseudo Functions ---
@@ -943,9 +947,10 @@ end
 -- Default is per map:
 --
 --    * Caucasus +4
---    * Nevada -7
---    * Normandy +1
+--    * Nevada -8
+--    * Normandy 0
 --    * Persian Gulf +4
+--    * The Channel +2 (should be 0)
 --
 -- @param #ATIS self
 -- @param #number delta Time difference in hours.
@@ -1267,15 +1272,7 @@ function ATIS:onafterBroadcast(From, Event, To)
     -- User specified.
     time=time-self.zuludiff*60*60
   else
-    if self.theatre==DCSMAP.Caucasus then
-      time=time-4*60*60  -- Caucasus UTC+4 hours
-    elseif self.theatre==DCSMAP.PersianGulf then
-      time=time-4*60*60  -- Abu Dhabi UTC+4 hours
-    elseif self.theatre==DCSMAP.NTTR then
-      time=time+7*60*60  -- Las Vegas UTC-7 hours
-    elseif self.theatre==DCSMAP.Normandy then
-      time=time-1*60*60  -- Calais UTC+1 hour
-    end
+    time=time-UTILS.GMTToLocalTimeDifference()*60*60
   end
 
   local clock=UTILS.SecondsToClock(time)
@@ -1292,6 +1289,18 @@ function ATIS:onafterBroadcast(From, Event, To)
   self:T3(string.format("zulu2=%s", tostring(zulu[2])))
   self:T3(string.format("ZULU =%s", tostring(ZULU)))
   self:T3(string.format("NATO =%s", tostring(NATO)))
+
+  --------------------------
+  --- Sunrise and Sunset ---
+  --------------------------
+
+  local sunrise=coord:GetSunrise()
+  sunrise=UTILS.Split(sunrise, ":")
+  local SUNRISE=string.format("%s%s", sunrise[1], sunrise[2])
+
+  local sunset=coord:GetSunset()  
+  sunset=UTILS.Split(sunset, ":")
+  local SUNSET=string.format("%s%s", sunset[1], sunset[2])
 
   ---------------------------------
   --- Temperature and Dew Point ---
@@ -1442,6 +1451,20 @@ function ATIS:onafterBroadcast(From, Event, To)
   subtitle=string.format("%s Zulu", ZULU)
   self.radioqueue:Number2Transmission(ZULU, nil, 0.5)
   self:Transmission(ATIS.Sound.TimeZulu, 0.2, subtitle)
+  alltext=alltext..";\n"..subtitle
+
+  -- Sunrise Time
+  subtitle=string.format("Sunrise at %s local time", SUNRISE)
+  self:Transmission(ATIS.Sound.SunriseAt, 0.5, subtitle)
+  self.radioqueue:Number2Transmission(SUNRISE, nil, 0.2)
+  self:Transmission(ATIS.Sound.TimeLocal, 0.2)
+  alltext=alltext..";\n"..subtitle
+
+  -- Sunset Time
+  subtitle=string.format("Sunset at %s local time", SUNSET)
+  self:Transmission(ATIS.Sound.SunsetAt, 0.5, subtitle)
+  self.radioqueue:Number2Transmission(SUNSET, nil, 0.5)
+  self:Transmission(ATIS.Sound.TimeLocal, 0.2)
   alltext=alltext..";\n"..subtitle
 
   -- Visibility
