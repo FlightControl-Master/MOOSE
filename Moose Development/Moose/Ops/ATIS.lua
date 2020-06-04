@@ -1249,8 +1249,6 @@ function ATIS:onafterBroadcast(From, Event, To)
   if WINDFROM=="000" then
     WINDFROM="360"
   end
-  
-  env.info(string.format("FF WINDFROM = %s", tostring(WINDFROM)))
 
   if self.metric then
     WINDSPEED=string.format("%d", windSpeed)
