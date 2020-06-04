@@ -2034,8 +2034,10 @@ do -- COORDINATE
     -- Sunrise in seconds of the day.
     local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
     
+    local date=UTILS.GetDCSMissionDate()
+    
     -- Debug output.
-    --self:I(string.format("Sun rise at lat=%.3f long=%.3f on %s + %d days (DayOfYear=%d): %s (GMT %d)", Latitude, Longitude, date, x, DayOfYear, UTILS.SecondsToClock(sunrise), Tdiff))
+    --self:I(string.format("Sun rise at lat=%.3f long=%.3f on %s (DayOfYear=%d): %s (%d sec of the day) (GMT %d)", Latitude, Longitude, date, DayOfYear, tostring(UTILS.SecondsToClock(sunrise)), sunrise, Tdiff))
     
     if InSeconds then
       return sunrise
@@ -2197,8 +2199,10 @@ do -- COORDINATE
     -- Sunrise in seconds of the day.
     local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
     
+    local date=UTILS.GetDCSMissionDate()
+    
     -- Debug output.
-    --self:I(string.format("Sun rise at lat=%.3f long=%.3f on %s + %d days (DayOfYear=%d): %s (GMT %d)", Latitude, Longitude, date, x, DayOfYear, UTILS.SecondsToClock(sunrise), Tdiff))
+    --self:I(string.format("Sun set at lat=%.3f long=%.3f on %s (DayOfYear=%d): %s (%d sec of the day) (GMT %d)", Latitude, Longitude, date, DayOfYear, tostring(UTILS.SecondsToClock(sunrise)), sunrise, Tdiff))
     
     if InSeconds then
       return sunrise
