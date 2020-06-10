@@ -402,6 +402,7 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
 
   -- Register the new static.
   --_DATABASE:_RegisterStaticTemplate(Template, self.CoalitionID, self.CategoryID, CountryID)
+  _DATABASE:AddStatic(Template.name)
   
   -- Debug output.
   self:T(Template)
