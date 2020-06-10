@@ -1275,9 +1275,16 @@ end
 
 --- Get a flight group from the data base.
 -- @param #DATABASE self
--- @param #string groupname Group name of the flight group.
+-- @param #string groupname Group name of the flight group. Can also be passed as GROUP object.
 -- @return Ops.FlightGroup#FLIGHTGROUP Flight group object.
 function DATABASE:GetFlightGroup(groupname)
+
+  -- Get group and group name.
+  if type(groupname)=="string" then
+  else
+    groupname=groupname:GetName()
+  end
+
   return self.FLIGHTGROUPS[groupname]
 end
 

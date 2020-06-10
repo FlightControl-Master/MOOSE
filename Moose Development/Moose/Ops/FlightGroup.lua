@@ -229,21 +229,21 @@ FLIGHTGROUP.version="0.5.0"
 
 --- Create a new FLIGHTGROUP object and start the FSM.
 -- @param #FLIGHTGROUP self
--- @param #string groupname Name of the group.
+-- @param Wrapper.Group#GROUP group The group object. Can also be given as #string with the name of the group
 -- @param #string autostart (Optional) If `true` or `nil` automatically start the FSM (default). If `false`, use FLIGHTGROUP:Start() manually.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:New(groupname, autostart)
+function FLIGHTGROUP:New(group, autostart)
 
   -- First check if we already have a flight group for this group.
-  local fg=_DATABASE:GetFlightGroup(groupname)
+  local fg=_DATABASE:GetFlightGroup(group)
   if fg then
-    fg:I(fg.lid..string.format("WARNING: Flight group %s already exists in data base!", groupname))
+    fg:I(fg.lid..string.format("WARNING: Flight group already exists in data base!"))
     return fg
   end
 
   -- Inherit everything from FSM class.
-  local self=BASE:Inherit(self, OPSGROUP:New(groupname)) -- #FLIGHTGROUP
-
+  local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #FLIGHTGROUP
+  
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("FLIGHTGROUP %s | ", self.groupname)
 
