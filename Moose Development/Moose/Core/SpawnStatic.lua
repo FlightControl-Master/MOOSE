@@ -52,6 +52,8 @@
 -- @field #string InitStaticName Name of the static.
 -- @field Core.Point#COORDINATE InitStaticCoordinate Coordinate where to spawn the static.
 -- @field #boolean InitDead Set static to be dead if true.
+-- @field #boolean InitCargo If true, static can act as cargo.
+-- @field #number InitCargoMass Mass of cargo in kg.
 -- @extends Core.Base#BASE
 
 
@@ -126,6 +128,8 @@ SPAWNSTATIC = {
 -- @field #number unitId Unit ID.
 -- @field #number groupId Group ID.
 -- @field #table offsets Offset parameters when linked to a unit.
+-- @field #number mass Cargo mass in kg.
+-- @field #boolean canCargo Static can be a cargo.
 
 --- Creates the main object to spawn a @{Static} defined in the mission editor (ME).
 -- @param #SPAWNSTATIC self
@@ -234,6 +238,24 @@ end
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:InitShape(StaticShape)
   self.InitStaticShape=StaticShape
+  return self
+end
+
+--- Initialize cargo mass.
+-- @param #SPAWNSTATIC self
+-- @param #number Mass Mass of the cargo in kg.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitCargoMass(Mass)
+  self.InitCargoMass=Mass
+  return self
+end
+
+--- Initialize as cargo.
+-- @param #SPAWNSTATIC self
+-- @param #boolean IsCargo If true, this static can act as cargo.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitCargo(IsCargo)
+  self.InitCargo=IsCargo
   return self
 end
 
@@ -385,6 +407,10 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     Template.dead=self.InitDead
   end
   
+  if self.InitCargo~=nil then
+    Template.isCargo=self.InitCargo
+  end
+  
   if self.InitLinkUnit then
     Template.linkUnit=self.InitLinkUnit:GetID()
     Template.linkOffset=true
@@ -409,6 +435,7 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   
   -- Add static to the game.
   local Static=coalition.addStaticObject(CountryID, Template)
+
     
   return _DATABASE:FindStatic(Static:getName())
 end
