@@ -1401,3 +1401,78 @@ function UTILS.GetSunset(Day, Month, Year, Latitude, Longitude, Tlocal)
 
   return UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tlocal)
 end
+
+
+--- Get weather of this mission from env.mission.weather variable.
+-- @return #table Clouds table which has entries "thickness", "density", "base", "iprecptns".
+-- @return #number Visibility distance in meters.
+-- @return #number Ground turbulence in m/s.
+-- @return #table Fog table, which has entries "thickness", "visibility" or nil if fog is disabled in the mission.
+-- @return #number Dust density or nil if dust is disabled in the mission.
+-- @return #boolean static If true, static weather is used. If false, dynamic weather is used.
+function UTILS.GetWeather()
+
+  -- Weather data from mission file.
+  local weather=env.mission.weather
+
+  -- Clouds
+  --[[
+  ["clouds"] =
+  {
+      ["thickness"] = 430,
+      ["density"] = 7,
+      ["base"] = 0,
+      ["iprecptns"] = 1,
+  }, -- end of ["clouds"]
+  ]]
+  local clouds=weather.clouds
+
+  -- 0=static, 1=dynamic
+  local static=weather.atmosphere_type==0
+
+  -- Visibilty distance in meters.
+  local visibility=weather.visibility.distance
+
+  -- Ground turbulence.
+  local turbulence=weather.groundTurbulence
+
+  -- Dust
+  --[[
+  ["enable_dust"] = false,
+  ["dust_density"] = 0,
+  ]]
+  local dust=nil
+  if weather.enable_dust==true then
+    dust=weather.dust_density
+  end
+
+  -- Fog
+  --[[
+  ["enable_fog"] = false,
+  ["fog"] =
+  {
+      ["thickness"] = 0,
+      ["visibility"] = 25,
+  }, -- end of ["fog"]
+  ]]
+  local fog=nil
+  if weather.enable_fog==true then
+    fog=weather.fog
+  end
+
+  return clouds, visibility, turbulence, fog, dust, static
+end
+
+--- Get fog in mission.
+-- @return #number Visibility in meters.
+-- @return #number Thickness in meters. 
+function UTILS.GetWeatherFog()
+
+  -- Weather data from mission file.
+  local weather=env.mission.weather
+
+  if weather.enable_fog==true then    
+    return weather.fog.thickness, weather.fog.visibility
+  end
+
+end
