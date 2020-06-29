@@ -229,10 +229,9 @@ FLIGHTGROUP.version="0.5.0"
 
 --- Create a new FLIGHTGROUP object and start the FSM.
 -- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP group The group object. Can also be given as #string with the name of the group
--- @param #string autostart (Optional) If `true` or `nil` automatically start the FSM (default). If `false`, use FLIGHTGROUP:Start() manually.
+-- @param Wrapper.Group#GROUP group The group object. Can also be given as #string with the name of the group.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:New(group, autostart)
+function FLIGHTGROUP:New(group)
 
   -- First check if we already have a flight group for this group.
   local fg=_DATABASE:GetFlightGroup(group)
@@ -338,6 +337,7 @@ function FLIGHTGROUP:New(group, autostart)
   self:HandleEvent(EVENTS.Ejection,       self.OnEventEjection)
   self:HandleEvent(EVENTS.Crash,          self.OnEventCrash)
   self:HandleEvent(EVENTS.RemoveUnit,     self.OnEventRemoveUnit)
+  self:HandleEvent(EVENTS.UnitLost,       self.OnEventUnitLost)
 
   -- Init waypoints.
   self:InitWaypoints()
@@ -1153,6 +1153,18 @@ function FLIGHTGROUP:OnEventCrash(EventData)
 
   end
 
+end
+
+--- Flightgroup event function handling the crash of a unit.
+-- @param #FLIGHTGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function FLIGHTGROUP:OnEventUnitLost(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    self:I(self.lid..string.format("EVENT: Unit %s lost!", EventData.IniUnitName))
+  end
+  
 end
 
 --- Flightgroup event function handling the crash of a unit.
@@ -3070,7 +3082,7 @@ function FLIGHTGROUP:_SetElementParkingAt(Element, Spot)
     
   if Spot then
   
-    env.info(string.format("FF Element %s is parking on spot %d", Element.name, Spot.TerminalID))  
+    self:I(self.lid..string.format("Element %s is parking on spot %d", Element.name, Spot.TerminalID))  
   
     if self.flightcontrol then
         
@@ -3204,10 +3216,13 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
 
   airbase=airbase or coord:GetClosestAirbase(nil, self:GetCoalition())
   
+  -- TODO: replace by airbase.parking if AIRBASE is updated.
+  local parking=airbase:GetParkingSpotsTable()
+  
   local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
   local dist=nil
   local distmin=math.huge 
-  for _,_parking in pairs(airbase.parking) do
+  for _,_parking in pairs(parking) do
     local parking=_parking --Wrapper.Airbase#AIRBASE.ParkingSpot
     dist=coord:Get2DDistance(parking.Coordinate)
     if dist<distmin then
@@ -3629,10 +3644,12 @@ function FLIGHTGROUP:SwitchRadioOn(Frequency, Modulation)
   if self:IsAlive() and Frequency then
 
     Modulation=Modulation or radio.Modulation.AM
+    
+    local group=self.group --Wrapper.Group#GROUP
   
-    self.group:SetOption(AI.Option.Air.id.SILENCE, false)
+    group:SetOption(AI.Option.Air.id.SILENCE, false)
   
-    self.group:CommandSetFrequency(Frequency, Modulation)
+    group:CommandSetFrequency(Frequency, Modulation)
     
     self.radioFreq=Frequency
     self.radioModu=Modulation
