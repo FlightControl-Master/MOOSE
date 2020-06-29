@@ -893,7 +893,7 @@ function DATABASE:_RegisterStatics()
       if DCSStatic:isExist() then
         local DCSStaticName = DCSStatic:getName()
 
-        self:I( { "Register Static:", DCSStaticName } )
+        self:T( { "Register Static:", DCSStaticName } )
         self:AddStatic( DCSStaticName )
       else
         self:E( { "Static does not exist: ",  DCSStatic } )
