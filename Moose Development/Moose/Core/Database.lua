@@ -258,7 +258,7 @@ function DATABASE:AddAirbase( AirbaseName )
 
     -- Register airbase.
     local airbase = AIRBASE:Register( AirbaseName )  --Wrapper.Airbase#AIRBASE
-    
+
     -- Add to airbase.
     self.AIRBASES[AirbaseName]=airbase
 
@@ -1262,8 +1262,6 @@ function DATABASE:SetPlayerSettings( PlayerName, Settings )
   self:F2( { PlayerName, Settings } )
   self.PLAYERSETTINGS[PlayerName] = Settings
 end
-
-
 
 --- Add a flight group to the data base.
 -- @param #DATABASE self

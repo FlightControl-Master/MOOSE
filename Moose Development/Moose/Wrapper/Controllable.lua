@@ -803,7 +803,7 @@ function CONTROLLABLE:CommandSetFrequency(Frequency, Modulation, Delay)
   local CommandSetFrequency = { 
     id = 'SetFrequency', 
     params = { 
-      frequency = Frequency, 
+      frequency = Frequency*1000000, 
       modulation = Modulation or radio.modulation.AM, 
     } 
   }
