@@ -3650,7 +3650,7 @@ function FLIGHTGROUP:SwitchRadioOn(Frequency, Modulation)
     group:SetOption(AI.Option.Air.id.SILENCE, false)
 
     group:CommandSetFrequency(Frequency, Modulation)
-    
+
     self.radioFreq=Frequency
     self.radioModu=Modulation
     self.radioOn=true
