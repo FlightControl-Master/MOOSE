@@ -64,9 +64,6 @@
 -- @field #boolean radioOn If true, radio is currently turned on.
 -- @field Core.RadioQueue#RADIOQUEUE radioQueue Radio queue.
 -- 
--- @field #number CallsignName Call sign name.
--- @field #number CallsignNumber Call sign number.
--- 
 -- @field #boolean eplrsDefault Default EPLRS data link setting.
 -- @field #boolean eplrs If true, EPLRS data link is on.
 -- 

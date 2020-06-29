@@ -42,6 +42,8 @@
 -- @field #table menu F10 radio menu.
 -- @field #string controlstatus Flight control status.
 -- @field #boolean ishelo If true, the is a helicopter group.
+-- @field #number callsignName Callsign name.
+-- @field #number callsignNumber Callsign number.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -1413,6 +1415,11 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     -- Turn on the radio.
     if self.radioFreqDefault then
       self:SwitchRadioOn(self.radioFreqDefault, self.radioModuDefault)
+    end
+    
+    -- Set callsign.
+    if self.callsignNameDefault then
+      self:SwitchCallsign(self.callsignNameDefault, self.callsignNumberDefault)
     end
 
     -- Update route.
@@ -3706,6 +3713,42 @@ function FLIGHTGROUP:SwitchFormation(Formation)
     self.formation=Formation
 
     self:I(self.lid..string.format("Switching formation to %d", self.formation))
+
+  end
+
+  return self
+end
+
+--- Set default formation.
+-- @param #FLIGHTGROUP self
+-- @param #number CallsignName Callsign name.
+-- @param #number CallsignNumber Callsign number.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
+
+  self.callsignNameDefault=CallsignName
+  self.callsignNumberDefault=CallsignNumber or 1
+
+  return self
+end
+
+--- Switch to a specific callsign.
+-- @param #FLIGHTGROUP self
+-- @param #number CallsignName Callsign name.
+-- @param #number CallsignNumber Callsign number.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SwitchCallsign(CallsignName, CallsignNumber)
+
+  if self:IsAlive() and CallsignName then
+
+    self.callsignName=CallsignName
+    self.callsignNumber=CallsignNumber or 1
+
+    self:I(self.lid..string.format("Switching callsign to %d-%d", self.callsignName, self.callsignNumber))
+    
+    local group=self.group --Wrapper.Group#GROUP
+    
+    group:CommandSetCallsign(self.callsignName, self.callsignNumber)
 
   end
 
