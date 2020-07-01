@@ -1481,8 +1481,8 @@ end
 -- @param #number WeaponType Bitmask of weapon types, which are allowed to use.
 -- @param DCS#AI.Task.Designation Designation (Optional) Designation type.
 -- @param #boolean Datalink (Optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default.
--- @param #number Frequency Frequency used to communicate with the FAC.
--- @param #number Modulation Modulation of radio for communication.
+-- @param #number Frequency Frequency in MHz used to communicate with the FAC. Default 133 MHz.
+-- @param #number Modulation Modulation of radio for communication. Default 0=AM.
 -- @param #number CallsignName Callsign enumerator name of the FAC.
 -- @param #number CallsignNumber Callsign number, e.g. Axeman-**1**.
 -- @return DCS#Task The DCS task structure.
@@ -1492,11 +1492,11 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
     id = 'FAC_AttackGroup',
     params = {
       groupId     = AttackGroup:GetID(),
-      weaponType  = WeaponType,
-      designation = Designation,
-      datalink    = Datalink,
-      frequency   = Frequency,
-      modulation  = Modulation,
+      weaponType  = WeaponType or ENUMS.WeaponFlag.AutoDCS,
+      designation = Designation or "Auto",
+      datalink    = Datalink and Datalink or true,
+      frequency   = (Frequency or 133)*1000000,
+      modulation  = Modulation or radio.modulation.AM,
       callname    = CallsignName,
       number      = CallsignNumber,
     }

@@ -2973,7 +2973,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- FAC Mission --
     -----------------  
 
-    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageTarget.Target, self.engageWeaponType, self.facDesignation, self.facDatalink, self.facFrequency, self.facModulation, CallsignName, CallsignNumber)
+    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageTarget.Target, self.engageWeaponType, self.facDesignation, self.facDatalink, self.facFreq, self.facModu, CallsignName, CallsignNumber)
     
     table.insert(DCStasks, DCStask)
   
