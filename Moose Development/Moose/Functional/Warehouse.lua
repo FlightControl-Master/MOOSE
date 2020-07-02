@@ -5162,7 +5162,7 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
     local assetitem=_asset --#WAREHOUSE.Assetitem
 
     -- Debug info.
-    self:I(self.lid..string.format("Asset %s spawned=%s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
+    self:T2(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
 
     if assetitem.spawned then
       n=n+1
@@ -6122,6 +6122,9 @@ function WAREHOUSE:_OnEventBirth(EventData)
 
       -- Debug message.
       self:T(self.lid..string.format("Warehouse %s captured event birth of its asset unit %s. spawned=%s", self.alias, EventData.IniUnitName, tostring(asset.spawned)))
+
+      -- Birth is triggered for each unit. We need to make sure not to call this too often!
+      if not asset.spawned then
 
       if request then
 

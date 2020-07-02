@@ -42,6 +42,8 @@
 -- @field #table menu F10 radio menu.
 -- @field #string controlstatus Flight control status.
 -- @field #boolean ishelo If true, the is a helicopter group.
+-- @field #number callsignName Callsign name.
+-- @field #number callsignNumber Callsign number.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -294,13 +296,13 @@ function FLIGHTGROUP:New(group)
   self:AddTransition("*",             "ElementOutOfAmmo", "*")           -- An element is completely out of ammo.
 
 
-  self:AddTransition("*",             "FlightParking",    "Parking")     -- The whole flight group is parking.
-  self:AddTransition("*",             "FlightTaxiing",    "Taxiing")     -- The whole flight group is taxiing.
-  self:AddTransition("*",             "FlightTakeoff",    "Airborne")    -- The whole flight group is airborne.
-  self:AddTransition("*",             "FlightAirborne",   "Airborne")    -- The whole flight group is airborne.
-  self:AddTransition("*",             "FlightLanding",    "Landing")     -- The whole flight group is landing.
-  self:AddTransition("*",             "FlightLanded",     "Landed")      -- The whole flight group has landed.
-  self:AddTransition("*",             "FlightArrived",    "Arrived")     -- The whole flight group has arrived.
+  self:AddTransition("*",             "Parking",          "Parking")     -- The whole flight group is parking.
+  self:AddTransition("*",             "Taxiing",          "Taxiing")     -- The whole flight group is taxiing.
+  self:AddTransition("*",             "Takeoff",          "Airborne")    -- The whole flight group is airborne.
+  self:AddTransition("*",             "Airborne",         "Airborne")    -- The whole flight group is airborne.
+  self:AddTransition("*",             "Landing",          "Landing")     -- The whole flight group is landing.
+  self:AddTransition("*",             "Landed",           "Landed")      -- The whole flight group has landed.
+  self:AddTransition("*",             "Arrived",          "Arrived")     -- The whole flight group has arrived.
 
 
   ------------------------
@@ -1113,13 +1115,13 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
           self:ElementArrived(element, airbase, parking)
           self:T3(self.lid..string.format("EVENT: Element %s shut down engines ==> arrived", element.name))
         else
-          self:T3(self.lid..string.format("EVENT: Element %s shut down engines (in air) ==> dead", element.name))
-          self:ElementDead(element)
+          self:T3(self.lid..string.format("EVENT: Element %s shut down engines but is not parking. Is it dead?", element.name))
+          --self:ElementDead(element)
         end
 
       else
 
-        self:I(self.lid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
+        --self:I(self.lid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
 
       end
 
@@ -1163,6 +1165,19 @@ function FLIGHTGROUP:OnEventUnitLost(EventData)
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
     self:I(self.lid..string.format("EVENT: Unit %s lost!", EventData.IniUnitName))
+    
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+
+    -- Get element.
+    local element=self:GetElementByName(unitname)
+
+    if element then
+      self:T3(self.lid..string.format("EVENT: Element %s crashed ==> dead", element.name))
+      self:ElementDead(element)
+    end
+    
   end
 
 end
@@ -1414,6 +1429,11 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     if self.radioFreqDefault then
       self:SwitchRadioOn(self.radioFreqDefault, self.radioModuDefault)
     end
+    
+    -- Set callsign.
+    if self.callsignNameDefault then
+      self:SwitchCallsign(self.callsignNameDefault, self.callsignNumberDefault)
+    end
 
     -- Update route.
     self:__UpdateRoute(-0.5)
@@ -1427,12 +1447,12 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
 
 end
 
---- On after "FlightParking" event. Add flight to flightcontrol of airbase.
+--- On after "Parking" event. Add flight to flightcontrol of airbase.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FLIGHTGROUP:onafterFlightParking(From, Event, To)
+function FLIGHTGROUP:onafterParking(From, Event, To)
   self:I(self.lid..string.format("Flight is parking"))
 
   local airbase=self.group:GetCoordinate():GetClosestAirbase()
@@ -1464,12 +1484,12 @@ function FLIGHTGROUP:onafterFlightParking(From, Event, To)
   end
 end
 
---- On after "FlightTaxiing" event.
+--- On after "Taxiing" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FLIGHTGROUP:onafterFlightTaxiing(From, Event, To)
+function FLIGHTGROUP:onafterTaxiing(From, Event, To)
   self:T(self.lid..string.format("Flight is taxiing"))
 
   -- Parking over.
@@ -1495,13 +1515,13 @@ function FLIGHTGROUP:onafterFlightTaxiing(From, Event, To)
 
 end
 
---- On after "FlightTakeoff" event.
+--- On after "Takeoff" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
-function FLIGHTGROUP:onafterFlightTakeoff(From, Event, To, airbase)
+function FLIGHTGROUP:onafterTakeoff(From, Event, To, airbase)
   self:T(self.lid..string.format("Flight takeoff from %s", airbase and airbase:GetName() or "unknown airbase"))
 
   -- Remove flight from all FC queues.
@@ -1512,12 +1532,12 @@ function FLIGHTGROUP:onafterFlightTakeoff(From, Event, To, airbase)
 
 end
 
---- On after "FlightAirborne" event.
+--- On after "Airborne" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FLIGHTGROUP:onafterFlightAirborne(From, Event, To)
+function FLIGHTGROUP:onafterAirborne(From, Event, To)
   self:I(self.lid..string.format("Flight airborne"))
 
   if not self.ai then
@@ -1525,25 +1545,25 @@ function FLIGHTGROUP:onafterFlightAirborne(From, Event, To)
   end
 end
 
---- On after "FlightLanding" event.
+--- On after "Landing" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FLIGHTGROUP:onafterFlightLanding(From, Event, To)
+function FLIGHTGROUP:onafterLanding(From, Event, To)
   self:T(self.lid..string.format("Flight is landing"))
 
   self:_SetElementStatusAll(OPSGROUP.ElementStatus.LANDING)
 
 end
 
---- On after "FlightLanded" event.
+--- On after "Landed" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
-function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
+function FLIGHTGROUP:onafterLanded(From, Event, To, airbase)
   self:T(self.lid..string.format("Flight landed at %s", airbase and airbase:GetName() or "unknown place"))
 
   if self:IsLandingAt() then
@@ -1556,12 +1576,12 @@ function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
   end
 end
 
---- On after "FlightArrived" event.
+--- On after "Arrived" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FLIGHTGROUP:onafterFlightArrived(From, Event, To)
+function FLIGHTGROUP:onafterArrived(From, Event, To)
   self:T(self.lid..string.format("Flight arrived"))
 
   -- Flight Control
@@ -2438,8 +2458,8 @@ end
 function FLIGHTGROUP._ClearedToLand(group, flightgroup)
   flightgroup:I(flightgroup.lid..string.format("Group was cleared to land"))
 
-  -- Trigger FlightLanding event.
-  flightgroup:__FlightLanding(-1)
+  -- Trigger Landing event.
+  flightgroup:__Landing(-1)
 end
 
 --- Function called when flight finished refuelling.
@@ -3706,6 +3726,42 @@ function FLIGHTGROUP:SwitchFormation(Formation)
     self.formation=Formation
 
     self:I(self.lid..string.format("Switching formation to %d", self.formation))
+
+  end
+
+  return self
+end
+
+--- Set default formation.
+-- @param #FLIGHTGROUP self
+-- @param #number CallsignName Callsign name.
+-- @param #number CallsignNumber Callsign number.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
+
+  self.callsignNameDefault=CallsignName
+  self.callsignNumberDefault=CallsignNumber or 1
+
+  return self
+end
+
+--- Switch to a specific callsign.
+-- @param #FLIGHTGROUP self
+-- @param #number CallsignName Callsign name.
+-- @param #number CallsignNumber Callsign number.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SwitchCallsign(CallsignName, CallsignNumber)
+
+  if self:IsAlive() and CallsignName then
+
+    self.callsignName=CallsignName
+    self.callsignNumber=CallsignNumber or 1
+
+    self:I(self.lid..string.format("Switching callsign to %d-%d", self.callsignName, self.callsignNumber))
+    
+    local group=self.group --Wrapper.Group#GROUP
+    
+    group:CommandSetCallsign(self.callsignName, self.callsignNumber)
 
   end
 

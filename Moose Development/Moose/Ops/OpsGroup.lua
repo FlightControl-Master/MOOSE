@@ -64,9 +64,6 @@
 -- @field #boolean radioOn If true, radio is currently turned on.
 -- @field Core.RadioQueue#RADIOQUEUE radioQueue Radio queue.
 -- 
--- @field #number CallsignName Call sign name.
--- @field #number CallsignNumber Call sign number.
--- 
 -- @field #boolean eplrsDefault Default EPLRS data link setting.
 -- @field #boolean eplrs If true, EPLRS data link is on.
 -- 
@@ -2455,7 +2452,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:__FlightParking(-0.5)
+      self:__Parking(-0.5)
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.ENGINEON then
@@ -2471,7 +2468,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:__FlightTaxiing(-0.5)
+      self:__Taxiing(-0.5)
     end
     
   elseif newstatus==OPSGROUP.ElementStatus.TAKEOFF then
@@ -2481,7 +2478,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
 
     if self:_AllSimilarStatus(newstatus) then
       -- Trigger takeoff event. Also triggers airborne event.
-      self:__FlightTakeoff(-0.5, airbase)
+      self:__Takeoff(-0.5, airbase)
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.AIRBORNE then
@@ -2490,7 +2487,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:__FlightAirborne(-0.5)
+      self:__Airborne(-0.5)
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.LANDED then
@@ -2499,7 +2496,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:FlightLanded(airbase)
+      self:Landed(airbase)
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.ARRIVED then
@@ -2510,10 +2507,10 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     if self:_AllSimilarStatus(newstatus) then
 
       if self:IsLanded() then
-        self:FlightArrived()
+        self:Arrived()
       elseif self:IsAirborne() then
-        self:FlightLanded()
-        self:FlightArrived()
+        self:Landed()
+        self:Arrived()
       end
 
     end

@@ -59,9 +59,10 @@ NAVYGROUP.version="0.0.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
--- TODO: Stop and resume route.
--- TODO: Add waypoints.
--- TODO: Add tasks.
+-- TODO: Detour, add temporary waypoint and resume route.
+-- DONE: Stop and resume route.
+-- DONE: Add waypoints.
+-- DONE: Add tasks.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -392,10 +393,11 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
     ---
   
     self:I(self.lid..string.format("No waypoints left"))
-  
-    -- TODO: Switch to waypoint 1
-  
-    --self:UpdateRoute(1)
+    
+    if #self.waypoints>1 then
+      self:I(self.lid..string.format("Resuming route at first waypoint"))
+      self:UpdateRoute(1)
+    end
           
   end
 
