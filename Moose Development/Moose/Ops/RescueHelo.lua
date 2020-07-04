@@ -876,8 +876,8 @@ function RESCUEHELO:onafterStart(From, Event, To)
   local Spawn=SPAWN:NewWithAlias(self.helogroupname, self.alias)
   
   -- Set modex for spawn.
-  Spawn:InitModex(self.modex)  
-  
+  Spawn:InitModex(self.modex)
+
   -- Spawn in air or at airbase.
   if self.takeoff==SPAWN.Takeoff.Air then
   

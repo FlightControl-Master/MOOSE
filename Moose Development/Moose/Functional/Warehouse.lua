@@ -5161,7 +5161,7 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
     local assetitem=_asset --#WAREHOUSE.Assetitem
 
     -- Debug info.
-    self:T2(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
+    self:I(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
 
     if assetitem.spawned then
       n=n+1

@@ -1055,7 +1055,8 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.ESCORT  
-  mission.missionFraction=0.1   
+  mission.missionFraction=0.1
+  mission.missionAltitude=1000
   mission.optionROE=ENUMS.ROE.OpenFire       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
@@ -1892,6 +1893,18 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Asset Data
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get all OPS groups.
+-- @param #AUFTRAG self
+-- @return #table Table of Ops.OpsGroup#OPSGROUP or {}.
+function AUFTRAG:GetOpsGroups()
+  local opsgroups={}
+  for _,_groupdata in pairs(self.groupdata or {}) do
+    local groupdata=_groupdata --#AUFTRAG.GroupData
+    table.insert(opsgroups, groupdata.opsgroup)
+  end
+  return opsgroups
+end
 
 --- Get asset data table.
 -- @param #AUFTRAG self

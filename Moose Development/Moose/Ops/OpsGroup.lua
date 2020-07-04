@@ -1776,7 +1776,7 @@ end
 -- @param #number N Total number of waypoints.
 function OPSGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   local text=string.format("Group passed waypoint %d/%d", n, N)
-  self:T(self.lid..text)
+  self:I(self.lid..text)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   
   -- Get all waypoint tasks.

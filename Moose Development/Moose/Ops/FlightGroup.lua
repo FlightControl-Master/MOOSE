@@ -744,7 +744,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   end
 
   -- Element status.
-  if self.verbose>1 then
+  if self.verbose>1 or true then
     local text="Elements:"
     for i,_element in pairs(self.elements) do
       local element=_element --#FLIGHTGROUP.Element
@@ -757,7 +757,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
       local parking=element.parking and tostring(element.parking.TerminalID) or "X"
 
       -- Check if element is not dead and we missed an event.
-      if life<0 and element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
+      if life<=0 and element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
         self:ElementDead(element)
       end
 
@@ -979,6 +979,10 @@ function FLIGHTGROUP:OnEventBirth(EventData)
       if EventData.Place then
         self.homebase=self.homebase or EventData.Place
       end
+      
+      if self.homebase and not self.destbase then
+        self.destbase=self.homebase
+      end
 
       -- Get element.
       local element=self:GetElementByName(unitname)
@@ -989,7 +993,7 @@ function FLIGHTGROUP:OnEventBirth(EventData)
       end
 
       -- Set element to spawned state.
-      self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", element.name))
+      self:I(self.lid..string.format("EVENT: Element %s born at airbase %s==> spawned", element.name, self.homebase and self.homebase:GetName() or "unknown"))
       self:ElementSpawned(element)
 
     end
@@ -1108,7 +1112,7 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
 
       if element.unit and element.unit:IsAlive() then
 
-        local airbase=element.unit:GetCoordinate():GetClosestAirbase()
+        local airbase=self:GetClosestAirbase() --element.unit:GetCoordinate():GetClosestAirbase()
         local parking=self:GetParkingSpot(element, 10, airbase)
 
         if airbase and parking then
@@ -1455,7 +1459,7 @@ end
 function FLIGHTGROUP:onafterParking(From, Event, To)
   self:I(self.lid..string.format("Flight is parking"))
 
-  local airbase=self.group:GetCoordinate():GetClosestAirbase()
+  local airbase=self:GetClosestAirbase() --self.group:GetCoordinate():GetClosestAirbase()
 
   local airbasename=airbase:GetName() or "unknown"
 
@@ -1496,7 +1500,7 @@ function FLIGHTGROUP:onafterTaxiing(From, Event, To)
   self.Tparking=nil
 
   -- TODO: need a better check for the airbase.
-  local airbase=self.group:GetCoordinate():GetClosestAirbase(nil, self.group:GetCoalition())
+  local airbase=self:GetClosestAirbase() --self.group:GetCoordinate():GetClosestAirbase(nil, self.group:GetCoalition())
 
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
 
@@ -1540,7 +1544,10 @@ end
 function FLIGHTGROUP:onafterAirborne(From, Event, To)
   self:I(self.lid..string.format("Flight airborne"))
 
-  if not self.ai then
+  if self.ai then
+    self:_CheckGroupDone(1)
+  else
+  --if not self.ai then
     self:_UpdateMenu()
   end
 end
@@ -1599,7 +1606,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FLIGHTGROUP:onafterFlightDead(From, Event, To)
+function FLIGHTGROUP:onafterDead(From, Event, To)
   self:I(self.lid..string.format("Flight dead!"))
 
   -- Delete waypoints so they are re-initialized at the next spawn.
@@ -1617,7 +1624,7 @@ function FLIGHTGROUP:onafterFlightDead(From, Event, To)
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
     self:MissionCancel(mission)
-    mission:FlightDead(self)
+    mission:GroupDead(self)
 
   end
 
@@ -1639,7 +1646,7 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
   local allowed=true
   local trepeat=nil
 
-  if self:IsAlive() and (self:IsAirborne() or self:IsWaiting() or self:IsInbound() or self:IsHolding()) then
+  if self:IsAlive() then -- and (self:IsAirborne() or self:IsWaiting() or self:IsInbound() or self:IsHolding()) then
     -- Alive & Airborne ==> Update route possible.
     self:T3(self.lid.."Update route possible. Group is ALIVE and AIRBORNE or WAITING or INBOUND or HOLDING")
   elseif self:IsDead()  then
@@ -1648,7 +1655,7 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
     allowed=false
   else
     -- Not airborne yet. Try again in 1 sec.
-    self:T3(self.lid.."FF update route denied ==> checking back in 5 sec")
+    self:I(self.lid.."FF update route denied ==> checking back in 5 sec")
     trepeat=-5
     allowed=false
   end
@@ -1726,7 +1733,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destbase and self.destbase:GetName() or "unknown"
-  self:T(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
+  self:I(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
 
 
   if #wp>1 then
@@ -1739,8 +1746,11 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     ---
     -- No waypoints left
     ---
-
-    self:_CheckGroupDone()
+    
+    if self:IsAirborne() then
+      env.info("FF no waypoints left ==> CheckGroupDone")
+      self:_CheckGroupDone()
+    end
 
   end
 
@@ -2674,10 +2684,16 @@ function FLIGHTGROUP:GetHomebaseFromWaypoints()
                          or wp.action==COORDINATE.WaypointAction.FromRunway  then
 
       -- Get airbase ID depending on airbase category.
-      local airbaseID=wp.airdromeId or wp.helipadId
+      local airbaseID=nil
+      
+      if wp.airdromeId then
+        airbaseID=wp.airdromeId
+      else
+        airbaseID=-wp.helipadId
+      end
 
       local airbase=AIRBASE:FindByID(airbaseID)
-
+      
       return airbase
     end
 
@@ -2978,8 +2994,8 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
   self.waypoints=waypoints or UTILS.DeepCopy(self.waypoints0)
 
   -- Get home and destination airbases from waypoints.
-  self.homebase=self:GetHomebaseFromWaypoints()
-  self.destbase=self:GetDestinationFromWaypoints()
+  self.homebase=self.homebase or self:GetHomebaseFromWaypoints()
+  self.destbase=self.destbase or self:GetDestinationFromWaypoints()
 
   -- Remove the landing waypoint. We use RTB for that. It makes adding new waypoints easier as we do not have to check if the last waypoint is the landing waypoint.
   if self.destbase then
@@ -2989,7 +3005,7 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
   end
 
   -- Debug info.
-  self:T(self.lid..string.format("Initializing %d waypoints. Homebase %s ==> %s Destination", #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "uknown"))
+  self:I(self.lid..string.format("Initializing %d waypoints. Homebase %s ==> %s Destination", #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "uknown"))
 
   -- Update route.
   if #self.waypoints>0 then
@@ -3001,7 +3017,7 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
 
     -- Update route (when airborne).
     --self:_CheckGroupDone(1)
-    self:__UpdateRoute(-1)
+    --self:__UpdateRoute(-1)
   end
 
   return self
@@ -3062,8 +3078,8 @@ function FLIGHTGROUP:AddWaypoint(coordinate, wpnumber, speed, updateroute)
 
   -- Update route.
   if updateroute==nil or updateroute==true then
-    self:_CheckGroupDone(1)
-    --self:__UpdateRoute(-1)
+    --self:_CheckGroupDone(1)
+    self:__UpdateRoute(-1)
   end
 
   return wpnumber
@@ -3234,7 +3250,7 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
 
   local coord=element.unit:GetCoordinate()
 
-  airbase=airbase or coord:GetClosestAirbase(nil, self:GetCoalition())
+  airbase=airbase or self:GetClosestAirbase() --coord:GetClosestAirbase(nil, self:GetCoalition())
 
   -- TODO: replace by airbase.parking if AIRBASE is updated.
   local parking=airbase:GetParkingSpotsTable()
@@ -3278,6 +3294,19 @@ function FLIGHTGROUP:GetParkingTime()
   end
 
   return -1
+end
+
+--- Search unoccupied parking spots at the airbase for all flight elements.
+-- @param #FLIGHTGROUP self
+-- @return Wrapper.Airbase#AIRBASE Closest airbase
+function FLIGHTGROUP:GetClosestAirbase()
+
+  local group=self.group --Wrapper.Group#GROUP
+  
+  local coord=group:GetCoordinate()
+  local coalition=self:GetCoalition()
+  
+  return coord:GetClosestAirbase(nil, coalition)
 end
 
 --- Search unoccupied parking spots at the airbase for all flight elements.
@@ -3562,8 +3591,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- OPTION FUNCTIONS
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 
 --- Set default TACAN parameters. AA TACANs are always on "Y" band.
 -- @param #FLIGHTGROUP self

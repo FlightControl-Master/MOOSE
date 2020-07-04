@@ -508,7 +508,7 @@ function AIRBASE:GetID(unique)
       ]]
 
       if AirbaseName==self.AirbaseName then
-        if airbaseCategory==Airbase.Category.SHIP then
+        if airbaseCategory==Airbase.Category.SHIP or airbaseCategory==Airbase.Category.HELIPAD then
           -- Ships get a negative sign as their unit number might be the same as the ID of another airbase.
           return unique and -airbaseID or airbaseID
         else
