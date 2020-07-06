@@ -2,8 +2,9 @@
 --
 -- **Main Features:**
 --
---    * Monitor flight status of elements or entire group.
+--    * Monitor flight status of elements and/or the entire group.
 --    * Monitor fuel and ammo status.
+--    * Conveniently set radio freqencies, TACAN, ROE etc.
 --    * Sophisticated task queueing system.
 --    * Many additional events for each element and the whole group.
 --
@@ -98,15 +99,6 @@
 --
 -- ## Waypoint Tasks
 --
--- # Missions
---
--- ## Anti-ship
---
--- ## AWACS
---
--- ## INTERCEPT
---
---
 -- # Examples
 --
 -- Here are some examples to show how things are done.
@@ -126,8 +118,6 @@
 -- ## 7. Waypoint Tasks
 --
 -- ## 8. Enroute Tasks
---
---
 --
 --
 -- @field #FLIGHTGROUP
@@ -2933,54 +2923,6 @@ function FLIGHTGROUP:IsLandingAirbase(wp)
   return nil
 end
 
-
---- Check if task description is unique.
--- @param #FLIGHTGROUP self
--- @param #string description Task destription
--- @return #boolean If true, no other task has the same description.
-function FLIGHTGROUP:CheckTaskDescriptionUnique(description)
-
-  -- Loop over tasks in queue
-  for _,_task in pairs(self.taskqueue) do
-    local task=_task --#FLIGHTGROUP.Task
-    if task.description==description then
-      return false
-    end
-  end
-
-  return true
-end
-
-
---- Get next waypoint of the flight group.
--- @param #FLIGHTGROUP self
--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
--- @return #number Number of waypoint.
-function FLIGHTGROUP:GetNextWaypoint()
-
-  -- Next waypoint.
-  local Nextwp=nil
-  if self.currentwp==#self.waypoints then
-    Nextwp=1
-  else
-    Nextwp=self.currentwp+1
-  end
-
-  -- Next waypoint.
-  local nextwp=self.waypoints[Nextwp] --Core.Point#COORDINATE
-
-  return nextwp,Nextwp
-end
-
---- Get next waypoint coordinates.
--- @param #FLIGHTGROUP self
--- @param #table wp Waypoint table.
--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
-function FLIGHTGROUP:GetWaypointCoordinate(wp)
-  -- TODO: move this to COORDINATE class.
-  return COORDINATE:New(wp.x, wp.alt, wp.y)
-end
-
 --- Initialize Mission Editor waypoints.
 -- @param #FLIGHTGROUP self
 -- @param #table waypoints Table of waypoints. Default is from group template.
@@ -3026,11 +2968,11 @@ end
 --- Add an AIR waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
 -- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
--- @param #number wpnumber Waypoint number. Default at the end.
 -- @param #number speed Speed in knots. Default 350 kts.
+-- @param #number wpnumber Waypoint number. Default at the end.
 -- @param #boolean updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return #number Waypoint index.
-function FLIGHTGROUP:AddWaypoint(coordinate, wpnumber, speed, updateroute)
+function FLIGHTGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
 
   -- Waypoint number. Default is at the end.
   wpnumber=wpnumber or #self.waypoints+1

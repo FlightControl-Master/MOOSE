@@ -2,10 +2,10 @@
 -- 
 -- **Main Features:**
 --
---    * Dynamically add and remove waypoints
---    * Let the group steam into the wind
---    * Command a full stop
---    * Let a submarine dive and surface
+--    * Dynamically add and remove waypoints.
+--    * Let the group steam into the wind.
+--    * Command a full stop.
+--    * Let a submarine dive and surface.
 --     
 -- ===
 --
@@ -18,6 +18,7 @@
 -- @type NAVYGROUP
 -- @field #boolean turning If true, group is currently turning.
 -- @field #NAVYGROUP.IntoWind intowind Into wind info.
+-- @field #table Qintowind Queue of "into wind" turns.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -32,10 +33,12 @@
 -- 
 -- @field #NAVYGROUP
 NAVYGROUP = {
-  ClassName      = "NAVYGROUP",
-  verbose        = 2,
-  turning        = false,
-  intowind       = nil,
+  ClassName       = "NAVYGROUP",
+  verbose         = 2,
+  turning         = false,
+  intowind        = nil,
+  intowindcounter = 0,
+  Qintowind       = {},
 }
 
 --- Navy group element.
@@ -49,6 +52,8 @@ NAVYGROUP = {
 -- @field #number Tstop Time to stop.
 -- @field #boolean Uturn U-turn.
 -- @field #number Speed Speed in knots.
+-- @field #boolean Open Currently active.
+-- @field #boolean Over This turn is over.
 
 
 --- NavyGroup version.
@@ -90,6 +95,8 @@ function NAVYGROUP:New(GroupName)
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Hold position.
   
   self:AddTransition("*",             "TurnIntoWind",     "*")           -- Command the group to turn into the wind.
+  self:AddTransition("*",             "TurnIntoWindOver", "*")           -- Turn into wind is over.
+  
   self:AddTransition("*",             "TurningStarted",   "*")           -- Group started turning.
   self:AddTransition("*",             "TurningStopped",   "*")           -- Group stopped turning.
   
@@ -173,6 +180,97 @@ function NAVYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clo
 
 end
 
+--- Add aircraft recovery time window and recovery case.
+-- @param #NAVYGROUP self
+-- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
+-- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
+-- @param #number speed Speed in knots during turn into wind leg.
+-- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+-- @return #NAVYGROUP.IntoWind Recovery window.
+function NAVYGROUP:CreateTurnIntoWind(starttime, stoptime, speed, uturn)
+
+  -- Absolute mission time in seconds.
+  local Tnow=timer.getAbsTime()
+
+  if starttime and type(starttime)=="number" then
+    starttime=UTILS.SecondsToClock(Tnow+starttime)
+  end
+
+  if stoptime and type(stoptime)=="number" then
+    stoptime=UTILS.SecondsToClock(Tnow+stoptime)
+  end
+
+  -- Input or now.
+  starttime=starttime or UTILS.SecondsToClock(Tnow)
+
+  -- Set start time.
+  local Tstart=UTILS.ClockToSeconds(starttime)
+
+  -- Set stop time.
+  local Tstop=UTILS.ClockToSeconds(stoptime or Tstart+90*60)
+
+  -- Consistancy check for timing.
+  if Tstart>Tstop then
+    self:E(string.format("ERROR:Into wind stop time %s lies before start time %s. Input rejected!", UTILS.SecondsToClock(Tstart), UTILS.SecondsToClock(Tstop)))
+    return self
+  end
+  if Tstop<=Tnow then
+    self:I(string.format("WARNING: Into wind stop time %s already over. Tnow=%s! Input rejected.", UTILS.SecondsToClock(Tstop), UTILS.SecondsToClock(Tnow)))
+    return self
+  end
+
+  -- Increase counter.
+  self.intowindcounter=self.intowindcounter+1
+
+  -- Recovery window.
+  local recovery={} --#NAVYGROUP.IntoWind
+  recovery.Tstart=Tstart
+  recovery.Tstop=Tstop
+  recovery.Open=false
+  recovery.Over=false
+  recovery.Speed=speed or 20
+  recovery.Uturn=uturn and uturn or false
+  recovery.Id=self.intowindcounter
+
+  return recovery
+end
+
+--- Add aircraft recovery time window and recovery case.
+-- @param #NAVYGROUP self
+-- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
+-- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
+-- @param #number speed Speed in knots during turn into wind leg.
+-- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+-- @return #NAVYGROUP.IntoWind Recovery window.
+function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn)
+
+  local recovery=self:CreateTurnIntoWind(starttime, stoptime, speed, uturn)
+  
+  -- Add to table
+  table.insert(self.Qintowind, recovery)
+
+  return recovery
+end
+
+--- Check if the group is currently turning.
+-- @param #NAVYGROUP self
+-- @return #boolean If true, group is currently turning.
+function NAVYGROUP:IsTurning()
+  return self.turning
+end
+
+--- Check if the group is currently steaming into the wind.
+-- @param #NAVYGROUP self
+-- @return #boolean If true, group is currently steaming into the wind.
+function NAVYGROUP:IsSteamingIntoWind()
+  if self.intowind then
+    return true
+  else
+    return false    
+  end
+end
+
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -204,22 +302,15 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   
   -- Check water is ahead.
   local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist or 5000, hdg))
+  
+  self:_CheckTurnsIntoWind()
 
-  local intowind=false
   if self.intowind then
   
     if timer.getAbsTime()>=self.intowind.Tstop then
     
-      if self.intowind.Uturn then
-        self:UpdateRoute(self.currentwp)
-      else
-        self:UpdateRoute()
-      end
+      self:TurnIntoWindOver()
       
-      self.intowind=nil
-      
-    else
-      intowind=true    
     end
   
   end
@@ -229,7 +320,8 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   local nMissions=self:CountRemainingMissison()
 
     -- Info text.
-  local text=string.format("State %s: Speed=%.1f knots Heading=%03d intowind=%s turning=%s collision=%s Tasks=%d Missions=%d", fsmstate, speed, hdg, tostring(intowind), tostring(self.turning), tostring(collision), nTaskTot, nMissions)
+  local text=string.format("State %s: Speed=%.1f knots Heading=%03d intowind=%s turning=%s collision=%s Tasks=%d Missions=%d", 
+  fsmstate, speed, hdg, tostring(self:IsSteamingIntoWind()), tostring(self:IsTurning()), tostring(collision), nTaskTot, nMissions)
   self:I(self.lid..text)
 
 
@@ -349,7 +441,7 @@ end
 function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
 
   -- Update route from this waypoint number onwards.
-  n=n or self.currentwp+1
+  n=n or self:GetWaypointIndexNext(true)
   
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
   self:_UpdateWaypointTasks()
@@ -358,11 +450,15 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   local waypoints={}
     
   -- Speed.
-  local speed=Speed and UTILS.KnotsToKmph(Speed) or self.speedCruise
+  --local speed=Speed and UTILS.KnotsToKmph(Speed) or self.speedCruise
   
   -- Depth for submarines.
   local depth=Depth or 0
+
+  -- Get current speed in km/h.
+  local speed=Speed and UTILS.KnotsToKmph(Speed) or self.group:GetVelocityKMH()
   
+  -- Current waypoint.
   local current=self:GetCoordinate():WaypointNaval(speed, depth)
   table.insert(waypoints, current)
   
@@ -371,7 +467,27 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
     local wp=self.waypoints[i]
     
     -- Set speed.
-    wp.speed=UTILS.KmphToMps(speed)
+    if i==n then
+    
+      if Speed then
+        wp.speed=UTILS.KnotsToMps(Speed)
+      elseif self.speedCruise then
+        wp.speed=UTILS.KmphToMps(self.speedCruise)
+      else
+        -- Take default waypoint speed.
+      end
+    
+    else
+    
+      if self.speedCruise then
+        wp.speed=UTILS.KmphToMps(self.speedCruise)
+      else
+        -- Take default waypoint speed.
+      end
+      
+    end
+    
+    -- Set depth.
     wp.alt=-depth --Depth and -Depth or wp.alt
     
     -- Add waypoint.
@@ -396,7 +512,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
     
     if #self.waypoints>1 then
       self:I(self.lid..string.format("Resuming route at first waypoint"))
-      self:UpdateRoute(1)
+      self:__UpdateRoute(-1, 1)
     end
           
   end
@@ -408,36 +524,56 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
+-- @param #NAVYGROUP.IntoWind Into wind parameters.
 -- @param #number Duration Duration in seconds.
 -- @param #number Speed Speed in knots.
 -- @param #boolean Uturn Return to the place we came from.
-function NAVYGROUP:onafterTurnIntoWind(From, Event, To, Duration, Speed, Uturn)
+function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
 
-  local headingTo=self:GetCoordinate():GetWind(50)
+  IntoWind.Heading=self:GetCoordinate():GetWind(50)
+  
+  IntoWind.Open=true
 
-  local intowind={} --#NAVYGROUP.IntoWind
-  intowind.Speed=Speed
-  intowind.Tstart=timer.getAbsTime()
-  intowind.Tstop=intowind.Tstart+Duration
-  intowind.Uturn=Uturn or false
-  intowind.Heading=headingTo
-    
-  self.intowind=intowind
+  self.intowind=IntoWind
 
-  self:I(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f knots, Tstart=%d Tstop=%d", intowind.Heading, intowind.Speed, intowind.Tstart, intowind.Tstop))
+  self:I(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f knots, Tstart=%d Tstop=%d", IntoWind.Heading, IntoWind.Speed, IntoWind.Tstart, IntoWind.Tstop))
   
   local distance=UTILS.NMToMeters(1000)
   
   local wp={}
   
   local coord=self:GetCoordinate()
-  local Coord=coord:Translate(distance, headingTo)
+  local Coord=coord:Translate(distance, IntoWind.Heading)
   
-  wp[1]=coord:WaypointNaval(Speed)
-  wp[2]=Coord:WaypointNaval(Speed)
+  wp[1]=coord:WaypointNaval(IntoWind.Speed)
+  wp[2]=Coord:WaypointNaval(IntoWind.Speed)
 
   self:Route(wp)
   
+end
+
+--- On after "TurnIntoWindOver" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number Duration Duration in seconds.
+-- @param #number Speed Speed in knots.
+-- @param #boolean Uturn Return to the place we came from.
+function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To)
+
+  self.intowind.Over=true
+  self.intowind.Open=false    
+
+  if self.intowind.Uturn then
+    self:UpdateRoute(self.currentwp, self.speedmax*0.7)
+  else
+    local wp=self:GetWaypointIndexNext(true)-- math.min(#self.waypoints, self.currentwp+1)
+    self:UpdateRoute()
+  end
+  
+  self.intowind=nil
+
 end
 
 --- On after "FullStop" event.
@@ -463,9 +599,10 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function NAVYGROUP:onafterCruise(From, Event, To)
+-- @param #number Speed Speed in knots.
+function NAVYGROUP:onafterCruise(From, Event, To, Speed)
 
-  self:UpdateRoute()
+  self:UpdateRoute(nil, Speed)
 
 end
 
@@ -541,11 +678,11 @@ end
 --- Add an a waypoint to the route.
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
+-- @param #number speed Speed in knots. Default is 70% of max speed.
 -- @param #number wpnumber Waypoint number. Default at the end.
--- @param #number speed Speed in knots. Default 11 kts.
 -- @param #boolean updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return #number Waypoint index.
-function NAVYGROUP:AddWaypoint(coordinate, wpnumber, speed, updateroute)
+function NAVYGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
 
   -- Waypoint number. Default is at the end.
   wpnumber=wpnumber or #self.waypoints+1
@@ -555,7 +692,7 @@ function NAVYGROUP:AddWaypoint(coordinate, wpnumber, speed, updateroute)
   end
   
   -- Speed in knots.
-  speed=speed or 11
+  speed=speed or self.speedmax*0.7
 
   -- Speed at waypoint.
   local speedkmh=UTILS.KnotsToKmph(speed)
@@ -635,7 +772,7 @@ function NAVYGROUP:_InitGroup()
   self.speedmax=self.group:GetSpeedMax()
   
   -- Cruise speed: 70% of max speed but within limit.
-  self.speedCruise=self.speedmax*0.7
+  --self.speedCruise=self.speedmax*0.7
   
   -- Group ammo.
   --self.ammo=self:GetAmmoTot()
@@ -696,7 +833,7 @@ function NAVYGROUP:_InitGroup()
     local text=string.format("Initialized Navy Group %s:\n", self.groupname)
     text=text..string.format("AC type      = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
-    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
+    --text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
     text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radioFreq, UTILS.GetModulationName(self.radioModu), tostring(self.radioOn))
@@ -839,14 +976,84 @@ function NAVYGROUP:_CheckGroupDone(delay)
       self:ScheduleOnce(delay, NAVYGROUP._CheckGroupDone, self)
     else
     
-      if not self.passedfinalwp then
+      if #self.waypoints>1 and self.passedfinalwp then
+      
+        local speed=self.speedCruise and UTILS.KmphToKnots(self.speedCruise) or UTILS.KmphToKnots(self.speedmax*0.7)
+      
+        -- Start route at first waypoint.
+        self:__UpdateRoute(-1, 1, speed)
+    
+      elseif not self.passedfinalwp then
+      
         self:UpdateRoute()
+        
       end
     
     end
     
   end
   
+end
+
+--- Check queued turns into wind.
+-- @param #NAVYGROUP self
+function NAVYGROUP:_CheckTurnsIntoWind()
+
+  -- Get current abs time.
+  local time=timer.getAbsTime()
+  local Cnow=UTILS.SecondsToClock(time)
+
+  -- Debug output:
+  local text=string.format(self.lid.."Recovery time windows:")
+
+  -- Handle case with no recoveries.
+  if #self.Qintowind==0 then
+    text=text.." none!"
+  end
+
+  -- Sort windows wrt to start time.
+  table.sort(self.Qintowind, function(a, b) return a.Tstart<b.Tstart end)
+
+  -- Loop over all slots.
+  for _,_recovery in pairs(self.Qintowind) do
+    local recovery=_recovery --#NAVYGROUP.IntoWind
+
+    -- Get start/stop clock strings.
+    local Cstart=UTILS.SecondsToClock(recovery.Tstart)
+    local Cstop=UTILS.SecondsToClock(recovery.Tstop)
+
+    -- Debug text.
+    text=text..string.format("\n- Start=%s Stop=%s Open=%s Closed=%s", Cstart, Cstop, tostring(recovery.Open), tostring(recovery.Over))
+  end
+
+  -- Debug output.
+  self:I(self.lid..text)
+
+
+  -- Loop over all slots.
+  for _,_recovery in pairs(self.Qintowind) do
+    local recovery=_recovery --#NAVYGROUP.IntoWind
+
+    if time>=recovery.Tstart and time<recovery.Tstop and not recovery.Open then
+      self:TurnIntoWind(recovery)
+      break
+    end
+    
+  end
+end
+
+
+--- Check queued turns into wind.
+-- @param #NAVYGROUP self
+-- @return #NAVYGROUP.IntoWind Next into wind data.
+function NAVYGROUP:GetNextTurnIntoWind()
+
+  -- Loop over all windows.
+  for _,_recovery in pairs(self.Qintowind) do
+    local recovery=_recovery --#NAVYGROUP.IntoWind
+    
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

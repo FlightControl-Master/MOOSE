@@ -417,6 +417,21 @@ function OPSGROUP:GetHeading()
   return nil
 end
 
+--- Get next waypoint index.
+-- @param #OPSGROUP self
+-- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
+-- @return #number Next waypoint index.
+function OPSGROUP:GetWaypointIndexNext(cyclic)
+
+  local n=math.min(self.currentwp+1, #self.waypoints)
+  
+  if cyclic and self.currentwp==#self.waypoints then
+    n=1
+  end
+  
+  return n
+end
+
 --- Get waypoint.
 -- @param #OPSGROUP self
 -- @param #number indx Waypoint index.
@@ -434,9 +449,12 @@ end
 
 --- Get next waypoint.
 -- @param #OPSGROUP self
+-- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
 -- @return #table Waypoint table.
-function OPSGROUP:GetWaypointNext()
-  local n=math.min(self.currentwp+1, #self.waypoints)
+function OPSGROUP:GetWaypointNext(cyclic)
+
+  local n=self:GetWaypointIndexNext(cyclic)
+  
   return self.waypoints[n]
 end
 
@@ -445,6 +463,47 @@ end
 -- @return #table Waypoint table.
 function OPSGROUP:GetWaypointCurrent()
   return self.waypoints[self.currentwp]
+end
+
+--- Check if task description is unique.
+-- @param #OPSGROUP self
+-- @param #string description Task destription
+-- @return #boolean If true, no other task has the same description.
+function OPSGROUP:CheckTaskDescriptionUnique(description)
+
+  -- Loop over tasks in queue
+  for _,_task in pairs(self.taskqueue) do
+    local task=_task --#OPSGROUP.Task
+    if task.description==description then
+      return false
+    end
+  end
+
+  return true
+end
+
+--- Get coordinate of next waypoint of the group.
+-- @param #OPSGROUP self
+-- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+-- @return #number Number of waypoint.
+function OPSGROUP:GetNextWaypointCoordinate()
+
+  -- Next waypoint.
+  local n=self:GetWaypointIndexNext(cyclic)
+
+  -- Next waypoint.
+  local wp=self.waypoints[n]
+
+  return self:GetWaypointCoordinate(wp)
+end
+
+--- Get next waypoint coordinates.
+-- @param #OPSGROUP self
+-- @param #table wp Waypoint table.
+-- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+function OPSGROUP:GetWaypointCoordinate(wp)
+  -- TODO: move this to COORDINATE class.
+  return COORDINATE:New(wp.x, wp.alt, wp.y)
 end
 
 --- Activate a *late activated* group.
@@ -1636,7 +1695,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
   
     -- Add waypoint.
-    self:AddWaypoint(waypointcoord, nextwaypoint, UTILS.KmphToKnots(self.speedCruise), false)
+    self:AddWaypoint(waypointcoord, UTILS.KmphToKnots(self.speedCruise), nextwaypoint, false)
     
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
