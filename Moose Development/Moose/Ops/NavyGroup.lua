@@ -20,6 +20,7 @@
 -- @field #NAVYGROUP.IntoWind intowind Into wind info.
 -- @field #table Qintowind Queue of "into wind" turns.
 -- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
+-- @field #number depth Ordered depth in meters.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -35,7 +36,6 @@
 -- @field #NAVYGROUP
 NAVYGROUP = {
   ClassName       = "NAVYGROUP",
-  verbose         = 2,
   turning         = false,
   intowind        = nil,
   intowindcounter = 0,
@@ -63,7 +63,7 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="0.0.1"
+NAVYGROUP.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -464,6 +464,8 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
   -- Get orientation.
   self.Corientlast=self.group:GetUnit(1):GetOrientationX()
   
+  self.depth=self.group:GetHeight()
+  
   -- Update route.
   self:Cruise()
   
@@ -551,7 +553,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
     
     if #self.waypoints>1 then
       self:I(self.lid..string.format("Resuming route at first waypoint"))
-      self:__UpdateRoute(-1, 1)
+      self:__UpdateRoute(-1, 1, nil, self.depth)
     end
           
   end
@@ -568,8 +570,6 @@ end
 -- @param #number Depth Depth in meters. Default 0 meters.
 -- @param #number ResumeRoute If true, resume route after detour point was reached.
 function NAVYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Depth, ResumeRoute)
-  
-  env.info("FF detour")
 
   -- Waypoints.
   local waypoints={}
@@ -616,7 +616,7 @@ function NAVYGROUP._DetourReached(group, navygroup, resume)
   if resume then
     local indx=navygroup:GetWaypointIndexNext(true)
     local speed=navygroup:GetSpeedToWaypoint(indx)
-    navygroup:UpdateRoute(indx, speed)
+    navygroup:UpdateRoute(indx, speed, navygroup.depth)
   end
   
   navygroup:DetourReached()
@@ -676,7 +676,7 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To)
   else
     local indx=self:GetWaypointIndexNext(self.adinfinitum)
     local speed=self:GetWaypointSpeed(indx)
-    self:UpdateRoute(indx, speed)
+    self:UpdateRoute(indx, speed, self.depth)
   end
   
   self.intowind=nil
@@ -709,7 +709,7 @@ end
 -- @param #number Speed Speed in knots.
 function NAVYGROUP:onafterCruise(From, Event, To, Speed)
 
-  self:UpdateRoute(nil, Speed)
+  self:UpdateRoute(nil, Speed, self.depth)
 
 end
 
@@ -718,11 +718,16 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number Depth Dive depth in meters.
+-- @param #number Depth Dive depth in meters. Default 50 meters.
 function NAVYGROUP:onafterDive(From, Event, To, Depth)
 
-  env.info("FF Diving")
-  self:UpdateRoute(nil, nil, Depth)
+  Depth=Depth or 50
+
+  self:I(self.lid..string.format("Diving to %d meters", Depth))
+  
+  self.depth=Depth
+  
+  self:UpdateRoute(nil, nil, self.depth)
 
 end
 
@@ -734,7 +739,9 @@ end
 -- @param #number Depth Dive depth in meters.
 function NAVYGROUP:onafterSurface(From, Event, To)
 
-  self:UpdateRoute(nil, nil, 0)
+  self.depth=0
+
+  self:UpdateRoute(nil, nil, self.depth)
 
 end
 
@@ -1090,13 +1097,13 @@ function NAVYGROUP:_CheckGroupDone(delay)
           local speed=self:GetSpeedToWaypoint(1)
         
           -- Start route at first waypoint.
-          self:__UpdateRoute(-1, 1, speed)
+          self:__UpdateRoute(-1, 1, speed, self.depth)
           
         end
     
       else
       
-        self:UpdateRoute()
+        self:UpdateRoute(nil, nil, self.depth)
         
       end
     
@@ -1166,11 +1173,7 @@ end
 -- @return #number Speed to next waypoint (>0) in knots.
 function NAVYGROUP:GetSpeedToWaypoint(indx)
 
-  self:I(self.lid..string.format("Index=%s", tostring(indx)))
-
   local speed=self:GetWaypointSpeed(indx)
-  
-  self:I(self.lid..string.format("Speed=%s", tostring(speed)))
   
   if speed<=0.1 then
     speed=self:GetSpeedCruise()

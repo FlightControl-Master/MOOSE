@@ -1864,22 +1864,20 @@ function AUFTRAG:Evaluate()
   end
   
   --TODO: all assets dead? Is this a FAILED criterion even if all targets have been destroyed? What if there are no initial targets (e.g. when ORBIT, PATROL, RECON missions).
-  
-  --self:I(self.lid..string.format("Evaluating mission: Initial Targets=%d, current targets=%d ==> success=%s", self.Ntargets, Ntargets, tostring(not failed)))
-  
+
   if failureCondition then
     failed=true
   elseif successCondition then
     failed=false
   end  
   
+  -- Debug text.
   local text=string.format("Evaluating mission:\n")
   text=text..string.format("Targets      = %d/%d\n", self.Ntargets, Ntargets)
   text=text..string.format("Damage       = %.1f %%\n", targetdamage)
   text=text..string.format("Success Cond = %s\n", tostring(successCondition))
   text=text..string.format("Failure Cond = %s", tostring(failureCondition))
-  self:I(self.lid..text)
-  
+  self:I(self.lid..text)  
   
   if failed then
     self:Failed()
@@ -1930,9 +1928,8 @@ end
 -- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @param #string status New status.
 function AUFTRAG:SetGroupStatus(opsgroup, status)
-  self:I(self.lid..string.format("Setting flight %s to status %s", opsgroup and opsgroup.groupname or "nil", tostring(status)))
+  self:T(self.lid..string.format("Setting flight %s to status %s", opsgroup and opsgroup.groupname or "nil", tostring(status)))
 
-  --env.info("FF trying to get flight status in AUFTRAG:GetGroupStatus")
   if self:GetGroupStatus(opsgroup)==AUFTRAG.GroupStatus.CANCELLED and status==AUFTRAG.GroupStatus.DONE then
     -- Do not overwrite a CANCELLED status with a DONE status.
   else
@@ -1945,11 +1942,11 @@ function AUFTRAG:SetGroupStatus(opsgroup, status)
   end
   
   -- Debug info.
-  self:I(self.lid..string.format("Setting flight %s status to %s. IsNotOver=%s  CheckGroupsDone=%s", opsgroup.groupname, self:GetGroupStatus(opsgroup), tostring(self:IsNotOver()), tostring(self:CheckGroupsDone())))
+  self:T2(self.lid..string.format("Setting flight %s status to %s. IsNotOver=%s  CheckGroupsDone=%s", opsgroup.groupname, self:GetGroupStatus(opsgroup), tostring(self:IsNotOver()), tostring(self:CheckGroupsDone())))
 
   -- Check if ALL flights are done with their mission.
   if self:IsNotOver() and self:CheckGroupsDone() then
-    self:I(self.lid.."All flights done ==> mission DONE!")
+    self:T3(self.lid.."All flights done ==> mission DONE!")
     self:Done()
   else
     self:T3(self.lid.."Mission NOT DONE yet!")
@@ -2842,7 +2839,6 @@ function AUFTRAG:GetMissionWaypointCoord(group)
   if self.missionAltitude then
     waypointcoord:SetAltitude(self.missionAltitude, true)
   end
-  env.info(string.format("FF mission alt=%d meters", waypointcoord.y))
 
   return waypointcoord
 end
@@ -3137,7 +3133,8 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
   
   end
   
-  self:I({missiontask=DCStasks})
+  -- Debug info.
+  self:T3({missiontask=DCStasks})
 
   -- Return the task.
   if #DCStasks==1 then

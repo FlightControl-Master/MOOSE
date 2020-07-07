@@ -203,7 +203,7 @@ OPSGROUP.TaskType={
 
 --- NavyGroup version.
 -- @field #string version
-OPSGROUP.version="0.0.1"
+OPSGROUP.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -649,6 +649,7 @@ function OPSGROUP:RemoveWaypoint(wpindex)
     -- Number of waypoints after delete.
     local n=#self.waypoints
     
+    -- Debug info.
     self:I(self.lid..string.format("Removing waypoint %d. N %d-->%d", wpindex, N, n))
   
     -- Shift all waypoint tasks after the removed waypoint.
@@ -681,7 +682,6 @@ function OPSGROUP:RemoveWaypoint(wpindex)
         self.passedfinalwp=true
       end
 
-      env.info("FF update route -1 after waypoint removed")
       self:_CheckGroupDone()
       
     else
@@ -1287,13 +1287,13 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
     local status=Mission:GetGroupStatus(self)  
   
     if status~=AUFTRAG.GroupStatus.PAUSED then
-      self:I(self.lid.."FF Task Done ==> Mission Done!")
+      self:T(self.lid.."Task Done ==> Mission Done!")
       self:MissionDone(Mission)
     else
       --Mission paused. Do nothing!
     end
   else
-    self:I(self.lid.."FF Task Done but NO mission found ==> _CheckGroupDone in 1 sec")
+    self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 1 sec")
     self:_CheckGroupDone(1)
   end
   
@@ -1574,7 +1574,7 @@ function OPSGROUP:onafterPauseMission(From, Event, To)
     local Task=Mission:GetGroupWaypointTask(self)
     
     -- Debug message.
-    self:I(self.lid..string.format("FF pausing current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+    self:I(self.lid..string.format("Pausing current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
   
     -- Cancelling the mission is actually cancelling the current task.
     self:TaskCancel(Task)
@@ -1623,7 +1623,7 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     local Task=Mission:GetGroupWaypointTask(self)
     
     -- Debug info.
-    self:I(self.lid..string.format("FF Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+    self:I(self.lid..string.format("Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
 
     -- Cancelling the mission is actually cancelling the current task.
     -- Note that two things can happen.
@@ -1850,7 +1850,7 @@ end
 -- @param #number N Total number of waypoints.
 function OPSGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   local text=string.format("Group passed waypoint %d/%d", n, N)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   
   -- Get all waypoint tasks.

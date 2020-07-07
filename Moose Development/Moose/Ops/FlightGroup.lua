@@ -191,7 +191,7 @@ FLIGHTGROUP.Attribute = {
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.5.0"
+FLIGHTGROUP.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1738,7 +1738,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     ---
     
     if self:IsAirborne() then
-      env.info("FF no waypoints left ==> CheckGroupDone")
+      self:T2(self.lid.."No waypoints left ==> CheckGroupDone")
       self:_CheckGroupDone()
     end
 
@@ -2033,16 +2033,12 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
 
     -- Respawn?
     if routeto then
-
-      --self:I(self.lid.."FF route (not repawn)")
-
-      -- Just route the group. Respawn might happen when going from holding to final.
+    
+       -- Just route the group. Respawn might happen when going from holding to final.
       self:Route(wp, 1)
 
     else
-
-      --self:I(self.lid.."FF respawn (not route)")
-
+    
       -- Get group template.
       local Template=self.group:GetTemplate()
 
