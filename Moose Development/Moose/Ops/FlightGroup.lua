@@ -821,7 +821,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   if #self.taskqueue>0 and self.verbose>1 then
     local text=string.format("Tasks #%d", #self.taskqueue)
     for i,_task in pairs(self.taskqueue) do
-      local task=_task --#FLIGHTGROUP.Task
+      local task=_task --Ops.OpsGroup#OPSGROUP.Task
       local name=task.description
       local taskid=task.dcstask.id or "unknown"
       local status=task.status
@@ -1229,7 +1229,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
--- @param #FLIGHTGROUP.ParkingSpot Spot Parking Spot.
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot Spot Parking Spot.
 function FLIGHTGROUP:onafterElementParking(From, Event, To, Element, Spot)
   self:T(self.lid..string.format("Element parking %s at spot %s", Element.name, Element.parking and tostring(Element.parking.TerminalID) or "N/A"))
 
@@ -2981,7 +2981,7 @@ function FLIGHTGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
 
   -- Shift all waypoint tasks after the inserted waypoint.
   for _,_task in pairs(self.taskqueue) do
-    local task=_task --#FLIGHTGROUP.Task
+    local task=_task --Ops.OpsGroup#OPSGROUP.Task
     if task.type==OPSGROUP.TaskType.WAYPOINT and task.waypoint and task.waypoint>=wpnumber then
       task.waypoint=task.waypoint+1
     end

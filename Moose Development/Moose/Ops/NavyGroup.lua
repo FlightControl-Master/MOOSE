@@ -161,7 +161,7 @@ end
 --- Group patrols ad inifintum. If the last waypoint is reached, it will go to waypoint one and repeat its route.
 -- @param #NAVYGROUP self
 -- @param #boolean switch If true or nil, patrol until the end of time. If false, go along the waypoints once and stop.
--- @return #NAVYGROPUP self
+-- @return #NAVYGROUP self
 function NAVYGROUP:SetPatrolAdInfinitum(switch)
   if switch==false then
     self.adinfinitum=false
@@ -174,7 +174,7 @@ end
 --- Group patrols ad inifintum. If the last waypoint is reached, it will go to waypoint one and repeat its route.
 -- @param #NAVYGROUP self
 -- @param #number Speed Speed in knots. Default 70% of max speed.
--- @return #NAVYGROPUP self
+-- @return #NAVYGROUP self
 function NAVYGROUP:SetSpeedCruise(Speed)
   
   self.speedCruise=Speed and UTILS.KnotsToKmph(Speed) or self.speedmax*0.7
