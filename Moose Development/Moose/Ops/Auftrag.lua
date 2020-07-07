@@ -247,9 +247,6 @@
 -- 
 -- # Examples
 -- 
--- 
---  
---
 --
 -- @field #AUFTRAG
 AUFTRAG = {
