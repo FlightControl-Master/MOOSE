@@ -19,6 +19,7 @@
 -- @field #boolean turning If true, group is currently turning.
 -- @field #NAVYGROUP.IntoWind intowind Into wind info.
 -- @field #table Qintowind Queue of "into wind" turns.
+-- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -52,6 +53,10 @@ NAVYGROUP = {
 -- @field #number Tstop Time to stop.
 -- @field #boolean Uturn U-turn.
 -- @field #number Speed Speed in knots.
+-- @field #number Offset Offset angle in degrees.
+-- @field #number Id Unique ID of the turn.
+-- @field Core.Point#COORDINATE Coordinate Coordinate where we left the route.
+-- @field #number Heading Heading the boat will take in degrees.
 -- @field #boolean Open Currently active.
 -- @field #boolean Over This turn is over.
 
@@ -64,7 +69,7 @@ NAVYGROUP.version="0.0.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
--- TODO: Detour, add temporary waypoint and resume route.
+-- DONE: Detour, add temporary waypoint and resume route.
 -- DONE: Stop and resume route.
 -- DONE: Add waypoints.
 -- DONE: Add tasks.
@@ -88,6 +93,7 @@ function NAVYGROUP:New(GroupName)
   -- Defaults
   self:SetDefaultROE()
   self:SetDetection()
+  self:SetPatrolAdInfinitum(true)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
@@ -99,6 +105,9 @@ function NAVYGROUP:New(GroupName)
   
   self:AddTransition("*",             "TurningStarted",   "*")           -- Group started turning.
   self:AddTransition("*",             "TurningStopped",   "*")           -- Group stopped turning.
+  
+  self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
+  self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
   
   self:AddTransition("*",             "Dive",             "Diving")      -- Command a submarine to dive.
   self:AddTransition("Diving",        "Surface",          "Cruising")    -- Command a submarine to go to the surface.
@@ -149,6 +158,31 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Group patrols ad inifintum. If the last waypoint is reached, it will go to waypoint one and repeat its route.
+-- @param #NAVYGROUP self
+-- @param #boolean switch If true or nil, patrol until the end of time. If false, go along the waypoints once and stop.
+-- @return #NAVYGROPUP self
+function NAVYGROUP:SetPatrolAdInfinitum(switch)
+  if switch==false then
+    self.adinfinitum=false
+  else
+    self.adinfinitum=true
+  end
+  return self
+end
+
+--- Group patrols ad inifintum. If the last waypoint is reached, it will go to waypoint one and repeat its route.
+-- @param #NAVYGROUP self
+-- @param #number Speed Speed in knots. Default 70% of max speed.
+-- @return #NAVYGROPUP self
+function NAVYGROUP:SetSpeedCruise(Speed)
+  
+  self.speedCruise=Speed and UTILS.KnotsToKmph(Speed) or self.speedmax*0.7
+
+  return self
+end
+
+
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
@@ -186,8 +220,9 @@ end
 -- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
 -- @param #number speed Speed in knots during turn into wind leg.
 -- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+-- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
 -- @return #NAVYGROUP.IntoWind Recovery window.
-function NAVYGROUP:CreateTurnIntoWind(starttime, stoptime, speed, uturn)
+function NAVYGROUP:CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
   -- Absolute mission time in seconds.
   local Tnow=timer.getAbsTime()
@@ -230,6 +265,7 @@ function NAVYGROUP:CreateTurnIntoWind(starttime, stoptime, speed, uturn)
   recovery.Over=false
   recovery.Speed=speed or 20
   recovery.Uturn=uturn and uturn or false
+  recovery.Offset=offset or 0
   recovery.Id=self.intowindcounter
 
   return recovery
@@ -241,10 +277,13 @@ end
 -- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
 -- @param #number speed Speed in knots during turn into wind leg.
 -- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+-- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
 -- @return #NAVYGROUP.IntoWind Recovery window.
-function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn)
+function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
-  local recovery=self:CreateTurnIntoWind(starttime, stoptime, speed, uturn)
+  local recovery=self:CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
+  
+  --TODO: check if window is overlapping with an other and if extend the window.
   
   -- Add to table
   table.insert(self.Qintowind, recovery)
@@ -320,8 +359,8 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   local nMissions=self:CountRemainingMissison()
 
     -- Info text.
-  local text=string.format("State %s: Speed=%.1f knots Heading=%03d intowind=%s turning=%s collision=%s Tasks=%d Missions=%d", 
-  fsmstate, speed, hdg, tostring(self:IsSteamingIntoWind()), tostring(self:IsTurning()), tostring(collision), nTaskTot, nMissions)
+  local text=string.format("State %s: Wp=%d/%d Speed=%.1f Heading=%03d intowind=%s turning=%s collision=%s Tasks=%d Missions=%d", 
+  fsmstate, self.currentwp, #self.waypoints, speed, hdg, tostring(self:IsSteamingIntoWind()), tostring(self:IsTurning()), tostring(collision), nTaskTot, nMissions)
   self:I(self.lid..text)
 
 
@@ -426,7 +465,7 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
   self.Corientlast=self.group:GetUnit(1):GetOrientationX()
   
   -- Update route.
-  self:__Cruise(-1)
+  self:Cruise()
   
 end
 
@@ -519,6 +558,71 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
 
 end
 
+--- On after "Detour" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Coordinate Coordinate where to go.
+-- @param #number Speed Speed in knots. Default cruise speed.
+-- @param #number Depth Depth in meters. Default 0 meters.
+-- @param #number ResumeRoute If true, resume route after detour point was reached.
+function NAVYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Depth, ResumeRoute)
+  
+  env.info("FF detour")
+
+  -- Waypoints.
+  local waypoints={}
+    
+  -- Depth for submarines.
+  local depth=Depth or 0
+
+  -- Get current speed in km/h.
+  local speed=Speed and UTILS.KnotsToKmph(Speed) or self.group:GetVelocityKMH()
+  
+  -- Current waypoint.
+  local current=self:GetCoordinate():WaypointNaval(speed, depth)
+  table.insert(waypoints, current)
+  
+  -- At each waypoint report passing.
+  local Task=self.group:TaskFunction("NAVYGROUP._DetourReached", self, ResumeRoute)
+  
+  local detour=Coordinate:WaypointNaval(speed, depth, {Task})
+  table.insert(waypoints, detour)
+  
+  self:Route(waypoints)
+
+end
+
+--- On after "DetourReached" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterDetourReached(From, Event, To)
+  self:I(self.lid.."Group reached detour coordinate.")
+end
+
+--- Function called when a group is passing a waypoint.
+--@param Wrapper.Group#GROUP group Group that passed the waypoint
+--@param #NAVYGROUP navygroup Navy group object.
+--@param #boolean resume Resume route.
+function NAVYGROUP._DetourReached(group, navygroup, resume)
+
+  -- Debug message.
+  local text=string.format("Group reached detour coordinate")
+  navygroup:I(navygroup.lid..text)
+
+  if resume then
+    local indx=navygroup:GetWaypointIndexNext(true)
+    local speed=navygroup:GetSpeedToWaypoint(indx)
+    navygroup:UpdateRoute(indx, speed)
+  end
+  
+  navygroup:DetourReached()
+
+end
+
 --- On after "TurnIntoWind" event.
 -- @param #NAVYGROUP self
 -- @param #string From From state.
@@ -530,9 +634,11 @@ end
 -- @param #boolean Uturn Return to the place we came from.
 function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
 
-  IntoWind.Heading=self:GetCoordinate():GetWind(50)
+  IntoWind.Heading=self:GetHeadingIntoWind(IntoWind.Offset)
   
   IntoWind.Open=true
+  
+  IntoWind.Coordinate=self:GetCoordinate()
 
   self.intowind=IntoWind
 
@@ -566,10 +672,11 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To)
   self.intowind.Open=false    
 
   if self.intowind.Uturn then
-    self:UpdateRoute(self.currentwp, self.speedmax*0.7)
+    self:Detour(self.intowind.Coordinate, self:GetSpeedCruise(), 0, true)
   else
-    local wp=self:GetWaypointIndexNext(true)-- math.min(#self.waypoints, self.currentwp+1)
-    self:UpdateRoute()
+    local indx=self:GetWaypointIndexNext(self.adinfinitum)
+    local speed=self:GetWaypointSpeed(indx)
+    self:UpdateRoute(indx, speed)
   end
   
   self.intowind=nil
@@ -976,14 +1083,18 @@ function NAVYGROUP:_CheckGroupDone(delay)
       self:ScheduleOnce(delay, NAVYGROUP._CheckGroupDone, self)
     else
     
-      if #self.waypoints>1 and self.passedfinalwp then
+      if self.passedfinalwp then
       
-        local speed=self.speedCruise and UTILS.KmphToKnots(self.speedCruise) or UTILS.KmphToKnots(self.speedmax*0.7)
-      
-        -- Start route at first waypoint.
-        self:__UpdateRoute(-1, 1, speed)
+        if #self.waypoints>1 and self.adinfinitum then
+          
+          local speed=self:GetSpeedToWaypoint(1)
+        
+          -- Start route at first waypoint.
+          self:__UpdateRoute(-1, 1, speed)
+          
+        end
     
-      elseif not self.passedfinalwp then
+      else
       
         self:UpdateRoute()
         
@@ -1042,6 +1153,31 @@ function NAVYGROUP:_CheckTurnsIntoWind()
   end
 end
 
+--- Get default cruise speed.
+-- @param #NAVYGROUP self
+-- @return #number Cruise speed (>0) in knots.
+function NAVYGROUP:GetSpeedCruise()
+  return UTILS.KmphToKnots(self.speedCruise or self.speedmax*0.7)
+end
+
+--- Returns a non-zero speed to the next waypoint (even if the waypoint speed is zero).
+-- @param #NAVYGROUP self
+-- @param #number indx Waypoint index.
+-- @return #number Speed to next waypoint (>0) in knots.
+function NAVYGROUP:GetSpeedToWaypoint(indx)
+
+  self:I(self.lid..string.format("Index=%s", tostring(indx)))
+
+  local speed=self:GetWaypointSpeed(indx)
+  
+  self:I(self.lid..string.format("Speed=%s", tostring(speed)))
+  
+  if speed<=0.1 then
+    speed=self:GetSpeedCruise()
+  end
+
+  return speed
+end
 
 --- Check queued turns into wind.
 -- @param #NAVYGROUP self
@@ -1054,6 +1190,48 @@ function NAVYGROUP:GetNextTurnIntoWind()
     
   end
 
+end
+
+--- Get wind direction and speed at current position.
+-- @param #NAVYGROUP self
+-- @return #number Direction the wind is blowing **from** in degrees.
+-- @return #number Wind speed in m/s.
+function NAVYGROUP:GetWind()
+
+  -- Current position of the carrier or input.
+  local coord=self:GetCoordinate()
+
+  -- Wind direction and speed. By default at 50 meters ASL.
+  local Wdir, Wspeed=coord:GetWind(50)
+
+  return Wdir, Wspeed
+end
+
+--- Get heading of group into the wind.
+-- @param #NAVYGROUP self
+-- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
+-- @return #number Carrier heading in degrees.
+function NAVYGROUP:GetHeadingIntoWind(Offset)
+
+  Offset=Offset or 0
+
+  -- Get direction the wind is blowing from. This is where we want to go.
+  local windfrom, vwind=self:GetWind()
+
+  -- Actually, we want the runway in the wind.
+  local intowind=windfrom-Offset
+
+  -- If no wind, take current heading.
+  if vwind<0.1 then
+    intowind=self:GetHeading()
+  end
+
+  -- Adjust negative values.
+  if intowind<0 then
+    intowind=intowind+360
+  end
+
+  return intowind
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -432,6 +432,21 @@ function OPSGROUP:GetWaypointIndexNext(cyclic)
   return n
 end
 
+--- Get waypoint speed.
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index.
+-- @return #number Speed set at waypoint in knots.
+function OPSGROUP:GetWaypointSpeed(indx)
+
+  local waypoint=self:GetWaypoint(indx)
+  
+  if waypoint then
+    return UTILS.MpsToKnots(waypoint.speed)
+  end
+
+  return nil
+end
+
 --- Get waypoint.
 -- @param #OPSGROUP self
 -- @param #number indx Waypoint index.
@@ -2164,7 +2179,7 @@ function OPSGROUP:Route(waypoints)
     end
     
   else
-    self:E(self.lid.."ERROR: Group is not alive!")
+    self:E(self.lid.."ERROR: Group is not alive! Cannot route group.")
   end
   
   return self
