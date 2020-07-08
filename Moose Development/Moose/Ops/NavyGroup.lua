@@ -316,6 +316,18 @@ end
 
 --- Update status.
 -- @param #NAVYGROUP self
+function NAVYGROUP:onbeforeStatus(From, Event, To)
+
+  if self:IsDead() or self:IsStopped() or self:IsAlive()==nil then
+    self:I(self.lid..string.format("Onbefore Status ==> false"))
+    return false
+  end
+
+  return true
+end
+
+--- Update status.
+-- @param #NAVYGROUP self
 function NAVYGROUP:onafterStatus(From, Event, To)
 
   -- FSM state.
@@ -482,16 +494,16 @@ end
 function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
 
   -- Update route from this waypoint number onwards.
-  n=n or self:GetWaypointIndexNext(true)
+  n=n or self:GetWaypointIndexNext(self.adinfinitum)
+  
+  -- Debug info.
+  self:T(self.lid..string.format("FF Update route n=%d", n))
   
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
-  self:_UpdateWaypointTasks()
+  self:_UpdateWaypointTasks(n)
 
   -- Waypoints.
   local waypoints={}
-    
-  -- Speed.
-  --local speed=Speed and UTILS.KnotsToKmph(Speed) or self.speedCruise
   
   -- Depth for submarines.
   local depth=Depth or 0
@@ -736,7 +748,6 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number Depth Dive depth in meters.
 function NAVYGROUP:onafterSurface(From, Event, To)
 
   self.depth=0
@@ -926,7 +937,7 @@ function NAVYGROUP:_InitGroup()
     element.status=OPSGROUP.ElementStatus.INUTERO
     table.insert(self.elements, element)
     
-    self:GetAmmoUnit(unit, true)
+    self:GetAmmoUnit(unit, false)
     
     if unit:IsAlive() then      
       self:ElementSpawned(element)
@@ -1145,7 +1156,7 @@ function NAVYGROUP:_CheckTurnsIntoWind()
   end
 
   -- Debug output.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
 
   -- Loop over all slots.

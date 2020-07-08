@@ -1483,7 +1483,7 @@ function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
   self:I(self.lid..string.format("Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
 
   -- Delay for route to mission. Group needs to be activated and controlled.
-  local delay=1
+  local delay=0
 
   -- Check if group is spawned.
   if self:IsInUtero() then
@@ -1491,7 +1491,7 @@ function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
     -- Activate group if it is late activated.
     if self:IsLateActivated() then
       self:Activate(delay)
-      delay=delay+1
+      --delay=delay+1
     end
   
   end
@@ -1515,7 +1515,7 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
   -- Debug output.
   local text=string.format("Starting %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
   self:T(self.lid..text)
-  MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
+  MESSAGE:New(text, 30, self.groupname):ToAllIf(self.Debug)
 
   -- Set current mission.
   self.currentmission=Mission.auftragsnummer
@@ -1524,7 +1524,7 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
   Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.STARTED)
   
   -- Set mission status to STARTED.
-  Mission:Started()
+  Mission:__Started(3)
 
   -- Route group to mission zone.
   self:RouteToMission(Mission, 3)
@@ -1541,7 +1541,7 @@ function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
 
   local text=string.format("Executing %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
   self:T(self.lid..text)
-  MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
+  MESSAGE:New(text, 30, self.groupname):ToAllIf(self.Debug)
   
   -- Set group mission status to EXECUTING.
   Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.EXECUTING)
@@ -1658,7 +1658,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   -- Debug info.
   local text=string.format("Mission %s DONE!", Mission.name)
   self:I(self.lid..text)
-  MESSAGE:New(text, 30, self.groupname):ToAllIf(true)
+  MESSAGE:New(text, 30, self.groupname):ToAllIf(self.Debug)
   
   -- Set group status.
   Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.DONE)
@@ -2189,17 +2189,18 @@ end
 
 --- Initialize Mission Editor waypoints.
 -- @param #OPSGROUP self
-function OPSGROUP:_UpdateWaypointTasks()
+-- @param #number n Waypoint
+function OPSGROUP:_UpdateWaypointTasks(n)
 
   local waypoints=self.waypoints
   local nwaypoints=#waypoints
 
   for i,wp in pairs(waypoints) do
     
-    if i>self.currentwp or nwaypoints==1 then
+    if i>=n or nwaypoints==1 then
     
       -- Debug info.
-      self:I(self.lid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d", i, nwaypoints, self.currentwp))
+      self:T(self.lid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d", i, nwaypoints, self.currentwp))
   
       -- Tasks of this waypoint
       local taskswp={}
@@ -2212,6 +2213,7 @@ function OPSGROUP:_UpdateWaypointTasks()
       wp.task=self.group:TaskCombo(taskswp)
       
     end
+    
   end
 
 end

@@ -721,7 +721,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   end
 
   -- Element status.
-  if self.verbose>1 or true then
+  if self.verbose>1 then
     local text="Elements:"
     for i,_element in pairs(self.elements) do
       local element=_element --#FLIGHTGROUP.Element
@@ -970,7 +970,7 @@ function FLIGHTGROUP:OnEventBirth(EventData)
       end
 
       -- Set element to spawned state.
-      self:I(self.lid..string.format("EVENT: Element %s born at airbase %s==> spawned", element.name, self.homebase and self.homebase:GetName() or "unknown"))
+      self:T(self.lid..string.format("EVENT: Element %s born at airbase %s==> spawned", element.name, self.homebase and self.homebase:GetName() or "unknown"))
       self:ElementSpawned(element)
 
     end
@@ -1145,7 +1145,7 @@ function FLIGHTGROUP:OnEventUnitLost(EventData)
 
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    self:I(self.lid..string.format("EVENT: Unit %s lost!", EventData.IniUnitName))
+    self:T(self.lid..string.format("EVENT: Unit %s lost!", EventData.IniUnitName))
     
     local unit=EventData.IniUnit
     local group=EventData.IniGroup
@@ -1155,7 +1155,7 @@ function FLIGHTGROUP:OnEventUnitLost(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:T3(self.lid..string.format("EVENT: Element %s crashed ==> dead", element.name))
+      self:I(self.lid..string.format("EVENT: Element %s unit lost ==> dead", element.name))
       self:ElementDead(element)
     end
     
@@ -1276,7 +1276,7 @@ function FLIGHTGROUP:onafterElementTaxiing(From, Event, To, Element)
   local TerminalID=Element.parking and tostring(Element.parking.TerminalID) or "N/A"
 
   -- Debug info.
-  self:I(self.lid..string.format("Element taxiing %s. Parking spot %s is now free", Element.name, TerminalID))
+  self:T(self.lid..string.format("Element taxiing %s. Parking spot %s is now free", Element.name, TerminalID))
 
   -- Set parking spot to free. Also for FC.
   self:_SetElementParkingFree(Element)
@@ -1293,7 +1293,7 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase if applicable or nil.
 function FLIGHTGROUP:onafterElementTakeoff(From, Event, To, Element, airbase)
-  self:I(self.lid..string.format("Element takeoff %s at %s airbase.", Element.name, airbase and airbase:GetName() or "unknown"))
+  self:T(self.lid..string.format("Element takeoff %s at %s airbase.", Element.name, airbase and airbase:GetName() or "unknown"))
 
   -- Helos with skids just take off without taxiing!
   if Element.parking then
@@ -1434,7 +1434,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterParking(From, Event, To)
-  self:I(self.lid..string.format("Flight is parking"))
+  self:T(self.lid..string.format("Flight is parking"))
 
   local airbase=self:GetClosestAirbase() --self.group:GetCoordinate():GetClosestAirbase()
 
@@ -1690,7 +1690,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   n=n or self.currentwp+1
 
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
-  self:_UpdateWaypointTasks()
+  self:_UpdateWaypointTasks(n)
 
   -- Waypoints.
   local wp={}
@@ -1710,7 +1710,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destbase and self.destbase:GetName() or "unknown"
-  self:I(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
+  self:T(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
 
 
   if #wp>1 then
@@ -1905,7 +1905,8 @@ end
 -- @param #number SpeedLand Landing speed in knots. Default 170 kts.
 function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, SpeedLand)
 
-  self:I(self.lid..string.format("RTB: event=%s: %s --> %s to %s", Event, From, To, airbase:GetName()))
+  -- Debug info.
+  self:T(self.lid..string.format("RTB: event=%s: %s --> %s to %s", Event, From, To, airbase:GetName()))
 
   -- Set the destination base.
   self.destbase=airbase
@@ -3043,7 +3044,8 @@ function FLIGHTGROUP:_SetElementParkingAt(Element, Spot)
 
   if Spot then
 
-    self:I(self.lid..string.format("Element %s is parking on spot %d", Element.name, Spot.TerminalID))
+    -- Debug info.
+    self:T(self.lid..string.format("Element %s is parking on spot %d", Element.name, Spot.TerminalID))
 
     if self.flightcontrol then
 

@@ -508,7 +508,6 @@ function AUFTRAG:New(Type)
   self:AddTransition("*",                      "GroupDead",    "*")  
   self:AddTransition("*",                      "AssetDead",     "*")
   
-  
   -- Init status update.
   self:__Status(-1)
   
@@ -1767,7 +1766,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
 
   -- Check if mission is not OVER yet.
   if self:IsNotOver() then
-
+ 
     if self:CheckGroupsDone() then
     
       -- All groups have reported MISSON DONE.
@@ -1873,7 +1872,8 @@ function AUFTRAG:Evaluate()
   text=text..string.format("Targets      = %d/%d\n", self.Ntargets, Ntargets)
   text=text..string.format("Damage       = %.1f %%\n", targetdamage)
   text=text..string.format("Success Cond = %s\n", tostring(successCondition))
-  text=text..string.format("Failure Cond = %s", tostring(failureCondition))
+  text=text..string.format("Failure Cond = %s\n", tostring(failureCondition))
+  text=text..string.format("Failed       = %s",   tostring(failed))
   self:I(self.lid..text)  
   
   if failed then
@@ -2371,8 +2371,6 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   self:__Status(-30)
 
 end
-
-
 
 --- On after "Stop" event. Remove mission from AIRWING and FLIGHTGROUP mission queues.
 -- @param #AUFTRAG self
