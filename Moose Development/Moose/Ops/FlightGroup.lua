@@ -2017,7 +2017,8 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
     end
 
     -- Clear all tasks.
-    self:ClearTasks()
+    -- Warning, looks like this can make DCS CRASH! Had this after calling RTB once passed the final waypoint.
+    --self:ClearTasks()
 
     -- Respawn?
     if routeto then

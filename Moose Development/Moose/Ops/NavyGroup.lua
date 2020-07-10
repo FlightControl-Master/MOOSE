@@ -675,8 +675,18 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   IntoWind.Coordinate=self:GetCoordinate()
 
   self.intowind=IntoWind
+  
+  -- Wind speed in m/s.
+  local _,vwind=self:GetWind()
+  
+  -- Convert to knots.
+  vwind=UTILS.MpsToKnots(vwind)
 
-  self:I(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f knots, Tstart=%d Tstop=%d", IntoWind.Heading, IntoWind.Speed, IntoWind.Tstart, IntoWind.Tstop))
+  -- Speed of carrier in m/s but at least 2 knots.
+  local speed=math.max(IntoWind.Speed-vwind, 2)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f Vwind=%.1f Vtot=%.1f knots, Tstart=%d Tstop=%d", IntoWind.Heading, speed, vwind, speed+vwind, IntoWind.Tstart, IntoWind.Tstop))
   
   local distance=UTILS.NMToMeters(1000)
   
@@ -685,8 +695,8 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   local coord=self:GetCoordinate()
   local Coord=coord:Translate(distance, IntoWind.Heading)
   
-  wp[1]=coord:WaypointNaval(IntoWind.Speed)
-  wp[2]=Coord:WaypointNaval(IntoWind.Speed)
+  wp[1]=coord:WaypointNaval(UTILS.KnotsToKmph(speed))
+  wp[2]=Coord:WaypointNaval(UTILS.KnotsToKmph(speed))
 
   self:Route(wp)
   
@@ -921,7 +931,7 @@ end
 --- Add an a waypoint to the route.
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
--- @param #number speed Speed in knots. Default is 70% of max speed.
+-- @param #number speed Speed in knots. Default is default cruise speed or 70% of max speed.
 -- @param #number wpnumber Waypoint number. Default at the end.
 -- @param #boolean updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return #number Waypoint index.
@@ -935,7 +945,7 @@ function NAVYGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
   end
   
   -- Speed in knots.
-  speed=speed or self.speedmax*0.7
+  speed=speed or self:GetSpeedCruise()
 
   -- Speed at waypoint.
   local speedkmh=UTILS.KnotsToKmph(speed)

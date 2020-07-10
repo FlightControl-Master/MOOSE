@@ -2156,30 +2156,36 @@ end
 --- Route group along waypoints.
 -- @param #OPSGROUP self
 -- @param #table waypoints Table of waypoints.
+-- @default
 -- @return #OPSGROUP self
-function OPSGROUP:Route(waypoints)
+function OPSGROUP:Route(waypoints, delay)
 
-  if self:IsAlive() then
-
-    -- DCS task combo.
-    local Tasks={}
-    
-    -- Route (Mission) task.
-    local TaskRoute=self.group:TaskRoute(waypoints)
-    table.insert(Tasks, TaskRoute)
-    
-    -- TaskCombo of enroute and mission tasks.
-    local TaskCombo=self.group:TaskCombo(Tasks)
-        
-    -- Set tasks.
-    if #Tasks>1 then
-      self:SetTask(TaskCombo)
-    else
-      self:SetTask(TaskRoute)
-    end
-    
+  if delay and delay>0 then
+    self:ScheduleOnce(delay, OPSGROUP.Route, self, waypoints)
   else
-    self:E(self.lid.."ERROR: Group is not alive! Cannot route group.")
+
+    if self:IsAlive() then
+  
+      -- DCS task combo.
+      local Tasks={}
+      
+      -- Route (Mission) task.
+      local TaskRoute=self.group:TaskRoute(waypoints)
+      table.insert(Tasks, TaskRoute)
+      
+      -- TaskCombo of enroute and mission tasks.
+      local TaskCombo=self.group:TaskCombo(Tasks)
+          
+      -- Set tasks.
+      if #Tasks>1 then
+        self:SetTask(TaskCombo)
+      else
+        self:SetTask(TaskRoute)
+      end
+      
+    else
+      self:E(self.lid.."ERROR: Group is not alive! Cannot route group.")
+    end
   end
   
   return self
