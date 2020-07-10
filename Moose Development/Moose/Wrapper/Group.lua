@@ -1039,11 +1039,16 @@ function GROUP:GetHeading()
   local GroupSize = self:GetSize()
   local HeadingAccumulator = 0
   
+  local n=0
   if GroupSize then
     for i = 1, GroupSize do
-      HeadingAccumulator = HeadingAccumulator + self:GetUnit(i):GetHeading()
+      local unit=self:GetUnit(i)
+      if unit and unit:IsAlive() then
+        HeadingAccumulator = HeadingAccumulator + unit:GetHeading()
+        n=n+1
+      end
     end
-    return math.floor(HeadingAccumulator / GroupSize)
+    return math.floor(HeadingAccumulator / n)
   end
   
   BASE:E( { "Cannot GetHeading", Group = self, Alive = self:IsAlive() } )

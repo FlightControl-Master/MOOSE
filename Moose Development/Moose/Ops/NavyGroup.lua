@@ -314,12 +314,15 @@ end
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Update status.
+---- Update status.
 -- @param #NAVYGROUP self
 function NAVYGROUP:onbeforeStatus(From, Event, To)
 
-  if self:IsDead() or self:IsStopped() or self:IsAlive()==nil then
-    self:I(self.lid..string.format("Onbefore Status ==> false"))
+  if self:IsDead() then  
+    self:I(self.lid..string.format("Onbefore Status DEAD ==> false"))
+    return false   
+  elseif self:IsStopped() then
+    self:I(self.lid..string.format("Onbefore Status STOPPED ==> false"))
     return false
   end
 
@@ -342,38 +345,47 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     self:_CheckDetectedUnits()
   end
   
+  if self:IsAlive() and not self:IsDead() then
 
-  -- Current heading and position of the carrier.
-  local hdg=self:GetHeading()
-  local pos=self:GetCoordinate()
-  local speed=self.group:GetVelocityKNOTS()
-  
-  -- Check if group started or stopped turning.
-  self:_CheckTurning()
-  
-  -- Check water is ahead.
-  local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist or 5000, hdg))
-  
-  self:_CheckTurnsIntoWind()
-
-  if self.intowind then
-  
-    if timer.getAbsTime()>=self.intowind.Tstop then
+    -- Current heading and position of the carrier.
+    local hdg=self:GetHeading()
+    local pos=self:GetCoordinate()
+    local speed=self.group:GetVelocityKNOTS()
     
-      self:TurnIntoWindOver()
+    -- Check if group started or stopped turning.
+    self:_CheckTurning()
+    
+    -- Check water is ahead.
+    local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist or 5000, hdg))
+    
+    self:_CheckTurnsIntoWind()
+  
+    if self.intowind then
+    
+      if timer.getAbsTime()>=self.intowind.Tstop then
       
+        self:TurnIntoWindOver()
+        
+      end
+    
     end
   
-  end
-
-  -- Get number of tasks and missions.
-  local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
-  local nMissions=self:CountRemainingMissison()
+    -- Get number of tasks and missions.
+    local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
+    local nMissions=self:CountRemainingMissison()
+  
+    -- Info text.
+    local text=string.format("State %s: Wp=%d/%d Speed=%.1f Heading=%03d intowind=%s turning=%s collision=%s Tasks=%d Missions=%d", 
+    fsmstate, self.currentwp, #self.waypoints, speed, hdg, tostring(self:IsSteamingIntoWind()), tostring(self:IsTurning()), tostring(collision), nTaskTot, nMissions)
+    self:I(self.lid..text)
+    
+  else
 
     -- Info text.
-  local text=string.format("State %s: Wp=%d/%d Speed=%.1f Heading=%03d intowind=%s turning=%s collision=%s Tasks=%d Missions=%d", 
-  fsmstate, self.currentwp, #self.waypoints, speed, hdg, tostring(self:IsSteamingIntoWind()), tostring(self:IsTurning()), tostring(collision), nTaskTot, nMissions)
-  self:I(self.lid..text)
+    local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
+    self:I(self.lid..text)
+  
+  end
 
 
   ---
@@ -434,10 +446,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
 
 
 
-  -- Next check in ~30 seconds.
-  if not self:IsStopped() then
-    self:__Status(-10)
-  end
+  self:__Status(-10)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -456,6 +465,19 @@ function NAVYGROUP:onafterElementSpawned(From, Event, To, Element)
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.SPAWNED)
 
+end
+
+--- On after "ElementDead" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #NAVYGROUP.Element Element The group element.
+function NAVYGROUP:onafterElementDead(From, Event, To, Element)
+  self:T(self.lid..string.format("Element dead %s.", Element.name))
+
+  -- Set element status.
+  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
 end
 
 --- On after "Spawned" event.
@@ -756,6 +778,54 @@ function NAVYGROUP:onafterSurface(From, Event, To)
 
 end
 
+--- On after "Dead" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterDead(From, Event, To)
+  self:I(self.lid..string.format("Group dead!"))
+
+  -- Delete waypoints so they are re-initialized at the next spawn.
+  self.waypoints=nil
+  self.groupinitialized=false
+
+  -- Cancel all mission.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    self:MissionCancel(mission)
+    mission:GroupDead(self)
+
+  end
+
+  -- Stop
+  self:Stop()
+end
+
+--- On after Start event. Starts the NAVYGROUP FSM and event handlers.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterStop(From, Event, To)
+
+  -- Check if group is still alive.
+  if self:IsAlive() then
+    -- Destroy group. No event is generated.
+    self.group:Destroy(false)
+  end
+
+  -- Handle events:
+  self:UnHandleEvent(EVENTS.Birth)
+  self:UnHandleEvent(EVENTS.Dead)
+  self:UnHandleEvent(EVENTS.RemoveUnit)
+
+  self.CallScheduler:Clear()
+
+  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Events DCS
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -792,6 +862,54 @@ function NAVYGROUP:OnEventBirth(EventData)
       
     end    
     
+  end
+
+end
+
+--- Flightgroup event function handling the crash of a unit.
+-- @param #NAVYGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function NAVYGROUP:OnEventDead(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    self:T(self.lid..string.format("EVENT: Unit %s dead!", EventData.IniUnitName))
+    
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+
+    -- Get element.
+    local element=self:GetElementByName(unitname)
+
+    if element then
+      self:I(self.lid..string.format("EVENT: Element %s dead ==> dead", element.name))
+      self:ElementDead(element)
+    end
+    
+  end
+
+end
+
+--- Flightgroup event function handling the crash of a unit.
+-- @param #NAVYGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function NAVYGROUP:OnEventRemoveUnit(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+
+    -- Get element.
+    local element=self:GetElementByName(unitname)
+
+    if element then
+      self:I(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
+      self:ElementDead(element)
+    end
+
   end
 
 end
@@ -935,6 +1053,7 @@ function NAVYGROUP:_InitGroup()
     element.name=unit:GetName()
     element.typename=unit:GetTypeName()
     element.status=OPSGROUP.ElementStatus.INUTERO
+    element.unit=unit
     table.insert(self.elements, element)
     
     self:GetAmmoUnit(unit, false)
@@ -1046,39 +1165,45 @@ end
 -- @param #NAVYGROUP self
 function NAVYGROUP:_CheckTurning()
 
-  -- Current orientation of carrier.
-  local vNew=self.group:GetUnit(1):GetOrientationX()
+  local unit=self.group:GetUnit(1)
+  
+  if unit and unit:IsAlive() then
 
-  -- Last orientation from 30 seconds ago.
-  local vLast=self.Corientlast or vNew
-
-  -- We only need the X-Z plane.
-  vNew.y=0 ; vLast.y=0
-
-  -- Angle between current heading and last time we checked ~30 seconds ago.
-  local deltaLast=math.deg(math.acos(UTILS.VecDot(vNew,vLast)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vLast)))
-
-  -- Last orientation becomes new orientation
-  self.Corientlast=vNew
-
-  -- Carrier is turning when its heading changed by at least two degrees since last check.
-  local turning=math.abs(deltaLast)>=2
-
-  -- Check if turning stopped.
-  if self.turning and not turning then
-
-    -- Carrier was turning but is not any more.
-    self:TurningStopped()
+    -- Current orientation of carrier.
+    local vNew=unit:GetOrientationX()
+  
+    -- Last orientation from 30 seconds ago.
+    local vLast=self.Corientlast or vNew
+  
+    -- We only need the X-Z plane.
+    vNew.y=0 ; vLast.y=0
+  
+    -- Angle between current heading and last time we checked ~30 seconds ago.
+    local deltaLast=math.deg(math.acos(UTILS.VecDot(vNew,vLast)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vLast)))
+  
+    -- Last orientation becomes new orientation
+    self.Corientlast=vNew
+  
+    -- Carrier is turning when its heading changed by at least two degrees since last check.
+    local turning=math.abs(deltaLast)>=2
+  
+    -- Check if turning stopped.
+    if self.turning and not turning then
+  
+      -- Carrier was turning but is not any more.
+      self:TurningStopped()
+      
+    elseif turning and not self.turning then
+  
+      -- Carrier was not turning but is now.
+      self:TurningStarted()    
+  
+    end
+  
+    -- Update turning.
+    self.turning=turning
     
-  elseif turning and not self.turning then
-
-    -- Carrier was not turning but is now.
-    self:TurningStarted()    
-
   end
-
-  -- Update turning.
-  self.turning=turning
   
 end
 
