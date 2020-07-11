@@ -432,6 +432,7 @@ ATIS.ICAOPhraseology={
 -- @field #ATIS.Soundfile MegaHertz
 -- @field #ATIS.Soundfile Meters
 -- @field #ATIS.Soundfile MetersPerSecond
+-- @field #ATIS.Soundfile Miles
 -- @field #ATIS.Soundfile MillimetersOfMercury
 -- @field #ATIS.Soundfile N0
 -- @field #ATIS.Soundfile N1
@@ -504,6 +505,7 @@ ATIS.Sound = {
   MegaHertz={filename="MegaHertz.ogg", duration=0.87},
   Meters={filename="Meters.ogg", duration=0.59},
   MetersPerSecond={filename="MetersPerSecond.ogg", duration=1.14},
+  Miles={filename="Miles.ogg", duration=1.04},
   MillimetersOfMercury={filename="MillimetersOfMercury.ogg", duration=1.53},
   Minus={filename="Minus.ogg", duration=0.64},
   N0={filename="N-0.ogg", duration=0.55},
@@ -1400,7 +1402,7 @@ function ATIS:onafterBroadcast(From, Event, To)
     VISIBILITY=string.format("%d", reportedviz)
   else
     -- max reported visibility 10 NM
-    local reportedviz=UTILS.Round(UTILS.MetersToNM(visibilitymin))
+    local reportedviz=UTILS.Round(UTILS.MetersToSM(visibilitymin))
     if reportedviz > 10 then
       reportedviz=10
     end
@@ -1540,14 +1542,14 @@ function ATIS:onafterBroadcast(From, Event, To)
   if self.metric then
     subtitle=string.format("Visibility %s km", VISIBILITY)
   else
-    subtitle=string.format("Visibility %s NM", VISIBILITY)
+    subtitle=string.format("Visibility %s SM", VISIBILITY)
   end
   self:Transmission(ATIS.Sound.Visibilty, 1.0, subtitle)
   self.radioqueue:Number2Transmission(VISIBILITY)
   if self.metric then
     self:Transmission(ATIS.Sound.Kilometers, 0.2)
   else
-    self:Transmission(ATIS.Sound.NauticalMiles, 0.2)
+    self:Transmission(ATIS.Sound.Miles, 0.2)
   end
   alltext=alltext..";\n"..subtitle
   
