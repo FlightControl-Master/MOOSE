@@ -365,7 +365,7 @@ ATIS.Alphabet = {
 ATIS.RunwayM2T={
   Caucasus=0,
   Nevada=12,
-  Normany=-10,
+  Normandy=-10,
   PersianGulf=2,
 }
 
