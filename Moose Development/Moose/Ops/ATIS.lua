@@ -1387,13 +1387,24 @@ function ATIS:onafterBroadcast(From, Event, To)
       visibilitymin=dust
     end
   end
+  
+  local VISIBILITY=""
 
-  -- Visibility in NM.
-  local VISIBILITY=string.format("%d", UTILS.Round(UTILS.MetersToNM(visibilitymin)))
-
-  -- Visibility in km.
   if self.metric then
-    VISIBILITY=string.format("%d", UTILS.Round(visibilitymin/1000))
+    -- Visibility in km.
+    local reportedviz=UTILS.Round(visibilitymin/1000)
+    -- max reported visibility 9999 m
+    if reportedviz > 10 then
+      reportedviz=10
+    end
+    VISIBILITY=string.format("%d", reportedviz)
+  else
+    -- max reported visibility 10 NM
+    local reportedviz=UTILS.Round(UTILS.MetersToNM(visibilitymin))
+    if reportedviz > 10 then
+      reportedviz=10
+    end
+    VISIBILITY=string.format("%d", reportedviz)
   end
 
   --------------
