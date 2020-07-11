@@ -67,6 +67,7 @@
 -- @field #number subduration Duration how long subtitles are displayed in seconds.
 -- @field #boolean metric If true, use metric units. If false, use imperial (default).
 -- @field #boolean PmmHg If true, give pressure in millimeters of Mercury. Default is inHg for imperial and hecto Pascal (=mili Bars) for metric units.
+-- @field #boolean qnhonly If true, suppresses reporting QFE. Default is to report both QNH and QFE.
 -- @field #boolean TDegF If true, give temperature in degrees Fahrenheit. Default is in degrees Celsius independent of chosen unit system.
 -- @field #number zuludiff Time difference local vs. zulu in hours.
 -- @field #boolean zulutimeonly If true, suppresses report of local time, sunrise, and sunset.
@@ -303,6 +304,7 @@ ATIS = {
   subduration    =   nil,
   metric         =   nil,
   PmmHg          =   nil,
+  qnhonly        =   false,
   TDegF          =   nil,
   zuludiff       =   nil,
   zulutimeonly   =   false,
@@ -897,6 +899,14 @@ function ATIS:SetAltimeterQNH(switch)
     self.altimeterQNH=false
   end
 
+  return self
+end
+
+-- Suppresses QFE readout. Default is to report both QNH and QFE.
+-- @param #ATIS self
+-- @return #ATIS self
+function ATIS:ReportQNHOnly()
+  self.qnhonly=true
   return self
 end
 
@@ -1664,24 +1674,42 @@ function ATIS:onafterBroadcast(From, Event, To)
 
   -- Altimeter QNH/QFE.
   if self.PmmHg then
-    subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s mmHg", QNH[1], QNH[2], QFE[1], QFE[2])
+    if self.qnhonly then
+      subtitle=string.format("Altimeter %s.%s mmHg", QNH[1], QNH[2])
+    else
+      subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s mmHg", QNH[1], QNH[2], QFE[1], QFE[2])
+    end
   else
     if self.metric then
-      subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s hPa", QNH[1], QNH[2], QFE[1], QFE[2])
+      if self.qnhonly then
+        subtitle=string.format("Altimeter %s.%s hPa", QNH[1], QNH[2])
+      else
+        subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s hPa", QNH[1], QNH[2], QFE[1], QFE[2])
+      end
     else
-      subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s inHg", QNH[1], QNH[2], QFE[1], QFE[2])
+      if self.qnhonly then
+        subtitle=string.format("Altimeter %s.%s inHg", QNH[1], QNH[2])
+      else
+        subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s inHg", QNH[1], QNH[2], QFE[1], QFE[2])
+      end
     end
   end
   local _ALTIMETER=subtitle
   self:Transmission(ATIS.Sound.Altimeter, 1.0, subtitle)
-  self:Transmission(ATIS.Sound.QNH, 0.5)
+  if not self.qnhonly then
+    self:Transmission(ATIS.Sound.QNH, 0.5)
+  end
   self.radioqueue:Number2Transmission(QNH[1])
   self:Transmission(ATIS.Sound.Decimal, 0.2)
   self.radioqueue:Number2Transmission(QNH[2])
-  self:Transmission(ATIS.Sound.QFE, 0.75)
-  self.radioqueue:Number2Transmission(QFE[1])
-  self:Transmission(ATIS.Sound.Decimal, 0.2)
-  self.radioqueue:Number2Transmission(QFE[2])
+  
+  if not self.qnhonly then
+    self:Transmission(ATIS.Sound.QFE, 0.75)
+    self.radioqueue:Number2Transmission(QFE[1])
+    self:Transmission(ATIS.Sound.Decimal, 0.2)
+    self.radioqueue:Number2Transmission(QFE[2])
+  end
+  
   if self.PmmHg then
     self:Transmission(ATIS.Sound.MillimetersOfMercury, 0.1)
   else
