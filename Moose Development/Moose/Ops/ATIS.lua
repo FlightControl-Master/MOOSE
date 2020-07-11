@@ -373,6 +373,19 @@ ATIS.RunwayM2T={
   PersianGulf=2,
 }
 
+--- Whether ICAO phraseology is used for ATIS broadcasts.
+-- @type ATIS.ICAOPhraseology
+-- @field #boolean Caucasus true.
+-- @field #boolean Nevada false.
+-- @field #boolean Normandy true.
+-- @field #boolean PersianGulf true.
+ATIS.ICAOPhraseology={
+  Caucasus=true,
+  Nevada=false,
+  Normandy=true,
+  PersianGulf=true
+}
+
 --- Nav point data.
 -- @type ATIS.NavPoint
 -- @field #number frequency Nav point frequency.
@@ -1700,13 +1713,18 @@ function ATIS:onafterBroadcast(From, Event, To)
     self:Transmission(ATIS.Sound.QNH, 0.5)
   end
   self.radioqueue:Number2Transmission(QNH[1])
-  self:Transmission(ATIS.Sound.Decimal, 0.2)
+
+  if ATIS.ICAOPhraseology[UTILS.GetDCSMap()] then
+    self:Transmission(ATIS.Sound.Decimal, 0.2)
+  end
   self.radioqueue:Number2Transmission(QNH[2])
   
   if not self.qnhonly then
     self:Transmission(ATIS.Sound.QFE, 0.75)
     self.radioqueue:Number2Transmission(QFE[1])
-    self:Transmission(ATIS.Sound.Decimal, 0.2)
+    if ATIS.ICAOPhraseology[UTILS.GetDCSMap()] then
+      self:Transmission(ATIS.Sound.Decimal, 0.2)
+    end
     self.radioqueue:Number2Transmission(QFE[2])
   end
   
