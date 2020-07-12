@@ -37,7 +37,7 @@
 -- ===
 -- 
 -- ### Author: **FlightControl**
--- ### Contributions: 
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -48,9 +48,10 @@
 do -- SET_BASE
 
   --- @type SET_BASE
-  -- @field #table Filter
-  -- @field #table Set
-  -- @field #table List
+  -- @field #table Filter Table of filters.
+  -- @field #table Set Table of objects.
+  -- @field #table Index Table of indicies.
+  -- @field #table List Unused table.
   -- @field Core.Scheduler#SCHEDULER CallScheduler
   -- @extends Core.Base#BASE
   
@@ -77,6 +78,10 @@ do -- SET_BASE
     Set = {},
     List = {},
     Index = {},
+    Database = nil,
+    CallScheduler=nil,
+    TimeInterval=nil,
+    YieldInterval=nil,
   }
   
   
@@ -224,8 +229,8 @@ do -- SET_BASE
   
   --- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using a given ObjectName as the index.
   -- @param #SET_BASE self
-  -- @param #string ObjectName
-  -- @param Core.Base#BASE Object
+  -- @param #string ObjectName The name of the object.
+  -- @param Core.Base#BASE Object The object itself.
   -- @return Core.Base#BASE The added BASE Object.
   function SET_BASE:Add( ObjectName, Object )
     self:F2( { ObjectName = ObjectName, Object = Object } )
@@ -234,9 +239,14 @@ do -- SET_BASE
     if self.Set[ObjectName] then
       self:Remove( ObjectName, true )
     end
+    
+    -- Add object to set.
     self.Set[ObjectName] = Object
+    
+    -- Add Object name to Index.
     table.insert( self.Index, ObjectName )
     
+    -- Trigger Added event.
     self:Added( ObjectName, Object )
   end
   
@@ -251,6 +261,81 @@ do -- SET_BASE
     self:T( Object.ObjectName )
     self:Add( Object.ObjectName, Object )
     
+  end
+  
+
+  --- Get the *union* of two sets.
+  -- @param #SET_BASE self
+  -- @param Core.Set#SET_BASE SetB Set *B*.
+  -- @return Core.Set#SET_BASE The union set, i.e. contains objects that are in set *A* **or** in set *B*.
+  function SET_BASE:GetSetUnion(SetB)
+  
+    local union=SET_BASE:New()
+  
+    for _,ObjectA in pairs(self.Set) do
+      union:AddObject(ObjectA)
+    end
+
+    for _,ObjectB in pairs(SetB.Set) do
+      union:AddObject(ObjectB)
+    end
+        
+    return union
+  end
+  
+  --- Get the *intersection* of this set, called *A*, and another set.
+  -- @param #SET_BASE self
+  -- @param Core.Set#SET_BASE SetB Set other set, called *B*.
+  -- @return Core.Set#SET_BASE A set of objects that is included in set *A* **and** in set *B*.
+  function SET_BASE:GetSetIntersection(SetB)
+  
+    local intersection=SET_BASE:New()
+    
+    local union=self:GetSetUnion(SetB)
+    
+    for _,Object in pairs(union.Set) do
+      if self:IsIncludeObject(Object) and SetB:IsIncludeObject(Object) then
+        intersection:AddObject(intersection)  
+      end
+    end
+    
+    return intersection
+  end
+
+  --- Get the *complement* of two sets.
+  -- @param #SET_BASE self
+  -- @param Core.Set#SET_BASE SetB Set other set, called *B*.
+  -- @return Core.Set#SET_BASE The set of objects that are in set *B* but **not** in this set *A*. 
+  function SET_BASE:GetSetComplement(SetB)
+  
+    local complement=SET_BASE:New()
+    
+    local union=self:GetSetUnion(SetA, SetB)
+    
+    for _,Object in pairs(union.Set) do
+      if SetA:IsIncludeObject(Object) and SetB:IsIncludeObject(Object) then
+        intersection:Add(intersection)  
+      end
+    end
+    
+    return intersection
+  end
+
+
+  --- Compare two sets.
+  -- @param #SET_BASE self
+  -- @param Core.Set#SET_BASE SetA First set.
+  -- @param Core.Set#SET_BASE SetB Set to be merged into first set.
+  -- @return Core.Set#SET_BASE The set of objects that are included in SetA and SetB.
+  function SET_BASE:CompareSets(SetA, SetB)
+  
+    for _,ObjectB in pairs(SetB.Set) do
+      if SetA:IsIncludeObject(ObjectB) then
+        SetA:Add(ObjectB)  
+      end
+    end
+    
+    return SetA
   end
   
   
@@ -712,11 +797,21 @@ do -- SET_BASE
   --end
   
   
-  --- Decides whether to include the Object
+  --- Decides whether to include the Object.
   -- @param #SET_BASE self
   -- @param #table Object
   -- @return #SET_BASE self
   function SET_BASE:IsIncludeObject( Object )
+    self:F3( Object )
+    
+    return true
+  end
+
+  --- Decides whether to include the Object.
+  -- @param #SET_BASE self
+  -- @param #table Object
+  -- @return #SET_BASE self
+  function SET_BASE:IsInSet(ObjectName)
     self:F3( Object )
     
     return true
@@ -965,7 +1060,7 @@ do -- SET_GROUP
   -- Note that for each unit in the group that is set, a default cargo bay limit is initialized.
   -- @param Core.Set#SET_GROUP self
   -- @param Wrapper.Group#GROUP group The group which should be added to the set.
-  -- @return self
+  -- @return Core.Set#SET_GROUP self
   function SET_GROUP:AddGroup( group )
   
     self:Add( group:GetName(), group )
@@ -981,7 +1076,7 @@ do -- SET_GROUP
   --- Add GROUP(s) to SET_GROUP.
   -- @param Core.Set#SET_GROUP self
   -- @param #string AddGroupNames A single name or an array of GROUP names.
-  -- @return self
+  -- @return Core.Set#SET_GROUP self
   function SET_GROUP:AddGroupsByName( AddGroupNames )
   
     local AddGroupNamesArray = ( type( AddGroupNames ) == "table" ) and AddGroupNames or { AddGroupNames }
@@ -996,7 +1091,7 @@ do -- SET_GROUP
   --- Remove GROUP(s) from SET_GROUP.
   -- @param Core.Set#SET_GROUP self
   -- @param Wrapper.Group#GROUP RemoveGroupNames A single name or an array of GROUP names.
-  -- @return self
+  -- @return Core.Set#SET_GROUP self
   function SET_GROUP:RemoveGroupsByName( RemoveGroupNames )
   
     local RemoveGroupNamesArray = ( type( RemoveGroupNames ) == "table" ) and RemoveGroupNames or { RemoveGroupNames }
@@ -1909,8 +2004,8 @@ do -- SET_UNIT
   
   --- Remove UNIT(s) from SET_UNIT.
   -- @param Core.Set#SET_UNIT self
-  -- @param Wrapper.Unit#UNIT RemoveUnitNames A single name or an array of UNIT names.
-  -- @return self
+  -- @param #table RemoveUnitNames A single name or an array of UNIT names.
+  -- @return Core.Set#SET_UNIT self
   function SET_UNIT:RemoveUnitsByName( RemoveUnitNames )
   
     local RemoveUnitNamesArray = ( type( RemoveUnitNames ) == "table" ) and RemoveUnitNames or { RemoveUnitNames }
@@ -2080,7 +2175,23 @@ do -- SET_UNIT
     return self
   end
   
-  
+  --- Iterate the SET_UNIT and count how many UNITs are alive.
+  -- @param #SET_UNIT self
+  -- @return #number The number of UNITs alive.
+  function SET_UNIT:CountAlive()
+
+    local Set = self:GetSet()
+    
+    local CountU = 0    
+    for UnitID, UnitData in pairs(Set) do -- For each GROUP in SET_GROUP
+      if UnitData and UnitData:IsAlive() then      
+        CountU = CountU + 1        
+      end
+      
+    end
+    
+    return CountU
+  end  
   
   --- Starts the filtering.
   -- @param #SET_UNIT self
@@ -3098,6 +3209,24 @@ do -- SET_STATIC
     
     return self
   end
+  
+  --- Iterate the SET_STATIC and count how many STATICSs are alive.
+  -- @param #SET_STATIC self
+  -- @return #number The number of UNITs alive.
+  function SET_STATIC:CountAlive()
+
+    local Set = self:GetSet()
+    
+    local CountU = 0    
+    for UnitID, UnitData in pairs(Set) do
+      if UnitData and UnitData:IsAlive() then      
+        CountU = CountU + 1        
+      end
+      
+    end
+    
+    return CountU
+  end    
   
   --- Handles the Database to check on an event (birth) that the Object was added in the Database.
   -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
