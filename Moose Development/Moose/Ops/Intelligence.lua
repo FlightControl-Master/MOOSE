@@ -51,7 +51,7 @@ INTEL = {
 }
 
 --- Detected item info.
--- @type INTEL.DetectedItem
+-- @type INTEL.Contact
 -- @field #string groupname Name of the group.
 -- @field Wrapper.Group#GROUP group The contact group.
 -- @field #string typename Type name of detected item.
@@ -311,7 +311,7 @@ function INTEL:onafterStatus(From, Event, To)
   if Ncontacts>0 then
     text="Detected Contacts:"
     for _,_contact in pairs(self.Contacts) do
-      local contact=_contact --#INTEL.DetectedItem
+      local contact=_contact --#INTEL.Contact
       local dT=timer.getAbsTime()-contact.Tdetected
       text=text..string.format("\n- %s (%s): %s, units=%d, T=%d sec", contact.categoryname, contact.attribute, contact.groupname, contact.group:CountAliveUnits(), dT)
       if contact.mission then
@@ -448,7 +448,7 @@ function INTEL:CreateDetectedItems(detectedunitset)
       ---
     
       -- Create new contact.
-      local item={} --#INTEL.DetectedItem
+      local item={} --#INTEL.Contact
       
       item.groupname=groupname
       item.group=group
@@ -473,7 +473,7 @@ function INTEL:CreateDetectedItems(detectedunitset)
   
   -- Now check if there some groups could not be detected any more.
   for i=#self.Contacts,1,-1 do
-    local item=self.Contacts[i] --#INTEL.DetectedItem
+    local item=self.Contacts[i] --#INTEL.Contact
     
     local group=detectedgroupset:FindGroup(item.groupname)
     
@@ -500,7 +500,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #INTEL.DetectedItem Contact Detected contact.
+-- @param #INTEL.Contact Contact Detected contact.
 function INTEL:onafterNewContact(From, Event, To, Contact)
   self:I(self.lid..string.format("NEW contact %s", Contact.groupname))
   table.insert(self.ContactsUnknown, Contact) 
@@ -511,7 +511,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #INTEL.DetectedItem Contact Detected contact.
+-- @param #INTEL.Contact Contact Detected contact.
 function INTEL:onafterLostContact(From, Event, To, Contact)
   self:I(self.lid..string.format("LOST contact %s", Contact.groupname))
   table.insert(self.ContactsLost, Contact)
@@ -524,11 +524,11 @@ end
 --- Create detected items.
 -- @param #INTEL self
 -- @param #string groupname Name of the contact group.
--- @return #INTEL.DetectedItem 
+-- @return #INTEL.Contact 
 function INTEL:GetContactByName(groupname)
 
   for i,_contact in pairs(self.Contacts) do
-    local contact=_contact --#INTEL.DetectedItem
+    local contact=_contact --#INTEL.Contact
     if contact.groupname==groupname then
       return contact
     end
@@ -539,18 +539,18 @@ end
 
 --- Add a contact to our list.
 -- @param #INTEL self
--- @param #INTEL.DetectedItem Contact The contact to be removed.
+-- @param #INTEL.Contact Contact The contact to be removed.
 function INTEL:AddContact(Contact)
   table.insert(self.Contacts, Contact)
 end
 
 --- Remove a contact from our list.
 -- @param #INTEL self
--- @param #INTEL.DetectedItem Contact The contact to be removed.
+-- @param #INTEL.Contact Contact The contact to be removed.
 function INTEL:RemoveContact(Contact)
 
   for i,_contact in pairs(self.Contacts) do
-    local contact=_contact --#INTEL.DetectedItem
+    local contact=_contact --#INTEL.Contact
     
     if contact.groupname==Contact.groupname then
       table.remove(self.Contacts, i)
@@ -562,7 +562,7 @@ end
 
 --- Remove a contact from our list.
 -- @param #INTEL self
--- @param #INTEL.DetectedItem Contact The contact to be removed.
+-- @param #INTEL.Contact Contact The contact to be removed.
 -- @return #boolean If true, contact was not detected for at least *dTforget* seconds.
 function INTEL:CheckContactLost(Contact)
 
