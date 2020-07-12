@@ -3542,12 +3542,12 @@ function FLIGHTGROUP:SwitchTACANOn(TACANChannel, TACANMorse)
 
   if self:IsAlive() then
 
-    local unit=self.group:GetUnit(1)
+    local unit=self.group:GetUnit(1)  --Wrapper.Unit#UNIT
 
     if unit and unit:IsAlive() then
 
-      local Type=5
-      local System=4
+      local Type=4
+      local System=5
       local UnitID=unit:GetID()
       local TACANMode="Y"
       local Frequency=UTILS.TACANToFrequency(TACANChannel, TACANMode)
