@@ -1455,9 +1455,11 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
   if squad then
 
     if asset.assignment==assignment then
+    
+      local nunits=#asset.template.units
   
       -- Debug text.
-      local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s", squad.name, assignment, asset.unittype, asset.attribute)
+      local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s, nunits=%d %s", squad.name, assignment, asset.unittype, asset.attribute, nunits, tostring(squad.ngrouping))
       self:I(self.lid..text)
       
       -- Create callsign and modex.
@@ -1476,12 +1478,13 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
           local unit = template.units[i]
           
           -- If grouping is larger than units present, copy first unit. 
-          if i>#template.units then
-            unit=UTILS.DeepCopy(template.units[1])          
+          if i>nunits then
+            --unit=UTILS.DeepCopy(template.units[1])
+            table.insert(template.units, UTILS.DeepCopy(template.units[1]))          
           end
           
-          --Remove units if original template contains more than in grouping.
-          if squad.ngrouping<#template.units and i>#template.units then
+          -- Remove units if original template contains more than in grouping.
+          if squad.ngrouping<nunits and i>nunits then
             unit=nil
           end
         end

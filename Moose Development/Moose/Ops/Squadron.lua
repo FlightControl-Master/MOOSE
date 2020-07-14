@@ -245,6 +245,17 @@ function SQUADRON:SetRadio(Frequency, Modulation)
   return self
 end
 
+--- Set number of units in groups.
+-- @param #SQUADRON self
+-- @param #nunits Number of units. Must be >=1 and <=4. Default 2.
+-- @return #SQUADRON self
+function SQUADRON:SetGrouping(nunits)
+  self.grouping=nunits or 2
+  if self.grouping<1 then self.grouping=1 end
+  if self.grouping>4 then self.grouping=4 end
+  return self
+end
+
 --- Set mission types this squadron is able to perform.
 -- @param #SQUADRON self
 -- @param #table MissionTypes Table of mission types. Can also be passed as a #string if only one type.

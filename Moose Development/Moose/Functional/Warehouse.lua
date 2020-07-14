@@ -5798,19 +5798,12 @@ function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, alias)
   template.route = {}
   template.route.routeRelativeTOT=true
   template.route.points = {}
-  
-  local N=asset.grouping or #template.units
 
   -- Handle units.
-  for i=1,N do
+  for i=1,#template.units do
 
     -- Unit template.
     local unit = template.units[i]
-    
-    -- If more units are in the 
-    if i>#template.units then
-      unit=UTILS.DeepCopy(template.units[1])
-    end
 
     -- Nillify the unit ID.
     unit.unitId=nil
