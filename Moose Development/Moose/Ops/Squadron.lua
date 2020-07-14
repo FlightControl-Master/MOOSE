@@ -23,6 +23,7 @@
 -- @field #string templatename Name of the template group.
 -- @field #string aircrafttype Type of the airframe the squadron is using.
 -- @field Wrapper.Group#GROUP templategroup Template group.
+-- @field #number ngrouping User defined number of units in the asset group.
 -- @field #table assets Squadron assets.
 -- @field #table missiontypes Capabilities (mission types and performances) of the squadron.
 -- @field #string livery Livery of the squadron.

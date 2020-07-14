@@ -1463,6 +1463,31 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
       -- Create callsign and modex.
       squad:GetCallsign(asset)
       squad:GetModex(asset)
+      
+      if squad.ngrouping then
+        local template=asset.template
+        
+        local N=math.max(#template.units, squad.ngrouping)
+  
+        -- Handle units.
+        for i=1,N do
+      
+          -- Unit template.
+          local unit = template.units[i]
+          
+          -- If grouping is larger than units present, copy first unit. 
+          if i>#template.units then
+            unit=UTILS.DeepCopy(template.units[1])          
+          end
+          
+          --Remove units if original template contains more than in grouping.
+          if squad.ngrouping<#template.units and i>#template.units then
+            unit=nil
+          end
+        end
+      
+        asset.nunits=squad.ngrouping
+      end
 
       -- Add asset to squadron.
       squad:AddAsset(asset)
