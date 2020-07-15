@@ -398,6 +398,45 @@ function INTEL:UpdateIntel()
   -- Create detected contacts.  
   self:CreateDetectedItems(DetectedSet)
   
+  -- Paint a picture of the battlefield.
+  self:PaintPicture()
+  
+end
+
+
+--- Create detected items.
+-- @param #INTEL self 
+function INTEL:PaintPicture()
+
+
+  local contacts={}
+  for _,_contact in pairs(self.Contacts) do
+    local contact=_contact --#INTEL.Contact    
+    table.insert(contacts, contact.groupname)    
+  end
+  
+  local neighbours={}
+  for _,_cA in pairs(self.Contacts) do
+    local cA=_cA --#INTEL.Contact
+    
+    neighbours[cA.groupname]={}
+    
+    for _,_cB in pairs(self.Contacts) do
+      local cB=_cB --#INTEL.Contact
+      
+      if cA.groupname~=cB.groupname then
+      
+        local dist=cA.position:Get2DDistance(cB.position)
+        
+        if dist<=10*1000 then
+          neighbours[cA.groupname]={contactname=cB.groupname, distance=dist}
+        end
+      
+      end          
+    end    
+  end
+
+
 end
 
 --- Create detected items.
@@ -521,10 +560,10 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create detected items.
+--- Get a contact by name.
 -- @param #INTEL self
 -- @param #string groupname Name of the contact group.
--- @return #INTEL.Contact 
+-- @return #INTEL.Contact The contact.
 function INTEL:GetContactByName(groupname)
 
   for i,_contact in pairs(self.Contacts) do
@@ -539,7 +578,7 @@ end
 
 --- Add a contact to our list.
 -- @param #INTEL self
--- @param #INTEL.Contact Contact The contact to be removed.
+-- @param #INTEL.Contact Contact The contact to be added.
 function INTEL:AddContact(Contact)
   table.insert(self.Contacts, Contact)
 end
@@ -560,7 +599,7 @@ function INTEL:RemoveContact(Contact)
 
 end
 
---- Remove a contact from our list.
+--- Check if a contact was lost.
 -- @param #INTEL self
 -- @param #INTEL.Contact Contact The contact to be removed.
 -- @return #boolean If true, contact was not detected for at least *dTforget* seconds.
