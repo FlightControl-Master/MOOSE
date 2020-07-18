@@ -33,6 +33,8 @@
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
 -- @field Wrapper.Marker#MARKER marker F10 map marker.
+-- @field #boolean markerOn If true, display marker on F10 map with the AUFTRAG status.
+-- @field #numberr markerCoaliton Coalition to which the marker is dispayed.
 -- @field #table DCStask DCS task structure.
 -- @field #number Ntargets Number of mission targets.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
@@ -259,6 +261,8 @@ AUFTRAG = {
   missionFraction    =   0.5,
   enrouteTasks       =    {},
   marker             =   nil,
+  markerOn           =   nil,
+  markerCoalition    =   nil,
   conditionStart     =    {},
   conditionSuccess   =    {},
   conditionFailure   =    {},
@@ -416,7 +420,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.3.0"
+AUFTRAG.version="0.3.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1302,6 +1306,16 @@ function AUFTRAG:SetName(Name)
   return self
 end
 
+--- Enable markers, which dispay the mission status on the F10 map.
+-- @param #AUFTRAG self
+-- @param #number Coalition The coaliton side to which the markers are dispayed. Default is to all.
+-- @return #AUFTRAG self
+function AUFTRAG:SetEnableMarkers(Coalition)
+  self.markerOn=true
+  self.markerCoaliton=Coalition or -1
+  return self
+end
+
 --- Set weapon type used for the engagement.
 -- @param #AUFTRAG self
 -- @param #number WeaponType Weapon type. Default is ENUMS.WeaponFlag.Auto
@@ -1821,7 +1835,10 @@ function AUFTRAG:onafterStatus(From, Event, To)
   end
   
   -- Update F10 marker.
-  self:UpdateMarker()
+  if self.markerOn then
+    self:UpdateMarker()
+  end
+  
 end
 
 --- Evaluate mission outcome - success or failure.
@@ -2863,7 +2880,12 @@ function AUFTRAG:UpdateMarker()
     -- Get target coordinates. Can be nil!
     local targetcoord=self:GetTargetCoordinate()
     
-    self.marker=MARKER:New(targetcoord, text):ReadOnly():ToAll()
+    if self.markerCoaliton and self.markerCoaliton>=0 then
+      self.marker=MARKER:New(targetcoord, text):ReadOnly():ToCoalition(self.markerCoaliton)
+    else
+      self.marker=MARKER:New(targetcoord, text):ReadOnly():ToAll()
+    end      
+      
     
   else
   

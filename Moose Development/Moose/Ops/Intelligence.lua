@@ -24,6 +24,8 @@
 -- @field #table Contacts Table of detected items.
 -- @field #table ContactsLost Table of lost detected items.
 -- @field #table ContactsUnknown Table of new detected items.
+-- @field #table Clusters Clusters of detected groups.
+-- @field #number clustercounter Running number of clusters.
 -- @field #number dTforget Time interval in seconds before a known contact which is not detected any more is forgotten.
 -- @extends Core.Fsm#FSM
 
@@ -48,6 +50,8 @@ INTEL = {
   Contacts        =    {},
   ContactsLost    =    {},
   ContactsUnknown =    {},
+  Clusters        =    {},
+  clustercounter  =     1,
 }
 
 --- Detected item info.
@@ -64,6 +68,15 @@ INTEL = {
 -- @field DCS#Vec3 velocity 3D velocity vector. Components x,y and z in m/s.
 -- @field #number speed Last known speed.
 -- @field #number markerID F10 map marker ID.
+
+--- Cluster info.
+-- @type INTEL.Cluster
+-- @field #number size Number of groups in the cluster.
+-- @field #table Contacts Table of contacts in the cluster.
+-- @field #number threatlevelMax Max threat level of cluster.
+-- @field #number threatlevelSum Sum of threat levels.
+-- @field Wrapper.Marker#MARKER marker F10 marker.
+
 
 --- INTEL class version.
 -- @field #string version
@@ -404,40 +417,8 @@ function INTEL:UpdateIntel()
 end
 
 
---- Create detected items.
--- @param #INTEL self 
-function INTEL:PaintPicture()
 
 
-  local contacts={}
-  for _,_contact in pairs(self.Contacts) do
-    local contact=_contact --#INTEL.Contact    
-    table.insert(contacts, contact.groupname)    
-  end
-  
-  local neighbours={}
-  for _,_cA in pairs(self.Contacts) do
-    local cA=_cA --#INTEL.Contact
-    
-    neighbours[cA.groupname]={}
-    
-    for _,_cB in pairs(self.Contacts) do
-      local cB=_cB --#INTEL.Contact
-      
-      if cA.groupname~=cB.groupname then
-      
-        local dist=cA.position:Get2DDistance(cB.position)
-        
-        if dist<=10*1000 then
-          neighbours[cA.groupname]={contactname=cB.groupname, distance=dist}
-        end
-      
-      end          
-    end    
-  end
-
-
-end
 
 --- Create detected items.
 -- @param #INTEL self
@@ -517,7 +498,7 @@ function INTEL:CreateDetectedItems(detectedunitset)
     local group=detectedgroupset:FindGroup(item.groupname)
     
     -- Check if deltaT>Tforget. We dont want quick oscillations between detected and undetected states.
-    if self:CheckContactLost(item) then
+    if self:_CheckContactLost(item) then
     
       -- Trigger LostContact event. This also adds the contact to the self.ContactsLost table.
       self:LostContact(item)
@@ -603,7 +584,7 @@ end
 -- @param #INTEL self
 -- @param #INTEL.Contact Contact The contact to be removed.
 -- @return #boolean If true, contact was not detected for at least *dTforget* seconds.
-function INTEL:CheckContactLost(Contact)
+function INTEL:_CheckContactLost(Contact)
 
   -- Group dead?
   if Contact.group==nil or not Contact.group:IsAlive() then
@@ -632,6 +613,155 @@ function INTEL:CheckContactLost(Contact)
     return false
   end
   
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Cluster Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Create detected items.
+-- @param #INTEL self 
+function INTEL:PaintPicture()
+
+  local contacts={}
+  for _,_contact in pairs(self.Contacts) do
+    local contact=_contact --#INTEL.Contact
+    if not self:CheckContactInClusters(contact) then
+      table.insert(contacts, contact.groupname)
+    end
+  end
+  
+  local contacts={}
+  for i,_cA in pairs(self.Contacts) do
+    local cA=_cA --#INTEL.Contact
+    
+    if not self:CheckContactInClusters(cA) then
+    
+      local n=0
+      local neighbours={}
+      for _,_cB in pairs(self.Contacts) do
+        local cB=_cB --#INTEL.Contact
+        
+        if cA.groupname~=cB.groupname and not self:CheckContactInClusters(cB) then
+        
+            local dist=cA.position:Get2DDistance(cB.position)
+            
+            if dist<=10*1000 then
+              n=n+1
+              table.insert(neighbours, {name=cB.groupname, distance=dist})
+            end
+        
+        end          
+      end
+      
+      table.insert(contacts, {name=cA.groupname, n=n, neighbours=neighbours})
+
+    end    
+  end
+
+  -- Sort contacts with respect to number of neighbours.
+  local function sort(a,b)
+    return a.n>b.n
+  end
+  table.sort(contacts, sort)
+  
+  
+  --- Remove a contact.
+  local function removecontact(contactname)
+    for i,contact in pairs(contacts) do
+      if contact.name==contactname then
+        table.remove(contacts, i)
+      end
+    end
+  end
+  
+  --[[
+  env.info("FF before removing neighbours")
+  for _,contact in pairs(contacts) do
+    env.info(string.format("Group %s has %d neighbours", contact.name, contact.n))
+  end
+  ]]
+  
+  
+  local function checkcontact(contact)
+  
+    for _,c in pairs(contacts) do
+      if c.name==contact.name then
+        return true
+      end
+    end
+    return false
+  end
+  
+  for _,contact in pairs(UTILS.DeepCopy(contacts)) do
+  
+    if checkcontact(contact) then
+      
+      local cluster={} --#INTEL.Cluster
+      cluster.index=self.clustercounter
+      
+      cluster.groups={}
+      table.insert(cluster.groups, contact.name)
+      
+      cluster.Contacts={}
+      table.insert(cluster.groups, self:GetContactByName(contact.name))
+      
+      local Contact=self:GetContactByName(contact.name)
+      cluster.coordinate=Contact.position
+      
+      cluster.size=1
+      for _,neighbour in pairs(contact.neighbours) do
+      
+        removecontact(neighbour.name)
+        
+        table.insert(cluster.groups, neighbour.name)
+        cluster.size=cluster.size+1
+        
+        table.insert(cluster.groups, self:GetContactByName(neighbour.name))
+      end
+      
+      local text=string.format("Cluster #%d. Size %d", cluster.index, cluster.size)
+      cluster.maker=MARKER:New(cluster.coordinate, text):ToAll()
+      
+      -- Add cluster.
+      table.insert(self.Clusters, cluster)
+      
+      -- Increase couter.
+      self.clustercounter=self.clustercounter+1
+
+    end    
+  end
+
+  --[[  
+  table.sort(contacts, sort)
+
+  env.info("FF after removing neighbours")
+  for i,cluster in pairs(clusters) do
+    env.info(string.format("Cluster %d has %d groups", i, cluster.n))
+  end
+  ]]
+
+end
+
+--- Check if contact is in any known cluster.
+-- @param #INTEL self
+-- @param #INTEL.Contact contact The contact.
+-- @return #boolean If true, contact is in clusters 
+function INTEL:CheckContactInClusters(contact)
+
+  for _,_cluster in pairs(self.Clusters) do
+    local cluster=_cluster --#INTEL.Cluster
+    
+    for _,_contact in pairs(cluster.Contacts) do
+      local Contact=_contact --#INTEL.Contact
+      
+      if Contact.groupname==contact.groupname then
+        return true
+      end
+    end
+  end
+
+  return false
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

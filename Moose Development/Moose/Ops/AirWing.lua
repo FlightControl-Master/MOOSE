@@ -1479,7 +1479,6 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
           
           -- If grouping is larger than units present, copy first unit. 
           if i>nunits then
-            --unit=UTILS.DeepCopy(template.units[1])
             table.insert(template.units, UTILS.DeepCopy(template.units[1]))          
           end
           
