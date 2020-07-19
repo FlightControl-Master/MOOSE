@@ -1822,7 +1822,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
     local groupdata=_groupdata --#AUFTRAG.GroupData
     text=text..string.format("\n- %s: status mission=%s opsgroup=%s", groupname, groupdata.status, groupdata.opsgroup and groupdata.opsgroup:GetState() or "N/A")
   end
-  self:T(self.lid..text)
+  self:I(self.lid..text)
 
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
 
