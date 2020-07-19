@@ -488,17 +488,20 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after "MissionAssign" event. Mission is added to the AIRWING mission queue.
+--- On after "AssignMissionAssignAirforce" event.
 -- @param #CHIEF self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.AirWing#AIRWING Airwing The AIRWING.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function CHIEF:onafterMissionAssign(From, Event, To, Airwing, Mission)
+function CHIEF:onafterAssignMissionAirforce(From, Event, To, Mission)
 
-  self:I(self.lid..string.format("Assigning mission %s (%s) to airwing %s", Mission.name, Mission.type, Airwing.alias))
-  Airwing:AddMission(Mission)
+  if self.wingcommander then
+    self:I(self.lid..string.format("Assigning mission %s (%s) to WINGCOMMANDER", Mission.name, Mission.type))
+    self.wingcommander:AddMission(Mission)
+  else
+    self:E(self.lid..string.format("Mission cannot be assigned as no WINGCOMMANDER is defined."))
+  end
 
 end
 

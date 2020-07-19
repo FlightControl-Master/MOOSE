@@ -1810,7 +1810,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
   local commander=self.wingcommander and tostring(self.wingcommander.coalition) or "N/A"
 
   -- Info message.
-  self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, commander))
+  self:T(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, commander))
 
   -- Check for error.  
   if fsmstate~=self.status then
@@ -1822,7 +1822,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
     local groupdata=_groupdata --#AUFTRAG.GroupData
     text=text..string.format("\n- %s: status mission=%s opsgroup=%s", groupname, groupdata.status, groupdata.opsgroup and groupdata.opsgroup:GetState() or "N/A")
   end
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
 
@@ -2885,7 +2885,6 @@ function AUFTRAG:UpdateMarker()
     else
       self.marker=MARKER:New(targetcoord, text):ReadOnly():ToAll()
     end      
-      
     
   else
   

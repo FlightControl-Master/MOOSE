@@ -281,7 +281,6 @@ end
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
 -- @param #INTEL self
--- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
@@ -297,7 +296,6 @@ end
 
 --- On after "Status" event.
 -- @param #INTEL self
--- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
@@ -619,15 +617,55 @@ end
 -- Cluster Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create detected items.
+--- Paint picture of the battle field.
 -- @param #INTEL self 
 function INTEL:PaintPicture()
+
+  -- First remove all lost contacts from clusters.
+  for _,_contact in pairs(self.ContactsLost) do
+    local contact=_contact --#INTEL.Contact
+    local cluster=self:GetClustersOfContact(contact)
+    if cluster then
+      self:RemoveContactFromCluster(contact, cluster)
+    end
+  end
+  
+  
+  for _,_contact in pairs(self.Contacts) do
+    local contact=_contact --#INTEL.Contact
+    
+    if not self:CheckContactInClusters(contact) then
+    
+      local cluster=self:IsContactPartOfAnyClusters(contact)
+      
+      if cluster then
+        self:AddContactToCluster(contact, cluster)
+      else
+      
+        local newcluster=self:CreateCluster(contact.position)
+        self:AddContactToCluster(contact, newcluster)
+      end
+    
+    end
+    
+  end
+  
+  if false then
 
   local contacts={}
   for _,_contact in pairs(self.Contacts) do
     local contact=_contact --#INTEL.Contact
     if not self:CheckContactInClusters(contact) then
-      table.insert(contacts, contact.groupname)
+      
+      -- Check if contact is part of known clusters.
+      local cluster=self:IsContactPartOfAnyCluster(contact)
+      
+      if cluster then
+        self:AddContactToCluster(contact, cluster)
+      else
+        table.insert(contacts, contact.groupname)
+      end
+      
     end
   end
   
@@ -674,17 +712,9 @@ function INTEL:PaintPicture()
       end
     end
   end
-  
-  --[[
-  env.info("FF before removing neighbours")
-  for _,contact in pairs(contacts) do
-    env.info(string.format("Group %s has %d neighbours", contact.name, contact.n))
-  end
-  ]]
-  
-  
-  local function checkcontact(contact)
-  
+
+  --- Check if a contact is in the list.  
+  local function checkcontact(contact)  
     for _,c in pairs(contacts) do
       if c.name==contact.name then
         return true
@@ -696,51 +726,124 @@ function INTEL:PaintPicture()
   for _,contact in pairs(UTILS.DeepCopy(contacts)) do
   
     if checkcontact(contact) then
-      
-      local cluster={} --#INTEL.Cluster
-      cluster.index=self.clustercounter
-      
-      cluster.groups={}
-      table.insert(cluster.groups, contact.name)
-      
-      cluster.Contacts={}
-      table.insert(cluster.groups, self:GetContactByName(contact.name))
-      
+    
       local Contact=self:GetContactByName(contact.name)
-      cluster.coordinate=Contact.position
+    
+      local cluster=self:CreateCluster(Contact.position)
       
-      cluster.size=1
+      self:AddContactToCluster(Contact, cluster)
+      
       for _,neighbour in pairs(contact.neighbours) do
-      
+        
+        -- Remove contact from table as this is now part of a cluster.
         removecontact(neighbour.name)
         
-        table.insert(cluster.groups, neighbour.name)
-        cluster.size=cluster.size+1
-        
-        table.insert(cluster.groups, self:GetContactByName(neighbour.name))
+        local Neighbour=self:GetContactByName(neighbour.name)
+                
+        self:AddContactToCluster(Neighbour, cluster)
+
       end
       
-      local text=string.format("Cluster #%d. Size %d", cluster.index, cluster.size)
-      cluster.maker=MARKER:New(cluster.coordinate, text):ToAll()
-      
-      -- Add cluster.
-      table.insert(self.Clusters, cluster)
-      
-      -- Increase couter.
-      self.clustercounter=self.clustercounter+1
 
     end    
   end
-
-  --[[  
-  table.sort(contacts, sort)
-
-  env.info("FF after removing neighbours")
-  for i,cluster in pairs(clusters) do
-    env.info(string.format("Cluster %d has %d groups", i, cluster.n))
+  
+  end -- if false then
+  
+  -- Update F10 marker text if cluster has changed.
+  for _,cluster in pairs(self.Clusters) do
+      -- Update F10 marker.
+      self:UpdateClusterMarker(cluster)
   end
-  ]]
 
+end
+
+--- Create a new cluster.
+-- @param #INTEL self
+-- @param Core.Point#COORDINATE coordinate The coordinate of the cluster.
+-- @return #INTEL.Cluster cluster The cluster. 
+function INTEL:CreateCluster(coordinate)
+
+  -- Create new cluster
+  local cluster={} --#INTEL.Cluster
+  
+  cluster.index=self.clustercounter
+  cluster.coordinate=coordinate  
+  cluster.threatlevelSum=0
+  cluster.threatlevelMax=0
+  cluster.size=0
+  cluster.Contacts={}
+    
+  -- Add cluster.
+  table.insert(self.Clusters, cluster)
+      
+  -- Increase counter.
+  self.clustercounter=self.clustercounter+1  
+
+  return cluster
+end
+
+--- Add a contact to the cluster.
+-- @param #INTEL self
+-- @param #INTEL.Contact contact The contact.
+-- @param #INTEL.Cluster cluster The cluster. 
+function INTEL:AddContactToCluster(contact, cluster)
+
+  if contact and cluster then
+    
+    -- Add neighbour to cluster contacts.
+    table.insert(cluster.Contacts, contact)
+    
+    cluster.threatlevelSum=cluster.threatlevelSum+contact.threatlevel
+    
+    cluster.size=cluster.size+1
+  end
+
+end
+
+--- Remove a contact from a cluster.
+-- @param #INTEL self
+-- @param #INTEL.Contact contact The contact.
+-- @param #INTEL.Cluster cluster The cluster. 
+function INTEL:RemoveContactFromCluster(contact, cluster)
+
+  if contact and cluster then
+  
+    for i,_contact in pairs(cluster.Contacts) do
+      local Contact=_contact --#INTEL.Contact
+      
+      if Contact.groupname==contact.groupname then
+      
+        cluster.threatlevelSum=cluster.threatlevelSum-contact.threatlevel
+        cluster.size=cluster.size-1
+        
+        table.remove(cluster.Contacts, i)
+              
+        return
+      end
+    
+    end
+    
+  end
+
+end
+
+--- Calculate cluster threatlevel sum.
+-- @param #INTEL self
+-- @param #INTEL.Cluster cluster The cluster of contacts.
+-- @return #number Sum of all threat levels of all groups in the cluster. 
+function INTEL:CalcClusterThreatlevelSum(cluster)
+
+  local threatlevel=0
+  
+  for _,_contact in pairs(cluster.Contacts) do
+    local contact=_contact --#INTEL.Contact
+    
+    threatlevel=threatlevel+contact.threatlevel
+    
+  end
+
+  return threatlevel
 end
 
 --- Check if contact is in any known cluster.
@@ -762,6 +865,71 @@ function INTEL:CheckContactInClusters(contact)
   end
 
   return false
+end
+
+--- Check if contact is close to any contact of known clusters.
+-- @param #INTEL self
+-- @param #INTEL.Contact contact The contact.
+-- @return #INTEL.Cluster The cluster this contact is part of or nil otherwise.
+function INTEL:IsContactPartOfAnyClusters(contact)
+
+  for _,_cluster in pairs(self.Clusters) do
+    local cluster=_cluster --#INTEL.Cluster
+    
+    for _,_contact in pairs(cluster.Contacts) do
+      local Contact=_contact --#INTEL.Contact
+      
+      local dist=Contact.position:Get2DDistance(contact.position)
+      
+      if dist<10*1000 then
+        return cluster
+      end
+      
+    end
+    
+  end
+
+  return nil
+end
+--- Check if contact is in any known cluster.
+-- @param #INTEL self
+-- @param #INTEL.Contact contact The contact.
+-- @return #INTEL.Cluster The cluster this contact belongs to or nil. 
+function INTEL:GetClustersOfContact(contact)
+
+  for _,_cluster in pairs(self.Clusters) do
+    local cluster=_cluster --#INTEL.Cluster
+    
+    for _,_contact in pairs(cluster.Contacts) do
+      local Contact=_contact --#INTEL.Contact
+      
+      if Contact.groupname==contact.groupname then
+        return cluster
+      end
+    end
+  end
+
+  return nil
+end
+
+--- Update cluster F10 marker.
+-- @param #INTEL self
+-- @param #INTEL.Cluster cluster The cluster. 
+function INTEL:UpdateClusterMarker(cluster)
+
+  -- Create a marker.
+  local text=string.format("Cluster #%d. Size %d, TLsum=%d", cluster.index, cluster.size, cluster.threatlevelSum)
+
+  if not  cluster.marker then
+    cluster.marker=MARKER:New(cluster.coordinate, text):ToAll()    
+  else
+  
+    if cluster.marker.text~=text then
+      cluster.marker:UpdateText(text)
+    end
+  
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
