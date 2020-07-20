@@ -2464,7 +2464,7 @@ function AIRBOSS:AddRecoveryWindow(starttime, stoptime, case, holdingoffset, tur
   local Tstart=UTILS.ClockToSeconds(starttime)
 
   -- Set stop time.
-  local Tstop=UTILS.ClockToSeconds(stoptime or Tstart+90*60)
+  local Tstop=stoptime and UTILS.ClockToSeconds(stoptime) or Tstart+90*60
 
   -- Consistancy check for timing.
   if Tstart>Tstop then

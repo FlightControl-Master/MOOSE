@@ -66,8 +66,10 @@ INTEL = {
 -- @field #number Tdetected Time stamp in abs. mission time seconds when this item was last detected.
 -- @field Core.Point#COORDINATE position Last known position of the item.
 -- @field DCS#Vec3 velocity 3D velocity vector. Components x,y and z in m/s.
--- @field #number speed Last known speed.
--- @field #number markerID F10 map marker ID.
+-- @field #number speed Last known speed in m/s.
+-- @field #boolean isship
+-- @field #boolean ishelo
+-- @field #boolean isgrund
 
 --- Cluster info.
 -- @type INTEL.Cluster
@@ -921,7 +923,7 @@ function INTEL:GetClusterCoordinate(cluster)
     
     x=x+contact.position.x
     y=y+contact.position.y
-    y=y+contact.position.z
+    z=z+contact.position.z
     n=n+1
     
   end
@@ -970,7 +972,6 @@ function INTEL:UpdateClusterMarker(cluster, newcoordinate)
     local refresh=false
   
     if cluster.marker.text~=text then
-      --cluster.marker:UpdateText(text)
       cluster.marker.text=text
       refresh=true
     end

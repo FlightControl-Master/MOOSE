@@ -26,6 +26,7 @@ __Moose.Include( 'Scripts/Moose/Core/Spawn.lua' )
 __Moose.Include( 'Scripts/Moose/Core/SpawnStatic.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Goal.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Spot.lua' )
+__Moose.Include( 'Scripts/Moose/Core/Astar.lua' )
 
 __Moose.Include( 'Scripts/Moose/Wrapper/Object.lua' )
 __Moose.Include( 'Scripts/Moose/Wrapper/Identifiable.lua' )

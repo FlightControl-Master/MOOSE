@@ -1921,15 +1921,18 @@ do -- COORDINATE
   --- Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoordinate
+  -- @param #number OFfset Height offset in meters. Default 2 m.
   -- @return #boolean true If the ToCoordinate has LOS with the Coordinate, otherwise false.
-  function COORDINATE:IsLOS( ToCoordinate )
+  function COORDINATE:IsLOS( ToCoordinate, Offset )
+  
+    Offset=Offset or 2
 
     -- Measurement of visibility should not be from the ground, so Adding a hypotethical 2 meters to each Coordinate.
     local FromVec3 = self:GetVec3()
-    FromVec3.y = FromVec3.y + 2
+    FromVec3.y = FromVec3.y + Offset
 
     local ToVec3 = ToCoordinate:GetVec3()
-    ToVec3.y = ToVec3.y + 2
+    ToVec3.y = ToVec3.y + Offset
 
     local IsLOS = land.isVisible( FromVec3, ToVec3 )
 
