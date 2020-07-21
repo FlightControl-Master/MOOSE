@@ -1,4 +1,4 @@
---- **Core** - Pathfinding.
+--- **Core** - A* Pathfinding.
 --
 -- **Main Features:**
 --
@@ -272,7 +272,7 @@ end
 -- @param #ASTAR.Node nodeA Node A.
 -- @param #ASTAR.Node nodeB Node B.
 -- @return #number Distance between nodes in meters.
-function ASTAR:dist_between ( nodeA, nodeB )
+function ASTAR:DistNodes ( nodeA, nodeB )
   return nodeA.coordinate:Get2DDistance(nodeB.coordinate)
 end
 
@@ -281,8 +281,8 @@ end
 -- @param #ASTAR.Node nodeA Node A.
 -- @param #ASTAR.Node nodeB Node B.
 -- @return #number Distance between nodes in meters.
-function ASTAR:heuristic_cost_estimate( nodeA, nodeB )
-  return self:dist_between(nodeA, nodeB)
+function ASTAR:HeuristicCost( nodeA, nodeB )
+  return self:DistNodes(nodeA, nodeB)
 end
 
 --- Function
@@ -318,7 +318,7 @@ end
 
 --- Function
 -- @param #ASTAR self
-function ASTAR:neighbor_nodes ( theNode, nodes )
+function ASTAR:neighbor_nodes(theNode, nodes)
 
   local neighbors = {}
   for _, node in ipairs ( nodes ) do
@@ -360,11 +360,11 @@ end
 
 --- Function
 -- @param #ASTAR self
-function ASTAR:unwind_path ( flat_path, map, current_node )
+function ASTAR:UnwindPath( flat_path, map, current_node )
 
   if map [ current_node ] then
     table.insert ( flat_path, 1, map [ current_node ] ) 
-    return self:unwind_path ( flat_path, map, map [ current_node ] )
+    return self:UnwindPath ( flat_path, map, map [ current_node ] )
   else
     return flat_path
   end
@@ -393,14 +393,14 @@ function ASTAR:GetPath()
   
   g_score [ start ] = 0
   
-  f_score [ start ] = g_score [ start ] + self:heuristic_cost_estimate ( start, goal )
+  f_score [ start ] = g_score [ start ] + self:HeuristicCost ( start, goal )
 
   while #openset > 0 do
   
     local current = self:lowest_f_score ( openset, f_score )
     
     if current == goal then
-      local path = self:unwind_path ( {}, came_from, goal )
+      local path = self:UnwindPath ( {}, came_from, goal )
       table.insert(path, goal)
       return path
     end
@@ -414,13 +414,13 @@ function ASTAR:GetPath()
     
       if self:not_in ( closedset, neighbor ) then
       
-        local tentative_g_score = g_score [ current ] + self:dist_between ( current, neighbor )
+        local tentative_g_score = g_score [ current ] + self:DistNodes ( current, neighbor )
          
         if self:not_in ( openset, neighbor ) or tentative_g_score < g_score [ neighbor ] then
         
           came_from   [ neighbor ] = current
           g_score   [ neighbor ] = tentative_g_score
-          f_score   [ neighbor ] = g_score [ neighbor ] + self:heuristic_cost_estimate ( neighbor, goal )
+          f_score   [ neighbor ] = g_score [ neighbor ] + self:HeuristicCost ( neighbor, goal )
           
           if self:not_in ( openset, neighbor ) then
             table.insert ( openset, neighbor )

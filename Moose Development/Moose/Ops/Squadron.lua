@@ -133,7 +133,7 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   self:SetEngagementRange()
   
   -- Everyone can ORBIT.
-  self:AddMissonCapability(AUFTRAG.Type.ORBIT)
+  self:AddMissionCapability(AUFTRAG.Type.ORBIT)
   
   self.attribute=self.templategroup:GetAttribute()
   
@@ -261,7 +261,7 @@ end
 -- @param #table MissionTypes Table of mission types. Can also be passed as a #string if only one type.
 -- @param #number Performance Performance describing how good this mission can be performed. Higher is better. Default 50. Max 100.
 -- @return #SQUADRON self
-function SQUADRON:AddMissonCapability(MissionTypes, Performance)
+function SQUADRON:AddMissionCapability(MissionTypes, Performance)
 
   -- Ensure Missiontypes is a table.
   if MissionTypes and type(MissionTypes)~="table" then

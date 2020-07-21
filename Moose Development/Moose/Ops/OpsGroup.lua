@@ -39,6 +39,7 @@
 -- @field #number speedmax Max speed in km/h.
 -- @field #number speedCruise Cruising speed in km/h.
 -- @field #boolean passedfinalwp Group has passed the final waypoint.
+-- @field #number wpcounter Running number counting waypoints.
 -- @field #boolean respawning Group is being respawned.
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
@@ -117,6 +118,7 @@ OPSGROUP = {
   inzones            =   nil,
   groupinitialized   =   nil,
   respawning         =   nil,
+  wpcounter          =     1,
 }
 
 --- Status of group element.
@@ -200,6 +202,19 @@ OPSGROUP.TaskType={
 -- @field #number MissilesAS Amount of anti-ship missiles.
 -- @field #number MissilesCR Amount of cruise missiles.
 -- @field #number MissilesBM Amount of ballistic missiles.
+
+--- Waypoint data.
+-- @type OPSGROUP.Waypoint
+-- @field #table wp DCS waypoint table.
+-- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
+-- @field #number speed Speed in m/s.
+-- @field #number altitude Altitude in meters. For submaries use negative sign for depth.
+-- @field #number index Waypoint index. This might change as waypoints are added and removed.
+-- @field #number uid Waypoint's unit id, which is a running number.
+-- @field #boolean onroad If true, ground group takes a road.
+-- @field #number formation The formation for this waypoint.
+-- @field #boolean detour If true, this waypoint is not part of the normal route.
+-- @field #string action Waypoint action (turning point, etc.). Ground groups have the formation here.
 
 --- NavyGroup version.
 -- @field #string version
@@ -632,6 +647,70 @@ end
 -- Waypoint Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Get the waypoint from its unique ID.
+-- @param #OPSGROUP self
+-- @param #number uid Waypoint unique ID.
+-- @return #OPSGROUP.Waypoint Waypoint data.
+function OPSGROUP:GetWaypointByID(uid)
+
+  for _,_waypoint in pairs(self.waypoints) do
+    local waypoint=_waypoint --#OPSGROUP.Waypoint
+    if waypoint.uid==uid then
+      return waypoint
+    end
+  end
+
+  return nil
+end
+
+--- Get the waypoint from its index.
+-- @param #OPSGROUP self
+-- @param #number index Waypoint index.
+-- @return #OPSGROUP.Waypoint Waypoint data.
+function OPSGROUP:GetWaypointByIndex(index)
+
+  for i,_waypoint in pairs(self.waypoints) do
+    local waypoint=_waypoint --#OPSGROUP.Waypoint
+    if i==index then
+      return waypoint
+    end
+  end
+
+  return nil
+end
+
+--- Get the waypoint index (its position in the current waypoints table).
+-- @param #OPSGROUP self
+-- @param #number uid Waypoint unique ID.
+-- @return #OPSGROUP.Waypoint Waypoint data.
+function OPSGROUP:GetWaypointIndex(uid)
+
+  for i,_waypoint in pairs(self.waypoints) do
+    local waypoint=_waypoint --#OPSGROUP.Waypoint
+    if waypoint.uid==uid then
+      return i
+    end
+  end
+
+  return nil
+end
+
+--- Remove a waypoint with a ceratin UID.
+-- @param #OPSGROUP self
+-- @param #number uid Waypoint UID.
+-- @return #OPSGROUP self
+function OPSGROUP:RemoveWaypointByID(uid)
+
+  local index=self:GetWaypointIndex(uid)
+  
+  if index then
+    self:RemoveWaypoint(index)
+    
+  end
+
+  return self
+end
+
 --- Remove a waypoint.
 -- @param #OPSGROUP self
 -- @param #number wpindex Waypoint number.
@@ -652,28 +731,6 @@ function OPSGROUP:RemoveWaypoint(wpindex)
     -- Debug info.
     self:I(self.lid..string.format("Removing waypoint %d. N %d-->%d", wpindex, N, n))
   
-    -- Shift all waypoint tasks after the removed waypoint.
-    for _,_task in pairs(self.taskqueue) do
-      local task=_task --#OPSGROUP.Task
-      if task.type==OPSGROUP.TaskType.WAYPOINT and task.waypoint and task.waypoint>wpindex then
-        task.waypoint=task.waypoint-1
-      end
-    end  
-  
-    -- Shift all mission waypoints after the removerd waypoint.
-    for _,_mission in pairs(self.missionqueue) do
-      local mission=_mission --Ops.Auftrag#AUFTRAG
-      
-      -- Get mission waypoint index.
-      local wpidx=mission:GetGroupWaypointIndex(self)
-      
-      -- Reduce number if this waypoint lies in the future.
-      if wpidx and wpidx>wpindex then
-        mission:SetGroupWaypointIndex(self, wpidx-1)
-      end
-    end  
-  
-    
     -- Waypoint was not reached yet.
     if wpindex > self.currentwp then
     
@@ -858,35 +915,46 @@ end
 -- @return #OPSGROUP.Task The task structure.
 function OPSGROUP:AddTaskWaypoint(task, waypointindex, description, prio, duration)
 
-  -- Increase counter.
-  self.taskcounter=self.taskcounter+1
-
-  -- Task data structure.
-  local newtask={} --#OPSGROUP.Task
-  newtask.description=description
-  newtask.status=OPSGROUP.TaskStatus.SCHEDULED
-  newtask.dcstask=task
-  newtask.prio=prio or 50
-  newtask.id=self.taskcounter
-  newtask.duration=duration
-  newtask.time=0
-  newtask.waypoint=waypointindex or (self.currentwp and self.currentwp+1 or 2)
-  newtask.type=OPSGROUP.TaskType.WAYPOINT
-  newtask.stopflag=USERFLAG:New(string.format("%s StopTaskFlag %d", self.groupname, newtask.id))  
-  newtask.stopflag:Set(0)
-
-  -- Add to table.
-  table.insert(self.taskqueue, newtask)
+  -- Index.
+  waypointindex=waypointindex or (self.currentwp and self.currentwp+1 or 2)
   
-  -- Info.
-  self:I(self.lid..string.format("Adding WAYPOINT task %s at WP %d", newtask.description, newtask.waypoint))
-  self:T3({newtask=newtask})
+  -- Get waypoint
+  local waypoint=self:GetWaypointByIndex(waypointindex)
   
-  -- Update route.
-  --self:_CheckGroupDone(1)
-  self:__UpdateRoute(-1)
+  if waypoint then
 
-  return newtask
+    -- Increase counter.
+    self.taskcounter=self.taskcounter+1
+
+    -- Task data structure.
+    local newtask={} --#OPSGROUP.Task
+    newtask.description=description
+    newtask.status=OPSGROUP.TaskStatus.SCHEDULED
+    newtask.dcstask=task
+    newtask.prio=prio or 50
+    newtask.id=self.taskcounter
+    newtask.duration=duration
+    newtask.time=0
+    newtask.waypoint=waypoint.uid
+    newtask.type=OPSGROUP.TaskType.WAYPOINT
+    newtask.stopflag=USERFLAG:New(string.format("%s StopTaskFlag %d", self.groupname, newtask.id))  
+    newtask.stopflag:Set(0)
+  
+    -- Add to table.
+    table.insert(self.taskqueue, newtask)
+    
+    -- Info.
+    self:I(self.lid..string.format("Adding WAYPOINT task %s at WP %d", newtask.description, newtask.waypoint))
+    self:T3({newtask=newtask})
+    
+    -- Update route.
+    --self:_CheckGroupDone(1)
+    self:__UpdateRoute(-1)
+  
+    return newtask    
+  end
+  
+  return nil
 end
 
 --- Add an *enroute* task.
@@ -1215,20 +1283,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
       
       -- Call task done function.      
       self:TaskDone(Task)
-      
-      
-      --[[
-      local mission=self:GetMissionByTaskID(Task.id)
-      
-      -- Is this a waypoint task?
-      if Task.type==OPSGROUP.TaskType.WAYPOINT and Task.waypoint then
 
-        -- Check that this is a mission waypoint and no other tasks are defined here.      
-        if mission and #self:GetTasksWaypoint(Task.waypoint)==0 then
-          self:RemoveWaypoint(Task.waypoint)
-        end
-      end
-      ]]
     end
     
   else
@@ -1710,7 +1765,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
   
     -- Add waypoint.
-    self:AddWaypoint(waypointcoord, UTILS.KmphToKnots(self.speedCruise), nextwaypoint, false)
+    local waypoint=self:AddWaypoint(waypointcoord, UTILS.KmphToKnots(self.speedCruise), nextwaypoint, false)
     
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
@@ -1738,7 +1793,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     mission:SetGroupWaypointTask(self, waypointtask)
     
     -- Set waypoint index.
-    mission:SetGroupWaypointIndex(self, nextwaypoint)
+    mission:SetGroupWaypointIndex(self, waypoint.uid)
     
     ---
     -- Mission Specific Settings
@@ -1848,13 +1903,14 @@ end
 -- @param #string To To state.
 -- @param #number n Waypoint passed.
 -- @param #number N Total number of waypoints.
-function OPSGROUP:onafterPassingWaypoint(From, Event, To, n, N)
+-- @param #OPSGROUP.Waypoint Waypoint Waypoint data passed.
+function OPSGROUP:onafterPassingWaypoint(From, Event, To, n, N, Waypoint)
   local text=string.format("Group passed waypoint %d/%d", n, N)
   self:T(self.lid..text)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   
   -- Get all waypoint tasks.
-  local tasks=self:GetTasksWaypoint(n)
+  local tasks=self:GetTasksWaypoint(Waypoint.uid)
   
   -- Debug info.
   local text=string.format("WP %d/%d tasks:", n, N)
@@ -2127,6 +2183,43 @@ end
 
 --- Initialize Mission Editor waypoints.
 -- @param #OPSGROUP self
+-- @param #table waypoint DCS waypoint data table.
+-- @return #OPSGROUP.Waypoint Waypoint data.
+function OPSGROUP:_CreateWaypoint(waypoint)
+
+  local wp={} --#OPSGROUP.Waypoint
+  
+  wp.wp=waypoint
+  wp.uid=self.wpcounter
+  
+  wp.altitude=altitude
+  wp.speed=speed
+  wp.detour=detour
+  wp.formation=formation
+  wp.onroad=onroad
+
+  wp.coordinate=coordinate
+
+  self.wpcounter=self.wpcounter+1
+  
+  return wp
+end
+
+--- Initialize Mission Editor waypoints.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Waypoint waypoint Waypoint data.
+-- @param #number wpnumber Waypoint index/number. Default is as last waypoint.
+function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
+
+  wpnumber=wpnumber or #self.waypoints+1
+
+  -- Add waypoint to table.
+  tabel.insert(self.waypoints, wpnumber, waypoint)
+
+end
+
+--- Initialize Mission Editor waypoints.
+-- @param #OPSGROUP self
 -- @param #table waypoints Table of waypoints. Default is from group template.
 -- @return #OPSGROUP self
 function OPSGROUP:InitWaypoints(waypoints)
@@ -2134,8 +2227,17 @@ function OPSGROUP:InitWaypoints(waypoints)
   -- Template waypoints.
   self.waypoints0=self.group:GetTemplateRoutePoints()
 
-  -- Waypoints of group as defined in the ME.
-  self.waypoints=waypoints or UTILS.DeepCopy(self.waypoints0)
+  -- Waypoints  
+  self.waypoints={}
+  
+  for index,wp in pairs(self.waypoints0) do
+  
+    local waypoint=self:_CreateWaypoint()
+    
+    self:_AddWaypoint(waypoint)
+    
+  
+  end
   
   -- Debug info.
   self:I(self.lid..string.format("Initializing %d waypoints", #self.waypoints))
@@ -2201,7 +2303,8 @@ function OPSGROUP:_UpdateWaypointTasks(n)
   local waypoints=self.waypoints
   local nwaypoints=#waypoints
 
-  for i,wp in pairs(waypoints) do
+  for i,_wp in pairs(waypoints) do
+    local wp=_wp --Ops.OpsGroup#OPSGROUP.Waypoint 
     
     if i>=n or nwaypoints==1 then
     
@@ -2212,11 +2315,11 @@ function OPSGROUP:_UpdateWaypointTasks(n)
       local taskswp={}
     
       -- At each waypoint report passing.
-      local TaskPassingWaypoint=self.group:TaskFunction("OPSGROUP._PassingWaypoint", self, i)      
+      local TaskPassingWaypoint=self.group:TaskFunction("OPSGROUP._PassingWaypoint", self, i, wp.uid)
       table.insert(taskswp, TaskPassingWaypoint)      
           
       -- Waypoint task combo.
-      wp.task=self.group:TaskCombo(taskswp)
+      wp.wp.task=self.group:TaskCombo(taskswp)
       
     end
     
@@ -2232,19 +2335,23 @@ end
 --@param Wrapper.Group#GROUP group Group that passed the waypoint
 --@param #OPSGROUP opsgroup Ops group object.
 --@param #number i Waypoint number that has been reached.
-function OPSGROUP._PassingWaypoint(group, opsgroup, i)
+--@param #number uid Waypoint UID.
+function OPSGROUP._PassingWaypoint(group, opsgroup, i, uid)
 
   local final=#opsgroup.waypoints or 1
 
   -- Debug message.
-  local text=string.format("Group passing waypoint %d of %d", i, final)
+  local text=string.format("Group passing waypoint %d of %d, uid=%d", i, final, uid)
   opsgroup:I(opsgroup.lid..text)
 
   -- Set current waypoint.
   opsgroup.currentwp=i
+  
+  -- Get waypoint data.
+  local waypoint=opsgroup:GetWaypointByID(uid)
 
   -- Trigger PassingWaypoint event.
-  opsgroup:PassingWaypoint(i, final)
+  opsgroup:PassingWaypoint(i, final, waypoint)
 
 end
 

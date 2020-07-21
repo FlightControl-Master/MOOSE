@@ -66,7 +66,7 @@
 -- At this point the airwing does not have any assets (aircraft). In order to add these, one needs to first define SQUADRONS.
 -- 
 --     VFA151=SQUADRON:New("F-14 Group", 8, "VFA-151 (Vigilantes)")
---     VFA151:AddMissonCapability({AUFTRAG.Type.PATROL, AUFTRAG.Type.INTERCEPT})
+--     VFA151:AddMissionCapability({AUFTRAG.Type.PATROL, AUFTRAG.Type.INTERCEPT})
 --     
 --     airwing:AddSquadron(VFA151)
 --     

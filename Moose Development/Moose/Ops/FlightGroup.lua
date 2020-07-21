@@ -2956,7 +2956,7 @@ end
 -- @param #number speed Speed in knots. Default 350 kts.
 -- @param #number wpnumber Waypoint number. Default at the end.
 -- @param #boolean updateroute If true or nil, call UpdateRoute. If false, no call.
--- @return #number Waypoint index.
+-- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function FLIGHTGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
 
   -- Waypoint number. Default is at the end.
@@ -2973,43 +2973,24 @@ function FLIGHTGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
   local speedkmh=UTILS.KnotsToKmph(speed)
 
   -- Create air waypoint.
-  local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speedkmh, true, nil, {}, string.format("Added Waypoint #%d", wpnumber))
+  local name=string.format("Added Waypoint #%d", wpnumber)
+  local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speedkmh, true, nil, {}, name)
 
-  -- Add to table.
-  table.insert(self.waypoints, wpnumber, wp)
+  -- Create waypoint data table.
+  local waypoint=self:_CreateWaypoint(wp)
+
+  -- Add waypoint to table.
+  self:_AddWaypoint(waypoint, wpnumber)
 
   -- Debug info.
   self:T(self.lid..string.format("Adding AIR waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, speed, self.currentwp, #self.waypoints))
 
-  -- Shift all waypoint tasks after the inserted waypoint.
-  for _,_task in pairs(self.taskqueue) do
-    local task=_task --Ops.OpsGroup#OPSGROUP.Task
-    if task.type==OPSGROUP.TaskType.WAYPOINT and task.waypoint and task.waypoint>=wpnumber then
-      task.waypoint=task.waypoint+1
-    end
-  end
-
-  -- Shift all mission waypoints after the inserted waypoint.
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-
-    -- Get mission waypoint index.
-    local wpidx=mission:GetGroupWaypointIndex(self)
-
-    -- Increase number if this waypoint lies in the future.
-    if wpidx and wpidx>=wpnumber then
-      mission:SetGroupWaypointIndex(self, wpidx+1)
-    end
-
-  end
-
   -- Update route.
   if updateroute==nil or updateroute==true then
-    --self:_CheckGroupDone(1)
     self:__UpdateRoute(-1)
   end
 
-  return wpnumber
+  return waypoint
 end
 
 

@@ -353,7 +353,7 @@ UTILS.MpsToMiph = function( mps )
 end
 
 --- Convert meters per second to knots.
--- @param #number knots Speed in m/s.
+-- @param #number mps Speed in m/s.
 -- @return #number Speed in knots.
 UTILS.MpsToKnots = function( mps )
   return mps * 1.94384 --3600 / 1852
