@@ -141,22 +141,30 @@ end
 -- @param #ASTAR.Node nodeB
 function ASTAR.LoS(nodeA, nodeB)
 
-  local los=nodeA.coordinate:IsLOS(nodeB.coordinate, 0.5)
+  local offset=0.1
+  
+  local dx=200
+  local dy=dx
+  
+  local cA=nodeA.coordinate:SetAltitude(0, true)
+  local cB=nodeB.coordinate:SetAltitude(0, true)
+
+  local los=cA:IsLOS(cB, offset)
   
   if los then
-    local heading=nodeA.coordinate:HeadingTo(nodeB.coordinate)
+    local heading=cA:HeadingTo(cB)
     
-    local Ap=nodeA.coordinate:Translate(100, heading+90)
-    local Bp=nodeA.coordinate:Translate(100, heading+90)
+    local Ap=cA:Translate(dx, heading+90)
+    local Bp=cB:Translate(dx, heading+90)
 
-    los=Ap:IsLOS(Bp, 0.5)
+    los=Ap:IsLOS(Bp, offset)
     
     if los then
 
-      local Am=nodeA.coordinate:Translate(100, heading-90)
-      local Bm=nodeA.coordinate:Translate(100, heading-90)
+      local Am=cA:Translate(dy, heading-90)
+      local Bm=cB:Translate(dy, heading-90)
     
-      los=Am:IsLOS(Bm, 0.5)
+      los=Am:IsLOS(Bm, offset)
     end
     
   end
@@ -170,8 +178,9 @@ end
 
 --- Find the closest node from a given coordinate.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate.
--- @return #ASTAR.Node Cloest node to the coordinate.
+-- @param #number DeltaX Increment in the direction of start to end coordinate in meters. Default 2000 meters.
+-- @param #number DeltaY Increment perpendicular to the direction of start to end coordinate in meters. Default is same as DeltaX.
+-- @return #ASTAR self
 function ASTAR:CreateGrid()
 
   local Dx=20000
@@ -218,6 +227,7 @@ function ASTAR:CreateGrid()
   end
   env.info("FF Done building grid!")
 
+  return self
 end
 
 --- Find the closest node from a given coordinate.

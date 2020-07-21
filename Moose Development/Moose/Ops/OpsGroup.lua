@@ -2185,24 +2185,17 @@ end
 -- @param #OPSGROUP self
 -- @param #table waypoint DCS waypoint data table.
 -- @return #OPSGROUP.Waypoint Waypoint data.
-function OPSGROUP:_CreateWaypoint(waypoint)
-
-  local wp={} --#OPSGROUP.Waypoint
+function OPSGROUP:_CreateWaypoint(waypoint, detour, onroad, formation)
   
-  wp.wp=waypoint
-  wp.uid=self.wpcounter
-  
-  wp.altitude=altitude
-  wp.speed=speed
-  wp.detour=detour
-  wp.formation=formation
-  wp.onroad=onroad
-
-  wp.coordinate=coordinate
+  waypoint.uid=self.wpcounter  
+  waypoint.coordinate=COORDINATE:New(waypoint.x, waypoint.alt, waypoint.y)
+  waypoint.detour=detour and detour or false
+  waypoint.formation=formation
+  waypoint.onroad=onroad and onroad or false
 
   self.wpcounter=self.wpcounter+1
   
-  return wp
+  return waypoint
 end
 
 --- Initialize Mission Editor waypoints.
@@ -2212,17 +2205,18 @@ end
 function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
 
   wpnumber=wpnumber or #self.waypoints+1
+  
+  env.info(string.format("adding waypoint at index=%d", wpnumber))
 
   -- Add waypoint to table.
-  tabel.insert(self.waypoints, wpnumber, waypoint)
+  table.insert(self.waypoints, wpnumber, waypoint)
 
 end
 
 --- Initialize Mission Editor waypoints.
 -- @param #OPSGROUP self
--- @param #table waypoints Table of waypoints. Default is from group template.
 -- @return #OPSGROUP self
-function OPSGROUP:InitWaypoints(waypoints)
+function OPSGROUP:InitWaypoints()
 
   -- Template waypoints.
   self.waypoints0=self.group:GetTemplateRoutePoints()
@@ -2232,11 +2226,10 @@ function OPSGROUP:InitWaypoints(waypoints)
   
   for index,wp in pairs(self.waypoints0) do
   
-    local waypoint=self:_CreateWaypoint()
+    local waypoint=self:_CreateWaypoint(wp)
     
     self:_AddWaypoint(waypoint)
-    
-  
+     
   end
   
   -- Debug info.
@@ -2319,7 +2312,7 @@ function OPSGROUP:_UpdateWaypointTasks(n)
       table.insert(taskswp, TaskPassingWaypoint)      
           
       -- Waypoint task combo.
-      wp.wp.task=self.group:TaskCombo(taskswp)
+      wp.task=self.group:TaskCombo(taskswp)
       
     end
     

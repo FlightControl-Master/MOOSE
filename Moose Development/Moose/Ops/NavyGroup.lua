@@ -539,8 +539,8 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   
   -- Add remaining waypoints to route.
   for i=n, #self.waypoints do
-    local wp=self.waypoints[i]
-    
+    local wp=self.waypoints[i]  --Ops.OpsGroup#OPSGROUP.Waypoint
+
     -- Set speed.
     if i==n then
     

@@ -1699,7 +1699,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   local speed=self.group and self.group:GetVelocityKMH() or 100
 
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
-  local current=self.group:GetCoordinate():WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speed, true, nil, {}, "Current")
+  local current=self.group:GetCoordinate():WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speed, true, nil, {}, "Current")
   table.insert(wp, current)
 
   -- Add remaining waypoints to route.
@@ -1710,7 +1710,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destbase and self.destbase:GetName() or "unknown"
-  self:T(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
+  self:I(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
 
 
   if #wp>1 then
@@ -2910,15 +2910,26 @@ end
 
 --- Initialize Mission Editor waypoints.
 -- @param #FLIGHTGROUP self
--- @param #table waypoints Table of waypoints. Default is from group template.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:InitWaypoints(waypoints)
+function FLIGHTGROUP:InitWaypoints()
 
   -- Template waypoints.
   self.waypoints0=self.group:GetTemplateRoutePoints()
+  
+  self:I(self.waypoints0)
 
-  -- Waypoints of group as defined in the ME.
-  self.waypoints=waypoints or UTILS.DeepCopy(self.waypoints0)
+  -- Waypoints  
+  self.waypoints={}
+  
+  for index,wp in pairs(self.waypoints0) do
+  
+    env.info("FF index "..index)
+  
+    local waypoint=self:_CreateWaypoint(wp)
+    
+    self:_AddWaypoint(waypoint)
+     
+  end
 
   -- Get home and destination airbases from waypoints.
   self.homebase=self.homebase or self:GetHomebaseFromWaypoints()
