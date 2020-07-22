@@ -247,7 +247,7 @@ end
 
 --- Set number of units in groups.
 -- @param #SQUADRON self
--- @param #nunits Number of units. Must be >=1 and <=4. Default 2.
+-- @param #number nunits Number of units. Must be >=1 and <=4. Default 2.
 -- @return #SQUADRON self
 function SQUADRON:SetGrouping(nunits)
   self.ngrouping=nunits or 2

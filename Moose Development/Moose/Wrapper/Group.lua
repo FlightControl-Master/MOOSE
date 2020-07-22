@@ -2100,6 +2100,7 @@ end
 
 --- Calculate the maxium A2G threat level of the Group.
 -- @param #GROUP self
+-- @return #number Number between 0 and 10.
 function GROUP:CalculateThreatLevelA2G()
   
   local MaxThreatLevelA2G = 0
@@ -2114,6 +2115,25 @@ function GROUP:CalculateThreatLevelA2G()
   self:T3( MaxThreatLevelA2G )
   return MaxThreatLevelA2G
 end
+
+--- Get threat level of the group.
+-- @param #GROUP self
+-- @return #number Max threat level (a number between 0 and 10).
+function GROUP:GetThreatLevel()
+  
+  local threatlevelMax = 0
+  for UnitName, UnitData in pairs(self:GetUnits()) do  
+    local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
+    
+    local threatlevel = ThreatUnit:GetThreatLevel()
+    if threatlevel > threatlevelMax then
+      threatlevelMax=threatlevel
+    end
+  end
+
+  return threatlevelMax
+end
+
 
 --- Returns true if the first unit of the GROUP is in the air.
 -- @param Wrapper.Group#GROUP self

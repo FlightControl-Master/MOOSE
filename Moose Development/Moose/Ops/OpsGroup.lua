@@ -26,7 +26,8 @@
 -- @field #boolean isGround If true, group is some ground unit.
 -- @field #table waypoints Table of waypoints.
 -- @field #table waypoints0 Table of initial waypoints.
--- @field #number currentwp Current waypoint.
+-- @field #number currentwp Current waypoint index. This is the index of the last passed waypoint.
+-- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
 -- @field #table taskqueue Queue of tasks.
 -- @field #number taskcounter Running number of task ids.
 -- @field #number taskcurrent ID of current task. If 0, there is no current task assigned.
@@ -434,17 +435,28 @@ end
 
 --- Get next waypoint index.
 -- @param #OPSGROUP self
--- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
+-- @param #boolean cyclic If true, return first waypoint if last waypoint was reached. Default is patrol ad infinitum value set.
 -- @return #number Next waypoint index.
 function OPSGROUP:GetWaypointIndexNext(cyclic)
 
-  local n=math.min(self.currentwp+1, #self.waypoints)
+  cyclic=cyclic or self.adinfinitum
   
-  if cyclic and self.currentwp==#self.waypoints then
+  local N=#self.waypoints
+
+  local n=math.min(self.currentwp+1, N)
+  
+  if cyclic and self.currentwp==N then
     n=1
   end
   
   return n
+end
+
+--- Get current waypoint index. This is the index of the last passed waypoint.
+-- @param #OPSGROUP self
+-- @return #number Current waypoint index.
+function OPSGROUP:GetWaypointIndexCurrent()  
+  return self.currentwp or 1
 end
 
 --- Get waypoint speed.
@@ -465,14 +477,14 @@ end
 --- Get waypoint.
 -- @param #OPSGROUP self
 -- @param #number indx Waypoint index.
--- @return #table Waypoint table.
+-- @return #OPSGROUP.Waypoint Waypoint table.
 function OPSGROUP:GetWaypoint(indx)
   return self.waypoints[indx]
 end
 
 --- Get final waypoint.
 -- @param #OPSGROUP self
--- @return #table Waypoint table.
+-- @return #OPSGROUP.Waypoint Final waypoint table.
 function OPSGROUP:GetWaypointFinal()
   return self.waypoints[#self.waypoints]
 end
@@ -480,7 +492,7 @@ end
 --- Get next waypoint.
 -- @param #OPSGROUP self
 -- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
--- @return #table Waypoint table.
+-- @return #OPSGROUP.Waypoint Next waypoint table.
 function OPSGROUP:GetWaypointNext(cyclic)
 
   local n=self:GetWaypointIndexNext(cyclic)
@@ -490,7 +502,7 @@ end
 
 --- Get current waypoint.
 -- @param #OPSGROUP self
--- @return #table Waypoint table.
+-- @return #OPSGROUP.Waypoint Current waypoint table.
 function OPSGROUP:GetWaypointCurrent()
   return self.waypoints[self.currentwp]
 end

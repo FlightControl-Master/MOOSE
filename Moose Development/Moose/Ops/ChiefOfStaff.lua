@@ -345,11 +345,10 @@ function CHIEF:onafterStart(From, Event, To)
   -- Start parent INTEL.
   self:GetParent(self).onafterStart(self, From, Event, To)
   
-  -- Start attached airwings.
-  for _,_airwing in pairs(self.airwings) do
-    local airwing=_airwing --Ops.AirWing#AIRWING
-    if airwing:GetState()=="NotReadyYet" then
-      airwing:Start()
+  -- Start wingcommander.
+  if self.wingcommander then
+    if self.wingcommander:GetState()=="NotReadyYet" then
+      self.wingcommander:Start()
     end
   end
 

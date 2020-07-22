@@ -19,7 +19,6 @@
 -- @field #boolean turning If true, group is currently turning.
 -- @field #NAVYGROUP.IntoWind intowind Into wind info.
 -- @field #table Qintowind Queue of "into wind" turns.
--- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
 -- @field #number depth Ordered depth in meters.
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -1230,7 +1229,7 @@ function NAVYGROUP:_CheckGroupDone(delay)
     
       else
       
-        self:UpdateRoute(nil, nil, self.depth)
+        self:__UpdateRoute(-1, nil, nil, self.depth)
         
       end
     

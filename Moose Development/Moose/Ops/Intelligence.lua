@@ -480,7 +480,7 @@ function INTEL:CreateDetectedItems(detectedunitset)
       item.attribute=group:GetAttribute()
       item.category=group:GetCategory()
       item.categoryname=group:GetCategoryName()
-      item.threatlevel=group:GetUnit(1):GetThreatLevel()
+      item.threatlevel=group:GetThreatLevel()
       item.position=group:GetCoordinate()
       item.velocity=group:GetVelocityVec3()
       item.speed=group:GetVelocityMPS()
@@ -699,7 +699,7 @@ function INTEL:PaintPicture()
   
   
       -- Update F10 marker.
-      self:UpdateClusterMarker(cluster, coordinate)
+      self:UpdateClusterMarker(cluster)
   end
 
 end
@@ -959,7 +959,7 @@ end
 --- Update cluster F10 marker.
 -- @param #INTEL self
 -- @param #INTEL.Cluster cluster The cluster.
--- @param Core.Point#COORDINATE newcoordinate Updated cluster positon.
+-- @return #INTEL self
 function INTEL:UpdateClusterMarker(cluster, newcoordinate)
 
   -- Create a marker.
@@ -976,10 +976,9 @@ function INTEL:UpdateClusterMarker(cluster, newcoordinate)
       refresh=true
     end
     
-    if newcoordinate then
-      cluster.coordinate=newcoordinate
+    if cluster.marker.coordinate~=cluster.coordinate then
       cluster.marker.coordinate=cluster.coordinate
-      refresh=true    
+      refresh=true
     end
     
     if refresh then
@@ -988,6 +987,7 @@ function INTEL:UpdateClusterMarker(cluster, newcoordinate)
   
   end
 
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
