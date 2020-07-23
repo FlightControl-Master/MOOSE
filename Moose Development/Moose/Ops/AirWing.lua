@@ -1555,8 +1555,8 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   end
   
   -- Add group to the detection set of the WINGCOMMANDER.
-  if self.wingcommander then
-    self.wingcommander.detectionset:AddGroup(asset.flightgroup.group)
+  if self.wingcommander and self.wingcommander.chief then
+    self.wingcommander.chief.detectionset:AddGroup(asset.flightgroup.group)
   end
   
 end
@@ -1574,8 +1574,8 @@ function AIRWING:onafterAssetDead(From, Event, To, asset, request)
   self:GetParent(self).onafterAssetDead(self, From, Event, To, asset, request)
 
   -- Add group to the detection set of the WINGCOMMANDER.
-  if self.wingcommander then
-    self.wingcommander.detectionset:RemoveGroupsByName({asset.spawngroupname})
+  if self.wingcommander and self.wingcommander.chief then
+    self.wingcommander.chief.detectionset:RemoveGroupsByName({asset.spawngroupname})
   end
   
   -- Remove asset from mission is done via Mission:AssetDead() call from flightgroup onafterFlightDead function

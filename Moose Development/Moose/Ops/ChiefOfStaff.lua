@@ -110,6 +110,7 @@ function CHIEF:New(AgentSet, Coalition)
   self:AddTransition("*",                "AssignMissionArmy",     "*")   -- Assign mission to a GENERAL.
   self:AddTransition("*",                "CancelMission",         "*")   -- Cancel mission.
   self:AddTransition("*",                "Defcon",                "*")   -- Change defence condition.
+  self:AddTransition("*",                "DeclareWar",            "*")   -- Declare War.
 
   ------------------------
   --- Pseudo Functions ---
@@ -238,11 +239,13 @@ end
 
 --- Set the wing commander for the airforce.
 -- @param #CHIEF self
--- @param Ops.WingCommander WingCommander The WINGCOMMANDER object.
+-- @param Ops.WingCommander#WINGCOMMANDER WingCommander The WINGCOMMANDER object.
 -- @return #CHIEF self
 function CHIEF:SetWingCommander(WingCommander)
 
   self.wingcommander=WingCommander
+  
+  self.wingcommander.chief=self
   
   return self
 end
@@ -594,14 +597,18 @@ function CHIEF:CheckMissionQueue()
       -- PLANNNED Mission
       ---
     
+      -- Check if there is an airwing that can do the mission.
       local airwing=self:GetAirwingForMission(mission)
         
       if airwing then
       
         -- Add mission to airwing.
-        self:MissionAssign(airwing, mission)
+        self:AssignMissionAirforce(mission)
     
         return
+        
+      else
+        self:T(self.lid.."NO airwing")
       end
       
     else

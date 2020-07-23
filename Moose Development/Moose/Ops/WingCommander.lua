@@ -18,6 +18,7 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table airwings Table of airwings which are commanded.
 -- @field #table missionqueue Mission queue.
+-- @field Ops.ChiefOfStaff#CHIEF chief Chief of staff.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -65,12 +66,19 @@ function WINGCOMMANDER:New()
 
   -- Inherit everything from INTEL class.
   local self=BASE:Inherit(self, FSM:New()) --#WINGCOMMANDER
+  
+  self.lid="WINGCOMMANDER | "
+
+  -- Start state.
+  self:SetStartState("NotReadyYet")
 
   -- Add FSM transitions.
-  --                 From State   -->      Event           -->     To State
-  self:AddTransition("*",              "MissionAssign",            "*")           -- Mission was assigned to an AIRWING.
-  self:AddTransition("*",              "CancelMission",            "*")           -- Cancel mission.
-  self:AddTransition("*",              "Defcon",                   "*")           -- Cancel mission.
+  --                 From State     -->      Event        -->     To State
+  self:AddTransition("NotReadyYet",        "Start",               "OnDuty")      -- Start WC.
+  self:AddTransition("*",                  "Status",              "*")           -- Status report.
+  self:AddTransition("*",                  "MissionAssign",       "*")           -- Mission was assigned to an AIRWING.
+  self:AddTransition("*",                  "CancelMission",       "*")           -- Cancel mission.
+  self:AddTransition("*",                  "Defcon",              "*")           -- Cancel mission.
 
   ------------------------
   --- Pseudo Functions ---
@@ -111,7 +119,6 @@ function WINGCOMMANDER:New()
     BASE:TraceLevel(1)
   end
   self.Debug=true
-
 
   return self
 end
@@ -182,9 +189,6 @@ function WINGCOMMANDER:onafterStart(From, Event, To)
   -- Short info.
   local text=string.format("Starting Wing Commander")
   self:I(self.lid..text)
-
-  -- Start parent INTEL.
-  self:GetParent(self).onafterStart(self, From, Event, To)
   
   -- Start attached airwings.
   for _,_airwing in pairs(self.airwings) do
@@ -194,6 +198,7 @@ function WINGCOMMANDER:onafterStart(From, Event, To)
     end
   end
 
+  self:__Status(-1)
 end
 
 --- On after "Status" event.
@@ -203,9 +208,6 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function WINGCOMMANDER:onafterStatus(From, Event, To)
-
-  -- Start parent INTEL.
-  self:GetParent(self).onafterStatus(self, From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
@@ -226,6 +228,7 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end  
 
+  self:__Status(-30)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
