@@ -1817,13 +1817,15 @@ function AUFTRAG:onafterStatus(From, Event, To)
     self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
 
+  -- Data on assigned groups.
   local text="Group data:"  
   for groupname,_groupdata in pairs(self.groupdata) do
     local groupdata=_groupdata --#AUFTRAG.GroupData
     text=text..string.format("\n- %s: status mission=%s opsgroup=%s", groupname, groupdata.status, groupdata.opsgroup and groupdata.opsgroup:GetState() or "N/A")
   end
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
+  -- Ready to evaluate mission outcome?
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
 
   -- Check if mission is OVER (done or cancelled) and enough time passed to evaluate the result.
@@ -2014,7 +2016,7 @@ end
 -- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @param Ops.OpsGroup#OPSGROUP.Task task Waypoint task.
 function AUFTRAG:SetGroupWaypointTask(opsgroup, task)
-  self:I(self.lid..string.format("Setting waypoint task %s", task and task.description or "WTF"))
+  self:T2(self.lid..string.format("Setting waypoint task %s", task and task.description or "WTF"))
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     groupdata.waypointtask=task
@@ -2037,7 +2039,7 @@ end
 -- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @param #number waypointindex Waypoint index.
 function AUFTRAG:SetGroupWaypointIndex(opsgroup, waypointindex)
-  self:I(self.lid..string.format("Setting waypoint index %d", waypointindex))
+  self:T2(self.lid..string.format("Setting waypoint index %d", waypointindex))
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     groupdata.waypointindex=waypointindex
@@ -2127,7 +2129,7 @@ end
 function AUFTRAG:onafterQueued(From, Event, To, Airwing)
   self.status=AUFTRAG.Status.QUEUED
   self.airwing=Airwing
-  self:I(self.lid..string.format("New mission status=%s at airwing %s", self.status, tostring(Airwing.alias)))
+  self:T(self.lid..string.format("New mission status=%s at airwing %s", self.status, tostring(Airwing.alias)))
 end
 
 
@@ -2138,7 +2140,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterRequested(From, Event, To)
   self.status=AUFTRAG.Status.REQUESTED
-  self:I(self.lid..string.format("New mission status=%s", self.status))
+  self:T(self.lid..string.format("New mission status=%s", self.status))
 end
 
 --- On after "Assign" event. 
@@ -2148,7 +2150,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterAssign(From, Event, To)
   self.status=AUFTRAG.Status.ASSIGNED
-  self:I(self.lid..string.format("New mission status=%s", self.status))  
+  self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
 
 --- On after "Schedule" event. Mission is added to the mission queue of a FLIGHTGROUP.
@@ -2159,7 +2161,7 @@ end
 -- @param Ops.OpsGroup#OPSGROUP FlightGroup
 function AUFTRAG:onafterScheduled(From, Event, To, FlightGroup)
   self.status=AUFTRAG.Status.SCHEDULED
-  self:I(self.lid..string.format("New mission status=%s", self.status))  
+  self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
 
 --- On after "Start" event.
@@ -2169,7 +2171,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterStarted(From, Event, To)
   self.status=AUFTRAG.Status.STARTED
-  self:I(self.lid..string.format("New mission status=%s", self.status))  
+  self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
 
 --- On after "Execute" event.
@@ -2179,7 +2181,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterExecuting(From, Event, To)
   self.status=AUFTRAG.Status.EXECUTING
-  self:I(self.lid..string.format("New mission status=%s", self.status))  
+  self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
 
 --- On after "Done" event.
@@ -2189,7 +2191,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterDone(From, Event, To)
   self.status=AUFTRAG.Status.DONE
-  self:I(self.lid..string.format("New mission status=%s", self.status))
+  self:T(self.lid..string.format("New mission status=%s", self.status))
   
   -- Set time stamp.
   self.Tover=timer.getAbsTime()
@@ -2259,7 +2261,7 @@ end
 function AUFTRAG:onafterSuccess(From, Event, To)
 
   self.status=AUFTRAG.Status.SUCCESS
-  self:I(self.lid..string.format("New mission status=%s", self.status))
+  self:T(self.lid..string.format("New mission status=%s", self.status))
   
   -- Stop mission.
   self:Stop()
@@ -2287,20 +2289,20 @@ function AUFTRAG:onafterCancel(From, Event, To)
   
   if self.wingcommander then
   
-    self:I(self.lid..string.format("Wingcommander will cancel the mission. Will wait for mission DONE before evaluation!"))
+    self:T(self.lid..string.format("Wingcommander will cancel the mission. Will wait for mission DONE before evaluation!"))
     
     self.wingcommander:CancelMission(self)
 
   elseif self.airwing then
     
-    self:I(self.lid..string.format("Airwing %s will cancel the mission. Will wait for mission DONE before evaluation!", self.airwing.alias))
+    self:T(self.lid..string.format("Airwing %s will cancel the mission. Will wait for mission DONE before evaluation!", self.airwing.alias))
     
     -- Airwing will cancel all flight missions and remove queued request from warehouse queue.
     self.airwing:MissionCancel(self)
   
   else
   
-    self:I(self.lid..string.format("No airwing or wingcommander. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
+    self:T(self.lid..string.format("No airwing or wingcommander. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
   
     for _,_groupdata in pairs(self.groupdata) do
       local groupdata=_groupdata --#AUFTRAG.GroupData
@@ -2311,7 +2313,7 @@ function AUFTRAG:onafterCancel(From, Event, To)
   
   -- Special mission states.
   if self.status==AUFTRAG.Status.PLANNED then
-    self:I(self.lid..string.format("Cancelled mission was in planned stage. Call it done!"))
+    self:T(self.lid..string.format("Cancelled mission was in planned stage. Call it done!"))
     self:Done()
   end
 
@@ -2325,7 +2327,7 @@ end
 function AUFTRAG:onafterFailed(From, Event, To)
 
   self.status=AUFTRAG.Status.FAILED
-  self:I(self.lid..string.format("New mission status=%s", self.status))
+  self:T(self.lid..string.format("New mission status=%s", self.status))
   
   if self.missionRepeated>=self.missionRepeatMax then
   
@@ -2353,7 +2355,7 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   -- Set mission status to PLANNED.
   self.status=AUFTRAG.Status.PLANNED
   
-  self:I(self.lid..string.format("New mission status=%s (on Repeat)", self.status))
+  self:T(self.lid..string.format("New mission status=%s (on Repeat)", self.status))
 
   -- Increase repeat counter.
   self.missionRepeated=self.missionRepeated+1
@@ -2452,7 +2454,7 @@ function AUFTRAG:DelAsset(Asset)
     local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
     
     if asset.uid==Asset.uid then
-      self:I(self.lid..string.format("Removing asset \"%s\" from mission", tostring(asset.spawngroupname)))
+      self:T(self.lid..string.format("Removing asset \"%s\" from mission", tostring(asset.spawngroupname)))
       table.remove(self.assets, i)
       return self
     end
@@ -3289,7 +3291,7 @@ function AUFTRAG:_TargetFromObject(Object)
   self.Ntargets=Ninitial
   
   -- Debug info.
-  self:I(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", target.Name, target.Type, Ninitial, Lifepoints))
+  self:T(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", target.Name, target.Type, Ninitial, Lifepoints))
   
   return target
 end

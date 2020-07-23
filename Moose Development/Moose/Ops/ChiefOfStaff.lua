@@ -374,7 +374,7 @@ function CHIEF:onafterStatus(From, Event, To)
   
   -- Clean up missions where the contact was lost.
   for _,_contact in pairs(self.ContactsLost) do
-    local contact=_contact --#CHIEF.Contact
+    local contact=_contact --#INTEL.Contact
     
     if contact.mission and contact.mission:IsNotOver() then
     
@@ -539,7 +539,6 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #string Defcon New defence condition.
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
 function CHIEF:onbeforeDefcon(From, Event, To, Defcon)
 
   local gotit=false
@@ -569,12 +568,25 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #string Defcon New defence condition.
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
 function CHIEF:onafterDefcon(From, Event, To, Defcon)
   self:I(self.lid..string.format("Changing Defcon from %s --> %s", self.Defcon, Defcon))
   
   -- Set new defcon.
   self.Defcon=Defcon
+end
+
+--- On after "DeclareWar" event.
+-- @param #CHIEF self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #CHIEF Chief The Chief we declared war on.
+function CHIEF:onafterDeclareWar(From, Event, To, Chief)
+
+  if Chief then
+    self:AddWarOnChief(Chief)
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

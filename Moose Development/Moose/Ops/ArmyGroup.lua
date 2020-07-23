@@ -70,6 +70,7 @@ function ARMYGROUP:New(GroupName)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "FullStop",         "Holding")     -- Hold position.
+  self:AddTransition("*",             "Cruise",           "Cruising")    -- Hold position.
   
   self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
   self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
@@ -342,11 +343,6 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     
   end
   
-  -- Get orientation.
-  self.Corientlast=self.group:GetUnit(1):GetOrientationX()
-  
-  self.depth=self.group:GetHeight()
-  
   -- Update route.
   self:Cruise()
   
@@ -462,7 +458,7 @@ function ARMYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Depth, Resu
   local speed=Speed and UTILS.KnotsToKmph(Speed) or self.group:GetVelocityKMH()
   
   -- Current waypoint.
-  local current=self:GetCoordinate():WaypointGround(Speed,Formation,DCSTasks)
+  local current=self:GetCoordinate():WaypointGround(Speed, Formation, DCSTasks)
   table.insert(waypoints, current)
   
   -- At each waypoint report passing.
@@ -533,8 +529,6 @@ function ARMYGROUP:onafterCruise(From, Event, To, Speed)
   self:UpdateRoute(nil, Speed, self.depth)
 
 end
-
-
 
 --- On after "Dead" event.
 -- @param #ARMYGROUP self
@@ -624,7 +618,7 @@ function ARMYGROUP:OnEventBirth(EventData)
 
 end
 
---- Flightgroup event function handling the crash of a unit.
+--- Event function handling the crash of a unit.
 -- @param #ARMYGROUP self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function ARMYGROUP:OnEventDead(EventData)
@@ -649,7 +643,7 @@ function ARMYGROUP:OnEventDead(EventData)
 
 end
 
---- Flightgroup event function handling the crash of a unit.
+--- Event function handling the crash of a unit.
 -- @param #ARMYGROUP self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function ARMYGROUP:OnEventRemoveUnit(EventData)
@@ -755,9 +749,7 @@ function ARMYGROUP:_InitGroup()
   self.position=self:GetCoordinate()
   
   -- Radio parameters from template.
-  self.radioOn=true  -- Radio is always on for ships.
-  self.radioFreq=tonumber(self.template.units[1].frequency)/1000000
-  self.radioModu=tonumber(self.template.units[1].modulation)/1000000
+  self.radioOn=false  -- Radio is always OFF for ground.
   
   -- If not set by the use explicitly yet, we take the template values as defaults.
   if not self.radioFreqDefault then
@@ -810,7 +802,7 @@ function ARMYGROUP:_InitGroup()
     --text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radioFreq, UTILS.GetModulationName(self.radioModu), tostring(self.radioOn))
+    --text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radioFreq, UTILS.GetModulationName(self.radioModu), tostring(self.radioOn))
     --text=text..string.format("Ammo         = %d (G=%d/R=%d/B=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Bombs, self.ammo.Missiles)
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))

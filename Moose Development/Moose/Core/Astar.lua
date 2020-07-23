@@ -78,8 +78,6 @@ function ASTAR:New()
   local self=BASE:Inherit(self, BASE:New()) --#ASTAR
 
   self.lid="ASTAR | "
-  
-  self.Debug=true
 
   return self
 end
@@ -136,6 +134,19 @@ function ASTAR:AddNode(Node)
   return self
 end
 
+--- Add a node to the table of grid nodes specifying its coordinate.
+-- @param #ASTAR self
+-- @param Core.Point#COORDINATE Coordinate The coordinate where the node is created.
+-- @return #ASTAR self
+function ASTAR:AddNodeFromCoordinate(Coordinate)
+
+  local node=self:GetNodeFromCoordinate(Coordinate)
+  
+  self:AddNode(node)
+    
+  return self
+end
+
 --- Check if the coordinate of a node has is at a valid surface type.
 -- @param #ASTAR self
 -- @param #ASTAR.Node Node The node to be added.
@@ -163,17 +174,6 @@ function ASTAR:CheckValidSurfaceType(Node, SurfaceTypes)
 
 end
 
---- Set valid neighbours to require line of sight between two nodes.
--- @param #ASTAR self
--- @param #number CorridorWidth Width of LoS corridor in meters.
--- @return #ASTAR self
-function ASTAR:SetValidNeighbourLoS(CorridorWidth)
-
-  self:SetValidNeighbourFunction(ASTAR.LoS, CorridorWidth)
-
-  return self
-end
-
 --- Add a function to determine if a neighbour of a node is valid.
 -- @param #ASTAR self
 -- @param #function NeighbourFunction Function that needs to return *true* for a neighbour to be valid.
@@ -190,6 +190,32 @@ function ASTAR:SetValidNeighbourFunction(NeighbourFunction, ...)
   
   return self
 end
+
+
+--- Set valid neighbours to require line of sight between two nodes.
+-- @param #ASTAR self
+-- @param #number CorridorWidth Width of LoS corridor in meters.
+-- @return #ASTAR self
+function ASTAR:SetValidNeighbourLoS(CorridorWidth)
+
+  self:SetValidNeighbourFunction(ASTAR.LoS, CorridorWidth)
+
+  return self
+end
+
+--- Set valid neighbours to be in a certain distance.
+-- @param #ASTAR self
+-- @param #number MaxDistance Max distance between nodes in meters. Default is 2000 m.
+-- @return #ASTAR self
+function ASTAR:SetValidNeighbourDistance(MaxDistance)
+
+  self:SetValidNeighbourFunction(ASTAR.DistMax, MaxDistance)
+
+  return self
+end
+
+
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Grid functions
@@ -329,6 +355,20 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
   return los
 end
 
+--- Function to check if two nodes have line of sight (LoS).
+-- @param #ASTAR.Node nodeA First node.
+-- @param #ASTAR.Node nodeB Other node.
+-- @param #number distmax Max distance in meters. Default is 2000 m.
+-- @return #boolean If true, distance between the two nodes is below threshold.
+function ASTAR.DistMax(nodeA, nodeB, distmax)
+
+  distmax=distmax or 2000
+
+  local dist=nodeA.coordinate:Get2DDistance(nodeB.coordinate)
+  
+  return dist<=distmax
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -338,6 +378,7 @@ end
 -- @param #ASTAR self
 -- @param Core.Point#COORDINATE Coordinate.
 -- @return #ASTAR.Node Cloest node to the coordinate.
+-- @return #number Distance to closest node in meters.
 function ASTAR:FindClosestNode(Coordinate)
 
   local distMin=math.huge
@@ -355,16 +396,22 @@ function ASTAR:FindClosestNode(Coordinate)
     
   end
     
-  return closeNode
+  return closeNode, distMin
 end
 
---- Add a node.
+--- Find the start node.
 -- @param #ASTAR self
 -- @param #ASTAR.Node Node The node to be added to the nodes table.
 -- @return #ASTAR self
 function ASTAR:FindStartNode()
 
-  self.startNode=self:FindClosestNode(self.startCoord)
+  local node, dist=self:FindClosestNode(self.startCoord)
+  
+  self.startNode=node
+  
+  if dist>1000 then
+    self:AddNode(node)
+  end
     
   return self
 end
@@ -375,7 +422,13 @@ end
 -- @return #ASTAR self
 function ASTAR:FindEndNode()
 
-  self.endNode=self:FindClosestNode(self.endCoord)
+  local node, dist=self:FindClosestNode(self.endCoord)
+
+  self.endNode=node
+  
+  if dist>1000 then
+    self:AddNode(node)
+  end
     
   return self
 end
@@ -432,9 +485,6 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
         table.remove(path, 1)
       end
       
-      -- Set end time.
-      local T9=timer.getAbsTime()
-      
       -- Debug message.
       local text=string.format("Found path with %d nodes", #path)
       self:I(self.lid..text)
@@ -473,7 +523,7 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
 
   -- Debug message.
   local text=string.format("WARNING: Could NOT find valid path!")
-  self:I(self.lid..text)
+  self:E(self.lid..text)
   MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
   
   return nil -- no valid path
