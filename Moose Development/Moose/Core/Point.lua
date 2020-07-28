@@ -175,10 +175,6 @@ do -- COORDINATE
   -- In order to use the most optimal road system to transport vehicles, the method @{#COORDINATE.GetPathOnRoad}() will calculate
   -- the most optimal path following the road between two coordinates.
   --   
-  --
-  --
-  --
-  --
   -- ## 8) Metric or imperial system
   --
   --   * @{#COORDINATE.IsMetric}(): Returns if the 3D point is Metric or Nautical Miles.
@@ -204,23 +200,23 @@ do -- COORDINATE
   
   --- @field COORDINATE.WaypointAction 
   COORDINATE.WaypointAction = {
-    TurningPoint = "Turning Point",
-    FlyoverPoint = "Fly Over Point",
-    FromParkingArea = "From Parking Area",
+    TurningPoint       = "Turning Point",
+    FlyoverPoint       = "Fly Over Point",
+    FromParkingArea    = "From Parking Area",
     FromParkingAreaHot = "From Parking Area Hot",
-    FromRunway = "From Runway",
-    Landing = "Landing",
-    LandingReFuAr = "LandingReFuAr",
+    FromRunway         = "From Runway",
+    Landing            = "Landing",
+    LandingReFuAr      = "LandingReFuAr",
   }
 
   --- @field COORDINATE.WaypointType 
   COORDINATE.WaypointType = {
-    TakeOffParking = "TakeOffParking",
+    TakeOffParking    = "TakeOffParking",
     TakeOffParkingHot = "TakeOffParkingHot",
-    TakeOff = "TakeOffParkingHot",
-    TurningPoint = "Turning Point",
-    Land = "Land",
-    LandingReFuAr = "LandingReFuAr",
+    TakeOff           = "TakeOffParkingHot",
+    TurningPoint      = "Turning Point",
+    Land              = "Land",
+    LandingReFuAr     = "LandingReFuAr",
   }
 
 
@@ -1290,8 +1286,10 @@ do -- COORDINATE
     RoutePoint.x    = self.x
     RoutePoint.y    = self.z
     
-    RoutePoint.alt  = self:GetLandHeight()+1 -- self.y
+    RoutePoint.alt      = self:GetLandHeight()+1
     RoutePoint.alt_type = COORDINATE.WaypointAltType.BARO
+    
+    RoutePoint.type = "Turning Point"
  
     RoutePoint.action = Formation or "Off Road"
     RoutePoint.formation_template=""
@@ -1921,7 +1919,7 @@ do -- COORDINATE
   --- Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoordinate
-  -- @param #number OFfset Height offset in meters. Default 2 m.
+  -- @param #number Offset Height offset in meters. Default 2 m.
   -- @return #boolean true If the ToCoordinate has LOS with the Coordinate, otherwise false.
   function COORDINATE:IsLOS( ToCoordinate, Offset )
   

@@ -1,5 +1,6 @@
 --- **Ops** - Generic group enhancement functions.
 -- 
+-- This class is **not** meant to be used itself by the end user.
 --     
 -- ===
 --
@@ -48,9 +49,10 @@
 -- @field #boolean detectionOn If true, detected units of the group are analyzed.
 -- @field Ops.Auftrag#AUFTRAG missionpaused Paused mission.
 -- 
--- @field Core.Point#COORDINATE position Current position of the group.
+-- @field Core.Point#COORDINATE position Position of the group at last status check.
 -- @field #number traveldist Distance traveled in meters. This is a lower bound!
 -- @field #number traveltime Time.
+-- @field #boolean ispathfinding If true, group is on pathfinding route.
 -- 
 -- @field #number tacanChannelDefault The default TACAN channel.
 -- @field #string tacanMorseDefault The default TACAN morse code.
@@ -70,16 +72,22 @@
 -- @field #boolean eplrs If true, EPLRS data link is on.
 -- 
 -- @field #string roeDefault Default ROE setting.
--- @field #string rotDefault Default ROT setting.
 -- @field #string roe Current ROE setting.
+-- 
+-- @field #string rotDefault Default ROT setting.
 -- @field #string rot Current ROT setting.
+-- 
+-- @field #string alarmstateDefault Default Alarm State setting.
+-- @field #string alarmstate Current Alarm State setting.
 -- 
 -- @field #number formationDefault Default formation setting.
 -- @field #number formation Current formation setting.
 -- 
+-- @field Core.Astar#ASTAR Astar path finding.
+-- 
 -- @extends Core.Fsm#FSM
 
---- *Something must be left to chance; nothing is sure in a sea fight above all.* --- Horatio Nelson
+--- *A small group of determined and like-minded people can change the course of history.* --- Mahatma Gandhi
 --
 -- ===
 --
@@ -87,7 +95,7 @@
 --
 -- # The OPSGROUP Concept
 -- 
--- The OPSGROUP class contains common functions used by other classes such as FLIGHGROUP and NAVYGROUP.
+-- The OPSGROUP class contains common functions used by other classes such as FLIGHGROUP, NAVYGROUP.
 -- 
 -- This class is **not** meant to be used itself by the end user.
 -- 
@@ -206,16 +214,18 @@ OPSGROUP.TaskType={
 
 --- Waypoint data.
 -- @type OPSGROUP.Waypoint
--- @field #table wp DCS waypoint table.
--- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
--- @field #number speed Speed in m/s.
--- @field #number altitude Altitude in meters. For submaries use negative sign for depth.
--- @field #number index Waypoint index. This might change as waypoints are added and removed.
 -- @field #number uid Waypoint's unit id, which is a running number.
--- @field #boolean onroad If true, ground group takes a road.
--- @field #number formation The formation for this waypoint.
--- @field #boolean detour If true, this waypoint is not part of the normal route.
+-- @field #number speed Speed in m/s.
+-- @field #number alt Altitude in meters. For submaries use negative sign for depth.
 -- @field #string action Waypoint action (turning point, etc.). Ground groups have the formation here.
+-- @field #table task Waypoint task combo.
+-- @field #string type Waypoint type.
+-- @field #number x Waypoint x-coordinate.
+-- @field #number y Waypoint y-coordinate.
+-- @field #boolean detour If true, this waypoint is not part of the normal route.
+-- @field #boolean intowind If true, this waypoint is a turn into wind route point.
+-- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
+-- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
 
 --- NavyGroup version.
 -- @field #string version
@@ -433,79 +443,7 @@ function OPSGROUP:GetHeading()
   return nil
 end
 
---- Get next waypoint index.
--- @param #OPSGROUP self
--- @param #boolean cyclic If true, return first waypoint if last waypoint was reached. Default is patrol ad infinitum value set.
--- @return #number Next waypoint index.
-function OPSGROUP:GetWaypointIndexNext(cyclic)
 
-  cyclic=cyclic or self.adinfinitum
-  
-  local N=#self.waypoints
-
-  local n=math.min(self.currentwp+1, N)
-  
-  if cyclic and self.currentwp==N then
-    n=1
-  end
-  
-  return n
-end
-
---- Get current waypoint index. This is the index of the last passed waypoint.
--- @param #OPSGROUP self
--- @return #number Current waypoint index.
-function OPSGROUP:GetWaypointIndexCurrent()  
-  return self.currentwp or 1
-end
-
---- Get waypoint speed.
--- @param #OPSGROUP self
--- @param #number indx Waypoint index.
--- @return #number Speed set at waypoint in knots.
-function OPSGROUP:GetWaypointSpeed(indx)
-
-  local waypoint=self:GetWaypoint(indx)
-  
-  if waypoint then
-    return UTILS.MpsToKnots(waypoint.speed)
-  end
-
-  return nil
-end
-
---- Get waypoint.
--- @param #OPSGROUP self
--- @param #number indx Waypoint index.
--- @return #OPSGROUP.Waypoint Waypoint table.
-function OPSGROUP:GetWaypoint(indx)
-  return self.waypoints[indx]
-end
-
---- Get final waypoint.
--- @param #OPSGROUP self
--- @return #OPSGROUP.Waypoint Final waypoint table.
-function OPSGROUP:GetWaypointFinal()
-  return self.waypoints[#self.waypoints]
-end
-
---- Get next waypoint.
--- @param #OPSGROUP self
--- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
--- @return #OPSGROUP.Waypoint Next waypoint table.
-function OPSGROUP:GetWaypointNext(cyclic)
-
-  local n=self:GetWaypointIndexNext(cyclic)
-  
-  return self.waypoints[n]
-end
-
---- Get current waypoint.
--- @param #OPSGROUP self
--- @return #OPSGROUP.Waypoint Current waypoint table.
-function OPSGROUP:GetWaypointCurrent()
-  return self.waypoints[self.currentwp]
-end
 
 --- Check if task description is unique.
 -- @param #OPSGROUP self
@@ -524,29 +462,6 @@ function OPSGROUP:CheckTaskDescriptionUnique(description)
   return true
 end
 
---- Get coordinate of next waypoint of the group.
--- @param #OPSGROUP self
--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
--- @return #number Number of waypoint.
-function OPSGROUP:GetNextWaypointCoordinate()
-
-  -- Next waypoint.
-  local n=self:GetWaypointIndexNext(cyclic)
-
-  -- Next waypoint.
-  local wp=self.waypoints[n]
-
-  return self:GetWaypointCoordinate(wp)
-end
-
---- Get next waypoint coordinates.
--- @param #OPSGROUP self
--- @param #table wp Waypoint table.
--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
-function OPSGROUP:GetWaypointCoordinate(wp)
-  -- TODO: move this to COORDINATE class.
-  return COORDINATE:New(wp.x, wp.alt, wp.y)
-end
 
 --- Activate a *late activated* group.
 -- @param #OPSGROUP self
@@ -707,6 +622,111 @@ function OPSGROUP:GetWaypointIndex(uid)
   return nil
 end
 
+--- Get next waypoint index.
+-- @param #OPSGROUP self
+-- @param #boolean cyclic If true, return first waypoint if last waypoint was reached. Default is patrol ad infinitum value set.
+-- @return #number Next waypoint index.
+function OPSGROUP:GetWaypointIndexNext(cyclic)
+
+  if cyclic==nil then
+    cyclic=self.adinfinitum
+  end
+  
+  --env.info("FF cyclic = "..tostring(cyclic))
+  
+  local N=#self.waypoints
+
+  local n=math.min(self.currentwp+1, N)
+  
+  --env.info("FF n = "..tostring(n))
+  
+  if cyclic and self.currentwp==N then
+    n=1
+    --env.info("FF cyclic n = "..tostring(n))
+  end
+  
+  return n
+end
+
+--- Get current waypoint index. This is the index of the last passed waypoint.
+-- @param #OPSGROUP self
+-- @return #number Current waypoint index.
+function OPSGROUP:GetWaypointIndexCurrent()  
+  return self.currentwp or 1
+end
+
+--- Get waypoint.
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index.
+-- @return #OPSGROUP.Waypoint Waypoint table.
+function OPSGROUP:GetWaypoint(indx)
+  return self.waypoints[indx]
+end
+
+--- Get final waypoint.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP.Waypoint Final waypoint table.
+function OPSGROUP:GetWaypointFinal()
+  return self.waypoints[#self.waypoints]
+end
+
+--- Get next waypoint.
+-- @param #OPSGROUP self
+-- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
+-- @return #OPSGROUP.Waypoint Next waypoint table.
+function OPSGROUP:GetWaypointNext(cyclic)
+
+  local n=self:GetWaypointIndexNext(cyclic)
+  
+  return self.waypoints[n]
+end
+
+--- Get current waypoint.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP.Waypoint Current waypoint table.
+function OPSGROUP:GetWaypointCurrent()
+  return self.waypoints[self.currentwp]
+end
+
+--- Get coordinate of next waypoint of the group.
+-- @param #OPSGROUP self
+-- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+function OPSGROUP:GetNextWaypointCoordinate()
+
+  -- Get next waypoint  
+  local waypoint=self:GetWaypointNext(cyclic)
+
+  return waypoint.coordinate
+end
+
+--- Get waypoint coordinates.
+-- @param #OPSGROUP self
+-- @param #number index Waypoint index.
+-- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+function OPSGROUP:GetWaypointCoordinate(index)
+  local waypoint=self:GetWaypoint(index)
+  if waypoint then
+    return waypoint.coordinate
+  end
+  return nil
+end
+
+--- Get waypoint speed.
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index.
+-- @return #number Speed set at waypoint in knots.
+function OPSGROUP:GetWaypointSpeed(indx)
+
+  local waypoint=self:GetWaypoint(indx)
+  
+  if waypoint then
+    return UTILS.MpsToKnots(waypoint.speed)
+  end
+
+  return nil
+end
+
+
 --- Remove a waypoint with a ceratin UID.
 -- @param #OPSGROUP self
 -- @param #number uid Waypoint UID.
@@ -716,8 +736,7 @@ function OPSGROUP:RemoveWaypointByID(uid)
   local index=self:GetWaypointIndex(uid)
   
   if index then
-    self:RemoveWaypoint(index)
-    
+    self:RemoveWaypoint(index)    
   end
 
   return self
@@ -741,24 +760,47 @@ function OPSGROUP:RemoveWaypoint(wpindex)
     local n=#self.waypoints
     
     -- Debug info.
-    self:I(self.lid..string.format("Removing waypoint %d. N %d-->%d", wpindex, N, n))
+    self:I(self.lid..string.format("Removing waypoint index %d, current wp index %d. N %d-->%d", wpindex, self.currentwp, N, n))
   
     -- Waypoint was not reached yet.
     if wpindex > self.currentwp then
     
-      -- Could be that we just removed the only remaining waypoint ==> passedfinalwp=true so we RTB or wait.
+      -- Could be that we just removed the only remaining waypoint ==> passedfinalwp=true.
+      
+      -- TODO: patrol adinfinitum.
+      
       if self.currentwp>=n then
         self.passedfinalwp=true
       end
-
-      self:_CheckGroupDone()
       
+      env.info("FF passed final waypoint after remove current wp = "..self.currentwp)
+
+      self:_CheckGroupDone(1)
+      
+    --elseif wpindex==self.currentwp then
+    
+      -- Removed the waypoint we just passed.
+    
     else
     
       -- If an already passed waypoint was deleted, we do not need to update the route.
-    
-      -- TODO: But what about the self.currentwp number. This is now incorrect!
-      self.currentwp=self.currentwp-1
+      
+      -- If current wp = 1 it stays 1. Otherwise decrease current wp.
+      
+      if self.currentwp==1 then
+      
+        if self.adinfinitum then
+          self.currentwp=#self.waypoints
+        else
+          self.currentwp=1
+        end
+        
+      else
+        self.currentwp=self.currentwp-1
+      end
+      
+      --self.currentwp=math.max(1, self.currentwp-1)
+      env.info("FF current waypoint after remove "..self.currentwp)
     
     end
         
@@ -995,9 +1037,9 @@ end
 
 --- Get the unfinished waypoint tasks
 -- @param #OPSGROUP self
--- @param #number n Waypoint index. Counting starts at one.
+-- @param #number id Unique waypoint ID.
 -- @return #table Table of tasks. Table could also be empty {}.
-function OPSGROUP:GetTasksWaypoint(n)
+function OPSGROUP:GetTasksWaypoint(id)
 
   -- Tasks table.    
   local tasks={}
@@ -1008,7 +1050,7 @@ function OPSGROUP:GetTasksWaypoint(n)
   -- Look for first task that SCHEDULED.
   for _,_task in pairs(self.taskqueue) do
     local task=_task --#OPSGROUP.Task
-    if task.type==OPSGROUP.TaskType.WAYPOINT and task.status==OPSGROUP.TaskStatus.SCHEDULED and task.waypoint==n then
+    if task.type==OPSGROUP.TaskType.WAYPOINT and task.status==OPSGROUP.TaskStatus.SCHEDULED and task.waypoint==id then
       table.insert(tasks, task)
     end
   end
@@ -1913,19 +1955,48 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Waypoint passed.
--- @param #number N Total number of waypoints.
 -- @param #OPSGROUP.Waypoint Waypoint Waypoint data passed.
-function OPSGROUP:onafterPassingWaypoint(From, Event, To, n, N, Waypoint)
-  local text=string.format("Group passed waypoint %d/%d", n, N)
-  self:T(self.lid..text)
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
+function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   
+  -- Apply tasks of this waypoint.
+  local ntasks=self:_SetWaypointTasks(Waypoint)
+  
+  -- Get waypoint index.
+  local wpindex=self:GetWaypointIndex(Waypoint.uid)
+
+  -- Final waypoint reached?
+  if wpindex==nil or wpindex==#self.waypoints then
+
+    -- Set switch to true.    
+    self.passedfinalwp=true
+    
+    -- Check if all tasks/mission are done? If so, RTB or WAIT.
+    -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
+    if ntasks==0 then
+      self:_CheckGroupDone(1)
+    end
+
+  end
+
+  -- Debug info.
+  local text=string.format("Group passed waypoint %s/%d ID=%d: final=%s detour=%s astar=%s", 
+  tostring(wpindex), #self.waypoints, Waypoint.uid, tostring(self.passedfinalwp), tostring(Waypoint.detour), tostring(Waypoint.astar))
+  self:I(self.lid..text)
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)  
+  
+end
+
+--- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Waypoint Waypoint The waypoint.
+-- @return #number Number of tasks.
+function OPSGROUP:_SetWaypointTasks(Waypoint)
+
   -- Get all waypoint tasks.
   local tasks=self:GetTasksWaypoint(Waypoint.uid)
-  
+
   -- Debug info.
-  local text=string.format("WP %d/%d tasks:", n, N)
+  local text=string.format("WP uid=%d tasks:", Waypoint.uid)
   if #tasks>0 then
     for i,_task in pairs(tasks) do
       local task=_task --#OPSGROUP.Task
@@ -1963,20 +2034,8 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, n, N, Waypoint)
   if #taskswp>0 then
     self:SetTask(self.group:TaskCombo(taskswp))
   end
-  
-  -- Final AIR waypoint reached?
-  if n==N then
 
-    -- Set switch to true.    
-    self.passedfinalwp=true
-    
-    -- Check if all tasks/mission are done? If so, RTB or WAIT.
-    -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
-    if #taskswp==0 then
-      self:_CheckGroupDone(1)
-    end
-
-  end
+  return #taskswp
 end
 
 --- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
@@ -2195,14 +2254,17 @@ end
 
 --- Initialize Mission Editor waypoints.
 -- @param #OPSGROUP self
--- @param #table waypoint DCS waypoint data table.
+-- @param #OPSGROUP.Waypoint waypoint DCS waypoint data table.
 -- @return #OPSGROUP.Waypoint Waypoint data.
-function OPSGROUP:_CreateWaypoint(waypoint, detour, onroad, formation)
+function OPSGROUP:_CreateWaypoint(waypoint, formation, detour)
   
   waypoint.uid=self.wpcounter  
   waypoint.coordinate=COORDINATE:New(waypoint.x, waypoint.alt, waypoint.y)
   waypoint.detour=detour and detour or false
   waypoint.formation=formation
+  if formation then
+    waypoint.action=formation
+  end
   waypoint.onroad=onroad and onroad or false
 
   self.wpcounter=self.wpcounter+1
@@ -2218,7 +2280,7 @@ function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
 
   wpnumber=wpnumber or #self.waypoints+1
   
-  env.info(string.format("adding waypoint at index=%d", wpnumber))
+  self:I(self.lid..string.format("Adding waypoint at index=%d id=%d", wpnumber, waypoint.uid))
 
   -- Add waypoint to table.
   table.insert(self.waypoints, wpnumber, waypoint)
@@ -2263,7 +2325,7 @@ end
 --- Route group along waypoints.
 -- @param #OPSGROUP self
 -- @param #table waypoints Table of waypoints.
--- @default
+-- @param #number delay Delay in seconds.
 -- @return #OPSGROUP self
 function OPSGROUP:Route(waypoints, delay)
 
@@ -2314,13 +2376,13 @@ function OPSGROUP:_UpdateWaypointTasks(n)
     if i>=n or nwaypoints==1 then
     
       -- Debug info.
-      self:T(self.lid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d", i, nwaypoints, self.currentwp))
+      self:I(self.lid..string.format("Updating waypoint task for waypoint %d/%d ID=%d. Last waypoint passed %d", i, nwaypoints, wp.uid, self.currentwp))
   
       -- Tasks of this waypoint
       local taskswp={}
     
       -- At each waypoint report passing.
-      local TaskPassingWaypoint=self.group:TaskFunction("OPSGROUP._PassingWaypoint", self, i, wp.uid)
+      local TaskPassingWaypoint=self.group:TaskFunction("OPSGROUP._PassingWaypoint", self, wp.uid)
       table.insert(taskswp, TaskPassingWaypoint)      
           
       -- Waypoint task combo.
@@ -2337,26 +2399,72 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function called when a group is passing a waypoint.
---@param Wrapper.Group#GROUP group Group that passed the waypoint
+--@param Wrapper.Group#GROUP group Group that passed the waypoint.
 --@param #OPSGROUP opsgroup Ops group object.
---@param #number i Waypoint number that has been reached.
 --@param #number uid Waypoint UID.
-function OPSGROUP._PassingWaypoint(group, opsgroup, i, uid)
-
-  local final=#opsgroup.waypoints or 1
-
-  -- Debug message.
-  local text=string.format("Group passing waypoint %d of %d, uid=%d", i, final, uid)
-  opsgroup:I(opsgroup.lid..text)
-
-  -- Set current waypoint.
-  opsgroup.currentwp=i
+function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
   
   -- Get waypoint data.
   local waypoint=opsgroup:GetWaypointByID(uid)
-
-  -- Trigger PassingWaypoint event.
-  opsgroup:PassingWaypoint(i, final, waypoint)
+  
+  if waypoint then
+  
+    -- Get the current waypoint index.
+    opsgroup.currentwp=opsgroup:GetWaypointIndex(uid)
+    
+    -- Set expected speed and formation from the next WP.
+    local wpnext=opsgroup:GetWaypointNext()  
+    if wpnext then
+      
+      -- Set formation.
+      if opsgroup.isGround then
+        opsgroup.formation=wpnext.action
+      end
+      
+      -- Set speed.
+      opsgroup.speed=wpnext.speed
+      
+    end
+    
+    -- Check if the group is still pathfinding.
+    if opsgroup.ispathfinding and not waypoint.astar then
+      opsgroup.ispathfinding=false
+    end  
+    
+    -- Check special waypoints.
+    if waypoint.astar then
+    
+      env.info("FF removing Astar waypoint "..uid)
+      opsgroup:RemoveWaypointByID(uid)
+      
+    elseif waypoint.detour then
+    
+      env.info("FF removing Detour waypoint "..uid)
+      opsgroup:RemoveWaypointByID(uid)
+      
+      -- Trigger event.
+      opsgroup:DetourReached()
+      
+      if waypoint.detour==0 then
+        opsgroup:FullStop()
+      elseif waypoint.detour==1 then
+        opsgroup:Cruise()
+      else
+        opsgroup:E("ERROR: waypoint.detour should be 0 or 1")
+      end
+      
+    end
+  
+    -- Debug message.
+    local text=string.format("Group passing waypoint uid=%d", uid)
+    opsgroup:I(opsgroup.lid..text)
+  
+    -- Trigger PassingWaypoint event.
+    if not (waypoint.astar or waypoint.detour) then
+      opsgroup:PassingWaypoint(waypoint)
+    end
+    
+  end
 
 end
 
@@ -2459,6 +2567,52 @@ function OPSGROUP:SetOptionROT(rot)
   end
   
   return self
+end
+
+
+--- Set the default Alarm State for the group. This is the state gets when the group is spawned or to which it defaults back after a mission.
+-- @param #OPSGROUP self
+-- @param #number alarmstate Alarm state of group. Default is `AI.Option.Ground.val.ALARM_STATE.AUTO` (0).
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultAlarmstate(alarmstate)
+  self.alarmstateDefault=alarmstate or 0
+  return self
+end
+
+--- Set current Alarm State of the group.
+-- @param #OPSGROUP self
+-- @param #string alarmstate Alarm state of group. Default is the value defined by :SetDefaultAlarmstate().
+-- @return #OPSGROUP self
+function OPSGROUP:SetOptionAlarmstate(alarmstate)
+
+  self.alarmstate=alarmstate or self.alarmstateDefault
+  
+  if self:IsAlive() then
+  
+    if self.alarmstate==0 then
+      self.group:OptionAlarmStateAuto()
+    elseif self.alarmstate==1 then
+      self.group:OptionAlarmStateGreen()
+    elseif self.alarmstate==2 then
+      self.group:OptionAlarmStateRed()
+    else
+      self:E("ERROR: Unknown Alarm State! Setting to AUTO.")
+      self.group:OptionAlarmStateAuto()
+    end
+    
+    self:I(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.alarmstate))
+  else
+    -- TODO WARNING
+  end
+  
+  return self
+end
+
+--- Get current Alarm State of the group.
+-- @param #OPSGROUP self
+-- @return #number Current Alarm State.
+function OPSGROUP:GetAlarmstate()
+  return self.alarmstate
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

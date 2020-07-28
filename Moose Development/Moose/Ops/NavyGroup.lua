@@ -20,6 +20,7 @@
 -- @field #NAVYGROUP.IntoWind intowind Into wind info.
 -- @field #table Qintowind Queue of "into wind" turns.
 -- @field #number depth Ordered depth in meters.
+-- @field #boolean collisionwarning If true, collition warning.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -54,6 +55,7 @@ NAVYGROUP = {
 -- @field #number Speed Speed in knots.
 -- @field #number Offset Offset angle in degrees.
 -- @field #number Id Unique ID of the turn.
+-- @field Ops.OpsGroup#OPSGROUP.Waypoint waypoint Turn into wind waypoint.
 -- @field Core.Point#COORDINATE Coordinate Coordinate where we left the route.
 -- @field #number Heading Heading the boat will take in degrees.
 -- @field #boolean Open Currently active.
@@ -99,14 +101,16 @@ function NAVYGROUP:New(GroupName)
   self:AddTransition("*",             "FullStop",         "Holding")     -- Hold position.
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Hold position.
   
-  self:AddTransition("*",             "TurnIntoWind",     "*")           -- Command the group to turn into the wind.
-  self:AddTransition("*",             "TurnIntoWindOver", "*")           -- Turn into wind is over.
+  self:AddTransition("*",             "TurnIntoWind",     "IntoWind")    -- Command the group to turn into the wind.
+  self:AddTransition("*",             "TurnIntoWindOver", "Cruising")    -- Turn into wind is over.
   
   self:AddTransition("*",             "TurningStarted",   "*")           -- Group started turning.
   self:AddTransition("*",             "TurningStopped",   "*")           -- Group stopped turning.
   
   self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
   self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
+  
+  self:AddTransition("*",             "CollitionWarning", "*")           -- Collision warning.
   
   self:AddTransition("*",             "Dive",             "Diving")      -- Command a submarine to dive.
   self:AddTransition("Diving",        "Surface",          "Cruising")    -- Command a submarine to go to the surface.
@@ -170,7 +174,7 @@ function NAVYGROUP:SetPatrolAdInfinitum(switch)
   return self
 end
 
---- Group patrols ad inifintum. If the last waypoint is reached, it will go to waypoint one and repeat its route.
+--- Set default cruise speed. This is the speed a group will take by default if no speed is specified explicitly.
 -- @param #NAVYGROUP self
 -- @param #number Speed Speed in knots. Default 70% of max speed.
 -- @return #NAVYGROUP self
@@ -290,6 +294,36 @@ function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
   return recovery
 end
 
+
+--- Check if the group is currently holding its positon.
+-- @param #NAVYGROUP self
+-- @return #boolean If true, group was ordered to hold.
+function NAVYGROUP:IsHolding()
+  return self:Is("Holding")
+end
+
+--- Check if the group is currently cruising.
+-- @param #NAVYGROUP self
+-- @return #boolean If true, group cruising.
+function NAVYGROUP:IsCruising()
+  return self:Is("Cruising")
+end
+
+--- Check if the group is currently on a detour.
+-- @param #NAVYGROUP self
+-- @return #boolean If true, group is on a detour
+function NAVYGROUP:IsOnDetour()
+  return self:Is("OnDetour")
+end
+
+
+--- Check if the group is currently diving.
+-- @param #NAVYGROUP self
+-- @return #boolean If true, group is currently diving.
+function NAVYGROUP:IsDiving()
+  return self:Is("Diving")
+end
+
 --- Check if the group is currently turning.
 -- @param #NAVYGROUP self
 -- @return #boolean If true, group is currently turning.
@@ -354,28 +388,41 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     -- Check if group started or stopped turning.
     self:_CheckTurning()
     
-    -- Check water is ahead.
-    local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist or 5000, hdg))
+    local freepath=10000
+    local collision=false
     
-    self:_CheckTurnsIntoWind()
-  
-    if self.intowind then
+    if not self:IsTurning() then
     
-      if timer.getAbsTime()>=self.intowind.Tstop then
+      if not self.ispathfinding then
       
-        self:TurnIntoWindOver()
+        freepath=self:_CheckFreePath(freepath, 100)
+               
+        if freepath<5000 then
+          self.ispathfinding=self:_FindPathToNextWaypoint()
+        end
         
       end
-    
+      
+      -- Check water is ahead.
+      --collision=self:_CheckCollisionCoord(pos:Translate(freepath+100, hdg))
+      
     end
+    
+    -- Check into wind queue.
+    self:_CheckTurnsIntoWind()
+    
+    -- Check if group got stuck.
+    self:_CheckStuck()    
   
     -- Get number of tasks and missions.
     local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
     local nMissions=self:CountRemainingMissison()
+
+    local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"
   
     -- Info text.
-    local text=string.format("State %s: Wp=%d/%d Speed=%.1f Heading=%03d intowind=%s turning=%s collision=%s Tasks=%d Missions=%d", 
-    fsmstate, self.currentwp, #self.waypoints, speed, hdg, tostring(self:IsSteamingIntoWind()), tostring(self:IsTurning()), tostring(collision), nTaskTot, nMissions)
+    local text=string.format("%s (T=%d,M=%d): Wp=%d-->%d (of %d) Speed=%.1f (%.1f) Depth=%.1f Hdg=%03d Turn=%s Collision=%d IntoWind=%s ROE=%d AS=%d", 
+    fsmstate, nTaskTot, nMissions, self.currentwp, self:GetWaypointIndexNext(), #self.waypoints, speed, UTILS.MpsToKnots(self.speed or 0), pos.y, hdg, tostring(self:IsTurning()), freepath, intowind, 0, 0)
     self:I(self.lid..text)
     
   else
@@ -444,7 +491,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   end
 
 
-
+  -- Next status update in 10 seconds.
   self:__Status(-10)
 end
 
@@ -510,8 +557,8 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #number n Waypoint number. Default is next waypoint.
--- @param #number Speed Speed in knots. Default cruise speed.
--- @param #number Depth Depth in meters. Default 0 meters.
+-- @param #number Speed Speed in knots to the next waypoint.
+-- @param #number Depth Depth in meters to the next waypoint.
 function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
 
   -- Update route from this waypoint number onwards.
@@ -526,52 +573,63 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   -- Waypoints.
   local waypoints={}
   
-  -- Depth for submarines.
-  local depth=Depth or 0
-
-  -- Get current speed in km/h.
-  local speed=Speed and UTILS.KnotsToKmph(Speed) or self.group:GetVelocityKMH()
-  
-  -- Current waypoint.
-  local current=self:GetCoordinate():WaypointNaval(speed, depth)
-  table.insert(waypoints, current)
-  
   -- Add remaining waypoints to route.
+  local depth=nil
   for i=n, #self.waypoints do
+  
+    -- Waypoint.
     local wp=self.waypoints[i]  --Ops.OpsGroup#OPSGROUP.Waypoint
 
-    -- Set speed.
+    -- Check if next wp.
     if i==n then
     
+      -- Speed.
       if Speed then
+        -- Take speed specified.
         wp.speed=UTILS.KnotsToMps(Speed)
-      elseif self.speedCruise then
-        wp.speed=UTILS.KmphToMps(self.speedCruise)
-      else
-        -- Take default waypoint speed.
-      end
-    
-    else
-    
-      if self.speedCruise then
-        wp.speed=UTILS.KmphToMps(self.speedCruise)
       else
         -- Take default waypoint speed.
       end
       
+      if Depth then
+        wp.alt=-Depth
+      elseif self.depth then
+        wp.alt=-self.depth
+      else
+        -- Take default waypoint alt.
+      end
+      
+      -- Current set speed in m/s.
+      self.speed=wp.speed
+      
+      -- Current set depth.
+      depth=wp.alt
+    
+    else
+      
+      -- Dive depth is applied to all other waypoints.      
+      if self.depth then
+        wp.alt=-self.depth
+      else
+        -- Take default waypoint depth.
+      end      
+      
     end
-    
-    -- Set depth.
-    wp.alt=-depth --Depth and -Depth or wp.alt
-    
+
     -- Add waypoint.
     table.insert(waypoints, wp)
   end
+  
+  -- Current waypoint.
+  local current=self:GetCoordinate():WaypointNaval(UTILS.MpsToKmph(self.speed), depth)
+  table.insert(waypoints, 1, current)  
 
   
   if #waypoints>1 then
-  
-    self:I(self.lid..string.format("Updateing route: WP=%d, Speed=%.1f knots, depth=%d meters", #self.waypoints-n+1, UTILS.KmphToKnots(speed), depth))
+
+    self:I(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Depth=%d m", 
+    self.currentwp, n, #self.waypoints, #waypoints-1, UTILS.MpsToKnots(self.speed), depth))
+
 
     -- Route group to all defined waypoints remaining.
     self:Route(waypoints)
@@ -584,11 +642,6 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   
     self:I(self.lid..string.format("No waypoints left"))
     
-    if #self.waypoints>1 then
-      self:I(self.lid..string.format("Resuming route at first waypoint"))
-      self:__UpdateRoute(-1, 1, nil, self.depth)
-    end
-          
   end
 
 end
@@ -601,7 +654,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate Coordinate where to go.
 -- @param #number Speed Speed in knots. Default cruise speed.
 -- @param #number Depth Depth in meters. Default 0 meters.
--- @param #number ResumeRoute If true, resume route after detour point was reached.
+-- @param #number ResumeRoute If true, resume route after detour point was reached. If false, the group will stop at the detour point and wait for futher commands.
 function NAVYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Depth, ResumeRoute)
 
   -- Waypoints.
@@ -610,20 +663,18 @@ function NAVYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Depth, Resu
   -- Depth for submarines.
   local depth=Depth or 0
 
-  -- Get current speed in km/h.
-  local speed=Speed and UTILS.KnotsToKmph(Speed) or self.group:GetVelocityKMH()
+  -- Speed in knots.
+  Speed=Speed or self:GetSpeedCruise()
   
-  -- Current waypoint.
-  local current=self:GetCoordinate():WaypointNaval(speed, depth)
-  table.insert(waypoints, current)
+  local wpindx=self.currentwp+1
   
-  -- At each waypoint report passing.
-  local Task=self.group:TaskFunction("NAVYGROUP._DetourReached", self, ResumeRoute)
+  local wp=self:AddWaypoint(Coordinate, Speed, wpindx, true)
   
-  local detour=Coordinate:WaypointNaval(speed, depth, {Task})
-  table.insert(waypoints, detour)
-  
-  self:Route(waypoints)
+  if ResumeRoute then
+    wp.detour=1
+  else
+    wp.detour=0
+  end
 
 end
 
@@ -662,9 +713,6 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #NAVYGROUP.IntoWind Into wind parameters.
--- @param #number Duration Duration in seconds.
--- @param #number Speed Speed in knots.
--- @param #boolean Uturn Return to the place we came from.
 function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
 
   IntoWind.Heading=self:GetHeadingIntoWind(IntoWind.Offset)
@@ -681,7 +729,7 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   -- Convert to knots.
   vwind=UTILS.MpsToKnots(vwind)
 
-  -- Speed of carrier in m/s but at least 2 knots.
+  -- Speed of carrier relative to wind but at least 2 knots.
   local speed=math.max(IntoWind.Speed-vwind, 2)
 
   -- Debug info.
@@ -689,16 +737,28 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   
   local distance=UTILS.NMToMeters(1000)
   
-  local wp={}
-  
   local coord=self:GetCoordinate()
   local Coord=coord:Translate(distance, IntoWind.Heading)
   
+  local wpindex=self.currentwp+1  --self:GetWaypointIndexNext(false)
+  
+  local wptiw=self:AddWaypoint(Coord, speed, wpindex, true)
+  wptiw.intowind=true
+  
+  IntoWind.waypoint=wptiw
+  
+  if IntoWind.Uturn then
+    IntoWind.Coordinate:MarkToAll("Return coord")
+  end
+  
+  --[[
+  local wp={}
   wp[1]=coord:WaypointNaval(UTILS.KnotsToKmph(speed))
   wp[2]=Coord:WaypointNaval(UTILS.KnotsToKmph(speed))
 
   self:Route(wp)
-  
+  ]]
+    
 end
 
 --- On after "TurnIntoWindOver" event.
@@ -711,15 +771,22 @@ end
 -- @param #boolean Uturn Return to the place we came from.
 function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To)
 
+  env.info("FF Turn Into Wind Over!")
+
   self.intowind.Over=true
-  self.intowind.Open=false    
+  self.intowind.Open=false
+  
+  -- Remove additional waypoint.
+  self:RemoveWaypointByID(self.intowind.waypoint.uid)
 
   if self.intowind.Uturn then
+    env.info("FF Turn Into Wind Over Uturn!")
     self:Detour(self.intowind.Coordinate, self:GetSpeedCruise(), 0, true)
   else
-    local indx=self:GetWaypointIndexNext(self.adinfinitum)
+    env.info("FF Turn Into Wind Over Next WP!")
+    local indx=self:GetWaypointIndexNext()
     local speed=self:GetWaypointSpeed(indx)
-    self:UpdateRoute(indx, speed, self.depth)
+    self:__UpdateRoute(-1, indx, speed)
   end
   
   self.intowind=nil
@@ -749,10 +816,13 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number Speed Speed in knots.
+-- @param #number Speed Speed in knots until next waypoint is reached.
 function NAVYGROUP:onafterCruise(From, Event, To, Speed)
 
-  self:UpdateRoute(nil, Speed, self.depth)
+  -- 
+  self.depth=nil
+
+  self:__UpdateRoute(-1, nil, Speed)
 
 end
 
@@ -762,7 +832,8 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #number Depth Dive depth in meters. Default 50 meters.
-function NAVYGROUP:onafterDive(From, Event, To, Depth)
+-- @param #number Speed Speed in knots until next waypoint is reached.
+function NAVYGROUP:onafterDive(From, Event, To, Depth, Speed)
 
   Depth=Depth or 50
 
@@ -770,7 +841,7 @@ function NAVYGROUP:onafterDive(From, Event, To, Depth)
   
   self.depth=Depth
   
-  self:UpdateRoute(nil, nil, self.depth)
+  self:__UpdateRoute(-1, nil, Speed)
 
 end
 
@@ -779,11 +850,12 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function NAVYGROUP:onafterSurface(From, Event, To)
+-- @param #number Speed Speed in knots until next waypoint is reached.
+function NAVYGROUP:onafterSurface(From, Event, To, Speed)
 
   self.depth=0
 
-  self:UpdateRoute(nil, nil, self.depth)
+  self:__UpdateRoute(-1, nil, Speed)
 
 end
 
@@ -959,7 +1031,7 @@ function NAVYGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
   self:_AddWaypoint(waypoint, wpnumber)
   
   -- Debug info.
-  self:T(self.lid..string.format("Adding NAVAL waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, speed, self.currentwp, #self.waypoints))
+  self:I(self.lid..string.format("Adding NAVAL waypoint index=%d uid=%d, speed=%.1f knots. Last waypoint passed was #%d. Total waypoints #%d", wpnumber, waypoint.uid, speed, self.currentwp, #self.waypoints))
 
   -- Update route.
   if updateroute==nil or updateroute==true then
@@ -1091,6 +1163,73 @@ end
 
 --- Check for possible collisions between two coordinates.
 -- @param #NAVYGROUP self
+-- @return #number Free distance in meters.
+function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
+
+  local distance=DistanceMax or 5000
+  local dx=dx or 100
+
+  -- If the group is turning, we cannot really tell anything about a possible collision.
+  if self:IsTurning() then
+    return distance
+  end
+  
+  -- Current coordinate.
+  local coordinate=self:GetCoordinate():SetAltitude(0, true)
+  
+  -- Current heading.
+  local heading=self:GetHeading()
+  
+  local function LoS(dist)
+    local checkcoord=coordinate:Translate(dist, heading, true)
+    return coordinate:IsLOS(checkcoord, 0.001)
+  end
+
+  -- First check if everything is clear.
+  if LoS(DistanceMax) then
+    return DistanceMax
+  end
+  
+  local function check()
+  
+    local xmin=0
+    local xmax=DistanceMax
+    
+    local Nmax=100
+    local eps=100
+
+    local N=1
+    while N<=Nmax do
+    
+      local d=xmax-xmin
+      local x=xmin+d/2
+      
+      local los=LoS(x)
+      
+      env.info(string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
+      
+      if los and d<=eps then
+        return x
+      end
+      
+      if los then
+        xmin=x
+      else
+        xmax=x
+      end
+    
+      N=N+1
+    end
+  
+    return 0
+  end
+
+
+  return check()
+end
+
+--- Check for possible collisions between two coordinates.
+-- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE coordto Coordinate to which the collision is check.
 -- @param Core.Point#COORDINATE coordfrom Coordinate from which the collision is check.
 -- @return #boolean If true, surface type ahead is not deep water.
@@ -1197,6 +1336,32 @@ function NAVYGROUP:_CheckTurning()
   
 end
 
+--- Check if group got stuck.
+-- @param #NAVYGROUP self
+function NAVYGROUP:_CheckStuck()
+
+  if self:IsHolding() then
+    return
+  end
+
+  local holdtime=0
+  if self.holdtimestamp then
+    holdtime=timer.getTime()-self.holdtimestamp
+  end
+  
+  local ExpectedSpeed=self:GetExpectedSpeed()
+  
+  local speed=self.group:GetVelocityMPS()
+  
+  if speed<0.5 and ExpectedSpeed>0 then
+    if not self.holdtimestamp then
+      self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f expected=%.1f knots", speed, ExpectedSpeed))
+      self.holdtimestamp=timer.getTime()
+    end
+  end
+    
+end
+
 --- Check if group is done, i.e.
 -- 
 --  * passed the final waypoint, 
@@ -1284,6 +1449,14 @@ function NAVYGROUP:_CheckTurnsIntoWind()
     end
     
   end
+
+  -- If into wind, check if over.
+  if self.intowind then  
+    if timer.getAbsTime()>=self.intowind.Tstop then    
+      self:TurnIntoWindOver()      
+    end  
+  end  
+  
 end
 
 --- Get default cruise speed.
@@ -1306,6 +1479,19 @@ function NAVYGROUP:GetSpeedToWaypoint(indx)
   end
 
   return speed
+end
+
+--- Returns the currently expected speed.
+-- @param #NAVYGROUP self
+-- @return #number Expected speed in m/s.
+function NAVYGROUP:GetExpectedSpeed()
+
+  if self:IsHolding() then
+    return 0
+  else
+    return self.speed or 0
+  end
+  
 end
 
 --- Check queued turns into wind.
@@ -1361,6 +1547,85 @@ function NAVYGROUP:GetHeadingIntoWind(Offset)
   end
 
   return intowind
+end
+
+--- Find free path to next waypoint.
+-- @param #NAVYGROUP self
+-- @return #boolean If true, a path was found.
+function NAVYGROUP:_FindPathToNextWaypoint()
+
+  -- Pathfinding A*
+  local astar=ASTAR:New()
+  
+  -- Current positon of the group.
+  local position=self:GetCoordinate()
+  
+  -- Next waypoint.
+  local wpnext=self:GetWaypointNext()
+  
+  -- Next waypoint coordinate.
+  local nextwp=wpnext.coordinate
+  
+  -- If we are currently turning into the wind...
+  if wpnext.intowind then
+    local hdg=self:GetHeading()
+    nextwp=position:Translate(UTILS.NMToMeters(20), hdg, true)
+  end
+  
+  local speed=UTILS.MpsToKnots(wpnext.speed)
+
+  -- Set start coordinate.    
+  astar:SetStartCoordinate(position)
+  
+  -- Set end coordinate.
+  astar:SetEndCoordinate(nextwp)
+  
+  -- Distance to next waypoint.
+  local dist=position:Get2DDistance(nextwp)
+  
+  local boxwidth=dist*2
+  local spacex=dist*0.1
+  local delta=dist/10
+  
+  -- Create a grid of nodes. We only want nodes of surface type water.
+  astar:CreateGrid({land.SurfaceType.WATER}, boxwidth, spacex, delta, delta*2, false)
+  
+  -- Valid neighbour nodes need to have line of sight.
+  astar:SetValidNeighbourLoS(400)
+  
+  --- Function to find a path and add waypoints to the group.
+  local function findpath()
+  
+    -- Calculate path from start to end node.
+    local path=astar:GetPath(true, true)
+    
+    if path then
+
+      -- Loop over nodes in found path.
+      for i,_node in ipairs(path) do
+        local node=_node --Core.Astar#ASTAR.Node
+                
+        -- Waypoint index.
+        local wpindex=self:GetWaypointIndexCurrent()+i
+          
+        -- Add waypoints along detour path to next waypoint.
+        local wp=self:AddWaypoint(node.coordinate, speed, wpindex)
+        wp.astar=true
+
+        -- Debug: smoke and mark path.
+        node.coordinate:MarkToAll(string.format("Path node #%d", i))
+        
+      end
+      
+      return #path>0 
+    else
+      return false
+    end
+    
+  end
+
+  return findpath()
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

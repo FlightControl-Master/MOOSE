@@ -16,7 +16,7 @@
 -- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
 -- @extends Ops.OpsGroup#OPSGROUP
 
---- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
+--- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B. Sledge
 --
 -- ===
 --
@@ -64,8 +64,9 @@ function ARMYGROUP:New(GroupName)
   
   -- Defaults
   self:SetDefaultROE()
+  self:SetDefaultAlarmstate()
   self:SetDetection()
-  self:SetPatrolAdInfinitum(true)
+  self:SetPatrolAdInfinitum(false)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
@@ -134,7 +135,7 @@ function ARMYGROUP:SetPatrolAdInfinitum(switch)
   return self
 end
 
---- Group patrols ad inifintum. If the last waypoint is reached, it will go to waypoint one and repeat its route.
+--- Set default cruise speed. This is the speed a group will take by default if no speed is specified explicitly.
 -- @param #ARMYGROUP self
 -- @param #number Speed Speed in knots. Default 70% of max speed.
 -- @return #ARMYGROUP self
@@ -225,8 +226,8 @@ function ARMYGROUP:onafterStatus(From, Event, To)
     local nMissions=self:CountRemainingMissison()
   
     -- Info text.
-    local text=string.format("State %s: Wp=%d/%d Speed=%.1f Heading=%03d Tasks=%d Missions=%d", 
-    fsmstate, self.currentwp, #self.waypoints, speed, hdg, nTaskTot, nMissions)
+    local text=string.format("State %s: Wp=%d/%d-->%d Speed=%.1f (%d) Heading=%03d ROE=%d Alarm=%d Formation=%s Tasks=%d Missions=%d", 
+    fsmstate, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), speed, UTILS.MpsToKnots(self.speed), hdg, self.roe, self.alarmstate, self.formation, nTaskTot, nMissions)
     self:I(self.lid..text)
     
   else
@@ -338,8 +339,11 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
 
   if self.ai then
   
-    -- Set default ROE and ROT options.
+    -- Set default ROE option.
     self:SetOptionROE(self.roe)
+    
+    -- Set default Alarm State option.
+    self:SetOptionAlarmstate(self.alarmstate)
     
   end
   
@@ -355,37 +359,32 @@ end
 -- @param #string To To state.
 -- @param #number n Waypoint number. Default is next waypoint.
 -- @param #number Speed Speed in knots. Default cruise speed.
--- @param #number Depth Depth in meters. Default 0 meters.
-function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
+-- @param #number Formation Formation of the group.
+function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
 
   -- Update route from this waypoint number onwards.
   n=n or self:GetWaypointIndexNext(self.adinfinitum)
   
   -- Debug info.
-  self:T(self.lid..string.format("FF Update route n=%d", n))
+  self:I(self.lid..string.format("FF Update route n=%d", n))
   
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
   self:_UpdateWaypointTasks(n)
 
   -- Waypoints.
   local waypoints={}
-  
-  -- Depth for submarines.
-  local depth=Depth or 0
 
-  -- Get current speed in km/h.
-  local speed=Speed and UTILS.KnotsToKmph(Speed) or self.group:GetVelocityKMH()
-  
-  -- Current waypoint.
-  local current=self:GetCoordinate():WaypointNaval(speed, depth)
-  table.insert(waypoints, current)
-  
   -- Add remaining waypoints to route.
   for i=n, #self.waypoints do
-    local wp=self.waypoints[i]
+  
+    -- Copy waypoint.
+    local wp=UTILS.DeepCopy(self.waypoints[i]) --Ops.OpsGroup#OPSGROUP.Waypoint
     
-    -- Set speed.
     if i==n then
+    
+      ---
+      -- Next Waypoint
+      ---
     
       if Speed then
         wp.speed=UTILS.KnotsToMps(Speed)
@@ -394,8 +393,22 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
       else
         -- Take default waypoint speed.
       end
+      
+      if Formation then
+        wp.action=Formation
+      end
+      
+      -- Current set formation.
+      self.formation=wp.action
+      
+      -- Current set speed in m/s.
+      self.speed=wp.speed
     
     else
+
+      ---
+      -- Later Waypoint(s)
+      ---
     
       if self.speedCruise then
         wp.speed=UTILS.KmphToMps(self.speedCruise)
@@ -405,17 +418,23 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
       
     end
     
-    -- Set depth.
-    wp.alt=-depth --Depth and -Depth or wp.alt
-    
+    -- Debug info.
+    self:I(string.format("WP %d %s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.type, wp.speed, wp.alt, wp.action))
+        
     -- Add waypoint.
     table.insert(waypoints, wp)
   end
 
+
+  -- Current waypoint.
+  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speed), self.formation)
+  table.insert(waypoints, 1, current)
+  table.insert(waypoints, 1, current)  -- Seems to be better to add this twice. Otherwise, the passing waypoint functions is triggered to early!
+
+  if #waypoints>2 then
   
-  if #waypoints>1 then
-  
-    self:I(self.lid..string.format("Updateing route: WP=%d, Speed=%.1f knots, depth=%d meters", #self.waypoints-n+1, UTILS.KmphToKnots(speed), depth))
+    self:I(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Formation=%s", 
+    self.currentwp, n, #self.waypoints, #waypoints-2, UTILS.MpsToKnots(self.speed), tostring(self.formation)))
 
     -- Route group to all defined waypoints remaining.
     self:Route(waypoints)
@@ -428,11 +447,6 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   
     self:I(self.lid..string.format("No waypoints left"))
     
-    if #self.waypoints>1 then
-      self:I(self.lid..string.format("Resuming route at first waypoint"))
-      self:__UpdateRoute(-1, 1, nil, self.depth)
-    end
-          
   end
 
 end
@@ -444,27 +458,24 @@ end
 -- @param #string To To state.
 -- @param Core.Point#COORDINATE Coordinate Coordinate where to go.
 -- @param #number Speed Speed in knots. Default cruise speed.
--- @param #number Depth Depth in meters. Default 0 meters.
+-- @param #number Formation Formation the group will use.
 -- @param #number ResumeRoute If true, resume route after detour point was reached.
-function ARMYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Depth, ResumeRoute)
+function ARMYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Formation, ResumeRoute)
 
   -- Waypoints.
   local waypoints={}
     
-  -- Depth for submarines.
-  local depth=Depth or 0
-
   -- Get current speed in km/h.
   local speed=Speed and UTILS.KnotsToKmph(Speed) or self.group:GetVelocityKMH()
   
   -- Current waypoint.
-  local current=self:GetCoordinate():WaypointGround(Speed, Formation, DCSTasks)
+  local current=self:GetCoordinate():WaypointGround(Speed, Formation)
   table.insert(waypoints, current)
   
   -- At each waypoint report passing.
   local Task=self.group:TaskFunction("ARMYGROUP._DetourReached", self, ResumeRoute)
   
-  local detour=Coordinate:WaypointNaval(speed, depth, {Task})
+  local detour=Coordinate:WaypointGround(Speed, Formation, {Task})
   table.insert(waypoints, detour)
   
   self:Route(waypoints)
@@ -482,21 +493,21 @@ end
 
 --- Function called when a group is passing a waypoint.
 --@param Wrapper.Group#GROUP group Group that passed the waypoint
---@param #ARMYGROUP navygroup Navy group object.
+--@param #ARMYGROUP armygroup Army group object.
 --@param #boolean resume Resume route.
-function ARMYGROUP._DetourReached(group, navygroup, resume)
+function ARMYGROUP._DetourReached(group, armygroup, resume)
 
   -- Debug message.
   local text=string.format("Group reached detour coordinate")
-  navygroup:I(navygroup.lid..text)
+  armygroup:I(armygroup.lid..text)
 
   if resume then
-    local indx=navygroup:GetWaypointIndexNext(true)
-    local speed=navygroup:GetSpeedToWaypoint(indx)
-    navygroup:UpdateRoute(indx, speed, navygroup.depth)
+    local indx=armygroup:GetWaypointIndexNext(true)
+    local speed=armygroup:GetSpeedToWaypoint(indx)
+    armygroup:__UpdateRoute(-1, indx, speed, armygroup.formation)
   end
   
-  navygroup:DetourReached()
+  armygroup:DetourReached()
 
 end
 
@@ -511,7 +522,7 @@ function ARMYGROUP:onafterFullStop(From, Event, To)
   local pos=self:GetCoordinate()
   
   -- Create a new waypoint.
-  local wp=pos:WaypointNaval(0)
+  local wp=pos:WaypointGround(0)
   
   -- Create new route consisting of only this position ==> Stop!
   self:Route({wp})
@@ -524,9 +535,10 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #number Speed Speed in knots.
-function ARMYGROUP:onafterCruise(From, Event, To, Speed)
+-- @param #number Formation Formation.
+function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
 
-  self:UpdateRoute(nil, Speed, self.depth)
+  self:__UpdateRoute(-1, nil, Speed, Formation)
 
 end
 
@@ -675,9 +687,10 @@ end
 -- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
 -- @param #number speed Speed in knots. Default is default cruise speed or 70% of max speed.
 -- @param #number wpnumber Waypoint number. Default at the end.
+-- @param #number formation Formation the group will use.
 -- @param #boolean updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return #number Waypoint index.
-function ARMYGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
+function ARMYGROUP:AddWaypoint(coordinate, speed, wpnumber, formation, updateroute)
 
   -- Waypoint number. Default is at the end.
   wpnumber=wpnumber or #self.waypoints+1
@@ -693,13 +706,16 @@ function ARMYGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
   local speedkmh=UTILS.KnotsToKmph(speed)
 
   -- Create a Naval waypoint.
-  local wp=coordinate:WaypointNaval(speedkmh)
+  local wp=coordinate:WaypointGround(speedkmh, formation)
   
-  -- Add to table.
-  table.insert(self.waypoints, wpnumber, wp)
+  -- Create waypoint data table.
+  local waypoint=self:_CreateWaypoint(wp)
+
+  -- Add waypoint to table.
+  self:_AddWaypoint(waypoint, wpnumber)
   
   -- Debug info.
-  self:T(self.lid..string.format("Adding NAVAL waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, speed, self.currentwp, #self.waypoints))
+  self:T(self.lid..string.format("Adding GROUND waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, speed, self.currentwp, #self.waypoints))
   
   
   -- Update route.
@@ -735,7 +751,7 @@ function ARMYGROUP:_InitGroup()
   -- Is (template) group late activated.
   self.isLateActivated=self.template.lateActivation
   
-  -- Naval groups cannot be uncontrolled.
+  -- Ground groups cannot be uncontrolled.
   self.isUncontrolled=false
   
   -- Max speed in km/h.
@@ -766,6 +782,7 @@ function ARMYGROUP:_InitGroup()
     end
   end
   
+  -- Units of the group.
   local units=self.group:GetUnits()
   
   for _,_unit in pairs(units) do
@@ -847,13 +864,13 @@ function ARMYGROUP:_CheckGroupDone(delay)
           local speed=self:GetSpeedToWaypoint(1)
         
           -- Start route at first waypoint.
-          self:__UpdateRoute(-1, 1, speed, self.depth)
+          self:__UpdateRoute(-1, 1, speed, self.formation)
           
         end
     
       else
       
-        self:UpdateRoute(nil, nil, self.depth)
+        self:UpdateRoute(nil, nil, self.formation)
         
       end
     

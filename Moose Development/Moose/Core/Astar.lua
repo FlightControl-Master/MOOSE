@@ -2,13 +2,16 @@
 --
 -- **Main Features:**
 --
---    * Stuff
+--    * Find path from A to B.
+--    * Pre-defined as well as custom valid neighbour functions.
+--    * Pre-defined as well as custom cost functions.
+--    * Easy rectangular grid setup.
 --
 -- ===
 --
 -- ### Author: **funkyfranky**
 -- @module Core.Astar
--- @image CORE_Atar.png
+-- @image CORE_Astar.png
 
 
 --- ASTAR class.
@@ -21,19 +24,109 @@
 -- @field #ASTAR.Node endNode End node.
 -- @field Core.Point#COORDINATE startCoord Start coordinate.
 -- @field Core.Point#COORDINATE endCoord End coordinate.
--- @field #func ValidNeighbourFunc Function to check if a node is valid.
+-- @field #function ValidNeighbourFunc Function to check if a node is valid.
 -- @field #table ValidNeighbourArg Optional arguments passed to the valid neighbour function.
+-- @field #function CostFunc Function to calculate the heuristic "cost" to go from one node to another.
+-- @field #table CostArg Optional arguments passed to the cost function. 
 -- @extends Core.Base#BASE
 
 --- When nothing goes right... Go left!
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\WingCommander\ASTAR_Main.jpg)
+-- ![Banner Image](..\Presentations\Astar\ASTAR_Main.jpg)
 --
 -- # The ASTAR Concept
 -- 
 -- Pathfinding algorithm.
+-- 
+-- 
+-- # Start and Goal
+-- 
+-- The first thing we need to define is obviously the place where we want to start and where we want to go eventually.
+-- 
+-- ## Start
+-- 
+-- The start
+-- 
+-- ## Goal 
+-- 
+-- 
+-- # Nodes
+-- 
+-- ## Rectangular Grid
+-- 
+-- A rectangular grid can be created using the @{#ASTAR.CreateGrid}(*ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid*), where
+-- 
+-- * *ValidSurfaceTypes* is a table of valid surface types. By default all surface types are valid.
+-- * *BoxXY* is the width of the grid perpendicular the the line between start and end node. Default is 40,000 meters (40 km).
+-- * *SpaceX* is the additional space behind the start and end nodes. Default is 20,000 meters (20 km).
+-- * *deltaX* is the grid spacing between nodes in the direction of start and end node. Default is 2,000 meters (2 km).
+-- * *deltaY* is the grid spacing perpendicular to the direction of start and end node. Default is the same as *deltaX*.
+-- * *MarkGrid* If set to *true*, this places marker on the F10 map on each grid node. Note that this can stall DCS if too many nodes are created. 
+-- 
+-- ## Valid Surfaces
+-- 
+-- Certain unit types can only travel on certain surfaces types, for example
+-- 
+-- * Naval units can only travel on water (that also excludes shallow water in DCS currently),
+-- * Ground units can only traval on land.
+-- 
+-- By restricting the surface type in the grid construction, we also reduce the number of nodes, which makes the algorithm more efficient.
+-- 
+-- ## Box Width (BoxHY)
+-- 
+-- The box width needs to be large enough to capture all paths you want to consider.
+-- 
+-- ## Space in X
+-- 
+-- The space in X value is important if the algorithm needs to to backwards from the start node or needs to extend even further than the end node.
+-- 
+-- ## Grid Spacing
+-- 
+-- The grid spacing is an important factor as it determines the number of nodes and hence the performance of the algorithm. It should be as large as possible.
+-- However, if the value is too large, the algorithm might fail to get a valid path.
+-- 
+-- A good estimate of the grid spacing is to set it to be smaller (~ half the size) of the smallest gap you need to path.
+-- 
+-- # Valid Neighbours
+-- 
+-- The A* algorithm needs to know if a transition from one node to another is allowed or not. By default, hopping from one node to another is always possible.
+-- 
+-- ## Line of Sight
+-- 
+-- For naval
+--  
+-- 
+-- # Heuristic Cost
+-- 
+-- In order to determine the optimal path, the pathfinding algorithm needs to know, how costly it is to go from one node to another.
+-- Often, this can simply be determined by the distance between two nodes. Therefore, the default cost function is set to be the 2D distance between two nodes.
+-- 
+-- 
+-- # Calculate the Path
+-- 
+-- Finally, we have to calculate the path. This is done by the @{ASTAR.GetPath}(*ExcludeStart, ExcludeEnd*) function. This function returns a table of nodes, which
+-- describe the optimal path from the start node to the end node.
+-- 
+-- By default, the start and end node are include in the table that is returned.
+-- 
+-- Note that a valid path must not always exist. So you should check if the function returns *nil*.
+-- 
+-- Common reasons that a path cannot be found are:
+-- 
+-- * The grid is too small ==> increase grid size, e.g. *BoxHY* and/or *SpaceX* if you use a rectangular grid.  
+-- * The grid spacing is too large ==> decrease *deltaX* and/or *deltaY*
+-- * There simply is no valid path ==> you are screwed :(
+-- 
+-- 
+-- # Examples
+-- 
+-- ## Strait of Hormuz
+-- 
+-- Carrier Group finds its way through the Stait of Hormuz.
+-- 
+-- ## 
 -- 
 --
 --
@@ -45,13 +138,13 @@ ASTAR = {
   nodes          =    {},
 }
 
---- Defence condition.
+--- Node data.
 -- @type ASTAR.Node
 -- @field Core.Point#COORDINATE coordinate Coordinate of the node.
 -- @field #number surfacetype Surface type.
 
---- ASTAR infinity
--- @field #string INF
+--- ASTAR infinity.
+-- @field #number INF
 ASTAR.INF=1/0
 
 --- ASTAR class version.
@@ -137,14 +230,14 @@ end
 --- Add a node to the table of grid nodes specifying its coordinate.
 -- @param #ASTAR self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where the node is created.
--- @return #ASTAR self
+-- @return #ASTAR.Node The node.
 function ASTAR:AddNodeFromCoordinate(Coordinate)
 
   local node=self:GetNodeFromCoordinate(Coordinate)
   
   self:AddNode(node)
     
-  return self
+  return node
 end
 
 --- Check if the coordinate of a node has is at a valid surface type.
@@ -214,8 +307,44 @@ function ASTAR:SetValidNeighbourDistance(MaxDistance)
   return self
 end
 
+--- Set the function which calculates the "cost" to go from one to another node.
+-- The first to arguments of this function are always the two nodes under consideration. But you can add optional arguments.
+-- Very often the distance between nodes is a good measure for the cost.
+-- @param #ASTAR self
+-- @param #function CostFunction Function that returns the "cost".
+-- @param ... Condition function arguments if any.
+-- @return #ASTAR self
+function ASTAR:SetCostFunction(CostFunction, ...)
 
+  self.CostFunc=CostFunction
+  
+  self.CostArg={}
+  if arg then
+    self.CostArg=arg
+  end
+  
+  return self
+end
 
+--- Set heuristic cost to go from one node to another to be their 2D distance.
+-- @param #ASTAR self
+-- @return #ASTAR self
+function ASTAR:SetCostDist2D()
+
+  self:SetCostFunction(ASTAR.Dist2D)
+
+  return self
+end
+
+--- Set heuristic cost to go from one node to another to be their 3D distance.
+-- @param #ASTAR self
+-- @return #ASTAR self
+function ASTAR:SetCostDist3D()
+
+  self:SetCostFunction(ASTAR.Dist3D)
+
+  return self
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Grid functions
@@ -370,6 +499,26 @@ function ASTAR.DistMax(nodeA, nodeB, distmax)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Heuristic cost functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Heuristic cost is given by the 2D distance between the nodes. 
+-- @param #ASTAR.Node nodeA First node.
+-- @param #ASTAR.Node nodeB Other node.
+-- @return #number Distance between the two nodes.
+function ASTAR.Dist2D(nodeA, nodeB)
+  return nodeA.coordinate:Get2DDistance(nodeB)
+end
+
+--- Heuristic cost is given by the 3D distance between the nodes. 
+-- @param #ASTAR.Node nodeA First node.
+-- @param #ASTAR.Node nodeB Other node.
+-- @return #number Distance between the two nodes.
+function ASTAR.Dist3D(nodeA, nodeB)
+  return nodeA.coordinate:Get3DDistance(nodeB.coordinate)
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -458,7 +607,7 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   local g_score, f_score = {}, {}
   
   g_score[start]=0
-  f_score[start]=g_score[start]+self:HeuristicCost(start, goal)
+  f_score[start]=g_score[start]+self:_HeuristicCost(start, goal)
   
   -- Set start time.
   local T0=timer.getAbsTime()
@@ -470,12 +619,12 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
 
   while #openset > 0 do
   
-    local current=self:LowestFscore(openset, f_score)
+    local current=self:_LowestFscore(openset, f_score)
     
     -- Check if we are at the end node.
     if current==goal then
     
-      local path=self:UnwindPath({}, came_from, goal)
+      local path=self:_UnwindPath({}, came_from, goal)
       
       if not ExcludeEndNode then
         table.insert(path, goal)
@@ -493,26 +642,26 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
       return path
     end
 
-    self:RemoveNode(openset, current)
+    self:_RemoveNode(openset, current)
     table.insert(closedset, current)
     
-    local neighbors=self:NeighbourNodes(current, nodes)
+    local neighbors=self:_NeighbourNodes(current, nodes)
     
     -- Loop over neighbours.
     for _,neighbor in ipairs(neighbors) do
     
-      if self:NotIn(closedset, neighbor) then
+      if self:_NotIn(closedset, neighbor) then
       
-        local tentative_g_score=g_score[current]+self:DistNodes(current, neighbor)
+        local tentative_g_score=g_score[current]+self:_DistNodes(current, neighbor)
          
-        if self:NotIn(openset, neighbor) or tentative_g_score < g_score[neighbor] then
+        if self:_NotIn(openset, neighbor) or tentative_g_score < g_score[neighbor] then
         
           came_from[neighbor]=current
           
           g_score[neighbor]=tentative_g_score
-          f_score[neighbor]=g_score[neighbor]+self:HeuristicCost(neighbor, goal)
+          f_score[neighbor]=g_score[neighbor]+self:_HeuristicCost(neighbor, goal)
           
-          if self:NotIn(openset, neighbor) then
+          if self:_NotIn(openset, neighbor) then
             table.insert(openset, neighbor)
           end
           
@@ -533,22 +682,18 @@ end
 -- A* pathfinding helper functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Calculate 2D distance between two nodes.
+--- Heuristic "cost" function to go from node A to node B. Default is the distance between the nodes.
 -- @param #ASTAR self
 -- @param #ASTAR.Node nodeA Node A.
 -- @param #ASTAR.Node nodeB Node B.
--- @return #number Distance between nodes in meters.
-function ASTAR:DistNodes(nodeA, nodeB)
-  return nodeA.coordinate:Get2DDistance(nodeB.coordinate)
-end
+-- @return #number "Cost" to go from node A to node B.
+function ASTAR:_HeuristicCost(nodeA, nodeB)
 
---- Heuristic cost function to go from node A to node B. That is simply the distance here.
--- @param #ASTAR self
--- @param #ASTAR.Node nodeA Node A.
--- @param #ASTAR.Node nodeB Node B.
--- @return #number Distance between nodes in meters.
-function ASTAR:HeuristicCost(nodeA, nodeB)
-  return self:DistNodes(nodeA, nodeB)
+  if self.CostFunc then
+    return self.CostFunc(nodeA, nodeB, unpack(self.CostArg))
+  else
+    return self:_DistNodes(nodeA, nodeB)
+  end
 end
 
 --- Check if going from a node to a neighbour is possible.
@@ -556,7 +701,7 @@ end
 -- @param #ASTAR.Node node A node.
 -- @param #ASTAR.Node neighbor Neighbour node.
 -- @return #boolean If true, transition between nodes is possible.
-function ASTAR:IsValidNeighbour(node, neighbor)
+function ASTAR:_IsValidNeighbour(node, neighbor)
 
   if self.ValidNeighbourFunc then
   
@@ -568,9 +713,21 @@ function ASTAR:IsValidNeighbour(node, neighbor)
 
 end
 
---- Function
+--- Calculate 2D distance between two nodes.
 -- @param #ASTAR self
-function ASTAR:LowestFscore(set, f_score)
+-- @param #ASTAR.Node nodeA Node A.
+-- @param #ASTAR.Node nodeB Node B.
+-- @return #number Distance between nodes in meters.
+function ASTAR:_DistNodes(nodeA, nodeB)
+  return nodeA.coordinate:Get2DDistance(nodeB.coordinate)
+end
+
+--- Function that calculates the lowest F score.
+-- @param #ASTAR self
+-- @param #table set The set of nodes.
+-- @param #number f_score F score.
+-- @return #ASTAR.Node Best node.
+function ASTAR:_LowestFscore(set, f_score)
 
   local lowest, bestNode = ASTAR.INF, nil
   
@@ -591,14 +748,14 @@ end
 -- @param #ASTAR.Node theNode The node.
 -- @param #table nodes Possible neighbours.
 -- @param #table Valid neighbour nodes.
-function ASTAR:NeighbourNodes(theNode, nodes)
+function ASTAR:_NeighbourNodes(theNode, nodes)
 
   local neighbors = {}
   for _, node in ipairs ( nodes ) do
   
     if theNode~=node then
     
-      local isvalid=self:IsValidNeighbour(theNode, node)
+      local isvalid=self:_IsValidNeighbour(theNode, node)
     
       if isvalid then
         table.insert(neighbors, node)
@@ -616,7 +773,7 @@ end
 -- @param #table set Set of nodes.
 -- @param #ASTAR.Node theNode The node to check.
 -- @return #boolean If true, the node is not in the set.
-function ASTAR:NotIn(set, theNode)
+function ASTAR:_NotIn(set, theNode)
 
   for _, node in ipairs ( set ) do
     if node == theNode then
@@ -631,7 +788,7 @@ end
 -- @param #ASTAR self
 -- @param #table set Set of nodes.
 -- @param #ASTAR.Node theNode The node to check.
-function ASTAR:RemoveNode(set, theNode)
+function ASTAR:_RemoveNode(set, theNode)
 
   for i, node in ipairs ( set ) do
     if node == theNode then 
@@ -649,11 +806,11 @@ end
 -- @param #table map Map.
 -- @param #ASTAR.Node current_node The current node.
 -- @return #table Unwinded path.
-function ASTAR:UnwindPath( flat_path, map, current_node )
+function ASTAR:_UnwindPath( flat_path, map, current_node )
 
   if map [ current_node ] then
     table.insert ( flat_path, 1, map [ current_node ] ) 
-    return self:UnwindPath ( flat_path, map, map [ current_node ] )
+    return self:_UnwindPath ( flat_path, map, map [ current_node ] )
   else
     return flat_path
   end

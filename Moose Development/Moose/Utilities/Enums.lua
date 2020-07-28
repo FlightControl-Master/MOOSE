@@ -222,6 +222,15 @@ ENUMS.Formation.RotaryWing.EchelonLeft={}
 ENUMS.Formation.RotaryWing.EchelonLeft.D70 =590081
 ENUMS.Formation.RotaryWing.EchelonLeft.D300=590082
 ENUMS.Formation.RotaryWing.EchelonLeft.D600=590083
+ENUMS.Formation.Vehicle={}
+ENUMS.Formation.Vehicle.Vee="Vee"
+ENUMS.Formation.Vehicle.EchelonRight="EchelonR"
+ENUMS.Formation.Vehicle.OffRoad="Off Road"
+ENUMS.Formation.Vehicle.Rank="Rank"
+ENUMS.Formation.Vehicle.EchelonLeft="EchelonL"
+ENUMS.Formation.Vehicle.OnRoad="On Road"
+ENUMS.Formation.Vehicle.Cone="Cone"
+ENUMS.Formation.Vehicle.Diamond="Diamond"
 
 --- Formations (old). The old format is a simplified version of the new formation enums, which allow more sophisticated settings.
 -- See the [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) on hoggit wiki.

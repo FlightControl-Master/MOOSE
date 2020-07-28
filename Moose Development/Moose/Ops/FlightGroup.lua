@@ -2537,6 +2537,8 @@ function FLIGHTGROUP:_InitGroup()
     self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC")
   end
 
+  -- Switch to default formation.
+  -- TODO: Should this be moved to onafterspawned?
   self:SwitchFormation(self.formationDefault)
 
   -- Add elemets.
