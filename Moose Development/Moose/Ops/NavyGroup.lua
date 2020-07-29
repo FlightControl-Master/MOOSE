@@ -93,6 +93,7 @@ function NAVYGROUP:New(GroupName)
   
   -- Defaults
   self:SetDefaultROE()
+  self:SetDefaultAlarmstate()
   self:SetDetection()
   self:SetPatrolAdInfinitum(true)
 
@@ -418,11 +419,23 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
     local nMissions=self:CountRemainingMissison()
 
-    local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"
+    local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"    
+    local turning=tostring(self:IsTurning())
+    local alt=pos.y
+    local speedExpected=UTILS.MpsToKnots(self.speed or 0)
+    
+    local wpidxCurr=self.currentwp
+    local wpuidCurr=0
+    local wpidxNext=self:GetWaypointIndexNext()
+    local wpuidNext=0
+    local wpDist=UTILS.MetersToNM(self:GetDistanceToWaypoint())
+    local wpETA=UTILS.SecondsToClock(self:GetTimeToWaypoint(), true)
+    local roe=self:GetROE() or 0
+    local als=self:GetAlarmstate() or 0
   
     -- Info text.
-    local text=string.format("%s (T=%d,M=%d): Wp=%d-->%d (of %d) Speed=%.1f (%.1f) Depth=%.1f Hdg=%03d Turn=%s Collision=%d IntoWind=%s ROE=%d AS=%d", 
-    fsmstate, nTaskTot, nMissions, self.currentwp, self:GetWaypointIndexNext(), #self.waypoints, speed, UTILS.MpsToKnots(self.speed or 0), pos.y, hdg, tostring(self:IsTurning()), freepath, intowind, 0, 0)
+    local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] (of %d) Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
+    fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, #self.waypoints, wpDist, wpETA, speed, speedExpected, alt, hdg, turning, freepath, intowind)
     self:I(self.lid..text)
     
   else
@@ -536,15 +549,14 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
 
   if self.ai then
   
-    -- Set default ROE and ROT options.
-    self:SetOptionROE(self.roe)
+    -- Set default ROE and Alarmstate options.
+    self:SetOptionROE(self.roe)    
+    self:SetOptionAlarmstate(self.alarmstate)
     
   end
   
   -- Get orientation.
   self.Corientlast=self.group:GetUnit(1):GetOrientationX()
-  
-  self.depth=self.group:GetHeight()
   
   -- Update route.
   self:Cruise()
@@ -562,7 +574,7 @@ end
 function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
 
   -- Update route from this waypoint number onwards.
-  n=n or self:GetWaypointIndexNext(self.adinfinitum)
+  n=n or self:GetWaypointIndexNext()
   
   -- Debug info.
   self:T(self.lid..string.format("FF Update route n=%d", n))
@@ -607,7 +619,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
     
     else
       
-      -- Dive depth is applied to all other waypoints.      
+      -- Dive depth is applied to all other waypoints.
       if self.depth then
         wp.alt=-self.depth
       else
@@ -637,10 +649,11 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   else
   
     ---
-    -- No waypoints left
+    -- No waypoints left ==> Full Stop
     ---
   
-    self:I(self.lid..string.format("No waypoints left"))
+    self:E(self.lid..string.format("WARNING: No waypoints left ==> Full Stop!"))    
+    self:FullStop()
     
   end
 
@@ -656,20 +669,20 @@ end
 -- @param #number Depth Depth in meters. Default 0 meters.
 -- @param #number ResumeRoute If true, resume route after detour point was reached. If false, the group will stop at the detour point and wait for futher commands.
 function NAVYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Depth, ResumeRoute)
-
-  -- Waypoints.
-  local waypoints={}
     
   -- Depth for submarines.
-  local depth=Depth or 0
+  Depth=Depth or 0
 
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
   
-  local wpindx=self.currentwp+1
+  -- ID of current waypoint.
+  local uid=self:GetWaypointCurrent().uid
   
-  local wp=self:AddWaypoint(Coordinate, Speed, wpindx, true)
+  -- Add waypoint after current.
+  local wp=self:AddWaypoint(Coordinate, Speed, uid, Depth, true)
   
+  -- Set if we want to resume route after reaching the detour waypoint.
   if ResumeRoute then
     wp.detour=1
   else
@@ -685,26 +698,6 @@ end
 -- @param #string To To state.
 function NAVYGROUP:onafterDetourReached(From, Event, To)
   self:I(self.lid.."Group reached detour coordinate.")
-end
-
---- Function called when a group is passing a waypoint.
---@param Wrapper.Group#GROUP group Group that passed the waypoint
---@param #NAVYGROUP navygroup Navy group object.
---@param #boolean resume Resume route.
-function NAVYGROUP._DetourReached(group, navygroup, resume)
-
-  -- Debug message.
-  local text=string.format("Group reached detour coordinate")
-  navygroup:I(navygroup.lid..text)
-
-  if resume then
-    local indx=navygroup:GetWaypointIndexNext(true)
-    local speed=navygroup:GetSpeedToWaypoint(indx)
-    navygroup:UpdateRoute(indx, speed, navygroup.depth)
-  end
-  
-  navygroup:DetourReached()
-
 end
 
 --- On after "TurnIntoWind" event.
@@ -739,10 +732,11 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   
   local coord=self:GetCoordinate()
   local Coord=coord:Translate(distance, IntoWind.Heading)
+
+  -- ID of current waypoint.
+  local uid=self:GetWaypointCurrent().uid
   
-  local wpindex=self.currentwp+1  --self:GetWaypointIndexNext(false)
-  
-  local wptiw=self:AddWaypoint(Coord, speed, wpindex, true)
+  local wptiw=self:AddWaypoint(Coord, speed, uid)
   wptiw.intowind=true
   
   IntoWind.waypoint=wptiw
@@ -751,14 +745,6 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
     IntoWind.Coordinate:MarkToAll("Return coord")
   end
   
-  --[[
-  local wp={}
-  wp[1]=coord:WaypointNaval(UTILS.KnotsToKmph(speed))
-  wp[2]=Coord:WaypointNaval(UTILS.KnotsToKmph(speed))
-
-  self:Route(wp)
-  ]]
-    
 end
 
 --- On after "TurnIntoWindOver" event.
@@ -816,10 +802,10 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number Speed Speed in knots until next waypoint is reached.
+-- @param #number Speed Speed in knots until next waypoint is reached. Default is speed set for waypoint.
 function NAVYGROUP:onafterCruise(From, Event, To, Speed)
 
-  -- 
+  -- No set depth.
   self.depth=nil
 
   self:__UpdateRoute(-1, nil, Speed)
@@ -1001,28 +987,36 @@ end
 
 --- Add an a waypoint to the route.
 -- @param #NAVYGROUP self
--- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
--- @param #number speed Speed in knots. Default is default cruise speed or 70% of max speed.
--- @param #number wpnumber Waypoint number. Default at the end.
--- @param #boolean updateroute If true or nil, call UpdateRoute. If false, no call.
+-- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
+-- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
+-- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
+-- @param #number Depth Depth at waypoint in meters.
+-- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
-function NAVYGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
-
-  -- Waypoint number. Default is at the end.
-  wpnumber=wpnumber or #self.waypoints+1
+function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Updateroute)
   
+  -- Set waypoint index.
+  local wpnumber=#self.waypoints+1
+  if wpnumber then
+    local index=self:GetWaypointIndex(AfterWaypointWithID)
+    if index then
+      wpnumber=index+1    
+    end
+  end
+
+  -- Check if final waypoint is still passed.  
   if wpnumber>self.currentwp then
     self.passedfinalwp=false
   end
   
   -- Speed in knots.
-  speed=speed or self:GetSpeedCruise()
+  Speed=Speed or self:GetSpeedCruise()
 
   -- Speed at waypoint.
-  local speedkmh=UTILS.KnotsToKmph(speed)
+  local speedkmh=UTILS.KnotsToKmph(Speed)
 
   -- Create a Naval waypoint.
-  local wp=coordinate:WaypointNaval(speedkmh)
+  local wp=Coordinate:WaypointNaval(speedkmh)
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
@@ -1031,10 +1025,10 @@ function NAVYGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
   self:_AddWaypoint(waypoint, wpnumber)
   
   -- Debug info.
-  self:I(self.lid..string.format("Adding NAVAL waypoint index=%d uid=%d, speed=%.1f knots. Last waypoint passed was #%d. Total waypoints #%d", wpnumber, waypoint.uid, speed, self.currentwp, #self.waypoints))
+  self:I(self.lid..string.format("Adding NAVAL waypoint index=%d uid=%d, speed=%.1f knots. Last waypoint passed was #%d. Total waypoints #%d", wpnumber, waypoint.uid, Speed, self.currentwp, #self.waypoints))
 
   -- Update route.
-  if updateroute==nil or updateroute==true then
+  if Updateroute==nil or Updateroute==true then
     self:_CheckGroupDone(1)
   end
   
@@ -1076,8 +1070,8 @@ function NAVYGROUP:_InitGroup()
   -- Max speed in km/h.
   self.speedmax=self.group:GetSpeedMax()
   
-  -- Cruise speed: 70% of max speed but within limit.
-  --self.speedCruise=self.speedmax*0.7
+  -- Cruise speed: 70% of max speed.
+  self.speedCruise=self.speedmax*0.7
   
   -- Group ammo.
   --self.ammo=self:GetAmmoTot()
@@ -1106,6 +1100,7 @@ function NAVYGROUP:_InitGroup()
     end
   end
   
+  -- Get all units of the group.
   local units=self.group:GetUnits()
   
   for _,_unit in pairs(units) do
@@ -1351,58 +1346,18 @@ function NAVYGROUP:_CheckStuck()
   
   local ExpectedSpeed=self:GetExpectedSpeed()
   
-  local speed=self.group:GetVelocityMPS()
+  local speed=self:GetVelocity()
   
   if speed<0.5 and ExpectedSpeed>0 then
     if not self.holdtimestamp then
-      self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f expected=%.1f knots", speed, ExpectedSpeed))
+      self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected", speed, ExpectedSpeed))
       self.holdtimestamp=timer.getTime()
     end
   end
     
 end
 
---- Check if group is done, i.e.
--- 
---  * passed the final waypoint, 
---  * no current task
---  * no current mission
---  * number of remaining tasks is zero
---  * number of remaining missions is zero
---  
--- @param #NAVYGROUP self
--- @param #number delay Delay in seconds.
-function NAVYGROUP:_CheckGroupDone(delay)
 
-  if self:IsAlive() and self.ai then
-
-    if delay and delay>0 then
-      -- Delayed call.
-      self:ScheduleOnce(delay, NAVYGROUP._CheckGroupDone, self)
-    else
-    
-      if self.passedfinalwp then
-      
-        if #self.waypoints>1 and self.adinfinitum then
-          
-          local speed=self:GetSpeedToWaypoint(1)
-        
-          -- Start route at first waypoint.
-          self:__UpdateRoute(-1, 1, speed, self.depth)
-          
-        end
-    
-      else
-      
-        self:__UpdateRoute(-1, nil, nil, self.depth)
-        
-      end
-    
-    end
-    
-  end
-  
-end
 
 --- Check queued turns into wind.
 -- @param #NAVYGROUP self
@@ -1466,33 +1421,7 @@ function NAVYGROUP:GetSpeedCruise()
   return UTILS.KmphToKnots(self.speedCruise or self.speedmax*0.7)
 end
 
---- Returns a non-zero speed to the next waypoint (even if the waypoint speed is zero).
--- @param #NAVYGROUP self
--- @param #number indx Waypoint index.
--- @return #number Speed to next waypoint (>0) in knots.
-function NAVYGROUP:GetSpeedToWaypoint(indx)
 
-  local speed=self:GetWaypointSpeed(indx)
-  
-  if speed<=0.1 then
-    speed=self:GetSpeedCruise()
-  end
-
-  return speed
-end
-
---- Returns the currently expected speed.
--- @param #NAVYGROUP self
--- @return #number Expected speed in m/s.
-function NAVYGROUP:GetExpectedSpeed()
-
-  if self:IsHolding() then
-    return 0
-  else
-    return self.speed or 0
-  end
-  
-end
 
 --- Check queued turns into wind.
 -- @param #NAVYGROUP self
@@ -1602,15 +1531,23 @@ function NAVYGROUP:_FindPathToNextWaypoint()
     if path then
 
       -- Loop over nodes in found path.
+      local uid=self:GetWaypointCurrent().uid -- ID of current waypoint.
+      
       for i,_node in ipairs(path) do
         local node=_node --Core.Astar#ASTAR.Node
                 
         -- Waypoint index.
         local wpindex=self:GetWaypointIndexCurrent()+i
+        
+        -- ID of current waypoint.
+        local uid=self:GetWaypointCurrent().uid
           
         -- Add waypoints along detour path to next waypoint.
-        local wp=self:AddWaypoint(node.coordinate, speed, wpindex)
+        local wp=self:AddWaypoint(node.coordinate, speed, uid)
         wp.astar=true
+        
+        -- Update id so the next wp is added after this one.
+        uid=wp.uid
 
         -- Debug: smoke and mark path.
         node.coordinate:MarkToAll(string.format("Path node #%d", i))

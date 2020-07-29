@@ -95,9 +95,10 @@
 --
 -- # The OPSGROUP Concept
 -- 
--- The OPSGROUP class contains common functions used by other classes such as FLIGHGROUP, NAVYGROUP.
+-- The OPSGROUP class contains common functions used by other classes such as FLIGHGROUP, NAVYGROUP and ARMYGROUP.
+-- Those classes inherit everything of this class and extend it with features specific to their unit category.  
 -- 
--- This class is **not** meant to be used itself by the end user.
+-- This class is **NOT** meant to be used by the end user itself.
 -- 
 -- 
 -- @field #OPSGROUP
@@ -229,7 +230,7 @@ OPSGROUP.TaskType={
 
 --- NavyGroup version.
 -- @field #string version
-OPSGROUP.version="0.1.0"
+OPSGROUP.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -427,6 +428,18 @@ function OPSGROUP:GetCoordinate()
     return self.group:GetCoordinate()    
   else
     self:E(self.lid.."WARNING: Group is not alive. Cannot get coordinate!")
+  end
+  return nil
+end
+
+--- Get current velocity of the group.
+-- @param #OPSGROUP self
+-- @return #number Velocity in m/s.
+function OPSGROUP:GetVelocity()
+  if self:IsAlive()~=nil then
+    return self.group:GetVelocityMPS()
+  else
+    self:E(self.lid.."WARNING: Group is not alive. Cannot get velocity!")
   end
   return nil
 end
@@ -690,8 +703,9 @@ end
 
 --- Get coordinate of next waypoint of the group.
 -- @param #OPSGROUP self
+-- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
 -- @return Core.Point#COORDINATE Coordinate of the next waypoint.
-function OPSGROUP:GetNextWaypointCoordinate()
+function OPSGROUP:GetNextWaypointCoordinate(cyclic)
 
   -- Get next waypoint  
   local waypoint=self:GetWaypointNext(cyclic)
@@ -725,6 +739,98 @@ function OPSGROUP:GetWaypointSpeed(indx)
 
   return nil
 end
+
+--- Get unique ID of waypoint.
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index.
+-- @return #number Unique ID.
+function OPSGROUP:GetWaypointID(indx)
+
+  local waypoint=self:GetWaypoint(indx)
+  
+  if waypoint then
+    return waypoint.uid
+  end
+
+  return nil
+
+end
+
+--- Returns a non-zero speed to the next waypoint (even if the waypoint speed is zero).
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index.
+-- @return #number Speed to next waypoint (>0) in knots.
+function OPSGROUP:GetSpeedToWaypoint(indx)
+
+  local speed=self:GetWaypointSpeed(indx)
+  
+  if speed<=0.1 then
+    speed=self:GetSpeedCruise()
+  end
+
+  return speed
+end
+
+--- Get distance to waypoint.
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index. Default is the next waypoint.
+-- @return #number Distance in meters.
+function OPSGROUP:GetDistanceToWaypoint(indx)
+  local dist=0
+  
+  if #self.waypoints>0 then
+
+    indx=indx or self:GetWaypointIndexNext()
+  
+    local wp=self:GetWaypoint(indx)
+  
+    if wp then
+    
+      local coord=self:GetCoordinate()
+      
+      dist=coord:Get2DDistance(wp.coordinate)
+    end
+    
+  end
+  
+  return dist
+end
+
+--- Get time to waypoint based on current velocity.
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index. Default is the next waypoint.
+-- @return #number Time in seconds. If velocity is 0
+function OPSGROUP:GetTimeToWaypoint(indx)
+  
+  local s=self:GetDistanceToWaypoint(indx)
+  
+  local v=self:GetVelocity()
+  
+  local t=s/v
+  
+  if t==math.inf then
+    return 365*24*60*60
+  elseif t==math.nan then
+    return 0
+  else  
+    return t
+  end
+  
+end
+
+--- Returns the currently expected speed.
+-- @param #OPSGROUP self
+-- @return #number Expected speed in m/s.
+function OPSGROUP:GetExpectedSpeed()
+
+  if self:IsHolding() then
+    return 0
+  else
+    return self.speed or 0
+  end
+  
+end
+
 
 
 --- Remove a waypoint with a ceratin UID.
@@ -765,7 +871,9 @@ function OPSGROUP:RemoveWaypoint(wpindex)
     -- Waypoint was not reached yet.
     if wpindex > self.currentwp then
     
-      -- Could be that we just removed the only remaining waypoint ==> passedfinalwp=true.
+      ---
+      -- Removed a FUTURE waypoint
+      ---
       
       -- TODO: patrol adinfinitum.
       
@@ -773,15 +881,15 @@ function OPSGROUP:RemoveWaypoint(wpindex)
         self.passedfinalwp=true
       end
       
-      env.info("FF passed final waypoint after remove current wp = "..self.currentwp)
+      env.info("FF passed final waypoint after remove! current wp = "..self.currentwp)
 
       self:_CheckGroupDone(1)
-      
-    --elseif wpindex==self.currentwp then
-    
-      -- Removed the waypoint we just passed.
-    
+
     else
+    
+      ---
+      -- Removed a waypoint ALREADY PASSED
+      ---
     
       -- If an already passed waypoint was deleted, we do not need to update the route.
       
@@ -962,20 +1070,17 @@ end
 --- Add a *waypoint* task.
 -- @param #OPSGROUP self
 -- @param #table task DCS task table structure.
--- @param #number waypointindex Number of waypoint. Counting starts at one! Default is the as *next* waypoint.
+-- @param #OPSGROUP.Waypoint Waypoint where the task is executed. Default is the at *next* waypoint.
 -- @param #string description Brief text describing the task, e.g. "Attack SAM". 
 -- @param #number prio Priority of the task. Number between 1 and 100. Default is 50.
 -- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
 -- @return #OPSGROUP.Task The task structure.
-function OPSGROUP:AddTaskWaypoint(task, waypointindex, description, prio, duration)
-
-  -- Index.
-  waypointindex=waypointindex or (self.currentwp and self.currentwp+1 or 2)
+function OPSGROUP:AddTaskWaypoint(task, Waypoint, description, prio, duration)
   
-  -- Get waypoint
-  local waypoint=self:GetWaypointByIndex(waypointindex)
-  
-  if waypoint then
+  -- Waypoint of task.
+  Waypoint=Waypoint or self:GetWaypointNext()
+    
+  if Waypoint then
 
     -- Increase counter.
     self.taskcounter=self.taskcounter+1
@@ -989,7 +1094,7 @@ function OPSGROUP:AddTaskWaypoint(task, waypointindex, description, prio, durati
     newtask.id=self.taskcounter
     newtask.duration=duration
     newtask.time=0
-    newtask.waypoint=waypoint.uid
+    newtask.waypoint=Waypoint.uid
     newtask.type=OPSGROUP.TaskType.WAYPOINT
     newtask.stopflag=USERFLAG:New(string.format("%s StopTaskFlag %d", self.groupname, newtask.id))  
     newtask.stopflag:Set(0)
@@ -1002,10 +1107,9 @@ function OPSGROUP:AddTaskWaypoint(task, waypointindex, description, prio, durati
     self:T3({newtask=newtask})
     
     -- Update route.
-    --self:_CheckGroupDone(1)
     self:__UpdateRoute(-1)
   
-    return newtask    
+    return newtask  
   end
   
   return nil
@@ -1807,8 +1911,8 @@ function OPSGROUP:RouteToMission(mission, delay)
     self:ScheduleOnce(delay, OPSGROUP.RouteToMission, self, mission)
   else
         
-    -- Next waypoint.
-    local nextwaypoint=self.currentwp+1
+    -- ID of current waypoint.
+    local uid=self:GetWaypointCurrent().uid    
     
     -- Get coordinate where the mission is executed.    
     local waypointcoord=mission:GetMissionWaypointCoord(self.group)
@@ -1817,9 +1921,12 @@ function OPSGROUP:RouteToMission(mission, delay)
     for _,task in pairs(mission.enrouteTasks) do
       self:AddTaskEnroute(task)
     end
+    
+    -- Speed to mission waypoint.
+    local SpeedToMission=UTILS.KmphToKnots(self.speedCruise)
   
     -- Add waypoint.
-    local waypoint=self:AddWaypoint(waypointcoord, UTILS.KmphToKnots(self.speedCruise), nextwaypoint, false)
+    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, false)
     
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
@@ -1841,7 +1948,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
     
     -- Add waypoint task. UpdateRoute is called inside.
-    local waypointtask=self:AddTaskWaypoint(mission.DCStask, nextwaypoint, mission.name, mission.prio, mission.duration)
+    local waypointtask=self:AddTaskWaypoint(mission.DCStask, waypoint, mission.name, mission.prio, mission.duration)
     
     -- Set waypoint task.
     mission:SetGroupWaypointTask(self, waypointtask)
@@ -2126,6 +2233,10 @@ function OPSGROUP:onafterCheckZone(From, Event, To)
   end
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Internal Check Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- Check if group is in zones.
 -- @param #OPSGROUP self
 function OPSGROUP:_CheckInZones()
@@ -2248,6 +2359,106 @@ function OPSGROUP:_CheckDetectedUnits()
 
 end
 
+--- Check if passed the final waypoint and, if necessary, update route.
+-- @param #OPSGROUP self
+-- @param #number delay Delay in seconds.
+function OPSGROUP:_CheckGroupDone(delay)
+
+  if self:IsAlive() and self.ai then
+
+    if delay and delay>0 then
+      -- Delayed call.
+      self:ScheduleOnce(delay, self._CheckGroupDone, self)
+    else
+    
+      if self.passedfinalwp then
+      
+        ---
+        -- Passed FINAL waypoint
+        ---
+      
+        if #self.waypoints>1 then
+        
+          if self.adinfinitum then
+          
+            -- Get positive speed to first waypoint.
+            local speed=self:GetSpeedToWaypoint(1)
+          
+            -- Start route at first waypoint.
+            self:__UpdateRoute(-1, 1, speed)
+            
+            self:I(self.lid..string.format("Passed final WP, #WP>1, adinfinitum=TRUE ==> Goto WP 1 at speed>0"))
+                        
+            self.passedfinalwp=false
+            
+          else
+            -- No further waypoints. Command a full stop.
+            self:__FullStop(-1)
+            
+            self:I(self.lid..string.format("Passed final WP, #WP>1, adinfinitum=FALSE ==> Full Stop"))
+          end
+          
+        elseif #self.waypoints==1 then
+        
+          --- Only one WP left
+        
+          -- The last waypoint.
+          local waypoint=self.waypoints[1] --Ops.OpsGroup#OPSGROUP.Waypoint
+          
+          local dist=self:GetCoordinate():Get2DDistance(waypoint.coordinate)          
+          
+          
+          if self.adinfinitum and dist>1000 then  -- Note that dist>100 caused the same wp to be passed a lot of times.
+          
+            self:I(self.lid..string.format("Passed final WP, #WP=1, adinfinitum=TRUE dist>1000 ==> Goto WP 1 at speed>0"))
+
+            -- Get positive speed to first waypoint.
+            local speed=self:GetSpeedToWaypoint(1)
+          
+            -- Start route at first waypoint.
+            self:__UpdateRoute(-1, 1, speed)
+            
+            self.passedfinalwp=false
+            
+          else
+          
+            self:I(self.lid..string.format("Passed final WP, #WP=1, adinfinitum=FALSE or dist<1000 ==> Full Stop"))
+          
+            self:__FullStop(-1)
+            
+          end
+          
+        else
+        
+          --- No waypoints left
+
+          -- No further waypoints. Command a full stop.
+          self:__FullStop(-1)
+          
+        end
+    
+      else
+      
+        ---
+        -- Final waypoint NOT passed yet
+        ---
+      
+        if #self.waypoints>0 then
+          self:I(self.lid..string.format("NOT Passed final WP, #WP>0 ==> Update Route"))
+          self:__UpdateRoute(-1)
+        else
+          self:E(self.lid..string.format("WARNING: No waypoints left! Commanding a Full Stop"))
+          self:__FullStop(-1)
+        end
+        
+      end
+    
+    end
+    
+  end
+  
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Waypoints & Routing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2261,11 +2472,11 @@ function OPSGROUP:_CreateWaypoint(waypoint, formation, detour)
   waypoint.uid=self.wpcounter  
   waypoint.coordinate=COORDINATE:New(waypoint.x, waypoint.alt, waypoint.y)
   waypoint.detour=detour and detour or false
-  waypoint.formation=formation
   if formation then
     waypoint.action=formation
   end
-  waypoint.onroad=onroad and onroad or false
+  waypoint.npassed=0
+  waypoint.patrol=false
 
   self.wpcounter=self.wpcounter+1
   
@@ -2411,6 +2622,9 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
   
     -- Get the current waypoint index.
     opsgroup.currentwp=opsgroup:GetWaypointIndex(uid)
+    
+    -- Increase passing counter.
+    waypoint.npassed=waypoint.npassed+1
     
     -- Set expected speed and formation from the next WP.
     local wpnext=opsgroup:GetWaypointNext()  

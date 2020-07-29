@@ -1778,7 +1778,6 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
         return
       end
 
-
       -- Number of tasks remaining.
       local nTasks=self:CountRemainingTasks()
 
