@@ -1401,3 +1401,13 @@ function UTILS.GetSunset(Day, Month, Year, Latitude, Longitude, Tlocal)
 
   return UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tlocal)
 end
+
+--- Get OS time. Needs os to be desanitized!
+-- @return #number Os time in seconds.
+function UTILS.GetOSTime()
+  if os then
+    return os.clock()
+  end
+
+  return nil
+end

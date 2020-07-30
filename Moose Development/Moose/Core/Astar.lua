@@ -20,6 +20,7 @@
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table nodes Table of nodes.
+-- @field #number counter Node counter.
 -- @field #ASTAR.Node startNode Start node.
 -- @field #ASTAR.Node endNode End node.
 -- @field Core.Point#COORDINATE startCoord Start coordinate.
@@ -136,12 +137,16 @@ ASTAR = {
   Debug          =   nil,
   lid            =   nil,
   nodes          =    {},
+  counter        =     1,
 }
 
 --- Node data.
 -- @type ASTAR.Node
+-- @field #number id Node id.
 -- @field Core.Point#COORDINATE coordinate Coordinate of the node.
 -- @field #number surfacetype Surface type.
+-- @field #table valid Cached valid/invalid nodes.
+-- @field #table cost Cached cost.
 
 --- ASTAR infinity.
 -- @field #number INF
@@ -149,7 +154,7 @@ ASTAR.INF=1/0
 
 --- ASTAR class version.
 -- @field #string version
-ASTAR.version="0.1.0"
+ASTAR.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -211,6 +216,12 @@ function ASTAR:GetNodeFromCoordinate(Coordinate)
   
   node.coordinate=Coordinate
   node.surfacetype=Coordinate:GetSurfaceType()
+  node.id=self.counter
+  
+  node.valid={}
+  node.cost={}
+  
+  self.counter=self.counter+1
   
   return node
 end
@@ -518,6 +529,23 @@ function ASTAR.Dist3D(nodeA, nodeB)
   return nodeA.coordinate:Get3DDistance(nodeB.coordinate)
 end
 
+--- Heuristic cost is given by the distance between the nodes on road. 
+-- @param #ASTAR.Node nodeA First node.
+-- @param #ASTAR.Node nodeB Other node.
+-- @return #number Distance between the two nodes.
+function ASTAR.DistRoad(nodeA, nodeB)
+
+  local path,dist,gotpath=nodeA.coordinate:GetPathOnRoad(nodeB.coordinate,IncludeEndpoints,Railroad,MarkPath,SmokePath)
+  
+  if gotpath then
+    return dist
+  else
+    return math.huge
+  end
+
+  return nodeA.coordinate:Get3DDistance(nodeB.coordinate)
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -616,13 +644,15 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   local text=string.format("Starting A* pathfinding")
   self:I(self.lid..text)
   MESSAGE:New(text, 10, "ASTAR"):ToAllIf(self.Debug)
+  
+  local Tstart=UTILS.GetOSTime()
 
   while #openset > 0 do
   
     local current=self:_LowestFscore(openset, f_score)
     
     -- Check if we are at the end node.
-    if current==goal then
+    if current.id==goal.id then
     
       local path=self:_UnwindPath({}, came_from, goal)
       
@@ -634,8 +664,20 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
         table.remove(path, 1)
       end
       
+      local Tstop=UTILS.GetOSTime()
+      
+      local dT=nil
+      if Tstart and Tstop then
+        dT=Tstop-Tstart
+      end
+      
       -- Debug message.
-      local text=string.format("Found path with %d nodes", #path)
+      local text=string.format("Found path with %d nodes (%d total nodes)", #path, #self.nodes)
+      if dT then
+        text=text..string.format(". OS Time %.6f seconds", dT)
+      end
+      text=text..string.format("\nNvalid = %d  %d cached", self.nvalid, self.nvalidcache)
+      text=text..string.format("\nNcost  = %d  %d cached", self.ncost, self.ncostcache)
       self:I(self.lid..text)
       MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
       
@@ -689,11 +731,34 @@ end
 -- @return #number "Cost" to go from node A to node B.
 function ASTAR:_HeuristicCost(nodeA, nodeB)
 
-  if self.CostFunc then
-    return self.CostFunc(nodeA, nodeB, unpack(self.CostArg))
+  if self.ncost then
+    self.ncost=self.ncost+1
   else
-    return self:_DistNodes(nodeA, nodeB)
+    self.ncost=1
   end
+
+  -- Get chached cost if available.
+  local cost=nodeA.cost[nodeB.id]
+  if cost~=nil then
+    if self.ncostcache then
+      self.ncostcache=self.ncostcache+1
+    else
+      self.ncostcache=1
+    end
+    return cost
+  end
+
+  local cost=nil
+  if self.CostFunc then
+    cost=self.CostFunc(nodeA, nodeB, unpack(self.CostArg))
+  else
+    cost=self:_DistNodes(nodeA, nodeB)
+  end
+  
+  nodeA.cost[nodeB.id]=cost
+  nodeB.cost[nodeA.id]=cost  -- Symmetric problem. 
+  
+  return cost
 end
 
 --- Check if going from a node to a neighbour is possible.
@@ -703,14 +768,34 @@ end
 -- @return #boolean If true, transition between nodes is possible.
 function ASTAR:_IsValidNeighbour(node, neighbor)
 
-  if self.ValidNeighbourFunc then
-  
-    return self.ValidNeighbourFunc(node, neighbor, unpack(self.ValidNeighbourArg))
-  
+  if self.nvalid then
+    self.nvalid=self.nvalid+1
   else
-    return true
+    self.nvalid=1
+  end
+  
+  local valid=node.valid[neighbor.id]
+  if valid~=nil then
+    --env.info(string.format("Node %d has valid=%s neighbour %d", node.id, tostring(valid), neighbor.id))
+    if self.nvalidcache then
+      self.nvalidcache=self.nvalidcache+1
+    else
+      self.nvalidcache=1
+    end
+    return valid
   end
 
+  local valid=nil
+  if self.ValidNeighbourFunc then
+    valid=self.ValidNeighbourFunc(node, neighbor, unpack(self.ValidNeighbourArg))  
+  else
+    valid=true
+  end
+
+  node.valid[neighbor.id]=valid
+  neighbor.valid[node.id]=valid  -- Symmetric problem. 
+
+  return valid
 end
 
 --- Calculate 2D distance between two nodes.
@@ -727,7 +812,7 @@ end
 -- @param #table set The set of nodes.
 -- @param #number f_score F score.
 -- @return #ASTAR.Node Best node.
-function ASTAR:_LowestFscore(set, f_score)
+function ASTAR:_LowestFscore2(set, f_score)
 
   local lowest, bestNode = ASTAR.INF, nil
   
@@ -743,6 +828,25 @@ function ASTAR:_LowestFscore(set, f_score)
   return bestNode
 end
 
+--- Function that calculates the lowest F score.
+-- @param #ASTAR self
+-- @param #table set The set of nodes.
+-- @param #number f_score F score.
+-- @return #ASTAR.Node Best node.
+function ASTAR:_LowestFscore(set, f_score)
+
+  local function sort(A, B)
+    local a=A --#ASTAR.Node
+    local b=B --#ASTAR.Node
+    return f_score[a]<f_score[b]
+  end
+
+  table.sort(set, sort)
+  
+  return set[1]
+end
+
+
 --- Function to get valid neighbours of a node.
 -- @param #ASTAR self
 -- @param #ASTAR.Node theNode The node.
@@ -751,9 +855,9 @@ end
 function ASTAR:_NeighbourNodes(theNode, nodes)
 
   local neighbors = {}
-  for _, node in ipairs ( nodes ) do
+  for _, node in pairs ( nodes ) do
   
-    if theNode~=node then
+    if theNode.id~=node.id then
     
       local isvalid=self:_IsValidNeighbour(theNode, node)
     
@@ -775,8 +879,8 @@ end
 -- @return #boolean If true, the node is not in the set.
 function ASTAR:_NotIn(set, theNode)
 
-  for _, node in ipairs ( set ) do
-    if node == theNode then
+  for _, node in pairs ( set ) do
+    if node.id == theNode.id then
       return false
     end
   end
@@ -790,8 +894,9 @@ end
 -- @param #ASTAR.Node theNode The node to check.
 function ASTAR:_RemoveNode(set, theNode)
 
-  for i, node in ipairs ( set ) do
-    if node == theNode then 
+  for i, node in pairs ( set ) do
+    if node.id == theNode.id then
+      --table.remove(set, i)
       set [ i ] = set [ #set ]
       set [ #set ] = nil
       break

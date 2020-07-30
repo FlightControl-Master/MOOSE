@@ -1524,27 +1524,8 @@ do -- COORDINATE
         local coord=COORDINATE:NewFromVec2(_vec2)
         
         Path[#Path+1]=coord
-        
-        if MarkPath then
-          coord:MarkToAll(string.format("Path segment %d.", _i))
-        end
-        if SmokePath then
-          coord:SmokeGreen()
-        end
       end
-            
-      -- Mark/smoke endpoints
-      if IncludeEndpoints then
-        if MarkPath then
-          COORDINATE:NewFromVec2(path[1]):MarkToAll("Path Initinal Point")
-          COORDINATE:NewFromVec2(path[1]):MarkToAll("Path Final Point")        
-        end
-        if SmokePath then
-          COORDINATE:NewFromVec2(path[1]):SmokeBlue()
-          COORDINATE:NewFromVec2(path[#path]):SmokeBlue()
-        end
-      end
-            
+                              
     else
       self:E("Path is nil. No valid path on road could be found.")
       GotPath=false
@@ -1555,6 +1536,23 @@ do -- COORDINATE
       Path[#Path+1]=ToCoord
     end
     
+    -- Mark or smoke.
+    if MarkPath or SmokePath then
+      for i,c in pairs(Path) do
+        local coord=c --#COORDINATE
+        if MarkPath then
+          coord:MarkToAll(string.format("Path segment %d", i))
+        end
+        if SmokePath then
+          if i==1 or i==#Path then          
+            coord:SmokeBlue()
+          else
+            coord:SmokeGreen()
+          end
+        end
+      end
+    end
+    
     -- Sum up distances.
     if #Path>=2 then
       for i=1,#Path-1 do
@@ -1562,7 +1560,7 @@ do -- COORDINATE
       end
     else
       -- There are cases where no path on road can be found.
-      return nil,nil
+      return nil,nil,false
     end 
         
     return Path, Way, GotPath

@@ -1535,12 +1535,6 @@ function NAVYGROUP:_FindPathToNextWaypoint()
       
       for i,_node in ipairs(path) do
         local node=_node --Core.Astar#ASTAR.Node
-                
-        -- Waypoint index.
-        local wpindex=self:GetWaypointIndexCurrent()+i
-        
-        -- ID of current waypoint.
-        local uid=self:GetWaypointCurrent().uid
           
         -- Add waypoints along detour path to next waypoint.
         local wp=self:AddWaypoint(node.coordinate, speed, uid)
