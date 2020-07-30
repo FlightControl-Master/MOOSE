@@ -147,6 +147,15 @@ function ARMYGROUP:SetSpeedCruise(Speed)
 end
 
 
+--- Get coordinate of the closest road.
+-- @param #ARMYGROUP self
+-- @param #boolean switch If true or nil, patrol until the end of time. If false, go along the waypoints once and stop.
+-- @return #ARMYGROUP self
+function ARMYGROUP:GetClosestRoad()
+  return self:GetCoordinate():GetClosestPointToRoad()
+end
+
+
 --- Add a *scheduled* task.
 -- @param #ARMYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.

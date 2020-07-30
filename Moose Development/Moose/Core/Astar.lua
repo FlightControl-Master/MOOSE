@@ -21,6 +21,11 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table nodes Table of nodes.
 -- @field #number counter Node counter.
+-- @field #number Nnodes Number of nodes.
+-- @field #number nvalid Number of nvalid calls.
+-- @field #number nvalidcache Number of cached valid evals.
+-- @field #number ncost Number of cost evaluations.
+-- @field #number ncostcache Number of cached cost evals.
 -- @field #ASTAR.Node startNode Start node.
 -- @field #ASTAR.Node endNode End node.
 -- @field Core.Point#COORDINATE startCoord Start coordinate.
@@ -138,6 +143,11 @@ ASTAR = {
   lid            =   nil,
   nodes          =    {},
   counter        =     1,
+  Nnodes         =     0,
+  ncost          =     0,
+  ncostcache     =     0,
+  nvalid         =     0,
+  nvalidcache    =     0,
 }
 
 --- Node data.
@@ -154,7 +164,7 @@ ASTAR.INF=1/0
 
 --- ASTAR class version.
 -- @field #string version
-ASTAR.version="0.3.0"
+ASTAR.version="0.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -233,7 +243,8 @@ end
 -- @return #ASTAR self
 function ASTAR:AddNode(Node)
 
-  table.insert(self.nodes, Node) 
+  self.nodes[Node.id]=Node
+  self.Nnodes=self.Nnodes+1 
     
   return self
 end
@@ -484,7 +495,7 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
     local Ap=UTILS.VecTranslate(cA, dx, heading+90)
     local Bp=UTILS.VecTranslate(cB, dx, heading+90)
 
-    los=land.isVisible(Ap, Bp) --Ap:IsLOS(Bp, offset)
+    los=land.isVisible(Ap, Bp)
     
     if los then
 
@@ -634,27 +645,34 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   local start=self.startNode
   local goal=self.endNode
 
+  -- Sets.
+  local openset   = {}
   local closedset = {}
-  local openset = { start }
   local came_from = {}
-
-  local g_score, f_score = {}, {}
+  local g_score   = {}
+  local f_score   = {}
   
-  g_score[start]=0
-  f_score[start]=g_score[start]+self:_HeuristicCost(start, goal)
+  openset[start.id]=true
+  local Nopen=1
+  
+  -- Initial scores.
+  g_score[start.id]=0
+  f_score[start.id]=g_score[start.id]+self:_HeuristicCost(start, goal)
   
   -- Set start time.
   local T0=timer.getAbsTime()
 
   -- Debug message.
-  local text=string.format("Starting A* pathfinding")
+  local text=string.format("Starting A* pathfinding with %d Nodes", self.Nnodes)
   self:I(self.lid..text)
   MESSAGE:New(text, 10, "ASTAR"):ToAllIf(self.Debug)
   
   local Tstart=UTILS.GetOSTime()
 
-  while #openset > 0 do
+  -- Loop while we still have an open set.
+  while Nopen > 0 do
   
+    -- Get current node.
     local current=self:_LowestFscore(openset, f_score)
     
     -- Check if we are at the end node.
@@ -678,39 +696,44 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
       end
       
       -- Debug message.
-      local text=string.format("Found path with %d nodes (%d total nodes)", #path, #self.nodes)
+      local text=string.format("Found path with %d nodes (%d total)", #path, self.Nnodes)
       if dT then
-        text=text..string.format(". OS Time %.6f seconds", dT)
+        text=text..string.format(", OS Time %.6f sec", dT)
       end
-      text=text..string.format("\nNvalid = %d  %d cached", self.nvalid, self.nvalidcache)
-      text=text..string.format("\nNcost  = %d  %d cached", self.ncost, self.ncostcache)
+      text=text..string.format(", Nvalid=%d [%d cached]", self.nvalid, self.nvalidcache)
+      text=text..string.format(", Ncost=%d [%d cached]", self.ncost, self.ncostcache)
       self:I(self.lid..text)
       MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
       
       return path
     end
 
-    self:_RemoveNode(openset, current)
-    table.insert(closedset, current)
+    -- Move Node from open to closed set.
+    openset[current.id]=nil
+    Nopen=Nopen-1
+    closedset[current.id]=true
     
+    -- Get neighbour nodes.
     local neighbors=self:_NeighbourNodes(current, nodes)
     
     -- Loop over neighbours.
-    for _,neighbor in ipairs(neighbors) do
+    for _,neighbor in pairs(neighbors) do
     
-      if self:_NotIn(closedset, neighbor) then
+      if self:_NotIn(closedset, neighbor.id) then
       
-        local tentative_g_score=g_score[current]+self:_DistNodes(current, neighbor)
+        local tentative_g_score=g_score[current.id]+self:_DistNodes(current, neighbor)
          
-        if self:_NotIn(openset, neighbor) or tentative_g_score < g_score[neighbor] then
+        if self:_NotIn(openset, neighbor.id) or tentative_g_score < g_score[neighbor.id] then
         
           came_from[neighbor]=current
           
-          g_score[neighbor]=tentative_g_score
-          f_score[neighbor]=g_score[neighbor]+self:_HeuristicCost(neighbor, goal)
+          g_score[neighbor.id]=tentative_g_score
+          f_score[neighbor.id]=g_score[neighbor.id]+self:_HeuristicCost(neighbor, goal)
           
-          if self:_NotIn(openset, neighbor) then
-            table.insert(openset, neighbor)
+          if self:_NotIn(openset, neighbor.id) then
+            -- Add to open set.
+            openset[neighbor.id]=true
+            Nopen=Nopen+1
           end
           
         end
@@ -736,21 +759,14 @@ end
 -- @param #ASTAR.Node nodeB Node B.
 -- @return #number "Cost" to go from node A to node B.
 function ASTAR:_HeuristicCost(nodeA, nodeB)
-
-  if self.ncost then
-    self.ncost=self.ncost+1
-  else
-    self.ncost=1
-  end
+  
+  -- Counter.
+  self.ncost=self.ncost+1
 
   -- Get chached cost if available.
   local cost=nodeA.cost[nodeB.id]
   if cost~=nil then
-    if self.ncostcache then
-      self.ncostcache=self.ncostcache+1
-    else
-      self.ncostcache=1
-    end
+    self.ncostcache=self.ncostcache+1
     return cost
   end
 
@@ -774,20 +790,13 @@ end
 -- @return #boolean If true, transition between nodes is possible.
 function ASTAR:_IsValidNeighbour(node, neighbor)
 
-  if self.nvalid then
-    self.nvalid=self.nvalid+1
-  else
-    self.nvalid=1
-  end
+  -- Counter.
+  self.nvalid=self.nvalid+1
   
   local valid=node.valid[neighbor.id]
   if valid~=nil then
     --env.info(string.format("Node %d has valid=%s neighbour %d", node.id, tostring(valid), neighbor.id))
-    if self.nvalidcache then
-      self.nvalidcache=self.nvalidcache+1
-    else
-      self.nvalidcache=1
-    end
+    self.nvalidcache=self.nvalidcache+1
     return valid
   end
 
@@ -815,43 +824,24 @@ end
 
 --- Function that calculates the lowest F score.
 -- @param #ASTAR self
--- @param #table set The set of nodes.
--- @param #number f_score F score.
--- @return #ASTAR.Node Best node.
-function ASTAR:_LowestFscore2(set, f_score)
-
-  local lowest, bestNode = ASTAR.INF, nil
-  
-  for _, node in ipairs ( set ) do
-  
-    local score = f_score [ node ]
-    
-    if score < lowest then
-      lowest, bestNode = score, node
-    end
-  end
-  
-  return bestNode
-end
-
---- Function that calculates the lowest F score.
--- @param #ASTAR self
--- @param #table set The set of nodes.
+-- @param #table set The set of nodes IDs.
 -- @param #number f_score F score.
 -- @return #ASTAR.Node Best node.
 function ASTAR:_LowestFscore(set, f_score)
 
-  local function sort(A, B)
-    local a=A --#ASTAR.Node
-    local b=B --#ASTAR.Node
-    return f_score[a]<f_score[b]
-  end
-
-  table.sort(set, sort)
+  local lowest, bestNode = ASTAR.INF, nil
   
-  return set[1]
+  for nid,node in pairs(set) do
+  
+    local score=f_score[nid]
+    
+    if score<lowest then
+      lowest, bestNode = score, nid
+    end
+  end
+  
+  return self.nodes[bestNode]
 end
-
 
 --- Function to get valid neighbours of a node.
 -- @param #ASTAR self
@@ -861,7 +851,8 @@ end
 function ASTAR:_NeighbourNodes(theNode, nodes)
 
   local neighbors = {}
-  for _, node in pairs ( nodes ) do
+  
+  for _,node in pairs(nodes) do
   
     if theNode.id~=node.id then
     
@@ -884,31 +875,7 @@ end
 -- @param #ASTAR.Node theNode The node to check.
 -- @return #boolean If true, the node is not in the set.
 function ASTAR:_NotIn(set, theNode)
-
-  for _, node in pairs ( set ) do
-    if node.id == theNode.id then
-      return false
-    end
-  end
-  
-  return true
-end
-
---- Function to remove a node from a set.
--- @param #ASTAR self
--- @param #table set Set of nodes.
--- @param #ASTAR.Node theNode The node to check.
-function ASTAR:_RemoveNode(set, theNode)
-
-  for i, node in pairs ( set ) do
-    if node.id == theNode.id then
-      --table.remove(set, i)
-      set [ i ] = set [ #set ]
-      set [ #set ] = nil
-      break
-    end
-  end
-  
+  return set[theNode]==nil
 end
 
 --- Unwind path function.
@@ -919,9 +886,9 @@ end
 -- @return #table Unwinded path.
 function ASTAR:_UnwindPath( flat_path, map, current_node )
 
-  if map [ current_node ] then
-    table.insert ( flat_path, 1, map [ current_node ] ) 
-    return self:_UnwindPath ( flat_path, map, map [ current_node ] )
+  if map [current_node] then
+    table.insert (flat_path, 1, map[current_node]) 
+    return self:_UnwindPath(flat_path, map, map[current_node])
   else
     return flat_path
   end
