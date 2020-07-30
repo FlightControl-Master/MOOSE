@@ -641,7 +641,7 @@ function SQUADRON:CanMission(Mission)
   return true
 end
 
---- Get assets for a mission.
+--- Count assets in airwing (warehous) stock.
 -- @param #SQUADRON self
 -- @return #number Assets not spawned.
 function SQUADRON:CountAssetsInStock()

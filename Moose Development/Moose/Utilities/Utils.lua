@@ -969,6 +969,22 @@ function UTILS.HdgDiff(h1, h2)
 end
 
 
+--- Translate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param #number distance The distance to translate.
+-- @param #number angle Rotation angle in degrees.
+-- @return DCS#Vec3 Vector rotated in the (x,z) plane.
+function UTILS.VecTranslate(a, distance, angle)
+
+  local SX = a.x
+  local SY = a.z
+  local Radians=math.rad(angle or 0)
+  local TX=distance*math.cos(Radians)+SX
+  local TY=distance*math.sin(Radians)+SY
+
+  return {x=TX, y=a.y, z=TY}
+end
+
 --- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param #number angle Rotation angle in degrees.
@@ -988,7 +1004,6 @@ function UTILS.Rotate2D(a, angle)
 
   return A
 end
-
 
 
 --- Converts a TACAN Channel/Mode couple into a frequency in Hz.
