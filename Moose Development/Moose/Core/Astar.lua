@@ -36,7 +36,7 @@
 -- @field #table CostArg Optional arguments passed to the cost function. 
 -- @extends Core.Base#BASE
 
---- When nothing goes right... Go left!
+--- **When nothing goes right... Go left!**
 --
 -- ===
 --
@@ -510,7 +510,7 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
   return los
 end
 
---- Function to check if two nodes have line of sight (LoS).
+--- Function to check if distance between two nodes is less than a threshold distance.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Other node.
 -- @param #number distmax Max distance in meters. Default is 2000 m.
@@ -550,7 +550,7 @@ end
 -- @return #number Distance between the two nodes.
 function ASTAR.DistRoad(nodeA, nodeB)
 
-  local path,dist,gotpath=nodeA.coordinate:GetPathOnRoad(nodeB.coordinate,IncludeEndpoints,Railroad,MarkPath,SmokePath)
+  local path, dist, gotpath=nodeA.coordinate:GetPathOnRoad(nodeB.coordinate,IncludeEndpoints,Railroad,MarkPath,SmokePath)
   
   if gotpath then
     return dist
@@ -564,7 +564,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 --- Find the closest node from a given coordinate.
 -- @param #ASTAR self

@@ -349,10 +349,10 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
   if self.ai then
   
     -- Set default ROE option.
-    self:SetOptionROE(self.roe)
+    self:SwitchROE(self.option.ROE)
     
     -- Set default Alarm State option.
-    self:SetOptionAlarmstate(self.alarmstate)
+    self:SwitchAlarmstate(self.option.Alarm)
     
   end
   
@@ -408,7 +408,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
       end
       
       -- Current set formation.
-      self.formation=wp.action
+      self.option.Formation=wp.action
       
       -- Current set speed in m/s.
       self.speed=wp.speed
@@ -436,14 +436,14 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
 
 
   -- Current waypoint.
-  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speed), self.formation)
+  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speed), self.option.Formation)
   table.insert(waypoints, 1, current)
   table.insert(waypoints, 1, current)  -- Seems to be better to add this twice. Otherwise, the passing waypoint functions is triggered to early!
 
   if #waypoints>2 then
   
     self:I(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Formation=%s", 
-    self.currentwp, n, #self.waypoints, #waypoints-2, UTILS.MpsToKnots(self.speed), tostring(self.formation)))
+    self.currentwp, n, #self.waypoints, #waypoints-2, UTILS.MpsToKnots(self.speed), tostring(self.option.Formation)))
 
     -- Route group to all defined waypoints remaining.
     self:Route(waypoints)
@@ -828,6 +828,11 @@ function ARMYGROUP:_InitGroup()
   
   return self
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Option Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions

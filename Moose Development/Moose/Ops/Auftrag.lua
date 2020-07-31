@@ -1362,7 +1362,7 @@ function AUFTRAG:SetEngageAsGroup(Switch)
   return self
 end
 
---- Set engage altitude.
+--- Set engage altitude. This is the altitude passed to the DCS task. In the ME it is the tickbox ALTITUDE ABOVE.
 -- @param #AUFTRAG self
 -- @param #string Altitude Altitude in feet. Default 6000 ft.
 -- @return #AUFTRAG self
@@ -1376,7 +1376,7 @@ function AUFTRAG:SetEngageAltitude(Altitude)
   return self
 end
 
---- Set mission altitude.
+--- Set mission altitude. This is the altitude of the waypoint create where the DCS task is executed.
 -- @param #AUFTRAG self
 -- @param #string Altitude Altitude in feet.
 -- @return #AUFTRAG self

@@ -54,34 +54,22 @@
 -- @field #number traveltime Time.
 -- @field #boolean ispathfinding If true, group is on pathfinding route.
 -- 
--- @field #number tacanChannelDefault The default TACAN channel.
--- @field #string tacanMorseDefault The default TACAN morse code.
--- @field #number tacanChannel The currenly used TACAN channel.
--- @field #string tacanMorse The currently used TACAN morse code.
--- @field #boolean tacanOn If true, TACAN is currently active.
--- @field Wrapper.Unit#UNIT tacanBeacon The unit acting as TACAN beacon.
 -- 
--- @field #number radioFreqDefault Default radio frequency in MHz.
--- @field #number radioFreq Currently used radio frequency in MHz.
--- @field #number radioModuDefault Default Radio modulation `radio.modulation.AM` or `radio.modulation.FM`.
--- @field #number radioModu Currently used radio modulation `radio.modulation.AM` or `radio.modulation.FM`.
+-- @field #OPSGROUP.Radio radio Current radio settings.
+-- @field #OPSGROUP.Radio radioDefault Default radio settings.
 -- @field #boolean radioOn If true, radio is currently turned on.
 -- @field Core.RadioQueue#RADIOQUEUE radioQueue Radio queue.
 -- 
--- @field #boolean eplrsDefault Default EPLRS data link setting.
--- @field #boolean eplrs If true, EPLRS data link is on.
+-- @field #OPSGROUP.Beacon tacan Current TACAN settings.
+-- @field #OPSGROUP.Beacon tacanDefault Default TACAN settings.
+-- @field #boolean tacanOn If true, TACAN is currently active.
 -- 
--- @field #string roeDefault Default ROE setting.
--- @field #string roe Current ROE setting.
+-- @field #OPSGROUP.Beacon icls Current ICLS settings.
+-- @field #OPSGROUP.Beacon iclsDefault Default ICLS settings.
+-- @field #boolean iclsOn If true, ICLS is currently active.
 -- 
--- @field #string rotDefault Default ROT setting.
--- @field #string rot Current ROT setting.
--- 
--- @field #string alarmstateDefault Default Alarm State setting.
--- @field #string alarmstate Current Alarm State setting.
--- 
--- @field #number formationDefault Default formation setting.
--- @field #number formation Current formation setting.
+-- @field #OPSGROUP.Option option Current optional settings.
+-- @field #OPSGROUP.Option optionDefault Default option settings. 
 -- 
 -- @field Core.Astar#ASTAR Astar path finding.
 -- 
@@ -129,6 +117,17 @@ OPSGROUP = {
   groupinitialized   =   nil,
   respawning         =   nil,
   wpcounter          =     1,
+  radio              =    {},
+  radioDefault       =    {},
+  option             =    {},
+  optionDefault      =    {},
+  tacan              =    {},
+  tacanDefault       =    {},
+  icls               =    {},
+  iclsDefault        =    {},
+  callsign           =    {},
+  callsignDefault    =    {},
+  
 }
 
 --- Status of group element.
@@ -198,6 +197,33 @@ OPSGROUP.TaskType={
 -- @type OPSGROUP.EnrouteTask
 -- @field DCS#Task DCStask DCS task structure table.
 -- @field #number WaypointIndex Waypoint number at which the enroute task is added.
+
+--- Beacon data.
+-- @type OPSGROUP.Beacon
+-- @field #number Channel Channel.
+-- @field #number Morse Morse Code.
+-- @field #string Band Band "X" or "Y" for TACAN beacon.
+-- @field #string UnitName Name of the unit acting as beacon.
+
+--- Radio data.
+-- @type OPSGROUP.Radio
+-- @field #number Freq Frequency
+-- @field #number Modu Modulation.
+
+--- Callsign data
+-- @type OPSGROUP.Callsign
+-- @field #number Name
+-- @field #number Number1 Number 1
+-- @field #number Number2 Number 2
+
+--- Option data.
+-- @type OPSGROUP.Option
+-- @field #number ROE Rule of engagement.
+-- @field #number ROT Reaction on threat.
+-- @field #number Alarm Alarm state.
+-- @field #number Formation Formation.
+-- @field #boolean EPLRS data link.
+-- @field #boolean Disperse Disperse under fire. 
 
 --- Ammo data.
 -- @type OPSGROUP.Ammo
@@ -830,8 +856,6 @@ function OPSGROUP:GetExpectedSpeed()
   end
   
 end
-
-
 
 --- Remove a waypoint with a ceratin UID.
 -- @param #OPSGROUP self
@@ -2723,7 +2747,7 @@ end
 -- @param #number roe ROE of group. Default is `ENUMS.ROE.ReturnFire`.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultROE(roe)
-  self.roeDefault=roe or ENUMS.ROE.ReturnFire
+  self.optionDefault.ROE=roe or ENUMS.ROE.ReturnFire
   return self
 end
 
@@ -2731,13 +2755,13 @@ end
 -- @param #OPSGROUP self
 -- @param #string roe ROE of group. Default is the value defined by :SetDefaultROE().
 -- @return #OPSGROUP self
-function OPSGROUP:SetOptionROE(roe)
+function OPSGROUP:SwitchROE(roe)
 
-  self.roe=roe or self.roeDefault
+  self.option.ROE=roe or self.optionDefault.ROE
   
   if self:IsAlive() then
   
-    self.group:OptionROE(self.roe)
+    self.group:OptionROE(self.option.ROE)
     
     self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.roe))
   else
@@ -2751,15 +2775,15 @@ end
 -- @param #OPSGROUP self
 -- @return #number Current ROE.
 function OPSGROUP:GetROE()
-  return self.roe
+  return self.option.ROE
 end
 
 --- Set the default ROT for the group. This is the ROT state gets when the group is spawned or to which it defaults back after a mission.
 -- @param #OPSGROUP self
--- @param #number roe ROE of group. Default is ENUMS.ROT.PassiveDefense.
+-- @param #number rot ROT of group. Default is ENUMS.ROT.PassiveDefense.
 -- @return #OPSGROUP self
-function OPSGROUP:SetDefaultROT(roe)
-  self.rotDefault=roe or ENUMS.ROT.PassiveDefense
+function OPSGROUP:SetDefaultROT(rot)
+  self.optionDefault.ROT=rot or ENUMS.ROT.PassiveDefense
   return self
 end
 
@@ -2767,13 +2791,13 @@ end
 -- @param #OPSGROUP self
 -- @param #string rot ROT of group. Default is the value defined by :SetDefaultROT().
 -- @return #OPSGROUP self
-function OPSGROUP:SetOptionROT(rot)
+function OPSGROUP:SwitchROT(rot)
 
-  self.rot=rot or self.rotDefault
+  self.option.ROT=rot or self.optionDefault.ROT
   
   if self:IsAlive() then
   
-    self.group:OptionROT(self.rot)
+    self.group:OptionROT(self.option.ROT)
     
     self:T2(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.rot))
   else
@@ -2783,13 +2807,20 @@ function OPSGROUP:SetOptionROT(rot)
   return self
 end
 
+--- Get current ROT of the group.
+-- @param #OPSGROUP self
+-- @return #number Current ROT.
+function OPSGROUP:GetROT()
+  return self.option.ROT
+end
+
 
 --- Set the default Alarm State for the group. This is the state gets when the group is spawned or to which it defaults back after a mission.
 -- @param #OPSGROUP self
 -- @param #number alarmstate Alarm state of group. Default is `AI.Option.Ground.val.ALARM_STATE.AUTO` (0).
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultAlarmstate(alarmstate)
-  self.alarmstateDefault=alarmstate or 0
+  self.optionDefault.Alarm=alarmstate or 0
   return self
 end
 
@@ -2797,24 +2828,24 @@ end
 -- @param #OPSGROUP self
 -- @param #string alarmstate Alarm state of group. Default is the value defined by :SetDefaultAlarmstate().
 -- @return #OPSGROUP self
-function OPSGROUP:SetOptionAlarmstate(alarmstate)
+function OPSGROUP:SwitchAlarmstate(alarmstate)
 
-  self.alarmstate=alarmstate or self.alarmstateDefault
+  self.option.Alarm=alarmstate or self.optionDefault.Alarm
   
   if self:IsAlive() then
   
-    if self.alarmstate==0 then
+    if self.option.Alarm==0 then
       self.group:OptionAlarmStateAuto()
-    elseif self.alarmstate==1 then
+    elseif self.option.Alarm==1 then
       self.group:OptionAlarmStateGreen()
-    elseif self.alarmstate==2 then
+    elseif self.option.Alarm==2 then
       self.group:OptionAlarmStateRed()
     else
       self:E("ERROR: Unknown Alarm State! Setting to AUTO.")
       self.group:OptionAlarmStateAuto()
     end
     
-    self:I(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.alarmstate))
+    self:I(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.option.Alarm))
   else
     -- TODO WARNING
   end
@@ -2826,7 +2857,217 @@ end
 -- @param #OPSGROUP self
 -- @return #number Current Alarm State.
 function OPSGROUP:GetAlarmstate()
-  return self.alarmstate
+  return self.option.Alarm
+end
+
+--- Set default TACAN parameters. AA TACANs are always on "Y" band.
+-- @param #OPSGROUP self
+-- @param #number Channel TACAN channel.
+-- @param #string Morse Morse code. Default "XXX".
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultTACAN(Channel, Morse)
+
+  self.tacanChannelDefault=Channel
+  self.tacanMorseDefault=Morse or "XXX"
+  
+  self.tacan.Channel=Channel
+  self.tacan.Band=Band
+  self.tacan.Morse=Morse or "XXX"
+  self.tacan.UnitName=UnitName
+
+  return self
+end
+
+--- Activate TACAN beacon.
+-- @param #OPSGROUP self
+-- @param #number TACANChannel TACAN Channel.
+-- @param #string TACANMorse TACAN morse code.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchTACAN(TACANChannel, TACANMorse)
+
+  if self:IsAlive() then
+
+    local unit=self.group:GetUnit(1)  --Wrapper.Unit#UNIT
+
+    if unit and unit:IsAlive() then
+
+      local Type=4
+      local System=5
+      local UnitID=unit:GetID()
+      local TACANMode="Y"
+      local Frequency=UTILS.TACANToFrequency(TACANChannel, TACANMode)
+
+      unit:CommandActivateBeacon(Type, System, Frequency, UnitID, TACANChannel, TACANMode, true, TACANMorse, true)
+
+      self.tacanBeacon=unit
+      self.tacanChannel=TACANChannel
+      self.tacanMorse=TACANMorse
+
+      self.tacanOn=true
+
+      self:I(self.lid..string.format("Switching TACAN to Channel %dY Morse %s", self.tacanChannel, tostring(self.tacanMorse)))
+
+    end
+
+  end
+
+  return self
+end
+
+--- Deactivate TACAN beacon.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchTACANOff()
+
+  if self.tacanBeacon and self.tacanBeacon:IsAlive() then
+    self.tacanBeacon:CommandDeactivateBeacon()
+  end
+
+  self:I(self.lid..string.format("Switching TACAN OFF"))
+
+  self.tacanOn=false
+
+end
+
+--- Set default Radio frequency and modulation.
+-- @param #OPSGROUP self
+-- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
+-- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultRadio(Frequency, Modulation)
+  
+  self.radioDefault.Freq=Frequency or 251
+  self.radioDefault.Modu=Modulation or radio.modulation.AM
+  
+  return self
+end
+
+--- Get current Radio frequency and modulation.
+-- @param #OPSGROUP self
+-- @return #number Radio frequency in MHz or nil.
+-- @return #number Radio modulation or nil.
+function OPSGROUP:GetRadio()
+  return self.radio.Freq, self.radio.Modu
+end
+
+--- Turn radio on.
+-- @param #OPSGROUP self
+-- @param #number Frequency Radio frequency in MHz.
+-- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchRadio(Frequency, Modulation)
+
+  if self:IsAlive() and Frequency then
+
+    Modulation=Modulation or radio.Modulation.AM
+
+    local group=self.group --Wrapper.Group#GROUP
+
+    if not self.radioOn then
+      group:SetOption(AI.Option.Air.id.SILENCE, false)
+    end
+
+    group:CommandSetFrequency(Frequency, Modulation)
+    
+    self.radio.Freq=Frequency
+    self.radio.Modu=Modulation
+    
+    -- Radio is on.
+    self.radioOn=true
+
+    self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radioFreq, UTILS.GetModulationName(self.radioModu)))
+
+  end
+
+  return self
+end
+
+--- Turn radio off.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:TurnRadioOff()
+
+  if self:IsAlive() then
+
+    self.group:SetOption(AI.Option.Air.id.SILENCE, true)
+
+    --self.radioFreq=nil
+    --self.radioModu=nil
+    
+    -- Radio is off.
+    self.radioOn=false
+
+    self:I(self.lid..string.format("Switching radio OFF"))
+
+  end
+
+  return self
+end
+
+--- Set default formation.
+-- @param #OPSGROUP self
+-- @param #number Formation The formation the groups flies in.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultFormation(Formation)
+
+  self.formationDefault=Formation
+
+  return self
+end
+
+--- Switch to a specific formation.
+-- @param #OPSGROUP self
+-- @param #number Formation New formation the group will fly in.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchFormation(Formation)
+
+  if self:IsAlive() and Formation then
+
+    self.group:SetOption(AI.Option.Air.id.FORMATION, Formation)
+    
+    self.formation=Formation
+
+    self:I(self.lid..string.format("Switching formation to %d", self.formation))
+
+  end
+
+  return self
+end
+
+--- Set default formation.
+-- @param #OPSGROUP self
+-- @param #number CallsignName Callsign name.
+-- @param #number CallsignNumber Callsign number.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
+
+  self.callsignNameDefault=CallsignName
+  self.callsignNumberDefault=CallsignNumber or 1
+
+  return self
+end
+
+--- Switch to a specific callsign.
+-- @param #OPSGROUP self
+-- @param #number CallsignName Callsign name.
+-- @param #number CallsignNumber Callsign number.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
+
+  if self:IsAlive() and CallsignName then
+
+    self.callsignName=CallsignName
+    self.callsignNumber=CallsignNumber or 1
+
+    self:I(self.lid..string.format("Switching callsign to %d-%d", self.callsignName, self.callsignNumber))
+    
+    local group=self.group --Wrapper.Group#GROUP
+    
+    group:CommandSetCallsign(self.callsignName, self.callsignNumber)
+
+  end
+
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
