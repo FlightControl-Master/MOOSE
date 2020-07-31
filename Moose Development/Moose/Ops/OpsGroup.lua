@@ -52,8 +52,9 @@
 -- @field Core.Point#COORDINATE position Position of the group at last status check.
 -- @field #number traveldist Distance traveled in meters. This is a lower bound!
 -- @field #number traveltime Time.
--- @field #boolean ispathfinding If true, group is on pathfinding route.
 -- 
+-- @field Core.Astar#ASTAR Astar path finding.
+-- @field #boolean ispathfinding If true, group is on pathfinding route.
 -- 
 -- @field #OPSGROUP.Radio radio Current radio settings.
 -- @field #OPSGROUP.Radio radioDefault Default radio settings.
@@ -69,9 +70,10 @@
 -- @field #boolean iclsOn If true, ICLS is currently active.
 -- 
 -- @field #OPSGROUP.Option option Current optional settings.
--- @field #OPSGROUP.Option optionDefault Default option settings. 
+-- @field #OPSGROUP.Option optionDefault Default option settings.
 -- 
--- @field Core.Astar#ASTAR Astar path finding.
+-- @field #OPSGROUP.Callsign callsign Current callsign settings.
+-- @field #OPSGROUP.Callsign callsignDefault Default callsign settings.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -2763,7 +2765,7 @@ function OPSGROUP:SwitchROE(roe)
   
     self.group:OptionROE(self.option.ROE)
     
-    self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.roe))
+    self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.option.ROE))
   else
     -- TODO WARNING
   end
@@ -2799,7 +2801,7 @@ function OPSGROUP:SwitchROT(rot)
   
     self.group:OptionROT(self.option.ROT)
     
-    self:T2(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.rot))
+    self:T2(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
   else
     -- TODO WARNING
   end
@@ -2880,10 +2882,11 @@ end
 
 --- Activate TACAN beacon.
 -- @param #OPSGROUP self
--- @param #number TACANChannel TACAN Channel.
--- @param #string TACANMorse TACAN morse code.
+-- @param #number Channel TACAN Channel.
+-- @param #string Morse TACAN morse code.
+-- @param #string Band TACAN channel mode "X" or "Y". Default is "Y" for aircraft and "X" for ground and naval groups.
 -- @return #OPSGROUP self
-function OPSGROUP:SwitchTACAN(TACANChannel, TACANMorse)
+function OPSGROUP:SwitchTACAN(Channel, Morse, Band)
 
   if self:IsAlive() then
 
@@ -2891,21 +2894,36 @@ function OPSGROUP:SwitchTACAN(TACANChannel, TACANMorse)
 
     if unit and unit:IsAlive() then
 
-      local Type=4
-      local System=5
       local UnitID=unit:GetID()
-      local TACANMode="Y"
-      local Frequency=UTILS.TACANToFrequency(TACANChannel, TACANMode)
 
-      unit:CommandActivateBeacon(Type, System, Frequency, UnitID, TACANChannel, TACANMode, true, TACANMorse, true)
+      local Type=BEACON.Type.TACAN
+      local System=BEACON.System.TACAN
+      
+      --local TACANMode="Y"
+      if self.isAircraft then
+        Type=4
+        System=5
+        Band=Band or "Y"        
+      else
+        Band=Band or "X"
+      end
+      
+      -- Tacan frequency.
+      local Frequency=UTILS.TACANToFrequency(Channel, Band)
+
+      unit:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Band, true, Morse, true)
 
       self.tacanBeacon=unit
-      self.tacanChannel=TACANChannel
-      self.tacanMorse=TACANMorse
+      
+      self.tacan.Channel=Channel
+      self.tacan.Morse=Morse
+      self.tacan.Band=Band
+      self.tacan.UnitName=unit:GetName()
 
+      -- TACAN is now on.
       self.tacanOn=true
 
-      self:I(self.lid..string.format("Switching TACAN to Channel %dY Morse %s", self.tacanChannel, tostring(self.tacanMorse)))
+      self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.UnitName))
 
     end
 
@@ -2963,7 +2981,7 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
 
     local group=self.group --Wrapper.Group#GROUP
 
-    if not self.radioOn then
+    if self.isAircraft and not self.radioOn then
       group:SetOption(AI.Option.Air.id.SILENCE, false)
     end
 
@@ -2975,7 +2993,7 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
     -- Radio is on.
     self.radioOn=true
 
-    self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radioFreq, UTILS.GetModulationName(self.radioModu)))
+    self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
 
   end
 

@@ -550,8 +550,8 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
   if self.ai then
   
     -- Set default ROE and Alarmstate options.
-    self:SetOptionROE(self.roe)    
-    self:SetOptionAlarmstate(self.alarmstate)
+    self:SwitchROE(self.option.ROE)    
+    self:SwitchAlarmstate(self.option.Alarm)
     
   end
   

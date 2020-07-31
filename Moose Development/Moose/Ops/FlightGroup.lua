@@ -1392,8 +1392,8 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
   if self.ai then
 
     -- Set default ROE and ROT options.
-    self:SetOptionROE(self.roe)
-    self:SetOptionROT(self.rot)
+    self:SwitchROE(self.option.ROE)
+    self:SwitchROT(self.option.ROT)
 
     -- TODO: make this input.
     self.group:SetOption(AI.Option.Air.id.PROHIBIT_JETT, true)
@@ -1402,18 +1402,19 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)
 
     -- Turn TACAN beacon on.
-    if self.tacanChannelDefault then
-      self:SwitchTACANOn(self.tacanChannelDefault, self.tacanMorseDefault)
+    if self.tacanDefault.Channel then
+      self:SwitchTACAN(self.tacanDefault.Channel, self.tacanDefault.Morse)
     end
 
     -- Turn on the radio.
-    if self.radioFreqDefault then
-      self:SwitchRadioOn(self.radioFreqDefault, self.radioModuDefault)
+    if self.radioDefault.Freq then
+      self:SwitchRadio(self.radioDefault.Freq, self.radioDefault.Modu)
     end
     
     -- Set callsign.
-    if self.callsignNameDefault then
+    if self.callsignDefault.Name then
       self:SwitchCallsign(self.callsignNameDefault, self.callsignNumberDefault)
+    else
     end
 
     -- Update route.
@@ -2510,35 +2511,27 @@ function FLIGHTGROUP:_InitGroup()
 
   -- Radio parameters from template.
   self.radioOn=self.template.communication
-  self.radioFreq=self.template.frequency
-  self.radioModu=self.template.modulation
-
-  -- If not set by the use explicitly yet, we take the template values as defaults.
-  if not self.radioFreqDefault then
-    self.radioFreqDefault=self.radioFreq
-    self.radioModuDefault=self.radioModu
-  end
+  self.radio.Freq=self.template.frequency
+  self.radio.Modu=self.template.modulation
+  self.radioDefault.Freq=self.radio.Freq
+  self.radioDefault.Modu=self.radio.Modu
 
   -- Set default formation.
-  if not self.formationDefault then
-    if self.ishelo then
-      self.formationDefault=ENUMS.Formation.RotaryWing.EchelonLeft.D300
-    else
-      self.formationDefault=ENUMS.Formation.FixedWing.EchelonLeft.Group
-    end
+  if self.ishelo then
+    self.optionDefault.Formation=ENUMS.Formation.RotaryWing.EchelonLeft.D300
+  else
+    self.optionDefault.Formation=ENUMS.Formation.FixedWing.EchelonLeft.Group
   end
 
+  -- Is this purely AI?
   self.ai=not self:_IsHuman(self.group)
 
+  -- Create Menu.
   if not self.ai then
     self.menu=self.menu or {}
     self.menu.atc=self.menu.atc or {}
     self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC")
   end
-
-  -- Switch to default formation.
-  -- TODO: Should this be moved to onafterspawned?
-  self:SwitchFormation(self.formationDefault)
 
   -- Add elemets.
   for _,unit in pairs(self.group:GetUnits()) do
@@ -2573,7 +2566,7 @@ function FLIGHTGROUP:_InitGroup()
     text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radioFreq, UTILS.GetModulationName(self.radioModu), tostring(self.radioOn))
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radioOn))
     text=text..string.format("Ammo         = %d (G=%d/R=%d/B=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Bombs, self.ammo.Missiles)
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
@@ -2965,28 +2958,34 @@ end
 --- Add an AIR waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
 -- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
--- @param #number speed Speed in knots. Default 350 kts.
--- @param #number wpnumber Waypoint number. Default at the end.
--- @param #boolean updateroute If true or nil, call UpdateRoute. If false, no call.
+-- @param #number Speed Speed in knots. Default 350 kts.
+-- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
+-- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
-function FLIGHTGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
+function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Updateroute)
 
-  -- Waypoint number. Default is at the end.
-  wpnumber=wpnumber or #self.waypoints+1
+  -- Set waypoint index.
+  local wpnumber=#self.waypoints+1
+  if wpnumber then
+    local index=self:GetWaypointIndex(AfterWaypointWithID)
+    if index then
+      wpnumber=index+1    
+    end
+  end
 
   if wpnumber>self.currentwp then
     self.passedfinalwp=false
   end
 
   -- Speed in knots.
-  speed=speed or 350
+  Speed=Speed or 350
 
   -- Speed at waypoint.
-  local speedkmh=UTILS.KnotsToKmph(speed)
+  local speedkmh=UTILS.KnotsToKmph(Speed)
 
   -- Create air waypoint.
   local name=string.format("Added Waypoint #%d", wpnumber)
-  local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speedkmh, true, nil, {}, name)
+  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speedkmh, true, nil, {}, name)
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
@@ -2995,10 +2994,10 @@ function FLIGHTGROUP:AddWaypoint(coordinate, speed, wpnumber, updateroute)
   self:_AddWaypoint(waypoint, wpnumber)
 
   -- Debug info.
-  self:T(self.lid..string.format("Adding AIR waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, speed, self.currentwp, #self.waypoints))
+  self:T(self.lid..string.format("Adding AIR waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, Speed, self.currentwp, #self.waypoints))
 
   -- Update route.
-  if updateroute==nil or updateroute==true then
+  if Updateroute==nil or Updateroute==true then
     self:__UpdateRoute(-1)
   end
 

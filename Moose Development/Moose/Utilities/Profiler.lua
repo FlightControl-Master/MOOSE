@@ -27,7 +27,8 @@
 --
 -- # The PROFILER Concept
 -- 
--- Profile your lua code.
+-- Profile your lua code. This tells you, which functions are called very often and which consume most CPU time.
+-- With this information you could optimize the perfomance of your code.
 -- 
 -- # Prerequisites
 -- 
@@ -56,7 +57,7 @@
 -- 
 --     X:\User\<Your User Name>\Saved Games\DCS OpenBeta\Logs
 -- 
--- ## Sort By
+-- ## Sort Output
 -- 
 -- By default the output is sorted with respect to the total time a function used.
 -- 
@@ -64,7 +65,6 @@
 -- 
 --     PROFILER.sortBy=1
 -- 
--- Lua profiler.
 -- @field #PROFILER
 PROFILER = {
   ClassName      = "PROFILER",
@@ -84,6 +84,7 @@ PROFILER = {
 PROFILER.sortBy=1          -- Sort reports by 0=Count, 1=Total time by function
 PROFILER.logUnknown=false  -- Log unknown functions
 PROFILER.lowCpsThres=5     -- Skip results with less than X calls per second
+PROFILER.fileName="_LuaProfiler.txt"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start/Stop Profiler
@@ -95,9 +96,6 @@ function PROFILER.Start()
   PROFILER.startTime=timer.getTime()
   PROFILER.endTime=0
   PROFILER.runTime=0
-
-  -- Set hook.
-  debug.sethook(PROFILER.hook, "cr")
   
   -- Add event handler.
   world.addEventHandler(PROFILER.eventHandler)
@@ -110,6 +108,12 @@ function PROFILER.Start()
   
   -- Message.
   showProfilerRunning()
+  
+  -- Info in log.
+  BASE:I('############################   Profiler Started   ############################')
+
+  -- Set hook.
+  debug.sethook(PROFILER.hook, "cr")
   
 end
 
@@ -207,7 +211,6 @@ end
 function PROFILER._flog(f, txt)
   f:write(txt.."\r\n")
   env.info("Profiler Analysis")
-  env.info(txt)
 end
 
 --- Show table.
@@ -235,8 +238,10 @@ end
 function PROFILER.showInfo()
 
   -- Output file.
-  local file=lfs.writedir()..[[Logs\]].."_LuaProfiler.txt"  
+  local file=lfs.writedir()..[[Logs\]]..PROFILER.fileName  
   local f=io.open(file, 'w')
+  
+  BASE:I(string.format("### Profiler: Writing result to file ", file))
   
   -- Gather data.
   local t={}

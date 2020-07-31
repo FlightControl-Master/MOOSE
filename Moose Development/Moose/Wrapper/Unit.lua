@@ -258,8 +258,7 @@ end
 
 --- Returns if the unit is activated.
 -- @param #UNIT self
--- @return #boolean true if Unit is activated.
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return #boolean `true` if Unit is activated. `nil` The DCS Unit is not existing or alive.  
 function UNIT:IsActive()
   self:F2( self.UnitName )
 
@@ -279,9 +278,7 @@ end
 -- If the Unit is alive and active, true is returned.    
 -- If the Unit is alive but not active, false is returned.  
 -- @param #UNIT self
--- @return #boolean true if Unit is alive and active.
--- @return #boolean false if Unit is alive but not active.
--- @return #nil if the Unit is not existing or is not alive.  
+-- @return #boolean `true` if Unit is alive and active. `false` if Unit is alive but not active. `nil` if the Unit is not existing or is not alive.
 function UNIT:IsAlive()
   self:F3( self.UnitName )
 
@@ -300,7 +297,6 @@ end
 --- Returns the Unit's callsign - the localized string.
 -- @param #UNIT self
 -- @return #string The Callsign of the Unit.
--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetCallsign()
   self:F2( self.UnitName )
 
@@ -640,8 +636,7 @@ end
 
 --- Returns the unit sensors.
 -- @param #UNIT self
--- @return DCS#Unit.Sensors
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return DCS#Unit.Sensors Table of sensors.  
 function UNIT:GetSensors()
   self:F2( self.UnitName )
 
@@ -661,7 +656,6 @@ end
 --- Returns if the unit has sensors of a certain type.
 -- @param #UNIT self
 -- @return #boolean returns true if the unit has specified types of sensors. This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors. 
--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:HasSensors( ... )
   self:F2( arg )
 
@@ -678,7 +672,6 @@ end
 --- Returns if the unit is SEADable.
 -- @param #UNIT self
 -- @return #boolean returns true if the unit is SEADable. 
--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:HasSEAD()
   self:F2()
 
@@ -705,7 +698,6 @@ end
 -- @param #UNIT self
 -- @return #boolean  Indicates if at least one of the unit's radar(s) is on.
 -- @return DCS#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
--- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetRadar()
   self:F2( self.UnitName )
 
