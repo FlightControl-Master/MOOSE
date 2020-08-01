@@ -429,7 +429,7 @@ BEACON = {
 -- @field #number VOR
 -- @field #number DME
 -- @field #number VOR_DME
--- @field #number TACAN
+-- @field #number TACAN TACtical Air Navigation system.
 -- @field #number VORTAC
 -- @field #number RSBN
 -- @field #number BROADCAST_STATION
@@ -440,45 +440,74 @@ BEACON = {
 -- @field #number ILS_NEAR_HOMER
 -- @field #number ILS_LOCALIZER
 -- @field #number ILS_GLIDESLOPE
+-- @field #number PRMG_LOCALIZER
+-- @field #number PRMG_GLIDESLOPE
+-- @field #number ICLS Same as ICLS glideslope.
+-- @field #number ICLS_LOCALIZER
+-- @field #number ICLS_GLIDESLOPE
 -- @field #number NAUTICAL_HOMER
--- @field #number ICLS
 BEACON.Type={
-  NULL = 0, 
-  VOR = 1,
-  DME = 2,
-  VOR_DME = 3, 
-  TACAN = 4,
-  VORTAC = 5, 
-  RSBN = 32,
-  BROADCAST_STATION = 1024, 
-  HOMER = 8,
-  AIRPORT_HOMER = 4104, 
+  NULL                      = 0, 
+  VOR                       = 1,
+  DME                       = 2,
+  VOR_DME                   = 3, 
+  TACAN                     = 4,
+  VORTAC                    = 5, 
+  RSBN                      = 128,
+  BROADCAST_STATION         = 1024, 
+  HOMER                     = 8,
+  AIRPORT_HOMER             = 4104, 
   AIRPORT_HOMER_WITH_MARKER = 4136, 
-  ILS_FAR_HOMER = 16408,
-  ILS_NEAR_HOMER = 16456, 
-  ILS_LOCALIZER = 16640,
-  ILS_GLIDESLOPE = 16896, 
-  NAUTICAL_HOMER = 32776,
-  ICLS = 131584,
+  ILS_FAR_HOMER             = 16408,
+  ILS_NEAR_HOMER            = 16424, 
+  ILS_LOCALIZER             = 16640,
+  ILS_GLIDESLOPE            = 16896,
+  PRMG_LOCALIZER            = 33024,
+  PRMG_GLIDESLOPE           = 33280,
+  ICLS                      = 131584, --leaving this in here but it is the same as ICLS_GLIDESLOPE
+  ICLS_LOCALIZER            = 131328,
+  ICLS_GLIDESLOPE           = 131584,
+  NAUTICAL_HOMER            = 65536,
+
 }
 
 --- Beacon systems supported by DCS. https://wiki.hoggitworld.com/view/DCS_command_activateBeacon
 -- @type BEACON.System
--- @field #number PAR_10
--- @field #number RSBN_5
--- @field #number TACAN
--- @field #number TACAN_TANKER
--- @field #number ILS_LOCALIZER (This is the one to be used for AA TACAN Tanker!)
--- @field #number ILS_GLIDESLOPE
--- @field #number BROADCAST_STATION
+-- @field #number PAR_10 ?
+-- @field #number RSBN_5 Russian VOR/DME system.
+-- @field #number TACAN TACtical Air Navigation system on ground.
+-- @field #number TACAN_TANKER_X TACtical Air Navigation system for tankers on X band.
+-- @field #number TACAN_TANKER_Y TACtical Air Navigation system for tankers on Y band.
+-- @field #number VOR Very High Frequency Omni-Directional Range
+-- @field #number ILS_LOCALIZER ILS localizer
+-- @field #number ILS_GLIDESLOPE ILS glideslope.
+-- @field #number PRGM_LOCALIZER PRGM localizer.
+-- @field #number PRGM_GLIDESLOPE PRGM glideslope.
+-- @field #number BROADCAST_STATION Broadcast station.
+-- @field #number VORTAC Radio-based navigational aid for aircraft pilots consisting of a co-located VHF omnidirectional range (VOR) beacon and a tactical air navigation system (TACAN) beacon.
+-- @field #number TACAN_AA_MODE_X TACtical Air Navigation for aircraft on X band.
+-- @field #number TACAN_AA_MODE_Y TACtical Air Navigation for aircraft on Y band.
+-- @field #number VORDME Radio beacon that combines a VHF omnidirectional range (VOR) with a distance measuring equipment (DME).
+-- @field #number ICLS_LOCALIZER Carrier landing system.
+-- @field #number ICLS_GLIDESLOPE Carrier landing system.
 BEACON.System={
-  PAR_10 = 1, 
-  RSBN_5 = 2, 
-  TACAN = 3, 
-  TACAN_TANKER = 4, 
-  ILS_LOCALIZER = 5, 
-  ILS_GLIDESLOPE = 6, 
-  BROADCAST_STATION = 7,
+  PAR_10            = 1, 
+  RSBN_5            = 2, 
+  TACAN             = 3, 
+  TACAN_TANKER_X    = 4,
+  TACAN_TANKER_Y    = 5,
+  VOR               = 6, 
+  ILS_LOCALIZER     = 7, 
+  ILS_GLIDESLOPE    = 8,
+  PRMG_LOCALIZER    = 9,
+  PRMG_GLIDESLOPE   = 10,
+  BROADCAST_STATION = 11,
+  VORTAC            = 12,
+  TACAN_AA_MODE_X   = 13,
+  TACAN_AA_MODE_Y   = 14,
+  VORDME            = 15,
+  ICLS_LOCALIZER    = 16,
+  ICLS_GLIDESLOPE   = 17,
 }
 
 --- Create a new BEACON Object. This doesn't activate the beacon, though, use @{#BEACON.ActivateTACAN} etc.

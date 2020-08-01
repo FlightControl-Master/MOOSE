@@ -205,18 +205,21 @@ OPSGROUP.TaskType={
 -- @field #number Channel Channel.
 -- @field #number Morse Morse Code.
 -- @field #string Band Band "X" or "Y" for TACAN beacon.
--- @field #string UnitName Name of the unit acting as beacon.
+-- @field #string BeaconName Name of the unit acting as beacon.
+-- @field Wrapper.Unit#UNIT BeaconUnit Unit object acting as beacon.
 
 --- Radio data.
 -- @type OPSGROUP.Radio
 -- @field #number Freq Frequency
 -- @field #number Modu Modulation.
 
---- Callsign data
+--- Callsign data.
 -- @type OPSGROUP.Callsign
--- @field #number Name
--- @field #number Number1 Number 1
--- @field #number Number2 Number 2
+-- @field #number NumberS Squadron name number.
+-- @field #number NumberG Group number.
+-- @field #number NumberE Element number.
+-- @field #string NameGroup Name of the group, e.g. Uzi.
+-- @field #string NameElement Name of group element, e.g. Uzi 11.
 
 --- Option data.
 -- @type OPSGROUP.Option
@@ -249,6 +252,7 @@ OPSGROUP.TaskType={
 -- @field #string action Waypoint action (turning point, etc.). Ground groups have the formation here.
 -- @field #table task Waypoint task combo.
 -- @field #string type Waypoint type.
+-- @field #string name Waypoint description. Shown in the F10 map.
 -- @field #number x Waypoint x-coordinate.
 -- @field #number y Waypoint y-coordinate.
 -- @field #boolean detour If true, this waypoint is not part of the normal route.
@@ -653,10 +657,12 @@ end
 -- @return #OPSGROUP.Waypoint Waypoint data.
 function OPSGROUP:GetWaypointIndex(uid)
 
-  for i,_waypoint in pairs(self.waypoints) do
-    local waypoint=_waypoint --#OPSGROUP.Waypoint
-    if waypoint.uid==uid then
-      return i
+  if uid then
+    for i,_waypoint in pairs(self.waypoints) do
+      local waypoint=_waypoint --#OPSGROUP.Waypoint
+      if waypoint.uid==uid then
+        return i
+      end
     end
   end
 
@@ -694,6 +700,21 @@ end
 -- @return #number Current waypoint index.
 function OPSGROUP:GetWaypointIndexCurrent()  
   return self.currentwp or 1
+end
+
+--- Get waypoint index after waypoint with given ID. So if the waypoint has index 3 it will return 4.
+-- @param #OPSGROUP self
+-- @param #number uid Unique ID of the waypoint. Default is new waypoint index after the last current one.
+-- @return #number Index after waypoint with given ID.
+function OPSGROUP:GetWaypointIndexAfterID(uid)
+
+  local index=self:GetWaypointIndex(uid)
+  if index then
+    return index+1
+  else
+    return #self.waypoints+1
+  end    
+  
 end
 
 --- Get waypoint.
@@ -1952,7 +1973,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     local SpeedToMission=UTILS.KmphToKnots(self.speedCruise)
   
     -- Add waypoint.
-    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, false)
+    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, nil, false)
     
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
@@ -1988,20 +2009,24 @@ function OPSGROUP:RouteToMission(mission, delay)
     
     -- ROE
     if mission.optionROE then
-      self:SetOptionROE(mission.optionROE)
+      self:SwitchROE(mission.optionROE)
     end
     -- ROT
     if mission.optionROT then
-      self:SetOptionROT(mission.optionROT)
+      self:SwitchROT(mission.optionROT)
     end
     -- Radio
-    if mission.radioFreq then
-      self:SwitchRadioOn(mission.radioFreq, mission.radioModu)
+    if mission.radio then
+      self:SwitchRadio(mission.radio.Freq, mission.radio.Modu)
     end
     -- TACAN
-    if mission.tacanChannel then
-      self:SwitchTACANOn(mission.tacanChannel, mission.tacanMorse)
+    if mission.tacan then
+      self:SwitchTACAN(mission.tacan.Channel, mission.tacan.Morse, mission.tacan.BeaconName, mission.tacan.Band)
     end
+    -- ICLS
+    if mission.icls then
+      self:SwitchICLS(mission.icls.Channel, mission.icls.Morse, mission.icls.UnitName)
+    end    
     -- Formation
     if mission.optionFormation then
       self:SwitchFormation(mission.optionFormation)
@@ -2489,21 +2514,29 @@ end
 -- Waypoints & Routing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Initialize Mission Editor waypoints.
+--- Enhance waypoint table.
 -- @param #OPSGROUP self
--- @param #OPSGROUP.Waypoint waypoint DCS waypoint data table.
 -- @return #OPSGROUP.Waypoint Waypoint data.
-function OPSGROUP:_CreateWaypoint(waypoint, formation, detour)
+function OPSGROUP:_CreateWaypoint(waypoint)
   
-  waypoint.uid=self.wpcounter  
-  waypoint.coordinate=COORDINATE:New(waypoint.x, waypoint.alt, waypoint.y)
-  waypoint.detour=detour and detour or false
-  if formation then
-    waypoint.action=formation
-  end
+  -- Set uid.
+  waypoint.uid=self.wpcounter
+  
+  -- Waypoint has not been passed yet.
   waypoint.npassed=0
-  waypoint.patrol=false
+    
+  -- Coordinate.
+  waypoint.coordinate=COORDINATE:New(waypoint.x, waypoint.alt, waypoint.y)
 
+  -- Set waypoint name.
+  waypoint.name=string.format("Waypoint UID=%d", waypoint.uid)  
+    
+  -- Set types.
+  waypoint.patrol=false
+  waypoint.detour=false
+  waypoint.astar=false
+
+  -- Increase UID counter.
   self.wpcounter=self.wpcounter+1
   
   return waypoint
@@ -2613,7 +2646,7 @@ function OPSGROUP:_UpdateWaypointTasks(n)
     if i>=n or nwaypoints==1 then
     
       -- Debug info.
-      self:I(self.lid..string.format("Updating waypoint task for waypoint %d/%d ID=%d. Last waypoint passed %d", i, nwaypoints, wp.uid, self.currentwp))
+      self:T(self.lid..string.format("Updating waypoint task for waypoint %d/%d ID=%d. Last waypoint passed %d", i, nwaypoints, wp.uid, self.currentwp))
   
       -- Tasks of this waypoint
       local taskswp={}
@@ -2866,64 +2899,83 @@ end
 -- @param #OPSGROUP self
 -- @param #number Channel TACAN channel.
 -- @param #string Morse Morse code. Default "XXX".
+-- @param #string UnitName Name of the unit acting as beacon.
+-- @param #string Band TACAN mode. Default is "X" for ground and "Y" for airborne units.
 -- @return #OPSGROUP self
-function OPSGROUP:SetDefaultTACAN(Channel, Morse)
-
-  self.tacanChannelDefault=Channel
-  self.tacanMorseDefault=Morse or "XXX"
+function OPSGROUP:SetDefaultTACAN(Channel, Morse, UnitName, Band)
   
-  self.tacan.Channel=Channel
-  self.tacan.Band=Band
-  self.tacan.Morse=Morse or "XXX"
-  self.tacan.UnitName=UnitName
+  self.tacanDefault={}
+  self.tacanDefault.Channel=Channel
+  self.tacanDefault.Morse=Morse or "XXX"
+  self.tacanDefault.BeaconName=UnitName
+  self.tacanDefault.Band=Band  
 
   return self
 end
 
---- Activate TACAN beacon.
+--- Activate/switch TACAN beacon settings.
 -- @param #OPSGROUP self
 -- @param #number Channel TACAN Channel.
 -- @param #string Morse TACAN morse code.
+-- @param #string UnitName Name of the unit in the group which should activate the TACAN beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
 -- @param #string Band TACAN channel mode "X" or "Y". Default is "Y" for aircraft and "X" for ground and naval groups.
 -- @return #OPSGROUP self
-function OPSGROUP:SwitchTACAN(Channel, Morse, Band)
+function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 
   if self:IsAlive() then
 
     local unit=self.group:GetUnit(1)  --Wrapper.Unit#UNIT
+    
+    if UnitName then
+      if type(UnitName)=="number" then
+        unit=self.group:GetUnit(UnitName)
+      else
+        unit=UNIT:FindByName(UnitName)
+      end
+    end
+    
+    if not unit then
+      self:E(self.lid.."ERROR: Could not get TACAN unit. Trying first unit in the group.")
+      unit=self.group:GetUnit(1)
+    end
 
     if unit and unit:IsAlive() then
 
       local UnitID=unit:GetID()
 
-      local Type=BEACON.Type.TACAN
+      local Type=BEACON.Type.TACAN      
       local System=BEACON.System.TACAN
-      
-      --local TACANMode="Y"
+            
       if self.isAircraft then
-        Type=4
-        System=5
+        System=BEACON.System.TACAN_TANKER_Y
         Band=Band or "Y"        
       else
+        System=BEACON.System.TACAN
         Band=Band or "X"
       end
       
       -- Tacan frequency.
       local Frequency=UTILS.TACANToFrequency(Channel, Band)
 
+      -- Activate beacon.
       unit:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Band, true, Morse, true)
 
-      self.tacanBeacon=unit
-      
+      -- Update info.
+      self.tacan={}
       self.tacan.Channel=Channel
       self.tacan.Morse=Morse
       self.tacan.Band=Band
-      self.tacan.UnitName=unit:GetName()
+      self.tacan.BeaconName=unit:GetName()
+      self.tacan.BeaconUnit=unit
 
       -- TACAN is now on.
       self.tacanOn=true
 
       self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.UnitName))
+      
+    else
+    
+      self:E(self.lid.."ERROR: Cound not set TACAN! Unit is not alive.")
 
     end
 
@@ -2937,12 +2989,11 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchTACANOff()
 
-  if self.tacanBeacon and self.tacanBeacon:IsAlive() then
-    self.tacanBeacon:CommandDeactivateBeacon()
+  if self.tacan.BeaconUnit and self.tacan.BeaconUnit:IsAlive() then
+    self.tacan.BeaconUnit:CommandDeactivateBeacon()
   end
 
   self:I(self.lid..string.format("Switching TACAN OFF"))
-
   self.tacanOn=false
 
 end
@@ -3059,8 +3110,8 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
 
-  self.callsignNameDefault=CallsignName
-  self.callsignNumberDefault=CallsignNumber or 1
+  self.callsignDefault.Name=CallsignName
+  self.callsignDefault.NumberG=CallsignNumber or 1
 
   return self
 end

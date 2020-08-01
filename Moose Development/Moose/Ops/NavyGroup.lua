@@ -990,19 +990,13 @@ end
 -- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
 -- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
 -- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Depth Depth at waypoint in meters.
+-- @param #number Depth Depth at waypoint in meters. Only for submarines.
 -- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
-function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Updateroute)
+function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Updateroute)
   
   -- Set waypoint index.
-  local wpnumber=#self.waypoints+1
-  if wpnumber then
-    local index=self:GetWaypointIndex(AfterWaypointWithID)
-    if index then
-      wpnumber=index+1    
-    end
-  end
+  local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
 
   -- Check if final waypoint is still passed.  
   if wpnumber>self.currentwp then
@@ -1012,11 +1006,8 @@ function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Updaterou
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
 
-  -- Speed at waypoint.
-  local speedkmh=UTILS.KnotsToKmph(Speed)
-
   -- Create a Naval waypoint.
-  local wp=Coordinate:WaypointNaval(speedkmh)
+  local wp=Coordinate:WaypointNaval(UTILS.KnotsToKmph(Speed), Depth)
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)

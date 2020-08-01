@@ -269,7 +269,6 @@ function FLIGHTGROUP:New(group)
   self:AddTransition("*",             "ElementLanded",    "*")           -- An element landed.
   self:AddTransition("*",             "ElementArrived",   "*")           -- An element arrived.
 
-
   self:AddTransition("*",             "ElementOutOfAmmo", "*")           -- An element is completely out of ammo.
 
 
@@ -1395,27 +1394,27 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     self:SwitchROE(self.option.ROE)
     self:SwitchROT(self.option.ROT)
 
+    -- Turn TACAN beacon on.
+    if self.tacanDefault then
+      self:SwitchTACAN(self.tacanDefault.Channel, self.tacanDefault.Morse)
+    end
+
+    -- Turn on the radio.
+    if self.radioDefault then
+      self:SwitchRadio(self.radioDefault.Freq, self.radioDefault.Modu)
+    end
+    
+    -- Set callsign.
+    if self.callsignDefault then
+      self:SwitchCallsign(self.callsignDefault.Name, self.callsignNumberDefault)
+    end
+    
     -- TODO: make this input.
     self.group:SetOption(AI.Option.Air.id.PROHIBIT_JETT, true)
     self.group:SetOption(AI.Option.Air.id.PROHIBIT_AB, true)   -- Does not seem to work. AI still used the after burner.
     self.group:SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
     --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)
-
-    -- Turn TACAN beacon on.
-    if self.tacanDefault.Channel then
-      self:SwitchTACAN(self.tacanDefault.Channel, self.tacanDefault.Morse)
-    end
-
-    -- Turn on the radio.
-    if self.radioDefault.Freq then
-      self:SwitchRadio(self.radioDefault.Freq, self.radioDefault.Modu)
-    end
     
-    -- Set callsign.
-    if self.callsignDefault.Name then
-      self:SwitchCallsign(self.callsignNameDefault, self.callsignNumberDefault)
-    else
-    end
 
     -- Update route.
     self:__UpdateRoute(-0.5)
@@ -2957,21 +2956,16 @@ end
 
 --- Add an AIR waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
--- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
+-- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
 -- @param #number Speed Speed in knots. Default 350 kts.
 -- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
+-- @param #number Altitude Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
 -- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
-function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Updateroute)
+function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitude, Updateroute)
 
   -- Set waypoint index.
-  local wpnumber=#self.waypoints+1
-  if wpnumber then
-    local index=self:GetWaypointIndex(AfterWaypointWithID)
-    if index then
-      wpnumber=index+1    
-    end
-  end
+  local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
 
   if wpnumber>self.currentwp then
     self.passedfinalwp=false
@@ -2980,15 +2974,16 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Updater
   -- Speed in knots.
   Speed=Speed or 350
 
-  -- Speed at waypoint.
-  local speedkmh=UTILS.KnotsToKmph(Speed)
-
   -- Create air waypoint.
-  local name=string.format("Added Waypoint #%d", wpnumber)
-  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speedkmh, true, nil, {}, name)
+  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
+  
+  -- Set altitude.
+  if Altitude then
+    waypoint.alt=UTILS.FeetToMeters(Altitude)
+  end
 
   -- Add waypoint to table.
   self:_AddWaypoint(waypoint, wpnumber)

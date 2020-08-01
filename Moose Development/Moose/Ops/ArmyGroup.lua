@@ -681,13 +681,7 @@ end
 function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation, Updateroute)
 
   -- Set waypoint index.
-  local wpnumber=#self.waypoints+1
-  if wpnumber then
-    local index=self:GetWaypointIndex(AfterWaypointWithID)
-    if index then
-      wpnumber=index+1    
-    end
-  end
+  local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
 
   -- Check if final waypoint is still passed.  
   if wpnumber>self.currentwp then
@@ -697,21 +691,17 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
 
-  -- Speed at waypoint.
-  local speedkmh=UTILS.KnotsToKmph(Speed)
-
   -- Create a Naval waypoint.
-  local wp=Coordinate:WaypointGround(speedkmh, Formation)
+  local wp=Coordinate:WaypointGround(UTILS.KnotsToKmph(Speed), Formation)
   
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
-
+  
   -- Add waypoint to table.
   self:_AddWaypoint(waypoint, wpnumber)
   
   -- Debug info.
   self:T(self.lid..string.format("Adding GROUND waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, Speed, self.currentwp, #self.waypoints))
-  
   
   -- Update route.
   if Updateroute==nil or Updateroute==true then

@@ -34,7 +34,7 @@
 -- @field #number duration Mission duration in seconds.
 -- @field Wrapper.Marker#MARKER marker F10 map marker.
 -- @field #boolean markerOn If true, display marker on F10 map with the AUFTRAG status.
--- @field #numberr markerCoaliton Coalition to which the marker is dispayed.
+-- @field #number markerCoaliton Coalition to which the marker is dispayed.
 -- @field #table DCStask DCS task structure.
 -- @field #number Ntargets Number of mission targets.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
@@ -93,13 +93,17 @@
 -- 
 -- @field #table enrouteTasks Mission enroute tasks.
 -- 
+-- @field #number missionRepeated Number of times mission was repeated.
+-- @field #number missionRepeatMax Number of times mission is repeated if failed.
+-- 
 -- @field #number radioFreq Mission radio frequency in MHz.
 -- @field #number radioModu Mission radio modulation (0=AM and 1=FM).
 -- @field #number tacanChannel Mission TACAN channel.
 -- @field #number tacanMorse Mission TACAN morse code.
 -- 
--- @field #number missionRepeated Number of times mission was repeated.
--- @field #number missionRepeatMax Number of times mission is repeated if failed.
+-- @field Ops.OpsGroup#OPSGROUP.Radio radio Radio freq and modulation.
+-- @field Ops.OpsGroup#OPSGROUP.Beacon tacan TACAN setting.
+-- @field Ops.OpsGroup#OPSGROUP.Beacon icls ICLS setting.
 -- 
 -- @field #number optionROE ROE.
 -- @field #number optionROT ROT.
@@ -859,7 +863,7 @@ function AUFTRAG:NewBAI(Target, Altitude)
   -- DCS Task options:
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
-  mission.engageAltitude=Altitude or UTILS.FeetToMeters(2000)
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 2000)
   
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
@@ -887,7 +891,7 @@ function AUFTRAG:NewSEAD(Target, Altitude)
   -- DCS Task options:
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG  --ENUMS.WeaponFlag.Cannons
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
-  mission.engageAltitude=Altitude or UTILS.FeetToMeters(2000)
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 2000)
   
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.SEAD
@@ -1318,7 +1322,7 @@ end
 
 --- Set weapon type used for the engagement.
 -- @param #AUFTRAG self
--- @param #number WeaponType Weapon type. Default is ENUMS.WeaponFlag.Auto
+-- @param #number WeaponType Weapon type. Default is `ENUMS.WeaponFlag.Auto`.
 -- @return #AUFTRAG self
 function AUFTRAG:SetWeaponType(WeaponType)
   
@@ -1434,9 +1438,10 @@ end
 -- @param #number Modulation Radio modulation. Default 0=AM.
 -- @return #AUFTRAG self
 function AUFTRAG:SetRadio(Frequency, Modulation)
-  
-  self.radioFreq=Frequency
-  self.radioModu=Modulation or 0
+    
+  self.radio={}
+  self.radio.Freq=Frequency
+  self.radio.Modu=Modulation
   
   return self
 end
@@ -1445,11 +1450,32 @@ end
 -- @param #AUFTRAG self
 -- @param #number Channel TACAN channel.
 -- @param #string Morse Morse code. Default "XXX".
+-- @param #string UnitName Name of the unit in the group for which acts as TACAN beacon. Default is the first unit in the group.
+-- @param #string Band Tacan channel mode ("X" or "Y"). Default is "X" for ground/naval and "Y" for aircraft.
 -- @return #AUFTRAG self
-function AUFTRAG:SetTACAN(Channel, Morse)
+function AUFTRAG:SetTACAN(Channel, Morse, UnitName, Band)
   
-  self.tacanChannel=Channel
-  self.tacanMorse=Morse or "XXX"
+  self.tacan={}  
+  self.tacan.Channel=Channel
+  self.tacan.Morse=Morse or "XXX"
+  self.tacan.UnitName=UnitName
+  self.tacan.Band=Band
+  
+  return self
+end
+
+--- Set ICLS beacon channel and Morse code for this mission.
+-- @param #AUFTRAG self
+-- @param #number Channel ICLS channel.
+-- @param #string Morse Morse code. Default "XXX".
+-- @param #string UnitName Name of the unit in the group for which acts as ICLS beacon. Default is the first unit in the group.
+-- @return #AUFTRAG self
+function AUFTRAG:SetICLS(Channel, Morse, UnitName)
+  
+  self.icls={}  
+  self.icls.Channel=Channel
+  self.icls.Morse=Morse or "XXX"
+  self.icls.UnitName=UnitName
   
   return self
 end
