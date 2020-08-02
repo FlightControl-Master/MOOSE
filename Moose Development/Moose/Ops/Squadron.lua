@@ -422,6 +422,7 @@ function SQUADRON:GetCallsign(Asset)
     for i=1,Asset.nunits do
     
       local callsign={}
+      
       callsign[1]=self.callsignName
       callsign[2]=math.floor(self.callsigncounter / 10)
       callsign[3]=self.callsigncounter % 10

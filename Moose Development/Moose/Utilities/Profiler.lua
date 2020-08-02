@@ -91,39 +91,51 @@ PROFILER.fileName="_LuaProfiler.txt"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start profiler.
-function PROFILER.Start()
+-- @param #number Delay Delay in seconds before profiler is stated. Default is immediately.
+-- @param #number Duration Duration in (game) seconds before the profiler is stopped. Default is when mission ends.
+function PROFILER.Start(Delay, Duration)
 
-  PROFILER.startTime=timer.getTime()
-  PROFILER.endTime=0
-  PROFILER.runTime=0
+  if Delay and Delay>0 then
+    BASE:ScheduleOnce(Delay, PROFILER.Start, 0, Duration)
+  else
+
+    PROFILER.startTime=timer.getTime()
+    PROFILER.endTime=0
+    PROFILER.runTime=0
+    
+    -- Add event handler.
+    world.addEventHandler(PROFILER.eventHandler)
+    
+    -- Message to screen.
+    local function showProfilerRunning()
+      timer.scheduleFunction(showProfilerRunning, nil, timer.getTime()+600)
+      trigger.action.outText("### Profiler running ###", 600)
+    end
+    
+    -- Message.
+    showProfilerRunning()
+    
+    -- Info in log.
+    BASE:I('############################   Profiler Started   ############################')
   
-  -- Add event handler.
-  world.addEventHandler(PROFILER.eventHandler)
-  
-  -- Message to screen.
-  local function showProfilerRunning()
-    timer.scheduleFunction(showProfilerRunning, nil, timer.getTime()+600)
-    trigger.action.outText("### Profiler running ###", 600)
+    -- Set hook.
+    debug.sethook(PROFILER.hook, "cr")
+    
+    if Duration then
+      PROFILER.Stop(Duration)
+    end
+    
   end
-  
-  -- Message.
-  showProfilerRunning()
-  
-  -- Info in log.
-  BASE:I('############################   Profiler Started   ############################')
-
-  -- Set hook.
-  debug.sethook(PROFILER.hook, "cr")
   
 end
 
 --- Stop profiler.
--- @param #number delay Delay before stop in seconds.
-function PROFILER.Stop(delay)
+-- @param #number Delay Delay before stop in seconds.
+function PROFILER.Stop(Delay)
 
-  if delay and delay>0 then
+  if Delay and Delay>0 then
     
-    BASE:ScheduleOnce(delay, PROFILER.Stop)
+    BASE:ScheduleOnce(Delay, PROFILER.Stop)
   
   else
 
@@ -210,7 +222,6 @@ end
 -- @param #string txt The text.
 function PROFILER._flog(f, txt)
   f:write(txt.."\r\n")
-  env.info("Profiler Analysis")
 end
 
 --- Show table.

@@ -14,6 +14,7 @@
 --- ARMYGROUP class.
 -- @type ARMYGROUP
 -- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
+-- @field #boolean formationPerma Formation that is used permanently and overrules waypoint formations.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B. Sledge
@@ -29,6 +30,7 @@
 -- @field #ARMYGROUP
 ARMYGROUP = {
   ClassName       = "ARMYGROUP",
+  formationPerma  = nil,
 }
 
 --- Navy group element.
@@ -235,8 +237,8 @@ function ARMYGROUP:onafterStatus(From, Event, To)
     local nMissions=self:CountRemainingMissison()
   
     -- Info text.
-    local text=string.format("State %s: Wp=%d/%d-->%d Speed=%.1f (%d) Heading=%03d ROE=%d Alarm=%d Formation=%s Tasks=%d Missions=%d", 
-    fsmstate, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), speed, UTILS.MpsToKnots(self.speed), hdg, self.roe, self.alarmstate, self.formation, nTaskTot, nMissions)
+    local text=string.format("%s: Wp=%d/%d-->%d Speed=%.1f (%d) Heading=%03d ROE=%d Alarm=%d Formation=%s Tasks=%d Missions=%d", 
+    fsmstate, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), speed, UTILS.MpsToKnots(self.speed), hdg, self.option.ROE, self.option.Alarm, self.option.Formation, nTaskTot, nMissions)
     self:I(self.lid..text)
     
   else
@@ -397,13 +399,13 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
     
       if Speed then
         wp.speed=UTILS.KnotsToMps(Speed)
-      elseif self.speedCruise then
-        wp.speed=UTILS.KmphToMps(self.speedCruise)
       else
         -- Take default waypoint speed.
       end
       
-      if Formation then
+      if self.formationPerma then
+        wp.action=self.formationPerma
+      elseif Formation then 
         wp.action=Formation
       end
       
@@ -419,8 +421,8 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
       -- Later Waypoint(s)
       ---
     
-      if self.speedCruise then
-        wp.speed=UTILS.KmphToMps(self.speedCruise)
+      if self.formationPerma then
+        wp.action=self.formationPerma
       else
         -- Take default waypoint speed.
       end
@@ -454,8 +456,9 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
     -- No waypoints left
     ---
   
-    self:I(self.lid..string.format("No waypoints left"))
-    
+    self:E(self.lid..string.format("WARNING: No waypoints left ==> Full Stop!"))    
+    self:FullStop()
+        
   end
 
 end
@@ -742,8 +745,11 @@ function ARMYGROUP:_InitGroup()
   -- Max speed in km/h.
   self.speedmax=self.group:GetSpeedMax()
   
+  -- Cruise speed in km/h
+  self.speedCruise=self.speedmax*0.7
+  
   -- Group ammo.
-  --self.ammo=self:GetAmmoTot()
+  self.ammo=self:GetAmmoTot()
   
   self.traveldist=0
   self.traveltime=timer.getAbsTime()
@@ -752,20 +758,15 @@ function ARMYGROUP:_InitGroup()
   -- Radio parameters from template.
   self.radioOn=false  -- Radio is always OFF for ground.
   
-  -- If not set by the use explicitly yet, we take the template values as defaults.
-  if not self.radioFreqDefault then
-    self.radioFreqDefault=self.radioFreq
-    self.radioModuDefault=self.radioModu
-  end
+  -- We set some values.
+  self.radioDefault.Freq=133
+  self.radioDefault.Modu=radio.modulation.AM
+  self.radio.Freq=133
+  self.radio.Modu=radio.modulation.AM
   
-  -- Set default formation.
-  if not self.formationDefault then
-    if self.ishelo then
-      self.formationDefault=ENUMS.Formation.RotaryWing.EchelonLeft.D300
-    else
-      self.formationDefault=ENUMS.Formation.FixedWing.EchelonLeft.Group
-    end
-  end
+  -- Set default formation from first waypoint.
+  self.option.Formation=self:GetWaypoint(1).action
+  self.optionDefault.Formation=self.option.Formation
   
   -- Units of the group.
   local units=self.group:GetUnits()
@@ -801,11 +802,11 @@ function ARMYGROUP:_InitGroup()
     local text=string.format("Initialized Navy Group %s:\n", self.groupname)
     text=text..string.format("AC type      = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
-    --text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
+    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    --text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radioFreq, UTILS.GetModulationName(self.radioModu), tostring(self.radioOn))
-    --text=text..string.format("Ammo         = %d (G=%d/R=%d/B=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Bombs, self.ammo.Missiles)
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radioOn))
+    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles)
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
     text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
@@ -823,17 +824,40 @@ end
 -- Option Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Switch to a specific formation.
+-- @param #ARMYGROUP self
+-- @param #number Formation New formation the group will fly in. Default is the setting of `SetDefaultFormation()`.
+-- @param #boolean Permanently If true, formation always used from now on.
+-- @return #ARMYGROUP self
+function ARMYGROUP:SwitchFormation(Formation, Permanently)
+
+  if self:IsAlive() then
+  
+    Formation=Formation or self.optionDefault.Formation
+
+    if Permanently then
+      self.formationPerma=Formation
+    else
+      self.formationPerma=nil
+    end    
+    
+    -- Set current formation.
+    self.option.Formation=Formation
+    
+    self:__UpdateRoute(-1, nil, nil, Formation)
+    
+    -- Debug info.
+    self:I(self.lid..string.format("Switching formation to %s (permanently=%s)", self.option.Formation, tostring(Permanently)))
+
+  end
+
+  return self
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Get default cruise speed.
--- @param #ARMYGROUP self
--- @return #number Cruise speed (>0) in knots.
-function ARMYGROUP:GetSpeedCruise()
-  return UTILS.KmphToKnots(self.speedCruise or self.speedmax*0.7)
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

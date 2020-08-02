@@ -175,18 +175,6 @@ function NAVYGROUP:SetPatrolAdInfinitum(switch)
   return self
 end
 
---- Set default cruise speed. This is the speed a group will take by default if no speed is specified explicitly.
--- @param #NAVYGROUP self
--- @param #number Speed Speed in knots. Default 70% of max speed.
--- @return #NAVYGROUP self
-function NAVYGROUP:SetSpeedCruise(Speed)
-  
-  self.speedCruise=Speed and UTILS.KnotsToKmph(Speed) or self.speedmax*0.7
-
-  return self
-end
-
-
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
@@ -1065,7 +1053,7 @@ function NAVYGROUP:_InitGroup()
   self.speedCruise=self.speedmax*0.7
   
   -- Group ammo.
-  --self.ammo=self:GetAmmoTot()
+  self.ammo=self:GetAmmoTot()
   
   self.traveldist=0
   self.traveltime=timer.getAbsTime()
@@ -1073,23 +1061,14 @@ function NAVYGROUP:_InitGroup()
   
   -- Radio parameters from template.
   self.radioOn=true  -- Radio is always on for ships.
-  self.radioFreq=tonumber(self.template.units[1].frequency)/1000000
-  self.radioModu=tonumber(self.template.units[1].modulation)/1000000
+  self.radio.Freq=tonumber(self.template.units[1].frequency)/1000000
+  self.radio.Modu=tonumber(self.template.units[1].modulation)
+  self.radioDefault.Freq=self.radio.Freq
+  self.radioDefault.Modu=self.radio.Modu
   
-  -- If not set by the use explicitly yet, we take the template values as defaults.
-  if not self.radioFreqDefault then
-    self.radioFreqDefault=self.radioFreq
-    self.radioModuDefault=self.radioModu
-  end
-  
-  -- Set default formation.
-  if not self.formationDefault then
-    if self.ishelo then
-      self.formationDefault=ENUMS.Formation.RotaryWing.EchelonLeft.D300
-    else
-      self.formationDefault=ENUMS.Formation.FixedWing.EchelonLeft.Group
-    end
-  end
+  -- Set default formation. No really applicable for ships.
+  self.optionDefault.Formation="Off Road"
+  self.option.Formation=self.optionDefault.Formation
   
   -- Get all units of the group.
   local units=self.group:GetUnits()
@@ -1125,11 +1104,11 @@ function NAVYGROUP:_InitGroup()
     local text=string.format("Initialized Navy Group %s:\n", self.groupname)
     text=text..string.format("AC type      = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
-    --text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
+    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radioFreq, UTILS.GetModulationName(self.radioModu), tostring(self.radioOn))
-    --text=text..string.format("Ammo         = %d (G=%d/R=%d/B=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Bombs, self.ammo.Missiles)
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radioOn))
+    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d/T=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles, self.ammo.Torpedos)
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
     text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))

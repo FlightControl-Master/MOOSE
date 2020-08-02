@@ -26,7 +26,7 @@
 -- @field #number ceiling Max altitude the aircraft can fly at in meters.
 -- @field #number tankertype The refueling system type (0=boom, 1=probe), if the group is a tanker.
 -- @field #number refueltype The refueling system type (0=boom, 1=probe), if the group can refuel from a tanker.
--- @field #FLIGHTGROUP.Ammo ammo Ammunition data. Number of Guns, Rockets, Bombs, Missiles.
+-- @field Ops.OpsGroup#OPSGROUP.Ammo ammo Ammunition data. Number of Guns, Rockets, Bombs, Missiles.
 -- @field #boolean ai If true, flight is purely AI. If false, flight contains at least one human player.
 -- @field #boolean fuellow Fuel low switch.
 -- @field #number fuellowthresh Low fuel threshold in percent.
@@ -1395,18 +1395,18 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     self:SwitchROT(self.option.ROT)
 
     -- Turn TACAN beacon on.
-    if self.tacanDefault then
+    if self.tacanDefault and self.tacanDefault.Channel then
       self:SwitchTACAN(self.tacanDefault.Channel, self.tacanDefault.Morse)
     end
 
     -- Turn on the radio.
-    if self.radioDefault then
+    if self.radioDefault and self.radioDefault.Freq then
       self:SwitchRadio(self.radioDefault.Freq, self.radioDefault.Modu)
     end
     
     -- Set callsign.
-    if self.callsignDefault then
-      self:SwitchCallsign(self.callsignDefault.Name, self.callsignNumberDefault)
+    if self.callsignDefault and self.callsignDefault.NameSquad then
+      --self:SwitchCallsign(self.callsignDefault.Name, self.callsignNumberDefault)
     end
     
     -- TODO: make this input.

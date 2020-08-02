@@ -215,10 +215,10 @@ OPSGROUP.TaskType={
 
 --- Callsign data.
 -- @type OPSGROUP.Callsign
--- @field #number NumberS Squadron name number.
--- @field #number NumberG Group number.
--- @field #number NumberE Element number.
--- @field #string NameGroup Name of the group, e.g. Uzi.
+-- @field #number NumberSquad Squadron number corresponding to a name like "Uzi".
+-- @field #number NumberGroup Group number. First number after name, e.g. "Uzi-**1**-1".
+-- @field #number NumberElement Element number.Second number after name, e.g. "Uzi-1-**1**"
+-- @field #string NameSquad Name of the squad, e.g. "Uzi".
 -- @field #string NameElement Name of group element, e.g. Uzi 11.
 
 --- Option data.
@@ -399,6 +399,24 @@ function OPSGROUP:GetLifePoints()
   if self.group then
     return self.group:GetLife(), self.group:GetLife0()
   end
+end
+
+--- Set default cruise speed..
+-- @param #OPSGROUP self
+-- @param #number Speed Speed in knots.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultSpeed(Speed)
+  if Speed then
+    self.speedCruise=UTILS.KnotsToKmph(Speed)
+  end
+  return self
+end
+
+--- Get default cruise speed.
+-- @param #OPSGROUP self
+-- @return #number Cruise speed (>0) in knots.
+function OPSGROUP:GetSpeedCruise()
+  return UTILS.KmphToKnots(self.speedCruise or self.speedmax*0.7)
 end
 
 --- Set detection on or off.
@@ -2922,7 +2940,7 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 
-  if self:IsAlive() then
+  if self:IsAlive() and Channel then
 
     local unit=self.group:GetUnit(1)  --Wrapper.Unit#UNIT
     
@@ -2971,7 +2989,7 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
       -- TACAN is now on.
       self.tacanOn=true
 
-      self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.UnitName))
+      self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
       
     else
     
@@ -2987,7 +3005,7 @@ end
 --- Deactivate TACAN beacon.
 -- @param #OPSGROUP self
 -- @return #OPSGROUP self
-function OPSGROUP:SwitchTACANOff()
+function OPSGROUP:TurnOffTACAN()
 
   if self.tacan.BeaconUnit and self.tacan.BeaconUnit:IsAlive() then
     self.tacan.BeaconUnit:CommandDeactivateBeacon()
@@ -3028,7 +3046,7 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
 
   if self:IsAlive() and Frequency then
 
-    Modulation=Modulation or radio.Modulation.AM
+    Modulation=Modulation or (self.radioDefault.Modu or radio.Modulation.AM)
 
     local group=self.group --Wrapper.Group#GROUP
 
@@ -3054,19 +3072,25 @@ end
 --- Turn radio off.
 -- @param #OPSGROUP self
 -- @return #OPSGROUP self
-function OPSGROUP:TurnRadioOff()
+function OPSGROUP:TurnOffRadio()
 
   if self:IsAlive() then
 
-    self.group:SetOption(AI.Option.Air.id.SILENCE, true)
-
-    --self.radioFreq=nil
-    --self.radioModu=nil
+    if self.isAircraft then
     
-    -- Radio is off.
-    self.radioOn=false
-
-    self:I(self.lid..string.format("Switching radio OFF"))
+      -- Set group to be silient.
+      self.group:SetOption(AI.Option.Air.id.SILENCE, true)
+  
+      --self.radio.Freq=nil
+      --self.radio.Modu=nil
+      
+      -- Radio is off.
+      self.radioOn=false
+  
+      self:I(self.lid..string.format("Switching radio OFF"))
+    else
+      self:E(self.lid.."ERROR radio can only be turned off for aircraft!")
+    end
 
   end
 
@@ -3078,24 +3102,39 @@ end
 -- @param #number Formation The formation the groups flies in.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultFormation(Formation)
-
-  self.formationDefault=Formation
+  
+  self.optionDefault.Formation=Formation
 
   return self
 end
 
 --- Switch to a specific formation.
 -- @param #OPSGROUP self
--- @param #number Formation New formation the group will fly in.
+-- @param #number Formation New formation the group will fly in. Default is the setting of `SetDefaultFormation()`.
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchFormation(Formation)
 
-  if self:IsAlive() and Formation then
-
-    self.group:SetOption(AI.Option.Air.id.FORMATION, Formation)
+  if self:IsAlive() then
+  
+    Formation=Formation or self.optionDefault.Formation
     
-    self.formation=Formation
+    if self.isAircraft then
 
+      self.group:SetOption(AI.Option.Air.id.FORMATION, Formation)
+              
+    elseif self.isGround then
+    
+      -- TODO: here we need to update the route.
+      
+    else
+      self:E(self.lid.."ERROR: Formation can only be set for aircraft or ground units!")
+      return self
+    end
+    
+    -- Set current formation.
+    self.option.Formation=Formation
+    
+    -- Debug info.
     self:I(self.lid..string.format("Switching formation to %d", self.formation))
 
   end
@@ -3110,8 +3149,8 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
 
-  self.callsignDefault.Name=CallsignName
-  self.callsignDefault.NumberG=CallsignNumber or 1
+  self.callsignDefault.NumberSquad=CallsignName
+  self.callsignDefault.NumberGroup=CallsignNumber or 1
 
   return self
 end
@@ -3123,16 +3162,16 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
 
-  if self:IsAlive() and CallsignName then
+  if self:IsAlive() then
 
-    self.callsignName=CallsignName
-    self.callsignNumber=CallsignNumber or 1
+    self.callsign.NumberSquad=CallsignName or self.callsignDefault.NumberSquad
+    self.callsign.NumberGroup=CallsignNumber or self.callsignDefault.NumberGroup
 
-    self:I(self.lid..string.format("Switching callsign to %d-%d", self.callsignName, self.callsignNumber))
+    self:I(self.lid..string.format("Switching callsign to %d-%d", self.callsign.NumberSquad, self.callsign.NumberGroup))
     
     local group=self.group --Wrapper.Group#GROUP
     
-    group:CommandSetCallsign(self.callsignName, self.callsignNumber)
+    group:CommandSetCallsign(self.callsign.NumberSquad, self.callsign.NumberGroup)
 
   end
 
@@ -3473,11 +3512,14 @@ function OPSGROUP:GetAmmoTot()
   Ammo.Guns=0
   Ammo.Rockets=0
   Ammo.Bombs=0
+  Ammo.Torpedos=0
   Ammo.Missiles=0
   Ammo.MissilesAA=0
   Ammo.MissilesAG=0
   Ammo.MissilesAS=0
-  
+  Ammo.MissilesCR=0
+  Ammo.MissilesSA=0
+    
   for _,_unit in pairs(units) do
     local unit=_unit --Wrapper.Unit#UNIT
     
@@ -3491,10 +3533,13 @@ function OPSGROUP:GetAmmoTot()
       Ammo.Guns=Ammo.Guns+ammo.Guns
       Ammo.Rockets=Ammo.Rockets+ammo.Rockets
       Ammo.Bombs=Ammo.Bombs+ammo.Bombs
+      Ammo.Torpedos=Ammo.Torpedos+ammo.Torpedos
       Ammo.Missiles=Ammo.Missiles+ammo.Missiles
       Ammo.MissilesAA=Ammo.MissilesAA+ammo.MissilesAA
       Ammo.MissilesAG=Ammo.MissilesAG+ammo.MissilesAG
       Ammo.MissilesAS=Ammo.MissilesAS+ammo.MissilesAS
+      Ammo.MissilesCR=Ammo.MissilesCR+ammo.MissilesCR
+      Ammo.MissilesSA=Ammo.MissilesSA+ammo.MissilesSA
     
     end
     
