@@ -475,7 +475,7 @@ end
 -- @return #boolean If true, two nodes have LoS.
 function ASTAR.LoS(nodeA, nodeB, corridor)
 
-  local offset=0.1
+  local offset=1
   
   local dx=corridor and corridor/2 or nil
   local dy=dx

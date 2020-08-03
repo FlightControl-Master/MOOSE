@@ -124,12 +124,9 @@ OPSGROUP = {
   option             =    {},
   optionDefault      =    {},
   tacan              =    {},
-  tacanDefault       =    {},
   icls               =    {},
-  iclsDefault        =    {},
   callsign           =    {},
   callsignDefault    =    {},
-  
 }
 
 --- Status of group element.
@@ -259,6 +256,7 @@ OPSGROUP.TaskType={
 -- @field #boolean intowind If true, this waypoint is a turn into wind route point.
 -- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
 -- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
+-- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
 
 --- NavyGroup version.
 -- @field #string version
@@ -352,6 +350,7 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "MissionDone",      "*")           -- Mission is over.
 
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
+  self:AddTransition("*",             "ElementDestroyed", "*")           -- An element was destroyed.
   self:AddTransition("*",             "ElementDead",      "*")           -- An element is dead.
 
   ------------------------
@@ -636,6 +635,67 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Waypoint Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get the waypoints.
+-- @param #OPSGROUP self
+-- @return #table Table of all waypoints.
+function OPSGROUP:GetWaypoints()
+  return self.waypoints
+end
+
+--- Mark waypoints on F10 map.
+-- @param #OPSGROUP self
+-- @param #number Duration Duration in seconds how long the waypoints are displayed before they are automatically removed. Default is that they are never removed.
+-- @return #OPSGROUP self
+function OPSGROUP:MarkWaypoints(Duration)
+
+  for i,_waypoint in pairs(self.waypoints or {}) do
+    local waypoint=_waypoint --#OPSGROUP.Waypoint
+    
+    local text=string.format("Waypoint ID=%d of %s", waypoint.uid, self.groupname)
+    text=text..string.format("\nSpeed=%.1f kts, Alt=%d ft (%s)", UTILS.MpsToKnots(waypoint.speed), UTILS.MetersToFeet(waypoint.alt), "BARO")
+    
+    if waypoint.marker then
+      if waypoint.marker.text~=text then
+        waypoint.marker.text=text
+      end
+      
+    else
+      waypoint.marker=MARKER:New(waypoint.coordinate, text):ToCoalition(self:GetCoalition())
+    end
+  end
+  
+  
+  if Duration then
+    self:RemoveWaypointMarkers(Duration)
+  end
+
+  return self
+end
+
+--- Remove waypoints markers on the F10 map.
+-- @param #OPSGROUP self
+-- @param #number Delay Delay in seconds before the markers are removed. Default is immediately.
+-- @return #OPSGROUP self
+function OPSGROUP:RemoveWaypointMarkers(Delay)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.RemoveWaypointMarkers, self)
+  else
+
+    for i,_waypoint in pairs(self.waypoints or {}) do
+      local waypoint=_waypoint --#OPSGROUP.Waypoint
+      
+      if waypoint.marker then
+        waypoint.marker:Remove()
+      end
+    end
+    
+  end
+  
+  return self
+end
+
 
 --- Get the waypoint from its unique ID.
 -- @param #OPSGROUP self
@@ -923,6 +983,12 @@ function OPSGROUP:RemoveWaypoint(wpindex)
   
     -- Number of waypoints before delete.
     local N=#self.waypoints
+    
+    -- Remove waypoint marker.
+    local wp=self:GetWaypoint(wpindex)
+    if wp and wp.marker then
+      wp.marker:Remove()
+    end
 
     -- Remove waypoint.
     table.remove(self.waypoints, wpindex)
@@ -1494,7 +1560,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
       if Task.dcstask.id=="Formation" then
         Task.formation:Stop()
         self:TaskDone(Task)
-      elseif stopflag==1 then
+      elseif stopflag==1 or not self:IsAlive() then
         -- Manual call TaskDone if setting flag to one was not successful.
         self:TaskDone(Task)
       end
@@ -1595,6 +1661,9 @@ function OPSGROUP:AddMission(Mission)
   
   -- Set mission status to SCHEDULED.
   Mission:Scheduled()
+  
+  -- Add elements.
+  Mission.Nelements=Mission.Nelements+#self.elements
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -2934,7 +3003,7 @@ end
 --- Activate/switch TACAN beacon settings.
 -- @param #OPSGROUP self
 -- @param #number Channel TACAN Channel.
--- @param #string Morse TACAN morse code.
+-- @param #string Morse TACAN morse code. Default is the value set in @{#OPSGROUP.SetDefaultTACAN} or if not set "XXX".
 -- @param #string UnitName Name of the unit in the group which should activate the TACAN beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
 -- @param #string Band TACAN channel mode "X" or "Y". Default is "Y" for aircraft and "X" for ground and naval groups.
 -- @return #OPSGROUP self
@@ -2955,6 +3024,10 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
     if not unit then
       self:E(self.lid.."ERROR: Could not get TACAN unit. Trying first unit in the group.")
       unit=self.group:GetUnit(1)
+    end
+    
+    if not Morse then
+      Morse=self.tacanDefault and self.tacanDefault.Morse or "XXX"
     end
 
     if unit and unit:IsAlive() then
@@ -3046,7 +3119,7 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
 
   if self:IsAlive() and Frequency then
 
-    Modulation=Modulation or (self.radioDefault.Modu or radio.Modulation.AM)
+    Modulation=Modulation or self.radioDefault.Modu
 
     local group=self.group --Wrapper.Group#GROUP
 
@@ -3432,7 +3505,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:Dead()
+      self:__Dead(-1)
     end
 
   end

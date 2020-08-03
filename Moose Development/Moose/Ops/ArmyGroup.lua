@@ -761,6 +761,7 @@ function ARMYGROUP:_InitGroup()
   -- We set some values.
   self.radioDefault.Freq=133
   self.radioDefault.Modu=radio.modulation.AM
+  
   self.radio.Freq=133
   self.radio.Modu=radio.modulation.AM
   

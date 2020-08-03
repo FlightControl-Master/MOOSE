@@ -1154,8 +1154,9 @@ function FLIGHTGROUP:OnEventUnitLost(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.lid..string.format("EVENT: Element %s unit lost ==> dead", element.name))
-      self:ElementDead(element)
+      self:I(self.lid..string.format("EVENT: Element %s unit lost ==> destroyed", element.name))
+      --self:ElementDead(element)
+      self:ElementDestroyed(element)
     end
     
   end
@@ -1359,6 +1360,25 @@ function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element, airbase, Pa
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.ARRIVED)
 end
 
+--- On after "ElementDestroyed" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Element Element The flight group element.
+function FLIGHTGROUP:onafterElementDestroyed(From, Event, To, Element)
+  self:T(self.lid..string.format("Element dead %s.", Element.name))
+  
+  -- Cancel all missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    mission:ElementDestroyed(self, Element)
+
+  end  
+  
+end
+
 --- On after "ElementDead" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -1395,8 +1415,8 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     self:SwitchROT(self.option.ROT)
 
     -- Turn TACAN beacon on.
-    if self.tacanDefault and self.tacanDefault.Channel then
-      self:SwitchTACAN(self.tacanDefault.Channel, self.tacanDefault.Morse)
+    if self.tacanDefault then
+      self:SwitchTACAN(self.tacanDefault.Channel, self.tacanDefault.Morse, self.tacanDefault.BeaconName, self.tacanDefault.Band)
     end
 
     -- Turn on the radio.
@@ -1578,7 +1598,7 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
   self:__Stop(5*60)
 end
 
---- On after "FlightDead" event.
+--- On after "Dead" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -1596,7 +1616,7 @@ function FLIGHTGROUP:onafterDead(From, Event, To)
     self.flightcontrol=nil
   end
 
-  -- Cancel all mission.
+  -- Cancel all missions.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
@@ -2510,8 +2530,10 @@ function FLIGHTGROUP:_InitGroup()
 
   -- Radio parameters from template.
   self.radioOn=self.template.communication
+  
   self.radio.Freq=self.template.frequency
   self.radio.Modu=self.template.modulation
+  
   self.radioDefault.Freq=self.radio.Freq
   self.radioDefault.Modu=self.radio.Modu
 
@@ -3221,7 +3243,15 @@ function FLIGHTGROUP:GetClosestAirbase()
   local coord=group:GetCoordinate()
   local coalition=self:GetCoalition()
   
-  return coord:GetClosestAirbase(nil, coalition)
+  local airbase=coord:GetClosestAirbase() --(nil, coalition)
+  
+  if airbase then
+    env.info("FF Got closest airbase ".. airbase:GetName())
+  else
+    env.info("FF no closest airbase!")
+  end
+  
+  return airbase
 end
 
 --- Search unoccupied parking spots at the airbase for all flight elements.

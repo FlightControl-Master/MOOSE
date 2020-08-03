@@ -37,6 +37,8 @@
 -- @field #number markerCoaliton Coalition to which the marker is dispayed.
 -- @field #table DCStask DCS task structure.
 -- @field #number Ntargets Number of mission targets.
+-- @field #number Ncasualties Number of own casualties during mission.
+-- @field #number Nelements Number of elements (units) assigned to mission.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
 -- @field #number Tover Mission abs. time stamp, when mission was over. 
 -- @field #table conditionStart Condition(s) that have to be true, before the mission will be started.
@@ -486,35 +488,38 @@ function AUFTRAG:New(Type)
   self.missionRepeatMax=0
   self.nassets=1
   self.dTevaluate=0
+  self.Ncasualties=0
+  self.Nelements=0
   
   -- FMS start state is PLANNED.
   self:SetStartState(self.status)
   
   -- PLANNED --> (QUEUED) --> (REQUESTED) --> SCHEDULED --> STARTED --> EXECUTING --> DONE
   
-  self:AddTransition(AUFTRAG.Status.PLANNED,   "Queued",        AUFTRAG.Status.QUEUED)      -- Mission is in queue of an AIRWING.
-  self:AddTransition(AUFTRAG.Status.QUEUED,    "Requested",     AUFTRAG.Status.REQUESTED)   -- Mission assets have been requested from the warehouse.
-  self:AddTransition(AUFTRAG.Status.REQUESTED, "Scheduled",     AUFTRAG.Status.SCHEDULED)   -- Mission added to the first ops group queue.
+  self:AddTransition(AUFTRAG.Status.PLANNED,   "Queued",           AUFTRAG.Status.QUEUED)      -- Mission is in queue of an AIRWING.
+  self:AddTransition(AUFTRAG.Status.QUEUED,    "Requested",        AUFTRAG.Status.REQUESTED)   -- Mission assets have been requested from the warehouse.
+  self:AddTransition(AUFTRAG.Status.REQUESTED, "Scheduled",        AUFTRAG.Status.SCHEDULED)   -- Mission added to the first ops group queue.
   
-  self:AddTransition(AUFTRAG.Status.PLANNED,   "Scheduled",     AUFTRAG.Status.SCHEDULED)   -- From planned directly to scheduled.
+  self:AddTransition(AUFTRAG.Status.PLANNED,   "Scheduled",        AUFTRAG.Status.SCHEDULED)   -- From planned directly to scheduled.
   
-  self:AddTransition(AUFTRAG.Status.SCHEDULED, "Started",       AUFTRAG.Status.STARTED)     -- First asset has started the mission
-  self:AddTransition(AUFTRAG.Status.STARTED,   "Executing",     AUFTRAG.Status.EXECUTING)   -- First asset is executing the mission.
+  self:AddTransition(AUFTRAG.Status.SCHEDULED, "Started",          AUFTRAG.Status.STARTED)     -- First asset has started the mission
+  self:AddTransition(AUFTRAG.Status.STARTED,   "Executing",        AUFTRAG.Status.EXECUTING)   -- First asset is executing the mission.
   
-  self:AddTransition("*",                      "Done",          AUFTRAG.Status.DONE)        -- All assets have reported that mission is done.
+  self:AddTransition("*",                      "Done",             AUFTRAG.Status.DONE)        -- All assets have reported that mission is done.
   
-  self:AddTransition("*",                      "Cancel",        "*")                        -- Command to cancel the mission.
+  self:AddTransition("*",                      "Cancel",           "*")                        -- Command to cancel the mission.
   
-  self:AddTransition("*",                      "Success",       AUFTRAG.Status.SUCCESS)
-  self:AddTransition("*",                      "Failed",        AUFTRAG.Status.FAILED)
+  self:AddTransition("*",                      "Success",          AUFTRAG.Status.SUCCESS)
+  self:AddTransition("*",                      "Failed",           AUFTRAG.Status.FAILED)
     
-  self:AddTransition("*",                      "Status",        "*")
-  self:AddTransition("*",                      "Stop",          "*")
+  self:AddTransition("*",                      "Status",           "*")
+  self:AddTransition("*",                      "Stop",             "*")
   
-  self:AddTransition("*",                      "Repeat",        AUFTRAG.Status.PLANNED)
+  self:AddTransition("*",                      "Repeat",           AUFTRAG.Status.PLANNED)
 
-  self:AddTransition("*",                      "GroupDead",    "*")  
-  self:AddTransition("*",                      "AssetDead",     "*")
+  self:AddTransition("*",                      "ElementDestroyed", "*")
+  self:AddTransition("*",                      "GroupDead",        "*")  
+  self:AddTransition("*",                      "AssetDead",        "*")
   
   -- Init status update.
   self:__Status(-1)
@@ -1836,7 +1841,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
   local commander=self.wingcommander and tostring(self.wingcommander.coalition) or "N/A"
 
   -- Info message.
-  self:T(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, commander))
+  self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, commander))
 
   -- Check for error.  
   if fsmstate~=self.status then
@@ -1902,6 +1907,11 @@ function AUFTRAG:Evaluate()
       failed=true
     end
     
+    -- No targets and everybody died ==> mission failed. Well, unless success condition is true.
+    if self.Ntargets==0 and self.Nelements==self.Ncasualties then
+      failed=true
+    end
+    
   end
   
   --TODO: all assets dead? Is this a FAILED criterion even if all targets have been destroyed? What if there are no initial targets (e.g. when ORBIT, PATROL, RECON missions).
@@ -1910,15 +1920,18 @@ function AUFTRAG:Evaluate()
     failed=true
   elseif successCondition then
     failed=false
-  end  
+  end
   
   -- Debug text.
   local text=string.format("Evaluating mission:\n")
-  text=text..string.format("Targets      = %d/%d\n", self.Ntargets, Ntargets)
-  text=text..string.format("Damage       = %.1f %%\n", targetdamage)
-  text=text..string.format("Success Cond = %s\n", tostring(successCondition))
-  text=text..string.format("Failure Cond = %s\n", tostring(failureCondition))
-  text=text..string.format("Failed       = %s",   tostring(failed))
+  text=text..string.format("Units assigned = %d\n", self.Nelements)
+  text=text..string.format("Own casualties = %d\n", self.Ncasualties)
+  text=text..string.format("Own losses     = %.1f %%\n", self.Ncasualties/self.Nelements*100)
+  text=text..string.format("Targets        = %d/%d\n", self.Ntargets, Ntargets)
+  text=text..string.format("Damage         = %.1f %%\n", targetdamage)
+  text=text..string.format("Success Cond   = %s\n", tostring(successCondition))
+  text=text..string.format("Failure Cond   = %s\n", tostring(failureCondition))
+  text=text..string.format("Failed         = %s",   tostring(failed))
   self:I(self.lid..text)  
   
   if failed then
@@ -2224,6 +2237,15 @@ function AUFTRAG:onafterDone(From, Event, To)
   
 end
 
+--- On after "ElementDestroyed" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group that is dead now.
+function AUFTRAG:onafterElementDestroyed(From, Event, To, OpsGroup, Element)
+  self.Ncasualties=self.Ncasualties+1
+end
 
 --- On after "GroupDead" event.
 -- @param #AUFTRAG self
@@ -2411,6 +2433,10 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   end  
   -- No flight data.
   self.groupdata={}
+  
+  -- Reset casualties and units assigned.
+  self.Ncasualties=0
+  self.Nelements=0
   
   -- Call status again.
   self:__Status(-30)

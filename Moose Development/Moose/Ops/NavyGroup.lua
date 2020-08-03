@@ -219,12 +219,9 @@ function NAVYGROUP:CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
   -- Absolute mission time in seconds.
   local Tnow=timer.getAbsTime()
 
+  -- Convert number to Clock.
   if starttime and type(starttime)=="number" then
     starttime=UTILS.SecondsToClock(Tnow+starttime)
-  end
-
-  if stoptime and type(stoptime)=="number" then
-    stoptime=UTILS.SecondsToClock(Tnow+stoptime)
   end
 
   -- Input or now.
@@ -234,7 +231,16 @@ function NAVYGROUP:CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
   local Tstart=UTILS.ClockToSeconds(starttime)
 
   -- Set stop time.
-  local Tstop=stoptime and UTILS.ClockToSeconds(stoptime) or Tstart+90*60
+  local Tstop=Tstart+90*60
+
+  if stoptime==nil then
+    Tstop=Tstart+90*60
+  elseif type(stoptime)=="number" then
+    Tstop=Tstart+stoptime
+  else
+    Tstop=UTILS.ClockToSeconds(stoptime)
+  end
+
 
   -- Consistancy check for timing.
   if Tstart>Tstop then
@@ -537,9 +543,15 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
 
   if self.ai then
   
-    -- Set default ROE and Alarmstate options.
-    self:SwitchROE(self.option.ROE)    
+    -- Set default ROE.
+    self:SwitchROE(self.option.ROE)
+    
+    -- Set default Alarm State.
     self:SwitchAlarmstate(self.option.Alarm)
+    
+    if self.tacanDefault then
+    
+    end
     
   end
   
@@ -1063,6 +1075,7 @@ function NAVYGROUP:_InitGroup()
   self.radioOn=true  -- Radio is always on for ships.
   self.radio.Freq=tonumber(self.template.units[1].frequency)/1000000
   self.radio.Modu=tonumber(self.template.units[1].modulation)
+  
   self.radioDefault.Freq=self.radio.Freq
   self.radioDefault.Modu=self.radio.Modu
   
@@ -1145,15 +1158,20 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
     return distance
   end
   
+  local offsetY=1
+  
   -- Current coordinate.
-  local coordinate=self:GetCoordinate():SetAltitude(0, true)
+  local coordinate=self:GetCoordinate():SetAltitude(offsetY, true)
   
   -- Current heading.
   local heading=self:GetHeading()
   
+  -- Check from 500 meters in front.
+  coordinate=coordinate:Translate(500, heading, true)
+  
   local function LoS(dist)
     local checkcoord=coordinate:Translate(dist, heading, true)
-    return coordinate:IsLOS(checkcoord, 0.001)
+    return coordinate:IsLOS(checkcoord, offsetY)
   end
 
   -- First check if everything is clear.
