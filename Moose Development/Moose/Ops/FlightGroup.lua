@@ -1420,13 +1420,17 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     end
 
     -- Turn on the radio.
-    if self.radioDefault and self.radioDefault.Freq then
+    if self.radioDefault then
       self:SwitchRadio(self.radioDefault.Freq, self.radioDefault.Modu)
+    else
+      self:SetDefaultRadio(self.radio.Freq, self.radio.Modu)
     end
     
     -- Set callsign.
-    if self.callsignDefault and self.callsignDefault.NameSquad then
-      --self:SwitchCallsign(self.callsignDefault.Name, self.callsignNumberDefault)
+    if self.callsignDefault then
+      self:SwitchCallsign(self.callsignDefault.NumberSquad, self.callsignDefault.NumberGroup)
+    else
+      self:SetDefaultCallsign(self.callsign.NumberSquad, self.callsign.NumberGroup)
     end
     
     -- TODO: make this input.
@@ -2529,13 +2533,15 @@ function FLIGHTGROUP:_InitGroup()
   self.position=self:GetCoordinate()
 
   -- Radio parameters from template.
-  self.radioOn=self.template.communication
-  
+  self.radioOn=self.template.communication  
   self.radio.Freq=self.template.frequency
   self.radio.Modu=self.template.modulation
   
-  self.radioDefault.Freq=self.radio.Freq
-  self.radioDefault.Modu=self.radio.Modu
+  --TODO callsign from template or getCallsign
+  self.callsign.NumberSquad=self.template.units[1].callsign[1]
+  self.callsign.NumberGroup=self.template.units[1].callsign[2]
+  self.callsign.NumberElement=self.template.units[1].callsign[3]  -- First element only
+  self.callsign.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
 
   -- Set default formation.
   if self.ishelo then

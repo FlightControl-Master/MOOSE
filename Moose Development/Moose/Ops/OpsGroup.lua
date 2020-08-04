@@ -2982,7 +2982,7 @@ function OPSGROUP:GetAlarmstate()
   return self.option.Alarm
 end
 
---- Set default TACAN parameters. AA TACANs are always on "Y" band.
+--- Set default TACAN parameters.
 -- @param #OPSGROUP self
 -- @param #number Channel TACAN channel.
 -- @param #string Morse Morse code. Default "XXX".
@@ -2995,7 +2995,7 @@ function OPSGROUP:SetDefaultTACAN(Channel, Morse, UnitName, Band)
   self.tacanDefault.Channel=Channel
   self.tacanDefault.Morse=Morse or "XXX"
   self.tacanDefault.BeaconName=UnitName
-  self.tacanDefault.Band=Band  
+  self.tacanDefault.Band=Band
 
   return self
 end
@@ -3009,7 +3009,7 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 
-  if self:IsAlive() and Channel then
+  if self:IsAlive() then
 
     local unit=self.group:GetUnit(1)  --Wrapper.Unit#UNIT
     
@@ -3026,11 +3026,15 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
       unit=self.group:GetUnit(1)
     end
     
+    if not Channel then
+      Channel=self.tacanDefault and self.tacanDefault.Channel or nil
+    end
+    
     if not Morse then
       Morse=self.tacanDefault and self.tacanDefault.Morse or "XXX"
     end
 
-    if unit and unit:IsAlive() then
+    if unit and unit:IsAlive() and Channel then
 
       local UnitID=unit:GetID()
 
@@ -3089,6 +3093,103 @@ function OPSGROUP:TurnOffTACAN()
 
 end
 
+
+--- Set default ICLS parameters.
+-- @param #OPSGROUP self
+-- @param #number Channel ICLS channel.
+-- @param #string Morse Morse code. Default "XXX".
+-- @param #string UnitName Name of the unit acting as beacon.
+-- @param #string Band ICLS mode. Default is "X" for ground and "Y" for airborne units.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultICLS(Channel, Morse, UnitName)
+  
+  self.iclsDefault={}
+  self.iclsDefault.Channel=Channel
+  self.iclsDefault.Morse=Morse or "XXX"
+  self.iclsDefault.BeaconName=UnitName
+
+  return self
+end
+
+--- Activate/switch ICLS beacon settings.
+-- @param #OPSGROUP self
+-- @param #number Channel ICLS Channel.
+-- @param #string Morse ICLS morse code. Default is the value set in @{#OPSGROUP.SetDefaultICLS} or if not set "XXX".
+-- @param #string UnitName Name of the unit in the group which should activate the ICLS beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
+
+  if self:IsAlive() then
+
+    local unit=self.group:GetUnit(1)  --Wrapper.Unit#UNIT
+    
+    if UnitName then
+      if type(UnitName)=="number" then
+        unit=self.group:GetUnit(UnitName)
+      else
+        unit=UNIT:FindByName(UnitName)
+      end
+    end
+    
+    if not unit then
+      self:E(self.lid.."ERROR: Could not get ICLS unit. Trying first unit in the group.")
+      unit=self.group:GetUnit(1)
+    end
+    
+    if not Channel then
+      Channel=self.iclsDefault and self.iclsDefault.Channel or nil
+    end
+    
+    if not Morse then
+      Morse=self.iclsDefault and self.iclsDefault.Morse or "XXX"
+    end
+
+    if unit and unit:IsAlive() and Channel then
+
+      local UnitID=unit:GetID()
+
+      -- Activate beacon.
+      unit:CommandActivateICLS(Channel, UnitID, Morse)
+
+      -- Update info.
+      self.icls={}
+      self.icls.Channel=Channel
+      self.icls.Morse=Morse
+      self.icls.Band=Band
+      self.icls.BeaconName=unit:GetName()
+      self.icls.BeaconUnit=unit
+
+      -- ICLS is now on.
+      self.iclsOn=true
+
+      self:I(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
+      
+    else
+    
+      self:E(self.lid.."ERROR: Cound not set ICLS! Unit is not alive.")
+
+    end
+
+  end
+
+  return self
+end
+
+--- Deactivate ICLS beacon.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:TurnOffICLS()
+
+  if self.icls.BeaconUnit and self.icls.BeaconUnit:IsAlive() then
+    self.icls.BeaconUnit:CommandDeactivateICLS()
+  end
+
+  self:I(self.lid..string.format("Switching ICLS OFF"))
+  self.iclsOn=false
+
+end
+
+
 --- Set default Radio frequency and modulation.
 -- @param #OPSGROUP self
 -- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
@@ -3096,6 +3197,7 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultRadio(Frequency, Modulation)
   
+  self.radioDefault={}
   self.radioDefault.Freq=Frequency or 251
   self.radioDefault.Modu=Modulation or radio.modulation.AM
   

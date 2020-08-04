@@ -262,7 +262,7 @@ AUFTRAG = {
   Debug              = false,
   lid                =   nil,
   auftragsnummer     =   nil,
-  groupdata         =    {},
+  groupdata         =     {},
   assets             =    {},
   missionFraction    =   0.5,
   enrouteTasks       =    {},
@@ -432,24 +432,24 @@ AUFTRAG.version="0.3.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Clone mission. How? Deepcopy?
--- DONE: Option to assign mission to specific squadrons (requires an AIRWING).
 -- TODO: Option to assign a specific payload for the mission (requires an AIRWING).
--- DONE: Add mission start conditions.
--- TODO: Add recovery tanker mission for boat ops.
--- DONE: Add rescue helo mission for boat ops.
 -- TODO: Mission success options damaged, destroyed.
+-- TODO: Recon mission. What input? Set of coordinates?
+-- NOPE: Clone mission. How? Deepcopy? ==> Create a new auftrag.
+-- TODO: F10 marker to create new missions.
+-- TODO: Add recovery tanker mission for boat ops.
+-- DONE: Option to assign mission to specific squadrons (requires an AIRWING).
+-- DONE: Add mission start conditions.
+-- DONE: Add rescue helo mission for boat ops.
 -- DONE: Mission ROE and ROT.
 -- DONE: Mission frequency and TACAN.
--- TODO: Mission formation, etc.
+-- DONE: Mission formation, etc.
 -- DONE: FSM events.
 -- DONE: F10 marker functions that are updated on Status event.
--- TODO: F10 marker to create new missions.
 -- DONE: Evaluate mission result ==> SUCCESS/FAILURE
 -- DONE: NewAUTO() NewA2G NewA2A
 -- DONE: Transport mission.
--- TODO: Recon mission. What input? Set of coordinates?
--- TODO: Set mission coalition, e.g. for F10 markers. Could be derived from target if target has a coalition.
+-- DONE: Set mission coalition, e.g. for F10 markers. Could be derived from target if target has a coalition.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -545,7 +545,7 @@ function AUFTRAG:NewANTISHIP(Target, Altitude)
   -- DCS task parameters:
   mission.engageWeaponType=ENUMS.WeaponFlag.Auto
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
-  mission.engageAltitude=Altitude or UTILS.FeetToMeters(2000)
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 2000)
   
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.ANTISHIPSTRIKE

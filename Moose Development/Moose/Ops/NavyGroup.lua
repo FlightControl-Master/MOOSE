@@ -21,6 +21,8 @@
 -- @field #table Qintowind Queue of "into wind" turns.
 -- @field #number depth Ordered depth in meters.
 -- @field #boolean collisionwarning If true, collition warning.
+-- @field #boolean pathfindingOn If true, enable pathfining.
+-- @field #boolean ispathfinding If true, group is currently path finding.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -69,7 +71,8 @@ NAVYGROUP.version="0.1.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- 
+
+-- TODO: Collision warning.
 -- DONE: Detour, add temporary waypoint and resume route.
 -- DONE: Stop and resume route.
 -- DONE: Add waypoints.
@@ -112,6 +115,7 @@ function NAVYGROUP:New(GroupName)
   self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
   
   self:AddTransition("*",             "CollitionWarning", "*")           -- Collision warning.
+  self:AddTransition("*",             "ClearAhead",       "*")           -- Clear ahead.
   
   self:AddTransition("*",             "Dive",             "Diving")      -- Command a submarine to dive.
   self:AddTransition("Diving",        "Surface",          "Cruising")    -- Command a submarine to go to the surface.
@@ -173,6 +177,14 @@ function NAVYGROUP:SetPatrolAdInfinitum(switch)
     self.adinfinitum=true
   end
   return self
+end
+
+--- Enable/disable pathfinding.
+-- @param #NAVYGROUP self
+-- @param #boolean switch If true, enable pathfinding.
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetPathfinding(Switch)
+  self.pathfindingOn=Switch
 end
 
 --- Add a *scheduled* task.
@@ -386,11 +398,19 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     local freepath=10000
     local collision=false
     
+    -- Only check if not currently turning.
     if not self:IsTurning() then
+    
+      -- Check free path ahead.
+      freepath=self:_CheckFreePath(freepath, 100)
+      
+      if freepath<5000 then
+        self:CollisionWarning()
+      end
     
       if not self.ispathfinding then
       
-        freepath=self:_CheckFreePath(freepath, 100)
+        
                
         if freepath<5000 then
           self.ispathfinding=self:_FindPathToNextWaypoint()
@@ -498,8 +518,8 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   end
 
 
-  -- Next status update in 10 seconds.
-  self:__Status(-10)
+  -- Next status update in 30 seconds.
+  self:__Status(-30)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -549,8 +569,21 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     -- Set default Alarm State.
     self:SwitchAlarmstate(self.option.Alarm)
     
+    -- Turn TACAN beacon on.
     if self.tacanDefault then
+      self:SwitchTACAN(self.tacanDefault.Channel, self.tacanDefault.Morse, self.tacanDefault.BeaconName, self.tacanDefault.Band)
+    end
     
+    -- Turn ICLS on.
+    if self.iclsDefault then
+      self:SwitchICLS(self.iclsDefault.Channel, self.iclsDefault.Morse, self.iclsDefault.BeaconName)
+    end    
+
+    -- Turn on the radio.
+    if self.radioDefault then
+      self:SwitchRadio(self.radioDefault.Freq, self.radioDefault.Modu)
+    else
+      self:SetDefaultRadio(self.radio.Freq, self.radio.Modu)
     end
     
   end
@@ -1076,9 +1109,6 @@ function NAVYGROUP:_InitGroup()
   self.radio.Freq=tonumber(self.template.units[1].frequency)/1000000
   self.radio.Modu=tonumber(self.template.units[1].modulation)
   
-  self.radioDefault.Freq=self.radio.Freq
-  self.radioDefault.Modu=self.radio.Modu
-  
   -- Set default formation. No really applicable for ships.
   self.optionDefault.Formation="Off Road"
   self.option.Formation=self.optionDefault.Formation
@@ -1407,15 +1437,6 @@ function NAVYGROUP:_CheckTurnsIntoWind()
   end  
   
 end
-
---- Get default cruise speed.
--- @param #NAVYGROUP self
--- @return #number Cruise speed (>0) in knots.
-function NAVYGROUP:GetSpeedCruise()
-  return UTILS.KmphToKnots(self.speedCruise or self.speedmax*0.7)
-end
-
-
 
 --- Check queued turns into wind.
 -- @param #NAVYGROUP self

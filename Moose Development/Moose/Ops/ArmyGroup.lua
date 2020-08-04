@@ -306,7 +306,7 @@ function ARMYGROUP:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end
 
-  self:__Status(-10)
+  self:__Status(-30)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -757,13 +757,8 @@ function ARMYGROUP:_InitGroup()
   
   -- Radio parameters from template.
   self.radioOn=false  -- Radio is always OFF for ground.
-  
-  -- We set some values.
-  self.radioDefault.Freq=133
-  self.radioDefault.Modu=radio.modulation.AM
-  
   self.radio.Freq=133
-  self.radio.Modu=radio.modulation.AM
+  self.radio.Modu=radio.modulation.AM  
   
   -- Set default formation from first waypoint.
   self.option.Formation=self:GetWaypoint(1).action
