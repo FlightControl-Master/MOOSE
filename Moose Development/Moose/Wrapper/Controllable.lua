@@ -1429,16 +1429,6 @@ end
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
 
-  -- FireAtPoint = {
-  --   id = 'FireAtPoint',
-  --   params = {
-  --     point = Vec2,
-  --     radius = Distance,
-  --     expendQty = number,
-  --     expendQtyEnabled = boolean,
-  --   }
-  -- }
-
   local DCSTask = {
     id = 'FireAtPoint',
     params = {
@@ -1458,7 +1448,6 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
     DCSTask.params.weaponType=WeaponType
   end
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 

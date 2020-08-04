@@ -817,7 +817,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   ---
 
   -- Task queue.
-  if #self.taskqueue>0 and self.verbose>1 then
+  if self.verbose>1 and #self.taskqueue>0 then
     local text=string.format("Tasks #%d", #self.taskqueue)
     for i,_task in pairs(self.taskqueue) do
       local task=_task --Ops.OpsGroup#OPSGROUP.Task
@@ -1088,7 +1088,7 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
 
       if element.unit and element.unit:IsAlive() then
 
-        local airbase=self:GetClosestAirbase() --element.unit:GetCoordinate():GetClosestAirbase()
+        local airbase=self:GetClosestAirbase()
         local parking=self:GetParkingSpot(element, 10, airbase)
 
         if airbase and parking then
@@ -1096,18 +1096,13 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
           self:T3(self.lid..string.format("EVENT: Element %s shut down engines ==> arrived", element.name))
         else
           self:T3(self.lid..string.format("EVENT: Element %s shut down engines but is not parking. Is it dead?", element.name))
-          --self:ElementDead(element)
         end
 
       else
-
         --self:I(self.lid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
-
       end
 
-    else
-      -- element is nil
-    end
+    end -- element nil?
 
   end
 
@@ -1154,8 +1149,7 @@ function FLIGHTGROUP:OnEventUnitLost(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.lid..string.format("EVENT: Element %s unit lost ==> destroyed", element.name))
-      --self:ElementDead(element)
+      self:T3(self.lid..string.format("EVENT: Element %s unit lost ==> destroyed", element.name))
       self:ElementDestroyed(element)
     end
     
@@ -1178,7 +1172,7 @@ function FLIGHTGROUP:OnEventRemoveUnit(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
+      self:T3(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
       self:ElementDead(element)
     end
 
@@ -1406,7 +1400,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterSpawned(From, Event, To)
-  self:I(self.lid..string.format("Flight spawned!"))
+  self:T(self.lid..string.format("Flight spawned"))
 
   if self.ai then
 
@@ -1543,7 +1537,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterAirborne(From, Event, To)
-  self:I(self.lid..string.format("Flight airborne"))
+  self:T(self.lid..string.format("Flight airborne"))
 
   if self.ai then
     self:_CheckGroupDone(1)
@@ -1608,7 +1602,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterDead(From, Event, To)
-  self:I(self.lid..string.format("Flight dead!"))
+  self:T(self.lid..string.format("Flight dead!"))
 
   -- Delete waypoints so they are re-initialized at the next spawn.
   self.waypoints=nil
@@ -1655,8 +1649,8 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
     self:E(self.lid.."Update route denied. Group is DEAD!")
     allowed=false
   else
-    -- Not airborne yet. Try again in 1 sec.
-    self:I(self.lid.."FF update route denied ==> checking back in 5 sec")
+    -- Not airborne yet. Try again in 5 sec.
+    self:T(self.lid.."Update route denied ==> checking back in 5 sec")
     trepeat=-5
     allowed=false
   end
@@ -1673,7 +1667,7 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
 
   local N=n or self.currentwp+1
   if not N or N<1 then
-    self:E(self.lid.."FF update route denied because N=nil or N<1")
+    self:E(self.lid.."Update route denied because N=nil or N<1")
     trepeat=-5
     allowed=false
   end
@@ -1734,7 +1728,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destbase and self.destbase:GetName() or "unknown"
-  self:I(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
+  self:T(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
 
 
   if #wp>1 then
@@ -2207,7 +2201,7 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
 
   local text=string.format("Flight group %s is HOLDING now", self.groupname)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Add flight to waiting/holding queue.
   if self.flightcontrol then
@@ -2936,18 +2930,13 @@ function FLIGHTGROUP:InitWaypoints()
 
   -- Template waypoints.
   self.waypoints0=self.group:GetTemplateRoutePoints()
-  
-  self:I(self.waypoints0)
 
   -- Waypoints  
   self.waypoints={}
   
   for index,wp in pairs(self.waypoints0) do
-  
-    env.info("FF index "..index)
-  
-    local waypoint=self:_CreateWaypoint(wp)
-    
+ 
+    local waypoint=self:_CreateWaypoint(wp)    
     self:_AddWaypoint(waypoint)
      
   end
@@ -2964,7 +2953,7 @@ function FLIGHTGROUP:InitWaypoints()
   end
 
   -- Debug info.
-  self:I(self.lid..string.format("Initializing %d waypoints. Homebase %s ==> %s Destination", #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "uknown"))
+  self:T(self.lid..string.format("Initializing %d waypoints. Homebase %s ==> %s Destination", #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "uknown"))
 
   -- Update route.
   if #self.waypoints>0 then
@@ -2974,9 +2963,6 @@ function FLIGHTGROUP:InitWaypoints()
       self.passedfinalwp=true
     end
 
-    -- Update route (when airborne).
-    --self:_CheckGroupDone(1)
-    --self:__UpdateRoute(-1)
   end
 
   return self
@@ -3250,12 +3236,6 @@ function FLIGHTGROUP:GetClosestAirbase()
   local coalition=self:GetCoalition()
   
   local airbase=coord:GetClosestAirbase() --(nil, coalition)
-  
-  if airbase then
-    env.info("FF Got closest airbase ".. airbase:GetName())
-  else
-    env.info("FF no closest airbase!")
-  end
   
   return airbase
 end

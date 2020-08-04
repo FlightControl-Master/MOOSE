@@ -120,13 +120,11 @@ OPSGROUP = {
   respawning         =   nil,
   wpcounter          =     1,
   radio              =    {},
-  radioDefault       =    {},
   option             =    {},
   optionDefault      =    {},
   tacan              =    {},
   icls               =    {},
   callsign           =    {},
-  callsignDefault    =    {},
 }
 
 --- Status of group element.
@@ -1234,7 +1232,7 @@ function OPSGROUP:AddTaskWaypoint(task, Waypoint, description, prio, duration)
     table.insert(self.taskqueue, newtask)
     
     -- Info.
-    self:I(self.lid..string.format("Adding WAYPOINT task %s at WP %d", newtask.description, newtask.waypoint))
+    self:T(self.lid..string.format("Adding WAYPOINT task %s at WP ID=%d", newtask.description, newtask.waypoint))
     self:T3({newtask=newtask})
     
     -- Update route.
@@ -2635,13 +2633,14 @@ end
 -- @param #number wpnumber Waypoint index/number. Default is as last waypoint.
 function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
 
+  -- Index.
   wpnumber=wpnumber or #self.waypoints+1
-  
-  self:I(self.lid..string.format("Adding waypoint at index=%d id=%d", wpnumber, waypoint.uid))
 
   -- Add waypoint to table.
   table.insert(self.waypoints, wpnumber, waypoint)
 
+  -- Debug info.
+  self:T2(self.lid..string.format("Adding waypoint at index=%d id=%d", wpnumber, waypoint.uid))
 end
 
 --- Initialize Mission Editor waypoints.
@@ -3069,9 +3068,7 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
       self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
       
     else
-    
       self:E(self.lid.."ERROR: Cound not set TACAN! Unit is not alive.")
-
     end
 
   end
@@ -3165,9 +3162,7 @@ function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
       self:I(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
       
     else
-    
       self:E(self.lid.."ERROR: Cound not set ICLS! Unit is not alive.")
-
     end
 
   end
@@ -3324,6 +3319,7 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
 
+  self.callsignDefault={}
   self.callsignDefault.NumberSquad=CallsignName
   self.callsignDefault.NumberGroup=CallsignNumber or 1
 
@@ -3344,9 +3340,8 @@ function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
 
     self:I(self.lid..string.format("Switching callsign to %d-%d", self.callsign.NumberSquad, self.callsign.NumberGroup))
     
-    local group=self.group --Wrapper.Group#GROUP
     
-    group:CommandSetCallsign(self.callsign.NumberSquad, self.callsign.NumberGroup)
+    self.group:CommandSetCallsign(self.callsign.NumberSquad, self.callsign.NumberGroup)
 
   end
 

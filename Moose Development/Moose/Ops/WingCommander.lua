@@ -2,7 +2,8 @@
 --
 -- **Main Features:**
 --
---    * Stuff
+--    * Manages AIRWINGS
+--    * Handles missions (AUFTRAG) and finds the best airwing able to do the job
 --
 -- ===
 --
@@ -49,10 +50,7 @@ WINGCOMMANDER.version="0.1.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Define A2A and A2G parameters.
 -- TODO: Improve airwing selection. Mostly done!
--- DONE: Add/remove spawned flightgroups to detection set.
--- DONE: Borderzones.
 -- NOGO: Maybe it's possible to preselect the assets for the mission.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -76,9 +74,10 @@ function WINGCOMMANDER:New()
   --                 From State     -->      Event        -->     To State
   self:AddTransition("NotReadyYet",        "Start",               "OnDuty")      -- Start WC.
   self:AddTransition("*",                  "Status",              "*")           -- Status report.
-  self:AddTransition("*",                  "MissionAssign",       "*")           -- Mission was assigned to an AIRWING.
+  self:AddTransition("*",                  "Stop",                "Stopped")     -- Stop WC.
+  
+  self:AddTransition("*",                  "AssignMission",       "*")           -- Mission was assigned to an AIRWING.
   self:AddTransition("*",                  "CancelMission",       "*")           -- Cancel mission.
-  self:AddTransition("*",                  "Defcon",              "*")           -- Cancel mission.
 
   ------------------------
   --- Pseudo Functions ---
@@ -217,6 +216,7 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
   
   -- Mission queue.
   if #self.missionqueue>0 then
+  
     local text="Mission queue:"
     for i,_mission in pairs(self.missionqueue) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
@@ -226,6 +226,7 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
       text=text..string.format("\n[%d] %s (%s): status=%s, target=%s", i, mission.name, mission.type, mission.status, target)
     end
     self:I(self.lid..text)
+    
   end  
 
   self:__Status(-30)
@@ -235,14 +236,14 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after "MissionAssign" event. Mission is added to the AIRWING mission queue.
+--- On after "AssignMission" event. Mission is added to the AIRWING mission queue.
 -- @param #WINGCOMMANDER self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Ops.AirWing#AIRWING Airwing The AIRWING.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function WINGCOMMANDER:onafterMissionAssign(From, Event, To, Airwing, Mission)
+function WINGCOMMANDER:onafterAssignMission(From, Event, To, Airwing, Mission)
 
   self:I(self.lid..string.format("Assigning mission %s (%s) to airwing %s", Mission.name, Mission.type, Airwing.alias))
   Airwing:AddMission(Mission)
@@ -268,7 +269,7 @@ function WINGCOMMANDER:onafterCancelMission(From, Event, To, Mission)
   
     -- Airwing will cancel mission.
     if Mission.airwing then
-      Mission.airwing:MissionCancel(Mission)
+      Mission.airwing:CancelMission(Mission)
     end
     
   end
@@ -300,7 +301,7 @@ function WINGCOMMANDER:CheckMissionQueue()
       if airwing then
       
         -- Add mission to airwing.
-        self:MissionAssign(airwing, mission)
+        self:AssignMission(airwing, mission)
     
         return
       end

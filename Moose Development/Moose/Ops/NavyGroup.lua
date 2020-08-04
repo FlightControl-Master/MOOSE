@@ -114,7 +114,7 @@ function NAVYGROUP:New(GroupName)
   self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
   self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
   
-  self:AddTransition("*",             "CollitionWarning", "*")           -- Collision warning.
+  self:AddTransition("*",             "CollisionWarning", "*")           -- Collision warning.
   self:AddTransition("*",             "ClearAhead",       "*")           -- Clear ahead.
   
   self:AddTransition("*",             "Dive",             "Diving")      -- Command a submarine to dive.
@@ -195,12 +195,14 @@ end
 -- @param #number WeaponType Type of weapon. Default auto.
 -- @param #string Clock Time when to start the attack.
 -- @param #number Prio Priority of the task.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task data.
 function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Radius, Nshots, WeaponType, Clock, Prio)
 
   local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
 
-  self:AddTask(DCStask, Clock, nil, Prio)
+  local task=self:AddTask(DCStask, Clock, nil, Prio)
 
+  return task
 end
 
 --- Add a *scheduled* task.
@@ -210,12 +212,14 @@ end
 -- @param #number WeaponType Type of weapon. Default auto.
 -- @param #string Clock Time when to start the attack.
 -- @param #number Prio Priority of the task.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task data.
 function NAVYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clock, Prio)
 
   local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack)
 
-  self:AddTask(DCStask, Clock, nil, Prio)
-
+  local task=self:AddTask(DCStask, Clock, nil, Prio)
+  
+  return task
 end
 
 --- Add aircraft recovery time window and recovery case.
@@ -409,11 +413,9 @@ function NAVYGROUP:onafterStatus(From, Event, To)
       end
     
       if not self.ispathfinding then
-      
-        
-               
+                 
         if freepath<5000 then
-          self.ispathfinding=self:_FindPathToNextWaypoint()
+          --self.ispathfinding=self:_FindPathToNextWaypoint()
         end
         
       end
@@ -466,7 +468,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   ---
   
   -- Task queue.
-  if #self.taskqueue>0 and self.verbose>1 then  
+  if self.verbose>-1 and #self.taskqueue>0 then  
     local text=string.format("Tasks #%d", #self.taskqueue)
     for i,_task in pairs(self.taskqueue) do
       local task=_task --Ops.OpsGroup#OPSGROUP.Task

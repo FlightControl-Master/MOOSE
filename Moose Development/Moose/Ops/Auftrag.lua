@@ -1890,31 +1890,46 @@ function AUFTRAG:Evaluate()
   
   -- Target damage in %.
   local targetdamage=self:GetTargetDamage()
+  
+  -- Own damage in %.
+  local owndamage=self.Ncasualties/self.Nelements*100
 
   -- Current number of mission targets.
   local Ntargets=self:CountMissionTargets()
   
-  -- Number of current targets is still >0 ==> Not everything was destroyed.
-  if self.type==AUFTRAG.Type.TROOPTRANSPORT then
-
-    if self.Ntargets>0 and Ntargets<self.Ntargets then
-      failed=true
-    end
+  if self.Ntargets>0 then
   
+    ---
+    -- Mission had targets
+    ---
+  
+    -- Number of current targets is still >0 ==> Not everything was destroyed.
+    if self.type==AUFTRAG.Type.TROOPTRANSPORT then
+  
+      if Ntargets<self.Ntargets then
+        failed=true
+      end
+    
+    else
+    
+      if Ntargets>0 then
+        failed=true
+      end
+      
+    end
+    
   else
+
+    ---
+    -- Mission had NO targets
+    ---
+
+      -- No targets and everybody died ==> mission failed. Well, unless success condition is true.
+      if self.Nelements==self.Ncasualties then
+        failed=true
+      end
   
-    if self.Ntargets>0 and Ntargets>0 then
-      failed=true
-    end
-    
-    -- No targets and everybody died ==> mission failed. Well, unless success condition is true.
-    if self.Ntargets==0 and self.Nelements==self.Ncasualties then
-      failed=true
-    end
-    
   end
-  
-  --TODO: all assets dead? Is this a FAILED criterion even if all targets have been destroyed? What if there are no initial targets (e.g. when ORBIT, PATROL, RECON missions).
 
   if failureCondition then
     failed=true
@@ -1924,14 +1939,19 @@ function AUFTRAG:Evaluate()
   
   -- Debug text.
   local text=string.format("Evaluating mission:\n")
-  text=text..string.format("Units assigned = %d\n", self.Nelements)
-  text=text..string.format("Own casualties = %d\n", self.Ncasualties)
-  text=text..string.format("Own losses     = %.1f %%\n", self.Ncasualties/self.Nelements*100)
-  text=text..string.format("Targets        = %d/%d\n", self.Ntargets, Ntargets)
-  text=text..string.format("Damage         = %.1f %%\n", targetdamage)
+  text=text..string.format("Own casualties = %d/%d\n", self.Ncasualties, self.Nelements)
+  text=text..string.format("Own losses     = %.1f %%\n", owndamage)
+  text=text..string.format("--------------------------\n")  
+  text=text..string.format("Targets left   = %d/%d\n", Ntargets, self.Ntargets)
+  text=text..string.format("Enemy losses   = %.1f %%\n", targetdamage)
+  text=text..string.format("--------------------------\n")
+  --text=text..string.format("Loss ratio     = %.1f %%\n", targetdamage)
+  --text=text..string.format("--------------------------\n")
   text=text..string.format("Success Cond   = %s\n", tostring(successCondition))
   text=text..string.format("Failure Cond   = %s\n", tostring(failureCondition))
-  text=text..string.format("Failed         = %s",   tostring(failed))
+  text=text..string.format("--------------------------\n")
+  text=text..string.format("Final Success  = %s\n", tostring(not failed))
+  text=text..string.format("=========================")
   self:I(self.lid..text)  
   
   if failed then
