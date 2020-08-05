@@ -1643,7 +1643,7 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
 
   if self:IsAlive() then -- and (self:IsAirborne() or self:IsWaiting() or self:IsInbound() or self:IsHolding()) then
     -- Alive & Airborne ==> Update route possible.
-    self:T3(self.lid.."Update route possible. Group is ALIVE and AIRBORNE or WAITING or INBOUND or HOLDING")
+    self:T3(self.lid.."Update route possible. Group is ALIVE")
   elseif self:IsDead()  then
     -- Group is dead! No more updates.
     self:E(self.lid.."Update route denied. Group is DEAD!")

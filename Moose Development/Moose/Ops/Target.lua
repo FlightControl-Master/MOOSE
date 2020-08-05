@@ -1,0 +1,620 @@
+--- **Ops** - Target.
+--
+-- **Main Features:**
+--
+--    * Manages AIRWINGS
+--    * Events when units get 
+--
+-- ===
+--
+-- ### Author: **funkyfranky**
+-- @module Ops.Target
+-- @image OPS_Target.png
+
+
+--- TARGET class.
+-- @type TARGET
+-- @field #string ClassName Name of the class.
+-- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #string lid Class id string for output to DCS log file.
+-- @field #table targets Table of target objects.
+-- @field #number targetcounter Running number to generate target object IDs.
+-- @field #number life Total life points on last status update.
+-- @field #number life0 Total life points of completely healthy targets.
+-- @extends Core.Fsm#FSM
+
+--- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D. Eisenhower
+--
+-- ===
+--
+-- ![Banner Image](..\Presentations\WingCommander\TARGET_Main.jpg)
+--
+-- # The TARGET Concept
+-- 
+-- A wing commander is the head of airwings. He will find the best AIRWING to perform an assigned TARGET (mission).
+--
+--
+-- @field #TARGET
+TARGET = {
+  ClassName      = "TARGET",
+  Debug          =   nil,
+  lid            =   nil,
+  targets        =    {},
+  targetcounter  =     0,
+  life           =     0,
+  life0          =     0,
+}
+
+
+--- Type.
+-- @type TARGET.ObjectType
+-- @field #string UNIT Target is a UNIT object.
+-- @field #string STATIC Target is a STATIC object.
+-- @field #string COORDINATE Target is a COORDINATE.
+-- @field #string AIRBASE Target is an AIRBASE.
+TARGET.ObjectType={
+  GROUP="Group",
+  UNIT="Unit",
+  STATIC="Static",
+  COORDINATE="Coordinate",
+  AIRBASE="Airbase",
+}
+
+--- Type.
+-- @type TARGET.ObjectStatus
+-- @field #string ALIVE Object is alive.
+-- @field #string DEAD Object is dead.
+TARGET.ObjectStatus={
+  ALIVE="Alive",
+  DEAD="Dead",
+}
+--- Type.
+-- @type TARGET.Object
+-- @field #number ID Target unique ID.
+-- @field #string Name Target name.
+-- @field #string Type Target type.
+-- @field Wrapper.Positionable#POSITIONABLE Object.
+-- @field #number Life Life points on last status update.
+-- @field #number Life0 Life points of completely healthy target.
+-- @field #string Status Status "Alive" or "Dead".
+
+_TARGETID=0
+
+--- TARGET class version.
+-- @field #string version
+TARGET.version="0.0.1"
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- TODO list
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- TODO: Improve airwing selection. Mostly done!
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Constructor
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Create a new TARGET object and start the FSM.
+-- @param #TARGET self
+-- @param #table TargetObject Target object.
+-- @return #TARGET self
+function TARGET:New(TargetObject)
+
+  -- Inherit everything from INTEL class.
+  local self=BASE:Inherit(self, FSM:New()) --#TARGET
+
+  -- Increase counter.
+  _TARGETID=_TARGETID+1
+  
+  self.lid=string.format("TARGET #%03d | ", _TARGETID)
+  
+  self:AddObject(TargetObject)
+
+  -- Start state.
+  self:SetStartState("Stopped")
+
+  -- Add FSM transitions.
+  --                 From State     -->      Event        -->     To State
+  self:AddTransition("Stopped",            "Start",               "Alive")       -- Start FSM.
+  self:AddTransition("*",                  "Status",              "*")           -- Status update.
+  self:AddTransition("*",                  "Stop",                "Stopped")     -- Stop FSM.
+  
+  self:AddTransition("*",                  "ObjectDamaged",       "*")           -- A Target was damaged.  
+  self:AddTransition("*",                  "ObjectDestroyed",     "*")           -- A Target was destroyed.
+  self:AddTransition("*",                  "ObjectRemoved",       "*")           -- A Target was removed.
+  
+  self:AddTransition("*",                  "Damaged",             "*")           -- Target was damaged.  
+  self:AddTransition("*",                  "Destroyed",           "Dead")        -- Target was completely destroyed.
+
+  ------------------------
+  --- Pseudo Functions ---
+  ------------------------
+
+  --- Triggers the FSM event "Start". Starts the TARGET. Initializes parameters and starts event handlers.
+  -- @function [parent=#TARGET] Start
+  -- @param #TARGET self
+
+  --- Triggers the FSM event "Start" after a delay. Starts the TARGET. Initializes parameters and starts event handlers.
+  -- @function [parent=#TARGET] __Start
+  -- @param #TARGET self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Stop". Stops the TARGET and all its event handlers.
+  -- @param #TARGET self
+
+  --- Triggers the FSM event "Stop" after a delay. Stops the TARGET and all its event handlers.
+  -- @function [parent=#TARGET] __Stop
+  -- @param #TARGET self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Status".
+  -- @function [parent=#TARGET] Status
+  -- @param #TARGET self
+
+  --- Triggers the FSM event "Status" after a delay.
+  -- @function [parent=#TARGET] __Status
+  -- @param #TARGET self
+  -- @param #number delay Delay in seconds.
+
+
+  -- Debug trace.
+  if false then
+    self.Debug=true
+    BASE:TraceOnOff(true)
+    BASE:TraceClass(self.ClassName)
+    BASE:TraceLevel(1)
+  end
+  
+  -- Start.
+  self:__Start(-1)
+
+  return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- User functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Create target data from a given object.
+-- @param #TARGET self
+-- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, AIRBASE or COORDINATE.
+function TARGET:AddObject(Object)
+
+  if Object:IsInstanceOf("GROUP") then
+  
+    local group=Object --Wrapper.Group#GROUP
+    
+    local units=group:GetUnits()
+    
+    for _,unit in pairs(units) do
+      self:_AddObject(unit)
+    end
+    
+  elseif Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") then
+  
+    local set=Object --Core.Set#SET_GROUP
+    
+    for _,object in pairs(set.Set) do
+      self:AddObject(object)
+    end
+    
+  
+  else
+  
+    ---
+    -- Units, Statics, Airbases, Coordinates
+    ---
+  
+    self:_AddObject(Object)
+    
+  end
+
+end
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Start & Status
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
+-- @param #TARGET self
+-- @param Wrapper.Group#GROUP Group Flight group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function TARGET:onafterStart(From, Event, To)
+
+  -- Short info.
+  local text=string.format("Starting Target")
+  self:I(self.lid..text)
+
+  self:HandleEvent(EVENTS.Dead,       self.OnEventUnitDeadOrLost)
+  self:HandleEvent(EVENTS.UnitLost,   self.OnEventUnitDeadOrLost)
+  
+  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)
+
+  self:__Status(-1)
+end
+
+--- On after "Status" event.
+-- @param #TARGET self
+-- @param Wrapper.Group#GROUP Group Flight group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function TARGET:onafterStatus(From, Event, To)
+
+  -- FSM state.
+  local fsmstate=self:GetState()
+    
+  -- Update damage.
+  local damaged=false
+  for i,_target in pairs(self.targets) do
+    local target=_target --#TARGET.Object
+    local life=target.Life
+    target.Life=self:GetTargetLife(target)
+    if target.Life<life then
+      self:ObjectDamaged(target)
+      damaged=true
+    end
+  end
+  
+  -- Target was damaged.
+  if damaged then
+    self:Damaged()
+  end
+  
+  -- Log output.
+  local text=string.format("%s: Targets=%d/%d Life=%.1f/%.1f Damage=%.1f", fsmstate, self:CountTargets(), #self.targets, self:GetLife(), self:GetLife0(), self:GetDamage())
+  if damaged then
+    text=text.." Damaged!"
+  end
+  self:I(self.lid..text)  
+  
+  -- Verbose output.
+  if true then
+    local text="Target:"
+    for i,_target in pairs(self.targets) do
+      local target=_target --#TARGET.Object
+      local damage=(1-target.Life/target.Life0)*100
+      text=text..string.format("\n[%d] %s %s: Life=%.1f/%.1f, Damage=%.1f", i, target.Name, target.Status, target.Life, target.Life0, damage)
+    end
+    self:I(self.lid..text)
+  end
+
+  -- Update status again in 30 sec.
+  self:__Status(-30)
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FSM Events
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "ObjectDamaged" event.
+-- @param #TARGET self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #TARGET.Object Target Target object.
+function TARGET:onafterObjectDamaged(From, Event, To, Target)
+
+  self:I(self.lid..string.format("Object %s damaged", Target.Name))
+
+end
+
+--- On after "ObjectDestroyed" event.
+-- @param #TARGET self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #TARGET.Object Target Target object.
+function TARGET:onafterObjectDestroyed(From, Event, To, Target)
+
+  self:I(self.lid..string.format("Object %s destroyed", Target.Name))
+  
+  -- Set target status.
+  Target.Status=TARGET.ObjectStatus.DEAD
+  
+  -- Check if anyone is alive?
+  local dead=true
+  for _,_target in pairs(self.targets) do
+    local target=_target --#TARGET.Object
+    if target.Status==TARGET.ObjectStatus.ALIVE then
+      dead=false
+    end
+  end
+  
+  -- All dead ==> Trigger destroyed event.
+  if dead then
+    self:Destroyed()
+  end
+
+end
+
+--- On after "Damaged" event.
+-- @param #TARGET self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function TARGET:onafterDamaged(From, Event, To)
+
+  self:I(self.lid..string.format("Target damaged"))
+
+end
+
+--- On after "Destroyed" event.
+-- @param #TARGET self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function TARGET:onafterDestroyed(From, Event, To)
+
+  self:I(self.lid..string.format("Target destroyed"))
+
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Event Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Event function handling the loss of a unit.
+-- @param #TARGET self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function TARGET:OnEventUnitDeadOrLost(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniUnitName then
+  
+    -- Debug info.
+    --self:T3(self.lid..string.format("EVENT: Unit %s dead or lost!", EventData.IniUnitName))
+    
+    -- Get target.
+    local target=self:GetTargetByName(EventData.IniUnitName)
+
+    -- Check if this is one of ours.
+    if target and target.Status==TARGET.ObjectStatus.ALIVE then
+    
+      -- Debug message.
+      self:T3(self.lid..string.format("EVENT: target unit %s dead or lost ==> destroyed", target.Name))
+
+      -- Trigger object destroyed event.
+      self:ObjectDestroyed(target)
+      
+    end
+    
+  end
+
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Adding and Removing Targets
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Create target data from a given object.
+-- @param #TARGET self
+-- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, AIRBASE or COORDINATE.
+function TARGET:_AddObject(Object)
+
+  local target={}  --#TARGET.Object
+  
+  if Object:IsInstanceOf("UNIT") then
+  
+    local unit=Object --Wrapper.Unit#UNIT
+    
+    target.Type=TARGET.ObjectType.UNIT
+    target.Name=unit:GetName()
+    
+    if unit and unit:IsAlive() then
+      target.Life=unit:GetLife()
+      target.Life0=math.max(unit:GetLife0(), target.Life)  -- There was an issue with ships that life is greater life0!
+    end
+
+  elseif Object:IsInstanceOf("STATIC") then
+  
+    local static=Object --Wrapper.Static#STATIC
+    
+    target.Type=TARGET.ObjectType.STATIC
+    target.Name=static:GetName()
+    
+    if static and static:IsAlive() then
+      target.Life0=1
+      target.Life=1      
+    end
+    
+
+  elseif Object:IsInstanceOf("AIRBASE") then
+  
+    local airbase=Object --Wrapper.Airbase#AIRBASE
+    
+    target.Type=TARGET.ObjectType.AIRBASE
+    target.Name=airbase:GetName()
+
+    target.Life0=1
+    target.Life=1      
+
+
+  elseif Object:IsInstanceOf("COORDINATE") then
+
+    local coord=Object --Core.Point#COORDINATE
+
+    target.Type=TARGET.ObjectType.COORDINATE
+    target.Name=coord:ToStringMGRS()
+
+    target.Life0=1
+    target.Life=1
+  
+  else
+    self:E(self.lid.."ERROR: Unknown object type!")
+    return nil
+  end
+  
+  self.life=self.life+target.Life
+  self.life0=self.life0+target.Life0
+ 
+  -- Increase counter.
+  self.targetcounter=self.targetcounter+1
+  
+  target.ID=self.targetcounter
+  target.Status=TARGET.ObjectStatus.ALIVE
+  target.Object=Object
+  
+  table.insert(self.targets, target)
+
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Life and Damage Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get target life points.
+-- @param #TARGET self
+-- @return #number Number of initial life points when mission was planned.
+function TARGET:GetLife0()
+  return self.life0
+end
+
+--- Get current damage.
+-- @param #TARGET self
+-- @return #number Damage in percent.
+function TARGET:GetDamage()
+  local life=self:GetLife()/self:GetLife0()
+  local damage=1-life
+  return damage*100
+end
+
+--- Get target life points.
+-- @param #TARGET self
+-- @param #TARGET.Object Target Target object.
+-- @return #number Life points of target.
+function TARGET:GetTargetLife(Target)
+
+  if Target.Type==TARGET.ObjectType.UNIT then
+
+    if Target.Object and Target.Object:IsAlive() then
+      return Target.Object:GetLife()
+    else
+      return 0
+    end
+  
+  elseif Target.Type==TARGET.ObjectType.STATIC then
+  
+    if Target.Object and Target.Object:IsAlive() then
+      return 1
+    else
+      return 0
+    end
+    
+  elseif Target.Type==TARGET.ObjectType.AIRBASE then
+  
+    if Target.Status==TARGET.ObjectStatus.ALIVE then
+      return 1
+    else
+      return 0
+    end
+    
+  elseif Target.Type==TARGET.ObjectType.COORDINATE then
+  
+    return 1
+    
+  end
+
+end
+
+--- Get current life points.
+-- @param #TARGET self
+-- @return #number Life points of target.
+function TARGET:GetLife()
+  
+  local N=0
+  
+  local function _GetLife(unit)
+    local unit=unit --Wrapper.Unit#UNIT
+    if Healthy then
+      local life=unit:GetLife()
+      local life0=unit:GetLife0()
+      
+      return math.max(life, life0)
+    else
+      return unit:GetLife()
+    end
+  end
+  
+  for _,_target in pairs(self.targets) do
+    local Target=_target --#TARGET.Object
+    
+    N=N+self:GetTargetLife(Target)
+
+  end
+  
+  return N
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Misc Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get a target object by its name.
+-- @param #TARGET self
+-- @param #string ObjectName Object name.
+-- @return #TARGET.Object The target object table or nil.
+function TARGET:GetTargetByName(ObjectName)
+
+  for _,_target in pairs(self.targets) do
+    local target=_target --#TARGET.Object
+    if ObjectName==target.Name then
+      return target
+    end
+  end
+
+  return nil
+end
+
+
+--- Count alive targets.
+-- @param #TARGET self
+-- @return #number Number of alive target objects.
+function TARGET:CountTargets()
+  
+  local N=0
+  
+  for _,_target in pairs(self.targets) do
+    local Target=_target --#TARGET.Object
+  
+    if Target.Type==TARGET.ObjectType.UNIT then
+    
+      local target=Target.Object --Wrapper.Unit#UNIT        
+      
+      if target and target:IsAlive() and target:GetLife()>1 then
+        N=N+1
+      end
+      
+    elseif Target.Type==TARGET.ObjectType.STATIC then
+    
+      local target=Target.Object --Wrapper.Static#STATIC
+      
+      if target and target:IsAlive() then
+        N=N+1
+      end
+      
+    elseif Target.Type==TARGET.ObjectType.AIRBASE then
+    
+      if Target.Status==TARGET.ObjectStatus.ALIVE then
+        N=N+1
+      end
+      
+    elseif Target.Type==TARGET.ObjectType.COORDINATE then
+    
+      -- No target we can check!
+  
+    else
+      self:E(self.lid.."ERROR unknown target type")
+    end
+    
+  end
+  
+  return N
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
