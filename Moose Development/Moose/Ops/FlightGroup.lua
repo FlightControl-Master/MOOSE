@@ -2624,6 +2624,9 @@ function FLIGHTGROUP:AddElementByName(unitname)
     element.status=OPSGROUP.ElementStatus.INUTERO
     element.group=unit:GetGroup()
 
+    -- TODO: this is wrong when grouping is used!
+    local unittemplate=element.unit:GetTemplate()
+
     element.modex=element.unit:GetTemplate().onboard_num
     element.skill=element.unit:GetTemplate().skill
     element.pylons=element.unit:GetTemplatePylons()
@@ -2642,8 +2645,8 @@ function FLIGHTGROUP:AddElementByName(unitname)
       element.ai=true
     end
 
-    local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f (%d %%), category=%d, categoryname=%s, callsign=%s, ai=%s",
-    element.name, element.status, element.skill, element.modex, element.fuelmass, element.fuelrel, element.category, element.categoryname, element.callsign, tostring(element.ai))
+    local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f (%d), category=%d, categoryname=%s, callsign=%s, ai=%s",
+    element.name, element.status, element.skill, element.modex, element.fuelmass, element.fuelrel*100, element.category, element.categoryname, element.callsign, tostring(element.ai))
     self:I(self.lid..text)
 
     -- Add element to table.

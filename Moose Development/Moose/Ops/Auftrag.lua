@@ -51,7 +51,7 @@
 -- @field #number orbitLeg Length of orbit leg in meters.
 -- @field Core.Point#COORDINATE orbitRaceTrack Race-track orbit coordinate.
 -- 
--- @field #AUFTRAG.TargetData engageTarget Target data to engage.
+-- @field Ops.Target#TARGET engageTarget Target data to engage.
 -- 
 -- @field Core.Zone#ZONE_RADIUS engageZone *Circular* engagement zone.
 -- @field #table engageTargetTypes Table of target types that are engaged in the engagement zone.
@@ -97,11 +97,6 @@
 -- 
 -- @field #number missionRepeated Number of times mission was repeated.
 -- @field #number missionRepeatMax Number of times mission is repeated if failed.
--- 
--- @field #number radioFreq Mission radio frequency in MHz.
--- @field #number radioModu Mission radio modulation (0=AM and 1=FM).
--- @field #number tacanChannel Mission TACAN channel.
--- @field #number tacanMorse Mission TACAN morse code.
 -- 
 -- @field Ops.OpsGroup#OPSGROUP.Radio radio Radio freq and modulation.
 -- @field Ops.OpsGroup#OPSGROUP.Beacon tacan TACAN setting.
@@ -188,9 +183,9 @@
 -- 
 -- An orbit mission can be created with the @{#AUFTRAG.NewORBIT}() function.
 -- 
--- ## PATROL
+-- ## GCCAP
 -- 
--- An patrol mission can be created with the @{#AUFTRAG.NewPATROL}() function.
+-- An patrol mission can be created with the @{#AUFTRAG.NewGCCAP}() function.
 -- 
 -- ## RECON
 -- 
@@ -293,7 +288,7 @@ _AUFTRAGSNR=0
 -- @field #string FERRY Ferry flight mission.
 -- @field #string INTERCEPT Intercept mission.
 -- @field #string ORBIT Orbit mission.
--- @field #string PATROL Similar to CAP but no auto engage targets.
+-- @field #string GCCAP Similar to CAP but no auto engage targets.
 -- @field #string RECON Recon mission.
 -- @field #string RECOVERYTANKER Recovery tanker mission. Not implemented yet.
 -- @field #string RESCUEHELO Rescue helo.
@@ -316,7 +311,7 @@ AUFTRAG.Type={
   FERRY="Ferry Flight",
   INTERCEPT="Intercept",
   ORBIT="Orbit",
-  PATROL="Patrol",
+  GCCAP="Patrol",
   RECON="Recon",
   RECOVERYTANKER="Recovery Tanker",
   RESCUEHELO="Rescue Helo",
@@ -632,7 +627,7 @@ function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
   return mission
 end
 
---- Create a PATROL mission.
+--- Create a GCCAP mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
@@ -640,13 +635,13 @@ end
 -- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @return #AUFTRAG self
-function AUFTRAG:NewPATROL(Coordinate, Altitude, Speed, Heading, Leg)
+function AUFTRAG:NewGCCAP(Coordinate, Altitude, Speed, Heading, Leg)
 
   -- Create ORBIT first.
   local mission=AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
     
-  -- Mission type PATROL.
-  mission.type=AUFTRAG.Type.PATROL
+  -- Mission type GCCAP.
+  mission.type=AUFTRAG.Type.GCCAP
   
   mission:_SetLogID()
 
@@ -671,7 +666,7 @@ function AUFTRAG:NewTANKER(Coordinate, Altitude, Speed, Heading, Leg, RefuelSyst
   -- Create ORBIT first.
   local mission=AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
     
-  -- Mission type PATROL.
+  -- Mission type TANKER.
   mission.type=AUFTRAG.Type.TANKER
   
   mission:_SetLogID()
@@ -701,7 +696,7 @@ function AUFTRAG:NewAWACS(Coordinate, Altitude, Speed, Heading, Leg)
   -- Create ORBIT first.
   local mission=AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
     
-  -- Mission type PATROL.
+  -- Mission type AWACS.
   mission.type=AUFTRAG.Type.AWACS
   
   mission:_SetLogID()
@@ -1082,7 +1077,7 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RESCUEHELO)
   
-  mission:_TargetFromObject(Carrier)
+  self.carrier=Carrier
   
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.NOTHING
@@ -1157,6 +1152,31 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius)
   return mission
 end
 
+--- Create a mission to attack a group. Mission type is automatically chosen from the group category.
+-- @param #AUFTRAG self
+-- @param Ops.Target#TARGET Target The target.
+-- @return #AUFTRAG self
+function AUFTRAG:NewTARGET(Target)
+
+  local mission=nil --#AUFTRAG
+  
+  if Target.category==TARGET.Category.GROUND then
+  
+  
+  elseif Target.category==TARGET.Category.AIRCRAFT then
+  
+  elseif Target.category==TARGET.Category.AIRBASE then
+  
+  elseif Target.category==TARGET.Category.COORDINATE then
+ 
+  end
+
+
+  if mission then
+    mission:SetPriority(10, true)
+  end
+
+end
 
 --- Create a mission to attack a group. Mission type is automatically chosen from the group category.
 -- @param #AUFTRAG self
@@ -1882,12 +1902,6 @@ function AUFTRAG:Evaluate()
   -- Assume success and check if any failed condition applies.
   local failed=false
   
-  -- Any success condition true?
-  local successCondition=self:EvalConditionsAny(self.conditionSuccess)
-  
-  -- Any failure condition true?
-  local failureCondition=self:EvalConditionsAny(self.conditionFailure)
-  
   -- Target damage in %.
   local targetdamage=self:GetTargetDamage()
   
@@ -1930,6 +1944,13 @@ function AUFTRAG:Evaluate()
       end
   
   end
+
+
+  -- Any success condition true?
+  local successCondition=self:EvalConditionsAny(self.conditionSuccess)
+  
+  -- Any failure condition true?
+  local failureCondition=self:EvalConditionsAny(self.conditionFailure)
 
   if failureCondition then
     failed=true
@@ -2217,8 +2238,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP FlightGroup
-function AUFTRAG:onafterScheduled(From, Event, To, FlightGroup)
+function AUFTRAG:onafterScheduled(From, Event, To)
   self.status=AUFTRAG.Status.SCHEDULED
   self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
@@ -2264,6 +2284,7 @@ end
 -- @param #string To To state.
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group that is dead now.
 function AUFTRAG:onafterElementDestroyed(From, Event, To, OpsGroup, Element)
+  -- Increase number of own casualties.
   self.Ncasualties=self.Ncasualties+1
 end
 
@@ -2500,6 +2521,170 @@ function AUFTRAG:onafterStop(From, Event, To)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Target Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Create target data from a given object.
+-- @param #AUFTRAG self
+-- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC.
+function AUFTRAG:_TargetFromObject(Object)
+
+  if not self.engageTarget then
+  
+    self.engageTarget=TARGET:New(Object)
+
+  else
+  
+    -- Target was already specified elsewhere.
+  
+  end
+
+  -- TODO: get rid of this.
+  self.Ntargets=self.engageTarget.Ntargets0
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", self.engageTarget.lid, self.engageTarget.lid, self.Ntargets, self.engageTarget:GetLife()))
+  
+  return self
+end
+
+
+--- Count alive mission targets.
+-- @param #AUFTRAG self
+-- @param #AUFTRAG.TargetData Target (Optional) The target object.
+-- @return #number Number of alive target units.
+function AUFTRAG:CountMissionTargets(Target)
+
+  if self.engageTarget then
+    return self.engageTarget:CountTargets()
+  else
+    return 0
+  end
+  
+end
+
+--- Get target life points.
+-- @param #AUFTRAG self
+-- @return #number Number of initial life points when mission was planned.
+function AUFTRAG:GetTargetInitialLife()
+  local target=self:GetTargetData()
+  if target then
+    return target.life0
+  else
+    return 0
+  end
+end
+
+--- Get target damage.
+-- @param #AUFTRAG self
+-- @return #number Damage in percent.
+function AUFTRAG:GetTargetDamage()
+  local target=self:GetTargetData()
+  if target then
+    return target:GetDamage()
+  else
+    return 0
+  end
+end
+
+
+--- Get target life points.
+-- @param #AUFTRAG self
+-- @return #number Life points of target.
+function AUFTRAG:GetTargetLife()
+  local target=self:GetTargetData()
+  if target then
+    return target:GetLife()
+  else
+    return 0
+  end
+end
+
+--- Get target.
+-- @param #AUFTRAG self
+-- @return Ops.Target#TARGET The target object. Could be many things.
+function AUFTRAG:GetTargetData()
+  return self.engageTarget
+end
+
+--- Get mission objective object. Could be many things depending on the mission type.
+-- @param #AUFTRAG self
+-- @return Wrapper.Positionable#POSITIONABLE The target object. Could be many things.
+function AUFTRAG:GetObjective()
+  return self:GetTargetData().Target
+end
+
+--- Get type of target.
+-- @param #AUFTRAG self
+-- @return #string The target type.
+function AUFTRAG:GetTargetType()
+  return self:GetTargetData().Type
+end
+
+--- Get 2D vector of target.
+-- @param #AUFTRAG self
+-- @return DCS#VEC2 The target 2D vector or *nil*.
+function AUFTRAG:GetTargetVec2()
+  local coord=self:GetTargetCoordinate()
+  if coord then
+    return coord:GetVec2()
+  end
+  return nil
+end
+
+--- Get coordinate of target.
+-- @param #AUFTRAG self
+-- @return Core.Point#COORDINATE The target coordinate or *nil*.
+function AUFTRAG:GetTargetCoordinate()
+  
+  if self.transportPickup then
+  
+    -- Special case where we defined a 
+    return self.transportPickup
+    
+  elseif self.engageTarget then
+
+    return self.engageTarget:GetCoordinate()
+    
+  else
+    self:E(self.lid.."ERROR: Cannot get target coordinate!")
+  end
+
+  return nil
+end
+
+--- Get name of the target.
+-- @param #AUFTRAG self
+-- @return #string Name of the target or "N/A".
+function AUFTRAG:GetTargetName()
+  
+  if self.engageTarget.Target then
+    return self.engageTarget.Name
+  end
+    
+  return "N/A"
+end
+
+
+--- Get distance to target.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE FromCoord The coordinate from which the distance is measured.
+-- @return #number Distance in meters or 0.
+function AUFTRAG:GetTargetDistance(FromCoord)
+
+  local TargetCoord=self:GetTargetCoordinate()
+  
+  if TargetCoord and FromCoord then
+    return TargetCoord:Get2DDistance(FromCoord)
+  else
+    self:E(self.lid.."ERROR: TargetCoord or FromCoord does not exist in AUFTRAG:GetTargetDistance() function! Returning 0")
+  end
+  
+  return 0
+end
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2554,229 +2739,6 @@ function AUFTRAG:GetAssetByName(Name)
   return nil
 end
 
-
---- Count alive mission targets.
--- @param #AUFTRAG self
--- @param #AUFTRAG.TargetData Target (Optional) The target object.
--- @return #number Number of alive target units.
-function AUFTRAG:CountMissionTargets(Target)
-  
-  local N=0
-  
-  Target=Target or self:GetTargetData()
-  
-  if Target then
-  
-    if Target.Type==AUFTRAG.TargetType.GROUP then
-    
-      local target=Target.Target --Wrapper.Group#GROUP
-      
-      local units=target:GetUnits()
-      
-      for _,_unit in pairs(units or {}) do
-        local unit=_unit --Wrapper.Unit#UNIT
-        
-        -- We check that unit is "alive" and has health >1. Somtimes units get heavily damanged but are still alive.
-        -- TODO: here I could introduce and count that if units have only health < 50% if mission objective is to just "damage" the units.
-        if unit and unit:IsAlive() and unit:GetLife()>1 then
-          N=N+1
-        end
-      end      
-      
-    elseif Target.Type==AUFTRAG.TargetType.UNIT then
-    
-      local target=Target.Target --Wrapper.Unit#UNIT        
-      
-      if target and target:IsAlive() and target:GetLife()>1 then
-        N=N+1
-      end
-      
-    elseif Target.Type==AUFTRAG.TargetType.STATIC then
-    
-      local target=Target.Target --Wrapper.Static#STATIC
-      
-      if target and target:IsAlive() then
-        N=N+1
-      end
-      
-    elseif Target.Type==AUFTRAG.TargetType.AIRBASE then
-    
-      -- TODO: any (good) way to tell whether an airbase was "destroyed" or at least damaged? Is :GetLive() working?
-      
-    elseif Target.Type==AUFTRAG.TargetType.COORDINATE then
-    
-      -- No target!
-
-    elseif Target.Type==AUFTRAG.TargetType.SETGROUP then
-    
-      for _,_group in pairs(Target.Target.Set or {}) do
-        local group=_group --Wrapper.Group#GROUP
-        
-        local units=group:GetUnits()
-        
-        for _,_unit in pairs(units or {}) do
-          local unit=_unit --Wrapper.Unit#UNIT
-          
-          -- We check that unit is "alive".
-          if unit and unit:IsAlive() and unit:GetLife()>1 then
-            N=N+1
-          end
-        end              
-        
-      end
-    
-    elseif Target.Type==AUFTRAG.TargetType.SETUNIT then
-
-      for _,_unit in pairs(Target.Target.Set or {}) do
-        local unit=_unit --Wrapper.Unit#UNIT
-
-        -- We check that unit is "alive".
-        if unit and unit:IsAlive() and unit:GetLife()>1 then
-          N=N+1
-        end
-                
-      end
-
-    else
-      self:E("ERROR unknown target type")      
-    end
-  end
-  
-  return N
-end
-
---- Get target life points.
--- @param #AUFTRAG self
--- @return #number Number of initial life points when mission was planned.
-function AUFTRAG:GetTargetInitialLife()
-  return self:GetTargetData().Lifepoints
-end
-
---- Get target damage.
--- @param #AUFTRAG self
--- @return #number Damage in percent.
-function AUFTRAG:GetTargetDamage()
-  local target=self:GetTargetData()
-  local life=self:GetTargetLife()/self:GetTargetInitialLife()
-  local damage=1-life
-  return damage*100
-end
-
-
---- Get target life points.
--- @param #AUFTRAG self
--- @return #number Life points of target.
-function AUFTRAG:GetTargetLife()
-  return self:_GetTargetLife(nil, false)
-end
-
---- Get target life points.
--- @param #AUFTRAG self
--- @param #AUFTRAG.TargetData Target (Optional) The target object.
--- @param #boolean Healthy Get the life points of the healthy target. 
--- @return #number Life points of target.
-function AUFTRAG:_GetTargetLife(Target, Healthy)
-  
-  local N=0
-  
-  Target=Target or self:GetTargetData()
-  
-  local function _GetLife(unit)
-    local unit=unit --Wrapper.Unit#UNIT
-    if Healthy then
-      local life=unit:GetLife()
-      local life0=unit:GetLife0()
-      
-      return math.max(life, life0)
-    else
-      return unit:GetLife()
-    end
-  end
-  
-  if Target then
-  
-    if Target.Type==AUFTRAG.TargetType.GROUP then
-    
-      local target=Target.Target --Wrapper.Group#GROUP
-      
-      local units=target:GetUnits()
-      
-      for _,_unit in pairs(units or {}) do
-        local unit=_unit --Wrapper.Unit#UNIT
-        
-        -- We check that unit is "alive".
-        if unit and unit:IsAlive() then
-          N=N+_GetLife(unit)
-        end
-      end      
-      
-    elseif Target.Type==AUFTRAG.TargetType.UNIT then
-    
-      local target=Target.Target --Wrapper.Unit#UNIT        
-      
-      if target and target:IsAlive() then
-        N=N+_GetLife(target)
-      end
-      
-    elseif Target.Type==AUFTRAG.TargetType.STATIC then
-    
-      local target=Target.Target --Wrapper.Static#STATIC
-      
-      -- Statics are alive or not.
-      if target and target:IsAlive() then
-        N=N+1 --_GetLife(target)
-      else
-        N=N+0
-      end
-      
-    elseif Target.Type==AUFTRAG.TargetType.AIRBASE then
-    
-      -- TODO: any (good) way to tell whether an airbase was "destroyed" or at least damaged? Is :GetLive() working?
-      N=N+1
-
-    elseif Target.Type==AUFTRAG.TargetType.COORDINATE then
-    
-      -- A coordinate does not live.
-      N=N+1
-      
-    elseif Target.Type==AUFTRAG.TargetType.SETGROUP then
-    
-      for _,_group in pairs(Target.Target.Set or {}) do
-        local group=_group --Wrapper.Group#GROUP
-        
-        local units=group:GetUnits()
-        
-        for _,_unit in pairs(units or {}) do
-          local unit=_unit --Wrapper.Unit#UNIT
-          
-          -- We check that unit is "alive".
-          if unit and unit:IsAlive() then
-            N=N+_GetLife(unit)
-          end
-        end              
-        
-      end
-    
-    elseif Target.Type==AUFTRAG.TargetType.SETUNIT then
-
-      for _,_unit in pairs(Target.Target.Set or {}) do
-        local unit=_unit --Wrapper.Unit#UNIT
-
-        -- We check that unit is "alive".
-        if unit and unit:IsAlive() then
-          N=N+_GetLife(unit)
-        end
-                
-      end
-
-    else
-      self:E(self.lid.."ERROR unknown target type")      
-    end
-  end
-  
-  return N
-end
-
 --- Count alive flight groups assigned for this mission.
 -- @param #AUFTRAG self
 -- @return #number Number of alive flight groups.
@@ -2791,109 +2753,6 @@ function AUFTRAG:CountOpsGroups()
   return N
 end
 
---- Get coordinate of target.
--- @param #AUFTRAG self
--- @return #AUFTRAG.TargetData The target object. Could be many things.
-function AUFTRAG:GetTargetData()
-  return self.engageTarget
-end
-
---- Get mission objective object. Could be many things depending on the mission type.
--- @param #AUFTRAG self
--- @return Wrapper.Positionable#POSITIONABLE The target object. Could be many things.
-function AUFTRAG:GetObjective()
-  return self:GetTargetData().Target
-end
-
---- Get type of target.
--- @param #AUFTRAG self
--- @return #string The target type.
-function AUFTRAG:GetTargetType()
-  return self:GetTargetData().Type
-end
-
---- Get 2D vector of target.
--- @param #AUFTRAG self
--- @return DCS#VEC2 The target 2D vector or *nil*.
-function AUFTRAG:GetTargetVec2()
-  local coord=self:GetTargetCoordinate()
-  if coord then
-    return coord:GetVec2()
-  end
-  return nil
-end
-
---- Get coordinate of target.
--- @param #AUFTRAG self
--- @return Core.Point#COORDINATE The target coordinate or *nil*.
-function AUFTRAG:GetTargetCoordinate()
-  
-  if self.transportPickup then
-  
-    -- Special case where we defined a 
-    return self.transportPickup
-    
-  else
-  
-    local target
-  
-    if self:GetTargetType()==AUFTRAG.TargetType.COORDINATE then
-    
-      -- Here the objective itself is a COORDINATE.
-      return self:GetObjective()
-      
-    elseif self:GetTargetType()==AUFTRAG.TargetType.SETGROUP then
-    
-      -- Return the first group in the set.
-      -- TODO: does this only return ALIVE groups?!
-      return self:GetObjective():GetFirst():GetCoordinate()
-      
-    elseif self:GetTargetType()==AUFTRAG.TargetType.SETUNIT then
-    
-      -- Return the first unit in the set.
-      -- TODO: does this only return ALIVE units?!
-      return self:GetObjective():GetFirst():GetCoordinate()
-      
-    else
-    
-      -- In all other cases the GetCoordinate() function should work.
-      return self:GetObjective():GetCoordinate()
-      
-    end  
-  end
-
-  return nil
-end
-
---- Get name of the target.
--- @param #AUFTRAG self
--- @return #string Name of the target or "N/A".
-function AUFTRAG:GetTargetName()
-  
-  if self.engageTarget.Target then
-    return self.engageTarget.Name
-  end
-    
-  return "N/A"
-end
-
-
---- Get distance to target.
--- @param #AUFTRAG self
--- @param Core.Point#COORDINATE FromCoord The coordinate from which the distance is measured.
--- @return #number Distance in meters or 0.
-function AUFTRAG:GetTargetDistance(FromCoord)
-
-  local TargetCoord=self:GetTargetCoordinate()
-  
-  if TargetCoord and FromCoord then
-    return TargetCoord:Get2DDistance(FromCoord)
-  else
-    self:E(self.lid.."ERROR: TargetCoord or FromCoord does not exist in AUFTRAG:GetTargetDistance() function! Returning 0")
-  end
-  
-  return 0
-end
 
 --- Get coordinate of target. First unit/group of the set is used.
 -- @param #AUFTRAG self
@@ -3100,10 +2959,10 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
   
     -- Done below as also other mission types use the orbit task.
 
-  elseif self.type==AUFTRAG.Type.PATROL then
+  elseif self.type==AUFTRAG.Type.GCCAP then
   
     --------------------
-    -- PATROL Mission --
+    -- GCCAP Mission --
     --------------------
   
     -- Done below as also other mission types use the orbit task.
@@ -3177,7 +3036,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     
     -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
     local param={}
-    param.unitname=self:GetTargetName()
+    param.unitname=self.carrier:GetName()
     param.offsetX=200
     param.offsetZ=240
     param.altitude=70
@@ -3207,7 +3066,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
   if self.type==AUFTRAG.Type.ORBIT  or 
      self.type==AUFTRAG.Type.CAP    or
      self.type==AUFTRAG.Type.CAS    or
-     self.type==AUFTRAG.Type.PATROL or
+     self.type==AUFTRAG.Type.GCCAP  or
      self.type==AUFTRAG.Type.AWACS  or 
      self.type==AUFTRAG.Type.TANKER then
 
@@ -3237,136 +3096,35 @@ end
 
 --- Get DCS task table for an attack group or unit task.
 -- @param #AUFTRAG self
--- @param #AUFTRAG.TargetData target Target data.
+-- @param Ops.Target#TARGET Target Target data.
 -- @param #table DCStasks DCS DCS tasks table to which the task is added.
 -- @return DCS#Task The DCS task table.
-function AUFTRAG:_GetDCSAttackTask(target, DCStasks)
+function AUFTRAG:_GetDCSAttackTask(Target, DCStasks)
 
-  local DCStask=nil
+  DCStasks=DCStasks or {}
+  
+  for _,_target in pairs(Target.targets) do
+    local target=_target --Ops.Target#TARGET.Object
 
-  if target.Type==AUFTRAG.TargetType.GROUP then
-
-    DCStask=CONTROLLABLE.TaskAttackGroup(nil, target.Target, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageAsGroup)
-    
-    table.insert(DCStasks, DCStask)
+    if target.Type==TARGET.ObjectType.GROUP then
   
-  elseif target.Type==AUFTRAG.TargetType.UNIT or target.Type==AUFTRAG.TargetType.STATIC then
-  
-    DCStask=CONTROLLABLE.TaskAttackUnit(nil, target.Target, self.engageAsGroup, self.WeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
-    
-    table.insert(DCStasks, DCStask)
-  
-  elseif target.Type==AUFTRAG.TargetType.SETGROUP then
-  
-    -- Add all groups.
-    for _,group in pairs(target.Target.Set or {}) do
-      DCStask=CONTROLLABLE.TaskAttackGroup(nil, group, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageAsGroup)
+      local DCStask=CONTROLLABLE.TaskAttackGroup(nil, target.Object, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageAsGroup)
+      
       table.insert(DCStasks, DCStask)
-    end
-  
-  elseif target.Type==AUFTRAG.TargetType.SETUNIT then
-
-    -- Add tasks to attack all units.
-    for _,unit in pairs(target.Target.Set or {}) do
-      DCStask=CONTROLLABLE.TaskAttackUnit(nil, unit, self.engageAsGroup, self.WeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+    
+    elseif target.Type==TARGET.ObjectType.UNIT or target.Type==TARGET.ObjectType.STATIC then
+    
+      local DCStask=CONTROLLABLE.TaskAttackUnit(nil, target.Object, self.engageAsGroup, self.WeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+      
       table.insert(DCStasks, DCStask)
+      
     end
-  
+    
   end
-
+  
   return DCStasks
 end
 
---- Create target data from a given object.
--- @param #AUFTRAG self
--- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC.
--- @return #AUFTRAG.TargetData Target.
-function AUFTRAG:_TargetFromObject(Object)
-  
-  local target={} --#AUFTRAG.TargetData
-  
-  -- The object.
-  target.Target=Object
-  
-  if Object:IsInstanceOf("GROUP") then
-  
-    target.Type=AUFTRAG.TargetType.GROUP
-    
-    local object=Object --Wrapper.Group#GROUP
-    
-    target.Name=object:GetName()
-    
-  elseif Object:IsInstanceOf("UNIT") then
-  
-    target.Type=AUFTRAG.TargetType.UNIT
-    
-    local object=Object --Wrapper.Unit#UNIT
-    
-    target.Name=object:GetName()  
-  
-  elseif Object:IsInstanceOf("STATIC") then
-  
-    target.Type=AUFTRAG.TargetType.STATIC
-    
-    target.Name=Object:GetName()
-  
-  elseif Object:IsInstanceOf("COORDINATE") then
-  
-    target.Type=AUFTRAG.TargetType.COORDINATE
-    
-    local object=Object --Core.Point#COORDINATE
-    
-    target.Name=object:ToStringLLDMS()
-    
-  elseif Object:IsInstanceOf("AIRBASE") then
-  
-    target.Type=AUFTRAG.TargetType.AIRBASE
-    
-    local object=Object --Wrapper.Airbase#AIRBASE
-    
-    target.Name=object:GetName()
-    
-  elseif Object:IsInstanceOf("SET_GROUP") then
-  
-    target.Type=AUFTRAG.TargetType.SETGROUP
-    
-    local object=Object --Core.Set#SET_GROUP
-    
-    target.Name=object:GetFirst():GetName()
-  
-  elseif Object:IsInstanceOf("SET_UNIT") then
-  
-    target.Type=AUFTRAG.TargetType.SETUNIT
-    
-    local object=Object --Core.Set#SET_UNIT
-    
-    target.Name=object:GetFirst():GetName()
-  
-  else
-    self:E(self.lid.."ERROR: Unknown object given as target. Needs to be a GROUP, UNIT, STATIC, COORDINATE")
-    return nil
-  end
-  
-  
-  -- Number of initial targets.
-  local Ninitial=self:CountMissionTargets(target)
-  
-  -- Initial total life point.
-  local Lifepoints=self:_GetTargetLife(target, true)
-    
-  -- Set engage Target.
-  self.engageTarget=target  
-  self.engageTarget.Ninital=Ninitial  
-  self.engageTarget.Lifepoints=Lifepoints
-  
-  -- TODO: get rid of this.
-  self.Ntargets=Ninitial
-  
-  -- Debug info.
-  self:T(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", target.Name, target.Type, Ninitial, Lifepoints))
-  
-  return target
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

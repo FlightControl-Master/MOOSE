@@ -1609,6 +1609,7 @@ WAREHOUSE = {
 -- @field #boolean iscargo If true, asset is cargo. If false asset is transport. Nil if in stock.
 -- @field #number rid The request ID of this asset.
 -- @field #boolean arrived If true, asset arrived at its destination.
+-- @field #number damage Damage of asset group in percent.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -3821,6 +3822,11 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
         asset.spawned=false
         asset.iscargo=nil
         asset.arrived=nil
+        
+        -- Destroy group if it is alive.
+        if group:IsAlive()==true then
+          asset.damage=group:GetDamage()
+        end
 
         -- Add asset to stock.
         table.insert(self.stock, asset)
@@ -3991,6 +3997,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
     asset.skill=skill
     asset.assignment=assignment
     asset.spawned=false
+    asset.damage=0
     asset.spawngroupname=string.format("%s_AID-%d", templategroupname, asset.uid)
 
     if i==1 then

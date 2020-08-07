@@ -1437,7 +1437,7 @@ end
 function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
   -- Debug message.
-  local text=string.format("Task %s ID=%d execute.", tostring(Task.description), Task.id)
+  local text=string.format("Task %s ID=%d execute", tostring(Task.description), Task.id)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.lid..text)
   

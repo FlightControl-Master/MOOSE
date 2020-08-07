@@ -16,11 +16,15 @@
 -- @type TARGET
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table targets Table of target objects.
 -- @field #number targetcounter Running number to generate target object IDs.
 -- @field #number life Total life points on last status update.
 -- @field #number life0 Total life points of completely healthy targets.
+-- @field #number threatlevel0 Initial threat level.
+-- @field #number category Target category (Ground, Air, Sea).
+-- @field #number Ntargets0 Number of initial targets.
 -- @extends Core.Fsm#FSM
 
 --- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D. Eisenhower
@@ -38,11 +42,14 @@
 TARGET = {
   ClassName      = "TARGET",
   Debug          =   nil,
+  verbose        =     0,
   lid            =   nil,
   targets        =    {},
   targetcounter  =     0,
   life           =     0,
   life0          =     0,
+  Ntargets0      =     0,
+  threatlevel0   =     0
 }
 
 
@@ -60,7 +67,23 @@ TARGET.ObjectType={
   AIRBASE="Airbase",
 }
 
---- Type.
+
+--- Category.
+-- @type TARGET.Category
+-- @field #string AIRCRAFT 
+-- @field #string GROUND
+-- @field #string NAVAL
+-- @field #string AIRBASE
+-- @field #string COORDINATE
+TARGET.Category={
+  AIRCRAFT="Aircraft",
+  GROUND="Grund",
+  NAVAL="Naval",
+  AIRBASE="Airbase",
+  COORDINATE="Coordinate",
+}
+
+--- Object status.
 -- @type TARGET.ObjectStatus
 -- @field #string ALIVE Object is alive.
 -- @field #string DEAD Object is dead.
@@ -105,10 +128,15 @@ function TARGET:New(TargetObject)
 
   -- Increase counter.
   _TARGETID=_TARGETID+1
-  
-  self.lid=string.format("TARGET #%03d | ", _TARGETID)
-  
+ 
+  -- Add object.
   self:AddObject(TargetObject)
+  
+  local Target=self.targets[1] --#TARGET.Object
+  
+  self.category=self:GetTargetCategory(Target)
+  
+  self.lid=string.format("TARGET #%03d %s | ", _TARGETID, self.category)
 
   -- Start state.
   self:SetStartState("Stopped")
@@ -179,30 +207,23 @@ end
 -- @param #TARGET self
 -- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, AIRBASE or COORDINATE.
 function TARGET:AddObject(Object)
+    
+  if Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") then
 
-  if Object:IsInstanceOf("GROUP") then
-  
-    local group=Object --Wrapper.Group#GROUP
-    
-    local units=group:GetUnits()
-    
-    for _,unit in pairs(units) do
-      self:_AddObject(unit)
-    end
-    
-  elseif Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") then
-  
+    ---
+    -- Sets
+    ---
+
     local set=Object --Core.Set#SET_GROUP
     
     for _,object in pairs(set.Set) do
       self:AddObject(object)
-    end
-    
+    end    
   
   else
   
     ---
-    -- Units, Statics, Airbases, Coordinates
+    -- Groups, Units, Statics, Airbases, Coordinates
     ---
   
     self:_AddObject(Object)
@@ -265,7 +286,7 @@ function TARGET:onafterStatus(From, Event, To)
   end
   
   -- Log output.
-  local text=string.format("%s: Targets=%d/%d Life=%.1f/%.1f Damage=%.1f", fsmstate, self:CountTargets(), #self.targets, self:GetLife(), self:GetLife0(), self:GetDamage())
+  local text=string.format("%s: Targets=%d/%d Life=%.1f/%.1f Damage=%.1f", fsmstate, self:CountTargets(), self.Ntargets0, self:GetLife(), self:GetLife0(), self:GetDamage())
   if damaged then
     text=text.." Damaged!"
   end
@@ -277,7 +298,7 @@ function TARGET:onafterStatus(From, Event, To)
     for i,_target in pairs(self.targets) do
       local target=_target --#TARGET.Object
       local damage=(1-target.Life/target.Life0)*100
-      text=text..string.format("\n[%d] %s %s: Life=%.1f/%.1f, Damage=%.1f", i, target.Name, target.Status, target.Life, target.Life0, damage)
+      text=text..string.format("\n[%d] %s %s %s: Life=%.1f/%.1f, Damage=%.1f", i, target.Type, target.Name, target.Status, target.Life, target.Life0, damage)
     end
     self:I(self.lid..text)
   end
@@ -397,7 +418,30 @@ function TARGET:_AddObject(Object)
 
   local target={}  --#TARGET.Object
   
-  if Object:IsInstanceOf("UNIT") then
+  if Object:IsInstanceOf("GROUP") then
+  
+    local group=Object --Wrapper.Group#GROUP
+  
+    target.Type=TARGET.ObjectType.GROUP
+    target.Name=group:GetName()    
+        
+    local units=group:GetUnits()
+      
+    target.Life=0 ; target.Life0=0
+    for _,_unit in pairs(units or {}) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      
+      local life=unit:GetLife()
+      
+      target.Life=target.Life+life
+      target.Life0=target.Life0+math.max(unit:GetLife0(), life)  -- There was an issue with ships that life is greater life0, which cannot be!
+      
+      self.threatlevel0=self.threatlevel0+unit:GetThreatLevel()
+      
+      self.Ntargets0=self.Ntargets0+1
+    end
+  
+  elseif Object:IsInstanceOf("UNIT") then
   
     local unit=Object --Wrapper.Unit#UNIT
     
@@ -407,6 +451,10 @@ function TARGET:_AddObject(Object)
     if unit and unit:IsAlive() then
       target.Life=unit:GetLife()
       target.Life0=math.max(unit:GetLife0(), target.Life)  -- There was an issue with ships that life is greater life0!
+      
+      self.threatlevel0=self.threatlevel0+unit:GetThreatLevel()
+      
+      self.Ntargets0=self.Ntargets0+1
     end
 
   elseif Object:IsInstanceOf("STATIC") then
@@ -418,7 +466,9 @@ function TARGET:_AddObject(Object)
     
     if static and static:IsAlive() then
       target.Life0=1
-      target.Life=1      
+      target.Life=1
+      
+      self.Ntargets0=self.Ntargets0+1
     end
     
 
@@ -430,8 +480,9 @@ function TARGET:_AddObject(Object)
     target.Name=airbase:GetName()
 
     target.Life0=1
-    target.Life=1      
-
+    target.Life=1
+    
+    self.Ntargets0=self.Ntargets0+1
 
   elseif Object:IsInstanceOf("COORDINATE") then
 
@@ -442,6 +493,9 @@ function TARGET:_AddObject(Object)
 
     target.Life0=1
     target.Life=1
+    
+    -- TODO: does this make sense for a coordinate?
+    --self.Ntargets0=self.Ntargets0+1
   
   else
     self:E(self.lid.."ERROR: Unknown object type!")
@@ -488,7 +542,24 @@ end
 -- @return #number Life points of target.
 function TARGET:GetTargetLife(Target)
 
-  if Target.Type==TARGET.ObjectType.UNIT then
+  if Target.Type==TARGET.ObjectType.GROUP then
+
+    if Target.Object and Target.Object:IsAlive() then
+    
+      local units=Target.Object:GetUnits()
+      
+      local life=0
+      for _,_unit in pairs(units or {}) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        life=life+unit:GetLife()
+      end
+      
+      return life
+    else
+      return 0
+    end
+
+  elseif Target.Type==TARGET.ObjectType.UNIT then
 
     if Target.Object and Target.Object:IsAlive() then
       return Target.Object:GetLife()
@@ -526,19 +597,7 @@ end
 function TARGET:GetLife()
   
   local N=0
-  
-  local function _GetLife(unit)
-    local unit=unit --Wrapper.Unit#UNIT
-    if Healthy then
-      local life=unit:GetLife()
-      local life0=unit:GetLife0()
-      
-      return math.max(life, life0)
-    else
-      return unit:GetLife()
-    end
-  end
-  
+
   for _,_target in pairs(self.targets) do
     local Target=_target --#TARGET.Object
     
@@ -548,6 +607,132 @@ function TARGET:GetLife()
   
   return N
 end
+
+
+
+--- Get target coordinate.
+-- @param #TARGET self
+-- @param #TARGET.Object Target Target object.
+-- @return Core.Point#COORDINATE Coordinate of the target.
+function TARGET:GetTargetCoordinate(Target)
+
+  if Target.Type==TARGET.ObjectType.GROUP then
+
+    if Target.Object and Target.Object:IsAlive() then
+
+      return Target.Object:GetCoordinate()    
+
+    end
+
+  elseif Target.Type==TARGET.ObjectType.UNIT then
+
+    if Target.Object and Target.Object:IsAlive() then
+      return Target.Object:GetCoordinate()
+    end
+  
+  elseif Target.Type==TARGET.ObjectType.STATIC then
+  
+    if Target.Object and Target.Object:IsAlive() then
+      return Target.Object:GetCoordinate()
+    end
+    
+  elseif Target.Type==TARGET.ObjectType.AIRBASE then
+  
+    if Target.Status==TARGET.ObjectStatus.ALIVE then
+      return Target.Object:GetCoordinate()
+    end
+    
+  elseif Target.Type==TARGET.ObjectType.COORDINATE then
+  
+    return Target.Object
+    
+  end
+
+  return nil
+end
+
+--- Get coordinate.
+-- @param #TARGET self
+-- @return Core.Point#COORDINATE Coordinate of the target.
+function TARGET:GetCoordinate()
+
+  for _,_target in pairs(self.targets) do
+    local Target=_target --#TARGET.Object
+    
+    local coordinate=self:GetTargetCoordinate(Target)
+    
+    if coordinate then
+      return coordinate
+    end
+
+  end
+
+  return nil
+end
+
+
+--- Get target category
+-- @param #TARGET self
+-- @param #TARGET.Object Target Target object.
+-- @return #TARGET.Category Target category.
+function TARGET:GetTargetCategory(Target)
+
+  local category=nil
+
+  if Target.Type==TARGET.ObjectType.GROUP then
+
+    if Target.Object and Target.Object:IsAlive()~=nil then
+    
+      local group=Target.Object --Wrapper.Group#GROUP
+      
+      local cat=group:GetCategory()
+      
+      if cat==Group.Category.AIRPLANE or cat==Group.Category.HELICOPTER then
+        category=TARGET.Category.AIRCRAFT
+      elseif cat==Group.Category.GROUND or cat==Group.Category.TRAIN then
+        category=TARGET.Category.GROUND
+      elseif cat==Group.Category.SHIP then
+        category=TARGET.Category.NAVAL
+      end
+
+    end
+
+  elseif Target.Type==TARGET.ObjectType.UNIT then
+
+    if Target.Object and Target.Object:IsAlive() then
+      local unit=Target.Object --Wrapper.Unit#UNIT
+      
+      local group=unit:GetGroup()
+
+      local cat=group:GetCategory()
+      
+      if cat==Group.Category.AIRPLANE or cat==Group.Category.HELICOPTER then
+        category=TARGET.Category.AIRCRAFT
+      elseif cat==Group.Category.GROUND or cat==Group.Category.TRAIN then
+        category=TARGET.Category.GROUND
+      elseif cat==Group.Category.SHIP then
+        category=TARGET.Category.NAVAL
+      end
+      
+    end
+  
+  elseif Target.Type==TARGET.ObjectType.STATIC then
+  
+    return TARGET.Category.GROUND
+      
+  elseif Target.Type==TARGET.ObjectType.AIRBASE then
+  
+    return TARGET.Category.AIRBASE
+    
+  elseif Target.Type==TARGET.ObjectType.COORDINATE then
+  
+    return TARGET.Category.COORDINATE
+    
+  end
+
+  return category
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
@@ -580,7 +765,20 @@ function TARGET:CountTargets()
   for _,_target in pairs(self.targets) do
     local Target=_target --#TARGET.Object
   
-    if Target.Type==TARGET.ObjectType.UNIT then
+    if Target.Type==TARGET.ObjectType.GROUP then
+
+      local target=Target.Object --Wrapper.Group#GROUP
+      
+      local units=target:GetUnits()
+      
+      for _,_unit in pairs(units or {}) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        if unit and unit:IsAlive() and unit:GetLife()>1 then
+          N=N+1
+        end
+      end
+  
+    elseif Target.Type==TARGET.ObjectType.UNIT then
     
       local target=Target.Object --Wrapper.Unit#UNIT        
       

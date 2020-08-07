@@ -26,6 +26,8 @@
 -- @field #number ngrouping User defined number of units in the asset group.
 -- @field #table assets Squadron assets.
 -- @field #table missiontypes Capabilities (mission types and performances) of the squadron.
+-- @field #number maintenancetime Time in seconds needed for maintenance of a returned flight.
+-- @field #number repairtime Time in seconds for each
 -- @field #string livery Livery of the squadron.
 -- @field #number skill Skill of squadron members.
 -- @field #number modex Modex.
@@ -67,6 +69,8 @@ SQUADRON = {
   aircrafttype   =   nil,
   assets         =    {},
   missiontypes   =    {},
+  repairtime     =     0,
+  maintenancetime=     0,
   livery         =   nil,
   skill          =   nil,
   modex          =   nil,
@@ -230,6 +234,17 @@ end
 -- @return #SQUADRON self
 function SQUADRON:SetSkill(Skill)
   self.skill=Skill
+  return self
+end
+
+--- Set maintenance and repair time.
+-- @param #SQUADRON self
+-- @param #number MaintenanceTime Time in minutes it takes until a flight is combat ready again. Default is 0 min.
+-- @param #number RepairTime Time in minutes it takes to repair a flight for each percent damage taken. Default is 0 min.
+-- @return #SQUADRON self
+function SQUADRON:SetMaintenanceTime(MaintenanceTime, RepairTime)
+  self.maintenancetime=MaintenanceTime and MaintenanceTime*60 or 0
+  self.repairtime=RepairTime and RepairTime*60 or 0
   return self
 end
 
@@ -683,12 +698,12 @@ function SQUADRON:RecruitAssets(Mission)
       -- Asset is already on a mission.
       ---
 
-      -- Check if this asset is currently on a PATROL mission (STARTED or EXECUTING).
-      if self.airwing:IsAssetOnMission(asset, AUFTRAG.Type.PATROL) and Mission.type==AUFTRAG.Type.INTERCEPT then
+      -- Check if this asset is currently on a GCCAP mission (STARTED or EXECUTING).
+      if self.airwing:IsAssetOnMission(asset, AUFTRAG.Type.GCCAP) and Mission.type==AUFTRAG.Type.INTERCEPT then
 
         -- Check if the payload of this asset is compatible with the mission.
-        -- Note: we do not check the payload as an asset that is on a PATROL mission should be able to do an INTERCEPT as well!
-        self:I(self.lid.."Adding asset on PATROL mission for an INTERCEPT mission")
+        -- Note: we do not check the payload as an asset that is on a GCCAP mission should be able to do an INTERCEPT as well!
+        self:I(self.lid.."Adding asset on GCCAP mission for an INTERCEPT mission")
         table.insert(assets, asset)
         
       end      
@@ -696,7 +711,7 @@ function SQUADRON:RecruitAssets(Mission)
     else
     
       ---
-      -- Asset as no current mission
+      -- Asset as NO current mission
       ---
 
       if asset.spawned then
@@ -744,7 +759,7 @@ function SQUADRON:RecruitAssets(Mission)
         ---          
       
         -- Check that asset is not already requested for another mission.
-        if Npayloads>0 and not asset.requested then
+        if Npayloads>0 and self:IsRepaired(asset) and (not asset.requested) then
                     
           -- Add this asset to the selection.
           table.insert(assets, asset)
@@ -759,6 +774,26 @@ function SQUADRON:RecruitAssets(Mission)
   end -- loop over assets
 
   return assets
+end
+
+--- Checks if a mission type is contained in a table of possible types.
+-- @param #SQUADRON self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
+-- @return #boolean If true, the requested mission type is part of the possible mission types.
+function SQUADRON:IsRepaired(Asset)
+
+  if Asset.Treturned then
+    local Tnow=timer.getAbsTime()
+    if Asset.Treturned+self.maintenancetime>=Tnow then
+      return true
+    else
+      return false
+    end
+  
+  else
+    return true
+  end
+
 end
 
 
