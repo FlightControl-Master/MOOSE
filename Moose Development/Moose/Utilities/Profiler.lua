@@ -82,8 +82,8 @@ PROFILER = {
 }
 
 PROFILER.sortBy=1          -- Sort reports by 0=Count, 1=Total time by function
-PROFILER.logUnknown=false  -- Log unknown functions
-PROFILER.lowCpsThres=5     -- Skip results with less than X calls per second
+PROFILER.logUnknown=true  -- Log unknown functions
+PROFILER.lowCpsThres=1     -- Skip results with less than X calls per second
 PROFILER.fileName="_LuaProfiler.txt"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -252,7 +252,7 @@ function PROFILER.showInfo()
   local file=lfs.writedir()..[[Logs\]]..PROFILER.fileName  
   local f=io.open(file, 'w')
   
-  BASE:I(string.format("### Profiler: Writing result to file ", file))
+  BASE:I(string.format("### Profiler: Writing result to file %s", file))
   
   -- Gather data.
   local t={}

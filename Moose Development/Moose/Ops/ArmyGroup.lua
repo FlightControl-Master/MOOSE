@@ -703,6 +703,9 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   -- Add waypoint to table.
   self:_AddWaypoint(waypoint, wpnumber)
   
+  -- Get closest point to road.
+  waypoint.roadcoord=Coordinate:GetClosestPointToRoad(false)
+  
   -- Debug info.
   self:T(self.lid..string.format("Adding GROUND waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, Speed, self.currentwp, #self.waypoints))
   

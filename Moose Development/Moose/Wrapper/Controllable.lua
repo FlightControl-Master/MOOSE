@@ -243,8 +243,7 @@ end
 
 --- Returns the initial health.
 -- @param #CONTROLLABLE self
--- @return #number The controllable health value (unit or group average).
--- @return #nil The controllable is not existing or alive.
+-- @return #number The controllable health value (unit or group average) or `nil` if the controllable does not exist.
 function CONTROLLABLE:GetLife0()
   self:F2( self.ControllableName )
 
@@ -296,7 +295,6 @@ end
 -- @return #nil The CONTROLLABLE is not existing or alive.
 function CONTROLLABLE:GetFuel()
   self:F( self.ControllableName )
-
   return nil
 end
 

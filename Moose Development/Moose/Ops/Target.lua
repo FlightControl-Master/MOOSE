@@ -2,8 +2,9 @@
 --
 -- **Main Features:**
 --
---    * Manages AIRWINGS
---    * Events when units get 
+--    * Manages target, number alive, life points, damage etc.
+--    * Events when targets are damaged or destroyed
+--    * Various target objects: UNIT, GROUP, STATIC, SET_UNIT, AIRBASE, COORDINATE, SET_GROUP, SET_UNIT
 --
 -- ===
 --
@@ -35,7 +36,9 @@
 --
 -- # The TARGET Concept
 -- 
--- A wing commander is the head of airwings. He will find the best AIRWING to perform an assigned TARGET (mission).
+-- Define a target of your mission and monitor its status. Events are triggered when the target is damaged or destroyed.
+-- 
+-- A target can consist of one or multiple "objects".
 --
 --
 -- @field #TARGET
@@ -247,7 +250,7 @@ function TARGET:onafterStart(From, Event, To)
 
   -- Short info.
   local text=string.format("Starting Target")
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   self:HandleEvent(EVENTS.Dead,       self.OnEventUnitDeadOrLost)
   self:HandleEvent(EVENTS.UnitLost,   self.OnEventUnitDeadOrLost)
@@ -272,12 +275,16 @@ function TARGET:onafterStatus(From, Event, To)
   local damaged=false
   for i,_target in pairs(self.targets) do
     local target=_target --#TARGET.Object
+    
     local life=target.Life
+    
     target.Life=self:GetTargetLife(target)
+    
     if target.Life<life then
       self:ObjectDamaged(target)
       damaged=true
     end
+    
   end
   
   -- Target was damaged.
@@ -285,15 +292,17 @@ function TARGET:onafterStatus(From, Event, To)
     self:Damaged()
   end
   
-  -- Log output.
-  local text=string.format("%s: Targets=%d/%d Life=%.1f/%.1f Damage=%.1f", fsmstate, self:CountTargets(), self.Ntargets0, self:GetLife(), self:GetLife0(), self:GetDamage())
-  if damaged then
-    text=text.." Damaged!"
-  end
-  self:I(self.lid..text)  
+  -- Log output verbose=1.
+  if self.verbose>=1 then
+    local text=string.format("%s: Targets=%d/%d Life=%.1f/%.1f Damage=%.1f", fsmstate, self:CountTargets(), self.Ntargets0, self:GetLife(), self:GetLife0(), self:GetDamage())
+    if damaged then
+      text=text.." Damaged!"
+    end
+    self:I(self.lid..text)
+  end  
   
-  -- Verbose output.
-  if true then
+  -- Log output verbose=2.
+  if self.verbose>=2 then
     local text="Target:"
     for i,_target in pairs(self.targets) do
       local target=_target --#TARGET.Object

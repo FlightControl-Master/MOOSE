@@ -242,8 +242,8 @@ function FLIGHTGROUP:New(group)
   self:AddTransition("*",             "RTZ",               "Inbound")     -- Group is returning to destination zone. Not implemented yet!
   self:AddTransition("Inbound",       "Holding",           "Holding")     -- Group is in holding pattern.
 
-  self:AddTransition("*",             "Refuel",            "Going4Fuel")  -- Group is send to refuel at a tanker. Not implemented yet!
-  self:AddTransition("Going4Fuel",    "Refueled",          "Airborne")    -- Group is send to refuel at a tanker. Not implemented yet!
+  self:AddTransition("*",             "Refuel",            "Going4Fuel")  -- Group is send to refuel at a tanker.
+  self:AddTransition("Going4Fuel",    "Refueled",          "Airborne")    -- Group finished refueling.
 
   self:AddTransition("*",             "LandAt",            "LandingAt")   -- Helo group is ordered to land at a specific point.
   self:AddTransition("LandingAt",     "LandedAt",          "LandedAt")    -- Helo group landed landed at a specific point.
@@ -449,11 +449,22 @@ end
 --- Set fuel critical threshold. Triggers event "FuelCritical" and event function "OnAfterFuelCritical".
 -- @param #FLIGHTGROUP self
 -- @param #number threshold Fuel threshold in percent. Default 10 %.
--- @param #boolean rtb If true, RTB on fuel critical event.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetFuelCriticalThreshold(threshold, rtb)
+function FLIGHTGROUP:SetFuelCriticalThreshold(threshold)
   self.fuelcriticalthresh=threshold or 10
-  self.fuelcriticalrtb=rtb
+  return self
+end
+
+--- Set if critical fuel threshold is reached, flight goes RTB.
+-- @param #FLIGHTGROUP self
+-- @param #boolean switch If true or nil, flight goes RTB. If false, turn this off.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetFuelCriticalRTB(switch)
+  if switch==false then
+    self.fuelcriticalrtb=false
+  else
+    self.fuelcriticalrtb=true
+  end
   return self
 end
 
@@ -1593,7 +1604,9 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
   end
 
   -- Stop and despawn in 5 min.
-  self:__Stop(5*60)
+  if not self.airwing then
+    self:__Stop(5*60)
+  end
 end
 
 --- On after "Dead" event.
@@ -1930,6 +1943,12 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
 
   -- Clear holding time in any case.
   self.Tholding=nil
+  
+  -- Cancel all missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    self:MissionCancel(mission)
+  end
 
   -- Defaults:
   SpeedTo=SpeedTo or UTILS.KmphToKnots(self.speedCruise)
@@ -2326,9 +2345,14 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
     local tanker=self.airwing:GetTankerForFlight(self)
 
     if tanker then
+    
+      self:I(self.lid..string.format("Send to refuel at tanker %s", tanker.flightgroup:GetName()))
+      
+      -- Get a coordinate towards the tanker.
+      local coordinate=self:GetCoordinate():GetIntermediateCoordinate(tanker.flightgroup:GetCoordinate(), 0.75)
 
       -- Send flight to tanker with refueling task.
-      self:Refuel(tanker.flightgroup:GetCoordinate())
+      self:Refuel(coordinate)
 
     else
 
@@ -2349,7 +2373,10 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
 
         self:I(self.lid..string.format("Send to refuel at tanker %s", tanker:GetName()))
 
-        self:Refuel()
+        -- Get a coordinate towards the tanker.
+        local coordinate=self:GetCoordinate():GetIntermediateCoordinate(tanker.flightgroup:GetCoordinate(), 0.75)
+
+        self:Refuel(coordinate)
 
         return
       end
@@ -2736,7 +2763,7 @@ end
 --- Find the nearest tanker.
 -- @param #FLIGHTGROUP self
 -- @param #number Radius Search radius in NM. Default 50 NM.
--- @return Wrapper.Group#GROUP Closest tanker group #nil.
+-- @return Wrapper.Group#GROUP Closest tanker group or `nil` if no tanker is in the given radius.
 function FLIGHTGROUP:FindNearestTanker(Radius)
 
   Radius=UTILS.NMToMeters(Radius or 50)

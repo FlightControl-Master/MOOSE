@@ -18,6 +18,7 @@
 -- @type SQUADRON
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string name Name of the squadron.
 -- @field #string templatename Name of the template group.
@@ -63,6 +64,7 @@
 SQUADRON = {
   ClassName      = "SQUADRON",
   Debug          =   nil,
+  verbose        =     0,
   lid            =   nil,
   name           =   nil,
   templatename   =   nil,
@@ -563,13 +565,22 @@ function SQUADRON:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
+
+  local callsign=self.callsignName and UTILS.GetCallsignName(self.callsignName) or "N/A"
+  local modex=self.modex and self.modex or -1
+  local skill=self.skill and tostring(self.skill) or "N/A"
   
-  -- Check if group has detected any units.
-  --self:_CheckAssetStatus()
+  local NassetsTot=#self.assets
+  local NassetsInS=self:CountAssetsInStock()
+  local NassetsQP, NassetsP, NassetsQ=self.airwing and self.airwing:CountAssetsOnMission(nil, self) or 0,0,0
 
   -- Short info.
-  local text=string.format("Status %s: Assets %d", fsmstate, #self.assets)
+  local text=string.format("%s [Type=%s, Callsign=%s, Modex=%d, Skill=%s]: Assets Total=%d, InStock=%d, OnMission=%d [P=%d, Q=%d]", 
+  fsmstate, self.aircrafttype, callsign, modex, skill, NassetsTot, NassetsInS, NassetsQP, NassetsP, NassetsQ)
   self:I(self.lid..text)
+  
+  -- Check if group has detected any units.
+  self:_CheckAssetStatus()  
   
   if not self:IsStopped() then
     self:__Status(-30)
@@ -581,9 +592,74 @@ end
 -- @param #SQUADRON self
 function SQUADRON:_CheckAssetStatus()
 
-  for _,_asset in pairs(self.assets) do
-    local asset=_asset
-        
+  if self.verbose>=0 then
+    local text=""
+    for j,_asset in pairs(self.assets) do
+      local asset=_asset  --Ops.AirWing#AIRWING.SquadronAsset
+  
+      -- Text.
+      text=text..string.format("\n-[%d] %s*%d: ", j, asset.unittype, asset.nunits)
+      
+      if asset.spawned then
+      
+        ---
+        -- Spawned
+        ---
+  
+        -- Mission info.
+        local mission=self.airwing and self.airwing:GetAssetCurrentMission(asset) or false
+        if mission then
+          local distance=asset.flightgroup and UTILS.MetersToNM(mission:GetTargetDistance(asset.flightgroup.group:GetCoordinate())) or 0
+          text=text..string.format(" Mission %s - %s: Status=%s, Dist=%.1f NM", mission.name, mission.type, mission.status, distance)
+        end
+          
+        -- Flight status.
+        text=text..", Flight: "
+        if asset.flightgroup and asset.flightgroup:IsAlive() then
+          local status=asset.flightgroup:GetState()
+          local fuelmin=asset.flightgroup:GetFuelMin()
+          local fuellow=asset.flightgroup:IsFuelLow()
+          local fuelcri=asset.flightgroup:IsFuelCritical()
+          
+          text=text..string.format("%s Fuel=%d", status, fuelmin)
+          if fuelcri then
+            text=text.." (Critical!)"
+          elseif fuellow then
+            text=text.." (Low)"
+          end
+          
+          local lifept, lifept0=asset.flightgroup:GetLifePoints()
+          text=text..string.format(", Life=%d/%d", lifept, lifept0)
+          
+          local ammo=asset.flightgroup:GetAmmoTot()
+          text=text..string.format(", Ammo=%d [G=%d, R=%d, B=%d, M=%d]", ammo.Total,ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles)
+        else
+          text=text.."N/A"
+        end
+
+        -- Payload info.
+        local payload=asset.payload and table.concat(self.airwing:GetPayloadMissionTypes(asset.payload), ", ") or "None"
+        text=text..", Payload={"..payload.."}"
+
+      
+      else
+  
+        ---
+        -- In Stock
+        ---
+  
+        if asset.Treturned then
+          local T=timer.getAbsTime()-asset.Treturned
+          text=text..string.format(" Treturn=%d sec", T)
+        end
+        if asset.damage then
+          text=text..string.format(" Damage=%.1f", asset.damage)
+        end
+        text=text..string.format(" Repaired=%s T=%d sec", tostring(self:IsRepaired(asset)), self:GetRepairTime(asset))
+      
+      end
+    end
+    self:I(self.lid..text)
   end
 
 end
@@ -603,6 +679,8 @@ function SQUADRON:onafterStop(From, Event, To)
     self:DelAsset(asset)
   end
 
+  self.CallScheduler:Clear()
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -776,6 +854,30 @@ function SQUADRON:RecruitAssets(Mission)
   return assets
 end
 
+
+--- Get the time an asset needs to be repaired.
+-- @param #SQUADRON self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
+-- @return #number Time in seconds until asset is repaired.
+function SQUADRON:GetRepairTime(Asset)
+
+  if Asset.Treturned then
+  
+    local t=self.maintenancetime    
+    t=t+Asset.damage*self.repairtime
+    
+    -- Seconds after returned.
+    local dt=timer.getAbsTime()-Asset.Treturned
+  
+    local T=t-dt
+    
+    return T
+  else
+    return 0
+  end
+
+end
+
 --- Checks if a mission type is contained in a table of possible types.
 -- @param #SQUADRON self
 -- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
@@ -784,7 +886,8 @@ function SQUADRON:IsRepaired(Asset)
 
   if Asset.Treturned then
     local Tnow=timer.getAbsTime()
-    if Asset.Treturned+self.maintenancetime>=Tnow then
+    local Trepaired=Asset.Treturned+self.maintenancetime
+    if Tnow>=Trepaired then
       return true
     else
       return false

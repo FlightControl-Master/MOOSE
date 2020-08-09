@@ -245,7 +245,7 @@ OPSGROUP.TaskType={
 -- @field #number speed Speed in m/s.
 -- @field #number alt Altitude in meters. For submaries use negative sign for depth.
 -- @field #string action Waypoint action (turning point, etc.). Ground groups have the formation here.
--- @field #table task Waypoint task combo.
+-- @field #table task Waypoint DCS task combo.
 -- @field #string type Waypoint type.
 -- @field #string name Waypoint description. Shown in the F10 map.
 -- @field #number x Waypoint x-coordinate.
@@ -254,6 +254,7 @@ OPSGROUP.TaskType={
 -- @field #boolean intowind If true, this waypoint is a turn into wind route point.
 -- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
 -- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
+-- @field Core.Point#COORDINATE roadcoord Closest point to road.
 -- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
 
 --- NavyGroup version.
@@ -417,8 +418,9 @@ function OPSGROUP:GetSpeedCruise()
 end
 
 --- Set detection on or off.
+-- If detection is on, detected targets of the group will be evaluated and FSM events triggered. 
 -- @param #OPSGROUP self
--- @param #boolean Switch If true, detection is on. If false or nil, detection is off. Default is off.
+-- @param #boolean Switch If `true`, detection is on. If `false` or `nil`, detection is off. Default is off.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDetection(Switch)
   self.detectionOn=Switch
