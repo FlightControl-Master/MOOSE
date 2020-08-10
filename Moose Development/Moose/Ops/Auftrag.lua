@@ -21,6 +21,7 @@
 -- @type AUFTRAG
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number auftragsnummer Auftragsnummer.
 -- @field #string type Mission type.
@@ -255,6 +256,7 @@
 AUFTRAG = {
   ClassName          = "AUFTRAG",
   Debug              = false,
+  verbose            =     2,
   lid                =   nil,
   auftragsnummer     =   nil,
   groupdata         =     {},
@@ -627,7 +629,8 @@ function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
   return mission
 end
 
---- Create a GCCAP mission.
+--- Create a Ground Controlled CAP (GCCAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a compat air patrol but not engage by
+-- themselfs. They wait for the CHIEF to tell them whom to engage.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
@@ -1178,6 +1181,96 @@ function AUFTRAG:NewTARGET(Target)
 
 end
 
+
+--- Create a mission to attack a group. Mission type is automatically chosen from the group category.
+-- @param #AUFTRAG self
+-- @param Wrapper.Positionable#POSITIONABLE Target Target object.
+-- @return #string Auftrag type, e.g. `AUFTRAG.Type.BAI` (="BAI").
+function AUFTRAG:_DetermineAuftragType(Target)
+
+  local group=nil      --Wrapper.Group#GROUP
+  local airbase=nil    --Wrapper.Airbase#AIRBASE
+  local scenery=nil    --Wrapper.Scenery#SCENERY
+  local coordinate=nil --Core.Point#COORDINATE
+  local auftrag=nil
+
+  if Target:IsInstanceOf("GROUP") then
+    group=Target --Target is already a group.  
+  elseif Target:IsInstanceOf("UNIT") then
+    group=Target:GetGroup()
+  elseif Target:IsInstanceOf("AIRBASE") then
+    airbase=Target
+  elseif Target:IsInstanceOf("SCENERY") then
+    scenery=Target
+  end
+  
+  if group then
+
+    local category=group:GetCategory()
+    local attribute=group:GetAttribute()
+
+    if category==Group.Category.AIRPLANE or category==Group.Category.HELICOPTER then
+    
+      ---
+      -- A2A: Intercept
+      ---
+    
+      auftrag=AUFTRAG.Type.INTERCEPT
+    
+    elseif category==Group.Category.GROUND or category==Group.Category.TRAIN then
+    
+      ---
+      -- GROUND
+      ---
+
+      if attribute==GROUP.Attribute.GROUND_SAM then
+          
+        -- SEAD/DEAD
+          
+        auftrag=AUFTRAG.Type.SEAD
+        
+      elseif attribute==GROUP.Attribute.GROUND_AAA then
+      
+        auftrag=AUFTRAG.Type.BAI
+        
+      elseif attribute==GROUP.Attribute.GROUND_ARTILLERY then
+      
+        auftrag=AUFTRAG.Type.BAI
+      
+      elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
+      
+        auftrag=AUFTRAG.Type.BAI
+          
+      else
+
+        auftrag=AUFTRAG.Type.BAI
+      
+      end
+
+    
+    elseif category==Group.Category.SHIP then
+    
+      ---
+      -- NAVAL
+      ---
+    
+      auftrag=AUFTRAG.Type.ANTISHIP
+  
+    else
+      self:E(self.lid.."ERROR: Unknown Group category!")
+    end
+    
+  elseif airbase then
+    auftrag=AUFTRAG.Type.BOMBRUNWAY   
+  elseif scenery then
+    auftrag=AUFTRAG.Type.STRIKE
+  elseif coordinate then
+    auftrag=AUFTRAG.Type.BOMBING
+  end
+
+  return auftrag
+end
+
 --- Create a mission to attack a group. Mission type is automatically chosen from the group category.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP EngageGroup Group to be engaged.
@@ -1186,66 +1279,54 @@ function AUFTRAG:NewAUTO(EngageGroup)
 
   local mission=nil --#AUFTRAG
   
-  local group=EngageGroup
+  local Target=EngageGroup
 
-  if group and group:IsAlive() then
+  local auftrag=self:_DetermineAuftragType(EngageGroup)
   
-    local category=group:GetCategory()
-    local attribute=group:GetAttribute()
-    local threatlevel=group:GetThreatLevel()
+  if auftrag==AUFTRAG.Type.ANTISHIP then
+    mission=AUFTRAG:NewANTISHIP(Target)
+  elseif auftrag==AUFTRAG.Type.ARTY then
+    mission=AUFTRAG:NewARTY(Target)
+  elseif auftrag==AUFTRAG.Type.AWACS then
+    mission=AUFTRAG:NewAWACS(Coordinate,Altitude,Speed,Heading,Leg)
+  elseif auftrag==AUFTRAG.Type.BAI then
+    mission=AUFTRAG:NewBAI(Target,Altitude)
+  elseif auftrag==AUFTRAG.Type.BOMBING then
+    mission=AUFTRAG:NewBOMBING(Target,Altitude)
+  elseif auftrag==AUFTRAG.Type.BOMBRUNWAY then
+    mission=AUFTRAG:NewBOMBRUNWAY(Airdrome,Altitude)
+  elseif auftrag==AUFTRAG.Type.BOMBCARPET then
+    mission=AUFTRAG:NewBOMBCARPET(Target,Altitude,CarpetLength)
+  elseif auftrag==AUFTRAG.Type.CAP then
+    mission=AUFTRAG:NewCAP(ZoneCAP,Altitude,Speed,Coordinate,Heading,Leg,TargetTypes)
+  elseif auftrag==AUFTRAG.Type.CAS then
+  mission=AUFTRAG:NewCAS(ZoneCAS,Altitude,Speed,Coordinate,Heading,Leg,TargetTypes)  
+  elseif auftrag==AUFTRAG.Type.ESCORT then
+    mission=AUFTRAG:NewESCORT(EscortGroup,OffsetVector,EngageMaxDistance,TargetTypes)  
+  elseif auftrag==AUFTRAG.Type.FACA then
+    mission=AUFTRAG:NewFACA(Target,Designation,DataLink,Frequency,Modulation)
+  elseif auftrag==AUFTRAG.Type.FERRY then
+    -- Not implemented yet.  
+  elseif auftrag==AUFTRAG.Type.GCCAP then
+    mission=AUFTRAG:NewGCCAP(Coordinate,Altitude,Speed,Heading,Leg)
+  elseif auftrag==AUFTRAG.Type.INTERCEPT then
+    mission=AUFTRAG:NewINTERCEPT(Target)
+  elseif auftrag==AUFTRAG.Type.ORBIT then
+    mission=AUFTRAG:NewORBIT(Coordinate,Altitude,Speed,Heading,Leg)
+  elseif auftrag==AUFTRAG.Type.RECON then
+    -- Not implemented yet.  
+  elseif auftrag==AUFTRAG.Type.RESCUEHELO then
+    mission=AUFTRAG:NewRESCUEHELO(Carrier)
+  elseif auftrag==AUFTRAG.Type.SEAD then
+    mission=AUFTRAG:NewSEAD(Target,Altitude)
+  elseif auftrag==AUFTRAG.Type.STRIKE then
+    mission=AUFTRAG:NewSTRIKE(Target,Altitude)
+  elseif auftrag==AUFTRAG.Type.TANKER then
+    mission=AUFTRAG:NewTANKER(Coordinate,Altitude,Speed,Heading,Leg,RefuelSystem)
+  elseif auftrag==AUFTRAG.Type.TROOPTRANSPORT then
+    mission=AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet,DropoffCoordinate,PickupCoordinate)
+  else
   
-    if category==Group.Category.AIRPLANE or category==Group.Category.HELICOPTER then
-    
-      ---
-      -- AIR
-      ---
-              
-      mission=AUFTRAG:NewINTERCEPT(group)
-      
-    elseif category==Group.Category.GROUND then
-    
-      ---
-      -- GROUND
-      ---
-    
-      --TODO: action depends on type
-      -- AA/SAM ==> SEAD
-      -- Tanks ==>
-      -- Artillery ==>
-      -- Infantry ==>
-      -- 
-              
-      if attribute==GROUP.Attribute.GROUND_AAA or attribute==GROUP.Attribute.GROUND_SAM then
-          
-        -- SEAD/DEAD
-        
-        -- TODO: Attack radars first? Attack launchers?  
-          
-        mission=AUFTRAG:NewSEAD(group)
-        
-      elseif attribute==GROUP.Attribute.GROUND_ARTILLERY then
-      
-        mission=AUFTRAG:NewBAI(group)
-      
-      elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
-      
-        mission=AUFTRAG:NewBAI(group)
-          
-      else
-
-        mission=AUFTRAG:NewBAI(group)
-      
-      end
-      
-    elseif category==Group.Category.SHIP then
-    
-      ---
-      -- NAVAL
-      ---
-      
-       mission=AUFTRAG:NewANTISHIP(group)
-            
-    end
   end
   
   if mission then
@@ -1255,7 +1336,19 @@ function AUFTRAG:NewAUTO(EngageGroup)
   return mission
 end
 
+--- Create a mission to attack a group. Mission type is automatically chosen from the group category.
+-- @param #AUFTRAG self
+-- @param Ops.Target#TARGET Target Target to engage.
+-- @return #AUFTRAG self
+function AUFTRAG:NewTARGET(Target)
 
+  for _,_target in pairs(Target) do
+    local target=_target --Ops.Target#TARGET.Object
+    a=target.Object
+  end
+
+  return mission
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User API Functions
@@ -1411,6 +1504,15 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:SetMissionAltitude(Altitude)
   self.missionAltitude=UTILS.FeetToMeters(Altitude)
+  return self
+end
+
+--- Set mission speed. That is the speed the group uses to get to the mission waypoint.
+-- @param #AUFTRAG self
+-- @param #string Speed Mission speed in knots.
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionSpeed(Speed)
+  self.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
   return self
 end
 
@@ -1823,6 +1925,9 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterStatus(From, Event, To)
 
+  -- Current abs. mission time.
+  local Tnow=timer.getAbsTime()
+
   -- Number of alive mission targets.
   local Ntargets=self:CountMissionTargets()
   
@@ -1837,7 +1942,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
       -- All groups have reported MISSON DONE.
       self:Done()
       
-    elseif (self.Tstop and timer.getAbsTime()>self.Tstop+10) or (self.Ntargets>0 and Ntargets==0) then
+    elseif (self.Tstop and Tnow>self.Tstop+10) or (self.Ntargets>0 and Ntargets==0) then
     
       -- Cancel mission if stop time passed.
       self:Cancel()
@@ -1845,36 +1950,39 @@ function AUFTRAG:onafterStatus(From, Event, To)
     end
     
   end
-
-  
+ 
   -- Current FSM state.
   local fsmstate=self:GetState()
-  local Tnow=timer.getAbsTime()
   
-  -- Mission start stop time.
-  local Cstart=UTILS.SecondsToClock(self.Tstart, true)
-  local Cstop=self.Tstop and UTILS.SecondsToClock(self.Tstop, true) or "INF"
-  
-  local targetname=self:GetTargetName() or "unknown"
-  
-  local airwing=self.airwing and self.airwing.alias or "N/A"
-  local commander=self.wingcommander and tostring(self.wingcommander.coalition) or "N/A"
-
-  -- Info message.
-  self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, commander))
-
   -- Check for error.  
   if fsmstate~=self.status then
     self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
-
-  -- Data on assigned groups.
-  local text="Group data:"  
-  for groupname,_groupdata in pairs(self.groupdata) do
-    local groupdata=_groupdata --#AUFTRAG.GroupData
-    text=text..string.format("\n- %s: status mission=%s opsgroup=%s", groupname, groupdata.status, groupdata.opsgroup and groupdata.opsgroup:GetState() or "N/A")
+  
+  if self.verbose>=1 then
+  
+    -- Mission start stop time.
+    local Cstart=UTILS.SecondsToClock(self.Tstart, true)
+    local Cstop=self.Tstop and UTILS.SecondsToClock(self.Tstop, true) or "INF"
+    
+    local targetname=self:GetTargetName() or "unknown"
+    
+    local airwing=self.airwing and self.airwing.alias or "N/A"
+    local commander=self.wingcommander and tostring(self.wingcommander.coalition) or "N/A"
+  
+    -- Info message.
+    self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, commander))
   end
-  self:T(self.lid..text)
+
+  if self.verbose>=2 then
+    -- Data on assigned groups.
+    local text="Group data:"  
+    for groupname,_groupdata in pairs(self.groupdata) do
+      local groupdata=_groupdata --#AUFTRAG.GroupData
+      text=text..string.format("\n- %s: status mission=%s opsgroup=%s", groupname, groupdata.status, groupdata.opsgroup and groupdata.opsgroup:GetState() or "N/A")
+    end
+    self:I(self.lid..text)
+  end
 
   -- Ready to evaluate mission outcome?
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false

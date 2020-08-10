@@ -2184,7 +2184,7 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
   local wp0=coordinate:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed, true)
   local wp9=Coordinate:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, "Refuel")
 
-  self:Route({wp0, wp9})
+  self:Route({wp0, wp9}, 1)
 
 end
 

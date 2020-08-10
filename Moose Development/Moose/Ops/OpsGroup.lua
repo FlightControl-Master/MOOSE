@@ -757,17 +757,12 @@ function OPSGROUP:GetWaypointIndexNext(cyclic)
     cyclic=self.adinfinitum
   end
   
-  --env.info("FF cyclic = "..tostring(cyclic))
-  
   local N=#self.waypoints
 
   local n=math.min(self.currentwp+1, N)
   
-  --env.info("FF n = "..tostring(n))
-  
   if cyclic and self.currentwp==N then
     n=1
-    --env.info("FF cyclic n = "..tostring(n))
   end
   
   return n

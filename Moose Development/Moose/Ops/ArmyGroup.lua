@@ -428,6 +428,17 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
       end
       
     end
+
+
+    if formation==ENUMS.Formation.Vehicle.OnRoad then
+    
+      local wpnext=self:GetWaypointNext()
+      
+      if wpnext.action~=ENUMS.Formation.Vehicle.OnRoad then
+        
+      end
+    
+    end
     
     -- Debug info.
     self:I(string.format("WP %d %s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.type, wp.speed, wp.alt, wp.action))
@@ -705,6 +716,7 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   
   -- Get closest point to road.
   waypoint.roadcoord=Coordinate:GetClosestPointToRoad(false)
+  waypoint.roadist=Coordinate:Get2DDistance(waypoint.roadcoord)
   
   -- Debug info.
   self:T(self.lid..string.format("Adding GROUND waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, Speed, self.currentwp, #self.waypoints))
