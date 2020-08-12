@@ -824,60 +824,10 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   end
 
   ---
-  -- Tasks
+  -- Tasks & Missions
   ---
 
-  -- Task queue.
-  if self.verbose>1 and #self.taskqueue>0 then
-    local text=string.format("Tasks #%d", #self.taskqueue)
-    for i,_task in pairs(self.taskqueue) do
-      local task=_task --Ops.OpsGroup#OPSGROUP.Task
-      local name=task.description
-      local taskid=task.dcstask.id or "unknown"
-      local status=task.status
-      local clock=UTILS.SecondsToClock(task.time, true)
-      local eta=task.time-timer.getAbsTime()
-      local started=task.timestamp and UTILS.SecondsToClock(task.timestamp, true) or "N/A"
-      local duration=-1
-      if task.duration then
-        duration=task.duration
-        if task.timestamp then
-          -- Time the task is running.
-          duration=task.duration-(timer.getAbsTime()-task.timestamp)
-        else
-          -- Time the task is supposed to run.
-          duration=task.duration
-        end
-      end
-      -- Output text for element.
-      if task.type==OPSGROUP.TaskType.SCHEDULED then
-        text=text..string.format("\n[%d] %s (%s): status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
-      elseif task.type==OPSGROUP.TaskType.WAYPOINT then
-        text=text..string.format("\n[%d] %s (%s): status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
-      end
-    end
-    self:I(self.lid..text)
-  end
-
-  ---
-  -- Missions
-  ---
-
-  -- Current mission name.
-  if self.verbose>0 then
-    local Mission=self:GetMissionByID(self.currentmission)
-
-    -- Current status.
-    local text=string.format("Missions %d, Current: %s", self:CountRemainingMissison(), Mission and Mission.name or "none")
-    for i,_mission in pairs(self.missionqueue) do
-      local mission=_mission --Ops.Auftrag#AUFTRAG
-      local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
-      local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
-      text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d wp=%s targets=%d",
-      i, tostring(mission.name), mission.type, mission:GetGroupStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, tostring(mission:GetGroupWaypointIndex(self)), mission:CountMissionTargets())
-    end
-    self:I(self.lid..text)
-  end
+  self:_PrintTaskAndMissionStatus()
 
   ---
   -- Fuel State
@@ -1415,35 +1365,35 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
 
   if self.ai then
 
-    -- Set default ROE and ROT options.
-    self:SwitchROE(self.option.ROE)
-    self:SwitchROT(self.option.ROT)
-
-    -- Turn TACAN beacon on.
-    if self.tacanDefault then
-      self:SwitchTACAN(self.tacanDefault.Channel, self.tacanDefault.Morse, self.tacanDefault.BeaconName, self.tacanDefault.Band)
+    -- Set default ROE.
+    if self.option.ROE then
+      self:SwitchROE(self.option.ROE)
+    else
+      self:SwitchROE(ENUMS.ROE.ReturnFire)
     end
 
-    -- Turn on the radio.
-    if self.radioDefault then
-      self:SwitchRadio(self.radioDefault.Freq, self.radioDefault.Modu)
+    -- Set default ROT.
+    if self.option.ROT then
+      self:SwitchROT(self.option.ROT)
     else
-      self:SetDefaultRadio(self.radio.Freq, self.radio.Modu)
+      self:SwitchROE(ENUMS.ROT.PassiveDefense)
+    end
+        
+    -- Turn TACAN beacon on.
+    if self.tacan.On then
+      self:_SwitchTACAN(self.tacan)
     end
     
-    -- Set callsign.
-    if self.callsignDefault then
-      self:SwitchCallsign(self.callsignDefault.NumberSquad, self.callsignDefault.NumberGroup)
-    else
-      self:SetDefaultCallsign(self.callsign.NumberSquad, self.callsign.NumberGroup)
+    -- Turn on the radio.
+    if self.radio.On then
+      self:SwitchRadio(self.radio.Freq, self.radio.Modu)
     end
     
     -- TODO: make this input.
     self.group:SetOption(AI.Option.Air.id.PROHIBIT_JETT, true)
-    self.group:SetOption(AI.Option.Air.id.PROHIBIT_AB, true)   -- Does not seem to work. AI still used the after burner.
+    self.group:SetOption(AI.Option.Air.id.PROHIBIT_AB,   true)   -- Does not seem to work. AI still used the after burner.
     self.group:SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
-    --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)
-    
+    --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)    
 
     -- Update route.
     self:__UpdateRoute(-0.5)
@@ -2554,7 +2504,7 @@ function FLIGHTGROUP:_InitGroup()
   self.position=self:GetCoordinate()
 
   -- Radio parameters from template.
-  self.radioOn=self.template.communication  
+  self.radio.On=self.template.communication
   self.radio.Freq=self.template.frequency
   self.radio.Modu=self.template.modulation
   
@@ -2614,7 +2564,7 @@ function FLIGHTGROUP:_InitGroup()
     text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radioOn))
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
     text=text..string.format("Ammo         = %d (G=%d/R=%d/B=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Bombs, self.ammo.Missiles)
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))

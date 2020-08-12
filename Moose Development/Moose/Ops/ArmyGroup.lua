@@ -21,7 +21,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\ARMYGROUP\NavyGroup_Main.jpg)
+-- ![Banner Image](..\Presentations\ARMYGROUP\ArmyGroup_Main.jpg)
 --
 -- # The ARMYGROUP Concept
 -- 
@@ -33,12 +33,12 @@ ARMYGROUP = {
   formationPerma  = nil,
 }
 
---- Navy group element.
+--- Army group element.
 -- @type ARMYGROUP.Element
 -- @field #string name Name of the element, i.e. the unit.
 -- @field #string typename Type name.
 
---- NavyGroup version.
+--- Army Group version.
 -- @field #string version
 ARMYGROUP.version="0.0.1"
 
@@ -151,8 +151,7 @@ end
 
 --- Get coordinate of the closest road.
 -- @param #ARMYGROUP self
--- @param #boolean switch If true or nil, patrol until the end of time. If false, go along the waypoints once and stop.
--- @return #ARMYGROUP self
+-- @return Core.Point#COORDINATE Coordinate of a road closest to the group.
 function ARMYGROUP:GetClosestRoad()
   return self:GetCoordinate():GetClosestPointToRoad()
 end
@@ -174,6 +173,24 @@ function ARMYGROUP:AddTaskFireAtPoint(Coordinate, Radius, Nshots, WeaponType, Cl
 
 end
 
+--- Add a *waypoint* task.
+-- @param #ARMYGROUP self
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
+-- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Where the task is executed. Default is next waypoint.
+-- @param #number Radius Radius in meters. Default 100 m.
+-- @param #number Nshots Number of shots to fire. Default 3.
+-- @param #number WeaponType Type of weapon. Default auto.
+-- @param #number Prio Priority of the task.
+function ARMYGROUP:AddTaskWaypointFireAtPoint(Coordinate, Waypoint, Radius, Nshots, WeaponType, Prio)
+
+  Waypoint=Waypoint or self:GetWaypointNext()
+
+  local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
+
+  self:AddTaskWaypoint(DCStask, Waypoint, nil, Prio)
+
+end
+
 --- Add a *scheduled* task.
 -- @param #ARMYGROUP self
 -- @param Wrapper.Group#GROUP TargetGroup Target group.
@@ -188,6 +205,8 @@ function ARMYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clo
   self:AddTask(DCStask, Clock, nil, Prio)
 
 end
+
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
@@ -251,60 +270,11 @@ function ARMYGROUP:onafterStatus(From, Event, To)
 
 
   ---
-  -- Tasks
+  -- Tasks & Missions
   ---
-  
-  -- Task queue.
-  if #self.taskqueue>0 and self.verbose>1 then  
-    local text=string.format("Tasks #%d", #self.taskqueue)
-    for i,_task in pairs(self.taskqueue) do
-      local task=_task --Ops.OpsGroup#OPSGROUP.Task
-      local name=task.description
-      local taskid=task.dcstask.id or "unknown"
-      local status=task.status
-      local clock=UTILS.SecondsToClock(task.time, true)
-      local eta=task.time-timer.getAbsTime()
-      local started=task.timestamp and UTILS.SecondsToClock(task.timestamp, true) or "N/A"
-      local duration=-1
-      if task.duration then
-        duration=task.duration
-        if task.timestamp then
-          -- Time the task is running.
-          duration=task.duration-(timer.getAbsTime()-task.timestamp)
-        else
-          -- Time the task is supposed to run.
-          duration=task.duration
-        end
-      end
-      -- Output text for element.
-      if task.type==OPSGROUP.TaskType.SCHEDULED then
-        text=text..string.format("\n[%d] %s (%s): status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
-      elseif task.type==OPSGROUP.TaskType.WAYPOINT then
-        text=text..string.format("\n[%d] %s (%s): status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
-      end
-    end
-    self:I(self.lid..text)
-  end
-  
-  ---
-  -- Missions
-  ---
-  
-  -- Current mission name.
-  if self.verbose>0 then  
-    local Mission=self:GetMissionByID(self.currentmission)
-    
-    -- Current status.
-    local text=string.format("Missions %d, Current: %s", self:CountRemainingMissison(), Mission and Mission.name or "none")
-    for i,_mission in pairs(self.missionqueue) do
-      local mission=_mission --Ops.Auftrag#AUFTRAG
-      local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
-      local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
-      text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d wp=%s targets=%d", 
-      i, tostring(mission.name), mission.type, mission:GetGroupStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, tostring(mission:GetGroupWaypointIndex(self)), mission:CountMissionTargets())
-    end
-    self:I(self.lid..text)
-  end
+
+  self:_PrintTaskAndMissionStatus()
+
 
   self:__Status(-30)
 end
@@ -350,11 +320,29 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
 
   if self.ai then
   
-    -- Set default ROE option.
-    self:SwitchROE(self.option.ROE)
+    -- Set default ROE.
+    if self.option.ROE then
+      self:SwitchROE(self.option.ROE)
+    else
+      self:SwitchROE(ENUMS.ROE.ReturnFire)
+    end
     
-    -- Set default Alarm State option.
-    self:SwitchAlarmstate(self.option.Alarm)
+    -- Set default Alarm State.
+    if self.option.Alarm then
+      self:SwitchAlarmstate(self.option.Alarm)
+    else
+      self:SwitchAlarmstate(0)
+    end
+    
+    -- Turn TACAN beacon on.
+    if self.tacan.On then
+      self:_SwitchTACAN(self.tacan)
+    end
+
+    -- Turn on the radio.
+    if self.radio.On then
+      self:SwitchRadio(self.radio.Freq, self.radio.Modu)
+    end
     
   end
   
@@ -384,9 +372,12 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
 
   -- Waypoints.
   local waypoints={}
+  
+  -- Total number of waypoints
+  local N=#self.waypoints
 
   -- Add remaining waypoints to route.
-  for i=n, #self.waypoints do
+  for i=n, N do
   
     -- Copy waypoint.
     local wp=UTILS.DeepCopy(self.waypoints[i]) --Ops.OpsGroup#OPSGROUP.Waypoint
@@ -404,7 +395,9 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
       end
       
       if self.formationPerma then
-        wp.action=self.formationPerma
+        --if self.formationPerma==ENUMS.Formation.Vehicle.OnRoad then
+          wp.action=self.formationPerma
+        --end
       elseif Formation then 
         wp.action=Formation
       end
@@ -428,17 +421,27 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
       end
       
     end
-
-
-    if formation==ENUMS.Formation.Vehicle.OnRoad then
     
-      local wpnext=self:GetWaypointNext()
-      
-      if wpnext.action~=ENUMS.Formation.Vehicle.OnRoad then
-        
-      end
+    if wp.roaddist>100 and wp.action==ENUMS.Formation.Vehicle.OnRoad then
+      env.info("FF Adding ON road waypoint")
+      --wp.roadcoord:MarkToAll("Added Road waypoint")
     
+      -- Waypoint is actually off road!
+      wp.action=ENUMS.Formation.Vehicle.OffRoad
+
+      -- Add "On Road" waypoint in between.
+      local wproad=wp.roadcoord:WaypointGround(wp.speed, ENUMS.Formation.Vehicle.OnRoad)
+      table.insert(waypoints, wproad)     
+    end    
+     
+    --if wp.formation==ENUMS.Formation.Vehicle.OnRoad and wp.action~=ENUMS.Formation.Vehicle.OnRoad then --and not self.formationPerma~=ENUMS.Formation.Vehicle.OnRoad then
+    --[[
+    if wp.action==ENUMS.Formation.Vehicle.OnRoad and wp.roaddist>100 then
+      env.info("FF Adding ON road waypoint")
+      local wproad=wp.roadcoord:WaypointGround(wp.speed, ENUMS.Formation.Vehicle.OnRoad)
+      table.insert(waypoints, wproad)     
     end
+    ]]
     
     -- Debug info.
     self:I(string.format("WP %d %s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.type, wp.speed, wp.alt, wp.action))
@@ -716,10 +719,24 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   
   -- Get closest point to road.
   waypoint.roadcoord=Coordinate:GetClosestPointToRoad(false)
-  waypoint.roadist=Coordinate:Get2DDistance(waypoint.roadcoord)
+  if waypoint.roadcoord then
+    waypoint.roaddist=Coordinate:Get2DDistance(waypoint.roadcoord)
+  else
+    waypoint.roaddist=1000*1000 --1000 km.
+  end
+
+  --[[  
+  if waypoint.roaddist>100 and waypoint.action==ENUMS.Formation.Vehicle.OnRoad then
+    waypoint.formation=ENUMS.Formation.Vehicle.OnRoad
+    waypoint.action=ENUMS.Formation.Vehicle.OffRoad
+  else
+    waypoint.formation=waypoint.action
+  end
+  ]]
+  
   
   -- Debug info.
-  self:T(self.lid..string.format("Adding GROUND waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, Speed, self.currentwp, #self.waypoints))
+  self:I(self.lid..string.format("Adding waypoint UID=%d (index=%d), Speed=%.1f knots, Dist2Road=%d m, Action=%s", waypoint.uid, wpnumber, Speed, waypoint.roaddist, waypoint.action))
   
   -- Update route.
   if Updateroute==nil or Updateroute==true then
@@ -771,7 +788,7 @@ function ARMYGROUP:_InitGroup()
   self.position=self:GetCoordinate()
   
   -- Radio parameters from template.
-  self.radioOn=false  -- Radio is always OFF for ground.
+  self.radio.On=false  -- Radio is always OFF for ground.
   self.radio.Freq=133
   self.radio.Modu=radio.modulation.AM  
   
@@ -810,13 +827,13 @@ function ARMYGROUP:_InitGroup()
     self.actype=unit:GetTypeName()
     
     -- Debug info.
-    local text=string.format("Initialized Navy Group %s:\n", self.groupname)
+    local text=string.format("Initialized Army Group %s:\n", self.groupname)
     text=text..string.format("AC type      = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
     text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radioOn))
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
     text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles)
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))

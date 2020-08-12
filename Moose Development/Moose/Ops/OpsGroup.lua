@@ -58,16 +58,13 @@
 -- 
 -- @field #OPSGROUP.Radio radio Current radio settings.
 -- @field #OPSGROUP.Radio radioDefault Default radio settings.
--- @field #boolean radioOn If true, radio is currently turned on.
 -- @field Core.RadioQueue#RADIOQUEUE radioQueue Radio queue.
 -- 
 -- @field #OPSGROUP.Beacon tacan Current TACAN settings.
 -- @field #OPSGROUP.Beacon tacanDefault Default TACAN settings.
--- @field #boolean tacanOn If true, TACAN is currently active.
 -- 
 -- @field #OPSGROUP.Beacon icls Current ICLS settings.
 -- @field #OPSGROUP.Beacon iclsDefault Default ICLS settings.
--- @field #boolean iclsOn If true, ICLS is currently active.
 -- 
 -- @field #OPSGROUP.Option option Current optional settings.
 -- @field #OPSGROUP.Option optionDefault Default option settings.
@@ -202,11 +199,13 @@ OPSGROUP.TaskType={
 -- @field #string Band Band "X" or "Y" for TACAN beacon.
 -- @field #string BeaconName Name of the unit acting as beacon.
 -- @field Wrapper.Unit#UNIT BeaconUnit Unit object acting as beacon.
+-- @field #boolean On If true, beacon is on, if false, beacon is turned off. If nil, has not been used yet.
 
 --- Radio data.
 -- @type OPSGROUP.Radio
 -- @field #number Freq Frequency
 -- @field #number Modu Modulation.
+-- @field #boolean On If true, radio is on, if false, radio is turned off. If nil, has not been used yet.
 
 --- Callsign data.
 -- @type OPSGROUP.Callsign
@@ -255,7 +254,9 @@ OPSGROUP.TaskType={
 -- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
 -- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
 -- @field Core.Point#COORDINATE roadcoord Closest point to road.
+-- @field #number roaddist Distance to closest point on road.
 -- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
+-- @field #string formation Ground formation. Similar to action but on/off road.
 
 --- NavyGroup version.
 -- @field #string version
@@ -864,6 +865,14 @@ end
 
 --- Get unique ID of waypoint.
 -- @param #OPSGROUP self
+-- @param #OPSGROUP.Waypoint waypoint The waypoint data table.
+-- @return #number Unique ID.
+function OPSGROUP:GetWaypointUID(waypoint)
+  return waypoint.uid
+end
+
+--- Get unique ID of waypoint given its index.
+-- @param #OPSGROUP self
 -- @param #number indx Waypoint index.
 -- @return #number Unique ID.
 function OPSGROUP:GetWaypointID(indx)
@@ -1213,7 +1222,7 @@ function OPSGROUP:AddTaskWaypoint(task, Waypoint, description, prio, duration)
 
     -- Task data structure.
     local newtask={} --#OPSGROUP.Task
-    newtask.description=description
+    newtask.description=description or string.format("Task #%d", self.taskcounter)
     newtask.status=OPSGROUP.TaskStatus.SCHEDULED
     newtask.dcstask=task
     newtask.prio=prio or 50
@@ -2593,6 +2602,72 @@ function OPSGROUP:_CheckGroupDone(delay)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Status Info Common to Air, Land and Sea
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Print info on mission and task status to DCS log file.
+-- @param #OPSGROUP self
+function OPSGROUP:_PrintTaskAndMissionStatus()
+
+ ---
+  -- Tasks: verbose >= 2
+  ---
+  
+  -- Task queue.
+  if #self.taskqueue>0 and self.verbose>=2 then  
+    local text=string.format("Tasks #%d", #self.taskqueue)
+    for i,_task in pairs(self.taskqueue) do
+      local task=_task --Ops.OpsGroup#OPSGROUP.Task
+      local name=task.description
+      local taskid=task.dcstask.id or "unknown"
+      local status=task.status
+      local clock=UTILS.SecondsToClock(task.time, true)
+      local eta=task.time-timer.getAbsTime()
+      local started=task.timestamp and UTILS.SecondsToClock(task.timestamp, true) or "N/A"
+      local duration=-1
+      if task.duration then
+        duration=task.duration
+        if task.timestamp then
+          -- Time the task is running.
+          duration=task.duration-(timer.getAbsTime()-task.timestamp)
+        else
+          -- Time the task is supposed to run.
+          duration=task.duration
+        end
+      end
+      -- Output text for element.
+      if task.type==OPSGROUP.TaskType.SCHEDULED then
+        text=text..string.format("\n[%d] %s (%s): status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
+      elseif task.type==OPSGROUP.TaskType.WAYPOINT then
+        text=text..string.format("\n[%d] %s (%s): status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
+      end
+    end
+    self:I(self.lid..text)
+  end
+  
+  ---
+  -- Missions: verbose>=1
+  ---
+  
+  -- Current mission name.
+  if self.verbose>0 then  
+    local Mission=self:GetMissionByID(self.currentmission)
+    
+    -- Current status.
+    local text=string.format("Missions %d, Current: %s", self:CountRemainingMissison(), Mission and Mission.name or "none")
+    for i,_mission in pairs(self.missionqueue) do
+      local mission=_mission --Ops.Auftrag#AUFTRAG
+      local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
+      local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
+      text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d wp=%s targets=%d", 
+      i, tostring(mission.name), mission.type, mission:GetGroupStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, tostring(mission:GetGroupWaypointIndex(self)), mission:CountMissionTargets())
+    end
+    self:I(self.lid..text)
+  end
+
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Waypoints & Routing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2653,9 +2728,13 @@ function OPSGROUP:InitWaypoints()
   
   for index,wp in pairs(self.waypoints0) do
   
-    local waypoint=self:_CreateWaypoint(wp)
+    --local waypoint=self:_CreateWaypoint(wp)    
+    --self:_AddWaypoint(waypoint)
     
-    self:_AddWaypoint(waypoint)
+    local coordinate=COORDINATE:New(wp.x, wp.alt, wp.y)
+    local speedknots=UTILS.MpsToKnots(wp.speed)
+    
+    self:AddWaypoint(coordinate, speedknots, index-1, nil, false)
      
   end
   
@@ -2871,19 +2950,26 @@ end
 
 --- Set current ROE for the group.
 -- @param #OPSGROUP self
--- @param #string roe ROE of group. Default is the value defined by :SetDefaultROE().
+-- @param #string roe ROE of group. Default is `ENUMS.ROE.ReturnFire`.
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchROE(roe)
+  
+  if self:IsAlive() or self:IsInUtero() then
 
-  self.option.ROE=roe or self.optionDefault.ROE
+    self.option.ROE=roe or ENUMS.ROE.ReturnFire
   
-  if self:IsAlive() then
-  
-    self.group:OptionROE(self.option.ROE)
+    if self:IsInUtero() then
+      self:I(self.lid..string.format("Setting current ROE=%d when GROUP is SPAWNED", self.option.ROE))
+    else
     
-    self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.option.ROE))
+      self.group:OptionROE(roe)
+    
+      self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.option.ROE))
+    end
+    
+    
   else
-    -- TODO WARNING
+    self:E(self.lid.."WARNING: Cannot switch ROE! Group is not alive")
   end
   
   return self
@@ -2907,19 +2993,26 @@ end
 
 --- Set ROT for the group.
 -- @param #OPSGROUP self
--- @param #string rot ROT of group. Default is the value defined by :SetDefaultROT().
+-- @param #string rot ROT of group. Default is `ENUMS.ROT.PassiveDefense`.
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchROT(rot)
-
-  self.option.ROT=rot or self.optionDefault.ROT
   
-  if self:IsAlive() then
+  if self:IsAlive() or self:IsInUtero() then
   
-    self.group:OptionROT(self.option.ROT)
+    self.option.ROT=rot or ENUMS.ROT.PassiveDefense
+  
+    if self:IsInUtero() then
+      self:I(self.lid..string.format("Setting current ROT=%d when GROUP is SPAWNED", self.option.ROT))      
+    else
     
-    self:T2(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
+      self.group:OptionROT(self.option.ROT)
+      
+      self:I(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
+    end
+    
+
   else
-    -- TODO WARNING
+    self:E(self.lid.."WARNING: Cannot switch ROT! Group is not alive")
   end
   
   return self
@@ -2943,29 +3036,41 @@ function OPSGROUP:SetDefaultAlarmstate(alarmstate)
 end
 
 --- Set current Alarm State of the group.
+-- 
+-- * 0 = "Auto"
+-- * 1 = "Green"
+-- * 2 = "Red"
+-- 
 -- @param #OPSGROUP self
--- @param #string alarmstate Alarm state of group. Default is the value defined by :SetDefaultAlarmstate().
+-- @param #number alarmstate Alarm state of group. Default is 0="Auto".
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchAlarmstate(alarmstate)
-
-  self.option.Alarm=alarmstate or self.optionDefault.Alarm
   
-  if self:IsAlive() then
+  if self:IsAlive() or self:IsInUtero() then
   
-    if self.option.Alarm==0 then
-      self.group:OptionAlarmStateAuto()
-    elseif self.option.Alarm==1 then
-      self.group:OptionAlarmStateGreen()
-    elseif self.option.Alarm==2 then
-      self.group:OptionAlarmStateRed()
-    else
-      self:E("ERROR: Unknown Alarm State! Setting to AUTO.")
-      self.group:OptionAlarmStateAuto()
-    end
+    self.option.Alarm=alarmstate or 0
     
-    self:I(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.option.Alarm))
+    if self:IsInUtero() then
+      self:I(self.lid..string.format("Setting current Alarm State=%d when GROUP is SPAWNED", self.option.Alarm))
+    else
+  
+      if self.option.Alarm==0 then
+        self.group:OptionAlarmStateAuto()
+      elseif self.option.Alarm==1 then
+        self.group:OptionAlarmStateGreen()
+      elseif self.option.Alarm==2 then
+        self.group:OptionAlarmStateRed()
+      else
+        self:E("ERROR: Unknown Alarm State! Setting to AUTO")
+        self.group:OptionAlarmStateAuto()
+        self.option.Alarm=0
+      end
+      
+      self:I(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.option.Alarm))
+      
+    end
   else
-    -- TODO WARNING
+    self:E(self.lid.."WARNING: Cannot switch Alarm State! Group is not alive.")
   end
   
   return self
@@ -2996,6 +3101,15 @@ function OPSGROUP:SetDefaultTACAN(Channel, Morse, UnitName, Band)
   return self
 end
 
+
+--- Activate/switch TACAN beacon settings.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Beacon Tacan Tacan data table.
+-- @return #OPSGROUP self
+function OPSGROUP:_SwitchTACAN(Tacan)
+  self:SwitchTACAN(Tacan.Channel, Tacan.Morse, Tacan.BeaconName, Tacan.Band)
+end
+
 --- Activate/switch TACAN beacon settings.
 -- @param #OPSGROUP self
 -- @param #number Channel TACAN Channel.
@@ -3005,7 +3119,7 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 
-  if self:IsAlive() then
+  if self:IsAlive() or self:IsInUtero() then
 
     local unit=self.group:GetUnit(1)  --Wrapper.Unit#UNIT
     
@@ -3022,15 +3136,10 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
       unit=self.group:GetUnit(1)
     end
     
-    if not Channel then
-      Channel=self.tacanDefault and self.tacanDefault.Channel or nil
-    end
+    Channel=Channel or 74
+    Morse=Morse or "XXX"
     
-    if not Morse then
-      Morse=self.tacanDefault and self.tacanDefault.Morse or "XXX"
-    end
-
-    if unit and unit:IsAlive() and Channel then
+    if unit and unit:IsAlive() or self:IsInUtero() then
 
       local UnitID=unit:GetID()
 
@@ -3039,7 +3148,7 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
             
       if self.isAircraft then
         System=BEACON.System.TACAN_TANKER_Y
-        Band=Band or "Y"        
+        Band=Band or "Y"
       else
         System=BEACON.System.TACAN
         Band=Band or "X"
@@ -3048,26 +3157,31 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
       -- Tacan frequency.
       local Frequency=UTILS.TACANToFrequency(Channel, Band)
 
-      -- Activate beacon.
-      unit:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Band, true, Morse, true)
-
       -- Update info.
-      self.tacan={}
       self.tacan.Channel=Channel
       self.tacan.Morse=Morse
       self.tacan.Band=Band
       self.tacan.BeaconName=unit:GetName()
       self.tacan.BeaconUnit=unit
+      self.tacan.On=true
 
-      -- TACAN is now on.
-      self.tacanOn=true
-
-      self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
+      if self:IsInUtero() then
+        self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s when GROUP is SPAWNED", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
+      else
+      
+        -- Activate beacon.
+        unit:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Band, true, Morse, true)
+                
+        self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
+      end
+      
       
     else
-      self:E(self.lid.."ERROR: Cound not set TACAN! Unit is not alive.")
+      self:E(self.lid.."ERROR: Cound not set TACAN! Unit is not alive")
     end
 
+  else
+    self:E(self.lid.."ERROR: Cound not set TACAN! Group is not alive")
   end
 
   return self
@@ -3107,13 +3221,21 @@ end
 
 --- Activate/switch ICLS beacon settings.
 -- @param #OPSGROUP self
--- @param #number Channel ICLS Channel.
--- @param #string Morse ICLS morse code. Default is the value set in @{#OPSGROUP.SetDefaultICLS} or if not set "XXX".
+-- @param #OPSGROUP.Beacon Icls ICLS data table.
+-- @return #OPSGROUP self
+function OPSGROUP:_SwitchICLS(Icls)
+  self:SwitchICLS(Icls.Channel, Icls.Morse, Icls.BeaconName)
+end
+
+--- Activate/switch ICLS beacon settings.
+-- @param #OPSGROUP self
+-- @param #number Channel ICLS Channel. Default is 1.
+-- @param #string Morse ICLS morse code. Default is "XXX".
 -- @param #string UnitName Name of the unit in the group which should activate the ICLS beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
 
-  if self:IsAlive() then
+  if self:IsAlive() or self:IsInUtero() then
 
     local unit=self.group:GetUnit(1)  --Wrapper.Unit#UNIT
     
@@ -3130,33 +3252,32 @@ function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
       unit=self.group:GetUnit(1)
     end
     
-    if not Channel then
-      Channel=self.iclsDefault and self.iclsDefault.Channel or nil
-    end
-    
-    if not Morse then
-      Morse=self.iclsDefault and self.iclsDefault.Morse or "XXX"
-    end
+    Channel=Channel or 1
+    Morse=Morse or "XXX"
 
-    if unit and unit:IsAlive() and Channel then
+    if unit and unit:IsAlive() or self:IsInUtero() then
 
       local UnitID=unit:GetID()
-
-      -- Activate beacon.
-      unit:CommandActivateICLS(Channel, UnitID, Morse)
-
+      
       -- Update info.
-      self.icls={}
       self.icls.Channel=Channel
       self.icls.Morse=Morse
-      self.icls.Band=Band
+      self.icls.Band=nil
       self.icls.BeaconName=unit:GetName()
       self.icls.BeaconUnit=unit
+      self.icls.On=true
+      
 
-      -- ICLS is now on.
-      self.iclsOn=true
+      if self:IsInUtero() then
+        self:I(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s when GROUP is SPAWNED", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
+      else
 
-      self:I(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
+        -- Activate beacon.
+        unit:CommandActivateICLS(Channel, UnitID, Morse)
+  
+        self:I(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
+        
+      end
       
     else
       self:E(self.lid.."ERROR: Cound not set ICLS! Unit is not alive.")
@@ -3204,33 +3325,42 @@ function OPSGROUP:GetRadio()
   return self.radio.Freq, self.radio.Modu
 end
 
---- Turn radio on.
+--- Turn radio on or switch frequency/modulation.
 -- @param #OPSGROUP self
--- @param #number Frequency Radio frequency in MHz.
+-- @param #number Frequency Radio frequency in MHz. Default is 127.5 MHz.
 -- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchRadio(Frequency, Modulation)
 
-  if self:IsAlive() and Frequency then
+  if self:IsAlive() or self:IsInUtero() then
 
-    Modulation=Modulation or self.radioDefault.Modu
+    Frequency=Frequency or 127.5
+    Modulation=Modulation or radio.modulation.AM
 
     local group=self.group --Wrapper.Group#GROUP
 
-    if self.isAircraft and not self.radioOn then
+    if self.isAircraft and not self.radio.On then
       group:SetOption(AI.Option.Air.id.SILENCE, false)
     end
 
-    group:CommandSetFrequency(Frequency, Modulation)
-    
+    -- Set radio
     self.radio.Freq=Frequency
     self.radio.Modu=Modulation
+    self.radio.On=true
     
-    -- Radio is on.
-    self.radioOn=true
+    if self:IsInUtero() then
+      self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
+    else
 
-    self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
-
+      -- Give command
+      group:CommandSetFrequency(Frequency, Modulation)
+  
+      self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
+      
+    end
+    
+  else
+    self:E(self.lid.."ERROR: Cound not set Radio! Group is not alive")
   end
 
   return self
@@ -3252,11 +3382,11 @@ function OPSGROUP:TurnOffRadio()
       --self.radio.Modu=nil
       
       -- Radio is off.
-      self.radioOn=false
+      self.radio.On=false
   
       self:I(self.lid..string.format("Switching radio OFF"))
     else
-      self:E(self.lid.."ERROR radio can only be turned off for aircraft!")
+      self:E(self.lid.."ERROR: Radio can only be turned off for aircraft!")
     end
 
   end

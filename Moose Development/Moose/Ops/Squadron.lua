@@ -156,8 +156,10 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   --                 From State  -->   Event        -->     To State
   self:AddTransition("Stopped",       "Start",              "OnDuty")      -- Start FSM.
   self:AddTransition("*",             "Status",             "*")           -- Status update.
+  
   self:AddTransition("OnDuty",        "Pause",              "Paused")      -- Pause squadron.
   self:AddTransition("Paused",        "Unpause",            "OnDuty")      -- Unpause squadron.
+  
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop squadron.
 
 

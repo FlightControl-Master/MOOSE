@@ -95,8 +95,8 @@ function NAVYGROUP:New(GroupName)
   self.lid=string.format("NAVYGROUP %s | ", self.groupname)
   
   -- Defaults
-  self:SetDefaultROE()
-  self:SetDefaultAlarmstate()
+  --self:SetDefaultROE()
+  --self:SetDefaultAlarmstate()
   self:SetDetection()
   self:SetPatrolAdInfinitum(true)
 
@@ -204,6 +204,27 @@ function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Radius, Nshots, WeaponType, Cl
 
   return task
 end
+
+--- Add a *waypoint* task.
+-- @param #NAVYGROUP self
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
+-- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Where the task is executed. Default is next waypoint.
+-- @param #number Radius Radius in meters. Default 100 m.
+-- @param #number Nshots Number of shots to fire. Default 3.
+-- @param #number WeaponType Type of weapon. Default auto.
+-- @param #number Prio Priority of the task.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+function NAVYGROUP:AddTaskWaypointFireAtPoint(Coordinate, Waypoint, Radius, Nshots, WeaponType, Prio)
+
+  Waypoint=Waypoint or self:GetWaypointNext()
+
+  local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
+
+  local task=self:AddTaskWaypoint(DCStask, Waypoint, nil, Prio)
+
+  return task
+end
+
 
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
@@ -408,14 +429,16 @@ function NAVYGROUP:onafterStatus(From, Event, To)
       -- Check free path ahead.
       freepath=self:_CheckFreePath(freepath, 100)
       
-      if freepath<5000 then
+      if freepath<5000 and not self.collisionwarning then
+      
+        -- Issue a collision warning event.
         self:CollisionWarning()
       end
     
       if not self.ispathfinding then
                  
         if freepath<5000 then
-          --self.ispathfinding=self:_FindPathToNextWaypoint()
+          self.ispathfinding=self:_FindPathToNextWaypoint()
         end
         
       end
@@ -464,60 +487,10 @@ function NAVYGROUP:onafterStatus(From, Event, To)
 
 
   ---
-  -- Tasks
+  -- Tasks & Missions
   ---
-  
-  -- Task queue.
-  if self.verbose>-1 and #self.taskqueue>0 then  
-    local text=string.format("Tasks #%d", #self.taskqueue)
-    for i,_task in pairs(self.taskqueue) do
-      local task=_task --Ops.OpsGroup#OPSGROUP.Task
-      local name=task.description
-      local taskid=task.dcstask.id or "unknown"
-      local status=task.status
-      local clock=UTILS.SecondsToClock(task.time, true)
-      local eta=task.time-timer.getAbsTime()
-      local started=task.timestamp and UTILS.SecondsToClock(task.timestamp, true) or "N/A"
-      local duration=-1
-      if task.duration then
-        duration=task.duration
-        if task.timestamp then
-          -- Time the task is running.
-          duration=task.duration-(timer.getAbsTime()-task.timestamp)
-        else
-          -- Time the task is supposed to run.
-          duration=task.duration
-        end
-      end
-      -- Output text for element.
-      if task.type==OPSGROUP.TaskType.SCHEDULED then
-        text=text..string.format("\n[%d] %s (%s): status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
-      elseif task.type==OPSGROUP.TaskType.WAYPOINT then
-        text=text..string.format("\n[%d] %s (%s): status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
-      end
-    end
-    self:I(self.lid..text)
-  end
-  
-  ---
-  -- Missions
-  ---
-  
-  -- Current mission name.
-  if self.verbose>0 then  
-    local Mission=self:GetMissionByID(self.currentmission)
-    
-    -- Current status.
-    local text=string.format("Missions %d, Current: %s", self:CountRemainingMissison(), Mission and Mission.name or "none")
-    for i,_mission in pairs(self.missionqueue) do
-      local mission=_mission --Ops.Auftrag#AUFTRAG
-      local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
-      local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
-      text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d wp=%s targets=%d", 
-      i, tostring(mission.name), mission.type, mission:GetGroupStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, tostring(mission:GetGroupWaypointIndex(self)), mission:CountMissionTargets())
-    end
-    self:I(self.lid..text)
-  end
+
+  self:_PrintTaskAndMissionStatus()
 
 
   -- Next status update in 30 seconds.
@@ -564,28 +537,36 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
   self:I(self.lid..string.format("Group spawned!"))
 
   if self.ai then
-  
+ 
     -- Set default ROE.
-    self:SwitchROE(self.option.ROE)
+    if self.option.ROE then
+      self:SwitchROE(self.option.ROE)
+    else
+      self:SwitchROE(ENUMS.ROE.ReturnFire)
+    end
     
     -- Set default Alarm State.
-    self:SwitchAlarmstate(self.option.Alarm)
+    if self.option.Alarm then
+      self:SwitchAlarmstate(self.option.Alarm)
+    else
+      self:SwitchAlarmstate(0)
+    end
     
     -- Turn TACAN beacon on.
-    if self.tacanDefault then
-      self:SwitchTACAN(self.tacanDefault.Channel, self.tacanDefault.Morse, self.tacanDefault.BeaconName, self.tacanDefault.Band)
+    if self.tacan.On then
+      self:_SwitchTACAN(self.tacan)
     end
     
     -- Turn ICLS on.
-    if self.iclsDefault then
-      self:SwitchICLS(self.iclsDefault.Channel, self.iclsDefault.Morse, self.iclsDefault.BeaconName)
+    if self.icls.On then
+      self:_SwitchICLS(self.icls)
     end    
 
     -- Turn on the radio.
-    if self.radioDefault then
-      self:SwitchRadio(self.radioDefault.Freq, self.radioDefault.Modu)
+    if self.radio.On then
+      self:SwitchRadio(self.radio.Freq, self.radio.Modu)
     else
-      self:SetDefaultRadio(self.radio.Freq, self.radio.Modu)
+      self.radio.On=true -- Radio is always on for ships. If not set, it is default.
     end
     
   end
@@ -776,7 +757,7 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   
   IntoWind.waypoint=wptiw
   
-  if IntoWind.Uturn then
+  if IntoWind.Uturn and self.Debug then
     IntoWind.Coordinate:MarkToAll("Return coord")
   end
   
@@ -878,6 +859,34 @@ function NAVYGROUP:onafterSurface(From, Event, To, Speed)
 
   self:__UpdateRoute(-1, nil, Speed)
 
+end
+
+--- On after "TurningStarted" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterTurningStarted(From, Event, To)
+  self.turning=true
+end
+
+--- On after "TurningStarted" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterTurningStopped(From, Event, To)
+  self.turning=false
+  self.collisionwarning=false
+end
+
+--- On after "CollisionWarning" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterCollisionWarning(From, Event, To)
+  self.collisionwarning=true
 end
 
 --- On after "Dead" event.
@@ -1029,6 +1038,16 @@ end
 -- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Updateroute)
+
+  if not Coordinate:IsInstanceOf("COORDINATE") then
+    if Coordinate:IsInstanceOf("POSITIONABLE") then
+      self:I(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE. Trying to get coordinate")
+      Coordinate=Coordinate:GetCoordinate()
+    else
+      self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE!")
+      return nil
+    end
+  end
   
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
@@ -1107,7 +1126,7 @@ function NAVYGROUP:_InitGroup()
   self.position=self:GetCoordinate()
   
   -- Radio parameters from template.
-  self.radioOn=true  -- Radio is always on for ships.
+  self.radio.On=false  -- Radio is always on for ships but we set it to false to check if it has been changed before spawn.
   self.radio.Freq=tonumber(self.template.units[1].frequency)/1000000
   self.radio.Modu=tonumber(self.template.units[1].modulation)
   
@@ -1152,7 +1171,7 @@ function NAVYGROUP:_InitGroup()
     text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radioOn))
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
     text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d/T=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles, self.ammo.Torpedos)
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
@@ -1190,7 +1209,13 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
     return distance
   end
   
-  local offsetY=1
+  -- Offset above sea level.
+  local offsetY=0.1
+  
+  -- Current bug on Caucasus. LoS returns false.
+  if UTILS.GetDCSMap()==DCSMAP.Caucasus then
+    offsetY=5.01
+  end
   
   -- Current coordinate.
   local coordinate=self:GetCoordinate():SetAltitude(offsetY, true)
@@ -1199,7 +1224,7 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
   local heading=self:GetHeading()
   
   -- Check from 500 meters in front.
-  coordinate=coordinate:Translate(500, heading, true)
+  --coordinate=coordinate:Translate(500, heading, true)
   
   local function LoS(dist)
     local checkcoord=coordinate:Translate(dist, heading, true)
@@ -1534,7 +1559,7 @@ function NAVYGROUP:_FindPathToNextWaypoint()
   local delta=dist/10
   
   -- Create a grid of nodes. We only want nodes of surface type water.
-  astar:CreateGrid({land.SurfaceType.WATER}, boxwidth, spacex, delta, delta*2, false)
+  astar:CreateGrid({land.SurfaceType.WATER}, boxwidth, spacex, delta, delta*2, self.Debug)
   
   -- Valid neighbour nodes need to have line of sight.
   astar:SetValidNeighbourLoS(400)
