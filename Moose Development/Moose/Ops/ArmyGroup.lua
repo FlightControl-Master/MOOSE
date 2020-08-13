@@ -233,17 +233,18 @@ function ARMYGROUP:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
+  
+  if self:IsAlive() then
 
-  ---
-  -- Detection
-  ---
-  
-  -- Check if group has detected any units.
-  if self.detectionOn then
-    self:_CheckDetectedUnits()
-  end
-  
-  if self:IsAlive() and not self:IsDead() then
+    ---
+    -- Detection
+    ---
+    
+    -- Check if group has detected any units.
+    if self.detectionOn then
+      self:_CheckDetectedUnits()
+    end
+
 
     -- Current heading and position of the carrier.
     local hdg=self:GetHeading()
@@ -276,6 +277,7 @@ function ARMYGROUP:onafterStatus(From, Event, To)
   self:_PrintTaskAndMissionStatus()
 
 
+  -- Next status update.
   self:__Status(-30)
 end
 

@@ -2292,25 +2292,30 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n The goto waypoint number.
-function OPSGROUP:onafterGotoWaypoint(From, Event, To, n)
+-- @param #number UID The goto waypoint unique ID.
+function OPSGROUP:onafterGotoWaypoint(From, Event, To, UID)
 
-  -- The last waypoint passed was n-1
-  self.currentwp=n-1
+  local n=self:GetWaypointIndex(UID)
   
-  -- TODO: switch to re-enable waypoint tasks.
-  if false then
-    local tasks=self:GetTasksWaypoint(n)
-    
-    for _,_task in pairs(tasks) do
-      local task=_task --#OPSGROUP.Task
-      task.status=OPSGROUP.TaskStatus.SCHEDULED
+  if n then
+  
+    -- TODO: switch to re-enable waypoint tasks.
+    if false then
+      local tasks=self:GetTasksWaypoint(n)
+      
+      for _,_task in pairs(tasks) do
+        local task=_task --#OPSGROUP.Task
+        task.status=OPSGROUP.TaskStatus.SCHEDULED
+      end
+      
     end
     
+    local Speed=self:GetSpeedToWaypoint(n)
+        
+    -- Update the route.
+    self:__UpdateRoute(-1, n, Speed)
+    
   end
-  
-  -- Update the route.
-  self:UpdateRoute()
   
 end
 

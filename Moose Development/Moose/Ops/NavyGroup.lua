@@ -95,10 +95,9 @@ function NAVYGROUP:New(GroupName)
   self.lid=string.format("NAVYGROUP %s | ", self.groupname)
   
   -- Defaults
-  --self:SetDefaultROE()
-  --self:SetDefaultAlarmstate()
   self:SetDetection()
   self:SetPatrolAdInfinitum(true)
+  self:SetPathfinding(false)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
@@ -181,7 +180,7 @@ end
 
 --- Enable/disable pathfinding.
 -- @param #NAVYGROUP self
--- @param #boolean switch If true, enable pathfinding.
+-- @param #boolean Switch If true, enable pathfinding.
 -- @return #NAVYGROUP self
 function NAVYGROUP:SetPathfinding(Switch)
   self.pathfindingOn=Switch
@@ -400,17 +399,17 @@ function NAVYGROUP:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
-
-  ---
-  -- Detection
-  ---
   
-  -- Check if group has detected any units.
-  if self.detectionOn then
-    self:_CheckDetectedUnits()
-  end
+  if self:IsAlive() then
   
-  if self:IsAlive() and not self:IsDead() then
+    ---
+    -- Detection
+    ---  
+  
+    -- Check if group has detected any units.
+    if self.detectionOn then
+      self:_CheckDetectedUnits()
+    end
 
     -- Current heading and position of the carrier.
     local hdg=self:GetHeading()
@@ -420,8 +419,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     -- Check if group started or stopped turning.
     self:_CheckTurning()
     
-    local freepath=10000
-    local collision=false
+    local freepath=UTILS.NMToMeters(10)
     
     -- Only check if not currently turning.
     if not self:IsTurning() then
@@ -429,15 +427,14 @@ function NAVYGROUP:onafterStatus(From, Event, To)
       -- Check free path ahead.
       freepath=self:_CheckFreePath(freepath, 100)
       
-      if freepath<5000 and not self.collisionwarning then
+      if freepath<5000 then
       
-        -- Issue a collision warning event.
-        self:CollisionWarning()
-      end
+        if not self.collisionwarning then
+          -- Issue a collision warning event.
+          self:CollisionWarning(freepath)
+        end
     
-      if not self.ispathfinding then
-                 
-        if freepath<5000 then
+        if self.pathfindingOn and not self.ispathfinding then
           self.ispathfinding=self:_FindPathToNextWaypoint()
         end
         
@@ -885,7 +882,9 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function NAVYGROUP:onafterCollisionWarning(From, Event, To)
+-- @param #number Distance Distance in meters where obstacle was detected.
+function NAVYGROUP:onafterCollisionWarning(From, Event, To, Distance)
+  self:I(self.lid..string.format("Iceberg ahead in %d meters!", Distance or -1))
   self.collisionwarning=true
 end
 
@@ -1039,8 +1038,9 @@ end
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Updateroute)
 
+  -- Check if a coordinate was given or at least a positionable.
   if not Coordinate:IsInstanceOf("COORDINATE") then
-    if Coordinate:IsInstanceOf("POSITIONABLE") then
+    if Coordinate:IsInstanceOf("POSITIONABLE") or Coordinate:IsInstanceOf("ZONE_BASE") then
       self:I(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE. Trying to get coordinate")
       Coordinate=Coordinate:GetCoordinate()
     else
@@ -1198,6 +1198,8 @@ end
 
 --- Check for possible collisions between two coordinates.
 -- @param #NAVYGROUP self
+-- @param #number DistanceMax Max distance in meters ahead to check. Default 5000.
+-- @param #number dx
 -- @return #number Free distance in meters.
 function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
 
@@ -1252,7 +1254,8 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
       
       local los=LoS(x)
       
-      env.info(string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
+      -- Debug message.
+      self:T(self.lid..string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
       
       if los and d<=eps then
         return x
