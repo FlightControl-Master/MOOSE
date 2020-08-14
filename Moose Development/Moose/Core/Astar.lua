@@ -550,7 +550,7 @@ end
 -- @return #number Distance between the two nodes.
 function ASTAR.DistRoad(nodeA, nodeB)
 
-  local path, dist, gotpath=nodeA.coordinate:GetPathOnRoad(nodeB.coordinate,IncludeEndpoints,Railroad,MarkPath,SmokePath)
+  local path, dist, gotpath=nodeA.coordinate:GetPathOnRoad(nodeB.coordinate, IncludeEndpoints, Railroad, MarkPath, SmokePath)
   
   if gotpath then
     return dist

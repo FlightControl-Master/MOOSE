@@ -4,7 +4,7 @@
 --
 --    * Manages target, number alive, life points, damage etc.
 --    * Events when targets are damaged or destroyed
---    * Various target objects: UNIT, GROUP, STATIC, SET_UNIT, AIRBASE, COORDINATE, SET_GROUP, SET_UNIT
+--    * Various target objects: UNIT, GROUP, STATIC, AIRBASE, COORDINATE, SET_GROUP, SET_UNIT
 --
 -- ===
 --
@@ -114,7 +114,7 @@ TARGET.version="0.0.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Improve airwing selection. Mostly done!
+-- TODO: A lot.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -680,7 +680,7 @@ function TARGET:GetCoordinate()
 end
 
 
---- Get target category
+--- Get target category.
 -- @param #TARGET self
 -- @param #TARGET.Object Target Target object.
 -- @return #TARGET.Category Target category.

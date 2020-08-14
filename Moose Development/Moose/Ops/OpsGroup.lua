@@ -1760,10 +1760,19 @@ function OPSGROUP:_GetNextMission()
   local time=timer.getAbsTime()
 
   -- Look for first mission that is SCHEDULED.
+  local importance=math.huge
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG    
+    if mission.importance<importance then
+      importance=mission.importance
+    end
+  end
+
+  -- Look for first mission that is SCHEDULED.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
-    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) then
+    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) and mission.importance<=importance then
       return mission
     end
   end

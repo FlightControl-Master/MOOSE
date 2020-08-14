@@ -30,6 +30,7 @@
 -- @field #string name Mission name.
 -- @field #number prio Mission priority.
 -- @field #boolean urgent Mission is urgent. Running missions with lower prio might be cancelled.
+-- @field #number importance Importance.
 -- @field #number Tstart Mission start time in seconds.
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
@@ -86,7 +87,8 @@
 -- @field #number nassets Number of required assets by the Airwing.
 -- @field #number requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
 -- @field #boolean cancelContactLost If true, cancel mission if the contact is lost.
--- @field #table squadrons User specifed airwing squadrons assigned for this mission. Only these will be considered for the job!
+-- @field #table squadrons User specified airwing squadrons assigned for this mission. Only these will be considered for the job!
+-- @field #table payloads User specified airwing payloads for this mission. Only these will be considered for the job! 
 -- @field Ops.AirWing#AIRWING.PatrolData patroldata Patrol data.
 -- 
 -- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
@@ -1147,7 +1149,9 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius)
   mission.artyShots=Nshots or 3
   mission.artyRadius=Radius or 100
   
-  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROE=ENUMS.ROE.OpenFire   -- Ground/naval need open fire!
+  mission.optionAlarm=0
+  
   mission.missionFraction=0.1
   
   mission.DCStask=mission:GetDCSMissionTask()
@@ -1159,22 +1163,31 @@ end
 -- @param #AUFTRAG self
 -- @param Ops.Target#TARGET Target The target.
 -- @return #AUFTRAG self
-function AUFTRAG:NewTARGET(Target)
+function AUFTRAG:NewTargetAir(Target)
 
   local mission=nil --#AUFTRAG
+  
+  self.engageTarget=Target
   
   if Target.category==TARGET.Category.GROUND then
   
   
   elseif Target.category==TARGET.Category.AIRCRAFT then
   
+    mission=AUFTRAG:NewINTERCEPT(Target)
+  
   elseif Target.category==TARGET.Category.AIRBASE then
   
+    mission=AUFTRAG:NewBOMBRUNWAY(Airdrome,Altitude)
+  
   elseif Target.category==TARGET.Category.COORDINATE then
+  
  
   end
-
-
+  
+  local mission=self:NewAUTO()
+  
+  
   if mission then
     mission:SetPriority(10, true)
   end
@@ -1288,7 +1301,7 @@ function AUFTRAG:NewAUTO(EngageGroup)
   elseif auftrag==AUFTRAG.Type.ARTY then
     mission=AUFTRAG:NewARTY(Target)
   elseif auftrag==AUFTRAG.Type.AWACS then
-    mission=AUFTRAG:NewAWACS(Coordinate,Altitude,Speed,Heading,Leg)
+    mission=AUFTRAG:NewAWACS(Coordinate, Altitude,Speed,Heading,Leg)
   elseif auftrag==AUFTRAG.Type.BAI then
     mission=AUFTRAG:NewBAI(Target,Altitude)
   elseif auftrag==AUFTRAG.Type.BOMBING then
@@ -1331,20 +1344,6 @@ function AUFTRAG:NewAUTO(EngageGroup)
   
   if mission then
     mission:SetPriority(10, true)
-  end
-
-  return mission
-end
-
---- Create a mission to attack a group. Mission type is automatically chosen from the group category.
--- @param #AUFTRAG self
--- @param Ops.Target#TARGET Target Target to engage.
--- @return #AUFTRAG self
-function AUFTRAG:NewTARGET(Target)
-
-  for _,_target in pairs(Target) do
-    local target=_target --Ops.Target#TARGET.Object
-    a=target.Object
   end
 
   return mission
@@ -1394,10 +1393,12 @@ end
 -- @param #AUFTRAG self
 -- @param #number Prio Priority 1=high, 100=low. Default 50.
 -- @param #boolean Urgent If *true*, another running mission might be cancelled if it has a lower priority.
+-- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first.
 -- @return #AUFTRAG self
 function AUFTRAG:SetPriority(Prio, Urgent)
   self.prio=Prio or 50
   self.urgent=Urgent
+  self.importance=5
   return self
 end
 
@@ -1685,6 +1686,18 @@ function AUFTRAG:AssignSquadrons(Squadrons)
   end
 
   self.squadrons=Squadrons
+end
+
+--- Set the required payload for this mission.
+-- @param #AUFTRAG self
+-- @param Ops.AirWing#AIRWING.Payload Required payload 
+-- @return #AUFTRAG self
+function AUFTRAG:AddRequiredPayload(Payload)
+
+  self.payloads=self.payloads or {}
+
+  table.insert(self.payload, Payload)
+  
 end
 
 
@@ -2875,11 +2888,23 @@ function AUFTRAG:GetMissionTypesText(MissionTypes)
   return text
 end
 
+--- Set the mission waypoint coordinate where the mission is executed. This is 
+-- @param #AUFTRAG self
+-- @return Core.Point#COORDINATE Coordinate where the mission is executed.
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionWaypointCoord(Coordinate)
+  self.missionWaypointCoord=Coordinate
+end
+
 --- Get coordinate of target. First unit/group of the set is used.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP group Group.
 -- @return Core.Point#COORDINATE Coordinate where the mission is executed.
 function AUFTRAG:GetMissionWaypointCoord(group)
+
+  if self.missionWaypointCoord then
+    return self.missionWaypointCoord
+  end
 
   -- Create waypoint coordinate half way between us and the target.
   local waypointcoord=group:GetCoordinate():GetIntermediateCoordinate(self:GetTargetCoordinate(), self.missionFraction)

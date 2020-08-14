@@ -1166,6 +1166,32 @@ end
 
 do -- Is Zone methods
 
+
+--- Check if any unit of a group is inside a @{Zone}.
+-- @param #GROUP self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if at least one unit is inside the zone or false if no unit is inside.
+function GROUP:IsInZone( Zone )
+  
+  if self:IsAlive() then
+  
+    for UnitID, UnitData in pairs(self:GetUnits()) do
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      
+      if Zone:IsVec3InZone(Unit:GetVec3()) then
+        return true  -- At least one unit is in the zone. That is enough.
+      else
+        -- This one is not but another could be.
+      end
+      
+    end
+    
+    return false
+  end
+  
+  return nil
+end
+
 --- Returns true if all units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.

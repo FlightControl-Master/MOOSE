@@ -116,6 +116,7 @@ AIRWING = {
   squadrons      =    {},
   missionqueue   =    {},
   payloads       =    {},
+  payloadcounter =     0,
   pointsCAP      =    {},
   pointsTANKER   =    {},
   pointsAWACS    =    {},
@@ -132,6 +133,7 @@ AIRWING = {
 
 --- Payload data.
 -- @type AIRWING.Payload
+-- @field #number uid Unique payload ID.
 -- @field #string unitname Name of the unit this pylon was extracted from.
 -- @field #string aircrafttype Type of aircraft, which can use this payload.
 -- @field #table capabilities Mission types and performances for which this payload can be used.
@@ -309,7 +311,8 @@ function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
     end
     
     -- Create payload.
-    local payload={} --#AIRWING.Payload    
+    local payload={} --#AIRWING.Payload
+    payload.uid=self.payloadcounter
     payload.unitname=Unit:GetName()
     payload.aircrafttype=Unit:GetTypeName()    
     payload.pylons=Unit:GetTemplatePayload()
@@ -342,6 +345,9 @@ function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
 
     -- Add payload
     table.insert(self.payloads, payload)
+    
+    -- Increase counter
+    self.payloadcounter=self.payloadcounter+1
     
     return payload
     
@@ -385,8 +391,9 @@ end
 -- @param #AIRWING self
 -- @param #string UnitType The type of the unit.
 -- @param #string MissionType The mission type.
+-- @param #table Payloads Specific payloads only to be considered.
 -- @return #AIRWING.Payload Payload table or *nil*.
-function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
+function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
 
   -- Quick check if we have any payloads.
   if not self.payloads or #self.payloads==0 then
@@ -427,11 +434,25 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType)
     end
   end
 
+  local function _checkPayloads(payload)
+    if Payloads then
+      for _,Payload in pairs(Payloads) do
+        if Payload.uid==payload.id then
+          return true
+        end
+      end
+    else
+      -- Payload was not specified.
+      return true
+    end
+    return false
+  end  
+
   -- Pre-selection: filter out only those payloads that are valid for the airframe and mission type and are available.
   local payloads={}
   for _,_payload in pairs(self.payloads) do
     local payload=_payload --#AIRWING.Payload
-    if payload.aircrafttype==UnitType and self:CheckMissionCapability(MissionType, payload.capabilities) and payload.navail>0 then
+    if payload.aircrafttype==UnitType and self:CheckMissionCapability(MissionType, payload.capabilities) and payload.navail>0 and _checkPayloads(payload) then
       table.insert(payloads, payload)
     end
   end
@@ -1119,6 +1140,15 @@ function AIRWING:_GetNextMission()
   end
   table.sort(self.missionqueue, _sort)
   
+  -- Look for first mission that is SCHEDULED.
+  local importance=math.huge
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG    
+    if mission.importance<importance then
+      importance=mission.importance
+    end
+  end  
+  
   -- Current time.
   local time=timer.getAbsTime()
 
@@ -1127,7 +1157,7 @@ function AIRWING:_GetNextMission()
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     -- Firstly, check if mission is due?
-    if mission:IsQueued() and mission:IsReadyToGo() then
+    if mission:IsQueued() and mission:IsReadyToGo() and mission.importance<=importance then
         
       -- Check if airwing can do the mission and gather required assets.
       local can, assets=self:CanMission(mission)
@@ -1146,7 +1176,7 @@ function AIRWING:_GetNextMission()
           
           -- Get payload for the asset.
           if not asset.payload then
-            local payload=self:FetchPayloadFromStock(asset.unittype, mission.type)
+            local payload=self:FetchPayloadFromStock(asset.unittype, mission.type, mission.payloads)
             if payload then
               asset.payload=payload
               table.insert(gotpayload, asset.uid)
@@ -1832,8 +1862,9 @@ end
 -- @param #AIRWING self
 -- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
 -- @param #table UnitTypes Types of units.
+-- @param #table Payloads Specific payloads to be counted only.
 -- @return #number Count of available payloads in stock.
-function AIRWING:CountPayloadsInStock(MissionTypes, UnitTypes)
+function AIRWING:CountPayloadsInStock(MissionTypes, UnitTypes, Payloads)
 
   if MissionTypes then
     if type(MissionTypes)=="string" then
@@ -1860,6 +1891,20 @@ function AIRWING:CountPayloadsInStock(MissionTypes, UnitTypes)
     end
     return false
   end
+  
+  local function _checkPayloads(payload)
+    if Payloads then
+      for _,Payload in pairs(Payloads) do
+        if Payload.uid==payload.id then
+          return true
+        end
+      end
+    else
+      -- Payload was not specified.
+      return true
+    end
+    return false
+  end  
 
   local n=0
   for _,_payload in pairs(self.payloads) do
@@ -1867,7 +1912,7 @@ function AIRWING:CountPayloadsInStock(MissionTypes, UnitTypes)
     
     for _,MissionType in pairs(MissionTypes) do
     
-      if self:CheckMissionCapability(MissionType, payload.capabilities) and _checkUnitTypes(payload) then
+      if self:CheckMissionCapability(MissionType, payload.capabilities) and _checkUnitTypes(payload) and _checkPayloads(payload) then
       
         if payload.unlimited then
           -- Payload is unlimited. Return a BIG number.
@@ -1950,7 +1995,7 @@ end
 -- @param #AIRWING self
 -- @param #table MissionTypes Types on mission to be checked. Default all.
 -- @return #table Assets on pending requests.
-function AIRWING:GetAssetsOnMission(MissionTypes, IncludeQueued)
+function AIRWING:GetAssetsOnMission(MissionTypes)
   
   local assets={}
   local Np=0
@@ -2024,7 +2069,7 @@ function AIRWING:CanMission(Mission)
   local unittypes=self:GetAircraftTypes(true, squadrons)
   
   -- Count all payloads in stock.
-  local Npayloads=self:CountPayloadsInStock(Mission.type, unittypes)
+  local Npayloads=self:CountPayloadsInStock(Mission.type, unittypes, Mission.payloads)
   
   if Npayloads<Mission.nassets then
     self:I(self.lid..string.format("INFO: Not enough PAYLOADS available! Got %d but need at least %d", Npayloads, Mission.nassets))
@@ -2040,7 +2085,7 @@ function AIRWING:CanMission(Mission)
     if can then
     
       -- Number of payloads available.
-      local Npayloads=self:CountPayloadsInStock(Mission.type, squadron.aircrafttype)
+      local Npayloads=self:CountPayloadsInStock(Mission.type, squadron.aircrafttype, Mission.payloads)
       
       local assets=squadron:RecruitAssets(Mission, Npayloads)    
           

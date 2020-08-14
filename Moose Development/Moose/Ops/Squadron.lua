@@ -758,11 +758,12 @@ end
 --- Get assets for a mission.
 -- @param #SQUADRON self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @param #number Nplayloads Number of payloads available.
 -- @return #table Assets that can do the required mission.
-function SQUADRON:RecruitAssets(Mission)
+function SQUADRON:RecruitAssets(Mission, Npayloads)
 
   -- Number of payloads available.
-  local Npayloads=self.airwing:CountPayloadsInStock(Mission.type, self.aircrafttype)      
+  Npayloads=Npayloads or self.airwing:CountPayloadsInStock(Mission.type, self.aircrafttype, Mission.payloads)      
 
   local assets={}
 
