@@ -252,6 +252,7 @@ OPSGROUP.TaskType={
 -- @field #boolean detour If true, this waypoint is not part of the normal route.
 -- @field #boolean intowind If true, this waypoint is a turn into wind route point.
 -- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
+-- @field #number npassed Number of times a groups passed this waypoint.
 -- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
 -- @field Core.Point#COORDINATE roadcoord Closest point to road.
 -- @field #number roaddist Distance to closest point on road.
@@ -1851,13 +1852,13 @@ function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
     -- Activate group if it is late activated.
     if self:IsLateActivated() then
       self:Activate(delay)
-      --delay=delay+1
+      delay=delay+1
     end
   
   end
   
   -- Startup group if it is uncontrolled.
-  if self.isAircraft and self:IsParking() and self:IsUncontrolled() then
+  if self.isAircraft and self:IsUncontrolled() then
     self:StartUncontrolled(delay)
   end  
 

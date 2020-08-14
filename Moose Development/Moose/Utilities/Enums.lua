@@ -56,6 +56,17 @@ ENUMS.ROT = {
   AllowAbortMission=4,
 }
 
+--- Alarm state.
+-- @type ENUMS.AlarmState
+-- @field #number Auto AI will automatically switch alarm states based on the presence of threats. The AI kind of cheats in this regard.
+-- @field #number Green Group is not combat ready. Sensors are stowed if possible.
+-- @field #number Red Group is combat ready and actively searching for targets. Some groups like infantry will not move in this state.
+ENUMS.AlarmState = {
+  Auto=0,
+  Green=1,
+  Red=2,
+}
+
 --- Weapon types. See the [Weapon Flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) enumerotor on hoggit wiki.
 -- @type ENUMS.WeaponFlag
 ENUMS.WeaponFlag={

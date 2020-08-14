@@ -241,12 +241,12 @@ function SQUADRON:SetSkill(Skill)
   return self
 end
 
---- Set maintenance and repair time.
+--- Set turnover and repair time. If an asset returns from a mission to the airwing, it will need some time until the asset is available for further missions.
 -- @param #SQUADRON self
 -- @param #number MaintenanceTime Time in minutes it takes until a flight is combat ready again. Default is 0 min.
 -- @param #number RepairTime Time in minutes it takes to repair a flight for each percent damage taken. Default is 0 min.
 -- @return #SQUADRON self
-function SQUADRON:SetMaintenanceTime(MaintenanceTime, RepairTime)
+function SQUADRON:SetTurnoverTime(MaintenanceTime, RepairTime)
   self.maintenancetime=MaintenanceTime and MaintenanceTime*60 or 0
   self.repairtime=RepairTime and RepairTime*60 or 0
   return self

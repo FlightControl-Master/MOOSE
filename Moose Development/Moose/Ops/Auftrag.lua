@@ -107,8 +107,9 @@
 -- 
 -- @field #number optionROE ROE.
 -- @field #number optionROT ROT.
--- @field #number optionCM Counter measures.
+-- @field #number optionAlarm Alarm state.
 -- @field #number optionFormation Formation.
+-- @field #number optionCM Counter measures.
 -- @field #number optionRTBammo RTB on out-of-ammo.
 -- @field #number optionRTBfuel RTB on out-of-fuel.
 -- @field #number optionECM ECM.
@@ -431,7 +432,7 @@ AUFTRAG.version="0.3.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Option to assign a specific payload for the mission (requires an AIRWING).
+-- DONE: Option to assign a specific payload for the mission (requires an AIRWING).
 -- TODO: Mission success options damaged, destroyed.
 -- TODO: Recon mission. What input? Set of coordinates?
 -- NOPE: Clone mission. How? Deepcopy? ==> Create a new auftrag.
@@ -1169,6 +1170,7 @@ function AUFTRAG:NewTargetAir(Target)
   
   self.engageTarget=Target
   
+  --[[
   if Target.category==TARGET.Category.GROUND then
   
   
@@ -1184,14 +1186,18 @@ function AUFTRAG:NewTargetAir(Target)
   
  
   end
+  ]]
   
-  local mission=self:NewAUTO()
+  local target=self.engageTarget:GetObject()
+  
+  local mission=self:NewAUTO(target)
   
   
   if mission then
     mission:SetPriority(10, true)
   end
 
+  return mission
 end
 
 
@@ -1411,6 +1417,15 @@ function AUFTRAG:SetRepeatOnFailure(Nrepeat)
   return self
 end
 
+--- Set how many times the mission is repeated if it was successful.
+-- @param #AUFTRAG self
+-- @param #number Nrepeat Number of repeats. Default 0.
+-- @return #AUFTRAG self
+function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
+  self.NrepeatSuccess=Nrepeat or 0
+  return self
+end
+
 --- Define how many assets are required to do the job.
 -- @param #AUFTRAG self
 -- @param #number Nassets Number of asset groups. Default 1.
@@ -1545,6 +1560,17 @@ end
 function AUFTRAG:SetROT(rot)
   
   self.optionROT=rot
+  
+  return self
+end
+
+--- Set alarm state for this mission.
+-- @param #AUFTRAG self
+-- @param #number Alarmstate Alarm state 0=Auto, 1=Green, 2=Red.
+-- @return #AUFTRAG self
+function AUFTRAG:SetAlarmstate(Alarmstate)
+  
+  self.optionAlarm=Alarmstate
   
   return self
 end
@@ -1688,7 +1714,7 @@ function AUFTRAG:AssignSquadrons(Squadrons)
   self.squadrons=Squadrons
 end
 
---- Set the required payload for this mission.
+--- Set the required payload for this mission. Only available for use with an AIRWING.
 -- @param #AUFTRAG self
 -- @param Ops.AirWing#AIRWING.Payload Required payload 
 -- @return #AUFTRAG self
@@ -2463,21 +2489,6 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
 
 end
 
---- On after "Success" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function AUFTRAG:onafterSuccess(From, Event, To)
-
-  self.status=AUFTRAG.Status.SUCCESS
-  self:T(self.lid..string.format("New mission status=%s", self.status))
-  
-  -- Stop mission.
-  self:Stop()
-
-end
-
 --- On after "Cancel" event. Cancells the mission.
 -- @param #AUFTRAG self
 -- @param #string From From state.
@@ -2493,6 +2504,7 @@ function AUFTRAG:onafterCancel(From, Event, To)
   
   -- No more repeats.
   self.missionRepeatMax=self.missionRepeated
+  self.NrepeatSuccess=self.missionRepeated
   
   -- Not necessary to delay the evaluaton?!
   self.dTevaluate=0
@@ -2529,6 +2541,32 @@ function AUFTRAG:onafterCancel(From, Event, To)
 
 end
 
+--- On after "Success" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterSuccess(From, Event, To)
+
+  self.status=AUFTRAG.Status.SUCCESS
+  self:T(self.lid..string.format("New mission status=%s", self.status))
+  
+  if self.missionRepeated>=self.NrepeatSuccess then
+  
+    -- Stop mission.
+    self:I(self.lid..string.format("Mission SUCCESS! Number of max repeats reached [%d>=%d] ==> Stopping mission!", self.missionRepeated, self.NrepeatSuccess))
+    self:Stop()
+    
+  else
+        
+    -- Repeat mission.
+    self:I(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.missionRepeated+1, self.NrepeatSuccess))
+    self:Repeat()
+    
+  end
+
+end
+
 --- On after "Failed" event.
 -- @param #AUFTRAG self
 -- @param #string From From state.
@@ -2547,7 +2585,7 @@ function AUFTRAG:onafterFailed(From, Event, To)
   else
         
     -- Repeat mission.
-    self:I(self.lid..string.format("Mission failed! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.missionRepeated+1, self.missionRepeatMax))
+    self:I(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.missionRepeated+1, self.missionRepeatMax))
     self:Repeat()
     
   end  

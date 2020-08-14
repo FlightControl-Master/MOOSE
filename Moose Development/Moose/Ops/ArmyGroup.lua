@@ -157,15 +157,15 @@ function ARMYGROUP:GetClosestRoad()
 end
 
 
---- Add a *scheduled* task.
+--- Add a *scheduled* task to fire at a given coordinate.
 -- @param #ARMYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
+-- @param #string Clock Time when to start the attack.
 -- @param #number Radius Radius in meters. Default 100 m.
 -- @param #number Nshots Number of shots to fire. Default 3.
 -- @param #number WeaponType Type of weapon. Default auto.
--- @param #string Clock Time when to start the attack.
 -- @param #number Prio Priority of the task.
-function ARMYGROUP:AddTaskFireAtPoint(Coordinate, Radius, Nshots, WeaponType, Clock, Prio)
+function ARMYGROUP:AddTaskFireAtPoint(Coordinate, Clock, Radius, Nshots, WeaponType, Prio)
 
   local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
 
@@ -173,7 +173,7 @@ function ARMYGROUP:AddTaskFireAtPoint(Coordinate, Radius, Nshots, WeaponType, Cl
 
 end
 
---- Add a *waypoint* task.
+--- Add a *waypoint* task to fire at a given coordinate.
 -- @param #ARMYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
 -- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Where the task is executed. Default is next waypoint.

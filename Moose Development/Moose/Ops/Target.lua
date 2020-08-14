@@ -764,6 +764,35 @@ function TARGET:GetTargetByName(ObjectName)
 end
 
 
+--- Get the first target objective alive.
+-- @param #TARGET self
+-- @return #TARGET.Object The target objective.
+function TARGET:GetObjective()
+
+  for _,_target in pairs(self.targets) do
+    local target=_target --#TARGET.Object
+    if target.Status==TARGET.ObjectStatus.ALIVE then
+      return target
+    end
+  end
+
+  return nil
+end
+
+--- Get the first target object alive.
+-- @param #TARGET self
+-- @return Wrapper.Positionable#POSITIONABLE The target object or nil.
+function TARGET:GetObject()
+
+  local target=self:GetObjective()
+  if target then
+    return target.Object
+  end
+
+  return nil
+end
+
+
 --- Count alive targets.
 -- @param #TARGET self
 -- @return #number Number of alive target objects.

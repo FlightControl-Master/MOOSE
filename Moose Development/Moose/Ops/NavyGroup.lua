@@ -189,10 +189,10 @@ end
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
+-- @param #string Clock Time when to start the attack.
 -- @param #number Radius Radius in meters. Default 100 m.
 -- @param #number Nshots Number of shots to fire. Default 3.
 -- @param #number WeaponType Type of weapon. Default auto.
--- @param #string Clock Time when to start the attack.
 -- @param #number Prio Priority of the task.
 -- @return Ops.OpsGroup#OPSGROUP.Task The task data.
 function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Radius, Nshots, WeaponType, Clock, Prio)
