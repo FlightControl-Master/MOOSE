@@ -1988,6 +1988,7 @@ function AIRWING:CountAssetsOnMission(MissionTypes, Squadron)
     end
   end
 
+  env.info(string.format("FF N=%d Np=%d, Nq=%d", Np+Nq, Np, Nq))
   return Np+Nq, Np, Nq
 end
 

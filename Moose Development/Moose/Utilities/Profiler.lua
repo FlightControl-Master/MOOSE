@@ -74,16 +74,22 @@ PROFILER = {
   fTimeTotal     = {},
   eventHandler   = {},
   startTime      = nil,
-  endTime        = nil,
   runTime        = nil,
-  sortBy         = 1,
   logUnknown     = false,
   lowCpsThres    = 5,
+  fileName       = "",
 }
 
-PROFILER.sortBy=1          -- Sort reports by 0=Count, 1=Total time by function
-PROFILER.logUnknown=true  -- Log unknown functions
-PROFILER.lowCpsThres=1     -- Skip results with less than X calls per second
+--- Waypoint data.
+-- @type PROFILER.Data
+-- @field #string func The function name.
+-- @field #string src The source file.
+-- @field #number line The line number
+-- @field #number count Number of function calls.
+-- @field #number tm Total time in seconds.
+
+PROFILER.logUnknown=false  -- Log unknown functions
+PROFILER.lowCpsThres=5     -- Skip results with less than X calls per second
 PROFILER.fileName="_LuaProfiler.txt"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -99,9 +105,8 @@ function PROFILER.Start(Delay, Duration)
     BASE:ScheduleOnce(Delay, PROFILER.Start, 0, Duration)
   else
 
-    PROFILER.startTime=timer.getTime()
-    PROFILER.endTime=0
-    PROFILER.runTime=0
+    PROFILER.TstartGame=timer.getTime()
+    PROFILER.TstartOS=os.clock()
     
     -- Add event handler.
     world.addEventHandler(PROFILER.eventHandler)
@@ -142,11 +147,10 @@ function PROFILER.Stop(Delay)
     -- Remove hook.
     debug.sethook()
   
-    -- Set end time.
-    PROFILER.endTime=timer.getTime()
     
     -- Run time.
-    PROFILER.runTime=PROFILER.endTime-PROFILER.startTime
+    PROFILER.runTimeGame=timer.getTime()-PROFILER.TstartGame
+    PROFILER.runTimeOS=os.clock()-PROFILER.TstartOS
     
     -- Show info.
     PROFILER.showInfo()
@@ -208,13 +212,19 @@ end
 
 --- Get data.
 -- @param #function func Function.
--- @param #boolean detailed Not used.
-function PROFILER.getData(func, detailed)
+-- @return #string Function name.
+-- @return #string Source file name.
+-- @return #string Line number.
+-- @return #number Function time in seconds.
+function PROFILER.getData(func)
+
   local n=PROFILER.dInfo[func]
+  
   if n.what=="C" then
-    return n.name, "", "", PROFILER.fTimeTotal[func]
+    return n.name, "?", "?", PROFILER.fTimeTotal[func]
   end
-  return n.name, n.short_src, n.linedefined, PROFILER.fTimeTotal[func]
+  
+  return n.name, n.short_src, n.linedefined, PROFILER.fTimeTotal[func]  
 end
 
 --- Write text to log file.
@@ -225,24 +235,27 @@ function PROFILER._flog(f, txt)
 end
 
 --- Show table.
--- @param #table t Data table.
+-- @param #table data Data table.
 -- @param #function f The file.
 -- @param #boolean detailed Show detailed info.
-function PROFILER.showTable(t, f, detailed)
-  for i=1, #t do
+function PROFILER.showTable(data, f, detailed)
+
+  -- Loop over data.
+  for i=1, #data do  
+    local t=data[i] --#PROFILER.Data
   
-    local cps=t[i].count/PROFILER.runTime
+    -- Calls per second.
+    local cps=t.count/PROFILER.runTimeGame
     
     if (cps>=PROFILER.lowCpsThres) then
     
-      if (detailed==false) then
-        PROFILER._flog(f,"- Function: "..t[i].func..": "..tostring(t[i].count).." ("..string.format("%.01f",cps).."/sec) Time: "..string.format("%g",t[i].tm).." seconds")
-      else
-        PROFILER._flog(f,"- Function: "..t[i].func..": "..tostring(t[i].count).." ("..string.format("%.01f",cps).."/sec) "..tostring(t[i].src)..":"..tostring(t[i].line).." Time: "..string.format("%g",t[i].tm).." seconds")
-      end
+      -- Output
+      local text=string.format("%20s: %8d calls %8.1f/sec   -   Time %8.3f sec (%.3f %%)  %s line %s", t.func, t.count, cps, t.tm, t.tm/PROFILER.runTimeGame*100, tostring(t.src), tostring(t.line))
+      PROFILER._flog(f, text)
       
     end
   end
+    
 end
 
 --- Write info to output file.
@@ -250,15 +263,15 @@ function PROFILER.showInfo()
 
   -- Output file.
   local file=lfs.writedir()..[[Logs\]]..PROFILER.fileName  
-  local f=io.open(file, 'w')
-  
-  BASE:I(string.format("### Profiler: Writing result to file %s", file))
+  local f=io.open(file, 'w')  
   
   -- Gather data.
+  local Ttot=0
+  local Calls=0
   local t={}
   for func, count in pairs(PROFILER.Counters) do
   
-    local s,src,line,tm=PROFILER.getData(func, false)
+    local s,src,line,tm=PROFILER.getData(func)
     
     if PROFILER.logUnknown==true then
       if s==nil then s="<Unknown>" end
@@ -272,39 +285,65 @@ function PROFILER.showInfo()
         count=count,
         tm=tm,
       }
+      Ttot=Ttot+tm
+      Calls=Calls+count
     end
     
   end
-    
-  -- Sort result.
-  if PROFILER.sortBy==0 then
-    table.sort(t, function(a,b) return a.count>b.count end )
-  end
-  if (PROFILER.sortBy==1) then
-    table.sort(t, function(a,b) return a.tm>b.tm end )
-  end  
+  
+  env.info("**************************************************************************************************")
+  env.info(string.format("Profiler"))
+  env.info(string.format("--------"))
+  env.info(string.format("* Runtime Game     : %s = %d sec", UTILS.SecondsToClock(PROFILER.runTimeGame, true), PROFILER.runTimeGame))
+  env.info(string.format("* Runtime Real     : %s = %d sec", UTILS.SecondsToClock(PROFILER.runTimeOS, true), PROFILER.runTimeOS))
+  env.info(string.format("* Function time    : %s = %.1f sec (%.1f percent of runtime game)", UTILS.SecondsToClock(Ttot, true), Ttot, Ttot/PROFILER.runTimeGame*100))
+  env.info(string.format("* Total functions  : %d", #t))
+  env.info(string.format("* Total func calls : %d", Calls))
+  env.info(string.format("* Writing to file  : \"%s\"", file))
+  env.info("**************************************************************************************************")  
+      
+  -- Sort by total time.
+  table.sort(t, function(a,b) return a.tm>b.tm end)
   
   -- Write data.
   PROFILER._flog(f,"")
-  PROFILER._flog(f,"#### #### #### #### #### ##### #### #### #### #### ####")
-  PROFILER._flog(f,"#### #### #### ---- Profiler Report ---- #### #### ####")
-  PROFILER._flog(f,"#### Profiler Runtime: "..string.format("%.01f",PROFILER.runTime/60).." minutes")
-  PROFILER._flog(f,"#### #### #### #### #### ##### #### #### #### #### ####")
-  PROFILER._flog(f,"")    
-  PROFILER.showTable(t, f, false)
+  PROFILER._flog(f,"************************************************************************************************************************")
+  PROFILER._flog(f,"************************************************************************************************************************")
+  PROFILER._flog(f,"************************************************************************************************************************")
+  PROFILER._flog(f,"")
+  PROFILER._flog(f,"-------------------------")
+  PROFILER._flog(f,"---- Profiler Report ----")
+  PROFILER._flog(f,"-------------------------")
+  PROFILER._flog(f,"")
+  PROFILER._flog(f,string.format("* Runtime Game     : %s = %.1f sec", UTILS.SecondsToClock(PROFILER.runTimeGame, true), PROFILER.runTimeGame))
+  PROFILER._flog(f,string.format("* Runtime Real     : %s = %.1f sec", UTILS.SecondsToClock(PROFILER.runTimeOS, true), PROFILER.runTimeOS).."  (can vary significantly compared to the game time)")
+  PROFILER._flog(f,string.format("* Function time    : %s = %.1f sec (%.1f %% of runtime game)", UTILS.SecondsToClock(Ttot, true), Ttot, Ttot/PROFILER.runTimeGame*100))
+  PROFILER._flog(f,"")
+  PROFILER._flog(f,string.format("* Total functions  = %d", #t))
+  PROFILER._flog(f,string.format("* Total func calls = %d", Calls))
+  PROFILER._flog(f,"")
+  PROFILER._flog(f,"************************************************************************************************************************")
+  PROFILER._flog(f,"")
+  PROFILER.showTable(t, f, true)
+  
+  -- Sort by number of calls.
+  table.sort(t, function(a,b) return a.count>b.count end)
   
   -- Detailed data.
   PROFILER._flog(f,"")
-  PROFILER._flog(f,"#### #### #### #### #### #### #### #### #### #### #### #### ####")
-  PROFILER._flog(f,"#### #### #### ---- Profiler Detailed Report ---- #### #### ####")
-  PROFILER._flog(f,"#### #### #### #### #### #### #### #### #### #### #### #### ####")
+  PROFILER._flog(f,"************************************************************************************************************************")
+  PROFILER._flog(f,"")
+  PROFILER._flog(f,"------------------------------")
+  PROFILER._flog(f,"---- Data Sorted by Calls ----")
+  PROFILER._flog(f,"------------------------------")
   PROFILER._flog(f,"")
   PROFILER.showTable(t, f, true)
   
   -- Closing.
   PROFILER._flog(f,"")
-  PROFILER._flog(f,"#### #### #### #### #### #### #### #### #### #### #### #### ####")
-  
+  PROFILER._flog(f,"************************************************************************************************************************")
+  PROFILER._flog(f,"************************************************************************************************************************")
+  PROFILER._flog(f,"************************************************************************************************************************")
   -- Close file.
   f:close()
 end

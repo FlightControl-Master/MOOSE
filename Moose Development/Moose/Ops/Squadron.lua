@@ -574,8 +574,11 @@ function SQUADRON:onafterStatus(From, Event, To)
   
   local NassetsTot=#self.assets
   local NassetsInS=self:CountAssetsInStock()
-  local NassetsQP, NassetsP, NassetsQ=self.airwing and self.airwing:CountAssetsOnMission(nil, self) or 0,0,0
-
+  local NassetsQP=0 ; local NassetsP=0 ; local NassetsQ=0  
+  if self.airwing then
+    NassetsQP, NassetsP, NassetsQ=self.airwing:CountAssetsOnMission(nil, self)
+  end
+  
   -- Short info.
   local text=string.format("%s [Type=%s, Callsign=%s, Modex=%d, Skill=%s]: Assets Total=%d, InStock=%d, OnMission=%d [P=%d, Q=%d]", 
   fsmstate, self.aircrafttype, callsign, modex, skill, NassetsTot, NassetsInS, NassetsQP, NassetsP, NassetsQ)
@@ -613,6 +616,8 @@ function SQUADRON:_CheckAssetStatus()
         if mission then
           local distance=asset.flightgroup and UTILS.MetersToNM(mission:GetTargetDistance(asset.flightgroup.group:GetCoordinate())) or 0
           text=text..string.format(" Mission %s - %s: Status=%s, Dist=%.1f NM", mission.name, mission.type, mission.status, distance)
+        else
+          text=text.."Mission None"
         end
           
         -- Flight status.

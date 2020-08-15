@@ -2386,7 +2386,7 @@ function OPSGROUP:onafterCheckZone(From, Event, To)
   end
 
   if not self:IsStopped() then
-    self:__CheckZone(-1)
+    self:__CheckZone(-10)
   end
 end
 
@@ -2442,7 +2442,6 @@ function OPSGROUP:_CheckInZones()
     for _,enterzone in pairs(enterzones) do
       self:EnterZone(enterzone)
     end
-    
     
   end
 
@@ -3493,6 +3492,30 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Element and Group Status Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check if all elements of the group have the same status (or are dead).
+-- @param #OPSGROUP self
+-- @param #string unitname Name of unit.
+function OPSGROUP:_UpdatePosition()
+
+  if self:IsAlive() then
+    
+    self.positionLast=self.position or self:GetCoordinate()
+    self.headingLast=self.heading or self:GetHeading()
+    self.orientXLast=self.orientX or self.group:GetUnit(1):GetOrientationX()
+    self.velocityLast=self.velocity or self.group:GetVelocityMPS()
+  
+    self.position=self:GetCoordinate()
+    self.heading=self:GetHeading()
+    self.orientX=self.group:GetUnit(1):GetOrientationX()
+    self.velocity=self.group:GetVelocityMPS()
+    
+    self.dTpositionUpdate=self.TpositionUpdate and self.TpositionUpdate-timer.getAbsTime() or 0
+    self.TpositionUpdate=timer.getAbsTime()
+    
+  end
+
+end
 
 --- Check if all elements of the group have the same status (or are dead).
 -- @param #OPSGROUP self

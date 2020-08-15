@@ -416,6 +416,9 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     local pos=self:GetCoordinate()
     local speed=self.group:GetVelocityKNOTS()
     
+    -- Update last known position, orientation, velocity.
+    self:_UpdatePosition()
+    
     -- Check if group started or stopped turning.
     self:_CheckTurning()
     
@@ -439,9 +442,6 @@ function NAVYGROUP:onafterStatus(From, Event, To)
         end
         
       end
-      
-      -- Check water is ahead.
-      --collision=self:_CheckCollisionCoord(pos:Translate(freepath+100, hdg))
       
     end
     
@@ -1348,10 +1348,10 @@ function NAVYGROUP:_CheckTurning()
   if unit and unit:IsAlive() then
 
     -- Current orientation of carrier.
-    local vNew=unit:GetOrientationX()
+    local vNew=self.orientX --unit:GetOrientationX()
   
     -- Last orientation from 30 seconds ago.
-    local vLast=self.Corientlast or vNew
+    local vLast=self.orientXLast --self.Corientlast or vNew
   
     -- We only need the X-Z plane.
     vNew.y=0 ; vLast.y=0
@@ -1360,7 +1360,7 @@ function NAVYGROUP:_CheckTurning()
     local deltaLast=math.deg(math.acos(UTILS.VecDot(vNew,vLast)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vLast)))
   
     -- Last orientation becomes new orientation
-    self.Corientlast=vNew
+    --self.Corientlast=vNew
   
     -- Carrier is turning when its heading changed by at least two degrees since last check.
     local turning=math.abs(deltaLast)>=2

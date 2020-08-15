@@ -71,7 +71,7 @@
 -- 
 -- 
 -- ### Author: **FlightControl**
--- ### Contributions: 
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 --
@@ -81,6 +81,12 @@
 do -- FSM
 
   --- @type FSM
+  -- @field #string ClassName Name of the class.
+  -- @field Core.Scheduler#SCHEDULER CallScheduler Call scheduler.
+  -- @field #table options Options.
+  -- @field #table subs Subs.
+  -- @field #table Scores Scores.
+  -- @field #string current Current state name.
   -- @extends Core.Base#BASE
   
   
@@ -369,8 +375,7 @@ do -- FSM
     self._EventSchedules = {}
     
     self.CallScheduler = SCHEDULER:New( self )
-    
-  
+     
     return self
   end
   
@@ -379,7 +384,6 @@ do -- FSM
   -- @param #FSM self
   -- @param #string State A string defining the start state.
   function FSM:SetStartState( State )
-  
     self._StartState = State
     self.current = State
   end
@@ -389,7 +393,6 @@ do -- FSM
   -- @param #FSM self
   -- @return #string A string containing the start state.
   function FSM:GetStartState()
-  
     return self._StartState or {}
   end
   
@@ -406,6 +409,7 @@ do -- FSM
     Transition.Event = Event
     Transition.To = To
   
+    -- Debug message.
     self:T2( Transition )
     
     self._Transitions[Transition] = Transition
@@ -414,9 +418,9 @@ do -- FSM
 
   
   --- Returns a table of the transition rules defined within the FSM.
-  -- @return #table
-  function FSM:GetTransitions()
-  
+  -- @param #FSM self
+  -- @return #table Transitions.
+  function FSM:GetTransitions()  
     return self._Transitions or {}
   end
   
@@ -448,7 +452,8 @@ do -- FSM
   
   
   --- Returns a table of the SubFSM rules defined within the FSM.
-  -- @return #table
+  -- @param #FSM self
+  -- @return #table Sub processes.
   function FSM:GetProcesses()
   
     self:F( { Processes = self._Processes } )
@@ -480,15 +485,17 @@ do -- FSM
   end
   
   --- Adds an End state.
-  function FSM:AddEndState( State )
-  
+  -- @param #FSM self
+  -- @param #string State The FSM state.
+  function FSM:AddEndState( State )  
     self._EndStates[State] = State
     self.endstates[State] = State
   end
   
   --- Returns the End states.
-  function FSM:GetEndStates()
-  
+  -- @param #FSM self
+  -- @return #table End states.
+  function FSM:GetEndStates()  
     return self._EndStates or {}
   end
   
@@ -532,18 +539,22 @@ do -- FSM
   end
   
   --- Returns a table with the scores defined.
-  function FSM:GetScores()
-  
+  -- @param #FSM self
+  -- @param #table Scores.
+  function FSM:GetScores()  
     return self._Scores or {}
   end
   
   --- Returns a table with the Subs defined.
-  function FSM:GetSubs()
-  
+  -- @param #FSM self
+  -- @return #table Sub processes.
+  function FSM:GetSubs()  
     return self.options.subs
   end
   
-  
+  --- Load call backs.
+  -- @param #FSM self
+  -- @param #table CallBackTable Table of call backs.  
   function FSM:LoadCallBacks( CallBackTable )
   
     for name, callback in pairs( CallBackTable or {} ) do
@@ -551,21 +562,34 @@ do -- FSM
     end
   
   end
-  
+ 
+   --- Event map.
+  -- @param #FSM self
+  -- @param #table Events Events.
+  -- @param #table EventStructure Event structure.
   function FSM:_eventmap( Events, EventStructure )
   
       local Event = EventStructure.Event
       local __Event = "__" .. EventStructure.Event
+      
       self[Event] = self[Event] or self:_create_transition(Event)
       self[__Event] = self[__Event] or self:_delayed_transition(Event)
+      
+      -- Debug message.
       self:T2( "Added methods: " .. Event .. ", " .. __Event )
+      
       Events[Event] = self.Events[Event] or { map = {} }
       self:_add_to_map( Events[Event].map, EventStructure )
   
   end
-  
+
+   --- Sub maps.
+  -- @param #FSM self
+  -- @param #table subs Subs.
+  -- @param #table sub Sub.
+  -- @param #string name Name.  
   function FSM:_submap( subs, sub, name )
-    --self:F( { sub = sub, name = name } )
+  
     subs[sub.From] = subs[sub.From] or {}
     subs[sub.From][sub.Event] = subs[sub.From][sub.Event] or {}
     
@@ -578,22 +602,23 @@ do -- FSM
     subs[sub.From][sub.Event][sub].ReturnEvents = sub.ReturnEvents or {} -- these events need to be given to find the correct continue event ... if none given, the processing will stop.
     subs[sub.From][sub.Event][sub].name = name
     subs[sub.From][sub.Event][sub].fsmparent = self
+    
   end
   
-  
+  --- Call handler.
+  -- @param #FSM self
+  -- @param #string step Step "onafter", "onbefore", "onenter", "onleave".
+  -- @param #string trigger Trigger.
+  -- @param #table params Parameters.
+  -- @param #string EventName Event name.
+  -- @return Value.
   function FSM:_call_handler( step, trigger, params, EventName )
+    --env.info(string.format("FF T=%.3f _call_handler step=%s, trigger=%s, event=%s", timer.getTime(), step, trigger, EventName))
 
     local handler = step .. trigger
-    local ErrorHandler = function( errmsg )
-  
-      env.info( "Error in SCHEDULER function:" .. errmsg )
-      if BASE.Debug ~= nil then
-        env.info( BASE.Debug.traceback() )
-      end
-      
-      return errmsg
-    end
+        
     if self[handler] then
+    
       if step == "onafter" or step == "OnAfter" then
         self:T( ":::>" .. step .. params[2] .. " : " .. params[1] .. " >> " .. params[2] .. ">" .. step .. params[2] .. "()" .. " >> " .. params[3] )
       elseif step == "onbefore" or step == "OnBefore" then
@@ -604,14 +629,31 @@ do -- FSM
         self:T( ":::>" .. step .. params[1] .. " : " .. params[1] .. ">" .. step .. params[1] .. "()" .. " >> " .. params[2] .. " >> " .. params[3] )
       else
         self:T( ":::>" .. step .. " : " .. params[1] .. " >> " .. params[2] .. " >> " .. params[3] )
-      end      
+      end
+      
       self._EventSchedules[EventName] = nil
+
+      -- Error handler.
+      local ErrorHandler = function( errmsg )
+        env.info( "Error in SCHEDULER function:" .. errmsg )
+        if BASE.Debug ~= nil then
+          env.info( BASE.Debug.traceback() )
+        end      
+        return errmsg
+      end
+      
+      -- Protected call.
       local Result, Value = xpcall( function() return self[handler]( self, unpack( params ) ) end, ErrorHandler )
+      
       return Value
     end
+    
   end
   
-  --- @param #FSM self
+  --- Handler.
+  -- @param #FSM self
+  -- @param #string EventName Event name.
+  -- @param ... Arguments.
   function FSM._handler( self, EventName, ... )
   
     local Can, To = self:can( EventName )
@@ -621,7 +663,11 @@ do -- FSM
     end
   
     if Can then
+    
+      -- From state.
       local From = self.current
+      
+      -- Parameters.
       local Params = { From, EventName, To, ...  }
 
 
@@ -632,8 +678,8 @@ do -- FSM
          self["onafter".. EventName] or
          self["OnAfter".. EventName] or
          self["onenter".. To] or
-         self["OnEnter".. To] 
-      then
+         self["OnEnter".. To] then
+         
         if self:_call_handler( "onbefore", EventName, Params, EventName ) == false then
           self:T( "*** FSM ***    Cancel" .. " *** " .. self.current .. " --> " .. EventName .. " --> " .. To .. " *** onbefore" .. EventName )
           return false
@@ -653,8 +699,11 @@ do -- FSM
             end  
           end
         end
+        
       else
+      
         local ClassName = self:GetClassName()
+        
         if ClassName == "FSM" then
           self:T( "*** FSM ***    Transit *** " .. self.current .. " --> " .. EventName .. " --> " .. To )
         end
@@ -672,84 +721,125 @@ do -- FSM
         end        
       end
   
+      -- New current state.
       self.current = To
   
       local execute = true
   
       local subtable = self:_gosub( From, EventName )
+      
       for _, sub in pairs( subtable ) do
+      
         --if sub.nextevent then
         --  self:F2( "nextevent = " .. sub.nextevent )
         --  self[sub.nextevent]( self )
         --end
+        
         self:T( "*** FSM ***    Sub *** " .. sub.StartEvent )
+        
         sub.fsm.fsmparent = self
         sub.fsm.ReturnEvents = sub.ReturnEvents
         sub.fsm[sub.StartEvent]( sub.fsm )
+        
         execute = false
       end
   
       local fsmparent, Event = self:_isendstate( To )
+      
       if fsmparent and Event then
+      
         self:T( "*** FSM ***    End *** " .. Event )
+        
         self:_call_handler("onenter", To, Params, EventName )
         self:_call_handler("OnEnter", To, Params, EventName )
         self:_call_handler("onafter", EventName, Params, EventName )
         self:_call_handler("OnAfter", EventName, Params, EventName )
         self:_call_handler("onstate", "change", Params, EventName )
+        
         fsmparent[Event]( fsmparent )
+        
         execute = false
       end
   
       if execute then
-          self:_call_handler("onafter", EventName, Params, EventName )
-          self:_call_handler("OnAfter", EventName, Params, EventName )
       
-        -- only execute the call if the From state is not equal to the To state! Otherwise this function should never execute!
-        --if from ~= to then
-          self:_call_handler("onenter", To, Params, EventName )
-          self:_call_handler("OnEnter", To, Params, EventName )
-        --end
+        self:_call_handler("onafter", EventName, Params, EventName )
+        self:_call_handler("OnAfter", EventName, Params, EventName )
+    
+        self:_call_handler("onenter", To, Params, EventName )
+        self:_call_handler("OnEnter", To, Params, EventName )
     
         self:_call_handler("onstate", "change", Params, EventName )
+        
       end
     else
-      self:T( "*** FSM *** NO Transition *** " .. self.current .. " --> " .. EventName .. " -->  ? " )
+      self:I( "*** FSM *** NO Transition *** " .. self.current .. " --> " .. EventName .. " -->  ? " )
     end
   
     return nil
   end
-  
+
+  --- Delayed transition.
+  -- @param #FSM self
+  -- @param #string EventName Event name.  
+  -- @return #function Function.
   function FSM:_delayed_transition( EventName )
+  
     return function( self, DelaySeconds, ... )
+    
+      -- Debug.
       self:T2( "Delayed Event: " .. EventName )
+      
       local CallID = 0
       if DelaySeconds ~= nil then
+      
         if DelaySeconds < 0 then -- Only call the event ONCE!
+        
           DelaySeconds = math.abs( DelaySeconds )
-          if not self._EventSchedules[EventName] then            
+          
+          if not self._EventSchedules[EventName] then
+          
+            -- Call _handler.
             CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1, nil, nil, nil, 4, true )
+            
+            -- Set call ID.
             self._EventSchedules[EventName] = CallID
+            
+            -- Debug output.
             self:T2(string.format("NEGATIVE Event %s delayed by %.1f sec SCHEDULED with CallID=%s", EventName, DelaySeconds, tostring(CallID)))
           else
             self:T2(string.format("NEGATIVE Event %s delayed by %.1f sec CANCELLED as we already have such an event in the queue.", EventName, DelaySeconds))
             -- reschedule
           end
         else
+        
           CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1, nil, nil, nil, 4, true )
+          
           self:T2(string.format("Event %s delayed by %.1f sec SCHEDULED with CallID=%s", EventName, DelaySeconds, tostring(CallID)))
         end
       else
         error( "FSM: An asynchronous event trigger requires a DelaySeconds parameter!!! This can be positive or negative! Sorry, but will not process this." )
       end
+      
+      -- Debug.
       self:T2( { CallID = CallID } )
     end
+    
   end
-  
+
+  --- Create transition.
+  -- @param #FSM self
+  -- @param #string EventName Event name.  
+  -- @return #function Function.  
   function FSM:_create_transition( EventName )
     return function( self, ... ) return self._handler( self,  EventName , ... ) end
   end
-  
+ 
+  --- Go sub.
+  -- @param #FSM self 
+  -- @param #string ParentFrom Parent from state.
+  -- @param #string ParentEvent Parent event name.
+  -- @return #table Subs.
   function FSM:_gosub( ParentFrom, ParentEvent )
     local fsmtable = {}
     if self.subs[ParentFrom] and self.subs[ParentFrom][ParentEvent] then
@@ -759,9 +849,15 @@ do -- FSM
       return {}
     end
   end
-  
+
+  --- Is end state.
+  -- @param #FSM self
+  -- @param #string Current Current state name.
+  -- @return #table FSM parent.
+  -- @return #string Event name.
   function FSM:_isendstate( Current )
     local FSMParent = self.fsmparent
+    
     if FSMParent and self.endstates[Current] then
       --self:T( { state = Current, endstates = self.endstates, endstate = self.endstates[Current] } )
       FSMParent.current = Current
@@ -778,9 +874,14 @@ do -- FSM
   
     return nil
   end
-  
+
+  --- Add to map.
+  -- @param #FSM self
+  -- @param #table Map Map.
+  -- @param #table Event Event table.
   function FSM:_add_to_map( Map, Event )
     self:F3( {  Map, Event } )
+    
     if type(Event.From) == 'string' then
        Map[Event.From] = Event.To
     else
@@ -788,33 +889,59 @@ do -- FSM
          Map[From] = Event.To
       end
     end
+    
     self:T3( {  Map, Event } )
   end
-  
+
+  --- Get current state.
+  -- @param #FSM self
+  -- @return #string Current FSM state.
   function FSM:GetState()
     return self.current
   end
-  
+
+  --- Get current state.
+  -- @param #FSM self
+  -- @return #string Current FSM state.  
   function FSM:GetCurrentState()
     return self.current
   end
   
-  
+  --- Check if FSM is in state.
+  -- @param #FSM self
+  -- @param #string State State name.
+  -- @param #boolean If true, FSM is in this state.
   function FSM:Is( State )
     return self.current == State
   end
-  
+
+  --- Check if FSM is in state.
+  -- @param #FSM self
+  -- @param #string State State name.
+  -- @param #boolean If true, FSM is in this state.  
   function FSM:is(state)
     return self.current == state
   end
-  
+
+  --- Check if can do an event.
+  -- @param #FSM self
+  -- @param #string e Event name.
+  -- @return #boolean If true, FSM can do the event.
+  -- @return #string To state.
   function FSM:can(e)
     local Event = self.Events[e]
+    
     self:F3( { self.current, Event } )
+    
     local To = Event and Event.map[self.current] or Event.map['*']
+    
     return To ~= nil, To
   end
-  
+
+  --- Check if cannot do an event.
+  -- @param #FSM self
+  -- @param #string e Event name.
+  -- @return #boolean If true, FSM cannot do the event.
   function FSM:cannot(e)
     return not self:can(e)
   end

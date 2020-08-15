@@ -486,6 +486,7 @@ function AUFTRAG:New(Type)
   self.engageAsGroup=true
   self.missionRepeated=0
   self.missionRepeatMax=0
+  self.NrepeatSuccess=0
   self.nassets=1
   self.dTevaluate=0
   self.Ncasualties=0
@@ -982,6 +983,10 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
   if type(Airdrome)=="string" then
     Airdrome=AIRBASE:FindByName(Airdrome)
   end
+  
+  if Airdrome:IsInstanceOf("AIRBASE") then
+  
+  end
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BOMBRUNWAY)
   
@@ -995,7 +1000,7 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.RUNWAYATTACK
   mission.missionAltitude=mission.engageAltitude*0.8  
-  mission.missionFraction=0.2
+  mission.missionFraction=0.75
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
@@ -3052,7 +3057,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- BOMBRUNWAY Mission --
     ------------------------
     
-    local DCStask=CONTROLLABLE.TaskBombingRunway(nil, self.engageTarget.Target, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAsGroup)
+    local DCStask=CONTROLLABLE.TaskBombingRunway(nil, self.engageTarget:GetObject(), self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAsGroup)
   
     table.insert(DCStasks, DCStask)    
 
@@ -3092,7 +3097,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- ESCORT Mission --
     --------------------
 
-    local DCStask=CONTROLLABLE.TaskEscort(nil, self.engageTarget.Target, self.escortVec3, LastWaypointIndex, self.engageMaxDistance, self.engageTargetTypes)
+    local DCStask=CONTROLLABLE.TaskEscort(nil, self.engageTarget:GetObject(), self.escortVec3, LastWaypointIndex, self.engageMaxDistance, self.engageTargetTypes)
     
     table.insert(DCStasks, DCStask)
 
@@ -3102,7 +3107,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- FAC Mission --
     -----------------  
 
-    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageTarget.Target, self.engageWeaponType, self.facDesignation, self.facDatalink, self.facFreq, self.facModu, CallsignName, CallsignNumber)
+    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageTarget:GetObject(), self.engageWeaponType, self.facDesignation, self.facDatalink, self.facFreq, self.facModu, CallsignName, CallsignNumber)
     
     table.insert(DCStasks, DCStask)
   

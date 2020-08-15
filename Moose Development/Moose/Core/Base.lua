@@ -26,8 +26,6 @@
 -- @module Core.Base
 -- @image Core_Base.JPG
 
-
-
 local _TraceOnOff = true
 local _TraceLevel = 1
 local _TraceAll = false
