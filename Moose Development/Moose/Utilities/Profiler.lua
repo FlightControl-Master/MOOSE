@@ -89,7 +89,7 @@ PROFILER = {
 -- @field #number tm Total time in seconds.
 
 PROFILER.logUnknown=false  -- Log unknown functions
-PROFILER.lowCpsThres=5     -- Skip results with less than X calls per second
+PROFILER.lowCpsThres=0     -- Skip results with less than X calls per second
 PROFILER.fileName="_LuaProfiler.txt"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -250,7 +250,7 @@ function PROFILER.showTable(data, f, detailed)
     if (cps>=PROFILER.lowCpsThres) then
     
       -- Output
-      local text=string.format("%20s: %8d calls %8.1f/sec   -   Time %8.3f sec (%.3f %%)  %s line %s", t.func, t.count, cps, t.tm, t.tm/PROFILER.runTimeGame*100, tostring(t.src), tostring(t.line))
+      local text=string.format("%30s: %8d calls %8.1f/sec   -   Time %8.3f sec (%.3f %%)  %s line %s", t.func, t.count, cps, t.tm, t.tm/PROFILER.runTimeGame*100, tostring(t.src), tostring(t.line))
       PROFILER._flog(f, text)
       
     end
@@ -276,8 +276,8 @@ function PROFILER.showInfo()
     if PROFILER.logUnknown==true then
       if s==nil then s="<Unknown>" end
     end
-    
-    if (s~=nil) then
+        
+    if s~=nil and s~="_copy" and s~="_Serialize" and s~="(for generator)"  and s~="pairs" then
       t[#t+1]=
       { func=s,
         src=src,
