@@ -204,6 +204,7 @@ function AIRWING:New(warehousename, airwingname)
   self:AddTransition("*",             "FlightOnMission",    "*")           -- Flight was spawned with a mission.
 
   -- Defaults:
+  self:SetVerbosity(0)
   self.nflightsCAP=0
   self.nflightsAWACS=0
   self.nflightsTANKERboom=0
@@ -559,6 +560,15 @@ function AIRWING:GetSquadron(SquadronName)
   return nil
 end
 
+--- Set verbosity level.
+-- @param #AIRWING self
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #AIRWING self
+function AIRWING:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
+  return self
+end
+
 --- Get squadron of an asset.
 -- @param #AIRWING self
 -- @param #AIRWING.SquadronAsset Asset The squadron asset.
@@ -792,93 +802,52 @@ function AIRWING:onafterStatus(From, Event, To)
   -- Check Rescue Helo missions.
   self:CheckRescuhelo()
   
-  -- Count missions not over yet.
-  local nmissions=self:CountMissionsInQueue()
-  
-  -- Count ALL payloads in stock. If any payload is unlimited, this gives 999.
-  local Npayloads=self:CountPayloadsInStock(AUFTRAG.Type)
   
   -- General info:
-  -- TODO: assets total
-  local text=string.format("%s: Missions=%d, Payloads=%d (%d), Squads=%d", fsmstate, nmissions, Npayloads, #self.payloads, #self.squadrons)
-  self:I(self.lid..text)
+  if self.verbose>=1 then
+
+    -- Count missions not over yet.
+    local nmissions=self:CountMissionsInQueue()
+    
+    -- Count ALL payloads in stock. If any payload is unlimited, this gives 999.
+    local Npayloads=self:CountPayloadsInStock(AUFTRAG.Type)
+  
+    -- TODO: assets total
+  
+    -- Output.
+    local text=string.format("%s: Missions=%d, Payloads=%d (%d), Squads=%d", fsmstate, nmissions, Npayloads, #self.payloads, #self.squadrons)
+    self:I(self.lid..text)
+  end
   
   ------------------
   -- Mission Info --
   ------------------
-  local text=string.format("Missions Total=%d:", #self.missionqueue)
-  for i,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-    text=text..string.format("\n[%d] %s: Status=%s, Nassets=%d, Prio=%d, ID=%d (%s)", i, mission.type, mission.status, mission.nassets, mission.prio, mission.auftragsnummer, mission.name)
+  if self.verbose>=2 then
+    local text=string.format("Missions Total=%d:", #self.missionqueue)
+    for i,_mission in pairs(self.missionqueue) do
+      local mission=_mission --Ops.Auftrag#AUFTRAG
+      text=text..string.format("\n[%d] %s: Status=%s, Nassets=%d, Prio=%d, ID=%d (%s)", i, mission.type, mission.status, mission.nassets, mission.prio, mission.auftragsnummer, mission.name)
+    end
+    self:I(self.lid..text)
   end
-  self:I(self.lid..text)
-
+  
   -------------------
   -- Squadron Info --
   -------------------
-  local text="Squadrons:"
-  for i,_squadron in pairs(self.squadrons) do
-    local squadron=_squadron --Ops.Squadron#SQUADRON
-    
-    local callsign=squadron.callsignName and UTILS.GetCallsignName(squadron.callsignName) or "N/A"
-    local modex=squadron.modex and squadron.modex or -1
-    local skill=squadron.skill and tostring(squadron.skill) or "N/A"
-    
-    -- Squadron text
-    text=text..string.format("\n* %s %s: %s*%d/%d, Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, squadron:CountAssetsInStock(), #squadron.assets, callsign, modex, skill)
-    
-    -- Loop over all assets.
-    if self.verbose>1 then
-      for j,_asset in pairs(squadron.assets) do
-        local asset=_asset --#AIRWING.SquadronAsset
-        local assignment=asset.assignment or "none"
-        local name=asset.templatename
-        local spawned=tostring(asset.spawned)
-        local groupname=asset.spawngroupname
-        local typename=asset.unittype
-        
-        local mission=self:GetAssetCurrentMission(asset)
-        local missiontext=""
-        if mission then
-          local distance=asset.flightgroup and UTILS.MetersToNM(mission:GetTargetDistance(asset.flightgroup.group:GetCoordinate())) or 0
-          missiontext=string.format(" [%s (%s): status=%s, distance=%.1f NM]", mission.type, mission.name, mission.status, distance)
-        end
-              
-        -- Mission info.
-        text=text..string.format("\n  -[%d] %s*%d \"%s\": spawned=%s, mission=%s%s", j, typename, asset.nunits, asset.spawngroupname, spawned, tostring(self:IsAssetOnMission(asset)), missiontext)
-        
-        -- Payload info.
-        local payload=asset.payload and table.concat(self:GetPayloadMissionTypes(asset.payload), ", ") or "None"
-        text=text.." payload="..payload
-        
-        -- Flight status.
-        text=text..", flight: "
-        if asset.flightgroup and asset.flightgroup:IsAlive() then
-          local status=asset.flightgroup:GetState()
-          local fuelmin=asset.flightgroup:GetFuelMin()
-          local fuellow=asset.flightgroup:IsFuelLow()
-          local fuelcri=asset.flightgroup:IsFuelCritical()
-          
-          text=text..string.format("%s fuel=%d", status, fuelmin)
-          if fuelcri then
-            text=text.." (critical!)"
-          elseif fuellow then
-            text=text.." (low)"
-          end
-          
-          local lifept, lifept0=asset.flightgroup:GetLifePoints()
-          text=text..string.format(" life=%d/%d", lifept, lifept0)
-          
-          local ammo=asset.flightgroup:GetAmmoTot()
-          text=text..string.format(" ammo=[G=%d, R=%d, B=%d, M=%d]", ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles)
-        else
-          text=text.."N/A"
-        end
-      end
+  if self.verbose>=3 then
+    local text="Squadrons:"
+    for i,_squadron in pairs(self.squadrons) do
+      local squadron=_squadron --Ops.Squadron#SQUADRON
       
+      local callsign=squadron.callsignName and UTILS.GetCallsignName(squadron.callsignName) or "N/A"
+      local modex=squadron.modex and squadron.modex or -1
+      local skill=squadron.skill and tostring(squadron.skill) or "N/A"
+      
+      -- Squadron text
+      text=text..string.format("\n* %s %s: %s*%d/%d, Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, squadron:CountAssetsInStock(), #squadron.assets, callsign, modex, skill)
     end
+    self:I(self.lid..text)
   end
-  self:I(self.lid..text)
    
   --------------
   -- Mission ---

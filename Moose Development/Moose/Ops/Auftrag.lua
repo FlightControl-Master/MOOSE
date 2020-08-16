@@ -98,8 +98,9 @@
 -- 
 -- @field #table enrouteTasks Mission enroute tasks.
 -- 
--- @field #number missionRepeated Number of times mission was repeated.
--- @field #number missionRepeatMax Number of times mission is repeated if failed.
+-- @field #number repeated Number of times mission was repeated.
+-- @field #number NrepeatFailure Number of times mission is repeated if failed.
+-- @field #number NrepeatSuccess Number of times mission is repeated if successful.
 -- 
 -- @field Ops.OpsGroup#OPSGROUP.Radio radio Radio freq and modulation.
 -- @field Ops.OpsGroup#OPSGROUP.Beacon tacan TACAN setting.
@@ -259,7 +260,7 @@
 AUFTRAG = {
   ClassName          = "AUFTRAG",
   Debug              = false,
-  verbose            =     2,
+  verbose            =     0,
   lid                =   nil,
   auftragsnummer     =   nil,
   groupdata         =     {},
@@ -473,19 +474,20 @@ function AUFTRAG:New(Type)
   -- Auftragsnummer.
   self.auftragsnummer=_AUFTRAGSNR
   
-  -- Log id.
+  -- Log ID.
   self:_SetLogID()
   
   -- State is planned.
   self.status=AUFTRAG.Status.PLANNED
   
   -- Defaults
+  self:SetVerbosity(0)  
   self:SetName()
   self:SetPriority()
   self:SetTime()
   self.engageAsGroup=true
-  self.missionRepeated=0
-  self.missionRepeatMax=0
+  self.repeated=0
+  self.NrepeatFailure=0
   self.NrepeatSuccess=0
   self.nassets=1
   self.dTevaluate=0
@@ -1413,16 +1415,16 @@ function AUFTRAG:SetPriority(Prio, Urgent)
   return self
 end
 
---- Set how many times the mission is repeated if it fails. 
+--- Set how many times the mission is repeated if it fails. Only valid if the mission is handled by an AIRWING or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nrepeat Number of repeats. Default 0.
 -- @return #AUFTRAG self
 function AUFTRAG:SetRepeatOnFailure(Nrepeat)
-  self.missionRepeatMax=Nrepeat or 0
+  self.NrepeatFailure=Nrepeat or 0
   return self
 end
 
---- Set how many times the mission is repeated if it was successful.
+--- Set how many times the mission is repeated if it was successful. Only valid if the mission is handled by an AIRWING or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nrepeat Number of repeats. Default 0.
 -- @return #AUFTRAG self
@@ -1431,7 +1433,7 @@ function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
   return self
 end
 
---- Define how many assets are required to do the job.
+--- Define how many assets are required to do the job. Only valid if the mission is handled by an AIRWING or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nassets Number of asset groups. Default 1.
 -- @return #AUFTRAG self
@@ -1456,6 +1458,15 @@ end
 function AUFTRAG:SetEnableMarkers(Coalition)
   self.markerOn=true
   self.markerCoaliton=Coalition or -1
+  return self
+end
+
+--- Set verbosity level.
+-- @param #AUFTRAG self
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #AUFTRAG self
+function AUFTRAG:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
   return self
 end
 
@@ -1537,11 +1548,11 @@ function AUFTRAG:SetMissionSpeed(Speed)
   return self
 end
 
---- Set max engage range.
+--- Set max mission range. Only applies if the AUFTRAG is handled by an AIRWING or CHIEF. This is the max allowed distance from the airbase to the target.
 -- @param #AUFTRAG self
 -- @param #number Range Max range in NM. Default 100 NM.
 -- @return #AUFTRAG self
-function AUFTRAG:SetEngageRange(Range)
+function AUFTRAG:SetMissionRange(Range)
   self.engageRange=UTILS.NMToMeters(Range or 100)
   return self
 end
@@ -2003,6 +2014,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
     self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
   
+  -- General info.
   if self.verbose>=1 then
   
     -- Mission start stop time.
@@ -2018,6 +2030,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
     self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, commander))
   end
 
+  -- Group info.
   if self.verbose>=2 then
     -- Data on assigned groups.
     local text="Group data:"  
@@ -2508,8 +2521,8 @@ function AUFTRAG:onafterCancel(From, Event, To)
   self.Tover=timer.getAbsTime()
   
   -- No more repeats.
-  self.missionRepeatMax=self.missionRepeated
-  self.NrepeatSuccess=self.missionRepeated
+  self.NrepeatFailure=self.repeated
+  self.NrepeatSuccess=self.repeated
   
   -- Not necessary to delay the evaluaton?!
   self.dTevaluate=0
@@ -2556,16 +2569,16 @@ function AUFTRAG:onafterSuccess(From, Event, To)
   self.status=AUFTRAG.Status.SUCCESS
   self:T(self.lid..string.format("New mission status=%s", self.status))
   
-  if self.missionRepeated>=self.NrepeatSuccess then
+  if self.repeated>=self.NrepeatSuccess then
   
     -- Stop mission.
-    self:I(self.lid..string.format("Mission SUCCESS! Number of max repeats reached [%d>=%d] ==> Stopping mission!", self.missionRepeated, self.NrepeatSuccess))
+    self:I(self.lid..string.format("Mission SUCCESS! Number of max repeats reached [%d>=%d] ==> Stopping mission!", self.repeated, self.NrepeatSuccess))
     self:Stop()
     
   else
         
     -- Repeat mission.
-    self:I(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.missionRepeated+1, self.NrepeatSuccess))
+    self:I(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, self.NrepeatSuccess))
     self:Repeat()
     
   end
@@ -2582,15 +2595,15 @@ function AUFTRAG:onafterFailed(From, Event, To)
   self.status=AUFTRAG.Status.FAILED
   self:T(self.lid..string.format("New mission status=%s", self.status))
   
-  if self.missionRepeated>=self.missionRepeatMax then
+  if self.repeated>=self.NrepeatFailure then
   
-    self:I(self.lid..string.format("Mission FAILED! Number of max repeats reached [%d>=%d] ==> Stopping mission!", self.missionRepeated, self.missionRepeatMax))
+    self:I(self.lid..string.format("Mission FAILED! Number of max repeats reached [%d>=%d] ==> Stopping mission!", self.repeated, self.NrepeatFailure))
     self:Stop()
     
   else
         
     -- Repeat mission.
-    self:I(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.missionRepeated+1, self.missionRepeatMax))
+    self:I(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, self.NrepeatFailure))
     self:Repeat()
     
   end  
@@ -2611,17 +2624,22 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   self:T(self.lid..string.format("New mission status=%s (on Repeat)", self.status))
 
   -- Increase repeat counter.
-  self.missionRepeated=self.missionRepeated+1
+  self.repeated=self.repeated+1
   
-  if self.wingcommander then
+  if self.chief then
     
+  elseif self.wingcommander then
+  
+  
+  
   elseif self.airwing then
   
     -- Already at the airwing ==> Queued()
     self:Queued(self.airwing)  
     
   else
-  
+    self:E(self.lid.."ERROR: Mission can only be repeated by a CHIEF, WINGCOMMANDER or AIRWING! Stopping AUFTRAG")
+    self:Stop()
   end
   
   
@@ -2822,8 +2840,8 @@ end
 -- @return #string Name of the target or "N/A".
 function AUFTRAG:GetTargetName()
   
-  if self.engageTarget.Target then
-    return self.engageTarget.Name
+  if self.engageTarget then
+    return self.engageTarget:GetName()
   end
     
   return "N/A"

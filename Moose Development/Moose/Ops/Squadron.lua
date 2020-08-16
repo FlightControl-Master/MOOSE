@@ -136,15 +136,20 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   
   -- Defaults.
   self.Ngroups=Ngroups or 3  
-  self:SetEngagementRange()
+  self:SetMissionRange()
+  self:SetSkill(AI.Skill.GOOD)
+  self:SetVerbosity(0)
   
   -- Everyone can ORBIT.
   self:AddMissionCapability(AUFTRAG.Type.ORBIT)
   
+  -- Generalized attribute.
   self.attribute=self.templategroup:GetAttribute()
   
+  -- Aircraft type.
   self.aircrafttype=self.templategroup:GetTypeName()
   
+  -- Refueling system.
   self.refuelSystem=select(2, self.templategroup:GetUnit(1):IsRefuelable())
   self.tankerSystem=select(2, self.templategroup:GetUnit(1):IsTanker())
 
@@ -201,8 +206,6 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
   end
-  self.Debug=true
-
 
   return self
 end
@@ -241,10 +244,19 @@ function SQUADRON:SetSkill(Skill)
   return self
 end
 
+--- Set verbosity level.
+-- @param #SQUADRON self
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #SQUADRON self
+function SQUADRON:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
+  return self
+end
+
 --- Set turnover and repair time. If an asset returns from a mission to the airwing, it will need some time until the asset is available for further missions.
 -- @param #SQUADRON self
 -- @param #number MaintenanceTime Time in minutes it takes until a flight is combat ready again. Default is 0 min.
--- @param #number RepairTime Time in minutes it takes to repair a flight for each percent damage taken. Default is 0 min.
+-- @param #number RepairTime Time in minutes it takes to repair a flight for each life point taken. Default is 0 min.
 -- @return #SQUADRON self
 function SQUADRON:SetTurnoverTime(MaintenanceTime, RepairTime)
   self.maintenancetime=MaintenanceTime and MaintenanceTime*60 or 0
@@ -350,12 +362,12 @@ function SQUADRON:GetMissionPeformance(MissionType)
   return -1
 end
 
---- Set max engagement range.
+--- Set max mission range. Only missions in a circle of this radius around the squadron airbase are executed.
 -- @param #SQUADRON self
--- @param #number EngageRange Engagement range in NM. Default 80 NM.
+-- @param #number Range Range in NM. Default 100 NM.
 -- @return #SQUADRON self
-function SQUADRON:SetEngagementRange(EngageRange)
-  self.engageRange=UTILS.NMToMeters(EngageRange or 80)
+function SQUADRON:SetMissionRange(Range)
+  self.engageRange=UTILS.NMToMeters(Range or 100)
   return self
 end
 
@@ -565,27 +577,31 @@ end
 -- @param #string To To state.
 function SQUADRON:onafterStatus(From, Event, To)
 
-  -- FSM state.
-  local fsmstate=self:GetState()
+  if self.verbose>=1 then
 
-  local callsign=self.callsignName and UTILS.GetCallsignName(self.callsignName) or "N/A"
-  local modex=self.modex and self.modex or -1
-  local skill=self.skill and tostring(self.skill) or "N/A"
+    -- FSM state.
+    local fsmstate=self:GetState()
   
-  local NassetsTot=#self.assets
-  local NassetsInS=self:CountAssetsInStock()
-  local NassetsQP=0 ; local NassetsP=0 ; local NassetsQ=0  
-  if self.airwing then
-    NassetsQP, NassetsP, NassetsQ=self.airwing:CountAssetsOnMission(nil, self)
-  end
-  
-  -- Short info.
-  local text=string.format("%s [Type=%s, Callsign=%s, Modex=%d, Skill=%s]: Assets Total=%d, InStock=%d, OnMission=%d [P=%d, Q=%d]", 
-  fsmstate, self.aircrafttype, callsign, modex, skill, NassetsTot, NassetsInS, NassetsQP, NassetsP, NassetsQ)
-  self:I(self.lid..text)
-  
-  -- Check if group has detected any units.
-  self:_CheckAssetStatus()  
+    local callsign=self.callsignName and UTILS.GetCallsignName(self.callsignName) or "N/A"
+    local modex=self.modex and self.modex or -1
+    local skill=self.skill and tostring(self.skill) or "N/A"
+    
+    local NassetsTot=#self.assets
+    local NassetsInS=self:CountAssetsInStock()
+    local NassetsQP=0 ; local NassetsP=0 ; local NassetsQ=0  
+    if self.airwing then
+      NassetsQP, NassetsP, NassetsQ=self.airwing:CountAssetsOnMission(nil, self)
+    end
+    
+    -- Short info.
+    local text=string.format("%s [Type=%s, Call=%s, Modex=%d, Skill=%s]: Assets Total=%d, Stock=%d, Mission=%d [Active=%d, Queue=%d]", 
+    fsmstate, self.aircrafttype, callsign, modex, skill, NassetsTot, NassetsInS, NassetsQP, NassetsP, NassetsQ)
+    self:I(self.lid..text)
+    
+    -- Check if group has detected any units.
+    self:_CheckAssetStatus()
+    
+  end  
   
   if not self:IsStopped() then
     self:__Status(-30)
@@ -597,7 +613,8 @@ end
 -- @param #SQUADRON self
 function SQUADRON:_CheckAssetStatus()
 
-  if self.verbose>=0 then
+  if self.verbose>=2 then
+  
     local text=""
     for j,_asset in pairs(self.assets) do
       local asset=_asset  --Ops.AirWing#AIRWING.SquadronAsset
@@ -647,8 +664,7 @@ function SQUADRON:_CheckAssetStatus()
         -- Payload info.
         local payload=asset.payload and table.concat(self.airwing:GetPayloadMissionTypes(asset.payload), ", ") or "None"
         text=text..", Payload={"..payload.."}"
-
-      
+     
       else
   
         ---

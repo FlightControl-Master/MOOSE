@@ -401,7 +401,17 @@ function OPSGROUP:GetLifePoints()
   end
 end
 
---- Set default cruise speed..
+
+--- Set verbosity level.
+-- @param #OPSGROUP self
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #OPSGROUP self
+function OPSGROUP:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
+  return self
+end
+
+--- Set default cruise speed.
 -- @param #OPSGROUP self
 -- @param #number Speed Speed in knots.
 -- @return #OPSGROUP self
@@ -1017,7 +1027,7 @@ function OPSGROUP:RemoveWaypoint(wpindex)
         self.passedfinalwp=true
       end
       
-      env.info("FF passed final waypoint after remove! current wp = "..self.currentwp)
+      --env.info("FF passed final waypoint after remove! current wp = "..self.currentwp)
 
       self:_CheckGroupDone(1)
 
@@ -1043,8 +1053,7 @@ function OPSGROUP:RemoveWaypoint(wpindex)
         self.currentwp=self.currentwp-1
       end
       
-      --self.currentwp=math.max(1, self.currentwp-1)
-      env.info("FF current waypoint after remove "..self.currentwp)
+      --env.info("FF current waypoint after remove "..self.currentwp)
     
     end
         
@@ -1099,7 +1108,7 @@ function OPSGROUP:SetTask(DCSTask)
         text=text..string.format("\n[%d] %s", i, tostring(task.id))
       end
     end
-    self:I(self.lid..text)    
+    self:T(self.lid..text)    
   end
   
   return self
@@ -1123,7 +1132,7 @@ function OPSGROUP:PushTask(DCSTask)
         text=text..string.format("\n[%d] %s", i, tostring(task.id))
       end
     end
-    self:I(self.lid..text)    
+    self:T(self.lid..text)    
   end
   
   return self
@@ -1367,7 +1376,6 @@ function OPSGROUP:RemoveTask(Task)
       -- Update route if this is a waypoint task.
       if task.type==OPSGROUP.TaskType.WAYPOINT and task.status==OPSGROUP.TaskStatus.SCHEDULED then
         self:_CheckGroupDone(1)
-        --self:__UpdateRoute(-1)
       end
       
       return true
@@ -1445,7 +1453,6 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
   -- Debug message.
   local text=string.format("Task %s ID=%d execute", tostring(Task.description), Task.id)
-  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.lid..text)
   
   -- Cancel current task if there is any.
@@ -1556,7 +1563,6 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
     
       -- Debug info.
       local text=string.format("Current task %s ID=%d cancelled (flag %s=%d)", Task.description, Task.id, Task.stopflag:GetName(), stopflag)
-      MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)    
       self:I(self.lid..text)
       
       -- Set stop flag. When the flag is true, the _TaskDone function is executed and calls :TaskDone()
@@ -1617,7 +1623,6 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
 
   -- Debug message.
   local text=string.format("Task done: %s ID=%d", Task.description, Task.id)
-  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.lid..text)
 
   -- No current task.
@@ -1979,7 +1984,11 @@ end
 function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
 
   if self.currentmission and Mission.auftragsnummer==self.currentmission then
-    
+
+    ---
+    -- Current Mission
+    ---
+
     -- Get mission waypoint task.
     local Task=Mission:GetGroupWaypointTask(self)
     
@@ -1995,11 +2004,15 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
         
   else
   
-    -- Not the current mission.
-    -- TODO: remove mission from queue?
+    ---
+    -- NOT the current mission
+    ---
  
     -- Set mission group status.
-    Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.CANCELLED) 
+    Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.CANCELLED)
+    
+    -- Remove mission from queue
+    self:RemoveMission(Mission)
     
     -- Send group RTB or WAIT if nothing left to do.
     self:_CheckGroupDone(1)
@@ -2019,7 +2032,6 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   -- Debug info.
   local text=string.format("Mission %s DONE!", Mission.name)
   self:I(self.lid..text)
-  MESSAGE:New(text, 30, self.groupname):ToAllIf(self.Debug)
   
   -- Set group status.
   Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.DONE)
@@ -2241,7 +2253,6 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   local text=string.format("Group passed waypoint %s/%d ID=%d: final=%s detour=%s astar=%s", 
   tostring(wpindex), #self.waypoints, Waypoint.uid, tostring(self.passedfinalwp), tostring(Waypoint.detour), tostring(Waypoint.astar))
   self:I(self.lid..text)
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)  
   
 end
 
@@ -2623,12 +2634,12 @@ end
 -- @param #OPSGROUP self
 function OPSGROUP:_PrintTaskAndMissionStatus()
 
- ---
-  -- Tasks: verbose >= 2
+  ---
+  -- Tasks: verbose >= 3
   ---
   
   -- Task queue.
-  if #self.taskqueue>0 and self.verbose>=2 then  
+  if self.verbose>=3 and #self.taskqueue>0 then  
     local text=string.format("Tasks #%d", #self.taskqueue)
     for i,_task in pairs(self.taskqueue) do
       local task=_task --Ops.OpsGroup#OPSGROUP.Task
@@ -2660,11 +2671,11 @@ function OPSGROUP:_PrintTaskAndMissionStatus()
   end
   
   ---
-  -- Missions: verbose>=1
+  -- Missions: verbose>=2
   ---
   
   -- Current mission name.
-  if self.verbose>0 then  
+  if self.verbose>=2 then  
     local Mission=self:GetMissionByID(self.currentmission)
     
     -- Current status.
@@ -2687,7 +2698,8 @@ end
 
 --- Enhance waypoint table.
 -- @param #OPSGROUP self
--- @return #OPSGROUP.Waypoint Waypoint data.
+-- @param #OPSGROUP.Waypoint Waypoint data.
+-- @return #OPSGROUP.Waypoint Modified waypoint data.
 function OPSGROUP:_CreateWaypoint(waypoint)
   
   -- Set uid.

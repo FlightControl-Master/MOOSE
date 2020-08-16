@@ -46,6 +46,7 @@
 -- @type WAREHOUSE
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug If true, send debug messages to all.
+-- @field #number verbose Verbosity level.
 -- @field #string wid Identifier of the warehouse printed before other output to DCS.log file.
 -- @field #boolean Report If true, send status messages to coalition.
 -- @field Wrapper.Static#STATIC warehouse The phyical warehouse structure.
@@ -1830,14 +1831,12 @@ WAREHOUSE.version="1.0.2"
 -- @param #string alias (Optional) Alias of the warehouse, i.e. the name it will be called when sending messages etc. Default is the name of the static
 -- @return #WAREHOUSE self
 function WAREHOUSE:New(warehouse, alias)
-  BASE:T({warehouse=warehouse})
 
   -- Check if just a string was given and convert to static.
   if type(warehouse)=="string" then
     local warehousename=warehouse
     warehouse=UNIT:FindByName(warehousename)
     if warehouse==nil then
-      --env.info(string.format("No warehouse unit with name %s found trying static.", tostring(warehousename)))
       warehouse=STATIC:FindByName(warehousename, true)
       self.isunit=false
     else
@@ -1858,7 +1857,7 @@ function WAREHOUSE:New(warehouse, alias)
   env.info(string.format("Adding warehouse v%s for structure %s with alias %s", WAREHOUSE.version, warehouse:GetName(), self.alias))
 
   -- Inherit everthing from FSM class.
-  local self = BASE:Inherit(self, FSM:New()) -- #WAREHOUSE
+  local self=BASE:Inherit(self, FSM:New()) -- #WAREHOUSE
 
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("WAREHOUSE %s | ", self.alias)
@@ -1890,6 +1889,8 @@ function WAREHOUSE:New(warehouse, alias)
 
   -- Defaults
   self:SetMarker(true)
+  self:SetReportOff()
+  self:SetVerbosity(0)
 
   -- Add warehouse to database.
   _WAREHOUSEDB.Warehouses[self.uid]=self
@@ -2548,6 +2549,15 @@ end
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetStatusUpdate(timeinterval)
   self.dTstatus=timeinterval
+  return self
+end
+
+--- Set verbosity level.
+-- @param #WAREHOUSE self
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
   return self
 end
 
@@ -3253,16 +3263,6 @@ function WAREHOUSE:onafterStart(From, Event, To)
   -- Save self in static object. Easier to retrieve later.
   self.warehouse:SetState(self.warehouse, "WAREHOUSE", self)
 
-  -- THIS! caused aircraft to be spawned and started but they would never begin their route!
-  -- VERY strange. Need to test more.
-  --[[
-  -- Debug mark warehouse & spawn zone.
-  self.zone:BoundZone(30, self.country)
-  self.spawnzone:BoundZone(30, self.country)
-  ]]
-
-  --self.spawnzone:GetCoordinate():MarkToCoalition(string.format("Warehouse %s spawn zone", self.alias), self:GetCoalition())
-
   -- Get the closest point on road wrt spawnzone of ground assets.
   local _road=self.spawnzone:GetCoordinate():GetClosestPointToRoad()
   if _road and self.road==nil then
@@ -3402,13 +3402,17 @@ end
 -- @param #string To To state.
 function WAREHOUSE:onafterStatus(From, Event, To)
 
-  local FSMstate=self:GetState()
-
-  local coalition=self:GetCoalitionName()
-  local country=self:GetCountryName()
-
-  -- Info.
-  self:I(self.lid..string.format("State=%s %s [%s]: Assets=%d,  Requests: waiting=%d, pending=%d", FSMstate, country, coalition, #self.stock, #self.queue, #self.pending))
+  -- General info.
+  if self.verbose>=1 then
+  
+    local FSMstate=self:GetState()
+  
+    local coalition=self:GetCoalitionName()
+    local country=self:GetCountryName()
+  
+    -- Info.
+    self:I(self.lid..string.format("State=%s %s [%s]: Assets=%d,  Requests: waiting=%d, pending=%d", FSMstate, country, coalition, #self.stock, #self.queue, #self.pending))
+  end
 
   -- Check if any pending jobs are done and can be deleted from the queue.
   self:_JobDone()
@@ -7616,10 +7620,10 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
           local problem=nil
 
           -- Safe parking using TO_AC from DCS result.
-          self:I(self.lid..string.format("Parking spot %d TOAC=%s (safe park=%s).", _termid, tostring(_toac), tostring(self.safeparking)))
+          self:T2(self.lid..string.format("Parking spot %d TOAC=%s (safe park=%s)", _termid, tostring(_toac), tostring(self.safeparking)))
           if self.safeparking and _toac then
             free=false
-            self:I(self.lid..string.format("Parking spot %d is occupied by other aircraft taking off (TOAC).", _termid))
+            self:T(self.lid..string.format("Parking spot %d is occupied by other aircraft taking off (TOAC)", _termid))
           end
 
           -- Loop over all obstacles.
@@ -7648,7 +7652,8 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
             -- Add parkingspot for this asset unit.
             table.insert(parking[_asset.uid], parkingspot)
 
-            self:I(self.lid..string.format("Parking spot %d is free for asset id=%d!", _termid, _asset.uid))
+            -- Debug
+            self:T(self.lid..string.format("Parking spot %d is free for asset id=%d!", _termid, _asset.uid))
 
             -- Add the unit as obstacle so that this spot will not be available for the next unit.
             table.insert(obstacles, {coord=_spot, size=_asset.size, name=_asset.templatename, type="asset"})
@@ -7659,7 +7664,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
           else
 
             -- Debug output for occupied spots.
-            self:I(self.lid..string.format("Parking spot %d is occupied or not big enough!", _termid))
+            self:T(self.lid..string.format("Parking spot %d is occupied or not big enough!", _termid))
             if self.Debug then
               local coord=problem.coord --Core.Point#COORDINATE
               local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
@@ -8284,67 +8289,70 @@ end
 -- @param #string name Name of the queue for info reasons.
 function WAREHOUSE:_PrintQueue(queue, name)
 
-  local total="Empty"
-  if #queue>0 then
-    total=string.format("Total = %d", #queue)
-  end
+  if self.verbose>=2 then
 
-  -- Init string.
-  local text=string.format("%s at %s: %s",name, self.alias, total)
-
-  for i,qitem in ipairs(queue) do
-    local qitem=qitem --#WAREHOUSE.Pendingitem
-
-    local uid=qitem.uid
-    local prio=qitem.prio
-    local clock="N/A"
-    if qitem.timestamp then
-      clock=tostring(UTILS.SecondsToClock(qitem.timestamp))
+    local total="Empty"
+    if #queue>0 then
+      total=string.format("Total = %d", #queue)
     end
-    local assignment=tostring(qitem.assignment)
-    local requestor=qitem.warehouse.alias
-    local airbasename=qitem.warehouse:GetAirbaseName()
-    local requestorAirbaseCat=qitem.warehouse:GetAirbaseCategory()
-    local assetdesc=qitem.assetdesc
-    local assetdescval=qitem.assetdescval
-    if assetdesc==WAREHOUSE.Descriptor.ASSETLIST then
-      assetdescval="Asset list"
+  
+    -- Init string.
+    local text=string.format("%s at %s: %s",name, self.alias, total)
+  
+    for i,qitem in ipairs(queue) do
+      local qitem=qitem --#WAREHOUSE.Pendingitem
+  
+      local uid=qitem.uid
+      local prio=qitem.prio
+      local clock="N/A"
+      if qitem.timestamp then
+        clock=tostring(UTILS.SecondsToClock(qitem.timestamp))
+      end
+      local assignment=tostring(qitem.assignment)
+      local requestor=qitem.warehouse.alias
+      local airbasename=qitem.warehouse:GetAirbaseName()
+      local requestorAirbaseCat=qitem.warehouse:GetAirbaseCategory()
+      local assetdesc=qitem.assetdesc
+      local assetdescval=qitem.assetdescval
+      if assetdesc==WAREHOUSE.Descriptor.ASSETLIST then
+        assetdescval="Asset list"
+      end
+      local nasset=tostring(qitem.nasset)
+      local ndelivered=tostring(qitem.ndelivered)
+      local ncargogroupset="N/A"
+      if qitem.cargogroupset then
+        ncargogroupset=tostring(qitem.cargogroupset:Count())
+      end
+      local transporttype="N/A"
+      if qitem.transporttype then
+        transporttype=qitem.transporttype
+      end
+      local ntransport="N/A"
+      if qitem.ntransport then
+        ntransport=tostring(qitem.ntransport)
+      end
+      local ntransportalive="N/A"
+      if qitem.transportgroupset then
+        ntransportalive=tostring(qitem.transportgroupset:Count())
+      end
+      local ntransporthome="N/A"
+      if qitem.ntransporthome then
+        ntransporthome=tostring(qitem.ntransporthome)
+      end
+  
+      -- Output text:
+      text=text..string.format(
+      "\n%d) UID=%d, Prio=%d, Clock=%s, Assignment=%s | Requestor=%s [Airbase=%s, category=%d] | Assets(%s)=%s: #requested=%s / #alive=%s / #delivered=%s | Transport=%s: #requested=%s / #alive=%s / #home=%s",
+      i, uid, prio, clock, assignment, requestor, airbasename, requestorAirbaseCat, assetdesc, assetdescval, nasset, ncargogroupset, ndelivered, transporttype, ntransport, ntransportalive, ntransporthome)
+  
     end
-    local nasset=tostring(qitem.nasset)
-    local ndelivered=tostring(qitem.ndelivered)
-    local ncargogroupset="N/A"
-    if qitem.cargogroupset then
-      ncargogroupset=tostring(qitem.cargogroupset:Count())
-    end
-    local transporttype="N/A"
-    if qitem.transporttype then
-      transporttype=qitem.transporttype
-    end
-    local ntransport="N/A"
-    if qitem.ntransport then
-      ntransport=tostring(qitem.ntransport)
-    end
-    local ntransportalive="N/A"
-    if qitem.transportgroupset then
-      ntransportalive=tostring(qitem.transportgroupset:Count())
-    end
-    local ntransporthome="N/A"
-    if qitem.ntransporthome then
-      ntransporthome=tostring(qitem.ntransporthome)
-    end
-
-    -- Output text:
-    text=text..string.format(
-    "\n%d) UID=%d, Prio=%d, Clock=%s, Assignment=%s | Requestor=%s [Airbase=%s, category=%d] | Assets(%s)=%s: #requested=%s / #alive=%s / #delivered=%s | Transport=%s: #requested=%s / #alive=%s / #home=%s",
-    i, uid, prio, clock, assignment, requestor, airbasename, requestorAirbaseCat, assetdesc, assetdescval, nasset, ncargogroupset, ndelivered, transporttype, ntransport, ntransportalive, ntransporthome)
-
-  end
-
-  if #queue==0 then
-    self:T(self.lid..text)
-  else
-    if total~="Empty" then
+  
+    if #queue==0 then
       self:I(self.lid..text)
+    else
+      if total~="Empty" then
+        self:I(self.lid..text)
+      end
     end
   end
 end
@@ -8352,17 +8360,19 @@ end
 --- Display status of warehouse.
 -- @param #WAREHOUSE self
 function WAREHOUSE:_DisplayStatus()
-  local text=string.format("\n------------------------------------------------------\n")
-  text=text..string.format("Warehouse %s status: %s\n", self.alias, self:GetState())
-  text=text..string.format("------------------------------------------------------\n")
-  text=text..string.format("Coalition name   = %s\n", self:GetCoalitionName())
-  text=text..string.format("Country name     = %s\n", self:GetCountryName())
-  text=text..string.format("Airbase name     = %s (category=%d)\n", self:GetAirbaseName(), self:GetAirbaseCategory())
-  text=text..string.format("Queued requests  = %d\n", #self.queue)
-  text=text..string.format("Pending requests = %d\n", #self.pending)
-  text=text..string.format("------------------------------------------------------\n")
-  text=text..self:_GetStockAssetsText()
-  self:T(text)
+  if self.verbose>=3 then
+    local text=string.format("\n------------------------------------------------------\n")
+    text=text..string.format("Warehouse %s status: %s\n", self.alias, self:GetState())
+    text=text..string.format("------------------------------------------------------\n")
+    text=text..string.format("Coalition name   = %s\n", self:GetCoalitionName())
+    text=text..string.format("Country name     = %s\n", self:GetCountryName())
+    text=text..string.format("Airbase name     = %s (category=%d)\n", self:GetAirbaseName(), self:GetAirbaseCategory())
+    text=text..string.format("Queued requests  = %d\n", #self.queue)
+    text=text..string.format("Pending requests = %d\n", #self.pending)
+    text=text..string.format("------------------------------------------------------\n")
+    text=text..self:_GetStockAssetsText()
+    self:I(text)
+  end
 end
 
 --- Get text about warehouse stock.

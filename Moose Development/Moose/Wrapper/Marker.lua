@@ -755,7 +755,7 @@ end
 -- @param #string Text The updated text, displayed in the mark panel.
 function MARKER:onafterTextUpdate(From, Event, To, Text)
 
-  self:I(self.lid..string.format("New Marker Text:\n%s", Text))
+  self:T(self.lid..string.format("New Marker Text:\n%s", Text))
 
 end
 
@@ -767,7 +767,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate The updated coordinates.
 function MARKER:onafterCoordUpdate(From, Event, To, Coordinate)
 
-  self:I(self.lid..string.format("New Marker Coordinate in LL DMS: %s", Coordinate:ToStringLLDMS()))
+  self:T(self.lid..string.format("New Marker Coordinate in LL DMS: %s", Coordinate:ToStringLLDMS()))
   
 end
 

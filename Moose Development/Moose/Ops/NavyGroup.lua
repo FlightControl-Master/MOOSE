@@ -410,11 +410,6 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     if self.detectionOn then
       self:_CheckDetectedUnits()
     end
-
-    -- Current heading and position of the carrier.
-    local hdg=self:GetHeading()
-    local pos=self:GetCoordinate()
-    local speed=self.group:GetVelocityKNOTS()
     
     -- Update last known position, orientation, velocity.
     self:_UpdatePosition()
@@ -450,35 +445,40 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     
     -- Check if group got stuck.
     self:_CheckStuck()    
-  
-    -- Get number of tasks and missions.
-    local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
-    local nMissions=self:CountRemainingMissison()
 
-    local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"    
-    local turning=tostring(self:IsTurning())
-    local alt=pos.y
-    local speedExpected=UTILS.MpsToKnots(self.speed or 0)
-    
-    local wpidxCurr=self.currentwp
-    local wpuidCurr=0
-    local wpidxNext=self:GetWaypointIndexNext()
-    local wpuidNext=0
-    local wpDist=UTILS.MetersToNM(self:GetDistanceToWaypoint())
-    local wpETA=UTILS.SecondsToClock(self:GetTimeToWaypoint(), true)
-    local roe=self:GetROE() or 0
-    local als=self:GetAlarmstate() or 0
+    if self.verbose>=1 then
   
-    -- Info text.
-    local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] (of %d) Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
-    fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, #self.waypoints, wpDist, wpETA, speed, speedExpected, alt, hdg, turning, freepath, intowind)
-    self:I(self.lid..text)
+      -- Get number of tasks and missions.
+      local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
+      local nMissions=self:CountRemainingMissison()
+  
+      local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"    
+      local turning=tostring(self:IsTurning())
+      local alt=self.position.y
+      local speed=UTILS.MpsToKnots(self.velocity)
+      local speedExpected=UTILS.MpsToKnots(self.speed or 0)
+      
+      local wpidxCurr=self.currentwp
+      local wpuidCurr=0
+      local wpidxNext=self:GetWaypointIndexNext()
+      local wpuidNext=0
+      local wpDist=UTILS.MetersToNM(self:GetDistanceToWaypoint())
+      local wpETA=UTILS.SecondsToClock(self:GetTimeToWaypoint(), true)
+      local roe=self:GetROE() or 0
+      local als=self:GetAlarmstate() or 0
+    
+      -- Info text.
+      local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] (of %d) Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
+      fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, #self.waypoints, wpDist, wpETA, speed, speedExpected, alt, self.heading, turning, freepath, intowind)
+      self:I(self.lid..text)
+      
+    end
     
   else
 
     -- Info text.
     local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
-    self:I(self.lid..text)
+    self:T(self.lid..text)
   
   end
 

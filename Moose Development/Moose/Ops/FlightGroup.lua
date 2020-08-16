@@ -1503,7 +1503,6 @@ function FLIGHTGROUP:onafterAirborne(From, Event, To)
   if self.ai then
     self:_CheckGroupDone(1)
   else
-  --if not self.ai then
     self:_UpdateMenu()
   end
 end
@@ -1706,7 +1705,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     ---
     
     if self:IsAirborne() then
-      self:T2(self.lid.."No waypoints left ==> CheckGroupDone")
+      self:I(self.lid.."No waypoints left ==> CheckGroupDone")
       self:_CheckGroupDone()
     end
 
@@ -1897,7 +1896,15 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   -- Cancel all missions.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
-    self:MissionCancel(mission)
+    local mystatus=mission:GetGroupStatus(self)
+    
+    -- Check if mission is already over!
+    if not (mystatus==AUFTRAG.GroupStatus.DONE or mystatus==AUFTRAG.GroupStatus.CANCELLED) then
+      local text=string.format("Canceling mission %s in state=%s", mission.name, mission.status)
+      env.info(text)
+      self:MissionCancel(mission)
+    end
+    
   end
 
   -- Defaults:
@@ -1907,7 +1914,6 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
 
   -- Debug message.
   local text=string.format("Flight group set to hold at airbase %s. SpeedTo=%d, SpeedHold=%d, SpeedLand=%d", airbase:GetName(), SpeedTo, SpeedHold, SpeedLand)
-  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:T(self.lid..text)
 
   local althold=self.ishelo and 1000+math.random(10)*100 or math.random(4,10)*1000
@@ -2087,7 +2093,6 @@ function FLIGHTGROUP:onafterWait(From, Event, To, Coord, Altitude, Speed)
 
   -- Debug message.
   local text=string.format("Flight group set to wait/orbit at altitude %d m and speed %.1f km/h", Altitude, Speed)
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   self:T(self.lid..text)
 
   --TODO: set ROE passive. introduce roe event/state/variable.
@@ -2111,7 +2116,6 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
 
   -- Debug message.
   local text=string.format("Flight group set to refuel at the nearest tanker")
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.lid..text)
 
   --TODO: set ROE passive. introduce roe event/state/variable.
@@ -2146,7 +2150,6 @@ end
 function FLIGHTGROUP:onafterRefueled(From, Event, To)
   -- Debug message.
   local text=string.format("Flight group finished refuelling")
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.lid..text)
 
   -- Check if flight is done.
@@ -2169,7 +2172,6 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
   self.Tholding=timer.getAbsTime()
 
   local text=string.format("Flight group %s is HOLDING now", self.groupname)
-  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:T(self.lid..text)
 
   -- Add flight to waiting/holding queue.
@@ -2280,7 +2282,6 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
 
   -- Debug message.
   local text=string.format("Low fuel for flight group %s", self.groupname)
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.lid..text)
 
   -- Set switch to true.
@@ -2350,7 +2351,6 @@ function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
 
   -- Debug message.
   local text=string.format("Critical fuel for flight group %s", self.groupname)
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.lid..text)
 
   -- Set switch to true.

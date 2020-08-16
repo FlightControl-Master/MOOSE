@@ -136,9 +136,12 @@ function TARGET:New(TargetObject)
   self:AddObject(TargetObject)
   
   local Target=self.targets[1] --#TARGET.Object
+    
+  self.name=self:GetTargetName(Target)
   
   self.category=self:GetTargetCategory(Target)
   
+  -- Log ID.
   self.lid=string.format("TARGET #%03d %s | ", _TARGETID, self.category)
 
   -- Start state.
@@ -658,6 +661,56 @@ function TARGET:GetTargetCoordinate(Target)
   end
 
   return nil
+end
+
+--- Get target name.
+-- @param #TARGET self
+-- @param #TARGET.Object Target Target object.
+-- @return #string Name of the target object.
+function TARGET:GetTargetName(Target)
+
+  if Target.Type==TARGET.ObjectType.GROUP then
+
+    if Target.Object and Target.Object:IsAlive() then
+
+      return Target.Object:GetName()
+
+    end
+
+  elseif Target.Type==TARGET.ObjectType.UNIT then
+
+    if Target.Object and Target.Object:IsAlive() then
+      return Target.Object:GetName()
+    end
+  
+  elseif Target.Type==TARGET.ObjectType.STATIC then
+  
+    if Target.Object and Target.Object:IsAlive() then
+      return Target.Object:GetName()
+    end
+    
+  elseif Target.Type==TARGET.ObjectType.AIRBASE then
+  
+    if Target.Status==TARGET.ObjectStatus.ALIVE then
+      return Target.Object:GetName()
+    end
+    
+  elseif Target.Type==TARGET.ObjectType.COORDINATE then
+  
+    local coord=Target.Object  --Core.Point#COORDINATE
+    
+    return coord:ToStringMGRS()
+    
+  end
+
+  return "Unknown"
+end
+
+--- Get name.
+-- @param #TARGET self
+-- @return #string Name of the target usually the first object.
+function TARGET:GetName()
+  return self.name
 end
 
 --- Get coordinate.

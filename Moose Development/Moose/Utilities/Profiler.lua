@@ -1,6 +1,6 @@
 --- **Utils** - Lua Profiler.
 --
---
+-- Find out how many times functions are called and how much real time it costs.
 --
 -- ===
 --
@@ -13,11 +13,17 @@
 --- PROFILER class.
 -- @type PROFILER
 -- @field #string ClassName Name of the class.
--- @field #table Counters Counters.
+-- @field #table Counters Function counters.
 -- @field #table dInfo Info.
 -- @field #table fTime Function time.
 -- @field #table fTimeTotal Total function time.
 -- @field #table eventhandler Event handler to get mission end event.
+-- @field #number TstartGame Game start time timer.getTime().
+-- @field #number TstartOS OS real start time os.clock.
+-- @field #boolean logUnknown Log unknown functions. Default is off.
+-- @field #number lowCpsThres Low calls per second threashold. Only write output if function has more calls per second than this value.
+-- @field #string fileNamePrefix Output file name prefix, e.g. "MooseProfiler".
+-- @field #string fileNameSuffix Output file name prefix, e.g. "txt"
 
 --- *The emperor counsels simplicity. First principles. Of each particular thing, ask: What is it in itself, in its own constitution? What is its causal nature? *
 --
@@ -27,8 +33,8 @@
 --
 -- # The PROFILER Concept
 -- 
--- Profile your lua code. This tells you, which functions are called very often and which consume most CPU time.
--- With this information you could optimize the perfomance of your code.
+-- Profile your lua code. This tells you, which functions are called very often and which consume most real time.
+-- With this information you can optimize the perfomance of your code.
 -- 
 -- # Prerequisites
 -- 
@@ -37,19 +43,22 @@
 -- 
 -- # Start
 -- 
--- The profiler can simply be started by
+-- The profiler can simply be started with the @{#PROFILER.Start}(*Delay, Duration*) function
 -- 
 --     PROFILER.Start()
 --    
--- The start can be delayed by specifying a the amount of seconds as argument, e.g. PROFILER.Start(60) to start profiling in 60 seconds.
+-- The optional parameter *Delay* can be used to delay the start by a certain amount of seconds and the optional parameter *Duration* can be used to
+-- stop the profiler after a certain amount of seconds.
 -- 
 -- # Stop
 -- 
--- The profiler automatically stops when the mission ends. But it can be stopped any time by calling
+-- The profiler automatically stops when the mission ends. But it can be stopped any time with the @{#PROFILER.Stop}(*Delay*) function
 -- 
 --     PROFILER.Stop()
 --    
--- The stop call can be delayed by specifying the delay in seconds as optional argument, e.g. PROFILER.Stop(120) to stop it in 120 seconds.
+-- The optional parameter *Delay* can be used to specify a delay after which the profiler is stopped.
+-- 
+-- When the profiler is stopped, the output is written to a file.
 -- 
 -- # Output
 -- 
@@ -57,13 +66,19 @@
 -- 
 --     X:\User\<Your User Name>\Saved Games\DCS OpenBeta\Logs
 -- 
--- ## Sort Output
+-- The default file name is "MooseProfiler.txt". If that file exists, the file name is "MooseProfiler-001.txt" etc.
 -- 
--- By default the output is sorted with respect to the total time a function used.
+-- ## Data
 -- 
--- The output can also be sorted with respect to the number of times the function was called by setting
+-- The data in the output file provides information on the functions that were called in the mission.
 -- 
---     PROFILER.sortBy=1
+-- It will tell you how many times a function was called in total, how many times per second, how much time in total and the percentage of time.
+-- 
+-- If you only want output for functions that are called more than X times per second, you can set
+-- 
+--     PROFILER.lowCpsThres=1.5
+-- 
+-- With this setting, only functions which are called more than 1.5 times per second are displayed.
 -- 
 -- @field #PROFILER
 PROFILER = {
@@ -73,11 +88,10 @@ PROFILER = {
   fTime          = {},
   fTimeTotal     = {},
   eventHandler   = {},
-  startTime      = nil,
-  runTime        = nil,
   logUnknown     = false,
-  lowCpsThres    = 5,
-  fileName       = "",
+  lowCpsThres    = 0.0,
+  fileNamePrefix = "MooseProfiler",
+  fileNameSuffix = "txt"
 }
 
 --- Waypoint data.
@@ -87,10 +101,6 @@ PROFILER = {
 -- @field #number line The line number
 -- @field #number count Number of function calls.
 -- @field #number tm Total time in seconds.
-
-PROFILER.logUnknown=false  -- Log unknown functions
-PROFILER.lowCpsThres=0     -- Skip results with less than X calls per second
-PROFILER.fileName="_LuaProfiler.txt"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start/Stop Profiler
@@ -104,28 +114,58 @@ function PROFILER.Start(Delay, Duration)
   if Delay and Delay>0 then
     BASE:ScheduleOnce(Delay, PROFILER.Start, 0, Duration)
   else
+  
+    -- Check if os and lfs are available.
+    local go=true
+    if not os then
+      error("Profiler needs os to be desanitized")
+      go=false
+    end
+    if not lfs then
+      error("Profiler needs lfs to be desanitized")
+      go=false
+    end
+    if not go then
+      return
+    end
 
+    -- Set start time.
     PROFILER.TstartGame=timer.getTime()
     PROFILER.TstartOS=os.clock()
     
     -- Add event handler.
     world.addEventHandler(PROFILER.eventHandler)
     
+    --[[
     -- Message to screen.
     local function showProfilerRunning()
       timer.scheduleFunction(showProfilerRunning, nil, timer.getTime()+600)
       trigger.action.outText("### Profiler running ###", 600)
-    end
-    
+    end    
     -- Message.
     showProfilerRunning()
+    ]]
     
     -- Info in log.
-    BASE:I('############################   Profiler Started   ############################')
+    env.info('############################   Profiler Started   ############################')
+    if Duration then
+      env.info(string.format("Duration %d seconds", Duration))
+    else
+      env.info(string.format("Stopped when mission ends"))
+    end
+    env.info(string.format("Calls per second threshold %.3f/sec", PROFILER.lowCpsThres))
+    env.info(string.format("Log file \"%s.%s\"", PROFILER.fileNamePrefix, PROFILER.fileNameSuffix))
+    env.info('###############################################################################')
+    
+    
+    -- Message on screen
+    local duration=Duration or 600
+    trigger.action.outText("### Profiler running ###", duration)
   
     -- Set hook.
     debug.sethook(PROFILER.hook, "cr")
     
+    -- Auto stop profiler.
     if Duration then
       PROFILER.Stop(Duration)
     end
@@ -148,12 +188,14 @@ function PROFILER.Stop(Delay)
     debug.sethook()
   
     
-    -- Run time.
-    PROFILER.runTimeGame=timer.getTime()-PROFILER.TstartGame
-    PROFILER.runTimeOS=os.clock()-PROFILER.TstartOS
+    -- Run time game.
+    local runTimeGame=timer.getTime()-PROFILER.TstartGame
+    
+    -- Run time real OS.
+    local runTimeOS=os.clock()-PROFILER.TstartOS
     
     -- Show info.
-    PROFILER.showInfo()
+    PROFILER.showInfo(runTimeGame, runTimeOS)
     
   end
 
@@ -237,20 +279,20 @@ end
 --- Show table.
 -- @param #table data Data table.
 -- @param #function f The file.
--- @param #boolean detailed Show detailed info.
-function PROFILER.showTable(data, f, detailed)
+-- @param #number runTimeGame Game run time in seconds.
+function PROFILER.showTable(data, f, runTimeGame)
 
   -- Loop over data.
   for i=1, #data do  
     local t=data[i] --#PROFILER.Data
   
     -- Calls per second.
-    local cps=t.count/PROFILER.runTimeGame
+    local cps=t.count/runTimeGame
     
     if (cps>=PROFILER.lowCpsThres) then
     
       -- Output
-      local text=string.format("%30s: %8d calls %8.1f/sec   -   Time %8.3f sec (%.3f %%)  %s line %s", t.func, t.count, cps, t.tm, t.tm/PROFILER.runTimeGame*100, tostring(t.src), tostring(t.line))
+      local text=string.format("%30s: %8d calls %8.1f/sec   -   Time %8.3f sec (%.3f %%)  %s line %s", t.func, t.count, cps, t.tm, t.tm/runTimeGame*100, tostring(t.src), tostring(t.line))
       PROFILER._flog(f, text)
       
     end
@@ -259,16 +301,50 @@ function PROFILER.showTable(data, f, detailed)
 end
 
 --- Write info to output file.
-function PROFILER.showInfo()
+-- @return #string File name.
+function PROFILER.getfilename()
+
+  local dir=lfs.writedir()..[[Logs\]]
+  
+  local file=dir..PROFILER.fileNamePrefix.."."..PROFILER.fileNameSuffix
+  
+  if not UTILS.FileExists(file) then
+    return file
+  end
+  
+  for i=1,999 do
+  
+    local file=string.format("%s%s-%03d.%s", dir,PROFILER.fileNamePrefix, i, PROFILER.fileNameSuffix)
+
+    if not UTILS.FileExists(file) then
+      return file
+    end
+    
+  end
+
+end
+
+--- Write info to output file.
+-- @param #number runTimeGame Game time in seconds.
+-- @param #number runTimeOS OS time in seconds.
+function PROFILER.showInfo(runTimeGame, runTimeOS)
 
   -- Output file.
-  local file=lfs.writedir()..[[Logs\]]..PROFILER.fileName  
+  local file=PROFILER.getfilename()
   local f=io.open(file, 'w')  
   
   -- Gather data.
   local Ttot=0
   local Calls=0
+  
   local t={}
+  
+  local tcopy=nil --#PROFILER.Data
+  local tserialize=nil --#PROFILER.Data
+  local tforgen=nil --#PROFILER.Data
+  local tpairs=nil --#PROFILER.Data
+  
+  
   for func, count in pairs(PROFILER.Counters) do
   
     local s,src,line,tm=PROFILER.getData(func)
@@ -277,26 +353,80 @@ function PROFILER.showInfo()
       if s==nil then s="<Unknown>" end
     end
         
-    if s~=nil and s~="_copy" and s~="_Serialize" and s~="(for generator)"  and s~="pairs" then
-      t[#t+1]=
+    if s~=nil then
+    
+      -- Profile data.
+      local T=
       { func=s,
         src=src,
         line=line,
         count=count,
         tm=tm,
-      }
+      } --#PROFILER.Data
+      
+      -- Collect special cases. Somehow, e.g. "_copy" appears multiple times so we try to gather all data.
+      if s=="_copy" then
+        if tcopy==nil then
+          tcopy=T
+        else
+          tcopy.count=tcopy.count+T.count
+          tcopy.tm=tcopy.tm+T.tm
+        end
+      elseif s=="_Serialize" then
+        if tserialize==nil then
+          tserialize=T
+        else
+          tserialize.count=tserialize.count+T.count
+          tserialize.tm=tserialize.tm+T.tm
+        end      
+      elseif s=="(for generator)" then
+        if tforgen==nil then
+          tforgen=T
+        else
+          tforgen.count=tforgen.count+T.count
+          tforgen.tm=tforgen.tm+T.tm
+        end      
+      elseif s=="pairs" then
+        if tpairs==nil then
+          tpairs=T
+        else
+          tpairs.count=tpairs.count+T.count
+          tpairs.tm=tpairs.tm+T.tm
+        end      
+      else
+        table.insert(t, T)
+      end
+      
+      -- Total function time.
       Ttot=Ttot+tm
+      
+      -- Total number of calls.
       Calls=Calls+count
+      
     end
-    
+        
   end
+
+  -- Add special cases.  
+  if tcopy then
+    table.insert(t, tcopy)
+  end
+  if tserialize then
+    table.insert(t, tserialize)      
+  end
+  if tforgen then
+    table.insert(t, tforgen)
+  end
+  if tpairs then
+    table.insert(t, tpairs)
+  end  
   
   env.info("**************************************************************************************************")
   env.info(string.format("Profiler"))
   env.info(string.format("--------"))
-  env.info(string.format("* Runtime Game     : %s = %d sec", UTILS.SecondsToClock(PROFILER.runTimeGame, true), PROFILER.runTimeGame))
-  env.info(string.format("* Runtime Real     : %s = %d sec", UTILS.SecondsToClock(PROFILER.runTimeOS, true), PROFILER.runTimeOS))
-  env.info(string.format("* Function time    : %s = %.1f sec (%.1f percent of runtime game)", UTILS.SecondsToClock(Ttot, true), Ttot, Ttot/PROFILER.runTimeGame*100))
+  env.info(string.format("* Runtime Game     : %s = %d sec", UTILS.SecondsToClock(runTimeGame, true), runTimeGame))
+  env.info(string.format("* Runtime Real     : %s = %d sec", UTILS.SecondsToClock(runTimeOS, true), runTimeOS))
+  env.info(string.format("* Function time    : %s = %.1f sec (%.1f percent of runtime game)", UTILS.SecondsToClock(Ttot, true), Ttot, Ttot/runTimeGame*100))
   env.info(string.format("* Total functions  : %d", #t))
   env.info(string.format("* Total func calls : %d", Calls))
   env.info(string.format("* Writing to file  : \"%s\"", file))
@@ -315,16 +445,16 @@ function PROFILER.showInfo()
   PROFILER._flog(f,"---- Profiler Report ----")
   PROFILER._flog(f,"-------------------------")
   PROFILER._flog(f,"")
-  PROFILER._flog(f,string.format("* Runtime Game     : %s = %.1f sec", UTILS.SecondsToClock(PROFILER.runTimeGame, true), PROFILER.runTimeGame))
-  PROFILER._flog(f,string.format("* Runtime Real     : %s = %.1f sec", UTILS.SecondsToClock(PROFILER.runTimeOS, true), PROFILER.runTimeOS).."  (can vary significantly compared to the game time)")
-  PROFILER._flog(f,string.format("* Function time    : %s = %.1f sec (%.1f %% of runtime game)", UTILS.SecondsToClock(Ttot, true), Ttot, Ttot/PROFILER.runTimeGame*100))
+  PROFILER._flog(f,string.format("* Runtime Game     : %s = %.1f sec", UTILS.SecondsToClock(runTimeGame, true), runTimeGame))
+  PROFILER._flog(f,string.format("* Runtime Real     : %s = %.1f sec", UTILS.SecondsToClock(runTimeOS, true), runTimeOS))
+  PROFILER._flog(f,string.format("* Function time    : %s = %.1f sec (%.1f %% of runtime game)", UTILS.SecondsToClock(Ttot, true), Ttot, Ttot/runTimeGame*100))
   PROFILER._flog(f,"")
   PROFILER._flog(f,string.format("* Total functions  = %d", #t))
   PROFILER._flog(f,string.format("* Total func calls = %d", Calls))
   PROFILER._flog(f,"")
   PROFILER._flog(f,"************************************************************************************************************************")
   PROFILER._flog(f,"")
-  PROFILER.showTable(t, f, true)
+  PROFILER.showTable(t, f, runTimeGame)
   
   -- Sort by number of calls.
   table.sort(t, function(a,b) return a.count>b.count end)
@@ -337,7 +467,7 @@ function PROFILER.showInfo()
   PROFILER._flog(f,"---- Data Sorted by Calls ----")
   PROFILER._flog(f,"------------------------------")
   PROFILER._flog(f,"")
-  PROFILER.showTable(t, f, true)
+  PROFILER.showTable(t, f, runTimeGame)
   
   -- Closing.
   PROFILER._flog(f,"")
