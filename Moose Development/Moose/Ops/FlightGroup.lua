@@ -248,7 +248,7 @@ function FLIGHTGROUP:New(group)
   self:AddTransition("*",             "LandAt",            "LandingAt")   -- Helo group is ordered to land at a specific point.
   self:AddTransition("LandingAt",     "LandedAt",          "LandedAt")    -- Helo group landed landed at a specific point.
 
-  self:AddTransition("*",             "Wait",              "Waiting")     -- Group is orbiting.
+  self:AddTransition("*",             "Wait",              "*")           -- Group is orbiting.
 
   self:AddTransition("*",             "FuelLow",           "*")          -- Fuel state of group is low. Default ~25%.
   self:AddTransition("*",             "FuelCritical",      "*")          -- Fuel state of group is critical. Default ~10%.
@@ -2119,9 +2119,9 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
   self:I(self.lid..text)
 
   --TODO: set ROE passive. introduce roe event/state/variable.
-
   --TODO: cancel current task
 
+  -- Pause current mission if there is any.
   self:PauseMission()
 
   -- Refueling task.

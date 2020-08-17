@@ -1766,11 +1766,11 @@ function OPSGROUP:_GetNextMission()
   local time=timer.getAbsTime()
 
   -- Look for first mission that is SCHEDULED.
-  local importance=math.huge
+  local vip=math.huge
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG    
-    if mission.importance<importance then
-      importance=mission.importance
+    if mission.importance<vip then
+      vip=mission.importance
     end
   end
 
@@ -1778,7 +1778,7 @@ function OPSGROUP:_GetNextMission()
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
-    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) and mission.importance<=importance then
+    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) and mission.importance<=vip then
       return mission
     end
   end
@@ -2918,7 +2918,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
   
     -- Debug message.
     local text=string.format("Group passing waypoint uid=%d", uid)
-    opsgroup:I(opsgroup.lid..text)
+    opsgroup:T2(opsgroup.lid..text)
   
     -- Trigger PassingWaypoint event.
     if not (waypoint.astar or waypoint.detour) then
@@ -3223,7 +3223,7 @@ function OPSGROUP:TurnOffTACAN()
   end
 
   self:I(self.lid..string.format("Switching TACAN OFF"))
-  self.tacanOn=false
+  self.tacan.On=false
 
 end
 

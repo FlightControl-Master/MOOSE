@@ -874,6 +874,7 @@ function ARMYGROUP:SwitchFormation(Formation, Permanently)
     -- Set current formation.
     self.option.Formation=Formation
     
+    -- Update route with the new formation.
     self:__UpdateRoute(-1, nil, nil, Formation)
     
     -- Debug info.

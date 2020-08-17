@@ -38,7 +38,6 @@
 -- @field #boolean markerOn If true, display marker on F10 map with the AUFTRAG status.
 -- @field #number markerCoaliton Coalition to which the marker is dispayed.
 -- @field #table DCStask DCS task structure.
--- @field #number Ntargets Number of mission targets.
 -- @field #number Ncasualties Number of own casualties during mission.
 -- @field #number Nelements Number of elements (units) assigned to mission.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
@@ -499,6 +498,7 @@ function AUFTRAG:New(Type)
   
   -- PLANNED --> (QUEUED) --> (REQUESTED) --> SCHEDULED --> STARTED --> EXECUTING --> DONE
   
+  self:AddTransition("*",                      "Planned",          AUFTRAG.Status.PLANNED)     -- Mission is in planning stage.
   self:AddTransition(AUFTRAG.Status.PLANNED,   "Queued",           AUFTRAG.Status.QUEUED)      -- Mission is in queue of an AIRWING.
   self:AddTransition(AUFTRAG.Status.QUEUED,    "Requested",        AUFTRAG.Status.REQUESTED)   -- Mission assets have been requested from the warehouse.
   self:AddTransition(AUFTRAG.Status.REQUESTED, "Scheduled",        AUFTRAG.Status.SCHEDULED)   -- Mission added to the first ops group queue.
@@ -1406,12 +1406,12 @@ end
 -- @param #AUFTRAG self
 -- @param #number Prio Priority 1=high, 100=low. Default 50.
 -- @param #boolean Urgent If *true*, another running mission might be cancelled if it has a lower priority.
--- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first.
+-- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is 5.
 -- @return #AUFTRAG self
-function AUFTRAG:SetPriority(Prio, Urgent)
+function AUFTRAG:SetPriority(Prio, Urgent, Importance)
   self.prio=Prio or 50
   self.urgent=Urgent
-  self.importance=5
+  self.importance=Importance or 5
   return self
 end
 
@@ -1730,15 +1730,15 @@ function AUFTRAG:AssignSquadrons(Squadrons)
   self.squadrons=Squadrons
 end
 
---- Set the required payload for this mission. Only available for use with an AIRWING.
+--- Add a required payload for this mission. Only these payloads will be used for this mission. If they are not available, the mission cannot start. Only available for use with an AIRWING.
 -- @param #AUFTRAG self
--- @param Ops.AirWing#AIRWING.Payload Required payload 
+-- @param Ops.AirWing#AIRWING.Payload Payload Required payload.
 -- @return #AUFTRAG self
 function AUFTRAG:AddRequiredPayload(Payload)
 
   self.payloads=self.payloads or {}
 
-  table.insert(self.payload, Payload)
+  table.insert(self.payloads, Payload)
   
 end
 
@@ -1985,6 +1985,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
 
   -- Number of alive mission targets.
   local Ntargets=self:CountMissionTargets()
+  local Ntargets0=self:GetTargetInitialNumber()
   
   -- Number of alive groups attached to this mission.
   local Ngroups=self:CountOpsGroups()
@@ -1997,7 +1998,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
       -- All groups have reported MISSON DONE.
       self:Done()
       
-    elseif (self.Tstop and Tnow>self.Tstop+10) or (self.Ntargets>0 and Ntargets==0) then
+    elseif (self.Tstop and Tnow>self.Tstop+10) or (Ntargets0>0 and Ntargets==0) then
     
       -- Cancel mission if stop time passed.
       self:Cancel()
@@ -2075,8 +2076,10 @@ function AUFTRAG:Evaluate()
 
   -- Current number of mission targets.
   local Ntargets=self:CountMissionTargets()
+  local Ntargets0=self:GetTargetInitialNumber()
   
-  if self.Ntargets>0 then
+  
+  if Ntargets0>0 then
   
     ---
     -- Mission had targets
@@ -2085,7 +2088,7 @@ function AUFTRAG:Evaluate()
     -- Number of current targets is still >0 ==> Not everything was destroyed.
     if self.type==AUFTRAG.Type.TROOPTRANSPORT then
   
-      if Ntargets<self.Ntargets then
+      if Ntargets<Ntargets0 then
         failed=true
       end
     
@@ -2128,7 +2131,7 @@ function AUFTRAG:Evaluate()
   text=text..string.format("Own casualties = %d/%d\n", self.Ncasualties, self.Nelements)
   text=text..string.format("Own losses     = %.1f %%\n", owndamage)
   text=text..string.format("--------------------------\n")  
-  text=text..string.format("Targets left   = %d/%d\n", Ntargets, self.Ntargets)
+  text=text..string.format("Targets left   = %d/%d\n", Ntargets, Ntargets0)
   text=text..string.format("Enemy losses   = %.1f %%\n", targetdamage)
   text=text..string.format("--------------------------\n")
   --text=text..string.format("Loss ratio     = %.1f %%\n", targetdamage)
@@ -2364,6 +2367,17 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--- On after "Planned" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterPlanned(From, Event, To)
+  self.status=AUFTRAG.Status.PLANNED
+  self:T(self.lid..string.format("New mission status=%s", self.status))
+end
 
 --- On after "Queue" event. Mission is added to the mission queue of an AIRWING.
 -- @param #AUFTRAG self
@@ -2627,15 +2641,20 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   self.repeated=self.repeated+1
   
   if self.chief then
+  
+    --TODO
     
   elseif self.wingcommander then
   
-  
+    -- Remove mission from airwing because WC will assign it again but maybe to a different wing.
+    if self.airwing then
+      self.airwing:RemoveMission(self)
+    end
   
   elseif self.airwing then
   
     -- Already at the airwing ==> Queued()
-    self:Queued(self.airwing)  
+    self:Queued(self.airwing)
     
   else
     self:E(self.lid.."ERROR: Mission can only be repeated by a CHIEF, WINGCOMMANDER or AIRWING! Stopping AUFTRAG")
@@ -2721,11 +2740,8 @@ function AUFTRAG:_TargetFromObject(Object)
   
   end
 
-  -- TODO: get rid of this.
-  self.Ntargets=self.engageTarget.Ntargets0
-  
   -- Debug info.
-  self:T(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", self.engageTarget.lid, self.engageTarget.lid, self.Ntargets, self.engageTarget:GetLife()))
+  self:T(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", self.engageTarget.lid, self.engageTarget.lid, self.engageTarget.Ntargets0, self.engageTarget:GetLife()))
   
   return self
 end
@@ -2733,9 +2749,8 @@ end
 
 --- Count alive mission targets.
 -- @param #AUFTRAG self
--- @param #AUFTRAG.TargetData Target (Optional) The target object.
 -- @return #number Number of alive target units.
-function AUFTRAG:CountMissionTargets(Target)
+function AUFTRAG:CountMissionTargets()
 
   if self.engageTarget then
     return self.engageTarget:CountTargets()
@@ -2744,6 +2759,19 @@ function AUFTRAG:CountMissionTargets(Target)
   end
   
 end
+
+--- Get initial number of targets.
+-- @param #AUFTRAG self
+-- @return #number Number of initial life points when mission was planned.
+function AUFTRAG:GetTargetInitialNumber()
+  local target=self:GetTargetData()
+  if target then
+    return target.Ntargets0
+  else
+    return 0
+  end
+end
+
 
 --- Get target life points.
 -- @param #AUFTRAG self
@@ -2999,7 +3027,7 @@ function AUFTRAG:UpdateMarker()
   -- Marker text.
   local text=string.format("%s %s: %s", self.name, self.type:upper(), self.status:upper())
   text=text..string.format("\n%s", self:GetTargetName())
-  text=text..string.format("\nTargets %d/%d, Life Points=%d/%d", self:CountMissionTargets(), self.Ntargets, self:GetTargetLife(), self:GetTargetInitialLife())
+  text=text..string.format("\nTargets %d/%d, Life Points=%d/%d", self:CountMissionTargets(), self:GetTargetInitialNumber(), self:GetTargetLife(), self:GetTargetInitialLife())
   text=text..string.format("\nFlights %d/%d", self:CountOpsGroups(), self.nassets)
 
   if not self.marker then

@@ -111,24 +111,24 @@ PROFILER = {
 -- @param #number Duration Duration in (game) seconds before the profiler is stopped. Default is when mission ends.
 function PROFILER.Start(Delay, Duration)
 
+  -- Check if os and lfs are available.
+  local go=true
+  if not os then
+    error("Profiler needs os to be desanitized")
+    go=false
+  end
+  if not lfs then
+    error("Profiler needs lfs to be desanitized")
+    go=false
+  end
+  if not go then
+    return
+  end
+
   if Delay and Delay>0 then
     BASE:ScheduleOnce(Delay, PROFILER.Start, 0, Duration)
   else
   
-    -- Check if os and lfs are available.
-    local go=true
-    if not os then
-      error("Profiler needs os to be desanitized")
-      go=false
-    end
-    if not lfs then
-      error("Profiler needs lfs to be desanitized")
-      go=false
-    end
-    if not go then
-      return
-    end
-
     -- Set start time.
     PROFILER.TstartGame=timer.getTime()
     PROFILER.TstartOS=os.clock()
@@ -149,12 +149,12 @@ function PROFILER.Start(Delay, Duration)
     -- Info in log.
     env.info('############################   Profiler Started   ############################')
     if Duration then
-      env.info(string.format("Duration %d seconds", Duration))
+      env.info(string.format("- Will be running for %d seconds", Duration))
     else
-      env.info(string.format("Stopped when mission ends"))
+      env.info(string.format("- Will be stopped when mission ends"))
     end
-    env.info(string.format("Calls per second threshold %.3f/sec", PROFILER.lowCpsThres))
-    env.info(string.format("Log file \"%s.%s\"", PROFILER.fileNamePrefix, PROFILER.fileNameSuffix))
+    env.info(string.format("- Calls per second threshold %.3f/sec", PROFILER.lowCpsThres))
+    env.info(string.format("- Output file \"%s\" in your DCS log file folder", PROFILER.getfilename()))
     env.info('###############################################################################')
     
     

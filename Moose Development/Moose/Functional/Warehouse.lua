@@ -46,7 +46,7 @@
 -- @type WAREHOUSE
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug If true, send debug messages to all.
--- @field #number verbose Verbosity level.
+-- @field #number verbosity Verbosity level.
 -- @field #string wid Identifier of the warehouse printed before other output to DCS.log file.
 -- @field #boolean Report If true, send status messages to coalition.
 -- @field Wrapper.Static#STATIC warehouse The phyical warehouse structure.
@@ -1890,7 +1890,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- Defaults
   self:SetMarker(true)
   self:SetReportOff()
-  self:SetVerbosity(0)
+  self:SetVerbosityLevel(0)
 
   -- Add warehouse to database.
   _WAREHOUSEDB.Warehouses[self.uid]=self
@@ -2556,8 +2556,8 @@ end
 -- @param #WAREHOUSE self
 -- @param #number VerbosityLevel Level of output (higher=more). Default 0.
 -- @return #WAREHOUSE self
-function WAREHOUSE:SetVerbosity(VerbosityLevel)
-  self.verbose=VerbosityLevel or 0
+function WAREHOUSE:SetVerbosityLevel(VerbosityLevel)
+  self.verbosity=VerbosityLevel or 0
   return self
 end
 
@@ -3403,7 +3403,7 @@ end
 function WAREHOUSE:onafterStatus(From, Event, To)
 
   -- General info.
-  if self.verbose>=1 then
+  if self.verbosity>=1 then
   
     local FSMstate=self:GetState()
   
@@ -8289,7 +8289,7 @@ end
 -- @param #string name Name of the queue for info reasons.
 function WAREHOUSE:_PrintQueue(queue, name)
 
-  if self.verbose>=2 then
+  if self.verbosity>=2 then
 
     local total="Empty"
     if #queue>0 then
@@ -8360,7 +8360,7 @@ end
 --- Display status of warehouse.
 -- @param #WAREHOUSE self
 function WAREHOUSE:_DisplayStatus()
-  if self.verbose>=3 then
+  if self.verbosity>=3 then
     local text=string.format("\n------------------------------------------------------\n")
     text=text..string.format("Warehouse %s status: %s\n", self.alias, self:GetState())
     text=text..string.format("------------------------------------------------------\n")

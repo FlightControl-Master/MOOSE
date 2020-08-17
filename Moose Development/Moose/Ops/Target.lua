@@ -104,6 +104,7 @@ TARGET.ObjectStatus={
 -- @field #number Life0 Life points of completely healthy target.
 -- @field #string Status Status "Alive" or "Dead".
 
+--- Global target ID counter.
 _TARGETID=0
 
 --- TARGET class version.

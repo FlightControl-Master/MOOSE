@@ -751,7 +751,7 @@ function SQUADRON:CanMission(Mission)
       
   -- Set range is valid. Mission engage distance can overrule the squad engage range.
   if TargetDistance>engagerange then
-    self:I(self.lid..string.format("INFO: Squad is not in range. Target dist=%d > %d NM max engage Range", UTILS.MetersToNM(TargetDistance), UTILS.MetersToNM(engagerange)))
+    self:I(self.lid..string.format("INFO: Squad is not in range. Target dist=%d > %d NM max mission Range", UTILS.MetersToNM(TargetDistance), UTILS.MetersToNM(engagerange)))
     return false
   end
   
@@ -833,7 +833,8 @@ function SQUADRON:RecruitAssets(Mission, Npayloads)
           if Mission.type==AUFTRAG.Type.INTERCEPT then
             combatready=flightgroup:CanAirToAir()
           else
-            combatready=flightgroup:CanAirToGround()
+            local excludeguns=Mission.type==AUFTRAG.Type.BOMBING or Mission.type==AUFTRAG.Type.BOMBRUNWAY or Mission.type==AUFTRAG.Type.BOMBCARPET
+            combatready=flightgroup:CanAirToGround(excludeguns)
           end
           
           -- No more attacks if fuel is already low. Safety first!
