@@ -103,6 +103,7 @@ TARGET.ObjectStatus={
 -- @field #number Life Life points on last status update.
 -- @field #number Life0 Life points of completely healthy target.
 -- @field #string Status Status "Alive" or "Dead".
+-- @field Core.Point#COORDINATE Coordinate of the target object.
 
 --- Global target ID counter.
 _TARGETID=0
@@ -436,7 +437,9 @@ function TARGET:_AddObject(Object)
     local group=Object --Wrapper.Group#GROUP
   
     target.Type=TARGET.ObjectType.GROUP
-    target.Name=group:GetName()    
+    target.Name=group:GetName()   
+    
+    target.Coordinate=group:GetCoordinate() 
         
     local units=group:GetUnits()
       
@@ -461,6 +464,8 @@ function TARGET:_AddObject(Object)
     target.Type=TARGET.ObjectType.UNIT
     target.Name=unit:GetName()
     
+    target.Coordinate=unit:GetCoordinate()
+    
     if unit and unit:IsAlive() then
       target.Life=unit:GetLife()
       target.Life0=math.max(unit:GetLife0(), target.Life)  -- There was an issue with ships that life is greater life0!
@@ -477,6 +482,8 @@ function TARGET:_AddObject(Object)
     target.Type=TARGET.ObjectType.STATIC
     target.Name=static:GetName()
     
+    target.Coordinate=static:GetCoordinate()
+    
     if static and static:IsAlive() then
       target.Life0=1
       target.Life=1
@@ -491,6 +498,8 @@ function TARGET:_AddObject(Object)
     
     target.Type=TARGET.ObjectType.AIRBASE
     target.Name=airbase:GetName()
+    
+    target.Coordinate=airbase:GetCoordinate()
 
     target.Life0=1
     target.Life=1
@@ -503,6 +512,8 @@ function TARGET:_AddObject(Object)
 
     target.Type=TARGET.ObjectType.COORDINATE
     target.Name=coord:ToStringMGRS()
+    
+    target.Coordinate=Object
 
     target.Life0=1
     target.Life=1
@@ -621,6 +632,56 @@ function TARGET:GetLife()
   return N
 end
 
+--- Get target 3D position vector.
+-- @param #TARGET self
+-- @param #TARGET.Object Target Target object.
+-- @return DCS#Vec3 Vector with x,y,z components
+function TARGET:GetTargetVec3(Target)
+
+  if Target.Type==TARGET.ObjectType.GROUP then
+  
+    local object=Target.Object --Wrapper.Group#GROUP
+
+    if object and object:IsAlive() then
+
+      return object:GetVec3()    
+
+    end
+
+  elseif Target.Type==TARGET.ObjectType.UNIT then
+  
+    local object=Target.Object --Wrapper.Unit#UNIT
+
+    if object and object:IsAlive() then
+      return object:GetVec3()
+    end
+  
+  elseif Target.Type==TARGET.ObjectType.STATIC then
+  
+    local object=Target.Object --Wrapper.Static#STATIC
+  
+    if object and object:IsAlive() then
+      return Target.Object:GetCoordinate()
+    end
+    
+  elseif Target.Type==TARGET.ObjectType.AIRBASE then
+  
+    local object=Target.Object --Wrapper.Airbase#AIRBASE
+    
+    return object:GetVec3()
+  
+    --if Target.Status==TARGET.ObjectStatus.ALIVE then      
+    --end
+    
+  elseif Target.Type==TARGET.ObjectType.COORDINATE then
+  
+    local object=Target.Object --Core.Point#COORDINATE
+  
+    return {x=object.x, y=object.y, z=object.z}
+    
+  end
+
+end
 
 
 --- Get target coordinate.
@@ -629,36 +690,25 @@ end
 -- @return Core.Point#COORDINATE Coordinate of the target.
 function TARGET:GetTargetCoordinate(Target)
 
-  if Target.Type==TARGET.ObjectType.GROUP then
-
-    if Target.Object and Target.Object:IsAlive() then
-
-      return Target.Object:GetCoordinate()    
-
-    end
-
-  elseif Target.Type==TARGET.ObjectType.UNIT then
-
-    if Target.Object and Target.Object:IsAlive() then
-      return Target.Object:GetCoordinate()
-    end
+  if Target.Type==TARGET.ObjectType.COORDINATE then
   
-  elseif Target.Type==TARGET.ObjectType.STATIC then
-  
-    if Target.Object and Target.Object:IsAlive() then
-      return Target.Object:GetCoordinate()
-    end
-    
-  elseif Target.Type==TARGET.ObjectType.AIRBASE then
-  
-    if Target.Status==TARGET.ObjectStatus.ALIVE then
-      return Target.Object:GetCoordinate()
-    end
-    
-  elseif Target.Type==TARGET.ObjectType.COORDINATE then
-  
+    -- Coordinate is the object itself.
     return Target.Object
     
+  else
+    
+    -- Get updated position vector.
+    local vec3=self:GetTargetVec3(Target)
+    
+    -- Update position. This saves us to create a new COORDINATE object each time.
+    if vec3 then
+      Target.Coordinate.x=vec3.x
+      Target.Coordinate.y=vec3.y
+      Target.Coordinate.z=vec3.z
+    end
+    
+    return Target.Coordinate
+  
   end
 
   return nil

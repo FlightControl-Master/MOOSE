@@ -227,7 +227,9 @@ function FLIGHTGROUP:New(group)
 
   -- Defaults
   self:SetFuelLowThreshold()
+  self:SetFuelLowRTB()
   self:SetFuelCriticalThreshold()
+  self:SetFuelCriticalRTB()
   self:SetDefaultROE()
   self:SetDefaultROT()
   self:SetDetection()

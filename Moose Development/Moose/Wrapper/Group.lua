@@ -261,7 +261,9 @@ end
 -- @param #string GroupName The Group name
 -- @return #GROUP self
 function GROUP:Register( GroupName )
+
   local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) ) -- #GROUP
+  
   self.GroupName = GroupName
   
   self:SetEventPriority( 4 )

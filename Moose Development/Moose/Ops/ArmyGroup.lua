@@ -333,7 +333,7 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     if self.option.Alarm then
       self:SwitchAlarmstate(self.option.Alarm)
     else
-      self:SwitchAlarmstate(0)
+      self:SwitchAlarmstate(ENUMS.AlarmState.Auto)
     end
     
     -- Turn TACAN beacon on.

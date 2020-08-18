@@ -1544,6 +1544,11 @@ function AIRWING:onafterSquadAssetReturned(From, Event, To, Squadron, Asset)
   -- Return payload.
   self:ReturnPayloadFromAsset(Asset)
   
+  -- Return tacan channel.
+  if Asset.tacan then
+    Squadron:ReturnTacan(Asset.tacan)
+  end
+  
   -- Set timestamp.
   Asset.Treturned=timer.getAbsTime()
 end
@@ -1565,48 +1570,52 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
 
   -- Create a flight group.
   local flightgroup=self:_CreateFlightGroup(asset)
-    
-  -- Set airwing.
-  flightgroup:SetAirwing(self)
+  
+  ---
+  -- Asset
+  ---
   
   -- Set asset flightgroup.
   asset.flightgroup=flightgroup
-  
-  -- Get the SQUADRON of the asset.
-  local squadron=self:GetSquadronOfAsset(asset)
-  
-  -- Set default TACAN channel.
-  local Tacan=squadron:GetTACAN()
-  if Tacan then
-    flightgroup:SetDefaultTACAN(Tacan)
-  end
-  
-  -- Set radio frequency and modulation
-  local radioFreq, radioModu=squadron:GetRadio()
-  if radioFreq then
-    flightgroup:SetDefaultRadio(radioFreq, radioModu)
-  end
   
   -- Not requested any more.
   asset.requested=nil
   
   -- Did not return yet.
-  asset.Treturned=nil
+  asset.Treturned=nil  
+
+  ---
+  -- Squadron
+  ---
   
+  -- Get the SQUADRON of the asset.
+  local squadron=self:GetSquadronOfAsset(asset)
+  
+  -- Set default TACAN channel.
+  local Tacan=squadron:FetchTacan()
+  if Tacan then
+    flightgroup:SwitchTACAN(Tacan, Morse, UnitName, Band)
+    asset.tacan=Tacan
+  end
+  
+  -- Set radio frequency and modulation
+  local radioFreq, radioModu=squadron:GetRadio()
+  if radioFreq then
+    flightgroup:SwitchRadio(radioFreq, radioModu)
+  end
+    
   -- Set RTB on fuel critical.
   flightgroup:SetFuelCriticalThreshold()  
+
+  ---
+  -- Mission
+  ---
   
   -- Get Mission (if any).
   local mission=self:GetMissionByID(request.assignment)
 
   -- Add mission to flightgroup queue.
   if mission then
-  
-    -- RTB on low fuel if on GCCAP.
-    if mission.type==AUFTRAG.Type.GCCAP then
-      flightgroup:SetFuelLowThreshold(25)
-      flightgroup:SetFuelLowRTB(true)
-    end
       
     -- Add mission to flightgroup queue.
     asset.flightgroup:AddMission(mission)

@@ -98,6 +98,9 @@
 -- @field #table enrouteTasks Mission enroute tasks.
 -- 
 -- @field #number repeated Number of times mission was repeated.
+-- @field #number repeatedSuccess Number of times mission was repeated after a success.
+-- @field #number repeatedFailure Number of times mission was repeated after a failure.
+-- @field #number Nrepeat Number of times the mission is repeated.
 -- @field #number NrepeatFailure Number of times mission is repeated if failed.
 -- @field #number NrepeatSuccess Number of times mission is repeated if successful.
 -- 
@@ -486,6 +489,9 @@ function AUFTRAG:New(Type)
   self:SetTime()
   self.engageAsGroup=true
   self.repeated=0
+  self.repeatedSuccess=0
+  self.repeatedFailure=0
+  self.Nrepeat=0
   self.NrepeatFailure=0
   self.NrepeatSuccess=0
   self.nassets=1
@@ -1412,6 +1418,15 @@ function AUFTRAG:SetPriority(Prio, Urgent, Importance)
   self.prio=Prio or 50
   self.urgent=Urgent
   self.importance=Importance or 5
+  return self
+end
+
+--- Set how many times the mission is repeated. Only valid if the mission is handled by an AIRWING or higher level.
+-- @param #AUFTRAG self
+-- @param #number Nrepeat Number of repeats. Default 0.
+-- @return #AUFTRAG self
+function AUFTRAG:SetRepeatOnFailure(Nrepeat)
+  self.Nrepeat=Nrepeat or 0
   return self
 end
 
@@ -2535,8 +2550,9 @@ function AUFTRAG:onafterCancel(From, Event, To)
   self.Tover=timer.getAbsTime()
   
   -- No more repeats.
-  self.NrepeatFailure=self.repeated
-  self.NrepeatSuccess=self.repeated
+  self.Nrepeat=self.repeated
+  self.NrepeatFailure=self.repeatedFailure
+  self.NrepeatSuccess=self.repeatedSuccess
   
   -- Not necessary to delay the evaluaton?!
   self.dTevaluate=0
@@ -2583,16 +2599,18 @@ function AUFTRAG:onafterSuccess(From, Event, To)
   self.status=AUFTRAG.Status.SUCCESS
   self:T(self.lid..string.format("New mission status=%s", self.status))
   
-  if self.repeated>=self.NrepeatSuccess then
+  if self.repeatedSuccess>=self.NrepeatSuccess then
   
     -- Stop mission.
-    self:I(self.lid..string.format("Mission SUCCESS! Number of max repeats reached [%d>=%d] ==> Stopping mission!", self.repeated, self.NrepeatSuccess))
+    self:I(self.lid..string.format("Mission SUCCESS! Number of max repeats reached [%d>=%d] ==> Stopping mission!", self.repeatedSuccess, self.NrepeatSuccess))
     self:Stop()
     
   else
+  
+    self.repeatedSuccess=self.repeatedSuccess+1
         
     -- Repeat mission.
-    self:I(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, self.NrepeatSuccess))
+    self:I(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeatedSuccess, self.NrepeatSuccess))
     self:Repeat()
     
   end
@@ -2609,16 +2627,23 @@ function AUFTRAG:onafterFailed(From, Event, To)
   self.status=AUFTRAG.Status.FAILED
   self:T(self.lid..string.format("New mission status=%s", self.status))
   
-  if self.repeated>=self.NrepeatFailure then
+  local repeatme=self.repeatedFailure<self.NrepeatFailure or self.repeated<self.Nrepeat
   
-    self:I(self.lid..string.format("Mission FAILED! Number of max repeats reached [%d>=%d] ==> Stopping mission!", self.repeated, self.NrepeatFailure))
-    self:Stop()
+  if self.repeatedFailure>=self.NrepeatFailure then
+
+    self.repeatedFailure=self.repeatedFailure+1
     
-  else
+    local N=math.max(self.NrepeatFailure, self.Nrepeat)
         
     -- Repeat mission.
-    self:I(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, self.NrepeatFailure))
+    self:I(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
     self:Repeat()
+  
+    
+  else
+  
+    self:I(self.lid..string.format("Mission FAILED! Number of max repeats %d reached ==> Stopping mission!", self.repeated+1))
+    self:Stop()
     
   end  
 

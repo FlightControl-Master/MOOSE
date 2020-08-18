@@ -395,6 +395,15 @@ function SQUADRON:SetModex(Modex, Prefix, Suffix)
   return self
 end
 
+--- Set low fuel threshold.
+-- @param #SQUADRON self
+-- @param #number LowFuel Low fuel threshold in percent. Default 25.
+-- @return #SQUADRON self
+function SQUADRON:SetLowFuelThreshold(LowFuel)
+  self.fuellow=LowFuel or 25
+  return self
+end
+
 --- Set airwing.
 -- @param #SQUADRON self
 -- @param Ops.AirWing#AIRWING Airwing The airwing.
@@ -500,23 +509,33 @@ function SQUADRON:GetModex(Asset)
   
 end
 
+
+--- Add TACAN channels to the squadron. Note that channels can only range from 1 to 126.
+-- @param #SQUADRON self
+-- @param #number ChannelMin Channel.
+-- @param #number ChannelMax Channel.
+-- @return #SQUADRON self
+-- @usage mysquad:AddTacanChannel(64,69)  -- adds channels 64, 65, 66, 67, 68, 69
+function SQUADRON:AddTacanChannel(ChannelMin, ChannelMax)
+
+  ChannelMax=ChannelMax or ChannelMin
+
+  for i=ChannelMin,ChannelMax do
+    self.tacanChannel[i]=true
+  end
+
+end
+
 --- Get an unused TACAN channel.
 -- @param #SQUADRON self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
 -- @return #number TACAN channel or *nil* if no channel is free.
-function SQUADRON:GetTACAN()
+function SQUADRON:FetchTacan()
 
-  if self.TACANmin and self.TACANmax then
-  
-    for channel=self.TACANmin, self.TACANmax do
-    
-      if not self.TACANused[channel] then
-        self.TACANused[channel]=true
-        return channel
-      end
-    
+  for channel,free in pairs(self.tacanChannel) do
+    if free then
+      self.tacanChannel[channel]=false
+      return channel
     end
-    
   end
 
   return nil
@@ -525,8 +544,8 @@ end
 --- "Return" a used TACAN channel.
 -- @param #SQUADRON self
 -- @param #number channel The channel that is available again.
-function SQUADRON:ReturnTACAN(channel)
-  self.TACANused[channel]=false
+function SQUADRON:ReturnTacan(channel)
+  self.tacanChannel[channel]=true
 end
 
 --- Check if squadron is "OnDuty".

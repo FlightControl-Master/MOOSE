@@ -3324,7 +3324,7 @@ function OPSGROUP:TurnOffICLS()
   end
 
   self:I(self.lid..string.format("Switching ICLS OFF"))
-  self.iclsOn=false
+  self.icls.On=false
 
 end
 
