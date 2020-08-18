@@ -289,10 +289,10 @@ function PROFILER.showTable(data, f, runTimeGame)
     -- Calls per second.
     local cps=t.count/runTimeGame
     
-    if (cps>=PROFILER.lowCpsThres) then
+    if cps>=PROFILER.lowCpsThres then
     
       -- Output
-      local text=string.format("%30s: %8d calls %8.1f/sec   -   Time %8.3f sec (%.3f %%)  %s line %s", t.func, t.count, cps, t.tm, t.tm/runTimeGame*100, tostring(t.src), tostring(t.line))
+      local text=string.format("%30s: %8d calls %8.1f/sec - Time Total %8.3f sec (%.3f %%) - Per call %5.3f sec  %s line %s", t.func, t.count, cps, t.tm, t.tm/runTimeGame*100, t.tm/t.count, tostring(t.src), tostring(t.line))
       PROFILER._flog(f, text)
       
     end
@@ -455,6 +455,19 @@ function PROFILER.showInfo(runTimeGame, runTimeOS)
   PROFILER._flog(f,"************************************************************************************************************************")
   PROFILER._flog(f,"")
   PROFILER.showTable(t, f, runTimeGame)
+
+  -- Sort by number of calls.
+  table.sort(t, function(a,b) return a.tm/a.count>b.tm/b.count end)
+  
+  -- Detailed data.
+  PROFILER._flog(f,"")
+  PROFILER._flog(f,"************************************************************************************************************************")
+  PROFILER._flog(f,"")
+  PROFILER._flog(f,"--------------------------------------")
+  PROFILER._flog(f,"---- Data Sorted by Time per Call ----")
+  PROFILER._flog(f,"--------------------------------------")
+  PROFILER._flog(f,"")
+  PROFILER.showTable(t, f, runTimeGame)
   
   -- Sort by number of calls.
   table.sort(t, function(a,b) return a.count>b.count end)
@@ -463,9 +476,9 @@ function PROFILER.showInfo(runTimeGame, runTimeOS)
   PROFILER._flog(f,"")
   PROFILER._flog(f,"************************************************************************************************************************")
   PROFILER._flog(f,"")
-  PROFILER._flog(f,"------------------------------")
-  PROFILER._flog(f,"---- Data Sorted by Calls ----")
-  PROFILER._flog(f,"------------------------------")
+  PROFILER._flog(f,"------------------------------------")
+  PROFILER._flog(f,"---- Data Sorted by Total Calls ----")
+  PROFILER._flog(f,"------------------------------------")
   PROFILER._flog(f,"")
   PROFILER.showTable(t, f, runTimeGame)
   

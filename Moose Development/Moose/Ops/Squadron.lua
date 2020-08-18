@@ -41,9 +41,7 @@
 -- @field #string attribute Generalized attribute of the squadron template group.
 -- @field #number tankerSystem For tanker squads, the refuel system used (boom=0 or probpe=1). Default nil.
 -- @field #number refuelSystem For refuelable squads, the refuel system used (boom=0 or probpe=1). Default nil.
--- @field #number TACANmin TACAN min channel.
--- @field #number TACANmax TACAN max channel.
--- @field #table TACANused Table of used TACAN channels.
+-- @field #table tacanChannel List of TACAN channels available to the squadron.
 -- @field #number radioFreq Radio frequency in MHz the squad uses.
 -- @field #number radioModu Radio modulation the squad uses.
 -- @extends Core.Fsm#FSM
@@ -84,9 +82,7 @@ SQUADRON = {
   engageRange    =   nil,
   tankerSystem   =   nil,
   refuelSystem   =   nil,
-  TACANmin       =   nil,
-  TACANmax       =   nil,
-  TACANused      =    {},
+  tacanChannel   =    {},
 }
 
 --- SQUADRON class version.
@@ -399,7 +395,7 @@ end
 -- @param #SQUADRON self
 -- @param #number LowFuel Low fuel threshold in percent. Default 25.
 -- @return #SQUADRON self
-function SQUADRON:SetLowFuelThreshold(LowFuel)
+function SQUADRON:SetFuelLowThreshold(LowFuel)
   self.fuellow=LowFuel or 25
   return self
 end

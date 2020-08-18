@@ -1425,7 +1425,7 @@ end
 -- @param #AUFTRAG self
 -- @param #number Nrepeat Number of repeats. Default 0.
 -- @return #AUFTRAG self
-function AUFTRAG:SetRepeatOnFailure(Nrepeat)
+function AUFTRAG:SetRepeat(Nrepeat)
   self.Nrepeat=Nrepeat or 0
   return self
 end
@@ -2599,19 +2599,25 @@ function AUFTRAG:onafterSuccess(From, Event, To)
   self.status=AUFTRAG.Status.SUCCESS
   self:T(self.lid..string.format("New mission status=%s", self.status))
   
-  if self.repeatedSuccess>=self.NrepeatSuccess then
+  local repeatme=self.repeatedFailure<self.NrepeatFailure or self.repeated<self.Nrepeat
   
-    -- Stop mission.
-    self:I(self.lid..string.format("Mission SUCCESS! Number of max repeats reached [%d>=%d] ==> Stopping mission!", self.repeatedSuccess, self.NrepeatSuccess))
-    self:Stop()
+  if repeatme then
+
+    -- Increase counter.
+    self.repeatedSuccess=self.repeatedSuccess+1
+
+    -- Number of repeats.
+    local N=math.max(self.NrepeatSuccess, self.Nrepeat)
+        
+    -- Repeat mission.
+    self:I(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
+    self:Repeat()
     
   else
   
-    self.repeatedSuccess=self.repeatedSuccess+1
-        
-    -- Repeat mission.
-    self:I(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeatedSuccess, self.NrepeatSuccess))
-    self:Repeat()
+    -- Stop mission.
+    self:I(self.lid..string.format("Mission SUCCESS! Number of max repeats %d reached  ==> Stopping mission!", self.repeated+1))
+    self:Stop()
     
   end
 
@@ -2629,19 +2635,21 @@ function AUFTRAG:onafterFailed(From, Event, To)
   
   local repeatme=self.repeatedFailure<self.NrepeatFailure or self.repeated<self.Nrepeat
   
-  if self.repeatedFailure>=self.NrepeatFailure then
+  if repeatme then
 
+    -- Increase counter.
     self.repeatedFailure=self.repeatedFailure+1
     
+    -- Number of repeats.
     local N=math.max(self.NrepeatFailure, self.Nrepeat)
         
     -- Repeat mission.
     self:I(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
     self:Repeat()
-  
     
   else
   
+    -- Stop mission.
     self:I(self.lid..string.format("Mission FAILED! Number of max repeats %d reached ==> Stopping mission!", self.repeated+1))
     self:Stop()
     

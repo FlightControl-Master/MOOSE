@@ -3227,22 +3227,15 @@ function OPSGROUP:TurnOffTACAN()
 
 end
 
-
---- Set default ICLS parameters.
+--- Get current TACAN parameters.
 -- @param #OPSGROUP self
--- @param #number Channel ICLS channel.
--- @param #string Morse Morse code. Default "XXX".
--- @param #string UnitName Name of the unit acting as beacon.
--- @param #string Band ICLS mode. Default is "X" for ground and "Y" for airborne units.
--- @return #OPSGROUP self
-function OPSGROUP:SetDefaultICLS(Channel, Morse, UnitName)
-  
-  self.iclsDefault={}
-  self.iclsDefault.Channel=Channel
-  self.iclsDefault.Morse=Morse or "XXX"
-  self.iclsDefault.BeaconName=UnitName
-
-  return self
+-- @return #number TACAN channel.
+-- @return #string TACAN Morse code.
+-- @return #string TACAN band ("X" or "Y").
+-- @return #boolean TACAN is On (true) or Off (false).
+-- @return #string UnitName Name of the unit acting as beacon.
+function OPSGROUP:GetTACAN()
+  return self.tacan.Channel, self.tacan.Morse, self.tacan.Band, self.tacan.On, self.tacan.BeaconName
 end
 
 --- Activate/switch ICLS beacon settings.

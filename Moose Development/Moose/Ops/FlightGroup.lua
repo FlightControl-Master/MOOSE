@@ -226,6 +226,7 @@ function FLIGHTGROUP:New(group)
   self.lid=string.format("FLIGHTGROUP %s | ", self.groupname)
 
   -- Defaults
+  self:SetVerbosity(3)
   self:SetFuelLowThreshold()
   self:SetFuelLowRTB()
   self:SetFuelCriticalThreshold()

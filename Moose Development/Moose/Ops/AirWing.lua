@@ -1604,8 +1604,9 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
     flightgroup:SwitchRadio(radioFreq, radioModu)
   end
     
-  -- Set RTB on fuel critical.
-  flightgroup:SetFuelCriticalThreshold()  
+  if squadron.fuellow then
+    flightgroup:SetFuelCriticalThreshold(squadron.fuellow)
+  end
 
   ---
   -- Mission
