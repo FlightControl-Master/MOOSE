@@ -1748,7 +1748,11 @@ function AIRWING:_CreateFlightGroup(asset)
   local flightgroup=FLIGHTGROUP:New(asset.spawngroupname)
 
   -- Set airwing.
-  flightgroup:SetAirwing(self)  
+  flightgroup:SetAirwing(self)
+  
+  flightgroup.squadron=self:GetSquadronOfAsset(asset)
+  
+  --[[
   
   --- Check if out of missiles. For A2A missions ==> RTB.
   function flightgroup:OnAfterOutOfMissiles()  
@@ -1773,6 +1777,8 @@ function AIRWING:_CreateFlightGroup(asset)
     local airwing=flightgroup:GetAirWing()
         
   end
+  
+  ]]
   
   return flightgroup
 end

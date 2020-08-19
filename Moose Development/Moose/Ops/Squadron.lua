@@ -529,6 +529,7 @@ function SQUADRON:FetchTacan()
 
   for channel,free in pairs(self.tacanChannel) do
     if free then
+      self:I(self.lid..string.format("Checking out Tacan channel %d", channel))
       self.tacanChannel[channel]=false
       return channel
     end
@@ -541,6 +542,7 @@ end
 -- @param #SQUADRON self
 -- @param #number channel The channel that is available again.
 function SQUADRON:ReturnTacan(channel)
+  self:I(self.lid..string.format("Returning Tacan channel %d", channel))
   self.tacanChannel[channel]=true
 end
 

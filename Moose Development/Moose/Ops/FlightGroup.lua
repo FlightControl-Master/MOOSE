@@ -34,6 +34,7 @@
 -- @field #boolean fuelcritical Fuel critical switch.
 -- @field #number fuelcriticalthresh Critical fuel threshold in percent.
 -- @field #boolean fuelcriticalrtb RTB on critical fuel switch.
+-- @field Ops.Squadron#SQUADRON squadron The squadron of this flight group.
 -- @field Ops.AirWing#AIRWING airwing The airwing the flight group belongs to.
 -- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol handling this group.
 -- @field Ops.Airboss#AIRBOSS airboss The airboss handling this group.
@@ -2468,9 +2469,11 @@ function FLIGHTGROUP:_InitGroup()
     self:E(self.lid.."WARNING: Group was already initialized!")
     return
   end
+  
+  local group=self.group --Wrapper.Group#GROUP
 
   -- Get template of group.
-  self.template=self.group:GetTemplate()
+  self.template=group:GetTemplate()
 
   -- Define category.
   self.isAircraft=true
@@ -2478,7 +2481,7 @@ function FLIGHTGROUP:_InitGroup()
   self.isGround=false
 
   -- Helo group.
-  self.ishelo=self.group:IsHelicopter()
+  self.ishelo=group:IsHelicopter()
 
   -- Is (template) group uncontrolled.
   self.isUncontrolled=self.template.uncontrolled
@@ -2487,7 +2490,7 @@ function FLIGHTGROUP:_InitGroup()
   self.isLateActivated=self.template.lateActivation
 
   -- Max speed in km/h.
-  self.speedmax=self.group:GetSpeedMax()
+  self.speedmax=group:GetSpeedMax()
 
   -- Cruise speed limit 350 kts for fixed and 80 knots for rotary wings.
   local speedCruiseLimit=self.ishelo and UTILS.KnotsToKmph(80) or UTILS.KnotsToKmph(350)
@@ -2525,7 +2528,7 @@ function FLIGHTGROUP:_InitGroup()
   end
 
   -- Is this purely AI?
-  self.ai=not self:_IsHuman(self.group)
+  self.ai=not self:_IsHuman(group)
 
   -- Create Menu.
   if not self.ai then
@@ -2607,10 +2610,11 @@ function FLIGHTGROUP:AddElementByName(unitname)
     -- TODO: this is wrong when grouping is used!
     local unittemplate=element.unit:GetTemplate()
 
-    element.modex=element.unit:GetTemplate().onboard_num
-    element.skill=element.unit:GetTemplate().skill
-    element.pylons=element.unit:GetTemplatePylons()
-    element.fuelmass0=element.unit:GetTemplatePayload().fuel
+    element.modex=unittemplate.onboard_num
+    element.skill=unittemplate.skill
+    element.payload=unittemplate.payload
+    element.pylons=unittemplate.payload and unittemplate.payload.pylons or nil --element.unit:GetTemplatePylons()
+    element.fuelmass0=unittemplate.payload and unittemplate.payload.fuel or 0 --element.unit:GetTemplatePayload().fuel
     element.fuelmass=element.fuelmass0
     element.fuelrel=element.unit:GetFuel()
     element.category=element.unit:GetUnitCategory()

@@ -315,6 +315,80 @@ AIRBASE.TheChannel = {
   ["High_Halden"] = "High Halden",
 }
 
+--- Airbases of Syria
+--
+-- * AIRBASE.Syria.Kuweires
+-- * AIRBASE.Syria.Marj_Ruhayyil
+-- * AIRBASE.Syria.Kiryat_Shmona
+-- * AIRBASE.Syria.Marj_as_Sultan_North
+-- * AIRBASE.Syria.Eyn_Shemer
+-- * AIRBASE.Syria.Incirlik
+-- * AIRBASE.Syria.Damascus
+-- * AIRBASE.Syria.Bassel_Al_Assad
+-- * AIRBASE.Syria.Aleppo
+-- * AIRBASE.Syria.Qabr_as_Sitt
+-- * AIRBASE.Syria.Wujah_Al_Hajar
+-- * AIRBASE.Syria.Al_Dumayr
+-- * AIRBASE.Syria.Hatay
+-- * AIRBASE.Syria.Haifa
+-- * AIRBASE.Syria.Khalkhalah
+-- * AIRBASE.Syria.Megiddo
+-- * AIRBASE.Syria.Rayak
+-- * AIRBASE.Syria.Mezzeh
+-- * AIRBASE.Syria.King_Hussein_Air_College
+-- * AIRBASE.Syria.Jirah
+-- * AIRBASE.Syria.Taftanaz
+-- * AIRBASE.Syria.Rene_Mouawad
+-- * AIRBASE.Syria.Ramat_David
+-- * AIRBASE.Syria.Minakh
+-- * AIRBASE.Syria.Adana_Sakirpasa
+-- * AIRBASE.Syria.Marj_as_Sultan_South
+-- * AIRBASE.Syria.Hama
+-- * AIRBASE.Syria.Al_Qusayr
+-- * AIRBASE.Syria.Palmyra
+-- * AIRBASE.Syria.Tabqa
+-- * AIRBASE.Syria.Beirut_Rafic_Hariri
+-- * AIRBASE.Syria.An_Nasiriyah
+-- * AIRBASE.Syria.Abu_al_Duhur
+--
+-- @field Syria
+AIRBASE.Syria={
+  ["Kuweires"]="Kuweires",
+  ["Marj_Ruhayyil"]="Marj Ruhayyil",
+  ["Kiryat_Shmona"]="Kiryat Shmona",
+  ["Marj_as_Sultan_North"]="Marj as Sultan North",
+  ["Eyn_Shemer"]="Eyn Shemer",
+  ["Incirlik"]="Incirlik",
+  ["Damascus"]="Damascus",
+  ["Bassel_Al_Assad"]="Bassel Al-Assad",
+  ["Aleppo"]="Aleppo",
+  ["Qabr_as_Sitt"]="Qabr as Sitt",
+  ["Wujah_Al_Hajar"]="Wujah Al Hajar",
+  ["Al_Dumayr"]="Al-Dumayr",
+  ["Hatay"]="Hatay",
+  ["Haifa"]="Haifa",
+  ["Khalkhalah"]="Khalkhalah",
+  ["Megiddo"]="Megiddo",
+  ["Rayak"]="Rayak",
+  ["Mezzeh"]="Mezzeh",
+  ["King_Hussein_Air_College"]="King Hussein Air College",
+  ["Jirah"]="Jirah",
+  ["Taftanaz"]="Taftanaz",
+  ["Rene_Mouawad"]="Rene Mouawad",
+  ["Ramat_David"]="Ramat David",
+  ["Minakh"]="Minakh",
+  ["Adana_Sakirpasa"]="Adana Sakirpasa",
+  ["Marj_as_Sultan_South"]="Marj as Sultan South",
+  ["Hama"]="Hama",
+  ["Al_Qusayr"]="Al Qusayr",
+  ["Palmyra"]="Palmyra",
+  ["Tabqa"]="Tabqa",
+  ["Beirut_Rafic_Hariri"]="Beirut-Rafic Hariri",
+  ["An_Nasiriyah"]="An Nasiriyah",
+  ["Abu_al_Duhur"]="Abu al-Duhur",
+}
+
+
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 -- @type AIRBASE.ParkingSpot
 -- @field Core.Point#COORDINATE Coordinate Coordinate of the parking spot.

@@ -2052,6 +2052,34 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
     Mission.patroldata.noccupied=Mission.patroldata.noccupied-1
     AIRWING.UpdatePatrolPointMarker(Mission.patroldata)
   end
+  
+  env.info("FF 000")
+  
+  -- TACAN
+  if Mission.tacan then
+  
+    env.info("FF 100")
+  
+    if self.tacanDefault then
+      env.info("FF 200")
+      self:_SwitchTACAN(self.tacanDefault)
+    else
+      env.info("FF 300")
+      self:TurnOffTACAN()
+    end
+    
+    local squadron=self.squadron --Ops.Squadron#SQUADRON
+    if squadron then
+      env.info("FF 400")
+      squadron:ReturnTacan(Mission.tacan.Channel)
+    end
+    
+    local asset=Mission:GetAssetByName(self.groupname)
+    if asset then
+      env.info("FF 500")
+      asset.tacan=nil
+    end  
+  end
 
   -- TODO: reset mission specific parameters like radio, ROE etc.  
   
@@ -3182,6 +3210,11 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
       
       -- Tacan frequency.
       local Frequency=UTILS.TACANToFrequency(Channel, Band)
+
+      -- Backup TACAN.
+      if self.tacan.Channel then
+        self.tacanDefault=UTILS.DeepCopy(self.tacan)
+      end
 
       -- Update info.
       self.tacan.Channel=Channel

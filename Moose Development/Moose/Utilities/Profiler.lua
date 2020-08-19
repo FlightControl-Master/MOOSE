@@ -111,16 +111,20 @@ PROFILER = {
 -- @param #number Duration Duration in (game) seconds before the profiler is stopped. Default is when mission ends.
 function PROFILER.Start(Delay, Duration)
 
-  -- Check if os and lfs are available.
+  -- Check if os, io and lfs are available.
   local go=true
   if not os then
-    error("Profiler needs os to be desanitized")
+    env.error("ERROR: Profiler needs os to be desanitized!")
     go=false
   end
+  if not io then
+    env.error("ERROR: Profiler needs io to be desanitized!")
+    go=false
+  end  
   if not lfs then
-    error("Profiler needs lfs to be desanitized")
+    env.error("ERROR: Profiler needs lfs to be desanitized!")
     go=false
-  end
+  end  
   if not go then
     return
   end
@@ -135,16 +139,6 @@ function PROFILER.Start(Delay, Duration)
     
     -- Add event handler.
     world.addEventHandler(PROFILER.eventHandler)
-    
-    --[[
-    -- Message to screen.
-    local function showProfilerRunning()
-      timer.scheduleFunction(showProfilerRunning, nil, timer.getTime()+600)
-      trigger.action.outText("### Profiler running ###", 600)
-    end    
-    -- Message.
-    showProfilerRunning()
-    ]]
     
     -- Info in log.
     env.info('############################   Profiler Started   ############################')
@@ -292,7 +286,7 @@ function PROFILER.showTable(data, f, runTimeGame)
     if cps>=PROFILER.lowCpsThres then
     
       -- Output
-      local text=string.format("%30s: %8d calls %8.1f/sec - Time Total %8.3f sec (%.3f %%) - Per call %5.3f sec  %s line %s", t.func, t.count, cps, t.tm, t.tm/runTimeGame*100, t.tm/t.count, tostring(t.src), tostring(t.line))
+      local text=string.format("%30s: %8d calls %8.1f/sec - Time Total %8.3f sec (%.3f %%) %5.3f sec/call  %s line %s", t.func, t.count, cps, t.tm, t.tm/runTimeGame*100, t.tm/t.count, tostring(t.src), tostring(t.line))
       PROFILER._flog(f, text)
       
     end
