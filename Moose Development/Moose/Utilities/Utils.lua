@@ -313,6 +313,10 @@ UTILS.MetersToNM = function(meters)
   return meters/1852
 end
 
+UTILS.MetersToSM = function(meters)
+  return meters/1609.34
+end
+
 UTILS.MetersToFeet = function(meters)
   return meters/0.3048
 end

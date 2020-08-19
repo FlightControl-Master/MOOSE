@@ -67,8 +67,10 @@
 -- @field #number subduration Duration how long subtitles are displayed in seconds.
 -- @field #boolean metric If true, use metric units. If false, use imperial (default).
 -- @field #boolean PmmHg If true, give pressure in millimeters of Mercury. Default is inHg for imperial and hecto Pascal (=mili Bars) for metric units.
+-- @field #boolean qnhonly If true, suppresses reporting QFE. Default is to report both QNH and QFE.
 -- @field #boolean TDegF If true, give temperature in degrees Fahrenheit. Default is in degrees Celsius independent of chosen unit system.
 -- @field #number zuludiff Time difference local vs. zulu in hours.
+-- @field #boolean zulutimeonly If true, suppresses report of local time, sunrise, and sunset.
 -- @field #number magvar Magnetic declination/variation at the airport in degrees.
 -- @field #table ils Table of ILS frequencies (can be runway specific).
 -- @field #table ndbinner Table of inner NDB frequencies (can be runway specific).
@@ -302,8 +304,10 @@ ATIS = {
   subduration    =   nil,
   metric         =   nil,
   PmmHg          =   nil,
+  qnhonly        =   false,
   TDegF          =   nil,
   zuludiff       =   nil,
+  zulutimeonly   =   false,
   magvar         =   nil,
   ils            =    {},
   ndbinner       =    {},
@@ -365,8 +369,21 @@ ATIS.Alphabet = {
 ATIS.RunwayM2T={
   Caucasus=0,
   Nevada=12,
-  Normany=-10,
+  Normandy=-10,
   PersianGulf=2,
+}
+
+--- Whether ICAO phraseology is used for ATIS broadcasts.
+-- @type ATIS.ICAOPhraseology
+-- @field #boolean Caucasus true.
+-- @field #boolean Nevada false.
+-- @field #boolean Normandy true.
+-- @field #boolean PersianGulf true.
+ATIS.ICAOPhraseology={
+  Caucasus=true,
+  Nevada=false,
+  Normandy=true,
+  PersianGulf=true
 }
 
 --- Nav point data.
@@ -415,6 +432,7 @@ ATIS.RunwayM2T={
 -- @field #ATIS.Soundfile MegaHertz
 -- @field #ATIS.Soundfile Meters
 -- @field #ATIS.Soundfile MetersPerSecond
+-- @field #ATIS.Soundfile Miles
 -- @field #ATIS.Soundfile MillimetersOfMercury
 -- @field #ATIS.Soundfile N0
 -- @field #ATIS.Soundfile N1
@@ -487,6 +505,7 @@ ATIS.Sound = {
   MegaHertz={filename="MegaHertz.ogg", duration=0.87},
   Meters={filename="Meters.ogg", duration=0.59},
   MetersPerSecond={filename="MetersPerSecond.ogg", duration=1.14},
+  Miles={filename="Miles.ogg", duration=1.04},
   MillimetersOfMercury={filename="MillimetersOfMercury.ogg", duration=1.53},
   Minus={filename="Minus.ogg", duration=0.64},
   N0={filename="N-0.ogg", duration=0.55},
@@ -898,6 +917,14 @@ function ATIS:SetAltimeterQNH(switch)
   return self
 end
 
+-- Suppresses QFE readout. Default is to report both QNH and QFE.
+-- @param #ATIS self
+-- @return #ATIS self
+function ATIS:ReportQNHOnly()
+  self.qnhonly=true
+  return self
+end
+
 --- Set magnetic declination/variation at the airport.
 --
 -- Default is per map:
@@ -957,6 +984,14 @@ end
 -- @return #ATIS self
 function ATIS:SetZuluTimeDifference(delta)
   self.zuludiff=delta
+  return self
+end
+
+-- Suppresses local time, sunrise, and sunset. Default is to report all these times.
+-- @param #ATIS self
+-- @return #ATIS self
+function ATIS:ReportZuluTimeOnly()
+  self.zulutimeonly=true
   return self
 end
 
@@ -1354,13 +1389,24 @@ function ATIS:onafterBroadcast(From, Event, To)
       visibilitymin=dust
     end
   end
+  
+  local VISIBILITY=""
 
-  -- Visibility in NM.
-  local VISIBILITY=string.format("%d", UTILS.Round(UTILS.MetersToNM(visibilitymin)))
-
-  -- Visibility in km.
   if self.metric then
-    VISIBILITY=string.format("%d", UTILS.Round(visibilitymin/1000))
+    -- Visibility in km.
+    local reportedviz=UTILS.Round(visibilitymin/1000)
+    -- max reported visibility 9999 m
+    if reportedviz > 10 then
+      reportedviz=10
+    end
+    VISIBILITY=string.format("%d", reportedviz)
+  else
+    -- max reported visibility 10 NM
+    local reportedviz=UTILS.Round(UTILS.MetersToSM(visibilitymin))
+    if reportedviz > 10 then
+      reportedviz=10
+    end
+    VISIBILITY=string.format("%d", reportedviz)
   end
 
   --------------
@@ -1450,72 +1496,63 @@ function ATIS:onafterBroadcast(From, Event, To)
   self.radioqueue:Number2Transmission(ZULU, nil, 0.5)
   self:Transmission(ATIS.Sound.TimeZulu, 0.2, subtitle)
   alltext=alltext..";\n"..subtitle
+  
+  if not self.zulutimeonly then
 
-  -- Sunrise Time
-  subtitle=string.format("Sunrise at %s local time", SUNRISE)
-  self:Transmission(ATIS.Sound.SunriseAt, 0.5, subtitle)
-  self.radioqueue:Number2Transmission(SUNRISE, nil, 0.2)
-  self:Transmission(ATIS.Sound.TimeLocal, 0.2)
-  alltext=alltext..";\n"..subtitle
-
-  -- Sunset Time
-  subtitle=string.format("Sunset at %s local time", SUNSET)
-  self:Transmission(ATIS.Sound.SunsetAt, 0.5, subtitle)
-  self.radioqueue:Number2Transmission(SUNSET, nil, 0.5)
-  self:Transmission(ATIS.Sound.TimeLocal, 0.2)
+    -- Sunrise Time
+    subtitle=string.format("Sunrise at %s local time", SUNRISE)
+    self:Transmission(ATIS.Sound.SunriseAt, 0.5, subtitle)
+    self.radioqueue:Number2Transmission(SUNRISE, nil, 0.2)
+    self:Transmission(ATIS.Sound.TimeLocal, 0.2)
+    alltext=alltext..";\n"..subtitle
+  
+    -- Sunset Time
+    subtitle=string.format("Sunset at %s local time", SUNSET)
+    self:Transmission(ATIS.Sound.SunsetAt, 0.5, subtitle)
+    self.radioqueue:Number2Transmission(SUNSET, nil, 0.5)
+    self:Transmission(ATIS.Sound.TimeLocal, 0.2)
+    alltext=alltext..";\n"..subtitle
+  end
+  
+  -- Wind
+  if self.metric then
+    subtitle=string.format("Wind from %s at %s m/s", WINDFROM, WINDSPEED)
+  else
+    subtitle=string.format("Wind from %s at %s knots", WINDFROM, WINDSPEED)
+  end
+  if turbulence>0 then
+    subtitle=subtitle..", gusting"
+  end
+  local _WIND=subtitle
+  self:Transmission(ATIS.Sound.WindFrom, 1.0, subtitle)
+  self.radioqueue:Number2Transmission(WINDFROM)
+  self:Transmission(ATIS.Sound.At, 0.2)
+  self.radioqueue:Number2Transmission(WINDSPEED)
+  if self.metric then
+    self:Transmission(ATIS.Sound.MetersPerSecond, 0.2)
+  else
+    self:Transmission(ATIS.Sound.Knots, 0.2)
+  end
+  if turbulence>0 then
+    self:Transmission(ATIS.Sound.Gusting, 0.2)
+  end
   alltext=alltext..";\n"..subtitle
 
   -- Visibility
   if self.metric then
     subtitle=string.format("Visibility %s km", VISIBILITY)
   else
-    subtitle=string.format("Visibility %s NM", VISIBILITY)
+    subtitle=string.format("Visibility %s SM", VISIBILITY)
   end
   self:Transmission(ATIS.Sound.Visibilty, 1.0, subtitle)
   self.radioqueue:Number2Transmission(VISIBILITY)
   if self.metric then
     self:Transmission(ATIS.Sound.Kilometers, 0.2)
   else
-    self:Transmission(ATIS.Sound.NauticalMiles, 0.2)
+    self:Transmission(ATIS.Sound.Miles, 0.2)
   end
   alltext=alltext..";\n"..subtitle
-
-  -- Cloud base
-  self:Transmission(CloudCover, 1.0, CLOUDSsub)
-  if CLOUDBASE and static then
-    -- Base
-    if self.metric then
-      subtitle=string.format("Cloudbase %s, ceiling %s meters", CLOUDBASE, CLOUDCEIL)
-    else
-      subtitle=string.format("Cloudbase %s, ceiling %s ft", CLOUDBASE, CLOUDCEIL)
-    end
-    self:Transmission(ATIS.Sound.CloudBase, 1.0, subtitle)
-    if tonumber(CLOUDBASE1000)>0 then
-      self.radioqueue:Number2Transmission(CLOUDBASE1000)
-      self:Transmission(ATIS.Sound.Thousand, 0.1)
-    end
-    if tonumber(CLOUDBASE0100)>0 then
-      self.radioqueue:Number2Transmission(CLOUDBASE0100)
-      self:Transmission(ATIS.Sound.Hundred, 0.1)
-    end
-    -- Ceiling
-    self:Transmission(ATIS.Sound.CloudCeiling, 0.5)
-    if tonumber(CLOUDCEIL1000)>0 then
-      self.radioqueue:Number2Transmission(CLOUDCEIL1000)
-      self:Transmission(ATIS.Sound.Thousand, 0.1)
-    end
-    if tonumber(CLOUDCEIL0100)>0 then
-      self.radioqueue:Number2Transmission(CLOUDCEIL0100)
-      self:Transmission(ATIS.Sound.Hundred, 0.1)
-    end
-    if self.metric then
-      self:Transmission(ATIS.Sound.Meters, 0.1)
-    else
-      self:Transmission(ATIS.Sound.Feet, 0.1)
-    end
-  end
-  alltext=alltext..";\n"..subtitle
-
+  
   -- Weather phenomena
   local wp=false
   local wpsub=""
@@ -1571,37 +1608,42 @@ function ATIS:onafterBroadcast(From, Event, To)
     alltext=alltext..";\n"..subtitle
   end
 
-  -- Altimeter QNH/QFE.
-  if self.PmmHg then
-    subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s mmHg", QNH[1], QNH[2], QFE[1], QFE[2])
-  else
+  -- Cloud base
+  self:Transmission(CloudCover, 1.0, CLOUDSsub)
+  if CLOUDBASE and static then
+    -- Base
     if self.metric then
-      subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s hPa", QNH[1], QNH[2], QFE[1], QFE[2])
+      subtitle=string.format("Cloudbase %s, ceiling %s meters", CLOUDBASE, CLOUDCEIL)
     else
-      subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s inHg", QNH[1], QNH[2], QFE[1], QFE[2])
+      subtitle=string.format("Cloudbase %s, ceiling %s ft", CLOUDBASE, CLOUDCEIL)
     end
-  end
-  local _ALTIMETER=subtitle
-  self:Transmission(ATIS.Sound.Altimeter, 1.0, subtitle)
-  self:Transmission(ATIS.Sound.QNH, 0.5)
-  self.radioqueue:Number2Transmission(QNH[1])
-  self:Transmission(ATIS.Sound.Decimal, 0.2)
-  self.radioqueue:Number2Transmission(QNH[2])
-  self:Transmission(ATIS.Sound.QFE, 0.75)
-  self.radioqueue:Number2Transmission(QFE[1])
-  self:Transmission(ATIS.Sound.Decimal, 0.2)
-  self.radioqueue:Number2Transmission(QFE[2])
-  if self.PmmHg then
-    self:Transmission(ATIS.Sound.MillimetersOfMercury, 0.1)
-  else
+    self:Transmission(ATIS.Sound.CloudBase, 1.0, subtitle)
+    if tonumber(CLOUDBASE1000)>0 then
+      self.radioqueue:Number2Transmission(CLOUDBASE1000)
+      self:Transmission(ATIS.Sound.Thousand, 0.1)
+    end
+    if tonumber(CLOUDBASE0100)>0 then
+      self.radioqueue:Number2Transmission(CLOUDBASE0100)
+      self:Transmission(ATIS.Sound.Hundred, 0.1)
+    end
+    -- Ceiling
+    self:Transmission(ATIS.Sound.CloudCeiling, 0.5)
+    if tonumber(CLOUDCEIL1000)>0 then
+      self.radioqueue:Number2Transmission(CLOUDCEIL1000)
+      self:Transmission(ATIS.Sound.Thousand, 0.1)
+    end
+    if tonumber(CLOUDCEIL0100)>0 then
+      self.radioqueue:Number2Transmission(CLOUDCEIL0100)
+      self:Transmission(ATIS.Sound.Hundred, 0.1)
+    end
     if self.metric then
-      self:Transmission(ATIS.Sound.HectoPascal, 0.1)
+      self:Transmission(ATIS.Sound.Meters, 0.1)
     else
-      self:Transmission(ATIS.Sound.InchesOfMercury, 0.1)
+      self:Transmission(ATIS.Sound.Feet, 0.1)
     end
   end
   alltext=alltext..";\n"..subtitle
-
+  
   -- Temperature
   if self.TDegF then
     if temperature<0 then
@@ -1628,7 +1670,7 @@ function ATIS:onafterBroadcast(From, Event, To)
     self:Transmission(ATIS.Sound.DegreesCelsius, 0.2)
   end
   alltext=alltext..";\n"..subtitle
-
+  
   -- Dew point
   if self.TDegF then
     if dewpoint<0 then
@@ -1656,27 +1698,57 @@ function ATIS:onafterBroadcast(From, Event, To)
   end
   alltext=alltext..";\n"..subtitle
 
-  -- Wind
-  if self.metric then
-    subtitle=string.format("Wind from %s at %s m/s", WINDFROM, WINDSPEED)
+  -- Altimeter QNH/QFE.
+  if self.PmmHg then
+    if self.qnhonly then
+      subtitle=string.format("Altimeter %s.%s mmHg", QNH[1], QNH[2])
+    else
+      subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s mmHg", QNH[1], QNH[2], QFE[1], QFE[2])
+    end
   else
-    subtitle=string.format("Wind from %s at %s knots", WINDFROM, WINDSPEED)
+    if self.metric then
+      if self.qnhonly then
+        subtitle=string.format("Altimeter %s.%s hPa", QNH[1], QNH[2])
+      else
+        subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s hPa", QNH[1], QNH[2], QFE[1], QFE[2])
+      end
+    else
+      if self.qnhonly then
+        subtitle=string.format("Altimeter %s.%s inHg", QNH[1], QNH[2])
+      else
+        subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s inHg", QNH[1], QNH[2], QFE[1], QFE[2])
+      end
+    end
   end
-  if turbulence>0 then
-    subtitle=subtitle..", gusting"
+  local _ALTIMETER=subtitle
+  self:Transmission(ATIS.Sound.Altimeter, 1.0, subtitle)
+  if not self.qnhonly then
+    self:Transmission(ATIS.Sound.QNH, 0.5)
   end
-  local _WIND=subtitle
-  self:Transmission(ATIS.Sound.WindFrom, 1.0, subtitle)
-  self.radioqueue:Number2Transmission(WINDFROM)
-  self:Transmission(ATIS.Sound.At, 0.2)
-  self.radioqueue:Number2Transmission(WINDSPEED)
-  if self.metric then
-    self:Transmission(ATIS.Sound.MetersPerSecond, 0.2)
+  self.radioqueue:Number2Transmission(QNH[1])
+
+  if ATIS.ICAOPhraseology[UTILS.GetDCSMap()] then
+    self:Transmission(ATIS.Sound.Decimal, 0.2)
+  end
+  self.radioqueue:Number2Transmission(QNH[2])
+  
+  if not self.qnhonly then
+    self:Transmission(ATIS.Sound.QFE, 0.75)
+    self.radioqueue:Number2Transmission(QFE[1])
+    if ATIS.ICAOPhraseology[UTILS.GetDCSMap()] then
+      self:Transmission(ATIS.Sound.Decimal, 0.2)
+    end
+    self.radioqueue:Number2Transmission(QFE[2])
+  end
+  
+  if self.PmmHg then
+    self:Transmission(ATIS.Sound.MillimetersOfMercury, 0.1)
   else
-    self:Transmission(ATIS.Sound.Knots, 0.2)
-  end
-  if turbulence>0 then
-    self:Transmission(ATIS.Sound.Gusting, 0.2)
+    if self.metric then
+      self:Transmission(ATIS.Sound.HectoPascal, 0.1)
+    else
+      self:Transmission(ATIS.Sound.InchesOfMercury, 0.1)
+    end
   end
   alltext=alltext..";\n"..subtitle
 
