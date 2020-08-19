@@ -3238,13 +3238,13 @@ do -- SET_STATIC
     self:F3( { Event } )
   
     if Event.IniObjectCategory == Object.Category.STATIC then
-      if not self.Database[Event.IniDCSStaticName] then
-        self.Database[Event.IniDCSStaticName] = STATIC:Register( Event.IniDCSStaticName )
-        self:T3( self.Database[Event.IniDCSStaticName] )
+      if not self.Database[Event.IniDCSUnitName] then
+        self.Database[Event.IniDCSUnitName] = STATIC:Register( Event.IniDCSUnitName )
+        self:T3( self.Database[Event.IniDCSUnitName] )
       end
     end
     
-    return Event.IniDCSStaticName, self.Database[Event.IniDCSStaticName]
+    return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
   
   --- Handles the Database to check on any event that Object exists in the Database.
@@ -3254,10 +3254,10 @@ do -- SET_STATIC
   -- @return #string The name of the STATIC
   -- @return #table The STATIC
   function SET_STATIC:FindInDatabase( Event )
-    self:F2( { Event.IniDCSStaticName, self.Set[Event.IniDCSStaticName], Event } )
+    self:F2( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
   
   
-    return Event.IniDCSStaticName, self.Set[Event.IniDCSStaticName]
+    return Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName]
   end
   
   

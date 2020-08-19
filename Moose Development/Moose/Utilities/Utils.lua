@@ -49,12 +49,14 @@ BIGSMOKEPRESET = {
 -- @field #string NTTR Nevada Test and Training Range map.
 -- @field #string PersianGulf Persian Gulf map.
 -- @field #string TheChannel The Channel map.
+-- @field #string Syria Syria map.
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
   Normandy="Normandy",
   PersianGulf="PersianGulf",
   TheChannel="TheChannel",
+  Syria="Syria",
 }
 
 
@@ -311,6 +313,10 @@ end
 
 UTILS.MetersToNM = function(meters)
   return meters/1852
+end
+
+UTILS.MetersToSM = function(meters)
+  return meters/1609.34
 end
 
 UTILS.MetersToFeet = function(meters)
@@ -1117,7 +1123,9 @@ function UTILS.GetMagneticDeclination(map)
   elseif map==DCSMAP.PersianGulf then
     declination=2
   elseif map==DCSMAP.TheChannel then
-    declination=-10    
+    declination=-10
+  elseif map==DCSMAP.Syria then
+    declination=5
   else
     declination=0
   end
@@ -1244,6 +1252,8 @@ function UTILS.GMTToLocalTimeDifference()
     return 0   -- Calais UTC+1 hour
   elseif theatre==DCSMAP.TheChannel then
     return 2   -- This map currently needs +2
+  elseif theatre==DCSMAP.Syria then
+    return 3   -- Damascus is UTC+3 hours
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
