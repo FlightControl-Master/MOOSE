@@ -366,11 +366,15 @@ ATIS.Alphabet = {
 -- @field #number Nevada +12° (East).
 -- @field #number Normandy -10° (West).
 -- @field #number PersianGulf +2° (East).
+-- @field #number TheChannel -10° (West).
+-- @field #number Syria +5° (East).
 ATIS.RunwayM2T={
   Caucasus=0,
   Nevada=12,
   Normandy=-10,
   PersianGulf=2,
+  TheChannel=-10,
+  Syria=5,
 }
 
 --- Whether ICAO phraseology is used for ATIS broadcasts.
@@ -379,11 +383,15 @@ ATIS.RunwayM2T={
 -- @field #boolean Nevada false.
 -- @field #boolean Normandy true.
 -- @field #boolean PersianGulf true.
+-- @field #boolean TheChannel true.
+-- @field #boolean Syria true.
 ATIS.ICAOPhraseology={
   Caucasus=true,
   Nevada=false,
   Normandy=true,
-  PersianGulf=true
+  PersianGulf=true,
+  TheChannel=true,
+  Syria=true,
 }
 
 --- Nav point data.
@@ -554,7 +562,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.8.0"
+ATIS.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
