@@ -15,6 +15,15 @@
 --- @type AIRBASE
 -- @field #string ClassName Name of the class, i.e. "AIRBASE".
 -- @field #table CategoryName Names of airbase categories.
+-- @field #string AirbaseName Name of the airbase.
+-- @field #number AirbaseID Airbase ID.
+-- @field #number category Airbase category.
+-- @field #table descriptors DCS descriptors.
+-- @field #boolean isAirdrome Airbase is an airdrome.
+-- @field #boolean isHelipad Airbase is a helipad.
+-- @field #boolean isShip Airbase is a ship.
+-- @field #table parking Parking spot data.
+-- @field #table parkingByID Parking spot data table with ID as key.
 -- @field #number activerwyno Active runway number (forced).
 -- @extends Wrapper.Positionable#POSITIONABLE
 
@@ -445,15 +454,44 @@ AIRBASE.TerminalType = {
 --- Create a new AIRBASE from DCSAirbase.
 -- @param #AIRBASE self
 -- @param #string AirbaseName The name of the airbase.
--- @return Wrapper.Airbase#AIRBASE
-function AIRBASE:Register( AirbaseName )
+-- @return #AIRBASE self
+function AIRBASE:Register(AirbaseName)
 
-  local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) ) --#AIRBASE
-  self.AirbaseName = AirbaseName
-  self.AirbaseID   = self:GetID(true)
+  -- Inherit everything from positionable.
+  local self=BASE:Inherit(self, POSITIONABLE:New(AirbaseName)) --#AIRBASE
+  
+  -- Set airbase name.
+  self.AirbaseName=AirbaseName
+  
+  -- Set airbase ID.
+  self.AirbaseID=self:GetID(true)
+  
+  -- Get descriptors.
+  self.descriptors=self:GetDesc()
+  
+  -- Category.
+  self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
+  
+  -- Set category.
+  if self.category==Airbase.Category.AIRDROME then
+    self.isAirdrome=true
+  elseif self.category==Airbase.Category.HELIPAD then
+    self.isHelipad=true
+  elseif self.category==Airbase.Category.SHIP then
+    self.isShip=true
+  else
+    self:E("ERROR: Unknown airbase category!")
+  end
+  
+  self:_InitParkingSpots()
+  
   local vec2=self:GetVec2()
+  
+  -- Init coordinate.
+  self:GetCoordinate()
+  
   if vec2 then
-    self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, vec2, 2500 )
+    self.AirbaseZone=ZONE_RADIUS:New( AirbaseName, vec2, 2500 )
   else
     self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
   end
@@ -508,7 +546,9 @@ end
 -- @param #AIRBASE self
 -- @return DCS#Airbase DCS airbase object.
 function AIRBASE:GetDCSObject()
-  local DCSAirbase = Airbase.getByName( self.AirbaseName )
+
+  -- Get the DCS object.
+  local DCSAirbase = Airbase.getByName(self.AirbaseName)
 
   if DCSAirbase then
     return DCSAirbase
@@ -533,7 +573,7 @@ function AIRBASE.GetAllAirbases(coalition, category)
   local airbases={}
   for _,_airbase in pairs(_DATABASE.AIRBASES) do
     local airbase=_airbase --#AIRBASE
-    if (coalition~=nil and airbase:GetCoalition()==coalition) or coalition==nil then
+    if coalition==nil or airbase:GetCoalition()==coalition then
       if category==nil or category==airbase:GetAirbaseCategory() then
         table.insert(airbases, airbase)
       end
@@ -564,23 +604,7 @@ function AIRBASE:GetID(unique)
       local airbaseID=tonumber(DCSAirbase:getID())
 
       local airbaseCategory=self:GetAirbaseCategory()
-
-      --env.info(string.format("FF airbase=%s id=%s category=%s", tostring(AirbaseName), tostring(airbaseID), tostring(airbaseCategory)))
-
-      -- No way AFIK to get the DCS version. So we check if the event exists. That should tell us if we are on DCS 2.5.6 or prior to that.
-      --[[
-      if world.event.S_EVENT_KILL and world.event.S_EVENT_KILL>0 and airbaseCategory==Airbase.Category.AIRDROME then
-
-        -- We have to take the key value of this loop!
-        airbaseID=DCSAirbaseId
-
-        -- Now another quirk: for Caucasus, we need to add 11 to the key value to get the correct ID. See https://forums.eagle.ru/showpost.php?p=4210774&postcount=11
-        if UTILS.GetDCSMap()==DCSMAP.Caucasus then
-          airbaseID=airbaseID+11
-        end
-      end
-      ]]
-
+      
       if AirbaseName==self.AirbaseName then
         if airbaseCategory==Airbase.Category.SHIP or airbaseCategory==Airbase.Category.HELIPAD then
           -- Ships get a negative sign as their unit number might be the same as the ID of another airbase.
@@ -728,6 +752,69 @@ function AIRBASE:GetParkingSpotsCoordinates(termtype)
   return spots
 end
 
+--- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
+-- @param #AIRBASE self
+-- @return#AIRBASE self
+function AIRBASE:_InitParkingSpots()
+
+  -- Get parking data of all spots (free or occupied)
+  local parkingdata=self:GetParkingData(false)
+
+  -- Init table.
+  self.parking={}
+  self.parkingByID={}
+  
+  self.NparkingTotal=0
+  self.NparkingX=0
+  self.NparkingY=0
+
+  -- Put coordinates of parking spots into table.
+  for _,spot in pairs(parkingdata) do
+      
+      -- New parking spot.
+      local park={} --#AIRBASE.ParkingSpot
+      park.Vec3=spot.vTerminalPos
+      park.Coordinate=COORDINATE:NewFromVec3(spot.vTerminalPos)
+      park.DistToRwy=spot.fDistToRW
+      park.Free=nil
+      park.TerminalID=spot.Term_Index
+      park.TerminalID0=spot.Term_Index_0
+      park.TerminalType=spot.Term_Type
+      park.TOAC=spot.TO_AC
+      
+      if park.TerminalID==AIRBASE.TerminalType.FighterAircraft then
+      
+      elseif park.TerminalID==AIRBASE.TerminalType.HelicopterOnly then
+      
+      elseif park.TerminalID==AIRBASE.TerminalType.HelicopterUsable then
+      
+      elseif park.TerminalID==AIRBASE.TerminalType.OpenBig then
+      
+      elseif park.TerminalID==AIRBASE.TerminalType.OpenMed then
+      
+      elseif park.TerminalID==AIRBASE.TerminalType.OpenMedOrBig then
+      
+      elseif park.TerminalID==AIRBASE.TerminalType.Runway then
+      
+      elseif park.TerminalID==AIRBASE.TerminalType.Shelter then
+      
+      end
+      
+      
+      self.parkingByID[park.TerminalID]=park
+      table.insert(self.parking, park)
+  end
+
+  return self
+end
+
+--- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
+-- @param #AIRBASE self
+-- @param #number TerminalID Terminal ID.
+-- @return #AIRBASE.ParkingSpot Parking spot.
+function AIRBASE:_GetParkingSpotByID(TerminalID)
+  return self.parkingByID[TerminalID]
+end
 
 --- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
 -- @param #AIRBASE self
@@ -737,6 +824,7 @@ function AIRBASE:GetParkingSpotsTable(termtype)
 
   -- Get parking data of all spots (free or occupied)
   local parkingdata=self:GetParkingData(false)
+  
   -- Get parking data of all free spots.
   local parkingfree=self:GetParkingData(true)
 
@@ -753,15 +841,18 @@ function AIRBASE:GetParkingSpotsTable(termtype)
   -- Put coordinates of parking spots into table.
   local spots={}
   for _,_spot in pairs(parkingdata) do
+  
     if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then
-      self:T2({_spot=_spot})
-      local _free=_isfree(_spot)
-      local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
-      table.insert(spots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=_free, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
+    
+      local spot=self:_GetParkingSpotByID(_spot.Term_Index)
+      
+      spot.Free=_isfree(_spot) -- updated
+      spot.TOAC=_spot.TO_AC    -- updated
+    
+      table.insert(spots, spot)
     end
+    
   end
-
-  self:T2({ spots = spots } )
 
   return spots
 end
@@ -781,8 +872,14 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
   for _,_spot in pairs(parkingfree) do
     if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) and _spot.Term_Index>0 then
       if (allowTOAC and allowTOAC==true) or _spot.TO_AC==false then
-        local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
-        table.insert(freespots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=true, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
+      
+        local spot=self:_GetParkingSpotByID(_spot.Term_Index)
+
+        spot.Free=true -- updated
+        spot.TOAC=_spot.TO_AC    -- updated
+      
+        table.insert(freespots, spot)
+        
       end
     end
   end
@@ -795,13 +892,9 @@ end
 -- @param #number TerminalID The terminal ID of the parking spot.
 -- @return #AIRBASE.ParkingSpot Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 function AIRBASE:GetParkingSpotData(TerminalID)
-  self:F({TerminalID=TerminalID})
 
   -- Get parking data.
   local parkingdata=self:GetParkingSpotsTable()
-
-  -- Debug output.
-  self:T2({parkingdata=parkingdata})
 
   for _,_spot in pairs(parkingdata) do
     local spot=_spot --#AIRBASE.ParkingSpot
@@ -1065,13 +1158,6 @@ function AIRBASE:CheckOnRunWay(group, radius, despawn)
     -- Get coordinates on runway.
     local runwaypoints=self:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
 
-    -- Mark runway spawn points.
-    --[[
-    for _i,_coord in pairs(runwaypoints) do
-      _coord:MarkToAll(string.format("runway %d",_i))
-    end
-    ]]
-
     -- Get units of group.
     local units=group:GetUnits()
 
@@ -1118,21 +1204,33 @@ function AIRBASE:CheckOnRunWay(group, radius, despawn)
   return false
 end
 
+--- Check if airbase is an airdrome.
+-- @param #AIRBASE self
+-- @return #boolean If true, airbase is an airdrome.
+function AIRBASE:IsAirdrome()
+  return self.isAirdrome
+end
+
+--- Check if airbase is a helipad.
+-- @param #AIRBASE self
+-- @return #boolean If true, airbase is a helipad.
+function AIRBASE:IsHelipad()
+  return self.isHelipad
+end
+
+--- Check if airbase is a ship.
+-- @param #AIRBASE self
+-- @return #boolean If true, airbase is a ship.
+function AIRBASE:IsShip()
+  return self.isShip
+end
+
 --- Get category of airbase.
 -- @param #AIRBASE self
 -- @return #number Category of airbase from GetDesc().category.
 function AIRBASE:GetAirbaseCategory()
-  local desc=self:GetDesc()
-  local category=Airbase.Category.AIRDROME
-
-  if desc and desc.category then
-    category=desc.category
-  else
-    self:E(string.format("ERROR: Cannot get category of airbase %s due to DCS 2.5.6 bug! Assuming it is an AIRDROME for now...", tostring(self.AirbaseName)))
-  end
-  return category
+  return self.category
 end
-
 
 --- Helper function to check for the correct terminal type including "artificial" ones.
 -- @param #number Term_Type Termial type from getParking routine.

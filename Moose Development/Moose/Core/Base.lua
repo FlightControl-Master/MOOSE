@@ -254,6 +254,8 @@ end
 -- @param #BASE Parent is the Parent class that the Child inherits from.
 -- @return #BASE Child
 function BASE:Inherit( Child, Parent )
+
+  -- Create child.
 	local Child = routines.utils.deepCopy( Child )
 
 	if Child ~= nil then
@@ -269,6 +271,7 @@ function BASE:Inherit( Child, Parent )
     
 		--Child:_SetDestructor()
 	end
+	
 	return Child
 end
 

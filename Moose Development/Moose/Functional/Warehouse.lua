@@ -7521,13 +7521,6 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       for i,unit in pairs(units) do
         local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
         coords[unit.name]=coord
-        --[[
-        local airbase=coord:GetClosestAirbase()
-        local _,TermID, dist, spot=coord:GetClosestParkingSpot(airbase)
-        if dist<=10 then
-          env.info(string.format("Found client %s on parking spot %d at airbase %s", unit.name, TermID, airbase:GetName()))
-        end
-        ]]
       end
     end
     return coords
@@ -7538,6 +7531,12 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
   -- List of obstacles.
   local obstacles={}
+  
+  -- Check all clients. Clients dont change so we can put that out of the loop.
+  local clientcoords=_clients()
+  for clientname,_coord in pairs(clientcoords) do
+    table.insert(obstacles, {coord=_coord, size=15, name=clientname, type="client"})
+  end
 
   -- Loop over all parking spots and get the currently present obstacles.
   -- How long does this take on very large airbases, i.e. those with hundereds of parking spots? Seems to be okay!
@@ -7553,22 +7552,16 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
     -- Check all units.
     for _,_unit in pairs(_units) do
       local unit=_unit --Wrapper.Unit#UNIT
-      local _coord=unit:GetCoordinate()
+      local _coord=unit:GetVec3()
       local _size=self:_GetObjectSize(unit:GetDCSObject())
       local _name=unit:GetName()
       table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="unit"})
     end
 
-    -- Check all clients.
-    local clientcoords=_clients()
-    for clientname,_coord in pairs(clientcoords) do
-      table.insert(obstacles, {coord=_coord, size=15, name=clientname, type="client"})
-    end
-
     -- Check all statics.
     for _,static in pairs(_statics) do
-      local _vec3=static:getPoint()
-      local _coord=COORDINATE:NewFromVec3(_vec3)
+      local _coord=static:getPoint()
+      --local _coord=COORDINATE:NewFromVec3(_vec3)
       local _name=static:getName()
       local _size=self:_GetObjectSize(static)
       table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="static"})
@@ -7576,11 +7569,11 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
     -- Check all scenery.
     for _,scenery in pairs(_sceneries) do
-      local _vec3=scenery:getPoint()
-      local _coord=COORDINATE:NewFromVec3(_vec3)
+      local _coord=scenery:getPoint()
+      --local _coord=COORDINATE:NewFromVec3(_vec3)
       local _name=scenery:getTypeName()
       local _size=self:_GetObjectSize(scenery)
-      table.insert(obstacles,{coord=_coord, size=_size, name=_name, type="scenery"})
+      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="scenery"})
     end
 
   end

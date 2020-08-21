@@ -21,7 +21,8 @@
 -- @field #number TstartGame Game start time timer.getTime().
 -- @field #number TstartOS OS real start time os.clock.
 -- @field #boolean logUnknown Log unknown functions. Default is off.
--- @field #number lowCpsThres Low calls per second threashold. Only write output if function has more calls per second than this value.
+-- @field #number ThreshCPS Low calls per second threshold. Only write output if function has more calls per second than this value.
+-- @field #number ThreshTtot Total time threshold. Only write output if total function CPU time is more than this value.
 -- @field #string fileNamePrefix Output file name prefix, e.g. "MooseProfiler".
 -- @field #string fileNameSuffix Output file name prefix, e.g. "txt"
 
@@ -76,7 +77,7 @@
 -- 
 -- If you only want output for functions that are called more than X times per second, you can set
 -- 
---     PROFILER.lowCpsThres=1.5
+--     PROFILER.ThreshCPS=1.5
 -- 
 -- With this setting, only functions which are called more than 1.5 times per second are displayed.
 -- 
@@ -89,7 +90,8 @@ PROFILER = {
   fTimeTotal     = {},
   eventHandler   = {},
   logUnknown     = false,
-  lowCpsThres    = 0.0,
+  ThreshCPS      = 0.0,
+  ThreshTtot     = 0.005,
   fileNamePrefix = "MooseProfiler",
   fileNameSuffix = "txt"
 }
@@ -147,7 +149,8 @@ function PROFILER.Start(Delay, Duration)
     else
       env.info(string.format("- Will be stopped when mission ends"))
     end
-    env.info(string.format("- Calls per second threshold %.3f/sec", PROFILER.lowCpsThres))
+    env.info(string.format("- Calls per second threshold %.3f/sec", PROFILER.ThreshCPS))
+    env.info(string.format("- Total function time threshold %.3f/sec", PROFILER.ThreshTtot))
     env.info(string.format("- Output file \"%s\" in your DCS log file folder", PROFILER.getfilename()))
     env.info('###############################################################################')
     
@@ -283,7 +286,10 @@ function PROFILER.showTable(data, f, runTimeGame)
     -- Calls per second.
     local cps=t.count/runTimeGame
     
-    if cps>=PROFILER.lowCpsThres then
+    local threshCPS=cps>=PROFILER.ThreshCPS
+    local threshTot=t.tm>=PROFILER.ThreshTtot
+    
+    if threshCPS and threshTot then
     
       -- Output
       local text=string.format("%30s: %8d calls %8.1f/sec - Time Total %8.3f sec (%.3f %%) %5.3f sec/call  %s line %s", t.func, t.count, cps, t.tm, t.tm/runTimeGame*100, t.tm/t.count, tostring(t.src), tostring(t.line))

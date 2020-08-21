@@ -896,31 +896,25 @@ function DATABASE:_RegisterStatics()
   return self
 end
 
---- @param #DATABASE self
+--- Register all world airbases.
+-- @param #DATABASE self
+-- @return #DATABASE self
 function DATABASE:_RegisterAirbases()
 
-  --[[
-  local CoalitionsData = { AirbasesRed = coalition.getAirbases( coalition.side.RED ), AirbasesBlue = coalition.getAirbases( coalition.side.BLUE ), AirbasesNeutral = coalition.getAirbases( coalition.side.NEUTRAL ) }
-  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-    for DCSAirbaseId, DCSAirbase in pairs( CoalitionData ) do
-
-      local DCSAirbaseName = DCSAirbase:getName()
-
-      self:T( { "Register Airbase:", DCSAirbaseName, DCSAirbase:getID() } )
-      self:AddAirbase( DCSAirbaseName )
-    end
-  end
-  ]]
-
  for DCSAirbaseId, DCSAirbase in pairs(world.getAirbases()) do
-      local DCSAirbaseName = DCSAirbase:getName()
+ 
+    -- Get the airbase name.
+    local DCSAirbaseName = DCSAirbase:getName()
 
-      -- This gives the incorrect value to be inserted into the airdromeID for DCS 2.5.6!
-      local airbaseID=DCSAirbase:getID()
+    -- This gave the incorrect value to be inserted into the airdromeID for DCS 2.5.6. Is fixed now.
+    local airbaseID=DCSAirbase:getID()
 
-      local airbase=self:AddAirbase( DCSAirbaseName )
+    -- Add and register airbase.
+    local airbase=self:AddAirbase( DCSAirbaseName )
 
-      self:I(string.format("Register Airbase: %s, getID=%d, GetID=%d (unique=%d)", DCSAirbaseName, DCSAirbase:getID(), airbase:GetID(), airbase:GetID(true)))
+    -- Debug output.
+    self:I(string.format("Register Airbase: %s, getID=%d, GetID=%d (unique=%d)", DCSAirbaseName, DCSAirbase:getID(), airbase:GetID(), airbase:GetID(true)))
+    
   end
 
   return self

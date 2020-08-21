@@ -228,6 +228,7 @@ do -- COORDINATE
   -- @return #COORDINATE
   function COORDINATE:New( x, y, z ) 
 
+    --env.info("FF COORDINATE New")
     local self = BASE:Inherit( self, BASE:New() ) -- #COORDINATE
     self.x = x
     self.y = y
@@ -717,12 +718,18 @@ do -- COORDINATE
 
   --- Return the 2D distance in meters between the target COORDINATE and the COORDINATE.
   -- @param #COORDINATE self
-  -- @param #COORDINATE TargetCoordinate The target COORDINATE.
+  -- @param #COORDINATE TargetCoordinate The target COORDINATE. Can also be a DCS#Vec3.
   -- @return DCS#Distance Distance The distance in meters.
   function COORDINATE:Get2DDistance( TargetCoordinate )
-    local TargetVec3 = TargetCoordinate:GetVec3()
-    local SourceVec3 = self:GetVec3()
-    return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
+
+    local a={x=TargetCoordinate.x-self.x, y=0, z=TargetCoordinate.z-self.z}
+    
+    return UTILS.VecNorm(a)
+
+    --local TargetVec3 = TargetCoordinate:GetVec3()
+    --local SourceVec3 = self:GetVec3()
+
+    --return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
   end
   
   --- Returns the temperature in Degrees Celsius.

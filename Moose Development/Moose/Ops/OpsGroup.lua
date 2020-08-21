@@ -49,6 +49,7 @@
 -- @field #boolean detectionOn If true, detected units of the group are analyzed.
 -- @field Ops.Auftrag#AUFTRAG missionpaused Paused mission.
 -- 
+-- @field Core.Point#COORDINATE coordinate Current coordinate.
 -- @field Core.Point#COORDINATE position Position of the group at last status check.
 -- @field #number traveldist Distance traveled in meters. This is a lower bound!
 -- @field #number traveltime Time.
@@ -481,15 +482,36 @@ function OPSGROUP:GetName()
   return self.groupname
 end
 
+--- Get current 3D vector of the group.
+-- @param #OPSGROUP self
+-- @return DCS#Vec3 Vector with x,y,z components.
+function OPSGROUP:GetVec3()
+  if self.group:IsAlive() then
+    self.group:GetVec3()
+  end  
+  return nil
+end
+
 --- Get current coordinate of the group.
 -- @param #OPSGROUP self
 -- @return Core.Point#COORDINATE The coordinate (of the first unit) of the group.
 function OPSGROUP:GetCoordinate()
-  if self:IsAlive()~=nil then
-    return self.group:GetCoordinate()    
+
+  local vec3=self:GetVec3()
+
+  if vec3 then
+  
+    self.coordinate=self.coordinate or COORDINATE:New(0,0,0)
+  
+    self.coordinate.x=vec3.x
+    self.coordinate.y=vec3.y
+    self.coordinate.z=vec3.z
+
+    return self.coordinate    
   else
     self:E(self.lid.."WARNING: Group is not alive. Cannot get coordinate!")
   end
+  
   return nil
 end
 

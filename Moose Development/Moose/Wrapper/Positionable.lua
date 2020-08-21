@@ -15,6 +15,8 @@
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 --- @type POSITIONABLE
+-- @field Core.Point#COORDINATE coordinate Coordinate object.
+-- @field Core.Point#POINT_VEC3 pointvec3 Point Vec3 object.
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 
@@ -45,6 +47,8 @@
 POSITIONABLE = {
   ClassName = "POSITIONABLE",
   PositionableName = "",
+  coordinate = nil,
+  pointvec3  = nil,
 }
 
 --- @field #POSITIONABLE.__
@@ -268,17 +272,29 @@ end
 -- @return Core.Point#POINT_VEC3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetPointVec3()
-  self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local PositionableVec3 = self:GetPositionVec3()
-    
-    local PositionablePointVec3 = POINT_VEC3:NewFromVec3( PositionableVec3 )
   
-    self:T2( PositionablePointVec3 )
-    return PositionablePointVec3
+    -- Get 3D vector.
+    local PositionableVec3 = self:GetPositionVec3()
+        
+    if self.pointvec3 then
+      --env.info("FF GetCoordinate GOT for "..tostring(self.PositionableName))
+
+      -- Update vector.      
+      self.pointvec3.x=PositionableVec3.x
+      self.pointvec3.y=PositionableVec3.y
+      self.pointvec3.z=PositionableVec3.z      
+      
+    else
+      --env.info("FF GetCoordinate NEW for "..tostring(self.PositionableName))
+      
+      self.pointvec3=POINT_VEC3:NewFromVec3(PositionableVec3)
+    end
+        
+    return self.pointvec3
   end
 
   BASE:E( { "Cannot GetPointVec3", Positionable = self, Alive = self:IsAlive() } )
@@ -290,21 +306,38 @@ end
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Core.Point#COORDINATE The COORDINATE of the POSITIONABLE.
 function POSITIONABLE:GetCoordinate()
-  self:F2( self.PositionableName )
 
+  -- Get DCS object.
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
+  
+    -- Get the current position.
     local PositionableVec3 = self:GetPositionVec3()
     
-    local PositionableCoordinate = COORDINATE:NewFromVec3( PositionableVec3 )
-    PositionableCoordinate:SetHeading( self:GetHeading() )
-    PositionableCoordinate:SetVelocity( self:GetVelocityMPS() )
+    if self.coordinate then
+      --env.info("FF GetCoordinate GOT for "..tostring(self.PositionableName))
+
+      -- Update vector.      
+      self.coordinate.x=PositionableVec3.x
+      self.coordinate.y=PositionableVec3.y
+      self.coordinate.z=PositionableVec3.z      
+      
+    else
+      --env.info("FF GetCoordinate NEW for "..tostring(self.PositionableName))
+      
+      self.coordinate=COORDINATE:NewFromVec3(PositionableVec3)
+    end
+
+    
+    -- Set heading and velocity.
+    self.coordinate:SetHeading( self:GetHeading() )
+    self.coordinate:SetVelocity( self:GetVelocityMPS() )
   
-    self:T2( PositionableCoordinate )
-    return PositionableCoordinate
+    return self.coordinate
   end
   
+  -- Error message.
   BASE:E( { "Cannot GetCoordinate", Positionable = self, Alive = self:IsAlive() } )
   
   return nil
@@ -1533,7 +1566,7 @@ end
 
 
 --- Returns true if the unit is within a @{Zone}.
--- @param #STPOSITIONABLEATIC self
+-- @param #POSITIONABLE self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
 function POSITIONABLE:IsInZone( Zone )

@@ -191,21 +191,30 @@ end
 -- @param #table object The input table.
 -- @return #table Copy of the input table.
 UTILS.DeepCopy = function(object)
+
   local lookup_table = {}
+  
+  -- Copy function.
   local function _copy(object)
     if type(object) ~= "table" then
       return object
     elseif lookup_table[object] then
       return lookup_table[object]
     end
+    
     local new_table = {}
+    
     lookup_table[object] = new_table
+    
     for index, value in pairs(object) do
       new_table[_copy(index)] = _copy(value)
     end
+    
     return setmetatable(new_table, getmetatable(object))
   end
+  
   local objectreturn = _copy(object)
+  
   return objectreturn
 end
 
