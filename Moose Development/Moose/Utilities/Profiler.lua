@@ -75,11 +75,17 @@
 -- 
 -- It will tell you how many times a function was called in total, how many times per second, how much time in total and the percentage of time.
 -- 
--- If you only want output for functions that are called more than X times per second, you can set
+-- If you only want output for functions that are called more than *X* times per second, you can set
 -- 
 --     PROFILER.ThreshCPS=1.5
 -- 
--- With this setting, only functions which are called more than 1.5 times per second are displayed.
+-- With this setting, only functions which are called more than 1.5 times per second are displayed. The default setting is PROFILER.ThreshCPS=0.0 (no threshold).
+-- 
+-- Furthermore, you can limit the output for functions that consumed a certain amount of CPU time in total by
+-- 
+--     PROFILER.ThreshTtot=0.005
+-- 
+-- With this setting, which is also the default, only functions which in total used more than 5 milliseconds CPU time.
 -- 
 -- @field #PROFILER
 PROFILER = {
@@ -451,6 +457,9 @@ function PROFILER.showInfo(runTimeGame, runTimeOS)
   PROFILER._flog(f,"")
   PROFILER._flog(f,string.format("* Total functions  = %d", #t))
   PROFILER._flog(f,string.format("* Total func calls = %d", Calls))
+  PROFILER._flog(f,"")
+  PROFILER._flog(f,string.format("* Calls per second threshold = %.3f/sec", PROFILER.ThreshCPS))
+  PROFILER._flog(f,string.format("* Total func time threshold  = %.3f/sec", PROFILER.ThreshTtot))  
   PROFILER._flog(f,"")
   PROFILER._flog(f,"************************************************************************************************************************")
   PROFILER._flog(f,"")
