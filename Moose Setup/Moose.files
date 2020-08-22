@@ -1,5 +1,7 @@
 Utilities/Routines.lua
 Utilities/Utils.lua
+Utilities/Enums.lua
+Utilities/Profiler.lua
 
 Core/Base.lua
 Core/UserFlag.lua
