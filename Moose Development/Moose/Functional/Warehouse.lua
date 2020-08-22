@@ -58,6 +58,10 @@
 -- @field Core.Point#COORDINATE rail Closest point to warehouse on rail.
 -- @field Core.Zone#ZONE spawnzone Zone in which assets are spawned.
 -- @field #number uid Unique ID of the warehouse.
+-- @field #boolean markerOn If true, markers are displayed on the F10 map.
+-- @field Wrapper.Marker#MARKER markerWarehouse Marker warehouse.
+-- @field Wrapper.Marker#MARKER markerRoad Road connection.
+-- @field Wrapper.Marker#MARKER markerRail Rail road connection.
 -- @field #number markerid ID of the warehouse marker at the airbase.
 -- @field #number dTstatus Time interval in seconds of updating the warehouse status and processing new events. Default 30 seconds.
 -- @field #number queueid Unit id of each request in the queue. Essentially a running number starting at one and incremented when a new request is added.
@@ -80,7 +84,6 @@
 -- @field #number lowfuelthresh Low fuel threshold. Triggers the event AssetLowFuel if for any unit fuel goes below this number.
 -- @field #boolean respawnafterdestroyed If true, warehouse is respawned after it was destroyed. Assets are kept.
 -- @field #number respawndelay Delay before respawn in seconds.
--- @field #boolean markerOn If true, markers are displayed on the F10 map.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -1560,7 +1563,6 @@ WAREHOUSE = {
   rail          =   nil,
   spawnzone     =   nil,
   uid           =   nil,
-  markerid      =   nil,
   dTstatus      =    30,
   queueid       =     0,
   stock         =    {},
@@ -3372,7 +3374,7 @@ function WAREHOUSE:onafterStop(From, Event, To)
   self:_UpdateWarehouseMarkText()
 
   -- Clear all pending schedules.
-  --self.CallScheduler:Clear()
+  self.CallScheduler:Clear()
 end
 
 --- On after "Pause" event. Pauses the warehouse, i.e. no requests are processed. However, new requests and new assets can be added in this state.
@@ -7497,7 +7499,7 @@ end
 function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
   -- Init default
-  local scanradius=100
+  local scanradius=25
   local scanunits=true
   local scanstatics=true
   local scanscenery=false
@@ -7527,14 +7529,14 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
   end
 
   -- Get parking spot data table. This contains all free and "non-free" spots.
-  local parkingdata=airbase:GetParkingSpotsTable()
+  local parkingdata=airbase.parking --airbase:GetParkingSpotsTable()
 
   -- List of obstacles.
   local obstacles={}
   
   -- Check all clients. Clients dont change so we can put that out of the loop.
-  local clientcoords=_clients()
-  for clientname,_coord in pairs(clientcoords) do
+  self.clientcoords=self.clientcoords or _clients()
+  for clientname,_coord in pairs(self.clientcoords) do
     table.insert(obstacles, {coord=_coord, size=15, name=clientname, type="client"})
   end
 
@@ -7605,19 +7607,8 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
           -- Coordinate of the parking spot.
           local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
           local _termid=parkingspot.TerminalID
-          local _toac=parkingspot.TOAC
-
-          --env.info(string.format("FF asset=%s (id=%d): needs terminal type=%d, id=%d, #obstacles=%d", _asset.templatename, _asset.uid, terminaltype, _termid, #obstacles))
-
           local free=true
           local problem=nil
-
-          -- Safe parking using TO_AC from DCS result.
-          self:T2(self.lid..string.format("Parking spot %d TOAC=%s (safe park=%s)", _termid, tostring(_toac), tostring(self.safeparking)))
-          if self.safeparking and _toac then
-            free=false
-            self:T(self.lid..string.format("Parking spot %d is occupied by other aircraft taking off (TOAC)", _termid))
-          end
 
           -- Loop over all obstacles.
           for _,obstacle in pairs(obstacles) do
@@ -8405,27 +8396,47 @@ function WAREHOUSE:_UpdateWarehouseMarkText()
 
   if self.markerOn then
 
-    -- Create a mark with the current assets in stock.
-    if self.markerid~=nil then
-      trigger.action.removeMark(self.markerid)
-    end
-
-    -- Get assets in stock.
-    local _data=self:GetStockInfo(self.stock)
-
-    -- Text.
+    -- Marker text.
     local text=string.format("Warehouse state: %s\nTotal assets in stock %d:\n", self:GetState(), #self.stock)
-
-    for _attribute,_count in pairs(_data) do
+    for _attribute,_count in pairs(self:GetStockInfo(self.stock) or {}) do
       if _count>0 then
         local attribute=tostring(UTILS.Split(_attribute, "_")[2])
         text=text..string.format("%s=%d, ", attribute,_count)
       end
     end
+    
+    local coordinate=self:GetCoordinate()
+    local coalition=self:GetCoalition()
 
-    -- Create/update marker at warehouse in F10 map.
-    self.markerid=self:GetCoordinate():MarkToCoalition(text, self:GetCoalition(), true)
-
+    if not self.markerWarehouse then
+    
+      -- Create a new marker.
+      self.markerWarehouse=MARKER:New(coordinate, text):ToCoalition(coalition)
+          
+    else
+  
+      local refresh=false
+    
+      if self.markerWarehouse.text~=text then
+        self.markerWarehouse.text=text
+        refresh=true
+      end
+      
+      if self.markerWarehouse.coordinate~=coordinate then
+        self.markerWarehouse.coordinate=coordinate
+        refresh=true
+      end
+      
+      if self.markerWarehouse.coalition~=coalition then
+        self.markerWarehouse.coalition=coalition
+        refresh=true
+      end
+      
+      if refresh then
+        self.markerWarehouse:Refresh()
+      end
+  
+    end
   end
 
 end

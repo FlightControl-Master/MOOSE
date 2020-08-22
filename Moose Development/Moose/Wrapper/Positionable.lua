@@ -219,6 +219,26 @@ function POSITIONABLE:GetPositionVec3()
   return nil
 end
 
+--- Returns the @{DCS#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetVec3()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionableVec3 = DCSPositionable:getPosition().p
+    self:T3( PositionableVec3 )
+    return PositionableVec3
+  end
+  
+  BASE:E( { "Cannot GetVec3", Positionable = self, Alive = self:IsAlive() } )
+
+  return nil
+end
+
 --- Returns the @{DCS#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Vec2 The 2D point vector of the POSITIONABLE.
@@ -298,6 +318,42 @@ function POSITIONABLE:GetPointVec3()
   end
 
   BASE:E( { "Cannot GetPointVec3", Positionable = self, Alive = self:IsAlive() } )
+  
+  return nil
+end
+
+--- Returns a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Core.Point#COORDINATE The COORDINATE of the POSITIONABLE.
+function POSITIONABLE:GetCoord()
+
+  -- Get DCS object.
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+  
+    -- Get the current position.
+    local PositionableVec3 = self:GetPositionVec3()
+    
+    if self.coordinate then
+      --env.info("FF GetCoordinate GOT for "..tostring(self.PositionableName))
+
+      -- Update vector.      
+      self.coordinate.x=PositionableVec3.x
+      self.coordinate.y=PositionableVec3.y
+      self.coordinate.z=PositionableVec3.z      
+      
+    else
+      --env.info("FF GetCoordinate NEW for "..tostring(self.PositionableName))
+      
+      self.coordinate=COORDINATE:NewFromVec3(PositionableVec3)
+    end
+  
+    return self.coordinate
+  end
+  
+  -- Error message.
+  BASE:E( { "Cannot GetCoordinate", Positionable = self, Alive = self:IsAlive() } )
   
   return nil
 end
@@ -413,26 +469,6 @@ function POSITIONABLE:GetRandomVec3( Radius )
   end
   
   BASE:E( { "Cannot GetRandomVec3", Positionable = self, Alive = self:IsAlive() } )
-
-  return nil
-end
-
---- Returns the @{DCS#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
--- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
--- @return #nil The POSITIONABLE is not existing or alive.  
-function POSITIONABLE:GetVec3()
-  self:F2( self.PositionableName )
-
-  local DCSPositionable = self:GetDCSObject()
-  
-  if DCSPositionable then
-    local PositionableVec3 = DCSPositionable:getPosition().p
-    self:T3( PositionableVec3 )
-    return PositionableVec3
-  end
-  
-  BASE:E( { "Cannot GetVec3", Positionable = self, Alive = self:IsAlive() } )
 
   return nil
 end
