@@ -7,7 +7,7 @@
 -- ### Author: **TAW CougarNL**, *funkyfranky*
 -- 
 -- @module Utilities.PROFILER
--- @image MOOSE.JPG
+-- @image Utils_Profiler.jpg
 
 
 --- PROFILER class.
@@ -26,7 +26,7 @@
 -- @field #string fileNamePrefix Output file name prefix, e.g. "MooseProfiler".
 -- @field #string fileNameSuffix Output file name prefix, e.g. "txt"
 
---- *The emperor counsels simplicity. First principles. Of each particular thing, ask: What is it in itself, in its own constitution? What is its causal nature? *
+--- *The emperor counsels simplicity.* *First principles. Of each particular thing, ask: What is it in itself, in its own constitution? What is its causal nature?*
 --
 -- ===
 --
@@ -39,7 +39,19 @@
 -- 
 -- # Prerequisites
 -- 
--- The modules **os** and **lfs** need to be desanizied.
+-- The modules **os**, **io** and **lfs** need to be desanizied. Comment out the lines
+-- 
+--     --sanitizeModule('os')
+--     --sanitizeModule('io')
+--     --sanitizeModule('lfs')
+--
+-- in your *"DCS World OpenBeta/Scripts/MissionScripting.lua"* file.
+--
+-- But be aware that these changes can make you system vulnerable to attacks.
+-- 
+-- # Disclaimer
+-- 
+-- **Profiling itself is CPU expensive!** Don't use this when you want to fly or host a mission.
 -- 
 -- 
 -- # Start
