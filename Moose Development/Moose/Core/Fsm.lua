@@ -642,10 +642,11 @@ do -- FSM
         return errmsg
       end
       
-      -- Protected call.
-      local Result, Value = xpcall( function() return self[handler]( self, unpack( params ) ) end, ErrorHandler )
+      --return self[handler](self, unpack( params ))
       
-      return Value
+      -- Protected call.
+      local Result, Value = xpcall( function() return self[handler]( self, unpack( params ) ) end, ErrorHandler )      
+      return Value      
     end
     
   end
@@ -773,7 +774,7 @@ do -- FSM
         
       end
     else
-      self:I( "*** FSM *** NO Transition *** " .. self.current .. " --> " .. EventName .. " -->  ? " )
+      self:T( "*** FSM *** NO Transition *** " .. self.current .. " --> " .. EventName .. " -->  ? " )
     end
   
     return nil

@@ -1292,41 +1292,124 @@ function AIRBASE:GetRunwayData(magvar, mark)
     return {}
   end
 
-  -- Get spawn points on runway.
+  -- Get spawn points on runway. These can be used to determine the runway heading.
   local runwaycoords=self:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
+  
+  -- Debug: For finding the numbers of the spawn points belonging to each runway.
+  if false then
+    for i,_coord in pairs(runwaycoords) do
+      local coord=_coord --Core.Point#COORDINATE
+      coord:Translate(100, 0):MarkToAll("Runway i="..i)
+    end
+  end
 
   -- Magnetic declination.
   magvar=magvar or UTILS.GetMagneticDeclination()
 
+  -- Number of runways.
   local N=#runwaycoords
-  local dN=2
-  local ex=false
+  local N2=N/2
+  local exception=false
 
+  -- Airbase name.
   local name=self:GetName()
+  
+
+  -- Exceptions
   if name==AIRBASE.Nevada.Jean_Airport or
      name==AIRBASE.Nevada.Creech_AFB   or
      name==AIRBASE.PersianGulf.Abu_Dhabi_International_Airport or
      name==AIRBASE.PersianGulf.Dubai_Intl or
      name==AIRBASE.PersianGulf.Shiraz_International_Airport or
-     name==AIRBASE.PersianGulf.Kish_International_Airport then
+     name==AIRBASE.PersianGulf.Kish_International_Airport
+     then
 
-    N=#runwaycoords/2
-    dN=1
-    ex=true
+    -- 1-->4, 2-->3, 3-->2, 4-->1
+    exception=1
+    
+  elseif UTILS.GetDCSMap()==DCSMAP.Syria and N>=2 and 
+    name~=AIRBASE.Syria.Minakh and
+    name~=AIRBASE.Syria.Damascus and
+    name~=AIRBASE.Syria.Khalkhalah and
+    name~=AIRBASE.Syria.Marj_Ruhayyil and
+    name~=AIRBASE.Syria.Beirut_Rafic_Hariri then
+  
+    -- 1-->3, 2-->4, 3-->1, 4-->2
+    exception=2
+      
+  end
+  
+  local function f(i)
+
+    local j
+        
+    if exception==1 then
+    
+      j=N-(i+1)  -- 1-->4, 2-->3
+      
+    elseif exception==2 then
+    
+      if i<=N2 then
+        j=i+N2  -- 1-->3, 2-->4
+      else
+        j=i-N2  -- 3-->1, 4-->3
+      end
+      
+    else
+
+      if i%2==0 then
+        j=i-1  -- even 2-->1, 4-->3
+      else
+        j=i+1  -- odd  1-->2, 3-->4
+      end
+    
+    end
+    
+    -- Special case where there is no obvious order.
+    if name==AIRBASE.Syria.Beirut_Rafic_Hariri then
+      if i==1 then
+        j=3
+      elseif i==2 then
+        j=6
+      elseif i==3 then
+        j=1
+      elseif i==4 then
+        j=5
+      elseif i==5 then
+        j=4
+      elseif i==6 then
+        j=2
+      end
+    end
+
+    if name==AIRBASE.Syria.Ramat_David then
+      if i==1 then
+        j=4
+      elseif i==2 then
+        j=6
+      elseif i==3 then
+        j=5
+      elseif i==4 then
+        j=1
+      elseif i==5 then
+        j=3
+      elseif i==6 then
+        j=2
+      end
+    end
+  
+    return j
   end
 
 
-  for i=1,N,dN do
+  for i=1,N do
 
-    local j=i+1
-    if ex then
-      --j=N+i
-      j=#runwaycoords-i+1
-    end
+    -- Get the other spawn point coordinate.
+    local j=f(i)
 
     -- Coordinates of the two runway points.
-    local c1=runwaycoords[i] --Core.Point#COORDINATES
-    local c2=runwaycoords[j] --Core.Point#COORDINATES
+    local c1=runwaycoords[i] --Core.Point#COORDINATE
+    local c2=runwaycoords[j] --Core.Point#COORDINATE
 
     -- Heading of runway.
     local hdg=c1:HeadingTo(c2)
@@ -1343,48 +1426,16 @@ function AIRBASE:GetRunwayData(magvar, mark)
     runway.endpoint=c2
 
     -- Debug info.
-    self:T(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m", self:GetName(), runway.idx, runway.heading, runway.length))
+    self:I(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m i=%d j=%d", self:GetName(), runway.idx, runway.heading, runway.length, i, j))
 
     -- Debug mark
     if mark then
-      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d (magvar=%d), length=%d m", runway.idx, runway.heading, magvar, runway.length))
+      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d (magvar=%d), length=%d m, i=%d, j=%d", runway.idx, runway.heading, magvar, runway.length, i, j))
     end
 
     -- Add runway.
     table.insert(runways, runway)
 
-  end
-
-  -- Get inverse runways
-  local inverse={}
-  for _,_runway in pairs(runways) do
-    local r=_runway --#AIRBASE.Runway
-
-    local runway={} --#AIRBASE.Runway
-    runway.heading=r.heading-180
-    if runway.heading<0 then
-      runway.heading=runway.heading+360
-    end
-    runway.idx=string.format("%02d", math.max(0, UTILS.Round((runway.heading-magvar)/10, 0)))
-    runway.length=r.length
-    runway.position=r.endpoint
-    runway.endpoint=r.position
-
-    -- Debug info.
-    self:T(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m", self:GetName(), runway.idx, runway.heading, runway.length))
-
-    -- Debug mark
-    if mark then
-      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d (magvar=%d), length=%d m", runway.idx, runway.heading, magvar, runway.length))
-    end
-
-    -- Add runway.
-    table.insert(inverse, runway)
-  end
-
-  -- Add inverse runway.
-  for _,runway in pairs(inverse) do
-    table.insert(runways, runway)
   end
 
   return runways

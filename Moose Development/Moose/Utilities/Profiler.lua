@@ -156,8 +156,9 @@ function PROFILER.Start(Delay, Duration)
       env.info(string.format("- Will be stopped when mission ends"))
     end
     env.info(string.format("- Calls per second threshold %.3f/sec", PROFILER.ThreshCPS))
-    env.info(string.format("- Total function time threshold %.3f/sec", PROFILER.ThreshTtot))
-    env.info(string.format("- Output file \"%s\" in your DCS log file folder", PROFILER.getfilename()))
+    env.info(string.format("- Total function time threshold %.3f sec", PROFILER.ThreshTtot))
+    env.info(string.format("- Output file \"%s\" in your DCS log file folder", PROFILER.getfilename(PROFILER.fileNameSuffix)))
+    env.info(string.format("- Output file \"%s\" in CSV format", PROFILER.getfilename("csv")))
     env.info('###############################################################################')
     
     
@@ -306,13 +307,47 @@ function PROFILER.showTable(data, f, runTimeGame)
     
 end
 
+--- Print csv file.
+-- @param #table data Data table.
+-- @param #number runTimeGame Game run time in seconds.
+function PROFILER.printCSV(data, runTimeGame)
+
+  -- Output file.
+  local file=PROFILER.getfilename("csv")
+  local g=io.open(file, 'w')
+
+  -- Header.
+  local text="Function,Total Calls,Calls per Sec,Total Time,Total in %,Sec per Call,Source File;Line Number,"
+  g:write(text.."\r\n")
+  
+  -- Loop over data.
+  for i=1, #data do  
+    local t=data[i] --#PROFILER.Data
+  
+    -- Calls per second.
+    local cps=t.count/runTimeGame
+
+    -- Output
+    local txt=string.format("%s,%d,%.1f,%.3f,%.3f,%.3f,%s,%s,", t.func, t.count, cps, t.tm, t.tm/runTimeGame*100, t.tm/t.count, tostring(t.src), tostring(t.line))
+    g:write(txt.."\r\n")
+      
+  end
+  
+  -- Close file.
+  g:close()
+end
+
+
 --- Write info to output file.
+-- @param #string ext Extension.
 -- @return #string File name.
-function PROFILER.getfilename()
+function PROFILER.getfilename(ext)
 
   local dir=lfs.writedir()..[[Logs\]]
   
-  local file=dir..PROFILER.fileNamePrefix.."."..PROFILER.fileNameSuffix
+  ext=ext or PROFILER.fileNameSuffix
+  
+  local file=dir..PROFILER.fileNamePrefix.."."..ext
   
   if not UTILS.FileExists(file) then
     return file
@@ -320,7 +355,7 @@ function PROFILER.getfilename()
   
   for i=1,999 do
   
-    local file=string.format("%s%s-%03d.%s", dir,PROFILER.fileNamePrefix, i, PROFILER.fileNameSuffix)
+    local file=string.format("%s%s-%03d.%s", dir,PROFILER.fileNamePrefix, i, ext)
 
     if not UTILS.FileExists(file) then
       return file
@@ -336,7 +371,7 @@ end
 function PROFILER.showInfo(runTimeGame, runTimeOS)
 
   -- Output file.
-  local file=PROFILER.getfilename()
+  local file=PROFILER.getfilename(PROFILER.fileNameSuffix)
   local f=io.open(file, 'w')  
   
   -- Gather data.
@@ -427,16 +462,15 @@ function PROFILER.showInfo(runTimeGame, runTimeOS)
     table.insert(t, tpairs)
   end  
   
-  env.info("**************************************************************************************************")
-  env.info(string.format("Profiler"))
-  env.info(string.format("--------"))
+  env.info('############################   Profiler Stopped   ############################')
   env.info(string.format("* Runtime Game     : %s = %d sec", UTILS.SecondsToClock(runTimeGame, true), runTimeGame))
   env.info(string.format("* Runtime Real     : %s = %d sec", UTILS.SecondsToClock(runTimeOS, true), runTimeOS))
   env.info(string.format("* Function time    : %s = %.1f sec (%.1f percent of runtime game)", UTILS.SecondsToClock(Ttot, true), Ttot, Ttot/runTimeGame*100))
   env.info(string.format("* Total functions  : %d", #t))
   env.info(string.format("* Total func calls : %d", Calls))
   env.info(string.format("* Writing to file  : \"%s\"", file))
-  env.info("**************************************************************************************************")  
+  env.info(string.format("* Writing to file  : \"%s\"", PROFILER.getfilename("csv")))
+  env.info("##############################################################################")  
       
   -- Sort by total time.
   table.sort(t, function(a,b) return a.tm>b.tm end)
@@ -459,7 +493,7 @@ function PROFILER.showInfo(runTimeGame, runTimeOS)
   PROFILER._flog(f,string.format("* Total func calls = %d", Calls))
   PROFILER._flog(f,"")
   PROFILER._flog(f,string.format("* Calls per second threshold = %.3f/sec", PROFILER.ThreshCPS))
-  PROFILER._flog(f,string.format("* Total func time threshold  = %.3f/sec", PROFILER.ThreshTtot))  
+  PROFILER._flog(f,string.format("* Total func time threshold  = %.3f sec", PROFILER.ThreshTtot))  
   PROFILER._flog(f,"")
   PROFILER._flog(f,"************************************************************************************************************************")
   PROFILER._flog(f,"")
@@ -498,5 +532,8 @@ function PROFILER.showInfo(runTimeGame, runTimeOS)
   PROFILER._flog(f,"************************************************************************************************************************")
   -- Close file.
   f:close()
+  
+  -- Print csv file.
+  PROFILER.printCSV(t, runTimeGame)
 end
 

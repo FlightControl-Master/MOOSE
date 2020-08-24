@@ -1586,7 +1586,7 @@ end
 
 --- Set Reaction on Threat (ROT) for this mission.
 -- @param #AUFTRAG self
--- @param #string roe Mission ROT.
+-- @param #string rot Mission ROT.
 -- @return #AUFTRAG self
 function AUFTRAG:SetROT(rot)
   

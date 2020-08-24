@@ -7530,6 +7530,10 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
   -- Get parking spot data table. This contains all free and "non-free" spots.
   local parkingdata=airbase.parking --airbase:GetParkingSpotsTable()
+  
+  ---
+  -- Find all obstacles
+  ---
 
   -- List of obstacles.
   local obstacles={}
@@ -7579,6 +7583,10 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
     end
 
   end
+  
+  ---
+  -- Get Parking Spots
+  ---
 
   -- Parking data for all assets.
   local parking={}
