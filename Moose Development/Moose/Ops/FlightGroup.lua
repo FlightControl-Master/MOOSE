@@ -728,9 +728,9 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
 
   -- Short info.
   if self.verbose>0 then
-    local text=string.format("Status %s [%d/%d]: Tasks=%d (%d,%d) Current=%d. Missions=%s. Waypoint=%d/%d. Detected=%d. Destination=%s, FC=%s",
+    local text=string.format("Status %s [%d/%d]: Tasks=%d (%d,%d) Curr=%d, Missions=%s, Waypoint=%d/%d, Detected=%d, Home=%s, Destination=%s",
     fsmstate, #self.elements, #self.elements, nTaskTot, nTaskSched, nTaskWP, self.taskcurrent, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0,
-    self.detectedunits:Count(), self.destbase and self.destbase:GetName() or "unknown", self.flightcontrol and self.flightcontrol.airbasename or "none")
+    self.detectedunits:Count(), self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "unknown")
     self:I(self.lid..text)
   end
 
@@ -890,6 +890,8 @@ end
 -- @param Core.Event#EVENTDATA EventData Event data.
 function FLIGHTGROUP:OnEventBirth(EventData)
 
+  env.info(string.format("EVENT: Birth for unit %s", tostring(EventData.IniUnitName)))
+
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
     local unit=EventData.IniUnit
@@ -898,11 +900,6 @@ function FLIGHTGROUP:OnEventBirth(EventData)
 
     -- Set group.
     self.group=self.group or EventData.IniGroup
-
-    if not self.groupinitialized then
-      --TODO: actually that is not very good here as if the first unit is born and in initgroup we initialize all elements!
-      self:_InitGroup()
-    end
 
     if self.respawning then
 
@@ -934,7 +931,7 @@ function FLIGHTGROUP:OnEventBirth(EventData)
       end
 
       -- Set element to spawned state.
-      self:T(self.lid..string.format("EVENT: Element %s born at airbase %s==> spawned", element.name, self.homebase and self.homebase:GetName() or "unknown"))
+      self:I(self.lid..string.format("EVENT: Element %s born at airbase %s==> spawned", element.name, self.homebase and self.homebase:GetName() or "unknown"))
       self:ElementSpawned(element)
 
     end
@@ -1365,7 +1362,12 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterSpawned(From, Event, To)
-  self:T(self.lid..string.format("Flight spawned"))
+  self:I(self.lid..string.format("Flight spawned"))
+
+  -- TODO: general routine in opsgroup
+  self.traveldist=0
+  self.traveltime=timer.getAbsTime()
+  self.position=self:GetCoordinate()
 
   if self.ai then
 
@@ -1776,14 +1778,17 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
 
           -- Number of remaining tasks/missions?
           if nTasks==0 and nMissions==0 then
+          
+            local destbase=self.destbase or self.homebase
+            local destzone=self.destzone or self.homezone
 
             -- Send flight to destination.
-            if self.destbase then
+            if destbase then
               self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTB!")
-              self:__RTB(-3, self.destbase)
-            elseif self.destzone then
+              self:__RTB(-3, destbase)
+            elseif destzone then
               self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTZ!")
-              self:__RTZ(-3, self.destzone)
+              self:__RTZ(-3, destzone)
             else
               self:I(self.lid.."Passed Final WP and NO Tasks/Missions left. No DestBase or DestZone ==> Wait!")
               self:__Wait(-1)
@@ -2500,14 +2505,6 @@ function FLIGHTGROUP:_InitGroup()
 
   -- Group ammo.
   self.ammo=self:GetAmmoTot()
-
-  -- Initial fuel mass.
-  -- TODO: this is a unit property!
-  self.fuelmass=0
-
-  self.traveldist=0
-  self.traveltime=timer.getAbsTime()
-  self.position=self:GetCoordinate()
 
   -- Radio parameters from template.
   self.radio.On=self.template.communication

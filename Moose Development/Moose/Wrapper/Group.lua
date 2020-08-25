@@ -670,14 +670,15 @@ end
 -- @param #number UnitNumber The number of the UNIT wrapper class to be returned.
 -- @return Wrapper.Unit#UNIT The UNIT wrapper class.
 function GROUP:GetUnit( UnitNumber )
-  self:F3( { self.GroupName, UnitNumber } )
 
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
+  
     local DCSUnit = DCSGroup:getUnit( UnitNumber )
-    local UnitFound = UNIT:Find( DCSGroup:getUnit( UnitNumber ) )
-    self:T2( UnitFound )
+    
+    local UnitFound = UNIT:Find(DCSUnit)
+    
     return UnitFound
   end
 
@@ -690,13 +691,11 @@ end
 -- @param #number UnitNumber The number of the DCS Unit to be returned.
 -- @return DCS#Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
-  self:F3( { self.GroupName, UnitNumber } )
 
-  local DCSGroup = self:GetDCSObject()
+  local DCSGroup=self:GetDCSObject()
 
   if DCSGroup then
-    local DCSUnitFound = DCSGroup:getUnit( UnitNumber )
-    self:T3( DCSUnitFound )
+    local DCSUnitFound=DCSGroup:getUnit( UnitNumber )
     return DCSUnitFound
   end
 
@@ -708,14 +707,14 @@ end
 -- @param #GROUP self
 -- @return #number The DCS Group size.
 function GROUP:GetSize()
-  self:F3( { self.GroupName } )
+
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
+  
     local GroupSize = DCSGroup:getSize()
     
     if GroupSize then
-      self:T3( GroupSize )
       return GroupSize
     else
       return 0

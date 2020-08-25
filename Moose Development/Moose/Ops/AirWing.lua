@@ -1571,6 +1571,9 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   -- Create a flight group.
   local flightgroup=self:_CreateFlightGroup(asset)
   
+  -- Set home base.
+  flightgroup.homebase=self.airbase
+  
   ---
   -- Asset
   ---

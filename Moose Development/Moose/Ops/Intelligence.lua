@@ -15,6 +15,7 @@
 -- @type INTEL
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
 -- @field #string alias Name of the agency.
@@ -47,6 +48,7 @@
 INTEL = {
   ClassName       = "INTEL",
   Debug           =   nil,
+  verbose         =     2,
   lid             =   nil,
   alias           =   nil,
   filterCategory  =    {},
@@ -355,7 +357,7 @@ function INTEL:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end  
 
-  self:__Status(-30) 
+  self:__Status(-60) 
 end
 
 

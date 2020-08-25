@@ -661,7 +661,7 @@ function TARGET:GetTargetVec3(Target)
     local object=Target.Object --Wrapper.Static#STATIC
   
     if object and object:IsAlive() then
-      return Target.Object:GetCoordinate()
+      return object:GetVec3()
     end
     
   elseif Target.Type==TARGET.ObjectType.AIRBASE then

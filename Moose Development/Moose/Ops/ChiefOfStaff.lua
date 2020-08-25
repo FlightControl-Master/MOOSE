@@ -388,9 +388,7 @@ function CHIEF:onafterStatus(From, Event, To)
   end
   
   -- Create missions for all new contacts.
-  local Nred=0
-  local Nyellow=0
-  local Nengage=0
+  local Nred=0 ; local Nyellow=0 ; local Nengage=0
   for _,_contact in pairs(self.Contacts) do
     local contact=_contact --#CHIEF.Contact
     local group=contact.group --Wrapper.Group#GROUP
@@ -438,7 +436,10 @@ function CHIEF:onafterStatus(From, Event, To)
     
   end
   
-  -- Set defcon.
+  ---
+  -- Defcon
+  ---
+  
   -- TODO: Need to introduce time check to avoid fast oscillation between different defcon states in case groups move in and out of the zones.
   if Nred>0 then
     self:SetDefcon(CHIEF.DEFCON.RED)
@@ -447,15 +448,22 @@ function CHIEF:onafterStatus(From, Event, To)
   else
     self:SetDefcon(CHIEF.DEFCON.GREEN)
   end
-  
-  
+
+  ---
+  -- Mission Queue
+  ---
+    
   -- Check mission queue and assign one PLANNED mission.
   self:CheckMissionQueue()
   
   local text=string.format("Defcon=%s   Missions=%d   Contacts: Total=%d Yellow=%d Red=%d", self.Defcon, #self.missionqueue, #self.Contacts, Nyellow, Nred)
   self:I(self.lid..text)
+
+  ---
+  -- Contacts
+  ---
   
-  -- Infor about contacts.
+  -- Info about contacts.
   if #self.Contacts>0 then
     local text="Contacts:"
     for i,_contact in pairs(self.Contacts) do
