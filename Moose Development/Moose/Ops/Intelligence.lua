@@ -18,13 +18,17 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
 -- @field #string alias Name of the agency.
--- @field #table filterCategory Category filters.
+-- @field Core.Set#SET_GROUP detectionset Set of detection groups, aka agents.
+-- @field #table filterCategory Filter for unit categories.
+-- @field #table filterCategoryGroup Filter for group categories.
 -- @field Core.Set#SET_ZONE acceptzoneset Set of accept zones. If defined, only contacts in these zones are considered.
 -- @field Core.Set#SET_ZONE rejectzoneset Set of reject zones. Contacts in these zones are not considered, even if they are in accept zones.
 -- @field #table Contacts Table of detected items.
 -- @field #table ContactsLost Table of lost detected items.
 -- @field #table ContactsUnknown Table of new detected items.
 -- @field #table Clusters Clusters of detected groups.
+-- @field #boolean clusteranalysis If true, create clusters of detected targets.
+-- @field #boolean clustermarkers If true, create cluster markers on F10 map. 
 -- @field #number clustercounter Running number of clusters.
 -- @field #number dTforget Time interval in seconds before a known contact which is not detected any more is forgotten.
 -- @extends Core.Fsm#FSM
@@ -188,7 +192,6 @@ function INTEL:New(DetectionSet, Coalition)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
   end
-  self.Debug=true
 
   return self
 end
@@ -241,6 +244,7 @@ function INTEL:SetFilterCategory(Categories)
   if type(Categories)~="table" then
     Categories={Categories}
   end
+  
   self.filterCategory=Categories
   
   local text="Filter categories: "
@@ -261,7 +265,7 @@ end
 -- * Group.Category.TRAIN
 -- 
 -- @param #INTEL self
--- @param #table Categories Filter categories, e.g. {Group.Category.AIRPLANE, Group.Category.HELICOPTER}.
+-- @param #table GroupCategories Filter categories, e.g. `{Group.Category.AIRPLANE, Group.Category.HELICOPTER}`.
 -- @return #INTEL self
 function INTEL:FilterCategoryGroup(GroupCategories)
   if type(GroupCategories)~="table" then
@@ -279,6 +283,17 @@ function INTEL:FilterCategoryGroup(GroupCategories)
   return self
 end
 
+--- Enable or disable cluster analysis of detected targets.
+-- Targets will be grouped in coupled clusters.
+-- @param #INTEL self
+-- @param #boolean Switch If true, enable cluster analysis.
+-- @param #boolean Markers If true, place markers on F10 map.
+-- @return #INTEL self
+function INTEL:SetClusterAnalysis(Switch, Markers)
+  self.clusteranalysis=Switch
+  self.clustermarkers=Markers
+  return self
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -320,12 +335,14 @@ function INTEL:onafterStatus(From, Event, To)
   local Ncontacts=#self.Contacts
 
   -- Short info.
-  local text=string.format("Status %s [Agents=%s]: Contacts=%d, New=%d, Lost=%d", fsmstate, self.detectionset:CountAlive(), Ncontacts, #self.ContactsUnknown, #self.ContactsLost)
-  self:I(self.lid..text)
+  if self.verbose>=1 then
+    local text=string.format("Status %s [Agents=%s]: Contacts=%d, New=%d, Lost=%d", fsmstate, self.detectionset:CountAlive(), Ncontacts, #self.ContactsUnknown, #self.ContactsLost)
+    self:I(self.lid..text)
+  end
   
   -- Detailed info.
-  if Ncontacts>0 then
-    text="Detected Contacts:"
+  if self.verbose>=2 and Ncontacts>0 then
+    local text="Detected Contacts:"
     for _,_contact in pairs(self.Contacts) do
       local contact=_contact --#INTEL.Contact
       local dT=timer.getAbsTime()-contact.Tdetected
@@ -347,28 +364,29 @@ end
 function INTEL:UpdateIntel()
 
   -- Set of all detected units.
-  local DetectedSet=SET_UNIT:New()
+  local DetectedUnits={}
 
   -- Loop over all units providing intel.
-  for _,_group in pairs(self.detectionset:GetSet()) do
+  for _,_group in pairs(self.detectionset.Set or {}) do
     local group=_group --Wrapper.Group#GROUP
+    
     if group and group:IsAlive() then
+    
       for _,_recce in pairs(group:GetUnits()) do
         local recce=_recce --Wrapper.Unit#UNIT
         
-        -- Get set of detected units.
-        local detectedunitset=recce:GetDetectedUnitSet()
-               
-        -- Add detected units to all set.
-        DetectedSet=DetectedSet:GetSetUnion(detectedunitset)
+        -- Get detected units.
+        self:GetDetectedUnits(recce, DetectedUnits)
+        
       end
+      
     end    
   end
   
   -- TODO: Filter units from reject zones.
   -- TODO: Filter detection methods?
   local remove={}
-  for _,_unit in pairs(DetectedSet.Set) do
+  for unitname,_unit in pairs(DetectedUnits) do
     local unit=_unit --Wrapper.Unit#UNIT
     
     -- Check if unit is in any of the accept zones.
@@ -384,7 +402,7 @@ function INTEL:UpdateIntel()
       
       -- Unit is not in accept zone ==> remove!
       if not inzone then
-        table.insert(remove, unit:GetName())
+        table.insert(remove, unitname)
       end
     end
     
@@ -399,8 +417,8 @@ function INTEL:UpdateIntel()
         end
       end
       if not keepit then
-        self:I(self.lid..string.format("Removing unit %s category=%d", unit:GetName(), unit:GetCategory()))
-        table.insert(remove, unit:GetName())
+        self:I(self.lid..string.format("Removing unit %s category=%d", unitname, unit:GetCategory()))
+        table.insert(remove, unitname)
       end
     end    
         
@@ -408,14 +426,26 @@ function INTEL:UpdateIntel()
   
   -- Remove filtered units.
   for _,unitname in pairs(remove) do
-    DetectedSet:Remove(unitname, true)
+    DetectedUnits[unitname]=nil
+  end
+  
+  -- Create detected groups.
+  local DetectedGroups={}  
+  for unitname,_unit in pairs(DetectedUnits) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    local group=unit:GetGroup()
+    if group then
+      DetectedGroups[group:GetName()]=group
+    end
   end
   
   -- Create detected contacts.  
-  self:CreateDetectedItems(DetectedSet)
+  self:CreateDetectedItems(DetectedGroups)
   
   -- Paint a picture of the battlefield.
-  self:PaintPicture()
+  if self.clusteranalysis then
+    self:PaintPicture()
+  end
   
 end
 
@@ -425,32 +455,15 @@ end
 
 --- Create detected items.
 -- @param #INTEL self
--- @param Core.Set#SET_UNIT detectedunitset Set of detected units. 
-function INTEL:CreateDetectedItems(detectedunitset)
-
-  local detectedgroupset=SET_GROUP:New()
-
-  -- Convert detected UNIT set to detected GROUP set.
-  for _,_unit in pairs(detectedunitset:GetSet()) do
-    local unit=_unit --Wrapper.Unit#UNIT
-    
-    local group=unit:GetGroup()
-    
-    if group and group:IsAlive() then
-      local groupname=group:GetName()     
-      detectedgroupset:Add(groupname, group)
-    end
-      
-  end
+-- @param #table DetectedGroups Table of detected Groups
+function INTEL:CreateDetectedItems(DetectedGroups)
   
   -- Current time.
   local Tnow=timer.getAbsTime()
   
-  for _,_group in pairs(detectedgroupset.Set) do
+  for groupname,_group in pairs(DetectedGroups) do
     local group=_group --Wrapper.Group#GROUP
     
-    -- Group name.
-    local groupname=group:GetName()
     
     -- Get contact if already known.
     local detecteditem=self:GetContactByName(groupname)
@@ -498,8 +511,6 @@ function INTEL:CreateDetectedItems(detectedunitset)
   for i=#self.Contacts,1,-1 do
     local item=self.Contacts[i] --#INTEL.Contact
     
-    local group=detectedgroupset:FindGroup(item.groupname)
-    
     -- Check if deltaT>Tforget. We dont want quick oscillations between detected and undetected states.
     if self:_CheckContactLost(item) then
     
@@ -509,6 +520,41 @@ function INTEL:CreateDetectedItems(detectedunitset)
       -- Remove contact from table.
       self:RemoveContact(item)
             
+    end
+  end
+
+end
+
+--- Return the detected target groups of the controllable as a @{SET_GROUP}.
+-- The optional parametes specify the detection methods that can be applied.
+-- If no detection method is given, the detection will use all the available methods by default.
+-- @param #INTEL self
+-- @param Wrapper.Unit#UNIT Unit The unit detecting.
+-- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
+-- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
+-- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
+-- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
+-- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
+-- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
+function INTEL:GetDetectedUnits(Unit, DetectedUnits, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+
+  -- Get detected DCS units.
+  local detectedtargets=Unit:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+
+  for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
+    local DetectedObject=Detection.object -- DCS#Object
+
+    if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
+    
+      local unit=UNIT:Find(DetectedObject)
+
+      if unit and unit:IsAlive() then
+      
+        local unitname=unit:GetName()
+        
+        DetectedUnits[unitname]=unit
+       
+      end
     end
   end
 
@@ -960,7 +1006,7 @@ end
 -- @param #INTEL self
 -- @param #INTEL.Cluster cluster The cluster.
 -- @return #INTEL self
-function INTEL:UpdateClusterMarker(cluster, newcoordinate)
+function INTEL:UpdateClusterMarker(cluster)
 
   -- Create a marker.
   local text=string.format("Cluster #%d. Size %d, TLsum=%d", cluster.index, cluster.size, cluster.threatlevelSum)

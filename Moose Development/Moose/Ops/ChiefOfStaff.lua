@@ -150,8 +150,6 @@ function CHIEF:New(AgentSet, Coalition)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
   end
-  self.Debug=true
-
 
   return self
 end
@@ -427,7 +425,7 @@ function CHIEF:onafterStatus(From, Event, To)
         mission.nassets=1
         
         -- Missons are repeated max 3 times on failure.
-        mission.missionRepeatMax=3
+        mission.NrepeatFailure=3
         
         -- Set mission contact.
         contact.mission=mission

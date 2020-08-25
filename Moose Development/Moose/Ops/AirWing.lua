@@ -1591,10 +1591,9 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   -- Get the SQUADRON of the asset.
   local squadron=self:GetSquadronOfAsset(asset)
   
-  -- Set default TACAN channel.
+  -- Get TACAN channel.
   local Tacan=squadron:FetchTacan()
   if Tacan then
-    flightgroup:SwitchTACAN(Tacan, Morse, UnitName, Band)
     asset.tacan=Tacan
   end
   
@@ -1617,13 +1616,26 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
 
   -- Add mission to flightgroup queue.
   if mission then
+  
+    if Tacan then
+      mission:SetTACAN(Tacan, Morse, UnitName, Band)
+    end
       
     -- Add mission to flightgroup queue.
     asset.flightgroup:AddMission(mission)
     
     -- Trigger event.
     self:FlightOnMission(flightgroup, mission)
+    
+  else
+    
+    if Tacan then
+      flightgroup:SwitchTACAN(Tacan, Morse, UnitName, Band)    
+    end
+  
   end
+  
+    
   
   -- Add group to the detection set of the WINGCOMMANDER.
   if self.wingcommander and self.wingcommander.chief then

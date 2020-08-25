@@ -449,7 +449,9 @@ AIRBASE.TerminalType = {
 -- @field Core.Point#COORDINATE position Position of runway start.
 -- @field Core.Point#COORDINATE endpoint End point of runway.
 
--- Registration.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Registration
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new AIRBASE from DCSAirbase.
 -- @param #AIRBASE self
@@ -491,6 +493,7 @@ function AIRBASE:Register(AirbaseName)
   self:GetCoordinate()
   
   if vec2 then
+    -- TODO: For ships we need a moving zone.
     self.AirbaseZone=ZONE_RADIUS:New( AirbaseName, vec2, 2500 )
   else
     self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
@@ -499,7 +502,9 @@ function AIRBASE:Register(AirbaseName)
   return self
 end
 
--- Reference methods.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Reference methods
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Finds a AIRBASE from the _DATABASE using a DCSAirbase object.
 -- @param #AIRBASE self
@@ -621,6 +626,38 @@ function AIRBASE:GetID(unique)
   return nil
 end
 
+
+--- Get category of airbase.
+-- @param #AIRBASE self
+-- @return #number Category of airbase from GetDesc().category.
+function AIRBASE:GetAirbaseCategory()
+  return self.category
+end
+
+--- Check if airbase is an airdrome.
+-- @param #AIRBASE self
+-- @return #boolean If true, airbase is an airdrome.
+function AIRBASE:IsAirdrome()
+  return self.isAirdrome
+end
+
+--- Check if airbase is a helipad.
+-- @param #AIRBASE self
+-- @return #boolean If true, airbase is a helipad.
+function AIRBASE:IsHelipad()
+  return self.isHelipad
+end
+
+--- Check if airbase is a ship.
+-- @param #AIRBASE self
+-- @return #boolean If true, airbase is a ship.
+function AIRBASE:IsShip()
+  return self.isShip
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Parking
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Returns a table of parking data for a given airbase. If the optional parameter *available* is true only available parking will be returned, otherwise all parking at the base is returned. Term types have the following enumerated values:
 --
@@ -765,8 +802,10 @@ function AIRBASE:_InitParkingSpots()
   self.parkingByID={}
   
   self.NparkingTotal=0
-  self.NparkingX=0
-  self.NparkingY=0
+  self.NparkingTerminal={}
+  for _,terminalType in pairs(AIRBASE.TerminalType) do
+    self.NparkingTerminal[terminalType]=0
+  end  
 
   -- Put coordinates of parking spots into table.
   for _,spot in pairs(parkingdata) do
@@ -782,24 +821,11 @@ function AIRBASE:_InitParkingSpots()
       park.TerminalType=spot.Term_Type
       park.TOAC=spot.TO_AC
       
-      if park.TerminalID==AIRBASE.TerminalType.FighterAircraft then
-      
-      elseif park.TerminalID==AIRBASE.TerminalType.HelicopterOnly then
-      
-      elseif park.TerminalID==AIRBASE.TerminalType.HelicopterUsable then
-      
-      elseif park.TerminalID==AIRBASE.TerminalType.OpenBig then
-      
-      elseif park.TerminalID==AIRBASE.TerminalType.OpenMed then
-      
-      elseif park.TerminalID==AIRBASE.TerminalType.OpenMedOrBig then
-      
-      elseif park.TerminalID==AIRBASE.TerminalType.Runway then
-      
-      elseif park.TerminalID==AIRBASE.TerminalType.Shelter then
-      
-      end
-      
+      for _,terminalType in pairs(AIRBASE.TerminalType) do
+        if self._CheckTerminalType(terminalType, park.TerminalType) then
+          self.NparkingTerminal[terminalType]=self.NparkingTerminal[terminalType]+1
+        end
+      end      
       
       self.parkingByID[park.TerminalID]=park
       table.insert(self.parking, park)
@@ -1134,104 +1160,6 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   return validspots
 end
 
---- Function that checks if at leat one unit of a group has been spawned close to a spawn point on the runway.
--- @param #AIRBASE self
--- @param Wrapper.Group#GROUP group Group to be checked.
--- @param #number radius Radius around the spawn point to be checked. Default is 50 m.
--- @param #boolean despawn If true, the group is destroyed.
--- @return #boolean True if group is within radius around spawn points on runway.
-function AIRBASE:CheckOnRunWay(group, radius, despawn)
-
-  -- Default radius.
-  radius=radius or 50
-
-  -- We only check at real airbases (not FARPS or ships).
-  if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
-    return false
-  end
-
-  if group and group:IsAlive() then
-
-    -- Debug.
-    self:T(string.format("%s, checking if group %s is on runway?",self:GetName(), group:GetName()))
-
-    -- Get coordinates on runway.
-    local runwaypoints=self:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
-
-    -- Get units of group.
-    local units=group:GetUnits()
-
-    -- Loop over units.
-    for _,_unit in pairs(units) do
-
-      local unit=_unit --Wrapper.Unit#UNIT
-
-      -- Check if unit is alive and not in air.
-      if unit and unit:IsAlive() and not unit:InAir() then
-        self:T(string.format("%s, checking if unit %s is on runway?",self:GetName(), unit:GetName()))
-
-        -- Loop over runway spawn points.
-        for _i,_coord in pairs(runwaypoints) do
-
-          -- Distance between unit and spawn pos.
-          local dist=unit:GetCoordinate():Get2DDistance(_coord)
-
-          -- Mark unit spawn points for debugging.
-          --unit:GetCoordinate():MarkToAll(string.format("unit %s distance to rwy %d = %d",unit:GetName(),_i, dist))
-
-          -- Check if unit is withing radius.
-          if dist<radius  then
-            self:E(string.format("%s, unit %s of group %s was spawned on runway #%d. Distance %.1f < radius %.1f m. Despawn = %s.", self:GetName(), unit:GetName(), group:GetName(),_i, dist, radius, tostring(despawn)))
-            --unit:FlareRed()
-            if despawn then
-              group:Destroy(true)
-            end
-            return true
-          else
-            self:T(string.format("%s, unit %s of group %s was NOT spawned on runway #%d. Distance %.1f > radius %.1f m. Despawn = %s.", self:GetName(), unit:GetName(), group:GetName(),_i, dist, radius, tostring(despawn)))
-            --unit:FlareGreen()
-          end
-
-        end
-      else
-        self:T(string.format("%s, checking if unit %s of group %s is on runway. Unit is NOT alive.",self:GetName(), unit:GetName(), group:GetName()))
-      end
-    end
-  else
-    self:T(string.format("%s, checking if group %s is on runway. Group is NOT alive.",self:GetName(), group:GetName()))
-  end
-
-  return false
-end
-
---- Check if airbase is an airdrome.
--- @param #AIRBASE self
--- @return #boolean If true, airbase is an airdrome.
-function AIRBASE:IsAirdrome()
-  return self.isAirdrome
-end
-
---- Check if airbase is a helipad.
--- @param #AIRBASE self
--- @return #boolean If true, airbase is a helipad.
-function AIRBASE:IsHelipad()
-  return self.isHelipad
-end
-
---- Check if airbase is a ship.
--- @param #AIRBASE self
--- @return #boolean If true, airbase is a ship.
-function AIRBASE:IsShip()
-  return self.isShip
-end
-
---- Get category of airbase.
--- @param #AIRBASE self
--- @return #number Category of airbase from GetDesc().category.
-function AIRBASE:GetAirbaseCategory()
-  return self.category
-end
-
 --- Helper function to check for the correct terminal type including "artificial" ones.
 -- @param #number Term_Type Termial type from getParking routine.
 -- @param #AIRBASE.TerminalType termtype Terminal type from AIRBASE.TerminalType enumerator.
@@ -1277,6 +1205,10 @@ function AIRBASE._CheckTerminalType(Term_Type, termtype)
 
   return match
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Runway
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get runways data. Only for airdromes!
 -- @param #AIRBASE self
@@ -1506,4 +1438,74 @@ function AIRBASE:GetActiveRunway(magvar)
   end
 
   return runways[iact]
+end
+
+--- Function that checks if at leat one unit of a group has been spawned close to a spawn point on the runway.
+-- @param #AIRBASE self
+-- @param Wrapper.Group#GROUP group Group to be checked.
+-- @param #number radius Radius around the spawn point to be checked. Default is 50 m.
+-- @param #boolean despawn If true, the group is destroyed.
+-- @return #boolean True if group is within radius around spawn points on runway.
+function AIRBASE:CheckOnRunWay(group, radius, despawn)
+
+  -- Default radius.
+  radius=radius or 50
+
+  -- We only check at real airbases (not FARPS or ships).
+  if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
+    return false
+  end
+
+  if group and group:IsAlive() then
+
+    -- Debug.
+    self:T(string.format("%s, checking if group %s is on runway?",self:GetName(), group:GetName()))
+
+    -- Get coordinates on runway.
+    local runwaypoints=self:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
+
+    -- Get units of group.
+    local units=group:GetUnits()
+
+    -- Loop over units.
+    for _,_unit in pairs(units) do
+
+      local unit=_unit --Wrapper.Unit#UNIT
+
+      -- Check if unit is alive and not in air.
+      if unit and unit:IsAlive() and not unit:InAir() then
+        self:T(string.format("%s, checking if unit %s is on runway?",self:GetName(), unit:GetName()))
+
+        -- Loop over runway spawn points.
+        for _i,_coord in pairs(runwaypoints) do
+
+          -- Distance between unit and spawn pos.
+          local dist=unit:GetCoordinate():Get2DDistance(_coord)
+
+          -- Mark unit spawn points for debugging.
+          --unit:GetCoordinate():MarkToAll(string.format("unit %s distance to rwy %d = %d",unit:GetName(),_i, dist))
+
+          -- Check if unit is withing radius.
+          if dist<radius  then
+            self:E(string.format("%s, unit %s of group %s was spawned on runway #%d. Distance %.1f < radius %.1f m. Despawn = %s.", self:GetName(), unit:GetName(), group:GetName(),_i, dist, radius, tostring(despawn)))
+            --unit:FlareRed()
+            if despawn then
+              group:Destroy(true)
+            end
+            return true
+          else
+            self:T(string.format("%s, unit %s of group %s was NOT spawned on runway #%d. Distance %.1f > radius %.1f m. Despawn = %s.", self:GetName(), unit:GetName(), group:GetName(),_i, dist, radius, tostring(despawn)))
+            --unit:FlareGreen()
+          end
+
+        end
+      else
+        self:T(string.format("%s, checking if unit %s of group %s is on runway. Unit is NOT alive.",self:GetName(), unit:GetName(), group:GetName()))
+      end
+    end
+  else
+    self:T(string.format("%s, checking if group %s is on runway. Group is NOT alive.",self:GetName(), group:GetName()))
+  end
+
+  return false
 end
