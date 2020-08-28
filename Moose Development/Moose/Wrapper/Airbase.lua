@@ -588,6 +588,25 @@ function AIRBASE.GetAllAirbases(coalition, category)
   return airbases
 end
 
+--- Get all airbase names of the current map. This includes ships and FARPS.
+-- @param DCS#Coalition coalition (Optional) Return only airbases belonging to the specified coalition. By default, all airbases of the map are returned.
+-- @param #number category (Optional) Return only airbases of a certain category, e.g. Airbase.Category.FARP
+-- @return #table Table containing all airbase names of the current map.
+function AIRBASE.GetAllAirbaseNames(coalition, category)
+
+  local airbases={}
+  for airbasename,_airbase in pairs(_DATABASE.AIRBASES) do
+    local airbase=_airbase --#AIRBASE
+    if coalition==nil or airbase:GetCoalition()==coalition then
+      if category==nil or category==airbase:GetAirbaseCategory() then
+        table.insert(airbases, airbasename)
+      end
+    end
+  end
+
+  return airbases
+end
+
 --- Get ID of the airbase.
 -- @param #AIRBASE self
 -- @param #boolean unique (Optional) If true, ships will get a negative sign as the unit ID might be the same as an airbase ID. Default off!

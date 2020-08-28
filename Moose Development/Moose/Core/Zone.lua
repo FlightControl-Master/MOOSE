@@ -1398,9 +1398,13 @@ ZONE_POLYGON_BASE = {
   ClassName="ZONE_POLYGON_BASE",
   }
 
---- A points array.
+--- A 2D points array.
 -- @type ZONE_POLYGON_BASE.ListVec2
--- @list <DCS#Vec2>
+-- @list <DCS#Vec2> Table of 2D vectors.
+
+--- A 3D points array.
+-- @type ZONE_POLYGON_BASE.ListVec3
+-- @list <DCS#Vec3> Table of 3D vectors.
 
 --- Constructor to create a ZONE_POLYGON_BASE instance, taking the zone name and an array of @{DCS#Vec2}, forming a polygon.
 -- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected.
@@ -1420,6 +1424,40 @@ function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
     self._.Polygon[i] = {}
     self._.Polygon[i].x = PointsArray[i].x
     self._.Polygon[i].y = PointsArray[i].y
+  end
+
+  return self
+end
+
+--- Update polygon points with an array of @{DCS#Vec2}.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #ZONE_POLYGON_BASE.ListVec2 Vec2Array An array of @{DCS#Vec2}, forming a polygon.
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:UpdateFromVec2(Vec2Array)
+
+  self._.Polygon = {}
+  
+  for i=1,#Vec2Array do
+    self._.Polygon[i] = {}
+    self._.Polygon[i].x=Vec2Array[i].x
+    self._.Polygon[i].y=Vec2Array[i].y
+  end
+
+  return self
+end
+
+--- Update polygon points with an array of @{DCS#Vec3}.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #ZONE_POLYGON_BASE.ListVec3 Vec2Array An array of @{DCS#Vec3}, forming a polygon.
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:UpdateFromVec3(Vec3Array)
+
+  self._.Polygon = {}
+  
+  for i=1,#Vec3Array do
+    self._.Polygon[i] = {}
+    self._.Polygon[i].x=Vec3Array[i].x
+    self._.Polygon[i].y=Vec3Array[i].z
   end
 
   return self

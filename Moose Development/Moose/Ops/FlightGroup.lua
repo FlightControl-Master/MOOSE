@@ -890,7 +890,7 @@ end
 -- @param Core.Event#EVENTDATA EventData Event data.
 function FLIGHTGROUP:OnEventBirth(EventData)
 
-  env.info(string.format("EVENT: Birth for unit %s", tostring(EventData.IniUnitName)))
+  --env.info(string.format("EVENT: Birth for unit %s", tostring(EventData.IniUnitName)))
 
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then

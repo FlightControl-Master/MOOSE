@@ -821,7 +821,7 @@ function AIRWING:onafterStatus(From, Event, To)
     -- Assets tot
     local Npq, Np, Nq=self:CountAssetsOnMission()
     
-    local assets=string.format("%d [Mission=%d (Active=%d, Queued=%d)]", self:CountAssets(), Npq, Np, Nq)
+    local assets=string.format("%d (OnMission: Total=%d, Active=%d, Queued=%d)", self:CountAssets(), Npq, Np, Nq)
 
     -- Output.
     local text=string.format("%s: Missions=%d, Payloads=%d (%d), Squads=%d, Assets=%s", fsmstate, Nmissions, Npayloads, #self.payloads, #self.squadrons, assets)
@@ -836,7 +836,7 @@ function AIRWING:onafterStatus(From, Event, To)
     for i,_mission in pairs(self.missionqueue) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
       
-      local prio=string.format("%d/%d", mission.prio, mission.importance) ; if mission.urgent then prio=prio.." (!)" end
+      local prio=string.format("%d/%s", mission.prio, tostring(mission.importance)) ; if mission.urgent then prio=prio.." (!)" end
       local assets=string.format("%d/%d", mission:CountOpsGroups(), mission.nassets)
       local target=string.format("%d/%d Damage=%.1f", mission:CountMissionTargets(), mission:GetTargetInitialNumber(), mission:GetTargetDamage())
       
@@ -1030,7 +1030,9 @@ function AIRWING:CheckRescuhelo()
 
   local N=self:CountMissionsInQueue({AUFTRAG.Type.RESCUEHELO})
   
-  local carrier=UNIT:FindByName(self.airbase:GetName())
+  local name=self.airbase:GetName()
+  
+  local carrier=UNIT:FindByName(name)
   
   for i=1,self.nflightsRescueHelo-N do
     
@@ -1127,7 +1129,7 @@ function AIRWING:_GetNextMission()
   local vip=math.huge
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG    
-    if mission.importance<vip then
+    if mission.importance and mission.importance<vip then
       vip=mission.importance
     end
   end
@@ -1140,7 +1142,7 @@ function AIRWING:_GetNextMission()
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     -- Firstly, check if mission is due?
-    if mission:IsQueued() and mission:IsReadyToGo() and mission.importance<=vip then
+    if mission:IsQueued() and mission:IsReadyToGo() and (mission.importance==nil or mission.importance<=vip) then
         
       -- Check if airwing can do the mission and gather required assets.
       local can, assets=self:CanMission(mission)
@@ -1571,8 +1573,6 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   -- Create a flight group.
   local flightgroup=self:_CreateFlightGroup(asset)
   
-  -- Set home base.
-  flightgroup.homebase=self.airbase
   
   ---
   -- Asset
@@ -1765,7 +1765,11 @@ function AIRWING:_CreateFlightGroup(asset)
   -- Set airwing.
   flightgroup:SetAirwing(self)
   
+  -- Set squadron.
   flightgroup.squadron=self:GetSquadronOfAsset(asset)
+
+  -- Set home base.
+  flightgroup.homebase=self.airbase
   
   --[[
   

@@ -947,24 +947,29 @@ end
 -- @param #GROUP self
 -- @return DCS#Vec2 Current Vec2 point of the first DCS Unit of the DCS Group.
 function GROUP:GetVec2()
-  self:F2( self.GroupName )
 
-  local UnitPoint = self:GetUnit(1)
-  UnitPoint:GetVec2()
-  local GroupPointVec2 = UnitPoint:GetVec2()
-  self:T3( GroupPointVec2 )
-  return GroupPointVec2
+  local Unit=self:GetUnit(1)
+  
+  if Unit then
+    return Unit:GetVec2()
+  end
+
 end
 
 --- Returns the current Vec3 vector of the first DCS Unit in the GROUP.
 -- @param #GROUP self
 -- @return DCS#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
 function GROUP:GetVec3()
-  self:F2( self.GroupName )
 
-  local GroupVec3 = self:GetUnit(1):GetVec3()
-  self:T3( GroupVec3 )
-  return GroupVec3
+  -- Get first unit.
+  local unit=self:GetUnit(1)
+
+  if unit then
+    return unit:GetVec3()
+  end
+  
+  self:E("ERROR: Cannot get Vec3 of group "..tostring(self.GroupName))
+  return nil
 end
 
 --- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.

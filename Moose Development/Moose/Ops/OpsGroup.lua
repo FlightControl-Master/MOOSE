@@ -1791,7 +1791,7 @@ function OPSGROUP:_GetNextMission()
   local vip=math.huge
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG    
-    if mission.importance<vip then
+    if mission.importance and mission.importance<vip then
       vip=mission.importance
     end
   end
@@ -1800,7 +1800,7 @@ function OPSGROUP:_GetNextMission()
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
-    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) and mission.importance<=vip then
+    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) and (mission.importance==nil or mission.importance<=vip) then
       return mission
     end
   end

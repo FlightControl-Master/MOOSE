@@ -437,6 +437,13 @@ function SQUADRON:DelAsset(Asset)
   return self
 end
 
+--- Get name of the squadron
+-- @param #SQUADRON self
+-- @return #sting Name of the squadron.
+function SQUADRON:GetName()
+  return self.name
+end
+
 --- Get radio frequency and modulation.
 -- @param #SQUADRON self
 -- @return #number Radio frequency in MHz.
@@ -850,7 +857,7 @@ function SQUADRON:RecruitAssets(Mission, Npayloads)
           if Mission.type==AUFTRAG.Type.INTERCEPT then
             combatready=flightgroup:CanAirToAir()
           else
-            local excludeguns=Mission.type==AUFTRAG.Type.BOMBING or Mission.type==AUFTRAG.Type.BOMBRUNWAY or Mission.type==AUFTRAG.Type.BOMBCARPET
+            local excludeguns=Mission.type==AUFTRAG.Type.BOMBING or Mission.type==AUFTRAG.Type.BOMBRUNWAY or Mission.type==AUFTRAG.Type.BOMBCARPET or Mission.type==AUFTRAG.Type.SEAD or Mission.type==AUFTRAG.Type.ANTISHIP
             combatready=flightgroup:CanAirToGround(excludeguns)
           end
           

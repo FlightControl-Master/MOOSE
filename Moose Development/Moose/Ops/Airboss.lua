@@ -260,7 +260,7 @@
 --
 -- That being said, this script allows you to use any of the three cases to be used at any time. Or, in other words, *you* need to specify when which case is safe and appropriate.
 --
--- This is a lot of responsability. *You* are the boss, but *you* need to make the right decisions or things will go terribly wrong!
+-- This is a lot of responsibility. *You* are the boss, but *you* need to make the right decisions or things will go terribly wrong!
 --
 -- Recovery windows can be set up via the @{#AIRBOSS.AddRecoveryWindow} function as explained below. With this it is possible to seamlessly (within reason!) switch recovery cases in the same mission.
 --
@@ -287,7 +287,7 @@
 --
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case1_Landing.png)
 --
--- Once the aircraft reaches the Inital, the landing pattern begins. The important steps of the pattern are shown in the image above.
+-- Once the aircraft reaches the Initial, the landing pattern begins. The important steps of the pattern are shown in the image above.
 --
 --
 -- ## CASE III
@@ -1931,6 +1931,11 @@ function AIRBOSS:New(carriername, alias)
 
   -- Welcome players.
   self:SetWelcomePlayers(true)
+  
+  -- Coordinates
+  self.landingcoord=COORDINATE:New(0,0,0)      --Core.Point#COORDINATE
+  self.sterncoord=COORDINATE:New(0, 0, 0)      --Core.Point#COORDINATE
+  self.landingspotcoord=COORDINATE:New(0,0,0)  --Core.Point#COORDINATE
 
   -- Init carrier parameters.
   if self.carriertype==AIRBOSS.CarrierType.STENNIS then
@@ -3391,18 +3396,11 @@ end
 -- @param #string To To state.
 function AIRBOSS:onafterStatus(From, Event, To)
 
-	if true then
-	  --env.info("FF Status ==> return")
-		--return
-	end
-
   -- Get current time.
   local time=timer.getTime()
 
   -- Update marshal and pattern queue every 30 seconds.
   if time-self.Tqueue>self.dTqueue then
-
-	  --collectgarbage()
 
     -- Get time.
     local clock=UTILS.SecondsToClock(timer.getAbsTime())
@@ -3414,7 +3412,7 @@ function AIRBOSS:onafterStatus(From, Event, To)
     local speed=self.carrier:GetVelocityKNOTS()
 
     -- Check water is ahead.
-    local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist, hdg))
+    local collision=false --self:_CheckCollisionCoord(pos:Translate(self.collisiondist, hdg))
 
     local holdtime=0
     if self.holdtimestamp then
@@ -3470,15 +3468,9 @@ function AIRBOSS:onafterStatus(From, Event, To)
           -- Disable turn into the wind for this window so that we do not do this all over again.
           self.recoverywindow.WIND=false
         end
-
-      else
-
-        -- Find path around the obstacle.
-        if not self.detour then
-          --self:_Pathfinder()
-        end
-
+        
       end
+      
     end
 
 
@@ -10287,24 +10279,25 @@ function AIRBOSS:_GetSternCoord()
   local FB=self:GetFinalBearing()
 
   -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
-  local stern=self:GetCoordinate()
+  self.sterncoord:UpdateFromCoordinate(self:GetCoordinate())
+  --local stern=self:GetCoordinate()
 
   -- Stern coordinate (sterndist<0).
   if self.carriertype==AIRBOSS.CarrierType.TARAWA then
     -- Tarawa: Translate 8 meters port.
-    stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(8, FB-90)
+    self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
   elseif self.carriertype==AIRBOSS.CarrierType.STENNIS then
     -- Stennis: translate 7 meters starboard wrt Final bearing.
-    stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(7, FB+90)
+    self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(7, FB+90, true, true)
   else
     -- Nimitz SC: translate 8 meters starboard wrt Final bearing.
-    stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(8.5, FB+90)
+    self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8.5, FB+90, true, true)
   end
 
   -- Set altitude.
-  stern:SetAltitude(self.carrierparam.deckheight)
+  self.sterncoord:SetAltitude(self.carrierparam.deckheight)
 
-  return stern
+  return self.sterncoord
 end
 
 --- Get wire from landing position.
@@ -11339,9 +11332,12 @@ end
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Optimal landing coordinate.
 function AIRBOSS:_GetOptLandingCoordinate()
+  
+  -- Start with stern coordiante.
+  self.landingcoord:UpdateFromCoordinate(self:_GetSternCoord())
 
   -- Stern coordinate.
-  local stern=self:_GetSternCoord()
+  --local stern=self:_GetSternCoord()
 
   -- Final bearing.
   local FB=self:GetFinalBearing(false)
@@ -11349,10 +11345,11 @@ function AIRBOSS:_GetOptLandingCoordinate()
   if self.carriertype==AIRBOSS.CarrierType.TARAWA then
 
     -- Landing 100 ft abeam, 120 ft alt.
-    stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
+	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
+    --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
 
     -- Alitude 120 ft.
-    stern:SetAltitude(UTILS.FeetToMeters(120))
+    self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
 
   else
 
@@ -11360,15 +11357,15 @@ function AIRBOSS:_GetOptLandingCoordinate()
     if self.carrierparam.wire3 then
       -- We take the position of the 3rd wire to approximately account for the length of the aircraft.
       local w3=self.carrierparam.wire3
-      stern=stern:Translate(w3, FB, true)
+      self.landingcoord:Translate(w3, FB, true, true)
     end
 
     -- Add 2 meters to account for aircraft height.
-    stern.y=stern.y+2
+    self.landingcoord.y=self.landingcoord.y+2
 
   end
 
-  return stern
+  return self.landingcoord
 end
 
 --- Get landing spot on Tarawa.
@@ -11376,8 +11373,10 @@ end
 -- @return Core.Point#COORDINATE Primary landing spot coordinate.
 function AIRBOSS:_GetLandingSpotCoordinate()
 
+  self.landingspotcoord:UpdateFromCoordinate(self:_GetSternCoord())
+
   -- Stern coordinate.
-  local stern=self:_GetSternCoord()
+  --local stern=self:_GetSternCoord()
 
   if self.carriertype==AIRBOSS.CarrierType.TARAWA then
 
@@ -11385,11 +11384,11 @@ function AIRBOSS:_GetLandingSpotCoordinate()
     local hdg=self:GetHeading()
 
     -- Primary landing spot 7.5
-    stern=stern:Translate(57, hdg):SetAltitude(self.carrierparam.deckheight)
+    self.landingspotcoord:Translate(57, hdg, true, true):SetAltitude(self.carrierparam.deckheight)
 
   end
 
-  return stern
+  return self.landingspotcoord
 end
 
 --- Get true (or magnetic) heading of carrier.
@@ -14333,7 +14332,7 @@ end
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Carrier coordinate.
 function AIRBOSS:GetCoordinate()
-  return self.carrier:GetCoordinate()
+  return self.carrier:GetCoord()
 end
 
 

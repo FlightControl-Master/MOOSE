@@ -99,7 +99,7 @@ TARGET.ObjectStatus={
 -- @field #number ID Target unique ID.
 -- @field #string Name Target name.
 -- @field #string Type Target type.
--- @field Wrapper.Positionable#POSITIONABLE Object.
+-- @field Wrapper.Positionable#POSITIONABLE Object The object, which can be many things, e.g. a UNIT, GROUP, STATIC, AIRBASE or COORDINATE object.
 -- @field #number Life Life points on last status update.
 -- @field #number Life0 Life points of completely healthy target.
 -- @field #string Status Status "Alive" or "Dead".
@@ -137,10 +137,18 @@ function TARGET:New(TargetObject)
   -- Add object.
   self:AddObject(TargetObject)
   
+  -- Get first target.
   local Target=self.targets[1] --#TARGET.Object
+  
+  if not Target then
+    self:E(self.lid.."ERROR: No valid TARGET!")
+    return nil
+  end
     
+  -- Target Name.
   self.name=self:GetTargetName(Target)
   
+  -- Target category.
   self.category=self:GetTargetCategory(Target)
   
   -- Log ID.
@@ -681,6 +689,7 @@ function TARGET:GetTargetVec3(Target)
     
   end
 
+  self:E(self.lid.."ERROR: Unknown TARGET type! Cannot get Vec3")
 end
 
 
@@ -780,6 +789,7 @@ function TARGET:GetCoordinate()
 
   end
 
+  self:E(self.lid..string.format("ERROR: Cannot get coordinate of target %s", self.name))
   return nil
 end
 

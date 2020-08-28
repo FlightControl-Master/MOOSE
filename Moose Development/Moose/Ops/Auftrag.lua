@@ -1096,7 +1096,9 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RESCUEHELO)
   
-  self.carrier=Carrier
+  --mission.carrier=Carrier
+  
+  mission:_TargetFromObject(Carrier)
   
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.NOTHING
@@ -1412,12 +1414,12 @@ end
 -- @param #AUFTRAG self
 -- @param #number Prio Priority 1=high, 100=low. Default 50.
 -- @param #boolean Urgent If *true*, another running mission might be cancelled if it has a lower priority.
--- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is 5.
+-- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is `nil`.
 -- @return #AUFTRAG self
 function AUFTRAG:SetPriority(Prio, Urgent, Importance)
   self.prio=Prio or 50
   self.urgent=Urgent
-  self.importance=Importance or 5
+  self.importance=Importance
   return self
 end
 
@@ -1665,6 +1667,47 @@ function AUFTRAG:SetICLS(Channel, Morse, UnitName)
   return self
 end
 
+--- Get mission type.
+-- @param #AUFTRAG self
+-- @return #string Mission type, e.g. "BAI".
+function AUFTRAG:GetType()
+  return self.type
+end
+
+--- Get mission name.
+-- @param #AUFTRAG self
+-- @return #string Mission name, e.g. "Auftrag Nr.1".
+function AUFTRAG:GetName()
+  return self.name
+end
+
+--- Get number of required assets.
+-- @param #AUFTRAG self
+-- @return #number Numer of required assets.
+function AUFTRAG:GetNumberOfRequiredAssets()
+  return self.nassets
+end
+
+--- Get mission priority.
+-- @param #AUFTRAG self
+-- @return #number Priority. Smaller is higher.
+function AUFTRAG:GetPriority()
+  return self.prio
+end
+
+--- Check if mission is "urgent".
+-- @param #AUFTRAG self
+-- @return #boolean If `true`, mission is "urgent".
+function AUFTRAG:IsUrgent()
+  return self.urgent
+end
+
+--- Get mission importance.
+-- @param #AUFTRAG self
+-- @return #number Importance. Smaller is higher.
+function AUFTRAG:GetImportance()
+  return self.importance
+end
 
 --- Add start condition.
 -- @param #AUFTRAG self
@@ -2599,7 +2642,7 @@ function AUFTRAG:onafterSuccess(From, Event, To)
   self.status=AUFTRAG.Status.SUCCESS
   self:T(self.lid..string.format("New mission status=%s", self.status))
   
-  local repeatme=self.repeatedFailure<self.NrepeatFailure or self.repeated<self.Nrepeat
+  local repeatme=self.repeatedSuccess<self.NrepeatSuccess or self.repeated<self.Nrepeat
   
   if repeatme then
 
@@ -3291,7 +3334,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     
     -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
     local param={}
-    param.unitname=self.carrier:GetName()
+    param.unitname=self:GetTargetName() --self.carrier:GetName()
     param.offsetX=200
     param.offsetZ=240
     param.altitude=70

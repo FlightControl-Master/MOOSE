@@ -300,6 +300,45 @@ do -- COORDINATE
     return { x = self.x, y = self.z }
   end
 
+  --- Update x,y,z coordinates from a given 3D vector.
+  -- @param #COORDINATE self
+  -- @param DCS#Vec3 Vec3 The 3D vector with x,y,z components.
+  -- @return #COORDINATE The modified COORDINATE itself.
+  function COORDINATE:UpdateFromVec3(Vec3)
+    
+    self.x=Vec3.x
+    self.y=Vec3.y
+    self.z=Vec3.z
+  
+    return self
+  end
+  
+  --- Update x,y,z coordinates from another given COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE Coordinate The coordinate with the new x,y,z positions.
+  -- @return #COORDINATE The modified COORDINATE itself.
+  function COORDINATE:UpdateFromCoordinate(Coordinate)
+    
+    self.x=Coordinate.x
+    self.y=Coordinate.y
+    self.z=Coordinate.z
+  
+    return self
+  end  
+
+  --- Update x and z coordinates from a given 2D vector.
+  -- @param #COORDINATE self
+  -- @param DCS#Vec2 Vec2 The 2D vector with x,y components. x is overwriting COORDINATE.x while y is overwriting COORDINATE.z.
+  -- @return #COORDINATE The modified COORDINATE itself.
+  function COORDINATE:UpdateFromVec2(Vec2)
+    
+    self.x=Vec2.x
+    self.z=Vec2.y
+  
+    return self
+  end
+  
+
   --- Returns the coordinate from the latitude and longitude given in decimal degrees.
   -- @param #COORDINATE self
   -- @param #number latitude Latitude in decimal degrees.
@@ -503,19 +542,27 @@ do -- COORDINATE
   -- @param DCS#Distance Distance The Distance to be added in meters.
   -- @param DCS#Angle Angle The Angle in degrees. Defaults to 0 if not specified (nil).
   -- @param #boolean Keepalt If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
-  -- @return Core.Point#COORDINATE The new calculated COORDINATE.
-  function COORDINATE:Translate( Distance, Angle, Keepalt )
-    local SX = self.x
-    local SY = self.z
-    local Radians = (Angle or 0) / 180 * math.pi
-    local TX = Distance * math.cos( Radians ) + SX
-    local TY = Distance * math.sin( Radians ) + SY
-  
-    if Keepalt then
-      return COORDINATE:NewFromVec3( { x = TX, y=self.y, z = TY } )
+  -- @param #boolean Overwrite If true, overwrite the original COORDINATE with the translated one. Otherwise, create a new COODINATE.
+  -- @return #COORDINATE The new calculated COORDINATE.
+  function COORDINATE:Translate( Distance, Angle, Keepalt, Overwrite )
+
+    -- Angle in rad.  
+    local alpha = math.rad((Angle or 0))
+    
+    local x = Distance * math.cos(alpha) + self.x  -- New x
+    local z = Distance * math.sin(alpha) + self.z  -- New z
+    
+    local y=Keepalt and self.y or land.getHeight({x=x, y=z})
+    
+    if Overwrite then
+      self.x=x
+      self.y=y
+      self.z=z
+      return self
     else
-      return COORDINATE:NewFromVec2( { x = TX, y = TY } )
+      return COORDINATE:New(x, y, z)
     end
+    
   end
 
   --- Rotate coordinate in 2D (x,z) space.
@@ -1356,7 +1403,7 @@ do -- COORDINATE
   -- @param #number Coalition (Optional) Coalition of the airbase.
   -- @return Wrapper.Airbase#AIRBASE Closest Airbase to the given coordinate.
   -- @return #number Distance to the closest airbase in meters.
-  function COORDINATE:GetClosestAirbase(Category, Coalition)
+  function COORDINATE:GetClosestAirbase2(Category, Coalition)
   
     -- Get all airbases of the map.
     local airbases=AIRBASE.GetAllAirbases(Coalition)
@@ -1388,6 +1435,36 @@ do -- COORDINATE
     end
     
     return closest,distmin
+  end
+
+  --- Gets the nearest airbase with respect to the current coordinates.
+  -- @param #COORDINATE self
+  -- @param #number Category (Optional) Category of the airbase. Enumerator of @{Wrapper.Airbase#AIRBASE.Category}.
+  -- @param #number Coalition (Optional) Coalition of the airbase.
+  -- @return Wrapper.Airbase#AIRBASE Closest Airbase to the given coordinate.
+  -- @return #number Distance to the closest airbase in meters.
+  function COORDINATE:GetClosestAirbase(Category, Coalition)
+
+    local a=self:GetVec3()
+    
+    local distmin=math.huge
+    local airbase=nil
+    for DCSairbaseID, DCSairbase in pairs(world.getAirbases(Coalition)) do
+      local b=DCSairbase:getPoint()
+      
+      local c=UTILS.VecSubstract(a,b)      
+      local dist=UTILS.VecNorm(c)
+      
+      --env.info(string.format("Airbase %s dist=%d category=%d", DCSairbase:getName(), dist, DCSairbase:getCategory()))
+      
+      if dist<distmin and (Category==nil or Category==DCSairbase:getDesc().category) then
+        distmin=dist
+        airbase=DCSairbase
+      end
+      
+    end
+    
+    return AIRBASE:Find(airbase)
   end
   
   --- Gets the nearest parking spot.

@@ -125,10 +125,17 @@ function POSITIONABLE:Destroy( GenerateEvent )
   return nil
 end
 
+--- Returns the DCS object. Polymorphic for other classes like UNIT, STATIC, GROUP, AIRBASE.
+-- @param #POSITIONABLE self
+-- @return DCS#Object The DCS object.
+function POSITIONABLE:GetDCSObject()
+  return nil
+end
+
 --- Returns a pos3 table of the objects current position and orientation in 3D space. X, Y, Z values are unit vectors defining the objects orientation.
 -- Coordinates are dependent on the position of the maps origin.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Position Table consisting of the point and orientation tables.
+-- @return DCS#Position3 Table consisting of the point and orientation tables.
 function POSITIONABLE:GetPosition()
   self:F2( self.PositionableName )
 
@@ -221,45 +228,42 @@ end
 
 --- Returns the @{DCS#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
--- @return #nil The POSITIONABLE is not existing or alive.  
+-- @return DCS#Vec3 The 3D point vector of the POSITIONABLE or `nil` if it is not existing or alive.  
 function POSITIONABLE:GetVec3()
-  self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local PositionableVec3 = DCSPositionable:getPosition().p
-    self:T3( PositionableVec3 )
-    return PositionableVec3
+  
+    local vec3=DCSPositionable:getPoint()
+    
+    if vec3 then
+      return vec3
+    else
+      self:E("ERROR: Cannot get vec3!")
+    end
   end
   
-  BASE:E( { "Cannot GetVec3", Positionable = self, Alive = self:IsAlive() } )
-
+  -- ERROR!
+  self:E( { "Cannot GetVec3", Positionable = self, Alive = self:IsAlive() } )
   return nil
 end
 
 --- Returns the @{DCS#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Vec2 The 2D point vector of the POSITIONABLE.
--- @return #nil The POSITIONABLE is not existing or alive.  
+-- @return DCS#Vec2 The 2D point vector of the POSITIONABLE or #nil if it is not existing or alive.
 function POSITIONABLE:GetVec2()
-  self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local PositionableVec3 = DCSPositionable:getPosition().p
-    
-    local PositionableVec2 = {}
-    PositionableVec2.x = PositionableVec3.x
-    PositionableVec2.y = PositionableVec3.z
   
-    self:T2( PositionableVec2 )
-    return PositionableVec2
+    local Vec3=DCSPositionable:getPoint() --DCS#Vec3
+    
+    return {x=Vec3.x, y=Vec3.z}
   end
   
-  BASE:E( { "Cannot GetVec2", Positionable = self, Alive = self:IsAlive() } )
+  self:E( { "Cannot GetVec2", Positionable = self, Alive = self:IsAlive() } )
 
   return nil
 end
@@ -282,7 +286,7 @@ function POSITIONABLE:GetPointVec2()
     return PositionablePointVec2
   end
   
-  BASE:E( { "Cannot GetPointVec2", Positionable = self, Alive = self:IsAlive() } )
+  self:E( { "Cannot GetPointVec2", Positionable = self, Alive = self:IsAlive() } )
 
   return nil
 end
@@ -333,20 +337,20 @@ function POSITIONABLE:GetCoord()
   if DCSPositionable then
   
     -- Get the current position.
-    local PositionableVec3 = self:GetPositionVec3()
+    local Vec3 = self:GetVec3()
     
     if self.coordinate then
-      --env.info("FF GetCoordinate GOT for "..tostring(self.PositionableName))
 
       -- Update vector.      
-      self.coordinate.x=PositionableVec3.x
-      self.coordinate.y=PositionableVec3.y
-      self.coordinate.z=PositionableVec3.z      
+      self.coordinate.x=Vec3.x
+      self.coordinate.y=Vec3.y
+      self.coordinate.z=Vec3.z      
       
     else
-      --env.info("FF GetCoordinate NEW for "..tostring(self.PositionableName))
       
-      self.coordinate=COORDINATE:NewFromVec3(PositionableVec3)
+      -- New COORDINATE.
+      self.coordinate=COORDINATE:NewFromVec3(Vec3)
+      
     end
   
     return self.coordinate
@@ -369,33 +373,15 @@ function POSITIONABLE:GetCoordinate()
   if DCSPositionable then
   
     -- Get the current position.
-    local PositionableVec3 = self:GetPositionVec3()
+    local PositionableVec3 = self:GetVec3()
     
-    if self.coordinate then
-      --env.info("FF GetCoordinate GOT for "..tostring(self.PositionableName))
+    -- Return a new coordiante object.
+    return COORDINATE:NewFromVec3(PositionableVec3)
 
-      -- Update vector.      
-      self.coordinate.x=PositionableVec3.x
-      self.coordinate.y=PositionableVec3.y
-      self.coordinate.z=PositionableVec3.z      
-      
-    else
-      --env.info("FF GetCoordinate NEW for "..tostring(self.PositionableName))
-      
-      self.coordinate=COORDINATE:NewFromVec3(PositionableVec3)
-    end
-
-    
-    -- Set heading and velocity.
-    self.coordinate:SetHeading( self:GetHeading() )
-    self.coordinate:SetVelocity( self:GetVelocityMPS() )
-  
-    return self.coordinate
   end
   
   -- Error message.
-  BASE:E( { "Cannot GetCoordinate", Positionable = self, Alive = self:IsAlive() } )
-  
+  self:E( { "Cannot GetCoordinate", Positionable = self, Alive = self:IsAlive() } )  
   return nil
 end
 
