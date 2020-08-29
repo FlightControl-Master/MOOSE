@@ -1,6 +1,7 @@
 __Moose.Include( 'Scripts/Moose/Utilities/Enums.lua' )
 __Moose.Include( 'Scripts/Moose/Utilities/Routines.lua' )
 __Moose.Include( 'Scripts/Moose/Utilities/Utils.lua' )
+__Moose.Include( 'Scripts/Moose/Utilities/Profiler.lua' )
 
 __Moose.Include( 'Scripts/Moose/Core/Base.lua' )
 __Moose.Include( 'Scripts/Moose/Core/UserFlag.lua' )
@@ -24,6 +25,7 @@ __Moose.Include( 'Scripts/Moose/Core/RadioQueue.lua' )
 __Moose.Include( 'Scripts/Moose/Core/RadioSpeech.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Spawn.lua' )
 __Moose.Include( 'Scripts/Moose/Core/SpawnStatic.lua' )
+__Moose.Include( 'Scripts/Moose/Core/Timer.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Goal.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Spot.lua' )
 
@@ -37,6 +39,7 @@ __Moose.Include( 'Scripts/Moose/Wrapper/Client.lua' )
 __Moose.Include( 'Scripts/Moose/Wrapper/Static.lua' )
 __Moose.Include( 'Scripts/Moose/Wrapper/Airbase.lua' )
 __Moose.Include( 'Scripts/Moose/Wrapper/Scenery.lua' )
+__Moose.Include( 'Scripts/Moose/Wrapper/Marker.lua' )
 
 __Moose.Include( 'Scripts/Moose/Cargo/Cargo.lua' )
 __Moose.Include( 'Scripts/Moose/Cargo/CargoUnit.lua' )
