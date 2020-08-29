@@ -1001,6 +1001,16 @@ function EVENT:onEvent( Event )
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = Event.initiator:isExist() and Event.IniDCSUnit:getTypeName() or "SCENERY" -- TODO: Bug fix for 2.1!
         end
+        
+        if Event.IniObjectCategory == Object.Category.BASE then
+          Event.IniDCSUnit = Event.initiator
+          Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+          Event.IniUnitName = Event.IniDCSUnitName
+          Event.IniUnit = AIRBASE:FindByName(Event.IniDCSUnitName)
+          Event.IniCoalition = Event.IniDCSUnit:getCoalition()
+          Event.IniCategory = Event.IniDCSUnit:getDesc().category
+          Event.IniTypeName = Event.IniDCSUnit:getTypeName()  
+        end
       end
       
       if Event.target then

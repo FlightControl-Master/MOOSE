@@ -56,6 +56,17 @@ ENUMS.ROT = {
   AllowAbortMission=4,
 }
 
+--- Alarm state.
+-- @type ENUMS.AlarmState
+-- @field #number Auto AI will automatically switch alarm states based on the presence of threats. The AI kind of cheats in this regard.
+-- @field #number Green Group is not combat ready. Sensors are stowed if possible.
+-- @field #number Red Group is combat ready and actively searching for targets. Some groups like infantry will not move in this state.
+ENUMS.AlarmState = {
+  Auto=0,
+  Green=1,
+  Red=2,
+}
+
 --- Weapon types. See the [Weapon Flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) enumerotor on hoggit wiki.
 -- @type ENUMS.WeaponFlag
 ENUMS.WeaponFlag={
@@ -222,6 +233,15 @@ ENUMS.Formation.RotaryWing.EchelonLeft={}
 ENUMS.Formation.RotaryWing.EchelonLeft.D70 =590081
 ENUMS.Formation.RotaryWing.EchelonLeft.D300=590082
 ENUMS.Formation.RotaryWing.EchelonLeft.D600=590083
+ENUMS.Formation.Vehicle={}
+ENUMS.Formation.Vehicle.Vee="Vee"
+ENUMS.Formation.Vehicle.EchelonRight="EchelonR"
+ENUMS.Formation.Vehicle.OffRoad="Off Road"
+ENUMS.Formation.Vehicle.Rank="Rank"
+ENUMS.Formation.Vehicle.EchelonLeft="EchelonL"
+ENUMS.Formation.Vehicle.OnRoad="On Road"
+ENUMS.Formation.Vehicle.Cone="Cone"
+ENUMS.Formation.Vehicle.Diamond="Diamond"
 
 --- Formations (old). The old format is a simplified version of the new formation enums, which allow more sophisticated settings.
 -- See the [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) on hoggit wiki.

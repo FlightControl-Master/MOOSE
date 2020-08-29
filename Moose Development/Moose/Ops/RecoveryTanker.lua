@@ -1345,7 +1345,6 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       group:InitModex(self.modex)
            
       -- Respawn tanker. Delaying respawn due to DCS bug https://github.com/FlightControl-Master/MOOSE/issues/1076
-      --SCHEDULER:New(nil , group.RespawnAtCurrentAirbase, {group}, 1)
       self:ScheduleOnce(1, GROUP.RespawnAtCurrentAirbase, group)
       
       -- Create tanker beacon and activate TACAN.
@@ -1364,7 +1363,6 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       end       
 
       -- Initial route.
-      --SCHEDULER:New(nil, self._InitRoute, {self, -self.distStern+UTILS.NMToMeters(3)}, 2)
       self:ScheduleOnce(2, RECOVERYTANKER._InitRoute, self, -self.distStern+UTILS.NMToMeters(3))     
     end
     

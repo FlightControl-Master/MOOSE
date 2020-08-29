@@ -1,13 +1,13 @@
 --- **Wrapper** -- AIRBASE is a wrapper class to handle the DCS Airbase objects.
--- 
+--
 -- ===
--- 
+--
 -- ### Author: **FlightControl**
--- 
+--
 -- ### Contributions: **funkyfranky**
--- 
+--
 -- ===
--- 
+--
 -- @module Wrapper.Airbase
 -- @image Wrapper_Airbase.JPG
 
@@ -15,44 +15,53 @@
 --- @type AIRBASE
 -- @field #string ClassName Name of the class, i.e. "AIRBASE".
 -- @field #table CategoryName Names of airbase categories.
+-- @field #string AirbaseName Name of the airbase.
+-- @field #number AirbaseID Airbase ID.
+-- @field #number category Airbase category.
+-- @field #table descriptors DCS descriptors.
+-- @field #boolean isAirdrome Airbase is an airdrome.
+-- @field #boolean isHelipad Airbase is a helipad.
+-- @field #boolean isShip Airbase is a ship.
+-- @field #table parking Parking spot data.
+-- @field #table parkingByID Parking spot data table with ID as key.
 -- @field #number activerwyno Active runway number (forced).
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the DCS Airbase objects:
--- 
+--
 --  * Support all DCS Airbase APIs.
 --  * Enhance with Airbase specific APIs not in the DCS Airbase API set.
---  
+--
 -- ## AIRBASE reference methods
--- 
+--
 -- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts).
---  
+--
 -- The AIRBASE class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
 -- using the DCS Airbase or the DCS AirbaseName.
--- 
--- Another thing to know is that AIRBASE objects do not "contain" the DCS Airbase object. 
+--
+-- Another thing to know is that AIRBASE objects do not "contain" the DCS Airbase object.
 -- The AIRBASE methods will reference the DCS Airbase object by name when it is needed during API execution.
 -- If the DCS Airbase object does not exist or is nil, the AIRBASE methods will return nil and log an exception in the DCS.log file.
---  
+--
 -- The AIRBASE class provides the following functions to retrieve quickly the relevant AIRBASE instance:
--- 
+--
 --  * @{#AIRBASE.Find}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase object.
 --  * @{#AIRBASE.FindByName}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase name.
---  
+--
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
--- 
+--
 -- ## DCS Airbase APIs
--- 
+--
 -- The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
 -- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{DCSWrapper.Airbase#Airbase.getName}()
 -- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
--- 
+--
 -- @field #AIRBASE AIRBASE
 AIRBASE = {
   ClassName="AIRBASE",
-  CategoryName = { 
+  CategoryName = {
     [Airbase.Category.AIRDROME]   = "Airdrome",
     [Airbase.Category.HELIPAD]    = "Helipad",
     [Airbase.Category.SHIP]       = "Ship",
@@ -61,9 +70,9 @@ AIRBASE = {
   }
 
 --- Enumeration to identify the airbases in the Caucasus region.
--- 
+--
 -- These are all airbases of Caucasus:
--- 
+--
 --   * AIRBASE.Caucasus.Gelendzhik
 --   * AIRBASE.Caucasus.Krasnodar_Pashkovsky
 --   * AIRBASE.Caucasus.Sukhumi_Babushara
@@ -85,7 +94,7 @@ AIRBASE = {
 --   * AIRBASE.Caucasus.Nalchik
 --   * AIRBASE.Caucasus.Mozdok
 --   * AIRBASE.Caucasus.Beslan
---   
+--
 -- @field Caucasus
 AIRBASE.Caucasus = {
   ["Gelendzhik"] = "Gelendzhik",
@@ -112,7 +121,7 @@ AIRBASE.Caucasus = {
   }
 
 --- These are all airbases of Nevada:
--- 
+--
 --   * AIRBASE.Nevada.Creech_AFB
 --   * AIRBASE.Nevada.Groom_Lake_AFB
 --   * AIRBASE.Nevada.McCarran_International_Airport
@@ -130,7 +139,7 @@ AIRBASE.Caucasus = {
 --   * AIRBASE.Nevada.Pahute_Mesa_Airstrip
 --   * AIRBASE.Nevada.Tonopah_Airport
 --   * AIRBASE.Nevada.Tonopah_Test_Range_Airfield
--- @field Nevada 
+-- @field Nevada
 AIRBASE.Nevada = {
   ["Creech_AFB"] = "Creech AFB",
   ["Groom_Lake_AFB"] = "Groom Lake AFB",
@@ -152,7 +161,7 @@ AIRBASE.Nevada = {
   }
 
 --- These are all airbases of Normandy:
--- 
+--
 --   * AIRBASE.Normandy.Saint_Pierre_du_Mont
 --   * AIRBASE.Normandy.Lignerolles
 --   * AIRBASE.Normandy.Cretteville
@@ -219,11 +228,11 @@ AIRBASE.Normandy = {
   ["Ford_AF"] = "Ford_AF",
   ["Goulet"] = "Goulet",
   ["Argentan"] = "Argentan",
-  ["Vrigny"] = "Vrigny", 
+  ["Vrigny"] = "Vrigny",
   ["Essay"] = "Essay",
   ["Hauterive"] = "Hauterive",
   ["Barville"] = "Barville",
-  ["Conches"] = "Conches",  
+  ["Conches"] = "Conches",
 }
 
 --- These are all airbases of the Persion Gulf Map:
@@ -269,7 +278,7 @@ AIRBASE.PersianGulf = {
   ["Bandar_Abbas_Intl"] = "Bandar Abbas Intl",
   ["Bandar_Lengeh"] = "Bandar Lengeh",
   ["Bandar_e_Jask_airfield"] = "Bandar-e-Jask airfield",
-  ["Dubai_Intl"] = "Dubai Intl",  
+  ["Dubai_Intl"] = "Dubai Intl",
   ["Fujairah_Intl"] = "Fujairah Intl",
   ["Havadarya"] = "Havadarya",
   ["Jiroft_Airport"] = "Jiroft Airport",
@@ -301,7 +310,7 @@ AIRBASE.PersianGulf = {
 -- * AIRBASE.TheChannel.Lympne
 -- * AIRBASE.TheChannel.Detling
 -- * AIRBASE.TheChannel.High_Halden
--- 
+--
 -- @field TheChannel
 AIRBASE.TheChannel = {
   ["Abbeville_Drucat"] = "Abbeville Drucat",
@@ -388,7 +397,7 @@ AIRBASE.Syria={
   ["Abu_al_Duhur"]="Abu al-Duhur",
 }
 
-  
+
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 -- @type AIRBASE.ParkingSpot
 -- @field Core.Point#COORDINATE Coordinate Coordinate of the parking spot.
@@ -398,11 +407,11 @@ AIRBASE.Syria={
 -- @field #boolean Free This spot is currently free, i.e. there is no alive aircraft on it at the present moment.
 -- @field #number TerminalID0 Unknown what this means. If you know, please tell us!
 -- @field #number DistToRwy Distance to runway in meters. Currently bugged and giving the same number as the TerminalID.
- 
+
 --- Terminal Types of parking spots. See also https://wiki.hoggitworld.com/view/DCS_func_getParking
--- 
+--
 -- Supported types are:
--- 
+--
 -- * AIRBASE.TerminalType.Runway = 16: Valid spawn points on runway.
 -- * AIRBASE.TerminalType.HelicopterOnly = 40: Special spots for Helicopers.
 -- * AIRBASE.TerminalType.Shelter = 68: Hardened Air Shelter. Currently only on Caucaus map.
@@ -411,7 +420,7 @@ AIRBASE.Syria={
 -- * AIRBASE.TerminalType.OpenMedOrBig = 176: Combines OpenMed and OpenBig spots.
 -- * AIRBASE.TerminalType.HelicopterUsable = 216: Combines HelicopterOnly, OpenMed and OpenBig.
 -- * AIRBASE.TerminalType.FighterAircraft = 244: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
--- 
+--
 -- @type AIRBASE.TerminalType
 -- @field #number Runway 16: Valid spawn points on runway.
 -- @field #number HelicopterOnly 40: Special spots for Helicopers.
@@ -440,28 +449,62 @@ AIRBASE.TerminalType = {
 -- @field Core.Point#COORDINATE position Position of runway start.
 -- @field Core.Point#COORDINATE endpoint End point of runway.
 
--- Registration.
-  
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Registration
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- Create a new AIRBASE from DCSAirbase.
 -- @param #AIRBASE self
 -- @param #string AirbaseName The name of the airbase.
--- @return Wrapper.Airbase#AIRBASE
-function AIRBASE:Register( AirbaseName )
+-- @return #AIRBASE self
+function AIRBASE:Register(AirbaseName)
 
-  local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) ) --#AIRBASE
-  self.AirbaseName = AirbaseName
-  self.AirbaseID   = self:GetID(true)
+  -- Inherit everything from positionable.
+  local self=BASE:Inherit(self, POSITIONABLE:New(AirbaseName)) --#AIRBASE
+  
+  -- Set airbase name.
+  self.AirbaseName=AirbaseName
+  
+  -- Set airbase ID.
+  self.AirbaseID=self:GetID(true)
+  
+  -- Get descriptors.
+  self.descriptors=self:GetDesc()
+  
+  -- Category.
+  self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
+  
+  -- Set category.
+  if self.category==Airbase.Category.AIRDROME then
+    self.isAirdrome=true
+  elseif self.category==Airbase.Category.HELIPAD then
+    self.isHelipad=true
+  elseif self.category==Airbase.Category.SHIP then
+    self.isShip=true
+  else
+    self:E("ERROR: Unknown airbase category!")
+  end
+  
+  self:_InitParkingSpots()
+  
   local vec2=self:GetVec2()
+  
+  -- Init coordinate.
+  self:GetCoordinate()
+  
   if vec2 then
-    self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, vec2, 2500 )
+    -- TODO: For ships we need a moving zone.
+    self.AirbaseZone=ZONE_RADIUS:New( AirbaseName, vec2, 2500 )
   else
     self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
   end
-  
+
   return self
 end
 
--- Reference methods.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Reference methods
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Finds a AIRBASE from the _DATABASE using a DCSAirbase object.
 -- @param #AIRBASE self
@@ -479,7 +522,7 @@ end
 -- @param #string AirbaseName The Airbase Name.
 -- @return #AIRBASE self
 function AIRBASE:FindByName( AirbaseName )
-  
+
   local AirbaseFound = _DATABASE:FindAirbase( AirbaseName )
   return AirbaseFound
 end
@@ -489,18 +532,18 @@ end
 -- @param #number id Airbase ID.
 -- @return #AIRBASE self
 function AIRBASE:FindByID(id)
-  
+
   for name,_airbase in pairs(_DATABASE.AIRBASES) do
     local airbase=_airbase --#AIRBASE
-    
+
     local aid=tonumber(airbase:GetID(true))
-    
+
     if aid==id then
       return airbase
     end
-  
+
   end
-  
+
   return nil
 end
 
@@ -508,12 +551,14 @@ end
 -- @param #AIRBASE self
 -- @return DCS#Airbase DCS airbase object.
 function AIRBASE:GetDCSObject()
-  local DCSAirbase = Airbase.getByName( self.AirbaseName )
-  
+
+  -- Get the DCS object.
+  local DCSAirbase = Airbase.getByName(self.AirbaseName)
+
   if DCSAirbase then
     return DCSAirbase
   end
-    
+
   return nil
 end
 
@@ -529,92 +574,127 @@ end
 -- @param #number category (Optional) Return only airbases of a certain category, e.g. Airbase.Category.FARP
 -- @return #table Table containing all airbase objects of the current map.
 function AIRBASE.GetAllAirbases(coalition, category)
-  
+
   local airbases={}
   for _,_airbase in pairs(_DATABASE.AIRBASES) do
     local airbase=_airbase --#AIRBASE
-    if (coalition~=nil and airbase:GetCoalition()==coalition) or coalition==nil then
+    if coalition==nil or airbase:GetCoalition()==coalition then
       if category==nil or category==airbase:GetAirbaseCategory() then
         table.insert(airbases, airbase)
       end
     end
   end
-  
+
+  return airbases
+end
+
+--- Get all airbase names of the current map. This includes ships and FARPS.
+-- @param DCS#Coalition coalition (Optional) Return only airbases belonging to the specified coalition. By default, all airbases of the map are returned.
+-- @param #number category (Optional) Return only airbases of a certain category, e.g. Airbase.Category.FARP
+-- @return #table Table containing all airbase names of the current map.
+function AIRBASE.GetAllAirbaseNames(coalition, category)
+
+  local airbases={}
+  for airbasename,_airbase in pairs(_DATABASE.AIRBASES) do
+    local airbase=_airbase --#AIRBASE
+    if coalition==nil or airbase:GetCoalition()==coalition then
+      if category==nil or category==airbase:GetAirbaseCategory() then
+        table.insert(airbases, airbasename)
+      end
+    end
+  end
+
   return airbases
 end
 
 --- Get ID of the airbase.
 -- @param #AIRBASE self
--- @param #boolean unique (Optional) If true, ships will get a negative sign as the unit ID might be the same as an airbase ID. Default off! 
+-- @param #boolean unique (Optional) If true, ships will get a negative sign as the unit ID might be the same as an airbase ID. Default off!
 -- @return #number The airbase ID.
 function AIRBASE:GetID(unique)
 
   if self.AirbaseID then
-  
+
     return unique and self.AirbaseID or math.abs(self.AirbaseID)
-    
+
   else
-  
+
    for DCSAirbaseId, DCSAirbase in ipairs(world.getAirbases()) do
-   
+
       -- Get the airbase name.
       local AirbaseName = DCSAirbase:getName()
-      
+
       -- This gives the incorrect value to be inserted into the airdromeID for DCS 2.5.6!
       local airbaseID=tonumber(DCSAirbase:getID())
-      
+
       local airbaseCategory=self:GetAirbaseCategory()
       
-      --env.info(string.format("FF airbase=%s id=%s category=%s", tostring(AirbaseName), tostring(airbaseID), tostring(airbaseCategory)))
-      
-      -- No way AFIK to get the DCS version. So we check if the event exists. That should tell us if we are on DCS 2.5.6 or prior to that.
-      --[[
-      if world.event.S_EVENT_KILL and world.event.S_EVENT_KILL>0 and airbaseCategory==Airbase.Category.AIRDROME then
-      
-        -- We have to take the key value of this loop!
-        airbaseID=DCSAirbaseId
-        
-        -- Now another quirk: for Caucasus, we need to add 11 to the key value to get the correct ID. See https://forums.eagle.ru/showpost.php?p=4210774&postcount=11
-        if UTILS.GetDCSMap()==DCSMAP.Caucasus then
-          airbaseID=airbaseID+11        
-        end
-      end
-      ]]
-      
       if AirbaseName==self.AirbaseName then
-        if airbaseCategory==Airbase.Category.SHIP then
+        if airbaseCategory==Airbase.Category.SHIP or airbaseCategory==Airbase.Category.HELIPAD then
           -- Ships get a negative sign as their unit number might be the same as the ID of another airbase.
           return unique and -airbaseID or airbaseID
         else
           return airbaseID
-        end      
+        end
       end
-            
+
     end
-    
+
   end
 
   return nil
 end
 
 
+--- Get category of airbase.
+-- @param #AIRBASE self
+-- @return #number Category of airbase from GetDesc().category.
+function AIRBASE:GetAirbaseCategory()
+  return self.category
+end
+
+--- Check if airbase is an airdrome.
+-- @param #AIRBASE self
+-- @return #boolean If true, airbase is an airdrome.
+function AIRBASE:IsAirdrome()
+  return self.isAirdrome
+end
+
+--- Check if airbase is a helipad.
+-- @param #AIRBASE self
+-- @return #boolean If true, airbase is a helipad.
+function AIRBASE:IsHelipad()
+  return self.isHelipad
+end
+
+--- Check if airbase is a ship.
+-- @param #AIRBASE self
+-- @return #boolean If true, airbase is a ship.
+function AIRBASE:IsShip()
+  return self.isShip
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Parking
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- Returns a table of parking data for a given airbase. If the optional parameter *available* is true only available parking will be returned, otherwise all parking at the base is returned. Term types have the following enumerated values:
--- 
+--
 -- * 16 : Valid spawn points on runway
--- * 40 : Helicopter only spawn  
+-- * 40 : Helicopter only spawn
 -- * 68 : Hardened Air Shelter
 -- * 72 : Open/Shelter air airplane only
 -- * 104: Open air spawn
--- 
+--
 -- Note that only Caucuses will return 68 as it is the only map currently with hardened air shelters.
 -- 104 are also generally larger, but does not guarantee a large aircraft like the B-52 or a C-130 are capable of spawning there.
--- 
+--
 -- Table entries:
--- 
+--
 -- * Term_index is the id for the parking
 -- * vTerminal pos is its vec3 position in the world
 -- * fDistToRW is the distance to the take-off position for the active runway from the parking.
--- 
+--
 -- @param #AIRBASE self
 -- @param #boolean available If true, only available parking spots will be returned.
 -- @return #table Table with parking data. See https://wiki.hoggitworld.com/view/DCS_func_getParking
@@ -623,13 +703,13 @@ function AIRBASE:GetParkingData(available)
 
   -- Get DCS airbase object.
   local DCSAirbase=self:GetDCSObject()
-  
+
   -- Get parking data.
   local parkingdata=nil
   if DCSAirbase then
     parkingdata=DCSAirbase:getParking(available)
   end
-  
+
   self:T2({parkingdata=parkingdata})
   return parkingdata
 end
@@ -642,27 +722,27 @@ function AIRBASE:GetParkingSpotsNumber(termtype)
 
   -- Get free parking spots data.
   local parkingdata=self:GetParkingData(false)
-  
+
   local nspots=0
   for _,parkingspot in pairs(parkingdata) do
     if AIRBASE._CheckTerminalType(parkingspot.Term_Type, termtype) then
       nspots=nspots+1
     end
   end
-  
+
   return nspots
 end
 
 --- Get number of free parking spots at an airbase.
 -- @param #AIRBASE self
 -- @param #AIRBASE.TerminalType termtype Terminal type.
--- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships. 
+-- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
 -- @return #number Number of free parking spots at this airbase.
 function AIRBASE:GetFreeParkingSpotsNumber(termtype, allowTOAC)
 
   -- Get free parking spots data.
   local parkingdata=self:GetParkingData(true)
-  
+
   local nfree=0
   for _,parkingspot in pairs(parkingdata) do
     -- Spots on runway are not counted unless explicitly requested.
@@ -672,7 +752,7 @@ function AIRBASE:GetFreeParkingSpotsNumber(termtype, allowTOAC)
       end
     end
   end
-  
+
   return nfree
 end
 
@@ -685,7 +765,7 @@ function AIRBASE:GetFreeParkingSpotsCoordinates(termtype, allowTOAC)
 
   -- Get free parking spots data.
   local parkingdata=self:GetParkingData(true)
-  
+
   -- Put coordinates of free spots into table.
   local spots={}
   for _,parkingspot in pairs(parkingdata) do
@@ -696,7 +776,7 @@ function AIRBASE:GetFreeParkingSpotsCoordinates(termtype, allowTOAC)
       end
     end
   end
-  
+
   return spots
 end
 
@@ -708,26 +788,78 @@ function AIRBASE:GetParkingSpotsCoordinates(termtype)
 
   -- Get all parking spots data.
   local parkingdata=self:GetParkingData(false)
-  
+
   -- Put coordinates of free spots into table.
   local spots={}
   for _,parkingspot in ipairs(parkingdata) do
-  
+
     -- Coordinates on runway are not returned unless explicitly requested.
     if AIRBASE._CheckTerminalType(parkingspot.Term_Type, termtype) then
-    
+
       -- Get coordinate from Vec3 terminal position.
       local _coord=COORDINATE:NewFromVec3(parkingspot.vTerminalPos)
-      
+
       -- Add to table.
       table.insert(spots, _coord)
     end
-    
+
   end
-  
+
   return spots
 end
 
+--- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
+-- @param #AIRBASE self
+-- @return#AIRBASE self
+function AIRBASE:_InitParkingSpots()
+
+  -- Get parking data of all spots (free or occupied)
+  local parkingdata=self:GetParkingData(false)
+
+  -- Init table.
+  self.parking={}
+  self.parkingByID={}
+  
+  self.NparkingTotal=0
+  self.NparkingTerminal={}
+  for _,terminalType in pairs(AIRBASE.TerminalType) do
+    self.NparkingTerminal[terminalType]=0
+  end  
+
+  -- Put coordinates of parking spots into table.
+  for _,spot in pairs(parkingdata) do
+      
+      -- New parking spot.
+      local park={} --#AIRBASE.ParkingSpot
+      park.Vec3=spot.vTerminalPos
+      park.Coordinate=COORDINATE:NewFromVec3(spot.vTerminalPos)
+      park.DistToRwy=spot.fDistToRW
+      park.Free=nil
+      park.TerminalID=spot.Term_Index
+      park.TerminalID0=spot.Term_Index_0
+      park.TerminalType=spot.Term_Type
+      park.TOAC=spot.TO_AC
+      
+      for _,terminalType in pairs(AIRBASE.TerminalType) do
+        if self._CheckTerminalType(terminalType, park.TerminalType) then
+          self.NparkingTerminal[terminalType]=self.NparkingTerminal[terminalType]+1
+        end
+      end      
+      
+      self.parkingByID[park.TerminalID]=park
+      table.insert(self.parking, park)
+  end
+
+  return self
+end
+
+--- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
+-- @param #AIRBASE self
+-- @param #number TerminalID Terminal ID.
+-- @return #AIRBASE.ParkingSpot Parking spot.
+function AIRBASE:_GetParkingSpotByID(TerminalID)
+  return self.parkingByID[TerminalID]
+end
 
 --- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
 -- @param #AIRBASE self
@@ -735,11 +867,12 @@ end
 -- @return #table Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 function AIRBASE:GetParkingSpotsTable(termtype)
 
-  -- Get parking data of all spots (free or occupied) 
+  -- Get parking data of all spots (free or occupied)
   local parkingdata=self:GetParkingData(false)
+  
   -- Get parking data of all free spots.
   local parkingfree=self:GetParkingData(true)
-  
+
   -- Function to ckeck if any parking spot is free.
   local function _isfree(_tocheck)
     for _,_spot in pairs(parkingfree) do
@@ -749,44 +882,53 @@ function AIRBASE:GetParkingSpotsTable(termtype)
     end
     return false
   end
-  
+
   -- Put coordinates of parking spots into table.
   local spots={}
   for _,_spot in pairs(parkingdata) do
+  
     if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then
-      self:T2({_spot=_spot})
-      local _free=_isfree(_spot)
-      local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
-      table.insert(spots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=_free, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
+    
+      local spot=self:_GetParkingSpotByID(_spot.Term_Index)
+      
+      spot.Free=_isfree(_spot) -- updated
+      spot.TOAC=_spot.TO_AC    -- updated
+    
+      table.insert(spots, spot)
     end
+    
   end
-  
-  self:T2({ spots = spots } )
-  
+
   return spots
 end
 
 --- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
 -- @param #AIRBASE self
 -- @param #AIRBASE.TerminalType termtype Terminal type.
--- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships. 
+-- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
 -- @return #table Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
 
   -- Get parking data of all free spots.
   local parkingfree=self:GetParkingData(true)
-    
+
   -- Put coordinates of free spots into table.
   local freespots={}
   for _,_spot in pairs(parkingfree) do
     if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) and _spot.Term_Index>0 then
       if (allowTOAC and allowTOAC==true) or _spot.TO_AC==false then
-        local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
-        table.insert(freespots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=true, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
+      
+        local spot=self:_GetParkingSpotByID(_spot.Term_Index)
+
+        spot.Free=true -- updated
+        spot.TOAC=_spot.TO_AC    -- updated
+      
+        table.insert(freespots, spot)
+        
       end
     end
   end
-  
+
   return freespots
 end
 
@@ -795,14 +937,10 @@ end
 -- @param #number TerminalID The terminal ID of the parking spot.
 -- @return #AIRBASE.ParkingSpot Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 function AIRBASE:GetParkingSpotData(TerminalID)
-  self:F({TerminalID=TerminalID})
 
   -- Get parking data.
   local parkingdata=self:GetParkingSpotsTable()
-  
-  -- Debug output.
-  self:T2({parkingdata=parkingdata})
-  
+
   for _,_spot in pairs(parkingdata) do
     local spot=_spot --#AIRBASE.ParkingSpot
     self:T({TerminalID=spot.TerminalID,TerminalType=spot.TerminalType})
@@ -810,7 +948,7 @@ function AIRBASE:GetParkingSpotData(TerminalID)
       return spot
     end
   end
-  
+
   self:E("ERROR: Could not find spot with Terminal ID="..tostring(TerminalID))
   return nil
 end
@@ -832,18 +970,18 @@ function AIRBASE:MarkParkingSpots(termtype, mark)
   -- Get airbase name.
   local airbasename=self:GetName()
   self:E(string.format("Parking spots at %s for termial type %s:", airbasename, tostring(termtype)))
-  
+
   for _,_spot in pairs(parkingdata) do
-    
+
     -- Mark text.
     local _text=string.format("Term Index=%d, Term Type=%d, Free=%s, TOAC=%s, Term ID0=%d, Dist2Rwy=%.1f m",
     _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy)
-    
+
     -- Create mark on the F10 map.
     if mark then
       _spot.Coordinate:MarkToAll(_text)
     end
-    
+
     -- Info to DCS.log file.
     local _text=string.format("%s, Term Index=%3d, Term Type=%03d, Free=%5s, TOAC=%5s, Term ID0=%3d, Dist2Rwy=%.1f m",
     airbasename, _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy)
@@ -861,7 +999,7 @@ end
 -- @param #boolean scanstatics (Optional) Scan for statics as obstacles. Default true.
 -- @param #boolean scanscenery (Optional) Scan for scenery as obstacles. Default false. Can cause problems with e.g. shelters.
 -- @param #boolean verysafe (Optional) If true, wait until an aircraft has taken off until the parking spot is considered to be free. Defaul false.
--- @param #number nspots (Optional) Number of freeparking spots requested. Default is the number of aircraft in the group. 
+-- @param #number nspots (Optional) Number of freeparking spots requested. Default is the number of aircraft in the group.
 -- @param #table parkingdata (Optional) Parking spots data table. If not given it is automatically derived from the GetParkingSpotsTable() function.
 -- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
 function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nspots, parkingdata)
@@ -879,8 +1017,8 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   end
   if verysafe==nil then
     verysafe=false
-  end  
-  
+  end
+
   -- Function calculating the overlap of two (square) objects.
   local function _overlap(object1, object2, dist)
     local pos1=object1 --Wrapper.Positionable#POSITIONABLE
@@ -888,107 +1026,107 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     local r1=pos1:GetBoundingRadius()
     local r2=pos2:GetBoundingRadius()
     if r1 and r2 then
-      local safedist=(r1+r2)*1.1    
+      local safedist=(r1+r2)*1.1
       local safe = (dist > safedist)
       self:T2(string.format("r1=%.1f r2=%.1f s=%.1f d=%.1f ==> safe=%s", r1, r2, safedist, dist, tostring(safe)))
       return safe
     else
       return true
-    end    
+    end
   end
-  
+
   -- Get airport name.
   local airport=self:GetName()
-  
+
   -- Get parking spot data table. This contains free and "non-free" spots.
   -- Note that there are three major issues with the DCS getParking() function:
   -- 1. A spot is considered as NOT free until an aircraft that is present has finally taken off. This might be a bit long especiall at smaller airports.
   -- 2. A "free" spot does not take the aircraft size into accound. So if two big aircraft are spawned on spots next to each other, they might overlap and get destroyed.
   -- 3. The routine return a free spot, if there a static objects placed on the spot.
   parkingdata=parkingdata or self:GetParkingSpotsTable(terminaltype)
-  
+
   -- Get the aircraft size, i.e. it's longest side of x,z.
   local aircraft=group:GetUnit(1)
   local _aircraftsize, ax,ay,az=aircraft:GetObjectSize()
-  
+
   -- Number of spots we are looking for. Note that, e.g. grouping can require a number different from the group size!
   local _nspots=nspots or group:GetSize()
-  
+
   -- Debug info.
   self:E(string.format("%s: Looking for %d parking spot(s) for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at termial type %s.", airport, _nspots, _aircraftsize, ax, ay, az, tostring(terminaltype)))
-  
+
   -- Table of valid spots.
   local validspots={}
   local nvalid=0
-  
+
   -- Test other stuff if no parking spot is available.
   local _test=false
   if _test then
     return validspots
   end
-  
+
   -- Mark all found obstacles on F10 map for debugging.
   local markobstacles=false
-  
+
   -- Loop over all known parking spots
   for _,parkingspot in pairs(parkingdata) do
-  
+
     -- Coordinate of the parking spot.
     local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
     local _termid=parkingspot.TerminalID
-    
+
     self:T2({_termid=_termid})
-    
+
     if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
-    
+
       -- Very safe uses the DCS getParking() info to check if a spot is free. Unfortunately, the function returns free=false until the aircraft has actually taken-off.
       if verysafe and (parkingspot.Free==false or parkingspot.TOAC==true) then
-          
+
         -- DCS getParking() routine returned that spot is not free.
         self:T(string.format("%s: Parking spot id %d NOT free (or aircraft has not taken off yet). Free=%s, TOAC=%s.", airport, parkingspot.TerminalID, tostring(parkingspot.Free), tostring(parkingspot.TOAC)))
-    
+
       else
-            
+
         -- Scan a radius of 50 meters around the spot.
         local _,_,_,_units,_statics,_sceneries=_spot:ScanObjects(scanradius, scanunits, scanstatics, scanscenery)
-      
+
         -- Loop over objects within scan radius.
         local occupied=false
-    
-        -- Check all units.    
+
+        -- Check all units.
         for _,unit in pairs(_units) do
           local _coord=unit:GetCoordinate()
-          local _dist=_coord:Get2DDistance(_spot)      
+          local _dist=_coord:Get2DDistance(_spot)
           local _safe=_overlap(aircraft, unit, _dist)
-          
+
           if markobstacles then
             local l,x,y,z=unit:GetObjectSize()
             _coord:MarkToAll(string.format("Unit %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", unit:GetName(),x,y,z,l,_dist, _termid, tostring(_safe)))
           end
-          
+
           if scanunits and not _safe then
             occupied=true
-          end      
+          end
         end
-      
+
         -- Check all statics.
         for _,static in pairs(_statics) do
           local _static=STATIC:Find(static)
           local _vec3=static:getPoint()
           local _coord=COORDINATE:NewFromVec3(_vec3)
-          local _dist=_coord:Get2DDistance(_spot)      
+          local _dist=_coord:Get2DDistance(_spot)
           local _safe=_overlap(aircraft,_static,_dist)
-          
+
           if markobstacles then
             local l,x,y,z=_static:GetObjectSize()
             _coord:MarkToAll(string.format("Static %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", static:getName(),x,y,z,l,_dist, _termid, tostring(_safe)))
           end
-          
+
           if scanstatics and not _safe then
             occupied=true
-          end            
+          end
         end
-        
+
         -- Check all scenery.
         for _,scenery in pairs(_sceneries) do
           local _scenery=SCENERY:Register(scenery:getTypeName(), scenery)
@@ -996,17 +1134,17 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
           local _coord=COORDINATE:NewFromVec3(_vec3)
           local _dist=_coord:Get2DDistance(_spot)
           local _safe=_overlap(aircraft,_scenery,_dist)
-          
+
           if markobstacles then
             local l,x,y,z=scenery:GetObjectSize(scenery)
             _coord:MarkToAll(string.format("Scenery %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", scenery:getTypeName(),x,y,z,l,_dist, _termid, tostring(_safe)))
           end
-          
+
           if scanscenery and not _safe then
             occupied=true
-          end                  
+          end
         end
-        
+
         -- Now check the already given spots so that we do not put a large aircraft next to one we already assigned a nearby spot.
         for _,_takenspot in pairs(validspots) do
           local _dist=_takenspot.Coordinate:Get2DDistance(_spot)
@@ -1015,7 +1153,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
             occupied=true
           end
         end
-              
+
         --_spot:MarkToAll(string.format("Parking spot %d free=%s", parkingspot.TerminalID, tostring(not occupied)))
         if occupied then
           self:I(string.format("%s: Parking spot id %d occupied.", airport, _termid))
@@ -1027,112 +1165,19 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
           nvalid=nvalid+1
           self:I(string.format("%s: Parking spot id %d free. Nfree=%d/%d.", airport, _termid, nvalid,_nspots))
         end
-        
+
       end -- loop over units
-         
+
       -- We found enough spots.
       if nvalid>=_nspots then
         return validspots
       end
     end -- check terminal type
-  end  
-    
+  end
+
   -- Retrun spots we found, even if there were not enough.
   return validspots
 end
-
---- Function that checks if at leat one unit of a group has been spawned close to a spawn point on the runway.
--- @param #AIRBASE self
--- @param Wrapper.Group#GROUP group Group to be checked.
--- @param #number radius Radius around the spawn point to be checked. Default is 50 m.
--- @param #boolean despawn If true, the group is destroyed. 
--- @return #boolean True if group is within radius around spawn points on runway.
-function AIRBASE:CheckOnRunWay(group, radius, despawn)
-
-  -- Default radius.
-  radius=radius or 50
-  
-  -- We only check at real airbases (not FARPS or ships).
-  if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
-    return false
-  end
-
-  if group and group:IsAlive() then
-  
-    -- Debug.
-    self:T(string.format("%s, checking if group %s is on runway?",self:GetName(), group:GetName()))
-  
-    -- Get coordinates on runway.
-    local runwaypoints=self:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
-    
-    -- Mark runway spawn points.
-    --[[
-    for _i,_coord in pairs(runwaypoints) do
-      _coord:MarkToAll(string.format("runway %d",_i))
-    end
-    ]]
-    
-    -- Get units of group.
-    local units=group:GetUnits()
-    
-    -- Loop over units.
-    for _,_unit in pairs(units) do
-    
-      local unit=_unit --Wrapper.Unit#UNIT
-      
-      -- Check if unit is alive and not in air.
-      if unit and unit:IsAlive() and not unit:InAir() then
-        self:T(string.format("%s, checking if unit %s is on runway?",self:GetName(), unit:GetName()))
-        
-        -- Loop over runway spawn points.
-        for _i,_coord in pairs(runwaypoints) do
-
-          -- Distance between unit and spawn pos.
-          local dist=unit:GetCoordinate():Get2DDistance(_coord)
-          
-          -- Mark unit spawn points for debugging.
-          --unit:GetCoordinate():MarkToAll(string.format("unit %s distance to rwy %d = %d",unit:GetName(),_i, dist))
-          
-          -- Check if unit is withing radius.
-          if dist<radius  then
-            self:E(string.format("%s, unit %s of group %s was spawned on runway #%d. Distance %.1f < radius %.1f m. Despawn = %s.", self:GetName(), unit:GetName(), group:GetName(),_i, dist, radius, tostring(despawn)))
-            --unit:FlareRed()
-            if despawn then
-              group:Destroy(true)
-            end
-            return true
-          else
-            self:T(string.format("%s, unit %s of group %s was NOT spawned on runway #%d. Distance %.1f > radius %.1f m. Despawn = %s.", self:GetName(), unit:GetName(), group:GetName(),_i, dist, radius, tostring(despawn)))
-            --unit:FlareGreen()
-          end
-                    
-        end
-      else
-        self:T(string.format("%s, checking if unit %s of group %s is on runway. Unit is NOT alive.",self:GetName(), unit:GetName(), group:GetName()))  
-      end      
-    end
-  else
-    self:T(string.format("%s, checking if group %s is on runway. Group is NOT alive.",self:GetName(), group:GetName()))
-  end
-  
-  return false
-end
-
---- Get category of airbase.
--- @param #AIRBASE self
--- @return #number Category of airbase from GetDesc().category.
-function AIRBASE:GetAirbaseCategory()
-  local desc=self:GetDesc()
-  local category=Airbase.Category.AIRDROME
-
-  if desc and desc.category then
-    category=desc.category
-  else
-    self:E(string.format("ERROR: Cannot get category of airbase %s due to DCS 2.5.6 bug! Assuming it is an AIRDROME for now...", tostring(self.AirbaseName)))
-  end
-  return category
-end
-
 
 --- Helper function to check for the correct terminal type including "artificial" ones.
 -- @param #number Term_Type Termial type from getParking routine.
@@ -1153,15 +1198,15 @@ function AIRBASE._CheckTerminalType(Term_Type, termtype)
       return true
     end
   end
-  
+
   -- Init no match.
   local match=false
-  
-  -- Standar case.  
+
+  -- Standar case.
   if Term_Type==termtype then
     match=true
   end
-  
+
   -- Artificial cases. Combination of terminal types.
   if termtype==AIRBASE.TerminalType.OpenMedOrBig then
     if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig then
@@ -1176,9 +1221,13 @@ function AIRBASE._CheckTerminalType(Term_Type, termtype)
       match=true
     end
   end
-  
+
   return match
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Runway
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get runways data. Only for airdromes!
 -- @param #AIRBASE self
@@ -1189,106 +1238,157 @@ function AIRBASE:GetRunwayData(magvar, mark)
 
   -- Runway table.
   local runways={}
-  
+
   if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
     return {}
   end
 
-  -- Get spawn points on runway.
+  -- Get spawn points on runway. These can be used to determine the runway heading.
   local runwaycoords=self:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
   
+  -- Debug: For finding the numbers of the spawn points belonging to each runway.
+  if false then
+    for i,_coord in pairs(runwaycoords) do
+      local coord=_coord --Core.Point#COORDINATE
+      coord:Translate(100, 0):MarkToAll("Runway i="..i)
+    end
+  end
+
   -- Magnetic declination.
   magvar=magvar or UTILS.GetMagneticDeclination()
-  
+
+  -- Number of runways.
   local N=#runwaycoords
-  local dN=2
-  local ex=false
-  
+  local N2=N/2
+  local exception=false
+
+  -- Airbase name.
   local name=self:GetName()
-  if name==AIRBASE.Nevada.Jean_Airport or 
-     name==AIRBASE.Nevada.Creech_AFB   or 
+  
+
+  -- Exceptions
+  if name==AIRBASE.Nevada.Jean_Airport or
+     name==AIRBASE.Nevada.Creech_AFB   or
      name==AIRBASE.PersianGulf.Abu_Dhabi_International_Airport or
      name==AIRBASE.PersianGulf.Dubai_Intl or
      name==AIRBASE.PersianGulf.Shiraz_International_Airport or
-     name==AIRBASE.PersianGulf.Kish_International_Airport then
-     
-    N=#runwaycoords/2
-    dN=1
-    ex=true
+     name==AIRBASE.PersianGulf.Kish_International_Airport
+     then
+
+    -- 1-->4, 2-->3, 3-->2, 4-->1
+    exception=1
+    
+  elseif UTILS.GetDCSMap()==DCSMAP.Syria and N>=2 and 
+    name~=AIRBASE.Syria.Minakh and
+    name~=AIRBASE.Syria.Damascus and
+    name~=AIRBASE.Syria.Khalkhalah and
+    name~=AIRBASE.Syria.Marj_Ruhayyil and
+    name~=AIRBASE.Syria.Beirut_Rafic_Hariri then
+  
+    -- 1-->3, 2-->4, 3-->1, 4-->2
+    exception=2
+      
   end
   
-  
-  for i=1,N,dN do
-  
-    local j=i+1
-    if ex then
-      --j=N+i
-      j=#runwaycoords-i+1
+  local function f(i)
+
+    local j
+        
+    if exception==1 then
+    
+      j=N-(i+1)  -- 1-->4, 2-->3
+      
+    elseif exception==2 then
+    
+      if i<=N2 then
+        j=i+N2  -- 1-->3, 2-->4
+      else
+        j=i-N2  -- 3-->1, 4-->3
+      end
+      
+    else
+
+      if i%2==0 then
+        j=i-1  -- even 2-->1, 4-->3
+      else
+        j=i+1  -- odd  1-->2, 3-->4
+      end
+    
     end
     
+    -- Special case where there is no obvious order.
+    if name==AIRBASE.Syria.Beirut_Rafic_Hariri then
+      if i==1 then
+        j=3
+      elseif i==2 then
+        j=6
+      elseif i==3 then
+        j=1
+      elseif i==4 then
+        j=5
+      elseif i==5 then
+        j=4
+      elseif i==6 then
+        j=2
+      end
+    end
+
+    if name==AIRBASE.Syria.Ramat_David then
+      if i==1 then
+        j=4
+      elseif i==2 then
+        j=6
+      elseif i==3 then
+        j=5
+      elseif i==4 then
+        j=1
+      elseif i==5 then
+        j=3
+      elseif i==6 then
+        j=2
+      end
+    end
+  
+    return j
+  end
+
+
+  for i=1,N do
+
+    -- Get the other spawn point coordinate.
+    local j=f(i)
+
     -- Coordinates of the two runway points.
-    local c1=runwaycoords[i] --Core.Point#COORDINATES
-    local c2=runwaycoords[j] --Core.Point#COORDINATES
-   
+    local c1=runwaycoords[i] --Core.Point#COORDINATE
+    local c2=runwaycoords[j] --Core.Point#COORDINATE
+
     -- Heading of runway.
     local hdg=c1:HeadingTo(c2)
-    
+
     -- Runway ID: heading=070° ==> idx="07"
     local idx=string.format("%02d", UTILS.Round((hdg-magvar)/10, 0))
-        
+
     -- Runway table.
     local runway={} --#AIRBASE.Runway
     runway.heading=hdg
     runway.idx=idx
-    runway.length=c1:Get2DDistance(c2)    
+    runway.length=c1:Get2DDistance(c2)
     runway.position=c1
     runway.endpoint=c2
-    
+
     -- Debug info.
-    self:T(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m", self:GetName(), runway.idx, runway.heading, runway.length))
-    
+    self:I(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m i=%d j=%d", self:GetName(), runway.idx, runway.heading, runway.length, i, j))
+
     -- Debug mark
     if mark then
-      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d (magvar=%d), length=%d m", runway.idx, runway.heading, magvar, runway.length))
+      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d (magvar=%d), length=%d m, i=%d, j=%d", runway.idx, runway.heading, magvar, runway.length, i, j))
     end
-    
+
     -- Add runway.
     table.insert(runways, runway)
-    
+
   end
-  
-  -- Get inverse runways
-  local inverse={}
-  for _,_runway in pairs(runways) do
-    local r=_runway --#AIRBASE.Runway
-    
-    local runway={} --#AIRBASE.Runway    
-    runway.heading=r.heading-180
-    if runway.heading<0 then
-      runway.heading=runway.heading+360
-    end    
-    runway.idx=string.format("%02d", math.max(0, UTILS.Round((runway.heading-magvar)/10, 0)))
-    runway.length=r.length
-    runway.position=r.endpoint
-    runway.endpoint=r.position
-    
-    -- Debug info.
-    self:T(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m", self:GetName(), runway.idx, runway.heading, runway.length))
-    
-    -- Debug mark
-    if mark then
-      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d (magvar=%d), length=%d m", runway.idx, runway.heading, magvar, runway.length))
-    end
-     
-    -- Add runway.
-    table.insert(inverse, runway)    
-  end
-  
-  -- Add inverse runway.
-  for _,runway in pairs(inverse) do
-    table.insert(runways, runway)        
-  end
-  
+
   return runways
 end
 
@@ -1316,48 +1416,115 @@ function AIRBASE:GetActiveRunway(magvar)
   -- Get wind vector.
   local Vwind=self:GetCoordinate():GetWindWithTurbulenceVec3()
   local norm=UTILS.VecNorm(Vwind)
-  
+
   -- Active runway number.
   local iact=1
-  
+
   -- Check if wind is blowing (norm>0).
   if norm>0 then
-  
+
     -- Normalize wind (not necessary).
     Vwind.x=Vwind.x/norm
     Vwind.y=0
     Vwind.z=Vwind.z/norm
-    
+
     -- Loop over runways.
     local dotmin=nil
     for i,_runway in pairs(runways) do
       local runway=_runway --#AIRBASE.Runway
-      
+
       -- Angle in rad.
       local alpha=math.rad(runway.heading)
-      
+
       -- Runway vector.
       local Vrunway={x=math.cos(alpha), y=0, z=math.sin(alpha)}
-      
+
       -- Dot product: parallel component of the two vectors.
       local dot=UTILS.VecDot(Vwind, Vrunway)
-      
+
       -- Debug.
       --env.info(string.format("runway=%03d° dot=%.3f", runway.heading, dot))
-      
+
       -- New min?
       if dotmin==nil or dot<dotmin then
         dotmin=dot
         iact=i
       end
-      
+
     end
   else
     self:E("WARNING: Norm of wind is zero! Cannot determine active runway based on wind direction.")
   end
-  
+
   return runways[iact]
 end
 
+--- Function that checks if at leat one unit of a group has been spawned close to a spawn point on the runway.
+-- @param #AIRBASE self
+-- @param Wrapper.Group#GROUP group Group to be checked.
+-- @param #number radius Radius around the spawn point to be checked. Default is 50 m.
+-- @param #boolean despawn If true, the group is destroyed.
+-- @return #boolean True if group is within radius around spawn points on runway.
+function AIRBASE:CheckOnRunWay(group, radius, despawn)
 
+  -- Default radius.
+  radius=radius or 50
 
+  -- We only check at real airbases (not FARPS or ships).
+  if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
+    return false
+  end
+
+  if group and group:IsAlive() then
+
+    -- Debug.
+    self:T(string.format("%s, checking if group %s is on runway?",self:GetName(), group:GetName()))
+
+    -- Get coordinates on runway.
+    local runwaypoints=self:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
+
+    -- Get units of group.
+    local units=group:GetUnits()
+
+    -- Loop over units.
+    for _,_unit in pairs(units) do
+
+      local unit=_unit --Wrapper.Unit#UNIT
+
+      -- Check if unit is alive and not in air.
+      if unit and unit:IsAlive() and not unit:InAir() then
+        self:T(string.format("%s, checking if unit %s is on runway?",self:GetName(), unit:GetName()))
+
+        -- Loop over runway spawn points.
+        for _i,_coord in pairs(runwaypoints) do
+
+          -- Distance between unit and spawn pos.
+          local dist=unit:GetCoordinate():Get2DDistance(_coord)
+
+          -- Mark unit spawn points for debugging.
+          --unit:GetCoordinate():MarkToAll(string.format("unit %s distance to rwy %d = %d",unit:GetName(),_i, dist))
+
+          -- Check if unit is withing radius.
+          if dist<radius  then
+            self:E(string.format("%s, unit %s of group %s was spawned on runway #%d. Distance %.1f < radius %.1f m. Despawn = %s.", self:GetName(), unit:GetName(), group:GetName(),_i, dist, radius, tostring(despawn)))
+            --unit:FlareRed()
+            if despawn then
+              group:Destroy(true)
+            end
+            return true
+          else
+            self:T(string.format("%s, unit %s of group %s was NOT spawned on runway #%d. Distance %.1f > radius %.1f m. Despawn = %s.", self:GetName(), unit:GetName(), group:GetName(),_i, dist, radius, tostring(despawn)))
+            --unit:FlareGreen()
+          end
+
+        end
+      else
+        self:T(string.format("%s, checking if unit %s of group %s is on runway. Unit is NOT alive.",self:GetName(), unit:GetName(), group:GetName()))
+      end
+    end
+  else
+    self:T(string.format("%s, checking if group %s is on runway. Group is NOT alive.",self:GetName(), group:GetName()))
+  end
+
+  return false
+end
