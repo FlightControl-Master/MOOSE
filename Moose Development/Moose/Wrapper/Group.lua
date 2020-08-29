@@ -2245,45 +2245,6 @@ function GROUP:GetDCSDesc(n)
   return nil
 end
 
---- Get health of the group.
--- @param #GROUP self
--- @return #number Health in percent.
-function GROUP:GetHealth()
-
-  local lp=0
-  local lp0=0
-  
-  local units=self:GetUnits()
-  
-  for _,_unit in pairs(units or {}) do
-    local unit=_unit --Wrapper.Unit#UNIT
-    
-    if unit and unit:IsAlive() then
-      local life=unit:GetLife()
-      local life0=unit:GetLife0()
-      life0=math.max(life0, life) --Issue with ships
-      
-      lp=lp+life
-      lp0=lp0+life
-      
-    end
-  
-  end
-  
-  if lp0>0 then
-    return lp/lp0*100
-  else
-    return 0
-  end
-end
-
---- Get damage of the group.
--- @param #GROUP self
--- @return #number Damage in percent.
-function GROUP:GetDamage()
-  return 100-self:GetHealth()
-end
-
 
 --- Get the generalized attribute of a self.
 -- Note that for a heterogenious self, the attribute is determined from the attribute of the first unit!

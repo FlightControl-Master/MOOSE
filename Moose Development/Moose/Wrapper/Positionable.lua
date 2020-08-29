@@ -304,8 +304,7 @@ function POSITIONABLE:GetPointVec3()
     -- Get 3D vector.
     local PositionableVec3 = self:GetPositionVec3()
         
-    if self.pointvec3 then
-      --env.info("FF GetCoordinate GOT for "..tostring(self.PositionableName))
+    if false and self.pointvec3 then
 
       -- Update vector.      
       self.pointvec3.x=PositionableVec3.x
@@ -313,9 +312,10 @@ function POSITIONABLE:GetPointVec3()
       self.pointvec3.z=PositionableVec3.z      
       
     else
-      --env.info("FF GetCoordinate NEW for "..tostring(self.PositionableName))
       
+      -- Create a new POINT_VEC3 object.
       self.pointvec3=POINT_VEC3:NewFromVec3(PositionableVec3)
+      
     end
         
     return self.pointvec3
