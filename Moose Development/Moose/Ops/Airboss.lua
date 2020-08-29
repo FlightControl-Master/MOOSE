@@ -3385,6 +3385,11 @@ function AIRBOSS:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PlayerLeaveUnit, self._PlayerLeft)
   self:HandleEvent(EVENTS.MissionEnd)
 
+  --self.StatusScheduler=SCHEDULER:New(self)
+  --self.StatusScheduler:Schedule(self, self._Status, {}, 1, 0.5)
+  
+  self.StatusTimer=TIMER:New(self._Status, self):Start(2, 0.5)
+
   -- Start status check in 1 second.
   self:__Status(1)
 end
@@ -3501,14 +3506,21 @@ function AIRBOSS:onafterStatus(From, Event, To)
     self:_ActivateBeacons()
   end
 
+  -- Call status every ~0.5 seconds.
+  self:__Status(-30)
+
+end
+
+--- Check AI status. Pattern queue AI in the groove? Marshal queue AI arrived in holding zone?
+-- @param #AIRBOSS self
+function AIRBOSS:_Status()
+
   -- Check player status.
   self:_CheckPlayerStatus()
 
   -- Check AI landing pattern status
   self:_CheckAIStatus()
 
-  -- Call status every ~0.5 seconds.
-  self:__Status(-self.dTstatus)
 end
 
 --- Check AI status. Pattern queue AI in the groove? Marshal queue AI arrived in holding zone?
@@ -3559,12 +3571,16 @@ function AIRBOSS:_CheckAIStatus()
 
         -- Get lineup and distance to carrier.
         local lineup=self:_Lineup(unit, true)
+        
+        local unitcoord=unit:GetCoord()
+        
+        local dist=unitcoord:Get2DDistance(self:GetCoord())
 
         -- Distance in NM.
-        local distance=UTILS.MetersToNM(unit:GetCoordinate():Get2DDistance(self:GetCoordinate()))
+        local distance=UTILS.MetersToNM(dist)
 
         -- Altitude in ft.
-        local alt=UTILS.MetersToFeet(unit:GetAltitude())
+        local alt=UTILS.MetersToFeet(unitcoord.y)
 
         -- Check if parameters are right and flight is in the groove.
         if lineup<2 and distance<=0.75 and alt<500 and not element.ballcall then
@@ -10497,6 +10513,8 @@ end
 -- @return Core.Zone#ZONE_POLYGON_BASE Initial zone.
 function AIRBOSS:_GetZoneInitial(case)
 
+  self.zoneInitial=self.zoneInitial or ZONE_POLYGON_BASE:New("Zone CASE I/II Initial")
+
   -- Get radial, i.e. inverse of BRC.
   local radial=self:GetRadial(2, false, false)
 
@@ -10504,7 +10522,7 @@ function AIRBOSS:_GetZoneInitial(case)
   local cv=self:GetCoordinate()
 
   -- Vec2 array.
-  local vec2
+  local vec2={}
 
   if case==1 then
     -- Case I
@@ -10535,15 +10553,20 @@ function AIRBOSS:_GetZoneInitial(case)
   end
 
   -- Polygon zone.
-  local zone=ZONE_POLYGON_BASE:New("Zone CASE I/II Initial", vec2)
+  --local zone=ZONE_POLYGON_BASE:New("Zone CASE I/II Initial", vec2)
+  
+  self.zoneInitial:UpdateFromVec2(vec2)
 
-  return zone
+  --return zone
+  return self.zoneInitial
 end
 
 --- Get lineup groove zone.
 -- @param #AIRBOSS self
 -- @return Core.Zone#ZONE_POLYGON_BASE Lineup zone.
 function AIRBOSS:_GetZoneLineup()
+
+  self.zoneLineup=self.zoneLineup or ZONE_POLYGON_BASE:New("Zone Lineup")
 
   -- Get radial, i.e. inverse of BRC.
   local fbi=self:GetRadial(1, false, false)
@@ -10560,11 +10583,14 @@ function AIRBOSS:_GetZoneLineup()
 
   -- Vec2 array.
   local vec2={c1:GetVec2(), c2:GetVec2(), c3:GetVec2(), c4:GetVec2(), c5:GetVec2()}
+  
+  self.zoneLineup:UpdateFromVec2(vec2)
 
   -- Polygon zone.
-  local zone=ZONE_POLYGON_BASE:New("Zone Lineup", vec2)
-
-  return zone
+  --local zone=ZONE_POLYGON_BASE:New("Zone Lineup", vec2)
+  --return zone
+  
+  return self.zoneLineup
 end
 
 
@@ -10575,6 +10601,8 @@ end
 -- @param #number b Width of the beginning in NM. Default 0.10 NM.
 -- @return Core.Zone#ZONE_POLYGON_BASE Groove zone.
 function AIRBOSS:_GetZoneGroove(l, w, b)
+
+  self.zoneGroove=self.zoneGroove or ZONE_POLYGON_BASE:New("Zone Groove")
 
   l=l or 1.50
   w=w or 0.25
@@ -10596,11 +10624,14 @@ function AIRBOSS:_GetZoneGroove(l, w, b)
 
   -- Vec2 array.
   local vec2={c1:GetVec2(), c2:GetVec2(), c3:GetVec2(), c4:GetVec2(), c5:GetVec2(), c6:GetVec2()}
+  
+  self.zoneGroove:UpdateFromVec2(vec2)
 
   -- Polygon zone.
-  local zone=ZONE_POLYGON_BASE:New("Zone Groove", vec2)
-
-  return zone
+  --local zone=ZONE_POLYGON_BASE:New("Zone Groove", vec2)
+  --return zone
+  
+  return self.zoneGroove
 end
 
 --- Get Bullseye zone with radius 1 NM and DME 3 NM from the carrier. Radial depends on recovery case.
@@ -10624,8 +10655,9 @@ function AIRBOSS:_GetZoneBullseye(case)
 
   -- Create zone.
   local zone=ZONE_RADIUS:New("Zone Bullseye", vec2, radius)
-
   return zone
+  
+  --self.zoneBullseye=self.zoneBullseye or ZONE_RADIUS:New("Zone Bullseye", vec2, radius)
 end
 
 --- Get dirty up zone with radius 1 NM and DME 9 NM from the carrier. Radial depends on recovery case.
@@ -10821,6 +10853,8 @@ end
 -- @return Core.Zone#ZONE Zone surrounding the carrier.
 function AIRBOSS:_GetZoneCarrierBox()
 
+  self.zoneCarrierbox=self.zoneCarrierbox or ZONE_POLYGON_BASE:New("Carrier Box Zone")
+
   -- Stern coordinate.
   local S=self:_GetSternCoord()
 
@@ -10849,15 +10883,20 @@ function AIRBOSS:_GetZoneCarrierBox()
   end
 
   -- Create polygon zone.
-  local zone=ZONE_POLYGON_BASE:New("Carrier Box Zone", vec2)
-
-  return zone
+  --local zone=ZONE_POLYGON_BASE:New("Carrier Box Zone", vec2)
+  --return zone
+  
+  self.zoneCarrierbox:UpdateFromVec2(vec2)
+  
+  return self.zoneCarrierbox
 end
 
 --- Get zone of landing runway.
 -- @param #AIRBOSS self
 -- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
 function AIRBOSS:_GetZoneRunwayBox()
+
+  self.zoneRunwaybox=self.zoneRunwaybox or ZONE_POLYGON_BASE:New("Landing Runway Zone")
 
   -- Stern coordinate.
   local S=self:_GetSternCoord()
@@ -10881,9 +10920,12 @@ function AIRBOSS:_GetZoneRunwayBox()
   end
 
   -- Create polygon zone.
-  local zone=ZONE_POLYGON_BASE:New("Landing Runway Zone", vec2)
-
-  return zone
+  --local zone=ZONE_POLYGON_BASE:New("Landing Runway Zone", vec2)
+  --return zone
+  
+  self.zoneRunwaybox:UpdateFromVec2(vec2)
+  
+  return self.zoneRunwaybox
 end
 
 
@@ -10986,12 +11028,14 @@ function AIRBOSS:_GetZoneHolding(case, stack)
     -- Post 2.5 NM port of carrier.
     local Post=self:GetCoordinate():Translate(D, hdg+270)
 
+    --TODO: update zone not creating a new one.
+
     -- Create holding zone.
-    zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", Post:GetVec2(), self.marshalradius)
+    self.zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", Post:GetVec2(), self.marshalradius)
 
     -- Delta pattern.
     if self.carriertype==AIRBOSS.CarrierType.TARAWA then
-      zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", self.carrier:GetVec2(), UTILS.NMToMeters(5))
+      self.zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", self.carrier:GetVec2(), UTILS.NMToMeters(5))
     end
 
 
@@ -11010,10 +11054,12 @@ function AIRBOSS:_GetZoneHolding(case, stack)
 
     -- Square zone length=7NM width=6 NM behind the carrier starting at angels+15 NM behind the carrier.
     -- So stay 0-5 NM (+1 NM error margin) port of carrier.
-    zoneHolding=ZONE_POLYGON_BASE:New("CASE II/III Holding Zone", p)
+    self.zoneHolding=self.zoneHolding or ZONE_POLYGON_BASE:New("CASE II/III Holding Zone")
+	
+	self.zoneHolding:UpdateFromVec2(p)
   end
 
-  return zoneHolding
+  return self.zoneHolding
 end
 
 --- Get zone where player are automatically commence when enter.
@@ -11054,7 +11100,9 @@ function AIRBOSS:_GetZoneCommence(case, stack)
     end
 
     -- Create holding zone.
-    zone=ZONE_RADIUS:New("CASE I Commence Zone", Three:GetVec2(), R)
+    self.zoneCommence=self.zoneCommence or ZONE_RADIUS:New("CASE I Commence Zone")
+	
+	self.zoneCommence:UpdateFromVec2(Three:GetVec2(), R)
 
   else
     -- Case II/III
@@ -11085,11 +11133,13 @@ function AIRBOSS:_GetZoneCommence(case, stack)
     end
 
     -- Zone polygon.
-    zone=ZONE_POLYGON_BASE:New("CASE II/III Commence Zone", p)
+    self.zoneCommence=self.zoneCommence or ZONE_POLYGON_BASE:New("CASE II/III Commence Zone")
+	
+	self.zoneCommence:UpdateFromVec2(p)
 
   end
 
-  return zone
+  return self.zoneCommence
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -14335,6 +14385,12 @@ function AIRBOSS:GetCoordinate()
   return self.carrier:GetCoord()
 end
 
+--- Get carrier coordinate.
+-- @param #AIRBOSS self
+-- @return Core.Point#COORDINATE Carrier coordinate.
+function AIRBOSS:GetCoord()
+  return self.carrier:GetCoord()
+end
 
 --- Get static weather of this mission from env.mission.weather.
 -- @param #AIRBOSS self

@@ -37,10 +37,10 @@
 -- @field #number callsigncounter Counter to increase callsign names for new assets.
 -- @field Ops.AirWing#AIRWING airwing The AIRWING object the squadron belongs to.
 -- @field #number Ngroups Number of asset flight groups this squadron has. 
--- @field #number engageRange Engagement range in meters.
+-- @field #number engageRange Mission range in meters.
 -- @field #string attribute Generalized attribute of the squadron template group.
 -- @field #number tankerSystem For tanker squads, the refuel system used (boom=0 or probpe=1). Default nil.
--- @field #number refuelSystem For refuelable squads, the refuel system used (boom=0 or probpe=1). Default nil.
+-- @field #number refuelSystem For refuelable squads, the refuel system used (boom=0 or probe=1). Default nil.
 -- @field #table tacanChannel List of TACAN channels available to the squadron.
 -- @field #number radioFreq Radio frequency in MHz the squad uses.
 -- @field #number radioModu Radio modulation the squad uses.

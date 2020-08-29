@@ -619,6 +619,7 @@ do -- FSM
         
     if self[handler] then
     
+      --[[
       if step == "onafter" or step == "OnAfter" then
         self:T( ":::>" .. step .. params[2] .. " : " .. params[1] .. " >> " .. params[2] .. ">" .. step .. params[2] .. "()" .. " >> " .. params[3] )
       elseif step == "onbefore" or step == "OnBefore" then
@@ -630,6 +631,7 @@ do -- FSM
       else
         self:T( ":::>" .. step .. " : " .. params[1] .. " >> " .. params[2] .. " >> " .. params[3] )
       end
+      ]]
       
       self._EventSchedules[EventName] = nil
 
@@ -930,9 +932,10 @@ do -- FSM
   -- @return #boolean If true, FSM can do the event.
   -- @return #string To state.
   function FSM:can(e)
+  
     local Event = self.Events[e]
-    
-    self:F3( { self.current, Event } )
+   
+    --self:F3( { self.current, Event } )
     
     local To = Event and Event.map[self.current] or Event.map['*']
     

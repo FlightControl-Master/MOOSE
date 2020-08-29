@@ -1772,13 +1772,9 @@ end
 
 --- Assign airwing squadron(s) to the mission. Only these squads will be considered for the job.
 -- @param #AUFTRAG self
--- @param #table Squadrons A table of SQUADRONs or a single SQUADRON object. 
+-- @param #table Squadrons A table of SQUADRON(s). **Has to be a table {}** even if a single squad is given.
 -- @return #AUFTRAG self
 function AUFTRAG:AssignSquadrons(Squadrons)
-
-  if Squadrons:IsInstanceOf("SQUADRON") then
-    Squadrons={Squadrons}
-  end
   
   for _,_squad in pairs(Squadrons) do
     local squadron=_squad --Ops.Squadron#SQUADRON

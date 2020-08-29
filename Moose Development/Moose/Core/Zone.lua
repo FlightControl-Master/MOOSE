@@ -443,6 +443,41 @@ function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
 	return self
 end
 
+--- Update zone from a 2D vector.
+-- @param #ZONE_RADIUS self
+-- @param DCS#Vec2 Vec2 The location of the zone.
+-- @param DCS#Distance Radius The radius of the zone.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:UpdateFromVec2(Vec2, Radius)
+
+  -- New center of the zone.
+  self.Vec2=Vec2
+
+  if Radius then
+    self.Radius=Radius
+  end
+
+  return self
+end
+
+--- Update zone from a 2D vector.
+-- @param #ZONE_RADIUS self
+-- @param DCS#Vec3 Vec3 The location of the zone.
+-- @param DCS#Distance Radius The radius of the zone.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:UpdateFromVec3(Vec3, Radius)
+
+  -- New center of the zone.
+  self.Vec2.x=Vec3.x
+  self.Vec2.y=Vec3.z
+
+  if Radius then
+    self.Radius=Radius
+  end
+
+  return self
+end
+
 --- Mark the zone with markers on the F10 map.
 -- @param #ZONE_RADIUS self
 -- @param #number Points (Optional) The amount of points in the circle. Default 360.
@@ -1410,20 +1445,24 @@ ZONE_POLYGON_BASE = {
 -- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected.
 -- @param #ZONE_POLYGON_BASE self
 -- @param #string ZoneName Name of the zone.
--- @param #ZONE_POLYGON_BASE.ListVec2 PointsArray An array of @{DCS#Vec2}, forming a polygon..
+-- @param #ZONE_POLYGON_BASE.ListVec2 PointsArray An array of @{DCS#Vec2}, forming a polygon.
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
+
+  -- Inherit ZONE_BASE.
   local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
   self:F( { ZoneName, PointsArray } )
 
-  local i = 0
-  
-  self._.Polygon = {}
-  
-  for i = 1, #PointsArray do
-    self._.Polygon[i] = {}
-    self._.Polygon[i].x = PointsArray[i].x
-    self._.Polygon[i].y = PointsArray[i].y
+  if PointsArray then
+
+    self._.Polygon = {}
+    
+    for i = 1, #PointsArray do
+      self._.Polygon[i] = {}
+      self._.Polygon[i].x = PointsArray[i].x
+      self._.Polygon[i].y = PointsArray[i].y
+    end
+    
   end
 
   return self

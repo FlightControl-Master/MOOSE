@@ -560,6 +560,7 @@ do -- COORDINATE
       self.z=z
       return self
     else
+      --env.info("FF translate with NEW coordinate T="..timer.getTime())
       return COORDINATE:New(x, y, z)
     end
     
@@ -1135,23 +1136,6 @@ do -- COORDINATE
     self.y=alt
     return self
   end
-
-  --- Add a Distance in meters from the COORDINATE horizontal plane, with the given angle, and calculate the new COORDINATE.
-  -- @param #COORDINATE self
-  -- @param DCS#Distance Distance The Distance to be added in meters.
-  -- @param DCS#Angle Angle The Angle in degrees.
-  -- @return #COORDINATE The new calculated COORDINATE.
-  function COORDINATE:Translate( Distance, Angle )
-    local SX = self.x
-    local SZ = self.z
-    local Radians = Angle / 180 * math.pi
-    local TX = Distance * math.cos( Radians ) + SX
-    local TZ = Distance * math.sin( Radians ) + SZ
-
-    return COORDINATE:New( TX, self.y, TZ )
-  end
-
-
 
   --- Build an air type route point.
   -- @param #COORDINATE self

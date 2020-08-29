@@ -332,6 +332,8 @@ function FLIGHTGROUP:New(group)
   self:__Status(-2)
   self:__QueueUpdate(-3)
 
+  --self.Timer=SCHEDULER:New()
+
   return self
 end
 
