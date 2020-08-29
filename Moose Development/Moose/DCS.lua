@@ -95,6 +95,11 @@ do -- world
   --- Returns a table of mark panels indexed numerically that are present within the mission. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_getMarkPanels)
   -- @function [parent=#world] getMarkPanels
   -- @return #table Table of marks.
+
+  --- Returns a table of DCS airbase objects.
+  -- @function [parent=#world] getAirbases
+  -- @param #number coalitionId The coalition side number ID. Default is all airbases are returned.
+  -- @return #table Table of DCS airbase objects.
  
 end -- world
 
@@ -360,7 +365,7 @@ do -- Types
   
   --- Time is given in seconds.
   -- @type Time
-  -- @extends #number
+  -- @extends #number Time in seconds.
   
   --- Model time is the time that drives the simulation. Model time may be stopped, accelerated and decelerated relative real time. 
   -- @type ModelTime
@@ -368,20 +373,20 @@ do -- Types
   
   --- Mission time is a model time plus time of the mission start.
   -- @type MissionTime
-  -- @extends #number
+  -- @extends #number Time in seconds.
   
   
   --- Distance is given in meters.
   -- @type Distance
-  -- @extends #number
+  -- @extends #number Distance in meters.
   
   --- Angle is given in radians.
   -- @type Angle
-  -- @extends #number
+  -- @extends #number Angle in radians.
   
   --- Azimuth is an angle of rotation around world axis y counter-clockwise.
   -- @type Azimuth
-  -- @extends #number
+  -- @extends #number Angle in radians.
   
   --- Mass is given in kilograms.
   -- @type Mass
@@ -401,15 +406,15 @@ do -- Types
   
   --- Position is a composite structure. It consists of both coordinate vector and orientation matrix. Position3 (also known as "Pos3" for short) is a table that has following format: 
   -- @type Position3
-  -- @field #Vec3 p
-  -- @field #Vec3 x
-  -- @field #Vec3 y
-  -- @field #Vec3 z
+  -- @field #Vec3 p 3D position vector.
+  -- @field #Vec3 x Orientation component of vector pointing East.
+  -- @field #Vec3 y Orientation component of vector pointing up.
+  -- @field #Vec3 z Orientation component of vector pointing North.
   
   --- 3-dimensional box.
   -- @type Box3
-  -- @field #Vec3 min
-  -- @field #Vec3 max
+  -- @field #Vec3 min Min.
+  -- @field #Vec3 max Max
   
   --- Each object belongs to a type. Object type is a named couple of properties those independent of mission and common for all units of the same type. Name of unit type is a string. Samples of unit type: "Su-27", "KAMAZ" and "M2 Bradley". 
   -- @type TypeName
@@ -514,7 +519,7 @@ do -- Object
   --- Returns object coordinates for current time.
   -- @function [parent=#Object] getPoint
   -- @param #Object self
-  -- @return #Vec3
+  -- @return #Vec3 3D position vector with x,y,z components.
   
   --- Returns object position for current time. 
   -- @function [parent=#Object] getPosition
@@ -524,7 +529,7 @@ do -- Object
   --- Returns the unit's velocity vector.
   -- @function [parent=#Object] getVelocity
   -- @param #Object self
-  -- @return #Vec3
+  -- @return #Vec3 3D velocity vector.
   
   --- Returns true if the unit is in air.
   -- @function [parent=#Object] inAir

@@ -191,21 +191,30 @@ end
 -- @param #table object The input table.
 -- @return #table Copy of the input table.
 UTILS.DeepCopy = function(object)
+
   local lookup_table = {}
+  
+  -- Copy function.
   local function _copy(object)
     if type(object) ~= "table" then
       return object
     elseif lookup_table[object] then
       return lookup_table[object]
     end
+    
     local new_table = {}
+    
     lookup_table[object] = new_table
+    
     for index, value in pairs(object) do
       new_table[_copy(index)] = _copy(value)
     end
+    
     return setmetatable(new_table, getmetatable(object))
   end
+  
   local objectreturn = _copy(object)
+  
   return objectreturn
 end
 
@@ -359,7 +368,7 @@ UTILS.MpsToMiph = function( mps )
 end
 
 --- Convert meters per second to knots.
--- @param #number knots Speed in m/s.
+-- @param #number mps Speed in m/s.
 -- @return #number Speed in knots.
 UTILS.MpsToKnots = function( mps )
   return mps * 1.94384 --3600 / 1852
@@ -975,6 +984,22 @@ function UTILS.HdgDiff(h1, h2)
 end
 
 
+--- Translate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param #number distance The distance to translate.
+-- @param #number angle Rotation angle in degrees.
+-- @return DCS#Vec3 Vector rotated in the (x,z) plane.
+function UTILS.VecTranslate(a, distance, angle)
+
+  local SX = a.x
+  local SY = a.z
+  local Radians=math.rad(angle or 0)
+  local TX=distance*math.cos(Radians)+SX
+  local TY=distance*math.sin(Radians)+SY
+
+  return {x=TX, y=a.y, z=TY}
+end
+
 --- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param #number angle Rotation angle in degrees.
@@ -994,7 +1019,6 @@ function UTILS.Rotate2D(a, angle)
 
   return A
 end
-
 
 
 --- Converts a TACAN Channel/Mode couple into a frequency in Hz.
@@ -1410,4 +1434,14 @@ function UTILS.GetSunset(Day, Month, Year, Latitude, Longitude, Tlocal)
   local DayOfYear=UTILS.GetDayOfYear(Year, Month, Day)
 
   return UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tlocal)
+end
+
+--- Get OS time. Needs os to be desanitized!
+-- @return #number Os time in seconds.
+function UTILS.GetOSTime()
+  if os then
+    return os.clock()
+  end
+
+  return nil
 end

@@ -513,7 +513,7 @@ ATIS.Sound = {
   MegaHertz={filename="MegaHertz.ogg", duration=0.87},
   Meters={filename="Meters.ogg", duration=0.59},
   MetersPerSecond={filename="MetersPerSecond.ogg", duration=1.14},
-  Miles={filename="Miles.ogg", duration=1.04},
+  Miles={filename="Miles.ogg", duration=0.60},
   MillimetersOfMercury={filename="MillimetersOfMercury.ogg", duration=1.53},
   Minus={filename="Minus.ogg", duration=0.64},
   N0={filename="N-0.ogg", duration=0.55},
@@ -534,6 +534,7 @@ ATIS.Sound = {
   Right={filename="Right.ogg", duration=0.44},
   Snow={filename="Snow.ogg", duration=0.48},
   SnowStorm={filename="SnowStorm.ogg", duration=0.82},
+  StatuteMiles={filename="StatuteMiles.ogg", duration=1.15},
   SunriseAt={filename="SunriseAt.ogg", duration=0.92},
   SunsetAt={filename="SunsetAt.ogg", duration=0.95},
   Temperature={filename="Temperature.ogg", duration=0.64},
@@ -553,6 +554,7 @@ ATIS.Sound = {
   TACANChannel={filename="TACANChannel.ogg", duration=0.88},
   PRMGChannel={filename="PRMGChannel.ogg", duration=1.18},
   RSBNChannel={filename="RSBNChannel.ogg", duration=1.14},
+  Zulu={filename="Zulu.ogg", duration=0.62},
 }
 
 
@@ -925,7 +927,7 @@ function ATIS:SetAltimeterQNH(switch)
   return self
 end
 
--- Suppresses QFE readout. Default is to report both QNH and QFE.
+--- Suppresses QFE readout. Default is to report both QNH and QFE.
 -- @param #ATIS self
 -- @return #ATIS self
 function ATIS:ReportQNHOnly()
@@ -995,7 +997,7 @@ function ATIS:SetZuluTimeDifference(delta)
   return self
 end
 
--- Suppresses local time, sunrise, and sunset. Default is to report all these times.
+--- Suppresses local time, sunrise, and sunset. Default is to report all these times.
 -- @param #ATIS self
 -- @return #ATIS self
 function ATIS:ReportZuluTimeOnly()
@@ -1502,7 +1504,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   -- Zulu Time
   subtitle=string.format("%s Zulu", ZULU)
   self.radioqueue:Number2Transmission(ZULU, nil, 0.5)
-  self:Transmission(ATIS.Sound.TimeZulu, 0.2, subtitle)
+  self:Transmission(ATIS.Sound.Zulu, 0.2, subtitle)
   alltext=alltext..";\n"..subtitle
   
   if not self.zulutimeonly then
@@ -1557,7 +1559,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   if self.metric then
     self:Transmission(ATIS.Sound.Kilometers, 0.2)
   else
-    self:Transmission(ATIS.Sound.Miles, 0.2)
+    self:Transmission(ATIS.Sound.StatuteMiles, 0.2)
   end
   alltext=alltext..";\n"..subtitle
   
@@ -1974,13 +1976,6 @@ function ATIS:onafterBroadcast(From, Event, To)
     
     alltext=alltext..";\n"..subtitle
   end
-
-  --[[
-  -- End of Information Alpha, Bravo, ...  
-  subtitle=string.format("End of information %s", NATO)
-  self:Transmission(ATIS.Sound.EndOfInformation, 0.5, subtitle)
-  self.radioqueue:NewTransmission(string.format("NATO Alphabet/%s.ogg", NATO), 0.75, self.soundpath)
-  --]]
   
   -- Advice on initial...
   subtitle=string.format("Advise on initial contact, you have information %s", NATO)

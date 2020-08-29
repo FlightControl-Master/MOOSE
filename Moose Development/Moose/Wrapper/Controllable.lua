@@ -243,8 +243,7 @@ end
 
 --- Returns the initial health.
 -- @param #CONTROLLABLE self
--- @return #number The controllable health value (unit or group average).
--- @return #nil The controllable is not existing or alive.
+-- @return #number The controllable health value (unit or group average) or `nil` if the controllable does not exist.
 function CONTROLLABLE:GetLife0()
   self:F2( self.ControllableName )
 
@@ -296,7 +295,6 @@ end
 -- @return #nil The CONTROLLABLE is not existing or alive.
 function CONTROLLABLE:GetFuel()
   self:F( self.ControllableName )
-
   return nil
 end
 
@@ -803,7 +801,7 @@ function CONTROLLABLE:CommandSetFrequency(Frequency, Modulation, Delay)
   local CommandSetFrequency = { 
     id = 'SetFrequency', 
     params = { 
-      frequency = Frequency, 
+      frequency = Frequency*1000000, 
       modulation = Modulation or radio.modulation.AM, 
     } 
   }
@@ -1429,16 +1427,6 @@ end
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
 
-  -- FireAtPoint = {
-  --   id = 'FireAtPoint',
-  --   params = {
-  --     point = Vec2,
-  --     radius = Distance,
-  --     expendQty = number,
-  --     expendQtyEnabled = boolean,
-  --   }
-  -- }
-
   local DCSTask = {
     id = 'FireAtPoint',
     params = {
@@ -1458,7 +1446,6 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
     DCSTask.params.weaponType=WeaponType
   end
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1481,8 +1468,8 @@ end
 -- @param #number WeaponType Bitmask of weapon types, which are allowed to use.
 -- @param DCS#AI.Task.Designation Designation (Optional) Designation type.
 -- @param #boolean Datalink (Optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default.
--- @param #number Frequency Frequency used to communicate with the FAC.
--- @param #number Modulation Modulation of radio for communication.
+-- @param #number Frequency Frequency in MHz used to communicate with the FAC. Default 133 MHz.
+-- @param #number Modulation Modulation of radio for communication. Default 0=AM.
 -- @param #number CallsignName Callsign enumerator name of the FAC.
 -- @param #number CallsignNumber Callsign number, e.g. Axeman-**1**.
 -- @return DCS#Task The DCS task structure.
@@ -1492,11 +1479,11 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
     id = 'FAC_AttackGroup',
     params = {
       groupId     = AttackGroup:GetID(),
-      weaponType  = WeaponType,
-      designation = Designation,
-      datalink    = Datalink,
-      frequency   = Frequency,
-      modulation  = Modulation,
+      weaponType  = WeaponType or ENUMS.WeaponFlag.AutoDCS,
+      designation = Designation or "Auto",
+      datalink    = Datalink and Datalink or true,
+      frequency   = (Frequency or 133)*1000000,
+      modulation  = Modulation or radio.modulation.AM,
       callname    = CallsignName,
       number      = CallsignNumber,
     }

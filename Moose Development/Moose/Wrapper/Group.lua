@@ -261,7 +261,9 @@ end
 -- @param #string GroupName The Group name
 -- @return #GROUP self
 function GROUP:Register( GroupName )
+
   local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) ) -- #GROUP
+  
   self.GroupName = GroupName
   
   self:SetEventPriority( 4 )
@@ -668,14 +670,15 @@ end
 -- @param #number UnitNumber The number of the UNIT wrapper class to be returned.
 -- @return Wrapper.Unit#UNIT The UNIT wrapper class.
 function GROUP:GetUnit( UnitNumber )
-  self:F3( { self.GroupName, UnitNumber } )
 
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
+  
     local DCSUnit = DCSGroup:getUnit( UnitNumber )
-    local UnitFound = UNIT:Find( DCSGroup:getUnit( UnitNumber ) )
-    self:T2( UnitFound )
+    
+    local UnitFound = UNIT:Find(DCSUnit)
+    
     return UnitFound
   end
 
@@ -688,13 +691,11 @@ end
 -- @param #number UnitNumber The number of the DCS Unit to be returned.
 -- @return DCS#Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
-  self:F3( { self.GroupName, UnitNumber } )
 
-  local DCSGroup = self:GetDCSObject()
+  local DCSGroup=self:GetDCSObject()
 
   if DCSGroup then
-    local DCSUnitFound = DCSGroup:getUnit( UnitNumber )
-    self:T3( DCSUnitFound )
+    local DCSUnitFound=DCSGroup:getUnit( UnitNumber )
     return DCSUnitFound
   end
 
@@ -706,14 +707,14 @@ end
 -- @param #GROUP self
 -- @return #number The DCS Group size.
 function GROUP:GetSize()
-  self:F3( { self.GroupName } )
+
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
+  
     local GroupSize = DCSGroup:getSize()
     
     if GroupSize then
-      self:T3( GroupSize )
       return GroupSize
     else
       return 0
@@ -946,24 +947,29 @@ end
 -- @param #GROUP self
 -- @return DCS#Vec2 Current Vec2 point of the first DCS Unit of the DCS Group.
 function GROUP:GetVec2()
-  self:F2( self.GroupName )
 
-  local UnitPoint = self:GetUnit(1)
-  UnitPoint:GetVec2()
-  local GroupPointVec2 = UnitPoint:GetVec2()
-  self:T3( GroupPointVec2 )
-  return GroupPointVec2
+  local Unit=self:GetUnit(1)
+  
+  if Unit then
+    return Unit:GetVec2()
+  end
+
 end
 
 --- Returns the current Vec3 vector of the first DCS Unit in the GROUP.
 -- @param #GROUP self
 -- @return DCS#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
 function GROUP:GetVec3()
-  self:F2( self.GroupName )
 
-  local GroupVec3 = self:GetUnit(1):GetVec3()
-  self:T3( GroupVec3 )
-  return GroupVec3
+  -- Get first unit.
+  local unit=self:GetUnit(1)
+
+  if unit then
+    return unit:GetVec3()
+  end
+  
+  self:E("ERROR: Cannot get Vec3 of group "..tostring(self.GroupName))
+  return nil
 end
 
 --- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
@@ -1039,11 +1045,16 @@ function GROUP:GetHeading()
   local GroupSize = self:GetSize()
   local HeadingAccumulator = 0
   
+  local n=0
   if GroupSize then
     for i = 1, GroupSize do
-      HeadingAccumulator = HeadingAccumulator + self:GetUnit(i):GetHeading()
+      local unit=self:GetUnit(i)
+      if unit and unit:IsAlive() then
+        HeadingAccumulator = HeadingAccumulator + unit:GetHeading()
+        n=n+1
+      end
     end
-    return math.floor(HeadingAccumulator / GroupSize)
+    return math.floor(HeadingAccumulator / n)
   end
   
   BASE:E( { "Cannot GetHeading", Group = self, Alive = self:IsAlive() } )
@@ -1160,6 +1171,32 @@ end
 
 
 do -- Is Zone methods
+
+
+--- Check if any unit of a group is inside a @{Zone}.
+-- @param #GROUP self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if at least one unit is inside the zone or false if no unit is inside.
+function GROUP:IsInZone( Zone )
+  
+  if self:IsAlive() then
+  
+    for UnitID, UnitData in pairs(self:GetUnits()) do
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      
+      if Zone:IsVec3InZone(Unit:GetVec3()) then
+        return true  -- At least one unit is in the zone. That is enough.
+      else
+        -- This one is not but another could be.
+      end
+      
+    end
+    
+    return false
+  end
+  
+  return nil
+end
 
 --- Returns true if all units of the group are within a @{Zone}.
 -- @param #GROUP self
@@ -2095,6 +2132,7 @@ end
 
 --- Calculate the maxium A2G threat level of the Group.
 -- @param #GROUP self
+-- @return #number Number between 0 and 10.
 function GROUP:CalculateThreatLevelA2G()
   
   local MaxThreatLevelA2G = 0
@@ -2109,6 +2147,25 @@ function GROUP:CalculateThreatLevelA2G()
   self:T3( MaxThreatLevelA2G )
   return MaxThreatLevelA2G
 end
+
+--- Get threat level of the group.
+-- @param #GROUP self
+-- @return #number Max threat level (a number between 0 and 10).
+function GROUP:GetThreatLevel()
+  
+  local threatlevelMax = 0
+  for UnitName, UnitData in pairs(self:GetUnits()) do  
+    local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
+    
+    local threatlevel = ThreatUnit:GetThreatLevel()
+    if threatlevel > threatlevelMax then
+      threatlevelMax=threatlevel
+    end
+  end
+
+  return threatlevelMax
+end
+
 
 --- Returns true if the first unit of the GROUP is in the air.
 -- @param Wrapper.Group#GROUP self
