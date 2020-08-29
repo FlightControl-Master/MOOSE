@@ -27,6 +27,8 @@
 -- @field #number ngrouping User defined number of units in the asset group.
 -- @field #table assets Squadron assets.
 -- @field #table missiontypes Capabilities (mission types and performances) of the squadron.
+-- @field #number fuellow Low fuel threshold.
+-- @field #boolean fuellowRefuel If `true`, flight tries to refuel at the nearest tanker.
 -- @field #number maintenancetime Time in seconds needed for maintenance of a returned flight.
 -- @field #number repairtime Time in seconds for each
 -- @field #string livery Livery of the squadron.
@@ -87,7 +89,7 @@ SQUADRON = {
 
 --- SQUADRON class version.
 -- @field #string version
-SQUADRON.version="0.1.0"
+SQUADRON.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -315,7 +317,7 @@ function SQUADRON:AddMissionCapability(MissionTypes, Performance)
   end
   
   -- Debug info.
-  self:I(self.missiontypes)
+  self:T2(self.missiontypes)
   
   return self
 end
@@ -400,6 +402,19 @@ function SQUADRON:SetFuelLowThreshold(LowFuel)
   return self
 end
 
+--- Set if low fuel threshold is reached, flight tries to refuel at the neares tanker.
+-- @param #SQUADRON self
+-- @param #boolean switch If true or nil, flight goes for refuelling. If false, turn this off.
+-- @return #SQUADRON self
+function SQUADRON:SetFuelLowRefuel(switch)
+  if switch==false then
+    self.fuellowRefuel=false
+  else
+    self.fuellowRefuel=true
+  end
+  return self
+end
+
 --- Set airwing.
 -- @param #SQUADRON self
 -- @param Ops.AirWing#AIRWING Airwing The airwing.
@@ -408,7 +423,6 @@ function SQUADRON:SetAirwing(Airwing)
   self.airwing=Airwing
   return self
 end
-
 
 --- Add airwing asset to squadron.
 -- @param #SQUADRON self
@@ -439,7 +453,7 @@ end
 
 --- Get name of the squadron
 -- @param #SQUADRON self
--- @return #sting Name of the squadron.
+-- @return #string Name of the squadron.
 function SQUADRON:GetName()
   return self.name
 end
@@ -536,7 +550,7 @@ function SQUADRON:FetchTacan()
 
   for channel,free in pairs(self.tacanChannel) do
     if free then
-      self:I(self.lid..string.format("Checking out Tacan channel %d", channel))
+      self:T(self.lid..string.format("Checking out Tacan channel %d", channel))
       self.tacanChannel[channel]=false
       return channel
     end
@@ -549,7 +563,7 @@ end
 -- @param #SQUADRON self
 -- @param #number channel The channel that is available again.
 function SQUADRON:ReturnTacan(channel)
-  self:I(self.lid..string.format("Returning Tacan channel %d", channel))
+  self:T(self.lid..string.format("Returning Tacan channel %d", channel))
   self.tacanChannel[channel]=true
 end
 
@@ -588,7 +602,7 @@ function SQUADRON:onafterStart(From, Event, To)
 
   -- Short info.
   local text=string.format("Starting SQUADRON", self.name)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Start the status monitoring.
   self:__Status(-1)
@@ -628,7 +642,7 @@ function SQUADRON:onafterStatus(From, Event, To)
   end  
   
   if not self:IsStopped() then
-    self:__Status(-30)
+    self:__Status(-60)
   end
 end
 
@@ -745,13 +759,13 @@ function SQUADRON:CanMission(Mission)
   
   -- On duty?=  
   if not self:IsOnDuty() then
-    self:I(self.lid..string.format("Squad in not OnDuty but in state %s. Cannot do mission %s with target %s", self:GetState(), Mission.name, Mission:GetTargetName()))
+    self:T(self.lid..string.format("Squad in not OnDuty but in state %s. Cannot do mission %s with target %s", self:GetState(), Mission.name, Mission:GetTargetName()))
     return false
   end
 
   -- Check mission type. WARNING: This assumes that all assets of the squad can do the same mission types!
   if not self:CheckMissionType(Mission.type, self:GetMissionTypes()) then
-    self:I(self.lid..string.format("INFO: Squad cannot do mission type %s (%s, %s)", Mission.type, Mission.name, Mission:GetTargetName()))
+    self:T(self.lid..string.format("INFO: Squad cannot do mission type %s (%s, %s)", Mission.type, Mission.name, Mission:GetTargetName()))
     return false
   end
   
@@ -761,7 +775,7 @@ function SQUADRON:CanMission(Mission)
     if Mission.refuelSystem and Mission.refuelSystem==self.tankerSystem then
       -- Correct refueling system.
     else
-      self:I(self.lid..string.format("INFO: Wrong refueling system requested=%s != %s=available", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
+      self:T(self.lid..string.format("INFO: Wrong refueling system requested=%s != %s=available", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
       return false
     end
   

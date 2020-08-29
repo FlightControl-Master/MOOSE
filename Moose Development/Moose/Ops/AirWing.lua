@@ -154,7 +154,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.3.0"
+AIRWING.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -204,7 +204,7 @@ function AIRWING:New(warehousename, airwingname)
   self:AddTransition("*",             "FlightOnMission",    "*")           -- Flight was spawned with a mission.
 
   -- Defaults:
-  self:SetVerbosity(2)
+  self:SetVerbosity(0)
   self.nflightsCAP=0
   self.nflightsAWACS=0
   self.nflightsTANKERboom=0
@@ -232,15 +232,6 @@ function AIRWING:New(warehousename, airwingname)
   -- @function [parent=#AIRWING] __Stop
   -- @param #AIRWING self
   -- @param #number delay Delay in seconds.
-
-
-  -- Debug trace.
-  if false then
-    self.Debug=true
-    self:TraceOnOff(true)
-    self:TraceClass(self.ClassName)
-    self:TraceLevel(1)
-  end
 
   return self
 end
@@ -341,7 +332,7 @@ function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
     end    
     
     -- Info
-    self:I(self.lid..string.format("Adding new payload from unit %s for aircraft type %s: ID=%d, N=%d (unlimited=%s), performance=%d, missions: %s", 
+    self:T(self.lid..string.format("Adding new payload from unit %s for aircraft type %s: ID=%d, N=%d (unlimited=%s), performance=%d, missions: %s", 
     payload.unitname, payload.aircrafttype, payload.uid, payload.navail, tostring(payload.unlimited), Performance, table.concat(MissionTypes, ", ")))
 
     -- Add payload
@@ -398,7 +389,7 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
 
   -- Quick check if we have any payloads.
   if not self.payloads or #self.payloads==0 then
-    self:I(self.lid.."WARNING: No payloads in stock!")
+    self:T(self.lid.."WARNING: No payloads in stock!")
     return nil
   end
   
@@ -466,7 +457,7 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
   
   -- Debug.
   if self.Debug then
-    self:I(self.lid..string.format("FF Sorted payloads for mission type X and aircraft type=Y:"))
+    self:I(self.lid..string.format("Sorted payloads for mission type X and aircraft type=Y:"))
     for _,_payload in ipairs(self.payloads) do
       local payload=_payload --#AIRWING.Payload
       if payload.aircrafttype==UnitType and self:CheckMissionCapability(MissionType, payload.capabilities) then
@@ -608,7 +599,7 @@ function AIRWING:AddMission(Mission)
   -- Info text.
   local text=string.format("Added mission %s (type=%s). Starting at %s. Stopping at %s", 
   tostring(Mission.name), tostring(Mission.type), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "INF")
-  self:I(self.lid..text)
+  self:T(self.lid..text)
   
   return self
 end
@@ -641,13 +632,20 @@ function AIRWING:SetNumberCAP(n)
   return self
 end
 
---- Set number of TANKER flights constantly in the air.
+--- Set number of TANKER flights with Boom constantly in the air.
 -- @param #AIRWING self
 -- @param #number Nboom Number of flights. Default 1.
+-- @return #AIRWING self
+function AIRWING:SetNumberTankerBoom(Nboom)
+  self.nflightsTANKERboom=Nboom or 1
+  return self
+end
+
+--- Set number of TANKER flights with Probe constantly in the air.
+-- @param #AIRWING self
 -- @param #number Nprobe Number of flights. Default 1.
 -- @return #AIRWING self
-function AIRWING:SetNumberTANKER(Nboom, Nprobe)
-  self.nflightsTANKERboom=Nboom or 1
+function AIRWING:SetNumberTankerProbe(Nprobe)
   self.nflightsTANKERprobe=Nprobe or 1
   return self
 end
@@ -833,6 +831,7 @@ function AIRWING:onafterStatus(From, Event, To)
   ------------------
   if self.verbose>=2 then
     local text=string.format("Missions Total=%d:", #self.missionqueue)
+    env.info("FF verbose "..self.verbose)
     for i,_mission in pairs(self.missionqueue) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
       
@@ -1170,7 +1169,7 @@ function AIRWING:_GetNextMission()
             end
           end
         end        
-        self:I(self.lid..string.format("Provided %d assets with payloads. Could not get payload for %d assets", #gotpayload, #remove))
+        self:T(self.lid..string.format("Provided %d assets with payloads. Could not get payload for %d assets", #gotpayload, #remove))
         
         -- Now remove assets for which we don't have a payload.
         for i=#assets,1,-1 do
@@ -1263,7 +1262,7 @@ function AIRWING:CalculateAssetMissionScore(asset, Mission, includePayload)
   -- Intercepts need to be carried out quickly. We prefer spawned assets.
   if Mission.type==AUFTRAG.Type.INTERCEPT then
     if asset.spawned then
-      self:I("FF adding 25 to asset because it is spawned")
+      self:T(self.lid.."Adding 25 to asset because it is spawned")
       score=score+25
     end
   end
@@ -1337,7 +1336,7 @@ function AIRWING:_OptimizeAssetSelection(assets, Mission, includePayload)
     asset.dist=nil
     asset.score=nil
   end
-  self:I(self.lid..text)
+  self:T2(self.lid..text)
 
 end
 
@@ -1421,6 +1420,7 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
 function AIRWING:onafterMissionCancel(From, Event, To, Mission)
   
+  -- Info message.
   self:I(self.lid..string.format("Cancel mission %s", Mission.name))
   
   if Mission:IsPlanned() or Mission:IsQueued() or Mission:IsRequested() then
@@ -1465,7 +1465,7 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
   
   -- Debug text.
   local text=string.format("New asset %s with assignment %s and request assignment %s", asset.spawngroupname, tostring(asset.assignment), tostring(assignment))
-  self:I(self.lid..text)
+  self:T3(self.lid..text)
   
   -- Get squadron.
   local squad=self:GetSquadron(asset.assignment)
@@ -1479,7 +1479,7 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
   
       -- Debug text.
       local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s, nunits=%d %s", squad.name, assignment, asset.unittype, asset.attribute, nunits, tostring(squad.ngrouping))
-      self:I(self.lid..text)
+      self:T(self.lid..text)
       
       -- Adjust number of elements in the group.
       if squad.ngrouping then
@@ -1538,7 +1538,7 @@ end
 -- @param #AIRWING.SquadronAsset Asset The asset that returned.
 function AIRWING:onafterSquadAssetReturned(From, Event, To, Squadron, Asset)
   -- Debug message.
-  self:I(self.lid..string.format("Asset %s from squadron %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Squadron.name, tostring(Asset.assignment)))
+  self:T(self.lid..string.format("Asset %s from squadron %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Squadron.name, tostring(Asset.assignment)))
   
   -- Stop flightgroup.
   Asset.flightgroup:Stop()
@@ -1607,8 +1607,12 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   end
     
   if squadron.fuellow then
-    flightgroup:SetFuelCriticalThreshold(squadron.fuellow)
+    flightgroup:SetFuelLowThreshold(squadron.fuellow)
   end
+  
+  if squadron.fuellowRefuel then
+    flightgroup:SetFuelLowRefuel(squadron.fuellowRefuel)
+  end  
 
   ---
   -- Mission
@@ -2111,7 +2115,7 @@ function AIRWING:CanMission(Mission)
   local Npayloads=self:CountPayloadsInStock(Mission.type, unittypes, Mission.payloads)
   
   if Npayloads<Mission.nassets then
-    self:I(self.lid..string.format("INFO: Not enough PAYLOADS available! Got %d but need at least %d", Npayloads, Mission.nassets))
+    self:T(self.lid..string.format("INFO: Not enough PAYLOADS available! Got %d but need at least %d", Npayloads, Mission.nassets))
     return false, Assets
   end
 
@@ -2135,7 +2139,7 @@ function AIRWING:CanMission(Mission)
       
       -- Debug output.
       local text=string.format("Mission=%s, squadron=%s, payloads=%d, can=%s, assets=%d. Found %d/%d", Mission.type, squadron.name, Npayloads, tostring(can), #assets, #Assets, Mission.nassets)
-      self:I(self.lid..text)
+      self:T(self.lid..text)
       
     end
 
@@ -2143,7 +2147,7 @@ function AIRWING:CanMission(Mission)
 
   -- Check if required assets are present.
   if Mission.nassets and Mission.nassets > #Assets then
-    self:I(self.lid..string.format("INFO: Not enough assets available! Got %d but need at least %d", #Assets, Mission.nassets))
+    self:T(self.lid..string.format("INFO: Not enough assets available! Got %d but need at least %d", #Assets, Mission.nassets))
     Can=false
   end
   

@@ -486,8 +486,8 @@ end
 -- @param #OPSGROUP self
 -- @return DCS#Vec3 Vector with x,y,z components.
 function OPSGROUP:GetVec3()
-  if self.group:IsAlive() then
-    self.group:GetVec3()
+  if self:IsAlive() then
+    return self.group:GetVec3()
   end  
   return nil
 end
@@ -1048,8 +1048,6 @@ function OPSGROUP:RemoveWaypoint(wpindex)
       if self.currentwp>=n then
         self.passedfinalwp=true
       end
-      
-      --env.info("FF passed final waypoint after remove! current wp = "..self.currentwp)
 
       self:_CheckGroupDone(1)
 
@@ -1074,8 +1072,6 @@ function OPSGROUP:RemoveWaypoint(wpindex)
       else
         self.currentwp=self.currentwp-1
       end
-      
-      --env.info("FF current waypoint after remove "..self.currentwp)
     
     end
         
@@ -1868,7 +1864,7 @@ end
 function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
 
   -- Debug info.
-  self:I(self.lid..string.format("Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
+  self:T(self.lid..string.format("Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
 
   -- Delay for route to mission. Group needs to be activated and controlled.
   local delay=0
@@ -2075,30 +2071,22 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
     AIRWING.UpdatePatrolPointMarker(Mission.patroldata)
   end
   
-  env.info("FF 000")
-  
   -- TACAN
   if Mission.tacan then
   
-    env.info("FF 100")
-  
     if self.tacanDefault then
-      env.info("FF 200")
       self:_SwitchTACAN(self.tacanDefault)
     else
-      env.info("FF 300")
       self:TurnOffTACAN()
     end
     
     local squadron=self.squadron --Ops.Squadron#SQUADRON
     if squadron then
-      env.info("FF 400")
       squadron:ReturnTacan(Mission.tacan.Channel)
     end
     
     local asset=Mission:GetAssetByName(self.groupname)
     if asset then
-      env.info("FF 500")
       asset.tacan=nil
     end  
   end
@@ -2302,7 +2290,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   -- Debug info.
   local text=string.format("Group passed waypoint %s/%d ID=%d: final=%s detour=%s astar=%s", 
   tostring(wpindex), #self.waypoints, Waypoint.uid, tostring(self.passedfinalwp), tostring(Waypoint.detour), tostring(Waypoint.astar))
-  self:I(self.lid..text)
+  self:T(self.lid..text)
   
 end
 
@@ -2604,7 +2592,7 @@ function OPSGROUP:_CheckGroupDone(delay)
             -- Start route at first waypoint.
             self:__UpdateRoute(-1, 1, speed)
             
-            self:I(self.lid..string.format("Passed final WP, #WP>1, adinfinitum=TRUE ==> Goto WP 1 at speed>0"))
+            self:T(self.lid..string.format("Passed final WP, #WP>1, adinfinitum=TRUE ==> Goto WP 1 at speed>0"))
                         
             self.passedfinalwp=false
             
@@ -2612,7 +2600,7 @@ function OPSGROUP:_CheckGroupDone(delay)
             -- No further waypoints. Command a full stop.
             self:__FullStop(-1)
             
-            self:I(self.lid..string.format("Passed final WP, #WP>1, adinfinitum=FALSE ==> Full Stop"))
+            self:T(self.lid..string.format("Passed final WP, #WP>1, adinfinitum=FALSE ==> Full Stop"))
           end
           
         elseif #self.waypoints==1 then
@@ -2627,7 +2615,7 @@ function OPSGROUP:_CheckGroupDone(delay)
           
           if self.adinfinitum and dist>1000 then  -- Note that dist>100 caused the same wp to be passed a lot of times.
           
-            self:I(self.lid..string.format("Passed final WP, #WP=1, adinfinitum=TRUE dist>1000 ==> Goto WP 1 at speed>0"))
+            self:T(self.lid..string.format("Passed final WP, #WP=1, adinfinitum=TRUE dist>1000 ==> Goto WP 1 at speed>0"))
 
             -- Get positive speed to first waypoint.
             local speed=self:GetSpeedToWaypoint(1)
@@ -2639,7 +2627,7 @@ function OPSGROUP:_CheckGroupDone(delay)
             
           else
           
-            self:I(self.lid..string.format("Passed final WP, #WP=1, adinfinitum=FALSE or dist<1000 ==> Full Stop"))
+            self:T(self.lid..string.format("Passed final WP, #WP=1, adinfinitum=FALSE or dist<1000 ==> Full Stop"))
           
             self:__FullStop(-1)
             
@@ -2661,7 +2649,7 @@ function OPSGROUP:_CheckGroupDone(delay)
         ---
       
         if #self.waypoints>0 then
-          self:I(self.lid..string.format("NOT Passed final WP, #WP>0 ==> Update Route"))
+          self:T(self.lid..string.format("NOT Passed final WP, #WP>0 ==> Update Route"))
           self:__UpdateRoute(-1)
         else
           self:E(self.lid..string.format("WARNING: No waypoints left! Commanding a Full Stop"))
@@ -2815,7 +2803,7 @@ function OPSGROUP:InitWaypoints()
   end
   
   -- Debug info.
-  self:I(self.lid..string.format("Initializing %d waypoints", #self.waypoints))
+  self:T(self.lid..string.format("Initializing %d waypoints", #self.waypoints))
   
   -- Update route.
   if #self.waypoints>0 then
@@ -2945,12 +2933,10 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
     -- Check special waypoints.
     if waypoint.astar then
     
-      env.info("FF removing Astar waypoint "..uid)
       opsgroup:RemoveWaypointByID(uid)
       
     elseif waypoint.detour then
     
-      env.info("FF removing Detour waypoint "..uid)
       opsgroup:RemoveWaypointByID(uid)
       
       -- Trigger event.
@@ -3035,12 +3021,12 @@ function OPSGROUP:SwitchROE(roe)
     self.option.ROE=roe or ENUMS.ROE.ReturnFire
   
     if self:IsInUtero() then
-      self:I(self.lid..string.format("Setting current ROE=%d when GROUP is SPAWNED", self.option.ROE))
+      self:T2(self.lid..string.format("Setting current ROE=%d when GROUP is SPAWNED", self.option.ROE))
     else
     
       self.group:OptionROE(roe)
     
-      self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.option.ROE))
+      self:T(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.option.ROE))
     end
     
     
@@ -3078,12 +3064,12 @@ function OPSGROUP:SwitchROT(rot)
     self.option.ROT=rot or ENUMS.ROT.PassiveDefense
   
     if self:IsInUtero() then
-      self:I(self.lid..string.format("Setting current ROT=%d when GROUP is SPAWNED", self.option.ROT))      
+      self:T2(self.lid..string.format("Setting current ROT=%d when GROUP is SPAWNED", self.option.ROT))      
     else
     
       self.group:OptionROT(self.option.ROT)
       
-      self:I(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
+      self:T(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
     end
     
 
@@ -3127,7 +3113,7 @@ function OPSGROUP:SwitchAlarmstate(alarmstate)
     self.option.Alarm=alarmstate or 0
     
     if self:IsInUtero() then
-      self:I(self.lid..string.format("Setting current Alarm State=%d when GROUP is SPAWNED", self.option.Alarm))
+      self:T2(self.lid..string.format("Setting current Alarm State=%d when GROUP is SPAWNED", self.option.Alarm))
     else
   
       if self.option.Alarm==0 then
@@ -3142,7 +3128,7 @@ function OPSGROUP:SwitchAlarmstate(alarmstate)
         self.option.Alarm=0
       end
       
-      self:I(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.option.Alarm))
+      self:T(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.option.Alarm))
       
     end
   else
@@ -3247,7 +3233,7 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
       self.tacan.On=true
 
       if self:IsInUtero() then
-        self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s when GROUP is SPAWNED", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
+        self:T(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s when GROUP is SPAWNED", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
       else
       
         -- Activate beacon.
@@ -3277,7 +3263,7 @@ function OPSGROUP:TurnOffTACAN()
     self.tacan.BeaconUnit:CommandDeactivateBeacon()
   end
 
-  self:I(self.lid..string.format("Switching TACAN OFF"))
+  self:T(self.lid..string.format("Switching TACAN OFF"))
   self.tacan.On=false
 
 end
@@ -3343,7 +3329,7 @@ function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
       
 
       if self:IsInUtero() then
-        self:I(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s when GROUP is SPAWNED", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
+        self:T2(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s when GROUP is SPAWNED", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
       else
 
         -- Activate beacon.
@@ -3371,7 +3357,7 @@ function OPSGROUP:TurnOffICLS()
     self.icls.BeaconUnit:CommandDeactivateICLS()
   end
 
-  self:I(self.lid..string.format("Switching ICLS OFF"))
+  self:T(self.lid..string.format("Switching ICLS OFF"))
   self.icls.On=false
 
 end
@@ -3423,7 +3409,7 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
     self.radio.On=true
     
     if self:IsInUtero() then
-      self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
+      self:T2(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
     else
 
       -- Give command
@@ -3458,7 +3444,7 @@ function OPSGROUP:TurnOffRadio()
       -- Radio is off.
       self.radio.On=false
   
-      self:I(self.lid..string.format("Switching radio OFF"))
+      self:T(self.lid..string.format("Switching radio OFF"))
     else
       self:E(self.lid.."ERROR: Radio can only be turned off for aircraft!")
     end

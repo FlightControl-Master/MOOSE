@@ -227,7 +227,7 @@ function FLIGHTGROUP:New(group)
   self.lid=string.format("FLIGHTGROUP %s | ", self.groupname)
 
   -- Defaults
-  self:SetVerbosity(3)
+  self:SetVerbosity(0)
   self:SetFuelLowThreshold()
   self:SetFuelLowRTB()
   self:SetFuelCriticalThreshold()
@@ -614,7 +614,7 @@ function FLIGHTGROUP:StartUncontrolled(delay)
 
     if self:IsAlive() then
       --TODO: check Alive==true and Alive==false ==> Activate first
-      self:I(self.lid.."Starting uncontrolled group")
+      self:T(self.lid.."Starting uncontrolled group")
       self.group:StartUncontrolled(delay)
       self.isUncontrolled=true
     else
@@ -637,7 +637,7 @@ function FLIGHTGROUP:ClearToLand(Delay)
   else
 
     if self:IsHolding() then
-      self:I(self.lid..string.format("Clear to land ==> setting holding flag to 1 (true)"))
+      self:T(self.lid..string.format("Clear to land ==> setting holding flag to 1 (true)"))
       self.flaghold:Set(1)
     end
 
@@ -729,7 +729,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   local nMissions=self:CountRemainingMissison()
 
   -- Short info.
-  if self.verbose>0 then
+  if self.verbose>=1 then
     local text=string.format("Status %s [%d/%d]: Tasks=%d (%d,%d) Curr=%d, Missions=%s, Waypoint=%d/%d, Detected=%d, Home=%s, Destination=%s",
     fsmstate, #self.elements, #self.elements, nTaskTot, nTaskSched, nTaskWP, self.taskcurrent, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0,
     self.detectedunits:Count(), self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "unknown")
@@ -737,7 +737,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   end
 
   -- Element status.
-  if self.verbose>1 then
+  if self.verbose>=2 then
     local text="Elements:"
     for i,_element in pairs(self.elements) do
       local element=_element --#FLIGHTGROUP.Element
@@ -771,7 +771,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   -- Distance travelled
   ---
 
-  if self.verbose>1 and self:IsAlive() and self.position then
+  if self.verbose>=3 and self:IsAlive() and self.position then
 
     local time=timer.getAbsTime()
 
@@ -933,7 +933,7 @@ function FLIGHTGROUP:OnEventBirth(EventData)
       end
 
       -- Set element to spawned state.
-      self:I(self.lid..string.format("EVENT: Element %s born at airbase %s==> spawned", element.name, self.homebase and self.homebase:GetName() or "unknown"))
+      self:T(self.lid..string.format("EVENT: Element %s born at airbase %s==> spawned", element.name, self.homebase and self.homebase:GetName() or "unknown"))
       self:ElementSpawned(element)
 
     end
@@ -1364,7 +1364,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterSpawned(From, Event, To)
-  self:I(self.lid..string.format("Flight spawned"))
+  self:T(self.lid..string.format("Flight spawned"))
 
   -- TODO: general routine in opsgroup
   self.traveldist=0
@@ -1713,7 +1713,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     ---
     
     if self:IsAirborne() then
-      self:I(self.lid.."No waypoints left ==> CheckGroupDone")
+      self:T(self.lid.."No waypoints left ==> CheckGroupDone")
       self:_CheckGroupDone()
     end
 
@@ -1786,25 +1786,25 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
 
             -- Send flight to destination.
             if destbase then
-              self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTB!")
+              self:T(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTB!")
               self:__RTB(-3, destbase)
             elseif destzone then
-              self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTZ!")
+              self:T(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTZ!")
               self:__RTZ(-3, destzone)
             else
-              self:I(self.lid.."Passed Final WP and NO Tasks/Missions left. No DestBase or DestZone ==> Wait!")
+              self:T(self.lid.."Passed Final WP and NO Tasks/Missions left. No DestBase or DestZone ==> Wait!")
               self:__Wait(-1)
             end
 
           else
-              self:I(self.lid..string.format("Passed Final WP but Tasks=%d or Missions=%d left in the queue. Wait!", nTasks, nMissions))
+              self:T(self.lid..string.format("Passed Final WP but Tasks=%d or Missions=%d left in the queue. Wait!", nTasks, nMissions))
               self:__Wait(-1)
           end
         else
-          self:I(self.lid..string.format("Passed Final WP but still have current Task (#%s) or Mission (#%s) left to do", tostring(self.taskcurrent), tostring(self.currentmission)))
+          self:T(self.lid..string.format("Passed Final WP but still have current Task (#%s) or Mission (#%s) left to do", tostring(self.taskcurrent), tostring(self.currentmission)))
         end
       else
-        self:I(self.lid..string.format("Flight (status=%s) did NOT pass the final waypoint yet ==> update route", self:GetState()))
+        self:T(self.lid..string.format("Flight (status=%s) did NOT pass the final waypoint yet ==> update route", self:GetState()))
         self:__UpdateRoute(-1)
       end
     end
@@ -1912,7 +1912,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
     -- Check if mission is already over!
     if not (mystatus==AUFTRAG.GroupStatus.DONE or mystatus==AUFTRAG.GroupStatus.CANCELLED) then
       local text=string.format("Canceling mission %s in state=%s", mission.name, mission.status)
-      env.info(text)
+      self:T(self.lid..text)
       self:MissionCancel(mission)
     end
     
@@ -2159,6 +2159,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterRefueled(From, Event, To)
+
   -- Debug message.
   local text=string.format("Flight group finished refuelling")
   self:I(self.lid..text)
@@ -2558,28 +2559,30 @@ function FLIGHTGROUP:_InitGroup()
     self.refueltype=select(2, unit:IsRefuelable())
 
     -- Debug info.
-    local text=string.format("Initialized Flight Group %s:\n", self.groupname)
-    text=text..string.format("AC type      = %s\n", self.actype)
-    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
-    text=text..string.format("Range max    = %.1f km\n", self.rangemax/1000)
-    text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
-    text=text..string.format("Tanker type  = %s\n", tostring(self.tankertype))
-    text=text..string.format("Refuel type  = %s\n", tostring(self.refueltype))
-    text=text..string.format("AI           = %s\n", tostring(self.ai))
-    text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
-    text=text..string.format("Elements     = %d\n", #self.elements)
-    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
-    text=text..string.format("Ammo         = %d (G=%d/R=%d/B=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Bombs, self.ammo.Missiles)
-    text=text..string.format("FSM state    = %s\n", self:GetState())
-    text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
-    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
-    text=text..string.format("Uncontrolled = %s\n", tostring(self:IsUncontrolled()))
-    text=text..string.format("Start Air    = %s\n", tostring(self:IsTakeoffAir()))
-    text=text..string.format("Start Cold   = %s\n", tostring(self:IsTakeoffCold()))
-    text=text..string.format("Start Hot    = %s\n", tostring(self:IsTakeoffHot()))
-    text=text..string.format("Start Rwy    = %s\n", tostring(self:IsTakeoffRunway()))
-    self:I(self.lid..text)
+    if self.verbose>=1 then
+      local text=string.format("Initialized Flight Group %s:\n", self.groupname)
+      text=text..string.format("AC type      = %s\n", self.actype)
+      text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
+      text=text..string.format("Range max    = %.1f km\n", self.rangemax/1000)
+      text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
+      text=text..string.format("Tanker type  = %s\n", tostring(self.tankertype))
+      text=text..string.format("Refuel type  = %s\n", tostring(self.refueltype))
+      text=text..string.format("AI           = %s\n", tostring(self.ai))
+      text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
+      text=text..string.format("Elements     = %d\n", #self.elements)
+      text=text..string.format("Waypoints    = %d\n", #self.waypoints)
+      text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
+      text=text..string.format("Ammo         = %d (G=%d/R=%d/B=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Bombs, self.ammo.Missiles)
+      text=text..string.format("FSM state    = %s\n", self:GetState())
+      text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
+      text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
+      text=text..string.format("Uncontrolled = %s\n", tostring(self:IsUncontrolled()))
+      text=text..string.format("Start Air    = %s\n", tostring(self:IsTakeoffAir()))
+      text=text..string.format("Start Cold   = %s\n", tostring(self:IsTakeoffCold()))
+      text=text..string.format("Start Hot    = %s\n", tostring(self:IsTakeoffHot()))
+      text=text..string.format("Start Rwy    = %s\n", tostring(self:IsTakeoffRunway()))
+      self:I(self.lid..text)
+    end
 
     -- Init done.
     self.groupinitialized=true
