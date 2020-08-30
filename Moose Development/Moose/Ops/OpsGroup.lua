@@ -487,8 +487,9 @@ end
 -- @return DCS#Vec3 Vector with x,y,z components.
 function OPSGROUP:GetVec3()
   if self:IsAlive() then
-    return self.group:GetVec3()
-  end  
+    local vec3=self.group:GetVec3()
+    return vec3
+  end
   return nil
 end
 
@@ -520,7 +521,8 @@ end
 -- @return #number Velocity in m/s.
 function OPSGROUP:GetVelocity()
   if self:IsAlive()~=nil then
-    return self.group:GetVelocityMPS()
+    local vel=self.group:GetVelocityMPS()
+    return rel
   else
     self:E(self.lid.."WARNING: Group is not alive. Cannot get velocity!")
   end
@@ -532,7 +534,8 @@ end
 -- @return #number Current heading of the group in degrees.
 function OPSGROUP:GetHeading()
   if self:IsAlive()~=nil then
-    return self.group:GetHeading()
+    local heading=self.group:GetHeading()
+    return heading
   else
     self:E(self.lid.."WARNING: Group is not alive. Cannot get heading!")
   end
@@ -618,7 +621,8 @@ end
 function OPSGROUP:IsAlive()
 
   if self.group then
-    return self.group:IsAlive()
+    local alive=self.group:IsAlive()
+    return alive
   end
 
   return nil

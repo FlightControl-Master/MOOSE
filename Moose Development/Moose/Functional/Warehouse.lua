@@ -1552,6 +1552,7 @@
 WAREHOUSE = {
   ClassName     = "WAREHOUSE",
   Debug         = false,
+  verbosity     =     0,
   lid           =   nil,
   Report        =  true,
   warehouse     =   nil,

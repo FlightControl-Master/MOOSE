@@ -593,8 +593,13 @@ function TARGET:GetTargetLife(Target)
 
   elseif Target.Type==TARGET.ObjectType.UNIT then
 
-    if Target.Object and Target.Object:IsAlive() then
-      return Target.Object:GetLife()
+    local unit=Target.Object --Wrapper.Unit#UNIT
+
+    if unit and unit:IsAlive() then
+    
+      -- Note! According to the profiler, there is a big difference if we "return unit:GetLife()" or "local life=unit:GetLife(); return life"!
+      local life=unit:GetLife()
+      return life
     else
       return 0
     end

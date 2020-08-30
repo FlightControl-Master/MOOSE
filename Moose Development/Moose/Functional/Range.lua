@@ -93,6 +93,8 @@
 -- @field Core.RadioQueue#RADIOQUEUE instructor Instructor radio queue.
 -- @field #number rangecontrolfreq Frequency on which the range control transmitts.
 -- @field Core.RadioQueue#RADIOQUEUE rangecontrol Range control radio queue.
+-- @field #string rangecontrolrelayname Name of relay unit.
+-- @field #string instructorrelayname Name of relay unit.
 -- @field #string soundpath Path inside miz file where the sound files are located. Default is "Range Soundfiles/".
 -- @extends Core.Fsm#FSM
 
@@ -516,7 +518,7 @@ RANGE.MenuF10Root=nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version="2.2.2"
+RANGE.version="2.2.3"
 
 --TODO list:
 --TODO: Verbosity level for messages.
@@ -770,6 +772,7 @@ function RANGE:onafterStart()
     
     -- Set location where the messages are transmitted from.
     self.rangecontrol:SetSenderCoordinate(self.location)
+    self.rangecontrol:SetSenderUnitName(self.rangecontrolrelayname)
     
     -- Start range control radio queue.
     self.rangecontrol:Start(1, 0.1)
@@ -794,6 +797,7 @@ function RANGE:onafterStart()
       
       -- Set location where the messages are transmitted from.
       self.instructor:SetSenderCoordinate(self.location)
+      self.instructor:SetSenderUnitName(self.instructorrelayname)
     
       -- Start instructor radio queue.
       self.instructor:Start(1, 0.1)       
@@ -1067,18 +1071,22 @@ end
 --- Enable range control and set frequency.
 -- @param #RANGE self
 -- @param #number frequency Frequency in MHz. Default 256 MHz.
+-- @param #string relayunitname Name of the unit used for transmission.
 -- @return #RANGE self
-function RANGE:SetRangeControl(frequency)
+function RANGE:SetRangeControl(frequency, relayunitname)
   self.rangecontrolfreq=frequency or 256
+  self.rangecontrolrelayname=relayunitname
   return self
 end
 
 --- Enable instructor radio and set frequency.
 -- @param #RANGE self
 -- @param #number frequency Frequency in MHz. Default 305 MHz.
+-- @param #string relayunitname Name of the unit used for transmission.
 -- @return #RANGE self
-function RANGE:SetInstructorRadio(frequency)
+function RANGE:SetInstructorRadio(frequency, relayunitname)
   self.instructorfreq=frequency or 305
+  self.instructorrelayname=relayunitname
   return self
 end
 

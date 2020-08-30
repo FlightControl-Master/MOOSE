@@ -375,8 +375,10 @@ function POSITIONABLE:GetCoordinate()
     -- Get the current position.
     local PositionableVec3 = self:GetVec3()
     
+    local coord=COORDINATE:NewFromVec3(PositionableVec3)
+    
     -- Return a new coordiante object.
-    return COORDINATE:NewFromVec3(PositionableVec3)
+    return coord
 
   end
   
@@ -420,8 +422,10 @@ function POSITIONABLE:GetOffsetCoordinate(x,y,z)
   -- Translate offset vector from map origin to the unit: v=u+a.
   local v={x=a.x+u.x, y=a.y+u.y, z=a.z+u.z}
   
+  local coord=COORDINATE:NewFromVec3(v)
+  
   -- Return the offset coordinate.
-  return COORDINATE:NewFromVec3(v)
+  return coord
 end
 
 --- Returns a random @{DCS#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
