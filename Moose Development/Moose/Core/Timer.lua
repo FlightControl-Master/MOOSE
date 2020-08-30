@@ -100,6 +100,12 @@ TIMER = {
   lid            =   nil,
 }
 
+--- Timer ID.
+_TIMERID=0
+
+--- Timer data base.
+_TIMERDB={}
+
 --- TIMER class version.
 -- @field #string version
 TIMER.version="0.1.0"
@@ -124,8 +130,6 @@ function TIMER:New(Function, ...)
 
   -- Inherit BASE.
   local self=BASE:Inherit(self, BASE:New()) --#TIMER
-
-  self.lid="TIMER | "
   
   -- Function to call.
   self.func=Function
@@ -135,6 +139,18 @@ function TIMER:New(Function, ...)
   
   -- Number of function calls.
   self.ncalls=0
+  
+  -- Increase counter
+  _TIMERID=_TIMERID+1
+  
+  -- Set UID.
+  self.uid=_TIMERID
+  
+  -- Log id.
+  self.lid=string.format("TIMER UID=%d | ", self.uid)
+  
+  -- Add to DB.
+  _TIMERDB[self.uid]=self
   
   return self
 end
@@ -151,7 +167,7 @@ function TIMER:Start(Tstart, dT, Duration)
   local Tnow=timer.getTime()
 
   -- Start time in sec.
-  self.Tstart=Tstart or Tnow
+  self.Tstart=Tstart and Tnow+Tstart or Tnow+0.001  -- one millisecond delay if Tstart=nil
   
   -- Set time interval.
   self.dT=dT
@@ -162,10 +178,10 @@ function TIMER:Start(Tstart, dT, Duration)
   end
   
   -- Call DCS timer function.
-  self.tid=timer.scheduleFunction(TIMER._Function, self, self.Tstart)
+  self.tid=timer.scheduleFunction(self._Function, self, self.Tstart)
   
   -- Set log id.
-  self.lid=string.format("TIMER ID=%d | ", self.tid)
+  self.lid=string.format("TIMER UID=%d/%d | ", self.uid, self.tid)
   
   -- Debug info.
   self:T(self.lid..string.format("Starting Timer in %.3f sec, dT=%s, Tstop=%s", self.Tstart-Tnow, tostring(self.dT), tostring(self.Tstop)))
@@ -186,8 +202,14 @@ function TIMER:Stop(Delay)
   else
 
     if self.tid then
+    
+      -- Remove timer function.
       self:T(self.lid..string.format("Stopping timer by removing timer function after %d calls!", self.ncalls))
       timer.removeFunction(self.tid)
+      
+      -- Remove DB entry.
+      _TIMERDB[self.uid]=nil
+      
     end
     
   end
@@ -209,6 +231,8 @@ end
 -- @param #number time DCS model time in seconds.
 -- @return #number Time when the function is called again or `nil` if the timer is stopped.
 function TIMER:_Function(time)
+
+  --self:I(self.lid.."FF calling timer _Function")
 
   -- Call function.
   self.func(unpack(self.para))

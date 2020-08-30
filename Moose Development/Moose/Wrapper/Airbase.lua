@@ -17,6 +17,7 @@
 -- @field #table CategoryName Names of airbase categories.
 -- @field #string AirbaseName Name of the airbase.
 -- @field #number AirbaseID Airbase ID.
+-- @field Core.Zone#ZONE AirbaseZone Circular zone around the airbase with a radius of 2500 meters. For ships this is a ZONE_UNIT object.
 -- @field #number category Airbase category.
 -- @field #table descriptors DCS descriptors.
 -- @field #boolean isAirdrome Airbase is an airdrome.
@@ -493,8 +494,14 @@ function AIRBASE:Register(AirbaseName)
   self:GetCoordinate()
 
   if vec2 then
-    -- TODO: For ships we need a moving zone.
-    self.AirbaseZone=ZONE_RADIUS:New( AirbaseName, vec2, 2500 )
+    if self.isShip then
+      local unit=UNIT:FindByName(AirbaseName)
+      if unit then
+        self.AirbaseZone=ZONE_UNIT:New(AirbaseName, unit, 2500)
+      end
+    else
+      self.AirbaseZone=ZONE_RADIUS:New(AirbaseName, vec2, 2500)
+    end
   else
     self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
   end

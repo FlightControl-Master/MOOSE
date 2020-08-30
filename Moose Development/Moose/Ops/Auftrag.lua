@@ -429,7 +429,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.3.1"
+AUFTRAG.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1801,7 +1801,7 @@ end
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
 function AUFTRAG:AddOpsGroup(OpsGroup)
-  self:I(self.lid..string.format("Adding Ops group %s", OpsGroup.groupname))
+  self:T(self.lid..string.format("Adding Ops group %s", OpsGroup.groupname))
 
   local groupdata={} --#AUFTRAG.GroupData
   groupdata.opsgroup=OpsGroup
@@ -1818,7 +1818,7 @@ end
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
 function AUFTRAG:DelOpsGroup(OpsGroup)
-  self:I(self.lid..string.format("Removing OPS group %s", OpsGroup and OpsGroup.groupname or "nil (ERROR)!"))
+  self:T(self.lid..string.format("Removing OPS group %s", OpsGroup and OpsGroup.groupname or "nil (ERROR)!"))
 
   if OpsGroup then
     
@@ -2139,15 +2139,24 @@ function AUFTRAG:Evaluate()
     -- Mission had targets
     ---
   
-    -- Number of current targets is still >0 ==> Not everything was destroyed.
+    -- Check if failed.
     if self.type==AUFTRAG.Type.TROOPTRANSPORT then
   
+      -- Transported groups have to survive.
       if Ntargets<Ntargets0 then
+        failed=true
+      end
+      
+    elseif self.type==AUFTRAG.Type.RESCUEHELO then
+
+      -- Rescue helo has to survive.
+      if self.Nelements==self.Ncasualties then
         failed=true
       end
     
     else
     
+      -- Still targets left.
       if Ntargets>0 then
         failed=true
       end

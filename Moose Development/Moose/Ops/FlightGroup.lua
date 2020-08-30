@@ -328,11 +328,13 @@ function FLIGHTGROUP:New(group)
   self:_InitGroup()
 
   -- Start the status monitoring.
-  self:__CheckZone(-1)
-  self:__Status(-2)
-  self:__QueueUpdate(-3)
-
-  --self.Timer=SCHEDULER:New()
+  self:__Status(-1)
+  
+  -- Start queue update timer.
+  self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(2, 5)
+  
+  -- Start check zone timer.
+  self.timerCheckZone=TIMER:New(self._CheckInZones, self):Start(3, 10)
 
   return self
 end
@@ -356,7 +358,7 @@ end
 -- @param Ops.AirWing#AIRWING airwing The AIRWING object.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetAirwing(airwing)
-  self:I(self.lid..string.format("Add flight to AIRWING %s", airwing.alias))
+  self:T(self.lid..string.format("Add flight to AIRWING %s", airwing.alias))
   self.airwing=airwing
   return self
 end
@@ -2409,6 +2411,9 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Ejection)
   self:UnHandleEvent(EVENTS.Crash)
   self:UnHandleEvent(EVENTS.RemoveUnit)
+  
+  self.timerCheckZone:Stop()
+  self.timerQueueUpdate:Stop()
 
   self.CallScheduler:Clear()
 
@@ -2437,7 +2442,7 @@ end
 -- @param Wrapper.Group#GROUP group Group object.
 -- @param #FLIGHTGROUP flightgroup Flight group object.
 function FLIGHTGROUP._ReachedHolding(group, flightgroup)
-  flightgroup:I(flightgroup.lid..string.format("Group reached holding point"))
+  flightgroup:T2(flightgroup.lid..string.format("Group reached holding point"))
 
   -- Trigger Holding event.
   flightgroup:__Holding(-1)
@@ -2447,7 +2452,7 @@ end
 -- @param Wrapper.Group#GROUP group Group object.
 -- @param #FLIGHTGROUP flightgroup Flight group object.
 function FLIGHTGROUP._ClearedToLand(group, flightgroup)
-  flightgroup:I(flightgroup.lid..string.format("Group was cleared to land"))
+  flightgroup:T2(flightgroup.lid..string.format("Group was cleared to land"))
 
   -- Trigger Landing event.
   flightgroup:__Landing(-1)
@@ -2457,7 +2462,7 @@ end
 -- @param Wrapper.Group#GROUP group Group object.
 -- @param #FLIGHTGROUP flightgroup Flight group object.
 function FLIGHTGROUP._FinishedRefuelling(group, flightgroup)
-  flightgroup:T(flightgroup.lid..string.format("Group finished refueling"))
+  flightgroup:T2(flightgroup.lid..string.format("Group finished refueling"))
 
   -- Trigger Holding event.
   flightgroup:__Refueled(-1)
@@ -2633,7 +2638,7 @@ function FLIGHTGROUP:AddElementByName(unitname)
 
     local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f (%d), category=%d, categoryname=%s, callsign=%s, ai=%s",
     element.name, element.status, element.skill, element.modex, element.fuelmass, element.fuelrel*100, element.category, element.categoryname, element.callsign, tostring(element.ai))
-    self:I(self.lid..text)
+    self:T(self.lid..text)
 
     -- Add element to table.
     table.insert(self.elements, element)

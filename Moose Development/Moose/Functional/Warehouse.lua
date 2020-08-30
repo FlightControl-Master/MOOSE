@@ -3521,12 +3521,14 @@ function WAREHOUSE:_JobDone()
         ---------------
 
         -- Info on job.
-        local text=string.format("Warehouse %s: Job on request id=%d for warehouse %s done!\n", self.alias, request.uid, request.warehouse.alias)
-        text=text..string.format("- %d of %d assets delivered. Casualties %d.", ncargodelivered, ncargotot, ncargodead)
-        if request.ntransport>0 then
-          text=text..string.format("\n- %d of %d transports returned home. Casualties %d.", ntransporthome, ntransporttot, ntransportdead)
+        if self.verbosity>=1 then
+          local text=string.format("Warehouse %s: Job on request id=%d for warehouse %s done!\n", self.alias, request.uid, request.warehouse.alias)
+          text=text..string.format("- %d of %d assets delivered. Casualties %d.", ncargodelivered, ncargotot, ncargodead)
+          if request.ntransport>0 then
+            text=text..string.format("\n- %d of %d transports returned home. Casualties %d.", ntransporthome, ntransporttot, ntransportdead)
+          end
+          self:_InfoMessage(text, 20)
         end
-        self:_InfoMessage(text, 20)
 
         -- Mark request for deletion.
         table.insert(done, request)
@@ -3575,13 +3577,13 @@ function WAREHOUSE:_JobDone()
 
             -- Debug text.
             local text=string.format("Group %s: speed=%d km/h, onground=%s , airbase=%s, spawnzone=%s ==> ishome=%s", group:GetName(), speed, tostring(onground), airbase, tostring(inspawnzone), tostring(ishome))
-            self:I(self.lid..text)
+            self:T(self.lid..text)
 
             if ishome then
 
               -- Info message.
               local text=string.format("Warehouse %s: Transport group arrived back home and no cargo left for request id=%d.\nSending transport group %s back to stock.", self.alias, request.uid, group:GetName())
-              self:_InfoMessage(text)
+              self:T(self.lid..text)
 
               -- Debug smoke.
               if self.Debug then
@@ -4807,7 +4809,7 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     end
 
     -- Move asset from pending queue into new warehouse.
-    env.info("FF asset arrived in wh. adding in 60 sec")
+    self:T(self.lid.."Asset arrived at warehouse adding in 60 sec")
     warehouse:__AddAsset(60, group)
   end
 
@@ -4822,8 +4824,10 @@ end
 function WAREHOUSE:onafterDelivered(From, Event, To, request)
 
   -- Debug info
-  local text=string.format("Warehouse %s: All assets delivered to warehouse %s!", self.alias, request.warehouse.alias)
-  self:_InfoMessage(text, 5)
+  if self.verbosity>=1 then
+    local text=string.format("Warehouse %s: All assets delivered to warehouse %s!", self.alias, request.warehouse.alias)
+    self:_InfoMessage(text, 5)
+  end
 
   -- Make some noise :)
   if self.Debug then
@@ -5163,12 +5167,12 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
     local assetitem=_asset --#WAREHOUSE.Assetitem
 
     -- Debug info.
-    self:I(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
+    self:T(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
 
     if assetitem.spawned then
       n=n+1
     else
-      self:E(self.lid.."FF What?! This should not happen!")
+      self:T(self.lid.."FF What?! This should not happen!")
     end
 
   end
@@ -8498,8 +8502,8 @@ end
 -- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
 function WAREHOUSE:_InfoMessage(text, duration)
   duration=duration or 20
-  if duration>0 then
-    MESSAGE:New(text, duration):ToCoalitionIf(self:GetCoalition(), self.Debug or self.Report)
+  if duration>0 and self.Debug or self.Report then
+    MESSAGE:New(text, duration):ToCoalition(self:GetCoalition())
   end
   self:I(self.lid..text)
 end

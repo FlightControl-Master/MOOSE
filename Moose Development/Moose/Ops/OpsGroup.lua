@@ -45,6 +45,8 @@
 -- @field #boolean respawning Group is being respawned.
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
+-- @field Core.Timer#TIMER timerCheckZone Timer for check zones.
+-- @field Core.Timer#TIMER timerQueueUpdate Timer for queue updates.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
 -- @field #boolean detectionOn If true, detected units of the group are analyzed.
 -- @field Ops.Auftrag#AUFTRAG missionpaused Paused mission.
@@ -315,7 +317,6 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "Stop",             "Stopped")     -- Stop FSM.
 
   self:AddTransition("*",             "Status",           "*")           -- Status update.
-  self:AddTransition("*",             "QueueUpdate",      "*")           -- Update task and mission queues.  
 
   self:AddTransition("*",             "UpdateRoute",      "*")           -- Update route of group. Only if airborne.
   self:AddTransition("*",             "Respawn",          "*")           -- Respawn group.
@@ -335,7 +336,6 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "OutOfBombs",        "*")          -- Group is out of bombs.
   self:AddTransition("*",             "OutOfMissiles",     "*")          -- Group is out of missiles.
 
-  self:AddTransition("*",             "CheckZone",        "*")           -- Check if group enters/leaves a certain zone.
   self:AddTransition("*",             "EnterZone",        "*")           -- Group entered a certain zone.
   self:AddTransition("*",             "LeaveZone",        "*")           -- Group leaves a certain zone.
 
@@ -1038,7 +1038,7 @@ function OPSGROUP:RemoveWaypoint(wpindex)
     local n=#self.waypoints
     
     -- Debug info.
-    self:I(self.lid..string.format("Removing waypoint index %d, current wp index %d. N %d-->%d", wpindex, self.currentwp, N, n))
+    self:T(self.lid..string.format("Removing waypoint index %d, current wp index %d. N %d-->%d", wpindex, self.currentwp, N, n))
   
     -- Waypoint was not reached yet.
     if wpindex > self.currentwp then
@@ -1188,7 +1188,7 @@ function OPSGROUP:AddTask(task, clock, description, prio, duration)
   table.insert(self.taskqueue, newtask)
   
   -- Info.
-  self:I(self.lid..string.format("Adding SCHEDULED task %s starting at %s", newtask.description, UTILS.SecondsToClock(newtask.time, true)))
+  self:T(self.lid..string.format("Adding SCHEDULED task %s starting at %s", newtask.description, UTILS.SecondsToClock(newtask.time, true)))
   self:T3({newtask=newtask})
 
   return newtask
@@ -1475,7 +1475,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
   -- Debug message.
   local text=string.format("Task %s ID=%d execute", tostring(Task.description), Task.id)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
   
   -- Cancel current task if there is any.
   if self.taskcurrent>0 then
@@ -1585,7 +1585,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
     
       -- Debug info.
       local text=string.format("Current task %s ID=%d cancelled (flag %s=%d)", Task.description, Task.id, Task.stopflag:GetName(), stopflag)
-      self:I(self.lid..text)
+      self:T(self.lid..text)
       
       -- Set stop flag. When the flag is true, the _TaskDone function is executed and calls :TaskDone()
       Task.stopflag:Set(1)
@@ -1601,7 +1601,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
     else
             
       -- Debug info.
-      self:I(self.lid..string.format("TaskCancel: Setting task %s ID=%d to DONE", Task.description, Task.id))
+      self:T(self.lid..string.format("TaskCancel: Setting task %s ID=%d to DONE", Task.description, Task.id))
       
       -- Call task done function.      
       self:TaskDone(Task)
@@ -1645,7 +1645,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
 
   -- Debug message.
   local text=string.format("Task done: %s ID=%d", Task.description, Task.id)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- No current task.
   if Task.id==self.taskcurrent then
@@ -1703,7 +1703,7 @@ function OPSGROUP:AddMission(Mission)
   -- Info text.
   local text=string.format("Added %s mission %s starting at %s, stopping at %s", 
   tostring(Mission.type), tostring(Mission.name), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "INF")
-  self:I(self.lid..text)
+  self:T(self.lid..text)
   
   return self
 end
@@ -2015,7 +2015,7 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     local Task=Mission:GetGroupWaypointTask(self)
     
     -- Debug info.
-    self:I(self.lid..string.format("Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+    self:T(self.lid..string.format("Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
 
     -- Cancelling the mission is actually cancelling the current task.
     -- Note that two things can happen.
@@ -2053,7 +2053,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
 
   -- Debug info.
   local text=string.format("Mission %s DONE!", Mission.name)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
   
   -- Set group status.
   Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.DONE)
@@ -2196,10 +2196,9 @@ end
 
 --- On after "QueueUpdate" event. 
 -- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function OPSGROUP:onafterQueueUpdate(From, Event, To)
+function OPSGROUP:_QueueUpdate()
+
+  --env.info(self.lid.."FF queueupdate T="..timer.getTime())
 
   ---
   -- Mission
@@ -2253,10 +2252,6 @@ function OPSGROUP:onafterQueueUpdate(From, Event, To)
     
   end
 
-  -- Update queue every ~5 sec.
-  if not self:IsStopped() then
-    self:__QueueUpdate(-5)
-  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2427,22 +2422,6 @@ function OPSGROUP:onafterLeaveZone(From, Event, To, Zone)
   self.inzones:Remove(zonename, true)
 end
 
---- On after "CheckZone" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function OPSGROUP:onafterCheckZone(From, Event, To)
-
-  if self:IsAlive()==true then
-    self:_CheckInZones()
-  end
-
-  if not self:IsStopped() then
-    self:__CheckZone(-10)
-  end
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Internal Check Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2451,7 +2430,7 @@ end
 -- @param #OPSGROUP self
 function OPSGROUP:_CheckInZones()
 
-  if self.checkzones then
+  if self.checkzones and self:IsAlive() then
   
     local Ncheck=self.checkzones:Count()
     local Ninside=self.inzones:Count()

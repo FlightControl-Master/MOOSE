@@ -154,10 +154,14 @@ function NAVYGROUP:New(GroupName)
   self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
   
   -- Start the status monitoring.
-  self:__CheckZone(-1)
-  self:__Status(-2)
-  self:__QueueUpdate(-3)
-   
+  self:__Status(-1)
+  
+  -- Start check zone timer.
+  self.timerCheckZone=TIMER:New(self._CheckInZones, self):Start(2, 5)
+  
+  -- Start queue update timer.
+  self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(3, 60)
+     
   return self  
 end
 
@@ -505,7 +509,7 @@ end
 -- @param #string To To state.
 -- @param #NAVYGROUP.Element Element The group element.
 function NAVYGROUP:onafterElementSpawned(From, Event, To, Element)
-  self:I(self.lid..string.format("Element spawned %s", Element.name))
+  self:T(self.lid..string.format("Element spawned %s", Element.name))
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.SPAWNED)
@@ -531,7 +535,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function NAVYGROUP:onafterSpawned(From, Event, To)
-  self:I(self.lid..string.format("Group spawned!"))
+  self:T(self.lid..string.format("Group spawned!"))
 
   if self.ai then
  
@@ -652,7 +656,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   
   if #waypoints>1 then
 
-    self:I(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Depth=%d m", 
+    self:T(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Depth=%d m", 
     self.currentwp, n, #self.waypoints, #waypoints-1, UTILS.MpsToKnots(self.speed), depth))
 
 
@@ -710,7 +714,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function NAVYGROUP:onafterDetourReached(From, Event, To)
-  self:I(self.lid.."Group reached detour coordinate.")
+  self:T(self.lid.."Group reached detour coordinate.")
 end
 
 --- On after "TurnIntoWind" event.
@@ -770,7 +774,8 @@ end
 -- @param #boolean Uturn Return to the place we came from.
 function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To)
 
-  env.info("FF Turn Into Wind Over!")
+  -- Debug message.
+  self:T2(self.lid.."Turn Into Wind Over!")
 
   self.intowind.Over=true
   self.intowind.Open=false
@@ -779,10 +784,10 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To)
   self:RemoveWaypointByID(self.intowind.waypoint.uid)
 
   if self.intowind.Uturn then
-    env.info("FF Turn Into Wind Over Uturn!")
+    self:T(self.lid.."Turn Into Wind Over ==> Uturn!")
     self:Detour(self.intowind.Coordinate, self:GetSpeedCruise(), 0, true)
   else
-    env.info("FF Turn Into Wind Over Next WP!")
+    self:T(self.lid.."FF Turn Into Wind Over ==> Next WP!")
     local indx=self:GetWaypointIndexNext()
     local speed=self:GetWaypointSpeed(indx)
     self:__UpdateRoute(-1, indx, speed)
@@ -1041,7 +1046,7 @@ function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Up
   -- Check if a coordinate was given or at least a positionable.
   if not Coordinate:IsInstanceOf("COORDINATE") then
     if Coordinate:IsInstanceOf("POSITIONABLE") or Coordinate:IsInstanceOf("ZONE_BASE") then
-      self:I(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE. Trying to get coordinate")
+      self:T(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE. Trying to get coordinate")
       Coordinate=Coordinate:GetCoordinate()
     else
       self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE!")
@@ -1070,7 +1075,7 @@ function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Up
   self:_AddWaypoint(waypoint, wpnumber)
   
   -- Debug info.
-  self:I(self.lid..string.format("Adding NAVAL waypoint index=%d uid=%d, speed=%.1f knots. Last waypoint passed was #%d. Total waypoints #%d", wpnumber, waypoint.uid, Speed, self.currentwp, #self.waypoints))
+  self:T(self.lid..string.format("Adding NAVAL waypoint index=%d uid=%d, speed=%.1f knots. Last waypoint passed was #%d. Total waypoints #%d", wpnumber, waypoint.uid, Speed, self.currentwp, #self.waypoints))
 
   -- Update route.
   if Updateroute==nil or Updateroute==true then

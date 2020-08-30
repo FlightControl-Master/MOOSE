@@ -113,9 +113,13 @@ function ARMYGROUP:New(GroupName)
   self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
   
   -- Start the status monitoring.
-  self:__CheckZone(-1)
-  self:__Status(-2)
-  self:__QueueUpdate(-3)
+  self:__Status(-1)
+  
+  -- Start check zone timer.
+  self.timerCheckZone=TIMER:New(self._CheckInZones, self):Start(2, 5)
+  
+  -- Start queue update timer.
+  self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(3, 30)
    
   return self  
 end
@@ -292,7 +296,7 @@ end
 -- @param #string To To state.
 -- @param #ARMYGROUP.Element Element The group element.
 function ARMYGROUP:onafterElementSpawned(From, Event, To, Element)
-  self:I(self.lid..string.format("Element spawned %s", Element.name))
+  self:T(self.lid..string.format("Element spawned %s", Element.name))
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.SPAWNED)
@@ -318,7 +322,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARMYGROUP:onafterSpawned(From, Event, To)
-  self:I(self.lid..string.format("Group spawned!"))
+  self:T(self.lid..string.format("Group spawned!"))
 
   if self.ai then
   
