@@ -902,7 +902,7 @@ end
 function DATABASE:_RegisterAirbases()
 
  for DCSAirbaseId, DCSAirbase in pairs(world.getAirbases()) do
- 
+
     -- Get the airbase name.
     local DCSAirbaseName = DCSAirbase:getName()
 
@@ -914,7 +914,7 @@ function DATABASE:_RegisterAirbases()
 
     -- Debug output.
     self:I(string.format("Register Airbase: %s, getID=%d, GetID=%d (unique=%d)", DCSAirbaseName, DCSAirbase:getID(), airbase:GetID(), airbase:GetID(true)))
-    
+
   end
 
   return self

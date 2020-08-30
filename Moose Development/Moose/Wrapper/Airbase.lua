@@ -461,19 +461,19 @@ function AIRBASE:Register(AirbaseName)
 
   -- Inherit everything from positionable.
   local self=BASE:Inherit(self, POSITIONABLE:New(AirbaseName)) --#AIRBASE
-  
+
   -- Set airbase name.
   self.AirbaseName=AirbaseName
-  
+
   -- Set airbase ID.
   self.AirbaseID=self:GetID(true)
-  
+
   -- Get descriptors.
   self.descriptors=self:GetDesc()
-  
+
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
-  
+
   -- Set category.
   if self.category==Airbase.Category.AIRDROME then
     self.isAirdrome=true
@@ -484,14 +484,14 @@ function AIRBASE:Register(AirbaseName)
   else
     self:E("ERROR: Unknown airbase category!")
   end
-  
+
   self:_InitParkingSpots()
-  
+
   local vec2=self:GetVec2()
-  
+
   -- Init coordinate.
   self:GetCoordinate()
-  
+
   if vec2 then
     -- TODO: For ships we need a moving zone.
     self.AirbaseZone=ZONE_RADIUS:New( AirbaseName, vec2, 2500 )
@@ -628,7 +628,7 @@ function AIRBASE:GetID(unique)
       local airbaseID=tonumber(DCSAirbase:getID())
 
       local airbaseCategory=self:GetAirbaseCategory()
-      
+
       if AirbaseName==self.AirbaseName then
         if airbaseCategory==Airbase.Category.SHIP or airbaseCategory==Airbase.Category.HELIPAD then
           -- Ships get a negative sign as their unit number might be the same as the ID of another airbase.
@@ -819,16 +819,16 @@ function AIRBASE:_InitParkingSpots()
   -- Init table.
   self.parking={}
   self.parkingByID={}
-  
+
   self.NparkingTotal=0
   self.NparkingTerminal={}
   for _,terminalType in pairs(AIRBASE.TerminalType) do
     self.NparkingTerminal[terminalType]=0
-  end  
+  end
 
   -- Put coordinates of parking spots into table.
   for _,spot in pairs(parkingdata) do
-      
+
       -- New parking spot.
       local park={} --#AIRBASE.ParkingSpot
       park.Vec3=spot.vTerminalPos
@@ -839,13 +839,13 @@ function AIRBASE:_InitParkingSpots()
       park.TerminalID0=spot.Term_Index_0
       park.TerminalType=spot.Term_Type
       park.TOAC=spot.TO_AC
-      
+
       for _,terminalType in pairs(AIRBASE.TerminalType) do
         if self._CheckTerminalType(terminalType, park.TerminalType) then
           self.NparkingTerminal[terminalType]=self.NparkingTerminal[terminalType]+1
         end
-      end      
-      
+      end
+
       self.parkingByID[park.TerminalID]=park
       table.insert(self.parking, park)
   end
@@ -869,7 +869,7 @@ function AIRBASE:GetParkingSpotsTable(termtype)
 
   -- Get parking data of all spots (free or occupied)
   local parkingdata=self:GetParkingData(false)
-  
+
   -- Get parking data of all free spots.
   local parkingfree=self:GetParkingData(true)
 
@@ -886,17 +886,17 @@ function AIRBASE:GetParkingSpotsTable(termtype)
   -- Put coordinates of parking spots into table.
   local spots={}
   for _,_spot in pairs(parkingdata) do
-  
+
     if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then
-    
+
       local spot=self:_GetParkingSpotByID(_spot.Term_Index)
-      
+
       spot.Free=_isfree(_spot) -- updated
       spot.TOAC=_spot.TO_AC    -- updated
-    
+
       table.insert(spots, spot)
     end
-    
+
   end
 
   return spots
@@ -917,14 +917,14 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
   for _,_spot in pairs(parkingfree) do
     if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) and _spot.Term_Index>0 then
       if (allowTOAC and allowTOAC==true) or _spot.TO_AC==false then
-      
+
         local spot=self:_GetParkingSpotByID(_spot.Term_Index)
 
         spot.Free=true -- updated
         spot.TOAC=_spot.TO_AC    -- updated
-      
+
         table.insert(freespots, spot)
-        
+
       end
     end
   end
@@ -1245,7 +1245,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
 
   -- Get spawn points on runway. These can be used to determine the runway heading.
   local runwaycoords=self:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
-  
+
   -- Debug: For finding the numbers of the spawn points belonging to each runway.
   if false then
     for i,_coord in pairs(runwaycoords) do
@@ -1264,7 +1264,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
 
   -- Airbase name.
   local name=self:GetName()
-  
+
 
   -- Exceptions
   if name==AIRBASE.Nevada.Jean_Airport or
@@ -1277,35 +1277,35 @@ function AIRBASE:GetRunwayData(magvar, mark)
 
     -- 1-->4, 2-->3, 3-->2, 4-->1
     exception=1
-    
-  elseif UTILS.GetDCSMap()==DCSMAP.Syria and N>=2 and 
+
+  elseif UTILS.GetDCSMap()==DCSMAP.Syria and N>=2 and
     name~=AIRBASE.Syria.Minakh and
     name~=AIRBASE.Syria.Damascus and
     name~=AIRBASE.Syria.Khalkhalah and
     name~=AIRBASE.Syria.Marj_Ruhayyil and
     name~=AIRBASE.Syria.Beirut_Rafic_Hariri then
-  
+
     -- 1-->3, 2-->4, 3-->1, 4-->2
     exception=2
-      
+
   end
-  
+
   local function f(i)
 
     local j
-        
+
     if exception==1 then
-    
+
       j=N-(i+1)  -- 1-->4, 2-->3
-      
+
     elseif exception==2 then
-    
+
       if i<=N2 then
         j=i+N2  -- 1-->3, 2-->4
       else
         j=i-N2  -- 3-->1, 4-->3
       end
-      
+
     else
 
       if i%2==0 then
@@ -1313,9 +1313,9 @@ function AIRBASE:GetRunwayData(magvar, mark)
       else
         j=i+1  -- odd  1-->2, 3-->4
       end
-    
+
     end
-    
+
     -- Special case where there is no obvious order.
     if name==AIRBASE.Syria.Beirut_Rafic_Hariri then
       if i==1 then
@@ -1348,7 +1348,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
         j=2
       end
     end
-  
+
     return j
   end
 
