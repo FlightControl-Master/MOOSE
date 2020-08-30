@@ -155,12 +155,12 @@ function NAVYGROUP:New(GroupName)
   
   -- Start the status monitoring.
   self:__Status(-1)
+
+  -- Start queue update timer.
+  self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(2, 5)
   
   -- Start check zone timer.
-  self.timerCheckZone=TIMER:New(self._CheckInZones, self):Start(2, 5)
-  
-  -- Start queue update timer.
-  self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(3, 60)
+  self.timerCheckZone=TIMER:New(self._CheckInZones, self):Start(2, 60)
      
   return self  
 end
