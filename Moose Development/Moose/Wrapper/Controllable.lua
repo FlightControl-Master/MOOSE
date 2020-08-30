@@ -243,8 +243,7 @@ end
 
 --- Returns the initial health.
 -- @param #CONTROLLABLE self
--- @return #number The controllable health value (unit or group average).
--- @return #nil The controllable is not existing or alive.
+-- @return #number The controllable health value (unit or group average) or `nil` if the controllable does not exist.
 function CONTROLLABLE:GetLife0()
   self:F2( self.ControllableName )
 
@@ -296,7 +295,6 @@ end
 -- @return #nil The CONTROLLABLE is not existing or alive.
 function CONTROLLABLE:GetFuel()
   self:F( self.ControllableName )
-
   return nil
 end
 
@@ -1429,16 +1427,6 @@ end
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
 
-  -- FireAtPoint = {
-  --   id = 'FireAtPoint',
-  --   params = {
-  --     point = Vec2,
-  --     radius = Distance,
-  --     expendQty = number,
-  --     expendQtyEnabled = boolean,
-  --   }
-  -- }
-
   local DCSTask = {
     id = 'FireAtPoint',
     params = {
@@ -1458,7 +1446,6 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
     DCSTask.params.weaponType=WeaponType
   end
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 

@@ -25,6 +25,7 @@ __Moose.Include( 'Scripts/Moose/Core/RadioQueue.lua' )
 __Moose.Include( 'Scripts/Moose/Core/RadioSpeech.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Spawn.lua' )
 __Moose.Include( 'Scripts/Moose/Core/SpawnStatic.lua' )
+__Moose.Include( 'Scripts/Moose/Core/Timer.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Goal.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Spot.lua' )
 

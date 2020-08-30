@@ -175,10 +175,6 @@ do -- COORDINATE
   -- In order to use the most optimal road system to transport vehicles, the method @{#COORDINATE.GetPathOnRoad}() will calculate
   -- the most optimal path following the road between two coordinates.
   --   
-  --
-  --
-  --
-  --
   -- ## 8) Metric or imperial system
   --
   --   * @{#COORDINATE.IsMetric}(): Returns if the 3D point is Metric or Nautical Miles.
@@ -204,23 +200,23 @@ do -- COORDINATE
   
   --- @field COORDINATE.WaypointAction 
   COORDINATE.WaypointAction = {
-    TurningPoint = "Turning Point",
-    FlyoverPoint = "Fly Over Point",
-    FromParkingArea = "From Parking Area",
+    TurningPoint       = "Turning Point",
+    FlyoverPoint       = "Fly Over Point",
+    FromParkingArea    = "From Parking Area",
     FromParkingAreaHot = "From Parking Area Hot",
-    FromRunway = "From Runway",
-    Landing = "Landing",
-    LandingReFuAr = "LandingReFuAr",
+    FromRunway         = "From Runway",
+    Landing            = "Landing",
+    LandingReFuAr      = "LandingReFuAr",
   }
 
   --- @field COORDINATE.WaypointType 
   COORDINATE.WaypointType = {
-    TakeOffParking = "TakeOffParking",
+    TakeOffParking    = "TakeOffParking",
     TakeOffParkingHot = "TakeOffParkingHot",
-    TakeOff = "TakeOffParkingHot",
-    TurningPoint = "Turning Point",
-    Land = "Land",
-    LandingReFuAr = "LandingReFuAr",
+    TakeOff           = "TakeOffParkingHot",
+    TurningPoint      = "Turning Point",
+    Land              = "Land",
+    LandingReFuAr     = "LandingReFuAr",
   }
 
 
@@ -232,6 +228,7 @@ do -- COORDINATE
   -- @return #COORDINATE
   function COORDINATE:New( x, y, z ) 
 
+    --env.info("FF COORDINATE New")
     local self = BASE:Inherit( self, BASE:New() ) -- #COORDINATE
     self.x = x
     self.y = y
@@ -302,6 +299,45 @@ do -- COORDINATE
   function COORDINATE:GetVec2()
     return { x = self.x, y = self.z }
   end
+
+  --- Update x,y,z coordinates from a given 3D vector.
+  -- @param #COORDINATE self
+  -- @param DCS#Vec3 Vec3 The 3D vector with x,y,z components.
+  -- @return #COORDINATE The modified COORDINATE itself.
+  function COORDINATE:UpdateFromVec3(Vec3)
+    
+    self.x=Vec3.x
+    self.y=Vec3.y
+    self.z=Vec3.z
+  
+    return self
+  end
+  
+  --- Update x,y,z coordinates from another given COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE Coordinate The coordinate with the new x,y,z positions.
+  -- @return #COORDINATE The modified COORDINATE itself.
+  function COORDINATE:UpdateFromCoordinate(Coordinate)
+    
+    self.x=Coordinate.x
+    self.y=Coordinate.y
+    self.z=Coordinate.z
+  
+    return self
+  end  
+
+  --- Update x and z coordinates from a given 2D vector.
+  -- @param #COORDINATE self
+  -- @param DCS#Vec2 Vec2 The 2D vector with x,y components. x is overwriting COORDINATE.x while y is overwriting COORDINATE.z.
+  -- @return #COORDINATE The modified COORDINATE itself.
+  function COORDINATE:UpdateFromVec2(Vec2)
+    
+    self.x=Vec2.x
+    self.z=Vec2.y
+  
+    return self
+  end
+  
 
   --- Returns the coordinate from the latitude and longitude given in decimal degrees.
   -- @param #COORDINATE self
@@ -506,19 +542,28 @@ do -- COORDINATE
   -- @param DCS#Distance Distance The Distance to be added in meters.
   -- @param DCS#Angle Angle The Angle in degrees. Defaults to 0 if not specified (nil).
   -- @param #boolean Keepalt If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
-  -- @return Core.Point#COORDINATE The new calculated COORDINATE.
-  function COORDINATE:Translate( Distance, Angle, Keepalt )
-    local SX = self.x
-    local SY = self.z
-    local Radians = (Angle or 0) / 180 * math.pi
-    local TX = Distance * math.cos( Radians ) + SX
-    local TY = Distance * math.sin( Radians ) + SY
-  
-    if Keepalt then
-      return COORDINATE:NewFromVec3( { x = TX, y=self.y, z = TY } )
+  -- @param #boolean Overwrite If true, overwrite the original COORDINATE with the translated one. Otherwise, create a new COODINATE.
+  -- @return #COORDINATE The new calculated COORDINATE.
+  function COORDINATE:Translate( Distance, Angle, Keepalt, Overwrite )
+
+    -- Angle in rad.  
+    local alpha = math.rad((Angle or 0))
+    
+    local x = Distance * math.cos(alpha) + self.x  -- New x
+    local z = Distance * math.sin(alpha) + self.z  -- New z
+    
+    local y=Keepalt and self.y or land.getHeight({x=x, y=z})
+    
+    if Overwrite then
+      self.x=x
+      self.y=y
+      self.z=z
+      return self
     else
-      return COORDINATE:NewFromVec2( { x = TX, y = TY } )
+      --env.info("FF translate with NEW coordinate T="..timer.getTime())
+      return COORDINATE:New(x, y, z)
     end
+    
   end
 
   --- Rotate coordinate in 2D (x,z) space.
@@ -721,12 +766,18 @@ do -- COORDINATE
 
   --- Return the 2D distance in meters between the target COORDINATE and the COORDINATE.
   -- @param #COORDINATE self
-  -- @param #COORDINATE TargetCoordinate The target COORDINATE.
+  -- @param #COORDINATE TargetCoordinate The target COORDINATE. Can also be a DCS#Vec3.
   -- @return DCS#Distance Distance The distance in meters.
   function COORDINATE:Get2DDistance( TargetCoordinate )
-    local TargetVec3 = TargetCoordinate:GetVec3()
-    local SourceVec3 = self:GetVec3()
-    return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
+
+    local a={x=TargetCoordinate.x-self.x, y=0, z=TargetCoordinate.z-self.z}
+    
+    return UTILS.VecNorm(a)
+
+    --local TargetVec3 = TargetCoordinate:GetVec3()
+    --local SourceVec3 = self:GetVec3()
+
+    --return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
   end
   
   --- Returns the temperature in Degrees Celsius.
@@ -1086,23 +1137,6 @@ do -- COORDINATE
     return self
   end
 
-  --- Add a Distance in meters from the COORDINATE horizontal plane, with the given angle, and calculate the new COORDINATE.
-  -- @param #COORDINATE self
-  -- @param DCS#Distance Distance The Distance to be added in meters.
-  -- @param DCS#Angle Angle The Angle in degrees.
-  -- @return #COORDINATE The new calculated COORDINATE.
-  function COORDINATE:Translate( Distance, Angle )
-    local SX = self.x
-    local SZ = self.z
-    local Radians = Angle / 180 * math.pi
-    local TX = Distance * math.cos( Radians ) + SX
-    local TZ = Distance * math.sin( Radians ) + SZ
-
-    return COORDINATE:New( TX, self.y, TZ )
-  end
-
-
-
   --- Build an air type route point.
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
@@ -1290,8 +1324,10 @@ do -- COORDINATE
     RoutePoint.x    = self.x
     RoutePoint.y    = self.z
     
-    RoutePoint.alt  = self:GetLandHeight()+1 -- self.y
+    RoutePoint.alt      = self:GetLandHeight()+1
     RoutePoint.alt_type = COORDINATE.WaypointAltType.BARO
+    
+    RoutePoint.type = "Turning Point"
  
     RoutePoint.action = Formation or "Off Road"
     RoutePoint.formation_template=""
@@ -1351,7 +1387,7 @@ do -- COORDINATE
   -- @param #number Coalition (Optional) Coalition of the airbase.
   -- @return Wrapper.Airbase#AIRBASE Closest Airbase to the given coordinate.
   -- @return #number Distance to the closest airbase in meters.
-  function COORDINATE:GetClosestAirbase(Category, Coalition)
+  function COORDINATE:GetClosestAirbase2(Category, Coalition)
   
     -- Get all airbases of the map.
     local airbases=AIRBASE.GetAllAirbases(Coalition)
@@ -1383,6 +1419,36 @@ do -- COORDINATE
     end
     
     return closest,distmin
+  end
+
+  --- Gets the nearest airbase with respect to the current coordinates.
+  -- @param #COORDINATE self
+  -- @param #number Category (Optional) Category of the airbase. Enumerator of @{Wrapper.Airbase#AIRBASE.Category}.
+  -- @param #number Coalition (Optional) Coalition of the airbase.
+  -- @return Wrapper.Airbase#AIRBASE Closest Airbase to the given coordinate.
+  -- @return #number Distance to the closest airbase in meters.
+  function COORDINATE:GetClosestAirbase(Category, Coalition)
+
+    local a=self:GetVec3()
+    
+    local distmin=math.huge
+    local airbase=nil
+    for DCSairbaseID, DCSairbase in pairs(world.getAirbases(Coalition)) do
+      local b=DCSairbase:getPoint()
+      
+      local c=UTILS.VecSubstract(a,b)      
+      local dist=UTILS.VecNorm(c)
+      
+      --env.info(string.format("Airbase %s dist=%d category=%d", DCSairbase:getName(), dist, DCSairbase:getCategory()))
+      
+      if dist<distmin and (Category==nil or Category==DCSairbase:getDesc().category) then
+        distmin=dist
+        airbase=DCSairbase
+      end
+      
+    end
+    
+    return AIRBASE:Find(airbase)
   end
   
   --- Gets the nearest parking spot.
@@ -1526,27 +1592,8 @@ do -- COORDINATE
         local coord=COORDINATE:NewFromVec2(_vec2)
         
         Path[#Path+1]=coord
-        
-        if MarkPath then
-          coord:MarkToAll(string.format("Path segment %d.", _i))
-        end
-        if SmokePath then
-          coord:SmokeGreen()
-        end
       end
-            
-      -- Mark/smoke endpoints
-      if IncludeEndpoints then
-        if MarkPath then
-          COORDINATE:NewFromVec2(path[1]):MarkToAll("Path Initinal Point")
-          COORDINATE:NewFromVec2(path[1]):MarkToAll("Path Final Point")        
-        end
-        if SmokePath then
-          COORDINATE:NewFromVec2(path[1]):SmokeBlue()
-          COORDINATE:NewFromVec2(path[#path]):SmokeBlue()
-        end
-      end
-            
+                              
     else
       self:E("Path is nil. No valid path on road could be found.")
       GotPath=false
@@ -1557,6 +1604,23 @@ do -- COORDINATE
       Path[#Path+1]=ToCoord
     end
     
+    -- Mark or smoke.
+    if MarkPath or SmokePath then
+      for i,c in pairs(Path) do
+        local coord=c --#COORDINATE
+        if MarkPath then
+          coord:MarkToAll(string.format("Path segment %d", i))
+        end
+        if SmokePath then
+          if i==1 or i==#Path then          
+            coord:SmokeBlue()
+          else
+            coord:SmokeGreen()
+          end
+        end
+      end
+    end
+    
     -- Sum up distances.
     if #Path>=2 then
       for i=1,#Path-1 do
@@ -1564,7 +1628,7 @@ do -- COORDINATE
       end
     else
       -- There are cases where no path on road can be found.
-      return nil,nil
+      return nil,nil,false
     end 
         
     return Path, Way, GotPath
@@ -1921,15 +1985,18 @@ do -- COORDINATE
   --- Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoordinate
+  -- @param #number Offset Height offset in meters. Default 2 m.
   -- @return #boolean true If the ToCoordinate has LOS with the Coordinate, otherwise false.
-  function COORDINATE:IsLOS( ToCoordinate )
+  function COORDINATE:IsLOS( ToCoordinate, Offset )
+  
+    Offset=Offset or 2
 
     -- Measurement of visibility should not be from the ground, so Adding a hypotethical 2 meters to each Coordinate.
     local FromVec3 = self:GetVec3()
-    FromVec3.y = FromVec3.y + 2
+    FromVec3.y = FromVec3.y + Offset
 
     local ToVec3 = ToCoordinate:GetVec3()
-    ToVec3.y = ToVec3.y + 2
+    ToVec3.y = ToVec3.y + Offset
 
     local IsLOS = land.isVisible( FromVec3, ToVec3 )
 

@@ -1,5 +1,5 @@
 --- **Wrapper** - Markers On the F10 map.
--- 
+--
 -- **Main Features:**
 --
 --    * Convenient handling of markers via multiple user API functions.
@@ -8,7 +8,7 @@
 --    * Retrieve data such as text and coordinate.
 --    * Marker specific FSM events when a marker is added, removed or changed.
 --    * Additional FSM events when marker text or position is changed.
---     
+--
 -- ===
 --
 -- ### Author: **funkyfranky**
@@ -36,104 +36,104 @@
 -- ![Banner Image](..\Presentations\MARKER\Marker_Main.jpg)
 --
 -- # The MARKER Class Idea
--- 
+--
 -- The MARKER class simplifies creating, updating and removing of markers on the F10 map.
--- 
+--
 -- # Create a Marker
--- 
+--
 --     -- Create a MARKER object at Batumi with a trivial text.
 --     local Coordinate=AIRBASE:FindByName("Batumi"):GetCoordinate()
 --     mymarker=MARKER:New(Coordinate, "I am Batumi Airfield")
--- 
--- Now this does **not** show the marker yet. We still need to specifiy to whom it is shown. There are several options, i.e. 
+--
+-- Now this does **not** show the marker yet. We still need to specifiy to whom it is shown. There are several options, i.e.
 -- show the marker to everyone, to a speficic coaliton only, or only to a specific group.
--- 
+--
 -- ## For Everyone
--- 
+--
 -- If the marker should be visible to everyone, you can use the :ToAll() function.
 --
 --     mymarker=MARKER:New(Coordinate, "I am Batumi Airfield"):ToAll()
--- 
+--
 -- ## For a Coaliton
--- 
+--
 -- If the maker should be visible to a specific coalition, you can use the :ToCoalition() function.
--- 
+--
 --     mymarker=MARKER:New(Coordinate, "I am Batumi Airfield"):ToCoaliton(coaliton.side.BLUE)
---     
+--
 -- ### To Blue Coaliton
--- 
+--
 -- ### To Red Coalition
---     
+--
 -- This would show the marker only to the Blue coaliton.
--- 
+--
 -- ## For a Group
--- 
--- 
+--
+--
 -- # Removing a Marker
--- 
--- 
+--
+--
 -- # Updating a Marker
--- 
+--
 -- The marker text and coordinate can be updated easily as shown below.
--- 
+--
 -- However, note that **updateing involves to remove and recreate the marker if either text or its coordinate is changed**.
--- *This is a DCS scripting engine limitation.* 
--- 
+-- *This is a DCS scripting engine limitation.*
+--
 -- ## Update Text
--- 
+--
 -- If you created a marker "mymarker" as shown above, you can update the dispayed test by
--- 
+--
 --     mymarker:UpdateText("I am the new text at Batumi")
---     
+--
 -- The update can also be delayed by, e.g. 90 seconds, using
--- 
+--
 --     mymarker:UpdateText("I am the new text at Batumi", 90)
--- 
+--
 -- ## Update Coordinate
--- 
+--
 -- If you created a marker "mymarker" as shown above, you can update its coordinate on the F10 map by
--- 
+--
 --     mymarker:UpdateCoordinate(NewCoordinate)
---     
+--
 -- The update can also be delayed by, e.g. 60 seconds, using
--- 
+--
 --     mymarker:UpdateCoordinate(NewCoordinate, 60)
--- 
+--
 -- # Retrieve Data
--- 
+--
 -- The important data as the displayed text and the coordinate of the marker can be retrieved easily.
--- 
+--
 -- ## Text
--- 
+--
 --     local text=mymarker:GetText()
 --     env.info("Marker Text = " .. text)
--- 
+--
 -- ## Coordinate
--- 
+--
 --     local Coordinate=mymarker:GetCoordinate()
 --     env.info("Marker Coordinate LL DSM = " .. Coordinate:ToStringLLDMS())
--- 
--- 
+--
+--
 -- # FSM Events
--- 
+--
 -- Moose creates addditonal events, so called FSM event, when markers are added, changed, removed, and text or the coordianteis updated.
--- 
+--
 -- These events can be captured and used for processing via OnAfter functions as shown below.
--- 
+--
 -- ## Added
--- 
+--
 -- ## Changed
--- 
+--
 -- ## Removed
--- 
+--
 -- ## TextUpdate
--- 
+--
 -- ## CoordUpdate
--- 
--- 
+--
+--
 -- # Examples
--- 
--- 
+--
+--
 -- @field #MARKER
 MARKER = {
   ClassName      = "MARKER",
@@ -170,29 +170,29 @@ MARKER.version="0.1.0"
 --- Create a new MARKER class object.
 -- @param #MARKER self
 -- @param Core.Point#COORDINATE Coordinate Coordinate where to place the marker.
--- @param #string Text Text displayed on the mark panel. 
+-- @param #string Text Text displayed on the mark panel.
 -- @return #MARKER self
 function MARKER:New(Coordinate, Text)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #MARKER
-  
+
   self.coordinate=Coordinate
-  
+
   self.text=Text
-  
+
   -- Defaults
   self.readonly=false
   self.message=""
-  
-  -- New marker ID. This is not the one of the actual marker.  
+
+  -- New marker ID. This is not the one of the actual marker.
   _MARKERID=_MARKERID+1
-  
+
   self.myid=_MARKERID
-  
+
   -- Log ID.
   self.lid=string.format("Marker #%d | ", self.myid)
-  
+
   -- Start State.
   self:SetStartState("Invisible")
 
@@ -201,7 +201,7 @@ function MARKER:New(Coordinate, Text)
   self:AddTransition("Invisible",     "Added",           "Visible")     -- Marker was added.
   self:AddTransition("Visible",       "Removed",         "Invisible")   -- Marker was removed.
   self:AddTransition("*",             "Changed",         "*")           -- Marker was changed.
-  
+
   self:AddTransition("*",             "TextUpdate",      "*")           -- Text updated.
   self:AddTransition("*",             "CoordUpdate",     "*")           -- Coordinates updated.
 
@@ -304,8 +304,8 @@ function MARKER:New(Coordinate, Text)
   self:HandleEvent(EVENTS.MarkAdded)
   self:HandleEvent(EVENTS.MarkRemoved)
   self:HandleEvent(EVENTS.MarkChange)
-  
-  return self  
+
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -318,7 +318,7 @@ end
 function MARKER:ReadOnly()
 
   self.readonly=true
-  
+
   return self
 end
 
@@ -329,7 +329,7 @@ end
 function MARKER:Message(Text)
 
   self.message=Text or ""
-  
+
   return self
 end
 
@@ -349,14 +349,14 @@ function MARKER:ToAll(Delay)
     self.togroup=nil
     self.groupname=nil
     self.groupid=nil
-  
+
     -- First remove an existing mark.
-    if self.shown then    
-      self:Remove()    
+    if self.shown then
+      self:Remove()
     end
-    
+
     self.mid=UTILS.GetMarkID()
-  
+
     -- Call DCS function.
     trigger.action.markToAll(self.mid, self.text, self.coordinate:GetVec3(), self.readonly, self.message)
 
@@ -377,25 +377,25 @@ function MARKER:ToCoalition(Coalition, Delay)
   else
 
     self.coalition=Coalition
-    
+
     self.tocoaliton=true
     self.toall=false
     self.togroup=false
     self.groupname=nil
     self.groupid=nil
-    
+
     -- First remove an existing mark.
-    if self.shown then    
-      self:Remove()    
+    if self.shown then
+      self:Remove()
     end
-    
+
     self.mid=UTILS.GetMarkID()
-    
+
     -- Call DCS function.
     trigger.action.markToCoalition(self.mid, self.text, self.coordinate:GetVec3(), self.coalition, self.readonly, self.message)
-    
+
   end
-  
+
   return self
 end
 
@@ -440,36 +440,36 @@ function MARKER:ToGroup(Group, Delay)
 
     -- Check if group exists.
     if Group and Group:IsAlive()~=nil then
-  
+
       self.groupid=Group:GetID()
-      
+
       if self.groupid then
-  
+
         self.groupname=Group:GetName()
-            
+
         self.togroup=true
         self.tocoaliton=nil
         self.coalition=nil
         self.toall=nil
-        
+
         -- First remove an existing mark.
-        if self.shown then    
-          self:Remove()    
+        if self.shown then
+          self:Remove()
         end
-        
+
         self.mid=UTILS.GetMarkID()
-      
+
         -- Call DCS function.
         trigger.action.markToGroup(self.mid, self.text, self.coordinate:GetVec3(), self.groupid, self.readonly, self.message)
-        
+
       end
-      
+
     else
-      --TODO: Warning!    
+      --TODO: Warning!
     end
-    
+
   end
-  
+
   return self
 end
 
@@ -482,14 +482,14 @@ function MARKER:UpdateText(Text, Delay)
 
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MARKER.UpdateText, self, Text)
-  else  
+  else
 
     self.text=tostring(Text)
-    
+
     self:Refresh()
-    
+
     self:TextUpdate(tostring(Text))
-    
+
   end
 
   return self
@@ -504,14 +504,14 @@ function MARKER:UpdateCoordinate(Coordinate, Delay)
 
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MARKER.UpdateCoordinate, self, Coordinate)
-  else  
+  else
 
     self.coordinate=Coordinate
-    
+
     self:Refresh()
-    
+
     self:CoordUpdate(Coordinate)
-    
+
   end
 
   return self
@@ -525,26 +525,26 @@ function MARKER:Refresh(Delay)
 
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MARKER.Refresh, self)
-  else  
+  else
 
     if self.toall then
-    
+
       self:ToAll()
-   
+
     elseif self.tocoaliton then
-    
+
       self:ToCoalition(self.coalition)
-    
+
     elseif self.togroup then
-    
+
       local group=GROUP:FindByName(self.groupname)
-    
+
       self:ToGroup(group)
-    
+
     else
       self:E(self.lid.."ERROR: unknown To in :Refresh()!")
     end
-    
+
   end
 
   return self
@@ -564,9 +564,9 @@ function MARKER:Remove(Delay)
 
       -- Call DCS function.
       trigger.action.removeMark(self.mid)
-      
+
     end
-    
+
   end
 
   return self
@@ -605,7 +605,7 @@ end
 
 --- Check if marker is currently invisible on the F10 map.
 -- @param #MARKER self
--- @return 
+-- @return
 function MARKER:IsInvisible()
   return self:Is("Invisible")
 end
@@ -620,17 +620,17 @@ end
 function MARKER:OnEventMarkAdded(EventData)
 
   if EventData and EventData.MarkID then
-  
+
     local MarkID=EventData.MarkID
-    
+
     self:T3(self.lid..string.format("Captured event MarkAdded for Mark ID=%s", tostring(MarkID)))
-    
+
     if MarkID==self.mid then
-        
+
       self.shown=true
-      
+
       self:Added(EventData)
-    
+
     end
 
   end
@@ -643,21 +643,21 @@ end
 function MARKER:OnEventMarkRemoved(EventData)
 
   if EventData and EventData.MarkID then
-  
+
     local MarkID=EventData.MarkID
-    
+
     self:T3(self.lid..string.format("Captured event MarkAdded for Mark ID=%s", tostring(MarkID)))
-    
+
     if MarkID==self.mid then
-        
+
       self.shown=false
-      
+
       self:Removed(EventData)
-    
+
     end
 
   end
-  
+
 end
 
 --- Event function when a MARKER changed.
@@ -666,17 +666,17 @@ end
 function MARKER:OnEventMarkChange(EventData)
 
   if EventData and EventData.MarkID then
-  
+
     local MarkID=EventData.MarkID
-    
+
     self:T3(self.lid..string.format("Captured event MarkChange for Mark ID=%s", tostring(MarkID)))
-    
+
     if MarkID==self.mid then
-        
+
       self:Changed(EventData)
-      
+
       self:TextChanged(tostring(EventData.MarkText))
-    
+
     end
 
   end
@@ -696,7 +696,7 @@ end
 function MARKER:onafterAdded(From, Event, To, EventData)
 
   -- Debug info.
-  local text=string.format("Captured event MarkAdded for myself:\n")      
+  local text=string.format("Captured event MarkAdded for myself:\n")
   text=text..string.format("Marker ID  = %s\n",   tostring(EventData.MarkID))
   text=text..string.format("Coalition  = %s\n",   tostring(EventData.MarkCoalition))
   text=text..string.format("Group  ID  = %s\n",   tostring(EventData.MarkGroupID))
@@ -716,7 +716,7 @@ end
 function MARKER:onafterRemoved(From, Event, To, EventData)
 
   -- Debug info.
-  local text=string.format("Captured event MarkRemoved for myself:\n")      
+  local text=string.format("Captured event MarkRemoved for myself:\n")
   text=text..string.format("Marker ID  = %s\n",   tostring(EventData.MarkID))
   text=text..string.format("Coalition  = %s\n",   tostring(EventData.MarkCoalition))
   text=text..string.format("Group  ID  = %s\n",   tostring(EventData.MarkGroupID))
@@ -736,7 +736,7 @@ end
 function MARKER:onafterChanged(From, Event, To, EventData)
 
   -- Debug info.
-  local text=string.format("Captured event MarkChange for myself:\n")      
+  local text=string.format("Captured event MarkChange for myself:\n")
   text=text..string.format("Marker ID  = %s\n",   tostring(EventData.MarkID))
   text=text..string.format("Coalition  = %s\n",   tostring(EventData.MarkCoalition))
   text=text..string.format("Group  ID  = %s\n",   tostring(EventData.MarkGroupID))
@@ -755,7 +755,7 @@ end
 -- @param #string Text The updated text, displayed in the mark panel.
 function MARKER:onafterTextUpdate(From, Event, To, Text)
 
-  self:I(self.lid..string.format("New Marker Text:\n%s", Text))
+  self:T(self.lid..string.format("New Marker Text:\n%s", Text))
 
 end
 
@@ -767,8 +767,8 @@ end
 -- @param Core.Point#COORDINATE Coordinate The updated coordinates.
 function MARKER:onafterCoordUpdate(From, Event, To, Coordinate)
 
-  self:I(self.lid..string.format("New Marker Coordinate in LL DMS: %s", Coordinate:ToStringLLDMS()))
-  
+  self:T(self.lid..string.format("New Marker Coordinate in LL DMS: %s", Coordinate:ToStringLLDMS()))
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

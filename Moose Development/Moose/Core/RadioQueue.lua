@@ -17,7 +17,7 @@
 -- 
 -- @type RADIOQUEUE
 -- @field #string ClassName Name of the class "RADIOQUEUE".
--- @field #boolean Debug Debug mode. More info.
+-- @field #boolean Debugmode Debug mode. More info.
 -- @field #string lid ID for dcs.log.
 -- @field #number frequency The radio frequency in Hz.
 -- @field #number modulation The radio modulation. Either radio.modulation.AM or radio.modulation.FM.
@@ -38,7 +38,7 @@
 -- @extends Core.Base#BASE
 RADIOQUEUE = {
   ClassName   = "RADIOQUEUE",
-  Debug       = nil,
+  Debugmode   = nil,
   lid         = nil,
   frequency   = nil,
   modulation  = nil,
@@ -55,7 +55,7 @@ RADIOQUEUE = {
   power       = nil,
   numbers     =  {},
   checking    = nil,
-  schedonce   = nil,
+  schedonce   = false,
 }
 
 --- Radio queue transmission data.
@@ -375,8 +375,10 @@ function RADIOQUEUE:Broadcast(transmission)
     sender:SetCommand(commandTransmit)
     
     -- Debug message.
-    local text=string.format("file=%s, freq=%.2f MHz, duration=%.2f sec, subtitle=%s", filename, self.frequency/1000000, transmission.duration, transmission.subtitle or "")
-    MESSAGE:New(text, 2, "RADIOQUEUE "..self.alias):ToAllIf(self.Debug)
+    if self.Debugmode then
+      local text=string.format("file=%s, freq=%.2f MHz, duration=%.2f sec, subtitle=%s", filename, self.frequency/1000000, transmission.duration, transmission.subtitle or "")
+      MESSAGE:New(text, 2, "RADIOQUEUE "..self.alias):ToAll()
+    end
       
   else
     
@@ -388,10 +390,7 @@ function RADIOQUEUE:Broadcast(transmission)
     
     -- Try to get positon from sender unit/static.
     if self.sendername then
-      local coord=self:_GetRadioSenderCoord()
-      if coord then
-        vec3=coord:GetVec3()
-      end
+      vec3=self:_GetRadioSenderCoord()
     end
     
     -- Try to get fixed positon.
@@ -408,8 +407,10 @@ function RADIOQUEUE:Broadcast(transmission)
       trigger.action.radioTransmission(filename, vec3, self.modulation, false, self.frequency, self.power)
       
       -- Debug message.
-      local text=string.format("file=%s, freq=%.2f MHz, duration=%.2f sec, subtitle=%s", filename, self.frequency/1000000, transmission.duration, transmission.subtitle or "")
-      MESSAGE:New(string.format(text, filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE "..self.alias):ToAllIf(self.Debug)
+      if self.Debugmode then
+        local text=string.format("file=%s, freq=%.2f MHz, duration=%.2f sec, subtitle=%s", filename, self.frequency/1000000, transmission.duration, transmission.subtitle or "")
+        MESSAGE:New(string.format(text, filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE "..self.alias):ToAll()
+      end
     end
 
   end
@@ -532,6 +533,7 @@ function RADIOQUEUE:_GetRadioSender()
 
   -- Try the general default.
   if self.sendername then
+  
     -- First try to find a unit 
     sender=UNIT:FindByName(self.sendername)
 
@@ -547,7 +549,7 @@ end
 
 --- Get unit from which we want to transmit a radio message. This has to be an aircraft for subtitles to work.
 -- @param #RADIOQUEUE self
--- @return Core.Point#COORDINATE Coordinate of the sender unit.
+-- @return DCS#Vec3 Vector 3D.
 function RADIOQUEUE:_GetRadioSenderCoord()
 
   local vec3=nil
@@ -560,7 +562,7 @@ function RADIOQUEUE:_GetRadioSenderCoord()
 
     -- Check that sender is alive and an aircraft.
     if sender and sender:IsAlive() then
-      return sender:GetCoordinate()
+      return sender:GetVec3()
     end
     
     -- Now try a static. 
@@ -568,7 +570,7 @@ function RADIOQUEUE:_GetRadioSenderCoord()
 
     -- Check that sender is alive and an aircraft.
     if sender then
-      return sender:GetCoordinate()
+      return sender:GetVec3()
     end
     
   end
