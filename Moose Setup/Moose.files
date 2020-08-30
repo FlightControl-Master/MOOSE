@@ -22,6 +22,7 @@ Core/Fsm.lua
 Core/Radio.lua
 Core/Spawn.lua
 Core/SpawnStatic.lua
+Core/Timer.lua
 Core/Goal.lua
 Core/Spot.lua
 
