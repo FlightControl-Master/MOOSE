@@ -341,7 +341,7 @@ end
 -- @param #TARGET.Object Target Target object.
 function TARGET:onafterObjectDamaged(From, Event, To, Target)
 
-  self:I(self.lid..string.format("Object %s damaged", Target.Name))
+  self:T(self.lid..string.format("Object %s damaged", Target.Name))
 
 end
 
@@ -353,7 +353,7 @@ end
 -- @param #TARGET.Object Target Target object.
 function TARGET:onafterObjectDestroyed(From, Event, To, Target)
 
-  self:I(self.lid..string.format("Object %s destroyed", Target.Name))
+  self:T(self.lid..string.format("Object %s destroyed", Target.Name))
   
   -- Set target status.
   Target.Status=TARGET.ObjectStatus.DEAD
@@ -381,7 +381,7 @@ end
 -- @param #string To To state.
 function TARGET:onafterDamaged(From, Event, To)
 
-  self:I(self.lid..string.format("Target damaged"))
+  self:T(self.lid..string.format("Target damaged"))
 
 end
 

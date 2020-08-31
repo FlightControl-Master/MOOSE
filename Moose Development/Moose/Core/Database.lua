@@ -1253,7 +1253,7 @@ end
 -- @param #DATABASE self
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup
 function DATABASE:AddFlightGroup(flightgroup)
-  self:I({NewFlightGroup=flightgroup.groupname})
+  self:T({NewFlightGroup=flightgroup.groupname})
   self.FLIGHTGROUPS[flightgroup.groupname]=flightgroup
 end
 

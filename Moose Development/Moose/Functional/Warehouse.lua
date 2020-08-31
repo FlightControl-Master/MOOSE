@@ -4280,10 +4280,12 @@ end
 function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   -- Info message.
-  local text=string.format("Warehouse %s: Processing request id=%d from warehouse %s.\n", self.alias, Request.uid, Request.warehouse.alias)
-  text=text..string.format("Requested %s assets of %s=%s.\n", tostring(Request.nasset), Request.assetdesc, Request.assetdesc==WAREHOUSE.Descriptor.ASSETLIST and "Asset list" or Request.assetdescval)
-  text=text..string.format("Transports %s of type %s.", tostring(Request.ntransport), tostring(Request.transporttype))
-  self:_InfoMessage(text, 5)
+  if self.verbosity>=1 then
+    local text=string.format("Warehouse %s: Processing request id=%d from warehouse %s.\n", self.alias, Request.uid, Request.warehouse.alias)
+    text=text..string.format("Requested %s assets of %s=%s.\n", tostring(Request.nasset), Request.assetdesc, Request.assetdesc==WAREHOUSE.Descriptor.ASSETLIST and "Asset list" or Request.assetdescval)
+    text=text..string.format("Transports %s of type %s.", tostring(Request.ntransport), tostring(Request.transporttype))
+    self:_InfoMessage(text, 5)
+  end
 
   ------------------------------------------------------------------------------------------------------------------------------------
   -- Cargo assets.
@@ -5156,7 +5158,7 @@ end
 -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   local text=string.format("Asset %s from request id=%d was spawned!", asset.spawngroupname, request.uid)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Sete asset state to spawned.
   asset.spawned=true
@@ -6281,10 +6283,12 @@ function WAREHOUSE:_OnEventArrived(EventData)
               local dt=10*(nunits-1)+1  -- one unit = 1 sec, two units = 11 sec, three units = 21 sec before we call the group arrived.
               
               -- Debug info.
-              local text=string.format("Air asset group %s from warehouse %s arrived at its destination. Trigger Arrived event in %d sec", group:GetName(), self.alias, dt)
-              self:_InfoMessage(text)
+              if self.verbosity>=1 then
+                local text=string.format("Air asset group %s from warehouse %s arrived at its destination. Trigger Arrived event in %d sec", group:GetName(), self.alias, dt)
+                self:_InfoMessage(text)
+              end              
               
-              
+              -- Arrived event.
               self:__Arrived(dt, group)
             end
 

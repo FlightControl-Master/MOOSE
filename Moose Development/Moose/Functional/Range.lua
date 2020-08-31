@@ -1916,8 +1916,35 @@ end
 -- @param #string To To state.
 function RANGE:onafterStatus(From, Event, To)
 
+  local fsmstate=self:GetState()
+  
+  local text=string.format("Range status: %s", fsmstate)
+  
+  if self.instructor then  
+    local alive="N/A"
+    if self.instructorrelayname then
+      local relay=UNIT:FindByName(self.instructorrelayname)
+      if relay then
+        alive=tostring(relay:IsAlive())
+      end
+    end
+    text=text..string.format(", Instructor %.3f MHz (Relay=%s alive=%s)", self.instructorfreq, tostring(self.instructorrelayname), alive)  
+  end
+  
+  if self.rangecontrol then  
+    local alive="N/A"
+    if self.rangecontrolrelayname then
+      local relay=UNIT:FindByName(self.rangecontrolrelayname)
+      if relay then
+        alive=tostring(relay:IsAlive())
+      end
+    end
+    text=text..string.format(", Control %.3f MHz (Relay=%s alive=%s)", self.rangecontrolfreq, tostring(self.rangecontrolrelayname), alive)  
+  end
+
+
   -- Check range status.
-  self:I(self.id..string.format("Range status: %s", self:GetState()))
+  self:I(self.id..text)
 
   -- Check player status.
   self:_CheckPlayers()

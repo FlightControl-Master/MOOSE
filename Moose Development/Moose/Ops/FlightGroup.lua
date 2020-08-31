@@ -1177,7 +1177,7 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
 
     else
       -- TODO: This can happen if spawned on deck of a carrier!
-      self:E(self.lid..string.format("Element spawned not in air but not on any parking spot."))
+      self:T(self.lid..string.format("Element spawned not in air but not on any parking spot."))
       self:__ElementParking(0.11, Element)
     end
   end
