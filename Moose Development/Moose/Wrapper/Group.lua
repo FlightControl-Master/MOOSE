@@ -951,7 +951,8 @@ function GROUP:GetVec2()
   local Unit=self:GetUnit(1)
   
   if Unit then
-    return Unit:GetVec2()
+    local vec2=Unit:GetVec2()
+    return vec2
   end
 
 end
@@ -965,7 +966,8 @@ function GROUP:GetVec3()
   local unit=self:GetUnit(1)
 
   if unit then
-    return unit:GetVec3()
+    local vec3=unit:GetVec3()
+    return vec3
   end
   
   self:E("ERROR: Cannot get Vec3 of group "..tostring(self.GroupName))
@@ -996,13 +998,11 @@ end
 -- @param Wrapper.Group#GROUP self
 -- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
 function GROUP:GetCoordinate()
-  self:F2( self.PositionableName )
 
   local FirstUnit = self:GetUnit(1)
   
   if FirstUnit then
     local FirstUnitCoordinate = FirstUnit:GetCoordinate()
-    self:T3(FirstUnitCoordinate)
     return FirstUnitCoordinate
   end
   
@@ -1176,7 +1176,7 @@ do -- Is Zone methods
 --- Check if any unit of a group is inside a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if at least one unit is inside the zone or false if no unit is inside.
+-- @return #boolean Returns `true` if *at least one unit* is inside the zone or `false` if *no* unit is inside.
 function GROUP:IsInZone( Zone )
   
   if self:IsAlive() then
@@ -1184,7 +1184,10 @@ function GROUP:IsInZone( Zone )
     for UnitID, UnitData in pairs(self:GetUnits()) do
       local Unit = UnitData -- Wrapper.Unit#UNIT
       
-      if Zone:IsVec3InZone(Unit:GetVec3()) then
+      -- Get 2D vector. That's all we need for the zone check.
+      local vec2=Unit:GetVec2()
+      
+      if Zone:IsVec2InZone(vec2) then
         return true  -- At least one unit is in the zone. That is enough.
       else
         -- This one is not but another could be.
