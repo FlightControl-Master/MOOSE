@@ -561,7 +561,8 @@ do -- COORDINATE
       return self
     else
       --env.info("FF translate with NEW coordinate T="..timer.getTime())
-      return COORDINATE:New(x, y, z)
+      local coord=COORDINATE:New(x, y, z)
+      return coord
     end
     
   end
@@ -761,7 +762,8 @@ do -- COORDINATE
     -- Move the vector to start at the end of A.
     vec=UTILS.VecAdd(self, vec)
     
-    return self:New(vec.x,vec.y,vec.z)
+    local coord=COORDINATE:New(vec.x,vec.y,vec.z)
+    return coord
   end
 
   --- Return the 2D distance in meters between the target COORDINATE and the COORDINATE.
