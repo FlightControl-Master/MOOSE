@@ -227,7 +227,7 @@ function FLIGHTGROUP:New(group)
   self.lid=string.format("FLIGHTGROUP %s | ", self.groupname)
 
   -- Defaults
-  self:SetVerbosity(0)
+  --self:SetVerbosity(0)
   self:SetFuelLowThreshold()
   self:SetFuelLowRTB()
   self:SetFuelCriticalThreshold()
@@ -407,6 +407,25 @@ end
 -- @return Ops.FlightControl#FLIGHTCONTROL The FLIGHTCONTROL object.
 function FLIGHTGROUP:GetFlightControl()
   return self.flightcontrol
+end
+
+
+--- Set the homebase.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Airbase#AIRBASE HomeAirbase The home airbase.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetHomebase(HomeAirbase)
+  self.homebase=HomeAirbase
+  return self
+end
+
+--- Set the destination airbase. This is where the flight will go, when the final waypoint is reached.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Airbase#AIRBASE DestinationAirbase The destination airbase.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetDestinationbase(DestinationAirbase)
+  self.destbase=DestinationAirbase
+  return self
 end
 
 
@@ -1386,7 +1405,7 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     if self.option.ROT then
       self:SwitchROT(self.option.ROT)
     else
-      self:SwitchROE(ENUMS.ROT.PassiveDefense)
+      self:SwitchROT(ENUMS.ROT.PassiveDefense)
     end
         
     -- Turn TACAN beacon on.
@@ -1529,6 +1548,7 @@ function FLIGHTGROUP:onafterLanding(From, Event, To)
 
 end
 
+
 --- On after "Landed" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -1538,15 +1558,23 @@ end
 function FLIGHTGROUP:onafterLanded(From, Event, To, airbase)
   self:T(self.lid..string.format("Flight landed at %s", airbase and airbase:GetName() or "unknown place"))
 
-  if self:IsLandingAt() then
-    self:LandedAt()
-  else
-    if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
-      -- Add flight to taxiinb queue.
-      self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIINB)
-    end
+  if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
+    -- Add flight to taxiinb queue.
+    self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIINB)
   end
+    
 end
+
+--- On after "LandedAt" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
+function FLIGHTGROUP:onafterLandedAt(From, Event, To)
+  self:I(self.lid..string.format("Flight landed at"))    
+end
+
 
 --- On after "Arrived" event.
 -- @param #FLIGHTGROUP self
@@ -2518,6 +2546,8 @@ function FLIGHTGROUP:_InitGroup()
   self.radio.On=self.template.communication
   self.radio.Freq=self.template.frequency
   self.radio.Modu=self.template.modulation
+  
+  self.radioDefault=UTILS.DeepCopy(self.radio)
   
   --TODO callsign from template or getCallsign
   self.callsign.NumberSquad=self.template.units[1].callsign[1]

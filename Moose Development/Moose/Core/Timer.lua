@@ -38,6 +38,8 @@
 -- 
 -- The TIMER class is the little sister of the SCHEDULER class. It does the same thing but is a bit easier to use and has less overhead. It should be sufficient in many cases.
 -- 
+-- It provides an easy interface to the DCS [timer.scheduleFunction](https://wiki.hoggitworld.com/view/DCS_func_scheduleFunction).
+-- 
 -- # Construction
 -- 
 -- A new TIMER is created by the @{#TIMER.New}(*func*, *...*) function
@@ -104,7 +106,7 @@ TIMER = {
 _TIMERID=0
 
 --- Timer data base.
-_TIMERDB={}
+--_TIMERDB={}
 
 --- TIMER class version.
 -- @field #string version
@@ -150,7 +152,7 @@ function TIMER:New(Function, ...)
   self.lid=string.format("TIMER UID=%d | ", self.uid)
   
   -- Add to DB.
-  _TIMERDB[self.uid]=self
+  --_TIMERDB[self.uid]=self
   
   return self
 end
@@ -208,7 +210,7 @@ function TIMER:Stop(Delay)
       timer.removeFunction(self.tid)
       
       -- Remove DB entry.
-      _TIMERDB[self.uid]=nil
+      --_TIMERDB[self.uid]=nil
       
     end
     
@@ -231,8 +233,6 @@ end
 -- @param #number time DCS model time in seconds.
 -- @return #number Time when the function is called again or `nil` if the timer is stopped.
 function TIMER:_Function(time)
-
-  --self:I(self.lid.."FF calling timer _Function")
 
   -- Call function.
   self.func(unpack(self.para))

@@ -95,7 +95,7 @@
 OPSGROUP = {
   ClassName          = "OPSGROUP",
   Debug              = false,
-  verbose            =     0,
+  verbose            =     3,
   lid                =   nil,
   groupname          =   nil,
   group              =   nil,
@@ -2443,7 +2443,7 @@ function OPSGROUP:_CheckInZones()
     for inzonename, inzone in pairs(self.inzones:GetSet()) do
         
       -- Check if group is still inside the zone.
-      local isstillinzone=self.group:IsPartlyOrCompletelyInZone(inzone)
+      local isstillinzone=self.group:IsInZone(inzone) --:IsPartlyOrCompletelyInZone(inzone)
       
       -- If not, trigger, LeaveZone event.
       if not isstillinzone then
@@ -2463,7 +2463,7 @@ function OPSGROUP:_CheckInZones()
       local checkzone=_checkzone --Core.Zone#ZONE
       
       -- Is group currtently in this check zone?
-      local isincheckzone=self.group:IsPartlyOrCompletelyInZone(checkzone)
+      local isincheckzone=self.group:IsInZone(checkzone) --:IsPartlyOrCompletelyInZone(checkzone)
 
       if isincheckzone and not self.inzones:_Find(checkzonename) then
         table.insert(enterzones, checkzone)
@@ -3009,7 +3009,7 @@ function OPSGROUP:SwitchROE(roe)
     
       self.group:OptionROE(roe)
     
-      self:T(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.option.ROE))
+      self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.option.ROE))
     end
     
     
@@ -3475,7 +3475,7 @@ function OPSGROUP:SwitchFormation(Formation)
     self.option.Formation=Formation
     
     -- Debug info.
-    self:I(self.lid..string.format("Switching formation to %d", self.formation))
+    self:I(self.lid..string.format("Switching formation to %d", self.option.Formation))
 
   end
 
@@ -3771,7 +3771,11 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:Landed(airbase)
+      if self:IsLandingAt() then
+        self:LandedAt()
+      else
+        self:Landed(airbase)
+      end
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.ARRIVED then
