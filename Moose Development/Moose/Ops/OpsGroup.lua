@@ -665,9 +665,16 @@ end
 
 --- Check if this group is currently "uncontrolled" and needs to be "started" to begin its route.
 -- @param #OPSGROUP self
--- @return #boolean If this group uncontrolled.
+-- @return #boolean If true, this group uncontrolled.
 function OPSGROUP:IsUncontrolled()
   return self.isUncontrolled
+end
+
+--- Check if this group has passed its final waypoint.
+-- @param #OPSGROUP self
+-- @return #boolean If true, this group has passed the final waypoint.
+function OPSGROUP:HasPassedFinalWaypoint()
+  return self.passedfinalwp
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2995,13 +3002,13 @@ end
 
 --- Set current ROE for the group.
 -- @param #OPSGROUP self
--- @param #string roe ROE of group. Default is `ENUMS.ROE.ReturnFire`.
+-- @param #string roe ROE of group. Default is value set in `SetDefaultROE` (usually `ENUMS.ROE.ReturnFire`).
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchROE(roe)
   
   if self:IsAlive() or self:IsInUtero() then
 
-    self.option.ROE=roe or ENUMS.ROE.ReturnFire
+    self.option.ROE=roe or self.optionDefault.ROE
   
     if self:IsInUtero() then
       self:T2(self.lid..string.format("Setting current ROE=%d when GROUP is SPAWNED", self.option.ROE))
@@ -3009,7 +3016,7 @@ function OPSGROUP:SwitchROE(roe)
     
       self.group:OptionROE(roe)
     
-      self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.option.ROE))
+      self:I(self.lid..string.format("Setting current ROE=%d (%s)", self.option.ROE, self:_GetROEName(self.option.ROE)))
     end
     
     
@@ -3018,6 +3025,24 @@ function OPSGROUP:SwitchROE(roe)
   end
   
   return self
+end
+
+--- Set current ROE for the group.
+-- @param #OPSGROUP self
+function OPSGROUP:_GetROEName(roe)
+  local name="unknown"
+  if roe==0 then
+    name="Weapon Free"
+  elseif roe==1 then
+    name="Open Fire/Weapon Free"
+  elseif roe==2 then
+    name="Open Fire"
+  elseif roe==3 then
+    name="Return Fire"
+  elseif roe==4 then
+    name="Weapon Hold"
+  end
+  return name
 end
 
 --- Get current ROE of the group.
@@ -3038,13 +3063,13 @@ end
 
 --- Set ROT for the group.
 -- @param #OPSGROUP self
--- @param #string rot ROT of group. Default is `ENUMS.ROT.PassiveDefense`.
+-- @param #string rot ROT of group. Default is value set in `:SetDefaultROT` (usually `ENUMS.ROT.PassiveDefense`).
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchROT(rot)
   
   if self:IsAlive() or self:IsInUtero() then
   
-    self.option.ROT=rot or ENUMS.ROT.PassiveDefense
+    self.option.ROT=rot or self.optionDefault.ROT
   
     if self:IsInUtero() then
       self:T2(self.lid..string.format("Setting current ROT=%d when GROUP is SPAWNED", self.option.ROT))      
@@ -3350,12 +3375,18 @@ end
 -- @param #OPSGROUP self
 -- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
 -- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
+-- @param #boolean OffSwitch If true, radio is OFF by default.
 -- @return #OPSGROUP self
-function OPSGROUP:SetDefaultRadio(Frequency, Modulation)
+function OPSGROUP:SetDefaultRadio(Frequency, Modulation, OffSwitch)
   
   self.radioDefault={}
   self.radioDefault.Freq=Frequency or 251
   self.radioDefault.Modu=Modulation or radio.modulation.AM
+  if OffSwitch then
+    self.radioDefault.On=false
+  else
+    self.radioDefault.On=true
+  end
   
   return self
 end
@@ -3364,42 +3395,63 @@ end
 -- @param #OPSGROUP self
 -- @return #number Radio frequency in MHz or nil.
 -- @return #number Radio modulation or nil.
+-- @return #boolean If true, the radio is on. Otherwise, radio is turned off.
 function OPSGROUP:GetRadio()
-  return self.radio.Freq, self.radio.Modu
+  return self.radio.Freq, self.radio.Modu, self.radio.On
 end
 
 --- Turn radio on or switch frequency/modulation.
 -- @param #OPSGROUP self
--- @param #number Frequency Radio frequency in MHz. Default is 127.5 MHz.
--- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
+-- @param #number Frequency Radio frequency in MHz. Default is value set in `SetDefaultRadio` (usually 251 MHz).
+-- @param #number Modulation Radio modulation. Default is value set in `SetDefaultRadio` (usually `radio.Modulation.AM`).
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchRadio(Frequency, Modulation)
 
   if self:IsAlive() or self:IsInUtero() then
 
-    Frequency=Frequency or 127.5
-    Modulation=Modulation or radio.modulation.AM
+    Frequency=Frequency or self.radioDefault.Freq
+    Modulation=Modulation or self.radioDefault.Modu
 
     local group=self.group --Wrapper.Group#GROUP
 
     if self.isAircraft and not self.radio.On then
       group:SetOption(AI.Option.Air.id.SILENCE, false)
     end
+    
+    -- Backup last radio settings.
+    if self.radio then
+      self.radioLast=UTILS.DeepCopy(self.radio)
+    end
 
-    -- Set radio
+    -- Set current radio.
     self.radio.Freq=Frequency
     self.radio.Modu=Modulation
     self.radio.On=true
     
-    if self:IsInUtero() then
-      self:T2(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
-    else
+    -- Only switch radio if different.
+    if self.radio.Freq~=self.radioLast.Freq or self.radio.Modu~=self.radioLast.Modu then
 
-      -- Give command
-      group:CommandSetFrequency(Frequency, Modulation)
-  
-      self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
+      --[[    
+      local text=string.format("\nRadio Freq=%.3f %.3f", self.radio.Freq, self.radioLast.Freq)
+      text=text..string.format("\nRadio Modu=%d %d", self.radio.Modu, self.radioLast.Modu)
+      text=text..string.format("\nRadio OnOf=%s %s", tostring(self.radio.On), tostring(self.radioLast.On))
+      text=text..string.format("\nRadio %s", tostring(self.radio==self.radioLast))
+      self:I(self.lid..text)
+      ]]
       
+      if self:IsInUtero() then
+        self:T2(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
+      else
+  
+        -- Give command
+        group:CommandSetFrequency(Frequency, Modulation)
+    
+        self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
+        
+      end
+      
+    else
+      self:T(self.lid.."INFO: Current radio not switched as freq/modulation did not change")
     end
     
   else
@@ -3420,9 +3472,6 @@ function OPSGROUP:TurnOffRadio()
     
       -- Set group to be silient.
       self.group:SetOption(AI.Option.Air.id.SILENCE, true)
-  
-      --self.radio.Freq=nil
-      --self.radio.Modu=nil
       
       -- Radio is off.
       self.radio.On=false

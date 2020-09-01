@@ -96,6 +96,8 @@ function NAVYGROUP:New(GroupName)
   
   -- Defaults
   self:SetDetection()
+  self:SetDefaultROE()
+  self:SetDefaultAlarmstate()
   self:SetPatrolAdInfinitum(true)
   self:SetPathfinding(false)
 
@@ -1134,6 +1136,9 @@ function NAVYGROUP:_InitGroup()
   self.radio.On=false  -- Radio is always on for ships but we set it to false to check if it has been changed before spawn.
   self.radio.Freq=tonumber(self.template.units[1].frequency)/1000000
   self.radio.Modu=tonumber(self.template.units[1].modulation)
+  
+  -- Set default radio.
+  self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)  
   
   -- Set default formation. No really applicable for ships.
   self.optionDefault.Formation="Off Road"

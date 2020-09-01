@@ -796,7 +796,10 @@ function ARMYGROUP:_InitGroup()
   -- Radio parameters from template.
   self.radio.On=false  -- Radio is always OFF for ground.
   self.radio.Freq=133
-  self.radio.Modu=radio.modulation.AM  
+  self.radio.Modu=radio.modulation.AM
+  
+  -- Set default radio.
+  self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
   
   -- Set default formation from first waypoint.
   self.option.Formation=self:GetWaypoint(1).action

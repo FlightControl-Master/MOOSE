@@ -2543,11 +2543,17 @@ function FLIGHTGROUP:_InitGroup()
   self.ammo=self:GetAmmoTot()
 
   -- Radio parameters from template.
-  self.radio.On=self.template.communication
-  self.radio.Freq=self.template.frequency
-  self.radio.Modu=self.template.modulation
+  self.radio.Freq=tonumber(self.template.frequency)
+  self.radio.Modu=tonumber(self.template.modulation)
+  local on=tostring(self.template.communication):lower()
+  if on=="true" then
+    self.radio.On=true
+  else
+    self.radio.On=false
+  end
   
-  self.radioDefault=UTILS.DeepCopy(self.radio)
+  -- Set default radio.
+  self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
   
   --TODO callsign from template or getCallsign
   self.callsign.NumberSquad=self.template.units[1].callsign[1]
