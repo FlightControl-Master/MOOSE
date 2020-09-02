@@ -201,14 +201,7 @@ function TARGET:New(TargetObject)
   -- @param #number delay Delay in seconds.
 
 
-  -- Debug trace.
-  if false then
-    self.Debug=true
-    BASE:TraceOnOff(true)
-    BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
-  end
-  
+
   -- Start.
   self:__Start(-1)
 

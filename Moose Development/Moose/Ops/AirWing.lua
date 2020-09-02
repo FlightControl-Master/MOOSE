@@ -204,7 +204,7 @@ function AIRWING:New(warehousename, airwingname)
   self:AddTransition("*",             "FlightOnMission",    "*")           -- Flight was spawned with a mission.
 
   -- Defaults:
-  self:SetVerbosity(0)
+  --self:SetVerbosity(0)
   self.nflightsCAP=0
   self.nflightsAWACS=0
   self.nflightsTANKERboom=0

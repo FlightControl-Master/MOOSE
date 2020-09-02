@@ -324,21 +324,18 @@ end
 function ARMYGROUP:onafterSpawned(From, Event, To)
   self:T(self.lid..string.format("Group spawned!"))
 
+  -- TODO
+  self.traveldist=0
+  self.traveltime=timer.getAbsTime()
+  self.position=self:GetCoordinate()
+
   if self.ai then
   
     -- Set default ROE.
-    if self.option.ROE then
-      self:SwitchROE(self.option.ROE)
-    else
-      self:SwitchROE(ENUMS.ROE.ReturnFire)
-    end
+    self:SwitchROE(self.option.ROE)
     
     -- Set default Alarm State.
-    if self.option.Alarm then
-      self:SwitchAlarmstate(self.option.Alarm)
-    else
-      self:SwitchAlarmstate(ENUMS.AlarmState.Auto)
-    end
+    self:SwitchAlarmstate(self.option.Alarm)
     
     -- Turn TACAN beacon on.
     if self.tacan.On then
@@ -346,8 +343,8 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     end
 
     -- Turn on the radio.
-    if self.radio.On then
-      self:SwitchRadio(self.radio.Freq, self.radio.Modu)
+    if self.radioLast then
+      self:SwitchRadio(self.radioLast.Freq, self.radioLst.Modu)
     end
     
   end
@@ -788,10 +785,6 @@ function ARMYGROUP:_InitGroup()
   
   -- Group ammo.
   self.ammo=self:GetAmmoTot()
-  
-  self.traveldist=0
-  self.traveltime=timer.getAbsTime()
-  self.position=self:GetCoordinate()
   
   -- Radio parameters from template.
   self.radio.On=false  -- Radio is always OFF for ground.

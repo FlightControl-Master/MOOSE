@@ -483,7 +483,7 @@ function AUFTRAG:New(Type)
   self.status=AUFTRAG.Status.PLANNED
   
   -- Defaults
-  self:SetVerbosity(0)  
+  --self:SetVerbosity(0)  
   self:SetName()
   self:SetPriority()
   self:SetTime()

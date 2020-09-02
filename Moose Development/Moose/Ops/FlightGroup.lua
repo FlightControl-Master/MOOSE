@@ -1394,19 +1394,11 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
 
   if self.ai then
 
-    -- Set default ROE.
-    if self.option.ROE then
-      self:SwitchROE(self.option.ROE)
-    else
-      self:SwitchROE(ENUMS.ROE.ReturnFire)
-    end
+    -- Set ROE.
+    self:SwitchROE(self.option.ROE)
 
-    -- Set default ROT.
-    if self.option.ROT then
-      self:SwitchROT(self.option.ROT)
-    else
-      self:SwitchROT(ENUMS.ROT.PassiveDefense)
-    end
+    -- Set ROT.
+    self:SwitchROT(self.option.ROT)
         
     -- Turn TACAN beacon on.
     if self.tacan.On then
@@ -1414,8 +1406,8 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     end
     
     -- Turn on the radio.
-    if self.radio.On then
-      self:SwitchRadio(self.radio.Freq, self.radio.Modu)
+    if self.radioLast then
+      self:SwitchRadio(self.radioLast.Freq, self.radioLast.Modu)
     end
     
     -- TODO: make this input.

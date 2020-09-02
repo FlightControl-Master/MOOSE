@@ -136,7 +136,7 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   self.Ngroups=Ngroups or 3  
   self:SetMissionRange()
   self:SetSkill(AI.Skill.GOOD)
-  self:SetVerbosity(0)
+  --self:SetVerbosity(0)
   
   -- Everyone can ORBIT.
   self:AddMissionCapability(AUFTRAG.Type.ORBIT)

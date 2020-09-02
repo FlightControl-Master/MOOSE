@@ -95,7 +95,7 @@
 OPSGROUP = {
   ClassName          = "OPSGROUP",
   Debug              = false,
-  verbose            =     3,
+  verbose            =     0,
   lid                =   nil,
   groupname          =   nil,
   group              =   nil,
@@ -522,7 +522,7 @@ end
 function OPSGROUP:GetVelocity()
   if self:IsAlive()~=nil then
     local vel=self.group:GetVelocityMPS()
-    return rel
+    return vel
   else
     self:E(self.lid.."WARNING: Group is not alive. Cannot get velocity!")
   end
@@ -2102,7 +2102,22 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
     end  
   end
 
-  -- TODO: reset mission specific parameters like radio, ROE etc.  
+  -- TODO: reset mission specific parameters like radio, ROE etc.
+  if Mission.radio and self.radioLast then
+    self:SwitchRadio(self.radioLast.Freq, self.radioLast.Modu)
+  end
+  
+  if Mission.optionROE then
+    self:SwitchROE()
+  end
+  
+  if Mission.optionROT then
+    self:SwitchROT()
+  end
+  
+  if Mission.optionAlarm then
+    self:SwitchAlarmstate()
+  end
   
   -- Check if group is done.
   self:_CheckGroupDone(1)
@@ -3014,7 +3029,7 @@ function OPSGROUP:SwitchROE(roe)
       self:T2(self.lid..string.format("Setting current ROE=%d when GROUP is SPAWNED", self.option.ROE))
     else
     
-      self.group:OptionROE(roe)
+      self.group:OptionROE(self.option.ROE)
     
       self:I(self.lid..string.format("Setting current ROE=%d (%s)", self.option.ROE, self:_GetROEName(self.option.ROE)))
     end
@@ -3118,7 +3133,7 @@ function OPSGROUP:SwitchAlarmstate(alarmstate)
   
   if self:IsAlive() or self:IsInUtero() then
   
-    self.option.Alarm=alarmstate or 0
+    self.option.Alarm=alarmstate or self.optionDefault.Alarm
     
     if self:IsInUtero() then
       self:T2(self.lid..string.format("Setting current Alarm State=%d when GROUP is SPAWNED", self.option.Alarm))
@@ -3407,10 +3422,19 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchRadio(Frequency, Modulation)
 
-  if self:IsAlive() or self:IsInUtero() then
+  Frequency=Frequency or self.radioDefault.Freq
+  Modulation=Modulation or self.radioDefault.Modu
 
-    Frequency=Frequency or self.radioDefault.Freq
-    Modulation=Modulation or self.radioDefault.Modu
+
+  if self:IsInUtero() then
+  
+    -- Set current radio.
+    self.radioLast={}
+    self.radioLast.Freq=Frequency
+    self.radioLast.Modu=Modulation
+
+    self:T2(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radioLast.Freq, UTILS.GetModulationName(self.radioLast.Modu)))  
+  elseif self:IsAlive() then 
 
     local group=self.group --Wrapper.Group#GROUP
 
@@ -3423,35 +3447,29 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
       self.radioLast=UTILS.DeepCopy(self.radio)
     end
 
+    -- Debug.
+    if false then
+      local text=string.format("\nRadio Freq=%.3f %.3f", self.radio.Freq, self.radioLast.Freq)
+      text=text..string.format("\nRadio Modu=%d %d", self.radio.Modu, self.radioLast.Modu)
+      text=text..string.format("\nRadio OnOf=%s %s", tostring(self.radio.On), tostring(self.radioLast.On))
+      self:I(self.lid..text)
+    end
+
     -- Set current radio.
     self.radio.Freq=Frequency
-    self.radio.Modu=Modulation
+    self.radio.Modu=Modulation    
     self.radio.On=true
     
     -- Only switch radio if different.
     if self.radio.Freq~=self.radioLast.Freq or self.radio.Modu~=self.radioLast.Modu then
-
-      --[[    
-      local text=string.format("\nRadio Freq=%.3f %.3f", self.radio.Freq, self.radioLast.Freq)
-      text=text..string.format("\nRadio Modu=%d %d", self.radio.Modu, self.radioLast.Modu)
-      text=text..string.format("\nRadio OnOf=%s %s", tostring(self.radio.On), tostring(self.radioLast.On))
-      text=text..string.format("\nRadio %s", tostring(self.radio==self.radioLast))
-      self:I(self.lid..text)
-      ]]
-      
-      if self:IsInUtero() then
-        self:T2(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
-      else
   
-        -- Give command
-        group:CommandSetFrequency(Frequency, Modulation)
-    
-        self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
-        
-      end
+      -- Give command
+      group:CommandSetFrequency(Frequency, Modulation)
+  
+      self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
       
     else
-      self:T(self.lid.."INFO: Current radio not switched as freq/modulation did not change")
+      self:I(self.lid.."INFO: Current radio not switched as freq/modulation did not change")
     end
     
   else

@@ -539,21 +539,18 @@ end
 function NAVYGROUP:onafterSpawned(From, Event, To)
   self:T(self.lid..string.format("Group spawned!"))
 
+  -- TODO
+  self.traveldist=0
+  self.traveltime=timer.getAbsTime()
+  self.position=self:GetCoordinate()
+
   if self.ai then
  
     -- Set default ROE.
-    if self.option.ROE then
-      self:SwitchROE(self.option.ROE)
-    else
-      self:SwitchROE(ENUMS.ROE.ReturnFire)
-    end
+    self:SwitchROE(self.option.ROE)
     
     -- Set default Alarm State.
-    if self.option.Alarm then
-      self:SwitchAlarmstate(self.option.Alarm)
-    else
-      self:SwitchAlarmstate(0)
-    end
+    self:SwitchAlarmstate(self.option.ROT)
     
     -- Turn TACAN beacon on.
     if self.tacan.On then
@@ -566,8 +563,8 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     end    
 
     -- Turn on the radio.
-    if self.radio.On then
-      self:SwitchRadio(self.radio.Freq, self.radio.Modu)
+    if self.radioLast then
+      self:SwitchRadio(self.radioLast.Freq, self.radioLast.Modu)
     else
       self.radio.On=true -- Radio is always on for ships. If not set, it is default.
     end
@@ -1128,10 +1125,6 @@ function NAVYGROUP:_InitGroup()
   -- Group ammo.
   self.ammo=self:GetAmmoTot()
   
-  self.traveldist=0
-  self.traveltime=timer.getAbsTime()
-  self.position=self:GetCoordinate()
-  
   -- Radio parameters from template.
   self.radio.On=false  -- Radio is always on for ships but we set it to false to check if it has been changed before spawn.
   self.radio.Freq=tonumber(self.template.units[1].frequency)/1000000
@@ -1230,7 +1223,10 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
   end
   
   -- Current coordinate.
-  local coordinate=self:GetCoordinate():SetAltitude(offsetY, true)
+  --local coordinate=self:GetCoordinate():SetAltitude(offsetY, true)
+  
+  local vec3=self:GetVec3()
+  vec3.y=offsetY
   
   -- Current heading.
   local heading=self:GetHeading()
@@ -1239,8 +1235,11 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
   --coordinate=coordinate:Translate(500, heading, true)
   
   local function LoS(dist)
-    local checkcoord=coordinate:Translate(dist, heading, true)
-    return coordinate:IsLOS(checkcoord, offsetY)
+    --local checkcoord=coordinate:Translate(dist, heading, true)
+    --return coordinate:IsLOS(checkcoord, offsetY)
+    local checkvec3=UTILS.VecTranslate(vec3, dist, heading)
+    local los=land.isVisible(vec3, checkvec3)
+    return los
   end
 
   -- First check if everything is clear.
@@ -1265,7 +1264,7 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
       local los=LoS(x)
       
       -- Debug message.
-      self:T(self.lid..string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
+      self:I(self.lid..string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
       
       if los and d<=eps then
         return x
