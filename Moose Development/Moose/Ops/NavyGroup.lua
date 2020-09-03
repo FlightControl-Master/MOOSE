@@ -1169,7 +1169,7 @@ function NAVYGROUP:_InitGroup()
     
     -- Debug info.
     local text=string.format("Initialized Navy Group %s:\n", self.groupname)
-    text=text..string.format("AC type      = %s\n", self.actype)
+    text=text..string.format("Unit type     = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
     text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Elements     = %d\n", #self.elements)
@@ -1177,7 +1177,7 @@ function NAVYGROUP:_InitGroup()
     text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
     text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d/T=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles, self.ammo.Torpedos)
     text=text..string.format("FSM state    = %s\n", self:GetState())
-    text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
+    text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
     text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
     self:I(self.lid..text)
     

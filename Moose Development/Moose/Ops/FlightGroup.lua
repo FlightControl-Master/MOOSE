@@ -1410,6 +1410,13 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
       self:SwitchRadio(self.radioLast.Freq, self.radioLast.Modu)
     end
     
+    -- Set callsign.
+    if self.callsignDefault then
+      self:SwitchCallsign(self.callsignDefault.NumberSquad, self.callsignDefault.NumberGroup)
+    else
+      self:SetDefaultCallsign(self.callsign.NumberSquad, self.callsign.NumberGroup)
+    end
+    
     -- TODO: make this input.
     self.group:SetOption(AI.Option.Air.id.PROHIBIT_JETT, true)
     self.group:SetOption(AI.Option.Air.id.PROHIBIT_AB,   true)   -- Does not seem to work. AI still used the after burner.
@@ -2594,7 +2601,7 @@ function FLIGHTGROUP:_InitGroup()
     -- Debug info.
     if self.verbose>=1 then
       local text=string.format("Initialized Flight Group %s:\n", self.groupname)
-      text=text..string.format("AC type      = %s\n", self.actype)
+      text=text..string.format("Unit type     = %s\n", self.actype)
       text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
       text=text..string.format("Range max    = %.1f km\n", self.rangemax/1000)
       text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))

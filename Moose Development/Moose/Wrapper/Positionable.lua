@@ -814,7 +814,8 @@ end
 -- @return #number The velocity in knots.
 function POSITIONABLE:GetVelocityKNOTS()
   self:F2( self.PositionableName )
-  return UTILS.MpsToKnots(self:GetVelocityMPS())
+  local velmps=self:GetVelocityMPS()
+  return UTILS.MpsToKnots(velmps)
 end
 
 --- Returns the Angle of Attack of a positionable.

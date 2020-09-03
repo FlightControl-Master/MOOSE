@@ -486,7 +486,7 @@ end
 -- @param #OPSGROUP self
 -- @return DCS#Vec3 Vector with x,y,z components.
 function OPSGROUP:GetVec3()
-  if self:IsAlive() then
+  if self:IsAlive()~=nil then
     local vec3=self.group:GetVec3()
     return vec3
   end
@@ -2803,6 +2803,10 @@ function OPSGROUP:InitWaypoints()
     local coordinate=COORDINATE:New(wp.x, wp.alt, wp.y)
     local speedknots=UTILS.MpsToKnots(wp.speed)
     
+    if index==1 then
+      self.speed=wp.speed
+    end
+    
     self:AddWaypoint(coordinate, speedknots, index-1, nil, false)
      
   end
@@ -3042,8 +3046,9 @@ function OPSGROUP:SwitchROE(roe)
   return self
 end
 
---- Set current ROE for the group.
+--- Get name of ROE corresponding to the numerical value.
 -- @param #OPSGROUP self
+-- @return #string Name of ROE.
 function OPSGROUP:_GetROEName(roe)
   local name="unknown"
   if roe==0 then
@@ -3350,7 +3355,6 @@ function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
       self.icls.BeaconUnit=unit
       self.icls.On=true
       
-
       if self:IsInUtero() then
         self:T2(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s when GROUP is SPAWNED", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
       else
@@ -3425,7 +3429,6 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
   Frequency=Frequency or self.radioDefault.Freq
   Modulation=Modulation or self.radioDefault.Modu
 
-
   if self:IsInUtero() then
   
     -- Set current radio.
@@ -3433,7 +3436,8 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
     self.radioLast.Freq=Frequency
     self.radioLast.Modu=Modulation
 
-    self:T2(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radioLast.Freq, UTILS.GetModulationName(self.radioLast.Modu)))  
+    self:T2(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radioLast.Freq, UTILS.GetModulationName(self.radioLast.Modu)))
+    
   elseif self:IsAlive() then 
 
     local group=self.group --Wrapper.Group#GROUP
@@ -3570,16 +3574,28 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
 
-  if self:IsAlive() then
+  CallsignName=CallsignName or self.callsignDefault.NumberSquad
+  CallsignNumber=CallsignNumber or self.callsignDefault.NumberGroup
 
-    self.callsign.NumberSquad=CallsignName or self.callsignDefault.NumberSquad
-    self.callsign.NumberGroup=CallsignNumber or self.callsignDefault.NumberGroup
+  if self:IsInUtero() then
+  
+    -- Set default callsign. We switch to this when group is spawned.
+    self:SetDefaultCallsign(CallsignName, CallsignNumber)
 
+  elseif self:IsAlive() then
+
+    -- Set current callsign.
+    self.callsign.NumberSquad=CallsignName
+    self.callsign.NumberGroup=CallsignNumber
+
+    -- Debug.
     self:I(self.lid..string.format("Switching callsign to %d-%d", self.callsign.NumberSquad, self.callsign.NumberGroup))
     
-    
+    -- Give command to change the callsign.
     self.group:CommandSetCallsign(self.callsign.NumberSquad, self.callsign.NumberGroup)
 
+  else
+    --TODO: Error
   end
 
   return self

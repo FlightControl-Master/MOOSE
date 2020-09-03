@@ -169,12 +169,14 @@ end
 -- @param #number Nshots Number of shots to fire. Default 3.
 -- @param #number WeaponType Type of weapon. Default auto.
 -- @param #number Prio Priority of the task.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task table.
 function ARMYGROUP:AddTaskFireAtPoint(Coordinate, Clock, Radius, Nshots, WeaponType, Prio)
 
   local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
 
-  self:AddTask(DCStask, Clock, nil, Prio)
+  local task=self:AddTask(DCStask, Clock, nil, Prio)
 
+  return task
 end
 
 --- Add a *waypoint* task to fire at a given coordinate.
@@ -262,7 +264,7 @@ function ARMYGROUP:onafterStatus(From, Event, To)
   
     -- Info text.
     local text=string.format("%s: Wp=%d/%d-->%d Speed=%.1f (%d) Heading=%03d ROE=%d Alarm=%d Formation=%s Tasks=%d Missions=%d", 
-    fsmstate, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), speed, UTILS.MpsToKnots(self.speed), hdg, self.option.ROE, self.option.Alarm, self.option.Formation, nTaskTot, nMissions)
+    fsmstate, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), speed, UTILS.MpsToKnots(self.speed or 0), hdg, self.option.ROE, self.option.Alarm, self.option.Formation, nTaskTot, nMissions)
     self:I(self.lid..text)
     
   else
@@ -368,7 +370,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
   n=n or self:GetWaypointIndexNext(self.adinfinitum)
   
   -- Debug info.
-  self:I(self.lid..string.format("FF Update route n=%d", n))
+  --self:I(self.lid..string.format("FF Update route n=%d", n))
   
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
   self:_UpdateWaypointTasks(n)
@@ -830,7 +832,7 @@ function ARMYGROUP:_InitGroup()
     
     -- Debug info.
     local text=string.format("Initialized Army Group %s:\n", self.groupname)
-    text=text..string.format("AC type      = %s\n", self.actype)
+    text=text..string.format("Unit type    = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
     text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Elements     = %d\n", #self.elements)
