@@ -29,7 +29,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\NAVYGROUP\NavyGroup_Main.jpg)
+-- ![Banner Image](..\Presentations\OPS\NavyGroup\_Main.png)
 --
 -- # The NAVYGROUP Concept
 -- 
@@ -462,7 +462,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
       local turning=tostring(self:IsTurning())
       local alt=self.position.y
       local speed=UTILS.MpsToKnots(self.velocity)
-      local speedExpected=UTILS.MpsToKnots(self.speed or 0)
+      local speedExpected=UTILS.MpsToKnots(self.speedWp or 0)
       
       local wpidxCurr=self.currentwp
       local wpuidCurr=0
@@ -628,7 +628,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
       end
       
       -- Current set speed in m/s.
-      self.speed=wp.speed
+      self.speedWp=wp.speed
       
       -- Current set depth.
       depth=wp.alt
@@ -649,14 +649,14 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   end
   
   -- Current waypoint.
-  local current=self:GetCoordinate():WaypointNaval(UTILS.MpsToKmph(self.speed), depth)
+  local current=self:GetCoordinate():WaypointNaval(UTILS.MpsToKmph(self.speedWp), depth)
   table.insert(waypoints, 1, current)  
 
   
   if #waypoints>1 then
 
     self:T(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Depth=%d m", 
-    self.currentwp, n, #self.waypoints, #waypoints-1, UTILS.MpsToKnots(self.speed), depth))
+    self.currentwp, n, #self.waypoints, #waypoints-1, UTILS.MpsToKnots(self.speedWp), depth))
 
 
     -- Route group to all defined waypoints remaining.
@@ -935,6 +935,11 @@ function NAVYGROUP:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Dead)
   self:UnHandleEvent(EVENTS.RemoveUnit)
 
+  -- Stop check timers.
+  self.timerCheckZone:Stop()
+  self.timerQueueUpdate:Stop()
+
+  -- Stop FSM scheduler.
   self.CallScheduler:Clear()
 
   self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
@@ -1117,10 +1122,10 @@ function NAVYGROUP:_InitGroup()
   self.isUncontrolled=false
   
   -- Max speed in km/h.
-  self.speedmax=self.group:GetSpeedMax()
+  self.speedMax=self.group:GetSpeedMax()
   
   -- Cruise speed: 70% of max speed.
-  self.speedCruise=self.speedmax*0.7
+  self.speedCruise=self.speedMax*0.7
   
   -- Group ammo.
   self.ammo=self:GetAmmoTot()
@@ -1170,7 +1175,7 @@ function NAVYGROUP:_InitGroup()
     -- Debug info.
     local text=string.format("Initialized Navy Group %s:\n", self.groupname)
     text=text..string.format("Unit type     = %s\n", self.actype)
-    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
+    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
     text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)

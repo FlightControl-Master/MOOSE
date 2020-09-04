@@ -32,7 +32,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\WingCommander\TARGET_Main.jpg)
+-- ![Banner Image](..\Presentations\OPS\Target\_Main.pngs)
 --
 -- # The TARGET Concept
 -- 

@@ -53,7 +53,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\FlightGroup\FLIGHTGROUP_Main.jpg)
+-- ![Banner Image](..\Presentations\OPS\FlightGroup\_Main.png)
 --
 -- # The FLIGHTGROUP Concept
 --
@@ -116,7 +116,7 @@ FLIGHTGROUP = {
   homezone           =   nil,
   destzone           =   nil,
   actype             =   nil,
-  speedmax           =   nil,
+  speedMax           =   nil,
   rangemax           =   nil,
   ceiling            =   nil,
   fuellow            = false,
@@ -2406,7 +2406,7 @@ function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
   end
 end
 
---- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
+--- On after "Stop" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -2439,11 +2439,14 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Crash)
   self:UnHandleEvent(EVENTS.RemoveUnit)
   
+  -- Stop check timers.
   self.timerCheckZone:Stop()
   self.timerQueueUpdate:Stop()
 
+  -- Stop FSM scheduler.
   self.CallScheduler:Clear()
 
+  -- Remove flight from data base.
   _DATABASE.FLIGHTGROUPS[self.groupname]=nil
 
   self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
@@ -2530,13 +2533,13 @@ function FLIGHTGROUP:_InitGroup()
   self.isLateActivated=self.template.lateActivation
 
   -- Max speed in km/h.
-  self.speedmax=group:GetSpeedMax()
+  self.speedMax=group:GetSpeedMax()
 
   -- Cruise speed limit 350 kts for fixed and 80 knots for rotary wings.
   local speedCruiseLimit=self.ishelo and UTILS.KnotsToKmph(80) or UTILS.KnotsToKmph(350)
 
   -- Cruise speed: 70% of max speed but within limit.
-  self.speedCruise=math.min(self.speedmax*0.7, speedCruiseLimit)
+  self.speedCruise=math.min(self.speedMax*0.7, speedCruiseLimit)
 
   -- Group ammo.
   self.ammo=self:GetAmmoTot()
@@ -2602,7 +2605,7 @@ function FLIGHTGROUP:_InitGroup()
     if self.verbose>=1 then
       local text=string.format("Initialized Flight Group %s:\n", self.groupname)
       text=text..string.format("Unit type     = %s\n", self.actype)
-      text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
+      text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
       text=text..string.format("Range max    = %.1f km\n", self.rangemax/1000)
       text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
       text=text..string.format("Tanker type  = %s\n", tostring(self.tankertype))

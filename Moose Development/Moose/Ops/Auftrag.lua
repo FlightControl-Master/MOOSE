@@ -123,7 +123,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\CarrierAirWing\AUFTRAG_Main.jpg)
+-- ![Banner Image](..\Presentations\OPS\Auftrag\_Main.png)
 --
 -- # The AUFTRAG Concept
 -- 
@@ -190,9 +190,9 @@
 -- 
 -- An orbit mission can be created with the @{#AUFTRAG.NewORBIT}() function.
 -- 
--- ## GCCAP
+-- ## GCICAP
 -- 
--- An patrol mission can be created with the @{#AUFTRAG.NewGCCAP}() function.
+-- An patrol mission can be created with the @{#AUFTRAG.NewGCICAP}() function.
 -- 
 -- ## RECON
 -- 
@@ -296,7 +296,7 @@ _AUFTRAGSNR=0
 -- @field #string FERRY Ferry flight mission.
 -- @field #string INTERCEPT Intercept mission.
 -- @field #string ORBIT Orbit mission.
--- @field #string GCCAP Similar to CAP but no auto engage targets.
+-- @field #string GCICAP Similar to CAP but no auto engage targets.
 -- @field #string RECON Recon mission.
 -- @field #string RECOVERYTANKER Recovery tanker mission. Not implemented yet.
 -- @field #string RESCUEHELO Rescue helo.
@@ -319,7 +319,7 @@ AUFTRAG.Type={
   FERRY="Ferry Flight",
   INTERCEPT="Intercept",
   ORBIT="Orbit",
-  GCCAP="Ground Controlled CAP",
+  GCICAP="Ground Controlled CAP",
   RECON="Recon",
   RECOVERYTANKER="Recovery Tanker",
   RESCUEHELO="Rescue Helo",
@@ -641,7 +641,7 @@ function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
   return mission
 end
 
---- Create a Ground Controlled CAP (GCCAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a compat air patrol but not engage by
+--- Create a Ground Controlled CAP (GCICAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a compat air patrol but not engage by
 -- themselfs. They wait for the CHIEF to tell them whom to engage.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
@@ -650,13 +650,13 @@ end
 -- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @return #AUFTRAG self
-function AUFTRAG:NewGCCAP(Coordinate, Altitude, Speed, Heading, Leg)
+function AUFTRAG:NewGCICAP(Coordinate, Altitude, Speed, Heading, Leg)
 
   -- Create ORBIT first.
   local mission=AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
     
-  -- Mission type GCCAP.
-  mission.type=AUFTRAG.Type.GCCAP
+  -- Mission type GCICAP.
+  mission.type=AUFTRAG.Type.GCICAP
   
   mission:_SetLogID()
 
@@ -1341,8 +1341,8 @@ function AUFTRAG:NewAUTO(EngageGroup)
     mission=AUFTRAG:NewFACA(Target,Designation,DataLink,Frequency,Modulation)
   elseif auftrag==AUFTRAG.Type.FERRY then
     -- Not implemented yet.  
-  elseif auftrag==AUFTRAG.Type.GCCAP then
-    mission=AUFTRAG:NewGCCAP(Coordinate,Altitude,Speed,Heading,Leg)
+  elseif auftrag==AUFTRAG.Type.GCICAP then
+    mission=AUFTRAG:NewGCICAP(Coordinate,Altitude,Speed,Heading,Leg)
   elseif auftrag==AUFTRAG.Type.INTERCEPT then
     mission=AUFTRAG:NewINTERCEPT(Target)
   elseif auftrag==AUFTRAG.Type.ORBIT then
@@ -3030,7 +3030,7 @@ function AUFTRAG:GetAssetByName(Name)
   return nil
 end
 
---- Count alive flight groups assigned for this mission.
+--- Count alive ops groups assigned for this mission.
 -- @param #AUFTRAG self
 -- @return #number Number of alive flight groups.
 function AUFTRAG:CountOpsGroups()
@@ -3262,10 +3262,10 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
   
     -- Done below as also other mission types use the orbit task.
 
-  elseif self.type==AUFTRAG.Type.GCCAP then
+  elseif self.type==AUFTRAG.Type.GCICAP then
   
     --------------------
-    -- GCCAP Mission --
+    -- GCICAP Mission --
     --------------------
   
     -- Done below as also other mission types use the orbit task.
@@ -3369,7 +3369,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
   if self.type==AUFTRAG.Type.ORBIT  or 
      self.type==AUFTRAG.Type.CAP    or
      self.type==AUFTRAG.Type.CAS    or
-     self.type==AUFTRAG.Type.GCCAP  or
+     self.type==AUFTRAG.Type.GCICAP or
      self.type==AUFTRAG.Type.AWACS  or 
      self.type==AUFTRAG.Type.TANKER then
 

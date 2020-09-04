@@ -21,7 +21,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\ARMYGROUP\ArmyGroup_Main.jpg)
+-- ![Banner Image](..\Presentations\OPS\ArmyGroup\_Main.png)
 --
 -- # The ARMYGROUP Concept
 -- 
@@ -147,7 +147,7 @@ end
 -- @return #ARMYGROUP self
 function ARMYGROUP:SetSpeedCruise(Speed)
   
-  self.speedCruise=Speed and UTILS.KnotsToKmph(Speed) or self.speedmax*0.7
+  self.speedCruise=Speed and UTILS.KnotsToKmph(Speed) or self.speedMax*0.7
 
   return self
 end
@@ -264,7 +264,7 @@ function ARMYGROUP:onafterStatus(From, Event, To)
   
     -- Info text.
     local text=string.format("%s: Wp=%d/%d-->%d Speed=%.1f (%d) Heading=%03d ROE=%d Alarm=%d Formation=%s Tasks=%d Missions=%d", 
-    fsmstate, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), speed, UTILS.MpsToKnots(self.speed or 0), hdg, self.option.ROE, self.option.Alarm, self.option.Formation, nTaskTot, nMissions)
+    fsmstate, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), speed, UTILS.MpsToKnots(self.speedWp or 0), hdg, self.option.ROE, self.option.Alarm, self.option.Formation, nTaskTot, nMissions)
     self:I(self.lid..text)
     
   else
@@ -411,7 +411,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
       self.option.Formation=wp.action
       
       -- Current set speed in m/s.
-      self.speed=wp.speed
+      self.speedWp=wp.speed
     
     else
 
@@ -457,14 +457,14 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
 
 
   -- Current waypoint.
-  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speed), self.option.Formation)
+  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), self.option.Formation)
   table.insert(waypoints, 1, current)
   table.insert(waypoints, 1, current)  -- Seems to be better to add this twice. Otherwise, the passing waypoint functions is triggered to early!
 
   if #waypoints>2 then
   
     self:I(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Formation=%s", 
-    self.currentwp, n, #self.waypoints, #waypoints-2, UTILS.MpsToKnots(self.speed), tostring(self.option.Formation)))
+    self.currentwp, n, #self.waypoints, #waypoints-2, UTILS.MpsToKnots(self.speedWp), tostring(self.option.Formation)))
 
     -- Route group to all defined waypoints remaining.
     self:Route(waypoints)
@@ -595,6 +595,11 @@ function ARMYGROUP:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Dead)
   self:UnHandleEvent(EVENTS.RemoveUnit)
 
+  -- Stop check timers.
+  self.timerCheckZone:Stop()
+  self.timerQueueUpdate:Stop()
+
+  -- Stop FSM scheduler.
   self.CallScheduler:Clear()
 
   self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
@@ -780,10 +785,10 @@ function ARMYGROUP:_InitGroup()
   self.isUncontrolled=false
   
   -- Max speed in km/h.
-  self.speedmax=self.group:GetSpeedMax()
+  self.speedMax=self.group:GetSpeedMax()
   
   -- Cruise speed in km/h
-  self.speedCruise=self.speedmax*0.7
+  self.speedCruise=self.speedMax*0.7
   
   -- Group ammo.
   self.ammo=self:GetAmmoTot()
@@ -833,7 +838,7 @@ function ARMYGROUP:_InitGroup()
     -- Debug info.
     local text=string.format("Initialized Army Group %s:\n", self.groupname)
     text=text..string.format("Unit type    = %s\n", self.actype)
-    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
+    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
     text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)

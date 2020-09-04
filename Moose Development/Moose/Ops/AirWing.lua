@@ -44,7 +44,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\AirWing\AIRWING_Main.jpg)
+-- ![Banner Image](..\Presentations\OPS\AirWing\_Main.png)
 --
 -- # The AIRWING Concept
 -- 
@@ -66,7 +66,7 @@
 -- At this point the airwing does not have any assets (aircraft). In order to add these, one needs to first define SQUADRONS.
 -- 
 --     VFA151=SQUADRON:New("F-14 Group", 8, "VFA-151 (Vigilantes)")
---     VFA151:AddMissionCapability({AUFTRAG.Type.GCCAP, AUFTRAG.Type.INTERCEPT})
+--     VFA151:AddMissionCapability({AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT})
 --     
 --     airwing:AddSquadron(VFA151)
 --     
@@ -78,8 +78,8 @@
 -- defined in the Mission Editor.
 -- 
 --     -- F-14 payloads for CAP and INTERCEPT. Phoenix are first, sparrows are second choice.
---     airwing:NewPayload(GROUP:FindByName("F-14 Payload AIM-54C"), 2, {AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.GCCAP}, 80)
---     airwing:NewPayload(GROUP:FindByName("F-14 Payload AIM-7M"), 20, {AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.GCCAP})
+--     airwing:NewPayload(GROUP:FindByName("F-14 Payload AIM-54C"), 2, {AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.GCICAP}, 80)
+--     airwing:NewPayload(GROUP:FindByName("F-14 Payload AIM-7M"), 20, {AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.GCICAP})
 -- 
 -- This will add two AIM-54C and 20 AIM-7M payloads.
 -- 
@@ -909,7 +909,7 @@ end
 -- @return #AIRWING self
 function AIRWING:CheckCAP()
 
-  local Ncap=self:CountMissionsInQueue({AUFTRAG.Type.GCCAP, AUFTRAG.Type.INTERCEPT})
+  local Ncap=self:CountMissionsInQueue({AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT})
   
   for i=1,self.nflightsCAP-Ncap do
   
@@ -917,7 +917,7 @@ function AIRWING:CheckCAP()
     
     local altitude=patrol.altitude+1000*patrol.noccupied
     
-    local missionCAP=AUFTRAG:NewGCCAP(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg)
+    local missionCAP=AUFTRAG:NewGCICAP(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg)
     
     missionCAP.patroldata=patrol
     

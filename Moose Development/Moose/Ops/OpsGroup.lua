@@ -38,8 +38,9 @@
 -- @field #number currentmission The ID (auftragsnummer) of the currently assigned AUFTRAG.
 -- @field Core.Set#SET_UNIT detectedunits Set of detected units.
 -- @field #string attribute Generalized attribute.
--- @field #number speedmax Max speed in km/h.
+-- @field #number speedMax Max speed in km/h.
 -- @field #number speedCruise Cruising speed in km/h.
+-- @field #number speedWp Speed to the next waypoint in km/h.
 -- @field #boolean passedfinalwp Group has passed the final waypoint.
 -- @field #number wpcounter Running number counting waypoints.
 -- @field #boolean respawning Group is being respawned.
@@ -81,7 +82,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\OPSGROUP\OpsGroup_Main.jpg)
+-- ![Banner Image](..\Presentations\OPS\OpsGroup\_Main.png)
 --
 -- # The OPSGROUP Concept
 -- 
@@ -427,7 +428,7 @@ end
 -- @param #OPSGROUP self
 -- @return #number Cruise speed (>0) in knots.
 function OPSGROUP:GetSpeedCruise()
-  return UTILS.KmphToKnots(self.speedCruise or self.speedmax*0.7)
+  return UTILS.KmphToKnots(self.speedCruise or self.speedMax*0.7)
 end
 
 --- Set detection on or off.
@@ -482,13 +483,81 @@ function OPSGROUP:GetName()
   return self.groupname
 end
 
+--- Get DCS GROUP object.
+-- @param #OPSGROUP self
+-- @return DCS#Group DCS group object.
+function OPSGROUP:GetDCSGroup()
+  local DCSGroup=Group.getByName(self.groupname)
+  return DCSGroup
+end
+
+--- Get DCS GROUP object.
+-- @param #OPSGROUP self
+-- @return DCS#Group DCS group object.
+function OPSGROUP:GetUnit(UnitNumber)
+  local DCSGroup=Group.getByName(self.groupname)
+  return DCSGroup
+end
+
+--- Get DCS GROUP object.
+-- @param #OPSGROUP self
+-- @param #number UnitNumber Number of the unit in the group. Default first unit.
+-- @return DCS#Unit DCS group object.
+function OPSGROUP:GetDCSUnit(UnitNumber)
+
+  local DCSGroup=self:GetDCSGroup()
+  
+  if DCSGroup then
+    local unit=DCSGroup:getUnit(UnitNumber or 1)
+    return unit
+  end
+  
+  return nil
+end
+
+--- Despawn group.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:DespawnGroup()
+
+  local DCSGroup=self:GetDCSGroup()
+  
+  if DCSGroup then
+    DCSGroup:destroy()
+  end
+
+  return self
+end
+
+--- Despawn a unit.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:DespawnUnit(UnitName)
+
+  local DCSGroup=self:GetDCSGroup()
+  
+  if DCSGroup then
+    DCSGroup:destroy()
+  end
+
+  return self
+end
+
+
 --- Get current 3D vector of the group.
 -- @param #OPSGROUP self
 -- @return DCS#Vec3 Vector with x,y,z components.
 function OPSGROUP:GetVec3()
-  if self:IsAlive()~=nil then
-    local vec3=self.group:GetVec3()
-    return vec3
+  if self:IsExist() then
+  
+    local unit=self:GetDCSUnit()
+    
+    if unit then
+      local vec3=unit:getPoint()
+      
+      return vec3
+    end
+    
   end
   return nil
 end
@@ -520,11 +589,21 @@ end
 -- @param #OPSGROUP self
 -- @return #number Velocity in m/s.
 function OPSGROUP:GetVelocity()
-  if self:IsAlive()~=nil then
-    local vel=self.group:GetVelocityMPS()
-    return vel
+  if self:IsExist() then
+  
+    local unit=self:GetDCSUnit(1)
+    
+    if unit then
+    
+      local velvec3=unit:getVelocity()
+      
+      local vel=UTILS.VecNorm(velvec3)
+      
+      return vel
+    
+    end
   else
-    self:E(self.lid.."WARNING: Group is not alive. Cannot get velocity!")
+    self:E(self.lid.."WARNING: Group does not exist. Cannot get velocity!")
   end
   return nil
 end
@@ -533,12 +612,30 @@ end
 -- @param #OPSGROUP self
 -- @return #number Current heading of the group in degrees.
 function OPSGROUP:GetHeading()
-  if self:IsAlive()~=nil then
-    local heading=self.group:GetHeading()
-    return heading
+
+  if self:IsExist() then
+  
+    local unit=self:GetDCSUnit()
+    
+    if unit then
+      
+      local pos=unit:getPosition()
+      
+      local heading=math.atan2(pos.x.z, pos.x.x)
+      
+      if heading<0 then
+        heading=heading+ 2*math.pi
+      end
+      
+      heading=math.deg(heading)
+      
+      return heading
+    end
+    
   else
-    self:E(self.lid.."WARNING: Group is not alive. Cannot get heading!")
+    self:E(self.lid.."WARNING: Group does not exist. Cannot get heading!")
   end
+  
   return nil
 end
 
@@ -612,6 +709,29 @@ function OPSGROUP:SelfDestruction(Delay, ExplosionPower)
       end
     end
   end
+
+end
+
+
+--- Check if group is exists.
+-- @param #OPSGROUP self
+-- @return #boolean If true, the group exists or false if the group does not exist. If nil, the DCS group could not be found.
+function OPSGROUP:IsExist()
+
+  local DCSGroup=self:GetDCSGroup()
+  
+  if DCSGroup then
+    local exists=DCSGroup:isExist()
+    return exists
+  end
+
+  return nil
+end
+
+--- Check if group is activated.
+-- @param #OPSGROUP self
+-- @return #boolean If true, the group exists or false if the group does not exist. If nil, the DCS group could not be found.
+function OPSGROUP:IsActive()
 
 end
 
@@ -1001,7 +1121,7 @@ function OPSGROUP:GetExpectedSpeed()
   if self:IsHolding() then
     return 0
   else
-    return self.speed or 0
+    return self.speedWp or 0
   end
   
 end
@@ -2804,7 +2924,7 @@ function OPSGROUP:InitWaypoints()
     local speedknots=UTILS.MpsToKnots(wp.speed)
     
     if index==1 then
-      self.speed=wp.speed
+      self.speedWp=wp.speed
     end
     
     self:AddWaypoint(coordinate, speedknots, index-1, nil, false)

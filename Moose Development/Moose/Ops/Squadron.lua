@@ -52,7 +52,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\Squadron\SQUADRON_Main.jpg)
+-- ![Banner Image](..\Presentations\OPS\Squadron\_Main.png)
 --
 -- # The SQUADRON Concept
 -- 
@@ -838,12 +838,12 @@ function SQUADRON:RecruitAssets(Mission, Npayloads)
       -- Asset is already on a mission.
       ---
 
-      -- Check if this asset is currently on a GCCAP mission (STARTED or EXECUTING).
-      if self.airwing:IsAssetOnMission(asset, AUFTRAG.Type.GCCAP) and Mission.type==AUFTRAG.Type.INTERCEPT then
+      -- Check if this asset is currently on a GCICAP mission (STARTED or EXECUTING).
+      if self.airwing:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and Mission.type==AUFTRAG.Type.INTERCEPT then
 
         -- Check if the payload of this asset is compatible with the mission.
-        -- Note: we do not check the payload as an asset that is on a GCCAP mission should be able to do an INTERCEPT as well!
-        self:I(self.lid.."Adding asset on GCCAP mission for an INTERCEPT mission")
+        -- Note: we do not check the payload as an asset that is on a GCICAP mission should be able to do an INTERCEPT as well!
+        self:I(self.lid.."Adding asset on GCICAP mission for an INTERCEPT mission")
         table.insert(assets, asset)
         
       end      
