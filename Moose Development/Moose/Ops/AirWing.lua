@@ -14,7 +14,6 @@
 --- AIRWING class.
 -- @type AIRWING
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #number verbose Verbosity of output.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table menu Table of menu items.
@@ -109,7 +108,6 @@
 -- @field #AIRWING
 AIRWING = {
   ClassName      = "AIRWING",
-  Debug          = false,
   verbose        =     0,
   lid            =   nil,
   menu           =   nil,
@@ -394,7 +392,7 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
   end
   
   -- Debug.
-  if self.Debug then
+  if self.verbose>=4 then
     self:I(self.lid..string.format("Looking for payload for unit type=%s and mission type=%s", UnitType, MissionType))
     for i,_payload in pairs(self.payloads) do
       local payload=_payload --#AIRWING.Payload
@@ -456,7 +454,7 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
   end
   
   -- Debug.
-  if self.Debug then
+  if self.verbose>=4 then
     self:I(self.lid..string.format("Sorted payloads for mission type X and aircraft type=Y:"))
     for _,_payload in ipairs(self.payloads) do
       local payload=_payload --#AIRWING.Payload
@@ -576,7 +574,7 @@ end
 
 --- Remove asset from squadron.
 -- @param #AIRWING self
--- @param #AIRWING.SquadronAsset Asset
+-- @param #AIRWING.SquadronAsset Asset The squad asset.
 function AIRWING:RemoveAssetFromSquadron(Asset)
   local squad=self:GetSquadronOfAsset(Asset)
   if squad then
@@ -1541,7 +1539,9 @@ function AIRWING:onafterSquadAssetReturned(From, Event, To, Squadron, Asset)
   self:T(self.lid..string.format("Asset %s from squadron %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Squadron.name, tostring(Asset.assignment)))
   
   -- Stop flightgroup.
-  Asset.flightgroup:Stop()
+  if Asset.flightgroup and not Asset.flightgroup:IsStopped() then
+    Asset.flightgroup:Stop()
+  end
   
   -- Return payload.
   self:ReturnPayloadFromAsset(Asset)

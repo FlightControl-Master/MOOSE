@@ -491,12 +491,20 @@ function OPSGROUP:GetDCSGroup()
   return DCSGroup
 end
 
---- Get DCS GROUP object.
+--- Get MOOSE UNIT object.
 -- @param #OPSGROUP self
--- @return DCS#Group DCS group object.
+-- @param #number UnitNumber Number of the unit in the group. Default first unit.
+-- @return Wrapper.Unit#UNIT The MOOSE UNIT object.
 function OPSGROUP:GetUnit(UnitNumber)
-  local DCSGroup=Group.getByName(self.groupname)
-  return DCSGroup
+
+  local DCSUnit=self:GetDCSUnit(UnitNumber)
+  
+  if DCSUnit then
+    local unit=UNIT:Find(DCSUnit)
+    return unit
+  end
+  
+  return nil
 end
 
 --- Get DCS GROUP object.
@@ -515,15 +523,68 @@ function OPSGROUP:GetDCSUnit(UnitNumber)
   return nil
 end
 
---- Despawn group.
+--- Get DCS units.
 -- @param #OPSGROUP self
--- @return #OPSGROUP self
-function OPSGROUP:DespawnGroup()
+-- @return #list<DCS#Unit> DCS units.
+function OPSGROUP:GetDCSUnits()
 
   local DCSGroup=self:GetDCSGroup()
   
   if DCSGroup then
+    local units=DCSGroup:getUnits()
+    return units
+  end
+  
+  return nil
+end
+
+--- Despawn the group. The whole group is despawned and (optionally) a "Remove Unit" event is generated for all current units of the group.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:Despawn()
+
+  local DCSGroup=self:GetDCSGroup()
+  
+  if DCSGroup then
+  
+    -- Destroy DCS group.
     DCSGroup:destroy()
+  
+    -- Get all units.
+    local units=self:GetDCSUnits()
+
+    -- Create a "Remove Unit" event.
+    local EventTime=timer.getTime()       
+    for i=1,#units do
+      self:CreateEventRemoveUnit(EventTime, units[i])
+    end
+  end
+
+  return self
+end
+
+--- Destroy group. The whole group is despawned and a "Unit Lost" event is generated for all current units.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:Destroy()
+
+  local DCSGroup=self:GetDCSGroup()
+  
+  if DCSGroup then
+  
+    self:I(self.lid.."Destroying group ")
+  
+    -- Destroy DCS group.
+    DCSGroup:destroy()  
+  
+    -- Get all units.
+    local units=self:GetDCSUnits()
+  
+    -- Create a "Unit Lost" event.
+    local EventTime=timer.getTime()    
+    for i=1,#units do
+      self:CreateEventUnitLost(EventTime, units[i])
+    end
   end
 
   return self
@@ -538,6 +599,7 @@ function OPSGROUP:DespawnUnit(UnitName)
   
   if DCSGroup then
     DCSGroup:destroy()
+    self:CreateEventRemoveUnit(timer.getTime(), DCSObject)
   end
 
   return self
@@ -2347,7 +2409,7 @@ function OPSGROUP:_QueueUpdate()
   ---
 
    -- First check if group is alive? Late activated groups are activated and uncontrolled units are started automatically.
-  if self:IsAlive()~=nil then
+  if self:IsExist() then
   
     local mission=self:_GetNextMission()
     
@@ -2562,6 +2624,67 @@ function OPSGROUP:onafterLeaveZone(From, Event, To, Zone)
   local zonename=Zone and Zone:GetName() or "unknown"
   self:T2(self.lid..string.format("Left Zone %s", zonename))
   self.inzones:Remove(zonename, true)
+end
+
+
+--- On after "ElementDestroyed" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Element Element The flight group element.
+function OPSGROUP:onafterElementDestroyed(From, Event, To, Element)
+  self:I(self.lid..string.format("Element destroyed %s", Element.name))
+  
+  -- Cancel all missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    mission:ElementDestroyed(self, Element)
+
+  end  
+
+  -- Set element status.
+  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
+  
+end
+
+--- On after "ElementDead" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Element Element The flight group element.
+function OPSGROUP:onafterElementDead(From, Event, To, Element)
+  self:I(self.lid..string.format("Element dead %s", Element.name))
+
+  -- Set element status.
+  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
+end
+
+--- On after "Dead" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterDead(From, Event, To)
+  self:T(self.lid..string.format("Flight dead!"))
+
+  -- Delete waypoints so they are re-initialized at the next spawn.
+  self.waypoints=nil
+  self.groupinitialized=false
+
+  -- Cancel all missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    self:MissionCancel(mission)
+    mission:GroupDead(self)
+
+  end
+
+  -- Stop
+  self:Stop()
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3427,6 +3550,7 @@ function OPSGROUP:GetTACAN()
   return self.tacan.Channel, self.tacan.Morse, self.tacan.Band, self.tacan.On, self.tacan.BeaconName
 end
 
+
 --- Activate/switch ICLS beacon settings.
 -- @param #OPSGROUP self
 -- @param #OPSGROUP.Beacon Icls ICLS data table.
@@ -3628,6 +3752,8 @@ function OPSGROUP:TurnOffRadio()
   return self
 end
 
+
+
 --- Set default formation.
 -- @param #OPSGROUP self
 -- @param #number Formation The formation the groups flies in.
@@ -3672,6 +3798,8 @@ function OPSGROUP:SwitchFormation(Formation)
 
   return self
 end
+
+
 
 --- Set default formation.
 -- @param #OPSGROUP self

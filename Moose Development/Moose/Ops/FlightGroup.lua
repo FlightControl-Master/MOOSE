@@ -46,6 +46,7 @@
 -- @field #boolean ishelo If true, the is a helicopter group.
 -- @field #number callsignName Callsign name.
 -- @field #number callsignNumber Callsign number.
+-- @field #number Ndestroyed Number of destroyed units.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -132,6 +133,7 @@ FLIGHTGROUP = {
   Tparking           =   nil,
   menu               =   nil,
   ishelo             =   nil,
+  Ndestroyed         =     0,
 }
 
 
@@ -1346,15 +1348,9 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementDestroyed(From, Event, To, Element)
-  self:T(self.lid..string.format("Element dead %s.", Element.name))
-  
-  -- Cancel all missions.
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
 
-    mission:ElementDestroyed(self, Element)
-
-  end  
+  -- Call OPSGROUP function.
+  self:GetParent(self).onafterElementDestroyed(self, From, Event, To, Element)
   
 end
 
@@ -1365,7 +1361,9 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
-  self:T(self.lid..string.format("Element dead %s.", Element.name))
+
+  -- Call OPSGROUP function.
+  self:GetParent(self).onafterElementDead(self, From, Event, To, Element)
 
   if self.flightcontrol and Element.parking then
     self.flightcontrol:SetParkingFree(Element.parking)
@@ -1373,9 +1371,7 @@ function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
 
   -- Not parking any more.
   Element.parking=nil
-
-  -- Set element status.
-  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
+  
 end
 
 
@@ -1569,7 +1565,6 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
 function FLIGHTGROUP:onafterLandedAt(From, Event, To)
   self:I(self.lid..string.format("Flight landed at"))    
 end
@@ -1601,11 +1596,6 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterDead(From, Event, To)
-  self:T(self.lid..string.format("Flight dead!"))
-
-  -- Delete waypoints so they are re-initialized at the next spawn.
-  self.waypoints=nil
-  self.groupinitialized=false
 
   -- Remove flight from all FC queues.
   if self.flightcontrol then
@@ -1613,17 +1603,9 @@ function FLIGHTGROUP:onafterDead(From, Event, To)
     self.flightcontrol=nil
   end
 
-  -- Cancel all missions.
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-
-    self:MissionCancel(mission)
-    mission:GroupDead(self)
-
-  end
-
-  -- Stop
-  self:Stop()
+  -- Call OPSGROUP function.
+  self:GetParent(self).onafterDead(self, From, Event, To)
+  
 end
 
 

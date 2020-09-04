@@ -2552,10 +2552,8 @@ end
 -- @param #string To To state.
 -- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
 function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
-    
-  -- Remove opsgroup from mission.
-  --self:DelOpsGroup(Asset.opsgroup)
-  
+ 
+  -- Number of groups alive. 
   local N=self:CountOpsGroups()
   
   -- All assets dead?
@@ -2568,15 +2566,22 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
       
     else
       
-      self:E(self.lid.."ERROR: All assets are dead not but mission was already over... Investigate!")
+      --self:E(self.lid.."ERROR: All assets are dead not but mission was already over... Investigate!")
       -- Now this can happen, because when a opsgroup dies (sometimes!), the mission is DONE
       
     end
   end
   
-  -- Remove asset from airwing.
+  -- Asset belonged to an airwing.
   if self.airwing then
-    self.airwing:RemoveAssetFromSquadron(Asset)
+    
+    if self.Ncasualties==self.Nelements then
+      -- All elements were destroyed ==> Asset is gone.
+      self.airwing:RemoveAssetFromSquadron(Asset)
+    else
+      -- Not all assets were destroyed (despawn) ==> Add asset back to airwing.
+      self.airwing:AddAsset(Asset.flightgroup.group, 1)
+    end
   end
 
   -- Delete asset from mission.

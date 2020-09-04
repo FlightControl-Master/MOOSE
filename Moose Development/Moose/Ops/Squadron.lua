@@ -17,7 +17,6 @@
 --- SQUADRON class.
 -- @type SQUADRON
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string name Name of the squadron.
@@ -63,8 +62,7 @@
 -- @field #SQUADRON
 SQUADRON = {
   ClassName      = "SQUADRON",
-  Debug          =   nil,
-  verbose        =     0,
+  verbose        =     3,
   lid            =   nil,
   name           =   nil,
   templatename   =   nil,
@@ -199,7 +197,6 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
 
   -- Debug trace.
   if false then
-    self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
@@ -658,7 +655,7 @@ function SQUADRON:_CheckAssetStatus()
       local asset=_asset  --Ops.AirWing#AIRWING.SquadronAsset
   
       -- Text.
-      text=text..string.format("\n-[%d] %s*%d: ", j, asset.unittype, asset.nunits)
+      text=text..string.format("\n-[%d] %s (%s*%d): ", j, asset.spawngroupname, asset.unittype, asset.nunits)
       
       if asset.spawned then
       
@@ -670,7 +667,7 @@ function SQUADRON:_CheckAssetStatus()
         local mission=self.airwing and self.airwing:GetAssetCurrentMission(asset) or false
         if mission then
           local distance=asset.flightgroup and UTILS.MetersToNM(mission:GetTargetDistance(asset.flightgroup.group:GetCoordinate())) or 0
-          text=text..string.format(" Mission %s - %s: Status=%s, Dist=%.1f NM", mission.name, mission.type, mission.status, distance)
+          text=text..string.format("Mission %s - %s: Status=%s, Dist=%.1f NM", mission.name, mission.type, mission.status, distance)
         else
           text=text.."Mission None"
         end
@@ -708,15 +705,24 @@ function SQUADRON:_CheckAssetStatus()
         ---
         -- In Stock
         ---
+        
+        text=text..string.format("In Stock")
+        
+        if self:IsRepaired(asset) then
+          text=text.." and Combat Ready"
+        else
+        
+          text=text..string.format(", Repaired in %d sec", self:GetRepairTime(asset))
+
+          if asset.damage then
+            text=text..string.format(" (Damage=%.1f)", asset.damage)
+          end
+        end
   
         if asset.Treturned then
           local T=timer.getAbsTime()-asset.Treturned
-          text=text..string.format(" Treturn=%d sec", T)
+          text=text..string.format(", Returned for %d sec", T)
         end
-        if asset.damage then
-          text=text..string.format(" Damage=%.1f", asset.damage)
-        end
-        text=text..string.format(" Repaired=%s T=%d sec", tostring(self:IsRepaired(asset)), self:GetRepairTime(asset))
       
       end
     end
