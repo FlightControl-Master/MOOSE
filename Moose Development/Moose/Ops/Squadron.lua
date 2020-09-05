@@ -448,6 +448,22 @@ function SQUADRON:DelAsset(Asset)
   return self
 end
 
+--- Remove airwing asset group from squadron.
+-- @param #SQUADRON self
+-- @param #string GroupName Name of the asset group.
+-- @return #SQUADRON self
+function SQUADRON:DelGroup(GroupName)
+  for i,_asset in pairs(self.assets) do
+    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    if GroupName==asset.spawngroupname then
+      self:T2(self.lid..string.format("Removing asset %s", asset.spawngroupname))
+      table.remove(self.assets, i)
+      break
+    end
+  end
+  return self
+end
+
 --- Get name of the squadron
 -- @param #SQUADRON self
 -- @return #string Name of the squadron.
@@ -648,14 +664,14 @@ end
 -- @param #SQUADRON self
 function SQUADRON:_CheckAssetStatus()
 
-  if self.verbose>=2 then
+  if self.verbose>=2 and #self.assets>0 then
   
     local text=""
     for j,_asset in pairs(self.assets) do
       local asset=_asset  --Ops.AirWing#AIRWING.SquadronAsset
   
       -- Text.
-      text=text..string.format("\n-[%d] %s (%s*%d): ", j, asset.spawngroupname, asset.unittype, asset.nunits)
+      text=text..string.format("\n[%d] %s (%s*%d): ", j, asset.spawngroupname, asset.unittype, asset.nunits)
       
       if asset.spawned then
       
@@ -709,7 +725,7 @@ function SQUADRON:_CheckAssetStatus()
         text=text..string.format("In Stock")
         
         if self:IsRepaired(asset) then
-          text=text.." and Combat Ready"
+          text=text..", Combat Ready"
         else
         
           text=text..string.format(", Repaired in %d sec", self:GetRepairTime(asset))

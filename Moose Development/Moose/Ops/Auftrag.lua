@@ -2571,18 +2571,6 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
       
     end
   end
-  
-  -- Asset belonged to an airwing.
-  if self.airwing then
-    
-    if self.Ncasualties==self.Nelements then
-      -- All elements were destroyed ==> Asset is gone.
-      self.airwing:RemoveAssetFromSquadron(Asset)
-    else
-      -- Not all assets were destroyed (despawn) ==> Add asset back to airwing.
-      self.airwing:AddAsset(Asset.flightgroup.group, 1)
-    end
-  end
 
   -- Delete asset from mission.
   self:DelAsset(Asset)

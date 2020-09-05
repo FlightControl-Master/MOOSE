@@ -40,7 +40,7 @@
 -- @field #string attribute Generalized attribute.
 -- @field #number speedMax Max speed in km/h.
 -- @field #number speedCruise Cruising speed in km/h.
--- @field #number speedWp Speed to the next waypoint in km/h.
+-- @field #number speedWp Speed to the next waypoint in m/s.
 -- @field #boolean passedfinalwp Group has passed the final waypoint.
 -- @field #number wpcounter Running number counting waypoints.
 -- @field #boolean respawning Group is being respawned.
@@ -51,6 +51,7 @@
 -- @field #boolean groupinitialized If true, group parameters were initialized.
 -- @field #boolean detectionOn If true, detected units of the group are analyzed.
 -- @field Ops.Auftrag#AUFTRAG missionpaused Paused mission.
+-- @field #number Ndestroyed Number of destroyed units.
 -- 
 -- @field Core.Point#COORDINATE coordinate Current coordinate.
 -- @field Core.Point#COORDINATE position Position of the group at last status check.
@@ -126,6 +127,7 @@ OPSGROUP = {
   tacan              =    {},
   icls               =    {},
   callsign           =    {},
+  Ndestroyed         =     0,
 }
 
 --- Status of group element.
@@ -540,51 +542,73 @@ end
 
 --- Despawn the group. The whole group is despawned and (optionally) a "Remove Unit" event is generated for all current units of the group.
 -- @param #OPSGROUP self
+-- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
+-- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
 -- @return #OPSGROUP self
-function OPSGROUP:Despawn()
+function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
 
-  local DCSGroup=self:GetDCSGroup()
-  
-  if DCSGroup then
-  
-    -- Destroy DCS group.
-    DCSGroup:destroy()
-  
-    -- Get all units.
-    local units=self:GetDCSUnits()
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.Despawn, self, 0, NoEventRemoveUnit)
+  else
 
-    -- Create a "Remove Unit" event.
-    local EventTime=timer.getTime()       
-    for i=1,#units do
-      self:CreateEventRemoveUnit(EventTime, units[i])
+    local DCSGroup=self:GetDCSGroup()
+    
+    if DCSGroup then
+    
+      -- Destroy DCS group.
+      DCSGroup:destroy()
+      
+      if not NoEventRemoveUnit then
+    
+        -- Get all units.
+        local units=self:GetDCSUnits()
+    
+        -- Create a "Remove Unit" event.
+        local EventTime=timer.getTime()       
+        for i=1,#units do
+          self:CreateEventRemoveUnit(EventTime, units[i])
+        end
+        
+      end
     end
   end
 
   return self
 end
 
---- Destroy group. The whole group is despawned and a "Unit Lost" event is generated for all current units.
+--- Destroy group. The whole group is despawned and a *Unit Lost* for aircraft or *Dead* event for ground/naval units is generated for all current units.
 -- @param #OPSGROUP self
+-- @param #number Delay Delay in seconds before the group will be destroyed. Default immediately.
 -- @return #OPSGROUP self
-function OPSGROUP:Destroy()
+function OPSGROUP:Destroy(Delay)
 
-  local DCSGroup=self:GetDCSGroup()
-  
-  if DCSGroup then
-  
-    self:I(self.lid.."Destroying group ")
-  
-    -- Destroy DCS group.
-    DCSGroup:destroy()  
-  
-    -- Get all units.
-    local units=self:GetDCSUnits()
-  
-    -- Create a "Unit Lost" event.
-    local EventTime=timer.getTime()    
-    for i=1,#units do
-      self:CreateEventUnitLost(EventTime, units[i])
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.Destroy, self)
+  else
+
+    local DCSGroup=self:GetDCSGroup()
+    
+    if DCSGroup then
+    
+      self:I(self.lid.."Destroying group")
+    
+      -- Destroy DCS group.
+      DCSGroup:destroy()  
+    
+      -- Get all units.
+      local units=self:GetDCSUnits()
+    
+      -- Create a "Unit Lost" event.
+      local EventTime=timer.getTime()    
+      for i=1,#units do
+        if self.isAircraft then
+          self:CreateEventUnitLost(EventTime, units[i])
+        else
+          self:CreateEventDead(EventTime, units[i])
+        end
+      end
     end
+    
   end
 
   return self
@@ -2642,7 +2666,10 @@ function OPSGROUP:onafterElementDestroyed(From, Event, To, Element)
 
     mission:ElementDestroyed(self, Element)
 
-  end  
+  end
+  
+  -- Increase counter.
+  self.Ndestroyed=self.Ndestroyed+1
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
@@ -2685,6 +2712,39 @@ function OPSGROUP:onafterDead(From, Event, To)
 
   -- Stop
   self:Stop()
+end
+
+--- On after "Stop" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterStop(From, Event, To)
+
+  -- Handle events:
+  self:UnHandleEvent(EVENTS.Birth)
+  self:UnHandleEvent(EVENTS.EngineStartup)
+  self:UnHandleEvent(EVENTS.Takeoff)
+  self:UnHandleEvent(EVENTS.Land)
+  self:UnHandleEvent(EVENTS.EngineShutdown)
+  self:UnHandleEvent(EVENTS.PilotDead)
+  self:UnHandleEvent(EVENTS.Ejection)
+  self:UnHandleEvent(EVENTS.Crash)
+  self:UnHandleEvent(EVENTS.RemoveUnit)
+  
+  -- Stop check timers.
+  self.timerCheckZone:Stop()
+  self.timerQueueUpdate:Stop()
+
+  -- Stop FSM scheduler.
+  self.CallScheduler:Clear()
+  
+  if self:IsAlive() then
+    self:E(self.lid.."WARNING: Group is still alive! Use OPSGROUP:Destroy() or OPSGROUP:Despawn() for a clean stop")
+  end
+
+  -- Debug output.
+  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

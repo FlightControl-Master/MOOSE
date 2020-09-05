@@ -46,7 +46,7 @@
 -- @field #boolean ishelo If true, the is a helicopter group.
 -- @field #number callsignName Callsign name.
 -- @field #number callsignNumber Callsign number.
--- @field #number Ndestroyed Number of destroyed units.
+-- @field #boolean despawnAfterLanding If true, group is despawned after landed at an airbase.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -133,7 +133,6 @@ FLIGHTGROUP = {
   Tparking           =   nil,
   menu               =   nil,
   ishelo             =   nil,
-  Ndestroyed         =     0,
 }
 
 
@@ -494,6 +493,14 @@ function FLIGHTGROUP:SetFuelCriticalRTB(switch)
   else
     self.fuelcriticalrtb=true
   end
+  return self
+end
+
+--- Enable that the group is despawned after landing. This can be useful to avoid DCS taxi issues with other AI or players or jamming taxiways.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetDespawnAfterLanding()
+  self.despawnAfterLanding=true
   return self
 end
 
@@ -1557,6 +1564,10 @@ function FLIGHTGROUP:onafterLanded(From, Event, To, airbase)
     -- Add flight to taxiinb queue.
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIINB)
   end
+  
+  if self.despawnAfterLanding then
+    self:Despawn()
+  end
     
 end
 
@@ -1602,6 +1613,18 @@ function FLIGHTGROUP:onafterDead(From, Event, To)
     self.flightcontrol:_RemoveFlight(self)
     self.flightcontrol=nil
   end
+  
+  if self.Ndestroyed==#self.elements then
+    if self.squadron then
+      -- All elements were destroyed ==> Asset group is gone.
+      self.squadron:DelGroup(self.groupname)
+    end    
+  else
+    if self.airwing then
+      -- Not all assets were destroyed (despawn) ==> Add asset back to airwing.
+      self.airwing:AddAsset(self.group, 1)    
+    end
+  end  
 
   -- Call OPSGROUP function.
   self:GetParent(self).onafterDead(self, From, Event, To)
@@ -2407,31 +2430,16 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
     end
 
     -- Destroy group. No event is generated.
-    self.group:Destroy(false)
+    -- DISABLED for now. Should use :Despawn() or :Destroy() which then calls stop.
+    --self.group:Destroy(false)
   end
-
-  -- Handle events:
-  self:UnHandleEvent(EVENTS.Birth)
-  self:UnHandleEvent(EVENTS.EngineStartup)
-  self:UnHandleEvent(EVENTS.Takeoff)
-  self:UnHandleEvent(EVENTS.Land)
-  self:UnHandleEvent(EVENTS.EngineShutdown)
-  self:UnHandleEvent(EVENTS.PilotDead)
-  self:UnHandleEvent(EVENTS.Ejection)
-  self:UnHandleEvent(EVENTS.Crash)
-  self:UnHandleEvent(EVENTS.RemoveUnit)
-  
-  -- Stop check timers.
-  self.timerCheckZone:Stop()
-  self.timerQueueUpdate:Stop()
-
-  -- Stop FSM scheduler.
-  self.CallScheduler:Clear()
 
   -- Remove flight from data base.
   _DATABASE.FLIGHTGROUPS[self.groupname]=nil
-
-  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
+  
+  
+  -- Call OPSGROUP function.
+  self:GetParent(self).onafterStop(self, From, Event, To)  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
