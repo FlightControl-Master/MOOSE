@@ -141,18 +141,6 @@ function ARMYGROUP:SetPatrolAdInfinitum(switch)
   return self
 end
 
---- Set default cruise speed. This is the speed a group will take by default if no speed is specified explicitly.
--- @param #ARMYGROUP self
--- @param #number Speed Speed in knots. Default 70% of max speed.
--- @return #ARMYGROUP self
-function ARMYGROUP:SetSpeedCruise(Speed)
-  
-  self.speedCruise=Speed and UTILS.KnotsToKmph(Speed) or self.speedMax*0.7
-
-  return self
-end
-
-
 --- Get coordinate of the closest road.
 -- @param #ARMYGROUP self
 -- @return Core.Point#COORDINATE Coordinate of a road closest to the group.
@@ -212,7 +200,26 @@ function ARMYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clo
 
 end
 
+--- Check if the group is currently holding its positon.
+-- @param #ARMYGROUP self
+-- @return #boolean If true, group was ordered to hold.
+function ARMYGROUP:IsHolding()
+  return self:Is("Holding")
+end
 
+--- Check if the group is currently cruising.
+-- @param #ARMYGROUP self
+-- @return #boolean If true, group cruising.
+function ARMYGROUP:IsCruising()
+  return self:Is("Cruising")
+end
+
+--- Check if the group is currently on a detour.
+-- @param #ARMYGROUP self
+-- @return #boolean If true, group is on a detour
+function ARMYGROUP:IsOnDetour()
+  return self:Is("OnDetour")
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
@@ -223,10 +230,10 @@ end
 function ARMYGROUP:onbeforeStatus(From, Event, To)
 
   if self:IsDead() then  
-    self:I(self.lid..string.format("Onbefore Status DEAD ==> false"))
+    self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
     return false   
   elseif self:IsStopped() then
-    self:I(self.lid..string.format("Onbefore Status STOPPED ==> false"))
+    self:T(self.lid..string.format("Onbefore Status STOPPED ==> false"))
     return false
   end
 
@@ -251,27 +258,36 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       self:_CheckDetectedUnits()
     end
 
-
-    -- Current heading and position of the carrier.
-    local hdg=self:GetHeading()
-    local pos=self:GetCoordinate()
-    local speed=self.group:GetVelocityKNOTS()
+    -- Update position etc.    
+    self:_UpdatePosition()
     
+    -- Check if group got stuck.
+    self:_CheckStuck()
+    
+    if self.verbose>=1 then
   
-    -- Get number of tasks and missions.
-    local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
-    local nMissions=self:CountRemainingMissison()
-  
-    -- Info text.
-    local text=string.format("%s: Wp=%d/%d-->%d Speed=%.1f (%d) Heading=%03d ROE=%d Alarm=%d Formation=%s Tasks=%d Missions=%d", 
-    fsmstate, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), speed, UTILS.MpsToKnots(self.speedWp or 0), hdg, self.option.ROE, self.option.Alarm, self.option.Formation, nTaskTot, nMissions)
-    self:I(self.lid..text)
+      -- Get number of tasks and missions.
+      local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
+      local nMissions=self:CountRemainingMissison()
+      
+      local roe=self:GetROE()
+      local alarm=self:GetAlarmstate()
+      local speed=UTILS.MpsToKnots(self.velocity)
+      local speedEx=UTILS.MpsToKnots(self:GetExpectedSpeed())
+      local formation=self.option.Formation
+    
+      -- Info text.
+      local text=string.format("%s: Wp=%d/%d-->%d Speed=%.1f (%d) Heading=%03d ROE=%d Alarm=%d Formation=%s Tasks=%d Missions=%d", 
+      fsmstate, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), speed, speedEx, self.heading, roe, alarm, formation, nTaskTot, nMissions)
+      self:I(self.lid..text)
+      
+    end
     
   else
 
     -- Info text.
     local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
-    self:I(self.lid..text)
+    self:T2(self.lid..text)
   
   end
 
@@ -305,19 +321,6 @@ function ARMYGROUP:onafterElementSpawned(From, Event, To, Element)
 
 end
 
---- On after "ElementDead" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #ARMYGROUP.Element Element The group element.
-function ARMYGROUP:onafterElementDead(From, Event, To, Element)
-  self:T(self.lid..string.format("Element dead %s.", Element.name))
-
-  -- Set element status.
-  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
-end
-
 --- On after "Spawned" event.
 -- @param #ARMYGROUP self
 -- @param #string From From state.
@@ -326,10 +329,8 @@ end
 function ARMYGROUP:onafterSpawned(From, Event, To)
   self:T(self.lid..string.format("Group spawned!"))
 
-  -- TODO
-  self.traveldist=0
-  self.traveltime=timer.getAbsTime()
-  self.position=self:GetCoordinate()
+  -- Update position.
+  self:_UpdatePosition()
 
   if self.ai then
   
@@ -368,9 +369,6 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
 
   -- Update route from this waypoint number onwards.
   n=n or self:GetWaypointIndexNext(self.adinfinitum)
-  
-  -- Debug info.
-  --self:I(self.lid..string.format("FF Update route n=%d", n))
   
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
   self:_UpdateWaypointTasks(n)
@@ -428,8 +426,6 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
     end
     
     if wp.roaddist>100 and wp.action==ENUMS.Formation.Vehicle.OnRoad then
-      env.info("FF Adding ON road waypoint")
-      --wp.roadcoord:MarkToAll("Added Road waypoint")
     
       -- Waypoint is actually off road!
       wp.action=ENUMS.Formation.Vehicle.OffRoad
@@ -439,17 +435,8 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
       table.insert(waypoints, wproad)     
     end    
      
-    --if wp.formation==ENUMS.Formation.Vehicle.OnRoad and wp.action~=ENUMS.Formation.Vehicle.OnRoad then --and not self.formationPerma~=ENUMS.Formation.Vehicle.OnRoad then
-    --[[
-    if wp.action==ENUMS.Formation.Vehicle.OnRoad and wp.roaddist>100 then
-      env.info("FF Adding ON road waypoint")
-      local wproad=wp.roadcoord:WaypointGround(wp.speed, ENUMS.Formation.Vehicle.OnRoad)
-      table.insert(waypoints, wproad)     
-    end
-    ]]
-    
     -- Debug info.
-    self:I(string.format("WP %d %s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.type, wp.speed, wp.alt, wp.action))
+    self:T(string.format("WP %d %s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.type, wp.speed, wp.alt, wp.action))
         
     -- Add waypoint.
     table.insert(waypoints, wp)
@@ -463,7 +450,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
 
   if #waypoints>2 then
   
-    self:I(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Formation=%s", 
+    self:T(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Formation=%s", 
     self.currentwp, n, #self.waypoints, #waypoints-2, UTILS.MpsToKnots(self.speedWp), tostring(self.option.Formation)))
 
     -- Route group to all defined waypoints remaining.
@@ -552,31 +539,6 @@ function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
 
 end
 
---- On after "Dead" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function ARMYGROUP:onafterDead(From, Event, To)
-  self:I(self.lid..string.format("Group dead!"))
-
-  -- Delete waypoints so they are re-initialized at the next spawn.
-  self.waypoints=nil
-  self.groupinitialized=false
-
-  -- Cancel all mission.
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-
-    self:MissionCancel(mission)
-    mission:GroupDead(self)
-
-  end
-
-  -- Stop
-  self:Stop()
-end
-
 --- On after Start event. Starts the ARMYGROUP FSM and event handlers.
 -- @param #ARMYGROUP self
 -- @param #string From From state.
@@ -584,25 +546,14 @@ end
 -- @param #string To To state.
 function ARMYGROUP:onafterStop(From, Event, To)
 
-  -- Check if group is still alive.
-  if self:IsAlive() then
-    -- Destroy group. No event is generated.
-    self.group:Destroy(false)
-  end
-
   -- Handle events:
   self:UnHandleEvent(EVENTS.Birth)
   self:UnHandleEvent(EVENTS.Dead)
   self:UnHandleEvent(EVENTS.RemoveUnit)
-
-  -- Stop check timers.
-  self.timerCheckZone:Stop()
-  self.timerQueueUpdate:Stop()
-
-  -- Stop FSM scheduler.
-  self.CallScheduler:Clear()
-
-  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
+  
+  -- Call OPSGROUP function.
+  self:GetParent(self).onafterStop(self, From, Event, To)  
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -662,8 +613,8 @@ function ARMYGROUP:OnEventDead(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.lid..string.format("EVENT: Element %s dead ==> dead", element.name))
-      self:ElementDead(element)
+      self:T(self.lid..string.format("EVENT: Element %s dead ==> destroyed", element.name))
+      self:ElementDestroyed(element)
     end
     
   end
@@ -685,7 +636,7 @@ function ARMYGROUP:OnEventRemoveUnit(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
+      self:T(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
       self:ElementDead(element)
     end
 
@@ -734,19 +685,9 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   else
     waypoint.roaddist=1000*1000 --1000 km.
   end
-
-  --[[  
-  if waypoint.roaddist>100 and waypoint.action==ENUMS.Formation.Vehicle.OnRoad then
-    waypoint.formation=ENUMS.Formation.Vehicle.OnRoad
-    waypoint.action=ENUMS.Formation.Vehicle.OffRoad
-  else
-    waypoint.formation=waypoint.action
-  end
-  ]]
-  
   
   -- Debug info.
-  self:I(self.lid..string.format("Adding waypoint UID=%d (index=%d), Speed=%.1f knots, Dist2Road=%d m, Action=%s", waypoint.uid, wpnumber, Speed, waypoint.roaddist, waypoint.action))
+  self:T(self.lid..string.format("Adding waypoint UID=%d (index=%d), Speed=%.1f knots, Dist2Road=%d m, Action=%s", waypoint.uid, wpnumber, Speed, waypoint.roaddist, waypoint.action))
   
   -- Update route.
   if Updateroute==nil or Updateroute==true then
@@ -836,18 +777,20 @@ function ARMYGROUP:_InitGroup()
     self.actype=unit:GetTypeName()
     
     -- Debug info.
-    local text=string.format("Initialized Army Group %s:\n", self.groupname)
-    text=text..string.format("Unit type    = %s\n", self.actype)
-    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
-    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
-    text=text..string.format("Elements     = %d\n", #self.elements)
-    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
-    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles)
-    text=text..string.format("FSM state    = %s\n", self:GetState())
-    text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
-    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
-    self:I(self.lid..text)
+    if self.verbose>=1 then
+      local text=string.format("Initialized Army Group %s:\n", self.groupname)
+      text=text..string.format("Unit type    = %s\n", self.actype)
+      text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
+      text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
+      text=text..string.format("Elements     = %d\n", #self.elements)
+      text=text..string.format("Waypoints    = %d\n", #self.waypoints)
+      text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
+      text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles)
+      text=text..string.format("FSM state    = %s\n", self:GetState())
+      text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
+      text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
+      self:I(self.lid..text)
+    end
     
     -- Init done.
     self.groupinitialized=true
@@ -885,7 +828,7 @@ function ARMYGROUP:SwitchFormation(Formation, Permanently)
     self:__UpdateRoute(-1, nil, nil, Formation)
     
     -- Debug info.
-    self:I(self.lid..string.format("Switching formation to %s (permanently=%s)", self.option.Formation, tostring(Permanently)))
+    self:T(self.lid..string.format("Switching formation to %s (permanently=%s)", self.option.Formation, tostring(Permanently)))
 
   end
 
@@ -895,6 +838,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

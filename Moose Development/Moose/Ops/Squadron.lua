@@ -62,7 +62,7 @@
 -- @field #SQUADRON
 SQUADRON = {
   ClassName      = "SQUADRON",
-  verbose        =     3,
+  verbose        =     0,
   lid            =   nil,
   name           =   nil,
   templatename   =   nil,

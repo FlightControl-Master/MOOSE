@@ -704,6 +704,21 @@ end
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+---- Update status.
+-- @param #FLIHGTGROUP self
+function FLIGHTGROUP:onbeforeStatus(From, Event, To)
+
+  if self:IsDead() then  
+    self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
+    return false   
+  elseif self:IsStopped() then
+    self:T(self.lid..string.format("Onbefore Status STOPPED ==> false"))
+    return false
+  end
+
+  return true
+end
+
 --- On after "Status" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -713,6 +728,9 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
+  
+  -- Update position.
+  self:_UpdatePosition()
 
   ---
   -- Detection
@@ -752,21 +770,27 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   end
 
   ---
-  -- Elements
+  -- Group
   ---
-
-  local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
-  local nMissions=self:CountRemainingMissison()
 
   -- Short info.
   if self.verbose>=1 then
+  
+    local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
+    local nMissions=self:CountRemainingMissison()
+  
+  
     local text=string.format("Status %s [%d/%d]: Tasks=%d (%d,%d) Curr=%d, Missions=%s, Waypoint=%d/%d, Detected=%d, Home=%s, Destination=%s",
     fsmstate, #self.elements, #self.elements, nTaskTot, nTaskSched, nTaskWP, self.taskcurrent, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0,
     self.detectedunits:Count(), self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "unknown")
     self:I(self.lid..text)
+    
   end
 
-  -- Element status.
+  ---
+  -- Elements
+  ---
+  
   if self.verbose>=2 then
     local text="Elements:"
     for i,_element in pairs(self.elements) do
@@ -801,24 +825,16 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   -- Distance travelled
   ---
 
-  if self.verbose>=3 and self:IsAlive() and self.position then
-
-    local time=timer.getAbsTime()
-
-    -- Current position.
-    local position=self:GetCoordinate()
+  if self.verbose>=3 and self:IsAlive() then
 
     -- Travelled distance since last check.
-    local ds=self.position:Get3DDistance(position)
+    local ds=self.travelds
 
     -- Time interval.
-    local dt=time-self.traveltime
+    local dt=self.dTpositionUpdate
 
     -- Speed.
     local v=ds/dt
-
-    -- Add up travelled distance.
-    self.traveldist=self.traveldist+ds
 
 
     -- Max fuel time remaining.
@@ -852,11 +868,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
 
     -- Log outut.
     self:I(self.lid..string.format("Travelled ds=%.1f km dt=%.1f s ==> v=%.1f knots. Fuel left for %.1f min", self.traveldist/1000, dt, UTILS.MpsToKnots(v), TmaxFuel/60))
-
-
-    -- Update parameters.
-    self.traveltime=time
-    self.position=position
+    
   end
 
   ---
@@ -910,8 +922,6 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
     self:__Status(-30)
   end
 end
-
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Events
@@ -1390,10 +1400,8 @@ end
 function FLIGHTGROUP:onafterSpawned(From, Event, To)
   self:T(self.lid..string.format("Flight spawned"))
 
-  -- TODO: general routine in opsgroup
-  self.traveldist=0
-  self.traveltime=timer.getAbsTime()
-  self.position=self:GetCoordinate()
+  -- Update position.  
+  self:_UpdatePosition()
 
   if self.ai then
 
@@ -1577,7 +1585,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterLandedAt(From, Event, To)
-  self:I(self.lid..string.format("Flight landed at"))    
+  self:T(self.lid..string.format("Flight landed at"))    
 end
 
 
@@ -2433,6 +2441,17 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
     -- DISABLED for now. Should use :Despawn() or :Destroy() which then calls stop.
     --self.group:Destroy(false)
   end
+
+  -- Handle events:
+  self:UnHandleEvent(EVENTS.Birth)
+  self:UnHandleEvent(EVENTS.EngineStartup)
+  self:UnHandleEvent(EVENTS.Takeoff)
+  self:UnHandleEvent(EVENTS.Land)
+  self:UnHandleEvent(EVENTS.EngineShutdown)
+  self:UnHandleEvent(EVENTS.PilotDead)
+  self:UnHandleEvent(EVENTS.Ejection)
+  self:UnHandleEvent(EVENTS.Crash)
+  self:UnHandleEvent(EVENTS.RemoveUnit)
 
   -- Remove flight from data base.
   _DATABASE.FLIGHTGROUPS[self.groupname]=nil

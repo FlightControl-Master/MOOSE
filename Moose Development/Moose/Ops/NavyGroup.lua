@@ -290,7 +290,7 @@ function NAVYGROUP:CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
     return self
   end
   if Tstop<=Tnow then
-    self:I(string.format("WARNING: Into wind stop time %s already over. Tnow=%s! Input rejected.", UTILS.SecondsToClock(Tstop), UTILS.SecondsToClock(Tnow)))
+    self:E(string.format("WARNING: Into wind stop time %s already over. Tnow=%s! Input rejected.", UTILS.SecondsToClock(Tstop), UTILS.SecondsToClock(Tnow)))
     return self
   end
 
@@ -389,10 +389,10 @@ end
 function NAVYGROUP:onbeforeStatus(From, Event, To)
 
   if self:IsDead() then  
-    self:I(self.lid..string.format("Onbefore Status DEAD ==> false"))
+    self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
     return false   
   elseif self:IsStopped() then
-    self:I(self.lid..string.format("Onbefore Status STOPPED ==> false"))
+    self:T(self.lid..string.format("Onbefore Status STOPPED ==> false"))
     return false
   end
 
@@ -450,7 +450,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     self:_CheckTurnsIntoWind()
     
     -- Check if group got stuck.
-    self:_CheckStuck()    
+    self:_CheckStuck()
 
     if self.verbose>=1 then
   
@@ -518,19 +518,6 @@ function NAVYGROUP:onafterElementSpawned(From, Event, To, Element)
 
 end
 
---- On after "ElementDead" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #NAVYGROUP.Element Element The group element.
-function NAVYGROUP:onafterElementDead(From, Event, To, Element)
-  self:T(self.lid..string.format("Element dead %s.", Element.name))
-
-  -- Set element status.
-  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
-end
-
 --- On after "Spawned" event.
 -- @param #NAVYGROUP self
 -- @param #string From From state.
@@ -539,10 +526,8 @@ end
 function NAVYGROUP:onafterSpawned(From, Event, To)
   self:T(self.lid..string.format("Group spawned!"))
 
-  -- TODO
-  self.traveldist=0
-  self.traveltime=timer.getAbsTime()
-  self.position=self:GetCoordinate()
+  -- Update position.
+  self:_UpdatePosition()
 
   if self.ai then
  
@@ -570,9 +555,6 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     end
     
   end
-  
-  -- Get orientation.
-  self.Corientlast=self.group:GetUnit(1):GetOrientationX()
   
   -- Update route.
   self:Cruise()
@@ -742,7 +724,7 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   local speed=math.max(IntoWind.Speed-vwind, 2)
 
   -- Debug info.
-  self:I(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f Vwind=%.1f Vtot=%.1f knots, Tstart=%d Tstop=%d", IntoWind.Heading, speed, vwind, speed+vwind, IntoWind.Tstart, IntoWind.Tstop))
+  self:T(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f Vwind=%.1f Vtot=%.1f knots, Tstart=%d Tstop=%d", IntoWind.Heading, speed, vwind, speed+vwind, IntoWind.Tstart, IntoWind.Tstop))
   
   local distance=UTILS.NMToMeters(1000)
   
@@ -840,7 +822,7 @@ function NAVYGROUP:onafterDive(From, Event, To, Depth, Speed)
 
   Depth=Depth or 50
 
-  self:I(self.lid..string.format("Diving to %d meters", Depth))
+  self:T(self.lid..string.format("Diving to %d meters", Depth))
   
   self.depth=Depth
   
@@ -888,33 +870,8 @@ end
 -- @param #string To To state.
 -- @param #number Distance Distance in meters where obstacle was detected.
 function NAVYGROUP:onafterCollisionWarning(From, Event, To, Distance)
-  self:I(self.lid..string.format("Iceberg ahead in %d meters!", Distance or -1))
+  self:T(self.lid..string.format("Iceberg ahead in %d meters!", Distance or -1))
   self.collisionwarning=true
-end
-
---- On after "Dead" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function NAVYGROUP:onafterDead(From, Event, To)
-  self:I(self.lid..string.format("Group dead!"))
-
-  -- Delete waypoints so they are re-initialized at the next spawn.
-  self.waypoints=nil
-  self.groupinitialized=false
-
-  -- Cancel all mission.
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-
-    self:MissionCancel(mission)
-    mission:GroupDead(self)
-
-  end
-
-  -- Stop
-  self:Stop()
 end
 
 --- On after Start event. Starts the NAVYGROUP FSM and event handlers.
@@ -924,25 +881,14 @@ end
 -- @param #string To To state.
 function NAVYGROUP:onafterStop(From, Event, To)
 
-  -- Check if group is still alive.
-  if self:IsAlive() then
-    -- Destroy group. No event is generated.
-    self.group:Destroy(false)
-  end
-
   -- Handle events:
   self:UnHandleEvent(EVENTS.Birth)
   self:UnHandleEvent(EVENTS.Dead)
   self:UnHandleEvent(EVENTS.RemoveUnit)
-
-  -- Stop check timers.
-  self.timerCheckZone:Stop()
-  self.timerQueueUpdate:Stop()
-
-  -- Stop FSM scheduler.
-  self.CallScheduler:Clear()
-
-  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
+  
+  -- Call OPSGROUP function.
+  self:GetParent(self).onafterStop(self, From, Event, To)
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1002,8 +948,8 @@ function NAVYGROUP:OnEventDead(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.lid..string.format("EVENT: Element %s dead ==> dead", element.name))
-      self:ElementDead(element)
+      self:T(self.lid..string.format("EVENT: Element %s dead ==> destroyed", element.name))
+      self:ElementDestroyed(element)
     end
     
   end
@@ -1025,7 +971,7 @@ function NAVYGROUP:OnEventRemoveUnit(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
+      self:T(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
       self:ElementDead(element)
     end
 
@@ -1173,18 +1119,20 @@ function NAVYGROUP:_InitGroup()
     self.actype=unit:GetTypeName()
     
     -- Debug info.
-    local text=string.format("Initialized Navy Group %s:\n", self.groupname)
-    text=text..string.format("Unit type     = %s\n", self.actype)
-    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
-    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
-    text=text..string.format("Elements     = %d\n", #self.elements)
-    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
-    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d/T=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles, self.ammo.Torpedos)
-    text=text..string.format("FSM state    = %s\n", self:GetState())
-    text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
-    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
-    self:I(self.lid..text)
+    if self.verbose>=1 then
+      local text=string.format("Initialized Navy Group %s:\n", self.groupname)
+      text=text..string.format("Unit type     = %s\n", self.actype)
+      text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
+      text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
+      text=text..string.format("Elements     = %d\n", #self.elements)
+      text=text..string.format("Waypoints    = %d\n", #self.waypoints)
+      text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
+      text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d/T=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles, self.ammo.Torpedos)
+      text=text..string.format("FSM state    = %s\n", self:GetState())
+      text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
+      text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
+      self:I(self.lid..text)
+    end
     
     -- Init done.
     self.groupinitialized=true
@@ -1269,7 +1217,7 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
       local los=LoS(x)
       
       -- Debug message.
-      self:I(self.lid..string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
+      self:T2(self.lid..string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
       
       if los and d<=eps then
         return x
@@ -1291,68 +1239,6 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
   return check()
 end
 
---- Check for possible collisions between two coordinates.
--- @param #NAVYGROUP self
--- @param Core.Point#COORDINATE coordto Coordinate to which the collision is check.
--- @param Core.Point#COORDINATE coordfrom Coordinate from which the collision is check.
--- @return #boolean If true, surface type ahead is not deep water.
--- @return #number Max free distance in meters.
-function NAVYGROUP:_CheckCollisionCoord(coordto, coordfrom)
-
-  -- Increment in meters.
-  local dx=100
-
-  -- From coordinate. Default 500 in front of the carrier.
-  local d=0
-  if coordfrom then
-    d=0
-  else
-    d=250
-    coordfrom=self:GetCoordinate():Translate(d, self:GetHeading())
-  end
-
-  -- Distance between the two coordinates.
-  local dmax=coordfrom:Get2DDistance(coordto)
-
-  -- Direction.
-  local direction=coordfrom:HeadingTo(coordto)
-
-  -- Scan path between the two coordinates.
-  local clear=true
-  while d<=dmax do
-
-    -- Check point.
-    local cp=coordfrom:Translate(d, direction)
-
-    -- Check if surface type is water.
-    if not cp:IsSurfaceTypeWater() then
-
-      -- Debug mark points.
-      if self.Debug or true then
-        local st=cp:GetSurfaceType()
-        cp:MarkToAll(string.format("Collision check surface type %d", st))
-      end
-
-      -- Collision WARNING!
-      clear=false
-      break
-    end
-
-    -- Increase distance.
-    d=d+dx
-  end
-
-  local text=""
-  if clear then
-    text=string.format("Path into direction %03d° is clear for the next %.1f NM.", direction, UTILS.MetersToNM(d))
-  else
-    text=string.format("Detected obstacle at distance %.1f NM into direction %03d°.", UTILS.MetersToNM(d), direction)
-  end
-  self:T(self.lid..text)
-
-  return not clear, d
-end
-
 --- Check if group is turning.
 -- @param #NAVYGROUP self
 function NAVYGROUP:_CheckTurning()
@@ -1365,16 +1251,13 @@ function NAVYGROUP:_CheckTurning()
     local vNew=self.orientX --unit:GetOrientationX()
   
     -- Last orientation from 30 seconds ago.
-    local vLast=self.orientXLast --self.Corientlast or vNew
+    local vLast=self.orientXLast
   
     -- We only need the X-Z plane.
     vNew.y=0 ; vLast.y=0
   
     -- Angle between current heading and last time we checked ~30 seconds ago.
     local deltaLast=math.deg(math.acos(UTILS.VecDot(vNew,vLast)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vLast)))
-  
-    -- Last orientation becomes new orientation
-    --self.Corientlast=vNew
   
     -- Carrier is turning when its heading changed by at least two degrees since last check.
     local turning=math.abs(deltaLast)>=2
@@ -1398,33 +1281,6 @@ function NAVYGROUP:_CheckTurning()
   end
   
 end
-
---- Check if group got stuck.
--- @param #NAVYGROUP self
-function NAVYGROUP:_CheckStuck()
-
-  if self:IsHolding() then
-    return
-  end
-
-  local holdtime=0
-  if self.holdtimestamp then
-    holdtime=timer.getTime()-self.holdtimestamp
-  end
-  
-  local ExpectedSpeed=self:GetExpectedSpeed()
-  
-  local speed=self:GetVelocity()
-  
-  if speed<0.5 and ExpectedSpeed>0 then
-    if not self.holdtimestamp then
-      self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected", speed, ExpectedSpeed))
-      self.holdtimestamp=timer.getTime()
-    end
-  end
-    
-end
-
 
 
 --- Check queued turns into wind.

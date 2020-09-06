@@ -54,8 +54,14 @@
 -- @field #number Ndestroyed Number of destroyed units.
 -- 
 -- @field Core.Point#COORDINATE coordinate Current coordinate.
--- @field Core.Point#COORDINATE position Position of the group at last status check.
--- @field #number traveldist Distance traveled in meters. This is a lower bound!
+-- 
+-- @field DCS#Vec3 position Position of the group at last status check.
+-- @field DCS#Vec3 positionLast Backup of last position vec to monitor changes.
+-- @field #number heading Heading of the group at last status check.
+-- @field #number headingLast Backup of last heading to monitor changes.
+-- @field DCS#Vec3 orientX Orientation at last status check.
+-- @field DCS#Vec3 orientXLast Backup of last orientation to monitor changes.
+-- @field #number traveldist Distance traveled in meters. This is a lower bound.
 -- @field #number traveltime Time.
 -- 
 -- @field Core.Astar#ASTAR Astar path finding.
@@ -590,7 +596,7 @@ function OPSGROUP:Destroy(Delay)
     
     if DCSGroup then
     
-      self:I(self.lid.."Destroying group")
+      self:T(self.lid.."Destroying group")
     
       -- Destroy DCS group.
       DCSGroup:destroy()  
@@ -650,8 +656,9 @@ end
 
 --- Get current coordinate of the group.
 -- @param #OPSGROUP self
+-- @param #boolean NewObject Create a new coordiante object.
 -- @return Core.Point#COORDINATE The coordinate (of the first unit) of the group.
-function OPSGROUP:GetCoordinate()
+function OPSGROUP:GetCoordinate(NewObject)
 
   local vec3=self:GetVec3()
 
@@ -663,7 +670,11 @@ function OPSGROUP:GetCoordinate()
     self.coordinate.y=vec3.y
     self.coordinate.z=vec3.z
 
-    return self.coordinate    
+    if NewObject then
+      local coord=COORDINATE:NewFromCoordinate(self.coordinate)
+    else
+      return self.coordinate
+    end    
   else
     self:E(self.lid.."WARNING: Group is not alive. Cannot get coordinate!")
   end
@@ -723,6 +734,41 @@ function OPSGROUP:GetHeading()
   end
   
   return nil
+end
+
+--- Get current orientation of the first unit in the group.
+-- @param #OPSGROUP self
+-- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
+-- @return DCS#Vec3 Orientation Y pointing "upwards".
+-- @return DCS#Vec3 Orientation Z perpendicular to the "nose".
+function OPSGROUP:GetOrientation()
+
+  if self:IsExist() then
+  
+    local unit=self:GetDCSUnit()
+    
+    if unit then
+      
+      local pos=unit:getPosition()
+            
+      return pos.x, pos.y, pos.z
+    end
+    
+  else
+    self:E(self.lid.."WARNING: Group does not exist. Cannot get orientation!")
+  end
+  
+  return nil
+end
+
+--- Get current orientation of the first unit in the group.
+-- @param #OPSGROUP self
+-- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
+function OPSGROUP:GetOrientationX()
+
+  local X,Y,Z=self:GetOrientation()
+  
+  return X
 end
 
 
@@ -2658,7 +2704,7 @@ end
 -- @param #string To To state.
 -- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onafterElementDestroyed(From, Event, To, Element)
-  self:I(self.lid..string.format("Element destroyed %s", Element.name))
+  self:T(self.lid..string.format("Element destroyed %s", Element.name))
   
   -- Cancel all missions.
   for _,_mission in pairs(self.missionqueue) do
@@ -2683,7 +2729,7 @@ end
 -- @param #string To To state.
 -- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onafterElementDead(From, Event, To, Element)
-  self:I(self.lid..string.format("Element dead %s", Element.name))
+  self:T(self.lid..string.format("Element dead %s", Element.name))
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
@@ -2695,7 +2741,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterDead(From, Event, To)
-  self:T(self.lid..string.format("Flight dead!"))
+  self:T(self.lid..string.format("Group dead!"))
 
   -- Delete waypoints so they are re-initialized at the next spawn.
   self.waypoints=nil
@@ -2710,8 +2756,8 @@ function OPSGROUP:onafterDead(From, Event, To)
 
   end
 
-  -- Stop
-  self:Stop()
+  -- Stop in a sec.
+  self:__Stop(-1)
 end
 
 --- On after "Stop" event.
@@ -2720,17 +2766,6 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterStop(From, Event, To)
-
-  -- Handle events:
-  self:UnHandleEvent(EVENTS.Birth)
-  self:UnHandleEvent(EVENTS.EngineStartup)
-  self:UnHandleEvent(EVENTS.Takeoff)
-  self:UnHandleEvent(EVENTS.Land)
-  self:UnHandleEvent(EVENTS.EngineShutdown)
-  self:UnHandleEvent(EVENTS.PilotDead)
-  self:UnHandleEvent(EVENTS.Ejection)
-  self:UnHandleEvent(EVENTS.Crash)
-  self:UnHandleEvent(EVENTS.RemoveUnit)
   
   -- Stop check timers.
   self.timerCheckZone:Stop()
@@ -3915,26 +3950,43 @@ end
 
 --- Check if all elements of the group have the same status (or are dead).
 -- @param #OPSGROUP self
--- @param #string unitname Name of unit.
+-- @return #OPSGROUP self
 function OPSGROUP:_UpdatePosition()
 
   if self:IsAlive() then
     
-    self.positionLast=self.position or self:GetCoordinate()
+    -- Backup last state to monitor differences.
+    self.positionLast=self.position or self:GetVec3()
     self.headingLast=self.heading or self:GetHeading()
-    self.orientXLast=self.orientX or self.group:GetUnit(1):GetOrientationX()
+    self.orientXLast=self.orientX or self:GetOrientationX()
     self.velocityLast=self.velocity or self.group:GetVelocityMPS()
   
-    self.position=self:GetCoordinate()
+    -- Current state.
+    self.position=self:GetVec3()
     self.heading=self:GetHeading()
-    self.orientX=self.group:GetUnit(1):GetOrientationX()
-    self.velocity=self.group:GetVelocityMPS()
+    self.orientX=self:GetOrientationX()
+    self.velocity=self:GetVelocity()
     
-    self.dTpositionUpdate=self.TpositionUpdate and self.TpositionUpdate-timer.getAbsTime() or 0
-    self.TpositionUpdate=timer.getAbsTime()
+    -- Update time.
+    local Tnow=timer.getTime()
+    self.dTpositionUpdate=self.TpositionUpdate and Tnow-self.TpositionUpdate or 0
+    self.TpositionUpdate=Tnow
+    
+    if not self.traveldist then
+      self.traveldist=0
+    end
+    
+    self.travelds=UTILS.VecNorm(UTILS.VecSubstract(self.position, self.positionLast))
+    
+    -- Add up travelled distance.
+    
+    self.traveldist=self.traveldist+self.travelds
+    
+    env.info(string.format("FF Traveled %.1f m", self.traveldist))
     
   end
 
+  return self
 end
 
 --- Check if all elements of the group have the same status (or are dead).
@@ -4481,6 +4533,56 @@ function OPSGROUP:_MissileCategoryName(categorynumber)
     cat="other"
   end
   return cat
+end
+
+--- Check if group got stuck.
+-- @param #OPSGROUP self
+function OPSGROUP:_CheckStuck()
+
+  -- Holding means we are not stuck.
+  if self:IsHolding() then
+    return
+  end
+  
+  -- Current time.
+  local Tnow=timer.getTime()
+  
+  -- Expected speed in m/s.
+  local ExpectedSpeed=self:GetExpectedSpeed()
+  
+  -- Current speed in m/s.
+  local speed=self:GetVelocity()
+  
+  -- Check speed.
+  if speed<0.5 then
+  
+    if ExpectedSpeed>0 and not self.stuckTimestamp then
+      self:T2(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected", speed, ExpectedSpeed))
+      self.stuckTimestamp=Tnow
+      self.stuckVec3=self:GetVec3()
+    end
+    
+  else
+    -- Moving (again).
+    self.stuckTimestamp=nil
+  end
+
+  -- Somehow we are not moving...
+  if self.stuckTimestamp then
+  
+    -- Time we are holding.
+    local holdtime=Tnow-self.stuckTimestamp
+    
+    if holdtime>=5*60 then
+    
+      self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
+      
+      --TODO: Stuck event!
+          
+    end
+    
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
