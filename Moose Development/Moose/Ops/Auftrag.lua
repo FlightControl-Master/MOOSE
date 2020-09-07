@@ -94,6 +94,7 @@
 -- @field #number missionAltitude Mission altitude in meters.
 -- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
 -- @field #number missionRange Mission range in meters. Used in AIRWING class.
+-- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
 -- 
 -- @field #table enrouteTasks Mission enroute tasks.
 -- 
@@ -1061,7 +1062,7 @@ end
 --- Create an ESCORT (or FOLLOW) mission. Flight will escort another group and automatically engage certain target types.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP EscortGroup The group to escort.
--- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=200, y=0, z=-100} for 200 meters to the right, same alitude, 100 meters behind.
+-- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=-100, y=0, z=200} for z=200 meters to the right, same alitude, x=100 meters behind.
 -- @param #number EngageMaxDistance Max engage distance of targets in meters. Default auto (*nil*).
 -- @param #table TargetTypes Types of targets to engage automatically. Default is {"Air"}, i.e. all enemy airborne units. Use an empty set {} for a simple "FOLLOW" mission.
 -- @return #AUFTRAG self
@@ -1072,7 +1073,7 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   mission:_TargetFromObject(EscortGroup)
   
   -- DCS task parameters:
-  mission.escortVec3=OffsetVector or {x=200, y=0, z=-100}
+  mission.escortVec3=OffsetVector or {x=-100, y=0, z=200}
   mission.engageMaxDistance=EngageMaxDistance
   mission.engageTargetTypes=TargetTypes or {"Air"}
   
@@ -2140,9 +2141,9 @@ function AUFTRAG:Evaluate()
     ---
   
     -- Check if failed.
-    if self.type==AUFTRAG.Type.TROOPTRANSPORT then
+    if self.type==AUFTRAG.Type.TROOPTRANSPORT or self.type==AUFTRAG.Type.ESCORT then
   
-      -- Transported groups have to survive.
+      -- Transported or escorted groups have to survive.
       if Ntargets<Ntargets0 then
         failed=true
       end
@@ -3040,7 +3041,8 @@ end
 
 --- Get coordinate of target. First unit/group of the set is used.
 -- @param #AUFTRAG self
--- @return #string
+-- @param #table MissionTypes A table of mission types.
+-- @return #string Comma separated list of mission types.
 function AUFTRAG:GetMissionTypesText(MissionTypes)
 
   local text=""
@@ -3051,7 +3053,7 @@ function AUFTRAG:GetMissionTypesText(MissionTypes)
   return text
 end
 
---- Set the mission waypoint coordinate where the mission is executed. This is 
+--- Set the mission waypoint coordinate where the mission is executed.
 -- @param #AUFTRAG self
 -- @return Core.Point#COORDINATE Coordinate where the mission is executed.
 -- @return #AUFTRAG self
@@ -3065,8 +3067,13 @@ end
 -- @return Core.Point#COORDINATE Coordinate where the mission is executed.
 function AUFTRAG:GetMissionWaypointCoord(group)
 
+  -- Check if a coord has been explicitly set.
   if self.missionWaypointCoord then
-    return self.missionWaypointCoord
+    local coord=self.missionWaypointCoord
+    if self.missionAltitude then
+      coord.y=self.missionAltitude
+    end
+    return coord
   end
 
   -- Create waypoint coordinate half way between us and the target.

@@ -774,12 +774,8 @@ do -- COORDINATE
 
     local a={x=TargetCoordinate.x-self.x, y=0, z=TargetCoordinate.z-self.z}
     
-    return UTILS.VecNorm(a)
-
-    --local TargetVec3 = TargetCoordinate:GetVec3()
-    --local SourceVec3 = self:GetVec3()
-
-    --return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
+    local norm=UTILS.VecNorm(a)
+    return norm
   end
   
   --- Returns the temperature in Degrees Celsius.

@@ -2472,8 +2472,6 @@ end
 -- @param #OPSGROUP self
 function OPSGROUP:_QueueUpdate()
 
-  --env.info(self.lid.."FF queueupdate T="..timer.getTime())
-
   ---
   -- Mission
   ---
@@ -2741,7 +2739,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterDead(From, Event, To)
-  self:T(self.lid..string.format("Group dead!"))
+  self:I(self.lid..string.format("Group dead!"))
 
   -- Delete waypoints so they are re-initialized at the next spawn.
   self.waypoints=nil
@@ -2757,7 +2755,7 @@ function OPSGROUP:onafterDead(From, Event, To)
   end
 
   -- Stop in a sec.
-  self:__Stop(-1)
+  self:__Stop(-5)
 end
 
 --- On after "Stop" event.
@@ -2775,7 +2773,8 @@ function OPSGROUP:onafterStop(From, Event, To)
   self.CallScheduler:Clear()
   
   if self:IsAlive() then
-    self:E(self.lid.."WARNING: Group is still alive! Use OPSGROUP:Destroy() or OPSGROUP:Despawn() for a clean stop")
+    local life, life0=self:GetLifePoints()
+    self:E(self.lid..string.format("WARNING: Group is still alive! Life points=%d/%d. Use OPSGROUP:Destroy() or OPSGROUP:Despawn() for a clean stop", life, life0))
   end
 
   -- Debug output.
@@ -3982,7 +3981,8 @@ function OPSGROUP:_UpdatePosition()
     
     self.traveldist=self.traveldist+self.travelds
     
-    env.info(string.format("FF Traveled %.1f m", self.traveldist))
+    -- Debug info.
+    --env.info(string.format("FF Traveled %.1f m", self.traveldist))
     
   end
 
