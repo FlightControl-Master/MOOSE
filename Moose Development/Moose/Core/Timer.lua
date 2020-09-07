@@ -206,7 +206,7 @@ function TIMER:Stop(Delay)
     if self.tid then
     
       -- Remove timer function.
-      self:T(self.lid..string.format("Stopping timer by removing timer function after %d calls!", self.ncalls))
+      self:I(self.lid..string.format("Stopping timer by removing timer function after %d calls!", self.ncalls))
       timer.removeFunction(self.tid)
       
       -- Remove DB entry.

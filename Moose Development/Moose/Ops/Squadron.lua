@@ -903,7 +903,7 @@ function SQUADRON:RecruitAssets(Mission, Npayloads)
           end
           
           -- Check if in a state where we really do not want to fight any more.
-          if flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() or flightgroup:IsDead() then
+          if flightgroup:IsHolding() or flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() or flightgroup:IsDead() or flightgroup:IsStopped() then
             combatready=false
           end
       

@@ -2452,13 +2452,12 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Ejection)
   self:UnHandleEvent(EVENTS.Crash)
   self:UnHandleEvent(EVENTS.RemoveUnit)
-
-  -- Remove flight from data base.
-  _DATABASE.FLIGHTGROUPS[self.groupname]=nil
-  
-  
+    
   -- Call OPSGROUP function.
-  self:GetParent(self).onafterStop(self, From, Event, To)  
+  self:GetParent(self).onafterStop(self, From, Event, To)
+  
+  -- Remove flight from data base.
+  _DATABASE.FLIGHTGROUPS[self.groupname]=nil  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
