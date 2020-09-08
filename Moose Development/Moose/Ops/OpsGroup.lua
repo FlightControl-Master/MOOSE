@@ -234,7 +234,15 @@ OPSGROUP.TaskType={
 -- @field #number Alarm Alarm state.
 -- @field #number Formation Formation.
 -- @field #boolean EPLRS data link.
--- @field #boolean Disperse Disperse under fire. 
+-- @field #boolean Disperse Disperse under fire.
+
+
+--- Weapon range data.
+-- @type OPSGROUP.WeaponData
+-- @field #number BitType Type of weapon.
+-- @field #number RangeMin Min range in meters.
+-- @field #number RangeMax Max range in meters.
+-- @field #number ReloadTime Time to reload in seconds.
 
 --- Ammo data.
 -- @type OPSGROUP.Ammo
@@ -469,6 +477,47 @@ function OPSGROUP:AddCheckZone(CheckZone)
   self.checkzones:AddZone(CheckZone)
   return self
 end
+
+
+--- Add a zone that triggers and event if the group enters or leaves any of the zones.
+-- @param #OPSGROUP self
+-- @param #number RangeMin
+-- @param #number RangeMax
+-- @param #number BitType
+-- @return #OPSGROUP self
+function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
+
+  RangeMin=(RangeMin or 0)*1000
+  RangeMax=(RangeMax or 10)*1000
+
+  local weapon={} --#OPSGROUP.WeaponData
+
+  weapon.BitType=BitType or ENUMS.WeaponFlag.Auto
+  weapon.RangeMax=RangeMax
+  weapon.RangeMin=RangeMin
+
+  self.weaponData=self.weaponData or {}  
+  self.weaponData[weapon.BitType]=weapon
+  
+  return self
+end
+
+--- 
+-- @param #OPSGROUP self
+-- @param #number BitType
+-- @return #OPSGROUP.WeaponData Weapon range data.
+function OPSGROUP:GetWeaponData(BitType)
+
+  BitType=BitType or ENUMS.WeaponFlag.Auto
+
+  if self.weaponData[BitType] then  
+    return self.wself.weaponData[BitType]
+  else
+    return self.wself.weaponData[ENUMS.WeaponFlag.Auto]
+  end
+
+end
+
 
 --- Get set of detected units.
 -- @param #OPSGROUP self
@@ -2400,9 +2449,6 @@ function OPSGROUP:RouteToMission(mission, delay)
     
     -- Speed to mission waypoint.
     local SpeedToMission=UTILS.KmphToKnots(self.speedCruise)
-  
-    -- Add waypoint.
-    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, nil, false)
     
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
@@ -2421,7 +2467,26 @@ function OPSGROUP:RouteToMission(mission, delay)
       
       end
     
+    elseif mission.type==AUFTRAG.Type.ARTY then
+    
+      local weapondata=self:GetWeaponData(mission.engageWeaponType)
+      
+      local targetcoord=mission:GetTargetCoordinate()
+      
+      local heading=self:GetCoordinate():HeadingTo(targetcoord)
+      
+      local dist=self:GetCoordinate():Get2DDistance(targetcoord)
+      
+      if dist>weapondata.RangeMax then
+        waypointcoord=self:GetCoordinate():Translate(dist-weapondata.RangeMax, heading)
+      elseif dist<weapondata.RangeMin then
+        waypointcoord=self:GetCoordinate():Translate(dist-weapondata.RangeMin, heading)
+      end
+    
     end
+
+    -- Add waypoint.
+    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, nil, false)
     
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, waypoint, mission.name, mission.prio, mission.duration)
