@@ -511,9 +511,9 @@ function OPSGROUP:GetWeaponData(BitType)
   BitType=BitType or ENUMS.WeaponFlag.Auto
 
   if self.weaponData[BitType] then  
-    return self.wself.weaponData[BitType]
+    return self.weaponData[BitType]
   else
-    return self.wself.weaponData[ENUMS.WeaponFlag.Auto]
+    return self.weaponData[ENUMS.WeaponFlag.Auto]
   end
 
 end
@@ -2469,18 +2469,35 @@ function OPSGROUP:RouteToMission(mission, delay)
     
     elseif mission.type==AUFTRAG.Type.ARTY then
     
+      -- Get weapon range.
       local weapondata=self:GetWeaponData(mission.engageWeaponType)
       
-      local targetcoord=mission:GetTargetCoordinate()
+      if weapondata then
       
-      local heading=self:GetCoordinate():HeadingTo(targetcoord)
-      
-      local dist=self:GetCoordinate():Get2DDistance(targetcoord)
-      
-      if dist>weapondata.RangeMax then
-        waypointcoord=self:GetCoordinate():Translate(dist-weapondata.RangeMax, heading)
-      elseif dist<weapondata.RangeMin then
-        waypointcoord=self:GetCoordinate():Translate(dist-weapondata.RangeMin, heading)
+        -- Get target coordinate.
+        local targetcoord=mission:GetTargetCoordinate()
+        
+        -- Heading to target.
+        local heading=self:GetCoordinate():HeadingTo(targetcoord)
+        
+        -- Distance to target.
+        local dist=self:GetCoordinate():Get2DDistance(targetcoord)
+                
+        -- Check if we are within range.
+        if dist>weapondata.RangeMax then
+          local d=dist-weapondata.RangeMax
+          d=(1.1)*d
+          
+          -- New waypoint coord.
+          waypointcoord=self:GetCoordinate():Translate(d, heading)
+        elseif dist<weapondata.RangeMin then
+          local d=dist-weapondata.RangeMin
+          d=(1.1)*d
+          
+          -- New waypoint coord.
+          waypointcoord=self:GetCoordinate():Translate(d, heading)  
+        end
+        
       end
     
     end
@@ -4638,7 +4655,7 @@ function OPSGROUP:_CheckStuck()
     -- Time we are holding.
     local holdtime=Tnow-self.stuckTimestamp
     
-    if holdtime>=5*60 then
+    if holdtime>=10*60 then
     
       self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
       

@@ -69,6 +69,8 @@ function ARMYGROUP:New(GroupName)
   self:SetDefaultAlarmstate()
   self:SetDetection()
   self:SetPatrolAdInfinitum(false)
+  
+  --self:AddWeaponRange(10, 32)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
