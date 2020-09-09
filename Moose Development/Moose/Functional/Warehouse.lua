@@ -1552,7 +1552,7 @@
 WAREHOUSE = {
   ClassName     = "WAREHOUSE",
   Debug         = false,
-  verbosity     =     0,
+  verbosity     =     2,
   lid           =   nil,
   Report        =  true,
   warehouse     =   nil,
@@ -1893,7 +1893,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- Defaults
   self:SetMarker(true)
   self:SetReportOff()
-  self:SetVerbosityLevel(0)
+  --self:SetVerbosityLevel(0)
 
   -- Add warehouse to database.
   _WAREHOUSEDB.Warehouses[self.uid]=self
@@ -3881,7 +3881,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       self:_DebugMessage(string.format("Removing group %s", group:GetName()), 5)
       -- Setting parameter to false, i.e. creating NO dead or remove unit event, seems to not confuse the dispatcher logic.
       -- TODO: It would be nice, however, to have the remove event.
-      group:Destroy(false)
+      group:Destroy() --(false)
     end
 
   else
@@ -5158,7 +5158,7 @@ end
 -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   local text=string.format("Asset %s from request id=%d was spawned!", asset.spawngroupname, request.uid)
-  self:T(self.lid..text)
+  self:I(self.lid..text)
 
   -- Sete asset state to spawned.
   asset.spawned=true
@@ -5169,22 +5169,22 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
     local assetitem=_asset --#WAREHOUSE.Assetitem
 
     -- Debug info.
-    self:T(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
+    self:I(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
 
     if assetitem.spawned then
       n=n+1
     else
-      self:T(self.lid.."FF What?! This should not happen!")
+      self:I(self.lid.."FF What?! This should not happen!")
     end
 
   end
 
   -- Trigger event.
   if n==request.nasset+request.ntransport then
-    self:T3(self.lid..string.format("All assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned. Calling RequestSpawned", n, request.nasset, request.ntransport, request.uid))
+    self:I(self.lid..string.format("All assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned. Calling RequestSpawned", n, request.nasset, request.ntransport, request.uid))
     self:RequestSpawned(request, request.cargogroupset, request.transportgroupset)
   else
-    self:T3(self.lid..string.format("Not all assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned YET", n, request.nasset, request.ntransport, request.uid))
+    self:I(self.lid..string.format("Not all assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned YET", n, request.nasset, request.ntransport, request.uid))
   end
 
 end
@@ -6119,36 +6119,44 @@ function WAREHOUSE:_OnEventBirth(EventData)
       -- Get asset and request from id.
       local asset=self:GetAssetByID(aid)
       local request=self:GetRequestByID(rid)
-
-      -- Debug message.
-      self:T(self.lid..string.format("Warehouse %s captured event birth of its asset unit %s. spawned=%s", self.alias, EventData.IniUnitName, tostring(asset.spawned)))
-
-      -- Birth is triggered for each unit. We need to make sure not to call this too often!
-      if not asset.spawned then
-
-        -- Remove asset from stock.
-        self:_DeleteStockItem(asset)
-
-        -- Set spawned switch.
-        asset.spawned=true
-        asset.spawngroupname=group:GetName()
-
-        -- Add group.
-        if asset.iscargo==true then
-          request.cargogroupset=request.cargogroupset or SET_GROUP:New()
-          request.cargogroupset:AddGroup(group)
-        else
-          request.transportgroupset=request.transportgroupset or SET_GROUP:New()
-          request.transportgroupset:AddGroup(group)
+            
+      if asset and request then
+      
+        
+        -- Debug message.
+        self:I(self.lid..string.format("Warehouse %s captured event birth of request ID=%d, asset ID=%d, unit %s spawned=%s", self.alias, request.uid, asset.uid, EventData.IniUnitName, tostring(asset.spawned)))
+  
+        -- Birth is triggered for each unit. We need to make sure not to call this too often!
+        if not asset.spawned then
+  
+          -- Remove asset from stock.
+          self:_DeleteStockItem(asset)
+  
+          -- Set spawned switch.
+          asset.spawned=true
+          asset.spawngroupname=group:GetName()
+  
+          -- Add group.
+          if asset.iscargo==true then
+            request.cargogroupset=request.cargogroupset or SET_GROUP:New()
+            request.cargogroupset:AddGroup(group)
+          else
+            request.transportgroupset=request.transportgroupset or SET_GROUP:New()
+            request.transportgroupset:AddGroup(group)
+          end
+  
+          -- Set warehouse state.
+          group:SetState(group, "WAREHOUSE", self)
+  
+          -- Asset spawned FSM function.
+          --self:__AssetSpawned(1, group, asset, request)
+          env.info(string.format("FF asset spawned %s, %s", asset.spawngroupname, EventData.IniUnitName))
+          self:AssetSpawned(group, asset, request)
+  
         end
-
-        -- Set warehouse state.
-        group:SetState(group, "WAREHOUSE", self)
-
-        -- Asset spawned FSM function.
-        --self:__AssetSpawned(1, group, asset, request)
-        self:AssetSpawned(group, asset, request)
-
+        
+      else
+        self:E(self.lid..string.format("ERROR: Either asset AID=%s or request RID=%s are nil in event birth of unit %s", tostring(aid), tostring(rid), tostring(EventData.IniUnitName)))
       end
 
     else

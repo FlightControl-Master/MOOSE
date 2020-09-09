@@ -3384,6 +3384,7 @@ function AIRBOSS:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Ejection)
   self:HandleEvent(EVENTS.PlayerLeaveUnit, self._PlayerLeft)
   self:HandleEvent(EVENTS.MissionEnd)
+  self:HandleEvent(EVENTS.RemoveUnit)
 
   --self.StatusScheduler=SCHEDULER:New(self)
   --self.StatusScheduler:Schedule(self, self._Status, {}, 1, 0.5)
@@ -8821,6 +8822,58 @@ function AIRBOSS:OnEventEjection(EventData)
   else
     -- Debug message.
     self:T(self.lid..string.format("AI unit %s ejected!", EventData.IniUnitName))
+
+    -- Remove element/unit from flight group and from all queues if no elements alive.
+    self:_RemoveUnitFromFlight(EventData.IniUnit)
+
+    -- What could happen is, that another element has landed (recovered) already and this one crashes.
+    -- This would mean that the flight would not be deleted from the queue ==> Check if section recovered.
+    local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
+    self:_CheckSectionRecovered(flight)
+  end
+
+end
+
+--- Airboss event handler for event REMOVEUNIT.
+-- @param #AIRBOSS self
+-- @param Core.Event#EVENTDATA EventData
+function AIRBOSS:OnEventRemoveUnit(EventData)
+  self:F3({eventland = EventData})
+
+  -- Nil checks.
+  if EventData==nil then
+    self:E(self.lid.."ERROR: EventData=nil in event REMOVEUNIT!")
+    self:E(EventData)
+    return
+  end
+  if EventData.IniUnit==nil then
+    self:E(self.lid.."ERROR: EventData.IniUnit=nil in event REMOVEUNIT!")
+    self:E(EventData)
+    return
+  end
+
+
+  local _unitName=EventData.IniUnitName
+  local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
+
+  self:T3(self.lid.."EJECT: unit   = "..tostring(EventData.IniUnitName))
+  self:T3(self.lid.."EJECT: group  = "..tostring(EventData.IniGroupName))
+  self:T3(self.lid.."EJECT: player = "..tostring(_playername))
+
+  if _unit and _playername then
+    self:T(self.lid..string.format("Player %s removed!",_playername))
+
+    -- Get player flight.
+    local flight=self.players[_playername]
+
+    -- Remove flight completely from all queues and collapse marshal if necessary.
+    if flight then
+      self:_RemoveFlight(flight, true)
+    end
+
+  else
+    -- Debug message.
+    self:T(self.lid..string.format("AI unit %s removed!", EventData.IniUnitName))
 
     -- Remove element/unit from flight group and from all queues if no elements alive.
     self:_RemoveUnitFromFlight(EventData.IniUnit)

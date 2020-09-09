@@ -2565,17 +2565,15 @@ function FLIGHTGROUP:_InitGroup()
   -- Set default radio.
   self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
   
-  --TODO callsign from template or getCallsign
+  -- Set callsign.
   local callsign=self.template.units[1].callsign
-  env.info("FF callsign:",showMessageBox)
-  if type(callsign)=="number" then
+  if type(callsign)=="number" then  -- Sometimes callsign is just "101".
     local cs=tostring(callsign)
     callsign={}
     callsign[1]=cs:sub(1,1)
     callsign[2]=cs:sub(2,2)
     callsign[3]=cs:sub(3,3)
   end
-  self:I({callsign=callsign})
   self.callsign.NumberSquad=callsign[1]
   self.callsign.NumberGroup=callsign[2]
   self.callsign.NumberElement=callsign[3]  -- First element only

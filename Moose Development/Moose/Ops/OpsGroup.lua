@@ -1919,7 +1919,6 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
   else
   
     local text=string.format("WARNING: No (current) task to cancel!")
-    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
     self:E(self.lid..text)
     
   end
@@ -2211,7 +2210,6 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
   -- Debug output.
   local text=string.format("Starting %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
   self:T(self.lid..text)
-  MESSAGE:New(text, 30, self.groupname):ToAllIf(self.Debug)
 
   -- Set current mission.
   self.currentmission=Mission.auftragsnummer
@@ -2237,7 +2235,6 @@ function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
 
   local text=string.format("Executing %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
   self:T(self.lid..text)
-  MESSAGE:New(text, 30, self.groupname):ToAllIf(self.Debug)
   
   -- Set group mission status to EXECUTING.
   Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.EXECUTING)
@@ -3454,7 +3451,7 @@ function OPSGROUP:SwitchROE(roe)
     
       self.group:OptionROE(self.option.ROE)
     
-      self:I(self.lid..string.format("Setting current ROE=%d (%s)", self.option.ROE, self:_GetROEName(self.option.ROE)))
+      self:T(self.lid..string.format("Setting current ROE=%d (%s)", self.option.ROE, self:_GetROEName(self.option.ROE)))
     end
     
     
@@ -3893,7 +3890,7 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
       self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
       
     else
-      self:I(self.lid.."INFO: Current radio not switched as freq/modulation did not change")
+      self:T(self.lid.."INFO: Current radio not switched as freq/modulation did not change")
     end
     
   else
@@ -4573,7 +4570,6 @@ function OPSGROUP:GetAmmoUnit(unit, display)
   else
     self:T3(self.lid..text)
   end
-  MESSAGE:New(text, 10):ToAllIf(display)
 
   -- Total amount of ammunition.
   nammo=nshells+nrockets+nmissiles+nbombs+ntorps

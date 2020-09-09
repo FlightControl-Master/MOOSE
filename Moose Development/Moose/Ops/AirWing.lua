@@ -829,7 +829,6 @@ function AIRWING:onafterStatus(From, Event, To)
   ------------------
   if self.verbose>=2 then
     local text=string.format("Missions Total=%d:", #self.missionqueue)
-    env.info("FF verbose "..self.verbose)
     for i,_mission in pairs(self.missionqueue) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
       
