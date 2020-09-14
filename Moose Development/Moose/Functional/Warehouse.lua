@@ -1552,7 +1552,7 @@
 WAREHOUSE = {
   ClassName     = "WAREHOUSE",
   Debug         = false,
-  verbosity     =     2,
+  verbosity     =     0,
   lid           =   nil,
   Report        =  true,
   warehouse     =   nil,
@@ -3472,172 +3472,174 @@ function WAREHOUSE:_JobDone()
   -- Loop over all pending requests of this warehouse.
   for _,request in pairs(self.pending) do
     local request=request --#WAREHOUSE.Pendingitem
+    
+    if request.born then
 
-    -- Count number of cargo groups.
-    local ncargo=0
-    if request.cargogroupset then
-      ncargo=request.cargogroupset:Count()
-    end
-
-    -- Count number of transport groups (if any).
-    local ntransport=0
-    if request.transportgroupset then
-      ntransport=request.transportgroupset:Count()
-    end
-
-    local ncargotot=request.nasset
-    local ncargodelivered=request.ndelivered
-
-    -- Dead cargo: Ndead=Ntot-Ndeliverd-Nalive,
-    local ncargodead=ncargotot-ncargodelivered-ncargo
-
-
-    local ntransporttot=request.ntransport
-    local ntransporthome=request.ntransporthome
-
-    -- Dead transport: Ndead=Ntot-Nhome-Nalive.
-    local ntransportdead=ntransporttot-ntransporthome-ntransport
-
-    local text=string.format("Request id=%d: Cargo: Ntot=%d, Nalive=%d, Ndelivered=%d, Ndead=%d  |  Transport: Ntot=%d, Nalive=%d, Nhome=%d, Ndead=%d",
-    request.uid, ncargotot, ncargo, ncargodelivered, ncargodead, ntransporttot, ntransport, ntransporthome, ntransportdead)
-    self:T(self.lid..text)
-
-
-    -- Handle different cases depending on what asset are still around.
-    if ncargo==0 then
-      ---------------------
-      -- Cargo delivered --
-      ---------------------
-
-      -- Trigger delivered event.
-      if not self.delivered[request.uid] then
-        self:Delivered(request)
+      -- Count number of cargo groups.
+      local ncargo=0
+      if request.cargogroupset then
+        ncargo=request.cargogroupset:Count()
       end
-
-      -- Check if transports are back home?
-      if ntransport==0 then
-        ---------------
-        -- Job done! --
-        ---------------
-
-        -- Info on job.
-        if self.verbosity>=1 then
-          local text=string.format("Warehouse %s: Job on request id=%d for warehouse %s done!\n", self.alias, request.uid, request.warehouse.alias)
-          text=text..string.format("- %d of %d assets delivered. Casualties %d.", ncargodelivered, ncargotot, ncargodead)
-          if request.ntransport>0 then
-            text=text..string.format("\n- %d of %d transports returned home. Casualties %d.", ntransporthome, ntransporttot, ntransportdead)
-          end
-          self:_InfoMessage(text, 20)
+  
+      -- Count number of transport groups (if any).
+      local ntransport=0
+      if request.transportgroupset then
+        ntransport=request.transportgroupset:Count()
+      end
+  
+      local ncargotot=request.nasset
+      local ncargodelivered=request.ndelivered
+  
+      -- Dead cargo: Ndead=Ntot-Ndeliverd-Nalive,
+      local ncargodead=ncargotot-ncargodelivered-ncargo
+  
+  
+      local ntransporttot=request.ntransport
+      local ntransporthome=request.ntransporthome
+  
+      -- Dead transport: Ndead=Ntot-Nhome-Nalive.
+      local ntransportdead=ntransporttot-ntransporthome-ntransport
+  
+      local text=string.format("Request id=%d: Cargo: Ntot=%d, Nalive=%d, Ndelivered=%d, Ndead=%d  |  Transport: Ntot=%d, Nalive=%d, Nhome=%d, Ndead=%d",
+      request.uid, ncargotot, ncargo, ncargodelivered, ncargodead, ntransporttot, ntransport, ntransporthome, ntransportdead)
+      self:T(self.lid..text)
+  
+  
+      -- Handle different cases depending on what asset are still around.
+      if ncargo==0 then
+        ---------------------
+        -- Cargo delivered --
+        ---------------------
+  
+        -- Trigger delivered event.
+        if not self.delivered[request.uid] then
+          self:Delivered(request)
         end
-
-        -- Mark request for deletion.
-        table.insert(done, request)
-
-      else
-        -----------------------------------
-        -- No cargo but still transports --
-        -----------------------------------
-
-        -- This is difficult! How do I know if transports were unused? They could also be just on their way back home.
-        -- ==> Need to do a lot of checks.
-
-        -- All transports are dead but there is still cargo left ==> Put cargo back into stock.
-        for _,_group in pairs(request.transportgroupset:GetSetObjects()) do
-          local group=_group --Wrapper.Group#GROUP
-
-          -- Check if group is alive.
-          if group and group:IsAlive() then
-
-            -- Check if group is in the spawn zone?
-            local category=group:GetCategory()
-
-            -- Get current speed.
-            local speed=group:GetVelocityKMH()
-            local notmoving=speed<1
-
-            -- Closest airbase.
-            local airbase=group:GetCoordinate():GetClosestAirbase():GetName()
-            local athomebase=self.airbase and self.airbase:GetName()==airbase
-
-            -- On ground
-            local onground=not group:InAir()
-
-            -- In spawn zone.
-            local inspawnzone=group:IsPartlyOrCompletelyInZone(self.spawnzone)
-
-            -- Check conditions for being back home.
-            local ishome=false
-            if category==Group.Category.GROUND or category==Group.Category.HELICOPTER then
-              -- Units go back to the spawn zone, helicopters land and they should not move any more.
-              ishome=inspawnzone and onground and notmoving
-            elseif category==Group.Category.AIRPLANE then
-              -- Planes need to be on ground at their home airbase and should not move any more.
-              ishome=athomebase and onground and notmoving
+  
+        -- Check if transports are back home?
+        if ntransport==0 then
+          ---------------
+          -- Job done! --
+          ---------------
+  
+          -- Info on job.
+          if self.verbosity>=1 then
+            local text=string.format("Warehouse %s: Job on request id=%d for warehouse %s done!\n", self.alias, request.uid, request.warehouse.alias)
+            text=text..string.format("- %d of %d assets delivered. Casualties %d.", ncargodelivered, ncargotot, ncargodead)
+            if request.ntransport>0 then
+              text=text..string.format("\n- %d of %d transports returned home. Casualties %d.", ntransporthome, ntransporttot, ntransportdead)
             end
-
-            -- Debug text.
-            local text=string.format("Group %s: speed=%d km/h, onground=%s , airbase=%s, spawnzone=%s ==> ishome=%s", group:GetName(), speed, tostring(onground), airbase, tostring(inspawnzone), tostring(ishome))
-            self:T(self.lid..text)
-
-            if ishome then
-
-              -- Info message.
-              local text=string.format("Warehouse %s: Transport group arrived back home and no cargo left for request id=%d.\nSending transport group %s back to stock.", self.alias, request.uid, group:GetName())
+            self:_InfoMessage(text, 20)
+          end
+  
+          -- Mark request for deletion.
+          table.insert(done, request)
+  
+        else
+          -----------------------------------
+          -- No cargo but still transports --
+          -----------------------------------
+  
+          -- This is difficult! How do I know if transports were unused? They could also be just on their way back home.
+          -- ==> Need to do a lot of checks.
+  
+          -- All transports are dead but there is still cargo left ==> Put cargo back into stock.
+          for _,_group in pairs(request.transportgroupset:GetSetObjects()) do
+            local group=_group --Wrapper.Group#GROUP
+  
+            -- Check if group is alive.
+            if group and group:IsAlive() then
+  
+              -- Check if group is in the spawn zone?
+              local category=group:GetCategory()
+  
+              -- Get current speed.
+              local speed=group:GetVelocityKMH()
+              local notmoving=speed<1
+  
+              -- Closest airbase.
+              local airbase=group:GetCoordinate():GetClosestAirbase():GetName()
+              local athomebase=self.airbase and self.airbase:GetName()==airbase
+  
+              -- On ground
+              local onground=not group:InAir()
+  
+              -- In spawn zone.
+              local inspawnzone=group:IsPartlyOrCompletelyInZone(self.spawnzone)
+  
+              -- Check conditions for being back home.
+              local ishome=false
+              if category==Group.Category.GROUND or category==Group.Category.HELICOPTER then
+                -- Units go back to the spawn zone, helicopters land and they should not move any more.
+                ishome=inspawnzone and onground and notmoving
+              elseif category==Group.Category.AIRPLANE then
+                -- Planes need to be on ground at their home airbase and should not move any more.
+                ishome=athomebase and onground and notmoving
+              end
+  
+              -- Debug text.
+              local text=string.format("Group %s: speed=%d km/h, onground=%s , airbase=%s, spawnzone=%s ==> ishome=%s", group:GetName(), speed, tostring(onground), airbase, tostring(inspawnzone), tostring(ishome))
               self:T(self.lid..text)
-
-              -- Debug smoke.
-              if self.Debug then
-                group:SmokeRed()
+  
+              if ishome then
+  
+                -- Info message.
+                local text=string.format("Warehouse %s: Transport group arrived back home and no cargo left for request id=%d.\nSending transport group %s back to stock.", self.alias, request.uid, group:GetName())
+                self:T(self.lid..text)
+  
+                -- Debug smoke.
+                if self.Debug then
+                  group:SmokeRed()
+                end
+  
+                -- Group arrived.
+                self:Arrived(group)
               end
-
-              -- Group arrived.
-              self:Arrived(group)
             end
           end
+  
         end
-
-      end
-
-    else
-
-      if ntransport==0 and request.ntransport>0 then
-        -----------------------------------
-        -- Still cargo but no transports --
-        -----------------------------------
-
-        local ncargoalive=0
-
-        -- All transports are dead but there is still cargo left ==> Put cargo back into stock.
-        for _,_group in pairs(request.cargogroupset:GetSetObjects()) do
-          --local group=group --Wrapper.Group#GROUP
-
-          -- These groups have been respawned as cargo, i.e. their name changed!
-          local groupname=_group:GetName()
-          local group=GROUP:FindByName(groupname.."#CARGO")
-
-          -- Check if group is alive.
-          if group and group:IsAlive() then
-
-            -- Check if group is in spawn zone?
-            if group:IsPartlyOrCompletelyInZone(self.spawnzone) then
-              -- Debug smoke.
-              if self.Debug then
-                group:SmokeBlue()
+  
+      else
+  
+        if ntransport==0 and request.ntransport>0 then
+          -----------------------------------
+          -- Still cargo but no transports --
+          -----------------------------------
+  
+          local ncargoalive=0
+  
+          -- All transports are dead but there is still cargo left ==> Put cargo back into stock.
+          for _,_group in pairs(request.cargogroupset:GetSetObjects()) do
+            --local group=group --Wrapper.Group#GROUP
+  
+            -- These groups have been respawned as cargo, i.e. their name changed!
+            local groupname=_group:GetName()
+            local group=GROUP:FindByName(groupname.."#CARGO")
+  
+            -- Check if group is alive.
+            if group and group:IsAlive() then
+  
+              -- Check if group is in spawn zone?
+              if group:IsPartlyOrCompletelyInZone(self.spawnzone) then
+                -- Debug smoke.
+                if self.Debug then
+                  group:SmokeBlue()
+                end
+                -- Add asset group back to stock.
+                self:AddAsset(group)
+                ncargoalive=ncargoalive+1
               end
-              -- Add asset group back to stock.
-              self:AddAsset(group)
-              ncargoalive=ncargoalive+1
             end
+  
           end
-
+  
+          -- Info message.
+          self:_InfoMessage(string.format("Warehouse %s: All transports of request id=%s dead! Putting remaining %s cargo assets back into warehouse!", self.alias, request.uid, ncargoalive))
         end
-
-        -- Info message.
-        self:_InfoMessage(string.format("Warehouse %s: All transports of request id=%s dead! Putting remaining %s cargo assets back into warehouse!", self.alias, request.uid, ncargoalive))
+  
       end
-
-    end
-
+    end -- born check
   end -- loop over requests
 
   -- Remove pending requests if done.
@@ -5158,7 +5160,7 @@ end
 -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   local text=string.format("Asset %s from request id=%d was spawned!", asset.spawngroupname, request.uid)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Sete asset state to spawned.
   asset.spawned=true
@@ -5169,22 +5171,23 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
     local assetitem=_asset --#WAREHOUSE.Assetitem
 
     -- Debug info.
-    self:I(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
+    self:T(self.lid..string.format("Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
 
     if assetitem.spawned then
       n=n+1
     else
-      self:I(self.lid.."FF What?! This should not happen!")
+      -- Now this can happend if multiple groups need to be spawned in one request.
+      --self:I(self.lid.."FF What?! This should not happen!")
     end
 
   end
 
   -- Trigger event.
   if n==request.nasset+request.ntransport then
-    self:I(self.lid..string.format("All assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned. Calling RequestSpawned", n, request.nasset, request.ntransport, request.uid))
+    self:T(self.lid..string.format("All assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned. Calling RequestSpawned", n, request.nasset, request.ntransport, request.uid))
     self:RequestSpawned(request, request.cargogroupset, request.transportgroupset)
   else
-    self:I(self.lid..string.format("Not all assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned YET", n, request.nasset, request.ntransport, request.uid))
+    self:T(self.lid..string.format("Not all assets %d (ncargo=%d + ntransport=%d) of request rid=%d spawned YET", n, request.nasset, request.ntransport, request.uid))
   end
 
 end
@@ -5795,7 +5798,7 @@ function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, alias)
   template.lateActivation=false
 
   if asset.missionTask then
-    self:I(self.lid..string.format("Setting mission task to %s", tostring(asset.missionTask)))
+    self:T(self.lid..string.format("Setting mission task to %s", tostring(asset.missionTask)))
     template.task=asset.missionTask
   end
 
@@ -6121,10 +6124,12 @@ function WAREHOUSE:_OnEventBirth(EventData)
       local request=self:GetRequestByID(rid)
             
       if asset and request then
-      
-        
+              
         -- Debug message.
-        self:I(self.lid..string.format("Warehouse %s captured event birth of request ID=%d, asset ID=%d, unit %s spawned=%s", self.alias, request.uid, asset.uid, EventData.IniUnitName, tostring(asset.spawned)))
+        self:T(self.lid..string.format("Warehouse %s captured event birth of request ID=%d, asset ID=%d, unit %s spawned=%s", self.alias, request.uid, asset.uid, EventData.IniUnitName, tostring(asset.spawned)))
+        
+        -- Set born to true.
+        request.born=true
   
         -- Birth is triggered for each unit. We need to make sure not to call this too often!
         if not asset.spawned then
@@ -6150,7 +6155,7 @@ function WAREHOUSE:_OnEventBirth(EventData)
   
           -- Asset spawned FSM function.
           --self:__AssetSpawned(1, group, asset, request)
-          env.info(string.format("FF asset spawned %s, %s", asset.spawngroupname, EventData.IniUnitName))
+          --env.info(string.format("FF asset spawned %s, %s", asset.spawngroupname, EventData.IniUnitName))
           self:AssetSpawned(group, asset, request)
   
         end
