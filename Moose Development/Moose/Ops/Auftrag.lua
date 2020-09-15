@@ -120,7 +120,7 @@
 -- 
 -- @extends Core.Fsm#FSM
 
---- *A warrior's mission is to foster the success of others.* --- Morihei Ueshiba
+--- *A warrior's mission is to foster the success of others.* - Morihei Ueshiba
 --
 -- ===
 --
@@ -128,10 +128,10 @@
 --
 -- # The AUFTRAG Concept
 -- 
--- As you probably know, setting tasks in DCS is often tedious. The AUFTRAG class significantly simplifies the necessary workflow by using optimized default parameters.
+-- The AUFTRAG class significantly simplifies the workflow of using DCS tasks.
 --
 -- You can think of an AUFTRAG as document, which contains the mission briefing, i.e. information about the target location, mission altitude, speed and various other parameters.
--- This document can be handed over directly to a pilot (or multiple pilots) via the FLIGHTGROUP class. The pilots will then execute the mission.
+-- This document can be handed over directly to a pilot (or multiple pilots) via the @{Ops.FlightGroup#FLIGHTGROUP} class. The pilots will then execute the mission.
 -- The AUFTRAG document can also be given to an AIRWING. The airwing will then determine the best assets (pilots and payloads) available for the job. 
 -- One more up the food chain, an AUFTRAG can be passed to a WINGCOMMANDER. The wing commander will find the best AIRWING and pass the job over to it.
 --
