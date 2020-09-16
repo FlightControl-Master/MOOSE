@@ -1169,7 +1169,10 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius)
   mission.optionROE=ENUMS.ROE.OpenFire   -- Ground/naval need open fire!
   mission.optionAlarm=0
   
-  mission.missionFraction=0.1
+  mission.missionFraction=0.0
+  
+  -- Evaluate after 8 min.
+  mission.dTevaluate=8*60
   
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -1185,29 +1188,10 @@ function AUFTRAG:NewTargetAir(Target)
   local mission=nil --#AUFTRAG
   
   self.engageTarget=Target
-  
-  --[[
-  if Target.category==TARGET.Category.GROUND then
-  
-  
-  elseif Target.category==TARGET.Category.AIRCRAFT then
-  
-    mission=AUFTRAG:NewINTERCEPT(Target)
-  
-  elseif Target.category==TARGET.Category.AIRBASE then
-  
-    mission=AUFTRAG:NewBOMBRUNWAY(Airdrome,Altitude)
-  
-  elseif Target.category==TARGET.Category.COORDINATE then
-  
- 
-  end
-  ]]
-  
+    
   local target=self.engageTarget:GetObject()
   
   local mission=self:NewAUTO(target)
-  
   
   if mission then
     mission:SetPriority(10, true)
@@ -2133,6 +2117,9 @@ function AUFTRAG:Evaluate()
   local Ntargets=self:CountMissionTargets()
   local Ntargets0=self:GetTargetInitialNumber()
   
+  local Life=self:GetTargetLife()
+  local Life0=self:GetTargetInitialLife()
+  
   
   if Ntargets0>0 then
   
@@ -2196,6 +2183,7 @@ function AUFTRAG:Evaluate()
   text=text..string.format("Own losses     = %.1f %%\n", owndamage)
   text=text..string.format("--------------------------\n")  
   text=text..string.format("Targets left   = %d/%d\n", Ntargets, Ntargets0)
+  text=text..string.format("Targets life   = %.1f/%.1f\n", Life, Life0)
   text=text..string.format("Enemy losses   = %.1f %%\n", targetdamage)
   text=text..string.format("--------------------------\n")
   --text=text..string.format("Loss ratio     = %.1f %%\n", targetdamage)

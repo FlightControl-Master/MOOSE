@@ -669,16 +669,37 @@ function OPSGROUP:Destroy(Delay)
   return self
 end
 
---- Despawn a unit.
+--- Despawn an element/unit of the group.
 -- @param #OPSGROUP self
+-- @param #OPSGROUP.Element Element The element that will be despawned.
+-- @param #number Delay Delay in seconds before the element will be despawned. Default immediately.
+-- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
 -- @return #OPSGROUP self
-function OPSGROUP:DespawnUnit(UnitName)
+function OPSGROUP:DespawnElement(Element, Delay, NoEventRemoveUnit)
 
-  local DCSGroup=self:GetDCSGroup()
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.DespawnElement, self, Element, 0, NoEventRemoveUnit)
+  else
+
+    if Element then
+      
+      -- Get DCS unit object.
+      local DCSunit=Unit.getByName(Element.name)
   
-  if DCSGroup then
-    DCSGroup:destroy()
-    self:CreateEventRemoveUnit(timer.getTime(), DCSObject)
+      if DCSunit then
+      
+        -- Destroy object.
+        DCSunit:destroy()
+        
+        -- Create a remove unit event.
+        if not NoEventRemoveUnit then
+          self:CreateEventRemoveUnit(timer.getTime(), DCSunit)
+        end
+        
+      end
+      
+    end
+    
   end
 
   return self
@@ -1082,7 +1103,7 @@ end
 function OPSGROUP:GetWaypointIndex(uid)
 
   if uid then
-    for i,_waypoint in pairs(self.waypoints) do
+    for i,_waypoint in pairs(self.waypoints or {}) do
       local waypoint=_waypoint --#OPSGROUP.Waypoint
       if waypoint.uid==uid then
         return i
@@ -2241,12 +2262,7 @@ function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
   
   -- Set mission status to EXECUTING.
   Mission:Executing()
-  
-  -- Formation
-  if Mission.optionFormation then
-    self:SwitchFormation(Mission.optionFormation)
-  end  
-  
+    
 end
 
 --- On after "PauseMission" event.
@@ -2371,7 +2387,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   -- Remove mission waypoint.
   local wpidx=Mission:GetGroupWaypointIndex(self)
   if wpidx then
-    self:RemoveWaypoint(wpidx)
+    self:RemoveWaypointByID(wpidx)
   end
   
   -- Decrease patrol data.
@@ -2380,6 +2396,27 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
     AIRWING.UpdatePatrolPointMarker(Mission.patroldata)
   end
   
+  -- ROE to default.
+  if Mission.optionROE then
+    self:SwitchROE()
+  end
+  -- ROT to default
+  if Mission.optionROT then
+    self:SwitchROT()
+  end
+  -- Alarm state to default.
+  if Mission.optionAlarm then
+    self:SwitchAlarmstate()
+  end  
+  -- Formation to default.
+  if Mission.optionFormation then
+    self:SwitchFormation()
+  end
+  -- Radio freq and modu to last used.
+  if Mission.radio and self.radioLast then
+    self:SwitchRadio(self.radioLast.Freq, self.radioLast.Modu)
+  end
+
   -- TACAN
   if Mission.tacan then
   
@@ -2399,23 +2436,8 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
       asset.tacan=nil
     end  
   end
-
-  -- TODO: reset mission specific parameters like radio, ROE etc.
-  if Mission.radio and self.radioLast then
-    self:SwitchRadio(self.radioLast.Freq, self.radioLast.Modu)
-  end
   
-  if Mission.optionROE then
-    self:SwitchROE()
-  end
-  
-  if Mission.optionROT then
-    self:SwitchROT()
-  end
-  
-  if Mission.optionAlarm then
-    self:SwitchAlarmstate()
-  end
+  -- TODO: reset ICLS settings.
   
   -- Check if group is done.
   self:_CheckGroupDone(1)
@@ -2482,17 +2504,21 @@ function OPSGROUP:RouteToMission(mission, delay)
                 
         -- Check if we are within range.
         if dist>weapondata.RangeMax then
-          local d=dist-weapondata.RangeMax
-          d=(1.1)*d
+        
+          local d=(dist-weapondata.RangeMax)*1.1
           
           -- New waypoint coord.
           waypointcoord=self:GetCoordinate():Translate(d, heading)
+          
+          self:T(self.lid..string.format("Out of max range = %.1f km for weapon %d", weapondata.RangeMax/1000, mission.engageWeaponType))
         elseif dist<weapondata.RangeMin then
-          local d=dist-weapondata.RangeMin
-          d=(1.1)*d
+        
+          local d=(dist-weapondata.RangeMin)*1.1
           
           -- New waypoint coord.
-          waypointcoord=self:GetCoordinate():Translate(d, heading)  
+          waypointcoord=self:GetCoordinate():Translate(d, heading)
+          
+          self:T(self.lid..string.format("Out of min range = %.1f km for weapon %d", weapondata.RangeMax/1000, mission.engageWeaponType))
         end
         
       end
@@ -2523,21 +2549,25 @@ function OPSGROUP:RouteToMission(mission, delay)
     if mission.optionROT then
       self:SwitchROT(mission.optionROT)
     end
-    -- Radio
-    if mission.radio then
-      self:SwitchRadio(mission.radio.Freq, mission.radio.Modu)
+    -- Alarm state.
+    if mission.optionAlarm then
+      self:SwitchAlarmstate(mission.optionAlarm)
     end
-    -- TACAN
-    if mission.tacan then
-      self:SwitchTACAN(mission.tacan.Channel, mission.tacan.Morse, mission.tacan.BeaconName, mission.tacan.Band)
-    end
-    -- ICLS
-    if mission.icls then
-      self:SwitchICLS(mission.icls.Channel, mission.icls.Morse, mission.icls.UnitName)
-    end    
     -- Formation
     if mission.optionFormation then
       self:SwitchFormation(mission.optionFormation)
+    end      
+    -- Radio frequency and modulation.
+    if mission.radio then
+      self:SwitchRadio(mission.radio.Freq, mission.radio.Modu)
+    end
+    -- TACAN settings.
+    if mission.tacan then
+      self:SwitchTACAN(mission.tacan.Channel, mission.tacan.Morse, mission.tacan.BeaconName, mission.tacan.Band)
+    end
+    -- ICLS settings.
+    if mission.icls then
+      self:SwitchICLS(mission.icls.Channel, mission.icls.Morse, mission.icls.UnitName)
     end
     
   end
@@ -2735,8 +2765,22 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Unit#UNIT Unit The detected unit.
 function OPSGROUP:onafterDetectedUnit(From, Event, To, Unit)
-  self:T2(self.lid..string.format("Detected unit %s", Unit:GetName()))
-  self.detectedunits:AddUnit(Unit)
+
+  -- Get unit name.
+  local unitname=Unit and Unit:GetName() or "unknown"
+
+  -- Debug.
+  self:T2(self.lid..string.format("Detected unit %s", unitname))
+  
+  
+  if self.detectedunits:FindUnit(unitname) then
+    -- Unit is already in the detected unit set ==> Trigger "DetectedUnitKnown" event.
+    self:DetectedUnitKnown(Unit)
+  else
+    -- Unit is was not detected ==> Trigger "DetectedUnitNew" event.
+    self:DetectedUnitNew(Unit)
+  end  
+  
 end
 
 --- On after "DetectedUnitNew" event.
@@ -2747,6 +2791,9 @@ end
 -- @param Wrapper.Unit#UNIT Unit The detected unit.
 function OPSGROUP:onafterDetectedUnitNew(From, Event, To, Unit)
   self:T(self.lid..string.format("Detected New unit %s", Unit:GetName()))
+  
+  -- Add unit to detected unit set.
+  self.detectedunits:AddUnit(Unit)
 end
 
 --- On after "EnterZone" event. Sets self.inzones[zonename]=true.
@@ -2851,9 +2898,11 @@ function OPSGROUP:onafterStop(From, Event, To)
   -- Stop FSM scheduler.
   self.CallScheduler:Clear()
   
-  if self:IsAlive() then
+  if self:IsAlive() and not (self:IsDead() or self:IsStopped()) then
     local life, life0=self:GetLifePoints()
-    self:E(self.lid..string.format("WARNING: Group is still alive! Life points=%d/%d. Use OPSGROUP:Destroy() or OPSGROUP:Despawn() for a clean stop", life, life0))
+    local state=self:GetState()
+    local text=string.format("WARNING: Group is still alive! Current state=%s. Life points=%d/%d. Use OPSGROUP:Destroy() or OPSGROUP:Despawn() for a clean stop", state, life, life0)
+    self:E(self.lid..text)
   end
 
   -- Debug output.
@@ -2931,6 +2980,8 @@ function OPSGROUP:_CheckDetectedUnits()
       local DetectedObject=Detection.object -- DCS#Object
 
       if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
+      
+        -- Unit.
         local unit=UNIT:Find(DetectedObject)
         
         if unit and unit:IsAlive() then
@@ -2941,16 +2992,8 @@ function OPSGROUP:_CheckDetectedUnits()
           -- Add unit to detected table of this run.        
           table.insert(detected, unit)
           
-          -- Trigger detected unit event.
+          -- Trigger detected unit event ==> This also triggers the DetectedUnitNew and DetectedUnitKnown events.
           self:DetectedUnit(unit)
-          
-          if self.detectedunits:FindUnit(unitname) then
-            -- Unit is already in the detected unit set ==> Trigger "DetectedUnitKnown" event.
-            self:DetectedUnitKnown(unit)
-          else
-            -- Unit is was not detected ==> Trigger "DetectedUnitNew" event.
-            self:DetectedUnitNew(unit)
-          end
           
         end
       end
@@ -3059,6 +3102,8 @@ function OPSGROUP:_CheckGroupDone(delay)
           --- No waypoints left
 
           -- No further waypoints. Command a full stop.
+          self:T(self.lid..string.format("No waypoints left ==> Full Stop"))
+          
           self:__FullStop(-1)
           
         end
@@ -3197,7 +3242,15 @@ function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
   table.insert(self.waypoints, wpnumber, waypoint)
 
   -- Debug info.
-  self:T2(self.lid..string.format("Adding waypoint at index=%d id=%d", wpnumber, waypoint.uid))
+  self:T(self.lid..string.format("Adding waypoint at index=%d id=%d", wpnumber, waypoint.uid))
+  
+  -- Now we obviously did not pass the final waypoint.
+  self.passedfinalwp=false
+  
+  -- Switch to cruise mode.
+  if self:IsHolding() then
+    self:Cruise()
+  end
 end
 
 --- Initialize Mission Editor waypoints.
@@ -3288,7 +3341,7 @@ end
 -- @param #number n Waypoint
 function OPSGROUP:_UpdateWaypointTasks(n)
 
-  local waypoints=self.waypoints
+  local waypoints=self.waypoints or {}
   local nwaypoints=#waypoints
 
   for i,_wp in pairs(waypoints) do

@@ -708,6 +708,41 @@ end
 -- @param #FLIHGTGROUP self
 function FLIGHTGROUP:onbeforeStatus(From, Event, To)
 
+  -- First we check if elements are still alive. Could be that they were despawned without notice, e.g. when landing on a too small airbase.
+  for i,_element in pairs(self.elements) do
+    local element=_element --#FLIGHTGROUP.Element
+    
+    -- Check that element is not already dead or not yet alive.
+    if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
+    
+      -- Unit shortcut.
+      local unit=element.unit
+      
+      local isdead=false      
+      if unit and unit:IsAlive() then
+      
+        -- Get life points.
+        local life=unit:GetLife() or 0
+    
+        -- Units with life <=1 are dead.
+        if life<=1 then
+          isdead=true
+        end
+        
+      else
+        -- Not alive any more.
+        isdead=true
+      end
+      
+      -- This one is dead.
+      if isdead then
+        self:E(self.lid..string.format("Element %s is dead! Probably despawned without notice or landed at a too small airbase", tostring(element.name)))
+        self:ElementDead(element)
+      end
+      
+    end    
+  end
+
   if self:IsDead() then  
     self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
     return false   
@@ -1327,18 +1362,27 @@ end
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase if applicable or nil.
 function FLIGHTGROUP:onafterElementLanded(From, Event, To, Element, airbase)
   self:T2(self.lid..string.format("Element landed %s at %s airbase", Element.name, airbase and airbase:GetName() or "unknown"))
+  
+  if self.despawnAfterLanding then
+  
+    -- Despawn the element.
+    self:DespawnElement(Element)
+  
+  else
 
-  -- Helos with skids land directly on parking spots.
-  if self.ishelo then
-
-    local Spot=self:GetParkingSpot(Element, 10, airbase)
-
-    self:_SetElementParkingAt(Element, Spot)
-
+    -- Helos with skids land directly on parking spots.
+    if self.ishelo then
+  
+      local Spot=self:GetParkingSpot(Element, 10, airbase)
+  
+      self:_SetElementParkingAt(Element, Spot)
+  
+    end
+  
+    -- Set element status.
+    self:_UpdateStatus(Element, OPSGROUP.ElementStatus.LANDED, airbase)
+    
   end
-
-  -- Set element status.
-  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.LANDED, airbase)
 end
 
 --- On after "ElementArrived" event.
@@ -1410,6 +1454,9 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
 
     -- Set ROT.
     self:SwitchROT(self.option.ROT)
+    
+    -- Set Formation
+    self:SwitchFormation(self.option.Formation)
         
     -- Turn TACAN beacon on.
     if self.tacan.On then
@@ -1572,10 +1619,6 @@ function FLIGHTGROUP:onafterLanded(From, Event, To, airbase)
     -- Add flight to taxiinb queue.
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIINB)
   end
-  
-  if self.despawnAfterLanding then
-    self:Despawn()
-  end
     
 end
 
@@ -1603,9 +1646,9 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.ARRIVED)
   end
 
-  -- Stop and despawn in 5 min.
+  -- Despawn in 5 min.
   if not self.airwing then
-    self:__Stop(5*60)
+    self:Despawn(5*60)
   end
 end
 
@@ -1731,9 +1774,11 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
   local current=self.group:GetCoordinate():WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speed, true, nil, {}, "Current")
   table.insert(wp, current)
+  
+  local Nwp=self.waypoints and #self.waypoints or 0
 
   -- Add remaining waypoints to route.
-  for i=n, #self.waypoints do
+  for i=n, Nwp do
     table.insert(wp, self.waypoints[i])
   end
 
@@ -2437,9 +2482,6 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
       end
     end
 
-    -- Destroy group. No event is generated.
-    -- DISABLED for now. Should use :Despawn() or :Destroy() which then calls stop.
-    --self.group:Destroy(false)
   end
 
   -- Handle events:

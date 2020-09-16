@@ -575,7 +575,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   n=n or self:GetWaypointIndexNext()
   
   -- Debug info.
-  self:T(self.lid..string.format("FF Update route n=%d", n))
+  self:T(self.lid..string.format("Update route n=%d", n))
   
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
   self:_UpdateWaypointTasks(n)
@@ -784,6 +784,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function NAVYGROUP:onafterFullStop(From, Event, To)
+  self:T(self.lid.."Full stop ==> holding")
 
   -- Get current position.
   local pos=self:GetCoordinate()
