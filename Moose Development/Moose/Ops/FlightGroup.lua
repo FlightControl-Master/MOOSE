@@ -1458,14 +1458,14 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     -- Set Formation
     self:SwitchFormation(self.option.Formation)
         
-    -- Turn TACAN beacon on.
-    if self.tacan.On then
-      self:_SwitchTACAN(self.tacan)
-    end
+    -- Set TACAN beacon.
+    self:_SwitchTACAN()
     
-    -- Turn on the radio.
-    if self.radioLast then
-      self:SwitchRadio(self.radioLast.Freq, self.radioLast.Modu)
+    -- Set radio freq and modu.
+    if self.radioDefault then
+      self:SwitchRadio()
+    else
+      self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
     end
     
     -- Set callsign.
@@ -2563,6 +2563,7 @@ function FLIGHTGROUP:_InitGroup()
     return
   end
   
+  -- Group object.
   local group=self.group --Wrapper.Group#GROUP
 
   -- Get template of group.
@@ -2594,20 +2595,12 @@ function FLIGHTGROUP:_InitGroup()
   -- Group ammo.
   self.ammo=self:GetAmmoTot()
 
-  -- Radio parameters from template.
+  -- Radio parameters from template. Default is set on spawn if not modified by user.
   self.radio.Freq=tonumber(self.template.frequency)
   self.radio.Modu=tonumber(self.template.modulation)
-  local on=tostring(self.template.communication):lower()
-  if on=="true" then
-    self.radio.On=true
-  else
-    self.radio.On=false
-  end
+  self.radio.On=self.template.communication
   
-  -- Set default radio.
-  self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
-  
-  -- Set callsign.
+  -- Set callsign. Default is set on spawn if not modified by user.
   local callsign=self.template.units[1].callsign
   if type(callsign)=="number" then  -- Sometimes callsign is just "101".
     local cs=tostring(callsign)
@@ -2627,6 +2620,10 @@ function FLIGHTGROUP:_InitGroup()
   else
     self.optionDefault.Formation=ENUMS.Formation.FixedWing.EchelonLeft.Group
   end
+  
+  -- Default TACAN off.
+  self:SetDefaultTACAN(nil, nil, nil, nil, true)
+  self.tacan=UTILS.DeepCopy(self.tacanDefault)
 
   -- Is this purely AI?
   self.ai=not self:_IsHuman(group)

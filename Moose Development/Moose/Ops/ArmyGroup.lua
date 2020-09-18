@@ -69,8 +69,6 @@ function ARMYGROUP:New(GroupName)
   self:SetDefaultAlarmstate()
   self:SetDetection()
   self:SetPatrolAdInfinitum(false)
-  
-  --self:AddWeaponRange(10, 32)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
@@ -100,14 +98,6 @@ function ARMYGROUP:New(GroupName)
   
   -- Initialize the group.
   self:_InitGroup()
-
-  -- Debug trace.
-  if false then
-    self.Debug=true
-    BASE:TraceOnOff(true)
-    BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
-  end
   
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
@@ -342,14 +332,14 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     -- Set default Alarm State.
     self:SwitchAlarmstate(self.option.Alarm)
     
-    -- Turn TACAN beacon on.
-    if self.tacan.On then
-      self:_SwitchTACAN(self.tacan)
-    end
+    -- Set TACAN to default.
+    self:_SwitchTACAN()
 
     -- Turn on the radio.
-    if self.radioLast then
-      self:SwitchRadio(self.radioLast.Freq, self.radioLst.Modu)
+    if self.radioDefault then
+      self:SwitchRadio(self.radioDefault.Freq, self.radioDefault.Modu)
+    else
+      self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, true)
     end
     
   end

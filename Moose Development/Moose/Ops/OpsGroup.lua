@@ -2412,32 +2412,34 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   if Mission.optionFormation then
     self:SwitchFormation()
   end
-  -- Radio freq and modu to last used.
-  if Mission.radio and self.radioLast then
-    self:SwitchRadio(self.radioLast.Freq, self.radioLast.Modu)
+  -- Radio freq and modu to default.
+  if Mission.radio then
+    self:SwitchRadio()
   end
 
-  -- TACAN
+  -- TACAN beacon.
   if Mission.tacan then
-  
-    if self.tacanDefault then
-      self:_SwitchTACAN(self.tacanDefault)
-    else
-      self:TurnOffTACAN()
-    end
+
+    -- Switch to default.  
+    self:_SwitchTACAN()
     
+    -- Return Squadron TACAN channel.
     local squadron=self.squadron --Ops.Squadron#SQUADRON
     if squadron then
       squadron:ReturnTacan(Mission.tacan.Channel)
     end
     
+    -- Set asset TACAN to nil.
     local asset=Mission:GetAssetByName(self.groupname)
     if asset then
       asset.tacan=nil
     end  
   end
   
-  -- TODO: reset ICLS settings.
+  -- ICLS beacon to default.
+  if Mission.icls then
+    self:_SwitchICLS()  
+  end
   
   -- Check if group is done.
   self:_CheckGroupDone(1)
@@ -3538,7 +3540,7 @@ end
 -- @param #OPSGROUP self
 -- @return #number Current ROE.
 function OPSGROUP:GetROE()
-  return self.option.ROE
+  return self.option.ROE or self.optionDefault.ROE
 end
 
 --- Set the default ROT for the group. This is the ROT state gets when the group is spawned or to which it defaults back after a mission.
@@ -3581,7 +3583,7 @@ end
 -- @param #OPSGROUP self
 -- @return #number Current ROT.
 function OPSGROUP:GetROT()
-  return self.option.ROT
+  return self.option.ROT or self.optionDefault.ROT
 end
 
 
@@ -3639,23 +3641,37 @@ end
 -- @param #OPSGROUP self
 -- @return #number Current Alarm State.
 function OPSGROUP:GetAlarmstate()
-  return self.option.Alarm
+  return self.option.Alarm or self.optionDefault.Alarm
 end
 
 --- Set default TACAN parameters.
 -- @param #OPSGROUP self
--- @param #number Channel TACAN channel.
+-- @param #number Channel TACAN channel. Default is 74.
 -- @param #string Morse Morse code. Default "XXX".
 -- @param #string UnitName Name of the unit acting as beacon.
 -- @param #string Band TACAN mode. Default is "X" for ground and "Y" for airborne units.
+-- @param #boolean OffSwitch If true, TACAN is off by default.
 -- @return #OPSGROUP self
-function OPSGROUP:SetDefaultTACAN(Channel, Morse, UnitName, Band)
+function OPSGROUP:SetDefaultTACAN(Channel, Morse, UnitName, Band, OffSwitch)
   
   self.tacanDefault={}
-  self.tacanDefault.Channel=Channel
+  self.tacanDefault.Channel=Channel or 74
   self.tacanDefault.Morse=Morse or "XXX"
   self.tacanDefault.BeaconName=UnitName
-  self.tacanDefault.Band=Band
+
+  if self.isAircraft then
+    Band=Band or "Y"
+  else
+    Band=Band or "X"
+  end
+  self.tacanDefault.Band=Band  
+  
+  
+  if OffSwitch then
+    self.tacanDefault.On=false
+  else
+    self.tacanDefault.On=true
+  end
 
   return self
 end
@@ -3663,10 +3679,24 @@ end
 
 --- Activate/switch TACAN beacon settings.
 -- @param #OPSGROUP self
--- @param #OPSGROUP.Beacon Tacan Tacan data table.
+-- @param #OPSGROUP.Beacon Tacan TACAN data table. Default is the default TACAN settings.
 -- @return #OPSGROUP self
 function OPSGROUP:_SwitchTACAN(Tacan)
-  self:SwitchTACAN(Tacan.Channel, Tacan.Morse, Tacan.BeaconName, Tacan.Band)
+
+  if Tacan then
+  
+    self:SwitchTACAN(Tacan.Channel, Tacan.Morse, Tacan.BeaconName, Tacan.Band)
+    
+  else
+  
+    if self.tacanDefault.On then
+      self:SwitchTACAN()
+    else
+      self:TurnOffTACAN()
+    end
+  
+  end
+  
 end
 
 --- Activate/switch TACAN beacon settings.
@@ -3678,10 +3708,19 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 
-  if self:IsAlive() or self:IsInUtero() then
+  if self:IsInUtero() then
+  
+    self:I(self.lid..string.format("Switching TACAN to DEFAULT when group is spawned"))
+    self:SetDefaultTACAN(Channel, Morse, UnitName, Band)
 
-    local unit=self.group:GetUnit(1)  --Wrapper.Unit#UNIT
-    
+  elseif self:IsAlive() then
+      
+    Channel=Channel or self.tacanDefault.Channel
+    Morse=Morse or self.tacanDefault.Morse
+    Band=Band or self.tacanDefault.Band
+    UnitName=UnitName or self.tacanDefault.BeaconName
+    local unit=self:GetUnit(1)  --Wrapper.Unit#UNIT
+
     if UnitName then
       if type(UnitName)=="number" then
         unit=self.group:GetUnit(UnitName)
@@ -3689,37 +3728,31 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
         unit=UNIT:FindByName(UnitName)
       end
     end
-    
+
     if not unit then
-      self:E(self.lid.."ERROR: Could not get TACAN unit. Trying first unit in the group.")
-      unit=self.group:GetUnit(1)
+      self:T(self.lid.."WARNING: Could not get TACAN unit. Trying first unit in the group")
+      unit=self:GetUnit(1)
     end
     
-    Channel=Channel or 74
-    Morse=Morse or "XXX"
-    
-    if unit and unit:IsAlive() or self:IsInUtero() then
+    if unit and unit:IsAlive() then
 
+      -- Unit ID.
       local UnitID=unit:GetID()
 
-      local Type=BEACON.Type.TACAN      
-      local System=BEACON.System.TACAN
-            
+      -- Type
+      local Type=BEACON.Type.TACAN
+      
+      -- System
+      local System=BEACON.System.TACAN            
       if self.isAircraft then
         System=BEACON.System.TACAN_TANKER_Y
-        Band=Band or "Y"
-      else
-        System=BEACON.System.TACAN
-        Band=Band or "X"
       end
       
       -- Tacan frequency.
       local Frequency=UTILS.TACANToFrequency(Channel, Band)
-
-      -- Backup TACAN.
-      if self.tacan.Channel then
-        self.tacanDefault=UTILS.DeepCopy(self.tacan)
-      end
+   
+      -- Activate beacon.
+      unit:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Band, true, Morse, true)
 
       -- Update info.
       self.tacan.Channel=Channel
@@ -3728,24 +3761,16 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
       self.tacan.BeaconName=unit:GetName()
       self.tacan.BeaconUnit=unit
       self.tacan.On=true
-
-      if self:IsInUtero() then
-        self:T(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s when GROUP is SPAWNED", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
-      else
-      
-        -- Activate beacon.
-        unit:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Band, true, Morse, true)
-                
-        self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
-      end
-      
+     
+      -- Debug info.        
+      self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
       
     else
       self:E(self.lid.."ERROR: Cound not set TACAN! Unit is not alive")
     end
 
   else
-    self:E(self.lid.."ERROR: Cound not set TACAN! Group is not alive")
+    self:E(self.lid.."ERROR: Cound not set TACAN! Group is not alive and not in utero any more")
   end
 
   return self
@@ -3760,7 +3785,7 @@ function OPSGROUP:TurnOffTACAN()
     self.tacan.BeaconUnit:CommandDeactivateBeacon()
   end
 
-  self:T(self.lid..string.format("Switching TACAN OFF"))
+  self:I(self.lid..string.format("Switching TACAN OFF"))
   self.tacan.On=false
 
 end
@@ -3777,45 +3802,93 @@ function OPSGROUP:GetTACAN()
 end
 
 
+
+--- Set default ICLS parameters.
+-- @param #OPSGROUP self
+-- @param #number Channel ICLS channel. Default is 1.
+-- @param #string Morse Morse code. Default "XXX".
+-- @param #string UnitName Name of the unit acting as beacon.
+-- @param #boolean OffSwitch If true, TACAN is off by default.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultICLS(Channel, Morse, UnitName, OffSwitch)
+  
+  self.iclsDefault={}
+  self.iclsDefault.Channel=Channel or 1
+  self.iclsDefault.Morse=Morse or "XXX"
+  self.iclsDefault.BeaconName=UnitName
+  
+  if OffSwitch then
+    self.iclsDefault.On=false
+  else
+    self.iclsDefault.On=true
+  end
+
+  return self
+end
+
+
 --- Activate/switch ICLS beacon settings.
 -- @param #OPSGROUP self
 -- @param #OPSGROUP.Beacon Icls ICLS data table.
 -- @return #OPSGROUP self
 function OPSGROUP:_SwitchICLS(Icls)
-  self:SwitchICLS(Icls.Channel, Icls.Morse, Icls.BeaconName)
+
+  if Icls then
+  
+    self:SwitchICLS(Icls.Channel, Icls.Morse, Icls.BeaconName)
+  
+  else
+  
+    if self.iclsDefault.On then
+      self:SwitchICLS()
+    else
+      self:TurnOffICLS()
+    end
+  
+  end
+
 end
 
 --- Activate/switch ICLS beacon settings.
 -- @param #OPSGROUP self
--- @param #number Channel ICLS Channel. Default is 1.
--- @param #string Morse ICLS morse code. Default is "XXX".
+-- @param #number Channel ICLS Channel. Default is what is set in `SetDefaultICLS()` so usually channel 1.
+-- @param #string Morse ICLS morse code. Default is what is set in `SetDefaultICLS()` so usually "XXX".
 -- @param #string UnitName Name of the unit in the group which should activate the ICLS beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
 
-  if self:IsAlive() or self:IsInUtero() then
+  if self:IsInUtero() then
+  
+    self:SetDefaultICLS(Channel,Morse,UnitName)
+  
+    self:T2(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s when GROUP is SPAWNED", self.iclsDefault.Channel, tostring(self.iclsDefault.Morse), self.iclsDefault.BeaconName))
 
-    local unit=self.group:GetUnit(1)  --Wrapper.Unit#UNIT
+  elseif self:IsAlive() then
+  
+    Channel=Channel or self.iclsDefault.Channel
+    Morse=Morse or self.iclsDefault.Morse
+    local unit=self:GetUnit(1)  --Wrapper.Unit#UNIT
     
     if UnitName then
       if type(UnitName)=="number" then
-        unit=self.group:GetUnit(UnitName)
+        unit=self:GetUnit(UnitName)
       else
         unit=UNIT:FindByName(UnitName)
       end
     end
     
     if not unit then
-      self:E(self.lid.."ERROR: Could not get ICLS unit. Trying first unit in the group.")
-      unit=self.group:GetUnit(1)
+      self:T(self.lid.."WARNING: Could not get ICLS unit. Trying first unit in the group")
+      unit=self:GetUnit(1)
     end
-    
-    Channel=Channel or 1
-    Morse=Morse or "XXX"
 
-    if unit and unit:IsAlive() or self:IsInUtero() then
+    if unit and unit:IsAlive() then
 
-      local UnitID=unit:GetID()
+      -- Unit ID.
+      local UnitID=unit:GetID()      
+
+      -- Activate beacon.
+      unit:CommandActivateICLS(Channel, UnitID, Morse)
       
       -- Update info.
       self.icls.Channel=Channel
@@ -3825,16 +3898,8 @@ function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
       self.icls.BeaconUnit=unit
       self.icls.On=true
       
-      if self:IsInUtero() then
-        self:T2(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s when GROUP is SPAWNED", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
-      else
-
-        -- Activate beacon.
-        unit:CommandActivateICLS(Channel, UnitID, Morse)
-  
-        self:I(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
-        
-      end
+      -- Debug info.
+      self:I(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
       
     else
       self:E(self.lid.."ERROR: Cound not set ICLS! Unit is not alive.")
@@ -3896,58 +3961,36 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchRadio(Frequency, Modulation)
 
-  Frequency=Frequency or self.radioDefault.Freq
-  Modulation=Modulation or self.radioDefault.Modu
-
   if self:IsInUtero() then
   
-    -- Set current radio.
-    self.radioLast={}
-    self.radioLast.Freq=Frequency
-    self.radioLast.Modu=Modulation
-
-    self:T2(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radioLast.Freq, UTILS.GetModulationName(self.radioLast.Modu)))
+    -- Set default radio.
+    self:SetDefaultRadio(Frequency, Modulation)
     
-  elseif self:IsAlive() then 
-
-    local group=self.group --Wrapper.Group#GROUP
+    -- Debug info.
+    self:T2(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radioDefault.Freq, UTILS.GetModulationName(self.radioDefault.Modu)))
+    
+  elseif self:IsAlive() then
+  
+    Frequency=Frequency or self.radioDefault.Freq
+    Modulation=Modulation or self.radioDefault.Modu
 
     if self.isAircraft and not self.radio.On then
-      group:SetOption(AI.Option.Air.id.SILENCE, false)
-    end
+      self.group:SetOption(AI.Option.Air.id.SILENCE, false)
+    end    
+  
+    -- Give command
+    self.group:CommandSetFrequency(Frequency, Modulation)
     
-    -- Backup last radio settings.
-    if self.radio then
-      self.radioLast=UTILS.DeepCopy(self.radio)
-    end
-
-    -- Debug.
-    if false then
-      local text=string.format("\nRadio Freq=%.3f %.3f", self.radio.Freq, self.radioLast.Freq)
-      text=text..string.format("\nRadio Modu=%d %d", self.radio.Modu, self.radioLast.Modu)
-      text=text..string.format("\nRadio OnOf=%s %s", tostring(self.radio.On), tostring(self.radioLast.On))
-      self:I(self.lid..text)
-    end
-
-    -- Set current radio.
+    -- Update current settings.
     self.radio.Freq=Frequency
     self.radio.Modu=Modulation    
     self.radio.On=true
     
-    -- Only switch radio if different.
-    if self.radio.Freq~=self.radioLast.Freq or self.radio.Modu~=self.radioLast.Modu then
-  
-      -- Give command
-      group:CommandSetFrequency(Frequency, Modulation)
-  
-      self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
-      
-    else
-      self:T(self.lid.."INFO: Current radio not switched as freq/modulation did not change")
-    end
-    
+    -- Debug info.
+    self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
+          
   else
-    self:E(self.lid.."ERROR: Cound not set Radio! Group is not alive")
+    self:E(self.lid.."ERROR: Cound not set Radio! Group is not alive or not in utero any more")
   end
 
   return self
@@ -4007,7 +4050,7 @@ function OPSGROUP:SwitchFormation(Formation)
               
     elseif self.isGround then
     
-      -- TODO: here we need to update the route.
+      -- Polymorphic and overwritten in ARMYGROUP.
       
     else
       self:E(self.lid.."ERROR: Formation can only be set for aircraft or ground units!")
@@ -4027,7 +4070,7 @@ end
 
 
 
---- Set default formation.
+--- Set default callsign.
 -- @param #OPSGROUP self
 -- @param #number CallsignName Callsign name.
 -- @param #number CallsignNumber Callsign number.
@@ -4048,15 +4091,15 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
 
-  CallsignName=CallsignName or self.callsignDefault.NumberSquad
-  CallsignNumber=CallsignNumber or self.callsignDefault.NumberGroup
-
   if self:IsInUtero() then
   
     -- Set default callsign. We switch to this when group is spawned.
     self:SetDefaultCallsign(CallsignName, CallsignNumber)
 
   elseif self:IsAlive() then
+
+    CallsignName=CallsignName or self.callsignDefault.NumberSquad
+    CallsignNumber=CallsignNumber or self.callsignDefault.NumberGroup
 
     -- Set current callsign.
     self.callsign.NumberSquad=CallsignName

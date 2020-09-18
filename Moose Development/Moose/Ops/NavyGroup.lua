@@ -535,23 +535,19 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     self:SwitchROE(self.option.ROE)
     
     -- Set default Alarm State.
-    self:SwitchAlarmstate(self.option.ROT)
+    self:SwitchAlarmstate(self.option.Alarm)
     
-    -- Turn TACAN beacon on.
-    if self.tacan.On then
-      self:_SwitchTACAN(self.tacan)
-    end
+    -- Set TACAN beacon.
+    self:_SwitchTACAN()
     
     -- Turn ICLS on.
-    if self.icls.On then
-      self:_SwitchICLS(self.icls)
-    end    
+    self:_SwitchICLS()    
 
-    -- Turn on the radio.
-    if self.radioLast then
-      self:SwitchRadio(self.radioLast.Freq, self.radioLast.Modu)
+    -- Set radio.
+    if self.radioDefault then
+      self:SwitchRadio()
     else
-      self.radio.On=true -- Radio is always on for ships. If not set, it is default.
+      self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, false)
     end
     
   end
@@ -1077,13 +1073,10 @@ function NAVYGROUP:_InitGroup()
   -- Group ammo.
   self.ammo=self:GetAmmoTot()
   
-  -- Radio parameters from template.
-  self.radio.On=false  -- Radio is always on for ships but we set it to false to check if it has been changed before spawn.
+  -- Radio parameters from template. Default is set on spawn if not modified by the user.
+  self.radio.On=true  -- Radio is always on for ships.
   self.radio.Freq=tonumber(self.template.units[1].frequency)/1000000
   self.radio.Modu=tonumber(self.template.units[1].modulation)
-  
-  -- Set default radio.
-  self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)  
   
   -- Set default formation. No really applicable for ships.
   self.optionDefault.Formation="Off Road"
