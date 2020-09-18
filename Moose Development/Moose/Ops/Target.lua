@@ -58,14 +58,17 @@ TARGET = {
 
 --- Type.
 -- @type TARGET.ObjectType
+-- @field #string GROUP Target is a GROUP object.
 -- @field #string UNIT Target is a UNIT object.
 -- @field #string STATIC Target is a STATIC object.
+-- @field #string SCENERY Target is a SCENERY object.
 -- @field #string COORDINATE Target is a COORDINATE.
 -- @field #string AIRBASE Target is an AIRBASE.
 TARGET.ObjectType={
   GROUP="Group",
   UNIT="Unit",
   STATIC="Static",
+  SCENERY="Scenery",
   COORDINATE="Coordinate",
   AIRBASE="Airbase",
 }
@@ -491,7 +494,20 @@ function TARGET:_AddObject(Object)
       
       self.Ntargets0=self.Ntargets0+1
     end
+
+  elseif Object:IsInstanceOf("SCENERY") then
+  
+    local scenery=Object --Wrapper.Scenery#SCENERY
     
+    target.Type=TARGET.ObjectType.SCENERY
+    target.Name=scenery:GetName()
+    
+    target.Coordinate=scenery:GetCoordinate()
+
+    target.Life0=1
+    target.Life=1
+    
+    self.Ntargets0=self.Ntargets0+1
 
   elseif Object:IsInstanceOf("AIRBASE") then
   
@@ -518,9 +534,19 @@ function TARGET:_AddObject(Object)
 
     target.Life0=1
     target.Life=1
+      
+  elseif Object:IsInstanceOf("ZONE_BASE") then
+  
+    local zone=Object --Core.Zone#ZONE_BASE
+    Object=zone:GetCoordinate()
     
-    -- TODO: does this make sense for a coordinate?
-    --self.Ntargets0=self.Ntargets0+1
+    target.Type=TARGET.ObjectType.COORDINATE
+    target.Name=zone:GetName()
+    
+    target.Coordinate=Object
+
+    target.Life0=1
+    target.Life=1
   
   else
     self:E(self.lid.."ERROR: Unknown object type!")
@@ -604,6 +630,14 @@ function TARGET:GetTargetLife(Target)
     else
       return 0
     end
+
+  elseif Target.Type==TARGET.ObjectType.SCENERY then
+  
+    if Target.Status==TARGET.ObjectStatus.ALIVE then
+      return 1
+    else
+      return 0
+    end
     
   elseif Target.Type==TARGET.ObjectType.AIRBASE then
   
@@ -667,6 +701,14 @@ function TARGET:GetTargetVec3(Target)
     local object=Target.Object --Wrapper.Static#STATIC
   
     if object and object:IsAlive() then
+      return object:GetVec3()
+    end
+
+  elseif Target.Type==TARGET.ObjectType.SCENERY then
+  
+    local object=Target.Object --Wrapper.Scenery#SCENERY
+  
+    if object then
       return object:GetVec3()
     end
     
@@ -840,6 +882,10 @@ function TARGET:GetTargetCategory(Target)
   elseif Target.Type==TARGET.ObjectType.STATIC then
   
     return TARGET.Category.GROUND
+    
+  elseif Target.Type==TARGET.ObjectType.SCENERY then
+  
+    return TARGET.Category.GROUND
       
   elseif Target.Type==TARGET.ObjectType.AIRBASE then
   
@@ -941,6 +987,12 @@ function TARGET:CountTargets()
       local target=Target.Object --Wrapper.Static#STATIC
       
       if target and target:IsAlive() then
+        N=N+1
+      end
+
+    elseif Target.Type==TARGET.ObjectType.SCENERY then
+    
+      if Target.Status==TARGET.ObjectStatus.ALIVE then
         N=N+1
       end
       

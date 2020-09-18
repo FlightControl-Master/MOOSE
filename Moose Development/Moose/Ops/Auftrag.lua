@@ -2795,7 +2795,15 @@ function AUFTRAG:_TargetFromObject(Object)
 
   if not self.engageTarget then
   
-    self.engageTarget=TARGET:New(Object)
+    if Object:IsInstanceOf("TARGET") then
+    
+      self.engageTarget=Object
+    
+    else
+  
+      self.engageTarget=TARGET:New(Object)
+      
+    end
 
   else
   

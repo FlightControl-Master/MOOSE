@@ -3543,7 +3543,7 @@ end
 
 --- Set the default ROT for the group. This is the ROT state gets when the group is spawned or to which it defaults back after a mission.
 -- @param #OPSGROUP self
--- @param #number rot ROT of group. Default is ENUMS.ROT.PassiveDefense.
+-- @param #number rot ROT of group. Default is `ENUMS.ROT.PassiveDefense`.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultROT(rot)
   self.optionDefault.ROT=rot or ENUMS.ROT.PassiveDefense

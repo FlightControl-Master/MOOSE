@@ -389,7 +389,7 @@ do -- COORDINATE
   -- @return #boolean True if units were found.
   -- @return #boolean True if statics were found.
   -- @return #boolean True if scenery objects were found.
-  -- @return #table Table of MOOSE @[#Wrapper.Unit#UNIT} objects found.
+  -- @return #table Table of MOOSE @{Wrapper.Unit#UNIT} objects found.
   -- @return #table Table of DCS static objects found.
   -- @return #table Table of DCS scenery objects found.
   function COORDINATE:ScanObjects(radius, scanunits, scanstatics, scanscenery)
@@ -477,7 +477,7 @@ do -- COORDINATE
     end
     for _,scenery in pairs(Scenery) do
       self:T(string.format("Scan found scenery %s typename=%s", scenery:getName(), scenery:getTypeName()))
-      SCENERY:Register(scenery:getName(), scenery)
+      --SCENERY:Register(scenery:getName(), scenery)
     end
     
     return gotunits, gotstatics, gotscenery, Units, Statics, Scenery
@@ -522,7 +522,51 @@ do -- COORDINATE
   
     return umin
   end  
+
+  --- Scan/find SCENERY objects within a certain radius around the coordinate using the world.searchObjects() DCS API function.
+  -- @param #COORDINATE self
+  -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
+  -- @return table Set of scenery objects.
+  function COORDINATE:ScanScenery(radius)
   
+    local _,_,_,_,_,scenerys=self:ScanObjects(radius, false, false, true)
+        
+    local set={}
+    
+    for _,_scenery in pairs(scenerys) do
+      local scenery=_scenery --DCS#Object
+      
+      local name=scenery:getName()
+      local s=SCENERY:Register(name, scenery)
+      table.insert(set, s)
+
+    end
+  
+    return set
+  end  
+
+  --- Find the closest scenery to the COORDINATE within a certain radius. 
+  -- @param #COORDINATE self
+  -- @param #number radius Scan radius in meters. Default 100 m.
+  -- @return Wrapper.Scenery#SCENERY The closest scenery or #nil if no object is inside the given radius.
+  function COORDINATE:FindClosestScenery(radius)
+  
+    local sceneries=self:ScanScenery(radius)
+    
+    local umin=nil --Wrapper.Scenery#SCENERY
+    local dmin=math.huge
+    for _,_scenery in pairs(sceneries) do
+      local scenery=_scenery --Wrapper.Scenery#SCENERY
+      local coordinate=scenery:GetCoordinate()
+      local d=self:Get2DDistance(coordinate)
+      if d<dmin then
+        dmin=d
+        umin=scenery
+      end
+    end    
+  
+    return umin
+  end  
  
   --- Calculate the distance from a reference @{#COORDINATE}.
   -- @param #COORDINATE self
