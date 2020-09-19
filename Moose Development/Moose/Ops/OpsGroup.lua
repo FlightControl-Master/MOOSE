@@ -2867,7 +2867,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterDead(From, Event, To)
-  self:I(self.lid..string.format("Group dead!"))
+  self:T(self.lid..string.format("Group dead!"))
 
   -- Delete waypoints so they are re-initialized at the next spawn.
   self.waypoints=nil
@@ -2908,7 +2908,7 @@ function OPSGROUP:onafterStop(From, Event, To)
   end
 
   -- Debug output.
-  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
+  self:T(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3710,7 +3710,7 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 
   if self:IsInUtero() then
   
-    self:I(self.lid..string.format("Switching TACAN to DEFAULT when group is spawned"))
+    self:T(self.lid..string.format("Switching TACAN to DEFAULT when group is spawned"))
     self:SetDefaultTACAN(Channel, Morse, UnitName, Band)
 
   elseif self:IsAlive() then
@@ -3763,7 +3763,7 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
       self.tacan.On=true
      
       -- Debug info.        
-      self:I(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
+      self:T(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
       
     else
       self:E(self.lid.."ERROR: Cound not set TACAN! Unit is not alive")
@@ -3785,7 +3785,7 @@ function OPSGROUP:TurnOffTACAN()
     self.tacan.BeaconUnit:CommandDeactivateBeacon()
   end
 
-  self:I(self.lid..string.format("Switching TACAN OFF"))
+  self:T(self.lid..string.format("Switching TACAN OFF"))
   self.tacan.On=false
 
 end
@@ -3899,7 +3899,7 @@ function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
       self.icls.On=true
       
       -- Debug info.
-      self:I(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
+      self:T(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
       
     else
       self:E(self.lid.."ERROR: Cound not set ICLS! Unit is not alive.")
@@ -3987,7 +3987,7 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
     self.radio.On=true
     
     -- Debug info.
-    self:I(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
+    self:T(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
           
   else
     self:E(self.lid.."ERROR: Cound not set Radio! Group is not alive or not in utero any more")
@@ -4061,7 +4061,7 @@ function OPSGROUP:SwitchFormation(Formation)
     self.option.Formation=Formation
     
     -- Debug info.
-    self:I(self.lid..string.format("Switching formation to %d", self.option.Formation))
+    self:T(self.lid..string.format("Switching formation to %d", self.option.Formation))
 
   end
 
@@ -4106,7 +4106,7 @@ function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
     self.callsign.NumberGroup=CallsignNumber
 
     -- Debug.
-    self:I(self.lid..string.format("Switching callsign to %d-%d", self.callsign.NumberSquad, self.callsign.NumberGroup))
+    self:T(self.lid..string.format("Switching callsign to %d-%d", self.callsign.NumberSquad, self.callsign.NumberGroup))
     
     -- Give command to change the callsign.
     self.group:CommandSetCallsign(self.callsign.NumberSquad, self.callsign.NumberGroup)
