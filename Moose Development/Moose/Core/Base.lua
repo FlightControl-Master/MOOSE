@@ -717,6 +717,22 @@ function BASE:CreateEventCrash( EventTime, Initiator )
 	world.onEvent( Event )
 end
 
+--- Creation of a Crash Event.
+-- @param #BASE self
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
+function BASE:CreateEventUnitLost(EventTime, Initiator)
+  self:F( { EventTime, Initiator } )
+
+  local Event = {
+    id = world.event.S_EVENT_UNIT_LOST,
+    time = EventTime,
+    initiator = Initiator,
+    }
+
+  world.onEvent( Event )
+end
+
 --- Creation of a Dead Event.
 -- @param #BASE self
 -- @param DCS#Time EventTime The time stamp of the event.

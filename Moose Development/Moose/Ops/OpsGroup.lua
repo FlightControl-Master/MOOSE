@@ -1,5 +1,6 @@
 --- **Ops** - Generic group enhancement functions.
 -- 
+-- This class is **not** meant to be used itself by the end user.
 --     
 -- ===
 --
@@ -26,7 +27,8 @@
 -- @field #boolean isGround If true, group is some ground unit.
 -- @field #table waypoints Table of waypoints.
 -- @field #table waypoints0 Table of initial waypoints.
--- @field #number currentwp Current waypoint.
+-- @field #number currentwp Current waypoint index. This is the index of the last passed waypoint.
+-- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
 -- @field #table taskqueue Queue of tasks.
 -- @field #number taskcounter Running number of task ids.
 -- @field #number taskcurrent ID of current task. If 0, there is no current task assigned.
@@ -36,58 +38,65 @@
 -- @field #number currentmission The ID (auftragsnummer) of the currently assigned AUFTRAG.
 -- @field Core.Set#SET_UNIT detectedunits Set of detected units.
 -- @field #string attribute Generalized attribute.
--- @field #number speedmax Max speed in km/h.
+-- @field #number speedMax Max speed in km/h.
 -- @field #number speedCruise Cruising speed in km/h.
+-- @field #number speedWp Speed to the next waypoint in m/s.
 -- @field #boolean passedfinalwp Group has passed the final waypoint.
+-- @field #number wpcounter Running number counting waypoints.
 -- @field #boolean respawning Group is being respawned.
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
+-- @field Core.Timer#TIMER timerCheckZone Timer for check zones.
+-- @field Core.Timer#TIMER timerQueueUpdate Timer for queue updates.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
 -- @field #boolean detectionOn If true, detected units of the group are analyzed.
 -- @field Ops.Auftrag#AUFTRAG missionpaused Paused mission.
+-- @field #number Ndestroyed Number of destroyed units.
 -- 
--- @field Core.Point#COORDINATE position Current position of the group.
--- @field #number traveldist Distance traveled in meters. This is a lower bound!
+-- @field Core.Point#COORDINATE coordinate Current coordinate.
+-- 
+-- @field DCS#Vec3 position Position of the group at last status check.
+-- @field DCS#Vec3 positionLast Backup of last position vec to monitor changes.
+-- @field #number heading Heading of the group at last status check.
+-- @field #number headingLast Backup of last heading to monitor changes.
+-- @field DCS#Vec3 orientX Orientation at last status check.
+-- @field DCS#Vec3 orientXLast Backup of last orientation to monitor changes.
+-- @field #number traveldist Distance traveled in meters. This is a lower bound.
 -- @field #number traveltime Time.
 -- 
--- @field #number tacanChannelDefault The default TACAN channel.
--- @field #string tacanMorseDefault The default TACAN morse code.
--- @field #number tacanChannel The currenly used TACAN channel.
--- @field #string tacanMorse The currently used TACAN morse code.
--- @field #boolean tacanOn If true, TACAN is currently active.
--- @field Wrapper.Unit#UNIT tacanBeacon The unit acting as TACAN beacon.
+-- @field Core.Astar#ASTAR Astar path finding.
+-- @field #boolean ispathfinding If true, group is on pathfinding route.
 -- 
--- @field #number radioFreqDefault Default radio frequency in MHz.
--- @field #number radioFreq Currently used radio frequency in MHz.
--- @field #number radioModuDefault Default Radio modulation `radio.modulation.AM` or `radio.modulation.FM`.
--- @field #number radioModu Currently used radio modulation `radio.modulation.AM` or `radio.modulation.FM`.
--- @field #boolean radioOn If true, radio is currently turned on.
+-- @field #OPSGROUP.Radio radio Current radio settings.
+-- @field #OPSGROUP.Radio radioDefault Default radio settings.
 -- @field Core.RadioQueue#RADIOQUEUE radioQueue Radio queue.
 -- 
--- @field #boolean eplrsDefault Default EPLRS data link setting.
--- @field #boolean eplrs If true, EPLRS data link is on.
+-- @field #OPSGROUP.Beacon tacan Current TACAN settings.
+-- @field #OPSGROUP.Beacon tacanDefault Default TACAN settings.
 -- 
--- @field #string roeDefault Default ROE setting.
--- @field #string rotDefault Default ROT setting.
--- @field #string roe Current ROE setting.
--- @field #string rot Current ROT setting.
+-- @field #OPSGROUP.Beacon icls Current ICLS settings.
+-- @field #OPSGROUP.Beacon iclsDefault Default ICLS settings.
 -- 
--- @field #number formationDefault Default formation setting.
--- @field #number formation Current formation setting.
+-- @field #OPSGROUP.Option option Current optional settings.
+-- @field #OPSGROUP.Option optionDefault Default option settings.
+-- 
+-- @field #OPSGROUP.Callsign callsign Current callsign settings.
+-- @field #OPSGROUP.Callsign callsignDefault Default callsign settings.
 -- 
 -- @extends Core.Fsm#FSM
 
---- *Something must be left to chance; nothing is sure in a sea fight above all.* --- Horatio Nelson
+--- *A small group of determined and like-minded people can change the course of history.* --- Mahatma Gandhi
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\OPSGROUP\OpsGroup_Main.jpg)
+-- ![Banner Image](..\Presentations\OPS\OpsGroup\_Main.png)
 --
 -- # The OPSGROUP Concept
 -- 
--- The OPSGROUP class contains common functions used by other classes such as FLIGHGROUP and NAVYGROUP.
+-- The OPSGROUP class contains common functions used by other classes such as FLIGHGROUP, NAVYGROUP and ARMYGROUP.
+-- Those classes inherit everything of this class and extend it with features specific to their unit category.  
 -- 
--- This class is **not** meant to be used itself by the end user.
+-- This class is **NOT** meant to be used by the end user itself.
 -- 
 -- 
 -- @field #OPSGROUP
@@ -117,6 +126,14 @@ OPSGROUP = {
   inzones            =   nil,
   groupinitialized   =   nil,
   respawning         =   nil,
+  wpcounter          =     1,
+  radio              =    {},
+  option             =    {},
+  optionDefault      =    {},
+  tacan              =    {},
+  icls               =    {},
+  callsign           =    {},
+  Ndestroyed         =     0,
 }
 
 --- Status of group element.
@@ -187,6 +204,46 @@ OPSGROUP.TaskType={
 -- @field DCS#Task DCStask DCS task structure table.
 -- @field #number WaypointIndex Waypoint number at which the enroute task is added.
 
+--- Beacon data.
+-- @type OPSGROUP.Beacon
+-- @field #number Channel Channel.
+-- @field #number Morse Morse Code.
+-- @field #string Band Band "X" or "Y" for TACAN beacon.
+-- @field #string BeaconName Name of the unit acting as beacon.
+-- @field Wrapper.Unit#UNIT BeaconUnit Unit object acting as beacon.
+-- @field #boolean On If true, beacon is on, if false, beacon is turned off. If nil, has not been used yet.
+
+--- Radio data.
+-- @type OPSGROUP.Radio
+-- @field #number Freq Frequency
+-- @field #number Modu Modulation.
+-- @field #boolean On If true, radio is on, if false, radio is turned off. If nil, has not been used yet.
+
+--- Callsign data.
+-- @type OPSGROUP.Callsign
+-- @field #number NumberSquad Squadron number corresponding to a name like "Uzi".
+-- @field #number NumberGroup Group number. First number after name, e.g. "Uzi-**1**-1".
+-- @field #number NumberElement Element number.Second number after name, e.g. "Uzi-1-**1**"
+-- @field #string NameSquad Name of the squad, e.g. "Uzi".
+-- @field #string NameElement Name of group element, e.g. Uzi 11.
+
+--- Option data.
+-- @type OPSGROUP.Option
+-- @field #number ROE Rule of engagement.
+-- @field #number ROT Reaction on threat.
+-- @field #number Alarm Alarm state.
+-- @field #number Formation Formation.
+-- @field #boolean EPLRS data link.
+-- @field #boolean Disperse Disperse under fire.
+
+
+--- Weapon range data.
+-- @type OPSGROUP.WeaponData
+-- @field #number BitType Type of weapon.
+-- @field #number RangeMin Min range in meters.
+-- @field #number RangeMax Max range in meters.
+-- @field #number ReloadTime Time to reload in seconds.
+
 --- Ammo data.
 -- @type OPSGROUP.Ammo
 -- @field #number Total Total amount of ammo.
@@ -201,9 +258,30 @@ OPSGROUP.TaskType={
 -- @field #number MissilesCR Amount of cruise missiles.
 -- @field #number MissilesBM Amount of ballistic missiles.
 
+--- Waypoint data.
+-- @type OPSGROUP.Waypoint
+-- @field #number uid Waypoint's unit id, which is a running number.
+-- @field #number speed Speed in m/s.
+-- @field #number alt Altitude in meters. For submaries use negative sign for depth.
+-- @field #string action Waypoint action (turning point, etc.). Ground groups have the formation here.
+-- @field #table task Waypoint DCS task combo.
+-- @field #string type Waypoint type.
+-- @field #string name Waypoint description. Shown in the F10 map.
+-- @field #number x Waypoint x-coordinate.
+-- @field #number y Waypoint y-coordinate.
+-- @field #boolean detour If true, this waypoint is not part of the normal route.
+-- @field #boolean intowind If true, this waypoint is a turn into wind route point.
+-- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
+-- @field #number npassed Number of times a groups passed this waypoint.
+-- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
+-- @field Core.Point#COORDINATE roadcoord Closest point to road.
+-- @field #number roaddist Distance to closest point on road.
+-- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
+-- @field #string formation Ground formation. Similar to action but on/off road.
+
 --- NavyGroup version.
 -- @field #string version
-OPSGROUP.version="0.1.0"
+OPSGROUP.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -256,7 +334,6 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "Stop",             "Stopped")     -- Stop FSM.
 
   self:AddTransition("*",             "Status",           "*")           -- Status update.
-  self:AddTransition("*",             "QueueUpdate",      "*")           -- Update task and mission queues.  
 
   self:AddTransition("*",             "UpdateRoute",      "*")           -- Update route of group. Only if airborne.
   self:AddTransition("*",             "Respawn",          "*")           -- Respawn group.
@@ -276,7 +353,6 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "OutOfBombs",        "*")          -- Group is out of bombs.
   self:AddTransition("*",             "OutOfMissiles",     "*")          -- Group is out of missiles.
 
-  self:AddTransition("*",             "CheckZone",        "*")           -- Check if group enters/leaves a certain zone.
   self:AddTransition("*",             "EnterZone",        "*")           -- Group entered a certain zone.
   self:AddTransition("*",             "LeaveZone",        "*")           -- Group leaves a certain zone.
 
@@ -293,6 +369,7 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "MissionDone",      "*")           -- Mission is over.
 
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
+  self:AddTransition("*",             "ElementDestroyed", "*")           -- An element was destroyed.
   self:AddTransition("*",             "ElementDead",      "*")           -- An element is dead.
 
   ------------------------
@@ -342,9 +419,38 @@ function OPSGROUP:GetLifePoints()
   end
 end
 
---- Set detection on or off.
+
+--- Set verbosity level.
 -- @param #OPSGROUP self
--- @param #boolean Switch If true, detection is on. If false or nil, detection is off. Default is off.
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #OPSGROUP self
+function OPSGROUP:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
+  return self
+end
+
+--- Set default cruise speed.
+-- @param #OPSGROUP self
+-- @param #number Speed Speed in knots.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultSpeed(Speed)
+  if Speed then
+    self.speedCruise=UTILS.KnotsToKmph(Speed)
+  end
+  return self
+end
+
+--- Get default cruise speed.
+-- @param #OPSGROUP self
+-- @return #number Cruise speed (>0) in knots.
+function OPSGROUP:GetSpeedCruise()
+  return UTILS.KmphToKnots(self.speedCruise or self.speedMax*0.7)
+end
+
+--- Set detection on or off.
+-- If detection is on, detected targets of the group will be evaluated and FSM events triggered. 
+-- @param #OPSGROUP self
+-- @param #boolean Switch If `true`, detection is on. If `false` or `nil`, detection is off. Default is off.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDetection(Switch)
   self.detectionOn=Switch
@@ -372,6 +478,47 @@ function OPSGROUP:AddCheckZone(CheckZone)
   return self
 end
 
+
+--- Add a zone that triggers and event if the group enters or leaves any of the zones.
+-- @param #OPSGROUP self
+-- @param #number RangeMin
+-- @param #number RangeMax
+-- @param #number BitType
+-- @return #OPSGROUP self
+function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
+
+  RangeMin=(RangeMin or 0)*1000
+  RangeMax=(RangeMax or 10)*1000
+
+  local weapon={} --#OPSGROUP.WeaponData
+
+  weapon.BitType=BitType or ENUMS.WeaponFlag.Auto
+  weapon.RangeMax=RangeMax
+  weapon.RangeMin=RangeMin
+
+  self.weaponData=self.weaponData or {}  
+  self.weaponData[weapon.BitType]=weapon
+  
+  return self
+end
+
+--- 
+-- @param #OPSGROUP self
+-- @param #number BitType
+-- @return #OPSGROUP.WeaponData Weapon range data.
+function OPSGROUP:GetWeaponData(BitType)
+
+  BitType=BitType or ENUMS.WeaponFlag.Auto
+
+  if self.weaponData[BitType] then  
+    return self.weaponData[BitType]
+  else
+    return self.weaponData[ENUMS.WeaponFlag.Auto]
+  end
+
+end
+
+
 --- Get set of detected units.
 -- @param #OPSGROUP self
 -- @return Core.Set#SET_UNIT Set of detected units.
@@ -393,14 +540,237 @@ function OPSGROUP:GetName()
   return self.groupname
 end
 
+--- Get DCS GROUP object.
+-- @param #OPSGROUP self
+-- @return DCS#Group DCS group object.
+function OPSGROUP:GetDCSGroup()
+  local DCSGroup=Group.getByName(self.groupname)
+  return DCSGroup
+end
+
+--- Get MOOSE UNIT object.
+-- @param #OPSGROUP self
+-- @param #number UnitNumber Number of the unit in the group. Default first unit.
+-- @return Wrapper.Unit#UNIT The MOOSE UNIT object.
+function OPSGROUP:GetUnit(UnitNumber)
+
+  local DCSUnit=self:GetDCSUnit(UnitNumber)
+  
+  if DCSUnit then
+    local unit=UNIT:Find(DCSUnit)
+    return unit
+  end
+  
+  return nil
+end
+
+--- Get DCS GROUP object.
+-- @param #OPSGROUP self
+-- @param #number UnitNumber Number of the unit in the group. Default first unit.
+-- @return DCS#Unit DCS group object.
+function OPSGROUP:GetDCSUnit(UnitNumber)
+
+  local DCSGroup=self:GetDCSGroup()
+  
+  if DCSGroup then
+    local unit=DCSGroup:getUnit(UnitNumber or 1)
+    return unit
+  end
+  
+  return nil
+end
+
+--- Get DCS units.
+-- @param #OPSGROUP self
+-- @return #list<DCS#Unit> DCS units.
+function OPSGROUP:GetDCSUnits()
+
+  local DCSGroup=self:GetDCSGroup()
+  
+  if DCSGroup then
+    local units=DCSGroup:getUnits()
+    return units
+  end
+  
+  return nil
+end
+
+--- Despawn the group. The whole group is despawned and (optionally) a "Remove Unit" event is generated for all current units of the group.
+-- @param #OPSGROUP self
+-- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
+-- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
+-- @return #OPSGROUP self
+function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.Despawn, self, 0, NoEventRemoveUnit)
+  else
+
+    local DCSGroup=self:GetDCSGroup()
+    
+    if DCSGroup then
+    
+      -- Destroy DCS group.
+      DCSGroup:destroy()
+      
+      if not NoEventRemoveUnit then
+    
+        -- Get all units.
+        local units=self:GetDCSUnits()
+    
+        -- Create a "Remove Unit" event.
+        local EventTime=timer.getTime()       
+        for i=1,#units do
+          self:CreateEventRemoveUnit(EventTime, units[i])
+        end
+        
+      end
+    end
+  end
+
+  return self
+end
+
+--- Destroy group. The whole group is despawned and a *Unit Lost* for aircraft or *Dead* event for ground/naval units is generated for all current units.
+-- @param #OPSGROUP self
+-- @param #number Delay Delay in seconds before the group will be destroyed. Default immediately.
+-- @return #OPSGROUP self
+function OPSGROUP:Destroy(Delay)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.Destroy, self)
+  else
+
+    local DCSGroup=self:GetDCSGroup()
+    
+    if DCSGroup then
+    
+      self:T(self.lid.."Destroying group")
+    
+      -- Destroy DCS group.
+      DCSGroup:destroy()  
+    
+      -- Get all units.
+      local units=self:GetDCSUnits()
+    
+      -- Create a "Unit Lost" event.
+      local EventTime=timer.getTime()    
+      for i=1,#units do
+        if self.isAircraft then
+          self:CreateEventUnitLost(EventTime, units[i])
+        else
+          self:CreateEventDead(EventTime, units[i])
+        end
+      end
+    end
+    
+  end
+
+  return self
+end
+
+--- Despawn an element/unit of the group.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Element Element The element that will be despawned.
+-- @param #number Delay Delay in seconds before the element will be despawned. Default immediately.
+-- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
+-- @return #OPSGROUP self
+function OPSGROUP:DespawnElement(Element, Delay, NoEventRemoveUnit)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.DespawnElement, self, Element, 0, NoEventRemoveUnit)
+  else
+
+    if Element then
+      
+      -- Get DCS unit object.
+      local DCSunit=Unit.getByName(Element.name)
+  
+      if DCSunit then
+      
+        -- Destroy object.
+        DCSunit:destroy()
+        
+        -- Create a remove unit event.
+        if not NoEventRemoveUnit then
+          self:CreateEventRemoveUnit(timer.getTime(), DCSunit)
+        end
+        
+      end
+      
+    end
+    
+  end
+
+  return self
+end
+
+
+--- Get current 3D vector of the group.
+-- @param #OPSGROUP self
+-- @return DCS#Vec3 Vector with x,y,z components.
+function OPSGROUP:GetVec3()
+  if self:IsExist() then
+  
+    local unit=self:GetDCSUnit()
+    
+    if unit then
+      local vec3=unit:getPoint()
+      
+      return vec3
+    end
+    
+  end
+  return nil
+end
+
 --- Get current coordinate of the group.
 -- @param #OPSGROUP self
+-- @param #boolean NewObject Create a new coordiante object.
 -- @return Core.Point#COORDINATE The coordinate (of the first unit) of the group.
-function OPSGROUP:GetCoordinate()
-  if self:IsAlive()~=nil then
-    return self.group:GetCoordinate()    
+function OPSGROUP:GetCoordinate(NewObject)
+
+  local vec3=self:GetVec3()
+
+  if vec3 then
+  
+    self.coordinate=self.coordinate or COORDINATE:New(0,0,0)
+  
+    self.coordinate.x=vec3.x
+    self.coordinate.y=vec3.y
+    self.coordinate.z=vec3.z
+
+    if NewObject then
+      local coord=COORDINATE:NewFromCoordinate(self.coordinate)
+    else
+      return self.coordinate
+    end    
   else
     self:E(self.lid.."WARNING: Group is not alive. Cannot get coordinate!")
+  end
+  
+  return nil
+end
+
+--- Get current velocity of the group.
+-- @param #OPSGROUP self
+-- @return #number Velocity in m/s.
+function OPSGROUP:GetVelocity()
+  if self:IsExist() then
+  
+    local unit=self:GetDCSUnit(1)
+    
+    if unit then
+    
+      local velvec3=unit:getVelocity()
+      
+      local vel=UTILS.VecNorm(velvec3)
+      
+      return vel
+    
+    end
+  else
+    self:E(self.lid.."WARNING: Group does not exist. Cannot get velocity!")
   end
   return nil
 end
@@ -409,76 +779,69 @@ end
 -- @param #OPSGROUP self
 -- @return #number Current heading of the group in degrees.
 function OPSGROUP:GetHeading()
-  if self:IsAlive()~=nil then
-    return self.group:GetHeading()
+
+  if self:IsExist() then
+  
+    local unit=self:GetDCSUnit()
+    
+    if unit then
+      
+      local pos=unit:getPosition()
+      
+      local heading=math.atan2(pos.x.z, pos.x.x)
+      
+      if heading<0 then
+        heading=heading+ 2*math.pi
+      end
+      
+      heading=math.deg(heading)
+      
+      return heading
+    end
+    
   else
-    self:E(self.lid.."WARNING: Group is not alive. Cannot get heading!")
+    self:E(self.lid.."WARNING: Group does not exist. Cannot get heading!")
   end
+  
   return nil
 end
 
---- Get next waypoint index.
+--- Get current orientation of the first unit in the group.
 -- @param #OPSGROUP self
--- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
--- @return #number Next waypoint index.
-function OPSGROUP:GetWaypointIndexNext(cyclic)
+-- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
+-- @return DCS#Vec3 Orientation Y pointing "upwards".
+-- @return DCS#Vec3 Orientation Z perpendicular to the "nose".
+function OPSGROUP:GetOrientation()
 
-  local n=math.min(self.currentwp+1, #self.waypoints)
+  if self:IsExist() then
   
-  if cyclic and self.currentwp==#self.waypoints then
-    n=1
+    local unit=self:GetDCSUnit()
+    
+    if unit then
+      
+      local pos=unit:getPosition()
+            
+      return pos.x, pos.y, pos.z
+    end
+    
+  else
+    self:E(self.lid.."WARNING: Group does not exist. Cannot get orientation!")
   end
   
-  return n
-end
-
---- Get waypoint speed.
--- @param #OPSGROUP self
--- @param #number indx Waypoint index.
--- @return #number Speed set at waypoint in knots.
-function OPSGROUP:GetWaypointSpeed(indx)
-
-  local waypoint=self:GetWaypoint(indx)
-  
-  if waypoint then
-    return UTILS.MpsToKnots(waypoint.speed)
-  end
-
   return nil
 end
 
---- Get waypoint.
+--- Get current orientation of the first unit in the group.
 -- @param #OPSGROUP self
--- @param #number indx Waypoint index.
--- @return #table Waypoint table.
-function OPSGROUP:GetWaypoint(indx)
-  return self.waypoints[indx]
-end
+-- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
+function OPSGROUP:GetOrientationX()
 
---- Get final waypoint.
--- @param #OPSGROUP self
--- @return #table Waypoint table.
-function OPSGROUP:GetWaypointFinal()
-  return self.waypoints[#self.waypoints]
-end
-
---- Get next waypoint.
--- @param #OPSGROUP self
--- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
--- @return #table Waypoint table.
-function OPSGROUP:GetWaypointNext(cyclic)
-
-  local n=self:GetWaypointIndexNext(cyclic)
+  local X,Y,Z=self:GetOrientation()
   
-  return self.waypoints[n]
+  return X
 end
 
---- Get current waypoint.
--- @param #OPSGROUP self
--- @return #table Waypoint table.
-function OPSGROUP:GetWaypointCurrent()
-  return self.waypoints[self.currentwp]
-end
+
 
 --- Check if task description is unique.
 -- @param #OPSGROUP self
@@ -497,29 +860,6 @@ function OPSGROUP:CheckTaskDescriptionUnique(description)
   return true
 end
 
---- Get coordinate of next waypoint of the group.
--- @param #OPSGROUP self
--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
--- @return #number Number of waypoint.
-function OPSGROUP:GetNextWaypointCoordinate()
-
-  -- Next waypoint.
-  local n=self:GetWaypointIndexNext(cyclic)
-
-  -- Next waypoint.
-  local wp=self.waypoints[n]
-
-  return self:GetWaypointCoordinate(wp)
-end
-
---- Get next waypoint coordinates.
--- @param #OPSGROUP self
--- @param #table wp Waypoint table.
--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
-function OPSGROUP:GetWaypointCoordinate(wp)
-  -- TODO: move this to COORDINATE class.
-  return COORDINATE:New(wp.x, wp.alt, wp.y)
-end
 
 --- Activate a *late activated* group.
 -- @param #OPSGROUP self
@@ -574,13 +914,37 @@ function OPSGROUP:SelfDestruction(Delay, ExplosionPower)
 
 end
 
+
+--- Check if group is exists.
+-- @param #OPSGROUP self
+-- @return #boolean If true, the group exists or false if the group does not exist. If nil, the DCS group could not be found.
+function OPSGROUP:IsExist()
+
+  local DCSGroup=self:GetDCSGroup()
+  
+  if DCSGroup then
+    local exists=DCSGroup:isExist()
+    return exists
+  end
+
+  return nil
+end
+
+--- Check if group is activated.
+-- @param #OPSGROUP self
+-- @return #boolean If true, the group exists or false if the group does not exist. If nil, the DCS group could not be found.
+function OPSGROUP:IsActive()
+
+end
+
 --- Check if group is alive.
 -- @param #OPSGROUP self
 -- @return #boolean *true* if group is exists and is activated, *false* if group is exist but is NOT activated. *nil* otherwise, e.g. the GROUP object is *nil* or the group is not spawned yet.
 function OPSGROUP:IsAlive()
 
   if self.group then
-    return self.group:IsAlive()
+    local alive=self.group:IsAlive()
+    return alive
   end
 
   return nil
@@ -623,14 +987,361 @@ end
 
 --- Check if this group is currently "uncontrolled" and needs to be "started" to begin its route.
 -- @param #OPSGROUP self
--- @return #boolean If this group uncontrolled.
+-- @return #boolean If true, this group uncontrolled.
 function OPSGROUP:IsUncontrolled()
   return self.isUncontrolled
+end
+
+--- Check if this group has passed its final waypoint.
+-- @param #OPSGROUP self
+-- @return #boolean If true, this group has passed the final waypoint.
+function OPSGROUP:HasPassedFinalWaypoint()
+  return self.passedfinalwp
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Waypoint Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get the waypoints.
+-- @param #OPSGROUP self
+-- @return #table Table of all waypoints.
+function OPSGROUP:GetWaypoints()
+  return self.waypoints
+end
+
+--- Mark waypoints on F10 map.
+-- @param #OPSGROUP self
+-- @param #number Duration Duration in seconds how long the waypoints are displayed before they are automatically removed. Default is that they are never removed.
+-- @return #OPSGROUP self
+function OPSGROUP:MarkWaypoints(Duration)
+
+  for i,_waypoint in pairs(self.waypoints or {}) do
+    local waypoint=_waypoint --#OPSGROUP.Waypoint
+    
+    local text=string.format("Waypoint ID=%d of %s", waypoint.uid, self.groupname)
+    text=text..string.format("\nSpeed=%.1f kts, Alt=%d ft (%s)", UTILS.MpsToKnots(waypoint.speed), UTILS.MetersToFeet(waypoint.alt), "BARO")
+    
+    if waypoint.marker then
+      if waypoint.marker.text~=text then
+        waypoint.marker.text=text
+      end
+      
+    else
+      waypoint.marker=MARKER:New(waypoint.coordinate, text):ToCoalition(self:GetCoalition())
+    end
+  end
+  
+  
+  if Duration then
+    self:RemoveWaypointMarkers(Duration)
+  end
+
+  return self
+end
+
+--- Remove waypoints markers on the F10 map.
+-- @param #OPSGROUP self
+-- @param #number Delay Delay in seconds before the markers are removed. Default is immediately.
+-- @return #OPSGROUP self
+function OPSGROUP:RemoveWaypointMarkers(Delay)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.RemoveWaypointMarkers, self)
+  else
+
+    for i,_waypoint in pairs(self.waypoints or {}) do
+      local waypoint=_waypoint --#OPSGROUP.Waypoint
+      
+      if waypoint.marker then
+        waypoint.marker:Remove()
+      end
+    end
+    
+  end
+  
+  return self
+end
+
+
+--- Get the waypoint from its unique ID.
+-- @param #OPSGROUP self
+-- @param #number uid Waypoint unique ID.
+-- @return #OPSGROUP.Waypoint Waypoint data.
+function OPSGROUP:GetWaypointByID(uid)
+
+  for _,_waypoint in pairs(self.waypoints) do
+    local waypoint=_waypoint --#OPSGROUP.Waypoint
+    if waypoint.uid==uid then
+      return waypoint
+    end
+  end
+
+  return nil
+end
+
+--- Get the waypoint from its index.
+-- @param #OPSGROUP self
+-- @param #number index Waypoint index.
+-- @return #OPSGROUP.Waypoint Waypoint data.
+function OPSGROUP:GetWaypointByIndex(index)
+
+  for i,_waypoint in pairs(self.waypoints) do
+    local waypoint=_waypoint --#OPSGROUP.Waypoint
+    if i==index then
+      return waypoint
+    end
+  end
+
+  return nil
+end
+
+--- Get the waypoint index (its position in the current waypoints table).
+-- @param #OPSGROUP self
+-- @param #number uid Waypoint unique ID.
+-- @return #OPSGROUP.Waypoint Waypoint data.
+function OPSGROUP:GetWaypointIndex(uid)
+
+  if uid then
+    for i,_waypoint in pairs(self.waypoints or {}) do
+      local waypoint=_waypoint --#OPSGROUP.Waypoint
+      if waypoint.uid==uid then
+        return i
+      end
+    end
+  end
+
+  return nil
+end
+
+--- Get next waypoint index.
+-- @param #OPSGROUP self
+-- @param #boolean cyclic If true, return first waypoint if last waypoint was reached. Default is patrol ad infinitum value set.
+-- @return #number Next waypoint index.
+function OPSGROUP:GetWaypointIndexNext(cyclic)
+
+  if cyclic==nil then
+    cyclic=self.adinfinitum
+  end
+  
+  local N=#self.waypoints
+
+  local n=math.min(self.currentwp+1, N)
+  
+  if cyclic and self.currentwp==N then
+    n=1
+  end
+  
+  return n
+end
+
+--- Get current waypoint index. This is the index of the last passed waypoint.
+-- @param #OPSGROUP self
+-- @return #number Current waypoint index.
+function OPSGROUP:GetWaypointIndexCurrent()  
+  return self.currentwp or 1
+end
+
+--- Get waypoint index after waypoint with given ID. So if the waypoint has index 3 it will return 4.
+-- @param #OPSGROUP self
+-- @param #number uid Unique ID of the waypoint. Default is new waypoint index after the last current one.
+-- @return #number Index after waypoint with given ID.
+function OPSGROUP:GetWaypointIndexAfterID(uid)
+
+  local index=self:GetWaypointIndex(uid)
+  if index then
+    return index+1
+  else
+    return #self.waypoints+1
+  end    
+  
+end
+
+--- Get waypoint.
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index.
+-- @return #OPSGROUP.Waypoint Waypoint table.
+function OPSGROUP:GetWaypoint(indx)
+  return self.waypoints[indx]
+end
+
+--- Get final waypoint.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP.Waypoint Final waypoint table.
+function OPSGROUP:GetWaypointFinal()
+  return self.waypoints[#self.waypoints]
+end
+
+--- Get next waypoint.
+-- @param #OPSGROUP self
+-- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
+-- @return #OPSGROUP.Waypoint Next waypoint table.
+function OPSGROUP:GetWaypointNext(cyclic)
+
+  local n=self:GetWaypointIndexNext(cyclic)
+  
+  return self.waypoints[n]
+end
+
+--- Get current waypoint.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP.Waypoint Current waypoint table.
+function OPSGROUP:GetWaypointCurrent()
+  return self.waypoints[self.currentwp]
+end
+
+--- Get coordinate of next waypoint of the group.
+-- @param #OPSGROUP self
+-- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
+-- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+function OPSGROUP:GetNextWaypointCoordinate(cyclic)
+
+  -- Get next waypoint  
+  local waypoint=self:GetWaypointNext(cyclic)
+
+  return waypoint.coordinate
+end
+
+--- Get waypoint coordinates.
+-- @param #OPSGROUP self
+-- @param #number index Waypoint index.
+-- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+function OPSGROUP:GetWaypointCoordinate(index)
+  local waypoint=self:GetWaypoint(index)
+  if waypoint then
+    return waypoint.coordinate
+  end
+  return nil
+end
+
+--- Get waypoint speed.
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index.
+-- @return #number Speed set at waypoint in knots.
+function OPSGROUP:GetWaypointSpeed(indx)
+
+  local waypoint=self:GetWaypoint(indx)
+  
+  if waypoint then
+    return UTILS.MpsToKnots(waypoint.speed)
+  end
+
+  return nil
+end
+
+--- Get unique ID of waypoint.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Waypoint waypoint The waypoint data table.
+-- @return #number Unique ID.
+function OPSGROUP:GetWaypointUID(waypoint)
+  return waypoint.uid
+end
+
+--- Get unique ID of waypoint given its index.
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index.
+-- @return #number Unique ID.
+function OPSGROUP:GetWaypointID(indx)
+
+  local waypoint=self:GetWaypoint(indx)
+  
+  if waypoint then
+    return waypoint.uid
+  end
+
+  return nil
+
+end
+
+--- Returns a non-zero speed to the next waypoint (even if the waypoint speed is zero).
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index.
+-- @return #number Speed to next waypoint (>0) in knots.
+function OPSGROUP:GetSpeedToWaypoint(indx)
+
+  local speed=self:GetWaypointSpeed(indx)
+  
+  if speed<=0.1 then
+    speed=self:GetSpeedCruise()
+  end
+
+  return speed
+end
+
+--- Get distance to waypoint.
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index. Default is the next waypoint.
+-- @return #number Distance in meters.
+function OPSGROUP:GetDistanceToWaypoint(indx)
+  local dist=0
+  
+  if #self.waypoints>0 then
+
+    indx=indx or self:GetWaypointIndexNext()
+  
+    local wp=self:GetWaypoint(indx)
+  
+    if wp then
+    
+      local coord=self:GetCoordinate()
+      
+      dist=coord:Get2DDistance(wp.coordinate)
+    end
+    
+  end
+  
+  return dist
+end
+
+--- Get time to waypoint based on current velocity.
+-- @param #OPSGROUP self
+-- @param #number indx Waypoint index. Default is the next waypoint.
+-- @return #number Time in seconds. If velocity is 0
+function OPSGROUP:GetTimeToWaypoint(indx)
+  
+  local s=self:GetDistanceToWaypoint(indx)
+  
+  local v=self:GetVelocity()
+  
+  local t=s/v
+  
+  if t==math.inf then
+    return 365*24*60*60
+  elseif t==math.nan then
+    return 0
+  else  
+    return t
+  end
+  
+end
+
+--- Returns the currently expected speed.
+-- @param #OPSGROUP self
+-- @return #number Expected speed in m/s.
+function OPSGROUP:GetExpectedSpeed()
+
+  if self:IsHolding() then
+    return 0
+  else
+    return self.speedWp or 0
+  end
+  
+end
+
+--- Remove a waypoint with a ceratin UID.
+-- @param #OPSGROUP self
+-- @param #number uid Waypoint UID.
+-- @return #OPSGROUP self
+function OPSGROUP:RemoveWaypointByID(uid)
+
+  local index=self:GetWaypointIndex(uid)
+  
+  if index then
+    self:RemoveWaypoint(index)    
+  end
+
+  return self
+end
 
 --- Remove a waypoint.
 -- @param #OPSGROUP self
@@ -642,6 +1353,12 @@ function OPSGROUP:RemoveWaypoint(wpindex)
   
     -- Number of waypoints before delete.
     local N=#self.waypoints
+    
+    -- Remove waypoint marker.
+    local wp=self:GetWaypoint(wpindex)
+    if wp and wp.marker then
+      wp.marker:Remove()
+    end
 
     -- Remove waypoint.
     table.remove(self.waypoints, wpindex)
@@ -650,46 +1367,44 @@ function OPSGROUP:RemoveWaypoint(wpindex)
     local n=#self.waypoints
     
     -- Debug info.
-    self:I(self.lid..string.format("Removing waypoint %d. N %d-->%d", wpindex, N, n))
+    self:T(self.lid..string.format("Removing waypoint index %d, current wp index %d. N %d-->%d", wpindex, self.currentwp, N, n))
   
-    -- Shift all waypoint tasks after the removed waypoint.
-    for _,_task in pairs(self.taskqueue) do
-      local task=_task --#OPSGROUP.Task
-      if task.type==OPSGROUP.TaskType.WAYPOINT and task.waypoint and task.waypoint>wpindex then
-        task.waypoint=task.waypoint-1
-      end
-    end  
-  
-    -- Shift all mission waypoints after the removerd waypoint.
-    for _,_mission in pairs(self.missionqueue) do
-      local mission=_mission --Ops.Auftrag#AUFTRAG
-      
-      -- Get mission waypoint index.
-      local wpidx=mission:GetGroupWaypointIndex(self)
-      
-      -- Reduce number if this waypoint lies in the future.
-      if wpidx and wpidx>wpindex then
-        mission:SetGroupWaypointIndex(self, wpidx-1)
-      end
-    end  
-  
-    
     -- Waypoint was not reached yet.
     if wpindex > self.currentwp then
     
-      -- Could be that we just removed the only remaining waypoint ==> passedfinalwp=true so we RTB or wait.
+      ---
+      -- Removed a FUTURE waypoint
+      ---
+      
+      -- TODO: patrol adinfinitum.
+      
       if self.currentwp>=n then
         self.passedfinalwp=true
       end
 
-      self:_CheckGroupDone()
-      
+      self:_CheckGroupDone(1)
+
     else
     
-      -- If an already passed waypoint was deleted, we do not need to update the route.
+      ---
+      -- Removed a waypoint ALREADY PASSED
+      ---
     
-      -- TODO: But what about the self.currentwp number. This is now incorrect!
-      self.currentwp=self.currentwp-1
+      -- If an already passed waypoint was deleted, we do not need to update the route.
+      
+      -- If current wp = 1 it stays 1. Otherwise decrease current wp.
+      
+      if self.currentwp==1 then
+      
+        if self.adinfinitum then
+          self.currentwp=#self.waypoints
+        else
+          self.currentwp=1
+        end
+        
+      else
+        self.currentwp=self.currentwp-1
+      end
     
     end
         
@@ -744,7 +1459,7 @@ function OPSGROUP:SetTask(DCSTask)
         text=text..string.format("\n[%d] %s", i, tostring(task.id))
       end
     end
-    self:I(self.lid..text)    
+    self:T(self.lid..text)    
   end
   
   return self
@@ -768,7 +1483,7 @@ function OPSGROUP:PushTask(DCSTask)
         text=text..string.format("\n[%d] %s", i, tostring(task.id))
       end
     end
-    self:I(self.lid..text)    
+    self:T(self.lid..text)    
   end
   
   return self
@@ -802,7 +1517,7 @@ function OPSGROUP:AddTask(task, clock, description, prio, duration)
   table.insert(self.taskqueue, newtask)
   
   -- Info.
-  self:I(self.lid..string.format("Adding SCHEDULED task %s starting at %s", newtask.description, UTILS.SecondsToClock(newtask.time, true)))
+  self:T(self.lid..string.format("Adding SCHEDULED task %s starting at %s", newtask.description, UTILS.SecondsToClock(newtask.time, true)))
   self:T3({newtask=newtask})
 
   return newtask
@@ -851,42 +1566,49 @@ end
 --- Add a *waypoint* task.
 -- @param #OPSGROUP self
 -- @param #table task DCS task table structure.
--- @param #number waypointindex Number of waypoint. Counting starts at one! Default is the as *next* waypoint.
+-- @param #OPSGROUP.Waypoint Waypoint where the task is executed. Default is the at *next* waypoint.
 -- @param #string description Brief text describing the task, e.g. "Attack SAM". 
 -- @param #number prio Priority of the task. Number between 1 and 100. Default is 50.
 -- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
 -- @return #OPSGROUP.Task The task structure.
-function OPSGROUP:AddTaskWaypoint(task, waypointindex, description, prio, duration)
-
-  -- Increase counter.
-  self.taskcounter=self.taskcounter+1
-
-  -- Task data structure.
-  local newtask={} --#OPSGROUP.Task
-  newtask.description=description
-  newtask.status=OPSGROUP.TaskStatus.SCHEDULED
-  newtask.dcstask=task
-  newtask.prio=prio or 50
-  newtask.id=self.taskcounter
-  newtask.duration=duration
-  newtask.time=0
-  newtask.waypoint=waypointindex or (self.currentwp and self.currentwp+1 or 2)
-  newtask.type=OPSGROUP.TaskType.WAYPOINT
-  newtask.stopflag=USERFLAG:New(string.format("%s StopTaskFlag %d", self.groupname, newtask.id))  
-  newtask.stopflag:Set(0)
-
-  -- Add to table.
-  table.insert(self.taskqueue, newtask)
+function OPSGROUP:AddTaskWaypoint(task, Waypoint, description, prio, duration)
   
-  -- Info.
-  self:I(self.lid..string.format("Adding WAYPOINT task %s at WP %d", newtask.description, newtask.waypoint))
-  self:T3({newtask=newtask})
-  
-  -- Update route.
-  --self:_CheckGroupDone(1)
-  self:__UpdateRoute(-1)
+  -- Waypoint of task.
+  Waypoint=Waypoint or self:GetWaypointNext()
+    
+  if Waypoint then
 
-  return newtask
+    -- Increase counter.
+    self.taskcounter=self.taskcounter+1
+
+    -- Task data structure.
+    local newtask={} --#OPSGROUP.Task
+    newtask.description=description or string.format("Task #%d", self.taskcounter)
+    newtask.status=OPSGROUP.TaskStatus.SCHEDULED
+    newtask.dcstask=task
+    newtask.prio=prio or 50
+    newtask.id=self.taskcounter
+    newtask.duration=duration
+    newtask.time=0
+    newtask.waypoint=Waypoint.uid
+    newtask.type=OPSGROUP.TaskType.WAYPOINT
+    newtask.stopflag=USERFLAG:New(string.format("%s StopTaskFlag %d", self.groupname, newtask.id))  
+    newtask.stopflag:Set(0)
+  
+    -- Add to table.
+    table.insert(self.taskqueue, newtask)
+    
+    -- Info.
+    self:T(self.lid..string.format("Adding WAYPOINT task %s at WP ID=%d", newtask.description, newtask.waypoint))
+    self:T3({newtask=newtask})
+    
+    -- Update route.
+    self:__UpdateRoute(-1)
+  
+    return newtask  
+  end
+  
+  return nil
 end
 
 --- Add an *enroute* task.
@@ -915,9 +1637,9 @@ end
 
 --- Get the unfinished waypoint tasks
 -- @param #OPSGROUP self
--- @param #number n Waypoint index. Counting starts at one.
+-- @param #number id Unique waypoint ID.
 -- @return #table Table of tasks. Table could also be empty {}.
-function OPSGROUP:GetTasksWaypoint(n)
+function OPSGROUP:GetTasksWaypoint(id)
 
   -- Tasks table.    
   local tasks={}
@@ -928,7 +1650,7 @@ function OPSGROUP:GetTasksWaypoint(n)
   -- Look for first task that SCHEDULED.
   for _,_task in pairs(self.taskqueue) do
     local task=_task --#OPSGROUP.Task
-    if task.type==OPSGROUP.TaskType.WAYPOINT and task.status==OPSGROUP.TaskStatus.SCHEDULED and task.waypoint==n then
+    if task.type==OPSGROUP.TaskType.WAYPOINT and task.status==OPSGROUP.TaskStatus.SCHEDULED and task.waypoint==id then
       table.insert(tasks, task)
     end
   end
@@ -1005,7 +1727,6 @@ function OPSGROUP:RemoveTask(Task)
       -- Update route if this is a waypoint task.
       if task.type==OPSGROUP.TaskType.WAYPOINT and task.status==OPSGROUP.TaskStatus.SCHEDULED then
         self:_CheckGroupDone(1)
-        --self:__UpdateRoute(-1)
       end
       
       return true
@@ -1082,9 +1803,8 @@ end
 function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
   -- Debug message.
-  local text=string.format("Task %s ID=%d execute.", tostring(Task.description), Task.id)
-  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-  self:I(self.lid..text)
+  local text=string.format("Task %s ID=%d execute", tostring(Task.description), Task.id)
+  self:T(self.lid..text)
   
   -- Cancel current task if there is any.
   if self.taskcurrent>0 then
@@ -1194,8 +1914,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
     
       -- Debug info.
       local text=string.format("Current task %s ID=%d cancelled (flag %s=%d)", Task.description, Task.id, Task.stopflag:GetName(), stopflag)
-      MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)    
-      self:I(self.lid..text)
+      self:T(self.lid..text)
       
       -- Set stop flag. When the flag is true, the _TaskDone function is executed and calls :TaskDone()
       Task.stopflag:Set(1)
@@ -1203,7 +1922,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
       if Task.dcstask.id=="Formation" then
         Task.formation:Stop()
         self:TaskDone(Task)
-      elseif stopflag==1 then
+      elseif stopflag==1 or not self:IsAlive() then
         -- Manual call TaskDone if setting flag to one was not successful.
         self:TaskDone(Task)
       end
@@ -1211,30 +1930,16 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
     else
             
       -- Debug info.
-      self:I(self.lid..string.format("TaskCancel: Setting task %s ID=%d to DONE", Task.description, Task.id))
+      self:T(self.lid..string.format("TaskCancel: Setting task %s ID=%d to DONE", Task.description, Task.id))
       
       -- Call task done function.      
       self:TaskDone(Task)
-      
-      
-      --[[
-      local mission=self:GetMissionByTaskID(Task.id)
-      
-      -- Is this a waypoint task?
-      if Task.type==OPSGROUP.TaskType.WAYPOINT and Task.waypoint then
 
-        -- Check that this is a mission waypoint and no other tasks are defined here.      
-        if mission and #self:GetTasksWaypoint(Task.waypoint)==0 then
-          self:RemoveWaypoint(Task.waypoint)
-        end
-      end
-      ]]
     end
     
   else
   
     local text=string.format("WARNING: No (current) task to cancel!")
-    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
     self:E(self.lid..text)
     
   end
@@ -1268,8 +1973,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
 
   -- Debug message.
   local text=string.format("Task done: %s ID=%d", Task.description, Task.id)
-  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- No current task.
   if Task.id==self.taskcurrent then
@@ -1317,6 +2021,9 @@ function OPSGROUP:AddMission(Mission)
   
   -- Set mission status to SCHEDULED.
   Mission:Scheduled()
+  
+  -- Add elements.
+  Mission.Nelements=Mission.Nelements+#self.elements
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -1324,7 +2031,7 @@ function OPSGROUP:AddMission(Mission)
   -- Info text.
   local text=string.format("Added %s mission %s starting at %s, stopping at %s", 
   tostring(Mission.type), tostring(Mission.name), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "INF")
-  self:I(self.lid..text)
+  self:T(self.lid..text)
   
   return self
 end
@@ -1409,10 +2116,19 @@ function OPSGROUP:_GetNextMission()
   local time=timer.getAbsTime()
 
   -- Look for first mission that is SCHEDULED.
+  local vip=math.huge
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG    
+    if mission.importance and mission.importance<vip then
+      vip=mission.importance
+    end
+  end
+
+  -- Look for first mission that is SCHEDULED.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
-    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) then
+    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) and (mission.importance==nil or mission.importance<=vip) then
       return mission
     end
   end
@@ -1480,7 +2196,7 @@ end
 function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
 
   -- Debug info.
-  self:I(self.lid..string.format("Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
+  self:T(self.lid..string.format("Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
 
   -- Delay for route to mission. Group needs to be activated and controlled.
   local delay=0
@@ -1491,13 +2207,13 @@ function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
     -- Activate group if it is late activated.
     if self:IsLateActivated() then
       self:Activate(delay)
-      --delay=delay+1
+      delay=delay+1
     end
   
   end
   
   -- Startup group if it is uncontrolled.
-  if self.isAircraft and self:IsParking() and self:IsUncontrolled() then
+  if self.isAircraft and self:IsUncontrolled() then
     self:StartUncontrolled(delay)
   end  
 
@@ -1515,7 +2231,6 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
   -- Debug output.
   local text=string.format("Starting %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
   self:T(self.lid..text)
-  MESSAGE:New(text, 30, self.groupname):ToAllIf(self.Debug)
 
   -- Set current mission.
   self.currentmission=Mission.auftragsnummer
@@ -1541,19 +2256,13 @@ function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
 
   local text=string.format("Executing %s Mission %s, target %s", Mission.type, tostring(Mission.name), Mission:GetTargetName())
   self:T(self.lid..text)
-  MESSAGE:New(text, 30, self.groupname):ToAllIf(self.Debug)
   
   -- Set group mission status to EXECUTING.
   Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.EXECUTING)
   
   -- Set mission status to EXECUTING.
   Mission:Executing()
-  
-  -- Formation
-  if Mission.optionFormation then
-    self:SwitchFormation(Mission.optionFormation)
-  end  
-  
+    
 end
 
 --- On after "PauseMission" event.
@@ -1618,12 +2327,16 @@ end
 function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
 
   if self.currentmission and Mission.auftragsnummer==self.currentmission then
-    
+
+    ---
+    -- Current Mission
+    ---
+
     -- Get mission waypoint task.
     local Task=Mission:GetGroupWaypointTask(self)
     
     -- Debug info.
-    self:I(self.lid..string.format("Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+    self:T(self.lid..string.format("Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
 
     -- Cancelling the mission is actually cancelling the current task.
     -- Note that two things can happen.
@@ -1634,11 +2347,15 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
         
   else
   
-    -- Not the current mission.
-    -- TODO: remove mission from queue?
+    ---
+    -- NOT the current mission
+    ---
  
     -- Set mission group status.
-    Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.CANCELLED) 
+    Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.CANCELLED)
+    
+    -- Remove mission from queue
+    self:RemoveMission(Mission)
     
     -- Send group RTB or WAIT if nothing left to do.
     self:_CheckGroupDone(1)
@@ -1657,8 +2374,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
 
   -- Debug info.
   local text=string.format("Mission %s DONE!", Mission.name)
-  self:I(self.lid..text)
-  MESSAGE:New(text, 30, self.groupname):ToAllIf(self.Debug)
+  self:T(self.lid..text)
   
   -- Set group status.
   Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.DONE)
@@ -1671,7 +2387,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   -- Remove mission waypoint.
   local wpidx=Mission:GetGroupWaypointIndex(self)
   if wpidx then
-    self:RemoveWaypoint(wpidx)
+    self:RemoveWaypointByID(wpidx)
   end
   
   -- Decrease patrol data.
@@ -1679,8 +2395,51 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
     Mission.patroldata.noccupied=Mission.patroldata.noccupied-1
     AIRWING.UpdatePatrolPointMarker(Mission.patroldata)
   end
+  
+  -- ROE to default.
+  if Mission.optionROE then
+    self:SwitchROE()
+  end
+  -- ROT to default
+  if Mission.optionROT then
+    self:SwitchROT()
+  end
+  -- Alarm state to default.
+  if Mission.optionAlarm then
+    self:SwitchAlarmstate()
+  end  
+  -- Formation to default.
+  if Mission.optionFormation then
+    self:SwitchFormation()
+  end
+  -- Radio freq and modu to default.
+  if Mission.radio then
+    self:SwitchRadio()
+  end
 
-  -- TODO: reset mission specific parameters like radio, ROE etc.  
+  -- TACAN beacon.
+  if Mission.tacan then
+
+    -- Switch to default.  
+    self:_SwitchTACAN()
+    
+    -- Return Squadron TACAN channel.
+    local squadron=self.squadron --Ops.Squadron#SQUADRON
+    if squadron then
+      squadron:ReturnTacan(Mission.tacan.Channel)
+    end
+    
+    -- Set asset TACAN to nil.
+    local asset=Mission:GetAssetByName(self.groupname)
+    if asset then
+      asset.tacan=nil
+    end  
+  end
+  
+  -- ICLS beacon to default.
+  if Mission.icls then
+    self:_SwitchICLS()  
+  end
   
   -- Check if group is done.
   self:_CheckGroupDone(1)
@@ -1698,8 +2457,8 @@ function OPSGROUP:RouteToMission(mission, delay)
     self:ScheduleOnce(delay, OPSGROUP.RouteToMission, self, mission)
   else
         
-    -- Next waypoint.
-    local nextwaypoint=self.currentwp+1
+    -- ID of current waypoint.
+    local uid=self:GetWaypointCurrent().uid    
     
     -- Get coordinate where the mission is executed.    
     local waypointcoord=mission:GetMissionWaypointCoord(self.group)
@@ -1708,9 +2467,9 @@ function OPSGROUP:RouteToMission(mission, delay)
     for _,task in pairs(mission.enrouteTasks) do
       self:AddTaskEnroute(task)
     end
-  
-    -- Add waypoint.
-    self:AddWaypoint(waypointcoord, UTILS.KmphToKnots(self.speedCruise), nextwaypoint, false)
+    
+    -- Speed to mission waypoint.
+    local SpeedToMission=UTILS.KmphToKnots(self.speedCruise)
     
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
@@ -1729,16 +2488,56 @@ function OPSGROUP:RouteToMission(mission, delay)
       
       end
     
+    elseif mission.type==AUFTRAG.Type.ARTY then
+    
+      -- Get weapon range.
+      local weapondata=self:GetWeaponData(mission.engageWeaponType)
+      
+      if weapondata then
+      
+        -- Get target coordinate.
+        local targetcoord=mission:GetTargetCoordinate()
+        
+        -- Heading to target.
+        local heading=self:GetCoordinate():HeadingTo(targetcoord)
+        
+        -- Distance to target.
+        local dist=self:GetCoordinate():Get2DDistance(targetcoord)
+                
+        -- Check if we are within range.
+        if dist>weapondata.RangeMax then
+        
+          local d=(dist-weapondata.RangeMax)*1.1
+          
+          -- New waypoint coord.
+          waypointcoord=self:GetCoordinate():Translate(d, heading)
+          
+          self:T(self.lid..string.format("Out of max range = %.1f km for weapon %d", weapondata.RangeMax/1000, mission.engageWeaponType))
+        elseif dist<weapondata.RangeMin then
+        
+          local d=(dist-weapondata.RangeMin)*1.1
+          
+          -- New waypoint coord.
+          waypointcoord=self:GetCoordinate():Translate(d, heading)
+          
+          self:T(self.lid..string.format("Out of min range = %.1f km for weapon %d", weapondata.RangeMax/1000, mission.engageWeaponType))
+        end
+        
+      end
+    
     end
+
+    -- Add waypoint.
+    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, nil, false)
     
     -- Add waypoint task. UpdateRoute is called inside.
-    local waypointtask=self:AddTaskWaypoint(mission.DCStask, nextwaypoint, mission.name, mission.prio, mission.duration)
+    local waypointtask=self:AddTaskWaypoint(mission.DCStask, waypoint, mission.name, mission.prio, mission.duration)
     
     -- Set waypoint task.
     mission:SetGroupWaypointTask(self, waypointtask)
     
     -- Set waypoint index.
-    mission:SetGroupWaypointIndex(self, nextwaypoint)
+    mission:SetGroupWaypointIndex(self, waypoint.uid)
     
     ---
     -- Mission Specific Settings
@@ -1746,23 +2545,31 @@ function OPSGROUP:RouteToMission(mission, delay)
     
     -- ROE
     if mission.optionROE then
-      self:SetOptionROE(mission.optionROE)
+      self:SwitchROE(mission.optionROE)
     end
     -- ROT
     if mission.optionROT then
-      self:SetOptionROT(mission.optionROT)
+      self:SwitchROT(mission.optionROT)
     end
-    -- Radio
-    if mission.radioFreq then
-      self:SwitchRadioOn(mission.radioFreq, mission.radioModu)
-    end
-    -- TACAN
-    if mission.tacanChannel then
-      self:SwitchTACANOn(mission.tacanChannel, mission.tacanMorse)
+    -- Alarm state.
+    if mission.optionAlarm then
+      self:SwitchAlarmstate(mission.optionAlarm)
     end
     -- Formation
     if mission.optionFormation then
       self:SwitchFormation(mission.optionFormation)
+    end      
+    -- Radio frequency and modulation.
+    if mission.radio then
+      self:SwitchRadio(mission.radio.Freq, mission.radio.Modu)
+    end
+    -- TACAN settings.
+    if mission.tacan then
+      self:SwitchTACAN(mission.tacan.Channel, mission.tacan.Morse, mission.tacan.BeaconName, mission.tacan.Band)
+    end
+    -- ICLS settings.
+    if mission.icls then
+      self:SwitchICLS(mission.icls.Channel, mission.icls.Morse, mission.icls.UnitName)
     end
     
   end
@@ -1774,17 +2581,14 @@ end
 
 --- On after "QueueUpdate" event. 
 -- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function OPSGROUP:onafterQueueUpdate(From, Event, To)
+function OPSGROUP:_QueueUpdate()
 
   ---
   -- Mission
   ---
 
    -- First check if group is alive? Late activated groups are activated and uncontrolled units are started automatically.
-  if self:IsAlive()~=nil then
+  if self:IsExist() then
   
     local mission=self:_GetNextMission()
     
@@ -1831,10 +2635,6 @@ function OPSGROUP:onafterQueueUpdate(From, Event, To)
     
   end
 
-  -- Update queue every ~5 sec.
-  if not self:IsStopped() then
-    self:__QueueUpdate(-5)
-  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1846,18 +2646,47 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Waypoint passed.
--- @param #number N Total number of waypoints.
-function OPSGROUP:onafterPassingWaypoint(From, Event, To, n, N)
-  local text=string.format("Group passed waypoint %d/%d", n, N)
-  self:T(self.lid..text)
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
+-- @param #OPSGROUP.Waypoint Waypoint Waypoint data passed.
+function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   
-  -- Get all waypoint tasks.
-  local tasks=self:GetTasksWaypoint(n)
+  -- Apply tasks of this waypoint.
+  local ntasks=self:_SetWaypointTasks(Waypoint)
   
+  -- Get waypoint index.
+  local wpindex=self:GetWaypointIndex(Waypoint.uid)
+
+  -- Final waypoint reached?
+  if wpindex==nil or wpindex==#self.waypoints then
+
+    -- Set switch to true.    
+    self.passedfinalwp=true
+    
+    -- Check if all tasks/mission are done? If so, RTB or WAIT.
+    -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
+    if ntasks==0 then
+      self:_CheckGroupDone(1)
+    end
+
+  end
+
   -- Debug info.
-  local text=string.format("WP %d/%d tasks:", n, N)
+  local text=string.format("Group passed waypoint %s/%d ID=%d: final=%s detour=%s astar=%s", 
+  tostring(wpindex), #self.waypoints, Waypoint.uid, tostring(self.passedfinalwp), tostring(Waypoint.detour), tostring(Waypoint.astar))
+  self:T(self.lid..text)
+  
+end
+
+--- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Waypoint Waypoint The waypoint.
+-- @return #number Number of tasks.
+function OPSGROUP:_SetWaypointTasks(Waypoint)
+
+  -- Get all waypoint tasks.
+  local tasks=self:GetTasksWaypoint(Waypoint.uid)
+
+  -- Debug info.
+  local text=string.format("WP uid=%d tasks:", Waypoint.uid)
   if #tasks>0 then
     for i,_task in pairs(tasks) do
       local task=_task --#OPSGROUP.Task
@@ -1895,20 +2724,8 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   if #taskswp>0 then
     self:SetTask(self.group:TaskCombo(taskswp))
   end
-  
-  -- Final AIR waypoint reached?
-  if n==N then
 
-    -- Set switch to true.    
-    self.passedfinalwp=true
-    
-    -- Check if all tasks/mission are done? If so, RTB or WAIT.
-    -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
-    if #taskswp==0 then
-      self:_CheckGroupDone(1)
-    end
-
-  end
+  return #taskswp
 end
 
 --- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
@@ -1916,25 +2733,30 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n The goto waypoint number.
-function OPSGROUP:onafterGotoWaypoint(From, Event, To, n)
+-- @param #number UID The goto waypoint unique ID.
+function OPSGROUP:onafterGotoWaypoint(From, Event, To, UID)
 
-  -- The last waypoint passed was n-1
-  self.currentwp=n-1
+  local n=self:GetWaypointIndex(UID)
   
-  -- TODO: switch to re-enable waypoint tasks.
-  if false then
-    local tasks=self:GetTasksWaypoint(n)
-    
-    for _,_task in pairs(tasks) do
-      local task=_task --#OPSGROUP.Task
-      task.status=OPSGROUP.TaskStatus.SCHEDULED
+  if n then
+  
+    -- TODO: switch to re-enable waypoint tasks.
+    if false then
+      local tasks=self:GetTasksWaypoint(n)
+      
+      for _,_task in pairs(tasks) do
+        local task=_task --#OPSGROUP.Task
+        task.status=OPSGROUP.TaskStatus.SCHEDULED
+      end
+      
     end
     
+    local Speed=self:GetSpeedToWaypoint(n)
+        
+    -- Update the route.
+    self:__UpdateRoute(-1, n, Speed)
+    
   end
-  
-  -- Update the route.
-  self:UpdateRoute()
   
 end
 
@@ -1945,8 +2767,22 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Unit#UNIT Unit The detected unit.
 function OPSGROUP:onafterDetectedUnit(From, Event, To, Unit)
-  self:T2(self.lid..string.format("Detected unit %s", Unit:GetName()))
-  self.detectedunits:AddUnit(Unit)
+
+  -- Get unit name.
+  local unitname=Unit and Unit:GetName() or "unknown"
+
+  -- Debug.
+  self:T2(self.lid..string.format("Detected unit %s", unitname))
+  
+  
+  if self.detectedunits:FindUnit(unitname) then
+    -- Unit is already in the detected unit set ==> Trigger "DetectedUnitKnown" event.
+    self:DetectedUnitKnown(Unit)
+  else
+    -- Unit is was not detected ==> Trigger "DetectedUnitNew" event.
+    self:DetectedUnitNew(Unit)
+  end  
+  
 end
 
 --- On after "DetectedUnitNew" event.
@@ -1957,6 +2793,9 @@ end
 -- @param Wrapper.Unit#UNIT Unit The detected unit.
 function OPSGROUP:onafterDetectedUnitNew(From, Event, To, Unit)
   self:T(self.lid..string.format("Detected New unit %s", Unit:GetName()))
+  
+  -- Add unit to detected unit set.
+  self.detectedunits:AddUnit(Unit)
 end
 
 --- On after "EnterZone" event. Sets self.inzones[zonename]=true.
@@ -1983,27 +2822,104 @@ function OPSGROUP:onafterLeaveZone(From, Event, To, Zone)
   self.inzones:Remove(zonename, true)
 end
 
---- On after "CheckZone" event.
+
+--- On after "ElementDestroyed" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function OPSGROUP:onafterCheckZone(From, Event, To)
+-- @param #OPSGROUP.Element Element The flight group element.
+function OPSGROUP:onafterElementDestroyed(From, Event, To, Element)
+  self:T(self.lid..string.format("Element destroyed %s", Element.name))
+  
+  -- Cancel all missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
 
-  if self:IsAlive()==true then
-    self:_CheckInZones()
-  end
+    mission:ElementDestroyed(self, Element)
 
-  if not self:IsStopped() then
-    self:__CheckZone(-1)
   end
+  
+  -- Increase counter.
+  self.Ndestroyed=self.Ndestroyed+1
+
+  -- Set element status.
+  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
+  
 end
+
+--- On after "ElementDead" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Element Element The flight group element.
+function OPSGROUP:onafterElementDead(From, Event, To, Element)
+  self:T(self.lid..string.format("Element dead %s", Element.name))
+
+  -- Set element status.
+  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
+end
+
+--- On after "Dead" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterDead(From, Event, To)
+  self:T(self.lid..string.format("Group dead!"))
+
+  -- Delete waypoints so they are re-initialized at the next spawn.
+  self.waypoints=nil
+  self.groupinitialized=false
+
+  -- Cancel all missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    self:MissionCancel(mission)
+    mission:GroupDead(self)
+
+  end
+
+  -- Stop in a sec.
+  self:__Stop(-5)
+end
+
+--- On after "Stop" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterStop(From, Event, To)
+  
+  -- Stop check timers.
+  self.timerCheckZone:Stop()
+  self.timerQueueUpdate:Stop()
+
+  -- Stop FSM scheduler.
+  self.CallScheduler:Clear()
+  
+  if self:IsAlive() and not (self:IsDead() or self:IsStopped()) then
+    local life, life0=self:GetLifePoints()
+    local state=self:GetState()
+    local text=string.format("WARNING: Group is still alive! Current state=%s. Life points=%d/%d. Use OPSGROUP:Destroy() or OPSGROUP:Despawn() for a clean stop", state, life, life0)
+    self:E(self.lid..text)
+  end
+
+  -- Debug output.
+  self:T(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Internal Check Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check if group is in zones.
 -- @param #OPSGROUP self
 function OPSGROUP:_CheckInZones()
 
-  if self.checkzones then
+  if self.checkzones and self:IsAlive() then
   
     local Ncheck=self.checkzones:Count()
     local Ninside=self.inzones:Count()
@@ -2016,7 +2932,7 @@ function OPSGROUP:_CheckInZones()
     for inzonename, inzone in pairs(self.inzones:GetSet()) do
         
       -- Check if group is still inside the zone.
-      local isstillinzone=self.group:IsPartlyOrCompletelyInZone(inzone)
+      local isstillinzone=self.group:IsInZone(inzone) --:IsPartlyOrCompletelyInZone(inzone)
       
       -- If not, trigger, LeaveZone event.
       if not isstillinzone then
@@ -2036,7 +2952,7 @@ function OPSGROUP:_CheckInZones()
       local checkzone=_checkzone --Core.Zone#ZONE
       
       -- Is group currtently in this check zone?
-      local isincheckzone=self.group:IsPartlyOrCompletelyInZone(checkzone)
+      local isincheckzone=self.group:IsInZone(checkzone) --:IsPartlyOrCompletelyInZone(checkzone)
 
       if isincheckzone and not self.inzones:_Find(checkzonename) then
         table.insert(enterzones, checkzone)
@@ -2047,7 +2963,6 @@ function OPSGROUP:_CheckInZones()
     for _,enterzone in pairs(enterzones) do
       self:EnterZone(enterzone)
     end
-    
     
   end
 
@@ -2067,6 +2982,8 @@ function OPSGROUP:_CheckDetectedUnits()
       local DetectedObject=Detection.object -- DCS#Object
 
       if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
+      
+        -- Unit.
         local unit=UNIT:Find(DetectedObject)
         
         if unit and unit:IsAlive() then
@@ -2077,16 +2994,8 @@ function OPSGROUP:_CheckDetectedUnits()
           -- Add unit to detected table of this run.        
           table.insert(detected, unit)
           
-          -- Trigger detected unit event.
+          -- Trigger detected unit event ==> This also triggers the DetectedUnitNew and DetectedUnitKnown events.
           self:DetectedUnit(unit)
-          
-          if self.detectedunits:FindUnit(unitname) then
-            -- Unit is already in the detected unit set ==> Trigger "DetectedUnitKnown" event.
-            self:DetectedUnitKnown(unit)
-          else
-            -- Unit is was not detected ==> Trigger "DetectedUnitNew" event.
-            self:DetectedUnitNew(unit)
-          end
           
         end
       end
@@ -2121,24 +3030,260 @@ function OPSGROUP:_CheckDetectedUnits()
 
 end
 
+--- Check if passed the final waypoint and, if necessary, update route.
+-- @param #OPSGROUP self
+-- @param #number delay Delay in seconds.
+function OPSGROUP:_CheckGroupDone(delay)
+
+  if self:IsAlive() and self.ai then
+
+    if delay and delay>0 then
+      -- Delayed call.
+      self:ScheduleOnce(delay, self._CheckGroupDone, self)
+    else
+    
+      if self.passedfinalwp then
+      
+        ---
+        -- Passed FINAL waypoint
+        ---
+      
+        if #self.waypoints>1 then
+        
+          if self.adinfinitum then
+          
+            -- Get positive speed to first waypoint.
+            local speed=self:GetSpeedToWaypoint(1)
+          
+            -- Start route at first waypoint.
+            self:__UpdateRoute(-1, 1, speed)
+            
+            self:T(self.lid..string.format("Passed final WP, #WP>1, adinfinitum=TRUE ==> Goto WP 1 at speed>0"))
+                        
+            self.passedfinalwp=false
+            
+          else
+            -- No further waypoints. Command a full stop.
+            self:__FullStop(-1)
+            
+            self:T(self.lid..string.format("Passed final WP, #WP>1, adinfinitum=FALSE ==> Full Stop"))
+          end
+          
+        elseif #self.waypoints==1 then
+        
+          --- Only one WP left
+        
+          -- The last waypoint.
+          local waypoint=self.waypoints[1] --Ops.OpsGroup#OPSGROUP.Waypoint
+          
+          local dist=self:GetCoordinate():Get2DDistance(waypoint.coordinate)          
+          
+          
+          if self.adinfinitum and dist>1000 then  -- Note that dist>100 caused the same wp to be passed a lot of times.
+          
+            self:T(self.lid..string.format("Passed final WP, #WP=1, adinfinitum=TRUE dist>1000 ==> Goto WP 1 at speed>0"))
+
+            -- Get positive speed to first waypoint.
+            local speed=self:GetSpeedToWaypoint(1)
+          
+            -- Start route at first waypoint.
+            self:__UpdateRoute(-1, 1, speed)
+            
+            self.passedfinalwp=false
+            
+          else
+          
+            self:T(self.lid..string.format("Passed final WP, #WP=1, adinfinitum=FALSE or dist<1000 ==> Full Stop"))
+          
+            self:__FullStop(-1)
+            
+          end
+          
+        else
+        
+          --- No waypoints left
+
+          -- No further waypoints. Command a full stop.
+          self:T(self.lid..string.format("No waypoints left ==> Full Stop"))
+          
+          self:__FullStop(-1)
+          
+        end
+    
+      else
+      
+        ---
+        -- Final waypoint NOT passed yet
+        ---
+      
+        if #self.waypoints>0 then
+          self:T(self.lid..string.format("NOT Passed final WP, #WP>0 ==> Update Route"))
+          self:__UpdateRoute(-1)
+        else
+          self:E(self.lid..string.format("WARNING: No waypoints left! Commanding a Full Stop"))
+          self:__FullStop(-1)
+        end
+        
+      end
+    
+    end
+    
+  end
+  
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Status Info Common to Air, Land and Sea
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Print info on mission and task status to DCS log file.
+-- @param #OPSGROUP self
+function OPSGROUP:_PrintTaskAndMissionStatus()
+
+  ---
+  -- Tasks: verbose >= 3
+  ---
+  
+  -- Task queue.
+  if self.verbose>=3 and #self.taskqueue>0 then  
+    local text=string.format("Tasks #%d", #self.taskqueue)
+    for i,_task in pairs(self.taskqueue) do
+      local task=_task --Ops.OpsGroup#OPSGROUP.Task
+      local name=task.description
+      local taskid=task.dcstask.id or "unknown"
+      local status=task.status
+      local clock=UTILS.SecondsToClock(task.time, true)
+      local eta=task.time-timer.getAbsTime()
+      local started=task.timestamp and UTILS.SecondsToClock(task.timestamp, true) or "N/A"
+      local duration=-1
+      if task.duration then
+        duration=task.duration
+        if task.timestamp then
+          -- Time the task is running.
+          duration=task.duration-(timer.getAbsTime()-task.timestamp)
+        else
+          -- Time the task is supposed to run.
+          duration=task.duration
+        end
+      end
+      -- Output text for element.
+      if task.type==OPSGROUP.TaskType.SCHEDULED then
+        text=text..string.format("\n[%d] %s (%s): status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
+      elseif task.type==OPSGROUP.TaskType.WAYPOINT then
+        text=text..string.format("\n[%d] %s (%s): status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
+      end
+    end
+    self:I(self.lid..text)
+  end
+  
+  ---
+  -- Missions: verbose>=2
+  ---
+  
+  -- Current mission name.
+  if self.verbose>=2 then  
+    local Mission=self:GetMissionByID(self.currentmission)
+    
+    -- Current status.
+    local text=string.format("Missions %d, Current: %s", self:CountRemainingMissison(), Mission and Mission.name or "none")
+    for i,_mission in pairs(self.missionqueue) do
+      local mission=_mission --Ops.Auftrag#AUFTRAG
+      local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
+      local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
+      text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d wp=%s targets=%d", 
+      i, tostring(mission.name), mission.type, mission:GetGroupStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, tostring(mission:GetGroupWaypointIndex(self)), mission:CountMissionTargets())
+    end
+    self:I(self.lid..text)
+  end
+
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Waypoints & Routing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Enhance waypoint table.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Waypoint Waypoint data.
+-- @return #OPSGROUP.Waypoint Modified waypoint data.
+function OPSGROUP:_CreateWaypoint(waypoint)
+  
+  -- Set uid.
+  waypoint.uid=self.wpcounter
+  
+  -- Waypoint has not been passed yet.
+  waypoint.npassed=0
+    
+  -- Coordinate.
+  waypoint.coordinate=COORDINATE:New(waypoint.x, waypoint.alt, waypoint.y)
+
+  -- Set waypoint name.
+  waypoint.name=string.format("Waypoint UID=%d", waypoint.uid)  
+    
+  -- Set types.
+  waypoint.patrol=false
+  waypoint.detour=false
+  waypoint.astar=false
+
+  -- Increase UID counter.
+  self.wpcounter=self.wpcounter+1
+  
+  return waypoint
+end
+
 --- Initialize Mission Editor waypoints.
 -- @param #OPSGROUP self
--- @param #table waypoints Table of waypoints. Default is from group template.
+-- @param #OPSGROUP.Waypoint waypoint Waypoint data.
+-- @param #number wpnumber Waypoint index/number. Default is as last waypoint.
+function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
+
+  -- Index.
+  wpnumber=wpnumber or #self.waypoints+1
+
+  -- Add waypoint to table.
+  table.insert(self.waypoints, wpnumber, waypoint)
+
+  -- Debug info.
+  self:T(self.lid..string.format("Adding waypoint at index=%d id=%d", wpnumber, waypoint.uid))
+  
+  -- Now we obviously did not pass the final waypoint.
+  self.passedfinalwp=false
+  
+  -- Switch to cruise mode.
+  if self:IsHolding() then
+    self:Cruise()
+  end
+end
+
+--- Initialize Mission Editor waypoints.
+-- @param #OPSGROUP self
 -- @return #OPSGROUP self
-function OPSGROUP:InitWaypoints(waypoints)
+function OPSGROUP:InitWaypoints()
 
   -- Template waypoints.
   self.waypoints0=self.group:GetTemplateRoutePoints()
 
-  -- Waypoints of group as defined in the ME.
-  self.waypoints=waypoints or UTILS.DeepCopy(self.waypoints0)
+  -- Waypoints  
+  self.waypoints={}
+  
+  for index,wp in pairs(self.waypoints0) do
+  
+    --local waypoint=self:_CreateWaypoint(wp)    
+    --self:_AddWaypoint(waypoint)
+    
+    local coordinate=COORDINATE:New(wp.x, wp.alt, wp.y)
+    local speedknots=UTILS.MpsToKnots(wp.speed)
+    
+    if index==1 then
+      self.speedWp=wp.speed
+    end
+    
+    self:AddWaypoint(coordinate, speedknots, index-1, nil, false)
+     
+  end
   
   -- Debug info.
-  self:I(self.lid..string.format("Initializing %d waypoints", #self.waypoints))
+  self:T(self.lid..string.format("Initializing %d waypoints", #self.waypoints))
   
   -- Update route.
   if #self.waypoints>0 then
@@ -2156,7 +3301,7 @@ end
 --- Route group along waypoints.
 -- @param #OPSGROUP self
 -- @param #table waypoints Table of waypoints.
--- @default
+-- @param #number delay Delay in seconds.
 -- @return #OPSGROUP self
 function OPSGROUP:Route(waypoints, delay)
 
@@ -2198,21 +3343,22 @@ end
 -- @param #number n Waypoint
 function OPSGROUP:_UpdateWaypointTasks(n)
 
-  local waypoints=self.waypoints
+  local waypoints=self.waypoints or {}
   local nwaypoints=#waypoints
 
-  for i,wp in pairs(waypoints) do
+  for i,_wp in pairs(waypoints) do
+    local wp=_wp --Ops.OpsGroup#OPSGROUP.Waypoint 
     
     if i>=n or nwaypoints==1 then
     
       -- Debug info.
-      self:T(self.lid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d", i, nwaypoints, self.currentwp))
+      self:T(self.lid..string.format("Updating waypoint task for waypoint %d/%d ID=%d. Last waypoint passed %d", i, nwaypoints, wp.uid, self.currentwp))
   
       -- Tasks of this waypoint
       local taskswp={}
     
       -- At each waypoint report passing.
-      local TaskPassingWaypoint=self.group:TaskFunction("OPSGROUP._PassingWaypoint", self, i)      
+      local TaskPassingWaypoint=self.group:TaskFunction("OPSGROUP._PassingWaypoint", self, wp.uid)
       table.insert(taskswp, TaskPassingWaypoint)      
           
       -- Waypoint task combo.
@@ -2229,22 +3375,73 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function called when a group is passing a waypoint.
---@param Wrapper.Group#GROUP group Group that passed the waypoint
+--@param Wrapper.Group#GROUP group Group that passed the waypoint.
 --@param #OPSGROUP opsgroup Ops group object.
---@param #number i Waypoint number that has been reached.
-function OPSGROUP._PassingWaypoint(group, opsgroup, i)
-
-  local final=#opsgroup.waypoints or 1
-
-  -- Debug message.
-  local text=string.format("Group passing waypoint %d of %d", i, final)
-  opsgroup:I(opsgroup.lid..text)
-
-  -- Set current waypoint.
-  opsgroup.currentwp=i
-
-  -- Trigger PassingWaypoint event.
-  opsgroup:PassingWaypoint(i, final)
+--@param #number uid Waypoint UID.
+function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
+  
+  -- Get waypoint data.
+  local waypoint=opsgroup:GetWaypointByID(uid)
+  
+  if waypoint then
+  
+    -- Get the current waypoint index.
+    opsgroup.currentwp=opsgroup:GetWaypointIndex(uid)
+    
+    -- Increase passing counter.
+    waypoint.npassed=waypoint.npassed+1
+    
+    -- Set expected speed and formation from the next WP.
+    local wpnext=opsgroup:GetWaypointNext()  
+    if wpnext then
+      
+      -- Set formation.
+      if opsgroup.isGround then
+        opsgroup.formation=wpnext.action
+      end
+      
+      -- Set speed.
+      opsgroup.speed=wpnext.speed
+      
+    end
+    
+    -- Check if the group is still pathfinding.
+    if opsgroup.ispathfinding and not waypoint.astar then
+      opsgroup.ispathfinding=false
+    end  
+    
+    -- Check special waypoints.
+    if waypoint.astar then
+    
+      opsgroup:RemoveWaypointByID(uid)
+      
+    elseif waypoint.detour then
+    
+      opsgroup:RemoveWaypointByID(uid)
+      
+      -- Trigger event.
+      opsgroup:DetourReached()
+      
+      if waypoint.detour==0 then
+        opsgroup:FullStop()
+      elseif waypoint.detour==1 then
+        opsgroup:Cruise()
+      else
+        opsgroup:E("ERROR: waypoint.detour should be 0 or 1")
+      end
+      
+    end
+  
+    -- Debug message.
+    local text=string.format("Group passing waypoint uid=%d", uid)
+    opsgroup:T2(opsgroup.lid..text)
+  
+    -- Trigger PassingWaypoint event.
+    if not (waypoint.astar or waypoint.detour) then
+      opsgroup:PassingWaypoint(waypoint)
+    end
+    
+  end
 
 end
 
@@ -2289,69 +3486,683 @@ end
 -- @param #number roe ROE of group. Default is `ENUMS.ROE.ReturnFire`.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultROE(roe)
-  self.roeDefault=roe or ENUMS.ROE.ReturnFire
+  self.optionDefault.ROE=roe or ENUMS.ROE.ReturnFire
   return self
 end
 
 --- Set current ROE for the group.
 -- @param #OPSGROUP self
--- @param #string roe ROE of group. Default is the value defined by :SetDefaultROE().
+-- @param #string roe ROE of group. Default is value set in `SetDefaultROE` (usually `ENUMS.ROE.ReturnFire`).
 -- @return #OPSGROUP self
-function OPSGROUP:SetOptionROE(roe)
+function OPSGROUP:SwitchROE(roe)
+  
+  if self:IsAlive() or self:IsInUtero() then
 
-  self.roe=roe or self.roeDefault
+    self.option.ROE=roe or self.optionDefault.ROE
   
-  if self:IsAlive() then
-  
-    self.group:OptionROE(self.roe)
+    if self:IsInUtero() then
+      self:T2(self.lid..string.format("Setting current ROE=%d when GROUP is SPAWNED", self.option.ROE))
+    else
     
-    self:I(self.lid..string.format("Setting current ROE=%d (0=WeaponFree, 1=OpenFireWeaponFree, 2=OpenFire, 3=ReturnFire, 4=WeaponHold)", self.roe))
+      self.group:OptionROE(self.option.ROE)
+    
+      self:T(self.lid..string.format("Setting current ROE=%d (%s)", self.option.ROE, self:_GetROEName(self.option.ROE)))
+    end
+    
+    
   else
-    -- TODO WARNING
+    self:E(self.lid.."WARNING: Cannot switch ROE! Group is not alive")
   end
   
   return self
+end
+
+--- Get name of ROE corresponding to the numerical value.
+-- @param #OPSGROUP self
+-- @return #string Name of ROE.
+function OPSGROUP:_GetROEName(roe)
+  local name="unknown"
+  if roe==0 then
+    name="Weapon Free"
+  elseif roe==1 then
+    name="Open Fire/Weapon Free"
+  elseif roe==2 then
+    name="Open Fire"
+  elseif roe==3 then
+    name="Return Fire"
+  elseif roe==4 then
+    name="Weapon Hold"
+  end
+  return name
 end
 
 --- Get current ROE of the group.
 -- @param #OPSGROUP self
 -- @return #number Current ROE.
 function OPSGROUP:GetROE()
-  return self.roe
+  return self.option.ROE or self.optionDefault.ROE
 end
 
 --- Set the default ROT for the group. This is the ROT state gets when the group is spawned or to which it defaults back after a mission.
 -- @param #OPSGROUP self
--- @param #number roe ROE of group. Default is ENUMS.ROT.PassiveDefense.
+-- @param #number rot ROT of group. Default is `ENUMS.ROT.PassiveDefense`.
 -- @return #OPSGROUP self
-function OPSGROUP:SetDefaultROT(roe)
-  self.rotDefault=roe or ENUMS.ROT.PassiveDefense
+function OPSGROUP:SetDefaultROT(rot)
+  self.optionDefault.ROT=rot or ENUMS.ROT.PassiveDefense
   return self
 end
 
 --- Set ROT for the group.
 -- @param #OPSGROUP self
--- @param #string rot ROT of group. Default is the value defined by :SetDefaultROT().
+-- @param #string rot ROT of group. Default is value set in `:SetDefaultROT` (usually `ENUMS.ROT.PassiveDefense`).
 -- @return #OPSGROUP self
-function OPSGROUP:SetOptionROT(rot)
-
-  self.rot=rot or self.rotDefault
+function OPSGROUP:SwitchROT(rot)
   
-  if self:IsAlive() then
+  if self:IsAlive() or self:IsInUtero() then
   
-    self.group:OptionROT(self.rot)
+    self.option.ROT=rot or self.optionDefault.ROT
+  
+    if self:IsInUtero() then
+      self:T2(self.lid..string.format("Setting current ROT=%d when GROUP is SPAWNED", self.option.ROT))      
+    else
     
-    self:T2(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.rot))
+      self.group:OptionROT(self.option.ROT)
+      
+      self:T(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
+    end
+    
+
   else
-    -- TODO WARNING
+    self:E(self.lid.."WARNING: Cannot switch ROT! Group is not alive")
   end
   
+  return self
+end
+
+--- Get current ROT of the group.
+-- @param #OPSGROUP self
+-- @return #number Current ROT.
+function OPSGROUP:GetROT()
+  return self.option.ROT or self.optionDefault.ROT
+end
+
+
+--- Set the default Alarm State for the group. This is the state gets when the group is spawned or to which it defaults back after a mission.
+-- @param #OPSGROUP self
+-- @param #number alarmstate Alarm state of group. Default is `AI.Option.Ground.val.ALARM_STATE.AUTO` (0).
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultAlarmstate(alarmstate)
+  self.optionDefault.Alarm=alarmstate or 0
+  return self
+end
+
+--- Set current Alarm State of the group.
+-- 
+-- * 0 = "Auto"
+-- * 1 = "Green"
+-- * 2 = "Red"
+-- 
+-- @param #OPSGROUP self
+-- @param #number alarmstate Alarm state of group. Default is 0="Auto".
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchAlarmstate(alarmstate)
+  
+  if self:IsAlive() or self:IsInUtero() then
+  
+    self.option.Alarm=alarmstate or self.optionDefault.Alarm
+    
+    if self:IsInUtero() then
+      self:T2(self.lid..string.format("Setting current Alarm State=%d when GROUP is SPAWNED", self.option.Alarm))
+    else
+  
+      if self.option.Alarm==0 then
+        self.group:OptionAlarmStateAuto()
+      elseif self.option.Alarm==1 then
+        self.group:OptionAlarmStateGreen()
+      elseif self.option.Alarm==2 then
+        self.group:OptionAlarmStateRed()
+      else
+        self:E("ERROR: Unknown Alarm State! Setting to AUTO")
+        self.group:OptionAlarmStateAuto()
+        self.option.Alarm=0
+      end
+      
+      self:T(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.option.Alarm))
+      
+    end
+  else
+    self:E(self.lid.."WARNING: Cannot switch Alarm State! Group is not alive.")
+  end
+  
+  return self
+end
+
+--- Get current Alarm State of the group.
+-- @param #OPSGROUP self
+-- @return #number Current Alarm State.
+function OPSGROUP:GetAlarmstate()
+  return self.option.Alarm or self.optionDefault.Alarm
+end
+
+--- Set default TACAN parameters.
+-- @param #OPSGROUP self
+-- @param #number Channel TACAN channel. Default is 74.
+-- @param #string Morse Morse code. Default "XXX".
+-- @param #string UnitName Name of the unit acting as beacon.
+-- @param #string Band TACAN mode. Default is "X" for ground and "Y" for airborne units.
+-- @param #boolean OffSwitch If true, TACAN is off by default.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultTACAN(Channel, Morse, UnitName, Band, OffSwitch)
+  
+  self.tacanDefault={}
+  self.tacanDefault.Channel=Channel or 74
+  self.tacanDefault.Morse=Morse or "XXX"
+  self.tacanDefault.BeaconName=UnitName
+
+  if self.isAircraft then
+    Band=Band or "Y"
+  else
+    Band=Band or "X"
+  end
+  self.tacanDefault.Band=Band  
+  
+  
+  if OffSwitch then
+    self.tacanDefault.On=false
+  else
+    self.tacanDefault.On=true
+  end
+
+  return self
+end
+
+
+--- Activate/switch TACAN beacon settings.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Beacon Tacan TACAN data table. Default is the default TACAN settings.
+-- @return #OPSGROUP self
+function OPSGROUP:_SwitchTACAN(Tacan)
+
+  if Tacan then
+  
+    self:SwitchTACAN(Tacan.Channel, Tacan.Morse, Tacan.BeaconName, Tacan.Band)
+    
+  else
+  
+    if self.tacanDefault.On then
+      self:SwitchTACAN()
+    else
+      self:TurnOffTACAN()
+    end
+  
+  end
+  
+end
+
+--- Activate/switch TACAN beacon settings.
+-- @param #OPSGROUP self
+-- @param #number Channel TACAN Channel.
+-- @param #string Morse TACAN morse code. Default is the value set in @{#OPSGROUP.SetDefaultTACAN} or if not set "XXX".
+-- @param #string UnitName Name of the unit in the group which should activate the TACAN beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
+-- @param #string Band TACAN channel mode "X" or "Y". Default is "Y" for aircraft and "X" for ground and naval groups.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
+
+  if self:IsInUtero() then
+  
+    self:T(self.lid..string.format("Switching TACAN to DEFAULT when group is spawned"))
+    self:SetDefaultTACAN(Channel, Morse, UnitName, Band)
+
+  elseif self:IsAlive() then
+      
+    Channel=Channel or self.tacanDefault.Channel
+    Morse=Morse or self.tacanDefault.Morse
+    Band=Band or self.tacanDefault.Band
+    UnitName=UnitName or self.tacanDefault.BeaconName
+    local unit=self:GetUnit(1)  --Wrapper.Unit#UNIT
+
+    if UnitName then
+      if type(UnitName)=="number" then
+        unit=self.group:GetUnit(UnitName)
+      else
+        unit=UNIT:FindByName(UnitName)
+      end
+    end
+
+    if not unit then
+      self:T(self.lid.."WARNING: Could not get TACAN unit. Trying first unit in the group")
+      unit=self:GetUnit(1)
+    end
+    
+    if unit and unit:IsAlive() then
+
+      -- Unit ID.
+      local UnitID=unit:GetID()
+
+      -- Type
+      local Type=BEACON.Type.TACAN
+      
+      -- System
+      local System=BEACON.System.TACAN            
+      if self.isAircraft then
+        System=BEACON.System.TACAN_TANKER_Y
+      end
+      
+      -- Tacan frequency.
+      local Frequency=UTILS.TACANToFrequency(Channel, Band)
+   
+      -- Activate beacon.
+      unit:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Band, true, Morse, true)
+
+      -- Update info.
+      self.tacan.Channel=Channel
+      self.tacan.Morse=Morse
+      self.tacan.Band=Band
+      self.tacan.BeaconName=unit:GetName()
+      self.tacan.BeaconUnit=unit
+      self.tacan.On=true
+     
+      -- Debug info.        
+      self:T(self.lid..string.format("Switching TACAN to Channel %d%s Morse %s on unit %s", self.tacan.Channel, self.tacan.Band, tostring(self.tacan.Morse), self.tacan.BeaconName))
+      
+    else
+      self:E(self.lid.."ERROR: Cound not set TACAN! Unit is not alive")
+    end
+
+  else
+    self:E(self.lid.."ERROR: Cound not set TACAN! Group is not alive and not in utero any more")
+  end
+
+  return self
+end
+
+--- Deactivate TACAN beacon.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:TurnOffTACAN()
+
+  if self.tacan.BeaconUnit and self.tacan.BeaconUnit:IsAlive() then
+    self.tacan.BeaconUnit:CommandDeactivateBeacon()
+  end
+
+  self:T(self.lid..string.format("Switching TACAN OFF"))
+  self.tacan.On=false
+
+end
+
+--- Get current TACAN parameters.
+-- @param #OPSGROUP self
+-- @return #number TACAN channel.
+-- @return #string TACAN Morse code.
+-- @return #string TACAN band ("X" or "Y").
+-- @return #boolean TACAN is On (true) or Off (false).
+-- @return #string UnitName Name of the unit acting as beacon.
+function OPSGROUP:GetTACAN()
+  return self.tacan.Channel, self.tacan.Morse, self.tacan.Band, self.tacan.On, self.tacan.BeaconName
+end
+
+
+
+--- Set default ICLS parameters.
+-- @param #OPSGROUP self
+-- @param #number Channel ICLS channel. Default is 1.
+-- @param #string Morse Morse code. Default "XXX".
+-- @param #string UnitName Name of the unit acting as beacon.
+-- @param #boolean OffSwitch If true, TACAN is off by default.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultICLS(Channel, Morse, UnitName, OffSwitch)
+  
+  self.iclsDefault={}
+  self.iclsDefault.Channel=Channel or 1
+  self.iclsDefault.Morse=Morse or "XXX"
+  self.iclsDefault.BeaconName=UnitName
+  
+  if OffSwitch then
+    self.iclsDefault.On=false
+  else
+    self.iclsDefault.On=true
+  end
+
+  return self
+end
+
+
+--- Activate/switch ICLS beacon settings.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Beacon Icls ICLS data table.
+-- @return #OPSGROUP self
+function OPSGROUP:_SwitchICLS(Icls)
+
+  if Icls then
+  
+    self:SwitchICLS(Icls.Channel, Icls.Morse, Icls.BeaconName)
+  
+  else
+  
+    if self.iclsDefault.On then
+      self:SwitchICLS()
+    else
+      self:TurnOffICLS()
+    end
+  
+  end
+
+end
+
+--- Activate/switch ICLS beacon settings.
+-- @param #OPSGROUP self
+-- @param #number Channel ICLS Channel. Default is what is set in `SetDefaultICLS()` so usually channel 1.
+-- @param #string Morse ICLS morse code. Default is what is set in `SetDefaultICLS()` so usually "XXX".
+-- @param #string UnitName Name of the unit in the group which should activate the ICLS beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
+
+  if self:IsInUtero() then
+  
+    self:SetDefaultICLS(Channel,Morse,UnitName)
+  
+    self:T2(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s when GROUP is SPAWNED", self.iclsDefault.Channel, tostring(self.iclsDefault.Morse), self.iclsDefault.BeaconName))
+
+  elseif self:IsAlive() then
+  
+    Channel=Channel or self.iclsDefault.Channel
+    Morse=Morse or self.iclsDefault.Morse
+    local unit=self:GetUnit(1)  --Wrapper.Unit#UNIT
+    
+    if UnitName then
+      if type(UnitName)=="number" then
+        unit=self:GetUnit(UnitName)
+      else
+        unit=UNIT:FindByName(UnitName)
+      end
+    end
+    
+    if not unit then
+      self:T(self.lid.."WARNING: Could not get ICLS unit. Trying first unit in the group")
+      unit=self:GetUnit(1)
+    end
+
+    if unit and unit:IsAlive() then
+
+      -- Unit ID.
+      local UnitID=unit:GetID()      
+
+      -- Activate beacon.
+      unit:CommandActivateICLS(Channel, UnitID, Morse)
+      
+      -- Update info.
+      self.icls.Channel=Channel
+      self.icls.Morse=Morse
+      self.icls.Band=nil
+      self.icls.BeaconName=unit:GetName()
+      self.icls.BeaconUnit=unit
+      self.icls.On=true
+      
+      -- Debug info.
+      self:T(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s", self.icls.Channel, tostring(self.icls.Morse), self.icls.BeaconName))
+      
+    else
+      self:E(self.lid.."ERROR: Cound not set ICLS! Unit is not alive.")
+    end
+
+  end
+
+  return self
+end
+
+--- Deactivate ICLS beacon.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:TurnOffICLS()
+
+  if self.icls.BeaconUnit and self.icls.BeaconUnit:IsAlive() then
+    self.icls.BeaconUnit:CommandDeactivateICLS()
+  end
+
+  self:T(self.lid..string.format("Switching ICLS OFF"))
+  self.icls.On=false
+
+end
+
+
+--- Set default Radio frequency and modulation.
+-- @param #OPSGROUP self
+-- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
+-- @param #number Modulation Radio modulation. Default `radio.Modulation.AM`.
+-- @param #boolean OffSwitch If true, radio is OFF by default.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultRadio(Frequency, Modulation, OffSwitch)
+  
+  self.radioDefault={}
+  self.radioDefault.Freq=Frequency or 251
+  self.radioDefault.Modu=Modulation or radio.modulation.AM
+  if OffSwitch then
+    self.radioDefault.On=false
+  else
+    self.radioDefault.On=true
+  end
+  
+  return self
+end
+
+--- Get current Radio frequency and modulation.
+-- @param #OPSGROUP self
+-- @return #number Radio frequency in MHz or nil.
+-- @return #number Radio modulation or nil.
+-- @return #boolean If true, the radio is on. Otherwise, radio is turned off.
+function OPSGROUP:GetRadio()
+  return self.radio.Freq, self.radio.Modu, self.radio.On
+end
+
+--- Turn radio on or switch frequency/modulation.
+-- @param #OPSGROUP self
+-- @param #number Frequency Radio frequency in MHz. Default is value set in `SetDefaultRadio` (usually 251 MHz).
+-- @param #number Modulation Radio modulation. Default is value set in `SetDefaultRadio` (usually `radio.Modulation.AM`).
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchRadio(Frequency, Modulation)
+
+  if self:IsInUtero() then
+  
+    -- Set default radio.
+    self:SetDefaultRadio(Frequency, Modulation)
+    
+    -- Debug info.
+    self:T2(self.lid..string.format("Switching radio to frequency %.3f MHz %s when GROUP is SPAWNED", self.radioDefault.Freq, UTILS.GetModulationName(self.radioDefault.Modu)))
+    
+  elseif self:IsAlive() then
+  
+    Frequency=Frequency or self.radioDefault.Freq
+    Modulation=Modulation or self.radioDefault.Modu
+
+    if self.isAircraft and not self.radio.On then
+      self.group:SetOption(AI.Option.Air.id.SILENCE, false)
+    end    
+  
+    -- Give command
+    self.group:CommandSetFrequency(Frequency, Modulation)
+    
+    -- Update current settings.
+    self.radio.Freq=Frequency
+    self.radio.Modu=Modulation    
+    self.radio.On=true
+    
+    -- Debug info.
+    self:T(self.lid..string.format("Switching radio to frequency %.3f MHz %s", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu)))
+          
+  else
+    self:E(self.lid.."ERROR: Cound not set Radio! Group is not alive or not in utero any more")
+  end
+
+  return self
+end
+
+--- Turn radio off.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:TurnOffRadio()
+
+  if self:IsAlive() then
+
+    if self.isAircraft then
+    
+      -- Set group to be silient.
+      self.group:SetOption(AI.Option.Air.id.SILENCE, true)
+      
+      -- Radio is off.
+      self.radio.On=false
+  
+      self:T(self.lid..string.format("Switching radio OFF"))
+    else
+      self:E(self.lid.."ERROR: Radio can only be turned off for aircraft!")
+    end
+
+  end
+
+  return self
+end
+
+
+
+--- Set default formation.
+-- @param #OPSGROUP self
+-- @param #number Formation The formation the groups flies in.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultFormation(Formation)
+  
+  self.optionDefault.Formation=Formation
+
+  return self
+end
+
+--- Switch to a specific formation.
+-- @param #OPSGROUP self
+-- @param #number Formation New formation the group will fly in. Default is the setting of `SetDefaultFormation()`.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchFormation(Formation)
+
+  if self:IsAlive() then
+  
+    Formation=Formation or self.optionDefault.Formation
+    
+    if self.isAircraft then
+
+      self.group:SetOption(AI.Option.Air.id.FORMATION, Formation)
+              
+    elseif self.isGround then
+    
+      -- Polymorphic and overwritten in ARMYGROUP.
+      
+    else
+      self:E(self.lid.."ERROR: Formation can only be set for aircraft or ground units!")
+      return self
+    end
+    
+    -- Set current formation.
+    self.option.Formation=Formation
+    
+    -- Debug info.
+    self:T(self.lid..string.format("Switching formation to %d", self.option.Formation))
+
+  end
+
+  return self
+end
+
+
+
+--- Set default callsign.
+-- @param #OPSGROUP self
+-- @param #number CallsignName Callsign name.
+-- @param #number CallsignNumber Callsign number.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
+
+  self.callsignDefault={}
+  self.callsignDefault.NumberSquad=CallsignName
+  self.callsignDefault.NumberGroup=CallsignNumber or 1
+
+  return self
+end
+
+--- Switch to a specific callsign.
+-- @param #OPSGROUP self
+-- @param #number CallsignName Callsign name.
+-- @param #number CallsignNumber Callsign number.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
+
+  if self:IsInUtero() then
+  
+    -- Set default callsign. We switch to this when group is spawned.
+    self:SetDefaultCallsign(CallsignName, CallsignNumber)
+
+  elseif self:IsAlive() then
+
+    CallsignName=CallsignName or self.callsignDefault.NumberSquad
+    CallsignNumber=CallsignNumber or self.callsignDefault.NumberGroup
+
+    -- Set current callsign.
+    self.callsign.NumberSquad=CallsignName
+    self.callsign.NumberGroup=CallsignNumber
+
+    -- Debug.
+    self:T(self.lid..string.format("Switching callsign to %d-%d", self.callsign.NumberSquad, self.callsign.NumberGroup))
+    
+    -- Give command to change the callsign.
+    self.group:CommandSetCallsign(self.callsign.NumberSquad, self.callsign.NumberGroup)
+
+  else
+    --TODO: Error
+  end
+
   return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Element and Group Status Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check if all elements of the group have the same status (or are dead).
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:_UpdatePosition()
+
+  if self:IsAlive() then
+    
+    -- Backup last state to monitor differences.
+    self.positionLast=self.position or self:GetVec3()
+    self.headingLast=self.heading or self:GetHeading()
+    self.orientXLast=self.orientX or self:GetOrientationX()
+    self.velocityLast=self.velocity or self.group:GetVelocityMPS()
+  
+    -- Current state.
+    self.position=self:GetVec3()
+    self.heading=self:GetHeading()
+    self.orientX=self:GetOrientationX()
+    self.velocity=self:GetVelocity()
+    
+    -- Update time.
+    local Tnow=timer.getTime()
+    self.dTpositionUpdate=self.TpositionUpdate and Tnow-self.TpositionUpdate or 0
+    self.TpositionUpdate=Tnow
+    
+    if not self.traveldist then
+      self.traveldist=0
+    end
+    
+    self.travelds=UTILS.VecNorm(UTILS.VecSubstract(self.position, self.positionLast))
+    
+    -- Add up travelled distance.
+    
+    self.traveldist=self.traveldist+self.travelds
+    
+    -- Debug info.
+    --env.info(string.format("FF Traveled %.1f m", self.traveldist))
+    
+  end
+
+  return self
+end
 
 --- Check if all elements of the group have the same status (or are dead).
 -- @param #OPSGROUP self
@@ -2578,7 +4389,11 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:Landed(airbase)
+      if self:IsLandingAt() then
+        self:LandedAt()
+      else
+        self:Landed(airbase)
+      end
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.ARRIVED then
@@ -2603,7 +4418,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:Dead()
+      self:__Dead(-1)
     end
 
   end
@@ -2683,11 +4498,14 @@ function OPSGROUP:GetAmmoTot()
   Ammo.Guns=0
   Ammo.Rockets=0
   Ammo.Bombs=0
+  Ammo.Torpedos=0
   Ammo.Missiles=0
   Ammo.MissilesAA=0
   Ammo.MissilesAG=0
   Ammo.MissilesAS=0
-  
+  Ammo.MissilesCR=0
+  Ammo.MissilesSA=0
+    
   for _,_unit in pairs(units) do
     local unit=_unit --Wrapper.Unit#UNIT
     
@@ -2701,10 +4519,13 @@ function OPSGROUP:GetAmmoTot()
       Ammo.Guns=Ammo.Guns+ammo.Guns
       Ammo.Rockets=Ammo.Rockets+ammo.Rockets
       Ammo.Bombs=Ammo.Bombs+ammo.Bombs
+      Ammo.Torpedos=Ammo.Torpedos+ammo.Torpedos
       Ammo.Missiles=Ammo.Missiles+ammo.Missiles
       Ammo.MissilesAA=Ammo.MissilesAA+ammo.MissilesAA
       Ammo.MissilesAG=Ammo.MissilesAG+ammo.MissilesAG
       Ammo.MissilesAS=Ammo.MissilesAS+ammo.MissilesAS
+      Ammo.MissilesCR=Ammo.MissilesCR+ammo.MissilesCR
+      Ammo.MissilesSA=Ammo.MissilesSA+ammo.MissilesSA
     
     end
     
@@ -2845,7 +4666,6 @@ function OPSGROUP:GetAmmoUnit(unit, display)
   else
     self:T3(self.lid..text)
   end
-  MESSAGE:New(text, 10):ToAllIf(display)
 
   -- Total amount of ammunition.
   nammo=nshells+nrockets+nmissiles+nbombs+ntorps
@@ -2887,6 +4707,56 @@ function OPSGROUP:_MissileCategoryName(categorynumber)
     cat="other"
   end
   return cat
+end
+
+--- Check if group got stuck.
+-- @param #OPSGROUP self
+function OPSGROUP:_CheckStuck()
+
+  -- Holding means we are not stuck.
+  if self:IsHolding() then
+    return
+  end
+  
+  -- Current time.
+  local Tnow=timer.getTime()
+  
+  -- Expected speed in m/s.
+  local ExpectedSpeed=self:GetExpectedSpeed()
+  
+  -- Current speed in m/s.
+  local speed=self:GetVelocity()
+  
+  -- Check speed.
+  if speed<0.5 then
+  
+    if ExpectedSpeed>0 and not self.stuckTimestamp then
+      self:T2(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected", speed, ExpectedSpeed))
+      self.stuckTimestamp=Tnow
+      self.stuckVec3=self:GetVec3()
+    end
+    
+  else
+    -- Moving (again).
+    self.stuckTimestamp=nil
+  end
+
+  -- Somehow we are not moving...
+  if self.stuckTimestamp then
+  
+    -- Time we are holding.
+    local holdtime=Tnow-self.stuckTimestamp
+    
+    if holdtime>=10*60 then
+    
+      self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
+      
+      --TODO: Stuck event!
+          
+    end
+    
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

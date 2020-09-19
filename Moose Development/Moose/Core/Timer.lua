@@ -11,7 +11,7 @@
 --
 -- ### Author: **funkyfranky**
 -- @module Core.Timer
--- @image CORE_Timer.png
+-- @image Core_Scheduler.JPG
 
 
 --- TIMER class.
@@ -19,6 +19,7 @@
 -- @field #string ClassName Name of the class.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number tid Timer ID returned by the DCS API function.
+-- @field #number uid Unique ID of the timer.
 -- @field #function func Timer function.
 -- @field #table para Parameters passed to the timer function.
 -- @field #number Tstart Relative start time in seconds.
@@ -28,7 +29,7 @@
 -- @field #number ncallsMax Max number of function calls. If reached, timer is stopped.
 -- @extends Core.Base#BASE
 
---- *Better three hours too soon than a minute too late.* – William Shakespeare
+--- *Better three hours too soon than a minute too late.* - William Shakespeare
 --
 -- ===
 --
@@ -36,7 +37,7 @@
 --
 -- # The TIMER Concept
 -- 
--- The TIMER class is the little sister of the SCHEDULER class. It does the same thing but is a bit easier to use and has less overhead. It should be sufficient in many cases.
+-- The TIMER class is the little sister of the @{Core.Scheduler#SCHEDULER} class. It does the same thing but is a bit easier to use and has less overhead. It should be sufficient in many cases.
 -- 
 -- It provides an easy interface to the DCS [timer.scheduleFunction](https://wiki.hoggitworld.com/view/DCS_func_scheduleFunction).
 -- 
@@ -62,20 +63,20 @@
 --  
 -- Note that
 -- 
--- * if *Tstart* is not specified (*nil*), the first function call happens immediately.
+-- * if *Tstart* is not specified (*nil*), the first function call happens immediately, i.e. after one millisecond.
 -- * if *dT* is not specified (*nil*), the function is called only once.
 -- * if *Duration* is not specified (*nil*), the timer runs forever or until stopped manually or until the max function calls are reached (see below).
 --
 -- For example,
 -- 
 --     mytimer:Start(3)            -- Will call the function once after 3 seconds.
---     mytimer:Start(nil, 0.5)     -- Will call right now and then every 0.5 sec until all eternaty.
+--     mytimer:Start(nil, 0.5)     -- Will call right now and then every 0.5 sec until all eternity.
 --     mytimer:Start(nil, 2.0, 20) -- Will call right now and then every 2.0 sec for 20 sec.
 --     mytimer:Start(1.0, nil, 10) -- Does not make sense as the function is only called once anyway. 
 --
 -- ## Stopping the Timer
 --
--- The timer can be stopped manually by the @{#TIMER.Start}(*Delay*) function
+-- The timer can be stopped manually by the @{#TIMER.Stop}(*Delay*) function
 -- 
 --     mytimer:Stop()
 --

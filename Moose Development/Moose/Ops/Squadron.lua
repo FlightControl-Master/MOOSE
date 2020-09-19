@@ -17,14 +17,19 @@
 --- SQUADRON class.
 -- @type SQUADRON
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string name Name of the squadron.
 -- @field #string templatename Name of the template group.
 -- @field #string aircrafttype Type of the airframe the squadron is using.
 -- @field Wrapper.Group#GROUP templategroup Template group.
+-- @field #number ngrouping User defined number of units in the asset group.
 -- @field #table assets Squadron assets.
 -- @field #table missiontypes Capabilities (mission types and performances) of the squadron.
+-- @field #number fuellow Low fuel threshold.
+-- @field #boolean fuellowRefuel If `true`, flight tries to refuel at the nearest tanker.
+-- @field #number maintenancetime Time in seconds needed for maintenance of a returned flight.
+-- @field #number repairtime Time in seconds for each
 -- @field #string livery Livery of the squadron.
 -- @field #number skill Skill of squadron members.
 -- @field #number modex Modex.
@@ -33,13 +38,11 @@
 -- @field #number callsigncounter Counter to increase callsign names for new assets.
 -- @field Ops.AirWing#AIRWING airwing The AIRWING object the squadron belongs to.
 -- @field #number Ngroups Number of asset flight groups this squadron has. 
--- @field #number engageRange Engagement range in meters.
+-- @field #number engageRange Mission range in meters.
 -- @field #string attribute Generalized attribute of the squadron template group.
 -- @field #number tankerSystem For tanker squads, the refuel system used (boom=0 or probpe=1). Default nil.
--- @field #number refuelSystem For refuelable squads, the refuel system used (boom=0 or probpe=1). Default nil.
--- @field #number TACANmin TACAN min channel.
--- @field #number TACANmax TACAN max channel.
--- @field #table TACANused Table of used TACAN channels.
+-- @field #number refuelSystem For refuelable squads, the refuel system used (boom=0 or probe=1). Default nil.
+-- @field #table tacanChannel List of TACAN channels available to the squadron.
 -- @field #number radioFreq Radio frequency in MHz the squad uses.
 -- @field #number radioModu Radio modulation the squad uses.
 -- @extends Core.Fsm#FSM
@@ -48,7 +51,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\Squadron\SQUADRON_Main.jpg)
+-- ![Banner Image](..\Presentations\OPS\Squadron\_Main.png)
 --
 -- # The SQUADRON Concept
 -- 
@@ -59,13 +62,15 @@
 -- @field #SQUADRON
 SQUADRON = {
   ClassName      = "SQUADRON",
-  Debug          =   nil,
+  verbose        =     0,
   lid            =   nil,
   name           =   nil,
   templatename   =   nil,
   aircrafttype   =   nil,
   assets         =    {},
   missiontypes   =    {},
+  repairtime     =     0,
+  maintenancetime=     0,
   livery         =   nil,
   skill          =   nil,
   modex          =   nil,
@@ -77,14 +82,12 @@ SQUADRON = {
   engageRange    =   nil,
   tankerSystem   =   nil,
   refuelSystem   =   nil,
-  TACANmin       =   nil,
-  TACANmax       =   nil,
-  TACANused      =    {},
+  tacanChannel   =    {},
 }
 
 --- SQUADRON class version.
 -- @field #string version
-SQUADRON.version="0.1.0"
+SQUADRON.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -129,15 +132,20 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   
   -- Defaults.
   self.Ngroups=Ngroups or 3  
-  self:SetEngagementRange()
+  self:SetMissionRange()
+  self:SetSkill(AI.Skill.GOOD)
+  --self:SetVerbosity(0)
   
   -- Everyone can ORBIT.
-  self:AddMissonCapability(AUFTRAG.Type.ORBIT)
+  self:AddMissionCapability(AUFTRAG.Type.ORBIT)
   
+  -- Generalized attribute.
   self.attribute=self.templategroup:GetAttribute()
   
+  -- Aircraft type.
   self.aircrafttype=self.templategroup:GetTypeName()
   
+  -- Refueling system.
   self.refuelSystem=select(2, self.templategroup:GetUnit(1):IsRefuelable())
   self.tankerSystem=select(2, self.templategroup:GetUnit(1):IsTanker())
 
@@ -149,8 +157,10 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   --                 From State  -->   Event        -->     To State
   self:AddTransition("Stopped",       "Start",              "OnDuty")      -- Start FSM.
   self:AddTransition("*",             "Status",             "*")           -- Status update.
+  
   self:AddTransition("OnDuty",        "Pause",              "Paused")      -- Pause squadron.
   self:AddTransition("Paused",        "Unpause",            "OnDuty")      -- Unpause squadron.
+  
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop squadron.
 
 
@@ -187,13 +197,10 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
 
   -- Debug trace.
   if false then
-    self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
   end
-  self.Debug=true
-
 
   return self
 end
@@ -232,6 +239,26 @@ function SQUADRON:SetSkill(Skill)
   return self
 end
 
+--- Set verbosity level.
+-- @param #SQUADRON self
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #SQUADRON self
+function SQUADRON:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
+  return self
+end
+
+--- Set turnover and repair time. If an asset returns from a mission to the airwing, it will need some time until the asset is available for further missions.
+-- @param #SQUADRON self
+-- @param #number MaintenanceTime Time in minutes it takes until a flight is combat ready again. Default is 0 min.
+-- @param #number RepairTime Time in minutes it takes to repair a flight for each life point taken. Default is 0 min.
+-- @return #SQUADRON self
+function SQUADRON:SetTurnoverTime(MaintenanceTime, RepairTime)
+  self.maintenancetime=MaintenanceTime and MaintenanceTime*60 or 0
+  self.repairtime=RepairTime and RepairTime*60 or 0
+  return self
+end
+
 --- Set radio frequency and modulation the squad uses.
 -- @param #SQUADRON self
 -- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
@@ -244,12 +271,23 @@ function SQUADRON:SetRadio(Frequency, Modulation)
   return self
 end
 
+--- Set number of units in groups.
+-- @param #SQUADRON self
+-- @param #number nunits Number of units. Must be >=1 and <=4. Default 2.
+-- @return #SQUADRON self
+function SQUADRON:SetGrouping(nunits)
+  self.ngrouping=nunits or 2
+  if self.ngrouping<1 then self.ngrouping=1 end
+  if self.ngrouping>4 then self.ngrouping=4 end
+  return self
+end
+
 --- Set mission types this squadron is able to perform.
 -- @param #SQUADRON self
 -- @param #table MissionTypes Table of mission types. Can also be passed as a #string if only one type.
 -- @param #number Performance Performance describing how good this mission can be performed. Higher is better. Default 50. Max 100.
 -- @return #SQUADRON self
-function SQUADRON:AddMissonCapability(MissionTypes, Performance)
+function SQUADRON:AddMissionCapability(MissionTypes, Performance)
 
   -- Ensure Missiontypes is a table.
   if MissionTypes and type(MissionTypes)~="table" then
@@ -276,7 +314,7 @@ function SQUADRON:AddMissonCapability(MissionTypes, Performance)
   end
   
   -- Debug info.
-  self:I(self.missiontypes)
+  self:T2(self.missiontypes)
   
   return self
 end
@@ -319,12 +357,12 @@ function SQUADRON:GetMissionPeformance(MissionType)
   return -1
 end
 
---- Set max engagement range.
+--- Set max mission range. Only missions in a circle of this radius around the squadron airbase are executed.
 -- @param #SQUADRON self
--- @param #number EngageRange Engagement range in NM. Default 80 NM.
+-- @param #number Range Range in NM. Default 100 NM.
 -- @return #SQUADRON self
-function SQUADRON:SetEngagementRange(EngageRange)
-  self.engageRange=UTILS.NMToMeters(EngageRange or 80)
+function SQUADRON:SetMissionRange(Range)
+  self.engageRange=UTILS.NMToMeters(Range or 100)
   return self
 end
 
@@ -352,6 +390,28 @@ function SQUADRON:SetModex(Modex, Prefix, Suffix)
   return self
 end
 
+--- Set low fuel threshold.
+-- @param #SQUADRON self
+-- @param #number LowFuel Low fuel threshold in percent. Default 25.
+-- @return #SQUADRON self
+function SQUADRON:SetFuelLowThreshold(LowFuel)
+  self.fuellow=LowFuel or 25
+  return self
+end
+
+--- Set if low fuel threshold is reached, flight tries to refuel at the neares tanker.
+-- @param #SQUADRON self
+-- @param #boolean switch If true or nil, flight goes for refuelling. If false, turn this off.
+-- @return #SQUADRON self
+function SQUADRON:SetFuelLowRefuel(switch)
+  if switch==false then
+    self.fuellowRefuel=false
+  else
+    self.fuellowRefuel=true
+  end
+  return self
+end
+
 --- Set airwing.
 -- @param #SQUADRON self
 -- @param Ops.AirWing#AIRWING Airwing The airwing.
@@ -360,7 +420,6 @@ function SQUADRON:SetAirwing(Airwing)
   self.airwing=Airwing
   return self
 end
-
 
 --- Add airwing asset to squadron.
 -- @param #SQUADRON self
@@ -389,6 +448,29 @@ function SQUADRON:DelAsset(Asset)
   return self
 end
 
+--- Remove airwing asset group from squadron.
+-- @param #SQUADRON self
+-- @param #string GroupName Name of the asset group.
+-- @return #SQUADRON self
+function SQUADRON:DelGroup(GroupName)
+  for i,_asset in pairs(self.assets) do
+    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    if GroupName==asset.spawngroupname then
+      self:T2(self.lid..string.format("Removing asset %s", asset.spawngroupname))
+      table.remove(self.assets, i)
+      break
+    end
+  end
+  return self
+end
+
+--- Get name of the squadron
+-- @param #SQUADRON self
+-- @return #string Name of the squadron.
+function SQUADRON:GetName()
+  return self.name
+end
+
 --- Get radio frequency and modulation.
 -- @param #SQUADRON self
 -- @return #number Radio frequency in MHz.
@@ -410,6 +492,7 @@ function SQUADRON:GetCallsign(Asset)
     for i=1,Asset.nunits do
     
       local callsign={}
+      
       callsign[1]=self.callsignName
       callsign[2]=math.floor(self.callsigncounter / 10)
       callsign[3]=self.callsigncounter % 10
@@ -456,23 +539,34 @@ function SQUADRON:GetModex(Asset)
   
 end
 
+
+--- Add TACAN channels to the squadron. Note that channels can only range from 1 to 126.
+-- @param #SQUADRON self
+-- @param #number ChannelMin Channel.
+-- @param #number ChannelMax Channel.
+-- @return #SQUADRON self
+-- @usage mysquad:AddTacanChannel(64,69)  -- adds channels 64, 65, 66, 67, 68, 69
+function SQUADRON:AddTacanChannel(ChannelMin, ChannelMax)
+
+  ChannelMax=ChannelMax or ChannelMin
+
+  for i=ChannelMin,ChannelMax do
+    self.tacanChannel[i]=true
+  end
+
+end
+
 --- Get an unused TACAN channel.
 -- @param #SQUADRON self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
 -- @return #number TACAN channel or *nil* if no channel is free.
-function SQUADRON:GetTACAN()
+function SQUADRON:FetchTacan()
 
-  if self.TACANmin and self.TACANmax then
-  
-    for channel=self.TACANmin, self.TACANmax do
-    
-      if not self.TACANused[channel] then
-        self.TACANused[channel]=true
-        return channel
-      end
-    
+  for channel,free in pairs(self.tacanChannel) do
+    if free then
+      self:T(self.lid..string.format("Checking out Tacan channel %d", channel))
+      self.tacanChannel[channel]=false
+      return channel
     end
-    
   end
 
   return nil
@@ -481,8 +575,9 @@ end
 --- "Return" a used TACAN channel.
 -- @param #SQUADRON self
 -- @param #number channel The channel that is available again.
-function SQUADRON:ReturnTACAN(channel)
-  self.TACANused[channel]=false
+function SQUADRON:ReturnTacan(channel)
+  self:T(self.lid..string.format("Returning Tacan channel %d", channel))
+  self.tacanChannel[channel]=true
 end
 
 --- Check if squadron is "OnDuty".
@@ -520,7 +615,7 @@ function SQUADRON:onafterStart(From, Event, To)
 
   -- Short info.
   local text=string.format("Starting SQUADRON", self.name)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Start the status monitoring.
   self:__Status(-1)
@@ -533,18 +628,34 @@ end
 -- @param #string To To state.
 function SQUADRON:onafterStatus(From, Event, To)
 
-  -- FSM state.
-  local fsmstate=self:GetState()
-  
-  -- Check if group has detected any units.
-  --self:_CheckAssetStatus()
+  if self.verbose>=1 then
 
-  -- Short info.
-  local text=string.format("Status %s: Assets %d", fsmstate, #self.assets)
-  self:I(self.lid..text)
+    -- FSM state.
+    local fsmstate=self:GetState()
+  
+    local callsign=self.callsignName and UTILS.GetCallsignName(self.callsignName) or "N/A"
+    local modex=self.modex and self.modex or -1
+    local skill=self.skill and tostring(self.skill) or "N/A"
+    
+    local NassetsTot=#self.assets
+    local NassetsInS=self:CountAssetsInStock()
+    local NassetsQP=0 ; local NassetsP=0 ; local NassetsQ=0  
+    if self.airwing then
+      NassetsQP, NassetsP, NassetsQ=self.airwing:CountAssetsOnMission(nil, self)
+    end
+    
+    -- Short info.
+    local text=string.format("%s [Type=%s, Call=%s, Modex=%d, Skill=%s]: Assets Total=%d, Stock=%d, Mission=%d [Active=%d, Queue=%d]", 
+    fsmstate, self.aircrafttype, callsign, modex, skill, NassetsTot, NassetsInS, NassetsQP, NassetsP, NassetsQ)
+    self:I(self.lid..text)
+    
+    -- Check if group has detected any units.
+    self:_CheckAssetStatus()
+    
+  end  
   
   if not self:IsStopped() then
-    self:__Status(-30)
+    self:__Status(-60)
   end
 end
 
@@ -553,9 +664,85 @@ end
 -- @param #SQUADRON self
 function SQUADRON:_CheckAssetStatus()
 
-  for _,_asset in pairs(self.assets) do
-    local asset=_asset
+  if self.verbose>=2 and #self.assets>0 then
+  
+    local text=""
+    for j,_asset in pairs(self.assets) do
+      local asset=_asset  --Ops.AirWing#AIRWING.SquadronAsset
+  
+      -- Text.
+      text=text..string.format("\n[%d] %s (%s*%d): ", j, asset.spawngroupname, asset.unittype, asset.nunits)
+      
+      if asset.spawned then
+      
+        ---
+        -- Spawned
+        ---
+  
+        -- Mission info.
+        local mission=self.airwing and self.airwing:GetAssetCurrentMission(asset) or false
+        if mission then
+          local distance=asset.flightgroup and UTILS.MetersToNM(mission:GetTargetDistance(asset.flightgroup.group:GetCoordinate())) or 0
+          text=text..string.format("Mission %s - %s: Status=%s, Dist=%.1f NM", mission.name, mission.type, mission.status, distance)
+        else
+          text=text.."Mission None"
+        end
+          
+        -- Flight status.
+        text=text..", Flight: "
+        if asset.flightgroup and asset.flightgroup:IsAlive() then
+          local status=asset.flightgroup:GetState()
+          local fuelmin=asset.flightgroup:GetFuelMin()
+          local fuellow=asset.flightgroup:IsFuelLow()
+          local fuelcri=asset.flightgroup:IsFuelCritical()
+          
+          text=text..string.format("%s Fuel=%d", status, fuelmin)
+          if fuelcri then
+            text=text.." (Critical!)"
+          elseif fuellow then
+            text=text.." (Low)"
+          end
+          
+          local lifept, lifept0=asset.flightgroup:GetLifePoints()
+          text=text..string.format(", Life=%d/%d", lifept, lifept0)
+          
+          local ammo=asset.flightgroup:GetAmmoTot()
+          text=text..string.format(", Ammo=%d [G=%d, R=%d, B=%d, M=%d]", ammo.Total,ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles)
+        else
+          text=text.."N/A"
+        end
+
+        -- Payload info.
+        local payload=asset.payload and table.concat(self.airwing:GetPayloadMissionTypes(asset.payload), ", ") or "None"
+        text=text..", Payload={"..payload.."}"
+     
+      else
+  
+        ---
+        -- In Stock
+        ---
         
+        text=text..string.format("In Stock")
+        
+        if self:IsRepaired(asset) then
+          text=text..", Combat Ready"
+        else
+        
+          text=text..string.format(", Repaired in %d sec", self:GetRepairTime(asset))
+
+          if asset.damage then
+            text=text..string.format(" (Damage=%.1f)", asset.damage)
+          end
+        end
+  
+        if asset.Treturned then
+          local T=timer.getAbsTime()-asset.Treturned
+          text=text..string.format(", Returned for %d sec", T)
+        end
+      
+      end
+    end
+    self:I(self.lid..text)
   end
 
 end
@@ -575,6 +762,8 @@ function SQUADRON:onafterStop(From, Event, To)
     self:DelAsset(asset)
   end
 
+  self.CallScheduler:Clear()
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -592,13 +781,13 @@ function SQUADRON:CanMission(Mission)
   
   -- On duty?=  
   if not self:IsOnDuty() then
-    self:I(self.lid..string.format("Squad in not OnDuty but in state %s. Cannot do mission %s with target %s", self:GetState(), Mission.name, Mission:GetTargetName()))
+    self:T(self.lid..string.format("Squad in not OnDuty but in state %s. Cannot do mission %s with target %s", self:GetState(), Mission.name, Mission:GetTargetName()))
     return false
   end
 
   -- Check mission type. WARNING: This assumes that all assets of the squad can do the same mission types!
   if not self:CheckMissionType(Mission.type, self:GetMissionTypes()) then
-    self:I(self.lid..string.format("INFO: Squad cannot do mission type %s (%s, %s)", Mission.type, Mission.name, Mission:GetTargetName()))
+    self:T(self.lid..string.format("INFO: Squad cannot do mission type %s (%s, %s)", Mission.type, Mission.name, Mission:GetTargetName()))
     return false
   end
   
@@ -608,7 +797,7 @@ function SQUADRON:CanMission(Mission)
     if Mission.refuelSystem and Mission.refuelSystem==self.tankerSystem then
       -- Correct refueling system.
     else
-      self:I(self.lid..string.format("INFO: Wrong refueling system requested=%s != %s=available", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
+      self:T(self.lid..string.format("INFO: Wrong refueling system requested=%s != %s=available", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
       return false
     end
   
@@ -622,14 +811,14 @@ function SQUADRON:CanMission(Mission)
       
   -- Set range is valid. Mission engage distance can overrule the squad engage range.
   if TargetDistance>engagerange then
-    self:I(self.lid..string.format("INFO: Squad is not in range. Target dist=%d > %d NM max engage Range", UTILS.MetersToNM(TargetDistance), UTILS.MetersToNM(engagerange)))
+    self:I(self.lid..string.format("INFO: Squad is not in range. Target dist=%d > %d NM max mission Range", UTILS.MetersToNM(TargetDistance), UTILS.MetersToNM(engagerange)))
     return false
   end
   
   return true
 end
 
---- Get assets for a mission.
+--- Count assets in airwing (warehous) stock.
 -- @param #SQUADRON self
 -- @return #number Assets not spawned.
 function SQUADRON:CountAssetsInStock()
@@ -650,11 +839,12 @@ end
 --- Get assets for a mission.
 -- @param #SQUADRON self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @param #number Nplayloads Number of payloads available.
 -- @return #table Assets that can do the required mission.
-function SQUADRON:RecruitAssets(Mission)
+function SQUADRON:RecruitAssets(Mission, Npayloads)
 
   -- Number of payloads available.
-  local Npayloads=self.airwing:CountPayloadsInStock(Mission.type, self.aircrafttype)      
+  Npayloads=Npayloads or self.airwing:CountPayloadsInStock(Mission.type, self.aircrafttype, Mission.payloads)      
 
   local assets={}
 
@@ -670,12 +860,12 @@ function SQUADRON:RecruitAssets(Mission)
       -- Asset is already on a mission.
       ---
 
-      -- Check if this asset is currently on a PATROL mission (STARTED or EXECUTING).
-      if self.airwing:IsAssetOnMission(asset, AUFTRAG.Type.PATROL) and Mission.type==AUFTRAG.Type.INTERCEPT then
+      -- Check if this asset is currently on a GCICAP mission (STARTED or EXECUTING).
+      if self.airwing:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and Mission.type==AUFTRAG.Type.INTERCEPT then
 
         -- Check if the payload of this asset is compatible with the mission.
-        -- Note: we do not check the payload as an asset that is on a PATROL mission should be able to do an INTERCEPT as well!
-        self:I(self.lid.."Adding asset on PATROL mission for an INTERCEPT mission")
+        -- Note: we do not check the payload as an asset that is on a GCICAP mission should be able to do an INTERCEPT as well!
+        self:I(self.lid.."Adding asset on GCICAP mission for an INTERCEPT mission")
         table.insert(assets, asset)
         
       end      
@@ -683,7 +873,7 @@ function SQUADRON:RecruitAssets(Mission)
     else
     
       ---
-      -- Asset as no current mission
+      -- Asset as NO current mission
       ---
 
       if asset.spawned then
@@ -703,7 +893,8 @@ function SQUADRON:RecruitAssets(Mission)
           if Mission.type==AUFTRAG.Type.INTERCEPT then
             combatready=flightgroup:CanAirToAir()
           else
-            combatready=flightgroup:CanAirToGround()
+            local excludeguns=Mission.type==AUFTRAG.Type.BOMBING or Mission.type==AUFTRAG.Type.BOMBRUNWAY or Mission.type==AUFTRAG.Type.BOMBCARPET or Mission.type==AUFTRAG.Type.SEAD or Mission.type==AUFTRAG.Type.ANTISHIP
+            combatready=flightgroup:CanAirToGround(excludeguns)
           end
           
           -- No more attacks if fuel is already low. Safety first!
@@ -712,7 +903,7 @@ function SQUADRON:RecruitAssets(Mission)
           end
           
           -- Check if in a state where we really do not want to fight any more.
-          if flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() or flightgroup:IsDead() then
+          if flightgroup:IsHolding() or flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() or flightgroup:IsDead() or flightgroup:IsStopped() then
             combatready=false
           end
       
@@ -731,7 +922,7 @@ function SQUADRON:RecruitAssets(Mission)
         ---          
       
         -- Check that asset is not already requested for another mission.
-        if Npayloads>0 and not asset.requested then
+        if Npayloads>0 and self:IsRepaired(asset) and (not asset.requested) then
                     
           -- Add this asset to the selection.
           table.insert(assets, asset)
@@ -746,6 +937,51 @@ function SQUADRON:RecruitAssets(Mission)
   end -- loop over assets
 
   return assets
+end
+
+
+--- Get the time an asset needs to be repaired.
+-- @param #SQUADRON self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
+-- @return #number Time in seconds until asset is repaired.
+function SQUADRON:GetRepairTime(Asset)
+
+  if Asset.Treturned then
+  
+    local t=self.maintenancetime    
+    t=t+Asset.damage*self.repairtime
+    
+    -- Seconds after returned.
+    local dt=timer.getAbsTime()-Asset.Treturned
+  
+    local T=t-dt
+    
+    return T
+  else
+    return 0
+  end
+
+end
+
+--- Checks if a mission type is contained in a table of possible types.
+-- @param #SQUADRON self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
+-- @return #boolean If true, the requested mission type is part of the possible mission types.
+function SQUADRON:IsRepaired(Asset)
+
+  if Asset.Treturned then
+    local Tnow=timer.getAbsTime()
+    local Trepaired=Asset.Treturned+self.maintenancetime
+    if Tnow>=Trepaired then
+      return true
+    else
+      return false
+    end
+  
+  else
+    return true
+  end
+
 end
 
 

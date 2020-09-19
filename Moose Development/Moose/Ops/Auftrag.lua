@@ -21,6 +21,7 @@
 -- @type AUFTRAG
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number auftragsnummer Auftragsnummer.
 -- @field #string type Mission type.
@@ -29,12 +30,16 @@
 -- @field #string name Mission name.
 -- @field #number prio Mission priority.
 -- @field #boolean urgent Mission is urgent. Running missions with lower prio might be cancelled.
+-- @field #number importance Importance.
 -- @field #number Tstart Mission start time in seconds.
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
 -- @field Wrapper.Marker#MARKER marker F10 map marker.
+-- @field #boolean markerOn If true, display marker on F10 map with the AUFTRAG status.
+-- @field #number markerCoaliton Coalition to which the marker is dispayed.
 -- @field #table DCStask DCS task structure.
--- @field #number Ntargets Number of mission targets.
+-- @field #number Ncasualties Number of own casualties during mission.
+-- @field #number Nelements Number of elements (units) assigned to mission.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
 -- @field #number Tover Mission abs. time stamp, when mission was over. 
 -- @field #table conditionStart Condition(s) that have to be true, before the mission will be started.
@@ -47,7 +52,7 @@
 -- @field #number orbitLeg Length of orbit leg in meters.
 -- @field Core.Point#COORDINATE orbitRaceTrack Race-track orbit coordinate.
 -- 
--- @field #AUFTRAG.TargetData engageTarget Target data to engage.
+-- @field Ops.Target#TARGET engageTarget Target data to engage.
 -- 
 -- @field Core.Zone#ZONE_RADIUS engageZone *Circular* engagement zone.
 -- @field #table engageTargetTypes Table of target types that are engaged in the engagement zone.
@@ -81,46 +86,52 @@
 -- @field #number nassets Number of required assets by the Airwing.
 -- @field #number requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
 -- @field #boolean cancelContactLost If true, cancel mission if the contact is lost.
--- @field #table squadrons User specifed airwing squadrons assigned for this mission. Only these will be considered for the job!
+-- @field #table squadrons User specified airwing squadrons assigned for this mission. Only these will be considered for the job!
+-- @field #table payloads User specified airwing payloads for this mission. Only these will be considered for the job! 
 -- @field Ops.AirWing#AIRWING.PatrolData patroldata Patrol data.
 -- 
 -- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
 -- @field #number missionAltitude Mission altitude in meters.
 -- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
 -- @field #number missionRange Mission range in meters. Used in AIRWING class.
+-- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
 -- 
 -- @field #table enrouteTasks Mission enroute tasks.
 -- 
--- @field #number radioFreq Mission radio frequency in MHz.
--- @field #number radioModu Mission radio modulation (0=AM and 1=FM).
--- @field #number tacanChannel Mission TACAN channel.
--- @field #number tacanMorse Mission TACAN morse code.
+-- @field #number repeated Number of times mission was repeated.
+-- @field #number repeatedSuccess Number of times mission was repeated after a success.
+-- @field #number repeatedFailure Number of times mission was repeated after a failure.
+-- @field #number Nrepeat Number of times the mission is repeated.
+-- @field #number NrepeatFailure Number of times mission is repeated if failed.
+-- @field #number NrepeatSuccess Number of times mission is repeated if successful.
 -- 
--- @field #number missionRepeated Number of times mission was repeated.
--- @field #number missionRepeatMax Number of times mission is repeated if failed.
+-- @field Ops.OpsGroup#OPSGROUP.Radio radio Radio freq and modulation.
+-- @field Ops.OpsGroup#OPSGROUP.Beacon tacan TACAN setting.
+-- @field Ops.OpsGroup#OPSGROUP.Beacon icls ICLS setting.
 -- 
 -- @field #number optionROE ROE.
 -- @field #number optionROT ROT.
--- @field #number optionCM Counter measures.
+-- @field #number optionAlarm Alarm state.
 -- @field #number optionFormation Formation.
+-- @field #number optionCM Counter measures.
 -- @field #number optionRTBammo RTB on out-of-ammo.
 -- @field #number optionRTBfuel RTB on out-of-fuel.
 -- @field #number optionECM ECM.
 -- 
 -- @extends Core.Fsm#FSM
 
---- *A warrior's mission is to foster the success of others.* --- Morihei Ueshiba
+--- *A warrior's mission is to foster the success of others.* - Morihei Ueshiba
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\CarrierAirWing\AUFTRAG_Main.jpg)
+-- ![Banner Image](..\Presentations\OPS\Auftrag\_Main.png)
 --
 -- # The AUFTRAG Concept
 -- 
--- As you probably know, setting tasks in DCS is often tedious. The AUFTRAG class significantly simplifies the necessary workflow by using optimized default parameters.
+-- The AUFTRAG class significantly simplifies the workflow of using DCS tasks.
 --
 -- You can think of an AUFTRAG as document, which contains the mission briefing, i.e. information about the target location, mission altitude, speed and various other parameters.
--- This document can be handed over directly to a pilot (or multiple pilots) via the FLIGHTGROUP class. The pilots will then execute the mission.
+-- This document can be handed over directly to a pilot (or multiple pilots) via the @{Ops.FlightGroup#FLIGHTGROUP} class. The pilots will then execute the mission.
 -- The AUFTRAG document can also be given to an AIRWING. The airwing will then determine the best assets (pilots and payloads) available for the job. 
 -- One more up the food chain, an AUFTRAG can be passed to a WINGCOMMANDER. The wing commander will find the best AIRWING and pass the job over to it.
 --
@@ -180,9 +191,9 @@
 -- 
 -- An orbit mission can be created with the @{#AUFTRAG.NewORBIT}() function.
 -- 
--- ## PATROL
+-- ## GCICAP
 -- 
--- An patrol mission can be created with the @{#AUFTRAG.NewPATROL}() function.
+-- An patrol mission can be created with the @{#AUFTRAG.NewGCICAP}() function.
 -- 
 -- ## RECON
 -- 
@@ -252,13 +263,16 @@
 AUFTRAG = {
   ClassName          = "AUFTRAG",
   Debug              = false,
+  verbose            =     0,
   lid                =   nil,
   auftragsnummer     =   nil,
-  groupdata         =    {},
+  groupdata         =     {},
   assets             =    {},
   missionFraction    =   0.5,
   enrouteTasks       =    {},
   marker             =   nil,
+  markerOn           =   nil,
+  markerCoalition    =   nil,
   conditionStart     =    {},
   conditionSuccess   =    {},
   conditionFailure   =    {},
@@ -283,7 +297,7 @@ _AUFTRAGSNR=0
 -- @field #string FERRY Ferry flight mission.
 -- @field #string INTERCEPT Intercept mission.
 -- @field #string ORBIT Orbit mission.
--- @field #string PATROL Similar to CAP but no auto engage targets.
+-- @field #string GCICAP Similar to CAP but no auto engage targets.
 -- @field #string RECON Recon mission.
 -- @field #string RECOVERYTANKER Recovery tanker mission. Not implemented yet.
 -- @field #string RESCUEHELO Rescue helo.
@@ -306,7 +320,7 @@ AUFTRAG.Type={
   FERRY="Ferry Flight",
   INTERCEPT="Intercept",
   ORBIT="Orbit",
-  PATROL="Patrol",
+  GCICAP="Ground Controlled CAP",
   RECON="Recon",
   RECOVERYTANKER="Recovery Tanker",
   RESCUEHELO="Rescue Helo",
@@ -416,30 +430,30 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.3.0"
+AUFTRAG.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Clone mission. How? Deepcopy?
--- DONE: Option to assign mission to specific squadrons (requires an AIRWING).
--- TODO: Option to assign a specific payload for the mission (requires an AIRWING).
--- DONE: Add mission start conditions.
--- TODO: Add recovery tanker mission for boat ops.
--- DONE: Add rescue helo mission for boat ops.
+-- DONE: Option to assign a specific payload for the mission (requires an AIRWING).
 -- TODO: Mission success options damaged, destroyed.
+-- TODO: Recon mission. What input? Set of coordinates?
+-- NOPE: Clone mission. How? Deepcopy? ==> Create a new auftrag.
+-- TODO: F10 marker to create new missions.
+-- TODO: Add recovery tanker mission for boat ops.
+-- DONE: Option to assign mission to specific squadrons (requires an AIRWING).
+-- DONE: Add mission start conditions.
+-- DONE: Add rescue helo mission for boat ops.
 -- DONE: Mission ROE and ROT.
 -- DONE: Mission frequency and TACAN.
--- TODO: Mission formation, etc.
+-- DONE: Mission formation, etc.
 -- DONE: FSM events.
 -- DONE: F10 marker functions that are updated on Status event.
--- TODO: F10 marker to create new missions.
 -- DONE: Evaluate mission result ==> SUCCESS/FAILURE
 -- DONE: NewAUTO() NewA2G NewA2A
 -- DONE: Transport mission.
--- TODO: Recon mission. What input? Set of coordinates?
--- TODO: Set mission coalition, e.g. for F10 markers. Could be derived from target if target has a coalition.
+-- DONE: Set mission coalition, e.g. for F10 markers. Could be derived from target if target has a coalition.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -463,50 +477,59 @@ function AUFTRAG:New(Type)
   -- Auftragsnummer.
   self.auftragsnummer=_AUFTRAGSNR
   
-  -- Log id.
+  -- Log ID.
   self:_SetLogID()
   
   -- State is planned.
   self.status=AUFTRAG.Status.PLANNED
   
   -- Defaults
+  --self:SetVerbosity(0)  
   self:SetName()
   self:SetPriority()
   self:SetTime()
   self.engageAsGroup=true
-  self.missionRepeated=0
-  self.missionRepeatMax=0
+  self.repeated=0
+  self.repeatedSuccess=0
+  self.repeatedFailure=0
+  self.Nrepeat=0
+  self.NrepeatFailure=0
+  self.NrepeatSuccess=0
   self.nassets=1
   self.dTevaluate=0
+  self.Ncasualties=0
+  self.Nelements=0
   
   -- FMS start state is PLANNED.
   self:SetStartState(self.status)
   
   -- PLANNED --> (QUEUED) --> (REQUESTED) --> SCHEDULED --> STARTED --> EXECUTING --> DONE
   
-  self:AddTransition(AUFTRAG.Status.PLANNED,   "Queued",        AUFTRAG.Status.QUEUED)      -- Mission is in queue of an AIRWING.
-  self:AddTransition(AUFTRAG.Status.QUEUED,    "Requested",     AUFTRAG.Status.REQUESTED)   -- Mission assets have been requested from the warehouse.
-  self:AddTransition(AUFTRAG.Status.REQUESTED, "Scheduled",     AUFTRAG.Status.SCHEDULED)   -- Mission added to the first ops group queue.
+  self:AddTransition("*",                      "Planned",          AUFTRAG.Status.PLANNED)     -- Mission is in planning stage.
+  self:AddTransition(AUFTRAG.Status.PLANNED,   "Queued",           AUFTRAG.Status.QUEUED)      -- Mission is in queue of an AIRWING.
+  self:AddTransition(AUFTRAG.Status.QUEUED,    "Requested",        AUFTRAG.Status.REQUESTED)   -- Mission assets have been requested from the warehouse.
+  self:AddTransition(AUFTRAG.Status.REQUESTED, "Scheduled",        AUFTRAG.Status.SCHEDULED)   -- Mission added to the first ops group queue.
   
-  self:AddTransition(AUFTRAG.Status.PLANNED,   "Scheduled",     AUFTRAG.Status.SCHEDULED)   -- From planned directly to scheduled.
+  self:AddTransition(AUFTRAG.Status.PLANNED,   "Scheduled",        AUFTRAG.Status.SCHEDULED)   -- From planned directly to scheduled.
   
-  self:AddTransition(AUFTRAG.Status.SCHEDULED, "Started",       AUFTRAG.Status.STARTED)     -- First asset has started the mission
-  self:AddTransition(AUFTRAG.Status.STARTED,   "Executing",     AUFTRAG.Status.EXECUTING)   -- First asset is executing the mission.
+  self:AddTransition(AUFTRAG.Status.SCHEDULED, "Started",          AUFTRAG.Status.STARTED)     -- First asset has started the mission
+  self:AddTransition(AUFTRAG.Status.STARTED,   "Executing",        AUFTRAG.Status.EXECUTING)   -- First asset is executing the mission.
   
-  self:AddTransition("*",                      "Done",          AUFTRAG.Status.DONE)        -- All assets have reported that mission is done.
+  self:AddTransition("*",                      "Done",             AUFTRAG.Status.DONE)        -- All assets have reported that mission is done.
   
-  self:AddTransition("*",                      "Cancel",        "*")                        -- Command to cancel the mission.
+  self:AddTransition("*",                      "Cancel",           "*")                        -- Command to cancel the mission.
   
-  self:AddTransition("*",                      "Success",       AUFTRAG.Status.SUCCESS)
-  self:AddTransition("*",                      "Failed",        AUFTRAG.Status.FAILED)
+  self:AddTransition("*",                      "Success",          AUFTRAG.Status.SUCCESS)
+  self:AddTransition("*",                      "Failed",           AUFTRAG.Status.FAILED)
     
-  self:AddTransition("*",                      "Status",        "*")
-  self:AddTransition("*",                      "Stop",          "*")
+  self:AddTransition("*",                      "Status",           "*")
+  self:AddTransition("*",                      "Stop",             "*")
   
-  self:AddTransition("*",                      "Repeat",        AUFTRAG.Status.PLANNED)
+  self:AddTransition("*",                      "Repeat",           AUFTRAG.Status.PLANNED)
 
-  self:AddTransition("*",                      "GroupDead",    "*")  
-  self:AddTransition("*",                      "AssetDead",     "*")
+  self:AddTransition("*",                      "ElementDestroyed", "*")
+  self:AddTransition("*",                      "GroupDead",        "*")  
+  self:AddTransition("*",                      "AssetDead",        "*")
   
   -- Init status update.
   self:__Status(-1)
@@ -532,7 +555,7 @@ function AUFTRAG:NewANTISHIP(Target, Altitude)
   -- DCS task parameters:
   mission.engageWeaponType=ENUMS.WeaponFlag.Auto
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
-  mission.engageAltitude=Altitude or UTILS.FeetToMeters(2000)
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 2000)
   
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.ANTISHIPSTRIKE
@@ -619,7 +642,8 @@ function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
   return mission
 end
 
---- Create a PATROL mission.
+--- Create a Ground Controlled CAP (GCICAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a compat air patrol but not engage by
+-- themselfs. They wait for the CHIEF to tell them whom to engage.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
@@ -627,13 +651,13 @@ end
 -- @param #number Heading Heading of race-track pattern in degrees. Default random in [0, 360) degrees.
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @return #AUFTRAG self
-function AUFTRAG:NewPATROL(Coordinate, Altitude, Speed, Heading, Leg)
+function AUFTRAG:NewGCICAP(Coordinate, Altitude, Speed, Heading, Leg)
 
   -- Create ORBIT first.
   local mission=AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
     
-  -- Mission type PATROL.
-  mission.type=AUFTRAG.Type.PATROL
+  -- Mission type GCICAP.
+  mission.type=AUFTRAG.Type.GCICAP
   
   mission:_SetLogID()
 
@@ -651,14 +675,14 @@ end
 -- @param #number Speed Orbit speed in knots. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
--- @param #number RefuelSystem Refueling system.
+-- @param #number RefuelSystem Refueling system (0=boom, 1=probe). This info is *only* for AIRWINGs so they launch the right tanker type.
 -- @return #AUFTRAG self
 function AUFTRAG:NewTANKER(Coordinate, Altitude, Speed, Heading, Leg, RefuelSystem)
 
   -- Create ORBIT first.
   local mission=AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
     
-  -- Mission type PATROL.
+  -- Mission type TANKER.
   mission.type=AUFTRAG.Type.TANKER
   
   mission:_SetLogID()
@@ -688,7 +712,7 @@ function AUFTRAG:NewAWACS(Coordinate, Altitude, Speed, Heading, Leg)
   -- Create ORBIT first.
   local mission=AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
     
-  -- Mission type PATROL.
+  -- Mission type AWACS.
   mission.type=AUFTRAG.Type.AWACS
   
   mission:_SetLogID()
@@ -855,7 +879,7 @@ function AUFTRAG:NewBAI(Target, Altitude)
   -- DCS Task options:
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
-  mission.engageAltitude=Altitude or UTILS.FeetToMeters(2000)
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 2000)
   
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
@@ -883,7 +907,7 @@ function AUFTRAG:NewSEAD(Target, Altitude)
   -- DCS Task options:
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG  --ENUMS.WeaponFlag.Cannons
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
-  mission.engageAltitude=Altitude or UTILS.FeetToMeters(2000)
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 2000)
   
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.SEAD
@@ -968,6 +992,10 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
   if type(Airdrome)=="string" then
     Airdrome=AIRBASE:FindByName(Airdrome)
   end
+  
+  if Airdrome:IsInstanceOf("AIRBASE") then
+  
+  end
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BOMBRUNWAY)
   
@@ -981,7 +1009,7 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.RUNWAYATTACK
   mission.missionAltitude=mission.engageAltitude*0.8  
-  mission.missionFraction=0.2
+  mission.missionFraction=0.75
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
@@ -1034,7 +1062,7 @@ end
 --- Create an ESCORT (or FOLLOW) mission. Flight will escort another group and automatically engage certain target types.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP EscortGroup The group to escort.
--- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=200, y=0, z=-100} for 200 meters to the right, same alitude, 100 meters behind.
+-- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=-100, y=0, z=200} for z=200 meters to the right, same alitude, x=100 meters behind.
 -- @param #number EngageMaxDistance Max engage distance of targets in meters. Default auto (*nil*).
 -- @param #table TargetTypes Types of targets to engage automatically. Default is {"Air"}, i.e. all enemy airborne units. Use an empty set {} for a simple "FOLLOW" mission.
 -- @return #AUFTRAG self
@@ -1045,7 +1073,7 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   mission:_TargetFromObject(EscortGroup)
   
   -- DCS task parameters:
-  mission.escortVec3=OffsetVector or {x=200, y=0, z=-100}
+  mission.escortVec3=OffsetVector or {x=-100, y=0, z=200}
   mission.engageMaxDistance=EngageMaxDistance
   mission.engageTargetTypes=TargetTypes or {"Air"}
   
@@ -1068,6 +1096,8 @@ end
 function AUFTRAG:NewRESCUEHELO(Carrier)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RESCUEHELO)
+  
+  --mission.carrier=Carrier
   
   mission:_TargetFromObject(Carrier)
   
@@ -1136,84 +1166,32 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius)
   mission.artyShots=Nshots or 3
   mission.artyRadius=Radius or 100
   
-  mission.optionROE=ENUMS.ROE.OpenFire
-  mission.missionFraction=0.1
+  mission.optionROE=ENUMS.ROE.OpenFire   -- Ground/naval need open fire!
+  mission.optionAlarm=0
+  
+  mission.missionFraction=0.0
+  
+  -- Evaluate after 8 min.
+  mission.dTevaluate=8*60
   
   mission.DCStask=mission:GetDCSMissionTask()
 
   return mission
 end
 
-
 --- Create a mission to attack a group. Mission type is automatically chosen from the group category.
 -- @param #AUFTRAG self
--- @param Wrapper.Group#GROUP EngageGroup Group to be engaged.
+-- @param Ops.Target#TARGET Target The target.
 -- @return #AUFTRAG self
-function AUFTRAG:NewAUTO(EngageGroup)
+function AUFTRAG:NewTargetAir(Target)
 
   local mission=nil --#AUFTRAG
   
-  local group=EngageGroup
-
-  if group and group:IsAlive() then
+  self.engageTarget=Target
+    
+  local target=self.engageTarget:GetObject()
   
-    local category=group:GetCategory()
-    local attribute=group:GetAttribute()
-    local threatlevel=group:GetThreatLevel()
-  
-    if category==Group.Category.AIRPLANE or category==Group.Category.HELICOPTER then
-    
-      ---
-      -- AIR
-      ---
-              
-      mission=AUFTRAG:NewINTERCEPT(group)
-      
-    elseif category==Group.Category.GROUND then
-    
-      ---
-      -- GROUND
-      ---
-    
-      --TODO: action depends on type
-      -- AA/SAM ==> SEAD
-      -- Tanks ==>
-      -- Artillery ==>
-      -- Infantry ==>
-      -- 
-              
-      if attribute==GROUP.Attribute.GROUND_AAA or attribute==GROUP.Attribute.GROUND_SAM then
-          
-        -- SEAD/DEAD
-        
-        -- TODO: Attack radars first? Attack launchers?  
-          
-        mission=AUFTRAG:NewSEAD(group)
-        
-      elseif attribute==GROUP.Attribute.GROUND_ARTILLERY then
-      
-        mission=AUFTRAG:NewBAI(group)
-      
-      elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
-      
-        mission=AUFTRAG:NewBAI(group)
-          
-      else
-
-        mission=AUFTRAG:NewBAI(group)
-      
-      end
-      
-    elseif category==Group.Category.SHIP then
-    
-      ---
-      -- NAVAL
-      ---
-      
-       mission=AUFTRAG:NewANTISHIP(group)
-            
-    end
-  end
+  local mission=self:NewAUTO(target)
   
   if mission then
     mission:SetPriority(10, true)
@@ -1223,6 +1201,159 @@ function AUFTRAG:NewAUTO(EngageGroup)
 end
 
 
+--- Create a mission to attack a group. Mission type is automatically chosen from the group category.
+-- @param #AUFTRAG self
+-- @param Wrapper.Positionable#POSITIONABLE Target Target object.
+-- @return #string Auftrag type, e.g. `AUFTRAG.Type.BAI` (="BAI").
+function AUFTRAG:_DetermineAuftragType(Target)
+
+  local group=nil      --Wrapper.Group#GROUP
+  local airbase=nil    --Wrapper.Airbase#AIRBASE
+  local scenery=nil    --Wrapper.Scenery#SCENERY
+  local coordinate=nil --Core.Point#COORDINATE
+  local auftrag=nil
+
+  if Target:IsInstanceOf("GROUP") then
+    group=Target --Target is already a group.  
+  elseif Target:IsInstanceOf("UNIT") then
+    group=Target:GetGroup()
+  elseif Target:IsInstanceOf("AIRBASE") then
+    airbase=Target
+  elseif Target:IsInstanceOf("SCENERY") then
+    scenery=Target
+  end
+  
+  if group then
+
+    local category=group:GetCategory()
+    local attribute=group:GetAttribute()
+
+    if category==Group.Category.AIRPLANE or category==Group.Category.HELICOPTER then
+    
+      ---
+      -- A2A: Intercept
+      ---
+    
+      auftrag=AUFTRAG.Type.INTERCEPT
+    
+    elseif category==Group.Category.GROUND or category==Group.Category.TRAIN then
+    
+      ---
+      -- GROUND
+      ---
+
+      if attribute==GROUP.Attribute.GROUND_SAM then
+          
+        -- SEAD/DEAD
+          
+        auftrag=AUFTRAG.Type.SEAD
+        
+      elseif attribute==GROUP.Attribute.GROUND_AAA then
+      
+        auftrag=AUFTRAG.Type.BAI
+        
+      elseif attribute==GROUP.Attribute.GROUND_ARTILLERY then
+      
+        auftrag=AUFTRAG.Type.BAI
+      
+      elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
+      
+        auftrag=AUFTRAG.Type.BAI
+          
+      else
+
+        auftrag=AUFTRAG.Type.BAI
+      
+      end
+
+    
+    elseif category==Group.Category.SHIP then
+    
+      ---
+      -- NAVAL
+      ---
+    
+      auftrag=AUFTRAG.Type.ANTISHIP
+  
+    else
+      self:E(self.lid.."ERROR: Unknown Group category!")
+    end
+    
+  elseif airbase then
+    auftrag=AUFTRAG.Type.BOMBRUNWAY   
+  elseif scenery then
+    auftrag=AUFTRAG.Type.STRIKE
+  elseif coordinate then
+    auftrag=AUFTRAG.Type.BOMBING
+  end
+
+  return auftrag
+end
+
+--- Create a mission to attack a group. Mission type is automatically chosen from the group category.
+-- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP EngageGroup Group to be engaged.
+-- @return #AUFTRAG self
+function AUFTRAG:NewAUTO(EngageGroup)
+
+  local mission=nil --#AUFTRAG
+  
+  local Target=EngageGroup
+
+  local auftrag=self:_DetermineAuftragType(EngageGroup)
+  
+  if auftrag==AUFTRAG.Type.ANTISHIP then
+    mission=AUFTRAG:NewANTISHIP(Target)
+  elseif auftrag==AUFTRAG.Type.ARTY then
+    mission=AUFTRAG:NewARTY(Target)
+  elseif auftrag==AUFTRAG.Type.AWACS then
+    mission=AUFTRAG:NewAWACS(Coordinate, Altitude,Speed,Heading,Leg)
+  elseif auftrag==AUFTRAG.Type.BAI then
+    mission=AUFTRAG:NewBAI(Target,Altitude)
+  elseif auftrag==AUFTRAG.Type.BOMBING then
+    mission=AUFTRAG:NewBOMBING(Target,Altitude)
+  elseif auftrag==AUFTRAG.Type.BOMBRUNWAY then
+    mission=AUFTRAG:NewBOMBRUNWAY(Airdrome,Altitude)
+  elseif auftrag==AUFTRAG.Type.BOMBCARPET then
+    mission=AUFTRAG:NewBOMBCARPET(Target,Altitude,CarpetLength)
+  elseif auftrag==AUFTRAG.Type.CAP then
+    mission=AUFTRAG:NewCAP(ZoneCAP,Altitude,Speed,Coordinate,Heading,Leg,TargetTypes)
+  elseif auftrag==AUFTRAG.Type.CAS then
+  mission=AUFTRAG:NewCAS(ZoneCAS,Altitude,Speed,Coordinate,Heading,Leg,TargetTypes)  
+  elseif auftrag==AUFTRAG.Type.ESCORT then
+    mission=AUFTRAG:NewESCORT(EscortGroup,OffsetVector,EngageMaxDistance,TargetTypes)  
+  elseif auftrag==AUFTRAG.Type.FACA then
+    mission=AUFTRAG:NewFACA(Target,Designation,DataLink,Frequency,Modulation)
+  elseif auftrag==AUFTRAG.Type.FERRY then
+    -- Not implemented yet.  
+  elseif auftrag==AUFTRAG.Type.GCICAP then
+    mission=AUFTRAG:NewGCICAP(Coordinate,Altitude,Speed,Heading,Leg)
+  elseif auftrag==AUFTRAG.Type.INTERCEPT then
+    mission=AUFTRAG:NewINTERCEPT(Target)
+  elseif auftrag==AUFTRAG.Type.ORBIT then
+    mission=AUFTRAG:NewORBIT(Coordinate,Altitude,Speed,Heading,Leg)
+  elseif auftrag==AUFTRAG.Type.RECON then
+    -- Not implemented yet.  
+  elseif auftrag==AUFTRAG.Type.RESCUEHELO then
+    mission=AUFTRAG:NewRESCUEHELO(Carrier)
+  elseif auftrag==AUFTRAG.Type.SEAD then
+    mission=AUFTRAG:NewSEAD(Target,Altitude)
+  elseif auftrag==AUFTRAG.Type.STRIKE then
+    mission=AUFTRAG:NewSTRIKE(Target,Altitude)
+  elseif auftrag==AUFTRAG.Type.TANKER then
+    mission=AUFTRAG:NewTANKER(Coordinate,Altitude,Speed,Heading,Leg,RefuelSystem)
+  elseif auftrag==AUFTRAG.Type.TROOPTRANSPORT then
+    mission=AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet,DropoffCoordinate,PickupCoordinate)
+  else
+  
+  end
+  
+  if mission then
+    mission:SetPriority(10, true)
+  end
+
+  return mission
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User API Functions
@@ -1268,23 +1399,43 @@ end
 -- @param #AUFTRAG self
 -- @param #number Prio Priority 1=high, 100=low. Default 50.
 -- @param #boolean Urgent If *true*, another running mission might be cancelled if it has a lower priority.
+-- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is `nil`.
 -- @return #AUFTRAG self
-function AUFTRAG:SetPriority(Prio, Urgent)
+function AUFTRAG:SetPriority(Prio, Urgent, Importance)
   self.prio=Prio or 50
   self.urgent=Urgent
+  self.importance=Importance
   return self
 end
 
---- Set how many times the mission is repeated if it fails. 
+--- Set how many times the mission is repeated. Only valid if the mission is handled by an AIRWING or higher level.
+-- @param #AUFTRAG self
+-- @param #number Nrepeat Number of repeats. Default 0.
+-- @return #AUFTRAG self
+function AUFTRAG:SetRepeat(Nrepeat)
+  self.Nrepeat=Nrepeat or 0
+  return self
+end
+
+--- Set how many times the mission is repeated if it fails. Only valid if the mission is handled by an AIRWING or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nrepeat Number of repeats. Default 0.
 -- @return #AUFTRAG self
 function AUFTRAG:SetRepeatOnFailure(Nrepeat)
-  self.missionRepeatMax=Nrepeat or 0
+  self.NrepeatFailure=Nrepeat or 0
   return self
 end
 
---- Define how many assets are required to do the job.
+--- Set how many times the mission is repeated if it was successful. Only valid if the mission is handled by an AIRWING or higher level.
+-- @param #AUFTRAG self
+-- @param #number Nrepeat Number of repeats. Default 0.
+-- @return #AUFTRAG self
+function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
+  self.NrepeatSuccess=Nrepeat or 0
+  return self
+end
+
+--- Define how many assets are required to do the job. Only valid if the mission is handled by an AIRWING or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nassets Number of asset groups. Default 1.
 -- @return #AUFTRAG self
@@ -1302,9 +1453,28 @@ function AUFTRAG:SetName(Name)
   return self
 end
 
+--- Enable markers, which dispay the mission status on the F10 map.
+-- @param #AUFTRAG self
+-- @param #number Coalition The coaliton side to which the markers are dispayed. Default is to all.
+-- @return #AUFTRAG self
+function AUFTRAG:SetEnableMarkers(Coalition)
+  self.markerOn=true
+  self.markerCoaliton=Coalition or -1
+  return self
+end
+
+--- Set verbosity level.
+-- @param #AUFTRAG self
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #AUFTRAG self
+function AUFTRAG:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
+  return self
+end
+
 --- Set weapon type used for the engagement.
 -- @param #AUFTRAG self
--- @param #number WeaponType Weapon type. Default is ENUMS.WeaponFlag.Auto
+-- @param #number WeaponType Weapon type. Default is `ENUMS.WeaponFlag.Auto`.
 -- @return #AUFTRAG self
 function AUFTRAG:SetWeaponType(WeaponType)
   
@@ -1348,7 +1518,7 @@ function AUFTRAG:SetEngageAsGroup(Switch)
   return self
 end
 
---- Set engage altitude.
+--- Set engage altitude. This is the altitude passed to the DCS task. In the ME it is the tickbox ALTITUDE ABOVE.
 -- @param #AUFTRAG self
 -- @param #string Altitude Altitude in feet. Default 6000 ft.
 -- @return #AUFTRAG self
@@ -1362,7 +1532,7 @@ function AUFTRAG:SetEngageAltitude(Altitude)
   return self
 end
 
---- Set mission altitude.
+--- Set mission altitude. This is the altitude of the waypoint create where the DCS task is executed.
 -- @param #AUFTRAG self
 -- @param #string Altitude Altitude in feet.
 -- @return #AUFTRAG self
@@ -1371,11 +1541,20 @@ function AUFTRAG:SetMissionAltitude(Altitude)
   return self
 end
 
---- Set max engage range.
+--- Set mission speed. That is the speed the group uses to get to the mission waypoint.
+-- @param #AUFTRAG self
+-- @param #string Speed Mission speed in knots.
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionSpeed(Speed)
+  self.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  return self
+end
+
+--- Set max mission range. Only applies if the AUFTRAG is handled by an AIRWING or CHIEF. This is the max allowed distance from the airbase to the target.
 -- @param #AUFTRAG self
 -- @param #number Range Max range in NM. Default 100 NM.
 -- @return #AUFTRAG self
-function AUFTRAG:SetEngageRange(Range)
+function AUFTRAG:SetMissionRange(Range)
   self.engageRange=UTILS.NMToMeters(Range or 100)
   return self
 end
@@ -1394,11 +1573,22 @@ end
 
 --- Set Reaction on Threat (ROT) for this mission.
 -- @param #AUFTRAG self
--- @param #string roe Mission ROT.
+-- @param #string rot Mission ROT.
 -- @return #AUFTRAG self
 function AUFTRAG:SetROT(rot)
   
   self.optionROT=rot
+  
+  return self
+end
+
+--- Set alarm state for this mission.
+-- @param #AUFTRAG self
+-- @param #number Alarmstate Alarm state 0=Auto, 1=Green, 2=Red.
+-- @return #AUFTRAG self
+function AUFTRAG:SetAlarmstate(Alarmstate)
+  
+  self.optionAlarm=Alarmstate
   
   return self
 end
@@ -1420,9 +1610,10 @@ end
 -- @param #number Modulation Radio modulation. Default 0=AM.
 -- @return #AUFTRAG self
 function AUFTRAG:SetRadio(Frequency, Modulation)
-  
-  self.radioFreq=Frequency
-  self.radioModu=Modulation or 0
+    
+  self.radio={}
+  self.radio.Freq=Frequency
+  self.radio.Modu=Modulation
   
   return self
 end
@@ -1431,15 +1622,77 @@ end
 -- @param #AUFTRAG self
 -- @param #number Channel TACAN channel.
 -- @param #string Morse Morse code. Default "XXX".
+-- @param #string UnitName Name of the unit in the group for which acts as TACAN beacon. Default is the first unit in the group.
+-- @param #string Band Tacan channel mode ("X" or "Y"). Default is "X" for ground/naval and "Y" for aircraft.
 -- @return #AUFTRAG self
-function AUFTRAG:SetTACAN(Channel, Morse)
+function AUFTRAG:SetTACAN(Channel, Morse, UnitName, Band)
   
-  self.tacanChannel=Channel
-  self.tacanMorse=Morse or "XXX"
+  self.tacan={}  
+  self.tacan.Channel=Channel
+  self.tacan.Morse=Morse or "XXX"
+  self.tacan.UnitName=UnitName
+  self.tacan.Band=Band
   
   return self
 end
 
+--- Set ICLS beacon channel and Morse code for this mission.
+-- @param #AUFTRAG self
+-- @param #number Channel ICLS channel.
+-- @param #string Morse Morse code. Default "XXX".
+-- @param #string UnitName Name of the unit in the group for which acts as ICLS beacon. Default is the first unit in the group.
+-- @return #AUFTRAG self
+function AUFTRAG:SetICLS(Channel, Morse, UnitName)
+  
+  self.icls={}  
+  self.icls.Channel=Channel
+  self.icls.Morse=Morse or "XXX"
+  self.icls.UnitName=UnitName
+  
+  return self
+end
+
+--- Get mission type.
+-- @param #AUFTRAG self
+-- @return #string Mission type, e.g. "BAI".
+function AUFTRAG:GetType()
+  return self.type
+end
+
+--- Get mission name.
+-- @param #AUFTRAG self
+-- @return #string Mission name, e.g. "Auftrag Nr.1".
+function AUFTRAG:GetName()
+  return self.name
+end
+
+--- Get number of required assets.
+-- @param #AUFTRAG self
+-- @return #number Numer of required assets.
+function AUFTRAG:GetNumberOfRequiredAssets()
+  return self.nassets
+end
+
+--- Get mission priority.
+-- @param #AUFTRAG self
+-- @return #number Priority. Smaller is higher.
+function AUFTRAG:GetPriority()
+  return self.prio
+end
+
+--- Check if mission is "urgent".
+-- @param #AUFTRAG self
+-- @return #boolean If `true`, mission is "urgent".
+function AUFTRAG:IsUrgent()
+  return self.urgent
+end
+
+--- Get mission importance.
+-- @param #AUFTRAG self
+-- @return #number Importance. Smaller is higher.
+function AUFTRAG:GetImportance()
+  return self.importance
+end
 
 --- Add start condition.
 -- @param #AUFTRAG self
@@ -1504,13 +1757,9 @@ end
 
 --- Assign airwing squadron(s) to the mission. Only these squads will be considered for the job.
 -- @param #AUFTRAG self
--- @param #table Squadrons A table of SQUADRONs or a single SQUADRON object. 
+-- @param #table Squadrons A table of SQUADRON(s). **Has to be a table {}** even if a single squad is given.
 -- @return #AUFTRAG self
 function AUFTRAG:AssignSquadrons(Squadrons)
-
-  if Squadrons:IsInstanceOf("SQUADRON") then
-    Squadrons={Squadrons}
-  end
   
   for _,_squad in pairs(Squadrons) do
     local squadron=_squad --Ops.Squadron#SQUADRON
@@ -1520,12 +1769,24 @@ function AUFTRAG:AssignSquadrons(Squadrons)
   self.squadrons=Squadrons
 end
 
+--- Add a required payload for this mission. Only these payloads will be used for this mission. If they are not available, the mission cannot start. Only available for use with an AIRWING.
+-- @param #AUFTRAG self
+-- @param Ops.AirWing#AIRWING.Payload Payload Required payload.
+-- @return #AUFTRAG self
+function AUFTRAG:AddRequiredPayload(Payload)
+
+  self.payloads=self.payloads or {}
+
+  table.insert(self.payloads, Payload)
+  
+end
+
 
 --- Add a Ops group to the mission.
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
 function AUFTRAG:AddOpsGroup(OpsGroup)
-  self:I(self.lid..string.format("Adding Ops group %s", OpsGroup.groupname))
+  self:T(self.lid..string.format("Adding Ops group %s", OpsGroup.groupname))
 
   local groupdata={} --#AUFTRAG.GroupData
   groupdata.opsgroup=OpsGroup
@@ -1542,7 +1803,7 @@ end
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
 function AUFTRAG:DelOpsGroup(OpsGroup)
-  self:I(self.lid..string.format("Removing OPS group %s", OpsGroup and OpsGroup.groupname or "nil (ERROR)!"))
+  self:T(self.lid..string.format("Removing OPS group %s", OpsGroup and OpsGroup.groupname or "nil (ERROR)!"))
 
   if OpsGroup then
     
@@ -1758,8 +2019,12 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterStatus(From, Event, To)
 
+  -- Current abs. mission time.
+  local Tnow=timer.getAbsTime()
+
   -- Number of alive mission targets.
   local Ntargets=self:CountMissionTargets()
+  local Ntargets0=self:GetTargetInitialNumber()
   
   -- Number of alive groups attached to this mission.
   local Ngroups=self:CountOpsGroups()
@@ -1772,7 +2037,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
       -- All groups have reported MISSON DONE.
       self:Done()
       
-    elseif (self.Tstop and timer.getAbsTime()>self.Tstop+10) or (self.Ntargets>0 and Ntargets==0) then
+    elseif (self.Tstop and Tnow>self.Tstop+10) or (Ntargets0>0 and Ntargets==0) then
     
       -- Cancel mission if stop time passed.
       self:Cancel()
@@ -1780,36 +2045,43 @@ function AUFTRAG:onafterStatus(From, Event, To)
     end
     
   end
-
-  
+ 
   -- Current FSM state.
   local fsmstate=self:GetState()
-  local Tnow=timer.getAbsTime()
   
-  -- Mission start stop time.
-  local Cstart=UTILS.SecondsToClock(self.Tstart, true)
-  local Cstop=self.Tstop and UTILS.SecondsToClock(self.Tstop, true) or "INF"
-  
-  local targetname=self:GetTargetName() or "unknown"
-  
-  local airwing=self.airwing and self.airwing.alias or "N/A"
-  local commander=self.wingcommander and tostring(self.wingcommander.coalition) or "N/A"
-
-  -- Info message.
-  self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, commander))
-
   -- Check for error.  
   if fsmstate~=self.status then
     self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
-
-  local text="Group data:"  
-  for groupname,_groupdata in pairs(self.groupdata) do
-    local groupdata=_groupdata --#AUFTRAG.GroupData
-    text=text..string.format("\n- %s: status mission=%s opsgroup=%s", groupname, groupdata.status, groupdata.opsgroup and groupdata.opsgroup:GetState() or "N/A")
+  
+  -- General info.
+  if self.verbose>=1 then
+  
+    -- Mission start stop time.
+    local Cstart=UTILS.SecondsToClock(self.Tstart, true)
+    local Cstop=self.Tstop and UTILS.SecondsToClock(self.Tstop, true) or "INF"
+    
+    local targetname=self:GetTargetName() or "unknown"
+    
+    local airwing=self.airwing and self.airwing.alias or "N/A"
+    local commander=self.wingcommander and tostring(self.wingcommander.coalition) or "N/A"
+  
+    -- Info message.
+    self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, commander))
   end
-  self:I(self.lid..text)
 
+  -- Group info.
+  if self.verbose>=2 then
+    -- Data on assigned groups.
+    local text="Group data:"  
+    for groupname,_groupdata in pairs(self.groupdata) do
+      local groupdata=_groupdata --#AUFTRAG.GroupData
+      text=text..string.format("\n- %s: status mission=%s opsgroup=%s", groupname, groupdata.status, groupdata.opsgroup and groupdata.opsgroup:GetState() or "N/A")
+    end
+    self:I(self.lid..text)
+  end
+
+  -- Ready to evaluate mission outcome?
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
 
   -- Check if mission is OVER (done or cancelled) and enough time passed to evaluate the result.
@@ -1821,7 +2093,10 @@ function AUFTRAG:onafterStatus(From, Event, To)
   end
   
   -- Update F10 marker.
-  self:UpdateMarker()
+  if self.markerOn then
+    self:UpdateMarker()
+  end
+  
 end
 
 --- Evaluate mission outcome - success or failure.
@@ -1832,48 +2107,92 @@ function AUFTRAG:Evaluate()
   -- Assume success and check if any failed condition applies.
   local failed=false
   
+  -- Target damage in %.
+  local targetdamage=self:GetTargetDamage()
+  
+  -- Own damage in %.
+  local owndamage=self.Ncasualties/self.Nelements*100
+
+  -- Current number of mission targets.
+  local Ntargets=self:CountMissionTargets()
+  local Ntargets0=self:GetTargetInitialNumber()
+  
+  local Life=self:GetTargetLife()
+  local Life0=self:GetTargetInitialLife()
+  
+  
+  if Ntargets0>0 then
+  
+    ---
+    -- Mission had targets
+    ---
+  
+    -- Check if failed.
+    if self.type==AUFTRAG.Type.TROOPTRANSPORT or self.type==AUFTRAG.Type.ESCORT then
+  
+      -- Transported or escorted groups have to survive.
+      if Ntargets<Ntargets0 then
+        failed=true
+      end
+      
+    elseif self.type==AUFTRAG.Type.RESCUEHELO then
+
+      -- Rescue helo has to survive.
+      if self.Nelements==self.Ncasualties then
+        failed=true
+      end
+    
+    else
+    
+      -- Still targets left.
+      if Ntargets>0 then
+        failed=true
+      end
+      
+    end
+    
+  else
+
+    ---
+    -- Mission had NO targets
+    ---
+
+      -- No targets and everybody died ==> mission failed. Well, unless success condition is true.
+      if self.Nelements==self.Ncasualties then
+        failed=true
+      end
+  
+  end
+
+
   -- Any success condition true?
   local successCondition=self:EvalConditionsAny(self.conditionSuccess)
   
   -- Any failure condition true?
   local failureCondition=self:EvalConditionsAny(self.conditionFailure)
-  
-  -- Target damage in %.
-  local targetdamage=self:GetTargetDamage()
-
-  -- Current number of mission targets.
-  local Ntargets=self:CountMissionTargets()
-  
-  -- Number of current targets is still >0 ==> Not everything was destroyed.
-  if self.type==AUFTRAG.Type.TROOPTRANSPORT then
-
-    if self.Ntargets>0 and Ntargets<self.Ntargets then
-      failed=true
-    end
-  
-  else
-  
-    if self.Ntargets>0 and Ntargets>0 then
-      failed=true
-    end
-    
-  end
-  
-  --TODO: all assets dead? Is this a FAILED criterion even if all targets have been destroyed? What if there are no initial targets (e.g. when ORBIT, PATROL, RECON missions).
 
   if failureCondition then
     failed=true
   elseif successCondition then
     failed=false
-  end  
+  end
   
   -- Debug text.
   local text=string.format("Evaluating mission:\n")
-  text=text..string.format("Targets      = %d/%d\n", self.Ntargets, Ntargets)
-  text=text..string.format("Damage       = %.1f %%\n", targetdamage)
-  text=text..string.format("Success Cond = %s\n", tostring(successCondition))
-  text=text..string.format("Failure Cond = %s\n", tostring(failureCondition))
-  text=text..string.format("Failed       = %s",   tostring(failed))
+  text=text..string.format("Own casualties = %d/%d\n", self.Ncasualties, self.Nelements)
+  text=text..string.format("Own losses     = %.1f %%\n", owndamage)
+  text=text..string.format("--------------------------\n")  
+  text=text..string.format("Targets left   = %d/%d\n", Ntargets, Ntargets0)
+  text=text..string.format("Targets life   = %.1f/%.1f\n", Life, Life0)
+  text=text..string.format("Enemy losses   = %.1f %%\n", targetdamage)
+  text=text..string.format("--------------------------\n")
+  --text=text..string.format("Loss ratio     = %.1f %%\n", targetdamage)
+  --text=text..string.format("--------------------------\n")
+  text=text..string.format("Success Cond   = %s\n", tostring(successCondition))
+  text=text..string.format("Failure Cond   = %s\n", tostring(failureCondition))
+  text=text..string.format("--------------------------\n")
+  text=text..string.format("Final Success  = %s\n", tostring(not failed))
+  text=text..string.format("=========================")
   self:I(self.lid..text)  
   
   if failed then
@@ -1997,7 +2316,7 @@ end
 -- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @param Ops.OpsGroup#OPSGROUP.Task task Waypoint task.
 function AUFTRAG:SetGroupWaypointTask(opsgroup, task)
-  self:I(self.lid..string.format("Setting waypoint task %s", task and task.description or "WTF"))
+  self:T2(self.lid..string.format("Setting waypoint task %s", task and task.description or "WTF"))
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     groupdata.waypointtask=task
@@ -2020,7 +2339,7 @@ end
 -- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @param #number waypointindex Waypoint index.
 function AUFTRAG:SetGroupWaypointIndex(opsgroup, waypointindex)
-  self:I(self.lid..string.format("Setting waypoint index %d", waypointindex))
+  self:T2(self.lid..string.format("Setting waypoint index %d", waypointindex))
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     groupdata.waypointindex=waypointindex
@@ -2101,6 +2420,17 @@ end
 -- FSM Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+--- On after "Planned" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterPlanned(From, Event, To)
+  self.status=AUFTRAG.Status.PLANNED
+  self:T(self.lid..string.format("New mission status=%s", self.status))
+end
+
 --- On after "Queue" event. Mission is added to the mission queue of an AIRWING.
 -- @param #AUFTRAG self
 -- @param #string From From state.
@@ -2110,7 +2440,7 @@ end
 function AUFTRAG:onafterQueued(From, Event, To, Airwing)
   self.status=AUFTRAG.Status.QUEUED
   self.airwing=Airwing
-  self:I(self.lid..string.format("New mission status=%s at airwing %s", self.status, tostring(Airwing.alias)))
+  self:T(self.lid..string.format("New mission status=%s at airwing %s", self.status, tostring(Airwing.alias)))
 end
 
 
@@ -2121,7 +2451,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterRequested(From, Event, To)
   self.status=AUFTRAG.Status.REQUESTED
-  self:I(self.lid..string.format("New mission status=%s", self.status))
+  self:T(self.lid..string.format("New mission status=%s", self.status))
 end
 
 --- On after "Assign" event. 
@@ -2131,7 +2461,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterAssign(From, Event, To)
   self.status=AUFTRAG.Status.ASSIGNED
-  self:I(self.lid..string.format("New mission status=%s", self.status))  
+  self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
 
 --- On after "Schedule" event. Mission is added to the mission queue of a FLIGHTGROUP.
@@ -2139,10 +2469,9 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP FlightGroup
-function AUFTRAG:onafterScheduled(From, Event, To, FlightGroup)
+function AUFTRAG:onafterScheduled(From, Event, To)
   self.status=AUFTRAG.Status.SCHEDULED
-  self:I(self.lid..string.format("New mission status=%s", self.status))  
+  self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
 
 --- On after "Start" event.
@@ -2152,7 +2481,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterStarted(From, Event, To)
   self.status=AUFTRAG.Status.STARTED
-  self:I(self.lid..string.format("New mission status=%s", self.status))  
+  self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
 
 --- On after "Execute" event.
@@ -2162,7 +2491,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterExecuting(From, Event, To)
   self.status=AUFTRAG.Status.EXECUTING
-  self:I(self.lid..string.format("New mission status=%s", self.status))  
+  self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
 
 --- On after "Done" event.
@@ -2172,13 +2501,23 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterDone(From, Event, To)
   self.status=AUFTRAG.Status.DONE
-  self:I(self.lid..string.format("New mission status=%s", self.status))
+  self:T(self.lid..string.format("New mission status=%s", self.status))
   
   -- Set time stamp.
   self.Tover=timer.getAbsTime()
   
 end
 
+--- On after "ElementDestroyed" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup The ops group that is dead now.
+function AUFTRAG:onafterElementDestroyed(From, Event, To, OpsGroup, Element)
+  -- Increase number of own casualties.
+  self.Ncasualties=self.Ncasualties+1
+end
 
 --- On after "GroupDead" event.
 -- @param #AUFTRAG self
@@ -2202,10 +2541,8 @@ end
 -- @param #string To To state.
 -- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
 function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
-    
-  -- Remove opsgroup from mission.
-  --self:DelOpsGroup(Asset.opsgroup)
-  
+ 
+  -- Number of groups alive. 
   local N=self:CountOpsGroups()
   
   -- All assets dead?
@@ -2218,34 +2555,14 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
       
     else
       
-      self:E(self.lid.."ERROR: All assets are dead not but mission was already over... Investigate!")
+      --self:E(self.lid.."ERROR: All assets are dead not but mission was already over... Investigate!")
       -- Now this can happen, because when a opsgroup dies (sometimes!), the mission is DONE
       
     end
   end
-  
-  -- Remove asset from airwing.
-  if self.airwing then
-    self.airwing:RemoveAssetFromSquadron(Asset)
-  end
 
   -- Delete asset from mission.
   self:DelAsset(Asset)
-
-end
-
---- On after "Success" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function AUFTRAG:onafterSuccess(From, Event, To)
-
-  self.status=AUFTRAG.Status.SUCCESS
-  self:I(self.lid..string.format("New mission status=%s", self.status))
-  
-  -- Stop mission.
-  self:Stop()
 
 end
 
@@ -2263,27 +2580,29 @@ function AUFTRAG:onafterCancel(From, Event, To)
   self.Tover=timer.getAbsTime()
   
   -- No more repeats.
-  self.missionRepeatMax=self.missionRepeated
+  self.Nrepeat=self.repeated
+  self.NrepeatFailure=self.repeatedFailure
+  self.NrepeatSuccess=self.repeatedSuccess
   
   -- Not necessary to delay the evaluaton?!
   self.dTevaluate=0
   
   if self.wingcommander then
   
-    self:I(self.lid..string.format("Wingcommander will cancel the mission. Will wait for mission DONE before evaluation!"))
+    self:T(self.lid..string.format("Wingcommander will cancel the mission. Will wait for mission DONE before evaluation!"))
     
     self.wingcommander:CancelMission(self)
 
   elseif self.airwing then
     
-    self:I(self.lid..string.format("Airwing %s will cancel the mission. Will wait for mission DONE before evaluation!", self.airwing.alias))
+    self:T(self.lid..string.format("Airwing %s will cancel the mission. Will wait for mission DONE before evaluation!", self.airwing.alias))
     
     -- Airwing will cancel all flight missions and remove queued request from warehouse queue.
     self.airwing:MissionCancel(self)
   
   else
   
-    self:I(self.lid..string.format("No airwing or wingcommander. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
+    self:T(self.lid..string.format("No airwing or wingcommander. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
   
     for _,_groupdata in pairs(self.groupdata) do
       local groupdata=_groupdata --#AUFTRAG.GroupData
@@ -2294,8 +2613,42 @@ function AUFTRAG:onafterCancel(From, Event, To)
   
   -- Special mission states.
   if self.status==AUFTRAG.Status.PLANNED then
-    self:I(self.lid..string.format("Cancelled mission was in planned stage. Call it done!"))
+    self:T(self.lid..string.format("Cancelled mission was in planned stage. Call it done!"))
     self:Done()
+  end
+
+end
+
+--- On after "Success" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterSuccess(From, Event, To)
+
+  self.status=AUFTRAG.Status.SUCCESS
+  self:T(self.lid..string.format("New mission status=%s", self.status))
+  
+  local repeatme=self.repeatedSuccess<self.NrepeatSuccess or self.repeated<self.Nrepeat
+  
+  if repeatme then
+
+    -- Increase counter.
+    self.repeatedSuccess=self.repeatedSuccess+1
+
+    -- Number of repeats.
+    local N=math.max(self.NrepeatSuccess, self.Nrepeat)
+        
+    -- Repeat mission.
+    self:I(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
+    self:Repeat()
+    
+  else
+  
+    -- Stop mission.
+    self:I(self.lid..string.format("Mission SUCCESS! Number of max repeats %d reached  ==> Stopping mission!", self.repeated+1))
+    self:Stop()
+    
   end
 
 end
@@ -2308,18 +2661,27 @@ end
 function AUFTRAG:onafterFailed(From, Event, To)
 
   self.status=AUFTRAG.Status.FAILED
-  self:I(self.lid..string.format("New mission status=%s", self.status))
+  self:T(self.lid..string.format("New mission status=%s", self.status))
   
-  if self.missionRepeated>=self.missionRepeatMax then
+  local repeatme=self.repeatedFailure<self.NrepeatFailure or self.repeated<self.Nrepeat
   
-    self:I(self.lid..string.format("Mission FAILED! Number of max repeats reached [%d>=%d] ==> Stopping mission!", self.missionRepeated, self.missionRepeatMax))
-    self:Stop()
+  if repeatme then
+
+    -- Increase counter.
+    self.repeatedFailure=self.repeatedFailure+1
     
-  else
+    -- Number of repeats.
+    local N=math.max(self.NrepeatFailure, self.Nrepeat)
         
     -- Repeat mission.
-    self:I(self.lid..string.format("Mission failed! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.missionRepeated+1, self.missionRepeatMax))
+    self:I(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
     self:Repeat()
+    
+  else
+  
+    -- Stop mission.
+    self:I(self.lid..string.format("Mission FAILED! Number of max repeats %d reached ==> Stopping mission!", self.repeated+1))
+    self:Stop()
     
   end  
 
@@ -2336,20 +2698,30 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   -- Set mission status to PLANNED.
   self.status=AUFTRAG.Status.PLANNED
   
-  self:I(self.lid..string.format("New mission status=%s (on Repeat)", self.status))
+  self:T(self.lid..string.format("New mission status=%s (on Repeat)", self.status))
 
   -- Increase repeat counter.
-  self.missionRepeated=self.missionRepeated+1
+  self.repeated=self.repeated+1
   
-  if self.wingcommander then
+  if self.chief then
+  
+    --TODO
     
+  elseif self.wingcommander then
+  
+    -- Remove mission from airwing because WC will assign it again but maybe to a different wing.
+    if self.airwing then
+      self.airwing:RemoveMission(self)
+    end
+  
   elseif self.airwing then
   
     -- Already at the airwing ==> Queued()
-    self:Queued(self.airwing)  
+    self:Queued(self.airwing)
     
   else
-  
+    self:E(self.lid.."ERROR: Mission can only be repeated by a CHIEF, WINGCOMMANDER or AIRWING! Stopping AUFTRAG")
+    self:Stop()
   end
   
   
@@ -2366,6 +2738,10 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   end  
   -- No flight data.
   self.groupdata={}
+  
+  -- Reset casualties and units assigned.
+  self.Ncasualties=0
+  self.Nelements=0
   
   -- Call status again.
   self:__Status(-30)
@@ -2409,156 +2785,75 @@ function AUFTRAG:onafterStop(From, Event, To)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Misc Functions
+-- Target Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Add asset to mission.
+--- Create target data from a given object.
 -- @param #AUFTRAG self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset to be added to the mission.
--- @return #AUFTRAG self
-function AUFTRAG:AddAsset(Asset)
+-- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC.
+function AUFTRAG:_TargetFromObject(Object)
 
-  self.assets=self.assets or {}
+  if not self.engageTarget then
   
-  table.insert(self.assets, Asset)
-
-  return self
-end
-
---- Delete asset from mission.
--- @param #AUFTRAG self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset  The asset to be removed.
--- @return #AUFTRAG self
-function AUFTRAG:DelAsset(Asset)
-
-  for i,_asset in pairs(self.assets or {}) do
-    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    if Object:IsInstanceOf("TARGET") then
     
-    if asset.uid==Asset.uid then
-      self:I(self.lid..string.format("Removing asset \"%s\" from mission", tostring(asset.spawngroupname)))
-      table.remove(self.assets, i)
-      return self
+      self.engageTarget=Object
+    
+    else
+  
+      self.engageTarget=TARGET:New(Object)
+      
     end
-    
+
+  else
+  
+    -- Target was already specified elsewhere.
+  
   end
 
+  -- Debug info.
+  self:T(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", self.engageTarget.lid, self.engageTarget.lid, self.engageTarget.Ntargets0, self.engageTarget:GetLife()))
+  
   return self
-end
-
---- Get asset by its spawn group name.
--- @param #AUFTRAG self
--- @param #string Name Asset spawn group name.
--- @return Ops.AirWing#AIRWING.SquadronAsset
-function AUFTRAG:GetAssetByName(Name)
-
-  for i,_asset in pairs(self.assets or {}) do
-    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
-    
-    if asset.spawngroupname==Name then
-      return asset
-    end
-    
-  end
-
-  return nil
 end
 
 
 --- Count alive mission targets.
 -- @param #AUFTRAG self
--- @param #AUFTRAG.TargetData Target (Optional) The target object.
 -- @return #number Number of alive target units.
-function AUFTRAG:CountMissionTargets(Target)
-  
-  local N=0
-  
-  Target=Target or self:GetTargetData()
-  
-  if Target then
-  
-    if Target.Type==AUFTRAG.TargetType.GROUP then
-    
-      local target=Target.Target --Wrapper.Group#GROUP
-      
-      local units=target:GetUnits()
-      
-      for _,_unit in pairs(units or {}) do
-        local unit=_unit --Wrapper.Unit#UNIT
-        
-        -- We check that unit is "alive" and has health >1. Somtimes units get heavily damanged but are still alive.
-        -- TODO: here I could introduce and count that if units have only health < 50% if mission objective is to just "damage" the units.
-        if unit and unit:IsAlive() and unit:GetLife()>1 then
-          N=N+1
-        end
-      end      
-      
-    elseif Target.Type==AUFTRAG.TargetType.UNIT then
-    
-      local target=Target.Target --Wrapper.Unit#UNIT        
-      
-      if target and target:IsAlive() and target:GetLife()>1 then
-        N=N+1
-      end
-      
-    elseif Target.Type==AUFTRAG.TargetType.STATIC then
-    
-      local target=Target.Target --Wrapper.Static#STATIC
-      
-      if target and target:IsAlive() then
-        N=N+1
-      end
-      
-    elseif Target.Type==AUFTRAG.TargetType.AIRBASE then
-    
-      -- TODO: any (good) way to tell whether an airbase was "destroyed" or at least damaged? Is :GetLive() working?
-      
-    elseif Target.Type==AUFTRAG.TargetType.COORDINATE then
-    
-      -- No target!
+function AUFTRAG:CountMissionTargets()
 
-    elseif Target.Type==AUFTRAG.TargetType.SETGROUP then
-    
-      for _,_group in pairs(Target.Target.Set or {}) do
-        local group=_group --Wrapper.Group#GROUP
-        
-        local units=group:GetUnits()
-        
-        for _,_unit in pairs(units or {}) do
-          local unit=_unit --Wrapper.Unit#UNIT
-          
-          -- We check that unit is "alive".
-          if unit and unit:IsAlive() and unit:GetLife()>1 then
-            N=N+1
-          end
-        end              
-        
-      end
-    
-    elseif Target.Type==AUFTRAG.TargetType.SETUNIT then
-
-      for _,_unit in pairs(Target.Target.Set or {}) do
-        local unit=_unit --Wrapper.Unit#UNIT
-
-        -- We check that unit is "alive".
-        if unit and unit:IsAlive() and unit:GetLife()>1 then
-          N=N+1
-        end
-                
-      end
-
-    else
-      self:E("ERROR unknown target type")      
-    end
+  if self.engageTarget then
+    return self.engageTarget:CountTargets()
+  else
+    return 0
   end
   
-  return N
 end
+
+--- Get initial number of targets.
+-- @param #AUFTRAG self
+-- @return #number Number of initial life points when mission was planned.
+function AUFTRAG:GetTargetInitialNumber()
+  local target=self:GetTargetData()
+  if target then
+    return target.Ntargets0
+  else
+    return 0
+  end
+end
+
 
 --- Get target life points.
 -- @param #AUFTRAG self
 -- @return #number Number of initial life points when mission was planned.
 function AUFTRAG:GetTargetInitialLife()
-  return self:GetTargetData().Lifepoints
+  local target=self:GetTargetData()
+  if target then
+    return target.life0
+  else
+    return 0
+  end
 end
 
 --- Get target damage.
@@ -2566,9 +2861,11 @@ end
 -- @return #number Damage in percent.
 function AUFTRAG:GetTargetDamage()
   local target=self:GetTargetData()
-  local life=self:GetTargetLife()/self:GetTargetInitialLife()
-  local damage=1-life
-  return damage*100
+  if target then
+    return target:GetDamage()
+  else
+    return 0
+  end
 end
 
 
@@ -2576,133 +2873,17 @@ end
 -- @param #AUFTRAG self
 -- @return #number Life points of target.
 function AUFTRAG:GetTargetLife()
-  return self:_GetTargetLife(nil, false)
+  local target=self:GetTargetData()
+  if target then
+    return target:GetLife()
+  else
+    return 0
+  end
 end
 
---- Get target life points.
+--- Get target.
 -- @param #AUFTRAG self
--- @param #AUFTRAG.TargetData Target (Optional) The target object.
--- @param #boolean Healthy Get the life points of the healthy target. 
--- @return #number Life points of target.
-function AUFTRAG:_GetTargetLife(Target, Healthy)
-  
-  local N=0
-  
-  Target=Target or self:GetTargetData()
-  
-  local function _GetLife(unit)
-    local unit=unit --Wrapper.Unit#UNIT
-    if Healthy then
-      local life=unit:GetLife()
-      local life0=unit:GetLife0()
-      
-      return math.max(life, life0)
-    else
-      return unit:GetLife()
-    end
-  end
-  
-  if Target then
-  
-    if Target.Type==AUFTRAG.TargetType.GROUP then
-    
-      local target=Target.Target --Wrapper.Group#GROUP
-      
-      local units=target:GetUnits()
-      
-      for _,_unit in pairs(units or {}) do
-        local unit=_unit --Wrapper.Unit#UNIT
-        
-        -- We check that unit is "alive".
-        if unit and unit:IsAlive() then
-          N=N+_GetLife(unit)
-        end
-      end      
-      
-    elseif Target.Type==AUFTRAG.TargetType.UNIT then
-    
-      local target=Target.Target --Wrapper.Unit#UNIT        
-      
-      if target and target:IsAlive() then
-        N=N+_GetLife(target)
-      end
-      
-    elseif Target.Type==AUFTRAG.TargetType.STATIC then
-    
-      local target=Target.Target --Wrapper.Static#STATIC
-      
-      -- Statics are alive or not.
-      if target and target:IsAlive() then
-        N=N+1 --_GetLife(target)
-      else
-        N=N+0
-      end
-      
-    elseif Target.Type==AUFTRAG.TargetType.AIRBASE then
-    
-      -- TODO: any (good) way to tell whether an airbase was "destroyed" or at least damaged? Is :GetLive() working?
-      N=N+1
-
-    elseif Target.Type==AUFTRAG.TargetType.COORDINATE then
-    
-      -- A coordinate does not live.
-      N=N+1
-      
-    elseif Target.Type==AUFTRAG.TargetType.SETGROUP then
-    
-      for _,_group in pairs(Target.Target.Set or {}) do
-        local group=_group --Wrapper.Group#GROUP
-        
-        local units=group:GetUnits()
-        
-        for _,_unit in pairs(units or {}) do
-          local unit=_unit --Wrapper.Unit#UNIT
-          
-          -- We check that unit is "alive".
-          if unit and unit:IsAlive() then
-            N=N+_GetLife(unit)
-          end
-        end              
-        
-      end
-    
-    elseif Target.Type==AUFTRAG.TargetType.SETUNIT then
-
-      for _,_unit in pairs(Target.Target.Set or {}) do
-        local unit=_unit --Wrapper.Unit#UNIT
-
-        -- We check that unit is "alive".
-        if unit and unit:IsAlive() then
-          N=N+_GetLife(unit)
-        end
-                
-      end
-
-    else
-      self:E(self.lid.."ERROR unknown target type")      
-    end
-  end
-  
-  return N
-end
-
---- Count alive flight groups assigned for this mission.
--- @param #AUFTRAG self
--- @return #number Number of alive flight groups.
-function AUFTRAG:CountOpsGroups()
-  local N=0
-  for _,_groupdata in pairs(self.groupdata) do
-    local groupdata=_groupdata --#AUFTRAG.GroupData
-    if groupdata and groupdata.opsgroup and groupdata.opsgroup:IsAlive() then
-      N=N+1
-    end
-  end
-  return N
-end
-
---- Get coordinate of target.
--- @param #AUFTRAG self
--- @return #AUFTRAG.TargetData The target object. Could be many things.
+-- @return Ops.Target#TARGET The target object. Could be many things.
 function AUFTRAG:GetTargetData()
   return self.engageTarget
 end
@@ -2742,33 +2923,12 @@ function AUFTRAG:GetTargetCoordinate()
     -- Special case where we defined a 
     return self.transportPickup
     
+  elseif self.engageTarget then
+
+    return self.engageTarget:GetCoordinate()
+    
   else
-  
-    local target
-  
-    if self:GetTargetType()==AUFTRAG.TargetType.COORDINATE then
-    
-      -- Here the objective itself is a COORDINATE.
-      return self:GetObjective()
-      
-    elseif self:GetTargetType()==AUFTRAG.TargetType.SETGROUP then
-    
-      -- Return the first group in the set.
-      -- TODO: does this only return ALIVE groups?!
-      return self:GetObjective():GetFirst():GetCoordinate()
-      
-    elseif self:GetTargetType()==AUFTRAG.TargetType.SETUNIT then
-    
-      -- Return the first unit in the set.
-      -- TODO: does this only return ALIVE units?!
-      return self:GetObjective():GetFirst():GetCoordinate()
-      
-    else
-    
-      -- In all other cases the GetCoordinate() function should work.
-      return self:GetObjective():GetCoordinate()
-      
-    end  
+    self:E(self.lid.."ERROR: Cannot get target coordinate!")
   end
 
   return nil
@@ -2779,8 +2939,8 @@ end
 -- @return #string Name of the target or "N/A".
 function AUFTRAG:GetTargetName()
   
-  if self.engageTarget.Target then
-    return self.engageTarget.Name
+  if self.engageTarget then
+    return self.engageTarget:GetName()
   end
     
   return "N/A"
@@ -2804,9 +2964,81 @@ function AUFTRAG:GetTargetDistance(FromCoord)
   return 0
 end
 
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Misc Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Add asset to mission.
+-- @param #AUFTRAG self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset to be added to the mission.
+-- @return #AUFTRAG self
+function AUFTRAG:AddAsset(Asset)
+
+  self.assets=self.assets or {}
+  
+  table.insert(self.assets, Asset)
+
+  return self
+end
+
+--- Delete asset from mission.
+-- @param #AUFTRAG self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset  The asset to be removed.
+-- @return #AUFTRAG self
+function AUFTRAG:DelAsset(Asset)
+
+  for i,_asset in pairs(self.assets or {}) do
+    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    
+    if asset.uid==Asset.uid then
+      self:T(self.lid..string.format("Removing asset \"%s\" from mission", tostring(asset.spawngroupname)))
+      table.remove(self.assets, i)
+      return self
+    end
+    
+  end
+
+  return self
+end
+
+--- Get asset by its spawn group name.
+-- @param #AUFTRAG self
+-- @param #string Name Asset spawn group name.
+-- @return Ops.AirWing#AIRWING.SquadronAsset
+function AUFTRAG:GetAssetByName(Name)
+
+  for i,_asset in pairs(self.assets or {}) do
+    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    
+    if asset.spawngroupname==Name then
+      return asset
+    end
+    
+  end
+
+  return nil
+end
+
+--- Count alive ops groups assigned for this mission.
+-- @param #AUFTRAG self
+-- @return #number Number of alive flight groups.
+function AUFTRAG:CountOpsGroups()
+  local N=0
+  for _,_groupdata in pairs(self.groupdata) do
+    local groupdata=_groupdata --#AUFTRAG.GroupData
+    if groupdata and groupdata.opsgroup and groupdata.opsgroup:IsAlive() then
+      N=N+1
+    end
+  end
+  return N
+end
+
+
 --- Get coordinate of target. First unit/group of the set is used.
 -- @param #AUFTRAG self
--- @return #string
+-- @param #table MissionTypes A table of mission types.
+-- @return #string Comma separated list of mission types.
 function AUFTRAG:GetMissionTypesText(MissionTypes)
 
   local text=""
@@ -2817,11 +3049,28 @@ function AUFTRAG:GetMissionTypesText(MissionTypes)
   return text
 end
 
+--- Set the mission waypoint coordinate where the mission is executed.
+-- @param #AUFTRAG self
+-- @return Core.Point#COORDINATE Coordinate where the mission is executed.
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionWaypointCoord(Coordinate)
+  self.missionWaypointCoord=Coordinate
+end
+
 --- Get coordinate of target. First unit/group of the set is used.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP group Group.
 -- @return Core.Point#COORDINATE Coordinate where the mission is executed.
 function AUFTRAG:GetMissionWaypointCoord(group)
+
+  -- Check if a coord has been explicitly set.
+  if self.missionWaypointCoord then
+    local coord=self.missionWaypointCoord
+    if self.missionAltitude then
+      coord.y=self.missionAltitude
+    end
+    return coord
+  end
 
   -- Create waypoint coordinate half way between us and the target.
   local waypointcoord=group:GetCoordinate():GetIntermediateCoordinate(self:GetTargetCoordinate(), self.missionFraction)
@@ -2855,7 +3104,7 @@ function AUFTRAG:UpdateMarker()
   -- Marker text.
   local text=string.format("%s %s: %s", self.name, self.type:upper(), self.status:upper())
   text=text..string.format("\n%s", self:GetTargetName())
-  text=text..string.format("\nTargets %d/%d, Life Points=%d/%d", self:CountMissionTargets(), self.Ntargets, self:GetTargetLife(), self:GetTargetInitialLife())
+  text=text..string.format("\nTargets %d/%d, Life Points=%d/%d", self:CountMissionTargets(), self:GetTargetInitialNumber(), self:GetTargetLife(), self:GetTargetInitialLife())
   text=text..string.format("\nFlights %d/%d", self:CountOpsGroups(), self.nassets)
 
   if not self.marker then
@@ -2863,7 +3112,11 @@ function AUFTRAG:UpdateMarker()
     -- Get target coordinates. Can be nil!
     local targetcoord=self:GetTargetCoordinate()
     
-    self.marker=MARKER:New(targetcoord, text):ReadOnly():ToAll()
+    if self.markerCoaliton and self.markerCoaliton>=0 then
+      self.marker=MARKER:New(targetcoord, text):ReadOnly():ToCoalition(self.markerCoaliton)
+    else
+      self.marker=MARKER:New(targetcoord, text):ReadOnly():ToAll()
+    end      
     
   else
   
@@ -2927,7 +3180,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- BOMBRUNWAY Mission --
     ------------------------
     
-    local DCStask=CONTROLLABLE.TaskBombingRunway(nil, self.engageTarget.Target, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAsGroup)
+    local DCStask=CONTROLLABLE.TaskBombingRunway(nil, self.engageTarget:GetObject(), self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAsGroup)
   
     table.insert(DCStasks, DCStask)    
 
@@ -2967,7 +3220,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- ESCORT Mission --
     --------------------
 
-    local DCStask=CONTROLLABLE.TaskEscort(nil, self.engageTarget.Target, self.escortVec3, LastWaypointIndex, self.engageMaxDistance, self.engageTargetTypes)
+    local DCStask=CONTROLLABLE.TaskEscort(nil, self.engageTarget:GetObject(), self.escortVec3, LastWaypointIndex, self.engageMaxDistance, self.engageTargetTypes)
     
     table.insert(DCStasks, DCStask)
 
@@ -2977,7 +3230,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- FAC Mission --
     -----------------  
 
-    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageTarget.Target, self.engageWeaponType, self.facDesignation, self.facDatalink, self.facFreq, self.facModu, CallsignName, CallsignNumber)
+    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageTarget:GetObject(), self.engageWeaponType, self.facDesignation, self.facDatalink, self.facFreq, self.facModu, CallsignName, CallsignNumber)
     
     table.insert(DCStasks, DCStask)
   
@@ -3005,10 +3258,10 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
   
     -- Done below as also other mission types use the orbit task.
 
-  elseif self.type==AUFTRAG.Type.PATROL then
+  elseif self.type==AUFTRAG.Type.GCICAP then
   
     --------------------
-    -- PATROL Mission --
+    -- GCICAP Mission --
     --------------------
   
     -- Done below as also other mission types use the orbit task.
@@ -3082,7 +3335,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     
     -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
     local param={}
-    param.unitname=self:GetTargetName()
+    param.unitname=self:GetTargetName() --self.carrier:GetName()
     param.offsetX=200
     param.offsetZ=240
     param.altitude=70
@@ -3112,7 +3365,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
   if self.type==AUFTRAG.Type.ORBIT  or 
      self.type==AUFTRAG.Type.CAP    or
      self.type==AUFTRAG.Type.CAS    or
-     self.type==AUFTRAG.Type.PATROL or
+     self.type==AUFTRAG.Type.GCICAP or
      self.type==AUFTRAG.Type.AWACS  or 
      self.type==AUFTRAG.Type.TANKER then
 
@@ -3142,136 +3395,35 @@ end
 
 --- Get DCS task table for an attack group or unit task.
 -- @param #AUFTRAG self
--- @param #AUFTRAG.TargetData target Target data.
+-- @param Ops.Target#TARGET Target Target data.
 -- @param #table DCStasks DCS DCS tasks table to which the task is added.
 -- @return DCS#Task The DCS task table.
-function AUFTRAG:_GetDCSAttackTask(target, DCStasks)
+function AUFTRAG:_GetDCSAttackTask(Target, DCStasks)
 
-  local DCStask=nil
+  DCStasks=DCStasks or {}
+  
+  for _,_target in pairs(Target.targets) do
+    local target=_target --Ops.Target#TARGET.Object
 
-  if target.Type==AUFTRAG.TargetType.GROUP then
-
-    DCStask=CONTROLLABLE.TaskAttackGroup(nil, target.Target, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageAsGroup)
-    
-    table.insert(DCStasks, DCStask)
+    if target.Type==TARGET.ObjectType.GROUP then
   
-  elseif target.Type==AUFTRAG.TargetType.UNIT or target.Type==AUFTRAG.TargetType.STATIC then
-  
-    DCStask=CONTROLLABLE.TaskAttackUnit(nil, target.Target, self.engageAsGroup, self.WeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
-    
-    table.insert(DCStasks, DCStask)
-  
-  elseif target.Type==AUFTRAG.TargetType.SETGROUP then
-  
-    -- Add all groups.
-    for _,group in pairs(target.Target.Set or {}) do
-      DCStask=CONTROLLABLE.TaskAttackGroup(nil, group, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageAsGroup)
+      local DCStask=CONTROLLABLE.TaskAttackGroup(nil, target.Object, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageAsGroup)
+      
       table.insert(DCStasks, DCStask)
-    end
-  
-  elseif target.Type==AUFTRAG.TargetType.SETUNIT then
-
-    -- Add tasks to attack all units.
-    for _,unit in pairs(target.Target.Set or {}) do
-      DCStask=CONTROLLABLE.TaskAttackUnit(nil, unit, self.engageAsGroup, self.WeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+    
+    elseif target.Type==TARGET.ObjectType.UNIT or target.Type==TARGET.ObjectType.STATIC then
+    
+      local DCStask=CONTROLLABLE.TaskAttackUnit(nil, target.Object, self.engageAsGroup, self.WeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+      
       table.insert(DCStasks, DCStask)
+      
     end
-  
+    
   end
-
+  
   return DCStasks
 end
 
---- Create target data from a given object.
--- @param #AUFTRAG self
--- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC.
--- @return #AUFTRAG.TargetData Target.
-function AUFTRAG:_TargetFromObject(Object)
-  
-  local target={} --#AUFTRAG.TargetData
-  
-  -- The object.
-  target.Target=Object
-  
-  if Object:IsInstanceOf("GROUP") then
-  
-    target.Type=AUFTRAG.TargetType.GROUP
-    
-    local object=Object --Wrapper.Group#GROUP
-    
-    target.Name=object:GetName()
-    
-  elseif Object:IsInstanceOf("UNIT") then
-  
-    target.Type=AUFTRAG.TargetType.UNIT
-    
-    local object=Object --Wrapper.Unit#UNIT
-    
-    target.Name=object:GetName()  
-  
-  elseif Object:IsInstanceOf("STATIC") then
-  
-    target.Type=AUFTRAG.TargetType.STATIC
-    
-    target.Name=Object:GetName()
-  
-  elseif Object:IsInstanceOf("COORDINATE") then
-  
-    target.Type=AUFTRAG.TargetType.COORDINATE
-    
-    local object=Object --Core.Point#COORDINATE
-    
-    target.Name=object:ToStringLLDMS()
-    
-  elseif Object:IsInstanceOf("AIRBASE") then
-  
-    target.Type=AUFTRAG.TargetType.AIRBASE
-    
-    local object=Object --Wrapper.Airbase#AIRBASE
-    
-    target.Name=object:GetName()
-    
-  elseif Object:IsInstanceOf("SET_GROUP") then
-  
-    target.Type=AUFTRAG.TargetType.SETGROUP
-    
-    local object=Object --Core.Set#SET_GROUP
-    
-    target.Name=object:GetFirst():GetName()
-  
-  elseif Object:IsInstanceOf("SET_UNIT") then
-  
-    target.Type=AUFTRAG.TargetType.SETUNIT
-    
-    local object=Object --Core.Set#SET_UNIT
-    
-    target.Name=object:GetFirst():GetName()
-  
-  else
-    self:E(self.lid.."ERROR: Unknown object given as target. Needs to be a GROUP, UNIT, STATIC, COORDINATE")
-    return nil
-  end
-  
-  
-  -- Number of initial targets.
-  local Ninitial=self:CountMissionTargets(target)
-  
-  -- Initial total life point.
-  local Lifepoints=self:_GetTargetLife(target, true)
-    
-  -- Set engage Target.
-  self.engageTarget=target  
-  self.engageTarget.Ninital=Ninitial  
-  self.engageTarget.Lifepoints=Lifepoints
-  
-  -- TODO: get rid of this.
-  self.Ntargets=Ninitial
-  
-  -- Debug info.
-  self:I(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", target.Name, target.Type, Ninitial, Lifepoints))
-  
-  return target
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

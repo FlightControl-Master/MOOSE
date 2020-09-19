@@ -56,6 +56,7 @@
 --- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+-- @field Core.Point#COORDINATE Coordinate object of the zone.
 -- @extends Core.Fsm#FSM
 
 
@@ -221,22 +222,6 @@ function ZONE_BASE:GetPointVec2()
 end
 
 
---- Returns a @{Core.Point#COORDINATE} of the zone.
--- @param #ZONE_BASE self
--- @return Core.Point#COORDINATE The Coordinate of the zone.
-function ZONE_BASE:GetCoordinate()
-  self:F2( self.ZoneName )
-  
-  local Vec2 = self:GetVec2()
-
-  local Coordinate = COORDINATE:NewFromVec2( Vec2 )
-
-  self:T2( { Coordinate } )
-  
-  return Coordinate  
-end
-
-
 --- Returns the @{DCS#Vec3} of the zone.
 -- @param #ZONE_BASE self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
@@ -276,15 +261,27 @@ end
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Core.Point#COORDINATE The Coordinate of the zone.
 function ZONE_BASE:GetCoordinate( Height ) --R2.1
-  self:F2( self.ZoneName )
+  self:F2(self.ZoneName)
   
   local Vec3 = self:GetVec3( Height )
-
-  local PointVec3 = COORDINATE:NewFromVec3( Vec3 )
-
-  self:T2( { PointVec3 } )
   
-  return PointVec3  
+  if self.Coordinate then
+  
+    -- Update coordinates.
+    self.Coordinate.x=Vec3.x
+    self.Coordinate.y=Vec3.y
+    self.Coordinate.z=Vec3.z
+    
+    --env.info("FF GetCoordinate NEW for ZONE_BASE "..tostring(self.ZoneName))
+  else
+
+    -- Create a new coordinate object.    
+    self.Coordinate=COORDINATE:NewFromVec3(Vec3)
+      
+    --env.info("FF GetCoordinate NEW for ZONE_BASE "..tostring(self.ZoneName))
+  end
+  
+  return self.Coordinate
 end
 
 
@@ -433,13 +430,52 @@ ZONE_RADIUS = {
 -- @param DCS#Distance Radius The radius of the zone.
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
+
+  -- Inherit ZONE_BASE.
 	local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) ) -- #ZONE_RADIUS
 	self:F( { ZoneName, Vec2, Radius } )
 
 	self.Radius = Radius
 	self.Vec2 = Vec2
 	
+	--self.Coordinate=COORDINATE:NewFromVec2(Vec2)
+	
 	return self
+end
+
+--- Update zone from a 2D vector.
+-- @param #ZONE_RADIUS self
+-- @param DCS#Vec2 Vec2 The location of the zone.
+-- @param DCS#Distance Radius The radius of the zone.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:UpdateFromVec2(Vec2, Radius)
+
+  -- New center of the zone.
+  self.Vec2=Vec2
+
+  if Radius then
+    self.Radius=Radius
+  end
+
+  return self
+end
+
+--- Update zone from a 2D vector.
+-- @param #ZONE_RADIUS self
+-- @param DCS#Vec3 Vec3 The location of the zone.
+-- @param DCS#Distance Radius The radius of the zone.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:UpdateFromVec3(Vec3, Radius)
+
+  -- New center of the zone.
+  self.Vec2.x=Vec3.x
+  self.Vec2.y=Vec3.z
+
+  if Radius then
+    self.Radius=Radius
+  end
+
+  return self
 end
 
 --- Mark the zone with markers on the F10 map.
@@ -1397,28 +1433,70 @@ ZONE_POLYGON_BASE = {
   ClassName="ZONE_POLYGON_BASE",
   }
 
---- A points array.
+--- A 2D points array.
 -- @type ZONE_POLYGON_BASE.ListVec2
--- @list <DCS#Vec2>
+-- @list <DCS#Vec2> Table of 2D vectors.
+
+--- A 3D points array.
+-- @type ZONE_POLYGON_BASE.ListVec3
+-- @list <DCS#Vec3> Table of 3D vectors.
 
 --- Constructor to create a ZONE_POLYGON_BASE instance, taking the zone name and an array of @{DCS#Vec2}, forming a polygon.
 -- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected.
 -- @param #ZONE_POLYGON_BASE self
 -- @param #string ZoneName Name of the zone.
--- @param #ZONE_POLYGON_BASE.ListVec2 PointsArray An array of @{DCS#Vec2}, forming a polygon..
+-- @param #ZONE_POLYGON_BASE.ListVec2 PointsArray An array of @{DCS#Vec2}, forming a polygon.
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
+
+  -- Inherit ZONE_BASE.
   local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
   self:F( { ZoneName, PointsArray } )
 
-  local i = 0
-  
+  if PointsArray then
+
+    self._.Polygon = {}
+    
+    for i = 1, #PointsArray do
+      self._.Polygon[i] = {}
+      self._.Polygon[i].x = PointsArray[i].x
+      self._.Polygon[i].y = PointsArray[i].y
+    end
+    
+  end
+
+  return self
+end
+
+--- Update polygon points with an array of @{DCS#Vec2}.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #ZONE_POLYGON_BASE.ListVec2 Vec2Array An array of @{DCS#Vec2}, forming a polygon.
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:UpdateFromVec2(Vec2Array)
+
   self._.Polygon = {}
   
-  for i = 1, #PointsArray do
+  for i=1,#Vec2Array do
     self._.Polygon[i] = {}
-    self._.Polygon[i].x = PointsArray[i].x
-    self._.Polygon[i].y = PointsArray[i].y
+    self._.Polygon[i].x=Vec2Array[i].x
+    self._.Polygon[i].y=Vec2Array[i].y
+  end
+
+  return self
+end
+
+--- Update polygon points with an array of @{DCS#Vec3}.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #ZONE_POLYGON_BASE.ListVec3 Vec2Array An array of @{DCS#Vec3}, forming a polygon.
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:UpdateFromVec3(Vec3Array)
+
+  self._.Polygon = {}
+  
+  for i=1,#Vec3Array do
+    self._.Polygon[i] = {}
+    self._.Polygon[i].x=Vec3Array[i].x
+    self._.Polygon[i].y=Vec3Array[i].z
   end
 
   return self

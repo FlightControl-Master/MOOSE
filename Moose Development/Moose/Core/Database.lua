@@ -136,7 +136,7 @@ function DATABASE:New()
   self:_RegisterClients()
   self:_RegisterStatics()
   --self:_RegisterPlayers()
-  self:_RegisterAirbases()
+  --self:_RegisterAirbases()
 
   self.UNITS_Position = 0
 
@@ -1253,7 +1253,7 @@ end
 -- @param #DATABASE self
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup
 function DATABASE:AddFlightGroup(flightgroup)
-  self:I({NewFlightGroup=flightgroup.groupname})
+  self:T({NewFlightGroup=flightgroup.groupname})
   self.FLIGHTGROUPS[flightgroup.groupname]=flightgroup
 end
 
