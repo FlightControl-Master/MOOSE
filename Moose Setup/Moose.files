@@ -75,8 +75,6 @@ Ops/NavyGroup.lua
 Ops/Squadron.lua
 Ops/AirWing.lua
 Ops/Intelligence.lua
-Ops/WingCommander.lua
-Ops/ChiefOfStaff.lua
 
 AI/AI_Balancer.lua
 AI/AI_Air.lua
