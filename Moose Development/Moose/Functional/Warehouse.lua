@@ -1569,6 +1569,7 @@ WAREHOUSE = {
   delivered     =    {},
   defending     =    {},
   portzone      =   nil,
+  harborzone    =   nil,
   shippinglanes =    {},
   offroadpaths  =    {},
   autodefence   = false,
@@ -2706,6 +2707,18 @@ end
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetPortZone(zone)
   self.portzone=zone
+  return self
+end
+
+--- Add a Harbor Zone for this warehouse where naval cargo units will spawn and be received.
+-- Both warehouses must have the harbor zone defined for units to properly spawn on both the 
+-- sending and receiving side. The harbor zone should be within 3km of the port zone used for 
+-- warehouse in order to facilitate the boarding process.
+-- @param #WAREHOUSE self
+-- @param Core.Zone#ZONE zone The zone defining the naval embarcation/debarcation point for cargo units
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetHarborZone(zone)
+  self.harborzone=zone
   return self
 end
 
@@ -4344,7 +4357,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
       -- Spawn Ship in port zone
       spawngroup=self:_SpawnAssetGroundNaval(_alias, _assetitem, Request, self.portzone)
-      return
 
     elseif Request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
 
@@ -4473,8 +4485,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
     --_boardradius=nil
   elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
-    BASE:T("Big 'ol board radius")
-    _boardradius=5000
+    _boardradius=6000
   end
 
   -- Empty cargo group set.
@@ -4485,7 +4496,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
 
     -- Find asset belonging to this group.
     local asset=self:FindAssetInDB(_group)
-
+    BASE:T("DEBUGGING*** load radius: "..asset.loadradius)
     -- New cargo group object.
     local cargogroup=CARGO_GROUP:New(_group, _cargotype,_group:GetName(),_boardradius, asset.loadradius)
 
@@ -4494,6 +4505,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
 
     -- Add group to group set.
     CargoGroups:AddCargo(cargogroup)
+
   end
 
   ------------------------
@@ -4543,6 +4555,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
 
     -- Pickup and deploy zones.
     local PickupZoneSet = SET_ZONE:New():AddZone(self.portzone)
+    PickupZoneSet:AddZone(self.harborzone)
     local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.portzone)
 
     -- Get the shipping lane to use and pass it to the Dispatcher
@@ -4561,17 +4574,43 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
 
   -- Set pickup and deploy radii.
   -- The 20 m inner radius are to ensure that the helo does not land on the warehouse itself in the middle of the default spawn zone.
-  local pickupouter=200
-  local pickupinner=0
-  if self.spawnzone.Radius~=nil then
-    pickupouter=self.spawnzone.Radius
+  local pickupouter = 200
+  local pickupinner = 0
+  local deployouter = 200
+  local deployinner = 0
+  if Request.transporttype==WAREHOUSE.TransportType.SHIP then
+    pickupouter=1000
     pickupinner=20
-  end
-  local deployouter=200
-  local deployinner=0
-  if self.spawnzone.Radius~=nil then
-    deployouter=Request.warehouse.spawnzone.Radius
-    deployinner=20
+    deployouter=1000
+    deployinner=0
+    --BASE:T("DEBUGGING*** Let's try to move these units")
+    --[[for _,_group in pairs(CargoGroupSet:GetSetObjects()) do
+      local group=GROUP:FindByName( _group:GetName() ) --Wrapper.Group#GROUP
+
+
+      --local _speed = group:GetSpeedMax()*0.7
+      BASE:T("DEBUGGING*** Group ".._.." coordinate is "..CargoTransport:GetCoordinate())
+      --local FromCoord = group:GetCoordinate()
+      local ToCoord = CargoTransport:GetCoordinate()
+
+      local FromWP = FromCoord:WaypointGround()
+      local ToWP = ToCoord:WaypointGround( 15, "Vee" )
+
+      group:Route( { FromWP, ToWP }, 10 )
+    end]]--
+  else 
+    pickupouter=200
+    pickupinner=0
+    if self.spawnzone.Radius~=nil then
+      pickupouter=self.spawnzone.Radius
+      pickupinner=20
+    end
+    deployouter=200
+    deployinner=0
+    if self.spawnzone.Radius~=nil then
+      deployouter=Request.warehouse.spawnzone.Radius
+      deployinner=20
+    end
   end
   CargoTransport:SetPickupRadius(pickupouter, pickupinner)
   CargoTransport:SetDeployRadius(deployouter, deployinner)
@@ -4599,6 +4638,15 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   --------------------------------
   -- Dispatcher Event Functions --
   --------------------------------
+
+  --- Function called before carrier loads something
+  function CargoTransport:OnBeforeMonitor(From, Event, To, Carrier, Cargo, PickupZone)
+    -- Need to get the cargo over to the portzone
+    -- But what if the cargo can't move on it's own?
+    BASE:T("DEBUGGING*** CargoTransport:OnBeforeMonitor")
+  
+  end
+
 
   --- Function called after carrier picked up something.
   function CargoTransport:OnAfterPickedUp(From, Event, To, Carrier, PickupZone)
@@ -4650,7 +4698,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     -- Get cargo group object.
     local group=Cargo:GetObject() --Wrapper.Group#GROUP
 
-    -- Get request.
+     -- Get request.
     local request=warehouse:_GetRequestOfGroup(group, warehouse.pending)
 
     -- Add cargo group to this carrier.

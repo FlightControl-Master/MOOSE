@@ -40,7 +40,7 @@ function AI_CARGO_SHIP:SetCarrier( CargoCarrier )
         self:F({AICargoTroops=AICargoTroops})
         if AICargoTroops then
             self:F({})
-            if not AICargoTroopsIs( "Loaded" ) then
+            if not AICargoTroops:Is( "Loaded" ) then
                 -- Better hope they can swim!
                 AICargoTroops:Destroyed()
             end
@@ -92,6 +92,7 @@ function AI_CARGO_SHIP:SetCombatRadius( CombatRadius )
     return self
 end
 
+
 --- Follow Infantry to the Carrier
 -- @param #AI_CARGO_SHIP self
 -- @param #AI_CARGO_SHIP Me
@@ -99,6 +100,7 @@ end
 -- @param Cargo.CargoGroup#CARGO_GROUP Cargo
 -- @return #AI_CARGO_SHIP
 function AI_CARGO_SHIP:FollowToCarrier( Me, ShipUnit, CargoGroup )
+    BASE:T("DEBUGGING*** AI_CARGO_SHIP:FollowToCarrier")
     local InfantryGroup = CargoGroup:GetGroup()
 
     self:F( { self=self:GetClassNameAndID(), InfantryGroup = InfantryGroup:GetName() } )
@@ -107,35 +109,35 @@ function AI_CARGO_SHIP:FollowToCarrier( Me, ShipUnit, CargoGroup )
         -- Check if the Cargo is near the CargoCarrier
         if InfantryGroup:IsPartlyInZone( ZONE_UNIT:New( "Radius", ShipUnit, 1000 ) ) then
 
-        -- Cargo does not need to navigate to Carrier
-        Me:Guard()
+            -- Cargo does not need to navigate to Carrier
+            Me:Guard()
         else
 
-        self:F( { InfantryGroup = InfantryGroup:GetName() } )
-        if InfantryGroup:IsAlive() then
-
             self:F( { InfantryGroup = InfantryGroup:GetName() } )
-            local Waypoints = {}
+            if InfantryGroup:IsAlive() then
 
-            -- Calculate new route
-            local FromCoord = InfantryGroup:GetCoordinate()
-            local FromGround = FromCoord:WaypointGround( 10, "Diamond" )
-            self:F({FromGround=FromGround})
-            table.insert( Waypoints, FromGround )
+                self:F( { InfantryGroup = InfantryGroup:GetName() } )
+                local Waypoints = {}
 
-            local ToCoord = ShipUnit:GetCoordinate():GetRandomCoordinateInRadius( 10, 5 )
-            local ToGround = ToCoord:WaypointGround( 10, "Diamond" )
-            self:F({ToGround=ToGround})
-            table.insert( Waypoints, ToGround )
+                -- Calculate new route
+                local FromCoord = InfantryGroup:GetCoordinate()
+                local FromGround = FromCoord:WaypointGround( 10, "Diamond" )
+                self:F({FromGround=FromGround})
+                table.insert( Waypoints, FromGround )
 
-            local TaskRoute = InfantryGroup:TaskFunction( "AI_CARGO_SHIP.FollowToCarrier", Me, ShipUnit, CargoGroup )
+                local ToCoord = ShipUnit:GetCoordinate():GetRandomCoordinateInRadius( 10, 5 )
+                local ToGround = ToCoord:WaypointGround( 10, "Diamond" )
+                self:F({ToGround=ToGround})
+                table.insert( Waypoints, ToGround )
 
-            self:F({Waypoints=Waypoints})
-            local Waypoint = Waypoints[#Waypoints]
-            InfantryGroup:SetTaskWaypoint( Waypoint, TaskRoute ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone
+                local TaskRoute = InfantryGroup:TaskFunction( "AI_CARGO_SHIP.FollowToCarrier", Me, ShipUnit, CargoGroup )
 
-            InfantryGroup:Route( Waypoints, 1 ) -- Move after a random number of seconds to the Route.  See Route method for details
-        end
+                self:F({Waypoints=Waypoints})
+                local Waypoint = Waypoints[#Waypoints]
+                InfantryGroup:SetTaskWaypoint( Waypoint, TaskRoute ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone
+
+                InfantryGroup:Route( Waypoints, 1 ) -- Move after a random number of seconds to the Route.  See Route method for details
+            end
         end
     end
 end
@@ -146,76 +148,57 @@ function AI_CARGO_SHIP:onafterMonitor( Ship, From, Event, To )
 
     if self.CombatRadius > 0 then
         if Ship and Ship:IsAlive() then
-        if self.CarrierCoordinate then
-            if self:IsTransporting() == true then
-            local Coordinate = Ship:GetCoordinate()
-            if self:Is( "Unloaded" ) or self:Is( "Loaded" ) then
-                self.Zone:Scan( { Object.Category.UNIT } )
-                if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
-                if self:Is( "Unloaded" ) then
-                    -- There are no enemies within combat radius. Reload the CargoCarrier.
-                    self:Reload()
-                end
-                else
-                if self:Is( "Loaded" ) then
-                    -- There are enemies within combat radius. Unload the CargoCarrier.
-                    self:__Unload( 1, nil, true ) -- The 2nd parameter is true, which means that the unload is for defending the carrier, not to deploy!
-                else
-                    if self:Is( "Unloaded" ) then
-                    --self:Follow()
-                    end
-                    self:F( "I am here" .. self:GetCurrentState() )
-                    if self:Is( "Following" ) then
-                    for Cargo, ShipUnit in pairs( self.Carrier_Cargo ) do
-                        local Cargo = Cargo -- Cargo.Cargo#CARGO
-                        local ShipUnit = ShipUnit -- Wrapper.Unit#UNIT
-                        if Cargo:IsAlive() then
-                        if not Cargo:IsNear( ShipUnit, 40 ) then
-                            ShipUnit:RouteStop()
-                            self.CarrierStopped = true
-                        else
-                            if self.CarrierStopped then
-                            if Cargo:IsNear( ShipUnit, 25 ) then
-                                ShipUnit:RouteResume()
-                                self.CarrierStopped = nil
-                            end
+            if self.CarrierCoordinate then
+                if self:IsTransporting() == true then
+                    local Coordinate = Ship:GetCoordinate()
+                        if self:Is( "Unloaded" ) or self:Is( "Loaded" ) then
+                            self.Zone:Scan( { Object.Category.UNIT } )
+                            if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
+                                if self:Is( "Unloaded" ) then
+                                    -- There are no enemies within combat radius. Reload the CargoCarrier.
+                                    self:Reload()
+                                end
+                            else
+                                if self:Is( "Loaded" ) then
+                                    -- There are enemies within combat radius. Unload the CargoCarrier.
+                                    self:__Unload( 1, nil, true ) -- The 2nd parameter is true, which means that the unload is for defending the carrier, not to deploy!
+                                else
+                                    if self:Is( "Unloaded" ) then
+                                    --self:Follow()
+                                    end
+                                    self:F( "I am here" .. self:GetCurrentState() )
+                                    if self:Is( "Following" ) then
+                                        for Cargo, ShipUnit in pairs( self.Carrier_Cargo ) do
+                                            local Cargo = Cargo -- Cargo.Cargo#CARGO
+                                            local ShipUnit = ShipUnit -- Wrapper.Unit#UNIT
+                                            if Cargo:IsAlive() then
+                                                if not Cargo:IsNear( ShipUnit, 40 ) then
+                                                    ShipUnit:RouteStop()
+                                                    self.CarrierStopped = true
+                                                else
+                                                    if self.CarrierStopped then
+                                                        if Cargo:IsNear( ShipUnit, 25 ) then
+                                                            ShipUnit:RouteResume()
+                                                            self.CarrierStopped = nil
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
                             end
                         end
-                        end
-                    end
                     end
                 end
-                end
-            end
-            end
-            
+            self.CarrierCoordinate = Ship:GetCoordinate()
         end
-        self.CarrierCoordinate = Ship:GetCoordinate()
-        end
-
         self:__Monitor( -5 )
     end
-
 end
 
-function AI_CARGO_SHIP:onafterFollow( Ship, From, Event, To )
-    self:F( { Ship, From, Event, To } )
-
-    self:F( "Follow" )
-    if Ship and Ship:IsAlive() then
-        for Cargo, ShipUnit in pairs( self.Carrier_Cargo ) do
-        local Cargo = Cargo -- Cargo.Cargo#CARGO
-        if Cargo:IsUnLoaded() then
-            self:FollowToCarrier( self, ShipUnit, Cargo )
-            ShipUnit:RouteResume()
-        end
-        end
-    end
-
-end
 
 function AI_CARGO_SHIP._Pickup( Ship, self, Coordinate, Speed, PickupZone )
-
     Ship:F( { "AI_CARGO_Ship._Pickup:", Ship:GetName() } )
 
     if Ship:IsAlive() then
@@ -232,6 +215,39 @@ function AI_CARGO_SHIP._Deploy( Ship, self, Coordinate, DeployZone )
         self:Unload( DeployZone )
     end
 end
+
+function AI_CARGO_SHIP:onafterPickup( Ship, From, Event, To, Coordinate, Speed, Height, PickupZone )
+    
+    if Ship and Ship:IsAlive() then
+        AI_CARGO_SHIP._Pickup( Ship, self, Coordinate, Speed, PickupZone )
+        self:GetParent( self, AI_CARGO_SHIP ).onafterPickup( self, Ship, From, Event, To, Coordinate, Speed, Height, PickupZone )
+    end
+end
+
+function AI_CARGO_SHIP:onafterPickedUp( Ship, From, Event, To, Coordinate, Speed, Height, PickupZone )
+
+    if Ship and Ship:IsAlive() then
+        Speed = Speed or Ship:GetSpeedMax()*0.8
+
+        local lane = self.ShippingLane
+        if lane then
+            local Waypoints = {}
+
+            for i=1, #lane do
+                local coord = lane[i]
+                local Waypoint = coord:WaypointGround(_speed)
+                table.insert(Waypoints, Waypoint)
+            end
+
+            local Waypoint = Waypoints[#Waypoints]
+            Ship:Route(Waypoints, 1)
+        
+        else
+            BASE:T("ERROR: No shipping lane defined for Naval Transport!")
+        end
+    end
+end
+
 
 function AI_CARGO_SHIP:onafterHome( Ship, From, Event, To, Coordinate, Speed, Height, HomeZone )
     if Ship and Ship:IsAlive() then
@@ -251,15 +267,12 @@ function AI_CARGO_SHIP:onafterHome( Ship, From, Event, To, Coordinate, Speed, He
             table.insert(Waypoints, Waypoint)
         end
 
-        --local TaskFunction = self:_SimpleTaskFunction( "warehouse:_Arrived", Ship )
-
         local Waypoint = Waypoints[#Waypoints]
-        --Ship:SetTaskWaypoint( Waypoint, TaskFunction )
 
         Ship:Route(Waypoints, 1)
         
         else
-        BASE:T("ERROR: No shipping lane defined for Naval Transport!")
+            BASE:T("ERROR: No shipping lane defined for Naval Transport!")
         end
     end
 end
