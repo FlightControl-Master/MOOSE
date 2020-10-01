@@ -909,6 +909,33 @@ function UTILS.VecNorm(a)
   return math.sqrt(UTILS.VecDot(a, a))
 end
 
+--- Calculate the distance between two 2D vectors.
+-- @param DCS#Vec2 a Vector in 3D with x, y components.
+-- @param DCS#Vec2 b Vector in 3D with x, y components.
+-- @return #number Distance between the vectors.
+function UTILS.VecDist2D(a, b)
+
+  local c={x=b.x-a.x, y=b.y-a.y}
+  
+  local d=math.sqrt(c.x*c.x+c.y*c.y)
+
+  return d
+end
+
+
+--- Calculate the distance between two 3D vectors.
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return #number Distance between the vectors.
+function UTILS.VecDist3D(a, b)
+
+  local c={x=b.x-a.x, y=b.y-a.y, z=b.z-a.z}
+  
+  local d=math.sqrt(UTILS.VecDot(c, c))
+
+  return d
+end
+
 --- Calculate the [cross product](https://en.wikipedia.org/wiki/Cross_product) of two 3D vectors. The result is a 3D vector.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.

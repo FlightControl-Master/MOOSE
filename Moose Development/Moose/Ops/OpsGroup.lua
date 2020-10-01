@@ -1096,6 +1096,22 @@ function OPSGROUP:GetWaypointByIndex(index)
   return nil
 end
 
+--- Get the waypoint UID from its index, i.e. its current position in the waypoints table.
+-- @param #OPSGROUP self
+-- @param #number index Waypoint index.
+-- @return #number Unique waypoint ID.
+function OPSGROUP:GetWaypointUIDFromIndex(index)
+
+  for i,_waypoint in pairs(self.waypoints) do
+    local waypoint=_waypoint --#OPSGROUP.Waypoint
+    if i==index then
+      return waypoint.uid
+    end
+  end
+
+  return nil
+end
+
 --- Get the waypoint index (its position in the current waypoints table).
 -- @param #OPSGROUP self
 -- @param #number uid Waypoint unique ID.
@@ -1367,7 +1383,7 @@ function OPSGROUP:RemoveWaypoint(wpindex)
     local n=#self.waypoints
     
     -- Debug info.
-    self:T(self.lid..string.format("Removing waypoint index %d, current wp index %d. N %d-->%d", wpindex, self.currentwp, N, n))
+    self:I(self.lid..string.format("Removing waypoint index %d, current wp index %d. N %d-->%d", wpindex, self.currentwp, N, n))
   
     -- Waypoint was not reached yet.
     if wpindex > self.currentwp then
@@ -3861,7 +3877,7 @@ function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
   
     self:SetDefaultICLS(Channel,Morse,UnitName)
   
-    self:T2(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s when GROUP is SPAWNED", self.iclsDefault.Channel, tostring(self.iclsDefault.Morse), self.iclsDefault.BeaconName))
+    self:T2(self.lid..string.format("Switching ICLS to Channel %d Morse %s on unit %s when GROUP is SPAWNED", self.iclsDefault.Channel, tostring(self.iclsDefault.Morse), tostring(self.iclsDefault.BeaconName)))
 
   elseif self:IsAlive() then
   
