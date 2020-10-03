@@ -22,6 +22,7 @@
 -- @field #number depth Ordered depth in meters.
 -- @field #boolean collisionwarning If true, collition warning.
 -- @field #boolean pathfindingOn If true, enable pathfining.
+-- @field #number pathCorridor Path corrdidor width in meters.
 -- @field #boolean ispathfinding If true, group is currently path finding.
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -42,6 +43,7 @@ NAVYGROUP = {
   intowind        = nil,
   intowindcounter = 0,
   Qintowind       = {},
+  pathCorridor    = 400,
 }
 
 --- Navy group element.
@@ -187,10 +189,31 @@ end
 --- Enable/disable pathfinding.
 -- @param #NAVYGROUP self
 -- @param #boolean Switch If true, enable pathfinding.
+-- @param #number CorridorWidth Corridor with in meters. Default 400 m.
 -- @return #NAVYGROUP self
-function NAVYGROUP:SetPathfinding(Switch)
+function NAVYGROUP:SetPathfinding(Switch, CorridorWidth)
   self.pathfindingOn=Switch
+  self.pathCorridor=CorridorWidth or 400
+  return self
 end
+
+--- Enable pathfinding.
+-- @param #NAVYGROUP self
+-- @param #number CorridorWidth Corridor with in meters. Default 400 m.
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetPathfindingOn(CorridorWidth)
+  self:SetPathfinding(true, CorridorWidth)
+  return self
+end
+
+--- Disable pathfinding.
+-- @param #NAVYGROUP self
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetPathfindingOff()
+  self:SetPathfinding(true, self.pathCorridor)
+  return self
+end
+
 
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
@@ -201,7 +224,7 @@ end
 -- @param #number WeaponType Type of weapon. Default auto.
 -- @param #number Prio Priority of the task.
 -- @return Ops.OpsGroup#OPSGROUP.Task The task data.
-function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Radius, Nshots, WeaponType, Clock, Prio)
+function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Clock, Radius, Nshots, WeaponType, Prio)
 
   local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
 
@@ -462,21 +485,36 @@ function NAVYGROUP:onafterStatus(From, Event, To)
       local turning=tostring(self:IsTurning())
       local alt=self.position.y
       local speed=UTILS.MpsToKnots(self.velocity)
-      local speedExpected=UTILS.MpsToKnots(self.speedWp or 0)
+      local speedExpected=UTILS.MpsToKnots(self:GetExpectedSpeed()) --UTILS.MpsToKnots(self.speedWp or 0)
       
+      -- Waypoint stuff.
       local wpidxCurr=self.currentwp
-      local wpuidCurr=0
-      local wpidxNext=self:GetWaypointIndexNext()
-      local wpuidNext=0
-      local wpDist=UTILS.MetersToNM(self:GetDistanceToWaypoint())
-      local wpETA=UTILS.SecondsToClock(self:GetTimeToWaypoint(), true)
+      local wpuidCurr=self:GetWaypointUIDFromIndex(wpidxCurr) or 0
+      local wpidxNext=self:GetWaypointIndexNext() or 0
+      local wpuidNext=self:GetWaypointUIDFromIndex(wpidxNext) or 0
+      local wpDist=UTILS.MetersToNM(self:GetDistanceToWaypoint() or 0)
+      local wpETA=UTILS.SecondsToClock(self:GetTimeToWaypoint() or 0, true)
+      
+      -- Current ROE and alarm state.
       local roe=self:GetROE() or 0
       local als=self:GetAlarmstate() or 0
     
       -- Info text.
       local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] (of %d) Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
-      fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, #self.waypoints, wpDist, wpETA, speed, speedExpected, alt, self.heading, turning, freepath, intowind)
+      fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, #self.waypoints or 0, wpDist, wpETA, speed, speedExpected, alt, self.heading, turning, freepath, intowind)
       self:I(self.lid..text)
+      
+      if false then
+        local text="Waypoints:"
+        for i,wp in pairs(self.waypoints) do
+          local waypoint=wp --Ops.OpsGroup#OPSGROUP.Waypoint
+          text=text..string.format("\n%d. UID=%d", i, waypoint.uid)
+          if i==self.currentwp then
+            text=text.." current!"
+          end
+        end
+        env.info(text)
+      end
       
     end
     
@@ -584,7 +622,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   for i=n, #self.waypoints do
   
     -- Waypoint.
-    local wp=self.waypoints[i]  --Ops.OpsGroup#OPSGROUP.Waypoint
+    local wp=UTILS.DeepCopy(self.waypoints[i])  --Ops.OpsGroup#OPSGROUP.Waypoint
 
     -- Check if next wp.
     if i==n then
@@ -594,7 +632,10 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
         -- Take speed specified.
         wp.speed=UTILS.KnotsToMps(Speed)
       else
-        -- Take default waypoint speed.
+        -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
+        if self.adinfinitum and wp.speed<0.1 then
+          wp.speed=UTILS.KmphToMps(self.speedCruise)
+        end
       end
       
       if Depth then
@@ -616,7 +657,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
       -- Dive depth is applied to all other waypoints.
       if self.depth then
         wp.alt=-self.depth
-      else
+      else        
         -- Take default waypoint depth.
       end      
       
@@ -1051,8 +1092,7 @@ function NAVYGROUP:_InitGroup()
   self.isNaval=true
   self.isGround=false
 
-
-  -- Helo group.
+  --TODO: Submarine check
   --self.isSubmarine=self.group:IsSubmarine()
   
   -- Ships are always AI.
@@ -1081,6 +1121,14 @@ function NAVYGROUP:_InitGroup()
   -- Set default formation. No really applicable for ships.
   self.optionDefault.Formation="Off Road"
   self.option.Formation=self.optionDefault.Formation
+
+  -- Default TACAN off.
+  self:SetDefaultTACAN(nil, nil, nil, nil, true)
+  self.tacan=UTILS.DeepCopy(self.tacanDefault)
+  
+  -- Default ICLS off.
+  self:SetDefaultICLS(nil, nil, nil, true)
+  self.icls=UTILS.DeepCopy(self.iclsDefault)
   
   -- Get all units of the group.
   local units=self.group:GetUnits()
@@ -1429,7 +1477,7 @@ function NAVYGROUP:_FindPathToNextWaypoint()
   astar:CreateGrid({land.SurfaceType.WATER}, boxwidth, spacex, delta, delta*2, self.Debug)
   
   -- Valid neighbour nodes need to have line of sight.
-  astar:SetValidNeighbourLoS(400)
+  astar:SetValidNeighbourLoS(self.pathCorridor)
   
   --- Function to find a path and add waypoints to the group.
   local function findpath()
@@ -1453,7 +1501,7 @@ function NAVYGROUP:_FindPathToNextWaypoint()
         uid=wp.uid
 
         -- Debug: smoke and mark path.
-        node.coordinate:MarkToAll(string.format("Path node #%d", i))
+        --node.coordinate:MarkToAll(string.format("Path node #%d", i))
         
       end
       
@@ -1464,8 +1512,8 @@ function NAVYGROUP:_FindPathToNextWaypoint()
     
   end
 
+  -- Return if path was found.
   return findpath()
-
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

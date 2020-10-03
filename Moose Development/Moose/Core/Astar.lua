@@ -329,6 +329,17 @@ function ASTAR:SetValidNeighbourDistance(MaxDistance)
   return self
 end
 
+--- Set valid neighbours to be in a certain distance.
+-- @param #ASTAR self
+-- @param #number MaxDistance Max distance between nodes in meters. Default is 2000 m.
+-- @return #ASTAR self
+function ASTAR:SetValidNeighbourRoad(MaxDistance)
+
+  self:SetValidNeighbourFunction(ASTAR.Road, MaxDistance)
+
+  return self
+end
+
 --- Set the function which calculates the "cost" to go from one to another node.
 -- The first to arguments of this function are always the two nodes under consideration. But you can add optional arguments.
 -- Very often the distance between nodes is a good measure for the cost.
@@ -364,6 +375,16 @@ end
 function ASTAR:SetCostDist3D()
 
   self:SetCostFunction(ASTAR.Dist3D)
+
+  return self
+end
+
+--- Set heuristic cost to go from one node to another to be their 3D distance.
+-- @param #ASTAR self
+-- @return #ASTAR self
+function ASTAR:SetCostRoad()
+
+  self:SetCostFunction(ASTAR)
 
   return self
 end
@@ -417,9 +438,7 @@ function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, Mark
   
   -- Debug info.
   local text=string.format("Building grid with nx=%d ny=%d => total=%d nodes", nx, nz, nx*nz)
-  self:I(self.lid..text)
-  MESSAGE:New(text, 10, "ASTAR"):ToAllIf(self.Debug)
-  
+  self:T(self.lid..text)
   
   -- Loop over x and z coordinate to create a 2D grid.
   for i=1,nx do
@@ -458,8 +477,7 @@ function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, Mark
     
   -- Debug info.
   local text=string.format("Done building grid!")
-  self:I(self.lid..text)
-  MESSAGE:New(text, 10, "ASTAR"):ToAllIf(self.Debug)
+  self:T2(self.lid..text)
 
   return self
 end
@@ -510,6 +528,22 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
   return los
 end
 
+--- Function to check if two nodes have a road connection.
+-- @param #ASTAR.Node nodeA First node.
+-- @param #ASTAR.Node nodeB Other node.
+-- @return #boolean If true, two nodes are connected via a road.
+function ASTAR.Road(nodeA, nodeB)
+
+  local path=land.findPathOnRoads("roads", nodeA.coordinate.x, nodeA.coordinate.z, nodeB.coordinate.x, nodeB.coordinate.z)
+  
+  if path then
+    return true    
+  else
+    return false
+  end
+
+end
+
 --- Function to check if distance between two nodes is less than a threshold distance.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Other node.
@@ -533,7 +567,8 @@ end
 -- @param #ASTAR.Node nodeB Other node.
 -- @return #number Distance between the two nodes.
 function ASTAR.Dist2D(nodeA, nodeB)
-  return nodeA.coordinate:Get2DDistance(nodeB)
+  local dist=nodeA.coordinate:Get2DDistance(nodeB)
+  return dist
 end
 
 --- Heuristic cost is given by the 3D distance between the nodes. 
@@ -541,7 +576,8 @@ end
 -- @param #ASTAR.Node nodeB Other node.
 -- @return #number Distance between the two nodes.
 function ASTAR.Dist3D(nodeA, nodeB)
-  return nodeA.coordinate:Get3DDistance(nodeB.coordinate)
+  local dist=nodeA.coordinate:Get3DDistance(nodeB.coordinate)
+  return dist
 end
 
 --- Heuristic cost is given by the distance between the nodes on road. 
@@ -550,15 +586,26 @@ end
 -- @return #number Distance between the two nodes.
 function ASTAR.DistRoad(nodeA, nodeB)
 
-  local path, dist, gotpath=nodeA.coordinate:GetPathOnRoad(nodeB.coordinate, IncludeEndpoints, Railroad, MarkPath, SmokePath)
+  -- Get the path.
+  local path=land.findPathOnRoads("roads", nodeA.coordinate.x, nodeA.coordinate.z, nodeB.coordinate.x, nodeB.coordinate.z)
   
-  if gotpath then
-    return dist
-  else
-    return math.huge
-  end
+  if path then
+  
+    local dist=0
+    
+    for i=2,#path do
+      local b=path[i] --DCS#Vec2
+      local a=path[i-1] --DCS#Vec2
+      
+      dist=dist+UTILS.VecDist2D(a,b)
+      
+    end
 
-  return nodeA.coordinate:Get3DDistance(nodeB.coordinate)
+    return dist
+  end
+  
+
+  return math.huge
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -601,7 +648,7 @@ function ASTAR:FindStartNode()
   self.startNode=node
   
   if dist>1000 then
-    self:I(self.lid.."Adding start node to node grid!")
+    self:T(self.lid.."Adding start node to node grid!")
     self:AddNode(node)
   end
     
@@ -619,7 +666,7 @@ function ASTAR:FindEndNode()
   self.endNode=node
   
   if dist>1000 then
-    self:I(self.lid.."Adding end node to node grid!")
+    self:T(self.lid.."Adding end node to node grid!")
     self:AddNode(node)
   end
     
@@ -663,8 +710,7 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
 
   -- Debug message.
   local text=string.format("Starting A* pathfinding with %d Nodes", self.Nnodes)
-  self:I(self.lid..text)
-  MESSAGE:New(text, 10, "ASTAR"):ToAllIf(self.Debug)
+  self:T(self.lid..text)
   
   local Tstart=UTILS.GetOSTime()
 
@@ -701,8 +747,7 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
       end
       text=text..string.format(", Nvalid=%d [%d cached]", self.nvalid, self.nvalidcache)
       text=text..string.format(", Ncost=%d [%d cached]", self.ncost, self.ncostcache)
-      self:I(self.lid..text)
-      MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
+      self:T(self.lid..text)
       
       return path
     end

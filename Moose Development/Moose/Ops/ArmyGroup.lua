@@ -167,14 +167,16 @@ end
 -- @param #number Nshots Number of shots to fire. Default 3.
 -- @param #number WeaponType Type of weapon. Default auto.
 -- @param #number Prio Priority of the task.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task table.
 function ARMYGROUP:AddTaskWaypointFireAtPoint(Coordinate, Waypoint, Radius, Nshots, WeaponType, Prio)
 
   Waypoint=Waypoint or self:GetWaypointNext()
 
   local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
 
-  self:AddTaskWaypoint(DCStask, Waypoint, nil, Prio)
+  local task=self:AddTaskWaypoint(DCStask, Waypoint, nil, Prio)
 
+  return task
 end
 
 --- Add a *scheduled* task.
@@ -184,12 +186,14 @@ end
 -- @param #number WeaponType Type of weapon. Default auto.
 -- @param #string Clock Time when to start the attack.
 -- @param #number Prio Priority of the task.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task table.
 function ARMYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clock, Prio)
 
   local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack)
 
-  self:AddTask(DCStask, Clock, nil, Prio)
+  local task=self:AddTask(DCStask, Clock, nil, Prio)
 
+  return task
 end
 
 --- Check if the group is currently holding its positon.
@@ -737,6 +741,10 @@ function ARMYGROUP:_InitGroup()
   -- Set default formation from first waypoint.
   self.option.Formation=self:GetWaypoint(1).action
   self.optionDefault.Formation=self.option.Formation
+
+  -- Default TACAN off.
+  self:SetDefaultTACAN(nil, nil, nil, nil, true)
+  self.tacan=UTILS.DeepCopy(self.tacanDefault)
   
   -- Units of the group.
   local units=self.group:GetUnits()

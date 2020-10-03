@@ -1303,7 +1303,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
 
     if exception==1 then
 
-      j=N-(i+1)  -- 1-->4, 2-->3
+      j=N-(i-1)  -- 1-->4, 2-->3
 
     elseif exception==2 then
 
