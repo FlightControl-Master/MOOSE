@@ -14048,10 +14048,10 @@ function AIRBOSS:_GetOnboardNumbers(group, playeronly)
     -- Onboard number and unit name.
     local n=tostring(unit.onboard_num)
     local name=unit.name
-    local skill=unit.skill
+    local skill=unit.skill or "Unknown"
 
     -- Debug text.
-    text=text..string.format("\n- unit %s: onboard #=%s  skill=%s", name, n, skill)
+    text=text..string.format("\n- unit %s: onboard #=%s  skill=%s", name, n, tostring(skill))
 
     if playeronly and skill=="Client" or skill=="Player" then
       -- There can be only one player in the group, so we skip everything else.
