@@ -438,9 +438,7 @@ function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, Mark
   
   -- Debug info.
   local text=string.format("Building grid with nx=%d ny=%d => total=%d nodes", nx, nz, nx*nz)
-  self:I(self.lid..text)
-  MESSAGE:New(text, 10, "ASTAR"):ToAllIf(self.Debug)
-  
+  self:T(self.lid..text)
   
   -- Loop over x and z coordinate to create a 2D grid.
   for i=1,nx do
@@ -479,8 +477,7 @@ function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, Mark
     
   -- Debug info.
   local text=string.format("Done building grid!")
-  self:I(self.lid..text)
-  MESSAGE:New(text, 10, "ASTAR"):ToAllIf(self.Debug)
+  self:T2(self.lid..text)
 
   return self
 end
@@ -651,7 +648,7 @@ function ASTAR:FindStartNode()
   self.startNode=node
   
   if dist>1000 then
-    self:I(self.lid.."Adding start node to node grid!")
+    self:T(self.lid.."Adding start node to node grid!")
     self:AddNode(node)
   end
     
@@ -669,7 +666,7 @@ function ASTAR:FindEndNode()
   self.endNode=node
   
   if dist>1000 then
-    self:I(self.lid.."Adding end node to node grid!")
+    self:T(self.lid.."Adding end node to node grid!")
     self:AddNode(node)
   end
     
@@ -713,8 +710,7 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
 
   -- Debug message.
   local text=string.format("Starting A* pathfinding with %d Nodes", self.Nnodes)
-  self:I(self.lid..text)
-  MESSAGE:New(text, 10, "ASTAR"):ToAllIf(self.Debug)
+  self:T(self.lid..text)
   
   local Tstart=UTILS.GetOSTime()
 
@@ -751,8 +747,7 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
       end
       text=text..string.format(", Nvalid=%d [%d cached]", self.nvalid, self.nvalidcache)
       text=text..string.format(", Ncost=%d [%d cached]", self.ncost, self.ncostcache)
-      self:I(self.lid..text)
-      MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
+      self:T(self.lid..text)
       
       return path
     end

@@ -22,6 +22,7 @@
 -- @field #number depth Ordered depth in meters.
 -- @field #boolean collisionwarning If true, collition warning.
 -- @field #boolean pathfindingOn If true, enable pathfining.
+-- @field #number pathCorridor Path corrdidor width in meters.
 -- @field #boolean ispathfinding If true, group is currently path finding.
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -42,6 +43,7 @@ NAVYGROUP = {
   intowind        = nil,
   intowindcounter = 0,
   Qintowind       = {},
+  pathCorridor    = 400,
 }
 
 --- Navy group element.
@@ -187,10 +189,31 @@ end
 --- Enable/disable pathfinding.
 -- @param #NAVYGROUP self
 -- @param #boolean Switch If true, enable pathfinding.
+-- @param #number CorridorWidth Corridor with in meters. Default 400 m.
 -- @return #NAVYGROUP self
-function NAVYGROUP:SetPathfinding(Switch)
+function NAVYGROUP:SetPathfinding(Switch, CorridorWidth)
   self.pathfindingOn=Switch
+  self.pathCorridor=CorridorWidth or 400
+  return self
 end
+
+--- Enable pathfinding.
+-- @param #NAVYGROUP self
+-- @param #number CorridorWidth Corridor with in meters. Default 400 m.
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetPathfindingOn(CorridorWidth)
+  self:SetPathfinding(true, CorridorWidth)
+  return self
+end
+
+--- Disable pathfinding.
+-- @param #NAVYGROUP self
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetPathfindingOff()
+  self:SetPathfinding(true, self.pathCorridor)
+  return self
+end
+
 
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
@@ -1454,7 +1477,7 @@ function NAVYGROUP:_FindPathToNextWaypoint()
   astar:CreateGrid({land.SurfaceType.WATER}, boxwidth, spacex, delta, delta*2, self.Debug)
   
   -- Valid neighbour nodes need to have line of sight.
-  astar:SetValidNeighbourLoS(400)
+  astar:SetValidNeighbourLoS(self.pathCorridor)
   
   --- Function to find a path and add waypoints to the group.
   local function findpath()
@@ -1478,7 +1501,7 @@ function NAVYGROUP:_FindPathToNextWaypoint()
         uid=wp.uid
 
         -- Debug: smoke and mark path.
-        node.coordinate:MarkToAll(string.format("Path node #%d", i))
+        --node.coordinate:MarkToAll(string.format("Path node #%d", i))
         
       end
       
@@ -1489,8 +1512,8 @@ function NAVYGROUP:_FindPathToNextWaypoint()
     
   end
 
+  -- Return if path was found.
   return findpath()
-
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

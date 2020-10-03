@@ -1383,7 +1383,7 @@ function OPSGROUP:RemoveWaypoint(wpindex)
     local n=#self.waypoints
     
     -- Debug info.
-    self:I(self.lid..string.format("Removing waypoint index %d, current wp index %d. N %d-->%d", wpindex, self.currentwp, N, n))
+    self:T(self.lid..string.format("Removing waypoint index %d, current wp index %d. N %d-->%d", wpindex, self.currentwp, N, n))
   
     -- Waypoint was not reached yet.
     if wpindex > self.currentwp then
