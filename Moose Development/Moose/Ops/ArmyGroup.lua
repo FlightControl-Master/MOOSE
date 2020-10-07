@@ -140,6 +140,18 @@ function ARMYGROUP:GetClosestRoad()
   return self:GetCoordinate():GetClosestPointToRoad()
 end
 
+--- Get 2D distance to the closest road.
+-- @param #ARMYGROUP self
+-- @return #number Distance in meters to the closest road.
+function ARMYGROUP:GetClosestRoadDist()
+  local road=self:GetClosestRoad()
+  if road then
+    local dist=road:Get2DDistance(self:GetCoordinate())
+    return dist
+  end
+  return math.huge
+end
+
 
 --- Add a *scheduled* task to fire at a given coordinate.
 -- @param #ARMYGROUP self
@@ -372,80 +384,75 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
   -- Waypoints.
   local waypoints={}
   
-  -- Total number of waypoints
-  local N=#self.waypoints
-
-  -- Add remaining waypoints to route.
-  for i=n, N do
+  -- Next waypoint.
+  local wp=UTILS.DeepCopy(self.waypoints[n]) --Ops.OpsGroup#OPSGROUP.Waypoint
   
-    -- Copy waypoint.
-    local wp=UTILS.DeepCopy(self.waypoints[i]) --Ops.OpsGroup#OPSGROUP.Waypoint
-    
-    if i==n then
-    
-      ---
-      -- Next Waypoint
-      ---
-    
-      if Speed then
-        wp.speed=UTILS.KnotsToMps(Speed)
-      else
-        -- Take default waypoint speed.
-      end
-      
-      if self.formationPerma then
-        --if self.formationPerma==ENUMS.Formation.Vehicle.OnRoad then
-          wp.action=self.formationPerma
-        --end
-      elseif Formation then 
-        wp.action=Formation
-      end
-      
-      -- Current set formation.
-      self.option.Formation=wp.action
-      
-      -- Current set speed in m/s.
-      self.speedWp=wp.speed
-    
-    else
+  -- Do we want to drive on road to the next wp?
+  local onroad=wp.action==ENUMS.Formation.Vehicle.OnRoad  
 
-      ---
-      -- Later Waypoint(s)
-      ---
-    
-      if self.formationPerma then
-        wp.action=self.formationPerma
-      else
-        -- Take default waypoint speed.
-      end
-      
-    end
-    
-    if wp.roaddist>100 and wp.action==ENUMS.Formation.Vehicle.OnRoad then
-    
-      -- Waypoint is actually off road!
-      wp.action=ENUMS.Formation.Vehicle.OffRoad
+  -- Current point.
+  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OffRoad)
+  table.insert(waypoints, current)
 
-      -- Add "On Road" waypoint in between.
-      local wproad=wp.roadcoord:WaypointGround(wp.speed, ENUMS.Formation.Vehicle.OnRoad)
-      table.insert(waypoints, wproad)     
-    end    
-     
-    -- Debug info.
-    self:T(string.format("WP %d %s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.type, wp.speed, wp.alt, wp.action))
+  -- Insert a point on road.
+  if onroad then
+    local current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
+    table.insert(waypoints, current)
+  end
+
         
-    -- Add waypoint.
-    table.insert(waypoints, wp)
+  -- Speed.
+  if Speed then
+    wp.speed=UTILS.KnotsToMps(Speed)
+  else
+    -- Take default waypoint speed.
+  end
+  
+  -- Formation.
+  if self.formationPerma then
+    wp.action=self.formationPerma
+  elseif Formation then 
+    wp.action=Formation
+  end
+  
+  -- Current set formation.
+  self.option.Formation=wp.action
+  
+  -- Current set speed in m/s.
+  self.speedWp=wp.speed
+
+  -- Add waypoint in between because this waypoint is "On Road" but lies "Off Road".
+  if onroad then
+  
+    -- The real waypoint is actually off road.
+    wp.action=ENUMS.Formation.Vehicle.OffRoad
+
+    -- Add "On Road" waypoint in between.
+    local wproad=wp.roadcoord:WaypointGround(wp.speed, ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
+    
+    -- Insert road waypoint.
+    table.insert(waypoints, wproad)
+  end    
+        
+  -- Add waypoint.
+  table.insert(waypoints, wp)
+  
+  -- Debug output.
+  if false then
+    for i,_wp in pairs(waypoints) do
+      local wp=_wp
+      local text=string.format("WP #%d UID=%d type=%s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.uid and wp.uid or 0, wp.type, wp.speed, wp.alt, wp.action)
+      self:I(text)
+      if wp.coordinate then
+        wp.coordinate:MarkToAll(text)
+      end
+    end
   end
 
 
-  -- Current waypoint.
-  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), self.option.Formation)
-  table.insert(waypoints, 1, current)
-  table.insert(waypoints, 1, current)  -- Seems to be better to add this twice. Otherwise, the passing waypoint functions is triggered to early!
-
-  if #waypoints>2 then
+  if #waypoints>=2 then
   
+    -- Debug info.
     self:T(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Formation=%s", 
     self.currentwp, n, #self.waypoints, #waypoints-2, UTILS.MpsToKnots(self.speedWp), tostring(self.option.Formation)))
 
@@ -646,7 +653,7 @@ end
 
 --- Add an a waypoint to the route.
 -- @param #ARMYGROUP self
--- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
+-- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint.
 -- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
 -- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
 -- @param #number Formation Formation the group will use.
@@ -683,7 +690,7 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   end
   
   -- Debug info.
-  self:T(self.lid..string.format("Adding waypoint UID=%d (index=%d), Speed=%.1f knots, Dist2Road=%d m, Action=%s", waypoint.uid, wpnumber, Speed, waypoint.roaddist, waypoint.action))
+  self:I(self.lid..string.format("Adding waypoint UID=%d (index=%d), Speed=%.1f knots, Dist2Road=%d m, Action=%s", waypoint.uid, wpnumber, Speed, waypoint.roaddist, waypoint.action))
   
   -- Update route.
   if Updateroute==nil or Updateroute==true then
