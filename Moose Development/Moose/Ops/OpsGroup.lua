@@ -2682,10 +2682,10 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     
   end
 
-  -- Check if all tasks/mission are done? If so, RTB or WAIT.
+  -- Check if all tasks/mission are done?
   -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
   if ntasks==0 then
-    self:_CheckGroupDone()
+    self:_CheckGroupDone(0.1)
   end
 
   -- Debug info.
@@ -3061,23 +3061,34 @@ function OPSGROUP:_CheckGroupDone(delay)
       self:ScheduleOnce(delay, self._CheckGroupDone, self)
     else
     
+      local waypoint=self:GetWaypoint(self.currentwp)
+    
+      local n=self:GetTasksWaypoint(id)
+    
     
       if self.adinfinitum then
       
         ---
         -- Parol Ad Infinitum
         ---
+
+        if #self.waypoints>0 then
       
-        -- Next waypoint index.
-        local i=self:GetWaypointIndexNext(true)
-        
-        -- Get positive speed to first waypoint.
-        local speed=self:GetSpeedToWaypoint(i)
-        
-        -- Start route at first waypoint.
-        self:UpdateRoute(i, speed)
-        
-        self:T(self.lid..string.format("Adinfinitum=TRUE ==> Goto WP index=%d at speed=%d knots", i, speed))
+          -- Next waypoint index.
+          local i=self:GetWaypointIndexNext(true)
+          
+          -- Get positive speed to first waypoint.
+          local speed=self:GetSpeedToWaypoint(i)
+          
+          -- Start route at first waypoint.
+          self:UpdateRoute(i, speed)
+          
+          self:T(self.lid..string.format("Adinfinitum=TRUE ==> Goto WP index=%d at speed=%d knots", i, speed))
+          
+        else
+          self:E(self.lid..string.format("WARNING: No waypoints left! Commanding a Full Stop"))
+          self:__FullStop(-1)        
+        end
 
       else
       

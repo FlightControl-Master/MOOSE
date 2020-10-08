@@ -617,65 +617,43 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   -- Waypoints.
   local waypoints={}
   
-  -- Add remaining waypoints to route.
-  local depth=nil
-  for i=n, #self.waypoints do
-  
-    -- Waypoint.
-    local wp=UTILS.DeepCopy(self.waypoints[i])  --Ops.OpsGroup#OPSGROUP.Waypoint
-
-    -- Check if next wp.
-    if i==n then
+  -- Waypoint.
+  local wp=UTILS.DeepCopy(self.waypoints[n])  --Ops.OpsGroup#OPSGROUP.Waypoint
     
-      -- Speed.
-      if Speed then
-        -- Take speed specified.
-        wp.speed=UTILS.KnotsToMps(Speed)
-      else
-        -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
-        if self.adinfinitum and wp.speed<0.1 then
-          wp.speed=UTILS.KmphToMps(self.speedCruise)
-        end
-      end
-      
-      if Depth then
-        wp.alt=-Depth
-      elseif self.depth then
-        wp.alt=-self.depth
-      else
-        -- Take default waypoint alt.
-      end
-      
-      -- Current set speed in m/s.
-      self.speedWp=wp.speed
-      
-      -- Current set depth.
-      depth=wp.alt
-    
-    else
-      
-      -- Dive depth is applied to all other waypoints.
-      if self.depth then
-        wp.alt=-self.depth
-      else        
-        -- Take default waypoint depth.
-      end      
-      
+  -- Speed.
+  if Speed then
+    -- Take speed specified.
+    wp.speed=UTILS.KnotsToMps(Speed)
+  else
+    -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
+    if self.adinfinitum and wp.speed<0.1 then
+      wp.speed=UTILS.KmphToMps(self.speedCruise)
     end
-
-    -- Add waypoint.
-    table.insert(waypoints, wp)
   end
   
+  if Depth then
+    wp.alt=-Depth
+  elseif self.depth then
+    wp.alt=-self.depth
+  else
+    -- Take default waypoint alt.
+  end
+  
+  -- Current set speed in m/s.
+  self.speedWp=wp.speed
+
+  -- Add waypoint.
+  table.insert(waypoints, wp)
+  
   -- Current waypoint.
-  local current=self:GetCoordinate():WaypointNaval(UTILS.MpsToKmph(self.speedWp), depth)
+  local current=self:GetCoordinate():WaypointNaval(UTILS.MpsToKmph(self.speedWp), wp.alt)
   table.insert(waypoints, 1, current)  
 
   
   if #waypoints>1 then
 
     self:T(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Depth=%d m", 
-    self.currentwp, n, #self.waypoints, #waypoints-1, UTILS.MpsToKnots(self.speedWp), depth))
+    self.currentwp, n, #self.waypoints, #waypoints-1, UTILS.MpsToKnots(self.speedWp), wp.alt))
 
 
     -- Route group to all defined waypoints remaining.
