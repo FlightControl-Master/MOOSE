@@ -1677,6 +1677,26 @@ function OPSGROUP:GetTasksWaypoint(id)
   return tasks
 end
 
+--- Count remaining waypoint tasks.
+-- @param #OPSGROUP self
+-- @param #number uid Unique waypoint ID.
+-- @return #number Number of waypoint tasks.
+function OPSGROUP:CountTasksWaypoint(id)
+
+  -- Tasks table.    
+  local n=0
+
+  -- Look for first task that SCHEDULED.
+  for _,_task in pairs(self.taskqueue) do
+    local task=_task --#OPSGROUP.Task
+    if task.type==OPSGROUP.TaskType.WAYPOINT and task.status==OPSGROUP.TaskStatus.SCHEDULED and task.waypoint==id then
+      n=n+1
+    end
+  end
+  
+  return n
+end
+
 --- Sort task queue.
 -- @param #OPSGROUP self
 function OPSGROUP:_SortTaskQueue()
@@ -3061,10 +3081,20 @@ function OPSGROUP:_CheckGroupDone(delay)
       self:ScheduleOnce(delay, self._CheckGroupDone, self)
     else
     
+      -- Get current waypoint.
       local waypoint=self:GetWaypoint(self.currentwp)
-    
-      local n=self:GetTasksWaypoint(id)
-    
+
+      if waypoint then
+      
+        -- Number of tasks remaining for this waypoint.
+        local ntasks=self:CountTasksWaypoint(waypoint.uid)
+        
+        -- We only want to update the route if there are no more tasks to be done.
+        if ntasks>0 then
+          self:T(self.lid..string.format("Still got %d tasks for the current waypoint UID=%d", ntasks, waypoint.uid))
+          return
+        end
+      end  
     
       if self.adinfinitum then
       

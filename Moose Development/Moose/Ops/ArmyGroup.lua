@@ -388,18 +388,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
   local wp=UTILS.DeepCopy(self.waypoints[n]) --Ops.OpsGroup#OPSGROUP.Waypoint
   
   -- Do we want to drive on road to the next wp?
-  local onroad=wp.action==ENUMS.Formation.Vehicle.OnRoad  
-
-  -- Current point.
-  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OffRoad)
-  table.insert(waypoints, current)
-
-  -- Insert a point on road.
-  if onroad then
-    local current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
-    table.insert(waypoints, current)
-  end
-
+  local onroad=wp.action==ENUMS.Formation.Vehicle.OnRoad
         
   -- Speed.
   if Speed then
@@ -436,6 +425,17 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
         
   -- Add waypoint.
   table.insert(waypoints, wp)
+
+
+  -- Current point.
+  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OffRoad)
+  table.insert(waypoints, 1, current)
+
+  -- Insert a point on road.
+  if onroad then
+    local current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
+    table.insert(waypoints, 2, current)
+  end
   
   -- Debug output.
   if false then
