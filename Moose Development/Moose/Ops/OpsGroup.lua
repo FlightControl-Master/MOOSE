@@ -479,11 +479,11 @@ function OPSGROUP:AddCheckZone(CheckZone)
 end
 
 
---- Add a zone that triggers and event if the group enters or leaves any of the zones.
+--- Add a weapon range for ARTY auftrag. 
 -- @param #OPSGROUP self
--- @param #number RangeMin
--- @param #number RangeMax
--- @param #number BitType
+-- @param #number RangeMin Minimum range in kilometers. Default 0 km.
+-- @param #number RangeMax Maximum range in kilometers. Default 10 km.
+-- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
 -- @return #OPSGROUP self
 function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
 
@@ -1133,18 +1133,21 @@ end
 --- Get next waypoint index.
 -- @param #OPSGROUP self
 -- @param #boolean cyclic If true, return first waypoint if last waypoint was reached. Default is patrol ad infinitum value set.
+-- @param #number i Waypoint index from which the next index is returned. Default is the last waypoint passed.
 -- @return #number Next waypoint index.
-function OPSGROUP:GetWaypointIndexNext(cyclic)
+function OPSGROUP:GetWaypointIndexNext(cyclic, i)
 
   if cyclic==nil then
     cyclic=self.adinfinitum
   end
   
   local N=#self.waypoints
-
-  local n=math.min(self.currentwp+1, N)
   
-  if cyclic and self.currentwp==N then
+  i=i or self.currentwp
+
+  local n=math.min(i+1, N)
+  
+  if cyclic and i==N then
     n=1
   end
   
@@ -1672,6 +1675,26 @@ function OPSGROUP:GetTasksWaypoint(id)
   end
   
   return tasks
+end
+
+--- Count remaining waypoint tasks.
+-- @param #OPSGROUP self
+-- @param #number uid Unique waypoint ID.
+-- @return #number Number of waypoint tasks.
+function OPSGROUP:CountTasksWaypoint(id)
+
+  -- Tasks table.    
+  local n=0
+
+  -- Look for first task that SCHEDULED.
+  for _,_task in pairs(self.taskqueue) do
+    local task=_task --#OPSGROUP.Task
+    if task.type==OPSGROUP.TaskType.WAYPOINT and task.status==OPSGROUP.TaskStatus.SCHEDULED and task.waypoint==id then
+      n=n+1
+    end
+  end
+  
+  return n
 end
 
 --- Sort task queue.
@@ -2542,9 +2565,14 @@ function OPSGROUP:RouteToMission(mission, delay)
       end
     
     end
+    
+    local formation=nil
+    if self.isGround and mission.optionFormation then
+      formation=mission.optionFormation
+    end
 
     -- Add waypoint.
-    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, nil, false)
+    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, formation, false)
     
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, waypoint, mission.name, mission.prio, mission.duration)
@@ -2572,7 +2600,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       self:SwitchAlarmstate(mission.optionAlarm)
     end
     -- Formation
-    if mission.optionFormation then
+    if mission.optionFormation and self.isAircraft then
       self:SwitchFormation(mission.optionFormation)
     end      
     -- Radio frequency and modulation.
@@ -2674,15 +2702,17 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   -- Final waypoint reached?
   if wpindex==nil or wpindex==#self.waypoints then
 
-    -- Set switch to true.    
-    self.passedfinalwp=true
-    
-    -- Check if all tasks/mission are done? If so, RTB or WAIT.
-    -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
-    if ntasks==0 then
-      self:_CheckGroupDone(1)
+    -- Set switch to true.
+    if not self.adinfinitum or #self.waypoints<=1 then
+      self.passedfinalwp=true
     end
+    
+  end
 
+  -- Check if all tasks/mission are done?
+  -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
+  if ntasks==0 then
+    self:_CheckGroupDone(0.1)
   end
 
   -- Debug info.
@@ -3058,92 +3088,81 @@ function OPSGROUP:_CheckGroupDone(delay)
       self:ScheduleOnce(delay, self._CheckGroupDone, self)
     else
     
-      if self.passedfinalwp then
-      
-        ---
-        -- Passed FINAL waypoint
-        ---
-      
-        if #self.waypoints>1 then
-        
-          if self.adinfinitum then
-          
-            -- Get positive speed to first waypoint.
-            local speed=self:GetSpeedToWaypoint(1)
-          
-            -- Start route at first waypoint.
-            self:__UpdateRoute(-1, 1, speed)
-            
-            self:T(self.lid..string.format("Passed final WP, #WP>1, adinfinitum=TRUE ==> Goto WP 1 at speed>0"))
-                        
-            self.passedfinalwp=false
-            
-          else
-            -- No further waypoints. Command a full stop.
-            self:__FullStop(-1)
-            
-            self:T(self.lid..string.format("Passed final WP, #WP>1, adinfinitum=FALSE ==> Full Stop"))
-          end
-          
-        elseif #self.waypoints==1 then
-        
-          --- Only one WP left
-        
-          -- The last waypoint.
-          local waypoint=self.waypoints[1] --Ops.OpsGroup#OPSGROUP.Waypoint
-          
-          local dist=self:GetCoordinate():Get2DDistance(waypoint.coordinate)          
-          
-          
-          if self.adinfinitum and dist>1000 then  -- Note that dist>100 caused the same wp to be passed a lot of times.
-          
-            self:T(self.lid..string.format("Passed final WP, #WP=1, adinfinitum=TRUE dist>1000 ==> Goto WP 1 at speed>0"))
+      -- Get current waypoint.
+      local waypoint=self:GetWaypoint(self.currentwp)
 
-            -- Get positive speed to first waypoint.
-            local speed=self:GetSpeedToWaypoint(1)
+      if waypoint then
+      
+        -- Number of tasks remaining for this waypoint.
+        local ntasks=self:CountTasksWaypoint(waypoint.uid)
+        
+        -- We only want to update the route if there are no more tasks to be done.
+        if ntasks>0 then
+          self:T(self.lid..string.format("Still got %d tasks for the current waypoint UID=%d ==> RETURN (no action)", ntasks, waypoint.uid))
+          return
+        end
+      end  
+    
+      if self.adinfinitum then
+      
+        ---
+        -- Parol Ad Infinitum
+        ---
+
+        if #self.waypoints>0 then
+      
+          -- Next waypoint index.
+          local i=self:GetWaypointIndexNext(true)
           
-            -- Start route at first waypoint.
-            self:__UpdateRoute(-1, 1, speed)
-            
-            self.passedfinalwp=false
-            
-          else
+          -- Get positive speed to first waypoint.
+          local speed=self:GetSpeedToWaypoint(i)
           
-            self:T(self.lid..string.format("Passed final WP, #WP=1, adinfinitum=FALSE or dist<1000 ==> Full Stop"))
+          -- Start route at first waypoint.
+          self:UpdateRoute(i, speed)
           
-            self:__FullStop(-1)
-            
-          end
+          self:T(self.lid..string.format("Adinfinitum=TRUE ==> Goto WP index=%d at speed=%d knots", i, speed))
           
         else
-        
-          --- No waypoints left
-
-          -- No further waypoints. Command a full stop.
-          self:T(self.lid..string.format("No waypoints left ==> Full Stop"))
-          
-          self:__FullStop(-1)
-          
+          self:E(self.lid..string.format("WARNING: No waypoints left! Commanding a Full Stop"))
+          self:__FullStop(-1)        
         end
-    
+
       else
       
         ---
-        -- Final waypoint NOT passed yet
+        -- Finite Patrol
         ---
-      
-        if #self.waypoints>0 then
-          self:T(self.lid..string.format("NOT Passed final WP, #WP>0 ==> Update Route"))
-          self:__UpdateRoute(-1)
-        else
-          self:E(self.lid..string.format("WARNING: No waypoints left! Commanding a Full Stop"))
+    
+        if self.passedfinalwp then
+        
+          ---
+          -- Passed FINAL waypoint
+          ---
+  
+          -- No further waypoints. Command a full stop.
           self:__FullStop(-1)
+              
+          self:T(self.lid..string.format("Passed final WP, adinfinitum=FALSE ==> Full Stop"))
+  
+        else
+        
+          ---
+          -- Final waypoint NOT passed yet
+          ---
+        
+          if #self.waypoints>0 then
+            self:T(self.lid..string.format("NOT Passed final WP, #WP>0 ==> Update Route"))
+            self:UpdateRoute()
+          else
+            self:E(self.lid..string.format("WARNING: No waypoints left! Commanding a Full Stop"))
+            self:__FullStop(-1)
+          end
+          
         end
         
       end
-    
-    end
-    
+      
+    end    
   end
   
 end
@@ -3283,17 +3302,18 @@ function OPSGROUP:InitWaypoints()
   self.waypoints={}
   
   for index,wp in pairs(self.waypoints0) do
-  
-    --local waypoint=self:_CreateWaypoint(wp)    
-    --self:_AddWaypoint(waypoint)
-    
+
+    -- Coordinate of the waypoint.    
     local coordinate=COORDINATE:New(wp.x, wp.alt, wp.y)
+    
+    -- Speed at the waypoint.
     local speedknots=UTILS.MpsToKnots(wp.speed)
     
     if index==1 then
       self.speedWp=wp.speed
     end
     
+    -- Add waypoint.
     self:AddWaypoint(coordinate, speedknots, index-1, nil, false)
      
   end
@@ -3368,7 +3388,7 @@ function OPSGROUP:_UpdateWaypointTasks(n)
     if i>=n or nwaypoints==1 then
     
       -- Debug info.
-      self:T(self.lid..string.format("Updating waypoint task for waypoint %d/%d ID=%d. Last waypoint passed %d", i, nwaypoints, wp.uid, self.currentwp))
+      self:T2(self.lid..string.format("Updating waypoint task for waypoint %d/%d ID=%d. Last waypoint passed %d", i, nwaypoints, wp.uid, self.currentwp))
   
       -- Tasks of this waypoint
       local taskswp={}
@@ -3401,12 +3421,12 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
   
   if waypoint then
   
+    -- Current wp.
+    local currentwp=opsgroup.currentwp
+  
     -- Get the current waypoint index.
     opsgroup.currentwp=opsgroup:GetWaypointIndex(uid)
-    
-    -- Increase passing counter.
-    waypoint.npassed=waypoint.npassed+1
-    
+        
     -- Set expected speed and formation from the next WP.
     local wpnext=opsgroup:GetWaypointNext()  
     if wpnext then
@@ -3450,13 +3470,18 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
   
     -- Debug message.
     local text=string.format("Group passing waypoint uid=%d", uid)
-    opsgroup:T2(opsgroup.lid..text)
-  
+    opsgroup:T(opsgroup.lid..text)
+    
     -- Trigger PassingWaypoint event.
     if not (waypoint.astar or waypoint.detour) then
+
+      -- Increase passing counter.
+      waypoint.npassed=waypoint.npassed+1    
+      
+      -- Call event function.
       opsgroup:PassingWaypoint(waypoint)
     end
-    
+
   end
 
 end

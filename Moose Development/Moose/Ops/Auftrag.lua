@@ -1166,6 +1166,8 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius)
   mission.artyShots=Nshots or 3
   mission.artyRadius=Radius or 100
   
+  mission.engageWeaponType=ENUMS.WeaponFlag.Auto
+  
   mission.optionROE=ENUMS.ROE.OpenFire   -- Ground/naval need open fire!
   mission.optionAlarm=0
   
