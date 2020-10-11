@@ -241,14 +241,15 @@ end
 -- @param #number Nshots Number of shots to fire. Default 3.
 -- @param #number WeaponType Type of weapon. Default auto.
 -- @param #number Prio Priority of the task.
+-- @param #number Duration Duration in seconds after which the task is cancelled. Default *never*.
 -- @return Ops.OpsGroup#OPSGROUP.Task The task table.
-function NAVYGROUP:AddTaskWaypointFireAtPoint(Coordinate, Waypoint, Radius, Nshots, WeaponType, Prio)
+function NAVYGROUP:AddTaskWaypointFireAtPoint(Coordinate, Waypoint, Radius, Nshots, WeaponType, Prio, Duration)
 
   Waypoint=Waypoint or self:GetWaypointNext()
 
   local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
 
-  local task=self:AddTaskWaypoint(DCStask, Waypoint, nil, Prio)
+  local task=self:AddTaskWaypoint(DCStask, Waypoint, nil, Prio, Duration)
 
   return task
 end
@@ -608,9 +609,6 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   -- Update route from this waypoint number onwards.
   n=n or self:GetWaypointIndexNext()
   
-  -- Debug info.
-  self:T(self.lid..string.format("Update route n=%d", n))
-  
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
   self:_UpdateWaypointTasks(n)
 
@@ -650,11 +648,10 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   table.insert(waypoints, 1, current)  
 
   
-  if #waypoints>1 then
+  if not self.passedfinalwp then
 
-    self:T(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Depth=%d m", 
-    self.currentwp, n, #self.waypoints, #waypoints-1, UTILS.MpsToKnots(self.speedWp), wp.alt))
-
+    -- Debug info.
+    self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), wp.alt))
 
     -- Route group to all defined waypoints remaining.
     self:Route(waypoints)
@@ -662,10 +659,10 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   else
   
     ---
-    -- No waypoints left ==> Full Stop
+    -- Passed final WP ==> Full Stop
     ---
   
-    self:E(self.lid..string.format("WARNING: No waypoints left ==> Full Stop!"))    
+    self:E(self.lid..string.format("WARNING: Passed final WP ==> Full Stop!"))
     self:FullStop()
     
   end

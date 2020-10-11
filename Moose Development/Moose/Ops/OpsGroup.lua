@@ -479,11 +479,11 @@ function OPSGROUP:AddCheckZone(CheckZone)
 end
 
 
---- Add a zone that triggers and event if the group enters or leaves any of the zones.
+--- Add a weapon range for ARTY auftrag. 
 -- @param #OPSGROUP self
--- @param #number RangeMin
--- @param #number RangeMax
--- @param #number BitType
+-- @param #number RangeMin Minimum range in kilometers. Default 0 km.
+-- @param #number RangeMax Maximum range in kilometers. Default 10 km.
+-- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
 -- @return #OPSGROUP self
 function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
 
@@ -2565,9 +2565,14 @@ function OPSGROUP:RouteToMission(mission, delay)
       end
     
     end
+    
+    local formation=nil
+    if self.isGround and mission.optionFormation then
+      formation=mission.optionFormation
+    end
 
     -- Add waypoint.
-    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, nil, false)
+    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, formation, false)
     
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, waypoint, mission.name, mission.prio, mission.duration)
@@ -2595,7 +2600,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       self:SwitchAlarmstate(mission.optionAlarm)
     end
     -- Formation
-    if mission.optionFormation then
+    if mission.optionFormation and self.isAircraft then
       self:SwitchFormation(mission.optionFormation)
     end      
     -- Radio frequency and modulation.
@@ -2697,8 +2702,10 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   -- Final waypoint reached?
   if wpindex==nil or wpindex==#self.waypoints then
 
-    -- Set switch to true.    
-    self.passedfinalwp=true
+    -- Set switch to true.
+    if not self.adinfinitum or #self.waypoints<=1 then
+      self.passedfinalwp=true
+    end
     
   end
 
@@ -2711,7 +2718,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   -- Debug info.
   local text=string.format("Group passed waypoint %s/%d ID=%d: final=%s detour=%s astar=%s", 
   tostring(wpindex), #self.waypoints, Waypoint.uid, tostring(self.passedfinalwp), tostring(Waypoint.detour), tostring(Waypoint.astar))
-  self:I(self.lid..text)
+  self:T(self.lid..text)
   
 end
 
@@ -3091,7 +3098,7 @@ function OPSGROUP:_CheckGroupDone(delay)
         
         -- We only want to update the route if there are no more tasks to be done.
         if ntasks>0 then
-          self:T(self.lid..string.format("Still got %d tasks for the current waypoint UID=%d", ntasks, waypoint.uid))
+          self:T(self.lid..string.format("Still got %d tasks for the current waypoint UID=%d ==> RETURN (no action)", ntasks, waypoint.uid))
           return
         end
       end  
@@ -3135,7 +3142,7 @@ function OPSGROUP:_CheckGroupDone(delay)
           -- No further waypoints. Command a full stop.
           self:__FullStop(-1)
               
-          self:T(self.lid..string.format("Passed final WP, #WP>1, adinfinitum=FALSE ==> Full Stop"))
+          self:T(self.lid..string.format("Passed final WP, adinfinitum=FALSE ==> Full Stop"))
   
         else
         
@@ -3295,17 +3302,18 @@ function OPSGROUP:InitWaypoints()
   self.waypoints={}
   
   for index,wp in pairs(self.waypoints0) do
-  
-    --local waypoint=self:_CreateWaypoint(wp)    
-    --self:_AddWaypoint(waypoint)
-    
+
+    -- Coordinate of the waypoint.    
     local coordinate=COORDINATE:New(wp.x, wp.alt, wp.y)
+    
+    -- Speed at the waypoint.
     local speedknots=UTILS.MpsToKnots(wp.speed)
     
     if index==1 then
       self.speedWp=wp.speed
     end
     
+    -- Add waypoint.
     self:AddWaypoint(coordinate, speedknots, index-1, nil, false)
      
   end

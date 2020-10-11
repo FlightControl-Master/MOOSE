@@ -40,7 +40,7 @@ ARMYGROUP = {
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="0.1.0"
+ARMYGROUP.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -350,7 +350,7 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     
     -- Set TACAN to default.
     self:_SwitchTACAN()
-
+    
     -- Turn on the radio.
     if self.radioDefault then
       self:SwitchRadio(self.radioDefault.Freq, self.radioDefault.Modu)
@@ -361,7 +361,7 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
   end
   
   -- Update route.
-  self:Cruise()
+  self:Cruise(nil, self.option.Formation or self.optionDefault.Formation)
   
 end
 
@@ -394,7 +394,10 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
   if Speed then
     wp.speed=UTILS.KnotsToMps(Speed)
   else
-    -- Take default waypoint speed.
+    -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
+    if self.adinfinitum and wp.speed<0.1 then
+      wp.speed=UTILS.KmphToMps(self.speedCruise)
+    end
   end
   
   -- Formation.
@@ -425,10 +428,15 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
         
   -- Add waypoint.
   table.insert(waypoints, wp)
-
+  
+  -- Apply formation at the current position or it will only be changed when reaching the next waypoint.
+  local formation=ENUMS.Formation.Vehicle.OffRoad
+  if wp.action~=ENUMS.Formation.Vehicle.OnRoad then
+    formation=wp.action
+  end
 
   -- Current point.
-  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OffRoad)
+  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), formation)
   table.insert(waypoints, 1, current)
 
   -- Insert a point on road.
@@ -442,32 +450,31 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
     for i,_wp in pairs(waypoints) do
       local wp=_wp
       local text=string.format("WP #%d UID=%d type=%s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.uid and wp.uid or 0, wp.type, wp.speed, wp.alt, wp.action)
-      self:I(text)
-      if wp.coordinate then
+      self:T(text)
+      if false and wp.coordinate then
         wp.coordinate:MarkToAll(text)
       end
     end
   end
 
-
-  if #waypoints>=2 then
+  if not self.passedfinalwp then
   
     -- Debug info.
-    self:T(self.lid..string.format("Updateing route: WP %d-->%d-->%d (#%d), Speed=%.1f knots, Formation=%s", 
-    self.currentwp, n, #self.waypoints, #waypoints-2, UTILS.MpsToKnots(self.speedWp), tostring(self.option.Formation)))
-
+    self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Formation=%s", 
+    self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), tostring(self.option.Formation)))
+  
     -- Route group to all defined waypoints remaining.
     self:Route(waypoints)
     
   else
-  
+
     ---
-    -- No waypoints left
+    -- Passed final WP ==> Full Stop
     ---
   
-    self:E(self.lid..string.format("WARNING: No waypoints left ==> Full Stop!"))    
-    self:FullStop()
-        
+    self:E(self.lid..string.format("WARNING: Passed final WP ==> Full Stop!"))
+    self:FullStop()  
+  
   end
 
 end
@@ -746,8 +753,7 @@ function ARMYGROUP:_InitGroup()
   self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
   
   -- Set default formation from first waypoint.
-  self.option.Formation=self:GetWaypoint(1).action
-  self.optionDefault.Formation=self.option.Formation
+  self.optionDefault.Formation=self:GetWaypoint(1).action
 
   -- Default TACAN off.
   self:SetDefaultTACAN(nil, nil, nil, nil, true)
@@ -815,10 +821,11 @@ end
 -- @param #ARMYGROUP self
 -- @param #number Formation New formation the group will fly in. Default is the setting of `SetDefaultFormation()`.
 -- @param #boolean Permanently If true, formation always used from now on.
+-- @param #boolean NoRouteUpdate If true, route is not updated.
 -- @return #ARMYGROUP self
-function ARMYGROUP:SwitchFormation(Formation, Permanently)
+function ARMYGROUP:SwitchFormation(Formation, Permanently, NoRouteUpdate)
 
-  if self:IsAlive() then
+  if self:IsAlive() or self:IsInUtero() then
   
     Formation=Formation or self.optionDefault.Formation
 
@@ -831,11 +838,20 @@ function ARMYGROUP:SwitchFormation(Formation, Permanently)
     -- Set current formation.
     self.option.Formation=Formation
     
-    -- Update route with the new formation.
-    self:__UpdateRoute(-1, nil, nil, Formation)
+    if self:IsInUtero() then
+        self:T(self.lid..string.format("Will switch formation to %s (permanently=%s) when group is spawned", self.option.Formation, tostring(Permanently)))
+    else
     
-    -- Debug info.
-    self:T(self.lid..string.format("Switching formation to %s (permanently=%s)", self.option.Formation, tostring(Permanently)))
+      -- Update route with the new formation.
+      if NoRouteUpdate then
+      else
+        self:__UpdateRoute(-1, nil, nil, Formation)
+      end
+      
+      -- Debug info.
+      self:T(self.lid..string.format("Switching formation to %s (permanently=%s)", self.option.Formation, tostring(Permanently)))
+      
+    end
 
   end
 
