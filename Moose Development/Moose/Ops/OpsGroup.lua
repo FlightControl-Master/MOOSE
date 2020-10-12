@@ -3440,21 +3440,25 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
       opsgroup.speed=wpnext.speed
       
     end
+  
+    -- Debug message.
+    local text=string.format("Group passing waypoint uid=%d", uid)
+    opsgroup:T(opsgroup.lid..text)
     
-    -- Check if the group is still pathfinding.
-    if opsgroup.ispathfinding and not waypoint.astar then
-      opsgroup.ispathfinding=false
-    end  
-    
-    -- Check special waypoints.
+    -- Trigger PassingWaypoint event.
     if waypoint.astar then
-    
+      
+      -- Remove Astar waypoint.
       opsgroup:RemoveWaypointByID(uid)
       
+      -- Cruise.
+      opsgroup:Cruise()
+    
     elseif waypoint.detour then
     
+      -- Remove detour waypoint.
       opsgroup:RemoveWaypointByID(uid)
-      
+
       -- Trigger event.
       opsgroup:DetourReached()
       
@@ -3466,14 +3470,12 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
         opsgroup:E("ERROR: waypoint.detour should be 0 or 1")
       end
       
-    end
-  
-    -- Debug message.
-    local text=string.format("Group passing waypoint uid=%d", uid)
-    opsgroup:T(opsgroup.lid..text)
-    
-    -- Trigger PassingWaypoint event.
-    if not (waypoint.astar or waypoint.detour) then
+    else
+
+      -- Check if the group is still pathfinding.
+      if opsgroup.ispathfinding then
+        opsgroup.ispathfinding=false
+      end  
 
       -- Increase passing counter.
       waypoint.npassed=waypoint.npassed+1    

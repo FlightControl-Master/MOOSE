@@ -109,7 +109,8 @@ function NAVYGROUP:New(GroupName)
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Hold position.
   
   self:AddTransition("*",             "TurnIntoWind",     "IntoWind")    -- Command the group to turn into the wind.
-  self:AddTransition("*",             "TurnIntoWindOver", "Cruising")    -- Turn into wind is over.
+  self:AddTransition("IntoWind",      "TurnIntoWindStop", "IntoWind")    -- Stop a turn into wind.  
+  self:AddTransition("IntoWind",      "TurnIntoWindOver", "Cruising")    -- Turn into wind is over.
   
   self:AddTransition("*",             "TurningStarted",   "*")           -- Group started turning.
   self:AddTransition("*",             "TurningStopped",   "*")           -- Group stopped turning.
@@ -144,14 +145,6 @@ function NAVYGROUP:New(GroupName)
   -- Initialize the group.
   self:_InitGroup()
 
-  -- Debug trace.
-  if false then
-    self.Debug=true
-    BASE:TraceOnOff(true)
-    BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
-  end
-  
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
   self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
@@ -272,7 +265,7 @@ function NAVYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clo
   return task
 end
 
---- Add aircraft recovery time window and recovery case.
+--- Create a turn into wind window. Note that this is not executed as it not added to the queue.
 -- @param #NAVYGROUP self
 -- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
 -- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
@@ -280,7 +273,7 @@ end
 -- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
 -- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
 -- @return #NAVYGROUP.IntoWind Recovery window.
-function NAVYGROUP:CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
+function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
   -- Absolute mission time in seconds.
   local Tnow=timer.getAbsTime()
@@ -335,17 +328,17 @@ function NAVYGROUP:CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
   return recovery
 end
 
---- Add aircraft recovery time window and recovery case.
+--- Add a time window, where the groups steams into the wind.
 -- @param #NAVYGROUP self
 -- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
 -- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
 -- @param #number speed Speed in knots during turn into wind leg.
--- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+-- @param #boolean uturn If `true` (or `nil`), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
 -- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
--- @return #NAVYGROUP.IntoWind Recovery window.
+-- @return #NAVYGROUP.IntoWind Turn into window data table.
 function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
-  local recovery=self:CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
+  local recovery=self:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
   
   --TODO: check if window is overlapping with an other and if extend the window.
   
@@ -353,6 +346,29 @@ function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
   table.insert(self.Qintowind, recovery)
 
   return recovery
+end
+
+--- Remove steam into wind window from queue. If the window is currently active, it is stopped first.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWind IntoWindData Turn into window data table.
+-- @return #NAVYGROUP self
+function NAVYGROUP:RemoveTurnIntoWind(IntoWindData)
+
+  -- Check if this is a window currently open.
+  if self.intowind and self.intowind.id==IntoWindData.Id then
+    self:TurnIntoWindStop()
+    return
+  end  
+
+  for i,_tiw in pairs(self.Qintowind) do
+    local tiw=_tiw --#NAVYGROUP.IntoWind
+    if tiw.Id==IntoWindData.Id then
+      table.remove(self.Qintowind, i)
+      break
+    end
+  end
+  
+  return self
 end
 
 
@@ -757,14 +773,35 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   
 end
 
+--- On before "TurnIntoWindStop" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onbeforeTurnIntoWindStop(From, Event, To)
+
+  if self.intowind then
+    return true
+  else
+    return false
+  end
+
+end
+
+--- On after "TurnIntoWindStop" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterTurnIntoWindStop(From, Event, To)
+  self:TurnIntoWindOver()
+end
+
 --- On after "TurnIntoWindOver" event.
 -- @param #NAVYGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number Duration Duration in seconds.
--- @param #number Speed Speed in knots.
--- @param #boolean Uturn Return to the place we came from.
 function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To)
 
   -- Debug message.
