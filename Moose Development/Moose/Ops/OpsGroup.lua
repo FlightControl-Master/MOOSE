@@ -295,7 +295,7 @@ OPSGROUP.version="0.5.0"
 
 --- Create a new OPSGROUP class object.
 -- @param #OPSGROUP self
--- @param Wrapper.Group#GROUP Group The group object. Can also be given by its group name as #string.
+-- @param Wrapper.Group#GROUP Group The group object. Can also be given by its group name as `#string`.
 -- @return #OPSGROUP self
 function OPSGROUP:New(Group)
 
@@ -3163,6 +3163,17 @@ function OPSGROUP:_CheckGroupDone(delay)
       end
       
     end    
+  end
+  
+end
+
+--- Check ammo is full.
+-- @param #OPSGROUP self
+-- @return #boolean If true, ammo is full.
+function OPSGROUP:_CheckAmmoFull()
+
+  for _,_ammo in pairs(self.ammo) do
+  
   end
   
 end

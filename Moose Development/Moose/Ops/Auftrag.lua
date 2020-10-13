@@ -7,7 +7,7 @@
 --    * Set mission start/stop times.
 --    * Set mission priority and urgency (can cancel running missions).
 --    * Specific mission options for ROE, ROT, formation, etc.
---    * Interface to FLIGHTGROUP, AIRWING and WINGCOMMANDER classes.
+--    * Interface to FLIGHTGROUP, NAVYGROUP, ARMYGROUP, AIRWING, WINGCOMMANDER and CHIEF classes.
 --    * FSM events when a mission is done, successful or failed.
 --    
 -- ===

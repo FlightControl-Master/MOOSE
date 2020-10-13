@@ -3,7 +3,16 @@
 -- **Main Features:**
 --
 --    * Dynamically add and remove waypoints.
---     
+--    * Convenient checks when the group enters or leaves a zone.
+--    * Sophisticated task queueing system.
+--    * Compatible with AUFTRAG class.
+--    * Easy change of ROE, alarm state, formation and other settings.
+--    * Many additional events that the mission designer can hook into.
+--
+-- **Example Missions:**
+-- 
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Armygroup).
+--    
 -- ===
 --
 -- ### Author: **funkyfranky**
@@ -15,6 +24,7 @@
 -- @type ARMYGROUP
 -- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
 -- @field #boolean formationPerma Formation that is used permanently and overrules waypoint formations.
+-- @field #boolean isMobile If true, group is mobile.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B. Sledge
@@ -46,7 +56,8 @@ ARMYGROUP.version="0.3.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
--- TODO: A lot.
+-- TODO: Check if group is mobile.
+-- TODO: Rearm. Specify a point where to go and wait until ammo is full.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -54,12 +65,12 @@ ARMYGROUP.version="0.3.0"
 
 --- Create a new ARMYGROUP class object.
 -- @param #ARMYGROUP self
--- @param #string GroupName Name of the group.
+-- @param Wrapper.Group#GROUP Group The group object. Can also be given by its group name as `#string`.
 -- @return #ARMYGROUP self
-function ARMYGROUP:New(GroupName)
+function ARMYGROUP:New(Group)
 
   -- Inherit everything from FSM class.
-  local self=BASE:Inherit(self, OPSGROUP:New(GroupName)) -- #ARMYGROUP
+  local self=BASE:Inherit(self, OPSGROUP:New(Group)) -- #ARMYGROUP
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("ARMYGROUP %s | ", self.groupname)
@@ -73,7 +84,10 @@ function ARMYGROUP:New(GroupName)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "FullStop",         "Holding")     -- Hold position.
-  self:AddTransition("*",             "Cruise",           "Cruising")    -- Hold position.
+  self:AddTransition("*",             "Cruise",           "Cruising")    -- Cruise along the given route of waypoints.
+  
+  self:AddTransition("*",             "Rearm",            "Rearming")    -- Group is send to a coordinate and waits until ammo is refilled.
+  self:AddTransition("Rearming",      "Rearmed",          "Cruising")    -- Group was rearmed.
   
   self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
   self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
@@ -224,9 +238,16 @@ end
 
 --- Check if the group is currently on a detour.
 -- @param #ARMYGROUP self
--- @return #boolean If true, group is on a detour
+-- @return #boolean If true, group is on a detour.
 function ARMYGROUP:IsOnDetour()
   return self:Is("OnDetour")
+end
+
+--- Check if the group is currently rearming.
+-- @param #ARMYGROUP self
+-- @return #boolean If true, group is rearming.
+function ARMYGROUP:IsRearming()
+  return self:Is("Rearming")
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -508,6 +529,26 @@ function ARMYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Formation, 
 
 end
 
+--- On after "Rearm" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+-- @param #number Formation Formation of the group.
+function ARMYGROUP:onafterRearm(From, Event, To, Coordinate, Formation)
+
+  -- ID of current waypoint.
+  local uid=self:GetWaypointCurrent().uid
+  
+  -- Add waypoint after current.
+  local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
+  
+  -- Set if we want to resume route after reaching the detour waypoint.
+  wp.detour=0
+
+end
+
 --- On after "DetourReached" event.
 -- @param #ARMYGROUP self
 -- @param #string From From state.
@@ -549,7 +590,7 @@ function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
 
 end
 
---- On after Start event. Starts the ARMYGROUP FSM and event handlers.
+--- On after "Stop" event.
 -- @param #ARMYGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.

@@ -50,7 +50,7 @@
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
---- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
+--- *To invent an airplane is nothing; to build one is something; to fly is everything.* -- Otto Lilienthal
 --
 -- ===
 --
@@ -210,7 +210,7 @@ FLIGHTGROUP.version="0.6.0"
 
 --- Create a new FLIGHTGROUP object and start the FSM.
 -- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP group The group object. Can also be given as #string with the name of the group.
+-- @param Wrapper.Group#GROUP Group The group object. Can also be given by its group name as `#string`.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:New(group)
 

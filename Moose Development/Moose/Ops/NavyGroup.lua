@@ -5,8 +5,18 @@
 --    * Dynamically add and remove waypoints.
 --    * Let the group steam into the wind.
 --    * Command a full stop.
+--    * Automatic pathfinding, e.g. around islands.
+--    * Collision warning, if group is heading towards a land mass.
 --    * Let a submarine dive and surface.
---     
+--    * Sophisticated task queueing system.
+--    * Compatible with AUFTRAG class.
+--    * Convenient checks when the group enters or leaves a zone.
+--    * Many additional events that the mission designer can hook into.
+-- 
+-- **Example Missions:**
+-- 
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Navygroup)
+-- 
 -- ===
 --
 -- ### Author: **funkyfranky**
@@ -19,6 +29,7 @@
 -- @field #boolean turning If true, group is currently turning.
 -- @field #NAVYGROUP.IntoWind intowind Into wind info.
 -- @field #table Qintowind Queue of "into wind" turns.
+-- @field #number intowindcounter Counter of into wind IDs.
 -- @field #number depth Ordered depth in meters.
 -- @field #boolean collisionwarning If true, collition warning.
 -- @field #boolean pathfindingOn If true, enable pathfining.
@@ -74,7 +85,9 @@ NAVYGROUP.version="0.5.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Collision warning.
+-- TODO: Extend, shorten turn into wind windows
+-- TODO: Skipper menu.
+-- DONE: Collision warning.
 -- DONE: Detour, add temporary waypoint and resume route.
 -- DONE: Stop and resume route.
 -- DONE: Add waypoints.
@@ -109,6 +122,7 @@ function NAVYGROUP:New(GroupName)
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Hold position.
   
   self:AddTransition("*",             "TurnIntoWind",     "IntoWind")    -- Command the group to turn into the wind.
+  self:AddTransition("IntoWind",      "TurnedIntoWind",   "IntoWind")    -- Group turned into wind.
   self:AddTransition("IntoWind",      "TurnIntoWindStop", "IntoWind")    -- Stop a turn into wind.  
   self:AddTransition("IntoWind",      "TurnIntoWindOver", "Cruising")    -- Turn into wind is over.
   
@@ -355,7 +369,8 @@ end
 function NAVYGROUP:RemoveTurnIntoWind(IntoWindData)
 
   -- Check if this is a window currently open.
-  if self.intowind and self.intowind.id==IntoWindData.Id then
+  if self.intowind and self.intowind.Id==IntoWindData.Id then
+    --env.info("FF stop in remove")
     self:TurnIntoWindStop()
     return
   end  
@@ -363,6 +378,7 @@ function NAVYGROUP:RemoveTurnIntoWind(IntoWindData)
   for i,_tiw in pairs(self.Qintowind) do
     local tiw=_tiw --#NAVYGROUP.IntoWind
     if tiw.Id==IntoWindData.Id then
+      --env.info("FF removing window "..tiw.Id)
       table.remove(self.Qintowind, i)
       break
     end
@@ -540,6 +556,37 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     -- Info text.
     local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
     self:T(self.lid..text)
+  
+  end
+
+  ---
+  -- Recovery Windows
+  ---
+
+  if self.verbose>=2 then
+  
+    -- Debug output:
+    local text=string.format(self.lid.."Turn into wind time windows:")
+  
+    -- Handle case with no recoveries.
+    if #self.Qintowind==0 then
+      text=text.." none!"
+    end  
+  
+    -- Loop over all slots.
+    for i,_recovery in pairs(self.Qintowind) do
+      local recovery=_recovery --#NAVYGROUP.IntoWind
+  
+      -- Get start/stop clock strings.
+      local Cstart=UTILS.SecondsToClock(recovery.Tstart)
+      local Cstop=UTILS.SecondsToClock(recovery.Tstop)
+  
+      -- Debug text.
+      text=text..string.format("\n[%d] ID=%d Start=%s Stop=%s Open=%s Over=%s", i, recovery.Id, Cstart, Cstop, tostring(recovery.Open), tostring(recovery.Over))
+    end
+  
+    -- Debug output.
+    self:I(self.lid..text)
   
   end
 
@@ -794,7 +841,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function NAVYGROUP:onafterTurnIntoWindStop(From, Event, To)
-  self:TurnIntoWindOver()
+  self:TurnIntoWindOver(self.intowind)
 end
 
 --- On after "TurnIntoWindOver" event.
@@ -802,28 +849,54 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To)
+-- @param #NAVYGROUP.IntoWind IntoWindData Data table.
+function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
 
-  -- Debug message.
-  self:T2(self.lid.."Turn Into Wind Over!")
+  if IntoWindData and self.intowind and IntoWindData.Id==self.intowind.Id then
 
-  self.intowind.Over=true
-  self.intowind.Open=false
+    -- Debug message.
+    self:T2(self.lid.."Turn Into Wind Over!")
   
-  -- Remove additional waypoint.
-  self:RemoveWaypointByID(self.intowind.waypoint.uid)
+    -- Window over and not open anymore.
+    self.intowind.Over=true
+    self.intowind.Open=false
+    
+    -- Remove additional waypoint.
+    self:RemoveWaypointByID(self.intowind.waypoint.uid)
+  
+    if self.intowind.Uturn then
 
-  if self.intowind.Uturn then
-    self:T(self.lid.."Turn Into Wind Over ==> Uturn!")
-    self:Detour(self.intowind.Coordinate, self:GetSpeedCruise(), 0, true)
-  else
-    self:T(self.lid.."FF Turn Into Wind Over ==> Next WP!")
-    local indx=self:GetWaypointIndexNext()
-    local speed=self:GetWaypointSpeed(indx)
-    self:__UpdateRoute(-1, indx, speed)
+      ---
+      -- U-turn ==> Go to coordinate where we left the route.
+      ---
+    
+      -- Detour to where we left the route.
+      self:I(self.lid.."FF Turn Into Wind Over ==> Uturn!")
+      self:Detour(self.intowind.Coordinate, self:GetSpeedCruise(), 0, true)
+      
+    else
+    
+      ---
+      -- Go directly to next waypoint.
+      ---
+    
+      -- Next waypoint index and speed.
+      local indx=self:GetWaypointIndexNext()
+      local speed=self:GetWaypointSpeed(indx)
+      
+      -- Update route.
+      self:I(self.lid..string.format("FF Turn Into Wind Over ==> Next WP Index=%d at %.1f knots via update route!", indx, speed))
+      self:__UpdateRoute(-1, indx, speed)
+      
+    end
+    
+    -- Set current window to nil.
+    self.intowind=nil
+    
+    -- Remove window from queue.
+    self:RemoveTurnIntoWind(IntoWindData)
+
   end
-  
-  self.intowind=nil
 
 end
 
@@ -911,6 +984,11 @@ end
 function NAVYGROUP:onafterTurningStopped(From, Event, To)
   self.turning=false
   self.collisionwarning=false
+  
+  if self:IsSteamingIntoWind() then
+    self:TurnedIntoWind()
+  end
+  
 end
 
 --- On after "CollisionWarning" event.
@@ -1343,66 +1421,60 @@ function NAVYGROUP:_CheckTurnsIntoWind()
 
   -- Get current abs time.
   local time=timer.getAbsTime()
-  local Cnow=UTILS.SecondsToClock(time)
 
-  -- Debug output:
-  local text=string.format(self.lid.."Recovery time windows:")
+  if self.intowind then
 
-  -- Handle case with no recoveries.
-  if #self.Qintowind==0 then
-    text=text.." none!"
-  end
+    -- Check if time is over.
+    if time>=self.intowind.Tstop then    
+      self:TurnIntoWindOver(self.intowind)
+    end
+  
+  else
+  
+    -- Get next window.
+    local IntoWind=self:GetNextTurnIntoWind()
 
-  -- Sort windows wrt to start time.
-  table.sort(self.Qintowind, function(a, b) return a.Tstart<b.Tstart end)
-
-  -- Loop over all slots.
-  for _,_recovery in pairs(self.Qintowind) do
-    local recovery=_recovery --#NAVYGROUP.IntoWind
-
-    -- Get start/stop clock strings.
-    local Cstart=UTILS.SecondsToClock(recovery.Tstart)
-    local Cstop=UTILS.SecondsToClock(recovery.Tstop)
-
-    -- Debug text.
-    text=text..string.format("\n- Start=%s Stop=%s Open=%s Closed=%s", Cstart, Cstop, tostring(recovery.Open), tostring(recovery.Over))
-  end
-
-  -- Debug output.
-  self:T(self.lid..text)
-
-
-  -- Loop over all slots.
-  for _,_recovery in pairs(self.Qintowind) do
-    local recovery=_recovery --#NAVYGROUP.IntoWind
-
-    if time>=recovery.Tstart and time<recovery.Tstop and not recovery.Open then
-      self:TurnIntoWind(recovery)
-      break
+    -- Start turn into wind.
+    if IntoWind then
+      self:TurnIntoWind(IntoWind)
     end
     
   end
-
-  -- If into wind, check if over.
-  if self.intowind then  
-    if timer.getAbsTime()>=self.intowind.Tstop then    
-      self:TurnIntoWindOver()      
-    end  
-  end  
   
 end
 
---- Check queued turns into wind.
+--- Get the next turn into wind window, which is not yet running.
 -- @param #NAVYGROUP self
--- @return #NAVYGROUP.IntoWind Next into wind data.
-function NAVYGROUP:GetNextTurnIntoWind()
+-- @return #NAVYGROUP.IntoWind Next into wind data. Could be `nil` if there is not next window.
+function NAVYGROUP:GetTurnIntoWindNext()
 
-  -- Loop over all windows.
-  for _,_recovery in pairs(self.Qintowind) do
-    local recovery=_recovery --#NAVYGROUP.IntoWind
-    
+  if #self.Qintowind>0 then
+
+    -- Get current abs time.
+    local time=timer.getAbsTime()
+  
+    -- Sort windows wrt to start time.
+    table.sort(self.Qintowind, function(a, b) return a.Tstart<b.Tstart end)
+  
+    -- Loop over all slots.
+    for _,_recovery in pairs(self.Qintowind) do
+      local recovery=_recovery --#NAVYGROUP.IntoWind
+  
+      if time>=recovery.Tstart and time<recovery.Tstop and not (recovery.Open or recovery.Over) then
+        return recovery
+      end
+      
+    end    
   end
 
+  return nil
+end
+
+--- Get the turn into wind window, which is currently open. 
+-- @param #NAVYGROUP self
+-- @return #NAVYGROUP.IntoWind Current into wind data. Could be `nil` if there is no window currenly open.
+function NAVYGROUP:GetTurnIntoWindCurrent()
+  return self.intowind
 end
 
 --- Get wind direction and speed at current position.
