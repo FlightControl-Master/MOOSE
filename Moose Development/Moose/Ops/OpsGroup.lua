@@ -1,10 +1,12 @@
---- **Ops** - Generic group enhancement functions.
+--- **Ops** - Generic group enhancement.
 -- 
--- This class is **not** meant to be used itself by the end user.
+-- This class is **not** meant to be used itself by the end user. It contains common functionalities of derived classes for air, ground and sea.
 --     
 -- ===
 --
 -- ### Author: **funkyfranky**
+-- 
+-- ===
 -- @module Ops.OpsGroup
 -- @image OPS_OpsGroup.png
 
@@ -83,6 +85,8 @@
 -- @field #OPSGROUP.Callsign callsign Current callsign settings.
 -- @field #OPSGROUP.Callsign callsignDefault Default callsign settings.
 -- 
+-- @field #OPSGROUP.Spot spot Laser and IR spot.
+-- 
 -- @extends Core.Fsm#FSM
 
 --- *A small group of determined and like-minded people can change the course of history.* --- Mahatma Gandhi
@@ -135,6 +139,17 @@ OPSGROUP = {
   callsign           =    {},
   Ndestroyed         =     0,
 }
+
+
+--- OPS group element.
+-- @type OPSGROUP.Element
+-- @field #string name Name of the element, i.e. the unit.
+-- @field Wrapper.Unit#UNIT unit The UNIT object.
+-- @field #string status The element status.
+-- @field #string typename Type name.
+-- @field #number length Length of element in meters.
+-- @field #number width Width of element in meters.
+-- @field #number height Height of element in meters.
 
 --- Status of group element.
 -- @type OPSGROUP.ElementStatus
@@ -236,13 +251,22 @@ OPSGROUP.TaskType={
 -- @field #boolean EPLRS data link.
 -- @field #boolean Disperse Disperse under fire.
 
-
 --- Weapon range data.
 -- @type OPSGROUP.WeaponData
 -- @field #number BitType Type of weapon.
 -- @field #number RangeMin Min range in meters.
 -- @field #number RangeMax Max range in meters.
 -- @field #number ReloadTime Time to reload in seconds.
+
+--- Laser and IR spot data.
+-- @type OPSGROUP.Spot
+-- @field DCS#Spot Laser Laser spot.
+-- @field DCS#Spot IR Infra-red spot.
+-- @field #number Code Laser code.
+-- @field Wrapper.Positionable#POSITIONABLE Target The target.
+-- @field Core.Point#COORDINATE Coordinate where the spot is pointing.
+-- @field #boolean On If true, the laser is on.
+-- @field Core.Timer#TIMER timer Spot timer.
 
 --- Ammo data.
 -- @type OPSGROUP.Ammo
@@ -281,13 +305,14 @@ OPSGROUP.TaskType={
 
 --- NavyGroup version.
 -- @field #string version
-OPSGROUP.version="0.5.0"
+OPSGROUP.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
--- TODO: Implement common functions.
+-- TODO: Suppression of fire.
+-- TODO: Add pseudo function.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -319,6 +344,12 @@ function OPSGROUP:New(Group)
   
   -- Init inzone set.
   self.inzones=SET_ZONE:New()
+  
+  -- Laser.
+  self.spot={}
+  self.spot.On=false
+  self.spot.timer=TIMER:New(OPSGROUP._UpdateLaser, self)  
+  self:SetLaser()
   
   -- Init task counter.
   self.taskcurrent=0
@@ -355,6 +386,14 @@ function OPSGROUP:New(Group)
 
   self:AddTransition("*",             "EnterZone",        "*")           -- Group entered a certain zone.
   self:AddTransition("*",             "LeaveZone",        "*")           -- Group leaves a certain zone.
+
+  self:AddTransition("*",             "Rearm",            "Rearming")    -- Group is send to a coordinate and waits until ammo is refilled.
+  self:AddTransition("Rearming",      "Rearming",         "Rearming")    -- Group has arrived at the rearming coodinate and is waiting to be fully rearmed.
+  self:AddTransition("Rearming",      "Rearmed",          "Cruising")    -- Group was rearmed.
+
+  self:AddTransition("*",             "LaserOn",          "*")            -- Turn laser on.
+  self:AddTransition("*",             "LaserOff",         "*")            -- Turn laser off.
+  self:AddTransition("*",             "LaserCode",        "*")            -- Switch laser code.
 
   self:AddTransition("*",             "TaskExecute",      "*")           -- Group will execute a task.
   self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task. Not implemented yet!
@@ -457,6 +496,19 @@ function OPSGROUP:SetDetection(Switch)
   return self
 end
 
+--- Set detection on or off.
+-- If detection is on, detected targets of the group will be evaluated and FSM events triggered. 
+-- @param #OPSGROUP self
+-- @param #number Code Laser code. Default 1688.
+-- @param #boolean IROff If true, then dont switch on the additional IR pointer.
+-- @param #number UpdateTime Time interval in seconds the beam gets up for moving targets. Default every 0.5 sec.
+-- @return #OPSGROUP self
+function OPSGROUP:SetLaser(Code, IROff, UpdateTime)
+  self.spot.Code=Code or 1688
+  self.spot.IRoff=IROff
+  return self
+end
+
 --- Define a SET of zones that trigger and event if the group enters or leaves any of the zones.
 -- @param #OPSGROUP self
 -- @param Core.Set#SET_ZONE CheckZonesSet Set of zones.
@@ -502,9 +554,9 @@ function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
   return self
 end
 
---- 
+--- Get weapon data.
 -- @param #OPSGROUP self
--- @param #number BitType
+-- @param #number BitType Type of weapon.
 -- @return #OPSGROUP.WeaponData Weapon range data.
 function OPSGROUP:GetWeaponData(BitType)
 
@@ -518,13 +570,47 @@ function OPSGROUP:GetWeaponData(BitType)
 
 end
 
-
 --- Get set of detected units.
 -- @param #OPSGROUP self
 -- @return Core.Set#SET_UNIT Set of detected units.
 function OPSGROUP:GetDetectedUnits()
   return self.detectedunits
 end
+
+--- Get highest detected threat. Detection must be turned on. The threat level is a number between 0 and 10, where 0 is the lowest, e.g. unarmed units.
+-- @param #OPSGROUP self
+-- @param #number ThreatLevelMin Only consider threats with level greater or equal to this number. Default 1 (so unarmed units wont be considered).
+-- @param #number ThreatLevelMax Only consider threats with level smaller or queal to this number. Default 10.
+-- @return Wrapper.Unit#UNIT Highest threat unit detected by the group or `nil` if no threat is currently detected.
+-- @return #number Threat level.
+function OPSGROUP:GetThreat(ThreatLevelMin, ThreatLevelMax)
+
+  ThreatLevelMin=ThreatLevelMin or 1
+  ThreatLevelMax=ThreatLevelMax or 10
+
+  local threat=nil --Wrapper.Unit#UNIT
+  local level=0
+  for _,_unit in pairs(self.detectedunits:GetSet()) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    -- Get threatlevel of unit.
+    local threatlevel=unit:GetThreatLevel()
+    
+    -- Check if withing threasholds.
+    if threatlevel>=ThreatLevelMin and threatlevel<=ThreatLevelMax then
+    
+      if threatlevel<level then
+        level=threatlevel
+        threat=unit        
+      end
+    
+    end
+  
+  end
+  
+  return threat, level
+end
+
 
 --- Get MOOSE GROUP object.
 -- @param #OPSGROUP self
@@ -997,6 +1083,13 @@ end
 -- @return #boolean If true, this group has passed the final waypoint.
 function OPSGROUP:HasPassedFinalWaypoint()
   return self.passedfinalwp
+end
+
+--- Check if the group is currently rearming.
+-- @param #OPSGROUP self
+-- @return #boolean If true, group is rearming.
+function OPSGROUP:IsRearming()
+  return self:Is("Rearming")
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1736,7 +1829,6 @@ function OPSGROUP:CountRemainingTasks()
       Ntot=Ntot+1
     
       if task.type==OPSGROUP.TaskType.WAYPOINT then
-        --TODO: maybe check that waypoint was not already passed?
         Nwp=Nwp+1
       elseif task.type==OPSGROUP.TaskType.SCHEDULED then
         Nsched=Nsched+1
@@ -1833,7 +1925,7 @@ function OPSGROUP:GetTaskByID(id, status)
   return nil
 end
 
---- On after TaskExecute event.
+--- On after "TaskExecute" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -2868,6 +2960,173 @@ function OPSGROUP:onafterLeaveZone(From, Event, To, Zone)
   self.inzones:Remove(zonename, true)
 end
 
+--- On after "LaserOn" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Target Target Coordinate. Target can also be any POSITIONABLE from which we can obtain its coordinates.
+function OPSGROUP:onafterLaserOn(From, Event, To, Target)
+
+  -- Assume we got a coordinate.
+  local coord=Target
+  
+  -- Check if we have a POSITIONABLE.
+  if Target:IsInstanceOf("POSITIONABLE") then
+    local target=Target --Wrapper.Positionable#POSITIONABLE
+    
+    if target:IsAlive() then
+    
+      self.spot.Target=Target
+      coord=Target:GetCoordinate()
+    
+    else
+      self:E("WARNING: LASER target is not alive!")
+      return    
+    end
+    
+  end
+  
+  -- Set coordinate.
+  self.spot.Coordinate=coord
+    
+  -- Get the first element alive.
+  local element=self:GetElementAlive()
+  
+  if element then
+
+    -- Debug message.
+    self:T(self.lid.."Switching LASER on")
+
+
+    -- Start timer that calls the update twice per sec.
+    self.spot.timer:Start(nil, 0.5)
+  
+    -- Set element.
+    self.spot.element=element
+    
+    -- Get DCS unit.
+    local DCSunit=self.spot.element.unit:GetDCSObject()
+    
+    -- Vec3.
+    self.spot.vec3=coord:GetVec3()
+    
+    -- Height offset.
+    local offsetY=element.height
+    
+    -- Create laser and IR beams.
+    self.spot.Laser=Spot.createLaser(DCSunit, {x=0, y=offsetY, z=0}, self.spot.vec3, self.spot.Code or 1688)
+    self.spot.IR=Spot.createInfraRed(DCSunit, {x=0, y=offsetY, z=0}, self.spot.vec3)
+  
+    -- Laser is on.
+    self.spot.On=true
+    
+  end 
+end
+
+--- On after "LaserOff" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterLaserOff(From, Event, To)
+
+  -- Debug message.
+  self:T(self.lid.."Switching LASER off")
+
+  -- "Destroy" the laser beam.
+  self.spot.Laser:destroy()
+  self.spot.IR:destroy()
+  
+  -- Set to nil.
+  self.spot.Laser=nil
+  self.spot.IR=nil
+
+  -- Laser is off.
+  self.spot.On=false
+  
+end
+
+--- On after "LaserCode" event. Changes the LASER code.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number Code Laser code. Default is 1688.
+function OPSGROUP:onafterLaserCode(From, Event, To, Code)
+
+  -- Default is 1688.
+  self.spot.Code=Code or 1688
+
+  -- Debug message.
+  self:T(self.lid..string.format("Setting LASER Code to %d", self.spot.Code))
+  
+  if self.spot.On then
+  
+    -- Debug info.
+    self:T(self.lid..string.format("Updating LASER Code to %d", self.spot.Code))
+    
+    -- Set LASER code.
+    self.spot.Laser:setCode(self.spot.Code)
+  end
+  
+end
+
+--- Update laser point.
+-- @param #OPSGROUP self
+function OPSGROUP:_UpdateLaser()
+
+  -- Firstly, check if laser is on. 
+  if self.spot.On then
+  
+    ---
+    -- LASER is ON
+    --´-
+  
+    -- Check if we have a POSITIONABLE to lase.
+    if self.spot.Target then
+    
+      ---
+      -- Lasing a possibly moving target
+      ---
+    
+      if self.spot.Target:IsAlive() then
+
+        -- Get current target position.  
+        local vec3=self.spot.Target:GetVec3()
+        
+        -- Calculate distance 
+        local dist=UTILS.VecDist3D(vec3, self.spot.vec3)
+        
+        -- Update laser if target moved more than one meter.
+        if dist>1 then
+       
+          -- Store current position.
+          self.spot.vec3=vec3
+          
+          -- Update beam coordinate.
+          self.spot.Coordinate:UpdateFromVec3(vec3)
+        
+          -- Set the new laser target point.
+          self.spot.Laser:setPoint(vec3)
+          self.spot.IR:setPoint(vec3)
+          
+        end
+        
+      else
+      
+        -- Switch laser off.
+        self:T(self.lid.."Target is not alive any more ==> switching LASER off")
+        self:LaserOff()
+      
+      end
+      
+    end
+  
+  end
+
+end
+
 
 --- On after "ElementDestroyed" event.
 -- @param #OPSGROUP self
@@ -2902,9 +3161,22 @@ end
 -- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onafterElementDead(From, Event, To, Element)
   self:T(self.lid..string.format("Element dead %s", Element.name))
-
+  
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
+  
+  -- Check if element was lasing and if so, switch to another unit alive to lase.
+  if self.spot.On and self.spot.element.name==Element.name then
+  
+    -- Switch laser off.
+    self:LaserOff()
+    
+    -- If there is another element alive, switch laser on again. 
+    if self:GetNelements()>0 then
+      self:__LaserOn(-1, self.spot.Target or self.spot.Coordinate)
+    end
+  end
+    
 end
 
 --- On after "Dead" event.
@@ -3172,10 +3444,19 @@ end
 -- @return #boolean If true, ammo is full.
 function OPSGROUP:_CheckAmmoFull()
 
-  for _,_ammo in pairs(self.ammo) do
+  -- Get current ammo.
+  local ammo=self:GetAmmoTot()
+
+  for key,value in pairs(self.ammo) do
+  
+    if ammo[key]<value then
+      -- At least one type of ammunition is less than when spawned.
+      return false
+    end
   
   end
   
+  return true
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3469,16 +3750,25 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
     
       -- Remove detour waypoint.
       opsgroup:RemoveWaypointByID(uid)
-
-      -- Trigger event.
-      opsgroup:DetourReached()
       
-      if waypoint.detour==0 then
-        opsgroup:FullStop()
-      elseif waypoint.detour==1 then
-        opsgroup:Cruise()
+      if opsgroup:IsRearming() then
+      
+        -- Trigger Rearming event.
+        opsgroup:Rearming()
+        
       else
-        opsgroup:E("ERROR: waypoint.detour should be 0 or 1")
+      
+        -- Trigger DetourReached event.
+        opsgroup:DetourReached()
+        
+        if waypoint.detour==0 then
+          opsgroup:FullStop()
+        elseif waypoint.detour==1 then
+          opsgroup:Cruise()
+        else
+          opsgroup:E("ERROR: waypoint.detour should be 0 or 1")
+        end
+        
       end
       
     else
@@ -4510,6 +4800,23 @@ function OPSGROUP:GetElementByName(unitname)
   return nil
 end
 
+--- Get the first element of a group, which is alive.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP.Element The element or `#nil` if no element is alive any more.
+function OPSGROUP:GetElementAlive()
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    if element.status~=OPSGROUP.ElementStatus.DEAD then
+      if element.unit and element.unit:IsAlive() then
+        return element      
+      end
+    end
+  end
+
+  return nil
+end
+
 --- Get number of elements alive.
 -- @param #OPSGROUP self
 -- @param #string status (Optional) Only count number, which are in a special status.
@@ -4811,6 +5118,26 @@ function OPSGROUP:_CheckStuck()
     
   end
   
+end
+
+--- Get coordinate from an object.
+-- @param #OPSGROUP self
+-- @param Wrapper.Object#OBJECT Object The object.
+-- @return Core.Point#COORDINATE The coordinate of the object.
+function OPSGROUP:_CoordinateFromObject(Object)
+  
+  if Object:IsInstanceOf("COORDINATE") then
+    return Object
+  else
+    if Object:IsInstanceOf("POSITIONABLE") or Object:IsInstanceOf("ZONE_BASE") then
+      self:T(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE or ZONE. Trying to get coordinate")
+      return Object:GetCoordinate()
+    else
+      self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE or ZONE!")
+    end
+  end  
+
+  return nil
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

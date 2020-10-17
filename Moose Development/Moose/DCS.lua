@@ -736,7 +736,66 @@ do -- Airbase
 
 end -- Airbase
 
+do -- Spot
 
+  --- [DCS Class Spot](https://wiki.hoggitworld.com/view/DCS_Class_Spot)
+  -- Represents a spot from laser or IR-pointer.
+  -- @type Spot 
+  -- @field #Spot.Category Category enum that stores spot categories. 
+  
+  --- Enum that stores spot categories. 
+  -- @type Spot.Category
+  -- @field #string INFRA_RED
+  -- @field #string LASER
+
+  
+  --- Creates a laser ray emanating from the given object to a point in 3d space.
+  -- @function [parent=#Spot] createLaser
+  -- @param DCS#Object Source The source object of the laser.
+  -- @param DCS#Vec3 LocalRef An optional 3D offset for the source.
+  -- @param DCS#Vec3 Vec3 Target coordinate where the ray is pointing at.
+  -- @param #number LaserCode Any 4 digit number between 1111 and 1788.
+  -- @return #Spot
+
+  --- Creates an infrared ray emanating from the given object to a point in 3d space. Can be seen with night vision goggles.
+  -- @function [parent=#Spot] createInfraRed
+  -- @param DCS#Object Source Source position of the IR ray.
+  -- @param DCS#Vec3 LocalRef An optional 3D offset for the source.
+  -- @param DCS#Vec3 Vec3 Target coordinate where the ray is pointing at.
+  -- @return #Spot
+
+  --- Returns a vec3 table of the x, y, and z coordinates for the position of the given object in 3D space. Coordinates are dependent on the position of the maps origin.
+  -- @function [parent=#Spot] getPoint
+  -- @param #Spot self
+  -- @return DCS#Vec3 Point in 3D, where the beam is pointing at.
+  
+  --- Sets the destination point from which the source of the spot is drawn toward.
+  -- @function [parent=#Spot] setPoint
+  -- @param #Spot self
+  -- @param DCS#Vec3 Vec3 Point in 3D, where the beam is pointing at.
+
+  --- Returns the number that is used to define the laser code for which laser designation can track.
+  -- @function [parent=#Spot] getCode
+  -- @param #Spot self
+  -- @return #number Code The laser code used.
+
+  --- Sets the number that is used to define the laser code for which laser designation can track.
+  -- @function [parent=#Spot] setCode
+  -- @param #Spot self
+  -- @param #number Code The laser code. Default value is 1688.
+  
+  --- Destroys the spot.
+  -- @function [parent=#Spot] destroy
+  -- @param #Spot self
+
+  --- Gets the category of the spot (laser or IR).
+  -- @function [parent=#Spot] getCategory
+  -- @param #Spot self
+  -- @return #string Category.
+
+  Spot = {} --#Spot
+
+end -- Spot
 
 do -- Controller
   --- Controller is an object that performs A.I.-routines. Other words controller is an instance of A.I.. Controller stores current main task, active enroute tasks and behavior options. Controller performs commands. Please, read DCS A-10C GUI Manual EN.pdf chapter "Task Planning for Unit Groups", page 91 to understand A.I. system of DCS:A-10C. 

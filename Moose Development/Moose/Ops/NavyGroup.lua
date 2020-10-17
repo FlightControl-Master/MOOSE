@@ -1,25 +1,33 @@
 --- **Ops** - Enhanced Naval Group.
 -- 
--- **Main Features:**
+-- ## Main Features:
 --
---    * Dynamically add and remove waypoints.
---    * Let the group steam into the wind.
---    * Command a full stop.
---    * Automatic pathfinding, e.g. around islands.
---    * Collision warning, if group is heading towards a land mass.
---    * Let a submarine dive and surface.
---    * Sophisticated task queueing system.
---    * Compatible with AUFTRAG class.
---    * Convenient checks when the group enters or leaves a zone.
---    * Many additional events that the mission designer can hook into.
+--    * Let the group steam into the wind
+--    * Command a full stop
+--    * Patrol waypoints *ad infinitum*
+--    * Collision warning, if group is heading towards a land mass
+--    * Automatic pathfinding, e.g. around islands
+--    * Let a submarine dive and surface
+--    * Manage TACAN and ICLS beacons
+--    * Dynamically add and remove waypoints
+--    * Sophisticated task queueing system (know when DCS tasks start and end)
+--    * Convenient checks when the group enters or leaves a zone
+--    * Detection events for new, known and lost units
+--    * Simple LASER and IR-pointer setup
+--    * Compatible with AUFTRAG class
+--    * Many additional events that the mission designer can hook into
 -- 
--- **Example Missions:**
+-- ===
+-- 
+-- ## Example Missions:
 -- 
 -- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Navygroup)
 -- 
 -- ===
 --
 -- ### Author: **funkyfranky**
+-- 
+-- ===
 -- @module Ops.NavyGroup
 -- @image OPS_NavyGroup.png
 
@@ -655,7 +663,11 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
   end
   
   -- Update route.
-  self:Cruise()
+  if #self.waypoints>1 then  
+    self:Cruise()
+  else
+    self:FullStop()
+  end
   
 end
 
@@ -1124,10 +1136,10 @@ function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Up
   -- Check if a coordinate was given or at least a positionable.
   if not Coordinate:IsInstanceOf("COORDINATE") then
     if Coordinate:IsInstanceOf("POSITIONABLE") or Coordinate:IsInstanceOf("ZONE_BASE") then
-      self:T(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE. Trying to get coordinate")
+      self:T(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE or ZONE. Trying to get coordinate")
       Coordinate=Coordinate:GetCoordinate()
     else
-      self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE!")
+      self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE or ZONE!")
       return nil
     end
   end

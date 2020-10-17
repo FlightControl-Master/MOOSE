@@ -1,16 +1,30 @@
 --- **Ops** - Enhanced Airborne Group.
 --
--- **Main Features:**
+-- ## Main Features:
 --
---    * Monitor flight status of elements and/or the entire group.
---    * Monitor fuel and ammo status.
---    * Conveniently set radio freqencies, TACAN, ROE etc.
---    * Sophisticated task queueing system.
---    * Many additional events for each element and the whole group.
+--    * Monitor flight status of elements and/or the entire group
+--    * Monitor fuel and ammo status
+--    * Conveniently set radio freqencies, TACAN, ROE etc
+--    * Order helos to land at specifc coordinates
+--    * Dynamically add and remove waypoints
+--    * Sophisticated task queueing system (know when DCS tasks start and end)
+--    * Convenient checks when the group enters or leaves a zone
+--    * Detection events for new, known and lost units
+--    * Simple LASER and IR-pointer setup
+--    * Compatible with AUFTRAG class
+--    * Many additional events that the mission designer can hook into
 --
 -- ===
 --
+-- ## Example Missions:
+-- 
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Flightgroup).
+--    
+-- ===
+--
 -- ### Author: **funkyfranky**
+-- 
+-- ===
 -- @module Ops.FlightGroup
 -- @image OPS_FlightGroup.png
 
@@ -186,6 +200,7 @@ FLIGHTGROUP.version="0.6.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: VTOL aircraft.
 -- TODO: Use new UnitLost event instead of crash/dead.
 -- TODO: Options EPLRS, Afterburner restrict etc.
 -- DONE: Add TACAN beacon.
@@ -2729,6 +2744,7 @@ function FLIGHTGROUP:AddElementByName(unitname)
       element.ai=true
     end
 
+    -- Debug text.
     local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f (%d), category=%d, categoryname=%s, callsign=%s, ai=%s",
     element.name, element.status, element.skill, element.modex, element.fuelmass, element.fuelrel*100, element.category, element.categoryname, element.callsign, tostring(element.ai))
     self:T(self.lid..text)
