@@ -87,6 +87,8 @@
 -- 
 -- @field #OPSGROUP.Spot spot Laser and IR spot.
 -- 
+-- @field #OPSGROUP.Ammo ammo Initial ammuont of ammo.
+-- 
 -- @extends Core.Fsm#FSM
 
 --- *A small group of determined and like-minded people can change the course of history.* --- Mahatma Gandhi
@@ -312,6 +314,8 @@ OPSGROUP.version="0.6.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
 -- TODO: Suppression of fire.
+-- TODO: AI on/off.
+-- TODO: Invisible/immortal.
 -- TODO: Add pseudo function.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -386,10 +390,6 @@ function OPSGROUP:New(Group)
 
   self:AddTransition("*",             "EnterZone",        "*")           -- Group entered a certain zone.
   self:AddTransition("*",             "LeaveZone",        "*")           -- Group leaves a certain zone.
-
-  self:AddTransition("*",             "Rearm",            "Rearming")    -- Group is send to a coordinate and waits until ammo is refilled.
-  self:AddTransition("Rearming",      "Rearming",         "Rearming")    -- Group has arrived at the rearming coodinate and is waiting to be fully rearmed.
-  self:AddTransition("Rearming",      "Rearmed",          "Cruising")    -- Group was rearmed.
 
   self:AddTransition("*",             "LaserOn",          "*")            -- Turn laser on.
   self:AddTransition("*",             "LaserOff",         "*")            -- Turn laser off.
@@ -577,6 +577,13 @@ function OPSGROUP:GetDetectedUnits()
   return self.detectedunits
 end
 
+--- Get inital amount of ammunition.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP.Ammo Initial ammo table.
+function OPSGROUP:GetAmmo0()
+  return self.ammo
+end
+
 --- Get highest detected threat. Detection must be turned on. The threat level is a number between 0 and 10, where 0 is the lowest, e.g. unarmed units.
 -- @param #OPSGROUP self
 -- @param #number ThreatLevelMin Only consider threats with level greater or equal to this number. Default 1 (so unarmed units wont be considered).
@@ -610,7 +617,6 @@ function OPSGROUP:GetThreat(ThreatLevelMin, ThreatLevelMax)
   
   return threat, level
 end
-
 
 --- Get MOOSE GROUP object.
 -- @param #OPSGROUP self
@@ -1089,7 +1095,8 @@ end
 -- @param #OPSGROUP self
 -- @return #boolean If true, group is rearming.
 function OPSGROUP:IsRearming()
-  return self:Is("Rearming")
+  local rearming=self:Is("Rearming") or self:Is("Rearm")
+  return rearming
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2814,7 +2821,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   
 end
 
---- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
+--- Set tasks at this waypoint
 -- @param #OPSGROUP self
 -- @param #OPSGROUP.Waypoint Waypoint The waypoint.
 -- @return #number Number of tasks.
@@ -3362,6 +3369,8 @@ function OPSGROUP:_CheckGroupDone(delay)
     
       -- Get current waypoint.
       local waypoint=self:GetWaypoint(self.currentwp)
+      
+      --env.info("FF CheckGroupDone")
 
       if waypoint then
       
@@ -3439,6 +3448,56 @@ function OPSGROUP:_CheckGroupDone(delay)
   
 end
 
+--- Check if group got stuck.
+-- @param #OPSGROUP self
+function OPSGROUP:_CheckStuck()
+
+  -- Holding means we are not stuck.
+  if self:IsHolding() or self:Is("Rearming") then
+    return
+  end
+  
+  -- Current time.
+  local Tnow=timer.getTime()
+  
+  -- Expected speed in m/s.
+  local ExpectedSpeed=self:GetExpectedSpeed()
+  
+  -- Current speed in m/s.
+  local speed=self:GetVelocity()
+  
+  -- Check speed.
+  if speed<0.5 then
+  
+    if ExpectedSpeed>0 and not self.stuckTimestamp then
+      self:T2(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected", speed, ExpectedSpeed))
+      self.stuckTimestamp=Tnow
+      self.stuckVec3=self:GetVec3()
+    end
+    
+  else
+    -- Moving (again).
+    self.stuckTimestamp=nil
+  end
+
+  -- Somehow we are not moving...
+  if self.stuckTimestamp then
+  
+    -- Time we are holding.
+    local holdtime=Tnow-self.stuckTimestamp
+    
+    if holdtime>=10*60 then
+    
+      self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
+      
+      --TODO: Stuck event!
+          
+    end
+    
+  end
+  
+end
+
 --- Check ammo is full.
 -- @param #OPSGROUP self
 -- @return #boolean If true, ammo is full.
@@ -3457,6 +3516,72 @@ function OPSGROUP:_CheckAmmoFull()
   end
   
   return true
+end
+
+--- Check ammo status.
+-- @param #OPSGROUP self
+function OPSGROUP:_CheckAmmoStatus()
+
+  -- First check if there was ammo initially.
+  if self.ammo.Total>0 then
+  
+    -- Get current ammo.
+    local ammo=self:GetAmmoTot()
+    
+    -- Check if rearming is completed.
+    if self:IsRearming() then
+      if ammo.Total==self.ammo.Total then
+        self:Rearmed()
+      end
+    end    
+    
+    -- Total.
+    if self.outofAmmo and ammo.Total>0 then
+      self.outofAmmo=false
+    end
+    if ammo.Total==0 and not self.outofAmmo then
+      self.outofAmmo=true
+      self:OutOfAmmo()
+    end
+
+    -- Guns.
+    if self.outofGuns and ammo.Guns>0 then
+      self.outoffGuns=false
+    end
+    if ammo.Guns==0 and self.ammo.Guns>0 and not self.outofGuns then
+      self.outofGuns=true
+      self:OutOfGuns()
+    end
+
+    -- Rockets.
+    if self.outofRockets and ammo.Rockets>0 then
+      self.outoffRockets=false
+    end
+    if ammo.Rockets==0 and self.ammo.Rockets>0 and not self.outofRockets then
+      self.outofRockets=true
+      self:OutOfRockets()
+    end
+
+    -- Bombs.
+    if self.outofBombs and ammo.Bombs>0 then
+      self.outoffBombs=false
+    end
+    if ammo.Bombs==0 and self.ammo.Bombs>0 and not self.outofBombs then
+      self.outofBombs=true
+      self:OutOfBombs()
+    end
+
+    -- Missiles.
+    if self.outofMissiles and ammo.Missiles>0 then
+      self.outoffMissiles=false
+    end
+    if ammo.Missiles==0 and self.ammo.Missiles>0 and not self.outofMissiles then
+      self.outofMissiles=true
+      self:OutOfMissiles()
+    end        
+  
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5068,56 +5193,6 @@ function OPSGROUP:_MissileCategoryName(categorynumber)
     cat="other"
   end
   return cat
-end
-
---- Check if group got stuck.
--- @param #OPSGROUP self
-function OPSGROUP:_CheckStuck()
-
-  -- Holding means we are not stuck.
-  if self:IsHolding() then
-    return
-  end
-  
-  -- Current time.
-  local Tnow=timer.getTime()
-  
-  -- Expected speed in m/s.
-  local ExpectedSpeed=self:GetExpectedSpeed()
-  
-  -- Current speed in m/s.
-  local speed=self:GetVelocity()
-  
-  -- Check speed.
-  if speed<0.5 then
-  
-    if ExpectedSpeed>0 and not self.stuckTimestamp then
-      self:T2(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected", speed, ExpectedSpeed))
-      self.stuckTimestamp=Tnow
-      self.stuckVec3=self:GetVec3()
-    end
-    
-  else
-    -- Moving (again).
-    self.stuckTimestamp=nil
-  end
-
-  -- Somehow we are not moving...
-  if self.stuckTimestamp then
-  
-    -- Time we are holding.
-    local holdtime=Tnow-self.stuckTimestamp
-    
-    if holdtime>=10*60 then
-    
-      self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
-      
-      --TODO: Stuck event!
-          
-    end
-    
-  end
-  
 end
 
 --- Get coordinate from an object.

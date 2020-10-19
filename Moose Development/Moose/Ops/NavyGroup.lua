@@ -883,7 +883,7 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
       ---
     
       -- Detour to where we left the route.
-      self:I(self.lid.."FF Turn Into Wind Over ==> Uturn!")
+      self:T(self.lid.."FF Turn Into Wind Over ==> Uturn!")
       self:Detour(self.intowind.Coordinate, self:GetSpeedCruise(), 0, true)
       
     else
@@ -897,7 +897,7 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
       local speed=self:GetWaypointSpeed(indx)
       
       -- Update route.
-      self:I(self.lid..string.format("FF Turn Into Wind Over ==> Next WP Index=%d at %.1f knots via update route!", indx, speed))
+      self:T(self.lid..string.format("FF Turn Into Wind Over ==> Next WP Index=%d at %.1f knots via update route!", indx, speed))
       self:__UpdateRoute(-1, indx, speed)
       
     end
@@ -1238,50 +1238,63 @@ function NAVYGROUP:_InitGroup()
   for _,_unit in pairs(units) do
     local unit=_unit --Wrapper.Unit#UNIT
     
+    -- Get unit template.
+    local unittemplate=unit:GetTemplate()    
+    
     local element={} --#NAVYGROUP.Element
     element.name=unit:GetName()
-    element.typename=unit:GetTypeName()
-    element.status=OPSGROUP.ElementStatus.INUTERO
     element.unit=unit
+    element.status=OPSGROUP.ElementStatus.INUTERO
+    element.typename=unit:GetTypeName()
+    element.skill=unittemplate.skill or "Unknown"
+    element.ai=true
+    element.category=element.unit:GetUnitCategory()
+    element.categoryname=element.unit:GetCategoryName()
+    element.size, element.length, element.height, element.width=unit:GetObjectSize()
+    element.ammo0=self:GetAmmoUnit(unit, false)    
+
+    -- Debug text.
+    if self.verbose>=2 then
+      local text=string.format("Adding element %s: status=%s, skill=%s, category=%s (%d), size: %.1f (L=%.1f H=%.1f W=%.1f)",
+      element.name, element.status, element.skill, element.categoryname, element.category, element.size, element.length, element.height, element.width)
+      self:I(self.lid..text)
+    end
+
+    -- Add element to table.    
     table.insert(self.elements, element)
+
+    -- Get Descriptors.
+    self.descriptors=self.descriptors or unit:GetDesc()
     
-    self:GetAmmoUnit(unit, false)
+    -- Set type name.
+    self.actype=self.actype or unit:GetTypeName()
     
-    if unit:IsAlive() then      
+    if unit:IsAlive() then
+      -- Trigger spawned event. 
       self:ElementSpawned(element)
     end
     
   end
 
-  -- Get first unit. This is used to extract other parameters.
-  local unit=self.group:GetUnit(1)
-  
-  if unit then
     
-    self.descriptors=unit:GetDesc()
-    
-    self.actype=unit:GetTypeName()
-    
-    -- Debug info.
-    if self.verbose>=1 then
-      local text=string.format("Initialized Navy Group %s:\n", self.groupname)
-      text=text..string.format("Unit type     = %s\n", self.actype)
-      text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
-      text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
-      text=text..string.format("Elements     = %d\n", #self.elements)
-      text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-      text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
-      text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d/T=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles, self.ammo.Torpedos)
-      text=text..string.format("FSM state    = %s\n", self:GetState())
-      text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
-      text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
-      self:I(self.lid..text)
-    end
-    
-    -- Init done.
-    self.groupinitialized=true
-    
+  -- Debug info.
+  if self.verbose>=1 then
+    local text=string.format("Initialized Navy Group %s:\n", self.groupname)
+    text=text..string.format("Unit type     = %s\n", self.actype)
+    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
+    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
+    text=text..string.format("Elements     = %d\n", #self.elements)
+    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
+    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d/T=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles, self.ammo.Torpedos)
+    text=text..string.format("FSM state    = %s\n", self:GetState())
+    text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
+    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
+    self:I(self.lid..text)
   end
+  
+  -- Init done.
+  self.groupinitialized=true
   
   return self
 end
@@ -1444,7 +1457,7 @@ function NAVYGROUP:_CheckTurnsIntoWind()
   else
   
     -- Get next window.
-    local IntoWind=self:GetNextTurnIntoWind()
+    local IntoWind=self:GetTurnIntoWindNext()
 
     -- Start turn into wind.
     if IntoWind then

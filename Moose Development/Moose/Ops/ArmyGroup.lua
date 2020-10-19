@@ -101,6 +101,10 @@ function ARMYGROUP:New(Group)
     
   self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
   self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
+
+  self:AddTransition("*",             "Rearm",            "Rearm")       -- Group is send to a coordinate and waits until ammo is refilled.
+  self:AddTransition("Rearm",         "Rearming",         "Rearming")    -- Group has arrived at the rearming coodinate and is waiting to be fully rearmed.
+  self:AddTransition("Rearming",      "Rearmed",          "Cruising")    -- Group was rearmed.
   
   ------------------------
   --- Pseudo Functions ---
@@ -294,23 +298,14 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       self:_CheckDetectedUnits()
     end
     
-    if self:IsRearming() then
-    
-      local rearmed=self:_CheckAmmoFull()
-      
-      if rearmed then
-        self:Rearmed()
-      end
-    
-    else
+    -- Check ammo status.
+    self:_CheckAmmoStatus()
 
-      -- Update position etc.    
-      self:_UpdatePosition()
+    -- Update position etc.    
+    self:_UpdatePosition()
       
-      -- Check if group got stuck.
-      self:_CheckStuck()
-    
-    end
+    -- Check if group got stuck.
+    self:_CheckStuck()
     
     if self.verbose>=1 then
   
@@ -325,8 +320,8 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       local formation=self.option.Formation or "unknown"
     
       -- Info text.
-      local text=string.format("%s: Wp=%d/%d-->%d Speed=%.1f (%d) Heading=%03d ROE=%d Alarm=%d Formation=%s Tasks=%d Missions=%d", 
-      fsmstate, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), speed, speedEx, self.heading, roe, alarm, formation, nTaskTot, nMissions)
+      local text=string.format("%s [ROE-AS=%d-%d T/M=%d/%d]: Wp=%d/%d-->%d (final %s), Speed=%.1f (%d), Heading=%03d", 
+      fsmstate, roe, alarm, nTaskTot, nMissions, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), tostring(self.passedfinalwp), speed, speedEx, self.heading)
       self:I(self.lid..text)
       
     end
@@ -398,6 +393,11 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
       self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, true)
     end
     
+    -- Formation
+    if not self.option.Formation then
+      self.option.Formation=self.optionDefault.Formation
+    end
+    
   end
   
   -- Update route.
@@ -418,6 +418,10 @@ end
 -- @param #number Speed Speed in knots. Default cruise speed.
 -- @param #number Formation Formation of the group.
 function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
+
+  -- Debug info.
+  local text=string.format("Update route n=%s, Speed=%s, Formation=%s", tostring(n), tostring(Speed), tostring(Formation))
+  self:T(self.lid..text)
 
   -- Update route from this waypoint number onwards.
   n=n or self:GetWaypointIndexNext(self.adinfinitum)
@@ -495,9 +499,6 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
       local wp=_wp
       local text=string.format("WP #%d UID=%d type=%s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.uid and wp.uid or 0, wp.type, wp.speed, wp.alt, wp.action)
       self:T(text)
-      if false and wp.coordinate then
-        wp.coordinate:MarkToAll(text)
-      end
     end
   end
 
@@ -521,6 +522,43 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
   
   end
 
+end
+
+--- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number UID The goto waypoint unique ID.
+-- @param #number Speed (Optional) Speed to waypoint in knots.
+-- @param #number Formation (Optional) Formation to waypoint.
+function ARMYGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed, Formation)
+
+  local n=self:GetWaypointIndex(UID)
+  
+  --env.info(string.format("FF AG Goto waypoint UID=%s Index=%s, Speed=%s, Formation=%s", tostring(UID), tostring(n), tostring(Speed), tostring(Formation)))
+  
+  if n then
+  
+    -- TODO: switch to re-enable waypoint tasks.
+    if false then
+      local tasks=self:GetTasksWaypoint(n)
+      
+      for _,_task in pairs(tasks) do
+        local task=_task --#OPSGROUP.Task
+        task.status=OPSGROUP.TaskStatus.SCHEDULED
+      end
+      
+    end
+    
+    -- Speed to waypoint.
+    Speed=Speed or self:GetSpeedToWaypoint(n)
+        
+    -- Update the route.
+    self:UpdateRoute(n, Speed, Formation)
+    
+  end
+  
 end
 
 --- On after "Detour" event.
@@ -792,7 +830,7 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   end
   
   -- Debug info.
-  self:I(self.lid..string.format("Adding waypoint UID=%d (index=%d), Speed=%.1f knots, Dist2Road=%d m, Action=%s", waypoint.uid, wpnumber, Speed, waypoint.roaddist, waypoint.action))
+  self:T(self.lid..string.format("Adding waypoint UID=%d (index=%d), Speed=%.1f knots, Dist2Road=%d m, Action=%s", waypoint.uid, wpnumber, Speed, waypoint.roaddist, waypoint.action))
   
   -- Update route.
   if Updateroute==nil or Updateroute==true then
@@ -876,9 +914,11 @@ function ARMYGROUP:_InitGroup()
     element.ammo0=self:GetAmmoUnit(unit, false)
 
     -- Debug text.
-    local text=string.format("Adding element %s: status=%s, skill=%s, category=%s (%d), size: %.1f (L=%.1f H=%.1f W=%.1f)",
-    element.name, element.status, element.skill, element.categoryname, element.category, element.size, element.length, element.height, element.width)
-    self:I(self.lid..text)
+    if self.verbose>=2 then
+      local text=string.format("Adding element %s: status=%s, skill=%s, category=%s (%d), size: %.1f (L=%.1f H=%.1f W=%.1f)",
+      element.name, element.status, element.skill, element.categoryname, element.category, element.size, element.length, element.height, element.width)
+      self:I(self.lid..text)
+    end
   
     -- Add element to table.
     table.insert(self.elements, element)
