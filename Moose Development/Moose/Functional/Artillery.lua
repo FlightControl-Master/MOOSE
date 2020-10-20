@@ -693,7 +693,7 @@ ARTY.db={
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.1.7"
+ARTY.version="1.1.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2770,7 +2770,7 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
-  self:I(self.lid..string.format("Status %s, Ammo total=%d: shells=%d [smoke=%d, illu=%d, nukes=%d*%.3f kT], rockets=%d, missiles=%d", fsmstate, ntot, nshells, self.Nsmoke, self.Nillu, self.Nukes, self.nukewarhead/1000000, nrockets, nmissiles))
+  self:T(self.lid..string.format("Status %s, Ammo total=%d: shells=%d [smoke=%d, illu=%d, nukes=%d*%.3f kT], rockets=%d, missiles=%d", fsmstate, ntot, nshells, self.Nsmoke, self.Nillu, self.Nukes, self.nukewarhead/1000000, nrockets, nmissiles))
 
   if self.Controllable and self.Controllable:IsAlive() then
 
@@ -4814,7 +4814,8 @@ function ARTY:_CheckShootingStarted()
     end
 
     -- Check if we waited long enough and no shot was fired.
-    if dt > self.WaitForShotTime and self.Nshots==0 then
+    --if dt > self.WaitForShotTime and self.Nshots==0 then
+    if dt > self.WaitForShotTime and (self.Nshots==0 or self.currentTarget.nshells >= self.Nshots) then  --https://github.com/FlightControl-Master/MOOSE/issues/1356
 
       -- Debug info.
       self:T(self.lid..string.format("%s, no shot event after %d seconds. Removing current target %s from list.", self.groupname, self.WaitForShotTime, name))
