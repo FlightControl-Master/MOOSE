@@ -2202,27 +2202,52 @@ function GROUP:IsAirborne(AllUnits)
   
   if units then
   
-    for _,_unit in pairs(units) do
-      local unit=_unit --Wrapper.Unit#UNIT
-      
-      if unit then
-      
-        -- Unit in air or not.
-        local inair=unit:InAir()
+    if AllUnits then
+    
+      --- We want to know if ALL units are airborne.
+
+      for _,_unit in pairs(units) do
+        local unit=_unit --Wrapper.Unit#UNIT
         
-        -- Unit is not in air and we wanted to know whether ALL units are ==> return false
-        if inair==false and AllUnits==true then
-          return false
-        end
+        if unit then
         
-        -- At least one unit is in are and we did not care which one.
-        if inair==true and not AllUnits then
-          return true
+          -- Unit in air or not.
+          local inair=unit:InAir()
+          
+          -- At least one unit is not in air.
+          if not inair then
+            return false
+          end
         end
         
       end
-      -- At least one unit is in the air.
-      return true  
+      
+      -- All units are in air.
+      return true
+    
+    else
+    
+      --- We want to know if ANY unit is airborne.
+
+      for _,_unit in pairs(units) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        
+        if unit then
+        
+          -- Unit in air or not.
+          local inair=unit:InAir()
+          
+          if inair then
+            -- At least one unit is in air.
+            return true
+          end
+          
+        end
+        
+        -- No unit is in air.
+        return false
+        
+      end
     end
   end
   
