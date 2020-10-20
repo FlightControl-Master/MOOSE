@@ -411,7 +411,7 @@ function FLIGHTGROUP:SetFlightControl(flightcontrol)
   table.insert(flightcontrol.flights, self)
 
   -- Update flight's F10 menu.
-  if self.ai==false then
+  if self.isAI==false then
     self:_UpdateMenu(0.5)
   end
 
@@ -1055,7 +1055,7 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
         -- TODO: could be that this element is part of a human flight group.
         -- Problem: when player starts hot, the AI does too and starts to taxi immidiately :(
         --          when player starts cold, ?
-        if self.ai then
+        if self.isAI then
           self:ElementEngineOn(element)
         else
           if element.ai then
@@ -1462,7 +1462,7 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
   -- Update position.  
   self:_UpdatePosition()
 
-  if self.ai then
+  if self.isAI then
 
     -- Set ROE.
     self:SwitchROE(self.option.ROE)
@@ -1537,7 +1537,7 @@ function FLIGHTGROUP:onafterParking(From, Event, To)
       self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.PARKING)
 
       -- Update player menu.
-      if not self.ai then
+      if not self.isAI then
         self:_UpdateMenu(0.5)
       end
 
@@ -1562,7 +1562,7 @@ function FLIGHTGROUP:onafterTaxiing(From, Event, To)
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
 
     -- Add AI flight to takeoff queue.
-    if self.ai then
+    if self.isAI then
       -- AI flights go directly to TAKEOFF as we don't know when they finished taxiing.
       self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAKEOFF)
     else
@@ -1601,7 +1601,7 @@ end
 function FLIGHTGROUP:onafterAirborne(From, Event, To)
   self:T(self.lid..string.format("Flight airborne"))
 
-  if self.ai then
+  if self.isAI then
     self:_CheckGroupDone(1)
   else
     self:_UpdateMenu()
@@ -1752,7 +1752,7 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
   --end
 
   -- Only AI flights.
-  if not self.ai then
+  if not self.isAI then
     allowed=false
   end
 
@@ -1855,7 +1855,7 @@ end
 -- @param #number delay Delay in seconds.
 function FLIGHTGROUP:_CheckGroupDone(delay)
 
-  if self:IsAlive() and self.ai then
+  if self:IsAlive() and self.isAI then
 
     if delay and delay>0 then
       -- Delayed call.
@@ -2114,7 +2114,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
 
   end
 
-  if self.ai then
+  if self.isAI then
 
     local routeto=false
     if fc or world.event.S_EVENT_KILL then
@@ -2294,7 +2294,7 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
     -- Set flight status to holding
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.HOLDING)
 
-    if not self.ai then
+    if not self.isAI then
       self:_UpdateMenu()
     end
 
@@ -2641,10 +2641,10 @@ function FLIGHTGROUP:_InitGroup()
   self.tacan=UTILS.DeepCopy(self.tacanDefault)
 
   -- Is this purely AI?
-  self.ai=not self:_IsHuman(group)
+  self.isAI=not self:_IsHuman(group)
 
   -- Create Menu.
-  if not self.ai then
+  if not self.isAI then
     self.menu=self.menu or {}
     self.menu.atc=self.menu.atc or {}
     self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC")
@@ -2680,7 +2680,7 @@ function FLIGHTGROUP:_InitGroup()
       text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
       text=text..string.format("Tanker type  = %s\n", tostring(self.tankertype))
       text=text..string.format("Refuel type  = %s\n", tostring(self.refueltype))
-      text=text..string.format("AI           = %s\n", tostring(self.ai))
+      text=text..string.format("AI           = %s\n", tostring(self.isAI))
       text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
       text=text..string.format("Elements     = %d\n", #self.elements)
       text=text..string.format("Waypoints    = %d\n", #self.waypoints)

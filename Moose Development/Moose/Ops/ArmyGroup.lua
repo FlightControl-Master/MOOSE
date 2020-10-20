@@ -375,7 +375,7 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
   -- Update position.
   self:_UpdatePosition()
 
-  if self.ai then
+  if self.isAI then
   
     -- Set default ROE.
     self:SwitchROE(self.option.ROE)
@@ -859,8 +859,8 @@ function ARMYGROUP:_InitGroup()
   self.isNaval=false
   self.isGround=true
   
-  -- Ships are always AI.
-  self.ai=true
+  -- Ground are always AI.
+  self.isAI=true
   
   -- Is (template) group late activated.
   self.isLateActivated=self.template.lateActivation

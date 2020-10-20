@@ -1690,6 +1690,13 @@ function AUFTRAG:GetPriority()
   return self.prio
 end
 
+--- Get casualties, i.e. number of units that died during this mission.
+-- @param #AUFTRAG self
+-- @return #number Number of dead units.
+function AUFTRAG:GetCasualties()
+  return self.Ncasualties or 0
+end
+
 --- Check if mission is "urgent".
 -- @param #AUFTRAG self
 -- @return #boolean If `true`, mission is "urgent".

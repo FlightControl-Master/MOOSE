@@ -23,7 +23,7 @@
 -- @field #boolean isLateActivated Is the group late activated.
 -- @field #boolean isUncontrolled Is the group uncontrolled.
 -- @field #table elements Table of elements, i.e. units of the group.
--- @field #boolean ai If true, group is purely AI.
+-- @field #boolean isAI If true, group is purely AI.
 -- @field #boolean isAircraft If true, group is airplane or helicopter.
 -- @field #boolean isNaval If true, group is ships or submarine.
 -- @field #boolean isGround If true, group is some ground unit.
@@ -262,12 +262,18 @@ OPSGROUP.TaskType={
 
 --- Laser and IR spot data.
 -- @type OPSGROUP.Spot
+-- @field #boolean CheckLOS If true, check LOS to target.
+-- @field #boolean IRon If true, turn IR pointer on.
+-- @field #number dt Update time interval in seconds.
 -- @field DCS#Spot Laser Laser spot.
 -- @field DCS#Spot IR Infra-red spot.
 -- @field #number Code Laser code.
--- @field Wrapper.Positionable#POSITIONABLE Target The target.
+-- @field Wrapper.Group#GROUP TargetGroup The target group.
+-- @field Wrapper.Positionable#POSITIONABLE TargetUnit The current target unit.
 -- @field Core.Point#COORDINATE Coordinate where the spot is pointing.
 -- @field #boolean On If true, the laser is on.
+-- @field #OPSGROUP.Element element The element of the group that is lasing.
+-- @field DCS#Vec3 vec3 The 3D positon vector of the laser (and IR) spot.
 -- @field Core.Timer#TIMER timer Spot timer.
 
 --- Ammo data.
@@ -496,17 +502,40 @@ function OPSGROUP:SetDetection(Switch)
   return self
 end
 
---- Set detection on or off.
--- If detection is on, detected targets of the group will be evaluated and FSM events triggered. 
+--- Set LASER parameters. 
 -- @param #OPSGROUP self
 -- @param #number Code Laser code. Default 1688.
+-- @param #boolean CheckLOS Check if lasing unit has line of sight to target coordinate.
 -- @param #boolean IROff If true, then dont switch on the additional IR pointer.
 -- @param #number UpdateTime Time interval in seconds the beam gets up for moving targets. Default every 0.5 sec.
 -- @return #OPSGROUP self
-function OPSGROUP:SetLaser(Code, IROff, UpdateTime)
+function OPSGROUP:SetLaser(Code, CheckLOS, IROff, UpdateTime)
   self.spot.Code=Code or 1688
-  self.spot.IRoff=IROff
+  self.spot.CheckLOS=CheckLOS
+  self.spot.IRon=not IROff
+  self.spot.dt=UpdateTime or 0.5
   return self
+end
+
+--- Get LASER code. 
+-- @param #OPSGROUP self
+-- @return #number Current Laser code.
+function OPSGROUP:GetLaserCode()
+  return self.spot.Code
+end
+
+--- Get current LASER coordinate, i.e. where the beam is pointing at if the LASER is on.
+-- @param #OPSGROUP self
+-- @return Core.Point#COORDINATE Current position where the LASER is pointing at.
+function OPSGROUP:GetLaserCoordinate()
+  return self.spot.Coordinate
+end
+
+--- Get current target of the LASER. This can be a STATIC or UNIT object.
+-- @param #OPSGROUP self
+-- @return Wrapper.Positionable#POSITIONABLE Current target object.
+function OPSGROUP:GetLaserTarget()
+  return self.spot.TargetUnit
 end
 
 --- Define a SET of zones that trigger and event if the group enters or leaves any of the zones.
@@ -2984,8 +3013,15 @@ function OPSGROUP:onafterLaserOn(From, Event, To, Target)
     
     if target:IsAlive() then
     
-      self.spot.Target=Target
-      coord=Target:GetCoordinate()
+      if target:IsInstanceOf("GROUP") then
+        self.spot.TargetGroup=target
+        self.spot.TargetUnit=target:GetHighestThreat()        
+      else
+        self.spot.TargetUnit=target      
+      end
+      
+      -- Current coordinate
+      coord=self.spot.TargetUnit:GetCoordinate()
     
     else
       self:E("WARNING: LASER target is not alive!")
@@ -3003,8 +3039,7 @@ function OPSGROUP:onafterLaserOn(From, Event, To, Target)
   if element then
 
     -- Debug message.
-    self:T(self.lid.."Switching LASER on")
-
+    self:I(self.lid.."Switching LASER on")
 
     -- Start timer that calls the update twice per sec.
     self.spot.timer:Start(nil, 0.5)
@@ -3023,11 +3058,12 @@ function OPSGROUP:onafterLaserOn(From, Event, To, Target)
     
     -- Create laser and IR beams.
     self.spot.Laser=Spot.createLaser(DCSunit, {x=0, y=offsetY, z=0}, self.spot.vec3, self.spot.Code or 1688)
-    self.spot.IR=Spot.createInfraRed(DCSunit, {x=0, y=offsetY, z=0}, self.spot.vec3)
+    if self.spot.IRon then
+      self.spot.IR=Spot.createInfraRed(DCSunit, {x=0, y=offsetY, z=0}, self.spot.vec3)
+    end
   
     -- Laser is on.
     self.spot.On=true
-    
   end 
 end
 
@@ -3091,16 +3127,16 @@ function OPSGROUP:_UpdateLaser()
     --´-
   
     -- Check if we have a POSITIONABLE to lase.
-    if self.spot.Target then
+    if self.spot.TargetUnit then
     
       ---
       -- Lasing a possibly moving target
       ---
     
-      if self.spot.Target:IsAlive() then
+      if self.spot.TargetUnit:IsAlive() then
 
         -- Get current target position.  
-        local vec3=self.spot.Target:GetVec3()
+        local vec3=self.spot.TargetUnit:GetVec3()
         
         -- Calculate distance 
         local dist=UTILS.VecDist3D(vec3, self.spot.vec3)
@@ -3116,22 +3152,39 @@ function OPSGROUP:_UpdateLaser()
         
           -- Set the new laser target point.
           self.spot.Laser:setPoint(vec3)
-          self.spot.IR:setPoint(vec3)
+          if self.spot.IRon then
+            self.spot.IR:setPoint(vec3)
+          end
           
         end
         
       else
       
-        -- Switch laser off.
-        self:T(self.lid.."Target is not alive any more ==> switching LASER off")
-        self:LaserOff()
+        if self.spot.TargetGroup and self.spot.TargetGroup:IsAlive() then
+        
+          -- Get first alive unit in the group.
+          local unit=self.spot.TargetGroup:GetHighestThreat()
+          
+          if unit then
+            self:I(self.lid.."Switching to target other target unit in the group")
+            self.spot.TargetUnit=unit
+          else
+            -- Switch laser off.
+            self:T(self.lid.."Target is not alive any more ==> switching LASER off")
+            self:LaserOff()          
+          end
+        
+        else
       
-      end
+          -- Switch laser off.
+          self:T(self.lid.."Target is not alive any more ==> switching LASER off")
+          self:LaserOff()
+        
+        end
       
+      end      
     end
-  
   end
-
 end
 
 
@@ -3360,7 +3413,7 @@ end
 -- @param #number delay Delay in seconds.
 function OPSGROUP:_CheckGroupDone(delay)
 
-  if self:IsAlive() and self.ai then
+  if self:IsAlive() and self.isAI then
 
     if delay and delay>0 then
       -- Delayed call.

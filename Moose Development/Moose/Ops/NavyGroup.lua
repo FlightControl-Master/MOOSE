@@ -639,7 +639,7 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
   -- Update position.
   self:_UpdatePosition()
 
-  if self.ai then
+  if self.isAI then
  
     -- Set default ROE.
     self:SwitchROE(self.option.ROE)
@@ -1198,7 +1198,7 @@ function NAVYGROUP:_InitGroup()
   --self.isSubmarine=self.group:IsSubmarine()
   
   -- Ships are always AI.
-  self.ai=true
+  self.isAI=true
   
   -- Is (template) group late activated.
   self.isLateActivated=self.template.lateActivation
