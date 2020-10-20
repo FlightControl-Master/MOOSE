@@ -1279,8 +1279,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
      name==AIRBASE.PersianGulf.Abu_Dhabi_International_Airport or
      name==AIRBASE.PersianGulf.Dubai_Intl or
      name==AIRBASE.PersianGulf.Shiraz_International_Airport or
-     name==AIRBASE.PersianGulf.Kish_International_Airport
-     then
+     name==AIRBASE.PersianGulf.Kish_International_Airport then
 
     -- 1-->4, 2-->3, 3-->2, 4-->1
     exception=1
@@ -1297,6 +1296,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
 
   end
 
+  --- Function returning the index of the runway coordinate belonding to the given index i.
   local function f(i)
 
     local j
@@ -1364,6 +1364,9 @@ function AIRBASE:GetRunwayData(magvar, mark)
 
     -- Get the other spawn point coordinate.
     local j=f(i)
+
+    -- Debug info.
+    --env.info(string.format("Runway i=%s j=%s (N=%d #runwaycoord=%d)", tostring(i), tostring(j), N, #runwaycoords))
 
     -- Coordinates of the two runway points.
     local c1=runwaycoords[i] --Core.Point#COORDINATE
