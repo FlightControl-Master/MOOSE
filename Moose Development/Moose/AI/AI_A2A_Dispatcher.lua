@@ -2774,7 +2774,7 @@ do -- AI_A2A_DISPATCHER
   --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
   --
   --   -- Now Setup the default fuel treshold.
-  --   A2ADispatcher:SetSquadronRefuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
+  --   A2ADispatcher:SetSquadronFuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --
   function AI_A2A_DISPATCHER:SetSquadronFuelThreshold( SquadronName, FuelThreshold )
 
@@ -2817,7 +2817,7 @@ do -- AI_A2A_DISPATCHER
   --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
   --
   --   -- Now Setup the squadron fuel treshold.
-  --   A2ADispatcher:SetSquadronRefuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
+  --   A2ADispatcher:SetSquadronFuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --
   --   -- Now Setup the squadron tanker.
   --   A2ADispatcher:SetSquadronTanker( "SquadronName", "Tanker" ) -- The group name of the tanker is "Tanker" in the Mission Editor.
