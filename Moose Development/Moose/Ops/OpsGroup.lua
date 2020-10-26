@@ -278,6 +278,7 @@ OPSGROUP.TaskType={
 -- @field #OPSGROUP.Element element The element of the group that is lasing.
 -- @field DCS#Vec3 vec3 The 3D positon vector of the laser (and IR) spot.
 -- @field DCS#Vec3 offset Local offset of the laser source.
+-- @field DCS#Vec3 offsetTarget Offset of the target.
 -- @field Core.Timer#TIMER timer Spot timer.
 
 --- Ammo data.
@@ -365,7 +366,8 @@ function OPSGROUP:New(Group)
   -- Laser.
   self.spot={}
   self.spot.On=false
-  self.spot.timer=TIMER:New(self._UpdateLaser, self)  
+  self.spot.timer=TIMER:New(self._UpdateLaser, self)
+  self.spot.Coordinate=COORDINATE:New(0, 0, 0)
   self:SetLaser(1688, true, false, 0.5)
   
   -- Init task counter.
@@ -3112,14 +3114,12 @@ function OPSGROUP:onbeforeLaserOn(From, Event, To, Target)
     
       -- Check LOS.
       self.spot.LOS=self:HasLoS(self.spot.Coordinate, self.spot.element, self.spot.offset)
-      
-      env.info(string.format("FF LOS=%s", tostring(self.spot.LOS)))
-      
+
       if self.spot.LOS then
         self:LaserGotLOS()
       else
         -- Try to switch laser on again in 10 sec.
-        env.info("FF no LOS currently. Trying to switch the laser on again in 10 sec.")
+        self:T(self.lid.."LASER got no LOS currently. Trying to switch the laser on again in 10 sec")
         self:__LaserOn(-10, Target)
         return false
       end
@@ -3142,9 +3142,6 @@ end
 -- @param Core.Point#COORDINATE Target Target Coordinate. Target can also be any POSITIONABLE from which we can obtain its coordinates.
 function OPSGROUP:onafterLaserOn(From, Event, To, Target)
 
-  -- Debug message.
-  self:I(self.lid.."Switching LASER on")
-
   -- Start timer that calls the update twice per sec by default.
   self.spot.timer:Start(nil, self.spot.dt)
 
@@ -3159,6 +3156,9 @@ function OPSGROUP:onafterLaserOn(From, Event, To, Target)
   
   -- Laser is on.
   self.spot.On=true
+
+  -- Debug message.
+  self:T(self.lid.."Switching LASER on")
   
 end
 
@@ -3179,7 +3179,7 @@ end
 function OPSGROUP:onafterLaserOff(From, Event, To)
 
   -- Debug message.
-  self:I(self.lid.."Switching LASER off")
+  self:T(self.lid.."Switching LASER off")
 
   -- "Destroy" the laser beam.
   self.spot.Laser:destroy()
@@ -3206,7 +3206,7 @@ end
 function OPSGROUP:onafterLaserPause(From, Event, To)
 
   -- Debug message.
-  self:I(self.lid.."Switching LASER off temporarily.")
+  self:I(self.lid.."Switching LASER off temporarily")
 
   -- "Destroy" the laser beam.
   self.spot.Laser:destroy()
@@ -3312,7 +3312,7 @@ function OPSGROUP:SetLaserTarget(Target)
           -- We got a GROUP as target.
           self.spot.TargetGroup=target
           self.spot.TargetUnit=target:GetHighestThreat()
-          self.spot.TargetType=3        
+          self.spot.TargetType=3
         else
           -- We got a UNIT or STATIC as target.
           self.spot.TargetUnit=target
@@ -3322,6 +3322,17 @@ function OPSGROUP:SetLaserTarget(Target)
             self.spot.TargetType=2
           end
         end
+        
+        -- Get object size.
+        local size,x,y,z=self.spot.TargetUnit:GetObjectSize()
+        
+        if y then
+          self.spot.offsetTarget={x=0, y=y/2, z=0}
+        else
+          self.spot.offsetTarget={x=0, 2, z=0}
+        end
+        
+        --env.info(string.format("Target offset %.3f", y))
               
       else
         self:E("WARNING: LASER target is not alive!")
@@ -3331,36 +3342,71 @@ function OPSGROUP:SetLaserTarget(Target)
     elseif Target:IsInstanceOf("COORDINATE") then
       -- Coordinate as target.
       self.spot.TargetType=0
+      self.spot.offsetTarget={x=0, y=0, z=0}
     else
       self:E(self.lid.."ERROR: LASER target should be a POSITIONABLE (GROUP, UNIT or STATIC) or a COORDINATE object!")
       return
     end
     
+    
+    -- Set vec3 and account for target offset.
+    self.spot.vec3=UTILS.VecAdd(Target:GetVec3(), self.spot.offsetTarget)
+    
     -- Set coordinate.
-    self.spot.Coordinate=Target:GetCoordinate()
+    self.spot.Coordinate:UpdateFromVec3(self.spot.vec3)
     
   end
 
+end
+
+--- Get highest threat.
+-- @param #OPSGROUP self
+-- @return Wrapper.Unit#UNIT The highest threat unit.
+-- @return #number Threat level of the unit.
+function OPSGROUP:GetHighestThreat()
+
+  local threat=nil
+  local levelmax=-1
+  for _,_unit in pairs(self.detectedunits:GetSet()) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    local threatlevel=unit:GetThreatLevel()
+    
+    if threatlevel>levelmax then
+      threat=unit
+      levelmax=threatlevel
+    end
+  
+  end
+
+  return threat, levelmax
 end
 
 --- Check if an element of the group has line of sight to a coordinate.
 -- @param #OPSGROUP self
 -- @param Core.Point#COORDINATE Coordinate The position to which we check the LoS.
 -- @param #OPSGROUP.Element Element The (optinal) element. If not given, all elements are checked.
--- @param DCS#Vec3 Offset Offset vector of the element.
+-- @param DCS#Vec3 OffsetElement Offset vector of the element.
+-- @param DCS#Vec3 OffsetCoordinate Offset vector of the coordinate.
 -- @return #boolean If `true`, there is line of sight to the specified coordinate.
-function OPSGROUP:HasLoS(Coordinate, Element, Offset)
+function OPSGROUP:HasLoS(Coordinate, Element, OffsetElement, OffsetCoordinate)
 
   -- Target vector.
   local Vec3=Coordinate:GetVec3()
-  
+
+  -- Optional offset.
+  if OffsetCoordinate then
+    Vec3=UTILS.VecAdd(vec3, OffsetCoordinate)
+  end
+
   --- Function to check LoS for an element of the group.
   local function checklos(element)  
-    local vec3=Element.unit:GetVec3()    
-    if Offset then
-      vec3=UTILS.VecAdd(vec3, Offset)
-    end    
+    local vec3=element.unit:GetVec3()    
+    if OffsetElement then
+      vec3=UTILS.VecAdd(vec3, OffsetElement)
+    end
     local _los=land.isVisible(vec3, Vec3)
+    --self:I({los=_los, source=vec3, target=Vec3})
     return _los
   end
 
@@ -3405,6 +3451,9 @@ function OPSGROUP:_UpdateLaser()
 
         -- Get current target position.  
         local vec3=self.spot.TargetUnit:GetVec3()
+        
+        -- Add target offset.
+        vec3=UTILS.VecAdd(vec3, self.spot.offsetTarget)
         
         -- Calculate distance 
         local dist=UTILS.VecDist3D(vec3, self.spot.vec3)
@@ -3461,7 +3510,7 @@ function OPSGROUP:_UpdateLaser()
     -- Check current LOS.
     local los=self:HasLoS(self.spot.Coordinate, self.spot.element, self.spot.offset)
     
-    env.info(string.format("FF check LOS=%s", tostring(los)))
+    --env.info(string.format("FF check LOS=%s", tostring(los)))
     
     if los then    
       -- Got LOS     
