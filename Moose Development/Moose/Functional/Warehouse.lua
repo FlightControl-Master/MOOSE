@@ -7025,7 +7025,7 @@ function WAREHOUSE:_CheckRequestNow(request)
 
   -- If no transport is requested, assets need to be mobile unless it is a self request.
   local onlymobile=false
-  if type(request.transport)=="number" and request.ntransport==0 and not request.toself then
+  if type(request.ntransport)=="number" and request.ntransport==0 and not request.toself then
     onlymobile=true
   end
 

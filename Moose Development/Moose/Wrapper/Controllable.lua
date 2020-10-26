@@ -2828,7 +2828,7 @@ function CONTROLLABLE:GetDetectedUnitSet(DetectVisual, DetectOptical, DetectRada
   return unitset
 end
 
---- Return the detected target groups of the controllable as a @{SET_GROUP}.
+--- Return the detected target groups of the controllable as a @{Core.Set#SET_GROUP}.
 -- The optional parametes specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
 -- @param Wrapper.Controllable#CONTROLLABLE self
