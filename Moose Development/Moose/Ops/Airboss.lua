@@ -1273,17 +1273,19 @@ AIRBOSS.AircraftCarrier={
 
 --- Carrier types.
 -- @type AIRBOSS.CarrierType
--- @field #string ROOSEVELT USS Theodore Roosevelt (CVN-71)
--- @field #string LINCOLN USS Abraham Lincoln (CVN-72)
--- @field #string WASHINGTON USS George Washington (CVN-73)
+-- @field #string ROOSEVELT USS Theodore Roosevelt (CVN-71) [Super Carrier Module]
+-- @field #string LINCOLN USS Abraham Lincoln (CVN-72) [Super Carrier Module]
+-- @field #string WASHINGTON USS George Washington (CVN-73) [Super Carrier Module]
 -- @field #string STENNIS USS John C. Stennis (CVN-74)
--- @field #string VINSON USS Carl Vinson (CVN-70)
+-- @field #string TRUMAN USS Harry S. Truman (CVN-75) [Super Carrier Module]
+-- @field #string VINSON USS Carl Vinson (CVN-70) [Obsolete]
 -- @field #string TARAWA USS Tarawa (LHA-1)
 -- @field #string KUZNETSOV Admiral Kuznetsov (CV 1143.5)
 AIRBOSS.CarrierType={
   ROOSEVELT="CVN_71",
   LINCOLN="CVN_72",
   WASHINGTON="CVN_73",
+  TRUMAN="CVN_75",
   STENNIS="Stennis",
   VINSON="VINSON",
   TARAWA="LHA_Tarawa",
@@ -1939,8 +1941,10 @@ function AIRBOSS:New(carriername, alias)
     self:_InitNimitz()
   elseif self.carriertype==AIRBOSS.CarrierType.LINCOLN then
     self:_InitNimitz()    
-  elseif self.carriertype==AIRBOSS.CarrierType.WASHINGTON then
+  elseif self.carriertype==AIRBOSS.CarrierType.WASHINGTON then  
     self:_InitNimitz()
+  elseif self.carriertype==AIRBOSS.CarrierType.TRUMAN then  
+    self:_InitNimitz()    
   elseif self.carriertype==AIRBOSS.CarrierType.VINSON then
     -- TODO: Carl Vinson parameters.
     self:_InitStennis()
@@ -2464,7 +2468,7 @@ function AIRBOSS:AddRecoveryWindow(starttime, stoptime, case, holdingoffset, tur
   local Tstart=UTILS.ClockToSeconds(starttime)
 
   -- Set stop time.
-  local Tstop=UTILS.ClockToSeconds(stoptime or Tstart+90*60)
+  local Tstop=stoptime and UTILS.ClockToSeconds(stoptime) or Tstart+90*60
 
   -- Consistancy check for timing.
   if Tstart>Tstop then

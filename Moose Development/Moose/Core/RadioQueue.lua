@@ -525,7 +525,7 @@ end
 
 --- Get unit from which we want to transmit a radio message. This has to be an aircraft for subtitles to work.
 -- @param #RADIOQUEUE self
--- @return Wrapper.Unit#UNIT Sending aircraft unit or nil if was not setup, is not an aircraft or is not alive.
+-- @return Wrapper.Unit#UNIT Sending unit or nil if was not setup, is not an aircraft or ground unit or is not alive.
 function RADIOQUEUE:_GetRadioSender()
 
   -- Check if we have a sending aircraft.
@@ -538,7 +538,7 @@ function RADIOQUEUE:_GetRadioSender()
     sender=UNIT:FindByName(self.sendername)
 
     -- Check that sender is alive and an aircraft.
-    if sender and sender:IsAlive() and sender:IsAir() then
+    if sender and sender:IsAlive() and (sender:IsAir() or sender:IsGround()) then
       return sender
     end
     
