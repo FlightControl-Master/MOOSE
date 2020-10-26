@@ -39,6 +39,7 @@
 -- @field #table missionqueue Queue of missions.
 -- @field #number currentmission The ID (auftragsnummer) of the currently assigned AUFTRAG.
 -- @field Core.Set#SET_UNIT detectedunits Set of detected units.
+-- @field Core.Set#SET_GROUP detectedgroups Set of detected groups.
 -- @field #string attribute Generalized attribute.
 -- @field #number speedMax Max speed in km/h.
 -- @field #number speedCruise Cruising speed in km/h.
@@ -127,6 +128,7 @@ OPSGROUP = {
   missionqueue       =    {},
   currentmission     =   nil,  
   detectedunits      =    {},
+  detectedgroups     =    {},
   attribute          =   nil,
   checkzones         =   nil,
   inzones            =   nil,
@@ -271,9 +273,11 @@ OPSGROUP.TaskType={
 -- @field Wrapper.Group#GROUP TargetGroup The target group.
 -- @field Wrapper.Positionable#POSITIONABLE TargetUnit The current target unit.
 -- @field Core.Point#COORDINATE Coordinate where the spot is pointing.
+-- @field #number TargetType Type of target: 0=coordinate, 1=static, 2=unit, 3=group.
 -- @field #boolean On If true, the laser is on.
 -- @field #OPSGROUP.Element element The element of the group that is lasing.
 -- @field DCS#Vec3 vec3 The 3D positon vector of the laser (and IR) spot.
+-- @field DCS#Vec3 offset Local offset of the laser source.
 -- @field Core.Timer#TIMER timer Spot timer.
 
 --- Ammo data.
@@ -347,10 +351,13 @@ function OPSGROUP:New(Group)
   end
     
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("OPSGROUP %s |", self.groupname)
+  self.lid=string.format("OPSGROUP %s | ", self.groupname)
   
   -- Init set of detected units.
   self.detectedunits=SET_UNIT:New()
+  
+  -- Init set of detected groups.
+  self.detectedgroups=SET_GROUP:New()
   
   -- Init inzone set.
   self.inzones=SET_ZONE:New()
@@ -358,8 +365,8 @@ function OPSGROUP:New(Group)
   -- Laser.
   self.spot={}
   self.spot.On=false
-  self.spot.timer=TIMER:New(OPSGROUP._UpdateLaser, self)  
-  self:SetLaser()
+  self.spot.timer=TIMER:New(self._UpdateLaser, self)  
+  self:SetLaser(1688, true, false, 0.5)
   
   -- Init task counter.
   self.taskcurrent=0
@@ -380,11 +387,16 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "Respawn",          "*")           -- Respawn group.
   self:AddTransition("*",             "PassingWaypoint",  "*")           -- Passing waypoint.
  
-  self:AddTransition("*",             "DetectedUnit",      "*")           -- Add a newly detected unit to the detected units set.
+  self:AddTransition("*",             "DetectedUnit",      "*")           -- Unit was detected (again) in this detection cycle.
   self:AddTransition("*",             "DetectedUnitNew",   "*")           -- Add a newly detected unit to the detected units set.
-  self:AddTransition("*",             "DetectedUnitKnown", "*")           -- Add a newly detected unit to the detected units set.
+  self:AddTransition("*",             "DetectedUnitKnown", "*")           -- A known unit is still detected.
   self:AddTransition("*",             "DetectedUnitLost",  "*")           -- Group lost a detected target.
 
+  self:AddTransition("*",             "DetectedGroup",      "*")          -- Unit was detected (again) in this detection cycle.
+  self:AddTransition("*",             "DetectedGroupNew",   "*")          -- Add a newly detected unit to the detected units set.
+  self:AddTransition("*",             "DetectedGroupKnown", "*")          -- A known unit is still detected.
+  self:AddTransition("*",             "DetectedGroupLost",  "*")          -- Group lost a detected target group.  
+  
   self:AddTransition("*",             "PassingWaypoint",   "*")           -- Group passed a waypoint.
   self:AddTransition("*",             "GotoWaypoint",      "*")           -- Group switches to a specific waypoint.
 
@@ -400,6 +412,9 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "LaserOn",          "*")            -- Turn laser on.
   self:AddTransition("*",             "LaserOff",         "*")            -- Turn laser off.
   self:AddTransition("*",             "LaserCode",        "*")            -- Switch laser code.
+  self:AddTransition("*",             "LaserPause",       "*")            -- Turn laser off temporarily.
+  self:AddTransition("*",             "LaserLostLOS",     "*")            -- Lasing element lost line of sight.
+  self:AddTransition("*",             "LaserGotLOS",      "*")            -- Lasing element got line of sight.
 
   self:AddTransition("*",             "TaskExecute",      "*")           -- Group will execute a task.
   self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task. Not implemented yet!
@@ -603,7 +618,14 @@ end
 -- @param #OPSGROUP self
 -- @return Core.Set#SET_UNIT Set of detected units.
 function OPSGROUP:GetDetectedUnits()
-  return self.detectedunits
+  return self.detectedunits or {}
+end
+
+--- Get set of detected groups.
+-- @param #OPSGROUP self
+-- @return Core.Set#SET_GROUP Set of detected groups.
+function OPSGROUP:GetDetectedGroups()
+  return self.detectedgroups or {}
 end
 
 --- Get inital amount of ammunition.
@@ -1126,6 +1148,13 @@ end
 function OPSGROUP:IsRearming()
   local rearming=self:Is("Rearming") or self:Is("Rearm")
   return rearming
+end
+
+--- Check if the group has currently switched a LASER on.
+-- @param #OPSGROUP self
+-- @return #boolean If true, LASER of the group is on.
+function OPSGROUP:IsLasing()
+  return self.spot.On
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2934,7 +2963,7 @@ function OPSGROUP:onafterGotoWaypoint(From, Event, To, UID)
   
 end
 
---- On after "DetectedUnit" event. Add newly detected unit to detected units set.
+--- On after "DetectedUnit" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -2947,7 +2976,7 @@ function OPSGROUP:onafterDetectedUnit(From, Event, To, Unit)
 
   -- Debug.
   self:T2(self.lid..string.format("Detected unit %s", unitname))
-  
+    
   
   if self.detectedunits:FindUnit(unitname) then
     -- Unit is already in the detected unit set ==> Trigger "DetectedUnitKnown" event.
@@ -2955,11 +2984,11 @@ function OPSGROUP:onafterDetectedUnit(From, Event, To, Unit)
   else
     -- Unit is was not detected ==> Trigger "DetectedUnitNew" event.
     self:DetectedUnitNew(Unit)
-  end  
-  
+  end
+
 end
 
---- On after "DetectedUnitNew" event.
+--- On after "DetectedUnitNew" event. Add newly detected unit to detected unit set.
 -- @param #OPSGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -2970,6 +2999,44 @@ function OPSGROUP:onafterDetectedUnitNew(From, Event, To, Unit)
   
   -- Add unit to detected unit set.
   self.detectedunits:AddUnit(Unit)
+end
+
+--- On after "DetectedGroup" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP Group The detected Group.
+function OPSGROUP:onafterDetectedGroup(From, Event, To, Group)
+
+  -- Get group name.
+  local groupname=Group and Group:GetName() or "unknown"
+
+  -- Debug.
+  self:I(self.lid..string.format("Detected group %s", groupname))
+    
+  
+  if self.detectedgroups:FindGroup(groupname) then
+    -- Group is already in the detected set ==> Trigger "DetectedGroupKnown" event.
+    self:DetectedGroupKnown(Group)
+  else
+    -- Group is was not detected ==> Trigger "DetectedGroupNew" event.
+    self:DetectedGroupNew(Group)
+  end
+  
+end
+
+--- On after "DetectedGroupNew" event. Add newly detected group to detected group set.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP Group The detected group.
+function OPSGROUP:onafterDetectedGroupNew(From, Event, To, Group)
+  self:I(self.lid..string.format("Detected New group %s", Group:GetName()))
+  
+  -- Add unit to detected unit set.
+  self.detectedgroups:AddGroup(Group)
 end
 
 --- On after "EnterZone" event. Sets self.inzones[zonename]=true.
@@ -2996,6 +3063,77 @@ function OPSGROUP:onafterLeaveZone(From, Event, To, Zone)
   self.inzones:Remove(zonename, true)
 end
 
+--- On before "LaserOn" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Target Target Coordinate. Target can also be any POSITIONABLE from which we can obtain its coordinates.
+function OPSGROUP:onbeforeLaserOn(From, Event, To, Target)
+
+  -- Check if LASER is already on.
+  if self.spot.On then
+    return false
+  end
+
+  if Target then
+
+    -- Target specified ==> set target.  
+    self:SetLaserTarget(Target)
+  
+  else
+    -- No target specified.
+    --TODO: error message
+    return false
+  end
+  
+  -- Get the first element alive.
+  local element=self:GetElementAlive()
+  
+  if element then
+  
+    -- Set element.
+    self.spot.element=element
+    
+    -- Vec3.
+    self.spot.vec3=self.spot.Coordinate:GetVec3()
+    
+    -- Height offset. No offset for aircraft. We take the height for ground or naval.
+    local offsetY=0    
+    if self.isGround or self.isNaval then
+      offsetY=element.height
+    end
+    
+    -- Local offset of the LASER source.
+    self.spot.offset={x=0, y=offsetY, z=0}
+    
+    -- Check LOS.
+    if self.spot.CheckLOS then
+    
+      -- Check LOS.
+      self.spot.LOS=self:HasLoS(self.spot.Coordinate, self.spot.element, self.spot.offset)
+      
+      env.info(string.format("FF LOS=%s", tostring(self.spot.LOS)))
+      
+      if self.spot.LOS then
+        self:LaserGotLOS()
+      else
+        -- Try to switch laser on again in 10 sec.
+        env.info("FF no LOS currently. Trying to switch the laser on again in 10 sec.")
+        self:__LaserOn(-10, Target)
+        return false
+      end
+      
+    end
+    
+  else
+    self:E(self.lid.."ERROR: No element alive for lasing")
+    return false
+  end
+
+  return true
+end
+
 --- On after "LaserOn" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -3004,67 +3142,33 @@ end
 -- @param Core.Point#COORDINATE Target Target Coordinate. Target can also be any POSITIONABLE from which we can obtain its coordinates.
 function OPSGROUP:onafterLaserOn(From, Event, To, Target)
 
-  -- Assume we got a coordinate.
-  local coord=Target
-  
-  -- Check if we have a POSITIONABLE.
-  if Target:IsInstanceOf("POSITIONABLE") then
-    local target=Target --Wrapper.Positionable#POSITIONABLE
-    
-    if target:IsAlive() then
-    
-      if target:IsInstanceOf("GROUP") then
-        self.spot.TargetGroup=target
-        self.spot.TargetUnit=target:GetHighestThreat()        
-      else
-        self.spot.TargetUnit=target      
-      end
-      
-      -- Current coordinate
-      coord=self.spot.TargetUnit:GetCoordinate()
-    
-    else
-      self:E("WARNING: LASER target is not alive!")
-      return    
-    end
-    
+  -- Debug message.
+  self:I(self.lid.."Switching LASER on")
+
+  -- Start timer that calls the update twice per sec by default.
+  self.spot.timer:Start(nil, self.spot.dt)
+
+  -- Get DCS unit.
+  local DCSunit=self.spot.element.unit:GetDCSObject()
+
+  -- Create laser and IR beams.
+  self.spot.Laser=Spot.createLaser(DCSunit, self.spot.offset, self.spot.vec3, self.spot.Code or 1688)
+  if self.spot.IRon then
+    self.spot.IR=Spot.createInfraRed(DCSunit, self.spot.offset, self.spot.vec3)
   end
   
-  -- Set coordinate.
-  self.spot.Coordinate=coord
-    
-  -- Get the first element alive.
-  local element=self:GetElementAlive()
+  -- Laser is on.
+  self.spot.On=true
   
-  if element then
+end
 
-    -- Debug message.
-    self:I(self.lid.."Switching LASER on")
-
-    -- Start timer that calls the update twice per sec.
-    self.spot.timer:Start(nil, 0.5)
-  
-    -- Set element.
-    self.spot.element=element
-    
-    -- Get DCS unit.
-    local DCSunit=self.spot.element.unit:GetDCSObject()
-    
-    -- Vec3.
-    self.spot.vec3=coord:GetVec3()
-    
-    -- Height offset.
-    local offsetY=element.height
-    
-    -- Create laser and IR beams.
-    self.spot.Laser=Spot.createLaser(DCSunit, {x=0, y=offsetY, z=0}, self.spot.vec3, self.spot.Code or 1688)
-    if self.spot.IRon then
-      self.spot.IR=Spot.createInfraRed(DCSunit, {x=0, y=offsetY, z=0}, self.spot.vec3)
-    end
-  
-    -- Laser is on.
-    self.spot.On=true
-  end 
+--- On before "LaserOff" event. Check if LASER is on.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onbeforeLaserOff(From, Event, To)
+  return self.spot.On
 end
 
 --- On after "LaserOff" event.
@@ -3075,7 +3179,34 @@ end
 function OPSGROUP:onafterLaserOff(From, Event, To)
 
   -- Debug message.
-  self:T(self.lid.."Switching LASER off")
+  self:I(self.lid.."Switching LASER off")
+
+  -- "Destroy" the laser beam.
+  self.spot.Laser:destroy()
+  self.spot.IR:destroy()
+
+  -- Stop update timer.
+  self.spot.timer:Stop()
+  
+  -- Set to nil.
+  self.spot.Laser=nil
+  self.spot.IR=nil
+  self.spot.TargetUnit=nil
+
+  -- Laser is off.
+  self.spot.On=false
+  
+end
+
+--- On after "LaserPause" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterLaserPause(From, Event, To)
+
+  -- Debug message.
+  self:I(self.lid.."Switching LASER off temporarily.")
 
   -- "Destroy" the laser beam.
   self.spot.Laser:destroy()
@@ -3102,17 +3233,154 @@ function OPSGROUP:onafterLaserCode(From, Event, To, Code)
   self.spot.Code=Code or 1688
 
   -- Debug message.
-  self:T(self.lid..string.format("Setting LASER Code to %d", self.spot.Code))
+  self:T2(self.lid..string.format("Setting LASER Code to %d", self.spot.Code))
   
   if self.spot.On then
   
     -- Debug info.
-    self:T(self.lid..string.format("Updating LASER Code to %d", self.spot.Code))
+    self:T(self.lid..string.format("New LASER Code is %d", self.spot.Code))
     
     -- Set LASER code.
     self.spot.Laser:setCode(self.spot.Code)
   end
   
+end
+
+--- On after "LaserLostLOS" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterLaserLostLOS(From, Event, To)
+
+  -- Lost line of sight.
+  self.spot.LOS=false
+
+  if self.spot.On then
+
+    -- Switch laser off.
+    self:LaserPause()
+  
+  end
+  
+end
+
+--- On after "LaserGotLOS" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterLaserGotLOS(From, Event, To)
+
+  -- Lost line of sight.
+  self.spot.LOS=true
+
+  if not self.spot.On then
+  
+    local target=nil
+    
+    if self.spot.TargetType==0 then
+      target=self.spot.Coordinate
+    elseif self.spot.TargetType==1 or self.spot.TargetType==2 then
+      target=self.spot.TargetUnit
+    elseif self.spot.TargetType==3 then
+      target=self.spot.TargetGroup
+    end
+
+    -- Switch laser back on.
+    if target then
+      self:__LaserOn(-1, target)
+    end
+  end
+  
+end
+
+--- Set LASER target.
+-- @param #OPSGROUP self
+-- @param Wrapper.Positionable#POSITIONABLE Target The target to lase. Can also be a COORDINATE object.
+function OPSGROUP:SetLaserTarget(Target)
+
+  if Target then
+
+    -- Check if we have a POSITIONABLE.
+    if Target:IsInstanceOf("POSITIONABLE") then
+      local target=Target --Wrapper.Positionable#POSITIONABLE
+      
+      if target:IsAlive() then
+      
+        if target:IsInstanceOf("GROUP") then
+          -- We got a GROUP as target.
+          self.spot.TargetGroup=target
+          self.spot.TargetUnit=target:GetHighestThreat()
+          self.spot.TargetType=3        
+        else
+          -- We got a UNIT or STATIC as target.
+          self.spot.TargetUnit=target
+          if target:IsInstanceOf("STATIC") then
+            self.spot.TargetType=1
+          elseif target:IsInstanceOf("UNIT") then
+            self.spot.TargetType=2
+          end
+        end
+              
+      else
+        self:E("WARNING: LASER target is not alive!")
+        return
+      end
+      
+    elseif Target:IsInstanceOf("COORDINATE") then
+      -- Coordinate as target.
+      self.spot.TargetType=0
+    else
+      self:E(self.lid.."ERROR: LASER target should be a POSITIONABLE (GROUP, UNIT or STATIC) or a COORDINATE object!")
+      return
+    end
+    
+    -- Set coordinate.
+    self.spot.Coordinate=Target:GetCoordinate()
+    
+  end
+
+end
+
+--- Check if an element of the group has line of sight to a coordinate.
+-- @param #OPSGROUP self
+-- @param Core.Point#COORDINATE Coordinate The position to which we check the LoS.
+-- @param #OPSGROUP.Element Element The (optinal) element. If not given, all elements are checked.
+-- @param DCS#Vec3 Offset Offset vector of the element.
+-- @return #boolean If `true`, there is line of sight to the specified coordinate.
+function OPSGROUP:HasLoS(Coordinate, Element, Offset)
+
+  -- Target vector.
+  local Vec3=Coordinate:GetVec3()
+  
+  --- Function to check LoS for an element of the group.
+  local function checklos(element)  
+    local vec3=Element.unit:GetVec3()    
+    if Offset then
+      vec3=UTILS.VecAdd(vec3, Offset)
+    end    
+    local _los=land.isVisible(vec3, Vec3)
+    return _los
+  end
+
+  if Element then  
+    local los=checklos(Element)
+    return los
+  else
+    
+    for _,element in pairs(self.elements) do
+      -- Get LoS of this element.
+      local los=checklos(element)      
+      if los then
+        return true
+      end
+    end
+  
+    return false
+  end
+
+  return nil
 end
 
 --- Update laser point.
@@ -3124,7 +3392,7 @@ function OPSGROUP:_UpdateLaser()
   
     ---
     -- LASER is ON
-    --´-
+    ---
   
     -- Check if we have a POSITIONABLE to lase.
     if self.spot.TargetUnit then
@@ -3166,25 +3434,51 @@ function OPSGROUP:_UpdateLaser()
           local unit=self.spot.TargetGroup:GetHighestThreat()
           
           if unit then
-            self:I(self.lid.."Switching to target other target unit in the group")
+            self:I(self.lid..string.format("Switching to target unit %s in the group", unit:GetName()))
             self.spot.TargetUnit=unit
           else
             -- Switch laser off.
-            self:T(self.lid.."Target is not alive any more ==> switching LASER off")
-            self:LaserOff()          
+            self:I(self.lid.."Target is not alive any more ==> switching LASER off")
+            self:LaserOff()
+            return          
           end
         
         else
       
           -- Switch laser off.
-          self:T(self.lid.."Target is not alive any more ==> switching LASER off")
+          self:I(self.lid.."Target is not alive any more ==> switching LASER off")
           self:LaserOff()
-        
+          return
         end
       
       end      
     end
   end
+  
+  -- Check LOS.
+  if self.spot.CheckLOS then
+  
+    -- Check current LOS.
+    local los=self:HasLoS(self.spot.Coordinate, self.spot.element, self.spot.offset)
+    
+    env.info(string.format("FF check LOS=%s", tostring(los)))
+    
+    if los then    
+      -- Got LOS     
+      if not self.spot.LOS then
+        self:LaserGotLOS()
+      end
+        
+    else    
+      -- No LOS currently      
+      if self.spot.LOS then
+        self:LaserLostLOS()
+      end 
+    
+    end
+    
+  end
+  
 end
 
 
@@ -3233,7 +3527,29 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
     
     -- If there is another element alive, switch laser on again. 
     if self:GetNelements()>0 then
-      self:__LaserOn(-1, self.spot.Target or self.spot.Coordinate)
+    
+      -- New target if any.
+      local target=nil
+    
+      if self.spot.TargetType==0 then
+        -- Coordinate
+        target=self.spot.Coordinate
+      elseif self.spot.TargetType==1 or self.spot.TargetType==2 then
+        -- Static or unit
+        if self.spot.TargetUnit and self.spot.TargetUnit:IsAlive() then
+          target=self.spot.TargetUnit
+        end        
+      elseif self.spot.TargetType==3 then
+        -- Group
+        if self.spot.TargetGroup and self.spot.TargetGroup:IsAlive() then
+          target=self.spot.TargetGroup
+        end      
+      end
+    
+      -- Switch laser on again.
+      if target then
+        self:__LaserOn(-1, target)
+      end
     end
   end
     
@@ -3356,6 +3672,7 @@ function OPSGROUP:_CheckDetectedUnits()
     local detectedtargets=self.group:GetDetectedTargets()
 
     local detected={}
+    local groups={}
     for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
       local DetectedObject=Detection.object -- DCS#Object
 
@@ -3375,8 +3692,21 @@ function OPSGROUP:_CheckDetectedUnits()
           -- Trigger detected unit event ==> This also triggers the DetectedUnitNew and DetectedUnitKnown events.
           self:DetectedUnit(unit)
           
+          -- Get group of unit.
+          local group=unit:GetGroup()
+          
+          -- Add group to table.
+          if group then          
+            groups[group:GetName()]=group          
+          end
+          
         end
       end
+    end
+    
+    -- Call detected group event.
+    for groupname, group in pairs(groups) do
+      self:DetectedGroup(group)
     end
 
     -- Loop over units in detected set.
@@ -3403,8 +3733,32 @@ function OPSGROUP:_CheckDetectedUnits()
     -- Remove lost units from detected set.
     self.detectedunits:RemoveUnitsByName(lost)
 
-  end
 
+    -- Loop over groups in detected set.
+    local lost={}
+    for _,_group in pairs(self.detectedgroups:GetSet()) do
+      local group=_group --Wrapper.Group#GROUP
+
+      -- Loop over detected units
+      local gotit=false
+      for _,_du in pairs(groups) do
+        local du=_du --Wrapper.Group#GROUP
+        if group:GetName()==du:GetName() then
+          gotit=true
+        end
+      end
+
+      if not gotit then
+        table.insert(lost, group:GetName())
+        self:DetectedGroupLost(group)
+      end
+
+    end
+    
+    -- Remove lost units from detected set.
+    self.detectedgroups:RemoveGroupsByName(lost)
+
+  end
 
 end
 

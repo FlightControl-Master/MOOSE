@@ -130,7 +130,9 @@ function ARMYGROUP:New(Group)
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
   self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
-  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
+  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)
+  
+  --self:HandleEvent(EVENTS.Hit,        self.OnEventHit)
   
   -- Start the status monitoring.
   self:__Status(-1)
@@ -545,7 +547,7 @@ function ARMYGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed, Formation)
       local tasks=self:GetTasksWaypoint(n)
       
       for _,_task in pairs(tasks) do
-        local task=_task --#OPSGROUP.Task
+        local task=_task --Ops.OpsGroup#OPSGROUP.Task
         task.status=OPSGROUP.TaskStatus.SCHEDULED
       end
       
@@ -762,7 +764,7 @@ function ARMYGROUP:OnEventDead(EventData)
 
 end
 
---- Event function handling the crash of a unit.
+--- Event function handling when a unit is removed from the game.
 -- @param #ARMYGROUP self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function ARMYGROUP:OnEventRemoveUnit(EventData)
@@ -783,6 +785,22 @@ function ARMYGROUP:OnEventRemoveUnit(EventData)
 
   end
 
+end
+
+--- Event function handling when a unit is hit.
+-- @param #ARMYGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function ARMYGROUP:OnEventHit(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+    
+    -- TODO: suppression
+
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

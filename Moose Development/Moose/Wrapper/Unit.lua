@@ -492,8 +492,7 @@ end
 
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
--- @return Wrapper.Group#GROUP The Group of the Unit.
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
 function UNIT:GetGroup()
   self:F2( self.UnitName )
 

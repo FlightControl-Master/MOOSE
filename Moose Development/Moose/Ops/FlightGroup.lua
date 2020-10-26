@@ -720,7 +720,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ---- Update status.
--- @param #FLIHGTGROUP self
+-- @param #FLIGHTGROUP self
 function FLIGHTGROUP:onbeforeStatus(From, Event, To)
 
   -- First we check if elements are still alive. Could be that they were despawned without notice, e.g. when landing on a too small airbase.
