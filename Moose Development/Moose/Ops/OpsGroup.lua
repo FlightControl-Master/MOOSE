@@ -320,15 +320,15 @@ OPSGROUP.TaskType={
 
 --- NavyGroup version.
 -- @field #string version
-OPSGROUP.version="0.6.0"
+OPSGROUP.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
--- TODO: Suppression of fire.
 -- TODO: AI on/off.
 -- TODO: Invisible/immortal.
+-- TODO: F10 menu.
 -- TODO: Add pseudo function.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -525,13 +525,13 @@ end
 --- Set LASER parameters. 
 -- @param #OPSGROUP self
 -- @param #number Code Laser code. Default 1688.
--- @param #boolean CheckLOS Check if lasing unit has line of sight to target coordinate.
+-- @param #boolean CheckLOS Check if lasing unit has line of sight to target coordinate. Default is `true`.
 -- @param #boolean IROff If true, then dont switch on the additional IR pointer.
 -- @param #number UpdateTime Time interval in seconds the beam gets up for moving targets. Default every 0.5 sec.
 -- @return #OPSGROUP self
 function OPSGROUP:SetLaser(Code, CheckLOS, IROff, UpdateTime)
   self.spot.Code=Code or 1688
-  self.spot.CheckLOS=CheckLOS
+  self.spot.CheckLOS=CheckLOS and CheckLOS or true
   self.spot.IRon=not IROff
   self.spot.dt=UpdateTime or 0.5
   return self
@@ -3051,8 +3051,7 @@ function OPSGROUP:onafterDetectedUnit(From, Event, To, Unit)
 
   -- Debug.
   self:T2(self.lid..string.format("Detected unit %s", unitname))
-    
-  
+      
   if self.detectedunits:FindUnit(unitname) then
     -- Unit is already in the detected unit set ==> Trigger "DetectedUnitKnown" event.
     self:DetectedUnitKnown(Unit)
@@ -3070,6 +3069,8 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Unit#UNIT Unit The detected unit.
 function OPSGROUP:onafterDetectedUnitNew(From, Event, To, Unit)
+  
+  -- Debug info.
   self:T(self.lid..string.format("Detected New unit %s", Unit:GetName()))
   
   -- Add unit to detected unit set.
@@ -3087,10 +3088,9 @@ function OPSGROUP:onafterDetectedGroup(From, Event, To, Group)
   -- Get group name.
   local groupname=Group and Group:GetName() or "unknown"
 
-  -- Debug.
-  self:I(self.lid..string.format("Detected group %s", groupname))
-    
-  
+  -- Debug info.
+  self:T(self.lid..string.format("Detected group %s", groupname))
+      
   if self.detectedgroups:FindGroup(groupname) then
     -- Group is already in the detected set ==> Trigger "DetectedGroupKnown" event.
     self:DetectedGroupKnown(Group)
@@ -3108,7 +3108,9 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Group#GROUP Group The detected group.
 function OPSGROUP:onafterDetectedGroupNew(From, Event, To, Group)
-  self:I(self.lid..string.format("Detected New group %s", Group:GetName()))
+
+  -- Debug info.
+  self:T(self.lid..string.format("Detected New group %s", Group:GetName()))
   
   -- Add unit to detected unit set.
   self.detectedgroups:AddGroup(Group)
@@ -3382,6 +3384,8 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterLaserLostLOS(From, Event, To)
 
+  --env.info("FF lost LOS")
+
   -- No of sight.
   self.spot.LOS=false
   
@@ -3389,6 +3393,8 @@ function OPSGROUP:onafterLaserLostLOS(From, Event, To)
   self.spot.lostLOS=true
 
   if self.spot.On then
+  
+    --env.info("FF lost LOS ==> pause laser")
 
     -- Switch laser off.
     self:LaserPause()
@@ -3407,18 +3413,18 @@ function OPSGROUP:onafterLaserGotLOS(From, Event, To)
   -- Has line of sight.
   self.spot.LOS=true
   
-  env.info("FF Laser Got LOS")
+  --env.info("FF Laser Got LOS")
 
   if self.spot.lostLOS then
   
     -- Did not loose LOS anymore.
     self.spot.lostLOS=false
     
-    env.info("FF had lost LOS and regained it")
+    --env.info("FF had lost LOS and regained it")
 
     -- Resume laser if currently paused.
     if self.spot.Paused then
-      env.info("FF laser was paused ==> resume")
+      --env.info("FF laser was paused ==> resume")
       self:LaserResume()
     end
 
@@ -3565,7 +3571,7 @@ function OPSGROUP:_UpdateLaser()
     -- Check current LOS.
     local los=self:HasLoS(self.spot.Coordinate, self.spot.element, self.spot.offset)
     
-    env.info(string.format("FF check LOS current=%s previous=%s", tostring(los), tostring(self.spot.LOS)))
+    --env.info(string.format("FF check LOS current=%s previous=%s", tostring(los), tostring(self.spot.LOS)))
     
     if los then    
       -- Got LOS     

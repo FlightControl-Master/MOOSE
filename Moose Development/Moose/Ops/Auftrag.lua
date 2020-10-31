@@ -1957,7 +1957,7 @@ function AUFTRAG:IsReadyToCancel()
     return true
   end
 
-
+  -- Evaluate failure condition. One is enough.
   local failure=self:EvalConditionsAny(self.conditionFailure)
   
   if failure then
@@ -1965,6 +1965,7 @@ function AUFTRAG:IsReadyToCancel()
     return true
   end  
   
+  -- Evaluate success consitions. One is enough.
   local success=self:EvalConditionsAny(self.conditionSuccess)
   
   if success then
