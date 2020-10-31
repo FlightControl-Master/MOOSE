@@ -7875,7 +7875,7 @@ end
 function AIRBOSS:_RemoveUnitFromFlight(unit)
 
   -- Check if unit exists.
-  if unit then
+  if unit and unit:IsInstanceOf("UNIT") then
 
     -- Get group.
     local group=unit:GetGroup()
