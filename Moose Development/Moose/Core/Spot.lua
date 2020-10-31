@@ -341,7 +341,7 @@ do
   -- @return #SPOT
   function SPOT:onafterLaseOff( From, Event, To )
   
-    self:F( {"Stopped lasing for ", self.Target:GetName() , SpotIR = self.SportIR, SpotLaser = self.SpotLaser } )
+    self:F( {"Stopped lasing for ", self.Target and self.Target:GetName() or "coord", SpotIR = self.SportIR, SpotLaser = self.SpotLaser } )
     
     self.Lasing = false
     
