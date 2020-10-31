@@ -913,7 +913,7 @@ do -- FSM
   --- Check if FSM is in state.
   -- @param #FSM self
   -- @param #string State State name.
-  -- @param #boolean If true, FSM is in this state.
+  -- @return #boolean If true, FSM is in this state.
   function FSM:Is( State )
     return self.current == State
   end
@@ -921,7 +921,7 @@ do -- FSM
   --- Check if FSM is in state.
   -- @param #FSM self
   -- @param #string State State name.
-  -- @param #boolean If true, FSM is in this state.  
+  -- @return #boolean If true, FSM is in this state.  
   function FSM:is(state)
     return self.current == state
   end

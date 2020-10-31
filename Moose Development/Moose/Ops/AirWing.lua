@@ -152,7 +152,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.5.0"
+AIRWING.version="0.5.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -472,11 +472,19 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
     return nil
   elseif #payloads==1 then
     -- Only one payload anyway.
-    return payloads[1]
+    local payload=payloads[1] --#AIRWING.Payload
+    if not payload.unlimited then
+      payload.navail=payload.navail-1
+    end
+    return payload
   else
     -- Sort payloads.
     table.sort(payloads, sortpayloads)
-    return payloads[1]
+    local payload=payloads[1] --#AIRWING.Payload
+    if not payload.unlimited then
+      payload.navail=payload.navail-1
+    end        
+    return payload
   end
   
 end

@@ -283,7 +283,13 @@ do -- COORDINATE
 
     return self
   end
-  
+
+  --- Return the coordinates itself. Sounds stupid but can be useful for compatibility.
+  -- @param #COORDINATE self
+  -- @return #COORDINATE self
+  function COORDINATE:GetCoordinate()
+    return self
+  end  
 
   --- Return the coordinates of the COORDINATE in Vec3 format.
   -- @param #COORDINATE self
@@ -733,6 +739,13 @@ do -- COORDINATE
     return Velocity or 0
   end
 
+  --- Return the "name" of the COORDINATE. Obviously, a coordinate does not have a name like a unit, static or group. So here we take the MGRS coordinates of the position. 
+  -- @param #COORDINATE self
+  -- @return #string MGRS coordinates.
+  function COORDINATE:GetName()
+    local name=self:ToStringMGRS()
+    return rname
+  end
   
   --- Return velocity text of the COORDINATE.
   -- @param #COORDINATE self

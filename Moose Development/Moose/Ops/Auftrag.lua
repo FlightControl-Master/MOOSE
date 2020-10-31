@@ -1,18 +1,26 @@
 --- **Ops** - Auftrag (mission) for Ops.
 --
--- **Main Features:**
+-- ## Main Features:
 --
---    * Simplifies defining and executing DCS tasks.
---    * Additional useful events.
---    * Set mission start/stop times.
---    * Set mission priority and urgency (can cancel running missions).
+--    * Simplifies defining and executing DCS tasks
+--    * Additional useful events
+--    * Set mission start/stop times
+--    * Set mission priority and urgency (can cancel running missions)
 --    * Specific mission options for ROE, ROT, formation, etc.
---    * Interface to FLIGHTGROUP, AIRWING and WINGCOMMANDER classes.
---    * FSM events when a mission is done, successful or failed.
---    
+--    * Compatible with FLIGHTGROUP, NAVYGROUP, ARMYGROUP, AIRWING, WINGCOMMANDER and CHIEF classes
+--    * FSM events when a mission is done, successful or failed
+--
 -- ===
 --
+-- ## Example Missions:
+-- 
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Auftrag).
+--       
+-- ===
+-- 
 -- ### Author: **funkyfranky**
+-- 
+-- ===
 -- @module Ops.Auftrag
 -- @image OPS_Auftrag.png
 
@@ -1682,6 +1690,13 @@ function AUFTRAG:GetPriority()
   return self.prio
 end
 
+--- Get casualties, i.e. number of units that died during this mission.
+-- @param #AUFTRAG self
+-- @return #number Number of dead units.
+function AUFTRAG:GetCasualties()
+  return self.Ncasualties or 0
+end
+
 --- Check if mission is "urgent".
 -- @param #AUFTRAG self
 -- @return #boolean If `true`, mission is "urgent".
@@ -1942,7 +1957,7 @@ function AUFTRAG:IsReadyToCancel()
     return true
   end
 
-
+  -- Evaluate failure condition. One is enough.
   local failure=self:EvalConditionsAny(self.conditionFailure)
   
   if failure then
@@ -1950,6 +1965,7 @@ function AUFTRAG:IsReadyToCancel()
     return true
   end  
   
+  -- Evaluate success consitions. One is enough.
   local success=self:EvalConditionsAny(self.conditionSuccess)
   
   if success then

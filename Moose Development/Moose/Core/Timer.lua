@@ -27,6 +27,7 @@
 -- @field #number dT Time interval between function calls in seconds.
 -- @field #number ncalls Counter of function calls.
 -- @field #number ncallsMax Max number of function calls. If reached, timer is stopped.
+-- @field #boolean isrunning If `true`, timer is running. Else it was not started yet or was stopped.
 -- @extends Core.Base#BASE
 
 --- *Better three hours too soon than a minute too late.* - William Shakespeare
@@ -111,7 +112,7 @@ _TIMERID=0
 
 --- TIMER class version.
 -- @field #string version
-TIMER.version="0.1.0"
+TIMER.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -142,6 +143,9 @@ function TIMER:New(Function, ...)
   
   -- Number of function calls.
   self.ncalls=0
+  
+  -- Not running yet.
+  self.isrunning=false
   
   -- Increase counter
   _TIMERID=_TIMERID+1
@@ -186,6 +190,9 @@ function TIMER:Start(Tstart, dT, Duration)
   -- Set log id.
   self.lid=string.format("TIMER UID=%d/%d | ", self.uid, self.tid)
   
+  -- Is now running.
+  self.isrunning=true
+  
   -- Debug info.
   self:T(self.lid..string.format("Starting Timer in %.3f sec, dT=%s, Tstop=%s", self.Tstart-Tnow, tostring(self.dT), tostring(self.Tstop)))
 
@@ -210,6 +217,9 @@ function TIMER:Stop(Delay)
       self:T(self.lid..string.format("Stopping timer by removing timer function after %d calls!", self.ncalls))
       timer.removeFunction(self.tid)
       
+      -- Not running any more.
+      self.isrunning=false
+      
       -- Remove DB entry.
       --_TIMERDB[self.uid]=nil
       
@@ -227,6 +237,13 @@ end
 function TIMER:SetMaxFunctionCalls(Nmax)
   self.ncallsMax=Nmax
   return self
+end
+
+--- Check if the timer has been started and was not stopped.
+-- @param #TIMER self
+-- @return #boolean If `true`, the timer is running.
+function TIMER:IsRunning()
+  return self.isrunning
 end
 
 --- Call timer function.
