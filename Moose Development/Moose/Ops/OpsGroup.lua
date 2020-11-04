@@ -55,6 +55,7 @@
 -- @field #boolean detectionOn If true, detected units of the group are analyzed.
 -- @field Ops.Auftrag#AUFTRAG missionpaused Paused mission.
 -- @field #number Ndestroyed Number of destroyed units.
+-- @field #number Nkills Number kills of this groups.
 -- 
 -- @field Core.Point#COORDINATE coordinate Current coordinate.
 -- 
@@ -88,7 +89,7 @@
 -- 
 -- @field #OPSGROUP.Spot spot Laser and IR spot.
 -- 
--- @field #OPSGROUP.Ammo ammo Initial ammuont of ammo.
+-- @field #OPSGROUP.Ammo ammo Initial ammount of ammo.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -142,6 +143,7 @@ OPSGROUP = {
   icls               =    {},
   callsign           =    {},
   Ndestroyed         =     0,
+  Nkills             =     0,
 }
 
 
@@ -352,9 +354,16 @@ function OPSGROUP:New(Group)
     self.group=Group
     self.groupname=Group:GetName()
   end
-    
+      
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("OPSGROUP %s | ", self.groupname)
+  self.lid=string.format("OPSGROUP %s | ", tostring(self.groupname))
+  
+  if self.group then
+    if not self:IsExist() then
+      self:E(self.lid.."ERROR: GROUP does not exist! Returning nil")
+      return nil
+    end
+  end
   
   -- Init set of detected units.
   self.detectedunits=SET_UNIT:New()
@@ -531,7 +540,11 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SetLaser(Code, CheckLOS, IROff, UpdateTime)
   self.spot.Code=Code or 1688
-  self.spot.CheckLOS=CheckLOS and CheckLOS or true
+  if CheckLOS~=nil then
+    self.spot.CheckLOS=CheckLOS
+  else
+    self.spot.CheckLOS=true
+  end
   self.spot.IRon=not IROff
   self.spot.dt=UpdateTime or 0.5
   return self
@@ -1303,7 +1316,7 @@ end
 -- @return #OPSGROUP.Waypoint Waypoint data.
 function OPSGROUP:GetWaypointByID(uid)
 
-  for _,_waypoint in pairs(self.waypoints) do
+  for _,_waypoint in pairs(self.waypoints or {}) do
     local waypoint=_waypoint --#OPSGROUP.Waypoint
     if waypoint.uid==uid then
       return waypoint
@@ -2190,11 +2203,16 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
       -- Set stop flag. When the flag is true, the _TaskDone function is executed and calls :TaskDone()
       Task.stopflag:Set(1)
       
+      local done=false
       if Task.dcstask.id=="Formation" then
         Task.formation:Stop()
-        self:TaskDone(Task)
-      elseif stopflag==1 or not self:IsAlive() then
+        done=true
+      elseif stopflag==1 or (not self:IsAlive()) or self:IsDead() or self:IsStopped() then
         -- Manual call TaskDone if setting flag to one was not successful.
+        done=true
+      end
+      
+      if done then
         self:TaskDone(Task)
       end
   
@@ -3173,7 +3191,7 @@ function OPSGROUP:onbeforeLaserOn(From, Event, To, Target)
     self.spot.element=element    
     
     -- Height offset. No offset for aircraft. We take the height for ground or naval.
-    local offsetY=0    
+    local offsetY=0
     if self.isGround or self.isNaval then
       offsetY=element.height
     end
@@ -3480,6 +3498,10 @@ function OPSGROUP:SetLaserTarget(Target)
       -- Coordinate as target.
       self.spot.TargetType=0
       self.spot.offsetTarget={x=0, y=0, z=0}
+    elseif Target:IsInstanceOf("SCENERY") then
+      -- Coordinate as target.
+      self.spot.TargetType=0
+      self.spot.offsetTarget={x=0, y=1, z=0}    
     else
       self:E(self.lid.."ERROR: LASER target should be a POSITIONABLE (GROUP, UNIT or STATIC) or a COORDINATE object!")
       return
@@ -3625,7 +3647,7 @@ end
 -- @param #string To To state.
 -- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onafterElementDead(From, Event, To, Element)
-  self:T(self.lid..string.format("Element dead %s", Element.name))
+  self:T(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
   
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
@@ -3672,7 +3694,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterDead(From, Event, To)
-  self:T(self.lid..string.format("Group dead!"))
+  self:T(self.lid..string.format("Group dead at t=%.3f", timer.getTime()))
 
   -- Delete waypoints so they are re-initialized at the next spawn.
   self.waypoints=nil
@@ -3681,6 +3703,8 @@ function OPSGROUP:onafterDead(From, Event, To)
   -- Cancel all missions.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    self:T(self.lid.."Cancelling mission because group is dead! Mission name "..tostring(mission:GetName()))
 
     self:MissionCancel(mission)
     mission:GroupDead(self)
@@ -3713,7 +3737,7 @@ function OPSGROUP:onafterStop(From, Event, To)
   end
 
   -- Debug output.
-  self:T(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
+  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

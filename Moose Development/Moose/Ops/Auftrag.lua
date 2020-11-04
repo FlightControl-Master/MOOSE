@@ -47,6 +47,7 @@
 -- @field #number markerCoaliton Coalition to which the marker is dispayed.
 -- @field #table DCStask DCS task structure.
 -- @field #number Ncasualties Number of own casualties during mission.
+-- @field #number Nkills Number of (enemy) units killed by assets of this mission.
 -- @field #number Nelements Number of elements (units) assigned to mission.
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
 -- @field #number Tover Mission abs. time stamp, when mission was over. 
@@ -504,8 +505,9 @@ function AUFTRAG:New(Type)
   self.NrepeatFailure=0
   self.NrepeatSuccess=0
   self.nassets=1
-  self.dTevaluate=0
+  self.dTevaluate=5
   self.Ncasualties=0
+  self.Nkills=0
   self.Nelements=0
   
   -- FMS start state is PLANNED.
@@ -1697,6 +1699,14 @@ function AUFTRAG:GetCasualties()
   return self.Ncasualties or 0
 end
 
+--- Get kills, i.e. number of units that were destroyed by assets of this mission.
+-- @param #AUFTRAG self
+-- @return #number Number of units destroyed.
+function AUFTRAG:GetKills()
+  return self.Nkills or 0
+end
+
+
 --- Check if mission is "urgent".
 -- @param #AUFTRAG self
 -- @return #boolean If `true`, mission is "urgent".
@@ -2101,6 +2111,11 @@ function AUFTRAG:onafterStatus(From, Event, To)
 
   -- Ready to evaluate mission outcome?
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
+  
+  --env.info("FF Tover="..tostring(self.Tover))
+  --if self.Tover then
+  --  env.info("FF Tnow-Tover="..tostring(Tnow-self.Tover))
+  --end
 
   -- Check if mission is OVER (done or cancelled) and enough time passed to evaluate the result.
   if self:IsOver() and ready2evaluate then
@@ -2199,13 +2214,12 @@ function AUFTRAG:Evaluate()
   local text=string.format("Evaluating mission:\n")
   text=text..string.format("Own casualties = %d/%d\n", self.Ncasualties, self.Nelements)
   text=text..string.format("Own losses     = %.1f %%\n", owndamage)
+  text=text..string.format("Killed units   = %d\n", self.Nkills)
   text=text..string.format("--------------------------\n")  
   text=text..string.format("Targets left   = %d/%d\n", Ntargets, Ntargets0)
   text=text..string.format("Targets life   = %.1f/%.1f\n", Life, Life0)
   text=text..string.format("Enemy losses   = %.1f %%\n", targetdamage)
   text=text..string.format("--------------------------\n")
-  --text=text..string.format("Loss ratio     = %.1f %%\n", targetdamage)
-  --text=text..string.format("--------------------------\n")
   text=text..string.format("Success Cond   = %s\n", tostring(successCondition))
   text=text..string.format("Failure Cond   = %s\n", tostring(failureCondition))
   text=text..string.format("--------------------------\n")
@@ -2562,6 +2576,8 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
  
   -- Number of groups alive. 
   local N=self:CountOpsGroups()
+  
+  self:I(self.lid..string.format("Asset %s dead! Number of ops groups remaining %d", tostring(Asset.spawngroupname), N))
   
   -- All assets dead?
   if N==0 then
@@ -3045,7 +3061,7 @@ function AUFTRAG:CountOpsGroups()
   local N=0
   for _,_groupdata in pairs(self.groupdata) do
     local groupdata=_groupdata --#AUFTRAG.GroupData
-    if groupdata and groupdata.opsgroup and groupdata.opsgroup:IsAlive() then
+    if groupdata and groupdata.opsgroup and groupdata.opsgroup:IsAlive() and not groupdata.opsgroup:IsDead() then
       N=N+1
     end
   end

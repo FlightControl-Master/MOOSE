@@ -525,12 +525,12 @@ function TARGET:_AddObject(Object)
 
   elseif Object:IsInstanceOf("COORDINATE") then
 
-    local coord=Object --Core.Point#COORDINATE
+    local coord=UTILS.DeepCopy(Object) --Core.Point#COORDINATE
 
     target.Type=TARGET.ObjectType.COORDINATE
     target.Name=coord:ToStringMGRS()
     
-    target.Coordinate=Object
+    target.Coordinate=coord
 
     target.Life0=1
     target.Life=1
