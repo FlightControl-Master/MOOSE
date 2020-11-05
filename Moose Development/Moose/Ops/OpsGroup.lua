@@ -1245,6 +1245,13 @@ function OPSGROUP:IsLasing()
   return self.spot.On
 end
 
+--- Check if the group has currently switched a LASER on.
+-- @param #OPSGROUP self
+-- @return #boolean If true, LASER of the group is on.
+function OPSGROUP:IsEngaging()
+  return self:is("Engaging")
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Waypoint Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3909,6 +3916,11 @@ function OPSGROUP:_CheckGroupDone(delay)
       self:ScheduleOnce(delay, self._CheckGroupDone, self)
     else
     
+      if self:IsEngaging() then
+        self:UpdateRoute()
+        return
+      end
+    
       -- Get current waypoint.
       local waypoint=self:GetWaypoint(self.currentwp)
       
@@ -4120,8 +4132,13 @@ function OPSGROUP:_CheckAmmoStatus()
     if ammo.Missiles==0 and self.ammo.Missiles>0 and not self.outofMissiles then
       self.outofMissiles=true
       self:OutOfMissiles()
-    end        
-  
+    end
+    
+    -- Check if group is engaging.
+    if self:IsEngaging() and ammo.Total==0 then
+      self:Disengage()
+    end
+
   end
   
 end
@@ -4264,6 +4281,9 @@ function OPSGROUP:InitWaypoints()
 
     -- Coordinate of the waypoint.    
     local coordinate=COORDINATE:New(wp.x, wp.alt, wp.y)
+    
+    -- Strange!
+    wp.speed=wp.speed or 0
     
     -- Speed at the waypoint.
     local speedknots=UTILS.MpsToKnots(wp.speed)
@@ -4422,6 +4442,10 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
       
         -- Trigger Rearming event.
         opsgroup:Rearming()
+        
+      elseif opsgroup:IsEngaging() then
+      
+        -- Nothing to do really.
         
       else
       

@@ -33,6 +33,7 @@
 -- @field #boolean adinfinitum Resume route at first waypoint when final waypoint is reached.
 -- @field #boolean formationPerma Formation that is used permanently and overrules waypoint formations.
 -- @field #boolean isMobile If true, group is mobile.
+-- @field #ARMYGROUP.Target engage Engage target.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B. Sledge
@@ -49,6 +50,7 @@
 ARMYGROUP = {
   ClassName       = "ARMYGROUP",
   formationPerma  = nil,
+  engage          = {},
 }
 
 --- Army group element.
@@ -60,6 +62,11 @@ ARMYGROUP = {
 -- @field #number length Length of element in meters.
 -- @field #number width Width of element in meters.
 -- @field #number height Height of element in meters.
+
+--- Target
+-- @type ARMYGROUP.Target
+-- @field Ops.Target#TARGET Target The target.
+-- @field Core.Point#COORDINATE Coordinate Last known coordinate of the target.
 
 --- Army Group version.
 -- @field #string version
@@ -103,6 +110,13 @@ function ARMYGROUP:New(Group)
     
   self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
   self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
+  
+  self:AddTransition("*",             "Retreat",          "Retreating")  --
+  self:AddTransition("Retreating",    "Retreated",        "Holding")     --
+  
+  self:AddTransition("Cruising",      "EngageTarget",     "Engaging")    -- Engage a target
+  self:AddTransition("Holding",       "EngageTarget",     "Engaging")    -- Engage a target
+  self:AddTransition("Engaging",      "Disengage",        "Cruising")    -- Engage a target
 
   self:AddTransition("*",             "Rearm",            "Rearm")       -- Group is send to a coordinate and waits until ammo is refilled.
   self:AddTransition("Rearm",         "Rearming",         "Rearming")    -- Group has arrived at the rearming coodinate and is waiting to be fully rearmed.
@@ -311,6 +325,11 @@ function ARMYGROUP:onafterStatus(From, Event, To)
     -- Check if group got stuck.
     self:_CheckStuck()
     
+    -- Update engagement.
+    if self:IsEngaging() then
+      self:_UpdateEngageTarget()
+    end
+    
     if self.verbose>=1 then
   
       -- Get number of tasks and missions.
@@ -321,11 +340,12 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       local alarm=self:GetAlarmstate()
       local speed=UTILS.MpsToKnots(self.velocity)
       local speedEx=UTILS.MpsToKnots(self:GetExpectedSpeed())
-      local formation=self.option.Formation or "unknown"
+      local formation=self.option.Formation or "unknown"      
+      local ammo=self:GetAmmoTot()
     
       -- Info text.
-      local text=string.format("%s [ROE-AS=%d-%d T/M=%d/%d]: Wp=%d/%d-->%d (final %s), Speed=%.1f (%d), Heading=%03d", 
-      fsmstate, roe, alarm, nTaskTot, nMissions, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), tostring(self.passedfinalwp), speed, speedEx, self.heading)
+      local text=string.format("%s [ROE-AS=%d-%d T/M=%d/%d]: Wp=%d/%d-->%d (final %s), Speed=%.1f (%d), Heading=%03d, Ammo=%d", 
+      fsmstate, roe, alarm, nTaskTot, nMissions, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), tostring(self.passedfinalwp), speed, speedEx, self.heading, ammo.Total)
       self:I(self.lid..text)
       
     end
@@ -506,7 +526,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
     end
   end
 
-  if not self.passedfinalwp then
+  if self:IsEngaging() or not self.passedfinalwp then
   
     -- Debug info.
     self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Formation=%s", 
@@ -630,6 +650,85 @@ function ARMYGROUP:onafterRearming(From, Event, To)
   -- Create new route consisting of only this position ==> Stop!
   self:Route({wp})
   
+end
+
+--- On after "EngageTarget" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP Group the group to be engaged.
+function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
+
+  if Target:IsInstanceOf("TARGET") then
+    self.engage.Target=Target
+  else
+    self.engage.Target=TARGET:New(Target)
+  end
+  
+  env.info("FF Engage Target "..self.engage.Target:GetName())
+
+  self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate())
+  
+  self:SwitchAlarmstate(ENUMS.AlarmState.Auto)
+  self:SwitchROE(ENUMS.ROE.WeaponFree)
+
+  -- ID of current waypoint.
+  local uid=self:GetWaypointCurrent().uid
+  
+  -- Add waypoint after current.
+  self.engage.Waypoint=self:AddWaypoint(self.engage.Coordinate, nil, uid, Formation, true)
+  
+  -- Set if we want to resume route after reaching the detour waypoint.
+  self.engage.Waypoint.detour=1
+
+end
+
+--- On after "EngageTarget" event.
+-- @param #ARMYGROUP self
+function ARMYGROUP:_UpdateEngageTarget()
+
+  if self.engage.Target and self.engage.Target:IsAlive() then
+  
+    env.info("FF Update Engage Target "..self.engage.Target:GetName())
+
+    local vec3=self.engage.Target:GetCoordinate():GetVec3()
+  
+    local dist=UTILS.VecDist2D(vec3, self.engage.Coordinate:GetVec3())
+    
+    if dist>100 then
+    
+      env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
+    
+      self.engage.Coordinate:UpdateFromVec3(vec3)
+
+      -- ID of current waypoint.
+      local uid=self:GetWaypointCurrent().uid
+    
+      -- Remove current waypoint
+      self:RemoveWaypointByID(self.engage.Waypoint.uid)
+  
+        -- Add waypoint after current.
+      self.engage.Waypoint=self:AddWaypoint(self.engage.Coordinate, nil, uid, Formation, true)
+    
+      -- Set if we want to resume route after reaching the detour waypoint.
+      self.engage.Waypoint.detour=0      
+    
+    end
+    
+  else
+    self:Disengage()
+  end
+
+end
+
+--- On after "Disengage" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function ARMYGROUP:onafterDisengage(From, Event, To)
+  self:_CheckGroupDone(1)    
 end
 
 --- On after "Rearmed" event.
