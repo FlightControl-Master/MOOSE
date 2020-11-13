@@ -34,6 +34,8 @@
 -- @field #boolean formationPerma Formation that is used permanently and overrules waypoint formations.
 -- @field #boolean isMobile If true, group is mobile.
 -- @field #ARMYGROUP.Target engage Engage target.
+-- @field #boolean retreatOnOutOfAmmo If true, the group will automatically retreat when out of ammo. Needs a retreat zone!
+-- @field Core.Set#SET_ZONE retreatZones Set of retreat zones.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B. Sledge
@@ -70,12 +72,13 @@ ARMYGROUP = {
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="0.3.0"
+ARMYGROUP.version="0.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Retreat.
 -- TODO: Suppression of fire. 
 -- TODO: Check if group is mobile.
 -- TODO: F10 menu.
@@ -102,6 +105,7 @@ function ARMYGROUP:New(Group)
   self:SetDefaultAlarmstate()
   self:SetDetection()
   self:SetPatrolAdInfinitum(false)
+  self:SetRetreatZones()
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
@@ -112,10 +116,11 @@ function ARMYGROUP:New(Group)
   self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
   
   self:AddTransition("*",             "Retreat",          "Retreating")  --
-  self:AddTransition("Retreating",    "Retreated",        "Holding")     --
+  self:AddTransition("Retreating",    "Retreated",        "Retreated")   --
   
   self:AddTransition("Cruising",      "EngageTarget",     "Engaging")    -- Engage a target
   self:AddTransition("Holding",       "EngageTarget",     "Engaging")    -- Engage a target
+  self:AddTransition("OnDetour",      "EngageTarget",     "Engaging")    -- Engage a target
   self:AddTransition("Engaging",      "Disengage",        "Cruising")    -- Engage a target
 
   self:AddTransition("*",             "Rearm",            "Rearm")       -- Group is send to a coordinate and waits until ammo is refilled.
@@ -258,6 +263,24 @@ function ARMYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clo
   return task
 end
 
+--- Define a set of possible retreat zones.
+-- @param #ARMYGROUP self
+-- @param Core.Set#SET_ZONE RetreatZoneSet The retreat zone set. Default is an empty set.
+-- @return #ARMYGROUP self
+function ARMYGROUP:SetRetreatZones(RetreatZoneSet)
+  self.retreatZones=RetreatZoneSet or SET_ZONE:New()
+  return self
+end
+
+--- Add a zone to the retreat zone set.
+-- @param #ARMYGROUP self
+-- @param Core.Zone#ZONE_BASE RetreatZone The retreat zone.
+-- @return #ARMYGROUP self
+function ARMYGROUP:AddRetreatZone(RetreatZone)
+  self.retreatZones:AddZone(RetreatZone)
+  return self
+end
+
 --- Check if the group is currently holding its positon.
 -- @param #ARMYGROUP self
 -- @return #boolean If true, group was ordered to hold.
@@ -278,6 +301,20 @@ end
 function ARMYGROUP:IsOnDetour()
   return self:Is("OnDetour")
 end
+
+--- Check if the group is ready for combat. I.e. not reaming, retreating, retreated, out of ammo or engaging.
+-- @param #ARMYGROUP self
+-- @return #boolean If true, group is on a combat ready.
+function ARMYGROUP:IsCombatReady()
+  local combatready=true
+  
+  if self:IsRearming() or self:IsRetreating() or self.outofAmmo or self:IsEngaging() or self:is("Retreated") or self:IsDead() or self:IsStopped() or self:IsInUtero() then
+    combatready=false
+  end
+  
+  return combatready
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
@@ -325,6 +362,9 @@ function ARMYGROUP:onafterStatus(From, Event, To)
     -- Check if group got stuck.
     self:_CheckStuck()
     
+    -- Check damage of elements and group.
+    self:_CheckDamage()
+    
     -- Update engagement.
     if self:IsEngaging() then
       self:_UpdateEngageTarget()
@@ -344,8 +384,8 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       local ammo=self:GetAmmoTot()
     
       -- Info text.
-      local text=string.format("%s [ROE-AS=%d-%d T/M=%d/%d]: Wp=%d/%d-->%d (final %s), Speed=%.1f (%d), Heading=%03d, Ammo=%d", 
-      fsmstate, roe, alarm, nTaskTot, nMissions, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), tostring(self.passedfinalwp), speed, speedEx, self.heading, ammo.Total)
+      local text=string.format("%s [ROE-AS=%d-%d T/M=%d/%d]: Wp=%d/%d-->%d (final %s), Life=%.1f, Speed=%.1f (%d), Heading=%03d, Ammo=%d", 
+      fsmstate, roe, alarm, nTaskTot, nMissions, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), tostring(self.passedfinalwp), self.life or 0, speed, speedEx, self.heading, ammo.Total)
       self:I(self.lid..text)
       
     end
@@ -596,6 +636,13 @@ end
 -- @param #number ResumeRoute If true, resume route after detour point was reached. If false, the group will stop at the detour point and wait for futher commands.
 function ARMYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Formation, ResumeRoute)
 
+  for _,_wp in pairs(self.waypoints) do
+    local wp=_wp --Ops.OpsGroup#OPSGROUP.Waypoint
+    if wp.detour then
+      self:RemoveWaypointByID(wp.uid)
+    end
+  end 
+
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
   
@@ -650,6 +697,103 @@ function ARMYGROUP:onafterRearming(From, Event, To)
   -- Create new route consisting of only this position ==> Stop!
   self:Route({wp})
   
+end
+
+--- On before "Retreat" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
+-- @param #number Formation (Optional) Formation of the group.
+function ARMYGROUP:onbeforeRetreat(From, Event, To, Zone, Formation)
+
+  if not Zone then
+  
+    local a=self:GetVec2()
+  
+    local distmin=math.huge
+    local zonemin=nil  
+    for _,_zone in pairs(self.retreatZones:GetSet()) do
+      local zone=_zone --Core.Zone#ZONE_BASE
+      
+      local b=zone:GetVec2()
+      
+      local dist=UTILS.VecDist2D(a, b)
+      
+      if dist<distmin then
+        distmin=dist
+        zonemin=zone
+      end
+    
+    end
+  
+    if zonemin then
+      self:__Retreat(0.1, zonemin, Formation)
+    end
+    
+    return false
+  end
+
+  return true
+end
+
+--- On after "Retreat" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE_BASE Zone (Optional) Zone where to retreat. Default is the closest retreat zone.
+-- @param #number Formation (Optional) Formation of the group.
+function ARMYGROUP:onafterRetreat(From, Event, To, Zone, Formation)
+
+  -- ID of current waypoint.
+  local uid=self:GetWaypointCurrent().uid
+  
+  local Coordinate=Zone:GetRandomCoordinate()
+  
+  -- Add waypoint after current.
+  local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
+  
+  -- Set if we want to resume route after reaching the detour waypoint.
+  wp.detour=0
+
+end
+
+--- On after "Retreated" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function ARMYGROUP:onafterRetreated(From, Event, To)
+
+  -- Get current position.
+  local pos=self:GetCoordinate()
+  
+  -- Create a new waypoint.
+  local wp=pos:WaypointGround(0)
+  
+  -- Create new route consisting of only this position ==> Stop!
+  self:Route({wp})
+  
+end
+
+--- On after "EngageTarget" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP Group the group to be engaged.
+function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target)
+
+  local ammo=self:GetAmmoTot()
+  
+  if ammo.Total==0 then
+    env.info("FF cannot engage because no ammo!")
+    return false
+  end
+
+  return true
 end
 
 --- On after "EngageTarget" event.
@@ -1031,11 +1175,13 @@ function ARMYGROUP:_InitGroup()
     element.categoryname=element.unit:GetCategoryName()
     element.size, element.length, element.height, element.width=unit:GetObjectSize()
     element.ammo0=self:GetAmmoUnit(unit, false)
+    element.life0=unit:GetLife0()
+    element.life=element.life0
 
     -- Debug text.
     if self.verbose>=2 then
-      local text=string.format("Adding element %s: status=%s, skill=%s, category=%s (%d), size: %.1f (L=%.1f H=%.1f W=%.1f)",
-      element.name, element.status, element.skill, element.categoryname, element.category, element.size, element.length, element.height, element.width)
+      local text=string.format("Adding element %s: status=%s, skill=%s, life=%.3f category=%s (%d), size: %.1f (L=%.1f H=%.1f W=%.1f)",
+      element.name, element.status, element.skill, element.life, element.categoryname, element.category, element.size, element.length, element.height, element.width)
       self:I(self.lid..text)
     end
   

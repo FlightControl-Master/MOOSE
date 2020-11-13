@@ -230,7 +230,13 @@ function TARGET:AddObject(Object)
     
     for _,object in pairs(set.Set) do
       self:AddObject(object)
-    end    
+    end
+    
+  elseif Object:IsInstanceOf("GROUP") then
+  
+    for _,unit in pairs(Object:GetUnits()) do
+      self:_AddObject(unit)
+    end
   
   else
   
@@ -716,6 +722,8 @@ function TARGET:GetTargetVec3(Target)
 
     if object and object:IsAlive() then
       return object:GetVec3()
+    else
+      return nil
     end
   
   elseif Target.Type==TARGET.ObjectType.STATIC then
@@ -724,6 +732,8 @@ function TARGET:GetTargetVec3(Target)
   
     if object and object:IsAlive() then
       return object:GetVec3()
+    else
+      return nil
     end
 
   elseif Target.Type==TARGET.ObjectType.SCENERY then
@@ -732,6 +742,8 @@ function TARGET:GetTargetVec3(Target)
   
     if object then
       return object:GetVec3()
+    else
+      return nil
     end
     
   elseif Target.Type==TARGET.ObjectType.AIRBASE then

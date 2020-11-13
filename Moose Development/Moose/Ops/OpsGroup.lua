@@ -156,6 +156,8 @@ OPSGROUP = {
 -- @field #number length Length of element in meters.
 -- @field #number width Width of element in meters.
 -- @field #number height Height of element in meters.
+-- @field #number life0 Initial life points.
+-- @field #number life Life points when last updated.
 
 --- Status of group element.
 -- @type OPSGROUP.ElementStatus
@@ -391,10 +393,13 @@ function OPSGROUP:New(Group)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("InUtero",       "Spawned",          "Spawned")     -- The whole group was spawned.
-  self:AddTransition("*",             "Dead",             "Dead")        -- The whole group is dead. 
+  self:AddTransition("*",             "Dead",             "Dead")        -- The whole group is dead.
   self:AddTransition("*",             "Stop",             "Stopped")     -- Stop FSM.
 
   self:AddTransition("*",             "Status",           "*")           -- Status update.
+  
+  self:AddTransition("*",             "Destroyed",        "*")           -- The whole group is dead.  
+  self:AddTransition("*",             "Damaged",          "*")           -- Someone in the group took damage.
 
   self:AddTransition("*",             "UpdateRoute",      "*")           -- Update route of group. Only if airborne.
   self:AddTransition("*",             "Respawn",          "*")           -- Respawn group.
@@ -445,6 +450,7 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementDestroyed", "*")           -- An element was destroyed.
   self:AddTransition("*",             "ElementDead",      "*")           -- An element is dead.
+  self:AddTransition("*",             "ElementDamaged",   "*")           -- An element was damaged.
 
   ------------------------
   --- Pseudo Functions ---
@@ -936,8 +942,23 @@ function OPSGROUP:DespawnElement(Element, Delay, NoEventRemoveUnit)
   return self
 end
 
+--- Get current 2D position vector of the group.
+-- @param #OPSGROUP self
+-- @return DCS#Vec2 Vector with x,y components.
+function OPSGROUP:GetVec2()
 
---- Get current 3D vector of the group.
+  local vec3=self:GetVec3()
+  
+  if vec3 then
+    local vec2={x=vec3.x, y=vec3.z}
+    return vec2
+  end
+
+  return nil
+end
+
+
+--- Get current 3D position vector of the group.
 -- @param #OPSGROUP self
 -- @return DCS#Vec3 Vector with x,y,z components.
 function OPSGROUP:GetVec3()
@@ -973,6 +994,7 @@ function OPSGROUP:GetCoordinate(NewObject)
 
     if NewObject then
       local coord=COORDINATE:NewFromCoordinate(self.coordinate)
+      return coord
     else
       return self.coordinate
     end    
@@ -1245,9 +1267,16 @@ function OPSGROUP:IsLasing()
   return self.spot.On
 end
 
---- Check if the group has currently switched a LASER on.
+--- Check if the group is currently retreating.
 -- @param #OPSGROUP self
--- @return #boolean If true, LASER of the group is on.
+-- @return #boolean If true, group is retreating.
+function OPSGROUP:IsRetreating()
+  return self:is("Retreating")
+end
+
+--- Check if the group is engaging another unit or group.
+-- @param #OPSGROUP self
+-- @return #boolean If true, group is engaging.
 function OPSGROUP:IsEngaging()
   return self:is("Engaging")
 end
@@ -3695,6 +3724,17 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
     
 end
 
+--- On before "Dead" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onbeforeDead(From, Event, To)
+  if self.Ndestroyed==#self.elements then
+    self:Destroyed()
+  end
+end
+
 --- On after "Dead" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -4052,6 +4092,37 @@ function OPSGROUP:_CheckStuck()
   
 end
 
+
+--- Check damage.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:_CheckDamage()
+
+  self.life=0
+  local damaged=false
+  for _,_element in pairs(self.elements) do
+    local element=_element --Ops.OpsGroup#OPSGROUP
+    
+    -- Current life points.
+    local life=element.unit:GetLife()
+    
+    self.life=self.life+life
+    
+    if life<element.life then
+      element.life=life    
+      self:ElementDamaged(element)
+      damaged=true
+    end
+    
+  end
+  
+  if damaged then
+    self:Damaged()
+  end
+  
+  return self
+end
+
 --- Check ammo is full.
 -- @param #OPSGROUP self
 -- @return #boolean If true, ammo is full.
@@ -4094,6 +4165,7 @@ function OPSGROUP:_CheckAmmoStatus()
       self.outofAmmo=false
     end
     if ammo.Total==0 and not self.outofAmmo then
+      env.info("FF out of ammo")
       self.outofAmmo=true
       self:OutOfAmmo()
     end
@@ -4442,6 +4514,11 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
       
         -- Trigger Rearming event.
         opsgroup:Rearming()
+        
+      elseif opsgroup:IsRetreating() then
+      
+        -- Trigger Retreated event.
+        opsgroup:Retreated()
         
       elseif opsgroup:IsEngaging() then
       

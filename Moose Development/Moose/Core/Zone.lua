@@ -817,6 +817,32 @@ function ZONE_RADIUS:GetScannedSetUnit()
   return SetUnit
 end
 
+--- Get a set of scanned units.
+-- @param #ZONE_RADIUS self
+-- @return Core.Set#SET_GROUP Set of groups.
+function ZONE_RADIUS:GetScannedSetGroup()
+
+  self.ScanSetGroup=self.ScanSetGroup or SET_GROUP:New() --Core.Set#SET_GROUP
+  
+  self.ScanSetGroup.Set={}
+
+  if self.ScanData then
+    for ObjectID, UnitObject in pairs( self.ScanData.Units ) do
+      local UnitObject = UnitObject -- DCS#Unit
+      if UnitObject:isExist() then
+      
+        local FoundUnit=UNIT:FindByName(UnitObject:getName())
+        if FoundUnit then
+          local group=FoundUnit:GetGroup()
+          self.ScanSetGroup:AddGroup(group)
+        end
+      end
+    end
+  end
+
+  return self.ScanSetGroup
+end
+
 
 --- Count the number of different coalitions inside the zone.
 -- @param #ZONE_RADIUS self
