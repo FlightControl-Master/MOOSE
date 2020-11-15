@@ -526,17 +526,21 @@ local _EVENTMETA = {
 -- @param #EVENT self
 -- @return #EVENT self
 function EVENT:New()
+
+  -- Inherit base.
   local self = BASE:Inherit( self, BASE:New() )
-  self:F2()
-  self.EventHandler = world.addEventHandler( self )
+  
+  -- Add world event handler.
+  self.EventHandler = world.addEventHandler(self)
+  
   return self
 end
 
 
---- Initializes the Events structure for the event
+--- Initializes the Events structure for the event.
 -- @param #EVENT self
--- @param DCS#world.event EventID
--- @param Core.Base#BASE EventClass
+-- @param DCS#world.event EventID Event ID.
+-- @param Core.Base#BASE EventClass The class object for which events are handled.
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
   self:F3( { _EVENTMETA[EventID].Text, EventClass } )
@@ -548,6 +552,7 @@ function EVENT:Init( EventID, EventClass )
   
   -- Each event has a subtable of EventClasses, ordered by EventPriority.
   local EventPriority = EventClass:GetEventPriority()
+  
   if not self.Events[EventID][EventPriority] then
     self.Events[EventID][EventPriority] = setmetatable( {}, { __mode = "k" } )
   end 
@@ -555,40 +560,45 @@ function EVENT:Init( EventID, EventClass )
   if not self.Events[EventID][EventPriority][EventClass] then
      self.Events[EventID][EventPriority][EventClass] = {}
   end
-  
-  
+    
   return self.Events[EventID][EventPriority][EventClass]
 end
 
 --- Removes a subscription
 -- @param #EVENT self
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param DCS#world.event EventID
--- @return #EVENT.Events
+-- @param DCS#world.event EventID Event ID.
+-- @return #EVENT self
 function EVENT:RemoveEvent( EventClass, EventID  )
 
+  -- Debug info.
   self:F2( { "Removing subscription for class: ", EventClass:GetClassNameAndID() } )
 
+  -- Get event prio.
   local EventPriority = EventClass:GetEventPriority()
 
+  -- Events.
   self.Events = self.Events or {}
   self.Events[EventID] = self.Events[EventID] or {}
   self.Events[EventID][EventPriority] = self.Events[EventID][EventPriority] or {}  
     
+  -- Remove
   self.Events[EventID][EventPriority][EventClass] = nil
   
+  return self
 end
 
---- Resets subscriptions
+--- Resets subscriptions.
 -- @param #EVENT self
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param DCS#world.event EventID
+-- @param DCS#world.event EventID Event ID.
 -- @return #EVENT.Events
 function EVENT:Reset( EventObject ) --R2.1
 
   self:F( { "Resetting subscriptions for class: ", EventObject:GetClassNameAndID() } )
 
   local EventPriority = EventObject:GetEventPriority()
+  
   for EventID, EventData in pairs( self.Events ) do
     if self.EventsDead then
       if self.EventsDead[EventID] then
@@ -603,19 +613,22 @@ function EVENT:Reset( EventObject ) --R2.1
 end
 
 
-
-
 --- Clears all event subscriptions for a @{Core.Base#BASE} derived object.
 -- @param #EVENT self
--- @param Core.Base#BASE EventObject
-function EVENT:RemoveAll( EventObject  )
-  self:F3( { EventObject:GetClassNameAndID() } )
+-- @param Core.Base#BASE EventClass The self class object for which the events are removed.
+-- @return #EVENT self
+function EVENT:RemoveAll(EventClass)
 
-  local EventClass = EventObject:GetClassNameAndID()
+  local EventClassName = EventClass:GetClassNameAndID()
+  
+  -- Get Event prio.
   local EventPriority = EventClass:GetEventPriority()
+  
   for EventID, EventData in pairs( self.Events ) do
     self.Events[EventID][EventPriority][EventClass] = nil
   end
+  
+  return self
 end
 
 
@@ -636,7 +649,7 @@ function EVENT:OnEventForTemplate( EventTemplate, EventFunction, EventClass, Eve
   return self
 end
 
---- Set a new listener for an S_EVENT_X event independent from a unit or a weapon.
+--- Set a new listener for an `S_EVENT_X` event independent from a unit or a weapon.
 -- @param #EVENT self
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is captured. When the event happens, the event process will be called in this class provided.
@@ -652,13 +665,13 @@ function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
 end
 
 
---- Set a new listener for an S_EVENT_X event for a UNIT.
+--- Set a new listener for an `S_EVENT_X` event for a UNIT.
 -- @param #EVENT self
 -- @param #string UnitName The name of the UNIT.
 -- @param #function EventFunction The function to be called when the event occurs for the GROUP.
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param EventID
--- @return #EVENT
+-- @return #EVENT self
 function EVENT:OnEventForUnit( UnitName, EventFunction, EventClass, EventID )
   self:F2( UnitName )
 
@@ -724,10 +737,10 @@ do -- OnDead
  
   --- Create an OnDead event handler for a group
   -- @param #EVENT self
-  -- @param Wrapper.Group#GROUP EventGroup
+  -- @param Wrapper.Group#GROUP EventGroup The GROUP object.
   -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
+  -- @param #table EventClass The self instance of the class for which the event is.
+  -- @return #EVENT self
   function EVENT:OnDeadForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
     
@@ -740,12 +753,13 @@ end
 
 
 do -- OnLand
+
   --- Create an OnLand event handler for a group
   -- @param #EVENT self
   -- @param #table EventTemplate
   -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
+  -- @param #table EventClass The self instance of the class for which the event is.
+  -- @return #EVENT self
   function EVENT:OnLandForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
   
@@ -757,12 +771,13 @@ do -- OnLand
 end
 
 do -- OnTakeOff
+
   --- Create an OnTakeOff event handler for a group
   -- @param #EVENT self
-  -- @param #table EventTemplate
+  -- @param #table EventTemplate Template table.
   -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
+  -- @param #table EventClass The self instance of the class for which the event is.
+  -- @return #EVENT self
   function EVENT:OnTakeOffForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
   
@@ -902,8 +917,9 @@ do -- Event Creation
 
 end
 
---- @param #EVENT self
--- @param #EVENTDATA Event
+--- Main event function.
+-- @param #EVENT self
+-- @param #EVENTDATA Event Event data table.
 function EVENT:onEvent( Event )
 
   local ErrorHandler = function( errmsg )
@@ -1287,7 +1303,7 @@ function EVENT:onEvent( Event )
   Event = nil
 end
 
---- The EVENTHANDLER structure
+--- The EVENTHANDLER structure.
 -- @type EVENTHANDLER
 -- @extends Core.Base#BASE
 EVENTHANDLER = {
@@ -1295,7 +1311,7 @@ EVENTHANDLER = {
   ClassID = 0,
 }
 
---- The EVENTHANDLER constructor
+--- The EVENTHANDLER constructor.
 -- @param #EVENTHANDLER self
 -- @return #EVENTHANDLER self
 function EVENTHANDLER:New()
