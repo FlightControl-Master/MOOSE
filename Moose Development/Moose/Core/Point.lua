@@ -744,7 +744,7 @@ do -- COORDINATE
   -- @return #string MGRS coordinates.
   function COORDINATE:GetName()
     local name=self:ToStringMGRS()
-    return rname
+    return name
   end
   
   --- Return velocity text of the COORDINATE.
@@ -1751,9 +1751,9 @@ do -- COORDINATE
     self:F2( { ExplosionIntensity } )
     ExplosionIntensity=ExplosionIntensity or 100
     if Delay and Delay>0 then
-      SCHEDULER:New(nil, self.Explosion, {self,ExplosionIntensity}, Delay)
+      self:ScheduleOnce(Delay, self.Explosion, self, ExplosionIntensity)
     else
-      trigger.action.explosion( self:GetVec3(), ExplosionIntensity )
+      trigger.action.explosion(self:GetVec3(), ExplosionIntensity)
     end
     return self
   end

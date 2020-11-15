@@ -230,7 +230,13 @@ function TARGET:AddObject(Object)
     
     for _,object in pairs(set.Set) do
       self:AddObject(object)
-    end    
+    end
+    
+  elseif Object:IsInstanceOf("GROUP") then
+  
+    for _,unit in pairs(Object:GetUnits()) do
+      self:_AddObject(unit)
+    end
   
   else
   
@@ -244,6 +250,19 @@ function TARGET:AddObject(Object)
 
 end
 
+--- Check if TARGET is alive.
+-- @param #TARGET self
+-- @param #boolean If true, target is alive.
+function TARGET:IsAlive()
+  return self:Is("Alive")
+end
+
+--- Check if TARGET is dead.
+-- @param #TARGET self
+-- @param #boolean If true, target is dead.
+function TARGET:IsDead()
+  return self:Is("Dead")
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -302,7 +321,7 @@ function TARGET:onafterStatus(From, Event, To)
   end
   
   -- Log output verbose=1.
-  if self.verbose>=1 then
+  if self.verbose>=0 then
     local text=string.format("%s: Targets=%d/%d Life=%.1f/%.1f Damage=%.1f", fsmstate, self:CountTargets(), self.Ntargets0, self:GetLife(), self:GetLife0(), self:GetDamage())
     if damaged then
       text=text.." Damaged!"
@@ -311,7 +330,7 @@ function TARGET:onafterStatus(From, Event, To)
   end  
   
   -- Log output verbose=2.
-  if self.verbose>=2 then
+  if self.verbose>=0 then
     local text="Target:"
     for i,_target in pairs(self.targets) do
       local target=_target --#TARGET.Object
@@ -349,7 +368,8 @@ end
 -- @param #TARGET.Object Target Target object.
 function TARGET:onafterObjectDestroyed(From, Event, To, Target)
 
-  self:T(self.lid..string.format("Object %s destroyed", Target.Name))
+  -- Debug message.
+  self:I(self.lid..string.format("Object %s destroyed", Target.Name))
   
   -- Set target status.
   Target.Status=TARGET.ObjectStatus.DEAD
@@ -405,16 +425,20 @@ function TARGET:OnEventUnitDeadOrLost(EventData)
   if EventData and EventData.IniUnitName then
   
     -- Debug info.
-    --self:T3(self.lid..string.format("EVENT: Unit %s dead or lost!", EventData.IniUnitName))
+    self:I(self.lid..string.format("EVENT: Unit %s dead or lost!", EventData.IniUnitName))
     
     -- Get target.
     local target=self:GetTargetByName(EventData.IniUnitName)
+    
+    if not target then
+      target=self:GetTargetByName(EventData.IniGroupName)
+    end
 
     -- Check if this is one of ours.
     if target and target.Status==TARGET.ObjectStatus.ALIVE then
     
       -- Debug message.
-      self:T3(self.lid..string.format("EVENT: target unit %s dead or lost ==> destroyed", target.Name))
+      self:I(self.lid..string.format("EVENT: target unit %s dead or lost ==> destroyed", target.Name))
 
       -- Trigger object destroyed event.
       self:ObjectDestroyed(target)
@@ -525,12 +549,12 @@ function TARGET:_AddObject(Object)
 
   elseif Object:IsInstanceOf("COORDINATE") then
 
-    local coord=Object --Core.Point#COORDINATE
+    local coord=UTILS.DeepCopy(Object) --Core.Point#COORDINATE
 
     target.Type=TARGET.ObjectType.COORDINATE
     target.Name=coord:ToStringMGRS()
     
-    target.Coordinate=Object
+    target.Coordinate=coord
 
     target.Life0=1
     target.Life=1
@@ -683,8 +707,12 @@ function TARGET:GetTargetVec3(Target)
     local object=Target.Object --Wrapper.Group#GROUP
 
     if object and object:IsAlive() then
-
-      return object:GetVec3()    
+      local vec3=object:GetVec3()
+      return vec3
+      
+    else
+    
+      return nil
 
     end
 
@@ -693,7 +721,10 @@ function TARGET:GetTargetVec3(Target)
     local object=Target.Object --Wrapper.Unit#UNIT
 
     if object and object:IsAlive() then
-      return object:GetVec3()
+      local vec3=object:GetVec3()
+      return vec3
+    else
+      return nil
     end
   
   elseif Target.Type==TARGET.ObjectType.STATIC then
@@ -701,7 +732,10 @@ function TARGET:GetTargetVec3(Target)
     local object=Target.Object --Wrapper.Static#STATIC
   
     if object and object:IsAlive() then
-      return object:GetVec3()
+      local vec3=object:GetVec3()
+      return vec3
+    else
+      return nil
     end
 
   elseif Target.Type==TARGET.ObjectType.SCENERY then
@@ -709,14 +743,18 @@ function TARGET:GetTargetVec3(Target)
     local object=Target.Object --Wrapper.Scenery#SCENERY
   
     if object then
-      return object:GetVec3()
+      local vec3=object:GetVec3()
+      return vec3
+    else
+      return nil
     end
     
   elseif Target.Type==TARGET.ObjectType.AIRBASE then
   
     local object=Target.Object --Wrapper.Airbase#AIRBASE
     
-    return object:GetVec3()
+    local vec3=object:GetVec3()
+    return vec3
   
     --if Target.Status==TARGET.ObjectStatus.ALIVE then      
     --end
@@ -725,7 +763,8 @@ function TARGET:GetTargetVec3(Target)
   
     local object=Target.Object --Core.Point#COORDINATE
   
-    return {x=object.x, y=object.y, z=object.z}
+    local vec3={x=object.x, y=object.y, z=object.z}
+    return vec3
     
   end
 
@@ -1007,7 +1046,7 @@ function TARGET:CountTargets()
       -- No target we can check!
   
     else
-      self:E(self.lid.."ERROR unknown target type")
+      self:E(self.lid.."ERROR: Unknown target type! Cannot count targets")
     end
     
   end

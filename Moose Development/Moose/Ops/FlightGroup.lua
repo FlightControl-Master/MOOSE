@@ -336,6 +336,7 @@ function FLIGHTGROUP:New(group)
   self:HandleEvent(EVENTS.Crash,          self.OnEventCrash)
   self:HandleEvent(EVENTS.RemoveUnit,     self.OnEventRemoveUnit)
   self:HandleEvent(EVENTS.UnitLost,       self.OnEventUnitLost)
+  self:HandleEvent(EVENTS.Kill,           self.OnEventKill)
 
   -- Init waypoints.
   self:InitWaypoints()
@@ -715,6 +716,12 @@ function FLIGHTGROUP:GetFuelMin()
   return fuelmin*100
 end
 
+--- Get number of kills of this group.
+-- @param #FLIGHTGROUP self
+-- @return #number Number of units killed.
+function FLIGHTGROUP:GetKills()
+  return self.Nkills
+end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -741,18 +748,22 @@ function FLIGHTGROUP:onbeforeStatus(From, Event, To)
     
         -- Units with life <=1 are dead.
         if life<=1 then
+          --env.info(string.format("FF unit %s: live<=1 in status at T=%.3f", unit:GetName(), timer.getTime()))
           isdead=true
         end
         
       else
         -- Not alive any more.
+        --env.info(string.format("FF unit %s: NOT alive in status at T=%.3f", unit:GetName(), timer.getTime()))
         isdead=true
       end
       
       -- This one is dead.
       if isdead then
-        self:E(self.lid..string.format("Element %s is dead! Probably despawned without notice or landed at a too small airbase", tostring(element.name)))
-        self:ElementDead(element)
+        local text=string.format("Element %s is dead at t=%.3f! Maybe despawned without notice or landed at a too small airbase. Calling ElementDead in 60 sec to give other events a chance", 
+        tostring(element.name), timer.getTime())
+        self:E(self.lid..text)
+        self:__ElementDead(60, element)
       end
       
     end    
@@ -854,9 +865,9 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
       local parking=element.parking and tostring(element.parking.TerminalID) or "X"
 
       -- Check if element is not dead and we missed an event.
-      if life<=0 and element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
-        self:ElementDead(element)
-      end
+      --if life<=0 and element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
+      --  self:ElementDead(element)
+      --end
 
       -- Get ammo.
       local ammo=self:GetAmmoElement(element)
@@ -1177,9 +1188,9 @@ function FLIGHTGROUP:OnEventCrash(EventData)
     -- Get element.
     local element=self:GetElementByName(unitname)
 
-    if element then
-      self:T3(self.lid..string.format("EVENT: Element %s crashed ==> dead", element.name))
-      self:ElementDead(element)
+    if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+      self:T(self.lid..string.format("EVENT: Element %s crashed ==> destroyed", element.name))      
+      self:ElementDestroyed(element)
     end
 
   end
@@ -1193,7 +1204,7 @@ function FLIGHTGROUP:OnEventUnitLost(EventData)
 
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    self:T(self.lid..string.format("EVENT: Unit %s lost!", EventData.IniUnitName))
+    self:T2(self.lid..string.format("EVENT: Unit %s lost at t=%.3f", EventData.IniUnitName, timer.getTime()))
     
     local unit=EventData.IniUnit
     local group=EventData.IniGroup
@@ -1202,9 +1213,33 @@ function FLIGHTGROUP:OnEventUnitLost(EventData)
     -- Get element.
     local element=self:GetElementByName(unitname)
 
-    if element then
-      self:T3(self.lid..string.format("EVENT: Element %s unit lost ==> destroyed", element.name))
+    if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+      self:T(self.lid..string.format("EVENT: Element %s unit lost ==> destroyed t=%.3f", element.name, timer.getTime()))
       self:ElementDestroyed(element)
+    end
+    
+  end
+
+end
+
+--- Flightgroup event function handling the crash of a unit.
+-- @param #FLIGHTGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function FLIGHTGROUP:OnEventKill(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    self:T2(self.lid..string.format("EVENT: Unit %s killed unit %s!", tostring(EventData.IniUnitName), tostring(EventData.TgtUnitName)))
+    
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+
+    self.Nkills=self.Nkills+1
+    
+    local mission=self:GetMissionCurrent()
+    if mission then
+      mission.Nkills=mission.Nkills+1
     end
     
   end
@@ -2439,7 +2474,7 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
         self:I(self.lid..string.format("Send to refuel at tanker %s", tanker:GetName()))
 
         -- Get a coordinate towards the tanker.
-        local coordinate=self:GetCoordinate():GetIntermediateCoordinate(tanker.flightgroup:GetCoordinate(), 0.75)
+        local coordinate=self:GetCoordinate():GetIntermediateCoordinate(tanker:GetCoordinate(), 0.75)
 
         self:Refuel(coordinate)
 

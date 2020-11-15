@@ -890,12 +890,14 @@ do -- ZONE_CAPTURE_COALITION
     end
     
     -- Status text.
-    local text=string.format("CAPTURE ZONE %s: Owner=%s (Previous=%s): #blue=%d, #red=%d, Status %s", self:GetZoneName(), self:GetCoalitionName(), UTILS.GetCoalitionName(self:GetPreviousCoalition()), nBlue, nRed, State)
-    local NewState = self:GetState()
-    if NewState~=State then
-      text=text..string.format(" --> %s", NewState)
+    if false then
+      local text=string.format("CAPTURE ZONE %s: Owner=%s (Previous=%s): #blue=%d, #red=%d, Status %s", self:GetZoneName(), self:GetCoalitionName(), UTILS.GetCoalitionName(self:GetPreviousCoalition()), nBlue, nRed, State)
+      local NewState = self:GetState()
+      if NewState~=State then
+        text=text..string.format(" --> %s", NewState)
+      end
+      self:I(text)
     end
-    self:I(text)
     
   end
 
