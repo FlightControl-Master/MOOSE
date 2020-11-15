@@ -1189,7 +1189,7 @@ function FLIGHTGROUP:OnEventCrash(EventData)
     local element=self:GetElementByName(unitname)
 
     if element and element.status~=OPSGROUP.ElementStatus.DEAD then
-      self:I(self.lid..string.format("EVENT: Element %s crashed ==> destroyed", element.name))      
+      self:T(self.lid..string.format("EVENT: Element %s crashed ==> destroyed", element.name))      
       self:ElementDestroyed(element)
     end
 
@@ -1204,7 +1204,7 @@ function FLIGHTGROUP:OnEventUnitLost(EventData)
 
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    self:I(self.lid..string.format("EVENT: Unit %s lost at t=%.3f", EventData.IniUnitName, timer.getTime()))
+    self:T2(self.lid..string.format("EVENT: Unit %s lost at t=%.3f", EventData.IniUnitName, timer.getTime()))
     
     local unit=EventData.IniUnit
     local group=EventData.IniGroup
@@ -1214,7 +1214,7 @@ function FLIGHTGROUP:OnEventUnitLost(EventData)
     local element=self:GetElementByName(unitname)
 
     if element and element.status~=OPSGROUP.ElementStatus.DEAD then
-      self:I(self.lid..string.format("EVENT: Element %s unit lost ==> destroyed t=%.3f", element.name, timer.getTime()))
+      self:T(self.lid..string.format("EVENT: Element %s unit lost ==> destroyed t=%.3f", element.name, timer.getTime()))
       self:ElementDestroyed(element)
     end
     
@@ -1229,7 +1229,7 @@ function FLIGHTGROUP:OnEventKill(EventData)
 
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    self:I(self.lid..string.format("EVENT: Unit %s killed unit %s!", tostring(EventData.IniUnitName), tostring(EventData.TgtUnitName)))
+    self:T2(self.lid..string.format("EVENT: Unit %s killed unit %s!", tostring(EventData.IniUnitName), tostring(EventData.TgtUnitName)))
     
     local unit=EventData.IniUnit
     local group=EventData.IniGroup

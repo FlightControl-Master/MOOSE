@@ -3345,7 +3345,7 @@ end
 function OPSGROUP:onafterLaserPause(From, Event, To)
 
   -- Debug message.
-  self:I(self.lid.."Switching LASER off temporarily")
+  self:T(self.lid.."Switching LASER off temporarily")
 
   -- "Destroy" the laser beam.
   self.spot.Laser:destroy()
@@ -3380,7 +3380,7 @@ end
 function OPSGROUP:onafterLaserResume(From, Event, To)
 
   -- Debug info.
-  self:I(self.lid.."Resuming LASER")
+  self:T(self.lid.."Resuming LASER")
   
   -- Unset paused.
   self.spot.Paused=false
@@ -3399,7 +3399,7 @@ function OPSGROUP:onafterLaserResume(From, Event, To)
   if target then
 
     -- Debug message.
-    self:I(self.lid.."Switching LASER on again at target ".. target:GetName())
+    self:T(self.lid.."Switching LASER on again")
   
     self:LaserOn(target)
   end
@@ -3601,13 +3601,13 @@ function OPSGROUP:_UpdateLaser()
         local unit=self.spot.TargetGroup:GetHighestThreat()
         
         if unit then
-          self:I(self.lid..string.format("Switching to target unit %s in the group", unit:GetName()))
+          self:T(self.lid..string.format("Switching to target unit %s in the group", unit:GetName()))
           self.spot.TargetUnit=unit
           -- We update the laser position in the next update cycle and then check the LOS.
           return
         else
           -- Switch laser off.
-          self:I(self.lid.."Target is not alive any more ==> switching LASER off")
+          self:T(self.lid.."Target is not alive any more ==> switching LASER off")
           self:LaserOff()
           return          
         end
@@ -3615,7 +3615,7 @@ function OPSGROUP:_UpdateLaser()
       else
     
         -- Switch laser off.
-        self:I(self.lid.."Target is not alive any more ==> switching LASER off")
+        self:T(self.lid.."Target is not alive any more ==> switching LASER off")
         self:LaserOff()
         return
       end

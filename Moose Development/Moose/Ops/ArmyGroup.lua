@@ -789,7 +789,7 @@ function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target)
   local ammo=self:GetAmmoTot()
   
   if ammo.Total==0 then
-    env.info("FF cannot engage because no ammo!")
+    self:E(self.lid.."WARNING: Cannot engage TARGET because no ammo left!")
     return false
   end
 
@@ -809,11 +809,13 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
   else
     self.engage.Target=TARGET:New(Target)
   end
-  
-  env.info("FF Engage Target "..self.engage.Target:GetName())
 
+  -- Target coordinate.
   self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate())
   
+  -- TODO: Backup current ROE and alarm state and reset after disengage.
+  
+  -- Switch ROE and alarm state.
   self:SwitchAlarmstate(ENUMS.AlarmState.Auto)
   self:SwitchROE(ENUMS.ROE.WeaponFree)
 
@@ -834,7 +836,7 @@ function ARMYGROUP:_UpdateEngageTarget()
 
   if self.engage.Target and self.engage.Target:IsAlive() then
   
-    env.info("FF Update Engage Target "..self.engage.Target:GetName())
+    --env.info("FF Update Engage Target "..self.engage.Target:GetName())
 
     local vec3=self.engage.Target:GetCoordinate():GetVec3()
   
@@ -842,7 +844,7 @@ function ARMYGROUP:_UpdateEngageTarget()
     
     if dist>100 then
     
-      env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
+      --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
     
       self.engage.Coordinate:UpdateFromVec3(vec3)
 
@@ -872,6 +874,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARMYGROUP:onafterDisengage(From, Event, To)
+  -- TODO: Reset ROE and alarm state.
   self:_CheckGroupDone(1)    
 end
 
