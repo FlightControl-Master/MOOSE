@@ -451,23 +451,23 @@ do -- Event Handling
   
   --- Subscribe to a DCS Event.
   -- @param #BASE self
-  -- @param Core.Event#EVENTS Event
+  -- @param Core.Event#EVENTS EventID Event ID.
   -- @param #function EventFunction (optional) The function to be called when the event occurs for the unit.
   -- @return #BASE
-  function BASE:HandleEvent( Event, EventFunction )
+  function BASE:HandleEvent( EventID, EventFunction )
   
-    self:EventDispatcher():OnEventGeneric( EventFunction, self, Event )
+    self:EventDispatcher():OnEventGeneric( EventFunction, self, EventID )
     
     return self
   end
   
   --- UnSubscribe to a DCS event.
   -- @param #BASE self
-  -- @param Core.Event#EVENTS Event
+  -- @param Core.Event#EVENTS EventID Event ID.
   -- @return #BASE
-  function BASE:UnHandleEvent( Event )
+  function BASE:UnHandleEvent( EventID )
   
-    self:EventDispatcher():RemoveEvent( self, Event )
+    self:EventDispatcher():RemoveEvent( self, EventID )
     
     return self
   end
