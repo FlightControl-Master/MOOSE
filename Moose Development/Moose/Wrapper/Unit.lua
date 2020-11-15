@@ -1179,23 +1179,26 @@ do -- Event Handling
 
   --- Subscribe to a DCS Event.
   -- @param #UNIT self
-  -- @param Core.Event#EVENTS Event
-  -- @param #function EventFunction (optional) The function to be called when the event occurs for the unit.
-  -- @return #UNIT
-  function UNIT:HandleEvent( Event, EventFunction )
+  -- @param Core.Event#EVENTS EventID Event ID.
+  -- @param #function EventFunction (Optional) The function to be called when the event occurs for the unit.
+  -- @return #UNIT self
+  function UNIT:HandleEvent(EventID, EventFunction)
   
-    self:EventDispatcher():OnEventForUnit( self:GetName(), EventFunction, self, Event )
+    self:EventDispatcher():OnEventForUnit(self:GetName(), EventFunction, self, EventID)
     
     return self
   end
   
   --- UnSubscribe to a DCS event.
   -- @param #UNIT self
-  -- @param Core.Event#EVENTS Event
-  -- @return #UNIT
-  function UNIT:UnHandleEvent( Event )
+  -- @param Core.Event#EVENTS EventID Event ID.
+  -- @return #UNIT self
+  function UNIT:UnHandleEvent(EventID)
   
-    self:EventDispatcher():RemoveForUnit( self:GetName(), self, Event )
+    --self:EventDispatcher():RemoveForUnit( self:GetName(), self, EventID )
+    
+    -- Fixes issue #1365 https://github.com/FlightControl-Master/MOOSE/issues/1365
+    self:EventDispatcher():RemoveEvent(self, EventID)
     
     return self
   end
