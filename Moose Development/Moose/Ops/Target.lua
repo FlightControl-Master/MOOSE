@@ -707,8 +707,8 @@ function TARGET:GetTargetVec3(Target)
     local object=Target.Object --Wrapper.Group#GROUP
 
     if object and object:IsAlive() then
-
-      return object:GetVec3()
+      local vec3=object:GetVec3()
+      return vec3
       
     else
     
@@ -721,7 +721,8 @@ function TARGET:GetTargetVec3(Target)
     local object=Target.Object --Wrapper.Unit#UNIT
 
     if object and object:IsAlive() then
-      return object:GetVec3()
+      local vec3=object:GetVec3()
+      return vec3
     else
       return nil
     end
@@ -731,7 +732,8 @@ function TARGET:GetTargetVec3(Target)
     local object=Target.Object --Wrapper.Static#STATIC
   
     if object and object:IsAlive() then
-      return object:GetVec3()
+      local vec3=object:GetVec3()
+      return vec3
     else
       return nil
     end
@@ -741,7 +743,8 @@ function TARGET:GetTargetVec3(Target)
     local object=Target.Object --Wrapper.Scenery#SCENERY
   
     if object then
-      return object:GetVec3()
+      local vec3=object:GetVec3()
+      return vec3
     else
       return nil
     end
@@ -750,7 +753,8 @@ function TARGET:GetTargetVec3(Target)
   
     local object=Target.Object --Wrapper.Airbase#AIRBASE
     
-    return object:GetVec3()
+    local vec3=object:GetVec3()
+    return vec3
   
     --if Target.Status==TARGET.ObjectStatus.ALIVE then      
     --end
@@ -759,7 +763,8 @@ function TARGET:GetTargetVec3(Target)
   
     local object=Target.Object --Core.Point#COORDINATE
   
-    return {x=object.x, y=object.y, z=object.z}
+    local vec3={x=object.x, y=object.y, z=object.z}
+    return vec3
     
   end
 
