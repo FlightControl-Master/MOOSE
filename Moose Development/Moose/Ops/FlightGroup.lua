@@ -2474,7 +2474,7 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
         self:I(self.lid..string.format("Send to refuel at tanker %s", tanker:GetName()))
 
         -- Get a coordinate towards the tanker.
-        local coordinate=self:GetCoordinate():GetIntermediateCoordinate(tanker.flightgroup:GetCoordinate(), 0.75)
+        local coordinate=self:GetCoordinate():GetIntermediateCoordinate(tanker:GetCoordinate(), 0.75)
 
         self:Refuel(coordinate)
 
