@@ -2846,7 +2846,7 @@ function AUFTRAG:_TargetFromObject(Object)
   end
 
   -- Debug info.
-  self:T(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", self.engageTarget.lid, self.engageTarget.lid, self.engageTarget.Ntargets0, self.engageTarget:GetLife()))
+  self:I(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", self.engageTarget.lid, self.engageTarget.lid, self.engageTarget.Ntargets0, self.engageTarget:GetLife()))
   
   return self
 end

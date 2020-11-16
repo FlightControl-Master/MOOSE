@@ -2781,6 +2781,10 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Delayed call.
     self:ScheduleOnce(delay, OPSGROUP.RouteToMission, self, mission)
   else
+  
+    if self:IsDead() then
+      return
+    end
         
     -- ID of current waypoint.
     local uid=self:GetWaypointCurrent().uid    

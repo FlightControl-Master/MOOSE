@@ -425,7 +425,7 @@ function TARGET:OnEventUnitDeadOrLost(EventData)
   if EventData and EventData.IniUnitName then
   
     -- Debug info.
-    self:I(self.lid..string.format("EVENT: Unit %s dead or lost!", EventData.IniUnitName))
+    self:T(self.lid..string.format("EVENT: Unit %s dead or lost!", tostring(EventData.IniUnitName)))
     
     -- Get target.
     local target=self:GetTargetByName(EventData.IniUnitName)
@@ -438,7 +438,7 @@ function TARGET:OnEventUnitDeadOrLost(EventData)
     if target and target.Status==TARGET.ObjectStatus.ALIVE then
     
       -- Debug message.
-      self:I(self.lid..string.format("EVENT: target unit %s dead or lost ==> destroyed", target.Name))
+      self:T(self.lid..string.format("EVENT: target unit %s dead or lost ==> destroyed", tostring(target.Name)))
 
       -- Trigger object destroyed event.
       self:ObjectDestroyed(target)
@@ -1008,7 +1008,7 @@ function TARGET:CountTargets()
       
       for _,_unit in pairs(units or {}) do
         local unit=_unit --Wrapper.Unit#UNIT
-        if unit and unit:IsAlive() and unit:GetLife()>1 then
+        if unit and unit:IsAlive()~=nil and unit:GetLife()>1 then
           N=N+1
         end
       end

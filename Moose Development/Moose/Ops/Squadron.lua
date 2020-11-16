@@ -549,11 +549,21 @@ end
 function SQUADRON:AddTacanChannel(ChannelMin, ChannelMax)
 
   ChannelMax=ChannelMax or ChannelMin
+  
+  if ChannelMin>126 then
+    self:E(self.lid.."ERROR: TACAN Channel must be <= 126! Will not add to available channels")
+    return self
+  end
+  if ChannelMax>126 then
+    self:E(self.lid.."WARNING: TACAN Channel must be <= 126! Adjusting ChannelMax to 126")
+    ChannelMax=126
+  end
 
   for i=ChannelMin,ChannelMax do
     self.tacanChannel[i]=true
   end
 
+  return self
 end
 
 --- Get an unused TACAN channel.
