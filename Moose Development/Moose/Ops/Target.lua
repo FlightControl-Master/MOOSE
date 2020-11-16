@@ -113,7 +113,7 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.1.0"
+TARGET.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -494,7 +494,7 @@ function TARGET:_AddObject(Object)
     
     target.Coordinate=unit:GetCoordinate()
     
-    if unit and unit:IsAlive() then
+    if unit then
       target.Life=unit:GetLife()
       target.Life0=math.max(unit:GetLife0(), target.Life)  -- There was an issue with ships that life is greater life0!
       
@@ -901,7 +901,7 @@ function TARGET:GetTargetCategory(Target)
 
   elseif Target.Type==TARGET.ObjectType.UNIT then
 
-    if Target.Object and Target.Object:IsAlive() then
+    if Target.Object and Target.Object:IsAlive()~=nil then
       local unit=Target.Object --Wrapper.Unit#UNIT
       
       local group=unit:GetGroup()
