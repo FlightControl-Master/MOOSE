@@ -451,6 +451,7 @@ do -- TASK_A2G_DISPATCHER
     
     self.Detection = Detection
     self.Mission = Mission
+    self.FlashNewTask = false
     
     self.Detection:FilterCategories( { Unit.Category.GROUND_UNIT } )
     
@@ -805,7 +806,7 @@ do -- TASK_A2G_DISPATCHER
       
       local TaskText = TaskReport:Text(", ")
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" then
+        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" and ( not self.FlashNewTask ) then
           Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetShortText(), TaskText ), TaskGroup )
         end
       end
