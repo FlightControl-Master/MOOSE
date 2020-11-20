@@ -83,7 +83,7 @@ do -- TASK_CAPTURE_DISPATCHER
   -- ## 1.1. Create a command center.
   -- 
   -- First you need to create a command center using the @{Tasking.CommandCenter#COMMANDCENTER.New}() constructor.
-  -- The command assumes that you´ve setup a group in the mission editor with the name HQ.
+  -- The command assumes that youÂ´ve setup a group in the mission editor with the name HQ.
   -- This group will act as the command center object.
   -- It is a good practice to mark this group as invisible and invulnerable.
   -- 
@@ -184,6 +184,7 @@ do -- TASK_CAPTURE_DISPATCHER
     local self = BASE:Inherit( self, TASK_MANAGER:New( SetGroup ) ) -- #TASK_CAPTURE_DISPATCHER
     
     self.Mission = Mission
+    self.FlashNewTask = false
     
     self:AddTransition( "Started", "Assign", "Started" )
     self:AddTransition( "Started", "ZoneCaptured", "Started" )
@@ -383,7 +384,7 @@ do -- TASK_CAPTURE_DISPATCHER
       local TaskText = TaskReport:Text(", ")
       
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" then
+        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" and ( not self.FlashNewTask ) then
           Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetShortText(), TaskText ), TaskGroup )
         end
       end
