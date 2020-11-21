@@ -225,7 +225,7 @@ FLIGHTGROUP.version="0.6.0"
 
 --- Create a new FLIGHTGROUP object and start the FSM.
 -- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP Group The group object. Can also be given by its group name as `#string`.
+-- @param Wrapper.Group#GROUP group The group object. Can also be given by its group name as `#string`.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:New(group)
 
@@ -1229,17 +1229,34 @@ function FLIGHTGROUP:OnEventKill(EventData)
 
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    self:T2(self.lid..string.format("EVENT: Unit %s killed unit %s!", tostring(EventData.IniUnitName), tostring(EventData.TgtUnitName)))
+  
+    -- Target name
+    local targetname=tostring(EventData.TgtUnitName)
+  
+    -- Debug info.
+    self:T2(self.lid..string.format("EVENT: Unit %s killed object %s!", tostring(EventData.IniUnitName), targetname))
     
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
+    -- Check if this was a UNIT or STATIC object.
+    local target=UNIT:FindByName(targetname)    
+    if not target then
+      target=STATIC:FindByName(targetname, false)
+    end
 
-    self.Nkills=self.Nkills+1
-    
-    local mission=self:GetMissionCurrent()
-    if mission then
-      mission.Nkills=mission.Nkills+1
+    -- Only count UNITS and STATICs (not SCENERY)
+    if target then
+
+      -- Debug info.
+      self:T(self.lid..string.format("EVENT: Unit %s killed unit/static %s!", tostring(EventData.IniUnitName), targetname))
+
+      -- Kill counter.
+      self.Nkills=self.Nkills+1
+      
+      -- Check if on a mission.
+      local mission=self:GetMissionCurrent()
+      if mission then
+        mission.Nkills=mission.Nkills+1 -- Increase mission kill counter.
+      end
+      
     end
     
   end
@@ -1526,9 +1543,9 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     end
     
     -- TODO: make this input.
-    self.group:SetOption(AI.Option.Air.id.PROHIBIT_JETT, true)
-    self.group:SetOption(AI.Option.Air.id.PROHIBIT_AB,   true)   -- Does not seem to work. AI still used the after burner.
-    self.group:SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_JETT, true)
+    self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB,   true)   -- Does not seem to work. AI still used the after burner.
+    self:GetGroup():SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
     --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)    
 
     -- Update route.

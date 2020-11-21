@@ -1073,7 +1073,7 @@ end
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP EscortGroup The group to escort.
 -- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=-100, y=0, z=200} for z=200 meters to the right, same alitude, x=100 meters behind.
--- @param #number EngageMaxDistance Max engage distance of targets in meters. Default auto (*nil*).
+-- @param #number EngageMaxDistance Max engage distance of targets in nautical miles. Default auto (*nil*).
 -- @param #table TargetTypes Types of targets to engage automatically. Default is {"Air"}, i.e. all enemy airborne units. Use an empty set {} for a simple "FOLLOW" mission.
 -- @return #AUFTRAG self
 function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetTypes)
@@ -1084,7 +1084,7 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   
   -- DCS task parameters:
   mission.escortVec3=OffsetVector or {x=-100, y=0, z=200}
-  mission.engageMaxDistance=EngageMaxDistance
+  mission.engageMaxDistance=EngageMaxDistance and UTILS.NMToMeters(EngageMaxDistance) or nil
   mission.engageTargetTypes=TargetTypes or {"Air"}
   
   -- Mission options:
@@ -2608,7 +2608,7 @@ end
 function AUFTRAG:onafterCancel(From, Event, To)
 
   -- Debug info.
-  self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for groups to report mission DONE before evaluation.", self.status))
+  self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for groups to report mission DONE before evaluation", self.status))
   
   -- Time stamp.
   self.Tover=timer.getAbsTime()
@@ -2846,7 +2846,7 @@ function AUFTRAG:_TargetFromObject(Object)
   end
 
   -- Debug info.
-  self:I(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", self.engageTarget.lid, self.engageTarget.lid, self.engageTarget.Ntargets0, self.engageTarget:GetLife()))
+  --self:T2(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", self.engageTarget.lid, self.engageTarget.lid, self.engageTarget.N0, self.engageTarget:GetLife()))
   
   return self
 end
@@ -2871,7 +2871,7 @@ end
 function AUFTRAG:GetTargetInitialNumber()
   local target=self:GetTargetData()
   if target then
-    return target.Ntargets0
+    return target.N0
   else
     return 0
   end
