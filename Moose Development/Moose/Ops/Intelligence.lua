@@ -113,8 +113,9 @@ INTEL.version="0.0.3"
 -- @param #INTEL self
 -- @param Core.Set#SET_GROUP DetectionSet Set of detection groups.
 -- @param #number Coalition Coalition side. Can also be passed as a string "red", "blue" or "neutral".
+-- @param #string Alias An *optional* alias how this object is called in the logs etc.
 -- @return #INTEL self
-function INTEL:New(DetectionSet, Coalition)
+function INTEL:New(DetectionSet, Coalition, Alias)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #INTEL
@@ -122,21 +123,46 @@ function INTEL:New(DetectionSet, Coalition)
   -- Detection set.
   self.detectionset=DetectionSet or SET_GROUP:New()
   
+  if Coalition and type(Coalition)=="string" then
+    if Coalition=="blue" then
+      Coalition=coalition.side.BLUE
+    elseif Coalition=="red" then
+      Coalition=coalition.side.RED
+    elseif Coalition=="neutral" then
+      Coalition=coalition.side.NEUTRAL
+    else
+      self:E("ERROR: Unknown coalition in INTEL!")
+    end
+  end
+  
   -- Determine coalition from first group in set.
   self.coalition=Coalition or DetectionSet:CountAlive()>0 and DetectionSet:GetFirst():GetCoalition() or nil
   
-  -- Set alias.
-  self.alias="SPECTRE"  
+  -- Filter coalition.
   if self.coalition then
-    if self.coalition==coalition.side.RED then
-      self.alias="KGB"
-    elseif self.coalition==coalition.side.BLUE then
-      self.alias="CIA"
+    local coalitionname=UTILS.GetCoalitionName(self.coalition):lower()
+    self.detectionset:FilterCoalitions(coalitionname)
+  end
+  
+  -- Filter once.
+  self.detectionset:FilterOnce()
+  
+  -- Set alias.
+  if Alias then
+    self.alias=tostring(Alias)
+  else
+    self.alias="SPECTRE"  
+    if self.coalition then
+      if self.coalition==coalition.side.RED then
+        self.alias="KGB"
+      elseif self.coalition==coalition.side.BLUE then
+        self.alias="CIA"
+      end
     end
   end
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("INTEL %s | ", self.alias)
+  self.lid=string.format("INTEL %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
 
   -- Start State.
   self:SetStartState("Stopped")
