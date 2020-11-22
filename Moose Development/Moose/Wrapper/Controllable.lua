@@ -3669,7 +3669,10 @@ end
 function CONTROLLABLE:OptionAAAttackRange(range)
   self:F2( { self.ControllableName } ) 
   -- defaults to 3
-  local range = range or 3       
+  local range = range or 3
+  if range < 0  or range > 4 then 
+    range = 3 
+  end
   local DCSControllable = self:GetDCSObject()
   if DCSControllable then
     local Controller = self:_GetController()
