@@ -173,6 +173,9 @@
 --   * @{#CONTROLLABLE.OptionAllowJettisonWeaponsOnThreat}
 --   * @{#CONTROLLABLE.OptionKeepWeaponsOnThreat}
 --
+-- ## 5.5) Air-2-Air missile attack range:
+--   * @{#CONTROLLABLE.OptionAAAttackRange}(): Defines the usage of A2A missiles against possible targets .
+-- 
 -- @field #CONTROLLABLE
 CONTROLLABLE = {
   ClassName = "CONTROLLABLE",
@@ -3658,4 +3661,24 @@ function CONTROLLABLE:OptionRestrictBurner(RestrictBurner)
     end
   end
 
+end
+
+--- Sets Controllable Option for A2A attack range for AIR FIGHTER units.
+-- @param #CONTROLLABLE self
+-- @param #number Defines the range: MAX_RANGE = 0, NEZ_RANGE = 1, HALF_WAY_RMAX_NEZ = 2, TARGET_THREAT_EST = 3, RANDOM_RANGE = 4. Defaults to 3. See: https://wiki.hoggitworld.com/view/DCS_option_missileAttack
+function CONTROLLABLE:OptionAAAttackRange(range)
+  self:F2( { self.ControllableName } ) 
+  -- defaults to 3
+  local range = range or 3       
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then 
+     if self:IsAir() then
+        self:SetOption(AI.Option.Air.val.MISSILE_ATTACK, range)      
+     end
+    end
+    return self
+  end
+  return nil
 end
