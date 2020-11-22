@@ -173,6 +173,12 @@
 --   * @{#CONTROLLABLE.OptionAllowJettisonWeaponsOnThreat}
 --   * @{#CONTROLLABLE.OptionKeepWeaponsOnThreat}
 --
+-- ## 5.5) Air-2-Air missile attack range:
+--   * @{#CONTROLLABLE.OptionAAAttackRange}(): Defines the usage of A2A missiles against possible targets.
+--   
+-- ## 5.6) GROUND units attack range:
+--   * @{#CONTROLLABLE.OptionEngageRange}(): Engage range limit in percent (a number between 0 and 100). Default 100. Defines the range at which a GROUND unit/group (e.g. a SAM site) is allowed to use its weapons automatically.
+-- 
 -- @field #CONTROLLABLE
 CONTROLLABLE = {
   ClassName = "CONTROLLABLE",
@@ -3658,4 +3664,51 @@ function CONTROLLABLE:OptionRestrictBurner(RestrictBurner)
     end
   end
 
+end
+
+--- Sets Controllable Option for A2A attack range for AIR FIGHTER units.
+-- @param #CONTROLLABLE self
+-- @param #number Defines the range: MAX_RANGE = 0, NEZ_RANGE = 1, HALF_WAY_RMAX_NEZ = 2, TARGET_THREAT_EST = 3, RANDOM_RANGE = 4. Defaults to 3. See: https://wiki.hoggitworld.com/view/DCS_option_missileAttack
+function CONTROLLABLE:OptionAAAttackRange(range)
+  self:F2( { self.ControllableName } ) 
+  -- defaults to 3
+  local range = range or 3
+  if range < 0  or range > 4 then
+    range = 3
+  end       
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then 
+     if self:IsAir() then
+        self:SetOption(AI.Option.Air.val.MISSILE_ATTACK, range)      
+     end
+    end
+    return self
+  end
+  return nil
+end
+
+--- Defines the range at which a GROUND unit/group is allowed to use its weapons automatically.
+-- @param #CONTROLLABLE self
+-- @param #number EngageRange Engage range limit in percent (a number between 0 and 100). Default 100.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionEngageRange(EngageRange)
+  self:F2( { self.ControllableName } ) 
+  -- Set default if not specified.
+  EngageRange=EngageRange or 100
+  if EngageRange < 0  or EngageRange > 100 then
+    EngageRange = 100
+  end
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then 
+     if self:IsGround() then
+        self:SetOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION, EngageRange)     
+     end
+    end
+   return self
+  end
+  return nil
 end
