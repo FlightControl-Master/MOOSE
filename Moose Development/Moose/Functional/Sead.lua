@@ -44,7 +44,8 @@ SEAD = {
 		High      = { Evade = 15, DelayOff = { 5, 17 }, DelayOn = { 30, 50 } } ,
 		Excellent = { Evade = 10, DelayOff = { 3, 10 }, DelayOn = { 30, 60 } } 
 	}, 
-	SEADGroupPrefixes = {} 
+	SEADGroupPrefixes = {},
+	EngagementRange = 75 --  default 75% engagement range Feature Request #1355
 }
 
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
@@ -72,6 +73,20 @@ function SEAD:New( SEADGroupPrefixes )
 	self:HandleEvent( EVENTS.Shot )
 	
 	return self
+end
+
+--- Sets the engagement range of the SAMs. Defaults to 75% to make it more deadly. Feature Request #1355
+-- @param #SEAD self
+-- @param #number range Gives the engagement range in percent, e.g. 50
+-- @return self
+function SEAD:SetEngagementRange(range)
+  self:F( { range } )
+  range = range or 75
+  if range < 0 or range > 100 then
+    range = 75
+  end
+  self.EngagementRange = range
+  return self
 end
 
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
@@ -174,7 +189,10 @@ function SEAD:OnEventShot( EventData )
 					local SuppressedGroups = {}
 					
 					local function SuppressionEnd(id)
+					 local range = self.EngagementRange -- Feature Request #1355
+					  --env.info(string.format("*** SEAD - Engagement Range is %d", range))
 						id.ctrl:setOption(AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.RED)
+						id.ctrl:setOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION,range) --Feature Request #1355
 						SuppressedGroups[id.groupName] = nil
 					end
 					
