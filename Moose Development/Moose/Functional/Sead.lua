@@ -39,12 +39,14 @@
 SEAD = {
 	ClassName = "SEAD", 
 	TargetSkill = {
-		Average   = { Evade = 50, DelayOff = { 10, 25 }, DelayOn = { 10, 30 } } ,
-		Good      = { Evade = 30, DelayOff = { 8, 20 }, DelayOn = { 20, 40 } } ,
-		High      = { Evade = 15, DelayOff = { 5, 17 }, DelayOn = { 30, 50 } } ,
-		Excellent = { Evade = 10, DelayOff = { 3, 10 }, DelayOn = { 30, 60 } } 
+		Average   = { Evade = 30, DelayOn = { 40, 60 } } ,
+		Good      = { Evade = 20, DelayOn = { 30, 50 } } ,
+		High      = { Evade = 15, DelayOn = { 20, 40 } } ,
+		Excellent = { Evade = 10, DelayOn = { 10, 30 } } 
 	}, 
-	SEADGroupPrefixes = {} 
+	SEADGroupPrefixes = {},
+	SuppressedGroups = {},
+	EngagementRange = 75 --  default 75% engagement range Feature Request #1355
 }
 
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
@@ -70,8 +72,23 @@ function SEAD:New( SEADGroupPrefixes )
 	end
 	
 	self:HandleEvent( EVENTS.Shot )
-	
+	self:I("*** SEAD - Started Version 0.2.0")
 	return self
+end
+
+--- Sets the engagement range of the SAMs. Defaults to 75% to make it more deadly. Feature Request #1355
+-- @param #SEAD self
+-- @param #number range Set the engagement range in percent, e.g. 50
+-- @return self
+function SEAD:SetEngagementRange(range)
+  self:F( { range } )
+  range = range or 75
+  if range < 0 or range > 100 then
+    range = 75
+  end
+  self.EngagementRange = range
+  self:T(string.format("*** SEAD - Engagement range set to %s",range))
+  return self
 end
 
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
@@ -79,16 +96,17 @@ end
 -- @param #SEAD
 -- @param Core.Event#EVENTDATA EventData
 function SEAD:OnEventShot( EventData )
-	self:F( { EventData } )
+	self:T( { EventData } )
 
 	local SEADUnit = EventData.IniDCSUnit
 	local SEADUnitName = EventData.IniDCSUnitName
-	local SEADWeapon = EventData.Weapon -- Identify the weapon fired						
+	local SEADWeapon = EventData.Weapon -- Identify the weapon fired
 	local SEADWeaponName = EventData.WeaponName	-- return weapon type
-	-- Start of the 2nd loop
-	self:T( "Missile Launched = " .. SEADWeaponName )
+
+	self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
+	self:T({ SEADWeapon })
 	
-	--if SEADWeaponName == "KH-58" or SEADWeaponName == "KH-25MPU" or SEADWeaponName == "AGM-88" or SEADWeaponName == "KH-31A" or SEADWeaponName == "KH-31P" then -- Check if the missile is a SEAD
+	--check for SEAD missiles
   if SEADWeaponName == "weapons.missiles.X_58" --Kh-58U anti-radiation missiles fired
     or 
     SEADWeaponName == "weapons.missiles.Kh25MP_PRGS1VP" --Kh-25MP anti-radiation missiles fired
@@ -107,27 +125,35 @@ function SEAD:OnEventShot( EventData )
     or
     SEADWeaponName == "weapons.missiles.AGM_122" --AGM-122 Sidearm anti-radiation missiles fired
     or
+    SEADWeaponName == "weapons.missiles.LD-10" --LD-10 anti-radiation missiles fired
+    or
     SEADWeaponName == "weapons.missiles.ALARM" --ALARM anti-radiation missiles fired
+    or
+    SEADWeaponName == "weapons.missiles.AGM_84E" --AGM84 anti-radiation missiles fired
+    or
+    SEADWeaponName == "weapons.missiles.AGM_84A" --AGM84 anti-radiation missiles fired
+    or
+    SEADWeaponName == "weapons.missiles.AGM_84H" --AGM84 anti-radiation missiles fired
     then
 	
 		local _evade = math.random (1,100) -- random number for chance of evading action
 		local _targetMim = EventData.Weapon:getTarget() -- Identify target
-		local _targetMimname = Unit.getName(_targetMim)
-		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
-		local _targetMimgroupName = _targetMimgroup:getName()
-		local _targetMimcont= _targetMimgroup:getController()
+		local _targetMimname = Unit.getName(_targetMim) -- Unit name
+		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon)) --targeted grouo
+		local _targetMimgroupName = _targetMimgroup:getName() -- group name
 		local _targetskill =  _DATABASE.Templates.Units[_targetMimname].Template.skill
 		self:T( self.SEADGroupPrefixes )
 		self:T( _targetMimgroupName )
+		-- see if we are shot at
 		local SEADGroupFound = false
 		for SEADGroupPrefixID, SEADGroupPrefix in pairs( self.SEADGroupPrefixes ) do
 			if string.find( _targetMimgroupName, SEADGroupPrefix, 1, true ) then
 				SEADGroupFound = true
-				self:T( 'Group Found' )
+				self:T( '*** SEAD - Group Found' )
 				break
 			end
 		end		
-		if SEADGroupFound == true then
+		if SEADGroupFound == true then -- yes we are being attacked
 			if _targetskill == "Random" then -- when skill is random, choose a skill
 				local Skills = { "Average", "Good", "High", "Excellent" }
 				_targetskill = Skills[ math.random(1,4) ]
@@ -136,63 +162,36 @@ function SEAD:OnEventShot( EventData )
 			if self.TargetSkill[_targetskill] then
 				if (_evade > self.TargetSkill[_targetskill].Evade) then
 				
-					self:T( string.format("Evading, target skill  " ..string.format(_targetskill)) )
-					
-					local _targetMim = Weapon.getTarget(SEADWeapon)
-					local _targetMimname = Unit.getName(_targetMim)
+					self:T( string.format("*** SEAD - Evading, target skill  " ..string.format(_targetskill)) )
+				
 					local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 					local _targetMimcont= _targetMimgroup:getController()
 					
 					routines.groupRandomDistSelf(_targetMimgroup,300,'Diamond',250,20) -- move randomly
 					
-					local SuppressedGroups1 = {} -- unit suppressed radar off for a random time
-					
-					local function SuppressionEnd1(id)
-						id.ctrl:setOption(AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.GREEN)
-						SuppressedGroups1[id.groupName] = nil
-					end
-					
-					local id = {
+					--tracker ID table to switch groups off and on again
+					local id = { 
 					groupName = _targetMimgroup,
 					ctrl = _targetMimcont
 					}
-					
-					local delay1 = math.random(self.TargetSkill[_targetskill].DelayOff[1], self.TargetSkill[_targetskill].DelayOff[2])
-					
-					if SuppressedGroups1[id.groupName] == nil then
-					
-						SuppressedGroups1[id.groupName] = {
-							SuppressionEndTime1 = timer.getTime() + delay1,
-							SuppressionEndN1 = SuppressionEndCounter1	--Store instance of SuppressionEnd() scheduled function
-						}
-							
-						Controller.setOption(_targetMimcont, AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.GREEN)
-						timer.scheduleFunction(SuppressionEnd1, id, SuppressedGroups1[id.groupName].SuppressionEndTime1)	--Schedule the SuppressionEnd() function
-						--trigger.action.outText( string.format("Radar Off " ..string.format(delay1)), 20)
-					end
-					
-					local SuppressedGroups = {}
-					
-					local function SuppressionEnd(id)
+
+					local function SuppressionEnd(id) --switch group back on
+					 local range = self.EngagementRange -- Feature Request #1355
+					  self:T(string.format("*** SEAD - Engagement Range is %d", range))
 						id.ctrl:setOption(AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.RED)
-						SuppressedGroups[id.groupName] = nil
+						id.ctrl:setOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION,range) --Feature Request #1355
+						self.SuppressedGroups[id.groupName] = nil  --delete group id from table when done
 					end
-					
-					local id = {
-						groupName = _targetMimgroup,
-						ctrl = _targetMimcont
-					}
-					
+					-- randomize switch-on time
 					local delay = math.random(self.TargetSkill[_targetskill].DelayOn[1], self.TargetSkill[_targetskill].DelayOn[2])
-					
-					if SuppressedGroups[id.groupName] == nil then
-						SuppressedGroups[id.groupName] = {
-							SuppressionEndTime = timer.getTime() + delay,
-							SuppressionEndN = SuppressionEndCounter	--Store instance of SuppressionEnd() scheduled function
-						}
-						
-						timer.scheduleFunction(SuppressionEnd, id, SuppressedGroups[id.groupName].SuppressionEndTime)	--Schedule the SuppressionEnd() function
-						--trigger.action.outText( string.format("Radar On " ..string.format(delay)), 20)
+					local SuppressionEndTime = timer.getTime() + delay
+					--create entry
+					if self.SuppressedGroups[id.groupName] == nil then  --no timer entry for this group yet
+						self.SuppressedGroups[id.groupName] = {
+							SuppressionEndTime = delay
+						  }
+						Controller.setOption(_targetMimcont, AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.GREEN)
+						timer.scheduleFunction(SuppressionEnd, id, SuppressionEndTime)	--Schedule the SuppressionEnd() function
 					end
 				end
 			end
