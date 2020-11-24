@@ -595,19 +595,24 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     --- Calculate the target route point.
     
     local FromCoord = AIGroup:GetCoordinate()
-    local ToTargetCoord = self.HomeAirbase:GetCoordinate()
-
-    if not self.RTBMinSpeed and not self.RTBMaxSpeed then    
+    local ToTargetCoord = self.HomeAirbase:GetCoordinate() -- coordinate is on land height(!)
+    local ToTargetVec3 = ToTargetCoord:GetVec3()
+    ToTargetVec3.y = ToTargetCoord:GetLandHeight()+1000 -- let's set this 1000m/3000 feet above ground
+    local ToTargetCoord2 = COORDINATE:NewFromVec3( ToTargetVec3 )
+     
+    if not self.RTBMinSpeed or not self.RTBMaxSpeed then    
       local RTBSpeedMax = AIGroup:GetSpeedMax()
-      self:SetRTBSpeed( RTBSpeedMax * 0.25, RTBSpeedMax * 0.25 )  
+      self:SetRTBSpeed( RTBSpeedMax * 0.2, RTBSpeedMax * 0.5 )  
     end
     
     local RTBSpeed = math.random( self.RTBMinSpeed, self.RTBMaxSpeed )
-    local ToAirbaseAngle = FromCoord:GetAngleDegrees( FromCoord:GetDirectionVec3( ToTargetCoord ) )
+    --local ToAirbaseAngle = FromCoord:GetAngleDegrees( FromCoord:GetDirectionVec3( ToTargetCoord2 ) )
 
-    local Distance = FromCoord:Get2DDistance( ToTargetCoord )
+    local Distance = FromCoord:Get2DDistance( ToTargetCoord2 )
     
-    local ToAirbaseCoord = FromCoord:Translate( 5000, ToAirbaseAngle )
+    --local ToAirbaseCoord = FromCoord:Translate( 5000, ToAirbaseAngle )
+    local ToAirbaseCoord = ToTargetCoord2
+		
     if Distance < 5000 then
       self:I( "RTB and near the airbase!" )
       self:Home()
