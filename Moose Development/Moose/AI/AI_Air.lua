@@ -602,7 +602,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
      
     if not self.RTBMinSpeed or not self.RTBMaxSpeed then    
       local RTBSpeedMax = AIGroup:GetSpeedMax()
-      self:SetRTBSpeed( RTBSpeedMax * 0.2, RTBSpeedMax * 0.5 )  
+      self:SetRTBSpeed( RTBSpeedMax * 0.5, RTBSpeedMax * 0.6 )  
     end
     
     local RTBSpeed = math.random( self.RTBMinSpeed, self.RTBMaxSpeed )
