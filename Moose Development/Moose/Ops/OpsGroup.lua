@@ -90,6 +90,7 @@
 -- @field #OPSGROUP.Spot spot Laser and IR spot.
 -- 
 -- @field #OPSGROUP.Ammo ammo Initial ammount of ammo.
+-- @field #OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -144,6 +145,7 @@ OPSGROUP = {
   callsign           =    {},
   Ndestroyed         =     0,
   Nkills             =     0,
+  weaponData         =    {},
 }
 
 
@@ -601,14 +603,14 @@ end
 
 --- Add a weapon range for ARTY auftrag. 
 -- @param #OPSGROUP self
--- @param #number RangeMin Minimum range in kilometers. Default 0 km.
--- @param #number RangeMax Maximum range in kilometers. Default 10 km.
+-- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
+-- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
 -- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
 -- @return #OPSGROUP self
 function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
 
-  RangeMin=(RangeMin or 0)*1000
-  RangeMax=(RangeMax or 10)*1000
+  RangeMin=UTILS.NMToMeters(RangeMin or 0)
+  RangeMax=UTILS.NMToMeters(RangeMax or 10)
 
   local weapon={} --#OPSGROUP.WeaponData
 
