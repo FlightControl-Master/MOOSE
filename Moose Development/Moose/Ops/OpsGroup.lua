@@ -90,6 +90,7 @@
 -- @field #OPSGROUP.Spot spot Laser and IR spot.
 -- 
 -- @field #OPSGROUP.Ammo ammo Initial ammount of ammo.
+-- @field #OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -144,6 +145,7 @@ OPSGROUP = {
   callsign           =    {},
   Ndestroyed         =     0,
   Nkills             =     0,
+  weaponData         =    {},
 }
 
 
@@ -601,14 +603,14 @@ end
 
 --- Add a weapon range for ARTY auftrag. 
 -- @param #OPSGROUP self
--- @param #number RangeMin Minimum range in kilometers. Default 0 km.
--- @param #number RangeMax Maximum range in kilometers. Default 10 km.
+-- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
+-- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
 -- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
 -- @return #OPSGROUP self
 function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
 
-  RangeMin=(RangeMin or 0)*1000
-  RangeMax=(RangeMax or 10)*1000
+  RangeMin=UTILS.NMToMeters(RangeMin or 0)
+  RangeMax=UTILS.NMToMeters(RangeMax or 10)
 
   local weapon={} --#OPSGROUP.WeaponData
 
@@ -3497,8 +3499,15 @@ function OPSGROUP:SetLaserTarget(Target)
 
   if Target then
 
-    -- Check if we have a POSITIONABLE.
-    if Target:IsInstanceOf("POSITIONABLE") then
+    -- Check object type.
+    if Target:IsInstanceOf("SCENERY") then
+    
+      -- Scenery as target. Treat it like a coordinate. Set offset to 1 meter above ground.
+      self.spot.TargetType=0
+      self.spot.offsetTarget={x=0, y=1, z=0}
+          
+    elseif Target:IsInstanceOf("POSITIONABLE") then
+  
       local target=Target --Wrapper.Positionable#POSITIONABLE
       
       if target:IsAlive() then
@@ -3535,13 +3544,11 @@ function OPSGROUP:SetLaserTarget(Target)
       end
       
     elseif Target:IsInstanceOf("COORDINATE") then
+    
       -- Coordinate as target.
       self.spot.TargetType=0
       self.spot.offsetTarget={x=0, y=0, z=0}
-    elseif Target:IsInstanceOf("SCENERY") then
-      -- Coordinate as target.
-      self.spot.TargetType=0
-      self.spot.offsetTarget={x=0, y=1, z=0}    
+      
     else
       self:E(self.lid.."ERROR: LASER target should be a POSITIONABLE (GROUP, UNIT or STATIC) or a COORDINATE object!")
       return
