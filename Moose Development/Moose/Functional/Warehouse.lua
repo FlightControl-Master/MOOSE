@@ -84,6 +84,8 @@
 -- @field #number lowfuelthresh Low fuel threshold. Triggers the event AssetLowFuel if for any unit fuel goes below this number.
 -- @field #boolean respawnafterdestroyed If true, warehouse is respawned after it was destroyed. Assets are kept.
 -- @field #number respawndelay Delay before respawn in seconds.
+-- @field #number runwaydestroyed Time stamp timer.getAbsTime() when the runway was destroyed.
+-- @field #number runwayrepairtime Time in seconds until runway will be repaired after it was destroyed. Default is 3600 sec (one hour).
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -1893,6 +1895,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- Defaults
   self:SetMarker(true)
   self:SetReportOff()
+  self:SetRunwayRepairtime()
   --self:SetVerbosityLevel(0)
 
   -- Add warehouse to database.
@@ -1944,6 +1947,8 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("Attacked",        "Captured",          "Running")     -- Warehouse was captured by another coalition. It must have been attacked first.
   self:AddTransition("*",               "AirbaseCaptured",   "*")           -- Airbase was captured by other coalition.
   self:AddTransition("*",               "AirbaseRecaptured", "*")           -- Airbase was re-captured from other coalition.
+  self:AddTransition("*",               "RunwayDestroyed",   "*")           -- Runway of the airbase was destroyed.
+  self:AddTransition("*",               "RunwayRepaired",    "*")           -- Runway of the airbase was repaired.
   self:AddTransition("*",               "AssetDead",         "*")           -- An asset group died.
   self:AddTransition("*",               "Destroyed",         "Destroyed")   -- Warehouse was destroyed. All assets in stock are gone and warehouse is stopped.
   self:AddTransition("Destroyed",       "Respawn",           "Running")     -- Respawn warehouse after it was destroyed.
@@ -3245,6 +3250,44 @@ function WAREHOUSE:FindAssetInDB(group)
   return nil
 end
 
+--- Check if runway is operational.
+-- @param #WAREHOUSE self
+-- @return #boolean If true, runway is operational.
+function WAREHOUSE:IsRunwayOperational()
+  if self.airbase then
+    if self.runwaydestroyed then
+      return false
+    else
+      return true
+    end
+  end
+  return nil
+end
+
+--- Set the time until the runway(s) of an airdrome are repaired after it has been destroyed.
+-- Note that this is the time, the DCS engine uses not something we can control on a user level or we could get via scripting.
+-- You need to input the value. On the DCS forum it was stated that this is currently one hour. Hence this is the default value.
+-- @param #WAREHOUSE self
+-- @param #number RepairTime Time in seconds until the runway is repaired. Default 3600 sec (one hour).
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetRunwayRepairtime(RepairTime)
+  self.runwayrepairtime=RepairTime or 3600
+  return self
+end
+
+--- Check if runway is operational.
+-- @param #WAREHOUSE self
+-- @return #number Time in seconds until the runway is repaired. Will return 0 if runway is repaired.
+function WAREHOUSE:GetRunwayRepairtime()
+  if self.runwaydestroyed then
+    local Tnow=timer.getAbsTime()
+    local Tsince=Tnow-self.runwaydestroyed
+    local Trepair=math.max(self.runwayrepairtime-Tsince, 0)
+    return Trepair
+  end
+  return 0
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM states
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3425,6 +3468,14 @@ function WAREHOUSE:onafterStatus(From, Event, To)
 
   -- Check if warehouse is being attacked or has even been captured.
   self:_CheckConquered()
+  
+  if self:IsRunwayOperational()==false then
+    local Trepair=self:GetRunwayRepairtime()
+    self:I(self.lid..string.format("Runway destroyed! Will be repaired in %d sec", Trepair))
+    if Trepair==0 then
+      self:RunwayRepaired()
+    end
+  end
 
   -- Check if requests are valid and remove invalid one.
   self:_CheckRequestConsistancy(self.queue)
@@ -5132,6 +5183,38 @@ function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 
 end
 
+--- On after "RunwayDestroyed" event.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param DCS#coalition.side Coalition Coalition side which originally captured the warehouse.
+function WAREHOUSE:onafterRunwayDestroyed(From, Event, To)
+
+  -- Message.
+  local text=string.format("Warehouse %s: Runway %s destroyed!", self.alias, self.airbasename)
+  self:_InfoMessage(text)
+
+  self.runwaydestroyed=timer.getAbsTime()
+
+end
+
+--- On after "RunwayRepaired" event.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function WAREHOUSE:onafterRunwayRepaired(From, Event, To)
+
+  -- Message.
+  local text=string.format("Warehouse %s: Runway %s repaired!", self.alias, self.airbasename)
+  self:_InfoMessage(text)
+
+  self.runwaydestroyed=nil
+
+end
+
+
 --- On before "AssetSpawned" event. Checks whether the asset was already set to "spawned" for groups with multiple units.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -6335,6 +6418,9 @@ function WAREHOUSE:_OnEventCrashOrDead(EventData)
         -- Trigger Destroyed event.
         self:Destroyed()
       end
+      if self.airbase and self.airbasename and self.airbasename==EventData.IniUnitName then
+        self:RunwayDestroyed()      
+      end
     end
 
     --self:I(self.lid..string.format("Warehouse %s captured event dead or crash or unit %s.", self.alias, tostring(EventData.IniUnitName)))
@@ -7079,15 +7165,23 @@ function WAREHOUSE:_CheckRequestNow(request)
 
     -- Check available parking for air asset units.
     if self.airbase and (_assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER) then
+    
+      if self:IsRunwayOperational() then
 
-      local Parking=self:_FindParkingForAssets(self.airbase,_assets)
-
-      --if Parking==nil and not (self.category==Airbase.Category.HELIPAD) then
-      if Parking==nil then
-        local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all requested assets at the moment.", self.alias)
+        local Parking=self:_FindParkingForAssets(self.airbase,_assets)
+  
+        --if Parking==nil and not (self.category==Airbase.Category.HELIPAD) then
+        if Parking==nil then
+          local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all requested assets at the moment.", self.alias)
+          self:_InfoMessage(text, 5)
+          return false
+        end
+        
+      else
+        -- Runway destroyed.
+        local text=string.format("Warehouse %s: Request denied! Runway is still destroyed", self.alias)
         self:_InfoMessage(text, 5)
-
-        return false
+        return false                
       end
 
     end
@@ -7132,7 +7226,9 @@ function WAREHOUSE:_CheckRequestNow(request)
 
   else
 
-    -- Self propelled case. Nothing to do for now.
+    ---
+    -- Self propelled case
+    ---
 
     -- Ground asset checks.
     if _assetcategory==Group.Category.GROUND then

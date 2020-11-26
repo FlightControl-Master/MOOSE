@@ -324,16 +324,32 @@ UTILS.MetersToNM = function(meters)
   return meters/1852
 end
 
+UTILS.KiloMetersToNM = function(kilometers)
+  return kilometers/1852*1000
+end
+
 UTILS.MetersToSM = function(meters)
   return meters/1609.34
+end
+
+UTILS.KiloMetersToSM = function(kilometers)
+  return kilometers/1609.34*1000
 end
 
 UTILS.MetersToFeet = function(meters)
   return meters/0.3048
 end
 
+UTILS.KiloMetersToFeet = function(kilometers)
+  return kilometers/0.3048*1000
+end
+
 UTILS.NMToMeters = function(NM)
   return NM*1852
+end
+
+UTILS.NMToKiloMeters = function(NM)
+  return NM*1852/1000
 end
 
 UTILS.FeetToMeters = function(feet)
