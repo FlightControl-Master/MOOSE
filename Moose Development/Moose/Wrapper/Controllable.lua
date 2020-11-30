@@ -175,7 +175,7 @@
 --
 -- ## 5.5) Air-2-Air missile attack range:
 --   * @{#CONTROLLABLE.OptionAAAttackRange}(): Defines the usage of A2A missiles against possible targets .
--- 
+--
 -- @field #CONTROLLABLE
 CONTROLLABLE = {
   ClassName = "CONTROLLABLE",
@@ -503,7 +503,7 @@ function CONTROLLABLE:TaskCombo( DCSTasks )
       tasks = DCSTasks
     }
   }
-  
+
   return DCSTaskCombo
 end
 
@@ -801,12 +801,12 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandSetFrequency(Frequency, Modulation, Delay)
 
-  local CommandSetFrequency = { 
-    id = 'SetFrequency', 
-    params = { 
-      frequency = Frequency*1000000, 
-      modulation = Modulation or radio.modulation.AM, 
-    } 
+  local CommandSetFrequency = {
+    id = 'SetFrequency',
+    params = {
+      frequency = Frequency*1000000,
+      modulation = Modulation or radio.modulation.AM,
+    }
   }
 
   if Delay and Delay>0 then
@@ -880,7 +880,7 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
       groupId          = AttackGroup:GetID(),
       weaponType       = WeaponType or 1073741822,
       expend           = WeaponExpend or "Auto",
-      attackQtyLimit   = AttackQty and true or false,      
+      attackQtyLimit   = AttackQty and true or false,
       attackQty        = AttackQty or 1,
       directionEnabled = Direction and true or false,
       direction        = Direction and math.rad(Direction) or 0,
@@ -920,7 +920,7 @@ function CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, Atta
       weaponType       = WeaponType or 1073741822,
     }
   }
-  
+
   return DCSTask
 end
 
@@ -1084,7 +1084,7 @@ function CONTROLLABLE:TaskEmbarking(Coordinate, GroupSetForEmbarking, Duration, 
   -- Distribution
   --local distribution={}
   --distribution[id]=gids
-  
+
   local groupID=self and self:GetID()
 
   local DCSTask = {
@@ -1313,7 +1313,7 @@ function CONTROLLABLE:TaskLandAtVec2(Vec2, Duration)
       duration     = Duration,
     },
   }
-  
+
   return DCSTask
 end
 
@@ -1795,7 +1795,7 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
 
   -- DCS task.
   local DCSTask = self:TaskWrappedAction(self:CommandDoScript(table.concat( DCSScript )))
-  
+
   return DCSTask
 end
 
@@ -1972,7 +1972,7 @@ function CONTROLLABLE:TaskRoute( Points )
     id = 'Mission',
     params = {
       airborne = self:IsAir(),
-      route = {points = Points}, 
+      route = {points = Points},
     },
   }
 
@@ -2898,9 +2898,9 @@ end
 function CONTROLLABLE:OptionROE(ROEvalue)
 
   local DCSControllable = self:GetDCSObject()
-  
+
   if DCSControllable then
-  
+
     local Controller = self:_GetController()
 
     if self:IsAir() then
@@ -3464,13 +3464,13 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionProhibitAfterburner(Prohibit)
   self:F2( { self.ControllableName } )
-  
+
   if Prohibit==nil then
     Prohibit=true
   end
 
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.PROHIBIT_AB, Prohibit)      
+    self:SetOption(AI.Option.Air.id.PROHIBIT_AB, Prohibit)
   end
 
   return self
@@ -3481,9 +3481,9 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_Never()
   self:F2( { self.ControllableName } )
-  
+
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 0)      
+    self:SetOption(AI.Option.Air.id.ECM_USING, 0)
   end
 
   return self
@@ -3494,9 +3494,9 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_OnlyLockByRadar()
   self:F2( { self.ControllableName } )
-  
+
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 1)      
+    self:SetOption(AI.Option.Air.id.ECM_USING, 1)
   end
 
   return self
@@ -3508,9 +3508,9 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_DetectedLockByRadar()
   self:F2( { self.ControllableName } )
-  
+
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 2)      
+    self:SetOption(AI.Option.Air.id.ECM_USING, 2)
   end
 
   return self
@@ -3521,9 +3521,9 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_AlwaysOn()
   self:F2( { self.ControllableName } )
-  
+
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 3)      
+    self:SetOption(AI.Option.Air.id.ECM_USING, 3)
   end
 
   return self
@@ -3667,18 +3667,18 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number Defines the range: MAX_RANGE = 0, NEZ_RANGE = 1, HALF_WAY_RMAX_NEZ = 2, TARGET_THREAT_EST = 3, RANDOM_RANGE = 4. Defaults to 3. See: https://wiki.hoggitworld.com/view/DCS_option_missileAttack
 function CONTROLLABLE:OptionAAAttackRange(range)
-  self:F2( { self.ControllableName } ) 
+  self:F2( { self.ControllableName } )
   -- defaults to 3
   local range = range or 3
-  if range < 0  or range > 4 then 
-    range = 3 
+  if range < 0  or range > 4 then
+    range = 3
   end
   local DCSControllable = self:GetDCSObject()
   if DCSControllable then
     local Controller = self:_GetController()
-    if Controller then 
+    if Controller then
      if self:IsAir() then
-        self:SetOption(AI.Option.Air.val.MISSILE_ATTACK, range)      
+        self:SetOption(AI.Option.Air.val.MISSILE_ATTACK, range)
      end
     end
     return self

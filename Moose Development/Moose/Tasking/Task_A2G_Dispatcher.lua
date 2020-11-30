@@ -451,6 +451,7 @@ do -- TASK_A2G_DISPATCHER
     
     self.Detection = Detection
     self.Mission = Mission
+    self.FlashNewTask = true --set to false to suppress flash messages
     
     self.Detection:FilterCategories( { Unit.Category.GROUND_UNIT } )
     
@@ -471,6 +472,12 @@ do -- TASK_A2G_DISPATCHER
     return self
   end
   
+    --- Set flashing player messages on or off
+  -- @param #TASK_A2G_DISPATCHER self
+  -- @param #boolean onoff Set messages on (true) or off (false)
+  function TASK_A2G_DISPATCHER:SetSendMessages( onoff )
+      self.FlashNewTask = onoff
+  end
   
   --- Creates a SEAD task when there are targets for it.
   -- @param #TASK_A2G_DISPATCHER self
@@ -616,7 +623,9 @@ do -- TASK_A2G_DISPATCHER
           if not DetectedItem then
             local TaskText = Task:GetName()
             for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-              Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2G task %s for %s removed.", TaskText, Mission:GetShortText() ), TaskGroup )
+              if self.FlashNewTask then
+                Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2G task %s for %s removed.", TaskText, Mission:GetShortText() ), TaskGroup )
+              end
             end
             Task = self:RemoveTask( TaskIndex )
           end
@@ -686,7 +695,7 @@ do -- TASK_A2G_DISPATCHER
               -- Now we send to each group the changes, if any.
               for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
                 local TargetsText = TargetsReport:Text(", ")
-                if ( Mission:IsGroupAssigned(TaskGroup) ) and TargetsText ~= "" then
+                if ( Mission:IsGroupAssigned(TaskGroup) ) and TargetsText ~= "" and self.FlashNewTask then
                   Mission:GetCommandCenter():MessageToGroup( string.format( "Task %s has change of targets:\n %s", Task:GetName(), TargetsText ), TaskGroup )
                 end
               end
@@ -805,7 +814,7 @@ do -- TASK_A2G_DISPATCHER
       
       local TaskText = TaskReport:Text(", ")
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" then
+        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" and self.FlashNewTask then
           Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetShortText(), TaskText ), TaskGroup )
         end
       end
