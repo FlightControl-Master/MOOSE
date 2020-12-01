@@ -1252,7 +1252,7 @@ function TASK:MenuFlashTaskStatus( TaskGroup, Flash )
   self.FlashTaskStatus = Flash
 
   if self.FlashTaskStatus then
-    self.FlashTaskScheduler, self.FlashTaskScheduleID = SCHEDULER:New( self, self.MenuTaskStatus, { TaskGroup }, 0, 60 )
+    self.FlashTaskScheduler, self.FlashTaskScheduleID = SCHEDULER:New( self, self.MenuTaskStatus, { TaskGroup }, 0, 60, 0, 61 ) --Issue ##1383 never ending flash messages
   else
     if self.FlashTaskScheduler then
       self.FlashTaskScheduler:Stop( self.FlashTaskScheduleID )
