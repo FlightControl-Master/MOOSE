@@ -881,6 +881,9 @@ do -- Group Assignment
     local Mission = self:GetMission()
     local CommandCenter = Mission:GetCommandCenter()
     CommandCenter:SetMenu()
+    
+    self:MenuFlashTaskStatus( TaskGroup, false ) --remove flashing messages, if any. Issues #1383 & 1312
+    
   end
 end
 
