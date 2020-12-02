@@ -881,6 +881,9 @@ do -- Group Assignment
     local Mission = self:GetMission()
     local CommandCenter = Mission:GetCommandCenter()
     CommandCenter:SetMenu()
+    
+    self:MenuFlashTaskStatus( TaskGroup, false ) -- stop message flashing, if any #1383 & #1312
+    
   end
 end
 
@@ -1252,7 +1255,7 @@ function TASK:MenuFlashTaskStatus( TaskGroup, Flash )
   self.FlashTaskStatus = Flash
 
   if self.FlashTaskStatus then
-    self.FlashTaskScheduler, self.FlashTaskScheduleID = SCHEDULER:New( self, self.MenuTaskStatus, { TaskGroup }, 0, 60 )
+    self.FlashTaskScheduler, self.FlashTaskScheduleID = SCHEDULER:New( self, self.MenuTaskStatus, { TaskGroup }, 0, 60) --Issue #1383 never ending flash messages
   else
     if self.FlashTaskScheduler then
       self.FlashTaskScheduler:Stop( self.FlashTaskScheduleID )
