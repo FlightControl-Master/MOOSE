@@ -53,6 +53,7 @@
 -- @type RANGE
 -- @field #string ClassName Name of the Class.
 -- @field #boolean Debug If true, debug info is send as messages on the screen.
+-- @field #boolean verbose Verbosity level. Higher means more output to DCS log file.
 -- @field #string id String id of range for output in DCS log.
 -- @field #string rangename Name of the range.
 -- @field Core.Point#COORDINATE location Coordinate of the range location.
@@ -289,6 +290,7 @@
 RANGE={
   ClassName           = "RANGE",
   Debug               = false,
+  verbose             =   0,
   id                  = nil,
   rangename           = nil,
   location            = nil,
@@ -518,7 +520,7 @@ RANGE.MenuF10Root=nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version="2.2.3"
+RANGE.version="2.3.0"
 
 --TODO list:
 --TODO: Verbosity level for messages.
@@ -556,7 +558,6 @@ function RANGE:New(rangename)
   -- Debug info.
   local text=string.format("Script version %s - creating new RANGE object %s.", RANGE.version, self.rangename)
   self:I(self.id..text)
-  MESSAGE:New(text, 10):ToAllIf(self.Debug)
 
   -- Defaults
   self:SetDefaultPlayerSmokeBomb()
@@ -723,7 +724,6 @@ function RANGE:onafterStart()
   -- Starting range.
   local text=string.format("Starting RANGE %s. Number of strafe targets = %d. Number of bomb targets = %d.", self.rangename, self.nstrafetargets, self.nbombtargets)
   self:I(self.id..text)
-  MESSAGE:New(text,10):ToAllIf(self.Debug)
 
   -- Event handling.
   if self.eventmoose then
@@ -757,6 +757,7 @@ function RANGE:onafterStart()
   
     -- Radio queue.
     self.rangecontrol=RADIOQUEUE:New(self.rangecontrolfreq, nil, self.rangename)
+    self.rangecontrol.schedonce=true
   
     -- Init numbers.
     self.rangecontrol:SetDigit(0, RANGE.Sound.RC0.filename, RANGE.Sound.RC0.duration, self.soundpath)
@@ -781,7 +782,8 @@ function RANGE:onafterStart()
     if self.instructorfreq then
         
       -- Radio queue.
-      self.instructor=RADIOQUEUE:New(self.instructorfreq, nil, self.rangename)
+      self.instructor=RADIOQUEUE:New(self.instructorfreq, nil, self.rangename)      
+      self.instructor.schedonce=true
       
       -- Init numbers.
       self.instructor:SetDigit(0, RANGE.Sound.IR0.filename, RANGE.Sound.IR0.duration, self.soundpath)
@@ -1148,7 +1150,6 @@ function RANGE:AddStrafePit(targetnames, boxlength, boxwidth, heading, inversehe
       -- Neither unit nor static object with this name could be found.
       local text=string.format("ERROR! Could not find ANY strafe target object with name %s.", _name)
       self:E(self.id..text)
-      MESSAGE:New(text, 10):ToAllIf(self.Debug)
 
     end
 
@@ -1168,7 +1169,6 @@ function RANGE:AddStrafePit(targetnames, boxlength, boxwidth, heading, inversehe
   if ntargets==0 then
     local text=string.format("ERROR! No strafe target could be found when calling RANGE:AddStrafePit() for range %s", self.rangename)
     self:E(self.id..text)
-    MESSAGE:New(text, 10):ToAllIf(self.Debug)
     return
   end
 
@@ -1238,7 +1238,6 @@ function RANGE:AddStrafePit(targetnames, boxlength, boxwidth, heading, inversehe
   -- Debug info
   local text=string.format("Adding new strafe target %s with %d targets: heading = %03d, box_L = %.1f, box_W = %.1f, goodpass = %d, foul line = %.1f", _name, ntargets, heading, l, w, goodpass, foulline)
   self:T(self.id..text)
-  MESSAGE:New(text, 5):ToAllIf(self.Debug)
 
   return self
 end
@@ -1567,13 +1566,13 @@ function RANGE:OnEventBirth(EventData)
     -- Debug output.
     local text=string.format("Player %s, callsign %s entered unit %s (UID %d) of group %s (GID %d)", _playername, _callsign, _unitName, _uid, _group:GetName(), _gid)
     self:T(self.id..text)
-    MESSAGE:New(text, 5):ToAllIf(self.Debug)
 
     -- Reset current strafe status.
     self.strafeStatus[_uid] = nil
 
     -- Add Menu commands after a delay of 0.1 seconds.
-    SCHEDULER:New(nil, self._AddF10Commands, {self,_unitName}, 0.1)
+    --SCHEDULER:New(nil, self._AddF10Commands, {self,_unitName}, 0.1)    
+    self:ScheduleOnce(0.1, self._AddF10Commands, self, _unitName)
 
     -- By default, some bomb impact points and do not flare each hit on target.
     self.PlayerSettings[_playername]={}  --#RANGE.PlayerData
@@ -1591,7 +1590,8 @@ function RANGE:OnEventBirth(EventData)
 
     -- Start check in zone timer.
     if self.planes[_uid] ~= true then
-      SCHEDULER:New(nil, self._CheckInZone, {self, EventData.IniUnitName}, 1, 1)
+      --SCHEDULER:New(nil, self._CheckInZone, {self, EventData.IniUnitName}, 1, 1)
+      self.timerCheckZone=TIMER:New(self._CheckInZone, self, EventData.IniUnitName):Start(1, 1)
       self.planes[_uid] = true
     end
 
@@ -1674,15 +1674,12 @@ function RANGE:OnEventHit(EventData)
 
       if _unit and _playername then
 
-        -- Position of target.
-        local targetPos = _target:GetCoordinate()
-
-        -- Message to player.
-        --local text=string.format("%s, direct hit on target %s.", self:_myname(_unitName), targetname)
-        --self:DisplayMessageToGroup(_unit, text, 10, true)
-
         -- Flare target.
         if self.PlayerSettings[_playername].flaredirecthits then
+        
+          -- Position of target.
+          local targetPos = _target:GetCoordinate()
+        
           targetPos:Flare(self.PlayerSettings[_playername].flarecolor)
         end
 
@@ -1724,9 +1721,6 @@ function RANGE:OnEventShot(EventData)
   self:T(self.id.."EVENT SHOT: Weapon name = ".._weaponName)
   self:T(self.id.."EVENT SHOT: Weapon cate = "..weaponcategory)
 
-  -- Special cases:
-  --local _viggen=string.match(_weapon, "ROBOT") or string.match(_weapon, "RB75") or string.match(_weapon, "BK90") or string.match(_weapon, "RB15") or string.match(_weapon, "RB04")
-
   -- Tracking conditions for bombs, rockets and missiles.
   local _bombs    = weaponcategory==Weapon.Category.BOMB     --string.match(_weapon, "weapons.bombs")
   local _rockets  = weaponcategory==Weapon.Category.ROCKET   --string.match(_weapon, "weapons.nurs")
@@ -1760,7 +1754,7 @@ function RANGE:OnEventShot(EventData)
     self:T(self.id..string.format("RANGE %s: Tracking %s - %s.", self.rangename, _weapon, EventData.weapon:getName()))
 
     -- Init bomb position.
-    local _lastBombPos = {x=0,y=0,z=0}
+    local _lastBombPos = {x=0,y=0,z=0} --DCS#Vec3
 
     -- Function monitoring the position of a bomb until impact.
     local function trackBomb(_ordnance)
@@ -1916,35 +1910,39 @@ end
 -- @param #string To To state.
 function RANGE:onafterStatus(From, Event, To)
 
-  local fsmstate=self:GetState()
-  
-  local text=string.format("Range status: %s", fsmstate)
-  
-  if self.instructor then  
-    local alive="N/A"
-    if self.instructorrelayname then
-      local relay=UNIT:FindByName(self.instructorrelayname)
-      if relay then
-        alive=tostring(relay:IsAlive())
-      end
-    end
-    text=text..string.format(", Instructor %.3f MHz (Relay=%s alive=%s)", self.instructorfreq, tostring(self.instructorrelayname), alive)  
-  end
-  
-  if self.rangecontrol then  
-    local alive="N/A"
-    if self.rangecontrolrelayname then
-      local relay=UNIT:FindByName(self.rangecontrolrelayname)
-      if relay then
-        alive=tostring(relay:IsAlive())
-      end
-    end
-    text=text..string.format(", Control %.3f MHz (Relay=%s alive=%s)", self.rangecontrolfreq, tostring(self.rangecontrolrelayname), alive)  
-  end
+  if self.verbose>0 then
 
-
-  -- Check range status.
-  self:I(self.id..text)
+    local fsmstate=self:GetState()
+    
+    local text=string.format("Range status: %s", fsmstate)
+    
+    if self.instructor then  
+      local alive="N/A"
+      if self.instructorrelayname then
+        local relay=UNIT:FindByName(self.instructorrelayname)
+        if relay then
+          alive=tostring(relay:IsAlive())
+        end
+      end
+      text=text..string.format(", Instructor %.3f MHz (Relay=%s alive=%s)", self.instructorfreq, tostring(self.instructorrelayname), alive)  
+    end
+    
+    if self.rangecontrol then  
+      local alive="N/A"
+      if self.rangecontrolrelayname then
+        local relay=UNIT:FindByName(self.rangecontrolrelayname)
+        if relay then
+          alive=tostring(relay:IsAlive())
+        end
+      end
+      text=text..string.format(", Control %.3f MHz (Relay=%s alive=%s)", self.rangecontrolfreq, tostring(self.rangecontrolrelayname), alive)  
+    end
+  
+  
+    -- Check range status.
+    self:I(self.id..text)
+    
+  end
 
   -- Check player status.
   self:_CheckPlayers()
@@ -2736,6 +2734,32 @@ function RANGE:_CheckInZone(_unitName)
 
   if _unit and _playername then
 
+    --- Function to check if unit is in zone and facing in the right direction and is below the max alt.
+    local function checkme(targetheading, _zone)
+      local zone=_zone --Core.Zone#ZONE
+
+      -- Heading check.
+      local unitheading  = _unit:GetHeading()
+      local pitheading   = targetheading-180
+      local deltaheading = unitheading-pitheading
+      local towardspit   = math.abs(deltaheading)<=90 or math.abs(deltaheading-360)<=90
+      
+      if towardspit then
+      
+        local vec3=_unit:GetVec3()
+        local vec2={x=vec3.x, y=vec3.z} --DCS#Vec2        
+        local landheight=land.getHeight(vec2)        
+        local unitalt=vec3.y-landheight
+        
+        if unitalt<=self.strafemaxalt then        
+          local unitinzone=zone:IsVec2InZone(vec2)      
+          return unitinzone
+        end
+      end
+      
+      return false
+    end
+
     -- Current position of player unit.
     local _unitID  = _unit:GetID()
 
@@ -2747,18 +2771,8 @@ function RANGE:_CheckInZone(_unitName)
       -- Get the current approach zone and check if player is inside.
       local zone=_currentStrafeRun.zone.polygon  --Core.Zone#ZONE_POLYGON_BASE
 
-      local unitheading  = _unit:GetHeading()
-      local pitheading   = _currentStrafeRun.zone.heading - 180
-      local deltaheading = unitheading-pitheading
-      local towardspit   = math.abs(deltaheading)<=90 or math.abs(deltaheading-360)<=90
-      local unitalt=_unit:GetHeight()-_unit:GetCoordinate():GetLandHeight()
-
-      -- Check if unit is inside zone and below max height AGL.
-      local unitinzone=_unit:IsInZone(zone) and unitalt <= self.strafemaxalt and towardspit
-
-      -- Debug output
-      local text=string.format("Checking still in zone. Unit = %s, player = %s in zone = %s. alt = %d, delta heading = %d", _unitName, _playername, tostring(unitinzone), unitalt, deltaheading)
-      self:T2(self.id..text)
+      -- Check if unit in zone and facing the right direction.
+      local unitinzone=checkme(_currentStrafeRun.zone.heading, zone)
 
       -- Check if player is in strafe zone and below max alt.
       if unitinzone then
@@ -2858,22 +2872,10 @@ function RANGE:_CheckInZone(_unitName)
       for _,_targetZone in pairs(self.strafeTargets) do
 
         -- Get the current approach zone and check if player is inside.
-        local zonenname=_targetZone.name
         local zone=_targetZone.polygon  --Core.Zone#ZONE_POLYGON_BASE
 
-        -- Check if player is in zone and below max alt and flying towards the target.
-        local unitheading  = _unit:GetHeading()
-        local pitheading   = _targetZone.heading - 180
-        local deltaheading = unitheading-pitheading
-        local towardspit   = math.abs(deltaheading)<=90 or math.abs(deltaheading-360)<=90
-        local unitalt      =_unit:GetHeight()-_unit:GetCoordinate():GetLandHeight()
-
-        -- Check if unit is inside zone and below max height AGL.
-        local unitinzone=_unit:IsInZone(zone) and unitalt <= self.strafemaxalt and towardspit
-
-        -- Debug info.
-        local text=string.format("Checking zone %s. Unit = %s, player = %s in zone = %s. alt = %d, delta heading = %d", _targetZone.name, _unitName, _playername, tostring(unitinzone), unitalt, deltaheading)
-        self:T2(self.id..text)
+        -- Check if unit in zone and facing the right direction.
+        local unitinzone=checkme(_targetZone.heading, zone)
 
         -- Player is inside zone.
         if unitinzone then
@@ -2882,7 +2884,7 @@ function RANGE:_CheckInZone(_unitName)
           local _ammo=self:_GetAmmo(_unitName)
 
           -- Init strafe status for this player.
-          self.strafeStatus[_unitID] = {hits = 0, zone = _targetZone, time = 1, ammo=_ammo, pastfoulline=false }
+          self.strafeStatus[_unitID] = {hits = 0, zone = _targetZone, time = 1, ammo=_ammo, pastfoulline=false}
 
           -- Rolling in!
           local _msg=string.format("%s, rolling in on strafe pit %s.", self:_myname(_unitName), _targetZone.name)
@@ -3089,11 +3091,9 @@ function RANGE:_GetAmmo(unitname)
 
           local text=string.format("Player %s has %d rounds ammo of type %s", playername, Nammo, Tammo)
           self:T(self.id..text)
-          MESSAGE:New(text, 10):ToAllIf(self.Debug)
         else
           local text=string.format("Player %s has %d ammo of type %s", playername, Nammo, Tammo)
           self:T(self.id..text)
-          MESSAGE:New(text, 10):ToAllIf(self.Debug)
         end
       end
     end

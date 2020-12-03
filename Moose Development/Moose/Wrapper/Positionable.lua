@@ -590,26 +590,29 @@ end
 
 --- Returns the POSITIONABLE heading in degrees.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number The POSITIONABLE heading
--- @return #nil The POSITIONABLE is not existing or alive.
+-- @return #number The POSITIONABLE heading in degrees or `nil` if not existing or alive.
 function POSITIONABLE:GetHeading()
+
   local DCSPositionable = self:GetDCSObject()
 
   if DCSPositionable then
 
     local PositionablePosition = DCSPositionable:getPosition()
+    
     if PositionablePosition then
       local PositionableHeading = math.atan2( PositionablePosition.x.z, PositionablePosition.x.x )
+      
       if PositionableHeading < 0 then
         PositionableHeading = PositionableHeading + 2 * math.pi
       end
+      
       PositionableHeading = PositionableHeading * 180 / math.pi
-      self:T2( PositionableHeading )
+      
       return PositionableHeading
     end
   end
 
-  BASE:E( { "Cannot GetHeading", Positionable = self, Alive = self:IsAlive() } )
+  self:E({"Cannot GetHeading", Positionable = self, Alive = self:IsAlive()})
 
   return nil
 end
