@@ -1288,9 +1288,11 @@ end
 -- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
 function AIRWING:_OptimizeAssetSelection(assets, Mission, includePayload)
 
-  local TargetCoordinate=Mission:GetTargetCoordinate()
+  local TargetVec2=Mission:GetTargetVec2()
 
-  local dStock=self:GetCoordinate():Get2DDistance(TargetCoordinate)
+  --local dStock=self:GetCoordinate():Get2DDistance(TargetCoordinate)
+  
+  local dStock=UTILS.VecDist2D(TargetVec2, self:GetVec2())
   
   -- Calculate distance to mission target.
   local distmin=math.huge
@@ -1300,7 +1302,8 @@ function AIRWING:_OptimizeAssetSelection(assets, Mission, includePayload)
     
     if asset.spawned then
       local group=GROUP:FindByName(asset.spawngroupname)
-      asset.dist=group:GetCoordinate():Get2DDistance(TargetCoordinate)
+      --asset.dist=group:GetCoordinate():Get2DDistance(TargetCoordinate)
+      asset.dist=UTILS.VecDist2D(group:GetVec2(), TargetVec2)
     else
       asset.dist=dStock
     end

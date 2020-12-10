@@ -3060,6 +3060,21 @@ function WAREHOUSE:GetCoordinate()
   return self.warehouse:GetCoordinate()
 end
 
+--- Get 3D vector of warehouse static.
+-- @param #WAREHOUSE self
+-- @return DCS#Vec3 The 3D vector of the warehouse.
+function WAREHOUSE:GetVec3()
+  return self.warehouse:GetVec3()
+end
+
+--- Get 2D vector of warehouse static.
+-- @param #WAREHOUSE self
+-- @return DCS#Vec2 The 2D vector of the warehouse.
+function WAREHOUSE:GetVec2()
+  return self.warehouse:GetVec2()
+end
+
+
 --- Get coalition side of warehouse static.
 -- @param #WAREHOUSE self
 -- @return #number Coalition side, i.e. number of @{DCS#coalition.side}.
