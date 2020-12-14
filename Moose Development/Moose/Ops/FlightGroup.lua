@@ -2387,7 +2387,7 @@ function FLIGHTGROUP:onafterEngageTargets(From, Event, To, TargetUnitSet)
 
   local DCSTasks={}
 
-  for _,_unit in paris(TargetUnitSet:GetSet()) do
+  for _,_unit in pairs(TargetUnitSet:GetSet()) do --detected by =HRP= Zero
     local unit=_unit  --Wrapper.Unit#UNIT
     local task=self.group:TaskAttackUnit(unit, true)
     table.insert(DCSTasks)
