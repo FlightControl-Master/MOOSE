@@ -457,8 +457,23 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   local Static=nil
   
   if self.InitFARP then
-    env.info("Spawning FARP")
-    Static=coalition.addGroup(CountryID, -1, Template)
+    
+    local TemplateGroup={}    
+    TemplateGroup.units={}
+    TemplateGroup.units[1]=Template
+    
+    TemplateGroup.visible=true
+    TemplateGroup.hidden=false
+    TemplateGroup.x=Template.x
+    TemplateGroup.y=Template.y
+    TemplateGroup.name=Template.name
+
+    self:T("Spawning FARP")        
+    self:T({Template=Template})
+    self:T({TemplateGroup=TemplateGroup})
+    
+    -- ED's dirty way to spawn FARPS.
+    Static=coalition.addGroup(CountryID, -1, TemplateGroup)
   else
     Static=coalition.addStaticObject(CountryID, Template)
   end

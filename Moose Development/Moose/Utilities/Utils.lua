@@ -115,6 +115,19 @@ CALLSIGN={
     Mantis=18,
     Badger=19,
   },
+  -- FARP
+  FARP={
+    London=1,
+    Dallas=2,
+    Paris=3,
+    Moscow=4,
+    Berlin=5,
+    Rome=6,
+    Madrid=7,
+    Warsaw=8,
+    Dublin=9,
+    Perth=10,
+  },
 } --#CALLSIGN
 
 --- Utilities static class.
