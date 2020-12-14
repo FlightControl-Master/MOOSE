@@ -241,6 +241,20 @@ function SPAWNSTATIC:InitShape(StaticShape)
   return self
 end
 
+--- Initialize parameters for spawning FARPs.
+-- @param #SPAWNSTATIC self
+-- @param #number CallsignID Callsign ID. Default 1 (="London").
+-- @param #number Frequency Frequency in MHz. Default 127.5 MHz.
+-- @param #number Modulation Modulation 0=AM, 1=FM.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitFARP(CallsignID, Frequency, Modulation)
+  self.InitFarp=true
+  self.InitFarpCallsignID=CallsignID or 1
+  self.InitFarpFreq=Frequency or 127.5
+  self.InitFarpModu=Modulation or 0
+  return self
+end
+
 --- Initialize cargo mass.
 -- @param #SPAWNSTATIC self
 -- @param #number Mass Mass of the cargo in kg.
@@ -420,22 +434,49 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     Template.offsets.angle=self.InitOffsetAngle and math.rad(self.InitOffsetAngle) or 0
   end
   
+  if self.InitFarp then
+    Template.heliport_callsign_id = self.InitFarpCallsignID
+    Template.heliport_frequency   = self.InitFarpFreq
+    Template.heliport_modulation  = self.InitFarpModu
+    Template.unitId=nil
+  end
+  
   -- Increase spawn index counter.
   self.SpawnIndex = self.SpawnIndex + 1
   
   -- Name of the spawned static.
   Template.name = self.InitStaticName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex)
 
-  -- Register the new static.
-  --_DATABASE:_RegisterStaticTemplate(Template, self.CoalitionID, self.CategoryID, CountryID)
-  _DATABASE:AddStatic(Template.name)
+  -- Add and register the new static.
+  local mystatic=_DATABASE:AddStatic(Template.name)
   
   -- Debug output.
   self:T(Template)
   
   -- Add static to the game.
-  local Static=coalition.addStaticObject(CountryID, Template)
-
+  local Static=nil
+  
+  if self.InitFARP then
     
-  return _DATABASE:FindStatic(Static:getName())
+    local TemplateGroup={}    
+    TemplateGroup.units={}
+    TemplateGroup.units[1]=Template
+    
+    TemplateGroup.visible=true
+    TemplateGroup.hidden=false
+    TemplateGroup.x=Template.x
+    TemplateGroup.y=Template.y
+    TemplateGroup.name=Template.name
+
+    self:T("Spawning FARP")        
+    self:T({Template=Template})
+    self:T({TemplateGroup=TemplateGroup})
+    
+    -- ED's dirty way to spawn FARPS.
+    Static=coalition.addGroup(CountryID, -1, TemplateGroup)
+  else
+    Static=coalition.addStaticObject(CountryID, Template)
+  end
+    
+  return mystatic
 end
