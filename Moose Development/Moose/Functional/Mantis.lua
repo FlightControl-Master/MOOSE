@@ -12,12 +12,19 @@
 -- Leverage attack range setup added by DCS in 11/20
 -- 
 -- ===
+-- 
+-- ## Missions:
 --
+-- ### [MANTIS - Modular, Automatic and Network capable Targeting and Interception System](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/MTS%20-%20Mantis/MTS-010%20-%20Basic%20Mantis%20Demo)
+-- 
+-- ===
+-- 
 -- ### Authors : **applevangelist **
 -- 
 -- @module Functional.Mantis
+-- @image Functional.Mantis.jpg
 -- Date: Dec 2020
---
+
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends @{Core.Base#BASE}
 -- @type MANTIS
@@ -48,21 +55,27 @@
 -- Controls a network of SAM sites. Use detection to switch on the AA site closest to the enemy.
 -- Leverage evasiveness from @{Functional.Sead#SEAD}.
 -- Leverage attack range setup added by DCS in 11/20.
--- @usage
+--
 -- Set up your SAM sites in the mission editor. Name the groups with common prefix like "Red SAM".
 -- Set up your EWR system in the mission editor. Name the groups with common prefix like "Red EWR". Can be e.g. AWACS or a combination of AWACS and Search Radars like e.g. EWR 1L13 etc.
 -- [optional] Set up your HQ. Can be any group, e.g. a command vehicle.
 -- 
 -- Start up your MANTIS
 -- 
--- `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`
--- [optional] Use `MANTIS:SetEWRGrouping(radius)`, `MANTIS:SetEWRRange(radius)`, `MANTIS:SetSAMRadius(radius)`, `MANTIS:SetDetectInterval(interval)` to fine-tune your setup.
+--    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`
+--    
+-- [optional] Use  
+--  + `MANTIS:SetEWRGrouping(radius)`  
+--  + `MANTIS:SetEWRRange(radius)`  
+--  + `MANTIS:SetSAMRadius(radius)`  
+--  + `MANTIS:SetDetectInterval(interval)`   
+-- to fine-tune your setup.
 -- 
--- `myredmantis:Start()`
+--    `myredmantis:Start()`
 -- 
 -- @field #MANTIS
 MANTIS = {
-  ClassName         = "MANTIS",
+  ClassName = "MANTIS",
   name  = "mymantis",
   SAM_Templates_Prefix = "",
   SAM_Group = nil,
@@ -109,10 +122,10 @@ do
     self.detectinterval = 30
     
     -- @field #string version
-    self.version="0.2.1"
+    self.version="0.2.2"
     env.info(string.format("***** Starting MANTIS Version %s *****", self.version))
     
-    -- Set some string id for output to DCS.log file.
+    -- Set the string id for output to DCS.log file.
     self.lid=string.format("MANTIS %s | ", self.name)
   
     -- Debug trace.
@@ -124,14 +137,14 @@ do
     end
     
     if self.dynamic then
-      -- get SAM SET_GROUP
+      -- Set SAM SET_GROUP
       self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition):FilterStart()
-      -- get EWR SET_GROUP
+      -- Set EWR SET_GROUP
       self.EWR_Group = SET_GROUP:New():FilterPrefixes({self.SAM_Templates_Prefix,self.EWR_Templates_Prefix}):FilterCoalitions(self.Coalition):FilterStart()
     else
-      -- get SAM SET_GROUP
+      -- Set SAM SET_GROUP
       self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition):FilterOnce()
-      -- get EWR SET_GROUP
+      -- Set EWR SET_GROUP
       self.EWR_Group = SET_GROUP:New():FilterPrefixes({self.SAM_Templates_Prefix,self.EWR_Templates_Prefix}):FilterCoalitions(self.Coalition):FilterOnce()
     end
     
@@ -204,7 +217,7 @@ do
     self.detectinterval = interval
   end    
      
-  --- Function to check if no object is in the given SAM zone
+  --- Function to check if any object is in the given SAM zone
   -- @param #MANTIS self
   -- @param #table dectset Table of coordinates of detected items
   -- @param samcoordinate Core.Point#COORDINATE Coordinate object.
@@ -237,12 +250,13 @@ do
     self:F(self.lid.."Starting Detection")
     
     -- start detection
-    groupset = self.EWR_Group
+    local groupset = self.EWR_Group
     local grouping = self.grouping or 5000
     local acceptrange = self.acceptrange or 80000
     local interval = self.detectinterval or 60
     
-    _MANTISdetection = DETECTION_AREAS:New( groupset, grouping ) --group detected objects to 5000m zones
+    --@param Functional.Detection #DETECTION_AREAS _MANTISdetection [internal] The MANTIS detection object
+    _MANTISdetection = DETECTION_AREAS:New( groupset, grouping ) --[internal] Groups detected objects to 5000m zones
     _MANTISdetection:FilterCategories({ Unit.Category.AIRPLANE, Unit.Category.HELICOPTER })
     _MANTISdetection:SetAcceptRange(acceptrange)
     _MANTISdetection:SetRefreshTimeInterval(interval)
@@ -253,7 +267,7 @@ do
       if DetectedItem.IsDetected then
         local Coordinate = DetectedItem.Coordinate -- Core.Point#COORDINATE
         local text = "MANTIS: Detection at "..Coordinate:ToStringLLDMS()
-        m = MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
+        local m = MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
       end
     end  
     return _MANTISdetection
@@ -328,8 +342,8 @@ do
             samgroup:OptionAlarmStateRed()
             --samgroup:OptionROEWeaponFree()
             --samgroup:SetAIOn()
-            text = string.format("SAM %s switched to alarm state RED!", name)
-            m=MESSAGE:New(text,15,"MANTIS"):ToAllIf(self.debug)
+            local text = string.format("SAM %s switched to alarm state RED!", name)
+            local m=MESSAGE:New(text,15,"MANTIS"):ToAllIf(self.debug)
           end --end alive
         else 
           if samgroup:IsAlive() then
@@ -337,8 +351,8 @@ do
             samgroup:OptionAlarmStateGreen()
             --samgroup:OptionROEWeaponFree()
             --samgroup:SetAIOn()
-            text = string.format("SAM %s switched to alarm state GREEN!", name)
-            m=MESSAGE:New(text,15,"MANTIS"):ToAllIf(self.debug)
+            local text = string.format("SAM %s switched to alarm state GREEN!", name)
+            local m=MESSAGE:New(text,15,"MANTIS"):ToAllIf(self.debug)
           end --end alive
         end --end check
       end --for for loop
