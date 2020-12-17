@@ -1,12 +1,8 @@
------------------------------------------------------------------------
--- MANTIS System
------------------------------------------------------------------------
---
---- **MANTIS** - Moose derived  *M*odular, *A*utomatic and *N*etwork capable *T*argeting and *I*nterception *S*ystem
+--- **Functional** -- Modular, Automatic and Network capable Targeting and Interception System for Air Defenses
 -- 
 -- ===
 -- 
--- MANTIS - Moose derived  Modular, Automatic and Network capable Targeting and Interception System
+-- **MANTIS** - Moose derived  Modular, Automatic and Network capable Targeting and Interception System
 -- Controls a network of SAM sites. Use detection to switch on the AA site closest to the enemy
 -- Leverage evasiveness from SEAD
 -- Leverage attack range setup added by DCS in 11/20
@@ -19,10 +15,11 @@
 -- 
 -- ===
 -- 
--- ### Authors : **applevangelist **
+-- ### Author : **applevangelist **
 -- 
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
+
 -- Date: Dec 2020
 
 -------------------------------------------------------------------------
@@ -35,16 +32,20 @@
 -- @field #string EWR_Templates_Prefix Prefix to build the #GROUP_SET for EWR group
 -- @field @{Core.Set#GROUP_SET} EWR_Group The EWR #GROUP_SET
 -- @field #string SEAD_Template_CC The ME name of the HQ object
--- @field @{Tasking.CommandCenter#COMMANDCENTER} SEAD_CC The #COMMANDCENTER object
+-- @field @{Wrapper.Group#GROUP} SEAD_CC The #GROUP object of the HQ
 -- @field #table SAM_Table Table of SAM sites
 -- @field #string lid Prefix for logging
 -- @field @{Functional.Detection#DETECTION_AREAS} Detection The #DETECTION_AREAS object
 -- @field #boolean debug Switch on extra messages
+-- @field #boolean verbose Switch on extra logging
 -- @field #number checkradius Radius of the SAM sites
 -- @field #number grouping Radius to group detected objects
 -- @field #number acceptrange Radius of the EWR detection
 -- @field #number detectinterval Interval in seconds for the target detection
+-- @field #number engagerange Firing engage range of the SAMs, see [https://wiki.hoggitworld.com/view/DCS_option_engagementRange]
+-- @field #boolean autorelocate Relocate HQ and EWR groups in random intervals. Note: You need to select units for this which are *actually mobile*
 -- @extends @{Core.Base#BASE}
+
 
 --- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - Frédéric Bastiat 
 -- 
@@ -65,33 +66,42 @@
 --    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`
 --    
 -- [optional] Use  
---  + `MANTIS:SetEWRGrouping(radius)`  
---  + `MANTIS:SetEWRRange(radius)`  
---  + `MANTIS:SetSAMRadius(radius)`  
---  + `MANTIS:SetDetectInterval(interval)`   
+--  * `MANTIS:SetEWRGrouping(radius)`  
+--  * `MANTIS:SetEWRRange(radius)`  
+--  * `MANTIS:SetSAMRadius(radius)`  
+--  * `MANTIS:SetDetectInterval(interval)`
+--  * `MANTIS:SetAutoRelocate(hq, ewr)`      
 -- to fine-tune your setup.
 -- 
 --    `myredmantis:Start()`
--- 
+--
+--
 -- @field #MANTIS
 MANTIS = {
-  ClassName = "MANTIS",
-  name  = "mymantis",
-  SAM_Templates_Prefix = "",
-  SAM_Group = nil,
-  EWR_Templates_Prefix = "",
-  EWR_Group = nil,
-  SEAD_Template_CC = "",
-  SEAD_CC = nil,
-  SAM_Table = {},
-  lid = "",
-  Detection = nil,
-  debug = false,
-  checkradius = 25000,
-  grouping = 5000,
-  acceptrange = 80000,
-  detectinterval = 30
+  ClassName             = "MANTIS",
+  name                  = "mymantis",
+  SAM_Templates_Prefix  = "",
+  SAM_Group             = nil,
+  EWR_Templates_Prefix  = "",
+  EWR_Group             = nil,
+  SEAD_Template_CC      = "",
+  SEAD_CC               = nil,
+  SAM_Table             = {},
+  lid                   = "",
+  Detection             = nil,
+  debug                 = false,
+  checkradius           = 25000,
+  grouping              = 5000,
+  acceptrange           = 80000,
+  detectinterval        = 30,
+  engagerange           = 75,
+  autorelocate          = false,
+  verbose               = false
 }
+
+-----------------------------------------------------------------------
+-- MANTIS System
+-----------------------------------------------------------------------
 
 do
   --- Function instantiate new class
@@ -101,11 +111,11 @@ do
   --@param #string ewrprefix Prefixes for the EWR and AWACS groups from the ME, e.g. all groups starting with "Red EWR..."
   --@param #string hq Group name of your HQ (optional)
   --@param #string coaltion Coalition side of your setup, e.g. "blue", "red" or "neutral"
-  --@param #boolean dynamic Use constant (true) filtering or just filer once (false, default)
+  --@param #boolean dynamic Use constant (true) filtering or just filter once (false, default)
   --@return #MANTIS self
   function MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic)
     
-    -- DONE: Create user functions for these
+    -- TODO: Create some user functions for these
     -- TODO: Make HQ useful
     -- TODO: Set SAMs to auto if EWR dies
 
@@ -120,9 +130,13 @@ do
     self.grouping = 5000
     self.acceptrange = 80000
     self.detectinterval = 30
+    self.engagerange = 75
+    self.autorelocate = false
+    self.autorelocateunits = { HQ = false, EWR = false}
+    self.verbose = false
     
     -- @field #string version
-    self.version="0.2.2"
+    self.version="0.2.5"
     env.info(string.format("***** Starting MANTIS Version %s *****", self.version))
     
     -- Set the string id for output to DCS.log file.
@@ -150,7 +164,8 @@ do
     
     -- set up CC
     if self.SEAD_Template_CC then
-      self.SEAD_CC = COMMANDCENTER:New(GROUP:FindByName(self.SEAD_Template_CC),self.SEAD_Template_CC)
+      self.SEAD_CC = GROUP:FindByName(self.SEAD_Template_CC)
+      --self.SEAD_CC = COMMANDCENTER:New(GROUP:FindByName(self.SEAD_Template_CC),self.SEAD_Template_CC)
     end
     -- Inherit everything from BASE class.
     local self = BASE:Inherit(self, BASE:New()) -- #MANTIS
@@ -201,13 +216,35 @@ do
     self.checkradius = radius
   end
   
+  --- Function to set SAM firing engage range, 0-100 percent, e.g. 75
+  -- @param #MANTIS self
+  -- @param #number range Percent of the max fire range
+  function MANTIS:SetSAMRadius(range)
+    local range = range or 75
+    if range < 0 or range > 100 then
+      range = 75
+    end
+    self.engagerange = range
+  end
+  
   --- Function to set switch-on/off the debug state
   -- @param #MANTIS self
   -- @param #boolean onoff Set true to switch on
   function MANTIS:Debug(onoff)
     local onoff = onoff or false
     self.debug = onoff
-  end 
+  end
+     
+  --- Function to get the HQ object for further use
+  -- @param #MANTIS self
+  -- @return Wrapper.GROUP#GROUP The HQ #GROUP object or *nil* if it doesn't exist
+  function MANTIS:GetCommandCenter()
+    if self.SEAD_CC then
+      return self.SEAD_CC
+    else
+      return nil      
+    end   
+  end
           
   --- Function to set the detection interval
   -- @param #MANTIS self
@@ -215,7 +252,57 @@ do
   function MANTIS:SetDetectInterval(interval)
     local interval = interval or 30
     self.detectinterval = interval
+  end  
+  
+  --- Function to set autorelocation for HQ and EWR objects. Note: Units must be actually mobile in DCS!
+  -- @param #MANTIS self
+  -- @param #boolean hq If true, will relocate HQ object
+  -- @param #boolean ewr If true, will relocate  EWR objects
+  function MANTIS:SetAutoRelocate(hq, ewr)
+    self:F({hq, ewr})
+    local hqrel = hq or false
+    local ewrel = ewr or false
+    if hqrel or ewrel then
+      self.autorelocate = true
+      self.autorelocateunits = { HQ = hqrel, EWR = ewrel }
+      self:T({self.autorelocate, self.autorelocateunits})
+    end
   end    
+  
+  --- [Internal] Function to execute the relocation
+  -- @param #MANTIS self
+  function MANTIS:_RelocateGroups()
+    self:T(self.lid.." Relocating Groups")
+    local text = self.lid.." Relocating Groups"
+    local m= MESSAGE:New(text,15,"MANTIS",true):ToAllIf(self.debug)
+    if self.verbose then env.info(text) end
+    if self.autorelocate then
+      -- relocate HQ
+      if self.autorelocateunits.HQ and self.SEAD_CC then --only relocate if HQ exists
+        local _hqgrp = self.SEAD_CC
+        self:T(self.lid.." Relocating HQ")
+        local text = self.lid.." Relocating HQ"
+        local m= MESSAGE:New(text,15,"MANTIS"):ToAll()
+        _hqgrp:RelocateGroundRandomInRadius(20,500,true,true)
+      end
+      --relocate EWR
+      -- TODO: maybe dependent on AlarmState? Observed: SA11 SR only relocates if no objects in reach
+      if self.autorelocateunits.EWR then
+         -- get EWR Group
+         local EWR_GRP = SET_GROUP:New():FilterPrefixes(self.EWR_Templates_Prefix):FilterCoalitions(self.Coalition):FilterOnce()
+         local EWR_Grps = EWR_GRP.Set --table of objects in SET_GROUP
+         for _,_grp in pairs (EWR_Grps) do
+             if _grp:IsGround() then
+              self:T(self.lid.." Relocating EWR ".._grp:GetName())
+              local text = self.lid.." Relocating EWR ".._grp:GetName()
+              local m= MESSAGE:New(text,15,"MANTIS"):ToAllIf(self.debug)
+              if self.verbose then env.info(text) end
+              _grp:RelocateGroundRandomInRadius(20,500,true,true)
+             end
+         end
+      end
+    end
+  end
      
   --- Function to check if any object is in the given SAM zone
   -- @param #MANTIS self
@@ -235,6 +322,7 @@ do
       local targetdistance = samcoordinate:DistanceFromPointVec2(coord)
       local text = string.format("Checking SAM at % s - Distance %d m - Target %s", samstring, targetdistance, dectstring)
       local m = MESSAGE:New(text,10,"Check"):ToAllIf(self.debug)
+      if self.verbose then env.info(self.lid..text) end
       -- end output to cross-check
       if targetdistance <= radius then
         return true
@@ -256,7 +344,7 @@ do
     local interval = self.detectinterval or 60
     
     --@param Functional.Detection #DETECTION_AREAS _MANTISdetection [internal] The MANTIS detection object
-    _MANTISdetection = DETECTION_AREAS:New( groupset, grouping ) --[internal] Groups detected objects to 5000m zones
+    _MANTISdetection = DETECTION_AREAS:New( groupset, grouping ) --[internal] Grouping detected objects to 5000m zones
     _MANTISdetection:FilterCategories({ Unit.Category.AIRPLANE, Unit.Category.HELICOPTER })
     _MANTISdetection:SetAcceptRange(acceptrange)
     _MANTISdetection:SetRefreshTimeInterval(interval)
@@ -264,7 +352,8 @@ do
     
     function _MANTISdetection:OnAfterDetectedItem(From,Event,To,DetectedItem)
       --BASE:I( { From, Event, To, DetectedItem })
-      if DetectedItem.IsDetected then
+      local debug = false
+      if DetectedItem.IsDetected and debug then
         local Coordinate = DetectedItem.Coordinate -- Core.Point#COORDINATE
         local text = "MANTIS: Detection at "..Coordinate:ToStringLLDMS()
         local m = MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
@@ -283,6 +372,7 @@ do
      local SAM_Grps = SAM_SET.Set --table of objects
      local SAM_Tbl = {} -- table of SAM defense zones
      local SEAD_Grps = {} -- table of SAM names to make evasive
+     local engagerange = self.engagerange -- firing range in % of max
      --cycle through groups and set alarm state etc
      for _i,_group in pairs (SAM_Grps) do
      --for i=1,#SAM_Grps do
@@ -290,7 +380,7 @@ do
         group:OptionAlarmStateGreen()
         --group:OptionROEHoldFire()
         --group:SetAIOn()
-        group:SetOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION,75)  --engagement will be 75% of firing range
+        group:SetOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION,engagerange)  --engagement will be 75% of firing range
         if group:IsGround() then
           local grpname = group:GetName()
           local grpcoord = group:GetCoordinate()
@@ -321,15 +411,6 @@ do
       --get detected set
       local detset = detection:GetDetectedItemCoordinates()
       self:F("Check:", {detset})
-      --[[report detections
-      if self.debug then
-        for _,_data in pairs (detset) do
-          local coord = _data
-          local text = "Target detect at "
-          text = text..coord:ToStringLLDMS()
-          m=MESSAGE:New(text,15,"MANTIS"):ToAllIf(self.debug)
-        end --end for
-      end --end if ]]
       -- switch SAMs on/off if (n)one of the detected groups is inside their reach
       local samset = self:_GetSAMTable() -- table of i.1=names, i.2=coordinates and i.3=zones of SAM sites
       for _,_data in pairs (samset) do
@@ -344,6 +425,7 @@ do
             --samgroup:SetAIOn()
             local text = string.format("SAM %s switched to alarm state RED!", name)
             local m=MESSAGE:New(text,15,"MANTIS"):ToAllIf(self.debug)
+            if self.verbose then env.info(self.lid..text) end
           end --end alive
         else 
           if samgroup:IsAlive() then
@@ -353,14 +435,23 @@ do
             --samgroup:SetAIOn()
             local text = string.format("SAM %s switched to alarm state GREEN!", name)
             local m=MESSAGE:New(text,15,"MANTIS"):ToAllIf(self.debug)
+            if self.verbose then env.info(self.lid..text) end
           end --end alive
         end --end check
       end --for for loop
     end --end function
+    -- relocation relay function
+    local function relocate()
+      self:_RelocateGroups()
+    end
     -- timer to run the system
     local interval = self.detectinterval
     self.MantisTimer = TIMER:New(check,self.Detection)
     self.MantisTimer:Start(5,interval,nil)
+    -- relocate HQ and EWR
+    local relointerval = math.random(1800,3600) -- random between 30 and 60 mins
+    self.MantisReloTimer = TIMER:New(relocate)
+    self.MantisReloTimer:Start(relointerval,relointerval,nil)
     return self
   end
   
@@ -370,6 +461,9 @@ do
   function MANTIS:Stop()
     if self.MantisTimer then
       self.MantisTimer:Stop()
+    end
+    if self.MantisReloTimer then
+      self.MantisReloTimer:Stop()
     end
   return self        
   end
