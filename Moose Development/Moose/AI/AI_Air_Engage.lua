@@ -418,6 +418,7 @@ end
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
+-- @param Core.Set#SET_UNIT AttackSetUnit Unit set to be attacked.
 function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, AttackSetUnit )
   self:I( { DefenderGroup, From, Event, To, AttackSetUnit } )
   
@@ -425,7 +426,7 @@ function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
 
   self.AttackSetUnit = AttackSetUnit -- Kept in memory in case of resume from refuel in air!
 
-  local AttackCount = AttackSetUnit:Count()
+  local AttackCount = AttackSetUnit:CountAlive()
   
   if AttackCount > 0 then
 
@@ -510,6 +511,7 @@ end
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
+-- @param Core.Set#SET_UNIT AttackSetUnit Set of units to be attacked.
 function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit )
   self:F( { DefenderGroup, From, Event, To, AttackSetUnit} )
   
@@ -517,8 +519,8 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
 
   self.AttackSetUnit = AttackSetUnit -- Kept in memory in case of resume from refuel in air!
 
-  local AttackCount = AttackSetUnit:Count()
-  self:I({AttackCount = AttackCount})
+  local AttackCount = AttackSetUnit:CountAlive()()
+  self:T({AttackCount = AttackCount})
   
   if AttackCount > 0 then
 
