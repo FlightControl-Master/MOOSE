@@ -519,7 +519,7 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
 
   self.AttackSetUnit = AttackSetUnit -- Kept in memory in case of resume from refuel in air!
 
-  local AttackCount = AttackSetUnit:CountAlive()()
+  local AttackCount = AttackSetUnit:CountAlive()
   self:T({AttackCount = AttackCount})
   
   if AttackCount > 0 then
