@@ -693,7 +693,7 @@ ARTY.db={
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.1.8"
+ARTY.version="1.1.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1146,12 +1146,11 @@ end
 -- @param alias (Optional) Alias name the group will be calling itself when sending messages. Default is the group name.
 -- @return #ARTY ARTY object or nil if group does not exist or is not a ground or naval group.
 function ARTY:NewFromCargoGroup(cargogroup, alias)
-  BASE:F2({cargogroup=cargogroup, alias=alias})
 
   if cargogroup then
-    BASE:T(self.lid..string.format("ARTY script version %s. Added CARGO group %s.", ARTY.version, cargogroup:GetName()))
+    BASE:T(string.format("ARTY script version %s. Added CARGO group %s.", ARTY.version, cargogroup:GetName()))
   else
-    BASE:E(self.lid.."ERROR: Requested ARTY CARGO GROUP does not exist! (Has to be a MOOSE CARGO(!) group.)")
+    BASE:E("ERROR: Requested ARTY CARGO GROUP does not exist! (Has to be a MOOSE CARGO(!) group.)")
     return nil
   end
 
