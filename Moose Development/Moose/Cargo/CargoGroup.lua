@@ -56,6 +56,8 @@ do -- CARGO_GROUP
   -- @param #number NearRadius (optional) Once the units are within this radius of the carrier, they are actually loaded, i.e. disappear from the scene.
   -- @return #CARGO_GROUP Cargo group object.
   function CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius, NearRadius )
+  
+    -- Inherit CAROG_REPORTABLE
     local self = BASE:Inherit( self, CARGO_REPORTABLE:New( Type, Name, 0, LoadRadius, NearRadius ) ) -- #CARGO_GROUP
     self:F( { Type, Name, LoadRadius } )
   
