@@ -1,24 +1,26 @@
 --- **Functional** -- Make SAM sites execute evasive and defensive behaviour when being fired upon.
---
+-- 
 -- ===
---
+-- 
 -- ## Features:
---
+-- 
 --   * When SAM sites are being fired upon, the SAMs will take evasive action will reposition themselves when possible.
 --   * When SAM sites are being fired upon, the SAMs will take defensive action by shutting down their radars.
---
+-- 
 -- ===
---
+-- 
 -- ## Missions:
---
+-- 
 -- [SEV - SEAD Evasion](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SEV%20-%20SEAD%20Evasion)
---
+-- 
 -- ===
---
--- ### Authors: **FlightControl**
---
+-- 
+-- ### Authors: **FlightControl**, **applevangelist**
+-- 
+-- Last Update: Dec 2020
+-- 
 -- ===
---
+-- 
 -- @module Functional.Sead
 -- @image SEAD.JPG
 
@@ -26,24 +28,24 @@
 -- @extends Core.Base#BASE
 
 --- Make SAM sites execute evasive and defensive behaviour when being fired upon.
---
+-- 
 -- This class is very easy to use. Just setup a SEAD object by using @{#SEAD.New}() and SAMs will evade and take defensive action when being fired upon.
---
+-- 
 -- # Constructor:
---
+-- 
 -- Use the @{#SEAD.New}() constructor to create a new SEAD object.
---
+-- 
 --       SEAD_RU_SAM_Defenses = SEAD:New( { 'RU SA-6 Kub', 'RU SA-6 Defenses', 'RU MI-26 Troops', 'RU Attack Gori' } )
---
+-- 
 -- @field #SEAD
 SEAD = {
-	ClassName = "SEAD",
+	ClassName = "SEAD", 
 	TargetSkill = {
 		Average   = { Evade = 30, DelayOn = { 40, 60 } } ,
 		Good      = { Evade = 20, DelayOn = { 30, 50 } } ,
 		High      = { Evade = 15, DelayOn = { 20, 40 } } ,
-		Excellent = { Evade = 10, DelayOn = { 10, 30 } }
-	},
+		Excellent = { Evade = 10, DelayOn = { 10, 30 } } 
+	}, 
 	SEADGroupPrefixes = {},
 	SuppressedGroups = {},
 	EngagementRange = 75 --  default 75% engagement range Feature Request #1355
@@ -52,7 +54,7 @@ SEAD = {
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
 -- When an anti radiation missile is fired (KH-58, KH-31P, KH-31A, KH-25MPU, HARM missiles), the SA will shut down their radars and will take evasive actions...
 -- Chances are big that the missile will miss.
--- @param table{string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Groups in the DCSRTE on which evasive actions need to be taken.
+-- @param table{string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Groups in the DCS mission editor on which evasive actions need to be taken.
 -- @return SEAD
 -- @usage
 -- -- CCCP SEAD Defenses
@@ -62,18 +64,37 @@ function SEAD:New( SEADGroupPrefixes )
 
 	local self = BASE:Inherit( self, BASE:New() )
 	self:F( SEADGroupPrefixes )
-
+	
 	if type( SEADGroupPrefixes ) == 'table' then
 		for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
 			self.SEADGroupPrefixes[SEADGroupPrefix] = SEADGroupPrefix
 		end
 	else
-		self.SEADGroupNames[SEADGroupPrefixes] = SEADGroupPrefixes
+		self.SEADGroupPrefixes[SEADGroupPrefixes] = SEADGroupPrefixes
 	end
-
+	
 	self:HandleEvent( EVENTS.Shot )
-	self:I("*** SEAD - Started Version 0.2.0")
+	self:I("*** SEAD - Started Version 0.2.2")
 	return self
+end
+
+--- Update the active SEAD Set
+-- @param #SEAD self
+-- @param #table SEADGroupPrefixes The prefixes to add, note: can also be a single #string
+-- @return #SEAD self
+function SEAD:UpdateSet( SEADGroupPrefixes )
+
+  self:F( SEADGroupPrefixes )
+  
+  if type( SEADGroupPrefixes ) == 'table' then
+    for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
+      self.SEADGroupPrefixes[SEADGroupPrefix] = SEADGroupPrefix
+    end
+  else
+    self.SEADGroupPrefixes[SEADGroupPrefixes] = SEADGroupPrefixes
+  end
+
+  return self
 end
 
 --- Sets the engagement range of the SAMs. Defaults to 75% to make it more deadly. Feature Request #1355
@@ -105,10 +126,10 @@ function SEAD:OnEventShot( EventData )
 
 	self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
 	self:T({ SEADWeapon })
-
+	
 	--check for SEAD missiles
   if SEADWeaponName == "weapons.missiles.X_58" --Kh-58U anti-radiation missiles fired
-    or
+    or 
     SEADWeaponName == "weapons.missiles.Kh25MP_PRGS1VP" --Kh-25MP anti-radiation missiles fired
     or
     SEADWeaponName == "weapons.missiles.X_25MP" --Kh-25MPU anti-radiation missiles fired
@@ -135,7 +156,7 @@ function SEAD:OnEventShot( EventData )
     or
     SEADWeaponName == "weapons.missiles.AGM_84H" --AGM84 anti-radiation missiles fired
     then
-
+	
 		local _evade = math.random (1,100) -- random number for chance of evading action
 		local _targetMim = EventData.Weapon:getTarget() -- Identify target
 		local _targetMimname = Unit.getName(_targetMim) -- Unit name
@@ -152,7 +173,7 @@ function SEAD:OnEventShot( EventData )
 				self:T( '*** SEAD - Group Found' )
 				break
 			end
-		end
+		end		
 		if SEADGroupFound == true then -- yes we are being attacked
 			if _targetskill == "Random" then -- when skill is random, choose a skill
 				local Skills = { "Average", "Good", "High", "Excellent" }
@@ -161,42 +182,26 @@ function SEAD:OnEventShot( EventData )
 			self:T( _targetskill )
 			if self.TargetSkill[_targetskill] then
 				if (_evade > self.TargetSkill[_targetskill].Evade) then
-
+				
 					self:T( string.format("*** SEAD - Evading, target skill  " ..string.format(_targetskill)) )
-
+				
 					local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 					local _targetMimcont= _targetMimgroup:getController()
-
+					
 					routines.groupRandomDistSelf(_targetMimgroup,300,'Diamond',250,20) -- move randomly
-
+					
 					--tracker ID table to switch groups off and on again
-					local id = {
+					local id = { 
 					groupName = _targetMimgroup,
 					ctrl = _targetMimcont
 					}
 
-					local delay1 = math.random(self.TargetSkill[_targetskill].DelayOff[1], self.TargetSkill[_targetskill].DelayOff[2])
-
-					if SuppressedGroups1[id.groupName] == nil then
-
-						SuppressedGroups1[id.groupName] = {
-							SuppressionEndTime1 = timer.getTime() + delay1,
-							SuppressionEndN1 = SuppressionEndCounter1	--Store instance of SuppressionEnd() scheduled function
-						}
-
-						Controller.setOption(_targetMimcont, AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.GREEN)
-						timer.scheduleFunction(SuppressionEnd1, id, SuppressedGroups1[id.groupName].SuppressionEndTime1)	--Schedule the SuppressionEnd() function
-						--trigger.action.outText( string.format("Radar Off " ..string.format(delay1)), 20)
-					end
-
-					local SuppressedGroups = {}
-
-					local function SuppressionEnd(id)
+					local function SuppressionEnd(id) --switch group back on
 					 local range = self.EngagementRange -- Feature Request #1355
-					  --env.info(string.format("*** SEAD - Engagement Range is %d", range))
+					  self:T(string.format("*** SEAD - Engagement Range is %d", range))
 						id.ctrl:setOption(AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.RED)
 						id.ctrl:setOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION,range) --Feature Request #1355
-						SuppressedGroups[id.groupName] = nil
+						self.SuppressedGroups[id.groupName] = nil  --delete group id from table when done
 					end
 					-- randomize switch-on time
 					local delay = math.random(self.TargetSkill[_targetskill].DelayOn[1], self.TargetSkill[_targetskill].DelayOn[2])
