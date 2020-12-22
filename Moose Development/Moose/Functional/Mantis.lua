@@ -61,19 +61,34 @@
 -- Set up your EWR system in the mission editor. Name the groups with common prefix like "Red EWR". Can be e.g. AWACS or a combination of AWACS and Search Radars like e.g. EWR 1L13 etc.
 -- [optional] Set up your HQ. Can be any group, e.g. a command vehicle.
 -- 
--- Start up your MANTIS
+-- # 1. Start up your MANTIS
 -- 
 --    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`
 --    
 -- [optional] Use  
+-- 
 --  * `MANTIS:SetEWRGrouping(radius)`  
 --  * `MANTIS:SetEWRRange(radius)`  
 --  * `MANTIS:SetSAMRadius(radius)`  
 --  * `MANTIS:SetDetectInterval(interval)`
---  * `MANTIS:SetAutoRelocate(hq, ewr)`      
+--  * `MANTIS:SetAutoRelocate(hq, ewr)`
+--        
 -- to fine-tune your setup.
 -- 
 --    `myredmantis:Start()`
+--
+-- # 2. Default settings
+-- 
+-- By default, the following settings are active:
+--  
+--  * checkradius = 25000 (meters) - SAMs will engage enemy flights, if they are within a 25km around each SAM site - `MANTIS:SetSAMRadius(radius)`
+--  * grouping = 5000 (meters) - Detection (EWR) will group enemy flights to areas of 5km for tracking - `MANTIS:SetEWRGrouping(radius)`
+--  * acceptrange = 80000 (meters) - Detection (EWR) will on consider flights inside a 80km radius - `MANTIS:SetEWRRange(radius)`  
+--  * detectinterval = 30 (seconds) - MANTIS will decide every 30 seconds which SAM to activate - `MANTIS:SetDetectInterval(interval)`
+--  * engagerange = 75 (percent) - SAMs will only fire if flights are inside of a 75% radius of their max firerange - `MANTIS:SetSAMRange(range)`
+--  * dynamic = false - Group filtering is set to once, i.e. newly added groups will not be part of the setup by default - `MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic)`
+--  * autorelocate = false - HQ and (mobile) EWR system will not relocate in random intervals between 30mins and 1 hour - `MANTIS:SetAutoRelocate(hq, ewr)`
+--  * debug = false - Debugging reports on screen are set to off - `MANTIS:Debug(onoff)`
 --
 --
 -- @field #MANTIS
@@ -115,7 +130,7 @@ do
   --@return #MANTIS self
   function MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic)
     
-    -- TODO: Create some user functions for these
+    -- DONE: Create some user functions for these
     -- TODO: Make HQ useful
     -- TODO: Set SAMs to auto if EWR dies
 
@@ -136,7 +151,7 @@ do
     self.verbose = false
     
     -- @field #string version
-    self.version="0.2.5"
+    self.version="0.2.6"
     env.info(string.format("***** Starting MANTIS Version %s *****", self.version))
     
     -- Set the string id for output to DCS.log file.
@@ -219,7 +234,7 @@ do
   --- Function to set SAM firing engage range, 0-100 percent, e.g. 75
   -- @param #MANTIS self
   -- @param #number range Percent of the max fire range
-  function MANTIS:SetSAMRadius(range)
+  function MANTIS:SetSAMRange(range)
     local range = range or 75
     if range < 0 or range > 100 then
       range = 75

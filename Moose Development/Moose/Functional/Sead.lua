@@ -15,7 +15,9 @@
 --
 -- ===
 --
--- ### Authors: **FlightControl**
+-- ### Authors: **FlightControl**, **applevangelist**
+--
+-- Last Update: Dec 2020
 --
 -- ===
 --
@@ -52,7 +54,7 @@ SEAD = {
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
 -- When an anti radiation missile is fired (KH-58, KH-31P, KH-31A, KH-25MPU, HARM missiles), the SA will shut down their radars and will take evasive actions...
 -- Chances are big that the missile will miss.
--- @param table{string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Groups in the DCSRTE on which evasive actions need to be taken.
+-- @param table{string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Groups in the DCS mission editor on which evasive actions need to be taken.
 -- @return SEAD
 -- @usage
 -- -- CCCP SEAD Defenses
@@ -68,12 +70,31 @@ function SEAD:New( SEADGroupPrefixes )
 			self.SEADGroupPrefixes[SEADGroupPrefix] = SEADGroupPrefix
 		end
 	else
-		self.SEADGroupNames[SEADGroupPrefixes] = SEADGroupPrefixes
+		self.SEADGroupPrefixes[SEADGroupPrefixes] = SEADGroupPrefixes
 	end
 
 	self:HandleEvent( EVENTS.Shot )
-	self:I("*** SEAD - Started Version 0.2.0")
+	self:I("*** SEAD - Started Version 0.2.2")
 	return self
+end
+
+--- Update the active SEAD Set
+-- @param #SEAD self
+-- @param #table SEADGroupPrefixes The prefixes to add, note: can also be a single #string
+-- @return #SEAD self
+function SEAD:UpdateSet( SEADGroupPrefixes )
+
+  self:F( SEADGroupPrefixes )
+
+  if type( SEADGroupPrefixes ) == 'table' then
+    for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
+      self.SEADGroupPrefixes[SEADGroupPrefix] = SEADGroupPrefix
+    end
+  else
+    self.SEADGroupPrefixes[SEADGroupPrefixes] = SEADGroupPrefixes
+  end
+
+  return self
 end
 
 --- Sets the engagement range of the SAMs. Defaults to 75% to make it more deadly. Feature Request #1355
