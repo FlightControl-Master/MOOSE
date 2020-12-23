@@ -11,7 +11,7 @@
 --
 -- ### Author: **funkyfranky**
 -- @module Core.Timer
--- @image CORE_Timer.png
+-- @image Core_Scheduler.JPG
 
 
 --- TIMER class.
@@ -19,6 +19,7 @@
 -- @field #string ClassName Name of the class.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number tid Timer ID returned by the DCS API function.
+-- @field #number uid Unique ID of the timer.
 -- @field #function func Timer function.
 -- @field #table para Parameters passed to the timer function.
 -- @field #number Tstart Relative start time in seconds.
@@ -26,9 +27,10 @@
 -- @field #number dT Time interval between function calls in seconds.
 -- @field #number ncalls Counter of function calls.
 -- @field #number ncallsMax Max number of function calls. If reached, timer is stopped.
+-- @field #boolean isrunning If `true`, timer is running. Else it was not started yet or was stopped.
 -- @extends Core.Base#BASE
 
---- *Better three hours too soon than a minute too late.* – William Shakespeare
+--- *Better three hours too soon than a minute too late.* - William Shakespeare
 --
 -- ===
 --
@@ -36,7 +38,7 @@
 --
 -- # The TIMER Concept
 -- 
--- The TIMER class is the little sister of the SCHEDULER class. It does the same thing but is a bit easier to use and has less overhead. It should be sufficient in many cases.
+-- The TIMER class is the little sister of the @{Core.Scheduler#SCHEDULER} class. It does the same thing but is a bit easier to use and has less overhead. It should be sufficient in many cases.
 -- 
 -- It provides an easy interface to the DCS [timer.scheduleFunction](https://wiki.hoggitworld.com/view/DCS_func_scheduleFunction).
 -- 
@@ -62,20 +64,20 @@
 --  
 -- Note that
 -- 
--- * if *Tstart* is not specified (*nil*), the first function call happens immediately.
+-- * if *Tstart* is not specified (*nil*), the first function call happens immediately, i.e. after one millisecond.
 -- * if *dT* is not specified (*nil*), the function is called only once.
 -- * if *Duration* is not specified (*nil*), the timer runs forever or until stopped manually or until the max function calls are reached (see below).
 --
 -- For example,
 -- 
 --     mytimer:Start(3)            -- Will call the function once after 3 seconds.
---     mytimer:Start(nil, 0.5)     -- Will call right now and then every 0.5 sec until all eternaty.
+--     mytimer:Start(nil, 0.5)     -- Will call right now and then every 0.5 sec until all eternity.
 --     mytimer:Start(nil, 2.0, 20) -- Will call right now and then every 2.0 sec for 20 sec.
 --     mytimer:Start(1.0, nil, 10) -- Does not make sense as the function is only called once anyway. 
 --
 -- ## Stopping the Timer
 --
--- The timer can be stopped manually by the @{#TIMER.Start}(*Delay*) function
+-- The timer can be stopped manually by the @{#TIMER.Stop}(*Delay*) function
 -- 
 --     mytimer:Stop()
 --
@@ -110,7 +112,7 @@ _TIMERID=0
 
 --- TIMER class version.
 -- @field #string version
-TIMER.version="0.1.0"
+TIMER.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -141,6 +143,9 @@ function TIMER:New(Function, ...)
   
   -- Number of function calls.
   self.ncalls=0
+  
+  -- Not running yet.
+  self.isrunning=false
   
   -- Increase counter
   _TIMERID=_TIMERID+1
@@ -185,6 +190,9 @@ function TIMER:Start(Tstart, dT, Duration)
   -- Set log id.
   self.lid=string.format("TIMER UID=%d/%d | ", self.uid, self.tid)
   
+  -- Is now running.
+  self.isrunning=true
+  
   -- Debug info.
   self:T(self.lid..string.format("Starting Timer in %.3f sec, dT=%s, Tstop=%s", self.Tstart-Tnow, tostring(self.dT), tostring(self.Tstop)))
 
@@ -209,6 +217,9 @@ function TIMER:Stop(Delay)
       self:T(self.lid..string.format("Stopping timer by removing timer function after %d calls!", self.ncalls))
       timer.removeFunction(self.tid)
       
+      -- Not running any more.
+      self.isrunning=false
+      
       -- Remove DB entry.
       --_TIMERDB[self.uid]=nil
       
@@ -226,6 +237,13 @@ end
 function TIMER:SetMaxFunctionCalls(Nmax)
   self.ncallsMax=Nmax
   return self
+end
+
+--- Check if the timer has been started and was not stopped.
+-- @param #TIMER self
+-- @return #boolean If `true`, the timer is running.
+function TIMER:IsRunning()
+  return self.isrunning
 end
 
 --- Call timer function.
