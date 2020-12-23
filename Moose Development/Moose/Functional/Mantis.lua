@@ -31,6 +31,7 @@
 -- @field @{Core.Set#GROUP_SET} SAM_Group The SAM #GROUP_SET
 -- @field #string EWR_Templates_Prefix Prefix to build the #GROUP_SET for EWR group
 -- @field @{Core.Set#GROUP_SET} EWR_Group The EWR #GROUP_SET
+-- @field @{Core.Set#GROUP_SET} Adv_EWR_Group The EWR #GROUP_SET used for advanced mode
 -- @field #string SEAD_Template_CC The ME name of the HQ object
 -- @field @{Wrapper.Group#GROUP} SEAD_CC The #GROUP object of the HQ
 -- @field #table SAM_Table Table of SAM sites
@@ -44,6 +45,9 @@
 -- @field #number detectinterval Interval in seconds for the target detection
 -- @field #number engagerange Firing engage range of the SAMs, see [https://wiki.hoggitworld.com/view/DCS_option_engagementRange]
 -- @field #boolean autorelocate Relocate HQ and EWR groups in random intervals. Note: You need to select units for this which are *actually mobile*
+-- @field #boolean advanced Use advanced mode, will decrease reactivity of MANTIS, if HQ and/or EWR network dies. Set SAMs to RED state if both are dead. Requires usage of an HQ object
+-- @field #number adv_ratio Percentage to use for advanced mode, defaults to 100%
+-- @field #number adv_state Advanced mode state tracker
 -- @extends @{Core.Base#BASE}
 
 
@@ -80,7 +84,9 @@
 -- # 2. Default settings
 -- 
 -- By default, the following settings are active:
---  
+--
+--  * SAM_Templates_Prefix = "Red SAM" - SAM site group names in the mission editor begin with "Red SAM"
+--  * EWR_Templates_Prefix = "Red EWR" - EWR group names in the mission editor begin with "Red EWR" - can also be AWACS
 --  * checkradius = 25000 (meters) - SAMs will engage enemy flights, if they are within a 25km around each SAM site - `MANTIS:SetSAMRadius(radius)`
 --  * grouping = 5000 (meters) - Detection (EWR) will group enemy flights to areas of 5km for tracking - `MANTIS:SetEWRGrouping(radius)`
 --  * acceptrange = 80000 (meters) - Detection (EWR) will on consider flights inside a 80km radius - `MANTIS:SetEWRRange(radius)`  
@@ -99,6 +105,7 @@ MANTIS = {
   SAM_Group             = nil,
   EWR_Templates_Prefix  = "",
   EWR_Group             = nil,
+  Adv_EWR_Group         = nil,
   SEAD_Template_CC      = "",
   SEAD_CC               = nil,
   SAM_Table             = {},
@@ -111,6 +118,9 @@ MANTIS = {
   detectinterval        = 30,
   engagerange           = 75,
   autorelocate          = false,
+  advanced              = false,
+  adv_ratio             = 100,
+  adv_state             = 0,
   verbose               = false
 }
 
@@ -131,8 +141,9 @@ do
   function MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic)
     
     -- DONE: Create some user functions for these
-    -- TODO: Make HQ useful
-    -- TODO: Set SAMs to auto if EWR dies
+    -- DONE: Make HQ useful
+    -- DONE: Set SAMs to auto if EWR dies
+    -- TODO: Refresh SAM table in dynamic mode
 
     self.name = name or "mymantis"
     self.SAM_Templates_Prefix = samprefix or "Red SAM"
@@ -148,10 +159,14 @@ do
     self.engagerange = 75
     self.autorelocate = false
     self.autorelocateunits = { HQ = false, EWR = false}
+    self.advanced = false
+    self.adv_ratio = 100
+    self.adv_state = 0 
     self.verbose = false
+    self.Adv_EWR_Group = nil
     
     -- @field #string version
-    self.version="0.2.6"
+    self.version="0.3.0"
     env.info(string.format("***** Starting MANTIS Version %s *****", self.version))
     
     -- Set the string id for output to DCS.log file.
@@ -260,6 +275,22 @@ do
       return nil      
     end   
   end
+  
+  --- Function to set the HQ object for further use
+  -- @param #MANTIS self
+  -- @param Wrapper.GROUP#GROUP The HQ #GROUP object to be set as HQ
+  function MANTIS:SetCommandCenter(group)
+    local group = group or nil
+    if group ~= nil then
+      if type(group) == "string" then
+        self.SEAD_CC = GROUP:FindByName(group)
+        self.SEAD_Template_CC = group
+      else
+        self.SEAD_CC = group
+        self.SEAD_Template_CC = group:GetName()
+      end
+    end
+  end
           
   --- Function to set the detection interval
   -- @param #MANTIS self
@@ -268,6 +299,108 @@ do
     local interval = interval or 30
     self.detectinterval = interval
   end  
+  
+  --- Function to set Advanded Mode
+  -- @param #MANTIS self
+  -- @param #boolean onoff If true, will activate Advanced Mode
+  -- @param #number ratio [optional] Percentage to use for advanced mode, defaults to 100%
+  -- @usage Advanced mode will *decrease* reactivity of MANTIS, if HQ and/or EWR network dies.  Set SAMs to RED state if both are dead.  Requires usage of an **HQ** object
+  -- E.g. `mymantis:SetAdvancedMode(true, 90)`
+  function MANTIS:SetAdvancedMode(onoff, ratio)
+    self:F({onoff, ratio})
+    local onoff = onoff or false
+    local ratio = ratio or 100
+    if (type(self.SEAD_Template_CC) == "string") and onoff and self.dynamic then
+      self.adv_ratio = ratio
+      self.advanced = true
+      self.adv_state = 0
+      self.Adv_EWR_Group = SET_GROUP:New():FilterPrefixes(self.EWR_Templates_Prefix):FilterCoalitions(self.Coalition):FilterStart()
+      env.info(string.format("***** Starting Advanced Mode MANTIS Version %s *****", self.version))
+    else
+      local text = self.lid.." Advanced Mode requires a HQ and dynamic to be set. Revisit your MANTIS:New() statement to add both."
+      local m= MESSAGE:New(text,10,"MANTIS",true):ToAll()
+      BASE:E(text)
+    end
+  end
+  
+  --- [Internal] Function to check if HQ is alive
+  -- @param #MANTIS self
+  -- @return #boolean True if HQ is alive, else false
+  function MANTIS:_CheckHQState()
+    local text = self.lid.." Checking HQ State"
+    self:T(text)
+    local m= MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
+    if self.verbose then env.info(text) end
+    -- start check
+    if self.advanced then
+      local hq = self.SEAD_Template_CC
+      local hqgrp = GROUP:FindByName(hq)
+      if hqgrp then
+        if hqgrp:IsAlive() then -- ok we're on, hq exists and as alive
+          env.info(self.lid.." HQ is alive!")
+          return true
+        else
+          env.info(self.lid.." HQ is dead!")
+          return false  
+        end
+      end
+    end 
+  end
+
+  --- [Internal] Function to check if EWR is (at least partially) alive
+  -- @param #MANTIS self
+  -- @return #boolean True if EWR is alive, else false
+  function MANTIS:_CheckEWRState()
+    local text = self.lid.." Checking EWR State"
+    self:F(text)
+    local m= MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
+    if self.verbose then env.info(text) end
+    -- start check
+    if self.advanced then
+      local EWR_Group = self.Adv_EWR_Group
+      --local EWR_Set = EWR_Group.Set
+      local nalive = EWR_Group:CountAlive()
+      env.info(self.lid..string.format(" No of EWR alive is %d", nalive))
+      if nalive > 0 then
+        return true
+      else
+        return false
+      end
+    end 
+  end
+
+  --- [Internal] Function to determine state of the advanced mode
+  -- @param #MANTIS self
+  -- @return #number Newly calculated interval
+  -- @return #number Previous state for tracking 0, 1, or 2
+  function MANTIS:_CheckAdvState()
+    local text = self.lid.." Checking Advanced State"
+    self:F(text)
+    local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
+    if self.verbose then env.info(text) end
+    -- start check
+    local currstate = self.adv_state -- save curr state for comparison later
+    local EWR_State = self:_CheckEWRState()
+    local HQ_State = self:_CheckHQState()
+    -- set state
+    if EWR_State and HQ_State then -- both alive
+      self.adv_state = 0 --everything is fine
+    elseif EWR_State or HQ_State then -- one alive
+      self.adv_state = 1 --slow down level 1
+    else -- none alive
+      self.adv_state = 2 --slow down level 2
+    end
+    -- calculate new detectioninterval
+    local interval = self.detectinterval -- e.g. 30
+    local ratio = self.adv_ratio / 100 -- e.g. 80/100 = 0.8
+    ratio = ratio * self.adv_state -- e.g 0.8*2 = 1.6
+    local newinterval = interval + (interval * ratio) -- e.g. 30+(30*1.6) = 78
+    local text = self.lid..string.format(" Calculated OldState/NewState/Interval: %d / %d / %d", currstate, self.adv_state, newinterval)
+    self:F(text)
+    local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
+    if self.verbose then env.info(text) end
+    return newinterval, currstate
+  end
   
   --- Function to set autorelocation for HQ and EWR objects. Note: Units must be actually mobile in DCS!
   -- @param #MANTIS self
@@ -289,7 +422,7 @@ do
   function MANTIS:_RelocateGroups()
     self:T(self.lid.." Relocating Groups")
     local text = self.lid.." Relocating Groups"
-    local m= MESSAGE:New(text,15,"MANTIS",true):ToAllIf(self.debug)
+    local m= MESSAGE:New(text,10,"MANTIS",true):ToAllIf(self.debug)
     if self.verbose then env.info(text) end
     if self.autorelocate then
       -- relocate HQ
@@ -297,7 +430,7 @@ do
         local _hqgrp = self.SEAD_CC
         self:T(self.lid.." Relocating HQ")
         local text = self.lid.." Relocating HQ"
-        local m= MESSAGE:New(text,15,"MANTIS"):ToAll()
+        local m= MESSAGE:New(text,10,"MANTIS"):ToAll()
         _hqgrp:RelocateGroundRandomInRadius(20,500,true,true)
       end
       --relocate EWR
@@ -310,7 +443,7 @@ do
              if _grp:IsGround() then
               self:T(self.lid.." Relocating EWR ".._grp:GetName())
               local text = self.lid.." Relocating EWR ".._grp:GetName()
-              local m= MESSAGE:New(text,15,"MANTIS"):ToAllIf(self.debug)
+              local m= MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
               if self.verbose then env.info(text) end
               _grp:RelocateGroundRandomInRadius(20,500,true,true)
              end
@@ -381,6 +514,7 @@ do
   -- @param #MANTIS self
   -- @return #MANTIS self
   function MANTIS:SetSAMStartState()
+    -- TODO: if using dynamic filtering, update SAM_Table and the (active) SEAD groups, pull req #1405/#1406
     self:F(self.lid.."Setting SAM Start States")
      -- get SAM Group
      local SAM_SET = self.SAM_Group
@@ -399,8 +533,9 @@ do
         if group:IsGround() then
           local grpname = group:GetName()
           local grpcoord = group:GetCoordinate()
-          local grpzone = ZONE_UNIT:New(grpname,group:GetUnit(1),5000) -- defense zone around each SAM site 5000 meters
-          table.insert( SAM_Tbl, {grpname, grpcoord, grpzone})
+          --local grpzone = ZONE_UNIT:New(grpname,group:GetUnit(1),5000) -- defense zone around each SAM site 5000 meters
+          --table.insert( SAM_Tbl, {grpname, grpcoord, grpzone})
+          table.insert( SAM_Tbl, {grpname, grpcoord}) -- make the table lighter, as I don't really use the zone here
           table.insert( SEAD_Grps, grpname )
         end
      end
@@ -427,7 +562,7 @@ do
       local detset = detection:GetDetectedItemCoordinates()
       self:F("Check:", {detset})
       -- switch SAMs on/off if (n)one of the detected groups is inside their reach
-      local samset = self:_GetSAMTable() -- table of i.1=names, i.2=coordinates and i.3=zones of SAM sites
+      local samset = self:_GetSAMTable() -- table of i.1=names, i.2=coordinates
       for _,_data in pairs (samset) do
         local samcoordinate = _data[2]
         local name = _data[1]
@@ -439,7 +574,7 @@ do
             --samgroup:OptionROEWeaponFree()
             --samgroup:SetAIOn()
             local text = string.format("SAM %s switched to alarm state RED!", name)
-            local m=MESSAGE:New(text,15,"MANTIS"):ToAllIf(self.debug)
+            local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
             if self.verbose then env.info(self.lid..text) end
           end --end alive
         else 
@@ -449,7 +584,7 @@ do
             --samgroup:OptionROEWeaponFree()
             --samgroup:SetAIOn()
             local text = string.format("SAM %s switched to alarm state GREEN!", name)
-            local m=MESSAGE:New(text,15,"MANTIS"):ToAllIf(self.debug)
+            local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
             if self.verbose then env.info(self.lid..text) end
           end --end alive
         end --end check
@@ -459,14 +594,52 @@ do
     local function relocate()
       self:_RelocateGroups()
     end
-    -- timer to run the system
+    -- check advanced state
+    local function checkadvstate()
+      if self.advanced then 
+        local interval, oldstate = self:_CheckAdvState()
+        local newstate = self.adv_state
+        if newstate ~= oldstate then
+          -- deal with new state
+          if newstate == 2 then
+            -- switch alarm state RED
+            if self.MantisTimer.isrunning then 
+              self.MantisTimer:Stop() 
+              self.MantisTimer.isrunning = false
+            end -- stop timer
+            local samset = self:_GetSAMTable() -- table of i.1=names, i.2=coordinates
+            for _,_data in pairs (samset) do
+              local name = _data[1]
+              local samgroup = GROUP:FindByName(name)
+              if samgroup:IsAlive() then
+                samgroup:OptionAlarmStateRed()
+              end -- end alive
+            end -- end for loop
+          elseif newstate <= 1 then
+            -- change MantisTimer to slow down or speed up
+            if self.MantisTimer.isrunning then 
+              self.MantisTimer:Stop()
+              self.MantisTimer.isrunning = false
+            end
+            self.MantisTimer = TIMER:New(check,self.Detection)
+            self.MantisTimer:Start(5,interval,nil) 
+            self.MantisTimer.isrunning = true
+          end
+        end -- end newstate vs oldstate
+      end -- end advanced
+    end
+    -- timers to run the system
     local interval = self.detectinterval
     self.MantisTimer = TIMER:New(check,self.Detection)
     self.MantisTimer:Start(5,interval,nil)
-    -- relocate HQ and EWR
+    self.MantisTimer.isrunning = true
+    -- timer to relocate HQ and EWR
     local relointerval = math.random(1800,3600) -- random between 30 and 60 mins
     self.MantisReloTimer = TIMER:New(relocate)
     self.MantisReloTimer:Start(relointerval,relointerval,nil)
+    -- timer for advanced state check
+    self.MantisAdvTimer = TIMER:New(checkadvstate)
+    self.MantisAdvTimer:Start(30,interval*5,nil)
     return self
   end
   
@@ -474,11 +647,14 @@ do
   -- @param #MANTIS self
   -- @return #MANTIS self
   function MANTIS:Stop()
-    if self.MantisTimer then
+    if self.MantisTimer.isrunning then
       self.MantisTimer:Stop()
     end
-    if self.MantisReloTimer then
+    if self.autorelocate then
       self.MantisReloTimer:Stop()
+    end
+    if self.advanced then
+      self.MantisAdvTimer:Stop()
     end
   return self        
   end
