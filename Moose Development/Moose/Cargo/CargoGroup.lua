@@ -56,6 +56,8 @@ do -- CARGO_GROUP
   -- @param #number NearRadius (optional) Once the units are within this radius of the carrier, they are actually loaded, i.e. disappear from the scene.
   -- @return #CARGO_GROUP Cargo group object.
   function CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius, NearRadius )
+  
+    -- Inherit CAROG_REPORTABLE
     local self = BASE:Inherit( self, CARGO_REPORTABLE:New( Type, Name, 0, LoadRadius, NearRadius ) ) -- #CARGO_GROUP
     self:F( { Type, Name, LoadRadius } )
   
@@ -481,7 +483,7 @@ do -- CARGO_GROUP
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2
+  -- @param Core.Point#POINT_VEC2 ToPointVec2
   function CARGO_GROUP:onafterUnLoad( From, Event, To, ToPointVec2, ... )
     --self:F( { From, Event, To, ToPointVec2 } )
   
@@ -491,7 +493,10 @@ do -- CARGO_GROUP
       self.CargoSet:ForEach(
         function( Cargo )
           --Cargo:UnLoad( ToPointVec2 )
-          local RandomVec2=ToPointVec2:GetRandomPointVec2InRadius(20, 10)
+          local RandomVec2=nil
+          if ToPointVec2 then 
+            RandomVec2=ToPointVec2:GetRandomPointVec2InRadius(20, 10)
+          end
           Cargo:UnBoard( RandomVec2 )
         end
       )
