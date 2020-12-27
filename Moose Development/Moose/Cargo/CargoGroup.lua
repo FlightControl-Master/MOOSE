@@ -483,7 +483,7 @@ do -- CARGO_GROUP
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2
+  -- @param Core.Point#POINT_VEC2 ToPointVec2
   function CARGO_GROUP:onafterUnLoad( From, Event, To, ToPointVec2, ... )
     --self:F( { From, Event, To, ToPointVec2 } )
   
@@ -493,7 +493,10 @@ do -- CARGO_GROUP
       self.CargoSet:ForEach(
         function( Cargo )
           --Cargo:UnLoad( ToPointVec2 )
-          local RandomVec2=ToPointVec2:GetRandomPointVec2InRadius(20, 10)
+          local RandomVec2=nil
+          if ToPointVec2 then 
+            RandomVec2=ToPointVec2:GetRandomPointVec2InRadius(20, 10)
+          end
           Cargo:UnBoard( RandomVec2 )
         end
       )
