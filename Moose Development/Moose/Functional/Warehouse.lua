@@ -7179,24 +7179,35 @@ function WAREHOUSE:_CheckRequestNow(request)
     _assetcategory=_assets[1].category
 
     -- Check available parking for air asset units.
-    if self.airbase and (_assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER) then
+    if _assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER then
     
-      if self:IsRunwayOperational() then
-
-        local Parking=self:_FindParkingForAssets(self.airbase,_assets)
+      if self.airbase then
+    
+        if self:IsRunwayOperational() then
   
-        --if Parking==nil and not (self.category==Airbase.Category.HELIPAD) then
-        if Parking==nil then
-          local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all requested assets at the moment.", self.alias)
+          local Parking=self:_FindParkingForAssets(self.airbase,_assets)
+    
+          --if Parking==nil and not (self.category==Airbase.Category.HELIPAD) then
+          if Parking==nil then
+            local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all requested assets at the moment.", self.alias)
+            self:_InfoMessage(text, 5)
+            return false
+          end
+          
+        else
+          -- Runway destroyed.
+          local text=string.format("Warehouse %s: Request denied! Runway is still destroyed", self.alias)
           self:_InfoMessage(text, 5)
-          return false
+          return false                
         end
         
       else
-        -- Runway destroyed.
-        local text=string.format("Warehouse %s: Request denied! Runway is still destroyed", self.alias)
+      
+        -- No airbase!
+        local text=string.format("Warehouse %s: Request denied! No airbase", self.alias)
         self:_InfoMessage(text, 5)
         return false                
+      
       end
 
     end
@@ -7220,14 +7231,37 @@ function WAREHOUSE:_CheckRequestNow(request)
       local _transportcategory=_transports[1].category
 
       -- Check available parking for transport units.
-      if self.airbase and (_transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER) then
-        local Parking=self:_FindParkingForAssets(self.airbase,_transports)
-        if Parking==nil then
-          local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all transports at the moment.", self.alias)
-          self:_InfoMessage(text, 5)
-
-          return false
+      if _transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER then
+      
+        if self.airbase then
+        
+          if self:IsRunwayOperational() then        
+      
+            local Parking=self:_FindParkingForAssets(self.airbase,_transports)
+            
+            -- No parking ==> return false
+            if Parking==nil then           
+              local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all transports at the moment.", self.alias)
+              self:_InfoMessage(text, 5)  
+              return false
+            end
+            
+          else
+          
+             -- Runway destroyed.
+            local text=string.format("Warehouse %s: Request denied! Runway is still destroyed", self.alias)
+            self:_InfoMessage(text, 5)
+            return false
+                                     
+          end
+          
+        else
+          -- No airbase
+          local text=string.format("Warehouse %s: Request denied! No airbase currently!", self.alias)
+          self:_InfoMessage(text, 5)  
+          return false        
         end
+          
       end
 
     else
