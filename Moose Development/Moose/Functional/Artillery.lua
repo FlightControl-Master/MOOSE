@@ -693,7 +693,7 @@ ARTY.db={
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.1.9"
+ARTY.version="1.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2765,36 +2765,30 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
   self:_EventFromTo("onafterStatus", Event, From, To)
   
   -- Get ammo.
-  local ntot, nshells, nrockets, nmissiles=self:GetAmmo()
+  local nammo, nshells, nrockets, nmissiles=self:GetAmmo()
+  
+  -- We have a cargo group ==> check if group was loaded into a carrier.
+  if self.iscargo and self.cargogroup then
+    if self.cargogroup:IsLoaded() and not self:is("InTransit")  then
+      -- Group is now InTransit state. Current target is canceled.
+      self:T(self.lid..string.format("Group %s has been loaded into a carrier and is now transported.", self.alias))
+      self:Loaded()
+    elseif self.cargogroup:IsUnLoaded() then
+      -- Group has been unloaded and is combat ready again.
+      self:T(self.lid..string.format("Group %s has been unloaded from the carrier.", self.alias))
+      self:UnLoaded()
+    end
+  end  
 
   -- FSM state.
   local fsmstate=self:GetState()
-  self:T(self.lid..string.format("Status %s, Ammo total=%d: shells=%d [smoke=%d, illu=%d, nukes=%d*%.3f kT], rockets=%d, missiles=%d", fsmstate, ntot, nshells, self.Nsmoke, self.Nillu, self.Nukes, self.nukewarhead/1000000, nrockets, nmissiles))
+  self:T(self.lid..string.format("Status %s, Ammo total=%d: shells=%d [smoke=%d, illu=%d, nukes=%d*%.3f kT], rockets=%d, missiles=%d", fsmstate, nammo, nshells, self.Nsmoke, self.Nillu, self.Nukes, self.nukewarhead/1000000, nrockets, nmissiles))
 
   if self.Controllable and self.Controllable:IsAlive() then
-
-    -- We have a cargo group ==> check if group was loaded into a carrier.
-    if self.cargogroup then
-      if self.cargogroup:IsLoaded() and not self:is("InTransit")  then
-        -- Group is now InTransit state. Current target is canceled.
-        self:T(self.lid..string.format("Group %s has been loaded into a carrier and is now transported.", self.alias))
-        self:Loaded()
-      elseif self.cargogroup:IsUnLoaded() then
-        -- Group has been unloaded and is combat ready again.
-        self:T(self.lid..string.format("Group %s has been unloaded from the carrier.", self.alias))
-        self:UnLoaded()
-      end
-    end
 
     -- Debug current status info.
     if self.Debug then
       self:_StatusReport()
-    end
-
-    -- Group is being transported as cargo ==> skip everything and check again in 5 seconds.
-    if self:is("InTransit") then
-      self:__Status(-5)
-      return
     end
 
     -- Group on the move.
@@ -2883,7 +2877,7 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
     end
 
     -- Get ammo.
-    local nammo, nshells, nrockets, nmissiles=self:GetAmmo()
+    --local nammo, nshells, nrockets, nmissiles=self:GetAmmo()
 
     -- Check if we have a target in the queue for which weapons are still available.
     local gotsome=false
@@ -2913,9 +2907,23 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
     -- Call status again in ~10 sec.
     self:__Status(self.StatusInterval)
 
+  elseif self.iscargo then
+
+    -- We have a cargo group ==> check if group was loaded into a carrier.
+    if self.cargogroup and self.cargogroup:IsAlive() then
+
+      -- Group is being transported as cargo ==> skip everything and check again in 5 seconds.
+      if self:is("InTransit") then
+        self:__Status(-5)
+      end
+      
+    end  
+
   else
     self:E(self.lid..string.format("Arty group %s is not alive!", self.groupname))
   end
+  
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -456,7 +456,7 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   -- Add static to the game.
   local Static=nil
   
-  if self.InitFARP then
+  if self.InitFarp then
     
     local TemplateGroup={}    
     TemplateGroup.units={}
