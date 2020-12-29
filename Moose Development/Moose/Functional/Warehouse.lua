@@ -7181,7 +7181,7 @@ function WAREHOUSE:_CheckRequestNow(request)
     -- Check available parking for air asset units.
     if _assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER then
     
-      if self.airbase then
+      if self.airbase and self.airbase:GetCoalition()==self:GetCoalition() then
     
         if self:IsRunwayOperational() then
   
@@ -7233,7 +7233,7 @@ function WAREHOUSE:_CheckRequestNow(request)
       -- Check available parking for transport units.
       if _transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER then
       
-        if self.airbase then
+        if self.airbase and self.airbase:GetCoalition()==self:GetCoalition() then
         
           if self:IsRunwayOperational() then        
       
@@ -7537,7 +7537,7 @@ function WAREHOUSE:_CheckQueue()
 
     -- Check if request is possible now.
     local okay=false
-    if valid then
+    if valid then    
       okay=self:_CheckRequestNow(qitem)
     else
       -- Remember invalid request and delete later in order not to confuse the loop.
