@@ -765,31 +765,48 @@ function BASE:CreateEventTakeoff( EventTime, Initiator )
   world.onEvent( Event )
 end
 
+  --- Creation of a S_EVENT_PLAYER_ENTER_AIRCRAFT event.
+  -- @param #BASE self
+  -- @param Wrapper.Unit#UNIT PlayerUnit The aircraft unit the player entered.
+  function BASE:CreateEventPlayerEnterAircraft( PlayerUnit )
+    self:F( { PlayerUnit } )
+  
+    local Event = {
+      id = EVENTS.PlayerEnterAircraft,
+      time = timer.getTime(),
+      initiator = PlayerUnit:GetDCSObject()
+      }
+  
+    world.onEvent(Event)
+  end  
+
 -- TODO: Complete DCS#Event structure.                       
 --- The main event handling function... This function captures all events generated for the class.
 -- @param #BASE self
 -- @param DCS#Event event
 function BASE:onEvent(event)
-  --self:F( { BaseEventCodes[event.id], event } )
 
 	if self then
-		for EventID, EventObject in pairs( self.Events ) do
+	
+		for EventID, EventObject in pairs(self.Events) do
 			if EventObject.EventEnabled then
-				--env.info( 'onEvent Table EventObject.Self = ' .. tostring(EventObject.Self) )
-				--env.info( 'onEvent event.id = ' .. tostring(event.id) )
-				--env.info( 'onEvent EventObject.Event = ' .. tostring(EventObject.Event) )
+
 				if event.id == EventObject.Event then
+
 					if self == EventObject.Self then
+					
 						if event.initiator and event.initiator:isExist() then
 							event.IniUnitName = event.initiator:getName()
 						end
+						
 						if event.target and event.target:isExist() then
 							event.TgtUnitName = event.target:getName()
 						end
-						--self:T( { BaseEventCodes[event.id], event } )
-						--EventObject.EventFunction( self, event )
+						
 					end
+					
 				end
+				
 			end
 		end
 	end

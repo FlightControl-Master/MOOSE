@@ -140,37 +140,6 @@ function DATABASE:New()
 
   self.UNITS_Position = 0
 
-  --- @param #DATABASE self
-  local function CheckPlayers( self )
-
-    local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ), AlivePlayersNeutral = coalition.getPlayers( coalition.side.NEUTRAL )}
-    for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-      --self:E( { "CoalitionData:", CoalitionData } )
-      for UnitId, UnitData in pairs( CoalitionData ) do
-        if UnitData and UnitData:isExist() then
-
-          local UnitName = UnitData:getName()
-          local PlayerName = UnitData:getPlayerName()
-          local PlayerUnit = UNIT:Find( UnitData )
-          --self:T( { "UnitData:", UnitData, UnitName, PlayerName, PlayerUnit } )
-
-          if PlayerName and PlayerName ~= "" then
-            if self.PLAYERS[PlayerName] == nil or self.PLAYERS[PlayerName] ~= UnitName then
-              --self:E( { "Add player for unit:", UnitName, PlayerName } )
-              self:AddPlayer( UnitName, PlayerName )
-              --_EVENTDISPATCHER:CreateEventPlayerEnterUnit( PlayerUnit )
-              local Settings = SETTINGS:Set( PlayerName )
-              Settings:SetPlayerMenu( PlayerUnit )
-            end
-          end
-        end
-      end
-    end
-  end
-
-  --self:E( "Scheduling" )
-  --PlayerCheckSchedule = SCHEDULER:New( nil, CheckPlayers, { self }, 1, 1 )
-
   return self
 end
 
@@ -224,8 +193,7 @@ end
 --- Deletes a Static from the DATABASE based on the Static Name.
 -- @param #DATABASE self
 function DATABASE:DeleteStatic( DCSStaticName )
-
-  --self.STATICS[DCSStaticName] = nil
+  self.STATICS[DCSStaticName] = nil
 end
 
 --- Finds a STATIC based on the StaticName.
@@ -867,7 +835,7 @@ end
 function DATABASE:_RegisterClients()
 
   for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
-    self:T( { "Register Client:", ClientName } )
+    self:I(string.format("Register Client %s", tostring(ClientName)))
     self:AddClient( ClientName )
   end
 
@@ -877,15 +845,15 @@ end
 --- @param #DATABASE self
 function DATABASE:_RegisterStatics()
 
-  local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ) }
-  self:I( { Statics = CoalitionsData } )
+  local CoalitionsData={GroupsRed=coalition.getStaticObjects(coalition.side.RED), GroupsBlue=coalition.getStaticObjects(coalition.side.BLUE), GroupsNeutral=coalition.getStaticObjects(coalition.side.NEUTRAL)}
+
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
     for DCSStaticId, DCSStatic in pairs( CoalitionData ) do
 
       if DCSStatic:isExist() then
         local DCSStaticName = DCSStatic:getName()
 
-        self:T( { "Register Static:", DCSStaticName } )
+        self:I( { "Register Static:", DCSStaticName } )
         self:AddStatic( DCSStaticName )
       else
         self:E( { "Static does not exist: ",  DCSStatic } )
@@ -911,9 +879,24 @@ function DATABASE:_RegisterAirbases()
 
     -- Add and register airbase.
     local airbase=self:AddAirbase( DCSAirbaseName )
+    
+    -- Unique ID.
+    local airbaseUID=airbase:GetID(true)    
 
     -- Debug output.
-    self:I(string.format("Register Airbase: %s, getID=%d, GetID=%d (unique=%d)", DCSAirbaseName, DCSAirbase:getID(), airbase:GetID(), airbase:GetID(true)))
+    local text=string.format("Register Airbase: %s (ID=%d UID=%d), category=%s, parking=%d [", tostring(DCSAirbaseName), airbaseID, airbaseUID, AIRBASE.CategoryName[airbase.category], airbase.NparkingTotal)
+    for _,terminalType in pairs(AIRBASE.TerminalType) do
+      if airbase.NparkingTerminal and airbase.NparkingTerminal[terminalType] then
+        text=text..string.format("%d=%d ", terminalType, airbase.NparkingTerminal[terminalType])
+      end
+    end
+    text=text.."]"        
+    self:I(text)
+    
+    -- Check for DCS bug IDs.
+    if airbaseID~=airbase:GetID() then
+      --self:E("WARNING: :getID does NOT match :GetID!")
+    end    
     
   end
 
@@ -945,9 +928,13 @@ function DATABASE:_EventOnBirth( Event )
       end
     end
     if Event.IniObjectCategory == 1 then
+    
       Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
       Event.IniGroup = self:FindGroup( Event.IniDCSGroupName )
+    
+      -- Get player name.  
       local PlayerName = Event.IniUnit:GetPlayerName()
+      
       if PlayerName then
         self:I( { "Player Joined:", PlayerName } )
         self:AddClient( Event.IniDCSUnitName )
@@ -956,10 +943,16 @@ function DATABASE:_EventOnBirth( Event )
         end
         local Settings = SETTINGS:Set( PlayerName )
         Settings:SetPlayerMenu( Event.IniUnit )
-        --MENU_INDEX:Refresh( Event.IniGroup )
       end
+      
+      _DATABASE:CreateEventBirth(-EventTime,Initiator,IniUnitName,place,subplace)
+      
     end
+    
   end
+  
+  
+  
 end
 
 

@@ -117,6 +117,8 @@ end
 --	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
 --	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
 function CLIENT:FindByName( ClientName, ClientBriefing, Error )
+
+  -- Client
   local ClientFound = _DATABASE:FindClient( ClientName )
 
   if ClientFound then
@@ -132,6 +134,10 @@ function CLIENT:FindByName( ClientName, ClientBriefing, Error )
   end
 end
 
+--- Transport defines that the Client is a Transport. Transports show cargo.
+-- @param #CLIENT self
+-- @param #string ClientName Name of the client unit.
+-- @return #CLIENT
 function CLIENT:Register( ClientName )
 
   local self = BASE:Inherit( self, UNIT:Register( ClientName ) ) -- #CLIENT
@@ -203,8 +209,6 @@ function CLIENT:ShowMissionBriefing( MissionBriefing )
 
   return self
 end
-
-
 
 --- Resets a CLIENT.
 -- @param #CLIENT self
@@ -291,6 +295,7 @@ function CLIENT:GetDCSGroup()
   local ClientUnit = Unit.getByName( self.ClientName )
 
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+	
 	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
 		self:T3( { "CoalitionData:", CoalitionData } )
 		for UnitId, UnitData in pairs( CoalitionData ) do
