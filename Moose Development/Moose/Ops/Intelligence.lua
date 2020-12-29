@@ -14,7 +14,6 @@
 --- INTEL class.
 -- @type INTEL
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
@@ -47,7 +46,6 @@
 -- @field #INTEL
 INTEL = {
   ClassName       = "INTEL",
-  Debug           =   nil,
   verbose         =     2,
   lid             =   nil,
   alias           =   nil,
@@ -91,19 +89,19 @@ INTEL = {
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.0.3"
+INTEL.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- DONE: Accept zones.
--- TODO: Reject zones.
 -- TODO: Filter detection methods.
+-- TODO: process detected set asynchroniously for better performance.
+-- DONE: Accept zones.
+-- DONE: Reject zones.
 -- NOGO: SetAttributeZone --> return groups of generalized attributes in a zone.
 -- DONE: Loose units only if they remain undetected for a given time interval. We want to avoid fast oscillation between detected/lost states. Maybe 1-5 min would be a good time interval?!
 -- DONE: Combine units to groups for all, new and lost.
--- TODO: process detected set asynchroniously for better performance.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -181,6 +179,7 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   -- Defaults
   self:SetForgetTime()
   self:SetAcceptZones()
+  self:SetRejectZones()
 
   ------------------------
   --- Pseudo Functions ---
@@ -212,15 +211,6 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   -- @param #INTEL self
   -- @param #number delay Delay in seconds.
 
-
-  -- Debug trace.
-  if false then
-    self.Debug=true
-    BASE:TraceOnOff(true)
-    BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
-  end
-
   return self
 end
 
@@ -230,19 +220,57 @@ end
 
 --- Set accept zones. Only contacts detected in this/these zone(s) are considered. 
 -- @param #INTEL self
--- @param Core.Set#SET_ZONE AcceptZoneSet Set of accept zones
+-- @param Core.Set#SET_ZONE AcceptZoneSet Set of accept zones.
 -- @return #INTEL self
 function INTEL:SetAcceptZones(AcceptZoneSet)
   self.acceptzoneset=AcceptZoneSet or SET_ZONE:New()
   return self
 end
 
---- Set accept zones. Only contacts detected in this zone are considered. 
+--- Add an accept zone. Only contacts detected in this zone are considered.
 -- @param #INTEL self
 -- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
 -- @return #INTEL self
 function INTEL:AddAcceptZone(AcceptZone)
   self.acceptzoneset:AddZone(AcceptZone)
+  return self
+end
+
+--- Remove an accept zone from the accept zone set.
+-- @param #INTEL self
+-- @param Core.Zone#ZONE AcceptZone Remove a zone from the accept zone set.
+-- @return #INTEL self
+function INTEL:RemoveAcceptZone(AcceptZone)
+  self.acceptzoneset:Remove(AcceptZone:GetName(), true)
+  return self
+end
+
+--- Set reject zones. Contacts detected in this/these zone(s) are rejected and not reported by the detection.
+-- Note that reject zones overrule accept zones, i.e. if a unit is inside and accept zone and inside a reject zone, it is rejected.
+-- @param #INTEL self
+-- @param Core.Set#SET_ZONE RejectZoneSet Set of reject zone(s).
+-- @return #INTEL self
+function INTEL:SetRejectZones(RejectZoneSet)
+  self.rejectzoneset=RejectZoneSet or SET_ZONE:New()
+  return self
+end
+
+--- Add a reject zone. Contacts detected in this zone are rejected and not reported by the detection.
+-- Note that reject zones overrule accept zones, i.e. if a unit is inside and accept zone and inside a reject zone, it is rejected.
+-- @param #INTEL self
+-- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
+-- @return #INTEL self
+function INTEL:AddRejectZone(RejectZone)
+  self.rejectzoneset:AddZone(RejectZone)
+  return self
+end
+
+--- Remove a reject zone from the reject zone set.
+-- @param #INTEL self
+-- @param Core.Zone#ZONE RejectZone Remove a zone from the reject zone set.
+-- @return #INTEL self
+function INTEL:RemoveRejectZone(RejectZone)
+  self.rejectzoneset:Remove(RejectZone:GetName(), true)
   return self
 end
 
@@ -411,7 +439,6 @@ function INTEL:UpdateIntel()
     end    
   end
   
-  -- TODO: Filter units from reject zones.
   -- TODO: Filter detection methods?
   local remove={}
   for unitname,_unit in pairs(DetectedUnits) do
@@ -430,6 +457,23 @@ function INTEL:UpdateIntel()
       
       -- Unit is not in accept zone ==> remove!
       if not inzone then
+        table.insert(remove, unitname)
+      end
+    end
+
+    -- Check if unit is in any of the reject zones.
+    if self.rejectzoneset:Count()>0 then
+      local inzone=false
+      for _,_zone in pairs(self.rejectzoneset.Set) do
+        local zone=_zone --Core.Zone#ZONE
+        if unit:IsInZone(zone) then
+          inzone=true
+          break
+        end
+      end
+      
+      -- Unit is inside a reject zone ==> remove!
+      if inzone then
         table.insert(remove, unitname)
       end
     end
