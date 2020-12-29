@@ -897,11 +897,20 @@ function AIRBASE:GetParkingSpotsTable(termtype)
     if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then
 
       local spot=self:_GetParkingSpotByID(_spot.Term_Index)
+      
+      if spot then
 
-      spot.Free=_isfree(_spot) -- updated
-      spot.TOAC=_spot.TO_AC    -- updated
-
-      table.insert(spots, spot)
+        spot.Free=_isfree(_spot) -- updated
+        spot.TOAC=_spot.TO_AC    -- updated
+  
+        table.insert(spots, spot)
+        
+      else
+      
+        self:E(string.format("ERROR: Parking spot %s is nil!", tostring(_spot.Term_Index)))
+        
+      end
+      
     end
 
   end
