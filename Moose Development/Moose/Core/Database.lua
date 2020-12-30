@@ -24,7 +24,7 @@
 -- ===
 --
 -- ### Author: **FlightControl**
--- ### Contributions:
+-- ### Contributions: **funkyfranky**
 --
 -- ===
 --
@@ -33,6 +33,9 @@
 
 
 --- @type DATABASE
+-- @field #string ClassName Name of the class.
+-- @field #table Templates Templates: Units, Groups, Statics, ClientsByName, ClientsByID.
+-- @field #table CLIENTS Clients.
 -- @extends Core.Base#BASE
 
 --- Contains collections of wrapper objects defined within MOOSE that reflect objects within the simulator.
@@ -126,8 +129,6 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.DeleteCargo )
   self:HandleEvent( EVENTS.NewZone )
   self:HandleEvent( EVENTS.DeleteZone )
-
-  -- Follow alive players and clients
   --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit ) -- This is not working anymore!, handling this through the birth event.
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
 
@@ -135,8 +136,8 @@ function DATABASE:New()
   self:_RegisterGroupsAndUnits()
   self:_RegisterClients()
   self:_RegisterStatics()
-  --self:_RegisterPlayers()
   self:_RegisterAirbases()
+  --self:_RegisterPlayers()
 
   self.UNITS_Position = 0
 
@@ -156,14 +157,22 @@ end
 
 --- Adds a Unit based on the Unit Name in the DATABASE.
 -- @param #DATABASE self
+-- @param #string DCSUnitName Unit name.
+-- @return Wrapper.Unit#UNIT The added unit.
 function DATABASE:AddUnit( DCSUnitName )
 
-  if not  self.UNITS[DCSUnitName] then
+  if not self.UNITS[DCSUnitName] then
+  
+    -- Debug info.
     self:T( { "Add UNIT:", DCSUnitName } )
-    local UnitRegister = UNIT:Register( DCSUnitName )
-    self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
+    
+    --local UnitRegister = UNIT:Register( DCSUnitName )
+    
+    -- Register unit
+    self.UNITS[DCSUnitName]=UNIT:Register(DCSUnitName)
 
-    table.insert( self.UNITS_Index, DCSUnitName )
+    -- This is not used anywhere in MOOSE as far as I can see so I remove it until there comes an error somewhere.
+    --table.insert(self.UNITS_Index, DCSUnitName )
   end
 
   return self.UNITS[DCSUnitName]
@@ -179,6 +188,8 @@ end
 
 --- Adds a Static based on the Static Name in the DATABASE.
 -- @param #DATABASE self
+-- @param #string DCSStaticName Name of the static.
+-- @return Wrapper.Static#STATIC The static object.
 function DATABASE:AddStatic( DCSStaticName )
 
   if not self.STATICS[DCSStaticName] then
@@ -594,6 +605,9 @@ function DATABASE:Spawn( SpawnTemplate )
 end
 
 --- Set a status to a Group within the Database, this to check crossing events for example.
+-- @param #DATABASE self
+-- @param #string GroupName Group name.
+-- @param #string Status Status.
 function DATABASE:SetStatusGroup( GroupName, Status )
   self:F2( Status )
 
@@ -601,8 +615,11 @@ function DATABASE:SetStatusGroup( GroupName, Status )
 end
 
 --- Get a status to a Group within the Database, this to check crossing events for example.
+-- @param #DATABASE self
+-- @param #string GroupName Group name.
+-- @return #string Status or an empty string "".
 function DATABASE:GetStatusGroup( GroupName )
-  self:F2( Status )
+  self:F2( GroupName )
 
   if self.Templates.Groups[GroupName] then
     return self.Templates.Groups[GroupName].Status
@@ -616,7 +633,8 @@ end
 -- @param #table GroupTemplate
 -- @param DCS#coalition.side CoalitionSide The coalition.side of the object.
 -- @param DCS#Object.Category CategoryID The Object.category of the object.
--- @param DCS#country.id CountryID the country.id of the object
+-- @param DCS#country.id CountryID the country ID of the object.
+-- @param #string GroupName (Optional) The name of the group. Default is `GroupTemplate.name`.
 -- @return #DATABASE self
 function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID, GroupName )
 
@@ -681,6 +699,10 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
         )
 end
 
+--- Get group template.
+-- @param #DATABASE self
+-- @param #string GroupName Group name.
+-- @return #table Group template table.
 function DATABASE:GetGroupTemplate( GroupName )
   local GroupTemplate = self.Templates.Groups[GroupName].Template
   GroupTemplate.SpawnCoalitionID = self.Templates.Groups[GroupName].CoalitionID
@@ -691,7 +713,10 @@ end
 
 --- Private method that registers new Static Templates within the DATABASE Object.
 -- @param #DATABASE self
--- @param #table StaticTemplate
+-- @param #table StaticTemplate Template table.
+-- @param #number CoalitionID Coalition ID.
+-- @param #number CategoryID Category ID.
+-- @param #number CountryID Country ID.
 -- @return #DATABASE self
 function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, CategoryID, CountryID )
 
@@ -721,10 +746,13 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
 
   self:AddStatic( StaticTemplateName )
 
+  return self
 end
 
-
---- @param #DATABASE self
+--- Get static group template.
+-- @param #DATABASE self
+-- @param #string StaticName Name of the static
+-- @return #table Static template table.
 function DATABASE:GetStaticGroupTemplate( StaticName )
   local StaticTemplate = self.Templates.Statics[StaticName].GroupTemplate
   return StaticTemplate, self.Templates.Statics[StaticName].CoalitionID, self.Templates.Statics[StaticName].CategoryID, self.Templates.Statics[StaticName].CountryID
@@ -913,20 +941,28 @@ function DATABASE:_EventOnBirth( Event )
   self:F( { Event } )
 
   if Event.IniDCSUnit then
+  
     if Event.IniObjectCategory == 3 then
+    
       self:AddStatic( Event.IniDCSUnitName )
+      
     else
+    
       if Event.IniObjectCategory == 1 then
+      
         self:AddUnit( Event.IniDCSUnitName )
         self:AddGroup( Event.IniDCSGroupName )
+        
         -- Add airbase if it was spawned later in the mission.
         local DCSAirbase = Airbase.getByName(Event.IniDCSUnitName)
         if DCSAirbase then
           self:I(string.format("Adding airbase %s", tostring(Event.IniDCSUnitName)))
           self:AddAirbase(Event.IniDCSUnitName)
         end
+        
       end
     end
+    
     if Event.IniObjectCategory == 1 then
     
       Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
@@ -936,17 +972,28 @@ function DATABASE:_EventOnBirth( Event )
       local PlayerName = Event.IniUnit:GetPlayerName()
       
       if PlayerName then
-        self:I( { "Player Joined:", PlayerName } )
+      
+        -- Debug info.
+        self:I(string.format("Player %s joint unit %s of group %s", tostring(PlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniDCSGroupName)))
+        
+        -- Add client.
         self:AddClient( Event.IniDCSUnitName )
+        
+        -- Add player.
         if not self.PLAYERS[PlayerName] then
           self:AddPlayer( Event.IniUnitName, PlayerName )
         end
+        
+        -- Player settings.
         local Settings = SETTINGS:Set( PlayerName )
-        Settings:SetPlayerMenu( Event.IniUnit )
+        Settings:SetPlayerMenu(Event.IniUnit)
+        
       end
       
-      _DATABASE:CreateEventBirth(-EventTime,Initiator,IniUnitName,place,subplace)
-      
+      if PlayerName or self.CLIENTS[Event.IniDCSUnitName] then
+        self:CreateEventPlayerEnterAircraft(Event.IniUnit)
+      end
+
     end
     
   end
@@ -1348,19 +1395,13 @@ function DATABASE:_RegisterTemplates()
                   for group_num, Template in pairs(obj_type_data.group) do
 
                     if obj_type_name ~= "static" and Template and Template.units and type(Template.units) == 'table' then  --making sure again- this is a valid group
-                      self:_RegisterGroupTemplate(
-                        Template,
-                        CoalitionSide,
-                        _DATABASECategory[string.lower(CategoryName)],
-                        CountryID
-                      )
+                    
+                      self:_RegisterGroupTemplate(Template, CoalitionSide, _DATABASECategory[string.lower(CategoryName)], CountryID)
+                      
                     else
-                      self:_RegisterStaticTemplate(
-                        Template,
-                        CoalitionSide,
-                        _DATABASECategory[string.lower(CategoryName)],
-                        CountryID
-                      )
+                    
+                      self:_RegisterStaticTemplate(Template, CoalitionSide, _DATABASECategory[string.lower(CategoryName)], CountryID)
+                      
                     end --if GroupTemplate and GroupTemplate.units then
                   end --for group_num, GroupTemplate in pairs(obj_type_data.group) do
                 end --if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then

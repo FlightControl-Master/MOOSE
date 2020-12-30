@@ -646,7 +646,7 @@ end
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
 -- @param EventClass The instance of the class for which the event is.
 -- @param #function OnEventFunction
--- @return #EVENT
+-- @return #EVENT self
 function EVENT:OnEventForTemplate( EventTemplate, EventFunction, EventClass, EventID )
   self:F2( EventTemplate.name )
 
@@ -693,8 +693,9 @@ end
 -- @param #string GroupName The name of the GROUP.
 -- @param #function EventFunction The function to be called when the event occurs for the GROUP.
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param EventID
--- @return #EVENT
+-- @param #number EventID Event ID.
+-- @param ... Optional arguments passed to the event function.
+-- @return #EVENT self
 function EVENT:OnEventForGroup( GroupName, EventFunction, EventClass, EventID, ... )
 
   local Event = self:Init( EventID, EventClass )
@@ -711,7 +712,7 @@ do -- OnBirth
   -- @param Wrapper.Group#GROUP EventGroup
   -- @param #function EventFunction The function to be called when the event occurs for the unit.
   -- @param EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
+  -- @return #EVENT self
   function EVENT:OnBirthForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
   

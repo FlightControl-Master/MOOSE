@@ -66,8 +66,7 @@ CLIENT = {
 	ClientBriefingShown = false,
 	_Menus = {},
 	_Tasks = {},
-	Messages = { 
-	}
+	Messages = {},
 }
 
 
@@ -137,7 +136,7 @@ end
 --- Transport defines that the Client is a Transport. Transports show cargo.
 -- @param #CLIENT self
 -- @param #string ClientName Name of the client unit.
--- @return #CLIENT
+-- @return #CLIENT self
 function CLIENT:Register( ClientName )
 
   local self = BASE:Inherit( self, UNIT:Register( ClientName ) ) -- #CLIENT
@@ -158,7 +157,7 @@ end
 
 --- Transport defines that the Client is a Transport. Transports show cargo.
 -- @param #CLIENT self
--- @return #CLIENT
+-- @return #CLIENT self
 function CLIENT:Transport()
   self:F()
 
@@ -245,6 +244,7 @@ end
 --- Checks for a client alive event and calls a function on a continuous basis.
 -- @param #CLIENT self
 -- @param #function CallBackFunction Create a function that will be called when a player joins the slot.
+-- @param ... (Optional) Arguments for callback function as comma separated list.
 -- @return #CLIENT
 function CLIENT:Alive( CallBackFunction, ... )
   self:F()

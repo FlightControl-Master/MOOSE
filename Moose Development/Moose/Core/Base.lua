@@ -676,6 +676,13 @@ do -- Event Handling
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
+  --- Occurs when a player enters a slot and takes control of an aircraft.
+  -- **NOTE**: This is a workaround of a long standing DCS bug with the PLAYER_ENTER_UNIT event. 
+  -- initiator : The unit that is being taken control of. 
+  -- @function [parent=#BASE] OnEventPlayerEnterAircraft
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
 end
  
 
@@ -765,7 +772,7 @@ function BASE:CreateEventTakeoff( EventTime, Initiator )
   world.onEvent( Event )
 end
 
-  --- Creation of a S_EVENT_PLAYER_ENTER_AIRCRAFT event.
+  --- Creation of a `S_EVENT_PLAYER_ENTER_AIRCRAFT` event.
   -- @param #BASE self
   -- @param Wrapper.Unit#UNIT PlayerUnit The aircraft unit the player entered.
   function BASE:CreateEventPlayerEnterAircraft( PlayerUnit )
