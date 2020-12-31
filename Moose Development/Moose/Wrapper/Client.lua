@@ -67,6 +67,7 @@ CLIENT = {
 	_Menus = {},
 	_Tasks = {},
 	Messages = {},
+	Players = {},
 }
 
 
@@ -145,12 +146,7 @@ function CLIENT:Register( ClientName )
   self.ClientName = ClientName
   self.MessageSwitch = true
   self.ClientAlive2 = false
-  
-  --self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
-  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, { "Client Alive " .. ClientName }, 1, 5, 0.5 )
-  self.AliveCheckScheduler:NoTrace()
 
-  self:F( self )
   return self
 end
 
@@ -159,29 +155,68 @@ end
 -- @param #CLIENT self
 -- @return #CLIENT self
 function CLIENT:Transport()
-  self:F()
-
   self.ClientTransport = true
   return self
 end
 
---- AddBriefing adds a briefing to a CLIENT when a player joins a mission.
+--- Adds a briefing to a CLIENT when a player joins a mission.
 -- @param #CLIENT self
 -- @param #string ClientBriefing is the text defining the Mission briefing.
 -- @return #CLIENT self
 function CLIENT:AddBriefing( ClientBriefing )
-  self:F( ClientBriefing )
+
   self.ClientBriefing = ClientBriefing
   self.ClientBriefingShown = false
   
   return self
 end
 
+--- Add player name.
+-- @param #CLIENT self
+-- @param #string PlayerName Name of the player.
+-- @return #CLIENT self
+function CLIENT:AddPlayer(PlayerName)
+
+  table.insert(self.Players, PlayerName)
+  
+  return self
+end
+
+--- Get player name(s).
+-- @param #CLIENT self
+-- @return #table List of player names.
+function CLIENT:GetPlayers()
+  return self.Players
+end
+
+--- Get name of player.
+-- @param #CLIENT self
+-- @return #
+function CLIENT:GetPlayer()
+  return self.Players[1]
+end
+
+--- Remove player.
+-- @param #CLIENT self
+-- @param #string PlayerName Name of the player.
+-- @return #CLIENT self
+function CLIENT:RemovePlayer(PlayerName)
+
+  for i,playername in pairs(self.Players) do
+    if PlayerName==playername then
+      table.remove(self.Players, i)
+      break
+    end
+  end
+
+  return self
+end
+
+
 --- Show the briefing of a CLIENT.
 -- @param #CLIENT self
 -- @return #CLIENT self
 function CLIENT:ShowBriefing()
-  self:F( { self.ClientName, self.ClientBriefingShown } )
 
   if not self.ClientBriefingShown then
     self.ClientBriefingShown = true
@@ -252,12 +287,17 @@ function CLIENT:Alive( CallBackFunction, ... )
   self.ClientCallBack = CallBackFunction
   self.ClientParameters = arg
 
+  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, { "Client Alive " .. self.ClientName }, 0.1, 5, 0.5 )
+  self.AliveCheckScheduler:NoTrace()
+
   return self
 end
 
 --- @param #CLIENT self
 function CLIENT:_AliveCheckScheduler( SchedulerName )
   self:F3( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
+
+  env.info("FF client alive scheduler")
 
   if self:IsAlive() then 
     if self.ClientAlive2 == false then
@@ -388,11 +428,13 @@ function CLIENT:GetClientGroupUnit()
 	local ClientDCSUnit = Unit.getByName( self.ClientName )
 
   self:T( self.ClientDCSUnit )
-	if ClientDCSUnit and ClientDCSUnit:isExist() then
-		local ClientUnit = _DATABASE:FindUnit( self.ClientName )
-		self:T2( ClientUnit )
+  
+	if ClientDCSUnit then -- and ClientDCSUnit:isExist() then
+		local ClientUnit=_DATABASE:FindUnit( self.ClientName )
 		return ClientUnit
 	end
+	
+	return nil
 end
 
 --- Returns the DCSUnit of the CLIENT.

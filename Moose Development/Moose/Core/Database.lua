@@ -468,6 +468,8 @@ end
 
 --- Adds a CLIENT based on the ClientName in the DATABASE.
 -- @param #DATABASE self
+-- @param #string ClientName Name of the Client unit.
+-- @return Wrapper.Client#CLIENT The client object.
 function DATABASE:AddClient( ClientName )
 
   if not self.CLIENTS[ClientName] then
@@ -863,7 +865,7 @@ end
 function DATABASE:_RegisterClients()
 
   for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
-    self:I(string.format("Register Client %s", tostring(ClientName)))
+    self:I(string.format("Register Client: %s", tostring(ClientName)))
     self:AddClient( ClientName )
   end
 
@@ -967,6 +969,13 @@ function DATABASE:_EventOnBirth( Event )
     
       Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
       Event.IniGroup = self:FindGroup( Event.IniDCSGroupName )
+      
+      -- TODO: create event ClientAlive
+      local client=self.CLIENTS[Event.IniDCSUnitName] --Wrapper.Client#CLIENT
+      
+      if client then
+        
+      end      
     
       -- Get player name.  
       local PlayerName = Event.IniUnit:GetPlayerName()
@@ -974,10 +983,15 @@ function DATABASE:_EventOnBirth( Event )
       if PlayerName then
       
         -- Debug info.
-        self:I(string.format("Player %s joint unit %s of group %s", tostring(PlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniDCSGroupName)))
+        self:I(string.format("Player '%s' joint unit '%s' of group '%s'", tostring(PlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniDCSGroupName)))
         
-        -- Add client.
-        self:AddClient( Event.IniDCSUnitName )
+        -- Add client in case it does not exist already.
+        if not client then
+          client=self:AddClient(Event.IniDCSUnitName)
+        end
+        
+        -- Add player.
+        client:AddPlayer(PlayerName)
         
         -- Add player.
         if not self.PLAYERS[PlayerName] then
@@ -988,12 +1002,11 @@ function DATABASE:_EventOnBirth( Event )
         local Settings = SETTINGS:Set( PlayerName )
         Settings:SetPlayerMenu(Event.IniUnit)
         
+        -- Create an event.
+        self:CreateEventPlayerEnterAircraft(Event.IniUnit)
+        
       end
       
-      if PlayerName or self.CLIENTS[Event.IniDCSUnitName] then
-        self:CreateEventPlayerEnterAircraft(Event.IniUnit)
-      end
-
     end
     
   end
