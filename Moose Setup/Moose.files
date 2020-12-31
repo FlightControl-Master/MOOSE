@@ -1,3 +1,4 @@
+Utilities/Enums.lua
 Utilities/Routines.lua
 Utilities/Utils.lua
 
@@ -11,6 +12,7 @@ Core/Event.lua
 Core/Settings.lua
 Core/Menu.lua
 Core/Zone.lua
+Core/Zone_Detection.lua
 Core/Database.lua
 Core/Set.lua
 Core/Point.lua
@@ -18,6 +20,8 @@ Core/Velocity.lua
 Core/Message.lua
 Core/Fsm.lua
 Core/Radio.lua
+Core/RadioQueue.lua
+Core/RadioSpeech.lua
 Core/Spawn.lua
 Core/SpawnStatic.lua
 Core/Goal.lua
@@ -48,6 +52,7 @@ Functional/Escort.lua
 Functional/MissileTrainer.lua
 Functional/ATC_Ground.lua
 Functional/Detection.lua
+Functional/DetectionZones.lua
 Functional/Designate.lua
 Functional/RAT.lua
 Functional/Range.lua
@@ -67,31 +72,35 @@ Ops/ATIS.lua
 
 AI/AI_Balancer.lua
 AI/AI_Air.lua
-AI/AI_A2A.lua
+AI/AI_Air_Patrol.lua
+AI/AI_Air_Engage.lua
 AI/AI_A2A_Patrol.lua
 AI/AI_A2A_Cap.lua
 AI/AI_A2A_Gci.lua
 AI/AI_A2A_Dispatcher.lua
-AI/AI_A2G.lua
-AI/AI_A2G_Engage.lua
 AI/AI_A2G_BAI.lua
 AI/AI_A2G_CAS.lua
 AI/AI_A2G_SEAD.lua
-AI/AI_A2G_Patrol.lua
 AI/AI_A2G_Dispatcher.lua
 AI/AI_Patrol.lua
-AI/AI_Cap.lua
-AI/AI_Cas.lua
-AI/AI_Bai.lua
+AI/AI_CAP.lua
+AI/AI_CAS.lua
+AI/AI_BAI.lua
 AI/AI_Formation.lua
+AI/AI_Escort.lua
+AI/AI_Escort_Request.lua
+AI/AI_Escort_Dispatcher.lua
+AI/AI_Escort_Dispatcher_Request.lua
 AI/AI_Cargo.lua
 AI/AI_Cargo_APC.lua
 AI/AI_Cargo_Helicopter.lua
 AI/AI_Cargo_Airplane.lua
+AI/AI_Cargo_Ship.lua
 AI/AI_Cargo_Dispatcher.lua
 AI/AI_Cargo_Dispatcher_APC.lua
 AI/AI_Cargo_Dispatcher_Helicopter.lua
 AI/AI_Cargo_Dispatcher_Airplane.lua
+AI/AI_Cargo_Dispatcher_Ship.lua
 
 Actions/Act_Assign.lua
 Actions/Act_Route.lua
@@ -108,10 +117,11 @@ Tasking/Task_A2G_Dispatcher.lua
 Tasking/Task_A2G.lua
 Tasking/Task_A2A_Dispatcher.lua
 Tasking/Task_A2A.lua
-Tasking/Task_Cargo.lua
+Tasking/Task_CARGO.lua
 Tasking/Task_Cargo_Transport.lua
 Tasking/Task_Cargo_CSAR.lua
 Tasking/Task_Cargo_Dispatcher.lua
-Tasking/TaskZoneCapture.lua
+Tasking/Task_Capture_Zone.lua
+Tasking/Task_Capture_Dispatcher.lua
 
 Globals.lua

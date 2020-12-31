@@ -1390,6 +1390,19 @@ do -- Cargo
         } 
 
         self.__.CargoBayWeightLimit = Weights[Desc.typeName] or ( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
+      elseif self:IsShip() then
+        local Desc = self:GetDesc()
+        self:F({Desc=Desc})
+
+        local Weights = {
+          ["Type_071"] = 245000,
+          ["LHA_Tarawa"] = 500000,
+          ["Ropucha-class"] = 150000,
+          ["Dry-cargo ship-1"] = 70000,
+          ["Dry-cargo ship-2"] = 70000,
+        }
+        self.__.CargoBayWeightLimit = Weights[Desc.typeName]
+
       else
         local Desc = self:GetDesc()
 

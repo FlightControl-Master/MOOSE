@@ -1777,7 +1777,7 @@ WAREHOUSE.version="1.0.2"
 -- TODO: Make more examples: ARTY, CAP, ...
 -- TODO: Check also general requests like all ground. Is this a problem for self propelled if immobile units are among the assets? Check if transport.
 -- TODO: Handle the case when units of a group die during the transfer.
--- TODO: Added habours as interface for transport to from warehouses? Could make a rudimentary shipping dispatcher.
+-- DONE: Added harbours as interface for transport to/from warehouses. Simplifies process of spawning units near the ship, especially if cargo not self-propelled.
 -- DONE: Test capturing a neutral warehouse.
 -- DONE: Add save/load capability of warehouse <==> persistance after mission restart. Difficult in lua!
 -- DONE: Get cargo bay and weight from CARGO_GROUP and GROUP. No necessary any more!
@@ -1830,7 +1830,6 @@ WAREHOUSE.version="1.0.2"
 -- @param #string alias (Optional) Alias of the warehouse, i.e. the name it will be called when sending messages etc. Default is the name of the static
 -- @return #WAREHOUSE self
 function WAREHOUSE:New(warehouse, alias)
-  BASE:T({warehouse=warehouse})
 
   -- Check if just a string was given and convert to static.
   if type(warehouse)=="string" then
@@ -4496,7 +4495,6 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
 
     -- Find asset belonging to this group.
     local asset=self:FindAssetInDB(_group)
-    BASE:T("DEBUGGING*** load radius: "..asset.loadradius)
     -- New cargo group object.
     local cargogroup=CARGO_GROUP:New(_group, _cargotype,_group:GetName(),_boardradius, asset.loadradius)
 
@@ -4556,7 +4554,8 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     -- Pickup and deploy zones.
     local PickupZoneSet = SET_ZONE:New():AddZone(self.portzone)
     PickupZoneSet:AddZone(self.harborzone)
-    local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.portzone)
+    local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.harborzone)
+
 
     -- Get the shipping lane to use and pass it to the Dispatcher
     local remotename = Request.warehouse.warehouse:GetName()
@@ -4583,21 +4582,6 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     pickupinner=20
     deployouter=1000
     deployinner=0
-    --BASE:T("DEBUGGING*** Let's try to move these units")
-    --[[for _,_group in pairs(CargoGroupSet:GetSetObjects()) do
-      local group=GROUP:FindByName( _group:GetName() ) --Wrapper.Group#GROUP
-
-
-      --local _speed = group:GetSpeedMax()*0.7
-      BASE:T("DEBUGGING*** Group ".._.." coordinate is "..CargoTransport:GetCoordinate())
-      --local FromCoord = group:GetCoordinate()
-      local ToCoord = CargoTransport:GetCoordinate()
-
-      local FromWP = FromCoord:WaypointGround()
-      local ToWP = ToCoord:WaypointGround( 15, "Vee" )
-
-      group:Route( { FromWP, ToWP }, 10 )
-    end]]--
   else 
     pickupouter=200
     pickupinner=0
@@ -4638,15 +4622,6 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   --------------------------------
   -- Dispatcher Event Functions --
   --------------------------------
-
-  --- Function called before carrier loads something
-  function CargoTransport:OnBeforeMonitor(From, Event, To, Carrier, Cargo, PickupZone)
-    -- Need to get the cargo over to the portzone
-    -- But what if the cargo can't move on it's own?
-    BASE:T("DEBUGGING*** CargoTransport:OnBeforeMonitor")
-  
-  end
-
 
   --- Function called after carrier picked up something.
   function CargoTransport:OnAfterPickedUp(From, Event, To, Carrier, PickupZone)
