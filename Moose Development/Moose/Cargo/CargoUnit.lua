@@ -100,7 +100,12 @@ do -- CARGO_UNIT
           
           -- Respawn the group...
           if self.CargoObject then
-            self.CargoObject:ReSpawnAt( FromPointVec2, CargoDeployHeading )
+            if CargoCarrier:IsShip() then
+              -- If CargoCarrier is a ship, we don't want to spawn the units in the water next to the boat. Use destination coord instead.
+              self.CargoObject:ReSpawnAt( ToPointVec2, CargoDeployHeading )
+            else
+              self.CargoObject:ReSpawnAt( FromPointVec2, CargoDeployHeading )
+            end
             self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
             self.CargoCarrier = nil
       

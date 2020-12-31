@@ -1569,6 +1569,7 @@ WAREHOUSE = {
   delivered     =    {},
   defending     =    {},
   portzone      =   nil,
+  harborzone    =   nil,
   shippinglanes =    {},
   offroadpaths  =    {},
   autodefence   = false,
@@ -1776,7 +1777,7 @@ WAREHOUSE.version="1.0.2"
 -- TODO: Make more examples: ARTY, CAP, ...
 -- TODO: Check also general requests like all ground. Is this a problem for self propelled if immobile units are among the assets? Check if transport.
 -- TODO: Handle the case when units of a group die during the transfer.
--- TODO: Added habours as interface for transport to from warehouses? Could make a rudimentary shipping dispatcher.
+-- DONE: Added harbours as interface for transport to/from warehouses. Simplifies process of spawning units near the ship, especially if cargo not self-propelled.
 -- DONE: Test capturing a neutral warehouse.
 -- DONE: Add save/load capability of warehouse <==> persistance after mission restart. Difficult in lua!
 -- DONE: Get cargo bay and weight from CARGO_GROUP and GROUP. No necessary any more!
@@ -1829,7 +1830,6 @@ WAREHOUSE.version="1.0.2"
 -- @param #string alias (Optional) Alias of the warehouse, i.e. the name it will be called when sending messages etc. Default is the name of the static
 -- @return #WAREHOUSE self
 function WAREHOUSE:New(warehouse, alias)
-  BASE:T({warehouse=warehouse})
 
   -- Check if just a string was given and convert to static.
   if type(warehouse)=="string" then
@@ -2706,6 +2706,18 @@ end
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetPortZone(zone)
   self.portzone=zone
+  return self
+end
+
+--- Add a Harbor Zone for this warehouse where naval cargo units will spawn and be received.
+-- Both warehouses must have the harbor zone defined for units to properly spawn on both the 
+-- sending and receiving side. The harbor zone should be within 3km of the port zone used for 
+-- warehouse in order to facilitate the boarding process.
+-- @param #WAREHOUSE self
+-- @param Core.Zone#ZONE zone The zone defining the naval embarcation/debarcation point for cargo units
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetHarborZone(zone)
+  self.harborzone=zone
   return self
 end
 
@@ -4342,8 +4354,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
     elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
 
-      self:_ErrorMessage("ERROR: Cargo transport by ship not supported yet!")
-      return
+      -- Spawn Ship in port zone
+      spawngroup=self:_SpawnAssetGroundNaval(_alias, _assetitem, Request, self.portzone)
 
     elseif Request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
 
@@ -4471,6 +4483,8 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     --_boardradius=nil
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
     --_boardradius=nil
+  elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
+    _boardradius=6000
   end
 
   -- Empty cargo group set.
@@ -4481,7 +4495,6 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
 
     -- Find asset belonging to this group.
     local asset=self:FindAssetInDB(_group)
-
     -- New cargo group object.
     local cargogroup=CARGO_GROUP:New(_group, _cargotype,_group:GetName(),_boardradius, asset.loadradius)
 
@@ -4490,6 +4503,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
 
     -- Add group to group set.
     CargoGroups:AddCargo(cargogroup)
+
   end
 
   ------------------------
@@ -4535,23 +4549,52 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     -- Set home zone.
     CargoTransport:SetHomeZone(self.spawnzone)
 
+  elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
+
+    -- Pickup and deploy zones.
+    local PickupZoneSet = SET_ZONE:New():AddZone(self.portzone)
+    PickupZoneSet:AddZone(self.harborzone)
+    local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.harborzone)
+
+
+    -- Get the shipping lane to use and pass it to the Dispatcher
+    local remotename = Request.warehouse.warehouse:GetName()
+    local ShippingLane = self.shippinglanes[remotename][math.random(#self.shippinglanes[remotename])]
+
+    -- Define dispatcher for this task.
+    CargoTransport = AI_CARGO_DISPATCHER_SHIP:New(TransportGroupSet, CargoGroups, PickupZoneSet, DeployZoneSet, ShippingLane)
+
+    -- Set home zone
+    CargoTransport:SetHomeZone(self.portzone)
+
   else
     self:E(self.lid.."ERROR: Unknown transporttype!")
   end
 
   -- Set pickup and deploy radii.
   -- The 20 m inner radius are to ensure that the helo does not land on the warehouse itself in the middle of the default spawn zone.
-  local pickupouter=200
-  local pickupinner=0
-  if self.spawnzone.Radius~=nil then
-    pickupouter=self.spawnzone.Radius
+  local pickupouter = 200
+  local pickupinner = 0
+  local deployouter = 200
+  local deployinner = 0
+  if Request.transporttype==WAREHOUSE.TransportType.SHIP then
+    pickupouter=1000
     pickupinner=20
-  end
-  local deployouter=200
-  local deployinner=0
-  if self.spawnzone.Radius~=nil then
-    deployouter=Request.warehouse.spawnzone.Radius
-    deployinner=20
+    deployouter=1000
+    deployinner=0
+  else 
+    pickupouter=200
+    pickupinner=0
+    if self.spawnzone.Radius~=nil then
+      pickupouter=self.spawnzone.Radius
+      pickupinner=20
+    end
+    deployouter=200
+    deployinner=0
+    if self.spawnzone.Radius~=nil then
+      deployouter=Request.warehouse.spawnzone.Radius
+      deployinner=20
+    end
   end
   CargoTransport:SetPickupRadius(pickupouter, pickupinner)
   CargoTransport:SetDeployRadius(deployouter, deployinner)
@@ -4630,7 +4673,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     -- Get cargo group object.
     local group=Cargo:GetObject() --Wrapper.Group#GROUP
 
-    -- Get request.
+     -- Get request.
     local request=warehouse:_GetRequestOfGroup(group, warehouse.pending)
 
     -- Add cargo group to this carrier.
@@ -6928,8 +6971,12 @@ function WAREHOUSE:_CheckRequestValid(request)
     elseif request.transporttype==WAREHOUSE.TransportType.SHIP then
 
       -- Transport by ship.
-      self:E("ERROR: Incorrect request. Transport by SHIP not implemented yet!")
-      valid=false
+      local shippinglane=self:HasConnectionNaval(request.warehouse)
+
+      if not shippinglane then
+        self:E("ERROR: Incorrect request. No shipping lane has been defined between warehouses!")
+        valid=false
+      end
 
     elseif request.transporttype==WAREHOUSE.TransportType.TRAIN then
 
@@ -8052,7 +8099,7 @@ function WAREHOUSE:_GetAttribute(group)
     -- Ships
     local aircraftcarrier=group:HasAttribute("Aircraft Carriers")
     local warship=group:HasAttribute("Heavy armed ships")
-    local armedship=group:HasAttribute("Armed ships")
+    local armedship=group:HasAttribute("Armed Ship")
     local unarmedship=group:HasAttribute("Unarmed ships")
 
 
