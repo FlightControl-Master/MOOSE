@@ -1464,7 +1464,7 @@ do -- Cargo
           ["Dry-cargo ship-1"] = 70000,
           ["Dry-cargo ship-2"] = 70000,
         }
-        self.__.CargoBayWeightLimit = Weights[Desc.typeName]
+        self.__.CargoBayWeightLimit = ( Weights[Desc.typeName] or 50000 )
 
       else
         local Desc = self:GetDesc()

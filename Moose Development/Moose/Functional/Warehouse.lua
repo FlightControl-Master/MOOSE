@@ -199,7 +199,13 @@
 --     warehouseBatumi:AddAsset("Huey", 5, WAREHOUSE.Attribute.AIR_TRANSPORTHELO)
 --
 -- This becomes important when assets are requested from other warehouses as described below. In this case, the five Hueys are now marked as transport helicopters and
--- not attack helicopters.
+-- not attack helicopters. This is also particularly useful when adding assets to a warehouse with the intention of using them to transport other units that are part of 
+-- a subsequent request (see below). Setting the attribute will help to ensure that warehouse module can find the correct unit when attempting to service a request in its
+-- queue. For example, if we want to add an Amphibious Landing Ship, even though most are indeed armed, it's recommended to do the following:
+-- 
+--     warehouseBatumi:AddAsset("Landing Ship", 1, WAREHOUSE.Attribute.NAVAL_UNARMEDSHIP)
+--
+-- Then when adding the request, you can simply specify WAREHOUSE.TransportType.SHIP (which corresponds to NAVAL_UNARMEDSHIP) as the TransportType.
 --
 -- ### Setting the Cargo Bay Weight Limit
 -- You can ajust the cargo bay weight limit, in case it is not calculated correctly automatically. For example, the cargo bay of a C-17A is much smaller in DCS than that of a C-130, which is
@@ -1734,12 +1740,15 @@ WAREHOUSE.Attribute = {
 -- @field #string TRAIN Transports are conducted by trains. Not implemented yet. Also trains are buggy in DCS.
 -- @field #string SELFPROPELLED Assets go to their destination by themselves. No transport carrier needed.
 WAREHOUSE.TransportType = {
-  AIRPLANE      = "Air_TransportPlane",
-  HELICOPTER    = "Air_TransportHelo",
-  APC           = "Ground_APC",
-  TRAIN         = "Ground_Train",
-  SHIP          = "Naval_UnarmedShip",
-  SELFPROPELLED = "Selfpropelled",
+  AIRPLANE         = "Air_TransportPlane",
+  HELICOPTER       = "Air_TransportHelo",
+  APC              = "Ground_APC",
+  TRAIN            = "Ground_Train",
+  SHIP             = "Naval_UnarmedShip",
+  AIRCRAFTCARRIER  = "Naval_AircraftCarrier",
+  WARSHIP          = "Naval_WarShip",
+  ARMEDSHIP        = "Naval_ArmedShip",
+  SELFPROPELLED    = "Selfpropelled",
 }
 
 --- Warehouse quantity enumerator for selecting number of assets, e.g. all, half etc. of what is in stock rather than an absolute number.
@@ -4441,7 +4450,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       self:_ErrorMessage("ERROR: Cargo transport by train not supported yet!")
       return
 
-    elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
+    elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.NAVALCARRIER then
 
       -- Spawn Ship in port zone
       spawngroup=self:_SpawnAssetGroundNaval(_alias, _assetitem, Request, self.portzone)
@@ -4572,7 +4581,8 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     --_boardradius=nil
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
     --_boardradius=nil
-  elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
+  elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
+      or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
     _boardradius=6000
   end
 
@@ -4638,7 +4648,8 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     -- Set home zone.
     CargoTransport:SetHomeZone(self.spawnzone)
 
-  elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
+  elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
+      or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
 
     -- Pickup and deploy zones.
     local PickupZoneSet = SET_ZONE:New():AddZone(self.portzone)
@@ -4666,7 +4677,8 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   local pickupinner = 0
   local deployouter = 200
   local deployinner = 0
-  if Request.transporttype==WAREHOUSE.TransportType.SHIP then
+  if Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
+    or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
     pickupouter=1000
     pickupinner=20
     deployouter=1000
@@ -7094,7 +7106,8 @@ function WAREHOUSE:_CheckRequestValid(request)
         valid=false
       end
 
-    elseif request.transporttype==WAREHOUSE.TransportType.SHIP then
+    elseif request.transporttype==WAREHOUSE.TransportType.SHIP or request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
+        or request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or request.transporttype==WAREHOUSE.TransportType.WARSHIP then
 
       -- Transport by ship.
       local shippinglane=self:HasConnectionNaval(request.warehouse)
@@ -8260,9 +8273,8 @@ function WAREHOUSE:_GetAttribute(group)
     -- Ships
     local aircraftcarrier=group:HasAttribute("Aircraft Carriers")
     local warship=group:HasAttribute("Heavy armed ships")
-    local armedship=group:HasAttribute("Armed Ship")
+    local armedship=group:HasAttribute("Armed ships") or group:HasAttribute("Armed Ship")
     local unarmedship=group:HasAttribute("Unarmed ships")
-
 
     -- Define attribute. Order is important.
     if transportplane then

@@ -133,7 +133,6 @@
 -- 
 -- ===
 -- 
-
 -- @field #AI_CARGO_DISPATCHER_SHIP
 AI_CARGO_DISPATCHER_SHIP = {
     ClassName = "AI_CARGO_DISPATCHER_SHIP"
