@@ -692,6 +692,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
     UnitNames[#UnitNames+1] = self.Templates.Units[UnitTemplate.name].UnitName
   end
 
+  -- Debug info.
   self:T( { Group     = self.Templates.Groups[GroupTemplateName].GroupName,
             Coalition = self.Templates.Groups[GroupTemplateName].CoalitionID,
             Category  = self.Templates.Groups[GroupTemplateName].CategoryID,
@@ -739,7 +740,8 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
   self.Templates.Statics[StaticTemplateName].CoalitionID = CoalitionID
   self.Templates.Statics[StaticTemplateName].CountryID = CountryID
 
-  self:I( { Static = self.Templates.Statics[StaticTemplateName].StaticName,
+  -- Debug info.
+  self:T( { Static = self.Templates.Statics[StaticTemplateName].StaticName,
             Coalition = self.Templates.Statics[StaticTemplateName].CoalitionID,
             Category = self.Templates.Statics[StaticTemplateName].CategoryID,
             Country = self.Templates.Statics[StaticTemplateName].CountryID
@@ -829,31 +831,36 @@ end
 function DATABASE:_RegisterGroupsAndUnits()
 
   local CoalitionsData = { GroupsRed = coalition.getGroups( coalition.side.RED ), GroupsBlue = coalition.getGroups( coalition.side.BLUE ),  GroupsNeutral = coalition.getGroups( coalition.side.NEUTRAL ) }
+  
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+  
     for DCSGroupId, DCSGroup in pairs( CoalitionData ) do
 
       if DCSGroup:isExist() then
+      
+        -- Group name.
         local DCSGroupName = DCSGroup:getName()
 
-        self:I( { "Register Group:", DCSGroupName } )
+        -- Add group.
+        self:I(string.format("Register Group: %s", tostring(DCSGroupName)))
         self:AddGroup( DCSGroupName )
 
+        -- Loop over units in group.
         for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
 
+          -- Get unit name.
           local DCSUnitName = DCSUnit:getName()
-          self:I( { "Register Unit:", DCSUnitName } )
+          
+          -- Add unit.
+          self:I(string.format("Register Unit: %s", tostring(DCSUnitName)))
           self:AddUnit( DCSUnitName )
+          
         end
       else
-        self:E( { "Group does not exist: ",  DCSGroup } )
+        self:E({"Group does not exist: ", DCSGroup})
       end
 
     end
-  end
-
-  self:T("Groups:")
-  for GroupName, Group in pairs( self.GROUPS ) do
-    self:T( { "Group:", GroupName } )
   end
 
   return self
@@ -1069,13 +1076,30 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
   self:F2( { Event } )
 
   if Event.IniUnit then
+  
     if Event.IniObjectCategory == 1 then
+    
+      -- Try to get the player name. This can be buggy for multicrew aircraft!
       local PlayerName = Event.IniUnit:GetPlayerName()
-      if PlayerName and self.PLAYERS[PlayerName] then
-        self:I( { "Player Left:", PlayerName } )
+      
+      if PlayerName then --and self.PLAYERS[PlayerName] then
+      
+        -- Debug info.
+        self:I(string.format("Player '%s' left unit %s", tostring(PlayerName), tostring(Event.IniUnitName)))
+        
+        -- Remove player menu.
         local Settings = SETTINGS:Set( PlayerName )
-        Settings:RemovePlayerMenu( Event.IniUnit )
-        self:DeletePlayer( Event.IniUnit, PlayerName )
+        Settings:RemovePlayerMenu(Event.IniUnit)
+        
+        -- Delete player.
+        self:DeletePlayer(Event.IniUnit, PlayerName)
+        
+        -- Client stuff.
+        local client=self.CLIENTS[Event.IniDCSUnitName] --Wrapper.Client#CLIENT
+        if client then
+          client:RemovePlayer(PlayerName)
+        end
+        
       end
     end
   end

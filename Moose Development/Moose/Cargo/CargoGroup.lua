@@ -78,6 +78,9 @@ do -- CARGO_GROUP
     local GroupName = CargoGroup:GetName()
     self.CargoName = Name
     self.CargoTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ) )
+    
+    -- Deactivate late activation.
+    self.CargoTemplate.lateActivation=false
 
     self.GroupTemplate = UTILS.DeepCopy( self.CargoTemplate )
     self.GroupTemplate.name = self.CargoName .. "#CARGO"
