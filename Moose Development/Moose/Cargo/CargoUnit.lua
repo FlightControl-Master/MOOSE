@@ -46,14 +46,17 @@ do -- CARGO_UNIT
   -- @param #number NearRadius (optional)
   -- @return #CARGO_UNIT
   function CARGO_UNIT:New( CargoUnit, Type, Name, LoadRadius, NearRadius )
-    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, LoadRadius, NearRadius ) ) -- #CARGO_UNIT
-    self:I( { Type, Name, LoadRadius, NearRadius } )
   
-    self:T( CargoUnit )
+    -- Inherit CARGO_REPRESENTABLE.
+    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, LoadRadius, NearRadius ) ) -- #CARGO_UNIT
+    
+    -- Debug info.
+    self:T({Type=Type, Name=Name, LoadRadius=LoadRadius, NearRadius=NearRadius})
+  
+    -- Set cargo object.
     self.CargoObject = CargoUnit
   
-    self:T( self.ClassName )
-  
+    -- Set event prio.
     self:SetEventPriority( 5 )
   
     return self

@@ -820,7 +820,7 @@ do -- Event Creation
   -- @param #EVENT self
   -- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
   function EVENT:CreateEventNewCargo( Cargo )
-    self:I( { Cargo } )
+    self:F( { Cargo } )
   
     local Event = {
       id = EVENTS.NewCargo,

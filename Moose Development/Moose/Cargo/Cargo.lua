@@ -1078,11 +1078,14 @@ do -- CARGO_REPRESENTABLE
     local self = BASE:Inherit( self, CARGO:New( Type, Name, 0, LoadRadius, NearRadius ) ) -- #CARGO_REPRESENTABLE
     self:F( { Type, Name, LoadRadius, NearRadius } )
 
-    local Desc = CargoObject:GetDesc()
-    self:I( { Desc = Desc } )
+    -- Descriptors.
+    local Desc=CargoObject:GetDesc()
+    self:T({Desc=Desc})
     
+    -- Weight.
     local Weight = math.random( 80, 120 )
     
+    -- Adjust weight..
     if Desc then
       if Desc.typeName == "2B11 mortar" then
         Weight = 210
@@ -1091,13 +1094,8 @@ do -- CARGO_REPRESENTABLE
       end
     end
 
+    -- Set weight.
     self:SetWeight( Weight )      
-
---      local Box = CargoUnit:GetBoundingBox()
---      local VolumeUnit = ( Box.max.x - Box.min.x ) * ( Box.max.y - Box.min.y ) * ( Box.max.z - Box.min.z ) 
---      self:I( { VolumeUnit = VolumeUnit, WeightUnit = WeightUnit } )
-    --self:SetVolume( VolumeUnit )
-
     
     return self
   end
