@@ -829,25 +829,27 @@ function AIRBASE:_InitParkingSpots()
   -- Put coordinates of parking spots into table.
   for _,spot in pairs(parkingdata) do
       
-      -- New parking spot.
-      local park={} --#AIRBASE.ParkingSpot
-      park.Vec3=spot.vTerminalPos
-      park.Coordinate=COORDINATE:NewFromVec3(spot.vTerminalPos)
-      park.DistToRwy=spot.fDistToRW
-      park.Free=nil
-      park.TerminalID=spot.Term_Index
-      park.TerminalID0=spot.Term_Index_0
-      park.TerminalType=spot.Term_Type
-      park.TOAC=spot.TO_AC
-      
-      for _,terminalType in pairs(AIRBASE.TerminalType) do
-        if self._CheckTerminalType(terminalType, park.TerminalType) then
-          self.NparkingTerminal[terminalType]=self.NparkingTerminal[terminalType]+1
-        end
-      end      
-      
-      self.parkingByID[park.TerminalID]=park
-      table.insert(self.parking, park)
+    -- New parking spot.
+    local park={} --#AIRBASE.ParkingSpot
+    park.Vec3=spot.vTerminalPos
+    park.Coordinate=COORDINATE:NewFromVec3(spot.vTerminalPos)
+    park.DistToRwy=spot.fDistToRW
+    park.Free=nil
+    park.TerminalID=spot.Term_Index
+    park.TerminalID0=spot.Term_Index_0
+    park.TerminalType=spot.Term_Type
+    park.TOAC=spot.TO_AC
+    
+    self.NparkingTotal=self.NparkingTotal+1
+    
+    for _,terminalType in pairs(AIRBASE.TerminalType) do
+      if self._CheckTerminalType(terminalType, park.TerminalType) then
+        self.NparkingTerminal[terminalType]=self.NparkingTerminal[terminalType]+1
+      end
+    end      
+    
+    self.parkingByID[park.TerminalID]=park
+    table.insert(self.parking, park)
   end
 
   return self
