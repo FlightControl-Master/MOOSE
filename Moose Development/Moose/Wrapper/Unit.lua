@@ -13,7 +13,7 @@
 -- 
 -- ### Author: **FlightControl**
 -- 
--- ### Contributions: 
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -22,6 +22,8 @@
 
 
 --- @type UNIT
+-- @field #string ClassName Name of the class.
+-- @field #string UnitName Name of the unit.
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
 --- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
@@ -87,6 +89,7 @@
 -- @field #UNIT UNIT
 UNIT = {
 	ClassName="UNIT",
+	UnitName=nil,
 }
 
 
@@ -377,6 +380,32 @@ function UNIT:GetPlayerName()
 
   return nil
 
+end
+
+--- Checks is the unit is a *Player* or *Client* slot.  
+-- @param #UNIT self
+-- @return #boolean If true, unit is a player or client aircraft  
+function UNIT:IsClient()
+
+  if _DATABASE.CLIENTS[self.UnitName] then
+    return true
+  end
+
+  return false
+end
+
+--- Get the CLIENT of the unit  
+-- @param #UNIT self
+-- @return Wrapper.Client#CLIENT  
+function UNIT:GetClient()
+
+  local client=_DATABASE.CLIENTS[self.UnitName]
+
+  if client then
+    return client
+  end
+
+  return nil
 end
 
 --- Returns the unit's number in the group. 

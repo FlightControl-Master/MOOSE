@@ -207,6 +207,14 @@ function CLIENT:RemovePlayer(PlayerName)
   return self
 end
 
+--- Remove all players.
+-- @param #CLIENT self
+-- @return #CLIENT self
+function CLIENT:RemovePlayers()
+  self.Players={}
+  return self
+end
+
 
 --- Show the briefing of a CLIENT.
 -- @param #CLIENT self

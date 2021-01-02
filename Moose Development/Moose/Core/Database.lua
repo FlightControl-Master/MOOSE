@@ -977,11 +977,11 @@ function DATABASE:_EventOnBirth( Event )
       Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
       Event.IniGroup = self:FindGroup( Event.IniDCSGroupName )
       
-      -- TODO: create event ClientAlive
+      -- Client
       local client=self.CLIENTS[Event.IniDCSUnitName] --Wrapper.Client#CLIENT
       
       if client then
-        
+        -- TODO: create event ClientAlive
       end      
     
       -- Get player name.  
@@ -1018,8 +1018,6 @@ function DATABASE:_EventOnBirth( Event )
     
   end
   
-  
-  
 end
 
 
@@ -1030,17 +1028,31 @@ function DATABASE:_EventOnDeadOrCrash( Event )
   self:F2( { Event } )
 
   if Event.IniDCSUnit then
+  
+    local name=Event.IniDCSUnitName
+  
     if Event.IniObjectCategory == 3 then
       if self.STATICS[Event.IniDCSUnitName] then
         self:DeleteStatic( Event.IniDCSUnitName )
       end
     else
       if Event.IniObjectCategory == 1 then
+      
+        -- Delete unit.
         if self.UNITS[Event.IniDCSUnitName] then
-          self:DeleteUnit( Event.IniDCSUnitName )
+          self:DeleteUnit(Event.IniDCSUnitName)
         end
+        
+        -- Remove client players.
+        local client=self.CLIENTS[name] --Wrapper.Client#CLIENT
+        
+        if client then
+          client:RemovePlayers()
+        end        
+        
       end
     end
+    
   end
 
   self:AccountDestroys( Event )
@@ -1055,15 +1067,31 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
 
   if Event.IniDCSUnit then
     if Event.IniObjectCategory == 1 then
+    
+      -- Add unit.
       self:AddUnit( Event.IniDCSUnitName )
+      
+      -- Ini unit.
       Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
+      
+      -- Add group.
       self:AddGroup( Event.IniDCSGroupName )
+      
+      -- Get player unit.
       local PlayerName = Event.IniDCSUnit:getPlayerName()
-      if not self.PLAYERS[PlayerName] then
-        self:AddPlayer( Event.IniDCSUnitName, PlayerName )
+      
+      if PlayerName then
+      
+        if not self.PLAYERS[PlayerName] then
+          self:AddPlayer( Event.IniDCSUnitName, PlayerName )
+        end
+        
+        local Settings = SETTINGS:Set( PlayerName )
+        Settings:SetPlayerMenu( Event.IniUnit )
+        
+      else
+        self:E("ERROR: getPlayerName() returned nil for event PlayerEnterUnit")
       end
-      local Settings = SETTINGS:Set( PlayerName )
-      Settings:SetPlayerMenu( Event.IniUnit )
     end
   end
 end
