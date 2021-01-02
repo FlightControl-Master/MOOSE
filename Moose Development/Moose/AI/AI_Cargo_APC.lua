@@ -428,18 +428,27 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, He
 
     self.RouteDeploy = true
     
-    local _speed=Speed or APC:GetSpeedMax()*0.5
-     
-    local Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
+    -- Set speed in km/h.
+    local speedmax=APC:GetSpeedMax()    
+    local _speed=Speed or speedmax*0.5    
+    _speed=math.min(_speed, speedmax)
 
+    -- Route on road.
+    local Waypoints = APC:TaskGroundOnRoad(Coordinate, _speed, "Line abreast", true)
+
+    -- Task function
     local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Deploy", self, Coordinate, DeployZone )
     
-    self:F({Waypoints = Waypoints})
+    -- Last waypoint
     local Waypoint = Waypoints[#Waypoints]
-    APC:SetTaskWaypoint( Waypoint, TaskFunction ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+    
+    -- Set task function
+    APC:SetTaskWaypoint(Waypoint, TaskFunction) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
   
+    -- Route group
     APC:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
 
+    -- Call parent function.
     self:GetParent( self, AI_CARGO_APC ).onafterDeploy( self, APC, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   end

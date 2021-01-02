@@ -192,6 +192,7 @@ world.event.S_EVENT_DELETE_ZONE = world.event.S_EVENT_MAX + 1003
 world.event.S_EVENT_NEW_ZONE_GOAL = world.event.S_EVENT_MAX + 1004
 world.event.S_EVENT_DELETE_ZONE_GOAL = world.event.S_EVENT_MAX + 1005
 world.event.S_EVENT_REMOVE_UNIT = world.event.S_EVENT_MAX + 1006
+world.event.S_EVENT_PLAYER_ENTER_AIRCRAFT = world.event.S_EVENT_MAX + 1007
 
 
 --- The different types of events supported by MOOSE.
@@ -233,6 +234,7 @@ EVENTS = {
   NewZoneGoal =       world.event.S_EVENT_NEW_ZONE_GOAL,
   DeleteZoneGoal =    world.event.S_EVENT_DELETE_ZONE_GOAL,
   RemoveUnit =        world.event.S_EVENT_REMOVE_UNIT,
+  PlayerEnterAircraft = world.event.S_EVENT_PLAYER_ENTER_AIRCRAFT,
   -- Added with DCS 2.5.6
   DetailedFailure =   world.event.S_EVENT_DETAILED_FAILURE or -1,  --We set this to -1 for backward compatibility to DCS 2.5.5 and earlier
   Kill =              world.event.S_EVENT_KILL or -1,
@@ -489,6 +491,11 @@ local _EVENTMETA = {
      Event = "OnEventRemoveUnit",
      Text = "S_EVENT_REMOVE_UNIT" 
    },
+   [EVENTS.PlayerEnterAircraft] = {
+     Order = 1,
+     Event = "OnEventPlayerEnterAircraft",
+     Text = "S_EVENT_PLAYER_ENTER_AIRCRAFT" 
+   },   
    -- Added with DCS 2.5.6
    [EVENTS.DetailedFailure] = {
      Order = 1,
@@ -639,7 +646,7 @@ end
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
 -- @param EventClass The instance of the class for which the event is.
 -- @param #function OnEventFunction
--- @return #EVENT
+-- @return #EVENT self
 function EVENT:OnEventForTemplate( EventTemplate, EventFunction, EventClass, EventID )
   self:F2( EventTemplate.name )
 
@@ -686,8 +693,9 @@ end
 -- @param #string GroupName The name of the GROUP.
 -- @param #function EventFunction The function to be called when the event occurs for the GROUP.
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param EventID
--- @return #EVENT
+-- @param #number EventID Event ID.
+-- @param ... Optional arguments passed to the event function.
+-- @return #EVENT self
 function EVENT:OnEventForGroup( GroupName, EventFunction, EventClass, EventID, ... )
 
   local Event = self:Init( EventID, EventClass )
@@ -704,7 +712,7 @@ do -- OnBirth
   -- @param Wrapper.Group#GROUP EventGroup
   -- @param #function EventFunction The function to be called when the event occurs for the unit.
   -- @param EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
+  -- @return #EVENT self
   function EVENT:OnBirthForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
   
@@ -812,7 +820,7 @@ do -- Event Creation
   -- @param #EVENT self
   -- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
   function EVENT:CreateEventNewCargo( Cargo )
-    self:I( { Cargo } )
+    self:F( { Cargo } )
   
     local Event = {
       id = EVENTS.NewCargo,
@@ -914,6 +922,21 @@ do -- Event Creation
   
     world.onEvent( Event )
   end
+  
+  --- Creation of a S_EVENT_PLAYER_ENTER_AIRCRAFT event.
+  -- @param #EVENT self
+  -- @param Wrapper.Unit#UNIT PlayerUnit The aircraft unit the player entered.
+  function EVENT:CreateEventPlayerEnterAircraft( PlayerUnit )
+    self:F( { PlayerUnit } )
+  
+    local Event = {
+      id = EVENTS.PlayerEnterAircraft,
+      time = timer.getTime(),
+      initiator = PlayerUnit:GetDCSObject()
+      }
+  
+    world.onEvent( Event )
+  end  
 
 end
 

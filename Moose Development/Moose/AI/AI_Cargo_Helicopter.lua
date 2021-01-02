@@ -67,16 +67,22 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   
   self:AddTransition( "Unloaded", "Pickup", "*" )
   self:AddTransition( "Loaded", "Deploy", "*" )
-  
+  --[[
   self:AddTransition( { "Unloaded", "Loading" }, "Load", "Boarding" )
   self:AddTransition( "Boarding", "Board", "Boarding" )
-  self:AddTransition( "Boarding", "Loaded", "Boarding" )
+  self:AddTransition( "Boarding", "Loaded", "Loaded" )
   self:AddTransition( "Boarding", "PickedUp", "Loaded" )
+  self:AddTransition( "Boarding", "Deploy", "Loaded" )
   self:AddTransition( "Loaded", "Unload", "Unboarding" )
   self:AddTransition( "Unboarding", "Unboard", "Unboarding" )
   self:AddTransition( "Unboarding", "Unloaded", "Unboarding" )
   self:AddTransition( "Unboarding", "Deployed", "Unloaded" )
-
+  self:AddTransition( "Unboarding", "Pickup", "Unloaded" )
+  --]]
+  self:AddTransition( "Boarding", "Loaded", "Loaded" )
+  self:AddTransition( "Unboarding", "Pickup", "Unloaded" )  
+  self:AddTransition( "Unloaded", "Unboard", "Unloaded" )  
+  self:AddTransition( "Unloaded", "Unloaded", "Unloaded" ) 
   self:AddTransition( "*", "Landed", "*" )
   self:AddTransition( "*", "Queue", "*" )
   self:AddTransition( "*", "Orbit" , "*" ) 
@@ -243,7 +249,7 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
     self:F( { Helicopter:GetName(), Height = Helicopter:GetHeight( true ), Velocity = Helicopter:GetVelocityKMH() } )
 
     if self.RoutePickup == true then
-      if Helicopter:GetHeight( true ) <= 5 and Helicopter:GetVelocityKMH() < 10 then
+      if Helicopter:GetHeight( true ) <= 5.5 and Helicopter:GetVelocityKMH() < 10 then
         --self:Load( Helicopter:GetPointVec2() )
         self:Load( self.PickupZone )
         self.RoutePickup = false
@@ -251,7 +257,7 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
     end
     
     if self.RouteDeploy == true then
-      if Helicopter:GetHeight( true ) <= 5 and Helicopter:GetVelocityKMH() < 10 then
+      if Helicopter:GetHeight( true ) <= 5.5 and Helicopter:GetVelocityKMH() < 10 then
         self:Unload( self.DeployZone )
         self.RouteDeploy = false
       end
@@ -308,7 +314,11 @@ function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordina
 --            true 
 --          )
 --          Route[#Route+1] = WaypointFrom
-        local CoordinateTo   = Coordinate
+        local CoordinateTo = Coordinate
+        
+        local landheight = CoordinateTo:GetLandHeight() -- get target height
+        CoordinateTo.y = landheight + 50 -- flight height should be 50m above ground
+    
         local WaypointTo = CoordinateTo:WaypointAir( 
           "RADIO", 
           POINT_VEC3.RoutePointType.TurningPoint, 
@@ -362,7 +372,10 @@ function AI_CARGO_HELICOPTER:onafterOrbit( Helicopter, From, Event, To, Coordina
 --            true 
 --          )
 --          Route[#Route+1] = WaypointFrom
-    local CoordinateTo   = Coordinate
+    local CoordinateTo = Coordinate
+    local landheight = CoordinateTo:GetLandHeight() -- get target height
+    CoordinateTo.y = landheight + 50 -- flight height should be 50m above ground
+    
     local WaypointTo = CoordinateTo:WaypointAir( 
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
@@ -422,7 +435,8 @@ end
 -- @param #number Height Height in meters to move to the pickup coordinate. This parameter is ignored for APCs.
 -- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
 function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate, Speed, Height, PickupZone )
-
+  self:F({Coordinate, Speed, Height, PickupZone })
+  
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
     Helicopter:Activate()
@@ -436,7 +450,6 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
     
     --- Calculate the target route point.
     local CoordinateFrom = Helicopter:GetCoordinate()
-    local CoordinateTo   = Coordinate
 
     --- Create a route point of type air.
     local WaypointFrom = CoordinateFrom:WaypointAir( 
@@ -448,6 +461,10 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
     )
 
     --- Create a route point of type air.
+    local CoordinateTo = Coordinate
+    local landheight = CoordinateTo:GetLandHeight() -- get target height
+    CoordinateTo.y = landheight + 50 -- flight height should be 50m above ground
+    
     local WaypointTo = CoordinateTo:WaypointAir( 
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
@@ -525,7 +542,11 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
     Route[#Route+1] = WaypointFrom
 
     --- Create a route point of type air.
-    local CoordinateTo   = Coordinate
+    
+    local CoordinateTo = Coordinate
+    local landheight = CoordinateTo:GetLandHeight() -- get target height
+    CoordinateTo.y = landheight + 50 -- flight height should be 50m above ground
+    
     local WaypointTo = CoordinateTo:WaypointAir( 
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
@@ -595,7 +616,10 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     Route[#Route+1] = WaypointFrom
 
     --- Create a route point of type air.
-    local CoordinateTo   = Coordinate
+    local CoordinateTo = Coordinate
+    local landheight = CoordinateTo:GetLandHeight() -- get target height
+    CoordinateTo.y = landheight + 50 -- flight height should be 50m above ground
+    
     local WaypointTo = CoordinateTo:WaypointAir( 
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
