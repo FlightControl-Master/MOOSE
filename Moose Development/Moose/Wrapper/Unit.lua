@@ -103,12 +103,18 @@ UNIT = {
 --- Create a new UNIT from DCSUnit.
 -- @param #UNIT self
 -- @param #string UnitName The name of the DCS unit.
--- @return #UNIT
+-- @return #UNIT self
 function UNIT:Register( UnitName )
+
+  -- Inherit CONTROLLABLE.
   local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) )
+  
+  -- Set unit name.
   self.UnitName = UnitName
   
+  -- Set event prio.
   self:SetEventPriority( 3 )
+  
   return self
 end
 
