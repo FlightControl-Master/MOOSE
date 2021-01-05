@@ -2926,9 +2926,13 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER.Squadron Squadron The squadron.
   function AI_A2A_DISPATCHER:GetSquadronFromDefender( Defender )
     self.Defenders = self.Defenders or {}
-    local DefenderName = Defender:GetName()
-    self:F( { DefenderName = DefenderName } )
-    return self.Defenders[ DefenderName ]
+    if Defender ~= nil then
+      local DefenderName = Defender:GetName()
+      self:F( { DefenderName = DefenderName } )
+      return self.Defenders[ DefenderName ]
+    else
+      return nil        
+    end
   end
 
 

@@ -52,7 +52,8 @@ function AI_CARGO:New( Carrier, CargoSet )
   self:AddTransition( "Loaded", "Deploy", "*" )
   
   self:AddTransition( "*", "Load", "Boarding" )
-  self:AddTransition( { "Boarding", "Loaded" }, "Board", "Boarding" )
+  self:AddTransition( "Boarding", "Board", "Boarding" )
+  self:AddTransition( "Loaded", "Board", "Loaded" )
   self:AddTransition( "Boarding", "Loaded", "Boarding" )
   self:AddTransition( "Boarding", "PickedUp", "Loaded" )
   
