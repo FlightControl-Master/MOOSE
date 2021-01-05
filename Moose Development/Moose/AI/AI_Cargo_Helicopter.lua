@@ -79,7 +79,7 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   self:AddTransition( "Unboarding", "Deployed", "Unloaded" )
   self:AddTransition( "Unboarding", "Pickup", "Unloaded" )
   --]]
-  self:AddTransition( "Boarding", "Loaded", "Loaded" )
+  self:AddTransition( "*", "Loaded", "Loaded" )
   self:AddTransition( "Unboarding", "Pickup", "Unloaded" )  
   self:AddTransition( "Unloaded", "Unboard", "Unloaded" )  
   self:AddTransition( "Unloaded", "Unloaded", "Unloaded" )
