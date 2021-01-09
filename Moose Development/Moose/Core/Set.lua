@@ -4928,7 +4928,7 @@ do -- SET_CARGO
   --- (R2.1) Add CARGO to SET_CARGO.
   -- @param Core.Set#SET_CARGO self
   -- @param Cargo.Cargo#CARGO Cargo A single cargo.
-  -- @return self
+  -- @return  Core.Set#SET_CARGO self
   function SET_CARGO:AddCargo( Cargo ) --R2.4
 
     self:Add( Cargo:GetName(), Cargo )
@@ -4940,7 +4940,7 @@ do -- SET_CARGO
   --- (R2.1) Add CARGOs to SET_CARGO.
   -- @param Core.Set#SET_CARGO self
   -- @param #string AddCargoNames A single name or an array of CARGO names.
-  -- @return self
+  -- @return  Core.Set#SET_CARGO self
   function SET_CARGO:AddCargosByName( AddCargoNames ) --R2.1
 
     local AddCargoNamesArray = ( type( AddCargoNames ) == "table" ) and AddCargoNames or { AddCargoNames }
@@ -4955,7 +4955,7 @@ do -- SET_CARGO
   --- (R2.1) Remove CARGOs from SET_CARGO.
   -- @param Core.Set#SET_CARGO self
   -- @param Wrapper.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
-  -- @return self
+  -- @return Core.Set#SET_CARGO self
   function SET_CARGO:RemoveCargosByName( RemoveCargoNames ) --R2.1
 
     local RemoveCargoNamesArray = ( type( RemoveCargoNames ) == "table" ) and RemoveCargoNames or { RemoveCargoNames }
