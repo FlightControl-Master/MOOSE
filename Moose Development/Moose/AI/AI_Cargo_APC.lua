@@ -1,4 +1,4 @@
---- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
+--- **AI** -- (R2.4.1) - Models the intelligent transportation of infantry and other cargo.
 --
 -- ===
 -- 
@@ -81,6 +81,8 @@
 AI_CARGO_APC = {
   ClassName = "AI_CARGO_APC",
   Coordinate = nil, -- Core.Point#COORDINATE,
+  OnRoad = true,
+  Formation = "Vee"
 }
 
 --- Creates a new AI_CARGO_APC object.
@@ -88,9 +90,11 @@ AI_CARGO_APC = {
 -- @param Wrapper.Group#GROUP APC The carrier APC group.
 -- @param Core.Set#SET_CARGO CargoSet The set of cargo to be transported.
 -- @param #number CombatRadius Provide the combat radius to defend the carrier by unboarding the cargo when enemies are nearby. When the combat radius is 0, no defense will happen of the carrier.
+-- @param #boolean OnRoad Make the APC use a route on road (true, default) or off road (false).
+-- @param #string Formation String for the off road formation as in the ME, e.g. "Vee" or "Wedge" etc.
 -- @return #AI_CARGO_APC
-function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
-
+function AI_CARGO_APC:New( APC, CargoSet, CombatRadius, OnRoad, Formation )
+  
   local self = BASE:Inherit( self, AI_CARGO:New( APC, CargoSet ) ) -- #AI_CARGO_APC
 
   self:AddTransition( "*", "Monitor", "*" )
@@ -101,10 +105,13 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
-  self:SetCombatRadius( CombatRadius )
+  self:SetRoutingAndFormation(OnRoad, Formation)
 
   self:SetCarrier( APC )
   
+  self:SetCombatRadius( CombatRadius )
+  
+  self:F({APC, CargoSet, CombatRadius, OnRoad, Formation})
   return self
 end
 
@@ -208,6 +215,22 @@ function AI_CARGO_APC:SetCombatRadius( CombatRadius )
   return self
 end
 
+--- Set the groups to take roads or off road, and the formation
+-- @param #AI_CARGO_APC self
+-- @param #boolean OnRoad Set to true for on road, false for off road
+-- @param #string Formation Formation of the group as given in the ME, e.g. "Vee"
+-- @return #AI_CARGO_APC self
+function AI_CARGO_APC:SetRoutingAndFormation(OnRoad, Formation)
+  
+  if OnRoad ~= nil then
+    self.OnRoad = OnRoad
+  end
+  if type(Formation) == "string" then
+    self.Formation = Formation or "Vee"
+  end
+  
+  return self
+end
 
 --- Follow Infantry to the Carrier.
 -- @param #AI_CARGO_APC self
@@ -392,9 +415,22 @@ function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, He
       self.RoutePickup = true
       
       local _speed=Speed or APC:GetSpeedMax()*0.5
+      Waypoints = {}
       
-      local Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
-  
+      local onroad = self.OnRoad        
+      if onroad then
+        self:F("**** AI_CARGO_APC: Routing on road")
+        Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
+      else
+        self:F("**** AI_CARGO_APC: Routing off road")
+        local formation = self.Formation
+        local FromCoordinate = APC:GetCoordinate()
+        local ToCoordinate = Coordinate
+        local FromWaypoint = FromCoordinate:WaypointGround(_speed,formation)
+        local ToWaypoint = ToCoordinate:WaypointGround(_speed,formation)
+        Waypoints = {FromWaypoint, ToWaypoint}
+      end
+      
       local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Pickup", self, Coordinate, Speed, PickupZone )
       
       self:F({Waypoints = Waypoints})
@@ -432,9 +468,21 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, He
     local speedmax=APC:GetSpeedMax()    
     local _speed=Speed or speedmax*0.5    
     _speed=math.min(_speed, speedmax)
-
-    -- Route on road.
-    local Waypoints = APC:TaskGroundOnRoad(Coordinate, _speed, "Line abreast", true)
+    Waypoints = {}
+    
+      local onroad = self.OnRoad        
+      if onroad then
+        self:F("**** AI_CARGO_APC: Routing on road")
+        Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
+      else
+        self:F("**** AI_CARGO_APC: Routing off road")
+        local formation = self.Formation
+        local FromCoordinate = APC:GetCoordinate()
+        local ToCoordinate = Coordinate
+        local FromWaypoint = FromCoordinate:WaypointGround(_speed,formation)
+        local ToWaypoint = ToCoordinate:WaypointGround(_speed,formation)
+        Waypoints = {FromWaypoint, ToWaypoint}
+      end
 
     -- Task function
     local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Deploy", self, Coordinate, DeployZone )
@@ -526,9 +574,22 @@ function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate, Speed, Heig
 
     self.RouteHome = true
     
-    Speed = Speed or APC:GetSpeedMax()*0.5
-    
-    local Waypoints = APC:TaskGroundOnRoad( Coordinate, Speed, "Line abreast", true )
+    local _speed = Speed or APC:GetSpeedMax()*0.5
+    Waypoints = {}
+  
+      local onroad = self.OnRoad        
+      if onroad then
+        self:F("**** AI_CARGO_APC: Routing on road")
+        Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
+      else
+        self:F("**** AI_CARGO_APC: Routing off road")
+        local formation = self.Formation
+        local FromCoordinate = APC:GetCoordinate()
+        local ToCoordinate = Coordinate
+        local FromWaypoint = FromCoordinate:WaypointGround(_speed,formation)
+        local ToWaypoint = ToCoordinate:WaypointGround(_speed,formation)
+        Waypoints = {FromWaypoint, ToWaypoint}
+      end
 
     self:F({Waypoints = Waypoints})
     local Waypoint = Waypoints[#Waypoints]
