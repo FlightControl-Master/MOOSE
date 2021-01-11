@@ -1,4 +1,4 @@
---- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
+--- **AI** - Models the intelligent transportation of infantry and other cargo.
 --
 -- ===
 -- 
@@ -35,10 +35,9 @@ AI_CARGO = {
 
 --- Creates a new AI_CARGO object.
 -- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param Core.Set#SET_CARGO CargoSet
--- @param #number CombatRadius
--- @return #AI_CARGO
+-- @param Wrapper.Group#GROUP Carrier Cargo carrier group.
+-- @param Core.Set#SET_CARGO CargoSet Set of cargo(s) to transport.
+-- @return #AI_CARGO self
 function AI_CARGO:New( Carrier, CargoSet )
 
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( Carrier ) ) -- #AI_CARGO

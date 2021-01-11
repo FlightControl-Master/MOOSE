@@ -1,4 +1,4 @@
---- **Cargo** -- Management of grouped cargo logistics, which are based on a @{Wrapper.Group} object.
+--- **Cargo** - Management of grouped cargo logistics, which are based on a @{Wrapper.Group} object.
 --
 -- ===
 -- 
