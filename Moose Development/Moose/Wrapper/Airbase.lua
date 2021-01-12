@@ -25,6 +25,8 @@
 -- @field #table parking Parking spot data.
 -- @field #table parkingByID Parking spot data table with ID as key.
 -- @field #number activerwyno Active runway number (forced).
+-- @field #table parkingWhitelist List of parking spot terminal IDs considered for spawning.
+-- @field #table parkingBlacklist List of parking spot terminal IDs **not** considered for spawning.
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the DCS Airbase objects:
@@ -645,6 +647,54 @@ function AIRBASE:GetID(unique)
   return nil
 end
 
+--- Set parking spot whitelist. Only these spots will be considered for spawning.
+-- Black listed spots overrule white listed spots.
+-- **NOTE** that terminal IDs are not necessarily the same as those displayed in the mission editor!
+-- @param #AIRBASE self
+-- @param #table TerminalIdBlacklist Table of white listed terminal IDs.
+-- @return #AIRBASE self
+-- @usage AIRBASE:FindByName("Batumi"):SetParkingSpotWhitelist({2, 3, 4}) --Only allow terminal IDs 2, 3, 4
+function AIRBASE:SetParkingSpotWhitelist(TerminalIdWhitelist)
+
+  if TerminalIdWhitelist==nil then
+    self.parkingWhitelist={}
+    return self
+  end
+
+  -- Ensure we got a table.
+  if type(TerminalIdWhitelist)~="table" then
+    TerminalIdWhitelist={self.parkingBlacklist}
+  end
+
+  self.parkingWhitelist={TerminalIdWhitelist}
+
+  return self
+end
+
+--- Set parking spot blacklist. These parking spots will *not* be used for spawning.
+-- Black listed spots overrule white listed spots.
+-- **NOTE** that terminal IDs are not necessarily the same as those displayed in the mission editor!
+-- @param #AIRBASE self
+-- @param #table TerminalIdBlacklist Table of black listed terminal IDs.
+-- @return #AIRBASE self
+-- @usage AIRBASE:FindByName("Batumi"):SetParkingSpotBlacklist({2, 3, 4}) --Forbit terminal IDs 2, 3, 4
+function AIRBASE:SetParkingSpotBlacklist(TerminalIdBlacklist)
+
+  if TerminalIdBlacklist==nil then
+    self.parkingBlacklist={}
+    return self
+  end
+
+  -- Ensure we got a table.
+  if type(TerminalIdBlacklist)~="table" then
+    TerminalIdBlacklist={self.parkingBlacklist}
+  end
+
+  self.parkingBlacklist=TerminalIdBlacklist
+
+  return self
+end
+
 
 --- Get category of airbase.
 -- @param #AIRBASE self
@@ -1077,9 +1127,8 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
     local _termid=parkingspot.TerminalID
 
-    self:T2({_termid=_termid})
-
-    if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
+    -- Check terminal type and black/white listed parking spots.
+    if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) and self:_CheckParkingLists(_termid) then
 
       -- Very safe uses the DCS getParking() info to check if a spot is free. Unfortunately, the function returns free=false until the aircraft has actually taken-off.
       if verysafe and (parkingspot.Free==false or parkingspot.TOAC==true) then
@@ -1179,6 +1228,39 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
 
   -- Retrun spots we found, even if there were not enough.
   return validspots
+end
+
+--- Check black and white lists.
+-- @param #AIRBASE self
+-- @param #number TerminalID Terminal ID to check.
+-- @return #boolean `true` if this is a valid spot.
+function AIRBASE:_CheckParkingLists(TerminalID)
+
+  -- First check the black list. If we find a match, this spot is forbidden!
+  if self.parkingBlacklist and #self.parkingBlacklist>0 then
+    for _,terminalID in pairs(self.parkingBlacklist or {}) do
+      if terminalID==TerminalID then
+        -- This is a invalid spot.
+        return false
+      end
+    end
+  end
+
+  
+  -- Check if a whitelist was defined.
+  if self.parkingWhitelist and #self.parkingWhitelist>0 then
+    for _,terminalID in pairs(self.parkingWhitelist or {}) do
+      if terminalID==TerminalID then
+        -- This is a valid spot.
+        return true
+      end
+    end
+    -- No match ==> invalid spot
+    return false
+  end
+
+  -- Neither black nor white lists were defined or spot is not in black list.
+  return true
 end
 
 --- Helper function to check for the correct terminal type including "artificial" ones.
