@@ -1,4 +1,4 @@
---- **AI** -- (R2.4) - Models the intelligent transportation of infantry (cargo).
+--- **AI** - Models the intelligent transportation of cargo using helicopters.
 --
 -- ===
 -- 
@@ -364,26 +364,11 @@ function AI_CARGO_HELICOPTER:onafterOrbit( Helicopter, From, Event, To, Coordina
     
     local Route = {}
     
---          local CoordinateFrom = Helicopter:GetCoordinate()
---          local WaypointFrom = CoordinateFrom:WaypointAir( 
---            "RADIO", 
---            POINT_VEC3.RoutePointType.TurningPoint, 
---            POINT_VEC3.RoutePointAction.TurningPoint, 
---            Speed, 
---            true 
---          )
---          Route[#Route+1] = WaypointFrom
     local CoordinateTo = Coordinate
     local landheight = CoordinateTo:GetLandHeight() -- get target height
     CoordinateTo.y = landheight + 50 -- flight height should be 50m above ground
     
-    local WaypointTo = CoordinateTo:WaypointAir( 
-      "RADIO", 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      50, 
-      true 
-    )
+    local WaypointTo = CoordinateTo:WaypointAir("RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, 50, true)
     Route[#Route+1] = WaypointTo
     
     local Tasks = {}
@@ -393,7 +378,7 @@ function AI_CARGO_HELICOPTER:onafterOrbit( Helicopter, From, Event, To, Coordina
     Route[#Route+1] = WaypointTo
 
     -- Now route the helicopter
-    Helicopter:Route( Route, 0 )
+    Helicopter:Route(Route, 0)
   end
 end
 
@@ -421,7 +406,6 @@ function AI_CARGO_HELICOPTER:onafterDeployed( Helicopter, From, Event, To, Deplo
   )
   
   self:GetParent( self, AI_CARGO_HELICOPTER ).onafterDeployed( self, Helicopter, From, Event, To, DeployZone )
-  
   
 end
 
@@ -453,26 +437,14 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
     local CoordinateFrom = Helicopter:GetCoordinate()
 
     --- Create a route point of type air.
-    local WaypointFrom = CoordinateFrom:WaypointAir( 
-      "RADIO", 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      _speed, 
-      true 
-    )
+    local WaypointFrom = CoordinateFrom:WaypointAir("RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, _speed, true)
 
     --- Create a route point of type air.
     local CoordinateTo = Coordinate
     local landheight = CoordinateTo:GetLandHeight() -- get target height
     CoordinateTo.y = landheight + 50 -- flight height should be 50m above ground
     
-    local WaypointTo = CoordinateTo:WaypointAir( 
-      "RADIO", 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      _speed, 
-      true 
-    )
+    local WaypointTo = CoordinateTo:WaypointAir("RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint,_speed, true)
 
     Route[#Route+1] = WaypointFrom
     Route[#Route+1] = WaypointTo
@@ -532,13 +504,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
 
     --- Create a route point of type air.
     local CoordinateFrom = Helicopter:GetCoordinate()
-    local WaypointFrom = CoordinateFrom:WaypointAir( 
-      "RADIO", 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      _speed, 
-      true 
-    )
+    local WaypointFrom = CoordinateFrom:WaypointAir("RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, _speed, true)
     Route[#Route+1] = WaypointFrom
     Route[#Route+1] = WaypointFrom
 
@@ -548,13 +514,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
     local landheight = CoordinateTo:GetLandHeight() -- get target height
     CoordinateTo.y = landheight + 50 -- flight height should be 50m above ground
     
-    local WaypointTo = CoordinateTo:WaypointAir( 
-      "RADIO", 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      _speed, 
-      true 
-    )
+    local WaypointTo = CoordinateTo:WaypointAir("RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, _speed, true)
 
     Route[#Route+1] = WaypointTo
     Route[#Route+1] = WaypointTo
@@ -564,7 +524,9 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
   
     local Tasks = {}
     
+    -- The _Deploy function does not exist.
     Tasks[#Tasks+1] = Helicopter:TaskFunction( "AI_CARGO_HELICOPTER._Deploy", self, Coordinate, DeployZone )
+    
     Tasks[#Tasks+1] = Helicopter:TaskOrbitCircle( math.random( 30, 100 ), _speed, CoordinateTo:GetRandomCoordinateInRadius( 800, 500 ) )
     
     --Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
@@ -607,13 +569,8 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
 
     --- Create a route point of type air.
     local CoordinateFrom = Helicopter:GetCoordinate()
-    local WaypointFrom = CoordinateFrom:WaypointAir( 
-      "RADIO", 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      Speed , 
-      true 
-    )
+    
+    local WaypointFrom = CoordinateFrom:WaypointAir("RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, Speed, true)
     Route[#Route+1] = WaypointFrom
 
     --- Create a route point of type air.
@@ -621,13 +578,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     local landheight = CoordinateTo:GetLandHeight() -- get target height
     CoordinateTo.y = landheight + 50 -- flight height should be 50m above ground
     
-    local WaypointTo = CoordinateTo:WaypointAir( 
-      "RADIO", 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      Speed , 
-      true 
-    )
+    local WaypointTo = CoordinateTo:WaypointAir("RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, Speed, true)
 
     Route[#Route+1] = WaypointTo
     
@@ -642,7 +593,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     Route[#Route+1] = WaypointTo
 
     -- Now route the helicopter
-    Helicopter:Route( Route, 0 )
+    Helicopter:Route(Route, 0)
     
   end
   

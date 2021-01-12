@@ -1,4 +1,4 @@
---- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
+--- **AI** - Models the intelligent transportation of infantry and other cargo.
 --
 -- ## Features:
 -- 
@@ -1104,7 +1104,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       -- The Pickup sequence ...
       -- Check if this Carrier need to go and Pickup something...
       -- So, if the cargo bay is not full yet with cargo to be loaded ...
-      self:I( { Carrier = CarrierGroupName, IsRelocating = AI_Cargo:IsRelocating(), IsTransporting = AI_Cargo:IsTransporting() } )
+      self:T( { Carrier = CarrierGroupName, IsRelocating = AI_Cargo:IsRelocating(), IsTransporting = AI_Cargo:IsTransporting() } )
       if AI_Cargo:IsRelocating() == false and AI_Cargo:IsTransporting() == false then
         -- ok, so there is a free Carrier
         -- now find the first cargo that is Unloaded

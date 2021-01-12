@@ -1,4 +1,4 @@
---- **Core** -- Management of CARGO logistics, that can be transported from and to transportation carriers.
+--- **Cargo** - Management of CARGO logistics, that can be transported from and to transportation carriers.
 --
 -- ===
 -- 
