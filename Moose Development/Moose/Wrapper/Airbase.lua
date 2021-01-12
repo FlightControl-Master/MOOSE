@@ -670,10 +670,10 @@ function AIRBASE:SetParkingSpotWhitelist(TerminalIdWhitelist)
 
   -- Ensure we got a table.
   if type(TerminalIdWhitelist)~="table" then
-    TerminalIdWhitelist={self.parkingBlacklist}
+    TerminalIdWhitelist={TerminalIdWhitelist}
   end
 
-  self.parkingWhitelist={TerminalIdWhitelist}
+  self.parkingWhitelist=TerminalIdWhitelist
 
   return self
 end
@@ -694,7 +694,7 @@ function AIRBASE:SetParkingSpotBlacklist(TerminalIdBlacklist)
 
   -- Ensure we got a table.
   if type(TerminalIdBlacklist)~="table" then
-    TerminalIdBlacklist={self.parkingBlacklist}
+    TerminalIdBlacklist={TerminalIdBlacklist}
   end
 
   self.parkingBlacklist=TerminalIdBlacklist
