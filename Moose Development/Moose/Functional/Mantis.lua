@@ -1,4 +1,4 @@
---- **Functional** -- Modular, Automatic and Network capable Targeting and Interception System for Air Defenses
+                                                                                            --- **Functional** -- Modular, Automatic and Network capable Targeting and Interception System for Air Defenses
 -- 
 -- ===
 -- 
@@ -20,23 +20,23 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 
--- Date: Dec 2020
+-- Date: Jan 2021
 
 -------------------------------------------------------------------------
---- **MANTIS** class, extends @{Core.Base#BASE}
--- @type MANTIS
+--- **MANTIS** class, extends @{#Core.Base#BASE}
+-- @type MANTIS #MANTIS
 -- @field #string Classname
 -- @field #string name Name of this Mantis
 -- @field #string SAM_Templates_Prefix Prefix to build the #GROUP_SET for SAM sites
--- @field @{Core.Set#GROUP_SET} SAM_Group The SAM #GROUP_SET
+-- @field @{#Core.Set#GROUP_SET} SAM_Group The SAM #GROUP_SET
 -- @field #string EWR_Templates_Prefix Prefix to build the #GROUP_SET for EWR group
--- @field @{Core.Set#GROUP_SET} EWR_Group The EWR #GROUP_SET
--- @field @{Core.Set#GROUP_SET} Adv_EWR_Group The EWR #GROUP_SET used for advanced mode
+-- @field @{#Core.Set#GROUP_SET} EWR_Group The EWR #GROUP_SET
+-- @field @{#Core.Set#GROUP_SET} Adv_EWR_Group The EWR #GROUP_SET used for advanced mode
 -- @field #string HQ_Template_CC The ME name of the HQ object
--- @field @{Wrapper.Group#GROUP} HQ_CC The #GROUP object of the HQ
+-- @field @{#Wrapper.Group#GROUP} HQ_CC The #GROUP object of the HQ
 -- @field #table SAM_Table Table of SAM sites
 -- @field #string lid Prefix for logging
--- @field @{Functional.Detection#DETECTION_AREAS} Detection The #DETECTION_AREAS object for EWR
+-- @field @{#Functional.Detection#DETECTION_AREAS} Detection The #DETECTION_AREAS object for EWR
 -- @field @{Functional.Detection#DETECTION_AREAS} AWACS_Detection The #DETECTION_AREAS object for AWACS
 -- @field #boolean debug Switch on extra messages
 -- @field #boolean verbose Switch on extra logging
@@ -51,7 +51,7 @@
 -- @field #number adv_state Advanced mode state tracker
 -- @field #boolean advAwacs Boolean switch to use Awacs as a separate detection stream
 -- @field #number awacsrange Detection range of an optional Awacs unit
--- @extends @{Core.Base#BASE}
+-- @extends @{#Core.Base#BASE}
 
 
 --- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - Frédéric Bastiat 
@@ -97,6 +97,7 @@
 -- # 2. Start up your MANTIS with a basic setting
 -- 
 --    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`
+--    `myredmantis:Start()`
 --    
 -- [optional] Use  
 -- 
@@ -106,13 +107,12 @@
 --  * `MANTIS:SetDetectInterval(interval)`
 --  * `MANTIS:SetAutoRelocate(hq, ewr)`
 --        
--- to fine-tune your setup.
--- 
---    `myredmantis:Start()`
+-- before starting #MANTIS to fine-tune your setup.
 -- 
 -- If you want to use a separate AWACS unit (default detection range: 250km) to support your EWR system, use e.g. the following setup:
 -- 
 --    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`
+--    `mybluemantis:Start()`
 --
 -- # 3. Default settings
 -- 
@@ -171,7 +171,7 @@ MANTIS = {
 -----------------------------------------------------------------------
 
 do
-  --- Function instantiate new class
+  --- Function to instantiate a new object of class MANTIS
   --@param #MANTIS self
   --@param #string name Name of this MANTIS for reporting
   --@param #string samprefix Prefixes for the SAM groups from the ME, e.g. all groups starting with "Red Sam..."
@@ -217,7 +217,7 @@ do
     end
     
     -- @field #string version
-    self.version="0.3.5"
+    self.version="0.3.6"
     env.info(string.format("***** Starting MANTIS Version %s *****", self.version))
     
     -- Set the string id for output to DCS.log file.
@@ -305,6 +305,19 @@ do
       range = 75
     end
     self.engagerange = range
+  end
+  
+    --- Function to set a new SAM firing engage range, use this method to adjust range while running MANTIS, e.g. for different setups day and night
+  -- @param #MANTIS self
+  -- @param #number range Percent of the max fire range
+  function MANTIS:SetNewSAMRangeWhileRunning(range)
+    local range = range or 75
+    if range < 0 or range > 100 then
+      range = 75
+    end
+    self.engagerange = range
+    self:_RefreshSAMTable()
+    self.mysead.EngagementRange = range
   end
   
   --- Function to set switch-on/off the debug state
