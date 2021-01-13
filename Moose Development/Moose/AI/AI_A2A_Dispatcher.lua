@@ -658,7 +658,9 @@ do -- AI_A2A_DISPATCHER
   -- of the race track will randomly selected between 90 (West to East) and 180 (North to South) degrees.
   -- After a random duration between 10 and 20 minutes, the flight will get a new random orbit location.
   --
-  -- Note that all parameters except the squadron name are optional. If not specified, default values are taken. Speed and altitude are taken from the
+  -- Note that all parameters except the squadron name are optional. If not specified, default values are taken. Speed and altitude are taken from the CAP command used earlier on, e.g.
+  --
+  --      A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
   --
   -- Also note that the center of the race track pattern is chosen randomly within the patrol zone and can be close the the boarder of the zone. Hence, it cannot be guaranteed that the
   -- whole pattern lies within the patrol zone.
