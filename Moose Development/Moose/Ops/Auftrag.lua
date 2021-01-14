@@ -315,6 +315,7 @@ _AUFTRAGSNR=0
 -- @field #string TANKER Tanker mission.
 -- @field #string TROOPTRANSPORT Troop transport mission.
 -- @field #string ARTY Fire at point.
+-- @field #string PATROLZONE Patrol a zone.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -338,6 +339,7 @@ AUFTRAG.Type={
   TANKER="Tanker",
   TROOPTRANSPORT="Troop Transport",
   ARTY="Fire At Point",
+  PATROLZONE="Patrol Zone",
 }
 
 --- Mission status.
@@ -1190,6 +1192,28 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius)
 
   return mission
 end
+
+--- Create a PATROLZONE mission. Group(s) will go to the zone and patrol it randomly.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE Zone The patrol zone.
+-- @return #AUFTRAG self
+function AUFTRAG:NewPATROLZONE(Zone)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.PATROLZONE)
+  
+  mission:_TargetFromObject(Zone)  
+  
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  
+  mission.missionFraction=1.0
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
 
 --- Create a mission to attack a group. Mission type is automatically chosen from the group category.
 -- @param #AUFTRAG self
@@ -2926,7 +2950,7 @@ end
 -- @param #AUFTRAG self
 -- @return Wrapper.Positionable#POSITIONABLE The target object. Could be many things.
 function AUFTRAG:GetObjective()
-  return self:GetTargetData().Target
+  return self:GetTargetData():GetObject()
 end
 
 --- Get type of target.
@@ -3388,6 +3412,26 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, self:GetTargetVec2(), self.artyRadius, self.artyShots, self.engageWeaponType)
     
     table.insert(DCStasks, DCStask)    
+
+  elseif self.type==AUFTRAG.Type.PATROLZONE then
+
+    -------------------------
+    -- PATROL ZONE Mission --
+    -------------------------
+  
+    local DCStask={}
+    
+    DCStask.id="PatrolZone"
+    
+    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    local param={}
+    param.zonename=self:GetTargetName()
+    param.zone=self:GetObjective()
+    param.altitude=70
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)
   
   else
     self:E(self.lid..string.format("ERROR: Unknown mission task!"))

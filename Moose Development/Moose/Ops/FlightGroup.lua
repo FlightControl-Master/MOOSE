@@ -512,6 +512,41 @@ function FLIGHTGROUP:SetFuelCriticalRTB(switch)
   return self
 end
 
+--- Enable to automatically engage detected targets. 
+-- @param #FLIGHTGROUP self
+-- @param #number RangeMax Max range in NM. Only detected targets within this radius will be engaged. Default is 25 NM.
+-- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
+-- @param Core.Set#SET_ZONE EngageZoneSet Set of zones in which targets are engaged. Default is anywhere.
+-- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
+-- @return #OPSGROUP self
+function FLIGHTGROUP:SetEngageDetectedOn(RangeMax, TargetTypes, EngageZoneSet, NoEngageZoneSet)
+
+  if TargetTypes then
+    if type(TargetTypes)~="table" then
+      TargetTypes={TargetTypes}
+    end
+  else
+    TargetTypes={"All"}
+  end
+
+  self.engagedetectedOn=true
+  self.engagedetectedRmax=UTILS.NMToMeters(RangeMax or 25)
+  self.engagedetectedTypes=TargetTypes
+  self.engagedetectedEngageZones=EngageZoneSet
+  self.engagedetectedNoEngageZones=NoEngageZoneSet
+
+  return self
+end
+
+--- Disable to automatically engage detected targets. 
+-- @param #FLIGHTGROUP self
+-- @return #OPSGROUP self
+function FLIGHTGROUP:SetEngageDetectedOff()
+  self.engagedetectedOn=false
+end
+
+
+
 --- Enable that the group is despawned after landing. This can be useful to avoid DCS taxi issues with other AI or players or jamming taxiways.
 -- @param #FLIGHTGROUP self
 -- @return #FLIGHTGROUP self
@@ -975,6 +1010,87 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
     if self.airboss:IsRecovering() or self:IsFuelCritical() then
       self:ClearToLand()
     end
+  end
+  
+  if self:IsAirborne() and self.detectionOn and self.engagedetectedOn then
+  
+    env.info("FF check detected:")
+  
+    local targetgroup=nil --Wrapper.Group#GROUP
+    local targetdist=math.huge
+    
+    -- Loop over detected groups.
+    for _,_group in pairs(self.detectedgroups:GetSet()) do
+      local group=_group --Wrapper.Group#GROUP
+      
+      env.info("group "..group:GetName())
+      
+      if group and group:IsAlive() then
+      
+        local targetcoord=group:GetCoordinate()
+        
+        local distance=targetcoord:Get2DDistance(self:GetCoordinate())
+        
+        if distance<=self.engagedetectedRmax and distance<targetdist then
+        
+          -- Check type attribute.
+          local righttype=false
+          for _,attribute in pairs(self.engagedetectedTypes) do
+            if group:HasAttribute(attribute, false) then
+              righttype=true
+              break
+            end
+          end
+          
+          -- We got the right type.
+          if righttype then
+        
+            local insideEngage=true
+            local insideNoEngage=false
+            
+            -- Check engage zones.
+            if self.engagedetectedEngageZones then
+              insideEngage=false
+              for _,_zone in pairs(self.engagedetectedEngageZones.Set) do
+                local zone=_zone --Core.Zone#ZONE
+                local inzone=zone:IsCoordinateInZone(targetcoord)
+                if inzone then
+                  insideEngage=true
+                  break
+                end             
+              end
+            end
+          
+            -- Check no engage zones.
+            if self.engagedetectedNoEngageZones then
+              for _,_zone in pairs(self.engagedetectedNoEngageZones.Set) do
+                local zone=_zone --Core.Zone#ZONE
+                local inzone=zone:IsCoordinateInZone(targetcoord)
+                if inzone then
+                  insideNoEngage=true
+                  break
+                end
+              end
+            end
+            
+            -- If inside engage but not inside no engage zones.
+            if insideEngage and not insideNoEngage then
+              targetdist=distance
+              targetgroup=group
+              env.info("targetgroup "..group:GetName())
+            end
+            
+          end
+          
+        end        
+      end
+    end
+    
+    if targetgroup then
+      env.info("engage target! "..targetgroup:GetName())
+      self:EngageTargets(targetgroup)
+    end
+  
   end
 
 
@@ -2383,24 +2499,63 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Core.Set#SET_UNIT TargetUnitSet
-function FLIGHTGROUP:onafterEngageTargets(From, Event, To, TargetUnitSet)
+function FLIGHTGROUP:onafterEngageTargets(From, Event, To, Target)
 
-  local DCSTasks={}
+  env.info("FF engage targets")
 
-  for _,_unit in pairs(TargetUnitSet:GetSet()) do --detected by =HRP= Zero
-    local unit=_unit  --Wrapper.Unit#UNIT
-    local task=self.group:TaskAttackUnit(unit, true)
-    table.insert(DCSTasks)
+  local DCStask=nil
+
+  if Target:IsInstanceOf("UNIT") then
+  
+  elseif Target:IsInstanceOf("GROUP") then
+  
+    env.info("FF engage targets GROUP!")
+  
+    DCStask=self:GetGroup():TaskAttackGroup(Target, nil, nil, nil, nil, nil, nil, true)
+  
+  elseif Target:IsInstanceOf("SET_UNIT") then
+
+    local DCSTasks={}
+  
+    for _,_unit in pairs(Target:GetSet()) do --detected by =HRP= Zero
+      local unit=_unit  --Wrapper.Unit#UNIT
+      local task=self:GetGroup():TaskAttackUnit(unit, true)
+      table.insert(DCSTasks)
+    end
+  
+    -- Task combo.
+    DCStask=self:GetGroup():TaskCombo(DCSTasks)
+
+  elseif Target:IsInstanceOf("SET_GROUP") then
+  
+  else
+  
   end
 
-  -- Task combo.
-  local DCSTask=self.group:TaskCombo(DCSTasks)
+  -- Create new task.The description "Task_Engage" is checked.
+  local Task=self:NewTaskScheduled(DCStask, 1, "Task_Engage", 0)
+  
+  -- Backup ROE setting.
+  Task.backupROE=self:GetROE()
+  
+  -- Switch ROE to open fire
+  self:SwitchROE(ENUMS.ROE.OpenFire)
 
-  --TODO needs a task function that calls EngageDone or so event and updates the route again.
+  -- Execute task.
+  self:TaskExecute(Task)  
 
-  -- Lets try if pushtask actually leaves the remaining tasks untouched.
-  self:SetTask(DCSTask)
+end
 
+--- On after "Disengage" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Set#SET_UNIT TargetUnitSet
+function FLIGHTGROUP:onafterDisengage(From, Event, To)
+
+  env.info("FF disengage targets")
+  
 end
 
 --- On before "LandAt" event. Check we have a helo group.

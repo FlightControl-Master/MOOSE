@@ -223,6 +223,7 @@ OPSGROUP.TaskType={
 -- @field #number timestamp Abs. mission time, when task was started.
 -- @field #number waypoint Waypoint index if task is a waypoint task.
 -- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
+-- @field #number backupROE Rules of engagement that are restored once the task is over.
 
 --- Enroute task.
 -- @type OPSGROUP.EnrouteTask
@@ -2165,6 +2166,12 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     
     -- Start formation FSM.
     Task.formation:Start()  
+
+  elseif Task.dcstask.id=="PatrolZone" then
+  
+    local Coordinate=Task.dcstask.params.zone:GetCoordinate()
+  
+    FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
   
   else
 
@@ -2310,6 +2317,11 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
   -- Task status done.
   Task.status=OPSGROUP.TaskStatus.DONE
   
+  -- Restore old ROE.
+  if Task.backupROE then
+    self:SwitchROE(Task.backupROE)
+  end
+  
   -- Check if this task was the task of the current mission ==> Mission Done!
   local Mission=self:GetMissionByTaskID(Task.id)
   
@@ -2324,6 +2336,11 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       --Mission paused. Do nothing!
     end
   else
+  
+    if Task.description=="Engage_Target" then
+      self:Disengage()
+    end    
+  
     self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 1 sec")
     self:_CheckGroupDone(1)
   end
@@ -2984,33 +3001,48 @@ end
 -- @param #string To To state.
 -- @param #OPSGROUP.Waypoint Waypoint Waypoint data passed.
 function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
-  
-  -- Apply tasks of this waypoint.
-  local ntasks=self:_SetWaypointTasks(Waypoint)
-  
-  -- Get waypoint index.
-  local wpindex=self:GetWaypointIndex(Waypoint.uid)
 
-  -- Final waypoint reached?
-  if wpindex==nil or wpindex==#self.waypoints then
-
-    -- Set switch to true.
-    if not self.adinfinitum or #self.waypoints<=1 then
-      self.passedfinalwp=true
-    end
+  -- Get the current task.
+  local task=self:GetTaskCurrent()
+  
+  if task and task.id=="PatrolZone" then
+  
+    local zone=task.dcstask.params.zone --Core.Zone#ZONE
+        
+    local Coordinate=zone:GetRandomCoordinate()
     
+    FLIGHTGROUP.AddWaypoint(self,Coordinate, Speed, AfterWaypointWithID, Altitude, Updateroute)
+    
+  else
+    
+    -- Apply tasks of this waypoint.
+    local ntasks=self:_SetWaypointTasks(Waypoint)
+    
+    -- Get waypoint index.
+    local wpindex=self:GetWaypointIndex(Waypoint.uid)
+  
+    -- Final waypoint reached?
+    if wpindex==nil or wpindex==#self.waypoints then
+  
+      -- Set switch to true.
+      if not self.adinfinitum or #self.waypoints<=1 then
+        self.passedfinalwp=true
+      end
+      
+    end
+  
+    -- Check if all tasks/mission are done?
+    -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
+    if ntasks==0 then
+      self:_CheckGroupDone(0.1)
+    end
+  
+    -- Debug info.
+    local text=string.format("Group passed waypoint %s/%d ID=%d: final=%s detour=%s astar=%s", 
+    tostring(wpindex), #self.waypoints, Waypoint.uid, tostring(self.passedfinalwp), tostring(Waypoint.detour), tostring(Waypoint.astar))
+    self:T(self.lid..text)
+  
   end
-
-  -- Check if all tasks/mission are done?
-  -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
-  if ntasks==0 then
-    self:_CheckGroupDone(0.1)
-  end
-
-  -- Debug info.
-  local text=string.format("Group passed waypoint %s/%d ID=%d: final=%s detour=%s astar=%s", 
-  tostring(wpindex), #self.waypoints, Waypoint.uid, tostring(self.passedfinalwp), tostring(Waypoint.detour), tostring(Waypoint.astar))
-  self:T(self.lid..text)
   
 end
 

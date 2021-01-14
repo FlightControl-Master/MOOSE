@@ -830,7 +830,7 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
 
 end
 
---- On after "EngageTarget" event.
+--- Update engage target.
 -- @param #ARMYGROUP self
 function ARMYGROUP:_UpdateEngageTarget()
 
