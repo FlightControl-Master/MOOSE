@@ -101,6 +101,7 @@
 -- 
 -- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
 -- @field #number missionAltitude Mission altitude in meters.
+-- @field #number missionSpeed Mission speed in km/h.
 -- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
 -- @field #number missionRange Mission range in meters. Used in AIRWING class.
 -- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
@@ -315,6 +316,7 @@ _AUFTRAGSNR=0
 -- @field #string TANKER Tanker mission.
 -- @field #string TROOPTRANSPORT Troop transport mission.
 -- @field #string ARTY Fire at point.
+-- @field #string PATROLZONE Patrol a zone.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -338,6 +340,7 @@ AUFTRAG.Type={
   TANKER="Tanker",
   TROOPTRANSPORT="Troop Transport",
   ARTY="Fire At Point",
+  PATROLZONE="Patrol Zone",
 }
 
 --- Mission status.
@@ -439,7 +442,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.5.0"
+AUFTRAG.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1190,6 +1193,32 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius)
 
   return mission
 end
+
+--- Create a PATROLZONE mission. Group(s) will go to the zone and patrol it randomly.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE Zone The patrol zone.
+-- @param #number Speed Speed in knots.
+-- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+-- @return #AUFTRAG self
+function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.PATROLZONE)
+  
+  mission:_TargetFromObject(Zone)
+    
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  
+  mission.missionFraction=1.0  
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
 
 --- Create a mission to attack a group. Mission type is automatically chosen from the group category.
 -- @param #AUFTRAG self
@@ -2926,7 +2955,7 @@ end
 -- @param #AUFTRAG self
 -- @return Wrapper.Positionable#POSITIONABLE The target object. Could be many things.
 function AUFTRAG:GetObjective()
-  return self:GetTargetData().Target
+  return self:GetTargetData():GetObject()
 end
 
 --- Get type of target.
@@ -3388,6 +3417,26 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, self:GetTargetVec2(), self.artyRadius, self.artyShots, self.engageWeaponType)
     
     table.insert(DCStasks, DCStask)    
+
+  elseif self.type==AUFTRAG.Type.PATROLZONE then
+
+    -------------------------
+    -- PATROL ZONE Mission --
+    -------------------------
+  
+    local DCStask={}
+    
+    DCStask.id="PatrolZone"
+    
+    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+    param.altitude=self.missionAltitude
+    param.speed=self.missionSpeed
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)
   
   else
     self:E(self.lid..string.format("ERROR: Unknown mission task!"))

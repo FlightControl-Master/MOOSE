@@ -101,6 +101,7 @@ function ARMYGROUP:New(Group)
   self.lid=string.format("ARMYGROUP %s | ", self.groupname)
   
   -- Defaults
+  self.isArmygroup=true
   self:SetDefaultROE()
   self:SetDefaultAlarmstate()
   self:SetDetection()
@@ -830,7 +831,7 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
 
 end
 
---- On after "EngageTarget" event.
+--- Update engage target.
 -- @param #ARMYGROUP self
 function ARMYGROUP:_UpdateEngageTarget()
 

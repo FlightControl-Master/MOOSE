@@ -72,6 +72,7 @@ TARGET = {
 -- @field #string SCENERY Target is a SCENERY object.
 -- @field #string COORDINATE Target is a COORDINATE.
 -- @field #string AIRBASE Target is an AIRBASE.
+-- @field #string ZONE Target is a ZONE object.
 TARGET.ObjectType={
   GROUP="Group",
   UNIT="Unit",
@@ -79,6 +80,7 @@ TARGET.ObjectType={
   SCENERY="Scenery",
   COORDINATE="Coordinate",
   AIRBASE="Airbase",
+  ZONE="Zone",
 }
 
 
@@ -89,12 +91,14 @@ TARGET.ObjectType={
 -- @field #string NAVAL
 -- @field #string AIRBASE
 -- @field #string COORDINATE
+-- @field #string ZONE
 TARGET.Category={
   AIRCRAFT="Aircraft",
   GROUND="Ground",
   NAVAL="Naval",
   AIRBASE="Airbase",
   COORDINATE="Coordinate",
+  ZONE="Zone",
 }
 
 --- Object status.
@@ -124,7 +128,7 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.3.0"
+TARGET.version="0.3.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -658,12 +662,12 @@ function TARGET:_AddObject(Object)
   elseif Object:IsInstanceOf("ZONE_BASE") then
   
     local zone=Object --Core.Zone#ZONE_BASE
-    Object=zone:GetCoordinate()
+    Object=zone --:GetCoordinate()
     
-    target.Type=TARGET.ObjectType.COORDINATE
+    target.Type=TARGET.ObjectType.ZONE
     target.Name=zone:GetName()
     
-    target.Coordinate=Object
+    target.Coordinate=zone:GetCoordinate()
 
     target.Life0=1
     target.Life=1
@@ -773,7 +777,13 @@ function TARGET:GetTargetLife(Target)
   elseif Target.Type==TARGET.ObjectType.COORDINATE then
   
     return 1
+
+  elseif Target.Type==TARGET.ObjectType.ZONE then
+  
+    return 1
     
+  else
+    self:E("ERROR: unknown target object type in GetTargetLife!")
   end
 
 end
@@ -865,6 +875,13 @@ function TARGET:GetTargetVec3(Target)
     local vec3={x=object.x, y=object.y, z=object.z}
     return vec3
     
+  elseif Target.Type==TARGET.ObjectType.ZONE then
+  
+    local object=Target.Object --Core.Zone#ZONE
+  
+    local vec3=object:GetVec3()
+    return vec3
+        
   end
 
   self:E(self.lid.."ERROR: Unknown TARGET type! Cannot get Vec3")
@@ -1032,7 +1049,13 @@ function TARGET:GetTargetCategory(Target)
   elseif Target.Type==TARGET.ObjectType.COORDINATE then
   
     return TARGET.Category.COORDINATE
-    
+
+  elseif Target.Type==TARGET.ObjectType.ZONE then
+  
+    return TARGET.Category.ZONE
+
+  else
+    self:E("ERROR: unknown target category!")
   end
 
   return category
@@ -1138,6 +1161,10 @@ function TARGET:CountObjectives(Target)
     end
     
   elseif Target.Type==TARGET.ObjectType.COORDINATE then
+  
+    -- No target we can check!
+
+  elseif Target.Type==TARGET.ObjectType.ZONE then
   
     -- No target we can check!
 

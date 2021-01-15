@@ -22,6 +22,9 @@
 -- @field #table template Template of the group.
 -- @field #boolean isLateActivated Is the group late activated.
 -- @field #boolean isUncontrolled Is the group uncontrolled.
+-- @field #boolean isFlightgroup Is a FLIGHTGROUP.
+-- @field #boolean isArmygroup Is an ARMYGROUP.
+-- @field #boolean isNavygroup Is a NAVYGROUP.
 -- @field #table elements Table of elements, i.e. units of the group.
 -- @field #boolean isAI If true, group is purely AI.
 -- @field #boolean isAircraft If true, group is airplane or helicopter.
@@ -223,6 +226,7 @@ OPSGROUP.TaskType={
 -- @field #number timestamp Abs. mission time, when task was started.
 -- @field #number waypoint Waypoint index if task is a waypoint task.
 -- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
+-- @field #number backupROE Rules of engagement that are restored once the task is over.
 
 --- Enroute task.
 -- @type OPSGROUP.EnrouteTask
@@ -326,7 +330,7 @@ OPSGROUP.TaskType={
 
 --- NavyGroup version.
 -- @field #string version
-OPSGROUP.version="0.7.0"
+OPSGROUP.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2132,7 +2136,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
   if self.taskcurrent>0 then
     self:TaskCancel()
   end
-
+  
   -- Set current task.
   self.taskcurrent=Task.id
   
@@ -2165,7 +2169,28 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     
     -- Start formation FSM.
     Task.formation:Start()  
+
+  elseif Task.dcstask.id=="PatrolZone" then
   
+    ---
+    -- Task patrol zone.
+    ---
+      
+    -- Parameters.
+    local zone=Task.dcstask.params.zone --Core.Zone#ZONE    
+    local Coordinate=zone:GetRandomCoordinate()    
+    local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)    
+    local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil
+
+    -- New waypoint.    
+    if self.isFlightgroup then
+      FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+    elseif self.isNavygroup then
+      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+    elseif self.isArmygroup then
+      NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+    end
+
   else
 
     -- If task is scheduled (not waypoint) set task.
@@ -2245,6 +2270,8 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
       if Task.dcstask.id=="Formation" then
         Task.formation:Stop()
         done=true
+      elseif Task.dcstask.id=="PatrolZone" then
+        done=true
       elseif stopflag==1 or (not self:IsAlive()) or self:IsDead() or self:IsStopped() then
         -- Manual call TaskDone if setting flag to one was not successful.
         done=true
@@ -2265,7 +2292,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
     end
     
   else
-  
+    
     local text=string.format("WARNING: No (current) task to cancel!")
     self:E(self.lid..text)
     
@@ -2310,6 +2337,11 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
   -- Task status done.
   Task.status=OPSGROUP.TaskStatus.DONE
   
+  -- Restore old ROE.
+  if Task.backupROE then
+    self:SwitchROE(Task.backupROE)
+  end
+  
   -- Check if this task was the task of the current mission ==> Mission Done!
   local Mission=self:GetMissionByTaskID(Task.id)
   
@@ -2324,6 +2356,11 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       --Mission paused. Do nothing!
     end
   else
+  
+    if Task.description=="Engage_Target" then
+      self:Disengage()
+    end    
+  
     self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 1 sec")
     self:_CheckGroupDone(1)
   end
@@ -2610,7 +2647,7 @@ function OPSGROUP:onafterPauseMission(From, Event, To)
     local Task=Mission:GetGroupWaypointTask(self)
     
     -- Debug message.
-    self:I(self.lid..string.format("Pausing current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+    self:T(self.lid..string.format("Pausing current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
   
     -- Cancelling the mission is actually cancelling the current task.
     self:TaskCancel(Task)
@@ -2629,7 +2666,8 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterUnpauseMission(From, Event, To)
 
-  self:I(self.lid..string.format("Unpausing mission"))
+  -- Debug info.
+  self:T(self.lid..string.format("Unpausing mission"))
   
   if self.missionpaused then
   
@@ -2855,6 +2893,8 @@ function OPSGROUP:RouteToMission(mission, delay)
         end
         
       end
+
+    elseif mission.type==AUFTRAG.Type.PATROLZONE then
     
     end
     
@@ -2984,33 +3024,59 @@ end
 -- @param #string To To state.
 -- @param #OPSGROUP.Waypoint Waypoint Waypoint data passed.
 function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
-  
-  -- Apply tasks of this waypoint.
-  local ntasks=self:_SetWaypointTasks(Waypoint)
-  
-  -- Get waypoint index.
-  local wpindex=self:GetWaypointIndex(Waypoint.uid)
 
-  -- Final waypoint reached?
-  if wpindex==nil or wpindex==#self.waypoints then
+  -- Get the current task.
+  local task=self:GetTaskCurrent()
+  
+  if task and task.dcstask.id=="PatrolZone" then
+  
+    -- Remove old waypoint.    
+    self:RemoveWaypointByID(Waypoint.uid)
 
-    -- Set switch to true.
-    if not self.adinfinitum or #self.waypoints<=1 then
-      self.passedfinalwp=true
-    end
+    local zone=task.dcstask.params.zone --Core.Zone#ZONE    
+    local Coordinate=zone:GetRandomCoordinate()    
+    local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)    
+    local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil
     
-  end
+    if self.isFlightgroup then
+      FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+    elseif self.isNavygroup then
+      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+    elseif self.isArmygroup then
+      NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+    end
 
-  -- Check if all tasks/mission are done?
-  -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
-  if ntasks==0 then
-    self:_CheckGroupDone(0.1)
+    
+  else
+    
+    -- Apply tasks of this waypoint.
+    local ntasks=self:_SetWaypointTasks(Waypoint)
+    
+    -- Get waypoint index.
+    local wpindex=self:GetWaypointIndex(Waypoint.uid)
+  
+    -- Final waypoint reached?
+    if wpindex==nil or wpindex==#self.waypoints then
+  
+      -- Set switch to true.
+      if not self.adinfinitum or #self.waypoints<=1 then
+        self.passedfinalwp=true
+      end
+      
+    end
+  
+    -- Check if all tasks/mission are done?
+    -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
+    if ntasks==0 then
+      self:_CheckGroupDone(0.1)
+    end
+  
+    -- Debug info.
+    local text=string.format("Group passed waypoint %s/%d ID=%d: final=%s detour=%s astar=%s", 
+    tostring(wpindex), #self.waypoints, Waypoint.uid, tostring(self.passedfinalwp), tostring(Waypoint.detour), tostring(Waypoint.astar))
+    self:T(self.lid..text)
+  
   end
-
-  -- Debug info.
-  local text=string.format("Group passed waypoint %s/%d ID=%d: final=%s detour=%s astar=%s", 
-  tostring(wpindex), #self.waypoints, Waypoint.uid, tostring(self.passedfinalwp), tostring(Waypoint.detour), tostring(Waypoint.astar))
-  self:T(self.lid..text)
   
 end
 
@@ -4176,7 +4242,6 @@ function OPSGROUP:_CheckAmmoStatus()
       self.outofAmmo=false
     end
     if ammo.Total==0 and not self.outofAmmo then
-      env.info("FF out of ammo")
       self.outofAmmo=true
       self:OutOfAmmo()
     end
@@ -4732,25 +4797,29 @@ function OPSGROUP:SwitchAlarmstate(alarmstate)
   
   if self:IsAlive() or self:IsInUtero() then
   
-    self.option.Alarm=alarmstate or self.optionDefault.Alarm
-    
-    if self:IsInUtero() then
-      self:T2(self.lid..string.format("Setting current Alarm State=%d when GROUP is SPAWNED", self.option.Alarm))
-    else
+    if self.isArmygroup or self.isNavygroup  then
   
-      if self.option.Alarm==0 then
-        self.group:OptionAlarmStateAuto()
-      elseif self.option.Alarm==1 then
-        self.group:OptionAlarmStateGreen()
-      elseif self.option.Alarm==2 then
-        self.group:OptionAlarmStateRed()
-      else
-        self:E("ERROR: Unknown Alarm State! Setting to AUTO")
-        self.group:OptionAlarmStateAuto()
-        self.option.Alarm=0
-      end
+      self.option.Alarm=alarmstate or self.optionDefault.Alarm
       
-      self:T(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.option.Alarm))
+      if self:IsInUtero() then
+        self:T2(self.lid..string.format("Setting current Alarm State=%d when GROUP is SPAWNED", self.option.Alarm))
+      else
+    
+        if self.option.Alarm==0 then
+          self.group:OptionAlarmStateAuto()
+        elseif self.option.Alarm==1 then
+          self.group:OptionAlarmStateGreen()
+        elseif self.option.Alarm==2 then
+          self.group:OptionAlarmStateRed()
+        else
+          self:E("ERROR: Unknown Alarm State! Setting to AUTO")
+          self.group:OptionAlarmStateAuto()
+          self.option.Alarm=0
+        end
+        
+        self:T(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.option.Alarm))
+        
+      end
       
     end
   else
