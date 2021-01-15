@@ -22,6 +22,9 @@
 -- @field #table template Template of the group.
 -- @field #boolean isLateActivated Is the group late activated.
 -- @field #boolean isUncontrolled Is the group uncontrolled.
+-- @field #boolean isFlightgroup Is a FLIGHTGROUP.
+-- @field #boolean isArmygroup Is an ARMYGROUP.
+-- @field #boolean isNavygroup Is a NAVYGROUP.
 -- @field #table elements Table of elements, i.e. units of the group.
 -- @field #boolean isAI If true, group is purely AI.
 -- @field #boolean isAircraft If true, group is airplane or helicopter.
@@ -327,7 +330,7 @@ OPSGROUP.TaskType={
 
 --- NavyGroup version.
 -- @field #string version
-OPSGROUP.version="0.7.0"
+OPSGROUP.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2133,7 +2136,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
   if self.taskcurrent>0 then
     self:TaskCancel()
   end
-
+  
   -- Set current task.
   self.taskcurrent=Task.id
   
@@ -2169,10 +2172,25 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
   elseif Task.dcstask.id=="PatrolZone" then
   
-    local Coordinate=Task.dcstask.params.zone:GetCoordinate()
-  
-    FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
-  
+    ---
+    -- Task patrol zone.
+    ---
+      
+    -- Parameters.
+    local zone=Task.dcstask.params.zone --Core.Zone#ZONE    
+    local Coordinate=zone:GetRandomCoordinate()    
+    local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)    
+    local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil
+
+    -- New waypoint.    
+    if self.isFlightgroup then
+      FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+    elseif self.isNavygroup then
+      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+    elseif self.isArmygroup then
+      NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+    end
+
   else
 
     -- If task is scheduled (not waypoint) set task.
@@ -2252,6 +2270,8 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
       if Task.dcstask.id=="Formation" then
         Task.formation:Stop()
         done=true
+      elseif Task.dcstask.id=="PatrolZone" then
+        done=true
       elseif stopflag==1 or (not self:IsAlive()) or self:IsDead() or self:IsStopped() then
         -- Manual call TaskDone if setting flag to one was not successful.
         done=true
@@ -2272,7 +2292,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
     end
     
   else
-  
+    
     local text=string.format("WARNING: No (current) task to cancel!")
     self:E(self.lid..text)
     
@@ -2307,7 +2327,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
 
   -- Debug message.
   local text=string.format("Task done: %s ID=%d", Task.description, Task.id)
-  self:T(self.lid..text)
+  self:I(self.lid..text)
 
   -- No current task.
   if Task.id==self.taskcurrent then
@@ -2872,6 +2892,8 @@ function OPSGROUP:RouteToMission(mission, delay)
         end
         
       end
+
+    elseif mission.type==AUFTRAG.Type.PATROLZONE then
     
     end
     
@@ -3005,13 +3027,24 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   -- Get the current task.
   local task=self:GetTaskCurrent()
   
-  if task and task.id=="PatrolZone" then
+  if task and task.dcstask.id=="PatrolZone" then
   
-    local zone=task.dcstask.params.zone --Core.Zone#ZONE
-        
-    local Coordinate=zone:GetRandomCoordinate()
+    -- Remove old waypoint.    
+    self:RemoveWaypointByID(Waypoint.uid)
+
+    local zone=task.dcstask.params.zone --Core.Zone#ZONE    
+    local Coordinate=zone:GetRandomCoordinate()    
+    local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)    
+    local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil
     
-    FLIGHTGROUP.AddWaypoint(self,Coordinate, Speed, AfterWaypointWithID, Altitude, Updateroute)
+    if self.isFlightgroup then
+      FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+    elseif self.isNavygroup then
+      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+    elseif self.isArmygroup then
+      NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+    end
+
     
   else
     
@@ -4208,7 +4241,6 @@ function OPSGROUP:_CheckAmmoStatus()
       self.outofAmmo=false
     end
     if ammo.Total==0 and not self.outofAmmo then
-      env.info("FF out of ammo")
       self.outofAmmo=true
       self:OutOfAmmo()
     end

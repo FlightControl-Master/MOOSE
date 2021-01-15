@@ -123,6 +123,7 @@ function NAVYGROUP:New(GroupName)
   self:SetDefaultAlarmstate()
   self:SetPatrolAdInfinitum(true)
   self:SetPathfinding(false)
+  self.isNavygroup=true
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State

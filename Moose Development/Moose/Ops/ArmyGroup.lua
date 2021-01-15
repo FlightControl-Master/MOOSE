@@ -101,6 +101,7 @@ function ARMYGROUP:New(Group)
   self.lid=string.format("ARMYGROUP %s | ", self.groupname)
   
   -- Defaults
+  self.isArmygroup=true
   self:SetDefaultROE()
   self:SetDefaultAlarmstate()
   self:SetDetection()

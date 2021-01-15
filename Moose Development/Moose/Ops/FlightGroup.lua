@@ -251,6 +251,7 @@ function FLIGHTGROUP:New(group)
   self:SetDefaultROE()
   self:SetDefaultROT()
   self:SetDetection()
+  self.isFlightgroup=true
 
   -- Holding flag.
   self.flaghold=USERFLAG:New(string.format("%s_FlagHold", self.groupname))
@@ -277,9 +278,8 @@ function FLIGHTGROUP:New(group)
   self:AddTransition("*",             "OutOfMissilesAG",   "*")          -- Group is out of A2G missiles. Not implemented yet!
   self:AddTransition("*",             "OutOfMissilesAS",   "*")          -- Group is out of A2G missiles. Not implemented yet!
 
-  self:AddTransition("Airborne",      "EngageTargets",    "Engaging")    -- Engage targets.
+  self:AddTransition("Airborne",      "EngageTarget",     "Engaging")    -- Engage targets.
   self:AddTransition("Engaging",      "Disengage",        "Airborne")    -- Engagement over.
-
 
   self:AddTransition("*",             "ElementParking",   "*")           -- An element is parking.
   self:AddTransition("*",             "ElementEngineOn",  "*")           -- An element spooled up the engines.
@@ -290,7 +290,6 @@ function FLIGHTGROUP:New(group)
   self:AddTransition("*",             "ElementArrived",   "*")           -- An element arrived.
 
   self:AddTransition("*",             "ElementOutOfAmmo", "*")           -- An element is completely out of ammo.
-
 
   self:AddTransition("*",             "Parking",          "Parking")     -- The whole flight group is parking.
   self:AddTransition("*",             "Taxiing",          "Taxiing")     -- The whole flight group is taxiing.
@@ -514,13 +513,14 @@ end
 
 --- Enable to automatically engage detected targets. 
 -- @param #FLIGHTGROUP self
--- @param #number RangeMax Max range in NM. Only detected targets within this radius will be engaged. Default is 25 NM.
+-- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
 -- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
 -- @param Core.Set#SET_ZONE EngageZoneSet Set of zones in which targets are engaged. Default is anywhere.
 -- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
--- @return #OPSGROUP self
+-- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetEngageDetectedOn(RangeMax, TargetTypes, EngageZoneSet, NoEngageZoneSet)
 
+  -- Ensure table.
   if TargetTypes then
     if type(TargetTypes)~="table" then
       TargetTypes={TargetTypes}
@@ -528,12 +528,26 @@ function FLIGHTGROUP:SetEngageDetectedOn(RangeMax, TargetTypes, EngageZoneSet, N
   else
     TargetTypes={"All"}
   end
+  
+  -- Ensure SET_ZONE if ZONE is provided.
+  if EngageZoneSet and EngageZoneSet:IsInstanceOf("ZONE_BASE") then
+    local zoneset=SET_ZONE:New():AddZone(EngageZoneSet)
+    EngageZoneSet=zoneset
+  end
+  if NoEngageZoneSet and NoEngageZoneSet:IsInstanceOf("ZONE_BASE") then
+    local zoneset=SET_ZONE:New():AddZone(NoEngageZoneSet)
+    NoEngageZoneSet=zoneset
+  end
 
+  -- Set parameters.
   self.engagedetectedOn=true
   self.engagedetectedRmax=UTILS.NMToMeters(RangeMax or 25)
   self.engagedetectedTypes=TargetTypes
   self.engagedetectedEngageZones=EngageZoneSet
   self.engagedetectedNoEngageZones=NoEngageZoneSet
+
+  -- Ensure detection is ON or it does not make any sense.
+  self:SetDetection(true)
 
   return self
 end
@@ -543,8 +557,8 @@ end
 -- @return #OPSGROUP self
 function FLIGHTGROUP:SetEngageDetectedOff()
   self.engagedetectedOn=false
+  return self
 end
-
 
 
 --- Enable that the group is despawned after landing. This can be useful to avoid DCS taxi issues with other AI or players or jamming taxiways.
@@ -1014,16 +1028,13 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   
   if self:IsAirborne() and self.detectionOn and self.engagedetectedOn then
   
-    env.info("FF check detected:")
-  
+    -- Target.
     local targetgroup=nil --Wrapper.Group#GROUP
     local targetdist=math.huge
     
     -- Loop over detected groups.
     for _,_group in pairs(self.detectedgroups:GetSet()) do
       local group=_group --Wrapper.Group#GROUP
-      
-      env.info("group "..group:GetName())
       
       if group and group:IsAlive() then
       
@@ -1077,7 +1088,6 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
             if insideEngage and not insideNoEngage then
               targetdist=distance
               targetgroup=group
-              env.info("targetgroup "..group:GetName())
             end
             
           end
@@ -1087,8 +1097,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
     end
     
     if targetgroup then
-      env.info("engage target! "..targetgroup:GetName())
-      self:EngageTargets(targetgroup)
+      self:EngageTarget(targetgroup)
     end
   
   end
@@ -1911,8 +1920,14 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
   end
 
   if self.taskcurrent>0 then
-    self:E(self.lid.."Update route denied because taskcurrent>0")
-    allowed=false
+  
+    local task=self:GetTaskCurrent()
+    if task.dcstask.id=="PatrolZone" then
+      -- For patrol zone, we need to allow the update.
+    else
+      self:E(self.lid.."Update route denied because taskcurrent>0")
+      allowed=false
+    end
   end
 
   -- Not good, because mission will never start. Better only check if there is a current task!
@@ -2033,6 +2048,11 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
       -- First check if there is a paused mission that
       if self.missionpaused then
         self:UnpauseMission()
+        return
+      end
+      
+      -- Group is currently engaging.
+      if self:IsEngaging() then
         return
       end
 
@@ -2493,24 +2513,24 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
 
 end
 
---- On after "EngageTargets" event. Order to engage a set of units.
+--- On after "EngageTarget" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Core.Set#SET_UNIT TargetUnitSet
-function FLIGHTGROUP:onafterEngageTargets(From, Event, To, Target)
+-- @param #table Target Target object. Can be a UNIT, STATIC, GROUP, SET_UNIT or SET_GROUP object.
+function FLIGHTGROUP:onafterEngageTarget(From, Event, To, Target)
 
-  env.info("FF engage targets")
-
+  -- DCS task.
   local DCStask=nil
 
-  if Target:IsInstanceOf("UNIT") then
+  -- Check target object.
+  if Target:IsInstanceOf("UNIT") or Target:IsInstanceOf("STATIC") then
+  
+    DCStask=self:GetGroup():TaskAttackUnit(Target, true)
   
   elseif Target:IsInstanceOf("GROUP") then
-  
-    env.info("FF engage targets GROUP!")
-  
+
     DCStask=self:GetGroup():TaskAttackGroup(Target, nil, nil, nil, nil, nil, nil, true)
   
   elseif Target:IsInstanceOf("SET_UNIT") then
@@ -2527,19 +2547,37 @@ function FLIGHTGROUP:onafterEngageTargets(From, Event, To, Target)
     DCStask=self:GetGroup():TaskCombo(DCSTasks)
 
   elseif Target:IsInstanceOf("SET_GROUP") then
+
+    local DCSTasks={}
+  
+    for _,_unit in pairs(Target:GetSet()) do --detected by =HRP= Zero
+      local unit=_unit  --Wrapper.Unit#UNIT
+      local task=self:GetGroup():TaskAttackGroup(Target, nil, nil, nil, nil, nil, nil, true)
+      table.insert(DCSTasks)
+    end
+  
+    -- Task combo.
+    DCStask=self:GetGroup():TaskCombo(DCSTasks)
   
   else
-  
+    self:E("ERROR: unknown Target in EngageTarget! Needs to be a UNIT, STATIC, GROUP, SET_UNIT or SET_GROUP")
+    return
   end
 
-  -- Create new task.The description "Task_Engage" is checked.
-  local Task=self:NewTaskScheduled(DCStask, 1, "Task_Engage", 0)
+  -- Create new task.The description "Engage_Target" is checked so do not change that lightly.
+  local Task=self:NewTaskScheduled(DCStask, 1, "Engage_Target", 0)
   
   -- Backup ROE setting.
   Task.backupROE=self:GetROE()
   
   -- Switch ROE to open fire
   self:SwitchROE(ENUMS.ROE.OpenFire)
+
+  -- Pause current mission.
+  local mission=self:GetMissionCurrent()
+  if mission then
+    self:PauseMission()
+  end
 
   -- Execute task.
   self:TaskExecute(Task)  
@@ -2553,9 +2591,7 @@ end
 -- @param #string To To state.
 -- @param Core.Set#SET_UNIT TargetUnitSet
 function FLIGHTGROUP:onafterDisengage(From, Event, To)
-
-  env.info("FF disengage targets")
-  
+  self:T(self.lid.."Disengage target")
 end
 
 --- On before "LandAt" event. Check we have a helo group.

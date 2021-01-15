@@ -101,6 +101,7 @@
 -- 
 -- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
 -- @field #number missionAltitude Mission altitude in meters.
+-- @field #number missionSpeed Mission speed in km/h.
 -- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
 -- @field #number missionRange Mission range in meters. Used in AIRWING class.
 -- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
@@ -441,7 +442,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.5.0"
+AUFTRAG.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1196,18 +1197,22 @@ end
 --- Create a PATROLZONE mission. Group(s) will go to the zone and patrol it randomly.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE Zone The patrol zone.
+-- @param #number Speed Speed in knots.
+-- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
 -- @return #AUFTRAG self
-function AUFTRAG:NewPATROLZONE(Zone)
+function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.PATROLZONE)
   
-  mission:_TargetFromObject(Zone)  
-  
+  mission:_TargetFromObject(Zone)
+    
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
   mission.optionAlarm=ENUMS.AlarmState.Auto
   
-  mission.missionFraction=1.0
+  mission.missionFraction=1.0  
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
   
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -3425,9 +3430,9 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     
     -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
     local param={}
-    param.zonename=self:GetTargetName()
     param.zone=self:GetObjective()
-    param.altitude=70
+    param.altitude=self.missionAltitude
+    param.speed=self.missionSpeed
     
     DCStask.params=param
     
