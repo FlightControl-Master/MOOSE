@@ -2327,7 +2327,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
 
   -- Debug message.
   local text=string.format("Task done: %s ID=%d", Task.description, Task.id)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- No current task.
   if Task.id==self.taskcurrent then
@@ -2647,7 +2647,7 @@ function OPSGROUP:onafterPauseMission(From, Event, To)
     local Task=Mission:GetGroupWaypointTask(self)
     
     -- Debug message.
-    self:I(self.lid..string.format("Pausing current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
+    self:T(self.lid..string.format("Pausing current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
   
     -- Cancelling the mission is actually cancelling the current task.
     self:TaskCancel(Task)
@@ -2666,7 +2666,8 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterUnpauseMission(From, Event, To)
 
-  self:I(self.lid..string.format("Unpausing mission"))
+  -- Debug info.
+  self:T(self.lid..string.format("Unpausing mission"))
   
   if self.missionpaused then
   
@@ -4796,25 +4797,29 @@ function OPSGROUP:SwitchAlarmstate(alarmstate)
   
   if self:IsAlive() or self:IsInUtero() then
   
-    self.option.Alarm=alarmstate or self.optionDefault.Alarm
-    
-    if self:IsInUtero() then
-      self:T2(self.lid..string.format("Setting current Alarm State=%d when GROUP is SPAWNED", self.option.Alarm))
-    else
+    if self.isArmygroup or self.isNavygroup  then
   
-      if self.option.Alarm==0 then
-        self.group:OptionAlarmStateAuto()
-      elseif self.option.Alarm==1 then
-        self.group:OptionAlarmStateGreen()
-      elseif self.option.Alarm==2 then
-        self.group:OptionAlarmStateRed()
-      else
-        self:E("ERROR: Unknown Alarm State! Setting to AUTO")
-        self.group:OptionAlarmStateAuto()
-        self.option.Alarm=0
-      end
+      self.option.Alarm=alarmstate or self.optionDefault.Alarm
       
-      self:T(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.option.Alarm))
+      if self:IsInUtero() then
+        self:T2(self.lid..string.format("Setting current Alarm State=%d when GROUP is SPAWNED", self.option.Alarm))
+      else
+    
+        if self.option.Alarm==0 then
+          self.group:OptionAlarmStateAuto()
+        elseif self.option.Alarm==1 then
+          self.group:OptionAlarmStateGreen()
+        elseif self.option.Alarm==2 then
+          self.group:OptionAlarmStateRed()
+        else
+          self:E("ERROR: Unknown Alarm State! Setting to AUTO")
+          self.group:OptionAlarmStateAuto()
+          self.option.Alarm=0
+        end
+        
+        self:T(self.lid..string.format("Setting current Alarm State=%d (0=Auto, 1=Green, 2=Red)", self.option.Alarm))
+        
+      end
       
     end
   else
