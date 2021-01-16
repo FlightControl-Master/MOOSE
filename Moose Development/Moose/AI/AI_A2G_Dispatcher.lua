@@ -431,7 +431,7 @@ do -- AI_A2G_DISPATCHER
   -- 
   -- ### 2.2. The **Defense Reactivity**.
   -- 
-  -- There are 5 levels that can be configured to tweak the defense reactivity. As explained above, the threat to a defense coordinate is 
+  -- There are three levels that can be configured to tweak the defense reactivity. As explained above, the threat to a defense coordinate is 
   -- also determined by the distance of the enemy ground target to the defense coordinate.
   -- If you want to have a **low** defense reactivity, that is, the probability that an A2G defense will engage to the enemy ground target, then
   -- use the @{#AI_A2G_DISPATCHER.SetDefenseReactivityLow}() method. For medium and high reactivity, use the methods 
