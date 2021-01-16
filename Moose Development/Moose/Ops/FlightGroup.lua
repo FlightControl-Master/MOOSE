@@ -194,7 +194,7 @@ FLIGHTGROUP.Attribute = {
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.6.0"
+FLIGHTGROUP.version="0.6.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -935,7 +935,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   -- Distance travelled
   ---
 
-  if self.verbose>=3 and self:IsAlive() then
+  if self.verbose>=4 and self:IsAlive() then
 
     -- Travelled distance since last check.
     local ds=self.travelds
@@ -1025,8 +1025,11 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
       self:ClearToLand()
     end
   end
-  
-  if self:IsAirborne() and self.detectionOn and self.engagedetectedOn then
+
+  ---
+  -- Engage Detected Targets
+  ---  
+  if self:IsAirborne() and self.detectionOn and self.engagedetectedOn and not (self.fuellow or self.fuelcritical) then
   
     -- Target.
     local targetgroup=nil --Wrapper.Group#GROUP
@@ -1038,16 +1041,20 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
       
       if group and group:IsAlive() then
       
-        local targetcoord=group:GetCoordinate()
-        
-        local distance=targetcoord:Get2DDistance(self:GetCoordinate())
+        -- Get 3D vector of target.
+        local targetVec3=group:GetVec3()
+
+        -- Distance to target.        
+        local distance=UTILS.VecDist3D(self.position, targetVec3)
         
         if distance<=self.engagedetectedRmax and distance<targetdist then
         
           -- Check type attribute.
           local righttype=false
           for _,attribute in pairs(self.engagedetectedTypes) do
-            if group:HasAttribute(attribute, false) then
+            local gotit=group:HasAttribute(attribute, false)
+            --self:I(self.lid..string.format("Group %s has attribute %s = %s", group:GetName(), attribute, tostring(gotit)))
+            if gotit then
               righttype=true
               break
             end
@@ -1064,7 +1071,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
               insideEngage=false
               for _,_zone in pairs(self.engagedetectedEngageZones.Set) do
                 local zone=_zone --Core.Zone#ZONE
-                local inzone=zone:IsCoordinateInZone(targetcoord)
+                local inzone=zone:IsVec3InZone(targetVec3)
                 if inzone then
                   insideEngage=true
                   break
@@ -1076,7 +1083,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
             if self.engagedetectedNoEngageZones then
               for _,_zone in pairs(self.engagedetectedNoEngageZones.Set) do
                 local zone=_zone --Core.Zone#ZONE
-                local inzone=zone:IsCoordinateInZone(targetcoord)
+                local inzone=zone:IsVec3InZone(targetVec3)
                 if inzone then
                   insideNoEngage=true
                   break
@@ -1096,7 +1103,9 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
       end
     end
     
+    -- If we found a group, we engage it.
     if targetgroup then
+      --self:I(self.lid..string.format("Engaging target group %s at distance %d meters", targetgroup:GetName(), targetdist))
       self:EngageTarget(targetgroup)
     end
   
@@ -1921,11 +1930,21 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
 
   if self.taskcurrent>0 then
   
-    local task=self:GetTaskCurrent()
-    if task.dcstask.id=="PatrolZone" then
-      -- For patrol zone, we need to allow the update.
+    --local task=self:GetTaskCurrent()
+    local task=self:GetTaskByID(self.taskcurrent)
+    
+    if task then
+      if task.dcstask.id=="PatrolZone" then
+        -- For patrol zone, we need to allow the update.
+      else
+        local taskname=task and task.description or "No description"
+        self:E(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
+        allowed=false
+      end
     else
-      self:E(self.lid.."Update route denied because taskcurrent>0")
+      -- Now this can happen, if we directly use TaskExecute as the task is not in the task queue and cannot be removed.
+      self:T(self.lid..string.format("WARNING: before update route taskcurrent=%d>0 but no task?!", self.taskcurrent))
+      -- Anyhow, a task is running so we do not allow to update the route!
       allowed=false
     end
   end

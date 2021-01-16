@@ -2096,7 +2096,8 @@ end
 -- @param #OPSGROUP self
 -- @return #OPSGROUP.Task Current task or nil.
 function OPSGROUP:GetTaskCurrent()
-  return self:GetTaskByID(self.taskcurrent, OPSGROUP.TaskStatus.EXECUTING)
+  local task=self:GetTaskByID(self.taskcurrent, OPSGROUP.TaskStatus.EXECUTING)
+  return task
 end
 
 --- Get task by its id.
@@ -2893,11 +2894,9 @@ function OPSGROUP:RouteToMission(mission, delay)
         end
         
       end
-
-    elseif mission.type==AUFTRAG.Type.PATROLZONE then
-    
     end
     
+    -- Formation.
     local formation=nil
     if self.isGround and mission.optionFormation then
       formation=mission.optionFormation
