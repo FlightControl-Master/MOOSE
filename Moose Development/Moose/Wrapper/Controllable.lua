@@ -129,7 +129,7 @@
 --   * @{#CONTROLLABLE.Route}(): Make the Controllable to follow a given route.
 --   * @{#CONTROLLABLE.RouteGroundTo}(): Make the GROUND Controllable to drive towards a specific coordinate.
 --   * @{#CONTROLLABLE.RouteAirTo}(): Make the AIR Controllable to fly towards a specific coordinate.
---   * @{CONTROLLABLE.RelocateGroundRandomInRadius}(): Relocate the GROUND controllable to a random point in a given radius.
+--   * @{#CONTROLLABLE.RelocateGroundRandomInRadius}(): Relocate the GROUND controllable to a random point in a given radius.
 --
 -- # 5) Option methods
 --
