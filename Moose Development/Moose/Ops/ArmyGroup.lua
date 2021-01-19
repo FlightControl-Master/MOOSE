@@ -394,9 +394,41 @@ function ARMYGROUP:onafterStatus(From, Event, To)
   else
 
     -- Info text.
-    local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
-    self:T2(self.lid..text)
+    if self.verbose>=1 then
+      local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
+      self:I(self.lid..text)
+    end
   
+  end
+
+  ---
+  -- Elements
+  ---
+  
+  if self.verbose>=2 then
+    local text="Elements:"
+    for i,_element in pairs(self.elements) do
+      local element=_element --#ARMYGROUP.Element
+
+      local name=element.name
+      local status=element.status
+      local unit=element.unit
+      --local life=unit:GetLifeRelative() or 0
+      local life,life0=self:GetLifePoints(element)
+      
+      local life0=element.life0
+
+      -- Get ammo.
+      local ammo=self:GetAmmoElement(element)
+
+      -- Output text for element.
+      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d",
+      i, name, status, life, life0, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles)
+    end
+    if #self.elements==0 then
+      text=text.." none!"
+    end
+    self:I(self.lid..text)
   end
 
 
@@ -965,8 +997,11 @@ function ARMYGROUP:OnEventBirth(EventData)
     
     if self.respawning then
     
+      self:I(self.lid.."Respawning unit "..tostring(unitname))
+    
       local function reset()
         self.respawning=nil
+        self:_CheckGroupDone()
       end
       
       -- Reset switch in 1 sec. This should allow all birth events of n>1 groups to have passed.

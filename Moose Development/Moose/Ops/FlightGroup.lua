@@ -2025,26 +2025,6 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
 
 end
 
---- On after "Respawn" event.
--- @param #FLIGHTGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #table Template The template used to respawn the group.
-function FLIGHTGROUP:onafterRespawn(From, Event, To, Template)
-
-  self:T(self.lid.."Respawning group!")
-
-  local template=UTILS.DeepCopy(Template or self.template)
-
-  if self.group and self.group:InAir() then
-    template.lateActivation=false
-    self.respawning=true
-    self.group=self.group:Respawn(template)
-  end
-
-end
-
 --- Check if flight is done, i.e.
 --
 --  * passed the final waypoint,

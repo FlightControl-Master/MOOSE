@@ -399,6 +399,7 @@ function OPSGROUP:New(Group)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("InUtero",       "Spawned",          "Spawned")     -- The whole group was spawned.
+  self:AddTransition("*",             "Respawn",          "*")           -- Respawn group.  
   self:AddTransition("*",             "Dead",             "Dead")        -- The whole group is dead.
   self:AddTransition("*",             "Stop",             "Stopped")     -- Stop FSM.
 
@@ -408,7 +409,6 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "Damaged",          "*")           -- Someone in the group took damage.
 
   self:AddTransition("*",             "UpdateRoute",      "*")           -- Update route of group. Only if airborne.
-  self:AddTransition("*",             "Respawn",          "*")           -- Respawn group.
   self:AddTransition("*",             "PassingWaypoint",  "*")           -- Passing waypoint.
  
   self:AddTransition("*",             "DetectedUnit",      "*")           -- Unit was detected (again) in this detection cycle.
@@ -497,12 +497,34 @@ end
 
 --- Returns the absolute (average) life points of the group.
 -- @param #OPSGROUP self
+-- @param #OPSGROUP.Element Element (Optional) Only get life points of this element.
 -- @return #number Life points. If group contains more than one element, the average is given.
 -- @return #number Initial life points.
-function OPSGROUP:GetLifePoints()
-  if self.group then
-    return self.group:GetLife(), self.group:GetLife0()
+function OPSGROUP:GetLifePoints(Element)
+
+  local life=0
+  local life0=0
+
+  if Element then
+  
+    local unit=Element.unit
+    
+    if unit then
+      life=unit:GetLife()
+      life0=unit:GetLife0()
+    end
+
+  else
+
+    for _,element in pairs(self.elements) do
+      local l,l0=self:GetLifePoints(element)
+      life=life+l
+      life0=life+l0
+    end  
+    
   end
+  
+  return life, life0
 end
 
 
@@ -3798,6 +3820,95 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
     end
   end
     
+end
+
+--- On after "Respawn" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #table Template The template used to respawn the group.
+function OPSGROUP:onafterRespawn(From, Event, To, Template)
+
+  self:I(self.lid.."Respawning group!")
+
+  local template=UTILS.DeepCopy(Template or self.template)
+  
+  template.lateActivation=false
+  
+  self:_Respawn(template,Reset)
+  
+end
+
+--- Respawn the group.
+-- @param #OPSGROUP self
+-- @param #table Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
+-- @param #boolean Reset Reset positions if TRUE.
+-- @return #OPSGROUP self
+function OPSGROUP:_Respawn(Template, Reset)
+
+  env.info("FF _Respawn")
+
+  -- Given template or get old.
+  Template=Template or UTILS.DeepCopy(self.template)
+  
+  -- Get correct heading.
+  local function _Heading(course)
+    local h
+    if course<=180 then
+      h=math.rad(course)
+    else
+      h=-math.rad(360-course)
+    end
+    return h 
+  end        
+
+  if self:IsAlive() then
+  
+    ---
+    -- Group is ALIVE
+    
+    -- Get units.
+    local units=self.group:GetUnits()
+  
+    -- Loop over template units.
+    for UnitID, Unit in pairs(Template.units) do
+    
+      for _,_unit in pairs(units) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        
+        if unit:GetName()==Unit.name then
+          local vec3=unit:GetVec3()
+          local heading=unit:GetHeading()
+          Unit.x=vec3.x
+          Unit.y=vec3.z
+          Unit.alt=vec3.y
+          Unit.heading=math.rad(heading)
+          Unit.psi=-Unit.heading
+        end
+      end
+    
+    end
+    
+    -- Despawn old group. Dont trigger any remove unit event since this is a respawn.
+    self:Despawn(0, true)
+    
+  else
+
+  end
+  
+  -- Currently respawning.
+  self.respawning=true
+  
+  self:I({Template=Template})
+
+  -- Spawn new group.
+  _DATABASE:Spawn(Template)
+  
+  -- Reset events.
+  --self:ResetEvents()
+  
+  return self
 end
 
 --- On before "Dead" event.
