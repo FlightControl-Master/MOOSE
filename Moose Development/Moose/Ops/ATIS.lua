@@ -1319,7 +1319,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   end
 
   if time < 0 then
-     time = 24*60*60 - time --avoid negative time around midnight
+     time = 24*60*60 + time --avoid negative time around midnight
   end
   
   local clock=UTILS.SecondsToClock(time)
