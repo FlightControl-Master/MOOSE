@@ -1501,3 +1501,23 @@ function UTILS.GetOSTime()
 
   return nil
 end
+
+--- Shuffle a table accoring to Fisher Yeates algorithm
+--@param #table table to be shuffled
+--@return #table
+function UTILS.ShuffleTable(t)
+  if t == nil or type(t) ~= "table" then 
+    BASE:I("Error in ShuffleTable: Missing or wrong tyåe of Argument") 
+    return 
+  end
+  math.random()
+  math.random()
+  math.random()
+  local TempTable = {}
+  for i = 1, #t do
+    local r = math.random(1,#t)
+    TempTable[i] = t[r]
+    table.remove(t,r)
+  end
+  return TempTable
+end
