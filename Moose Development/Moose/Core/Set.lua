@@ -5411,10 +5411,12 @@ do -- SET_ZONE
 
   --- Get a random zone from the set.
   -- @param #SET_ZONE self
+  -- @param #number margin Number of tries to find a zone
   -- @return Core.Zone#ZONE_BASE The random Zone.
   -- @return #nil if no zone in the collection.
-  function SET_ZONE:GetRandomZone()
-
+  function SET_ZONE:GetRandomZone(margin)
+    
+    local margin = margin or 100
     if self:Count() ~= 0 then
 
       local Index = self.Index
@@ -5423,9 +5425,11 @@ do -- SET_ZONE
       -- Loop until a zone has been found.
       -- The :GetZoneMaybe() call will evaluate the probability for the zone to be selected.
       -- If the zone is not selected, then nil is returned by :GetZoneMaybe() and the loop continues!
-      while not ZoneFound do
+      local counter = 0
+      while (not ZoneFound) or (counter < margin) do
         local ZoneRandom = math.random( 1, #Index )
         ZoneFound = self.Set[Index[ZoneRandom]]:GetZoneMaybe()
+        counter = counter + 1
       end
 
       return ZoneFound

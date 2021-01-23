@@ -1318,6 +1318,10 @@ function ATIS:onafterBroadcast(From, Event, To)
     time=time-UTILS.GMTToLocalTimeDifference()*60*60
   end
 
+  if time < 0 then
+     time = 24*60*60 + time --avoid negative time around midnight
+  end
+  
   local clock=UTILS.SecondsToClock(time)
   local zulu=UTILS.Split(clock, ":")
   local ZULU=string.format("%s%s", zulu[1], zulu[2])
