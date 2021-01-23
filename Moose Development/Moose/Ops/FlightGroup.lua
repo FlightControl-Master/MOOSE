@@ -175,22 +175,13 @@ FLIGHTGROUP.Attribute = {
 
 --- Flight group element.
 -- @type FLIGHTGROUP.Element
--- @field #string name Name of the element, i.e. the unit/client.
--- @field Wrapper.Unit#UNIT unit Element unit object.
--- @field Wrapper.Group#GROUP group Group object of the element.
 -- @field #string modex Tail number.
--- @field #string skill Skill level.
--- @field #boolean ai If true, element is AI.
 -- @field Wrapper.Client#CLIENT client The client if element is occupied by a human player.
 -- @field #table pylons Table of pylons.
 -- @field #number fuelmass Mass of fuel in kg.
--- @field #number category Aircraft category.
--- @field #string categoryname Aircraft category name.
 -- @field #string callsign Call sign, e.g. "Uzi 1-1".
--- @field #string status Status, i.e. born, parking, taxiing. See @{#OPSGROUP.ElementStatus}.
--- @field #number damage Damage of element in percent.
 -- @field Wrapper.Airbase#AIRBASE.ParkingSpot parking The parking spot table the element is parking on.
-
+-- @extends Ops.OpsGroup#OPSGROUP.Element
 
 --- FLIGHTGROUP class version.
 -- @field #string version
@@ -243,7 +234,7 @@ function FLIGHTGROUP:New(group)
   self.lid=string.format("FLIGHTGROUP %s | ", self.groupname)
 
   -- Defaults
-  --self:SetVerbosity(0)
+  self.isFlightgroup=true  
   self:SetFuelLowThreshold()
   self:SetFuelLowRTB()
   self:SetFuelCriticalThreshold()
@@ -251,7 +242,6 @@ function FLIGHTGROUP:New(group)
   self:SetDefaultROE()
   self:SetDefaultROT()
   self:SetDetection()
-  self.isFlightgroup=true
 
   -- Holding flag.
   self.flaghold=USERFLAG:New(string.format("%s_FlagHold", self.groupname))
@@ -313,13 +303,6 @@ function FLIGHTGROUP:New(group)
   -- @param #number delay Delay in seconds.
 
   -- TODO: Add pseudo functions.
-
-  -- Debug trace.
-  if false then
-    BASE:TraceOnOff(true)
-    BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
-  end
 
   -- Add to data base.
   _DATABASE:AddFlightGroup(self)
@@ -554,7 +537,7 @@ end
 
 --- Disable to automatically engage detected targets. 
 -- @param #FLIGHTGROUP self
--- @return #OPSGROUP self
+-- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetEngageDetectedOff()
   self.engagedetectedOn=false
   return self
@@ -747,7 +730,7 @@ function FLIGHTGROUP:GetFuelMin()
 
   local fuelmin=math.huge
   for i,_element in pairs(self.elements) do
-    local element=_element --#FLIGHTGROUP.Element
+    local element=_element --Ops.OpsGroup#OPSGROUP.Element
 
     local unit=element.unit
 
@@ -1119,63 +1102,8 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Events
+-- DCS Events ==> See also OPSGROUP
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Flightgroup event function, handling the birth of a unit.
--- @param #FLIGHTGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function FLIGHTGROUP:OnEventBirth(EventData)
-
-  --env.info(string.format("EVENT: Birth for unit %s", tostring(EventData.IniUnitName)))
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-
-    -- Set group.
-    self.group=self.group or EventData.IniGroup
-
-    if self.respawning then
-
-      local function reset()
-        self.respawning=nil
-      end
-
-      -- Reset switch in 1 sec. This should allow all birth events of n>1 groups to have passed.
-      -- TODO: Can I do this more rigorously?
-      self:ScheduleOnce(1, reset)
-
-    else
-
-      -- Set homebase if not already set.
-      if EventData.Place then
-        self.homebase=self.homebase or EventData.Place
-      end
-      
-      if self.homebase and not self.destbase then
-        self.destbase=self.homebase
-      end
-
-      -- Get element.
-      local element=self:GetElementByName(unitname)
-
-      -- Create element spawned event if not already present.
-      if not self:_IsElement(unitname) then
-        element=self:AddElementByName(unitname)
-      end
-
-      -- Set element to spawned state.
-      self:T(self.lid..string.format("EVENT: Element %s born at airbase %s==> spawned", element.name, self.homebase and self.homebase:GetName() or "unknown"))
-      self:ElementSpawned(element)
-
-    end
-
-  end
-
-end
 
 --- Flightgroup event function handling the crash of a unit.
 -- @param #FLIGHTGROUP self
@@ -1356,69 +1284,7 @@ function FLIGHTGROUP:OnEventUnitLost(EventData)
 
 end
 
---- Flightgroup event function handling the crash of a unit.
--- @param #FLIGHTGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function FLIGHTGROUP:OnEventKill(EventData)
 
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-  
-    -- Target name
-    local targetname=tostring(EventData.TgtUnitName)
-  
-    -- Debug info.
-    self:T2(self.lid..string.format("EVENT: Unit %s killed object %s!", tostring(EventData.IniUnitName), targetname))
-    
-    -- Check if this was a UNIT or STATIC object.
-    local target=UNIT:FindByName(targetname)    
-    if not target then
-      target=STATIC:FindByName(targetname, false)
-    end
-
-    -- Only count UNITS and STATICs (not SCENERY)
-    if target then
-
-      -- Debug info.
-      self:T(self.lid..string.format("EVENT: Unit %s killed unit/static %s!", tostring(EventData.IniUnitName), targetname))
-
-      -- Kill counter.
-      self.Nkills=self.Nkills+1
-      
-      -- Check if on a mission.
-      local mission=self:GetMissionCurrent()
-      if mission then
-        mission.Nkills=mission.Nkills+1 -- Increase mission kill counter.
-      end
-      
-    end
-    
-  end
-
-end
-
---- Flightgroup event function handling the crash of a unit.
--- @param #FLIGHTGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function FLIGHTGROUP:OnEventRemoveUnit(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-
-    -- Get element.
-    local element=self:GetElementByName(unitname)
-
-    if element then
-      self:T3(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
-      self:ElementDead(element)
-    end
-
-  end
-
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM functions
@@ -1743,7 +1609,7 @@ function FLIGHTGROUP:onafterTaxiing(From, Event, To)
   self.Tparking=nil
 
   -- TODO: need a better check for the airbase.
-  local airbase=self:GetClosestAirbase() --self.group:GetCoordinate():GetClosestAirbase(nil, self.group:GetCoalition())
+  local airbase=self:GetClosestAirbase()
 
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
 
@@ -2894,7 +2760,7 @@ function FLIGHTGROUP:_InitGroup()
 
   -- Add elemets.
   for _,unit in pairs(self.group:GetUnits()) do
-    local element=self:AddElementByName(unit:GetName())
+    self:_AddElementByName(unit:GetName())
   end
 
   -- Get first unit. This is used to extract other parameters.
@@ -2960,9 +2826,10 @@ function FLIGHTGROUP:AddElementByName(unitname)
     local element={} --#FLIGHTGROUP.Element
 
     element.name=unitname
-    element.unit=unit
     element.status=OPSGROUP.ElementStatus.INUTERO
+    element.unit=unit
     element.group=unit:GetGroup()
+
 
     -- TODO: this is wrong when grouping is used!
     local unittemplate=element.unit:GetTemplate()

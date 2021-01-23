@@ -612,6 +612,12 @@ function NAVYGROUP:onafterStatus(From, Event, To)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- DCS Events ==> See OPSGROUP
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- See OPSGROUP!
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1030,94 +1036,6 @@ function NAVYGROUP:onafterStop(From, Event, To)
   -- Call OPSGROUP function.
   self:GetParent(self).onafterStop(self, From, Event, To)
   
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Events DCS
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Event function handling the birth of a unit.
--- @param #NAVYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function NAVYGROUP:OnEventBirth(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-    
-    if self.respawning then
-    
-      local function reset()
-        self.respawning=nil
-      end
-      
-      -- Reset switch in 1 sec. This should allow all birth events of n>1 groups to have passed.
-      -- TODO: Can I do this more rigorously?
-      self:ScheduleOnce(1, reset)
-    
-    else
-          
-      -- Get element.
-      local element=self:GetElementByName(unitname)
-
-      -- Set element to spawned state.
-      self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", element.name))            
-      self:ElementSpawned(element)
-      
-    end    
-    
-  end
-
-end
-
---- Flightgroup event function handling the crash of a unit.
--- @param #NAVYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function NAVYGROUP:OnEventDead(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    self:T(self.lid..string.format("EVENT: Unit %s dead!", EventData.IniUnitName))
-    
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-
-    -- Get element.
-    local element=self:GetElementByName(unitname)
-
-    if element then
-      self:T(self.lid..string.format("EVENT: Element %s dead ==> destroyed", element.name))
-      self:ElementDestroyed(element)
-    end
-    
-  end
-
-end
-
---- Flightgroup event function handling the crash of a unit.
--- @param #NAVYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function NAVYGROUP:OnEventRemoveUnit(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-
-    -- Get element.
-    local element=self:GetElementByName(unitname)
-
-    if element then
-      self:T(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
-      self:ElementDead(element)
-    end
-
-  end
-
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

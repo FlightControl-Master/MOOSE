@@ -95,6 +95,9 @@
 -- @field #OPSGROUP.Ammo ammo Initial ammount of ammo.
 -- @field #OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
 -- 
+-- @field #OPSGROUP.Element carrier Carrier the group is loaded into as cargo.
+-- @field #table cargo Table containing all cargo of the carrier.
+-- 
 -- @extends Core.Fsm#FSM
 
 --- *A small group of determined and like-minded people can change the course of history.* --- Mahatma Gandhi
@@ -149,20 +152,44 @@ OPSGROUP = {
   Ndestroyed         =     0,
   Nkills             =     0,
   weaponData         =    {},
+  cargo              =    {},
 }
 
 
 --- OPS group element.
 -- @type OPSGROUP.Element
+-- 
 -- @field #string name Name of the element, i.e. the unit.
+-- @field #string status The element status. See @{#OPSGROUP.ElementStatus}.
 -- @field Wrapper.Unit#UNIT unit The UNIT object.
--- @field #string status The element status.
+-- @field Wrapper.Group#GROUP group The GROUP object.
+-- @field DCS#Unit DCSunit The DCS unit object.
+-- @field #boolean ai If true, element is AI.
+-- @field #string skill Skill level.
+--
 -- @field #string typename Type name.
+-- @field #number category Aircraft category.
+-- @field #string categoryname Aircraft category name.
+--
+-- @field #number size Size (max of length, width, height) in meters.
 -- @field #number length Length of element in meters.
 -- @field #number width Width of element in meters.
 -- @field #number height Height of element in meters.
+-- 
+-- @field DCS#Vec3 vec3 Last known 3D position vector.
+-- @field DCS#Vec3 orientX Last known ordientation vector in the direction of the nose X.
+-- @field #number heading Last known heading in degrees.
+--
 -- @field #number life0 Initial life points.
 -- @field #number life Life points when last updated.
+-- @field #number damage Damage of element in percent.
+-- 
+-- @field DCS#Object.Desc descriptors Descriptors table.
+-- @field #number weightEmpty Empty weight in kg.
+-- @field #number weightMaxTotal Max. total weight in kg.
+-- @field #number weightMaxCargo Max. cargo weight in kg.
+-- @field #number weightCargo Current cargo weight in kg.
+-- @field #number weight Current weight including cargo in kg.
 
 --- Status of group element.
 -- @type OPSGROUP.ElementStatus
@@ -328,7 +355,19 @@ OPSGROUP.TaskType={
 -- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
 -- @field #string formation Ground formation. Similar to action but on/off road.
 
---- NavyGroup version.
+--- Cargo data.
+-- @type OPSGROUP.CargoStatus
+-- @field #string Reserved
+-- @field #string Loaded
+
+--- Cargo data.
+-- @type OPSGROUP.Cargo
+-- @field #OPSGROUP opsgroup The cargo opsgroup.
+-- @field #OPSGROUP.CargoStatus status Status of the cargo group.
+-- @field Core.Zone#ZONE pickupzone Zone where the cargo is picked up.
+-- @field Core.Zone#ZONE deployzone Zone where the cargo is dropped off.
+
+--- OpsGroup version.
 -- @field #string version
 OPSGROUP.version="0.7.1"
 
@@ -401,6 +440,7 @@ function OPSGROUP:New(Group)
   self:AddTransition("InUtero",       "Spawned",          "Spawned")     -- The whole group was spawned.
   self:AddTransition("*",             "Respawn",          "*")           -- Respawn group.  
   self:AddTransition("*",             "Dead",             "Dead")        -- The whole group is dead.
+  self:AddTransition("*",             "InUtero",          "InUtero")     -- Deactivated group goes back to mummy.
   self:AddTransition("*",             "Stop",             "Stopped")     -- Stop FSM.
 
   self:AddTransition("*",             "Status",           "*")           -- Status update.
@@ -453,11 +493,28 @@ function OPSGROUP:New(Group)
   self:AddTransition("*",             "UnpauseMission",   "*")           -- Unpause the the paused mission.
   self:AddTransition("*",             "MissionDone",      "*")           -- Mission is over.
 
+  self:AddTransition("*",             "ElementInUtero",   "*")           -- An element is in utero again.
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementDestroyed", "*")           -- An element was destroyed.
   self:AddTransition("*",             "ElementDead",      "*")           -- An element is dead.
   self:AddTransition("*",             "ElementDamaged",   "*")           -- An element was damaged.
 
+  self:AddTransition("*",             "Board",            "Boarding")    -- Group is boarding a cargo carrier.
+  self:AddTransition("*",             "Embark",           "*")           -- Group was loaded into a cargo carrier.
+  self:AddTransition("InUtero",       "Unboard",          "*")           -- Group was unloaded from a cargo carrier.
+  
+  self:AddTransition("*",             "Pickup",           "Pickingup")   -- Carrier and is on route to pick up cargo.
+  self:AddTransition("Pickingup",     "Loading",          "Loading")     -- Carrier is loading cargo.
+  self:AddTransition("Loading",       "Load",             "Loading")     -- Carrier loads cargo into carrier.
+    
+  self:AddTransition("Loading",       "Pickup",           "Pickingup")   -- Carrier is picking up another cargo.
+  
+  self:AddTransition("Loading",       "Transport",        "Transporting")-- Carrier is transporting cargo.
+  
+  self:AddTransition("Transporting",  "Dropoff",          "Droppingoff") -- Carrier is dropping off cargo.
+  self:AddTransition("Droppingoff",   "Dropoff",          "Droppingoff") -- Carrier is dropping off cargo.
+  self:AddTransition("Droppingoff",   "Droppedoff",       "Droppedoff")  -- Carrier has dropped off all its cargo.
+  
   ------------------------
   --- Pseudo Functions ---
   ------------------------
@@ -860,78 +917,244 @@ function OPSGROUP:GetDCSUnits()
   return nil
 end
 
---- Despawn the group. The whole group is despawned and (optionally) a "Remove Unit" event is generated for all current units of the group.
+
+--- Get current 2D position vector of the group.
 -- @param #OPSGROUP self
+-- @param #string UnitName (Optional) Get position of a specifc unit of the group. Default is the first existing unit in the group.
+-- @return DCS#Vec2 Vector with x,y components.
+function OPSGROUP:GetVec2(UnitName)
+
+  local vec3=self:GetVec3(UnitName)
+  
+  if vec3 then
+    local vec2={x=vec3.x, y=vec3.z}
+    return vec2
+  end
+
+  return nil
+end
+
+
+--- Get current 3D position vector of the group.
+-- @param #OPSGROUP self
+-- @param #string UnitName (Optional) Get position of a specifc unit of the group. Default is the first existing unit in the group.
+-- @return DCS#Vec3 Vector with x,y,z components.
+function OPSGROUP:GetVec3(UnitName)
+
+  if self:IsExist() then
+
+    local unit=nil --DCS#Unit    
+    if UnitName then
+      unit=Unit.getByName(UnitName)
+    else
+      unit=self:GetDCSUnit()
+    end
+
+    
+    if unit then
+      local vec3=unit:getPoint()      
+      return vec3
+    end
+    
+  end
+  
+  return nil
+end
+
+--- Get current coordinate of the group.
+-- @param #OPSGROUP self
+-- @param #boolean NewObject Create a new coordiante object.
+-- @return Core.Point#COORDINATE The coordinate (of the first unit) of the group.
+function OPSGROUP:GetCoordinate(NewObject)
+
+  local vec3=self:GetVec3()
+
+  if vec3 then
+  
+    self.coordinate=self.coordinate or COORDINATE:New(0,0,0)
+  
+    self.coordinate.x=vec3.x
+    self.coordinate.y=vec3.y
+    self.coordinate.z=vec3.z
+
+    if NewObject then
+      local coord=COORDINATE:NewFromCoordinate(self.coordinate)
+      return coord
+    else
+      return self.coordinate
+    end    
+  else
+    self:E(self.lid.."WARNING: Group is not alive. Cannot get coordinate!")
+  end
+  
+  return nil
+end
+
+--- Get current velocity of the group.
+-- @param #OPSGROUP self
+-- @param #string UnitName (Optional) Get heading of a specific unit of the group. Default is from the first existing unit in the group.
+-- @return #number Velocity in m/s.
+function OPSGROUP:GetVelocity(UnitName)
+
+  if self:IsExist() then
+  
+    local unit=nil --DCS#Unit
+
+    if UnitName then
+      unit=Unit.getByName(UnitName)
+    else
+      unit=self:GetDCSUnit()
+    end
+    
+    if unit then
+    
+      local velvec3=unit:getVelocity()
+      
+      local vel=UTILS.VecNorm(velvec3)
+      
+      return vel
+    end
+    
+  else
+    self:E(self.lid.."WARNING: Group does not exist. Cannot get velocity!")
+  end
+  
+  return nil
+end
+
+--- Get current heading of the group.
+-- @param #OPSGROUP self
+-- @param #string UnitName (Optional) Get heading of a specific unit of the group. Default is from the first existing unit in the group.
+-- @return #number Current heading of the group in degrees.
+function OPSGROUP:GetHeading(UnitName)
+
+  if self:IsExist() then
+  
+    local unit=nil --DCS#Unit    
+    if UnitName then
+      unit=Unit.getByName(UnitName)
+    else
+      unit=self:GetDCSUnit()
+    end
+    
+    if unit then
+      
+      local pos=unit:getPosition()
+      
+      local heading=math.atan2(pos.x.z, pos.x.x)
+      
+      if heading<0 then
+        heading=heading+ 2*math.pi
+      end
+      
+      heading=math.deg(heading)
+      
+      return heading
+    end
+    
+  else
+    self:E(self.lid.."WARNING: Group does not exist. Cannot get heading!")
+  end
+  
+  return nil
+end
+
+--- Get current orientation of the group.
+-- @param #OPSGROUP self
+-- @param #string UnitName (Optional) Get orientation of a specific unit of the group. Default is the first existing unit of the group.
+-- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
+-- @return DCS#Vec3 Orientation Y pointing "upwards".
+-- @return DCS#Vec3 Orientation Z perpendicular to the "nose".
+function OPSGROUP:GetOrientation(UnitName)
+
+  if self:IsExist() then
+  
+    local unit=nil --DCS#Unit
+    
+    if UnitName then
+      unit=Unit.getByName(UnitName)
+    else
+      unit=self:GetDCSUnit()
+    end
+    
+    if unit then
+      
+      local pos=unit:getPosition()
+            
+      return pos.x, pos.y, pos.z
+    end
+    
+  else
+    self:E(self.lid.."WARNING: Group does not exist. Cannot get orientation!")
+  end
+  
+  return nil
+end
+
+--- Get current orientation of the first unit in the group.
+-- @param #OPSGROUP self
+-- @param #string UnitName (Optional) Get orientation of a specific unit of the group. Default is the first existing unit of the group.
+-- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
+function OPSGROUP:GetOrientationX(UnitName)
+
+  local X,Y,Z=self:GetOrientation(UnitName)
+  
+  return X
+end
+
+
+
+--- Check if task description is unique.
+-- @param #OPSGROUP self
+-- @param #string description Task destription
+-- @return #boolean If true, no other task has the same description.
+function OPSGROUP:CheckTaskDescriptionUnique(description)
+
+  -- Loop over tasks in queue
+  for _,_task in pairs(self.taskqueue) do
+    local task=_task --#OPSGROUP.Task
+    if task.description==description then
+      return false
+    end
+  end
+
+  return true
+end
+
+
+--- Despawn a unit of the group. A "Remove Unit" event is generated by default.
+-- @param #OPSGROUP self
+-- @param #string UnitName Name of the unit
 -- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
 -- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
 -- @return #OPSGROUP self
-function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
+function OPSGROUP:DespawnUnit(UnitName, Delay, NoEventRemoveUnit)
 
-  if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, OPSGROUP.Despawn, self, 0, NoEventRemoveUnit)
-  else
+  env.info("FF despawn element .."..tostring(UnitName))
 
-    local DCSGroup=self:GetDCSGroup()
+  local element=self:GetElementByName(UnitName)
+  
+  if element then
+  
+    -- Get DCS unit object.
+    local DCSunit=Unit.getByName(UnitName)
     
-    if DCSGroup then
+    if DCSunit then
     
-      -- Destroy DCS group.
-      DCSGroup:destroy()
+      -- Despawn unit.
+      DCSunit:destroy()
       
+      -- Element goes back in utero.
+      self:ElementInUtero(element)
+           
       if not NoEventRemoveUnit then
-    
-        -- Get all units.
-        local units=self:GetDCSUnits()
-    
-        -- Create a "Remove Unit" event.
-        local EventTime=timer.getTime()       
-        for i=1,#units do
-          self:CreateEventRemoveUnit(EventTime, units[i])
-        end
-        
+        self:CreateEventRemoveUnit(timer.getTime(), DCSunit)
       end
-    end
-  end
-
-  return self
-end
-
---- Destroy group. The whole group is despawned and a *Unit Lost* for aircraft or *Dead* event for ground/naval units is generated for all current units.
--- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before the group will be destroyed. Default immediately.
--- @return #OPSGROUP self
-function OPSGROUP:Destroy(Delay)
-
-  if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, OPSGROUP.Destroy, self)
-  else
-
-    local DCSGroup=self:GetDCSGroup()
-    
-    if DCSGroup then
-    
-      self:T(self.lid.."Destroying group")
-    
-      -- Destroy DCS group.
-      DCSGroup:destroy()  
-    
-      -- Get all units.
-      local units=self:GetDCSUnits()
-    
-      -- Create a "Unit Lost" event.
-      local EventTime=timer.getTime()    
-      for i=1,#units do
-        if self.isAircraft then
-          self:CreateEventUnitLost(EventTime, units[i])
-        else
-          self:CreateEventDead(EventTime, units[i])
-        end
-      end
+      
     end
     
   end
 
-  return self
 end
 
 --- Despawn an element/unit of the group.
@@ -970,177 +1193,98 @@ function OPSGROUP:DespawnElement(Element, Delay, NoEventRemoveUnit)
   return self
 end
 
---- Get current 2D position vector of the group.
+--- Despawn the group. The whole group is despawned and (optionally) a "Remove Unit" event is generated for all current units of the group.
 -- @param #OPSGROUP self
--- @return DCS#Vec2 Vector with x,y components.
-function OPSGROUP:GetVec2()
+-- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
+-- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
+-- @return #OPSGROUP self
+function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
 
-  local vec3=self:GetVec3()
-  
-  if vec3 then
-    local vec2={x=vec3.x, y=vec3.z}
-    return vec2
-  end
-
-  return nil
-end
-
-
---- Get current 3D position vector of the group.
--- @param #OPSGROUP self
--- @return DCS#Vec3 Vector with x,y,z components.
-function OPSGROUP:GetVec3()
-  if self:IsExist() then
-  
-    local unit=self:GetDCSUnit()
-    
-    if unit then
-      local vec3=unit:getPoint()
-      
-      return vec3
-    end
-    
-  end
-  return nil
-end
-
---- Get current coordinate of the group.
--- @param #OPSGROUP self
--- @param #boolean NewObject Create a new coordiante object.
--- @return Core.Point#COORDINATE The coordinate (of the first unit) of the group.
-function OPSGROUP:GetCoordinate(NewObject)
-
-  local vec3=self:GetVec3()
-
-  if vec3 then
-  
-    self.coordinate=self.coordinate or COORDINATE:New(0,0,0)
-  
-    self.coordinate.x=vec3.x
-    self.coordinate.y=vec3.y
-    self.coordinate.z=vec3.z
-
-    if NewObject then
-      local coord=COORDINATE:NewFromCoordinate(self.coordinate)
-      return coord
-    else
-      return self.coordinate
-    end    
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.Despawn, self, 0, NoEventRemoveUnit)
   else
-    self:E(self.lid.."WARNING: Group is not alive. Cannot get coordinate!")
-  end
-  
-  return nil
-end
 
---- Get current velocity of the group.
--- @param #OPSGROUP self
--- @return #number Velocity in m/s.
-function OPSGROUP:GetVelocity()
-  if self:IsExist() then
-  
-    local unit=self:GetDCSUnit(1)
+    local DCSGroup=self:GetDCSGroup()
     
-    if unit then
+    if DCSGroup then
     
-      local velvec3=unit:getVelocity()
-      
-      local vel=UTILS.VecNorm(velvec3)
-      
-      return vel
-    
+      -- Get all units.
+      local units=self:GetDCSUnits()
+         
+      for i=1,#units do
+        local unit=units[i]
+        if unit then
+          local name=unit:getName()
+          if name then
+            self:DespawnUnit(name, 0, NoEventRemoveUnit)
+          end
+        end
+      end
+        
     end
-  else
-    self:E(self.lid.."WARNING: Group does not exist. Cannot get velocity!")
   end
-  return nil
+
+  return self
 end
 
---- Get current heading of the group.
+--- Destroy a unit of the group. A *Unit Lost* for aircraft or *Dead* event for ground/naval units is generated.
 -- @param #OPSGROUP self
--- @return #number Current heading of the group in degrees.
-function OPSGROUP:GetHeading()
+-- @param #string UnitName Name of the unit which should be destroyed.
+-- @param #number Delay Delay in seconds before the group will be destroyed. Default immediately.
+-- @return #OPSGROUP self
+function OPSGROUP:DestroyUnit(UnitName, Delay)
 
-  if self:IsExist() then
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.DestroyUnit, self, UnitName, 0)
+  else
   
-    local unit=self:GetDCSUnit()
+    local unit=Unit.getByName(UnitName)
     
     if unit then
+
+      -- Create a "Unit Lost" event.
+      local EventTime=timer.getTime()    
       
-      local pos=unit:getPosition()
-      
-      local heading=math.atan2(pos.x.z, pos.x.x)
-      
-      if heading<0 then
-        heading=heading+ 2*math.pi
+      if self.isAircraft then
+        self:CreateEventUnitLost(EventTime, unit)
+      else
+        self:CreateEventDead(EventTime, unit)
       end
       
-      heading=math.deg(heading)
-      
-      return heading
     end
-    
+  
+  end
+  
+end
+
+--- Destroy group. The whole group is despawned and a *Unit Lost* for aircraft or *Dead* event for ground/naval units is generated for all current units.
+-- @param #OPSGROUP self
+-- @param #number Delay Delay in seconds before the group will be destroyed. Default immediately.
+-- @return #OPSGROUP self
+function OPSGROUP:Destroy(Delay)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.Destroy, self, 0)
   else
-    self:E(self.lid.."WARNING: Group does not exist. Cannot get heading!")
-  end
-  
-  return nil
-end
 
---- Get current orientation of the first unit in the group.
--- @param #OPSGROUP self
--- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
--- @return DCS#Vec3 Orientation Y pointing "upwards".
--- @return DCS#Vec3 Orientation Z perpendicular to the "nose".
-function OPSGROUP:GetOrientation()
-
-  if self:IsExist() then
-  
-    local unit=self:GetDCSUnit()
+    -- Get all units.
+    local units=self:GetDCSUnits()
     
-    if unit then
+    if units then
+  
+      -- Create a "Unit Lost" event.    
+      for _,unit in pairs(units) do
+        if unit then
+          self:DestroyUnit(unit:getName())
+        end
+      end
       
-      local pos=unit:getPosition()
-            
-      return pos.x, pos.y, pos.z
     end
-    
-  else
-    self:E(self.lid.."WARNING: Group does not exist. Cannot get orientation!")
-  end
-  
-  return nil
-end
-
---- Get current orientation of the first unit in the group.
--- @param #OPSGROUP self
--- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
-function OPSGROUP:GetOrientationX()
-
-  local X,Y,Z=self:GetOrientation()
-  
-  return X
-end
-
-
-
---- Check if task description is unique.
--- @param #OPSGROUP self
--- @param #string description Task destription
--- @return #boolean If true, no other task has the same description.
-function OPSGROUP:CheckTaskDescriptionUnique(description)
-
-  -- Loop over tasks in queue
-  for _,_task in pairs(self.taskqueue) do
-    local task=_task --#OPSGROUP.Task
-    if task.description==description then
-      return false
-    end
+          
   end
 
-  return true
+  return self
 end
-
 
 --- Activate a *late activated* group.
 -- @param #OPSGROUP self
@@ -1165,6 +1309,31 @@ function OPSGROUP:Activate(delay)
       self:E(self.lid.."ERROR: Activating group that is does not exist!")
     end
     
+  end
+
+  return self
+end
+
+--- Deactivate the group. Group will be respawned in late activated state.
+-- @param #OPSGROUP self
+-- @param #number delay (Optional) Delay in seconds before the group is deactivated. Default is immediately.
+-- @return #OPSGROUP self
+function OPSGROUP:Deactivate(delay)
+
+  if delay and delay>0 then
+    self:ScheduleOnce(delay, OPSGROUP.Deactivate, self)  
+  else
+  
+    if self:IsAlive()==true then
+      
+      self.template.lateActivation=true
+      
+      local template=UTILS.DeepCopy(self.template)
+      
+      self:_Respawn(0, template)
+      
+    end
+      
   end
 
   return self
@@ -1742,6 +1911,150 @@ function OPSGROUP:RemoveWaypoint(wpindex)
   return self
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- DCS Events
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Event function handling the birth of a unit.
+-- @param #OPSGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function OPSGROUP:OnEventBirth(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+    
+    if self.respawning then
+    
+      self:I(self.lid.."Respawning unit "..tostring(unitname))
+    
+      local function reset()
+        self.respawning=nil
+        self:_CheckGroupDone()
+      end
+      
+      -- Reset switch in 1 sec. This should allow all birth events of n>1 groups to have passed.
+      -- TODO: Can I do this more rigorously?
+      self:ScheduleOnce(1, reset)
+    
+    else
+
+      -- Set homebase if not already set.
+      if self.isFlightgroup then
+        if EventData.Place then
+          self.homebase=self.homebase or EventData.Place
+        end
+        
+        if self.homebase and not self.destbase then
+          self.destbase=self.homebase
+        end
+        self:T(self.lid..string.format("EVENT: Element %s born at airbase %s==> spawned", unitname, self.homebase and self.homebase:GetName() or "unknown"))
+      else
+      self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", unitname))          
+      end
+          
+      -- Get element.
+      local element=self:GetElementByName(unitname)
+
+      -- Set element to spawned state.        
+      self:ElementSpawned(element)
+      
+    end    
+    
+  end
+
+end
+
+--- Event function handling the crash of a unit.
+-- @param #OPSGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function OPSGROUP:OnEventDead(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    self:T(self.lid..string.format("EVENT: Unit %s dead!", EventData.IniUnitName))
+    
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+
+    -- Get element.
+    local element=self:GetElementByName(unitname)
+
+    if element then
+      self:T(self.lid..string.format("EVENT: Element %s dead ==> destroyed", element.name))
+      self:ElementDestroyed(element)
+    end
+    
+  end
+
+end
+
+--- Event function handling when a unit is removed from the game.
+-- @param #OPSGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function OPSGROUP:OnEventRemoveUnit(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+
+    -- Get element.
+    local element=self:GetElementByName(unitname)
+
+    if element then
+      self:T(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
+      self:ElementDead(element)
+    end
+
+  end
+
+end
+
+--- Event function handling the event that a unit achieved a kill.
+-- @param #OPSGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function OPSGROUP:OnEventKill(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+  
+    -- Target name
+    local targetname=tostring(EventData.TgtUnitName)
+  
+    -- Debug info.
+    self:T2(self.lid..string.format("EVENT: Unit %s killed object %s!", tostring(EventData.IniUnitName), targetname))
+    
+    -- Check if this was a UNIT or STATIC object.
+    local target=UNIT:FindByName(targetname)    
+    if not target then
+      target=STATIC:FindByName(targetname, false)
+    end
+
+    -- Only count UNITS and STATICs (not SCENERY)
+    if target then
+
+      -- Debug info.
+      self:T(self.lid..string.format("EVENT: Unit %s killed unit/static %s!", tostring(EventData.IniUnitName), targetname))
+
+      -- Kill counter.
+      self.Nkills=self.Nkills+1
+      
+      -- Check if on a mission.
+      local mission=self:GetMissionCurrent()
+      if mission then
+        mission.Nkills=mission.Nkills+1 -- Increase mission kill counter.
+      end
+      
+    end
+    
+  end
+
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Task Functions
@@ -3748,6 +4061,19 @@ function OPSGROUP:_UpdateLaser()
   
 end
 
+--- On after "ElementInUtero" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Element Element The flight group element.
+function OPSGROUP:onafterElementInUtero(From, Event, To, Element)
+  self:I(self.lid..string.format("Element in utero %s", Element.name))
+  
+  -- Set element status.
+  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.INUTERO)
+  
+end
 
 --- On after "ElementDestroyed" event.
 -- @param #OPSGROUP self
@@ -3827,7 +4153,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #table Template The template used to respawn the group.
+-- @param #table Template The template used to respawn the group. Default is the inital template of the group.
 function OPSGROUP:onafterRespawn(From, Event, To, Template)
 
   self:I(self.lid.."Respawning group!")
@@ -3836,77 +4162,112 @@ function OPSGROUP:onafterRespawn(From, Event, To, Template)
   
   template.lateActivation=false
   
-  self:_Respawn(template,Reset)
+  --self.respawning=true
+  
+  self:_Respawn(0, template, Reset)
   
 end
 
 --- Respawn the group.
 -- @param #OPSGROUP self
+-- @param #number Delay Delay in seconds before respawn happens. Default 0.
 -- @param #table Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
 -- @param #boolean Reset Reset positions if TRUE.
 -- @return #OPSGROUP self
-function OPSGROUP:_Respawn(Template, Reset)
+function OPSGROUP:_Respawn(Delay, Template, Reset)
 
-  env.info("FF _Respawn")
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP._Respawn, self, 0, Template, Reset)
+  else
 
-  -- Given template or get old.
-  Template=Template or UTILS.DeepCopy(self.template)
+    env.info("FF _Respawn")
   
-  -- Get correct heading.
-  local function _Heading(course)
-    local h
-    if course<=180 then
-      h=math.rad(course)
+    -- Given template or get old.
+    Template=Template or UTILS.DeepCopy(self.template)
+    
+    -- Get correct heading.
+    local function _Heading(course)
+      local h
+      if course<=180 then
+        h=math.rad(course)
+      else
+        h=-math.rad(360-course)
+      end
+      return h 
+    end        
+  
+    if self:IsAlive() then
+    
+      ---
+      -- Group is ALIVE
+      ---
+      
+      -- Get units.
+      local units=self.group:GetUnits()
+    
+      -- Loop over template units.
+      for UnitID, Unit in pairs(Template.units) do
+      
+        for _,_unit in pairs(units) do
+          local unit=_unit --Wrapper.Unit#UNIT
+          
+          if unit:GetName()==Unit.name then
+            local vec3=unit:GetVec3()
+            local heading=unit:GetHeading()
+            Unit.x=vec3.x
+            Unit.y=vec3.z
+            Unit.alt=vec3.y
+            Unit.heading=math.rad(heading)
+            Unit.psi=-Unit.heading
+          end
+        end
+      
+      end
+      
+      -- Despawn old group. Dont trigger any remove unit event since this is a respawn.
+      self:Despawn(0, true)
+      
     else
-      h=-math.rad(360-course)
-    end
-    return h 
-  end        
 
-  if self:IsAlive() then
-  
-    ---
-    -- Group is ALIVE
-    
-    -- Get units.
-    local units=self.group:GetUnits()
-  
-    -- Loop over template units.
-    for UnitID, Unit in pairs(Template.units) do
-    
-      for _,_unit in pairs(units) do
-        local unit=_unit --Wrapper.Unit#UNIT
-        
-        if unit:GetName()==Unit.name then
-          local vec3=unit:GetVec3()
-          local heading=unit:GetHeading()
+      ---
+      -- Group is DESPAWNED
+      ---
+
+      --[[
+
+      -- Loop over template units.
+      for UnitID, Unit in pairs(Template.units) do
+
+        local element=self:GetElementByName(Unit.name)      
+          
+        if element then
+          local vec3=element.vec3
+          local heading=element.heading
           Unit.x=vec3.x
           Unit.y=vec3.z
           Unit.alt=vec3.y
           Unit.heading=math.rad(heading)
           Unit.psi=-Unit.heading
         end
+        
       end
-    
+      
+      ]]     
+  
     end
     
-    -- Despawn old group. Dont trigger any remove unit event since this is a respawn.
-    self:Despawn(0, true)
+    -- Currently respawning.
+    --self.respawning=true
     
-  else
-
+    self:I({Template=Template})
+  
+    -- Spawn new group.
+    _DATABASE:Spawn(Template)
+    
+    -- Reset events.
+    --self:ResetEvents()
+    
   end
-  
-  -- Currently respawning.
-  self.respawning=true
-  
-  self:I({Template=Template})
-
-  -- Spawn new group.
-  _DATABASE:Spawn(Template)
-  
-  -- Reset events.
-  --self:ResetEvents()
   
   return self
 end
@@ -3972,6 +4333,140 @@ function OPSGROUP:onafterStop(From, Event, To)
 
   -- Debug output.
   self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Cargo Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "Load" event. Carrier loads a cargo group into ints cargo bay.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP CargoGroup The OPSGROUP loaded as cargo.
+function OPSGROUP:onafterLoad(From, Event, To, CargoGroup)
+
+  env.info("FF load")
+
+  local weight=500
+
+  local carrier=nil --#OPSGROUP.Element
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    
+    local cargobay=element.weightMaxCargo-element.weightCargo
+    
+    if cargobay>=weight then
+      carrier=element
+      break
+    end
+    
+  end
+
+  if carrier then
+  
+    -- TODO: add function to set/add/get internal cargo.
+    carrier.weightCargo=carrier.weightCargo+weight
+    
+    -- This function is only really used for aircraft and sets the total internal cargo weight.
+    trigger.action.setUnitInternalCargo(carrier.name, carrier.weightCargo)  --https://wiki.hoggitworld.com/view/DCS_func_setUnitInternalCargo
+    
+    -- Embark ==> Loaded
+    CargoGroup:Embark(carrier)
+    
+  else
+    self:E(self.lid.."Cound not find a carrier with enough cargo capacity!")
+  end
+
+end
+
+--- On after "Unload" event. Carrier unloads a cargo group from its cargo bay.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP CargoGroup The OPSGROUP loaded as cargo.
+-- @param Core.Point#COORDINATE Coordinate Coordinate were the group is unloaded to.
+-- @param #number Heading Heading of group.
+function OPSGROUP:onafterUnload(From, Event, To, CargoGroup, Coordinate, Heading)
+
+  --TODO: Add check if CargoGroup is 
+  if CargoGroup:IsInUtero() then
+    CargoGroup:Unboard(Coordinate, Heading)
+  end
+
+end
+
+--- On after "Stop" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Element Carrier The OPSGROUP element
+function OPSGROUP:onafterEmbark(From, Event, To, Carrier)
+
+  env.info("FF embark")
+
+  -- Despawn this group.
+  self:Despawn(0, true)
+
+  self.carrier=Carrier
+
+end
+
+--- On after "Unboard" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Coordinate Coordinate were the group is unloaded to. Can also be a DCS#Vec3 object.
+-- @param #number Heading Heading the group has in degrees. Default is last known heading of the group.
+function OPSGROUP:onafterUnboard(From, Event, To, Coordinate, Heading)
+
+  env.info("FF Unboard")
+
+  -- Template for the respawned group.
+  local Template=UTILS.DeepCopy(self.template)
+
+  -- Loop over template units.
+  for _,Unit in pairs(Template.units) do
+
+    local element=self:GetElementByName(Unit.name)      
+      
+    if element then
+    
+      local vec3=element.vec3
+            
+      -- Relative pos vector.
+      local rvec2={x=Unit.x-Template.x, y=Unit.y-Template.y} --DCS#Vec2
+      
+      local cvec2={x=Coordinate.x, y=Coordinate.z} --DCS#Vec2
+      
+      -- Position.
+      Unit.x=cvec2.x+rvec2.x
+      Unit.y=cvec2.y+rvec2.y
+      Unit.alt=land.getHeight({x=Unit.x, y=Unit.y})
+      
+      -- Heading.
+      Unit.heading=Heading and math.rad(Heading) or Unit.heading
+      Unit.psi=-Unit.heading
+      
+    end
+    
+  end
+  
+  -- Reduce carrier weight.
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    self.carrier.weightCargo=self.carrier.weightCargo-element.weight
+  end
+  -- This function is only really used for aircraft and sets the total internal cargo weight.
+  trigger.action.setUnitInternalCargo(self.carrier.name, self.carrier.weightCargo)  --https://wiki.hoggitworld.com/view/DCS_func_setUnitInternalCargo  
+  
+  -- Respawn group.
+  self:_Respawn(0, Template)
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5429,7 +5924,7 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:_UpdatePosition()
 
-  if self:IsAlive() then
+  if self:IsAlive()~=nil then
     
     -- Backup last state to monitor differences.
     self.positionLast=self.position or self:GetVec3()
@@ -5443,6 +5938,11 @@ function OPSGROUP:_UpdatePosition()
     self.orientX=self:GetOrientationX()
     self.velocity=self:GetVelocity()
     
+    for _,_element in pairs(self.elements) do
+      local element=_element --#OPSGROUP.Element
+      element.vec3=self:GetVec3(element.name)
+    end
+    
     -- Update time.
     local Tnow=timer.getTime()
     self.dTpositionUpdate=self.TpositionUpdate and Tnow-self.TpositionUpdate or 0
@@ -5451,11 +5951,11 @@ function OPSGROUP:_UpdatePosition()
     if not self.traveldist then
       self.traveldist=0
     end
-    
+
+    -- Travel distance since last check.    
     self.travelds=UTILS.VecNorm(UTILS.VecSubstract(self.position, self.positionLast))
     
-    -- Add up travelled distance.
-    
+    -- Add up travelled distance.    
     self.traveldist=self.traveldist+self.travelds
     
     -- Debug info.
@@ -5632,7 +6132,16 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     self:T3(self.lid..string.format("Element %s: %s", Element.name, Element.status))
   end
 
-  if newstatus==OPSGROUP.ElementStatus.SPAWNED then
+  if newstatus==OPSGROUP.ElementStatus.INUTERO then
+    ---
+    -- INUTERO
+    ---
+
+    if self:_AllSimilarStatus(newstatus) then
+      self:__InUtero(-0.5)
+    end
+
+  elseif newstatus==OPSGROUP.ElementStatus.SPAWNED then
     ---
     -- SPAWNED
     ---
@@ -6044,6 +6553,102 @@ function OPSGROUP:_CoordinateFromObject(Object)
       self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE or ZONE!")
     end
   end  
+
+  return nil
+end
+
+--- Add a unit/element to the OPS group.
+-- @param #OPSGROUP self
+-- @param #string unitname Name of unit.
+-- @return #OPSGROUP.Element The element or nil.
+function OPSGROUP:_AddElementByName(unitname)
+
+  local unit=UNIT:FindByName(unitname)
+
+  if unit then
+  
+    -- TODO: this is wrong when grouping is used!
+    local unittemplate=unit:GetTemplate()
+  
+
+    local element={} --#OPSGROUP.Element
+
+    -- Name and status.
+    element.name=unitname
+    element.status=OPSGROUP.ElementStatus.INUTERO    
+    
+    -- Unit and group.
+    element.unit=unit
+    element.DCSunit=Unit.getByName(unitname)
+    element.group=unit:GetGroup()
+    
+    -- Skill etc.
+    element.skill=unittemplate.skill or "Unknown"    
+    if element.skill=="Client" or element.skill=="Player" then
+      element.ai=false
+      element.client=CLIENT:FindByName(unitname)
+    else
+      element.ai=true
+    end
+
+    -- Descriptors and type/category.
+    element.descriptors=unit:GetDesc()
+    self:I({desc=element.descriptors})
+    
+    element.category=unit:GetUnitCategory()
+    element.categoryname=unit:GetCategoryName()
+    element.typename=unit:GetTypeName()
+    
+    -- Ammo.
+    element.ammo0=self:GetAmmoUnit(unit, false)
+    
+    -- Life points.
+    element.life=unit:GetLife()
+    element.life0=math.max(unit:GetLife0(), element.life) -- Some units report a life0 that is smaller than its initial life points.
+    
+    -- Size and dimensions.
+    element.size, element.length, element.height, element.width=unit:GetObjectSize()
+    
+    -- Weight and cargo.
+    element.weightEmpty=element.descriptors.massEmpty or 666
+    element.weightMaxTotal=element.descriptors.massMax or element.weightEmpty+10*95 --If max mass is not given, we assume 10 soldiers.
+    element.weightMaxCargo=math.max(element.weightMaxTotal-element.weightEmpty, 0)
+    element.weightCargo=0        
+    element.weight=element.weightEmpty+element.weightCargo
+    
+        
+    -- FLIGHTGROUP specific.
+    if self.isFlightgroup then
+      element.callsign=element.unit:GetCallsign()     
+      element.modex=unittemplate.onboard_num
+      element.payload=unittemplate.payload
+      element.pylons=unittemplate.payload and unittemplate.payload.pylons or nil
+      element.fuelmass0=unittemplate.payload and unittemplate.payload.fuel or 0
+      element.fuelmass=element.fuelmass0
+      element.fuelrel=element.unit:GetFuel()
+    end
+
+    -- Debug text.
+    local text=string.format("Adding element %s: status=%s, skill=%s, life=%.1f/%.1f category=%s (%d), type=%s, size=%.1f (L=%.1f H=%.1f W=%.1f), weight=%.1f/%.1f (cargo=%.1f/%.1f)",
+    element.name, element.status, element.skill, element.life, element.life0, element.categoryname, element.category, element.typename, 
+    element.size, element.length, element.height, element.width, element.weight, element.weightMaxTotal, element.weightCargo, element.weightMaxCargo)
+    self:I(self.lid..text)
+
+    -- Debug text.
+    --local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f (%d), category=%d, categoryname=%s, callsign=%s, ai=%s",
+    --element.name, element.status, element.skill, element.modex, element.fuelmass, element.fuelrel*100, element.category, element.categoryname, element.callsign, tostring(element.ai))
+    --self:T(self.lid..text)
+
+    -- Add element to table.
+    table.insert(self.elements, element)
+
+    -- Trigger spawned event if alive.
+    if unit:IsAlive() then
+      self:ElementSpawned(element)
+    end
+
+    return element
+  end
 
   return nil
 end
