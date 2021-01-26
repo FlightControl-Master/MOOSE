@@ -1,4 +1,4 @@
-                                                                                            --- **Functional** -- Modular, Automatic and Network capable Targeting and Interception System for Air Defenses
+--- **Functional** -- Modular, Automatic and Network capable Targeting and Interception System for Air Defenses
 -- 
 -- ===
 -- 
@@ -37,7 +37,7 @@
 -- @field #table SAM_Table Table of SAM sites
 -- @field #string lid Prefix for logging
 -- @field @{#Functional.Detection#DETECTION_AREAS} Detection The #DETECTION_AREAS object for EWR
--- @field @{Functional.Detection#DETECTION_AREAS} AWACS_Detection The #DETECTION_AREAS object for AWACS
+-- @field @{#Functional.Detection#DETECTION_AREAS} AWACS_Detection The #DETECTION_AREAS object for AWACS
 -- @field #boolean debug Switch on extra messages
 -- @field #boolean verbose Switch on extra logging
 -- @field #number checkradius Radius of the SAM sites
@@ -96,7 +96,7 @@
 -- 
 -- # 2. Start up your MANTIS with a basic setting
 -- 
---    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`
+--    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`  
 --    `myredmantis:Start()`
 --    
 -- [optional] Use  
@@ -111,7 +111,7 @@
 -- 
 -- If you want to use a separate AWACS unit (default detection range: 250km) to support your EWR system, use e.g. the following setup:
 -- 
---    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`
+--    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`  
 --    `mybluemantis:Start()`
 --
 -- # 3. Default settings
@@ -181,6 +181,26 @@ do
   --@param #boolean dynamic Use constant (true) filtering or just filter once (false, default) (optional)
   --@param #string awacs Group name of your Awacs (optional)
   --@return #MANTIS self
+  --@usage Start up your MANTIS with a basic setting
+  --
+  --    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`  
+  --    `myredmantis:Start()`
+  --    
+  -- [optional] Use  
+  -- 
+  --  * `MANTIS:SetEWRGrouping(radius)`  
+  --  * `MANTIS:SetEWRRange(radius)`  
+  --  * `MANTIS:SetSAMRadius(radius)`  
+  --  * `MANTIS:SetDetectInterval(interval)`
+  --  * `MANTIS:SetAutoRelocate(hq, ewr)`
+  --        
+  -- before starting #MANTIS to fine-tune your setup.
+  -- 
+  -- If you want to use a separate AWACS unit (default detection range: 250km) to support your EWR system, use e.g. the following setup:
+  -- 
+  --    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`  
+  --    `mybluemantis:Start()`
+  --    
   function MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic,awacs)
     
     -- DONE: Create some user functions for these
@@ -307,7 +327,7 @@ do
     self.engagerange = range
   end
   
-    --- Function to set a new SAM firing engage range, use this method to adjust range while running MANTIS, e.g. for different setups day and night
+  --- Function to set a new SAM firing engage range, use this method to adjust range while running MANTIS, e.g. for different setups day and night
   -- @param #MANTIS self
   -- @param #number range Percent of the max fire range
   function MANTIS:SetNewSAMRangeWhileRunning(range)
@@ -535,7 +555,7 @@ do
     end
   end
      
-  --- Function to check if any object is in the given SAM zone
+  --- (Internal) Function to check if any object is in the given SAM zone
   -- @param #MANTIS self
   -- @param #table dectset Table of coordinates of detected items
   -- @param samcoordinate Core.Point#COORDINATE Coordinate object.
@@ -562,7 +582,7 @@ do
     return false
   end
 
-  --- Function to start the detection via EWR groups
+  --- (Internal) Function to start the detection via EWR groups
   -- @param #MANTIS self
   -- @return Functional.Detection #DETECTION_AREAS The running detection set
   function MANTIS:StartDetection()
@@ -593,7 +613,7 @@ do
     return _MANTISdetection
   end
   
-    --- Function to start the detection via AWACS if defined as separate
+ --- (Internal) Function to start the detection via AWACS if defined as separate
   -- @param #MANTIS self
   -- @return Functional.Detection #DETECTION_AREAS The running detection set
   function MANTIS:StartAwacsDetection()
@@ -625,7 +645,7 @@ do
     return _MANTISAwacs
   end
   
-  --- Function to set the SAM start state
+  --- (Internal) Function to set the SAM start state
   -- @param #MANTIS self
   -- @return #MANTIS self
   function MANTIS:SetSAMStartState()
