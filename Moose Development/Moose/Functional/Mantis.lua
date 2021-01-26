@@ -1,4 +1,4 @@
-                                                                                            --- **Functional** -- Modular, Automatic and Network capable Targeting and Interception System for Air Defenses
+--- **Functional** -- Modular, Automatic and Network capable Targeting and Interception System for Air Defenses
 -- 
 -- ===
 -- 
@@ -96,7 +96,7 @@
 -- 
 -- # 2. Start up your MANTIS with a basic setting
 -- 
---    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`
+--    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`  
 --    `myredmantis:Start()`
 --    
 -- [optional] Use  
@@ -111,7 +111,7 @@
 -- 
 -- If you want to use a separate AWACS unit (default detection range: 250km) to support your EWR system, use e.g. the following setup:
 -- 
---    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`
+--    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`  
 --    `mybluemantis:Start()`
 --
 -- # 3. Default settings
