@@ -221,10 +221,10 @@ FLIGHTGROUP.version="0.6.1"
 function FLIGHTGROUP:New(group)
 
   -- First check if we already have a flight group for this group.
-  local fg=_DATABASE:GetFlightGroup(group)
-  if fg then
-    fg:I(fg.lid..string.format("WARNING: Flight group already exists in data base!"))
-    return fg
+  local og=_DATABASE:GetOpsGroup(group)
+  if og then
+    og:I(og.lid..string.format("WARNING: OPS group already exists in data base!"))
+    return og
   end
 
   -- Inherit everything from FSM class.
@@ -303,9 +303,6 @@ function FLIGHTGROUP:New(group)
   -- @param #number delay Delay in seconds.
 
   -- TODO: Add pseudo functions.
-
-  -- Add to data base.
-  _DATABASE:AddFlightGroup(self)
 
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,          self.OnEventBirth)
@@ -2143,7 +2140,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   wp[#wp+1]=p0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskHold, TaskKlar}, "Holding Point")
 
   -- Approach point: 10 NN in direction of runway.
-  if airbase:GetAirbaseCategory()==Airbase.Category.AIRDROME then
+  if airbase:IsAirdrome() then
 
     ---
     -- Airdrome
@@ -2156,7 +2153,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
     local pland=airbase:GetCoordinate():Translate(x2, runway.heading-180):SetAltitude(h2)
     wp[#wp+1]=pland:WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing")
 
-  elseif airbase:GetAirbaseCategory()==Airbase.Category.SHIP then
+  elseif airbase:IsShip() then
 
     ---
     -- Ship
@@ -2169,33 +2166,12 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
 
   if self.isAI then
 
-    local routeto=false
-    if fc or world.event.S_EVENT_KILL then
-      routeto=true
-    end
-
     -- Clear all tasks.
     -- Warning, looks like this can make DCS CRASH! Had this after calling RTB once passed the final waypoint.
     --self:ClearTasks()
-
-    -- Respawn?
-    if routeto then
     
-       -- Just route the group. Respawn might happen when going from holding to final.
-      self:Route(wp, 1)
-
-    else
-    
-      -- Get group template.
-      local Template=self.group:GetTemplate()
-
-      -- Set route points.
-      Template.route.points=wp
-
-      --Respawn the group with new waypoints.
-      self:Respawn(Template)
-
-    end
+     -- Just route the group. Respawn might happen when going from holding to final.
+    self:Route(wp, 1)
 
   end
 

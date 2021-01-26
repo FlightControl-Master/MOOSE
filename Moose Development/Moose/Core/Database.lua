@@ -1420,19 +1420,18 @@ function DATABASE:SetPlayerSettings( PlayerName, Settings )
   self.PLAYERSETTINGS[PlayerName] = Settings
 end
 
---- Add a flight group to the data base.
+--- Add an OPS group (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) to the data base.
 -- @param #DATABASE self
--- @param Ops.FlightGroup#FLIGHTGROUP flightgroup
-function DATABASE:AddFlightGroup(flightgroup)
-  self:T({NewFlightGroup=flightgroup.groupname})
-  self.FLIGHTGROUPS[flightgroup.groupname]=flightgroup
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group added to the DB.
+function DATABASE:AddOpsGroup(opsgroup)
+  self.FLIGHTGROUPS[opsgroup.groupname]=opsgroup
 end
 
---- Get a flight group from the data base.
+--- Get an OPS group (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) from the data base.
 -- @param #DATABASE self
--- @param #string groupname Group name of the flight group. Can also be passed as GROUP object.
--- @return Ops.FlightGroup#FLIGHTGROUP Flight group object.
-function DATABASE:GetFlightGroup(groupname)
+-- @param #string groupname Group name of the group. Can also be passed as GROUP object.
+-- @return Ops.OpsGroup#OPSGROUP OPS group object.
+function DATABASE:GetOpsGroup(groupname)
 
   -- Get group and group name.
   if type(groupname)=="string" then

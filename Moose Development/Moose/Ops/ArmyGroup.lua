@@ -91,12 +91,19 @@ ARMYGROUP.version="0.4.0"
 
 --- Create a new ARMYGROUP class object.
 -- @param #ARMYGROUP self
--- @param Wrapper.Group#GROUP Group The group object. Can also be given by its group name as `#string`.
+-- @param Wrapper.Group#GROUP group The GROUP object. Can also be given by its group name as `#string`.
 -- @return #ARMYGROUP self
-function ARMYGROUP:New(Group)
+function ARMYGROUP:New(group)
+
+  -- First check if we already have an OPS group for this group.
+  local og=_DATABASE:GetOpsGroup(group)
+  if og then
+    og:I(og.lid..string.format("WARNING: OPS group already exists in data base!"))
+    return og
+  end
 
   -- Inherit everything from FSM class.
-  local self=BASE:Inherit(self, OPSGROUP:New(Group)) -- #ARMYGROUP
+  local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #ARMYGROUP
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("ARMYGROUP %s | ", self.groupname)
@@ -258,6 +265,26 @@ end
 function ARMYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clock, Prio)
 
   local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack)
+
+  local task=self:AddTask(DCStask, Clock, nil, Prio)
+
+  return task
+end
+
+--- Add a *scheduled* task to transport group(s).
+-- @param #ARMYGROUP self
+-- @param Core.Set#SET_GROUP GroupSet Set of cargo groups. Can also be a singe @{Wrapper.Group#GROUP} object.
+-- @param Core.Zone#ZONE PickupZone Zone where the cargo is picked up.
+-- @param Core.Zone#ZONE DeployZone Zone where the cargo is delivered to.
+-- @param #string Clock Time when to start the attack.
+-- @param #number Prio Priority of the task.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+function ARMYGROUP:AddTaskCargoGroup(GroupSet, PickupZone, DeployZone, Clock, Prio)
+
+  local DCStask={}
+  DCStask.id="CargoTransport"
+  DCStask.params={}
+  DCStask.params.cargoqueu=1
 
   local task=self:AddTask(DCStask, Clock, nil, Prio)
 

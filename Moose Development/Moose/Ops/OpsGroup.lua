@@ -97,6 +97,8 @@
 -- 
 -- @field #OPSGROUP.Element carrier Carrier the group is loaded into as cargo.
 -- @field #table cargo Table containing all cargo of the carrier.
+-- @field #table cargoqueue Table containing cargo groups to be transported.
+-- @field #OPSGROUP.CargoTransport cargoTransport Current cargo transport assignment.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -153,6 +155,7 @@ OPSGROUP = {
   Nkills             =     0,
   weaponData         =    {},
   cargo              =    {},
+  cargoqueue         =    {},
 }
 
 
@@ -355,12 +358,21 @@ OPSGROUP.TaskType={
 -- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
 -- @field #string formation Ground formation. Similar to action but on/off road.
 
---- Cargo data.
+--- Cargo status.
 -- @type OPSGROUP.CargoStatus
+-- @field #string Waiting
 -- @field #string Reserved
 -- @field #string Loaded
+-- @field #string Delivered
 
---- Cargo data.
+--- Cargo transport data.
+-- @type OPSGROUP.CargoTransport
+-- @field #table cargos Cargos. Each element is a #OPSGROUP.Cargo
+-- @field #string status Status of the cargo group.
+-- @field Core.Zone#ZONE pickupzone Zone where the cargo is picked up.
+-- @field Core.Zone#ZONE deployzone Zone where the cargo is dropped off.
+
+--- Cargo group data.
 -- @type OPSGROUP.Cargo
 -- @field #OPSGROUP opsgroup The cargo opsgroup.
 -- @field #OPSGROUP.CargoStatus status Status of the cargo group.
@@ -386,20 +398,20 @@ OPSGROUP.version="0.7.1"
 
 --- Create a new OPSGROUP class object.
 -- @param #OPSGROUP self
--- @param Wrapper.Group#GROUP Group The group object. Can also be given by its group name as `#string`.
+-- @param Wrapper.Group#GROUP group The GROUP object. Can also be given by its group name as `#string`.
 -- @return #OPSGROUP self
-function OPSGROUP:New(Group)
+function OPSGROUP:New(group)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #OPSGROUP
   
   -- Get group and group name.
-  if type(Group)=="string" then
-    self.groupname=Group
+  if type(group)=="string" then
+    self.groupname=group
     self.group=GROUP:FindByName(self.groupname)
   else
-    self.group=Group
-    self.groupname=Group:GetName()
+    self.group=group
+    self.groupname=group:GetName()
   end
       
   -- Set some string id for output to DCS.log file.
@@ -504,12 +516,13 @@ function OPSGROUP:New(Group)
   self:AddTransition("InUtero",       "Unboard",          "*")           -- Group was unloaded from a cargo carrier.
   
   self:AddTransition("*",             "Pickup",           "Pickingup")   -- Carrier and is on route to pick up cargo.
-  self:AddTransition("Pickingup",     "Loading",          "Loading")     -- Carrier is loading cargo.
+  self:AddTransition("*",             "Loading",          "Loading")     -- Carrier is loading cargo.
   self:AddTransition("Loading",       "Load",             "Loading")     -- Carrier loads cargo into carrier.
+  self:AddTransition("Loading",       "Loaded",           "Loaded")      -- Carrier loads cargo into carrier.
     
   self:AddTransition("Loading",       "Pickup",           "Pickingup")   -- Carrier is picking up another cargo.
   
-  self:AddTransition("Loading",       "Transport",        "Transporting")-- Carrier is transporting cargo.
+  self:AddTransition("Loading",       "Transport",        "*")           -- Carrier is transporting cargo.
   
   self:AddTransition("Transporting",  "Dropoff",          "Droppingoff") -- Carrier is dropping off cargo.
   self:AddTransition("Droppingoff",   "Dropoff",          "Droppingoff") -- Carrier is dropping off cargo.
@@ -537,6 +550,10 @@ function OPSGROUP:New(Group)
   -- @param #number delay Delay in seconds.
 
   -- TODO: Add pseudo functions.
+
+
+  -- Add to data base.
+  _DATABASE:AddOpsGroup(self)
 
   return self  
 end
@@ -4339,6 +4356,189 @@ end
 -- Cargo Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Create a
+-- @param #OPSGROUP self
+-- @param Core.Set#SET_GROUP GroupSet Set of groups to be transported. Can also be a single @{Wrapper.Group#GROUP} object.
+-- @param Core.Zone#ZONE Pickupzone Pickup zone.
+-- @param Core.Zone#ZONE Deployzone Deploy zone.
+-- @return #OPSGROUP.CargoTransport Cargo transport.
+function OPSGROUP:CreateCargoTransport(GroupSet, Pickupzone, Deployzone)
+
+  local transport={} --#OPSGROUP.CargoTransport
+  
+  transport.pickupzone=Pickupzone
+  transport.deployzone=Deployzone
+  transport.id=1
+  transport.status="Planning"
+  
+  transport.cargos={}
+  if GroupSet:IsInstanceOf("GROUP") or GroupSet:IsInstanceOf("OPSGROUP") then
+    local cargo=self:CreateCargoGroupData(GroupSet, Pickupzone, Deployzone)
+    env.info("FF adding cargo group "..cargo.opsgroup:GetName())
+    table.insert(transport.cargos, cargo)    
+  else
+    for _,group in pairs(GroupSet.Set) do
+      local cargo=self:CreateCargoGroupData(GroupSet, Pickupzone, Deployzone)
+      table.insert(transport.cargos, cargo)            
+    end
+  end
+  
+  return transport
+end
+
+--- Create a
+-- @param #OPSGROUP self
+-- @param Wrapper.Group#GROUP group The GROUP object.
+-- @param Core.Zone#ZONE Pickupzone Pickup zone.
+-- @param Core.Zone#ZONE Deployzone Deploy zone.
+-- @return #OPSGROUP.Cargo Cargo data.
+function OPSGROUP:CreateCargoGroupData(group, Pickupzone, Deployzone)
+
+  local opsgroup=nil
+  
+  if group:IsInstanceOf("OPSGROUP") then
+    opsgroup=group
+  else
+  
+    opsgroup=_DATABASE:GetOpsGroup(group)
+    
+    if not opsgroup then
+      if group:IsAir() then
+        opsgroup=FLIGHTGROUP:New(group)
+      elseif group:IsShip() then
+        opsgroup=NAVYGROUP:New(group)
+      else
+        opsgroup=ARMYGROUP:New(group)
+      end
+     
+    end
+    
+  end
+
+  local cargo={} --#OPSGROUP.Cargo
+  
+  cargo.opsgroup=opsgroup
+  cargo.status="Unknown"
+  cargo.pickupzone=Pickupzone
+  cargo.deployzone=Deployzone
+
+  return cargo
+end
+
+--- On after "Load" event. Carrier loads a cargo group into ints cargo bay.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE Zone Pickup zone.
+function OPSGROUP:onafterPickup(From, Event, To, Zone)
+
+  env.info("FF pickup")
+
+  local inzone=Zone:IsCoordinateInZone(self:GetCoordinate())
+  
+  if inzone then
+    
+    -- We are already in the pickup zone ==> initiate loading.
+    self:Loading()
+  
+  else
+  
+    -- Get a random coordinate in the pickup zone and let the carrier go there.
+    local Coordinate=Zone:GetRandomCoordinate()
+    
+    local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation, Updateroute)
+    waypoint.detour=true
+  
+  end
+  
+end
+
+--- Get total weight of the group including cargo.
+-- @param #OPSGROUP self
+-- @return #number Total weight in kg.
+function OPSGROUP:GetWeightTotal()
+
+  local weight=0
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    
+    if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+      weight=weight+element.weight
+    end
+    
+  end
+
+  return weight
+end
+
+--- Get weight of the internal cargo the group is carriing right now. 
+-- @param #OPSGROUP self
+-- @return #number Cargo weight in kg.
+function OPSGROUP:GetWeightCargo()
+
+  local weight=0
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    
+    if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+      weight=weight+element.weightCargo
+    end
+    
+  end
+
+  return weight
+end
+
+
+--- On after "Loading" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterLoading(From, Event, To)
+
+  env.info("FF loading")
+
+  --- Find a carrier which can load a given weight.
+  local function _findCarrier(weight)
+    local carrier=nil --#OPSGROUP.Element
+    for _,_element in pairs(self.elements) do
+      local element=_element --#OPSGROUP.Element
+      
+      local cargobay=element.weightMaxCargo-element.weightCargo
+      
+      if cargobay>=weight then
+        return element
+      end
+      
+    end
+    
+    return nil
+  end
+
+  
+  for _,_cargo in pairs(self.cargoTransport.cargos) do
+    local cargo=_cargo --#OPSGROUP.Cargo
+    
+    local weight=cargo.opsgroup:GetWeightTotal()
+    
+    local carrier=_findCarrier(weight)
+    
+    if carrier then
+    
+      -- Order cargo group to board the carrier.
+      cargo.opsgroup:Board(carrier)
+      
+    else
+    
+      env.info("FF cannot board carrier")
+      
+    end
+  end
+
+end
+
 --- On after "Load" event. Carrier loads a cargo group into ints cargo bay.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -4398,7 +4598,28 @@ function OPSGROUP:onafterUnload(From, Event, To, CargoGroup, Coordinate, Heading
 
 end
 
---- On after "Stop" event.
+---
+-- Cargo Group Functions
+---
+
+--- On after "Board" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Element Carrier The OPSGROUP element
+function OPSGROUP:onafterBoard(From, Event, To, Carrier)
+
+  env.info("FF board")
+
+  self.carrier=Carrier
+  
+  self:Embark(Carrier)
+
+end
+
+
+--- On after "Embark" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -5201,10 +5422,16 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
         -- Trigger Retreated event.
         opsgroup:Retreated()
         
+      elseif opsgroup:Is("Pickingup") then
+        --TODO: make IsPickingup() function.
+      
+        opsgroup:FullStop()
+        opsgroup:Loading()
+        
       elseif opsgroup:IsEngaging() then
       
         -- Nothing to do really.
-        
+                
       else
       
         -- Trigger DetourReached event.

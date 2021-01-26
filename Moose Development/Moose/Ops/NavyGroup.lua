@@ -107,12 +107,19 @@ NAVYGROUP.version="0.5.0"
 
 --- Create a new NAVYGROUP class object.
 -- @param #NAVYGROUP self
--- @param #string GroupName Name of the group.
+-- @param Wrapper.Group#GROUP group The group object. Can also be given by its group name as `#string`.
 -- @return #NAVYGROUP self
-function NAVYGROUP:New(GroupName)
+function NAVYGROUP:New(group)
+
+  -- First check if we already have an OPS group for this group.
+  local og=_DATABASE:GetOpsGroup(group)
+  if og then
+    og:I(og.lid..string.format("WARNING: OPS group already exists in data base!"))
+    return og
+  end
 
   -- Inherit everything from FSM class.
-  local self=BASE:Inherit(self, OPSGROUP:New(GroupName)) -- #NAVYGROUP
+  local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #NAVYGROUP
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("NAVYGROUP %s | ", self.groupname)
