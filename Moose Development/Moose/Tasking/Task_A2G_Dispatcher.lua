@@ -753,6 +753,7 @@ do -- TASK_A2G_DISPATCHER
           local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
           if TargetSetUnit then
             Task = TASK_A2G_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", DetectedItemID ), TargetSetUnit )
+            DetectedItem.DesignateMenuName = string.format( "SEAD.%03d", DetectedItemID ) --inject a name for DESIGNATE, if using same DETECTION object
             Task:SetDetection( Detection, DetectedItem )
           end
 
@@ -761,6 +762,7 @@ do -- TASK_A2G_DISPATCHER
             local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
             if TargetSetUnit then
               Task = TASK_A2G_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", DetectedItemID ), TargetSetUnit )
+              DetectedItem.DesignateMenuName = string.format( "CAS.%03d", DetectedItemID ) --inject a name for DESIGNATE, if using same DETECTION object
               Task:SetDetection( Detection, DetectedItem )
             end
 
@@ -769,6 +771,7 @@ do -- TASK_A2G_DISPATCHER
               local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.Mission:GetCommandCenter():GetPositionable():GetCoalition() ) -- Returns a SetUnit if there are targets to be BAIed...
               if TargetSetUnit then
                 Task = TASK_A2G_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", DetectedItemID ), TargetSetUnit )
+                DetectedItem.DesignateMenuName = string.format( "BAI.%03d", DetectedItemID ) --inject a name for DESIGNATE, if using same DETECTION object
                 Task:SetDetection( Detection, DetectedItem )
               end
             end
