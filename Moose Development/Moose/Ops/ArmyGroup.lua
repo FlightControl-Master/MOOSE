@@ -469,6 +469,35 @@ function ARMYGROUP:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)
   end
+  
+  
+  ---
+  -- Cargo
+  ---
+  
+  if self.cargoTransport then
+  
+    local text=string.format("Cargo: %s   %s --> %s", self.carrierStatus, self.cargoTransport.pickupzone:GetName(), self.cargoTransport.deployzone:GetName())
+    
+    for _,_cargo in pairs(self.cargoTransport.cargos) do    
+      local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup      
+      local name=cargo.opsgroup:GetName()
+      local gstatus=cargo.opsgroup:GetState()
+      local cstatus=cargo.opsgroup.cargoStatus
+      text=text..string.format("\n- %s [%s]: %s", name, gstatus, cstatus)
+      
+      if self:IsPickingup() then
+      
+      elseif self:IsLoading() then
+      
+      elseif self:IsLoaded() then
+      
+      end
+      
+    end
+    
+    self:I(self.lid..text)  
+  end
 
 
   ---
@@ -867,40 +896,6 @@ function ARMYGROUP:onafterRetreated(From, Event, To)
   
   -- Create new route consisting of only this position ==> Stop!
   self:Route({wp})
-  
-end
-
---- On after "Board" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP.Element Carrier to board.
-function ARMYGROUP:onafterBoard(From, Event, To, Carrier, Formation)
-
-  local Coordinate=Carrier.unit:GetCoordinate()
-  
-  local Speed=UTILS.KmphToKnots(self.speedMax*0.2)
-  
-  local waypoint=self:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation, true)
-  
-  
-end
-
---- On after "Pickup" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP.Element Carrier to board.
-function ARMYGROUP:onafterBoard(From, Event, To, Carrier, Formation)
-
-  local Coordinate=Carrier.unit:GetCoordinate()
-  
-  local Speed=UTILS.KmphToKnots(self.speedMax*0.2)
-  
-  local waypoint=self:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation, true)
-  
   
 end
 
