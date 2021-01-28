@@ -1001,7 +1001,13 @@ do -- DESIGNATE
         local ID = self.Detection:GetDetectedItemID( DetectedItem )
         local MenuText = ID --.. ", " .. Coord:ToStringA2G( AttackGroup )
         
-        MenuText = string.format( "(%3s) %s", Designating, MenuText )
+        -- Use injected MenuName from TaskA2GDispatcher if using same Detection Object
+        if DetectedItem.DesignateMenuName then
+          MenuText = string.format( "(%3s) %s", Designating, DetectedItem.DesignateMenuName )
+        else
+          MenuText = string.format( "(%3s) %s", Designating, MenuText )
+        end
+        
         local DetectedMenu = MENU_GROUP_DELAYED:New( AttackGroup, MenuText, MenuDesignate ):SetTime( MenuTime ):SetTag( self.DesignateName )
         
         -- Build the Lasing menu.
