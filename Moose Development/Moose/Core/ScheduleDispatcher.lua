@@ -122,7 +122,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self.Schedule[Scheduler][CallID].Function = ScheduleFunction
   self.Schedule[Scheduler][CallID].Arguments = ScheduleArguments
   self.Schedule[Scheduler][CallID].StartTime = timer.getTime() + ( Start or 0 )
-  self.Schedule[Scheduler][CallID].Start = Start + 0.1
+  self.Schedule[Scheduler][CallID].Start = Start + 0.001
   self.Schedule[Scheduler][CallID].Repeat = Repeat or 0
   self.Schedule[Scheduler][CallID].Randomize = Randomize or 0
   self.Schedule[Scheduler][CallID].Stop = Stop

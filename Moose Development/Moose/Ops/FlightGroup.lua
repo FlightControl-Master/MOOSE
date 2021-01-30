@@ -1169,7 +1169,8 @@ function FLIGHTGROUP:OnEventBirth(EventData)
 
       -- Set element to spawned state.
       self:T(self.lid..string.format("EVENT: Element %s born at airbase %s==> spawned", element.name, self.homebase and self.homebase:GetName() or "unknown"))
-      self:ElementSpawned(element)
+      -- This is delayed by a millisec because inAir check for units spawned in air failed (returned false even though the unit was spawned in air).
+      self:__ElementSpawned(0.0, element)
 
     end
 
@@ -1436,7 +1437,7 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.SPAWNED)
 
-  if Element.unit:InAir() then
+  if Element.unit:InAir(true) then
     -- Trigger ElementAirborne event. Add a little delay because spawn is also delayed!
     self:__ElementAirborne(0.11, Element)
   else
@@ -2008,7 +2009,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   if #wp>1 then
 
     -- Route group to all defined waypoints remaining.
-    self:Route(wp, 1)
+    self:Route(wp)
 
   else
 

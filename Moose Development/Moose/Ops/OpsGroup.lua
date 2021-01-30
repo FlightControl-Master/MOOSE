@@ -2223,7 +2223,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
       local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
         
       -- Set task for group.
-      self:SetTask(TaskFinal, 1)
+      self:SetTask(TaskFinal)
           
     end
     
