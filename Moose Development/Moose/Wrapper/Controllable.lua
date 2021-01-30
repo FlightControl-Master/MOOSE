@@ -1467,6 +1467,7 @@ end
 --- (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.
 -- The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
 -- If the task is assigned to the controllable lead unit will be a FAC.
+-- It's important to note that depending on the type of unit that is being assigned the task (AIR or GROUND), you must choose the correct type of callsign enumerator. For airborne controllables use CALLSIGN.Aircraft and for ground based use CALLSIGN.JTAC enumerators.
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Group#GROUP AttackGroup Target GROUP object.
 -- @param #number WeaponType Bitmask of weapon types, which are allowed to use.
@@ -1474,7 +1475,7 @@ end
 -- @param #boolean Datalink (Optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default.
 -- @param #number Frequency Frequency in MHz used to communicate with the FAC. Default 133 MHz.
 -- @param #number Modulation Modulation of radio for communication. Default 0=AM.
--- @param #number CallsignName Callsign enumerator name of the FAC.
+-- @param #number CallsignName Callsign enumerator name of the FAC. (CALLSIGN.Aircraft.{name} for airborne controllables, CALLSIGN.JTACS.{name} for ground units)
 -- @param #number CallsignNumber Callsign number, e.g. Axeman-**1**.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation, Datalink, Frequency, Modulation, CallsignName, CallsignNumber )
