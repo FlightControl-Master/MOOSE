@@ -1010,6 +1010,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   -- Engage Detected Targets
   ---  
   if self:IsAirborne() and self.detectionOn and self.engagedetectedOn and not (self.fuellow or self.fuelcritical) then
+    env.info("FF 100")
   
     -- Target.
     local targetgroup=nil --Wrapper.Group#GROUP
@@ -1019,7 +1020,11 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
     for _,_group in pairs(self.detectedgroups:GetSet()) do
       local group=_group --Wrapper.Group#GROUP
       
+      env.info("FF 200")
+      
       if group and group:IsAlive() then
+      
+        env.info("FF 300")
       
         -- Get 3D vector of target.
         local targetVec3=group:GetVec3()
@@ -1029,11 +1034,13 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
         
         if distance<=self.engagedetectedRmax and distance<targetdist then
         
+          env.info("FF 400")
+        
           -- Check type attribute.
           local righttype=false
           for _,attribute in pairs(self.engagedetectedTypes) do
             local gotit=group:HasAttribute(attribute, false)
-            --self:I(self.lid..string.format("Group %s has attribute %s = %s", group:GetName(), attribute, tostring(gotit)))
+            self:I(self.lid..string.format("Group %s has attribute %s = %s", group:GetName(), attribute, tostring(gotit)))
             if gotit then
               righttype=true
               break
@@ -1085,7 +1092,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
     
     -- If we found a group, we engage it.
     if targetgroup then
-      --self:I(self.lid..string.format("Engaging target group %s at distance %d meters", targetgroup:GetName(), targetdist))
+      self:I(self.lid..string.format("Engaging target group %s at distance %d meters", targetgroup:GetName(), targetdist))
       self:EngageTarget(targetgroup)
     end
   
@@ -1871,7 +1878,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   if #wp>1 then
 
     -- Route group to all defined waypoints remaining.
-    self:Route(wp, 1)
+    self:Route(wp)
 
   else
 

@@ -353,10 +353,10 @@ end
 function ARMYGROUP:onbeforeStatus(From, Event, To)
 
   if self:IsDead() then  
-    self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
+    self:I(self.lid..string.format("Onbefore Status DEAD ==> false"))
     return false   
   elseif self:IsStopped() then
-    self:T(self.lid..string.format("Onbefore Status STOPPED ==> false"))
+    self:I(self.lid..string.format("Onbefore Status STOPPED ==> false"))
     return false
   end
 
@@ -476,7 +476,7 @@ function ARMYGROUP:onafterStatus(From, Event, To)
   ---
   
   if self.cargoTransport then
-  
+    
     local text=string.format("Cargo: %s   %s --> %s", self.carrierStatus, self.cargoTransport.pickupzone:GetName(), self.cargoTransport.deployzone:GetName())
     
     for _,_cargo in pairs(self.cargoTransport.cargos) do    
@@ -484,19 +484,57 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       local name=cargo.opsgroup:GetName()
       local gstatus=cargo.opsgroup:GetState()
       local cstatus=cargo.opsgroup.cargoStatus
-      text=text..string.format("\n- %s [%s]: %s", name, gstatus, cstatus)
-      
-      if self:IsPickingup() then
-      
-      elseif self:IsLoading() then
-      
-      elseif self:IsLoaded() then
-      
-      end
-      
+      text=text..string.format("\n- %s [%s]: %s", name, gstatus, cstatus)            
     end
     
-    self:I(self.lid..text)  
+    self:I(self.lid..text)
+    
+
+    if self:IsNotCarrier() then
+    
+      env.info("FF not carrier ==> pickup")
+    
+      -- Initiate the cargo transport process.
+      self:Pickup(self.cargoTransport.pickupzone)
+      
+    elseif self:IsPickingup() then
+    
+      env.info("FF picking up")
+    
+    elseif self:IsLoading() then
+    
+      env.info("FF loading")
+    
+      local boarding=false      
+      for _,_cargo in pairs(self.cargoTransport.cargos) do    
+        local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+        
+        if cargo.opsgroup.carrierGroup:GetName()==self:GetName() and cargo.opsgroup.cargoStatus==OPSGROUP.CargoStatus.BOARDING then
+          boarding=true
+        end
+        
+      end
+      
+      -- Boarding finished ==> Transport cargo.
+      if not boarding then
+        env.info("FF boarding finished ==> Loaded")
+        self:Loaded()
+      end      
+    
+    elseif self:IsLoaded() then
+    
+      env.info("FF loaded")
+      
+    elseif self:IsTransporting() then
+    
+      env.info("FF transporting")
+      
+    elseif self:IsUnloading() then
+    
+      env.info("FF unloading")            
+    
+    end
+      
   end
 
 
@@ -1190,7 +1228,7 @@ function ARMYGROUP:_InitGroup()
   self.actype=units[1]:GetTypeName()
   
   -- Debug info.
-  if self.verbose>=1 then
+  if self.verbose>=0 then
     local text=string.format("Initialized Army Group %s:\n", self.groupname)
     text=text..string.format("Unit type    = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))

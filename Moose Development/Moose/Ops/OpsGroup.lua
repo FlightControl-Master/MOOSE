@@ -362,17 +362,21 @@ OPSGROUP.TaskType={
 
 --- Cargo Carrier status.
 -- @type OPSGROUP.CarrierStatus
+-- @field #string NOTCARRIER This group is not a carrier yet.
 -- @field #string EMPTY Carrier is empty and ready for cargo transport.
 -- @field #string PICKUP Carrier is on its way to pickup cargo.
 -- @field #string LOADING Carrier is loading cargo.
 -- @field #string LOADED Carrier has loaded cargo.
 -- @field #string TRANSPORTING Carrier is transporting cargo.
+-- @field #string UNLOADING Carrier is unloading cargo.
 OPSGROUP.CarrierStatus={
+  NOTCARRIER="not carrier",
   EMPTY="empty",
   PICKUP="pickup",
   LOADING="loading",
   LOADED="loaded",
   TRANSPORTING="transporting",
+  UNLOADING="unloading",
 }
 
 --- Cargo status.
@@ -468,7 +472,7 @@ function OPSGROUP:New(group)
   self.spot.Coordinate=COORDINATE:New(0, 0, 0)
   self:SetLaser(1688, true, false, 0.5)
   self.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
-  self.carrierStatus=OPSGROUP.CarrierStatus.EMPTY
+  self.carrierStatus=OPSGROUP.CarrierStatus.NOTCARRIER
   
   -- Init task counter.
   self.taskcurrent=0
@@ -1519,6 +1523,13 @@ function OPSGROUP:IsEngaging()
   return self:is("Engaging")
 end
 
+--- Check if the group is not a carrier yet.
+-- @param #OPSGROUP self
+-- @return #boolean If true, group is not a carrier.
+function OPSGROUP:IsNotCarrier()
+  return self.carrierStatus==OPSGROUP.CarrierStatus.NOTCARRIER
+end
+
 --- Check if the group is picking up cargo.
 -- @param #OPSGROUP self
 -- @return #boolean If true, group is picking up.
@@ -1548,7 +1559,12 @@ function OPSGROUP:IsTransporting()
   return self.carrierStatus==OPSGROUP.CarrierStatus.TRANSPORTING
 end
 
-
+--- Check if the group is unloading cargo.
+-- @param #OPSGROUP self
+-- @return #boolean If true, group is unloading.
+function OPSGROUP:IsUnloading()
+  return self.carrierStatus==OPSGROUP.CarrierStatus.UNLOADING
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Waypoint Functions
@@ -4556,22 +4572,16 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #OPSGROUP.CargoTransport CargoTransport Cargo transport assignment.
-function OPSGROUP:onafterPickup(From, Event, To, CargoTransport)
+-- @param Core.Zone#ZONE Zone Pickup zone.
+function OPSGROUP:onafterPickup(From, Event, To, Zone)
 
   env.info("FF pickup")
   
   -- Set carrier status.
   self.carrierStatus=OPSGROUP.CarrierStatus.PICKUP  
-  
-  local Zone=CargoTransport.pickupzone
 
   local inzone=Zone:IsCoordinateInZone(self:GetCoordinate())
-  
-  self.cargoTransport=CargoTransport
-  
-
-  
+ 
   if inzone then
     
     -- We are already in the pickup zone ==> initiate loading.
@@ -4594,15 +4604,11 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #OPSGROUP.CargoTransport CargoTransport Cargo transport assignment.
-function OPSGROUP:onafterLoading(From, Event, To, CargoTransport)
+function OPSGROUP:onafterLoading(From, Event, To)
   env.info("FF loading")
 
   -- Set carrier status.
   self.carrierStatus=OPSGROUP.CarrierStatus.LOADING  
-
-  
-  CargoTransport=CargoTransport or self.cargoTransport
 
   --- Find a carrier which can load a given weight.
   local function _findCarrier(weight)
@@ -4622,7 +4628,7 @@ function OPSGROUP:onafterLoading(From, Event, To, CargoTransport)
   end
 
   
-  for _,_cargo in pairs(CargoTransport.cargos) do
+  for _,_cargo in pairs(self.cargoTransport.cargos) do
     local cargo=_cargo --#OPSGROUP.CargoGroup
     
     local weight=cargo.opsgroup:GetWeightTotal()
@@ -4630,6 +4636,9 @@ function OPSGROUP:onafterLoading(From, Event, To, CargoTransport)
     local carrier=_findCarrier(weight)
     
     if carrier then
+    
+      -- Set cargo status.
+      cargo.opsgroup.cargoStatus=OPSGROUP.CargoStatus.ASSIGNED
     
       -- Order cargo group to board the carrier.
       env.info("FF order group to board carrier")
@@ -4664,13 +4673,13 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup)
     carrier.weightCargo=carrier.weightCargo+weight
     
     -- This function is only really used for aircraft and sets the total internal cargo weight.
-    trigger.action.setUnitInternalCargo(carrier.name, carrier.weightCargo)  --https://wiki.hoggitworld.com/view/DCS_func_setUnitInternalCargo
+    --trigger.action.setUnitInternalCargo(carrier.name, carrier.weightCargo)  --https://wiki.hoggitworld.com/view/DCS_func_setUnitInternalCargo
     
     -- Embark ==> Loaded
     CargoGroup:Embark(carrier)
     
-    env.info("FF carrier loaded (todo)")
-    self:Loaded()
+    --env.info("FF carrier loaded (todo)")
+    --self:Loaded()
     
   else
     self:E(self.lid.."ERROR: Cargo has no carrier on Load event!")
@@ -4734,21 +4743,27 @@ end
 -- @param Core.Zone#ZONE Zone Deploy zone.
 function OPSGROUP:onafterDeploy(From, Event, To, Zone)
   env.info("FF deploy at zone ".. (Zone and Zone:GetName() or "Not given!"))
+  
+  self.carrierStatus=OPSGROUP.CarrierStatus.UNLOADING
     
-  for _,_cargo in pairs(self.cargo) do
+  for _,_cargo in pairs(self.cargoTransport.cargos) do
     local cargo=_cargo --#OPSGROUP.CargoGroup
     
-    local zone=Zone or cargo.deployzone
+    env.info("FF deploy cargo "..cargo.opsgroup:GetName())
+       
+    local zone=Zone or cargo.deployzone  --Core.Zone#ZONE
     
-    if zone:IsCoordinateInZone(self:GetCoordinate()) then
+    --if zone:IsCoordinateInZone(self:GetCoordinate()) then
 
       local Coordinate=zone:GetRandomCoordinate()
       local Heading=math.random(0,359)
       
       -- Unload.
-      self:Unload(cargo.opsgroup, Coordinate, Heading)
+      env.info("FF unload cargo "..cargo.opsgroup:GetName())
+      cargo.opsgroup:Unboard(Coordinate, Heading)
+      --self:Unload(cargo.opsgroup, Coordinate, Heading)
     
-    end
+    --end
   
   end
   
@@ -4792,8 +4807,15 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
   self.carrier=Carrier 
   self.carrierGroup=CarrierGroup
   
+  -- Add to current cargo of carrier.
+  --CarrierGroup:_AddCargoGroup(self)
+  
+  --TODO: make cargo run to carrier
+  --TODO: check if cargo is mobile. if not ==> load
+  --TODO: check if cargo is alive=true. if only exists ==> load.
+  
   -- Trigger embark event.
-  self.carrierGroup:Load(self)
+  self.carrierGroup:__Load(10, self)
 
 end
 
@@ -4827,11 +4849,12 @@ end
 function OPSGROUP:onafterUnboard(From, Event, To, Coordinate, Heading)
   env.info("FF Unboard")
   
-  -- Set cargo status.
-  self.cargoStatus=OPSGROUP.CargoStatus.DELIVERED
-
   -- Template for the respawned group.
   local Template=UTILS.DeepCopy(self.template)
+  
+  env.info("FF template")
+  self:I({template=Template})
+  self:I({template=self.template})
 
   -- Loop over template units.
   for _,Unit in pairs(Template.units) do
@@ -4866,7 +4889,14 @@ function OPSGROUP:onafterUnboard(From, Event, To, Coordinate, Heading)
     self.carrier.weightCargo=self.carrier.weightCargo-element.weight
   end
   -- This function is only really used for aircraft and sets the total internal cargo weight.
-  trigger.action.setUnitInternalCargo(self.carrier.name, self.carrier.weightCargo)  --https://wiki.hoggitworld.com/view/DCS_func_setUnitInternalCargo  
+  if self.isFlightgroup then
+    trigger.action.setUnitInternalCargo(self.carrier.name, self.carrier.weightCargo)  --https://wiki.hoggitworld.com/view/DCS_func_setUnitInternalCargo
+  end
+  
+  -- Set cargo status.
+  self.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
+  self.carrier=nil
+  self.carrierGroup=nil  
   
   -- Respawn group.
   self:_Respawn(0, Template)
