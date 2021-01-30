@@ -1174,8 +1174,9 @@ end
 
 --- Returns true if the UNIT is in the air.
 -- @param #UNIT self
+-- @param #boolean NoHeloCheck If true, no additonal checks for helos are performed.
 -- @return #boolean Return true if in the air or #nil if the UNIT is not existing or alive.   
-function UNIT:InAir()
+function UNIT:InAir(NoHeloCheck)
   self:F2( self.UnitName )
 
   -- Get DCS unit object.
@@ -1185,14 +1186,14 @@ function UNIT:InAir()
 
     -- Get DCS result of whether unit is in air or not.
     local UnitInAir = DCSUnit:inAir()
-    
+
     -- Get unit category.
     local UnitCategory = DCSUnit:getDesc().category
 
     -- If DCS says that it is in air, check if this is really the case, since we might have landed on a building where inAir()=true but actually is not.
     -- This is a workaround since DCS currently does not acknoledge that helos land on buildings.
     -- Note however, that the velocity check will fail if the ground is moving, e.g. on an aircraft carrier!    
-    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER then
+    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER and (not NoHeloCheck) then
       local VelocityVec3 = DCSUnit:getVelocity()
       local Velocity = UTILS.VecNorm(VelocityVec3)
       local Coordinate = DCSUnit:getPoint()

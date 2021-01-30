@@ -1894,7 +1894,7 @@ do -- Patrol methods
       local ToCoord = COORDINATE:NewFromVec2( { x = Waypoint.x, y = Waypoint.y } )
       -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
       local Route = {}
-      Route[#Route+1] = FromCoord:WaypointGround( 0 )
+      Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
       Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
 
 
@@ -1947,7 +1947,7 @@ do -- Patrol methods
 
       -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
       local Route = {}
-      Route[#Route+1] = FromCoord:WaypointGround( 20 )
+      Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
       Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
 
 
