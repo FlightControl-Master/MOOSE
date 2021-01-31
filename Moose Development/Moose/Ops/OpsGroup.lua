@@ -410,6 +410,7 @@ OPSGROUP.CargoStatus={
 -- @field #string status Status of the cargo group. See @{#OPSGROUP.CargoStatus}.
 -- @field Core.Zone#ZONE pickupzone Zone where the cargo is picked up.
 -- @field Core.Zone#ZONE deployzone Zone where the cargo is dropped off.
+-- @field #boolean delivered If true, group was delivered.
 
 --- OpsGroup version.
 -- @field #string version
@@ -555,6 +556,7 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "Loaded",           "*")           -- Carrier loaded all assigned cargo into carrier.
   self:AddTransition("*",             "Transport",        "*")           -- Carrier is transporting cargo.
   self:AddTransition("*",             "Deploy",           "*")           -- Carrier is dropping off cargo.
+  self:AddTransition("*",             "Unloaded",         "*")           -- Carrier unloaded all its cargo.
   
   ------------------------
   --- Pseudo Functions ---
@@ -581,7 +583,7 @@ function OPSGROUP:New(group)
 
 
   -- Add to data base.
-  _DATABASE:AddOpsGroup(self)
+  --_DATABASE:AddOpsGroup(self)
 
   return self  
 end
@@ -4419,8 +4421,11 @@ function OPSGROUP:onafterStop(From, Event, To)
     self:E(self.lid..text)
   end
 
+  -- Remove flight from data base.
+  _DATABASE.FLIGHTGROUPS[self.groupname]=nil  
+
   -- Debug output.
-  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
+  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database")  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4496,12 +4501,13 @@ function OPSGROUP:CreateCargoGroupData(group, Pickupzone, Deployzone)
       else
         opsgroup=ARMYGROUP:New(group)
       end
-     
+    else
+      env.info("FF found opsgroup in createcargo")
     end
     
   end
 
-  local cargo={} --#OPSGROUP.Cargo
+  local cargo={} --#OPSGROUP.CargoGroup
   
   cargo.opsgroup=opsgroup
   cargo.status="Unknown"
@@ -4631,22 +4637,29 @@ function OPSGROUP:onafterLoading(From, Event, To)
   for _,_cargo in pairs(self.cargoTransport.cargos) do
     local cargo=_cargo --#OPSGROUP.CargoGroup
     
-    local weight=cargo.opsgroup:GetWeightTotal()
+    if not cargo.delivered then
     
-    local carrier=_findCarrier(weight)
-    
-    if carrier then
-    
-      -- Set cargo status.
-      cargo.opsgroup.cargoStatus=OPSGROUP.CargoStatus.ASSIGNED
-    
-      -- Order cargo group to board the carrier.
-      env.info("FF order group to board carrier")
-      cargo.opsgroup:Board(self, carrier)
+      local weight=cargo.opsgroup:GetWeightTotal()
       
-    else
-    
-      env.info("FF cannot board carrier")
+      local carrier=_findCarrier(weight)
+      
+      if carrier then
+      
+        -- Set cargo status.
+        cargo.opsgroup.cargoStatus=OPSGROUP.CargoStatus.ASSIGNED
+      
+        -- Order cargo group to board the carrier.
+        env.info("FF order group to board carrier")
+        cargo.opsgroup:Board(self, carrier)
+        
+        --TODO: only one group for testing
+        break
+        
+      else
+      
+        env.info("FF cannot board carrier")
+        
+      end
       
     end
   end
@@ -4744,26 +4757,33 @@ end
 function OPSGROUP:onafterDeploy(From, Event, To, Zone)
   env.info("FF deploy at zone ".. (Zone and Zone:GetName() or "Not given!"))
   
+  -- Set carrier status to UNLOADING.
   self.carrierStatus=OPSGROUP.CarrierStatus.UNLOADING
     
   for _,_cargo in pairs(self.cargoTransport.cargos) do
     local cargo=_cargo --#OPSGROUP.CargoGroup
     
-    env.info("FF deploy cargo "..cargo.opsgroup:GetName())
-       
-    local zone=Zone or cargo.deployzone  --Core.Zone#ZONE
+    if cargo.opsgroup.cargoStatus==OPSGROUP.CargoStatus.LOADED and cargo.opsgroup.carrierGroup:GetName()==self.groupname then
     
-    --if zone:IsCoordinateInZone(self:GetCoordinate()) then
-
-      local Coordinate=zone:GetRandomCoordinate()
-      local Heading=math.random(0,359)
+      env.info("FF deploy cargo "..cargo.opsgroup:GetName())
+         
+      local zone=Zone or cargo.deployzone  --Core.Zone#ZONE
       
-      -- Unload.
-      env.info("FF unload cargo "..cargo.opsgroup:GetName())
-      cargo.opsgroup:Unboard(Coordinate, Heading)
-      --self:Unload(cargo.opsgroup, Coordinate, Heading)
-    
-    --end
+      --if zone:IsCoordinateInZone(self:GetCoordinate()) then
+  
+        local Coordinate=zone:GetRandomCoordinate()
+        local Heading=math.random(0,359)
+        
+        cargo.delivered=true
+        
+        -- Unload.
+        env.info("FF unload cargo "..cargo.opsgroup:GetName())
+        cargo.opsgroup:Unboard(Coordinate, Heading)
+        --self:Unload(cargo.opsgroup, Coordinate, Heading)
+      
+      --end
+      
+    end
   
   end
   
@@ -4785,6 +4805,46 @@ function OPSGROUP:onafterUnload(From, Event, To, CargoGroup, Coordinate, Heading
   end
 
 end
+
+--- On after "Unloaded" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE Zone Deploy zone.
+function OPSGROUP:onafterUnloaded(From, Event, To)
+  env.info("FF unloaded")
+  
+  local pickup=false
+  for _,_cargo in pairs(self.cargoTransport.cargos) do    
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+    
+    -- Check for waiting or undelivered non cargo groups.
+    --if cargo.opsgroup.cargoStatus==OPSGROUP.CargoStatus.WAITING or (cargo.opsgroup.cargoStatus==OPSGROUP.CargoStatus.NOTCARGO and not cargo.delivered) then
+    if not cargo.delivered then
+      pickup=true
+      break
+    end
+    
+  end  
+  
+  if pickup then
+  
+    env.info("FF cargo left ==> pickup")
+    self:Pickup(self.cargoTransport.pickupzone)
+  
+  else
+  
+    -- No current transport assignment.
+    self.cargoTransport=nil
+  
+    env.info("FF all delivered ==> check group done")
+    self:_CheckGroupDone()
+  
+  end
+  
+end
+
 
 ---
 -- Cargo Group Functions

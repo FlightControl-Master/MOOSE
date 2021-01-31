@@ -332,6 +332,9 @@ function FLIGHTGROUP:New(group)
   -- Start check zone timer.
   self.timerCheckZone=TIMER:New(self._CheckInZones, self):Start(3, 10)
 
+  -- Add OPSGROUP to _DATABASE.
+  _DATABASE:AddOpsGroup(self)
+
   return self
 end
 
@@ -2603,9 +2606,7 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
 
   -- Call OPSGROUP function.
   self:GetParent(self).onafterStop(self, From, Event, To)
-
-  -- Remove flight from data base.
-  _DATABASE.FLIGHTGROUPS[self.groupname]=nil
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -1424,6 +1424,7 @@ end
 -- @param #DATABASE self
 -- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group added to the DB.
 function DATABASE:AddOpsGroup(opsgroup)
+  env.info("Adding OPSGROUP "..tostring(opsgroup.groupname))
   self.FLIGHTGROUPS[opsgroup.groupname]=opsgroup
 end
 
@@ -1439,6 +1440,7 @@ function DATABASE:GetOpsGroup(groupname)
     groupname=groupname:GetName()
   end
 
+  env.info("Getting OPSGROUP "..tostring(groupname))
   return self.FLIGHTGROUPS[groupname]
 end
 

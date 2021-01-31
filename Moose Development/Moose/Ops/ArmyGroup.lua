@@ -171,6 +171,9 @@ function ARMYGROUP:New(group)
   
   -- Start check zone timer.
   self.timerCheckZone=TIMER:New(self._CheckInZones, self):Start(2, 30)
+  
+  -- Add OPSGROUP to _DATABASE.
+  _DATABASE:AddOpsGroup(self)
    
   return self  
 end
@@ -477,22 +480,24 @@ function ARMYGROUP:onafterStatus(From, Event, To)
   
   if self.cargoTransport then
     
-    local text=string.format("Cargo: %s   %s --> %s", self.carrierStatus, self.cargoTransport.pickupzone:GetName(), self.cargoTransport.deployzone:GetName())
-    
+    -- Debug
+    local text=string.format("Carrier [%s]: %s --> %s", self.carrierStatus, self.cargoTransport.pickupzone:GetName(), self.cargoTransport.deployzone:GetName())    
     for _,_cargo in pairs(self.cargoTransport.cargos) do    
       local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup      
       local name=cargo.opsgroup:GetName()
       local gstatus=cargo.opsgroup:GetState()
       local cstatus=cargo.opsgroup.cargoStatus
-      text=text..string.format("\n- %s [%s]: %s", name, gstatus, cstatus)            
-    end
-    
+      text=text..string.format("\n- %s [%s]: %s", name, gstatus, cstatus)
+      --self:I({template=cargo.opsgroup.template})
+    end    
     self:I(self.lid..text)
     
 
     if self:IsNotCarrier() then
     
       env.info("FF not carrier ==> pickup")
+      
+      --TODO: Check if there is still cargo left. Maybe someone else already picked it up or it got destroyed.
     
       -- Initiate the cargo transport process.
       self:Pickup(self.cargoTransport.pickupzone)
@@ -500,6 +505,8 @@ function ARMYGROUP:onafterStatus(From, Event, To)
     elseif self:IsPickingup() then
     
       env.info("FF picking up")
+      
+      --TODO: Check if there is still cargo left. Maybe someone else already picked it up or it got destroyed.
     
     elseif self:IsLoading() then
     
@@ -509,7 +516,7 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       for _,_cargo in pairs(self.cargoTransport.cargos) do    
         local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
         
-        if cargo.opsgroup.carrierGroup:GetName()==self:GetName() and cargo.opsgroup.cargoStatus==OPSGROUP.CargoStatus.BOARDING then
+        if cargo.opsgroup.carrierGroup and cargo.opsgroup.carrierGroup:GetName()==self:GetName() and cargo.opsgroup.cargoStatus==OPSGROUP.CargoStatus.BOARDING then
           boarding=true
         end
         
@@ -523,15 +530,32 @@ function ARMYGROUP:onafterStatus(From, Event, To)
     
     elseif self:IsLoaded() then
     
-      env.info("FF loaded")
+      env.info("FF loaded (nothing to do?)")
       
     elseif self:IsTransporting() then
     
-      env.info("FF transporting")
+      env.info("FF transporting (nothing to do)")
       
     elseif self:IsUnloading() then
     
-      env.info("FF unloading")            
+      env.info("FF unloading ==> Checking if all cargo was delivered")            
+
+      local delivered=true
+      for _,_cargo in pairs(self.cargoTransport.cargos) do    
+        local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+        
+        if (cargo.opsgroup.carrierGroup and cargo.opsgroup.carrierGroup:GetName()==self:GetName()) and not cargo.delivered then
+          delivered=false
+          break
+        end
+        
+      end
+      
+      -- Boarding finished ==> Transport cargo.
+      if delivered then
+        env.info("FF unloading finished ==> Unloaded")
+        self:Unloaded()
+      end      
     
     end
       

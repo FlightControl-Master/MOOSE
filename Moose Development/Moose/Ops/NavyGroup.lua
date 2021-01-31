@@ -188,6 +188,9 @@ function NAVYGROUP:New(group)
   
   -- Start check zone timer.
   self.timerCheckZone=TIMER:New(self._CheckInZones, self):Start(2, 60)
+
+  -- Add OPSGROUP to _DATABASE.
+  _DATABASE:AddOpsGroup(self)
      
   return self  
 end
