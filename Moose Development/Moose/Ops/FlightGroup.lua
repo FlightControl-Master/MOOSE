@@ -249,6 +249,7 @@ function FLIGHTGROUP:New(group)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->      To State
+  self:AddTransition("*",             "LandAtAirbase",     "Inbound")     -- Helo group is ordered to land at a specific point.  
   self:AddTransition("*",             "RTB",               "Inbound")     -- Group is returning to destination base.
   self:AddTransition("*",             "RTZ",               "Inbound")     -- Group is returning to destination zone. Not implemented yet!
   self:AddTransition("Inbound",       "Holding",           "Holding")     -- Group is in holding pattern.
@@ -795,7 +796,7 @@ function FLIGHTGROUP:onbeforeStatus(From, Event, To)
         local text=string.format("Element %s is dead at t=%.3f! Maybe despawned without notice or landed at a too small airbase. Calling ElementDead in 60 sec to give other events a chance",
         tostring(element.name), timer.getTime())
         self:E(self.lid..text)
-        self:__ElementDead(60, element)
+        --self:__ElementDead(60, element)
       end
 
     end
@@ -1013,7 +1014,6 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   -- Engage Detected Targets
   ---
   if self:IsAirborne() and self.detectionOn and self.engagedetectedOn and not (self.fuellow or self.fuelcritical) then
-    env.info("FF 100")
 
     -- Target.
     local targetgroup=nil --Wrapper.Group#GROUP
@@ -1023,11 +1023,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
     for _,_group in pairs(self.detectedgroups:GetSet()) do
       local group=_group --Wrapper.Group#GROUP
 
-      env.info("FF 200")
-
       if group and group:IsAlive() then
-
-        env.info("FF 300")
 
         -- Get 3D vector of target.
         local targetVec3=group:GetVec3()
@@ -1036,8 +1032,6 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
         local distance=UTILS.VecDist3D(self.position, targetVec3)
 
         if distance<=self.engagedetectedRmax and distance<targetdist then
-
-          env.info("FF 400")
 
           -- Check type attribute.
           local righttype=false
@@ -1100,6 +1094,12 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
     end
 
   end
+
+  ---
+  -- Cargo
+  ---
+  
+  self:_CheckCargoTransport()
 
 
   -- Next check in ~30 seconds.
@@ -1554,6 +1554,9 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB,   true)   -- Does not seem to work. AI still used the after burner.
     self:GetGroup():SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
     --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)
+    
+    -- Update status.
+    self:__Status(-0.1)
 
     -- Update route.
     self:__UpdateRoute(-0.5)
@@ -1703,6 +1706,14 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterLandedAt(From, Event, To)
   self:T(self.lid..string.format("Flight landed at"))
+  
+  
+  if self:IsPickingup() then
+    self:Loading()
+  elseif self:IsTransporting() then
+    self:Deploy()
+  end
+  
 end
 
 
@@ -1721,7 +1732,78 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
   end
 
   -- Despawn in 5 min.
-  if not self.airwing then
+  if self.airwing then
+    -- Let airwing do its thing.
+  elseif self.isLandingAtAirbase then
+    
+    local Template=UTILS.DeepCopy(self.template)  --DCS#Template
+    
+    -- No late activation.
+    self.isLateActivated=false
+    Template.lateActivation=self.isLateActivated    
+    
+    -- Spawn in uncontrolled state.
+    self.isUncontrolled=true
+    Template.uncontrolled=self.isUncontrolled    
+    
+    -- First waypoint of the group.
+    local SpawnPoint=Template.route.points[1]
+
+    -- These are only for ships and FARPS.
+    SpawnPoint.linkUnit = nil
+    SpawnPoint.helipadId = nil
+    SpawnPoint.airdromeId = nil
+    
+    -- Airbase.
+    local airbase=self.isLandingAtAirbase
+    
+    -- Get airbase ID and category.
+    local AirbaseID = airbase:GetID()
+    
+    -- Set airdromeId.
+    if airbase:IsShip() then
+      SpawnPoint.linkUnit = AirbaseID
+      SpawnPoint.helipadId = AirbaseID
+    elseif airbase:IsHelipad() then
+      SpawnPoint.linkUnit = AirbaseID
+      SpawnPoint.helipadId = AirbaseID
+    elseif airbase:IsAirdrome() then
+      SpawnPoint.airdromeId = AirbaseID
+    end
+
+    -- Set waypoint type/action.
+    SpawnPoint.alt    = 0
+    SpawnPoint.type   = COORDINATE.WaypointType.TakeOffParking
+    SpawnPoint.action = COORDINATE.WaypointAction.FromParkingArea    
+    
+    local units=Template.units
+    
+    for i=#units,1,-1 do
+      local unit=units[i]
+      local element=self:GetElementByName(unit.name)
+      if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+        unit.parking=element.parking.TerminalID
+        unit.parking_id=nil
+        local vec3=element.unit:GetVec3()
+        local heading=element.unit:GetHeading()
+        unit.x=vec3.x
+        unit.y=vec3.z
+        unit.alt=vec3.y
+        unit.heading=math.rad(heading)
+        unit.psi=-unit.heading        
+      else
+        table.remove(units, i)
+      end
+    end
+    
+    -- Respawn with this template.
+    self:_Respawn(0, Template)
+    
+    -- Reset.
+    self.isLandingAtAirbase=nil
+    
+  else
+    -- Depawn after 5 min. Important to trigger dead events before DCS despawns on its own without any notification.
     self:Despawn(5*60)
   end
 end
@@ -1860,9 +1942,16 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
 
   -- Current velocity.
   local speed=self.group and self.group:GetVelocityKMH() or 100
+  
+  -- Waypoint type.
+  local waypointType=COORDINATE.WaypointType.TurningPoint
+  if self:IsLanded() or self:IsLandedAt() or self:IsAirborne()==false then
+    -- Had some issues with passing waypoint function of the next WP called too ealy when the type is TurningPoint. Setting it to TakeOff solved it!
+    waypointType=COORDINATE.WaypointType.TakeOff
+  end
 
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
-  local current=self.group:GetCoordinate():WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speed, true, nil, {}, "Current")
+  local current=self.group:GetCoordinate():WaypointAir(COORDINATE.WaypointAltType.BARO, waypointType, COORDINATE.WaypointAction.TurningPoint, speed, true, nil, {}, "Current")
   table.insert(wp, current)
 
   local Nwp=self.waypoints and #self.waypoints or 0
@@ -1916,6 +2005,9 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
       -- Delayed call.
       self:ScheduleOnce(delay, FLIGHTGROUP._CheckGroupDone, self)
     else
+    
+      -- Debug info.
+      self:T(self.lid.."Check group done?")
 
       -- First check if there is a paused mission that
       if self.missionpaused then
@@ -1925,6 +2017,13 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
 
       -- Group is currently engaging.
       if self:IsEngaging() then
+        self:T(self.lid.."Engaging! Group NOT done...")
+        return
+      end
+      
+      -- Group is ordered to land at an airbase.
+      if self.isLandingAtAirbase then
+        self:T(self.lid.."Landing at airbase! Group NOT done...")
         return
       end
 
@@ -2063,9 +2162,6 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   -- Set the destination base.
   self.destbase=airbase
 
-  -- Clear holding time in any case.
-  self.Tholding=nil
-
   -- Cancel all missions.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
@@ -2080,10 +2176,39 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
 
   end
 
+  self:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
+
+end
+
+--- On after "LandAtAirbase" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
+function FLIGHTGROUP:onafterLandAtAirbase(From, Event, To, airbase)
+
+  self.isLandingAtAirbase=airbase
+
+  self:_LandAtAirbase(airbase)
+
+end
+
+--- Land at an airbase.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Airbase#AIRBASE airbase Airbase where the group shall land.
+-- @param #number SpeedTo Speed used for travelling from current position to holding point in knots.
+-- @param #number SpeedHold Holding speed in knots.
+-- @param #number SpeedLand Landing speed in knots. Default 170 kts.
+function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
+
   -- Defaults:
   SpeedTo=SpeedTo or UTILS.KmphToKnots(self.speedCruise)
   SpeedHold=SpeedHold or (self.ishelo and 80 or 250)
   SpeedLand=SpeedLand or (self.ishelo and 40 or 170)
+  
+  -- Clear holding time in any case.
+  self.Tholding=nil  
 
   -- Debug message.
   local text=string.format("Flight group set to hold at airbase %s. SpeedTo=%d, SpeedHold=%d, SpeedLand=%d", airbase:GetName(), SpeedTo, SpeedHold, SpeedLand)
@@ -2181,7 +2306,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
     --self:ClearTasks()
 
      -- Just route the group. Respawn might happen when going from holding to final.
-    self:Route(wp, 1)
+    self:Route(wp)
 
   end
 
@@ -2473,9 +2598,6 @@ function FLIGHTGROUP:onafterLandAt(From, Event, To, Coordinate, Duration)
   local DCStask=self.group:TaskLandAtVec2(Coordinate:GetVec2(), Duration)
 
   local Task=self:NewTaskScheduled(DCStask, 1, "Task_Land_At", 0)
-
-  -- Add task with high priority.
-  --self:AddTask(task, 1, "Task_Land_At", 0)
 
   self:TaskExecute(Task)
 
@@ -3182,10 +3304,58 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
   end
 
   -- Speed in knots.
-  Speed=Speed or 350
+  Speed=Speed or self.speedCruise
 
   -- Create air waypoint.
   local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
+
+  -- Create waypoint data table.
+  local waypoint=self:_CreateWaypoint(wp)
+
+  -- Set altitude.
+  if Altitude then
+    waypoint.alt=UTILS.FeetToMeters(Altitude)
+  end
+
+  -- Add waypoint to table.
+  self:_AddWaypoint(waypoint, wpnumber)
+
+  -- Debug info.
+  self:T(self.lid..string.format("Adding AIR waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, Speed, self.currentwp, #self.waypoints))
+
+  -- Update route.
+  if Updateroute==nil or Updateroute==true then
+    self:__UpdateRoute(-1)
+  end
+
+  return waypoint
+end
+
+--- Add an LANDING waypoint to the flight plan.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Airbase#AIRBASE Airbase The airbase where the group should land.
+-- @param #number Speed Speed in knots. Default 350 kts.
+-- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
+-- @param #number Altitude Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
+-- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
+-- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
+function FLIGHTGROUP:AddWaypointLanding(Airbase, Speed, AfterWaypointWithID, Altitude, Updateroute)
+
+  -- Set waypoint index.
+  local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
+
+  if wpnumber>self.currentwp then
+    self.passedfinalwp=false
+  end
+
+  -- Speed in knots.
+  Speed=Speed or self.speedCruise
+
+  -- Get coordinate of airbase.
+  local Coordinate=Airbase:GetCoordinate()
+
+  -- Create air waypoint.
+  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO,COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, nil, Airbase, {}, "Landing Temp", nil)
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)

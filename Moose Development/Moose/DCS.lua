@@ -460,6 +460,22 @@ do -- Types
   --@field #boolean lateActivated
   --@field #boolean uncontrolled
 
+  --- DCS template data structure.
+  -- @type Template
+  -- @field #boolean uncontrolled Aircraft is uncontrolled.
+  -- @field #boolean lateActivation Group is late activated.
+  -- @field #number x 2D Position on x-axis in meters.
+  -- @field #number y 2D Position on y-axis in meters.
+  -- @field #table units Unit list.
+  -- 
+  
+  --- Unit data structure.
+  --@type Template.Unit
+  --@field #string name Name of the unit.
+  --@field #number x
+  --@field #number y
+  --@field #number alt
+
 end --
 
 

@@ -464,8 +464,8 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       local ammo=self:GetAmmoElement(element)
 
       -- Output text for element.
-      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d",
-      i, name, status, life, life0, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles)
+      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d, cargo=%d/%d kg",
+      i, name, status, life, life0, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles, element.weightCargo, element.weightMaxCargo)
     end
     if #self.elements==0 then
       text=text.." none!"
@@ -478,88 +478,7 @@ function ARMYGROUP:onafterStatus(From, Event, To)
   -- Cargo
   ---
   
-  if self.cargoTransport then
-    
-    -- Debug
-    local text=string.format("Carrier [%s]: %s --> %s", self.carrierStatus, self.cargoTransport.pickupzone:GetName(), self.cargoTransport.deployzone:GetName())    
-    for _,_cargo in pairs(self.cargoTransport.cargos) do    
-      local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup      
-      local name=cargo.opsgroup:GetName()
-      local gstatus=cargo.opsgroup:GetState()
-      local cstatus=cargo.opsgroup.cargoStatus
-      text=text..string.format("\n- %s [%s]: %s", name, gstatus, cstatus)
-      --self:I({template=cargo.opsgroup.template})
-    end    
-    self:I(self.lid..text)
-    
-
-    if self:IsNotCarrier() then
-    
-      env.info("FF not carrier ==> pickup")
-      
-      --TODO: Check if there is still cargo left. Maybe someone else already picked it up or it got destroyed.
-    
-      -- Initiate the cargo transport process.
-      self:Pickup(self.cargoTransport.pickupzone)
-      
-    elseif self:IsPickingup() then
-    
-      env.info("FF picking up")
-      
-      --TODO: Check if there is still cargo left. Maybe someone else already picked it up or it got destroyed.
-    
-    elseif self:IsLoading() then
-    
-      env.info("FF loading")
-    
-      local boarding=false      
-      for _,_cargo in pairs(self.cargoTransport.cargos) do    
-        local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-        
-        if cargo.opsgroup.carrierGroup and cargo.opsgroup.carrierGroup:GetName()==self:GetName() and cargo.opsgroup.cargoStatus==OPSGROUP.CargoStatus.BOARDING then
-          boarding=true
-        end
-        
-      end
-      
-      -- Boarding finished ==> Transport cargo.
-      if not boarding then
-        env.info("FF boarding finished ==> Loaded")
-        self:Loaded()
-      end      
-    
-    elseif self:IsLoaded() then
-    
-      env.info("FF loaded (nothing to do?)")
-      
-    elseif self:IsTransporting() then
-    
-      env.info("FF transporting (nothing to do)")
-      
-    elseif self:IsUnloading() then
-    
-      env.info("FF unloading ==> Checking if all cargo was delivered")            
-
-      local delivered=true
-      for _,_cargo in pairs(self.cargoTransport.cargos) do    
-        local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-        
-        if (cargo.opsgroup.carrierGroup and cargo.opsgroup.carrierGroup:GetName()==self:GetName()) and not cargo.delivered then
-          delivered=false
-          break
-        end
-        
-      end
-      
-      -- Boarding finished ==> Transport cargo.
-      if delivered then
-        env.info("FF unloading finished ==> Unloaded")
-        self:Unloaded()
-      end      
-    
-    end
-      
-  end
+  self:_CheckCargoTransport()
 
 
   ---
