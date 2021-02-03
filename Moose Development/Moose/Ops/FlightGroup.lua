@@ -57,7 +57,6 @@
 -- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
 -- @field #table menu F10 radio menu.
 -- @field #string controlstatus Flight control status.
--- @field #boolean ishelo If true, the is a helicopter group.
 -- @field #number callsignName Callsign name.
 -- @field #number callsignNumber Callsign number.
 -- @field #boolean despawnAfterLanding If true, group is despawned after landed at an airbase.
@@ -146,7 +145,7 @@ FLIGHTGROUP = {
   Tholding           =   nil,
   Tparking           =   nil,
   menu               =   nil,
-  ishelo             =   nil,
+  isHelo             =   nil,
 }
 
 
@@ -1004,7 +1003,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   ---
   -- Airboss Helo
   ---
-  if self.ishelo and self.airboss and self:IsHolding() then
+  if self.isHelo and self.airboss and self:IsHolding() then
     if self.airboss:IsRecovering() or self:IsFuelCritical() then
       self:ClearToLand()
     end
@@ -1445,7 +1444,7 @@ function FLIGHTGROUP:onafterElementLanded(From, Event, To, Element, airbase)
   else
 
     -- Helos with skids land directly on parking spots.
-    if self.ishelo then
+    if self.isHelo then
 
       local Spot=self:GetParkingSpot(Element, 10, airbase)
 
@@ -2204,8 +2203,8 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
   -- Defaults:
   SpeedTo=SpeedTo or UTILS.KmphToKnots(self.speedCruise)
-  SpeedHold=SpeedHold or (self.ishelo and 80 or 250)
-  SpeedLand=SpeedLand or (self.ishelo and 40 or 170)
+  SpeedHold=SpeedHold or (self.isHelo and 80 or 250)
+  SpeedLand=SpeedLand or (self.isHelo and 40 or 170)
   
   -- Clear holding time in any case.
   self.Tholding=nil  
@@ -2214,7 +2213,7 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   local text=string.format("Flight group set to hold at airbase %s. SpeedTo=%d, SpeedHold=%d, SpeedLand=%d", airbase:GetName(), SpeedTo, SpeedHold, SpeedLand)
   self:T(self.lid..text)
 
-  local althold=self.ishelo and 1000+math.random(10)*100 or math.random(4,10)*1000
+  local althold=self.isHelo and 1000+math.random(10)*100 or math.random(4,10)*1000
 
   -- Holding points.
   local c0=self.group:GetCoordinate()
@@ -2244,8 +2243,8 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   end
 
    -- Altitude above ground for a glide slope of 3 degrees.
-  local x1=self.ishelo and UTILS.NMToMeters(5.0) or UTILS.NMToMeters(10)
-  local x2=self.ishelo and UTILS.NMToMeters(2.5) or UTILS.NMToMeters(5)
+  local x1=self.isHelo and UTILS.NMToMeters(5.0) or UTILS.NMToMeters(10)
+  local x2=self.isHelo and UTILS.NMToMeters(2.5) or UTILS.NMToMeters(5)
   local alpha=math.rad(3)
   local h1=x1*math.tan(alpha)
   local h2=x2*math.tan(alpha)
@@ -2365,8 +2364,8 @@ end
 function FLIGHTGROUP:onafterWait(From, Event, To, Coord, Altitude, Speed)
 
   Coord=Coord or self.group:GetCoordinate()
-  Altitude=Altitude or (self.ishelo and 1000 or 10000)
-  Speed=Speed or (self.ishelo and 80 or 250)
+  Altitude=Altitude or (self.isHelo and 1000 or 10000)
+  Speed=Speed or (self.isHelo and 80 or 250)
 
   -- Debug message.
   local text=string.format("Flight group set to wait/orbit at altitude %d m and speed %.1f km/h", Altitude, Speed)
@@ -2464,7 +2463,7 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
 
   elseif self.airboss then
 
-    if self.ishelo then
+    if self.isHelo then
 
       local carrierpos=self.airboss:GetCoordinate()
       local carrierheading=self.airboss:GetHeading()
@@ -2578,7 +2577,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to land. Default is current position.
 -- @param #number Duration The duration in seconds to remain on ground. Default 600 sec (10 min).
 function FLIGHTGROUP:onbeforeLandAt(From, Event, To, Coordinate, Duration)
-  return self.ishelo
+  return self.isHelo
 end
 
 --- On after "LandAt" event. Order helicopter to land at a specific point.
@@ -2804,7 +2803,7 @@ function FLIGHTGROUP:_InitGroup()
   self.isGround=false
 
   -- Helo group.
-  self.ishelo=group:IsHelicopter()
+  self.isHelo=group:IsHelicopter()
 
   -- Is (template) group uncontrolled.
   self.isUncontrolled=self.template.uncontrolled
@@ -2816,7 +2815,7 @@ function FLIGHTGROUP:_InitGroup()
   self.speedMax=group:GetSpeedMax()
 
   -- Cruise speed limit 350 kts for fixed and 80 knots for rotary wings.
-  local speedCruiseLimit=self.ishelo and UTILS.KnotsToKmph(80) or UTILS.KnotsToKmph(350)
+  local speedCruiseLimit=self.isHelo and UTILS.KnotsToKmph(80) or UTILS.KnotsToKmph(350)
 
   -- Cruise speed: 70% of max speed but within limit.
   self.speedCruise=math.min(self.speedMax*0.7, speedCruiseLimit)
@@ -2844,7 +2843,7 @@ function FLIGHTGROUP:_InitGroup()
   self.callsign.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
 
   -- Set default formation.
-  if self.ishelo then
+  if self.isHelo then
     self.optionDefault.Formation=ENUMS.Formation.RotaryWing.EchelonLeft.D300
   else
     self.optionDefault.Formation=ENUMS.Formation.FixedWing.EchelonLeft.Group

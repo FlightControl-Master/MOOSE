@@ -609,6 +609,11 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   
   end
 
+  ---
+  -- Cargo
+  ---
+  
+  self:_CheckCargoTransport()
 
   ---
   -- Tasks & Missions
@@ -1164,50 +1169,19 @@ function NAVYGROUP:_InitGroup()
   -- Get all units of the group.
   local units=self.group:GetUnits()
   
-  for _,_unit in pairs(units) do
-    local unit=_unit --Wrapper.Unit#UNIT
-    
-    -- Get unit template.
-    local unittemplate=unit:GetTemplate()    
-    
-    local element={} --#NAVYGROUP.Element
-    element.name=unit:GetName()
-    element.unit=unit
-    element.status=OPSGROUP.ElementStatus.INUTERO
-    element.typename=unit:GetTypeName()
-    element.skill=unittemplate.skill or "Unknown"
-    element.ai=true
-    element.category=element.unit:GetUnitCategory()
-    element.categoryname=element.unit:GetCategoryName()
-    element.size, element.length, element.height, element.width=unit:GetObjectSize()
-    element.ammo0=self:GetAmmoUnit(unit, false)    
-
-    -- Debug text.
-    if self.verbose>=2 then
-      local text=string.format("Adding element %s: status=%s, skill=%s, category=%s (%d), size: %.1f (L=%.1f H=%.1f W=%.1f)",
-      element.name, element.status, element.skill, element.categoryname, element.category, element.size, element.length, element.height, element.width)
-      self:I(self.lid..text)
-    end
-
-    -- Add element to table.    
-    table.insert(self.elements, element)
-
-    -- Get Descriptors.
-    self.descriptors=self.descriptors or unit:GetDesc()
-    
-    -- Set type name.
-    self.actype=self.actype or unit:GetTypeName()
-    
-    if unit:IsAlive() then
-      -- Trigger spawned event. 
-      self:ElementSpawned(element)
-    end
-    
+  -- Add elemets.
+  for _,unit in pairs(units) do
+    self:_AddElementByName(unit:GetName())
   end
-
-    
+  
+  -- Get Descriptors.
+  self.descriptors=units[1]:GetDesc()
+  
+  -- Set type name.
+  self.actype=units[1]:GetTypeName()
+      
   -- Debug info.
-  if self.verbose>=1 then
+  if self.verbose>=0 then
     local text=string.format("Initialized Navy Group %s:\n", self.groupname)
     text=text..string.format("Unit type     = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
