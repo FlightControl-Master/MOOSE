@@ -1745,10 +1745,9 @@ do -- COORDINATE
   --- Creates an explosion at the point of a certain intensity.
   -- @param #COORDINATE self
   -- @param #number ExplosionIntensity Intensity of the explosion in kg TNT. Default 100 kg.
-  -- @param #number Delay Delay before explosion in seconds.
+  -- @param #number Delay (Optional) Delay before explosion is triggered in seconds.
   -- @return #COORDINATE self
   function COORDINATE:Explosion( ExplosionIntensity, Delay )
-    self:F2( { ExplosionIntensity } )
     ExplosionIntensity=ExplosionIntensity or 100
     if Delay and Delay>0 then
       self:ScheduleOnce(Delay, self.Explosion, self, ExplosionIntensity)
@@ -1760,11 +1759,17 @@ do -- COORDINATE
 
   --- Creates an illumination bomb at the point.
   -- @param #COORDINATE self
-  -- @param #number power Power of illumination bomb in Candela.
+  -- @param #number Power Power of illumination bomb in Candela. Default 1000 cd.
+  -- @param #number Delay (Optional) Delay before bomb is ignited in seconds.
   -- @return #COORDINATE self
-  function COORDINATE:IlluminationBomb(power)
-    self:F2()
-    trigger.action.illuminationBomb( self:GetVec3(), power )
+  function COORDINATE:IlluminationBomb(Power, Delay)
+    Power=Power or 1000
+    if Delay and Delay>0 then
+      self:ScheduleOnce(Delay, self.IlluminationBomb, self, Power)
+    else  
+      trigger.action.illuminationBomb(self:GetVec3(), Power)
+    end
+    return self
   end
 
 

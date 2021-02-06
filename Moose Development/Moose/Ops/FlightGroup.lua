@@ -31,10 +31,6 @@
 
 --- FLIGHTGROUP class.
 -- @type FLIGHTGROUP
--- @field Wrapper.Airbase#AIRBASE homebase The home base of the flight group.
--- @field Wrapper.Airbase#AIRBASE destbase The destination base of the flight group.
--- @field Core.Zone#ZONE homezone The home zone of the flight group. Set when spawn happens in air.
--- @field Core.Zone#ZONE destzone The destination zone of the flight group. Set when final waypoint is in air.
 -- @field #string actype Type name of the aircraft.
 -- @field #number rangemax Max range in km.
 -- @field #number ceiling Max altitude the aircraft can fly at in meters.
@@ -690,10 +686,17 @@ function FLIGHTGROUP:StartUncontrolled(delay)
     self:ScheduleOnce(delay, FLIGHTGROUP.StartUncontrolled, self)
   else
 
-    if self:IsAlive() then
-      --TODO: check Alive==true and Alive==false ==> Activate first
-      self:T(self.lid.."Starting uncontrolled group")
-      self.group:StartUncontrolled(delay)
+    local alive=self:IsAlive()
+    
+    if alive~=nil then
+      -- Check if group is already active.
+      local _delay=0
+      if alive==false then        
+        self:Activate()
+        _delay=1
+      end      
+      self:I(self.lid.."Starting uncontrolled group")
+      self.group:StartUncontrolled(_delay)
       self.isUncontrolled=true
     else
       self:E(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive!")
@@ -1443,17 +1446,20 @@ function FLIGHTGROUP:onafterElementLanded(From, Event, To, Element, airbase)
 
   else
 
+    -- Set element status.
+    self:_UpdateStatus(Element, OPSGROUP.ElementStatus.LANDED, airbase)
+
     -- Helos with skids land directly on parking spots.
     if self.isHelo then
 
       local Spot=self:GetParkingSpot(Element, 10, airbase)
 
-      self:_SetElementParkingAt(Element, Spot)
+      if Spot then
+        self:_SetElementParkingAt(Element, Spot)
+        self:_UpdateStatus(Element, OPSGROUP.ElementStatus.ARRIVED)
+      end
 
     end
-
-    -- Set element status.
-    self:_UpdateStatus(Element, OPSGROUP.ElementStatus.LANDED, airbase)
 
   end
 end
@@ -1469,6 +1475,7 @@ end
 function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element, airbase, Parking)
   self:T(self.lid..string.format("Element arrived %s at %s airbase using parking spot %d", Element.name, airbase and airbase:GetName() or "unknown", Parking and Parking.TerminalID or -99))
 
+  -- Set element parking.
   self:_SetElementParkingAt(Element, Parking)
 
   -- Set element status.
@@ -1661,9 +1668,22 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterAirborne(From, Event, To)
   self:T(self.lid..string.format("Flight airborne"))
+  
+  -- No current airbase any more.
+  self.currbase=nil
 
   if self.isAI then
-    self:_CheckGroupDone(1)
+    if self:IsTransporting() then
+      env.info("FF transporting land at airbase ")
+      local airbase=self.cargoTransport.deployzone:GetAirbase()
+      self:LandAtAirbase(airbase)
+    elseif self:IsPickingup() then
+      env.info("FF pickingup land at airbase ")
+      local airbase=self.cargoTransport.pickupzone:GetAirbase()
+      self:LandAtAirbase(airbase)
+    else
+      self:_CheckGroupDone(1)
+    end
   else
     self:_UpdateMenu()
   end
@@ -1714,7 +1734,6 @@ function FLIGHTGROUP:onafterLandedAt(From, Event, To)
   end
   
 end
-
 
 --- On after "Arrived" event.
 -- @param #FLIGHTGROUP self
@@ -1800,6 +1819,13 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
     
     -- Reset.
     self.isLandingAtAirbase=nil
+    
+    -- Init (un-)loading process.
+    if self:IsPickingup() then
+      self:__Loading(-1)
+    elseif self:IsTransporting() then
+      self:__Deploy(-1)
+    end
     
   else
     -- Depawn after 5 min. Important to trigger dead events before DCS despawns on its own without any notification.
@@ -2031,6 +2057,9 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
 
       -- Number of mission remaining.
       local nMissions=self:CountRemainingMissison()
+      
+      -- Number of cargo transports remaining.
+      local nTransports=self:CountRemainingTransports()
 
       -- Final waypoint passed?
       if self.passedfinalwp then
@@ -2039,7 +2068,7 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
         if self.currentmission==nil and self.taskcurrent==0 then
 
           -- Number of remaining tasks/missions?
-          if nTasks==0 and nMissions==0 then
+          if nTasks==0 and nMissions==0 and nTransports==0 then
 
             local destbase=self.destbase or self.homebase
             local destzone=self.destzone or self.homezone
@@ -2201,6 +2230,9 @@ end
 -- @param #number SpeedLand Landing speed in knots. Default 170 kts.
 function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
+  -- Set current airbase.
+  self.currbase=airbase
+
   -- Defaults:
   SpeedTo=SpeedTo or UTILS.KmphToKnots(self.speedCruise)
   SpeedHold=SpeedHold or (self.isHelo and 80 or 250)
@@ -2287,10 +2319,10 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
     local pland=airbase:GetCoordinate():Translate(x2, runway.heading-180):SetAltitude(h2)
     wp[#wp+1]=pland:WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing")
 
-  elseif airbase:IsShip() then
+  elseif airbase:IsShip() or airbase:IsHelipad() then
 
     ---
-    -- Ship
+    -- Ship or Helipad
     ---
 
     local pland=airbase:GetCoordinate()
@@ -2713,6 +2745,8 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
     end
 
   end
+  
+  self.currbase=nil
 
   -- Handle events:
   self:UnHandleEvent(EVENTS.Birth)
@@ -3542,12 +3576,21 @@ end
 -- @return Wrapper.Airbase#AIRBASE.ParkingSpot Parking spot or nil if no spot is within distance threshold.
 function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
 
+  -- Coordinate of unit landed
   local coord=element.unit:GetCoordinate()
 
+  -- Airbase.
   airbase=airbase or self:GetClosestAirbase() --coord:GetClosestAirbase(nil, self:GetCoalition())
 
   -- TODO: replace by airbase.parking if AIRBASE is updated.
   local parking=airbase:GetParkingSpotsTable()
+  
+  -- If airbase is ship, translate parking coords. Alternatively, we just move the coordinate of the unit to the origin of the map, which is way more efficient.
+  if airbase and airbase:IsShip() then
+    coord.x=0
+    coord.z=0
+    maxdist=100
+  end
 
   local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
   local dist=nil
