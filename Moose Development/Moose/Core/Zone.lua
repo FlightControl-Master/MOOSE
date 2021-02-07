@@ -1057,24 +1057,48 @@ end
 
 --- Returns a random Vec2 location within the zone.
 -- @param #ZONE_RADIUS self
--- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
--- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @param #number inner (Optional) Minimal distance from the center of the zone. Default is 0.
+-- @param #number outer (Optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type! 
 -- @return DCS#Vec2 The random location within the zone.
-function ZONE_RADIUS:GetRandomVec2( inner, outer )
-	self:F( self.ZoneName, inner, outer )
+function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
 
-	local Point = {}
 	local Vec2 = self:GetVec2()
 	local _inner = inner or 0
 	local _outer = outer or self:GetRadius()
+	
+	if surfacetypes and type(surfacetypes)~="table" then
+    surfacetypes={surfacetypes}
+	end
 
-	local angle = math.random() * math.pi * 2;
-	Point.x = Vec2.x + math.cos( angle ) * math.random(_inner, _outer);
-	Point.y = Vec2.y + math.sin( angle ) * math.random(_inner, _outer);
+  local function _getpoint()
+    local point = {}
+    local angle = math.random() * math.pi * 2
+    point.x = Vec2.x + math.cos(angle) * math.random(_inner, _outer)
+    point.y = Vec2.y + math.sin(angle) * math.random(_inner, _outer)
+    return point
+  end
+  
+  local function _checkSurface(point)
+    for _,sf in pairs(surfacetypes) do
+      if sf==land.getSurfaceType(point) then
+        return true
+      end
+    end
+    return false
+  end
 	
-	self:T( { Point } )
+	local point=_getpoint()
 	
-	return Point
+	if surfacetypes then
+	  local N=1 ; local Nmax=1000
+    while _checkSurface(point)==false and N<=Nmax do
+      point=_getpoint()
+      N=N+1
+    end
+  end
+	
+	return point
 end
 
 --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
@@ -1126,15 +1150,15 @@ end
 
 --- Returns a @{Core.Point#COORDINATE} object reflecting a random 3D location within the zone.
 -- @param #ZONE_RADIUS self
--- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
--- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#COORDINATE
-function ZONE_RADIUS:GetRandomCoordinate( inner, outer )
-  self:F( self.ZoneName, inner, outer )
+-- @param #number inner (Optional) Minimal distance from the center of the zone. Default is 0.
+-- @param #number outer (Optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type! 
+-- @return Core.Point#COORDINATE The random coordinate.
+function ZONE_RADIUS:GetRandomCoordinate(inner, outer, surfacetypes)
 
-  local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2(inner, outer) )
+  local vec2=self:GetRandomVec2(inner, outer, surfacetypes)
 
-  self:T3( { Coordinate = Coordinate } )
+  local Coordinate = COORDINATE:NewFromVec2(vec2)
   
   return Coordinate
 end

@@ -358,6 +358,14 @@ function FLIGHTGROUP:SetAirwing(airwing)
   return self
 end
 
+--- Set if aircraft is VTOL capable. Unfortunately, there is no DCS way to determine this via scripting.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetVTOL()
+  self.isVTOL=true
+  return self
+end
+
 --- Get airwing the flight group belongs to.
 -- @param #FLIGHTGROUP self
 -- @return Ops.AirWing#AIRWING The AIRWING object.
@@ -1674,13 +1682,17 @@ function FLIGHTGROUP:onafterAirborne(From, Event, To)
 
   if self.isAI then
     if self:IsTransporting() then
-      env.info("FF transporting land at airbase ")
-      local airbase=self.cargoTransport.deployzone:GetAirbase()
-      self:LandAtAirbase(airbase)
+      if self.cargoTransport and self.cargoTransport.deployzone and self.cargoTransport.deployzone:IsInstanceOf("ZONE_AIRBASE") then
+        env.info("FF transporting land at airbase ")
+        local airbase=self.cargoTransport.deployzone:GetAirbase()
+        self:LandAtAirbase(airbase)
+      end
     elseif self:IsPickingup() then
-      env.info("FF pickingup land at airbase ")
-      local airbase=self.cargoTransport.pickupzone:GetAirbase()
-      self:LandAtAirbase(airbase)
+      if self.cargoTransport and self.cargoTransport.pickupzone and self.cargoTransport.pickupzone:IsInstanceOf("ZONE_AIRBASE") then
+        env.info("FF pickingup land at airbase ")
+        local airbase=self.cargoTransport.pickupzone:GetAirbase()
+        self:LandAtAirbase(airbase)
+      end
     else
       self:_CheckGroupDone(1)
     end
@@ -2919,12 +2931,14 @@ function FLIGHTGROUP:_InitGroup()
     self.refueltype=select(2, unit:IsRefuelable())
 
     -- Debug info.
-    if self.verbose>=1 then
+    if self.verbose>=0 then
       local text=string.format("Initialized Flight Group %s:\n", self.groupname)
       text=text..string.format("Unit type     = %s\n", self.actype)
       text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
       text=text..string.format("Range max    = %.1f km\n", self.rangemax/1000)
       text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
+      text=text..string.format("Weight       = %.1f kg\n", self:GetWeightTotal())
+      text=text..string.format("Cargo bay    = %.1f kg\n", self:GetFreeCargobay())      
       text=text..string.format("Tanker type  = %s\n", tostring(self.tankertype))
       text=text..string.format("Refuel type  = %s\n", tostring(self.refueltype))
       text=text..string.format("AI           = %s\n", tostring(self.isAI))
@@ -3295,6 +3309,7 @@ function FLIGHTGROUP:InitWaypoints()
   -- Get home and destination airbases from waypoints.
   self.homebase=self.homebase or self:GetHomebaseFromWaypoints()
   self.destbase=self.destbase or self:GetDestinationFromWaypoints()
+  self.currbase=self:GetHomebaseFromWaypoints()
 
   -- Remove the landing waypoint. We use RTB for that. It makes adding new waypoints easier as we do not have to check if the last waypoint is the landing waypoint.
   if self.destbase then

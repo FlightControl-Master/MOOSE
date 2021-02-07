@@ -19,13 +19,14 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string groupname Name of the group.
 -- @field Wrapper.Group#GROUP group Group object.
--- @field #table template Template of the group.
+-- @field DCS#Template template Template table of the group.
 -- @field #boolean isLateActivated Is the group late activated.
 -- @field #boolean isUncontrolled Is the group uncontrolled.
 -- @field #boolean isFlightgroup Is a FLIGHTGROUP.
 -- @field #boolean isArmygroup Is an ARMYGROUP.
 -- @field #boolean isNavygroup Is a NAVYGROUP.
 -- @field #boolean isHelo If true, the is a helicopter group.
+-- @field #boolean isVTOL If true, the is capable of Vertical TakeOff and Landing (VTOL). 
 -- @field #table elements Table of elements, i.e. units of the group.
 -- @field #boolean isAI If true, group is purely AI.
 -- @field #boolean isAircraft If true, group is airplane or helicopter.
@@ -108,6 +109,7 @@
 -- @field #OPSGROUP.CargoTransport cargoTransport Current cargo transport assignment.
 -- @field #string cargoStatus Cargo status of this group acting as cargo.
 -- @field #string carrierStatus Carrier status of this group acting as cargo carrier.
+-- @field #number cargocounter Running number of cargo UIDs.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -165,6 +167,7 @@ OPSGROUP = {
   weaponData         =    {},
   cargoqueue         =    {},
   cargoBay           =    {},
+  cargocounter       =     1,
 }
 
 
@@ -499,6 +502,7 @@ function OPSGROUP:New(group)
   self:SetLaser(1688, true, false, 0.5)
   self.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
   self.carrierStatus=OPSGROUP.CarrierStatus.NOTCARRIER
+  self.cargocounter=1
   
   -- Init task counter.
   self.taskcurrent=0
@@ -582,7 +586,8 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "Transport",        "*")           -- Carrier is transporting cargo.
   self:AddTransition("*",             "Deploy",           "*")           -- Carrier is dropping off cargo.
   self:AddTransition("*",             "Unload",           "*")           -- Carrier unload a cargo group.
-  self:AddTransition("*",             "Unloaded",         "*")           -- Carrier unloaded all its cargo.
+  self:AddTransition("*",             "Unloaded",         "*")           -- Carrier unloaded all its current cargo.
+  self:AddTransition("*",             "Delivered",        "*")           -- Carrier delivered ALL cargo of the transport assignment.
   
   ------------------------
   --- Pseudo Functions ---
@@ -1283,7 +1288,7 @@ function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
     
       -- Clear any task ==> makes DCS crash!
       --self.group:ClearTasks()
-    
+
       -- Get all units.
       local units=self:GetDCSUnits()
          
@@ -1292,11 +1297,12 @@ function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
         if unit then
           local name=unit:getName()
           if name then
+            -- Despawn the unit.                         
             self:DespawnUnit(name, 0, NoEventRemoveUnit)
           end
         end
       end
-        
+              
     end
   end
 
@@ -3002,6 +3008,11 @@ end
 -- @return Ops.Auftrag#AUFTRAG Next mission or *nil*.
 function OPSGROUP:_GetNextMission()
 
+  -- Check if group is acting as carrier or cargo at the moment.
+  if self:IsTransporting() or self:IsPickingup() or self:IsLoading() or self:IsLoaded() then
+    return nil
+  end
+
   -- Number of missions.
   local Nmissions=#self.missionqueue
 
@@ -4376,7 +4387,7 @@ end
 --- Respawn the group.
 -- @param #OPSGROUP self
 -- @param #number Delay Delay in seconds before respawn happens. Default 0.
--- @param #table Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
+-- @param DCS#Template Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
 -- @param #boolean Reset Reset positions if TRUE.
 -- @return #OPSGROUP self
 function OPSGROUP:_Respawn(Delay, Template, Reset)
@@ -4389,17 +4400,6 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
   
     -- Given template or get old.
     Template=Template or UTILS.DeepCopy(self.template)
-    
-    -- Get correct heading.
-    local function _Heading(course)
-      local h
-      if course<=180 then
-        h=math.rad(course)
-      else
-        h=-math.rad(360-course)
-      end
-      return h 
-    end        
   
     if self:IsAlive() then
     
@@ -4466,6 +4466,10 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
   
     -- Spawn new group.
     _DATABASE:Spawn(Template)
+    
+    -- Set activation and controlled state.
+    self.isLateActivated=Template.lateActivation
+    self.isUncontrolled=Template.uncontrolled
     
     -- Reset events.
     --self:ResetEvents()
@@ -4577,69 +4581,15 @@ function OPSGROUP:_CheckCargoTransport()
   end
   self:I(self.lid..text)
   
-
-  if self.cargoTransport then
-    -- TODO: Check if this group can actually transport any cargo.
-
-    local done=true
-    for _,_cargo in pairs(self.cargoTransport.cargos) do
-      local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-      
-      if cargo.delivered then
-        -- This one is delivered.
-      elseif cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped() then
-        -- This one is dead.
-      else
-        done=false --Someone is not done!
-      end
-      
-      --TODO: check if cargo is too heavy for this carrier group ==> elseif
-      
-    end
+  -- Loop over cargo queue and check if everything was delivered.
+  for i=#self.cargoqueue,1,-1 do
+    local transport=self.cargoqueue[i] --#OPSGROUP.CargoTransport
+    self:_CheckDelivered(transport)
+  end      
     
-    if done then
-      self.cargoTransport.status=OPSGROUP.TransportStatus.DELIVERED
-    end
-    
-  end
-  
   -- Check if there is anything in the queue.
-  if not self.cargoTransport then
-    
-    -- Current position.
-    local coord=self:GetCoordinate()
-
-    -- Sort results table wrt prio and distance to pickup zone.
-    local function _sort(a, b)
-      local transportA=a --#OPSGROUP.CargoTransport
-      local transportB=b --#OPSGROUP.CargoTransport
-      local distA=transportA.pickupzone:GetCoordinate():Get2DDistance(coord)
-      local distB=transportB.pickupzone:GetCoordinate():Get2DDistance(coord)
-      return (transportA.prio<transportB.prio) or (transportA.prio==transportB.prio and distA<distB)
-    end
-    table.sort(self.cargoqueue, _sort)
-    
-    -- Look for first mission that is SCHEDULED.
-    local vip=math.huge
-    for _,_cargotransport in pairs(self.cargoqueue) do
-      local cargotransport=_cargotransport --#OPSGROUP.CargoTransport    
-      if cargotransport.importance and cargotransport.importance<vip then
-        vip=cargotransport.importance
-      end
-    end
-  
-    -- Find next transport assignment.    
-    for _,_cargotransport in pairs(self.cargoqueue) do
-      local cargotransport=_cargotransport --#OPSGROUP.CargoTransport
-      
-      if Time>=cargotransport.Tstart and cargotransport.status==OPSGROUP.TransportStatus.SCHEDULED and (cargotransport.importance==nil or cargotransport.importance<=vip) then
-        cargotransport.status=OPSGROUP.TransportStatus.EXECUTING
-        self.cargoTransport=cargotransport
-        break
-      end
-      
-    end
-    
+  if not self.cargoTransport then    
+    self.cargoTransport=self:_GetNextCargoTransport()    
   end
 
   -- Now handle the transport.
@@ -4718,6 +4668,7 @@ function OPSGROUP:_CheckCargoTransport()
       
     elseif self:IsUnloading() then
     
+      -- Debug info.
       self:I(self.lid.."Unloading ==> Checking if all cargo was delivered")
 
       local delivered=true
@@ -4731,7 +4682,7 @@ function OPSGROUP:_CheckCargoTransport()
         
       end
       
-      -- Boarding finished ==> Transport cargo.
+      -- Unloading finished ==> pickup next batch or call it a day.
       if delivered then
         self:I(self.lid.."Unloading finished ==> Unloaded")
         self:Unloaded()
@@ -4744,6 +4695,83 @@ function OPSGROUP:_CheckCargoTransport()
   -- TODO: Remove delivered transports from cargo queue!
 
   return self
+end
+
+--- Get cargo transport from cargo queue.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP.CargoTransport The next due cargo transport or `nil`.
+function OPSGROUP:_GetNextCargoTransport()
+
+  -- Abs. mission time in seconds.
+  local Time=timer.getAbsTime()
+
+  -- Current position.
+  local coord=self:GetCoordinate()
+
+  -- Sort results table wrt prio and distance to pickup zone.
+  local function _sort(a, b)
+    local transportA=a --#OPSGROUP.CargoTransport
+    local transportB=b --#OPSGROUP.CargoTransport
+    local distA=transportA.pickupzone:GetCoordinate():Get2DDistance(coord)
+    local distB=transportB.pickupzone:GetCoordinate():Get2DDistance(coord)
+    return (transportA.prio<transportB.prio) or (transportA.prio==transportB.prio and distA<distB)
+  end
+  table.sort(self.cargoqueue, _sort)
+  
+  -- Look for first mission that is SCHEDULED.
+  local vip=math.huge
+  for _,_cargotransport in pairs(self.cargoqueue) do
+    local cargotransport=_cargotransport --#OPSGROUP.CargoTransport    
+    if cargotransport.importance and cargotransport.importance<vip then
+      vip=cargotransport.importance
+    end
+  end
+
+  -- Find next transport assignment.    
+  for _,_cargotransport in pairs(self.cargoqueue) do
+    local cargotransport=_cargotransport --#OPSGROUP.CargoTransport
+    
+    if Time>=cargotransport.Tstart and cargotransport.status==OPSGROUP.TransportStatus.SCHEDULED and (cargotransport.importance==nil or cargotransport.importance<=vip) then
+      return cargotransport
+    end
+    
+  end
+
+  return nil
+end
+
+--- Check if all cargo of this transport assignment was delivered.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.CargoTransport The next due cargo transport or `nil`.
+-- @return #boolean If true, all cargo was delivered.
+function OPSGROUP:_CheckDelivered(CargoTransport)
+
+  -- TODO: Check if this group can actually transport any cargo.
+
+  local done=true
+  for _,_cargo in pairs(CargoTransport.cargos) do
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+    
+    if cargo.delivered then
+      -- This one is delivered.
+    elseif cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped() then
+      -- This one is dead.
+    else
+      done=false --Someone is not done!
+    end
+    
+    --TODO: check if ALL remaining cargo is too heavy for this carrier group ==> el
+    
+  end
+  
+  if done then
+    self:Delivered(CargoTransport)    
+  end
+
+  -- Debug info.
+  self:I(self.lid..string.format("Cargotransport UID=%d Status=%s: delivered=%s", CargoTransport.uid, CargoTransport.status, tostring(done)))
+  
+  return done
 end
 
 --- Create a cargo transport assignment.
@@ -4763,11 +4791,15 @@ function OPSGROUP:AddCargoTransport(GroupSet, Pickupzone, Deployzone, Prio, Impo
   -- Create a new cargo transport assignment.
   local cargotransport=self:CreateCargoTransport(GroupSet, Pickupzone, Deployzone, Prio, Importance, ClockStart, Embarkzone, Disembarkzone, NewCarrierGroup)
   
-  -- Set state to SCHEDULED.
-  cargotransport.status=OPSGROUP.TransportStatus.SCHEDULED
+  if cargotransport then
   
-  --Add to cargo queue
-  table.insert(self.cargoqueue, cargotransport)
+    -- Set state to SCHEDULED.
+    cargotransport.status=OPSGROUP.TransportStatus.SCHEDULED
+    
+    --Add to cargo queue
+    table.insert(self.cargoqueue, cargotransport)
+    
+  end
   
   return cargotransport
 end
@@ -4816,7 +4848,7 @@ function OPSGROUP:CreateCargoTransport(GroupSet, Pickupzone, Deployzone, Prio, I
 
   -- Data structure.
   local transport={} --#OPSGROUP.CargoTransport
-  transport.uid=1
+  transport.uid=self.cargocounter
   transport.status=OPSGROUP.TransportStatus.PLANNING  
   transport.pickupzone=Pickupzone
   transport.deployzone=Deployzone
@@ -4830,14 +4862,26 @@ function OPSGROUP:CreateCargoTransport(GroupSet, Pickupzone, Deployzone, Prio, I
   
   -- Check type of GroupSet provided.
   if GroupSet:IsInstanceOf("GROUP") or GroupSet:IsInstanceOf("OPSGROUP") then
+  
     -- We got a single GROUP or OPSGROUP objectg.
     local cargo=self:CreateCargoGroupData(GroupSet, Pickupzone, Deployzone)
-    table.insert(transport.cargos, cargo)
-  else
-    -- We got a SET_GROUP object.
-    for _,group in pairs(GroupSet.Set) do
-      local cargo=self:CreateCargoGroupData(group, Pickupzone, Deployzone)
+    
+    if cargo and self:CanCargo(cargo.opsgroup) then
       table.insert(transport.cargos, cargo)
+    end
+    
+  else
+  
+    -- We got a SET_GROUP object.
+    
+    for _,group in pairs(GroupSet.Set) do
+    
+      local cargo=self:CreateCargoGroupData(group, Pickupzone, Deployzone)
+      
+      if cargo and self:CanCargo(cargo.opsgroup) then
+        table.insert(transport.cargos, cargo)
+      end
+      
     end
   end
   
@@ -4856,7 +4900,13 @@ function OPSGROUP:CreateCargoTransport(GroupSet, Pickupzone, Deployzone, Prio, I
     self:I(self.lid..text)
   end
   
-  return transport
+  if #transport.cargos>0 then
+    self.cargocounter=self.cargocounter+1
+    return transport      
+  else
+    self:E(self.lid.."ERROR: Cargo too heavy for this carrier group!")
+    return nil
+  end
 end
 
 --- Create a cargo group data structure.
@@ -4884,7 +4934,7 @@ function OPSGROUP:CreateCargoGroupData(group, Pickupzone, Deployzone)
         opsgroup=ARMYGROUP:New(group)
       end
     else
-      env.info("FF found opsgroup in createcargo")
+      --env.info("FF found opsgroup in createcargo")
     end
     
   end
@@ -4997,6 +5047,25 @@ function OPSGROUP:RedWeightCargo(UnitName, Weight)
   return self
 end
 
+--- Check if the group can be carrier of a cargo group.
+-- **Note** that the cargo group *cannot* be split into units, i.e. the largest cargo bay of any element of the group must be able to load the whole cargo group in one piece. 
+-- @param #OPSGROUP self
+-- @param #OPSGROUP CargoGroup Cargo group, which needs a carrier.
+-- @return #boolean If `true`, there is an element of the group that can load the whole cargo group.
+function OPSGROUP:CanCargo(CargoGroup)
+
+  local weight=CargoGroup:GetWeightTotal()
+  
+  for _,element in pairs(self.elements) do
+    local can=element.weightMaxCargo>=weight
+    if can then
+      return true
+    end
+  end
+  
+  return false
+end
+
 --- Add weight to the internal cargo of an element of the group. 
 -- @param #OPSGROUP self
 -- @param #OPSGROUP CargoGroup Cargo group, which needs a carrier.
@@ -5033,6 +5102,7 @@ function OPSGROUP:onafterPickup(From, Event, To, Zone)
   
   local airbasePickup=nil --Wrapper.Airbase#AIRBASE
   if Zone and Zone:IsInstanceOf("ZONE_AIRBASE") then
+    env.info("FF 001")
     airbasePickup=Zone:GetAirbase()
   end
   
@@ -5041,16 +5111,21 @@ function OPSGROUP:onafterPickup(From, Event, To, Zone)
   if self:IsArmygroup() or self:IsNavygroup() then
     ready4loading=inzone
   else
+    env.info("FF 002 currbase="..(self.currbase and self.currbase:GetName() or "unknown"))
+  
     -- Aircraft is already parking at the pickup airbase.
     ready4loading=self.currbase and self.currbase:GetName()==Zone:GetName() and self:IsParking()
     
     -- If a helo is landed in the zone, we also are ready for loading.
-    if ready4loading==false and self.isHelo and self:IsLandedAt() and inzone then
+    if ready4loading==false and (self.isHelo or self.isVTOL) and self:IsLandedAt() and inzone then
       ready4loading=true
+      env.info("FF 003")
     end
   end 
  
   if ready4loading then
+  
+            env.info("FF 004")
     
     -- We are already in the pickup zone ==> initiate loading.
     self:Loading()
@@ -5062,24 +5137,28 @@ function OPSGROUP:onafterPickup(From, Event, To, Zone)
     
     -- Add waypoint.
     if self.isFlightgroup then
-
-        ---
-        -- Pickup at airbase
-        ---
           
       if airbasePickup then
+      
+        ---
+        -- Pickup at airbase
+        ---      
 
         local airbaseCurrent=self.currbase
         
         if airbaseCurrent then
+        
+          env.info("FF 100")
       
           -- Activate uncontrolled group.
           if self:IsParking() then
+            env.info("FF 200")
             self:StartUncontrolled()
           end
           
         else
           -- Order group to land at an airbase.
+          env.info("FF 300")
           self:LandAtAirbase(airbasePickup)
         end
         
@@ -5286,7 +5365,7 @@ function OPSGROUP:onafterTransport(From, Event, To, Zone)
     ready2deploy=self.currbase and self.currbase:GetName()==Zone:GetName() and self:IsParking()
     
     -- If a helo is landed in the zone, we also are ready for loading.
-    if ready2deploy==false and self.isHelo and self:IsLandedAt() and inzone then
+    if ready2deploy==false and (self.isHelo or self.isVTOL) and self:IsLandedAt() and inzone then
       ready2deploy=true
     end
   end   
@@ -5454,6 +5533,7 @@ function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Heading)
     ---
   
     OpsGroup:Unboard(Coordinate, Heading)
+    
   else
 
     ---
@@ -5480,7 +5560,6 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Core.Zone#ZONE Zone Deploy zone.
 function OPSGROUP:onafterUnloaded(From, Event, To)
   -- Debug info
   self:I(self.lid.."Cargo unloaded..")
@@ -5519,8 +5598,8 @@ function OPSGROUP:onafterUnloaded(From, Event, To)
     -- This is not a carrier anymore.
     self.carrierStatus=OPSGROUP.CarrierStatus.NOTCARRIER
   
-    -- No current transport assignment.
-    self.cargoTransport=nil
+    -- Everything delivered.
+    self:Delivered(self.cargoTransport)
     
     -- Startup uncontrolled aircraft to allow it to go back.
     if self:IsFlightgroup() then
@@ -5535,6 +5614,27 @@ function OPSGROUP:onafterUnloaded(From, Event, To)
   
   end
   
+end
+
+--- On after "Delivered" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.CargoTransport CargoTransport
+function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
+
+  -- Set cargo status.
+  CargoTransport.status=OPSGROUP.TransportStatus.DELIVERED
+  
+  -- Check if this was the current transport.
+  if self.cargoTransport and self.cargoTransport.uid==CargoTransport.uid then
+    self.cargoTransport=nil
+  end
+  
+  -- Remove cargo transport from cargo queue.
+  self:DelCargoTransport(CargoTransport)
+
 end
 
 
@@ -5569,7 +5669,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
     local Coordinate=Carrier.unit:GetCoordinate()
   
     if self.isArmygroup then
-      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation, Updateroute)      
+      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate)      
       waypoint.detour=true
     else
       local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate)
@@ -5642,6 +5742,9 @@ function OPSGROUP:onafterUnboard(From, Event, To, Coordinate, Heading, Delay)
   
   -- Template for the respawned group.
   local Template=UTILS.DeepCopy(self.template)  --DCS#Template
+  
+  -- No late activation.
+  Template.lateActivation=false
 
   -- Loop over template units.
   for _,Unit in pairs(Template.units) do
@@ -7869,11 +7972,25 @@ function OPSGROUP:_AddElementByName(unitname)
     
     -- Weight and cargo.
     element.weightEmpty=element.descriptors.massEmpty or 666
-    element.weightMaxTotal=element.descriptors.massMax or element.weightEmpty+2*95 --If max mass is not given, we assume 10 soldiers.
-    element.weightMaxCargo=math.max(element.weightMaxTotal-element.weightEmpty, 0)
     element.weightCargo=0        
-    element.weight=element.weightEmpty+element.weightCargo
+    element.weight=element.weightEmpty+element.weightCargo    
     
+    -- Looks like only aircraft have a massMax value in the descriptors.
+    element.weightMaxTotal=element.descriptors.massMax or element.weightEmpty+2*95 --If max mass is not given, we assume 10 soldiers.
+    
+
+    if self.isArmygroup then
+    
+      element.weightMaxTotal=element.weightEmpty+10*95 --If max mass is not given, we assume 10 soldiers.
+    
+    elseif self.isNavygroup then
+    
+      element.weightMaxTotal=element.weightEmpty+10*1000
+    
+    end
+    
+    -- Max cargo weight
+    element.weightMaxCargo=math.max(element.weightMaxTotal-element.weightEmpty, 0)
         
     -- FLIGHTGROUP specific.
     if self.isFlightgroup then
