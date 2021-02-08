@@ -4310,9 +4310,12 @@ function OPSGROUP:onafterElementDestroyed(From, Event, To, Element)
   
   -- Increase counter.
   self.Ndestroyed=self.Ndestroyed+1
+  
+  -- Element is dead.
+  self:ElementDead(Element)
 
   -- Set element status.
-  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
+  --self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
   
 end
 
@@ -4323,7 +4326,7 @@ end
 -- @param #string To To state.
 -- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onafterElementDead(From, Event, To, Element)
-  self:T(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
+  self:I(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
   
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
@@ -4358,6 +4361,19 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
       -- Switch laser on again.
       if target then
         self:__LaserOn(-1, target)
+      end
+    end
+  end
+  
+  -- Check cargo bay and declare cargo groups dead
+  for groupname, carriername in pairs(self.cargoBay or {}) do
+    if Element.name==carriername then
+      local opsgroup=_DATABASE:GetOpsGroup(groupname)
+      if opsgroup and not (opsgroup:IsDead() or opsgroup:IsStopped()) then
+        for _,element in pairs(opsgroup.elements) do
+          env.info("FF cargo element dead "..element.name)
+          opsgroup:ElementDead(element)
+        end
       end
     end
   end
@@ -4584,7 +4600,10 @@ function OPSGROUP:_CheckCargoTransport()
   -- Loop over cargo queue and check if everything was delivered.
   for i=#self.cargoqueue,1,-1 do
     local transport=self.cargoqueue[i] --#OPSGROUP.CargoTransport
-    self:_CheckDelivered(transport)
+    local delivered=self:_CheckDelivered(transport)
+    if delivered then
+      self:Delivered(transport)    
+    end
   end      
     
   -- Check if there is anything in the queue.
@@ -4742,11 +4761,9 @@ end
 
 --- Check if all cargo of this transport assignment was delivered.
 -- @param #OPSGROUP self
--- @param #OPSGROUP.CargoTransport The next due cargo transport or `nil`.
+-- @param #OPSGROUP.CargoTransport CargoTransport The next due cargo transport or `nil`.
 -- @return #boolean If true, all cargo was delivered.
 function OPSGROUP:_CheckDelivered(CargoTransport)
-
-  -- TODO: Check if this group can actually transport any cargo.
 
   local done=true
   for _,_cargo in pairs(CargoTransport.cargos) do
@@ -4759,15 +4776,9 @@ function OPSGROUP:_CheckDelivered(CargoTransport)
     else
       done=false --Someone is not done!
     end
-    
-    --TODO: check if ALL remaining cargo is too heavy for this carrier group ==> el
-    
+   
   end
   
-  if done then
-    self:Delivered(CargoTransport)    
-  end
-
   -- Debug info.
   self:I(self.lid..string.format("Cargotransport UID=%d Status=%s: delivered=%s", CargoTransport.uid, CargoTransport.status, tostring(done)))
   
@@ -5453,7 +5464,8 @@ function OPSGROUP:onafterDeploy(From, Event, To, Zone)
     local cargo=_cargo --#OPSGROUP.CargoGroup
     
     -- Check that cargo is loaded into this group.
-    if cargo.opsgroup:IsLoaded(self.groupname) then
+    -- TODO: Could be that the element carriing this cargo group is DEAD!
+    if cargo.opsgroup:IsLoaded(self.groupname) and not (cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped()) then
     
       env.info("FF deploy cargo "..cargo.opsgroup:GetName())
          
@@ -5570,21 +5582,10 @@ function OPSGROUP:onafterUnloaded(From, Event, To)
     self:TaskCancel(Task)
   end  
   
-  -- Check if there is still cargo to pickup.
-  local pickup=false
-  for _,_cargo in pairs(self.cargoTransport.cargos) do    
-    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-    
-    -- Check for waiting or undelivered non cargo groups.
-    --if cargo.opsgroup.cargoStatus==OPSGROUP.CargoStatus.WAITING or (cargo.opsgroup.cargoStatus==OPSGROUP.CargoStatus.NOTCARGO and not cargo.delivered) then
-    if not cargo.delivered then
-      pickup=true
-      break
-    end
-    
-  end  
+  -- Check everything was delivered (or is dead).
+  local delivered=self:_CheckDelivered(self.cargoTransport)
   
-  if pickup then
+  if not delivered then
   
     -- Pickup the next batch.
     self:I(self.lid.."Still cargo left ==> pickup")
