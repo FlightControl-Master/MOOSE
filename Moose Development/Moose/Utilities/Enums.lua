@@ -311,3 +311,54 @@ ENUMS.Morse.N8="- - - * *"
 ENUMS.Morse.N9="- - - - *"
 ENUMS.Morse.N0="- - - - -"
 ENUMS.Morse[" "]=" "
+
+--- ISO (639-1) 2-letter Language Codes. See the [Wikipedia](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
+-- 
+-- 
+-- @type ENUMS.ISOLang
+ENUMS.ISOLang = 
+{
+  Arabic    = 'AR',
+  Chinese   = 'ZH',
+  English   = 'EN',
+  French    = 'FR',
+  German    = 'DE',
+  Russian   = 'RU',
+  Spanish   = 'ES',
+  Japanese  = 'JA',
+  Italian   = 'IT',
+}
+
+--- Phonetic Alphabet (NATO). See the [Wikipedia](https://en.wikipedia.org/wiki/NATO_phonetic_alphabet).
+-- 
+-- 
+-- @type ENUMS.Phonetic
+ENUMS.Phonetic =
+{
+  A = 'Alpha',
+  B = 'Bravo',
+  C = 'Charlie',
+  D = 'Delta',
+  E = 'Echo',
+  F = 'Foxtrot',
+  G = 'Golf',
+  H = 'Hotel',
+  I = 'India',
+  J = 'Juliett',
+  K = 'Kilo',
+  L = 'Lima',
+  M = 'Mike',
+  N = 'November',
+  O = 'Oscar',
+  P = 'Papa',
+  Q = 'Quebec',
+  R = 'Romeo',
+  S = 'Sierra',
+  T = 'Tango',
+  U = 'Uniform',
+  V = 'Victor',
+  W = 'Whiskey',
+  X = 'Xray',
+  Y = 'Yankee',
+  Z = 'Zulu',
+}
