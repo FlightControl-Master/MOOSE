@@ -1738,11 +1738,11 @@ end
 function FLIGHTGROUP:onafterLandedAt(From, Event, To)
   self:T(self.lid..string.format("Flight landed at"))
   
-  
+  -- Trigger (un-)loading process.
   if self:IsPickingup() then
-    self:Loading()
+    self:__Loading(-1)
   elseif self:IsTransporting() then
-    self:Deploy()
+    self:__Unloading(-1)
   end
   
 end
@@ -1836,7 +1836,7 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
     if self:IsPickingup() then
       self:__Loading(-1)
     elseif self:IsTransporting() then
-      self:__Deploy(-1)
+      self:__Unloading(-1)
     end
     
   else
