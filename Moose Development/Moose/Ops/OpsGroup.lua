@@ -425,13 +425,12 @@ OPSGROUP.TransportStatus={
 -- @field #string status Status of the transport. See @{#OPSGROUP.TransportStatus}.
 -- @field #number prio Priority of this transport. Should be a number between 0 (high prio) and 100 (low prio).
 -- @field #number importance Importance of this transport. Smaller=higher.
--- @field #number Tstart Start time in abs. seconds.
+-- @field #number Tstart Start time in *abs.* seconds.
 -- @field Core.Zone#ZONE pickupzone Zone where the cargo is picked up.
 -- @field Core.Zone#ZONE deployzone Zone where the cargo is dropped off.
 -- @field Core.Zone#ZONE embarkzone (Optional) Zone where the cargo is supposed to embark. Default is the pickup zone.
 -- @field Core.Zone#ZONE disembarkzone (Optional) Zone where the cargo is disembarked. Default is the deploy zone.
 -- @field #OPSGROUP carrierGroup The new carrier group.
--- @field #OPSGROUP carrierGroupFrom The carrier group 
 
 --- Cargo group data.
 -- @type OPSGROUP.CargoGroup
@@ -453,6 +452,10 @@ OPSGROUP.version="0.7.1"
 -- TODO: Invisible/immortal.
 -- TODO: F10 menu.
 -- TODO: Add pseudo function.
+-- TODO: Options EPLRS, Afterburner restrict etc.
+-- TODO: Damage?
+-- TODO: Shot events?
+-- TODO: Marks to add waypoints/tasks on-the-fly.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -4583,7 +4586,7 @@ function OPSGROUP:_CheckCargoTransport()
   
   -- Cargo queue debug info.
   if self.verbose>=0 then
-    local text="Cargo queue:"
+    local text=""
     for i,_transport in pairs(self.cargoqueue) do
       local transport=_transport --#OPSGROUP.CargoTransport    
       text=text..string.format("\n[%d] UID=%d Status=%s: %s --> %s", i, transport.uid, transport.status, transport.pickupzone:GetName(), transport.deployzone:GetName())
@@ -4614,7 +4617,6 @@ function OPSGROUP:_CheckCargoTransport()
   -- Check if there is anything in the queue.
   if not self.cargoTransport then    
     self.cargoTransport=self:_GetNextCargoTransport()
-    self.cargoTransport.status=OPSGROUP.TransportStatus.EXECUTING
   end
 
   -- Now handle the transport.
@@ -4641,19 +4643,15 @@ function OPSGROUP:_CheckCargoTransport()
     
       -- Debug info.
       self:I(self.lid.."Not carrier ==> pickup")
-      
-      --TODO: Check if there is still cargo left. Maybe someone else already picked it up or it got destroyed.
     
       -- Initiate the cargo transport process.
-      self:Pickup(self.cargoTransport.pickupzone)
+      self:Pickup()
       
     elseif self:IsPickingup() then
     
       -- Debug Info.
       self:T(self.lid.."Picking up...")
-      
-      --TODO: Check if there is still cargo left. Maybe someone else already picked it up or it got destroyed.
-    
+
     elseif self:IsLoading() then
     
       -- Debug info.
@@ -4723,8 +4721,6 @@ function OPSGROUP:_CheckCargoTransport()
     end
       
   end
-  
-  -- TODO: Remove delivered transports from cargo queue!
 
   return self
 end
@@ -4763,7 +4759,7 @@ function OPSGROUP:_DelCargobay(CargoGroup, CarrierElement)
     self:RedWeightCargo(CargoGroup.carrier.name, weight)
     
   else
-    env.info("ERROR: Group is not in cargo bay. Cannot remove it!")
+    env.error("ERROR: Group is not in cargo bay. Cannot remove it!")
   end
 
 end
@@ -4803,6 +4799,7 @@ function OPSGROUP:_GetNextCargoTransport()
     local cargotransport=_cargotransport --#OPSGROUP.CargoTransport
     
     if Time>=cargotransport.Tstart and cargotransport.status==OPSGROUP.TransportStatus.SCHEDULED and (cargotransport.importance==nil or cargotransport.importance<=vip) then
+      cargotransport.status=OPSGROUP.TransportStatus.EXECUTING    
       return cargotransport
     end
     
@@ -4847,13 +4844,12 @@ end
 -- @param #string ClockStart Start time in format "HH:MM(:SS)(+D)", e.g. "13:05:30" or "08:30+1". Can also be given as a `#number`, in which case it is interpreted as relative amount in seconds from now on.
 -- @param Core.Zone#ZONE Embarkzone (Optional) Zone where the cargo is going to be embarked into the transport. By default is goes to the assigned carrier unit.
 -- @param Core.Zone#ZONE Disembarkzone (Optional) Zone where the cargo disembarks to (is spawned after unloaded). Default is anywhere in the deploy zone.
--- @param #OPSGROUP NewCarrierGroup (Optional) The OPSGROUP where the cargo is directly loaded into.
--- @param #OPSGROUP FromCarrierGroup (Optional) The OPSGROUP where the cargo loaded from.
+-- @param #OPSGROUP DisembarkCarrierGroup (Optional) The OPSGROUP where the cargo is directly loaded into.
 -- @return #OPSGROUP.CargoTransport Cargo transport.
-function OPSGROUP:AddCargoTransport(GroupSet, Pickupzone, Deployzone, Prio, Importance, ClockStart, Embarkzone, Disembarkzone, NewCarrierGroup, FromCarrierGroup)
+function OPSGROUP:AddCargoTransport(GroupSet, Pickupzone, Deployzone, Prio, Importance, ClockStart, Embarkzone, Disembarkzone, DisembarkCarrierGroup)
 
   -- Create a new cargo transport assignment.
-  local cargotransport=self:CreateCargoTransport(GroupSet, Pickupzone, Deployzone, Prio, Importance, ClockStart, Embarkzone, Disembarkzone, NewCarrierGroup, FromCarrierGroup)
+  local cargotransport=self:CreateCargoTransport(GroupSet, Pickupzone, Deployzone, Prio, Importance, ClockStart, Embarkzone, Disembarkzone, DisembarkCarrierGroup)
   
   if cargotransport then
   
@@ -5189,7 +5185,10 @@ function OPSGROUP:onafterPickup(From, Event, To)
   if ready4loading then
 
     -- We are already in the pickup zone ==> initiate loading.
-    self:Loading()
+    if (self:IsArmygroup() or self:IsNavygroup()) and not self:IsHolding() then
+      self:FullStop()
+    end
+    self:__Loading(-5)
   
   else
   
@@ -5250,6 +5249,15 @@ function OPSGROUP:onafterPickup(From, Event, To)
       
   end
   
+end
+
+--- On before "Loading" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onbeforeLoading(From, Event, To)
+
 end
 
 --- On after "Loading" event.
@@ -5325,9 +5333,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
         else
           env.info("FF cargo NOT in embark zone "..self.cargoTransport.embarkzone:GetName())
         end
-      
-      elseif self.cargoTransport.carrierGroupFrom and cargo.opsgroup:IsLoaded(self.cargoTransport.carrierGroupFrom:GetName()) then
-      
+
       end
       
     else    
@@ -5699,6 +5705,9 @@ function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Heading, 
     OpsGroup.position=self:GetVec3()
     
   end
+  
+  -- Trigger "Disembarked" event.
+  OpsGroup:Disembarked()
 
 end
 
@@ -5816,7 +5825,12 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
   if isArmyOrNavy and CarrierGroup:IsHolding() or CarrierGroup:IsParking() or CarrierGroup:IsLandedAt() then
   
     -- Board if group is mobile, not late activated and army or navy. Everything else is loaded directly.
-    local board=(self.speedMax>0) and (not self:IsLateActivated()) and (self.isArmygroup or self.isNavygroup) and (not self.carrierGroup:IsLateActivated())
+    local board=self.speedMax>0 and self:IsAlive() and isArmyOrNavy and self.carrierGroup:IsAlive()
+    
+    -- Armygroup cannot board ship ==> Load directly.
+    if self:IsArmygroup() and self.carrierGroup:IsNavygroup() then
+      board=false
+    end
     
     if board then
     
@@ -6595,7 +6609,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
         else
           -- Stop and loading.
           opsgroup:FullStop()        
-          opsgroup:Loading()
+          opsgroup:__Loading(-5)
         end          
                 
       elseif opsgroup:IsTransporting() then
@@ -8062,7 +8076,10 @@ function OPSGROUP:_AddElementByName(unitname)
     end
     
     -- Max cargo weight
-    element.weightMaxCargo=math.max(element.weightMaxTotal-element.weightEmpty, 0)
+    --element.weightMaxCargo=math.max(element.weightMaxTotal-element.weightEmpty, 0)
+    
+    unit:SetCargoBayWeightLimit()
+    element.weightMaxCargo=unit.__.CargoBayWeightLimit
         
     -- FLIGHTGROUP specific.
     if self.isFlightgroup then

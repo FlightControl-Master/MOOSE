@@ -187,16 +187,12 @@ FLIGHTGROUP.version="0.6.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: VTOL aircraft.
--- TODO: Use new UnitLost event instead of crash/dead.
--- TODO: Options EPLRS, Afterburner restrict etc.
--- DONE: Add TACAN beacon.
--- TODO: Damage?
--- TODO: shot events?
--- TODO: Marks to add waypoints/tasks on-the-fly.
 -- TODO: Mark assigned parking spot on F10 map.
 -- TODO: Let user request a parking spot via F10 marker :)
--- TODO: Monitor traveled distance in air ==> calculate fuel consumption ==> calculate range remaining. Will this give half way accurate results?
--- TODO: Out of AG/AA missiles. Safe state of out-of-ammo.
+-- DONE: Use new UnitLost event instead of crash/dead.
+-- DONE: Monitor traveled distance in air ==> calculate fuel consumption ==> calculate range remaining. Will this give half way accurate results?
+-- DONE: Out of AG/AA missiles. Safe state of out-of-ammo.
+-- DONE: Add TACAN beacon.
 -- DONE: Add tasks.
 -- DONE: Waypoints, read, add, insert, detour.
 -- DONE: Get ammo.
