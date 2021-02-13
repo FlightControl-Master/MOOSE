@@ -1778,7 +1778,8 @@ do -- SET_GROUP
       local MGroupPrefix = false
       for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
         self:T3( { "Prefix:", string.find( MGroup:GetName(), GroupPrefix, 1 ), GroupPrefix } )
-        if string.find( MGroup:GetName(), GroupPrefix:gsub ("-", "%%-"), 1 ) then
+--        if string.find( MGroup:GetName(), GroupPrefix:gsub ("-", "%%-"), 1 ) then
+        if string.find( MGroup:GetName(), string.format('^%s',GroupPrefix:gsub ("-", "%%-")), 1 ) then
           MGroupPrefix = true
         end
       end
