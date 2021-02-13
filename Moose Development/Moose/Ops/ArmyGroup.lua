@@ -575,6 +575,21 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
   
 end
 
+--- On before "UpdateRoute" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Waypoint number. Default is next waypoint.
+-- @param #number Speed Speed in knots. Default cruise speed.
+-- @param #number Formation Formation of the group.
+function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Formation)
+  if self:IsWaiting() then
+    return false
+  end
+  return true
+end
+
 --- On after "UpdateRoute" event.
 -- @param #ARMYGROUP self
 -- @param #string From From state.
@@ -1027,6 +1042,10 @@ end
 -- @param #number Speed Speed in knots.
 -- @param #number Formation Formation.
 function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
+
+  -- Not waiting anymore.
+  self.Twaiting=nil
+  self.dTwait=nil
 
   self:__UpdateRoute(-1, nil, Speed, Formation)
 

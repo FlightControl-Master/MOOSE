@@ -694,6 +694,21 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
   
 end
 
+--- On before "UpdateRoute" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Waypoint number. Default is next waypoint.
+-- @param #number Speed Speed in knots to the next waypoint.
+-- @param #number Depth Depth in meters to the next waypoint.
+function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
+  if self:IsWaiting() then
+    return false
+  end
+  return true
+end
+
 --- On after "UpdateRoute" event.
 -- @param #NAVYGROUP self
 -- @param #string From From state.
@@ -961,6 +976,10 @@ end
 -- @param #string To To state.
 -- @param #number Speed Speed in knots until next waypoint is reached. Default is speed set for waypoint.
 function NAVYGROUP:onafterCruise(From, Event, To, Speed)
+
+  -- Not waiting anymore.
+  self.Twaiting=nil
+  self.dTwait=nil
 
   -- No set depth.
   self.depth=nil
