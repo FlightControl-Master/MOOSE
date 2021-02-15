@@ -4839,7 +4839,7 @@ function OPSGROUP:_GetNextCargoTransport()
   for _,_cargotransport in pairs(self.cargoqueue) do
     local cargotransport=_cargotransport --#OPSGROUP.CargoTransport
     
-    if Time>=cargotransport.Tstart and cargotransport.status==OPSGROUP.TransportStatus.SCHEDULED and (cargotransport.importance==nil or cargotransport.importance<=vip) and not self:_CheckDelivered(cargotransport) then
+    if Time>=cargotransport.Tstart and cargotransport.status~=OPSGROUP.TransportStatus.DELIVERED and (cargotransport.importance==nil or cargotransport.importance<=vip) and not self:_CheckDelivered(cargotransport) then
       cargotransport.status=OPSGROUP.TransportStatus.EXECUTING    
       return cargotransport
     end
@@ -4859,12 +4859,16 @@ function OPSGROUP:_CheckDelivered(CargoTransport)
   for _,_cargo in pairs(CargoTransport.cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
     
-    if cargo.delivered then
-      -- This one is delivered.
-    elseif cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped() then
-      -- This one is dead.
-    else
-      done=false --Someone is not done!
+    if self:CanCargo(cargo.opsgroup) then
+    
+      if cargo.delivered then
+        -- This one is delivered.
+      elseif cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped() then
+        -- This one is dead.
+      else
+        done=false --Someone is not done!
+      end
+      
     end
    
   end
@@ -5168,13 +5172,17 @@ end
 -- @return #boolean If `true`, there is an element of the group that can load the whole cargo group.
 function OPSGROUP:CanCargo(CargoGroup)
 
-  local weight=CargoGroup:GetWeightTotal()
-  
-  for _,element in pairs(self.elements) do
-    local can=element.weightMaxCargo>=weight
-    if can then
-      return true
+  if CargoGroup then
+
+    local weight=CargoGroup:GetWeightTotal()
+    
+    for _,element in pairs(self.elements) do
+      local can=element.weightMaxCargo>=weight
+      if can then
+        return true
+      end
     end
+    
   end
   
   return false
@@ -5358,7 +5366,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
   for _,_cargo in pairs(self.cargoTransport.cargos) do
     local cargo=_cargo --#OPSGROUP.CargoGroup
     
-    if not cargo.delivered then
+    if self:CanCargo(cargo.opsgroup) and not cargo.delivered then
 
       -- Check that group is not cargo already and not busy.
       -- TODO: Need a better :IsBusy() function or :IsReadyForMission() :IsReadyForBoarding() :IsReadyForTransport()    
