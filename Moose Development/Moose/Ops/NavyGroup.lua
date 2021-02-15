@@ -582,7 +582,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   -- Recovery Windows
   ---
 
-  if self.verbose>=2 then
+  if self.verbose>=2 and #self.Qintowind>0 then
   
     -- Debug output:
     local text=string.format(self.lid.."Turn into wind time windows:")
