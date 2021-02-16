@@ -438,7 +438,7 @@ OPSGROUP.TransportStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.7.1"
+OPSGROUP.version="0.7.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4625,8 +4625,8 @@ function OPSGROUP:_CheckCargoTransport()
   if self.verbose>=1 then
     local text=""
     for i,_transport in pairs(self.cargoqueue) do
-      local transport=_transport --#OPSGROUP.CargoTransport    
-      text=text..string.format("\n[%d] UID=%d Status=%s: %s --> %s", i, transport.uid, transport.status, transport.pickupzone:GetName(), transport.deployzone:GetName())
+      local transport=_transport --#Ops.OpsTransport#OPSTRANSPORT
+      text=text..string.format("\n[%d] UID=%d Status=%s: %s --> %s", i, transport.uid, transport:GetState(), transport.pickupzone:GetName(), transport.deployzone:GetName())
       for j,_cargo in pairs(transport.cargos) do
         local cargo=_cargo --#OPSGROUP.CargoGroup
         local state=cargo.opsgroup:GetState()
@@ -4837,10 +4837,11 @@ function OPSGROUP:_GetNextCargoTransport()
 
   -- Find next transport assignment.    
   for _,_cargotransport in pairs(self.cargoqueue) do
-    local cargotransport=_cargotransport --#OPSGROUP.CargoTransport
+    local cargotransport=_cargotransport --Ops.OpsTransport#OPSTRANSPORT
     
-    if Time>=cargotransport.Tstart and cargotransport.status~=OPSGROUP.TransportStatus.DELIVERED and (cargotransport.importance==nil or cargotransport.importance<=vip) and not self:_CheckDelivered(cargotransport) then
-      cargotransport.status=OPSGROUP.TransportStatus.EXECUTING    
+    if Time>=cargotransport.Tstart and cargotransport:GetCarrierTransportStatus(self)==OPSTRANSPORT.Status.SCHEDULED and (cargotransport.importance==nil or cargotransport.importance<=vip) and not self:_CheckDelivered(cargotransport) then
+      cargotransport:Executing()
+      cargotransport:SetCarrierTransportStatus(self, OPSTRANSPORT.Status.EXECUTING)
       return cargotransport
     end
     
@@ -4851,7 +4852,7 @@ end
 
 --- Check if all cargo of this transport assignment was delivered.
 -- @param #OPSGROUP self
--- @param #OPSGROUP.CargoTransport CargoTransport The next due cargo transport or `nil`.
+-- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport The next due cargo transport or `nil`.
 -- @return #boolean If true, all cargo was delivered.
 function OPSGROUP:_CheckDelivered(CargoTransport)
 
@@ -4874,7 +4875,7 @@ function OPSGROUP:_CheckDelivered(CargoTransport)
   end
   
   -- Debug info.
-  self:T(self.lid..string.format("Cargotransport UID=%d Status=%s: delivered=%s", CargoTransport.uid, CargoTransport.status, tostring(done)))
+  self:T(self.lid..string.format("Cargotransport UID=%d Status=%s: delivered=%s", CargoTransport.uid, CargoTransport:GetState(), tostring(done)))
   
   return done
 end
@@ -4914,8 +4915,9 @@ end
 -- @param Ops.OpsTransport#OPSTRANSPORT OpsTransport The troop transport assignment.
 function OPSGROUP:AddOpsTransport(OpsTransport)
 
-  -- Set state to SCHEDULED.
-  OpsTransport.status=OPSTRANSPORT.Status.SCHEDULED
+  -- Add this group as carrier for the transport.
+  OpsTransport:_AddCarrier(self)
+
 
   --Add to cargo queue
   table.insert(self.cargoqueue, OpsTransport)
@@ -5868,7 +5870,10 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
     if self:IsFlightgroup() then
       if self:IsUncontrolled() then
         self:StartUncontrolled()
-      end
+      elseif self:IsLandedAt() then
+        local Task=self:GetTaskCurrent()
+        self:TaskCancel(Task)
+      end      
     end
   
     -- Check group done.

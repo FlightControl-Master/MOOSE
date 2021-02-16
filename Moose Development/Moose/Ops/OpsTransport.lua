@@ -23,7 +23,11 @@
 --- OPSTRANSPORT class.
 -- @type OPSTRANSPORT
 -- @field #string ClassName Name of the class.
+-- @field #string lid Log ID.
+-- @field #number uid Unique ID of the transport.
+-- @field #number verbose Verbosity level.
 -- @field #table cargos Cargos. Each element is a @{#OPSGROUP.Cargo}.
+-- @field #table carriers Carriers assigned for this transport.
 -- @field #string status Status of the transport. See @{#OPSTRANSPORT.Status}.
 -- @field #number prio Priority of this transport. Should be a number between 0 (high prio) and 100 (low prio).
 -- @field #number importance Importance of this transport. Smaller=higher.
@@ -50,6 +54,8 @@ OPSTRANSPORT = {
   ClassName       = "OPSTRANSPORT",
   verbose         =  1,
   cargos          = {},
+  carriers        = {},
+  carrierTransportStatus = {},  
 }
 
 --- Cargo transport status.
@@ -59,17 +65,18 @@ OPSTRANSPORT = {
 -- @field #string EXECUTING Transport is being executed.
 -- @field #string DELIVERED Transport was delivered. 
 OPSTRANSPORT.Status={
-  PLANNING="planning",
+  PLANNED="planned",
   SCHEDULED="scheduled",
   EXECUTING="executing",
   DELIVERED="delivered",
 }
 
+--- Transport ID.
 _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.0.1"
+OPSTRANSPORT.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -92,10 +99,10 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #OPSTRANSPORT
   
+  _OPSTRANSPORTID=_OPSTRANSPORTID+1  
+  
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("OPSTRANSPORT %s --> %s | ", Pickupzone:GetName(), Deployzone:GetName())
-
-  _OPSTRANSPORTID=_OPSTRANSPORTID+1
+  self.lid=string.format("OPSTRANSPORT [UID=%d] %s --> %s | ", _OPSTRANSPORTID, Pickupzone:GetName(), Deployzone:GetName())
   
   self.uid=_OPSTRANSPORTID
   self.status=OPSTRANSPORT.Status.PLANNING  
@@ -107,14 +114,16 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   self.importance=nil
   self.Tstart=timer.getAbsTime()
   self.carrierGroup=nil
-  self.cargos={}  
+  self.cargos={}
+  self.carriers={}
+  
 
 
   -- Check type of GroupSet provided.
   if GroupSet:IsInstanceOf("GROUP") or GroupSet:IsInstanceOf("OPSGROUP") then
   
-    -- We got a single GROUP or OPSGROUP objectg.
-    local cargo=self:CreateCargoGroupData(GroupSet, Pickupzone, Deployzone)
+    -- We got a single GROUP or OPSGROUP object.
+    local cargo=self:_CreateCargoGroupData(GroupSet, Pickupzone, Deployzone)
     
     if cargo  then --and self:CanCargo(cargo.opsgroup)
       table.insert(self.cargos, cargo)
@@ -149,6 +158,22 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
     text=text..string.format("\nTOTAL: Ncargo=%d, Weight=%.1f kg", #self.cargos, Weight)
     self:I(self.lid..text)
   end
+
+
+  -- FMS start state is PLANNED.
+  self:SetStartState(OPSTRANSPORT.Status.PLANNED)
+  
+  -- PLANNED --> SCHEDULED --> EXECUTING --> DELIVERED  
+  self:AddTransition("*",                           "Planned",          OPSTRANSPORT.Status.PLANNED)     -- Cargo transport was planned.
+  self:AddTransition(OPSTRANSPORT.Status.PLANNED,   "Scheduled",        OPSTRANSPORT.Status.SCHEDULED)   -- Cargo is queued at at least one carrier.
+  self:AddTransition(OPSTRANSPORT.Status.SCHEDULED, "Executing",        OPSTRANSPORT.Status.EXECUTING)   -- Cargo is being transported.
+  self:AddTransition(OPSTRANSPORT.Status.EXECUTING, "Delivered",        OPSTRANSPORT.Status.DELIVERED)   -- Cargo was delivered.
+
+  self:AddTransition("*",                      "Status",           "*")
+  self:AddTransition("*",                      "Stop",             "*")
+  
+  -- Call status update
+  self:__Status(-1)
   
   return self
 end
@@ -157,7 +182,7 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new OPSTRANSPORT class object.
+--- Set embark zone.
 -- @param #OPSTRANSPORT self
 -- @param Core.Zone#ZONE EmbarkZone Zone where the troops are embarked.
 -- @return #OPSTRANSPORT self
@@ -165,6 +190,42 @@ function OPSTRANSPORT:SetEmbarkZone(EmbarkZone)
   self.embarkzone=EmbarkZone or self.pickupzone
   return self
 end
+
+--- Add a carrier assigned for this transport.
+-- @param #OPSTRANSPORT self
+-- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:_AddCarrier(CarrierGroup)
+
+  self:SetCarrierTransportStatus(CarrierGroup, OPSTRANSPORT.Status.SCHEDULED)
+  
+  self:Scheduled()
+  
+  table.insert(self.carriers, CarrierGroup) 
+  
+  return self
+end
+
+--- Add a carrier assigned for this transport.
+-- @param #OPSTRANSPORT self
+-- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
+-- @param #string Status Carrier Status.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetCarrierTransportStatus(CarrierGroup, Status)
+
+  self.carrierTransportStatus[CarrierGroup.groupname]=Status
+    
+  return self
+end
+
+--- Get carrier transport status.
+-- @param #OPSTRANSPORT self
+-- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
+-- @return #string Carrier status.
+function OPSTRANSPORT:GetCarrierTransportStatus(CarrierGroup)
+  return self.carrierTransportStatus[CarrierGroup.groupname]
+end
+
 
 
 --- Create a cargo group data structure.
@@ -206,4 +267,114 @@ function OPSTRANSPORT:_CreateCargoGroupData(group, Pickupzone, Deployzone)
   cargo.deployzone=Deployzone
 
   return cargo
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Status Update
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "Status" event.
+-- @param #OPSTRANSPORT self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSTRANSPORT:onafterStatus(From, Event, To)
+
+  local fsmstate=self:GetState()
+
+  local text=string.format("State=%s", fsmstate)
+  
+  for _,_cargo in pairs(self.cargos) do
+    local cargo=_cargo  --Ops.OpsGroup#OPSGROUP.CargoGroup
+  end
+  
+  for _,_carrier in pairs(self.carriers) do
+    local carrier=_carrier
+  end  
+  
+  self:I(self.lid..text)
+  
+  -- Check if all cargo was delivered (or is dead).
+  self:_CheckDelivered()
+
+  self:__Status(-30)
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FSM Event Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "Planned" event.
+-- @param #OPSTRANSPORT self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSTRANSPORT:onafterPlanned(From, Event, To)
+  self:I(self.lid..string.format("New status %s", OPSTRANSPORT.Status.PLANNED))
+end
+
+--- On after "Scheduled" event.
+-- @param #OPSTRANSPORT self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSTRANSPORT:onafterScheduled(From, Event, To)
+  self:I(self.lid..string.format("New status %s", OPSTRANSPORT.Status.SCHEDULED))
+end
+
+--- On after "Executing" event.
+-- @param #OPSTRANSPORT self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSTRANSPORT:onafterExecuting(From, Event, To)
+  self:I(self.lid..string.format("New status %s", OPSTRANSPORT.Status.EXECUTING))
+end
+
+--- On after "Delivered" event.
+-- @param #OPSTRANSPORT self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSTRANSPORT:onafterDelivered(From, Event, To)
+  self:I(self.lid..string.format("New status %s", OPSTRANSPORT.Status.DELIVERED))
+  
+  -- TODO: Inform all assigned carriers that cargo was delivered. They can have this in the queue or are currently processing this transport.
+  
+  for _,_carrier in pairs(self.carriers) do
+    local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+    if self:GetCarrierTransportStatus(carrier)~=OPSTRANSPORT.Status.DELIVERED then
+      carrier:Delivered(self)
+    end 
+  end
+  
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Misc Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--- Check if all cargo of this transport assignment was delivered.
+-- @param #OPSTRANSPORT self
+function OPSTRANSPORT:_CheckDelivered()
+
+  local done=true
+  for _,_cargo in pairs(self.cargos) do
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+    
+    if cargo.delivered then
+      -- This one is delivered.
+    elseif cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped() then
+      -- This one is dead.
+    else
+      done=false --Someone is not done!
+    end
+   
+  end
+  
+  if done then
+    self:Delivered()  
+  end
+  
 end
