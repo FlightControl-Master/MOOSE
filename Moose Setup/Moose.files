@@ -67,7 +67,8 @@ Functional/Artillery.lua
 Functional/Suppression.lua
 Functional/PseudoATC.lua
 Functional/Warehouse.lua
-Functional/Fox.lua
+Functional/Mantis.lua
+Functional/Shorad.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua
