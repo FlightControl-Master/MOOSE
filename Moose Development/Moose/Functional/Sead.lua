@@ -17,7 +17,7 @@
 -- 
 -- ### Authors: **FlightControl**, **applevangelist**
 -- 
--- Last Update: Dec 2020
+-- Last Update: Feb 2021
 -- 
 -- ===
 -- 
@@ -51,9 +51,44 @@ SEAD = {
 	EngagementRange = 75 --  default 75% engagement range Feature Request #1355
 }
 
+  -- TODO Complete list?
+  --- Missile enumerators
+  -- @field Harms
+  SEAD.Harms = {
+  --[[
+  ["X58"] = "weapons.missiles.X_58", --Kh-58X anti-radiation missiles fired
+  ["Kh25"] = "weapons.missiles.Kh25MP_PRGS1VP", --Kh-25MP anti-radiation missiles fired
+  ["X25"] = "weapons.missiles.X_25MP", --Kh-25MPU anti-radiation missiles fired
+  ["X28"] = "weapons.missiles.X_28", --Kh-28 anti-radiation missiles fired
+  ["X31"] = "weapons.missiles.X_31P", --Kh-31P anti-radiation missiles fired
+  ["AGM45A"] = "weapons.missiles.AGM_45A", --AGM-45A anti-radiation missiles fired
+  ["AGM45"] = "weapons.missiles.AGM_45", --AGM-45B anti-radiation missiles fired
+  ["AGM88"] = "weapons.missiles.AGM_88", --AGM-88C anti-radiation missiles fired
+  ["AGM122"] = "weapons.missiles.AGM_122", --AGM-122 Sidearm anti-radiation missiles fired
+  ["LD10"] = "weapons.missiles.LD-10", --LD-10 anti-radiation missiles fired
+  ["ALARM"] = "weapons.missiles.ALARM", --ALARM anti-radiation missiles fired
+  ["AGM84E"] = "weapons.missiles.AGM_84E", --AGM84 anti-radiation missiles fired
+  ["AGM84A"] = "weapons.missiles.AGM_84A", --AGM84 anti-radiation missiles fired
+  ["AGM84H"] = "weapons.missiles.AGM_84H", --AGM84 anti-radiation missiles fired
+  --]]
+  ["AGM_88"] = "AGM_88",
+  ["AGM_45"] = "AGM_45",
+  ["AGM_122"] = "AGM_122",
+  ["AGM_84"] = "AGM_84",
+  ["AGM_45"] = "AGM_45",
+  ["ALARN"] = "ALARM",
+  ["LD-10"] = "LD-10",
+  ["X_58"] = "X_58",
+  ["X_28"] = "X_28",
+  ["X_25"] = "X_25",
+  ["X_31"] = "X_31",
+  ["Kh25"] = "Kh25",
+  }
+  
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
 -- When an anti radiation missile is fired (KH-58, KH-31P, KH-31A, KH-25MPU, HARM missiles), the SA will shut down their radars and will take evasive actions...
 -- Chances are big that the missile will miss.
+-- @param #SEAD self
 -- @param table{string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Groups in the DCS mission editor on which evasive actions need to be taken.
 -- @return SEAD
 -- @usage
@@ -74,7 +109,7 @@ function SEAD:New( SEADGroupPrefixes )
 	end
 	
 	self:HandleEvent( EVENTS.Shot )
-	self:I("*** SEAD - Started Version 0.2.2")
+	self:I("*** SEAD - Started Version 0.2.5")
 	return self
 end
 
@@ -112,7 +147,20 @@ function SEAD:SetEngagementRange(range)
   return self
 end
 
---- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
+  --- Check if a known HARM was fired
+  -- @param #SEAD self
+  -- @param #string WeaponName
+  -- @return #boolean Returns true for a match
+  function SEAD:_CheckHarms(WeaponName)
+    self:F( { WeaponName } )
+    local hit = false
+      for _,_name in pairs (SEAD.Harms) do
+        if string.find(WeaponName,_name,1) then hit = true end
+      end
+    return hit
+  end
+
+--- Detects if an SAM site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @see SEAD
 -- @param #SEAD
 -- @param Core.Event#EVENTDATA EventData
@@ -127,7 +175,7 @@ function SEAD:OnEventShot( EventData )
 	self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
 	self:T({ SEADWeapon })
 	
-	--check for SEAD missiles
+	--[[check for SEAD missiles
   if SEADWeaponName == "weapons.missiles.X_58" --Kh-58U anti-radiation missiles fired
     or 
     SEADWeaponName == "weapons.missiles.Kh25MP_PRGS1VP" --Kh-25MP anti-radiation missiles fired
@@ -155,12 +203,13 @@ function SEAD:OnEventShot( EventData )
     SEADWeaponName == "weapons.missiles.AGM_84A" --AGM84 anti-radiation missiles fired
     or
     SEADWeaponName == "weapons.missiles.AGM_84H" --AGM84 anti-radiation missiles fired
-    then
-	
+    --]]
+  if self:_CheckHarms(SEADWeaponName) then
+  
 		local _evade = math.random (1,100) -- random number for chance of evading action
 		local _targetMim = EventData.Weapon:getTarget() -- Identify target
 		local _targetMimname = Unit.getName(_targetMim) -- Unit name
-		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon)) --targeted grouo
+		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon)) --targeted group
 		local _targetMimgroupName = _targetMimgroup:getName() -- group name
 		local _targetskill =  _DATABASE.Templates.Units[_targetMimname].Template.skill
 		self:T( self.SEADGroupPrefixes )
