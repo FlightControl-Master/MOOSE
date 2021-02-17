@@ -2,13 +2,13 @@
 -- 
 -- ## Main Features:
 --
---    * Patrol waypoints *ad infinitum*
+--    * Transport troops from A to B.
 --
 -- ===
 --
 -- ## Example Missions:
 -- 
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Armygroup).
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Transport).
 --    
 -- ===
 --
@@ -32,22 +32,25 @@
 -- @field #number prio Priority of this transport. Should be a number between 0 (high prio) and 100 (low prio).
 -- @field #number importance Importance of this transport. Smaller=higher.
 -- @field #number Tstart Start time in *abs.* seconds.
+-- @field #number Tstop Stop time in *abs.* seconds. Default `#nil` (never stops).
 -- @field Core.Zone#ZONE pickupzone Zone where the cargo is picked up.
 -- @field Core.Zone#ZONE deployzone Zone where the cargo is dropped off.
 -- @field Core.Zone#ZONE embarkzone (Optional) Zone where the cargo is supposed to embark. Default is the pickup zone.
 -- @field Core.Zone#ZONE disembarkzone (Optional) Zone where the cargo is disembarked. Default is the deploy zone.
 -- @field Ops.OpsGroup#OPSGROUP carrierGroup The new carrier group.
+-- @field disembarkActivation Activation setting when group is disembared from carrier.
+-- @field disembarkInUtero Do not spawn the group in any any state but leave it "*in utero*". For example, to directly load it into another carrier.
 -- @extends Core.Fsm#FSM
 
---- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B. Sledge
+--- *Victory is the beautiful, bright-colored flower. Transport is the stem without which it could never have blossomed.* -- Winston Churchill
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\OPS\ArmyGroup\_Main.png)
+-- ![Banner Image](..\Presentations\OPS\Transport\_Main.png)
 --
 -- # The OPSTRANSPORT Concept
 -- 
--- This class enhances naval groups.
+-- Transport OPSGROUPS using carriers such as APCs, helicopters or airplanes.
 -- 
 -- @field #OPSTRANSPORT
 OPSTRANSPORT = {
@@ -99,11 +102,13 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #OPSTRANSPORT
   
+  -- Increase ID counter.
   _OPSTRANSPORTID=_OPSTRANSPORTID+1  
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("OPSTRANSPORT [UID=%d] %s --> %s | ", _OPSTRANSPORTID, Pickupzone:GetName(), Deployzone:GetName())
   
+  -- Defaults.
   self.uid=_OPSTRANSPORTID
   self.status=OPSTRANSPORT.Status.PLANNING  
   self.pickupzone=Pickupzone
@@ -112,53 +117,15 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   self.disembarkzone=Deployzone
   self.prio=50
   self.importance=nil
-  self.Tstart=timer.getAbsTime()
+  self.Tstart=timer.getAbsTime()+5
   self.carrierGroup=nil
   self.cargos={}
   self.carriers={}
   
-
-
-  -- Check type of GroupSet provided.
-  if GroupSet:IsInstanceOf("GROUP") or GroupSet:IsInstanceOf("OPSGROUP") then
-  
-    -- We got a single GROUP or OPSGROUP object.
-    local cargo=self:_CreateCargoGroupData(GroupSet, Pickupzone, Deployzone)
-    
-    if cargo  then --and self:CanCargo(cargo.opsgroup)
-      table.insert(self.cargos, cargo)
-    end
-    
-  else
-  
-    -- We got a SET_GROUP object.
-    
-    for _,group in pairs(GroupSet.Set) do
-    
-      local cargo=self:_CreateCargoGroupData(group, Pickupzone, Deployzone)
-      
-      if cargo then --and self:CanCargo(cargo.opsgroup) then
-        table.insert(self.cargos, cargo)
-      end
-      
-    end
+  if GroupSet then
+    self:AddCargoGroups(GroupSet, Pickupzone, Deployzone)
   end
   
-  -- Debug info.
-  if self.verbose>=0 then
-    local text=string.format("Created Cargo Transport (UID=%d) from %s(%s) --> %s(%s)", 
-    self.uid, self.pickupzone:GetName(), self.embarkzone:GetName(), self.deployzone:GetName(), self.disembarkzone:GetName())
-    local Weight=0
-    for _,_cargo in pairs(self.cargos) do
-      local cargo=_cargo --#OPSGROUP.CargoGroup
-      local weight=cargo.opsgroup:GetWeightTotal()
-      Weight=Weight+weight
-      text=text..string.format("\n- %s [%s] weight=%.1f kg", cargo.opsgroup:GetName(), cargo.opsgroup:GetState(), weight)
-    end
-    text=text..string.format("\nTOTAL: Ncargo=%d, Weight=%.1f kg", #self.cargos, Weight)
-    self:I(self.lid..text)
-  end
-
 
   -- FMS start state is PLANNED.
   self:SetStartState(OPSTRANSPORT.Status.PLANNED)
@@ -182,6 +149,56 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Add cargo groups to be transported.
+-- @param #OPSTRANSPORT self
+-- @param Core.Set#SET_GROUP GroupSet Set of groups to be transported. Can also be passed as a single GROUP or OPSGROUP object.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:AddCargoGroups(GroupSet, Pickupzone, Deployzone)
+
+  -- Check type of GroupSet provided.
+  if GroupSet:IsInstanceOf("GROUP") or GroupSet:IsInstanceOf("OPSGROUP") then
+  
+    -- We got a single GROUP or OPSGROUP object.
+    local cargo=self:_CreateCargoGroupData(GroupSet, Pickupzone, Deployzone)
+    
+    if cargo  then --and self:CanCargo(cargo.opsgroup)
+      table.insert(self.cargos, cargo)
+    end
+    
+  else
+  
+    -- We got a SET_GROUP object.
+    
+    for _,group in pairs(GroupSet.Set) do
+    
+      local cargo=self:_CreateCargoGroupData(group, Pickupzone, Deployzone)
+      
+      if cargo then
+        table.insert(self.cargos, cargo)
+      end
+      
+    end
+  end
+  
+  -- Debug info.
+  if self.verbose>=0 then
+    local text=string.format("Created Cargo Transport (UID=%d) from %s(%s) --> %s(%s)", 
+    self.uid, self.pickupzone:GetName(), self.embarkzone:GetName(), self.deployzone:GetName(), self.disembarkzone:GetName())
+    local Weight=0
+    for _,_cargo in pairs(self.cargos) do
+      local cargo=_cargo --#OPSGROUP.CargoGroup
+      local weight=cargo.opsgroup:GetWeightTotal()
+      Weight=Weight+weight
+      text=text..string.format("\n- %s [%s] weight=%.1f kg", cargo.opsgroup:GetName(), cargo.opsgroup:GetState(), weight)
+    end
+    text=text..string.format("\nTOTAL: Ncargo=%d, Weight=%.1f kg", #self.cargos, Weight)
+    self:I(self.lid..text)
+  end
+
+
+  return self
+end
+
 --- Set embark zone.
 -- @param #OPSTRANSPORT self
 -- @param Core.Zone#ZONE EmbarkZone Zone where the troops are embarked.
@@ -190,6 +207,43 @@ function OPSTRANSPORT:SetEmbarkZone(EmbarkZone)
   self.embarkzone=EmbarkZone or self.pickupzone
   return self
 end
+
+--- Set disembark zone.
+-- @param #OPSTRANSPORT self
+-- @param Core.Zone#ZONE DisembarkZone Zone where the troops are disembarked.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetDisembarkZone(DisembarkZone)
+  self.disembarkzone=DisembarkZone or self.deployzone
+  return self
+end
+
+--- Set activation status of group when disembarked from transport carrier.
+-- @param #OPSTRANSPORT self
+-- @param #boolean Active If `true` or `nil`, group is activated when disembarked. If `false`, group is late activated and needs to be activated manually.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetDisembarkActivation(Active)
+  if Active==true or Active==nil then
+    self.disembarkActivation=true
+  else
+    self.disembarkActivation=false
+  end  
+  return self
+end
+
+
+--- Set if group remains *in utero* after disembarkment from carrier. Can be used to directly load the group into another carrier. Similar to disembark in late activated state.
+-- @param #OPSTRANSPORT self
+-- @param #boolean InUtero If `true` or `nil`, group remains *in utero* after disembarkment.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetDisembarkInUtero(InUtero)
+  if InUtero==true or InUtero==nil then
+    self.disembarkInUtero=true
+  else
+    self.disembarkInUtero=false
+  end  
+  return self
+end
+
 
 --- Add a carrier assigned for this transport.
 -- @param #OPSTRANSPORT self
@@ -240,7 +294,7 @@ function OPSTRANSPORT:_CreateCargoGroupData(group, Pickupzone, Deployzone)
   
   if group:IsInstanceOf("OPSGROUP") then
     opsgroup=group
-  else
+  elseif group:IsInstanceOf("GROUP") then
   
     opsgroup=_DATABASE:GetOpsGroup(group)
     
@@ -252,10 +306,11 @@ function OPSTRANSPORT:_CreateCargoGroupData(group, Pickupzone, Deployzone)
       else
         opsgroup=ARMYGROUP:New(group)
       end
-    else
-      --env.info("FF found opsgroup in createcargo")
     end
     
+  else
+    self:E(self.lid.."ERROR: Cargo must be a GROUP or OPSGROUP object!")
+    return nil
   end
 
   local cargo={} --#OPSGROUP.CargoGroup

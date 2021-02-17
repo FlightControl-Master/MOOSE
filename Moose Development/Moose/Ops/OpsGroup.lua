@@ -108,7 +108,7 @@
 -- @field #OPSGROUP carrierGroup Carrier group transporting this group as cargo.
 -- @field #table cargoqueue Table containing cargo groups to be transported.
 -- @field #table cargoBay Table containing OPSGROUP loaded into this group.
--- @field #OPSGROUP.CargoTransport cargoTransport Current cargo transport assignment.
+-- @field Ops.OpsTransport#OPSTRANSPORT cargoTransport Current cargo transport assignment.
 -- @field #string cargoStatus Cargo status of this group acting as cargo.
 -- @field #string carrierStatus Carrier status of this group acting as cargo carrier.
 -- @field #number cargocounter Running number of cargo UIDs.
@@ -2999,7 +2999,7 @@ function OPSGROUP:CountRemainingTransports()
 
   -- Loop over mission queue.
   for _,_transport in pairs(self.cargoqueue) do
-    local transport=_transport --#OPSGROUP.CargoTransport
+    local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
     
     -- Count not delivered (executing or scheduled) assignments.
     if transport and transport.status~=OPSGROUP.TransportStatus.DELIVERED then
@@ -4752,7 +4752,7 @@ function OPSGROUP:_CheckCargoTransport()
   
   -- Loop over cargo queue and check if everything was delivered.
   for i=#self.cargoqueue,1,-1 do
-    local transport=self.cargoqueue[i] --#OPSGROUP.CargoTransport
+    local transport=self.cargoqueue[i] --Ops.OpsTransport#OPSTRANSPORT
     local delivered=self:_CheckDelivered(transport)
     if delivered then
       self:Delivered(transport)
@@ -4807,7 +4807,7 @@ end
 
 --- Get cargo transport from cargo queue.
 -- @param #OPSGROUP self
--- @return #OPSGROUP.CargoTransport The next due cargo transport or `nil`.
+-- @return Ops.OpsTransport#OPSTRANSPORT The next due cargo transport or `nil`.
 function OPSGROUP:_GetNextCargoTransport()
 
   -- Abs. mission time in seconds.
@@ -4818,8 +4818,8 @@ function OPSGROUP:_GetNextCargoTransport()
 
   -- Sort results table wrt prio and distance to pickup zone.
   local function _sort(a, b)
-    local transportA=a --#OPSGROUP.CargoTransport
-    local transportB=b --#OPSGROUP.CargoTransport
+    local transportA=a --Ops.OpsTransport#OPSTRANSPORT
+    local transportB=b --Ops.OpsTransport#OPSTRANSPORT
     local distA=transportA.pickupzone:GetCoordinate():Get2DDistance(coord)
     local distB=transportB.pickupzone:GetCoordinate():Get2DDistance(coord)
     return (transportA.prio<transportB.prio) or (transportA.prio==transportB.prio and distA<distB)
@@ -4829,7 +4829,7 @@ function OPSGROUP:_GetNextCargoTransport()
   -- Look for first mission that is SCHEDULED.
   local vip=math.huge
   for _,_cargotransport in pairs(self.cargoqueue) do
-    local cargotransport=_cargotransport --#OPSGROUP.CargoTransport    
+    local cargotransport=_cargotransport --Ops.OpsTransport#OPSTRANSPORT    
     if cargotransport.importance and cargotransport.importance<vip then
       vip=cargotransport.importance
     end
@@ -4926,12 +4926,12 @@ end
 
 --- Delete a cargo transport assignment from the cargo queue
 -- @param #OPSGROUP self
--- @param #OPSGROUP.CargoTransport CargoTransport Cargo transport do be deleted.
+-- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport Cargo transport do be deleted.
 -- @return #OPSGROUP self
 function OPSGROUP:DelCargoTransport(CargoTransport)
 
   for i,_transport in pairs(self.cargoqueue) do
-    local transport=_transport --#OPSGROUP.CargoTransport
+    local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
     if transport.uid==CargoTransport.uid then
       table.remove(self.cargoqueue, i)
       return self
@@ -4952,7 +4952,7 @@ end
 -- @param Core.Zone#ZONE Embarkzone (Optional) Zone where the cargo is going to be embarked into the transport. By default is goes to the assigned carrier unit.
 -- @param Core.Zone#ZONE Disembarkzone (Optional) Zone where the cargo disembarks to (is spawned after unloaded). Default is anywhere in the deploy zone.
 -- @param #OPSGROUP DisembarkCarrierGroup (Optional) The OPSGROUP where the cargo is directly loaded into.
--- @return #OPSGROUP.CargoTransport Cargo transport.
+-- @return Ops.OpsTransport#OPSTRANSPORT Cargo transport.
 function OPSGROUP:CreateCargoTransport(GroupSet, Pickupzone, Deployzone, Prio, Importance, ClockStart, Embarkzone, Disembarkzone, DisembarkCarrierGroup)
 
   -- Current mission time.
@@ -4967,7 +4967,7 @@ function OPSGROUP:CreateCargoTransport(GroupSet, Pickupzone, Deployzone, Prio, I
   end
 
   -- Data structure.
-  local transport={} --#OPSGROUP.CargoTransport
+  local transport={} --Ops.OpsTransport#OPSTRANSPORT
   transport.uid=self.cargocounter
   transport.status=OPSGROUP.TransportStatus.PLANNING  
   transport.pickupzone=Pickupzone
@@ -5678,7 +5678,14 @@ function OPSGROUP:onafterUnloading(From, Event, To)
         -- Delivered to deploy zone
         ---  
         
-        if not self.cargoTransport.inactiveUnload then
+        if self.cargoTransport.disembarkInUtero then
+        
+          -- Unload but keep "in utero" (no coordinate provided).
+          self:Unload(cargo.opsgroup)
+
+        else
+        
+          -- TODO: honor disembark zone!
         
           local zoneCarrier=ZONE_RADIUS:New("Carrier", self:GetVec2(), 100)
         
@@ -5687,11 +5694,8 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           local Heading=math.random(0,359)
                   
           -- Unload.
-          env.info("FF unload cargo "..cargo.opsgroup:GetName())
-          self:Unload(cargo.opsgroup, Coordinate, nil, Heading)
-        else
-          env.info("FF unload cargo Inactive "..cargo.opsgroup:GetName())
-          self:Unload(cargo.opsgroup)
+          self:Unload(cargo.opsgroup, Coordinate, self.cargoTransport.disembarkActivation, Heading)
+
         end
       
       end
@@ -5711,8 +5715,11 @@ end
 -- @param Core.Point#COORDINATE Coordinate Coordinate were the group is unloaded to.
 -- @param #number Heading Heading of group.
 function OPSGROUP:onbeforeUnload(From, Event, To, OpsGroup, Coordinate, Heading)
-  --TODO: Add check if CargoGroup is cargo of this carrier.
-  return true
+
+  -- Remove group from carrier bay. If group is not in cargo bay, function will return false and transition is denied.
+  local removed=self:_DelCargobay(OpsGroup)
+  
+  return removed
 end
 
 --- On after "Unload" event. Carrier unloads a cargo group from its cargo bay.
@@ -5725,10 +5732,7 @@ end
 -- @param #boolean Activated If `true`, group is active. If `false`, group is spawned in late activated state.
 -- @param #number Heading (Optional) Heading of group in degrees. Default is random heading for each unit. 
 function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Activated, Heading)
-  
-  -- Remove group from carrier bay.
-  self:_DelCargobay(OpsGroup)
-  
+    
   -- Debug info.
   OpsGroup:I(OpsGroup.lid..string.format("New cargo status %s --> %s", OpsGroup.cargoStatus, OPSGROUP.CargoStatus.NOTCARGO))
 
@@ -5841,7 +5845,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #OPSGROUP.CargoTransport CargoTransport
+-- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport
 function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
 
   -- Set cargo status.
