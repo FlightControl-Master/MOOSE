@@ -3,33 +3,33 @@
 -- ===
 -- 
 -- **SHORAD** - Short Range Air Defense System
--- Controls a network of short range AAA groups. Uses events to detect a missile attack
+-- Controls a network of short range air/missile defense groups.
 -- 
 -- ===
 -- 
 -- ## Missions:
 --
--- ### [SHORAD - Short Range Air Defense](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/tbd)
+-- ### [SHORAD - Short Range Air Defense](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SRD%20-%20SHORAD%20Defense)
 -- 
 -- ===
 -- 
 -- ### Author : **applevangelist **
 -- 
 -- @module Functional.Shorad
--- @image Functional.Mantis.jpg
+-- @image Functional.Shorad.jpg
 --
 -- Date: Feb 2021
 
 -------------------------------------------------------------------------
---- **SHORAD** class, extends @{#Core.Base#BASE}
+--- **SHORAD** class, extends Core.Base#BASE
 -- @type SHORAD
 -- @field #string ClassName
 -- @field #string name Name of this Shorad
 -- @field #boolean debug Set the debug state
 -- @field #string Prefixes String to be used to build the @{#Core.Set#SET_GROUP} 
 -- @field #number Radius Shorad defense radius in meters
--- @field @{#Core.Set#SET_GROUP} Groupset The set of Shorad groups
--- @field @{#Core.Set#SET_GROUP} Samset The set of SAM groups to defend
+-- @field Core.Set#SET_GROUP Groupset The set of Shorad groups
+-- @field Core.Set#SET_GROUP Samset The set of SAM groups to defend
 -- @field #string Coalition The coalition of this Shorad
 -- @field #number ActiveTimer How long a Shorad stays active after wake-up in seconds
 -- @field #table ActiveGroups Table for the timer function
@@ -40,14 +40,14 @@
 -- @field #number DefenseHighProb Default 90, maximim detection limit
 -- @extends Core.Base#BASE
 
---- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - Frédéric Bastiat 
+--- *Good friends are worth defending.* Mr Tushman, Wonder (the Movie) 
 -- 
 -- Simple Class for a more intelligent Short Range Air Defense System
 -- 
 -- #SHORAD
--- Moose derived missile intercepting short range defense system
--- Protects a network of SAM sites. Uses events to switch on the defense groups closest to the enemy
--- Integrate with @{Functional.Mantis#MANTIS} to complete the defensive system setup.
+-- Moose derived missile intercepting short range defense system.
+-- Protects a network of SAM sites. Uses events to switch on the defense groups closest to the enemy.
+-- Easily integrated with @{Functional.Mantis#MANTIS} to complete the defensive system setup.
 --
 -- ## Usage
 --
@@ -75,8 +75,6 @@
 --  * SHORAD:SwitchHARMDefense(onoff)
 --  * SHORAD:SwitchAGMDefense(onoff)
 --  * SHORAD:SetDefenseLimits(low,high)
---  * SHORAD:SetActiveTimer(seconds)
---  * SHORAD:SetDefenseRadius(meters)
 --  * SHORAD:SetActiveTimer(seconds)
 --  * SHORAD:SetDefenseRadius(meters)
 --
@@ -176,7 +174,7 @@ do
     self.DefendMavs = true
     self.DefenseLowProb = 70 -- probability to detect a missile shot, low margin
     self.DefenseHighProb = 90  -- probability to detect a missile shot, high margin
-    self:I("*** SHORAD - Started Version 0.0.1")
+    self:I("*** SHORAD - Started Version 0.0.2")
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("SHORAD %s | ", self.name)
     self:_InitState()
@@ -289,7 +287,7 @@ do
     return hit
   end
   
-  --- Check if a Maverick was fired
+  --- Check if an AGM was fired
   -- @param #SHORAD self
   -- @param #string WeaponName
   -- @return #boolean Returns true for a match
@@ -380,6 +378,7 @@ do
   -- @param #string TargetGroup Name of the target group used to build the #ZONE
   -- @param #number Radius Radius of the #ZONE
   -- @param #number ActiveTimer Number of seconds to stay active
+  -- @usage Use this function to integrate with other systems.
   function SHORAD:WakeUpShorad(TargetGroup, Radius, ActiveTimer)
     self:F({TargetGroup, Radius, ActiveTimer})
     local targetgroup = GROUP:FindByName(TargetGroup)
@@ -414,6 +413,7 @@ do
   
   --- Main function - work on the EventData
   -- @param #SHORAD self
+  -- @param Core.Event#EVENTDATA EventData The event details table data set
   function SHORAD:OnEventShot( EventData )
     self:F( { EventData } )
   
@@ -421,32 +421,35 @@ do
     --local ShootingUnitName = EventData.IniDCSUnitName
     local ShootingWeapon = EventData.Weapon -- Identify the weapon fired
     local ShootingWeaponName = EventData.WeaponName -- return weapon type
-    -- get detection probability
-    local IsDetected = self:_ShotIsDetected()
-    -- convert to text
-    local DetectedText = "false"
-    if IsDetected then 
-      DetectedText = "true"
-    end
-    local text = string.format("%s Missile Launched = %s | Detected probability state is %s", self.lid, ShootingWeaponName, DetectedText)
-    self:T( text )
-    local m = MESSAGE:New(text,15,"Info"):ToAllIf(self.debug)
     -- get firing coalition
     local weaponcoalition = EventData.IniGroup:GetCoalition()
-    if (self:_CheckHarms(ShootingWeaponName) or self:_CheckMavs(ShootingWeaponName)) and self:_CheckCoalition(weaponcoalition) and IsDetected then
-      -- get target data
-      local targetdata = EventData.Weapon:getTarget() -- Identify target
-      local targetunitname = Unit.getName(targetdata) -- Unit name
-      local targetgroup = Unit.getGroup(Weapon.getTarget(ShootingWeapon)) --targeted group
-      local targetgroupname = targetgroup:getName() -- group name
-      -- check if we or a SAM site are the target 
-      --local TargetGroup = EventData.TgtGroup -- Wrapper.Group#GROUP
-      local shotatus = self:_CheckShotAtShorad(targetgroupname) --#boolean
-      local shotatsams = self:_CheckShotAtSams(targetgroupname) --#boolean
-      -- if being shot at, find closest SHORADs to activate
-      if shotatsams or shotatus then
-        self:T({shotatsams=shotatsams,shotatus=shotatus})
-        self:WakeUpShorad(targetgroupname, self.Radius, self.ActiveTimer)
+    -- get detection probability
+    if self:_CheckCoalition(weaponcoalition) then --avoid overhead on friendly fire
+      local IsDetected = self:_ShotIsDetected()
+      -- convert to text
+      local DetectedText = "false"
+      if IsDetected then 
+        DetectedText = "true"
+      end
+      local text = string.format("%s Missile Launched = %s | Detected probability state is %s", self.lid, ShootingWeaponName, DetectedText)
+      self:T( text )
+      local m = MESSAGE:New(text,15,"Info"):ToAllIf(self.debug)
+      --
+      if (self:_CheckHarms(ShootingWeaponName) or self:_CheckMavs(ShootingWeaponName)) and IsDetected then
+        -- get target data
+        local targetdata = EventData.Weapon:getTarget() -- Identify target
+        local targetunitname = Unit.getName(targetdata) -- Unit name
+        local targetgroup = Unit.getGroup(Weapon.getTarget(ShootingWeapon)) --targeted group
+        local targetgroupname = targetgroup:getName() -- group name
+        -- check if we or a SAM site are the target 
+        --local TargetGroup = EventData.TgtGroup -- Wrapper.Group#GROUP
+        local shotatus = self:_CheckShotAtShorad(targetgroupname) --#boolean
+        local shotatsams = self:_CheckShotAtSams(targetgroupname) --#boolean
+        -- if being shot at, find closest SHORADs to activate
+        if shotatsams or shotatus then
+          self:T({shotatsams=shotatsams,shotatus=shotatus})
+          self:WakeUpShorad(targetgroupname, self.Radius, self.ActiveTimer)
+        end
       end
     end
   end 
