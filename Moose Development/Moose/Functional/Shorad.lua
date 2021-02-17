@@ -378,7 +378,14 @@ do
   -- @param #string TargetGroup Name of the target group used to build the #ZONE
   -- @param #number Radius Radius of the #ZONE
   -- @param #number ActiveTimer Number of seconds to stay active
-  -- @usage Use this function to integrate with other systems.
+  -- @usage Use this function to integrate with other systems, example   
+  -- 
+  -- local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()
+  -- myshorad = SHORAD:New("BlueShorad", "Blue SHORAD", SamSet, 22000, 600, "blue")
+  -- myshorad:SwitchDebug(true)
+  -- mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
+  -- mymantis:AddShorad(myshorad,720)
+  -- mymantis:Start()
   function SHORAD:WakeUpShorad(TargetGroup, Radius, ActiveTimer)
     self:F({TargetGroup, Radius, ActiveTimer})
     local targetgroup = GROUP:FindByName(TargetGroup)
