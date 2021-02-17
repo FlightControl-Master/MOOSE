@@ -31,7 +31,7 @@
 -- @field Core.Set#SET_GROUP SAM_Group The SAM #SET_GROUP
 -- @field #string EWR_Templates_Prefix Prefix to build the #SET_GROUP for EWR group
 -- @field Core.Set#SET_GROUP EWR_Group The EWR #SET_GROUP
--- @field #Core.Set#SET_GROUP Adv_EWR_Group The EWR #SET_GROUP used for advanced mode
+-- @field Core.Set#SET_GROUP Adv_EWR_Group The EWR #SET_GROUP used for advanced mode
 -- @field #string HQ_Template_CC The ME name of the HQ object
 -- @field Wrapper.Group#GROUP HQ_CC The #GROUP object of the HQ
 -- @field #table SAM_Table Table of SAM sites
@@ -135,8 +135,26 @@
 -- # 4. Advanced Mode
 -- 
 --  Advanced mode will *decrease* reactivity of MANTIS, if HQ and/or EWR  network dies.  Awacs is counted as one EWR unit. It will set SAMs to RED state if both are dead.  Requires usage of an **HQ** object and the **dynamic** option.  
---  E.g. `mymantis:SetAdvancedMode( true, 90 )`  
+--  
+--  E.g.        `mymantis:SetAdvancedMode( true, 90 )`  
+--  
 --  Use this option if you want to make use of or allow advanced SEAD tactics.  
+--  
+-- # 5. Integrate SHORAD
+--  
+--  You can also choose to integrate Mantis with @{Functional.Shorad#SHORAD} for protection against HARMs and AGMs. When SHORAD detects a missile fired at one of MANTIS' SAM sites, it will activate SHORAD systems in
+--  the given defense checkradius around that SAM site. Create a SHORAD object first, then integrate with MANTIS like so:
+--  
+--      `local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()`
+--      `myshorad = SHORAD:New("BlueShorad", "Blue SHORAD", SamSet, 22000, 600, "blue")`
+--      `-- now set up MANTIS`
+--      `mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`
+--      `mymantis:AddShorad(myshorad,720)`
+--      `mymantis:Start()`
+-- 
+--  and (optionally) remove the link later on with
+--  
+--        `mymantis:RemoveShorad()`    
 --
 -- @field #MANTIS
 MANTIS = {
