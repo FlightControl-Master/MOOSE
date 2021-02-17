@@ -23,21 +23,21 @@
 -- Date: Jan 2021
 
 -------------------------------------------------------------------------
---- **MANTIS** class, extends @{#Core.Base#BASE}
+--- **MANTIS** class, extends #Core.Base#BASE
 -- @type MANTIS
 -- @field #string Classname
 -- @field #string name Name of this Mantis
 -- @field #string SAM_Templates_Prefix Prefix to build the #SET_GROUP for SAM sites
--- @field @{#Core.Set#SET_GROUP} SAM_Group The SAM #SET_GROUP
+-- @field Core.Set#SET_GROUP SAM_Group The SAM #SET_GROUP
 -- @field #string EWR_Templates_Prefix Prefix to build the #SET_GROUP for EWR group
--- @field @{#Core.Set#SET_GROUP} EWR_Group The EWR #SET_GROUP
--- @field @{#Core.Set#SET_GROUP} Adv_EWR_Group The EWR #SET_GROUP used for advanced mode
+-- @field Core.Set#SET_GROUP EWR_Group The EWR #SET_GROUP
+-- @field #Core.Set#SET_GROUP Adv_EWR_Group The EWR #SET_GROUP used for advanced mode
 -- @field #string HQ_Template_CC The ME name of the HQ object
--- @field @{#Wrapper.Group#GROUP} HQ_CC The #GROUP object of the HQ
+-- @field Wrapper.Group#GROUP HQ_CC The #GROUP object of the HQ
 -- @field #table SAM_Table Table of SAM sites
 -- @field #string lid Prefix for logging
--- @field @{#Functional.Detection#DETECTION_AREAS} Detection The #DETECTION_AREAS object for EWR
--- @field @{#Functional.Detection#DETECTION_AREAS} AWACS_Detection The #DETECTION_AREAS object for AWACS
+-- @field Functional.Detection#DETECTION_AREAS Detection The #DETECTION_AREAS object for EWR
+-- @field Functional.Detection#DETECTION_AREAS AWACS_Detection The #DETECTION_AREAS object for AWACS
 -- @field #boolean debug Switch on extra messages
 -- @field #boolean verbose Switch on extra logging
 -- @field #number checkradius Radius of the SAM sites
@@ -51,10 +51,10 @@
 -- @field #number adv_state Advanced mode state tracker
 -- @field #boolean advAwacs Boolean switch to use Awacs as a separate detection stream
 -- @field #number awacsrange Detection range of an optional Awacs unit
--- @field @{#Functional.Shorad#SHORAD} Shorad SHORAD Object, if available
+-- @field Functional.Shorad#SHORAD Shorad SHORAD Object, if available
 -- @field #boolean ShoradLink If true, #MANTIS has #SHORAD enabled
 -- @field #number ShoradTime Timer in seconds, how long #SHORAD will be active after a detection inside of the defense range
--- @extends @{#Core.Base#BASE}
+-- @extends Core.Base#BASE
 
 
 --- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - Frédéric Bastiat 
@@ -382,7 +382,7 @@ do
   
   --- Function to set the HQ object for further use
   -- @param #MANTIS self
-  -- @param Wrapper.GROUP#GROUP The HQ #GROUP object to be set as HQ
+  -- @param Wrapper.GROUP#GROUP group The #GROUP object to be set as HQ
   function MANTIS:SetCommandCenter(group)
     local group = group or nil
     if group ~= nil then
@@ -774,7 +774,7 @@ do
             -- switch off SAM
             samgroup:OptionAlarmStateRed()
             -- link in to SHORAD if available
-            -- TODO Test integration
+            -- TODO Test integration fully
             if self.ShoradLink then
               local Shorad = self.Shorad
               local radius = self.checkradius
