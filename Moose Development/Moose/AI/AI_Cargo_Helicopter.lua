@@ -33,7 +33,7 @@
 -- 
 -- ## Infantry health.
 -- 
--- When infantry is unboarded from the APCs, the infantry is actually respawned into the battlefield. 
+-- When infantry is unboarded from the helicopters, the infantry is actually respawned into the battlefield. 
 -- As a result, the unboarding infantry is very _healthy_ every time it unboards.
 -- This is due to the limitation of the DCS simulator, which is not able to specify the health of new spawned units as a parameter.
 -- However, infantry that was destroyed when unboarded, won't be respawned again. Destroyed is destroyed.
@@ -67,18 +67,6 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   
   self:AddTransition( "Unloaded", "Pickup", "*" )
   self:AddTransition( "Loaded", "Deploy", "*" )
-  --[[
-  self:AddTransition( { "Unloaded", "Loading" }, "Load", "Boarding" )
-  self:AddTransition( "Boarding", "Board", "Boarding" )
-  self:AddTransition( "Boarding", "Loaded", "Loaded" )
-  self:AddTransition( "Boarding", "PickedUp", "Loaded" )
-  self:AddTransition( "Boarding", "Deploy", "Loaded" )
-  self:AddTransition( "Loaded", "Unload", "Unboarding" )
-  self:AddTransition( "Unboarding", "Unboard", "Unboarding" )
-  self:AddTransition( "Unboarding", "Unloaded", "Unboarding" )
-  self:AddTransition( "Unboarding", "Deployed", "Unloaded" )
-  self:AddTransition( "Unboarding", "Pickup", "Unloaded" )
-  --]]
   self:AddTransition( "*", "Loaded", "Loaded" )
   self:AddTransition( "Unboarding", "Pickup", "Unloaded" )  
   self:AddTransition( "Unloaded", "Unboard", "Unloaded" )  
@@ -108,6 +96,24 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate
   -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+  
+    --- PickedUp Handler OnAfter for AI_CARGO_HELICOPTER - Cargo set has been picked up, ready to deploy
+  -- @function [parent=#AI_CARGO_HELICOPTER] OnAfterPickedUp
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param Wrapper.Group#GROUP Helicopter The helicopter #GROUP object
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param Wrapper.Unit#UNIT Unit The helicopter #UNIT object
+
+    --- Unloaded Handler OnAfter for AI_CARGO_HELICOPTER - Cargo unloaded, carrier is empty
+  -- @function [parent=#AI_CARGO_HELICOPTER] OnAfterUnloaded
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #string Cargo.CargoGroup#CARGO_GROUP Cargo The #CARGO_GROUP object.
+  -- @param Wrapper.Unit#UNIT Unit The helicopter #UNIT object
   
   --- Pickup Trigger for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] Pickup
@@ -141,6 +147,13 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param Core.Point#COORDINATE Coordinate
   -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
   
+    --- Deployed Handler OnAfter for AI_CARGO_HELICOPTER
+  -- @function [parent=#AI_CARGO_HELICOPTER] OnAfterDeployed
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  
   --- Deploy Trigger for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] Deploy
   -- @param #AI_CARGO_HELICOPTER self
@@ -154,6 +167,20 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param Core.Point#COORDINATE Coordinate Place at which the cargo is deployed.
   -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
   
+  --- Home Trigger for AI_CARGO_HELICOPTER
+  -- @function [parent=#AI_CARGO_HELICOPTER] Home
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param Core.Point#COORDINATE Coordinate Place to which the helicopter will go.
+  -- @param #number Speed (optional) Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+  -- @param #number Height (optional) Height the Helicopter should by flying at.
+  
+  --- Home Asynchronous Trigger for AI_CARGO_HELICOPTER
+  -- @function [parent=#AI_CARGO_HELICOPTER] __Home
+  -- @param #number Delay Delay in seconds.
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param Core.Point#COORDINATE Coordinate Place to which the helicopter will go.
+  -- @param #number Speed (optional) Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+  -- @param #number Height (optional) Height the Helicopter should by flying at. 
 
   -- We need to capture the Crash events for the helicopters.
   -- The helicopter reference is used in the semaphore AI_CARGO_QUEUE.
@@ -235,7 +262,7 @@ end
 -- @param Event
 -- @param To
 function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
-
+  self:F({From, Event, To})
   Helicopter:F( { Name = Helicopter:GetName() } )
 
   if Helicopter and Helicopter:IsAlive() then
@@ -276,7 +303,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Speed
 function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordinate, Speed, DeployZone )
-
+  self:F({From, Event, To, Coordinate, Speed, DeployZone})
   local HelicopterInZone = false
 
   if Helicopter and Helicopter:IsAlive() == true then
@@ -359,7 +386,8 @@ end
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Speed
 function AI_CARGO_HELICOPTER:onafterOrbit( Helicopter, From, Event, To, Coordinate )
-
+  self:F({From, Event, To, Coordinate})
+  
   if Helicopter and Helicopter:IsAlive() then
     
     local Route = {}
@@ -394,7 +422,7 @@ end
 -- @param #boolean Deployed Cargo is deployed.
 -- @return #boolean True if all cargo has been unloaded.
 function AI_CARGO_HELICOPTER:onafterDeployed( Helicopter, From, Event, To, DeployZone )
-  self:F( { Helicopter, From, Event, To, DeployZone = DeployZone } )
+  self:F( { From, Event, To, DeployZone = DeployZone } )
 
   self:Orbit( Helicopter:GetCoordinate(), 50 )
 
@@ -488,7 +516,7 @@ end
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
 -- @param #number Height Height in meters to move to the deploy coordinate.
 function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate, Speed, Height, DeployZone )
-
+  self:F({From, Event, To, Coordinate, Speed, Height, DeployZone})
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
     self.RouteDeploy = true
@@ -554,7 +582,8 @@ end
 -- @param #number Height Height in meters to move to the home coordinate.
 -- @param Core.Zone#ZONE HomeZone The zone wherein the carrier will return when all cargo has been transported. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed, Height, HomeZone )
-
+  self:F({From, Event, To, Coordinate, Speed, Height})
+  
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
     self.RouteHome = true
@@ -563,7 +592,8 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     
     --- Calculate the target route point.
 
-    Coordinate.y = Height
+    --Coordinate.y = Height
+    Height = Height or 50
     
     Speed = Speed or Helicopter:GetSpeedMax()*0.5          
 
@@ -576,7 +606,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     --- Create a route point of type air.
     local CoordinateTo = Coordinate
     local landheight = CoordinateTo:GetLandHeight() -- get target height
-    CoordinateTo.y = landheight + 50 -- flight height should be 50m above ground
+    CoordinateTo.y = landheight + Height -- flight height should be 50m above ground
     
     local WaypointTo = CoordinateTo:WaypointAir("RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, Speed, true)
 
@@ -589,12 +619,11 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     
     Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
     Route[#Route].task = Helicopter:TaskCombo( Tasks )
-
+ 
     Route[#Route+1] = WaypointTo
 
     -- Now route the helicopter
     Helicopter:Route(Route, 0)
-    
   end
   
 end
