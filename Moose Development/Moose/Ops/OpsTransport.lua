@@ -1,4 +1,4 @@
---- **Ops** - Troop transport assignment of OPS groups.
+--- **Ops** - Troop transport assignment for OPS groups.
 -- 
 -- ## Main Features:
 --
@@ -106,22 +106,24 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   _OPSTRANSPORTID=_OPSTRANSPORTID+1  
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("OPSTRANSPORT [UID=%d] %s --> %s | ", _OPSTRANSPORTID, Pickupzone:GetName(), Deployzone:GetName())
+  self.lid=string.format("OPSTRANSPORT [UID=%d] | ", _OPSTRANSPORTID)
   
   -- Defaults.
   self.uid=_OPSTRANSPORTID
-  self.status=OPSTRANSPORT.Status.PLANNING  
+  self.status=OPSTRANSPORT.Status.PLANNING
+    
   self.pickupzone=Pickupzone
   self.deployzone=Deployzone
   self.embarkzone=Pickupzone
-  self.disembarkzone=Deployzone
-  self.prio=50
-  self.importance=nil
-  self.Tstart=timer.getAbsTime()+5
   self.carrierGroup=nil
   self.cargos={}
   self.carriers={}
+
   
+  self:SetPriority()
+  self:SetTime()
+  
+  -- Add cargo groups.
   if GroupSet then
     self:AddCargoGroups(GroupSet, Pickupzone, Deployzone)
   end
@@ -138,6 +140,9 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
 
   self:AddTransition("*",                      "Status",           "*")
   self:AddTransition("*",                      "Stop",             "*")
+  
+  self:AddTransition("*",                      "Unloaded",         "*")
+  
   
   -- Call status update
   self:__Status(-1)
@@ -183,7 +188,7 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, Pickupzone, Deployzone)
   -- Debug info.
   if self.verbose>=0 then
     local text=string.format("Created Cargo Transport (UID=%d) from %s(%s) --> %s(%s)", 
-    self.uid, self.pickupzone:GetName(), self.embarkzone:GetName(), self.deployzone:GetName(), self.disembarkzone:GetName())
+    self.uid, self.pickupzone:GetName(), self.embarkzone and self.embarkzone:GetName() or "none", self.deployzone:GetName(), self.disembarkzone and self.disembarkzone:GetName() or "none")
     local Weight=0
     for _,_cargo in pairs(self.cargos) do
       local cargo=_cargo --#OPSGROUP.CargoGroup
@@ -213,7 +218,7 @@ end
 -- @param Core.Zone#ZONE DisembarkZone Zone where the troops are disembarked.
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetDisembarkZone(DisembarkZone)
-  self.disembarkzone=DisembarkZone or self.deployzone
+  self.disembarkzone=DisembarkZone
   return self
 end
 
@@ -259,6 +264,56 @@ function OPSTRANSPORT:_AddCarrier(CarrierGroup)
   
   return self
 end
+
+--- Set transport start and stop time.
+-- @param #OPSTRANSPORT self
+-- @param #string ClockStart Time the transport is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
+-- @param #string ClockStop (Optional) Time the transport is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetTime(ClockStart, ClockStop)
+
+  -- Current mission time.
+  local Tnow=timer.getAbsTime()
+  
+  -- Set start time. Default in 5 sec.
+  local Tstart=Tnow+5
+  if ClockStart and type(ClockStart)=="number" then
+    Tstart=Tnow+ClockStart
+  elseif ClockStart and type(ClockStart)=="string" then
+    Tstart=UTILS.ClockToSeconds(ClockStart)
+  end
+
+  -- Set stop time. Default nil.
+  local Tstop=nil
+  if ClockStop and type(ClockStop)=="number" then
+    Tstop=Tnow+ClockStop
+  elseif ClockStop and type(ClockStop)=="string" then
+    Tstop=UTILS.ClockToSeconds(ClockStop)
+  end
+  
+  self.Tstart=Tstart
+  self.Tstop=Tstop
+
+  if Tstop then
+    self.duration=self.Tstop-self.Tstart
+  end  
+
+  return self
+end
+
+--- Set mission priority and (optional) urgency. Urgent missions can cancel other running missions. 
+-- @param #OPSTRANSPORT self
+-- @param #number Prio Priority 1=high, 100=low. Default 50.
+-- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is `nil`.
+-- @param #boolean Urgent If *true*, another running mission might be cancelled if it has a lower priority.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetPriority(Prio, Importance, Urgent)
+  self.prio=Prio or 50
+  self.urgent=Urgent
+  self.importance=Importance
+  return self
+end
+
 
 --- Add a carrier assigned for this transport.
 -- @param #OPSTRANSPORT self
@@ -337,14 +392,18 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
 
   local fsmstate=self:GetState()
 
-  local text=string.format("State=%s", fsmstate)
+  local text=string.format("State=%s: %s --> %s", fsmstate, self.pickupzone:GetName(), self.deployzone:GetName())
   
+  text=text..string.format("\nCargos:")
   for _,_cargo in pairs(self.cargos) do
     local cargo=_cargo  --Ops.OpsGroup#OPSGROUP.CargoGroup
+    text=text..string.format("\n- %s: %s %s, carrier=%s", cargo.opsgroup:GetName(), cargo.opsgroup:GetState(), cargo.opsgroup.cargoStatus, cargo.opsgroup.carrier and cargo.opsgroup.carrier.name or "none")
   end
   
+  text=text..string.format("\nCarriers:")
   for _,_carrier in pairs(self.carriers) do
-    local carrier=_carrier
+    local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+    text=text..string.format("\n- %s: %s %s, cargo=%d kg", carrier:GetName(), carrier:GetState(), carrier.carrierStatus, carrier:GetWeightCargo())
   end  
   
   self:I(self.lid..text)
@@ -394,8 +453,7 @@ end
 function OPSTRANSPORT:onafterDelivered(From, Event, To)
   self:I(self.lid..string.format("New status %s", OPSTRANSPORT.Status.DELIVERED))
   
-  -- TODO: Inform all assigned carriers that cargo was delivered. They can have this in the queue or are currently processing this transport.
-  
+  -- Inform all assigned carriers that cargo was delivered. They can have this in the queue or are currently processing this transport.  
   for _,_carrier in pairs(self.carriers) do
     local carrier=_carrier --Ops.OpsGroup#OPSGROUP
     if self:GetCarrierTransportStatus(carrier)~=OPSTRANSPORT.Status.DELIVERED then
@@ -403,6 +461,16 @@ function OPSTRANSPORT:onafterDelivered(From, Event, To)
     end 
   end
   
+end
+
+--- On after "Unloaded" event.
+-- @param #OPSTRANSPORT self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup OPSGROUP that was unloaded from a carrier.
+function OPSTRANSPORT:onafterUnloaded(From, Event, To, OpsGroup)
+  self:I(self.lid..string.format("Unloaded OPSGROUP %s", OpsGroup:GetName()))
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

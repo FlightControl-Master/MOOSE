@@ -5303,15 +5303,17 @@ function OPSGROUP:onafterPickup(From, Event, To)
       end
     elseif self.isNavygroup then
     
-      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate)
-      waypoint.detour=true
+      -- Navy Group
+    
+      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid) ; waypoint.detour=true
       
       self:__Cruise(-2)
            
     elseif self.isArmygroup then
     
-      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate)
-      waypoint.detour=true
+      -- Army Group
+
+      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid) ; waypoint.detour=true
       
       self:__Cruise(-2)
       
@@ -5496,7 +5498,7 @@ function OPSGROUP:onafterLoaded(From, Event, To)
   end
   
   -- Order group to transport.
-  self:__Transport(1, self.cargoTransport.deployzone)
+  self:__Transport(1)
   
 end
 
@@ -5551,8 +5553,16 @@ function OPSGROUP:onafterTransport(From, Event, To)
 
   else
   
-    -- Get a random coordinate in the deploy zone and let the carrier go there.
-    local Coordinate=Zone:GetRandomCoordinate()
+    -- Coord where the carrier goes to unload.
+    local Coordinate=nil --Core.Point#COORDINATE
+    
+    if self.cargoTransport.carrierGroup and self.cargoTransport.carrierGroup:IsLoading() then
+      -- Coordinate of the new carrier.
+      Coordinate=self.cargoTransport.carrierGroup:GetCoordinate()
+    else
+      -- Get a random coordinate in the deploy zone and let the carrier go there.
+      Coordinate=Zone:GetRandomCoordinate()
+    end
 
     -- Add waypoint.
     if self.isFlightgroup then
@@ -5594,9 +5604,8 @@ function OPSGROUP:onafterTransport(From, Event, To)
           
     elseif self.isArmygroup then
     
-      -- ARMYGROUP
-      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate)
-      waypoint.detour=true
+      -- ARMYGROUP            
+      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid) ; waypoint.detour=true
       
       -- Give cruise command.
       self:Cruise()
@@ -5604,8 +5613,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
     elseif self.isNavygroup then
     
       -- NAVYGROUP
-      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate)
-      waypoint.detour=true
+      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid) ; waypoint.detour=true
       
       -- Give cruise command.
       self:Cruise()
@@ -5629,7 +5637,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
   self.carrierStatus=OPSGROUP.CarrierStatus.UNLOADING
   
   -- Deploy zone.
-  local zone=self.cargoTransport.disembarkzone  --Core.Zone#ZONE
+  local zone=self.cargoTransport.disembarkzone or self.cargoTransport.deployzone  --Core.Zone#ZONE
     
   for _,_cargo in pairs(self.cargoTransport.cargos) do
     local cargo=_cargo --#OPSGROUP.CargoGroup
@@ -5663,7 +5671,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           env.info("ERROR: No element of the group can take this cargo!")
         end
             
-      elseif zone:IsInstanceOf("ZONE_AIRBASE") and zone:GetAirbase():IsShip() then
+      elseif zone and zone:IsInstanceOf("ZONE_AIRBASE") and zone:GetAirbase():IsShip() then
 
         ---
         -- Delivered to a ship via helo or VTOL
@@ -5684,20 +5692,37 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           self:Unload(cargo.opsgroup)
 
         else
+
+          local Coordinate=nil        
         
-          -- TODO: honor disembark zone!
+          if self.cargoTransport.disembarkzone then
+          
+            -- Random coordinate in disembark zone.
+            Coordinate=self.cargoTransport.disembarkzone:GetRandomCoordinate()
+          
+          else
         
-          local zoneCarrier=ZONE_RADIUS:New("Carrier", self:GetVec2(), 100)
-        
-          -- Random coordinate/heading in the zone.
-          local Coordinate=zoneCarrier:GetRandomCoordinate(50)
+            -- TODO: Optimize with random Vec2
+          
+            -- Create a zone around the carrier.
+            local zoneCarrier=ZONE_RADIUS:New("Carrier", self:GetVec2(), 100)
+          
+            -- Random coordinate/heading in the zone.
+            Coordinate=zoneCarrier:GetRandomCoordinate(50)
+            
+          end
+
+          -- Random heading of the group.
           local Heading=math.random(0,359)
                   
-          -- Unload.
+          -- Unload to Coordinate.
           self:Unload(cargo.opsgroup, Coordinate, self.cargoTransport.disembarkActivation, Heading)
 
         end
-      
+        
+        -- Trigger "Unloaded" event for current cargo transport
+        self.cargoTransport:Unloaded(cargo.opsgroup)
+              
       end
       
     end
@@ -5799,7 +5824,7 @@ function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Activated
   
   -- Trigger "Disembarked" event.
   OpsGroup:Disembarked(OpsGroup.carrierGroup, OpsGroup.carrier)
-
+  
   -- No carrier any more.
   OpsGroup.carrier=nil
   OpsGroup.carrierGroup=nil    
@@ -5882,7 +5907,8 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
   
     -- Check group done.
     self:I(self.lid.."All cargo delivered ==> check group done")
-    self:_CheckGroupDone(0.1)
+    self:__Cruise(0.1)
+    self:_CheckGroupDone(0.2)
 
     -- No current transport any more.  
     self.cargoTransport=nil
@@ -6718,7 +6744,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
           opsgroup:LandAt(opsgroup:GetCoordinate(), 60*60)
         
         else
-          -- Stop and loading.
+          -- Wait and load cargo.
           opsgroup:Wait()        
           opsgroup:__Loading(-5)
         end          
@@ -6733,8 +6759,8 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
           opsgroup:LandAt(opsgroup:GetCoordinate(), 60*60)
         
         else
-          -- Stop and loading.        
-          opsgroup:Wait()        
+          -- Stop and unload.
+          opsgroup:Wait()
           opsgroup:Unloading()
         end
         
@@ -8101,15 +8127,19 @@ end
 -- @return Core.Point#COORDINATE The coordinate of the object.
 function OPSGROUP:_CoordinateFromObject(Object)
   
-  if Object:IsInstanceOf("COORDINATE") then
-    return Object
-  else
-    if Object:IsInstanceOf("POSITIONABLE") or Object:IsInstanceOf("ZONE_BASE") then
-      self:T(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE or ZONE. Trying to get coordinate")
-      return Object:GetCoordinate()
+  if Object then
+    if Object:IsInstanceOf("COORDINATE") then
+      return Object
     else
-      self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE or ZONE!")
+      if Object:IsInstanceOf("POSITIONABLE") or Object:IsInstanceOf("ZONE_BASE") then
+        self:T(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE or ZONE. Trying to get coordinate")
+        return Object:GetCoordinate()
+      else
+        self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE or ZONE!")
+      end
     end
+  else
+    self:E(self.lid.."ERROR: Object passed is nil!")
   end  
 
   return nil
