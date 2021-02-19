@@ -172,7 +172,7 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param #AI_CARGO_HELICOPTER self
   -- @param Core.Point#COORDINATE Coordinate Place to which the helicopter will go.
   -- @param #number Speed (optional) Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-  -- @param #number Height (optional) Height the Helicopter should by flying at.
+  -- @param #number Height (optional) Height the Helicopter should be flying at.
   
   --- Home Asynchronous Trigger for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] __Home
@@ -180,7 +180,7 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param #AI_CARGO_HELICOPTER self
   -- @param Core.Point#COORDINATE Coordinate Place to which the helicopter will go.
   -- @param #number Speed (optional) Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-  -- @param #number Height (optional) Height the Helicopter should by flying at. 
+  -- @param #number Height (optional) Height the Helicopter should be flying at. 
 
   -- We need to capture the Crash events for the helicopters.
   -- The helicopter reference is used in the semaphore AI_CARGO_QUEUE.
