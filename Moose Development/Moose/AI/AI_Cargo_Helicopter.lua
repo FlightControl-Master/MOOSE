@@ -95,7 +95,7 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param #string Event
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate
-  -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+  -- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
   
     --- PickedUp Handler OnAfter for AI_CARGO_HELICOPTER - Cargo set has been picked up, ready to deploy
   -- @function [parent=#AI_CARGO_HELICOPTER] OnAfterPickedUp
@@ -112,14 +112,14 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param #string From
   -- @param #string Event
   -- @param #string To
-  -- @param #string Cargo.CargoGroup#CARGO_GROUP Cargo The #CARGO_GROUP object.
+  -- @param Cargo.CargoGroup#CARGO_GROUP Cargo The #CARGO_GROUP object.
   -- @param Wrapper.Unit#UNIT Unit The helicopter #UNIT object
   
   --- Pickup Trigger for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] Pickup
   -- @param #AI_CARGO_HELICOPTER self
   -- @param Core.Point#COORDINATE Coordinate
-  -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+  -- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
   
   --- Pickup Asynchronous Trigger for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] __Pickup
@@ -135,7 +135,7 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param #string Event
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate Place at which cargo is deployed.
-  -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+  -- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
   -- @return #boolean
   
   --- Deploy Handler OnAfter for AI_CARGO_HELICOPTER
@@ -145,7 +145,7 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param #string Event
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate
-  -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+  -- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
   
     --- Deployed Handler OnAfter for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] OnAfterDeployed
@@ -158,29 +158,29 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @function [parent=#AI_CARGO_HELICOPTER] Deploy
   -- @param #AI_CARGO_HELICOPTER self
   -- @param Core.Point#COORDINATE Coordinate Place at which the cargo is deployed.
-  -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+  -- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
   
   --- Deploy Asynchronous Trigger for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] __Deploy
   -- @param #number Delay Delay in seconds.
   -- @param #AI_CARGO_HELICOPTER self
   -- @param Core.Point#COORDINATE Coordinate Place at which the cargo is deployed.
-  -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+  -- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
   
   --- Home Trigger for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] Home
   -- @param #AI_CARGO_HELICOPTER self
   -- @param Core.Point#COORDINATE Coordinate Place to which the helicopter will go.
-  -- @param #number Speed (optional) Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-  -- @param #number Height (optional) Height the Helicopter should by flying at.
+  -- @param #number Speed (optional) Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+  -- @param #number Height (optional) Height the Helicopter should be flying at.
   
   --- Home Asynchronous Trigger for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] __Home
   -- @param #number Delay Delay in seconds.
   -- @param #AI_CARGO_HELICOPTER self
   -- @param Core.Point#COORDINATE Coordinate Place to which the helicopter will go.
-  -- @param #number Speed (optional) Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-  -- @param #number Height (optional) Height the Helicopter should by flying at. 
+  -- @param #number Speed (optional) Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+  -- @param #number Height (optional) Height the Helicopter should be flying at. 
 
   -- We need to capture the Crash events for the helicopters.
   -- The helicopter reference is used in the semaphore AI_CARGO_QUEUE.
@@ -444,7 +444,7 @@ end
 -- @param Event
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Pickup place.
--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
 -- @param #number Height Height in meters to move to the pickup coordinate. This parameter is ignored for APCs.
 -- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
 function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate, Speed, Height, PickupZone )
@@ -513,7 +513,7 @@ end
 -- @param Event
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Place at which the cargo is deployed.
--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
 -- @param #number Height Height in meters to move to the deploy coordinate.
 function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate, Speed, Height, DeployZone )
   self:F({From, Event, To, Coordinate, Speed, Height, DeployZone})
@@ -578,7 +578,7 @@ end
 -- @param Event
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Home place.
--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param #number Speed Speed in km/h to fly to the pickup coordinate. Default is 50% of max possible speed the unit can go.
 -- @param #number Height Height in meters to move to the home coordinate.
 -- @param Core.Zone#ZONE HomeZone The zone wherein the carrier will return when all cargo has been transported. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed, Height, HomeZone )
