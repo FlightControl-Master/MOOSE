@@ -32,6 +32,8 @@
 -- @field #boolean isAircraft If true, group is airplane or helicopter.
 -- @field #boolean isNaval If true, group is ships or submarine.
 -- @field #boolean isGround If true, group is some ground unit.
+-- @field #boolean isDestroyed If true, the whole group was destroyed.
+-- @field #boolean isDead If true, the whole group is dead.
 -- @field #table waypoints Table of waypoints.
 -- @field #table waypoints0 Table of initial waypoints.
 -- @field Wrapper.Airbase#AIRBASE homebase The home base of the flight group.
@@ -1537,7 +1539,18 @@ end
 -- @param #OPSGROUP self
 -- @return #boolean If true, all units/elements of the group are dead.
 function OPSGROUP:IsDead()
-  return self:Is("Dead")
+  if self.isDead then
+    return true
+  else
+    return self:Is("Dead")
+  end
+end
+
+--- Check if group was destroyed.
+-- @param #OPSGROUP self
+-- @return #boolean If true, all units/elements of the group were destroyed.
+function OPSGROUP:IsDestroyed()
+  return self.isDestroyed
 end
 
 --- Check if FSM is stopped.
@@ -2994,6 +3007,7 @@ end
 -- @param #OPSGROUP self
 -- @return #number Number of unfinished transports in the queue.
 function OPSGROUP:CountRemainingTransports()
+  env.info("FF Count remaining transports="..#self.cargoqueue)
 
   local N=0
 
@@ -3001,14 +3015,17 @@ function OPSGROUP:CountRemainingTransports()
   for _,_transport in pairs(self.cargoqueue) do
     local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
     
+    self:I(self.lid..string.format("Transport status=%s [%s]", transport:GetCarrierTransportStatus(self), transport:GetState()))
+    
     -- Count not delivered (executing or scheduled) assignments.
-    if transport and transport.status~=OPSGROUP.TransportStatus.DELIVERED then
+    if transport and transport:GetCarrierTransportStatus(self)==OPSTRANSPORT.Status.SCHEDULED and transport:GetState()~=OPSTRANSPORT.Status.DELIVERED then
 
       N=N+1
       
     end
   end
   
+  env.info("FF Count remaining transports="..N)
   return N
 end
 
@@ -4532,6 +4549,16 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
   return self
 end
 
+--- On after "Destroyed" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterDestroyed(From, Event, To)
+  self:T(self.lid..string.format("Group destroyed at t=%.3f", timer.getTime()))
+  self.isDestroyed=true
+end
+
 --- On before "Dead" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -4550,10 +4577,9 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterDead(From, Event, To)
   self:T(self.lid..string.format("Group dead at t=%.3f", timer.getTime()))
-
-  -- Delete waypoints so they are re-initialized at the next spawn.
-  self.waypoints=nil
-  self.groupinitialized=false
+  
+  -- Is dead now.
+  self.isDead=true
 
   -- Cancel all missions.
   for _,_mission in pairs(self.missionqueue) do
@@ -4565,6 +4591,10 @@ function OPSGROUP:onafterDead(From, Event, To)
     mission:GroupDead(self)
 
   end
+  
+  -- Delete waypoints so they are re-initialized at the next spawn.
+  self.waypoints=nil
+  self.groupinitialized=false  
 
   -- Stop in a sec.
   self:__Stop(-5)
@@ -4922,6 +4952,7 @@ function OPSGROUP:AddOpsTransport(OpsTransport)
   --Add to cargo queue
   table.insert(self.cargoqueue, OpsTransport)
 
+  self:I(self.lid.."FF adding transport to carrier, #self.cargoqueue="..#self.cargoqueue)
 end
 
 --- Delete a cargo transport assignment from the cargo queue
@@ -5654,6 +5685,9 @@ function OPSGROUP:onafterUnloading(From, Event, To)
       -- Cargo was delivered (somehow).
       cargo.delivered=true
       
+      -- Increase number of delivered cargos.
+      self.cargoTransport.Ndelivered=self.cargoTransport.Ndelivered+1
+      
       if carrierGroup then
       
         ---
@@ -5902,12 +5936,14 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
       elseif self:IsLandedAt() then
         local Task=self:GetTaskCurrent()
         self:TaskCancel(Task)
-      end      
+      end
+    else 
+      -- Army & Navy: give Cruise command to "wake up" from waiting status.
+      self:__Cruise(0.1)
     end
   
     -- Check group done.
     self:I(self.lid.."All cargo delivered ==> check group done")
-    self:__Cruise(0.1)
     self:_CheckGroupDone(0.2)
 
     -- No current transport any more.  
@@ -7504,7 +7540,7 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:_UpdatePosition()
 
-  if self:IsAlive()~=nil then
+  if self:IsExist() then
     
     -- Backup last state to monitor differences.
     self.positionLast=self.position or self:GetVec3()

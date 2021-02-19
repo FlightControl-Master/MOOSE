@@ -38,8 +38,11 @@
 -- @field Core.Zone#ZONE embarkzone (Optional) Zone where the cargo is supposed to embark. Default is the pickup zone.
 -- @field Core.Zone#ZONE disembarkzone (Optional) Zone where the cargo is disembarked. Default is the deploy zone.
 -- @field Ops.OpsGroup#OPSGROUP carrierGroup The new carrier group.
--- @field disembarkActivation Activation setting when group is disembared from carrier.
--- @field disembarkInUtero Do not spawn the group in any any state but leave it "*in utero*". For example, to directly load it into another carrier.
+-- @field #boolean disembarkActivation Activation setting when group is disembared from carrier.
+-- @field #boolean disembarkInUtero Do not spawn the group in any any state but leave it "*in utero*". For example, to directly load it into another carrier.
+-- @field #number Ncargo Total number of cargo groups.
+-- @field #number Ncarrier Total number of assigned carriers.
+-- @field #number Ndelivered Total number of cargo groups delivered.
 -- @extends Core.Fsm#FSM
 
 --- *Victory is the beautiful, bright-colored flower. Transport is the stem without which it could never have blossomed.* -- Winston Churchill
@@ -118,6 +121,9 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   self.carrierGroup=nil
   self.cargos={}
   self.carriers={}
+  self.Ncargo=0
+  self.Ncarrier=0
+  self.Ndelivered=0
 
   
   self:SetPriority()
@@ -168,6 +174,7 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, Pickupzone, Deployzone)
     
     if cargo  then --and self:CanCargo(cargo.opsgroup)
       table.insert(self.cargos, cargo)
+      self.Ncargo=self.Ncargo+1
     end
     
   else
@@ -180,6 +187,7 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, Pickupzone, Deployzone)
       
       if cargo then
         table.insert(self.cargos, cargo)
+        self.Ncargo=self.Ncargo+1
       end
       
     end
@@ -249,6 +257,21 @@ function OPSTRANSPORT:SetDisembarkInUtero(InUtero)
   return self
 end
 
+--- Check if an OPS group is assigned as carrier for this transport.
+-- @param #OPSTRANSPORT self
+-- @param Ops.OpsGroup#OPSGROUP CarrierGroup Potential carrier OPSGROUP.
+-- @return #boolean If true, group is an assigned carrier. 
+function OPSTRANSPORT:IsCarrier(CarrierGroup)
+
+  for _,_carrier in pairs(self.carriers) do
+    local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+    if carrier.groupname==CarrierGroup.groupname then
+      return true
+    end
+  end
+
+  return false
+end
 
 --- Add a carrier assigned for this transport.
 -- @param #OPSTRANSPORT self
@@ -256,11 +279,19 @@ end
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:_AddCarrier(CarrierGroup)
 
-  self:SetCarrierTransportStatus(CarrierGroup, OPSTRANSPORT.Status.SCHEDULED)
+  if not self:IsCarrier(CarrierGroup) then
   
-  self:Scheduled()
-  
-  table.insert(self.carriers, CarrierGroup) 
+    -- Increase carrier count.
+    self.Ncarrier=self.Ncarrier+1
+
+    -- Set trans
+    self:SetCarrierTransportStatus(CarrierGroup, OPSTRANSPORT.Status.SCHEDULED)
+    
+    self:Scheduled()
+    
+    table.insert(self.carriers, CarrierGroup)
+    
+  end 
   
   return self
 end
@@ -390,9 +421,11 @@ end
 -- @param #string To To state.
 function OPSTRANSPORT:onafterStatus(From, Event, To)
 
+  -- Current FSM state.
   local fsmstate=self:GetState()
+  
 
-  local text=string.format("State=%s: %s --> %s", fsmstate, self.pickupzone:GetName(), self.deployzone:GetName())
+  local text=string.format("%s [%s --> %s]: Ncargo=%d/%d, Ncarrier=%d", fsmstate:upper(), self.pickupzone:GetName(), self.deployzone:GetName(), self.Ncargo, self.Ndelivered, self.Ncarrier)
   
   text=text..string.format("\nCargos:")
   for _,_cargo in pairs(self.cargos) do
@@ -483,20 +516,34 @@ end
 function OPSTRANSPORT:_CheckDelivered()
 
   local done=true
+  local dead=true
   for _,_cargo in pairs(self.cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
     
     if cargo.delivered then
       -- This one is delivered.
-    elseif cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped() then
+      dead=false
+    elseif cargo.opsgroup==nil then
+      -- This one is nil?!
+      dead=false
+    elseif cargo.opsgroup:IsDestroyed() then
+      -- This one was destroyed.
+    elseif cargo.opsgroup:IsDead() then
       -- This one is dead.
+      dead=false
+    elseif cargo.opsgroup:IsStopped() then
+      -- This one is stopped.
+      dead=false
     else
       done=false --Someone is not done!
+      dead=false
     end
    
   end
   
-  if done then
+  if dead then
+    --self:CargoDead()
+  elseif done then
     self:Delivered()  
   end
   

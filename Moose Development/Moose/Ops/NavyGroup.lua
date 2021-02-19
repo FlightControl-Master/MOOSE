@@ -660,6 +660,10 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
 
   -- Update position.
   self:_UpdatePosition()
+  
+  -- Not dead or destroyed yet.
+  self.isDead=false
+  self.isDestroyed=false  
 
   if self.isAI then
  

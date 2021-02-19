@@ -1529,6 +1529,10 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
 
   -- Update position.
   self:_UpdatePosition()
+  
+  -- Not dead or destroyed yet.
+  self.isDead=false
+  self.isDestroyed=false
 
   if self.isAI then
 
@@ -2067,12 +2071,15 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
       
       -- Number of cargo transports remaining.
       local nTransports=self:CountRemainingTransports()
+      
+      -- Debug info.
+      self:T(self.lid..string.format("Remaining (final=%s): missions=%d, tasks=%d, transports=%d", tostring(self.passedfinalwp), nMissions, nTasks, nTransports))
 
       -- Final waypoint passed?
       if self.passedfinalwp then
 
         -- Got current mission or task?
-        if self.currentmission==nil and self.taskcurrent==0 then
+        if self.currentmission==nil and self.taskcurrent==0 and self.cargoTransport==nil then
 
           -- Number of remaining tasks/missions?
           if nTasks==0 and nMissions==0 and nTransports==0 then
@@ -2082,10 +2089,10 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
 
             -- Send flight to destination.
             if destbase then
-              self:T(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTB!")
+              self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports ==> RTB!")
               self:__RTB(-3, destbase)
             elseif destzone then
-              self:T(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTZ!")
+              self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports ==> RTZ!")
               self:__RTZ(-3, destzone)
             else
               self:T(self.lid.."Passed Final WP and NO Tasks/Missions left. No DestBase or DestZone ==> Wait!")
