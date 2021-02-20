@@ -37,6 +37,7 @@
 -- @field Core.Zone#ZONE deployzone Zone where the cargo is dropped off.
 -- @field Core.Zone#ZONE embarkzone (Optional) Zone where the cargo is supposed to embark. Default is the pickup zone.
 -- @field Core.Zone#ZONE disembarkzone (Optional) Zone where the cargo is disembarked. Default is the deploy zone.
+-- @field Core.Zone#ZONE unboardzone (Optional) Zone where the cargo is going to after disembarkment.
 -- @field Ops.OpsGroup#OPSGROUP carrierGroup The new carrier group.
 -- @field #boolean disembarkActivation Activation setting when group is disembared from carrier.
 -- @field #boolean disembarkInUtero Do not spawn the group in any any state but leave it "*in utero*". For example, to directly load it into another carrier.
@@ -82,13 +83,14 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.0.2"
+OPSTRANSPORT.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot. 
+-- TODO: Add start conditions.
+-- TODO: Check carrier(s) dead.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -143,14 +145,12 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   self:AddTransition(OPSTRANSPORT.Status.PLANNED,   "Scheduled",        OPSTRANSPORT.Status.SCHEDULED)   -- Cargo is queued at at least one carrier.
   self:AddTransition(OPSTRANSPORT.Status.SCHEDULED, "Executing",        OPSTRANSPORT.Status.EXECUTING)   -- Cargo is being transported.
   self:AddTransition(OPSTRANSPORT.Status.EXECUTING, "Delivered",        OPSTRANSPORT.Status.DELIVERED)   -- Cargo was delivered.
+  self:AddTransition("*",                           "Status",           "*")
+  self:AddTransition("*",                           "Stop",             "*")
+  self:AddTransition("*",                           "Unloaded",         "*")
+  
 
-  self:AddTransition("*",                      "Status",           "*")
-  self:AddTransition("*",                      "Stop",             "*")
-  
-  self:AddTransition("*",                      "Unloaded",         "*")
-  
-  
-  -- Call status update
+  -- Call status update.
   self:__Status(-1)
   
   return self
@@ -430,13 +430,15 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
   text=text..string.format("\nCargos:")
   for _,_cargo in pairs(self.cargos) do
     local cargo=_cargo  --Ops.OpsGroup#OPSGROUP.CargoGroup
-    text=text..string.format("\n- %s: %s %s, carrier=%s", cargo.opsgroup:GetName(), cargo.opsgroup:GetState(), cargo.opsgroup.cargoStatus, cargo.opsgroup.carrier and cargo.opsgroup.carrier.name or "none")
+    local name=cargo.opsgroup.carrier and cargo.opsgroup.carrier.name or "none"
+    text=text..string.format("\n- %s: %s [%s], weight=%d kg, carrier=%s", cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name)
   end
   
   text=text..string.format("\nCarriers:")
   for _,_carrier in pairs(self.carriers) do
     local carrier=_carrier --Ops.OpsGroup#OPSGROUP
-    text=text..string.format("\n- %s: %s %s, cargo=%d kg", carrier:GetName(), carrier:GetState(), carrier.carrierStatus, carrier:GetWeightCargo())
+    text=text..string.format("\n- %s: %s [%s], cargo=%d/%d kg, free cargo bay %d/%d kg", 
+    carrier:GetName(), carrier.carrierStatus:upper(), carrier:GetState(), carrier:GetWeightCargo(), carrier:GetWeightCargoMax(), carrier:GetFreeCargobayMax(true), carrier:GetFreeCargobayMax())
   end  
   
   self:I(self.lid..text)
@@ -510,7 +512,6 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 --- Check if all cargo of this transport assignment was delivered.
 -- @param #OPSTRANSPORT self
 function OPSTRANSPORT:_CheckDelivered()
@@ -543,7 +544,10 @@ function OPSTRANSPORT:_CheckDelivered()
   
   if dead then
     --self:CargoDead()
+    self:I(self.lid.."All cargo DEAD!")
+    self:Delivered()
   elseif done then
+    self:I(self.lid.."All cargo delivered")
     self:Delivered()  
   end
   

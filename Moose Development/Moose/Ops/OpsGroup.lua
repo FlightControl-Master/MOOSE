@@ -4641,7 +4641,7 @@ function OPSGROUP:_CheckCargoTransport()
   local Time=timer.getAbsTime()
 
   -- Cargo bay debug info.
-  if self.verbose>=1 then
+  if self.verbose>=3 then
     local text=""
     for cargogroupname, carriername in pairs(self.cargoBay) do
       text=text..string.format("\n- %s in carrier %s", tostring(cargogroupname), tostring(carriername))
@@ -4652,7 +4652,7 @@ function OPSGROUP:_CheckCargoTransport()
   end
   
   -- Cargo queue debug info.
-  if self.verbose>=1 then
+  if self.verbose>=3 then
     local text=""
     for i,_transport in pairs(self.cargoqueue) do
       local transport=_transport --#Ops.OpsTransport#OPSTRANSPORT
@@ -4681,7 +4681,7 @@ function OPSGROUP:_CheckCargoTransport()
   if self.cargoTransport then    
     
     -- Debug info.
-    if self.verbose>=1 then
+    if self.verbose>=2 then
       local text=string.format("Carrier [%s]: %s --> %s", self.carrierStatus, self.cargoTransport.pickupzone:GetName(), self.cargoTransport.deployzone:GetName())    
       for _,_cargo in pairs(self.cargoTransport.cargos) do    
         local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup      
@@ -4785,7 +4785,7 @@ function OPSGROUP:_CheckCargoTransport()
     local transport=self.cargoqueue[i] --Ops.OpsTransport#OPSTRANSPORT
     local delivered=self:_CheckDelivered(transport)
     if delivered then
-      self:Delivered(transport)
+      --self:Delivered(transport)
     end
   end  
 
@@ -5141,6 +5141,36 @@ function OPSGROUP:GetFreeCargobay(UnitName)
   return Free
 end
 
+--- Get max weight of cargo (group) this group can load. This is the largest free cargo bay of any (not dead) element of the group.
+-- Optionally, you can calculate the current max weight possible, which accounts for currently loaded cargo.
+-- @param #OPSGROUP self
+-- @param #boolean Currently If true, calculate the max weight currently possible in case there is already cargo loaded. 
+-- @return #number Max weight in kg.
+function OPSGROUP:GetFreeCargobayMax(Currently)
+
+  local maxweight=0
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    
+    if element.status~=OPSGROUP.ElementStatus.DEAD then
+    
+      local weight=element.weightMaxCargo
+      
+      if Currently then
+        weight=weight-element.weightCargo
+      end
+    
+      -- Check if this element can load more.
+      if weight>maxweight then
+        maxweight=weight
+      end
+      
+    end
+  end
+
+  return maxweight
+end
+
 
 --- Get weight of the internal cargo the group is carriing right now. 
 -- @param #OPSGROUP self
@@ -5155,6 +5185,26 @@ function OPSGROUP:GetWeightCargo(UnitName)
     if (UnitName==nil or UnitName==element.name) and element.status~=OPSGROUP.ElementStatus.DEAD then
     
       weight=weight+element.weightCargo
+      
+    end
+    
+  end
+
+  return weight
+end
+
+--- Get max weight of the internal cargo the group can carry. 
+-- @param #OPSGROUP self
+-- @return #number Cargo weight in kg.
+function OPSGROUP:GetWeightCargoMax()
+
+  local weight=0
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    
+    if element.status~=OPSGROUP.ElementStatus.DEAD then
+    
+      weight=weight+element.weightMaxCargo
       
     end
     
@@ -5246,7 +5296,7 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterPickup(From, Event, To)
   -- Debug info.
-  self:I(self.lid..string.format("New carrier status %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.PICKUP))
+  self:I(self.lid..string.format("New carrier status: %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.PICKUP))
   
   -- Set carrier status.
   self.carrierStatus=OPSGROUP.CarrierStatus.PICKUP
@@ -5370,7 +5420,7 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterLoading(From, Event, To)
   -- Debug info.
-  self:I(self.lid..string.format("New carrier status %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.LOADING))
+  self:I(self.lid..string.format("New carrier status: %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.LOADING))
 
   -- Set carrier status.
   self.carrierStatus=OPSGROUP.CarrierStatus.LOADING
@@ -5398,23 +5448,29 @@ function OPSGROUP:onafterLoading(From, Event, To)
     return nil
   end
   
+  --TODO: sort cargos wrt weight.
+  
+  -- Loop over all cargos.
   for _,_cargo in pairs(self.cargoTransport.cargos) do
     local cargo=_cargo --#OPSGROUP.CargoGroup
     
-    if self:CanCargo(cargo.opsgroup) and not cargo.delivered then
+    -- Check that cargo weight is 
+    if self:CanCargo(cargo.opsgroup) and not (cargo.delivered or cargo.opsgroup:IsDead()) then
 
       -- Check that group is not cargo already and not busy.
       -- TODO: Need a better :IsBusy() function or :IsReadyForMission() :IsReadyForBoarding() :IsReadyForTransport()    
       if cargo.opsgroup:IsNotCargo() and not (cargo.opsgroup:IsPickingup() or cargo.opsgroup:IsLoading() or cargo.opsgroup:IsTransporting() or cargo.opsgroup:IsUnloading() or cargo.opsgroup:IsLoaded()) then
       
-        -- Check if cargo is in pickup zone.
+        -- Check if cargo is in embark/pickup zone.
         local inzone=self.cargoTransport.embarkzone:IsCoordinateInZone(cargo.opsgroup:GetCoordinate())
         
-        -- First check if cargo is not delivered yet.
+        -- Cargo MUST be inside zone or it will not be loaded!
         if inzone then
         
+          -- Weight  of cargo.
           local weight=cargo.opsgroup:GetWeightTotal()
           
+          -- Find a carrier that has enough free cargo bay for this group.
           local carrier=_findCarrier(weight)
           
           if carrier then
@@ -5429,19 +5485,20 @@ function OPSGROUP:onafterLoading(From, Event, To)
             cargo.opsgroup:Board(self, carrier)        
             
           else
-          
-            env.info("FF cannot board carrier")
-            
+            -- Debug info.
+            env.info("FF cannot board carrier")            
           end
   
         else
+          -- Debug info.
           env.info("FF cargo NOT in embark zone "..self.cargoTransport.embarkzone:GetName())
         end
 
       end
       
-    else    
-      env.info("FF cargo already delivered")
+    else
+      -- Debug info.
+      self:T3(self.lid.."Cargo already delivered, is dead or carrier cannot")
     end
     
   end
@@ -5451,11 +5508,11 @@ end
 --- Clear waypoints.
 -- @param #OPSGROUP self
 function OPSGROUP:ClearWaypoints()
-    -- Clear all waypoints.  
-    for i=1,#self.waypoints do
-      table.remove(self.waypoints, i)
-    end
-    self.waypoints={}
+  -- Clear all waypoints.  
+  for i=1,#self.waypoints do
+    table.remove(self.waypoints, i)
+  end
+  self.waypoints={}
 end
 
 --- On after "Load" event. Carrier loads a cargo group into ints cargo bay.
@@ -5488,7 +5545,7 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
     ---
 
     -- Debug info.
-    CargoGroup:I(CargoGroup.lid..string.format("New cargo status %s --> %s", CargoGroup.cargoStatus, OPSGROUP.CargoStatus.LOADED))
+    CargoGroup:I(CargoGroup.lid..string.format("New cargo status: %s --> %s", CargoGroup.cargoStatus, OPSGROUP.CargoStatus.LOADED))
      
     -- Set cargo status.
     CargoGroup.cargoStatus=OPSGROUP.CargoStatus.LOADED
@@ -5540,7 +5597,7 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterTransport(From, Event, To)
   -- Debug info.
-  self:I(self.lid..string.format("New carrier status %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.TRANSPORTING))
+  self:I(self.lid..string.format("New carrier status: %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.TRANSPORTING))
 
   -- Set carrier status.
   self.carrierStatus=OPSGROUP.CarrierStatus.TRANSPORTING  
@@ -5662,7 +5719,7 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterUnloading(From, Event, To)
   -- Debug info.
-  self:I(self.lid..string.format("New carrier status %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.UNLOADING))
+  self:I(self.lid..string.format("New carrier status: %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.UNLOADING))
   
   -- Set carrier status to UNLOADING.
   self.carrierStatus=OPSGROUP.CarrierStatus.UNLOADING
@@ -5793,7 +5850,7 @@ end
 function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Activated, Heading)
     
   -- Debug info.
-  OpsGroup:I(OpsGroup.lid..string.format("New cargo status %s --> %s", OpsGroup.cargoStatus, OPSGROUP.CargoStatus.NOTCARGO))
+  OpsGroup:I(OpsGroup.lid..string.format("New cargo status: %s --> %s", OpsGroup.cargoStatus, OPSGROUP.CargoStatus.NOTCARGO))
 
   -- Set cargo status.
   OpsGroup.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
@@ -5914,13 +5971,15 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
   if self.cargoTransport and self.cargoTransport.uid==CargoTransport.uid then
   
     -- Debug info.
-    self:I(self.lid..string.format("New carrier status %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.NOTCARRIER))
+    self:I(self.lid..string.format("New carrier status: %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.NOTCARRIER))
     
-    -- This is not a carrier anymore.
-    self.carrierStatus=OPSGROUP.CarrierStatus.NOTCARRIER  
-  
+    -- Checks
     if self:IsPickingup() then
       -- Delete pickup waypoint?
+      local wpindex=self:GetWaypointIndexNext(false)
+      if wpindex then
+        self:RemoveWaypoint(wpindex)
+      end
     elseif self:IsLoading() then
       -- Nothing to do?
     elseif self:IsTransporting() then
@@ -5928,6 +5987,9 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
     elseif self:IsUnloading() then
       -- Nothing to do?
     end
+    
+    -- This is not a carrier anymore.
+    self.carrierStatus=OPSGROUP.CarrierStatus.NOTCARRIER      
     
     -- Startup uncontrolled aircraft to allow it to go back.
     if self:IsFlightgroup() then
@@ -5960,6 +6022,23 @@ end
 -- Cargo Group Functions
 ---
 
+--- On before "Board" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP CarrierGroup The carrier group.
+-- @param #OPSGROUP.Element Carrier The OPSGROUP element
+function OPSGROUP:onbeforeBoard(From, Event, To, CarrierGroup, Carrier)
+
+  if self:IsDead() then
+    self:I(self.lid.."Group DEAD ==> Deny Board transition!")
+    return false
+  end
+
+  return true
+end
+
 --- On after "Board" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -5969,7 +6048,7 @@ end
 -- @param #OPSGROUP.Element Carrier The OPSGROUP element
 function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
   -- Debug info.
-  self:I(self.lid..string.format("New cargo status %s --> %s", self.cargoStatus, OPSGROUP.CargoStatus.BOARDING))
+  self:I(self.lid..string.format("New cargo status: %s --> %s", self.cargoStatus, OPSGROUP.CargoStatus.BOARDING))
   
   -- Set cargo status.
   self.cargoStatus=OPSGROUP.CargoStatus.BOARDING
