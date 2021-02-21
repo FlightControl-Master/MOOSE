@@ -880,8 +880,8 @@ do -- SET_GROUP
   --
   --    * @{#SET_GROUP.FilterCoalitions}: Builds the SET_GROUP with the groups belonging to the coalition(s).
   --    * @{#SET_GROUP.FilterCategories}: Builds the SET_GROUP with the groups belonging to the category(ies).
-  --    * @{#SET_GROUP.FilterCountries}: Builds the SET_GROUP with the gruops belonging to the country(ies).
-  --    * @{#SET_GROUP.FilterPrefixes}: Builds the SET_GROUP with the groups starting with the same prefix string(s).
+  --    * @{#SET_GROUP.FilterCountries}: Builds the SET_GROUP with the groups belonging to the country(ies).
+  --    * @{#SET_GROUP.FilterPrefixes}: Builds the SET_GROUP with the groups *containing* the given string in the group name. **Attention!** Bad naming convention, as this not really filtering *prefixes*.
   --    * @{#SET_GROUP.FilterActive}: Builds the SET_GROUP with the groups that are only active. Groups that are inactive (late activation) won't be included in the set!
   --
   -- For the Category Filter, extra methods have been added:
@@ -1241,10 +1241,10 @@ do -- SET_GROUP
   end
 
 
-  --- Builds a set of groups of defined GROUP prefixes.
-  -- All the groups starting with the given prefixes will be included within the set.
+  --- Builds a set of groups that contain the given string in their group name.
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all groups that **contain** the string. 
   -- @param #SET_GROUP self
-  -- @param #string Prefixes The prefix of which the group name starts with.
+  -- @param #string Prefixes The string pattern(s) that needs to be contained in the group name. Can also be passed as a `#table` of strings.
   -- @return #SET_GROUP self
   function SET_GROUP:FilterPrefixes( Prefixes )
     if not self.Filter.GroupPrefixes then
@@ -1843,7 +1843,7 @@ do -- SET_UNIT
   --    * @{#SET_UNIT.FilterCategories}: Builds the SET_UNIT with the units belonging to the category(ies).
   --    * @{#SET_UNIT.FilterTypes}: Builds the SET_UNIT with the units belonging to the unit type(s).
   --    * @{#SET_UNIT.FilterCountries}: Builds the SET_UNIT with the units belonging to the country(ies).
-  --    * @{#SET_UNIT.FilterPrefixes}: Builds the SET_UNIT with the units starting with the same prefix string(s).
+  --    * @{#SET_UNIT.FilterPrefixes}: Builds the SET_UNIT with the units sharing the same string(s) in their name. **ATTENTION!** Bad naming convention as this *does not* only filter *prefixes*.
   --    * @{#SET_UNIT.FilterActive}: Builds the SET_UNIT with the units that are only active. Units that are inactive (late activation) won't be included in the set!
   --
   -- Once the filter criteria have been set for the SET_UNIT, you can start filtering using:
@@ -2105,10 +2105,10 @@ do -- SET_UNIT
   end
 
 
-  --- Builds a set of units of defined unit prefixes.
-  -- All the units starting with the given prefixes will be included within the set.
+  --- Builds a set of UNITs that contain a given string in their unit name.
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all units that **contain** the string. 
   -- @param #SET_UNIT self
-  -- @param #string Prefixes The prefix of which the unit name starts with.
+  -- @param #string Prefixes The string pattern(s) that needs to be contained in the unit name. Can also be passed as a `#table` of strings.
   -- @return #SET_UNIT self
   function SET_UNIT:FilterPrefixes( Prefixes )
     if not self.Filter.UnitPrefixes then
@@ -2963,7 +2963,7 @@ do -- SET_STATIC
   --    * @{#SET_STATIC.FilterCategories}: Builds the SET_STATIC with the units belonging to the category(ies).
   --    * @{#SET_STATIC.FilterTypes}: Builds the SET_STATIC with the units belonging to the unit type(s).
   --    * @{#SET_STATIC.FilterCountries}: Builds the SET_STATIC with the units belonging to the country(ies).
-  --    * @{#SET_STATIC.FilterPrefixes}: Builds the SET_STATIC with the units starting with the same prefix string(s).
+  --    * @{#SET_STATIC.FilterPrefixes}: Builds the SET_STATIC with the units containing the same string(s) in their name. **ATTENTION** bad naming convention as this *does not** only filter *prefixes*.
   --
   -- Once the filter criteria have been set for the SET_STATIC, you can start filtering using:
   --
@@ -3176,10 +3176,10 @@ do -- SET_STATIC
   end
 
 
-  --- Builds a set of units of defined unit prefixes.
-  -- All the units starting with the given prefixes will be included within the set.
+  --- Builds a set of STATICs that contain the given string in their name.
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all statics that **contain** the string. 
   -- @param #SET_STATIC self
-  -- @param #string Prefixes The prefix of which the unit name starts with.
+  -- @param #string Prefixes The string pattern(s) that need to be contained in the static name. Can also be passed as a `#table` of strings.
   -- @return #SET_STATIC self
   function SET_STATIC:FilterPrefixes( Prefixes )
     if not self.Filter.StaticPrefixes then
@@ -3675,7 +3675,7 @@ do -- SET_CLIENT
   --    * @{#SET_CLIENT.FilterCategories}: Builds the SET_CLIENT with the clients belonging to the category(ies).
   --    * @{#SET_CLIENT.FilterTypes}: Builds the SET_CLIENT with the clients belonging to the client type(s).
   --    * @{#SET_CLIENT.FilterCountries}: Builds the SET_CLIENT with the clients belonging to the country(ies).
-  --    * @{#SET_CLIENT.FilterPrefixes}: Builds the SET_CLIENT with the clients starting with the same prefix string(s).
+  --    * @{#SET_CLIENT.FilterPrefixes}: Builds the SET_CLIENT with the clients containing the same string(s) in their unit/pilot name. **ATTENTION!** Bad naming convention as this *does not* only filter *prefixes*.
   --    * @{#SET_CLIENT.FilterActive}: Builds the SET_CLIENT with the units that are only active. Units that are inactive (late activation) won't be included in the set!
   --
   -- Once the filter criteria have been set for the SET_CLIENT, you can start filtering using:
@@ -3858,10 +3858,10 @@ do -- SET_CLIENT
   end
 
 
-  --- Builds a set of clients of defined client prefixes.
-  -- All the clients starting with the given prefixes will be included within the set.
+  --- Builds a set of CLIENTs that contain the given string in their unit/pilot name.
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all clients that **contain** the string. 
   -- @param #SET_CLIENT self
-  -- @param #string Prefixes The prefix of which the client name starts with.
+  -- @param #string Prefixes The string pattern(s) that needs to be contained in the unit/pilot name. Can also be passed as a `#table` of strings.
   -- @return #SET_CLIENT self
   function SET_CLIENT:FilterPrefixes( Prefixes )
     if not self.Filter.ClientPrefixes then
@@ -4114,7 +4114,7 @@ do -- SET_PLAYER
   --    * @{#SET_PLAYER.FilterCategories}: Builds the SET_PLAYER with the clients belonging to the category(ies).
   --    * @{#SET_PLAYER.FilterTypes}: Builds the SET_PLAYER with the clients belonging to the client type(s).
   --    * @{#SET_PLAYER.FilterCountries}: Builds the SET_PLAYER with the clients belonging to the country(ies).
-  --    * @{#SET_PLAYER.FilterPrefixes}: Builds the SET_PLAYER with the clients starting with the same prefix string(s).
+  --    * @{#SET_PLAYER.FilterPrefixes}: Builds the SET_PLAYER with the clients sharing the same string(s) in their unit/pilot name. **ATTENTION** Bad naming convention as this *does not* only filter prefixes.
   --
   -- Once the filter criteria have been set for the SET_PLAYER, you can start filtering using:
   --
@@ -4293,10 +4293,10 @@ do -- SET_PLAYER
   end
 
 
-  --- Builds a set of clients of defined client prefixes.
-  -- All the clients starting with the given prefixes will be included within the set.
+  --- Builds a set of PLAYERs that contain the given string in their unit/pilot name.
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all player clients that **contain** the string. 
   -- @param #SET_PLAYER self
-  -- @param #string Prefixes The prefix of which the client name starts with.
+  -- @param #string Prefixes The string pattern(s) that needs to be contained in the unit/pilot name. Can also be passed as a `#table` of strings.
   -- @return #SET_PLAYER self
   function SET_PLAYER:FilterPrefixes( Prefixes )
     if not self.Filter.ClientPrefixes then
@@ -4874,7 +4874,7 @@ do -- SET_CARGO
   -- Filter criteria are defined by:
   --
   --    * @{#SET_CARGO.FilterCoalitions}: Builds the SET_CARGO with the cargos belonging to the coalition(s).
-  --    * @{#SET_CARGO.FilterPrefixes}: Builds the SET_CARGO with the cargos containing the prefix string(s).
+  --    * @{#SET_CARGO.FilterPrefixes}: Builds the SET_CARGO with the cargos containing the same string(s). **ATTENTION** Bad naming convention as this *does not* only filter *prefixes*.
   --    * @{#SET_CARGO.FilterTypes}: Builds the SET_CARGO with the cargos belonging to the cargo type(s).
   --    * @{#SET_CARGO.FilterCountries}: Builds the SET_CARGO with the cargos belonging to the country(ies).
   --
@@ -5036,10 +5036,10 @@ do -- SET_CARGO
   end
 
 
-  --- (R2.1) Builds a set of cargos of defined cargo prefixes.
-  -- All the cargos starting with the given prefixes will be included within the set.
+  --- Builds a set of CARGOs that contain a given string in their name.
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all cargos that **contain** the string. 
   -- @param #SET_CARGO self
-  -- @param #string Prefixes The prefix of which the cargo name starts with.
+  -- @param #string Prefixes The string pattern(s) that need to be in the cargo name. Can also be passed as a `#table` of strings.
   -- @return #SET_CARGO self
   function SET_CARGO:FilterPrefixes( Prefixes ) --R2.1
     if not self.Filter.CargoPrefixes then
@@ -5315,7 +5315,7 @@ do -- SET_ZONE
   -- You can set filter criteria to build the collection of zones in SET_ZONE.
   -- Filter criteria are defined by:
   --
-  --    * @{#SET_ZONE.FilterPrefixes}: Builds the SET_ZONE with the zones having a certain text pattern of prefix.
+  --    * @{#SET_ZONE.FilterPrefixes}: Builds the SET_ZONE with the zones having a certain text pattern in their name. **ATTENTION!** Bad naming convention as this *does not* only filter *prefixes*.
   --
   -- Once the filter criteria have been set for the SET_ZONE, you can start filtering using:
   --
@@ -5450,10 +5450,10 @@ do -- SET_ZONE
 
 
 
-  --- Builds a set of zones of defined zone prefixes.
-  -- All the zones starting with the given prefixes will be included within the set.
+  --- Builds a set of ZONEs that contain the given string in their name.
+  -- **ATTENTION!** Bad naming convention as this **does not** filter only **prefixes** but all zones that **contain** the string. 
   -- @param #SET_ZONE self
-  -- @param #string Prefixes The prefix of which the zone name starts with.
+  -- @param #string Prefixes The string pattern(s) that need to be contained in the zone name. Can also be passed as a `#table` of strings.
   -- @return #SET_ZONE self
   function SET_ZONE:FilterPrefixes( Prefixes )
     if not self.Filter.Prefixes then
@@ -5652,7 +5652,7 @@ do -- SET_ZONE_GOAL
   -- You can set filter criteria to build the collection of zones in SET_ZONE_GOAL.
   -- Filter criteria are defined by:
   --
-  --    * @{#SET_ZONE_GOAL.FilterPrefixes}: Builds the SET_ZONE_GOAL with the zones having a certain text pattern of prefix.
+  --    * @{#SET_ZONE_GOAL.FilterPrefixes}: Builds the SET_ZONE_GOAL with the zones having a certain text pattern in their name. **ATTENTION!** Bad naming convention as this *does not* only filter *prefixes*.
   --
   -- Once the filter criteria have been set for the SET_ZONE_GOAL, you can start filtering using:
   --
@@ -5768,10 +5768,10 @@ do -- SET_ZONE_GOAL
 
 
 
-  --- Builds a set of zones of defined zone prefixes.
-  -- All the zones starting with the given prefixes will be included within the set.
+  --- Builds a set of ZONE_GOALs that contain the given string in their name.
+  -- **ATTENTION!** Bad naming convention as this **does not** filter only **prefixes** but all zones that **contain** the string. 
   -- @param #SET_ZONE_GOAL self
-  -- @param #string Prefixes The prefix of which the zone name starts with.
+  -- @param #string Prefixes The string pattern(s) that needs to be contained in the zone name. Can also be passed as a `#table` of strings.
   -- @return #SET_ZONE_GOAL self
   function SET_ZONE_GOAL:FilterPrefixes( Prefixes )
     if not self.Filter.Prefixes then
