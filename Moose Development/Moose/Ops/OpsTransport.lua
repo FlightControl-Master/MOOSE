@@ -33,6 +33,7 @@
 -- @field #number importance Importance of this transport. Smaller=higher.
 -- @field #number Tstart Start time in *abs.* seconds.
 -- @field #number Tstop Stop time in *abs.* seconds. Default `#nil` (never stops).
+-- @field #table conditionStart Start conditions.
 -- @field Core.Zone#ZONE pickupzone Zone where the cargo is picked up.
 -- @field Core.Zone#ZONE deployzone Zone where the cargo is dropped off.
 -- @field Core.Zone#ZONE embarkzone (Optional) Zone where the cargo is supposed to embark. Default is the pickup zone.
@@ -62,7 +63,8 @@ OPSTRANSPORT = {
   verbose         =  1,
   cargos          = {},
   carriers        = {},
-  carrierTransportStatus = {},  
+  carrierTransportStatus = {},
+  conditionStart =  {},
 }
 
 --- Cargo transport status.
@@ -78,6 +80,11 @@ OPSTRANSPORT.Status={
   DELIVERED="delivered",
 }
 
+--- Generic mission condition.
+-- @type OPSTRANSPORT.Condition
+-- @field #function func Callback function to check for a condition. Should return a #boolean.
+-- @field #table arg Optional arguments passed to the condition callback function.
+
 --- Transport ID.
 _OPSTRANSPORTID=0
 
@@ -89,7 +96,7 @@ OPSTRANSPORT.version="0.0.3"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add start conditions.
+-- DONE: Add start conditions.
 -- TODO: Check carrier(s) dead.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -345,6 +352,26 @@ function OPSTRANSPORT:SetPriority(Prio, Importance, Urgent)
   return self
 end
 
+--- Add start condition.
+-- @param #OPSTRANSPORT self
+-- @param #function ConditionFunction Function that needs to be true before the transport can be started. Must return a #boolean.
+-- @param ... Condition function arguments if any.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:AddConditionStart(ConditionFunction, ...)
+  
+  local condition={} --#OPSTRANSPORT.Condition
+  
+  condition.func=ConditionFunction
+  condition.arg={}
+  if arg then
+    condition.arg=arg
+  end
+  
+  table.insert(self.conditionStart, condition)
+  
+  return self
+end
+
 
 --- Add a carrier assigned for this transport.
 -- @param #OPSTRANSPORT self
@@ -365,7 +392,6 @@ end
 function OPSTRANSPORT:GetCarrierTransportStatus(CarrierGroup)
   return self.carrierTransportStatus[CarrierGroup.groupname]
 end
-
 
 
 --- Create a cargo group data structure.
@@ -408,6 +434,38 @@ function OPSTRANSPORT:_CreateCargoGroupData(group, Pickupzone, Deployzone)
   cargo.deployzone=Deployzone
 
   return cargo
+end
+
+--- Check if transport is ready to be started.
+-- * Start time passed.
+-- * Stop time did not pass already.
+-- * All start conditions are true.
+-- @param #OPSTRANSPORT self
+-- @return #boolean If true, mission can be started.
+function OPSTRANSPORT:IsReadyToGo()
+  
+  local Tnow=timer.getAbsTime()
+
+  -- Start time did not pass yet.
+  if self.Tstart and Tnow<self.Tstart or false then
+    return false
+  end
+  
+  -- Stop time already passed.
+  if self.Tstop and Tnow>self.Tstop or false then
+    return false
+  end
+  
+  -- All start conditions true?
+  local startme=self:EvalConditionsAll(self.conditionStart)
+  
+  if not startme then
+    return false
+  end
+  
+
+  -- We're good to go!
+  return true
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -551,4 +609,28 @@ function OPSTRANSPORT:_CheckDelivered()
     self:Delivered()  
   end
   
+end
+
+--- Check if all given condition are true.
+-- @param #OPSTRANSPORT self
+-- @param #table Conditions Table of conditions.
+-- @return #boolean If true, all conditions were true. Returns false if at least one condition returned false.
+function OPSTRANSPORT:EvalConditionsAll(Conditions)
+
+  -- Any stop condition must be true.
+  for _,_condition in pairs(Conditions or {}) do
+    local condition=_condition --#OPSTRANSPORT.Condition
+  
+    -- Call function.
+    local istrue=condition.func(unpack(condition.arg))
+    
+    -- Any false will return false.
+    if not istrue then
+      return false
+    end
+    
+  end
+
+  -- All conditions were true.
+  return true
 end

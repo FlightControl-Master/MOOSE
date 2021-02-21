@@ -4840,9 +4840,6 @@ end
 -- @return Ops.OpsTransport#OPSTRANSPORT The next due cargo transport or `nil`.
 function OPSGROUP:_GetNextCargoTransport()
 
-  -- Abs. mission time in seconds.
-  local Time=timer.getAbsTime()
-
   -- Current position.
   local coord=self:GetCoordinate()
 
@@ -4869,7 +4866,9 @@ function OPSGROUP:_GetNextCargoTransport()
   for _,_cargotransport in pairs(self.cargoqueue) do
     local cargotransport=_cargotransport --Ops.OpsTransport#OPSTRANSPORT
     
-    if Time>=cargotransport.Tstart and cargotransport:GetCarrierTransportStatus(self)==OPSTRANSPORT.Status.SCHEDULED and (cargotransport.importance==nil or cargotransport.importance<=vip) and not self:_CheckDelivered(cargotransport) then
+    local carrierstatusScheduled=cargotransport:GetCarrierTransportStatus(self)==OPSTRANSPORT.Status.SCHEDULED
+    
+    if cargotransport:IsReadyToGo() and carrierstatusScheduled and (cargotransport.importance==nil or cargotransport.importance<=vip) and not self:_CheckDelivered(cargotransport) then
       cargotransport:Executing()
       cargotransport:SetCarrierTransportStatus(self, OPSTRANSPORT.Status.EXECUTING)
       return cargotransport
