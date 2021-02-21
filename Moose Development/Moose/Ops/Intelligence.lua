@@ -810,16 +810,17 @@ function INTEL:PaintPicture()
 
   
   -- Update F10 marker text if cluster has changed.
-  for _,_cluster in pairs(self.Clusters) do
-    local cluster=_cluster --#INTEL.Cluster
-  
-      local coordinate=self:GetClusterCoordinate(cluster)
-  
-  
-      -- Update F10 marker.
-      self:UpdateClusterMarker(cluster)
-  end
+  if self.clustermarkers then --honor markersettings
+    for _,_cluster in pairs(self.Clusters) do
+      local cluster=_cluster --#INTEL.Cluster
 
+        local coordinate=self:GetClusterCoordinate(cluster)
+
+
+        -- Update F10 marker.
+        self:UpdateClusterMarker(cluster)
+    end
+  end
 end
 
 --- Create a new cluster.
