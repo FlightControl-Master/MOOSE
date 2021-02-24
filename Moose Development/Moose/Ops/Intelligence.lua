@@ -351,6 +351,15 @@ function INTEL:SetClusterAnalysis(Switch, Markers)
   return self
 end
 
+--- Set verbosity level for debugging. 
+-- @param #INTEL self
+-- @param #number Verbosity The higher, the noisier, e.g. 0=off, 2=debug
+-- @return #INTEL self
+function INTEL:SetVerbosity(Verbosity)
+  self.verbose=Verbosity or 2
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
