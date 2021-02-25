@@ -1271,6 +1271,7 @@ AIRBOSS.AircraftCarrier={
   F14B="F-14B",
   F14A_AI="F-14A",
   FA18C="F/A-18C",
+  T45C="T-45",
   S3B="S-3B",
   S3BTANKER="S-3B Tanker",
   E2D="E-2C",
@@ -5471,6 +5472,7 @@ function AIRBOSS:_GetAircraftAoA(playerData)
 
   -- Get AC type.
   local hornet=playerData.actype==AIRBOSS.AircraftCarrier.HORNET
+  local goshawk=playerData.actype==AIRBOSS.AircraftCarrier.T45C
   local skyhawk=playerData.actype==AIRBOSS.AircraftCarrier.A4EC
   local harrier=playerData.actype==AIRBOSS.AircraftCarrier.AV8B
   local tomcat=playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B
@@ -5497,6 +5499,15 @@ function AIRBOSS:_GetAircraftAoA(playerData)
     aoa.OnSpeedMin = self:_AoAUnit2Deg(playerData, 14.5)  --14.17 --14.5 units
     aoa.Fast       = self:_AoAUnit2Deg(playerData, 14.0)  --13.33 --14.0 units
     aoa.FAST       = self:_AoAUnit2Deg(playerData, 13.0)  --11.67 --13.0 units
+  elseif goshawk then
+    -- T-45C Goshawk parameters.
+    aoa.SLOW       = 8.00 --19
+    aoa.Slow       = 7.75 --18
+    aoa.OnSpeedMax = 7.25 --17.5
+    aoa.OnSpeed    = 7.00 --17
+    aoa.OnSpeedMin = 6.75 --16.5
+    aoa.Fast       = 6.25 --16
+    aoa.FAST       = 6.00 --15
   elseif skyhawk then
     -- A-4E-C Skyhawk parameters from https://forums.eagle.ru/showpost.php?p=3703467&postcount=390
     -- Note that these are arbitrary UNITS and not degrees. We need a conversion formula!
@@ -5681,6 +5692,9 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
       speed=UTILS.KnotsToMps(250)
+	elseif goshawk then
+	  alt=UTILS.FeetToMeters(800)
+      speed=UTILS.KnotsToMps(300)
     end
 
   elseif step==AIRBOSS.PatternStep.BREAKENTRY then
@@ -5691,11 +5705,14 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
       speed=UTILS.KnotsToMps(250)
+	elseif goshawk then
+	  alt=UTILS.FeetToMeters(800)
+      speed=UTILS.KnotsToMps(300)
     end
 
   elseif step==AIRBOSS.PatternStep.EARLYBREAK then
 
-    if hornet or tomcat or harrier then
+    if hornet or tomcat or harrier or goshawk then
       alt=UTILS.FeetToMeters(800)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
@@ -5703,7 +5720,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
 
   elseif step==AIRBOSS.PatternStep.LATEBREAK then
 
-    if hornet or tomcat or harrier then
+    if hornet or tomcat or harrier or goshawk then
       alt=UTILS.FeetToMeters(800)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
@@ -5711,7 +5728,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
 
   elseif step==AIRBOSS.PatternStep.ABEAM then
 
-    if hornet or tomcat or harrier then
+    if hornet or tomcat or harrier or goshawk then
       alt=UTILS.FeetToMeters(600)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(500)
@@ -5725,11 +5742,20 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     else
       dist=UTILS.NMToMeters(1.2)
     end
+    
+	if goshawk then
+      -- 0.9 to 1.1 NM per natops ch.4 page 48
+      dist=UTILS.NMToMeters(0.9)
+    else
+      dist=UTILS.NMToMeters(1.1)
+    end
 
   elseif step==AIRBOSS.PatternStep.NINETY then
 
     if hornet or tomcat then
       alt=UTILS.FeetToMeters(500)
+	elseif goshawk then
+      alt=UTILS.FeetToMeters(450)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(500)
     elseif harrier then
@@ -5740,7 +5766,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
 
   elseif step==AIRBOSS.PatternStep.WAKE then
 
-    if hornet then
+    if hornet or goshawk then
       alt=UTILS.FeetToMeters(370)
     elseif tomcat then
       alt=UTILS.FeetToMeters(430) -- Tomcat should be a bit higher as it intercepts the GS a bit higher.
@@ -5753,7 +5779,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
 
   elseif step==AIRBOSS.PatternStep.FINAL then
 
-    if hornet then
+    if hornet or goshawk then
       alt=UTILS.FeetToMeters(300)
     elseif tomcat then
       alt=UTILS.FeetToMeters(360)
@@ -10491,6 +10517,9 @@ function AIRBOSS:_Trapped(playerData)
     elseif playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
       -- A-4E gets slowed down much faster the the F/A-18C!
       dcorr=56
+	elseif playerData.actype==AIRBOSS.AircraftCarrier.T45C then
+     -- T-45 also gets slowed down much faster the the F/A-18C.
+     dcorr=56
     end
 
     -- Get wire.
@@ -14080,6 +14109,8 @@ function AIRBOSS:_GetACNickname(actype)
   local nickname="unknown"
   if actype==AIRBOSS.AircraftCarrier.A4EC then
     nickname="Skyhawk"
+  elseif actype==AIRBOSS.AircraftCarrier.T45C then
+    nickname="Goshawk"
   elseif actype==AIRBOSS.AircraftCarrier.AV8B then
     nickname="Harrier"
   elseif actype==AIRBOSS.AircraftCarrier.E2D then
