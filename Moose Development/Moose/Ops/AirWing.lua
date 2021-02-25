@@ -950,9 +950,9 @@ function AIRWING:CheckTANKER()
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     if mission:IsNotOver() and mission.type==AUFTRAG.Type.TANKER then
-      if mission.refuelSystem==0 then
+      if mission.refuelSystem==1 then
         Nboom=Nboom+1
-      elseif mission.refuelSystem==1 then
+      elseif mission.refuelSystem==0 then
         Nprob=Nprob+1
       end
     
