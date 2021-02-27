@@ -1682,13 +1682,11 @@ function FLIGHTGROUP:onafterAirborne(From, Event, To)
   if self.isAI then
     if self:IsTransporting() then
       if self.cargoTransport and self.cargoTransport.deployzone and self.cargoTransport.deployzone:IsInstanceOf("ZONE_AIRBASE") then
-        env.info("FF transporting land at airbase ")
         local airbase=self.cargoTransport.deployzone:GetAirbase()
         self:LandAtAirbase(airbase)
       end
     elseif self:IsPickingup() then
       if self.cargoTransport and self.cargoTransport.pickupzone and self.cargoTransport.pickupzone:IsInstanceOf("ZONE_AIRBASE") then
-        env.info("FF pickingup land at airbase ")
         local airbase=self.cargoTransport.pickupzone:GetAirbase()
         self:LandAtAirbase(airbase)
       end
@@ -2959,6 +2957,9 @@ function FLIGHTGROUP:_InitGroup()
       text=text..string.format("Start Rwy    = %s\n", tostring(self:IsTakeoffRunway()))
       self:I(self.lid..text)
     end
+    
+    env.info("DCS Unit BOOM_AND_RECEPTACLE="..tostring(Unit.RefuelingSystem.BOOM_AND_RECEPTACLE))
+    env.info("DCS Unit PROBE_AND_DROGUE="..tostring(Unit.RefuelingSystem.PROBE_AND_DROGUE))
 
     -- Init done.
     self.groupinitialized=true

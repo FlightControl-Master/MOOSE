@@ -1086,15 +1086,10 @@ end
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation, Updateroute)
 
-  env.info("FF Current waypoint   index="..self.currentwp)
-  env.info("FF Add waypoint after index="..(AfterWaypointWithID or "nil"))
-
   local coordinate=self:_CoordinateFromObject(Coordinate)
 
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
-  
-  env.info("FF Add waypoint index="..wpnumber)
 
   -- Check if final waypoint is still passed.  
   if wpnumber>self.currentwp then

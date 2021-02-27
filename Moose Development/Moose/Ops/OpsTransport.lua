@@ -26,9 +26,8 @@
 -- @field #string lid Log ID.
 -- @field #number uid Unique ID of the transport.
 -- @field #number verbose Verbosity level.
--- @field #table cargos Cargos. Each element is a @{#OPSGROUP.Cargo}.
+-- @field #table cargos Cargos. Each element is a @{Ops.OpsGroup#OPSGROUP.CargoGroup}.
 -- @field #table carriers Carriers assigned for this transport.
--- @field #string status Status of the transport. See @{#OPSTRANSPORT.Status}.
 -- @field #number prio Priority of this transport. Should be a number between 0 (high prio) and 100 (low prio).
 -- @field #number importance Importance of this transport. Smaller=higher.
 -- @field #number Tstart Start time in *abs.* seconds.
@@ -39,12 +38,13 @@
 -- @field Core.Zone#ZONE embarkzone (Optional) Zone where the cargo is supposed to embark. Default is the pickup zone.
 -- @field Core.Zone#ZONE disembarkzone (Optional) Zone where the cargo is disembarked. Default is the deploy zone.
 -- @field Core.Zone#ZONE unboardzone (Optional) Zone where the cargo is going to after disembarkment.
--- @field Ops.OpsGroup#OPSGROUP carrierGroup The new carrier group.
 -- @field #boolean disembarkActivation Activation setting when group is disembared from carrier.
 -- @field #boolean disembarkInUtero Do not spawn the group in any any state but leave it "*in utero*". For example, to directly load it into another carrier.
+-- @field #table disembarkCarriers Table of carriers to which the cargo is disembared. This is a direct transfer from the old to the new carrier.
 -- @field #number Ncargo Total number of cargo groups.
 -- @field #number Ncarrier Total number of assigned carriers.
 -- @field #number Ndelivered Total number of cargo groups delivered.
+-- @field #table pathsTransport Paths of `#OPSGROUP.Path`. 
 -- @extends Core.Fsm#FSM
 
 --- *Victory is the beautiful, bright-colored flower. Transport is the stem without which it could never have blossomed.* -- Winston Churchill
@@ -64,12 +64,13 @@ OPSTRANSPORT = {
   cargos          = {},
   carriers        = {},
   carrierTransportStatus = {},
-  conditionStart =  {},
+  conditionStart  =  {},
+  pathsTransport  =  {},
 }
 
 --- Cargo transport status.
 -- @type OPSTRANSPORT.Status
--- @field #string PLANNING Planning state.
+-- @field #string PLANNED Planning state.
 -- @field #string SCHEDULED Transport is scheduled in the cargo queue.
 -- @field #string EXECUTING Transport is being executed.
 -- @field #string DELIVERED Transport was delivered. 
@@ -79,6 +80,12 @@ OPSTRANSPORT.Status={
   EXECUTING="executing",
   DELIVERED="delivered",
 }
+
+--- Path.
+-- @type OPSTRANSPORT.Path
+-- @field #table coords Table of coordinates.
+-- @field #number radius Radomization radius in meters. Default 0 m.
+-- @field #number altitude Altitude in feet AGL. Only for aircraft.
 
 --- Generic mission condition.
 -- @type OPSTRANSPORT.Condition
@@ -115,32 +122,30 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   local self=BASE:Inherit(self, FSM:New()) -- #OPSTRANSPORT
   
   -- Increase ID counter.
-  _OPSTRANSPORTID=_OPSTRANSPORTID+1  
+  _OPSTRANSPORTID=_OPSTRANSPORTID+1
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("OPSTRANSPORT [UID=%d] | ", _OPSTRANSPORTID)
   
   -- Defaults.
   self.uid=_OPSTRANSPORTID
-  self.status=OPSTRANSPORT.Status.PLANNING
+  --self.status=OPSTRANSPORT.Status.PLANNING
     
   self.pickupzone=Pickupzone
   self.deployzone=Deployzone
   self.embarkzone=Pickupzone
-  self.carrierGroup=nil
   self.cargos={}
   self.carriers={}
   self.Ncargo=0
   self.Ncarrier=0
   self.Ndelivered=0
-
   
   self:SetPriority()
   self:SetTime()
   
-  -- Add cargo groups.
+  -- Add cargo groups (could also be added later).
   if GroupSet then
-    self:AddCargoGroups(GroupSet, Pickupzone, Deployzone)
+    self:AddCargoGroups(GroupSet)
   end
   
 
@@ -152,8 +157,11 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   self:AddTransition(OPSTRANSPORT.Status.PLANNED,   "Scheduled",        OPSTRANSPORT.Status.SCHEDULED)   -- Cargo is queued at at least one carrier.
   self:AddTransition(OPSTRANSPORT.Status.SCHEDULED, "Executing",        OPSTRANSPORT.Status.EXECUTING)   -- Cargo is being transported.
   self:AddTransition(OPSTRANSPORT.Status.EXECUTING, "Delivered",        OPSTRANSPORT.Status.DELIVERED)   -- Cargo was delivered.
+  
   self:AddTransition("*",                           "Status",           "*")
   self:AddTransition("*",                           "Stop",             "*")
+  
+  self:AddTransition("*",                           "Loaded",           "*")
   self:AddTransition("*",                           "Unloaded",         "*")
   
 
@@ -171,13 +179,13 @@ end
 -- @param #OPSTRANSPORT self
 -- @param Core.Set#SET_GROUP GroupSet Set of groups to be transported. Can also be passed as a single GROUP or OPSGROUP object.
 -- @return #OPSTRANSPORT self
-function OPSTRANSPORT:AddCargoGroups(GroupSet, Pickupzone, Deployzone)
+function OPSTRANSPORT:AddCargoGroups(GroupSet)
 
   -- Check type of GroupSet provided.
   if GroupSet:IsInstanceOf("GROUP") or GroupSet:IsInstanceOf("OPSGROUP") then
   
     -- We got a single GROUP or OPSGROUP object.
-    local cargo=self:_CreateCargoGroupData(GroupSet, Pickupzone, Deployzone)
+    local cargo=self:_CreateCargoGroupData(GroupSet)
     
     if cargo  then --and self:CanCargo(cargo.opsgroup)
       table.insert(self.cargos, cargo)
@@ -190,7 +198,7 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, Pickupzone, Deployzone)
     
     for _,group in pairs(GroupSet.Set) do
     
-      local cargo=self:_CreateCargoGroupData(group, Pickupzone, Deployzone)
+      local cargo=self:_CreateCargoGroupData(group)
       
       if cargo then
         table.insert(self.cargos, cargo)
@@ -202,11 +210,10 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, Pickupzone, Deployzone)
   
   -- Debug info.
   if self.verbose>=0 then
-    local text=string.format("Created Cargo Transport (UID=%d) from %s(%s) --> %s(%s)", 
-    self.uid, self.pickupzone:GetName(), self.embarkzone and self.embarkzone:GetName() or "none", self.deployzone:GetName(), self.disembarkzone and self.disembarkzone:GetName() or "none")
+    local text=string.format("Added cargo groups:")
     local Weight=0
     for _,_cargo in pairs(self.cargos) do
-      local cargo=_cargo --#OPSGROUP.CargoGroup
+      local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
       local weight=cargo.opsgroup:GetWeightTotal()
       Weight=Weight+weight
       text=text..string.format("\n- %s [%s] weight=%.1f kg", cargo.opsgroup:GetName(), cargo.opsgroup:GetState(), weight)
@@ -250,6 +257,40 @@ function OPSTRANSPORT:SetDisembarkActivation(Active)
   return self
 end
 
+--- Set transfer carrier(s). These are carrier groups, where the cargo is directly loaded into when disembarked.
+-- @param #OPSTRANSPORT self
+-- @param Core.Set#SET_GROUP Carriers Carrier set.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetDisembarkCarriers(Carriers)
+
+  self:I(self.lid.."Setting transfer carriers!")
+
+  -- Create table.
+  self.disembarkCarriers=self.disembarkCarriers or {}
+
+  if Carriers:IsInstanceOf("GROUP") or Carriers:IsInstanceOf("OPSGROUP") then
+  
+    local carrier=self:_GetOpsGroupFromObject(Carriers)
+    if  carrier then
+      table.insert(self.disembarkCarriers, carrier)
+    end
+      
+  elseif Carriers:IsInstanceOf("SET_GROUP") or Carriers:IsInstanceOf("SET_OPSGROUP") then
+  
+    for _,object in pairs(Carriers:GetSet()) do
+      local carrier=self:_GetOpsGroupFromObject(object)
+      if carrier then
+        table.insert(self.disembarkCarriers, carrier)
+      end
+    end
+    
+  else  
+    self:E(self.lid.."ERROR: Carriers must be a GROUP, OPSGROUP, SET_GROUP or SET_OPSGROUP object!")    
+  end
+
+  return self
+end
+
 
 --- Set if group remains *in utero* after disembarkment from carrier. Can be used to directly load the group into another carrier. Similar to disembark in late activated state.
 -- @param #OPSTRANSPORT self
@@ -264,21 +305,7 @@ function OPSTRANSPORT:SetDisembarkInUtero(InUtero)
   return self
 end
 
---- Check if an OPS group is assigned as carrier for this transport.
--- @param #OPSTRANSPORT self
--- @param Ops.OpsGroup#OPSGROUP CarrierGroup Potential carrier OPSGROUP.
--- @return #boolean If true, group is an assigned carrier. 
-function OPSTRANSPORT:IsCarrier(CarrierGroup)
 
-  for _,_carrier in pairs(self.carriers) do
-    local carrier=_carrier --Ops.OpsGroup#OPSGROUP
-    if carrier.groupname==CarrierGroup.groupname then
-      return true
-    end
-  end
-
-  return false
-end
 
 --- Add a carrier assigned for this transport.
 -- @param #OPSTRANSPORT self
@@ -358,18 +385,74 @@ end
 -- @param ... Condition function arguments if any.
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:AddConditionStart(ConditionFunction, ...)
+
+  if ConditionFunction then
   
-  local condition={} --#OPSTRANSPORT.Condition
-  
-  condition.func=ConditionFunction
-  condition.arg={}
-  if arg then
-    condition.arg=arg
+    local condition={} --#OPSTRANSPORT.Condition
+    
+    condition.func=ConditionFunction
+    condition.arg={}
+    if arg then
+      condition.arg=arg
+    end
+    
+    table.insert(self.conditionStart, condition)
+    
   end
   
-  table.insert(self.conditionStart, condition)
-  
   return self
+end
+
+--- Add path used for transportation from the pickup to the deploy zone. If multiple paths are defined, a random one is chosen.
+-- @param #OPSTRANSPORT self
+-- @param Wrapper.Group#GROUP PathGroup A (late activated) GROUP defining a transport path by their waypoints.
+-- @param #number Radius Randomization radius in meters. Default 0 m.
+-- @param #number Altitude Altitude in feet AGL. Only for aircraft.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:AddPathTransport(PathGroup, Radius, Altitude)
+
+  local path={} --#OPSTRANSPORT.Path
+  path.coords={}
+  path.radius=Radius or 0
+  path.altitude=Altitude
+
+  -- Get route points.  
+  local waypoints=PathGroup:GetTaskRoute()
+  
+  for _,wp in pairs(waypoints) do
+    local coord=COORDINATE:New(wp.x, wp.alt, wp.y)
+    table.insert(path.coords, coord)
+  end
+
+  -- Add path.
+  table.insert(self.pathsTransport, path)
+
+  return self
+end
+
+--- Get a path for transportation.
+-- @param #OPSTRANSPORT self
+-- @return #table The path of COORDINATEs.
+function OPSTRANSPORT:_GetPathTransport()
+
+  if self.pathsTransport and #self.pathsTransport>0 then
+  
+    -- Get a random path for transport.
+    local path=self.pathsTransport[math.random(#self.pathsTransport)] --#OPSTRANSPORT.Path
+
+    
+    local coordinates={}
+    for _,coord in ipairs(path.coords) do
+    
+      -- TODO: Add randomization.
+    
+      table.insert(coordinates, coord)
+    end
+        
+    return coordinates
+  end
+
+  return nil
 end
 
 
@@ -394,46 +477,22 @@ function OPSTRANSPORT:GetCarrierTransportStatus(CarrierGroup)
 end
 
 
---- Create a cargo group data structure.
--- @param #OPSTRANSPORT self
--- @param Wrapper.Group#GROUP group The GROUP object.
--- @param Core.Zone#ZONE Pickupzone Pickup zone.
--- @param Core.Zone#ZONE Deployzone Deploy zone.
--- @return #OPSGROUP.CargoGroup Cargo group data.
-function OPSTRANSPORT:_CreateCargoGroupData(group, Pickupzone, Deployzone)
 
-  local opsgroup=nil
-  
-  if group:IsInstanceOf("OPSGROUP") then
-    opsgroup=group
-  elseif group:IsInstanceOf("GROUP") then
-  
-    opsgroup=_DATABASE:GetOpsGroup(group)
-    
-    if not opsgroup then
-      if group:IsAir() then
-        opsgroup=FLIGHTGROUP:New(group)
-      elseif group:IsShip() then
-        opsgroup=NAVYGROUP:New(group)
-      else
-        opsgroup=ARMYGROUP:New(group)
-      end
+
+--- Check if an OPS group is assigned as carrier for this transport.
+-- @param #OPSTRANSPORT self
+-- @param Ops.OpsGroup#OPSGROUP CarrierGroup Potential carrier OPSGROUP.
+-- @return #boolean If true, group is an assigned carrier. 
+function OPSTRANSPORT:IsCarrier(CarrierGroup)
+
+  for _,_carrier in pairs(self.carriers) do
+    local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+    if carrier.groupname==CarrierGroup.groupname then
+      return true
     end
-    
-  else
-    self:E(self.lid.."ERROR: Cargo must be a GROUP or OPSGROUP object!")
-    return nil
   end
 
-  local cargo={} --#OPSGROUP.CargoGroup
-  
-  cargo.opsgroup=opsgroup
-  cargo.delivered=false
-  cargo.status="Unknown"
-  cargo.pickupzone=Pickupzone
-  cargo.deployzone=Deployzone
-
-  return cargo
+  return false
 end
 
 --- Check if transport is ready to be started.
@@ -443,29 +502,47 @@ end
 -- @param #OPSTRANSPORT self
 -- @return #boolean If true, mission can be started.
 function OPSTRANSPORT:IsReadyToGo()
+
+  -- Debug text.
+  local text=self.lid.."Is ReadyToGo? "
   
+  -- Current abs time.
   local Tnow=timer.getAbsTime()
 
   -- Start time did not pass yet.
   if self.Tstart and Tnow<self.Tstart or false then
+    text=text.."No, start time not passed!"
     return false
   end
   
   -- Stop time already passed.
   if self.Tstop and Tnow>self.Tstop or false then
+    text=text.."Nope, stop time already passed!"
+    self:T(text)
     return false
   end
   
   -- All start conditions true?
   local startme=self:EvalConditionsAll(self.conditionStart)
   
+  -- Nope, not yet.
   if not startme then
+    text=text..("No way, at least one start condition is not true!")
+    self:I(text)
     return false
   end
   
-
   -- We're good to go!
+  text=text.."Yes!"
+  self:T(text)
   return true
+end
+
+--- Check if all cargo was delivered (or is dead).
+-- @param #OPSTRANSPORT self
+-- @return #boolean If true, all possible cargo was delivered. 
+function OPSTRANSPORT:IsDelivered()
+  return self:is(OPSTRANSPORT.Status.DELIVERED)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -482,14 +559,16 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
   -- Current FSM state.
   local fsmstate=self:GetState()
   
-
+  -- Info text.
   local text=string.format("%s [%s --> %s]: Ncargo=%d/%d, Ncarrier=%d", fsmstate:upper(), self.pickupzone:GetName(), self.deployzone:GetName(), self.Ncargo, self.Ndelivered, self.Ncarrier)
   
   text=text..string.format("\nCargos:")
   for _,_cargo in pairs(self.cargos) do
     local cargo=_cargo  --Ops.OpsGroup#OPSGROUP.CargoGroup
-    local name=cargo.opsgroup.carrier and cargo.opsgroup.carrier.name or "none"
-    text=text..string.format("\n- %s: %s [%s], weight=%d kg, carrier=%s", cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name)
+    local carrier=cargo.opsgroup:_GetMyCarrierElement()
+    local name=carrier and carrier.name or "none"
+    local cstate=carrier and carrier.status or "N/A"
+    text=text..string.format("\n- %s: %s [%s], weight=%d kg, carrier=%s [%s]", cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name, cstate)
   end
   
   text=text..string.format("\nCarriers:")
@@ -504,7 +583,10 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
   -- Check if all cargo was delivered (or is dead).
   self:_CheckDelivered()
 
-  self:__Status(-30)
+  -- Update status again.
+  if not self:IsDelivered() then
+    self:__Status(-30)
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -574,39 +656,44 @@ end
 -- @param #OPSTRANSPORT self
 function OPSTRANSPORT:_CheckDelivered()
 
-  local done=true
-  local dead=true
-  for _,_cargo in pairs(self.cargos) do
-    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-    
-    if cargo.delivered then
-      -- This one is delivered.
-      dead=false
-    elseif cargo.opsgroup==nil then
-      -- This one is nil?!
-      dead=false
-    elseif cargo.opsgroup:IsDestroyed() then
-      -- This one was destroyed.
-    elseif cargo.opsgroup:IsDead() then
-      -- This one is dead.
-      dead=false
-    elseif cargo.opsgroup:IsStopped() then
-      -- This one is stopped.
-      dead=false
-    else
-      done=false --Someone is not done!
-      dead=false
+  -- First check that at least one cargo was added (as we allow to do that later).
+  if self.Ncargo>0 then
+
+    local done=true
+    local dead=true
+    for _,_cargo in pairs(self.cargos) do
+      local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+      
+      if cargo.delivered then
+        -- This one is delivered.
+        dead=false
+      elseif cargo.opsgroup==nil then
+        -- This one is nil?!
+        dead=false
+      elseif cargo.opsgroup:IsDestroyed() then
+        -- This one was destroyed.
+      elseif cargo.opsgroup:IsDead() then
+        -- This one is dead.
+        dead=false
+      elseif cargo.opsgroup:IsStopped() then
+        -- This one is stopped.
+        dead=false
+      else
+        done=false --Someone is not done!
+        dead=false
+      end
+     
     end
-   
-  end
-  
-  if dead then
-    --self:CargoDead()
-    self:I(self.lid.."All cargo DEAD!")
-    self:Delivered()
-  elseif done then
-    self:I(self.lid.."All cargo delivered")
-    self:Delivered()  
+    
+    if dead then
+      --self:CargoDead()
+      self:I(self.lid.."All cargo DEAD!")
+      self:Delivered()
+    elseif done then
+      self:I(self.lid.."All cargo delivered")
+      self:Delivered()  
+    end
+    
   end
   
 end
@@ -634,3 +721,92 @@ function OPSTRANSPORT:EvalConditionsAll(Conditions)
   -- All conditions were true.
   return true
 end
+
+
+
+--- Find transfer carrier element for cargo group.
+-- @param #OPSTRANSPORT self
+-- @param Ops.OpsGroup#OPSGROUP CargoGroup The cargo group that needs to be loaded into a carrier unit/element of the carrier group.
+-- @param Core.Zone#ZONE Zone (Optional) Zone where the carrier must be in.
+-- @return Ops.OpsGroup#OPSGROUP.Element New carrier element for cargo or nil.
+-- @return Ops.OpsGroup#OPSGROUP New carrier group for cargo or nil.
+function OPSTRANSPORT:FindTransferCarrierForCargo(CargoGroup, Zone)
+
+  local carrier=nil --Ops.OpsGroup#OPSGROUP.Element
+  local carrierGroup=nil --Ops.OpsGroup#OPSGROUP
+  
+  --TODO: maybe sort the carriers wrt to largest free cargo bay. Or better smallest free cargo bay that can take the cargo group weight.
+  
+  for _,_carrier in pairs(self.disembarkCarriers or {}) do
+    local carrierGroup=_carrier --Ops.OpsGroup#OPSGROUP
+    
+    -- Find an element of the group that has enough free space.
+    carrier=carrierGroup:FindCarrierForCargo(CargoGroup)
+    
+    if carrier then
+      if Zone==nil or Zone:IsCoordinateInZone(carrier.unit:GetCoordinate()) then
+        return carrier, carrierGroup      
+      else
+        self:T3(self.lid.."Got transfer carrier but carrier not in zone (yet)!")
+      end
+    else
+      self:T3(self.lid.."No transfer carrier available!")
+    end
+  end
+
+  return nil, nil
+end
+
+--- Create a cargo group data structure.
+-- @param #OPSTRANSPORT self
+-- @param Wrapper.Group#GROUP group The GROUP or OPSGROUP object.
+-- @return Ops.OpsGroup#OPSGROUP.CargoGroup Cargo group data.
+function OPSTRANSPORT:_CreateCargoGroupData(group)
+
+  local opsgroup=self:_GetOpsGroupFromObject(group)
+
+  local cargo={} --Ops.OpsGroup#OPSGROUP.CargoGroup
+  
+  cargo.opsgroup=opsgroup
+  cargo.delivered=false
+  cargo.status="Unknown"
+  cargo.disembarkCarrierElement=nil
+  cargo.disembarkCarrierGroup=nil
+
+  return cargo
+end
+
+--- Get an OPSGROUIP
+-- @param #OPSTRANSPORT self
+-- @param Core.Base#BASE Object The object, which can be a GROUP or OPSGROUP.
+-- @return Ops.OpsGroup#OPSGROUP Ops Group.
+function OPSTRANSPORT:_GetOpsGroupFromObject(Object)
+
+  local opsgroup=nil
+
+  if Object:IsInstanceOf("OPSGROUP") then
+    -- We already have an OPSGROUP
+    opsgroup=Object
+  elseif Object:IsInstanceOf("GROUP") then
+  
+    -- Look into DB and try to find an existing OPSGROUP.
+    opsgroup=_DATABASE:GetOpsGroup(Object)
+    
+    if not opsgroup then
+      if Object:IsAir() then
+        opsgroup=FLIGHTGROUP:New(Object)
+      elseif Object:IsShip() then
+        opsgroup=NAVYGROUP:New(Object)
+      else
+        opsgroup=ARMYGROUP:New(Object)
+      end
+    end
+    
+  else
+    self:E(self.lid.."ERROR: Object must be a GROUP or OPSGROUP object!")
+    return nil
+  end
+
+  return opsgroup
+end
+

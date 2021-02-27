@@ -233,7 +233,7 @@ do -- SET_BASE
   -- @param Core.Base#BASE Object The object itself.
   -- @return Core.Base#BASE The added BASE Object.
   function SET_BASE:Add( ObjectName, Object )
-    self:F2( { ObjectName = ObjectName, Object = Object } )
+    self:I( { ObjectName = ObjectName, Object = Object } )
 
     -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
     if self.Set[ObjectName] then
@@ -5947,4 +5947,604 @@ do -- SET_ZONE_GOAL
     return nil
   end
 
+end
+
+
+
+do -- SET_OPSGROUP
+
+  --- @type SET_OPSGROUP
+  -- @extends Core.Set#SET_BASE
+
+  --- Mission designers can use the @{Core.Set#SET_OPSGROUP} class to build sets of OPS groups belonging to certain:
+  --
+  --  * Coalitions
+  --  * Categories
+  --  * Countries
+  --  * Contain a certain string pattern
+  --
+  -- ## SET_OPSGROUP constructor
+  --
+  -- Create a new SET_OPSGROUP object with the @{#SET_OPSGROUP.New} method:
+  --
+  --    * @{#SET_OPSGROUP.New}: Creates a new SET_OPSGROUP object.
+  --
+  -- ## Add or Remove GROUP(s) from SET_OPSGROUP
+  --
+  -- GROUPS can be added and removed using the @{Core.Set#SET_OPSGROUP.AddGroupsByName} and @{Core.Set#SET_OPSGROUP.RemoveGroupsByName} respectively.
+  -- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_OPSGROUP.
+  --
+  -- ## SET_OPSGROUP filter criteria
+  --
+  -- You can set filter criteria to define the set of groups within the SET_OPSGROUP.
+  -- Filter criteria are defined by:
+  --
+  --    * @{#SET_OPSGROUP.FilterCoalitions}: Builds the SET_OPSGROUP with the groups belonging to the coalition(s).
+  --    * @{#SET_OPSGROUP.FilterCategories}: Builds the SET_OPSGROUP with the groups belonging to the category(ies).
+  --    * @{#SET_OPSGROUP.FilterCountries}: Builds the SET_OPSGROUP with the groups belonging to the country(ies).
+  --    * @{#SET_OPSGROUP.FilterPrefixes}: Builds the SET_OPSGROUP with the groups *containing* the given string in the group name. **Attention!** Bad naming convention, as this not really filtering *prefixes*.
+  --    * @{#SET_OPSGROUP.FilterActive}: Builds the SET_OPSGROUP with the groups that are only active. Groups that are inactive (late activation) won't be included in the set!
+  --
+  -- For the Category Filter, extra methods have been added:
+  --
+  --    * @{#SET_OPSGROUP.FilterCategoryAirplane}: Builds the SET_OPSGROUP from airplanes.
+  --    * @{#SET_OPSGROUP.FilterCategoryHelicopter}: Builds the SET_OPSGROUP from helicopters.
+  --    * @{#SET_OPSGROUP.FilterCategoryGround}: Builds the SET_OPSGROUP from ground vehicles or infantry.
+  --    * @{#SET_OPSGROUP.FilterCategoryShip}: Builds the SET_OPSGROUP from ships.
+  --
+  --
+  -- Once the filter criteria have been set for the SET_OPSGROUP, you can start filtering using:
+  --
+  --    * @{#SET_OPSGROUP.FilterStart}: Starts the filtering of the groups within the SET_OPSGROUP and add or remove GROUP objects **dynamically**.
+  --    * @{#SET_OPSGROUP.FilterOnce}: Filters of the groups **once**.
+  --
+  --
+  -- ## SET_OPSGROUP iterators
+  --
+  -- Once the filters have been defined and the SET_OPSGROUP has been built, you can iterate the SET_OPSGROUP with the available iterator methods.
+  -- The iterator methods will walk the SET_OPSGROUP set, and call for each element within the set a function that you provide.
+  -- The following iterator methods are currently available within the SET_OPSGROUP:
+  --
+  --   * @{#SET_OPSGROUP.ForEachGroup}: Calls a function for each alive group it finds within the SET_OPSGROUP.
+  --
+  -- ## SET_OPSGROUP trigger events on the GROUP objects.
+  --
+  -- The SET is derived from the FSM class, which provides extra capabilities to track the contents of the GROUP objects in the SET_OPSGROUP.
+  --
+  -- ### When a GROUP object crashes or is dead, the SET_OPSGROUP will trigger a **Dead** event.
+  --
+  -- You can handle the event using the OnBefore and OnAfter event handlers.
+  -- The event handlers need to have the paramters From, Event, To, GroupObject.
+  -- The GroupObject is the GROUP object that is dead and within the SET_OPSGROUP, and is passed as a parameter to the event handler.
+  -- See the following example:
+  --
+  --        -- Create the SetCarrier SET_OPSGROUP collection.
+  --
+  --        local SetHelicopter = SET_OPSGROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
+  --
+  --        -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
+  --
+  --        function SetHelicopter:OnAfterDead( From, Event, To, GroupObject )
+  --          self:F( { GroupObject = GroupObject:GetName() } )
+  --        end
+  --
+  --
+  -- ===
+  -- 
+  -- @field #SET_OPSGROUP SET_OPSGROUP
+  -- 
+  SET_OPSGROUP = {
+    ClassName = "SET_OPSGROUP",
+    Filter = {
+      Coalitions    = nil,
+      Categories    = nil,
+      Countries     = nil,
+      GroupPrefixes = nil,
+    },
+    FilterMeta = {
+      Coalitions = {
+        red     = coalition.side.RED,
+        blue    = coalition.side.BLUE,
+        neutral = coalition.side.NEUTRAL,
+      },
+      Categories = {
+        plane      = Group.Category.AIRPLANE,
+        helicopter = Group.Category.HELICOPTER,
+        ground     = Group.Category.GROUND,
+        ship       = Group.Category.SHIP,
+      },
+    }, -- FilterMeta
+  }
+
+
+  --- Creates a new SET_OPSGROUP object, building a set of groups belonging to a coalitions, categories, countries, types or with defined prefix names.
+  -- @param #SET_OPSGROUP self
+  -- @return #SET_OPSGROUP
+  function SET_OPSGROUP:New()
+
+    -- Inherit SET_BASE.
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.GROUPS)) -- #SET_OPSGROUP
+
+    -- Include non activated 
+    self:FilterActive( false )
+
+    return self
+  end
+
+  --- Gets the Set.
+  -- @param #SET_OPSGROUP self
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:GetAliveSet()
+
+    local AliveSet = SET_OPSGROUP:New()
+
+    -- Clean the Set before returning with only the alive Groups.
+    for GroupName, GroupObject in pairs(self.Set) do    
+      local GroupObject=GroupObject --Wrapper.Group#GROUP
+      
+      if GroupObject and GroupObject:IsAlive() then      
+        AliveSet:Add(GroupName, GroupObject)
+      end
+    end
+
+    return AliveSet.Set or {}
+  end
+  
+  --- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using a given ObjectName as the index.
+  -- @param #SET_BASE self
+  -- @param #string ObjectName The name of the object.
+  -- @param Core.Base#BASE Object The object itself.
+  -- @return Core.Base#BASE The added BASE Object.
+  function SET_OPSGROUP:Add(ObjectName, Object)
+    self:I( { ObjectName = ObjectName, Object = Object } )
+
+    -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
+    if self.Set[ObjectName] then
+      self:Remove(ObjectName, true)
+    end
+    
+    local object=nil --Ops.OpsGroup#OPSGROUP
+    if Object:IsInstanceOf("GROUP") then
+    
+      ---
+      -- GROUP Object
+      ---
+    
+      -- Fist, look up in the DATABASE if an OPSGROUP already exists.
+      object=_DATABASE:FindOpsGroup(ObjectName)
+    
+      if not object then
+      
+        if Object:IsShip() then
+          object=NAVYGROUP:New(Object)
+        elseif Object:IsGround() then
+          object=ARMYGROUP:New(Object)
+        elseif Object:IsAir() then
+          object=FLIGHTGROUP:New(Object)
+        else
+          env.error("ERROR: Unknown category of group object!")
+        end
+      end
+      
+    elseif Object:IsInstanceOf("OPSGROUP") then
+      -- We already have an OPSGROUP.
+      object=Object
+    else
+      env.error("ERROR: Object must be a GROUP or OPSGROUP!")
+    end
+    
+    -- Add object to set.
+    self.Set[ObjectName]=object
+
+    -- Add Object name to Index.
+    table.insert(self.Index, ObjectName)
+
+    -- Trigger Added event.
+    self:Added(ObjectName, object)
+  end  
+
+  --- Add a GROUP or OPSGROUP object to the set.
+  -- **NOTE** that an OPSGROUP is automatically created from the GROUP if it does not exist already.
+  -- @param Core.Set#SET_OPSGROUP self
+  -- @param Wrapper.Group#GROUP group The GROUP which should be added to the set. Can also be given as an #OPSGROUP object.
+  -- @return Core.Set#SET_OPSGROUP self
+  function SET_OPSGROUP:AddGroup(group)
+  
+    local groupname=group:GetName()
+    
+    self:Add(groupname, group )
+
+    return self
+  end
+
+  --- Add GROUP(s) or OPSGROUP(s) to the set.
+  -- @param Core.Set#SET_OPSGROUP self
+  -- @param #string AddGroupNames A single name or an array of GROUP names.
+  -- @return Core.Set#SET_OPSGROUP self
+  function SET_OPSGROUP:AddGroupsByName( AddGroupNames )
+
+    local AddGroupNamesArray = ( type( AddGroupNames ) == "table" ) and AddGroupNames or { AddGroupNames }
+
+    for AddGroupID, AddGroupName in pairs( AddGroupNamesArray ) do
+      self:Add(AddGroupName, GROUP:FindByName(AddGroupName))
+    end
+
+    return self
+  end
+
+  --- Remove GROUP(s) or OPSGROUP(s) from the set.
+  -- @param Core.Set#SET_OPSGROUP self
+  -- @param Wrapper.Group#GROUP RemoveGroupNames A single name or an array of GROUP names.
+  -- @return Core.Set#SET_OPSGROUP self
+  function SET_OPSGROUP:RemoveGroupsByName( RemoveGroupNames )
+
+    local RemoveGroupNamesArray = ( type( RemoveGroupNames ) == "table" ) and RemoveGroupNames or { RemoveGroupNames }
+
+    for RemoveGroupID, RemoveGroupName in pairs( RemoveGroupNamesArray ) do
+      self:Remove( RemoveGroupName )
+    end
+
+    return self
+  end
+
+  --- Finds an OPSGROUP based on the group name.
+  -- @param #SET_OPSGROUP self
+  -- @param #string GroupName Name of the group.
+  -- @return Ops.OpsGroup#OPSGROUP The found OPSGROUP (FLIGHTGROUP, ARMYGROUP or NAVYGROUP) or `#nil` if the group is not in the set.
+  function SET_OPSGROUP:FindGroup(GroupName)
+    local GroupFound = self.Set[GroupName]
+    return GroupFound
+  end
+  
+  --- Finds a FLIGHTGROUP based on the group name.
+  -- @param #SET_OPSGROUP self
+  -- @param #string GroupName Name of the group.
+  -- @return Ops.FlightGroup#FLIGHTGROUP The found FLIGHTGROUP or `#nil` if the group is not in the set.
+  function SET_OPSGROUP:FindFlightGroup(GroupName)
+    local GroupFound = self:FindGroup(GroupName)
+    return GroupFound
+  end
+  
+  --- Finds a ARMYGROUP based on the group name.
+  -- @param #SET_OPSGROUP self
+  -- @param #string GroupName Name of the group.
+  -- @return Ops.ArmyGroup#ARMYGROUP The found ARMYGROUP or `#nil` if the group is not in the set.
+  function SET_OPSGROUP:FindArmyGroup(GroupName)
+    local GroupFound = self:FindGroup(GroupName)
+    return GroupFound
+  end  
+
+
+  --- Finds a NAVYGROUP based on the group name.
+  -- @param #SET_OPSGROUP self
+  -- @param #string GroupName Name of the group.
+  -- @return Ops.NavyGroup#NAVYGROUP The found NAVYGROUP or `#nil` if the group is not in the set.
+  function SET_OPSGROUP:FindNavyGroup(GroupName)
+    local GroupFound = self:FindGroup(GroupName)
+    return GroupFound
+  end  
+    
+  --- Builds a set of groups of coalitions.
+  -- Possible current coalitions are red, blue and neutral.
+  -- @param #SET_OPSGROUP self
+  -- @param #string Coalitions Can take the following values: "red", "blue", "neutral" or combinations as a table, for example `{"red", "neutral"}`.
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:FilterCoalitions(Coalitions)
+  
+    -- Create an empty set.
+    if not self.Filter.Coalitions then
+      self.Filter.Coalitions={}
+    end
+    
+    -- Ensure we got a table.
+    if type(Coalitions)~="table" then
+      Coalitions = {Coalitions}
+    end
+    
+    -- Set filter.
+    for CoalitionID, Coalition in pairs( Coalitions ) do
+      self.Filter.Coalitions[Coalition] = Coalition
+    end
+    
+    return self
+  end
+
+
+  --- Builds a set of groups out of categories.
+  -- 
+  -- Possible current categories are:
+  -- 
+  -- * "plane" for fixed wing groups
+  -- * "helicopter" for rotary wing groups
+  -- * "ground" for ground groups
+  -- * "ship" for naval groups
+  -- 
+  -- @param #SET_OPSGROUP self
+  -- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship" or combinations as a table, for example `{"plane", "helicopter"}`.
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:FilterCategories( Categories )
+  
+    if not self.Filter.Categories then
+      self.Filter.Categories={}
+    end
+    
+    if type(Categories)~="table" then
+      Categories={Categories}
+    end
+    
+    for CategoryID, Category in pairs( Categories ) do
+      self.Filter.Categories[Category] = Category
+    end
+    
+    return self
+  end
+
+  --- Builds a set of groups out of ground category.
+  -- @param #SET_OPSGROUP self
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:FilterCategoryGround()
+    self:FilterCategories("ground")
+    return self
+  end
+
+  --- Builds a set of groups out of airplane category.
+  -- @param #SET_OPSGROUP self
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:FilterCategoryAirplane()
+    self:FilterCategories("plane")
+    return self
+  end
+  
+  --- Builds a set of groups out of aicraft category (planes and helicopters).
+  -- @param #SET_OPSGROUP self
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:FilterCategoryAircraft()
+    self:FilterCategories({"plane", "helicopter"})
+    return self
+  end  
+
+  --- Builds a set of groups out of helicopter category.
+  -- @param #SET_OPSGROUP self
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:FilterCategoryHelicopter()
+    self:FilterCategories("helicopter")
+    return self
+  end
+
+  --- Builds a set of groups out of ship category.
+  -- @param #SET_OPSGROUP self
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:FilterCategoryShip()
+    self:FilterCategories("ship")
+    return self
+  end
+
+  --- Builds a set of groups of defined countries.
+  -- @param #SET_OPSGROUP self
+  -- @param #string Countries Can take those country strings known within DCS world.
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:FilterCountries(Countries)
+  
+    -- Create empty table if necessary.
+    if not self.Filter.Countries then
+      self.Filter.Countries = {}
+    end
+    
+    -- Ensure input is a table.
+    if type(Countries)~="table" then
+      Countries={Countries}
+    end
+    
+    -- Set filter.
+    for CountryID, Country in pairs( Countries ) do
+      self.Filter.Countries[Country] = Country
+    end
+    
+    return self
+  end
+
+
+  --- Builds a set of groups that contain the given string in their group name.
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all groups that **contain** the string. 
+  -- @param #SET_OPSGROUP self
+  -- @param #string Prefixes The string pattern(s) that needs to be contained in the group name. Can also be passed as a `#table` of strings.
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:FilterPrefixes(Prefixes)
+  
+    -- Create emtpy table if necessary.
+    if not self.Filter.GroupPrefixes then
+      self.Filter.GroupPrefixes={}
+    end
+    
+    -- Ensure we have a table.
+    if type(Prefixes)~="table" then
+      Prefixes={Prefixes}
+    end
+    
+    -- Set group prefixes.
+    for PrefixID, Prefix in pairs(Prefixes) do
+      self.Filter.GroupPrefixes[Prefix]=Prefix
+    end
+    
+    return self
+  end
+
+  --- Builds a set of groups that are only active.
+  -- Only the groups that are active will be included within the set.
+  -- @param #SET_OPSGROUP self
+  -- @param #boolean Active (optional) Include only active groups to the set.
+  -- Include inactive groups if you provide false.
+  -- @return #SET_OPSGROUP self
+  -- @usage
+  --
+  -- -- Include only active groups to the set.
+  -- GroupSet = SET_OPSGROUP:New():FilterActive():FilterStart()
+  --
+  -- -- Include only active groups to the set of the blue coalition, and filter one time.
+  -- GroupSet = SET_OPSGROUP:New():FilterActive():FilterCoalition( "blue" ):FilterOnce()
+  --
+  -- -- Include only active groups to the set of the blue coalition, and filter one time.
+  -- -- Later, reset to include back inactive groups to the set.
+  -- GroupSet = SET_OPSGROUP:New():FilterActive():FilterCoalition( "blue" ):FilterOnce()
+  -- ... logic ...
+  -- GroupSet = SET_OPSGROUP:New():FilterActive( false ):FilterCoalition( "blue" ):FilterOnce()
+  --
+  function SET_OPSGROUP:FilterActive( Active )
+    Active = Active or not ( Active == false )
+    self.Filter.Active = Active
+    return self
+  end
+
+
+  --- Starts the filtering.
+  -- @param #SET_OPSGROUP self
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:FilterStart()
+
+    if _DATABASE then
+      self:_FilterStart()
+      self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
+    end
+
+    return self
+  end
+
+  --- Handles the OnDead or OnCrash event for alive groups set.
+  -- Note: The GROUP object in the SET_OPSGROUP collection will only be removed if the last unit is destroyed of the GROUP.
+  -- @param #SET_OPSGROUP self
+  -- @param Core.Event#EVENTDATA Event
+  function SET_OPSGROUP:_EventOnDeadOrCrash( Event )
+    self:F( { Event } )
+
+    if Event.IniDCSUnit then
+      local ObjectName, Object = self:FindInDatabase( Event )
+      if ObjectName then
+        if Event.IniDCSGroup:getSize() == 1 then -- Only remove if the last unit of the group was destroyed.
+          self:Remove( ObjectName )
+        end
+      end
+    end
+  end
+
+  --- Handles the Database to check on an event (birth) that the Object was added in the Database.
+  -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+  -- @param #SET_OPSGROUP self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #string The name of the GROUP
+  -- @return #table The GROUP
+  function SET_OPSGROUP:AddInDatabase( Event )
+  
+    if Event.IniObjectCategory==1 then
+    
+      if not self.Database[Event.IniDCSGroupName] then
+        self.Database[Event.IniDCSGroupName] = GROUP:Register( Event.IniDCSGroupName )
+      end
+      
+    end
+
+    return Event.IniDCSGroupName, self.Database[Event.IniDCSGroupName]
+  end
+
+  --- Handles the Database to check on any event that Object exists in the Database.
+  -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+  -- @param #SET_OPSGROUP self
+  -- @param Core.Event#EVENTDATA Event Event data table.
+  -- @return #string The name of the GROUP
+  -- @return #table The GROUP
+  function SET_OPSGROUP:FindInDatabase(Event)
+    return Event.IniDCSGroupName, self.Database[Event.IniDCSGroupName]
+  end
+
+  --- Iterate the set and call an iterator function for each OPSGROUP object.
+  -- @param #SET_OPSGROUP self
+  -- @param #function IteratorFunction The function that will be called for all OPSGROUPs in the set. **NOTE** that the function must have the OPSGROUP as first parameter!
+  -- @param ... (Optional) arguments passed to the `IteratorFunction`.
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:ForEachGroup( IteratorFunction, ... )
+
+    self:ForEach(IteratorFunction, arg, self:GetSet())
+
+    return self
+  end
+
+  --- Check include object.
+  -- @param #SET_OPSGROUP self
+  -- @param Wrapper.Group#GROUP MGroup The group that is checked for inclusion.
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:IsIncludeObject(MGroup)
+  
+    -- Assume it is and check later if not.
+    local MGroupInclude=true
+
+    -- Filter active.
+    if self.Filter.Active~=nil then
+    
+      local MGroupActive = false
+      
+      if self.Filter.Active==false or (self.Filter.Active==true and MGroup:IsActive()==true) then
+        MGroupActive = true
+      end
+      
+      MGroupInclude = MGroupInclude and MGroupActive
+    end
+
+    -- Filter coalitions.
+    if self.Filter.Coalitions then
+    
+      local MGroupCoalition = false
+      
+      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName]==MGroup:GetCoalition() then
+          MGroupCoalition = true      
+        end
+      end
+      
+      MGroupInclude = MGroupInclude and MGroupCoalition
+    end
+
+    -- Filter categories.
+    if self.Filter.Categories then
+    
+      local MGroupCategory = false
+      
+      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName]==MGroup:GetCategory() then
+          MGroupCategory = true
+        end
+      end
+      
+      MGroupInclude = MGroupInclude and MGroupCategory
+    end
+
+    -- Filter countries.
+    if self.Filter.Countries then
+      local MGroupCountry = false
+      for CountryID, CountryName in pairs( self.Filter.Countries ) do
+        if country.id[CountryName] == MGroup:GetCountry() then
+          MGroupCountry = true
+        end
+      end
+      MGroupInclude = MGroupInclude and MGroupCountry
+    end
+
+    -- Filter "prefixes".
+    if self.Filter.GroupPrefixes then
+    
+      local MGroupPrefix = false
+      
+      for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
+        if string.find( MGroup:GetName(), GroupPrefix:gsub ("-", "%%-"), 1 ) then --Not sure why "-" is replaced by "%-" ?!
+          MGroupPrefix = true
+        end
+      end
+      
+      MGroupInclude = MGroupInclude and MGroupPrefix
+    end
+
+    return MGroupInclude
+  end
+  
 end

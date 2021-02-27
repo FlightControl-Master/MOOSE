@@ -498,7 +498,8 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     -- Check if group started or stopped turning.
     self:_CheckTurning()
     
-    local freepath=UTILS.NMToMeters(10)
+    local disttoWP=math.min(self:GetDistanceToWaypoint(), UTILS.NMToMeters(10))
+    local freepath=disttoWP
     
     -- Only check if not currently turning.
     if not self:IsTurning() then
@@ -506,7 +507,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
       -- Check free path ahead.
       freepath=self:_CheckFreePath(freepath, 100)
       
-      if freepath<5000 then
+      if disttoWP>1 and freepath<disttoWP then
       
         if not self.collisionwarning then
           -- Issue a collision warning event.
@@ -752,6 +753,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
     wp.alt=-self.depth
   else
     -- Take default waypoint alt.
+    wp.alt=wp.alt or 0
   end
   
   -- Current set speed in m/s.
@@ -1274,8 +1276,6 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
   --coordinate=coordinate:Translate(500, heading, true)
   
   local function LoS(dist)
-    --local checkcoord=coordinate:Translate(dist, heading, true)
-    --return coordinate:IsLOS(checkcoord, offsetY)
     local checkvec3=UTILS.VecTranslate(vec3, dist, heading)
     local los=land.isVisible(vec3, checkvec3)
     return los
@@ -1303,7 +1303,7 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
       local los=LoS(x)
       
       -- Debug message.
-      self:T2(self.lid..string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
+      self:I(self.lid..string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
       
       if los and d<=eps then
         return x
@@ -1477,6 +1477,7 @@ end
 -- @param #NAVYGROUP self
 -- @return #boolean If true, a path was found.
 function NAVYGROUP:_FindPathToNextWaypoint()
+  env.info("FF Path finding")
 
   -- Pathfinding A*
   local astar=ASTAR:New()
@@ -1486,6 +1487,11 @@ function NAVYGROUP:_FindPathToNextWaypoint()
   
   -- Next waypoint.
   local wpnext=self:GetWaypointNext()
+  
+  -- No next waypoint.
+  if wpnext==nil then
+    return
+  end
   
   -- Next waypoint coordinate.
   local nextwp=wpnext.coordinate
@@ -1503,16 +1509,21 @@ function NAVYGROUP:_FindPathToNextWaypoint()
   
   -- Set end coordinate.
   astar:SetEndCoordinate(nextwp)
-  
+
   -- Distance to next waypoint.
   local dist=position:Get2DDistance(nextwp)
+  
+  -- Check distance >= 5 meters.
+  if dist<5 then
+    return
+  end
   
   local boxwidth=dist*2
   local spacex=dist*0.1
   local delta=dist/10
   
   -- Create a grid of nodes. We only want nodes of surface type water.
-  astar:CreateGrid({land.SurfaceType.WATER}, boxwidth, spacex, delta, delta*2, self.Debug)
+  astar:CreateGrid({land.SurfaceType.WATER}, boxwidth, spacex, delta, delta, self.verbose>10)
   
   -- Valid neighbour nodes need to have line of sight.
   astar:SetValidNeighbourLoS(self.pathCorridor)
@@ -1539,7 +1550,9 @@ function NAVYGROUP:_FindPathToNextWaypoint()
         uid=wp.uid
 
         -- Debug: smoke and mark path.
-        --node.coordinate:MarkToAll(string.format("Path node #%d", i))
+        if self.verbose>=10 then
+          node.coordinate:MarkToAll(string.format("Path node #%d", i))
+        end
         
       end
       
