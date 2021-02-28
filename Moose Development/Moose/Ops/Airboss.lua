@@ -1705,7 +1705,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.1.5"
+AIRBOSS.version="1.1.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4160,7 +4160,7 @@ function AIRBOSS:_InitStennis()
 
   -- Carrier Parameters.
   self.carrierparam.sterndist  =-153
-  self.carrierparam.deckheight =  19
+  self.carrierparam.deckheight =  19.06
 
   -- Total size of the carrier (approx as rectangle).
   self.carrierparam.totlength=310         -- Wiki says 332.8 meters overall length.
@@ -4168,7 +4168,7 @@ function AIRBOSS:_InitStennis()
   self.carrierparam.totwidthstarboard=30
 
   -- Landing runway.
-  self.carrierparam.rwyangle   =  -9
+  self.carrierparam.rwyangle   =  -9.1359
   self.carrierparam.rwylength  = 225
   self.carrierparam.rwywidth   =  20
 
@@ -4311,7 +4311,7 @@ function AIRBOSS:_InitNimitz()
 
   -- Carrier Parameters.
   self.carrierparam.sterndist  =-164
-  self.carrierparam.deckheight =  20
+  self.carrierparam.deckheight =  20.1494  --DCS World OpenBeta\CoreMods\tech\USS_Nimitz\Database\USS_CVN_7X.lua
 
   -- Total size of the carrier (approx as rectangle).
   self.carrierparam.totlength=332.8         -- Wiki says 332.8 meters overall length.
@@ -4319,7 +4319,7 @@ function AIRBOSS:_InitNimitz()
   self.carrierparam.totwidthstarboard=35
 
   -- Landing runway.
-  self.carrierparam.rwyangle   =  -9
+  self.carrierparam.rwyangle   =  -9.1359  --DCS World OpenBeta\CoreMods\tech\USS_Nimitz\scripts\USS_Nimitz_RunwaysAndRoutes.lua
   self.carrierparam.rwylength  = 250
   self.carrierparam.rwywidth   =  25
 
@@ -10341,7 +10341,7 @@ function AIRBOSS:_GetSternCoord()
     stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(7, FB+90)
   else
     -- Nimitz SC: translate 8 meters starboard wrt Final bearing.
-    stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(8.5, FB+90)
+    stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(9.5, FB+90)
   end
 
   -- Set altitude.
