@@ -2647,6 +2647,15 @@ function AIRBOSS:SetRecoveryTurnTime(interval)
   return self
 end
 
+--- Set multiplayer environment wire correction.
+-- @param #AIRBOSS self
+-- @param #number Dcorr Correction distance in meters. Default 8.7 m.
+-- @return #AIRBOSS self
+function AIRBOSS:SetMPWireCorrection(Dcorr)
+  self.mpWireCorrection=Dcorr or 8.7
+  return self
+end
+
 --- Set time interval for updating queues and other stuff.
 -- @param #AIRBOSS self
 -- @param #number interval Time interval in seconds. Default 30 sec.
@@ -10426,6 +10435,11 @@ function AIRBOSS:_GetWire(Lcoord, dc)
 
   -- Corrected landing distance wrt to stern. Landing distance needs to be reduced due to delayed landing event for human players.
   local d=Ldist-dc
+  
+  -- Multiplayer wire correction.
+  if self.mpWireCorrection then
+	d=d-self.mpWireCorrection
+  end
 
   -- Shift wires from stern to their correct position.
   local w1=self.carrierparam.wire1
