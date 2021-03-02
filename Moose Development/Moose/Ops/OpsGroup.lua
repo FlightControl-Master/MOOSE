@@ -179,7 +179,6 @@ OPSGROUP = {
 
 --- OPS group element.
 -- @type OPSGROUP.Element
--- 
 -- @field #string name Name of the element, i.e. the unit.
 -- @field #string status The element status. See @{#OPSGROUP.ElementStatus}.
 -- @field Wrapper.Unit#UNIT unit The UNIT object.
@@ -187,6 +186,10 @@ OPSGROUP = {
 -- @field DCS#Unit DCSunit The DCS unit object.
 -- @field #boolean ai If true, element is AI.
 -- @field #string skill Skill level.
+-- 
+-- @field Core.Zone#ZONE zoneBoundingbox Bounding box zone of the
+-- @field Core.Zone#ZONE zoneLoad Loading zone.
+-- @field Core.Zone#ZONE zoneUnload Unloading zone.
 --
 -- @field #string typename Type name.
 -- @field #number category Aircraft category.
