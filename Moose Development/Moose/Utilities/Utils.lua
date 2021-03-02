@@ -931,11 +931,27 @@ function UTILS.VecDot(a, b)
   return a.x*b.x + a.y*b.y + a.z*b.z
 end
 
+--- Calculate the [dot product](https://en.wikipedia.org/wiki/Dot_product) of two 2D vectors. The result is a number.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param DCS#Vec2 b Vector in 2D with x, y components.
+-- @return #number Scalar product of the two vectors a*b.
+function UTILS.Vec2Dot(a, b)
+  return a.x*b.x + a.y*b.y
+end
+
+
 --- Calculate the [euclidean norm](https://en.wikipedia.org/wiki/Euclidean_distance) (length) of a 3D vector.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @return #number Norm of the vector.
 function UTILS.VecNorm(a)
   return math.sqrt(UTILS.VecDot(a, a))
+end
+
+--- Calculate the [euclidean norm](https://en.wikipedia.org/wiki/Euclidean_distance) (length) of a 2D vector.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @return #number Norm of the vector.
+function UTILS.Vec2Norm(a)
+  return math.sqrt(UTILS.Vec2Dot(a, a))
 end
 
 --- Calculate the distance between two 2D vectors.
@@ -1020,6 +1036,17 @@ function UTILS.VecHdg(a)
   return h
 end
 
+--- Calculate "heading" of a 2D vector in the X-Y plane.
+-- @param DCS#Vec2 a Vector in "D with x, y components.
+-- @return #number Heading in degrees in [0,360).
+function UTILS.Vec2Hdg(a)
+  local h=math.deg(math.atan2(a.y, a.x))
+  if h<0 then
+    h=h+360
+  end
+  return h
+end
+
 --- Calculate the difference between two "heading", i.e. angles in [0,360) deg.
 -- @param #number h1 Heading one.
 -- @param #number h2 Heading two.
@@ -1056,6 +1083,22 @@ function UTILS.VecTranslate(a, distance, angle)
   return {x=TX, y=a.y, z=TY}
 end
 
+--- Translate 2D vector in the 2D (x,z) plane. 
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param #number distance The distance to translate.
+-- @param #number angle Rotation angle in degrees.
+-- @return DCS#Vec2 Translated vector.
+function UTILS.Vec2Translate(a, distance, angle)
+
+  local SX = a.x
+  local SY = a.y
+  local Radians=math.rad(angle or 0)
+  local TX=distance*math.cos(Radians)+SX
+  local TY=distance*math.sin(Radians)+SY
+
+  return {x=TX, y=TY}
+end
+
 --- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param #number angle Rotation angle in degrees.
@@ -1072,6 +1115,25 @@ function UTILS.Rotate2D(a, angle)
   local Y=a.y
   
   local A={x=X, y=Y, z=Z}
+
+  return A
+end
+
+--- Rotate 2D vector in the 2D (x,z) plane. 
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param #number angle Rotation angle in degrees.
+-- @return DCS#Vec2 Vector rotated in the (x,y) plane.
+function UTILS.Vec2Rotate2D(a, angle)
+
+  local phi=math.rad(angle)
+  
+  local x=a.y
+  local y=a.x
+    
+  local Z=x*math.cos(phi)-y*math.sin(phi)
+  local X=x*math.sin(phi)+y*math.cos(phi)
+  
+  local A={x=X, y=Z}
 
   return A
 end

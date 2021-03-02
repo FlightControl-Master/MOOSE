@@ -5772,6 +5772,19 @@ function OPSGROUP:onafterUnloading(From, Event, To)
             
               -- Create a zone around the carrier.
               local zoneCarrier=ZONE_RADIUS:New("Carrier", self:GetVec2(), 100)
+              
+                            
+              local d={}
+              d.p1={x=vec2.x-l/2, y=vec2.y-w/2} --DCS#Vec2
+              d.p2={x=vec2.x-l/2, y=vec2.y+w/2} --DCS#Vec2
+              d.p3={x=d2.x+20, y=d2.y+20}
+              d.p4={x=d1.x+20, y=d1.y+20}
+              
+              for _,_p in pairs(d) do
+                local p=_p --#DCSVec2
+              end
+              
+              local zoneCarrier=ZONE_POLYGON_BASE:New("Carrier", {d1, d2, d3, d4})
             
               -- Random coordinate/heading in the zone.
               Coordinate=zoneCarrier:GetRandomCoordinate(50)
@@ -7978,6 +7991,48 @@ function OPSGROUP:GetElementByName(unitname)
   return nil
 end
 
+--- Get the bounding box of the element.
+-- @param #OPSGROUP self
+-- @param #string UnitName Name of unit.
+-- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
+function OPSGROUP:GetElementBoundingBox(UnitName)
+
+  local element=self:GetElementByName(UnitName)
+  
+  if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+
+    local l=element.length
+    local w=element.width
+    
+    local heading=element.unit:GetHeading()
+    
+    env.info(string.format("FF l=%d w=%d h=%d", l, w, heading))
+    
+    local vec2=self:GetVec2(element.name)
+    
+    -- Set of 
+    local b={}
+    b[1]={y=l/2,  x=-w/2} --DCS#Vec2
+    b[2]={y=l/2,  x=w/2}  --DCS#Vec2
+    b[3]={y=-l/2, x=w/2}  --DCS#Vec2
+    b[4]={y=-l/2, x=-w/2} --DCS#Vec2
+    
+    for i,p in pairs(b) do
+      b[i]=UTILS.Vec2Rotate2D(p, heading)
+    end
+    
+    local d=UTILS.Vec2Norm(vec2)
+    local h=UTILS.Vec2Hdg(vec2)
+    for i,p in pairs(b) do
+      --b[i]=UTILS.Vec2Translate(p, d, h)
+    end    
+        
+    return ZONE_POLYGON_BASE:New(element.name, b)
+  end
+     
+  return nil         
+end
+
 --- Get the first element of a group, which is alive.
 -- @param #OPSGROUP self
 -- @return #OPSGROUP.Element The element or `#nil` if no element is alive any more.
@@ -7994,6 +8049,7 @@ function OPSGROUP:GetElementAlive()
 
   return nil
 end
+
 
 --- Get number of elements alive.
 -- @param #OPSGROUP self
