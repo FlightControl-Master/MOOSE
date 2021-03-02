@@ -39,6 +39,7 @@
 --    * [F-14A/B Tomcat](https://forums.eagle.ru/forumdisplay.php?f=395) (Player & AI)
 --    * [A-4E Skyhawk Community Mod](https://forums.eagle.ru/showthread.php?t=224989) (Player & AI)
 --    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI) [**WIP**]
+--    * [T-45C Goshawk (VNAO)(Player & AI)]
 --    * F/A-18C Hornet (AI)
 --    * F-14A Tomcat (AI)
 --    * E-2D Hawkeye (AI)
@@ -12044,15 +12045,15 @@ function AIRBOSS:_EvalGrooveTime(playerData)
 
   local grade=""
   if t<9 then
-    grade="--"
-  elseif t<12 then
-    grade="(OK)"
-  elseif t<22 then
-    grade="OK"
+    grade="_NESA_"
+  elseif t<15 then
+    grade="NESA"
+  elseif t<19 then
+    grade="OK Groove"
   elseif t<=24 then
-    grade="(OK)"
+    grade="(LIG)"
   else
-    grade="--"
+    grade="LIG"
   end
 
   -- The unicorn!
@@ -12093,7 +12094,7 @@ function AIRBOSS:_LSOgrade(playerData)
 
   -- Groove time 16-18 sec for a unicorn.
   local Tgroove=playerData.Tgroove
-  local TgrooveUnicorn=Tgroove and (Tgroove>=16.0 and Tgroove<=18.0) or false
+  local TgrooveUnicorn=Tgroove and (Tgroove>=15.0 and Tgroove<=18.99) or false
 
   local grade
   local points
