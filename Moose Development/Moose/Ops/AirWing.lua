@@ -966,7 +966,7 @@ function AIRWING:CheckTANKER()
     
     local altitude=patrol.altitude+1000*patrol.noccupied
     
-    local mission=AUFTRAG:NewTANKER(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg, 0)
+    local mission=AUFTRAG:NewTANKER(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg, 1)
     
     mission.patroldata=patrol
     
@@ -984,7 +984,7 @@ function AIRWING:CheckTANKER()
     
     local altitude=patrol.altitude+1000*patrol.noccupied
     
-    local mission=AUFTRAG:NewTANKER(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg, 1)
+    local mission=AUFTRAG:NewTANKER(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg, 0)
     
     mission.patroldata=patrol
     
