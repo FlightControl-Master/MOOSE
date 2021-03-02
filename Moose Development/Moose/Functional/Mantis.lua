@@ -20,7 +20,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 
--- Date: Jan 2021
+-- Date: Feb 2021
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends #Core.Base#BASE
@@ -31,7 +31,7 @@
 -- @field Core.Set#SET_GROUP SAM_Group The SAM #SET_GROUP
 -- @field #string EWR_Templates_Prefix Prefix to build the #SET_GROUP for EWR group
 -- @field Core.Set#SET_GROUP EWR_Group The EWR #SET_GROUP
--- @field #Core.Set#SET_GROUP Adv_EWR_Group The EWR #SET_GROUP used for advanced mode
+-- @field Core.Set#SET_GROUP Adv_EWR_Group The EWR #SET_GROUP used for advanced mode
 -- @field #string HQ_Template_CC The ME name of the HQ object
 -- @field Wrapper.Group#GROUP HQ_CC The #GROUP object of the HQ
 -- @field #table SAM_Table Table of SAM sites
@@ -54,6 +54,7 @@
 -- @field Functional.Shorad#SHORAD Shorad SHORAD Object, if available
 -- @field #boolean ShoradLink If true, #MANTIS has #SHORAD enabled
 -- @field #number ShoradTime Timer in seconds, how long #SHORAD will be active after a detection inside of the defense range
+-- @field #number ShoradActDistance Distance of an attacker in meters from a Mantis SAM site, on which Shorad will be switched on. Useful to not give away Shorad sites too early. Default 15km. Should be smaller than checkradius.
 -- @extends Core.Base#BASE
 
 
@@ -127,7 +128,7 @@
 --  * grouping = 5000 (meters) - Detection (EWR) will group enemy flights to areas of 5km for tracking - `MANTIS:SetEWRGrouping(radius)`
 --  * acceptrange = 80000 (meters) - Detection (EWR) will on consider flights inside a 80km radius - `MANTIS:SetEWRRange(radius)`  
 --  * detectinterval = 30 (seconds) - MANTIS will decide every 30 seconds which SAM to activate - `MANTIS:SetDetectInterval(interval)`
---  * engagerange = 75 (percent) - SAMs will only fire if flights are inside of a 75% radius of their max firerange - `MANTIS:SetSAMRange(range)`
+--  * engagerange = 85 (percent) - SAMs will only fire if flights are inside of a 85% radius of their max firerange - `MANTIS:SetSAMRange(range)`
 --  * dynamic = false - Group filtering is set to once, i.e. newly added groups will not be part of the setup by default - `MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic)`
 --  * autorelocate = false - HQ and (mobile) EWR system will not relocate in random intervals between 30mins and 1 hour - `MANTIS:SetAutoRelocate(hq, ewr)`
 --  * debug = false - Debugging reports on screen are set to off - `MANTIS:Debug(onoff)`
@@ -135,8 +136,26 @@
 -- # 4. Advanced Mode
 -- 
 --  Advanced mode will *decrease* reactivity of MANTIS, if HQ and/or EWR  network dies.  Awacs is counted as one EWR unit. It will set SAMs to RED state if both are dead.  Requires usage of an **HQ** object and the **dynamic** option.  
---  E.g. `mymantis:SetAdvancedMode( true, 90 )`  
+--  
+--  E.g.        `mymantis:SetAdvancedMode( true, 90 )`  
+--  
 --  Use this option if you want to make use of or allow advanced SEAD tactics.  
+--  
+-- # 5. Integrate SHORAD
+--  
+--  You can also choose to integrate Mantis with @{Functional.Shorad#SHORAD} for protection against HARMs and AGMs. When SHORAD detects a missile fired at one of MANTIS' SAM sites, it will activate SHORAD systems in
+--  the given defense checkradius around that SAM site. Create a SHORAD object first, then integrate with MANTIS like so:
+--  
+--      `local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()`
+--      `myshorad = SHORAD:New("BlueShorad", "Blue SHORAD", SamSet, 22000, 600, "blue")`
+--      `-- now set up MANTIS`
+--      `mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`
+--      `mymantis:AddShorad(myshorad,720)`
+--      `mymantis:Start()`
+-- 
+--  and (optionally) remove the link later on with
+--  
+--        `mymantis:RemoveShorad()`    
 --
 -- @field #MANTIS
 MANTIS = {
@@ -169,7 +188,8 @@ MANTIS = {
   awacsrange            = 250000,
   Shorad                = nil,
   ShoradLink            = false,
-  ShoradTime            = 600, 
+  ShoradTime            = 600,
+  ShoradActDistance     = 15000, 
 }
 
 -----------------------------------------------------------------------
@@ -235,19 +255,20 @@ do
     self.verbose = false
     self.Adv_EWR_Group = nil
     self.AWACS_Prefix = awacs or nil
-    self.awacsrange = 250000      --TODO: 250km, User Function to change
+    self.awacsrange = 250000      --DONE: 250km, User Function to change
     self.Shorad = nil
     self.ShoradLink = false
-    self.ShoradTime = 600 
+    self.ShoradTime = 600
+    self.ShoradActDistance = 15000
+     
     if type(awacs) == "string" then
       self.advAwacs = true
     else
       self.advAwacs = false
     end
     
-    -- @field #string version
-    self.version="0.3.6"
-    env.info(string.format("***** Starting MANTIS Version %s *****", self.version))
+    -- Inherit everything from BASE class.
+    local self = BASE:Inherit(self, BASE:New()) -- #MANTIS
     
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("MANTIS %s | ", self.name)
@@ -276,8 +297,10 @@ do
     if self.HQ_Template_CC then
       self.HQ_CC = GROUP:FindByName(self.HQ_Template_CC)
     end
-    -- Inherit everything from BASE class.
-    local self = BASE:Inherit(self, BASE:New()) -- #MANTIS
+    
+    -- @field #string version
+    self.version="0.3.7"
+    self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
     
     return self    
   end
@@ -378,6 +401,14 @@ do
         self.advAwacs = true
       end
     end
+  end
+
+  --- Function to set AWACS detection range. Defaults to 250.000m (250km) - use **before** starting your Mantis!
+  -- @param #MANTIS self
+  -- @param #number range Detection range of the AWACS group
+  function MANTIS:SetAwacsRange(range)
+      local range = range or 250000
+      self.awacsrange = range
   end
   
   --- Function to set the HQ object for further use
@@ -569,6 +600,7 @@ do
   -- @param #table dectset Table of coordinates of detected items
   -- @param samcoordinate Core.Point#COORDINATE Coordinate object.
   -- @return #boolean True if in any zone, else false
+  -- @return #number Distance Target distance in meters or zero when no object is in zone
   function MANTIS:CheckObjectInZone(dectset, samcoordinate)
     self:F(self.lid.."CheckObjectInZone Called")
     -- check if non of the coordinate is in the given defense zone
@@ -585,10 +617,10 @@ do
       if self.verbose then env.info(self.lid..text) end
       -- end output to cross-check
       if targetdistance <= radius then
-        return true
+        return true, targetdistance
       end
     end
-    return false
+    return false, 0
   end
 
   --- (Internal) Function to start the detection via EWR groups
@@ -658,7 +690,7 @@ do
   -- @param #MANTIS self
   -- @return #MANTIS self
   function MANTIS:SetSAMStartState()
-    -- TODO: if using dynamic filtering, update SAM_Table and the (active) SEAD groups, pull req #1405/#1406
+    -- DONE: if using dynamic filtering, update SAM_Table and the (active) SEAD groups, pull req #1405/#1406
     self:F(self.lid.."Setting SAM Start States")
      -- get SAM Group
      local SAM_SET = self.SAM_Group
@@ -769,13 +801,14 @@ do
         local samcoordinate = _data[2]
         local name = _data[1]
         local samgroup = GROUP:FindByName(name)
-        if self:CheckObjectInZone(detset, samcoordinate) then --check any target in zone
+        local IsInZone, Distance = self:CheckObjectInZone(detset, samcoordinate)
+        if IsInZone then --check any target in zone
           if samgroup:IsAlive() then
             -- switch off SAM
             samgroup:OptionAlarmStateRed()
             -- link in to SHORAD if available
-            -- TODO Test integration fully
-            if self.ShoradLink then
+            -- DONE: Test integration fully
+            if self.ShoradLink and Distance < self.ShoradActDistance then -- don't give SHORAD position away too early
               local Shorad = self.Shorad
               local radius = self.checkradius
               local ontime = self.ShoradTime
