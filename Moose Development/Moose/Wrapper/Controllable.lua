@@ -3687,3 +3687,57 @@ function CONTROLLABLE:OptionAAAttackRange(range)
   end
   return nil
 end
+
+--- Defines the range at which a GROUND unit/group is allowed to use its weapons automatically.
+-- @param #CONTROLLABLE self
+-- @param #number EngageRange Engage range limit in percent (a number between 0 and 100). Default 100.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionEngageRange(EngageRange)
+  self:F2( { self.ControllableName } ) 
+  -- Set default if not specified.
+  EngageRange=EngageRange or 100
+  if EngageRange < 0  or EngageRange > 100 then
+    EngageRange = 100
+  end
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then 
+     if self:IsGround() then
+        self:SetOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION, EngageRange)     
+     end
+    end
+   return self
+  end
+  return nil
+end
+
+--- (GROUND) Relocate controllable to a random point within a given radius; use e.g.for evasive actions; Note that not all ground controllables can actually drive, also the alarm state of the controllable might stop it from moving.
+-- @param #CONTROLLABLE self
+-- @param  #number speed Speed of the controllable, default 20
+-- @param  #number radius Radius of the relocation zone, default 500
+-- @param  #boolean onroad If true, route on road (less problems with AI way finding), default true
+-- @param  #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
+function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortcut)
+  self:F2( { self.ControllableName } ) 
+
+    local _coord = self:GetCoordinate() 
+    local _radius = radius or 500
+    local _speed = speed or 20
+    local _tocoord = _coord:GetRandomCoordinateInRadius(_radius,100)
+    local _onroad = onroad or true
+    local _grptsk = {}
+    local _candoroad = false
+    local _shortcut = shortcut or false
+    
+    -- create a DCS Task an push it on the group
+    -- TaskGroundOnRoad(ToCoordinate,Speed,OffRoadFormation,Shortcut,FromCoordinate,WaypointFunction,WaypointFunctionArguments)
+    if onroad then
+      _grptsk, _candoroad = self:TaskGroundOnRoad(_tocoord,_speed,"Off Road",_shortcut)
+      self:Route(_grptsk,5)
+    else
+      self:TaskRouteToVec2(_tocoord:GetVec2(),_speed,"Off Road")
+    end
+
+  return self    
+end
