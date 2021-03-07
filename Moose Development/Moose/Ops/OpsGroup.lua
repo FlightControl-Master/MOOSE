@@ -115,6 +115,8 @@
 -- @field #string cargoStatus Cargo status of this group acting as cargo.
 -- @field #string carrierStatus Carrier status of this group acting as cargo carrier.
 -- @field #number cargocounter Running number of cargo UIDs.
+-- @field #OPSGROUP.CarrierLoader carrierLoader Carrier loader parameters.
+-- @field #OPSGROUP.CarrierLoader carrierUnloader Carrier unloader parameters.
 -- 
 -- @extends Core.Fsm#FSM
 
@@ -174,6 +176,8 @@ OPSGROUP = {
   cargoBay           =    {},
   cargocounter       =     1,
   mycarrier          =    {},
+  carrierLoader      =    {},
+  carrierUnloader    =    {},
 }
 
 
@@ -187,9 +191,9 @@ OPSGROUP = {
 -- @field #boolean ai If true, element is AI.
 -- @field #string skill Skill level.
 -- 
--- @field Core.Zone#ZONE zoneBoundingbox Bounding box zone of the
--- @field Core.Zone#ZONE zoneLoad Loading zone.
--- @field Core.Zone#ZONE zoneUnload Unloading zone.
+-- @field Core.Zone#ZONE_POLYGON_BASE zoneBoundingbox Bounding box zone of the element unit.
+-- @field Core.Zone#ZONE_POLYGON_BASE zoneLoad Loading zone.
+-- @field Core.Zone#ZONE_POLYGON_BASE zoneUnload Unloading zone.
 --
 -- @field #string typename Type name.
 -- @field #number category Aircraft category.
@@ -409,18 +413,11 @@ OPSGROUP.CargoStatus={
   LOADED="loaded",
 }
 
---- Cargo transport status.
--- @type OPSGROUP.TransportStatus
--- @field #string PLANNING Planning state.
--- @field #string SCHEDULED Transport is scheduled in the cargo queue.
--- @field #string EXECUTING Transport is being executed.
--- @field #string DELIVERED Transport was delivered. 
-OPSGROUP.TransportStatus={
-  PLANNING="planning",
-  SCHEDULED="scheduled",
-  EXECUTING="executing",
-  DELIVERED="delivered",
-}
+--- Cargo carrier loader parameters.
+-- @type OPSGROUP.CarrierLoader
+-- @field #string type Loader type "Front", "Back", "Left", "Right", "All".
+-- @field #number length Length of (un-)loading zone in meters.
+-- @field #number width Width of (un-)loading zone in meters.
 
 --- Cargo transport data.
 -- @type OPSGROUP.MyCarrier
@@ -503,6 +500,9 @@ function OPSGROUP:New(group)
   self.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
   self.carrierStatus=OPSGROUP.CarrierStatus.NOTCARRIER
   self.cargocounter=1
+  self:SetCarrierLoaderAllAspect()
+  self:SetCarrierUnloaderAllAspect()
+  
   
   -- Init task counter.
   self.taskcurrent=0
@@ -1436,8 +1436,8 @@ end
 --- Self destruction of group. An explosion is created at the position of each element.
 -- @param #OPSGROUP self
 -- @param #number Delay Delay in seconds. Default now.
--- @param #number ExplosionPower (Optional) Explosion power in kg TNT. Default 500 kg.
--- @return #number Relative fuel in percent.
+-- @param #number ExplosionPower (Optional) Explosion power in kg TNT. Default 100 kg.
+-- @return #OPSGROUP self
 function OPSGROUP:SelfDestruction(Delay, ExplosionPower)
 
   if Delay and Delay>0 then
@@ -1451,12 +1451,135 @@ function OPSGROUP:SelfDestruction(Delay, ExplosionPower)
       local unit=element.unit
       
       if unit and unit:IsAlive() then
-        unit:Explode(ExplosionPower)
+        unit:Explode(ExplosionPower or 100)
       end
     end
   end
 
+  return self
 end
+
+--- Set that this carrier is an all aspect loader.
+-- @param #OPSGROUP self
+-- @param #number Length Length of loading zone in meters. Default 50 m.
+-- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCarrierLoaderAllAspect(Length, Width)
+  self.carrierLoader.type="front"
+  self.carrierLoader.length=Length or 50
+  self.carrierLoader.width=Width or 20
+  return self
+end
+
+--- Set that this carrier is a front loader.
+-- @param #OPSGROUP self
+-- @param #number Length Length of loading zone in meters. Default 50 m.
+-- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCarrierLoaderFront(Length, Width)
+  self.carrierLoader.type="front"
+  self.carrierLoader.length=Length or 50
+  self.carrierLoader.width=Width or 20
+  return self
+end
+
+--- Set that this carrier is a back loader.
+-- @param #OPSGROUP self
+-- @param #number Length Length of loading zone in meters. Default 50 m.
+-- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCarrierLoaderBack(Length, Width)
+  self.carrierLoader.type="back"
+  self.carrierLoader.length=Length or 50
+  self.carrierLoader.width=Width or 20
+  return self
+end
+
+--- Set that this carrier is a starboard (right side) loader.
+-- @param #OPSGROUP self
+-- @param #number Length Length of loading zone in meters. Default 50 m.
+-- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCarrierLoaderStarboard(Length, Width)
+  self.carrierLoader.type="right"
+  self.carrierLoader.length=Length or 50
+  self.carrierLoader.width=Width or 20
+  return self
+end
+
+--- Set that this carrier is a port (left side) loader.
+-- @param #OPSGROUP self
+-- @param #number Length Length of loading zone in meters. Default 50 m.
+-- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCarrierLoaderPort(Length, Width)
+  self.carrierLoader.type="left"
+  self.carrierLoader.length=Length or 50
+  self.carrierLoader.width=Width or 20
+  return self
+end
+
+
+--- Set that this carrier is an all aspect unloader.
+-- @param #OPSGROUP self
+-- @param #number Length Length of loading zone in meters. Default 50 m.
+-- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCarrierUnloaderAllAspect(Length, Width)
+  self.carrierUnloader.type="front"
+  self.carrierUnloader.length=Length or 50
+  self.carrierUnloader.width=Width or 20
+  return self
+end
+
+--- Set that this carrier is a front unloader.
+-- @param #OPSGROUP self
+-- @param #number Length Length of loading zone in meters. Default 50 m.
+-- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCarrierUnloaderFront(Length, Width)
+  self.carrierUnloader.type="front"
+  self.carrierUnloader.length=Length or 50
+  self.carrierUnloader.width=Width or 20
+  return self
+end
+
+--- Set that this carrier is a back unloader.
+-- @param #OPSGROUP self
+-- @param #number Length Length of loading zone in meters. Default 50 m.
+-- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCarrierUnloaderBack(Length, Width)
+  self.carrierUnloader.type="back"
+  self.carrierUnloader.length=Length or 50
+  self.carrierUnloader.width=Width or 20
+  return self
+end
+
+--- Set that this carrier is a starboard (right side) unloader.
+-- @param #OPSGROUP self
+-- @param #number Length Length of loading zone in meters. Default 50 m.
+-- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCarrierUnloaderStarboard(Length, Width)
+  self.carrierUnloader.type="right"
+  self.carrierUnloader.length=Length or 50
+  self.carrierUnloader.width=Width or 20
+  return self
+end
+
+--- Set that this carrier is a port (left side) unloader.
+-- @param #OPSGROUP self
+-- @param #number Length Length of loading zone in meters. Default 50 m.
+-- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @return #OPSGROUP self
+function OPSGROUP:SetCarrierUnloaderPort(Length, Width)
+  self.carrierUnloader.type="left"
+  self.carrierUnloader.length=Length or 50
+  self.carrierUnloader.width=Width or 20
+  return self
+end
+
 
 --- Check if this is a FLIGHTGROUP.
 -- @param #OPSGROUP self
@@ -5767,27 +5890,12 @@ function OPSGROUP:onafterUnloading(From, Event, To)
               Coordinate=self.cargoTransport.disembarkzone:GetRandomCoordinate()
             
             else
-          
-              -- TODO: Optimize with random Vec2
-            
-              -- Create a zone around the carrier.
-              local zoneCarrier=ZONE_RADIUS:New("Carrier", self:GetVec2(), 100)
               
-                            
-              local d={}
-              d.p1={x=vec2.x-l/2, y=vec2.y-w/2} --DCS#Vec2
-              d.p2={x=vec2.x-l/2, y=vec2.y+w/2} --DCS#Vec2
-              d.p3={x=d2.x+20, y=d2.y+20}
-              d.p4={x=d1.x+20, y=d1.y+20}
-              
-              for _,_p in pairs(d) do
-                local p=_p --#DCSVec2
-              end
-              
-              local zoneCarrier=ZONE_POLYGON_BASE:New("Carrier", {d1, d2, d3, d4})
+              -- Get random point in disembark zone.
+              local zoneCarrier=self:GetElementZoneUnload(cargo.opsgroup:_GetMyCarrierElement().name)
             
               -- Random coordinate/heading in the zone.
-              Coordinate=zoneCarrier:GetRandomCoordinate(50)
+              Coordinate=zoneCarrier:GetRandomCoordinate()
               
             end
   
@@ -5800,8 +5908,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           end
           
           -- Trigger "Unloaded" event for current cargo transport
-          self.cargoTransport:Unloaded(cargo.opsgroup)
-                
+          self.cargoTransport:Unloaded(cargo.opsgroup)                
       
         end
       
@@ -5898,13 +6005,16 @@ function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Activated
     -- Respawn group.
     OpsGroup:_Respawn(0, Template)
     
-    if self:IsNavygroup() then
-      self.currentwp=1
-      NAVYGROUP.AddWaypoint(self, Coordinate, nil, nil, nil, false)
-    elseif self:IsArmygroup() then
-      self.currentwp=1
-      ARMYGROUP.AddWaypoint(self, Coordinate, nil, nil, nil, false)    
-    end
+    -- Add current waypoint. These have been cleard on loading.
+    if OpsGroup:IsNavygroup() then
+      OpsGroup.currentwp=1
+      OpsGroup.passedfinalwp=true
+      NAVYGROUP.AddWaypoint(OpsGroup, Coordinate, nil, nil, nil, false)
+    elseif OpsGroup:IsArmygroup() then
+      OpsGroup.currentwp=1
+      OpsGroup.passedfinalwp=true      
+      ARMYGROUP.AddWaypoint(OpsGroup, Coordinate, nil, nil, nil, false)    
+    end    
   
   else
 
@@ -5919,11 +6029,10 @@ function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Activated
   end
   
   -- Trigger "Disembarked" event.
-  OpsGroup:Disembarked(OpsGroup.carrierGroup, OpsGroup.carrier)
+  OpsGroup:Disembarked(OpsGroup:_GetMyCarrierGroup(), OpsGroup:_GetMyCarrierElement())
   
-  -- No carrier any more.
-  OpsGroup.carrier=nil
-  OpsGroup.carrierGroup=nil    
+  -- Remove my carrier.
+  OpsGroup:_RemoveMyCarrier()
 
 end
 
@@ -5966,11 +6075,8 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport
+-- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport The cargo transport assignment.
 function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
-
-  -- Set cargo status.
-  CargoTransport.status=OPSGROUP.TransportStatus.DELIVERED
   
   -- Check if this was the current transport.
   if self.cargoTransport and self.cargoTransport.uid==CargoTransport.uid then
@@ -7995,43 +8101,172 @@ end
 -- @param #OPSGROUP self
 -- @param #string UnitName Name of unit.
 -- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
-function OPSGROUP:GetElementBoundingBox(UnitName)
+function OPSGROUP:GetElementZoneBoundingBox(UnitName)
 
   local element=self:GetElementByName(UnitName)
   
   if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+  
+    -- Create a new zone if necessary.
+    element.zoneBoundingbox=element.zoneBoundingbox or ZONE_POLYGON_BASE:New(element.name.." Zone Bounding Box", {})
 
     local l=element.length
     local w=element.width
     
-    local heading=element.unit:GetHeading()
+    local X=self:GetOrientationX(element.name)
+    local heading=math.deg(math.atan2(X.z, X.x))
     
     env.info(string.format("FF l=%d w=%d h=%d", l, w, heading))
-    
-    local vec2=self:GetVec2(element.name)
-    
-    -- Set of 
+     
+    -- Set of edges facing "North" at the origin of the map.
     local b={}
-    b[1]={y=l/2,  x=-w/2} --DCS#Vec2
-    b[2]={y=l/2,  x=w/2}  --DCS#Vec2
-    b[3]={y=-l/2, x=w/2}  --DCS#Vec2
-    b[4]={y=-l/2, x=-w/2} --DCS#Vec2
+    b[1]={x=l/2,  y=-w/2} --DCS#Vec2
+    b[2]={x=l/2,  y=w/2}  --DCS#Vec2
+    b[3]={x=-l/2, y=w/2}  --DCS#Vec2
+    b[4]={x=-l/2, y=-w/2} --DCS#Vec2
     
+    -- Rotate box to match current heading of the unit.
     for i,p in pairs(b) do
       b[i]=UTILS.Vec2Rotate2D(p, heading)
     end
-    
+
+    -- Translate the zone to the positon of the unit.
+    local vec2=self:GetVec2(element.name)    
     local d=UTILS.Vec2Norm(vec2)
     local h=UTILS.Vec2Hdg(vec2)
     for i,p in pairs(b) do
-      --b[i]=UTILS.Vec2Translate(p, d, h)
+      b[i]=UTILS.Vec2Translate(p, d, h)
     end    
+
+    -- Update existing zone.  
+    element.zoneBoundingbox:UpdateFromVec2(b)
         
-    return ZONE_POLYGON_BASE:New(element.name, b)
+    return element.zoneBoundingbox
   end
      
   return nil         
 end
+
+--- Get the loading zone of the element.
+-- @param #OPSGROUP self
+-- @param #string UnitName Name of unit.
+-- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
+function OPSGROUP:GetElementZoneLoad(UnitName)
+
+  local element=self:GetElementByName(UnitName)
+  
+  if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+  
+    element.zoneLoad=element.zoneLoad or ZONE_POLYGON_BASE:New(element.name.." Zone Load", {})
+
+    self:_GetElementZoneLoader(element, element.zoneLoad, self.carrierLoader)    
+    
+    return element.zoneLoad
+  end
+
+  return nil
+end
+
+--- Get the unloading zone of the element.
+-- @param #OPSGROUP self
+-- @param #string UnitName Name of unit.
+-- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
+function OPSGROUP:GetElementZoneUnload(UnitName)
+
+  local element=self:GetElementByName(UnitName)
+  
+  if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+  
+    element.zoneUnload=element.zoneUnload or ZONE_POLYGON_BASE:New(element.name.." Zone Unload", {})
+
+    self:_GetElementZoneLoader(element, element.zoneUnload, self.carrierUnloader)    
+    
+    return element.zoneUnload
+  end
+
+  return nil
+end
+
+--- Get/update the (un-)loading zone of the element.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP.Element Element Element.
+-- @param Core.Zone#ZONE_POLYGON Zone The zone.
+-- @param #OPSGROUP.CarrierLoader Loader Loader parameters.
+-- @return Core.Zone#ZONE_POLYGON Bounding box polygon zone.
+function OPSGROUP:_GetElementZoneLoader(Element, Zone, Loader)
+
+  if Element.status~=OPSGROUP.ElementStatus.DEAD then
+
+    local l=Element.length
+    local w=Element.width
+    
+    -- Orientation 3D vector where the "nose" is pointing.
+    local X=self:GetOrientationX(Element.name)
+    
+    -- Heading in deg.
+    local heading=math.deg(math.atan2(X.z, X.x))
+    
+    env.info(string.format("FF l=%d w=%d h=%d", l, w, heading))
+     
+    -- Bounding box at the origin of the map facing "North".
+    local b={}
+    
+    -- Create polygon rectangles.
+    if Loader.type:lower()=="front" then
+      table.insert(b, {x= l/2,               y=-Loader.width/2}) -- left, low    
+      table.insert(b, {x= l/2+Loader.length, y=-Loader.width/2}) -- left, up
+      table.insert(b, {x= l/2+Loader.length, y= Loader.width/2}) -- right, up
+      table.insert(b, {x= l/2,               y= Loader.width/2}) -- right, low
+    elseif Loader.type:lower()=="back" then
+      table.insert(b, {x=-l/2,               y=-Loader.width/2}) -- left, low    
+      table.insert(b, {x=-l/2-Loader.length, y=-Loader.width/2}) -- left, up
+      table.insert(b, {x=-l/2-Loader.length, y= Loader.width/2}) -- right, up
+      table.insert(b, {x=-l/2,               y= Loader.width/2}) -- right, low    
+    elseif Loader.type:lower()=="left" then
+      table.insert(b, {x= Loader.length/2, y= -w/2})              -- right, up
+      table.insert(b, {x= Loader.length/2, y= -w/2-Loader.width}) -- left,  up
+      table.insert(b, {x=-Loader.length/2, y= -w/2-Loader.width}) -- left,  down
+      table.insert(b, {x=-Loader.length/2, y= -w/2})              -- right, down
+    elseif Loader.type:lower()=="right" then
+      table.insert(b, {x= Loader.length/2, y=  w/2})              -- right, up
+      table.insert(b, {x= Loader.length/2, y=  w/2+Loader.width}) -- left,  up
+      table.insert(b, {x=-Loader.length/2, y=  w/2+Loader.width}) -- left,  down
+      table.insert(b, {x=-Loader.length/2, y=  w/2})              -- right, down
+    else
+      -- All aspect. Rectangle around the unit but need to cut out the area of the unit itself.
+      b[1]={x= l/2, y=-w/2} --DCS#Vec2
+      b[2]={x= l/2, y= w/2} --DCS#Vec2
+      b[3]={x=-l/2, y= w/2} --DCS#Vec2
+      b[4]={x=-l/2, y=-w/2} --DCS#Vec2
+      table.insert(b, {x=b[1].x+Loader.length, y=b[1].y-Loader.width})
+      table.insert(b, {x=b[2].x+Loader.length, y=b[2].y+Loader.width})
+      table.insert(b, {x=b[3].x-Loader.length, y=b[3].y+Loader.width})
+      table.insert(b, {x=b[4].x-Loader.length, y=b[4].y-Loader.width})
+    end
+            
+    -- Rotate edges to match the current heading of the unit.
+    for i,p in pairs(b) do
+      b[i]=UTILS.Vec2Rotate2D(p, heading)
+    end    
+
+    -- Translate box to the current position of the unit.
+    local vec2=self:GetVec2(Element.name)    
+    local d=UTILS.Vec2Norm(vec2)
+    local h=UTILS.Vec2Hdg(vec2)
+    
+    for i,p in pairs(b) do
+      b[i]=UTILS.Vec2Translate(p, d, h)
+    end
+          
+    -- Update existing zone.  
+    Zone:UpdateFromVec2(b)
+        
+    return Zone
+  end
+     
+  return nil      
+end
+
 
 --- Get the first element of a group, which is alive.
 -- @param #OPSGROUP self
@@ -8399,9 +8634,7 @@ function OPSGROUP:_AddElementByName(unitname)
     
     end
     
-    -- Max cargo weight
-    --element.weightMaxCargo=math.max(element.weightMaxTotal-element.weightEmpty, 0)
-    
+    -- Max cargo weight:
     unit:SetCargoBayWeightLimit()
     element.weightMaxCargo=unit.__.CargoBayWeightLimit
         

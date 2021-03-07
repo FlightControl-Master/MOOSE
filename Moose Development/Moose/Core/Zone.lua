@@ -1728,26 +1728,28 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @return DCS#Vec2 The Vec2 coordinate.
 function ZONE_POLYGON_BASE:GetRandomVec2()
-  self:F2()
 
-  --- It is a bit tricky to find a random point within a polygon. Right now i am doing it the dirty and inefficient way...
-  local Vec2Found = false
-  local Vec2
+  -- It is a bit tricky to find a random point within a polygon. Right now i am doing it the dirty and inefficient way...
+  
+  -- Get the bounding square.
   local BS = self:GetBoundingSquare()
   
-  self:T2( BS )
+  local Nmax=1000 ; local n=0
+  while n<Nmax do
   
-  while Vec2Found == false do
-    Vec2 = { x = math.random( BS.x1, BS.x2 ), y = math.random( BS.y1, BS.y2 ) }
-    self:T2( Vec2 )
-    if self:IsVec2InZone( Vec2 ) then
-      Vec2Found = true
+    -- Random point in the bounding square.
+    local Vec2={x=math.random(BS.x1, BS.x2), y=math.random(BS.y1, BS.y2)}
+    
+    -- Check if this is in the polygon.
+    if self:IsVec2InZone(Vec2) then
+      return Vec2
     end
+    
+    n=n+1
   end
-  
-  self:T2( Vec2 )
 
-  return Vec2
+  self:E("Could not find a random point in the polygon zone!")
+  return nil
 end
 
 --- Return a @{Core.Point#POINT_VEC2} object representing a random 2D point at landheight within the zone.

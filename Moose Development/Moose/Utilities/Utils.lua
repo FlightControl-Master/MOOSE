@@ -1127,13 +1127,13 @@ function UTILS.Vec2Rotate2D(a, angle)
 
   local phi=math.rad(angle)
   
-  local x=a.y
-  local y=a.x
+  local x=a.x
+  local y=a.y
     
-  local Z=x*math.cos(phi)-y*math.sin(phi)
-  local X=x*math.sin(phi)+y*math.cos(phi)
+  local X=x*math.cos(phi)-y*math.sin(phi)
+  local Y=x*math.sin(phi)+y*math.cos(phi)
   
-  local A={x=X, y=Z}
+  local A={x=X, y=Y}
 
   return A
 end

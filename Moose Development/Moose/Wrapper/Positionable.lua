@@ -1394,18 +1394,6 @@ do -- Cargo
     return ItemCount
   end
 
---  --- Get Cargo Bay Free Volume in m3.
---  -- @param #POSITIONABLE self
---  -- @return #number CargoBayFreeVolume
---  function POSITIONABLE:GetCargoBayFreeVolume()
---    local CargoVolume = 0
---    for CargoName, Cargo in pairs( self.__.Cargo ) do
---      CargoVolume = CargoVolume + Cargo:GetVolume()
---    end
---    return self.__.CargoBayVolumeLimit - CargoVolume
---  end
---
-
   --- Get Cargo Bay Free Weight in kg.
   -- @param #POSITIONABLE self
   -- @return #number CargoBayFreeWeight
@@ -1422,13 +1410,6 @@ do -- Cargo
     end
     return self.__.CargoBayWeightLimit - CargoWeight
   end
-
---  --- Get Cargo Bay Volume Limit in m3.
---  -- @param #POSITIONABLE self
---  -- @param #number VolumeLimit
---  function POSITIONABLE:SetCargoBayVolumeLimit( VolumeLimit )
---    self.__.CargoBayVolumeLimit = VolumeLimit
---  end
 
   --- Set Cargo Bay Weight Limit in kg.
   -- @param #POSITIONABLE self
@@ -1458,11 +1439,13 @@ do -- Cargo
         self:F({Desc=Desc})
 
         local Weights = {
-          ["Type_071"] = 245000,
-          ["LHA_Tarawa"] = 500000,
-          ["Ropucha-class"] = 150000,
-          ["Dry-cargo ship-1"] = 70000,
-          ["Dry-cargo ship-2"] = 70000,
+          ["Type_071"]         = 245000,
+          ["LHA_Tarawa"]       = 500000,
+          ["Ropucha-class"]    = 150000,
+          ["Dry-cargo ship-1"] =  70000,
+          ["Dry-cargo ship-2"] =  70000,
+          ["Higgins_boat"]     =   3700, -- Higgins Boat can load 3700 kg of general cargo or 36 men (source wikipedia).
+          ["USS_Samuel_Chase"] =  25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.
         }
         self.__.CargoBayWeightLimit = ( Weights[Desc.typeName] or 50000 )
 
@@ -1507,9 +1490,11 @@ do -- Cargo
         }
 
         local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 95
+        
         self.__.CargoBayWeightLimit = CargoBayWeightLimit
       end
     end
+    
     self:F({CargoBayWeightLimit = self.__.CargoBayWeightLimit})
   end
 end --- Cargo
