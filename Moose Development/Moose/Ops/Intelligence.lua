@@ -1,8 +1,11 @@
 --- **Ops** - Office of Military Intelligence.
 --
--- **Main Features:**
+-- ## Main Features:
 --
---    * Stuff
+--    * Detect and track contacts consistently
+--    * Detect and track clusters of contacts consistently
+--    * Use FSM events to link functionality into your scripts
+--    * Easy setup  
 --
 -- ===
 --
@@ -41,9 +44,42 @@
 -- ![Banner Image](..\Presentations\CarrierAirWing\INTEL_Main.jpg)
 --
 -- # The INTEL Concept
+-- 
+--  * Lightweight replacement for @{Functional.Detection#DETECTION}
+--  * Detect and track contacts consistently
+--  * Detect and track clusters of contacts consistently
+--  * Once detected and still alive, planes will be tracked 10 minutes, helicopters 20 minutes, ships and trains 1 hour, ground units 2 hours
+--  * Use FSM events to link functionality into your scripts
+-- 
+-- # Basic Usage 
 --
---
---
+--  ## set up a detection SET_GROUP  
+--  
+--  `Red_DetectionSetGroup = SET_GROUP:New()`  
+--  `Red_DetectionSetGroup:FilterPrefixes( { "Red EWR" } )`  
+--  `Red_DetectionSetGroup:FilterOnce()`  
+--  
+--  ## New Intel type detection for the red side, logname "KGB"    
+--  
+--  `RedIntel = INTEL:New(Red_DetectionSetGroup,"red","KGB")`  
+--  `RedIntel:SetClusterAnalysis(true,true)`  
+--  `RedIntel:SetVerbosity(2)`  
+--  `RedIntel:Start()`  
+--  
+--  ## Hook into new contacts found  
+--  
+--  `function RedIntel:OnAfterNewContact(From, Event, To, Contact)`  
+--        `local text = string.format("NEW contact %s detected by %s", Contact.groupname, Contact.recce or "unknown")`  
+--        `local m = MESSAGE:New(text,15,"KGB"):ToAll()`  
+-- `end`  
+-- 
+--  ## And/or new clusters found  
+--  
+-- `function RedIntel:OnAfterNewCluster(From, Event, To, Contact, Cluster)`  
+--        `local text = string.format("NEW cluster %d size %d with contact %s", Cluster.index, Cluster.size, Contact.groupname)`  
+--        `local m = MESSAGE:New(text,15,"KGB"):ToAll()`  
+-- `end`   
+-- 
 -- @field #INTEL
 INTEL = {
   ClassName       = "INTEL",
@@ -57,7 +93,7 @@ INTEL = {
   ContactsUnknown =    {},
   Clusters        =    {},
   clustercounter  =     1,
-  clusterradius   =   15,
+  clusterradius   =   10,
 }
 
 --- Detected item info.
@@ -314,7 +350,7 @@ function INTEL:RemoveRejectZone(RejectZone)
   return self
 end
 
---- Set forget contacts time interval. 
+--- Set forget contacts time interval. For unknown contacts only.
 -- Previously known contacts that are not detected any more, are "lost" after this time.
 -- This avoids fast oscillations between a contact being detected and undetected.
 -- @param #INTEL self
@@ -429,7 +465,7 @@ end
 -- @param #number radius The radius of the clusters
 -- @return #INTEL self
 function INTEL:SetClusterRadius(radius)
-  local radius = radius or 15
+  local radius = radius or 10
   self.clusterradius = radius
   return self
 end
@@ -1046,7 +1082,7 @@ function INTEL:CalcClusterThreatlevelSum(cluster)
     threatlevel=threatlevel+contact.threatlevel
     
   end
-
+  cluster.threatlevelSum = threatlevel  
   return threatlevel
 end
 
@@ -1058,7 +1094,7 @@ function INTEL:CalcClusterThreatlevelAverage(cluster)
 
   local threatlevel=self:CalcClusterThreatlevelSum(cluster)  
   threatlevel=threatlevel/cluster.size
-  
+  cluster.threatlevelAve = threatlevel 
   return threatlevel
 end
 
@@ -1078,7 +1114,7 @@ function INTEL:CalcClusterThreatlevelMax(cluster)
     end
     
   end
-
+  cluster.threatlevelMax = threatlevel 
   return threatlevel
 end
 
@@ -1119,7 +1155,7 @@ function INTEL:IsContactConnectedToCluster(contact, cluster)
       --local dist=Contact.position:Get2DDistance(contact.position)
       local dist=Contact.position:DistanceFromPointVec2(contact.position)
       
-      local radius = self.clusterradius or 15
+      local radius = self.clusterradius or 10
       if dist<radius*1000 then
         return true
       end
