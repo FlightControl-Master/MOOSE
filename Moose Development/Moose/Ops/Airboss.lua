@@ -39,7 +39,7 @@
 --    * [F-14A/B Tomcat](https://forums.eagle.ru/forumdisplay.php?f=395) (Player & AI)
 --    * [A-4E Skyhawk Community Mod](https://forums.eagle.ru/showthread.php?t=224989) (Player & AI)
 --    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI) [**WIP**]
---    * [T-45C Goshawk (VNAO)(Player & AI)]
+--    * [T-45C Goshawk] https://www.vnao-cvw-7.com/t-45-goshawk) (VNAO)(Player & AI) [**WIP**]
 --    * F/A-18C Hornet (AI)
 --    * F-14A Tomcat (AI)
 --    * E-2D Hawkeye (AI)
@@ -573,7 +573,10 @@
 --    * **L**ined **U**p **L**eft or **R**ight: LUL, LUR
 --    * Too **H**igh or too **LO**w: H, LO
 --    * Too **F**ast or too **SLO**w: F, SLO
---    * **Fly through** glideslope **down** or **up**: \\ , /
+--    * **O**ver**S**hoot: OS, only referenced during **X**
+--    * **Fly through** glideslope **down** or **up**: \\ , /, advisory only
+--    * **D**rift **L**eft or **R**ight:DL, DR, advisory only
+--    * **A**ngled **A**pproach: Angled approach (wings level and LUL): AA, advisory only
 --
 -- Each grading, x, is subdivided by
 --
@@ -634,7 +637,7 @@
 --
 -- ## Foul Deck Waveoff
 --
--- A foul deck waveoff is called by the LSO if an aircraft is detected within the landing area when an approaching aircraft is crossing the ship's wake during Case I/II operations,
+-- A foul deck waveoff is called by the LSO if an aircraft is detected within the landing area when an approaching aircraft is at position IM-IC during Case I/II operations,
 -- or with an aircraft approaching the 3/4 NM during Case III operations.
 --
 -- The approaching aircraft will be notified via LSO radio comms and is supposed to overfly the landing area to enter the Bolter pattern. **This pass is not graded**.
@@ -1264,6 +1267,7 @@ AIRBOSS = {
 -- @field #string S3BTANKER Lockheed S-3B Viking tanker.
 -- @field #string E2D Grumman E-2D Hawkeye AWACS.
 -- @field #string C2A Grumman C-2A Greyhound from Military Aircraft Mod.
+-- @field #string T-45 T-45C by VNAO
 AIRBOSS.AircraftCarrier={
   AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
@@ -2650,10 +2654,10 @@ end
 
 --- Set multiplayer environment wire correction.
 -- @param #AIRBOSS self
--- @param #number Dcorr Correction distance in meters. Default 8.7 m.
+-- @param #number Dcorr Correction distance in meters. Default 12 m.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMPWireCorrection(Dcorr)
-  self.mpWireCorrection=Dcorr or 8.7
+  self.mpWireCorrection=Dcorr or 12
   return self
 end
 
@@ -2819,12 +2823,14 @@ end
 -- @param #number Right
 -- @param #number RIGHT
 -- @return #AIRBOSS self
-function AIRBOSS:SetLineupErrorThresholds(_max,_min, Left, LEFT, Right, RIGHT)
+function AIRBOSS:SetLineupErrorThresholds(_max,_min, Left, LeftMed, LEFT, Right, RightMed, RIGHT)
   self.lue._max=_max   or  0.5
   self.lue._min=_min   or -0.5
   self.lue.Left=Left   or -1.0
+  self.lue.LeftMed=LeftMed   or -2.0
   self.lue.LEFT=LEFT   or -3.0
   self.lue.Right=Right or  1.0
+  self.lue.RightMed=RightMed or  2.0 
   self.lue.RIGHT=RIGHT or  3.0
   return self
 end
@@ -10096,6 +10102,27 @@ function AIRBOSS:_Groove(playerData)
       -- Distance in NM.
       local d=UTILS.MetersToNM(rho)
 
+	-- Drift on lineup.
+	  if rho>=RAR and rho<=RIM then
+	    if gd.LUE>0.21 and lineupError<-0.21 then 
+			env.info" Drift Right across centre ==> DR-"
+			gd.Drift=" DR"
+			self:T(self.lid..string.format("Got Drift Right across centre step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
+		 elseif gd.LUE<-0.21 and lineupError>0.21 then
+			env.info" Drift Left ==> DL-"
+			gd.Drift=" DL"
+			self:T(self.lid..string.format("Got Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
+		 elseif gd.LUE>0.12 and lineupError<-0.12 then
+			env.info" Little Drift Right across centre ==> (DR-)"
+			gd.Drift=" (DR)"
+			self:T(self.lid..string.format("Got Little Drift Right across centre at step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
+		 elseif gd.LUE<-0.12 and lineupError>0.12 then
+			env.info" Little Drift Left across centre ==> (DL-)"
+			gd.Drift=" (DL)"
+			self:E(self.lid..string.format("Got Little Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))	
+		end
+      end
+
       -- Update max deviation of line up error.
       if math.abs(lineupError)>math.abs(gd.LUE) then
         self:T(self.lid..string.format("Got bigger LUE at step %s, d=%.3f: LUE %.3f>%.3f", gs, d, lineupError, gd.LUE))
@@ -12092,7 +12119,7 @@ function AIRBOSS:_LSOgrade(playerData)
   local nS=count(G, '%(')
   local nN=N-nS-nL
 
-  -- Groove time 16-18 sec for a unicorn.
+  -- Groove time 15-18.99 sec for a unicorn.
   local Tgroove=playerData.Tgroove
   local TgrooveUnicorn=Tgroove and (Tgroove>=15.0 and Tgroove<=18.99) or false
 
@@ -12227,7 +12254,35 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
 
   -- Aircraft specific AoA values.
   local acaoa=self:_GetAircraftAoA(playerData)
-
+  
+  --Angled Approach.
+  local P=nil
+  if step==AIRBOSS.PatternStep.GROOVE_XX and ROL<=4.0 then
+	  if LUE>self.lue.RIGHT then
+		P=underline("AA")
+	  elseif 
+		LUE>self.lue.RightMed then
+		P=("AA ")
+	  elseif 
+		LUE>self.lue.Right then
+		P=little("AA ")
+	  end
+  end
+ 
+  --Overshoot Start.
+  local O=nil
+  if step==AIRBOSS.PatternStep.GROOVE_XX then
+	  if LUE<self.lue.LEFT then 
+		O=underline("OS")
+	  elseif 
+		LUE<self.lue.Left then
+		O=("OS")
+	  elseif 
+		LUE<self.lue._min then
+		O=little("OS")
+	  end	
+  end
+  
   -- Speed via AoA. Depends on aircraft type.
   local S=nil
   if AOA>acaoa.SLOW then
@@ -12260,7 +12315,7 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
     A=little("LO")
   end
 
-  -- Line up. Good [-0.5, 0.5]
+  -- Line up. XX Step replaced by Overshoot start (OS). Good [-0.5, 0.5]
   local D=nil
   if LUE>self.lue.RIGHT then
     D=underline("LUL")
@@ -12268,11 +12323,11 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
     D="LUL"
   elseif LUE>self.lue._max then
     D=little("LUL")
-  elseif LUE<self.lue.LEFT then
+  elseif LUE<self.lue.LEFT and step~=AIRBOSS.PatternStep.GROOVE_XX then
     D=underline("LUR")
-  elseif LUE<self.lue.Left then
+  elseif LUE<self.lue.Left and step~=AIRBOSS.PatternStep.GROOVE_XX then
     D="LUR"
-  elseif LUE<self.lue._min then
+  elseif LUE<self.lue._min and step~=AIRBOSS.PatternStep.GROOVE_XX then
     D=little("LUR")
   end
 
@@ -12283,6 +12338,11 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
   if fdata.FlyThrough then
     G=G..fdata.FlyThrough
   end
+  -- Angled Approach - doesn't affect score, advisory only.
+  if P then
+    G=G..P
+    n=n
+  end  
   -- Speed.
   if S then
     G=G..S
@@ -12298,7 +12358,17 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
     G=G..D
     n=n+1
   end
-
+  --Drift in Lineup
+  if fdata.Drift then
+    G=G..fdata.Drift
+	n=n -- Drift doesn't affect score, advisory only.
+  end
+  -- Overshoot.
+  if O then
+    G=G..O
+    n=n+1
+  end
+  
   -- Add current step.
   local step=self:_GS(step)
   step=step:gsub("XX","X")
