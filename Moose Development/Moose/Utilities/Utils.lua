@@ -408,6 +408,14 @@ UTILS.hPa2inHg = function( hPa )
   return hPa * 0.0295299830714
 end
 
+--- Convert knots to alitude corrected KIAS, e.g. for tankers.
+-- @param #number knots Speed in knots.
+-- @param #number altitude Altitude in feet
+-- @return #number Corrected KIAS
+UTILS.KnotsToAltKIAS = function( knots, altitude )
+  return (knots * 0.018 * (altitude / 1000)) + knots 
+end
+
 --- Convert pressure from hecto Pascal (hPa) to millimeters of mercury (mmHg).
 -- @param #number hPa Pressure in hPa.
 -- @return #number Pressure in mmHg.
