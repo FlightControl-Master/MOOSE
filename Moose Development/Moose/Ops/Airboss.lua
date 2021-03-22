@@ -39,7 +39,7 @@
 --    * [F-14A/B Tomcat](https://forums.eagle.ru/forumdisplay.php?f=395) (Player & AI)
 --    * [A-4E Skyhawk Community Mod](https://forums.eagle.ru/showthread.php?t=224989) (Player & AI)
 --    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI) [**WIP**]
---    * [T-45C Goshawk] https://www.vnao-cvw-7.com/t-45-goshawk) (VNAO)(Player & AI) [**WIP**]
+--    * [T-45C Goshawk](https://www.vnao-cvw-7.com/t-45-goshawk) (VNAO)(Player & AI) [**WIP**]
 --    * F/A-18C Hornet (AI)
 --    * F-14A Tomcat (AI)
 --    * E-2D Hawkeye (AI)
@@ -1267,7 +1267,7 @@ AIRBOSS = {
 -- @field #string S3BTANKER Lockheed S-3B Viking tanker.
 -- @field #string E2D Grumman E-2D Hawkeye AWACS.
 -- @field #string C2A Grumman C-2A Greyhound from Military Aircraft Mod.
--- @field #string T-45 T-45C by VNAO
+-- @field #string T45 T-45C by VNAO
 AIRBOSS.AircraftCarrier={
   AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
@@ -12262,10 +12262,10 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
 		P=underline("AA")
 	  elseif 
 		LUE>self.lue.RightMed then
-		P=("AA ")
+		P="AA "
 	  elseif 
 		LUE>self.lue.Right then
-		P=little("AA ")
+		P=little("AA")
 	  end
   end
  
@@ -12276,7 +12276,7 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
 		O=underline("OS")
 	  elseif 
 		LUE<self.lue.Left then
-		O=("OS")
+		O="OS"
 	  elseif 
 		LUE<self.lue._min then
 		O=little("OS")
