@@ -1267,7 +1267,7 @@ AIRBOSS = {
 -- @field #string S3BTANKER Lockheed S-3B Viking tanker.
 -- @field #string E2D Grumman E-2D Hawkeye AWACS.
 -- @field #string C2A Grumman C-2A Greyhound from Military Aircraft Mod.
--- @field #string T45 T-45C by VNAO
+-- @field #string T45C T-45C by VNAO
 AIRBOSS.AircraftCarrier={
   AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
@@ -1344,6 +1344,8 @@ AIRBOSS.CarrierType={
 -- @field #number _min Min _OK_ value. Default -0.5 deg.
 -- @field #number Left  (LUR) threshold. Default -1.0 deg.
 -- @field #number Right (LUL) threshold. Default 1.0 deg.
+-- @field #number LeftMed threshold for AA/OS measuring. Default -2.0 deg.
+-- @field #number RightMed threshold for AA/OS measuring. Default 2.0 deg.
 -- @field #number LEFT   LUR  threshold. Default -3.0 deg.
 -- @field #number RIGHT  LUL  threshold. Default 3.0 deg.
 
@@ -2819,8 +2821,10 @@ end
 -- @param #number _max
 -- @param #number _min
 -- @param #number Left
+-- @param #number LeftMed
 -- @param #number LEFT
 -- @param #number Right
+-- @param #number RightMed
 -- @param #number RIGHT
 -- @return #AIRBOSS self
 function AIRBOSS:SetLineupErrorThresholds(_max,_min, Left, LeftMed, LEFT, Right, RightMed, RIGHT)
