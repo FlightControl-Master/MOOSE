@@ -1,13 +1,13 @@
 --- This module contains derived utilities taken from the MIST framework, which are excellent tools to be reused in an OO environment.
--- 
--- ### Authors: 
--- 
+--
+-- ### Authors:
+--
 --   * Grimes : Design & Programming of the MIST framework.
---   
+--
 -- ### Contributions:
--- 
---   * FlightControl : Rework to OO framework 
--- 
+--
+--   * FlightControl : Rework to OO framework
+--
 -- @module Utils
 -- @image MOOSE.JPG
 
@@ -18,7 +18,7 @@
 -- @field White
 -- @field Orange
 -- @field Blue
- 
+
 SMOKECOLOR = trigger.smokeColor -- #SMOKECOLOR
 
 --- @type FLARECOLOR
@@ -92,7 +92,7 @@ CALLSIGN={
     Texaco=1,
     Arco=2,
     Shell=3,
-  }, 
+  },
   -- JTAC
   JTAC={
     Axeman=1,
@@ -161,31 +161,31 @@ UTILS = {
 UTILS.IsInstanceOf = function( object, className )
   -- Is className NOT a string ?
   if not type( className ) == 'string' then
-  
+
     -- Is className a Moose class ?
     if type( className ) == 'table' and className.IsInstanceOf ~= nil then
-    
+
       -- Get the name of the Moose class as a string
       className = className.ClassName
-      
+
     -- className is neither a string nor a Moose class, throw an error
     else
-    
+
       -- I'm not sure if this should take advantage of MOOSE logging function, or throw an error for pcall
       local err_str = 'className parameter should be a string; parameter received: '..type( className )
       return false
       -- error( err_str )
-      
+
     end
   end
-  
+
   -- Is the object a Moose class instance ?
   if type( object ) == 'table' and object.IsInstanceOf ~= nil then
-  
+
     -- Use the IsInstanceOf method of the BASE class
     return object:IsInstanceOf( className )
   else
-  
+
     -- If the object is not an instance of a Moose class, evaluate against lua basic data types
     local basicDataTypes = { 'string', 'number', 'function', 'boolean', 'nil', 'table' }
     for _, basicDataType in ipairs( basicDataTypes ) do
@@ -194,7 +194,7 @@ UTILS.IsInstanceOf = function( object, className )
       end
     end
   end
-  
+
   -- Check failed
   return false
 end
@@ -206,7 +206,7 @@ end
 UTILS.DeepCopy = function(object)
 
   local lookup_table = {}
-  
+
   -- Copy function.
   local function _copy(object)
     if type(object) ~= "table" then
@@ -214,20 +214,20 @@ UTILS.DeepCopy = function(object)
     elseif lookup_table[object] then
       return lookup_table[object]
     end
-    
+
     local new_table = {}
-    
+
     lookup_table[object] = new_table
-    
+
     for index, value in pairs(object) do
       new_table[_copy(index)] = _copy(value)
     end
-    
+
     return setmetatable(new_table, getmetatable(object))
   end
-  
+
   local objectreturn = _copy(object)
-  
+
   return objectreturn
 end
 
@@ -237,19 +237,19 @@ end
 UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
 
   lookup_table = {}
-  
+
   local function _Serialize( tbl )
 
     if type(tbl) == 'table' then --function only works for tables!
-    
+
       if lookup_table[tbl] then
         return lookup_table[object]
       end
 
       local tbl_str = {}
-      
+
       lookup_table[tbl] = tbl_str
-      
+
       tbl_str[#tbl_str + 1] = '{'
 
       for ind,val in pairs(tbl) do -- serialize its fields
@@ -297,7 +297,7 @@ UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a s
           env.info('unable to serialize value type ' .. routines.utils.basicSerialize(type(val)) .. ' at index ' .. tostring(ind))
           env.info( debug.traceback() )
         end
-  
+
       end
       tbl_str[#tbl_str + 1] = '}'
       return table.concat(tbl_str)
@@ -305,7 +305,7 @@ UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a s
       return tostring(tbl)
     end
   end
-  
+
   local objectreturn = _Serialize(tbl)
   return objectreturn
 end
@@ -414,7 +414,7 @@ end
 -- @param #number Celcius Temperature in degrees Celsius.
 -- @return #number Temperature in degrees Farenheit.
 UTILS.CelciusToFarenheit = function( Celcius )
-  return Celcius * 9/5 + 32 
+  return Celcius * 9/5 + 32
 end
 
 --- Convert pressure from hecto Pascal (hPa) to inches of mercury (inHg).
@@ -422,6 +422,14 @@ end
 -- @return #number Pressure in inHg.
 UTILS.hPa2inHg = function( hPa )
   return hPa * 0.0295299830714
+end
+
+--- Convert knots to alitude corrected KIAS, e.g. for tankers.
+-- @param #number knots Speed in knots.
+-- @param #number altitude Altitude in feet
+-- @return #number Corrected KIAS
+UTILS.KnotsToAltKIAS = function( knots, altitude )
+  return (knots * 0.018 * (altitude / 1000)) + knots
 end
 
 --- Convert pressure from hecto Pascal (hPa) to millimeters of mercury (mmHg).
@@ -540,23 +548,23 @@ UTILS.tostringMGRS = function(MGRS, acc) --R2.1
     -- Test if Easting/Northing have less than 4 digits.
     --MGRS.Easting=123    -- should be 00123
     --MGRS.Northing=5432  -- should be 05432
-    
+
     -- Truncate rather than round MGRS grid!
     local Easting=tostring(MGRS.Easting)
     local Northing=tostring(MGRS.Northing)
-    
+
     -- Count number of missing digits. Easting/Northing should have 5 digits. However, it is passed as a number. Therefore, any leading zeros would not be displayed by lua.
-    local nE=5-string.len(Easting) 
+    local nE=5-string.len(Easting)
     local nN=5-string.len(Northing)
-    
+
     -- Get leading zeros (if any).
     for i=1,nE do Easting="0"..Easting end
     for i=1,nN do Northing="0"..Northing end
-    
+
     -- Return MGRS string.
     return string.format("%s %s %s %s", MGRS.UTMZone, MGRS.MGRSDigraph, string.sub(Easting, 1, acc), string.sub(Northing, 1, acc))
   end
-  
+
 end
 
 
@@ -584,7 +592,7 @@ function UTILS.spairs( t, order )
     for k in pairs(t) do keys[#keys+1] = k end
 
     -- if order function given, sort by it by passing the table and keys a, b,
-    -- otherwise just sort the keys 
+    -- otherwise just sort the keys
     if order then
         table.sort(keys, function(a,b) return order(t, a, b) end)
     else
@@ -610,7 +618,7 @@ function UTILS.kpairs( t, getkey, order )
     for k, o in pairs(t) do keys[#keys+1] = k keyso[#keyso+1] = getkey( o ) end
 
     -- if order function given, sort by it by passing the table and keys a, b,
-    -- otherwise just sort the keys 
+    -- otherwise just sort the keys
     if order then
         table.sort(keys, function(a,b) return order(t, a, b) end)
     else
@@ -630,7 +638,7 @@ end
 -- Here is a customized version of pairs, which I called rpairs because it iterates over the table in a random order.
 function UTILS.rpairs( t )
     -- collect the keys
-    
+
     local keys = {}
     for k in pairs(t) do keys[#keys+1] = k end
 
@@ -641,7 +649,7 @@ function UTILS.rpairs( t )
       random[i] = keys[k]
       table.remove( keys, k )
     end
-    
+
     -- return the iterator function
     local i = 0
     return function()
@@ -742,15 +750,15 @@ end
 -- @param #boolean short (Optional) If true, use short output, i.e. (HH:)MM:SS without day.
 -- @return #string Time in format Hours:Minutes:Seconds+Days (HH:MM:SS+D).
 function UTILS.SecondsToClock(seconds, short)
-  
+
   -- Nil check.
   if seconds==nil then
     return nil
   end
-  
+
   -- Seconds
   local seconds = tonumber(seconds)
-  
+
   -- Seconds of this day.
   local _seconds=seconds%(60*60*24)
 
@@ -780,10 +788,10 @@ function UTILS.SecondsOfToday()
 
     -- Time in seconds.
     local time=timer.getAbsTime()
-    
+
     -- Short format without days since mission start.
     local clock=UTILS.SecondsToClock(time, true)
-      
+
     -- Time is now the seconds passed since last midnight.
     return UTILS.ClockToSeconds(clock)
 end
@@ -798,24 +806,24 @@ end
 -- @param #string clock String of clock time. E.g., "06:12:35" or "5:1:30+1". Format is (H)H:(M)M:((S)S)(+D) H=Hours, M=Minutes, S=Seconds, D=Days.
 -- @return #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
 function UTILS.ClockToSeconds(clock)
-  
+
   -- Nil check.
   if clock==nil then
     return nil
   end
-  
+
   -- Seconds init.
   local seconds=0
-  
+
   -- Split additional days.
   local dsplit=UTILS.Split(clock, "+")
-  
+
   -- Convert days to seconds.
   if #dsplit>1 then
     seconds=seconds+tonumber(dsplit[2])*60*60*24
   end
 
-  -- Split hours, minutes, seconds    
+  -- Split hours, minutes, seconds
   local tsplit=UTILS.Split(dsplit[1], ":")
 
   -- Get time in seconds
@@ -833,7 +841,7 @@ function UTILS.ClockToSeconds(clock)
     end
     i=i+1
   end
-  
+
   return seconds
 end
 
@@ -845,12 +853,12 @@ function UTILS.DisplayMissionTime(duration)
   local mission_time=Tnow-timer.getTime0()
   local mission_time_minutes=mission_time/60
   local mission_time_seconds=mission_time%60
-  local local_time=UTILS.SecondsToClock(Tnow)  
+  local local_time=UTILS.SecondsToClock(Tnow)
   local text=string.format("Time: %s - %02d:%02d", local_time, mission_time_minutes, mission_time_seconds)
   MESSAGE:New(text, duration):ToAll()
 end
 
---- Replace illegal characters [<>|/?*:\\] in a string. 
+--- Replace illegal characters [<>|/?*:\\] in a string.
 -- @param #string Text Input text.
 -- @param #string ReplaceBy Replace illegal characters by this character or string. Default underscore "_".
 -- @return #string The input text with illegal chars replaced.
@@ -871,28 +879,28 @@ function UTILS.RandomGaussian(x0, sigma, xmin, xmax, imax)
 
   -- Standard deviation. Default 10 if not given.
   sigma=sigma or 10
-  
+
   -- Max attempts.
   imax=imax or 100
-    
+
   local r
   local gotit=false
   local i=0
   while not gotit do
-  
+
     -- Uniform numbers in [0,1). We need two.
     local x1=math.random()
     local x2=math.random()
-  
+
     -- Transform to Gaussian exp(-(x-x0)²/(2*sigma²).
     r = math.sqrt(-2*sigma*sigma * math.log(x1)) * math.cos(2*math.pi * x2) + x0
-    
+
     i=i+1
     if (r>=xmin and r<=xmax) or i>imax then
       gotit=true
     end
   end
-  
+
   return r
 end
 
@@ -917,9 +925,9 @@ function UTILS.Randomize(value, fac, lower, upper)
   else
     max=value+value*fac
   end
-  
+
   local r=math.random(min, max)
-  
+
   return r
 end
 
@@ -945,7 +953,7 @@ end
 function UTILS.VecDist2D(a, b)
 
   local c={x=b.x-a.x, y=b.y-a.y}
-  
+
   local d=math.sqrt(c.x*c.x+c.y*c.y)
 
   return d
@@ -959,7 +967,7 @@ end
 function UTILS.VecDist3D(a, b)
 
   local c={x=b.x-a.x, y=b.y-a.y, z=b.z-a.z}
-  
+
   local d=math.sqrt(UTILS.VecDot(c, c))
 
   return d
@@ -973,7 +981,7 @@ function UTILS.VecCross(a, b)
   return {x=a.y*b.z - a.z*b.y, y=a.z*b.x - a.x*b.z, z=a.x*b.y - a.y*b.x}
 end
 
---- Calculate the difference between two 3D vectors by substracting the x,y,z components from each other. 
+--- Calculate the difference between two 3D vectors by substracting the x,y,z components from each other.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
 -- @return DCS#Vec3 Vector c=a-b with c(i)=a(i)-b(i), i=x,y,z.
@@ -981,7 +989,7 @@ function UTILS.VecSubstract(a, b)
   return {x=a.x-b.x, y=a.y-b.y, z=a.z-b.z}
 end
 
---- Calculate the total vector of two 3D vectors by adding the x,y,z components of each other. 
+--- Calculate the total vector of two 3D vectors by adding the x,y,z components of each other.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
 -- @return DCS#Vec3 Vector c=a+b with c(i)=a(i)+b(i), i=x,y,z.
@@ -989,14 +997,14 @@ function UTILS.VecAdd(a, b)
   return {x=a.x+b.x, y=a.y+b.y, z=a.z+b.z}
 end
 
---- Calculate the angle between two 3D vectors. 
+--- Calculate the angle between two 3D vectors.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
--- @return #number Angle alpha between and b in degrees. alpha=acos(a*b)/(|a||b|), (* denotes the dot product). 
+-- @return #number Angle alpha between and b in degrees. alpha=acos(a*b)/(|a||b|), (* denotes the dot product).
 function UTILS.VecAngle(a, b)
 
   local cosalpha=UTILS.VecDot(a,b)/(UTILS.VecNorm(a)*UTILS.VecNorm(b))
-  
+
   local alpha=0
   if cosalpha>=0.9999999999 then  --acos(1) is not defined.
     alpha=0
@@ -1004,8 +1012,8 @@ function UTILS.VecAngle(a, b)
     alpha=math.pi
   else
     alpha=math.acos(cosalpha)
-  end 
-  
+  end
+
   return math.deg(alpha)
 end
 
@@ -1029,18 +1037,18 @@ function UTILS.HdgDiff(h1, h2)
   -- Angle in rad.
   local alpha= math.rad(tonumber(h1))
   local beta = math.rad(tonumber(h2))
-      
+
   -- Runway vector.
   local v1={x=math.cos(alpha), y=0, z=math.sin(alpha)}
   local v2={x=math.cos(beta),  y=0, z=math.sin(beta)}
 
   local delta=UTILS.VecAngle(v1, v2)
-  
+
   return math.abs(delta)
 end
 
 
---- Translate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
+--- Translate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param #number distance The distance to translate.
 -- @param #number angle Rotation angle in degrees.
@@ -1056,21 +1064,21 @@ function UTILS.VecTranslate(a, distance, angle)
   return {x=TX, y=a.y, z=TY}
 end
 
---- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
+--- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param #number angle Rotation angle in degrees.
 -- @return DCS#Vec3 Vector rotated in the (x,z) plane.
 function UTILS.Rotate2D(a, angle)
 
   local phi=math.rad(angle)
-  
+
   local x=a.z
   local y=a.x
-    
+
   local Z=x*math.cos(phi)-y*math.sin(phi)
   local X=x*math.sin(phi)+y*math.cos(phi)
   local Y=a.y
-  
+
   local A={x=X, y=Y, z=Z}
 
   return A
@@ -1088,17 +1096,17 @@ function UTILS.TACANToFrequency(TACANChannel, TACANMode)
   end
   if TACANMode ~= "X" and TACANMode ~= "Y" then
     return nil -- error in arguments
-  end  
-  
+  end
+
 -- This code is largely based on ED's code, in DCS World\Scripts\World\Radio\BeaconTypes.lua, line 137.
 -- I have no idea what it does but it seems to work
   local A = 1151 -- 'X', channel >= 64
   local B = 64   -- channel >= 64
-  
+
   if TACANChannel < 64 then
     B = 1
   end
-  
+
   if TACANMode == 'Y' then
     A = 1025
     if TACANChannel < 64 then
@@ -1109,7 +1117,7 @@ function UTILS.TACANToFrequency(TACANChannel, TACANMode)
       A = 962
     end
   end
-  
+
   return (A + TACANChannel - B) * 1000000
 end
 
@@ -1136,13 +1144,13 @@ end
 -- @param #number Time (Optional) Abs. time in seconds. Default now, i.e. the value return from timer.getAbsTime().
 -- @return #number Day of the mission. Mission starts on day 0.
 function UTILS.GetMissionDay(Time)
-  
+
   Time=Time or timer.getAbsTime()
-  
+
   local clock=UTILS.SecondsToClock(Time, false)
-  
+
   local x=tonumber(UTILS.Split(clock, "+")[2])
-  
+
   return x
 end
 
@@ -1152,11 +1160,11 @@ end
 function UTILS.GetMissionDayOfYear(Time)
 
   local Date, Year, Month, Day=UTILS.GetDCSMissionDate()
-  
+
   local d=UTILS.GetMissionDay(Time)
-  
+
   return UTILS.GetDayOfYear(Year, Month, Day)+d
-  
+
 end
 
 --- Returns the current date.
@@ -1168,20 +1176,20 @@ function UTILS.GetDate()
 
   -- Mission start date
   local date, year, month, day=UTILS.GetDCSMissionDate()
-  
+
   local time=timer.getAbsTime()
-  
+
   local clock=UTILS.SecondsToClock(time, false)
-  
+
   local x=tonumber(UTILS.Split(clock, "+")[2])
-  
+
   local day=day+x
 
 end
 
 --- Returns the magnetic declination of the map.
 -- Returned values for the current maps are:
--- 
+--
 -- * Caucasus +6 (East), year ~ 2011
 -- * NTTR +12 (East), year ~ 2011
 -- * Normandy -10 (West), year ~ 1944
@@ -1192,7 +1200,7 @@ function UTILS.GetMagneticDeclination(map)
 
   -- Map.
   map=map or UTILS.GetDCSMap()
-  
+
   local declination=0
   if map==DCSMAP.Caucasus then
     declination=6
@@ -1227,12 +1235,12 @@ function UTILS.FileExists(file)
     end
   else
     return nil
-  end  
+  end
 end
 
 --- Checks the current memory usage collectgarbage("count"). Info is printed to the DCS log file. Time stamp is the current mission runtime.
--- @param #boolean output If true, print to DCS log file. 
--- @return #number Memory usage in kByte. 
+-- @param #boolean output If true, print to DCS log file.
+-- @return #number Memory usage in kByte.
 function UTILS.CheckMemory(output)
   local time=timer.getTime()
   local clock=UTILS.SecondsToClock(time)
@@ -1262,7 +1270,7 @@ function UTILS.GetCoalitionName(Coalition)
   else
     return "Unknown"
   end
-    
+
 end
 
 --- Get the modulation name from its numerical value.
@@ -1281,7 +1289,7 @@ function UTILS.GetModulationName(Modulation)
   else
     return "Unknown"
   end
-    
+
 end
 
 --- Get the callsign name from its enumerator value
@@ -1294,7 +1302,7 @@ function UTILS.GetCallsignName(Callsign)
       return name
     end
   end
-  
+
   for name, value in pairs(CALLSIGN.AWACS) do
     if value==Callsign then
       return name
@@ -1306,7 +1314,7 @@ function UTILS.GetCallsignName(Callsign)
       return name
     end
   end
-  
+
   for name, value in pairs(CALLSIGN.Tanker) do
     if value==Callsign then
       return name
@@ -1350,11 +1358,11 @@ end
 function UTILS.GetDayOfYear(Year, Month, Day)
 
   local floor = math.floor
-  
+
    local n1 = floor(275 * Month / 9)
    local n2 = floor((Month + 9) / 12)
    local n3 = (1 + floor((Year - 4 * floor(Year / 4) + 2) / 3))
-   
+
    return n1 - (n2 * n3) + Day - 30
 end
 
@@ -1367,14 +1375,14 @@ end
 -- @return #number Sun rise/set in seconds of the day.
 function UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, Rising, Tlocal)
 
-  -- Defaults  
+  -- Defaults
   local zenith=90.83
   local latitude=Latitude
   local longitude=Longitude
   local rising=Rising
   local n=DayOfYear
   Tlocal=Tlocal or 0
-  
+
 
   -- Short cuts.
   local rad = math.rad
@@ -1401,47 +1409,47 @@ function UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, Rising, Tlocal)
         return val
      end
   end
-  
+
    -- Convert the longitude to hour value and calculate an approximate time
    local lng_hour = longitude / 15
-  
+
    local t
    if rising then -- Rising time is desired
       t = n + ((6 - lng_hour) / 24)
    else -- Setting time is desired
       t = n + ((18 - lng_hour) / 24)
    end
-  
+
    -- Calculate the Sun's mean anomaly
    local M = (0.9856 * t) - 3.289
-  
+
    -- Calculate the Sun's true longitude
    local L = fit_into_range(M + (1.916 * sin(M)) + (0.020 * sin(2 * M)) + 282.634, 0, 360)
-  
+
    -- Calculate the Sun's right ascension
    local RA = fit_into_range(atan(0.91764 * tan(L)), 0, 360)
-  
+
    -- Right ascension value needs to be in the same quadrant as L
    local Lquadrant  = floor(L / 90) * 90
    local RAquadrant = floor(RA / 90) * 90
    RA = RA + Lquadrant - RAquadrant
-  
+
    -- Right ascension value needs to be converted into hours
    RA = RA / 15
-  
+
    -- Calculate the Sun's declination
    local sinDec = 0.39782 * sin(L)
    local cosDec = cos(asin(sinDec))
-  
+
    -- Calculate the Sun's local hour angle
    local cosH = (cos(zenith) - (sinDec * sin(latitude))) / (cosDec * cos(latitude))
-  
+
    if rising and cosH > 1 then
       return "N/R" -- The sun never rises on this location on the specified date
    elseif cosH < -1 then
       return "N/S" -- The sun never sets on this location on the specified date
    end
-  
+
    -- Finish calculating H and convert into hours
    local H
    if rising then
@@ -1450,13 +1458,13 @@ function UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, Rising, Tlocal)
       H = acos(cosH)
    end
    H = H / 15
-  
+
    -- Calculate local mean time of rising/setting
    local T = H + RA - (0.06571 * t) - 6.622
 
    -- Adjust back to UTC
    local UT = fit_into_range(T - lng_hour +Tlocal, 0, 24)
-   
+
    return floor(UT)*60*60+frac(UT)*60*60--+Tlocal*60*60
  end
 
@@ -1506,9 +1514,9 @@ end
 --@param #table table to be shuffled
 --@return #table
 function UTILS.ShuffleTable(t)
-  if t == nil or type(t) ~= "table" then 
-    BASE:I("Error in ShuffleTable: Missing or wrong tyåe of Argument") 
-    return 
+  if t == nil or type(t) ~= "table" then
+    BASE:I("Error in ShuffleTable: Missing or wrong tyåe of Argument")
+    return
   end
   math.random()
   math.random()
