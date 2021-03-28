@@ -1457,11 +1457,14 @@ do -- Cargo
         self:F({Desc=Desc})
 
         local Weights = {
-          ["Type_071"] = 245000,
-          ["LHA_Tarawa"] = 500000,
-          ["Ropucha-class"] = 150000,
-          ["Dry-cargo ship-1"] = 70000,
-          ["Dry-cargo ship-2"] = 70000,
+          ["Type_071"]         = 245000,
+          ["LHA_Tarawa"]       = 500000,
+          ["Ropucha-class"]    = 150000,
+          ["Dry-cargo ship-1"] =  70000,
+          ["Dry-cargo ship-2"] =  70000,
+          ["Higgins_boat"]     =   3700, -- Higgins Boat can load 3700 kg of general cargo or 36 men (source wikipedia).
+          ["USS_Samuel_Chase"] =  25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.   
+          ["LST_Mk2"]          =2100000, -- Can carry 2100 tons according to wiki source!
         }
         self.__.CargoBayWeightLimit = ( Weights[Desc.typeName] or 50000 )
 
@@ -1469,40 +1472,47 @@ do -- Cargo
         local Desc = self:GetDesc()
 
         local Weights = {
-          ["M1126 Stryker ICV"] = 9,
-          ["M-113"] = 9,
           ["AAV7"] = 25,
-          ["M2A1_halftrack"] = 9,
-          ["BMD-1"] = 9,
+          ["Bedford_MWD"] = 8, -- new by kappa
+          ["Blitz_36-6700A"] = 10, -- new by kappa
+          ["BMD-1"] = 9,  -- IRL should be 4 passengers
           ["BMP-1"] = 8,
           ["BMP-2"] = 7,
-          ["BMP-3"] = 8,
+          ["BMP-3"] = 8,  -- IRL should be 7+2 passengers
           ["Boman"] = 25,
-          ["BTR-80"] = 9,
-          ["BTR_D"] = 12,
+          ["BTR-80"] = 9, -- IRL should be 7 passengers
+          ["BTR-82A"] = 9, -- new by kappa -- IRL should be 7 passengers
+          ["BTR_D"] = 12,  -- IRL should be 10 passengers
           ["Cobra"] = 8,
+          ["Land_Rover_101_FC"] = 11, -- new by kappa
+          ["Land_Rover_109_S3"] = 7, -- new by kappa
           ["LAV-25"] = 6,
           ["M-2 Bradley"] = 6,
           ["M1043 HMMWV Armament"] = 4,
           ["M1045 HMMWV TOW"] = 4,
           ["M1126 Stryker ICV"] = 9,
           ["M1134 Stryker ATGM"] = 9,
+          ["M2A1_halftrack"] = 9,
+          ["M-113"] = 9,   -- IRL should be 11 passengers
           ["Marder"] = 6,
-          ["MCV-80"] = 9,
+          ["MCV-80"] = 9, -- IRL should be 7 passengers
           ["MLRS FDDM"] = 4,
-          ["MTLB"] = 25,
-          ["TPZ"] = 10,
-          ["Ural-4320 APA-5D"] = 10,
+          ["MTLB"] = 25,    -- IRL should be 11 passengers
           ["GAZ-66"] = 8,
           ["GAZ-3307"] = 12,
           ["GAZ-3308"] = 14,
-          ["Tigr_233036"] = 6,
+          ["Grad_FDDM"] = 6, -- new by kappa
           ["KAMAZ Truck"] = 12,
           ["KrAZ6322"] = 12,
           ["M 818"] = 12,
+          ["Tigr_233036"] = 6,
+          ["TPZ"] = 10,
+          ["UAZ-469"] = 4, -- new by kappa
           ["Ural-375"] = 12,
           ["Ural-4320-31"] = 14,
+          ["Ural-4320 APA-5D"] = 10,
           ["Ural-4320T"] = 14,
+          ["ZBD04A"] = 7, -- new by kappa
         }
 
         local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 95
