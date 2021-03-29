@@ -535,7 +535,7 @@ local _EVENTMETA = {
      Event = "OnEventParatrooperLanding",
      Text = "S_EVENT_PARATROOPER_LENDING" 
    },
-   [EVENTS.DicardChairAfterEjection] = {
+   [EVENTS.DiscardChairAfterEjection] = {
      Order = 1,
      Event = "OnEventDiscardChairAfterEjection",
      Text = "S_EVENT_DISCARD_CHAIR_AFTER_EJECTION" 
