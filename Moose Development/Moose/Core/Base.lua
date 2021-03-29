@@ -676,6 +676,37 @@ do -- Event Handling
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
+  --- Paratrooper landing.
+  -- @function [parent=#BASE] OnEventParatrooperLanding
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Discard chair after ejection.
+  -- @function [parent=#BASE] OnEventDiscardChairAfterEjection
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Weapon add. Fires when entering a mission per pylon with the name of the weapon (double pylons not counted, infinite wep reload not counted.
+  -- @function [parent=#BASE] OnEventParatrooperLanding
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Trigger zone.
+  -- @function [parent=#BASE] OnEventTriggerZone
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Landing quality mark. 
+  -- @function [parent=#BASE] OnEventLandingQualityMark
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- BDA.
+  -- @function [parent=#BASE] OnEventBDA
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+
   --- Occurs when a player enters a slot and takes control of an aircraft.
   -- **NOTE**: This is a workaround of a long standing DCS bug with the PLAYER_ENTER_UNIT event. 
   -- initiator : The unit that is being taken control of. 
