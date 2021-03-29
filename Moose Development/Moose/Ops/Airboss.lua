@@ -301,7 +301,7 @@
 --
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case3.png)
 --
--- A Case III recovery is conducted during nighttime. The holding position and the landing pattern are rather different from a Case I recovery as can be seen in the image above.
+-- A Case III recovery is conducted during nighttime or when the visibility is below CASE II minima during the day. The holding position and the landing pattern are rather different from a Case I recovery as can be seen in the image above.
 --
 -- The first holding zone starts 21 NM astern the carrier at angels 6. The separation between the stacks is 1000 ft just like in Case I. However, the distance to the boat
 -- increases by 1 NM with each stack. The general form can be written as D=15+6+(N-1), where D is the distance to the boat in NM and N the number of the stack starting at N=1.
@@ -10108,19 +10108,19 @@ function AIRBOSS:_Groove(playerData)
 
 	-- Drift on lineup.
 	  if rho>=RAR and rho<=RIM then
-	    if gd.LUE>0.21 and lineupError<-0.21 then 
+	    if gd.LUE>0.22 and lineupError<-0.22 then 
 			env.info" Drift Right across centre ==> DR-"
 			gd.Drift=" DR"
 			self:T(self.lid..string.format("Got Drift Right across centre step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
-		 elseif gd.LUE<-0.21 and lineupError>0.21 then
+		 elseif gd.LUE<-0.22 and lineupError>0.22 then
 			env.info" Drift Left ==> DL-"
 			gd.Drift=" DL"
 			self:T(self.lid..string.format("Got Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
-		 elseif gd.LUE>0.12 and lineupError<-0.12 then
+		 elseif gd.LUE>0.13 and lineupError<-0.14 then
 			env.info" Little Drift Right across centre ==> (DR-)"
 			gd.Drift=" (DR)"
 			self:T(self.lid..string.format("Got Little Drift Right across centre at step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
-		 elseif gd.LUE<-0.12 and lineupError>0.12 then
+		 elseif gd.LUE<-0.13 and lineupError>0.14 then
 			env.info" Little Drift Left across centre ==> (DL-)"
 			gd.Drift=" (DL)"
 			self:E(self.lid..string.format("Got Little Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))	
@@ -12261,7 +12261,7 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
   
   --Angled Approach.
   local P=nil
-  if step==AIRBOSS.PatternStep.GROOVE_XX and ROL<=4.0 then
+  if step==AIRBOSS.PatternStep.GROOVE_XX and ROL<=4.0 and playerData.case<3 then
 	  if LUE>self.lue.RIGHT then
 		P=underline("AA")
 	  elseif 
@@ -12327,12 +12327,22 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
     D="LUL"
   elseif LUE>self.lue._max then
     D=little("LUL")
-  elseif LUE<self.lue.LEFT and step~=AIRBOSS.PatternStep.GROOVE_XX then
-    D=underline("LUR")
-  elseif LUE<self.lue.Left and step~=AIRBOSS.PatternStep.GROOVE_XX then
-    D="LUR"
-  elseif LUE<self.lue._min and step~=AIRBOSS.PatternStep.GROOVE_XX then
-    D=little("LUR")
+  elseif playerData.case<3 then
+	  if LUE<self.lue.LEFT and step~=AIRBOSS.PatternStep.GROOVE_XX then
+		D=underline("LUR")
+	  elseif LUE<self.lue.Left and step~=AIRBOSS.PatternStep.GROOVE_XX then
+		D="LUR"
+	  elseif LUE<self.lue._min and step~=AIRBOSS.PatternStep.GROOVE_XX then
+		D=little("LUR")
+	 end
+  elseif playerData.case==3 then
+	  if LUE<self.lue.LEFT then
+		D=underline("LUR")
+	  elseif LUE<self.lue.Left then
+		D="LUR"
+	  elseif LUE<self.lue._min then
+		D=little("LUR")
+	 end
   end
 
   -- Compile.
