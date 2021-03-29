@@ -241,6 +241,13 @@ EVENTS = {
   Score =             world.event.S_EVENT_SCORE or -1,
   UnitLost =          world.event.S_EVENT_UNIT_LOST or -1,
   LandingAfterEjection = world.event.S_EVENT_LANDING_AFTER_EJECTION or -1,
+  -- Added with DCS 2.7.0
+  ParatrooperLanding        = world.event.S_EVENT_PARATROOPER_LENDING or -1,
+  DiscardChairAfterEjection = world.event.S_EVENT_DISCARD_CHAIR_AFTER_EJECTION or -1,
+  WeaponAdd                 = world.event.S_EVENT_WEAPON_ADD or -1,
+  TriggerZone               = world.event.S_EVENT_TRIGGER_ZONE or -1,
+  LandingQualityMark        = world.event.S_EVENT_LANDING_QUALITY_MARK or -1,
+  BDA                       = world.event.S_EVENT_BDA or -1,
 }
 
 --- The Event structure
@@ -521,6 +528,37 @@ local _EVENTMETA = {
      Order = 1,
      Event = "OnEventLandingAfterEjection",
      Text = "S_EVENT_LANDING_AFTER_EJECTION" 
+   },
+   -- Added with DCS 2.7.0
+   [EVENTS.ParatrooperLanding] = {
+     Order = 1,
+     Event = "OnEventParatrooperLanding",
+     Text = "S_EVENT_PARATROOPER_LENDING" 
+   },
+   [EVENTS.DicardChairAfterEjection] = {
+     Order = 1,
+     Event = "OnEventDiscardChairAfterEjection",
+     Text = "S_EVENT_DISCARD_CHAIR_AFTER_EJECTION" 
+   },
+   [EVENTS.WeaponAdd] = {
+     Order = 1,
+     Event = "OnEventWeaponAdd",
+     Text = "S_EVENT_WEAPON_ADD" 
+   },
+   [EVENTS.TriggerZone] = {
+     Order = 1,
+     Event = "OnEventTriggerZone",
+     Text = "S_EVENT_TRIGGER_ZONE" 
+   },
+   [EVENTS.LandingQualityMark] = {
+     Order = 1,
+     Event = "OnEventLandingQualityMark",
+     Text = "S_EVENT_LANDING_QUALITYMARK" 
+   },
+   [EVENTS.BDA] = {
+     Order = 1,
+     Event = "OnEventBDA",
+     Text = "S_EVENT_BDA" 
    },   
 }
 
