@@ -147,6 +147,7 @@ FLIGHTGROUP = {
   Tparking           =   nil,
   menu               =   nil,
   ishelo             =   nil,
+  RTBRecallCount     =  0,
 }
 
 
@@ -2150,11 +2151,16 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
     end
 
     if not self.group:IsAirborne(true) then
-      self:I(self.lid..string.format("WARNING: Group is not AIRBORNE  ==> RTB event is suspended for 10 sec."))
+      -- this should really not happen, either the AUFTRAG is cancelled before the group was airborne or it is stuck at the ground for some reason
+      self:I(self.lid..string.format("WARNING: Group is not AIRBORNE  ==> RTB event is suspended for 20 sec."))
       allowed=false
-      Tsuspend=-10
+      Tsuspend=-20
+      self.RTBRecallCount = self.RTBRecallCount+1
+      if self.RTBRecallCount > 3 then
+        self:Despawn(5)
+      end
     end
-
+      
     -- Only if fuel is not low or critical.
     if not (self:IsFuelLow() or self:IsFuelCritical()) then
 
