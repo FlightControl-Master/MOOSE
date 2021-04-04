@@ -1,11 +1,11 @@
 --- **Ops** - Office of Military Intelligence.
 --
--- ## Main Features:
+-- **Main Features:**
 --
 --    * Detect and track contacts consistently
 --    * Detect and track clusters of contacts consistently
 --    * Use FSM events to link functionality into your scripts
---    * Easy setup  
+--    * Easy setup 
 --
 -- ===
 --
@@ -80,6 +80,7 @@
 --        `local m = MESSAGE:New(text,15,"KGB"):ToAll()`  
 -- `end`   
 -- 
+--
 -- @field #INTEL
 INTEL = {
   ClassName       = "INTEL",
@@ -93,7 +94,7 @@ INTEL = {
   ContactsUnknown =    {},
   Clusters        =    {},
   clustercounter  =     1,
-  clusterradius   =   10,
+  clusterradius   =   15,
 }
 
 --- Detected item info.
@@ -130,7 +131,7 @@ INTEL = {
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.2.0"
+INTEL.version="0.2.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -350,7 +351,7 @@ function INTEL:RemoveRejectZone(RejectZone)
   return self
 end
 
---- Set forget contacts time interval. For unknown contacts only.
+--- Set forget contacts time interval. 
 -- Previously known contacts that are not detected any more, are "lost" after this time.
 -- This avoids fast oscillations between a contact being detected and undetected.
 -- @param #INTEL self
@@ -465,7 +466,7 @@ end
 -- @param #number radius The radius of the clusters
 -- @return #INTEL self
 function INTEL:SetClusterRadius(radius)
-  local radius = radius or 10
+  local radius = radius or 15
   self.clusterradius = radius
   return self
 end
@@ -1082,7 +1083,7 @@ function INTEL:CalcClusterThreatlevelSum(cluster)
     threatlevel=threatlevel+contact.threatlevel
     
   end
-  cluster.threatlevelSum = threatlevel  
+  cluster.threatlevelSum = threatlevel
   return threatlevel
 end
 
@@ -1094,7 +1095,7 @@ function INTEL:CalcClusterThreatlevelAverage(cluster)
 
   local threatlevel=self:CalcClusterThreatlevelSum(cluster)  
   threatlevel=threatlevel/cluster.size
-  cluster.threatlevelAve = threatlevel 
+  cluster.threatlevelAve = threatlevel
   return threatlevel
 end
 
@@ -1114,7 +1115,7 @@ function INTEL:CalcClusterThreatlevelMax(cluster)
     end
     
   end
-  cluster.threatlevelMax = threatlevel 
+  cluster.threatlevelMax = threatlevel
   return threatlevel
 end
 
@@ -1155,7 +1156,7 @@ function INTEL:IsContactConnectedToCluster(contact, cluster)
       --local dist=Contact.position:Get2DDistance(contact.position)
       local dist=Contact.position:DistanceFromPointVec2(contact.position)
       
-      local radius = self.clusterradius or 10
+      local radius = self.clusterradius or 15
       if dist<radius*1000 then
         return true
       end
@@ -1285,7 +1286,13 @@ function INTEL:UpdateClusterMarker(cluster)
   local text=string.format("Cluster #%d. Size %d, Units %d, TLsum=%d", cluster.index, cluster.size, unitcount, cluster.threatlevelSum)
 
   if not cluster.marker then
-    cluster.marker=MARKER:New(cluster.coordinate, text):ToAll()    
+    if self.coalition == coalition.side.RED then
+      cluster.marker=MARKER:New(cluster.coordinate, text):ToRed()
+    elseif self.coalition == coalition.side.BLUE then
+      cluster.marker=MARKER:New(cluster.coordinate, text):ToBlue()
+    else
+      cluster.marker=MARKER:New(cluster.coordinate, text):ToNeutral()
+    end    
   else
   
     local refresh=false
