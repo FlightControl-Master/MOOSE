@@ -140,6 +140,7 @@ FLIGHTGROUP = {
   fuelcritical       =   nil,
   fuelcriticalthresh =   nil,
   fuelcriticalrtb    = false,
+  outofAAMrtb        = true,
   squadron           =   nil,
   flightcontrol      =   nil,
   flaghold           =   nil,
@@ -476,6 +477,20 @@ function FLIGHTGROUP:SetFuelLowRTB(switch)
   end
   return self
 end
+
+--- Set if flight is out of Air-Air-Missiles, flight goes RTB.
+-- @param #FLIGHTGROUP self
+-- @param #boolean switch If true or nil, flight goes RTB. If false, turn this off.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOutOfAMMRTB(switch)
+  if switch==false then
+    self.outofAAMrtb=false
+  else
+    self.outofAAMrtb=true
+  end
+  return self
+end
+
 
 --- Set if low fuel threshold is reached, flight tries to refuel at the neares tanker.
 -- @param #FLIGHTGROUP self
@@ -1015,7 +1030,18 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
     if fuelmin<self.fuelcriticalthresh and not self.fuelcritical then
       self:FuelCritical()
     end
-
+    
+    -- Out of AA Ammo? CAP, GCICAP, INTERCEPT
+    local CurrIsCap = false
+    local CurrAuftrag = self:GetMissionCurrent()
+    if CurrAuftrag then 
+      local CurrAuftragType = CurrAuftrag:GetType()
+      if CurrAuftragType == "CAP" or CurrAuftragType == "GCICAP" or CurrAuftragType == "INTERCEPT" then CurrIsCap = true end
+    end
+    if (not self:CanAirToAir(true)) and CurrIsCap then
+      self:OutOfMissilesAA()
+    end
+    
   end
 
   ---
@@ -2047,6 +2073,20 @@ function FLIGHTGROUP:onafterRespawn(From, Event, To, Template)
 
 end
 
+--- On after "OutOfMissilesAA" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterOutOfMissilesAA(From, Event, To)
+  self:I(self.lid.."Group is out of AA Missiles!")
+  if self.outofAAMrtb then
+    -- Back to destination or home.
+    local airbase=self.destbase or self.homebase
+    self:__RTB(-5,airbase)
+  end
+end
+
 --- Check if flight is done, i.e.
 --
 --  * passed the final waypoint,
@@ -2155,8 +2195,9 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
       self:I(self.lid..string.format("WARNING: Group is not AIRBORNE  ==> RTB event is suspended for 20 sec."))
       allowed=false
       Tsuspend=-20
-      self.RTBRecallCount = self.RTBRecallCount+1
-      if self.RTBRecallCount > 3 then
+      local groupspeed = self.group:GetVelocityMPS()
+      if groupspeed <= 1 then self.RTBRecallCount = self.RTBRecallCount+1 end
+      if self.RTBRecallCount > 6 then
         self:Despawn(5)
       end
     end
