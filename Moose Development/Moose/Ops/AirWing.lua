@@ -1464,7 +1464,9 @@ function AIRWING:onafterMissionCancel(From, Event, To, Mission)
   -- Info message.
   self:I(self.lid..string.format("Cancel mission %s", Mission.name))
   
-  if Mission:IsPlanned() or Mission:IsQueued() or Mission:IsRequested() then
+  local Ngroups = Mission:CountOpsGroups()
+  
+  if Mission:IsPlanned() or Mission:IsQueued() or Mission:IsRequested() or Ngroups == 0 then
   
     Mission:Done()
   
