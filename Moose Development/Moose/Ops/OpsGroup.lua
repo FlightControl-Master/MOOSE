@@ -445,7 +445,9 @@ OPSGROUP.version="0.7.2"
 -- TODO: Invisible/immortal.
 -- TODO: F10 menu.
 -- TODO: Add pseudo function.
--- TODO: Options EPLRS, Afterburner restrict etc.
+-- TODO: Options EPLRS
+-- TODO: Afterburner restrict
+-- TODO: What more options?
 -- TODO: Damage?
 -- TODO: Shot events?
 -- TODO: Marks to add waypoints/tasks on-the-fly.
@@ -5029,6 +5031,7 @@ end
 --- Create a cargo transport assignment.
 -- @param #OPSGROUP self
 -- @param Ops.OpsTransport#OPSTRANSPORT OpsTransport The troop transport assignment.
+-- @return #OPSGROUP self
 function OPSGROUP:AddOpsTransport(OpsTransport)
 
   -- Add this group as carrier for the transport.
@@ -5039,6 +5042,8 @@ function OPSGROUP:AddOpsTransport(OpsTransport)
   table.insert(self.cargoqueue, OpsTransport)
 
   self:I(self.lid.."FF adding transport to carrier, #self.cargoqueue="..#self.cargoqueue)
+  
+  return self
 end
 
 --- Delete a cargo transport assignment from the cargo queue
@@ -7190,7 +7195,7 @@ function OPSGROUP:SwitchROT(rot)
     
       self.group:OptionROT(self.option.ROT)
       
-      self:T(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
+      self:I(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
     end
     
 
