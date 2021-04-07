@@ -38,6 +38,7 @@
 -- @field #boolean DefendMavs Default true, intercept incoming AG-Missiles
 -- @field #number DefenseLowProb Default 70, minimum detection limit
 -- @field #number DefenseHighProb Default 90, maximim detection limit
+-- @field #boolean UseAIOnOff Decide if we are using AI on/off (true) or AlarmState red/green (default).
 -- @extends Core.Base#BASE
 
 --- *Good friends are worth defending.* Mr Tushman, Wonder (the Movie) 
@@ -94,7 +95,8 @@ SHORAD = {
   DefendHarms = true,
   DefendMavs = true,
   DefenseLowProb = 70,
-  DefenseHighProb = 90,  
+  DefenseHighProb = 90,
+  UseAIOnOff = false,  
 }
 
 -----------------------------------------------------------------------
@@ -174,7 +176,8 @@ do
     self.DefendMavs = true
     self.DefenseLowProb = 70 -- probability to detect a missile shot, low margin
     self.DefenseHighProb = 90  -- probability to detect a missile shot, high margin
-    self:I("*** SHORAD - Started Version 0.0.2")
+    self.UseAIOnOff = false -- Decide if we are using AI on/off (true) or AlarmState red/green (default)
+    self:I("*** SHORAD - Started Version 0.1.0")
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("SHORAD %s | ", self.name)
     self:_InitState()
@@ -189,7 +192,11 @@ do
     self:T({set = set})
     local aliveset = set:GetAliveSet() --#table
     for _,_group in pairs (aliveset) do
+     if self.UseAIOnOff then
+      _group:SetAIOff()
+     else
       _group:OptionAlarmStateGreen() --Wrapper.Group#GROUP
+     end
     end
     -- gather entropy
     for i=1,10 do
@@ -270,6 +277,13 @@ do
       radius = 20000
     end
     self.Radius = radius
+  end
+  
+  --- Set using AI on/off instead of changing alarm state
+  -- @param #SHORAD self
+  -- @param #boolean switch Decide if we are changing alarm state or AI state
+  function SHORAD:SetUsingAIOnOff(switch)
+    self.UseAIOnOff = switch or false
   end
   
   --- Check if a HARM was fired
@@ -396,7 +410,11 @@ do
     local function SleepShorad(group)
       local groupname = group:GetName()
       self.ActiveGroups[groupname] = nil
-      group:OptionAlarmStateGreen()
+      if self.UseAIOnOff then
+        group:SetAIOff()
+      else
+        group:OptionAlarmStateGreen()
+      end
       local text = string.format("Sleeping SHORAD %s", group:GetName())
       self:T(text)
       local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
@@ -407,6 +425,9 @@ do
         local text = string.format("Waking up SHORAD %s", _group:GetName())
         self:T(text)
         local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
+        if self.UseAIOnOff then
+          _group:SetAIOn()
+        end
         _group:OptionAlarmStateRed()
         local groupname = _group:GetName()
         if self.ActiveGroups[groupname] == nil then -- no timer yet for this group
