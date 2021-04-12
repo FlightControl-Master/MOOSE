@@ -140,7 +140,8 @@ FLIGHTGROUP = {
   fuelcritical       =   nil,
   fuelcriticalthresh =   nil,
   fuelcriticalrtb    = false,
-  outofAAMrtb        = true,
+  outofAAMrtb        =  true,
+  outofAGMrtb        =  true,
   squadron           =   nil,
   flightcontrol      =   nil,
   flaghold           =   nil,
@@ -148,7 +149,7 @@ FLIGHTGROUP = {
   Tparking           =   nil,
   menu               =   nil,
   ishelo             =   nil,
-  RTBRecallCount     =  0,
+  RTBRecallCount     =   0,
 }
 
 
@@ -212,7 +213,7 @@ FLIGHTGROUP.version="0.6.1"
 -- TODO: Mark assigned parking spot on F10 map.
 -- TODO: Let user request a parking spot via F10 marker :)
 -- TODO: Monitor traveled distance in air ==> calculate fuel consumption ==> calculate range remaining. Will this give half way accurate results?
--- TODO: Out of AG/AA missiles. Safe state of out-of-ammo.
+-- DONE: Out of AG/AA missiles. Safe state of out-of-ammo.
 -- DONE: Add tasks.
 -- DONE: Waypoints, read, add, insert, detour.
 -- DONE: Get ammo.
@@ -276,9 +277,9 @@ function FLIGHTGROUP:New(group)
   self:AddTransition("*",             "FuelLow",           "*")          -- Fuel state of group is low. Default ~25%.
   self:AddTransition("*",             "FuelCritical",      "*")          -- Fuel state of group is critical. Default ~10%.
 
-  self:AddTransition("*",             "OutOfMissilesAA",   "*")          -- Group is out of A2A missiles. Not implemented yet!
-  self:AddTransition("*",             "OutOfMissilesAG",   "*")          -- Group is out of A2G missiles. Not implemented yet!
-  self:AddTransition("*",             "OutOfMissilesAS",   "*")          -- Group is out of A2G missiles. Not implemented yet!
+  self:AddTransition("*",             "OutOfMissilesAA",   "*")          -- Group is out of A2A missiles. 
+  self:AddTransition("*",             "OutOfMissilesAG",   "*")          -- Group is out of A2G missiles. 
+  self:AddTransition("*",             "OutOfMissilesAS",   "*")          -- Group is out of A2S(ship) missiles. Not implemented yet!
 
   self:AddTransition("Airborne",      "EngageTarget",     "Engaging")    -- Engage targets.
   self:AddTransition("Engaging",      "Disengage",        "Airborne")    -- Engagement over.
@@ -482,7 +483,7 @@ end
 -- @param #FLIGHTGROUP self
 -- @param #boolean switch If true or nil, flight goes RTB. If false, turn this off.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetOutOfAMMRTB(switch)
+function FLIGHTGROUP:SetOutOfAAMRTB(switch)
   if switch==false then
     self.outofAAMrtb=false
   else
@@ -491,6 +492,18 @@ function FLIGHTGROUP:SetOutOfAMMRTB(switch)
   return self
 end
 
+--- Set if flight is out of Air-Ground-Missiles, flight goes RTB.
+-- @param #FLIGHTGROUP self
+-- @param #boolean switch If true or nil, flight goes RTB. If false, turn this off.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOutOfAGMRTB(switch)
+  if switch==false then
+    self.outofAGMrtb=false
+  else
+    self.outofAGMrtb=true
+  end
+  return self
+end
 
 --- Set if low fuel threshold is reached, flight tries to refuel at the neares tanker.
 -- @param #FLIGHTGROUP self
@@ -1031,17 +1044,28 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
       self:FuelCritical()
     end
     
-    -- Out of AA Ammo? CAP, GCICAP, INTERCEPT
+    -- Out of AA Missiles? CAP, GCICAP, INTERCEPT
     local CurrIsCap = false
+    -- Out of AG Missiles? BAI, SEAD, CAS, STRIKE
+    local CurrIsA2G = false
+    -- Check AUFTRAG Type
     local CurrAuftrag = self:GetMissionCurrent()
     if CurrAuftrag then 
       local CurrAuftragType = CurrAuftrag:GetType()
       if CurrAuftragType == "CAP" or CurrAuftragType == "GCICAP" or CurrAuftragType == "INTERCEPT" then CurrIsCap = true end
+      if CurrAuftragType == "BAI" or CurrAuftragType == "CAS" or CurrAuftragType == "SEAD" or CurrAuftragType == "STRIKE"  then CurrIsA2G = true end
     end
+    
+    -- Check A2A
     if (not self:CanAirToAir(true)) and CurrIsCap then
       self:OutOfMissilesAA()
     end
     
+    -- Check A2G
+    if (not self:CanAirToGround(false)) and CurrIsA2G then
+      self:OutOfMissilesAG()
+    end
+
   end
 
   ---
@@ -2081,6 +2105,20 @@ end
 function FLIGHTGROUP:onafterOutOfMissilesAA(From, Event, To)
   self:I(self.lid.."Group is out of AA Missiles!")
   if self.outofAAMrtb then
+    -- Back to destination or home.
+    local airbase=self.destbase or self.homebase
+    self:__RTB(-5,airbase)
+  end
+end
+
+--- On after "OutOfMissilesAG" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterOutOfMissilesAG(From, Event, To)
+  self:I(self.lid.."Group is out of AG Missiles!")
+  if self.outofAGMrtb then
     -- Back to destination or home.
     local airbase=self.destbase or self.homebase
     self:__RTB(-5,airbase)
