@@ -7,7 +7,7 @@
 --    * Wind direction and speed
 --    * Visibility
 --    * Cloud coverage, base and ceiling
---    * Temprature
+--    * Temperature
 --    * Dew point (approximate as there is no relative humidity in DCS yet)    
 --    * Pressure QNH/QFE
 --    * Weather phenomena: rain, thunderstorm, fog, dust
@@ -564,7 +564,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.9.0"
+ATIS.version="0.9.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1431,9 +1431,103 @@ function ATIS:onafterBroadcast(From, Event, To)
   local cloudceil=clouds.base+clouds.thickness
   local clouddens=clouds.density
 
+  -- Cloud preset (DCS 2.7)  
+  local cloudspreset=clouds.preset or "Nothing"
+  
   -- Precepitation: 0=None, 1=Rain, 2=Thunderstorm, 3=Snow, 4=Snowstorm.
-  local precepitation=tonumber(clouds.iprecptns)
+  local precepitation=0  
 
+  if cloudspreset:find("Preset10") then
+    -- Scattered 5
+    clouddens=4
+  elseif cloudspreset:find("Preset11") then
+    -- Scattered 6
+    clouddens=4
+  elseif cloudspreset:find("Preset12") then
+    -- Scattered 7
+    clouddens=4
+  elseif cloudspreset:find("Preset13") then
+    -- Broken 1
+    clouddens=7
+  elseif cloudspreset:find("Preset14") then
+    -- Broken 2
+    clouddens=7        
+  elseif cloudspreset:find("Preset15") then
+    -- Broken 3
+    clouddens=7        
+  elseif cloudspreset:find("Preset16") then
+    -- Broken 4
+    clouddens=7        
+  elseif cloudspreset:find("Preset17") then
+    -- Broken 5
+    clouddens=7        
+  elseif cloudspreset:find("Preset18") then
+    -- Broken 6
+    clouddens=7        
+  elseif cloudspreset:find("Preset19") then
+    -- Broken 7
+    clouddens=7        
+  elseif cloudspreset:find("Preset20") then
+    -- Broken 8
+    clouddens=7        
+  elseif cloudspreset:find("Preset21") then
+    -- Overcast 1
+    clouddens=9        
+  elseif cloudspreset:find("Preset22") then
+    -- Overcast 2
+    clouddens=9        
+  elseif cloudspreset:find("Preset23") then
+    -- Overcast 3
+    clouddens=9        
+  elseif cloudspreset:find("Preset24") then
+    -- Overcast 4
+    clouddens=9        
+  elseif cloudspreset:find("Preset25") then
+    -- Overcast 5
+    clouddens=9        
+  elseif cloudspreset:find("Preset26") then
+    -- Overcast 6
+    clouddens=9        
+  elseif cloudspreset:find("Preset27") then
+    -- Overcast 7
+    clouddens=9                        
+  elseif cloudspreset:find("Preset1") then
+    -- Light Scattered 1
+    clouddens=1
+  elseif cloudspreset:find("Preset2") then
+    -- Light Scattered 2
+    clouddens=1
+  elseif cloudspreset:find("Preset3") then
+    -- High Scattered 1
+    clouddens=4
+  elseif cloudspreset:find("Preset4") then
+    -- High Scattered 2
+    clouddens=4
+  elseif cloudspreset:find("Preset5") then
+    -- Scattered 1
+    clouddens=4
+  elseif cloudspreset:find("Preset6") then
+    -- Scattered 2
+    clouddens=4
+  elseif cloudspreset:find("Preset7") then
+    -- Scattered 3
+    clouddens=4
+  elseif cloudspreset:find("Preset8") then
+    -- High Scattered 3
+    clouddens=4
+  elseif cloudspreset:find("Preset9") then
+    -- Scattered 4
+    clouddens=4
+  elseif cloudspreset:find("RainyPreset") then
+    -- Overcast + Rain
+    clouddens=9
+    if temperature>5 then
+      precepitation=1  -- rain
+    else
+      precepitation=3  -- snow
+    end
+  end
+  
   local CLOUDBASE=string.format("%d", UTILS.MetersToFeet(cloudbase))
   local CLOUDCEIL=string.format("%d", UTILS.MetersToFeet(cloudceil))
 
