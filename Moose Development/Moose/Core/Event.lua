@@ -254,7 +254,7 @@ EVENTS = {
 -- Note that at the beginning of each field description, there is an indication which field will be populated depending on the object type involved in the Event:
 --   
 --   * A (Object.Category.)UNIT : A UNIT object type is involved in the Event.
---   * A (Object.Category.)STATIC : A STATIC object type is involved in the Event.µ
+--   * A (Object.Category.)STATIC : A STATIC object type is involved in the Event.Âµ
 --   
 -- @type EVENTDATA
 -- @field #number id The identifier of the event.
@@ -1115,13 +1115,25 @@ function EVENT:onEvent( Event )
         end
         
         if Event.TgtObjectCategory == Object.Category.STATIC then
+          BASE:T({Event = Event})
+          --[[
+              Event.TgtDCSUnit = Event.target
+              Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+              Event.TgtUnitName = Event.TgtDCSUnitName
+              Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
+              Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
+              Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
+              Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+          --]]
+          -- Same as for Event Initiator above 2.7 issue
           Event.TgtDCSUnit = Event.target
-          Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+          local ID=Event.initiator.id_
+          Event.TgtDCSUnitName = string.format("Ejected Pilot ID %s", tostring(ID))
           Event.TgtUnitName = Event.TgtDCSUnitName
-          Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
-          Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
-          Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
-          Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+          --Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
+          Event.TgtCoalition = Event.IniCoalition
+          Event.TgtCategory = Event.IniCategory
+          Event.TgtTypeName = "Ejected Pilot"
         end
   
         if Event.TgtObjectCategory == Object.Category.SCENERY then
