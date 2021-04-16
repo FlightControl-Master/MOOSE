@@ -63,7 +63,7 @@
 -- 
 -- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
 -- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
--- If you want to obtain the complete **3D position** including ori�ntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
+-- If you want to obtain the complete **3D position** including orientation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
 -- 
 -- ## Test if alive
 -- 
@@ -527,8 +527,7 @@ end
 
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
--- @return Wrapper.Group#GROUP The Group of the Unit.
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
 function UNIT:GetGroup()
   self:F2( self.UnitName )
 
@@ -1175,8 +1174,9 @@ end
 
 --- Returns true if the UNIT is in the air.
 -- @param #UNIT self
+-- @param #boolean NoHeloCheck If true, no additonal checks for helos are performed.
 -- @return #boolean Return true if in the air or #nil if the UNIT is not existing or alive.   
-function UNIT:InAir()
+function UNIT:InAir(NoHeloCheck)
   self:F2( self.UnitName )
 
   -- Get DCS unit object.
@@ -1186,14 +1186,14 @@ function UNIT:InAir()
 
     -- Get DCS result of whether unit is in air or not.
     local UnitInAir = DCSUnit:inAir()
-    
+
     -- Get unit category.
     local UnitCategory = DCSUnit:getDesc().category
 
     -- If DCS says that it is in air, check if this is really the case, since we might have landed on a building where inAir()=true but actually is not.
     -- This is a workaround since DCS currently does not acknoledge that helos land on buildings.
     -- Note however, that the velocity check will fail if the ground is moving, e.g. on an aircraft carrier!    
-    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER then
+    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER and (not NoHeloCheck) then
       local VelocityVec3 = DCSUnit:getVelocity()
       local Velocity = UTILS.VecNorm(VelocityVec3)
       local Coordinate = DCSUnit:getPoint()
@@ -1392,4 +1392,22 @@ function UNIT:GetTemplateFuel()
   end
 
   return nil
+end
+
+--- GROUND - Switch on/off radar emissions
+-- @param #UNIT self
+-- @param #boolean switch
+function UNIT:EnableEmission(switch)
+  self:F2( self.UnitName )
+  
+  local switch = switch or false
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+  
+    DCSUnit:enableEmission(switch)
+
+  end
+
 end
