@@ -2585,6 +2585,23 @@ do -- Players
   
 end
 
+--- GROUND - Switch on/off radar emissions
+-- @param #GROUP self
+-- @param #boolean switch
+function GROUP:EnableEmission(switch)
+  self:F2( self.GroupName )
+  local switch = switch or false
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+  
+    DCSUnit:enableEmission(switch)
+
+  end
+
+end
+
 --do -- Smoke
 --
 ----- Signal a flare at the position of the GROUP.

@@ -1428,16 +1428,22 @@ end
 -- @param DCS#Distance Radius The radius of the zone to deploy the fire at.
 -- @param #number AmmoCount (optional) Quantity of ammunition to expand (omit to fire until ammunition is depleted).
 -- @param #number WeaponType (optional) Enum for weapon type ID. This value is only required if you want the group firing to use a specific weapon, for instance using the task on a ship to force it to fire guided missiles at targets within cannon range. See http://wiki.hoggit.us/view/DCS_enum_weapon_flag
+-- @param #number Altitude (Optional) Altitude in meters.
+-- @param #number ASL Altitude is above mean sea level. Default is above ground level. 
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
+function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Altitude, ASL )
 
   local DCSTask = {
     id = 'FireAtPoint',
     params = {
       point            = Vec2,
+      x=Vec2.x,
+      y=Vec2.y,
       zoneRadius       = Radius,
+      radius           = Radius,
       expendQty        = 100, -- dummy value
       expendQtyEnabled = false,
+      alt_type         = ASL and 0 or 1
     }
   }
 
@@ -1445,10 +1451,16 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
     DCSTask.params.expendQty = AmmoCount
     DCSTask.params.expendQtyEnabled = true
   end
+  
+  if Altitude then
+    DCSTask.params.altitude=Altitude
+  end
 
   if WeaponType then
     DCSTask.params.weaponType=WeaponType
   end
+  
+  self:I(DCSTask)
 
   return DCSTask
 end
