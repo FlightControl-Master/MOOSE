@@ -1152,6 +1152,10 @@ do -- Unit
   -- @param #Unit self
   -- @return #Unit.Desc
   
+  --- GROUND - Switch on/off radar emissions
+  -- @function [parent=#Unit] enableEmission
+  -- @param #Unit self
+  -- @param #boolean switch
   
   Unit = {} --#Unit
 
@@ -1236,6 +1240,11 @@ do -- Group
   -- @function [parent=#Group] getController
   -- @param #Group self 
   -- @return #Controller
+  
+    --- GROUND - Switch on/off radar emissions
+  -- @function [parent=#Group] enableEmission
+  -- @param #Group self
+  -- @param #boolean switch
   
   Group = {} --#Group
 
