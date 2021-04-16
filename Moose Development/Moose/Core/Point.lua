@@ -1978,6 +1978,62 @@ do -- COORDINATE
     function COORDINATE:RemoveMark( MarkID )
       trigger.action.removeMark( MarkID )
     end
+    
+    --- Line to all.
+    -- Creates a line on the F10 map from one point to another.
+    -- @param #COORDINATE self
+    -- @param #COORDINATE Endpoint COORDIANTE to where the line is drawn.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
+    -- @return #number The resulting Mark ID which is a number.
+    function COORDINATE:LineToAll(Endpoint, Coalition, LineType, Color, Alpha, ReadOnly, Text)
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local vec3=Endpoint:GetVec3()
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      LineType=LineType or 1
+      trigger.action.lineToAll(Coalition, MarkID, self:GetVec3(), vec3, Color, LineType, ReadOnly, Text or "")
+      return MarkID
+    end
+    
+    --- Circle to all.
+    -- Creates a circle on the map with a given radius, color, fill color, and outline.
+    -- @param #COORDINATE self
+    -- @param #COORDINATE Center COORDIANTE of the center of the circle.
+    -- @param #numberr Radius Radius in meters. Default 1000 m.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.5.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
+    -- @return #number The resulting Mark ID which is a number.
+    function COORDINATE:CircleToAll(Radius, Coalition, LineType, Color, Alpha, FillColor, FillAlpha, ReadOnly, Text)
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local vec3=self:GetVec3()
+      Radius=Radius or 1000
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      LineType=LineType or 1
+      FillColor=FillColor or {1,0,0}
+      FillColor[4]=FillAlpha or 0.5
+      trigger.action.circleToAll(Coalition, MarkID, vec3, Radius, Color, FillColor, LineType, ReadOnly, Text or "")
+      return MarkID
+    end            
   
   end -- Markings
   
