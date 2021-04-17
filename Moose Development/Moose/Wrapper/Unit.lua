@@ -154,8 +154,8 @@ function UNIT:Name()
   return self.UnitName
 end
 
-
---- @param #UNIT self
+--- Get the DCS unit object.
+-- @param #UNIT self
 -- @return DCS#Unit
 function UNIT:GetDCSObject()
 
