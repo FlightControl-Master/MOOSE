@@ -154,8 +154,8 @@ function UNIT:Name()
   return self.UnitName
 end
 
-
---- @param #UNIT self
+--- Get the DCS unit object.
+-- @param #UNIT self
 -- @return DCS#Unit
 function UNIT:GetDCSObject()
 
@@ -1429,7 +1429,7 @@ function UNIT:GetTemplateFuel()
   return nil
 end
 
---- GROUND - Switch on/off radar emissions
+--- GROUND - Switch on/off radar emissions.
 -- @param #UNIT self
 -- @param #boolean switch
 function UNIT:EnableEmission(switch)
