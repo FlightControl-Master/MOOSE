@@ -340,6 +340,8 @@ OPSGROUP.version="0.7.1"
 -- TODO: Invisible/immortal.
 -- TODO: F10 menu.
 -- TODO: Add pseudo function.
+-- TODO: EPLRS datalink.
+-- TODO: Emission on/off.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
