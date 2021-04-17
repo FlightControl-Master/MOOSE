@@ -57,7 +57,7 @@ build_script:
            "Authorization" = "Bearer $token"
            "Content-type" = "application/json"
            }
-         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-include'; branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
+         $RequestBody = @{ accountName = 'funkyfranky'; projectSlug = 'moose-include'; branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
          # Generate the new version ...
          $project = Invoke-RestMethod -method Post -Uri "$apiUrl/builds" -Headers $headers -Body $RequestBody
        }
