@@ -1162,6 +1162,7 @@ end
 
 
 
+
 --- Returns if the unit is a friendly unit.
 -- @param #UNIT self
 -- @return #boolean IsFriendly evaluation result.
