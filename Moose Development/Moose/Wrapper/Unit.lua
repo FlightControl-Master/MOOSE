@@ -1429,7 +1429,7 @@ function UNIT:GetTemplateFuel()
   return nil
 end
 
---- GROUND - Switch on/off radar emissions
+--- GROUND - Switch on/off radar emissions.
 -- @param #UNIT self
 -- @param #boolean switch
 function UNIT:EnableEmission(switch)
