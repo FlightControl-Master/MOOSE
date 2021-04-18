@@ -51,6 +51,7 @@ build_script:
    - ps: | 
        if( $env:appveyor_repo_branch -eq 'master' -or $env:appveyor_repo_branch -eq 'develop' )     
        {
+         echo "Hello World!"
          $apiUrl = 'https://ci.appveyor.com/api'
          $token = 'v2.bg2hb0fnxm96dr5f8yb'
          $headers = @{
