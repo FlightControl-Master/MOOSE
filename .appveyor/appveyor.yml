@@ -57,7 +57,7 @@ build_script:
            "Authorization" = "Bearer $token"
            "Content-type" = "application/json"
            }
-         $RequestBody = @{ accountName = 'funkyfranky'; projectSlug = 'moose-include'; branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
+         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-include'; branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
          # Generate the new version ...
          $project = Invoke-RestMethod -method Post -Uri "$apiUrl/builds" -Headers $headers -Body $RequestBody
        }
@@ -70,7 +70,7 @@ build_script:
            "Authorization" = "Bearer $token"
            "Content-type" = "application/json"
            }
-         $RequestBody = @{ accountName = 'funkyfranky'; projectSlug = 'moose-docs'; branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
+         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-docs'; branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
          # get project with last build details
          $project = Invoke-RestMethod -method Post -Uri "$apiUrl/builds" -Headers $headers -Body $RequestBody
        }
