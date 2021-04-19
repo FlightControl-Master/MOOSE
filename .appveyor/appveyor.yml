@@ -29,17 +29,17 @@ install:
   - cmd:
 # Outcomment if lua environment invalidates and needs to be reinstalled, otherwise all will run from the cache.
 call choco install 7zip.commandline
-# - call choco install lua51
-# - call choco install luarocks
-# - call refreshenv
-# - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
-# cmd: PATH = %PATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\bin
-# cmd: set LUA_PATH = %LUA_PATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\share\lua\5.1\?.lua;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\share\lua\5.1\?\init.lua
-# cmd: set LUA_CPATH = %LUA_CPATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\lib\lua\5.1\?.dll 
-# - call luarocks install luasrcdiet
-# - call luarocks install checks
-# - call luarocks install luadocumentor
-# - call luarocks install luacheck
+call choco install lua51
+call choco install luarocks
+call refreshenv
+call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
+cmd: PATH = %PATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\bin
+cmd: set LUA_PATH = %LUA_PATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\share\lua\5.1\?.lua;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\share\lua\5.1\?\init.lua
+cmd: set LUA_CPATH = %LUA_CPATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\lib\lua\5.1\?.dll 
+call luarocks install luasrcdiet
+call luarocks install checks
+call luarocks install luadocumentor
+call luarocks install luacheck
 
 
 #cache:
