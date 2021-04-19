@@ -53,7 +53,7 @@ build_script:
        {
          echo "Hello World!"
          $apiUrl = 'https://ci.appveyor.com/api'
-         $token = 'v2.bg2hb0fnxm96dr5f8yb'
+         $token = 'v2.6hcv3ige78kg3yvg4ge8'
          $headers = @{
            "Authorization" = "Bearer $token"
            "Content-type" = "application/json"
@@ -66,7 +66,7 @@ build_script:
        if( $env:appveyor_repo_branch -eq 'master' -or $env:appveyor_repo_branch -eq 'develop' )     
        {
          $apiUrl = 'https://ci.appveyor.com/api'
-         $token = 'v2.bg2hb0fnxm96dr5f8yb'
+         $token = 'v2.6hcv3ige78kg3yvg4ge8'
          $headers = @{
            "Authorization" = "Bearer $token"
            "Content-type" = "application/json"
