@@ -361,6 +361,14 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Beirut_Rafic_Hariri
 -- * AIRBASE.Syria.An_Nasiriyah
 -- * AIRBASE.Syria.Abu_al_Duhur
+-- * AIRBASE.Syria.H4
+-- * AIRBASE.Syria.Gaziantep
+-- * AIRBASE.Syria.Rosh_Pina
+-- * AIRBASE.Syria.Sayqal
+-- * AIRBASE.Syria.Shayrat
+-- * AIRBASE.Syria.Tiyas
+-- * AIRBASE.Syria.Tha_lah
+-- * AIRBASE.Syria.Naqoura
 --
 -- @field Syria
 AIRBASE.Syria={
@@ -397,6 +405,14 @@ AIRBASE.Syria={
   ["Beirut_Rafic_Hariri"]="Beirut-Rafic Hariri",
   ["An_Nasiriyah"]="An Nasiriyah",
   ["Abu_al_Duhur"]="Abu al-Duhur",
+  ["H4"]="H4",
+  ["Gaziantep"]="Gaziantep",
+  ["Rosh_Pina"]="Rosh Pina",
+  ["Sayqal"]="Sayqal",
+  ["Shayrat"]="Shayrat",
+  ["Tiyas"]="Tiyas",
+  ["Tha_lah"]="Tha'lah",
+  ["Naqoura"]="Naqoura",
 }
 
 
