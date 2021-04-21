@@ -2551,7 +2551,7 @@ do -- Players
   
 end
 
---- GROUND - Switch on/off radar emissions
+--- GROUND - Switch on/off radar emissions.
 -- @param #GROUP self
 -- @param #boolean switch
 function GROUP:EnableEmission(switch)
