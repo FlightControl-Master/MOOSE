@@ -18,6 +18,8 @@ local.properties
 # External tool builders
 .externalToolBuilders/
 
+# AppVeyor
+.appveyor/
 
 # CDT-specific
 .cproject
