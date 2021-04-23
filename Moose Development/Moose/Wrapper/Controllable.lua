@@ -2910,7 +2910,7 @@ end
 --- Set option for Rules of Engagement (ROE).
 -- @param Wrapper.Controllable#CONTROLLABLE self
 -- @param #number ROEvalue ROE value. See ENUMS.ROE.
--- @return Wrapper.Controllable#CONTROLLABLE self
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionROE(ROEvalue)
 
   local DCSControllable = self:GetDCSObject()
@@ -2952,8 +2952,8 @@ function CONTROLLABLE:OptionROEHoldFirePossible()
 end
 
 --- Weapons Hold: AI will hold fire under all circumstances.
--- @param Wrapper.Controllable#CONTROLLABLE self
--- @return Wrapper.Controllable#CONTROLLABLE self
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionROEHoldFire()
   self:F2( { self.ControllableName } )
 
@@ -3551,7 +3551,7 @@ end
 -- Note that when WayPointInitialize is called, the Mission of the controllable is RESTARTED!
 -- @param #CONTROLLABLE self
 -- @param #table WayPoints If WayPoints is given, then use the route.
--- @return #CONTROLLABLE
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:WayPointInitialize( WayPoints )
   self:F( { WayPoints } )
 
@@ -3582,7 +3582,7 @@ end
 -- @param #number WayPoint The waypoint number. Note that the start waypoint on the route is WayPoint 1!
 -- @param #number WayPointIndex When defining multiple WayPoint functions for one WayPoint, use WayPointIndex to set the sequence of actions.
 -- @param #function WayPointFunction The waypoint function to be called when the controllable moves over the waypoint. The waypoint function takes variable parameters.
--- @return #CONTROLLABLE
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:WayPointFunction( WayPoint, WayPointIndex, WayPointFunction, ... )
   self:F2( { WayPoint, WayPointIndex, WayPointFunction } )
 
@@ -3598,7 +3598,7 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number WayPoint The WayPoint from where to execute the mission.
 -- @param #number WaitTime The amount seconds to wait before initiating the mission.
--- @return #CONTROLLABLE
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
   self:F( { WayPoint, WaitTime } )
 
@@ -3682,6 +3682,7 @@ end
 --- Sets Controllable Option for A2A attack range for AIR FIGHTER units.
 -- @param #CONTROLLABLE self
 -- @param #number range Defines the range 
+-- @return #CONTROLLABLE self
 -- @usage Range can be one of MAX_RANGE = 0, NEZ_RANGE = 1, HALF_WAY_RMAX_NEZ = 2, TARGET_THREAT_EST = 3, RANDOM_RANGE = 4. Defaults to 3. See: https://wiki.hoggitworld.com/view/DCS_option_missileAttack
 function CONTROLLABLE:OptionAAAttackRange(range)
   self:F2( { self.ControllableName } ) 
@@ -3733,6 +3734,7 @@ end
 -- @param  #number radius Radius of the relocation zone, default 500
 -- @param  #boolean onroad If true, route on road (less problems with AI way finding), default true
 -- @param  #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortcut)
   self:F2( { self.ControllableName } ) 
 
