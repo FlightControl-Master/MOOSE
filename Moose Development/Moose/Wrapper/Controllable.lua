@@ -3758,3 +3758,24 @@ function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortc
 
   return self    
 end
+
+--- Defines how long a GROUND unit/group will move to avoid an ongoing attack.
+-- @param #CONTROLLABLE self
+-- @param #number Seconds Any positive number: AI will disperse, but only for the specified time before continuing their route. 0: AI will not disperse. 
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionDisperseOnAttack(Seconds)
+  self:F2( { self.ControllableName } ) 
+  -- Set default if not specified.
+  local seconds = Seconds or 0
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then 
+     if self:IsGround() then
+        self:SetOption(AI.Option.GROUND.id.DISPERSE_ON_ATTACK, seconds)     
+     end
+    end
+   return self
+  end
+  return nil
+end
