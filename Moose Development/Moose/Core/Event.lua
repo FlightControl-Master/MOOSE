@@ -254,7 +254,7 @@ EVENTS = {
 -- Note that at the beginning of each field description, there is an indication which field will be populated depending on the object type involved in the Event:
 --   
 --   * A (Object.Category.)UNIT : A UNIT object type is involved in the Event.
---   * A (Object.Category.)STATIC : A STATIC object type is involved in the Event.Âµ
+--   * A (Object.Category.)STATIC : A STATIC object type is involved in the Event.
 --   
 -- @type EVENTDATA
 -- @field #number id The identifier of the event.

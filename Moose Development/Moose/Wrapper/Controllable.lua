@@ -1429,7 +1429,7 @@ end
 -- @param #number AmmoCount (optional) Quantity of ammunition to expand (omit to fire until ammunition is depleted).
 -- @param #number WeaponType (optional) Enum for weapon type ID. This value is only required if you want the group firing to use a specific weapon, for instance using the task on a ship to force it to fire guided missiles at targets within cannon range. See http://wiki.hoggit.us/view/DCS_enum_weapon_flag
 -- @param #number Altitude (Optional) Altitude in meters.
--- @param #number ASL Altitude is above mean sea level. Default is above ground level. 
+-- @param #number ASL Altitude is above mean sea level. Default is above ground level.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Altitude, ASL )
 
@@ -1451,7 +1451,7 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
     DCSTask.params.expendQty = AmmoCount
     DCSTask.params.expendQtyEnabled = true
   end
-  
+
   if Altitude then
     DCSTask.params.altitude=Altitude
   end
@@ -1459,7 +1459,7 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
   if WeaponType then
     DCSTask.params.weaponType=WeaponType
   end
-  
+
   self:I(DCSTask)
 
   return DCSTask
@@ -2908,7 +2908,7 @@ end
 --- Set option for Rules of Engagement (ROE).
 -- @param Wrapper.Controllable#CONTROLLABLE self
 -- @param #number ROEvalue ROE value. See ENUMS.ROE.
--- @return Wrapper.Controllable#CONTROLLABLE self
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionROE(ROEvalue)
 
   local DCSControllable = self:GetDCSObject()
@@ -2950,8 +2950,8 @@ function CONTROLLABLE:OptionROEHoldFirePossible()
 end
 
 --- Weapons Hold: AI will hold fire under all circumstances.
--- @param Wrapper.Controllable#CONTROLLABLE self
--- @return Wrapper.Controllable#CONTROLLABLE self
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionROEHoldFire()
   self:F2( { self.ControllableName } )
 
@@ -3549,7 +3549,7 @@ end
 -- Note that when WayPointInitialize is called, the Mission of the controllable is RESTARTED!
 -- @param #CONTROLLABLE self
 -- @param #table WayPoints If WayPoints is given, then use the route.
--- @return #CONTROLLABLE
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:WayPointInitialize( WayPoints )
   self:F( { WayPoints } )
 
@@ -3580,7 +3580,7 @@ end
 -- @param #number WayPoint The waypoint number. Note that the start waypoint on the route is WayPoint 1!
 -- @param #number WayPointIndex When defining multiple WayPoint functions for one WayPoint, use WayPointIndex to set the sequence of actions.
 -- @param #function WayPointFunction The waypoint function to be called when the controllable moves over the waypoint. The waypoint function takes variable parameters.
--- @return #CONTROLLABLE
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:WayPointFunction( WayPoint, WayPointIndex, WayPointFunction, ... )
   self:F2( { WayPoint, WayPointIndex, WayPointFunction } )
 
@@ -3596,7 +3596,7 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number WayPoint The WayPoint from where to execute the mission.
 -- @param #number WaitTime The amount seconds to wait before initiating the mission.
--- @return #CONTROLLABLE
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
   self:F( { WayPoint, WaitTime } )
 
@@ -3679,7 +3679,9 @@ end
 
 --- Sets Controllable Option for A2A attack range for AIR FIGHTER units.
 -- @param #CONTROLLABLE self
--- @param #number Defines the range: MAX_RANGE = 0, NEZ_RANGE = 1, HALF_WAY_RMAX_NEZ = 2, TARGET_THREAT_EST = 3, RANDOM_RANGE = 4. Defaults to 3. See: https://wiki.hoggitworld.com/view/DCS_option_missileAttack
+-- @param #number range Defines the range
+-- @return #CONTROLLABLE self
+-- @usage Range can be one of MAX_RANGE = 0, NEZ_RANGE = 1, HALF_WAY_RMAX_NEZ = 2, TARGET_THREAT_EST = 3, RANDOM_RANGE = 4. Defaults to 3. See: https://wiki.hoggitworld.com/view/DCS_option_missileAttack
 function CONTROLLABLE:OptionAAAttackRange(range)
   self:F2( { self.ControllableName } )
   -- defaults to 3
@@ -3705,7 +3707,7 @@ end
 -- @param #number EngageRange Engage range limit in percent (a number between 0 and 100). Default 100.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionEngageRange(EngageRange)
-  self:F2( { self.ControllableName } ) 
+  self:F2( { self.ControllableName } )
   -- Set default if not specified.
   EngageRange=EngageRange or 100
   if EngageRange < 0  or EngageRange > 100 then
@@ -3714,9 +3716,9 @@ function CONTROLLABLE:OptionEngageRange(EngageRange)
   local DCSControllable = self:GetDCSObject()
   if DCSControllable then
     local Controller = self:_GetController()
-    if Controller then 
+    if Controller then
      if self:IsGround() then
-        self:SetOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION, EngageRange)     
+        self:SetOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION, EngageRange)
      end
     end
    return self
@@ -3730,10 +3732,11 @@ end
 -- @param  #number radius Radius of the relocation zone, default 500
 -- @param  #boolean onroad If true, route on road (less problems with AI way finding), default true
 -- @param  #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortcut)
-  self:F2( { self.ControllableName } ) 
+  self:F2( { self.ControllableName } )
 
-    local _coord = self:GetCoordinate() 
+    local _coord = self:GetCoordinate()
     local _radius = radius or 500
     local _speed = speed or 20
     local _tocoord = _coord:GetRandomCoordinateInRadius(_radius,100)
@@ -3741,7 +3744,7 @@ function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortc
     local _grptsk = {}
     local _candoroad = false
     local _shortcut = shortcut or false
-    
+
     -- create a DCS Task an push it on the group
     -- TaskGroundOnRoad(ToCoordinate,Speed,OffRoadFormation,Shortcut,FromCoordinate,WaypointFunction,WaypointFunctionArguments)
     if onroad then
@@ -3751,5 +3754,26 @@ function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortc
       self:TaskRouteToVec2(_tocoord:GetVec2(),_speed,"Off Road")
     end
 
-  return self    
+  return self
+end
+
+--- Defines how long a GROUND unit/group will move to avoid an ongoing attack.
+-- @param #CONTROLLABLE self
+-- @param #number Seconds Any positive number: AI will disperse, but only for the specified time before continuing their route. 0: AI will not disperse.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionDisperseOnAttack(Seconds)
+  self:F2( { self.ControllableName } )
+  -- Set default if not specified.
+  local seconds = Seconds or 0
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then
+     if self:IsGround() then
+        self:SetOption(AI.Option.GROUND.id.DISPERSE_ON_ATTACK, seconds)
+     end
+    end
+   return self
+  end
+  return nil
 end

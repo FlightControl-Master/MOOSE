@@ -1242,7 +1242,7 @@ do -- Group
   -- @param #Group self 
   -- @return #number
   
-  --- Returns initial size of the group. If some of the units will be destroyed, initial size of the group will not be changed. Initial size limits the unitNumber parameter for Group.getUnit() function.
+  --- Returns initial size of the group. If some of the units will be destroyed, initial size of the group will not be changed; Initial size limits the unitNumber parameter for Group.getUnit() function.
   -- @function [parent=#Group] getInitialSize
   -- @param #Group self 
   -- @return #number

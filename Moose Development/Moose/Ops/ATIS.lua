@@ -580,6 +580,8 @@ ATIS.version="0.9.1"
 -- DONE: Metric units.
 -- DONE: Set UTC correction.
 -- DONE: Set magnetic variation.
+-- DONE: New DCS 2.7 weather presets.
+-- DONE: whatever
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor

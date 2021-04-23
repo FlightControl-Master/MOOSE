@@ -190,7 +190,7 @@ do -- ACT_ROUTE
           self:F( { ZoneName = ZoneName } )
           local Zone = Zone -- Core.Zone#ZONE
           local ZoneCoord = Zone:GetCoordinate()
-          local ZoneDistance = ZoneCoord:Get2DDistance( self.Coordinate )
+          local ZoneDistance = ZoneCoord:Get2DDistance( Coordinate )
           self:F( { ShortestDistance, ShortestReferenceName } )
           if ShortestDistance == 0 or ZoneDistance < ShortestDistance then
             ShortestDistance = ZoneDistance
