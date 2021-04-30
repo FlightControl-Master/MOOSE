@@ -1142,7 +1142,7 @@ do -- COORDINATE
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
   -- @param #COORDINATE.WaypointType Type The route point type.
   -- @param #COORDINATE.WaypointAction Action The route point action.
-  -- @param DCS#Speed Speed Airspeed in km/h. Default is 500 km/h.
+  -- @param DCS#Speed Speed Airspeed in [m/s]. Default is 14 m/s or 500 km/h.
   -- @param #boolean SpeedLocked true means the speed is locked.
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
   -- @param #table DCSTasks A table of @{DCS#Task} items which are executed at the waypoint.
@@ -1161,7 +1161,7 @@ do -- COORDINATE
     end
     
     -- Speed or default 500 km/h.
-    Speed=Speed or 500
+    Speed=Speed or 14
     
     -- Waypoint array.
     local RoutePoint = {}
@@ -1179,7 +1179,7 @@ do -- COORDINATE
     RoutePoint.action = Action or nil    
     
     -- Speed.
-    RoutePoint.speed = Speed/3.6
+    RoutePoint.speed = Speed
     RoutePoint.speed_locked = SpeedLocked
     
     -- ETA.
@@ -1230,7 +1230,7 @@ do -- COORDINATE
   --- Build a Waypoint Air "Turning Point".
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
-  -- @param DCS#Speed Speed Airspeed in km/h.
+  -- @param DCS#Speed Speed Airspeed in [m/s].
   -- @param #table DCSTasks (Optional) A table of @{DCS#Task} items which are executed at the waypoint.
   -- @param #string description (Optional) A text description of the waypoint, which will be shown on the F10 map.
   -- @return #table The route point.
@@ -1242,7 +1242,7 @@ do -- COORDINATE
   --- Build a Waypoint Air "Fly Over Point".
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
-  -- @param DCS#Speed Speed Airspeed in km/h.
+  -- @param DCS#Speed Speed Airspeed in [m/s].
   -- @return #table The route point.
   function COORDINATE:WaypointAirFlyOverPoint( AltType, Speed )
     return self:WaypointAir( AltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, Speed )
@@ -1252,7 +1252,7 @@ do -- COORDINATE
   --- Build a Waypoint Air "Take Off Parking Hot".
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
-  -- @param DCS#Speed Speed Airspeed in km/h.
+  -- @param DCS#Speed Speed Airspeed in [m/s].
   -- @return #table The route point.
   function COORDINATE:WaypointAirTakeOffParkingHot( AltType, Speed )
     return self:WaypointAir( AltType, COORDINATE.WaypointType.TakeOffParkingHot, COORDINATE.WaypointAction.FromParkingAreaHot, Speed )
@@ -1262,7 +1262,7 @@ do -- COORDINATE
   --- Build a Waypoint Air "Take Off Parking".
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
-  -- @param DCS#Speed Speed Airspeed in km/h.
+  -- @param DCS#Speed Speed Airspeed in [m/s].
   -- @return #table The route point.
   function COORDINATE:WaypointAirTakeOffParking( AltType, Speed )
     return self:WaypointAir( AltType, COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, Speed )
@@ -1272,7 +1272,7 @@ do -- COORDINATE
   --- Build a Waypoint Air "Take Off Runway".
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
-  -- @param DCS#Speed Speed Airspeed in km/h.
+  -- @param DCS#Speed Speed Airspeed in [m/s].
   -- @return #table The route point.
   function COORDINATE:WaypointAirTakeOffRunway( AltType, Speed )
     return self:WaypointAir( AltType, COORDINATE.WaypointType.TakeOff, COORDINATE.WaypointAction.FromRunway, Speed )
@@ -1281,7 +1281,7 @@ do -- COORDINATE
   
   --- Build a Waypoint Air "Landing".
   -- @param #COORDINATE self
-  -- @param DCS#Speed Speed Airspeed in km/h.
+  -- @param DCS#Speed Speed Airspeed in [m/s].
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
   -- @param #table DCSTasks A table of @{DCS#Task} items which are executed at the waypoint.
   -- @param #string description A text description of the waypoint, which will be shown on the F10 map.
@@ -1299,7 +1299,7 @@ do -- COORDINATE
   
   --- Build a Waypoint Air "LandingReFuAr". Mimics the aircraft ReFueling and ReArming. 
   -- @param #COORDINATE self
-  -- @param DCS#Speed Speed Airspeed in km/h.
+  -- @param DCS#Speed Speed Airspeed in [m/s].
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
   -- @param #number timeReFuAr Time in minutes, the aircraft stays at the airbase. Default 10 min.
   -- @param #table DCSTasks A table of @{DCS#Task} items which are executed at the waypoint.
@@ -1312,7 +1312,7 @@ do -- COORDINATE
   
   --- Build an ground type route point.
   -- @param #COORDINATE self
-  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  -- @param #number Speed (Optional) Speed in [m/s] The default speed is 5 m/s or 20 km/h.
   -- @param #string Formation (Optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
   -- @param #table DCSTasks (Optional) A table of DCS tasks that are executed at the waypoints. Mind the curly brackets {}!
   -- @return #table The route point.
@@ -1335,7 +1335,7 @@ do -- COORDINATE
     RoutePoint.ETA=0
     RoutePoint.ETA_locked=true
 
-    RoutePoint.speed = ( Speed or 20 ) / 3.6
+    RoutePoint.speed = Speed or 5
     RoutePoint.speed_locked = true
 
     RoutePoint.task = {}
@@ -1348,7 +1348,7 @@ do -- COORDINATE
   
   --- Build route waypoint point for Naval units.
   -- @param #COORDINATE self
-  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  -- @param #number Speed (Optional) Speed in [m/s]. The default speed is 5 m/s or 20 km/h.
   -- @param #string Depth (Optional) Dive depth in meters. Only for submarines. Default is COORDINATE.y component.
   -- @param #table DCSTasks (Optional) A table of DCS tasks that are executed at the waypoints. Mind the curly brackets {}!
   -- @return #table The route point.
@@ -1370,7 +1370,7 @@ do -- COORDINATE
     RoutePoint.ETA=0
     RoutePoint.ETA_locked=true
 
-    RoutePoint.speed = ( Speed or 20 ) / 3.6
+    RoutePoint.speed = Speed or 5
     RoutePoint.speed_locked = true
 
     RoutePoint.task = {}
@@ -3138,5 +3138,4 @@ do -- POINT_VEC2
   end
 
 end
-
 
