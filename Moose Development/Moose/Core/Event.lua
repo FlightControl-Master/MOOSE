@@ -236,11 +236,11 @@ EVENTS = {
   RemoveUnit =        world.event.S_EVENT_REMOVE_UNIT,
   PlayerEnterAircraft = world.event.S_EVENT_PLAYER_ENTER_AIRCRAFT,
   -- Added with DCS 2.5.6
-  DetailedFailure =   world.event.S_EVENT_DETAILED_FAILURE or -1,  --We set this to -1 for backward compatibility to DCS 2.5.5 and earlier
-  Kill =              world.event.S_EVENT_KILL or -1,
-  Score =             world.event.S_EVENT_SCORE or -1,
-  UnitLost =          world.event.S_EVENT_UNIT_LOST or -1,
-  LandingAfterEjection = world.event.S_EVENT_LANDING_AFTER_EJECTION or -1,
+  DetailedFailure           = world.event.S_EVENT_DETAILED_FAILURE or -1,  --We set this to -1 for backward compatibility to DCS 2.5.5 and earlier
+  Kill                      = world.event.S_EVENT_KILL or -1,
+  Score                     = world.event.S_EVENT_SCORE or -1,
+  UnitLost                  = world.event.S_EVENT_UNIT_LOST or -1,
+  LandingAfterEjection      = 31, --world.event.S_EVENT_LANDING_AFTER_EJECTION or -1,
   -- Added with DCS 2.7.0
   ParatrooperLanding        = world.event.S_EVENT_PARATROOPER_LENDING or -1,
   DiscardChairAfterEjection = world.event.S_EVENT_DISCARD_CHAIR_AFTER_EJECTION or -1,
@@ -524,7 +524,7 @@ local _EVENTMETA = {
      Event = "OnEventUnitLost",
      Text = "S_EVENT_UNIT_LOST" 
    },
-   [EVENTS.LandingAfterEjection] = {
+   [world.event.S_EVENT_LANDING_AFTER_EJECTION] = {
      Order = 1,
      Event = "OnEventLandingAfterEjection",
      Text = "S_EVENT_LANDING_AFTER_EJECTION" 
@@ -578,6 +578,10 @@ function EVENT:New()
   -- Add world event handler.
   self.EventHandler = world.addEventHandler(self)
   
+  for _,Event in pairs(self.Events) do
+    self:Init(Event,EventClass)
+  end
+  
   return self
 end
 
@@ -588,7 +592,9 @@ end
 -- @param Core.Base#BASE EventClass The class object for which events are handled.
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
-  self:F3( { _EVENTMETA[EventID].Text, EventClass } )
+  self:I( { _EVENTMETA[EventID].Text, EventClass } )
+  
+  env.info("FF EVENT.Init ID="..EventID)
 
   if not self.Events[EventID] then 
     -- Create a WEAK table to ensure that the garbage collector is cleaning the event links when the object usage is cleaned.
@@ -983,6 +989,8 @@ end
 -- @param #EVENTDATA Event Event data table.
 function EVENT:onEvent( Event )
 
+  env.info("FF some event")
+
   local ErrorHandler = function( errmsg )
 
     env.info( "Error in SCHEDULER function:" .. errmsg )
@@ -1000,17 +1008,37 @@ function EVENT:onEvent( Event )
   -- Check if this is a known event?
   if EventMeta then
   
-    if self and 
-       self.Events and 
-       self.Events[Event.id] and
-       self.MissionEnd == false and
-       ( Event.initiator ~= nil or ( Event.initiator == nil and Event.id ~= EVENTS.PlayerLeaveUnit ) ) then
+    env.info("FF some event 100 ID="..tostring(Event.id))
+    
+    if Event.id==31 then
+       env.info("FF got event 31")
+       local initiator=Event.initiator~=nil
+       env.info(string.format("FF got event 31 initiator=%s", tostring(initiator)))
+       if self then
+         env.info(string.format("FF got event 31 self=true"))
+       end
+       if self.Events then
+         env.info(string.format("FF got event 31 self.Events=true"))
+       end     
+       if self.Events[Event.id] then
+         env.info(string.format("FF got event 31 self.Events[Event.id]=true"))
+       else
+        env.info(string.format("FF NO event 31 self.Events[Event.id]=FALSE!"))
+       end   
+    end
+  
+    --if self and self.Events and self.Events[Event.id] and self.MissionEnd==false and (Event.initiator~=nil or (Event.initiator==nil and Event.idss~=EVENTS.PlayerLeaveUnit)) then
+    if self and self.Events and self.MissionEnd==false and (Event.initiator~=nil or (Event.initiator==nil and Event.idss~=EVENTS.PlayerLeaveUnit)) then
   
       if Event.id and Event.id == EVENTS.MissionEnd then
         self.MissionEnd = true
       end
       
-      if Event.initiator then    
+      env.info("FF some event 150")
+      
+      if Event.initiator then
+      
+        env.info("FF some event 200")
         
         Event.IniObjectCategory = Event.initiator:getCategory()
   
@@ -1039,9 +1067,14 @@ function EVENT:onEvent( Event )
         end
         
         if Event.IniObjectCategory == Object.Category.STATIC then
+        
+          env.info("FF some event 300")
+        
           if Event.id==31 then
-            --env.info("FF event 31")
-            -- Event.initiator is a Static object representing the pilot. But getName() error due to DCS bug.
+          
+            env.info("FF event 31")
+            
+            -- Event.initiator is a Static object representing the pilot. But getName() errors due to DCS bug.
             Event.IniDCSUnit = Event.initiator
             local ID=Event.initiator.id_
             Event.IniDCSUnitName = string.format("Ejected Pilot ID %s", tostring(ID))
@@ -1049,6 +1082,17 @@ function EVENT:onEvent( Event )
             Event.IniCoalition = 0
             Event.IniCategory  = 0
             Event.IniTypeName = "Ejected Pilot"
+            
+            local static=Event.initiator
+            local vec3=static:getPoint()
+            
+            local template=TEMPLATE.GetGround(TEMPLATE.Ground.SoldierM4, "Ejected Pilot", country.id.USA, vec3)
+            local group=_DATABASE:Spawn(template)
+            Event.IniDCSGroup=group:GetDCSObject()
+            Event.IniCoalition=group:GetCoalition()
+            Event.IniCategory=group:GetCategory()
+            
+            
           else
             Event.IniDCSUnit = Event.initiator
             Event.IniDCSUnitName = Event.IniDCSUnit:getName()
