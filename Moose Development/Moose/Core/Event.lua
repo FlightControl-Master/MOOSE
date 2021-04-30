@@ -1114,9 +1114,10 @@ function EVENT:onEvent( Event )
           Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
         end
         
+        env.info("FF I am here first")
         if Event.TgtObjectCategory == Object.Category.STATIC then
+          env.info("FF I am here")
           BASE:T({Event = Event})
-          --[[
               Event.TgtDCSUnit = Event.target
               Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
               Event.TgtUnitName = Event.TgtDCSUnitName
@@ -1124,8 +1125,8 @@ function EVENT:onEvent( Event )
               Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
               Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
               Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
-          --]]
           -- Same as for Event Initiator above 2.7 issue
+          --[[
           Event.TgtDCSUnit = Event.target
           local ID=Event.initiator.id_
           Event.TgtDCSUnitName = string.format("Ejected Pilot ID %s", tostring(ID))
@@ -1134,6 +1135,7 @@ function EVENT:onEvent( Event )
           Event.TgtCoalition = Event.IniCoalition
           Event.TgtCategory = Event.IniCategory
           Event.TgtTypeName = "Ejected Pilot"
+          ]]
         end
   
         if Event.TgtObjectCategory == Object.Category.SCENERY then

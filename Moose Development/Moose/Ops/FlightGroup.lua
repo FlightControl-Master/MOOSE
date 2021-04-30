@@ -56,6 +56,7 @@
 -- @field #number callsignName Callsign name.
 -- @field #number callsignNumber Callsign number.
 -- @field #boolean despawnAfterLanding If true, group is despawned after landed at an airbase.
+-- @field #number RTBRecallCount Number that counts RTB calls.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -145,6 +146,7 @@ FLIGHTGROUP = {
   Twaiting           =   nil,
   menu               =   nil,
   isHelo             =   nil,
+  RTBRecallCount     =     0,
 }
 
 
