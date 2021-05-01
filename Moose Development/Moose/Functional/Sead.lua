@@ -109,7 +109,7 @@ function SEAD:New( SEADGroupPrefixes )
 	end
 	
 	self:HandleEvent( EVENTS.Shot )
-	self:I("*** SEAD - Started Version 0.2.5")
+	self:I("*** SEAD - Started Version 0.2.7")
 	return self
 end
 
@@ -205,15 +205,18 @@ function SEAD:OnEventShot( EventData )
     SEADWeaponName == "weapons.missiles.AGM_84H" --AGM84 anti-radiation missiles fired
     --]]
   if self:_CheckHarms(SEADWeaponName) then
-  
+    local _targetskill = "Random"
+    local _targetMimgroupName = "none"
 		local _evade = math.random (1,100) -- random number for chance of evading action
 		local _targetMim = EventData.Weapon:getTarget() -- Identify target
-		local _targetMimname = Unit.getName(_targetMim) -- Unit name
-		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon)) --targeted group
-		local _targetMimgroupName = _targetMimgroup:getName() -- group name
-		local _targetskill =  _DATABASE.Templates.Units[_targetMimname].Template.skill
-		self:T( self.SEADGroupPrefixes )
-		self:T( _targetMimgroupName )
+		local _targetUnit = UNIT:Find(_targetMim) -- Unit name by DCS Object
+		if _targetUnit and _targetUnit:IsAlive() then
+  		local _targetMimgroup = _targetUnit:GetGroup()
+  		local _targetMimgroupName = _targetMimgroup:GetName() -- group name
+  		--local _targetskill =  _DATABASE.Templates.Units[_targetUnit].Template.skill
+  		self:T( self.SEADGroupPrefixes )
+  		self:T( _targetMimgroupName )
+		end
 		-- see if we are shot at
 		local SEADGroupFound = false
 		for SEADGroupPrefixID, SEADGroupPrefix in pairs( self.SEADGroupPrefixes ) do
@@ -249,6 +252,7 @@ function SEAD:OnEventShot( EventData )
 					 local range = self.EngagementRange -- Feature Request #1355
 					  self:T(string.format("*** SEAD - Engagement Range is %d", range))
 						id.ctrl:setOption(AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.RED)
+						--id.groupName:enableEmission(true)
 						id.ctrl:setOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION,range) --Feature Request #1355
 						self.SuppressedGroups[id.groupName] = nil  --delete group id from table when done
 					end
@@ -261,6 +265,7 @@ function SEAD:OnEventShot( EventData )
 							SuppressionEndTime = delay
 						  }
 						Controller.setOption(_targetMimcont, AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.GREEN)
+						--_targetMimgroup:enableEmission(false)
 						timer.scheduleFunction(SuppressionEnd, id, SuppressionEndTime)	--Schedule the SuppressionEnd() function
 					end
 				end

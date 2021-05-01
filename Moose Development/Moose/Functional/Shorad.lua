@@ -18,7 +18,7 @@
 -- @module Functional.Shorad
 -- @image Functional.Shorad.jpg
 --
--- Date: Feb 2021
+-- Date: May 2021
 
 -------------------------------------------------------------------------
 --- **SHORAD** class, extends Core.Base#BASE
@@ -38,7 +38,7 @@
 -- @field #boolean DefendMavs Default true, intercept incoming AG-Missiles
 -- @field #number DefenseLowProb Default 70, minimum detection limit
 -- @field #number DefenseHighProb Default 90, maximim detection limit
--- @field #boolean UseAIOnOff Decide if we are using AI on/off (true) or AlarmState red/green (default).
+-- @field #boolean UseEmOnOff Decide if we are using Emission on/off (default) or AlarmState red/green.
 -- @extends Core.Base#BASE
 
 --- *Good friends are worth defending.* Mr Tushman, Wonder (the Movie) 
@@ -96,7 +96,7 @@ SHORAD = {
   DefendMavs = true,
   DefenseLowProb = 70,
   DefenseHighProb = 90,
-  UseAIOnOff = false,  
+  UseEmOnOff = false,  
 }
 
 -----------------------------------------------------------------------
@@ -176,8 +176,8 @@ do
     self.DefendMavs = true
     self.DefenseLowProb = 70 -- probability to detect a missile shot, low margin
     self.DefenseHighProb = 90  -- probability to detect a missile shot, high margin
-    self.UseAIOnOff = false -- Decide if we are using AI on/off (true) or AlarmState red/green (default)
-    self:I("*** SHORAD - Started Version 0.1.0")
+    self.UseEmOnOff = false -- Decide if we are using Emission on/off (default) or AlarmState red/green
+    self:I("*** SHORAD - Started Version 0.2.1")
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("SHORAD %s | ", self.name)
     self:_InitState()
@@ -192,8 +192,9 @@ do
     self:T({set = set})
     local aliveset = set:GetAliveSet() --#table
     for _,_group in pairs (aliveset) do
-     if self.UseAIOnOff then
-      _group:SetAIOff()
+     if self.UseEmOnOff then
+      --_group:SetAIOff()
+      _group:EnableEmission(false)
      else
       _group:OptionAlarmStateGreen() --Wrapper.Group#GROUP
      end
@@ -279,11 +280,11 @@ do
     self.Radius = radius
   end
   
-  --- Set using AI on/off instead of changing alarm state
+  --- Set using Emission on/off instead of changing alarm state
   -- @param #SHORAD self
   -- @param #boolean switch Decide if we are changing alarm state or AI state
-  function SHORAD:SetUsingAIOnOff(switch)
-    self.UseAIOnOff = switch or false
+  function SHORAD:SetUsingEmOnOff(switch)
+    self.UseEmOnOff = switch or false
   end
   
   --- Check if a HARM was fired
@@ -410,8 +411,9 @@ do
     local function SleepShorad(group)
       local groupname = group:GetName()
       self.ActiveGroups[groupname] = nil
-      if self.UseAIOnOff then
-        group:SetAIOff()
+      if self.UseEmOnOff then
+        group:EnableEmission(false)
+        --group:SetAIOff()
       else
         group:OptionAlarmStateGreen()
       end
@@ -425,8 +427,9 @@ do
         local text = string.format("Waking up SHORAD %s", _group:GetName())
         self:T(text)
         local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
-        if self.UseAIOnOff then
+        if self.UseEmOnOff then
           _group:SetAIOn()
+          _group:EnableEmission(true)
         end
         _group:OptionAlarmStateRed()
         local groupname = _group:GetName()
@@ -461,23 +464,31 @@ do
       end
       local text = string.format("%s Missile Launched = %s | Detected probability state is %s", self.lid, ShootingWeaponName, DetectedText)
       self:T( text )
-      local m = MESSAGE:New(text,15,"Info"):ToAllIf(self.debug)
+      local m = MESSAGE:New(text,10,"Info"):ToAllIf(self.debug)
       --
       if (self:_CheckHarms(ShootingWeaponName) or self:_CheckMavs(ShootingWeaponName)) and IsDetected then
         -- get target data
         local targetdata = EventData.Weapon:getTarget() -- Identify target
-        local targetunitname = Unit.getName(targetdata) -- Unit name
-        local targetgroup = Unit.getGroup(Weapon.getTarget(ShootingWeapon)) --targeted group
-        local targetgroupname = targetgroup:getName() -- group name
-        -- check if we or a SAM site are the target 
-        --local TargetGroup = EventData.TgtGroup -- Wrapper.Group#GROUP
-        local shotatus = self:_CheckShotAtShorad(targetgroupname) --#boolean
-        local shotatsams = self:_CheckShotAtSams(targetgroupname) --#boolean
-        -- if being shot at, find closest SHORADs to activate
-        if shotatsams or shotatus then
-          self:T({shotatsams=shotatsams,shotatus=shotatus})
-          self:WakeUpShorad(targetgroupname, self.Radius, self.ActiveTimer)
-        end
+        local targetunit = UNIT:Find(targetdata)
+        --local targetunitname = Unit.getName(targetdata) -- Unit name
+        if targetunit and targetunit:IsAlive() then
+          local targetunitname = targetunit:GetName()
+          --local targetgroup = Unit.getGroup(Weapon.getTarget(ShootingWeapon)) --targeted group
+          local targetgroup = targetunit:GetGroup()
+          local targetgroupname = targetgroup:GetName() -- group name
+          local text = string.format("%s Missile Target = %s", self.lid, tostring(targetgroupname))
+          self:T( text )
+          local m = MESSAGE:New(text,10,"Info"):ToAllIf(self.debug)
+          -- check if we or a SAM site are the target 
+          --local TargetGroup = EventData.TgtGroup -- Wrapper.Group#GROUP
+          local shotatus = self:_CheckShotAtShorad(targetgroupname) --#boolean
+          local shotatsams = self:_CheckShotAtSams(targetgroupname) --#boolean
+          -- if being shot at, find closest SHORADs to activate
+          if shotatsams or shotatus then
+            self:T({shotatsams=shotatsams,shotatus=shotatus})
+            self:WakeUpShorad(targetgroupname, self.Radius, self.ActiveTimer)
+          end
+        end  
       end
     end
   end 
