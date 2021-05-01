@@ -89,6 +89,42 @@ function TEMPLATE.GetGround(TypeName, GroupName, CountryID, Vec3, Nunits, Radius
   return template
 end
 
+
+
+--- Set the position of the template.
+-- @param #table Template The template to be modified.
+-- @param DCS#Vec2 Vec2 2D Position vector with x and y components of the group.
+function TEMPLATE.SetPositionFromVec2(Template, Vec2)
+
+  Template.x=Vec2.x
+  Template.y=Vec2.y
+  
+  for _,unit in pairs(Template.units) do
+    unit.x=Vec2.x
+    unit.y=Vec2.y
+  end
+  
+  Template.route.points[1].x=Vec2.x
+  Template.route.points[1].y=Vec2.y
+  Template.route.points[1].alt=0 --TODO: Use land height.
+ 
+end
+
+--- Set the position of the template.
+-- @param #table Template The template to be modified.
+-- @param DCS#Vec3 Vec3 Position vector of the group.
+function TEMPLATE.SetPositionFromVec3(Template, Vec3)
+
+  local Vec2={x=Vec3.x, y=Vec3.z}
+  
+  TEMPLATE.SetPositionFromVec2(Template, Vec2)
+  
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Generic Ground Template
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 TEMPLATE.GenericGround=
 {
   ["visible"] = false,
@@ -152,32 +188,164 @@ TEMPLATE.GenericGround=
   ["start_time"] = 0,
 }
 
---- Set the position of the template.
--- @param #table Template The template to be modified.
--- @param DCS#Vec2 Vec2 2D Position vector with x and y components of the group.
-function TEMPLATE.SetPositionFromVec2(Template, Vec2)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Generic Ship Template
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  Template.x=Vec2.x
-  Template.y=Vec2.y
-  
-  for _,unit in pairs(Template.units) do
-    unit.x=Vec2.x
-    unit.y=Vec2.y
-  end
-  
-  Template.route.points[1].x=Vec2.x
-  Template.route.points[1].y=Vec2.y
-  Template.route.points[1].alt=0 --TODO: Use land height.
- 
-end
+TEMPLATE.GenericNaval=
+{
+  ["visible"] = false,
+  ["tasks"] = {}, -- end of ["tasks"]
+  ["uncontrollable"] = false,
+  ["route"] = 
+  {
+      ["points"] = 
+      {
+          [1] = 
+          {
+              ["alt"] = 0,
+              ["type"] = "Turning Point",
+              ["ETA"] = 0,
+              ["alt_type"] = "BARO",
+              ["formation_template"] = "",
+              ["y"] = 0,
+              ["x"] = 0,
+              ["ETA_locked"] = true,
+              ["speed"] = 0,
+              ["action"] = "Turning Point",
+              ["task"] = 
+              {
+                  ["id"] = "ComboTask",
+                  ["params"] = 
+                  {
+                      ["tasks"] = 
+                      {
+                      }, -- end of ["tasks"]
+                  }, -- end of ["params"]
+              }, -- end of ["task"]
+              ["speed_locked"] = true,
+          }, -- end of [1]
+      }, -- end of ["points"]
+  }, -- end of ["route"]
+  ["groupId"] = nil,
+  ["hidden"] = false,
+  ["units"] = 
+  {
+      [1] = 
+      {
+          ["transportable"] = 
+          {
+              ["randomTransportable"] = false,
+          }, -- end of ["transportable"]
+          ["skill"] = "Average",
+          ["type"] = "TICONDEROG",
+          ["unitId"] = nil,
+          ["y"] = 0,
+          ["x"] = 0,
+          ["name"] = "Naval-1-1",
+          ["heading"] = 0,
+          ["modulation"] = 0,
+          ["frequency"] = 127500000,
+      }, -- end of [1]
+  }, -- end of ["units"]
+  ["y"] = 0,
+  ["x"] = 0,
+  ["name"] = "Naval-1",
+  ["start_time"] = 0,
+}
 
---- Set the position of the template.
--- @param #table Template The template to be modified.
--- @param DCS#Vec3 Vec3 Position vector of the group.
-function TEMPLATE.SetPositionFromVec3(Template, Vec3)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Generic Ship Template
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  local Vec2={x=Vec3.x, y=Vec3.z}
-  
-  TEMPLATE.SetPositionFromVec2(Template, Vec2)
-  
-end
+TEMPLATE.GenericHelicopter=
+{
+  ["modulation"] = 0,
+  ["tasks"] = {}, -- end of ["tasks"]
+  ["radioSet"] = false,
+  ["task"] = "Nothing",
+  ["uncontrolled"] = false,
+  ["taskSelected"] = true,
+  ["route"] = 
+  {
+      ["points"] = 
+      {
+          [1] = 
+          {
+              ["alt"] = 10,
+              ["action"] = "From Parking Area",
+              ["alt_type"] = "BARO",
+              ["speed"] = 41.666666666667,
+              ["task"] = 
+              {
+                  ["id"] = "ComboTask",
+                  ["params"] = 
+                  {
+                      ["tasks"] = 
+                      {
+                      }, -- end of ["tasks"]
+                  }, -- end of ["params"]
+              }, -- end of ["task"]
+              ["type"] = "TakeOffParking",
+              ["ETA"] = 0,
+              ["ETA_locked"] = true,
+              ["y"] = 618351.087765,
+              ["x"] = -356168.27327001,
+              ["formation_template"] = "",
+              ["airdromeId"] = 22,
+              ["speed_locked"] = true,
+          }, -- end of [1]
+      }, -- end of ["points"]
+  }, -- end of ["route"]
+  ["groupId"] = nil,
+  ["hidden"] = false,
+  ["units"] = 
+  {
+      [1] = 
+      {
+          ["alt"] = 10,
+          ["alt_type"] = "BARO",
+          ["livery_id"] = "USA X Black",
+          ["skill"] = "High",
+          ["parking"] = "4",
+          ["ropeLength"] = 15,
+          ["speed"] = 41.666666666667,
+          ["type"] = "AH-1W",
+          ["unitId"] = 8,
+          ["psi"] = 0,
+          ["parking_id"] = "10",
+          ["x"] = -356168.27327001,
+          ["name"] = "Rotary-1-1",
+          ["payload"] = 
+          {
+              ["pylons"] = 
+              {
+              }, -- end of ["pylons"]
+              ["fuel"] = "1250.0",
+              ["flare"] = 30,
+              ["chaff"] = 30,
+              ["gun"] = 100,
+          }, -- end of ["payload"]
+          ["y"] = 618351.087765,
+          ["heading"] = 0,
+          ["callsign"] = 
+          {
+              [1] = 2,
+              [2] = 1,
+              [3] = 1,
+              ["name"] = "Springfield11",
+          }, -- end of ["callsign"]
+          ["onboard_num"] = "050",
+      }, -- end of [1]
+  }, -- end of ["units"]
+  ["y"] = 0,
+  ["x"] = 0,
+  ["name"] = "Rotary-1",
+  ["communication"] = true,
+  ["start_time"] = 0,
+  ["frequency"] = 127.5,
+}
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
