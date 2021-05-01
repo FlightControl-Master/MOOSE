@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/1y8nfmx7lwsn33tt?svg=true)](https://ci.appveyor.com/project/Applevangelist/MOOSE)
+
 # MOOSE framework
 
 MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment, and is meant for mission designers in DCS World.
@@ -50,9 +52,7 @@ This repository contains all the demonstration missions in packed format (*.miz)
 
 This repository contains all the demonstration missions in unpacked format. That means that there is no .miz file included, but all the .miz contents are unpacked.
 
-  
-  
-  
+
 ##  [MOOSE Web Site](https://flightcontrol-master.github.io/MOOSE_DOCS/)
 
 Documentation on the MOOSE class hierarchy, usage guides and background information can be found here for normal users, beta testers and contributors.

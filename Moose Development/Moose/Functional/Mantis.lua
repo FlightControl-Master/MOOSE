@@ -20,7 +20,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 
--- Date: Feb 2021
+-- Date: Apr 2021
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends #Core.Base#BASE
@@ -51,6 +51,7 @@
 -- @field #number adv_state Advanced mode state tracker
 -- @field #boolean advAwacs Boolean switch to use Awacs as a separate detection stream
 -- @field #number awacsrange Detection range of an optional Awacs unit
+-- @field #boolean UseEmOnOff Decide if we are using Emissions on/off (true) or AlarmState red/green (default)
 -- @field Functional.Shorad#SHORAD Shorad SHORAD Object, if available
 -- @field #boolean ShoradLink If true, #MANTIS has #SHORAD enabled
 -- @field #number ShoradTime Timer in seconds, how long #SHORAD will be active after a detection inside of the defense range
@@ -189,7 +190,8 @@ MANTIS = {
   Shorad                = nil,
   ShoradLink            = false,
   ShoradTime            = 600,
-  ShoradActDistance     = 15000, 
+  ShoradActDistance     = 15000,
+  UseEmOnOff            = true, 
 }
 
 -----------------------------------------------------------------------
@@ -206,6 +208,7 @@ do
   --@param #string coaltion Coalition side of your setup, e.g. "blue", "red" or "neutral"
   --@param #boolean dynamic Use constant (true) filtering or just filter once (false, default) (optional)
   --@param #string awacs Group name of your Awacs (optional)
+  --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN (optional, deault true)
   --@return #MANTIS self
   --@usage Start up your MANTIS with a basic setting
   --
@@ -227,7 +230,7 @@ do
   --    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`  
   --    `mybluemantis:Start()`
   --    
-  function MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic,awacs)
+  function MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic,awacs, EmOnOff)
     
     -- DONE: Create some user functions for these
     -- DONE: Make HQ useful
@@ -260,6 +263,12 @@ do
     self.ShoradLink = false
     self.ShoradTime = 600
     self.ShoradActDistance = 15000
+    -- TODO: add emissions on/off when available .... in 2 weeks
+    if EmOnOff then
+      if EmOnOff == false then
+        self.UseEmOnOff = false
+      end
+    end    
      
     if type(awacs) == "string" then
       self.advAwacs = true
@@ -299,7 +308,7 @@ do
     end
     
     -- @field #string version
-    self.version="0.3.7"
+    self.version="0.4.1"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
     
     return self    
@@ -456,6 +465,13 @@ do
       local m= MESSAGE:New(text,10,"MANTIS",true):ToAll()
       BASE:E(text)
     end
+  end
+  
+  --- Set using Emissions on/off instead of changing alarm state
+  -- @param #MANTIS self
+  -- @param #boolean switch Decide if we are changing alarm state or Emission state
+  function MANTIS:SetUsingEmOnOff(switch)
+    self.UseEmOnOff = switch or false
   end
   
   --- [Internal] Function to check if HQ is alive
@@ -701,7 +717,13 @@ do
      --cycle through groups and set alarm state etc
      for _i,_group in pairs (SAM_Grps) do
         local group = _group
-        group:OptionAlarmStateGreen() -- AI off
+        -- TODO: add emissions on/off
+        if self.UseEmOnOff then
+          group:EnableEmission(false)
+          --group:SetAIOff()
+        else
+          group:OptionAlarmStateGreen() -- AI off
+        end
         group:SetOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION,engagerange)  --default engagement will be 75% of firing range
         if group:IsGround() then
           local grpname = group:GetName()
@@ -804,7 +826,12 @@ do
         local IsInZone, Distance = self:CheckObjectInZone(detset, samcoordinate)
         if IsInZone then --check any target in zone
           if samgroup:IsAlive() then
-            -- switch off SAM
+            -- switch on SAM
+            if self.UseEmOnOff then
+              -- TODO: add emissions on/off
+              --samgroup:SetAIOn()
+              samgroup:EnableEmission(true)
+            end
             samgroup:OptionAlarmStateRed()
             -- link in to SHORAD if available
             -- DONE: Test integration fully
@@ -822,7 +849,13 @@ do
         else 
           if samgroup:IsAlive() then
             -- switch off SAM
-            samgroup:OptionAlarmStateGreen()
+            if self.UseEmOnOff then
+              -- TODO: add emissions on/off
+              samgroup:EnableEmission(false)
+              --samgroup:SetAIOff()
+            else
+              samgroup:OptionAlarmStateGreen()
+            end
             --samgroup:OptionROEWeaponFree()
             --samgroup:SetAIOn()
             local text = string.format("SAM %s switched to alarm state GREEN!", name)
@@ -857,6 +890,11 @@ do
               local name = _data[1]
               local samgroup = GROUP:FindByName(name)
               if samgroup:IsAlive() then
+                if self.UseEmOnOff then
+                  -- TODO: add emissions on/off
+                  --samgroup:SetAIOn()
+                  samgroup:EnableEmission(true)
+                end
                 samgroup:OptionAlarmStateRed()
               end -- end alive
             end -- end for loop

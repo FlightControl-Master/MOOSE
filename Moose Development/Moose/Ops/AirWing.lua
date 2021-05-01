@@ -119,6 +119,7 @@ AIRWING = {
   pointsTANKER   =    {},
   pointsAWACS    =    {},
   wingcommander  =   nil,
+  markpoints     =   false,
 }
 
 --- Squadron asset.
@@ -209,6 +210,7 @@ function AIRWING:New(warehousename, airwingname)
   self.nflightsTANKERprobe=0
   self.nflightsRecoveryTanker=0
   self.nflightsRescueHelo=0
+  self.markpoints = false
 
   ------------------------
   --- Pseudo Functions ---
@@ -230,6 +232,24 @@ function AIRWING:New(warehousename, airwingname)
   -- @function [parent=#AIRWING] __Stop
   -- @param #AIRWING self
   -- @param #number delay Delay in seconds.
+ 
+  --- On after "FlightOnMission" event. Triggered when an asset group starts a mission.
+   -- @function [parent=#AIRWING] OnAfterFlightOnMission
+   -- @param #AIRWING self
+   -- @param #string From The From state
+   -- @param #string Event The Event called
+   -- @param #string To The To state
+   -- @param Ops.FlightGroup#FLIGHTGROUP Flightgroup The Flightgroup on mission
+   -- @param Ops.Auftrag#AUFTRAG Mission The Auftrag of the Flightgroup
+   
+   --- On after "AssetReturned" event. Triggered when an asset group returned to its airwing.
+    -- @function [parent=#AIRWING] OnAfterAssetReturned
+    -- @param #AIRWING self
+    -- @param #string From From state.
+    -- @param #string Event Event.
+    -- @param #string To To state.
+    -- @param Ops.Squadron#SQUADRON Squadron The asset squadron.
+    -- @param #AIRWING.SquadronAsset Asset The asset that returned.
 
   return self
 end
@@ -647,6 +667,19 @@ function AIRWING:SetNumberTankerBoom(Nboom)
   return self
 end
 
+--- Set markers on the map for Patrol Points.
+-- @param #AIRWING self
+-- @param #boolean onoff Set to true to switch markers on.
+-- @return #AIRWING self
+function AIRWING:ShowPatrolPointMarkers(onoff)
+  if onoff then
+    self.markpoints = true
+  else
+    self.markpoints = false
+  end
+  return self
+end
+
 --- Set number of TANKER flights with Probe constantly in the air.
 -- @param #AIRWING self
 -- @param #number Nprobe Number of flights. Default 1.
@@ -688,13 +721,13 @@ end
 
 --- Update marker of the patrol point.
 -- @param #AIRWING.PatrolData point Patrol point table.
-function AIRWING.UpdatePatrolPointMarker(point)
-
-  local text=string.format("%s Occupied=%d\nheading=%03d, leg=%d NM, alt=%d ft, speed=%d kts", 
-  point.type, point.noccupied, point.heading, point.leg, point.altitude, point.speed)
-
-  point.marker:UpdateText(text, 1)
-
+function AIRWING:UpdatePatrolPointMarker(point)
+  if self.markpoints then -- sometimes there's a direct call from #OPSGROUP
+    local text=string.format("%s Occupied=%d\nheading=%03d, leg=%d NM, alt=%d ft, speed=%d kts", 
+    point.type, point.noccupied, point.heading, point.leg, point.altitude, point.speed)
+  
+    point.marker:UpdateText(text, 1)
+  end
 end
 
 
@@ -717,10 +750,12 @@ function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegL
   patrolpoint.altitude=Altitude or math.random(10,20)*1000
   patrolpoint.speed=Speed or 350
   patrolpoint.noccupied=0
-  patrolpoint.marker=MARKER:New(Coordinate, "New Patrol Point"):ToAll()
   
-  AIRWING.UpdatePatrolPointMarker(patrolpoint)
-
+  if self.markpoints then
+    patrolpoint.marker=MARKER:New(Coordinate, "New Patrol Point"):ToAll()
+    AIRWING.UpdatePatrolPointMarker(patrolpoint)
+  end
+  
   return patrolpoint
 end
 
@@ -928,7 +963,7 @@ function AIRWING:CheckCAP()
     
     patrol.noccupied=patrol.noccupied+1
     
-    AIRWING.UpdatePatrolPointMarker(patrol)
+    if self.markpoints then AIRWING.UpdatePatrolPointMarker(patrol) end
     
     self:AddMission(missionCAP)
       
@@ -972,7 +1007,7 @@ function AIRWING:CheckTANKER()
     
     patrol.noccupied=patrol.noccupied+1
     
-    AIRWING.UpdatePatrolPointMarker(patrol)
+    if self.markpoints then AIRWING.UpdatePatrolPointMarker(patrol) end
     
     self:AddMission(mission)
       
@@ -990,7 +1025,7 @@ function AIRWING:CheckTANKER()
     
     patrol.noccupied=patrol.noccupied+1
     
-    AIRWING.UpdatePatrolPointMarker(patrol)
+    if self.markpoints then AIRWING.UpdatePatrolPointMarker(patrol) end
     
     self:AddMission(mission)
       
@@ -1018,7 +1053,7 @@ function AIRWING:CheckAWACS()
     
     patrol.noccupied=patrol.noccupied+1
     
-    AIRWING.UpdatePatrolPointMarker(patrol)
+    if self.markpoints then AIRWING.UpdatePatrolPointMarker(patrol) end
     
     self:AddMission(mission)
       
@@ -1431,7 +1466,9 @@ function AIRWING:onafterMissionCancel(From, Event, To, Mission)
   -- Info message.
   self:I(self.lid..string.format("Cancel mission %s", Mission.name))
   
-  if Mission:IsPlanned() or Mission:IsQueued() or Mission:IsRequested() then
+  local Ngroups = Mission:CountOpsGroups()
+  
+  if Mission:IsPlanned() or Mission:IsQueued() or Mission:IsRequested() or Ngroups == 0 then
   
     Mission:Done()
   

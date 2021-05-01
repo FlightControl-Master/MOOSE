@@ -241,13 +241,20 @@ EVENTS = {
   Score =             world.event.S_EVENT_SCORE or -1,
   UnitLost =          world.event.S_EVENT_UNIT_LOST or -1,
   LandingAfterEjection = world.event.S_EVENT_LANDING_AFTER_EJECTION or -1,
+  -- Added with DCS 2.7.0
+  ParatrooperLanding        = world.event.S_EVENT_PARATROOPER_LENDING or -1,
+  DiscardChairAfterEjection = world.event.S_EVENT_DISCARD_CHAIR_AFTER_EJECTION or -1,
+  WeaponAdd                 = world.event.S_EVENT_WEAPON_ADD or -1,
+  TriggerZone               = world.event.S_EVENT_TRIGGER_ZONE or -1,
+  LandingQualityMark        = world.event.S_EVENT_LANDING_QUALITY_MARK or -1,
+  BDA                       = world.event.S_EVENT_BDA or -1,
 }
 
 --- The Event structure
 -- Note that at the beginning of each field description, there is an indication which field will be populated depending on the object type involved in the Event:
 --   
 --   * A (Object.Category.)UNIT : A UNIT object type is involved in the Event.
---   * A (Object.Category.)STATIC : A STATIC object type is involved in the Event.µ
+--   * A (Object.Category.)STATIC : A STATIC object type is involved in the Event.
 --   
 -- @type EVENTDATA
 -- @field #number id The identifier of the event.
@@ -521,6 +528,37 @@ local _EVENTMETA = {
      Order = 1,
      Event = "OnEventLandingAfterEjection",
      Text = "S_EVENT_LANDING_AFTER_EJECTION" 
+   },
+   -- Added with DCS 2.7.0
+   [EVENTS.ParatrooperLanding] = {
+     Order = 1,
+     Event = "OnEventParatrooperLanding",
+     Text = "S_EVENT_PARATROOPER_LENDING" 
+   },
+   [EVENTS.DiscardChairAfterEjection] = {
+     Order = 1,
+     Event = "OnEventDiscardChairAfterEjection",
+     Text = "S_EVENT_DISCARD_CHAIR_AFTER_EJECTION" 
+   },
+   [EVENTS.WeaponAdd] = {
+     Order = 1,
+     Event = "OnEventWeaponAdd",
+     Text = "S_EVENT_WEAPON_ADD" 
+   },
+   [EVENTS.TriggerZone] = {
+     Order = 1,
+     Event = "OnEventTriggerZone",
+     Text = "S_EVENT_TRIGGER_ZONE" 
+   },
+   [EVENTS.LandingQualityMark] = {
+     Order = 1,
+     Event = "OnEventLandingQualityMark",
+     Text = "S_EVENT_LANDING_QUALITYMARK" 
+   },
+   [EVENTS.BDA] = {
+     Order = 1,
+     Event = "OnEventBDA",
+     Text = "S_EVENT_BDA" 
    },   
 }
 
@@ -1011,6 +1049,14 @@ function EVENT:onEvent( Event )
             Event.IniCoalition = 0
             Event.IniCategory  = 0
             Event.IniTypeName = "Ejected Pilot"
+         elseif Event.id == 33 then -- ejection seat discarded
+            Event.IniDCSUnit = Event.initiator
+            local ID=Event.initiator.id_
+            Event.IniDCSUnitName = string.format("Ejection Seat ID %s", tostring(ID))
+            Event.IniUnitName = Event.IniDCSUnitName
+            Event.IniCoalition = 0
+            Event.IniCategory  = 0
+            Event.IniTypeName = "Ejection Seat"
           else
             Event.IniDCSUnit = Event.initiator
             Event.IniDCSUnitName = Event.IniDCSUnit:getName()
@@ -1077,13 +1123,34 @@ function EVENT:onEvent( Event )
         end
         
         if Event.TgtObjectCategory == Object.Category.STATIC then
-          Event.TgtDCSUnit = Event.target
-          Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
-          Event.TgtUnitName = Event.TgtDCSUnitName
-          Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
-          Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
-          Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
-          Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+          BASE:T({StaticTgtEvent = Event.id})
+          -- get base data
+            Event.TgtDCSUnit = Event.target
+            if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
+              Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+              Event.TgtUnitName = Event.TgtDCSUnitName
+              Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
+              Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
+              Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
+              Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+            else
+              Event.TgtDCSUnitName = string.format("No target object for Event ID %s", tostring(Event.id))
+              Event.TgtUnitName = Event.TgtDCSUnitName
+              Event.TgtUnit = nil
+              Event.TgtCoalition = 0
+              Event.TgtCategory = 0
+              if Event.id == 6 then
+                Event.TgtTypeName = "Ejected Pilot"
+                Event.TgtDCSUnitName = string.format("Ejected Pilot ID %s", tostring(Event.IniDCSUnitName))
+                Event.TgtUnitName = Event.TgtDCSUnitName
+              elseif Event.id == 33 then
+                Event.TgtTypeName = "Ejection Seat"
+                Event.TgtDCSUnitName = string.format("Ejection Seat ID %s", tostring(Event.IniDCSUnitName))
+                Event.TgtUnitName = Event.TgtDCSUnitName
+              else
+                Event.TgtTypeName = "Static"
+              end
+           end
         end
   
         if Event.TgtObjectCategory == Object.Category.SCENERY then
