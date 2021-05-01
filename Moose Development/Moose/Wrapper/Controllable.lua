@@ -1460,7 +1460,7 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
     DCSTask.params.weaponType=WeaponType
   end
 
-  self:I(DCSTask)
+  --self:I(DCSTask)
 
   return DCSTask
 end
