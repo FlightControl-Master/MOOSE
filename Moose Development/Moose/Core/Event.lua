@@ -1049,6 +1049,14 @@ function EVENT:onEvent( Event )
             Event.IniCoalition = 0
             Event.IniCategory  = 0
             Event.IniTypeName = "Ejected Pilot"
+         elseif Event.id == 33 then -- ejection seat discarded
+            Event.IniDCSUnit = Event.initiator
+            local ID=Event.initiator.id_
+            Event.IniDCSUnitName = string.format("Ejection Seat ID %s", tostring(ID))
+            Event.IniUnitName = Event.IniDCSUnitName
+            Event.IniCoalition = 0
+            Event.IniCategory  = 0
+            Event.IniTypeName = "Ejection Seat"
           else
             Event.IniDCSUnit = Event.initiator
             Event.IniDCSUnitName = Event.IniDCSUnit:getName()
@@ -1115,25 +1123,34 @@ function EVENT:onEvent( Event )
         end
         
         if Event.TgtObjectCategory == Object.Category.STATIC then
-          BASE:T({Event = Event})
-          --[[
-              Event.TgtDCSUnit = Event.target
+          BASE:T({StaticTgtEvent = Event.id})
+          -- get base data
+            Event.TgtDCSUnit = Event.target
+            if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
               Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
               Event.TgtUnitName = Event.TgtDCSUnitName
               Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
               Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
               Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
               Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
-          --]]
-          -- Same as for Event Initiator above 2.7 issue
-          Event.TgtDCSUnit = Event.target
-          local ID=Event.initiator.id_
-          Event.TgtDCSUnitName = string.format("Ejected Pilot ID %s", tostring(ID))
-          Event.TgtUnitName = Event.TgtDCSUnitName
-          --Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
-          Event.TgtCoalition = Event.IniCoalition
-          Event.TgtCategory = Event.IniCategory
-          Event.TgtTypeName = "Ejected Pilot"
+            else
+              Event.TgtDCSUnitName = string.format("No target object for Event ID %s", tostring(Event.id))
+              Event.TgtUnitName = Event.TgtDCSUnitName
+              Event.TgtUnit = nil
+              Event.TgtCoalition = 0
+              Event.TgtCategory = 0
+              if Event.id == 6 then
+                Event.TgtTypeName = "Ejected Pilot"
+                Event.TgtDCSUnitName = string.format("Ejected Pilot ID %s", tostring(Event.IniDCSUnitName))
+                Event.TgtUnitName = Event.TgtDCSUnitName
+              elseif Event.id == 33 then
+                Event.TgtTypeName = "Ejection Seat"
+                Event.TgtDCSUnitName = string.format("Ejection Seat ID %s", tostring(Event.IniDCSUnitName))
+                Event.TgtUnitName = Event.TgtDCSUnitName
+              else
+                Event.TgtTypeName = "Static"
+              end
+           end
         end
   
         if Event.TgtObjectCategory == Object.Category.SCENERY then
