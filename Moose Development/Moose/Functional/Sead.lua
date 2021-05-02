@@ -16,9 +16,15 @@
 -- ===
 -- 
 -- ### Authors: **FlightControl**, **applevangelist**
+<<<<<<< Updated upstream
 -- 
 -- Last Update: Feb 2021
 -- 
+=======
+--
+-- Last Update: April 2021
+--
+>>>>>>> Stashed changes
 -- ===
 -- 
 -- @module Functional.Sead
