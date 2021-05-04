@@ -1,20 +1,20 @@
 --- **Functional** -- Short Range Air Defense System
---
+-- 
 -- ===
---
+-- 
 -- **SHORAD** - Short Range Air Defense System
 -- Controls a network of short range air/missile defense groups.
---
+-- 
 -- ===
---
+-- 
 -- ## Missions:
 --
 -- ### [SHORAD - Short Range Air Defense](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SRD%20-%20SHORAD%20Defense)
---
+-- 
 -- ===
---
+-- 
 -- ### Author : **applevangelist **
---
+-- 
 -- @module Functional.Shorad
 -- @image Functional.Shorad.jpg
 --
@@ -26,7 +26,7 @@
 -- @field #string ClassName
 -- @field #string name Name of this Shorad
 -- @field #boolean debug Set the debug state
--- @field #string Prefixes String to be used to build the @{#Core.Set#SET_GROUP}
+-- @field #string Prefixes String to be used to build the @{#Core.Set#SET_GROUP} 
 -- @field #number Radius Shorad defense radius in meters
 -- @field Core.Set#SET_GROUP Groupset The set of Shorad groups
 -- @field Core.Set#SET_GROUP Samset The set of SAM groups to defend
@@ -41,10 +41,10 @@
 -- @field #boolean UseEmOnOff Decide if we are using Emission on/off (default) or AlarmState red/green.
 -- @extends Core.Base#BASE
 
---- *Good friends are worth defending.* Mr Tushman, Wonder (the Movie)
---
+--- *Good friends are worth defending.* Mr Tushman, Wonder (the Movie) 
+-- 
 -- Simple Class for a more intelligent Short Range Air Defense System
---
+-- 
 -- #SHORAD
 -- Moose derived missile intercepting short range defense system.
 -- Protects a network of SAM sites. Uses events to switch on the defense groups closest to the enemy.
@@ -52,26 +52,26 @@
 --
 -- ## Usage
 --
--- Set up a #SET_GROUP for the SAM sites to be protected:
---
---        `local SamSet = SET_GROUP:New():FilterPrefixes("Red SAM"):FilterCoalitions("red"):FilterStart()`
---
+-- Set up a #SET_GROUP for the SAM sites to be protected:  
+-- 
+--        `local SamSet = SET_GROUP:New():FilterPrefixes("Red SAM"):FilterCoalitions("red"):FilterStart()`   
+--    
 -- By default, SHORAD will defense against both HARMs and AG-Missiles with short to medium range. The default defense probability is 70-90%.
--- When a missile is detected, SHORAD will activate defense groups in the given radius around the target for 10 minutes. It will *not* react to friendly fire.
---
+-- When a missile is detected, SHORAD will activate defense groups in the given radius around the target for 10 minutes. It will *not* react to friendly fire.    
+--        
 -- ### Start a new SHORAD system, parameters are:
+--   
+--  * Name: Name of this SHORAD.  
+--  * ShoradPrefix: Filter for the Shorad #SET_GROUP.  
+--  * Samset: The #SET_GROUP of SAM sites to defend.  
+--  * Radius: Defense radius in meters. 
+--  * ActiveTimer: Determines how many seconds the systems stay on red alert after wake-up call.  
+--  * Coalition: Coalition, i.e. "blue", "red", or "neutral".* 
+--    
+--        `myshorad = SHORAD:New("RedShorad", "Red SHORAD", SamSet, 25000, 600, "red")`       
 --
---  * Name: Name of this SHORAD.
---  * ShoradPrefix: Filter for the Shorad #SET_GROUP.
---  * Samset: The #SET_GROUP of SAM sites to defend.
---  * Radius: Defense radius in meters.
---  * ActiveTimer: Determines how many seconds the systems stay on red alert after wake-up call.
---  * Coalition: Coalition, i.e. "blue", "red", or "neutral".*
---
---        `myshorad = SHORAD:New("RedShorad", "Red SHORAD", SamSet, 25000, 600, "red")`
---
--- ## Customize options
---
+-- ## Customize options   
+--  
 --  * SHORAD:SwitchDebug(debug)
 --  * SHORAD:SwitchHARMDefense(onoff)
 --  * SHORAD:SwitchAGMDefense(onoff)
@@ -96,7 +96,7 @@ SHORAD = {
   DefendMavs = true,
   DefenseLowProb = 70,
   DefenseHighProb = 90,
-  UseEmOnOff = false,
+  UseEmOnOff = false,  
 }
 
 -----------------------------------------------------------------------
@@ -137,7 +137,7 @@ do
   ["X_31"] = "X_31",
   ["Kh25"] = "Kh25",
   }
-
+  
   --- TODO complete list?
   -- @field Mavs
   SHORAD.Mavs = {
@@ -148,7 +148,7 @@ do
   ["Kh31"] = "Kh31",
   ["Kh66"] = "Kh66",
   }
-
+  
   --- Instantiates a new SHORAD object
   -- @param #SHORAD self
   -- @param #string Name Name of this SHORAD
@@ -157,10 +157,10 @@ do
   -- @param #number Radius Defense radius in meters, used to switch on groups
   -- @param #number ActiveTimer Determines how many seconds the systems stay on red alert after wake-up call
   -- @param #string Coalition Coalition, i.e. "blue", "red", or "neutral"
-  function SHORAD:New(Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition)
+  function SHORAD:New(Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition) 
     local self = BASE:Inherit( self, BASE:New() )
-    self:F({Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition})
-
+    self:T({Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition})
+    
     local GroupSet = SET_GROUP:New():FilterPrefixes(ShoradPrefix):FilterCoalitions(Coalition):FilterCategoryGround():FilterStart()
 
     self.name = Name or "MyShorad"
@@ -176,14 +176,14 @@ do
     self.DefendMavs = true
     self.DefenseLowProb = 70 -- probability to detect a missile shot, low margin
     self.DefenseHighProb = 90  -- probability to detect a missile shot, high margin
-    self.UseEmOnOff = false -- Decide if we are using Emission on/off (default) or AlarmState red/green
-    self:I("*** SHORAD - Started Version 0.2.1")
+    self.UseEmOnOff = true -- Decide if we are using Emission on/off (default) or AlarmState red/green
+    self:I("*** SHORAD - Started Version 0.2.5")
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("SHORAD %s | ", self.name)
     self:_InitState()
     return self
   end
-
+  
   --- Initially set all groups to alarm state GREEN
   -- @param #SHORAD self
   function SHORAD:_InitState()
@@ -204,12 +204,12 @@ do
       math.random()
     end
   end
-
+  
   --- Switch debug state
   -- @param #SHORAD self
   -- @param #boolean debug Switch debug on (true) or off (false)
   function SHORAD:SwitchDebug(debug)
-    self:F( { debug } )
+    self:T( { debug } )
     local onoff = debug or false
     if debug then
        self.debug = true
@@ -221,31 +221,31 @@ do
       BASE:TraceOff()
     end
   end
-
+  
   --- Switch defense for HARMs
   -- @param #SHORAD self
   -- @param #boolean onoff
   function SHORAD:SwitchHARMDefense(onoff)
-    self:F( { onoff } )
+    self:T( { onoff } )
     local onoff = onoff or true
     self.DefendHarms = onoff
   end
-
+  
   --- Switch defense for AGMs
   -- @param #SHORAD self
   -- @param #boolean onoff
   function SHORAD:SwitchAGMDefense(onoff)
-    self:F( { onoff } )
+    self:T( { onoff } )
     local onoff = onoff or true
     self.DefendMavs = onoff
   end
-
+  
   --- Set defense probability limits
   -- @param #SHORAD self
   -- @param #number low Minimum detection limit, integer 1-100
   -- @param #number high Maximum detection limit integer 1-100
   function SHORAD:SetDefenseLimits(low,high)
-    self:F( { low, high } )
+    self:T( { low, high } )
     local low = low or 70
     local high = high or 90
     if (low < 0) or (low > 100) or (low > high) then
@@ -257,7 +257,7 @@ do
     self.DefenseLowProb = low
     self.DefenseHighProb = high
   end
-
+  
   --- Set the number of seconds a SHORAD site will stay active
   -- @param #SHORAD self
   -- @param #number seconds Number of seconds systems stay active
@@ -271,7 +271,7 @@ do
 
   --- Set the number of meters for the SHORAD defense zone
   -- @param #SHORAD self
-  -- @param #number meters Radius of the defense search zone in meters. #SHORADs in this range around a targeted group will go active
+  -- @param #number meters Radius of the defense search zone in meters. #SHORADs in this range around a targeted group will go active 
   function SHORAD:SetDefenseRadius(meters)
     local radius = meters or 20000
     if radius < 0 then
@@ -279,20 +279,20 @@ do
     end
     self.Radius = radius
   end
-
+  
   --- Set using Emission on/off instead of changing alarm state
   -- @param #SHORAD self
   -- @param #boolean switch Decide if we are changing alarm state or AI state
   function SHORAD:SetUsingEmOnOff(switch)
     self.UseEmOnOff = switch or false
   end
-
+  
   --- Check if a HARM was fired
   -- @param #SHORAD self
   -- @param #string WeaponName
   -- @return #boolean Returns true for a match
   function SHORAD:_CheckHarms(WeaponName)
-    self:F( { WeaponName } )
+    self:T( { WeaponName } )
     local hit = false
     if self.DefendHarms then
       for _,_name in pairs (SHORAD.Harms) do
@@ -301,13 +301,13 @@ do
     end
     return hit
   end
-
+  
   --- Check if an AGM was fired
   -- @param #SHORAD self
   -- @param #string WeaponName
   -- @return #boolean Returns true for a match
   function SHORAD:_CheckMavs(WeaponName)
-    self:F( { WeaponName } )
+    self:T( { WeaponName } )
     local hit = false
     if self.DefendMavs then
       for _,_name in pairs (SHORAD.Mavs) do
@@ -316,7 +316,7 @@ do
     end
     return hit
   end
-
+  
   --- Check the coalition of the attacker
   -- @param #SHORAD self
   -- @param #string Coalition name
@@ -324,7 +324,7 @@ do
   function SHORAD:_CheckCoalition(Coalition)
     local owncoalition = self.Coalition
     local othercoalition = ""
-    if Coalition == 0 then
+    if Coalition == 0 then 
       othercoalition = "neutral"
     elseif Coalition == 1 then
       othercoalition = "red"
@@ -338,7 +338,7 @@ do
       return false
     end
   end
-
+  
   --- Check if the missile is aimed at a SHORAD
   -- @param #SHORAD self
   -- @param #string TargetGroupName Name of the target group
@@ -352,11 +352,12 @@ do
       local groupname = _groups:GetName()
       if string.find(groupname, tgtgrp, 1) then
         returnname = true
+        _groups:RelocateGroundRandomInRadius(7,125,false,false) -- be a bit evasive
       end
     end
-    return returnname
+    return returnname  
   end
-
+  
   --- Check if the missile is aimed at a SAM site
   -- @param #SHORAD self
   -- @param #string TargetGroupName Name of the target group
@@ -364,7 +365,8 @@ do
   function SHORAD:_CheckShotAtSams(TargetGroupName)
     local tgtgrp = TargetGroupName
     local shorad = self.Samset
-    local shoradset = shorad:GetAliveSet() --#table
+    --local shoradset = shorad:GetAliveSet() --#table
+    local shoradset = shorad:GetSet() --#table
     local returnname = false
     for _,_groups in pairs (shoradset) do
       local groupname = _groups:GetName()
@@ -374,7 +376,7 @@ do
     end
     return returnname
   end
-
+  
   --- Calculate if the missile shot is detected
   -- @param #SHORAD self
   -- @return #boolean Returns true for a detection, else false
@@ -387,24 +389,36 @@ do
     end
     return IsDetected
   end
-
+  
   --- Wake up #SHORADs in a zone with diameter Radius for ActiveTimer seconds
   -- @param #SHORAD self
   -- @param #string TargetGroup Name of the target group used to build the #ZONE
   -- @param #number Radius Radius of the #ZONE
   -- @param #number ActiveTimer Number of seconds to stay active
-  -- @usage Use this function to integrate with other systems, example
-  --
+  -- @param #number TargetCat (optional) Category, i.e. Object.Category.UNIT or Object.Category.STATIC
+  -- @usage Use this function to integrate with other systems, example   
+  -- 
   -- local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()
   -- myshorad = SHORAD:New("BlueShorad", "Blue SHORAD", SamSet, 22000, 600, "blue")
   -- myshorad:SwitchDebug(true)
   -- mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
   -- mymantis:AddShorad(myshorad,720)
   -- mymantis:Start()
-  function SHORAD:WakeUpShorad(TargetGroup, Radius, ActiveTimer)
-    self:F({TargetGroup, Radius, ActiveTimer})
-    local targetgroup = GROUP:FindByName(TargetGroup)
-    local targetzone = ZONE_GROUP:New("Shorad",targetgroup,Radius) -- create a defense zone to check
+  function SHORAD:WakeUpShorad(TargetGroup, Radius, ActiveTimer, TargetCat)
+    self:T({TargetGroup, Radius, ActiveTimer, TargetCat})
+    local targetcat = TargetCat or Object.Category.UNIT
+    local targetgroup = TargetGroup
+    local targetvec2 = nil
+    if targetcat == Object.Category.UNIT then
+      targetvec2 = GROUP:FindByName(targetgroup):GetVec2()
+    elseif targetcat == Object.Category.STATIC then
+      targetvec2 = STATIC:FindByName(targetgroup,false):GetVec2()
+    else
+      local samset = self.Samset
+      local sam = samset:GetRandom()
+      targetvec2 = sam:GetVec2()
+    end
+    local targetzone = ZONE_RADIUS:New("Shorad",targetvec2,Radius)  -- create a defense zone to check
     local groupset = self.Groupset --Core.Set#SET_GROUP
     local shoradset = groupset:GetAliveSet() --#table
     -- local function to switch off shorad again
@@ -441,13 +455,13 @@ do
       end
     end
   end
-
+  
   --- Main function - work on the EventData
   -- @param #SHORAD self
   -- @param Core.Event#EVENTDATA EventData The event details table data set
   function SHORAD:OnEventShot( EventData )
-    self:F( { EventData } )
-
+    self:T( { EventData } )
+  
     --local ShootingUnit = EventData.IniDCSUnit
     --local ShootingUnitName = EventData.IniDCSUnitName
     local ShootingWeapon = EventData.Weapon -- Identify the weapon fired
@@ -459,7 +473,7 @@ do
       local IsDetected = self:_ShotIsDetected()
       -- convert to text
       local DetectedText = "false"
-      if IsDetected then
+      if IsDetected then 
         DetectedText = "true"
       end
       local text = string.format("%s Missile Launched = %s | Detected probability state is %s", self.lid, ShootingWeaponName, DetectedText)
@@ -469,29 +483,43 @@ do
       if (self:_CheckHarms(ShootingWeaponName) or self:_CheckMavs(ShootingWeaponName)) and IsDetected then
         -- get target data
         local targetdata = EventData.Weapon:getTarget() -- Identify target
-        local targetunit = UNIT:Find(targetdata)
+        local targetcat = targetdata:getCategory() -- Identify category
+        self:T(string.format("Target Category (3=STATIC, 1=UNIT)= %s",tostring(targetcat)))
+        local targetunit = nil
+        if targetcat == Object.Category.UNIT then -- UNIT
+          targetunit = UNIT:Find(targetdata)
+        elseif targetcat == Object.Category.STATIC then  -- STATIC
+          targetunit = STATIC:Find(targetdata)
+        end   
         --local targetunitname = Unit.getName(targetdata) -- Unit name
         if targetunit and targetunit:IsAlive() then
           local targetunitname = targetunit:GetName()
           --local targetgroup = Unit.getGroup(Weapon.getTarget(ShootingWeapon)) --targeted group
-          local targetgroup = targetunit:GetGroup()
-          local targetgroupname = targetgroup:GetName() -- group name
+          local targetgroup = nil
+          local targetgroupname = "none"
+          if targetcat == Object.Category.UNIT then
+            targetgroup = targetunit:GetGroup()
+            targetgroupname = targetgroup:GetName() -- group name
+          elseif targetcat == Object.Category.STATIC then
+            targetgroup = targetunit
+            targetgroupname = targetunitname
+          end
           local text = string.format("%s Missile Target = %s", self.lid, tostring(targetgroupname))
           self:T( text )
           local m = MESSAGE:New(text,10,"Info"):ToAllIf(self.debug)
-          -- check if we or a SAM site are the target
+          -- check if we or a SAM site are the target 
           --local TargetGroup = EventData.TgtGroup -- Wrapper.Group#GROUP
           local shotatus = self:_CheckShotAtShorad(targetgroupname) --#boolean
           local shotatsams = self:_CheckShotAtSams(targetgroupname) --#boolean
           -- if being shot at, find closest SHORADs to activate
           if shotatsams or shotatus then
             self:T({shotatsams=shotatsams,shotatus=shotatus})
-            self:WakeUpShorad(targetgroupname, self.Radius, self.ActiveTimer)
+            self:WakeUpShorad(targetgroupname, self.Radius, self.ActiveTimer, targetcat)
           end
-        end
+        end  
       end
     end
-  end
+  end 
 --
 end
 -----------------------------------------------------------------------
