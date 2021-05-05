@@ -61,7 +61,7 @@ function MARKEROPS_BASE:New(Tagname,Keywords)
   self.lid=string.format("MARKEROPS_BASE %s | ", tostring(self.version))
   
   self.Tag = Tagname or "mytag"-- #string
-  self.Keywords = Keywords or {} -- #table
+  self.Keywords = Keywords or {} -- #table - might want to use lua regex here, too
   self.debug = false
   
   -----------------------
