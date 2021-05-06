@@ -13,7 +13,7 @@
 --
 -- ### Author: **funkyfranky**
 -- @module Wrapper.Marker
--- @image Wrapper_Marker.png
+-- @image MOOSE_Core.JPG
 
 
 --- Marker class.

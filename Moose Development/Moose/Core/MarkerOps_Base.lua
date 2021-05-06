@@ -15,7 +15,7 @@
 -- ===
 ---
 -- @module Core.MarkerOps_Base
--- @image Wrapper_Marker.png
+-- @image MOOSE_Core.JPG
 
 --------------------------------------------------------------------------
 -- MARKEROPS_BASE Class Definition.
@@ -32,8 +32,6 @@
 --- *Fiat lux.* -- Latin proverb.
 --
 -- ===
---
--- ![Banner Image](..\Presentations\MARKER\Marker_Main.jpg)
 --
 -- # The MARKEROPS_BASE Concept
 -- 
