@@ -1184,7 +1184,7 @@ do -- COORDINATE
     
     -- ETA.
     RoutePoint.ETA=0
-    RoutePoint.ETA_locked=true
+    RoutePoint.ETA_locked=false
     
     -- Waypoint description.
     RoutePoint.name=description
@@ -1333,7 +1333,7 @@ do -- COORDINATE
     RoutePoint.formation_template=""
     
     RoutePoint.ETA=0
-    RoutePoint.ETA_locked=true
+    RoutePoint.ETA_locked=false
 
     RoutePoint.speed = ( Speed or 20 ) / 3.6
     RoutePoint.speed_locked = true
@@ -1368,7 +1368,7 @@ do -- COORDINATE
     RoutePoint.formation_template = ""
 
     RoutePoint.ETA=0
-    RoutePoint.ETA_locked=true
+    RoutePoint.ETA_locked=false
 
     RoutePoint.speed = ( Speed or 20 ) / 3.6
     RoutePoint.speed_locked = true
