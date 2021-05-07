@@ -3267,7 +3267,7 @@ do -- SET_STATIC
     -- @param #SET_STATIC self
     -- @param Core.Zone#ZONE Zone The Zone to be tested for.
     -- @return #boolean
-    function SET_STATIC:IsPatriallyInZone( Zone )
+    function SET_STATIC:IsPartiallyInZone( Zone )
 
       local IsPartiallyInZone = false
 
