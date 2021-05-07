@@ -721,11 +721,13 @@ end
 
 --- Update marker of the patrol point.
 -- @param #AIRWING.PatrolData point Patrol point table.
-function AIRWING.UpdatePatrolPointMarker(point)
+function AIRWING:UpdatePatrolPointMarker(point)
+  if self.markpoints then -- sometimes there's a direct call from #OPSGROUP
     local text=string.format("%s Occupied=%d\nheading=%03d, leg=%d NM, alt=%d ft, speed=%d kts", 
     point.type, point.noccupied, point.heading, point.leg, point.altitude, point.speed)
   
     point.marker:UpdateText(text, 1)
+  end
 end
 
 

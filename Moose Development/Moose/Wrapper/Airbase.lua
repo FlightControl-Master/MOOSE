@@ -615,7 +615,7 @@ end
 
 --- Get all airbase names of the current map. This includes ships and FARPS.
 -- @param DCS#Coalition coalition (Optional) Return only airbases belonging to the specified coalition. By default, all airbases of the map are returned.
--- @param #number category (Optional) Return only airbases of a certain category, e.g. Airbase.Category.FARP
+-- @param #number category (Optional) Return only airbases of a certain category, e.g. `Airbase.Category.HELIPAD`.
 -- @return #table Table containing all airbase names of the current map.
 function AIRBASE.GetAllAirbaseNames(coalition, category)
 
