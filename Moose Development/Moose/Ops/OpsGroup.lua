@@ -435,13 +435,14 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.7.2"
+OPSGROUP.version="0.7.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: AI on/off.
+-- TODO: Emission on/off.
 -- TODO: Invisible/immortal.
 -- TODO: F10 menu.
 -- TODO: Add pseudo function.
@@ -1112,7 +1113,7 @@ function OPSGROUP:GetVelocity(UnitName)
   return nil
 end
 
---- Get current heading of the group.
+--- Get current heading of the group or (optionally) of a specific unit of the group.
 -- @param #OPSGROUP self
 -- @param #string UnitName (Optional) Get heading of a specific unit of the group. Default is from the first existing unit in the group.
 -- @return #number Current heading of the group in degrees.
@@ -1181,7 +1182,7 @@ function OPSGROUP:GetOrientation(UnitName)
   return nil
 end
 
---- Get current orientation of the first unit in the group.
+--- Get current "X" orientation of the first unit in the group.
 -- @param #OPSGROUP self
 -- @param #string UnitName (Optional) Get orientation of a specific unit of the group. Default is the first existing unit of the group.
 -- @return DCS#Vec3 Orientation X parallel to where the "nose" is pointing.
@@ -1736,6 +1737,13 @@ function OPSGROUP:IsNotCarrier()
   return self.carrierStatus==OPSGROUP.CarrierStatus.NOTCARRIER
 end
 
+--- Check if the group is a carrier.
+-- @param #OPSGROUP self
+-- @return #boolean If true, group is a carrier.
+function OPSGROUP:IsCarrier()
+  return not self:IsNotCarrier()
+end
+
 --- Check if the group is picking up cargo.
 -- @param #OPSGROUP self
 -- @return #boolean If true, group is picking up.
@@ -1764,6 +1772,13 @@ function OPSGROUP:IsUnloading()
   return self.carrierStatus==OPSGROUP.CarrierStatus.UNLOADING
 end
 
+
+--- Check if the group is assigned as cargo.
+-- @param #OPSGROUP self
+-- @return #boolean If true, group is cargo.
+function OPSGROUP:IsCargo()
+  return not self:IsNotCargo()
+end
 
 --- Check if the group is **not** cargo.
 -- @param #OPSGROUP self
@@ -4548,6 +4563,12 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
       end
     end
   end
+  
+  if self:IsCarrier() then
+    if self.cargoTransport then
+      self.cargoTransport:CarrierGroupDead()
+    end
+  end
 
 end
 
@@ -4693,7 +4714,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterDead(From, Event, To)
-  self:T(self.lid..string.format("Group dead at t=%.3f", timer.getTime()))
+  self:I(self.lid..string.format("Group dead at t=%.3f", timer.getTime()))
 
   -- Is dead now.
   self.isDead=true
@@ -4708,11 +4729,17 @@ function OPSGROUP:onafterDead(From, Event, To)
     mission:GroupDead(self)
 
   end
+  
+  -- Inform all transports in the queue that this carrier group is dead now.
+  for i,_transport in pairs(self.cargoqueue) do
+    local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+    transport:DeadCarrierGroup(self)
+  end  
 
   -- Delete waypoints so they are re-initialized at the next spawn.
   self.waypoints=nil
   self.groupinitialized=false
-
+  
   -- Stop in a sec.
   self:__Stop(-5)
 end
@@ -5037,16 +5064,16 @@ function OPSGROUP:AddOpsTransport(OpsTransport)
   -- Add this group as carrier for the transport.
   OpsTransport:_AddCarrier(self)
 
-
   --Add to cargo queue
   table.insert(self.cargoqueue, OpsTransport)
 
+  -- Debug message.
   self:I(self.lid.."FF adding transport to carrier, #self.cargoqueue="..#self.cargoqueue)
 
   return self
 end
 
---- Delete a cargo transport assignment from the cargo queue
+--- Delete a cargo transport assignment from the cargo queue.
 -- @param #OPSGROUP self
 -- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport Cargo transport do be deleted.
 -- @return #OPSGROUP self

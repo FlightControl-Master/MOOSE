@@ -3,6 +3,9 @@
 -- ## Main Features:
 --
 --    * Transport troops from A to B.
+--    * Supports ground, naval and airborne (airplanes and helicopters) units as carriers
+--    * Use combined forces (ground, naval, air) to transport the troops.
+--    * Additional FSM events to hook into and customize your mission design. 
 --
 -- ===
 --
@@ -55,7 +58,8 @@
 --
 -- # The OPSTRANSPORT Concept
 -- 
--- Transport OPSGROUPS using carriers such as APCs, helicopters or airplanes.
+-- This class simulates troop transport using carriers such as APCs, ships helicopters or airplanes. The carriers and transported groups need to be OPSGROUPS (see ARMYGROUP, NAVYGROUP and FLIGHTGROUP classed). 
+-- 
 -- 
 -- @field #OPSTRANSPORT
 OPSTRANSPORT = {
@@ -97,14 +101,14 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.0.5"
+OPSTRANSPORT.version="0.0.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- DONE: Add start conditions.
--- TODO: Check carrier(s) dead.
+-- DONE: Check carrier(s) dead.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -164,6 +168,9 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   self:AddTransition("*",                           "Loaded",           "*")
   self:AddTransition("*",                           "Unloaded",         "*")
   
+  self:AddTransition("*",                           "DeadCarrierUnit",  "*")
+  self:AddTransition("*",                           "DeadCarrierGroup", "*")
+  self:AddTransition("*",                           "DeadCarrierAll",   "*")
 
   -- Call status update.
   self:__Status(-1)
@@ -313,22 +320,51 @@ end
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:_AddCarrier(CarrierGroup)
 
+  -- Check that this is not already an assigned carrier.
   if not self:IsCarrier(CarrierGroup) then
   
     -- Increase carrier count.
     self.Ncarrier=self.Ncarrier+1
 
-    -- Set trans
+    -- Set transport status to SCHEDULED.
     self:SetCarrierTransportStatus(CarrierGroup, OPSTRANSPORT.Status.SCHEDULED)
     
+    -- Call scheduled event.
     self:Scheduled()
     
+    -- Add carrier to table.
     table.insert(self.carriers, CarrierGroup)
     
   end 
   
   return self
 end
+
+--- Remove group from the current carrier list/table.
+-- @param #OPSTRANSPORT self
+-- @param Ops.OpsGroup#OPSGROUP CarrierGroup Carrier OPSGROUP.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:_DelCarrier(CarrierGroup)
+
+  if self:IsCarrier(CarrierGroup) then
+ 
+    for i,_carrier in pairs(self.carriers) do
+      local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+      if carrier.groupname==CarrierGroup.groupname then
+        self:I(self.lid..string.format("Removing carrier %s", CarrierGroup.groupname))
+        table.remove(self.carriers, i)        
+      end
+    end    
+  
+    if #self.carriers==0 then  
+      self:DeadCarrierAll()
+    end
+    
+  end 
+  
+  return self
+end
+
 
 --- Set transport start and stop time.
 -- @param #OPSTRANSPORT self
@@ -560,7 +596,7 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
   local fsmstate=self:GetState()
   
   -- Info text.
-  local text=string.format("%s [%s --> %s]: Ncargo=%d/%d, Ncarrier=%d", fsmstate:upper(), self.pickupzone:GetName(), self.deployzone:GetName(), self.Ncargo, self.Ndelivered, self.Ncarrier)
+  local text=string.format("%s [%s --> %s]: Ncargo=%d/%d, Ncarrier=%d/%d", fsmstate:upper(), self.pickupzone:GetName(), self.deployzone:GetName(), self.Ncargo, self.Ndelivered, #self.carriers,self.Ncarrier)
   
   text=text..string.format("\nCargos:")
   for _,_cargo in pairs(self.cargos) do
@@ -646,6 +682,30 @@ end
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup OPSGROUP that was unloaded from a carrier.
 function OPSTRANSPORT:onafterUnloaded(From, Event, To, OpsGroup)
   self:I(self.lid..string.format("Unloaded OPSGROUP %s", OpsGroup:GetName()))
+end
+
+--- On after "DeadCarrierGroup" event.
+-- @param #OPSTRANSPORT self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup Carrier OPSGROUP that is dead. 
+function OPSTRANSPORT:onafterDeadCarrierGroup(From, Event, To, OpsGroup)
+  self:I(self.lid..string.format("Carrier OPSGROUP %s dead!", OpsGroup:GetName()))
+  -- Remove group from carrier list/table.
+  self:_DelCarrier(OpsGroup)
+end
+
+--- On after "DeadCarrierAll" event.
+-- @param #OPSTRANSPORT self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state. 
+function OPSTRANSPORT:onafterDeadCarrierAll(From, Event, To)
+  self:I(self.lid..string.format("ALL Carrier OPSGROUPs are dead! Setting stage to PLANNED if not all cargo was delivered."))
+  if not self:IsDelivered() then
+    self:Planned()
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -776,7 +836,7 @@ function OPSTRANSPORT:_CreateCargoGroupData(group)
   return cargo
 end
 
---- Get an OPSGROUIP
+--- Get an OPSGROUP from a given OPSGROUP or GROUP object. If the object is a GROUUP, an OPSGROUP is created automatically. 
 -- @param #OPSTRANSPORT self
 -- @param Core.Base#BASE Object The object, which can be a GROUP or OPSGROUP.
 -- @return Ops.OpsGroup#OPSGROUP Ops Group.
