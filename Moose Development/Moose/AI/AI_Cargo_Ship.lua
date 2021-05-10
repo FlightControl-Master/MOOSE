@@ -7,7 +7,7 @@
 -- ===
 --
 -- @module AI.AI_Cargo_Ship
--- @image AI_Cargo_Dispatching_For_Ship.JPG
+-- @image AI_Cargo_Dispatcher.JPG
 
 --- @type AI_CARGO_SHIP
 -- @extends AI.AI_Cargo#AI_CARGO
