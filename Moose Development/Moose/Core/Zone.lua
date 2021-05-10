@@ -56,6 +56,8 @@
 --- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+-- @field #number DrawID Unique ID of the drawn zone on the F10 map.
+-- @field #table Color Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
 -- @extends Core.Fsm#FSM
 
 
@@ -104,7 +106,9 @@ ZONE_BASE = {
   ClassName = "ZONE_BASE",
   ZoneName = "",
   ZoneProbability = 1,
-  }
+  DrawID=nil,
+  Color={}
+}
 
 
 --- The ZONE_BASE.BoundingSquare
@@ -324,6 +328,76 @@ function ZONE_BASE:BoundZone()
 
 end
 
+
+--- Set color of zone.
+-- @param #ZONE_BASE self
+-- @param #table RGBcolor RGB color table. Default `{1, 0, 0}`.
+-- @param #number Alpha Transparacy between 0 and 1. Default 0.15.
+-- @return #ZONE_BASE self
+function ZONE_BASE:SetColor(RGBcolor, Alpha)
+
+  RGBcolor=RGBcolor or {1, 0, 0}
+  Alpha=Alpha or 0.15
+  
+  self.Color={}
+  self.Color[1]=RGBcolor[1]
+  self.Color[2]=RGBcolor[2]
+  self.Color[3]=RGBcolor[3]
+  self.Color[4]=Alpha
+
+  return self
+end
+
+--- Get color table of the zone.
+-- @param #ZONE_BASE self
+-- @return #table Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
+function ZONE_BASE:GetColor()
+  return self.Color
+end
+
+--- Get RGB color of zone.
+-- @param #ZONE_BASE self
+-- @return #table Table with three entries, e.g. {1, 0, 0}, which is the RGB color code.
+function ZONE_BASE:GetColorRGB()
+  local rgb={}
+  rgb[1]=self.Color[1]
+  rgb[2]=self.Color[2]
+  rgb[3]=self.Color[3]
+  return rgb
+end
+
+--- Get transperency Alpha value of zone.
+-- @param #ZONE_BASE self
+-- @return #number Alpha value.
+function ZONE_BASE:GetColorAlpha()
+  local alpha=self.Color[4]
+  return alpha
+end
+
+--- Remove the drawing of the zone from the F10 map. 
+-- @param #ZONE_BASE self
+-- @param #number Delay (Optional) Delay before the drawing is removed.
+-- @return #ZONE_BASE self
+function ZONE_BASE:UndrawZone(Delay)
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, ZONE_BASE.UndrawZone, self)
+  else
+    if self.DrawID then
+      UTILS.RemoveMark(self.DrawID)
+    end
+  end
+  return self
+end
+
+--- Get ID of the zone object drawn on the F10 map.
+-- The ID can be used to remove the drawn object from the F10 map view via `UTILS.RemoveMark(MarkID)`.  
+-- @param #ZONE_BASE self
+-- @return #number Unique ID of the
+function ZONE_BASE:GetDrawID()
+  return self.DrawID
+end
+
+
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_BASE self
 -- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
@@ -467,6 +541,32 @@ function ZONE_RADIUS:MarkZone(Points)
 
   end
   
+end
+
+--- Draw the zone circle on the F10 map. 
+-- @param #ZONE_RADIUS self
+-- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+-- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha Transparency [0,1]. Default 1.
+-- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+-- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+-- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+
+  local coordinate=self:GetCoordinate()
+  
+  local Radius=self:GetRadius()
+  
+  Color=Color or self:GetColorRGB()
+  Alpha=Alpha or 1
+  FillColor=FillColor or Color
+  FillAlpha=FillAlpha or self:GetColorAlpha()
+
+  self.DrawID=coordinate:CircleToAll(Radius, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+  
+  return self
 end
 
 --- Bounds the zone with tires.
@@ -1116,22 +1216,37 @@ ZONE = {
   }
 
 
---- Constructor of ZONE, taking the zone name.
+--- Constructor of ZONE taking the zone name.
 -- @param #ZONE self
 -- @param #string ZoneName The name of the zone as defined within the mission editor.
--- @return #ZONE
+-- @return #ZONE self
 function ZONE:New( ZoneName )
 
+  -- First try to find the zone in the DB.
+  local zone=_DATABASE:FindZone(ZoneName)
+  
+  if zone then
+    --env.info("FF found zone in DB")
+    return zone
+  end
+
+  -- Get zone from DCS trigger function.
   local Zone = trigger.misc.getZone( ZoneName )
   
+  -- Error!
   if not Zone then
     error( "Zone " .. ZoneName .. " does not exist." )
     return nil
   end
 
-  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, { x = Zone.point.x, y = Zone.point.z }, Zone.radius ) )
-  self:F( ZoneName )
+  -- Create a new ZONE_RADIUS.
+  local self=BASE:Inherit( self, ZONE_RADIUS:New(ZoneName, {x=Zone.point.x, y=Zone.point.z}, Zone.radius))
+  self:F(ZoneName)
+  
+  -- Color of zone.
+  self.Color={1, 0, 0, 0.15}
 
+  -- DCS zone.
   self.Zone = Zone
   
   return self
@@ -1425,7 +1540,7 @@ function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
 end
 
 --- Returns the center location of the polygon.
--- @param #ZONE_GROUP self
+-- @param #ZONE_POLYGON_BASE self
 -- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Group} location.
 function ZONE_POLYGON_BASE:GetVec2()
   self:F( self.ZoneName )
@@ -1433,6 +1548,78 @@ function ZONE_POLYGON_BASE:GetVec2()
   local Bounds = self:GetBoundingSquare()
   
   return { x = ( Bounds.x2 + Bounds.x1 ) / 2, y = ( Bounds.y2 + Bounds.y1 ) / 2 }  
+end
+
+--- Get a vertex of the polygon.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #number Index Index of the vertex. Default 1. 
+-- @return DCS#Vec2 Vertex of the polygon.
+function ZONE_POLYGON_BASE:GetVertexVec2(Index)
+  return self._.Polygon[Index or 1]
+end
+
+--- Get a vertex of the polygon.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #number Index Index of the vertex. Default 1. 
+-- @return DCS#Vec3 Vertex of the polygon.
+function ZONE_POLYGON_BASE:GetVertexVec3(Index)
+  local vec2=self:GetVertexVec2(Index)
+  if vec2 then
+    local vec3={x=vec2.x, y=land.getHeight(vec2), z=vec2.y}
+    return vec3
+  end
+  return nil
+end
+
+--- Get a vertex of the polygon.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #number Index Index of the vertex. Default 1. 
+-- @return Core.Point#COORDINATE Vertex of the polygon.
+function ZONE_POLYGON_BASE:GetVertexCoordinate(Index)
+  local vec2=self:GetVertexVec2(Index)
+  if vec2 then
+    local coord=COORDINATE:NewFromVec2(vec2)
+    return coord
+  end
+  return nil
+end
+
+
+--- Get a list of verticies of the polygon.
+-- @param #ZONE_POLYGON_BASE self
+-- @return <DCS#Vec2> List of DCS#Vec2 verticies defining the edges of the polygon.
+function ZONE_POLYGON_BASE:GetVerticiesVec2()
+  return self._.Polygon
+end
+
+--- Get a list of verticies of the polygon.
+-- @param #ZONE_POLYGON_BASE self
+-- @return #table List of DCS#Vec3 verticies defining the edges of the polygon.
+function ZONE_POLYGON_BASE:GetVerticiesVec3()
+
+  local coords={}
+
+  for i,vec2 in ipairs(self._.Polygon) do
+    local vec3={x=vec2.x, y=land.getHeight(vec2), z=vec2.y}
+    table.insert(coords, vec3)
+  end
+  
+  return coords
+end
+
+--- Get a list of verticies of the polygon.
+-- @param #ZONE_POLYGON_BASE self
+-- @return #table List of COORDINATES verticies defining the edges of the polygon.
+function ZONE_POLYGON_BASE:GetVerticiesCoordinates()
+
+  local coords={}
+
+  for i,vec2 in ipairs(self._.Polygon) do
+    local coord=COORDINATE:NewFromVec2(vec2)
+    table.insert(coords, coord)
+  end
+  
+  return coords
 end
 
 --- Flush polygon coordinates as a table in DCS.log.
@@ -1494,6 +1681,46 @@ function ZONE_POLYGON_BASE:BoundZone( UnBound )
 end
 
 
+--- Draw the zone on the F10 map.  **NOTE** Currently, only polygons with **exactly four points** are supported!
+-- @param #ZONE_POLYGON_BASE self
+-- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+-- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha Transparency [0,1]. Default 1.
+-- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+-- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+-- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+
+  local coordinate=COORDINATE:NewFromVec2(self._.Polygon[1])
+
+  Color=Color or self:GetColorRGB()
+  Alpha=Alpha or 1
+  FillColor=FillColor or Color
+  FillAlpha=FillAlpha or self:GetColorAlpha()
+
+
+  if #self._.Polygon==4 then
+  
+    local Coord2=COORDINATE:NewFromVec2(self._.Polygon[2])
+    local Coord3=COORDINATE:NewFromVec2(self._.Polygon[3])
+    local Coord4=COORDINATE:NewFromVec2(self._.Polygon[4])
+  
+    self.DrawID=coordinate:QuadToAll(Coord2, Coord3, Coord4, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+  
+  else
+  
+    local Coordinates=self:GetVerticiesCoordinates()
+    table.remove(Coordinates, 1)
+  
+    self.DrawID=coordinate:MarkupToAllFreeForm(Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+  
+  end
+  
+  
+  return self
+end
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_POLYGON_BASE self

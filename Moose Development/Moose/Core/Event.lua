@@ -592,9 +592,7 @@ end
 -- @param Core.Base#BASE EventClass The class object for which events are handled.
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
-  self:I( { _EVENTMETA[EventID].Text, EventClass } )
-
-  env.info("FF EVENT.Init ID="..EventID)
+  self:F( { _EVENTMETA[EventID].Text, EventClass } )
 
   if not self.Events[EventID] then
     -- Create a WEAK table to ensure that the garbage collector is cleaning the event links when the object usage is cleaned.
@@ -988,8 +986,6 @@ end
 -- @param #EVENT self
 -- @param #EVENTDATA Event Event data table.
 function EVENT:onEvent( Event )
-
-  env.info("FF some event")
 
   local ErrorHandler = function( errmsg )
 
