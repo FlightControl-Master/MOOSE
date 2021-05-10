@@ -1008,37 +1008,13 @@ function EVENT:onEvent( Event )
   -- Check if this is a known event?
   if EventMeta then
 
-    env.info("FF some event 100 ID="..tostring(Event.id))
-
-    if Event.id==31 then
-       env.info("FF got event 31")
-       local initiator=Event.initiator~=nil
-       env.info(string.format("FF got event 31 initiator=%s", tostring(initiator)))
-       if self then
-         env.info(string.format("FF got event 31 self=true"))
-       end
-       if self.Events then
-         env.info(string.format("FF got event 31 self.Events=true"))
-       end
-       if self.Events[Event.id] then
-         env.info(string.format("FF got event 31 self.Events[Event.id]=true"))
-       else
-        env.info(string.format("FF NO event 31 self.Events[Event.id]=FALSE!"))
-       end
-    end
-
-    --if self and self.Events and self.Events[Event.id] and self.MissionEnd==false and (Event.initiator~=nil or (Event.initiator==nil and Event.idss~=EVENTS.PlayerLeaveUnit)) then
-    if self and self.Events and self.MissionEnd==false and (Event.initiator~=nil or (Event.initiator==nil and Event.idss~=EVENTS.PlayerLeaveUnit)) then
+    if self and self.Events and self.Events[Event.id] and self.MissionEnd==false and (Event.initiator~=nil or (Event.initiator==nil and Event.idss~=EVENTS.PlayerLeaveUnit)) then
 
       if Event.id and Event.id == EVENTS.MissionEnd then
         self.MissionEnd = true
       end
 
-      env.info("FF some event 150")
-
       if Event.initiator then
-
-        env.info("FF some event 200")
 
         Event.IniObjectCategory = Event.initiator:getCategory()
 
@@ -1068,11 +1044,7 @@ function EVENT:onEvent( Event )
 
         if Event.IniObjectCategory == Object.Category.STATIC then
 
-          env.info("FF some event 300")
-
           if Event.id==31 then
-
-            env.info("FF event 31")
 
             -- Event.initiator is a Static object representing the pilot. But getName() errors due to DCS bug.
             Event.IniDCSUnit = Event.initiator
