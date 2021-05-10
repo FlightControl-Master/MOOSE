@@ -17,6 +17,7 @@
 --   * Get zone properties.
 --   * Get zone bounding box.
 --   * Set/get zone name.
+--   * Draw zones (circular and polygon) on the F10 map.
 --   
 -- 
 -- There are essentially two core functions that zones accomodate:
@@ -494,6 +495,10 @@ end
 --   * @{#ZONE_RADIUS.GetRandomVec2}(): Gets a random 2D point in the zone.
 --   * @{#ZONE_RADIUS.GetRandomPointVec2}(): Gets a @{Core.Point#POINT_VEC2} object representing a random 2D point in the zone.
 --   * @{#ZONE_RADIUS.GetRandomPointVec3}(): Gets a @{Core.Point#POINT_VEC3} object representing a random 3D point in the zone. Note that the height of the point is at landheight.
+-- 
+-- ## Draw zone
+-- 
+--   * @{#ZONE_RADIUS.DrawZone}(): Draws the zone on the F10 map.
 -- 
 -- @field #ZONE_RADIUS
 ZONE_RADIUS = {
@@ -1506,6 +1511,11 @@ end
 --   * @{#ZONE_POLYGON_BASE.GetRandomVec2}(): Gets a random 2D point in the zone.
 --   * @{#ZONE_POLYGON_BASE.GetRandomPointVec2}(): Return a @{Core.Point#POINT_VEC2} object representing a random 2D point within the zone.
 --   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Core.Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
+--
+-- ## Draw zone
+-- 
+--   * @{#ZONE_POLYGON_BASE.DrawZone}(): Draws the zone on the F10 map.
+--
 -- 
 -- @field #ZONE_POLYGON_BASE
 ZONE_POLYGON_BASE = {
@@ -1938,7 +1948,7 @@ end
 -- This is especially handy if you want to quickly setup a SET_ZONE...
 -- So when you would declare `local SetZone = SET_ZONE:New():FilterPrefixes( "Defense" ):FilterStart()`,
 -- then SetZone would contain the ZONE_POLYGON object `DefenseZone` as part of the zone collection,
--- without much scripting overhead!!! 
+-- without much scripting overhead!
 -- 
 -- @field #ZONE_POLYGON
 ZONE_POLYGON = {

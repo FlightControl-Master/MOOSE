@@ -240,7 +240,7 @@ EVENTS = {
   Kill                      = world.event.S_EVENT_KILL or -1,
   Score                     = world.event.S_EVENT_SCORE or -1,
   UnitLost                  = world.event.S_EVENT_UNIT_LOST or -1,
-  LandingAfterEjection      = 31, --world.event.S_EVENT_LANDING_AFTER_EJECTION or -1,
+  LandingAfterEjection      = world.event.S_EVENT_LANDING_AFTER_EJECTION or -1,
   -- Added with DCS 2.7.0
   ParatrooperLanding        = world.event.S_EVENT_PARATROOPER_LENDING or -1,
   DiscardChairAfterEjection = world.event.S_EVENT_DISCARD_CHAIR_AFTER_EJECTION or -1,
@@ -524,7 +524,7 @@ local _EVENTMETA = {
      Event = "OnEventUnitLost",
      Text = "S_EVENT_UNIT_LOST"
    },
-   [world.event.S_EVENT_LANDING_AFTER_EJECTION] = {
+   [EVENTS.LandingAfterEjection] = {
      Order = 1,
      Event = "OnEventLandingAfterEjection",
      Text = "S_EVENT_LANDING_AFTER_EJECTION"
@@ -592,7 +592,7 @@ end
 -- @param Core.Base#BASE EventClass The class object for which events are handled.
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
-  self:F( { _EVENTMETA[EventID].Text, EventClass } )
+  self:F3( { _EVENTMETA[EventID].Text, EventClass } )
 
   if not self.Events[EventID] then
     -- Create a WEAK table to ensure that the garbage collector is cleaning the event links when the object usage is cleaned.
@@ -1124,34 +1124,33 @@ function EVENT:onEvent( Event )
         end
 
         if Event.TgtObjectCategory == Object.Category.STATIC then
-          BASE:T({StaticTgtEvent = Event.id})
           -- get base data
-            Event.TgtDCSUnit = Event.target
-            if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
-              Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+          Event.TgtDCSUnit = Event.target
+          if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
+            Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+            Event.TgtUnitName = Event.TgtDCSUnitName
+            Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
+            Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
+            Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
+            Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+          else
+            Event.TgtDCSUnitName = string.format("No target object for Event ID %s", tostring(Event.id))
+            Event.TgtUnitName = Event.TgtDCSUnitName
+            Event.TgtUnit = nil
+            Event.TgtCoalition = 0
+            Event.TgtCategory = 0
+            if Event.id == 6 then
+              Event.TgtTypeName = "Ejected Pilot"
+              Event.TgtDCSUnitName = string.format("Ejected Pilot ID %s", tostring(Event.IniDCSUnitName))
               Event.TgtUnitName = Event.TgtDCSUnitName
-              Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
-              Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
-              Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
-              Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+            elseif Event.id == 33 then
+              Event.TgtTypeName = "Ejection Seat"
+              Event.TgtDCSUnitName = string.format("Ejection Seat ID %s", tostring(Event.IniDCSUnitName))
+              Event.TgtUnitName = Event.TgtDCSUnitName
             else
-              Event.TgtDCSUnitName = string.format("No target object for Event ID %s", tostring(Event.id))
-              Event.TgtUnitName = Event.TgtDCSUnitName
-              Event.TgtUnit = nil
-              Event.TgtCoalition = 0
-              Event.TgtCategory = 0
-              if Event.id == 6 then
-                Event.TgtTypeName = "Ejected Pilot"
-                Event.TgtDCSUnitName = string.format("Ejected Pilot ID %s", tostring(Event.IniDCSUnitName))
-                Event.TgtUnitName = Event.TgtDCSUnitName
-              elseif Event.id == 33 then
-                Event.TgtTypeName = "Ejection Seat"
-                Event.TgtDCSUnitName = string.format("Ejection Seat ID %s", tostring(Event.IniDCSUnitName))
-                Event.TgtUnitName = Event.TgtDCSUnitName
-              else
-                Event.TgtTypeName = "Static"
-              end
-           end
+              Event.TgtTypeName = "Static"
+            end
+          end
         end
 
         if Event.TgtObjectCategory == Object.Category.SCENERY then

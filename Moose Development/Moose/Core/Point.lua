@@ -634,9 +634,9 @@ do -- COORDINATE
 
   --- Return a random Coordinate within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
   -- @param #COORDINATE self
-  -- @param DCS#Distance OuterRadius
-  -- @param DCS#Distance InnerRadius
-  -- @return #COORDINATE
+  -- @param DCS#Distance OuterRadius Outer radius in meters.
+  -- @param DCS#Distance InnerRadius Inner radius in meters.
+  -- @return #COORDINATE self
   function COORDINATE:GetRandomCoordinateInRadius( OuterRadius, InnerRadius )
     self:F2( { OuterRadius, InnerRadius } )
 
@@ -2172,8 +2172,8 @@ do -- COORDINATE
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
     -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
-    -- @param #number FontSize Font size.    
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.3.
+    -- @param #number FontSize Font size. Default 14.
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again. 
     function COORDINATE:TextToAll(Text, Coalition, Color, Alpha, FillColor, FillAlpha, FontSize, ReadOnly)
@@ -2185,8 +2185,8 @@ do -- COORDINATE
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
       FillColor=FillColor or Color
-      FillColor[4]=FillAlpha or 0.15      
-      FontSize=FontSize or 12
+      FillColor[4]=FillAlpha or 0.3
+      FontSize=FontSize or 14
       trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
       return MarkID
     end
