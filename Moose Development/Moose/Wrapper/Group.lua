@@ -2551,9 +2551,10 @@ do -- Players
   
 end
 
---- GROUND - Switch on/off radar emissions
+--- GROUND - Switch on/off radar emissions for the group.
 -- @param #GROUP self
--- @param #boolean switch
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @return #GROUP self 
 function GROUP:EnableEmission(switch)
   self:F2( self.GroupName )
   local switch = switch or false
@@ -2566,6 +2567,7 @@ function GROUP:EnableEmission(switch)
 
   end
 
+  return self
 end
 
 --do -- Smoke
