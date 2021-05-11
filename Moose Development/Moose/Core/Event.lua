@@ -578,10 +578,6 @@ function EVENT:New()
   -- Add world event handler.
   self.EventHandler = world.addEventHandler(self)
 
-  for _,Event in pairs(self.Events) do
-    self:Init(Event,EventClass)
-  end
-
   return self
 end
 
