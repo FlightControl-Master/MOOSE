@@ -164,6 +164,7 @@ do -- COORDINATE
   --
   --   * @{#COORDINATE.WaypointAir}(): Build an air route point.
   --   * @{#COORDINATE.WaypointGround}(): Build a ground route point.
+  --   * @{#COORDINATE.WaypointNaval}(): Build a naval route point.
   --
   -- Route points can be used in the Route methods of the @{Wrapper.Group#GROUP} class.
   --
@@ -183,9 +184,17 @@ do -- COORDINATE
   --
   -- ## 9) Coordinate text generation
   --
-  --
   --   * @{#COORDINATE.ToStringBR}(): Generates a Bearing & Range text in the format of DDD for DI where DDD is degrees and DI is distance.
   --   * @{#COORDINATE.ToStringLL}(): Generates a Latutude & Longutude text.
+  --
+  -- ## 10) Drawings on F10 map
+  --
+  --   * @{#COORDINATE.CircleToAll}(): Draw a circle on the F10 map.
+  --   * @{#COORDINATE.LineToAll}(): Draw a line on the F10 map.
+  --   * @{#COORDINATE.RectToAll}(): Draw a rectangle on the F10 map.
+  --   * @{#COORDINATE.QuadToAll}(): Draw a shape with four points on the F10 map.
+  --   * @{#COORDINATE.TextToAll}(): Write some text on the F10 map.
+  --   * @{#COORDINATE.ArrowToAll}(): Draw an arrow on the F10 map.
   --
   -- @field #COORDINATE
   COORDINATE = {
@@ -675,9 +684,9 @@ do -- COORDINATE
 
   --- Return a random Coordinate within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
   -- @param #COORDINATE self
-  -- @param DCS#Distance OuterRadius
-  -- @param DCS#Distance InnerRadius
-  -- @return #COORDINATE
+  -- @param DCS#Distance OuterRadius Outer radius in meters.
+  -- @param DCS#Distance InnerRadius Inner radius in meters.
+  -- @return #COORDINATE self
   function COORDINATE:GetRandomCoordinateInRadius( OuterRadius, InnerRadius )
     self:F2( { OuterRadius, InnerRadius } )
 
@@ -2044,13 +2053,13 @@ do -- COORDINATE
     -- @param #COORDINATE self
     -- @param #COORDINATE Endpoint COORDIANTE to where the line is drawn.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @param #string Text (Optional) Text displayed when mark is added. Default none.
-    -- @return #number The resulting Mark ID which is a number.
-    function COORDINATE:LineToAll(Endpoint, Coalition, LineType, Color, Alpha, ReadOnly, Text)
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:LineToAll(Endpoint, Coalition, Color, Alpha, LineType, ReadOnly, Text)
       local MarkID = UTILS.GetMarkID()
       if ReadOnly==nil then
         ReadOnly=false
@@ -2067,18 +2076,17 @@ do -- COORDINATE
     --- Circle to all.
     -- Creates a circle on the map with a given radius, color, fill color, and outline.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Center COORDIANTE of the center of the circle.
     -- @param #numberr Radius Radius in meters. Default 1000 m.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
-    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-    -- @param #number FillAlpha Transparency [0,1]. Default 0.5.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @param #string Text (Optional) Text displayed when mark is added. Default none.
-    -- @return #number The resulting Mark ID which is a number.
-    function COORDINATE:CircleToAll(Radius, Coalition, LineType, Color, Alpha, FillColor, FillAlpha, ReadOnly, Text)
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:CircleToAll(Radius, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text)
       local MarkID = UTILS.GetMarkID()
       if ReadOnly==nil then
         ReadOnly=false
@@ -2089,14 +2097,188 @@ do -- COORDINATE
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
       LineType=LineType or 1
-      FillColor=FillColor or {1,0,0}
-      FillColor[4]=FillAlpha or 0.5
+      FillColor=FillColor or Color
+      FillColor[4]=FillAlpha or 0.15
       trigger.action.circleToAll(Coalition, MarkID, vec3, Radius, Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
     end
 
   end -- Markings
 
+    --- Rectangle to all. Creates a rectangle on the map from the COORDINATE in one corner to the end COORDINATE in the opposite corner.
+    -- Creates a line on the F10 map from one point to another.
+    -- @param #COORDINATE self
+    -- @param #COORDINATE Endpoint COORDIANTE in the opposite corner.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:RectToAll(Endpoint, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text)
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local vec3=Endpoint:GetVec3()
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      LineType=LineType or 1
+      FillColor=FillColor or Color
+      FillColor[4]=FillAlpha or 0.15
+      trigger.action.rectToAll(Coalition, MarkID, self:GetVec3(), vec3, Color, FillColor, LineType, ReadOnly, Text or "")
+      return MarkID
+    end
+
+    --- Creates a shape defined by 4 points on the F10 map. The first point is the current COORDINATE. The remaining three points need to be specified.
+    -- @param #COORDINATE self
+    -- @param #COORDINATE Coord2 Second COORDIANTE of the quad shape.
+    -- @param #COORDINATE Coord3 Third COORDIANTE of the quad shape.
+    -- @param #COORDINATE Coord4 Fourth COORDIANTE of the quad shape.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:QuadToAll(Coord2, Coord3, Coord4, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text)
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local point1=self:GetVec3()
+      local point2=Coord2:GetVec3()
+      local point3=Coord3:GetVec3()
+      local point4=Coord4:GetVec3()
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      LineType=LineType or 1
+      FillColor=FillColor or Color
+      FillColor[4]=FillAlpha or 0.15
+      trigger.action.quadToAll(Coalition, MarkID, self:GetVec3(), point2, point3, point4, Color, FillColor, LineType, ReadOnly, Text or "")
+      return MarkID
+    end
+
+    --- Creates a free form shape on the F10 map. The first point is the current COORDINATE. The remaining points need to be specified.
+    -- **NOTE**: A free form polygon must have **at least three points** in total and currently only **up to 10 points** in total are supported.
+    -- @param #COORDINATE self
+    -- @param #table Coordinates Table of coordinates of the remaining points of the shape.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:MarkupToAllFreeForm(Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text)
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      LineType=LineType or 1
+      FillColor=FillColor or Color
+      FillColor[4]=FillAlpha or 0.15
+
+      local vecs={}
+      table.insert(vecs, self:GetVec3())
+      for _,coord in ipairs(Coordinates) do
+        table.insert(vecs, coord:GetVec3())
+      end
+
+      if #vecs<3 then
+        self:E("ERROR: A free form polygon needs at least three points!")
+      elseif #vecs==3 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==4 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==5 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==6 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==7 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==8 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==9 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==10 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10], Color, FillColor, LineType, ReadOnly, Text or "")
+      else
+        self:E("ERROR: Currently a free form polygon can only have 10 points in total!")
+        -- Unfortunately, unpack(vecs) does not work! So no idea how to generalize this :(
+        trigger.action.markupToAll(7, Coalition, MarkID, unpack(vecs), Color, FillColor, LineType, ReadOnly, Text or "")
+      end
+
+      return MarkID
+    end
+
+    --- Text to all. Creates a text imposed on the map at the COORDINATE. Text scales with the map.
+    -- @param #COORDINATE self
+    -- @param #string Text Text displayed on the F10 map.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.3.
+    -- @param #number FontSize Font size. Default 14.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:TextToAll(Text, Coalition, Color, Alpha, FillColor, FillAlpha, FontSize, ReadOnly)
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      FillColor=FillColor or Color
+      FillColor[4]=FillAlpha or 0.3
+      FontSize=FontSize or 14
+      trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
+      return MarkID
+    end
+
+    --- Arrow to all. Creates an arrow from the COORDINATE to the endpoint COORDINATE on the F10 map. There is no control over other dimensions of the arrow.
+    -- @param #COORDINATE self
+    -- @param #COORDINATE Endpoint COORDINATE where the tip of the arrow is pointing at.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:ArrowToAll(Endpoint, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text)
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local vec3=Endpoint:GetVec3()
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      LineType=LineType or 1
+      FillColor=FillColor or Color
+      FillColor[4]=FillAlpha or 0.15
+      --trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
+      trigger.action.arrowToAll(Coalition, MarkID, vec3, self:GetVec3(), Color, FillColor, LineType, ReadOnly, Text or "")
+      return MarkID
+    end
 
   --- Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.
   -- @param #COORDINATE self

@@ -236,11 +236,11 @@ EVENTS = {
   RemoveUnit =        world.event.S_EVENT_REMOVE_UNIT,
   PlayerEnterAircraft = world.event.S_EVENT_PLAYER_ENTER_AIRCRAFT,
   -- Added with DCS 2.5.6
-  DetailedFailure =   world.event.S_EVENT_DETAILED_FAILURE or -1,  --We set this to -1 for backward compatibility to DCS 2.5.5 and earlier
-  Kill =              world.event.S_EVENT_KILL or -1,
-  Score =             world.event.S_EVENT_SCORE or -1,
-  UnitLost =          world.event.S_EVENT_UNIT_LOST or -1,
-  LandingAfterEjection = world.event.S_EVENT_LANDING_AFTER_EJECTION or -1,
+  DetailedFailure           = world.event.S_EVENT_DETAILED_FAILURE or -1,  --We set this to -1 for backward compatibility to DCS 2.5.5 and earlier
+  Kill                      = world.event.S_EVENT_KILL or -1,
+  Score                     = world.event.S_EVENT_SCORE or -1,
+  UnitLost                  = world.event.S_EVENT_UNIT_LOST or -1,
+  LandingAfterEjection      = world.event.S_EVENT_LANDING_AFTER_EJECTION or -1,
   -- Added with DCS 2.7.0
   ParatrooperLanding        = world.event.S_EVENT_PARATROOPER_LENDING or -1,
   DiscardChairAfterEjection = world.event.S_EVENT_DISCARD_CHAIR_AFTER_EJECTION or -1,
@@ -1000,11 +1000,7 @@ function EVENT:onEvent( Event )
   -- Check if this is a known event?
   if EventMeta then
 
-    if self and
-       self.Events and
-       self.Events[Event.id] and
-       self.MissionEnd == false and
-       ( Event.initiator ~= nil or ( Event.initiator == nil and Event.id ~= EVENTS.PlayerLeaveUnit ) ) then
+    if self and self.Events and self.Events[Event.id] and self.MissionEnd==false and (Event.initiator~=nil or (Event.initiator==nil and Event.id~=EVENTS.PlayerLeaveUnit)) then
 
       if Event.id and Event.id == EVENTS.MissionEnd then
         self.MissionEnd = true
@@ -1039,9 +1035,10 @@ function EVENT:onEvent( Event )
         end
 
         if Event.IniObjectCategory == Object.Category.STATIC then
+
           if Event.id==31 then
-            --env.info("FF event 31")
-            -- Event.initiator is a Static object representing the pilot. But getName() error due to DCS bug.
+
+            -- Event.initiator is a Static object representing the pilot. But getName() errors due to DCS bug.
             Event.IniDCSUnit = Event.initiator
             local ID=Event.initiator.id_
             Event.IniDCSUnitName = string.format("Ejected Pilot ID %s", tostring(ID))
@@ -1122,36 +1119,34 @@ function EVENT:onEvent( Event )
           Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
         end
 
-        env.info("FF I am here first")
         if Event.TgtObjectCategory == Object.Category.STATIC then
-          BASE:T({StaticTgtEvent = Event.id})
           -- get base data
-            Event.TgtDCSUnit = Event.target
-            if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
-              Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+          Event.TgtDCSUnit = Event.target
+          if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
+            Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+            Event.TgtUnitName = Event.TgtDCSUnitName
+            Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
+            Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
+            Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
+            Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+          else
+            Event.TgtDCSUnitName = string.format("No target object for Event ID %s", tostring(Event.id))
+            Event.TgtUnitName = Event.TgtDCSUnitName
+            Event.TgtUnit = nil
+            Event.TgtCoalition = 0
+            Event.TgtCategory = 0
+            if Event.id == 6 then
+              Event.TgtTypeName = "Ejected Pilot"
+              Event.TgtDCSUnitName = string.format("Ejected Pilot ID %s", tostring(Event.IniDCSUnitName))
               Event.TgtUnitName = Event.TgtDCSUnitName
-              Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
-              Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
-              Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
-              Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+            elseif Event.id == 33 then
+              Event.TgtTypeName = "Ejection Seat"
+              Event.TgtDCSUnitName = string.format("Ejection Seat ID %s", tostring(Event.IniDCSUnitName))
+              Event.TgtUnitName = Event.TgtDCSUnitName
             else
-              Event.TgtDCSUnitName = string.format("No target object for Event ID %s", tostring(Event.id))
-              Event.TgtUnitName = Event.TgtDCSUnitName
-              Event.TgtUnit = nil
-              Event.TgtCoalition = 0
-              Event.TgtCategory = 0
-              if Event.id == 6 then
-                Event.TgtTypeName = "Ejected Pilot"
-                Event.TgtDCSUnitName = string.format("Ejected Pilot ID %s", tostring(Event.IniDCSUnitName))
-                Event.TgtUnitName = Event.TgtDCSUnitName
-              elseif Event.id == 33 then
-                Event.TgtTypeName = "Ejection Seat"
-                Event.TgtDCSUnitName = string.format("Ejection Seat ID %s", tostring(Event.IniDCSUnitName))
-                Event.TgtUnitName = Event.TgtDCSUnitName
-              else
-                Event.TgtTypeName = "Static"
-              end
-           end
+              Event.TgtTypeName = "Static"
+            end
+          end
         end
 
         if Event.TgtObjectCategory == Object.Category.SCENERY then
