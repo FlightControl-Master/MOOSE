@@ -295,6 +295,17 @@ do -- country
   -- @field QATAR
   -- @field OMAN
   -- @field UNITED_ARAB_EMIRATES
+  -- @field SOUTH_AFRICA
+  -- @field CUBA
+  -- @field PORTUGAL
+  -- @field GDR
+  -- @field LEBANON
+  -- @field CJTF_BLUE
+  -- @field CJTF_RED
+  -- @field UN_PEACEKEEPERS
+  -- @field Argentinia
+  -- @field Cyprus
+  -- @field Slovenia
 
   country = {} --#country
 

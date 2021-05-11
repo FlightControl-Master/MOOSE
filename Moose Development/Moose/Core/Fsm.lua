@@ -540,7 +540,7 @@ do -- FSM
   
   --- Returns a table with the scores defined.
   -- @param #FSM self
-  -- @param #table Scores.
+  -- @return #table Scores.
   function FSM:GetScores()  
     return self._Scores or {}
   end

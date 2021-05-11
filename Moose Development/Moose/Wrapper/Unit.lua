@@ -761,40 +761,6 @@ function UNIT:GetFuel()
   return nil
 end
 
---- Sets the passed group or unit objects radar emitters on or off. Can be used on sam sites for example to shut down the radar without setting AI off or changing the alarm state.
--- @param #UNIT self
--- @param #boolean Switch If `true` or `nil`, emission is enabled. If `false`, emission is turned off.
--- @return #UNIT self 
-function UNIT:SetEmission(Switch)
-
-  if Switch==nil then
-    Switch=true
-  end
-
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    DCSUnit:enableEmission(Switch)
-  end
-  
-  return self
-end
-
---- Sets the passed group or unit objects radar emitters ON. Can be used on sam sites for example to shut down the radar without setting AI off or changing the alarm state.
--- @param #UNIT self
--- @return #UNIT self 
-function UNIT:EnableEmission()
-  self:SetEmission(true)
-  return self
-end
-
---- Sets the passed group or unit objects radar emitters OFF. Can be used on sam sites for example to shut down the radar without setting AI off or changing the alarm state.
--- @param #UNIT self
--- @return #UNIT self 
-function UNIT:DisableEmission()
-  self:SetEmission(false)
-  return self
-end
 
 --- Returns a list of one @{Wrapper.Unit}.
 -- @param #UNIT self
@@ -1429,9 +1395,10 @@ function UNIT:GetTemplateFuel()
   return nil
 end
 
---- GROUND - Switch on/off radar emissions.
+--- GROUND - Switch on/off radar emissions of a unit.
 -- @param #UNIT self
--- @param #boolean switch
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled. 
+-- @return #UNIT self
 function UNIT:EnableEmission(switch)
   self:F2( self.UnitName )
   
@@ -1445,4 +1412,5 @@ function UNIT:EnableEmission(switch)
 
   end
 
+  return self
 end
