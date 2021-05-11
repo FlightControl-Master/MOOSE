@@ -1000,7 +1000,7 @@ function EVENT:onEvent( Event )
   -- Check if this is a known event?
   if EventMeta then
 
-    if self and self.Events and self.Events[Event.id] and self.MissionEnd==false and (Event.initiator~=nil or (Event.initiator==nil and Event.idss~=EVENTS.PlayerLeaveUnit)) then
+    if self and self.Events and self.Events[Event.id] and self.MissionEnd==false and (Event.initiator~=nil or (Event.initiator==nil and Event.id~=EVENTS.PlayerLeaveUnit)) then
 
       if Event.id and Event.id == EVENTS.MissionEnd then
         self.MissionEnd = true
