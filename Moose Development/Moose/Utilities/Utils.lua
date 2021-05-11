@@ -652,6 +652,17 @@ function UTILS.GetMarkID()
 
 end
 
+--- Remove an object (marker, circle, arrow, text, quad, ...) on the F10 map.
+-- @param #number MarkID Unique ID of the object.
+-- @param #number Delay (Optional) Delay in seconds before the mark is removed.
+function UTILS.RemoveMark(MarkID, Delay)
+  if Delay and Delay>0 then
+    TIMER:New(UTILS.RemoveMark, MarkID):Start(Delay)
+  else
+    trigger.action.removeMark(MarkID)
+  end
+end
+
 
 -- Test if a Vec2 is in a radius of another Vec2
 function UTILS.IsInRadius( InVec2, Vec2, Radius )
