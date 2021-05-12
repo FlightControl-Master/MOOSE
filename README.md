@@ -30,7 +30,7 @@ This repository contains the source lua code of the MOOSE framework.
   
 ###   [MOOSE_INCLUDE](https://github.com/FlightControl-Master/MOOSE_INCLUDE) - For use and generated 
 
-This repository contains the Moose.lua file to be included within your missions.
+This repository contains the Moose.lua file to be included within your missions. Note that the Moose\_.lua is technically the same as Moose.lua, but without any commentary or unnecessary whitespace in it. You only need to load **one** of those at the beginning of your mission.
   
  
 ###   [MOOSE_DOCS](https://github.com/FlightControl-Master/MOOSE_DOCS) - Not for use
