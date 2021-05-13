@@ -416,6 +416,25 @@ AIRBASE.Syria={
 }
 
 
+--- Airbases of the Mariana Islands map.
+--
+-- * AIRBASE.MarianaIslands.Rota_International_Airport
+-- * AIRBASE.MarianaIslands.Andersen
+-- * AIRBASE.MarianaIslands.Northwest_Field
+-- * AIRBASE.MarianaIslands.Antonio_B_Won_Pat_International_Airport
+-- * AIRBASE.MarianaIslands.Saipan_International_Airport
+-- * AIRBASE.MarianaIslands.Tinian_International_Airport
+-- @field MarianaIslands
+AIRBASE.MarianaIslands={
+  ["Rota_International_Airport"]="Rota International Airport",
+  ["Andersen"]="Andersen",
+  ["Northwest_Field"]="Northwest_Field",
+  ["Antonio_B_Won_Pat_International_Airport"]="Antonio B. Won Pat International Airport",
+  ["Saipan_International_Airport"]="Saipan International Airport",
+  ["Tinian_International_Airport"]="Tinian International Airport",
+}
+
+
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 -- @type AIRBASE.ParkingSpot
 -- @field Core.Point#COORDINATE Coordinate Coordinate of the parking spot.

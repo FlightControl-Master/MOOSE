@@ -50,6 +50,7 @@ BIGSMOKEPRESET = {
 -- @field #string PersianGulf Persian Gulf map.
 -- @field #string TheChannel The Channel map.
 -- @field #string Syria Syria map.
+-- @field #string MarianaIslands Mariana Islands map.
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -57,6 +58,7 @@ DCSMAP = {
   PersianGulf="PersianGulf",
   TheChannel="TheChannel",
   Syria="Syria",
+  MarianaIslands="MarianaIslands"
 }
 
 
@@ -1182,6 +1184,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=-10
   elseif map==DCSMAP.Syria then
     declination=5
+  elseif map==DCSMAP.MarianaIslands then
+    declination=-2    
   else
     declination=0
   end
@@ -1310,6 +1314,8 @@ function UTILS.GMTToLocalTimeDifference()
     return 2   -- This map currently needs +2
   elseif theatre==DCSMAP.Syria then
     return 3   -- Damascus is UTC+3 hours
+  elseif theatre==DCSMAP.MarianaIslands then
+    return 2   -- Guam is UTC+10 hours but is +2 for now.    
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
