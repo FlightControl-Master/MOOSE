@@ -1723,7 +1723,7 @@ function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlph
   
     local Coordinates=self:GetVerticiesCoordinates()
     table.remove(Coordinates, 1)
-  
+
     self.DrawID=coordinate:MarkupToAllFreeForm(Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
   
   end
