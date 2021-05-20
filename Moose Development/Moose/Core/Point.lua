@@ -2176,21 +2176,26 @@ do -- COORDINATE
     -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
     function COORDINATE:MarkupToAllFreeForm(Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text)
+
       local MarkID = UTILS.GetMarkID()
       if ReadOnly==nil then
         ReadOnly=false
       end
+
       Coalition=Coalition or -1
+
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+
       LineType=LineType or 1
-      FillColor=FillColor or Color
+
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
 
       local vecs={}
-      table.insert(vecs, self:GetVec3())
-      for _,coord in ipairs(Coordinates) do
-        table.insert(vecs, coord:GetVec3())
+      vecs[1]=self:GetVec3()
+      for i,coord in ipairs(Coordinates) do
+        vecs[i+1]=coord:GetVec3()
       end
 
       if #vecs<3 then
