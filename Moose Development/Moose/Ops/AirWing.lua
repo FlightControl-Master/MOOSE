@@ -148,12 +148,13 @@ AIRWING = {
 -- @field #number heading Heading in degrees.
 -- @field #number leg Leg length in NM.
 -- @field #number speed Speed in knots.
+-- @field #number refuelsystem Refueling system type: `0=Unit.RefuelingSystem.BOOM_AND_RECEPTACLE`, `1=Unit.RefuelingSystem.PROBE_AND_DROGUE`.
 -- @field #number noccupied Number of flights on this patrol point.
 -- @field Wrapper.Marker#MARKER marker F10 marker.
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.5.1"
+AIRWING.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -739,8 +740,9 @@ end
 -- @param #number Heading Heading in degrees. Default random (0, 360] degrees.
 -- @param #number LegLength Length of race-track orbit in NM. Default 15 NM.
 -- @param #number Speed Orbit speed in knots. Default 350 knots.
+-- @param #number RefuelSystem Refueling system: 0=Boom, 1=Probe. Default nil=any.
 -- @return #AIRWING.PatrolData Patrol point table.
-function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegLength)
+function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegLength, RefuelSystem)
 
   local patrolpoint={}  --#AIRWING.PatrolData
   patrolpoint.type=Type or "Unknown"
@@ -750,6 +752,7 @@ function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegL
   patrolpoint.altitude=Altitude or math.random(10,20)*1000
   patrolpoint.speed=Speed or 350
   patrolpoint.noccupied=0
+  patrolpoint.refuelsystem=RefuelSystem
   
   if self.markpoints then
     patrolpoint.marker=MARKER:New(Coordinate, "New Patrol Point"):ToAll()
@@ -783,10 +786,11 @@ end
 -- @param #number Speed Orbit speed in knots.
 -- @param #number Heading Heading in degrees.
 -- @param #number LegLength Length of race-track orbit in NM.
+-- @param #number RefuelSystem Set refueling system of tanker: 0=boom, 1=probe. Default any (=nil).
 -- @return #AIRWING self
-function AIRWING:AddPatrolPointTANKER(Coordinate, Altitude, Speed, Heading, LegLength)
+function AIRWING:AddPatrolPointTANKER(Coordinate, Altitude, Speed, Heading, LegLength, RefuelSystem)
   
-  local patrolpoint=self:NewPatrolPoint("Tanker", Coordinate, Altitude, Speed, Heading, LegLength)
+  local patrolpoint=self:NewPatrolPoint("Tanker", Coordinate, Altitude, Speed, Heading, LegLength, RefuelSystem)
 
   table.insert(self.pointsTANKER, patrolpoint)
 
@@ -919,11 +923,12 @@ function AIRWING:onafterStatus(From, Event, To)
 
 end
 
---- Get patrol data
+--- Get patrol data.
 -- @param #AIRWING self
 -- @param #table PatrolPoints Patrol data points.
--- @return #AIRWING.PatrolData
-function AIRWING:_GetPatrolData(PatrolPoints)
+-- @param #number RefuelSystem If provided, only return points with the specific refueling system.
+-- @return #AIRWING.PatrolData Patrol point data table.
+function AIRWING:_GetPatrolData(PatrolPoints, RefuelSystem)
 
   -- Sort wrt lowest number of flights on this point.
   local function sort(a,b)
@@ -934,14 +939,18 @@ function AIRWING:_GetPatrolData(PatrolPoints)
   
     -- Sort data wrt number of flights at that point.
     table.sort(PatrolPoints, sort)
-    return PatrolPoints[1]
-
-  else
     
-    return self:NewPatrolPoint()
-      
+    for _,_patrolpoint in pairs(PatrolPoints) do
+      local patrolpoint=_patrolpoint --#AIRWING.PatrolData
+      if (RefuelSystem and patrolpoint.refuelsystem and RefuelSystem==patrolpoint.refuelsystem) or RefuelSystem==nil or patrolpoint.refuelsystem==nil then
+        return patrolpoint
+      end
+    end
+    
   end
   
+  -- Return a new point.
+  return self:NewPatrolPoint()
 end
 
 --- Check how many CAP missions are assigned and add number of missing missions.
@@ -980,28 +989,29 @@ function AIRWING:CheckTANKER()
   local Nboom=0
   local Nprob=0
   
-  -- Count tanker mission.
+  -- Count tanker missions.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     if mission:IsNotOver() and mission.type==AUFTRAG.Type.TANKER then
-      if mission.refuelSystem==0 then
+      if mission.refuelSystem==Unit.RefuelingSystem.BOOM_AND_RECEPTACLE then
         Nboom=Nboom+1
-      elseif mission.refuelSystem==1 then
+      elseif mission.refuelSystem==Unit.RefuelingSystem.PROBE_AND_DROGUE then
         Nprob=Nprob+1
       end
     
     end
   
   end
-  
+
+  -- Check missing boom tankers.  
   for i=1,self.nflightsTANKERboom-Nboom do
   
     local patrol=self:_GetPatrolData(self.pointsTANKER)
     
     local altitude=patrol.altitude+1000*patrol.noccupied
     
-    local mission=AUFTRAG:NewTANKER(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg, 1)
+    local mission=AUFTRAG:NewTANKER(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg, Unit.RefuelingSystem.BOOM_AND_RECEPTACLE)
     
     mission.patroldata=patrol
     
@@ -1013,13 +1023,14 @@ function AIRWING:CheckTANKER()
       
   end
   
+  -- Check missing probe tankers.
   for i=1,self.nflightsTANKERprobe-Nprob do
   
     local patrol=self:_GetPatrolData(self.pointsTANKER)
     
     local altitude=patrol.altitude+1000*patrol.noccupied
     
-    local mission=AUFTRAG:NewTANKER(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg, 0)
+    local mission=AUFTRAG:NewTANKER(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg, Unit.RefuelingSystem.PROBE_AND_DROGUE)
     
     mission.patroldata=patrol
     
