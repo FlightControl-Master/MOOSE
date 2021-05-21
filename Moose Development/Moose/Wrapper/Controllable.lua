@@ -1920,7 +1920,7 @@ do -- Patrol methods
       local Route = {}
       if IsSub then
         Route[#Route+1] = FromCoord:WaypointNaval( Speed, depth )
-        Route[#Route+1] = ToCoord:WaypointNaval( Speed, depth )
+        Route[#Route+1] = ToCoord:WaypointNaval( Speed, Waypoint.alt )
       else
         Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
         Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
