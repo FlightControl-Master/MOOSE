@@ -1894,7 +1894,16 @@ do -- Patrol methods
       if ToWaypoint then
         FromWaypoint = ToWaypoint
       end
-
+      -- test for submarine
+      local depth = 0
+      local IsSub = false
+      if PatrolGroup:IsShip() then
+        local navalvec3 = FromCoord:GetVec3()
+        if navalvec3.y < 0 then 
+          depth = navalvec3.y
+          IsSub = true
+        end
+      end
       -- Loop until a waypoint has been found that is not the same as the current waypoint.
       -- Otherwise the object zon't move or drive in circles and the algorithm would not do exactly
       -- what it is supposed to do, which is making groups drive around.
@@ -1909,9 +1918,13 @@ do -- Patrol methods
       local ToCoord = COORDINATE:NewFromVec2( { x = Waypoint.x, y = Waypoint.y } )
       -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
       local Route = {}
-      Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
-      Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
-
+      if IsSub then
+        Route[#Route+1] = FromCoord:WaypointNaval( Speed, depth )
+        Route[#Route+1] = ToCoord:WaypointNaval( Speed, depth )
+      else
+        Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
+        Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
+      end
 
       local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRouteRandom", Speed, Formation, ToWaypoint )
 
