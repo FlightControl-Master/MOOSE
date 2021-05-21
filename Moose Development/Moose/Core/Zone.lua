@@ -2038,7 +2038,7 @@ end
 function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, Closed)
     Coalition = Coalition or -1
     Color = Color or {1, 1, 1}
-    Radius = Radius or 100
+    Radius = Radius or 1000
     Alpha = Alpha or 1
     Segments = Segments or 10
     Closed = Closed or false
