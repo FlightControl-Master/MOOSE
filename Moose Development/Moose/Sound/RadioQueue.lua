@@ -1,4 +1,4 @@
---- **Core** - Queues Radio Transmissions.
+--- **Sound** - Queues Radio Transmissions.
 -- 
 -- ===
 -- 
@@ -10,8 +10,8 @@
 --
 -- ### Authors: funkyfranky
 --
--- @module Core.RadioQueue
--- @image Core_Radio.JPG
+-- @module Sound.RadioQueue
+-- @image Sound_Radio.JPG
 
 --- Manages radio transmissions.
 -- 
@@ -125,9 +125,9 @@ function RADIOQUEUE:Start(delay, dt)
 
   -- Start Scheduler.
   if self.schedonce then
-    self:_CheckRadioQueueDelayed(delay)
+    self:_CheckRadioQueueDelayed(self.delay)
   else
-    self.RQid=self.scheduler:Schedule(nil, RADIOQUEUE._CheckRadioQueue, {self}, delay, dt)
+    self.RQid=self.scheduler:Schedule(nil, RADIOQUEUE._CheckRadioQueue, {self}, self.delay, self.dt)
   end
   
   return self
@@ -202,7 +202,7 @@ end
 --- Add a transmission to the radio queue.
 -- @param #RADIOQUEUE self
 -- @param #RADIOQUEUE.Transmission transmission The transmission data table. 
--- @return #RADIOQUEUE self The RADIOQUEUE object.
+-- @return #RADIOQUEUE self
 function RADIOQUEUE:AddTransmission(transmission)
   self:F({transmission=transmission})
   
@@ -221,7 +221,7 @@ function RADIOQUEUE:AddTransmission(transmission)
   return self
 end
 
---- Add a transmission to the radio queue.
+--- Create a new transmission and add it to the radio queue.
 -- @param #RADIOQUEUE self
 -- @param #string filename Name of the sound file. Usually an ogg or wav file type.
 -- @param #number duration Duration in seconds the file lasts.
@@ -232,6 +232,8 @@ end
 -- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, subtitle, subduration)
+
+  env.info("FF new transmission.")
 
   -- Sanity checks.
   if not filename then
@@ -272,6 +274,19 @@ function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, 
   return self
 end
 
+--- Create a new transmission and add it to the radio queue.
+-- @param #RADIOQUEUE self
+-- @param Sound.SoundFile#SOUNDFILE soundfile Sound file object to be added.
+-- @param #number tstart Start time (abs) seconds. Default now.
+-- @param #number interval Interval in seconds after the last transmission finished.
+-- @return #RADIOQUEUE self
+function RADIOQUEUE:AddSoundfile(soundfile, tstart, interval)
+  env.info(string.format("FF add soundfile: name=%s%s", soundfile:GetPath(), soundfile:GetFileName()))
+  self:NewTransmission(soundfile:GetFileName(), soundfile.duration, soundfile:GetPath(), tstart, interval, soundfile.subtitle, soundfile.subduration)
+
+  return self
+end
+
 --- Convert a number (as string) into a radio transmission.
 -- E.g. for board number or headings.
 -- @param #RADIOQUEUE self
@@ -292,7 +307,7 @@ function RADIOQUEUE:Number2Transmission(number, delay, interval)
   end
   
   -- Split string into characters.
-  local numbers=_split(number)
+  local numbers=UTILS.GetCharacters(number) --l_split(number)
 
   local wait=0    
   for i=1,#numbers do
@@ -547,7 +562,7 @@ function RADIOQUEUE:_GetRadioSender()
   return nil
 end
 
---- Get unit from which we want to transmit a radio message. This has to be an aircraft for subtitles to work.
+--- Get unit from which we want to transmit a radio message. This has to be an aircraft or ground unit for subtitles to work.
 -- @param #RADIOQUEUE self
 -- @return DCS#Vec3 Vector 3D.
 function RADIOQUEUE:_GetRadioSenderCoord()
