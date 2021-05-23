@@ -1,10 +1,11 @@
---- **AddOn** - Simple Radio
+--- **Sound** - Simple Radio Standalone Integration
 --
 -- ===
 --
 -- **Main Features:**
 --
---    * SRS integration
+--    * Play sound files via SRS
+--    * Play text-to-speach via SRS
 --
 -- ===
 --
@@ -31,12 +32,11 @@
 -- @module Addons.SRS
 -- @image Addons_SRS.png
 
-
 --- MSRS class.
 -- @type MSRS
 -- @field #string ClassName Name of the class.
 -- @field #string lid Class id string for output to DCS log file.
--- @extends Core.Fsm#FSM
+-- @extends Core.Base#BASE
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
 --
@@ -46,8 +46,11 @@
 --
 -- # The MSRS Concept
 --
--- Automatic terminal information service, or ATIS, is a continuous broadcast of recorded aeronautical information in busier terminal areas, *i.e.* airports and their immediate surroundings.
--- ATIS broadcasts contain essential information, such as current weather information, active runways, and any other information required by the pilots.
+-- This class allows to broadcast sound files or text via Simple Radio Standalone (SRS).
+-- 
+-- # Prerequisites
+-- 
+-- This script needs SRS version >= 0.9.6.
 --
 -- @field #MSRS
 MSRS = {
@@ -57,7 +60,7 @@ MSRS = {
 
 --- ATIS class version.
 -- @field #string version
-MSRS.version="0.9.1"
+MSRS.version="0.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -69,16 +72,22 @@ MSRS.version="0.9.1"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new ATIS class object for a specific aircraft carrier unit.
+--- Create a new MSRS object.
 -- @param #MSRS self
--- @param #string airbasename Name of the airbase.
--- @param #number frequency Radio frequency in MHz. Default 143.00 MHz.
--- @param #number modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators
+-- @param #string PathToSRS Path to the directory, where SRS is located.
+-- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz.
+-- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators.
 -- @return #MSRS self
-function MSRS:New(airbasename, frequency, modulation)
+function MSRS:New(PathToSRS, Frequency, Modulation)
 
   -- Inherit everything from FSM class.
-  local self=BASE:Inherit(self, FSM:New()) -- #ATIS
+  local self=BASE:Inherit(self, FSM:New()) -- #MSRS
+  
+  self.path=self:SetPath(PathToSRS)
+  
+  self.frequency=Frequency or 143
+  
+  self.modulation=Modulation or radio.modulation.AM
 
 
   return self
@@ -88,56 +97,51 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set sound files folder within miz file.
+
+--- Set path, where the sound file is located.
 -- @param #MSRS self
--- @param #string path Path for sound files. Default "ATIS Soundfiles/". Mind the slash "/" at the end!
+-- @param #string Path Path to the directory, where the sound file is located.
 -- @return #MSRS self
-function MSRS:SetSoundfilesPath(path)
-  self.soundpath=tostring(path or "ATIS Soundfiles/")
-  self:I(self.lid..string.format("Setting sound files path to %s", self.soundpath))
+function MSRS:SetPath(Path)
+
+  if Path==nil then
+    return nil
+  end
+  
+  self.path=Path
+
+  -- Remove (back)slashes.  
+  while self.path:sub(-1)=="/" or self.path:sub(-1)=="\\" do
+    self.path=self.path:sub(1,-1)
+  end
+  
   return self
 end
 
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Start & Status
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Start ATIS FSM.
+--- Get path to SRS directory.
 -- @param #MSRS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function MSRS:onafterStart(From, Event, To)
+-- @return #string 
+function MSRS:GetPath()
+  return self.path
+end
+
+--- Set path, where the sound file is located.
+-- @param #MSRS self
+-- @param #string Path Path to the directory, where the sound file is located.
+-- @return #MSRS self
+function MSRS:PlaySoundfile(Soundfile)
+
+  
 
 end
 
---- Update status.
+--- Set path, where the sound file is located.
 -- @param #MSRS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function MSRS:onafterStatus(From, Event, To)
+-- @param #string Message Text message.
+-- @return #MSRS self
+function MSRS:PlayText(Message)
 
-  -- Get FSM state.
-  local fsmstate=self:GetState()
 
-  self:__Status(-60)
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- FSM Events
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Check if radio queue is empty. If so, start broadcasting the message again.
--- @param #MRSRS self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function MSRS:onafterCheckQueue(From, Event, To)
-
-  -- Check back in 5 seconds.
-  self:__CheckQueue(-5)
 end
 
 

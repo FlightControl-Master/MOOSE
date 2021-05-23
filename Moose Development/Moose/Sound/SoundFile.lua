@@ -71,7 +71,7 @@ do -- Sound File
     return self
   end
   
-  --- Set path, where the .
+  --- Set path, where the sound file is located.
   -- @param #SOUNDFILE self
   -- @param #string Path Path to the directory, where the sound file is located.
   -- @return self
