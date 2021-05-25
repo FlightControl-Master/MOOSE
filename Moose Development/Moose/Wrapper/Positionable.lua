@@ -684,6 +684,27 @@ function POSITIONABLE:IsShip()
 end
 
 
+--- Returns if the unit is a submarine.
+-- @param #POSITIONABLE self
+-- @return #boolean Submarines attributes result.
+function POSITIONABLE:IsSubmarine()
+  self:F2()
+
+  local DCSUnit = self:GetDCSObject()
+
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+		if UnitDescriptor.attributes["Submarines"] == true then
+			return true
+		else
+			return false
+		end
+  end
+
+  return nil
+end
+
+
 --- Returns true if the POSITIONABLE is in the air.
 -- Polymorphic, is overridden in GROUP and UNIT.
 -- @param Wrapper.Positionable#POSITIONABLE self
@@ -817,8 +838,7 @@ end
 -- @return #number The velocity in knots.
 function POSITIONABLE:GetVelocityKNOTS()
   self:F2( self.PositionableName )
-  local velmps=self:GetVelocityMPS()
-  return UTILS.MpsToKnots(velmps)
+  return UTILS.MpsToKnots(self:GetVelocityMPS())
 end
 
 --- Returns the Angle of Attack of a positionable.
