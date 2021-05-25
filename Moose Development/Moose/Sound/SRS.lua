@@ -9,17 +9,15 @@
 --
 -- ===
 --
--- ## Youtube Videos:
---
---    * None
+-- ## Youtube Videos: None yet
 --
 -- ===
 --
--- ## Missions: Example missions can be found [here](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20ATIS)
+-- ## Missions: None yet
 --
 -- ===
 --
--- ## Sound files: Check out the pinned messages in the Moose discord #ops-atis channel.
+-- ## Sound files: None yet.
 --
 -- ===
 --
@@ -110,10 +108,17 @@ function MSRS:SetPath(Path)
   
   self.path=Path
 
-  -- Remove (back)slashes.  
-  while self.path:sub(-1)=="/" or self.path:sub(-1)=="\\" do
-    self.path=self.path:sub(1,-1)
+  -- Remove (back)slashes.
+  local nmax=1000
+  local n=1
+  while (self.path:sub(-1)=="/" or self.path:sub(-1)==[[\]]) and n<=nmax do
+    env.info(string.format("FF SRS path=%s (before)", self.path))
+    self.path=self.path:sub(1,#self.path-1)
+    env.info(string.format("FF SRS path=%s (after)", self.path))
+    n=n+1
   end
+  
+  env.info(string.format("FF SRS path=%s (final)", self.path))
   
   return self
 end
@@ -127,11 +132,27 @@ end
 
 --- Set path, where the sound file is located.
 -- @param #MSRS self
--- @param #string Path Path to the directory, where the sound file is located.
+-- @param Sound.SoundFile#SOUNDFILE Soundfile Sound file to play.
+-- @param #number Delay Delay in seconds, before the sound file is played.
 -- @return #MSRS self
-function MSRS:PlaySoundfile(Soundfile)
+function MSRS:PlaySoundfile(Soundfile, Delay)
 
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, MSRS.PlaySoundfile, Soundfile, 0)
+  else
+
+    local exe=self:GetPath().."/".."DCS-SR-ExternalAudio.exe"
+    local soundfile=Soundfile:GetName()
+    
+    env.info(string.format("FF PlaySoundfile soundfile=%s", soundfile))
+    
+    local command=string.format("%s --file %s --freqs %d --modulations %d --coalition %d", exe, soundfile, self.frequency, 0)
+    
+    env.info(string.format("FF PlaySoundfile command=%s", command))
+    
+  end
   
+  -- TODO: execute!
 
 end
 

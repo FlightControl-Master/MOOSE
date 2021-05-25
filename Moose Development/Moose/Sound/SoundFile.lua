@@ -60,6 +60,8 @@ do -- Sound File
     -- Set file name.
     self.filename=filename or "Hallo World.ogg"
     
+    --TODO: check that sound file is .ogg or .mp3
+    
     -- Set path
     self.path=Path or "l10n/DEFAULT/"
     
