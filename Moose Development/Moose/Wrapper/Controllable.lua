@@ -1832,7 +1832,7 @@ end
 
 do -- Patrol methods
 
-  --- (GROUND) Patrol iteratively using the waypoints the for the (parent) group.
+  --- (GROUND) Patrol iteratively using the waypoints of the (parent) group.
   -- @param #CONTROLLABLE self
   -- @return #CONTROLLABLE
   function CONTROLLABLE:PatrolRoute()
@@ -3817,7 +3817,7 @@ function CONTROLLABLE:OptionDisperseOnAttack(Seconds)
     local Controller = self:_GetController()
     if Controller then
      if self:IsGround() then
-        self:SetOption(AI.Option.GROUND.id.DISPERSE_ON_ATTACK, seconds)
+        self:SetOption(AI.Option.Ground.id.DISPERSE_ON_ATTACK, seconds)
      end
     end
    return self
