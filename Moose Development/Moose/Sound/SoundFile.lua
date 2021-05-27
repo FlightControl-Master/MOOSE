@@ -48,17 +48,17 @@ do -- Sound File
   
   --- Constructor to create a new SOUNDFILE object.
   -- @param #SOUNDFILE self
-  -- @param #string filename The name of the sound file, e.g. "Hello World.ogg".
+  -- @param #string FileName The name of the sound file, e.g. "Hello World.ogg".
   -- @param #string Path The path of the directory, where the sound file is located. Default is "l10n/DEFAULT/" within the miz file.
   -- @param #number Duration Duration in seconds, how long it takes to play the sound file. Default is 3 seconds.
   -- @return #SOUNDFILE self
-  function SOUNDFILE:New(filename, Path, Duration)
+  function SOUNDFILE:New(FileName, Path, Duration)
   
     -- Inherit BASE.
     local self=BASE:Inherit(self, BASE:New()) -- #SOUNDFILE
 
     -- Set file name.
-    self.filename=filename or "Hallo World.ogg"
+    self.filename=FileName or "Hallo World.ogg"
     
     --TODO: check that sound file is .ogg or .mp3
     
@@ -76,15 +76,19 @@ do -- Sound File
   --- Set path, where the sound file is located.
   -- @param #SOUNDFILE self
   -- @param #string Path Path to the directory, where the sound file is located.
-  -- @return self
+  -- @return #SOUNDFILE self
   function SOUNDFILE:SetPath(Path)
     
     self.path=Path or "l10n/DEFAULT/"
-    
-    while self.path:sub(-1)=="/" or self.path:sub(-1)=="\\" do
-      self.path=self.path:sub(1,-1)
+        
+    -- Remove (back)slashes.
+    local nmax=1000
+    local n=1
+    while (self.path:sub(-1)=="/" or self.path:sub(-1)==[[\]]) and n<=nmax do
+      self.path=self.path:sub(1,#self.path-1)
+      n=n+1
     end
-    
+          
     return self
   end  
   
@@ -113,28 +117,6 @@ do -- Sound File
     local path=self:GetPath()
     local name=string.format("%s/%s", path, filename)
     return name
-  end
-  
-
-  --- Set the userflag to a given Number.
-  -- @param #SOUNDFILE self
-  -- @param #number Number The number value to be checked if it is the same as the userflag.
-  -- @param #number Delay Delay in seconds, before the flag is set.
-  -- @return #SOUNDFILE self
-  -- @usage
-  --   local BlueVictory = USERFLAG:New( "VictoryBlue" )
-  --   BlueVictory:Set( 100 ) -- Set the UserFlag VictoryBlue to 100.
-  --   
-  function SOUNDFILE:Set( Number, Delay ) --R2.3
-  
-    if Delay and Delay>0 then
-      self:ScheduleOnce(Delay, USERFLAG.Set, self, Number)
-    else
-      --env.info(string.format("Setting flag \"%s\" to %d at T=%.1f", self.UserFlagName, Number, timer.getTime()))
-      trigger.action.setUserFlag( self.UserFlagName, Number )
-    end
-    
-    return self
   end
   
 end
