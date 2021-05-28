@@ -327,20 +327,17 @@ do -- Zones
               
         Zone=ZONE_POLYGON_BASE:New(ZoneName, ZoneData.verticies)
         
-        for i,vec2 in pairs(ZoneData.verticies) do
-          local coord=COORDINATE:NewFromVec2(vec2)
-          coord:MarkToAll(string.format("%s Point %d", ZoneName, i))
-        end
+        --for i,vec2 in pairs(ZoneData.verticies) do
+        --  local coord=COORDINATE:NewFromVec2(vec2)
+        --  coord:MarkToAll(string.format("%s Point %d", ZoneName, i))
+        --end
       
       end
       
       if Zone then
 
-        -- Debug output.
-        --self:I({"Register ZONE: %s (", Name = ZoneName})
-        
+        -- Store color of zone.        
         Zone.Color=color
-
       
         -- Store in DB.
         self.ZONENAMES[ZoneName] = ZoneName
