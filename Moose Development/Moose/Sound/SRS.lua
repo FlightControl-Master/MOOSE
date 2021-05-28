@@ -1,4 +1,4 @@
---- **Sound** - Simple Radio Standalone Integration
+--- **Sound** - Simple Radio Standalone (SRS) Integration.
 --
 -- ===
 --
@@ -41,7 +41,10 @@
 -- @field #string name Name. Default "DCS-STTS".
 -- @field #number volume Volume between 0 (min) and 1 (max). Default 1.
 -- @field #string culture Culture. Default "en-GB".
--- @field #string path Path to the SRS exe.
+-- @field #string gender Gender. Default "female".
+-- @field #string voice Specifc voce.
+-- @field Core.Point#COORDINATE coordinate Coordinate from where the transmission is send.
+-- @field #string path Path to the SRS exe. This includes the final slash "/".
 -- @extends Core.Base#BASE
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -62,16 +65,17 @@
 MSRS = {
   ClassName      =     "MSRS",
   lid            =        nil,
+  port           =       5002,
+  name           =     "MSRS",
   frequencies    =         {},
   modulations    =         {},
   coalition      =          0,
-  speed          =          1,
-  port           =       5002,
-  name           = "DCS-STTS",
-  volume         =     1,
-  culture        =    "en-GB",
   gender         =   "female",
+  culture        =    "en-GB",  
   voice          =        nil,
+  volume         =          1,  
+  speed          =          1,
+  coordinate     =        nil,
   latitude       =        nil,
   longitude      =        nil,
   altitude       =        nil,
@@ -79,7 +83,7 @@ MSRS = {
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.0.1"
+MSRS.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -94,8 +98,8 @@ MSRS.version="0.0.1"
 --- Create a new MSRS object.
 -- @param #MSRS self
 -- @param #string PathToSRS Path to the directory, where SRS is located.
--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz.
--- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators.
+-- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
+-- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
 -- @return #MSRS self
 function MSRS:New(PathToSRS, Frequency, Modulation)
 
@@ -107,16 +111,17 @@ function MSRS:New(PathToSRS, Frequency, Modulation)
   local self=BASE:Inherit(self, BASE:New()) -- #MSRS
   
   self:SetPath(PathToSRS)
+  self:SetPort()
   self:SetFrequencies(Frequency)
   self:SetModulations(Modulation)
-
+  self:SetGender()
+  
   return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 --- Set path to SRS install directory. More precisely, path to where the DCS-
 -- @param #MSRS self
@@ -125,6 +130,7 @@ end
 function MSRS:SetPath(Path)
 
   if Path==nil then
+    self:E("ERROR: No path to SRS directory specified!")
     return nil
   end
   
@@ -138,6 +144,8 @@ function MSRS:SetPath(Path)
     n=n+1
   end
   
+  self.path=self.path.."/"
+  
   self:I(string.format("SRS path=%s", self:GetPath()))
   
   return self
@@ -145,9 +153,24 @@ end
 
 --- Get path to SRS directory.
 -- @param #MSRS self
--- @return #string Path to the directory.
+-- @return #string Path to the directory. This includes the final slash "/".
 function MSRS:GetPath()
   return self.path
+end
+
+--- Set port.
+-- @param #MSRS self
+-- @param #number Port Port. Default 5002.
+-- @return #MSRS self
+function MSRS:SetPort(Port)
+  self.port=Port or 5002
+end
+
+--- Get port.
+-- @param #MSRS self
+-- @return #number Port.
+function MSRS:GetPort()
+  return self.port
 end
 
 --- Set frequencies.
@@ -164,6 +187,13 @@ function MSRS:SetFrequencies(Frequencies)
   self.frequencies=Frequencies
   
   return self
+end
+
+--- Get frequencies.
+-- @param #MSRS self
+-- @param #table Frequencies in MHz.
+function MSRS:GetFrequencies()
+  return self.frequencies
 end
 
 
@@ -183,25 +213,73 @@ function MSRS:SetModulations(Modulations)
   return self
 end
 
+--- Get modulations.
+-- @param #MSRS self
+-- @param #table Modulations.
+function MSRS:GetModulations()
+  return self.modulations
+end
+
+--- Set gender.
+-- @param #MSRS self
+-- @param #string Gender Gender: "male" or "female" (default).
+-- @return #MSRS self
+function MSRS:SetGender(Gender)
+
+  Gender=Gender or "female"
+  
+  Gender=Gender:lower()
+  
+  self.gender=Gender
+  
+  return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Transmission Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- Play sound file (ogg or mp3) via SRS.
 -- @param #MSRS self
 -- @param Sound.SoundFile#SOUNDFILE Soundfile Sound file to play.
 -- @param #number Delay Delay in seconds, before the sound file is played.
 -- @return #MSRS self
-function MSRS:PlaySoundfile(Soundfile, Delay)
+function MSRS:PlaySoundFile(Soundfile, Delay)
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, MSRS.PlaySoundfile, self, Soundfile, 0)
+    self:ScheduleOnce(Delay, MSRS.PlaySoundFile, self, Soundfile, 0)
   else
 
-    local exe=self:GetPath().."/".."DCS-SR-ExternalAudio.exe"
     local soundfile=Soundfile:GetName()
-    local freq=table.concat(self.frequencies, " ")
-    local modu=table.concat(self.modulations, " ")
-    local coal=self.coalition
-    local port=self.port
+
+    local command=self:_GetCommand()
     
-    local command=string.format("%s --file %s --freqs %s --modulations %s --coalition %d --port %d -h", exe, soundfile, freq, modu, coal, port)
+    command=command.." --file="..tostring(soundfile)
+    
+    env.info(string.format("FF PlaySoundfile command=%s", command))
+
+    -- Execute SRS command.
+    os.execute(command)
+        
+  end
+
+  return self
+end
+
+--- Play a SOUNDTEXT text-to-speech object.
+-- @param #MSRS self
+-- @param Sound.SoundFile#SOUNDTEXT SoundText Sound text.
+-- @param #number Delay Delay in seconds, before the sound file is played.
+-- @return #MSRS self
+function MSRS:PlaySoundText(SoundText, Delay)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, MSRS.PlaySoundText, self, SoundText, 0)
+  else
+
+    local command=self:_GetCommand(nil, nil, nil, SoundText.gender, SoundText.voice, SoundText.culture, SoundText.volume, SoundText.speed)
+    
+    command=command..string.format(" --text=\"%s\"", tostring(SoundText.text))
     
     env.info(string.format("FF PlaySoundfile command=%s", command))
 
@@ -215,29 +293,26 @@ end
 
 --- Play text message via STTS.
 -- @param #MSRS self
--- @param #string Message Text message.
+-- @param #string Text Text message.
 -- @param #number Delay Delay in seconds, before the message is played.
 -- @return #MSRS self
-function MSRS:PlayText(Message, Delay)
+function MSRS:PlayText(Text, Delay)
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, MSRS.PlayText, self, Message, 0)
+    self:ScheduleOnce(Delay, MSRS.PlayText, self, Text, 0)
   else
 
-    local text=string.format("\"%s\"", Message)
-    local exe=self:GetPath().."/".."DCS-SR-ExternalAudio.exe"
-    local freq=table.concat(self.frequencies, " ")
-    local modu=table.concat(self.modulations, " ")
-    local coal=self.coalition
-    local port=self.port
-    local gender="male"
+    local text=string.format("\"%s\"", Text)
     
-    local command=string.format("%s -h --text=%s --freqs=%s --modulations=%s --coalition=%d --port=%d --gender=%s", exe, text, freq, modu, coal, port, gender)
+    local command=self:_GetCommand()    
+
+    command=command..string.format(" --text=\"%s\"", tostring(Text))
     
     env.info(string.format("FF Text command=%s", command))
 
     -- Execute SRS command.
-    os.execute(command)
+    local x=os.execute(command)
+    env.info(x)
         
   end
   
@@ -249,6 +324,46 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Get SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
+-- @param #MSRS self
+-- @param #table freqs Frequencies in MHz.
+-- @param #table modus Modulations.
+-- @param #number coal Coalition.
+-- @param #string gender Gender.
+-- @param #string voice Voice.
+-- @param #string culture Culture.
+-- @param #number volume Volume.
+-- @param #number speed Speed.
+-- @param #number port Port.
+-- @return #string Command.
+function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port)
+
+    
+  local exe=self:GetPath().."DCS-SR-ExternalAudio.exe"
+  freqs=table.concat(freqs or self.frequencies, ",")
+  modus=table.concat(modus or self.modulations, ",")
+  coal=coal or self.coalition
+  gender=gender or self.gender
+  voice=voice or self.voice
+  culture=culture or self.culture
+  volume=volume or self.volume
+  speed=speed or self.speed
+  port=port or self.port  
+  
+  local command=string.format("%s --freqs=%s --modulations=%s --coalition=%d --port=%d --gender=%s --volume=%.2f --speed=%d", exe, freqs, modus, coal, port, gender, volume, speed)
+  
+  if voice then
+    command=command..string.format(" --voice=\"%s\"", tostring(voice))
+  end
+  
+  if culture then
+    command=command.." --culture="..tostring(culture)
+  end
+  
+  env.info("FF command="..command)
+
+  return command
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

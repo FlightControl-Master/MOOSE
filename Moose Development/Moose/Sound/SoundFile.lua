@@ -1,4 +1,4 @@
---- **Sound** - Sound file management.
+--- **Sound** - Sound output classes.
 --
 -- ===
 -- 
@@ -16,12 +16,46 @@
 -- @image Sound_Soundfile.png
 -- 
 
+do -- Sound Base
+
+  --- @type SOUNDBASE
+  -- @field #string ClassName Name of the class
+  -- @extends Core.Base#BASE
+
+
+  --- Sound files used by other classes.
+  -- 
+  -- # 1. USERFLAG constructor
+  --   
+  --   * @{#USERFLAG.New}(): Creates a new USERFLAG object.
+  -- 
+  -- @field #SOUNDBASE
+  SOUNDBASE={
+    ClassName   = "SOUNDBASE",
+  }
+  
+  --- Constructor to create a new SOUNDBASE object.
+  -- @param #SOUNDBASE self
+  -- @return #SOUNDBASE self
+  function SOUNDBASE:New()
+  
+    -- Inherit BASE.
+    local self=BASE:Inherit(self, BASE:New()) -- #SOUNDFILE
+
+    
+
+    return self
+  end
+  
+end
+
+
 do -- Sound File
 
   --- @type SOUNDFILE
   -- @field #string ClassName Name of the class
   -- @field #string filename Name of the flag.
-  -- @field #string path Directory path, where the sound file is located.
+  -- @field #string path Directory path, where the sound file is located. This includes the final slash "/".
   -- @field #string duration Duration of the sound file in seconds.
   -- @field #string subtitle Subtitle of the transmission.
   -- @field #number subduration Duration in seconds how long the subtitle is displayed.
@@ -39,7 +73,7 @@ do -- Sound File
   SOUNDFILE={
     ClassName   = "SOUNDFILE",
     filename    =  nil,
-    path        = "l10n/DEFAULT",
+    path        = "l10n/DEFAULT/",
     duration    =    3,
     subtitle    =   nil,
     subduration =   0,
@@ -58,12 +92,10 @@ do -- Sound File
     local self=BASE:Inherit(self, BASE:New()) -- #SOUNDFILE
 
     -- Set file name.
-    self.filename=FileName or "Hallo World.ogg"
-    
-    --TODO: check that sound file is .ogg or .mp3
+    self:SetFileName(FileName)
     
     -- Set path
-    self.path=Path or "l10n/DEFAULT/"
+    self:SetPath(Path)
     
     self.duration=Duration or 3
     
@@ -79,19 +111,39 @@ do -- Sound File
   -- @return #SOUNDFILE self
   function SOUNDFILE:SetPath(Path)
     
+    -- Init path.
     self.path=Path or "l10n/DEFAULT/"
         
     -- Remove (back)slashes.
-    local nmax=1000
-    local n=1
+    local nmax=1000 ; local n=1
     while (self.path:sub(-1)=="/" or self.path:sub(-1)==[[\]]) and n<=nmax do
       self.path=self.path:sub(1,#self.path-1)
       n=n+1
     end
+    
+    -- Append slash.
+    self.path=self.path.."/"
           
     return self
   end  
-  
+
+  --- Get path of the directory, where the sound file is located.
+  -- @param #SOUNDFILE self
+  -- @return #string Path.
+  function SOUNDFILE:GetPath()
+    local path=self.path or "l10n/DEFAULT/"
+    return path
+  end
+
+  --- Set sound file name. This must be a .ogg or .mp3 file!
+  -- @param #SOUNDFILE self
+  -- @param #string FileName Name of the file.
+  -- @return #SOUNDFILE self
+  function SOUNDFILE:SetFileName(FileName)
+    --TODO: check that sound file is really .ogg or .mp3
+    self.filename=FileName or "HelloWorld.mp3"
+    return self
+  end
 
   --- Get the sound file name.
   -- @param #SOUNDFILE self
@@ -99,24 +151,133 @@ do -- Sound File
   function SOUNDFILE:GetFileName()    
     return self.filename
   end
-  
-  --- Get path of the directory, where the sound file is located.
+
+
+  --- Set duration how long it takes to play the sound file.
   -- @param #SOUNDFILE self
-  -- @return #string Path.
-  function SOUNDFILE:GetPath()
-    local path=self.path or "l10n/DEFAULT"
-    path=path.."/"    
-    return path
+  -- @param #string Duration Duration in seconds. Default 3 seconds.
+  -- @return #SOUNDFILE self
+  function SOUNDFILE:SetDuration(Duration)
+    self.duration=Duration or 3
+    return self
+  end  
+
+  --- Get duration how long the sound file takes to play.
+  -- @param #SOUNDFILE self
+  -- @return #number Duration in seconds.
+  function SOUNDFILE:GetDuration()
+    return self.duration or 3
   end
 
   --- Get the complete sound file name inlcuding its path.
   -- @param #SOUNDFILE self
   -- @return #string Name of the sound file.
   function SOUNDFILE:GetName()
-    local filename=self:GetFileName()
     local path=self:GetPath()
-    local name=string.format("%s/%s", path, filename)
+    local filename=self:GetFileName()
+    local name=string.format("%s%s", path, filename)
     return name
   end
+  
+end
+
+do -- Text-To-Speech
+
+  --- @type SOUNDTEXT
+  -- @field #string ClassName Name of the class
+  -- @field #string text Text to speak.
+  -- @field #number duration Duration in seconds.
+  -- @field #string gender Gender.
+  -- @field #string voice Voice.
+  -- @field #string culture Culture.
+  -- @extends Core.Base#BASE
+
+
+  --- Sound files used by other classes.
+  -- 
+  -- # 1. USERFLAG constructor
+  --   
+  --   * @{#USERFLAG.New}(): Creates a new USERFLAG object.
+  -- 
+  -- @field #SOUNDTEXT
+  SOUNDTEXT={
+    ClassName   = "SOUNDTEXT",
+  }
+  
+  --- Constructor to create a new SOUNDTEXT object.
+  -- @param #SOUNDTEXT self
+  -- @param #string Text The text to speak.
+  -- @param #number Duration Duration in seconds, how long it takes to play the text. Default is 3 seconds.
+  -- @return #SOUNDTEXT self
+  function SOUNDTEXT:New(Text, Duration)
+  
+    -- Inherit BASE.
+    local self=BASE:Inherit(self, BASE:New()) -- #SOUNDTEXT
+
+    self:SetText(Text)
+    self:SetDuration(Duration)
+    self:SetGender()
+    self:SetCulture()
+    
+    -- Debug info:
+    self:I(string.format("New SOUNDTEXT: text=%s, duration=%.1f sec", self.text, self.duration))
+
+    return self
+  end
+  
+  --- Set text.
+  -- @param #SOUNDTEXT self
+  -- @param #string Text Text to speak. Default "Hello World!".
+  -- @return #SOUNDTEXT self
+  function SOUNDTEXT:SetText(Text)
+    
+    self.text=Text or "Hello World!"
+                  
+    return self
+  end
+  
+  --- Set duration, how long it takes to speak the text.
+  -- @param #SOUNDTEXT self
+  -- @param #number Duration Duration in seconds. Default 3 seconds.
+  -- @return #SOUNDTEXT self
+  function SOUNDTEXT:SetDuration(Duration)
+    
+    self.duration=Duration or 3
+                  
+    return self
+  end    
+  
+  --- Set gender.
+  -- @param #SOUNDTEXT self
+  -- @param #string Gender Gender: "male" or "female" (default).
+  -- @return #SOUNDTEXT self
+  function SOUNDTEXT:SetGender(Gender)
+    
+    self.gender=Gender or "female"
+                  
+    return self
+  end
+  
+  --- Set the voice name. See the list from --help or if using google see: https://cloud.google.com/text-to-speech/docs/voices
+  -- @param #SOUNDTEXT self
+  -- @param #string Voice 
+  -- @return #SOUNDTEXT self
+  function SOUNDTEXT:SetVoice(Voice)
+    
+    self.voice=Voice
+                  
+    return self
+  end
+  
+  --- Set TTS culture - local for the voice.
+  -- @param #SOUNDTEXT self
+  -- @param #string Culture TTS culture. Default "en-GB".
+  -- @return #SOUNDTEXT self
+  function SOUNDTEXT:SetCulture(Culture)
+    
+    self.culture=Culture or "en-GB"
+                  
+    return self
+  end  
   
 end

@@ -35,6 +35,7 @@
 -- @field #table numbers Table of number transmission parameters.
 -- @field #boolean checking Scheduler is checking the radio queue. 
 -- @field #boolean schedonce Call ScheduleOnce instead of normal scheduler.
+-- @field Sound.SRS#MSRS msrs Moose SRS class.
 -- @extends Core.Base#BASE
 RADIOQUEUE = {
   ClassName   = "RADIOQUEUE",
@@ -69,6 +70,8 @@ RADIOQUEUE = {
 -- @field #boolean isplaying If true, transmission is currently playing.
 -- @field #number Tplay Mission time (abs) in seconds when the transmission should be played.
 -- @field #number interval Interval in seconds before next transmission.
+-- @field Sound.SoundFile#SOUNDFILE soundfile Sound file object to play via SRS.
+-- @field Sound.SoundFile#SOUNDTEXT soundtext Sound TTS object to play via SRS.
 
 
 --- Create a new RADIOQUEUE object for a given radio frequency/modulation.
@@ -170,6 +173,15 @@ function RADIOQUEUE:SetRadioPower(power)
   return self
 end
 
+--- Set SRS.
+-- @param #RADIOQUEUE self
+-- @param #string PathToSRS Path to SRS.
+-- @return #RADIOQUEUE self The RADIOQUEUE object.
+function RADIOQUEUE:SetSRS(PathToSRS)
+  self.msrs=MSRS:New(PathToSRS, self.frequency/1000000, self.modulation)
+  return self
+end
+
 --- Set parameters of a digit.
 -- @param #RADIOQUEUE self
 -- @param #number digit The digit 0-9.
@@ -230,7 +242,7 @@ end
 -- @param #number interval Interval in seconds after the last transmission finished.
 -- @param #string subtitle Subtitle of the transmission.
 -- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
--- @return #RADIOQUEUE self The RADIOQUEUE object.
+-- @return #RADIOQUEUE.Transmission Radio transmission table.
 function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, subtitle, subduration)
 
   env.info("FF new transmission.")
@@ -271,7 +283,7 @@ function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, 
   -- Add transmission to queue.  
   self:AddTransmission(transmission)
   
-  return self
+  return transmission
 end
 
 --- Create a new transmission and add it to the radio queue.
@@ -280,10 +292,10 @@ end
 -- @param #number tstart Start time (abs) seconds. Default now.
 -- @param #number interval Interval in seconds after the last transmission finished.
 -- @return #RADIOQUEUE self
-function RADIOQUEUE:AddSoundfile(soundfile, tstart, interval)
+function RADIOQUEUE:AddSoundFile(soundfile, tstart, interval)
   env.info(string.format("FF add soundfile: name=%s%s", soundfile:GetPath(), soundfile:GetFileName()))
-  self:NewTransmission(soundfile:GetFileName(), soundfile.duration, soundfile:GetPath(), tstart, interval, soundfile.subtitle, soundfile.subduration)
-
+  local transmission=self:NewTransmission(soundfile:GetFileName(), soundfile.duration, soundfile:GetPath(), tstart, interval, soundfile.subtitle, soundfile.subduration)
+  transmission.soundfile=soundfile
   return self
 end
 
@@ -295,19 +307,9 @@ end
 -- @param #number interval Interval between the next call.
 -- @return #number Duration of the call in seconds.
 function RADIOQUEUE:Number2Transmission(number, delay, interval)
-
-  --- Split string into characters.
-  local function _split(str)
-    local chars={}
-    for i=1,#str do
-      local c=str:sub(i,i)
-      table.insert(chars, c)
-    end
-    return chars
-  end
   
   -- Split string into characters.
-  local numbers=UTILS.GetCharacters(number) --l_split(number)
+  local numbers=UTILS.GetCharacters(number)
 
   local wait=0    
   for i=1,#numbers do
@@ -339,6 +341,11 @@ end
 -- @param #RADIOQUEUE self
 -- @param #RADIOQUEUE.Transmission transmission The transmission.
 function RADIOQUEUE:Broadcast(transmission)
+
+  if (transmission.soundfile or transmission.soundtext) and self.msrs then
+    self:_BroadcastSRS(transmission)
+    return
+  end
 
   -- Get unit sending the transmission.
   local sender=self:_GetRadioSender()
@@ -429,6 +436,19 @@ function RADIOQUEUE:Broadcast(transmission)
     end
 
   end
+end
+
+--- Broadcast radio message.
+-- @param #RADIOQUEUE self
+-- @param #RADIOQUEUE.Transmission transmission The transmission.
+function RADIOQUEUE:_BroadcastSRS(transmission)
+
+  if transmission.soundfile then
+    self.msrs:PlaySoundFile(transmission.soundfile)
+  elseif transmission.soundtext then
+    self.msrs:PlaySoundText(transmission.soundtext)
+  end
+
 end
 
 --- Start checking the radio queue.

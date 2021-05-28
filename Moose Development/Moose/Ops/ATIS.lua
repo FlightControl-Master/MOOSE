@@ -59,7 +59,7 @@
 -- @field #number frequency Radio frequency in MHz.
 -- @field #number modulation Radio modulation 0=AM or 1=FM.
 -- @field #number power Radio power in Watts. Default 100 W.
--- @field Core.RadioQueue#RADIOQUEUE radioqueue Radio queue for broadcasing messages.
+-- @field Sound.RadioQueue#RADIOQUEUE radioqueue Radio queue for broadcasing messages.
 -- @field #string soundpath Path to sound files.
 -- @field #string relayunitname Name of the radio relay unit.
 -- @field #table towerfrequency Table with tower frequencies.
@@ -2102,6 +2102,14 @@ end
 -- @param #string Text Report text.
 function ATIS:onafterReport(From, Event, To, Text)
   self:T(self.lid..string.format("Report:\n%s", Text))
+  
+  -- Remove line breaks
+  local text=string.gsub(Text, "[\r\n]", "")
+  env.info("FF: "..text)
+  
+  local msrs=MSRS:New("D:\\DCS\\_SRS\\", 305, Modulation)
+  msrs:PlayText(text)
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
