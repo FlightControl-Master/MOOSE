@@ -3817,10 +3817,30 @@ function CONTROLLABLE:OptionDisperseOnAttack(Seconds)
     local Controller = self:_GetController()
     if Controller then
      if self:IsGround() then
-        self:SetOption(AI.Option.GROUND.id.DISPERSE_ON_ATTACK, seconds)
+        self:SetOption(AI.Option.Ground.id.DISPERSE_ON_ATTACK, seconds)
      end
     end
    return self
   end
+  return nil
+end
+
+--- Returns if the unit is a submarine.
+-- @param #POSITIONABLE self
+-- @return #boolean Submarines attributes result.
+function POSITIONABLE:IsSubmarine()
+  self:F2()
+
+  local DCSUnit = self:GetDCSObject()
+
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+        if UnitDescriptor.attributes["Submarines"] == true then
+            return true
+        else
+            return false
+        end
+  end
+
   return nil
 end
