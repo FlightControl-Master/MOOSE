@@ -1600,6 +1600,7 @@ end
 -- ## Draw zone
 --
 --   * @{#ZONE_POLYGON_BASE.DrawZone}(): Draws the zone on the F10 map.
+--   * @{#ZONE_POLYGON_BASE.Boundary}(): Draw a frontier on the F10 map with small filled circles.
 --
 --
 -- @field #ZONE_POLYGON_BASE
@@ -2051,6 +2052,45 @@ function ZONE_POLYGON_BASE:GetBoundingSquare()
   return { x1 = x1, y1 = y1, x2 = x2, y2 = y2 }
 end
 
+--- Draw a frontier on the F10 map with small filled circles.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1= All.
+-- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1, 0, 0} for red. Default {1, 1, 1}= White.
+-- @param #number Radius (Optional) Radius of the circles in meters. Default 1000.
+-- @param #number Alpha (Optional) Alpha transparency [0,1]. Default 1.
+-- @param #number Segments (Optional) Number of segments within boundary line. Default 10.
+-- @param #boolean Closed (Optional) Link the last point with the first one to obtain a closed boundary. Default false
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, Closed)
+    Coalition = Coalition or -1
+    Color = Color or {1, 1, 1}
+    Radius = Radius or 1000
+    Alpha = Alpha or 1
+    Segments = Segments or 10
+    Closed = Closed or false
+    local i = 1
+    local j = #self._.Polygon
+    if (Closed) then
+        Limit = #self._.Polygon + 1
+    else
+        Limit = #self._.Polygon
+    end
+    while i <= #self._.Polygon do
+        self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
+        if j ~= Limit then
+            local DeltaX = self._.Polygon[j].x - self._.Polygon[i].x
+            local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
+            for Segment = 0, Segments do
+                local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
+                local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
+                ZONE_RADIUS:New( "Zone", {x = PointX, y = PointY}, Radius ):DrawZone(Coalition, Color, 1, Color, Alpha, nil, true)
+            end
+        end
+        j = i
+        i = i + 1
+    end
+    return self
+end
 
 --- @type ZONE_POLYGON
 -- @extends #ZONE_POLYGON_BASE

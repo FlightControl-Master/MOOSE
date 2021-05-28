@@ -1832,7 +1832,7 @@ end
 
 do -- Patrol methods
 
-  --- (GROUND) Patrol iteratively using the waypoints the for the (parent) group.
+  --- (GROUND) Patrol iteratively using the waypoints of the (parent) group.
   -- @param #CONTROLLABLE self
   -- @return #CONTROLLABLE
   function CONTROLLABLE:PatrolRoute()
@@ -1851,8 +1851,27 @@ do -- Patrol methods
 
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
-      local From = FromCoord:WaypointGround( 120 )
-
+      
+      -- test for submarine
+      local depth = 0
+      local IsSub = false
+      if PatrolGroup:IsShip() then
+        local navalvec3 = FromCoord:GetVec3()
+        if navalvec3.y < 0 then 
+          depth = navalvec3.y
+          IsSub = true
+        end
+      end
+      
+     
+      local Waypoint = Waypoints[1]
+      local Speed = Waypoint.speed or (20 / 3.6)
+       local From = FromCoord:WaypointGround( Speed )
+       
+      if IsSub then 
+         From = FromCoord:WaypointNaval( Speed, Waypoint.alt )
+      end
+      
       table.insert( Waypoints, 1, From )
 
       local TaskRoute = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRoute" )
@@ -1892,7 +1911,16 @@ do -- Patrol methods
       if ToWaypoint then
         FromWaypoint = ToWaypoint
       end
-
+      -- test for submarine
+      local depth = 0
+      local IsSub = false
+      if PatrolGroup:IsShip() then
+        local navalvec3 = FromCoord:GetVec3()
+        if navalvec3.y < 0 then 
+          depth = navalvec3.y
+          IsSub = true
+        end
+      end
       -- Loop until a waypoint has been found that is not the same as the current waypoint.
       -- Otherwise the object zon't move or drive in circles and the algorithm would not do exactly
       -- what it is supposed to do, which is making groups drive around.
@@ -1907,9 +1935,13 @@ do -- Patrol methods
       local ToCoord = COORDINATE:NewFromVec2( { x = Waypoint.x, y = Waypoint.y } )
       -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
       local Route = {}
-      Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
-      Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
-
+      if IsSub then
+        Route[#Route+1] = FromCoord:WaypointNaval( Speed, depth )
+        Route[#Route+1] = ToCoord:WaypointNaval( Speed, Waypoint.alt )
+      else
+        Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
+        Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
+      end
 
       local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRouteRandom", Speed, Formation, ToWaypoint )
 
@@ -1950,9 +1982,20 @@ do -- Patrol methods
     self:F( { PatrolGroup = PatrolGroup:GetName() } )
 
     if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
-
+    
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
+      
+      -- test for submarine
+      local depth = 0
+      local IsSub = false
+      if PatrolGroup:IsShip() then
+        local navalvec3 = FromCoord:GetVec3()
+        if navalvec3.y < 0 then 
+          depth = navalvec3.y
+          IsSub = true
+        end
+      end
 
       -- Select a random Zone and get the Coordinate of the new Zone.
       local RandomZone = ZoneList[ math.random( 1, #ZoneList ) ] -- Core.Zone#ZONE
@@ -1960,9 +2003,13 @@ do -- Patrol methods
 
       -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
       local Route = {}
-      Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
-      Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
-
+      if IsSub then
+        Route[#Route+1] = FromCoord:WaypointNaval( Speed, depth )
+        Route[#Route+1] = ToCoord:WaypointNaval( Speed, depth )
+      else
+        Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
+        Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
+      end
 
       local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolZones", ZoneList, Speed, Formation, DelayMin, DelayMax )
 
@@ -3770,10 +3817,30 @@ function CONTROLLABLE:OptionDisperseOnAttack(Seconds)
     local Controller = self:_GetController()
     if Controller then
      if self:IsGround() then
-        self:SetOption(AI.Option.GROUND.id.DISPERSE_ON_ATTACK, seconds)
+        self:SetOption(AI.Option.Ground.id.DISPERSE_ON_ATTACK, seconds)
      end
     end
    return self
   end
+  return nil
+end
+
+--- Returns if the unit is a submarine.
+-- @param #POSITIONABLE self
+-- @return #boolean Submarines attributes result.
+function POSITIONABLE:IsSubmarine()
+  self:F2()
+
+  local DCSUnit = self:GetDCSObject()
+
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+        if UnitDescriptor.attributes["Submarines"] == true then
+            return true
+        else
+            return false
+        end
+  end
+
   return nil
 end
