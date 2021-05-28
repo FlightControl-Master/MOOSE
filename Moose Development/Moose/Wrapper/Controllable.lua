@@ -3824,3 +3824,23 @@ function CONTROLLABLE:OptionDisperseOnAttack(Seconds)
   end
   return nil
 end
+
+--- Returns if the unit is a submarine.
+-- @param #POSITIONABLE self
+-- @return #boolean Submarines attributes result.
+function POSITIONABLE:IsSubmarine()
+  self:F2()
+
+  local DCSUnit = self:GetDCSObject()
+
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+        if UnitDescriptor.attributes["Submarines"] == true then
+            return true
+        else
+            return false
+        end
+  end
+
+  return nil
+end
