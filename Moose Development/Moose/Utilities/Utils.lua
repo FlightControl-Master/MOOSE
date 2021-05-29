@@ -698,7 +698,10 @@ function UTILS.IsInSphere( InVec3, Vec3, Radius )
   return InSphere
 end
 
--- Beaufort scale: returns Beaufort number and wind description as a function of wind speed in m/s.
+--- Beaufort scale: returns Beaufort number and wind description as a function of wind speed in m/s.
+-- @param #number speed Wind speed in m/s.
+-- @return #number Beaufort number.
+-- @return #string Beauford wind description.
 function UTILS.BeaufortScale(speed)
   local bn=nil
   local bd=nil
@@ -756,6 +759,21 @@ function UTILS.Split(str, sep)
     table.insert(result, each)
   end
   return result
+end
+
+--- Get a table of all characters in a string.
+-- @param #string str Sting.
+-- @return #table Individual characters.
+function UTILS.GetCharacters(str)
+
+  local chars={}
+  
+  for i=1,#str do
+    local c=str:sub(i,i)
+    table.insert(chars, c)
+  end
+  
+  return chars
 end
 
 --- Convert time in seconds to hours, minutes and seconds.

@@ -4,10 +4,11 @@ Utilities/Utils.lua
 Utilities/Enums.lua
 Utilities/Profiler.lua
 Utilities/Templates.lua
+Utilities/STTS.lua
 
 Core/Base.lua
+Core/Beacon.lua
 Core/UserFlag.lua
-Core/UserSound.lua
 Core/Report.lua
 Core/Scheduler.lua
 Core/ScheduleDispatcher.lua
@@ -22,9 +23,6 @@ Core/Point.lua
 Core/Velocity.lua
 Core/Message.lua
 Core/Fsm.lua
-Core/Radio.lua
-Core/RadioQueue.lua
-Core/RadioSpeech.lua
 Core/Spawn.lua
 Core/SpawnStatic.lua
 Core/Timer.lua
@@ -120,6 +118,13 @@ Actions/Act_Assign.lua
 Actions/Act_Route.lua
 Actions/Act_Account.lua
 Actions/Act_Assist.lua
+
+Sound/UserSound.lua
+Sound/SoundOutput.lua
+Sound/Radio.lua
+Sound/RadioQueue.lua
+Sound/RadioSpeech.lua
+Sound/SRS.lua
 
 Tasking/CommandCenter.lua
 Tasking/Mission.lua
