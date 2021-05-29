@@ -4,7 +4,8 @@
 -- 
 -- ## Features:
 -- 
---   * Add a sound file to the 
+--   * Create a SOUNDFILE object (mp3 or ogg) to be played via DCS or SRS transmissions
+--   * Create a SOUNDTEXT object for text-to-speech output
 -- 
 -- ===
 -- 
@@ -12,22 +13,19 @@
 -- 
 -- ===
 -- 
--- @module Sound.Soundfile
--- @image Sound_Soundfile.png
--- 
+-- @module Sound.SoundOutput
+-- @image Sound_SoundOutput.png
 
 do -- Sound Base
 
   --- @type SOUNDBASE
-  -- @field #string ClassName Name of the class
+  -- @field #string ClassName Name of the class.
   -- @extends Core.Base#BASE
 
 
-  --- Sound files used by other classes.
+  --- Basic sound output inherited by other classes.
   -- 
-  -- # 1. USERFLAG constructor
-  --   
-  --   * @{#USERFLAG.New}(): Creates a new USERFLAG object.
+  -- This class is **not** meant to be used by "ordinary" users.
   -- 
   -- @field #SOUNDBASE
   SOUNDBASE={
@@ -40,7 +38,7 @@ do -- Sound Base
   function SOUNDBASE:New()
   
     -- Inherit BASE.
-    local self=BASE:Inherit(self, BASE:New()) -- #SOUNDFILE
+    local self=BASE:Inherit(self, BASE:New()) -- #SOUNDBASE
 
     
 
@@ -94,10 +92,11 @@ do -- Sound File
     -- Set file name.
     self:SetFileName(FileName)
     
-    -- Set path
+    -- Set path.
     self:SetPath(Path)
     
-    self.duration=Duration or 3
+    -- Set duration.
+    self:SetDuration(Duration)
     
     -- Debug info:
     self:I(string.format("New SOUNDFILE: file name=%s, path=%s", self.filename, self.path))
@@ -137,11 +136,11 @@ do -- Sound File
 
   --- Set sound file name. This must be a .ogg or .mp3 file!
   -- @param #SOUNDFILE self
-  -- @param #string FileName Name of the file.
+  -- @param #string FileName Name of the file. Default is "Hello World.mp3".
   -- @return #SOUNDFILE self
   function SOUNDFILE:SetFileName(FileName)
     --TODO: check that sound file is really .ogg or .mp3
-    self.filename=FileName or "HelloWorld.mp3"
+    self.filename=FileName or "Hello World.mp3"
     return self
   end
 
@@ -187,17 +186,27 @@ do -- Text-To-Speech
   -- @field #string ClassName Name of the class
   -- @field #string text Text to speak.
   -- @field #number duration Duration in seconds.
-  -- @field #string gender Gender.
-  -- @field #string voice Voice.
-  -- @field #string culture Culture.
+  -- @field #string gender Gender: "male", "female".
+  -- @field #string culture Culture, e.g. "en-GB".
+  -- @field #string voice Specific voice to use. Overrules `gender` and `culture` settings.
   -- @extends Core.Base#BASE
 
 
-  --- Sound files used by other classes.
+  --- Text-to-speech objects for other classes.
   -- 
-  -- # 1. USERFLAG constructor
+  -- # Constructor
   --   
-  --   * @{#USERFLAG.New}(): Creates a new USERFLAG object.
+  --   * @{#SOUNDTEXT.New}(*Text, Duration*): Creates a new SOUNDTEXT object.
+  --
+  -- Name: Microsoft Hazel Desktop, Culture: en-GB,  Gender: Female, Age: Adult, Desc: Microsoft Hazel Desktop - English (Great Britain)
+  -- Name: Microsoft David Desktop, Culture: en-US,  Gender: Male, Age: Adult, Desc: Microsoft David Desktop - English (United States)
+  -- Name: Microsoft Zira Desktop, Culture: en-US,  Gender: Female, Age: Adult, Desc: Microsoft Zira Desktop - English (United States)
+  -- Name: Microsoft Hedda Desktop, Culture: de-DE,  Gender: Female, Age: Adult, Desc: Microsoft Hedda Desktop - German
+  -- Name: Microsoft Helena Desktop, Culture: es-ES,  Gender: Female, Age: Adult, Desc: Microsoft Helena Desktop - Spanish (Spain)
+  -- Name: Microsoft Hortense Desktop, Culture: fr-FR,  Gender: Female, Age: Adult, Desc: Microsoft Hortense Desktop - French
+  -- Name: Microsoft Elsa Desktop, Culture: it-IT,  Gender: Female, Age: Adult, Desc: Microsoft Elsa Desktop - Italian (Italy)
+  -- Name: Microsoft Irina Desktop, Culture: ru-RU,  Gender: Female, Age: Adult, Desc: Microsoft Irina Desktop - Russian
+  -- Name: Microsoft Huihui Desktop, Culture: zh-CN,  Gender: Female, Age: Adult, Desc: Microsoft Huihui Desktop - Chinese (Simplified)
   -- 
   -- @field #SOUNDTEXT
   SOUNDTEXT={
@@ -216,8 +225,8 @@ do -- Text-To-Speech
 
     self:SetText(Text)
     self:SetDuration(Duration)
-    self:SetGender()
-    self:SetCulture()
+    --self:SetGender()
+    --self:SetCulture()
     
     -- Debug info:
     self:I(string.format("New SOUNDTEXT: text=%s, duration=%.1f sec", self.text, self.duration))
@@ -258,9 +267,10 @@ do -- Text-To-Speech
     return self
   end
   
-  --- Set the voice name. See the list from --help or if using google see: https://cloud.google.com/text-to-speech/docs/voices
+  --- Set to use a specific voice name.
+  -- See the list from `DCS-SR-ExternalAudio.exe --help` or if using google see https://cloud.google.com/text-to-speech/docs/voices
   -- @param #SOUNDTEXT self
-  -- @param #string Voice 
+  -- @param #string Voice Voice name. Note that this will overrule `Gender` and `Culture`.
   -- @return #SOUNDTEXT self
   function SOUNDTEXT:SetVoice(Voice)
     

@@ -71,7 +71,7 @@ MSRS = {
   modulations    =         {},
   coalition      =          0,
   gender         =   "female",
-  culture        =    "en-GB",  
+  culture        =        nil,  
   voice          =        nil,
   volume         =          1,  
   speed          =          1,
@@ -81,15 +81,19 @@ MSRS = {
   altitude       =        nil,
 }
 
+--- Counter.
+_MSRSuuid=0
+
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.0.2"
+MSRS.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot.
+-- TODO: Add functions to add/remove freqs and modulations.
+-- TODO: Add coordinate.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -144,7 +148,7 @@ function MSRS:SetPath(Path)
     n=n+1
   end
   
-  self.path=self.path.."/"
+  self.path=self.path --.."/"
   
   self:I(string.format("SRS path=%s", self:GetPath()))
   
@@ -225,15 +229,39 @@ end
 -- @param #string Gender Gender: "male" or "female" (default).
 -- @return #MSRS self
 function MSRS:SetGender(Gender)
-
+  self:I("Input gender to "..tostring(Gender))
+  
   Gender=Gender or "female"
   
-  Gender=Gender:lower()
+  self.gender=Gender:lower()
   
-  self.gender=Gender
+  self:I("Setting gender to "..tostring(self.gender))
   
   return self
 end
+
+--- Set culture.
+-- @param #MSRS self
+-- @param #string Culture Culture, e.g. "en-GB" (default).
+-- @return #MSRS self
+function MSRS:SetCulture(Culture)
+
+  self.culture=Culture
+  
+  return self
+end
+
+--- Set to use a specific voice. Will override gender and culture settings. 
+-- @param #MSRS self
+-- @param #string Voice Voice.
+-- @return #MSRS self
+function MSRS:SetVoice(Voice)
+
+  self.voice=Voice
+  
+  return self
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Transmission Functions
@@ -250,16 +278,20 @@ function MSRS:PlaySoundFile(Soundfile, Delay)
     self:ScheduleOnce(Delay, MSRS.PlaySoundFile, self, Soundfile, 0)
   else
 
+    -- Sound file name.
     local soundfile=Soundfile:GetName()
 
+    -- Get command.
     local command=self:_GetCommand()
     
+    -- Append file.
     command=command.." --file="..tostring(soundfile)
     
-    env.info(string.format("FF PlaySoundfile command=%s", command))
+    -- Debug output.
+    self:I(string.format("MSRS PlaySoundfile command=%s", command))
 
     -- Execute SRS command.
-    os.execute(command)
+    local x=os.execute(command)
         
   end
 
@@ -277,14 +309,17 @@ function MSRS:PlaySoundText(SoundText, Delay)
     self:ScheduleOnce(Delay, MSRS.PlaySoundText, self, SoundText, 0)
   else
 
+    -- Get command.
     local command=self:_GetCommand(nil, nil, nil, SoundText.gender, SoundText.voice, SoundText.culture, SoundText.volume, SoundText.speed)
     
+    -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(SoundText.text))
     
-    env.info(string.format("FF PlaySoundfile command=%s", command))
+    -- Debug putput.
+    self:I(string.format("MSRS PlaySoundfile command=%s", command))
 
     -- Execute SRS command.
-    os.execute(command)
+    local x=os.execute(command)
         
   end
 
@@ -302,17 +337,79 @@ function MSRS:PlayText(Text, Delay)
     self:ScheduleOnce(Delay, MSRS.PlayText, self, Text, 0)
   else
 
-    local text=string.format("\"%s\"", Text)
-    
+    -- Get command line.
     local command=self:_GetCommand()    
 
+    -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(Text))
     
-    env.info(string.format("FF Text command=%s", command))
+    -- Check that length of command is max 255 chars or os.execute() will not work!
+    if string.len(command)>255 then
+    
+      -- Create a tmp file.
+      local filename = os.getenv('TMP') .. "\\MSRS-"..STTS.uuid()..".bat"
+      
+      local script = io.open(filename, "w+")
+      script:write(command.." && exit")
+      script:close()
+    
+      -- Play command.  
+      command=string.format("\"%s\"", filename)
+            
+      -- Play file in 0.05 seconds
+      timer.scheduleFunction(os.execute, command, timer.getTime()+0.05)
+      
+      -- Remove file in 1 second.
+      timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
+    else
+
+      -- Debug output.
+      self:I(string.format("MSRS Text command=%s", command))
+  
+      -- Execute SRS command.
+      local x=os.execute(command)
+    
+    end    
+    
+        
+  end
+  
+  return self
+end
+
+
+--- Play text file via STTS.
+-- @param #MSRS self
+-- @param #string TextFile Full path to the file.
+-- @param #number Delay Delay in seconds, before the message is played.
+-- @return #MSRS self
+function MSRS:PlayTextFile(TextFile, Delay)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, MSRS.PlayTextFile, self, TextFile, 0)
+  else
+  
+    -- First check if text file exists!
+    local exists=UTILS.FileExists(TextFile)    
+    if not exists then
+      self:E("ERROR: MSRS Text file does not exist! File="..tostring(TextFile))
+      return self
+    end
+
+    -- Get command line.    
+    local command=self:_GetCommand()
+
+    -- Append text file.
+    command=command..string.format(" --textFile=\"%s\"", tostring(TextFile))
+    
+    -- Debug output.
+    self:I(string.format("MSRS TextFile command=%s", command))
+    
+    -- Count length of command.
+    local l=string.len(command)
 
     -- Execute SRS command.
     local x=os.execute(command)
-    env.info(x)
         
   end
   
@@ -338,8 +435,8 @@ end
 -- @return #string Command.
 function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port)
 
-    
-  local exe=self:GetPath().."DCS-SR-ExternalAudio.exe"
+  local path=self:GetPath() or STTS.DIRECTORY    
+  local exe=STTS.EXECUTABLE or "DCS-SR-ExternalAudio.exe"
   freqs=table.concat(freqs or self.frequencies, ",")
   modus=table.concat(modus or self.modulations, ",")
   coal=coal or self.coalition
@@ -348,19 +445,34 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   culture=culture or self.culture
   volume=volume or self.volume
   speed=speed or self.speed
-  port=port or self.port  
+  port=port or self.port
   
-  local command=string.format("%s --freqs=%s --modulations=%s --coalition=%d --port=%d --gender=%s --volume=%.2f --speed=%d", exe, freqs, modus, coal, port, gender, volume, speed)
+  env.info("FF gender="..tostring(gender))
+  env.info("FF gender="..tostring(self.gender))
   
+  -- This did not work well. Stopped if the transmission was a bit longer with no apparent error.  
+  --local command=string.format("%s --freqs=%s --modulations=%s --coalition=%d --port=%d --volume=%.2f --speed=%d", exe, freqs, modus, coal, port, volume, speed)
+
+  -- Command from orig STTS script. Works better for some unknown reason!
+  local command=string.format("start /min \"\" /d \"%s\" /b \"%s\" -f %s -m %s -c %s -p %s -n \"%s\"", path, exe, freqs, modus, coal, port, "ROBOT")
+
+  -- Set voice or gender/culture.
   if voice then
+    -- Use a specific voice (no need for gender and/or culture.
     command=command..string.format(" --voice=\"%s\"", tostring(voice))
+  else
+    -- Add gender.
+    if gender and gender~="female" then
+      command=command..string.format(" --gender=%s", tostring(gender))
+    end
+    -- Add culture.
+    if culture and culture~="en-GB" then
+      command=command..string.format(" -l %s", tostring(culture))
+    end
   end
   
-  if culture then
-    command=command.." --culture="..tostring(culture)
-  end
-  
-  env.info("FF command="..command)
+  -- Debug output.
+  self:I("MSRS command="..command)
 
   return command
 end

@@ -77,7 +77,7 @@ RADIOQUEUE = {
 --- Create a new RADIOQUEUE object for a given radio frequency/modulation.
 -- @param #RADIOQUEUE self
 -- @param #number frequency The radio frequency in MHz.
--- @param #number modulation (Optional) The radio modulation. Default radio.modulation.AM.
+-- @param #number modulation (Optional) The radio modulation. Default `radio.modulation.AM` (=0).
 -- @param #string alias (Optional) Name of the radio queue.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:New(frequency, modulation, alias)
@@ -245,8 +245,6 @@ end
 -- @return #RADIOQUEUE.Transmission Radio transmission table.
 function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, subtitle, subduration)
 
-  env.info("FF new transmission.")
-
   -- Sanity checks.
   if not filename then
     self:E(self.lid.."ERROR: No filename specified.")
@@ -288,7 +286,7 @@ end
 
 --- Create a new transmission and add it to the radio queue.
 -- @param #RADIOQUEUE self
--- @param Sound.SoundFile#SOUNDFILE soundfile Sound file object to be added.
+-- @param Sound.SoundOutput#SOUNDFILE soundfile Sound file object to be added.
 -- @param #number tstart Start time (abs) seconds. Default now.
 -- @param #number interval Interval in seconds after the last transmission finished.
 -- @return #RADIOQUEUE self
