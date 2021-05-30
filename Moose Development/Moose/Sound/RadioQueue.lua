@@ -70,8 +70,8 @@ RADIOQUEUE = {
 -- @field #boolean isplaying If true, transmission is currently playing.
 -- @field #number Tplay Mission time (abs) in seconds when the transmission should be played.
 -- @field #number interval Interval in seconds before next transmission.
--- @field Sound.SoundFile#SOUNDFILE soundfile Sound file object to play via SRS.
--- @field Sound.SoundFile#SOUNDTEXT soundtext Sound TTS object to play via SRS.
+-- @field Sound.SoundOutput#SOUNDFILE soundfile Sound file object to play via SRS.
+-- @field Sound.SoundOutput#SOUNDTEXT soundtext Sound TTS object to play via SRS.
 
 
 --- Create a new RADIOQUEUE object for a given radio frequency/modulation.
@@ -176,9 +176,11 @@ end
 --- Set SRS.
 -- @param #RADIOQUEUE self
 -- @param #string PathToSRS Path to SRS.
+-- @param #number Port SRS port. Default 5002.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
-function RADIOQUEUE:SetSRS(PathToSRS)
+function RADIOQUEUE:SetSRS(PathToSRS, Port)
   self.msrs=MSRS:New(PathToSRS, self.frequency/1000000, self.modulation)
+  self.msrs:SetPort(Port)
   return self
 end
 
@@ -284,18 +286,32 @@ function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, 
   return transmission
 end
 
---- Create a new transmission and add it to the radio queue.
+--- Add a SOUNDFILE to the radio queue.
 -- @param #RADIOQUEUE self
 -- @param Sound.SoundOutput#SOUNDFILE soundfile Sound file object to be added.
 -- @param #number tstart Start time (abs) seconds. Default now.
 -- @param #number interval Interval in seconds after the last transmission finished.
 -- @return #RADIOQUEUE self
 function RADIOQUEUE:AddSoundFile(soundfile, tstart, interval)
-  env.info(string.format("FF add soundfile: name=%s%s", soundfile:GetPath(), soundfile:GetFileName()))
+  --env.info(string.format("FF add soundfile: name=%s%s", soundfile:GetPath(), soundfile:GetFileName()))
   local transmission=self:NewTransmission(soundfile:GetFileName(), soundfile.duration, soundfile:GetPath(), tstart, interval, soundfile.subtitle, soundfile.subduration)
   transmission.soundfile=soundfile
   return self
 end
+
+--- Add a SOUNDTEXT to the radio queue.
+-- @param #RADIOQUEUE self
+-- @param Sound.SoundOutput#SOUNDTEXT soundtext Text-to-speech text.
+-- @param #number tstart Start time (abs) seconds. Default now.
+-- @param #number interval Interval in seconds after the last transmission finished.
+-- @return #RADIOQUEUE self
+function RADIOQUEUE:AddSoundText(soundtext, tstart, interval)
+
+  local transmission=self:NewTransmission("SoundText.ogg", soundtext.duration, nil, tstart, interval, soundtext.subtitle, soundtext.subduration)
+  transmission.soundtext=soundtext
+  return self
+end
+
 
 --- Convert a number (as string) into a radio transmission.
 -- E.g. for board number or headings.
@@ -340,7 +356,7 @@ end
 -- @param #RADIOQUEUE.Transmission transmission The transmission.
 function RADIOQUEUE:Broadcast(transmission)
 
-  if (transmission.soundfile or transmission.soundtext) and self.msrs then
+  if ((transmission.soundfile and transmission.soundfile.useSRS) or transmission.soundtext) and self.msrs then
     self:_BroadcastSRS(transmission)
     return
   end
@@ -441,7 +457,7 @@ end
 -- @param #RADIOQUEUE.Transmission transmission The transmission.
 function RADIOQUEUE:_BroadcastSRS(transmission)
 
-  if transmission.soundfile then
+  if transmission.soundfile and transmission.soundfile.useSRS then
     self.msrs:PlaySoundFile(transmission.soundfile)
   elseif transmission.soundtext then
     self.msrs:PlaySoundText(transmission.soundtext)

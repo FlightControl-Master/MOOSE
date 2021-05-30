@@ -20,8 +20,7 @@ _DATABASE:_RegisterCargos()
 _DATABASE:_RegisterZones()
 
 --- Check if os etc is available.
-BASE:I("Checking de-sanitization of os, io and lfs (Check <DCS install folder>/Scripts/MissionScripting.lua and commend out sanitizeModule(''). Use at your own risk!)")
-
+BASE:I("Checking de-sanitization of os, io and lfs:")
 local __na=false
 if os then
   BASE:I("- os available")
@@ -42,5 +41,5 @@ else
   __na=true  
 end
 if __na then
-  BASE:I("Check <DCS install folder>/Scripts/MissionScripting.lua and commend out the lines with sanitizeModule(''). Use at your own risk!)")
+  BASE:I("Check <DCS install folder>/Scripts/MissionScripting.lua and comment out the lines with sanitizeModule(''). Use at your own risk!)")
 end

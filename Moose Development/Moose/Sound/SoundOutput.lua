@@ -57,7 +57,7 @@ do -- Sound File
   -- @field #string duration Duration of the sound file in seconds.
   -- @field #string subtitle Subtitle of the transmission.
   -- @field #number subduration Duration in seconds how long the subtitle is displayed.
-  -- @field #boolean insideMiz If true (default), the sound file is located inside the mission .miz file.
+  -- @field #boolean useSRS If true, sound file is played via SRS. Sound file needs to be on local disk not inside the miz file!
   -- @extends Core.Base#BASE
 
 
@@ -75,7 +75,7 @@ do -- Sound File
     duration    =    3,
     subtitle    =   nil,
     subduration =   0,
-    insideMiz   = true,
+    useSRS      = false,
   }
   
   --- Constructor to create a new SOUNDFILE object.
@@ -178,6 +178,19 @@ do -- Sound File
     return name
   end
   
+  --- Get the complete sound file name inlcuding its path.
+  -- @param #SOUNDFILE self
+  -- @param #boolean Switch If true or nil, use SRS. If false, use DCS transmission.
+  -- @return #SOUNDFILE self
+  function SOUNDFILE:UseSRS(Switch)
+    if Switch==true or Switch==nil then
+      self.useSRS=true
+    else
+      self.useSRS=false
+    end
+    return self
+  end  
+  
 end
 
 do -- Text-To-Speech
@@ -224,7 +237,7 @@ do -- Text-To-Speech
     local self=BASE:Inherit(self, BASE:New()) -- #SOUNDTEXT
 
     self:SetText(Text)
-    self:SetDuration(Duration)
+    self:SetDuration(Duration or STTS.getSpeechTime(Text))
     --self:SetGender()
     --self:SetCulture()
     
