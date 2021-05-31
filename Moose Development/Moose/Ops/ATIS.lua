@@ -18,6 +18,7 @@
 --    * Option to present information in imperial or metric units
 --    * Runway length and airfield elevation (optional)
 --    * Frequencies/channels of nav aids (ILS, VOR, NDB, TACAN, PRMG, RSBN) (optional)
+--    * SRS Simple-Text-To-Speech (STTS) integration (no sound files necessary)
 --
 -- ===
 --

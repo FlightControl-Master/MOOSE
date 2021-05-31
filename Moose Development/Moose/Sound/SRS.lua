@@ -57,9 +57,40 @@
 --
 -- This class allows to broadcast sound files or text via Simple Radio Standalone (SRS).
 -- 
--- # Prerequisites
+-- ## Prerequisites
 -- 
--- This script needs SRS version >= 0.9.6.
+-- This script needs SRS version >= 1.9.6.
+-- 
+-- # Play Sound Files
+-- 
+--     local soundfile=SOUNDFILE:New("My Soundfile.ogg", "D:\\Sounds For DCS")
+--     local msrs=MSRS:New("C:\\Path To SRS", 251, radio.modulation.AM)
+--     msrs:PlaySoundFile(soundfile)
+-- 
+-- # Play Text-To-Speech
+-- 
+-- Basic example:
+-- 
+--     -- Create a SOUNDTEXT object.
+--     local text=SOUNDTEXT:New("All Enemies destroyed")
+--     
+--     -- MOOSE SRS 
+--     local msrs=MSRS:New("D:\\DCS\\_SRS\\", 305, radio.modulation.AM)
+--
+--     -- Text-to speech with default voice after 2 seconds.
+--     msrs:PlaySoundText(text, 2)
+--
+-- ## Set Gender
+-- 
+-- Use a specific gender by :SetGender("male") or :SetGender("female").
+-- 
+-- ## Set Culture
+-- 
+-- Use a specific "culture" by :SetCulture("en-US") or :SetGender("de-DE").
+-- 
+-- ## Set Voice
+-- 
+-- Use a specifc voice by :SetVoice("Microsoft Hedda Desktop"). Note that this must be installed on your windows system.
 --
 -- @field #MSRS
 MSRS = {
@@ -94,6 +125,7 @@ MSRS.version="0.0.3"
 
 -- TODO: Add functions to add/remove freqs and modulations.
 -- TODO: Add coordinate.
+-- TODO: Add google.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
