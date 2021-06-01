@@ -86,7 +86,7 @@
 -- 
 -- ## Set Culture
 -- 
--- Use a specific "culture" by :SetCulture("en-US") or :SetGender("de-DE").
+-- Use a specific "culture" by :SetCulture("en-US") or :SetCulture("de-DE").
 -- 
 -- ## Set Voice
 -- 
@@ -478,6 +478,10 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   volume=volume or self.volume
   speed=speed or self.speed
   port=port or self.port
+  
+  -- Replace modulation
+  modus=modus:gsub("0", "AM")
+  modus=modus:gsub("1", "FM")
   
   -- This did not work well. Stopped if the transmission was a bit longer with no apparent error.  
   --local command=string.format("%s --freqs=%s --modulations=%s --coalition=%d --port=%d --volume=%.2f --speed=%d", exe, freqs, modus, coal, port, volume, speed)
