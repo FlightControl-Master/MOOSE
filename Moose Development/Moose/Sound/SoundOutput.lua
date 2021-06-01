@@ -57,7 +57,7 @@ do -- Sound File
   -- @field #string duration Duration of the sound file in seconds.
   -- @field #string subtitle Subtitle of the transmission.
   -- @field #number subduration Duration in seconds how long the subtitle is displayed.
-  -- @field #boolean insideMiz If true (default), the sound file is located inside the mission .miz file.
+  -- @field #boolean useSRS If true, sound file is played via SRS. Sound file needs to be on local disk not inside the miz file!
   -- @extends Core.Base#BASE
 
 
@@ -75,7 +75,7 @@ do -- Sound File
     duration    =    3,
     subtitle    =   nil,
     subduration =   0,
-    insideMiz   = true,
+    useSRS      = false,
   }
   
   --- Constructor to create a new SOUNDFILE object.
@@ -178,6 +178,19 @@ do -- Sound File
     return name
   end
   
+  --- Get the complete sound file name inlcuding its path.
+  -- @param #SOUNDFILE self
+  -- @param #boolean Switch If true or nil, use SRS. If false, use DCS transmission.
+  -- @return #SOUNDFILE self
+  function SOUNDFILE:UseSRS(Switch)
+    if Switch==true or Switch==nil then
+      self.useSRS=true
+    else
+      self.useSRS=false
+    end
+    return self
+  end  
+  
 end
 
 do -- Text-To-Speech
@@ -198,15 +211,22 @@ do -- Text-To-Speech
   --   
   --   * @{#SOUNDTEXT.New}(*Text, Duration*): Creates a new SOUNDTEXT object.
   --
-  -- Name: Microsoft Hazel Desktop, Culture: en-GB,  Gender: Female, Age: Adult, Desc: Microsoft Hazel Desktop - English (Great Britain)
-  -- Name: Microsoft David Desktop, Culture: en-US,  Gender: Male, Age: Adult, Desc: Microsoft David Desktop - English (United States)
-  -- Name: Microsoft Zira Desktop, Culture: en-US,  Gender: Female, Age: Adult, Desc: Microsoft Zira Desktop - English (United States)
-  -- Name: Microsoft Hedda Desktop, Culture: de-DE,  Gender: Female, Age: Adult, Desc: Microsoft Hedda Desktop - German
-  -- Name: Microsoft Helena Desktop, Culture: es-ES,  Gender: Female, Age: Adult, Desc: Microsoft Helena Desktop - Spanish (Spain)
-  -- Name: Microsoft Hortense Desktop, Culture: fr-FR,  Gender: Female, Age: Adult, Desc: Microsoft Hortense Desktop - French
-  -- Name: Microsoft Elsa Desktop, Culture: it-IT,  Gender: Female, Age: Adult, Desc: Microsoft Elsa Desktop - Italian (Italy)
-  -- Name: Microsoft Irina Desktop, Culture: ru-RU,  Gender: Female, Age: Adult, Desc: Microsoft Irina Desktop - Russian
-  -- Name: Microsoft Huihui Desktop, Culture: zh-CN,  Gender: Female, Age: Adult, Desc: Microsoft Huihui Desktop - Chinese (Simplified)
+  --
+  -- # Specific Voice
+  -- 
+  -- You can use a specific voice for the transmission with the @{SOUNDTEXT.SetVoice}(*VoiceName*) function. Here are some examples
+  --
+  -- * Name: Microsoft Hazel Desktop, Culture: en-GB,  Gender: Female, Age: Adult, Desc: Microsoft Hazel Desktop - English (Great Britain)
+  -- * Name: Microsoft David Desktop, Culture: en-US,  Gender: Male, Age: Adult, Desc: Microsoft David Desktop - English (United States)
+  -- * Name: Microsoft Zira Desktop, Culture: en-US,  Gender: Female, Age: Adult, Desc: Microsoft Zira Desktop - English (United States)
+  -- * Name: Microsoft Hedda Desktop, Culture: de-DE,  Gender: Female, Age: Adult, Desc: Microsoft Hedda Desktop - German
+  -- * Name: Microsoft Helena Desktop, Culture: es-ES,  Gender: Female, Age: Adult, Desc: Microsoft Helena Desktop - Spanish (Spain)
+  -- * Name: Microsoft Hortense Desktop, Culture: fr-FR,  Gender: Female, Age: Adult, Desc: Microsoft Hortense Desktop - French
+  -- * Name: Microsoft Elsa Desktop, Culture: it-IT,  Gender: Female, Age: Adult, Desc: Microsoft Elsa Desktop - Italian (Italy)
+  -- * Name: Microsoft Irina Desktop, Culture: ru-RU,  Gender: Female, Age: Adult, Desc: Microsoft Irina Desktop - Russian
+  -- * Name: Microsoft Huihui Desktop, Culture: zh-CN,  Gender: Female, Age: Adult, Desc: Microsoft Huihui Desktop - Chinese (Simplified)
+  -- 
+  -- Note that this must be installed on your windos machine. Also note that this overrides any culture and gender settings.
   -- 
   -- @field #SOUNDTEXT
   SOUNDTEXT={
@@ -224,7 +244,7 @@ do -- Text-To-Speech
     local self=BASE:Inherit(self, BASE:New()) -- #SOUNDTEXT
 
     self:SetText(Text)
-    self:SetDuration(Duration)
+    self:SetDuration(Duration or STTS.getSpeechTime(Text))
     --self:SetGender()
     --self:SetCulture()
     
@@ -270,11 +290,11 @@ do -- Text-To-Speech
   --- Set to use a specific voice name.
   -- See the list from `DCS-SR-ExternalAudio.exe --help` or if using google see https://cloud.google.com/text-to-speech/docs/voices
   -- @param #SOUNDTEXT self
-  -- @param #string Voice Voice name. Note that this will overrule `Gender` and `Culture`.
+  -- @param #string VoiceName Voice name. Note that this will overrule `Gender` and `Culture`.
   -- @return #SOUNDTEXT self
-  function SOUNDTEXT:SetVoice(Voice)
+  function SOUNDTEXT:SetVoice(VoiceName)
     
-    self.voice=Voice
+    self.voice=VoiceName
                   
     return self
   end

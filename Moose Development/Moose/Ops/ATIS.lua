@@ -18,6 +18,7 @@
 --    * Option to present information in imperial or metric units
 --    * Runway length and airfield elevation (optional)
 --    * Frequencies/channels of nav aids (ILS, VOR, NDB, TACAN, PRMG, RSBN) (optional)
+--    * SRS Simple-Text-To-Speech (STTS) integration (no sound files necessary)
 --
 -- ===
 --
@@ -1115,6 +1116,7 @@ function ATIS:SetSTTS(PathToSRS, Gender, Culture, Voice, Port)
   self.msrs:SetGender(Gender)
   self.msrs:SetCulture(Culture)
   self.msrs:SetVoice(Voice)
+  self.msrs:SetPort(Port)
   return self
 end
 
@@ -2187,9 +2189,6 @@ function ATIS:onafterReport(From, Event, To, Text)
     -- Replace ";" by "."
     local text=string.gsub(text, ";", ". ")
     env.info("FF: "..text)
-            
-    --local msrs=MSRS:New("D:\\DCS\\_SRS\\", 305, Modulation)
-    --msrs:PlayText(text)
     
     -- Play text-to-speech report.    
     self.msrs:PlayText(text)

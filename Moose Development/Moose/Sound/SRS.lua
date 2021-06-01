@@ -57,9 +57,40 @@
 --
 -- This class allows to broadcast sound files or text via Simple Radio Standalone (SRS).
 -- 
--- # Prerequisites
+-- ## Prerequisites
 -- 
--- This script needs SRS version >= 0.9.6.
+-- This script needs SRS version >= 1.9.6.
+-- 
+-- # Play Sound Files
+-- 
+--     local soundfile=SOUNDFILE:New("My Soundfile.ogg", "D:\\Sounds For DCS")
+--     local msrs=MSRS:New("C:\\Path To SRS", 251, radio.modulation.AM)
+--     msrs:PlaySoundFile(soundfile)
+-- 
+-- # Play Text-To-Speech
+-- 
+-- Basic example:
+-- 
+--     -- Create a SOUNDTEXT object.
+--     local text=SOUNDTEXT:New("All Enemies destroyed")
+--     
+--     -- MOOSE SRS 
+--     local msrs=MSRS:New("D:\\DCS\\_SRS\\", 305, radio.modulation.AM)
+--
+--     -- Text-to speech with default voice after 2 seconds.
+--     msrs:PlaySoundText(text, 2)
+--
+-- ## Set Gender
+-- 
+-- Use a specific gender by :SetGender("male") or :SetGender("female").
+-- 
+-- ## Set Culture
+-- 
+-- Use a specific "culture" by :SetCulture("en-US") or :SetCulture("de-DE").
+-- 
+-- ## Set Voice
+-- 
+-- Use a specifc voice by :SetVoice("Microsoft Hedda Desktop"). Note that this must be installed on your windows system.
 --
 -- @field #MSRS
 MSRS = {
@@ -94,6 +125,7 @@ MSRS.version="0.0.3"
 
 -- TODO: Add functions to add/remove freqs and modulations.
 -- TODO: Add coordinate.
+-- TODO: Add google.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -447,14 +479,15 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   speed=speed or self.speed
   port=port or self.port
   
-  env.info("FF gender="..tostring(gender))
-  env.info("FF gender="..tostring(self.gender))
+  -- Replace modulation
+  modus=modus:gsub("0", "AM")
+  modus=modus:gsub("1", "FM")
   
   -- This did not work well. Stopped if the transmission was a bit longer with no apparent error.  
   --local command=string.format("%s --freqs=%s --modulations=%s --coalition=%d --port=%d --volume=%.2f --speed=%d", exe, freqs, modus, coal, port, volume, speed)
 
   -- Command from orig STTS script. Works better for some unknown reason!
-  local command=string.format("start /min \"\" /d \"%s\" /b \"%s\" -f %s -m %s -c %s -p %s -n \"%s\"", path, exe, freqs, modus, coal, port, "ROBOT")
+  local command=string.format("start /min \"\" /d \"%s\" /b \"%s\" -f %s -m %s -c %s -p %s -n \"%s\" -h", path, exe, freqs, modus, coal, port, "ROBOT")
 
   -- Set voice or gender/culture.
   if voice then
