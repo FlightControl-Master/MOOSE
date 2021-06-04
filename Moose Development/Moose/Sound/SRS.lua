@@ -21,8 +21,7 @@
 --
 -- ===
 --
--- Automatic terminal information service, or ATIS, is a continuous broadcast of recorded aeronautical information in busier terminal areas, *i.e.* airports and their immediate surroundings.
--- ATIS broadcasts contain essential information, such as current weather information, active runways, and any other information required by the pilots.
+-- The goal of the [SRS](https://github.com/ciribob/DCS-SimpleRadioStandalone) project is to bring VoIP communication into DCS and to make communication as frictionless as possible.
 --
 -- ===
 --

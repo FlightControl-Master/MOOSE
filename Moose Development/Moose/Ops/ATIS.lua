@@ -255,6 +255,13 @@
 -- # Marks on the F10 Map
 --
 -- You can place marks on the F10 map via the @{#ATIS.SetMapMarks}() function. These will contain info about the ATIS frequency, the currently active runway and some basic info about the weather (wind, pressure and temperature).
+-- 
+-- # Text-To-Speech
+-- 
+-- You can enable text-to-speech ATIS information with the @{#ATIS.SetSTTS}() function. This uses [SRS](http://dcssimpleradio.com/) (Version >= 1.9.6.0) for broadcasing.
+-- Advantages are that no sound files are necessary. Also the issue that FC3 aircraft hear all transmissions will be circumvented.
+-- 
+-- The @{#ATIS.SetSTTS}() requires you to specify the path to the SRS install directory. 
 --
 -- # Examples
 --
@@ -1109,8 +1116,9 @@ end
 -- @param #string Gender Gender: "male" or "female" (default).
 -- @param #string Culture Culture, e.g. "en-GB" (default).
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
+-- @param #number Port SRS port. Default 5002.
 -- @return #ATIS self
-function ATIS:SetSTTS(PathToSRS, Gender, Culture, Voice, Port)
+function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port)
   self.useSRS=true
   self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
   self.msrs:SetGender(Gender)
