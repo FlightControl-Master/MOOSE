@@ -5,13 +5,19 @@
 -- ## Features:
 -- 
 --   * Create a SOUNDFILE object (mp3 or ogg) to be played via DCS or SRS transmissions
---   * Create a SOUNDTEXT object for text-to-speech output
+--   * Create a SOUNDTEXT object for text-to-speech output vis SRS Simple-Text-To-Speech
 -- 
 -- ===
 -- 
 -- ### Author: **funkyfranky**
 -- 
 -- ===
+-- 
+-- There are two classes, SOUNDFILE and SOUNDTEXT, defined in this section that deal with playing
+-- sound files or arbitrary text (via SRS Simple-Text-To-Speech), respectively.
+-- 
+-- The SOUNDFILE and SOUNDTEXT objects can be defined and used in other MOOSE classes.
+-- 
 -- 
 -- @module Sound.SoundOutput
 -- @image Sound_SoundOutput.png
@@ -63,9 +69,39 @@ do -- Sound File
 
   --- Sound files used by other classes.
   -- 
-  -- # 1. USERFLAG constructor
+  -- # The SOUNDFILE Concept
   --   
-  --   * @{#USERFLAG.New}(): Creates a new USERFLAG object.
+  -- A SOUNDFILE object hold the important properties that are necessary to play the sound file, e.g. its file name, path, duration.
+  -- 
+  -- It can be created with the @{#SOUNDFILE.New}(*FileName*, *Path*, *Duration*) function:
+  -- 
+  --     local soundfile=SOUNDFILE:New("My Soundfile.ogg", "Sound File/", 3.5)
+  -- 
+  -- ## SRS
+  -- 
+  -- If sound files are supposed to be played via SRS, you need to use the @{#SOUNDFILE.SetPlayWithSRS}() function.
+  -- 
+  -- # Location/Path
+  -- 
+  -- ## DCS
+  -- 
+  -- DCS can only play sound files that are located inside the mission (.miz) file. In particular, DCS cannot make use of files that are stored on
+  -- your hard drive.
+  -- 
+  -- The default location where sound files are stored in DCS is the directory "l10n/DEFAULT/". This is where sound files are placed, if they are
+  -- added via the mission editor (TRIGGERS-->ACTIONS-->SOUND TO ALL). Note however, that sound files which are not added with a trigger command,
+  -- will be deleted each time the mission is saved! Therefore, this directory is not ideal to be used especially if many sound files are to
+  -- be included since for each file a trigger action needs to be created. Which is cumbersome, to say the least.
+  -- 
+  -- The recommended way is to create a new folder inside the mission (.miz) file (a miz file is essentially zip file and can be opened, e.g., with 7-Zip)
+  -- and to place the sound files in there. Sound files in these folders are not wiped out by DCS on the next save.
+  -- 
+  -- ## SRS
+  -- 
+  -- SRS sound files need to be located on your local drive (not inside the miz). Therefore, you need to specify the full path.
+  -- 
+  -- 
+  -- ## SRS
   -- 
   -- @field #SOUNDFILE
   SOUNDFILE={
@@ -178,11 +214,11 @@ do -- Sound File
     return name
   end
   
-  --- Get the complete sound file name inlcuding its path.
+  --- Set whether sound files should be played via SRS.
   -- @param #SOUNDFILE self
   -- @param #boolean Switch If true or nil, use SRS. If false, use DCS transmission.
   -- @return #SOUNDFILE self
-  function SOUNDFILE:UseSRS(Switch)
+  function SOUNDFILE:SetPlayWithSRS(Switch)
     if Switch==true or Switch==nil then
       self.useSRS=true
     else
@@ -207,12 +243,30 @@ do -- Text-To-Speech
 
   --- Text-to-speech objects for other classes.
   -- 
-  -- # Constructor
+  -- # The SOUNDTEXT Concept
+  -- 
+  -- A SOUNDTEXT object holds all necessary information to play a general text via SRS Simple-Text-To-Speech.
+  -- 
+  -- It can be created with the @{#SOUNDTEXT.New}(*Text*, *Duration*) function.
   --   
   --   * @{#SOUNDTEXT.New}(*Text, Duration*): Creates a new SOUNDTEXT object.
   --
+  -- # Options
+  -- 
+  -- ## Gender
+  -- 
+  -- You can choose a gender ("male" or "femal") with the @{#SOUNDTEXT.SetGender}(*Gender*) function.
+  -- Note that the gender voice needs to be installed on your windows machine for the used culture (see below).
+  -- 
+  -- ## Culture
+  -- 
+  -- You can choose a "culture" (accent) with the @{#SOUNDTEXT.SetCulture}(*Culture*) function, where the default (SRS) culture is "en-GB".
+  -- 
+  -- Other examples for culture are: "en-US" (US accent), "de-DE" (German), "it-IT" (Italian), "ru-RU" (Russian), "zh-CN" (Chinese).
+  -- 
+  -- Note that the chosen culture needs to be installed on your windows machine. 
   --
-  -- # Specific Voice
+  -- ## Specific Voice
   -- 
   -- You can use a specific voice for the transmission with the @{SOUNDTEXT.SetVoice}(*VoiceName*) function. Here are some examples
   --
@@ -287,18 +341,6 @@ do -- Text-To-Speech
     return self
   end
   
-  --- Set to use a specific voice name.
-  -- See the list from `DCS-SR-ExternalAudio.exe --help` or if using google see https://cloud.google.com/text-to-speech/docs/voices
-  -- @param #SOUNDTEXT self
-  -- @param #string VoiceName Voice name. Note that this will overrule `Gender` and `Culture`.
-  -- @return #SOUNDTEXT self
-  function SOUNDTEXT:SetVoice(VoiceName)
-    
-    self.voice=VoiceName
-                  
-    return self
-  end
-  
   --- Set TTS culture - local for the voice.
   -- @param #SOUNDTEXT self
   -- @param #string Culture TTS culture. Default "en-GB".
@@ -308,6 +350,18 @@ do -- Text-To-Speech
     self.culture=Culture or "en-GB"
                   
     return self
-  end  
+  end    
+  
+  --- Set to use a specific voice name.
+  -- See the list from `DCS-SR-ExternalAudio.exe --help` or if using google see [google voices](https://cloud.google.com/text-to-speech/docs/voices).
+  -- @param #SOUNDTEXT self
+  -- @param #string VoiceName Voice name. Note that this will overrule `Gender` and `Culture`.
+  -- @return #SOUNDTEXT self
+  function SOUNDTEXT:SetVoice(VoiceName)
+    
+    self.voice=VoiceName
+                  
+    return self
+  end
   
 end

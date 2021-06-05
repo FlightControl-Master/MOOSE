@@ -4,7 +4,7 @@
 -- 
 -- ## Features:
 -- 
---   * Managed Radio Transmissions.
+--   * Manage Radio Transmissions
 --
 -- ===
 --
@@ -14,6 +14,10 @@
 -- @image Sound_Radio.JPG
 
 --- Manages radio transmissions.
+-- 
+-- The main goal of the RADIOQUEUE class is to string together multiple sound files to play a complete sentence.
+-- The underlying problem is that radio transmissions in DCS are not queued but played "on top" of each other.
+-- Therefore, to achive the goal, it is vital to know the precise duration how long it takes to play the sound file.
 -- 
 -- @type RADIOQUEUE
 -- @field #string ClassName Name of the class "RADIOQUEUE".
