@@ -21,8 +21,7 @@
 --
 -- ===
 --
--- Automatic terminal information service, or ATIS, is a continuous broadcast of recorded aeronautical information in busier terminal areas, *i.e.* airports and their immediate surroundings.
--- ATIS broadcasts contain essential information, such as current weather information, active runways, and any other information required by the pilots.
+-- The goal of the [SRS](https://github.com/ciribob/DCS-SimpleRadioStandalone) project is to bring VoIP communication into DCS and to make communication as frictionless as possible.
 --
 -- ===
 --
@@ -82,15 +81,16 @@
 --
 -- ## Set Gender
 -- 
--- Use a specific gender by :SetGender("male") or :SetGender("female").
+-- Use a specific gender with the @{#MSRS.SetGender} function, e.g. `SetGender("male")` or `:SetGender("female")`.
 -- 
 -- ## Set Culture
 -- 
--- Use a specific "culture" by :SetCulture("en-US") or :SetCulture("de-DE").
+-- Use a specific "culture" with the @{#MSRS.SetCulture} function, e.g. `:SetCulture("en-US")` or `:SetCulture("de-DE")`.
 -- 
 -- ## Set Voice
 -- 
--- Use a specifc voice by :SetVoice("Microsoft Hedda Desktop"). Note that this must be installed on your windows system.
+-- Use a specifc voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+-- Note that this must be installed on your windows system.
 --
 -- @field #MSRS
 MSRS = {
