@@ -35,6 +35,7 @@
 -- @field #number clustercounter Running number of clusters.
 -- @field #number dTforget Time interval in seconds before a known contact which is not detected any more is forgotten.
 -- @field #number clusterradius Radius im kilometers in which groups/units are considered to belong to a cluster
+-- @field #number prediction Seconds default to be used with CalcClusterFuturePosition.
 -- @extends Core.Fsm#FSM
 
 --- Top Secret!
@@ -95,6 +96,9 @@ INTEL = {
   Clusters        =    {},
   clustercounter  =     1,
   clusterradius   =   15,
+  clusteranalysis =   true,
+  clustermarkers  =   false,
+  prediction      =   300,
 }
 
 --- Detected item info.
@@ -131,7 +135,7 @@ INTEL = {
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.2.1"
+INTEL.version="0.2.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -898,7 +902,7 @@ end
 -- Cluster Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Paint picture of the battle field.
+--- [Internal] Paint picture of the battle field. Does Cluster analysis and updates clusters. Sets markers if markers are enabled.
 -- @param #INTEL self 
 function INTEL:PaintPicture()
 
@@ -918,8 +922,12 @@ function INTEL:PaintPicture()
     else
       local mission = _cluster.mission or nil
       local marker = _cluster.marker
+      local markerID = _cluster.markerID
       if marker then
         marker:Remove()
+      end
+      if markerID then
+        COORDINATE:RemoveMark(markerID)
       end
       self:LostCluster(_cluster, mission)
     end
@@ -989,12 +997,10 @@ function INTEL:PaintPicture()
   if self.clustermarkers then
     for _,_cluster in pairs(self.Clusters) do
       local cluster=_cluster --#INTEL.Cluster
-    
-        local coordinate=self:GetClusterCoordinate(cluster)
-    
-    
-        -- Update F10 marker.
-        self:UpdateClusterMarker(cluster)
+      --local coordinate=self:GetClusterCoordinate(cluster)
+      -- Update F10 marker.
+      self:UpdateClusterMarker(cluster)
+      self:CalcClusterFuturePosition(cluster,self.prediction)
     end
   end
 end
@@ -1108,6 +1114,7 @@ function INTEL:CalcClusterThreatlevelMax(cluster)
   local threatlevel=0
   
   for _,_contact in pairs(cluster.Contacts) do
+  
     local contact=_contact --#INTEL.Contact
     
     if contact.threatlevel>threatlevel then
@@ -1117,6 +1124,65 @@ function INTEL:CalcClusterThreatlevelMax(cluster)
   end
   cluster.threatlevelMax = threatlevel
   return threatlevel
+end
+
+--- Calculate cluster heading.
+-- @param #INTEL self
+-- @param #INTEL.Cluster cluster The cluster of contacts.
+-- @return #number Heading average of all groups in the cluster. 
+function INTEL:CalcClusterDirection(cluster)
+
+  local direction = 0
+  local n=0
+  for _,_contact in pairs(cluster.Contacts) do
+    local group = _contact.group -- Wrapper.Group#GROUP
+    if group:IsAlive() then
+      direction = direction + group:GetHeading()
+      n=n+1
+    end
+  end 
+  return math.floor(direction / n)
+  
+end
+
+--- Calculate cluster speed.
+-- @param #INTEL self
+-- @param #INTEL.Cluster cluster The cluster of contacts.
+-- @return #number Speed average of all groups in the cluster in MPS. 
+function INTEL:CalcClusterSpeed(cluster)
+
+  local velocity = 0
+  local n=0
+  for _,_contact in pairs(cluster.Contacts) do
+    local group = _contact.group -- Wrapper.Group#GROUP
+    if group:IsAlive() then
+      velocity = velocity + group:GetVelocityMPS()
+      n=n+1
+    end
+  end 
+  return math.floor(velocity / n)
+  
+end
+
+--- Calculate cluster future position after given seconds.
+-- @param #INTEL self
+-- @param #INTEL.Cluster cluster The cluster of contacts.
+-- @param #number seconds Timeframe in seconds.
+-- @return Core.Point#COORDINATE Calculated future position of the cluster.
+function INTEL:CalcClusterFuturePosition(cluster,seconds)
+  local speed = self:CalcClusterSpeed(cluster) -- #number MPS
+  local direction = self:CalcClusterDirection(cluster) -- #number heading
+  -- local currposition = cluster.coordinate -- Core.Point#COORDINATE
+  local currposition = self:GetClusterCoordinate(cluster) -- Core.Point#COORDINATE
+  local distance = speed * seconds -- #number in meters the cluster will travel
+  local futureposition = currposition:Translate(distance,direction,true,false)
+  if self.clustermarkers and (self.verbose > 1) then
+    if cluster.markerID then
+      COORDINATE:RemoveMark(cluster.markerID)
+    end
+    cluster.markerID = currposition:ArrowToAll(futureposition,self.coalition,{1,0,0},1,{1,1,0},0.5,2,true,"Postion Calc")
+  end
+  return futureposition
 end
 
 
@@ -1216,10 +1282,16 @@ function INTEL:GetClusterCoordinate(cluster)
   
   for _,_contact in pairs(cluster.Contacts) do
     local contact=_contact --#INTEL.Contact
-    
-    x=x+contact.position.x
-    y=y+contact.position.y
-    z=z+contact.position.z
+    local group = contact.group --Wrapper.Group#GROUP
+    local coord = {}
+    if group:IsAlive() then
+      coord = group:GetCoordinate()
+    else
+      coord = contact.position
+    end
+    x=x+coord.x
+    y=y+coord.y
+    z=z+coord.z
     n=n+1
     
   end
