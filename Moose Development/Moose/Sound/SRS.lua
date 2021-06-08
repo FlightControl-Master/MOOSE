@@ -319,11 +319,19 @@ function MSRS:PlaySoundFile(Soundfile, Delay)
     -- Append file.
     command=command.." --file="..tostring(soundfile)
     
+    self:_ExectCommand(command)
+    
+    --[[
+    
+    command=command.." > bla.txt"
+    
     -- Debug output.
     self:I(string.format("MSRS PlaySoundfile command=%s", command))
 
     -- Execute SRS command.
     local x=os.execute(command)
+    
+    ]]
         
   end
 
@@ -347,11 +355,17 @@ function MSRS:PlaySoundText(SoundText, Delay)
     -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(SoundText.text))
     
+    self:_ExectCommand(command)
+    
+    --[[
+    command=command.." > bla.txt"
+    
     -- Debug putput.
     self:I(string.format("MSRS PlaySoundfile command=%s", command))
 
     -- Execute SRS command.
     local x=os.execute(command)
+    ]]
         
   end
 
@@ -374,6 +388,10 @@ function MSRS:PlayText(Text, Delay)
 
     -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(Text))
+    
+    self:_ExectCommand(command)
+    
+    --[[
     
     -- Check that length of command is max 255 chars or os.execute() will not work!
     if string.len(command)>255 then
@@ -403,7 +421,7 @@ function MSRS:PlayText(Text, Delay)
     
     end    
     
-        
+    ]]
   end
   
   return self
@@ -441,7 +459,8 @@ function MSRS:PlayTextFile(TextFile, Delay)
     local l=string.len(command)
 
     -- Execute SRS command.
-    local x=os.execute(command)
+    self:_ExectCommand(command)
+--    local x=os.execute(command)
         
   end
   
@@ -452,6 +471,32 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Execute SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
+-- @param #MSRS self
+-- @param #string command Command to executer
+-- @return #string Command.
+function MSRS:_ExectCommand(command)
+
+    -- Create a tmp file.
+    local filename = os.getenv('TMP') .. "\\MSRS-"..STTS.uuid()..".bat"
+    
+    local script = io.open(filename, "w+")
+    script:write(command.." && exit")
+    script:close()
+  
+    -- Play command.  
+    command=string.format('start /b "" "\"%s\"', filename)
+          
+    -- Play file in 0.05 seconds
+    timer.scheduleFunction(os.execute, command, timer.getTime()+0.01)
+    
+    -- Remove file in 1 second.
+    timer.scheduleFunction(os.remove, filename, timer.getTime()+1)  
+
+  return res
+end
+
 
 --- Get SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
 -- @param #MSRS self
@@ -488,6 +533,8 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
 
   -- Command from orig STTS script. Works better for some unknown reason!
   local command=string.format("start /min \"\" /d \"%s\" /b \"%s\" -f %s -m %s -c %s -p %s -n \"%s\" -h", path, exe, freqs, modus, coal, port, "ROBOT")
+  
+  --local command=string.format('start /b "" /d "%s" "%s" -f %s -m %s -c %s -p %s -n "%s" > bla.txt', path, exe, freqs, modus, coal, port, "ROBOT")
 
   -- Set voice or gender/culture.
   if voice then
