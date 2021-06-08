@@ -1391,7 +1391,8 @@ function AIRBASE:GetRunwayData(magvar, mark)
      name==AIRBASE.PersianGulf.Abu_Dhabi_International_Airport or
      name==AIRBASE.PersianGulf.Dubai_Intl or
      name==AIRBASE.PersianGulf.Shiraz_International_Airport or
-     name==AIRBASE.PersianGulf.Kish_International_Airport then
+     name==AIRBASE.PersianGulf.Kish_International_Airport or 
+     name==AIRBASE.MarianaIslands.Andersen then
 
     -- 1-->4, 2-->3, 3-->2, 4-->1
     exception=1
