@@ -11,7 +11,7 @@
 -- ### Authors: funkyfranky
 --
 -- @module Sound.RadioQueue
--- @image Sound_Radio.JPG
+-- @image Core_Radio.JPG
 
 --- Manages radio transmissions.
 -- 

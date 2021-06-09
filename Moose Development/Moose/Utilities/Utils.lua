@@ -1287,6 +1287,9 @@ end
 -- * NTTR +12 (East), year ~ 2011
 -- * Normandy -10 (West), year ~ 1944
 -- * Persian Gulf +2 (East), year ~ 2011
+-- * The Cannel Map -10 (West)
+-- * Syria +5 (East)
+-- * Mariana Islands +2 (East)
 -- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
@@ -1308,7 +1311,7 @@ function UTILS.GetMagneticDeclination(map)
   elseif map==DCSMAP.Syria then
     declination=5
   elseif map==DCSMAP.MarianaIslands then
-    declination=-2    
+    declination=2
   else
     declination=0
   end

@@ -35,7 +35,7 @@
 --
 -- ===
 --
--- ## Sound files: Check out the pinned messages in the Moose discord #ops-atis channel.
+-- ## Sound files: [MOOSE Sound Files](https://github.com/FlightControl-Master/MOOSE_SOUND/releases)
 --
 -- ===
 --
@@ -91,6 +91,7 @@
 -- @field #number relHumidity Relative humidity (used to approximately calculate the dew point).
 -- @field #boolean useSRS If true, use SRS for transmission.
 -- @field Sound.SRS#MSRS msrs Moose SRS object.
+-- @field #number dTQueueCheck Time interval to check the radio queue. Default 5 sec or 90 sec if SRS is used.
 -- @extends Core.Fsm#FSM
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -258,10 +259,13 @@
 -- 
 -- # Text-To-Speech
 -- 
--- You can enable text-to-speech ATIS information with the @{#ATIS.SetSTTS}() function. This uses [SRS](http://dcssimpleradio.com/) (Version >= 1.9.6.0) for broadcasing.
--- Advantages are that no sound files are necessary. Also the issue that FC3 aircraft hear all transmissions will be circumvented.
+-- You can enable text-to-speech ATIS information with the @{#ATIS.SetSRS}() function. This uses [SRS](http://dcssimpleradio.com/) (Version >= 1.9.6.0) for broadcasing.
+-- Advantages are that **no sound files** or radio relay units are necessary. Also the issue that FC3 aircraft hear all transmissions will be circumvented.
 -- 
--- The @{#ATIS.SetSTTS}() requires you to specify the path to the SRS install directory. 
+-- The @{#ATIS.SetSRS}() requires you to specify the path to the SRS install directory or more specifically the path to the DCS-SR-ExternalAudio.exe file.
+-- 
+-- Unfortunately, it is not possible to determine the duration of the complete transmission. So once the transmission is finished, there might be some radio silence before
+-- the next iteration begins. You can fine tune the time interval between transmissions with the @{#ATIS.SetQueueUpdateTime}() function. The default interval is 90 seconds.
 --
 -- # Examples
 --
@@ -293,7 +297,14 @@
 --     atisAbuDhabi:SetTowerFrequencies({250.5, 119.2})
 --     atisAbuDhabi:SetVOR(114.25)
 --     atisAbuDhabi:Start()
+--     
+-- ## SRS
+-- 
+--     atis=ATIS:New("Batumi", 305, radio.modulation.AM)
+--     atis:SetSRS("D:\\DCS\\_SRS\\", "male", "en-US")
+--     atis:Start()
 --
+-- This uses a male voice with US accent. It requires SRS to be installed in the `D:\DCS\_SRS\` directory. Not that backslashes need to be escaped or simply use slashes (as in linux).
 --
 -- @field #ATIS
 ATIS = {
@@ -378,6 +389,7 @@ ATIS.Alphabet = {
 -- @field #number PersianGulf +2° (East).
 -- @field #number TheChannel -10° (West).
 -- @field #number Syria +5° (East).
+-- @field #number MarianaIslands +2° (East).
 ATIS.RunwayM2T={
   Caucasus=0,
   Nevada=12,
@@ -385,6 +397,7 @@ ATIS.RunwayM2T={
   PersianGulf=2,
   TheChannel=-10,
   Syria=5,
+  MarianaIslands=2,
 }
 
 --- Whether ICAO phraseology is used for ATIS broadcasts.
@@ -395,6 +408,7 @@ ATIS.RunwayM2T={
 -- @field #boolean PersianGulf true.
 -- @field #boolean TheChannel true.
 -- @field #boolean Syria true.
+-- @field #boolean MarianaIslands true.
 ATIS.ICAOPhraseology={
   Caucasus=true,
   Nevada=false,
@@ -402,6 +416,7 @@ ATIS.ICAOPhraseology={
   PersianGulf=true,
   TheChannel=true,
   Syria=true,
+  MarianaIslands=true,
 }
 
 --- Nav point data.
@@ -574,7 +589,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.9.1"
+ATIS.version="0.9.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -638,6 +653,7 @@ function ATIS:New(airbasename, frequency, modulation)
   self:SetAltimeterQNH(true)
   self:SetMapMarks(false)
   self:SetRelativeHumidity()
+  self:SetQueueUpdateTime()
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -965,7 +981,9 @@ end
 --   * 170° on the Normany map
 --   * 182° on the Persian Gulf map
 --
--- Likewise, to convert *magnetic* into *true* heading, one has to substract easterly and add westerly variation.
+-- Likewise, to convert *true* into *magnetic* heading, one has to substract easterly and add westerly variation.
+-- 
+-- Or you make your life simple and just include the sign so you don't have to bother about East/West.
 --
 -- @param #ATIS self
 -- @param #number magvar Magnetic variation in degrees. Positive for easterly and negative for westerly variation. Default is magnatic declinaton of the used map, c.f. @{Utilities.UTils#UTILS.GetMagneticDeclination}.
@@ -1125,7 +1143,18 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port)
   self.msrs:SetCulture(Culture)
   self.msrs:SetVoice(Voice)
   self.msrs:SetPort(Port)
+  if self.dTQueueCheck<=10 then
+    self:SetQueueUpdateTime(90)
+  end
   return self
+end
+
+--- Set the time interval between radio queue updates.
+-- @param #ATIS self
+-- @param #number TimeInterval Interval in seconds. Default 5 sec.
+-- @return #ATIS self
+function ATIS:SetQueueUpdateTime(TimeInterval)
+  self.dTQueueCheck=TimeInterval or 5
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1199,7 +1228,13 @@ function ATIS:onafterStatus(From, Event, To)
   end
 
     -- Info text.
-  local text=string.format("State %s: Freq=%.3f MHz %s, Relay unit=%s (alive=%s)", fsmstate, self.frequency, UTILS.GetModulationName(self.modulation), tostring(self.relayunitname), relayunitstatus)
+  local text=string.format("State %s: Freq=%.3f MHz %s", fsmstate, self.frequency, UTILS.GetModulationName(self.modulation))
+  if self.useSRS then
+    text=text..string.format(", SRS path=%s (%s), gender=%s, culture=%s, voice=%s", 
+    tostring(self.msrs.path), tostring(self.msrs.port), tostring(self.msrs.gender), tostring(self.msrs.culture), tostring(self.msrs.voice))
+  else
+    text=text..string.format(", Relay unit=%s (alive=%s)", tostring(self.relayunitname), relayunitstatus)
+  end
   self:I(self.lid..text)
 
   self:__Status(-60)
@@ -1220,8 +1255,6 @@ function ATIS:onafterCheckQueue(From, Event, To)
   
     self:Broadcast()
     
-    self:__CheckQueue(-120)
-    
   else
   
     if #self.radioqueue.queue==0 then
@@ -1231,10 +1264,12 @@ function ATIS:onafterCheckQueue(From, Event, To)
       self:T2(self.lid..string.format("Radio queue %d transmissions queued.", #self.radioqueue.queue))
     end
   
-    -- Check back in 5 seconds.
-    self:__CheckQueue(-5)
+    
     
   end
+
+  -- Check back in 5 seconds.  
+  self:__CheckQueue(-math.abs(self.dTQueueCheck))  
 end
 
 --- Broadcast ATIS radio message.
@@ -1778,10 +1813,14 @@ function ATIS:onafterBroadcast(From, Event, To)
   end
   if CLOUDBASE and static then
     -- Base
+    local cbase=tostring(tonumber(CLOUDBASE1000)*1000+tonumber(CLOUDBASE0100)*100)
+    local cceil=tostring(tonumber(CLOUDCEIL1000)*1000+tonumber(CLOUDCEIL0100)*100)
     if self.metric then
-      subtitle=string.format("Cloud base %s, ceiling %s meters", CLOUDBASE, CLOUDCEIL)
+      --subtitle=string.format("Cloud base %s, ceiling %s meters", CLOUDBASE, CLOUDCEIL)
+      subtitle=string.format("Cloud base %s, ceiling %s meters", cbase, cceil)
     else
-      subtitle=string.format("Cloud base %s, ceiling %s feet", CLOUDBASE, CLOUDCEIL)
+      --subtitle=string.format("Cloud base %s, ceiling %s feet", CLOUDBASE, CLOUDCEIL)
+      subtitle=string.format("Cloud base %s, ceiling %s feet", cbase, cceil)
     end
     if not self.useSRS then
       self:Transmission(ATIS.Sound.CloudBase, 1.0, subtitle)
@@ -2195,7 +2234,7 @@ function ATIS:onafterReport(From, Event, To, Text)
     local text=string.gsub(text, "m/s", "meters per second")
     
     -- Replace ";" by "."
-    local text=string.gsub(text, ";", ". ")
+    local text=string.gsub(text, ";", " . ")
     env.info("FF: "..text)
     
     -- Play text-to-speech report.    

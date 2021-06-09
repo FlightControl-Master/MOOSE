@@ -100,9 +100,6 @@ do -- Sound File
   -- 
   -- SRS sound files need to be located on your local drive (not inside the miz). Therefore, you need to specify the full path.
   -- 
-  -- 
-  -- ## SRS
-  -- 
   -- @field #SOUNDFILE
   SOUNDFILE={
     ClassName   = "SOUNDFILE",
