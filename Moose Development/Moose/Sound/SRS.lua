@@ -26,8 +26,8 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- @module Addons.SRS
--- @image Addons_SRS.png
+-- @module Sound.MSRS
+-- @image Sound_MSRS.png
 
 --- MSRS class.
 -- @type MSRS
@@ -111,9 +111,6 @@ MSRS = {
   longitude      =        nil,
   altitude       =        nil,
 }
-
---- Counter.
-_MSRSuuid=0
 
 --- MSRS class version.
 -- @field #string version
