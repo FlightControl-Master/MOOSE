@@ -319,7 +319,7 @@ function MSRS:PlaySoundFile(Soundfile, Delay)
     -- Append file.
     command=command.." --file="..tostring(soundfile)
     
-    self:_ExectCommand(command)
+    self:_ExecCommand(command)
     
     --[[
     
@@ -355,7 +355,7 @@ function MSRS:PlaySoundText(SoundText, Delay)
     -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(SoundText.text))
     
-    self:_ExectCommand(command)
+    self:_ExecCommand(command)
     
     --[[
     command=command.." > bla.txt"
@@ -389,7 +389,7 @@ function MSRS:PlayText(Text, Delay)
     -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(Text))
     
-    self:_ExectCommand(command)
+    self:_ExecCommand(command)
     
     --[[
     
@@ -459,7 +459,7 @@ function MSRS:PlayTextFile(TextFile, Delay)
     local l=string.len(command)
 
     -- Execute SRS command.
-    self:_ExectCommand(command)
+    self:_ExecCommand(command)
 --    local x=os.execute(command)
         
   end
@@ -476,7 +476,7 @@ end
 -- @param #MSRS self
 -- @param #string command Command to executer
 -- @return #string Command.
-function MSRS:_ExectCommand(command)
+function MSRS:_ExecCommand(command)
 
     -- Create a tmp file.
     local filename = os.getenv('TMP') .. "\\MSRS-"..STTS.uuid()..".bat"
@@ -484,15 +484,56 @@ function MSRS:_ExectCommand(command)
     local script = io.open(filename, "w+")
     script:write(command.." && exit")
     script:close()
-  
+      
     -- Play command.  
-    command=string.format('start /b "" "\"%s\"', filename)
-          
-    -- Play file in 0.05 seconds
-    timer.scheduleFunction(os.execute, command, timer.getTime()+0.01)
+    command=string.format('start /b "" "%s"', filename)
     
-    -- Remove file in 1 second.
-    timer.scheduleFunction(os.remove, filename, timer.getTime()+1)  
+    if true then
+    
+      -- Create a tmp file.
+      local filenvbs = os.getenv('TMP') .. "\\MSRS-"..STTS.uuid()..".vbs"
+      
+      -- VBS script
+      local script = io.open(filenvbs, "w+")
+      script:write(string.format('Dim WinScriptHost\n'))
+      script:write(string.format('Set WinScriptHost = CreateObject("WScript.Shell")\n'))
+      script:write(string.format('WinScriptHost.Run Chr(34) & "%s" & Chr(34), 0\n', filename))
+      script:write(string.format('Set WinScriptHost = Nothing'))
+      script:close()
+
+      -- Run visual basic script. This still pops up a window but very briefly and does not put the DCS window out of focus.      
+      local runvbs=string.format('cscript.exe //Nologo //B "%s"', filenvbs)
+      
+      -- Debug output.
+      self:I("MSRS execute command="..command)
+      self:I("MSRS execute VBS command="..runvbs)
+      
+      -- Now create powershell process and feed your script to its stdin
+      --local pipe = io.popen("cscript.exe //Nologo //B", "w")
+      --pipe:write(script)
+      --pipe:close()
+            
+      -- Play file in 0.01 seconds
+      os.execute(runvbs)      
+      
+      -- Remove file in 1 second.
+      timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
+      timer.scheduleFunction(os.remove, filenvbs, timer.getTime()+1)
+    
+    
+    else
+
+      -- Debug output.
+      self:I("MSRS execute command="..command)    
+            
+      -- Play file in 0.05 seconds
+      timer.scheduleFunction(os.execute, command, timer.getTime()+0.01)
+      
+      -- Remove file in 1 second.
+      timer.scheduleFunction(os.remove, filename, timer.getTime()+1)  
+    
+    end
+    
 
   return res
 end
@@ -535,6 +576,8 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   local command=string.format("start /min \"\" /d \"%s\" /b \"%s\" -f %s -m %s -c %s -p %s -n \"%s\" -h", path, exe, freqs, modus, coal, port, "ROBOT")
   
   --local command=string.format('start /b "" /d "%s" "%s" -f %s -m %s -c %s -p %s -n "%s" > bla.txt', path, exe, freqs, modus, coal, port, "ROBOT")
+  
+  local command=string.format('%s/%s -f %s -m %s -c %s -p %s -n "%s"', path, exe, freqs, modus, coal, port, "ROBOT")
 
   -- Set voice or gender/culture.
   if voice then
