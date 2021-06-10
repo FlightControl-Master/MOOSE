@@ -132,7 +132,7 @@ do -- Sound File
     self:SetDuration(Duration)
     
     -- Debug info:
-    self:I(string.format("New SOUNDFILE: file name=%s, path=%s", self.filename, self.path))
+    self:T(string.format("New SOUNDFILE: file name=%s, path=%s", self.filename, self.path))
 
     return self
   end
@@ -300,7 +300,7 @@ do -- Text-To-Speech
     --self:SetCulture()
     
     -- Debug info:
-    self:I(string.format("New SOUNDTEXT: text=%s, duration=%.1f sec", self.text, self.duration))
+    self:T(string.format("New SOUNDTEXT: text=%s, duration=%.1f sec", self.text, self.duration))
 
     return self
   end

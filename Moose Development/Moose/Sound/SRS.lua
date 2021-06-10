@@ -158,7 +158,7 @@ end
 
 --- Set path to SRS install directory. More precisely, path to where the DCS-
 -- @param #MSRS self
--- @param #string Path Path to the directory, where the sound file is located.
+-- @param #string Path Path to the directory, where the sound file is located. This does **not** contain a final backslash or slash.
 -- @return #MSRS self
 function MSRS:SetPath(Path)
 
@@ -177,9 +177,8 @@ function MSRS:SetPath(Path)
     n=n+1
   end
   
-  self.path=self.path --.."/"
-  
-  self:I(string.format("SRS path=%s", self:GetPath()))
+  -- Debug output.
+  self:T(string.format("SRS path=%s", self:GetPath()))
   
   return self
 end
@@ -258,13 +257,13 @@ end
 -- @param #string Gender Gender: "male" or "female" (default).
 -- @return #MSRS self
 function MSRS:SetGender(Gender)
-  self:I("Input gender to "..tostring(Gender))
   
   Gender=Gender or "female"
   
   self.gender=Gender:lower()
   
-  self:I("Setting gender to "..tostring(self.gender))
+  -- Debug output.
+  self:T("Setting gender to "..tostring(self.gender))
   
   return self
 end
@@ -291,6 +290,26 @@ function MSRS:SetVoice(Voice)
   return self
 end
 
+--- Opens a new command window and prints the SRS STTS help.
+-- @param #MSRS self
+-- @return #MSRS self
+function MSRS:Help()
+  local path=self:GetPath() or STTS.DIRECTORY    
+  local exe=STTS.EXECUTABLE or "DCS-SR-ExternalAudio.exe"
+  
+  local filename = os.getenv('TMP') .. "\\MSRS-help-"..STTS.uuid()..".txt"
+    
+  local command=string.format("%s/%s --help > %s", path, exe, filename)  
+  os.execute(command)
+  
+  local f=assert(io.open(filename, "rb"))
+  local data=f:read("*all")
+  f:close()
+  
+  env.info(data)
+  
+  return self
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Transmission Functions
@@ -450,7 +469,7 @@ function MSRS:PlayTextFile(TextFile, Delay)
     command=command..string.format(" --textFile=\"%s\"", tostring(TextFile))
     
     -- Debug output.
-    self:I(string.format("MSRS TextFile command=%s", command))
+    self:T(string.format("MSRS TextFile command=%s", command))
     
     -- Count length of command.
     local l=string.len(command)
@@ -502,13 +521,8 @@ function MSRS:_ExecCommand(command)
       local runvbs=string.format('cscript.exe //Nologo //B "%s"', filenvbs)
       
       -- Debug output.
-      self:I("MSRS execute command="..command)
-      self:I("MSRS execute VBS command="..runvbs)
-      
-      -- Now create powershell process and feed your script to its stdin
-      --local pipe = io.popen("cscript.exe //Nologo //B", "w")
-      --pipe:write(script)
-      --pipe:close()
+      self:T("MSRS execute command="..command)
+      self:T("MSRS execute VBS command="..runvbs)
             
       -- Play file in 0.01 seconds
       os.execute(runvbs)      
@@ -521,7 +535,7 @@ function MSRS:_ExecCommand(command)
     else
 
       -- Debug output.
-      self:I("MSRS execute command="..command)    
+      self:T("MSRS execute command="..command)    
             
       -- Play file in 0.05 seconds
       timer.scheduleFunction(os.execute, command, timer.getTime()+0.01)
@@ -592,7 +606,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   end
   
   -- Debug output.
-  self:I("MSRS command="..command)
+  self:T("MSRS command="..command)
 
   return command
 end
