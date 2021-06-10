@@ -1336,7 +1336,7 @@ function UTILS.GMTToLocalTimeDifference()
   elseif theatre==DCSMAP.Syria then
     return 3   -- Damascus is UTC+3 hours
   elseif theatre==DCSMAP.MarianaIslands then
-    return 2   -- Guam is UTC+10 hours but is +2 for now.    
+    return 10  -- Guam is UTC+10 hours.    
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
