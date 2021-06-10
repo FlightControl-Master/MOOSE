@@ -1395,11 +1395,14 @@ function ATIS:onafterBroadcast(From, Event, To)
 
   if time < 0 then
      time = 24*60*60 + time --avoid negative time around midnight
-  end
+  end  
   
   local clock=UTILS.SecondsToClock(time)
   local zulu=UTILS.Split(clock, ":")
   local ZULU=string.format("%s%s", zulu[1], zulu[2])
+  if self.useSRS then
+    ZULU=string.format("%s hours", zulu[1])
+  end
 
 
   -- NATO time stamp. 0=Alfa, 1=Bravo, 2=Charlie, etc.
@@ -1419,10 +1422,17 @@ function ATIS:onafterBroadcast(From, Event, To)
   local sunrise=coord:GetSunrise()
   sunrise=UTILS.Split(sunrise, ":")
   local SUNRISE=string.format("%s%s", sunrise[1], sunrise[2])
+  if self.useSRS then
+    SUNRISE=string.format("%s %s hours", sunrise[1], sunrise[2])
+  end  
 
   local sunset=coord:GetSunset()  
   sunset=UTILS.Split(sunset, ":")
   local SUNSET=string.format("%s%s", sunset[1], sunset[2])
+  if self.useSRS then
+    SUNSET=string.format("%s %s hours", sunset[1], sunset[2])
+  end  
+
 
   ---------------------------------
   --- Temperature and Dew Point ---
