@@ -2156,6 +2156,9 @@ function ATIS:onafterBroadcast(From, Event, To)
   -- VOR
   if self.vor then
     subtitle=string.format("VOR frequency %.2f MHz", self.vor)
+    if self.useSRS then
+      subtitle=string.format("V O R frequency %.2f MHz", self.vor)
+    end
     if not self.useSRS then
       self:Transmission(ATIS.Sound.VORFrequency, 1.0, subtitle)
       local f=string.format("%.2f", self.vor)

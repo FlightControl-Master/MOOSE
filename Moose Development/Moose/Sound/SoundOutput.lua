@@ -5,7 +5,7 @@
 -- ## Features:
 -- 
 --   * Create a SOUNDFILE object (mp3 or ogg) to be played via DCS or SRS transmissions
---   * Create a SOUNDTEXT object for text-to-speech output vis SRS Simple-Text-To-Speech
+--   * Create a SOUNDTEXT object for text-to-speech output vis SRS Simple-Text-To-Speech (STTS)
 -- 
 -- ===
 -- 
@@ -29,7 +29,7 @@ do -- Sound Base
   -- @extends Core.Base#BASE
 
 
-  --- Basic sound output inherited by other classes.
+  --- Basic sound output inherited by other classes suche as SOUNDFILE and SOUNDTEXT.
   -- 
   -- This class is **not** meant to be used by "ordinary" users.
   -- 
@@ -50,6 +50,50 @@ do -- Sound Base
 
     return self
   end
+  
+  --- Function returns estimated speech time in seconds.
+  -- Assumptions for time calc: 100 Words per min, avarage of 5 letters for english word so
+  -- 
+  --   * 5 chars * 100wpm = 500 characters per min = 8.3 chars per second
+  --   
+  -- So lengh of msg / 8.3 = number of seconds needed to read it. rounded down to 8 chars per sec map function:
+  -- 
+  -- * (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+  -- 
+  -- @param #string Text The text string to analyze.
+  -- @param #number Speed Speed factor. Default 1.
+  -- @param #boolean isGoogle If true, google text-to-speech is used.
+  function SOUNDBASE:GetSpeechTime(length,speed,isGoogle)
+  
+    local maxRateRatio = 3 
+  
+    speed = speed or 1.0
+    isGoogle = isGoogle or false
+  
+    local speedFactor = 1.0
+    if isGoogle then
+        speedFactor = speed
+    else
+        if speed ~= 0 then
+            speedFactor = math.abs(speed) * (maxRateRatio - 1) / 10 + 1
+        end
+        if speed < 0 then
+            speedFactor = 1/speedFactor
+        end
+    end
+  
+    -- Words per minute.
+    local wpm = math.ceil(100 * speedFactor)
+    
+    -- Characters per second.
+    local cps = math.floor((wpm * 5)/60)
+  
+    if type(length) == "string" then
+        length = string.len(length)
+    end
+  
+    return math.ceil(length/cps)
+  end  
   
 end
 

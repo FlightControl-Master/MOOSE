@@ -17,7 +17,7 @@
 --
 -- ===
 --
--- ## Sound files: None yet.
+-- ## Sound files: [MOOSE Sound Files](https://github.com/FlightControl-Master/MOOSE_SOUND/releases)
 --
 -- ===
 --
@@ -44,6 +44,7 @@
 -- @field #string voice Specifc voce.
 -- @field Core.Point#COORDINATE coordinate Coordinate from where the transmission is send.
 -- @field #string path Path to the SRS exe. This includes the final slash "/".
+-- @field #string google Full path google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
 -- @extends Core.Base#BASE
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -91,6 +92,10 @@
 -- 
 -- Use a specifc voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system.
+-- 
+-- ## Set Coordinate
+-- 
+-- Use @{#MSRS.SetCoordinate} to define the origin from where the transmission is broadcasted.
 --
 -- @field #MSRS
 MSRS = {
@@ -107,9 +112,6 @@ MSRS = {
   volume         =          1,  
   speed          =          1,
   coordinate     =        nil,
-  latitude       =        nil,
-  longitude      =        nil,
-  altitude       =        nil,
 }
 
 --- MSRS class version.
@@ -121,8 +123,8 @@ MSRS.version="0.0.3"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Add functions to add/remove freqs and modulations.
--- TODO: Add coordinate.
--- TODO: Add google.
+-- DONE: Add coordinate.
+-- DONE: Add google.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -290,15 +292,41 @@ function MSRS:SetVoice(Voice)
   return self
 end
 
---- Opens a new command window and prints the SRS STTS help.
+--- Set the coordinate from which the transmissions will be broadcasted.
+-- @param #MSRS self
+-- @param Core.Point#COORDINATE Coordinate Origin of the transmission.
+-- @return #MSRS self
+function MSRS:SetCoordinate(Coordinate)
+
+  self.coordinate=Coordinate
+  
+  return self
+end
+
+--- Use google text-to-speech.
+-- @param #MSRS self
+-- @param PathToCredentials Full path to the google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
+-- @return #MSRS self
+function MSRS:SetGoogle(PathToCredentials)
+
+  self.google=PathToCredentials
+  
+  return self
+end
+
+--- Print SRS STTS help to DCS log file.
 -- @param #MSRS self
 -- @return #MSRS self
 function MSRS:Help()
+
+  -- Path and exe.
   local path=self:GetPath() or STTS.DIRECTORY    
   local exe=STTS.EXECUTABLE or "DCS-SR-ExternalAudio.exe"
   
+  -- Text file for output.
   local filename = os.getenv('TMP') .. "\\MSRS-help-"..STTS.uuid()..".txt"
     
+  -- Print help.
   local command=string.format("%s/%s --help > %s", path, exe, filename)  
   os.execute(command)
   
@@ -306,7 +334,11 @@ function MSRS:Help()
   local data=f:read("*all")
   f:close()
   
+  -- Print to log file.
+  env.info("SRS STTS help output:")
+  env.info("======================================================================")
   env.info(data)
+  env.info("======================================================================")
   
   return self
 end
@@ -371,6 +403,7 @@ function MSRS:PlaySoundText(SoundText, Delay)
     -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(SoundText.text))
     
+    -- Execute command.
     self:_ExecCommand(command)
     
     --[[
@@ -405,6 +438,7 @@ function MSRS:PlayText(Text, Delay)
     -- Append text.
     command=command..string.format(" --text=\"%s\"", tostring(Text))
     
+    -- Execute command.
     self:_ExecCommand(command)
     
     --[[
@@ -474,9 +508,8 @@ function MSRS:PlayTextFile(TextFile, Delay)
     -- Count length of command.
     local l=string.len(command)
 
-    -- Execute SRS command.
+    -- Execute command.
     self:_ExecCommand(command)
---    local x=os.execute(command)
         
   end
   
@@ -491,19 +524,20 @@ end
 --- Execute SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
 -- @param #MSRS self
 -- @param #string command Command to executer
--- @return #string Command.
+-- @return #number Return value of os.execute() command.
 function MSRS:_ExecCommand(command)
 
     -- Create a tmp file.
-    local filename = os.getenv('TMP') .. "\\MSRS-"..STTS.uuid()..".bat"
+    local filename=os.getenv('TMP').."\\MSRS-"..STTS.uuid()..".bat"
     
-    local script = io.open(filename, "w+")
+    local script=io.open(filename, "w+")
     script:write(command.." && exit")
     script:close()
       
     -- Play command.  
     command=string.format('start /b "" "%s"', filename)
     
+    local res=nil
     if true then
     
       -- Create a tmp file.
@@ -525,7 +559,7 @@ function MSRS:_ExecCommand(command)
       self:T("MSRS execute VBS command="..runvbs)
             
       -- Play file in 0.01 seconds
-      os.execute(runvbs)      
+      res=os.execute(runvbs)      
       
       -- Remove file in 1 second.
       timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
@@ -537,8 +571,8 @@ function MSRS:_ExecCommand(command)
       -- Debug output.
       self:T("MSRS execute command="..command)    
             
-      -- Play file in 0.05 seconds
-      timer.scheduleFunction(os.execute, command, timer.getTime()+0.01)
+      -- Execute command
+      res=os.execute(command)
       
       -- Remove file in 1 second.
       timer.scheduleFunction(os.remove, filename, timer.getTime()+1)  
@@ -547,6 +581,19 @@ function MSRS:_ExecCommand(command)
     
 
   return res
+end
+
+--- Get lat, long and alt from coordinate.
+-- @param #MSRS self
+-- @param Core.Point#Coordinate Coordinate Coordinate. Can also be a DCS#Vec3.
+-- @return #number Latitude.
+-- @return #number Longitude.
+-- @return #number Altitude.
+function MSRS:_GetLatLongAlt(Coordinate)
+  
+  local lat, lon, alt=coord.LOtoLL(Coordinate)
+  
+  return lat, lon, math.floor(alt)
 end
 
 
@@ -588,6 +635,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   
   --local command=string.format('start /b "" /d "%s" "%s" -f %s -m %s -c %s -p %s -n "%s" > bla.txt', path, exe, freqs, modus, coal, port, "ROBOT")
   
+  -- Command.
   local command=string.format('%s/%s -f %s -m %s -c %s -p %s -n "%s"', path, exe, freqs, modus, coal, port, "ROBOT")
 
   -- Set voice or gender/culture.
@@ -603,6 +651,17 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
     if culture and culture~="en-GB" then
       command=command..string.format(" -l %s", tostring(culture))
     end
+  end
+  
+  -- Set coordinate.
+  if self.coordinate then
+    local lat,lon,alt=self:_GetLatLongAlt(self.coordinate)
+    command=command..string.format(" -L %.4f -O %.4f -A %d", lat, lon, alt)
+  end
+  
+  -- Set google.
+  if self.google then
+    command=command..string.format(' -G "%s"', self.google)
   end
   
   -- Debug output.
