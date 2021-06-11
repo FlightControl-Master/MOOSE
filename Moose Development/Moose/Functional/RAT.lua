@@ -5786,6 +5786,8 @@ end
 -- If desired, the @{#RATMANAGER} can be stopped by the @{#RATMANAGER.Stop}(stoptime) function. The parameter "stoptime" specifies the time delay in seconds after which the manager stops.
 -- When this happens, no new aircraft will be spawned and the population will eventually decrease to zero.
 -- 
+-- When you are using a time intervall like @{#RATMANAGER.dTspawn}(delay), @{#RATMANAGER} will ignore the amount set with @{#RATMANAGER.New}(). @{#RATMANAGER.dTspawn}(delay) will spawn infinite groups.
+-- 
 -- ## Example
 -- In this example, three different @{#RAT} objects are created (but not spawned manually). The @{#RATMANAGER} takes care that at least five aircraft of each type are alive and that the total number of aircraft
 -- spawned is 25. The @{#RATMANAGER} is started after 30 seconds and stopped after two hours.
