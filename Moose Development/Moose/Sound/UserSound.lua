@@ -1,4 +1,4 @@
---- **Core** - Manage user sound.
+--- **Sound** - Manage user sound.
 --
 -- ===
 -- 
@@ -16,7 +16,7 @@
 -- 
 -- ===
 -- 
--- @module Core.UserSound
+-- @module Sound.UserSound
 -- @image Core_Usersound.JPG
 
 do -- UserSound

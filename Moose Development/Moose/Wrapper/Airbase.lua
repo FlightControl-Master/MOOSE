@@ -336,41 +336,53 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Incirlik
 -- * AIRBASE.Syria.Damascus
 -- * AIRBASE.Syria.Bassel_Al_Assad
+-- * AIRBASE.Syria.Rosh_Pina
 -- * AIRBASE.Syria.Aleppo
--- * AIRBASE.Syria.Qabr_as_Sitt
+-- * AIRBASE.Syria.Al_Qusayr
 -- * AIRBASE.Syria.Wujah_Al_Hajar
 -- * AIRBASE.Syria.Al_Dumayr
+-- * AIRBASE.Syria.Gazipasa
+-- * AIRBASE.Syria.Ru_Convoy_4
 -- * AIRBASE.Syria.Hatay
+-- * AIRBASE.Syria.Nicosia
+-- * AIRBASE.Syria.Pinarbashi
+-- * AIRBASE.Syria.Paphos
+-- * AIRBASE.Syria.Kingsfield
+-- * AIRBASE.Syria.Tha'lah
 -- * AIRBASE.Syria.Haifa
 -- * AIRBASE.Syria.Khalkhalah
 -- * AIRBASE.Syria.Megiddo
+-- * AIRBASE.Syria.Lakatamia
 -- * AIRBASE.Syria.Rayak
+-- * AIRBASE.Syria.Larnaca
 -- * AIRBASE.Syria.Mezzeh
--- * AIRBASE.Syria.King_Hussein_Air_College
--- * AIRBASE.Syria.Jirah
+-- * AIRBASE.Syria.Gecitkale
+-- * AIRBASE.Syria.Akrotiri
+-- * AIRBASE.Syria.Naqoura
+-- * AIRBASE.Syria.Gaziantep
+-- * AIRBASE.Syria.CVN_71
+-- * AIRBASE.Syria.Sayqal
+-- * AIRBASE.Syria.Tiyas
+-- * AIRBASE.Syria.Shayrat
 -- * AIRBASE.Syria.Taftanaz
+-- * AIRBASE.Syria.H4
+-- * AIRBASE.Syria.King_Hussein_Air_College
 -- * AIRBASE.Syria.Rene_Mouawad
+-- * AIRBASE.Syria.Jirah
 -- * AIRBASE.Syria.Ramat_David
+-- * AIRBASE.Syria.Qabr_as_Sitt
 -- * AIRBASE.Syria.Minakh
 -- * AIRBASE.Syria.Adana_Sakirpasa
--- * AIRBASE.Syria.Marj_as_Sultan_South
--- * AIRBASE.Syria.Hama
--- * AIRBASE.Syria.Al_Qusayr
 -- * AIRBASE.Syria.Palmyra
+-- * AIRBASE.Syria.Hama
+-- * AIRBASE.Syria.Ercan
+-- * AIRBASE.Syria.Marj_as_Sultan_South
 -- * AIRBASE.Syria.Tabqa
 -- * AIRBASE.Syria.Beirut_Rafic_Hariri
 -- * AIRBASE.Syria.An_Nasiriyah
 -- * AIRBASE.Syria.Abu_al_Duhur
--- * AIRBASE.Syria.H4
--- * AIRBASE.Syria.Gaziantep
--- * AIRBASE.Syria.Rosh_Pina
--- * AIRBASE.Syria.Sayqal
--- * AIRBASE.Syria.Shayrat
--- * AIRBASE.Syria.Tiyas
--- * AIRBASE.Syria.Tha_lah
--- * AIRBASE.Syria.Naqoura
 --
--- @field Syria
+--@field Syria
 AIRBASE.Syria={
   ["Kuweires"]="Kuweires",
   ["Marj_Ruhayyil"]="Marj Ruhayyil",
@@ -380,39 +392,71 @@ AIRBASE.Syria={
   ["Incirlik"]="Incirlik",
   ["Damascus"]="Damascus",
   ["Bassel_Al_Assad"]="Bassel Al-Assad",
+  ["Rosh_Pina"]="Rosh Pina",
   ["Aleppo"]="Aleppo",
-  ["Qabr_as_Sitt"]="Qabr as Sitt",
+  ["Al_Qusayr"]="Al Qusayr",
   ["Wujah_Al_Hajar"]="Wujah Al Hajar",
   ["Al_Dumayr"]="Al-Dumayr",
+  ["Gazipasa"]="Gazipasa",
+  ["Ru_Convoy_4"]="Ru Convoy-4",
   ["Hatay"]="Hatay",
+  ["Nicosia"]="Nicosia",
+  ["Pinarbashi"]="Pinarbashi",
+  ["Paphos"]="Paphos",
+  ["Kingsfield"]="Kingsfield",
+  ["Tha'lah"]="Tha'lah",
   ["Haifa"]="Haifa",
   ["Khalkhalah"]="Khalkhalah",
   ["Megiddo"]="Megiddo",
+  ["Lakatamia"]="Lakatamia",
   ["Rayak"]="Rayak",
+  ["Larnaca"]="Larnaca",
   ["Mezzeh"]="Mezzeh",
-  ["King_Hussein_Air_College"]="King Hussein Air College",
-  ["Jirah"]="Jirah",
+  ["Gecitkale"]="Gecitkale",
+  ["Akrotiri"]="Akrotiri",
+  ["Naqoura"]="Naqoura",
+  ["Gaziantep"]="Gaziantep",
+  ["CVN_71"]="CVN-71",
+  ["Sayqal"]="Sayqal",
+  ["Tiyas"]="Tiyas",
+  ["Shayrat"]="Shayrat",
   ["Taftanaz"]="Taftanaz",
+  ["H4"]="H4",
+  ["King_Hussein_Air_College"]="King Hussein Air College",
   ["Rene_Mouawad"]="Rene Mouawad",
+  ["Jirah"]="Jirah",
   ["Ramat_David"]="Ramat David",
+  ["Qabr_as_Sitt"]="Qabr as Sitt",
   ["Minakh"]="Minakh",
   ["Adana_Sakirpasa"]="Adana Sakirpasa",
-  ["Marj_as_Sultan_South"]="Marj as Sultan South",
-  ["Hama"]="Hama",
-  ["Al_Qusayr"]="Al Qusayr",
   ["Palmyra"]="Palmyra",
+  ["Hama"]="Hama",
+  ["Ercan"]="Ercan",
+  ["Marj_as_Sultan_South"]="Marj as Sultan South",
   ["Tabqa"]="Tabqa",
   ["Beirut_Rafic_Hariri"]="Beirut-Rafic Hariri",
   ["An_Nasiriyah"]="An Nasiriyah",
   ["Abu_al_Duhur"]="Abu al-Duhur",
-  ["H4"]="H4",
-  ["Gaziantep"]="Gaziantep",
-  ["Rosh_Pina"]="Rosh Pina",
-  ["Sayqal"]="Sayqal",
-  ["Shayrat"]="Shayrat",
-  ["Tiyas"]="Tiyas",
-  ["Tha_lah"]="Tha'lah",
-  ["Naqoura"]="Naqoura",
+}
+
+
+
+--- Airbases of the Mariana Islands map.
+--
+-- * AIRBASE.MarianaIslands.Rota_International_Airport
+-- * AIRBASE.MarianaIslands.Andersen
+-- * AIRBASE.MarianaIslands.Northwest_Field
+-- * AIRBASE.MarianaIslands.Antonio_B_Won_Pat_International_Airport
+-- * AIRBASE.MarianaIslands.Saipan_International_Airport
+-- * AIRBASE.MarianaIslands.Tinian_International_Airport
+-- @field MarianaIslands
+AIRBASE.MarianaIslands={
+  ["Rota_International_Airport"]="Rota International Airport",
+  ["Andersen"]="Andersen",
+  ["Northwest_Field"]="Northwest_Field",
+  ["Antonio_B_Won_Pat_International_Airport"]="Antonio B. Won Pat International Airport",
+  ["Saipan_International_Airport"]="Saipan International Airport",
+  ["Tinian_International_Airport"]="Tinian International Airport",
 }
 
 
@@ -1372,7 +1416,8 @@ function AIRBASE:GetRunwayData(magvar, mark)
      name==AIRBASE.PersianGulf.Abu_Dhabi_International_Airport or
      name==AIRBASE.PersianGulf.Dubai_Intl or
      name==AIRBASE.PersianGulf.Shiraz_International_Airport or
-     name==AIRBASE.PersianGulf.Kish_International_Airport then
+     name==AIRBASE.PersianGulf.Kish_International_Airport or 
+     name==AIRBASE.MarianaIslands.Andersen then
 
     -- 1-->4, 2-->3, 3-->2, 4-->1
     exception=1
