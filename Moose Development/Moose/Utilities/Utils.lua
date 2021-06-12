@@ -50,6 +50,7 @@ BIGSMOKEPRESET = {
 -- @field #string PersianGulf Persian Gulf map.
 -- @field #string TheChannel The Channel map.
 -- @field #string Syria Syria map.
+-- @field #string MarianaIslands Mariana Islands map.
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -57,6 +58,7 @@ DCSMAP = {
   PersianGulf="PersianGulf",
   TheChannel="TheChannel",
   Syria="Syria",
+  MarianaIslands="MarianaIslands"
 }
 
 
@@ -696,7 +698,10 @@ function UTILS.IsInSphere( InVec3, Vec3, Radius )
   return InSphere
 end
 
--- Beaufort scale: returns Beaufort number and wind description as a function of wind speed in m/s.
+--- Beaufort scale: returns Beaufort number and wind description as a function of wind speed in m/s.
+-- @param #number speed Wind speed in m/s.
+-- @return #number Beaufort number.
+-- @return #string Beauford wind description.
 function UTILS.BeaufortScale(speed)
   local bn=nil
   local bd=nil
@@ -754,6 +759,21 @@ function UTILS.Split(str, sep)
     table.insert(result, each)
   end
   return result
+end
+
+--- Get a table of all characters in a string.
+-- @param #string str Sting.
+-- @return #table Individual characters.
+function UTILS.GetCharacters(str)
+
+  local chars={}
+  
+  for i=1,#str do
+    local c=str:sub(i,i)
+    table.insert(chars, c)
+  end
+  
+  return chars
 end
 
 --- Convert time in seconds to hours, minutes and seconds.
@@ -1205,6 +1225,9 @@ end
 -- * NTTR +12 (East), year ~ 2011
 -- * Normandy -10 (West), year ~ 1944
 -- * Persian Gulf +2 (East), year ~ 2011
+-- * The Cannel Map -10 (West)
+-- * Syria +5 (East)
+-- * Mariana Islands +2 (East)
 -- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
@@ -1225,6 +1248,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=-10
   elseif map==DCSMAP.Syria then
     declination=5
+  elseif map==DCSMAP.MarianaIslands then
+    declination=2
   else
     declination=0
   end
@@ -1353,6 +1378,8 @@ function UTILS.GMTToLocalTimeDifference()
     return 2   -- This map currently needs +2
   elseif theatre==DCSMAP.Syria then
     return 3   -- Damascus is UTC+3 hours
+  elseif theatre==DCSMAP.MarianaIslands then
+    return 10  -- Guam is UTC+10 hours.    
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0

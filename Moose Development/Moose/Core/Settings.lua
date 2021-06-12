@@ -236,6 +236,7 @@ do -- SETTINGS
 
   --- SETTINGS constructor.
   -- @param #SETTINGS self
+  -- @param #string PlayerName (Optional) Set settings for this player.
   -- @return #SETTINGS
   function SETTINGS:Set( PlayerName )
 

@@ -36,7 +36,7 @@
 -- 
 -- ===
 --
--- ## Sound files: Check out the pinned messages in the Moose discord *#func-range* channel.
+-- ## Sound files: [MOOSE Sound Files](https://github.com/FlightControl-Master/MOOSE_SOUND/releases)
 --
 -- ===
 --
@@ -91,9 +91,9 @@
 -- @field #boolean defaultsmokebomb If true, initialize player settings to smoke bomb.
 -- @field #boolean autosave If true, automatically save results every X seconds.
 -- @field #number instructorfreq Frequency on which the range control transmitts.
--- @field Core.RadioQueue#RADIOQUEUE instructor Instructor radio queue.
+-- @field Sound.RadioQueue#RADIOQUEUE instructor Instructor radio queue.
 -- @field #number rangecontrolfreq Frequency on which the range control transmitts.
--- @field Core.RadioQueue#RADIOQUEUE rangecontrol Range control radio queue.
+-- @field Sound.RadioQueue#RADIOQUEUE rangecontrol Range control radio queue.
 -- @field #string rangecontrolrelayname Name of relay unit.
 -- @field #string instructorrelayname Name of relay unit.
 -- @field #string soundpath Path inside miz file where the sound files are located. Default is "Range Soundfiles/".
