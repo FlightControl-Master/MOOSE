@@ -589,7 +589,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.9.3"
+ATIS.version="0.9.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2248,7 +2248,9 @@ function ATIS:onafterReport(From, Event, To, Text)
     
     -- Replace ";" by "."
     local text=string.gsub(text, ";", " . ")
-    env.info("FF: "..text)
+    
+    --Debug output.
+    self:T("SRS TTS: "..text)
     
     -- Play text-to-speech report.    
     self.msrs:PlayText(text)
