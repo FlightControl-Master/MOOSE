@@ -8,7 +8,7 @@
 -- 
 -- ## Missions:
 --
--- ### [CSAR - Combat Search & Rescue](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tbd)
+-- ### [CSAR - Combat Search & Rescue](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20CSAR)
 -- 
 -- ===
 -- 
@@ -127,7 +127,7 @@
 --    
 --      The CSAR helicopter has landed close to an Airbase/MASH/FARP and the pilots are safe. Use e.g. `function my_csar:OnAfterRescued(...)` to link into this event:
 --      
---          function my_csar:OnAfterRescued(from, event, to, heliunit, heliname)
+--          function my_csar:OnAfterRescued(from, event, to, heliunit, heliname, pilotssaved)
 --            ... your code here ...
 --          end     
 --
@@ -212,7 +212,7 @@ CSAR.AircraftType["Mi-24"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.0r1"
+CSAR.version="0.1.0r2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -309,7 +309,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.allowDownedPilotCAcontrol = false -- Set to false if you don't want to allow control by Combined arms.
   self.enableForAI = true -- set to false to disable AI units from being rescued.
   self.smokecolor = 4 -- Color of smokemarker for blue side, 0 is green, 1 is red, 2 is white, 3 is orange and 4 is blue
-  self.coordtype = 1 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
+  self.coordtype = 2 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
   self.immortalcrew = true -- Set to true to make wounded crew immortal
   self.invisiblecrew = false -- Set to true to make wounded crew insvisible 
   self.messageTime = 30 -- Time to show longer messages for in seconds 
@@ -383,8 +383,8 @@ function CSAR:New(Coalition, Template, Alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #string Heliname Name of the helicopter group
-  -- @param #string Woundedgroupname Name of the downed pilot's group
+  -- @param #string Heliname Name of the helicopter group.
+  -- @param #string Woundedgroupname Name of the downed pilot's group.
 
     --- On After "Returning" event. Heli can return home with downed pilot(s).
   -- @function [parent=#CSAR] OnAfterReturning
@@ -392,8 +392,8 @@ function CSAR:New(Coalition, Template, Alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #string Heliname Name of the helicopter group
-  -- @param #string Woundedgroupname Name of the downed pilot's group
+  -- @param #string Heliname Name of the helicopter group.
+  -- @param #string Woundedgroupname Name of the downed pilot's group.
   
     --- On After "Rescued" event. Pilot(s) have been brought to the MASH/FARP/AFB.
   -- @function [parent=#CSAR] OnAfterRescued
@@ -401,8 +401,9 @@ function CSAR:New(Coalition, Template, Alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param Wrapper.Unit#UNIT HeliUnit Unit of the helicopter
-  -- @param #string HeliName Name of the helicopter group
+  -- @param Wrapper.Unit#UNIT HeliUnit Unit of the helicopter.
+  -- @param #string HeliName Name of the helicopter group.
+  -- @param #number PilotsSaved Number of the save pilots on board when landing.
   
   return self
 end
@@ -492,10 +493,13 @@ end
 -- @return #string alias The alias name.
 function CSAR:_SpawnPilotInField(country,point)
   self:T({country,point})
+  for i=1,10 do
+    math.random(i,10000)
+  end
   local template = self.template
   local alias = string.format("Downed Pilot-%d",math.random(1,10000))
   local coalition = self.coalition
-  local pilotcacontrol = self.allowDownedPilotCAcontrol -- is this really correct?
+  local pilotcacontrol = self.allowDownedPilotCAcontrol -- Switch AI on/oof - is this really correct for CA?
   local _spawnedGroup = SPAWN
     :NewWithAlias(template,alias)
     :InitCoalition(coalition)
@@ -559,9 +563,9 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   self:T({_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description})
   -- local _spawnedGroup = self:_SpawnGroup( _coalition, _country, _point, _typeName )
   local template = self.template
-  local alias = string.format("Downed Pilot-%d",math.random(1,10000))
-  local immortalcrew = self.immortalcrew
-  local invisiblecrew = self.invisiblecrew
+  --local alias = string.format("Downed Pilot-%d",math.random(1,10000))
+  --local immortalcrew = self.immortalcrew
+  --local invisiblecrew = self.invisiblecrew
   local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point)
   local _typeName = _typeName or "PoW"
   if not noMessage then
@@ -1240,13 +1244,20 @@ function CSAR:_RescuePilots(_heliUnit)
       return
   end
   
+  -- TODO: count saved units?
+  local PilotsSaved = 0
+  for _,_units in pairs(_rescuedGroups) do
+    PilotsSaved = PilotsSaved + 1
+  end
+
+  
   self.inTransitGroups[_heliName] = nil
   
   local _txt = string.format("%s: The pilots have been taken to the\nmedical clinic. Good job!", _heliName)
   
   self:_DisplayMessageToSAR(_heliUnit, _txt, 10)
   -- trigger event
-  self:__Rescued(-1,_heliUnit,_heliName)
+  self:__Rescued(-1,_heliUnit,_heliName, PilotsSaved)
 end
 
 --- Check and return Wrappe.Unit#UNIT based on the name if alive.
@@ -1917,3 +1928,6 @@ function CSAR:onbeforePilotDown(From, Event, To, Group, Frequency, Leadername, C
   return self
 end
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- End Ops.CSAR
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
