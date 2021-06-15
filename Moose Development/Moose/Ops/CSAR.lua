@@ -64,27 +64,37 @@
 -- 
 -- ## 2. Options
 -- 
--- The following options are available (with their defaults):
+-- The following options are available (with their defaults). Only set the ones you want changed:
 --
 --         self.allowDownedPilotCAcontrol = false -- Set to false if you don't want to allow control by Combined Arms.
---         self.allowFARPRescue = true -- allows pilot to be rescued by landing at a FARP or Airbase. Else MASH only.
---         self.autosmoke = false -- automatically smoke downed pilot location when a heli is near.
+--         self.allowFARPRescue = true -- allows pilots to be rescued by landing at a FARP or Airbase. Else MASH only!
+--         self.autosmoke = false -- automatically smoke a downed pilot's location when a heli is near.
 --         self.coordtype = 1 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
---         self.csarOncrash = true -- If set to true, will generate a downed pilot when a plane crashes as well.
---         self.csarPrefix = { "helicargo", "MEDEVAC"} -- prefixes used for useprefix=true - DO NOT use # in helicopter names in the Mission Editor!
---         self.enableForAI = true -- set to false to disable AI units from being rescued.
---         self.extractDistance = 500 -- Distance the Downed pilot will run to the rescue helicopter.
+--         self.csarOncrash = true -- (WIP) If set to true, will generate a downed pilot when a plane crashes as well.
+--         self.enableForAI = true -- set to false to disable AI pilots from being rescued.
+--         self.pilotRuntoExtractPoint = true -- Downed pilot will run to the rescue helicopter up to self.extractDistance in meters. 
+--         self.extractDistance = 500 -- Distance the downed pilot will start to run to the rescue helicopter.
 --         self.immortalcrew = true -- Set to true to make wounded crew immortal.
 --         self.invisiblecrew = false -- Set to true to make wounded crew insvisible.
 --         self.loadDistance = 75 -- configure distance for pilots to get into helicopter in meters.
 --         self.mashprefix = {"MASH"} -- prefixes of #GROUP objects used as MASHes.
 --         self.max_units = 6 -- number of pilots that can be carried if #CSAR.AircraftType is undefined.
---         self.messageTime = 10 -- Time to show messages for in seconds. Doubled for long messages.
---         self.pilotRuntoExtractPoint = true -- Downed Pilot will run to the rescue helicopter up to self.extractDistance in meters. 
---         self.radioSound = "beacon.ogg" -- the name of the sound file to use for the Pilot radio beacons. 
---         self.smokecolor = 4 -- Color of smokemarker for blue side, 0 is green, 1 is red, 2 is white, 3 is orange and 4 is blue.
---         self.template = Template or "generic" -- late activated template for downed pilot, usually single infantry soldier.
---         self.useprefix = true  -- Use the Prefixed defined below, Requires Unit have the Prefix defined below. 
+--         self.messageTime = 15 -- Time to show messages for in seconds. Doubled for long messages.
+--         self.radioSound = "beacon.ogg" -- the name of the sound file to use for the pilots' radio beacons. 
+--         self.smokecolor = 4 -- Color of smokemarker, 0 is green, 1 is red, 2 is white, 3 is orange and 4 is blue.
+--         self.useprefix = true  -- Requires CSAR helicopter #GROUP names to have the prefix(es) defined below.
+--         self.csarPrefix = { "helicargo", "MEDEVAC"} -- #GROUP name prefixes used for useprefix=true - DO NOT use # in helicopter names in the Mission Editor! 
+--         self.verbose = 0 -- set to > 1 for stats output for debugging.
+-- 
+-- ## 2.1 Experimental Features
+-- 
+--       WARNING - Here'll be dragons!
+--       DANGER - For this to work you need to de-sanitize your mission environment (all three entries) in <DCS root>\Scripts\MissionScripting.lua
+--       Needs SRS => 1.9.6 to work (works on the *server* side of SRS)
+--       self.useSRS = false -- Set true to use FF's SRS integration
+--       self.SRSPath = "E:\\Program Files\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
+--       self.SRSchannel = 300 -- radio channel
+--       self.SRSModulation = radio.modulation.AM -- modulation
 -- 
 -- ## 3. Events
 --
@@ -142,7 +152,7 @@
 -- @field #CSAR
 CSAR = {
   ClassName       = "CSAR",
-  verbose         =     1,
+  verbose         =     0,
   lid             =   "",
   coalition       = 1,
   coalitiontxt    = "blue",
@@ -212,7 +222,7 @@ CSAR.AircraftType["Mi-24"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.2r1"
+CSAR.version="0.1.2r2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
