@@ -96,12 +96,19 @@
 --       self.SRSchannel = 300 -- radio channel
 --       self.SRSModulation = radio.modulation.AM -- modulation
 -- 
--- ## 3. Events
+-- ## 3. Results
+-- 
+-- Number of successful landings with save pilots and aggregated number of saved pilots is stored in these variables in the object:
+--      
+--        self.rescues -- number of successful landings *with* saved pilots
+--        self.rescuedpilots -- aggregated number of pilots rescued from the field (of *all* players)
+-- 
+-- ## 4. Events
 --
 --  The class comes with a number of FSM-based events that missions designers can use to shape their mission.
 --  These are:
 --  
--- ### 1. PilotDown. 
+-- ### 4.1. PilotDown. 
 --      
 --      The event is triggered when a new downed pilot is detected. Use e.g. `function my_csar:OnAfterPilotDown(...)` to link into this event:
 --      
@@ -109,7 +116,7 @@
 --            ... your code here ...
 --          end
 --    
--- ### 2. Approach. 
+-- ### 4.2. Approach. 
 --      
 --      A CSAR helicpoter is closing in on a downed pilot. Use e.g. `function my_csar:OnAfterApproach(...)` to link into this event:
 --      
@@ -117,7 +124,7 @@
 --            ... your code here ...
 --          end
 --    
--- ### 3. Boarded. 
+-- ### 4.3. Boarded. 
 --    
 --      The pilot has been boarded to the helicopter. Use e.g. `function my_csar:OnAfterBoarded(...)` to link into this event:
 --      
@@ -125,7 +132,7 @@
 --            ... your code here ...
 --          end
 --    
--- ### 4. Returning. 
+-- ### 4.4. Returning. 
 --      
 --       The CSAR helicopter is ready to return to an Airbase, FARP or MASH. Use e.g. `function my_csar:OnAfterReturning(...)` to link into this event:
 --       
@@ -133,7 +140,7 @@
 --            ... your code here ...
 --          end
 --    
--- ### 5. Rescued. 
+-- ### 4.5. Rescued. 
 --    
 --      The CSAR helicopter has landed close to an Airbase/MASH/FARP and the pilots are safe. Use e.g. `function my_csar:OnAfterRescued(...)` to link into this event:
 --      
@@ -141,7 +148,7 @@
 --            ... your code here ...
 --          end     
 --
--- ## 4. Spawn downed pilots at location to be picked up.
+-- ## 5. Spawn downed pilots at location to be picked up.
 --  
 --      If missions designers want to spawn downed pilots into the field, e.g. at mission begin to give the helicopter guys works, they can do this like so:
 --      
@@ -179,6 +186,7 @@ CSAR = {
   bluemash = {},
   smokecolor = 4,
   rescues = 0,
+  rescuedpilots = 0,
 }
 
 --- Downed pilots info.
@@ -222,14 +230,13 @@ CSAR.AircraftType["Mi-24"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.3r1"
+CSAR.version="0.1.3r2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: SRS Integration (to be tested)
--- WONTDO: Slot blocker etc
+-- DONE: SRS Integration (to be tested)
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -316,6 +323,7 @@ function CSAR:New(Coalition, Template, Alias)
   
   -- settings, counters etc
   self.rescues = 0 -- counter for successful rescue landings at FARP/AFB/MASH
+  self.rescuedpilots = 0 -- counter for saved pilots
   self.csarOncrash = true -- If set to true, will generate a csar when a plane crashes as well.
   self.allowDownedPilotCAcontrol = false -- Set to false if you don't want to allow control by Combined arms.
   self.enableForAI = true -- set to false to disable AI units from being rescued.
@@ -692,19 +700,11 @@ function CSAR:_EventHandler(EventData)
         self.takenOff[_event.IniPlayerName] = nil
     end
     
-  -- if its a sar heli, re-add check status script
-    for _, _heliName in pairs(self.csarUnits) do    
-        if _heliName == _event.IniPlayerName then
-            -- add back the status script
-            local DownedPilotTable = self.downedPilots
-            for _, _groupInfo in pairs(DownedPilotTable) do  -- #CSAR.DownedPilot
-                if _groupInfo.side == _event.IniCoalition then
-                    local _woundedName = _groupInfo.name
-                    self:_CheckWoundedGroupStatus(_heliName,_woundedName)
-                end
-            end
-        end
-    end
+    local _unit = _event.IniUnit
+    local _group = _event.IniGroup
+    if _unit:IsHelicopter() or _group:IsHelicopter() then
+      self:_AddMedevacMenuItem()
+    end 
     
     return true
   
@@ -1083,7 +1083,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
             if (_distance < self.extractDistance) then
               local _time = self.landedStatus[_lookupKeyHeli]
               if _time == nil then
-                  self.landedStatus[_lookupKeyHeli] = math.floor( (_distance - self.loadDistance) / 1.94 )   
+                  self.landedStatus[_lookupKeyHeli] = math.floor( (_distance - self.loadDistance) / 3.6 )   
                   _time = self.landedStatus[_lookupKeyHeli] 
                   self:_OrderGroupToMoveToPoint(_woundedGroup, _heliUnit:GetCoordinate())
                   self:_DisplayMessageToSAR(_heliUnit, "Wait till " .. _pilotName .. " gets in. \nETA " .. _time .. " more seconds.", self.messageTime, true)
@@ -1789,7 +1789,7 @@ function CSAR:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Ejection, self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
-  self:HandleEvent(EVENTS.Dead, self._EventHandler)
+  self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
   self:_GenerateVHFrequencies()
   if self.useprefix then
     local prefixes = self.csarPrefix or {}
@@ -1855,10 +1855,14 @@ function CSAR:onafterStatus(From, Event, To)
   end
   
   if self.verbose > 0 then
-    local text = string.format("%s Active SAR: %d | Downed Pilots in field: %d | Pilots boarded: %d | Rescue (landings): %d",self.lid,NumberOfSARPilots,PilotsInFieldN,PilotsBoarded,self.rescues)
+    local text = string.format("%s Active SAR: %d | Downed Pilots in field: %d | Pilots boarded: %d | Landings: %d | Pilots rescued: %d",
+      self.lid,NumberOfSARPilots,PilotsInFieldN,PilotsBoarded,self.rescues,self.rescuedpilots)
     self:T(text)
-    if self.verbose > 1 then
-      local m = MESSAGE:New(text,"10","Status"):ToAll()
+    if self.verbose < 2 then
+      self:I(text)
+    elseif self.verbose > 1 then
+      self:I(text)
+      local m = MESSAGE:New(text,"10","Status",true):ToCoalition(self.coalition)
     end
   end
   self:__Status(-20)
@@ -1878,7 +1882,7 @@ function CSAR:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Ejection)
   self:UnHandleEvent(EVENTS.PlayerEnterUnit)
   self:UnHandleEvent(EVENTS.PlayerEnterAircraft)
-  self:UnHandleEvent(EVENTS.Dead)
+  self:UnHandleEvent(EVENTS.PilotDead)
   self:T(self.lid .. "Stopped.")
   return self
 end
@@ -1933,6 +1937,7 @@ end
 function CSAR:onbeforeRescued(From, Event, To, HeliUnit, HeliName, PilotsSaved)
   self:T({From, Event, To, HeliName, HeliUnit})
   self.rescues = self.rescues + 1
+  self.rescuedpilots = self.rescuedpilots + PilotsSaved
   return self
 end
 
