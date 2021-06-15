@@ -80,7 +80,7 @@
 --         self.mashprefix = {"MASH"} -- prefixes of #GROUP objects used as MASHes.
 --         self.max_units = 6 -- number of pilots that can be carried if #CSAR.AircraftType is undefined.
 --         self.messageTime = 15 -- Time to show messages for in seconds. Doubled for long messages.
---         self.radioSound = "beacon.ogg" -- the name of the sound file to use for the pilots' radio beacons. 
+--         self.radioSound = "beacon.ogg" -- the name of the sound file to use for the pilots\' radio beacons. 
 --         self.smokecolor = 4 -- Color of smokemarker, 0 is green, 1 is red, 2 is white, 3 is orange and 4 is blue.
 --         self.useprefix = true  -- Requires CSAR helicopter #GROUP names to have the prefix(es) defined below.
 --         self.csarPrefix = { "helicargo", "MEDEVAC"} -- #GROUP name prefixes used for useprefix=true - DO NOT use # in helicopter names in the Mission Editor! 
@@ -88,10 +88,10 @@
 -- 
 -- ## 2.1 Experimental Features
 -- 
---       WARNING - Here'll be dragons!
+--       "WARNING - Here\'ll be dragons!
 --       DANGER - For this to work you need to de-sanitize your mission environment (all three entries) in <DCS root>\Scripts\MissionScripting.lua
---       Needs SRS => 1.9.6 to work (works on the *server* side of SRS)
---       self.useSRS = false -- Set true to use FF's SRS integration
+--       Needs SRS => 1.9.6 to work (works on the *server* side of SRS)"
+--       self.useSRS = false -- Set true to use FF\'s SRS integration
 --       self.SRSPath = "E:\\Program Files\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
 --       self.SRSchannel = 300 -- radio channel
 --       self.SRSModulation = radio.modulation.AM -- modulation
@@ -222,7 +222,7 @@ CSAR.AircraftType["Mi-24"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.2r2"
+CSAR.version="0.1.3r1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -262,6 +262,7 @@ function CSAR:New(Coalition, Template, Alias)
     end
   else
     self.coalition = Coalition
+    self.coalitiontxt = string.lower(UTILS.GetCoalitionName(self.coalition))
   end
   
   -- Set alias.
@@ -1082,7 +1083,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
             if (_distance < self.extractDistance) then
               local _time = self.landedStatus[_lookupKeyHeli]
               if _time == nil then
-                  self.landedStatus[_lookupKeyHeli] = math.floor( (_distance * self.loadtimemax ) / self.extractDistance )   
+                  self.landedStatus[_lookupKeyHeli] = math.floor( (_distance - self.loadDistance) / 1.94 )   
                   _time = self.landedStatus[_lookupKeyHeli] 
                   self:_OrderGroupToMoveToPoint(_woundedGroup, _heliUnit:GetCoordinate())
                   self:_DisplayMessageToSAR(_heliUnit, "Wait till " .. _pilotName .. " gets in. \nETA " .. _time .. " more seconds.", self.messageTime, true)
@@ -1427,7 +1428,11 @@ function CSAR:_SignalFlare(_unitName)
       local _coord = _closest.pilot:GetCoordinate()
       _coord:FlareRed(_clockDir)
   else
-      self:_DisplayMessageToSAR(_heli, "No Pilots within 8km/4.32nm", self.messageTime)
+      local disttext = "4.3nm"
+      if self.coordtype == 4 then
+          disttext = "8km"
+      end
+      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",disttext), self.messageTime)
   end
 end
 
@@ -1472,7 +1477,11 @@ function CSAR:_Reqsmoke( _unitName )
       local color = self.smokecolor
       _coord:Smoke(color)
   else
-      self:_DisplayMessageToSAR(_heli, "No Pilots within 8km/4.32nm", self.messageTime)
+      local disttext = "4.3nm"
+      if self.coordtype == 4 then
+          disttext = "8km"
+      end
+      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",disttext), self.messageTime)
   end
 end
 
@@ -1715,6 +1724,7 @@ function CSAR:_GetClockDirection(_heli, _group)
     local Aspect = Angle - _heading
     if Aspect == 0 then Aspect = 360 end
     clock = math.floor(Aspect / 30)
+    if clock == 0 then clock = 12 end
   end    
   return clock
 end
