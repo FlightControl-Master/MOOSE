@@ -13,7 +13,7 @@
 -- 
 -- ===
 -- 
--- ### Author : **applevangelist **
+-- ### Author : **applevangelist**
 -- 
 -- @module Functional.Shorad
 -- @image Functional.Shorad.jpg
@@ -94,7 +94,7 @@ SHORAD = {
   lid = "",
   DefendHarms = true,
   DefendMavs = true,
-  DefenseLowProb = 70,
+  DefenseLowProb = 75,
   DefenseHighProb = 90,
   UseEmOnOff = false,  
 }
