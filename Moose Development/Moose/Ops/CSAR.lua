@@ -224,13 +224,14 @@ CSAR.AircraftType["SA342Mistral"] = 2
 CSAR.AircraftType["SA342Minigun"] = 2
 CSAR.AircraftType["SA342L"] = 4
 CSAR.AircraftType["SA342M"] = 4
-CSAR.AircraftType["UH-1H"] = 4
-CSAR.AircraftType["Mi-8MT"] = 8 
-CSAR.AircraftType["Mi-24"] = 8 
+CSAR.AircraftType["UH-1H"] = 8
+CSAR.AircraftType["Mi-8MT"] = 12 
+CSAR.AircraftType["Mi-24P"] = 8 
+CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.3r2"
+CSAR.version="0.1.3r3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1748,7 +1749,7 @@ function CSAR:_AddBeaconToGroup(_group, _freq)
     end
     
     if _group:IsAlive() then
-    local _radioUnit = _group:GetUnit(1)    
+      local _radioUnit = _group:GetUnit(1)    
       local Frequency = _freq -- Freq in Hertz
       local Sound =  "l10n/DEFAULT/"..self.radioSound
       trigger.action.radioTransmission(Sound, _radioUnit:GetPositionVec3(), 0, false, Frequency, 1000) -- Beacon in MP only runs for exactly 30secs straight
