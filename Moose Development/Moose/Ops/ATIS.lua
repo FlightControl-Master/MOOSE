@@ -589,7 +589,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.9.5"
+ATIS.version="0.9.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1143,6 +1143,7 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port)
   self.msrs:SetCulture(Culture)
   self.msrs:SetVoice(Voice)
   self.msrs:SetPort(Port)
+  self.msrs:SetCoalition(self:GetCoalition())
   if self.dTQueueCheck<=10 then
     self:SetQueueUpdateTime(90)
   end
@@ -1155,6 +1156,14 @@ end
 -- @return #ATIS self
 function ATIS:SetQueueUpdateTime(TimeInterval)
   self.dTQueueCheck=TimeInterval or 5
+end
+
+--- Get the coalition of the associated airbase.
+-- @param #ATIS self
+-- @return #number Coalition of the associcated airbase.
+function ATIS:GetCoalition()
+  local coal=self.airbase and self.airbase:GetCoalition() or nil
+  return coal
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1203,6 +1212,10 @@ function ATIS:onafterStart(From, Event, To)
 
   -- Start radio queue.
   self.radioqueue:Start(1, 0.1)
+  
+  -- Handle airbase capture
+  -- Handle events.
+  self:HandleEvent(EVENTS.BaseCaptured)  
 
   -- Init status updates.
   self:__Status(-2)
@@ -2257,6 +2270,36 @@ function ATIS:onafterReport(From, Event, To, Text)
     
   end
   
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Event Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Base captured
+-- @param #ATIS self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function ATIS:OnEventBaseCaptured(EventData)
+  
+  if EventData and EventData.Place then
+
+    -- Place is the airbase that was captured.
+    local airbase=EventData.Place --Wrapper.Airbase#AIRBASE
+
+    -- Check that this airbase belongs or did belong to this warehouse.
+    if EventData.PlaceName==self.airbasename then
+
+      -- New coalition of airbase after it was captured.
+      local NewCoalitionAirbase=airbase:GetCoalition()
+      
+      if self.useSRS and self.msrs and self.msrs.coalition~=NewCoalitionAirbase then
+        self.msrs:SetCoalition(NewCoalitionAirbase)
+      end
+      
+    end
+    
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

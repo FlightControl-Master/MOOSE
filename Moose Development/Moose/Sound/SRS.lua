@@ -150,6 +150,7 @@ function MSRS:New(PathToSRS, Frequency, Modulation)
   self:SetFrequencies(Frequency)
   self:SetModulations(Modulation)
   self:SetGender()
+  self:SetCoalition()
   
   return self
 end
@@ -206,6 +207,22 @@ end
 function MSRS:GetPort()
   return self.port
 end
+
+--- Set coalition.
+-- @param #MSRS self
+-- @param #number Coalition Coalition. Default 0.
+-- @return #MSRS self
+function MSRS:SetCoalition(Coalition)
+  self.coalition=Coalition or 0
+end
+
+--- Get coalition.
+-- @param #MSRS self
+-- @return #number Coalition.
+function MSRS:GetCoalition()
+  return self.coalition
+end
+
 
 --- Set frequencies.
 -- @param #MSRS self
