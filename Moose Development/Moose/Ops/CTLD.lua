@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Date: June 2021
+-- Date: 22 June 2021
 
 do
 ------------------------------------------------------
@@ -382,7 +382,7 @@ do
 -- @field #CTLD
 CTLD = {
   ClassName       = "CTLD",
-  verbose         =     2,
+  verbose         =     0,
   lid             =   "",
   coalition       = 1,
   coalitiontxt    = "blue",
