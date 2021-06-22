@@ -85,6 +85,7 @@ __Moose.Include( 'Scripts/Moose/Ops/Squadron.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/AirWing.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/Intelligence.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/CSAR.lua' )
+__Moose.Include( 'Scripts/Moose/Ops/CTLD.lua' )
 
 __Moose.Include( 'Scripts/Moose/AI/AI_Balancer.lua' )
 __Moose.Include( 'Scripts/Moose/AI/AI_Air.lua' )
