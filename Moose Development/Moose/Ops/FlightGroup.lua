@@ -417,6 +417,9 @@ end
 -- @param Wrapper.Airbase#AIRBASE HomeAirbase The home airbase.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetHomebase(HomeAirbase)
+  if type(HomeAirbase)=="string" then
+    HomeAirbase=AIRBASE:FindByName(HomeAirbase)
+  end
   self.homebase=HomeAirbase
   return self
 end
@@ -426,6 +429,9 @@ end
 -- @param Wrapper.Airbase#AIRBASE DestinationAirbase The destination airbase.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetDestinationbase(DestinationAirbase)
+  if type(DestinationAirbase)=="string" then
+    DestinationAirbase=AIRBASE:FindByName(DestinationAirbase)
+  end
   self.destbase=DestinationAirbase
   return self
 end
@@ -730,7 +736,7 @@ function FLIGHTGROUP:StartUncontrolled(delay)
       end
       self:I(self.lid.."Starting uncontrolled group")
       self.group:StartUncontrolled(_delay)
-      self.isUncontrolled=true
+      self.isUncontrolled=false
     else
       self:E(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive!")
     end

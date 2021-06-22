@@ -5447,6 +5447,8 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
     -- Add waypoint.
     if self.isFlightgroup then
+    
+      env.info("FF pickup is flightgroup")
 
       if airbasePickup then
 
@@ -5461,10 +5463,13 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
           -- Activate uncontrolled group.
           if self:IsParking() then
+            env.info("FF pickup start uncontrolled while parking at current airbase")
             self:StartUncontrolled()
           end
 
         else
+        
+          env.info("FF pickup land at airbase")
 
           -- Order group to land at an airbase.
           self:LandAtAirbase(airbasePickup)
@@ -5477,6 +5482,14 @@ function OPSGROUP:onafterPickup(From, Event, To)
         -- Helo can also land in a zone (NOTE: currently VTOL cannot!)
         ---
 
+        env.info("FF pickup helo addwaypoint")
+        
+        -- Activate uncontrolled group.
+        if self:IsParking() then
+          env.info("FF pickup start uncontrolled while parking airbase")
+          self:StartUncontrolled()
+        end        
+
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
         Coordinate:SetAltitude(200)
         local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate)
@@ -5485,6 +5498,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
       else
         self:E(self.lid.."ERROR: Carrier aircraft cannot land in Pickup zone! Specify a ZONE_AIRBASE as pickup zone")
       end
+      
     elseif self.isNavygroup then
 
       -- Navy Group
@@ -5656,8 +5670,11 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
       CargoGroup:Despawn(0, true)
     end
 
-    -- Trigger embarked event.
+    -- Trigger embarked event for cargo group.
     CargoGroup:Embarked(self, Carrier)
+    
+    -- Trigger "Loaded" event for current cargo transport.
+    self.cargoTransport:Loaded(CargoGroup, Carrier)
 
   else
     self:E(self.lid.."ERROR: Cargo has no carrier on Load event!")

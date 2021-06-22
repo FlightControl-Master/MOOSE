@@ -415,6 +415,15 @@ function OPSTRANSPORT:SetPriority(Prio, Importance, Urgent)
   return self
 end
 
+--- Set verbosity. 
+-- @param #OPSTRANSPORT self
+-- @param #number Verbosity Be more verbose. Default 0
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetVerbosity(Verbosity)
+  self.verbose=Verbosity or 0
+  return self
+end
+
 --- Add start condition.
 -- @param #OPSTRANSPORT self
 -- @param #function ConditionFunction Function that needs to be true before the transport can be started. Must return a #boolean.
@@ -672,6 +681,17 @@ function OPSTRANSPORT:onafterDelivered(From, Event, To)
     end 
   end
   
+end
+
+--- On after "Loaded" event.
+-- @param #OPSTRANSPORT self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup OPSGROUP that was loaded into a carrier.
+-- @param Ops.OpsGroup#OPSGROUP.Element Carrier Carrier element.
+function OPSTRANSPORT:onafterLoaded(From, Event, To, OpsGroup, Carrier)
+  self:I(self.lid..string.format("Loaded OPSGROUP %s into carrier %s", OpsGroup:GetName(), tostring(Carrier.name)))
 end
 
 --- On after "Unloaded" event.

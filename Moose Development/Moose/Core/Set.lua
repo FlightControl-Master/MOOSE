@@ -1400,6 +1400,22 @@ do -- SET_GROUP
     return self
   end
 
+  --- Activate late activated groups.
+  -- @param #SET_GROUP self
+  -- @param #number Delay Delay in seconds.
+  -- @return #SET_GROUP self
+  function SET_GROUP:Activate(Delay)
+    local Set = self:GetSet()
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      local group=GroupData --Wrapper.Group#GROUP
+      if group and group:IsAlive()==false then
+        group:Activate(Delay)
+      end
+    end
+    return self
+  end
+
+
   --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
@@ -6411,6 +6427,21 @@ do -- SET_OPSGROUP
 
     return self
   end
+  
+  --- Activate late activated groups in the set.
+  -- @param #SET_OPSGROUP self
+  -- @param #number Delay Delay in seconds.
+  -- @return #SET_OPSGROUP self
+  function SET_OPSGROUP:Activate(Delay)
+    local Set = self:GetSet()
+    for GroupID, GroupData in pairs(Set) do
+      local group=GroupData --Ops.OpsGroup#OPSGROUP
+      if group and group:IsAlive()==false then
+        group:Activate(Delay)
+      end
+    end
+    return self
+  end  
 
   --- Handles the OnDead or OnCrash event for alive groups set.
   -- Note: The GROUP object in the SET_OPSGROUP collection will only be removed if the last unit is destroyed of the GROUP.

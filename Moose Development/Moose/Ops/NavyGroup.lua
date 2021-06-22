@@ -1005,7 +1005,7 @@ function NAVYGROUP:onafterDive(From, Event, To, Depth, Speed)
 
   Depth=Depth or 50
 
-  self:T(self.lid..string.format("Diving to %d meters", Depth))
+  self:I(self.lid..string.format("Diving to %d meters", Depth))
   
   self.depth=Depth
   
