@@ -59,7 +59,7 @@
 --        local my_csar = CSAR:New(coalition.side.BLUE,"Downed Pilot","Luftrettung")
 --        -- options
 --        my_csar.immortalcrew = true -- downed pilot spawn is immortal
---        my_csar.invisiblevrew = false -- downed pilot spawn is visible
+--        my_csar.invisiblecrew = false -- downed pilot spawn is visible
 --        -- start the FSM
 --        my_csar:__Start(5)
 -- 
@@ -86,6 +86,9 @@
 --         self.useprefix = true  -- Requires CSAR helicopter #GROUP names to have the prefix(es) defined below.
 --         self.csarPrefix = { "helicargo", "MEDEVAC"} -- #GROUP name prefixes used for useprefix=true - DO NOT use # in helicopter names in the Mission Editor! 
 --         self.verbose = 0 -- set to > 1 for stats output for debugging.
+--         -- (added 0.1.4) limit amount of downed pilots spawned by ejection events
+--         self.limitmaxdownedpilots = true,
+--         self.maxdownedpilots = 10,
 -- 
 -- ## 2.1 Experimental Features
 -- 
@@ -188,6 +191,8 @@ CSAR = {
   smokecolor = 4,
   rescues = 0,
   rescuedpilots = 0,
+  limitmaxdownedpilots = true,
+  maxdownedpilots = 10,
 }
 
 --- Downed pilots info.
@@ -235,7 +240,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.3r4"
+CSAR.version="0.1.4r1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -350,6 +355,9 @@ function CSAR:New(Coalition, Template, Alias)
   self.mashprefix = {"MASH"} -- prefixes used to find MASHes
   self.bluemash = SET_GROUP:New():FilterCoalitions(self.coalition):FilterPrefixes(self.mashprefix):FilterOnce() -- currently only GROUP objects, maybe support STATICs also?
   self.autosmoke = false -- automatically smoke location when heli is near
+  -- added 0.1.4
+  self.limitmaxdownedpilots = true
+  self.maxdownedpilots = 25
   
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -774,7 +782,13 @@ function CSAR:_EventHandler(EventData)
       if self:_DoubleEjection(_unitname) then
         return
       end
-          
+      
+      -- limit no of pilots in the field.
+      if self.limitmaxdownedpilots and self:_ReachedPilotLimit() then
+        return
+      end
+      
+      -- all checks passed, get going.    
       local _freq = self:_GenerateADFFrequency()
        self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate()  , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, 0)
        
@@ -1776,6 +1790,36 @@ function CSAR:_RefreshRadioBeacons()
     end
 end
 
+--- Helper function to count active downed pilots.
+-- @param #CSAR self
+-- @return #number Number of pilots in the field.
+function CSAR:_CountActiveDownedPilots()
+  self:T(self.lid .. " _CountActiveDownedPilots")
+  local PilotsInFieldN = 0
+  for _, _unitName in pairs(self.downedPilots) do
+    self:T({_unitName})
+    if _unitName.name ~= nil then
+      PilotsInFieldN = PilotsInFieldN + 1
+    end
+  end
+  return PilotsInFieldN
+end
+
+--- Helper to decide if we're over max limit.
+-- @param #CSAR self
+-- @return #boolean True or false.
+function CSAR:_ReachedPilotLimit()
+   self:T(self.lid .. " _ReachedPilotLimit")
+   local limit = self.maxdownedpilots
+   local islimited = self.limitmaxdownedpilots
+   local count = self:_CountActiveDownedPilots()
+   if islimited and (count >= limit) then
+      return true
+   else
+      return false
+   end
+end
+
   ------------------------------
   --- FSM internal Functions ---
   ------------------------------
@@ -1844,13 +1888,7 @@ function CSAR:onafterStatus(From, Event, To)
     NumberOfSARPilots = NumberOfSARPilots + 1
   end
 
-  local PilotsInFieldN = 0
-  for _, _unitName in pairs(self.downedPilots) do
-    self:T({_unitName})
-    if _unitName.name ~= nil then
-      PilotsInFieldN = PilotsInFieldN + 1
-    end
-  end
+  local PilotsInFieldN = self:_CountActiveDownedPilots()
   
   local PilotsBoarded = 0
   for _, _unitName in pairs(self.inTransitGroups) do
@@ -1860,8 +1898,8 @@ function CSAR:onafterStatus(From, Event, To)
   end
   
   if self.verbose > 0 then
-    local text = string.format("%s Active SAR: %d | Downed Pilots in field: %d | Pilots boarded: %d | Landings: %d | Pilots rescued: %d",
-      self.lid,NumberOfSARPilots,PilotsInFieldN,PilotsBoarded,self.rescues,self.rescuedpilots)
+    local text = string.format("%s Active SAR: %d | Downed Pilots in field: %d (max %d) | Pilots boarded: %d | Landings: %d | Pilots rescued: %d",
+      self.lid,NumberOfSARPilots,PilotsInFieldN,self.maxdownedpilots,PilotsBoarded,self.rescues,self.rescuedpilots)
     self:T(text)
     if self.verbose < 2 then
       self:I(text)
