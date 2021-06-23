@@ -327,7 +327,7 @@ do
 --          ... your code here ...
 --        end
 --  
--- ## 3.3 OnAfterTroopsTroopsDeployed
+-- ## 3.3 OnAfterTroopsDeployed
 --  
 --    This function is called when a player has deployed troops into the field:
 --
@@ -335,7 +335,7 @@ do
 --          ... your code here ...
 --        end
 --  
--- ## 3.4 OnAfterTroopsCratesDropped
+-- ## 3.4 OnAfterCratesDropped
 --  
 --    This function is called when a player has deployed crates to a DROP zone:
 --
@@ -343,7 +343,7 @@ do
 --          ... your code here ...
 --        end
 --  
--- ## 3.5 OnAfterTroopsCratesBuild
+-- ## 3.5 OnAfterCratesBuild
 --  
 --    This function is called when a player has build a vehicle or FOB:
 --
