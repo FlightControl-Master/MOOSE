@@ -234,7 +234,7 @@ CSAR.AircraftType["SA342Minigun"] = 2
 CSAR.AircraftType["SA342L"] = 4
 CSAR.AircraftType["SA342M"] = 4
 CSAR.AircraftType["UH-1H"] = 8
-CSAR.AircraftType["Mi-8MT"] = 12 
+CSAR.AircraftType["Mi-8MTV2"] = 12 
 CSAR.AircraftType["Mi-24P"] = 8 
 CSAR.AircraftType["Mi-24V"] = 8
 
