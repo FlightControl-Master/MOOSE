@@ -1449,8 +1449,8 @@ do -- Cargo
         self:F({Desc=Desc})
 
         local Weights = {
-          ["C-17A"] = 35000,   --77519 cannot be used, because it loads way too much apcs and infantry.,
-          ["C-130"] = 22000    --The real value cannot be used, because it loads way too much apcs and infantry.,
+          ["C-17A"] = 35000,   --77519 cannot be used, because it loads way too much apcs and infantry.
+          ["C-130"] = 22000    --The real value cannot be used, because it loads way too much apcs and infantry.
         }
 
         self.__.CargoBayWeightLimit = Weights[Desc.typeName] or ( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
@@ -1467,6 +1467,7 @@ do -- Cargo
           ["Higgins_boat"]     =   3700, -- Higgins Boat can load 3700 kg of general cargo or 36 men (source wikipedia).
           ["USS_Samuel_Chase"] =  25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.
           ["LST_Mk2"]          =2100000, -- Can carry 2100 tons according to wiki source!
+          ["speedboat"]        =    500, -- 500 kg ~ 5 persons
         }
         self.__.CargoBayWeightLimit = ( Weights[Desc.typeName] or 50000 )
 

@@ -2252,9 +2252,14 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
       allowed=false
       Tsuspend=-20
       local groupspeed = self.group:GetVelocityMPS()
-      if groupspeed <= 1 then self.RTBRecallCount = self.RTBRecallCount+1 end
+      if groupspeed<=1 and not self:IsParking() then 
+        self.RTBRecallCount = self.RTBRecallCount+1
+      end
       if self.RTBRecallCount > 6 then
+        self:I(self.lid..string.format("WARNING: Group is not moving and was called RTB %d times. Assuming a problem and despawning!", self.RTBRecallCount))
+        self.RTBRecallCount=0
         self:Despawn(5)
+        return
       end
     end
 

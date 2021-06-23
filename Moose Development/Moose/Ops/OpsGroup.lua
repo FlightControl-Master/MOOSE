@@ -1104,6 +1104,9 @@ function OPSGROUP:GetVelocity(UnitName)
       local vel=UTILS.VecNorm(velvec3)
 
       return vel
+      
+    else
+      self:E(self.lid.."WARNING: Unit does not exist. Cannot get velocity!")
     end
 
   else
@@ -1751,9 +1754,9 @@ function OPSGROUP:IsPickingup()
   return self.carrierStatus==OPSGROUP.CarrierStatus.PICKUP
 end
 
---- Check if the group is picking up cargo.
+--- Check if the group is loading cargo.
 -- @param #OPSGROUP self
--- @return #boolean If true, group is picking up.
+-- @return #boolean If true, group is loading.
 function OPSGROUP:IsLoading()
   return self.carrierStatus==OPSGROUP.CarrierStatus.LOADING
 end
@@ -1803,14 +1806,20 @@ end
 
 --- Check if the group is currently loaded into a carrier.
 -- @param #OPSGROUP self
--- @param #string CarrierGroupName (Optional) Additionally check if group is loaded into this particular carrier group.
+-- @param #string CarrierGroupName (Optional) Additionally check if group is loaded into a particular carrier group(s).
 -- @return #boolean If true, group is loaded.
 function OPSGROUP:IsLoaded(CarrierGroupName)
   if CarrierGroupName then
-    local carrierGroup=self:_GetMyCarrierGroup()
-    if carrierGroup and carrierGroup.groupname~=CarrierGroupName then
-      return false
+    if type(CarrierGroupName)~="table" then
+      CarrierGroupName={CarrierGroupName}
     end
+    for _,CarrierName in pairs(CarrierGroupName) do
+      local carrierGroup=self:_GetMyCarrierGroup()
+      if carrierGroup and carrierGroup.groupname==CarrierName then
+        return true
+      end
+    end
+    return false
   end
   return self.cargoStatus==OPSGROUP.CargoStatus.LOADED
 end
@@ -4881,16 +4890,23 @@ function OPSGROUP:_CheckCargoTransport()
         end
 
       end
+      
+      self:I(self.lid.."gotcargo="..tostring(gotcargo))
+      self:I(self.lid.."boarding="..tostring(boarding))
+      self:I(self.lid.."required="..tostring(self.cargoTransport:_CheckRequiredCargos()))
 
       -- Boarding finished ==> Transport cargo.
-      if gotcargo and not boarding then
+      if gotcargo and self.cargoTransport:_CheckRequiredCargos() and not boarding then
         self:I(self.lid.."Boarding finished ==> Loaded")
         self:Loaded()
+      else
+        -- No cargo and no one is boarding ==> check again if we can make anyone board.
+        self:Loading()
       end
 
       -- No cargo and no one is boarding ==> check again if we can make anyone board.
       if not gotcargo and not boarding then
-        self:Loading()
+        --self:Loading()
       end
 
     elseif self:IsTransporting() then
@@ -5671,10 +5687,10 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
     end
 
     -- Trigger embarked event for cargo group.
-    CargoGroup:Embarked(self, Carrier)
+    CargoGroup:Embarked(self, carrier)
     
     -- Trigger "Loaded" event for current cargo transport.
-    self.cargoTransport:Loaded(CargoGroup, Carrier)
+    self.cargoTransport:Loaded(CargoGroup, carrier)
 
   else
     self:E(self.lid.."ERROR: Cargo has no carrier on Load event!")
@@ -5903,6 +5919,9 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           ---
           -- Delivered to another carrier group.
           ---
+
+            -- Debug info.
+            self:I(self.lid..string.format("Transferring cargo %s to new carrier group %s", cargo.opsgroup:GetName(), carrierGroup:GetName()))
 
             -- Unload from this and directly load into the other carrier.
             self:Unload(cargo.opsgroup)
@@ -6229,7 +6248,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
   local CargoIsArmyOrNavy=self:IsArmygroup() or self:IsNavygroup()
 
   -- Check that carrier is standing still.
-  if (CarrierIsArmyOrNavy and CarrierGroup:IsHolding()) or (CarrierGroup:IsParking() or CarrierGroup:IsLandedAt()) then
+  if (CarrierIsArmyOrNavy and (CarrierGroup:IsHolding() and CarrierGroup:GetVelocity(Carrier.name)<=1)) or (CarrierGroup:IsFlightgroup() and (CarrierGroup:IsParking() or CarrierGroup:IsLandedAt())) then
 
     -- Board if group is mobile, not late activated and army or navy. Everything else is loaded directly.
     local board=self.speedMax>0 and CargoIsArmyOrNavy and self:IsAlive() and CarrierGroup:IsAlive()

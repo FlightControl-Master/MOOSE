@@ -44,6 +44,7 @@
 -- @field #boolean disembarkActivation Activation setting when group is disembared from carrier.
 -- @field #boolean disembarkInUtero Do not spawn the group in any any state but leave it "*in utero*". For example, to directly load it into another carrier.
 -- @field #table disembarkCarriers Table of carriers to which the cargo is disembared. This is a direct transfer from the old to the new carrier.
+-- @field #table requiredCargos Table of cargo groups that must be loaded before the first transport is started.
 -- @field #number Ncargo Total number of cargo groups.
 -- @field #number Ncarrier Total number of assigned carriers.
 -- @field #number Ndelivered Total number of cargo groups delivered.
@@ -70,6 +71,7 @@ OPSTRANSPORT = {
   carrierTransportStatus = {},
   conditionStart  =  {},
   pathsTransport  =  {},
+  requiredCargos  =  {},
 }
 
 --- Cargo transport status.
@@ -266,7 +268,7 @@ end
 
 --- Set transfer carrier(s). These are carrier groups, where the cargo is directly loaded into when disembarked.
 -- @param #OPSTRANSPORT self
--- @param Core.Set#SET_GROUP Carriers Carrier set.
+-- @param Core.Set#SET_GROUP Carriers Carrier set. Can also be passed as a #GROUP, #OPSGROUP or #SET_OPSGROUP object.
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetDisembarkCarriers(Carriers)
 
@@ -309,6 +311,41 @@ function OPSTRANSPORT:SetDisembarkInUtero(InUtero)
   else
     self.disembarkInUtero=false
   end  
+  return self
+end
+
+
+--- Set required cargo. This is a list of cargo groups that need to be loaded before the **first** transport will start.
+-- @param #OPSTRANSPORT self
+-- @param Core.Set#SET_GROUP Cargos Required cargo set. Can also be passed as a #GROUP, #OPSGROUP or #SET_OPSGROUP object.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetRequiredCargos(Cargos)
+
+  self:I(self.lid.."Setting required cargos!")
+
+  -- Create table.
+  self.requiredCargos=self.requiredCargos or {}
+
+  if Cargos:IsInstanceOf("GROUP") or Cargos:IsInstanceOf("OPSGROUP") then
+  
+    local cargo=self:_GetOpsGroupFromObject(Cargos)
+    if cargo then
+      table.insert(self.requiredCargos, cargo)
+    end
+      
+  elseif Cargos:IsInstanceOf("SET_GROUP") or Cargos:IsInstanceOf("SET_OPSGROUP") then
+  
+    for _,object in pairs(Cargos:GetSet()) do
+      local cargo=self:_GetOpsGroupFromObject(object)
+      if cargo then
+        table.insert(self.requiredCargos, cargo)
+      end
+    end
+    
+  else  
+    self:E(self.lid.."ERROR: Required Cargos must be a GROUP, OPSGROUP, SET_GROUP or SET_OPSGROUP object!")    
+  end
+
   return self
 end
 
@@ -363,6 +400,22 @@ function OPSTRANSPORT:_DelCarrier(CarrierGroup)
   end 
   
   return self
+end
+
+--- Get a list of alive carriers.
+-- @param #OPSTRANSPORT self
+-- @return #table Names of all carriers
+function OPSTRANSPORT:_GetCarrierNames()
+
+  local names={}
+  for _,_carrier in pairs(self.carriers) do
+    local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+    if carrier:IsAlive()~=nil then
+      table.insert(names, carrier.groupname)
+    end
+  end
+  
+  return names
 end
 
 
@@ -778,6 +831,31 @@ function OPSTRANSPORT:_CheckDelivered()
   
 end
 
+--- Check if all required cargos are loaded.
+-- @param #OPSTRANSPORT self
+-- @return #boolean If true, all required cargos are loaded or there is no required cargo.
+function OPSTRANSPORT:_CheckRequiredCargos()
+  
+  if self.requiredCargos==nil or #self.requiredCargos==0 then
+    return true
+  end
+  
+  local carrierNames=self:_GetCarrierNames()
+  
+  local gotit=true
+  for _,_cargo in pairs(self.requiredCargos) do
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP
+    
+    
+    if not cargo:IsLoaded(carrierNames) then
+      return false
+    end
+    
+  end
+  
+  return true
+end
+
 --- Check if all given condition are true.
 -- @param #OPSTRANSPORT self
 -- @param #table Conditions Table of conditions.
@@ -820,17 +898,22 @@ function OPSTRANSPORT:FindTransferCarrierForCargo(CargoGroup, Zone)
   for _,_carrier in pairs(self.disembarkCarriers or {}) do
     local carrierGroup=_carrier --Ops.OpsGroup#OPSGROUP
     
-    -- Find an element of the group that has enough free space.
-    carrier=carrierGroup:FindCarrierForCargo(CargoGroup)
+    -- First check if carrier is alive and loading cargo.
+    if carrierGroup and carrierGroup:IsAlive() and carrierGroup:IsLoading() then
     
-    if carrier then
-      if Zone==nil or Zone:IsCoordinateInZone(carrier.unit:GetCoordinate()) then
-        return carrier, carrierGroup      
+      -- Find an element of the group that has enough free space.
+      carrier=carrierGroup:FindCarrierForCargo(CargoGroup)
+      
+      if carrier then
+        if Zone==nil or Zone:IsCoordinateInZone(carrier.unit:GetCoordinate()) then
+          return carrier, carrierGroup      
+        else
+          self:T3(self.lid.."Got transfer carrier but carrier not in zone (yet)!")
+        end
       else
-        self:T3(self.lid.."Got transfer carrier but carrier not in zone (yet)!")
+        self:T3(self.lid.."No transfer carrier available!")
       end
-    else
-      self:T3(self.lid.."No transfer carrier available!")
+      
     end
   end
 
