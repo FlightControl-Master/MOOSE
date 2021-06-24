@@ -240,7 +240,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.4r1"
+CSAR.version="0.1.4r3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1783,7 +1783,7 @@ function CSAR:_RefreshRadioBeacons()
     for _,_pilot in pairs (PilotTable) do
       local pilot = _pilot -- #CSAR.DownedPilot
       local group = pilot.group
-      local frequency = pilot.frequency
+      local frequency = pilot.frequency or 0 -- thanks to @Thrud
       if frequency and frequency > 0 then
         self:_AddBeaconToGroup(group,frequency)
       end
