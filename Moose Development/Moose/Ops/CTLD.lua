@@ -8,7 +8,7 @@
 -- 
 -- ## Missions:
 --
--- ### [CTLD - Combat Troop & Logistics Deployment](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/)
+-- ### [CTLD - Combat Troop & Logistics Deployment](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20CTLD)
 -- 
 -- ===
 -- 
@@ -180,7 +180,7 @@ end
 
 do
 -------------------------------------------------------------------------
---- **CTLD** class, extends #Core.Base#BASE, #Core.Fsm#FSM
+--- **CTLD** class, extends Core.Base#BASE, Core.Fsm#FSM
 -- @type CTLD
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity level.
@@ -489,7 +489,7 @@ CTLD.SkipFrequencies = {
   
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.1b1"
+CTLD.version="0.1.1b2"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -703,7 +703,7 @@ end
 -- Helper and User Functions
 ------------------------------------------------------------------- 
 
---- Function to generate valid UHF Frequencies
+--- (Internal) Function to generate valid UHF Frequencies
 -- @param #CTLD self
 function CTLD:_GenerateUHFrequencies()
   self:T(self.lid .. " _GenerateUHFrequencies")
@@ -718,7 +718,7 @@ function CTLD:_GenerateUHFrequencies()
     return self
 end
 
---- Function to generate valid FM Frequencies
+--- (Internal) Function to generate valid FM Frequencies
 -- @param #CTLD sel
 function CTLD:_GenerateFMFrequencies()
   self:T(self.lid .. " _GenerateFMrequencies")
@@ -742,7 +742,7 @@ function CTLD:_GenerateFMFrequencies()
     return self
 end
 
---- Populate table with available VHF beacon frequencies.
+--- (Internal) Populate table with available VHF beacon frequencies.
 -- @param #CTLD self
 function CTLD:_GenerateVHFrequencies()
   self:T(self.lid .. " _GenerateVHFrequencies")
@@ -806,7 +806,7 @@ function CTLD:_GenerateVHFrequencies()
   return self
 end
 
---- Function to generate valid laser codes.
+--- (Internal) Function to generate valid laser codes.
 -- @param #CTLD self
 function CTLD:_GenerateLaserCodes()
   self:T(self.lid .. " _GenerateLaserCodes")
@@ -828,7 +828,7 @@ function CTLD:_GenerateLaserCodes()
     end
 end
 
---- Helper function to generate laser codes.
+--- (Internal) Helper function to generate laser codes.
 -- @param #CTLD self
 -- @param #number _number
 -- @param #number _numberToFind
@@ -846,7 +846,7 @@ function CTLD:_ContainsDigit(_number, _numberToFind)
     return false
 end
 
---- Event handler function
+--- (Internal) Event handler function
 -- @param #CTLD self
 -- @param Core.Event#EVENTDATA EventData
 function CTLD:_EventHandler(EventData)
@@ -873,7 +873,7 @@ function CTLD:_EventHandler(EventData)
   return self
 end
 
---- Function to load troops into a heli.
+--- (Internal) Function to load troops into a heli.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
@@ -930,7 +930,7 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   return self
 end
 
---- Function to spawn crates in front of the heli.
+--- (Internal) Function to spawn crates in front of the heli.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
@@ -1011,7 +1011,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     return self
 end
 
---- Function to find and list nearby crates.
+--- (Internal) Function to find and list nearby crates.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
@@ -1045,7 +1045,7 @@ function CTLD:_ListCratesNearby( _group, _unit)
   return self
 end
 
---- Return distance in meters between two coordinates.
+--- (Internal) Return distance in meters between two coordinates.
 -- @param #CTLD self
 -- @param Core.Point#COORDINATE _point1 Coordinate one
 -- @param Core.Point#COORDINATE _point2 Coordinate two
@@ -1060,7 +1060,7 @@ function CTLD:_GetDistance(_point1, _point2)
   end
 end
 
---- Function to find and return nearby crates.
+--- (Internal) Function to find and return nearby crates.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP _group Group
 -- @param Wrapper.Unit#UNIT _unit Unit
@@ -1094,7 +1094,7 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist)
   return found, index
 end
 
---- Function to get and load nearby crates.
+--- (Internal) Function to get and load nearby crates.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
@@ -1194,7 +1194,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
   return self
 end
 
---- Function to list loaded cargo.
+--- (Internal) Function to list loaded cargo.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
@@ -1249,7 +1249,7 @@ function CTLD:_ListCargo(Group, Unit)
   return self
 end
 
---- Function to unload troops from heli.
+--- (Internal) Function to unload troops from heli.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
@@ -1326,7 +1326,7 @@ function CTLD:_UnloadTroops(Group, Unit)
   return self
 end
 
---- Function to unload crates from heli.
+--- (Internal) Function to unload crates from heli.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrappe.Unit#UNIT Unit
@@ -1384,7 +1384,7 @@ function CTLD:_UnloadCrates(Group, Unit)
   return self
 end
 
---- Function to build nearby crates.
+--- (Internal) Function to build nearby crates.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrappe.Unit#UNIT Unit
@@ -1464,7 +1464,7 @@ function CTLD:_BuildCrates(Group, Unit)
   return self
 end
 
---- Function to actually SPAWN buildables in the mission.
+--- (Internal) Function to actually SPAWN buildables in the mission.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Group#UNIT Unit
@@ -1496,7 +1496,7 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build)
   return self
 end
 
---- Function to move group to WP zone.
+--- (Internal) Function to move group to WP zone.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group The Group to move.
 function CTLD:_MoveGroupToZone(Group)
@@ -1523,7 +1523,7 @@ function CTLD:_MoveGroupToZone(Group)
   return self
 end
 
---- Housekeeping - Cleanup crates when build
+--- (Internal) Housekeeping - Cleanup crates when build
 -- @param #CTLD self
 -- @param #table Crates Table of #CTLD_CARGO objects near the unit.
 -- @param #CTLD.Buildable Build Table build object.
@@ -1575,7 +1575,7 @@ function CTLD:_CleanUpCrates(Crates,Build,Number)
   return self
 end
 
---- Housekeeping - Function to refresh F10 menus.
+--- (Internal) Housekeeping - Function to refresh F10 menus.
 -- @param #CTLD self
 -- @return #CTLD self
 function CTLD:_RefreshF10Menus()
@@ -1747,7 +1747,7 @@ function CTLD:DeactivateZone(Name,ZoneType)
   return self
 end
 
---- Function to obtain a valid FM frequency.
+--- (Internal) Function to obtain a valid FM frequency.
 -- @param #CTLD self
 -- @param #string Name Name of zone.
 -- @return #CTLD.ZoneBeacon Beacon Beacon table.
@@ -1768,7 +1768,7 @@ function CTLD:_GetFMBeacon(Name)
   return beacon
 end
 
---- Function to obtain a valid UHF frequency.
+--- (Internal) Function to obtain a valid UHF frequency.
 -- @param #CTLD self
 -- @param #string Name Name of zone.
 -- @return #CTLD.ZoneBeacon Beacon Beacon table.
@@ -1789,7 +1789,7 @@ function CTLD:_GetUHFBeacon(Name)
   return beacon
 end
 
---- Function to obtain a valid VHF frequency.
+--- (Internal) Function to obtain a valid VHF frequency.
 -- @param #CTLD self
 -- @param #string Name Name of zone.
 -- @return #CTLD.ZoneBeacon Beacon Beacon table.
@@ -1845,7 +1845,7 @@ function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon)
   return self
 end
 
---- Function to show list of radio beacons
+--- (Internal) Function to show list of radio beacons
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
@@ -1878,7 +1878,7 @@ function CTLD:_ListRadioBeacons(Group, Unit)
   return self
 end
 
---- Add radio beacon to zone. Runs 30 secs.
+--- (Internal) Add radio beacon to zone. Runs 30 secs.
 -- @param #CTLD self
 -- @param #string Name Name of zone.
 -- @param #string Sound Name of soundfile.
@@ -1898,7 +1898,7 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation)
   return self
 end
 
---- Function to refresh radio beacons
+--- (Internal) Function to refresh radio beacons
 -- @param #CTLD self
 function CTLD:_RefreshRadioBeacons()
   self:I(self.lid .. " _RefreshRadioBeacons")
@@ -1926,7 +1926,7 @@ function CTLD:_RefreshRadioBeacons()
   return self
 end
 
---- function to see if a unit is in a specific zone type.
+--- (Internal) Function to see if a unit is in a specific zone type.
 -- @param #CTLD self
 -- @param Wrapper.Unit#UNIT Unit Unit
 -- @param #CTLD.CargoZoneType Zonetype Zonetype
@@ -1978,7 +1978,7 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
   return outcome, zonenameret, zoneret, maxdist
 end
 
---- Userfunction - Start smoke in a zone close to the Unit.
+--- User function - Start smoke in a zone close to the Unit.
 -- @param #CTLD self
 -- @param Wrapper.Unit#UNIT Unit The Unit.
 -- @param #boolean Flare If true, flare instead.
@@ -2020,6 +2020,7 @@ function CTLD:SmokeZoneNearBy(Unit, Flare)
   end
   return self 
 end
+
   --- User - Function to add/adjust unittype capabilities.
   -- @param #CTLD self
   -- @param #string Unittype The unittype to adjust. If passed as Wrapper.Unit#UNIT, it will search for the unit in the mission.
@@ -2050,7 +2051,7 @@ end
     return self
   end
   
-  --- Check if a unit is hovering *in parameters*.
+  --- (Internal) Check if a unit is hovering *in parameters*.
   -- @param #CTLD self
   -- @param Wrapper.Unit#UNIT Unit
   -- @return #boolean Outcome
@@ -2077,7 +2078,7 @@ end
     return outcome
   end
   
-  --- List if a unit is hovering *in parameters*.
+  --- (Internal) List if a unit is hovering *in parameters*.
   -- @param #CTLD self
   -- @param Wrapper.Group#GROUP Group
   -- @param Wrapper.Unit#UNIT Unit
@@ -2090,7 +2091,7 @@ end
     return self
   end
   
-  --- Check if a unit is in a load zone and is hovering in parameters.
+  --- (Internal) Check if a unit is in a load zone and is hovering in parameters.
   -- @param #CTLD self
   -- @param Wrapper.Unit#UNIT Unit
   -- @return #boolean Outcome
@@ -2100,7 +2101,7 @@ end
     return outcome
   end
   
-    --- Check if a unit is above ground.
+  --- (Internal) Check if a unit is above ground.
   -- @param #CTLD self
   -- @param Wrapper.Unit#UNIT Unit
   -- @return #boolean Outcome
@@ -2117,7 +2118,7 @@ end
     end
   end
   
-   --- Autoload if we can do crates, have capacity free and are in a load zone.
+  --- (Internal) Autoload if we can do crates, have capacity free and are in a load zone.
   -- @param #CTLD self
   -- @param Wrapper.Unit#UNIT Unit
   -- @return #CTLD self
@@ -2147,7 +2148,7 @@ end
     return self
   end
   
-  --- Run through all pilots and see if we autoload.
+  --- (Internal) Run through all pilots and see if we autoload.
   -- @param #CTLD self
   -- @return #CTLD self
   function CTLD:CheckAutoHoverload()
@@ -2164,7 +2165,7 @@ end
 -- FSM functions
 ------------------------------------------------------------------- 
 
-  --- FSM Function onafterStart.
+  --- (Internal) FSM Function onafterStart.
   -- @param #CTLD self
   -- @param #string From State.
   -- @param #string Event Trigger.
@@ -2185,7 +2186,7 @@ end
     return self
   end
 
-  --- FSM Function onbeforeStatus.
+  --- (Internal) FSM Function onbeforeStatus.
   -- @param #CTLD self
   -- @param #string From State.
   -- @param #string Event Trigger.
@@ -2199,7 +2200,7 @@ end
     return self
   end
   
-  --- FSM Function onafterStatus.
+  --- (Internal) FSM Function onafterStatus.
   -- @param #CTLD self
   -- @param #string From State.
   -- @param #string Event Trigger.
@@ -2232,7 +2233,7 @@ end
     return self
   end
   
-  --- FSM Function onafterStop.
+  --- (Internal) FSM Function onafterStop.
   -- @param #CTLD self
   -- @param #string From State.
   -- @param #string Event Trigger.
@@ -2246,7 +2247,7 @@ end
     return self
   end
   
-  --- FSM Function onbeforeTroopsPickedUp.
+  --- (Internal) FSM Function onbeforeTroopsPickedUp.
   -- @param #CTLD self
   -- @param #string From State.
   -- @param #string Event Trigger.
@@ -2260,7 +2261,7 @@ end
     return self
   end
   
-    --- FSM Function onbeforeCratesPickedUp.
+    --- (Internal) FSM Function onbeforeCratesPickedUp.
   -- @param #CTLD self
   -- @param #string From State .
   -- @param #string Event Trigger.
@@ -2274,7 +2275,7 @@ end
     return self
   end
   
-    --- FSM Function onbeforeTroopsDeployed.
+  --- (Internal) FSM Function onbeforeTroopsDeployed.
   -- @param #CTLD self
   -- @param #string From State.
   -- @param #string Event Trigger.
@@ -2288,7 +2289,7 @@ end
     return self
   end
   
-    --- FSM Function onbeforeCratesDropped.
+  --- (Internal) FSM Function onbeforeCratesDropped.
   -- @param #CTLD self
   -- @param #string From State.
   -- @param #string Event Trigger.
@@ -2302,7 +2303,7 @@ end
     return self
   end
   
-    --- FSM Function onbeforeCratesBuild.
+  --- (Internal) FSM Function onbeforeCratesBuild.
   -- @param #CTLD self
   -- @param #string From State.
   -- @param #string Event Trigger.
