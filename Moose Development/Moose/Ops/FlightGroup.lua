@@ -2379,9 +2379,6 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
   -- Holding points.
   local c0=self.group:GetCoordinate()
-  local zone=airbase:GetZone()
-  env.info("FF landatairbase zone:")
-  self:I({zone=zone})
   local p0=airbase:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(althold))
   local p1=nil
   local wpap=nil
@@ -3715,8 +3712,6 @@ end
 -- @return Wrapper.Airbase#AIRBASE.ParkingSpot Parking spot or nil if no spot is within distance threshold.
 function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
 
-  env.info("FF Get Parking spot for element "..element.name)
-
   -- Coordinate of unit landed
   local coord=element.unit:GetCoordinate()
 
@@ -3731,7 +3726,6 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
     coord.x=0
     coord.z=0
     maxdist=500 -- 100 meters was not enough, e.g. on the Seawise Giant, where the spot is 139 meters from the "center"
-    env.info("FF Airbase is ship")
   end
 
   local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
@@ -3740,7 +3734,7 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
   for _,_parking in pairs(parking) do
     local parking=_parking --Wrapper.Airbase#AIRBASE.ParkingSpot
     dist=coord:Get2DDistance(parking.Coordinate)
-    env.info(string.format("FF parking %d dist=%.1f", parking.TerminalID, dist))
+    --env.info(string.format("FF parking %d dist=%.1f", parking.TerminalID, dist))
     if dist<distmin then
       distmin=dist
       spot=_parking

@@ -1791,7 +1791,7 @@ end
 function OPSGROUP:IsNotCargo(CheckTransport)
   local notcargo=self.cargoStatus==OPSGROUP.CargoStatus.NOTCARGO
   if self.cargoTransportUID==nil then
-    notcargo=true
+    --notcargo=true
   end
   return notcargo
 end
@@ -4835,6 +4835,9 @@ function OPSGROUP:_CheckCargoTransport()
   -- Check if there is anything in the queue.
   if not self.cargoTransport then
     self.cargoTransport=self:_GetNextCargoTransport()
+    if self.cargoTransport and not self:IsActive() then
+      self:Activate()
+    end
   end
 
   -- Now handle the transport.
@@ -4864,7 +4867,7 @@ function OPSGROUP:_CheckCargoTransport()
       self:I(self.lid.."Not carrier ==> pickup")
 
       -- Initiate the cargo transport process.
-      self:Pickup()
+      self:__Pickup(-1)
 
     elseif self:IsPickingup() then
 
@@ -4897,9 +4900,10 @@ function OPSGROUP:_CheckCargoTransport()
 
       end
       
-      self:I(self.lid.."gotcargo="..tostring(gotcargo))
-      self:I(self.lid.."boarding="..tostring(boarding))
-      self:I(self.lid.."required="..tostring(self.cargoTransport:_CheckRequiredCargos()))
+      -- Debug.
+      --self:I(self.lid.."gotcargo="..tostring(gotcargo))
+      --self:I(self.lid.."boarding="..tostring(boarding))
+      --self:I(self.lid.."required="..tostring(self.cargoTransport:_CheckRequiredCargos()))
 
       -- Boarding finished ==> Transport cargo.
       if gotcargo and self.cargoTransport:_CheckRequiredCargos() and not boarding then
@@ -5090,7 +5094,7 @@ function OPSGROUP:AddOpsTransport(OpsTransport)
   table.insert(self.cargoqueue, OpsTransport)
 
   -- Debug message.
-  self:I(self.lid.."FF adding transport to carrier, #self.cargoqueue="..#self.cargoqueue)
+  self:T(self.lid.."Adding transport to carrier, #self.cargoqueue="..#self.cargoqueue)
 
   return self
 end
@@ -8708,7 +8712,7 @@ function OPSGROUP:_AddElementByName(unitname)
 
     -- Descriptors and type/category.
     element.descriptors=unit:GetDesc()
-    self:I({desc=element.descriptors})
+    --self:I({desc=element.descriptors})
 
     element.category=unit:GetUnitCategory()
     element.categoryname=unit:GetCategoryName()
@@ -8762,7 +8766,7 @@ function OPSGROUP:_AddElementByName(unitname)
     local text=string.format("Adding element %s: status=%s, skill=%s, life=%.1f/%.1f category=%s (%d), type=%s, size=%.1f (L=%.1f H=%.1f W=%.1f), weight=%.1f/%.1f (cargo=%.1f/%.1f)",
     element.name, element.status, element.skill, element.life, element.life0, element.categoryname, element.category, element.typename,
     element.size, element.length, element.height, element.width, element.weight, element.weightMaxTotal, element.weightCargo, element.weightMaxCargo)
-    self:I(self.lid..text)
+    self:T(self.lid..text)
 
     -- Debug text.
     --local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f (%d), category=%d, categoryname=%s, callsign=%s, ai=%s",
