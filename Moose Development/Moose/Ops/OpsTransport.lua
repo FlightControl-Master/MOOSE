@@ -103,7 +103,7 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.0.6"
+OPSTRANSPORT.version="0.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -418,6 +418,23 @@ function OPSTRANSPORT:_GetCarrierNames()
   return names
 end
 
+--- Get (all) cargo @{Ops.OpsGroup#OPSGROUP}s. Optionally, only delivered or undelivered groups can be returned.
+-- @param #OPSTRANSPORT self
+-- @param #boolean Delivered If `true`, only delivered groups are returned. If `false` only undelivered groups are returned. If `nil`, all groups are returned.
+-- @return #table Ops groups.
+function OPSTRANSPORT:GetCargoOpsGroups(Delivered)
+
+  local opsgroups={}
+  for _,_cargo in pairs(self.cargos) do
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+    if Delivered==nil or cargo.delivered==Delivered then
+      table.insert(opsgroups, cargo.opsgroup)
+    end
+  end
+  
+  return opsgroups
+end
+
 
 --- Set transport start and stop time.
 -- @param #OPSTRANSPORT self
@@ -574,8 +591,33 @@ function OPSTRANSPORT:GetCarrierTransportStatus(CarrierGroup)
   return self.carrierTransportStatus[CarrierGroup.groupname]
 end
 
+--- Get unique ID of the transport assignment.
+-- @param #OPSTRANSPORT self
+-- @return #number UID.
+function OPSTRANSPORT:GetUID()
+  return self.uid
+end
 
+--- Get number of delivered cargo groups.
+-- @param #OPSTRANSPORT self
+-- @return #number Total number of delivered cargo groups.
+function OPSTRANSPORT:GetNcargoDelivered()
+  return self.Ndelivered
+end
 
+--- Get number of cargo groups.
+-- @param #OPSTRANSPORT self
+-- @return #number Total number of cargo groups.
+function OPSTRANSPORT:GetNcargoTotal()
+  return self.Ncargo
+end
+
+--- Get number of carrier groups assigned for this transport.
+-- @param #OPSTRANSPORT self
+-- @return #number Total number of carrier groups.
+function OPSTRANSPORT:GetNcarrier()
+  return self.Ncarrier
+end
 
 --- Check if an OPS group is assigned as carrier for this transport.
 -- @param #OPSTRANSPORT self

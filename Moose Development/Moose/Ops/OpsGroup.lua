@@ -113,7 +113,8 @@
 -- @field #table cargoBay Table containing OPSGROUP loaded into this group.
 -- @field Ops.OpsTransport#OPSTRANSPORT cargoTransport Current cargo transport assignment.
 -- @field #string cargoStatus Cargo status of this group acting as cargo.
--- @field #string carrierStatus Carrier status of this group acting as cargo carrier.
+-- @field #number cargoTransportUID Unique ID of the transport assignment this cargo group is associated with.
+-- @field #string carrierStatus Carrier status of this group acting as cargo carrier. 
 -- @field #number cargocounter Running number of cargo UIDs.
 -- @field #OPSGROUP.CarrierLoader carrierLoader Carrier loader parameters.
 -- @field #OPSGROUP.CarrierLoader carrierUnloader Carrier unloader parameters.
@@ -1785,9 +1786,14 @@ end
 
 --- Check if the group is **not** cargo.
 -- @param #OPSGROUP self
+-- @param #boolean CheckTransport If true or nil, also check if cargo is associated with a transport assignment. If not, we consider it not cargo.
 -- @return #boolean If true, group is *not* cargo.
-function OPSGROUP:IsNotCargo()
-  return self.cargoStatus==OPSGROUP.CargoStatus.NOTCARGO
+function OPSGROUP:IsNotCargo(CheckTransport)
+  local notcargo=self.cargoStatus==OPSGROUP.CargoStatus.NOTCARGO
+  if self.cargoTransportUID==nil then
+    notcargo=true
+  end
+  return notcargo
 end
 
 --- Check if the group is currently boarding a carrier.
@@ -4575,7 +4581,7 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
   
   if self:IsCarrier() then
     if self.cargoTransport then
-      self.cargoTransport:CarrierGroupDead()
+      self.cargoTransport:DeadCarrierGroup(self)
     end
   end
 
@@ -5349,9 +5355,14 @@ end
 -- @param #boolean Reserved If `true`, reserve space for me.
 function OPSGROUP:_SetMyCarrier(CarrierGroup, CarrierElement, Reserved)
 
+  -- Debug info.
+  self:I(self.lid..string.format("Setting My Carrier: %s (%s), reserved=%s", CarrierGroup:GetName(), tostring(CarrierElement.name), tostring(Reserved)))
+
   self.mycarrier.group=CarrierGroup
   self.mycarrier.element=CarrierElement
   self.mycarrier.reserved=Reserved
+  
+  self.cargoTransportUID=CarrierGroup.cargoTransport and CarrierGroup.cargoTransport.uid or nil
 
 end
 
@@ -5405,6 +5416,7 @@ function OPSGROUP:_RemoveMyCarrier()
   self.mycarrier.element=nil
   self.mycarrier.reserved=nil
   self.mycarrier={}
+  self.cargoTransportUID=nil
   return self
 end
 
@@ -5582,9 +5594,9 @@ function OPSGROUP:onafterLoading(From, Event, To)
     -- Check that cargo weight is
     if self:CanCargo(cargo.opsgroup) and not (cargo.delivered or cargo.opsgroup:IsDead()) then
 
-      -- Check that group is not cargo already and not busy.
+      -- Check that group is NOT cargo and NOT acting as carrier already
       -- TODO: Need a better :IsBusy() function or :IsReadyForMission() :IsReadyForBoarding() :IsReadyForTransport()
-      if cargo.opsgroup:IsNotCargo() and not (cargo.opsgroup:IsPickingup() or cargo.opsgroup:IsLoading() or cargo.opsgroup:IsTransporting() or cargo.opsgroup:IsUnloading() or cargo.opsgroup:IsLoaded()) then
+      if cargo.opsgroup:IsNotCargo() and not (cargo.opsgroup:IsPickingup() or cargo.opsgroup:IsLoading() or cargo.opsgroup:IsTransporting() or cargo.opsgroup:IsUnloading()) then
 
         -- Check if cargo is in embark/pickup zone.
         local inzone=self.cargoTransport.embarkzone:IsCoordinateInZone(cargo.opsgroup:GetCoordinate())
@@ -5640,6 +5652,22 @@ function OPSGROUP:ClearWaypoints()
   self.waypoints={}
 end
 
+--- Transfer cargo from to another carrier. 
+-- @param #OPSGROUP self
+-- @param #OPSGROUP CargoGroup The cargo group to be transferred.
+-- @param #OPSGROUP CarrierGroup The new carrier group.
+-- @param #OPSGROUP.Element CarrierElement The new carrier element.
+function OPSGROUP:_TransferCargo(CargoGroup, CarrierGroup, CarrierElement)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Transferring cargo %s to new carrier group %s", CargoGroup:GetName(), CarrierGroup:GetName()))
+  
+  -- Unload from this and directly load into the other carrier.
+  self:Unload(CargoGroup)
+  CarrierGroup:Load(CargoGroup, CarrierElement)
+  
+end
+
 --- On after "Load" event. Carrier loads a cargo group into ints cargo bay.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -5690,7 +5718,11 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
     CargoGroup:Embarked(self, carrier)
     
     -- Trigger "Loaded" event for current cargo transport.
-    self.cargoTransport:Loaded(CargoGroup, carrier)
+    if self.cargoTransport then
+      self.cargoTransport:Loaded(CargoGroup, carrier)
+    else
+      self:E(self.lid..string.format("WARNING: Loaded cargo but no current OPSTRANSPORT assignment!"))
+    end
 
   else
     self:E(self.lid.."ERROR: Cargo has no carrier on Load event!")
@@ -5918,14 +5950,9 @@ function OPSGROUP:onafterUnloading(From, Event, To)
 
           ---
           -- Delivered to another carrier group.
-          ---
-
-            -- Debug info.
-            self:I(self.lid..string.format("Transferring cargo %s to new carrier group %s", cargo.opsgroup:GetName(), carrierGroup:GetName()))
-
-            -- Unload from this and directly load into the other carrier.
-            self:Unload(cargo.opsgroup)
-            carrierGroup:Load(cargo.opsgroup, carrier)
+          ---            
+          
+          self:_TransferCargo(cargo.opsgroup, carrierGroup, carrier)
 
         elseif zone and zone:IsInstanceOf("ZONE_AIRBASE") and zone:GetAirbase():IsShip() then
 
@@ -6240,9 +6267,6 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
   -- Set cargo status.
   self.cargoStatus=OPSGROUP.CargoStatus.BOARDING
 
-  -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.
-  self:_SetMyCarrier(CarrierGroup, Carrier, true)
-
   -- Army or Navy group.
   local CarrierIsArmyOrNavy=CarrierGroup:IsArmygroup() or CarrierGroup:IsNavygroup()
   local CargoIsArmyOrNavy=self:IsArmygroup() or self:IsNavygroup()
@@ -6279,6 +6303,9 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
         self:Cruise()
       end
 
+      -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.
+      self:_SetMyCarrier(CarrierGroup, Carrier, true)
+
     else
 
       ---
@@ -6287,6 +6314,13 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
 
       -- Debug info.
       self:I(self.lid..string.format("Board with direct load to carrier %s", CarrierGroup:GetName()))
+      
+      local mycarriergroup=self:_GetMyCarrierGroup()
+      
+      -- Unload cargo first.
+      if mycarriergroup then
+        mycarriergroup:Unload(self)
+      end
 
       -- Trigger Load event.
       CarrierGroup:Load(self)
@@ -6294,9 +6328,16 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
     end
 
   else
+  
+    -- Redo boarding call.
     self:T(self.lid.."Carrier not ready for boarding yet ==> repeating boarding call in 10 sec")
     self:__Board(-10, CarrierGroup, Carrier)
+    
+    -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.
+    self:_SetMyCarrier(CarrierGroup, Carrier, true)
+    
   end
+
 
 end
 
@@ -8085,7 +8126,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:__Airborne(-0.5)
+      self:__Airborne(-0.1)
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.LANDED then

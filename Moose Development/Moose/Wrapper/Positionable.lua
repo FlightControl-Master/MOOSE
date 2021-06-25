@@ -1459,15 +1459,16 @@ do -- Cargo
         self:F({Desc=Desc})
 
         local Weights = {
-          ["Type_071"]         = 245000,
-          ["LHA_Tarawa"]       = 500000,
-          ["Ropucha-class"]    = 150000,
-          ["Dry-cargo ship-1"] =  70000,
-          ["Dry-cargo ship-2"] =  70000,
-          ["Higgins_boat"]     =   3700, -- Higgins Boat can load 3700 kg of general cargo or 36 men (source wikipedia).
-          ["USS_Samuel_Chase"] =  25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.
-          ["LST_Mk2"]          =2100000, -- Can carry 2100 tons according to wiki source!
-          ["speedboat"]        =    500, -- 500 kg ~ 5 persons
+          ["Type_071"]         =   245000,
+          ["LHA_Tarawa"]       =   500000,
+          ["Ropucha-class"]    =   150000,
+          ["Dry-cargo ship-1"] =    70000,
+          ["Dry-cargo ship-2"] =    70000,
+          ["Higgins_boat"]     =     3700, -- Higgins Boat can load 3700 kg of general cargo or 36 men (source wikipedia).
+          ["USS_Samuel_Chase"] =    25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.
+          ["LST_Mk2"]          =  2100000, -- Can carry 2100 tons according to wiki source!
+          ["speedboat"]        =      500, -- 500 kg ~ 5 persons
+          ["Seawise_Giant"]    =261000000, -- Gross tonnage is 261,000 tonns.
         }
         self.__.CargoBayWeightLimit = ( Weights[Desc.typeName] or 50000 )
 

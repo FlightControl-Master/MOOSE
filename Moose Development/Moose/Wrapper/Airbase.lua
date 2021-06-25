@@ -533,6 +533,9 @@ function AIRBASE:Register(AirbaseName)
 
   -- Get descriptors.
   self.descriptors=self:GetDesc()
+  
+  -- Debug info.
+  --self:I({airbase=AirbaseName, descriptors=self.descriptors})
 
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
@@ -544,12 +547,21 @@ function AIRBASE:Register(AirbaseName)
     self.isHelipad=true
   elseif self.category==Airbase.Category.SHIP then
     self.isShip=true
+    -- DCS bug: Oil rigs and gas platforms have category=2 (ship). Also they cannot be retrieved by coalition.getStaticObjects()
+    if self.descriptors.typeName=="Oil rig" or self.descriptors.typeName=="Ga" then
+      self.isHelipad=true
+      self.isShip=false
+      self.category=Airbase.Category.HELIPAD
+      _DATABASE:AddStatic(AirbaseName)
+    end
   else
     self:E("ERROR: Unknown airbase category!")
   end
 
+  -- Init parking spots.
   self:_InitParkingSpots()
 
+  -- Get 2D position vector.
   local vec2=self:GetVec2()
 
   -- Init coordinate.

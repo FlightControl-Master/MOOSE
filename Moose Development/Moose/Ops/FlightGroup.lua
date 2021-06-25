@@ -1474,7 +1474,7 @@ function FLIGHTGROUP:onafterElementTakeoff(From, Event, To, Element, airbase)
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.TAKEOFF, airbase)
 
   -- Trigger element airborne event.
-  self:__ElementAirborne(2, Element)
+  self:__ElementAirborne(0.1, Element)
 end
 
 --- On after "ElementAirborne" event.
@@ -1749,7 +1749,7 @@ function FLIGHTGROUP:onafterAirborne(From, Event, To)
         self:LandAtAirbase(airbase)
       end
     else
-      self:_CheckGroupDone(1)
+      self:_CheckGroupDone()
     end
   else
     self:_UpdateMenu()
@@ -2194,7 +2194,8 @@ function FLIGHTGROUP:_CheckGroupDone(delay)
             -- Send flight to destination.
             if destbase then
               self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports ==> RTB!")
-              self:__RTB(-3, destbase)
+              --self:RTB(destbase)
+              self:__RTB(-0.1, destbase)
             elseif destzone then
               self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports ==> RTZ!")
               self:__RTZ(-3, destzone)
@@ -2378,6 +2379,9 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
   -- Holding points.
   local c0=self.group:GetCoordinate()
+  local zone=airbase:GetZone()
+  env.info("FF landatairbase zone:")
+  self:I({zone=zone})
   local p0=airbase:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(althold))
   local p1=nil
   local wpap=nil
@@ -3075,8 +3079,8 @@ function FLIGHTGROUP:_InitGroup()
       self:I(self.lid..text)
     end
 
-    env.info("DCS Unit BOOM_AND_RECEPTACLE="..tostring(Unit.RefuelingSystem.BOOM_AND_RECEPTACLE))
-    env.info("DCS Unit PROBE_AND_DROGUE="..tostring(Unit.RefuelingSystem.PROBE_AND_DROGUE))
+    --env.info("DCS Unit BOOM_AND_RECEPTACLE="..tostring(Unit.RefuelingSystem.BOOM_AND_RECEPTACLE))
+    --env.info("DCS Unit PROBE_AND_DROGUE="..tostring(Unit.RefuelingSystem.PROBE_AND_DROGUE))
 
     -- Init done.
     self.groupinitialized=true
@@ -3711,6 +3715,8 @@ end
 -- @return Wrapper.Airbase#AIRBASE.ParkingSpot Parking spot or nil if no spot is within distance threshold.
 function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
 
+  env.info("FF Get Parking spot for element "..element.name)
+
   -- Coordinate of unit landed
   local coord=element.unit:GetCoordinate()
 
@@ -3724,7 +3730,8 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
   if airbase and airbase:IsShip() then
     coord.x=0
     coord.z=0
-    maxdist=100
+    maxdist=500 -- 100 meters was not enough, e.g. on the Seawise Giant, where the spot is 139 meters from the "center"
+    env.info("FF Airbase is ship")
   end
 
   local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
@@ -3733,6 +3740,7 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
   for _,_parking in pairs(parking) do
     local parking=_parking --Wrapper.Airbase#AIRBASE.ParkingSpot
     dist=coord:Get2DDistance(parking.Coordinate)
+    env.info(string.format("FF parking %d dist=%.1f", parking.TerminalID, dist))
     if dist<distmin then
       distmin=dist
       spot=_parking
