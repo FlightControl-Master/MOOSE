@@ -59,7 +59,12 @@
 --
 -- # The OPSTRANSPORT Concept
 -- 
--- This class simulates troop transport using carriers such as APCs, ships helicopters or airplanes. The carriers and transported groups need to be OPSGROUPS (see ARMYGROUP, NAVYGROUP and FLIGHTGROUP classed). 
+-- This class simulates troop transport using carriers such as APCs, ships, helicopters or airplanes. The carriers and transported groups need to be OPSGROUPS (see ARMYGROUP, NAVYGROUP and FLIGHTGROUP classes).
+-- 
+-- **IMPORTANT NOTES**
+-- 
+-- * Cargo groups are **not** split and distributed into different carrier *units*. That means that the whole cargo group **must fit** into one of the carrier units.
+-- * Cargo groups must be inside the pickup zones to be considered for loading. Groups not inside the pickup zone will not get the command to board. 
 -- 
 -- 
 -- @field #OPSTRANSPORT
@@ -714,8 +719,10 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
   text=text..string.format("\nCarriers:")
   for _,_carrier in pairs(self.carriers) do
     local carrier=_carrier --Ops.OpsGroup#OPSGROUP
-    text=text..string.format("\n- %s: %s [%s], cargo=%d/%d kg, free cargo bay %d/%d kg", 
-    carrier:GetName(), carrier.carrierStatus:upper(), carrier:GetState(), carrier:GetWeightCargo(), carrier:GetWeightCargoMax(), carrier:GetFreeCargobayMax(true), carrier:GetFreeCargobayMax())
+    text=text..string.format("\n- %s: %s [%s], Cargo Bay [current/reserved/total]=%d/%d/%d kg [free %d/%d/%d kg]", 
+    carrier:GetName(), carrier.carrierStatus:upper(), carrier:GetState(), 
+    carrier:GetWeightCargo(nil, false), carrier:GetWeightCargo(), carrier:GetWeightCargoMax(), 
+    carrier:GetFreeCargobay(nil, false), carrier:GetFreeCargobay(), carrier:GetFreeCargobayMax())
   end  
   
   self:I(self.lid..text)

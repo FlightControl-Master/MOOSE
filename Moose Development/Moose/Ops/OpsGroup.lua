@@ -219,6 +219,7 @@ OPSGROUP = {
 -- @field #number weightMaxCargo Max. cargo weight in kg.
 -- @field #number weightCargo Current cargo weight in kg.
 -- @field #number weight Current weight including cargo in kg.
+-- @field #table cargoBay Cargo bay.
 
 --- Status of group element.
 -- @type OPSGROUP.ElementStatus
@@ -420,11 +421,16 @@ OPSGROUP.CargoStatus={
 -- @field #number length Length of (un-)loading zone in meters.
 -- @field #number width Width of (un-)loading zone in meters.
 
---- Cargo transport data.
+--- Data of the carrier that has loaded this group.
 -- @type OPSGROUP.MyCarrier
 -- @field #OPSGROUP group The carrier group.
 -- @field #OPSGROUP.Element element The carrier element.
 -- @field #boolean reserved If `true`, the carrier has caro space reserved for me.
+
+--- Element cargo bay data.
+-- @type OPSGROUP.MyCargo
+-- @field #OPSGROUP group The cargo group.
+-- @field #boolean reserved If `true`, the cargo bay space is reserved but cargo has not actually been loaded yet.
 
 --- Cargo group data.
 -- @type OPSGROUP.CargoGroup
@@ -4562,6 +4568,7 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
   end
 
   -- Check cargo bay and declare cargo groups dead.
+  --[[
   for groupname, carriername in pairs(self.cargoBay or {}) do
     if Element.name==carriername then
       local opsgroup=_DATABASE:GetOpsGroup(groupname)
@@ -4577,6 +4584,26 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
         end
       end
     end
+  end
+  ]]
+  
+  -- Check cargo bay and declare cargo groups dead.
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    for _,_cargo in pairs(element.cargoBay) do
+      local cargo=_cargo --#OPSGROUP.MyCargo
+      if cargo.group and not (cargo.group:IsDead() or cargo.group:IsStopped()) then
+        for _,cargoelement in pairs(cargo.group.elements) do
+
+          -- Debug info.
+          self:T2(self.lid.."Cargo element dead "..cargoelement.name)
+
+          -- Trigger dead event.
+          cargo.group:ElementDead(cargoelement)
+
+        end
+      end      
+    end    
   end
   
   if self:IsCarrier() then
@@ -4800,6 +4827,7 @@ function OPSGROUP:_CheckCargoTransport()
   local Time=timer.getAbsTime()
 
   -- Cargo bay debug info.
+  --[[
   if self.verbose>=3 then
     local text=""
     for cargogroupname, carriername in pairs(self.cargoBay) do
@@ -4809,6 +4837,22 @@ function OPSGROUP:_CheckCargoTransport()
       self:I(self.lid.."Cargo bay:"..text)
     end
   end
+  ]]
+  
+  -- Check cargo bay and declare cargo groups dead.
+  if self.verbose>=0 then
+    local text=""  
+    for _,_element in pairs(self.elements) do
+      local element=_element --#OPSGROUP.Element
+      for _,_cargo in pairs(element.cargoBay) do
+        local cargo=_cargo --#OPSGROUP.MyCargo
+        text=text..string.format("\n- %s in carrier %s, reserved=%s", tostring(cargo.group:GetName()), tostring(element.name), tostring(cargo.reserved))
+      end    
+    end
+    if text~="" then
+      self:I(self.lid.."Cargo bay:"..text)
+    end    
+  end  
 
   -- Cargo queue debug info.
   if self.verbose>=3 then
@@ -4958,49 +5002,157 @@ function OPSGROUP:_CheckCargoTransport()
   return self
 end
 
+
+--- Check if a group is in the cargo bay.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP OpsGroup Group to check.
+-- @return #boolean If `true`, group is in the cargo bay.
+function OPSGROUP:_IsInCargobay(OpsGroup)
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    for _,_cargo in pairs(element.cargoBay) do
+      local cargo=_cargo --#OPSGROUP.MyCargo
+      if cargo.group.groupname==OpsGroup.groupname then
+        return true
+      end
+    end
+  end
+
+  return false
+end
+
 --- Add OPSGROUP to cargo bay of a carrier.
 -- @param #OPSGROUP self
 -- @param #OPSGROUP CargoGroup Cargo group.
 -- @param #OPSGROUP.Element CarrierElement The element of the carrier.
-function OPSGROUP:_AddCargobay(CargoGroup, CarrierElement)
+-- @param #boolean Reserved Only reserve the cargo bay space.
+function OPSGROUP:_AddCargobay(CargoGroup, CarrierElement, Reserved)
 
   --TODO: Check group is not already in cargobay of this carrier or any other carrier.
+  
+  local cargo=self:_GetCargobay(CargoGroup)
+  
+  if cargo then
+    cargo.reserved=Reserved
+  else
 
+    cargo={} --#OPSGROUP.MyCargo
+    cargo.group=CargoGroup
+    cargo.reserved=Reserved
+    
+    table.insert(CarrierElement.cargoBay, cargo)  
+  end
+  
+  
+    
+  -- Set my carrier.
+  CargoGroup:_SetMyCarrier(self, CarrierElement, Reserved)
+
+  -- Fill cargo bay (obsolete).
+  self.cargoBay[CargoGroup.groupname]=CarrierElement.name
+  
+  if not Reserved then
+  
     -- Cargo weight.
     local weight=CargoGroup:GetWeightTotal()
 
     -- Add weight to carrier.
     self:AddWeightCargo(CarrierElement.name, weight)
-
-    -- Fill cargo bay.
-    self.cargoBay[CargoGroup.groupname]=CarrierElement.name
+    
+  end    
 
   return self
+end
+
+--- Get cargo bay item.
+-- @param #OPSGROUP self
+-- @param #OPSGROUP CargoGroup Cargo group.
+-- @return #OPSGROUP.MyCargo Cargo bay item or `nil` if the group is not in the carrier.
+-- @return #number CargoBayIndex Index of item in the cargo bay table.
+-- @return #OPSGROUP.Element Carrier element.
+function OPSGROUP:_GetCargobay(CargoGroup)
+
+  -- Loop over elements and their cargo bay items.
+  local CarrierElement=nil  --#OPSGROUP.Element
+  local cargobayIndex=nil
+  local reserved=nil
+  for i,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    for j,_cargo in pairs(element.cargoBay) do
+      local cargo=_cargo --#OPSGROUP.MyCargo
+      if cargo.group and cargo.group.groupname==CargoGroup.groupname then
+        return cargo, j, element
+      end
+    end
+  end
+
+  return nil, nil, nil
 end
 
 --- Remove OPSGROUP from cargo bay of a carrier.
 -- @param #OPSGROUP self
 -- @param #OPSGROUP CargoGroup Cargo group.
--- @param #OPSGROUP.Element CarrierElement The element of the carrier.
 -- @return #boolean If `true`, cargo could be removed.
-function OPSGROUP:_DelCargobay(CargoGroup, CarrierElement)
+function OPSGROUP:_DelCargobay(CargoGroup)
 
   if self.cargoBay[CargoGroup.groupname] then
 
     -- Not in cargo bay any more.
     self.cargoBay[CargoGroup.groupname]=nil
 
-    -- Reduce carrier weight.
-    local weight=CargoGroup:GetWeightTotal()
-
-    -- Get carrier of group.
-    local carrier=CargoGroup:_GetMyCarrierElement()
-
-    if carrier then
-      self:RedWeightCargo(carrier.name, weight)
+  end
+  
+  
+  --[[
+  local MyCarrierGroup, MyCarrierElement, MyIsReserved=CargoGroup:_GetMyCarrier()
+  
+  if MyCarrierGroup and MyCarrierGroup.groupname==self.groupname then
+      if not IsReserved then
+  
+      -- Reduce carrier weight.
+      local weight=CargoGroup:GetWeightTotal()
+      
+      self:RedWeightCargo(CarrierElement.name, weight)
+      
+      end
+      
+  end
+  ]]
+  
+  
+  -- Loop over elements and their cargo bay items.
+  --[[
+  local CarrierElement=nil  --#OPSGROUP.Element
+  local cargobayIndex=nil
+  local reserved=nil
+  for i,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    for j,_cargo in pairs(element.cargoBay) do
+      local cargo=_cargo --#OPSGROUP.MyCargo
+      if cargo.group and cargo.group.groupname==CargoGroup.groupname then
+        CarrierElement=element
+        cargobayIndex=j
+        reserved=cargo.reserved
+      end
+    end
+  end
+  ]]
+  
+  local cargoBayItem, cargoBayIndex, CarrierElement=self:_GetCargobay(CargoGroup)
+  
+  if cargoBayItem and cargoBayIndex then
+  
+    -- Remove
+    table.remove(CarrierElement.cargoBay, cargoBayIndex)
+    
+    -- Reduce weight (if cargo space was not just reserved).
+    if not cargoBayItem.reserved then
+      local weight=CargoGroup:GetWeightTotal()
+      self:RedWeightCargo(CarrierElement.name, weight)
     end
 
-    return true
+    return true    
   end
 
   env.error(self.lid.."ERROR: Group is not in cargo bay. Cannot remove it!")
@@ -5117,11 +5269,12 @@ function OPSGROUP:DelCargoTransport(CargoTransport)
 end
 
 
---- Get total weight of the group including cargo.
+--- Get total weight of the group including cargo. Optionally, the total weight of a specific unit can be requested.
 -- @param #OPSGROUP self
 -- @param #string UnitName Name of the unit. Default is of the whole group.
+-- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
 -- @return #number Total weight in kg.
-function OPSGROUP:GetWeightTotal(UnitName)
+function OPSGROUP:GetWeightTotal(UnitName, IncludeReserved)
 
   local weight=0
   for _,_element in pairs(self.elements) do
@@ -5129,7 +5282,21 @@ function OPSGROUP:GetWeightTotal(UnitName)
 
     if (UnitName==nil or UnitName==element.name) and element.status~=OPSGROUP.ElementStatus.DEAD then
 
-      weight=weight+element.weight
+      weight=weight+element.weightEmpty
+      
+      for _,_cargo in pairs(element.cargoBay) do
+        local cargo=_cargo --#OPSGROUP.MyCargo
+        
+        local wcargo=0
+        
+        -- Count cargo that is not reserved or if reserved cargo should be included.
+        if (not cargo.reserved) or (cargo.reserved==true and (IncludeReserved==true or IncludeReserved==nil)) then 
+          wcargo=cargo.group:GetWeightTotal(element.name)
+        end
+        
+        weight=weight+wcargo
+        
+      end
 
     end
 
@@ -5141,24 +5308,15 @@ end
 --- Get free cargo bay weight.
 -- @param #OPSGROUP self
 -- @param #string UnitName Name of the unit. Default is of the whole group.
+-- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
 -- @return #number Free cargo bay in kg.
-function OPSGROUP:GetFreeCargobay(UnitName)
+function OPSGROUP:GetFreeCargobay(UnitName, IncludeReserved)
 
-  local Free=0
-  for _,_element in pairs(self.elements) do
-    local element=_element --#OPSGROUP.Element
-
-    if (UnitName==nil or UnitName==element.name) and element.status~=OPSGROUP.ElementStatus.DEAD then
-      local free=element.weightMaxCargo-element.weightCargo
-      --[[
-      for _,_opsgroup in pairs(element.reservedCargos or {}) do
-        local opsgroup=_opsgroup --#OPSGROUP
-        free=free-opsgroup:GetWeightTotal()
-      end
-      ]]
-      Free=Free+free
-    end
-  end
+  local weightCargoMax=self:GetWeightCargoMax(UnitName)
+  
+  local weightCargo=self:GetWeightCargo(UnitName, IncludeReserved)
+  
+  local Free=weightCargoMax-weightCargo
 
   self:I(self.lid..string.format("Free cargo bay=%d kg (unit=%s)", Free, (UnitName or "whole group")))
   return Free
@@ -5198,8 +5356,9 @@ end
 --- Get weight of the internal cargo the group is carriing right now.
 -- @param #OPSGROUP self
 -- @param #string UnitName Name of the unit. Default is of the whole group.
+-- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
 -- @return #number Cargo weight in kg.
-function OPSGROUP:GetWeightCargo(UnitName)
+function OPSGROUP:GetWeightCargo(UnitName, IncludeReserved)
 
   local weight=0
   for _,_element in pairs(self.elements) do
@@ -5213,34 +5372,36 @@ function OPSGROUP:GetWeightCargo(UnitName)
 
   end
 
-  local gewicht=0
-  for groupname, carriername in pairs(self.cargoBay) do
-    local element=self:GetElementByName(carriername)
-    if (UnitName==nil or UnitName==carriername) and (element and element.status~=OPSGROUP.ElementStatus.DEAD) then
-      local opsgroup=_DATABASE:FindOpsGroup(groupname)
-      if opsgroup then
-        gewicht=gewicht+opsgroup:GetWeightTotal()
+  local gewicht=0  
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    if (UnitName==nil or UnitName==element.name) and (element and element.status~=OPSGROUP.ElementStatus.DEAD) then
+      for _,_cargo in pairs(element.cargoBay) do
+        local cargo=_cargo --#OPSGROUP.MyCargo
+        if (not cargo.reserved) or (cargo.reserved==true and (IncludeReserved==true or IncludeReserved==nil)) then 
+          gewicht=gewicht+cargo.group:GetWeightTotal()
+        end 
       end
     end
   end
-
-  if gewicht~=weight then
+  if IncludeReserved==false and gewicht~=weight then
     self:I(self.lid..string.format("ERROR: FF weight!=gewicht: weight=%.1f, gewicht=%.1f", weight, gewicht))
   end
 
-  return weight
+  return gewicht
 end
 
---- Get max weight of the internal cargo the group can carry.
+--- Get max weight of the internal cargo the group can carry. Optionally, the max cargo weight of a specific unit can be requested.
 -- @param #OPSGROUP self
--- @return #number Cargo weight in kg.
-function OPSGROUP:GetWeightCargoMax()
+-- @param #string UnitName Name of the unit. Default is of the whole group.
+-- @return #number Max cargo weight in kg. This does **not** include any cargo loaded or reserved currently.
+function OPSGROUP:GetWeightCargoMax(UnitName)
 
   local weight=0
   for _,_element in pairs(self.elements) do
     local element=_element --#OPSGROUP.Element
 
-    if element.status~=OPSGROUP.ElementStatus.DEAD then
+    if (UnitName==nil or UnitName==element.name) and element.status~=OPSGROUP.ElementStatus.DEAD then
 
       weight=weight+element.weightMaxCargo
 
@@ -5263,6 +5424,9 @@ function OPSGROUP:AddWeightCargo(UnitName, Weight)
 
     -- Add weight.
     element.weightCargo=element.weightCargo+Weight
+    
+    -- Debug info.
+    self:I(self.lid..string.format("FF %s: Adding %.1f kg cargo weight. New cargo weight=%.1f kg", UnitName, Weight, element.weightCargo))
 
     -- For airborne units, we set the weight in game.
     if self.isFlightgroup then
@@ -5613,6 +5777,8 @@ function OPSGROUP:onafterLoading(From, Event, To)
 
           -- Find a carrier that has enough free cargo bay for this group.
           local carrier=_findCarrier(weight)
+          
+          local carrier=self:FindCarrierForCargo(cargo.opsgroup)
 
           if carrier then
 
@@ -5694,9 +5860,6 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
 
   if carrier then
 
-    -- Add into carrier bay.
-    self:_AddCargobay(CargoGroup, carrier)
-
     ---
     -- Embark Cargo
     ---
@@ -5710,8 +5873,8 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
     -- Clear all waypoints.
     CargoGroup:ClearWaypoints()
 
-    -- Set carrier (again).
-    CargoGroup:_SetMyCarrier(self, carrier, false)
+    -- Add into carrier bay.
+    self:_AddCargobay(CargoGroup, carrier, false)
 
     -- Despawn this group.
     if CargoGroup:IsAlive() then
@@ -6308,7 +6471,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       end
 
       -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.
-      self:_SetMyCarrier(CarrierGroup, Carrier, true)
+      CarrierGroup:_AddCargobay(self, Carrier, true)
 
     else
 
@@ -6337,8 +6500,9 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
     self:T(self.lid.."Carrier not ready for boarding yet ==> repeating boarding call in 10 sec")
     self:__Board(-10, CarrierGroup, Carrier)
     
-    -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.
-    self:_SetMyCarrier(CarrierGroup, Carrier, true)
+    -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.´
+    CarrierGroup:_AddCargobay(self, Carrier, true)
+    --self:_SetMyCarrier(CarrierGroup, Carrier, true)
     
   end
 
@@ -8750,6 +8914,8 @@ function OPSGROUP:_AddElementByName(unitname)
     -- Max cargo weight:
     unit:SetCargoBayWeightLimit()
     element.weightMaxCargo=unit.__.CargoBayWeightLimit
+    
+    element.cargoBay={}
 
     -- FLIGHTGROUP specific.
     if self.isFlightgroup then
