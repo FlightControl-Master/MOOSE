@@ -240,7 +240,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.4r4"
+CSAR.version="0.1.5r1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -601,7 +601,8 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point)
   local _typeName = _typeName or "PoW"
   if not noMessage then
-    local m = MESSAGE:New("MAYDAY MAYDAY! " .. _typeName .. " is down. ",10,"INFO"):ToCoalition(self.coalition)
+    self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, 10)
+    --local m = MESSAGE:New("MAYDAY MAYDAY! " .. _typeName .. " is down. ",10,"INFO"):ToCoalition(self.coalition)
   end
   
   if not _freq then
@@ -759,8 +760,9 @@ function CSAR:_EventHandler(EventData)
       if self.takenOff[_event.IniUnitName] == true or _group:IsAirborne() then
           if self:_DoubleEjection(_unitname) then
             return
-          end         
-          local m = MESSAGE:New("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!",10,"Info"):ToCoalition(self.coalition)
+          end
+          self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!", self.coalition, 10)         
+          --local m = MESSAGE:New("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!",10,"Info"):ToCoalition(self.coalition)
       else
           self:T(self.lid .. " Pilot has not taken off, ignore")
       end
