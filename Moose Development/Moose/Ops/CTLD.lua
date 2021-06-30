@@ -270,6 +270,7 @@ do
 --          my_ctld.movetroopstowpzone = true -- Troops and vehicles will move to the nearest MOVE zone...
 --          my_ctld.movetroopsdistance = 5000 -- .. but only if this far away (in meters)
 --          my_ctld.smokedistance = 2000 -- Only smoke or flare zones if requesting player unit is this far away (in meters)
+--          my_ctld.suppressmessages = false -- Set to true if you want to script your own messages.
 -- 
 -- ## 2.1 User functions
 -- 
@@ -512,7 +513,7 @@ CTLD.SkipFrequencies = {
   
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.1b2"
+CTLD.version="0.1.2b1"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -521,7 +522,6 @@ CTLD.version="0.1.1b2"
 -- @param #string Alias Alias of this CTLD for logging.
 -- @return #CTLD self
 function CTLD:New(Coalition, Prefixes, Alias)
-  -- TODO: CTLD Marker
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #CTLD
   
@@ -568,14 +568,15 @@ function CTLD:New(Coalition, Prefixes, Alias)
 
   -- Add FSM transitions.
   --                 From State  -->   Event        -->     To State
-  self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
-  self:AddTransition("*",             "Status",             "*")           -- CTLD status update.
+  self:AddTransition("Stopped",       "Start",               "Running")     -- Start FSM.
+  self:AddTransition("*",             "Status",              "*")           -- CTLD status update.
   self:AddTransition("*",             "TroopsPickedUp",      "*")           -- CTLD pickup  event. 
   self:AddTransition("*",             "CratesPickedUp",      "*")           -- CTLD pickup  event.  
-  self:AddTransition("*",             "TroopsDeployed",      "*")           -- CTLD deploy  event.  
+  self:AddTransition("*",             "TroopsDeployed",      "*")           -- CTLD deploy  event. 
+  self:AddTransition("*",             "TroopsRTB",           "*")           -- CTLD deploy  event.   
   self:AddTransition("*",             "CratesDropped",       "*")           -- CTLD deploy  event.  
   self:AddTransition("*",             "CratesBuild",         "*")           -- CTLD build  event.   
-  self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
+  self:AddTransition("*",             "Stop",                "Stopped")     -- Stop FSM.
   
   -- tables
   self.PilotGroups ={}
@@ -627,9 +628,12 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.movetroopsdistance = 5000
   
   -- added support Hercules Mod
-  self.enableHercules = true
+  self.enableHercules = false
   self.HercMinAngels = 165 -- for troop/cargo drop via chute
   self.HercMaxAngels = 2000 -- for troop/cargo drop via chute
+  
+  -- message suppression
+  self.suppressmessages = false
   
   for i=1,100 do
     math.random()
@@ -678,7 +682,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo crate.
+  -- @param #CTLD_CARGO Cargo Cargo troops.
   -- @return #CTLD self
   
   --- FSM Function OnAfterCratesPickedUp.
@@ -724,6 +728,15 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
   -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
   -- @return #CTLD self
+  
+  --- FSM Function OnAfterTroopsRTB.
+  -- @function [parent=#CTLD] OnAfterTroopsRTB
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
   
   return self
 end
@@ -894,7 +907,7 @@ function CTLD:_EventHandler(EventData)
       self:_RefreshF10Menus()
     end
     -- Herc support
-    self:I(_unit:GetTypeName())
+    --self:T_unit:GetTypeName())
     if _unit:GetTypeName() == "Hercules" and self.enableHercules then
       self:_RefreshF10Menus()
     end
@@ -904,6 +917,20 @@ function CTLD:_EventHandler(EventData)
     local unitname = event.IniUnitName or "none"
     self.CtldUnits[unitname] = nil
   end
+  return self
+end
+
+--- (Internal) Function to message a group.
+-- @param #CTLD self
+-- @param #string Text The text to display.
+-- @param #number Time Number of seconds to display the message.
+-- @param #boolean Clearscreen Clear screen or not.
+-- @param Wrapper.Group#GROUP Group The group receiving the message.
+function CTLD:_SendMessage(Text, Time, Clearscreen, Group)
+  self:T(self.lid .. " _SendMessage")
+  if not self.suppressmessages then
+    local m = MESSAGE:New(Text,Time,"CTLD",Clearscreen):ToGroup(Group)
+  end 
   return self
 end
 
@@ -920,10 +947,11 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   -- check if we are in LOAD zone
   local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
   if not inzone then
-    local m = MESSAGE:New("You are not close enough to a logistics zone!",15,"CTLD"):ToGroup(Group)
+    self:_SendMessage("You are not close enough to a logistics zone!", 10, false, Group)
     if not self.debug then return self end
   elseif not grounded and not hoverload then
-    local m = MESSAGE:New("You need to land or hover in position to load!",15,"CTLD"):ToGroup(Group)
+    self:_SendMessage("You need to land or hover in position to load!", 10, false, Group)
+    --local m = MESSAGE:New("You need to land or hover in position to load!",15,"CTLD"):ToGroup(Group)
     if not self.debug then return self end
   end
   -- load troops into heli
@@ -932,7 +960,7 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   local unitname = unit:GetName()
   local cargotype = Cargotype -- #CTLD_CARGO
   local cratename = cargotype:GetName() -- #string
-  self:T(self.lid .. string.format("Troops %s requested", cratename))
+  --self:Tself.lid .. string.format("Troops %s requested", cratename))
   -- see if this heli can load troops
   local unittype = unit:GetTypeName()
   local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
@@ -952,13 +980,15 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
     loaded.Cargo = {}
   end
   if troopsize + numberonboard > trooplimit then
-    local m = MESSAGE:New("Sorry, we\'re crammed already!",10,"CTLD",true):ToGroup(group)
+    self:_SendMessage("Sorry, we\'re crammed already!", 10, false, Group)
+    --local m = MESSAGE:New("Sorry, we\'re crammed already!",10,"CTLD",true):ToGroup(group)
     return
   else
     loaded.Troopsloaded = loaded.Troopsloaded + troopsize
     table.insert(loaded.Cargo,Cargotype)
     self.Loaded_Cargo[unitname] = loaded
-    local m = MESSAGE:New("Troops boarded!",10,"CTLD",true):ToGroup(group)
+    self:_SendMessage("Troops boarded!", 10, false, Group)
+    --local m = MESSAGE:New("Troops boarded!",10,"CTLD",true):ToGroup(group)
     self:__TroopsPickedUp(1,Group, Unit, Cargotype)
   end
   return self
@@ -974,7 +1004,7 @@ end
 function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   self:T(self.lid .. " _GetCrates")
   local cgoname = Cargo:GetName()
-  self:T({cgoname, number, drop})
+  --self:T{cgoname, number, drop})
     -- check if we are in LOAD zone
   local inzone = true
   
@@ -985,7 +1015,8 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   end
   
   if not inzone then
-    local m = MESSAGE:New("You are not close enough to a logistics zone!",15,"CTLD"):ToGroup(Group)
+    self:_SendMessage("You are not close enough to a logistics zone!", 10, false, Group)
+    --local m = MESSAGE:New("You are not close enough to a logistics zone!",15,"CTLD"):ToGroup(Group)
     if not self.debug then return self end
   end
   
@@ -995,7 +1026,8 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   local loaddist = self.CrateDistance or 30
   local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist)
   if numbernearby >= canloadcratesno and not drop then
-    local m = MESSAGE:New("There are enough crates nearby already! Take care of those first!",15,"CTLD"):ToGroup(Group)
+    self:_SendMessage("There are enough crates nearby already! Take care of those first!", 10, false, Group)
+    --local m = MESSAGE:New("There are enough crates nearby already! Take care of those first!",15,"CTLD"):ToGroup(Group)
     return self
   end
   -- spawn crates in front of helicopter
@@ -1004,7 +1036,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   local number = number or cargotype:GetCratesNeeded() --#number
   local cratesneeded = cargotype:GetCratesNeeded() --#number
   local cratename = cargotype:GetName()
-  self:T(self.lid .. string.format("Crate %s requested", cratename))
+  --self:Tself.lid .. string.format("Crate %s requested", cratename))
   local cratetemplate = "Container"-- #string
   -- get position and heading of heli
   local position = Unit:GetCoordinate()
@@ -1047,8 +1079,9 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     if drop then
       text = string.format("Crates for %s have been dropped!",cratename)
       self:__CratesDropped(1, Group, Unit, droppedcargo)
-    end 
-    local m = MESSAGE:New(text,15,"CTLD",true):ToGroup(Group)
+    end
+    self:_SendMessage(text, 10, false, Group) 
+    --local m = MESSAGE:New(text,15,"CTLD",true):ToGroup(Group)
     return self
 end
 
@@ -1079,9 +1112,11 @@ function CTLD:_ListCratesNearby( _group, _unit)
     text:Add("--------- N O N E ------------")
     end
     text:Add("------------------------------------------------------------")
-    local m = MESSAGE:New(text:Text(),15,"CTLD",true):ToGroup(_group)
+    self:_SendMessage(text:Text(), 30, true, _group) 
+    --local m = MESSAGE:New(text:Text(),15,"CTLD",true):ToGroup(_group)
   else
-    local m = MESSAGE:New(string.format("No (loadable) crates within %d meters!",finddist),15,"CTLD",true):ToGroup(_group)
+    self:_SendMessage(string.format("No (loadable) crates within %d meters!",finddist), 10, false, _group) 
+    --local m = MESSAGE:New(string.format("No (loadable) crates within %d meters!",finddist),15,"CTLD",true):ToGroup(_group)
   end
   return self
 end
@@ -1129,7 +1164,7 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist)
       end
     end
   end
-  self:T(string.format("Found crates = %d",index))
+  --self:Tstring.format("Found crates = %d",index))
   -- table.sort(found)
   --self:T({found})
   return found, index
@@ -1160,11 +1195,14 @@ function CTLD:_LoadCratesNearby(Group, Unit)
   -- --> hover or land if not forcedhover
   -----------------------------------------
   if not cancrates then
-    local m = MESSAGE:New("Sorry this chopper cannot carry crates!",10,"CTLD"):ToGroup(Group)
+    self:_SendMessage("Sorry this chopper cannot carry crates!", 10, false, Group) 
+    --local m = MESSAGE:New("Sorry this chopper cannot carry crates!",10,"CTLD"):ToGroup(Group)
   elseif self.forcehoverload and not canhoverload then
-    local m = MESSAGE:New("Hover over the crates to pick them up!",10,"CTLD"):ToGroup(Group)
+    self:_SendMessage("Hover over the crates to pick them up!", 10, false, Group) 
+    --local m = MESSAGE:New("Hover over the crates to pick them up!",10,"CTLD"):ToGroup(Group)
   elseif not grounded and not canhoverload then
-    local m = MESSAGE:New("Land or hover over the crates to pick them up!",10,"CTLD"):ToGroup(Group)
+    self:_SendMessage("Land or hover over the crates to pick them up!", 10, false, Group) 
+    --local m = MESSAGE:New("Land or hover over the crates to pick them up!",10,"CTLD"):ToGroup(Group)
   else
      -- have we loaded stuff already?
     local numberonboard = 0
@@ -1182,7 +1220,8 @@ function CTLD:_LoadCratesNearby(Group, Unit)
     local finddist = self.CrateDistance or 30
     local nearcrates,number = self:_FindCratesNearby(Group,Unit,finddist) -- #table
     if number == 0 or numberonboard == cratelimit then
-      local m = MESSAGE:New("Sorry no loadable crates nearby or fully loaded!",10,"CTLD"):ToGroup(Group)
+      self:_SendMessage("Sorry no loadable crates nearby or fully loaded!", 10, false, Group) 
+      --local m = MESSAGE:New("Sorry no loadable crates nearby or fully loaded!",10,"CTLD"):ToGroup(Group)
       return -- exit
     else
       -- go through crates and load
@@ -1210,7 +1249,8 @@ function CTLD:_LoadCratesNearby(Group, Unit)
           -- destroy crate
           crate:GetPositionable():Destroy()
           crate.Positionable = nil
-          local m = MESSAGE:New(string.format("Crate ID %d for %s loaded!",crate:GetID(),crate:GetName()),10,"CTLD"):ToGroup(Group)
+          self:_SendMessage(string.format("Crate ID %d for %s loaded!",crate:GetID(),crate:GetName()), 10, false, Group) 
+          --local m = MESSAGE:New(string.format("Crate ID %d for %s loaded!",crate:GetID(),crate:GetName()),10,"CTLD"):ToGroup(Group)
           self:__CratesPickedUp(1, Group, Unit, crate)
         end
         --if loaded.Cratesloaded == cratelimit then break end
@@ -1283,9 +1323,11 @@ function CTLD:_ListCargo(Group, Unit)
     end
     report:Add("------------------------------------------------------------")
     local text = report:Text()
-    local m = MESSAGE:New(text,30,"CTLD",true):ToGroup(Group)
+    self:_SendMessage(text, 30, true, Group) 
+    --local m = MESSAGE:New(text,30,"CTLD",true):ToGroup(Group)
   else
-    local m = MESSAGE:New(string.format("Nothing loaded!\nTroop limit: %d | Crate limit %d",trooplimit,cratelimit),10,"CTLD"):ToGroup(Group)
+    self:_SendMessage(string.format("Nothing loaded!\nTroop limit: %d | Crate limit %d",trooplimit,cratelimit), 10, false, Group) 
+    --local m = MESSAGE:New(string.format("Nothing loaded!\nTroop limit: %d | Crate limit %d",trooplimit,cratelimit),10,"CTLD"):ToGroup(Group)
   end
   return self
 end
@@ -1358,12 +1400,15 @@ function CTLD:_UnloadTroops(Group, Unit)
             end
           end -- template loop
           cargo:SetWasDropped(true)
-          local m = MESSAGE:New(string.format("Dropped Troops %s into action!",name),10,"CTLD"):ToGroup(Group)
-          self:__TroopsDeployed(1, Group, Unit, name, self.DroppedTroops[self.TroopCounter])
+          self:_SendMessage(string.format("Dropped Troops %s into action!",name), 10, false, Group) 
+          --local m = MESSAGE:New(string.format("Dropped Troops %s into action!",name),10,"CTLD"):ToGroup(Group)
+          self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter])
         end -- if type end
       end  -- cargotable loop
     else -- droppingatbase
-        local m = MESSAGE:New("Troops have returned to base!",15,"CTLD"):ToGroup(Group)
+        self:_SendMessage("Troops have returned to base!", 10, false, Group) 
+        --local m = MESSAGE:New("Troops have returned to base!",15,"CTLD"):ToGroup(Group)
+        self:__TroopsRTB(1, Group, Unit)
     end
     -- cleanup load list
     local    loaded = {} -- #CTLD.LoadedCargo
@@ -1386,9 +1431,11 @@ function CTLD:_UnloadTroops(Group, Unit)
     self.Loaded_Cargo[unitname] = loaded
   else
    if IsHerc then
-    local m = MESSAGE:New("Nothing loaded or not within airdrop parameters!",10,"CTLD"):ToGroup(Group)
+    self:_SendMessage("Nothing loaded or not within airdrop parameters!", 10, false, Group) 
+    --local m = MESSAGE:New("Nothing loaded or not within airdrop parameters!",10,"CTLD"):ToGroup(Group)
    else
-    local m = MESSAGE:New("Nothing loaded or not hovering within parameters!",10,"CTLD"):ToGroup(Group)
+    self:_SendMessage("Nothing loaded or not hovering within parameters!", 10, false, Group) 
+    --local m = MESSAGE:New("Nothing loaded or not hovering within parameters!",10,"CTLD"):ToGroup(Group)
    end
   end
   return self
@@ -1403,7 +1450,8 @@ function CTLD:_UnloadCrates(Group, Unit)
   -- check if we are in DROP zone
   local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.DROP)
   if not inzone then
-    local m = MESSAGE:New("You are not close enough to a drop zone!",15,"CTLD"):ToGroup(Group)
+    self:_SendMessage("You are not close enough to a drop zone!", 10, false, Group) 
+    --local m = MESSAGE:New("You are not close enough to a drop zone!",15,"CTLD"):ToGroup(Group)
     if not self.debug then 
       return self 
     end
@@ -1453,9 +1501,11 @@ function CTLD:_UnloadCrates(Group, Unit)
     self.Loaded_Cargo[unitname] = loaded
   else
     if IsHerc then
-        local m = MESSAGE:New("Nothing loaded or not within airdrop parameters!",10,"CTLD"):ToGroup(Group)
+        self:_SendMessage("Nothing loaded or not within airdrop parameters!", 10, false, Group) 
+        --local m = MESSAGE:New("Nothing loaded or not within airdrop parameters!",10,"CTLD"):ToGroup(Group)
     else
-        local m = MESSAGE:New("Nothing loaded or not hovering within parameters!",10,"CTLD"):ToGroup(Group)
+        self:_SendMessage("Nothing loaded or not hovering within parameters!", 10, false, Group) 
+        --local m = MESSAGE:New("Nothing loaded or not hovering within parameters!",10,"CTLD"):ToGroup(Group)
      end
   end
   return self
@@ -1501,7 +1551,7 @@ function CTLD:_BuildCrates(Group, Unit)
          end
          foundbuilds = true
         end
-        self:T({buildables = buildables})
+        --self:T{buildables = buildables})
       end -- end dropped
     end -- end crate loop
     -- ok let\'s list what we have
@@ -1516,14 +1566,15 @@ function CTLD:_BuildCrates(Group, Unit)
       if build.CanBuild then 
         txtok = "YES" 
       end
-      self:T({name,needed,found,txtok})
+      --self:T{name,needed,found,txtok})
       local text = string.format("Type: %s | Required %d | Found %d | Can Build %s", name, needed, found, txtok)
       report:Add(text)
     end -- end list buildables
     if not foundbuilds then report:Add("     --- None Found ---") end
     report:Add("------------------------------------------------------------")
     local text = report:Text()
-    local m = MESSAGE:New(text,30,"CTLD",true):ToGroup(Group)
+    self:_SendMessage(text, 30, true, Group) 
+    --local m = MESSAGE:New(text,30,"CTLD",true):ToGroup(Group)
     -- let\'s get going
     if canbuild then
       -- loop again
@@ -1536,7 +1587,8 @@ function CTLD:_BuildCrates(Group, Unit)
       end
     end
   else
-    local m = MESSAGE:New(string.format("No crates within %d meters!",finddist),15,"CTLD",true):ToGroup(Group)  
+    self:_SendMessage(string.format("No crates within %d meters!",finddist), 10, false, Group) 
+    --local m = MESSAGE:New(string.format("No crates within %d meters!",finddist),15,"CTLD",true):ToGroup(Group)  
   end -- number > 0
   return self
 end
@@ -1580,17 +1632,17 @@ function CTLD:_MoveGroupToZone(Group)
   self:T(self.lid .. " _MoveGroupToZone")
   local groupname = Group:GetName() or "none"
   local groupcoord = Group:GetCoordinate()
-  self:T(self.lid .. " _MoveGroupToZone for " .. groupname)
+  --self:Tself.lid .. " _MoveGroupToZone for " .. groupname)
   -- Get closest zone of type
   local outcome, name, zone, distance  = self:IsUnitInZone(Group,CTLD.CargoZoneType.MOVE)
-  self:T(string.format("Closest WP zone %s is %d meters",name,distance))
+  --self:Tstring.format("Closest WP zone %s is %d meters",name,distance))
   if (distance <= self.movetroopsdistance) and zone then
     -- yes, we can ;)
     local groupname = Group:GetName()
-    self:T(string.format("Moving troops %s to zone %s, distance %d!",groupname,name,distance))
+    --self:Tstring.format("Moving troops %s to zone %s, distance %d!",groupname,name,distance))
     local zonecoord = zone:GetRandomCoordinate(20,125) -- Core.Point#COORDINATE
     local coordinate = zonecoord:GetVec2()
-    self:T({coordinate=coordinate})
+    --self:T{coordinate=coordinate})
     Group:SetAIOn()
     Group:OptionAlarmStateAuto()
     Group:OptionDisperseOnAttack(30)
@@ -1609,7 +1661,7 @@ function CTLD:_CleanUpCrates(Crates,Build,Number)
   self:T(self.lid .. " _CleanUpCrates")
   -- clean up real world crates
   local build = Build -- #CTLD.Buildable
-  self:T({Build = Build})
+  --self:T{Build = Build})
   local existingcrates = self.Spawned_Cargo -- #table of exising crates
   local newexcrates = {}
   -- get right number of crates to destroy
@@ -1623,18 +1675,18 @@ function CTLD:_CleanUpCrates(Crates,Build,Number)
   for _,_crate in pairs(Crates) do
     local nowcrate = _crate -- #CTLD_CARGO
     local name = nowcrate:GetName()
-    self:T(string.format("Looking for Crate for %s", name))
+    --self:Tstring.format("Looking for Crate for %s", name))
     local thisID = nowcrate:GetID()
     if name == nametype then -- matching crate type
       table.insert(destIDs,thisID)
       found = found + 1
       nowcrate:GetPositionable():Destroy()
       nowcrate.Positionable = nil
-      self:T(string.format("%s Found %d Need %d", name, found, numberdest))
+      --self:Tstring.format("%s Found %d Need %d", name, found, numberdest))
     end
     if found == numberdest then break end -- got enough
   end
-  self:T({destIDs})
+  --self:T{destIDs})
   -- loop and remove from real world representation
   for _,_crate in pairs(existingcrates) do
     local excrate = _crate -- #CTLD_CARGO
@@ -1656,10 +1708,10 @@ end
 -- @param #CTLD self
 -- @return #CTLD self
 function CTLD:_RefreshF10Menus()
-  self:I(self.lid .. " _RefreshF10Menus")
+  self:T(self.lid .. " _RefreshF10Menus")
   local PlayerSet = self.PilotGroups -- Core.Set#SET_GROUP
   local PlayerTable = PlayerSet:GetSetObjects() -- #table of #GROUP objects
-  --self:I({PlayerTable=PlayerTable})
+  --self:T({PlayerTable=PlayerTable})
   -- rebuild units table
   local _UnitList = {}
   for _key, _group in pairs (PlayerTable) do  
@@ -1774,13 +1826,13 @@ function CTLD:AddZone(Zone)
   local zone = Zone -- #CTLD.CargoZone
   if zone.type == CTLD.CargoZoneType.LOAD then
     table.insert(self.pickupZones,zone)
-    self:T("Registered LOAD zone " .. zone.name)
+    --self:T"Registered LOAD zone " .. zone.name)
   elseif zone.type == CTLD.CargoZoneType.DROP then
     table.insert(self.dropOffZones,zone)
-    self:T("Registered DROP zone " .. zone.name)
+    --self:T"Registered DROP zone " .. zone.name)
   else
     table.insert(self.wpZones,zone)
-    self:T("Registered MOVE zone " .. zone.name)
+    --self:T"Registered MOVE zone " .. zone.name)
   end
   return self
 end
@@ -1955,7 +2007,8 @@ function CTLD:_ListRadioBeacons(Group, Unit)
     report:Add("--------- N O N E ------------")
   end
   report:Add("------------------------------------------------------------")
-  local m = MESSAGE:New(report:Text(),30,"CTLD",true):ToGroup(Group)
+  self:_SendMessage(report:Text(), 30, true, Group) 
+  --local m = MESSAGE:New(report:Text(),30,"CTLD",true):ToGroup(Group)
   return self
 end
 
@@ -2018,7 +2071,7 @@ end
 function CTLD:IsUnitInZone(Unit,Zonetype)
   self:T(self.lid .. " IsUnitInZone")
   local unitname = Unit:GetName()
-  self:T(string.format("%s | Zone search for %s | Type %s",self.lid,unitname,Zonetype))
+  --self:Tstring.format("%s | Zone search for %s | Type %s",self.lid,unitname,Zonetype))
   local zonetable = {}
   local outcome = false
   if Zonetype == CTLD.CargoZoneType.LOAD then
@@ -2044,7 +2097,7 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
     local color = czone.color
     local zoneradius = zone:GetRadius()
     local distance = self:_GetDistance(zonecoord,unitcoord)
-    self:T(string.format("Check distance: %d",distance))
+    --self:Tstring.format("Check distance: %d",distance))
     if distance <= zoneradius and active then 
       outcome = true
     end
@@ -2055,7 +2108,7 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
       colorret = color 
     end
   end
-  self:T({outcome, zonenameret, zoneret, maxdist})
+  --self:T{outcome, zonenameret, zoneret, maxdist})
   return outcome, zonenameret, zoneret, maxdist
 end
 
@@ -2090,14 +2143,16 @@ function CTLD:SmokeZoneNearBy(Unit, Flare)
         end
         local txt = "smoking"
         if Flare then txt = "flaring" end
-        local m = MESSAGE:New(string.format("Roger, %s zone %s!",txt, zonename),10,"CTLD"):ToGroup(Group)
+        self:_SendMessage(string.format("Roger, %s zone %s!",txt, zonename), 10, false, Group)
+        --local m = MESSAGE:New(string.format("Roger, %s zone %s!",txt, zonename),10,"CTLD"):ToGroup(Group)
         smoked = true
       end
     end
   end
   if not smoked then
-    local distance = UTILS.MetersToNM(self.smkedistance)
-    local m = MESSAGE:New(string.format("Negative, need to be closer than %dnm to a zone!",distance),10,"CTLD"):ToGroup(Group)
+    local distance = UTILS.MetersToNM(self.smokedistance)
+    self:_SendMessage(string.format("Negative, need to be closer than %dnm to a zone!",distance), 10, false, Group)
+    --local m = MESSAGE:New(string.format("Negative, need to be closer than %dnm to a zone!",distance),10,"CTLD"):ToGroup(Group)
   end
   return self 
 end
@@ -2150,7 +2205,7 @@ end
       local maxh = self.maximumHoverHeight -- 15
       local minh =  self.minimumHoverHeight -- 5
       local mspeed = 2 -- 2 m/s
-      self:T(string.format("%s Unit parameters: at %dm AGL with %dmps",self.lid,aheight,uspeed))
+      --self:Tstring.format("%s Unit parameters: at %dm AGL with %dmps",self.lid,aheight,uspeed))
       if (uspeed <= mspeed) and (aheight <= maxh) and (aheight >= minh)  then 
         -- yep within parameters
         outcome = true
@@ -2178,7 +2233,7 @@ end
       local minh =  self.HercMaxAngels -- 5000m
       local mspeed = 2 -- 2 m/s
       -- TODO:Add speed test for Herc, should not be above 280kph/150kn
-      self:T(string.format("%s Unit parameters: at %dm AGL with %dmps",self.lid,aheight,uspeed))
+      --self:Tstring.format("%s Unit parameters: at %dm AGL with %dmps",self.lid,aheight,uspeed))
       if (aheight <= maxh) and (aheight >= minh)  then 
         -- yep within parameters
         outcome = true
@@ -2196,7 +2251,8 @@ end
     local htxt = "true"
     if not inhover then htxt = "false" end
     local text = string.format("Hover parameters (autoload/drop):\n - Min height %dm \n - Max height %dm \n - Max speed 2mps \n - In parameter: %s", self.minimumHoverHeight, self.maximumHoverHeight, htxt)
-    local m = MESSAGE:New(text,10,"CTLD",false):ToGroup(Group)
+    self:_SendMessage(text, 10, false, Group)
+    --local m = MESSAGE:New(text,10,"CTLD",false):ToGroup(Group)
     return self
   end
   
@@ -2211,7 +2267,8 @@ end
     local minheight = UTILS.MetersToFeet(self.HercMinAngels)
     local maxheight = UTILS.MetersToFeet(self.HercMaxAngels)
     local text = string.format("Flight parameters (airdrop):\n - Min height %dft \n - Max height %dft \n - In parameter: %s", minheight, maxheight, htxt)
-    local m = MESSAGE:New(text,10,"CTLD",false):ToGroup(Group)
+    self:_SendMessage(text, 10, false, Group)
+    --local m = MESSAGE:New(text,15,"CTLD",false):ToGroup(Group)
     return self
   end
   
@@ -2302,19 +2359,19 @@ end
   -- @param #string To State.
   -- @return #CTLD self
   function CTLD:onafterStart(From, Event, To)
-    self:I({From, Event, To})
+    self:T({From, Event, To})
     if self.useprefix then
       local prefix = self.prefixes
-      self:I({prefix=prefix})
+      --self:T{prefix=prefix})
       if self.enableHercules then
-        --self:I("CTLD with prefixes and Hercules")
+        --self:T("CTLD with prefixes and Hercules")
         self.PilotGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefix):FilterStart()
       else
-        --self:I("CTLD with prefixes NO Hercules")
+        --self:T("CTLD with prefixes NO Hercules")
         self.PilotGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefix):FilterCategoryHelicopter():FilterStart()
       end
     else
-      --self:I("CTLD NO prefixes NO Hercules")
+      --self:T("CTLD NO prefixes NO Hercules")
       self.PilotGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterCategoryHelicopter():FilterStart()
     end
     -- Events
@@ -2346,7 +2403,7 @@ end
   -- @param #string To State.
   -- @return #CTLD self
   function CTLD:onafterStatus(From, Event, To)
-    self:I({From, Event, To})
+    self:T({From, Event, To})
      -- gather some stats
     -- pilots
     local pilots = 0
@@ -2396,7 +2453,7 @@ end
   -- @param #CTLD_CARGO Cargo Cargo crate.
   -- @return #CTLD self
   function CTLD:onbeforeTroopsPickedUp(From, Event, To, Group, Unit, Cargo)
-    self:I({From, Event, To})
+    self:T({From, Event, To})
     return self
   end
   
@@ -2410,7 +2467,7 @@ end
   -- @param #CTLD_CARGO Cargo Cargo crate.
   -- @return #CTLD self
   function CTLD:onbeforeCratesPickedUp(From, Event, To, Group, Unit, Cargo)
-    self:I({From, Event, To})
+    self:T({From, Event, To})
     return self
   end
   
@@ -2424,7 +2481,7 @@ end
   -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
   -- @return #CTLD self
   function CTLD:onbeforeTroopsDeployed(From, Event, To, Group, Unit, Troops)
-    self:I({From, Event, To})
+    self:T({From, Event, To})
     return self
   end
   
@@ -2438,7 +2495,7 @@ end
   -- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
   -- @return #CTLD self
   function CTLD:onbeforeCratesDropped(From, Event, To, Group, Unit, Cargotable)
-    self:I({From, Event, To})
+    self:T({From, Event, To})
     return self
   end
   
@@ -2452,7 +2509,20 @@ end
   -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
   -- @return #CTLD self
   function CTLD:onbeforeCratesBuild(From, Event, To, Group, Unit, Vehicle)
-    self:I({From, Event, To})
+    self:T({From, Event, To})
+    return self
+  end
+  
+  --- (Internal) FSM Function onbeforeTroopsRTB.
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @return #CTLD self
+  function CTLD:onbeforeTroopsRTB(From, Event, To, Group, Unit)
+    self:T({From, Event, To})
     return self
   end
   

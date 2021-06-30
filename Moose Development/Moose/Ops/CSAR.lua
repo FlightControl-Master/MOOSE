@@ -187,7 +187,7 @@ CSAR = {
   useprefix    = true,  -- Use the Prefixed defined below, Requires Unit have the Prefix defined below 
   csarPrefix = {},
   template = nil,
-  bluemash = {},
+  mash = {},
   smokecolor = 4,
   rescues = 0,
   rescuedpilots = 0,
@@ -240,13 +240,14 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.5r1"
+CSAR.version="0.1.5r2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- DONE: SRS Integration (to be tested)
+-- TODO: Maybe - add option to smoke/flare closest MASH
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -353,7 +354,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.csarPrefix = { "helicargo", "MEDEVAC"} -- prefixes used for useprefix=true - DON\'T use # in names!
   self.template = Template or "generic" -- template for downed pilot
   self.mashprefix = {"MASH"} -- prefixes used to find MASHes
-  self.bluemash = SET_GROUP:New():FilterCoalitions(self.coalition):FilterPrefixes(self.mashprefix):FilterOnce() -- currently only GROUP objects, maybe support STATICs also?
+  self.mash = SET_GROUP:New():FilterCoalitions(self.coalition):FilterPrefixes(self.mashprefix):FilterOnce() -- currently only GROUP objects, maybe support STATICs also?
   self.autosmoke = false -- automatically smoke location when heli is near
   -- added 0.1.4
   self.limitmaxdownedpilots = true
@@ -1528,7 +1529,7 @@ end
 -- @retunr
 function CSAR:_GetClosestMASH(_heli)
   self:T(self.lid .. " _GetClosestMASH")
-  local _mashset = self.bluemash -- Core.Set#SET_GROUP
+  local _mashset = self.mash -- Core.Set#SET_GROUP
   local _mashes = _mashset:GetSetObjects() -- #table
   local _shortestDistance = -1
   local _distance = 0
