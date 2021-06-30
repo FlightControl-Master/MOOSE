@@ -1062,22 +1062,6 @@ function NAVYGROUP:onafterCollisionWarning(From, Event, To, Distance)
   self.collisionwarning=true
 end
 
---- On after Start event. Starts the NAVYGROUP FSM and event handlers.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function NAVYGROUP:onafterStop(From, Event, To)
-
-  -- Handle events:
-  self:UnHandleEvent(EVENTS.Birth)
-  self:UnHandleEvent(EVENTS.Dead)
-  self:UnHandleEvent(EVENTS.RemoveUnit)
-  
-  -- Call OPSGROUP function.
-  self:GetParent(self).onafterStop(self, From, Event, To)
-  
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Routing

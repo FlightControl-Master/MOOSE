@@ -2079,26 +2079,6 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
 
 end
 
---- On after "Respawn" event.
--- @param #FLIGHTGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #table Template The template used to respawn the group.
-function FLIGHTGROUP:onafterRespawn(From, Event, To, Template)
-
-  self:T(self.lid.."Respawning group!")
-
-  local template=UTILS.DeepCopy(Template or self.template)
-
-  if self.group and self.group:InAir() then
-    template.lateActivation=false
-    self.respawning=true
-    self.group=self.group:Respawn(template)
-  end
-
-end
-
 --- On after "OutOfMissilesAA" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -2856,44 +2836,6 @@ function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
   end
 end
 
---- On after "Stop" event.
--- @param #FLIGHTGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function FLIGHTGROUP:onafterStop(From, Event, To)
-
-  -- Check if group is still alive.
-  if self:IsAlive() then
-
-    -- Set element parking spot to FREE (after arrived for example).
-    if self.flightcontrol then
-      for _,_element in pairs(self.elements) do
-        local element=_element --#FLIGHTGROUP.Element
-        self:_SetElementParkingFree(element)
-      end
-    end
-
-  end
-
-  self.currbase=nil
-
-  -- Handle events:
-  self:UnHandleEvent(EVENTS.Birth)
-  self:UnHandleEvent(EVENTS.EngineStartup)
-  self:UnHandleEvent(EVENTS.Takeoff)
-  self:UnHandleEvent(EVENTS.Land)
-  self:UnHandleEvent(EVENTS.EngineShutdown)
-  self:UnHandleEvent(EVENTS.PilotDead)
-  self:UnHandleEvent(EVENTS.Ejection)
-  self:UnHandleEvent(EVENTS.Crash)
-  self:UnHandleEvent(EVENTS.RemoveUnit)
-
-  -- Call OPSGROUP function.
-  self:GetParent(self).onafterStop(self, From, Event, To)
-
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Task functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3433,14 +3375,14 @@ function FLIGHTGROUP:InitWaypoints()
   self.currbase=self:GetHomebaseFromWaypoints()
 
   -- Remove the landing waypoint. We use RTB for that. It makes adding new waypoints easier as we do not have to check if the last waypoint is the landing waypoint.
-  if self.destbase then
+  if self.destbase and #self.waypoints>1 then
     table.remove(self.waypoints, #self.waypoints)
   else
     self.destbase=self.homebase
   end
 
   -- Debug info.
-  self:T(self.lid..string.format("Initializing %d waypoints. Homebase %s ==> %s Destination", #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "uknown"))
+  self:I(self.lid..string.format("Initializing %d waypoints. Homebase %s ==> %s Destination", #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "uknown"))
 
   -- Update route.
   if #self.waypoints>0 then

@@ -1055,23 +1055,6 @@ function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
 
 end
 
---- On after "Stop" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function ARMYGROUP:onafterStop(From, Event, To)
-
-  -- Handle events:
-  self:UnHandleEvent(EVENTS.Birth)
-  self:UnHandleEvent(EVENTS.Dead)
-  self:UnHandleEvent(EVENTS.RemoveUnit)
-  
-  -- Call OPSGROUP function.
-  self:GetParent(self).onafterStop(self, From, Event, To)  
-  
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Routing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

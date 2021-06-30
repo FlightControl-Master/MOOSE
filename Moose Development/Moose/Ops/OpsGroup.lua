@@ -378,6 +378,7 @@ OPSGROUP.TaskType={
 -- @field #boolean detour If true, this waypoint is not part of the normal route.
 -- @field #boolean intowind If true, this waypoint is a turn into wind route point.
 -- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
+-- @field #boolean temp If true, this is a temporary waypoint and will be deleted when passed. Also the passing waypoint FSM event is not triggered.
 -- @field #number npassed Number of times a groups passed this waypoint.
 -- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
 -- @field Core.Point#COORDINATE roadcoord Closest point to road.
@@ -2292,50 +2293,34 @@ function OPSGROUP:OnEventBirth(EventData)
     local group=EventData.IniGroup
     local unitname=EventData.IniUnitName
 
-    if self.respawning then
 
-      self:I(self.lid.."Respawning unit "..tostring(unitname))
+    -- Set homebase if not already set.
+    if self.isFlightgroup then
 
-      local function reset()
-        self.respawning=nil
-        self:_CheckGroupDone()
-      end
-
-      -- Reset switch in 1 sec. This should allow all birth events of n>1 groups to have passed.
-      -- TODO: Can I do this more rigorously?
-      self:ScheduleOnce(1, reset)
-
-    else
-
-      -- Set homebase if not already set.
-      if self.isFlightgroup then
-
-        if EventData.Place then
-          self.homebase=self.homebase or EventData.Place
-          self.currbase=EventData.Place
-        else
-          self.currbase=nil
-        end
-
-        if self.homebase and not self.destbase then
-          self.destbase=self.homebase
-        end
-
-        self:T(self.lid..string.format("EVENT: Element %s born at airbase %s==> spawned", unitname, self.homebase and self.homebase:GetName() or "unknown"))
+      if EventData.Place then
+        self.homebase=self.homebase or EventData.Place
+        self.currbase=EventData.Place
       else
-      self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", unitname))
+        self.currbase=nil
       end
 
-      -- Get element.
-      local element=self:GetElementByName(unitname)
+      if self.homebase and not self.destbase then
+        self.destbase=self.homebase
+      end
 
-      -- Set element to spawned state.
-      self:ElementSpawned(element)
-
+      self:I(self.lid..string.format("EVENT: Element %s born at airbase %s ==> spawned", unitname, self.homebase and self.homebase:GetName() or "unknown"))
+    else
+      self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", unitname))
     end
 
-  end
+    -- Get element.
+    local element=self:GetElementByName(unitname)
 
+    -- Set element to spawned state.
+    self:ElementSpawned(element)
+    
+  end
+  
 end
 
 --- Event function handling the crash of a unit.
@@ -3755,7 +3740,7 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after "PassingWaypoint" event.
+--- Check if group is currently waiting.
 -- @param #OPSGROUP self
 -- @param #boolean If true, group is currently waiting.
 function OPSGROUP:IsWaiting()
@@ -3776,8 +3761,10 @@ function OPSGROUP:onafterWait(From, Event, To, Duration)
   -- Order Group to hold.
   self:FullStop()
 
+  -- Set time stamp.
   self.Twaiting=timer.getAbsTime()
 
+  -- Max waiting
   self.dTwait=Duration
 
 end
@@ -4567,25 +4554,6 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
     end
   end
 
-  -- Check cargo bay and declare cargo groups dead.
-  --[[
-  for groupname, carriername in pairs(self.cargoBay or {}) do
-    if Element.name==carriername then
-      local opsgroup=_DATABASE:GetOpsGroup(groupname)
-      if opsgroup and not (opsgroup:IsDead() or opsgroup:IsStopped()) then
-        for _,element in pairs(opsgroup.elements) do
-
-          -- Debug info.
-          self:T2(self.lid.."Cargo element dead "..element.name)
-
-          -- Trigger dead event.
-          opsgroup:ElementDead(element)
-
-        end
-      end
-    end
-  end
-  ]]
   
   -- Check cargo bay and declare cargo groups dead.
   for _,_element in pairs(self.elements) do
@@ -4593,25 +4561,31 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
     for _,_cargo in pairs(element.cargoBay) do
       local cargo=_cargo --#OPSGROUP.MyCargo
       if cargo.group and not (cargo.group:IsDead() or cargo.group:IsStopped()) then
-        for _,cargoelement in pairs(cargo.group.elements) do
-
-          -- Debug info.
-          self:T2(self.lid.."Cargo element dead "..cargoelement.name)
-
-          -- Trigger dead event.
-          cargo.group:ElementDead(cargoelement)
-
+      
+        -- Remove my carrier
+        cargo.group:_RemoveMyCarrier()
+        
+        if cargo.reserved then
+          -- This group was not loaded yet ==> Not cargo any more.
+          cargo.group.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
+        else
+            
+          -- Carrier dead ==> cargo dead.
+          for _,cargoelement in pairs(cargo.group.elements) do
+  
+            -- Debug info.
+            self:T2(self.lid.."Cargo element dead "..cargoelement.name)
+  
+            -- Trigger dead event.
+            cargo.group:ElementDead(cargoelement)
+  
+          end
         end
+        
       end      
     end    
   end
   
-  if self:IsCarrier() then
-    if self.cargoTransport then
-      self.cargoTransport:DeadCarrierGroup(self)
-    end
-  end
-
 end
 
 --- On after "Respawn" event.
@@ -4713,6 +4687,10 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
 
     -- Debug output.
     self:I({Template=Template})
+    
+    --if self:IsStopped() then
+      --self:InitWaypoints()
+    --end    
 
     -- Spawn new group.
     _DATABASE:Spawn(Template)
@@ -4720,6 +4698,7 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     -- Set activation and controlled state.
     self.isLateActivated=Template.lateActivation
     self.isUncontrolled=Template.uncontrolled
+    
 
     -- Reset events.
     --self:ResetEvents()
@@ -4772,18 +4751,43 @@ function OPSGROUP:onafterDead(From, Event, To)
 
   end
   
+  -- Delete waypoints so they are re-initialized at the next spawn.
+  self:ClearWaypoints()
+  self.groupinitialized=false
+  
+  -- Set cargo status to NOTCARGO.
+  self.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
+  self.carrierStatus=OPSGROUP.CarrierStatus.NOTCARRIER
+
+  -- Remove from cargo bay of carrier.
+  local mycarrier=self:_GetMyCarrierGroup()
+  if mycarrier and not mycarrier:IsDead() then
+    mycarrier:_DelCargobay(self)
+    self:_RemoveMyCarrier()    
+  end
+
   -- Inform all transports in the queue that this carrier group is dead now.
   for i,_transport in pairs(self.cargoqueue) do
     local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
-    transport:DeadCarrierGroup(self)
+    transport:__DeadCarrierGroup(1, self)
   end  
-
-  -- Delete waypoints so they are re-initialized at the next spawn.
-  self.waypoints=nil
-  self.groupinitialized=false
   
   -- Stop in a sec.
   self:__Stop(-5)
+end
+
+--- On before "Stop" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onbeforeStop(From, Event, To)
+
+  if self:IsAlive() then
+    return false
+  end
+
+  return true
 end
 
 --- On after "Stop" event.
@@ -4792,6 +4796,23 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterStop(From, Event, To)
+
+  -- Handle events:
+  self:UnHandleEvent(EVENTS.Birth)
+  self:UnHandleEvent(EVENTS.Dead)
+  self:UnHandleEvent(EVENTS.RemoveUnit)
+
+  -- Handle events:
+  if self.isFlightgroup then
+    self:UnHandleEvent(EVENTS.EngineStartup)
+    self:UnHandleEvent(EVENTS.Takeoff)
+    self:UnHandleEvent(EVENTS.Land)
+    self:UnHandleEvent(EVENTS.EngineShutdown)
+    self:UnHandleEvent(EVENTS.PilotDead)
+    self:UnHandleEvent(EVENTS.Ejection)
+    self:UnHandleEvent(EVENTS.Crash)
+    self.currbase=nil
+  end  
 
   -- Stop check timers.
   self.timerCheckZone:Stop()
@@ -4827,18 +4848,6 @@ function OPSGROUP:_CheckCargoTransport()
   local Time=timer.getAbsTime()
 
   -- Cargo bay debug info.
-  --[[
-  if self.verbose>=3 then
-    local text=""
-    for cargogroupname, carriername in pairs(self.cargoBay) do
-      text=text..string.format("\n- %s in carrier %s", tostring(cargogroupname), tostring(carriername))
-    end
-    if text~="" then
-      self:I(self.lid.."Cargo bay:"..text)
-    end
-  end
-  ]]
-  
   -- Check cargo bay and declare cargo groups dead.
   if self.verbose>=0 then
     local text=""  
@@ -5043,7 +5052,6 @@ function OPSGROUP:_AddCargobay(CargoGroup, CarrierElement, Reserved)
     
     table.insert(CarrierElement.cargoBay, cargo)  
   end
-  
   
     
   -- Set my carrier.
@@ -5500,22 +5508,6 @@ function OPSGROUP:FindCarrierForCargo(CargoGroup)
   return nil
 end
 
---- Reserve cargo space for a cargo group.
--- @param #OPSGROUP self
--- @param #OPSGROUP CargoGroup Cargo group, which needs a carrier.
--- @return #OPSGROUP.Element Carrier able to transport the cargo.
-function OPSGROUP:ReserveCargoSpace(CargoGroup)
-
-  local element=self:FindCarrierForCargo(CargoGroup)
-
-  if element then
-    element.reservedCargo=element.reservedCargo or {}
-    table.insert(element.reservedCargo, CargoGroup)
-  end
-
-  return nil
-end
-
 --- Set my carrier.
 -- @param #OPSGROUP self
 -- @param #OPSGROUP CarrierGroup Carrier group.
@@ -5688,8 +5680,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
         Coordinate:SetAltitude(200)
-        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate)
-        waypoint.detour=true
+        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=true
 
       else
         self:E(self.lid.."ERROR: Carrier aircraft cannot land in Pickup zone! Specify a ZONE_AIRBASE as pickup zone")
@@ -5733,26 +5724,6 @@ function OPSGROUP:onafterLoading(From, Event, To)
   -- Loading time stamp.
   self.Tloading=timer.getAbsTime()
 
-  -- Create a temp array and monitor the free cargo space for each element.
-  local cargobay={}
-  for _,_element in pairs(self.elements) do
-    local element=_element --#OPSGROUP.Element
-    cargobay[element.name]=element.weightMaxCargo-element.weightCargo
-  end
-
-
-  --- Find a carrier which can load a given weight.
-  local function _findCarrier(weight)
-    local carrier=nil --#OPSGROUP.Element
-    for _,_element in pairs(self.elements) do
-      local element=_element --#OPSGROUP.Element
-      if cargobay[element.name]>=weight then
-        return element
-      end
-    end
-    return nil
-  end
-
   --TODO: sort cargos wrt weight.
 
   -- Loop over all cargos.
@@ -5772,18 +5743,10 @@ function OPSGROUP:onafterLoading(From, Event, To)
         -- Cargo MUST be inside zone or it will not be loaded!
         if inzone then
 
-          -- Weight  of cargo.
-          local weight=cargo.opsgroup:GetWeightTotal()
-
-          -- Find a carrier that has enough free cargo bay for this group.
-          local carrier=_findCarrier(weight)
-          
+          -- Find a carrier for this cargo.          
           local carrier=self:FindCarrierForCargo(cargo.opsgroup)
 
           if carrier then
-
-            -- Decrease free cargo bay.
-            cargobay[carrier.name]=cargobay[carrier.name]-weight
 
             -- Set cargo status.
             cargo.opsgroup.cargoStatus=OPSGROUP.CargoStatus.ASSIGNED
@@ -5918,6 +5881,23 @@ function OPSGROUP:onafterLoaded(From, Event, To)
 
 end
 
+--- On before "Transport" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onbeforeTransport(From, Event, To)
+
+  if self.cargoTransport==nil then
+    return false
+  elseif self.cargoTransport:IsDelivered() then --could be if all cargo was dead on boarding
+    return false
+  end
+
+  return true
+end
+
+
 --- On after "Transport" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -6011,8 +5991,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
         Coordinate:SetAltitude(200)
-        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate)
-        waypoint.detour=true
+        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=true
 
       else
         self:E(self.lid.."ERROR: Carrier aircraft cannot land in Deploy zone! Specify a ZONE_AIRBASE as deploy zone")
@@ -6461,12 +6440,10 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       self:ClearWaypoints()
 
       if self.isArmygroup then
-        local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate)
-        waypoint.detour=true
+        local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=0
         self:Cruise()
       else
-        local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate)
-        waypoint.detour=true
+        local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=0
         self:Cruise()
       end
 
@@ -7322,6 +7299,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
           opsgroup:Cruise()
         else
           opsgroup:E("ERROR: waypoint.detour should be 0 or 1")
+          opsgroup:FullStop()
         end
 
       end
