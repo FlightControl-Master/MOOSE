@@ -1607,8 +1607,12 @@ do -- COORDINATE
       roadtype="railroads"
     end
     local x,y = land.getClosestPointOnRoads(roadtype, self.x, self.z)
-    local vec2={ x = x, y = y }
-    return COORDINATE:NewFromVec2(vec2)
+    local coord=nil
+    if x and y then
+      local vec2={ x = x, y = y }
+      coord=COORDINATE:NewFromVec2(vec2)
+    end    
+    return coord 
   end
 
 

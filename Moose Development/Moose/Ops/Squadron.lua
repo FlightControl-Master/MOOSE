@@ -45,6 +45,7 @@
 -- @field #table tacanChannel List of TACAN channels available to the squadron.
 -- @field #number radioFreq Radio frequency in MHz the squad uses.
 -- @field #number radioModu Radio modulation the squad uses.
+-- @field #number takeoffType Take of type.
 -- @extends Core.Fsm#FSM
 
 --- *It is unbelievable what a squadron of twelve aircraft did to tip the balance.* -- Adolf Galland
@@ -87,12 +88,13 @@ SQUADRON = {
 
 --- SQUADRON class version.
 -- @field #string version
-SQUADRON.version="0.5.0"
+SQUADRON.version="0.5.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Parking spots for squadrons?
 -- DONE: Engage radius.
 -- DONE: Modex.
 -- DONE: Call signs.
@@ -281,6 +283,41 @@ function SQUADRON:SetGrouping(nunits)
   if self.ngrouping>4 then self.ngrouping=4 end
   return self
 end
+
+
+--- Set takeoff type. All assets of this squadron will be spawned with cold (default) or hot engines.
+-- Spawning on runways is not supported.
+-- @param #SQUADRON self
+-- @param #string TakeoffType Take off type: "Cold" (default) or "Hot" with engines on.
+-- @return #SQUADRON self
+function SQUADRON:SetTakeoffType(TakeoffType)
+  TakeoffType=TakeoffType or "Cold"
+  if TakeoffType:lower()=="hot" then
+    self.takeoffType=COORDINATE.WaypointType.TakeOffParkingHot
+  elseif TakeoffType:lower()=="cold" then
+    self.takeoffType=COORDINATE.WaypointType.TakeOffParking
+  else
+    self.takeoffType=COORDINATE.WaypointType.TakeOffParking
+  end
+  return self
+end
+
+--- Set takeoff type cold (default).
+-- @param #SQUADRON self
+-- @return #SQUADRON self
+function SQUADRON:SetTakeoffCold()
+  self:SetTakeoffType("Cold")
+  return self
+end
+
+--- Set takeoff type hot.
+-- @param #SQUADRON self
+-- @return #SQUADRON self
+function SQUADRON:SetTakeoffHot()
+  self:SetTakeoffType("Hot")
+  return self
+end
+
 
 --- Set mission types this squadron is able to perform.
 -- @param #SQUADRON self
