@@ -1607,13 +1607,12 @@ do -- COORDINATE
       roadtype="railroads"
     end
     local x,y = land.getClosestPointOnRoads(roadtype, self.x, self.z)
+    local coord=nil
     if x and y then
       local vec2={ x = x, y = y }
-      local coord=COORDINATE:NewFromVec2(vec2)
-      return coord
-    else
-      return nil
+      coord=COORDINATE:NewFromVec2(vec2)
     end
+    return coord
   end
 
 
@@ -1780,7 +1779,7 @@ do -- COORDINATE
     Power=Power or 1000
     if Delay and Delay>0 then
       self:ScheduleOnce(Delay, self.IlluminationBomb, self, Power)
-    else  
+    else
       trigger.action.illuminationBomb(self:GetVec3(), Power)
     end
     return self

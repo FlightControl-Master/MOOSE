@@ -5790,21 +5790,32 @@ end
 -- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
 -- @param #table parking Parking data for this asset.
 -- @param #boolean uncontrolled Spawn aircraft in uncontrolled state.
--- @param #boolean hotstart Spawn aircraft with engines already on. Default is a cold start with engines off.
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
-function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrolled, hotstart)
+function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrolled)
 
   if asset and asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
 
     -- Prepare the spawn template.
     local template=self:_SpawnAssetPrepareTemplate(asset, alias)
 
+    -- Cold start (default).
+    local _type=COORDINATE.WaypointType.TakeOffParking
+    local _action=COORDINATE.WaypointAction.FromParkingArea
+
+    -- Hot start.
+    if asset.takeoffType and asset.takeoffType==COORDINATE.WaypointType.TakeOffParkingHot then
+      _type=COORDINATE.WaypointType.TakeOffParkingHot
+      _action=COORDINATE.WaypointAction.FromParkingAreaHot
+      uncontrolled=false
+    end
+
+
     -- Set route points.
     if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
 
       -- Get flight path if the group goes to another warehouse by itself.
       if request.toself then
-        local wp=self.airbase:GetCoordinate():WaypointAir("RADIO", COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, 0, false, self.airbase, {}, "Parking")
+        local wp=self.airbase:GetCoordinate():WaypointAir("RADIO", _type, _action, 0, false, self.airbase, {}, "Parking")
         template.route.points={wp}
       else
         template.route.points=self:_GetFlightplan(asset, self.airbase, request.warehouse.airbase)
@@ -5812,18 +5823,8 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
 
     else
 
-      -- Cold start (default).
-      local _type=COORDINATE.WaypointType.TakeOffParking
-      local _action=COORDINATE.WaypointAction.FromParkingArea
-
-      -- Hot start.
-      if hotstart then
-        _type=COORDINATE.WaypointType.TakeOffParkingHot
-        _action=COORDINATE.WaypointAction.FromParkingAreaHot
-      end
-
       -- First route point is the warehouse airbase.
-      template.route.points[1]=self.airbase:GetCoordinate():WaypointAir("BARO",_type,_action, 0, true, self.airbase, nil, "Spawnpoint")
+      template.route.points[1]=self.airbase:GetCoordinate():WaypointAir("BARO", _type, _action, 0, true, self.airbase, nil, "Spawnpoint")
 
     end
 
@@ -9040,9 +9041,23 @@ function WAREHOUSE:_GetFlightplan(asset, departure, destination)
   local wp={}
   local c={}
 
+  -- Cold start (default).
+  local _type=COORDINATE.WaypointType.TakeOffParking
+  local _action=COORDINATE.WaypointAction.FromParkingArea
+
+  -- Hot start.
+  if asset.takeoffType and asset.takeoffType==COORDINATE.WaypointType.TakeOffParkingHot then
+    env.info("FF hot")
+    _type=COORDINATE.WaypointType.TakeOffParkingHot
+    _action=COORDINATE.WaypointAction.FromParkingAreaHot
+  else
+    env.info("FF cold")      
+  end
+
+
   --- Departure/Take-off
   c[#c+1]=Pdeparture
-  wp[#wp+1]=Pdeparture:WaypointAir("RADIO", COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, VxClimb*3.6, true, departure, nil, "Departure")
+  wp[#wp+1]=Pdeparture:WaypointAir("RADIO", _type, _action, VxClimb*3.6, true, departure, nil, "Departure")
 
   --- Begin of Cruise
   local Pcruise=Pdeparture:Translate(d_climb, heading)

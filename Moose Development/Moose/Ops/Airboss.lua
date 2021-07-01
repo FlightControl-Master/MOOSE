@@ -15717,8 +15717,12 @@ function AIRBOSS:_MarshalCallRecoveryStart(case)
 
   -- Debug output.
   local text=string.format("Starting aircraft recovery Case %d ops.", case)
-  if case>1 then
-    text=text..string.format(" Marshal radial %03d°.", radial)
+  if case==1 then
+    text=text..string.format(" BRC %03d°.", self:GetBRC())
+  elseif case==2 then
+    text=text..string.format(" Marshal radial %03d°. BRC %03d°.", radial, self:GetBRC())
+  elseif case==3 then
+    text=text..string.format(" Marshal radial %03d°. Final heading %03d°.", radial, self:GetFinalBearing(false))
   end
   self:T(self.lid..text)
 

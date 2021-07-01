@@ -14,7 +14,7 @@
 -- 
 -- **Main Features:**
 --
---    * MOOSE based Helicopter CSAR Operations.
+--    * MOOSE-based Helicopter CSAR Operations for Players.
 --
 -- ===
 --
@@ -25,7 +25,7 @@
 -- Date: June 2021
 
 -------------------------------------------------------------------------
---- **CSAR** class, extends #Core.Base#BASE, #Core.Fsm#FSM
+--- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
 -- @type CSAR
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity level.
@@ -41,13 +41,14 @@
 --
 -- # CSAR Concept
 -- 
---  * Object oriented refactoring of Ciribob's fantastic CSAR script.
+--  * MOOSE-based Helicopter CSAR Operations for Players.
+--  * Object oriented refactoring of Ciribob\'s fantastic CSAR script.
 --  * No need for extra MIST loading. 
 --  * Additional events to tailor your mission.
 -- 
 -- ## 0. Prerequisites
 -- 
--- You need to load an .ogg soundfile for the pilot's beacons into the mission, e.g. "beacon.ogg", use a once trigger, "sound to country" for that.
+-- You need to load an .ogg soundfile for the pilot\'s beacons into the mission, e.g. "beacon.ogg", use a once trigger, "sound to country" for that.
 -- Create a late-activated single infantry unit as template in the mission editor and name it e.g. "Downed Pilot".
 -- 
 -- ## 1. Basic Setup
@@ -58,7 +59,7 @@
 --        local my_csar = CSAR:New(coalition.side.BLUE,"Downed Pilot","Luftrettung")
 --        -- options
 --        my_csar.immortalcrew = true -- downed pilot spawn is immortal
---        my_csar.invisiblevrew = false -- downed pilot spawn is visible
+--        my_csar.invisiblecrew = false -- downed pilot spawn is visible
 --        -- start the FSM
 --        my_csar:__Start(5)
 -- 
@@ -66,25 +67,28 @@
 -- 
 -- The following options are available (with their defaults). Only set the ones you want changed:
 --
---         self.allowDownedPilotCAcontrol = false -- Set to false if you don't want to allow control by Combined Arms.
+--         self.allowDownedPilotCAcontrol = false -- Set to false if you don\'t want to allow control by Combined Arms.
 --         self.allowFARPRescue = true -- allows pilots to be rescued by landing at a FARP or Airbase. Else MASH only!
---         self.autosmoke = false -- automatically smoke a downed pilot's location when a heli is near.
+--         self.autosmoke = false -- automatically smoke a downed pilot\'s location when a heli is near.
 --         self.coordtype = 1 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
---         self.csarOncrash = true -- (WIP) If set to true, will generate a downed pilot when a plane crashes as well.
---         self.enableForAI = true -- set to false to disable AI pilots from being rescued.
+--         self.csarOncrash = false -- (WIP) If set to true, will generate a downed pilot when a plane crashes as well.
+--         self.enableForAI = false -- set to false to disable AI pilots from being rescued.
 --         self.pilotRuntoExtractPoint = true -- Downed pilot will run to the rescue helicopter up to self.extractDistance in meters. 
 --         self.extractDistance = 500 -- Distance the downed pilot will start to run to the rescue helicopter.
 --         self.immortalcrew = true -- Set to true to make wounded crew immortal.
 --         self.invisiblecrew = false -- Set to true to make wounded crew insvisible.
 --         self.loadDistance = 75 -- configure distance for pilots to get into helicopter in meters.
 --         self.mashprefix = {"MASH"} -- prefixes of #GROUP objects used as MASHes.
---         self.max_units = 6 -- number of pilots that can be carried if #CSAR.AircraftType is undefined.
+--         self.max_units = 6 -- max number of pilots that can be carried if #CSAR.AircraftType is undefined.
 --         self.messageTime = 15 -- Time to show messages for in seconds. Doubled for long messages.
 --         self.radioSound = "beacon.ogg" -- the name of the sound file to use for the pilots\' radio beacons. 
 --         self.smokecolor = 4 -- Color of smokemarker, 0 is green, 1 is red, 2 is white, 3 is orange and 4 is blue.
 --         self.useprefix = true  -- Requires CSAR helicopter #GROUP names to have the prefix(es) defined below.
 --         self.csarPrefix = { "helicargo", "MEDEVAC"} -- #GROUP name prefixes used for useprefix=true - DO NOT use # in helicopter names in the Mission Editor! 
 --         self.verbose = 0 -- set to > 1 for stats output for debugging.
+--         -- (added 0.1.4) limit amount of downed pilots spawned by ejection events
+--         self.limitmaxdownedpilots = true,
+--         self.maxdownedpilots = 10,
 -- 
 -- ## 2.1 Experimental Features
 -- 
@@ -153,7 +157,7 @@
 --      If missions designers want to spawn downed pilots into the field, e.g. at mission begin to give the helicopter guys works, they can do this like so:
 --      
 --        -- Create downed "Pilot Wagner" in #ZONE "CSAR_Start_1" at a random point for the blue coalition
---        my_csar:_SpawnCsarAtZone( "CSAR_Start_1", coalition.side.BLUE, "Pilot Wagner", true )
+--        my_csar:SpawnCSARAtZone( "CSAR_Start_1", coalition.side.BLUE, "Pilot Wagner", true )
 --
 --
 -- @field #CSAR
@@ -183,10 +187,12 @@ CSAR = {
   useprefix    = true,  -- Use the Prefixed defined below, Requires Unit have the Prefix defined below 
   csarPrefix = {},
   template = nil,
-  bluemash = {},
+  mash = {},
   smokecolor = 4,
   rescues = 0,
   rescuedpilots = 0,
+  limitmaxdownedpilots = true,
+  maxdownedpilots = 10,
 }
 
 --- Downed pilots info.
@@ -202,18 +208,21 @@ CSAR = {
 -- @field Wrapper.Group#GROUP group Spawned group object.
 -- @field #number timestamp Timestamp for approach process
   
---- Known beacons from the available maps
+--- Updated and sorted list of known NDB beacons (in kHz!) from the available maps.
 -- @field #CSAR.SkipFrequencies
 CSAR.SkipFrequencies = {
-  745,381,384,300.50,312.5,1175,342,735,300.50,353.00,
-  440,795,525,520,690,625,291.5,300.50,
-  435,309.50,920,1065,274,312.50,
-  580,602,297.50,750,485,950,214,
-  1025,730,995,455,307,670,329,395,770,
-  380,705,300.5,507,740,1030,515,330,309.5,348,462,905,352,1210,942,435,
-  324,320,420,311,389,396,862,680,297.5,920,662,866,907,309.5,822,515,470,342,1182,309.5,720,528,
-  337,312.5,830,740,309.5,641,312,722,682,1050,
-  1116,935,1000,430,577,540,550,560,570,
+  214,274,291.5,295,297.5,
+  300.5,304,307,309.5,311,312,312.5,316,
+  320,324,328,329,330,336,337,
+  342,343,348,351,352,353,358,
+  363,365,368,372.5,374,
+  380,381,384,389,395,396,
+  414,420,430,432,435,440,450,455,462,470,485,
+  507,515,520,525,528,540,550,560,570,577,580,602,625,641,662,670,680,682,690,
+  705,720,722,730,735,740,745,750,770,795,
+  822,830,862,866,
+  905,907,920,935,942,950,995,
+  1000,1025,1030,1050,1065,1116,1175,1182,1210
   }
  
 --- All slot / Limit settings
@@ -225,19 +234,20 @@ CSAR.AircraftType["SA342Minigun"] = 2
 CSAR.AircraftType["SA342L"] = 4
 CSAR.AircraftType["SA342M"] = 4
 CSAR.AircraftType["UH-1H"] = 8
-CSAR.AircraftType["Mi-8MT"] = 12 
+CSAR.AircraftType["Mi-8MTV2"] = 12 
 CSAR.AircraftType["Mi-24P"] = 8 
 CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.3r3"
+CSAR.version="0.1.5r3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- DONE: SRS Integration (to be tested)
+-- TODO: Maybe - add option to smoke/flare closest MASH
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -325,9 +335,9 @@ function CSAR:New(Coalition, Template, Alias)
   -- settings, counters etc
   self.rescues = 0 -- counter for successful rescue landings at FARP/AFB/MASH
   self.rescuedpilots = 0 -- counter for saved pilots
-  self.csarOncrash = true -- If set to true, will generate a csar when a plane crashes as well.
-  self.allowDownedPilotCAcontrol = false -- Set to false if you don't want to allow control by Combined arms.
-  self.enableForAI = true -- set to false to disable AI units from being rescued.
+  self.csarOncrash = false -- If set to true, will generate a csar when a plane crashes as well.
+  self.allowDownedPilotCAcontrol = false -- Set to false if you don\'t want to allow control by Combined arms.
+  self.enableForAI = false -- set to false to disable AI units from being rescued.
   self.smokecolor = 4 -- Color of smokemarker for blue side, 0 is green, 1 is red, 2 is white, 3 is orange and 4 is blue
   self.coordtype = 2 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
   self.immortalcrew = true -- Set to true to make wounded crew immortal
@@ -339,18 +349,21 @@ function CSAR:New(Coalition, Template, Alias)
   self.loadtimemax = 135 -- seconds
   self.radioSound = "beacon.ogg" -- the name of the sound file to use for the Pilot radio beacons. If this isnt added to the mission BEACONS WONT WORK!
   self.allowFARPRescue = true --allows pilot to be rescued by landing at a FARP or Airbase
-  self.max_units = 6 --number of pilots that can be carried
+  self.max_units = 6 --max number of pilots that can be carried
   self.useprefix = true  -- Use the Prefixed defined below, Requires Unit have the Prefix defined below 
-  self.csarPrefix = { "helicargo", "MEDEVAC"} -- prefixes used for useprefix=true - DON'T use # in names!
+  self.csarPrefix = { "helicargo", "MEDEVAC"} -- prefixes used for useprefix=true - DON\'T use # in names!
   self.template = Template or "generic" -- template for downed pilot
   self.mashprefix = {"MASH"} -- prefixes used to find MASHes
-  self.bluemash = SET_GROUP:New():FilterCoalitions(self.coalition):FilterPrefixes(self.mashprefix):FilterOnce() -- currently only GROUP objects, maybe support STATICs also?
+  self.mash = SET_GROUP:New():FilterCoalitions(self.coalition):FilterPrefixes(self.mashprefix):FilterOnce() -- currently only GROUP objects, maybe support STATICs also?
   self.autosmoke = false -- automatically smoke location when heli is near
+  -- added 0.1.4
+  self.limitmaxdownedpilots = true
+  self.maxdownedpilots = 25
   
-  -- WARNING - here'll be dragons
+  -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
   -- needs SRS => 1.9.6 to work (works on the *server* side)
-  self.useSRS = false -- Use FF's SRS integration
+  self.useSRS = false -- Use FF\'s SRS integration
   self.SRSPath = "E:\\Program Files\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your server(!)
   self.SRSchannel = 300 -- radio channel
   self.SRSModulation = radio.modulation.AM -- modulation
@@ -403,7 +416,7 @@ function CSAR:New(Coalition, Template, Alias)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #string Heliname Name of the helicopter group.
-  -- @param #string Woundedgroupname Name of the downed pilot's group.
+  -- @param #string Woundedgroupname Name of the downed pilot\'s group.
   
     --- On After "Boarded" event. Downed pilot boarded heli.
   -- @function [parent=#CSAR] OnAfterBoarded
@@ -412,7 +425,7 @@ function CSAR:New(Coalition, Template, Alias)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #string Heliname Name of the helicopter group.
-  -- @param #string Woundedgroupname Name of the downed pilot's group.
+  -- @param #string Woundedgroupname Name of the downed pilot\'s group.
 
     --- On After "Returning" event. Heli can return home with downed pilot(s).
   -- @function [parent=#CSAR] OnAfterReturning
@@ -421,7 +434,7 @@ function CSAR:New(Coalition, Template, Alias)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #string Heliname Name of the helicopter group.
-  -- @param #string Woundedgroupname Name of the downed pilot's group.
+  -- @param #string Woundedgroupname Name of the downed pilot\'s group.
   
     --- On After "Rescued" event. Pilot(s) have been brought to the MASH/FARP/AFB.
   -- @function [parent=#CSAR] OnAfterRescued
@@ -440,7 +453,7 @@ end
 --- Helper Functions ---
 ------------------------
 
---- Function to insert downed pilot tracker object.
+--- (Internal) Function to insert downed pilot tracker object.
 -- @param #CSAR self
 -- @param Wrapper.Group#GROUP Group The #GROUP object
 -- @param #string Groupname Name of the spawned group.
@@ -476,9 +489,10 @@ function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Descript
   self.downedPilots = PilotTable
   -- Increase counter
   self.downedpilotcounter = self.downedpilotcounter+1
+  return self
 end
 
---- Count pilots on board.
+--- (Internal) Count pilots on board.
 -- @param #CSAR self
 -- @param #string _heliName
 -- @return #number count  
@@ -493,7 +507,7 @@ function CSAR:_PilotsOnboard(_heliName)
   return count
 end
 
---- Function to check for dupe eject events.
+--- (Internal) Function to check for dupe eject events.
 -- @param #CSAR self
 -- @param #string _unitname Name of unit.
 -- @return #boolean Outcome
@@ -509,7 +523,7 @@ function CSAR:_DoubleEjection(_unitname)
     return false
 end
 
---- Spawn a downed pilot
+--- (Internal) Spawn a downed pilot
 -- @param #CSAR self
 -- @param #number country Country for template.
 -- @param Core.Point#COORDINATE point Coordinate to spawn at.
@@ -535,7 +549,7 @@ function CSAR:_SpawnPilotInField(country,point)
   return _spawnedGroup, alias -- Wrapper.Group#GROUP object
 end
 
---- Add options to a downed pilot
+--- (Internal) Add options to a downed pilot
 -- @param #CSAR self
 -- @param Wrapper.Group#GROUP group Group to use.
 function CSAR:_AddSpecialOptions(group)
@@ -566,10 +580,10 @@ function CSAR:_AddSpecialOptions(group)
   
   group:OptionAlarmStateGreen()
   group:OptionROEHoldFire()
-
+  return self
 end
 
---- Function to spawn a CSAR object into the scene.
+--- (Internal) Function to spawn a CSAR object into the scene.
 -- @param #CSAR self
 -- @param #number _coalition Coalition
 -- @param DCS#country.id _country Country ID
@@ -589,7 +603,8 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point)
   local _typeName = _typeName or "PoW"
   if not noMessage then
-    local m = MESSAGE:New("MAYDAY MAYDAY! " .. _typeName .. " is down. ",10,"INFO"):ToCoalition(self.coalition)
+    self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, 10)
+    --local m = MESSAGE:New("MAYDAY MAYDAY! " .. _typeName .. " is down. ",10,"INFO"):ToCoalition(self.coalition)
   end
   
   if not _freq then
@@ -620,15 +635,16 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
 
   self:_InitSARForPilot(_spawnedGroup, _GroupName, _freq, noMessage)
   
+  return self
 end
 
---- Function to add a CSAR object into the scene at a zone coordinate. For mission designers wanting to add e.g. PoWs to the scene.
+--- (Internal) Function to add a CSAR object into the scene at a zone coordinate. For mission designers wanting to add e.g. PoWs to the scene.
 -- @param #CSAR self
 -- @param #string _zone Name of the zone.
 -- @param #number _coalition Coalition.
 -- @param #string _description (optional) Description.
 -- @param #boolean _randomPoint (optional) Random yes or no.
--- @param #boolean _nomessage (optional) If true, don't send a message to SAR.
+-- @param #boolean _nomessage (optional) If true, don\'t send a message to SAR.
 function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _nomessage)
   self:T(self.lid .. " _SpawnCsarAtZone")
   local freq = self:_GenerateADFFrequency()
@@ -658,10 +674,28 @@ function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _
   end
   
   self:_AddCsar(_coalition, _country, pos, "PoW", "Unknown", nil, freq, _nomessage, _description)
+  
+  return self
+end
+
+--- Function to add a CSAR object into the scene at a zone coordinate. For mission designers wanting to add e.g. PoWs to the scene.
+-- @param #CSAR self
+-- @param #string Zone Name of the zone.
+-- @param #number Coalition Coalition.
+-- @param #string Description (optional) Description.
+-- @param #boolean RandomPoint (optional) Random yes or no.
+-- @param #boolean Nomessage (optional) If true, don\'t send a message to SAR.
+-- @usage If missions designers want to spawn downed pilots into the field, e.g. at mission begin, to give the helicopter guys works, they can do this like so:
+--      
+--        -- Create downed "Pilot Wagner" in #ZONE "CSAR_Start_1" at a random point for the blue coalition
+--        my_csar:SpawnCSARAtZone( "CSAR_Start_1", coalition.side.BLUE, "Pilot Wagner", true )
+function CSAR:SpawnCSARAtZone(Zone, Coalition, Description, RandomPoint, Nomessage)
+  self:_SpawnCsarAtZone(Zone, Coalition, Description, RandomPoint, Nomessage)
+  return self
 end
 
 -- TODO: Split in functions per Event type
---- Event handler.
+--- (Internal) Event handler.
 -- @param #CSAR self
 function CSAR:_EventHandler(EventData)
   self:T(self.lid .. " _EventHandler")
@@ -731,8 +765,9 @@ function CSAR:_EventHandler(EventData)
       if self.takenOff[_event.IniUnitName] == true or _group:IsAirborne() then
           if self:_DoubleEjection(_unitname) then
             return
-          end         
-          local m = MESSAGE:New("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!",10,"Info"):ToCoalition(self.coalition)
+          end
+          self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!", self.coalition, 10)         
+          --local m = MESSAGE:New("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!",10,"Info"):ToCoalition(self.coalition)
       else
           self:T(self.lid .. " Pilot has not taken off, ignore")
       end
@@ -770,7 +805,13 @@ function CSAR:_EventHandler(EventData)
       if self:_DoubleEjection(_unitname) then
         return
       end
-          
+      
+      -- limit no of pilots in the field.
+      if self.limitmaxdownedpilots and self:_ReachedPilotLimit() then
+        return
+      end
+      
+      -- all checks passed, get going.    
       local _freq = self:_GenerateADFFrequency()
        self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate()  , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, 0)
        
@@ -815,10 +856,10 @@ function CSAR:_EventHandler(EventData)
   
           return true
       end
-
+  return self
 end
 
---- Initialize the action for a pilot.
+--- (Internal)  Initialize the action for a pilot.
 -- @param #CSAR self
 -- @param Wrapper.Group#GROUP _downedGroup The group to rescue.
 -- @param #string _GroupName Name of the Group
@@ -844,9 +885,11 @@ function CSAR:_InitSARForPilot(_downedGroup, _GroupName, _freq, _nomessage)
 
    -- trigger FSM event
   self:__PilotDown(2,_downedGroup, _freqk, _leadername, _coordinatesText)
+  
+  return self
 end
 
---- Check if a name is in downed pilot table
+--- (Internal) Check if a name is in downed pilot table
 -- @param #CSAR self
 -- @param #string name Name to search for.
 -- @return #boolean Outcome.
@@ -865,7 +908,7 @@ function CSAR:_CheckNameInDownedPilots(name)
   return found, table
 end
 
---- Check if a name is in downed pilot table and remove it.
+--- (Internal) Check if a name is in downed pilot table and remove it.
 -- @param #CSAR self
 -- @param #string name Name to search for.
 -- @param #boolean force Force removal.
@@ -877,7 +920,7 @@ function CSAR:_RemoveNameFromDownedPilots(name,force)
     if _pilot.name == name then
     local group = _pilot.group -- Wrapper.Group#GROUP
     if group then
-      if (not group:IsAlive()) or ( force == true) then -- don't delete groups which still exist
+      if (not group:IsAlive()) or ( force == true) then -- don\'t delete groups which still exist
         found = true
         _pilot.desc = nil
         _pilot.frequency = nil
@@ -896,7 +939,7 @@ function CSAR:_RemoveNameFromDownedPilots(name,force)
   return found
 end
 
---- Check state of wounded group.
+--- (Internal) Check state of wounded group.
 -- @param #CSAR self
 -- @param #string heliname heliname
 -- @param #string woundedgroupname woundedgroupname
@@ -933,13 +976,13 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
     local _distance = self:_GetDistance(_heliCoord,_leaderCoord)
     if _distance < 3000 and _distance > 0 then
       if self:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedGroup, _woundedGroupName) == true then
-        -- we're close, reschedule
+        -- we\'re close, reschedule
         _downedpilot.timestamp = timer.getAbsTime()
         self:__Approach(-5,heliname,woundedgroupname)
       end
     else
       self.heliVisibleMessage[_lookupKeyHeli] = nil
-      --reschedule as units aren't dead yet , schedule for a bit slower though as we're far away
+      --reschedule as units aren\'t dead yet , schedule for a bit slower though as we\'re far away
       _downedpilot.timestamp = timer.getAbsTime()
       self:__Approach(-10,heliname,woundedgroupname)
     end
@@ -947,9 +990,10 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
   self:T("...Downed Pilot KIA?!")
   self:_RemoveNameFromDownedPilots(_downedpilot.name)
   end
+  return self
 end
 
---- Function to pop a smoke at a wounded pilot's positions.
+--- (Internal) Function to pop a smoke at a wounded pilot\'s positions.
 -- @param #CSAR self
 -- @param #string _woundedGroupName Name of the group.
 -- @param Wrapper.Group#GROUP _woundedLeader Object of the group.
@@ -964,9 +1008,10 @@ function CSAR:_PopSmokeForGroup(_woundedGroupName, _woundedLeader)
       _smokecoord:Smoke(_smokecolor)
       self.smokeMarkers[_woundedGroupName] = timer.getTime() + 300 -- next smoke time
   end
+  return self
 end
 
---- Function to pickup the wounded pilot from the ground.
+--- (Internal) Function to pickup the wounded pilot from the ground.
 -- @param #CSAR self
 -- @param Wrapper.Unit#UNIT _heliUnit Object of the group.
 -- @param #string _pilotName Name of the pilot.
@@ -985,13 +1030,13 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
       _groups = self.inTransitGroups[_heliName]
   end
   
-  -- if the heli can't pick them up, show a message and return
+  -- if the heli can\'t pick them up, show a message and return
   local _maxUnits = self.AircraftType[_heliUnit:GetTypeName()]
   if _maxUnits == nil then
     _maxUnits = self.max_units
   end
   if _unitsInHelicopter + 1 > _maxUnits then
-      self:_DisplayMessageToSAR(_heliUnit, string.format("%s, %s. We're already crammed with %d guys! Sorry!", _pilotName, _heliName, _unitsInHelicopter, _unitsInHelicopter), self.messageTime)
+      self:_DisplayMessageToSAR(_heliUnit, string.format("%s, %s. We\'re already crammed with %d guys! Sorry!", _pilotName, _heliName, _unitsInHelicopter, _unitsInHelicopter), self.messageTime)
       return true
   end
   
@@ -1010,14 +1055,14 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
   _woundedGroup:Destroy()
   self:_RemoveNameFromDownedPilots(_woundedGroupName,true)
   
-  self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s I'm in! Get to the MASH ASAP! ", _heliName, _pilotName), self.messageTime,true,true)
+  self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s I\'m in! Get to the MASH ASAP! ", _heliName, _pilotName), self.messageTime,true,true)
   
   self:__Boarded(5,_heliName,_woundedGroupName)
   
   return true
 end
 
---- Move group to destination.
+--- (Internal) Move group to destination.
 -- @param #CSAR self
 -- @param Wrapper.Group#GROUP _leader
 -- @param Core.Point#COORDINATE _destination
@@ -1028,9 +1073,10 @@ function CSAR:_OrderGroupToMoveToPoint(_leader, _destination)
 
   group:SetAIOn()
   group:RouteToVec2(coordinate,5)
+  return self
 end
 
---- Function to check if heli is close to group.
+--- (Internal) Function to check if heli is close to group.
 -- @param #CSAR self
 -- @param #number _distance
 -- @param Wrapper.Unit#UNIT _heliUnit
@@ -1068,9 +1114,9 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
   
       if self.heliCloseMessage[_lookupKeyHeli] == nil then
           if self.autosmoke == true then
-            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You're close now! Land or hover at the smoke.", _heliName, _pilotName), self.messageTime,true,true)
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land or hover at the smoke.", _heliName, _pilotName), self.messageTime,true,true)
           else
-            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You're close now! Land in a safe place, I will go there ", _heliName, _pilotName), self.messageTime,true,true)
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land in a safe place, I will go there ", _heliName, _pilotName), self.messageTime,true,true)
           end
           --mark as shown for THIS heli and THIS group
           self.heliCloseMessage[_lookupKeyHeli] = true
@@ -1079,7 +1125,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
       -- have we landed close enough?
       if not _heliUnit:InAir() then
   
-          -- if you land on them, doesnt matter if they were heading to someone else as you're closer, you win! :)
+          -- if you land on them, doesnt matter if they were heading to someone else as you\'re closer, you win! :)
         if self.pilotRuntoExtractPoint == true then
             if (_distance < self.extractDistance) then
               local _time = self.landedStatus[_lookupKeyHeli]
@@ -1134,7 +1180,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                       end
   
                       if _time > 0 then
-                          self:_DisplayMessageToSAR(_heliUnit, "Hovering above " .. _pilotName .. ". \n\nHold hover for " .. _time .. " seconds to winch them up. \n\nIf the countdown stops you're too far away!", self.messageTime, true)
+                          self:_DisplayMessageToSAR(_heliUnit, "Hovering above " .. _pilotName .. ". \n\nHold hover for " .. _time .. " seconds to winch them up. \n\nIf the countdown stops you\'re too far away!", self.messageTime, true)
                       else
                           self.hoverStatus[_lookupKeyHeli] = nil
                           self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
@@ -1161,7 +1207,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
   end
 end
 
---- Check if group not KIA.
+--- (Internal) Check if group not KIA.
 -- @param #CSAR self
 -- @param Wrapper.Group#GROUP _woundedGroup
 -- @param #string _woundedGroupName
@@ -1191,43 +1237,44 @@ function CSAR:_CheckGroupNotKIA(_woundedGroup, _woundedGroupName, _heliUnit, _he
   return inTransit
 end
 
---- Monitor in-flight returning groups.
+--- (Internal) Monitor in-flight returning groups.
 -- @param #CSAR self
 -- @param #string heliname Heli name
 -- @param #string groupname Group name
 function CSAR:_ScheduledSARFlight(heliname,groupname)
   self:T(self.lid .. " _ScheduledSARFlight")
   self:T({heliname,groupname})
-        local _heliUnit = self:_GetSARHeli(heliname)
-        local _woundedGroupName = groupname
+  local _heliUnit = self:_GetSARHeli(heliname)
+  local _woundedGroupName = groupname
 
-        if (_heliUnit == nil) then
-            --helicopter crashed?
-            self.inTransitGroups[heliname] = nil
-            return
-        end
+  if (_heliUnit == nil) then
+      --helicopter crashed?
+      self.inTransitGroups[heliname] = nil
+      return
+  end
 
-        if self.inTransitGroups[heliname] == nil or self.inTransitGroups[heliname][_woundedGroupName] == nil then
-            -- Groups already rescued
-            return
-        end
+  if self.inTransitGroups[heliname] == nil or self.inTransitGroups[heliname][_woundedGroupName] == nil then
+      -- Groups already rescued
+      return
+  end
 
-        local _dist = self:_GetClosestMASH(_heliUnit)
+  local _dist = self:_GetClosestMASH(_heliUnit)
 
-        if _dist == -1 then
-            return
-        end
+  if _dist == -1 then
+      return
+  end
 
-        if _dist < 200 and _heliUnit:InAir() == false then
-            self:_RescuePilots(_heliUnit)
-            return
-        end
+  if _dist < 200 and _heliUnit:InAir() == false then
+      self:_RescuePilots(_heliUnit)
+      return
+  end
 
-        --queue up
-        self:__Returning(-5,heliname,_woundedGroupName)
+  --queue up
+  self:__Returning(-5,heliname,_woundedGroupName)
+  return self
 end
 
---- Mark pilot as rescued and remove from tables.
+--- (Internal) Mark pilot as rescued and remove from tables.
 -- @param #CSAR self
 -- @param Wrapper.Unit#UNIT _heliUnit
 function CSAR:_RescuePilots(_heliUnit)
@@ -1250,9 +1297,10 @@ function CSAR:_RescuePilots(_heliUnit)
   self:_DisplayMessageToSAR(_heliUnit, _txt, self.messageTime)
   -- trigger event
   self:__Rescued(-1,_heliUnit,_heliName, PilotsSaved)
+  return self
 end
 
---- Check and return Wrappe.Unit#UNIT based on the name if alive.
+--- (Internal) Check and return Wrappe.Unit#UNIT based on the name if alive.
 -- @param #CSAR self
 -- @param #string _unitname Name of Unit
 -- @return #UNIT or nil
@@ -1266,7 +1314,7 @@ function CSAR:_GetSARHeli(_unitName)
   end
 end
 
---- Display message to single Unit.
+--- (Internal) Display message to single Unit.
 -- @param #CSAR self
 -- @param Wrapper.Unit#UNIT _unit Unit #UNIT to display to.
 -- @param #string _text Text of message.
@@ -1288,9 +1336,10 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak)
     local msrs = MSRS:New(path,channel,modulation)
     msrs:PlaySoundText(srstext, 2)
   end
+  return self
 end
 
---- Function to get string of a group's position.
+--- (Internal) Function to get string of a group\'s position.
 -- @param #CSAR self
 -- @param Wrapper.Controllable#CONTROLLABLE _woundedGroup Group or Unit object.
 -- @return #string Coordinates as Text
@@ -1316,7 +1365,7 @@ function CSAR:_GetPositionOfWounded(_woundedGroup)
   return _coordinatesText
 end
 
---- Display active SAR tasks to player.
+--- (Internal) Display active SAR tasks to player.
 -- @param #CSAR self
 -- @param #string _unitName Unit to display to
 function CSAR:_DisplayActiveSAR(_unitName)
@@ -1366,9 +1415,10 @@ function CSAR:_DisplayActiveSAR(_unitName)
   end
   
   self:_DisplayMessageToSAR(_heli, _msg, self.messageTime*2)
+  return self
 end
 
---- Find the closest downed pilot to a heli.
+--- (Internal) Find the closest downed pilot to a heli.
 -- @param #CSAR self
 -- @param Wrapper.Unit#UNIT _heli Helicopter #UNIT
 -- @return #table Table of results
@@ -1402,7 +1452,7 @@ function CSAR:_GetClosestDownedPilot(_heli)
   return { pilot = _closestGroup, distance = _shortestDistance, groupInfo = _closestGroupInfo }
 end
 
---- Fire a flare at the point of a downed pilot.
+--- (Internal) Fire a flare at the point of a downed pilot.
 -- @param #CSAR self
 -- @param #string _unitName Name of the unit.
 function CSAR:_SignalFlare(_unitName)
@@ -1435,9 +1485,10 @@ function CSAR:_SignalFlare(_unitName)
       end
       self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",disttext), self.messageTime)
   end
+  return self
 end
 
---- Display info to all SAR groups.
+--- (Internal) Display info to all SAR groups.
 -- @param #CSAR self
 -- @param #string _message Message to display.
 -- @param #number _side Coalition of message.
@@ -1452,9 +1503,10 @@ function CSAR:_DisplayToAllSAR(_message, _side, _messagetime)
       end
     end
   end
+  return self
 end
 
----Request smoke at closest downed pilot.
+---(Internal) Request smoke at closest downed pilot.
 --@param #CSAR self
 --@param #string _unitName Name of the helicopter
 function CSAR:_Reqsmoke( _unitName )
@@ -1484,15 +1536,16 @@ function CSAR:_Reqsmoke( _unitName )
       end
       self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",disttext), self.messageTime)
   end
+  return self
 end
 
---- Determine distance to closest MASH.
+--- (Internal) Determine distance to closest MASH.
 -- @param #CSAR self
 -- @param Wrapper.Unit#UNIT _heli Helicopter #UNIT
 -- @retunr
 function CSAR:_GetClosestMASH(_heli)
   self:T(self.lid .. " _GetClosestMASH")
-  local _mashset = self.bluemash -- Core.Set#SET_GROUP
+  local _mashset = self.mash -- Core.Set#SET_GROUP
   local _mashes = _mashset:GetSetObjects() -- #table
   local _shortestDistance = -1
   local _distance = 0
@@ -1541,7 +1594,7 @@ function CSAR:_GetClosestMASH(_heli)
   end
 end
 
---- Display onboarded rescued pilots.
+--- (Internal) Display onboarded rescued pilots.
 -- @param #CSAR self
 -- @param #string _unitName Name of the chopper
 function CSAR:_CheckOnboard(_unitName)
@@ -1561,9 +1614,10 @@ function CSAR:_CheckOnboard(_unitName)
         end
         self:_DisplayMessageToSAR(_unit, _text, self.messageTime*2)
     end
+    return self
 end
 
---- Populate F10 menu for CSAR players.
+--- (Internal) Populate F10 menu for CSAR players.
 -- @param #CSAR self
 function CSAR:_AddMedevacMenuItem()
   self:T(self.lid .. " _AddMedevacMenuItem")
@@ -1603,10 +1657,10 @@ function CSAR:_AddMedevacMenuItem()
       end
     end
   end  
-  return
+  return self
 end
 
---- Return distance in meters between two coordinates.
+--- (Internal) Return distance in meters between two coordinates.
 -- @param #CSAR self
 -- @param Core.Point#COORDINATE _point1 Coordinate one
 -- @param Core.Point#COORDINATE _point2 Coordinate two
@@ -1621,7 +1675,7 @@ function CSAR:_GetDistance(_point1, _point2)
   end
 end
 
---- Populate table with available beacon frequencies.
+--- (Internal) Populate table with available beacon frequencies.
 -- @param #CSAR self
 function CSAR:_GenerateVHFrequencies()
   self:T(self.lid .. " _GenerateVHFrequencies")
@@ -1672,7 +1726,7 @@ function CSAR:_GenerateVHFrequencies()
   
   -- third range
   _start = 850000
-  while _start <= 1250000 do
+  while _start <= 999000 do -- updated for Gazelle
   
       -- skip existing NDB frequencies
       local _found = false
@@ -1690,9 +1744,10 @@ function CSAR:_GenerateVHFrequencies()
       _start = _start + 50000
   end
   self.FreeVHFFrequencies = FreeVHFFrequencies
+  return self
 end
 
---- Pop frequency from prepopulated table.
+--- (Internal) Pop frequency from prepopulated table.
 -- @param #CSAR self
 -- @return #number frequency
 function CSAR:_GenerateADFFrequency()
@@ -1706,7 +1761,7 @@ function CSAR:_GenerateADFFrequency()
   return _vhf
 end
 
---- Function to determine clockwise direction for flares.
+--- (Internal) Function to determine clockwise direction for flares.
 -- @param #CSAR self
 -- @param Wrapper.Unit#UNIT _heli The Helicopter
 -- @param Wrapper.Group#GROUP _group The downed Group
@@ -1730,7 +1785,7 @@ function CSAR:_GetClockDirection(_heli, _group)
   return clock
 end
 
---- Function to add beacon to downed pilot.
+--- (Internal) Function to add beacon to downed pilot.
 -- @param #CSAR self
 -- @param Wrapper.Group#GROUP _group Group #GROUP object.
 -- @param #number _freq Frequency to use
@@ -1754,29 +1809,63 @@ function CSAR:_AddBeaconToGroup(_group, _freq)
       local Sound =  "l10n/DEFAULT/"..self.radioSound
       trigger.action.radioTransmission(Sound, _radioUnit:GetPositionVec3(), 0, false, Frequency, 1000) -- Beacon in MP only runs for exactly 30secs straight
     end
+    return self
 end
 
---- Helper function to (re-)add beacon to downed pilot.
+--- (Internal) Helper function to (re-)add beacon to downed pilot.
 -- @param #CSAR self
 -- @param #table _args Arguments
 function CSAR:_RefreshRadioBeacons()
     self:T(self.lid .. " _RefreshRadioBeacons")
-    local PilotTable = self.downedPilots
-    for _,_pilot in pairs (PilotTable) do
-      local pilot = _pilot -- #CSAR.DownedPilot
-      local group = pilot.group
-      local frequency = pilot.frequency
-      if frequency and frequency > 0 then
-        self:_AddBeaconToGroup(group,frequency)
+    if self:_CountActiveDownedPilots() > 0 then
+      local PilotTable = self.downedPilots
+      for _,_pilot in pairs (PilotTable) do
+        local pilot = _pilot -- #CSAR.DownedPilot
+        local group = pilot.group
+        local frequency = pilot.frequency or 0.0 -- thanks to @Thrud
+        if group:IsAlive() and frequency > 0.0 then
+          self:_AddBeaconToGroup(group,frequency)
+        end
       end
     end
+    return self
+end
+
+--- (Internal) Helper function to count active downed pilots.
+-- @param #CSAR self
+-- @return #number Number of pilots in the field.
+function CSAR:_CountActiveDownedPilots()
+  self:T(self.lid .. " _CountActiveDownedPilots")
+  local PilotsInFieldN = 0
+  for _, _unitName in pairs(self.downedPilots) do
+    self:T({_unitName})
+    if _unitName.name ~= nil then
+      PilotsInFieldN = PilotsInFieldN + 1
+    end
+  end
+  return PilotsInFieldN
+end
+
+--- (Internal) Helper to decide if we're over max limit.
+-- @param #CSAR self
+-- @return #boolean True or false.
+function CSAR:_ReachedPilotLimit()
+   self:T(self.lid .. " _ReachedPilotLimit")
+   local limit = self.maxdownedpilots
+   local islimited = self.limitmaxdownedpilots
+   local count = self:_CountActiveDownedPilots()
+   if islimited and (count >= limit) then
+      return true
+   else
+      return false
+   end
 end
 
   ------------------------------
   --- FSM internal Functions ---
   ------------------------------
 
---- Function called after Start() event.
+--- (Internal) Function called after Start() event.
 -- @param #CSAR self.
 -- @param #string From From state.
 -- @param #string Event Event triggered.
@@ -1802,7 +1891,7 @@ function CSAR:onafterStart(From, Event, To)
   return self
 end
 
---- Function called before Status() event.
+--- (Internal) Function called before Status() event.
 -- @param #CSAR self.
 -- @param #string From From state.
 -- @param #string Event Event triggered.
@@ -1819,7 +1908,7 @@ function CSAR:onbeforeStatus(From, Event, To)
       local name = entry.name
       local timestamp = entry.timestamp or 0
       local now = timer.getAbsTime()
-      if now - timestamp > 17 then -- only check if we're not in approach mode, which is iterations of 5 and 10.
+      if now - timestamp > 17 then -- only check if we\'re not in approach mode, which is iterations of 5 and 10.
           self:_CheckWoundedGroupStatus(_sar,name)
       end
     end
@@ -1827,7 +1916,7 @@ function CSAR:onbeforeStatus(From, Event, To)
   return self
 end
 
---- Function called after Status() event.
+--- (Internal) Function called after Status() event.
 -- @param #CSAR self.
 -- @param #string From From state.
 -- @param #string Event Event triggered.
@@ -1840,13 +1929,7 @@ function CSAR:onafterStatus(From, Event, To)
     NumberOfSARPilots = NumberOfSARPilots + 1
   end
 
-  local PilotsInFieldN = 0
-  for _, _unitName in pairs(self.downedPilots) do
-    self:T({_unitName})
-    if _unitName.name ~= nil then
-      PilotsInFieldN = PilotsInFieldN + 1
-    end
-  end
+  local PilotsInFieldN = self:_CountActiveDownedPilots()
   
   local PilotsBoarded = 0
   for _, _unitName in pairs(self.inTransitGroups) do
@@ -1856,8 +1939,8 @@ function CSAR:onafterStatus(From, Event, To)
   end
   
   if self.verbose > 0 then
-    local text = string.format("%s Active SAR: %d | Downed Pilots in field: %d | Pilots boarded: %d | Landings: %d | Pilots rescued: %d",
-      self.lid,NumberOfSARPilots,PilotsInFieldN,PilotsBoarded,self.rescues,self.rescuedpilots)
+    local text = string.format("%s Active SAR: %d | Downed Pilots in field: %d (max %d) | Pilots boarded: %d | Landings: %d | Pilots rescued: %d",
+      self.lid,NumberOfSARPilots,PilotsInFieldN,self.maxdownedpilots,PilotsBoarded,self.rescues,self.rescuedpilots)
     self:T(text)
     if self.verbose < 2 then
       self:I(text)
@@ -1870,7 +1953,7 @@ function CSAR:onafterStatus(From, Event, To)
   return self
 end
 
---- Function called after Stop() event.
+--- (Internal) Function called after Stop() event.
 -- @param #CSAR self.
 -- @param #string From From state.
 -- @param #string Event Event triggered.
@@ -1888,46 +1971,46 @@ function CSAR:onafterStop(From, Event, To)
   return self
 end
 
---- Function called before Approach() event.
+--- (Internal) Function called before Approach() event.
 -- @param #CSAR self.
 -- @param #string From From state.
 -- @param #string Event Event triggered.
 -- @param #string To To state.
 -- @param #string Heliname Name of the helicopter group.
--- @param #string Woundedgroupname Name of the downed pilot's group.
+-- @param #string Woundedgroupname Name of the downed pilot\'s group.
 function CSAR:onbeforeApproach(From, Event, To, Heliname, Woundedgroupname)
   self:T({From, Event, To, Heliname, Woundedgroupname})
   self:_CheckWoundedGroupStatus(Heliname,Woundedgroupname)
   return self
 end
 
---- Function called before Boarded() event.
+--- (Internal) Function called before Boarded() event.
 -- @param #CSAR self.
 -- @param #string From From state.
 -- @param #string Event Event triggered.
 -- @param #string To To state.
 -- @param #string Heliname Name of the helicopter group.
--- @param #string Woundedgroupname Name of the downed pilot's group.
+-- @param #string Woundedgroupname Name of the downed pilot\'s group.
 function CSAR:onbeforeBoarded(From, Event, To, Heliname, Woundedgroupname)
   self:T({From, Event, To, Heliname, Woundedgroupname})
   self:_ScheduledSARFlight(Heliname,Woundedgroupname)
   return self
 end
 
---- Function called before Returning() event. 
+--- (Internal) Function called before Returning() event. 
 -- @param #CSAR self.
 -- @param #string From From state.
 -- @param #string Event Event triggered.
 -- @param #string To To state.
 -- @param #string Heliname Name of the helicopter group.
--- @param #string Woundedgroupname Name of the downed pilot's group.
+-- @param #string Woundedgroupname Name of the downed pilot\'s group.
 function CSAR:onbeforeReturning(From, Event, To, Heliname, Woundedgroupname)
   self:T({From, Event, To, Heliname, Woundedgroupname})
   self:_ScheduledSARFlight(Heliname,Woundedgroupname)
   return self
 end
 
---- Function called before Rescued() event.
+--- (Internal) Function called before Rescued() event.
 -- @param #CSAR self.
 -- @param #string From From state.
 -- @param #string Event Event triggered.
@@ -1942,7 +2025,7 @@ function CSAR:onbeforeRescued(From, Event, To, HeliUnit, HeliName, PilotsSaved)
   return self
 end
 
---- Function called before PilotDown() event.
+--- (Internal) Function called before PilotDown() event.
 -- @param #CSAR self.
 -- @param #string From From state.
 -- @param #string Event Event triggered.
