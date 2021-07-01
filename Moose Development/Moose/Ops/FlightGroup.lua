@@ -863,7 +863,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
-
+  
   -- Update position.
   self:_UpdatePosition()
 

@@ -525,7 +525,7 @@ function OPSGROUP:New(group)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("InUtero",       "Spawned",          "Spawned")     -- The whole group was spawned.
-  self:AddTransition("*",             "Respawn",          "*")           -- Respawn group.
+  self:AddTransition("*",             "Respawn",          "InUtero")     -- Respawn group.
   self:AddTransition("*",             "Dead",             "Dead")        -- The whole group is dead.
   self:AddTransition("*",             "InUtero",          "InUtero")     -- Deactivated group goes back to mummy.
   self:AddTransition("*",             "Stop",             "Stopped")     -- Stop FSM.
@@ -4473,7 +4473,7 @@ end
 -- @param #string To To state.
 -- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onafterElementInUtero(From, Event, To, Element)
-  self:I(self.lid..string.format("Element in utero %s", Element.name))
+  self:T(self.lid..string.format("Element in utero %s", Element.name))
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.INUTERO)
@@ -4502,9 +4502,6 @@ function OPSGROUP:onafterElementDestroyed(From, Event, To, Element)
 
   -- Element is dead.
   self:ElementDead(Element)
-
-  -- Set element status.
-  --self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
 
 end
 
@@ -4554,36 +4551,40 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
     end
   end
 
-  
-  -- Check cargo bay and declare cargo groups dead.
-  for _,_element in pairs(self.elements) do
-    local element=_element --#OPSGROUP.Element
-    for _,_cargo in pairs(element.cargoBay) do
-      local cargo=_cargo --#OPSGROUP.MyCargo
-      if cargo.group and not (cargo.group:IsDead() or cargo.group:IsStopped()) then
+
+  -- Clear cargo bay of element.
+  --for _,_cargo in pairs(Element.cargoBay) do
+  for i=#Element.cargoBay,1,-1 do
+    local cargo=Element.cargoBay[i] --#OPSGROUP.MyCargo --_cargo --#OPSGROUP.MyCargo
+    
+    -- Remove from cargo bay.
+    self:_DelCargobay(cargo.group)
+    
+    if cargo.group and not (cargo.group:IsDead() or cargo.group:IsStopped()) then
+    
+      -- Remove my carrier
+      cargo.group:_RemoveMyCarrier()
       
-        -- Remove my carrier
-        cargo.group:_RemoveMyCarrier()
+      if cargo.reserved then
+      
+        -- This group was not loaded yet ==> Not cargo any more.
+        cargo.group.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
         
-        if cargo.reserved then
-          -- This group was not loaded yet ==> Not cargo any more.
-          cargo.group.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
-        else
-            
-          -- Carrier dead ==> cargo dead.
-          for _,cargoelement in pairs(cargo.group.elements) do
-  
-            -- Debug info.
-            self:T2(self.lid.."Cargo element dead "..cargoelement.name)
-  
-            -- Trigger dead event.
-            cargo.group:ElementDead(cargoelement)
-  
-          end
+      else
+          
+        -- Carrier dead ==> cargo dead.
+        for _,cargoelement in pairs(cargo.group.elements) do
+
+          -- Debug info.
+          self:T2(self.lid.."Cargo element dead "..cargoelement.name)
+
+          -- Trigger dead event.
+          cargo.group:ElementDead(cargoelement)
+
         end
-        
-      end      
-    end    
+      end
+      
+    end
   end
   
 end
@@ -4596,13 +4597,14 @@ end
 -- @param #table Template The template used to respawn the group. Default is the inital template of the group.
 function OPSGROUP:onafterRespawn(From, Event, To, Template)
 
+  -- Debug info.
   self:I(self.lid.."Respawning group!")
 
+  -- Copy template.
   local template=UTILS.DeepCopy(Template or self.template)
 
+  -- Late activation off.
   template.lateActivation=false
-
-  --self.respawning=true
 
   self:_Respawn(0, template)
 
@@ -4686,12 +4688,8 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     end
 
     -- Debug output.
-    self:I({Template=Template})
+    self:T({Template=Template})
     
-    --if self:IsStopped() then
-      --self:InitWaypoints()
-    --end    
-
     -- Spawn new group.
     _DATABASE:Spawn(Template)
 
@@ -4699,6 +4697,10 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     self.isLateActivated=Template.lateActivation
     self.isUncontrolled=Template.uncontrolled
     
+    -- Not dead or destroyed any more.
+    self.isDead=false
+    self.isDestroyed=false
+    self.Ndestroyed=0    
 
     -- Reset events.
     --self:ResetEvents()
@@ -4765,7 +4767,7 @@ function OPSGROUP:onafterDead(From, Event, To)
     mycarrier:_DelCargobay(self)
     self:_RemoveMyCarrier()    
   end
-
+  
   -- Inform all transports in the queue that this carrier group is dead now.
   for i,_transport in pairs(self.cargoqueue) do
     local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
@@ -4783,7 +4785,9 @@ end
 -- @param #string To To state.
 function OPSGROUP:onbeforeStop(From, Event, To)
 
+  -- We check if 
   if self:IsAlive() then
+    self:E(self.lid..string.format("WARNING: Group is still alive! Will not stop the FSM. Use :Despawn() instead"))
     return false
   end
 
@@ -4849,7 +4853,7 @@ function OPSGROUP:_CheckCargoTransport()
 
   -- Cargo bay debug info.
   -- Check cargo bay and declare cargo groups dead.
-  if self.verbose>=0 then
+  if self.verbose>=1 then
     local text=""  
     for _,_element in pairs(self.elements) do
       local element=_element --#OPSGROUP.Element
@@ -4858,9 +4862,10 @@ function OPSGROUP:_CheckCargoTransport()
         text=text..string.format("\n- %s in carrier %s, reserved=%s", tostring(cargo.group:GetName()), tostring(element.name), tostring(cargo.reserved))
       end    
     end
-    if text~="" then
-      self:I(self.lid.."Cargo bay:"..text)
-    end    
+    if text=="" then
+      text=" empty"
+    end
+    self:I(self.lid.."Cargo bay:"..text)    
   end  
 
   -- Cargo queue debug info.
@@ -5110,46 +5115,14 @@ function OPSGROUP:_DelCargobay(CargoGroup)
     self.cargoBay[CargoGroup.groupname]=nil
 
   end
-  
-  
-  --[[
-  local MyCarrierGroup, MyCarrierElement, MyIsReserved=CargoGroup:_GetMyCarrier()
-  
-  if MyCarrierGroup and MyCarrierGroup.groupname==self.groupname then
-      if not IsReserved then
-  
-      -- Reduce carrier weight.
-      local weight=CargoGroup:GetWeightTotal()
-      
-      self:RedWeightCargo(CarrierElement.name, weight)
-      
-      end
-      
-  end
-  ]]
-  
-  
-  -- Loop over elements and their cargo bay items.
-  --[[
-  local CarrierElement=nil  --#OPSGROUP.Element
-  local cargobayIndex=nil
-  local reserved=nil
-  for i,_element in pairs(self.elements) do
-    local element=_element --#OPSGROUP.Element
-    for j,_cargo in pairs(element.cargoBay) do
-      local cargo=_cargo --#OPSGROUP.MyCargo
-      if cargo.group and cargo.group.groupname==CargoGroup.groupname then
-        CarrierElement=element
-        cargobayIndex=j
-        reserved=cargo.reserved
-      end
-    end
-  end
-  ]]
-  
+
+  -- Get cargo bay info.
   local cargoBayItem, cargoBayIndex, CarrierElement=self:_GetCargobay(CargoGroup)
   
   if cargoBayItem and cargoBayIndex then
+  
+    -- Debug info.
+    self:T(self.lid..string.format("Removing cargo group %s from cargo bay (index=%d) of carrier %s", CargoGroup:GetName(), cargoBayIndex, CarrierElement.name))
   
     -- Remove
     table.remove(CarrierElement.cargoBay, cargoBayIndex)
@@ -5163,7 +5136,7 @@ function OPSGROUP:_DelCargobay(CargoGroup)
     return true    
   end
 
-  env.error(self.lid.."ERROR: Group is not in cargo bay. Cannot remove it!")
+  self:E(self.lid.."ERROR: Group is not in cargo bay. Cannot remove it!")
   return false
 end
 
@@ -5320,13 +5293,18 @@ end
 -- @return #number Free cargo bay in kg.
 function OPSGROUP:GetFreeCargobay(UnitName, IncludeReserved)
 
+  -- Max cargo weight.
   local weightCargoMax=self:GetWeightCargoMax(UnitName)
   
+  -- Current cargo weight.
   local weightCargo=self:GetWeightCargo(UnitName, IncludeReserved)
   
+  -- Free cargo.
   local Free=weightCargoMax-weightCargo
 
-  self:I(self.lid..string.format("Free cargo bay=%d kg (unit=%s)", Free, (UnitName or "whole group")))
+  -- Debug info.
+  self:T(self.lid..string.format("Free cargo bay=%d kg (unit=%s)", Free, (UnitName or "whole group")))
+  
   return Free
 end
 
@@ -5368,6 +5346,7 @@ end
 -- @return #number Cargo weight in kg.
 function OPSGROUP:GetWeightCargo(UnitName, IncludeReserved)
 
+  -- Calculate weight based on actual cargo weight.
   local weight=0
   for _,_element in pairs(self.elements) do
     local element=_element --#OPSGROUP.Element
@@ -5380,20 +5359,28 @@ function OPSGROUP:GetWeightCargo(UnitName, IncludeReserved)
 
   end
 
+  -- Calculate weight from stuff in cargo bay. By default this includes the reserved weight if a cargo group was assigned and is currently boarding.
   local gewicht=0  
   for _,_element in pairs(self.elements) do
     local element=_element --#OPSGROUP.Element
     if (UnitName==nil or UnitName==element.name) and (element and element.status~=OPSGROUP.ElementStatus.DEAD) then
       for _,_cargo in pairs(element.cargoBay) do
         local cargo=_cargo --#OPSGROUP.MyCargo
-        if (not cargo.reserved) or (cargo.reserved==true and (IncludeReserved==true or IncludeReserved==nil)) then 
-          gewicht=gewicht+cargo.group:GetWeightTotal()
+        if (not cargo.reserved) or (cargo.reserved==true and (IncludeReserved==true or IncludeReserved==nil)) then
+          local cargoweight=cargo.group:GetWeightTotal() 
+          gewicht=gewicht+cargoweight
+          --self:I(self.lid..string.format("unit=%s (reserved=%s): cargo=%s weight=%d, total weight=%d", tostring(UnitName), tostring(IncludeReserved), cargo.group:GetName(), cargoweight, weight))
         end 
       end
     end
   end
+  
+  -- Debug info.
+  self:T2(self.lid..string.format("Unit=%s (reserved=%s): weight=%d, gewicht=%d", tostring(UnitName), tostring(IncludeReserved), weight, gewicht))
+  
+  -- Quick check.
   if IncludeReserved==false and gewicht~=weight then
-    self:I(self.lid..string.format("ERROR: FF weight!=gewicht: weight=%.1f, gewicht=%.1f", weight, gewicht))
+    self:E(self.lid..string.format("ERROR: FF weight!=gewicht: weight=%.1f, gewicht=%.1f", weight, gewicht))
   end
 
   return gewicht
@@ -5434,7 +5421,7 @@ function OPSGROUP:AddWeightCargo(UnitName, Weight)
     element.weightCargo=element.weightCargo+Weight
     
     -- Debug info.
-    self:I(self.lid..string.format("FF %s: Adding %.1f kg cargo weight. New cargo weight=%.1f kg", UnitName, Weight, element.weightCargo))
+    self:T(self.lid..string.format("%s: Adding %.1f kg cargo weight. New cargo weight=%.1f kg", UnitName, Weight, element.weightCargo))
 
     -- For airborne units, we set the weight in game.
     if self.isFlightgroup then
@@ -5516,7 +5503,7 @@ end
 function OPSGROUP:_SetMyCarrier(CarrierGroup, CarrierElement, Reserved)
 
   -- Debug info.
-  self:I(self.lid..string.format("Setting My Carrier: %s (%s), reserved=%s", CarrierGroup:GetName(), tostring(CarrierElement.name), tostring(Reserved)))
+  self:T(self.lid..string.format("Setting My Carrier: %s (%s), reserved=%s", CarrierGroup:GetName(), tostring(CarrierElement.name), tostring(Reserved)))
 
   self.mycarrier.group=CarrierGroup
   self.mycarrier.element=CarrierElement
@@ -5572,6 +5559,7 @@ end
 -- @param #OPSGROUP self
 -- @return #OPSGROUP self
 function OPSGROUP:_RemoveMyCarrier()
+  self:I(self.lid..string.format("Removing my carrier!"))
   self.mycarrier.group=nil
   self.mycarrier.element=nil
   self.mycarrier.reserved=nil
@@ -5635,8 +5623,6 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
     -- Add waypoint.
     if self.isFlightgroup then
-    
-      env.info("FF pickup is flightgroup")
 
       if airbasePickup then
 
@@ -5651,13 +5637,10 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
           -- Activate uncontrolled group.
           if self:IsParking() then
-            env.info("FF pickup start uncontrolled while parking at current airbase")
             self:StartUncontrolled()
           end
 
         else
-        
-          env.info("FF pickup land at airbase")
 
           -- Order group to land at an airbase.
           self:LandAtAirbase(airbasePickup)
@@ -5669,12 +5652,9 @@ function OPSGROUP:onafterPickup(From, Event, To)
         ---
         -- Helo can also land in a zone (NOTE: currently VTOL cannot!)
         ---
-
-        env.info("FF pickup helo addwaypoint")
         
         -- Activate uncontrolled group.
         if self:IsParking() then
-          env.info("FF pickup start uncontrolled while parking airbase")
           self:StartUncontrolled()
         end        
 
@@ -5809,6 +5789,7 @@ end
 -- @param #OPSGROUP CargoGroup The OPSGROUP loaded as cargo.
 -- @param #OPSGROUP.Element Carrier The carrier element/unit.
 function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
+
   -- Debug info.
   self:I(self.lid..string.format("Loading group %s", tostring(CargoGroup.groupname)))
 
@@ -5904,6 +5885,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterTransport(From, Event, To)
+
   -- Debug info.
   self:I(self.lid..string.format("New carrier status: %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.TRANSPORTING))
 
@@ -6107,7 +6089,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           ---
 
           -- Issue warning.
-          env.info("ERROR: Deploy/disembark zone is a ZONE_AIRBASE of a ship! Where to put the cargo? Dumping into the sea, sorry!")
+          self:E(self.lid.."ERROR: Deploy/disembark zone is a ZONE_AIRBASE of a ship! Where to put the cargo? Dumping into the sea, sorry!")
           --TODO: Dumb into sea.
 
         else
@@ -6479,7 +6461,6 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
     
     -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.´
     CarrierGroup:_AddCargobay(self, Carrier, true)
-    --self:_SetMyCarrier(CarrierGroup, Carrier, true)
     
   end
 

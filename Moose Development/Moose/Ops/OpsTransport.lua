@@ -32,9 +32,11 @@
 -- @field #table cargos Cargos. Each element is a @{Ops.OpsGroup#OPSGROUP.CargoGroup}.
 -- @field #table carriers Carriers assigned for this transport.
 -- @field #number prio Priority of this transport. Should be a number between 0 (high prio) and 100 (low prio).
+-- @field #boolean urgent If true, transport is urgent.
 -- @field #number importance Importance of this transport. Smaller=higher.
 -- @field #number Tstart Start time in *abs.* seconds.
 -- @field #number Tstop Stop time in *abs.* seconds. Default `#nil` (never stops).
+-- @field #number duration Duration (`Tstop-Tstart`) of the transport in seconds.
 -- @field #table conditionStart Start conditions.
 -- @field Core.Zone#ZONE pickupzone Zone where the cargo is picked up.
 -- @field Core.Zone#ZONE deployzone Zone where the cargo is dropped off.
@@ -70,7 +72,7 @@
 -- @field #OPSTRANSPORT
 OPSTRANSPORT = {
   ClassName       = "OPSTRANSPORT",
-  verbose         =  1,
+  verbose         =  0,
   cargos          = {},
   carriers        = {},
   carrierTransportStatus = {},
@@ -108,12 +110,13 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.0.7"
+OPSTRANSPORT.version="0.0.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Stop/abort transport.
 -- DONE: Add start conditions.
 -- DONE: Check carrier(s) dead.
 
@@ -140,7 +143,6 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   
   -- Defaults.
   self.uid=_OPSTRANSPORTID
-  --self.status=OPSTRANSPORT.Status.PLANNING
     
   self.pickupzone=Pickupzone
   self.deployzone=Deployzone
@@ -277,7 +279,8 @@ end
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetDisembarkCarriers(Carriers)
 
-  self:I(self.lid.."Setting transfer carriers!")
+  -- Debug info.
+  self:T(self.lid.."Setting transfer carriers!")
 
   -- Create table.
   self.disembarkCarriers=self.disembarkCarriers or {}
@@ -326,7 +329,8 @@ end
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetRequiredCargos(Cargos)
 
-  self:I(self.lid.."Setting required cargos!")
+  -- Debug info.
+  self:T(self.lid.."Setting required cargos!")
 
   -- Create table.
   self.requiredCargos=self.requiredCargos or {}
@@ -390,11 +394,11 @@ function OPSTRANSPORT:_DelCarrier(CarrierGroup)
 
   if self:IsCarrier(CarrierGroup) then
  
-    for i,_carrier in pairs(self.carriers) do
-      local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+    for i=#self.carriers,1,-1 do
+      local carrier=self.carriers[i] --Ops.OpsGroup#OPSGROUP
       if carrier.groupname==CarrierGroup.groupname then
-        self:I(self.lid..string.format("Removing carrier %s", CarrierGroup.groupname))
-        table.remove(self.carriers, i)        
+        self:T(self.lid..string.format("Removing carrier %s", CarrierGroup.groupname))
+        table.remove(self.carriers, i)
       end
     end    
   
@@ -704,28 +708,36 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
   -- Current FSM state.
   local fsmstate=self:GetState()
   
-  -- Info text.
-  local text=string.format("%s [%s --> %s]: Ncargo=%d/%d, Ncarrier=%d/%d", fsmstate:upper(), self.pickupzone:GetName(), self.deployzone:GetName(), self.Ncargo, self.Ndelivered, #self.carriers,self.Ncarrier)
+  if self.verbose>=1 then  
   
-  text=text..string.format("\nCargos:")
-  for _,_cargo in pairs(self.cargos) do
-    local cargo=_cargo  --Ops.OpsGroup#OPSGROUP.CargoGroup
-    local carrier=cargo.opsgroup:_GetMyCarrierElement()
-    local name=carrier and carrier.name or "none"
-    local cstate=carrier and carrier.status or "N/A"
-    text=text..string.format("\n- %s: %s [%s], weight=%d kg, carrier=%s [%s]", cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name, cstate)
+    -- Info text.
+    local text=string.format("%s [%s --> %s]: Ncargo=%d/%d, Ncarrier=%d/%d", fsmstate:upper(), self.pickupzone:GetName(), self.deployzone:GetName(), self.Ncargo, self.Ndelivered, #self.carriers,self.Ncarrier)
+
+    -- Info about cargo and carrier.    
+    if self.verbose>=2 then
+    
+      text=text..string.format("\nCargos:")
+      for _,_cargo in pairs(self.cargos) do
+        local cargo=_cargo  --Ops.OpsGroup#OPSGROUP.CargoGroup
+        local carrier=cargo.opsgroup:_GetMyCarrierElement()
+        local name=carrier and carrier.name or "none"
+        local cstate=carrier and carrier.status or "N/A"
+        text=text..string.format("\n- %s: %s [%s], weight=%d kg, carrier=%s [%s], delivered=%s", 
+        cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name, cstate, tostring(cargo.delivered))
+      end
+      
+      text=text..string.format("\nCarriers:")
+      for _,_carrier in pairs(self.carriers) do
+        local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+        text=text..string.format("\n- %s: %s [%s], Cargo Bay [current/reserved/total]=%d/%d/%d kg [free %d/%d/%d kg]", 
+        carrier:GetName(), carrier.carrierStatus:upper(), carrier:GetState(), 
+        carrier:GetWeightCargo(nil, false), carrier:GetWeightCargo(), carrier:GetWeightCargoMax(), 
+        carrier:GetFreeCargobay(nil, false), carrier:GetFreeCargobay(), carrier:GetFreeCargobayMax())
+      end
+    end
+    
+    self:I(self.lid..text)
   end
-  
-  text=text..string.format("\nCarriers:")
-  for _,_carrier in pairs(self.carriers) do
-    local carrier=_carrier --Ops.OpsGroup#OPSGROUP
-    text=text..string.format("\n- %s: %s [%s], Cargo Bay [current/reserved/total]=%d/%d/%d kg [free %d/%d/%d kg]", 
-    carrier:GetName(), carrier.carrierStatus:upper(), carrier:GetState(), 
-    carrier:GetWeightCargo(nil, false), carrier:GetWeightCargo(), carrier:GetWeightCargoMax(), 
-    carrier:GetFreeCargobay(nil, false), carrier:GetFreeCargobay(), carrier:GetFreeCargobayMax())
-  end  
-  
-  self:I(self.lid..text)
   
   -- Check if all cargo was delivered (or is dead).
   self:_CheckDelivered()
