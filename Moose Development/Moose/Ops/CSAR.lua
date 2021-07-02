@@ -290,7 +290,7 @@ function CSAR:New(Coalition, Template, Alias)
     self.alias="Red Cross"  
     if self.coalition then
       if self.coalition==coalition.side.RED then
-        self.alias="Ã�Â¡Ã�Â¿Ã�Â°Ã‘ï¿½Ã�ÂµÃ�Â½Ã�Â¸Ã�Âµ"
+        self.alias="IFRC"
       elseif self.coalition==coalition.side.BLUE then
         self.alias="CSAR"
       end
@@ -538,7 +538,7 @@ function CSAR:_SpawnPilotInField(country,point,frequency)
     math.random(i,10000)
   end
   local template = self.template
-  local alias = string.format("Pilot %.2fkHz-%d", freq, math.random(1,10000))
+  local alias = string.format("Pilot %.2fkHz-%d", freq, math.random(1,99))
   local coalition = self.coalition
   local pilotcacontrol = self.allowDownedPilotCAcontrol -- Switch AI on/oof - is this really correct for CA?
   local _spawnedGroup = SPAWN
@@ -1828,8 +1828,8 @@ function CSAR:_RefreshRadioBeacons()
         self:T({_pilot})
         local pilot = _pilot -- #CSAR.DownedPilot
         local group = pilot.group
-        local frequency = pilot.frequency or 0.0 -- thanks to @Thrud
-        if group and group:IsAlive() and frequency > 0.0 then
+        local frequency = pilot.frequency or 0 -- thanks to @Thrud
+        if group and group:IsAlive() and frequency > 0 then
           self:_AddBeaconToGroup(group,frequency)
         end
       end

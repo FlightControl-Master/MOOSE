@@ -300,12 +300,12 @@ do
 -- Activate a zone:
 -- 
 --        -- Activate zone called Name of type #CTLD.CargoZoneType ZoneType:
---        my_ctld:ActivateZone(Name,ZoneType)
+--        my_ctld:ActivateZone(Name,CTLD.CargoZoneType.MOVE)
 -- 
 -- Deactivate a zone:
 -- 
 --        -- Deactivate zone called Name of type #CTLD.CargoZoneType ZoneType:
---        my_ctld:DeactivateZone(Name,ZoneType)
+--        my_ctld:DeactivateZone(Name,CTLD.CargoZoneType.DROP)
 -- 
 -- ## 3. Events
 --
