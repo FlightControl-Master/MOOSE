@@ -316,7 +316,7 @@ do
 -- 
 --   This function is called when a player has loaded Troops:
 --
---        function CTLD:OnAfterTroopsPickedUp(From, Event, To, Group, Unit, Cargo)
+--        function my_ctld:OnAfterTroopsPickedUp(From, Event, To, Group, Unit, Cargo)
 --          ... your code here ...
 --        end
 -- 
@@ -324,7 +324,7 @@ do
 -- 
 --    This function is called when a player has picked up crates:
 --
---        function CTLD:OnAfterCratesPickedUp(From, Event, To, Group, Unit, Cargo)
+--        function my_ctld:OnAfterCratesPickedUp(From, Event, To, Group, Unit, Cargo)
 --          ... your code here ...
 --        end
 --  
@@ -332,7 +332,7 @@ do
 --  
 --    This function is called when a player has deployed troops into the field:
 --
---        function CTLD:OnAfterTroopsDeployed(From, Event, To, Group, Unit, Troops)
+--        function my_ctld:OnAfterTroopsDeployed(From, Event, To, Group, Unit, Troops)
 --          ... your code here ...
 --        end
 --  
@@ -340,7 +340,7 @@ do
 --  
 --    This function is called when a player has deployed crates to a DROP zone:
 --
---        function CTLD:OnAfterCratesDropped(From, Event, To, Group, Unit, Cargotable)
+--        function my_ctld:OnAfterCratesDropped(From, Event, To, Group, Unit, Cargotable)
 --          ... your code here ...
 --        end
 --  
@@ -348,7 +348,7 @@ do
 --  
 --    This function is called when a player has build a vehicle or FOB:
 --
---        function CTLD:OnAfterCratesBuild(From, Event, To, Group, Unit, Vehicle)
+--        function my_ctld:OnAfterCratesBuild(From, Event, To, Group, Unit, Vehicle)
 --          ... your code here ...
 --        end
 --  
