@@ -18,11 +18,11 @@
 --
 -- ===
 --
--- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original)
+-- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original), Thanks to: Shadowze, Cammel (testing)
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: June 2021
+-- Date: July 2021
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -240,7 +240,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.5r3"
+CSAR.version="0.1.6r1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -290,7 +290,7 @@ function CSAR:New(Coalition, Template, Alias)
     self.alias="Red Cross"  
     if self.coalition then
       if self.coalition==coalition.side.RED then
-        self.alias="Спасение"
+        self.alias="Ã�Â¡Ã�Â¿Ã�Â°Ã‘ï¿½Ã�ÂµÃ�Â½Ã�Â¸Ã�Âµ"
       elseif self.coalition==coalition.side.BLUE then
         self.alias="CSAR"
       end
@@ -527,15 +527,18 @@ end
 -- @param #CSAR self
 -- @param #number country Country for template.
 -- @param Core.Point#COORDINATE point Coordinate to spawn at.
+-- @param #number frequency Frequency of the pilot's beacon
 -- @return Wrapper.Group#GROUP group The #GROUP object.
 -- @return #string alias The alias name.
-function CSAR:_SpawnPilotInField(country,point)
-  self:T({country,point})
+function CSAR:_SpawnPilotInField(country,point,frequency)
+  self:T({country,point,frequency})
+  local freq = frequency or 1000
+  local freq = freq / 1000 -- kHz
   for i=1,10 do
     math.random(i,10000)
   end
   local template = self.template
-  local alias = string.format("Downed Pilot-%d",math.random(1,10000))
+  local alias = string.format("Pilot %.2fkHz-%d", freq, math.random(1,10000))
   local coalition = self.coalition
   local pilotcacontrol = self.allowDownedPilotCAcontrol -- Switch AI on/oof - is this really correct for CA?
   local _spawnedGroup = SPAWN
@@ -545,7 +548,7 @@ function CSAR:_SpawnPilotInField(country,point)
     :InitAIOnOff(pilotcacontrol)
     :InitDelayOff()
     :SpawnFromCoordinate(point)
-  
+
   return _spawnedGroup, alias -- Wrapper.Group#GROUP object
 end
 
@@ -599,18 +602,20 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   self:T({_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description})
 
   local template = self.template
-
-  local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point)
+  
+  if not _freq then
+    _freq = self:_GenerateADFFrequency()
+    if not _freq then _freq = "333250" end --noob catch
+  end 
+  
+  local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point,_freq)
+  
   local _typeName = _typeName or "PoW"
+  
   if not noMessage then
     self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, 10)
     --local m = MESSAGE:New("MAYDAY MAYDAY! " .. _typeName .. " is down. ",10,"INFO"):ToCoalition(self.coalition)
   end
-  
-  if not _freq then
-    _freq = self:_GenerateADFFrequency()
-    if not _freq then _freq = "333.25" end --noob catch
-  end 
   
   if _freq then
     self:_AddBeaconToGroup(_spawnedGroup, _freq)
@@ -1631,7 +1636,7 @@ function CSAR:_AddMedevacMenuItem()
   for _key, _group in pairs (_allHeliGroups) do  
     local _unit = _group:GetUnit(1) -- Asume that there is only one unit in the flight for players
     if _unit then 
-      if _unit:IsAlive() then         
+      if _unit:IsAlive() and _unit:IsPlayer() then         
         local unitName = _unit:GetName()
             _UnitList[unitName] = unitName
       end -- end isAlive
@@ -1820,10 +1825,11 @@ function CSAR:_RefreshRadioBeacons()
     if self:_CountActiveDownedPilots() > 0 then
       local PilotTable = self.downedPilots
       for _,_pilot in pairs (PilotTable) do
+        self:T({_pilot})
         local pilot = _pilot -- #CSAR.DownedPilot
         local group = pilot.group
         local frequency = pilot.frequency or 0.0 -- thanks to @Thrud
-        if group:IsAlive() and frequency > 0.0 then
+        if group and group:IsAlive() and frequency > 0.0 then
           self:_AddBeaconToGroup(group,frequency)
         end
       end
