@@ -1429,7 +1429,7 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
         asset.flightgroup:AddMission(Mission)
 
         -- Trigger event.
-        self:FlightOnMission(asset.flightgroup, Mission)
+        self:__FlightOnMission(5, asset.flightgroup, Mission)
 
       else
         self:E(self.lid.."ERROR: flight group for asset does NOT exist!")
@@ -1662,6 +1662,8 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
     local Tacan=squadron:FetchTacan()
     if Tacan then
       asset.tacan=Tacan
+      --flightgroup:SetDefaultTACAN(Tacan,Morse,UnitName,Band,OffSwitch)
+      flightgroup:SwitchTACAN(Tacan, Morse, UnitName, Band)
     end
 
     -- Set radio frequency and modulation
@@ -1689,19 +1691,19 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
     if mission then
 
       if Tacan then
-        mission:SetTACAN(Tacan, Morse, UnitName, Band)
+        --mission:SetTACAN(Tacan, Morse, UnitName, Band)
       end
 
       -- Add mission to flightgroup queue.
       asset.flightgroup:AddMission(mission)
 
       -- Trigger event.
-      self:FlightOnMission(flightgroup, mission)
+      self:__FlightOnMission(5, flightgroup, mission)
 
     else
 
       if Tacan then
-        flightgroup:SwitchTACAN(Tacan, Morse, UnitName, Band)
+        --flightgroup:SwitchTACAN(Tacan, Morse, UnitName, Band)
       end
 
     end
@@ -1743,6 +1745,7 @@ end
 -- @param #string To To state.
 function AIRWING:onafterDestroyed(From, Event, To)
 
+  -- Debug message.
   self:I(self.lid.."Airwing warehouse destroyed!")
 
   -- Cancel all missions.

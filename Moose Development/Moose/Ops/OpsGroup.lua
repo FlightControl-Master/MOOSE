@@ -7663,6 +7663,12 @@ function OPSGROUP:GetTACAN()
   return self.tacan.Channel, self.tacan.Morse, self.tacan.Band, self.tacan.On, self.tacan.BeaconName
 end
 
+--- Get current TACAN parameters.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP.Beacon TACAN beacon.
+function OPSGROUP:GetBeaconTACAN()
+  return self.tacan
+end
 
 
 --- Set default ICLS parameters.

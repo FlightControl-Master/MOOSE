@@ -1823,6 +1823,8 @@ function AUFTRAG:AssignSquadrons(Squadrons)
   end
 
   self.squadrons=Squadrons
+  
+  return self
 end
 
 --- Add a required payload for this mission. Only these payloads will be used for this mission. If they are not available, the mission cannot start. Only available for use with an AIRWING.
@@ -1835,12 +1837,14 @@ function AUFTRAG:AddRequiredPayload(Payload)
 
   table.insert(self.payloads, Payload)
   
+  return self
 end
 
 
 --- Add a Ops group to the mission.
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
+-- @return #AUFTRAG self
 function AUFTRAG:AddOpsGroup(OpsGroup)
   self:T(self.lid..string.format("Adding Ops group %s", OpsGroup.groupname))
 
@@ -1853,11 +1857,13 @@ function AUFTRAG:AddOpsGroup(OpsGroup)
 
   self.groupdata[OpsGroup.groupname]=groupdata
 
+  return self
 end
 
 --- Remove an Ops  group from the mission.
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
+-- @return #AUFTRAG self
 function AUFTRAG:DelOpsGroup(OpsGroup)
   self:T(self.lid..string.format("Removing OPS group %s", OpsGroup and OpsGroup.groupname or "nil (ERROR)!"))
 
@@ -1870,6 +1876,7 @@ function AUFTRAG:DelOpsGroup(OpsGroup)
     
   end
 
+  return self
 end
 
 --- Check if mission is PLANNED.

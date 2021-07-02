@@ -2631,9 +2631,8 @@ end
 --- Check parking ID.
 -- @param #WAREHOUSE self
 -- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot Parking spot.
--- @param Wrapper.Airbase#AIRBASE airbase The airbase.
 -- @return #boolean If true, parking is valid.
-function WAREHOUSE:_CheckParkingValid(spot, airbase)
+function WAREHOUSE:_CheckParkingValid(spot)
 
   if self.parkingIDs==nil then
     return true
@@ -7841,7 +7840,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
         local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
 
         -- Check correct terminal type for asset. We don't want helos in shelters etc.
-        if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) and self:_CheckParkingValid(parkingspot, airbase) and airbase:_CheckParkingLists(parkingspot.TerminalID) then
+        if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) and self:_CheckParkingValid(parkingspot) and airbase:_CheckParkingLists(parkingspot.TerminalID) then
 
           -- Coordinate of the parking spot.
           local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE

@@ -302,7 +302,7 @@ function SQUADRON:SetTakeoffType(TakeoffType)
   return self
 end
 
---- Set takeoff type cold (default).
+--- Set takeoff type cold (default). All assets of this squadron will be spawned with engines off (cold).
 -- @param #SQUADRON self
 -- @return #SQUADRON self
 function SQUADRON:SetTakeoffCold()
@@ -310,7 +310,7 @@ function SQUADRON:SetTakeoffCold()
   return self
 end
 
---- Set takeoff type hot.
+--- Set takeoff type hot. All assets of this squadron will be spawned with engines on (hot).
 -- @param #SQUADRON self
 -- @return #SQUADRON self
 function SQUADRON:SetTakeoffHot()
@@ -801,7 +801,8 @@ end
 -- @param #string To To state.
 function SQUADRON:onafterStop(From, Event, To)
 
-  self:I(self.lid.."STOPPING Squadron!")
+  -- Debug info.
+  self:I(self.lid.."STOPPING Squadron and removing all assets!")
 
   -- Remove all assets.
   for i=#self.assets,1,-1 do
@@ -809,6 +810,7 @@ function SQUADRON:onafterStop(From, Event, To)
     self:DelAsset(asset)
   end
 
+  -- Clear call scheduler.
   self.CallScheduler:Clear()
   
 end

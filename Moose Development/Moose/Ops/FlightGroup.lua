@@ -1020,6 +1020,8 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   if self:IsAlive() and self.group:IsAirborne(true) then
 
     local fuelmin=self:GetFuelMin()
+    
+   self:I(self.lid..string.format("Fuel state=%d", fuelmin))
 
     if fuelmin>=self.fuellowthresh then
       self.fuellow=false
@@ -2751,8 +2753,10 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFuelLow(From, Event, To)
 
+  local fuel=self:GetFuelMin() or 0
+
   -- Debug message.
-  local text=string.format("Low fuel for flight group %s", self.groupname)
+  local text=string.format("Low fuel %d for flight group %s", fuel, self.groupname)
   self:I(self.lid..text)
 
   -- Set switch to true.
