@@ -605,7 +605,7 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   
   if not _freq then
     _freq = self:_GenerateADFFrequency()
-    if not _freq then _freq = "333250" end --noob catch
+    if not _freq then _freq = 333250 end --noob catch
   end 
   
   local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point,_freq)
@@ -818,7 +818,7 @@ function CSAR:_EventHandler(EventData)
       
       -- all checks passed, get going.    
       local _freq = self:_GenerateADFFrequency()
-       self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate()  , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, 0)
+       self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate()  , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, "none")
        
       return true
   
