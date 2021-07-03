@@ -240,7 +240,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.6r1"
+CSAR.version="0.1.6r2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -359,12 +359,14 @@ function CSAR:New(Coalition, Template, Alias)
   -- added 0.1.4
   self.limitmaxdownedpilots = true
   self.maxdownedpilots = 25
-  
+  -- generate Frequencies
+  self:_GenerateVHFrequencies()
+    
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
   -- needs SRS => 1.9.6 to work (works on the *server* side)
   self.useSRS = false -- Use FF\'s SRS integration
-  self.SRSPath = "E:\\Program Files\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your server(!)
+  self.SRSPath = "E:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your server(!)
   self.SRSchannel = 300 -- radio channel
   self.SRSModulation = radio.modulation.AM -- modulation
   
@@ -605,7 +607,7 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   
   if not _freq then
     _freq = self:_GenerateADFFrequency()
-    if not _freq then _freq = 333250 end --noob catch
+    if not _freq then _freq = 333000 end --noob catch
   end 
   
   local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point,_freq)
@@ -1886,7 +1888,6 @@ function CSAR:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
-  self:_GenerateVHFrequencies()
   if self.useprefix then
     local prefixes = self.csarPrefix or {}
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefixes):FilterCategoryHelicopter():FilterStart()
