@@ -646,7 +646,7 @@ function MARKER:OnEventMarkRemoved(EventData)
 
     local MarkID=EventData.MarkID
 
-    self:T3(self.lid..string.format("Captured event MarkAdded for Mark ID=%s", tostring(MarkID)))
+    self:T3(self.lid..string.format("Captured event MarkRemoved for Mark ID=%s", tostring(MarkID)))
 
     if MarkID==self.mid then
 
