@@ -673,9 +673,9 @@ function MARKER:OnEventMarkChange(EventData)
 
     if MarkID==self.mid then
 
-      self:Changed(EventData)
+      self.text=tostring(EventData.MarkText)
 
-      self:TextChanged(tostring(EventData.MarkText))
+      self:Changed(EventData)
 
     end
 
