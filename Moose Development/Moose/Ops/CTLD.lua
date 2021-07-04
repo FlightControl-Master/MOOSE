@@ -351,6 +351,24 @@ do
 --        function my_ctld:OnAfterCratesBuild(From, Event, To, Group, Unit, Vehicle)
 --          ... your code here ...
 --        end
+ --  
+-- ## 3.6 A simple SCORING example:
+--  
+--    To award player with points, using the SCORING Class (SCORING: my_Scoring, CTLD: CTLD_Cargotransport)
+--
+--        function CTLD_Cargotransport:OnAfterCratesDropped(From, Event, To, Group, Unit, Cargotable)
+--            local points = 10
+--            local PlayerName = Unit:GetPlayerName()
+--            my_scoring:_AddPlayerFromUnit( Unit )
+--            my_scoring:AddGoalScore(Unit, "CTLD", string.format("Pilot %s has been awarded %d points for transporting cargo crates!", PlayerName, points), points)
+--        end
+--        
+--        function CTLD_Cargotransport:OnAfterCratesBuild(From, Event, To, Group, Unit, Vehicle)
+--          local points = 5
+--          local PlayerName = Unit:GetPlayerName()
+--          my_scoring:_AddPlayerFromUnit( Unit )
+--          scoring:AddGoalScore(Unit, "CTLD", string.format("Pilot %s has been awarded %d points for the construction of Units!", PlayerName, points), points)
+--         end
 --  
 -- ## 4. F10 Menu structure
 -- 
