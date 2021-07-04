@@ -513,7 +513,7 @@ CTLD.SkipFrequencies = {
   
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.3r1"
+CTLD.version="0.1.4r1"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -926,6 +926,8 @@ function CTLD:_EventHandler(EventData)
     local _unit = event.IniUnit
     local _group = event.IniGroup
     if _unit:IsHelicopter() or _group:IsHelicopter() then
+      local unitname = event.IniUnitName or "none"
+      self.Loaded_Cargo[unitname] = nil
       self:_RefreshF10Menus()
     end
     -- Herc support
@@ -938,6 +940,7 @@ function CTLD:_EventHandler(EventData)
     -- remove from pilot table
     local unitname = event.IniUnitName or "none"
     self.CtldUnits[unitname] = nil
+    self.Loaded_Cargo[unitname] = nil
   end
   return self
 end
