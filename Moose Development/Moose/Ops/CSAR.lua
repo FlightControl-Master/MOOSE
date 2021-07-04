@@ -70,6 +70,7 @@
 --         self.allowDownedPilotCAcontrol = false -- Set to false if you don\'t want to allow control by Combined Arms.
 --         self.allowFARPRescue = true -- allows pilots to be rescued by landing at a FARP or Airbase. Else MASH only!
 --         self.autosmoke = false -- automatically smoke a downed pilot\'s location when a heli is near.
+--         self.autosmokedistance = 1000 -- distance for autosmoke
 --         self.coordtype = 1 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
 --         self.csarOncrash = false -- (WIP) If set to true, will generate a downed pilot when a plane crashes as well.
 --         self.enableForAI = false -- set to false to disable AI pilots from being rescued.
@@ -240,7 +241,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.6r2"
+CSAR.version="0.1.7r2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -356,6 +357,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.mashprefix = {"MASH"} -- prefixes used to find MASHes
   self.mash = SET_GROUP:New():FilterCoalitions(self.coalition):FilterPrefixes(self.mashprefix):FilterOnce() -- currently only GROUP objects, maybe support STATICs also?
   self.autosmoke = false -- automatically smoke location when heli is near
+  self.autosmokedistance = 1000 -- distance for autosmoke
   -- added 0.1.4
   self.limitmaxdownedpilots = true
   self.maxdownedpilots = 25
@@ -987,7 +989,7 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
         _downedpilot.timestamp = timer.getAbsTime()
         self:__Approach(-5,heliname,woundedgroupname)
       end
-    else
+    elseif _distance >= 3000 and _distance < 5000 then
       self.heliVisibleMessage[_lookupKeyHeli] = nil
       --reschedule as units aren\'t dead yet , schedule for a bit slower though as we\'re far away
       _downedpilot.timestamp = timer.getAbsTime()
@@ -1103,7 +1105,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
   
   local _reset = true
   
-  if (self.autosmoke == true) and (_distance < 500) then
+  if (self.autosmoke == true) and (_distance < self.autosmokedistance) then
       self:_PopSmokeForGroup(_woundedGroupName, _woundedLeader)
   end
   
