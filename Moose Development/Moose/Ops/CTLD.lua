@@ -513,7 +513,7 @@ CTLD.SkipFrequencies = {
   
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.4r1"
+CTLD.version="0.1.4r2"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1073,10 +1073,13 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   -- loop crates needed
   for i=1,number do
     local cratealias = string.format("%s-%d", cratetemplate, math.random(1,100000))
-    local cratedistance = i*4 + 6
+    local cratedistance = i*4 + 8
     if IsHerc then 
       -- wider radius
       cratedistance = i*4 + 12
+    end
+    for i=1,50 do
+      math.random(90,270)
     end
     local rheading = math.floor(math.random(90,270) * heading + 1 / 360)
     if not IsHerc then
@@ -1574,11 +1577,11 @@ function CTLD:_BuildCrates(Group, Unit)
           foundbuilds = true
         else
          buildables[name].Found = buildables[name].Found + 1
-         if buildables[name].Found >= buildables[name].Required then 
+         foundbuilds = true
+        end
+        if buildables[name].Found >= buildables[name].Required then 
            buildables[name].CanBuild = true
            canbuild = true
-         end
-         foundbuilds = true
         end
         --self:T{buildables = buildables})
       end -- end dropped
@@ -1638,7 +1641,7 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build)
   if type == CTLD_CARGO.Enum.VEHICLE then canmove = true end
   local temptable = Build.Template or {}
   local zone = ZONE_GROUP:New(string.format("Unload zone-%s",unitname),Group,100)
-  local randomcoord = zone:GetRandomCoordinate(20,50):GetVec2()
+  local randomcoord = zone:GetRandomCoordinate(35):GetVec2()
   for _,_template in pairs(temptable) do
     self.TroopCounter = self.TroopCounter + 1
     local alias = string.format("%s-%d", _template, math.random(1,100000))
