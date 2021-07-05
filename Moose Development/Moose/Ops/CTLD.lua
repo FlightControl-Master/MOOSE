@@ -367,7 +367,7 @@ do
 --          local points = 5
 --          local PlayerName = Unit:GetPlayerName()
 --          my_scoring:_AddPlayerFromUnit( Unit )
---          scoring:AddGoalScore(Unit, "CTLD", string.format("Pilot %s has been awarded %d points for the construction of Units!", PlayerName, points), points)
+--          my_scoring:AddGoalScore(Unit, "CTLD", string.format("Pilot %s has been awarded %d points for the construction of Units!", PlayerName, points), points)
 --         end
 --  
 -- ## 4. F10 Menu structure
