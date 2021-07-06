@@ -861,7 +861,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
-  
+
   -- Update position.
   self:_UpdatePosition()
 
@@ -1018,7 +1018,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   if self:IsAlive() and self.group:IsAirborne(true) then
 
     local fuelmin=self:GetFuelMin()
-    
+
    self:I(self.lid..string.format("Fuel state=%d", fuelmin))
 
     if fuelmin>=self.fuellowthresh then
@@ -2233,7 +2233,7 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
       allowed=false
       Tsuspend=-20
       local groupspeed = self.group:GetVelocityMPS()
-      if groupspeed<=1 and not self:IsParking() then 
+      if groupspeed<=1 and not self:IsParking() then
         self.RTBRecallCount = self.RTBRecallCount+1
       end
       if self.RTBRecallCount > 6 then
@@ -2768,8 +2768,9 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
     -- Get closest tanker from airwing that can refuel this flight.
     local tanker=self.airwing:GetTankerForFlight(self)
 
-    if tanker then
+    if tanker and self.fuellowrefuel then
 
+      -- Debug message.
       self:I(self.lid..string.format("Send to refuel at tanker %s", tanker.flightgroup:GetName()))
 
       -- Get a coordinate towards the tanker.

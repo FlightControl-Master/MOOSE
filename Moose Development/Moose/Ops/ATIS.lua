@@ -1617,6 +1617,30 @@ function ATIS:onafterBroadcast(From, Event, To)
     -- Scattered 4
     clouddens=4
   elseif cloudspreset:find("RainyPreset") then
+  -- Overcast + Rain
+  clouddens=9
+    if temperature>5 then
+      precepitation=1  -- rain
+    else
+      precepitation=3  -- snow
+    end
+  elseif cloudspreset:find("RainyPreset1") then
+  -- Overcast + Rain
+  clouddens=9
+    if temperature>5 then
+      precepitation=1  -- rain
+    else
+      precepitation=3  -- snow
+    end  
+  elseif cloudspreset:find("RainyPreset2") then
+  -- Overcast + Rain
+  clouddens=9
+    if temperature>5 then
+      precepitation=1  -- rain
+    else
+      precepitation=3  -- snow
+    end
+  elseif cloudspreset:find("RainyPreset3") then
     -- Overcast + Rain
     clouddens=9
     if temperature>5 then

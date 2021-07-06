@@ -18,11 +18,11 @@
 --
 -- ===
 --
--- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original)
+-- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original), Thanks to: Shadowze, Cammel (testing)
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: June 2021
+-- Date: July 2021
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -70,6 +70,7 @@
 --         self.allowDownedPilotCAcontrol = false -- Set to false if you don\'t want to allow control by Combined Arms.
 --         self.allowFARPRescue = true -- allows pilots to be rescued by landing at a FARP or Airbase. Else MASH only!
 --         self.autosmoke = false -- automatically smoke a downed pilot\'s location when a heli is near.
+--         self.autosmokedistance = 1000 -- distance for autosmoke
 --         self.coordtype = 1 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
 --         self.csarOncrash = false -- (WIP) If set to true, will generate a downed pilot when a plane crashes as well.
 --         self.enableForAI = false -- set to false to disable AI pilots from being rescued.
@@ -240,7 +241,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.5r3"
+CSAR.version="0.1.7r2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -290,7 +291,7 @@ function CSAR:New(Coalition, Template, Alias)
     self.alias="Red Cross"  
     if self.coalition then
       if self.coalition==coalition.side.RED then
-        self.alias="Спасение"
+        self.alias="IFRC"
       elseif self.coalition==coalition.side.BLUE then
         self.alias="CSAR"
       end
@@ -356,15 +357,18 @@ function CSAR:New(Coalition, Template, Alias)
   self.mashprefix = {"MASH"} -- prefixes used to find MASHes
   self.mash = SET_GROUP:New():FilterCoalitions(self.coalition):FilterPrefixes(self.mashprefix):FilterOnce() -- currently only GROUP objects, maybe support STATICs also?
   self.autosmoke = false -- automatically smoke location when heli is near
+  self.autosmokedistance = 1000 -- distance for autosmoke
   -- added 0.1.4
   self.limitmaxdownedpilots = true
   self.maxdownedpilots = 25
-  
+  -- generate Frequencies
+  self:_GenerateVHFrequencies()
+    
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
   -- needs SRS => 1.9.6 to work (works on the *server* side)
   self.useSRS = false -- Use FF\'s SRS integration
-  self.SRSPath = "E:\\Program Files\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your server(!)
+  self.SRSPath = "E:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your server(!)
   self.SRSchannel = 300 -- radio channel
   self.SRSModulation = radio.modulation.AM -- modulation
   
@@ -527,15 +531,18 @@ end
 -- @param #CSAR self
 -- @param #number country Country for template.
 -- @param Core.Point#COORDINATE point Coordinate to spawn at.
+-- @param #number frequency Frequency of the pilot's beacon
 -- @return Wrapper.Group#GROUP group The #GROUP object.
 -- @return #string alias The alias name.
-function CSAR:_SpawnPilotInField(country,point)
-  self:T({country,point})
+function CSAR:_SpawnPilotInField(country,point,frequency)
+  self:T({country,point,frequency})
+  local freq = frequency or 1000
+  local freq = freq / 1000 -- kHz
   for i=1,10 do
     math.random(i,10000)
   end
   local template = self.template
-  local alias = string.format("Downed Pilot-%d",math.random(1,10000))
+  local alias = string.format("Pilot %.2fkHz-%d", freq, math.random(1,99))
   local coalition = self.coalition
   local pilotcacontrol = self.allowDownedPilotCAcontrol -- Switch AI on/oof - is this really correct for CA?
   local _spawnedGroup = SPAWN
@@ -545,7 +552,7 @@ function CSAR:_SpawnPilotInField(country,point)
     :InitAIOnOff(pilotcacontrol)
     :InitDelayOff()
     :SpawnFromCoordinate(point)
-  
+
   return _spawnedGroup, alias -- Wrapper.Group#GROUP object
 end
 
@@ -599,18 +606,20 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   self:T({_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description})
 
   local template = self.template
-
-  local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point)
+  
+  if not _freq then
+    _freq = self:_GenerateADFFrequency()
+    if not _freq then _freq = 333000 end --noob catch
+  end 
+  
+  local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point,_freq)
+  
   local _typeName = _typeName or "PoW"
+  
   if not noMessage then
     self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, 10)
     --local m = MESSAGE:New("MAYDAY MAYDAY! " .. _typeName .. " is down. ",10,"INFO"):ToCoalition(self.coalition)
   end
-  
-  if not _freq then
-    _freq = self:_GenerateADFFrequency()
-    if not _freq then _freq = "333.25" end --noob catch
-  end 
   
   if _freq then
     self:_AddBeaconToGroup(_spawnedGroup, _freq)
@@ -654,7 +663,7 @@ function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _
     return
   end
   
-  local _description = _description or "none"
+  local _description = _description or "Unknown"
   
   local pos = {}
   if _randomPoint then
@@ -673,7 +682,7 @@ function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _
     _country = country.id.UN_PEACEKEEPERS
   end
   
-  self:_AddCsar(_coalition, _country, pos, "PoW", "Unknown", nil, freq, _nomessage, _description)
+  self:_AddCsar(_coalition, _country, pos, "PoW", _description, nil, freq, _nomessage, _description)
   
   return self
 end
@@ -813,7 +822,7 @@ function CSAR:_EventHandler(EventData)
       
       -- all checks passed, get going.    
       local _freq = self:_GenerateADFFrequency()
-       self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate()  , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, 0)
+       self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate()  , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, "none")
        
       return true
   
@@ -980,7 +989,7 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
         _downedpilot.timestamp = timer.getAbsTime()
         self:__Approach(-5,heliname,woundedgroupname)
       end
-    else
+    elseif _distance >= 3000 and _distance < 5000 then
       self.heliVisibleMessage[_lookupKeyHeli] = nil
       --reschedule as units aren\'t dead yet , schedule for a bit slower though as we\'re far away
       _downedpilot.timestamp = timer.getAbsTime()
@@ -1096,7 +1105,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
   
   local _reset = true
   
-  if (self.autosmoke == true) and (_distance < 500) then
+  if (self.autosmoke == true) and (_distance < self.autosmokedistance) then
       self:_PopSmokeForGroup(_woundedGroupName, _woundedLeader)
   end
   
@@ -1631,7 +1640,7 @@ function CSAR:_AddMedevacMenuItem()
   for _key, _group in pairs (_allHeliGroups) do  
     local _unit = _group:GetUnit(1) -- Asume that there is only one unit in the flight for players
     if _unit then 
-      if _unit:IsAlive() then         
+      if _unit:IsAlive() and _unit:IsPlayer() then         
         local unitName = _unit:GetName()
             _UnitList[unitName] = unitName
       end -- end isAlive
@@ -1820,10 +1829,11 @@ function CSAR:_RefreshRadioBeacons()
     if self:_CountActiveDownedPilots() > 0 then
       local PilotTable = self.downedPilots
       for _,_pilot in pairs (PilotTable) do
+        self:T({_pilot})
         local pilot = _pilot -- #CSAR.DownedPilot
         local group = pilot.group
-        local frequency = pilot.frequency or 0.0 -- thanks to @Thrud
-        if group:IsAlive() and frequency > 0.0 then
+        local frequency = pilot.frequency or 0 -- thanks to @Thrud
+        if group and group:IsAlive() and frequency > 0 then
           self:_AddBeaconToGroup(group,frequency)
         end
       end
@@ -1880,7 +1890,6 @@ function CSAR:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
-  self:_GenerateVHFrequencies()
   if self.useprefix then
     local prefixes = self.csarPrefix or {}
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefixes):FilterCategoryHelicopter():FilterStart()

@@ -667,8 +667,6 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     self.Players[PlayerName].ThreatLevel = UnitThreatLevel
     self.Players[PlayerName].ThreatType = UnitThreatType
 
-    -- TODO: DCS bug concerning Units with skill level client don't get destroyed in multi player. This logic is deactivated until this bug gets fixed.
-    --[[
     if self.Players[PlayerName].Penalty > self.Fratricide * 0.50 then
       if self.Players[PlayerName].PenaltyWarning < 1 then
         MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than " .. self.Fratricide .. ", you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty,
@@ -684,8 +682,6 @@ function SCORING:_AddPlayerFromUnit( UnitData )
       ):ToAll()
       UnitData:GetGroup():Destroy()
     end
-    --]]
-
   end
 end
 

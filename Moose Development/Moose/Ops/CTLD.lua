@@ -18,7 +18,7 @@
 --
 -- ===
 --
--- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original)
+-- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original), Thanks to: Shadowze, Cammel (testing)
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
@@ -55,10 +55,10 @@ CTLD_CARGO = {
   -- @type CTLD_CARGO.Enum
   -- @field #string Type Type of Cargo.
   CTLD_CARGO.Enum = {
-    VEHICLE = "Vehicle", -- #string vehicles
-    TROOPS = "Troops", -- #string troops
-    FOB = "FOB", -- #string FOB
-    CRATE = "CRATE", -- #string crate
+    ["VEHICLE"] = "Vehicle", -- #string vehicles
+    ["TROOPS"] = "Troops", -- #string troops
+    ["FOB"] = "FOB", -- #string FOB
+    ["CRATE"] = "Crate", -- #string crate
   }
   
   --- Function to create new CTLD_CARGO object.
@@ -260,7 +260,7 @@ do
 -- 
 -- The following options are available (with their defaults). Only set the ones you want changed:
 --
---          my_ctld.useprefix = true -- Adjust *before* starting CTLD. If set to false, *all* choppers of the coalition side will be enabled for CTLD.
+--          my_ctld.useprefix = true -- (DO NOT SWITCH THIS OFF UNLESS YOU KNOW WHAT YOU ARE DOING!) Adjust **before** starting CTLD. If set to false, *all* choppers of the coalition side will be enabled for CTLD.
 --          my_ctld.CrateDistance = 30 -- List and Load crates in this radius only.
 --          my_ctld.maximumHoverHeight = 15 -- Hover max this high to load.
 --          my_ctld.minimumHoverHeight = 4 -- Hover min this low to load.
@@ -300,12 +300,12 @@ do
 -- Activate a zone:
 -- 
 --        -- Activate zone called Name of type #CTLD.CargoZoneType ZoneType:
---        my_ctld:ActivateZone(Name,ZoneType)
+--        my_ctld:ActivateZone(Name,CTLD.CargoZoneType.MOVE)
 -- 
 -- Deactivate a zone:
 -- 
 --        -- Deactivate zone called Name of type #CTLD.CargoZoneType ZoneType:
---        my_ctld:DeactivateZone(Name,ZoneType)
+--        my_ctld:DeactivateZone(Name,CTLD.CargoZoneType.DROP)
 -- 
 -- ## 3. Events
 --
@@ -316,7 +316,7 @@ do
 -- 
 --   This function is called when a player has loaded Troops:
 --
---        function CTLD:OnAfterTroopsPickedUp(From, Event, To, Group, Unit, Cargo)
+--        function my_ctld:OnAfterTroopsPickedUp(From, Event, To, Group, Unit, Cargo)
 --          ... your code here ...
 --        end
 -- 
@@ -324,7 +324,7 @@ do
 -- 
 --    This function is called when a player has picked up crates:
 --
---        function CTLD:OnAfterCratesPickedUp(From, Event, To, Group, Unit, Cargo)
+--        function my_ctld:OnAfterCratesPickedUp(From, Event, To, Group, Unit, Cargo)
 --          ... your code here ...
 --        end
 --  
@@ -332,7 +332,7 @@ do
 --  
 --    This function is called when a player has deployed troops into the field:
 --
---        function CTLD:OnAfterTroopsDeployed(From, Event, To, Group, Unit, Troops)
+--        function my_ctld:OnAfterTroopsDeployed(From, Event, To, Group, Unit, Troops)
 --          ... your code here ...
 --        end
 --  
@@ -340,7 +340,7 @@ do
 --  
 --    This function is called when a player has deployed crates to a DROP zone:
 --
---        function CTLD:OnAfterCratesDropped(From, Event, To, Group, Unit, Cargotable)
+--        function my_ctld:OnAfterCratesDropped(From, Event, To, Group, Unit, Cargotable)
 --          ... your code here ...
 --        end
 --  
@@ -348,9 +348,27 @@ do
 --  
 --    This function is called when a player has build a vehicle or FOB:
 --
---        function CTLD:OnAfterCratesBuild(From, Event, To, Group, Unit, Vehicle)
+--        function my_ctld:OnAfterCratesBuild(From, Event, To, Group, Unit, Vehicle)
 --          ... your code here ...
 --        end
+ --  
+-- ## 3.6 A simple SCORING example:
+--  
+--    To award player with points, using the SCORING Class (SCORING: my_Scoring, CTLD: CTLD_Cargotransport)
+--
+--        function CTLD_Cargotransport:OnAfterCratesDropped(From, Event, To, Group, Unit, Cargotable)
+--            local points = 10
+--            local PlayerName = Unit:GetPlayerName()
+--            my_scoring:_AddPlayerFromUnit( Unit )
+--            my_scoring:AddGoalScore(Unit, "CTLD", string.format("Pilot %s has been awarded %d points for transporting cargo crates!", PlayerName, points), points)
+--        end
+--        
+--        function CTLD_Cargotransport:OnAfterCratesBuild(From, Event, To, Group, Unit, Vehicle)
+--          local points = 5
+--          local PlayerName = Unit:GetPlayerName()
+--          my_scoring:_AddPlayerFromUnit( Unit )
+--          my_scoring:AddGoalScore(Unit, "CTLD", string.format("Pilot %s has been awarded %d points for the construction of Units!", PlayerName, points), points)
+--         end
 --  
 -- ## 4. F10 Menu structure
 -- 
@@ -395,7 +413,7 @@ do
 -- 
 -- Also, the following options need to be set to `true`:
 -- 
---              my_ctld.useprefix = true -- this is true by default
+--              my_ctld.useprefix = true -- this is true by default and MUST BE ON. 
 -- 
 -- Standard transport capabilities as per the real Hercules are:
 -- 
@@ -513,7 +531,7 @@ CTLD.SkipFrequencies = {
   
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.2b1"
+CTLD.version="0.1.3r2"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -745,6 +763,28 @@ end
 -- Helper and User Functions
 ------------------------------------------------------------------- 
 
+--- (Internal) Function to get capabilities of a chopper
+-- @param #CTLD self
+-- @param Wrapper.Unit#UNIT Unit The unit
+-- @return #table Capabilities Table of caps
+function CTLD:_GetUnitCapabilities(Unit)
+  self:T(self.lid .. " _GetUnitCapabilities")
+  local _unit = Unit -- Wrapper.Unit#UNIT
+  local unittype = _unit:GetTypeName()
+  local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+  if not capabilities or capabilities == {} then
+    -- e.g. ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0},
+    capabilities = {}
+    capabilities.troops = false
+    capabilities.crates = false
+    capabilities.cratelimit = 0
+    capabilities.trooplimit = 0
+    capabilities.type = "generic"
+  end
+  return capabilities
+end
+
+
 --- (Internal) Function to generate valid UHF Frequencies
 -- @param #CTLD self
 function CTLD:_GenerateUHFrequencies()
@@ -904,6 +944,8 @@ function CTLD:_EventHandler(EventData)
     local _unit = event.IniUnit
     local _group = event.IniGroup
     if _unit:IsHelicopter() or _group:IsHelicopter() then
+      local unitname = event.IniUnitName or "none"
+      self.Loaded_Cargo[unitname] = nil
       self:_RefreshF10Menus()
     end
     -- Herc support
@@ -916,6 +958,7 @@ function CTLD:_EventHandler(EventData)
     -- remove from pilot table
     local unitname = event.IniUnitName or "none"
     self.CtldUnits[unitname] = nil
+    self.Loaded_Cargo[unitname] = nil
   end
   return self
 end
@@ -963,7 +1006,8 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   --self:Tself.lid .. string.format("Troops %s requested", cratename))
   -- see if this heli can load troops
   local unittype = unit:GetTypeName()
-  local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+  --local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+  local capabilities = self:_GetUnitCapabilities(Unit)
   local cantroops = capabilities.troops -- #boolean
   local trooplimit = capabilities.trooplimit -- #number
   local troopsize = cargotype:GetCratesNeeded() -- #number
@@ -984,8 +1028,11 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
     --local m = MESSAGE:New("Sorry, we\'re crammed already!",10,"CTLD",true):ToGroup(group)
     return
   else
+    self.CargoCounter = self.CargoCounter + 1
+    local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, CTLD_CARGO.Enum.TROOPS, true, true, Cargotype.CratesNeeded)
+    self:T({cargotype=loadcargotype})
     loaded.Troopsloaded = loaded.Troopsloaded + troopsize
-    table.insert(loaded.Cargo,Cargotype)
+    table.insert(loaded.Cargo,loadcargotype)
     self.Loaded_Cargo[unitname] = loaded
     self:_SendMessage("Troops boarded!", 10, false, Group)
     --local m = MESSAGE:New("Troops boarded!",10,"CTLD",true):ToGroup(group)
@@ -1006,12 +1053,12 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   local cgoname = Cargo:GetName()
   --self:T{cgoname, number, drop})
     -- check if we are in LOAD zone
-  local inzone = true
-  
-  if drop then 
-    local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.DROP)
+  local inzone = false 
+  local drop = drop or false
+  if not drop then 
+    inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
   else
-    local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
+    inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.DROP)
   end
   
   if not inzone then
@@ -1021,7 +1068,8 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   end
   
   -- avoid crate spam
-  local capabilities = self.UnitTypes[Unit:GetTypeName()] -- #CTLD.UnitCapabilities
+  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
+  --local capabilities = self.UnitTypes[Unit:GetTypeName()] -- #CTLD.UnitCapabilities
   local canloadcratesno = capabilities.cratelimit
   local loaddist = self.CrateDistance or 30
   local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist)
@@ -1046,10 +1094,13 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   -- loop crates needed
   for i=1,number do
     local cratealias = string.format("%s-%d", cratetemplate, math.random(1,100000))
-    local cratedistance = i*4 + 6
+    local cratedistance = i*4 + 8
     if IsHerc then 
       -- wider radius
       cratedistance = i*4 + 12
+    end
+    for i=1,50 do
+      math.random(90,270)
     end
     local rheading = math.floor(math.random(90,270) * heading + 1 / 360)
     if not IsHerc then
@@ -1183,7 +1234,8 @@ function CTLD:_LoadCratesNearby(Group, Unit)
   local unitname = unit:GetName()
   -- see if this heli can load crates
   local unittype = unit:GetTypeName()
-  local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+  local capabilities = self:_GetUnitCapabilities(Unit)
+  --local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
   local cancrates = capabilities.crates -- #boolean
   local cratelimit = capabilities.cratelimit -- #number
   local grounded = not self:IsUnitInAir(Unit)
@@ -1284,9 +1336,10 @@ function CTLD:_ListCargo(Group, Unit)
   self:T(self.lid .. " _ListCargo")
   local unitname = Unit:GetName()
   local unittype = Unit:GetTypeName()
-  local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
+  --local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
   local trooplimit = capabilities.trooplimit -- #boolean
-  local cratelimit = capabilities.cratelimit -- #numbe
+  local cratelimit = capabilities.cratelimit -- #number
   local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
   if self.Loaded_Cargo[unitname] then
     local no_troops = loadedcargo.Troopsloaded or 0
@@ -1545,13 +1598,13 @@ function CTLD:_BuildCrates(Group, Unit)
           foundbuilds = true
         else
          buildables[name].Found = buildables[name].Found + 1
-         if buildables[name].Found >= buildables[name].Required then 
-           buildables[name].CanBuild = true
-           canbuild = true
-         end
          foundbuilds = true
         end
-        --self:T{buildables = buildables})
+        if buildables[name].Found >= buildables[name].Required then 
+           buildables[name].CanBuild = true
+           canbuild = true
+        end
+        self:T({buildables = buildables})
       end -- end dropped
     end -- end crate loop
     -- ok let\'s list what we have
@@ -1609,7 +1662,7 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build)
   if type == CTLD_CARGO.Enum.VEHICLE then canmove = true end
   local temptable = Build.Template or {}
   local zone = ZONE_GROUP:New(string.format("Unload zone-%s",unitname),Group,100)
-  local randomcoord = zone:GetRandomCoordinate(20,50):GetVec2()
+  local randomcoord = zone:GetRandomCoordinate(35):GetVec2()
   for _,_template in pairs(temptable) do
     self.TroopCounter = self.TroopCounter + 1
     local alias = string.format("%s-%d", _template, math.random(1,100000))
@@ -1715,11 +1768,13 @@ function CTLD:_RefreshF10Menus()
   -- rebuild units table
   local _UnitList = {}
   for _key, _group in pairs (PlayerTable) do  
-    local _unit = _group:GetUnit(1) -- Asume that there is only one unit in the flight for players
+    local _unit = _group:GetUnit(1) -- Wrapper.Unit#UNIT Asume that there is only one unit in the flight for players
     if _unit then 
-      if _unit:IsAlive() then         
-        local unitName = _unit:GetName()
-            _UnitList[unitName] = unitName
+      if _unit:IsAlive() and _unit:IsPlayer() then
+        if _unit:IsHelicopter() or (_unit:GetTypeName() == "Hercules" and self.enableHercules) then --ensure no stupid unit entries here
+          local unitName = _unit:GetName()
+          _UnitList[unitName] = unitName
+        end    
       end -- end isAlive
     end -- end if _unit
   end -- end for
@@ -1737,7 +1792,8 @@ function CTLD:_RefreshF10Menus()
         if _group then
           -- get chopper capabilities
           local unittype = _unit:GetTypeName()
-          local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+          local capabilities = self:_GetUnitCapabilities(_unit) -- #CTLD.UnitCapabilities
+          --local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
           local cantroops = capabilities.troops
           local cancrates = capabilities.crates
           -- top menu
@@ -1790,8 +1846,8 @@ function CTLD:_RefreshF10Menus()
 
 --- User function - Add *generic* troop type loadable as cargo. This type will load directly into the heli without crates.
 -- @param #CTLD self
--- @param #Name Name Unique name of this type of troop. E.g. "Anti-Air Small".
--- @param #Table Templates Table of #string names of late activated Wrapper.Group#GROUP making up this troop.
+-- @param #string Name Unique name of this type of troop. E.g. "Anti-Air Small".
+-- @param #table Templates Table of #string names of late activated Wrapper.Group#GROUP making up this troop.
 -- @param #CTLD_CARGO.Enum Type Type of cargo, here TROOPS - these will move to a nearby destination zone when dropped/build.
 -- @param #number NoTroops Size of the group in number of Units across combined templates (for loading).
 function CTLD:AddTroopsCargo(Name,Templates,Type,NoTroops)
@@ -1805,8 +1861,8 @@ end
 
 --- User function - Add *generic* crate-type loadable as cargo. This type will create crates that need to be loaded, moved, dropped and built.
 -- @param #CTLD self
--- @param #Name Name Unique name of this type of cargo. E.g. "Humvee".
--- @param #Table Templates Table of #string names of late activated Wrapper.Group#GROUP building this cargo.
+-- @param #string Name Unique name of this type of cargo. E.g. "Humvee".
+-- @param #table Templates Table of #string names of late activated Wrapper.Group#GROUP building this cargo.
 -- @param #CTLD_CARGO.Enum Type Type of cargo. I.e. VEHICLE or FOB. VEHICLE will move to destination zones when dropped/build, FOB stays put.
 -- @param #number NoCrates Number of crates needed to build this cargo.
 function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates)
@@ -2315,7 +2371,8 @@ end
     local unittype = Unit:GetTypeName()
     local unitname = Unit:GetName()
     local Group = Unit:GetGroup()
-    local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+    local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
+    --local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
     local cancrates = capabilities.crates -- #boolean
     local cratelimit = capabilities.cratelimit -- #number
     if cancrates then
@@ -2360,7 +2417,7 @@ end
   -- @return #CTLD self
   function CTLD:onafterStart(From, Event, To)
     self:T({From, Event, To})
-    if self.useprefix then
+    if self.useprefix or self.enableHercules then
       local prefix = self.prefixes
       --self:T{prefix=prefix})
       if self.enableHercules then
@@ -2368,11 +2425,11 @@ end
         self.PilotGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefix):FilterStart()
       else
         --self:T("CTLD with prefixes NO Hercules")
-        self.PilotGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefix):FilterCategoryHelicopter():FilterStart()
+        self.PilotGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefix):FilterCategories("helicopter"):FilterStart()
       end
     else
       --self:T("CTLD NO prefixes NO Hercules")
-      self.PilotGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterCategoryHelicopter():FilterStart()
+      self.PilotGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterCategories("helicopter"):FilterStart()
     end
     -- Events
     self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
