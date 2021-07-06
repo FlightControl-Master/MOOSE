@@ -55,10 +55,10 @@ CTLD_CARGO = {
   -- @type CTLD_CARGO.Enum
   -- @field #string Type Type of Cargo.
   CTLD_CARGO.Enum = {
-    VEHICLE = "Vehicle", -- #string vehicles
-    TROOPS = "Troops", -- #string troops
-    FOB = "FOB", -- #string FOB
-    CRATE = "CRATE", -- #string crate
+    ["VEHICLE"] = "Vehicle", -- #string vehicles
+    ["TROOPS"] = "Troops", -- #string troops
+    ["FOB"] = "FOB", -- #string FOB
+    ["CRATE"] = "Crate", -- #string crate
   }
   
   --- Function to create new CTLD_CARGO object.
@@ -513,7 +513,7 @@ CTLD.SkipFrequencies = {
   
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.4r2"
+CTLD.version="0.1.3r2"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1010,8 +1010,11 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
     --local m = MESSAGE:New("Sorry, we\'re crammed already!",10,"CTLD",true):ToGroup(group)
     return
   else
+    self.CargoCounter = self.CargoCounter + 1
+    local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, CTLD_CARGO.Enum.TROOPS, true, true, Cargotype.CratesNeeded)
+    self:T({cargotype=loadcargotype})
     loaded.Troopsloaded = loaded.Troopsloaded + troopsize
-    table.insert(loaded.Cargo,Cargotype)
+    table.insert(loaded.Cargo,loadcargotype)
     self.Loaded_Cargo[unitname] = loaded
     self:_SendMessage("Troops boarded!", 10, false, Group)
     --local m = MESSAGE:New("Troops boarded!",10,"CTLD",true):ToGroup(group)
@@ -1583,7 +1586,7 @@ function CTLD:_BuildCrates(Group, Unit)
            buildables[name].CanBuild = true
            canbuild = true
         end
-        --self:T{buildables = buildables})
+        self:T({buildables = buildables})
       end -- end dropped
     end -- end crate loop
     -- ok let\'s list what we have

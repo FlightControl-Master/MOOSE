@@ -663,7 +663,7 @@ function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _
     return
   end
   
-  local _description = _description or "none"
+  local _description = _description or "Unknown"
   
   local pos = {}
   if _randomPoint then
@@ -682,7 +682,7 @@ function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _
     _country = country.id.UN_PEACEKEEPERS
   end
   
-  self:_AddCsar(_coalition, _country, pos, "PoW", "Unknown", nil, freq, _nomessage, _description)
+  self:_AddCsar(_coalition, _country, pos, "PoW", _description, nil, freq, _nomessage, _description)
   
   return self
 end
