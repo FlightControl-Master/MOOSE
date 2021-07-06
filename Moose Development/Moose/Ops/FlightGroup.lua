@@ -53,8 +53,6 @@
 -- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
 -- @field #table menu F10 radio menu.
 -- @field #string controlstatus Flight control status.
--- @field #number callsignName Callsign name.
--- @field #number callsignNumber Callsign number.
 -- @field #boolean despawnAfterLanding If true, group is despawned after landed at an airbase.
 -- @field #number RTBRecallCount Number that counts RTB calls.
 --
@@ -2949,7 +2947,6 @@ function FLIGHTGROUP:_InitGroup()
   end
   self.callsign.NumberSquad=callsign[1]
   self.callsign.NumberGroup=callsign[2]
-  self.callsign.NumberElement=callsign[3]  -- First element only
   self.callsign.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
 
   -- Set default formation.

@@ -100,6 +100,8 @@
 --
 -- @field #OPSGROUP.Callsign callsign Current callsign settings.
 -- @field #OPSGROUP.Callsign callsignDefault Default callsign settings.
+-- @field #string callsignName Callsign name.
+-- @field #string callsignAlias Callsign alias.
 --
 -- @field #OPSGROUP.Spot spot Laser and IR spot.
 --
@@ -118,6 +120,9 @@
 -- @field #number cargocounter Running number of cargo UIDs.
 -- @field #OPSGROUP.CarrierLoader carrierLoader Carrier loader parameters.
 -- @field #OPSGROUP.CarrierLoader carrierUnloader Carrier unloader parameters.
+-- 
+-- @field #boolean useSRS Use SRS for transmissions.
+-- @field Sound.SRS#MSRS msrs MOOSE SRS wrapper.
 --
 -- @extends Core.Fsm#FSM
 
@@ -309,9 +314,7 @@ OPSGROUP.TaskType={
 -- @type OPSGROUP.Callsign
 -- @field #number NumberSquad Squadron number corresponding to a name like "Uzi".
 -- @field #number NumberGroup Group number. First number after name, e.g. "Uzi-**1**-1".
--- @field #number NumberElement Element number.Second number after name, e.g. "Uzi-1-**1**"
 -- @field #string NameSquad Name of the squad, e.g. "Uzi".
--- @field #string NameElement Name of group element, e.g. Uzi 11.
 
 --- Option data.
 -- @type OPSGROUP.Option
@@ -1468,6 +1471,53 @@ function OPSGROUP:SelfDestruction(Delay, ExplosionPower)
         unit:Explode(ExplosionPower or 100)
       end
     end
+  end
+
+  return self
+end
+
+--- Use SRS Simple-Text-To-Speech for transmissions.
+-- @param #OPSGROUP self
+-- @param #string PathToSRS Path to SRS directory.
+-- @param #string Gender Gender: "male" or "female" (default).
+-- @param #string Culture Culture, e.g. "en-GB" (default).
+-- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
+-- @param #number Port SRS port. Default 5002.
+-- @return #OPSGROUP self
+function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port)
+  self.useSRS=true
+  self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
+  self.msrs:SetGender(Gender)
+  self.msrs:SetCulture(Culture)
+  self.msrs:SetVoice(Voice)
+  self.msrs:SetPort(Port)
+  self.msrs:SetCoalition(self:GetCoalition())
+  return self
+end
+
+--- Send a radio transmission via SRS Text-To-Speech.
+-- @param #OPSGROUP self
+-- @param #string Text Text of transmission.
+-- @param #number Delay Delay in seconds before the transmission is started.
+-- @return #OPSGROUP self
+function OPSGROUP:RadioTransmission(Text, Delay)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.RadioTransmission, self, Text, 0)
+  else
+
+    if self.useSRS and self.msrs then
+      
+      local freq, modu, radioon=self:GetRadio()
+    
+      self.msrs:SetFrequencies(freq)
+      self.msrs:SetModulations(modu)
+      
+      self:I(self.lid..string.format("Radio transmission on %.3f MHz %s: %s", freq, UTILS.GetModulationName(modu), Text))
+    
+      self.msrs:PlayText(Text) 
+    end
+    
   end
 
   return self
@@ -3326,6 +3376,9 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
 
   -- Set group mission status to STARTED.
   Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.STARTED)
+  
+  -- 
+
 
   -- Set mission status to STARTED.
   Mission:__Started(3)
@@ -7941,13 +7994,14 @@ end
 --- Set default callsign.
 -- @param #OPSGROUP self
 -- @param #number CallsignName Callsign name.
--- @param #number CallsignNumber Callsign number.
+-- @param #number CallsignNumber Callsign number. Default 1.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
 
-  self.callsignDefault={}
+  self.callsignDefault={} --#OPSGROUP.Callsign
   self.callsignDefault.NumberSquad=CallsignName
   self.callsignDefault.NumberGroup=CallsignNumber or 1
+  self.callsignDefault.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
 
   return self
 end
@@ -7963,6 +8017,7 @@ function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
 
     -- Set default callsign. We switch to this when group is spawned.
     self:SetDefaultCallsign(CallsignName, CallsignNumber)
+    --self.callsign=UTILS.DeepCopy(self.callsignDefault)
 
   elseif self:IsAlive() then
 
@@ -7978,9 +8033,21 @@ function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
 
     -- Give command to change the callsign.
     self.group:CommandSetCallsign(self.callsign.NumberSquad, self.callsign.NumberGroup)
+    
+    -- Callsign of the group, e.g. Colt-1
+    self.callsignName=UTILS.GetCallsignName(self.callsign.NumberSquad).."-"..self.callsign.NumberGroup
+    self.callsign.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
+    
+    -- Set callsign of elements.    
+    for _,_element in pairs(self.elements) do
+      local element=_element --#OPSGROUP.Element
+      if element.status~=OPSGROUP.ElementStatus.DEAD then
+        element.callsign=element.unit:GetCallsign()
+      end
+    end
 
   else
-    --TODO: Error
+    self:E(self.lid.."ERROR: Group is not alive and not in utero! Cannot switch callsign")
   end
 
   return self
@@ -8815,10 +8882,10 @@ function OPSGROUP:_AddElementByName(unitname)
 
   if unit then
 
-    -- TODO: this is wrong when grouping is used!
+    -- Get unit template.
     local unittemplate=unit:GetTemplate()
 
-
+    -- Element table.
     local element={} --#OPSGROUP.Element
 
     -- Name and status.
@@ -8828,7 +8895,10 @@ function OPSGROUP:_AddElementByName(unitname)
     -- Unit and group.
     element.unit=unit
     element.DCSunit=Unit.getByName(unitname)
+    element.gid=element.DCSunit:getNumber()
+    element.uid=element.DCSunit:getID()
     element.group=unit:GetGroup()
+    element.opsgroup=self
 
     -- Skill etc.
     element.skill=unittemplate.skill or "Unknown"
@@ -8841,11 +8911,10 @@ function OPSGROUP:_AddElementByName(unitname)
 
     -- Descriptors and type/category.
     element.descriptors=unit:GetDesc()
-    --self:I({desc=element.descriptors})
-
     element.category=unit:GetUnitCategory()
     element.categoryname=unit:GetCategoryName()
     element.typename=unit:GetTypeName()
+    --self:I({desc=element.descriptors})
 
     -- Ammo.
     element.ammo0=self:GetAmmoUnit(unit, false)
@@ -8880,6 +8949,7 @@ function OPSGROUP:_AddElementByName(unitname)
     unit:SetCargoBayWeightLimit()
     element.weightMaxCargo=unit.__.CargoBayWeightLimit
     
+    -- Cargo bay (empty).
     element.cargoBay={}
 
     -- FLIGHTGROUP specific.
@@ -8891,6 +8961,14 @@ function OPSGROUP:_AddElementByName(unitname)
       element.fuelmass0=unittemplate.payload and unittemplate.payload.fuel or 0
       element.fuelmass=element.fuelmass0
       element.fuelrel=element.unit:GetFuel()
+    else
+      element.callsign="Peter-1-1"
+      element.modex="000"
+      element.payload={}
+      element.pylons={}
+      element.fuelmass0=99999
+      element.fuelmass =99999
+      element.fuelrel=1
     end
 
     -- Debug text.
@@ -8898,11 +8976,6 @@ function OPSGROUP:_AddElementByName(unitname)
     element.name, element.status, element.skill, element.life, element.life0, element.categoryname, element.category, element.typename,
     element.size, element.length, element.height, element.width, element.weight, element.weightMaxTotal, element.weightCargo, element.weightMaxCargo)
     self:T(self.lid..text)
-
-    -- Debug text.
-    --local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f (%d), category=%d, categoryname=%s, callsign=%s, ai=%s",
-    --element.name, element.status, element.skill, element.modex, element.fuelmass, element.fuelrel*100, element.category, element.categoryname, element.callsign, tostring(element.ai))
-    --self:T(self.lid..text)
 
     -- Add element to table.
     table.insert(self.elements, element)
