@@ -2757,8 +2757,9 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
     -- Get closest tanker from airwing that can refuel this flight.
     local tanker=self.airwing:GetTankerForFlight(self)
 
-    if tanker then
+    if tanker and self.fuellowrefuel then
     
+      -- Debug message.
       self:I(self.lid..string.format("Send to refuel at tanker %s", tanker.flightgroup:GetName()))
       
       -- Get a coordinate towards the tanker.
