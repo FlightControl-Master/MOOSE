@@ -802,10 +802,11 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup OPSGROUP that was loaded into a carrier.
--- @param Ops.OpsGroup#OPSGROUP.Element Carrier Carrier element.
-function OPSTRANSPORT:onafterLoaded(From, Event, To, OpsGroup, Carrier)
-  self:I(self.lid..string.format("Loaded OPSGROUP %s into carrier %s", OpsGroup:GetName(), tostring(Carrier.name)))
+-- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo OPSGROUP that was loaded into a carrier.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier OPSGROUP that was loaded into a carrier.
+-- @param Ops.OpsGroup#OPSGROUP.Element CarrierElement Carrier element.
+function OPSTRANSPORT:onafterLoaded(From, Event, To, OpsGroupCargo, OpsGroupCarrier, CarrierElement)
+  self:I(self.lid..string.format("Loaded OPSGROUP %s into carrier %s", OpsGroupCargo:GetName(), tostring(CarrierElement.name)))
 end
 
 --- On after "Unloaded" event.
@@ -813,9 +814,10 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroup OPSGROUP that was unloaded from a carrier.
-function OPSTRANSPORT:onafterUnloaded(From, Event, To, OpsGroup)
-  self:I(self.lid..string.format("Unloaded OPSGROUP %s", OpsGroup:GetName()))
+-- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo OPSGROUP that was unloaded from a carrier.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier Carrier OPSGROUP that unloaded the cargo.
+function OPSTRANSPORT:onafterUnloaded(From, Event, To, OpsGroupCargo, OpsGroupCarrier)
+  self:I(self.lid..string.format("Unloaded OPSGROUP %s", OpsGroupCargo:GetName()))
 end
 
 --- On after "DeadCarrierGroup" event.
