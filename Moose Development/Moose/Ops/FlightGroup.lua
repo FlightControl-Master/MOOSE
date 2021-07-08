@@ -2396,7 +2396,7 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   -- Set holding flag to 0=false.
   self.flaghold:Set(0)
 
-  local holdtime=5*60
+  local holdtime=1*60
   if fc or self.airboss then
     holdtime=nil
   end

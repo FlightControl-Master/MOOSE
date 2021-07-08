@@ -1713,24 +1713,28 @@ end
 -- @param #OPSGROUP self
 -- @return #boolean If true, group is not spawned yet.
 function OPSGROUP:IsInUtero()
-  return self:Is("InUtero")
+  local is=self:Is("InUtero")
+  return is
 end
 
 --- Check if group is in state spawned.
 -- @param #OPSGROUP self
 -- @return #boolean If true, group is spawned.
 function OPSGROUP:IsSpawned()
-  return self:Is("Spawned")
+  local is=self:Is("Spawned")
+  return is
 end
 
 --- Check if group is dead.
 -- @param #OPSGROUP self
 -- @return #boolean If true, all units/elements of the group are dead.
 function OPSGROUP:IsDead()
+  --env.info("FF IsDead")
   if self.isDead then
     return true
   else
-    return self:Is("Dead")
+    local is=self:Is("Dead")
+    return is
   end
 end
 
@@ -1745,7 +1749,8 @@ end
 -- @param #OPSGROUP self
 -- @return #boolean If true, FSM state is stopped.
 function OPSGROUP:IsStopped()
-  return self:Is("Stopped")
+  local is=self:Is("Stopped")
+  return is
 end
 
 --- Check if this group is currently "uncontrolled" and needs to be "started" to begin its route.
@@ -1781,14 +1786,16 @@ end
 -- @param #OPSGROUP self
 -- @return #boolean If true, group is retreating.
 function OPSGROUP:IsRetreating()
-  return self:is("Retreating")
+  local is=self:is("Retreating")
+  return is
 end
 
 --- Check if the group is engaging another unit or group.
 -- @param #OPSGROUP self
 -- @return #boolean If true, group is engaging.
 function OPSGROUP:IsEngaging()
-  return self:is("Engaging")
+  local is=self:is("Engaging")
+  return is
 end
 
 --- Check if the group is not a carrier yet.
@@ -2358,7 +2365,7 @@ function OPSGROUP:OnEventBirth(EventData)
         self.destbase=self.homebase
       end
 
-      self:I(self.lid..string.format("EVENT: Element %s born at airbase %s ==> spawned", unitname, self.homebase and self.homebase:GetName() or "unknown"))
+      self:I(self.lid..string.format("EVENT: Element %s born at airbase %s ==> spawned", unitname, self.currbase and self.currbase:GetName() or "unknown"))
     else
       self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", unitname))
     end
