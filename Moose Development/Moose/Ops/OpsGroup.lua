@@ -4675,7 +4675,8 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     self:ScheduleOnce(Delay, OPSGROUP._Respawn, self, 0, Template, Reset)
   else
 
-    self:I(self.lid.."FF _Respawn")
+    -- Debug message.
+    self:T2(self.lid.."FF _Respawn")
 
     -- Given template or get old.
     Template=Template or UTILS.DeepCopy(self.template)
@@ -5612,7 +5613,7 @@ end
 -- @param #OPSGROUP self
 -- @return #OPSGROUP self
 function OPSGROUP:_RemoveMyCarrier()
-  self:I(self.lid..string.format("Removing my carrier!"))
+  self:T(self.lid..string.format("Removing my carrier!"))
   self.mycarrier.group=nil
   self.mycarrier.element=nil
   self.mycarrier.reserved=nil
@@ -5723,16 +5724,50 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
       -- Navy Group
 
-      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid) ; waypoint.detour=true
+      local cwp=self:GetWaypointCurrent()
+      local uid=cwp and cwp.uid or nil
 
+      -- Get a (random) pre-defined transport path.
+      local path=self.cargoTransport:_GetPathPickup()
+
+      if path then
+        -- Loop over coordinates.
+        for i,coordinate in pairs(path) do
+          local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
+          uid=waypoint.uid
+          --coordinate:MarkToAll(string.format("Path i=%d, UID=%d", i, uid))
+        end
+      end
+
+      -- NAVYGROUP
+      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=true
+
+      -- Give cruise command.
       self:__Cruise(-2)
+
 
     elseif self.isArmygroup then
 
       -- Army Group
 
-      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid) ; waypoint.detour=true
+      local cwp=self:GetWaypointCurrent()
+      local uid=cwp and cwp.uid or nil
 
+      -- Get a (random) pre-defined transport path.
+      local path=self.cargoTransport:_GetPathPickup()
+
+      if path then
+        -- Loop over coordinates.
+        for i,coordinate in pairs(path) do
+          local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
+          uid=waypoint.uid
+          --coordinate:MarkToAll(string.format("Path i=%d, UID=%d", i, uid))
+        end
+      end
+
+      -- ARMYGROUP
+      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=true
+      
       self:__Cruise(-2)
 
     end
@@ -5883,7 +5918,7 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
     
     -- Trigger "Loaded" event for current cargo transport.
     if self.cargoTransport then
-      self.cargoTransport:Loaded(CargoGroup, carrier)
+      self.cargoTransport:Loaded(CargoGroup, self, carrier)
     else
       self:E(self.lid..string.format("WARNING: Loaded cargo but no current OPSTRANSPORT assignment!"))
     end
@@ -6034,15 +6069,18 @@ function OPSGROUP:onafterTransport(From, Event, To)
 
     elseif self.isArmygroup then
 
+      local cwp=self:GetWaypointCurrent()
+      local uid=cwp and cwp.uid or nil
+
       local path=self.cargoTransport:_GetPathTransport()
+      
       if path then
-
-        for _,_zone in pairs(path.zones:GetSet()) do
-          local zone=_zone --Core.Zone#ZONE
-          local coordinate=zone:GetRandomCoordinate(nil, nil, nil)  --TODO: surface type land
-          local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, self:GetWaypointCurrent().uid) ; waypoint.temp=true
+        -- Loop over coordinates.
+        for i,coordinate in pairs(path) do
+          local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
+          uid=waypoint.uid
+          --coordinate:MarkToAll(string.format("Path i=%d, UID=%d", i, uid))
         end
-
       end
 
       -- ARMYGROUP
@@ -6060,12 +6098,11 @@ function OPSGROUP:onafterTransport(From, Event, To)
       local path=self.cargoTransport:_GetPathTransport()
 
       if path then
-        -- Loop over zones
+        -- Loop over coordinates.
         for i,coordinate in pairs(path) do
-          local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid)
-          waypoint.temp=true
+          local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
           uid=waypoint.uid
-          coordinate:MarkToAll(string.format("Path i=%d, UID=%d", i, uid))
+          --coordinate:MarkToAll(string.format("Path i=%d, UID=%d", i, uid))
         end
       end
 
@@ -6184,7 +6221,7 @@ function OPSGROUP:onafterUnloading(From, Event, To)
           end
 
           -- Trigger "Unloaded" event for current cargo transport
-          self.cargoTransport:Unloaded(cargo.opsgroup)
+          self.cargoTransport:Unloaded(cargo.opsgroup, self)
 
         end
 
@@ -7236,7 +7273,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
 
     -- Debug message.
     local text=string.format("Group passing waypoint uid=%d", uid)
-    opsgroup:I(opsgroup.lid..text)
+    opsgroup:T(opsgroup.lid..text)
 
     -- Trigger PassingWaypoint event.
     if waypoint.temp then

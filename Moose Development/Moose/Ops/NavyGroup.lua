@@ -1287,7 +1287,7 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
       local los=LoS(x)
       
       -- Debug message.
-      self:I(self.lid..string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
+      self:T(self.lid..string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
       
       if los and d<=eps then
         return x

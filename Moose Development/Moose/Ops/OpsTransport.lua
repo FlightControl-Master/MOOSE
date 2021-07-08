@@ -50,7 +50,8 @@
 -- @field #number Ncargo Total number of cargo groups.
 -- @field #number Ncarrier Total number of assigned carriers.
 -- @field #number Ndelivered Total number of cargo groups delivered.
--- @field #table pathsTransport Paths of `#OPSGROUP.Path`. 
+-- @field #table pathsTransport Transport paths of `#OPSGROUP.Path`. 
+-- @field #table pathsPickup Pickup paths of `#OPSGROUP.Path`.
 -- @extends Core.Fsm#FSM
 
 --- *Victory is the beautiful, bright-colored flower. Transport is the stem without which it could never have blossomed.* -- Winston Churchill
@@ -78,6 +79,7 @@ OPSTRANSPORT = {
   carrierTransportStatus = {},
   conditionStart  =  {},
   pathsTransport  =  {},
+  pathsPickup     =  {},
   requiredCargos  =  {},
 }
 
@@ -203,7 +205,7 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet)
     -- We got a single GROUP or OPSGROUP object.
     local cargo=self:_CreateCargoGroupData(GroupSet)
     
-    if cargo  then --and self:CanCargo(cargo.opsgroup)
+    if cargo  then
       table.insert(self.cargos, cargo)
       self.Ncargo=self.Ncargo+1
     end
@@ -530,10 +532,11 @@ end
 --- Add path used for transportation from the pickup to the deploy zone. If multiple paths are defined, a random one is chosen.
 -- @param #OPSTRANSPORT self
 -- @param Wrapper.Group#GROUP PathGroup A (late activated) GROUP defining a transport path by their waypoints.
+-- @param #boolean Reversed If `true`, add waypoints of group in reversed order.
 -- @param #number Radius Randomization radius in meters. Default 0 m.
 -- @param #number Altitude Altitude in feet AGL. Only for aircraft.
 -- @return #OPSTRANSPORT self
-function OPSTRANSPORT:AddPathTransport(PathGroup, Radius, Altitude)
+function OPSTRANSPORT:AddPathTransport(PathGroup, Reversed, Radius, Altitude)
 
   local path={} --#OPSTRANSPORT.Path
   path.coords={}
@@ -543,10 +546,20 @@ function OPSTRANSPORT:AddPathTransport(PathGroup, Radius, Altitude)
   -- Get route points.  
   local waypoints=PathGroup:GetTaskRoute()
   
-  for _,wp in pairs(waypoints) do
-    local coord=COORDINATE:New(wp.x, wp.alt, wp.y)
-    table.insert(path.coords, coord)
+  if Reversed then
+    for i=#waypoints,1,-1 do
+      local wp=waypoints[i]
+      local coord=COORDINATE:New(wp.x, wp.alt, wp.y)
+      table.insert(path.coords, coord)    
+    end
+  else
+    for i=1,#waypoints do
+      local wp=waypoints[i]
+      local coord=COORDINATE:New(wp.x, wp.alt, wp.y)
+      table.insert(path.coords, coord)    
+    end  
   end
+
 
   -- Add path.
   table.insert(self.pathsTransport, path)
@@ -563,6 +576,69 @@ function OPSTRANSPORT:_GetPathTransport()
   
     -- Get a random path for transport.
     local path=self.pathsTransport[math.random(#self.pathsTransport)] --#OPSTRANSPORT.Path
+
+    
+    local coordinates={}
+    for _,coord in ipairs(path.coords) do
+    
+      -- TODO: Add randomization.
+    
+      table.insert(coordinates, coord)
+    end
+        
+    return coordinates
+  end
+
+  return nil
+end
+
+
+--- Add path used to go to the pickup zone. If multiple paths are defined, a random one is chosen.
+-- @param #OPSTRANSPORT self
+-- @param Wrapper.Group#GROUP PathGroup A (late activated) GROUP defining a transport path by their waypoints.
+-- @param #boolean Reversed If `true`, add waypoints of group in reversed order.
+-- @param #number Radius Randomization radius in meters. Default 0 m.
+-- @param #number Altitude Altitude in feet AGL. Only for aircraft.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:AddPathPickup(PathGroup, Reversed, Radius, Altitude)
+
+  local path={} --#OPSTRANSPORT.Path
+  path.coords={}
+  path.radius=Radius or 0
+  path.altitude=Altitude
+
+  -- Get route points.  
+  local waypoints=PathGroup:GetTaskRoute()
+  
+  if Reversed then
+    for i=#waypoints,1,-1 do    
+      local wp=waypoints[i]
+      local coord=COORDINATE:New(wp.x, wp.alt, wp.y)
+      table.insert(path.coords, coord)    
+    end
+  else
+    for i=1,#waypoints do
+      local wp=waypoints[i]
+      local coord=COORDINATE:New(wp.x, wp.alt, wp.y)
+      table.insert(path.coords, coord)    
+    end  
+  end
+  
+  -- Add path.
+  table.insert(self.pathsPickup, path)
+
+  return self
+end
+
+--- Get a path for pickup.
+-- @param #OPSTRANSPORT self
+-- @return #table The path of COORDINATEs.
+function OPSTRANSPORT:_GetPathPickup()
+
+  if self.pathsPickup and #self.pathsPickup>0 then
+  
+    -- Get a random path for transport.
+    local path=self.pathsPickup[math.random(#self.pathsPickup)] --#OPSTRANSPORT.Path
 
     
     local coordinates={}
