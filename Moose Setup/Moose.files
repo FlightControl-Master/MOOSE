@@ -74,6 +74,8 @@ Ops/Airboss.lua
 Ops/RecoveryTanker.lua
 Ops/RescueHelo.lua
 Ops/ATIS.lua
+Ops/CTLD.lua
+Ops/CSAR.lua
 
 AI/AI_Balancer.lua
 AI/AI_Air.lua
