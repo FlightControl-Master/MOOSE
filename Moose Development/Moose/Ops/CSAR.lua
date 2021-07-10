@@ -87,17 +87,21 @@
 --         self.useprefix = true  -- Requires CSAR helicopter #GROUP names to have the prefix(es) defined below.
 --         self.csarPrefix = { "helicargo", "MEDEVAC"} -- #GROUP name prefixes used for useprefix=true - DO NOT use # in helicopter names in the Mission Editor! 
 --         self.verbose = 0 -- set to > 1 for stats output for debugging.
---         -- (added 0.1.4) limit amount of downed pilots spawned by ejection events
---         self.limitmaxdownedpilots = true,
---         self.maxdownedpilots = 10,
+--         -- (added 0.1.4) limit amount of downed pilots spawned by **ejection** events
+--         self.limitmaxdownedpilots = true
+--         self.maxdownedpilots = 10 
+--         -- (added 0.1.8) - allow to set far/near distance for approach and optionally pilot must open doors
+--         self.approachdist_far = 5000 -- switch do 10 sec interval approach mode, meters
+--         self.approachdist_near = 3000 -- switch to 5 sec interval approach mode, meters
+--         self.pilotmustopendoors = false -- switch to true to enable check of open doors
 -- 
 -- ## 2.1 Experimental Features
 -- 
---       "WARNING - Here\'ll be dragons!
+--       WARNING - Here\'ll be dragons!
 --       DANGER - For this to work you need to de-sanitize your mission environment (all three entries) in <DCS root>\Scripts\MissionScripting.lua
---       Needs SRS => 1.9.6 to work (works on the *server* side of SRS)"
+--       Needs SRS => 1.9.6 to work (works on the **server** side of SRS)
 --       self.useSRS = false -- Set true to use FF\'s SRS integration
---       self.SRSPath = "E:\\Program Files\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
+--       self.SRSPath = "E:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
 --       self.SRSchannel = 300 -- radio channel
 --       self.SRSModulation = radio.modulation.AM -- modulation
 -- 
@@ -241,7 +245,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.7r2"
+CSAR.version="0.1.8r1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -363,6 +367,10 @@ function CSAR:New(Coalition, Template, Alias)
   self.maxdownedpilots = 25
   -- generate Frequencies
   self:_GenerateVHFrequencies()
+  -- added 0.1.8
+  self.approachdist_far = 5000 -- switch do 10 sec interval approach mode, meters
+  self.approachdist_near = 3000 -- switch to 5 sec interval approach mode, meters
+  self.pilotmustopendoors = false -- switch to true to enable check on open doors
     
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -983,13 +991,13 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
     local _heliCoord = _heliUnit:GetCoordinate()
     local _leaderCoord = _woundedGroup:GetCoordinate()
     local _distance = self:_GetDistance(_heliCoord,_leaderCoord)
-    if _distance < 3000 and _distance > 0 then
+    if _distance < self.approachdist_near and _distance > 0 then
       if self:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedGroup, _woundedGroupName) == true then
         -- we\'re close, reschedule
         _downedpilot.timestamp = timer.getAbsTime()
         self:__Approach(-5,heliname,woundedgroupname)
       end
-    elseif _distance >= 3000 and _distance < 5000 then
+    elseif _distance >= self.approachdist_near and _distance < self.approachdist_far then
       self.heliVisibleMessage[_lookupKeyHeli] = nil
       --reschedule as units aren\'t dead yet , schedule for a bit slower though as we\'re far away
       _downedpilot.timestamp = timer.getAbsTime()
@@ -1085,6 +1093,48 @@ function CSAR:_OrderGroupToMoveToPoint(_leader, _destination)
   return self
 end
 
+
+--- (internal) Function to check if the heli door(s) are open. Thanks to Shadowze.
+-- @param #CSAR self
+-- @param #string unit_name Name of unit.
+-- @return #boolean outcome The outcome.
+function CSAR:_IsLoadingDoorOpen( unit_name )
+  self:T(self.lid .. " _IsLoadingDoorOpen")
+  local ret_val = false
+  local unit = Unit.getByName(unit_name)
+  if unit ~= nil then
+      local type_name = unit:getTypeName()
+      
+      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
+          self:I(unit_name .. " Cargo doors are open or cargo door not present")
+          ret_val =  true
+      end
+      
+      if type_name == "Mi-24P" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 then
+          self:I(unit_name .. " a side door is open")
+          ret_val =  true
+      end
+      
+      if type_name == "UH-1H" and unit:getDrawArgumentValue(43) == 1 or unit:getDrawArgumentValue(44) == 1 then
+          self:I(unit_name .. " a side door is open ")
+          ret_val =  true
+      end
+
+      if string.find(type_name, "SA342" ) and unit:getDrawArgumentValue(34) == 1 or unit:getDrawArgumentValue(38) == 1 then
+          self:I(unit_name .. " front door(s) are open")
+          ret_val =  true
+      end
+
+      if ret_val == false then
+          self:I(unit_name .. " all doors are closed")
+      end
+      return ret_val
+          
+  end -- nil
+  
+  return false
+end
+
 --- (Internal) Function to check if heli is close to group.
 -- @param #CSAR self
 -- @param #number _distance
@@ -1148,15 +1198,25 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                   self.landedStatus[_lookupKeyHeli] = _time
               end
               if _time <= 0 or _distance < self.loadDistance then
-                 self.landedStatus[_lookupKeyHeli] = nil
-                 self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
-                 return false
+                 if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
+                  self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in, bugger!", self.messageTime, true)
+                  return true
+                 else
+                   self.landedStatus[_lookupKeyHeli] = nil
+                   self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
+                   return false
+                 end
               end
             end
         else
           if (_distance < self.loadDistance) then
-              self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
-              return false
+              if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
+                self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in, honk!", self.messageTime, true)
+                return true
+              else
+                self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
+                return false
+              end
           end
         end
       else
@@ -1191,9 +1251,14 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                       if _time > 0 then
                           self:_DisplayMessageToSAR(_heliUnit, "Hovering above " .. _pilotName .. ". \n\nHold hover for " .. _time .. " seconds to winch them up. \n\nIf the countdown stops you\'re too far away!", self.messageTime, true)
                       else
+                       if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
+                          self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in, noob!", self.messageTime, true)
+                          return true
+                        else
                           self.hoverStatus[_lookupKeyHeli] = nil
                           self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
                           return false
+                        end
                       end
                       _reset = false
                   else
