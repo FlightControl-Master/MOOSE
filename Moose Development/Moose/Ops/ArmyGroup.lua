@@ -38,7 +38,7 @@
 -- @field Core.Set#SET_ZONE retreatZones Set of retreat zones.
 -- @extends Ops.OpsGroup#OPSGROUP
 
---- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B. Sledge
+--- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B Sledge
 --
 -- ===
 --
@@ -55,17 +55,6 @@ ARMYGROUP = {
   engage          = {},
 }
 
---- Army group element.
--- @type ARMYGROUP.Element
--- @field #string name Name of the element, i.e. the unit.
--- @field Wrapper.Unit#UNIT unit The UNIT object.
--- @field #string status The element status.
--- @field #string typename Type name.
--- @field #number length Length of element in meters.
--- @field #number width Width of element in meters.
--- @field #number height Height of element in meters.
--- @extends Ops.OpsGroup#OPSGROUP.Element
-
 --- Target
 -- @type ARMYGROUP.Target
 -- @field Ops.Target#TARGET Target The target.
@@ -73,7 +62,7 @@ ARMYGROUP = {
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="0.4.0"
+ARMYGROUP.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list

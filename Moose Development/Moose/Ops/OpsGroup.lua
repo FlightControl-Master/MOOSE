@@ -117,7 +117,6 @@
 -- @field #string cargoStatus Cargo status of this group acting as cargo.
 -- @field #number cargoTransportUID Unique ID of the transport assignment this cargo group is associated with.
 -- @field #string carrierStatus Carrier status of this group acting as cargo carrier. 
--- @field #number cargocounter Running number of cargo UIDs.
 -- @field #OPSGROUP.CarrierLoader carrierLoader Carrier loader parameters.
 -- @field #OPSGROUP.CarrierLoader carrierUnloader Carrier unloader parameters.
 -- 
@@ -134,7 +133,7 @@
 --
 -- # The OPSGROUP Concept
 --
--- The OPSGROUP class contains common functions used by other classes such as FLIGHGROUP, NAVYGROUP and ARMYGROUP.
+-- The OPSGROUP class contains common functions used by other classes such as FLIGHTGROUP, NAVYGROUP and ARMYGROUP.
 -- Those classes inherit everything of this class and extend it with features specific to their unit category.
 --
 -- This class is **NOT** meant to be used by the end user itself.
@@ -180,7 +179,6 @@ OPSGROUP = {
   weaponData         =    {},
   cargoqueue         =    {},
   cargoBay           =    {},
-  cargocounter       =     1,
   mycarrier          =    {},
   carrierLoader      =    {},
   carrierUnloader    =    {},
@@ -225,6 +223,14 @@ OPSGROUP = {
 -- @field #number weightCargo Current cargo weight in kg.
 -- @field #number weight Current weight including cargo in kg.
 -- @field #table cargoBay Cargo bay.
+-- 
+-- @field #string modex Tail number.
+-- @field Wrapper.Client#CLIENT client The client if element is occupied by a human player.
+-- @field #table pylons Table of pylons.
+-- @field #number fuelmass Mass of fuel in kg.
+-- @field #string callsign Call sign, e.g. "Uzi 1-1".
+-- @field Wrapper.Airbase#AIRBASE.ParkingSpot parking The parking spot table the element is parking on.
+
 
 --- Status of group element.
 -- @type OPSGROUP.ElementStatus
@@ -446,7 +452,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.7.3"
+OPSGROUP.version="0.7.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -511,12 +517,12 @@ function OPSGROUP:New(group)
   self.spot.timer=TIMER:New(self._UpdateLaser, self)
   self.spot.Coordinate=COORDINATE:New(0, 0, 0)
   self:SetLaser(1688, true, false, 0.5)
+  
+  -- Cargo.
   self.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
   self.carrierStatus=OPSGROUP.CarrierStatus.NOTCARRIER
-  self.cargocounter=1
   self:SetCarrierLoaderAllAspect()
   self:SetCarrierUnloaderAllAspect()
-
 
   -- Init task counter.
   self.taskcurrent=0
@@ -1513,6 +1519,7 @@ function OPSGROUP:RadioTransmission(Text, Delay)
       self.msrs:SetFrequencies(freq)
       self.msrs:SetModulations(modu)
       
+      -- Debug info.
       self:I(self.lid..string.format("Radio transmission on %.3f MHz %s: %s", freq, UTILS.GetModulationName(modu), Text))
     
       self.msrs:PlayText(Text) 
@@ -2365,7 +2372,7 @@ function OPSGROUP:OnEventBirth(EventData)
         self.destbase=self.homebase
       end
 
-      self:I(self.lid..string.format("EVENT: Element %s born at airbase %s ==> spawned", unitname, self.currbase and self.currbase:GetName() or "unknown"))
+      self:T(self.lid..string.format("EVENT: Element %s born at airbase %s ==> spawned", unitname, self.currbase and self.currbase:GetName() or "unknown"))
     else
       self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", unitname))
     end
@@ -4572,7 +4579,9 @@ end
 -- @param #string To To state.
 -- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onafterElementDead(From, Event, To, Element)
-  self:I(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
+
+  -- Debug info.
+  self:T(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
@@ -4615,7 +4624,7 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
   -- Clear cargo bay of element.
   --for _,_cargo in pairs(Element.cargoBay) do
   for i=#Element.cargoBay,1,-1 do
-    local cargo=Element.cargoBay[i] --#OPSGROUP.MyCargo --_cargo --#OPSGROUP.MyCargo
+    local cargo=Element.cargoBay[i] --#OPSGROUP.MyCargo
     
     -- Remove from cargo bay.
     self:_DelCargobay(cargo.group)
@@ -4628,7 +4637,7 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
       if cargo.reserved then
       
         -- This group was not loaded yet ==> Not cargo any more.
-        cargo.group.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
+        cargo.group:_NewCargoStatus(OPSGROUP.CargoStatus.NOTCARGO)
         
       else
           
@@ -4798,6 +4807,8 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterDead(From, Event, To)
+
+  -- Debug info.
   self:I(self.lid..string.format("Group dead at t=%.3f", timer.getTime()))
 
   -- Is dead now.
@@ -4897,7 +4908,7 @@ function OPSGROUP:onafterStop(From, Event, To)
   _DATABASE.FLIGHTGROUPS[self.groupname]=nil
 
   -- Debug output.
-  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database")
+  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from _DATABASE")
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4983,7 +4994,7 @@ function OPSGROUP:_CheckCargoTransport()
     if self:IsNotCarrier() then
 
       -- Debug info.
-      self:I(self.lid.."Not carrier ==> pickup")
+      self:T(self.lid.."Not carrier ==> pickup")
 
       -- Initiate the cargo transport process.
       self:__Pickup(-1)
@@ -5000,7 +5011,7 @@ function OPSGROUP:_CheckCargoTransport()
       self.Tloading=self.Tloading or Time
 
       -- Debug info.
-      self:I(self.lid.."Loading...")
+      self:T(self.lid.."Loading...")
 
       local boarding=false
       local gotcargo=false
@@ -5018,15 +5029,10 @@ function OPSGROUP:_CheckCargoTransport()
         end
 
       end
-      
-      -- Debug.
-      --self:I(self.lid.."gotcargo="..tostring(gotcargo))
-      --self:I(self.lid.."boarding="..tostring(boarding))
-      --self:I(self.lid.."required="..tostring(self.cargoTransport:_CheckRequiredCargos()))
 
       -- Boarding finished ==> Transport cargo.
       if gotcargo and self.cargoTransport:_CheckRequiredCargos() and not boarding then
-        self:I(self.lid.."Boarding finished ==> Loaded")
+        self:T(self.lid.."Boarding finished ==> Loaded")
         self:Loaded()
       else
         -- No cargo and no one is boarding ==> check again if we can make anyone board.
@@ -5046,7 +5052,7 @@ function OPSGROUP:_CheckCargoTransport()
     elseif self:IsUnloading() then
 
       -- Debug info.
-      self:I(self.lid.."Unloading ==> Checking if all cargo was delivered")
+      self:T(self.lid.."Unloading ==> Checking if all cargo was delivered")
 
       local delivered=true
       for _,_cargo in pairs(self.cargoTransport.cargos) do
@@ -5064,7 +5070,7 @@ function OPSGROUP:_CheckCargoTransport()
 
       -- Unloading finished ==> pickup next batch or call it a day.
       if delivered then
-        self:I(self.lid.."Unloading finished ==> Unloaded")
+        self:T(self.lid.."Unloading finished ==> Unloaded")
         self:Unloaded()
       else
         self:Unloading()
@@ -5468,6 +5474,23 @@ function OPSGROUP:GetWeightCargoMax(UnitName)
   return weight
 end
 
+--- Get OPSGROUPs in the cargo bay.
+-- @param #OPSGROUP self
+-- @return #table Cargo OPSGROUPs.
+function OPSGROUP:GetCargoOpsGroups()
+
+  local opsgroups={}
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    for _,_cargo in pairs(element.cargoBay) do
+      local cargo=_cargo --#OPSGROUP.MyCargo
+      table.insert(opsgroups, cargo.group)
+    end
+  end
+
+  return opsgroups
+end
+
 --- Add weight to the internal cargo of an element of the group.
 -- @param #OPSGROUP self
 -- @param #string UnitName Name of the unit. Default is of the whole group.
@@ -5635,11 +5658,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterPickup(From, Event, To)
-  -- Debug info.
-  self:I(self.lid..string.format("New carrier status: %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.PICKUP))
 
   -- Set carrier status.
-  self.carrierStatus=OPSGROUP.CarrierStatus.PICKUP
+  self:_NewCarrierStatus(OPSGROUP.CarrierStatus.PICKUP)
 
   -- Pickup zone.
   local Zone=self.cargoTransport.pickupzone
@@ -5790,11 +5811,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterLoading(From, Event, To)
-  -- Debug info.
-  self:I(self.lid..string.format("New carrier status: %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.LOADING))
 
   -- Set carrier status.
-  self.carrierStatus=OPSGROUP.CarrierStatus.LOADING
+  self:_NewCarrierStatus(OPSGROUP.CarrierStatus.LOADING)
 
   -- Loading time stamp.
   self.Tloading=timer.getAbsTime()
@@ -5824,7 +5843,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
           if carrier then
 
             -- Set cargo status.
-            cargo.opsgroup.cargoStatus=OPSGROUP.CargoStatus.ASSIGNED
+            cargo.opsgroup:_NewCargoStatus(OPSGROUP.CargoStatus.ASSIGNED)
 
             -- Order cargo group to board the carrier.
             cargo.opsgroup:Board(self, carrier)
@@ -5860,6 +5879,36 @@ function OPSGROUP:ClearWaypoints()
   self.waypoints={}
 end
 
+--- Set (new) cargo status.
+-- @param #OPSGROUP self
+-- @param #string Status New status.
+function OPSGROUP:_NewCargoStatus(Status)
+
+  -- Debug info.
+  if self.verbose>=2 then
+    self:I(self.lid..string.format("New cargo status: %s --> %s", tostring(self.cargoStatus), tostring(Status)))
+  end
+
+  -- Set cargo status.
+  self.cargoStatus=Status
+
+end
+
+--- Set (new) carrier status.
+-- @param #OPSGROUP self
+-- @param #string Status New status.
+function OPSGROUP:_NewCarrierStatus(Status)
+
+  -- Debug info.
+  if self.verbose>=2 then
+    self:I(self.lid..string.format("New carrier status: %s --> %s", tostring(self.carrierStatus), tostring(Status)))
+  end
+
+  -- Set cargo status.
+  self.carrierStatus=Status
+
+end
+
 --- Transfer cargo from to another carrier. 
 -- @param #OPSGROUP self
 -- @param #OPSGROUP CargoGroup The cargo group to be transferred.
@@ -5886,7 +5935,7 @@ end
 function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
 
   -- Debug info.
-  self:I(self.lid..string.format("Loading group %s", tostring(CargoGroup.groupname)))
+  self:T(self.lid..string.format("Loading group %s", tostring(CargoGroup.groupname)))
 
   -- Carrier element.
   local carrier=Carrier or CargoGroup:_GetMyCarrierElement() --#OPSGROUP.Element
@@ -5902,12 +5951,9 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
     ---
     -- Embark Cargo
     ---
-
-    -- Debug info.
-    CargoGroup:I(CargoGroup.lid..string.format("New cargo status: %s --> %s", CargoGroup.cargoStatus, OPSGROUP.CargoStatus.LOADED))
-
-    -- Set cargo status.
-    CargoGroup.cargoStatus=OPSGROUP.CargoStatus.LOADED
+    
+    -- New cargo status.
+    CargoGroup:_NewCargoStatus(OPSGROUP.CargoStatus.LOADED)
 
     -- Clear all waypoints.
     CargoGroup:ClearWaypoints()
@@ -5927,7 +5973,7 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
     if self.cargoTransport then
       self.cargoTransport:Loaded(CargoGroup, self, carrier)
     else
-      self:E(self.lid..string.format("WARNING: Loaded cargo but no current OPSTRANSPORT assignment!"))
+      self:T(self.lid..string.format("WARNING: Loaded cargo but no current OPSTRANSPORT assignment!"))
     end
 
   else
@@ -5981,11 +6027,8 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterTransport(From, Event, To)
 
-  -- Debug info.
-  self:I(self.lid..string.format("New carrier status: %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.TRANSPORTING))
-
   -- Set carrier status.
-  self.carrierStatus=OPSGROUP.CarrierStatus.TRANSPORTING
+  self:_NewCarrierStatus(OPSGROUP.CarrierStatus.TRANSPORTING)
 
   --TODO: This is all very similar to the onafterPickup() function. Could make it general.
 
@@ -6131,11 +6174,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterUnloading(From, Event, To)
-  -- Debug info.
-  self:I(self.lid..string.format("New carrier status: %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.UNLOADING))
 
   -- Set carrier status to UNLOADING.
-  self.carrierStatus=OPSGROUP.CarrierStatus.UNLOADING
+  self:_NewCarrierStatus(OPSGROUP.CarrierStatus.UNLOADING)
 
   -- Deploy zone.
   local zone=self.cargoTransport.disembarkzone or self.cargoTransport.deployzone  --Core.Zone#ZONE
@@ -6270,12 +6311,9 @@ end
 -- @param #boolean Activated If `true`, group is active. If `false`, group is spawned in late activated state.
 -- @param #number Heading (Optional) Heading of group in degrees. Default is random heading for each unit.
 function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Activated, Heading)
-
-  -- Debug info.
-  OpsGroup:I(OpsGroup.lid..string.format("New cargo status: %s --> %s", OpsGroup.cargoStatus, OPSGROUP.CargoStatus.NOTCARGO))
-
-  -- Set cargo status.
-  OpsGroup.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
+  
+  -- New cargo status.
+  OpsGroup:_NewCargoStatus(OPSGROUP.CargoStatus.NOTCARGO)
 
   --TODO: Unload flightgroup. Find parking spot etc.
 
@@ -6362,8 +6400,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterUnloaded(From, Event, To)
+
   -- Debug info
-  self:I(self.lid.."Cargo unloaded..")
+  self:T(self.lid.."Cargo unloaded..")
 
   -- Cancel landedAt task.
   if self:IsFlightgroup() and self:IsLandedAt() then
@@ -6400,9 +6439,9 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
 
   -- Check if this was the current transport.
   if self.cargoTransport and self.cargoTransport.uid==CargoTransport.uid then
-
-    -- Debug info.
-    self:I(self.lid..string.format("New carrier status: %s --> %s", self.carrierStatus, OPSGROUP.CarrierStatus.NOTCARRIER))
+    
+    -- This is not a carrier anymore.
+    self:_NewCarrierStatus(OPSGROUP.CarrierStatus.NOTCARRIER)
 
     -- Checks
     if self:IsPickingup() then
@@ -6419,9 +6458,6 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
       -- Nothing to do?
     end
 
-    -- This is not a carrier anymore.
-    self.carrierStatus=OPSGROUP.CarrierStatus.NOTCARRIER
-
     -- Startup uncontrolled aircraft to allow it to go back.
     if self:IsFlightgroup() then
       if self:IsUncontrolled() then
@@ -6436,7 +6472,7 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
     end
 
     -- Check group done.
-    self:I(self.lid.."All cargo delivered ==> check group done")
+    self:T(self.lid.."All cargo delivered ==> check group done")
     self:_CheckGroupDone(0.2)
 
     -- No current transport any more.
@@ -6467,11 +6503,11 @@ function OPSGROUP:onbeforeBoard(From, Event, To, CarrierGroup, Carrier)
     return false
   elseif CarrierGroup:IsDead() then
     self:I(self.lid.."Carrier Group DEAD ==> Deny Board transition!")
-    self.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
+    self:_NewCargoStatus(OPSGROUP.CargoStatus.NOTCARGO)
     return false
   elseif Carrier.status==OPSGROUP.ElementStatus.DEAD then
     self:I(self.lid.."Carrier Element DEAD ==> Deny Board transition!")
-    self.cargoStatus=OPSGROUP.CargoStatus.NOTCARGO
+    self:_NewCargoStatus(OPSGROUP.CargoStatus.NOTCARGO)
     return false
   end
 
@@ -6486,11 +6522,9 @@ end
 -- @param #OPSGROUP CarrierGroup The carrier group.
 -- @param #OPSGROUP.Element Carrier The OPSGROUP element
 function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
-  -- Debug info.
-  self:I(self.lid..string.format("New cargo status: %s --> %s", self.cargoStatus, OPSGROUP.CargoStatus.BOARDING))
 
   -- Set cargo status.
-  self.cargoStatus=OPSGROUP.CargoStatus.BOARDING
+  self:_NewCargoStatus(OPSGROUP.CargoStatus.BOARDING)  
 
   -- Army or Navy group.
   local CarrierIsArmyOrNavy=CarrierGroup:IsArmygroup() or CarrierGroup:IsNavygroup()
@@ -6510,7 +6544,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
     if board then
 
       -- Debug info.
-      self:I(self.lid..string.format("Boarding group=%s [%s], carrier=%s", CarrierGroup:GetName(), CarrierGroup:GetState(), Carrier.name))
+      self:T(self.lid..string.format("Boarding group=%s [%s], carrier=%s", CarrierGroup:GetName(), CarrierGroup:GetState(), Carrier.name))
 
       -- TODO: Implement embarkzone.
       local Coordinate=Carrier.unit:GetCoordinate()
@@ -6536,7 +6570,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       ---
 
       -- Debug info.
-      self:I(self.lid..string.format("Board with direct load to carrier %s", CarrierGroup:GetName()))
+      self:T(self.lid..string.format("Board with direct load to carrier %s", CarrierGroup:GetName()))
       
       local mycarriergroup=self:_GetMyCarrierGroup()
       
@@ -6732,6 +6766,9 @@ function OPSGROUP:_CheckGroupDone(delay)
       -- Delayed call.
       self:ScheduleOnce(delay, self._CheckGroupDone, self)
     else
+
+      -- Debug info.
+      self:T(self.lid.."Check OPSGROUP done?")
 
       -- Group is engaging something.
       if self:IsEngaging() then
@@ -7523,7 +7560,8 @@ function OPSGROUP:SwitchROT(rot)
 
       self.group:OptionROT(self.option.ROT)
 
-      self:I(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
+      -- Debug info.
+      self:T(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
     end
 
 
@@ -8326,7 +8364,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:__Spawned(-0.5)
+      self:Spawned()
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.PARKING then
@@ -8335,7 +8373,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:__Parking(-0.5)
+      self:Parking()
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.ENGINEON then
@@ -8351,7 +8389,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:__Taxiing(-0.5)
+      self:Taxiing()
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.TAKEOFF then
@@ -8361,7 +8399,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
 
     if self:_AllSimilarStatus(newstatus) then
       -- Trigger takeoff event. Also triggers airborne event.
-      self:__Takeoff(-0.5, airbase)
+      self:Takeoff(airbase)
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.AIRBORNE then
@@ -8370,7 +8408,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:__Airborne(-0.1)
+      self:Airborne()
     end
 
   elseif newstatus==OPSGROUP.ElementStatus.LANDED then
@@ -8463,13 +8501,19 @@ function OPSGROUP:GetElementZoneBoundingBox(UnitName)
     -- Create a new zone if necessary.
     element.zoneBoundingbox=element.zoneBoundingbox or ZONE_POLYGON_BASE:New(element.name.." Zone Bounding Box", {})
 
+    -- Length in meters.
     local l=element.length
+    -- Width in meters.
     local w=element.width
 
+    -- Orientation vector.
     local X=self:GetOrientationX(element.name)
+    
+    -- Heading in degrees.
     local heading=math.deg(math.atan2(X.z, X.x))
 
-    env.info(string.format("FF l=%d w=%d h=%d", l, w, heading))
+    -- Debug info.
+    self:T(self.lid..string.format("Element %s bouding box: l=%d w=%d heading=%d", element.name, l, w, heading))
 
     -- Set of edges facing "North" at the origin of the map.
     local b={}
@@ -8559,7 +8603,7 @@ function OPSGROUP:_GetElementZoneLoader(Element, Zone, Loader)
     -- Heading in deg.
     local heading=math.deg(math.atan2(X.z, X.x))
 
-    env.info(string.format("FF l=%d w=%d h=%d", l, w, heading))
+    --env.info(string.format("FF l=%d w=%d h=%d", l, w, heading))
 
     -- Bounding box at the origin of the map facing "North".
     local b={}

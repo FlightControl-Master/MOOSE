@@ -6134,7 +6134,7 @@ function AIRBOSS:_ScanCarrierZone()
         local flight=_DATABASE:GetOpsGroup(groupname)
 
         if flight and flight:IsInbound() and flight.destbase:GetName()==self.carrier:GetName() then
-          if flight.ishelo then
+          if flight.isHelo then
           else
             putintomarshal=true
           end

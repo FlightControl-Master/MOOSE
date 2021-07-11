@@ -65,12 +65,7 @@ NAVYGROUP = {
   pathCorridor    = 400,
 }
 
---- Navy group element.
--- @type NAVYGROUP.Element
--- @field #string name Name of the element, i.e. the unit.
--- @field #string typename Type name.
-
---- Navy group element.
+--- Turn into wind parameters.
 -- @type NAVYGROUP.IntoWind
 -- @field #number Tstart Time to start.
 -- @field #number Tstop Time to stop.
@@ -87,7 +82,7 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="0.5.0"
+NAVYGROUP.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list

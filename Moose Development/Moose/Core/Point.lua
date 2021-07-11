@@ -647,7 +647,8 @@ do -- COORDINATE
     local y=X*math.sin(phi)+Y*math.cos(phi)
 
     -- Coordinate assignment looks bit strange but is correct.
-    return COORDINATE:NewFromVec3({x=y, y=self.y, z=x})
+    local coord=COORDINATE:NewFromVec3({x=y, y=self.y, z=x})
+    return coord
   end
 
   --- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
@@ -690,7 +691,8 @@ do -- COORDINATE
   function COORDINATE:GetRandomCoordinateInRadius( OuterRadius, InnerRadius )
     self:F2( { OuterRadius, InnerRadius } )
 
-    return COORDINATE:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
+    local coord=COORDINATE:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
+    return coord
   end
 
 

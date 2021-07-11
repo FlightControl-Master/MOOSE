@@ -69,6 +69,44 @@
 -- * Cargo groups are **not** split and distributed into different carrier *units*. That means that the whole cargo group **must fit** into one of the carrier units.
 -- * Cargo groups must be inside the pickup zones to be considered for loading. Groups not inside the pickup zone will not get the command to board. 
 -- 
+-- # Constructor
+-- 
+-- A new cargo transport assignment is created with the @{#OPSTRANSPORT.New}() function
+-- 
+--     local opstransport=OPSTRANSPORT:New(Cargo, PickupZone, DeployZone)
+-- 
+-- Here `Cargo` is an object of the troops to be transported. This can be a GROUP, OPSGROUP, SET_GROUP or SET_OPSGROUP object.
+-- 
+-- `PickupZone` is the zone where the troops are picked up by the transport carriers. **Note** that troops *must* be inside this zone to be considered for loading!
+-- 
+-- `DeployZone` is the zone where the troops are transported to.
+-- 
+-- ## Assign to Carrier(s)
+-- 
+-- A transport can be assigned to one or multiple carrier OPSGROUPS with this @{Ops.OpsGroup#OPSGROUP.AddOpsTransport}() function
+-- 
+--     myopsgroup:AddOpsTransport(opstransport)
+-- 
+-- There is no restriction to the type of the carrier. It can be a ground group (e.g. an APC), a helicopter, an airplane or even a ship.
+-- 
+-- You can also mix carrier types. For instance, you can assign the same transport to APCs and helicopters. Or to helicopters and airplanes.
+-- 
+-- # Examples
+--
+-- A carrier group is assigned to transport infantry troops from zone "Zone Kobuleti X" to zone "Zone Alpha".
+--
+--     -- Carrier group.
+--     local carrier=ARMYGROUP:New("TPz Fuchs Group")
+--       
+--     -- Set of groups to transport.
+--     local infantryset=SET_GROUP:New():FilterPrefixes("Infantry Platoon Alpha"):FilterOnce()
+--     
+--     -- Cargo transport assignment.
+--     local opstransport=OPSTRANSPORT:New(infantryset, ZONE:New("Zone Kobuleti X"), ZONE:New("Zone Alpha"))
+--     
+--     -- Assign transport to carrier.
+--     carrier:AddOpsTransport(opstransport)
+-- 
 -- 
 -- @field #OPSTRANSPORT
 OPSTRANSPORT = {
@@ -112,7 +150,7 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.0.8"
+OPSTRANSPORT.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -227,7 +265,7 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet)
   end
   
   -- Debug info.
-  if self.verbose>=0 then
+  if self.verbose>=1 then
     local text=string.format("Added cargo groups:")
     local Weight=0
     for _,_cargo in pairs(self.cargos) do
@@ -432,18 +470,27 @@ end
 --- Get (all) cargo @{Ops.OpsGroup#OPSGROUP}s. Optionally, only delivered or undelivered groups can be returned.
 -- @param #OPSTRANSPORT self
 -- @param #boolean Delivered If `true`, only delivered groups are returned. If `false` only undelivered groups are returned. If `nil`, all groups are returned.
--- @return #table Ops groups.
+-- @return #table Cargo Ops groups.
 function OPSTRANSPORT:GetCargoOpsGroups(Delivered)
 
   local opsgroups={}
   for _,_cargo in pairs(self.cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
     if Delivered==nil or cargo.delivered==Delivered then
-      table.insert(opsgroups, cargo.opsgroup)
+      if cargo.opsgroup and not (cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped()) then
+        table.insert(opsgroups, cargo.opsgroup)
+      end
     end
   end
   
   return opsgroups
+end
+
+--- Get carrier @{Ops.OpsGroup#OPSGROUP}s.
+-- @param #OPSTRANSPORT self
+-- @return #table Carrier Ops groups.
+function OPSTRANSPORT:GetCarrierOpsGroups()
+  return self.carriers
 end
 
 
@@ -579,11 +626,13 @@ function OPSTRANSPORT:_GetPathTransport()
 
     
     local coordinates={}
-    for _,coord in ipairs(path.coords) do
+    for _,_coord in ipairs(path.coords) do
+      local coord=_coord --Core.Point#COORDINATE 
+      
+      -- Get random coordinate.
+      local c=coord:GetRandomCoordinateInRadius(path.radius)
     
-      -- TODO: Add randomization.
-    
-      table.insert(coordinates, coord)
+      table.insert(coordinates, c)
     end
         
     return coordinates
@@ -642,11 +691,13 @@ function OPSTRANSPORT:_GetPathPickup()
 
     
     local coordinates={}
-    for _,coord in ipairs(path.coords) do
+    for _,_coord in ipairs(path.coords) do
+      local coord=_coord --Core.Point#COORDINATE 
+      
+      -- Get random coordinate.
+      local c=coord:GetRandomCoordinateInRadius(path.radius)
     
-      -- TODO: Add randomization.
-    
-      table.insert(coordinates, coord)
+      table.insert(coordinates, c)
     end
         
     return coordinates
@@ -753,7 +804,7 @@ function OPSTRANSPORT:IsReadyToGo()
   -- Nope, not yet.
   if not startme then
     text=text..("No way, at least one start condition is not true!")
-    self:I(text)
+    self:T(text)
     return false
   end
   

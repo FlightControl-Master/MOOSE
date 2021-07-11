@@ -6112,7 +6112,7 @@ do -- SET_OPSGROUP
   -- @param Core.Base#BASE Object The object itself.
   -- @return Core.Base#BASE The added BASE Object.
   function SET_OPSGROUP:Add(ObjectName, Object)
-    self:I( { ObjectName = ObjectName, Object = Object } )
+    self:T( { ObjectName = ObjectName, Object = Object } )
 
     -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
     if self.Set[ObjectName] then
