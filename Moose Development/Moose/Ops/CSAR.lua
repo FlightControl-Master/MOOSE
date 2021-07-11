@@ -1377,7 +1377,7 @@ end
 --- (Internal) Check and return Wrappe.Unit#UNIT based on the name if alive.
 -- @param #CSAR self
 -- @param #string _unitname Name of Unit
--- @return #UNIT or nil
+-- @return Wrapper.Unit#UNIT The unit or nil
 function CSAR:_GetSARHeli(_unitName)
   self:T(self.lid .. " _GetSARHeli")
   local unit = UNIT:FindByName(_unitName)
