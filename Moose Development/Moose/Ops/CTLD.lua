@@ -81,8 +81,8 @@ CTLD_CARGO = {
     self.Name = Name or "none" -- #string
     self.Templates = Templates or {} -- #table
     self.CargoType = Sorte or "type" -- #CTLD_CARGO.Enum
-    self.HasBeenMoved = HasBeenMoved or false -- #booolean
-    self.LoadDirectly = LoadDirectly or false -- #booolean
+    self.HasBeenMoved = HasBeenMoved or false -- #boolean
+    self.LoadDirectly = LoadDirectly or false -- #boolean
     self.CratesNeeded = CratesNeeded or 0 -- #number
     self.Positionable = Positionable or nil -- Wrapper.Positionable#POSITIONABLE
     self.HasBeenDropped = Dropped or false --#boolean
@@ -803,16 +803,10 @@ function CTLD:_GenerateUHFrequencies()
 end
 
 --- (Internal) Function to generate valid FM Frequencies
--- @param #CTLD sel
+-- @param #CTLD self
 function CTLD:_GenerateFMFrequencies()
   self:T(self.lid .. " _GenerateFMrequencies")
     self.FreeFMFrequencies = {}
-    local _start = 220000000
-
-    while _start < 399000000 do
-
-        _start = _start + 500000
-    end
 
     for _first = 3, 7 do
         for _second = 0, 5 do

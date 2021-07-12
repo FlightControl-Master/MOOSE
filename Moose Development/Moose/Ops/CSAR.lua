@@ -1428,12 +1428,8 @@ function CSAR:_GetPositionOfWounded(_woundedGroup)
       _coordinatesText = _coordinate:ToStringLLDMS()  
     elseif self.coordtype == 2 then -- MGRS
       _coordinatesText = _coordinate:ToStringMGRS()  
-    elseif self.coordtype == 3 then -- Bullseye Imperial
-    local Settings = _SETTINGS:SetImperial()
-      _coordinatesText = _coordinate:ToStringBULLS(self.coalition,Settings)
-    else -- Bullseye Metric --(medevac.coordtype == 4)
-    local Settings = _SETTINGS:SetMetric()
-      _coordinatesText = _coordinate:ToStringBULLS(self.coalition,Settings)
+    else -- Bullseye Metric --(medevac.coordtype == 4 or 3)
+      _coordinatesText = _coordinate:ToStringBULLS(self.coalition)
     end
   end
   return _coordinatesText
@@ -1467,12 +1463,11 @@ function CSAR:_DisplayActiveSAR(_unitName)
         local _woundcoord = _woundedGroup:GetCoordinate()
         local _distance = self:_GetDistance(_helicoord, _woundcoord)
         self:T({_distance = _distance})
-        -- change distance to miles if self.coordtype < 4
         local distancetext = ""
-        if self.coordtype < 4 then
-          distancetext = string.format("%.3fnm",UTILS.MetersToNM(_distance))
+        if _SETTINGS:IsImperial() then
+          distancetext = string.format("%.1fnm",UTILS.MetersToNM(_distance))
         else
-          distancetext = string.format("%.3fkm", _distance/1000.0)
+          distancetext = string.format("%.1fkm", _distance/1000.0)
         end
         table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %.2f KHz ADF - %s ", _value.desc, _coordinatesText, _value.frequency / 1000, distancetext) })
     end
@@ -1542,10 +1537,10 @@ function CSAR:_SignalFlare(_unitName)
   
       local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
       local _distance = 0
-      if self.coordtype < 4 then
-        _distance = string.format("%.3fnm",UTILS.MetersToNM(_closest.distance))
+      if _SETTINGS:IsImperial() then
+        _distance = string.format("%.1fnm",UTILS.MetersToNM(_closest.distance))
       else
-        _distance = string.format("%.3fkm",_closest.distance)
+        _distance = string.format("%.1fkm",_closest.distance)
       end 
       local _msg = string.format("%s - Popping signal flare at your %s o\'clock. Distance %s", _unitName, _clockDir, _distance)
       self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true)
@@ -1554,7 +1549,7 @@ function CSAR:_SignalFlare(_unitName)
       _coord:FlareRed(_clockDir)
   else
       local disttext = "4.3nm"
-      if self.coordtype == 4 then
+      if _SETTINGS:IsMetric() then
           disttext = "8km"
       end
       self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",disttext), self.messageTime)
@@ -1593,10 +1588,10 @@ function CSAR:_Reqsmoke( _unitName )
   if _closest ~= nil and _closest.pilot ~= nil and _closest.distance < 8000.0 then
       local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
       local _distance = 0
-      if self.coordtype < 4 then
-        _distance = string.format("%.3fnm",UTILS.MetersToNM(_closest.distance))
+      if _SETTINGS:IsImperial() then
+        _distance = string.format("%.1fnm",UTILS.MetersToNM(_closest.distance))
       else
-        _distance = string.format("%.3fkm",_closest.distance)
+        _distance = string.format("%.1fkm",_closest.distance)
       end 
       local _msg = string.format("%s - Popping signal smoke at your %s o\'clock. Distance %s", _unitName, _clockDir, _distance)
       self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true)
@@ -1605,7 +1600,7 @@ function CSAR:_Reqsmoke( _unitName )
       _coord:Smoke(color)
   else
       local disttext = "4.3nm"
-      if self.coordtype == 4 then
+      if _SETTINGS:IsMetric() then
           disttext = "8km"
       end
       self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",disttext), self.messageTime)
