@@ -13,12 +13,12 @@
 -- 
 -- ===
 -- 
--- ### Author : **applevangelist**
+-- ### Author : **applevangelist **
 -- 
 -- @module Functional.Shorad
 -- @image Functional.Shorad.jpg
 --
--- Date: May 2021
+-- Date: July 2021
 
 -------------------------------------------------------------------------
 --- **SHORAD** class, extends Core.Base#BASE
@@ -94,7 +94,7 @@ SHORAD = {
   lid = "",
   DefendHarms = true,
   DefendMavs = true,
-  DefenseLowProb = 75,
+  DefenseLowProb = 70,
   DefenseHighProb = 90,
   UseEmOnOff = false,  
 }
@@ -108,22 +108,6 @@ do
   --- Missile enumerators
   -- @field Harms
   SHORAD.Harms = {
-  --[[
-  ["X58"] = "weapons.missiles.X_58", --Kh-58X anti-radiation missiles fired
-  ["Kh25"] = "weapons.missiles.Kh25MP_PRGS1VP", --Kh-25MP anti-radiation missiles fired
-  ["X25"] = "weapons.missiles.X_25MP", --Kh-25MPU anti-radiation missiles fired
-  ["X28"] = "weapons.missiles.X_28", --Kh-28 anti-radiation missiles fired
-  ["X31"] = "weapons.missiles.X_31P", --Kh-31P anti-radiation missiles fired
-  ["AGM45A"] = "weapons.missiles.AGM_45A", --AGM-45A anti-radiation missiles fired
-  ["AGM45"] = "weapons.missiles.AGM_45", --AGM-45B anti-radiation missiles fired
-  ["AGM88"] = "weapons.missiles.AGM_88", --AGM-88C anti-radiation missiles fired
-  ["AGM122"] = "weapons.missiles.AGM_122", --AGM-122 Sidearm anti-radiation missiles fired
-  ["LD10"] = "weapons.missiles.LD-10", --LD-10 anti-radiation missiles fired
-  ["ALARM"] = "weapons.missiles.ALARM", --ALARM anti-radiation missiles fired
-  ["AGM84E"] = "weapons.missiles.AGM_84E", --AGM84 anti-radiation missiles fired
-  ["AGM84A"] = "weapons.missiles.AGM_84A", --AGM84 anti-radiation missiles fired
-  ["AGM84H"] = "weapons.missiles.AGM_84H", --AGM84 anti-radiation missiles fired
-  --]]
   ["AGM_88"] = "AGM_88",
   ["AGM_45"] = "AGM_45",
   ["AGM_122"] = "AGM_122",
@@ -157,7 +141,9 @@ do
   -- @param #number Radius Defense radius in meters, used to switch on groups
   -- @param #number ActiveTimer Determines how many seconds the systems stay on red alert after wake-up call
   -- @param #string Coalition Coalition, i.e. "blue", "red", or "neutral"
-  function SHORAD:New(Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition) 
+  -- @param #boolean UseEmOnOff Use Emissions On/Off rather than Alarm State Red/Green (default: use Emissions switch)
+  -- @retunr #SHORAD self
+  function SHORAD:New(Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition, UseEmOnOff) 
     local self = BASE:Inherit( self, BASE:New() )
     self:T({Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition})
     
@@ -171,22 +157,23 @@ do
     self.ActiveTimer = ActiveTimer or 600
     self.ActiveGroups = {}
     self.Groupset = GroupSet
-    self:HandleEvent( EVENTS.Shot )
     self.DefendHarms = true
     self.DefendMavs = true
     self.DefenseLowProb = 70 -- probability to detect a missile shot, low margin
     self.DefenseHighProb = 90  -- probability to detect a missile shot, high margin
-    self.UseEmOnOff = true -- Decide if we are using Emission on/off (default) or AlarmState red/green
-    self:I("*** SHORAD - Started Version 0.2.5")
+    self.UseEmOnOff = UseEmOnOff or false -- Decide if we are using Emission on/off (default) or AlarmState red/green
+    self:I("*** SHORAD - Started Version 0.2.8")
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("SHORAD %s | ", self.name)
     self:_InitState()
+    self:HandleEvent(EVENTS.Shot, self.HandleEventShot)
     return self
   end
   
   --- Initially set all groups to alarm state GREEN
   -- @param #SHORAD self
   function SHORAD:_InitState()
+    self:T(self.lid .. " _InitState")
     local table = {}
     local set = self.Groupset
     self:T({set = set})
@@ -195,31 +182,48 @@ do
      if self.UseEmOnOff then
       --_group:SetAIOff()
       _group:EnableEmission(false)
+      _group:OptionAlarmStateRed() --Wrapper.Group#GROUP
      else
       _group:OptionAlarmStateGreen() --Wrapper.Group#GROUP
      end
+     _group:OptionDisperseOnAttack(30)
     end
     -- gather entropy
-    for i=1,10 do
+    for i=1,100 do
       math.random()
     end
+    return self
   end
   
-  --- Switch debug state
+  --- Switch debug state on
   -- @param #SHORAD self
   -- @param #boolean debug Switch debug on (true) or off (false)
-  function SHORAD:SwitchDebug(debug)
-    self:T( { debug } )
-    local onoff = debug or false
-    if debug then
-       self.debug = true
-       --tracing
-       BASE:TraceOn()
-       BASE:TraceClass("SHORAD")
+  function SHORAD:SwitchDebug(onoff)
+    self:T( { onoff } )
+    if onoff then
+      self:SwitchDebugOn()
     else
-      self.debug = false
-      BASE:TraceOff()
+      self.SwitchDebugOff()
     end
+    return self
+  end
+  
+  --- Switch debug state on
+  -- @param #SHORAD self
+  function SHORAD:SwitchDebugOn()
+     self.debug = true
+     --tracing
+     BASE:TraceOn()
+     BASE:TraceClass("SHORAD")
+     return self
+  end
+  
+  --- Switch debug state off
+  -- @param #SHORAD self
+  function SHORAD:SwitchDebugOff()
+    self.debug = false
+    BASE:TraceOff()
+    return self
   end
   
   --- Switch defense for HARMs
@@ -229,6 +233,7 @@ do
     self:T( { onoff } )
     local onoff = onoff or true
     self.DefendHarms = onoff
+    return self
   end
   
   --- Switch defense for AGMs
@@ -238,6 +243,7 @@ do
     self:T( { onoff } )
     local onoff = onoff or true
     self.DefendMavs = onoff
+    return self
   end
   
   --- Set defense probability limits
@@ -256,35 +262,42 @@ do
     end
     self.DefenseLowProb = low
     self.DefenseHighProb = high
+    return self
   end
   
   --- Set the number of seconds a SHORAD site will stay active
   -- @param #SHORAD self
   -- @param #number seconds Number of seconds systems stay active
   function SHORAD:SetActiveTimer(seconds)
+    self:T(self.lid .. " SetActiveTimer")
     local timer = seconds or 600
     if timer < 0 then
       timer = 600
     end
     self.ActiveTimer = timer
+    return self
   end
 
   --- Set the number of meters for the SHORAD defense zone
   -- @param #SHORAD self
   -- @param #number meters Radius of the defense search zone in meters. #SHORADs in this range around a targeted group will go active 
   function SHORAD:SetDefenseRadius(meters)
+  self:T(self.lid .. " SetDefenseRadius")
     local radius = meters or 20000
     if radius < 0 then
       radius = 20000
     end
     self.Radius = radius
+    return self
   end
   
   --- Set using Emission on/off instead of changing alarm state
   -- @param #SHORAD self
   -- @param #boolean switch Decide if we are changing alarm state or AI state
   function SHORAD:SetUsingEmOnOff(switch)
+  self:T(self.lid .. " SetUsingEmOnOff")
     self.UseEmOnOff = switch or false
+    return self
   end
   
   --- Check if a HARM was fired
@@ -292,6 +305,7 @@ do
   -- @param #string WeaponName
   -- @return #boolean Returns true for a match
   function SHORAD:_CheckHarms(WeaponName)
+    self:T(self.lid .. " _CheckHarms")
     self:T( { WeaponName } )
     local hit = false
     if self.DefendHarms then
@@ -307,6 +321,7 @@ do
   -- @param #string WeaponName
   -- @return #boolean Returns true for a match
   function SHORAD:_CheckMavs(WeaponName)
+    self:T(self.lid .. " _CheckMavs")
     self:T( { WeaponName } )
     local hit = false
     if self.DefendMavs then
@@ -322,6 +337,7 @@ do
   -- @param #string Coalition name
   -- @return #boolean Returns false for a match
   function SHORAD:_CheckCoalition(Coalition)
+    self:T(self.lid .. " _CheckCoalition")
     local owncoalition = self.Coalition
     local othercoalition = ""
     if Coalition == 0 then 
@@ -344,6 +360,7 @@ do
   -- @param #string TargetGroupName Name of the target group
   -- @return #boolean Returns true for a match, else false
   function SHORAD:_CheckShotAtShorad(TargetGroupName)
+    self:T(self.lid .. " _CheckShotAtShorad")
     local tgtgrp = TargetGroupName
     local shorad = self.Groupset
     local shoradset = shorad:GetAliveSet() --#table
@@ -352,7 +369,7 @@ do
       local groupname = _groups:GetName()
       if string.find(groupname, tgtgrp, 1) then
         returnname = true
-        _groups:RelocateGroundRandomInRadius(7,100,false,false) -- be a bit evasive
+        --_groups:RelocateGroundRandomInRadius(7,100,false,false) -- be a bit evasive
       end
     end
     return returnname  
@@ -363,6 +380,7 @@ do
   -- @param #string TargetGroupName Name of the target group
   -- @return #boolean Returns true for a match, else false
   function SHORAD:_CheckShotAtSams(TargetGroupName)
+    self:T(self.lid .. " _CheckShotAtSams")
     local tgtgrp = TargetGroupName
     local shorad = self.Samset
     --local shoradset = shorad:GetAliveSet() --#table
@@ -381,6 +399,7 @@ do
   -- @param #SHORAD self
   -- @return #boolean Returns true for a detection, else false
   function SHORAD:_ShotIsDetected()
+    self:T(self.lid .. " _ShotIsDetected")
     local IsDetected = false
     local DetectionProb = math.random(self.DefenseLowProb, self.DefenseHighProb)  -- reference value
     local ActualDetection = math.random(1,100) -- value for this shot
@@ -405,6 +424,7 @@ do
   -- mymantis:AddShorad(myshorad,720)
   -- mymantis:Start()
   function SHORAD:WakeUpShorad(TargetGroup, Radius, ActiveTimer, TargetCat)
+    self:T(self.lid .. " WakeUpShorad")
     self:T({TargetGroup, Radius, ActiveTimer, TargetCat})
     local targetcat = TargetCat or Object.Category.UNIT
     local targetgroup = TargetGroup
@@ -442,7 +462,7 @@ do
         self:T(text)
         local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
         if self.UseEmOnOff then
-          _group:SetAIOn()
+          --_group:SetAIOn()
           _group:EnableEmission(true)
         end
         _group:OptionAlarmStateRed()
@@ -454,14 +474,15 @@ do
         end
       end
     end
+    return self
   end
   
   --- Main function - work on the EventData
   -- @param #SHORAD self
   -- @param Core.Event#EVENTDATA EventData The event details table data set
-  function SHORAD:OnEventShot( EventData )
+  function SHORAD:HandleEventShot( EventData )
     self:T( { EventData } )
-  
+    self:T(self.lid .. " HandleEventShot")
     --local ShootingUnit = EventData.IniDCSUnit
     --local ShootingUnitName = EventData.IniDCSUnitName
     local ShootingWeapon = EventData.Weapon -- Identify the weapon fired

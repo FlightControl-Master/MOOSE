@@ -20,7 +20,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 
--- Date: Apr 2021
+-- Date: July 2021
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends #Core.Base#BASE
@@ -59,7 +59,7 @@
 -- @extends Core.Base#BASE
 
 
---- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - Frédéric Bastiat 
+--- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - FrÃ©dÃ©ric Bastiat 
 -- 
 -- Simple Class for a more intelligent Air Defense System
 -- 
@@ -191,7 +191,7 @@ MANTIS = {
   ShoradLink            = false,
   ShoradTime            = 600,
   ShoradActDistance     = 15000,
-  UseEmOnOff            = true, 
+  UseEmOnOff            = false, 
 }
 
 -----------------------------------------------------------------------
@@ -208,7 +208,7 @@ do
   --@param #string coaltion Coalition side of your setup, e.g. "blue", "red" or "neutral"
   --@param #boolean dynamic Use constant (true) filtering or just filter once (false, default) (optional)
   --@param #string awacs Group name of your Awacs (optional)
-  --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN (optional, deault true)
+  --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN
   --@return #MANTIS self
   --@usage Start up your MANTIS with a basic setting
   --
@@ -267,6 +267,8 @@ do
     if EmOnOff then
       if EmOnOff == false then
         self.UseEmOnOff = false
+      else
+        self.UseEmOnOff = true
       end
     end    
      
@@ -308,7 +310,7 @@ do
     end
     
     -- @field #string version
-    self.version="0.4.1"
+    self.version="0.4.2"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
     
     return self    
