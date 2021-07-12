@@ -456,6 +456,8 @@ CTLD = {
 -- DONE: Zone Radio Beacons
 -- DONE: Stats Running
 -- DONE: Added support for Hercules
+-- TODO: Possibly - either/or loading crates and troops
+-- TODO: Limit of troops, crates buildable?
 ------------------------------
 
 --- Radio Beacons
