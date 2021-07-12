@@ -609,13 +609,6 @@ function FLIGHTGROUP:IsCruising()
   return self:Is("Cruising")
 end
 
---- Check if flight is waiting after passing final waypoint.
--- @param #FLIGHTGROUP self
--- @return #boolean If true, flight is waiting.
-function FLIGHTGROUP:IsWaiting()
-  return self:Is("Waiting")
-end
-
 --- Check if flight is landing.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is landing, i.e. on final approach.
@@ -2556,15 +2549,15 @@ function FLIGHTGROUP:onbeforeWait(From, Event, To, Coord, Altitude, Speed)
   end
 
   if Nsched>0 then
-    self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> WAIT event is suspended for 10 sec.", Nsched))
-    Tsuspend=-10
-    allowed=false
+    --self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> WAIT event is suspended for 10 sec.", Nsched))
+    --Tsuspend=-10
+    --allowed=false
   end
 
   if Nwp>0 then
-    self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> WAIT event is suspended for 10 sec.", Nwp))
-    Tsuspend=-10
-    allowed=false
+    --self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> WAIT event is suspended for 10 sec.", Nwp))
+    --Tsuspend=-10
+    --allowed=false
   end
 
   if Tsuspend and not allowed then

@@ -522,6 +522,17 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     
     -- Check if group got stuck.
     self:_CheckStuck()
+    
+    -- Check if group is waiting.
+    if self:IsWaiting() then
+      if self.Twaiting and self.dTwait then
+        if timer.getAbsTime()>self.Twaiting+self.dTwait then
+          self.Twaiting=nil
+          self.dTwait=nil
+          self:Cruise()
+        end
+      end
+    end    
 
     if self.verbose>=1 then
   

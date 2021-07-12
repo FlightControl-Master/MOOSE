@@ -392,6 +392,17 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       self:_UpdateEngageTarget()
     end
     
+    -- Check if group is waiting.
+    if self:IsWaiting() then
+      if self.Twaiting and self.dTwait then
+        if timer.getAbsTime()>self.Twaiting+self.dTwait then
+          self.Twaiting=nil
+          self.dTwait=nil
+          self:Cruise()
+        end
+      end
+    end
+    
   end
   
   if alive~=nil then

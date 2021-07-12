@@ -284,6 +284,7 @@ OPSGROUP.TaskType={
 --- Task structure.
 -- @type OPSGROUP.Task
 -- @field #string type Type of task: either SCHEDULED or WAYPOINT.
+-- @field #boolean ismission This is an AUFTRAG task.
 -- @field #number id Task ID. Running number to get the task.
 -- @field #number prio Priority.
 -- @field #number time Abs. mission time when to execute the task.
@@ -2876,6 +2877,57 @@ function OPSGROUP:GetTaskByID(id, status)
   return nil
 end
 
+--- On before "TaskExecute" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
+function OPSGROUP:onbeforeTaskExecute(From, Event, To, Task)
+
+  -- Get mission of this task (if any).
+  local Mission=self:GetMissionByTaskID(Task.id)
+  
+  if Mission then
+
+    if Mission.Tpush then
+    
+      local Tnow=timer.getAbsTime()
+      
+      -- Time to push
+      local dt=Mission.Tpush-Tnow
+      
+      -- Push time not reached.
+      if Tnow<Mission.Tpush then
+      
+        if self:IsWaiting() then
+          -- Group is already waiting
+        else
+          self:Wait()
+        end
+        
+        -- Debug info.
+        self:T(self.lid..string.format("Mission %s task execute suspended for %d seconds", Mission.name, dt))
+        
+        -- Reexecute task.
+        self:__TaskExecute(-dt, Task)
+        
+        return false        
+      else
+        -- Not waiting any more.
+        self.Twaiting=nil
+        self.dTwait=nil
+      end
+    
+    end
+    
+  else
+    --env.info("FF no mission task execute")  
+  end
+
+  return true
+end
+
 --- On after "TaskExecute" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -2895,17 +2947,17 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
   -- Set current task.
   self.taskcurrent=Task.id
-
-  --
-  if self:GetTaskCurrent()==nil then
-    table.insert(self.taskqueue, Task)
-  end
-
+  
   -- Set time stamp.
   Task.timestamp=timer.getAbsTime()
 
   -- Task status executing.
   Task.status=OPSGROUP.TaskStatus.EXECUTING
+  
+  -- Insert into task queue. Not sure any more, why I added this. But probably if a task is just executed without having been put into the queue.
+  if self:GetTaskCurrent()==nil then
+    table.insert(self.taskqueue, Task)
+  end
 
   if Task.dcstask.id=="Formation" then
 
@@ -2955,7 +3007,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
   else
 
     -- If task is scheduled (not waypoint) set task.
-    if Task.type==OPSGROUP.TaskType.SCHEDULED then
+    if Task.type==OPSGROUP.TaskType.SCHEDULED or Task.ismission then
 
       local DCStasks={}
       if Task.dcstask.id=='ComboTask' then
@@ -2984,11 +3036,15 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
       -- Set task for group.
       self:SetTask(TaskFinal)
-
+      
+    elseif Task.type==OPSGROUP.TaskType.WAYPOINT then
+      -- Waypoint tasks are executed elsewhere!
+    else
+      self:E(self.lid.."ERROR: Unknown task type: ")
     end
 
   end
-
+  
   -- Get mission of this task (if any).
   local Mission=self:GetMissionByTaskID(self.taskcurrent)
   if Mission then
@@ -3390,9 +3446,6 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
 
   -- Set group mission status to STARTED.
   Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.STARTED)
-  
-  -- 
-
 
   -- Set mission status to STARTED.
   Mission:__Started(3)
@@ -3400,6 +3453,17 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
   -- Route group to mission zone.
   self:RouteToMission(Mission, 3)
 
+end
+
+--- On before "MissionExecute" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission table.
+function OPSGROUP:onbeforeMissionExecute(From, Event, To, Mission)
+
+  return true
 end
 
 --- On after "MissionExecute" event. Mission execution began.
@@ -3698,6 +3762,7 @@ function OPSGROUP:RouteToMission(mission, delay)
 
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, waypoint, mission.name, mission.prio, mission.duration)
+    waypointtask.ismission=true
 
     -- Set waypoint task.
     mission:SetGroupWaypointTask(self, waypointtask)
@@ -3910,21 +3975,31 @@ function OPSGROUP:_SetWaypointTasks(Waypoint)
 
   -- Debug info.
   local text=string.format("WP uid=%d tasks:", Waypoint.uid)
+  local missiontask=nil --Ops.OpsGroup#OPSGROUP.Task
   if #tasks>0 then
     for i,_task in pairs(tasks) do
       local task=_task --#OPSGROUP.Task
       text=text..string.format("\n[%d] %s", i, task.description)
+      if task.ismission then
+        missiontask=task
+      end
     end
   else
     text=text.." None"
   end
   self:T(self.lid..text)
+  
+  -- Check if there is mission task
+  if missiontask then
+    env.info("FF executing mission task")
+    self:TaskExecute(missiontask)
+    return 1
+  end
 
+  -- TODO: maybe set waypoint enroute tasks?
 
   -- Tasks at this waypoints.
   local taskswp={}
-
-  -- TODO: maybe set waypoint enroute tasks?
 
   for _,task in pairs(tasks) do
     local Task=task --Ops.OpsGroup#OPSGROUP.Task

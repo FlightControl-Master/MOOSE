@@ -39,9 +39,10 @@
 -- @field #number prio Mission priority.
 -- @field #boolean urgent Mission is urgent. Running missions with lower prio might be cancelled.
 -- @field #number importance Importance.
--- @field #number Tstart Mission start time in seconds.
--- @field #number Tstop Mission stop time in seconds.
+-- @field #number Tstart Mission start time in abs. seconds.
+-- @field #number Tstop Mission stop time in abs. seconds.
 -- @field #number duration Mission duration in seconds.
+-- @field #number Tpush Mission push/execute time in abs. seconds.
 -- @field Wrapper.Marker#MARKER marker F10 map marker.
 -- @field #boolean markerOn If true, display marker on F10 map with the AUFTRAG status.
 -- @field #number markerCoaliton Coalition to which the marker is dispayed.
@@ -442,7 +443,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.6.0"
+AUFTRAG.version="0.6.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1432,6 +1433,24 @@ function AUFTRAG:SetTime(ClockStart, ClockStop)
   if Tstop then
     self.duration=self.Tstop-self.Tstart
   end  
+
+  return self
+end
+
+
+--- Set mission push time. This is the time the mission is executed. If the push time is not passed, the group will wait at the mission execution waypoint.
+-- @param #AUFTRAG self
+-- @param #string ClockPush Time the mission is executed, e.g. "05:00" for 5 am. Can also be given as a `#number`, where it is interpreted as relative push time in seconds.
+-- @return #AUFTRAG self
+function AUFTRAG:SetPushTime(ClockPush)
+
+  if ClockPush then
+    if type(ClockPush)=="string" then
+      self.Tpush=UTILS.ClockToSeconds(ClockPush)
+    elseif type(ClockPush)=="number" then
+      self.Tpush=timer.getAbsTime()+ClockPush
+    end
+  end
 
   return self
 end

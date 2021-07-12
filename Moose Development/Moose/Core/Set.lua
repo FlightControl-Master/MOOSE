@@ -233,7 +233,9 @@ do -- SET_BASE
   -- @param Core.Base#BASE Object The object itself.
   -- @return Core.Base#BASE The added BASE Object.
   function SET_BASE:Add( ObjectName, Object )
-    self:I( { ObjectName = ObjectName, Object = Object } )
+  
+    -- Debug info.
+    self:T( { ObjectName = ObjectName, Object = Object } )
 
     -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
     if self.Set[ObjectName] then
@@ -5908,12 +5910,13 @@ do -- SET_ZONE_GOAL
   -- @param Core.Event#EVENTDATA EventData
   function SET_ZONE_GOAL:OnEventNewZoneGoal( EventData )
 
-    self:I( { "New Zone Capture Coalition", EventData } )
-    self:I( { "Zone Capture Coalition", EventData.ZoneGoal } )
+    -- Debug info.
+    self:T( { "New Zone Capture Coalition", EventData } )
+    self:T( { "Zone Capture Coalition", EventData.ZoneGoal } )
 
     if EventData.ZoneGoal then
       if EventData.ZoneGoal and self:IsIncludeObject( EventData.ZoneGoal ) then
-        self:I( { "Adding Zone Capture Coalition", EventData.ZoneGoal.ZoneName, EventData.ZoneGoal } )
+        self:T( { "Adding Zone Capture Coalition", EventData.ZoneGoal.ZoneName, EventData.ZoneGoal } )
         self:Add( EventData.ZoneGoal.ZoneName , EventData.ZoneGoal  )
       end
     end
