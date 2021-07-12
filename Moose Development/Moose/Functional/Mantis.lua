@@ -20,7 +20,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 
--- Date: Apr 2021
+-- Date: July 2021
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends #Core.Base#BASE
@@ -310,7 +310,7 @@ do
     end
     
     -- @field #string version
-    self.version="0.4.1"
+    self.version="0.4.2"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
     
     return self    
