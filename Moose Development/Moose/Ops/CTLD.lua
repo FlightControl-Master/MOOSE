@@ -410,6 +410,7 @@ do
 --              my_ctld.enableHercules = true
 --              my_ctld.HercMinAngels = 155 -- for troop/cargo drop via chute in meters, ca 470 ft
 --              my_ctld.HercMaxAngels = 2000 -- for troop/cargo drop via chute in meters, ca 6000 ft
+--              my_ctld.HercMaxSpeed = 77 -- 77mps or 270 kph or 150 kn
 -- 
 -- Also, the following options need to be set to `true`:
 -- 
@@ -478,7 +479,7 @@ CTLD = {
 -- @field #table vhfbeacon Beacon info as #CTLD.ZoneBeacon
 
 --- Zone Type Info.
--- @type CTLD.
+-- @type CTLD.CargoZoneType
 CTLD.CargoZoneType = {
   LOAD = "load",
   DROP = "drop",
@@ -651,6 +652,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.enableHercules = false
   self.HercMinAngels = 165 -- for troop/cargo drop via chute
   self.HercMaxAngels = 2000 -- for troop/cargo drop via chute
+  self.HercMaxSpeed = 77 -- 280 kph or 150kn eq 77 mps
   
   -- message suppression
   self.suppressmessages = false
@@ -2283,10 +2285,12 @@ end
       local aheight = uheight - gheight -- height above ground
       local maxh = self.HercMinAngels-- 1500m
       local minh =  self.HercMaxAngels -- 5000m
-      local mspeed = 2 -- 2 m/s
-      -- TODO:Add speed test for Herc, should not be above 280kph/150kn
-      --self:Tstring.format("%s Unit parameters: at %dm AGL with %dmps",self.lid,aheight,uspeed))
-      if (aheight <= maxh) and (aheight >= minh)  then 
+      local maxspeed =  self.HercMaxSpeed -- 77 mps
+      -- TODO: TEST - Speed test for Herc, should not be above 280kph/150kn
+      local kmspeed = uspeed * 3.6
+      local knspeed = kmspeed / 1.86
+      self:T(string.format("%s Unit parameters: at %dm AGL with %dmps | %dkph | %dkn",self.lid,aheight,uspeed,kmspeed,knspeed))
+      if (aheight <= maxh) and (aheight >= minh) and (uspeed <= maxspeed) then 
         -- yep within parameters
         outcome = true
       end
@@ -2302,7 +2306,14 @@ end
     local inhover = self:IsCorrectHover(Unit)
     local htxt = "true"
     if not inhover then htxt = "false" end
-    local text = string.format("Hover parameters (autoload/drop):\n - Min height %dm \n - Max height %dm \n - Max speed 2mps \n - In parameter: %s", self.minimumHoverHeight, self.maximumHoverHeight, htxt)
+    local text = ""
+    if _SETTINGS:IsMetric() then
+      text = string.format("Hover parameters (autoload/drop):\n - Min height %dm \n - Max height %dm \n - Max speed 2mps \n - In parameter: %s", self.minimumHoverHeight, self.maximumHoverHeight, htxt)
+    else
+      local minheight = UTILS.MetersToFeet(self.minimumHoverHeight)
+      local maxheight = UTILS.MetersToFeet(self.maximumHoverHeight)
+      text = string.format("Hover parameters (autoload/drop):\n - Min height %dm \n - Max height %dm \n - Max speed 6fts \n - In parameter: %s", minheight, maxheight, htxt)
+    end
     self:_SendMessage(text, 10, false, Group)
     --local m = MESSAGE:New(text,10,"CTLD",false):ToGroup(Group)
     return self
@@ -2316,9 +2327,16 @@ end
     local inhover = self:IsCorrectFlightParameters(Unit)
     local htxt = "true"
     if not inhover then htxt = "false" end
-    local minheight = UTILS.MetersToFeet(self.HercMinAngels)
-    local maxheight = UTILS.MetersToFeet(self.HercMaxAngels)
-    local text = string.format("Flight parameters (airdrop):\n - Min height %dft \n - Max height %dft \n - In parameter: %s", minheight, maxheight, htxt)
+    local text = ""
+    if _SETTINGS:IsImperial() then
+      local minheight = UTILS.MetersToFeet(self.HercMinAngels)
+      local maxheight = UTILS.MetersToFeet(self.HercMaxAngels)
+      text = string.format("Flight parameters (airdrop):\n - Min height %dft \n - Max height %dft \n - In parameter: %s", minheight, maxheight, htxt)
+    else
+      local minheight = self.HercMinAngels
+      local maxheight = self.HercMaxAngels
+      text = string.format("Flight parameters (airdrop):\n - Min height %dm \n - Max height %dm \n - In parameter: %s", minheight, maxheight, htxt)
+    end
     self:_SendMessage(text, 10, false, Group)
     --local m = MESSAGE:New(text,15,"CTLD",false):ToGroup(Group)
     return self

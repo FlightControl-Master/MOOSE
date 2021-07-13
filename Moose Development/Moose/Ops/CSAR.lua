@@ -662,7 +662,9 @@ end
 -- @param #string _description (optional) Description.
 -- @param #boolean _randomPoint (optional) Random yes or no.
 -- @param #boolean _nomessage (optional) If true, don\'t send a message to SAR.
-function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _nomessage)
+-- @param #string unitname (optional) Name of the lost unit.
+-- @param #string typename (optional) Type of plane.
+function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _nomessage, unitname, typename)
   self:T(self.lid .. " _SpawnCsarAtZone")
   local freq = self:_GenerateADFFrequency()
   local _triggerZone = ZONE:New(_zone) -- trigger to use as reference position
@@ -671,7 +673,9 @@ function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _
     return
   end
   
-  local _description = _description or "Unknown"
+  local _description = _description or "PoW"
+  local unitname = unitname or "Old Rusty"
+  local typename = typename or "Phantom II"
   
   local pos = {}
   if _randomPoint then
@@ -690,7 +694,7 @@ function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _
     _country = country.id.UN_PEACEKEEPERS
   end
   
-  self:_AddCsar(_coalition, _country, pos, "PoW", _description, nil, freq, _nomessage, _description)
+  self:_AddCsar(_coalition, _country, pos, typename, unitname, _description, freq, _nomessage, _description)
   
   return self
 end
@@ -702,12 +706,14 @@ end
 -- @param #string Description (optional) Description.
 -- @param #boolean RandomPoint (optional) Random yes or no.
 -- @param #boolean Nomessage (optional) If true, don\'t send a message to SAR.
+-- @param #string unitname (optional) Name of the lost unit.
+-- @param #string typename (optional) Type of plane.
 -- @usage If missions designers want to spawn downed pilots into the field, e.g. at mission begin, to give the helicopter guys works, they can do this like so:
 --      
 --        -- Create downed "Pilot Wagner" in #ZONE "CSAR_Start_1" at a random point for the blue coalition
---        my_csar:SpawnCSARAtZone( "CSAR_Start_1", coalition.side.BLUE, "Pilot Wagner", true )
-function CSAR:SpawnCSARAtZone(Zone, Coalition, Description, RandomPoint, Nomessage)
-  self:_SpawnCsarAtZone(Zone, Coalition, Description, RandomPoint, Nomessage)
+--        my_csar:SpawnCSARAtZone( "CSAR_Start_1", coalition.side.BLUE, "Wagner", true, false, "Charly-1-1", "F5E" )
+function CSAR:SpawnCSARAtZone(Zone, Coalition, Description, RandomPoint, Nomessage, Unitname, Typename)
+  self:_SpawnCsarAtZone(Zone, Coalition, Description, RandomPoint, Nomessage, Unitname, Typename)
   return self
 end
 
@@ -1199,7 +1205,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
               end
               if _time <= 0 or _distance < self.loadDistance then
                  if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
-                  self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in, bugger!", self.messageTime, true)
+                  self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true)
                   return true
                  else
                    self.landedStatus[_lookupKeyHeli] = nil
@@ -1211,7 +1217,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
         else
           if (_distance < self.loadDistance) then
               if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
-                self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in, honk!", self.messageTime, true)
+                self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true)
                 return true
               else
                 self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
@@ -1252,7 +1258,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                           self:_DisplayMessageToSAR(_heliUnit, "Hovering above " .. _pilotName .. ". \n\nHold hover for " .. _time .. " seconds to winch them up. \n\nIf the countdown stops you\'re too far away!", self.messageTime, true)
                       else
                        if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
-                          self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in, noob!", self.messageTime, true)
+                          self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true)
                           return true
                         else
                           self.hoverStatus[_lookupKeyHeli] = nil
