@@ -373,6 +373,7 @@ OPSGROUP.TaskType={
 -- @field #number MissilesAS Amount of anti-ship missiles.
 -- @field #number MissilesCR Amount of cruise missiles.
 -- @field #number MissilesBM Amount of ballistic missiles.
+-- @field #number MissilesSA Amount of surfe-to-air missiles.
 
 --- Waypoint data.
 -- @type OPSGROUP.Waypoint
@@ -1695,6 +1696,12 @@ end
 -- @return #boolean If true, the group exists or false if the group does not exist. If nil, the DCS group could not be found.
 function OPSGROUP:IsActive()
 
+  if self.group then
+    local active=self.group:IsActive()
+    return active
+  end
+
+  return nil
 end
 
 --- Check if group is alive.
@@ -1737,7 +1744,6 @@ end
 -- @param #OPSGROUP self
 -- @return #boolean If true, all units/elements of the group are dead.
 function OPSGROUP:IsDead()
-  --env.info("FF IsDead")
   if self.isDead then
     return true
   else
@@ -1804,6 +1810,16 @@ end
 function OPSGROUP:IsEngaging()
   local is=self:is("Engaging")
   return is
+end
+
+--- Check if group is currently waiting.
+-- @param #OPSGROUP self
+-- @return #boolean If true, group is currently waiting.
+function OPSGROUP:IsWaiting()
+  if self.Twaiting then
+    return true
+  end
+  return false
 end
 
 --- Check if the group is not a carrier yet.
@@ -1901,14 +1917,6 @@ function OPSGROUP:IsLoaded(CarrierGroupName)
   end
   return self.cargoStatus==OPSGROUP.CargoStatus.LOADED
 end
-
---- Check if the group is cargo and waiting for a carrier to pick it up.
--- @param #OPSGROUP self
--- @return #boolean If true, group is waiting for a carrier.
-function OPSGROUP:IsWaitingAsCargo()
-  return self.cargoStatus==OPSGROUP.CargoStatus.WAITING
-end
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Waypoint Functions
@@ -3872,14 +3880,37 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Check if group is currently waiting.
--- @param #OPSGROUP self
--- @param #boolean If true, group is currently waiting.
-function OPSGROUP:IsWaiting()
-  if self.Twaiting then
-    return true
+--- On before "Wait" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number Duration Duration how long the group will be waiting in seconds. Default `nil` (=forever).
+function OPSGROUP:onbeforeWait(From, Event, To, Duration)
+
+  local allowed=true
+  local Tsuspend=nil
+
+  -- Check for a current task.
+  if self.taskcurrent>0 then
+    self:I(self.lid..string.format("WARNING: Got current task ==> WAIT event is suspended for 30 sec!"))
+    Tsuspend=-30
+    allowed=false
   end
-  return false
+  
+  -- Check for a current transport assignment.
+  if self.cargoTransport then
+    self:I(self.lid..string.format("WARNING: Got current TRANSPORT assignment ==> WAIT event is suspended for 30 sec!"))
+    Tsuspend=-30
+    allowed=false  
+  end
+
+  -- Call wait again.
+  if Tsuspend and not allowed then
+    self:__Wait(Tsuspend, Duration)
+  end
+
+  return allowed
 end
 
 --- On after "Wait" event.
@@ -3991,7 +4022,6 @@ function OPSGROUP:_SetWaypointTasks(Waypoint)
   
   -- Check if there is mission task
   if missiontask then
-    env.info("FF executing mission task")
     self:TaskExecute(missiontask)
     return 1
   end
@@ -4038,7 +4068,7 @@ function OPSGROUP:onafterGotoWaypoint(From, Event, To, UID)
 
   if n then
 
-    -- TODO: switch to re-enable waypoint tasks.
+    -- TODO: Switch to re-enable waypoint tasks?
     if false then
       local tasks=self:GetTasksWaypoint(n)
 
@@ -4213,7 +4243,7 @@ function OPSGROUP:onbeforeLaserOn(From, Event, To, Target)
         self:LaserGotLOS()
       else
         -- Try to switch laser on again in 10 sec.
-        self:I(self.lid.."LASER got no LOS currently. Trying to switch the laser on again in 10 sec")
+        self:T(self.lid.."LASER got no LOS currently. Trying to switch the laser on again in 10 sec")
         self:__LaserOn(-10, Target)
         return false
       end
@@ -4697,7 +4727,6 @@ function OPSGROUP:onafterElementDead(From, Event, To, Element)
 
 
   -- Clear cargo bay of element.
-  --for _,_cargo in pairs(Element.cargoBay) do
   for i=#Element.cargoBay,1,-1 do
     local cargo=Element.cargoBay[i] --#OPSGROUP.MyCargo
     
@@ -4809,6 +4838,13 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
       -- Group is DESPAWNED
       ---
 
+      -- Ensure elements in utero.
+      for _,_element in pairs(self.elements) do
+        local element=_element --#OPSGROUP.Element
+        self:ElementInUtero(element)
+      end
+      
+
       --[[
 
       -- Loop over template units.
@@ -4845,7 +4881,10 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     -- Not dead or destroyed any more.
     self.isDead=false
     self.isDestroyed=false
-    self.Ndestroyed=0    
+    self.Ndestroyed=0
+    
+    self:InitWaypoints()
+    self:_InitGroup()    
 
     -- Reset events.
     --self:ResetEvents()
@@ -4919,10 +4958,17 @@ function OPSGROUP:onafterDead(From, Event, To)
   for i,_transport in pairs(self.cargoqueue) do
     local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
     transport:__DeadCarrierGroup(1, self)
-  end  
+  end
+  
+  -- Cargo queue empty
+  self.cargoqueue={}
+  
+  -- No current cargo transport.
+  self.cargoTransport=nil
+  
   
   -- Stop in a sec.
-  self:__Stop(-5)
+  --self:__Stop(-5)
 end
 
 --- On before "Stop" event.
@@ -5343,6 +5389,7 @@ function OPSGROUP:_CheckDelivered(CargoTransport)
       elseif cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped() then
         -- This one is dead.
       else
+        --env.info(string.format())
         done=false --Someone is not done!
       end
 
@@ -5378,14 +5425,14 @@ end
 -- @param #OPSGROUP self
 -- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport Cargo transport do be deleted.
 -- @return #OPSGROUP self
-function OPSGROUP:DelCargoTransport(CargoTransport)
-
-  for i,_transport in pairs(self.cargoqueue) do
-    local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+function OPSGROUP:DelOpsTransport(CargoTransport)
+  
+  for i=#self.cargoqueue,1,-1 do
+    local transport=self.cargoqueue[i] --Ops.OpsTransport#OPSTRANSPORT
     if transport.uid==CargoTransport.uid then
       table.remove(self.cargoqueue, i)
       return self
-    end
+    end    
   end
 
   return self
@@ -5574,7 +5621,7 @@ function OPSGROUP:AddWeightCargo(UnitName, Weight)
 
   local element=self:GetElementByName(UnitName)
 
-  if element and element.unit and element.unit:IsAlive() then
+  if element then --we do not check if the element is actually alive because we need to remove cargo from dead units
 
     -- Add weight.
     element.weightCargo=element.weightCargo+Weight
@@ -5767,7 +5814,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
     -- We are already in the pickup zone ==> wait and initiate loading.
     if (self:IsArmygroup() or self:IsNavygroup()) and not self:IsHolding() then
-      self:Wait()
+      self:FullStop()
     end
 
     -- Start loading.
@@ -5992,7 +6039,7 @@ end
 function OPSGROUP:_TransferCargo(CargoGroup, CarrierGroup, CarrierElement)
 
   -- Debug info.
-  self:I(self.lid..string.format("Transferring cargo %s to new carrier group %s", CargoGroup:GetName(), CarrierGroup:GetName()))
+  self:T(self.lid..string.format("Transferring cargo %s to new carrier group %s", CargoGroup:GetName(), CarrierGroup:GetName()))
   
   -- Unload from this and directly load into the other carrier.
   self:Unload(CargoGroup)
@@ -6136,7 +6183,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
 
     -- We are already in the pickup zone ==> wait and initiate unloading.
     if (self:IsArmygroup() or self:IsNavygroup()) and not self:IsHolding() then
-      self:Wait()
+      self:FullStop()
     end
 
     -- Start loading.
@@ -6440,10 +6487,12 @@ function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Activated
 
     -- Add current waypoint. These have been cleard on loading.
     if OpsGroup:IsNavygroup() then
+      OpsGroup:ClearWaypoints()
       OpsGroup.currentwp=1
       OpsGroup.passedfinalwp=true
       NAVYGROUP.AddWaypoint(OpsGroup, Coordinate, nil, nil, nil, false)
     elseif OpsGroup:IsArmygroup() then
+      OpsGroup:ClearWaypoints()
       OpsGroup.currentwp=1
       OpsGroup.passedfinalwp=true
       ARMYGROUP.AddWaypoint(OpsGroup, Coordinate, nil, nil, nil, false)
@@ -6555,7 +6604,7 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
   end
 
   -- Remove cargo transport from cargo queue.
-  self:DelCargoTransport(CargoTransport)
+  self:DelOpsTransport(CargoTransport)
 
 end
 
@@ -6859,8 +6908,6 @@ function OPSGROUP:_CheckGroupDone(delay)
 
       -- Get current waypoint.
       local waypoint=self:GetWaypoint(self.currentwp)
-
-      --env.info("FF CheckGroupDone")
 
       if waypoint then
 
@@ -7437,7 +7484,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
 
         else
           -- Wait and load cargo.
-          opsgroup:Wait()
+          opsgroup:FullStop()
           opsgroup:__Loading(-5)
         end
 
@@ -7450,7 +7497,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
 
         else
           -- Stop and unload.
-          opsgroup:Wait()
+          opsgroup:FullStop()
           opsgroup:Unloading()
         end
 
@@ -8521,7 +8568,7 @@ function OPSGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:__Dead(-1)
+      self:Dead()
     end
 
   end
@@ -8677,8 +8724,6 @@ function OPSGROUP:_GetElementZoneLoader(Element, Zone, Loader)
 
     -- Heading in deg.
     local heading=math.deg(math.atan2(X.z, X.x))
-
-    --env.info(string.format("FF l=%d w=%d h=%d", l, w, heading))
 
     -- Bounding box at the origin of the map facing "North".
     local b={}
@@ -9035,6 +9080,24 @@ function OPSGROUP:_CoordinateFromObject(Object)
   return nil
 end
 
+--- Check if a unit is an element of the flightgroup.
+-- @param #OPSGROUP self
+-- @param #string unitname Name of unit.
+-- @return #boolean If true, unit is element of the flight group or false if otherwise.
+function OPSGROUP:_IsElement(unitname)
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --Ops.OpsGroup#OPSGROUP.Element
+
+    if element.name==unitname then
+      return true
+    end
+
+  end
+
+  return false
+end
+
 --- Add a unit/element to the OPS group.
 -- @param #OPSGROUP self
 -- @param #string unitname Name of unit.
@@ -9095,7 +9158,7 @@ function OPSGROUP:_AddElementByName(unitname)
     element.weight=element.weightEmpty+element.weightCargo
 
     -- Looks like only aircraft have a massMax value in the descriptors.
-    element.weightMaxTotal=element.descriptors.massMax or element.weightEmpty+2*95 --If max mass is not given, we assume 10 soldiers.
+    element.weightMaxTotal=element.descriptors.massMax or element.weightEmpty+8*95 --If max mass is not given, we assume 8 soldiers.
 
 
     if self.isArmygroup then
@@ -9141,7 +9204,9 @@ function OPSGROUP:_AddElementByName(unitname)
     self:T(self.lid..text)
 
     -- Add element to table.
-    table.insert(self.elements, element)
+    if not self:_IsElement(unitname) then
+      table.insert(self.elements, element)
+    end
 
     -- Trigger spawned event if alive.
     if unit:IsAlive() then

@@ -208,8 +208,8 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   -- PLANNED --> SCHEDULED --> EXECUTING --> DELIVERED  
   self:AddTransition("*",                           "Planned",          OPSTRANSPORT.Status.PLANNED)     -- Cargo transport was planned.
   self:AddTransition(OPSTRANSPORT.Status.PLANNED,   "Scheduled",        OPSTRANSPORT.Status.SCHEDULED)   -- Cargo is queued at at least one carrier.
-  self:AddTransition(OPSTRANSPORT.Status.SCHEDULED, "Executing",        OPSTRANSPORT.Status.EXECUTING)   -- Cargo is being transported.
-  self:AddTransition(OPSTRANSPORT.Status.EXECUTING, "Delivered",        OPSTRANSPORT.Status.DELIVERED)   -- Cargo was delivered.
+  self:AddTransition(OPSTRANSPORT.Status.SCHEDULED, "Executing",        OPSTRANSPORT.Status.EXECUTING)   -- Cargo is being transported.  
+  self:AddTransition("*",                           "Delivered",        OPSTRANSPORT.Status.DELIVERED)   -- Cargo was delivered.
   
   self:AddTransition("*",                           "Status",           "*")
   self:AddTransition("*",                           "Stop",             "*")
@@ -885,7 +885,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSTRANSPORT:onafterPlanned(From, Event, To)
-  self:I(self.lid..string.format("New status %s", OPSTRANSPORT.Status.PLANNED))
+  self:T(self.lid..string.format("New status: %s-->%s", From, To))
 end
 
 --- On after "Scheduled" event.
@@ -894,7 +894,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSTRANSPORT:onafterScheduled(From, Event, To)
-  self:I(self.lid..string.format("New status %s", OPSTRANSPORT.Status.SCHEDULED))
+  self:T(self.lid..string.format("New status: %s-->%s", From, To))
 end
 
 --- On after "Executing" event.
@@ -903,7 +903,22 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSTRANSPORT:onafterExecuting(From, Event, To)
-  self:I(self.lid..string.format("New status %s", OPSTRANSPORT.Status.EXECUTING))
+  self:T(self.lid..string.format("New status: %s-->%s", From, To))
+end
+
+--- On before "Delivered" event.
+-- @param #OPSTRANSPORT self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSTRANSPORT:onbeforeDelivered(From, Event, To)
+
+  -- Check that we do not call delivered again.
+  if From==OPSTRANSPORT.Status.DELIVERED then
+    return false
+  end
+
+  return true
 end
 
 --- On after "Delivered" event.
@@ -912,7 +927,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSTRANSPORT:onafterDelivered(From, Event, To)
-  self:I(self.lid..string.format("New status %s", OPSTRANSPORT.Status.DELIVERED))
+  self:T(self.lid..string.format("New status: %s-->%s", From, To))
   
   -- Inform all assigned carriers that cargo was delivered. They can have this in the queue or are currently processing this transport.  
   for _,_carrier in pairs(self.carriers) do
@@ -941,7 +956,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo OPSGROUP that was unloaded from a carrier.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
 -- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier Carrier OPSGROUP that unloaded the cargo.
 function OPSTRANSPORT:onafterUnloaded(From, Event, To, OpsGroupCargo, OpsGroupCarrier)
   self:I(self.lid..string.format("Unloaded OPSGROUP %s", OpsGroupCargo:GetName()))
@@ -966,6 +981,7 @@ end
 -- @param #string To To state. 
 function OPSTRANSPORT:onafterDeadCarrierAll(From, Event, To)
   self:I(self.lid..string.format("ALL Carrier OPSGROUPs are dead! Setting stage to PLANNED if not all cargo was delivered."))
+  self:_CheckDelivered()
   if not self:IsDelivered() then
     self:Planned()
   end
@@ -997,7 +1013,6 @@ function OPSTRANSPORT:_CheckDelivered()
         -- This one was destroyed.
       elseif cargo.opsgroup:IsDead() then
         -- This one is dead.
-        dead=false
       elseif cargo.opsgroup:IsStopped() then
         -- This one is stopped.
         dead=false
@@ -1089,7 +1104,7 @@ function OPSTRANSPORT:FindTransferCarrierForCargo(CargoGroup, Zone)
     local carrierGroup=_carrier --Ops.OpsGroup#OPSGROUP
     
     -- First check if carrier is alive and loading cargo.
-    if carrierGroup and carrierGroup:IsAlive() and carrierGroup:IsLoading() then
+    if carrierGroup and carrierGroup:IsAlive() and (carrierGroup:IsLoading() or self.deployzone:IsInstanceOf("ZONE_AIRBASE")) then
     
       -- Find an element of the group that has enough free space.
       carrier=carrierGroup:FindCarrierForCargo(CargoGroup)
@@ -1098,10 +1113,10 @@ function OPSTRANSPORT:FindTransferCarrierForCargo(CargoGroup, Zone)
         if Zone==nil or Zone:IsCoordinateInZone(carrier.unit:GetCoordinate()) then
           return carrier, carrierGroup      
         else
-          self:T3(self.lid.."Got transfer carrier but carrier not in zone (yet)!")
+          self:T2(self.lid.."Got transfer carrier but carrier not in zone (yet)!")
         end
       else
-        self:T3(self.lid.."No transfer carrier available!")
+        self:T2(self.lid.."No transfer carrier available!")
       end
       
     end

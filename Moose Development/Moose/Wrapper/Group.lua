@@ -310,8 +310,7 @@ end
 
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Position The 3D position vectors of the POSITIONABLE.
--- @return #nil The POSITIONABLE is not existing or alive.  
+-- @return DCS#Position The 3D position vectors of the POSITIONABLE or #nil if the groups not existing or alive.  
 function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3()
   self:F2( self.PositionableName )
 
@@ -340,8 +339,7 @@ end
 -- 
 -- @param #GROUP self
 -- @return #boolean true if the group is alive and active.
--- @return #boolean false if the group is alive but inactive.
--- @return #nil if the group does not exist anymore.
+-- @return #boolean false if the group is alive but inactive or #nil if the group does not exist anymore.
 function GROUP:IsAlive()
   self:F2( self.GroupName )
 
@@ -363,8 +361,7 @@ end
 
 --- Returns if the group is activated.
 -- @param #GROUP self
--- @return #boolean true if group is activated.
--- @return #nil The group is not existing or alive.  
+-- @return #boolean true if group is activated or #nil The group is not existing or alive.  
 function GROUP:IsActive()
   self:F2( self.GroupName )
 
@@ -412,7 +409,6 @@ function GROUP:Destroy( GenerateEvent, delay )
   self:F2( self.GroupName )
   
   if delay and delay>0 then
-    --SCHEDULER:New(nil, GROUP.Destroy, {self, GenerateEvent}, delay)
     self:ScheduleOnce(delay, GROUP.Destroy, self, GenerateEvent)
   else
 

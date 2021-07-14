@@ -2191,7 +2191,7 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
       end
       
       -- Group is waiting.
-      if self.Twaiting then
+      if self:IsWaiting() then
         self:T(self.lid.."Waiting! Group NOT done...")
         return        
       end
@@ -2531,37 +2531,31 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Core.Point#COORDINATE Coord Coordinate where to orbit. Default current position.
--- @param #number Altitude Altitude in feet. Default 10000 ft.
--- @param #number Speed Speed in knots. Default 250 kts.
-function FLIGHTGROUP:onbeforeWait(From, Event, To, Coord, Altitude, Speed)
+-- @param #number Duration Duration how long the group will be waiting in seconds. Default `nil` (=forever).
+-- @param #number Altitude Altitude in feet. Default 10,000 ft for airplanes and 1,000 feet for helos.
+-- @param #number Speed Speed in knots. Default 250 kts for airplanes and 20 kts for helos.
+function FLIGHTGROUP:onbeforeWait(From, Event, To, Duration, Altitude, Speed)
 
   local allowed=true
   local Tsuspend=nil
 
-  -- Check if there are remaining tasks.
-  local Ntot,Nsched, Nwp=self:CountRemainingTasks()
-
+  -- Check for a current task.
   if self.taskcurrent>0 then
-    self:I(self.lid..string.format("WARNING: Got current task ==> WAIT event is suspended for 10 sec."))
-    Tsuspend=-10
+    self:I(self.lid..string.format("WARNING: Got current task ==> WAIT event is suspended for 30 sec!"))
+    Tsuspend=-30
     allowed=false
   end
-
-  if Nsched>0 then
-    --self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> WAIT event is suspended for 10 sec.", Nsched))
-    --Tsuspend=-10
-    --allowed=false
+  
+  -- Check for a current transport assignment.
+  if self.cargoTransport then
+    self:I(self.lid..string.format("WARNING: Got current TRANSPORT assignment ==> WAIT event is suspended for 30 sec!"))
+    Tsuspend=-30
+    allowed=false  
   end
 
-  if Nwp>0 then
-    --self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> WAIT event is suspended for 10 sec.", Nwp))
-    --Tsuspend=-10
-    --allowed=false
-  end
-
+  -- Call wait again.
   if Tsuspend and not allowed then
-    self:__Wait(Tsuspend, Coord, Altitude, Speed)
+    self:__Wait(Tsuspend, Duration, Altitude, Speed)
   end
 
   return allowed
@@ -2574,14 +2568,18 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #number Duration Duration how long the group will be waiting in seconds. Default `nil` (=forever).
--- @param Core.Point#COORDINATE Coord Coordinate where to orbit. Default current position.
--- @param #number Altitude Altitude in feet. Default 10000 ft.
--- @param #number Speed Speed in knots. Default 250 kts.
-function FLIGHTGROUP:onafterWait(From, Event, To, Duration, Coord, Altitude, Speed)
+-- @param #number Altitude Altitude in feet. Default 10,000 ft for airplanes and 1,000 feet for helos.
+-- @param #number Speed Speed in knots. Default 250 kts for airplanes and 20 kts for helos.
+function FLIGHTGROUP:onafterWait(From, Event, To, Duration, Altitude, Speed)
 
-  Coord=Coord or self.group:GetCoordinate()
+  -- Group will orbit at its current position.
+  local Coord=self.group:GetCoordinate()
+  
+  -- Set altitude: 1000 ft for helos and 10,000 ft for panes.
   Altitude=Altitude or (self.isHelo and 1000 or 10000)
-  Speed=Speed or (self.isHelo and 80 or 250)
+  
+  -- Set speed.
+  Speed=Speed or (self.isHelo and 20 or 250)
 
   -- Debug message.
   local text=string.format("Flight group set to wait/orbit at altitude %d m and speed %.1f km/h", Altitude, Speed)
@@ -3009,7 +3007,7 @@ function FLIGHTGROUP:_InitGroup()
 
   -- First check if group was already initialized.
   if self.groupinitialized then
-    self:E(self.lid.."WARNING: Group was already initialized!")
+    self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
     return
   end
 
@@ -3106,7 +3104,7 @@ function FLIGHTGROUP:_InitGroup()
     self.refueltype=select(2, unit:IsRefuelable())
 
     -- Debug info.
-    if self.verbose>=0 then
+    if self.verbose>=1 then
       local text=string.format("Initialized Flight Group %s:\n", self.groupname)
       text=text..string.format("Unit type     = %s\n", self.actype)
       text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
@@ -3604,27 +3602,6 @@ function FLIGHTGROUP:AddWaypointLanding(Airbase, Speed, AfterWaypointWithID, Alt
 
   return waypoint
 end
-
-
-
---- Check if a unit is an element of the flightgroup.
--- @param #FLIGHTGROUP self
--- @param #string unitname Name of unit.
--- @return #boolean If true, unit is element of the flight group or false if otherwise.
-function FLIGHTGROUP:_IsElement(unitname)
-
-  for _,_element in pairs(self.elements) do
-    local element=_element --Ops.OpsGroup#OPSGROUP.Element
-
-    if element.name==unitname then
-      return true
-    end
-
-  end
-
-  return false
-end
-
 
 
 --- Set parking spot of element.

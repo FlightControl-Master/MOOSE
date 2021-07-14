@@ -345,10 +345,10 @@ end
 function ARMYGROUP:onbeforeStatus(From, Event, To)
 
   if self:IsDead() then  
-    self:I(self.lid..string.format("Onbefore Status DEAD ==> false"))
+    self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
     return false   
   elseif self:IsStopped() then
-    self:I(self.lid..string.format("Onbefore Status STOPPED ==> false"))
+    self:T(self.lid..string.format("Onbefore Status STOPPED ==> false"))
     return false
   end
 
@@ -567,14 +567,17 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     if not self.option.Formation then
       self.option.Formation=self.optionDefault.Formation
     end
+
+    -- Update route.
+    if #self.waypoints>1 then
+      self:Cruise(nil, self.option.Formation or self.optionDefault.Formation)
+    else
+      self:FullStop()
+    end
+
+    -- Update status.
+    self:__Status(-0.1)
     
-  end
-  
-  -- Update route.
-  if #self.waypoints>1 then
-    self:Cruise(nil, self.option.Formation or self.optionDefault.Formation)
-  else
-    self:FullStop()
   end
   
 end
@@ -1117,7 +1120,7 @@ function ARMYGROUP:_InitGroup()
 
   -- First check if group was already initialized.
   if self.groupinitialized then
-    self:E(self.lid.."WARNING: Group was already initialized!")
+    self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
     return
   end
 
@@ -1177,7 +1180,7 @@ function ARMYGROUP:_InitGroup()
   self.actype=units[1]:GetTypeName()
   
   -- Debug info.
-  if self.verbose>=0 then
+  if self.verbose>=1 then
     local text=string.format("Initialized Army Group %s:\n", self.groupname)
     text=text..string.format("Unit type    = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
