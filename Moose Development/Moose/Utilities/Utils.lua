@@ -1564,3 +1564,148 @@ function UTILS.IsLoadingDoorOpen( unit_name )
   
   return nil
 end
+
+--- Function to generate valid FM frequencies in mHz for radio beacons (FM).
+-- @return #table Table of frequencies.
+function UTILS.GenerateFMFrequencies()
+    local FreeFMFrequencies = {}
+    for _first = 3, 7 do
+        for _second = 0, 5 do
+            for _third = 0, 9 do
+                local _frequency = ((100 * _first) + (10 * _second) + _third) * 100000 --extra 0 because we didnt bother with 4th digit
+                table.insert(FreeFMFrequencies, _frequency)
+            end
+        end
+    end
+    return FreeFMFrequencies
+end
+
+--- Function to generate valid VHF frequencies in kHz for radio beacons (FM).
+-- @return #table VHFrequencies
+function UTILS.GenerateVHFrequencies()
+
+  -- known and sorted map-wise NDBs in kHz
+  local _skipFrequencies = {
+  214,274,291.5,295,297.5,
+  300.5,304,307,309.5,311,312,312.5,316,
+  320,324,328,329,330,336,337,
+  342,343,348,351,352,353,358,
+  363,365,368,372.5,374,
+  380,381,384,389,395,396,
+  414,420,430,432,435,440,450,455,462,470,485,
+  507,515,520,525,528,540,550,560,570,577,580,
+  602,625,641,662,670,680,682,690,
+  705,720,722,730,735,740,745,750,770,795,
+  822,830,862,866,
+  905,907,920,935,942,950,995,
+  1000,1025,1030,1050,1065,1116,1175,1182,1210
+  }
+      
+  local FreeVHFFrequencies = {}
+    
+    -- first range
+  local _start = 200000
+  while _start < 400000 do
+  
+      -- skip existing NDB frequencies#
+      local _found = false
+      for _, value in pairs(_skipFrequencies) do
+          if value * 1000 == _start then
+              _found = true
+              break
+          end
+      end
+      if _found == false then
+          table.insert(FreeVHFFrequencies, _start)
+      end
+       _start = _start + 10000
+  end
+ 
+   -- second range
+  _start = 400000
+  while _start < 850000 do
+       -- skip existing NDB frequencies
+      local _found = false
+      for _, value in pairs(_skipFrequencies) do
+          if value * 1000 == _start then
+              _found = true
+              break
+          end
+      end
+      if _found == false then
+          table.insert(FreeVHFFrequencies, _start)
+      end
+      _start = _start + 10000
+  end
+  
+  -- third range
+  _start = 850000
+  while _start <= 999000 do -- adjusted for Gazelle
+      -- skip existing NDB frequencies
+      local _found = false
+      for _, value in pairs(_skipFrequencies) do
+          if value * 1000 == _start then
+              _found = true
+              break
+          end
+      end
+      if _found == false then
+          table.insert(FreeVHFFrequencies, _start)
+      end
+       _start = _start + 50000
+  end
+
+  return FreeVHFFrequencies
+end
+
+--- Function to generate valid UHF Frequencies in mHz (AM).
+-- @return #table UHF Frequencies
+function UTILS.GenerateUHFrequencies()
+
+    local FreeUHFFrequencies = {}
+    local _start = 220000000
+
+    while _start < 399000000 do
+        table.insert(FreeUHFFrequencies, _start)
+        _start = _start + 500000
+    end
+
+    return FreeUHFFrequencies
+end
+
+--- Function to generate valid laser codes for JTAC.
+-- @return #table Laser Codes.
+function UTILS.GenerateLaserCodes()
+    local jtacGeneratedLaserCodes = {}
+    
+    -- helper function
+    local function ContainsDigit(_number, _numberToFind)
+      local _thisNumber = _number
+      local _thisDigit = 0
+      while _thisNumber ~= 0 do
+          _thisDigit = _thisNumber % 10
+          _thisNumber = math.floor(_thisNumber / 10)
+          if _thisDigit == _numberToFind then
+              return true
+          end
+      end
+      return false
+    end
+    
+    -- generate list of laser codes
+    local _code = 1111
+    local _count = 1
+    while _code < 1777 and _count < 30 do
+        while true do
+           _code = _code + 1
+            if not self:_ContainsDigit(_code, 8)
+                    and not ContainsDigit(_code, 9)
+                    and not ContainsDigit(_code, 0) then
+                table.insert(jtacGeneratedLaserCodes, _code)
+                break
+            end
+        end
+        _count = _count + 1
+    end
+    return jtacGeneratedLaserCodes
+end
