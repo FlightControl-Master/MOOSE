@@ -609,7 +609,8 @@ end
 -- @param #number _freq Frequency
 -- @param #boolean noMessage 
 -- @param #string _description Description
-function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description )
+-- @param #boolean forcedesc Use the description only for the pilot track entry
+function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description, forcedesc )
   self:T(self.lid .. " _AddCsar")
   self:T({_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description})
 
@@ -622,11 +623,10 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   
   local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point,_freq)
   
-  local _typeName = _typeName or "PoW"
+  local _typeName = _typeName or "Pilot"
   
   if not noMessage then
     self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, 10)
-    --local m = MESSAGE:New("MAYDAY MAYDAY! " .. _typeName .. " is down. ",10,"INFO"):ToCoalition(self.coalition)
   end
   
   if _freq then
@@ -635,15 +635,14 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   
   self:_AddSpecialOptions(_spawnedGroup)
 
-  local _text = " "
-  if _playerName ~= nil then
-      _text = "Pilot " .. _playerName .. " of " .. _unitName .. " - " .. _typeName
-  elseif _typeName ~= nil then
-      _text = "AI Pilot of " .. _unitName .. " - " .. _typeName
-  else
-      _text = _description
-  end
-    
+  local _text = _description
+  if not forcedesc then
+    if _playerName ~= nil then
+        _text = "Pilot " .. _playerName
+    elseif _unitName ~= nil then
+        _text = "AI Pilot of " .. _unitName
+    end
+  end   
   self:T({_spawnedGroup, _alias})
   
   local _GroupName = _spawnedGroup:GetName() or _alias
@@ -664,7 +663,8 @@ end
 -- @param #boolean _nomessage (optional) If true, don\'t send a message to SAR.
 -- @param #string unitname (optional) Name of the lost unit.
 -- @param #string typename (optional) Type of plane.
-function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _nomessage, unitname, typename)
+-- @param #boolean forcedesc (optional) Force to use the description passed only for the pilot track entry. Use to have fully custom names.
+function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _nomessage, unitname, typename, forcedesc)
   self:T(self.lid .. " _SpawnCsarAtZone")
   local freq = self:_GenerateADFFrequency()
   local _triggerZone = ZONE:New(_zone) -- trigger to use as reference position
@@ -694,7 +694,7 @@ function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _
     _country = country.id.UN_PEACEKEEPERS
   end
   
-  self:_AddCsar(_coalition, _country, pos, typename, unitname, _description, freq, _nomessage, _description)
+  self:_AddCsar(_coalition, _country, pos, typename, unitname, _description, freq, _nomessage, _description, forcedesc)
   
   return self
 end
@@ -706,14 +706,15 @@ end
 -- @param #string Description (optional) Description.
 -- @param #boolean RandomPoint (optional) Random yes or no.
 -- @param #boolean Nomessage (optional) If true, don\'t send a message to SAR.
--- @param #string unitname (optional) Name of the lost unit.
--- @param #string typename (optional) Type of plane.
--- @usage If missions designers want to spawn downed pilots into the field, e.g. at mission begin, to give the helicopter guys works, they can do this like so:
+-- @param #string Unitname (optional) Name of the lost unit.
+-- @param #string Typename (optional) Type of plane.
+-- @param #boolean Forcedesc (optional) Force to use the **description passed only** for the pilot track entry. Use to have fully custom names.
+-- @usage If missions designers want to spawn downed pilots into the field, e.g. at mission begin, to give the helicopter guys work, they can do this like so:
 --      
 --        -- Create downed "Pilot Wagner" in #ZONE "CSAR_Start_1" at a random point for the blue coalition
 --        my_csar:SpawnCSARAtZone( "CSAR_Start_1", coalition.side.BLUE, "Wagner", true, false, "Charly-1-1", "F5E" )
-function CSAR:SpawnCSARAtZone(Zone, Coalition, Description, RandomPoint, Nomessage, Unitname, Typename)
-  self:_SpawnCsarAtZone(Zone, Coalition, Description, RandomPoint, Nomessage, Unitname, Typename)
+function CSAR:SpawnCSARAtZone(Zone, Coalition, Description, RandomPoint, Nomessage, Unitname, Typename, Forcedesc)
+  self:_SpawnCsarAtZone(Zone, Coalition, Description, RandomPoint, Nomessage, Unitname, Typename, Forcedesc)
   return self
 end
 
