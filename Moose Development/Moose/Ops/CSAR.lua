@@ -609,7 +609,8 @@ end
 -- @param #number _freq Frequency
 -- @param #boolean noMessage 
 -- @param #string _description Description
-function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description )
+-- @param #boolean forcedesc Use the description only for the pilot track entry
+function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description, forcedesc )
   self:T(self.lid .. " _AddCsar")
   self:T({_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description})
 
@@ -622,11 +623,10 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   
   local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point,_freq)
   
-  local _typeName = _typeName or "PoW"
+  local _typeName = _typeName or "Pilot"
   
   if not noMessage then
     self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, 10)
-    --local m = MESSAGE:New("MAYDAY MAYDAY! " .. _typeName .. " is down. ",10,"INFO"):ToCoalition(self.coalition)
   end
   
   if _freq then
@@ -635,15 +635,14 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   
   self:_AddSpecialOptions(_spawnedGroup)
 
-  local _text = " "
-  if _playerName ~= nil then
-      _text = "Pilot " .. _playerName .. " of " .. _unitName .. " - " .. _typeName
-  elseif _typeName ~= nil then
-      _text = "AI Pilot of " .. _unitName .. " - " .. _typeName
-  else
-      _text = _description
-  end
-    
+  local _text = _description
+  if not forcedesc then
+    if _playerName ~= nil then
+        _text = "Pilot " .. _playerName
+    elseif _unitName ~= nil then
+        _text = "AI Pilot of " .. _unitName
+    end
+  end   
   self:T({_spawnedGroup, _alias})
   
   local _GroupName = _spawnedGroup:GetName() or _alias
@@ -662,7 +661,10 @@ end
 -- @param #string _description (optional) Description.
 -- @param #boolean _randomPoint (optional) Random yes or no.
 -- @param #boolean _nomessage (optional) If true, don\'t send a message to SAR.
-function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _nomessage)
+-- @param #string unitname (optional) Name of the lost unit.
+-- @param #string typename (optional) Type of plane.
+-- @param #boolean forcedesc (optional) Force to use the description passed only for the pilot track entry. Use to have fully custom names.
+function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _nomessage, unitname, typename, forcedesc)
   self:T(self.lid .. " _SpawnCsarAtZone")
   local freq = self:_GenerateADFFrequency()
   local _triggerZone = ZONE:New(_zone) -- trigger to use as reference position
@@ -671,7 +673,9 @@ function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _
     return
   end
   
-  local _description = _description or "Unknown"
+  local _description = _description or "PoW"
+  local unitname = unitname or "Old Rusty"
+  local typename = typename or "Phantom II"
   
   local pos = {}
   if _randomPoint then
@@ -690,7 +694,7 @@ function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _
     _country = country.id.UN_PEACEKEEPERS
   end
   
-  self:_AddCsar(_coalition, _country, pos, "PoW", _description, nil, freq, _nomessage, _description)
+  self:_AddCsar(_coalition, _country, pos, typename, unitname, _description, freq, _nomessage, _description, forcedesc)
   
   return self
 end
@@ -702,12 +706,15 @@ end
 -- @param #string Description (optional) Description.
 -- @param #boolean RandomPoint (optional) Random yes or no.
 -- @param #boolean Nomessage (optional) If true, don\'t send a message to SAR.
--- @usage If missions designers want to spawn downed pilots into the field, e.g. at mission begin, to give the helicopter guys works, they can do this like so:
+-- @param #string Unitname (optional) Name of the lost unit.
+-- @param #string Typename (optional) Type of plane.
+-- @param #boolean Forcedesc (optional) Force to use the **description passed only** for the pilot track entry. Use to have fully custom names.
+-- @usage If missions designers want to spawn downed pilots into the field, e.g. at mission begin, to give the helicopter guys work, they can do this like so:
 --      
 --        -- Create downed "Pilot Wagner" in #ZONE "CSAR_Start_1" at a random point for the blue coalition
---        my_csar:SpawnCSARAtZone( "CSAR_Start_1", coalition.side.BLUE, "Pilot Wagner", true )
-function CSAR:SpawnCSARAtZone(Zone, Coalition, Description, RandomPoint, Nomessage)
-  self:_SpawnCsarAtZone(Zone, Coalition, Description, RandomPoint, Nomessage)
+--        my_csar:SpawnCSARAtZone( "CSAR_Start_1", coalition.side.BLUE, "Wagner", true, false, "Charly-1-1", "F5E" )
+function CSAR:SpawnCSARAtZone(Zone, Coalition, Description, RandomPoint, Nomessage, Unitname, Typename, Forcedesc)
+  self:_SpawnCsarAtZone(Zone, Coalition, Description, RandomPoint, Nomessage, Unitname, Typename, Forcedesc)
   return self
 end
 
@@ -1199,7 +1206,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
               end
               if _time <= 0 or _distance < self.loadDistance then
                  if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
-                  self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in, bugger!", self.messageTime, true)
+                  self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true)
                   return true
                  else
                    self.landedStatus[_lookupKeyHeli] = nil
@@ -1211,7 +1218,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
         else
           if (_distance < self.loadDistance) then
               if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
-                self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in, honk!", self.messageTime, true)
+                self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true)
                 return true
               else
                 self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
@@ -1252,7 +1259,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                           self:_DisplayMessageToSAR(_heliUnit, "Hovering above " .. _pilotName .. ". \n\nHold hover for " .. _time .. " seconds to winch them up. \n\nIf the countdown stops you\'re too far away!", self.messageTime, true)
                       else
                        if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
-                          self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in, noob!", self.messageTime, true)
+                          self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true)
                           return true
                         else
                           self.hoverStatus[_lookupKeyHeli] = nil
@@ -1377,7 +1384,7 @@ end
 --- (Internal) Check and return Wrappe.Unit#UNIT based on the name if alive.
 -- @param #CSAR self
 -- @param #string _unitname Name of Unit
--- @return #UNIT or nil
+-- @return Wrapper.Unit#UNIT The unit or nil
 function CSAR:_GetSARHeli(_unitName)
   self:T(self.lid .. " _GetSARHeli")
   local unit = UNIT:FindByName(_unitName)
@@ -1428,12 +1435,8 @@ function CSAR:_GetPositionOfWounded(_woundedGroup)
       _coordinatesText = _coordinate:ToStringLLDMS()  
     elseif self.coordtype == 2 then -- MGRS
       _coordinatesText = _coordinate:ToStringMGRS()  
-    elseif self.coordtype == 3 then -- Bullseye Imperial
-    local Settings = _SETTINGS:SetImperial()
-      _coordinatesText = _coordinate:ToStringBULLS(self.coalition,Settings)
-    else -- Bullseye Metric --(medevac.coordtype == 4)
-    local Settings = _SETTINGS:SetMetric()
-      _coordinatesText = _coordinate:ToStringBULLS(self.coalition,Settings)
+    else -- Bullseye Metric --(medevac.coordtype == 4 or 3)
+      _coordinatesText = _coordinate:ToStringBULLS(self.coalition)
     end
   end
   return _coordinatesText
@@ -1467,12 +1470,11 @@ function CSAR:_DisplayActiveSAR(_unitName)
         local _woundcoord = _woundedGroup:GetCoordinate()
         local _distance = self:_GetDistance(_helicoord, _woundcoord)
         self:T({_distance = _distance})
-        -- change distance to miles if self.coordtype < 4
         local distancetext = ""
-        if self.coordtype < 4 then
-          distancetext = string.format("%.3fnm",UTILS.MetersToNM(_distance))
+        if _SETTINGS:IsImperial() then
+          distancetext = string.format("%.1fnm",UTILS.MetersToNM(_distance))
         else
-          distancetext = string.format("%.3fkm", _distance/1000.0)
+          distancetext = string.format("%.1fkm", _distance/1000.0)
         end
         table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %.2f KHz ADF - %s ", _value.desc, _coordinatesText, _value.frequency / 1000, distancetext) })
     end
@@ -1542,10 +1544,10 @@ function CSAR:_SignalFlare(_unitName)
   
       local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
       local _distance = 0
-      if self.coordtype < 4 then
-        _distance = string.format("%.3fnm",UTILS.MetersToNM(_closest.distance))
+      if _SETTINGS:IsImperial() then
+        _distance = string.format("%.1fnm",UTILS.MetersToNM(_closest.distance))
       else
-        _distance = string.format("%.3fkm",_closest.distance)
+        _distance = string.format("%.1fkm",_closest.distance)
       end 
       local _msg = string.format("%s - Popping signal flare at your %s o\'clock. Distance %s", _unitName, _clockDir, _distance)
       self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true)
@@ -1554,7 +1556,7 @@ function CSAR:_SignalFlare(_unitName)
       _coord:FlareRed(_clockDir)
   else
       local disttext = "4.3nm"
-      if self.coordtype == 4 then
+      if _SETTINGS:IsMetric() then
           disttext = "8km"
       end
       self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",disttext), self.messageTime)
@@ -1593,10 +1595,10 @@ function CSAR:_Reqsmoke( _unitName )
   if _closest ~= nil and _closest.pilot ~= nil and _closest.distance < 8000.0 then
       local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
       local _distance = 0
-      if self.coordtype < 4 then
-        _distance = string.format("%.3fnm",UTILS.MetersToNM(_closest.distance))
+      if _SETTINGS:IsImperial() then
+        _distance = string.format("%.1fnm",UTILS.MetersToNM(_closest.distance))
       else
-        _distance = string.format("%.3fkm",_closest.distance)
+        _distance = string.format("%.1fkm",_closest.distance)
       end 
       local _msg = string.format("%s - Popping signal smoke at your %s o\'clock. Distance %s", _unitName, _clockDir, _distance)
       self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true)
@@ -1605,7 +1607,7 @@ function CSAR:_Reqsmoke( _unitName )
       _coord:Smoke(color)
   else
       local disttext = "4.3nm"
-      if self.coordtype == 4 then
+      if _SETTINGS:IsMetric() then
           disttext = "8km"
       end
       self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",disttext), self.messageTime)
