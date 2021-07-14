@@ -59,7 +59,7 @@
 -- @extends Core.Base#BASE
 
 
---- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - FrÃ©dÃ©ric Bastiat 
+--- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - Frédéric Bastiat 
 -- 
 -- Simple Class for a more intelligent Air Defense System
 -- 
@@ -194,6 +194,7 @@ MANTIS = {
   UseEmOnOff            = false,
   TimeStamp             = 0,
   state2flag            = false,
+  SamStateTracker       = {},
 }
 
 --- Advanced state enumerator
@@ -276,6 +277,7 @@ do
     self.TimeStamp = timer.getAbsTime()
     self.relointerval = math.random(1800,3600) -- random between 30 and 60 mins
     self.state2flag = false
+    self.SamStateTracker = {} -- table to hold alert states, so we don't trigger state changes twice in adv mode
 
     if EmOnOff then
       if EmOnOff == false then
@@ -323,7 +325,7 @@ do
     end
     
     -- @field #string version
-    self.version="0.5.1"
+    self.version="0.5.2"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
     
     --- FSM Functions ---
@@ -867,7 +869,7 @@ do
      local engagerange = self.engagerange -- firing range in % of max
      --cycle through groups and set alarm state etc
      for _i,_group in pairs (SAM_Grps) do
-        local group = _group
+        local group = _group -- Wrapper.Group#GROUP
         -- TODO: add emissions on/off
         if self.UseEmOnOff then
           group:EnableEmission(false)
@@ -876,11 +878,12 @@ do
           group:OptionAlarmStateGreen() -- AI off
         end
         group:SetOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION,engagerange)  --default engagement will be 75% of firing range
-        if group:IsGround() then
+        if group:IsGround() and group:IsAlive() then
           local grpname = group:GetName()
           local grpcoord = group:GetCoordinate()
           table.insert( SAM_Tbl, {grpname, grpcoord})
           table.insert( SEAD_Grps, grpname )
+          self.SamStateTracker[grpname] = "GREEN"
         end
      end
      self.SAM_Table = SAM_Tbl
@@ -907,7 +910,7 @@ do
      for _i,_group in pairs (SAM_Grps) do
         local group = _group
         group:SetOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION,engagerange)  --engagement will be 75% of firing range
-        if group:IsGround() then
+        if group:IsGround() and group:IsAlive() then
           local grpname = group:GetName()
           local grpcoord = group:GetCoordinate()
           table.insert( SAM_Tbl, {grpname, grpcoord}) -- make the table lighter, as I don't really use the zone here
@@ -982,7 +985,10 @@ do
             samgroup:EnableEmission(true)
           end
           samgroup:OptionAlarmStateRed()
-          self:__RedState(1,samgroup)
+          if self.SamStateTracker[name] ~= "RED" then
+            self:__RedState(1,samgroup)
+            self.SamStateTracker[name] = "RED"
+          end
           -- link in to SHORAD if available
           -- DONE: Test integration fully
           if self.ShoradLink and Distance < self.ShoradActDistance then -- don't give SHORAD position away too early
@@ -1001,16 +1007,13 @@ do
         if samgroup:IsAlive() then
           -- switch off SAM
           if self.UseEmOnOff then
-            -- TODO: add emissions on/off
             samgroup:EnableEmission(false)
-            self:__GreenState(1,samgroup)
-            --samgroup:SetAIOff()
-          else
-            samgroup:OptionAlarmStateGreen()
-            self:__GreenState(1,samgroup)
           end
-          --samgroup:OptionROEWeaponFree()
-          --samgroup:SetAIOn()
+            samgroup:OptionAlarmStateGreen()
+            if self.SamStateTracker[name] ~= "GREEN" then
+              self:__GreenState(1,samgroup)
+              self.SamStateTracker[name] = "GREEN"
+            end
           local text = string.format("SAM %s switched to alarm state GREEN!", name)
           local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
           if self.verbose then self:I(self.lid..text) end
