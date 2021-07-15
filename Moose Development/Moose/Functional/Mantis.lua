@@ -1136,6 +1136,13 @@ do
   -- @return #MANTIS self
   function MANTIS:onafterStatus(From,Event,To)
     self:T({From, Event, To})
+    -- Display some states
+    if self.debug then
+      self:I(self.lid .. "Status Report")
+      for _name,_state in pairs(self.SamStateTracker) do
+        self:I(string.format("Site %s\tStatus %s",_name,_state))
+      end
+    end
     local interval = self.detectinterval * -1
     self:__Status(interval)
     return self

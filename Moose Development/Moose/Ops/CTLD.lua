@@ -262,6 +262,7 @@ do
 --
 --          my_ctld.useprefix = true -- (DO NOT SWITCH THIS OFF UNLESS YOU KNOW WHAT YOU ARE DOING!) Adjust **before** starting CTLD. If set to false, *all* choppers of the coalition side will be enabled for CTLD.
 --          my_ctld.CrateDistance = 30 -- List and Load crates in this radius only.
+--          my_ctld.dropcratesanywhere = false -- Option to allow crates to be dropped anywhere.
 --          my_ctld.maximumHoverHeight = 15 -- Hover max this high to load.
 --          my_ctld.minimumHoverHeight = 4 -- Hover min this low to load.
 --          my_ctld.forcehoverload = true -- Crates (not: troops) can only be loaded while hovering.
@@ -516,6 +517,8 @@ CTLD.UnitTypes = {
 }
 
 --- Updated and sorted known NDB beacons (in kHz!) from the available maps
+ 
+--[[ -- Now in UTILS
 -- @field #CTLD.SkipFrequencies 
 CTLD.SkipFrequencies = {
   214,274,291.5,295,297.5,
@@ -531,10 +534,11 @@ CTLD.SkipFrequencies = {
   905,907,920,935,942,950,995,
   1000,1025,1030,1050,1065,1116,1175,1182,1210
   }
-  
+--]]  
+
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.3r2"
+CTLD.version="0.1.4r1"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -643,6 +647,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.minimumHoverHeight = 4
   self.forcehoverload = true
   self.hoverautoloading = true
+  self.dropcratesanywhere = false -- #1570
   
   self.smokedistance = 2000
   self.movetroopstowpzone = true
@@ -794,13 +799,15 @@ end
 function CTLD:_GenerateUHFrequencies()
   self:T(self.lid .. " _GenerateUHFrequencies")
     self.FreeUHFFrequencies = {}
+    self.FreeUHFFrequencies = UTILS.GenerateUHFrequencies()    
+    --[[
     local _start = 220000000
 
     while _start < 399000000 do
         table.insert(self.FreeUHFFrequencies, _start)
         _start = _start + 500000
     end
-
+  --]]
     return self
 end
 
@@ -809,7 +816,8 @@ end
 function CTLD:_GenerateFMFrequencies()
   self:T(self.lid .. " _GenerateFMrequencies")
     self.FreeFMFrequencies = {}
-
+    self.FreeFMFrequencies = UTILS.GenerateFMFrequencies()
+    --[[
     for _first = 3, 7 do
         for _second = 0, 5 do
             for _third = 0, 9 do
@@ -818,7 +826,7 @@ function CTLD:_GenerateFMFrequencies()
             end
         end
     end
-
+    --]]
     return self
 end
 
@@ -826,6 +834,13 @@ end
 -- @param #CTLD self
 function CTLD:_GenerateVHFrequencies()
   self:T(self.lid .. " _GenerateVHFrequencies")
+  
+  self.FreeVHFFrequencies = {}
+  self.UsedVHFFrequencies = {}
+  
+  self.FreeVHFFrequencies = UTILS.GenerateVHFrequencies()
+  
+  --[[
   local _skipFrequencies = self.SkipFrequencies
       
    self.FreeVHFFrequencies = {}
@@ -882,10 +897,11 @@ function CTLD:_GenerateVHFrequencies()
       end
        _start = _start + 50000
   end
-
+  --]]
   return self
 end
 
+--[[ -- unused
 --- (Internal) Function to generate valid laser codes.
 -- @param #CTLD self
 function CTLD:_GenerateLaserCodes()
@@ -925,6 +941,8 @@ function CTLD:_ContainsDigit(_number, _numberToFind)
     end
     return false
 end
+
+--]]
 
 --- (Internal) Event handler function
 -- @param #CTLD self
@@ -1056,24 +1074,26 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   if not drop then 
     inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
   else
-    inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.DROP)
+    if self.dropcratesanywhere then -- #1570
+      inzone = true
+    else
+      inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.DROP)
+    end
   end
   
   if not inzone then
     self:_SendMessage("You are not close enough to a logistics zone!", 10, false, Group)
-    --local m = MESSAGE:New("You are not close enough to a logistics zone!",15,"CTLD"):ToGroup(Group)
     if not self.debug then return self end
   end
-  
+
   -- avoid crate spam
   local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
-  --local capabilities = self.UnitTypes[Unit:GetTypeName()] -- #CTLD.UnitCapabilities
   local canloadcratesno = capabilities.cratelimit
   local loaddist = self.CrateDistance or 30
   local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist)
   if numbernearby >= canloadcratesno and not drop then
     self:_SendMessage("There are enough crates nearby already! Take care of those first!", 10, false, Group)
-    --local m = MESSAGE:New("There are enough crates nearby already! Take care of those first!",15,"CTLD"):ToGroup(Group)
+
     return self
   end
   -- spawn crates in front of helicopter
@@ -1082,7 +1102,6 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   local number = number or cargotype:GetCratesNeeded() --#number
   local cratesneeded = cargotype:GetCratesNeeded() --#number
   local cratename = cargotype:GetName()
-  --self:Tself.lid .. string.format("Crate %s requested", cratename))
   local cratetemplate = "Container"-- #string
   -- get position and heading of heli
   local position = Unit:GetCoordinate()
@@ -1130,7 +1149,6 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
       self:__CratesDropped(1, Group, Unit, droppedcargo)
     end
     self:_SendMessage(text, 10, false, Group) 
-    --local m = MESSAGE:New(text,15,"CTLD",true):ToGroup(Group)
     return self
 end
 
@@ -1149,7 +1167,6 @@ function CTLD:_ListCratesNearby( _group, _unit)
     for _,_entry in pairs (crates) do
       local entry = _entry -- #CTLD_CARGO
       local name = entry:GetName() --#string
-      -- TODO Meaningful sorting/aggregation
       local dropped = entry:WasDropped()
       if dropped then
         text:Add(string.format("Dropped crate for %s",name))
@@ -1158,14 +1175,12 @@ function CTLD:_ListCratesNearby( _group, _unit)
       end
     end
     if text:GetCount() == 1 then
-    text:Add("--------- N O N E ------------")
+    text:Add("        N O N E")
     end
     text:Add("------------------------------------------------------------")
     self:_SendMessage(text:Text(), 30, true, _group) 
-    --local m = MESSAGE:New(text:Text(),15,"CTLD",true):ToGroup(_group)
   else
     self:_SendMessage(string.format("No (loadable) crates within %d meters!",finddist), 10, false, _group) 
-    --local m = MESSAGE:New(string.format("No (loadable) crates within %d meters!",finddist),15,"CTLD",true):ToGroup(_group)
   end
   return self
 end
@@ -1347,7 +1362,7 @@ function CTLD:_ListCargo(Group, Unit)
     report:Add("------------------------------------------------------------")
     report:Add(string.format("Troops: %d(%d), Crates: %d(%d)",no_troops,trooplimit,no_crates,cratelimit))
     report:Add("------------------------------------------------------------")
-    report:Add("-- TROOPS --")
+    report:Add("        -- TROOPS --")
     for _,_cargo in pairs(cargotable) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
@@ -1356,10 +1371,10 @@ function CTLD:_ListCargo(Group, Unit)
       end
     end
     if report:GetCount() == 4 then
-      report:Add("--------- N O N E ------------")
+      report:Add("        N O N E")
     end
     report:Add("------------------------------------------------------------")
-    report:Add("-- CRATES --")
+    report:Add("       -- CRATES --")
     local cratecount = 0
     for _,_cargo in pairs(cargotable) do
       local cargo = _cargo -- #CTLD_CARGO
@@ -1370,7 +1385,7 @@ function CTLD:_ListCargo(Group, Unit)
       end
     end
     if cratecount == 0 then
-      report:Add("--------- N O N E ------------")
+      report:Add("        N O N E")
     end
     report:Add("------------------------------------------------------------")
     local text = report:Text()
@@ -1498,13 +1513,16 @@ end
 -- @param Wrappe.Unit#UNIT Unit
 function CTLD:_UnloadCrates(Group, Unit)
   self:T(self.lid .. " _UnloadCrates")
-  -- check if we are in DROP zone
-  local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.DROP)
-  if not inzone then
-    self:_SendMessage("You are not close enough to a drop zone!", 10, false, Group) 
-    --local m = MESSAGE:New("You are not close enough to a drop zone!",15,"CTLD"):ToGroup(Group)
-    if not self.debug then 
-      return self 
+  
+  if not self.dropcratesanywhere then -- #1570
+    -- check if we are in DROP zone
+    local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.DROP)
+    if not inzone then
+      self:_SendMessage("You are not close enough to a drop zone!", 10, false, Group) 
+      --local m = MESSAGE:New("You are not close enough to a drop zone!",15,"CTLD"):ToGroup(Group)
+      if not self.debug then 
+        return self 
+      end
     end
   end
   -- check for hover unload
@@ -2058,7 +2076,7 @@ function CTLD:_ListRadioBeacons(Group, Unit)
     end
   end
   if report:GetCount() == 1 then
-    report:Add("--------- N O N E ------------")
+    report:Add("        N O N E")
   end
   report:Add("------------------------------------------------------------")
   self:_SendMessage(report:Text(), 30, true, Group) 

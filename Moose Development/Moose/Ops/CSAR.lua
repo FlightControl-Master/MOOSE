@@ -214,6 +214,8 @@ CSAR = {
 -- @field #number timestamp Timestamp for approach process
   
 --- Updated and sorted list of known NDB beacons (in kHz!) from the available maps.
+
+--[[ Moved to Utils
 -- @field #CSAR.SkipFrequencies
 CSAR.SkipFrequencies = {
   214,274,291.5,295,297.5,
@@ -229,7 +231,8 @@ CSAR.SkipFrequencies = {
   905,907,920,935,942,950,995,
   1000,1025,1030,1050,1065,1116,1175,1182,1210
   }
- 
+--]]
+
 --- All slot / Limit settings
 -- @type CSAR.AircraftType
 -- @field #string typename Unit type name.
@@ -245,7 +248,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.8r1"
+CSAR.version="0.1.8r2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -872,7 +875,11 @@ function CSAR:_EventHandler(EventData)
           end
    
           if _place:GetCoalition() == self.coalition or _place:GetCoalition() == coalition.side.NEUTRAL then
-              self:_RescuePilots(_unit)  
+            if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_event.IniUnitName) then
+              self:_DisplayMessageToSAR(_unit, "Open the door to let me out!", self.messageTime, true)
+            else
+              self:_RescuePilots(_unit)
+            end  
           else
               self:T(string.format("Airfield %d, Unit %d", _place:GetCoalition(), _unit:GetCoalition()))
               end
@@ -1113,27 +1120,27 @@ function CSAR:_IsLoadingDoorOpen( unit_name )
       local type_name = unit:getTypeName()
       
       if type_name == "Mi-8MT" and unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
-          self:I(unit_name .. " Cargo doors are open or cargo door not present")
+          self:T(unit_name .. " Cargo doors are open or cargo door not present")
           ret_val =  true
       end
       
       if type_name == "Mi-24P" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 then
-          self:I(unit_name .. " a side door is open")
+          self:T(unit_name .. " a side door is open")
           ret_val =  true
       end
       
       if type_name == "UH-1H" and unit:getDrawArgumentValue(43) == 1 or unit:getDrawArgumentValue(44) == 1 then
-          self:I(unit_name .. " a side door is open ")
+          self:T(unit_name .. " a side door is open ")
           ret_val =  true
       end
 
       if string.find(type_name, "SA342" ) and unit:getDrawArgumentValue(34) == 1 or unit:getDrawArgumentValue(38) == 1 then
-          self:I(unit_name .. " front door(s) are open")
+          self:T(unit_name .. " front door(s) are open")
           ret_val =  true
       end
 
       if ret_val == false then
-          self:I(unit_name .. " all doors are closed")
+          self:T(unit_name .. " all doors are closed")
       end
       return ret_val
           
@@ -1346,8 +1353,12 @@ function CSAR:_ScheduledSARFlight(heliname,groupname)
   end
 
   if _dist < 200 and _heliUnit:InAir() == false then
+    if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(heliname) then
+      self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me out!", self.messageTime, true)
+    else
       self:_RescuePilots(_heliUnit)
       return
+    end
   end
 
   --queue up
@@ -1755,11 +1766,13 @@ end
 -- @param #CSAR self
 function CSAR:_GenerateVHFrequencies()
   self:T(self.lid .. " _GenerateVHFrequencies")
-  local _skipFrequencies = self.SkipFrequencies
+  --local _skipFrequencies = self.SkipFrequencies
       
   local FreeVHFFrequencies = {}
-  local UsedVHFFrequencies = {}
+  --local UsedVHFFrequencies = {}
+  FreeVHFFrequencies = UTILS.GenerateVHFrequencies()
   
+  --[[ moved to UTILS
     -- first range
   local _start = 200000
   while _start < 400000 do
@@ -1819,6 +1832,7 @@ function CSAR:_GenerateVHFrequencies()
   
       _start = _start + 50000
   end
+  --]]
   self.FreeVHFFrequencies = FreeVHFFrequencies
   return self
 end
