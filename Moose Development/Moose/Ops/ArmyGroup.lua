@@ -141,7 +141,7 @@ function ARMYGROUP:New(group)
 
 
   -- Init waypoints.
-  self:InitWaypoints()
+  self:_InitWaypoints()
   
   -- Initialize the group.
   self:_InitGroup()
@@ -1115,8 +1115,9 @@ end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #ARMYGROUP self
+-- @param #table Template Template used to init the group. Default is `self.template`.
 -- @return #ARMYGROUP self
-function ARMYGROUP:_InitGroup()
+function ARMYGROUP:_InitGroup(Template)
 
   -- First check if group was already initialized.
   if self.groupinitialized then
@@ -1125,7 +1126,7 @@ function ARMYGROUP:_InitGroup()
   end
 
   -- Get template of group.
-  self.template=self.group:GetTemplate()
+  local template=Template or self:_GetTemplate()
 
   -- Define category.
   self.isAircraft=false
@@ -1136,7 +1137,7 @@ function ARMYGROUP:_InitGroup()
   self.isAI=true
   
   -- Is (template) group late activated.
-  self.isLateActivated=self.template.lateActivation
+  self.isLateActivated=template.lateActivation
   
   -- Ground groups cannot be uncontrolled.
   self.isUncontrolled=false

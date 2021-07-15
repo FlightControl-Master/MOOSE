@@ -375,6 +375,12 @@ OPSGROUP.TaskType={
 -- @field #number MissilesBM Amount of ballistic missiles.
 -- @field #number MissilesSA Amount of surfe-to-air missiles.
 
+--- Spawn point data.
+-- @type OPSGROUP.Spawnpoint
+-- @field Core.Point#COORDINATE Coordinate Coordinate where to spawn
+-- @field Wrapper.Airbase#AIRBASE Airport Airport where to spawn.
+-- @field #table TerminalIDs Terminal IDs, where to spawn the group. It is a table of `#number`s because a group can consist of multiple units.
+
 --- Waypoint data.
 -- @type OPSGROUP.Waypoint
 -- @field #number uid Waypoint's unit id, which is a running number.
@@ -503,6 +509,9 @@ function OPSGROUP:New(group)
       return nil
     end
   end
+  
+  -- Set the template.
+  self:_SetTemplate()
 
   -- Init set of detected units.
   self.detectedunits=SET_UNIT:New()
@@ -3881,7 +3890,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On before "Wait" event.
--- @param #FLIGHTGROUP self
+-- @param #OPSGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
@@ -4787,7 +4796,7 @@ end
 -- @param #OPSGROUP self
 -- @param #number Delay Delay in seconds before respawn happens. Default 0.
 -- @param DCS#Template Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
--- @param #boolean Reset Reset positions if TRUE.
+-- @param #boolean Reset Reset waypoints and reinit group if `true`.
 -- @return #OPSGROUP self
 function OPSGROUP:_Respawn(Delay, Template, Reset)
 
@@ -4799,13 +4808,15 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     self:T2(self.lid.."FF _Respawn")
 
     -- Given template or get old.
-    Template=Template or UTILS.DeepCopy(self.template)
+    Template=Template or self:_GetTemplate(true)
 
     if self:IsAlive() then
 
       ---
       -- Group is ALIVE
       ---
+
+      --[[
 
       -- Get units.
       local units=self.group:GetUnits()
@@ -4828,6 +4839,29 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
         end
 
       end
+      
+      ]]
+
+      local units=Template.units
+
+      for i=#units,1,-1 do
+        local unit=units[i]
+        local element=self:GetElementByName(unit.name)
+        if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+          unit.parking=element.parking and element.parking.TerminalID or unit.parking
+          unit.parking_id=nil
+          local vec3=element.unit:GetVec3()
+          local heading=element.unit:GetHeading()
+          unit.x=vec3.x
+          unit.y=vec3.z
+          unit.alt=vec3.y
+          unit.heading=math.rad(heading)
+          unit.psi=-unit.heading
+        else
+          table.remove(units, i)
+        end
+      end
+
 
       -- Despawn old group. Dont trigger any remove unit event since this is a respawn.
       self:Despawn(0, true)
@@ -4843,28 +4877,6 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
         local element=_element --#OPSGROUP.Element
         self:ElementInUtero(element)
       end
-      
-
-      --[[
-
-      -- Loop over template units.
-      for UnitID, Unit in pairs(Template.units) do
-
-        local element=self:GetElementByName(Unit.name)
-
-        if element then
-          local vec3=element.vec3
-          local heading=element.heading
-          Unit.x=vec3.x
-          Unit.y=vec3.z
-          Unit.alt=vec3.y
-          Unit.heading=math.rad(heading)
-          Unit.psi=-Unit.heading
-        end
-
-      end
-
-      ]]
 
     end
 
@@ -4881,10 +4893,18 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     -- Not dead or destroyed any more.
     self.isDead=false
     self.isDestroyed=false
-    self.Ndestroyed=0
     
-    self:InitWaypoints()
-    self:_InitGroup()    
+    
+    self.groupinitialized=false
+    self.Ndestroyed=0        
+    self.wpcounter=1
+    self.currentwp=1
+    
+    -- Init waypoints.
+    self:_InitWaypoints()
+
+    -- Init Group.
+    self:_InitGroup()
 
     -- Reset events.
     --self:ResetEvents()
@@ -5827,6 +5847,10 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
     -- Add waypoint.
     if self.isFlightgroup then
+    
+      ---
+      -- Flight Group
+      ---    
 
       if airbasePickup then
 
@@ -5872,7 +5896,9 @@ function OPSGROUP:onafterPickup(From, Event, To)
       
     elseif self.isNavygroup then
 
+      ---
       -- Navy Group
+      ---
 
       local cwp=self:GetWaypointCurrent()
       local uid=cwp and cwp.uid or nil
@@ -5898,7 +5924,9 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
     elseif self.isArmygroup then
 
+      ---
       -- Army Group
+      ---    
 
       local cwp=self:GetWaypointCurrent()
       local uid=cwp and cwp.uid or nil
@@ -5972,12 +6000,12 @@ function OPSGROUP:onafterLoading(From, Event, To)
 
           else
             -- Debug info.
-            self:T(self.lid.."Cannot board carrier!")
+            self:T(self.lid..string.format("Cannot board carrier! Group %s is NOT (yet) in zone %s", cargo.opsgroup:GetName(), self.cargoTransport.embarkzone:GetName()))                        
           end
 
         else
           -- Debug info.
-          self:T(self.lid.."Cargo NOT in embark zone "..self.cargoTransport.embarkzone:GetName())
+          self:T(self.lid..string.format("Cargo %s NOT in embark zone %s", cargo.opsgroup:GetName(), self.cargoTransport.embarkzone:GetName()))
         end
 
       end
@@ -7251,6 +7279,7 @@ function OPSGROUP:_CreateWaypoint(waypoint)
   waypoint.patrol=false
   waypoint.detour=false
   waypoint.astar=false
+  waypoint.temp=false
 
   -- Increase UID counter.
   self.wpcounter=self.wpcounter+1
@@ -7271,33 +7300,40 @@ function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
   table.insert(self.waypoints, wpnumber, waypoint)
 
   -- Debug info.
-  self:T(self.lid..string.format("Adding waypoint at index=%d id=%d", wpnumber, waypoint.uid))
+  self:T(self.lid..string.format("Adding waypoint at index=%d with UID=%d", wpnumber, waypoint.uid))
 
   -- Now we obviously did not pass the final waypoint.
-  self.passedfinalwp=false
-
-  -- Switch to cruise mode.
-  if self:IsHolding() then
-    -- Disable this for now. Cruise has to be commanded manually now. If group is ordered to hold, it will hold until told to move again.
-    --self:Cruise()
+  if self.currentwp and wpnumber>self.currentwp then  
+    self.passedfinalwp=false
   end
+  
 end
 
 --- Initialize Mission Editor waypoints.
 -- @param #OPSGROUP self
+-- @param #number WpIndexMin
+-- @param #number WpIndexMax
 -- @return #OPSGROUP self
-function OPSGROUP:InitWaypoints()
+function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
 
   -- Template waypoints.
   self.waypoints0=self.group:GetTemplateRoutePoints()
 
-  -- Waypoints
+  -- Waypoints empty!
   self.waypoints={}
+  
+  WpIndexMin=WpIndexMin or 1
+  WpIndexMax=WpIndexMax or #self.waypoints0  
+  WpIndexMax=math.min(WpIndexMax, #self.waypoints0) --Ensure max is not out of bounce.
 
-  for index,wp in pairs(self.waypoints0) do
+  --for index,wp in pairs(self.waypoints0) do
+  
+  for i=WpIndexMin,WpIndexMax do
+  
+    local wp=self.waypoints0[i] --DCS#Waypoint
 
     -- Coordinate of the waypoint.
-    local coordinate=COORDINATE:New(wp.x, wp.alt, wp.y)
+    local coordinate=COORDINATE:NewFromWaypoint(wp)   
 
     -- Strange!
     wp.speed=wp.speed or 0
@@ -7305,17 +7341,49 @@ function OPSGROUP:InitWaypoints()
     -- Speed at the waypoint.
     local speedknots=UTILS.MpsToKnots(wp.speed)
 
-    if index==1 then
+    if i==1 then
       self.speedWp=wp.speed
     end
+    
+    local waypoint=self:_CreateWaypoint(wp)
+    
+    self:_AddWaypoint(waypoint)
 
     -- Add waypoint.
-    self:AddWaypoint(coordinate, speedknots, index-1, nil, false)
-
+    --[[
+    if self:IsFlightgroup() then
+      FLIGHTGROUP.AddWaypoint(self, coordinate, speedknots, index-1, Altitude, false)
+    elseif self:IsArmygroup() then      
+      ARMYGROUP.AddWaypoint(self, coordinate, speedknots, index-1, Formation, false)
+    elseif self:IsNavygroup() then    
+      NAVYGROUP.AddWaypoint(self, coordinate, speedknots, index-1, Depth, false)
+    else
+      -- Should not happen!
+      self:AddWaypoint(coordinate, speedknots, index-1, nil, false)
+    end
+    ]]
+    
   end
 
   -- Debug info.
   self:T(self.lid..string.format("Initializing %d waypoints", #self.waypoints))
+  
+  -- Flight group specific.
+  if self:IsFlightgroup() then
+
+    -- Get home and destination airbases from waypoints.
+    self.homebase=self.homebase or self:GetHomebaseFromWaypoints()
+    self.destbase=self.destbase or self:GetDestinationFromWaypoints()
+    self.currbase=self:GetHomebaseFromWaypoints()
+  
+    -- Remove the landing waypoint. We use RTB for that. It makes adding new waypoints easier as we do not have to check if the last waypoint is the landing waypoint.
+    if self.destbase and #self.waypoints>1 then
+      table.remove(self.waypoints, #self.waypoints)
+    else
+      self.destbase=self.homebase
+    end
+  
+  end
 
   -- Update route.
   if #self.waypoints>0 then
@@ -7324,7 +7392,9 @@ function OPSGROUP:InitWaypoints()
     if #self.waypoints==1 then
       self.passedfinalwp=true
     end
-
+  
+  else
+    self:E(self.lid.."WARNING: No waypoints initialized. Number of waypoints is 0!")
   end
 
   return self
@@ -9218,6 +9288,42 @@ function OPSGROUP:_AddElementByName(unitname)
 
   return nil
 end
+
+--- Set the template of the group.
+-- @param #OPSGROUP self
+-- @param #table Template Template to set. Default is from the GROUP.
+-- @return #OPSGROUP self
+function OPSGROUP:_SetTemplate(Template)
+
+  self.template=Template or self.group:GetTemplate()
+  
+  self:I(self.lid.."Setting group template")
+
+  return self
+end
+
+--- Get the template of the group.
+-- @param #OPSGROUP self
+-- @param #boolean Copy Get a deep copy of the template.
+-- @return #table Template table.
+function OPSGROUP:_GetTemplate(Copy)
+
+  if self.template then
+
+    if Copy then
+      local template=UTILS.DeepCopy(self.template)
+      return template
+    else
+      return self.template
+    end
+    
+  else
+    self:E(self.lid..string.format("ERROR: No template was set yet!"))    
+  end
+
+  return nil
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

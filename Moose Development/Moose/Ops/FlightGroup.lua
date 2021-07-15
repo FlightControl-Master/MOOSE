@@ -306,7 +306,7 @@ function FLIGHTGROUP:New(group)
   self:HandleEvent(EVENTS.Kill,           self.OnEventKill)
 
   -- Init waypoints.
-  self:InitWaypoints()
+  self:_InitWaypoints()
 
   -- Initialize group.
   self:_InitGroup()
@@ -1478,7 +1478,7 @@ function FLIGHTGROUP:onafterElementTakeoff(From, Event, To, Element, airbase)
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.TAKEOFF, airbase)
 
   -- Trigger element airborne event.
-  self:__ElementAirborne(0.1, Element)
+  self:__ElementAirborne(0.01, Element)
   
 end
 
@@ -1750,7 +1750,7 @@ function FLIGHTGROUP:onafterAirborne(From, Event, To)
   self.currbase=nil
   
   -- Cruising.
-  self:__Cruise(-0.05)
+  self:__Cruise(-0.01)
 
 end
 
@@ -1882,7 +1882,7 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
     SpawnPoint.airdromeId = nil
 
     -- Airbase.
-    local airbase=self.isLandingAtAirbase
+    local airbase=self.isLandingAtAirbase --Wrapper.Airbase#AIRBASE
 
     -- Get airbase ID and category.
     local AirbaseID = airbase:GetID()
@@ -1909,7 +1909,7 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
       local unit=units[i]
       local element=self:GetElementByName(unit.name)
       if element and element.status~=OPSGROUP.ElementStatus.DEAD then
-        unit.parking=element.parking.TerminalID
+        unit.parking=element.parking and element.parking.TerminalID or nil
         unit.parking_id=nil
         local vec3=element.unit:GetVec3()
         local heading=element.unit:GetHeading()
@@ -2415,6 +2415,10 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   
   -- Passed final waypoint!
   self.passedfinalwp=true
+  
+  -- Not waiting any more.
+  self.Twaiting=nil
+  self.dTwait=nil
 
   -- Defaults:
   SpeedTo=SpeedTo or UTILS.KmphToKnots(self.speedCruise)
@@ -2469,7 +2473,7 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   -- Set holding flag to 0=false.
   self.flaghold:Set(0)
 
-  local holdtime=1*60
+  local holdtime=2*60
   if fc or self.airboss then
     holdtime=nil
   end
@@ -3002,8 +3006,9 @@ end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #FLIGHTGROUP self
+-- @param #table Template Template used to init the group. Default is `self.template`.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:_InitGroup()
+function FLIGHTGROUP:_InitGroup(Template)
 
   -- First check if group was already initialized.
   if self.groupinitialized then
@@ -3015,7 +3020,7 @@ function FLIGHTGROUP:_InitGroup()
   local group=self.group --Wrapper.Group#GROUP
 
   -- Get template of group.
-  self.template=group:GetTemplate()
+  local template=Template or self:_GetTemplate()
 
   -- Define category.
   self.isAircraft=true
@@ -3026,10 +3031,10 @@ function FLIGHTGROUP:_InitGroup()
   self.isHelo=group:IsHelicopter()
 
   -- Is (template) group uncontrolled.
-  self.isUncontrolled=self.template.uncontrolled
+  self.isUncontrolled=template.uncontrolled
 
   -- Is (template) group late activated.
-  self.isLateActivated=self.template.lateActivation
+  self.isLateActivated=template.lateActivation
 
   -- Max speed in km/h.
   self.speedMax=group:GetSpeedMax()
@@ -3044,12 +3049,12 @@ function FLIGHTGROUP:_InitGroup()
   self.ammo=self:GetAmmoTot()
 
   -- Radio parameters from template. Default is set on spawn if not modified by user.
-  self.radio.Freq=tonumber(self.template.frequency)
-  self.radio.Modu=tonumber(self.template.modulation)
-  self.radio.On=self.template.communication
+  self.radio.Freq=tonumber(template.frequency)
+  self.radio.Modu=tonumber(template.modulation)
+  self.radio.On=template.communication
 
   -- Set callsign. Default is set on spawn if not modified by user.
-  local callsign=self.template.units[1].callsign
+  local callsign=template.units[1].callsign
   if type(callsign)=="number" then  -- Sometimes callsign is just "101".
     local cs=tostring(callsign)
     callsign={}
@@ -3453,7 +3458,7 @@ function FLIGHTGROUP:IsLandingAirbase(wp)
 
   if wp then
 
-    if wp.action and wp.action==COORDINATE.WaypointAction.LANDING then
+    if wp.action and wp.action==COORDINATE.WaypointAction.Landing then
       return true
     else
       return false

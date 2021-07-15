@@ -165,7 +165,7 @@ function NAVYGROUP:New(group)
 
 
   -- Init waypoints.
-  self:InitWaypoints()
+  self:_InitWaypoints()
   
   -- Initialize the group.
   self:_InitGroup()
@@ -1130,8 +1130,9 @@ end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #NAVYGROUP self
+-- @param #table Template Template used to init the group. Default is `self.template`.
 -- @return #NAVYGROUP self
-function NAVYGROUP:_InitGroup()
+function NAVYGROUP:_InitGroup(Template)
 
   -- First check if group was already initialized.
   if self.groupinitialized then
@@ -1140,7 +1141,7 @@ function NAVYGROUP:_InitGroup()
   end
 
   -- Get template of group.
-  self.template=self.group:GetTemplate()
+  local template=Template or self:_GetTemplate()
 
   -- Define category.
   self.isAircraft=false
@@ -1154,7 +1155,7 @@ function NAVYGROUP:_InitGroup()
   self.isAI=true
   
   -- Is (template) group late activated.
-  self.isLateActivated=self.template.lateActivation
+  self.isLateActivated=template.lateActivation
   
   -- Naval groups cannot be uncontrolled.
   self.isUncontrolled=false
@@ -1170,8 +1171,8 @@ function NAVYGROUP:_InitGroup()
   
   -- Radio parameters from template. Default is set on spawn if not modified by the user.
   self.radio.On=true  -- Radio is always on for ships.
-  self.radio.Freq=tonumber(self.template.units[1].frequency)/1000000
-  self.radio.Modu=tonumber(self.template.units[1].modulation)
+  self.radio.Freq=tonumber(template.units[1].frequency)/1000000
+  self.radio.Modu=tonumber(template.units[1].modulation)
   
   -- Set default formation. No really applicable for ships.
   self.optionDefault.Formation="Off Road"
