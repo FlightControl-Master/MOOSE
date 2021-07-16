@@ -212,24 +212,7 @@ CSAR = {
 -- @field #string player Player name if applicable.
 -- @field Wrapper.Group#GROUP group Spawned group object.
 -- @field #number timestamp Timestamp for approach process
-  
---- Updated and sorted list of known NDB beacons (in kHz!) from the available maps.
--- @field #CSAR.SkipFrequencies
-CSAR.SkipFrequencies = {
-  214,274,291.5,295,297.5,
-  300.5,304,307,309.5,311,312,312.5,316,
-  320,324,328,329,330,336,337,
-  342,343,348,351,352,353,358,
-  363,365,368,372.5,374,
-  380,381,384,389,395,396,
-  414,420,430,432,435,440,450,455,462,470,485,
-  507,515,520,525,528,540,550,560,570,577,580,602,625,641,662,670,680,682,690,
-  705,720,722,730,735,740,745,750,770,795,
-  822,830,862,866,
-  905,907,920,935,942,950,995,
-  1000,1025,1030,1050,1065,1116,1175,1182,1210
-  }
- 
+
 --- All slot / Limit settings
 -- @type CSAR.AircraftType
 -- @field #string typename Unit type name.
@@ -245,7 +228,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.8r1"
+CSAR.version="0.1.8r2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -872,7 +855,11 @@ function CSAR:_EventHandler(EventData)
           end
    
           if _place:GetCoalition() == self.coalition or _place:GetCoalition() == coalition.side.NEUTRAL then
-              self:_RescuePilots(_unit)  
+            if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_event.IniUnitName) then
+              self:_DisplayMessageToSAR(_unit, "Open the door to let me out!", self.messageTime, true)
+            else
+              self:_RescuePilots(_unit)
+            end  
           else
               self:T(string.format("Airfield %d, Unit %d", _place:GetCoalition(), _unit:GetCoalition()))
               end
@@ -1113,27 +1100,27 @@ function CSAR:_IsLoadingDoorOpen( unit_name )
       local type_name = unit:getTypeName()
       
       if type_name == "Mi-8MT" and unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
-          self:I(unit_name .. " Cargo doors are open or cargo door not present")
+          self:T(unit_name .. " Cargo doors are open or cargo door not present")
           ret_val =  true
       end
       
       if type_name == "Mi-24P" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 then
-          self:I(unit_name .. " a side door is open")
+          self:T(unit_name .. " a side door is open")
           ret_val =  true
       end
       
       if type_name == "UH-1H" and unit:getDrawArgumentValue(43) == 1 or unit:getDrawArgumentValue(44) == 1 then
-          self:I(unit_name .. " a side door is open ")
+          self:T(unit_name .. " a side door is open ")
           ret_val =  true
       end
 
       if string.find(type_name, "SA342" ) and unit:getDrawArgumentValue(34) == 1 or unit:getDrawArgumentValue(38) == 1 then
-          self:I(unit_name .. " front door(s) are open")
+          self:T(unit_name .. " front door(s) are open")
           ret_val =  true
       end
 
       if ret_val == false then
-          self:I(unit_name .. " all doors are closed")
+          self:T(unit_name .. " all doors are closed")
       end
       return ret_val
           
@@ -1346,8 +1333,12 @@ function CSAR:_ScheduledSARFlight(heliname,groupname)
   end
 
   if _dist < 200 and _heliUnit:InAir() == false then
+    if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(heliname) then
+      self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me out!", self.messageTime, true)
+    else
       self:_RescuePilots(_heliUnit)
       return
+    end
   end
 
   --queue up
@@ -1754,71 +1745,9 @@ end
 --- (Internal) Populate table with available beacon frequencies.
 -- @param #CSAR self
 function CSAR:_GenerateVHFrequencies()
-  self:T(self.lid .. " _GenerateVHFrequencies")
-  local _skipFrequencies = self.SkipFrequencies
-      
+  self:T(self.lid .. " _GenerateVHFrequencies")    
   local FreeVHFFrequencies = {}
-  local UsedVHFFrequencies = {}
-  
-    -- first range
-  local _start = 200000
-  while _start < 400000 do
-  
-      -- skip existing NDB frequencies
-      local _found = false
-      for _, value in pairs(_skipFrequencies) do
-          if value * 1000 == _start then
-              _found = true
-              break
-          end
-      end
-
-      if _found == false then
-          table.insert(FreeVHFFrequencies, _start)
-      end
-  
-      _start = _start + 10000
-  end
- 
-   -- second range
-  _start = 400000
-  while _start < 850000 do
-  
-      -- skip existing NDB frequencies
-      local _found = false
-      for _, value in pairs(_skipFrequencies) do
-          if value * 1000 == _start then
-              _found = true
-              break
-          end
-      end
-  
-      if _found == false then
-          table.insert(FreeVHFFrequencies, _start)
-      end
-  
-      _start = _start + 10000
-  end
-  
-  -- third range
-  _start = 850000
-  while _start <= 999000 do -- updated for Gazelle
-  
-      -- skip existing NDB frequencies
-      local _found = false
-      for _, value in pairs(_skipFrequencies) do
-          if value * 1000 == _start then
-              _found = true
-              break
-          end
-      end
-  
-      if _found == false then
-          table.insert(FreeVHFFrequencies, _start)
-      end
-  
-      _start = _start + 50000
-  end
+  FreeVHFFrequencies = UTILS.GenerateVHFrequencies()
   self.FreeVHFFrequencies = FreeVHFFrequencies
   return self
 end
