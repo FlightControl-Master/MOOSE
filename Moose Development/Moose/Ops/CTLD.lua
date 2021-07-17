@@ -510,6 +510,7 @@ CTLD.UnitTypes = {
     ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2},
     ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8},
     ["Mi-8MTV2"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12},
+    ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12},
     ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0},
     ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8},
     ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8},
@@ -780,6 +781,14 @@ function CTLD:_GenerateUHFrequencies()
   self:T(self.lid .. " _GenerateUHFrequencies")
     self.FreeUHFFrequencies = {}
     self.FreeUHFFrequencies = UTILS.GenerateUHFrequencies()    
+    --[[
+    local _start = 220000000
+
+    while _start < 399000000 do
+        table.insert(self.FreeUHFFrequencies, _start)
+        _start = _start + 500000
+    end
+  --]]
     return self
 end
 
@@ -799,7 +808,9 @@ function CTLD:_GenerateVHFrequencies()
   
   self.FreeVHFFrequencies = {}
   self.UsedVHFFrequencies = {}
+  
   self.FreeVHFFrequencies = UTILS.GenerateVHFrequencies()
+  
   return self
 end
 
