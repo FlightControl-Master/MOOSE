@@ -510,31 +510,12 @@ CTLD.UnitTypes = {
     ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2},
     ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8},
     ["Mi-8MTV2"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12},
+    ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12},
     ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0},
     ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8},
     ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8},
     ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64}, -- 19t cargo, 64 paratroopers
 }
-
---- Updated and sorted known NDB beacons (in kHz!) from the available maps
- 
---[[ -- Now in UTILS
--- @field #CTLD.SkipFrequencies 
-CTLD.SkipFrequencies = {
-  214,274,291.5,295,297.5,
-  300.5,304,307,309.5,311,312,312.5,316,
-  320,324,328,329,330,336,337,
-  342,343,348,351,352,353,358,
-  363,365,368,372.5,374,
-  380,381,384,389,395,396,
-  414,420,430,432,435,440,450,455,462,470,485,
-  507,515,520,525,528,540,550,560,570,577,580,602,625,641,662,670,680,682,690,
-  705,720,722,730,735,740,745,750,770,795,
-  822,830,862,866,
-  905,907,920,935,942,950,995,
-  1000,1025,1030,1050,1065,1116,1175,1182,1210
-  }
---]]  
 
 --- CTLD class version.
 -- @field #string version
@@ -2449,6 +2430,7 @@ end
   -- @return #CTLD self
   function CTLD:onafterStart(From, Event, To)
     self:T({From, Event, To})
+    self:I(self.lid .. "Started.")
     if self.useprefix or self.enableHercules then
       local prefix = self.prefixes
       --self:T{prefix=prefix})

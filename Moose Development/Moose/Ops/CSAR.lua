@@ -1,3 +1,4 @@
+
 --- **Ops** -- Combat Search and Rescue.
 --
 -- ===
@@ -212,7 +213,8 @@ CSAR = {
 -- @field #string player Player name if applicable.
 -- @field Wrapper.Group#GROUP group Spawned group object.
 -- @field #number timestamp Timestamp for approach process
-  
+-- @field #boolean alive Group is alive or dead/rescued
+--   
 --- Updated and sorted list of known NDB beacons (in kHz!) from the available maps.
 
 --[[ Moved to Utils
@@ -242,13 +244,14 @@ CSAR.AircraftType["SA342Minigun"] = 2
 CSAR.AircraftType["SA342L"] = 4
 CSAR.AircraftType["SA342M"] = 4
 CSAR.AircraftType["UH-1H"] = 8
-CSAR.AircraftType["Mi-8MTV2"] = 12 
+CSAR.AircraftType["Mi-8MTV2"] = 12
+CSAR.AircraftType["Mi-8MT"] = 12  
 CSAR.AircraftType["Mi-24P"] = 8 
 CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.8r2"
+CSAR.version="0.1.8r3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -320,6 +323,7 @@ function CSAR:New(Coalition, Template, Alias)
   self:AddTransition("*",             "Boarded",            "*")          -- Pilot boarded.
   self:AddTransition("*",             "Returning",          "*")        -- CSAR able to return to base.
   self:AddTransition("*",             "Rescued",            "*")          -- Pilot at MASH.
+  self:AddTransition("*",             "KIA",                "*")          -- Pilot killed in action.
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
 
   -- tables, mainly for tracking actions
@@ -461,6 +465,14 @@ function CSAR:New(Coalition, Template, Alias)
   -- @param #string HeliName Name of the helicopter group.
   -- @param #number PilotsSaved Number of the saved pilots on board when landing.
   
+  --- On After "KIA" event. Pilot is dead.
+  -- @function [parent=#CSAR] OnAfterKIA
+  -- @param #CSAR self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string Pilotname Name of the pilot KIA.
+  
   return self
 end
 
@@ -494,6 +506,7 @@ function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Descript
   DownedPilot.typename = Typename or ""
   DownedPilot.group = Group
   DownedPilot.timestamp = 0
+  DownedPilot.alive = true
   
   -- Add Pilot
   local PilotTable = self.downedPilots
@@ -930,7 +943,7 @@ function CSAR:_CheckNameInDownedPilots(name)
   local found = false
   local table = nil
   for _,_pilot in pairs(PilotTable) do
-    if _pilot.name == name then
+    if _pilot.name == name and _pilot.alive == true then
       found = true
       table = _pilot
       break
@@ -947,25 +960,10 @@ end
 function CSAR:_RemoveNameFromDownedPilots(name,force)
   local PilotTable = self.downedPilots --#CSAR.DownedPilot
   local found = false
-  for _,_pilot in pairs(PilotTable) do
+  for _index,_pilot in pairs(PilotTable) do
     if _pilot.name == name then
-    local group = _pilot.group -- Wrapper.Group#GROUP
-    if group then
-      if (not group:IsAlive()) or ( force == true) then -- don\'t delete groups which still exist
-        found = true
-        _pilot.desc = nil
-        _pilot.frequency = nil
-        _pilot.index = nil
-        _pilot.name = nil
-        _pilot.originalUnit = nil
-        _pilot.player = nil
-        _pilot.side = nil
-        _pilot.typename = nil
-        _pilot.group = nil
-        _pilot.timestamp = nil
-      end
+      self.downedPilots[_index].alive = false
     end
-   end
   end
   return found
 end
@@ -988,7 +986,7 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
   end
   
   local _woundedGroup = _downedpilot.group
-  if _woundedGroup ~= nil then 
+  if _woundedGroup ~= nil and _woundedGroup:IsAlive() then 
     local _heliUnit = self:_GetSARHeli(_heliName) -- Wrapper.Unit#UNIT
     
     local _lookupKeyHeli = _heliName .. "_" .. _woundedGroupName --lookup key for message state tracking
@@ -1001,7 +999,6 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
       return
     end
 
-  --if self:_CheckGroupNotKIA(_woundedGroup, _woundedGroupName, _heliUnit, _heliName) then
     local _heliCoord = _heliUnit:GetCoordinate()
     local _leaderCoord = _woundedGroup:GetCoordinate()
     local _distance = self:_GetDistance(_heliCoord,_leaderCoord)
@@ -1019,7 +1016,10 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
     end
   else
   self:T("...Downed Pilot KIA?!")
-  self:_RemoveNameFromDownedPilots(_downedpilot.name)
+  if not _downedpilot.alive then
+    --self:__KIA(1,_downedpilot.name)
+    self:_RemoveNameFromDownedPilots(_downedpilot.name, true)
+  end
   end
   return self
 end
@@ -1295,36 +1295,6 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
   end
 end
 
---- (Internal) Check if group not KIA.
--- @param #CSAR self
--- @param Wrapper.Group#GROUP _woundedGroup
--- @param #string _woundedGroupName
--- @param Wrapper.Unit#UNIT _heliUnit
--- @param #string _heliName
--- @return #boolean Outcome
-function CSAR:_CheckGroupNotKIA(_woundedGroup, _woundedGroupName, _heliUnit, _heliName)
-  self:T(self.lid .. " _CheckGroupNotKIA")
-  -- check if unit has died or been picked up
-  local inTransit = false
-  if _woundedGroup and _heliUnit then
-    for _currentHeli, _groups in pairs(self.inTransitGroups) do
-      if _groups[_woundedGroupName] then
-        inTransit = true
-        self:_DisplayToAllSAR(string.format("%s has been picked up by %s", _woundedGroupName, _currentHeli), self.coalition, self.messageTime)
-        break
-      end -- end name check
-    end -- end loop
-    if not inTransit then
-      -- KIA
-      self:_DisplayToAllSAR(string.format("%s is KIA ", _woundedGroupName), self.coalition, self.messageTime)
-    end
-    --stops the message being displayed again
-    self:_RemoveNameFromDownedPilots(_woundedGroupName)
-  end
-  --continue
-  return inTransit
-end
-
 --- (Internal) Monitor in-flight returning groups.
 -- @param #CSAR self
 -- @param #string heliname Heli name
@@ -1475,7 +1445,7 @@ function CSAR:_DisplayActiveSAR(_unitName)
     self:T({Table=_value})
     --local _woundedGroup = GROUP:FindByName(_groupName)
     local _woundedGroup = _value.group
-    if _woundedGroup then  
+    if _woundedGroup and _value.alive then  
         local _coordinatesText = self:_GetPositionOfWounded(_woundedGroup) 
         local _helicoord =  _heli:GetCoordinate()
         local _woundcoord = _woundedGroup:GetCoordinate()
@@ -1769,70 +1739,7 @@ function CSAR:_GenerateVHFrequencies()
   --local _skipFrequencies = self.SkipFrequencies
       
   local FreeVHFFrequencies = {}
-  --local UsedVHFFrequencies = {}
   FreeVHFFrequencies = UTILS.GenerateVHFrequencies()
-  
-  --[[ moved to UTILS
-    -- first range
-  local _start = 200000
-  while _start < 400000 do
-  
-      -- skip existing NDB frequencies
-      local _found = false
-      for _, value in pairs(_skipFrequencies) do
-          if value * 1000 == _start then
-              _found = true
-              break
-          end
-      end
-
-      if _found == false then
-          table.insert(FreeVHFFrequencies, _start)
-      end
-  
-      _start = _start + 10000
-  end
- 
-   -- second range
-  _start = 400000
-  while _start < 850000 do
-  
-      -- skip existing NDB frequencies
-      local _found = false
-      for _, value in pairs(_skipFrequencies) do
-          if value * 1000 == _start then
-              _found = true
-              break
-          end
-      end
-  
-      if _found == false then
-          table.insert(FreeVHFFrequencies, _start)
-      end
-  
-      _start = _start + 10000
-  end
-  
-  -- third range
-  _start = 850000
-  while _start <= 999000 do -- updated for Gazelle
-  
-      -- skip existing NDB frequencies
-      local _found = false
-      for _, value in pairs(_skipFrequencies) do
-          if value * 1000 == _start then
-              _found = true
-              break
-          end
-      end
-  
-      if _found == false then
-          table.insert(FreeVHFFrequencies, _start)
-      end
-  
-      _start = _start + 50000
-  end
-  --]]
   self.FreeVHFFrequencies = FreeVHFFrequencies
   return self
 end
@@ -1929,8 +1836,8 @@ function CSAR:_CountActiveDownedPilots()
   self:T(self.lid .. " _CountActiveDownedPilots")
   local PilotsInFieldN = 0
   for _, _unitName in pairs(self.downedPilots) do
-    self:T({_unitName})
-    if _unitName.name ~= nil then
+    self:T({_unitName.desc})
+    if _unitName.alive == true then
       PilotsInFieldN = PilotsInFieldN + 1
     end
   end
@@ -1982,6 +1889,26 @@ function CSAR:onafterStart(From, Event, To)
 end
 
 --- (Internal) Function called before Status() event.
+-- @param #CSAR self
+function CSAR:_CheckDownedPilotTable()
+  local pilots = self.downedPilots
+  for _,_entry in pairs (pilots) do
+    self:T("Checking for " .. _entry.name)
+    self:T({entry=_entry})
+    local group = _entry.group    
+    if not group:IsAlive() then
+      self:T("Group is dead")
+      if _entry.alive == true then
+        self:T("Switching .alive to false")
+        self:__KIA(1,_entry.desc)
+        self:_RemoveNameFromDownedPilots(_entry.name,true)
+      end
+    end
+  end
+  return self
+end
+
+--- (Internal) Function called before Status() event.
 -- @param #CSAR self.
 -- @param #string From From state.
 -- @param #string Event Event triggered.
@@ -1991,15 +1918,18 @@ function CSAR:onbeforeStatus(From, Event, To)
   -- housekeeping
   self:_AddMedevacMenuItem()
   self:_RefreshRadioBeacons()
+  self:_CheckDownedPilotTable()
   for _,_sar in pairs (self.csarUnits) do
     local PilotTable = self.downedPilots
     for _,_entry in pairs (PilotTable) do
-      local entry = _entry -- #CSAR.DownedPilot
-      local name = entry.name
-      local timestamp = entry.timestamp or 0
-      local now = timer.getAbsTime()
-      if now - timestamp > 17 then -- only check if we\'re not in approach mode, which is iterations of 5 and 10.
-          self:_CheckWoundedGroupStatus(_sar,name)
+      if _entry.alive then
+        local entry = _entry -- #CSAR.DownedPilot
+        local name = entry.name
+        local timestamp = entry.timestamp or 0
+        local now = timer.getAbsTime()
+        if now - timestamp > 17 then -- only check if we\'re not in approach mode, which is iterations of 5 and 10.
+            self:_CheckWoundedGroupStatus(_sar,name)
+        end
       end
     end
   end
