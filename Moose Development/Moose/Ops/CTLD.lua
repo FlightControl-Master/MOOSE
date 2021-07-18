@@ -1840,15 +1840,15 @@ function CTLD:ActivateZone(Name,ZoneType,NewState)
   self:T(self.lid .. " AddZone")
   local newstate = true
   -- set optional in case we\'re deactivating
-  if not NewState or NewState == false then
-    newstate = false
-  end
+  if NewState ~= nil then
+    newstate = NewState
+  end  
+  
   -- get correct table
-  local zone = ZoneType -- #CTLD.CargoZone
   local table = {}
-  if zone.type == CTLD.CargoZoneType.LOAD then
+  if ZoneType == CTLD.CargoZoneType.LOAD then
     table = self.pickupZones
-  elseif zone.type == CTLD.CargoZoneType.DROP then
+  elseif ZoneType == CTLD.CargoZoneType.DROP then
     table = self.dropOffZones
   else
     table = self.wpZones
@@ -1863,6 +1863,7 @@ function CTLD:ActivateZone(Name,ZoneType,NewState)
   end
   return self
 end
+
 
 --- User function - Deactivate Name #CTLD.CargoZoneType ZoneType for this CTLD instance.
 -- @param #CTLD self
