@@ -577,6 +577,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self:AddTransition("Stopped",       "Start",               "Running")     -- Start FSM.
   self:AddTransition("*",             "Status",              "*")           -- CTLD status update.
   self:AddTransition("*",             "TroopsPickedUp",      "*")           -- CTLD pickup  event. 
+    self:AddTransition("*",             "TroopsExtracted",     "*")           -- CTLD extract  event. 
   self:AddTransition("*",             "CratesPickedUp",      "*")           -- CTLD pickup  event.  
   self:AddTransition("*",             "TroopsDeployed",      "*")           -- CTLD deploy  event. 
   self:AddTransition("*",             "TroopsRTB",           "*")           -- CTLD deploy  event.   
@@ -693,6 +694,17 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #CTLD_CARGO Cargo Cargo troops.
   -- @return #CTLD self
   
+    --- FSM Function OnAfterTroopsExtracted.
+    -- @function [parent=#CTLD] OnAfterTroopsExtracted
+    -- @param #CTLD self
+    -- @param #string From State.
+    -- @param #string Event Trigger.
+    -- @param #string To State.
+    -- @param Wrapper.Group#GROUP Group Group Object.
+    -- @param Wrapper.Unit#UNIT Unit Unit Object.
+    -- @param #CTLD_CARGO Cargo Cargo troops.
+    -- @return #CTLD self
+    
   --- FSM Function OnAfterCratesPickedUp.
   -- @function [parent=#CTLD] OnAfterCratesPickedUp
   -- @param #CTLD self
@@ -1038,6 +1050,96 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   return self
 end
 
+  --- (Internal) Function to extract (load from the field) troops into a heli.
+  -- @param #CTLD self
+  -- @param Wrapper.Group#GROUP Group
+  -- @param Wrapper.Unit#UNIT Unit
+  -- @param #CTLD_CARGO Cargotype
+  function CTLD:_ExtractTroops(Group, Unit)
+    self:T(self.lid .. " _ExtractTroops")
+    -- landed or hovering over load zone?
+    local grounded = not self:IsUnitInAir(Unit)
+    local hoverload = self:CanHoverLoad(Unit)
+    
+    if not grounded and not hoverload then
+      self:_SendMessage("You need to land or hover in position to load!", 10, false, Group)
+      if not self.debug then return self end
+    end
+    -- load troops into heli
+    local unit = Unit -- Wrapper.Unit#UNIT
+    local unitname = unit:GetName()
+    -- see if this heli can load troops
+    local unittype = unit:GetTypeName()
+    local capabilities = self:_GetUnitCapabilities(Unit)
+    local cantroops = capabilities.troops -- #boolean
+    local trooplimit = capabilities.trooplimit -- #number
+    local unitcoord = unit:GetCoordinate()
+    
+    -- find nearest group of deployed troops
+    local nearestGroup = nil
+    local nearestGroupIndex = -1
+    local nearestDistance = 10000000
+    for k,v in pairs(self.DroppedTroops) do
+      local distance = self:_GetDistance(v:GetCoordinate(),unitcoord)
+      if distance < nearestDistance then
+        nearestGroup = v
+        nearestGroupIndex = k
+        nearestDistance = distance
+      end
+    end
+  
+    if nearestGroup == nil or nearestDistance > self.CrateDistance then
+      self:_SendMessage("No units close enough to extract!", 10, false, Group)
+      return self
+    end
+    -- find matching cargo type
+    local groupType = string.match(nearestGroup:GetName(), "(.+)-(.+)$")
+    local Cargotype = nil
+    for k,v in pairs(self.Cargo_Troops) do
+      if v.Name == groupType then
+        Cargotype = v
+        break
+      end
+    end
+  
+    if Cargotype == nil then
+      self:_SendMessage("Can't find a matching cargo type for " .. groupType, 10, false, Group)
+      return self
+    end
+  
+    local troopsize = Cargotype:GetCratesNeeded() -- #number
+    -- have we loaded stuff already?
+    local numberonboard = 0
+    local loaded = {}
+    if self.Loaded_Cargo[unitname] then
+      loaded = self.Loaded_Cargo[unitname] -- #CTLD.LoadedCargo
+      numberonboard = loaded.Troopsloaded or 0
+    else
+      loaded = {} -- #CTLD.LoadedCargo
+      loaded.Troopsloaded = 0
+      loaded.Cratesloaded = 0
+      loaded.Cargo = {}
+    end
+    if troopsize + numberonboard > trooplimit then
+      self:_SendMessage("Sorry, we\'re crammed already!", 10, false, Group)
+      return
+    else
+      self.CargoCounter = self.CargoCounter + 1
+      local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, CTLD_CARGO.Enum.TROOPS, true, true, Cargotype.CratesNeeded)
+      self:T({cargotype=loadcargotype})
+      loaded.Troopsloaded = loaded.Troopsloaded + troopsize
+      table.insert(loaded.Cargo,loadcargotype)
+      self.Loaded_Cargo[unitname] = loaded
+      self:_SendMessage("Troops boarded!", 10, false, Group)
+      self:__TroopsExtracted(1,Group, Unit, nearestGroup)
+  
+      -- clean up:
+      table.remove(self.DroppedTroops, nearestGroupIndex)
+      nearestGroup:Destroy()
+    end
+    return self
+  end
+  
 --- (Internal) Function to spawn crates in front of the heli.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
@@ -1824,6 +1926,7 @@ function CTLD:_RefreshF10Menus()
               menus[menucount] = MENU_GROUP_COMMAND:New(_group,entry.Name,troopsmenu,self._LoadTroops, self, _group, _unit, entry)
             end
             local unloadmenu1 = MENU_GROUP_COMMAND:New(_group,"Drop troops",toptroops, self._UnloadTroops, self, _group, _unit):Refresh()
+              local extractMenu1 = MENU_GROUP_COMMAND:New(_group, "Extract troops", toptroops, self._ExtractTroops, self, _group, _unit):Refresh()
           end
           local rbcns = MENU_GROUP_COMMAND:New(_group,"List active zone beacons",topmenu, self._ListRadioBeacons, self, _group, _unit)
           if unittype == "Hercules" then
@@ -2542,6 +2645,21 @@ end
     return self
   end
   
+      --- (Internal) FSM Function onbeforeTroopsExtracted.
+    -- @param #CTLD self
+    -- @param #string From State.
+    -- @param #string Event Trigger.
+    -- @param #string To State.
+    -- @param Wrapper.Group#GROUP Group Group Object.
+    -- @param Wrapper.Unit#UNIT Unit Unit Object.
+    -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
+    -- @return #CTLD self
+    function CTLD:onbeforeTroopsExtracted(From, Event, To, Group, Unit, Troops)
+      self:T({From, Event, To})
+      return self
+    end
+    
+    
   --- (Internal) FSM Function onbeforeTroopsDeployed.
   -- @param #CTLD self
   -- @param #string From State.
