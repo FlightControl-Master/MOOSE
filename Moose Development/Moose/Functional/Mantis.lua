@@ -1081,7 +1081,7 @@ do
     if self.advAwacs then
       self.AWACS_Detection = self:StartAwacsDetection()
     end
-    self:__Status(self.detectinterval)   
+    self:__Status(-math.random(1,10))   
     return self
   end
   

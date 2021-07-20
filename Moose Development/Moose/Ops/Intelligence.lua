@@ -56,30 +56,30 @@
 --
 --  ## set up a detection SET_GROUP  
 --  
---  `Red_DetectionSetGroup = SET_GROUP:New()`  
---  `Red_DetectionSetGroup:FilterPrefixes( { "Red EWR" } )`  
---  `Red_DetectionSetGroup:FilterOnce()`  
+--          `Red_DetectionSetGroup = SET_GROUP:New()`  
+--          `Red_DetectionSetGroup:FilterPrefixes( { "Red EWR" } )`  
+--          `Red_DetectionSetGroup:FilterOnce()`  
 --  
 --  ## New Intel type detection for the red side, logname "KGB"    
 --  
---  `RedIntel = INTEL:New(Red_DetectionSetGroup,"red","KGB")`  
---  `RedIntel:SetClusterAnalysis(true,true)`  
---  `RedIntel:SetVerbosity(2)`  
---  `RedIntel:Start()`  
+--          `RedIntel = INTEL:New(Red_DetectionSetGroup,"red","KGB")`  
+--          `RedIntel:SetClusterAnalysis(true,true)`  
+--          `RedIntel:SetVerbosity(2)`  
+--          `RedIntel:__Start(2)`  
 --  
 --  ## Hook into new contacts found  
 --  
---  `function RedIntel:OnAfterNewContact(From, Event, To, Contact)`  
---        `local text = string.format("NEW contact %s detected by %s", Contact.groupname, Contact.recce or "unknown")`  
---        `local m = MESSAGE:New(text,15,"KGB"):ToAll()`  
--- `end`  
+--          `function RedIntel:OnAfterNewContact(From, Event, To, Contact)`  
+--                `local text = string.format("NEW contact %s detected by %s", Contact.groupname, Contact.recce or "unknown")`  
+--                `local m = MESSAGE:New(text,15,"KGB"):ToAll()`  
+--          `end`  
 -- 
 --  ## And/or new clusters found  
 --  
--- `function RedIntel:OnAfterNewCluster(From, Event, To, Contact, Cluster)`  
---        `local text = string.format("NEW cluster %d size %d with contact %s", Cluster.index, Cluster.size, Contact.groupname)`  
---        `local m = MESSAGE:New(text,15,"KGB"):ToAll()`  
--- `end`   
+--          `function RedIntel:OnAfterNewCluster(From, Event, To, Contact, Cluster)`  
+--                `local text = string.format("NEW cluster %d size %d with contact %s", Cluster.index, Cluster.size, Contact.groupname)`  
+--                `local m = MESSAGE:New(text,15,"KGB"):ToAll()`  
+--          `end`   
 -- 
 --
 -- @field #INTEL
@@ -116,7 +116,7 @@ INTEL = {
 -- @field #number speed Last known speed in m/s.
 -- @field #boolean isship
 -- @field #boolean ishelo
--- @field #boolean isgrund
+-- @field #boolean isground
 -- @field Ops.Auftrag#AUFTRAG mission The current Auftrag attached to this contact
 -- @field #string recce The name of the recce unit that detected this contact
 
@@ -135,13 +135,13 @@ INTEL = {
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.2.2"
+INTEL.version="0.2.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Filter detection methods.
+-- DONE: Filter detection methods.
 -- TODO: process detected set asynchroniously for better performance.
 -- DONE: Accept zones.
 -- DONE: Reject zones.
@@ -203,7 +203,14 @@ function INTEL:New(DetectionSet, Coalition, Alias)
         self.alias="CIA"
       end
     end
-  end
+  end 
+  
+  self.DetectVisual = true
+  self.DetectOptical = true
+  self.DetectRadar = true
+  self.DetectIRST = true
+  self.DetectRWR = true
+  self.DetectDLINK = true
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("INTEL %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -475,6 +482,39 @@ function INTEL:SetClusterRadius(radius)
   return self
 end
 
+--- Set detection types for this #INTEL - all default to true.
+-- @param #INTEL self
+-- @param #boolean DetectVisual Visual detection
+-- @param #boolean DetectOptical Optical detection
+-- @param #boolean DetectRadar Radar detection
+-- @param #boolean DetectIRST IRST detection
+-- @param #boolean DetectRWR RWR detection
+-- @param #boolean DetectDLINK Data link detection
+-- @return self
+function INTEL:SetDetectionTypes(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+  self.DetectVisual = DetectVisual and true 
+  self.DetectOptical = DetectOptical and true
+  self.DetectRadar = DetectRadar and true
+  self.DetectIRST = DetectIRST and true
+  self.DetectRWR = DetectRWR and true
+  self.DetectDLINK = DetectDLINK and true
+  return self
+end
+
+--- Get table of #INTEL.Contact objects
+-- @param #INTEL self
+-- @return #table Contacts
+function INTEL:GetContactTable()
+  return self.Contacts
+end
+
+--- Get table of #INTEL.Cluster objects
+-- @param #INTEL self
+-- @return #table Clusters
+function INTEL:GetClusterTable()
+  return self.Clusters
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -530,7 +570,7 @@ function INTEL:onafterStatus(From, Event, To)
       text=text..string.format("\n- %s (%s): %s, units=%d, T=%d sec", contact.categoryname, contact.attribute, contact.groupname, contact.group:CountAliveUnits(), dT)
       if contact.mission then
         local mission=contact.mission --Ops.Auftrag#AUFTRAG
-        text=text..string.format(" mission name=%s type=%s target=%s", mission.name, mission.type, mission:GetTargetName() or "unkown")
+        text=text..string.format(" mission name=%s type=%s target=%s", mission.name, mission.type, mission:GetTargetName() or "unknown")
       end
     end
     self:I(self.lid..text)
@@ -558,14 +598,13 @@ function INTEL:UpdateIntel()
         local recce=_recce --Wrapper.Unit#UNIT
         
         -- Get detected units.
-        self:GetDetectedUnits(recce, DetectedUnits, RecceDetecting)
+        self:GetDetectedUnits(recce, DetectedUnits, RecceDetecting, self.DetectVisual, self.DetectOptical, self.DetectRadar, self.DetectIRST, self.DetectRWR, self.DetectDLINK)
         
       end
       
     end    
   end
   
-  -- TODO: Filter detection methods?
   local remove={}
   for unitname,_unit in pairs(DetectedUnits) do
     local unit=_unit --Wrapper.Unit#UNIT
@@ -700,7 +739,7 @@ function INTEL:CreateDetectedItems(DetectedGroups, RecceDetecting)
       item.velocity=group:GetVelocityVec3()
       item.speed=group:GetVelocityMPS()
       item.recce=RecceDetecting[groupname]
-      self:T(string.format("%s group detect by %s/%s", groupname, RecceDetecting[groupname] or "unknonw", item.recce or "unknown"))
+      self:T(string.format("%s group detect by %s/%s", groupname, RecceDetecting[groupname] or "unknown", item.recce or "unknown"))
       -- Add contact to table.    
       self:AddContact(item)
       
@@ -728,7 +767,7 @@ function INTEL:CreateDetectedItems(DetectedGroups, RecceDetecting)
 
 end
 
---- Return the detected target groups of the controllable as a @{SET_GROUP}.
+--- (Internal) Return the detected target groups of the controllable as a @{SET_GROUP}.
 -- The optional parametes specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
 -- @param #INTEL self
@@ -815,7 +854,7 @@ function INTEL:onafterLostCluster(From, Event, To, Cluster, Mission)
   local text = self.lid..string.format("LOST cluster %d", Cluster.index)
   if Mission then
     local mission=Mission --Ops.Auftrag#AUFTRAG
-    text=text..string.format(" mission name=%s type=%s target=%s", mission.name, mission.type, mission:GetTargetName() or "unkown")
+    text=text..string.format(" mission name=%s type=%s target=%s", mission.name, mission.type, mission:GetTargetName() or "unknown")
   end
   self:T(text)
 end
