@@ -59,7 +59,7 @@
 -- @extends Core.Base#BASE
 
 
---- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - FrÃ©dÃ©ric Bastiat 
+--- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - Frédéric Bastiat 
 -- 
 -- Simple Class for a more intelligent Air Defense System
 -- 
@@ -195,6 +195,8 @@ MANTIS = {
   TimeStamp             = 0,
   state2flag            = false,
   SamStateTracker       = {},
+  DLink                 = false,
+  DLTimeStamp           = 0,
 }
 
 --- Advanced state enumerator
@@ -278,7 +280,8 @@ do
     self.relointerval = math.random(1800,3600) -- random between 30 and 60 mins
     self.state2flag = false
     self.SamStateTracker = {} -- table to hold alert states, so we don't trigger state changes twice in adv mode
-
+    self.DLink = false
+    
     if EmOnOff then
       if EmOnOff == false then
         self.UseEmOnOff = false
@@ -325,7 +328,7 @@ do
     end
     
     -- @field #string version
-    self.version="0.5.2"
+    self.version="0.6.2"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
     
     --- FSM Functions ---
@@ -593,7 +596,7 @@ do
   -- E.g. `mymantis:SetAdvancedMode(true, 90)`
   function MANTIS:SetAdvancedMode(onoff, ratio)
     self:T(self.lid .. "SetAdvancedMode")
-    self:T({onoff, ratio})
+    --self.T({onoff, ratio})
     local onoff = onoff or false
     local ratio = ratio or 100
     if (type(self.HQ_Template_CC) == "string") and onoff and self.dynamic then
@@ -619,6 +622,17 @@ do
     return self
   end
   
+  --- Set using an #INTEL_DLINK object instead of #DETECTION
+  -- @param #MANTIS self
+  -- @param Ops.Intelligence#INTEL_DLINK DLink The data link object to be used.
+  function MANTIS:SetUsingDLink(DLink)
+    self:T(self.lid .. "SetUsingDLink")
+    self.DLink = true
+    self.Detection = DLink
+    self.DLTimeStamp = timer.getAbsTime()
+    return self
+  end
+  
   --- [Internal] Function to check if HQ is alive
   -- @param #MANTIS self
   -- @return #boolean True if HQ is alive, else false
@@ -633,10 +647,10 @@ do
       local hqgrp = GROUP:FindByName(hq)
       if hqgrp then
         if hqgrp:IsAlive() then -- ok we're on, hq exists and as alive
-          self:T(self.lid.." HQ is alive!")
+          --self.T(self.lid.." HQ is alive!")
           return true
         else
-          self:T(self.lid.." HQ is dead!")
+          --self.T(self.lid.." HQ is dead!")
           return false  
         end
       end
@@ -650,7 +664,7 @@ do
   function MANTIS:_CheckEWRState()
     self:T(self.lid .. "CheckEWRState")
     local text = self.lid.." Checking EWR State"
-    self:T(text)
+    --self.T(text)
     local m= MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
     if self.verbose then self:I(text) end
     -- start check
@@ -666,7 +680,7 @@ do
           end
         end
       end
-      self:T(self.lid..string.format(" No of EWR alive is %d", nalive))
+      --self.T(self.lid..string.format(" No of EWR alive is %d", nalive))
       if nalive > 0 then
         return true
       else
@@ -682,10 +696,8 @@ do
   -- @return #number Previous state for tracking 0, 1, or 2
   function MANTIS:_CalcAdvState()
     self:T(self.lid .. "CalcAdvState")
-    local text = self.lid.." Calculating Advanced State"
-    self:T(text)
-    local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
-    if self.verbose then self:I(text) end
+    local m=MESSAGE:New(self.lid.." Calculating Advanced State",10,"MANTIS"):ToAllIf(self.debug)
+    if self.verbose then self:I(self.lid.." Calculating Advanced State") end
     -- start check
     local currstate = self.adv_state -- save curr state for comparison later
     local EWR_State = self:_CheckEWRState()
@@ -703,10 +715,12 @@ do
     local ratio = self.adv_ratio / 100 -- e.g. 80/100 = 0.8
     ratio = ratio * self.adv_state -- e.g 0.8*2 = 1.6
     local newinterval = interval + (interval * ratio) -- e.g. 30+(30*1.6) = 78
-    local text = self.lid..string.format(" Calculated OldState/NewState/Interval: %d / %d / %d", currstate, self.adv_state, newinterval)
-    self:T(text)
-    local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
-    if self.verbose then self:I(text) end
+    if self.debug or self.verbose then
+      local text = self.lid..string.format(" Calculated OldState/NewState/Interval: %d / %d / %d", currstate, self.adv_state, newinterval)
+      --self.T(text)
+      local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
+      if self.verbose then self:I(text) end
+    end
     return newinterval, currstate
   end
   
@@ -716,13 +730,13 @@ do
   -- @param #boolean ewr If true, will relocate  EWR objects
   function MANTIS:SetAutoRelocate(hq, ewr)
     self:T(self.lid .. "SetAutoRelocate")
-    self:T({hq, ewr})
+    --self.T({hq, ewr})
     local hqrel = hq or false
     local ewrel = ewr or false
     if hqrel or ewrel then
       self.autorelocate = true
       self.autorelocateunits = { HQ = hqrel, EWR = ewrel }
-      self:T({self.autorelocate, self.autorelocateunits})
+      --self.T({self.autorelocate, self.autorelocateunits})
     end
     return self
   end    
@@ -739,7 +753,7 @@ do
       local HQGroup = self.HQ_CC
       if self.autorelocateunits.HQ and self.HQ_CC and HQGroup:IsAlive() then --only relocate if HQ exists
         local _hqgrp = self.HQ_CC
-        self:T(self.lid.." Relocating HQ")
+        --self.T(self.lid.." Relocating HQ")
         local text = self.lid.." Relocating HQ"
         --local m= MESSAGE:New(text,10,"MANTIS"):ToAll()
           _hqgrp:RelocateGroundRandomInRadius(20,500,true,true)
@@ -752,7 +766,7 @@ do
          local EWR_Grps = EWR_GRP.Set --table of objects in SET_GROUP
          for _,_grp in pairs (EWR_Grps) do
              if _grp:IsAlive() and _grp:IsGround() then
-              self:T(self.lid.." Relocating EWR ".._grp:GetName())
+              --self.T(self.lid.." Relocating EWR ".._grp:GetName())
               local text = self.lid.." Relocating EWR ".._grp:GetName()
               local m= MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
               if self.verbose then self:I(text) end
@@ -778,12 +792,14 @@ do
     for _,_coord in pairs (set) do
       local coord = _coord  -- get current coord to check
       -- output for cross-check
-      local dectstring = coord:ToStringLLDMS()
-      local samstring = samcoordinate:ToStringLLDMS()
       local targetdistance = samcoordinate:DistanceFromPointVec2(coord)
-      local text = string.format("Checking SAM at % s - Distance %d m - Target %s", samstring, targetdistance, dectstring)
-      local m = MESSAGE:New(text,10,"Check"):ToAllIf(self.debug)
-      if self.verbose then self:I(self.lid..text) end
+      if self.verbose or self.debug then 
+        local dectstring = coord:ToStringLLDMS()
+        local samstring = samcoordinate:ToStringLLDMS()
+        local text = string.format("Checking SAM at % s - Distance %d m - Target %s", samstring, targetdistance, dectstring)
+        local m = MESSAGE:New(text,10,"Check"):ToAllIf(self.debug)
+        self:I(self.lid..text) 
+      end
       -- end output to cross-check
       if targetdistance <= radius then
         return true, targetdistance
@@ -999,9 +1015,11 @@ do
             self:__ShoradActivated(1,name, radius, ontime)
           end
           -- debug output
-          local text = string.format("SAM %s switched to alarm state RED!", name)
-          local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
-          if self.verbose then self:I(self.lid..text) end
+          if self.debug or self.verbose then
+            local text = string.format("SAM %s switched to alarm state RED!", name)
+            local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
+            if self.verbose then self:I(self.lid..text) end
+          end
         end --end alive
       else 
         if samgroup:IsAlive() then
@@ -1014,9 +1032,11 @@ do
               self:__GreenState(1,samgroup)
               self.SamStateTracker[name] = "GREEN"
             end
-          local text = string.format("SAM %s switched to alarm state GREEN!", name)
-          local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
-          if self.verbose then self:I(self.lid..text) end
+          if self.debug or self.verbose then  
+            local text = string.format("SAM %s switched to alarm state GREEN!", name)
+            local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
+            if self.verbose then self:I(self.lid..text) end
+          end
         end --end alive
       end --end check
     end --for for loop
@@ -1066,6 +1086,20 @@ do
     end -- end newstate vs oldstate
     return self
   end
+  
+  --- [Internal] Check DLink state
+  -- @param #MANTIS self
+  -- @return #MANTIS self
+  function MANTIS:_CheckDLinkState()
+    self:T(self.lid .. "_CheckDLinkState")
+    local dlink = self.Detection -- Ops.Intelligence#INTEL_DLINK
+    local TS = timer.getAbsTime()
+    if not dlink:Is("Running") and (TS - self.DLTimeStamp > 29) then
+      self.DLink = false
+      self.Detection = self:StartDetection() -- fall back
+      self:I(self.lid .. "Intel DLink not running - switching back to single detection!")
+    end
+  end
     
   --- [Internal] Function to set start state
   -- @param #MANTIS self
@@ -1077,7 +1111,9 @@ do
     self:T({From, Event, To})
     self:T(self.lid.."Starting MANTIS")
     self:SetSAMStartState()
-    self.Detection = self:StartDetection()
+    if not self.DLink then
+      self.Detection = self:StartDetection()
+    end
     if self.advAwacs then
       self.AWACS_Detection = self:StartAwacsDetection()
     end
@@ -1120,9 +1156,14 @@ do
       end
     end
     
-    -- timer for advanced state check
+    -- advanced state check
     if self.advanced then
       self:_CheckAdvState()
+    end
+    
+    -- check DLink state
+    if self.DLink then
+      self:_CheckDLinkState()
     end
     
     return self
