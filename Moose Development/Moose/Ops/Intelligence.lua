@@ -1456,8 +1456,6 @@ end
 --- ===
 --
 -- ### Author: **applevangelist**
--- @module Ops.Intel_DLink
--- @image OPS_Intel.png
 
 --- INTEL_DLINK class.
 -- @type INTEL_DLINK
