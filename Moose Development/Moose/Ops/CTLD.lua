@@ -528,7 +528,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.4r2"
+CTLD.version="0.1.4r3"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -961,7 +961,7 @@ end
     local nearestDistance = 10000000
     for k,v in pairs(self.DroppedTroops) do
       local distance = self:_GetDistance(v:GetCoordinate(),unitcoord)
-      if distance < nearestDistance then
+      if distance < nearestDistance and distance ~= -1 then
         nearestGroup = v
         nearestGroupIndex = k
         nearestDistance = distance
@@ -2349,6 +2349,20 @@ end
     return self
   end
   
+  --- (Internal) Run through DroppedTroops and capture alive units
+  -- @param #CTLD self
+  -- @return #CTLD self
+  function CTLD:CleanDroppedTroops()
+    local troops = self.DroppedTroops
+    local newtable = {}
+    for _index, _group in pairs (troops) do
+      if _group and _group:IsAlive() then
+        newtable[_index] = _group
+      end
+    end
+    self.DroppedTroops = newtable
+    return self
+  end
 ------------------------------------------------------------------- 
 -- FSM functions
 ------------------------------------------------------------------- 
@@ -2388,6 +2402,7 @@ end
   -- @return #CTLD self
   function CTLD:onbeforeStatus(From, Event, To)
     self:T({From, Event, To})
+    self:CleanDroppedTroops()
     self:_RefreshF10Menus()
     self:_RefreshRadioBeacons()
     self:CheckAutoHoverload()
