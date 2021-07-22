@@ -1494,6 +1494,28 @@ INTEL_DLINK.version = "0.0.1"
 -- @param #string Alias (optional) Name of this instance. Default "SPECTRE"
 -- @param #number Interval (optional) When to query #INTEL objects for detected items (default 20 seconds).
 -- @param #number Cachetime (optional) How long to cache detected items (default 300 seconds).
+-- @usage Use #INTEL_DLINK if you want to merge data from a number of #INTEL objects into one. This might be useful to simulate a Data Link, e.g. for Russian-tech based EWR, 
+-- realising a Star Topology @{https://en.wikipedia.org/wiki/Network_topology#Star} in a basic setup.
+-- It will collect the contacts and clusters from the #INTEL objects. 
+-- Contact duplicates are removed. Clusters might contain duplicates (Might fix that later, WIP).
+--
+-- Basic setup:    
+--					local datalink = INTEL_DLINK:New({myintel1,myintel2}), "FSB", 20, 300)
+--					datalink:__Start(2)
+--
+-- Add an Intel while running:
+-- 					datalink:AddIntel(myintel3)
+--
+-- Gather the data:
+-- 					datalink:GetContactTable() -- #table of #INTEL.Contact contacts.
+--					datalink:GetClusterTable() -- #table of #INTEL.Cluster clusters.
+--					datalink:GetDetectedItemCoordinates() -- #table of contact coordinates, to be compatible with @{Functional.Detection#DETECTION}.
+--
+-- Gather data with the event function:  
+-- 					function datalink:OnAfterCollected(From, Event, To, Contacts, Clusters)	
+--						... <your code here> ...
+--					end
+--			
 function INTEL_DLINK:New(Intels, Alias, Interval, Cachetime)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #INTEL
@@ -1528,6 +1550,44 @@ function INTEL_DLINK:New(Intels, Alias, Interval, Cachetime)
   self:AddTransition("*",             "Collect",           "*")           -- Collect data.
   self:AddTransition("*",             "Collected",         "*")           -- Collection of data done.
   self:AddTransition("*",             "Stop",              "Stopped")     -- Stop FSM.
+  
+  ----------------------------------------------------------------------------------------------
+  -- Pseudo Functions
+  ----------------------------------------------------------------------------------------------
+  --- Triggers the FSM event "Start". Starts the INTEL_DLINK.
+  -- @function [parent=#INTEL_DLINK] Start
+  -- @param #INTEL_DLINK self
+
+  --- Triggers the FSM event "Start" after a delay. Starts the INTEL_DLINK.
+  -- @function [parent=#INTEL_DLINK] __Start
+  -- @param #INTEL_DLINK self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Stop". Stops the INTEL_DLINK.
+  -- @param #INTEL_DLINK self
+
+  --- Triggers the FSM event "Stop" after a delay. Stops the INTEL_DLINK.
+  -- @function [parent=#INTEL_DLINK] __Stop
+  -- @param #INTEL_DLINK self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Collect". Used internally to collect all data.
+  -- @function [parent=#INTEL_DLINK] Collect
+  -- @param #INTEL_DLINK self
+
+  --- Triggers the FSM event "Collect" after a delay.
+  -- @function [parent=#INTEL_DLINK] __Status
+  -- @param #INTEL_DLINK self
+  -- @param #number delay Delay in seconds.
+  
+  --- On After "Collected" event. Data tables have been refreshed.
+  -- @function [parent=#INTEL_DLINK] OnAfterCollected
+  -- @param #INTEL_DLINK self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #table Contacts Table of #INTEL.Contact Contacts.
+  -- @param #table Clusters Table of #INTEL.Cluster Clusters.
   
   return self
 end
