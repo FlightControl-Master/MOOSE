@@ -59,6 +59,7 @@ CTLD_CARGO = {
     ["TROOPS"] = "Troops", -- #string troops
     ["FOB"] = "FOB", -- #string FOB
     ["CRATE"] = "Crate", -- #string crate
+    ["REPAIR"] = "Repair", -- #string repair
   }
   
   --- Function to create new CTLD_CARGO object.
@@ -169,13 +170,25 @@ CTLD_CARGO = {
      return false
     end 
   end
+  
   --- Set WasDropped.
   -- @param #CTLD_CARGO self
   -- @param #boolean dropped
   function CTLD_CARGO:SetWasDropped(dropped)
     self.HasBeenDropped = dropped or false
   end
-
+  
+  --- Query crate type for REPAIR
+  -- @param #CTLD_CARGO self
+  -- @param #boolean 
+  function CTLD_CARGO:IsRepair()
+   if self.CargoType == "Repair" then
+    return true
+   else
+    return false
+   end
+  end
+   
 end
 
 do
@@ -235,6 +248,9 @@ do
 --        -- add infantry unit called "Forward Ops Base" using template "FOB", of type FOB, size 4, i.e. needs four crates to be build:
 --        my_ctld:AddCratesCargo("Forward Ops Base",{"FOB"},CTLD_CARGO.Enum.FOB,4)
 --        
+--        -- add crates to repair FOB or VEHICLE type units - the 2nd parameter needs to match the template you want to repair
+--        my_ctld:AddCratesRepair("Humvee Repair","Humvee",CTLD_CARGO.Enum.REPAIR,1)
+--        
 -- ## 1.3 Add logistics zones
 --  
 --  Add zones for loading troops and crates and dropping, building crates
@@ -272,6 +288,7 @@ do
 --          my_ctld.movetroopsdistance = 5000 -- .. but only if this far away (in meters)
 --          my_ctld.smokedistance = 2000 -- Only smoke or flare zones if requesting player unit is this far away (in meters)
 --          my_ctld.suppressmessages = false -- Set to true if you want to script your own messages.
+--          my_ctld.repairtime = 300 -- Number of seconds it takes to repair a unit.
 -- 
 -- ## 2.1 User functions
 -- 
@@ -353,11 +370,15 @@ do
 --          ... your code here ...
 --        end
 --  
--- ## 3.6 OnAfterCratesBuild
+-- ## 3.6 OnAfterCratesBuild, OnAfterCratesRepaired
 --  
 --    This function is called when a player has build a vehicle or FOB:
 --
 --        function my_ctld:OnAfterCratesBuild(From, Event, To, Group, Unit, Vehicle)
+--          ... your code here ...
+--        end
+--        
+--        function my_ctld:OnAfterCratesRepaired(From, Event, To, Group, Unit, Vehicle)
 --          ... your code here ...
 --        end
  --  
@@ -385,7 +406,7 @@ do
 -- 
 -- ## 4.1 Manage Crates
 -- 
--- Use this entry to get, load, list nearby, drop, and build crates. Also @see options.
+-- Use this entry to get, load, list nearby, drop, build and repair crates. Also @see options.
 -- 
 -- ## 4.2 Manage Troops
 -- 
@@ -591,7 +612,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self:AddTransition("*",             "TroopsDeployed",      "*")           -- CTLD deploy  event. 
   self:AddTransition("*",             "TroopsRTB",           "*")           -- CTLD deploy  event.   
   self:AddTransition("*",             "CratesDropped",       "*")           -- CTLD deploy  event.  
-  self:AddTransition("*",             "CratesBuild",         "*")           -- CTLD build  event.   
+  self:AddTransition("*",             "CratesBuild",         "*")           -- CTLD build  event.
+  self:AddTransition("*",             "CratesRepaired",      "*")           -- CTLD repair  event.    
   self:AddTransition("*",             "Stop",                "Stopped")     -- Stop FSM.
   
   -- tables
@@ -651,6 +673,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- message suppression
   self.suppressmessages = false
+  
+  -- time to repair a unit/group
+  self.repairtime = 300
   
   for i=1,100 do
     math.random()
@@ -745,7 +770,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
   -- @return #CTLD self
   
-   --- FSM Function OnAfterCratesBuild.
+  --- FSM Function OnAfterCratesBuild.
   -- @function [parent=#CTLD] OnAfterCratesBuild
   -- @param #CTLD self
   -- @param #string From State.
@@ -755,7 +780,18 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
   -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB build.
   -- @return #CTLD self
-  
+
+  --- FSM Function OnAfterCratesRepaired.
+  -- @function [parent=#CTLD] OnAfterCratesRepaired
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB repaired.
+  -- @return #CTLD self
+    
   --- FSM Function OnAfterTroopsRTB.
   -- @function [parent=#CTLD] OnAfterTroopsRTB
   -- @param #CTLD self
@@ -926,6 +962,111 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
     self.Loaded_Cargo[unitname] = loaded
     self:_SendMessage("Troops boarded!", 10, false, Group)
     self:__TroopsPickedUp(1,Group, Unit, Cargotype)
+  end
+  return self
+end
+
+function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
+    self:T(self.lid .. " _FindRepairNearby")
+    local unitcoord = Unit:GetCoordinate()
+    
+    -- find nearest group of deployed groups
+    local nearestGroup = nil
+    local nearestGroupIndex = -1
+    local nearestDistance = 10000000
+    for k,v in pairs(self.DroppedTroops) do
+      local distance = self:_GetDistance(v:GetCoordinate(),unitcoord)
+      if distance < nearestDistance and distance ~= -1 then
+        nearestGroup = v
+        nearestGroupIndex = k
+        nearestDistance = distance
+      end
+    end
+    
+    -- found one and matching distance?  
+    if nearestGroup == nil or nearestDistance > 1000 then
+      self:_SendMessage("No unit close enough to repair!", 10, false, Group)
+      return nil, nil
+    end
+    
+    local groupname = nearestGroup:GetName()
+    --self:I(string.format("***** Found Group %s",groupname))
+    
+    -- helper to find matching template
+    local function matchstring(String,Table)
+      local match = false
+      if type(Table) == "table" then
+        for _,_name in pairs (Table) do
+          if string.find(String,_name) then
+            match = true
+            break
+          end
+        end
+      else
+        if type(String) == "string" then
+          if string.find(String,Table) then match = true end
+        end
+      end 
+      return match
+    end
+    
+    -- walk through generics and find matching type
+    local Cargotype = nil
+    for k,v in pairs(self.Cargo_Crates) do
+      --self:I({groupname,v.Templates})
+      if matchstring(groupname,v.Templates) and matchstring(groupname,Repairtype) then
+        Cargotype = v -- #CTLD_CARGO
+        break
+      end
+    end
+
+    if Cargotype == nil then
+      --self:_SendMessage("Can't find a matching group for " .. Repairtype, 10, false, Group)
+      return nil, nil
+    else
+      return nearestGroup, Cargotype
+    end
+    
+end
+
+--- (Internal) Function to repair an object.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @param #table Crates Table of #CTLD_CARGO objects near the unit.
+-- @param #CTLD.Buildable Build Table build object.
+-- @param #number Number Number of objects in Crates (found) to limit search.
+function CTLD:_RepairObjectFromCrates(Group,Unit,Crates,Build,Number)
+  self:T(self.lid .. " _RepairObjectFromCrates")
+  local build = Build -- -- #CTLD.Buildable
+  --self:I({Build=Build})
+  local Repairtype = build.Template -- #string
+  local NearestGroup, CargoType = self:_FindRepairNearby(Group,Unit,Repairtype) -- Wrapper.Group#GROUP, #CTLD_CARGO
+  --self:I({Repairtype=Repairtype, CargoType=CargoType, NearestGroup=NearestGroup})
+  if NearestGroup ~= nil then
+    if self.repairtime < 2 then self.repairtime = 30 end -- noob catch
+    self:_SendMessage(string.format("Repair started using %s taking %d secs", build.Name, self.repairtime), 10, false, Group)
+    -- now we can build ....
+    --NearestGroup:Destroy(false)
+    local name = CargoType:GetName()
+    local required = CargoType:GetCratesNeeded()
+    local template = CargoType:GetTemplates()
+    local ctype = CargoType:GetType()
+    local object = {} -- #CTLD.Buildable
+    object.Name = CargoType:GetName()
+    object.Required = required
+    object.Found = required
+    object.Template = template
+    object.CanBuild = true
+    object.Type = ctype -- #CTLD_CARGO.Enum
+    self:_CleanUpCrates(Crates,Build,Number)
+    local desttimer = TIMER:New(function() NearestGroup:Destroy(false) end, self)
+    desttimer:Start(self.repairtime - 1)
+    local buildtimer = TIMER:New(self._BuildObjectFromCrates,self,Group,Unit,object,true)
+    buildtimer:Start(self.repairtime)
+    --self:_BuildObjectFromCrates(Group,Unit,object)
+  else
+    self:_SendMessage("Can't repair this unit with " .. build.Name, 10, false, Group)
   end
   return self
 end
@@ -1533,7 +1674,7 @@ function CTLD:_BuildCrates(Group, Unit)
     -- get dropped crates
     for _,_crate in pairs(crates) do
       local Crate = _crate -- #CTLD_CARGO
-      if Crate:WasDropped() then
+      if Crate:WasDropped() and not Crate:IsRepair() then
         -- we can build these - maybe
         local name = Crate:GetName()
         local required = Crate:GetCratesNeeded()
@@ -1596,12 +1737,91 @@ function CTLD:_BuildCrates(Group, Unit)
   return self
 end
 
+--- (Internal) Function to repair nearby vehicles / FOBs
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrappe.Unit#UNIT Unit
+function CTLD:_RepairCrates(Group, Unit)
+  self:T(self.lid .. " _RepairCrates")
+  -- get nearby crates
+  local finddist = self.CrateDistance or 30
+  local crates,number = self:_FindCratesNearby(Group,Unit, finddist) -- #table
+  local buildables = {}
+  local foundbuilds = false
+  local canbuild = false
+  if number > 0 then
+    -- get dropped crates
+    for _,_crate in pairs(crates) do
+      local Crate = _crate -- #CTLD_CARGO
+      if Crate:WasDropped() and Crate:IsRepair() then
+        -- we can build these - maybe
+        local name = Crate:GetName()
+        local required = Crate:GetCratesNeeded()
+        local template = Crate:GetTemplates()
+        local ctype = Crate:GetType()
+        if not buildables[name] then
+          local object = {} -- #CTLD.Buildable
+          object.Name = name
+          object.Required = required
+          object.Found = 1
+          object.Template = template
+          object.CanBuild = false
+          object.Type = ctype -- #CTLD_CARGO.Enum
+          buildables[name] = object
+          foundbuilds = true
+        else
+         buildables[name].Found = buildables[name].Found + 1
+         foundbuilds = true
+        end
+        if buildables[name].Found >= buildables[name].Required then 
+           buildables[name].CanBuild = true
+           canbuild = true
+        end
+        self:T({repair = buildables})
+      end -- end dropped
+    end -- end crate loop
+    -- ok let\'s list what we have
+    local report = REPORT:New("Checklist Repairs")
+    report:Add("------------------------------------------------------------")
+    for _,_build in pairs(buildables) do
+      local build = _build -- Object table from above
+      local name = build.Name
+      local needed = build.Required
+      local found = build.Found
+      local txtok = "NO"
+      if build.CanBuild then 
+        txtok = "YES" 
+      end
+      local text = string.format("Type: %s | Required %d | Found %d | Can Repair %s", name, needed, found, txtok)
+      report:Add(text)
+    end -- end list buildables
+    if not foundbuilds then report:Add("     --- None Found ---") end
+    report:Add("------------------------------------------------------------")
+    local text = report:Text()
+    self:_SendMessage(text, 30, true, Group) 
+    -- let\'s get going
+    if canbuild then
+      -- loop again
+      for _,_build in pairs(buildables) do
+        local build = _build -- #CTLD.Buildable
+        if build.CanBuild then
+          self:_RepairObjectFromCrates(Group,Unit,crates,build,number)
+        end
+      end
+    end
+  else
+    self:_SendMessage(string.format("No crates within %d meters!",finddist), 10, false, Group) 
+  end -- number > 0
+  return self
+end
+
 --- (Internal) Function to actually SPAWN buildables in the mission.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Group#UNIT Unit
 -- @param #CTLD.Buildable Build
-function CTLD:_BuildObjectFromCrates(Group,Unit,Build)
+-- @param #boolean Repair If true this is a repair and not a new build
+function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair)
   self:T(self.lid .. " _BuildObjectFromCrates")
   -- Spawn-a-crate-content
   local position = Unit:GetCoordinate() or Group:GetCoordinate()
@@ -1615,15 +1835,26 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build)
   local randomcoord = zone:GetRandomCoordinate(35):GetVec2()
   for _,_template in pairs(temptable) do
     self.TroopCounter = self.TroopCounter + 1
+    if canmove then
     local alias = string.format("%s-%d", _template, math.random(1,100000))
     self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
       :InitRandomizeUnits(true,20,2)
       :InitDelayOff()
       :SpawnFromVec2(randomcoord)
+    else -- don't random position of e.g. SAM units build as FOB
+      self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
+      --:InitRandomizeUnits(true,20,2)
+      :InitDelayOff()
+      :SpawnFromVec2(randomcoord)
+    end
     if self.movetroopstowpzone and canmove then
       self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
     end
-    self:__CratesBuild(1,Group,Unit,self.DroppedTroops[self.TroopCounter])
+    if Repair then
+      self:__CratesRepaired(1,Group,Unit,self.DroppedTroops[self.TroopCounter])
+    else
+      self:__CratesBuild(1,Group,Unit,self.DroppedTroops[self.TroopCounter])
+    end
   end -- template loop
   return self
 end
@@ -1756,7 +1987,8 @@ function CTLD:_RefreshF10Menus()
             end
             listmenu = MENU_GROUP_COMMAND:New(_group,"List crates nearby",topcrates, self._ListCratesNearby, self, _group, _unit)
             local unloadmenu = MENU_GROUP_COMMAND:New(_group,"Drop crates",topcrates, self._UnloadCrates, self, _group, _unit)
-            local buildmenu = MENU_GROUP_COMMAND:New(_group,"Build crates",topcrates, self._BuildCrates, self, _group, _unit):Refresh()
+            local buildmenu = MENU_GROUP_COMMAND:New(_group,"Build crates",topcrates, self._BuildCrates, self, _group, _unit)
+            local repairmenu = MENU_GROUP_COMMAND:New(_group,"Repair",topcrates, self._RepairCrates, self, _group, _unit):Refresh()
           end
           -- sub menu troops management
           if cantroops then 
@@ -1811,6 +2043,21 @@ function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates)
   self.CargoCounter = self.CargoCounter + 1
   -- Crates are not directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,false,NoCrates)
+  table.insert(self.Cargo_Crates,cargo)
+  return self
+end
+
+--- User function - Add *generic* repair crates loadable as cargo. This type will create crates that need to be loaded, moved, dropped and built.
+-- @param #CTLD self
+-- @param #string Name Unique name of this type of cargo. E.g. "Humvee".
+-- @param #string Template Template of VEHICLE or FOB cargo that this can repair.
+-- @param #CTLD_CARGO.Enum Type Type of cargo, here REPAIR.
+-- @param #number NoCrates Number of crates needed to build this cargo.
+function CTLD:AddCratesRepair(Name,Template,Type,NoCrates)
+  self:T(self.lid .. " AddCratesRepair")
+  self.CargoCounter = self.CargoCounter + 1
+  -- Crates are not directly loadable
+  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Template,Type,false,false,NoCrates)
   table.insert(self.Cargo_Crates,cargo)
   return self
 end

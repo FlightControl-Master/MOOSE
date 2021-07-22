@@ -1494,9 +1494,9 @@ INTEL_DLINK.version = "0.0.1"
 -- @param #string Alias (optional) Name of this instance. Default "SPECTRE"
 -- @param #number Interval (optional) When to query #INTEL objects for detected items (default 20 seconds).
 -- @param #number Cachetime (optional) How long to cache detected items (default 300 seconds).
--- @usage Use #INTEL_DLINK if you want to merge data from a number of #INTEL objects into one. This might be useful to simulate a Data Link, e.g. for Russian-tech based EWR, 
--- realising a Star Topology @{https://en.wikipedia.org/wiki/Network_topology#Star} in a basic setup.
--- It will collect the contacts and clusters from the #INTEL objects. 
+-- @usage Use #INTEL_DLINK if you want to merge data from a number of #INTEL objects into one. This might be useful to simulate a  
+-- Data Link, e.g. for Russian-tech based EWR, realising a Star Topology @{https://en.wikipedia.org/wiki/Network_topology#Star}
+-- in a basic setup. It will collect the contacts and clusters from the #INTEL objects. 
 -- Contact duplicates are removed. Clusters might contain duplicates (Might fix that later, WIP).
 --
 -- Basic setup:    
@@ -1723,7 +1723,7 @@ function INTEL_DLINK:GetContactTable()
   return self.contacts
 end
 
---- Function to query the detected clusters -- not yet implemented!
+--- Function to query the detected clusters
 -- @param #INTEL_DLINK self
 -- @return #table Table of #INTEL.Cluster clusters
 function INTEL_DLINK:GetClusterTable()
