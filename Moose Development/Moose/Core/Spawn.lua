@@ -3408,8 +3408,8 @@ function SPAWN:_SpawnCleanUpScheduler()
 	    if Stamp.Vec2 then
     		if SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() < 1 then
     		  local NewVec2 = SpawnUnit:GetVec2()
-    		  if Stamp.Vec2.x == NewVec2.x and Stamp.Vec2.y == NewVec2.y then
-      		  -- If the plane is not moving, and is on the ground, assign it with a timestamp...
+    		  if (Stamp.Vec2.x == NewVec2.x and Stamp.Vec2.y == NewVec2.y) or (SpawnUnit:GetLife() <= 1) then
+      		  -- If the plane is not moving or dead , and is on the ground, assign it with a timestamp...
     				if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
     					self:T( { "CleanUp Scheduler:", "ReSpawning:", SpawnGroup:GetName() } )
     					self:ReSpawn( SpawnCursor )
@@ -3427,7 +3427,7 @@ function SPAWN:_SpawnCleanUpScheduler()
     	else
         if SpawnUnit:InAir() == false then
           Stamp.Vec2 = SpawnUnit:GetVec2()
-          if SpawnUnit:GetVelocityKMH() < 1 then
+          if (SpawnUnit:GetVelocityKMH() < 1) then
             Stamp.Time = timer.getTime()
           end
         else

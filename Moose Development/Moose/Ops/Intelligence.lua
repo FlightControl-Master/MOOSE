@@ -35,6 +35,7 @@
 -- @field #number clustercounter Running number of clusters.
 -- @field #number dTforget Time interval in seconds before a known contact which is not detected any more is forgotten.
 -- @field #number clusterradius Radius im kilometers in which groups/units are considered to belong to a cluster
+-- @field #number prediction Seconds default to be used with CalcClusterFuturePosition.
 -- @extends Core.Fsm#FSM
 
 --- Top Secret!
@@ -55,30 +56,30 @@
 --
 --  ## set up a detection SET_GROUP  
 --  
---  `Red_DetectionSetGroup = SET_GROUP:New()`  
---  `Red_DetectionSetGroup:FilterPrefixes( { "Red EWR" } )`  
---  `Red_DetectionSetGroup:FilterOnce()`  
+--          `Red_DetectionSetGroup = SET_GROUP:New()`  
+--          `Red_DetectionSetGroup:FilterPrefixes( { "Red EWR" } )`  
+--          `Red_DetectionSetGroup:FilterOnce()`  
 --  
 --  ## New Intel type detection for the red side, logname "KGB"    
 --  
---  `RedIntel = INTEL:New(Red_DetectionSetGroup,"red","KGB")`  
---  `RedIntel:SetClusterAnalysis(true,true)`  
---  `RedIntel:SetVerbosity(2)`  
---  `RedIntel:Start()`  
+--          `RedIntel = INTEL:New(Red_DetectionSetGroup,"red","KGB")`  
+--          `RedIntel:SetClusterAnalysis(true,true)`  
+--          `RedIntel:SetVerbosity(2)`  
+--          `RedIntel:__Start(2)`  
 --  
 --  ## Hook into new contacts found  
 --  
---  `function RedIntel:OnAfterNewContact(From, Event, To, Contact)`  
---        `local text = string.format("NEW contact %s detected by %s", Contact.groupname, Contact.recce or "unknown")`  
---        `local m = MESSAGE:New(text,15,"KGB"):ToAll()`  
--- `end`  
+--          `function RedIntel:OnAfterNewContact(From, Event, To, Contact)`  
+--                `local text = string.format("NEW contact %s detected by %s", Contact.groupname, Contact.recce or "unknown")`  
+--                `local m = MESSAGE:New(text,15,"KGB"):ToAll()`  
+--          `end`  
 -- 
 --  ## And/or new clusters found  
 --  
--- `function RedIntel:OnAfterNewCluster(From, Event, To, Contact, Cluster)`  
---        `local text = string.format("NEW cluster %d size %d with contact %s", Cluster.index, Cluster.size, Contact.groupname)`  
---        `local m = MESSAGE:New(text,15,"KGB"):ToAll()`  
--- `end`   
+--          `function RedIntel:OnAfterNewCluster(From, Event, To, Contact, Cluster)`  
+--                `local text = string.format("NEW cluster %d size %d with contact %s", Cluster.index, Cluster.size, Contact.groupname)`  
+--                `local m = MESSAGE:New(text,15,"KGB"):ToAll()`  
+--          `end`   
 -- 
 --
 -- @field #INTEL
@@ -95,6 +96,9 @@ INTEL = {
   Clusters        =    {},
   clustercounter  =     1,
   clusterradius   =   15,
+  clusteranalysis =   true,
+  clustermarkers  =   false,
+  prediction      =   300,
 }
 
 --- Detected item info.
@@ -112,7 +116,7 @@ INTEL = {
 -- @field #number speed Last known speed in m/s.
 -- @field #boolean isship
 -- @field #boolean ishelo
--- @field #boolean isgrund
+-- @field #boolean isground
 -- @field Ops.Auftrag#AUFTRAG mission The current Auftrag attached to this contact
 -- @field #string recce The name of the recce unit that detected this contact
 
@@ -131,13 +135,13 @@ INTEL = {
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.2.1"
+INTEL.version="0.2.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Filter detection methods.
+-- DONE: Filter detection methods.
 -- TODO: process detected set asynchroniously for better performance.
 -- DONE: Accept zones.
 -- DONE: Reject zones.
@@ -199,7 +203,14 @@ function INTEL:New(DetectionSet, Coalition, Alias)
         self.alias="CIA"
       end
     end
-  end
+  end 
+  
+  self.DetectVisual = true
+  self.DetectOptical = true
+  self.DetectRadar = true
+  self.DetectIRST = true
+  self.DetectRWR = true
+  self.DetectDLINK = true
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("INTEL %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -218,7 +229,8 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   self:AddTransition("*",             "LostContact",        "*")           -- Contact could not be detected any more.
   
   self:AddTransition("*",             "NewCluster",         "*")           -- New cluster has been detected.
-  self:AddTransition("*",             "LostCluster",         "*")          -- Cluster could not be detected any more.
+  self:AddTransition("*",             "LostCluster",        "*")          -- Cluster could not be detected any more.
+  self:AddTransition("*",             "Stop",               "Stopped")
   
   -- Defaults
   self:SetForgetTime()
@@ -471,6 +483,47 @@ function INTEL:SetClusterRadius(radius)
   return self
 end
 
+--- Set detection types for this #INTEL - all default to true.
+-- @param #INTEL self
+-- @param #boolean DetectVisual Visual detection
+-- @param #boolean DetectOptical Optical detection
+-- @param #boolean DetectRadar Radar detection
+-- @param #boolean DetectIRST IRST detection
+-- @param #boolean DetectRWR RWR detection
+-- @param #boolean DetectDLINK Data link detection
+-- @return self
+function INTEL:SetDetectionTypes(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+  self.DetectVisual = DetectVisual and true 
+  self.DetectOptical = DetectOptical and true
+  self.DetectRadar = DetectRadar and true
+  self.DetectIRST = DetectIRST and true
+  self.DetectRWR = DetectRWR and true
+  self.DetectDLINK = DetectDLINK and true
+  return self
+end
+
+--- Get table of #INTEL.Contact objects
+-- @param #INTEL self
+-- @return #table Contacts or nil if not running
+function INTEL:GetContactTable()
+  if self:Is("Running") then
+    return self.Contacts
+  else
+    return nil
+  end
+end
+
+--- Get table of #INTEL.Cluster objects
+-- @param #INTEL self
+-- @return #table Clusters or nil if not running
+function INTEL:GetClusterTable()
+  if self:Is("Running") and self.clusteranalysis then
+    return self.Clusters
+  else
+    return nil
+  end
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -526,7 +579,7 @@ function INTEL:onafterStatus(From, Event, To)
       text=text..string.format("\n- %s (%s): %s, units=%d, T=%d sec", contact.categoryname, contact.attribute, contact.groupname, contact.group:CountAliveUnits(), dT)
       if contact.mission then
         local mission=contact.mission --Ops.Auftrag#AUFTRAG
-        text=text..string.format(" mission name=%s type=%s target=%s", mission.name, mission.type, mission:GetTargetName() or "unkown")
+        text=text..string.format(" mission name=%s type=%s target=%s", mission.name, mission.type, mission:GetTargetName() or "unknown")
       end
     end
     self:I(self.lid..text)
@@ -554,14 +607,13 @@ function INTEL:UpdateIntel()
         local recce=_recce --Wrapper.Unit#UNIT
         
         -- Get detected units.
-        self:GetDetectedUnits(recce, DetectedUnits, RecceDetecting)
+        self:GetDetectedUnits(recce, DetectedUnits, RecceDetecting, self.DetectVisual, self.DetectOptical, self.DetectRadar, self.DetectIRST, self.DetectRWR, self.DetectDLINK)
         
       end
       
     end    
   end
   
-  -- TODO: Filter detection methods?
   local remove={}
   for unitname,_unit in pairs(DetectedUnits) do
     local unit=_unit --Wrapper.Unit#UNIT
@@ -696,7 +748,7 @@ function INTEL:CreateDetectedItems(DetectedGroups, RecceDetecting)
       item.velocity=group:GetVelocityVec3()
       item.speed=group:GetVelocityMPS()
       item.recce=RecceDetecting[groupname]
-      self:T(string.format("%s group detect by %s/%s", groupname, RecceDetecting[groupname] or "unknonw", item.recce or "unknown"))
+      self:T(string.format("%s group detect by %s/%s", groupname, RecceDetecting[groupname] or "unknown", item.recce or "unknown"))
       -- Add contact to table.    
       self:AddContact(item)
       
@@ -724,7 +776,7 @@ function INTEL:CreateDetectedItems(DetectedGroups, RecceDetecting)
 
 end
 
---- Return the detected target groups of the controllable as a @{SET_GROUP}.
+--- (Internal) Return the detected target groups of the controllable as a @{SET_GROUP}.
 -- The optional parametes specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
 -- @param #INTEL self
@@ -811,7 +863,7 @@ function INTEL:onafterLostCluster(From, Event, To, Cluster, Mission)
   local text = self.lid..string.format("LOST cluster %d", Cluster.index)
   if Mission then
     local mission=Mission --Ops.Auftrag#AUFTRAG
-    text=text..string.format(" mission name=%s type=%s target=%s", mission.name, mission.type, mission:GetTargetName() or "unkown")
+    text=text..string.format(" mission name=%s type=%s target=%s", mission.name, mission.type, mission:GetTargetName() or "unknown")
   end
   self:T(text)
 end
@@ -898,7 +950,7 @@ end
 -- Cluster Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Paint picture of the battle field.
+--- [Internal] Paint picture of the battle field. Does Cluster analysis and updates clusters. Sets markers if markers are enabled.
 -- @param #INTEL self 
 function INTEL:PaintPicture()
 
@@ -918,8 +970,12 @@ function INTEL:PaintPicture()
     else
       local mission = _cluster.mission or nil
       local marker = _cluster.marker
+      local markerID = _cluster.markerID
       if marker then
         marker:Remove()
+      end
+      if markerID then
+        COORDINATE:RemoveMark(markerID)
       end
       self:LostCluster(_cluster, mission)
     end
@@ -989,12 +1045,10 @@ function INTEL:PaintPicture()
   if self.clustermarkers then
     for _,_cluster in pairs(self.Clusters) do
       local cluster=_cluster --#INTEL.Cluster
-    
-        local coordinate=self:GetClusterCoordinate(cluster)
-    
-    
-        -- Update F10 marker.
-        self:UpdateClusterMarker(cluster)
+      --local coordinate=self:GetClusterCoordinate(cluster)
+      -- Update F10 marker.
+      self:UpdateClusterMarker(cluster)
+      self:CalcClusterFuturePosition(cluster,self.prediction)
     end
   end
 end
@@ -1108,6 +1162,7 @@ function INTEL:CalcClusterThreatlevelMax(cluster)
   local threatlevel=0
   
   for _,_contact in pairs(cluster.Contacts) do
+  
     local contact=_contact --#INTEL.Contact
     
     if contact.threatlevel>threatlevel then
@@ -1117,6 +1172,65 @@ function INTEL:CalcClusterThreatlevelMax(cluster)
   end
   cluster.threatlevelMax = threatlevel
   return threatlevel
+end
+
+--- Calculate cluster heading.
+-- @param #INTEL self
+-- @param #INTEL.Cluster cluster The cluster of contacts.
+-- @return #number Heading average of all groups in the cluster. 
+function INTEL:CalcClusterDirection(cluster)
+
+  local direction = 0
+  local n=0
+  for _,_contact in pairs(cluster.Contacts) do
+    local group = _contact.group -- Wrapper.Group#GROUP
+    if group:IsAlive() then
+      direction = direction + group:GetHeading()
+      n=n+1
+    end
+  end 
+  return math.floor(direction / n)
+  
+end
+
+--- Calculate cluster speed.
+-- @param #INTEL self
+-- @param #INTEL.Cluster cluster The cluster of contacts.
+-- @return #number Speed average of all groups in the cluster in MPS. 
+function INTEL:CalcClusterSpeed(cluster)
+
+  local velocity = 0
+  local n=0
+  for _,_contact in pairs(cluster.Contacts) do
+    local group = _contact.group -- Wrapper.Group#GROUP
+    if group:IsAlive() then
+      velocity = velocity + group:GetVelocityMPS()
+      n=n+1
+    end
+  end 
+  return math.floor(velocity / n)
+  
+end
+
+--- Calculate cluster future position after given seconds.
+-- @param #INTEL self
+-- @param #INTEL.Cluster cluster The cluster of contacts.
+-- @param #number seconds Timeframe in seconds.
+-- @return Core.Point#COORDINATE Calculated future position of the cluster.
+function INTEL:CalcClusterFuturePosition(cluster,seconds)
+  local speed = self:CalcClusterSpeed(cluster) -- #number MPS
+  local direction = self:CalcClusterDirection(cluster) -- #number heading
+  -- local currposition = cluster.coordinate -- Core.Point#COORDINATE
+  local currposition = self:GetClusterCoordinate(cluster) -- Core.Point#COORDINATE
+  local distance = speed * seconds -- #number in meters the cluster will travel
+  local futureposition = currposition:Translate(distance,direction,true,false)
+  if self.clustermarkers and (self.verbose > 1) then
+    if cluster.markerID then
+      COORDINATE:RemoveMark(cluster.markerID)
+    end
+    cluster.markerID = currposition:ArrowToAll(futureposition,self.coalition,{1,0,0},1,{1,1,0},0.5,2,true,"Postion Calc")
+  end
+  return futureposition
 end
 
 
@@ -1216,10 +1330,16 @@ function INTEL:GetClusterCoordinate(cluster)
   
   for _,_contact in pairs(cluster.Contacts) do
     local contact=_contact --#INTEL.Contact
-    
-    x=x+contact.position.x
-    y=y+contact.position.y
-    z=z+contact.position.z
+    local group = contact.group --Wrapper.Group#GROUP
+    local coord = {}
+    if group:IsAlive() then
+      coord = group:GetCoordinate()
+    else
+      coord = contact.position
+    end
+    x=x+coord.x
+    y=y+coord.y
+    z=z+coord.z
     n=n+1
     
   end
@@ -1319,3 +1439,246 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------
+-- Start INTEL_DLINK
+----------------------------------------------------------------------------------------------
+
+--- **Ops_DLink** - Support for Office of Military Intelligence.
+--
+-- **Main Features:**
+--
+--    * Overcome limitations of (non-available) datalinks between ground radars
+--    * Detect and track contacts consistently across INTEL instances
+--    * Use FSM events to link functionality into your scripts
+--    * Easy setup 
+--
+--- ===
+--
+-- ### Author: **applevangelist**
+
+--- INTEL_DLINK class.
+-- @type INTEL_DLINK
+-- @field #string ClassName Name of the class.
+-- @field #string lid Class id string for output to DCS log file.
+-- @field #number verbose Make the logging verbose.
+-- @field #string alias Alias name for logging.
+-- @field #number cachetime Number of seconds to keep an object.
+-- @field #number interval Number of seconds between collection runs.
+-- @field #table contacts Table of Ops.Intelligence#INTEL.Contact contacts.
+-- @field #table clusters Table of Ops.Intelligence#INTEL.Cluster clusters.
+-- @field #table contactcoords Table of contacts' Core.Point#COORDINATE objects.
+-- @extends Core.Fsm#FSM
+
+--- INTEL_DLINK data aggregator
+-- @field #INTEL_DLINK
+INTEL_DLINK = {
+  ClassName       = "INTEL_DLINK",
+  verbose         =     0,
+  lid             =   nil,
+  alias           =   nil,
+  cachetime       =   300,
+  interval        =   20,
+  contacts        =   {},
+  clusters        =   {},
+  contactcoords   =   {},
+}
+
+--- Version string
+-- @field #string version
+INTEL_DLINK.version = "0.0.1"
+
+--- Function to instantiate a new object
+-- @param #INTEL_DLINK self
+-- @param #table Intels Table of Ops.Intelligence#INTEL objects.
+-- @param #string Alias (optional) Name of this instance. Default "SPECTRE"
+-- @param #number Interval (optional) When to query #INTEL objects for detected items (default 20 seconds).
+-- @param #number Cachetime (optional) How long to cache detected items (default 300 seconds).
+function INTEL_DLINK:New(Intels, Alias, Interval, Cachetime)
+  -- Inherit everything from FSM class.
+  local self=BASE:Inherit(self, FSM:New()) -- #INTEL
+  
+  self.intels = Intels or {}
+  self.contacts = {}
+  self.clusters = {}
+  self.contactcoords = {}
+  
+  -- Set alias.
+  if Alias then
+    self.alias=tostring(Alias)
+  else
+    self.alias="SPECTRE"
+  end
+  
+  -- Cache time
+  self.cachetime = Cachetime or 300
+  
+  -- Interval
+  self.interval = Interval or 20
+  
+  -- Set some string id for output to DCS.log file.
+  self.lid=string.format("INTEL_DLINK %s | ", self.alias)
+  
+    -- Start State.
+  self:SetStartState("Stopped")
+
+  -- Add FSM transitions.
+  --                 From State  -->   Event        -->    To State
+  self:AddTransition("Stopped",       "Start",             "Running")     -- Start FSM.
+  self:AddTransition("*",             "Collect",           "*")           -- Collect data.
+  self:AddTransition("*",             "Collected",         "*")           -- Collection of data done.
+  self:AddTransition("*",             "Stop",              "Stopped")     -- Stop FSM.
+  
+  return self
+end
+----------------------------------------------------------------------------------------------
+-- Helper & User Functions
+----------------------------------------------------------------------------------------------
+
+--- Function to add an #INTEL object to the aggregator
+-- @param #INTEL_DLINK self
+-- @param Ops.Intelligence#INTEL Intel the #INTEL object to add
+-- @return #INTEL_DLINK self
+function INTEL_DLINK:AddIntel(Intel)
+   self:T(self.lid .. "AddIntel")
+   if Intel then
+    table.insert(self.intels,Intel)
+   end
+   return self
+end
+
+----------------------------------------------------------------------------------------------
+-- FSM Functions
+----------------------------------------------------------------------------------------------
+
+--- Function to start the work.
+-- @param #INTEL_DLINK self
+-- @param #string From The From state
+-- @param #string Event The Event triggering this call
+-- @param #string To The To state
+-- @return #INTEL_DLINK self
+function INTEL_DLINK:onafterStart(From, Event, To)
+  self:T({From, Event, To})
+  local text = string.format("Version %s started.", self.version)
+  self:I(self.lid .. text)
+  self:__Collect(-math.random(1,10))
+  return self
+end
+
+--- Function to collect data from the various #INTEL
+-- @param #INTEL_DLINK self
+-- @param #string From The From state
+-- @param #string Event The Event triggering this call
+-- @param #string To The To state
+-- @return #INTEL_DLINK self
+function INTEL_DLINK:onbeforeCollect(From, Event, To)
+  self:T({From, Event, To})
+  -- run through our #INTEL objects and gather the contacts tables
+  self:T("Contacts Data Gathering")
+  local newcontacts = {}
+  local intels = self.intels -- #table
+  for _,_intel in pairs (intels) do
+    _intel = _intel -- #INTEL
+    if _intel:Is("Running") then
+      local ctable = _intel:GetContactTable() or {} -- #INTEL.Contact
+        for _,_contact in pairs (ctable) do
+          local _ID = string.format("%s-%d",_contact.groupname, _contact.Tdetected)
+          self:T(string.format("Adding %s",_ID))
+          newcontacts[_ID] = _contact
+        end
+    end
+  end
+  -- clean up for stale contacts and dupes
+  self:T("Cleanup")
+  local contacttable = {}
+  local coordtable = {}
+  local TNow = timer.getAbsTime()
+  local Tcache = self.cachetime
+  for _ind, _contact in pairs(newcontacts) do -- #string, #INTEL.Contact
+    if TNow - _contact.Tdetected < Tcache then
+      if (not contacttable[_contact.groupname]) or (contacttable[_contact.groupname] and contacttable[_contact.groupname].Tdetected < _contact.Tdetected) then
+        self:T(string.format("Adding %s",_contact.groupname))
+        contacttable[_contact.groupname] = _contact
+        table.insert(coordtable,_contact.position)
+      end
+    end
+  end
+  -- run through our #INTEL objects and gather the clusters tables
+  self:T("Clusters Data Gathering")
+  local newclusters = {}
+  local intels = self.intels -- #table
+  for _,_intel in pairs (intels) do
+    _intel = _intel -- #INTEL
+    if _intel:Is("Running") then
+      local ctable = _intel:GetClusterTable() or {} -- #INTEL.Cluster
+        for _,_cluster in pairs (ctable) do
+          local _ID = string.format("%s-%d", _intel.alias, _cluster.index)
+          self:T(string.format("Adding %s",_ID))
+          table.insert(newclusters,_cluster)
+        end
+    end
+  end
+  -- update self tables
+  self.contacts = contacttable
+  self.contactcoords = coordtable
+  self.clusters = newclusters
+  self:__Collected(1, contacttable, newclusters) -- make table available via FSM Event
+  -- schedule next round
+  local interv = self.interval * -1
+  self:__Collect(interv) 
+  return self
+end
+
+--- Function called after collection is done
+-- @param #INTEL_DLINK self
+-- @param #string From The From state
+-- @param #string Event The Event triggering this call
+-- @param #string To The To state
+-- @param #table Contacts The table of collected #INTEL.Contact contacts
+-- @param #table Clusters The table of collected #INTEL.Cluster clusters
+-- @return #INTEL_DLINK self
+function INTEL_DLINK:onbeforeCollected(From, Event, To, Contacts, Clusters)
+  self:T({From, Event, To})
+  return self
+end
+
+--- Function to stop
+-- @param #INTEL_DLINK self
+-- @param #string From The From state
+-- @param #string Event The Event triggering this call
+-- @param #string To The To state
+-- @return #INTEL_DLINK self
+function INTEL_DLINK:onafterStop(From, Event, To)
+  self:T({From, Event, To})
+  local text = string.format("Version %s stopped.", self.version)
+  self:I(self.lid .. text)
+  return self
+end
+
+--- Function to query the detected contacts
+-- @param #INTEL_DLINK self
+-- @return #table Table of #INTEL.Contact contacts
+function INTEL_DLINK:GetContactTable()
+  self:T(self.lid .. "GetContactTable")
+  return self.contacts
+end
+
+--- Function to query the detected clusters -- not yet implemented!
+-- @param #INTEL_DLINK self
+-- @return #table Table of #INTEL.Cluster clusters
+function INTEL_DLINK:GetClusterTable()
+  self:T(self.lid .. "GetClusterTable")
+  return self.clusters
+end
+
+--- Function to query the detected contact coordinates
+-- @param #INTEL_DLINK self
+-- @return #table Table of the contacts' Core.Point#COORDINATE objects.
+function INTEL_DLINK:GetDetectedItemCoordinates()
+  self:T(self.lid .. "GetDetectedItemCoordinates")
+  return self.contactcoords
+end
+
+----------------------------------------------------------------------------------------------
+-- End INTEL_DLINK
+----------------------------------------------------------------------------------------------

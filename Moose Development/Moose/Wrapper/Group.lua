@@ -2551,9 +2551,10 @@ do -- Players
   
 end
 
---- GROUND - Switch on/off radar emissions
+--- GROUND - Switch on/off radar emissions for the group.
 -- @param #GROUP self
--- @param #boolean switch
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @return #GROUP self 
 function GROUP:EnableEmission(switch)
   self:F2( self.GroupName )
   local switch = switch or false
@@ -2566,6 +2567,31 @@ function GROUP:EnableEmission(switch)
 
   end
 
+  return self
+end
+
+--- Switch on/off invisible flag for the group.
+-- @param #GROUP self
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @return #GROUP self 
+function GROUP:SetCommandInvisible(switch)
+  self:F2( self.GroupName )
+  local switch = switch or false
+  local SetInvisible = {id = 'SetInvisible', params = {value = true}}
+  self:SetCommand(SetInvisible)
+  return self
+end
+
+--- Switch on/off immortal flag for the group.
+-- @param #GROUP self
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @return #GROUP self 
+function GROUP:SetCommandImmortal(switch)
+  self:F2( self.GroupName )
+  local switch = switch or false
+  local SetInvisible = {id = 'SetImmortal', params = {value = true}}
+  self:SetCommand(SetInvisible)
+  return self
 end
 
 --do -- Smoke

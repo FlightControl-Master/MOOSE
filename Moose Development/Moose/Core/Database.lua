@@ -298,24 +298,78 @@ do -- Zones
   -- @return #DATABASE self
   function DATABASE:_RegisterZones()
 
-    for ZoneID, ZoneData in pairs( env.mission.triggers.zones ) do
+    for ZoneID, ZoneData in pairs(env.mission.triggers.zones) do
       local ZoneName = ZoneData.name
+      
+      -- Color
+      local color=ZoneData.color or {1, 0, 0, 0.15}
+      
+      -- Create new Zone
+      local Zone=nil   --Core.Zone#ZONE_BASE
+      
+      if ZoneData.type==0 then
+      
+        ---
+        -- Circular zone
+        ---
+        
+        self:I(string.format("Register ZONE: %s (Circular)", ZoneName))
+        
+        Zone=ZONE:New(ZoneName)
+          
+      else
 
-      self:I( { "Register ZONE:", Name = ZoneName } )
-      local Zone = ZONE:New( ZoneName )
-      self.ZONENAMES[ZoneName] = ZoneName
-      self:AddZone( ZoneName, Zone )
+        ---
+        -- Quad-point zone
+        ---
+
+        self:I(string.format("Register ZONE: %s (Polygon, Quad)", ZoneName))
+              
+        Zone=ZONE_POLYGON_BASE:New(ZoneName, ZoneData.verticies)
+        
+        --for i,vec2 in pairs(ZoneData.verticies) do
+        --  local coord=COORDINATE:NewFromVec2(vec2)
+        --  coord:MarkToAll(string.format("%s Point %d", ZoneName, i))
+        --end
+      
+      end
+      
+      if Zone then
+
+        -- Store color of zone.        
+        Zone.Color=color
+      
+        -- Store in DB.
+        self.ZONENAMES[ZoneName] = ZoneName
+        
+        -- Add zone.
+        self:AddZone(ZoneName, Zone)
+        
+      end
+      
     end
 
+    -- Polygon zones defined by late activated groups.
     for ZoneGroupName, ZoneGroup in pairs( self.GROUPS ) do
       if ZoneGroupName:match("#ZONE_POLYGON") then
+      
         local ZoneName1 = ZoneGroupName:match("(.*)#ZONE_POLYGON")
         local ZoneName2 = ZoneGroupName:match(".*#ZONE_POLYGON(.*)")
         local ZoneName = ZoneName1 .. ( ZoneName2 or "" )
 
-        self:I( { "Register ZONE_POLYGON:", Name = ZoneName } )
+        -- Debug output
+        self:I(string.format("Register ZONE: %s (Polygon)", ZoneName))
+        
+        -- Create a new polygon zone.
         local Zone_Polygon = ZONE_POLYGON:New( ZoneName, ZoneGroup )
+        
+        -- Set color.
+        Zone_Polygon:SetColor({1, 0, 0}, 0.15)
+        
+        -- Store name in DB.
         self.ZONENAMES[ZoneName] = ZoneName
+        
+        -- Add zone to DB.
         self:AddZone( ZoneName, Zone_Polygon )
       end
     end

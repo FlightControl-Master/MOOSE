@@ -50,6 +50,7 @@ BIGSMOKEPRESET = {
 -- @field #string PersianGulf Persian Gulf map.
 -- @field #string TheChannel The Channel map.
 -- @field #string Syria Syria map.
+-- @field #string MarianaIslands Mariana Islands map.
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -57,6 +58,7 @@ DCSMAP = {
   PersianGulf="PersianGulf",
   TheChannel="TheChannel",
   Syria="Syria",
+  MarianaIslands="MarianaIslands"
 }
 
 
@@ -668,6 +670,17 @@ function UTILS.GetMarkID()
 
 end
 
+--- Remove an object (marker, circle, arrow, text, quad, ...) on the F10 map.
+-- @param #number MarkID Unique ID of the object.
+-- @param #number Delay (Optional) Delay in seconds before the mark is removed.
+function UTILS.RemoveMark(MarkID, Delay)
+  if Delay and Delay>0 then
+    TIMER:New(UTILS.RemoveMark, MarkID):Start(Delay)
+  else
+    trigger.action.removeMark(MarkID)
+  end
+end
+
 
 -- Test if a Vec2 is in a radius of another Vec2
 function UTILS.IsInRadius( InVec2, Vec2, Radius )
@@ -685,7 +698,10 @@ function UTILS.IsInSphere( InVec3, Vec3, Radius )
   return InSphere
 end
 
--- Beaufort scale: returns Beaufort number and wind description as a function of wind speed in m/s.
+--- Beaufort scale: returns Beaufort number and wind description as a function of wind speed in m/s.
+-- @param #number speed Wind speed in m/s.
+-- @return #number Beaufort number.
+-- @return #string Beauford wind description.
 function UTILS.BeaufortScale(speed)
   local bn=nil
   local bd=nil
@@ -743,6 +759,21 @@ function UTILS.Split(str, sep)
     table.insert(result, each)
   end
   return result
+end
+
+--- Get a table of all characters in a string.
+-- @param #string str Sting.
+-- @return #table Individual characters.
+function UTILS.GetCharacters(str)
+
+  local chars={}
+  
+  for i=1,#str do
+    local c=str:sub(i,i)
+    table.insert(chars, c)
+  end
+  
+  return chars
 end
 
 --- Convert time in seconds to hours, minutes and seconds.
@@ -1194,6 +1225,9 @@ end
 -- * NTTR +12 (East), year ~ 2011
 -- * Normandy -10 (West), year ~ 1944
 -- * Persian Gulf +2 (East), year ~ 2011
+-- * The Cannel Map -10 (West)
+-- * Syria +5 (East)
+-- * Mariana Islands +2 (East)
 -- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
@@ -1214,6 +1248,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=-10
   elseif map==DCSMAP.Syria then
     declination=5
+  elseif map==DCSMAP.MarianaIslands then
+    declination=2
   else
     declination=0
   end
@@ -1342,6 +1378,8 @@ function UTILS.GMTToLocalTimeDifference()
     return 2   -- This map currently needs +2
   elseif theatre==DCSMAP.Syria then
     return 3   -- Damascus is UTC+3 hours
+  elseif theatre==DCSMAP.MarianaIslands then
+    return 10  -- Guam is UTC+10 hours.    
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
@@ -1528,4 +1566,189 @@ function UTILS.ShuffleTable(t)
     table.remove(t,r)
   end
   return TempTable
+end
+
+--- (Helicopter) Check if one loading door is open.
+--@param #string unit_name Unit name to be checked
+--@return #boolean Outcome - true if a (loading door) is open, false if not, nil if none exists.
+function UTILS.IsLoadingDoorOpen( unit_name )
+
+  local ret_val = false
+  local unit = Unit.getByName(unit_name)
+  if unit ~= nil then
+      local type_name = unit:getTypeName()
+      
+      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
+          BASE:T(unit_name .. " Cargo doors are open or cargo door not present")
+          ret_val =  true
+      end
+      
+      if type_name == "Mi-24P" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 then
+          BASE:T(unit_name .. " a side door is open")
+          ret_val =  true
+      end
+      
+      if type_name == "UH-1H" and unit:getDrawArgumentValue(43) == 1 or unit:getDrawArgumentValue(44) == 1 then
+          BASE:T(unit_name .. " a side door is open ")
+          ret_val =  true
+      end
+
+      if string.find(type_name, "SA342" ) and unit:getDrawArgumentValue(34) == 1 or unit:getDrawArgumentValue(38) == 1 then
+          BASE:T(unit_name .. " front door(s) are open")
+          ret_val =  true
+      end
+
+      if ret_val == false then
+          BASE:T(unit_name .. " all doors are closed")
+      end
+      return ret_val
+          
+  end -- nil
+  
+  return nil
+end
+
+--- Function to generate valid FM frequencies in mHz for radio beacons (FM).
+-- @return #table Table of frequencies.
+function UTILS.GenerateFMFrequencies()
+    local FreeFMFrequencies = {}
+    for _first = 3, 7 do
+        for _second = 0, 5 do
+            for _third = 0, 9 do
+                local _frequency = ((100 * _first) + (10 * _second) + _third) * 100000 --extra 0 because we didnt bother with 4th digit
+                table.insert(FreeFMFrequencies, _frequency)
+            end
+        end
+    end
+    return FreeFMFrequencies
+end
+
+--- Function to generate valid VHF frequencies in kHz for radio beacons (FM).
+-- @return #table VHFrequencies
+function UTILS.GenerateVHFrequencies()
+
+  -- known and sorted map-wise NDBs in kHz
+  local _skipFrequencies = {
+  214,274,291.5,295,297.5,
+  300.5,304,307,309.5,311,312,312.5,316,
+  320,324,328,329,330,332,336,337,
+  342,343,348,351,352,353,358,
+  363,365,368,372.5,374,
+  380,381,384,385,389,395,396,
+  414,420,430,432,435,440,450,455,462,470,485,
+  507,515,520,525,528,540,550,560,570,577,580,
+  602,625,641,662,670,680,682,690,
+  705,720,722,730,735,740,745,750,770,795,
+  822,830,862,866,
+  905,907,920,935,942,950,995,
+  1000,1025,1030,1050,1065,1116,1175,1182,1210
+  }
+      
+  local FreeVHFFrequencies = {}
+    
+    -- first range
+  local _start = 200000
+  while _start < 400000 do
+  
+      -- skip existing NDB frequencies#
+      local _found = false
+      for _, value in pairs(_skipFrequencies) do
+          if value * 1000 == _start then
+              _found = true
+              break
+          end
+      end
+      if _found == false then
+          table.insert(FreeVHFFrequencies, _start)
+      end
+       _start = _start + 10000
+  end
+ 
+   -- second range
+  _start = 400000
+  while _start < 850000 do
+       -- skip existing NDB frequencies
+      local _found = false
+      for _, value in pairs(_skipFrequencies) do
+          if value * 1000 == _start then
+              _found = true
+              break
+          end
+      end
+      if _found == false then
+          table.insert(FreeVHFFrequencies, _start)
+      end
+      _start = _start + 10000
+  end
+  
+  -- third range
+  _start = 850000
+  while _start <= 999000 do -- adjusted for Gazelle
+      -- skip existing NDB frequencies
+      local _found = false
+      for _, value in pairs(_skipFrequencies) do
+          if value * 1000 == _start then
+              _found = true
+              break
+          end
+      end
+      if _found == false then
+          table.insert(FreeVHFFrequencies, _start)
+      end
+       _start = _start + 50000
+  end
+
+  return FreeVHFFrequencies
+end
+
+--- Function to generate valid UHF Frequencies in mHz (AM).
+-- @return #table UHF Frequencies
+function UTILS.GenerateUHFrequencies()
+
+    local FreeUHFFrequencies = {}
+    local _start = 220000000
+
+    while _start < 399000000 do
+        table.insert(FreeUHFFrequencies, _start)
+        _start = _start + 500000
+    end
+
+    return FreeUHFFrequencies
+end
+
+--- Function to generate valid laser codes for JTAC.
+-- @return #table Laser Codes.
+function UTILS.GenerateLaserCodes()
+    local jtacGeneratedLaserCodes = {}
+    
+    -- helper function
+    local function ContainsDigit(_number, _numberToFind)
+      local _thisNumber = _number
+      local _thisDigit = 0
+      while _thisNumber ~= 0 do
+          _thisDigit = _thisNumber % 10
+          _thisNumber = math.floor(_thisNumber / 10)
+          if _thisDigit == _numberToFind then
+              return true
+          end
+      end
+      return false
+    end
+    
+    -- generate list of laser codes
+    local _code = 1111
+    local _count = 1
+    while _code < 1777 and _count < 30 do
+        while true do
+           _code = _code + 1
+            if not self:_ContainsDigit(_code, 8)
+                    and not ContainsDigit(_code, 9)
+                    and not ContainsDigit(_code, 0) then
+                table.insert(jtacGeneratedLaserCodes, _code)
+                break
+            end
+        end
+        _count = _count + 1
+    end
+    return jtacGeneratedLaserCodes
 end

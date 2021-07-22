@@ -74,7 +74,7 @@ AIRBASE = {
 
 --- Enumeration to identify the airbases in the Caucasus region.
 --
--- These are all airbases of Caucasus:
+-- Airbases of the Caucasus map:
 --
 --   * AIRBASE.Caucasus.Gelendzhik
 --   * AIRBASE.Caucasus.Krasnodar_Pashkovsky
@@ -123,7 +123,7 @@ AIRBASE.Caucasus = {
   ["Beslan"] = "Beslan",
   }
 
---- These are all airbases of Nevada:
+--- Airbases of the Nevada map:
 --
 --   * AIRBASE.Nevada.Creech_AFB
 --   * AIRBASE.Nevada.Groom_Lake_AFB
@@ -142,6 +142,7 @@ AIRBASE.Caucasus = {
 --   * AIRBASE.Nevada.Pahute_Mesa_Airstrip
 --   * AIRBASE.Nevada.Tonopah_Airport
 --   * AIRBASE.Nevada.Tonopah_Test_Range_Airfield
+--   
 -- @field Nevada
 AIRBASE.Nevada = {
   ["Creech_AFB"] = "Creech AFB",
@@ -163,7 +164,7 @@ AIRBASE.Nevada = {
   ["Tonopah_Test_Range_Airfield"] = "Tonopah Test Range Airfield",
   }
 
---- These are all airbases of Normandy:
+--- Airbases of the Normandy map:
 --
 --   * AIRBASE.Normandy.Saint_Pierre_du_Mont
 --   * AIRBASE.Normandy.Lignerolles
@@ -196,6 +197,7 @@ AIRBASE.Nevada = {
 --   * AIRBASE.Normandy.Funtington
 --   * AIRBASE.Normandy.Tangmere
 --   * AIRBASE.Normandy.Ford_AF
+--   
 -- @field Normandy
 AIRBASE.Normandy = {
   ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
@@ -238,7 +240,7 @@ AIRBASE.Normandy = {
   ["Conches"] = "Conches",
 }
 
---- These are all airbases of the Persion Gulf Map:
+--- Airbases of the Persion Gulf Map:
 --
 -- * AIRBASE.PersianGulf.Abu_Dhabi_International_Airport
 -- * AIRBASE.PersianGulf.Abu_Musa_Island_Airport
@@ -269,6 +271,7 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Sirri_Island
 -- * AIRBASE.PersianGulf.Tunb_Island_AFB
 -- * AIRBASE.PersianGulf.Tunb_Kochak
+-- 
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Abu_Dhabi_International_Airport"] = "Abu Dhabi Intl",
@@ -302,7 +305,7 @@ AIRBASE.PersianGulf = {
   ["Tunb_Kochak"] = "Tunb Kochak",
 }
 
---- These are all airbases of the The Channel Map:
+--- Airbases of The Channel Map:
 --
 -- * AIRBASE.TheChannel.Abbeville_Drucat
 -- * AIRBASE.TheChannel.Merville_Calonne
@@ -327,7 +330,7 @@ AIRBASE.TheChannel = {
   ["High_Halden"] = "High Halden",
 }
 
---- Airbases of Syria
+--- Airbases of the Syria map:
 --
 -- * AIRBASE.Syria.Kuweires
 -- * AIRBASE.Syria.Marj_Ruhayyil
@@ -337,41 +340,53 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Incirlik
 -- * AIRBASE.Syria.Damascus
 -- * AIRBASE.Syria.Bassel_Al_Assad
+-- * AIRBASE.Syria.Rosh_Pina
 -- * AIRBASE.Syria.Aleppo
--- * AIRBASE.Syria.Qabr_as_Sitt
+-- * AIRBASE.Syria.Al_Qusayr
 -- * AIRBASE.Syria.Wujah_Al_Hajar
 -- * AIRBASE.Syria.Al_Dumayr
+-- * AIRBASE.Syria.Gazipasa
+-- * AIRBASE.Syria.Ru_Convoy_4
 -- * AIRBASE.Syria.Hatay
+-- * AIRBASE.Syria.Nicosia
+-- * AIRBASE.Syria.Pinarbashi
+-- * AIRBASE.Syria.Paphos
+-- * AIRBASE.Syria.Kingsfield
+-- * AIRBASE.Syria.Thalah
 -- * AIRBASE.Syria.Haifa
 -- * AIRBASE.Syria.Khalkhalah
 -- * AIRBASE.Syria.Megiddo
+-- * AIRBASE.Syria.Lakatamia
 -- * AIRBASE.Syria.Rayak
+-- * AIRBASE.Syria.Larnaca
 -- * AIRBASE.Syria.Mezzeh
--- * AIRBASE.Syria.King_Hussein_Air_College
--- * AIRBASE.Syria.Jirah
+-- * AIRBASE.Syria.Gecitkale
+-- * AIRBASE.Syria.Akrotiri
+-- * AIRBASE.Syria.Naqoura
+-- * AIRBASE.Syria.Gaziantep
+-- * AIRBASE.Syria.CVN_71
+-- * AIRBASE.Syria.Sayqal
+-- * AIRBASE.Syria.Tiyas
+-- * AIRBASE.Syria.Shayrat
 -- * AIRBASE.Syria.Taftanaz
+-- * AIRBASE.Syria.H4
+-- * AIRBASE.Syria.King_Hussein_Air_College
 -- * AIRBASE.Syria.Rene_Mouawad
+-- * AIRBASE.Syria.Jirah
 -- * AIRBASE.Syria.Ramat_David
+-- * AIRBASE.Syria.Qabr_as_Sitt
 -- * AIRBASE.Syria.Minakh
 -- * AIRBASE.Syria.Adana_Sakirpasa
--- * AIRBASE.Syria.Marj_as_Sultan_South
--- * AIRBASE.Syria.Hama
--- * AIRBASE.Syria.Al_Qusayr
 -- * AIRBASE.Syria.Palmyra
+-- * AIRBASE.Syria.Hama
+-- * AIRBASE.Syria.Ercan
+-- * AIRBASE.Syria.Marj_as_Sultan_South
 -- * AIRBASE.Syria.Tabqa
 -- * AIRBASE.Syria.Beirut_Rafic_Hariri
 -- * AIRBASE.Syria.An_Nasiriyah
 -- * AIRBASE.Syria.Abu_al_Duhur
--- * AIRBASE.Syria.H4
--- * AIRBASE.Syria.Gaziantep
--- * AIRBASE.Syria.Rosh_Pina
--- * AIRBASE.Syria.Sayqal
--- * AIRBASE.Syria.Shayrat
--- * AIRBASE.Syria.Tiyas
--- * AIRBASE.Syria.Tha_lah
--- * AIRBASE.Syria.Naqoura
 --
--- @field Syria
+--@field Syria
 AIRBASE.Syria={
   ["Kuweires"]="Kuweires",
   ["Marj_Ruhayyil"]="Marj Ruhayyil",
@@ -381,39 +396,71 @@ AIRBASE.Syria={
   ["Incirlik"]="Incirlik",
   ["Damascus"]="Damascus",
   ["Bassel_Al_Assad"]="Bassel Al-Assad",
+  ["Rosh_Pina"]="Rosh Pina",
   ["Aleppo"]="Aleppo",
-  ["Qabr_as_Sitt"]="Qabr as Sitt",
+  ["Al_Qusayr"]="Al Qusayr",
   ["Wujah_Al_Hajar"]="Wujah Al Hajar",
   ["Al_Dumayr"]="Al-Dumayr",
+  ["Gazipasa"]="Gazipasa",
+  ["Ru_Convoy_4"]="Ru Convoy-4",
   ["Hatay"]="Hatay",
+  ["Nicosia"]="Nicosia",
+  ["Pinarbashi"]="Pinarbashi",
+  ["Paphos"]="Paphos",
+  ["Kingsfield"]="Kingsfield",
+  ["Thalah"]="Tha'lah",
   ["Haifa"]="Haifa",
   ["Khalkhalah"]="Khalkhalah",
   ["Megiddo"]="Megiddo",
+  ["Lakatamia"]="Lakatamia",
   ["Rayak"]="Rayak",
+  ["Larnaca"]="Larnaca",
   ["Mezzeh"]="Mezzeh",
-  ["King_Hussein_Air_College"]="King Hussein Air College",
-  ["Jirah"]="Jirah",
+  ["Gecitkale"]="Gecitkale",
+  ["Akrotiri"]="Akrotiri",
+  ["Naqoura"]="Naqoura",
+  ["Gaziantep"]="Gaziantep",
+  ["Sayqal"]="Sayqal",
+  ["Tiyas"]="Tiyas",
+  ["Shayrat"]="Shayrat",
   ["Taftanaz"]="Taftanaz",
+  ["H4"]="H4",
+  ["King_Hussein_Air_College"]="King Hussein Air College",
   ["Rene_Mouawad"]="Rene Mouawad",
+  ["Jirah"]="Jirah",
   ["Ramat_David"]="Ramat David",
+  ["Qabr_as_Sitt"]="Qabr as Sitt",
   ["Minakh"]="Minakh",
   ["Adana_Sakirpasa"]="Adana Sakirpasa",
-  ["Marj_as_Sultan_South"]="Marj as Sultan South",
-  ["Hama"]="Hama",
-  ["Al_Qusayr"]="Al Qusayr",
   ["Palmyra"]="Palmyra",
+  ["Hama"]="Hama",
+  ["Ercan"]="Ercan",
+  ["Marj_as_Sultan_South"]="Marj as Sultan South",
   ["Tabqa"]="Tabqa",
   ["Beirut_Rafic_Hariri"]="Beirut-Rafic Hariri",
   ["An_Nasiriyah"]="An Nasiriyah",
   ["Abu_al_Duhur"]="Abu al-Duhur",
-  ["H4"]="H4",
-  ["Gaziantep"]="Gaziantep",
-  ["Rosh_Pina"]="Rosh Pina",
-  ["Sayqal"]="Sayqal",
-  ["Shayrat"]="Shayrat",
-  ["Tiyas"]="Tiyas",
-  ["Tha_lah"]="Tha'lah",
-  ["Naqoura"]="Naqoura",
+}
+
+
+
+--- Airbases of the Mariana Islands map:
+--
+-- * AIRBASE.MarianaIslands.Rota_Intl
+-- * AIRBASE.MarianaIslands.Andersen_AFB
+-- * AIRBASE.MarianaIslands.Antonio_B_Won_Pat_Intl
+-- * AIRBASE.MarianaIslands.Saipan_Intl
+-- * AIRBASE.MarianaIslands.Tinian_Intl
+-- * AIRBASE.MarianaIslands.Olf_Orote
+--
+--@field MarianaIslands
+AIRBASE.MarianaIslands={
+  ["Rota_Intl"]="Rota Intl",
+  ["Andersen_AFB"]="Andersen AFB",
+  ["Antonio_B_Won_Pat_Intl"]="Antonio B. Won Pat Intl",
+  ["Saipan_Intl"]="Saipan Intl",
+  ["Tinian_Intl"]="Tinian Intl",
+  ["Olf_Orote"]="Olf Orote",
 }
 
 
@@ -1388,7 +1435,8 @@ function AIRBASE:GetRunwayData(magvar, mark)
      name==AIRBASE.PersianGulf.Abu_Dhabi_International_Airport or
      name==AIRBASE.PersianGulf.Dubai_Intl or
      name==AIRBASE.PersianGulf.Shiraz_International_Airport or
-     name==AIRBASE.PersianGulf.Kish_International_Airport then
+     name==AIRBASE.PersianGulf.Kish_International_Airport or 
+     name==AIRBASE.MarianaIslands.Andersen_AFB then
 
     -- 1-->4, 2-->3, 3-->2, 4-->1
     exception=1

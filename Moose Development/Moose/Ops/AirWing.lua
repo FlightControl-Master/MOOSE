@@ -32,6 +32,7 @@
 -- @field #table pointsCAP Table of CAP points.
 -- @field #table pointsTANKER Table of Tanker points.
 -- @field #table pointsAWACS Table of AWACS points.
+-- @field #boolean markpoints Display markers on the F10 map.
 -- @field Ops.WingCommander#WINGCOMMANDER wingcommander The wing commander responsible for this airwing.
 -- 
 -- @field Ops.RescueHelo#RESCUEHELO rescuehelo The rescue helo.
@@ -153,7 +154,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.5.1"
+AIRWING.version="0.5.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -210,7 +211,7 @@ function AIRWING:New(warehousename, airwingname)
   self.nflightsTANKERprobe=0
   self.nflightsRecoveryTanker=0
   self.nflightsRescueHelo=0
-  self.markpoints = false
+  self.markpoints=false
 
   ------------------------
   --- Pseudo Functions ---
@@ -1551,6 +1552,9 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
       
         asset.nunits=squad.ngrouping
       end
+      
+      -- Set takeoff type.
+      asset.takeoffType=squad.takeoffType
 
       -- Create callsign and modex (needs to be after grouping).
       squad:GetCallsign(asset)
@@ -1616,84 +1620,86 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
 
   -- Call parent warehouse function first.
   self:GetParent(self).onafterAssetSpawned(self, From, Event, To, group, asset, request)
-
-  -- Create a flight group.
-  local flightgroup=self:_CreateFlightGroup(asset)
-  
-  
-  ---
-  -- Asset
-  ---
-  
-  -- Set asset flightgroup.
-  asset.flightgroup=flightgroup
-  
-  -- Not requested any more.
-  asset.requested=nil
-  
-  -- Did not return yet.
-  asset.Treturned=nil  
-
-  ---
-  -- Squadron
-  ---
   
   -- Get the SQUADRON of the asset.
   local squadron=self:GetSquadronOfAsset(asset)
   
-  -- Get TACAN channel.
-  local Tacan=squadron:FetchTacan()
-  if Tacan then
-    asset.tacan=Tacan
-  end
-  
-  -- Set radio frequency and modulation
-  local radioFreq, radioModu=squadron:GetRadio()
-  if radioFreq then
-    flightgroup:SwitchRadio(radioFreq, radioModu)
-  end
+  -- Check if we have a squadron or if this was some other request.
+  if squadron then  
+
+    -- Create a flight group.
+    local flightgroup=self:_CreateFlightGroup(asset)
+       
+    ---
+    -- Asset
+    ---
     
-  if squadron.fuellow then
-    flightgroup:SetFuelLowThreshold(squadron.fuellow)
-  end
+    -- Set asset flightgroup.
+    asset.flightgroup=flightgroup
+    
+    -- Not requested any more.
+    asset.requested=nil
+    
+    -- Did not return yet.
+    asset.Treturned=nil  
   
-  if squadron.fuellowRefuel then
-    flightgroup:SetFuelLowRefuel(squadron.fuellowRefuel)
-  end  
-
-  ---
-  -- Mission
-  ---
-  
-  -- Get Mission (if any).
-  local mission=self:GetMissionByID(request.assignment)
-
-  -- Add mission to flightgroup queue.
-  if mission then
-  
+    ---
+    -- Squadron
+    ---
+       
+    -- Get TACAN channel.
+    local Tacan=squadron:FetchTacan()
     if Tacan then
-      mission:SetTACAN(Tacan, Morse, UnitName, Band)
+      asset.tacan=Tacan
+    end
+    
+    -- Set radio frequency and modulation
+    local radioFreq, radioModu=squadron:GetRadio()
+    if radioFreq then
+      flightgroup:SwitchRadio(radioFreq, radioModu)
     end
       
-    -- Add mission to flightgroup queue.
-    asset.flightgroup:AddMission(mission)
-    
-    -- Trigger event.
-    self:FlightOnMission(flightgroup, mission)
-    
-  else
-    
-    if Tacan then
-      flightgroup:SwitchTACAN(Tacan, Morse, UnitName, Band)    
+    if squadron.fuellow then
+      flightgroup:SetFuelLowThreshold(squadron.fuellow)
     end
-  
-  end
-  
     
+    if squadron.fuellowRefuel then
+      flightgroup:SetFuelLowRefuel(squadron.fuellowRefuel)
+    end  
   
-  -- Add group to the detection set of the WINGCOMMANDER.
-  if self.wingcommander and self.wingcommander.chief then
-    self.wingcommander.chief.detectionset:AddGroup(asset.flightgroup.group)
+    ---
+    -- Mission
+    ---
+    
+    -- Get Mission (if any).
+    local mission=self:GetMissionByID(request.assignment)
+  
+    -- Add mission to flightgroup queue.
+    if mission then
+    
+      if Tacan then
+        mission:SetTACAN(Tacan, Morse, UnitName, Band)
+      end
+        
+      -- Add mission to flightgroup queue.
+      asset.flightgroup:AddMission(mission)
+      
+      -- Trigger event.
+      self:FlightOnMission(flightgroup, mission)
+      
+    else
+      
+      if Tacan then
+        flightgroup:SwitchTACAN(Tacan, Morse, UnitName, Band)    
+      end
+    
+    end
+       
+    -- Add group to the detection set of the WINGCOMMANDER.
+    if self.wingcommander and self.wingcommander.chief then
+      self.wingcommander.chief.detectionset:AddGroup(asset.flightgroup.group)
+    end
+    
   end
   
 end
@@ -1821,34 +1827,6 @@ function AIRWING:_CreateFlightGroup(asset)
 
   -- Set home base.
   flightgroup.homebase=self.airbase
-  
-  --[[
-  
-  --- Check if out of missiles. For A2A missions ==> RTB.
-  function flightgroup:OnAfterOutOfMissiles()  
-    local airwing=flightgroup:GetAirWing()
-    
-  end
-  
-  --- Check if out of missiles. For A2G missions ==> RTB. But need to check A2G missiles, rockets as well.
-  function flightgroup:OnAfterOutOfBombs()  
-    local airwing=flightgroup:GetAirWing()
-  
-  end
-
-  --- Mission started.
-  function flightgroup:OnAfterMissionStart(From, Event, To, Mission)
-    local airwing=flightgroup:GetAirWing()
-  
-  end
-  
-  --- Flight is DEAD.
-  function flightgroup:OnAfterFlightDead(From, Event, To)  
-    local airwing=flightgroup:GetAirWing()
-        
-  end
-  
-  ]]
   
   return flightgroup
 end
