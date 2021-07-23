@@ -1,4 +1,4 @@
---- **Ops** -- Combat Troops & Logistics Deployment.
+--- **Ops** -- Combat Troops & Logistics Department.
 --
 -- ===
 -- 

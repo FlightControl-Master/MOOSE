@@ -1010,6 +1010,8 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
       end
     elseif _distance >= self.approachdist_near and _distance < self.approachdist_far then
       self.heliVisibleMessage[_lookupKeyHeli] = nil
+      self.heliCloseMessage[_lookupKeyHeli] = nil
+      self.landedStatus[_lookupKeyHeli] = nil
       --reschedule as units aren\'t dead yet , schedule for a bit slower though as we\'re far away
       _downedpilot.timestamp = timer.getAbsTime()
       self:__Approach(-10,heliname,woundedgroupname)
@@ -1520,8 +1522,9 @@ function CSAR:_SignalFlare(_unitName)
   end
   
   local _closest = self:_GetClosestDownedPilot(_heli)
-  
-  if _closest ~= nil and _closest.pilot ~= nil and _closest.distance < 8000.0 then
+  local smokedist = 8000
+  if self.approachdist_far > smokedist then smokedist = self.approachdist_far end
+  if _closest ~= nil and _closest.pilot ~= nil and _closest.distance < smokedist then
   
       local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
       local _distance = 0
@@ -1536,11 +1539,13 @@ function CSAR:_SignalFlare(_unitName)
       local _coord = _closest.pilot:GetCoordinate()
       _coord:FlareRed(_clockDir)
   else
-      local disttext = "4.3nm"
-      if _SETTINGS:IsMetric() then
-          disttext = "8km"
-      end
-      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",disttext), self.messageTime)
+      local _distance = smokedist
+      if _SETTINGS:IsImperial() then
+        _distance = string.format("%.1fnm",UTILS.MetersToNM(smokedist))
+      else
+        _distance = string.format("%.1fkm",smokedist/1000)
+      end 
+      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",_distance), self.messageTime)
   end
   return self
 end
@@ -1572,8 +1577,10 @@ function CSAR:_Reqsmoke( _unitName )
   if _heli == nil then
       return
   end
+  local smokedist = 8000
+  if smokedist < self.approachdist_far then smokedist = self.approachdist_far end
   local _closest = self:_GetClosestDownedPilot(_heli)
-  if _closest ~= nil and _closest.pilot ~= nil and _closest.distance < 8000.0 then
+  if _closest ~= nil and _closest.pilot ~= nil and _closest.distance < smokedist then
       local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
       local _distance = 0
       if _SETTINGS:IsImperial() then
@@ -1587,11 +1594,13 @@ function CSAR:_Reqsmoke( _unitName )
       local color = self.smokecolor
       _coord:Smoke(color)
   else
-      local disttext = "4.3nm"
-      if _SETTINGS:IsMetric() then
-          disttext = "8km"
-      end
-      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",disttext), self.messageTime)
+      local _distance = 0
+      if _SETTINGS:IsImperial() then
+        _distance = string.format("%.1fnm",UTILS.MetersToNM(smokedist))
+      else
+        _distance = string.format("%.1fkm",smokedist/1000)
+      end 
+      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",_distance), self.messageTime)
   end
   return self
 end
