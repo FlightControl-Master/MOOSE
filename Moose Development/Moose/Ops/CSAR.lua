@@ -368,7 +368,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.mashprefix = {"MASH"} -- prefixes used to find MASHes
   self.mash = SET_GROUP:New():FilterCoalitions(self.coalition):FilterPrefixes(self.mashprefix):FilterOnce() -- currently only GROUP objects, maybe support STATICs also?
   self.autosmoke = false -- automatically smoke location when heli is near
-  self.autosmokedistance = 1000 -- distance for autosmoke
+  self.autosmokedistance = 2000 -- distance for autosmoke
   -- added 0.1.4
   self.limitmaxdownedpilots = true
   self.maxdownedpilots = 25
@@ -998,10 +998,15 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
       self:T("...helinunit nil!")
       return
     end
-
+    
     local _heliCoord = _heliUnit:GetCoordinate()
     local _leaderCoord = _woundedGroup:GetCoordinate()
     local _distance = self:_GetDistance(_heliCoord,_leaderCoord)
+    -- autosmoke
+    if (self.autosmoke == true) and (_distance < self.autosmokedistance) and (_distance ~= -1) then
+        self:_PopSmokeForGroup(_woundedGroupName, _woundedGroup)
+    end
+    
     if _distance < self.approachdist_near and _distance > 0 then
       if self:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedGroup, _woundedGroupName) == true then
         -- we\'re close, reschedule
@@ -1009,7 +1014,23 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
         self:__Approach(-5,heliname,woundedgroupname)
       end
     elseif _distance >= self.approachdist_near and _distance < self.approachdist_far then
-      self.heliVisibleMessage[_lookupKeyHeli] = nil
+      -- message once
+      if self.heliVisibleMessage[_lookupKeyHeli] == nil then
+          local _pilotName = _downedpilot.desc
+          if self.autosmoke == true then
+            local dist = self.autosmokedistance / 1000
+            local disttext = string.format("%.0fkm",dist)
+            if _SETTINGS:IsImperial() then
+              local dist = UTILS.MetersToNM(self.autosmokedistance)
+              disttext = string.format("%.0fnm",dist)
+            end
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Damn, that thing is loud!\nI'll pop a smoke when you are %s away.\nLand or hover by the smoke.", _heliName, _pilotName, disttext), self.messageTime,false,true)
+          else
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Damn, that thing is loud!\nRequest a flare or smoke if you need.", _heliName, _pilotName), self.messageTime,false,true)
+          end
+          --mark as shown for THIS heli and THIS group
+          self.heliVisibleMessage[_lookupKeyHeli] = true     
+      end    
       self.heliCloseMessage[_lookupKeyHeli] = nil
       self.landedStatus[_lookupKeyHeli] = nil
       --reschedule as units aren\'t dead yet , schedule for a bit slower though as we\'re far away
@@ -1171,27 +1192,13 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
   
   local _reset = true
   
-  if (self.autosmoke == true) and (_distance < self.autosmokedistance) then
-      self:_PopSmokeForGroup(_woundedGroupName, _woundedLeader)
-  end
-  
-  if self.heliVisibleMessage[_lookupKeyHeli] == nil then
-      if self.autosmoke == true then
-        self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Damn, that thing is loud! Land or hover by the smoke.", _heliName, _pilotName), self.messageTime,true,true)
-      else
-        self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Damn, that thing is loud! Request a Flare or Smoke if you need", _heliName, _pilotName), self.messageTime,true,true)
-      end
-      --mark as shown for THIS heli and THIS group
-      self.heliVisibleMessage[_lookupKeyHeli] = true
-  end
-  
   if (_distance < 500) then
   
       if self.heliCloseMessage[_lookupKeyHeli] == nil then
           if self.autosmoke == true then
-            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land or hover at the smoke.", _heliName, _pilotName), self.messageTime,true,true)
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land or hover at the smoke.", _heliName, _pilotName), self.messageTime,false,true)
           else
-            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land in a safe place, I will go there ", _heliName, _pilotName), self.messageTime,true,true)
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land in a safe place, I will go there ", _heliName, _pilotName), self.messageTime,false,true)
           end
           --mark as shown for THIS heli and THIS group
           self.heliCloseMessage[_lookupKeyHeli] = true
@@ -1208,7 +1215,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                   self.landedStatus[_lookupKeyHeli] = math.floor( (_distance - self.loadDistance) / 3.6 )   
                   _time = self.landedStatus[_lookupKeyHeli] 
                   self:_OrderGroupToMoveToPoint(_woundedGroup, _heliUnit:GetCoordinate())
-                  self:_DisplayMessageToSAR(_heliUnit, "Wait till " .. _pilotName .. " gets in. \nETA " .. _time .. " more seconds.", self.messageTime, true)
+                  self:_DisplayMessageToSAR(_heliUnit, "Wait till " .. _pilotName .. " gets in. \nETA " .. _time .. " more seconds.", self.messageTime, false)
               else
                   _time = self.landedStatus[_lookupKeyHeli] - 10
                   self.landedStatus[_lookupKeyHeli] = _time
@@ -1785,7 +1792,8 @@ function CSAR:_GetClockDirection(_heli, _group)
   if _heading then
     local Aspect = Angle - _heading
     if Aspect == 0 then Aspect = 360 end
-    clock = math.floor(Aspect / 30)
+    --clock = math.floor(Aspect / 30)
+    clock = math.abs(UTILS.Round((Aspect / 30),0))
     if clock == 0 then clock = 12 end
   end    
   return clock
