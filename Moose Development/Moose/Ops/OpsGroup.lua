@@ -3009,6 +3009,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- Parameters.
     local zone=Task.dcstask.params.zone --Core.Zone#ZONE
     local Coordinate=zone:GetRandomCoordinate()
+    Coordinate:MarkToAll("Random Patrol Zone Coordinate")
     local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil
 
@@ -3695,15 +3696,21 @@ function OPSGROUP:RouteToMission(mission, delay)
     self:ScheduleOnce(delay, OPSGROUP.RouteToMission, self, mission)
   else
 
-    if self:IsDead() then
+    if self:IsDead() or self:IsStopped() then
       return
     end
 
     -- ID of current waypoint.
     local uid=self:GetWaypointCurrent().uid
-
+    
+    -- Random radius.
+    local randomradius=1000
+    if mission.type==AUFTRAG.Type.PATROLZONE then
+      randomradius=nil
+    end
+    
     -- Get coordinate where the mission is executed.
-    local waypointcoord=mission:GetMissionWaypointCoord(self.group)
+    local waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius)
 
     -- Add enroute tasks.
     for _,task in pairs(mission.enrouteTasks) do
@@ -5423,6 +5430,39 @@ function OPSGROUP:_CheckDelivered(CargoTransport)
   return done
 end
 
+
+--- Check if all cargo of this transport assignment was delivered.
+-- @param #OPSGROUP self
+-- @param Ops.OpsTransport#OPSTRANSPORT CargoTransport The next due cargo transport or `nil`.
+-- @return #boolean If true, all cargo was delivered.
+function OPSGROUP:_CheckGoPickup(CargoTransport)
+
+  local done=true
+  for _,_cargo in pairs(CargoTransport.cargos) do
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+
+    if self:CanCargo(cargo.opsgroup) then
+
+      if cargo.delivered then
+        -- This one is delivered.
+      elseif cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped() then
+        -- This one is dead.
+      elseif cargo.opsgroup:IsLoaded() then
+        -- This one is loaded into a(nother) carrier.
+      else
+        done=false --Someone is not done!
+      end
+
+    end
+
+  end
+
+  -- Debug info.
+  self:T(self.lid..string.format("Cargotransport UID=%d Status=%s: delivered=%s", CargoTransport.uid, CargoTransport:GetState(), tostring(done)))
+
+  return done
+end
+
 --- Create a cargo transport assignment.
 -- @param #OPSGROUP self
 -- @param Ops.OpsTransport#OPSTRANSPORT OpsTransport The troop transport assignment.
@@ -5515,6 +5555,32 @@ function OPSGROUP:GetFreeCargobay(UnitName, IncludeReserved)
   self:T(self.lid..string.format("Free cargo bay=%d kg (unit=%s)", Free, (UnitName or "whole group")))
   
   return Free
+end
+
+--- Get relative free cargo bay in percent.
+-- @param #OPSGROUP self
+-- @param #string UnitName Name of the unit. Default is of the whole group.
+-- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+-- @return #number Free cargo bay in percent.
+function OPSGROUP:GetFreeCargobayRelative(UnitName, IncludeReserved)
+
+  local free=self:GetFreeCargobay(UnitName, IncludeReserved)
+  
+  local total=self:GetWeightCargoMax(UnitName)
+  
+  local percent=free/total*100
+  
+  return percent
+end
+
+--- Get relative used (loaded) cargo bay in percent.
+-- @param #OPSGROUP self
+-- @param #string UnitName Name of the unit. Default is of the whole group.
+-- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+-- @return #number Used cargo bay in percent.
+function OPSGROUP:GetUsedCargobayRelative(UnitName, IncludeReserved)
+  local free=self:GetFreeCargobayRelative(UnitName, IncludeReserved)
+  return 100-free
 end
 
 --- Get max weight of cargo (group) this group can load. This is the largest free cargo bay of any (not dead) element of the group.
@@ -6563,7 +6629,7 @@ function OPSGROUP:onafterUnloaded(From, Event, To)
   end
 
   -- Check everything was delivered (or is dead).
-  local delivered=self:_CheckDelivered(self.cargoTransport)
+  local delivered=self:_CheckGoPickup(self.cargoTransport)
 
   if not delivered then
 
@@ -9295,9 +9361,11 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:_SetTemplate(Template)
 
+  -- Set the template.
   self.template=Template or self.group:GetTemplate()
   
-  self:I(self.lid.."Setting group template")
+  -- Debug info.
+  self:T3(self.lid.."Setting group template")
 
   return self
 end

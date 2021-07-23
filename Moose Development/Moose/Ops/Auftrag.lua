@@ -3149,8 +3149,9 @@ end
 --- Get coordinate of target. First unit/group of the set is used.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP group Group.
+-- @param #number randomradius Random radius in meters.
 -- @return Core.Point#COORDINATE Coordinate where the mission is executed.
-function AUFTRAG:GetMissionWaypointCoord(group)
+function AUFTRAG:GetMissionWaypointCoord(group, randomradius)
 
   -- Check if a coord has been explicitly set.
   if self.missionWaypointCoord then
@@ -3166,7 +3167,9 @@ function AUFTRAG:GetMissionWaypointCoord(group)
   local alt=waypointcoord.y
   
   -- Add some randomization.
-  waypointcoord=ZONE_RADIUS:New("Temp", waypointcoord:GetVec2(), 1000):GetRandomCoordinate():SetAltitude(alt, false)
+  if randomradius then
+    waypointcoord=ZONE_RADIUS:New("Temp", waypointcoord:GetVec2(), randomradius):GetRandomCoordinate():SetAltitude(alt, false)
+  end
   
   -- Set altitude of mission waypoint.
   if self.missionAltitude then
