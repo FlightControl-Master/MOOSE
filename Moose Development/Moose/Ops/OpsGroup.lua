@@ -5447,7 +5447,7 @@ function OPSGROUP:_CheckGoPickup(CargoTransport)
         -- This one is delivered.
       elseif cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped() then
         -- This one is dead.
-      elseif cargo.opsgroup:IsLoaded() then
+      elseif cargo.opsgroup:IsLoaded(CargoTransport:_GetCarrierNames()) then
         -- This one is loaded into a(nother) carrier.
       else
         done=false --Someone is not done!
