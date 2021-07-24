@@ -6087,12 +6087,18 @@ end
 
 --- Clear waypoints.
 -- @param #OPSGROUP self
-function OPSGROUP:ClearWaypoints()
+-- @param #number IndexMin Clear waypoints up to this min WP index. Default 1.
+-- @param #number IndexMax Clear waypoints up to this max WP index. Default `#self.waypoints`.
+function OPSGROUP:ClearWaypoints(IndexMin, IndexMax)
+
+  IndexMin=IndexMin or 1
+  IndexMax=IndexMax or #self.waypoints
+
   -- Clear all waypoints.
-  for i=1,#self.waypoints do
+  for i=IndexMax,IndexMin,-1 do
     table.remove(self.waypoints, i)
   end
-  self.waypoints={}
+  --self.waypoints={}
 end
 
 --- Set (new) cargo status.
@@ -6768,7 +6774,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       local Coordinate=Carrier.unit:GetCoordinate()
 
       -- Clear all waypoints.
-      self:ClearWaypoints()
+      self:ClearWaypoints(self.currentwp+1)
 
       if self.isArmygroup then
         local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=0
