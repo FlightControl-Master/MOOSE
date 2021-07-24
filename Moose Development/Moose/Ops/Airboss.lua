@@ -39,6 +39,7 @@
 --    * [F-14A/B Tomcat](https://forums.eagle.ru/forumdisplay.php?f=395) (Player & AI)
 --    * [A-4E Skyhawk Community Mod](https://forums.eagle.ru/showthread.php?t=224989) (Player & AI)
 --    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI) [**WIP**]
+--    * [T-45C Goshawk](https://www.vnao-cvw-7.com/t-45-goshawk) (VNAO)(Player & AI) [**WIP**]
 --    * F/A-18C Hornet (AI)
 --    * F-14A Tomcat (AI)
 --    * E-2D Hawkeye (AI)
@@ -101,7 +102,7 @@
 -- ### Wags DCS Hornet Videos:
 --
 --    * [DCS: F/A-18C Hornet - Episode 9: CASE I Carrier Landing](https://www.youtube.com/watch?v=TuigBLhtAH8)
---    * [DCS: F/A-18C Hornet – Episode 16: CASE III Introduction](https://www.youtube.com/watch?v=DvlMHnLjbDQ)
+--    * [DCS: F/A-18C Hornet â€“ Episode 16: CASE III Introduction](https://www.youtube.com/watch?v=DvlMHnLjbDQ)
 --    * [DCS: F/A-18C Hornet Case I Carrier Landing Training Lesson Recording](https://www.youtube.com/watch?v=D33uM9q4xgA)
 --
 -- ### AV-8B Harrier at USS Tarawa
@@ -266,7 +267,7 @@
 --
 -- That being said, this script allows you to use any of the three cases to be used at any time. Or, in other words, *you* need to specify when which case is safe and appropriate.
 --
--- This is a lot of responsability. *You* are the boss, but *you* need to make the right decisions or things will go terribly wrong!
+-- This is a lot of responsibility. *You* are the boss, but *you* need to make the right decisions or things will go terribly wrong!
 --
 -- Recovery windows can be set up via the @{#AIRBOSS.AddRecoveryWindow} function as explained below. With this it is possible to seamlessly (within reason!) switch recovery cases in the same mission.
 --
@@ -293,14 +294,14 @@
 --
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case1_Landing.png)
 --
--- Once the aircraft reaches the Inital, the landing pattern begins. The important steps of the pattern are shown in the image above.
+-- Once the aircraft reaches the Initial, the landing pattern begins. The important steps of the pattern are shown in the image above.
 --
 --
 -- ## CASE III
 --
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case3.png)
 --
--- A Case III recovery is conducted during nighttime. The holding position and the landing pattern are rather different from a Case I recovery as can be seen in the image above.
+-- A Case III recovery is conducted during nighttime or when the visibility is below CASE II minima during the day. The holding position and the landing pattern are rather different from a Case I recovery as can be seen in the image above.
 --
 -- The first holding zone starts 21 NM astern the carrier at angels 6. The separation between the stacks is 1000 ft just like in Case I. However, the distance to the boat
 -- increases by 1 NM with each stack. The general form can be written as D=15+6+(N-1), where D is the distance to the boat in NM and N the number of the stack starting at N=1.
@@ -572,7 +573,10 @@
 --    * **L**ined **U**p **L**eft or **R**ight: LUL, LUR
 --    * Too **H**igh or too **LO**w: H, LO
 --    * Too **F**ast or too **SLO**w: F, SLO
---    * **Fly through** glideslope **down** or **up**: \\ , /
+--    * **O**ver**S**hoot: OS, only referenced during **X**
+--    * **Fly through** glideslope **down** or **up**: \\ , /, advisory only
+--    * **D**rift **L**eft or **R**ight:DL, DR, advisory only
+--    * **A**ngled **A**pproach: Angled approach (wings level and LUL): AA, advisory only
 --
 -- Each grading, x, is subdivided by
 --
@@ -633,7 +637,7 @@
 --
 -- ## Foul Deck Waveoff
 --
--- A foul deck waveoff is called by the LSO if an aircraft is detected within the landing area when an approaching aircraft is crossing the ship's wake during Case I/II operations,
+-- A foul deck waveoff is called by the LSO if an aircraft is detected within the landing area when an approaching aircraft is at position IM-IC during Case I/II operations,
 -- or with an aircraft approaching the 3/4 NM during Case III operations.
 --
 -- The approaching aircraft will be notified via LSO radio comms and is supposed to overfly the landing area to enter the Bolter pattern. **This pass is not graded**.
@@ -721,7 +725,7 @@
 --
 -- The same holds true after the recovery window closes. The carrier will head back to the place where he left its assigned route and resume the path to the next waypoint defined in the mission editor.
 --
--- Note that the carrier will only head into the wind, if the wind direction is different by more than 5° from the current heading of the carrier (the angled runway, if any, fis taken into account here).
+-- Note that the carrier will only head into the wind, if the wind direction is different by more than 5Â° from the current heading of the carrier (the angled runway, if any, fis taken into account here).
 --
 -- ===
 --
@@ -860,10 +864,10 @@
 --
 -- The graph displays the lineup error (LUE) as a function of the distance to the carrier.
 --
--- The pilot approaches the carrier from the port side, LUE>0°, at a distance of ~1 NM.
--- At the beginning of the groove (X), he significantly overshoots to the starboard side (LUE<5°).
+-- The pilot approaches the carrier from the port side, LUE>0Â°, at a distance of ~1 NM.
+-- At the beginning of the groove (X), he significantly overshoots to the starboard side (LUE<5Â°).
 -- In the middle (IM), he performs good corrections and smoothly reduces the lineup error.
--- Finally, at a distance of ~0.3 NM (IC) he has corrected his lineup with the runway to a reasonable level, |LUE|<0.5°.
+-- Finally, at a distance of ~0.3 NM (IC) he has corrected his lineup with the runway to a reasonable level, |LUE|<0.5Â°.
 --
 -- ## Glideslope Error
 --
@@ -872,7 +876,7 @@
 -- The graph displays the glideslope error (GSE) as a function of the distance to the carrier.
 --
 -- In this case the pilot already enters the groove (X) below the optimal glideslope. He is not able to correct his height in the IM part and
--- stays significantly too low. In close, he performs a harsh correction to gain altitude and ends up even slightly too high (GSE>0.5°).
+-- stays significantly too low. In close, he performs a harsh correction to gain altitude and ends up even slightly too high (GSE>0.5Â°).
 -- At his point further corrections are necessary.
 --
 -- ## Angle of Attack
@@ -1263,6 +1267,7 @@ AIRBOSS = {
 -- @field #string S3BTANKER Lockheed S-3B Viking tanker.
 -- @field #string E2D Grumman E-2D Hawkeye AWACS.
 -- @field #string C2A Grumman C-2A Greyhound from Military Aircraft Mod.
+-- @field #string T45C T-45C by VNAO
 AIRBOSS.AircraftCarrier={
   AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
@@ -1271,6 +1276,7 @@ AIRBOSS.AircraftCarrier={
   F14B="F-14B",
   F14A_AI="F-14A",
   FA18C="F/A-18C",
+  T45C="T-45",
   S3B="S-3B",
   S3BTANKER="S-3B Tanker",
   E2D="E-2C",
@@ -1338,6 +1344,8 @@ AIRBOSS.CarrierType={
 -- @field #number _min Min _OK_ value. Default -0.5 deg.
 -- @field #number Left  (LUR) threshold. Default -1.0 deg.
 -- @field #number Right (LUL) threshold. Default 1.0 deg.
+-- @field #number LeftMed threshold for AA/OS measuring. Default -2.0 deg.
+-- @field #number RightMed threshold for AA/OS measuring. Default 2.0 deg.
 -- @field #number LEFT   LUR  threshold. Default -3.0 deg.
 -- @field #number RIGHT  LUL  threshold. Default 3.0 deg.
 
@@ -1940,17 +1948,22 @@ function AIRBOSS:New(carriername, alias)
   -- Welcome players.
   self:SetWelcomePlayers(true)
 
+  -- Coordinates
+  self.landingcoord=COORDINATE:New(0,0,0)      --Core.Point#COORDINATE
+  self.sterncoord=COORDINATE:New(0, 0, 0)      --Core.Point#COORDINATE
+  self.landingspotcoord=COORDINATE:New(0,0,0)  --Core.Point#COORDINATE
+
   -- Init carrier parameters.
   if self.carriertype==AIRBOSS.CarrierType.STENNIS then
     self:_InitStennis()
   elseif self.carriertype==AIRBOSS.CarrierType.ROOSEVELT then
     self:_InitNimitz()
   elseif self.carriertype==AIRBOSS.CarrierType.LINCOLN then
-    self:_InitNimitz()    
-  elseif self.carriertype==AIRBOSS.CarrierType.WASHINGTON then  
     self:_InitNimitz()
-  elseif self.carriertype==AIRBOSS.CarrierType.TRUMAN then  
-    self:_InitNimitz()    
+  elseif self.carriertype==AIRBOSS.CarrierType.WASHINGTON then
+    self:_InitNimitz()
+  elseif self.carriertype==AIRBOSS.CarrierType.TRUMAN then
+    self:_InitNimitz()
   elseif self.carriertype==AIRBOSS.CarrierType.VINSON then
     -- TODO: Carl Vinson parameters.
     self:_InitStennis()
@@ -1988,7 +2001,7 @@ function AIRBOSS:New(carriername, alias)
     self:_GetZoneGroove():SmokeZone(SMOKECOLOR.Red, 5)
     self:_GetZoneLineup():SmokeZone(SMOKECOLOR.Green, 5)
     self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.White, 45)
-    self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)		
+    self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)
     self:_GetZoneArcIn(case):SmokeZone(SMOKECOLOR.Blue, 45)
     self:_GetZoneArcOut(case):SmokeZone(SMOKECOLOR.Blue, 45)
     self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Blue, 45)
@@ -2028,7 +2041,7 @@ function AIRBOSS:New(carriername, alias)
 
       -- Bow
       bow:FlareYellow()
-	  
+
       -- Runway half width = 10 m.
       local r1=stern:Translate(self.carrierparam.rwywidth*0.5, FB+90)
       local r2=stern:Translate(self.carrierparam.rwywidth*0.5, FB-90)
@@ -2425,7 +2438,7 @@ end
 -- @param #number duration Default duration of the recovery in minutes. Default 30 min.
 -- @param #number windondeck Default wind on deck in knots. Default 25 knots.
 -- @param #boolean uturn U-turn after recovery window closes on=true or off=false/nil. Default off.
--- @param #number offset Relative Marshal radial in degrees for Case II/III recoveries. Default 30°.
+-- @param #number offset Relative Marshal radial in degrees for Case II/III recoveries. Default 30Â°.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMenuRecovery(duration, windondeck, uturn, offset)
 
@@ -2643,10 +2656,10 @@ end
 
 --- Set multiplayer environment wire correction.
 -- @param #AIRBOSS self
--- @param #number Dcorr Correction distance in meters. Default 8.7 m.
+-- @param #number Dcorr Correction distance in meters. Default 12 m.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMPWireCorrection(Dcorr)
-  self.mpWireCorrection=Dcorr or 8.7
+  self.mpWireCorrection=Dcorr or 12
   return self
 end
 
@@ -2808,16 +2821,20 @@ end
 -- @param #number _max
 -- @param #number _min
 -- @param #number Left
+-- @param #number LeftMed
 -- @param #number LEFT
 -- @param #number Right
+-- @param #number RightMed
 -- @param #number RIGHT
 -- @return #AIRBOSS self
-function AIRBOSS:SetLineupErrorThresholds(_max,_min, Left, LEFT, Right, RIGHT)
+function AIRBOSS:SetLineupErrorThresholds(_max,_min, Left, LeftMed, LEFT, Right, RightMed, RIGHT)
   self.lue._max=_max   or  0.5
   self.lue._min=_min   or -0.5
   self.lue.Left=Left   or -1.0
+  self.lue.LeftMed=LeftMed   or -2.0
   self.lue.LEFT=LEFT   or -3.0
   self.lue.Right=Right or  1.0
+  self.lue.RightMed=RightMed or  2.0 
   self.lue.RIGHT=RIGHT or  3.0
   return self
 end
@@ -3288,7 +3305,7 @@ function AIRBOSS:GetNextRecoveryTime(InSeconds)
     if InSeconds then
       return self.recoverywindow.START, self.recoverywindow.STOP
     else
-      return UTILS.SecondsToClock(self.recoverywindow.START), UTILS.SecondsToClock(self.recoverywindow.STOP)      
+      return UTILS.SecondsToClock(self.recoverywindow.START), UTILS.SecondsToClock(self.recoverywindow.STOP)
     end
   else
     if InSeconds then
@@ -3398,6 +3415,12 @@ function AIRBOSS:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Ejection)
   self:HandleEvent(EVENTS.PlayerLeaveUnit, self._PlayerLeft)
   self:HandleEvent(EVENTS.MissionEnd)
+  self:HandleEvent(EVENTS.RemoveUnit)
+
+  --self.StatusScheduler=SCHEDULER:New(self)
+  --self.StatusScheduler:Schedule(self, self._Status, {}, 1, 0.5)
+
+  self.StatusTimer=TIMER:New(self._Status, self):Start(2, 0.5)
 
   -- Start status check in 1 second.
   self:__Status(1)
@@ -3410,18 +3433,11 @@ end
 -- @param #string To To state.
 function AIRBOSS:onafterStatus(From, Event, To)
 
-	if true then
-	  --env.info("FF Status ==> return")
-		--return
-	end
-
   -- Get current time.
   local time=timer.getTime()
 
   -- Update marshal and pattern queue every 30 seconds.
   if time-self.Tqueue>self.dTqueue then
-
-	  --collectgarbage()
 
     -- Get time.
     local clock=UTILS.SecondsToClock(timer.getAbsTime())
@@ -3433,7 +3449,7 @@ function AIRBOSS:onafterStatus(From, Event, To)
     local speed=self.carrier:GetVelocityKNOTS()
 
     -- Check water is ahead.
-    local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist, hdg))
+    local collision=false --self:_CheckCollisionCoord(pos:Translate(self.collisiondist, hdg))
 
     local holdtime=0
     if self.holdtimestamp then
@@ -3490,14 +3506,8 @@ function AIRBOSS:onafterStatus(From, Event, To)
           self.recoverywindow.WIND=false
         end
 
-      else
-
-        -- Find path around the obstacle.
-        if not self.detour then
-          --self:_Pathfinder()
-        end
-
       end
+
     end
 
 
@@ -3528,14 +3538,21 @@ function AIRBOSS:onafterStatus(From, Event, To)
     self:_ActivateBeacons()
   end
 
+  -- Call status every ~0.5 seconds.
+  self:__Status(-30)
+
+end
+
+--- Check AI status. Pattern queue AI in the groove? Marshal queue AI arrived in holding zone?
+-- @param #AIRBOSS self
+function AIRBOSS:_Status()
+
   -- Check player status.
   self:_CheckPlayerStatus()
 
   -- Check AI landing pattern status
   self:_CheckAIStatus()
 
-  -- Call status every ~0.5 seconds.
-  self:__Status(-self.dTstatus)
 end
 
 --- Check AI status. Pattern queue AI in the groove? Marshal queue AI arrived in holding zone?
@@ -3587,11 +3604,15 @@ function AIRBOSS:_CheckAIStatus()
         -- Get lineup and distance to carrier.
         local lineup=self:_Lineup(unit, true)
 
+        local unitcoord=unit:GetCoord()
+
+        local dist=unitcoord:Get2DDistance(self:GetCoord())
+
         -- Distance in NM.
-        local distance=UTILS.MetersToNM(unit:GetCoordinate():Get2DDistance(self:GetCoordinate()))
+        local distance=UTILS.MetersToNM(dist)
 
         -- Altitude in ft.
-        local alt=UTILS.MetersToFeet(unit:GetAltitude())
+        local alt=UTILS.MetersToFeet(unitcoord.y)
 
         -- Check if parameters are right and flight is in the groove.
         if lineup<2 and distance<=0.75 and alt<500 and not element.ballcall then
@@ -3857,7 +3878,7 @@ function AIRBOSS:_CheckRecoveryTimes()
       -- Check if time is less than 5 minutes.
       if nextwindow.WIND and nextwindow.START-time<self.dTturn and not self.turnintowind then
 
-        -- Check that wind is blowing from a direction > 5° different from the current heading.
+        -- Check that wind is blowing from a direction > 5Â° different from the current heading.
         local hdg=self:GetHeading()
         local wind=self:GetHeadingIntoWind()
         local delta=self:_GetDeltaHeading(hdg, wind)
@@ -3875,7 +3896,7 @@ function AIRBOSS:_CheckRecoveryTimes()
         end
 
         --Debug info
-        self:T(self.lid..string.format("Heading=%03d°, Wind=%03d° %.1f kts, Delta=%03d° ==> U-turn=%s", hdg, wind,UTILS.MpsToKnots(vwind), delta, tostring(uturn)))
+        self:T(self.lid..string.format("Heading=%03dÂ°, Wind=%03dÂ° %.1f kts, Delta=%03dÂ° ==> U-turn=%s", hdg, wind,UTILS.MpsToKnots(vwind), delta, tostring(uturn)))
 
         -- Time into the wind 1 day or if longer recovery time + the 5 min early.
         local t=math.max(nextwindow.STOP-nextwindow.START+self.dTturn, 60*60*24)
@@ -4145,7 +4166,7 @@ end
 -- @param #string To To state.
 function AIRBOSS:onafterStop(From, Event, To)
   self:I(self.lid..string.format("Stopping airboss script."))
-  
+
   -- Unhandle events.
   self:UnHandleEvent(EVENTS.Birth)
   self:UnHandleEvent(EVENTS.Land)
@@ -5471,6 +5492,7 @@ function AIRBOSS:_GetAircraftAoA(playerData)
 
   -- Get AC type.
   local hornet=playerData.actype==AIRBOSS.AircraftCarrier.HORNET
+  local goshawk=playerData.actype==AIRBOSS.AircraftCarrier.T45C
   local skyhawk=playerData.actype==AIRBOSS.AircraftCarrier.A4EC
   local harrier=playerData.actype==AIRBOSS.AircraftCarrier.AV8B
   local tomcat=playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B
@@ -5497,6 +5519,15 @@ function AIRBOSS:_GetAircraftAoA(playerData)
     aoa.OnSpeedMin = self:_AoAUnit2Deg(playerData, 14.5)  --14.17 --14.5 units
     aoa.Fast       = self:_AoAUnit2Deg(playerData, 14.0)  --13.33 --14.0 units
     aoa.FAST       = self:_AoAUnit2Deg(playerData, 13.0)  --11.67 --13.0 units
+  elseif goshawk then
+    -- T-45C Goshawk parameters.
+    aoa.SLOW       = 8.00 --19
+    aoa.Slow       = 7.75 --18
+    aoa.OnSpeedMax = 7.25 --17.5
+    aoa.OnSpeed    = 7.00 --17
+    aoa.OnSpeedMin = 6.75 --16.5
+    aoa.Fast       = 6.25 --16
+    aoa.FAST       = 6.00 --15
   elseif skyhawk then
     -- A-4E-C Skyhawk parameters from https://forums.eagle.ru/showpost.php?p=3703467&postcount=390
     -- Note that these are arbitrary UNITS and not degrees. We need a conversion formula!
@@ -5681,6 +5712,9 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
       speed=UTILS.KnotsToMps(250)
+	elseif goshawk then
+	  alt=UTILS.FeetToMeters(800)
+      speed=UTILS.KnotsToMps(300)
     end
 
   elseif step==AIRBOSS.PatternStep.BREAKENTRY then
@@ -5691,11 +5725,14 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
       speed=UTILS.KnotsToMps(250)
+	elseif goshawk then
+	  alt=UTILS.FeetToMeters(800)
+      speed=UTILS.KnotsToMps(300)
     end
 
   elseif step==AIRBOSS.PatternStep.EARLYBREAK then
 
-    if hornet or tomcat or harrier then
+    if hornet or tomcat or harrier or goshawk then
       alt=UTILS.FeetToMeters(800)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
@@ -5703,7 +5740,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
 
   elseif step==AIRBOSS.PatternStep.LATEBREAK then
 
-    if hornet or tomcat or harrier then
+    if hornet or tomcat or harrier or goshawk then
       alt=UTILS.FeetToMeters(800)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
@@ -5711,7 +5748,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
 
   elseif step==AIRBOSS.PatternStep.ABEAM then
 
-    if hornet or tomcat or harrier then
+    if hornet or tomcat or harrier or goshawk then
       alt=UTILS.FeetToMeters(600)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(500)
@@ -5726,10 +5763,19 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
       dist=UTILS.NMToMeters(1.2)
     end
 
+	if goshawk then
+      -- 0.9 to 1.1 NM per natops ch.4 page 48
+      dist=UTILS.NMToMeters(0.9)
+    else
+      dist=UTILS.NMToMeters(1.1)
+    end
+
   elseif step==AIRBOSS.PatternStep.NINETY then
 
     if hornet or tomcat then
       alt=UTILS.FeetToMeters(500)
+	elseif goshawk then
+      alt=UTILS.FeetToMeters(450)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(500)
     elseif harrier then
@@ -5740,7 +5786,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
 
   elseif step==AIRBOSS.PatternStep.WAKE then
 
-    if hornet then
+    if hornet or goshawk then
       alt=UTILS.FeetToMeters(370)
     elseif tomcat then
       alt=UTILS.FeetToMeters(430) -- Tomcat should be a bit higher as it intercepts the GS a bit higher.
@@ -5753,7 +5799,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
 
   elseif step==AIRBOSS.PatternStep.FINAL then
 
-    if hornet then
+    if hornet or goshawk then
       alt=UTILS.FeetToMeters(300)
     elseif tomcat then
       alt=UTILS.FeetToMeters(360)
@@ -6079,66 +6125,32 @@ function AIRBOSS:_ScanCarrierZone()
     -- Create a new flight group
     if knownflight then
 
-      -- Debug output.
-      self:T2(self.lid..string.format("Known flight group %s of type %s in CCA.", groupname, actype))
-
       -- Check if flight is AI and if we want to handle it at all.
-      if knownflight.ai and self.handleai then
+      if knownflight.ai and knownflight.flag==-100 and self.handleai then
 
-        -- Defines if AI group should be handled by the airboss.
-        local iscarriersquad=true
+        local putintomarshal=false
 
-        -- Check if AI group is part of the group set if a set was defined.
-        if self.squadsetAI then
-          local group=self.squadsetAI:FindGroup(groupname)
-          if group then
-            iscarriersquad=true
+        -- Get flight group.
+        local flight=_DATABASE:GetFlightGroup(groupname)
+
+        if flight and flight:IsInbound() and flight.destbase:GetName()==self.carrier:GetName() then
+          if flight.ishelo then
           else
-            iscarriersquad=false
+            putintomarshal=true
           end
-        end
-
-        -- Check if group was explicitly excluded.
-        if self.excludesetAI then
-          local group=self.excludesetAI:FindGroup(groupname)
-          if group then
-            iscarriersquad=false
-          end
+          flight.airboss=self
         end
 
 
-        -- Get distance to carrier.
-        local dist=knownflight.group:GetCoordinate():Get2DDistance(self:GetCoordinate())
 
-        -- Close in distance. Is >0 if AC comes closer wrt to first detected distance d0.
-        local closein=knownflight.dist0-dist
-
-        -- Debug info.
-        self:T3(self.lid..string.format("Known AI flight group %s closed in by %.1f NM", knownflight.groupname, UTILS.MetersToNM(closein)))
-
-        -- Is this group the tanker?
-        local istanker=self.tanker and self.tanker.tanker:GetName()==groupname
-
-        -- Is this group the AWACS?
-        local isawacs=self.awacs and self.awacs.tanker:GetName()==groupname
-
-        -- Send tanker to marshal stack?
-        local tanker2marshal = istanker and self.tanker:IsReturning() and self.tanker.airbase:GetName()==self.airbase:GetName() and knownflight.flag==-100 and self.tanker.recovery==true
-
-        -- Send AWACS to marhsal stack?
-        local awacs2marshal  = isawacs  and self.awacs:IsReturning()  and self.awacs.airbase:GetName()==self.airbase:GetName()  and knownflight.flag==-100 and self.awacs.recovery==true
-
-        -- Put flight into Marshal.
-        local putintomarshal=closein>UTILS.NMToMeters(5) and knownflight.flag==-100 and iscarriersquad and (not istanker) and (not isawacs)
-
-        -- Send AI flight to marshal stack if group closes in more than 5 and has initial flag value.
-        if putintomarshal or tanker2marshal or awacs2marshal then
+        -- Send AI flight to marshal stack.
+        if putintomarshal then
 
           -- Get the next free stack for current recovery case.
           local stack=self:_GetFreeStack(knownflight.ai)
 
           -- Repawn.
-          local respawn=self.respawnAI --or tanker2marshal
+          local respawn=self.respawnAI
 
           if stack then
 
@@ -6158,7 +6170,8 @@ function AIRBOSS:_ScanCarrierZone()
           break
 
         end   -- Closed in or tanker/AWACS
-      end     -- AI
+
+      end
 
     else
 
@@ -6262,7 +6275,7 @@ function AIRBOSS:_MarshalPlayer(playerData, stack)
 
       -- Set stack flag.
       flight.flag=stack
-	  
+
 	  -- Trigger Marshal event.
 	  self:Marshal(flight)
     end
@@ -6521,7 +6534,7 @@ function AIRBOSS:_MarshalAI(flight, nstack, respawn)
 
   -- Route group.
   flight.group:Route(wp, 1)
-  
+
   -- Trigger Marshal event.
   self:Marshal(flight)
 
@@ -6920,7 +6933,7 @@ function AIRBOSS:_AddMarshalGroup(flight, stack)
       -- For case 1 we want the BRC but above routine return FB.
       radial=self:GetBRC()
     end
-    local text=string.format("Select TACAN %03d°, channel %d%s (%s)", radial, self.TACANchannel,self.TACANmode, self.TACANmorse)
+    local text=string.format("Select TACAN %03dÂ°, channel %d%s (%s)", radial, self.TACANchannel,self.TACANmode, self.TACANmorse)
     self:MessageToPlayer(flight, text, nil, "")
   end
 
@@ -7057,7 +7070,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
 
   -- Recovery case.
   case=case or self.case
-  
+
   if case==1 then
     return self:_GetFreeStack_Old(ai, case, empty)
   end
@@ -7073,7 +7086,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
   for i=1,nmaxstacks do
     stack[i]=self.NmaxStack  -- Number of human flights per stack.
   end
-  
+
   local nmax=1
 
   -- Loop over all flights in marshal stack.
@@ -7085,7 +7098,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
 
       -- Get stack of flight.
       local n=flight.flag
-      
+
       if n>nmax then
         nmax=n
       end
@@ -7102,7 +7115,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
 
     end
   end
-  
+
   local nfree=nil
   if stack[nmax]==0 then
     -- Max occupied stack is completely full!
@@ -7118,7 +7131,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
       -- Case II/III return next stack
       nfree=nmax+1
     end
-  
+
   elseif stack[nmax]==self.NmaxStack then
     -- Max occupied stack is completely empty! This should happen only when there is no other flight in the marshal queue.
     self:E(self.lid..string.format("ERROR: Max occupied stack is empty. Should not happen! Nmax=%d, stack[nmax]=%d", nmax, stack[nmax]))
@@ -7130,7 +7143,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
     else
       nfree=nmax
     end
-    
+
   end
 
   self:I(self.lid..string.format("Returning free stack %s", tostring(nfree)))
@@ -8877,6 +8890,58 @@ function AIRBOSS:OnEventEjection(EventData)
 
 end
 
+--- Airboss event handler for event REMOVEUNIT.
+-- @param #AIRBOSS self
+-- @param Core.Event#EVENTDATA EventData
+function AIRBOSS:OnEventRemoveUnit(EventData)
+  self:F3({eventland = EventData})
+
+  -- Nil checks.
+  if EventData==nil then
+    self:E(self.lid.."ERROR: EventData=nil in event REMOVEUNIT!")
+    self:E(EventData)
+    return
+  end
+  if EventData.IniUnit==nil then
+    self:E(self.lid.."ERROR: EventData.IniUnit=nil in event REMOVEUNIT!")
+    self:E(EventData)
+    return
+  end
+
+
+  local _unitName=EventData.IniUnitName
+  local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
+
+  self:T3(self.lid.."EJECT: unit   = "..tostring(EventData.IniUnitName))
+  self:T3(self.lid.."EJECT: group  = "..tostring(EventData.IniGroupName))
+  self:T3(self.lid.."EJECT: player = "..tostring(_playername))
+
+  if _unit and _playername then
+    self:T(self.lid..string.format("Player %s removed!",_playername))
+
+    -- Get player flight.
+    local flight=self.players[_playername]
+
+    -- Remove flight completely from all queues and collapse marshal if necessary.
+    if flight then
+      self:_RemoveFlight(flight, true)
+    end
+
+  else
+    -- Debug message.
+    self:T(self.lid..string.format("AI unit %s removed!", EventData.IniUnitName))
+
+    -- Remove element/unit from flight group and from all queues if no elements alive.
+    self:_RemoveUnitFromFlight(EventData.IniUnit)
+
+    -- What could happen is, that another element has landed (recovered) already and this one crashes.
+    -- This would mean that the flight would not be deleted from the queue ==> Check if section recovered.
+    local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
+    self:_CheckSectionRecovered(flight)
+  end
+
+end
+
 --- Airboss event handler for event player leave unit.
 -- @param #AIRBOSS self
 -- @param Core.Event#EVENTDATA EventData
@@ -9281,7 +9346,7 @@ function AIRBOSS:_Initial(playerData)
       -- Hook down for students.
       if playerData.difficulty==AIRBOSS.Difficulty.EASY and playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
         if playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B then
-          hint=hint.." - Hook down, SAS on, Wing Sweep 68°!"
+          hint=hint.." - Hook down, SAS on, Wing Sweep 68Â°!"
         else
           hint=hint.." - Hook down!"
         end
@@ -10041,6 +10106,27 @@ function AIRBOSS:_Groove(playerData)
       -- Distance in NM.
       local d=UTILS.MetersToNM(rho)
 
+	-- Drift on lineup.
+	  if rho>=RAR and rho<=RIM then
+	    if gd.LUE>0.22 and lineupError<-0.22 then 
+			env.info" Drift Right across centre ==> DR-"
+			gd.Drift=" DR"
+			self:T(self.lid..string.format("Got Drift Right across centre step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
+		 elseif gd.LUE<-0.22 and lineupError>0.22 then
+			env.info" Drift Left ==> DL-"
+			gd.Drift=" DL"
+			self:T(self.lid..string.format("Got Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
+		 elseif gd.LUE>0.13 and lineupError<-0.14 then
+			env.info" Little Drift Right across centre ==> (DR-)"
+			gd.Drift=" (DR)"
+			self:T(self.lid..string.format("Got Little Drift Right across centre at step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
+		 elseif gd.LUE<-0.13 and lineupError>0.14 then
+			env.info" Little Drift Left across centre ==> (DL-)"
+			gd.Drift=" (DL)"
+			self:E(self.lid..string.format("Got Little Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))	
+		end
+      end
+
       -- Update max deviation of line up error.
       if math.abs(lineupError)>math.abs(gd.LUE) then
         self:T(self.lid..string.format("Got bigger LUE at step %s, d=%.3f: LUE %.3f>%.3f", gs, d, lineupError, gd.LUE))
@@ -10339,24 +10425,25 @@ function AIRBOSS:_GetSternCoord()
   local FB=self:GetFinalBearing()
 
   -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
-  local stern=self:GetCoordinate()
+  self.sterncoord:UpdateFromCoordinate(self:GetCoordinate())
+  --local stern=self:GetCoordinate()
 
   -- Stern coordinate (sterndist<0).
   if self.carriertype==AIRBOSS.CarrierType.TARAWA then
     -- Tarawa: Translate 8 meters port.
-    stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(8, FB-90)
+    self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
   elseif self.carriertype==AIRBOSS.CarrierType.STENNIS then
     -- Stennis: translate 7 meters starboard wrt Final bearing.
-    stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(7, FB+90)
+    self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(7, FB+90, true, true)
   else
     -- Nimitz SC: translate 8 meters starboard wrt Final bearing.
-    stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(9.5, FB+90)
+    self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(9.5, FB+90, true, true)
   end
 
   -- Set altitude.
-  stern:SetAltitude(self.carrierparam.deckheight)
+  self.sterncoord:SetAltitude(self.carrierparam.deckheight)
 
-  return stern
+  return self.sterncoord
 end
 
 --- Get wire from landing position.
@@ -10476,6 +10563,9 @@ function AIRBOSS:_Trapped(playerData)
     elseif playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
       -- A-4E gets slowed down much faster the the F/A-18C!
       dcorr=56
+	elseif playerData.actype==AIRBOSS.AircraftCarrier.T45C then
+     -- T-45 also gets slowed down much faster the the F/A-18C.
+     dcorr=56
     end
 
     -- Get wire.
@@ -10561,6 +10651,8 @@ end
 -- @return Core.Zone#ZONE_POLYGON_BASE Initial zone.
 function AIRBOSS:_GetZoneInitial(case)
 
+  self.zoneInitial=self.zoneInitial or ZONE_POLYGON_BASE:New("Zone CASE I/II Initial")
+
   -- Get radial, i.e. inverse of BRC.
   local radial=self:GetRadial(2, false, false)
 
@@ -10568,7 +10660,7 @@ function AIRBOSS:_GetZoneInitial(case)
   local cv=self:GetCoordinate()
 
   -- Vec2 array.
-  local vec2
+  local vec2={}
 
   if case==1 then
     -- Case I
@@ -10599,15 +10691,20 @@ function AIRBOSS:_GetZoneInitial(case)
   end
 
   -- Polygon zone.
-  local zone=ZONE_POLYGON_BASE:New("Zone CASE I/II Initial", vec2)
+  --local zone=ZONE_POLYGON_BASE:New("Zone CASE I/II Initial", vec2)
 
-  return zone
+  self.zoneInitial:UpdateFromVec2(vec2)
+
+  --return zone
+  return self.zoneInitial
 end
 
 --- Get lineup groove zone.
 -- @param #AIRBOSS self
 -- @return Core.Zone#ZONE_POLYGON_BASE Lineup zone.
 function AIRBOSS:_GetZoneLineup()
+
+  self.zoneLineup=self.zoneLineup or ZONE_POLYGON_BASE:New("Zone Lineup")
 
   -- Get radial, i.e. inverse of BRC.
   local fbi=self:GetRadial(1, false, false)
@@ -10625,10 +10722,13 @@ function AIRBOSS:_GetZoneLineup()
   -- Vec2 array.
   local vec2={c1:GetVec2(), c2:GetVec2(), c3:GetVec2(), c4:GetVec2(), c5:GetVec2()}
 
-  -- Polygon zone.
-  local zone=ZONE_POLYGON_BASE:New("Zone Lineup", vec2)
+  self.zoneLineup:UpdateFromVec2(vec2)
 
-  return zone
+  -- Polygon zone.
+  --local zone=ZONE_POLYGON_BASE:New("Zone Lineup", vec2)
+  --return zone
+
+  return self.zoneLineup
 end
 
 
@@ -10639,6 +10739,8 @@ end
 -- @param #number b Width of the beginning in NM. Default 0.10 NM.
 -- @return Core.Zone#ZONE_POLYGON_BASE Groove zone.
 function AIRBOSS:_GetZoneGroove(l, w, b)
+
+  self.zoneGroove=self.zoneGroove or ZONE_POLYGON_BASE:New("Zone Groove")
 
   l=l or 1.50
   w=w or 0.25
@@ -10661,10 +10763,13 @@ function AIRBOSS:_GetZoneGroove(l, w, b)
   -- Vec2 array.
   local vec2={c1:GetVec2(), c2:GetVec2(), c3:GetVec2(), c4:GetVec2(), c5:GetVec2(), c6:GetVec2()}
 
-  -- Polygon zone.
-  local zone=ZONE_POLYGON_BASE:New("Zone Groove", vec2)
+  self.zoneGroove:UpdateFromVec2(vec2)
 
-  return zone
+  -- Polygon zone.
+  --local zone=ZONE_POLYGON_BASE:New("Zone Groove", vec2)
+  --return zone
+
+  return self.zoneGroove
 end
 
 --- Get Bullseye zone with radius 1 NM and DME 3 NM from the carrier. Radial depends on recovery case.
@@ -10688,8 +10793,9 @@ function AIRBOSS:_GetZoneBullseye(case)
 
   -- Create zone.
   local zone=ZONE_RADIUS:New("Zone Bullseye", vec2, radius)
-
   return zone
+
+  --self.zoneBullseye=self.zoneBullseye or ZONE_RADIUS:New("Zone Bullseye", vec2, radius)
 end
 
 --- Get dirty up zone with radius 1 NM and DME 9 NM from the carrier. Radial depends on recovery case.
@@ -10885,6 +10991,8 @@ end
 -- @return Core.Zone#ZONE Zone surrounding the carrier.
 function AIRBOSS:_GetZoneCarrierBox()
 
+  self.zoneCarrierbox=self.zoneCarrierbox or ZONE_POLYGON_BASE:New("Carrier Box Zone")
+
   -- Stern coordinate.
   local S=self:_GetSternCoord()
 
@@ -10913,15 +11021,20 @@ function AIRBOSS:_GetZoneCarrierBox()
   end
 
   -- Create polygon zone.
-  local zone=ZONE_POLYGON_BASE:New("Carrier Box Zone", vec2)
+  --local zone=ZONE_POLYGON_BASE:New("Carrier Box Zone", vec2)
+  --return zone
 
-  return zone
+  self.zoneCarrierbox:UpdateFromVec2(vec2)
+
+  return self.zoneCarrierbox
 end
 
 --- Get zone of landing runway.
 -- @param #AIRBOSS self
 -- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
 function AIRBOSS:_GetZoneRunwayBox()
+
+  self.zoneRunwaybox=self.zoneRunwaybox or ZONE_POLYGON_BASE:New("Landing Runway Zone")
 
   -- Stern coordinate.
   local S=self:_GetSternCoord()
@@ -10945,9 +11058,12 @@ function AIRBOSS:_GetZoneRunwayBox()
   end
 
   -- Create polygon zone.
-  local zone=ZONE_POLYGON_BASE:New("Landing Runway Zone", vec2)
+  --local zone=ZONE_POLYGON_BASE:New("Landing Runway Zone", vec2)
+  --return zone
 
-  return zone
+  self.zoneRunwaybox:UpdateFromVec2(vec2)
+
+  return self.zoneRunwaybox
 end
 
 
@@ -11050,12 +11166,14 @@ function AIRBOSS:_GetZoneHolding(case, stack)
     -- Post 2.5 NM port of carrier.
     local Post=self:GetCoordinate():Translate(D, hdg+270)
 
+    --TODO: update zone not creating a new one.
+
     -- Create holding zone.
-    zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", Post:GetVec2(), self.marshalradius)
+    self.zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", Post:GetVec2(), self.marshalradius)
 
     -- Delta pattern.
     if self.carriertype==AIRBOSS.CarrierType.TARAWA then
-      zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", self.carrier:GetVec2(), UTILS.NMToMeters(5))
+      self.zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", self.carrier:GetVec2(), UTILS.NMToMeters(5))
     end
 
 
@@ -11074,10 +11192,12 @@ function AIRBOSS:_GetZoneHolding(case, stack)
 
     -- Square zone length=7NM width=6 NM behind the carrier starting at angels+15 NM behind the carrier.
     -- So stay 0-5 NM (+1 NM error margin) port of carrier.
-    zoneHolding=ZONE_POLYGON_BASE:New("CASE II/III Holding Zone", p)
+    self.zoneHolding=self.zoneHolding or ZONE_POLYGON_BASE:New("CASE II/III Holding Zone")
+
+	self.zoneHolding:UpdateFromVec2(p)
   end
 
-  return zoneHolding
+  return self.zoneHolding
 end
 
 --- Get zone where player are automatically commence when enter.
@@ -11118,11 +11238,13 @@ function AIRBOSS:_GetZoneCommence(case, stack)
     end
 
     -- Create holding zone.
-    zone=ZONE_RADIUS:New("CASE I Commence Zone", Three:GetVec2(), R)
+    self.zoneCommence=self.zoneCommence or ZONE_RADIUS:New("CASE I Commence Zone")
+
+	self.zoneCommence:UpdateFromVec2(Three:GetVec2(), R)
 
   else
     -- Case II/III
-	
+
 	stack=stack or 1
 
      -- Start point at 21 NM for stack=1.
@@ -11149,11 +11271,13 @@ function AIRBOSS:_GetZoneCommence(case, stack)
     end
 
     -- Zone polygon.
-    zone=ZONE_POLYGON_BASE:New("CASE II/III Commence Zone", p)
+    self.zoneCommence=self.zoneCommence or ZONE_POLYGON_BASE:New("CASE II/III Commence Zone")
+
+	self.zoneCommence:UpdateFromVec2(p)
 
   end
 
-  return zone
+  return self.zoneCommence
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -11207,15 +11331,15 @@ function AIRBOSS:_AttitudeMonitor(playerData)
 
   -- Output
   local text=string.format("Pattern step: %s", step)
-  text=text..string.format("\nAoA=%.1f° = %.1f Units | |V|=%.1f knots", aoa, self:_AoADeg2Units(playerData, aoa), UTILS.MpsToKnots(vabs))
+  text=text..string.format("\nAoA=%.1fÂ° = %.1f Units | |V|=%.1f knots", aoa, self:_AoADeg2Units(playerData, aoa), UTILS.MpsToKnots(vabs))
   if self.Debug then
     -- Velocity vector.
     text=text..string.format("\nVx=%.1f Vy=%.1f Vz=%.1f m/s", velo.x, velo.y, velo.z)
     --Wind vector.
     text=text..string.format("\nWind Vx=%.1f Vy=%.1f Vz=%.1f m/s", wind.x, wind.y, wind.z)
   end
-  text=text..string.format("\nPitch=%.1f° | Roll=%.1f° | Yaw=%.1f°", pitch, roll, yaw)
-  text=text..string.format("\nClimb Angle=%.1f° | Rate=%d ft/min", unit:GetClimbAngle(), velo.y*196.85)
+  text=text..string.format("\nPitch=%.1fÂ° | Roll=%.1fÂ° | Yaw=%.1fÂ°", pitch, roll, yaw)
+  text=text..string.format("\nClimb Angle=%.1fÂ° | Rate=%d ft/min", unit:GetClimbAngle(), velo.y*196.85)
   local dist=self:_GetOptLandingCoordinate():Get3DDistance(playerData.unit)
   -- Get player velocity in km/h.
   local vplayer=playerData.unit:GetVelocityKMH()
@@ -11236,14 +11360,14 @@ function AIRBOSS:_AttitudeMonitor(playerData)
      playerData.step==AIRBOSS.PatternStep.GROOVE_IW then
     local lue=self:_Lineup(playerData.unit, true)
     local gle=self:_Glideslope(playerData.unit)
-    text=text..string.format("\nGamma=%.1f° | Rho=%.1f°", relhead, phi)
-    text=text..string.format("\nLineUp=%.2f° | GlideSlope=%.2f° | AoA=%.1f Units", lue, gle, self:_AoADeg2Units(playerData, aoa))
+    text=text..string.format("\nGamma=%.1fÂ° | Rho=%.1fÂ°", relhead, phi)
+    text=text..string.format("\nLineUp=%.2fÂ° | GlideSlope=%.2fÂ° | AoA=%.1f Units", lue, gle, self:_AoADeg2Units(playerData, aoa))
     local grade, points, analysis=self:_LSOgrade(playerData)
     text=text..string.format("\nTgroove=%.1f sec", self:_GetTimeInGroove(playerData))
     text=text..string.format("\nGrade: %s %.1f PT - %s", grade, points, analysis)
   else
     text=text..string.format("\nR=%.2f NM | X=%d Z=%d m", UTILS.MetersToNM(rho), dx, dz)
-    text=text..string.format("\nGamma=%.1f° | Rho=%.1f°", relhead, phi)
+    text=text..string.format("\nGamma=%.1fÂ° | Rho=%.1fÂ°", relhead, phi)
   end
 
   MESSAGE:New(text, 1, nil , true):ToClient(playerData.client)
@@ -11397,8 +11521,11 @@ end
 -- @return Core.Point#COORDINATE Optimal landing coordinate.
 function AIRBOSS:_GetOptLandingCoordinate()
 
+  -- Start with stern coordiante.
+  self.landingcoord:UpdateFromCoordinate(self:_GetSternCoord())
+
   -- Stern coordinate.
-  local stern=self:_GetSternCoord()
+  --local stern=self:_GetSternCoord()
 
   -- Final bearing.
   local FB=self:GetFinalBearing(false)
@@ -11406,10 +11533,11 @@ function AIRBOSS:_GetOptLandingCoordinate()
   if self.carriertype==AIRBOSS.CarrierType.TARAWA then
 
     -- Landing 100 ft abeam, 120 ft alt.
-    stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
+	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
+    --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
 
     -- Alitude 120 ft.
-    stern:SetAltitude(UTILS.FeetToMeters(120))
+    self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
 
   else
 
@@ -11417,15 +11545,15 @@ function AIRBOSS:_GetOptLandingCoordinate()
     if self.carrierparam.wire3 then
       -- We take the position of the 3rd wire to approximately account for the length of the aircraft.
       local w3=self.carrierparam.wire3
-      stern=stern:Translate(w3, FB, true)
+      self.landingcoord:Translate(w3, FB, true, true)
     end
 
     -- Add 2 meters to account for aircraft height.
-    stern.y=stern.y+2
+    self.landingcoord.y=self.landingcoord.y+2
 
   end
 
-  return stern
+  return self.landingcoord
 end
 
 --- Get landing spot on Tarawa.
@@ -11433,8 +11561,10 @@ end
 -- @return Core.Point#COORDINATE Primary landing spot coordinate.
 function AIRBOSS:_GetLandingSpotCoordinate()
 
+  self.landingspotcoord:UpdateFromCoordinate(self:_GetSternCoord())
+
   -- Stern coordinate.
-  local stern=self:_GetSternCoord()
+  --local stern=self:_GetSternCoord()
 
   if self.carriertype==AIRBOSS.CarrierType.TARAWA then
 
@@ -11442,11 +11572,11 @@ function AIRBOSS:_GetLandingSpotCoordinate()
     local hdg=self:GetHeading()
 
     -- Primary landing spot 7.5
-    stern=stern:Translate(57, hdg):SetAltitude(self.carrierparam.deckheight)
+    self.landingspotcoord:Translate(57, hdg, true, true):SetAltitude(self.carrierparam.deckheight)
 
   end
 
-  return stern
+  return self.landingspotcoord
 end
 
 --- Get true (or magnetic) heading of carrier.
@@ -11509,7 +11639,7 @@ end
 
 --- Get wind speed on carrier deck parallel and perpendicular to runway.
 -- @param #AIRBOSS self
--- @param #number alt Altitude in meters. Default 50 m.
+-- @param #number alt Altitude in meters. Default 15 m. (change made from 50m from Discord discussion from Sickdog)
 -- @return #number Wind component parallel to runway im m/s.
 -- @return #number Wind component perpendicular to runway in m/s.
 -- @return #number Total wind strength in m/s.
@@ -11532,7 +11662,7 @@ function AIRBOSS:GetWindOnDeck(alt)
   zc=UTILS.Rotate2D(zc, -self.carrierparam.rwyangle)
 
   -- Wind (from) vector
-  local vw=cv:GetWindWithTurbulenceVec3(alt or 50)
+  local vw=cv:GetWindWithTurbulenceVec3(alt or 15)
 
   -- Total wind velocity vector.
   -- Carrier velocity has to be negative. If carrier drives in the direction the wind is blowing from, we have less wind in total.
@@ -11946,15 +12076,15 @@ function AIRBOSS:_EvalGrooveTime(playerData)
 
   local grade=""
   if t<9 then
-    grade="--"
-  elseif t<12 then
-    grade="(OK)"
-  elseif t<22 then
-    grade="OK"
+    grade="_NESA_"
+  elseif t<15 then
+    grade="NESA"
+  elseif t<19 then
+    grade="OK Groove"
   elseif t<=24 then
-    grade="(OK)"
+    grade="(LIG)"
   else
-    grade="--"
+    grade="LIG"
   end
 
   -- The unicorn!
@@ -11993,9 +12123,9 @@ function AIRBOSS:_LSOgrade(playerData)
   local nS=count(G, '%(')
   local nN=N-nS-nL
 
-  -- Groove time 16-18 sec for a unicorn.
+  -- Groove time 15-18.99 sec for a unicorn.
   local Tgroove=playerData.Tgroove
-  local TgrooveUnicorn=Tgroove and (Tgroove>=16.0 and Tgroove<=18.0) or false
+  local TgrooveUnicorn=Tgroove and (Tgroove>=15.0 and Tgroove<=18.99) or false
 
   local grade
   local points
@@ -12128,7 +12258,35 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
 
   -- Aircraft specific AoA values.
   local acaoa=self:_GetAircraftAoA(playerData)
-
+  
+  --Angled Approach.
+  local P=nil
+  if step==AIRBOSS.PatternStep.GROOVE_XX and ROL<=4.0 and playerData.case<3 then
+	  if LUE>self.lue.RIGHT then
+		P=underline("AA")
+	  elseif 
+		LUE>self.lue.RightMed then
+		P="AA "
+	  elseif 
+		LUE>self.lue.Right then
+		P=little("AA")
+	  end
+  end
+ 
+  --Overshoot Start.
+  local O=nil
+  if step==AIRBOSS.PatternStep.GROOVE_XX then
+	  if LUE<self.lue.LEFT then 
+		O=underline("OS")
+	  elseif 
+		LUE<self.lue.Left then
+		O="OS"
+	  elseif 
+		LUE<self.lue._min then
+		O=little("OS")
+	  end	
+  end
+  
   -- Speed via AoA. Depends on aircraft type.
   local S=nil
   if AOA>acaoa.SLOW then
@@ -12161,7 +12319,7 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
     A=little("LO")
   end
 
-  -- Line up. Good [-0.5, 0.5]
+  -- Line up. XX Step replaced by Overshoot start (OS). Good [-0.5, 0.5]
   local D=nil
   if LUE>self.lue.RIGHT then
     D=underline("LUL")
@@ -12169,12 +12327,22 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
     D="LUL"
   elseif LUE>self.lue._max then
     D=little("LUL")
-  elseif LUE<self.lue.LEFT then
-    D=underline("LUR")
-  elseif LUE<self.lue.Left then
-    D="LUR"
-  elseif LUE<self.lue._min then
-    D=little("LUR")
+  elseif playerData.case<3 then
+	  if LUE<self.lue.LEFT and step~=AIRBOSS.PatternStep.GROOVE_XX then
+		D=underline("LUR")
+	  elseif LUE<self.lue.Left and step~=AIRBOSS.PatternStep.GROOVE_XX then
+		D="LUR"
+	  elseif LUE<self.lue._min and step~=AIRBOSS.PatternStep.GROOVE_XX then
+		D=little("LUR")
+	 end
+  elseif playerData.case==3 then
+	  if LUE<self.lue.LEFT then
+		D=underline("LUR")
+	  elseif LUE<self.lue.Left then
+		D="LUR"
+	  elseif LUE<self.lue._min then
+		D=little("LUR")
+	 end
   end
 
   -- Compile.
@@ -12184,6 +12352,11 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
   if fdata.FlyThrough then
     G=G..fdata.FlyThrough
   end
+  -- Angled Approach - doesn't affect score, advisory only.
+  if P then
+    G=G..P
+    n=n
+  end  
   -- Speed.
   if S then
     G=G..S
@@ -12199,7 +12372,17 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
     G=G..D
     n=n+1
   end
-
+  --Drift in Lineup
+  if fdata.Drift then
+    G=G..fdata.Drift
+	n=n -- Drift doesn't affect score, advisory only.
+  end
+  -- Overshoot.
+  if O then
+    G=G..O
+    n=n+1
+  end
+  
   -- Add current step.
   local step=self:_GS(step)
   step=step:gsub("XX","X")
@@ -12512,7 +12695,7 @@ function AIRBOSS:_PlayerHint(playerData, delay, soundoff)
       if self.holdingoffset<0 then
         turn="left"
       end
-      hint=hint..string.format("\nTurn %s and select TACAN %03d°.", turn, radial)
+      hint=hint..string.format("\nTurn %s and select TACAN %03dÂ°.", turn, radial)
     end
 
   end
@@ -12521,7 +12704,7 @@ function AIRBOSS:_PlayerHint(playerData, delay, soundoff)
   if playerData.step==AIRBOSS.PatternStep.DIRTYUP then
     if playerData.difficulty==AIRBOSS.Difficulty.EASY then
       if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
-        hint=hint.."\nFAF! Checks completed. Nozzles 50°."
+        hint=hint.."\nFAF! Checks completed. Nozzles 50Â°."
       else
         --TODO: Tomcat?
         hint=hint.."\nDirty up! Hook, gear and flaps down."
@@ -12590,14 +12773,14 @@ function AIRBOSS:_StepHint(playerData, step)
     -- Late break.
     if step==AIRBOSS.PatternStep.LATEBREAK then
       if playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B then
-        hint=hint.."\nWing Sweep 20°, Gear DOWN < 280 KIAS."
+        hint=hint.."\nWing Sweep 20Â°, Gear DOWN < 280 KIAS."
       end
     end
 
     -- Abeam.
     if step==AIRBOSS.PatternStep.ABEAM then
       if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
-        hint=hint.."\nNozzles 50°-60°. Antiskid OFF. Lights OFF."
+        hint=hint.."\nNozzles 50Â°-60Â°. Antiskid OFF. Lights OFF."
       elseif playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B then
         hint=hint.."\nSlats/Flaps EXTENDED < 225 KIAS. DLC SELECTED. Auto Throttle IF DESIRED."
       else
@@ -13032,7 +13215,7 @@ function AIRBOSS:_Debrief(playerData)
       end
 
       -- Re-enter message.
-      local text=string.format("fly heading %03d° for %d NM to re-enter the pattern.", heading, UTILS.MetersToNM(distance))
+      local text=string.format("fly heading %03dÂ° for %d NM to re-enter the pattern.", heading, UTILS.MetersToNM(distance))
       self:MessageToPlayer(playerData, text, "LSO", nil, nil, false, 5)
 
     else
@@ -13228,9 +13411,9 @@ function AIRBOSS:_CheckCollisionCoord(coordto, coordfrom)
 
   local text=""
   if clear then
-    text=string.format("Path into direction %03d° is clear for the next %.1f NM.", direction, UTILS.MetersToNM(d))
+    text=string.format("Path into direction %03dÂ° is clear for the next %.1f NM.", direction, UTILS.MetersToNM(d))
   else
-    text=string.format("Detected obstacle at distance %.1f NM into direction %03d°.", UTILS.MetersToNM(d), direction)
+    text=string.format("Detected obstacle at distance %.1f NM into direction %03dÂ°.", UTILS.MetersToNM(d), direction)
   end
   self:T2(self.lid..text)
 
@@ -13290,7 +13473,7 @@ function AIRBOSS:_Pathfinder()
       local collision=self:_CheckFreePathToNextWP(fromcoord)
 
       -- Debug info.
-      self:T2(self.lid..string.format("Pathfinder d=%.1f m, direction=%03d°, collision=%s", distance, direction, tostring(collision)))
+      self:T2(self.lid..string.format("Pathfinder d=%.1f m, direction=%03dÂ°, collision=%s", distance, direction, tostring(collision)))
 
       -- If path is clear, we start a little detour.
       if not collision then
@@ -13724,7 +13907,7 @@ function AIRBOSS:_CheckPatternUpdate()
   -- Update if carrier moves by more than 2.5 NM.
   local Dupdate=UTILS.NMToMeters(2.5)
 
-  -- Update if carrier turned by more than 5°.
+  -- Update if carrier turned by more than 5Â°.
   local Hupdate=5
 
   -----------------------
@@ -13758,7 +13941,7 @@ function AIRBOSS:_CheckPatternUpdate()
   -- Check if orientation changed.
   local Hchange=false
   if math.abs(deltaHeading)>=Hupdate then
-    self:T(self.lid..string.format("Carrier heading changed by %d°.", deltaHeading))
+    self:T(self.lid..string.format("Carrier heading changed by %dÂ°.", deltaHeading))
     Hchange=true
   end
 
@@ -14025,6 +14208,8 @@ function AIRBOSS:_GetACNickname(actype)
   local nickname="unknown"
   if actype==AIRBOSS.AircraftCarrier.A4EC then
     nickname="Skyhawk"
+  elseif actype==AIRBOSS.AircraftCarrier.T45C then
+    nickname="Goshawk"
   elseif actype==AIRBOSS.AircraftCarrier.AV8B then
     nickname="Harrier"
   elseif actype==AIRBOSS.AircraftCarrier.E2D then
@@ -14390,9 +14575,15 @@ end
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Carrier coordinate.
 function AIRBOSS:GetCoordinate()
-  return self.carrier:GetCoordinate()
+  return self.carrier:GetCoord()
 end
 
+--- Get carrier coordinate.
+-- @param #AIRBOSS self
+-- @return Core.Point#COORDINATE Carrier coordinate.
+function AIRBOSS:GetCoord()
+  return self.carrier:GetCoord()
+end
 
 --- Get static weather of this mission from env.mission.weather.
 -- @param #AIRBOSS self
@@ -15451,7 +15642,7 @@ end
 function AIRBOSS:_MarshalCallNewFinalBearing(FB)
 
   -- Subtitle.
-  local text=string.format("new final bearing %03d°.", FB)
+  local text=string.format("new final bearing %03dÂ°.", FB)
 
   -- Debug message.
   self:I(self.lid..text)
@@ -15474,7 +15665,7 @@ end
 function AIRBOSS:_MarshalCallCarrierTurnTo(hdg)
 
   -- Subtitle.
-  local text=string.format("carrier is now starting turn to heading %03d°.", hdg)
+  local text=string.format("carrier is now starting turn to heading %03dÂ°.", hdg)
 
   -- Debug message.
   self:I(self.lid..text)
@@ -15527,11 +15718,11 @@ function AIRBOSS:_MarshalCallRecoveryStart(case)
   -- Debug output.
   local text=string.format("Starting aircraft recovery Case %d ops.", case)
   if case==1 then
-    text=text..string.format(" BRC %03d°.", self:GetBRC())
+    text=text..string.format(" BRC %03dÂ°.", self:GetBRC())
   elseif case==2 then
-    text=text..string.format(" Marshal radial %03d°. BRC %03d°.", radial, self:GetBRC())
+    text=text..string.format(" Marshal radial %03dÂ°. BRC %03dÂ°.", radial, self:GetBRC())
   elseif case==3 then
-    text=text..string.format(" Marshal radial %03d°. Final heading %03d°.", radial, self:GetFinalBearing(false))
+    text=text..string.format(" Marshal radial %03dÂ°. Final heading %03dÂ°.", radial, self:GetFinalBearing(false))
   end
   self:T(self.lid..text)
 
@@ -15576,7 +15767,7 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   local CT=UTILS.Split(clock[1], ":")
 
   -- Subtitle text.
-  local text=string.format("Case %d, expected BRC %03d°, hold at angels %d. Expected Charlie Time %s. Altimeter %.2f. Report see me.", case, brc, angels, charlie, qfe)
+  local text=string.format("Case %d, expected BRC %03dÂ°, hold at angels %d. Expected Charlie Time %s. Altimeter %.2f. Report see me.", case, brc, angels, charlie, qfe)
 
   -- Debug message.
   self:I(self.lid..text)
@@ -15753,11 +15944,11 @@ function AIRBOSS:_AddF10Commands(_unitName)
           missionCommands.addCommandForGroup(gid, "60 min", _menusetrtime, self._SkipperRecoveryTime, self, _unitName, 60)
           missionCommands.addCommandForGroup(gid, "90 min", _menusetrtime, self._SkipperRecoveryTime, self, _unitName, 90)
           local _menusetrtime=missionCommands.addSubMenuForGroup(gid, "Set Marshal Radial", _skipperPath)
-          missionCommands.addCommandForGroup(gid, "+30°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName,  30)
-          missionCommands.addCommandForGroup(gid, "+15°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName,  15)
-          missionCommands.addCommandForGroup(gid, "0°",   _menusetrtime, self._SkipperRecoveryOffset, self, _unitName,   0)
-          missionCommands.addCommandForGroup(gid, "-15°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName, -15)
-          missionCommands.addCommandForGroup(gid, "-30°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName, -30)
+          missionCommands.addCommandForGroup(gid, "+30Â°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName,  30)
+          missionCommands.addCommandForGroup(gid, "+15Â°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName,  15)
+          missionCommands.addCommandForGroup(gid, "0Â°",   _menusetrtime, self._SkipperRecoveryOffset, self, _unitName,   0)
+          missionCommands.addCommandForGroup(gid, "-15Â°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName, -15)
+          missionCommands.addCommandForGroup(gid, "-30Â°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName, -30)
           missionCommands.addCommandForGroup(gid, "U-turn On/Off", _skipperPath, self._SkipperRecoveryUturn, self, _unitName)
           missionCommands.addCommandForGroup(gid, "Start CASE I",  _skipperPath, self._SkipperStartRecovery, self, _unitName, 1)
           missionCommands.addCommandForGroup(gid, "Start CASE II", _skipperPath, self._SkipperStartRecovery, self, _unitName, 2)
@@ -15814,7 +16005,7 @@ function AIRBOSS:_SkipperStartRecovery(_unitName, case)
       -- Inform player.
       local text=string.format("affirm, Case %d recovery will start in 5 min for %d min. Wind on deck %d knots. U-turn=%s.", case, self.skipperTime, self.skipperSpeed, tostring(self.skipperUturn))
 	  if case>1 then
-		text=text..string.format(" Marshal radial %d°.", self.skipperOffset)
+		text=text..string.format(" Marshal radial %dÂ°.", self.skipperOffset)
 	  end
       if self:IsRecovering() then
         text="negative, carrier is already recovering."
@@ -15880,7 +16071,7 @@ function AIRBOSS:_SkipperRecoveryOffset(_unitName, offset)
     if playerData then
 
       -- Inform player.
-      local text=string.format("roger, relative CASE II/III Marshal radial set to %d°.", offset)
+      local text=string.format("roger, relative CASE II/III Marshal radial set to %dÂ°.", offset)
       self:MessageToPlayer(playerData, text, "AIRBOSS")
 
       self.skipperOffset=offset
@@ -16343,7 +16534,7 @@ function AIRBOSS:_RequestCommence(_unitName)
                 -- For case 1 we want the BRC but above routine return FB.
                 radial=self:GetBRC()
               end
-              text=text..string.format("\nSelect TACAN %03d°, Channel %d%s (%s).\n", radial, self.TACANchannel,self.TACANmode, self.TACANmorse)
+              text=text..string.format("\nSelect TACAN %03dÂ°, Channel %d%s (%s).\n", radial, self.TACANchannel,self.TACANmode, self.TACANmorse)
             end
 
             -- TODO: Inform section members.
@@ -16955,7 +17146,7 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
           -- Only include current and future recovery windows.
           if Tabs<recovery.STOP then
             -- Output text.
-            recoverytext=recoverytext..string.format("\n* %s - %s: Case %d (%d°)", UTILS.SecondsToClock(recovery.START), UTILS.SecondsToClock(recovery.STOP), recovery.CASE, recovery.OFFSET)
+            recoverytext=recoverytext..string.format("\n* %s - %s: Case %d (%dÂ°)", UTILS.SecondsToClock(recovery.START), UTILS.SecondsToClock(recovery.STOP), recovery.CASE, recovery.OFFSET)
             if recovery.WIND then
               recoverytext=recoverytext..string.format(" @ %.1f kts wind", recovery.SPEED)
             end
@@ -16996,9 +17187,9 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
         text=text..string.format("Case %d recovery ops\n", self.case)
       else
         local radial=self:GetRadial(self.case, true, true, false)
-        text=text..string.format("Case %d recovery ops\nMarshal radial %03d°\n", self.case, radial)
+        text=text..string.format("Case %d recovery ops\nMarshal radial %03dÂ°\n", self.case, radial)
       end
-      text=text..string.format("BRC %03d° - FB %03d°\n", self:GetBRC(), self:GetFinalBearing(true))
+      text=text..string.format("BRC %03dÂ° - FB %03dÂ°\n", self:GetBRC(), self:GetFinalBearing(true))
       text=text..string.format("Speed %.1f kts - Wind on deck %.1f kts\n", carrierspeed, wind)
       text=text..string.format("Tower frequency %.3f MHz\n", self.TowerFreq)
       text=text..string.format("Marshal radio %.3f MHz\n", self.MarshalFreq)
@@ -17059,10 +17250,10 @@ function AIRBOSS:_DisplayCarrierWeather(_unitname)
     local WodPA=UTILS.MpsToKnots(WodPA)
     local WodPP=UTILS.MpsToKnots(WodPP)
 
-    local WD=string.format('%03d°', Wd)
-    local Ts=string.format("%d°C",T)
+    local WD=string.format('%03dÂ°', Wd)
+    local Ts=string.format("%dÂ°C",T)
 
-    local tT=string.format("%d°C",T)
+    local tT=string.format("%dÂ°C",T)
     local tW=string.format("%.1f knots", UTILS.MpsToKnots(Ws))
     local tP=string.format("%.2f inHg", UTILS.hPa2inHg(P))
 
@@ -17313,7 +17504,7 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
         if playerData.step==AIRBOSS.PatternStep.HOLDING and playerData.case>1 then
           -- Get inverse magnetic radial potential offset.
           local radial=self:GetRadial(playerData.case, true, true, true)
-          stacktext=stacktext..string.format("Select TACAN %03d°, %d DME\n", radial, angels+15)
+          stacktext=stacktext..string.format("Select TACAN %03dÂ°, %d DME\n", radial, angels+15)
         end
       end
 
@@ -17354,7 +17545,7 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
         local brc=self:GetBRC()
 
         -- Help player to find its way to the initial zone.
-        text=text..string.format("\nTo Initial: Fly heading %03d° for %.1f NM and turn to BRC %03d°", flyhdg, flydist, brc)
+        text=text..string.format("\nTo Initial: Fly heading %03dÂ° for %.1f NM and turn to BRC %03dÂ°", flyhdg, flydist, brc)
 
       elseif playerData.step==AIRBOSS.PatternStep.PLATFORM then
 
@@ -17369,7 +17560,7 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
         local hdg=self:GetRadial(playerData.case, true, true, true)
 
         -- Help player to find its way to the initial zone.
-        text=text..string.format("\nTo Platform: Fly heading %03d° for %.1f NM and turn to %03d°", flyhdg, flydist, hdg)
+        text=text..string.format("\nTo Platform: Fly heading %03dÂ° for %.1f NM and turn to %03dÂ°", flyhdg, flydist, hdg)
 
       end
 
