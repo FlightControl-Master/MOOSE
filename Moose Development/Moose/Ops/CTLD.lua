@@ -37,6 +37,7 @@ do
 -- @field #number CratesNeeded Crates needed to build.
 -- @field Wrapper.Positionable#POSITIONABLE Positionable Representation of cargo in the mission.
 -- @field #boolean HasBeenDropped True if dropped from heli.
+-- @field #number PerCrateMass Mass in kg
 -- @extends Core.Fsm#FSM
 CTLD_CARGO = {
   ClassName = "CTLD_CARGO",
@@ -49,6 +50,7 @@ CTLD_CARGO = {
   CratesNeeded = 0,
   Positionable = nil,
   HasBeenDropped = false,
+  PerCrateMass = 0
   }
   
   --- Define cargo types.
@@ -73,8 +75,9 @@ CTLD_CARGO = {
   -- @param #number CratesNeeded Crates needed to build.
   -- @param Wrapper.Positionable#POSITIONABLE Positionable Representation of cargo in the mission.
   -- @param #boolean Dropped Cargo/Troops have been unloaded from a chopper.
+  -- @param #number PerCrateMass Mass in kg
   -- @return #CTLD_CARGO self
-  function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped)
+  function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass)
     -- Inherit everything from BASE class.
     local self=BASE:Inherit(self, BASE:New()) -- #CTLD
     self:T({ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped})
@@ -87,6 +90,7 @@ CTLD_CARGO = {
     self.CratesNeeded = CratesNeeded or 0 -- #number
     self.Positionable = Positionable or nil -- Wrapper.Positionable#POSITIONABLE
     self.HasBeenDropped = Dropped or false --#boolean
+    self.PerCrateMass = PerCrateMass or 0 -- #number
     return self
   end
   
@@ -955,13 +959,14 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
     return
   else
     self.CargoCounter = self.CargoCounter + 1
-    local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, CTLD_CARGO.Enum.TROOPS, true, true, Cargotype.CratesNeeded)
+    local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, CTLD_CARGO.Enum.TROOPS, true, true, Cargotype.CratesNeeded,nil,nil,Cargotype.PerCrateMass)
     self:T({cargotype=loadcargotype})
     loaded.Troopsloaded = loaded.Troopsloaded + troopsize
     table.insert(loaded.Cargo,loadcargotype)
     self.Loaded_Cargo[unitname] = loaded
     self:_SendMessage("Troops boarded!", 10, false, Group)
     self:__TroopsPickedUp(1,Group, Unit, Cargotype)
+    self:_UpdateUnitCargoMass(Unit)
   end
   return self
 end
@@ -1062,7 +1067,7 @@ function CTLD:_RepairObjectFromCrates(Group,Unit,Crates,Build,Number)
     self:_CleanUpCrates(Crates,Build,Number)
     local desttimer = TIMER:New(function() NearestGroup:Destroy(false) end, self)
     desttimer:Start(self.repairtime - 1)
-    local buildtimer = TIMER:New(self._BuildObjectFromCrates,self,Group,Unit,object,true)
+    local buildtimer = TIMER:New(self._BuildObjectFromCrates,self,Group,Unit,object,true,NearestGroup:GetCoordinate())
     buildtimer:Start(self.repairtime)
     --self:_BuildObjectFromCrates(Group,Unit,object)
   else
@@ -1146,12 +1151,13 @@ end
       return
     else
       self.CargoCounter = self.CargoCounter + 1
-      local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, CTLD_CARGO.Enum.TROOPS, true, true, Cargotype.CratesNeeded)
+      local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, CTLD_CARGO.Enum.TROOPS, true, true, Cargotype.CratesNeeded,nil,nil,Cargotype.PerCrateMass)
       self:T({cargotype=loadcargotype})
       loaded.Troopsloaded = loaded.Troopsloaded + troopsize
       table.insert(loaded.Cargo,loadcargotype)
       self.Loaded_Cargo[unitname] = loaded
       self:_SendMessage("Troops boarded!", 10, false, Group)
+      self:_UpdateUnitCargoMass(Unit)
       self:__TroopsExtracted(1,Group, Unit, nearestGroup)
   
       -- clean up:
@@ -1238,10 +1244,10 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     self.CargoCounter = self.CargoCounter +1
     local realcargo = nil
     if drop then
-      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true)
+      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass)
       table.insert(droppedcargo,realcargo)
     else
-      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter])
+      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],nil,cargotype.PerCrateMass)
     end
     table.insert(self.Spawned_Cargo, realcargo)
   end
@@ -1273,7 +1279,7 @@ function CTLD:_ListCratesNearby( _group, _unit)
       if dropped then
         text:Add(string.format("Dropped crate for %s",name))
       else
-        text:Add(string.format("Crate for %s",name))
+        text:Add(string.format("Crate for %s, %d Kg",name, entry.PerCrateMass))
       end
     end
     if text:GetCount() == 1 then
@@ -1367,6 +1373,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
   else
      -- have we loaded stuff already?
     local numberonboard = 0
+    local massonboard = 0
     local loaded = {}
     if self.Loaded_Cargo[unitname] then
       loaded = self.Loaded_Cargo[unitname] -- #CTLD.LoadedCargo
@@ -1407,7 +1414,8 @@ function CTLD:_LoadCratesNearby(Group, Unit)
           -- destroy crate
           crate:GetPositionable():Destroy()
           crate.Positionable = nil
-          self:_SendMessage(string.format("Crate ID %d for %s loaded!",crate:GetID(),crate:GetName()), 10, false, Group) 
+          self:_SendMessage(string.format("Crate ID %d for %s loaded!",crate:GetID(),crate:GetName()), 10, false, Group)
+          self:_UpdateUnitCargoMass(Unit) 
           self:__CratesPickedUp(1, Group, Unit, crate)
         end
       end
@@ -1431,6 +1439,43 @@ function CTLD:_LoadCratesNearby(Group, Unit)
   return self
 end
 
+--- (Internal) Function to get current loaded mass
+-- @param #CTLD self
+-- @param Wrapper.Unit#UNIT Unit
+-- @return #number mass in kgs
+function CTLD:_GetUnitCargoMass(Unit) 
+  self:T(self.lid .. " _GetUnitCargoMass")
+  local unitname = Unit:GetName()
+  local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
+  local loadedmass = 0 -- #number
+  if self.Loaded_Cargo[unitname] then
+    local cargotable = loadedcargo.Cargo or {} -- #table
+    for _,_cargo in pairs(cargotable) do
+      local cargo = _cargo -- #CTLD_CARGO
+      local type = cargo:GetType() -- #CTLD_CARGO.Enum
+      if type == CTLD_CARGO.Enum.TROOPS and not cargo:WasDropped() then
+        loadedmass = loadedmass + (cargo.PerCrateMass * cargo:GetCratesNeeded())
+      end
+      if type ~= CTLD_CARGO.Enum.TROOPS and not cargo:WasDropped() then
+        loadedmass = loadedmass + cargo.PerCrateMass
+      end
+    end
+  end
+  return loadedmass
+end
+
+--- (Internal) Function to calculate and set Unit internal cargo mass
+-- @param #CTLD self
+-- @param Wrapper.Unit#UNIT Unit
+function CTLD:_UpdateUnitCargoMass(Unit)
+  self:T(self.lid .. " _UpdateUnitCargoMass")
+  local calculatedMass = self:_GetUnitCargoMass(Unit)
+  Unit:SetUnitInternalCargo(calculatedMass)
+  local report = REPORT:New("Loadmaster report")
+  report:Add("Carrying " .. calculatedMass .. "Kg")
+  self:_SendMessage(report:Text(),10,false,Unit:GetGroup())
+end
+
 --- (Internal) Function to list loaded cargo.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
@@ -1444,6 +1489,7 @@ function CTLD:_ListCargo(Group, Unit)
   local trooplimit = capabilities.trooplimit -- #boolean
   local cratelimit = capabilities.cratelimit -- #number
   local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
+  local loadedmass = self:_GetUnitCargoMass(Unit) -- #number
   if self.Loaded_Cargo[unitname] then
     local no_troops = loadedcargo.Troopsloaded or 0
     local no_crates = loadedcargo.Cratesloaded or 0
@@ -1469,7 +1515,7 @@ function CTLD:_ListCargo(Group, Unit)
     for _,_cargo in pairs(cargotable) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
-      if type ~= CTLD_CARGO.Enum.TROOPS then
+      if type ~= CTLD_CARGO.Enum.TROOPS and not cargo:WasDropped() then
         report:Add(string.format("Crate: %s size 1",cargo:GetName()))
         cratecount = cratecount + 1
       end
@@ -1478,6 +1524,7 @@ function CTLD:_ListCargo(Group, Unit)
       report:Add("        N O N E")
     end
     report:Add("------------------------------------------------------------")
+    report:Add("Total Mass: ".. loadedmass .. " kg")
     local text = report:Text()
     self:_SendMessage(text, 30, true, Group) 
   else
@@ -1580,6 +1627,7 @@ function CTLD:_UnloadTroops(Group, Unit)
     end
     self.Loaded_Cargo[unitname] = nil
     self.Loaded_Cargo[unitname] = loaded
+    self:_UpdateUnitCargoMass(Unit)
   else
    if IsHerc then
     self:_SendMessage("Nothing loaded or not within airdrop parameters!", 10, false, Group) 
@@ -1648,6 +1696,7 @@ function CTLD:_UnloadCrates(Group, Unit)
     end
     self.Loaded_Cargo[unitname] = nil
     self.Loaded_Cargo[unitname] = loaded
+    self:_UpdateUnitCargoMass(Unit)
   else
     if IsHerc then
         self:_SendMessage("Nothing loaded or not within airdrop parameters!", 10, false, Group) 
@@ -1821,7 +1870,8 @@ end
 -- @param Wrapper.Group#UNIT Unit
 -- @param #CTLD.Buildable Build
 -- @param #boolean Repair If true this is a repair and not a new build
-function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair)
+-- @param Core.Point#COORDINATE Coordinate Location for repair (e.g. where the destroyed unit was)
+function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation)
   self:T(self.lid .. " _BuildObjectFromCrates")
   -- Spawn-a-crate-content
   local position = Unit:GetCoordinate() or Group:GetCoordinate()
@@ -1833,6 +1883,9 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair)
   local temptable = Build.Template or {}
   local zone = ZONE_GROUP:New(string.format("Unload zone-%s",unitname),Group,100)
   local randomcoord = zone:GetRandomCoordinate(35):GetVec2()
+  if Repair then
+    randomcoord = RepairLocation:GetVec2()
+  end
   for _,_template in pairs(temptable) do
     self.TroopCounter = self.TroopCounter + 1
     if canmove then
@@ -2023,11 +2076,12 @@ function CTLD:_RefreshF10Menus()
 -- @param #table Templates Table of #string names of late activated Wrapper.Group#GROUP making up this troop.
 -- @param #CTLD_CARGO.Enum Type Type of cargo, here TROOPS - these will move to a nearby destination zone when dropped/build.
 -- @param #number NoTroops Size of the group in number of Units across combined templates (for loading).
-function CTLD:AddTroopsCargo(Name,Templates,Type,NoTroops)
+-- @param #number PerTroopMass Mass in kg of each soldier
+function CTLD:AddTroopsCargo(Name,Templates,Type,NoTroops,PerTroopMass)
   self:T(self.lid .. " AddTroopsCargo")
   self.CargoCounter = self.CargoCounter + 1
   -- Troops are directly loadable
-  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,true,NoTroops)
+  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,true,NoTroops,nil,nil,PerTroopMass)
   table.insert(self.Cargo_Troops,cargo)
   return self
 end
@@ -2038,11 +2092,12 @@ end
 -- @param #table Templates Table of #string names of late activated Wrapper.Group#GROUP building this cargo.
 -- @param #CTLD_CARGO.Enum Type Type of cargo. I.e. VEHICLE or FOB. VEHICLE will move to destination zones when dropped/build, FOB stays put.
 -- @param #number NoCrates Number of crates needed to build this cargo.
-function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates)
+-- @param #number PerCrateMass Mass in kg of each crate
+function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass)
   self:T(self.lid .. " AddCratesCargo")
   self.CargoCounter = self.CargoCounter + 1
   -- Crates are not directly loadable
-  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,false,NoCrates)
+  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,false,NoCrates,nil,nil,PerCrateMass)
   table.insert(self.Cargo_Crates,cargo)
   return self
 end
@@ -2053,11 +2108,12 @@ end
 -- @param #string Template Template of VEHICLE or FOB cargo that this can repair.
 -- @param #CTLD_CARGO.Enum Type Type of cargo, here REPAIR.
 -- @param #number NoCrates Number of crates needed to build this cargo.
-function CTLD:AddCratesRepair(Name,Template,Type,NoCrates)
+-- @param #number PerCrateMass Mass in kg of each crate
+function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass)
   self:T(self.lid .. " AddCratesRepair")
   self.CargoCounter = self.CargoCounter + 1
   -- Crates are not directly loadable
-  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Template,Type,false,false,NoCrates)
+  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Template,Type,false,false,NoCrates,nil,nil,PerCrateMass)
   table.insert(self.Cargo_Crates,cargo)
   return self
 end

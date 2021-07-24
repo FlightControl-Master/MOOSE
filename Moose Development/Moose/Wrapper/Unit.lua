@@ -580,6 +580,18 @@ function UNIT:GetAmmo()
   return nil
 end
 
+--- Sets the Unit's Internal Cargo Mass, in kg
+-- @param #UNIT self
+-- @param #number mass to set cargo to
+-- @return #UNIT self
+function UNIT:SetUnitInternalCargo(mass)
+  local DCSUnit = self:GetDCSObject()
+  if DCSUnit then
+    trigger.action.setUnitInternalCargo(DCSUnit:getName(), mass)
+  end
+  return self
+end
+
 --- Get the number of ammunition and in particular the number of shells, rockets, bombs and missiles a unit currently has.
 -- @param #UNIT self
 -- @return #number Total amount of ammo the unit has left. This is the sum of shells, rockets, bombs and missiles.
