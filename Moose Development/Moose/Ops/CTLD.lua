@@ -18,7 +18,7 @@
 --
 -- ===
 --
--- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original), Thanks to: Shadowze, Cammel (testing)
+-- ### Author: **Applevangelist** (Moose Version), ***Ciribob*** (original), Thanks to: Shadowze, Cammel (testing), bbirchnz (additional code!!)
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
@@ -241,6 +241,8 @@ do
 --        -- add infantry unit called "Anti-Tank Small" using template "ATS", of type TROOP with size 3
 --        -- infantry units will be loaded directly from LOAD zones into the heli (matching number of free seats needed)
 --        my_ctld:AddTroopsCargo("Anti-Tank Small",{"ATS"},CTLD_CARGO.Enum.TROOPS,3)
+--        -- if you want to add weight to your Heli, troops can have a weight in kg **per person**. Currently no max weight checked. Fly carefully.
+--        my_ctld:AddTroopsCargo("Anti-Tank Small",{"ATS"},CTLD_CARGO.Enum.TROOPS,3,80)
 --        
 --        -- add infantry unit called "Anti-Tank" using templates "AA" and "AA"", of type TROOP with size 4
 --        my_ctld:AddTroopsCargo("Anti-Air",{"AA","AA2"},CTLD_CARGO.Enum.TROOPS,4)
@@ -248,6 +250,8 @@ do
 --        -- add vehicle called "Humvee" using template "Humvee", of type VEHICLE, size 2, i.e. needs two crates to be build
 --        -- vehicles and FOB will be spawned as crates in a LOAD zone first. Once transported to DROP zones, they can be build into the objects
 --        my_ctld:AddCratesCargo("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,2)
+--        -- if you want to add weight to your Heli, crates can have a weight in kg **per crate**. Currently no max weight checked. Fly carefully.
+--        my_ctld:AddCratesCargo("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,2,2775)
 --        
 --        -- add infantry unit called "Forward Ops Base" using template "FOB", of type FOB, size 4, i.e. needs four crates to be build:
 --        my_ctld:AddCratesCargo("Forward Ops Base",{"FOB"},CTLD_CARGO.Enum.FOB,4)
@@ -445,7 +449,7 @@ do
 --              my_ctld.enableHercules = true
 --              my_ctld.HercMinAngels = 155 -- for troop/cargo drop via chute in meters, ca 470 ft
 --              my_ctld.HercMaxAngels = 2000 -- for troop/cargo drop via chute in meters, ca 6000 ft
---              my_ctld.HercMaxSpeed = 77 -- 77mps or 270 kph or 150 kn
+--              my_ctld.HercMaxSpeed = 77 -- 77mps or 270kph or 150kn
 -- 
 -- Also, the following options need to be set to `true`:
 -- 

@@ -886,6 +886,12 @@ function CSAR:_EventHandler(EventData)
               self:T(self.lid .. " Landing Place Nil")
               return -- error!
           end
+          
+          -- anyone on board?
+          if self.inTransitGroups[_event.IniUnitName] == nil then
+            -- ignore
+            return
+          end
    
           if _place:GetCoalition() == self.coalition or _place:GetCoalition() == coalition.side.NEUTRAL then
             if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_event.IniUnitName) then
