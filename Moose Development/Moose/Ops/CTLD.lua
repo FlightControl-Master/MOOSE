@@ -1084,7 +1084,6 @@ end
   -- @param #CTLD self
   -- @param Wrapper.Group#GROUP Group
   -- @param Wrapper.Unit#UNIT Unit
-  -- @param #CTLD_CARGO Cargotype
   function CTLD:_ExtractTroops(Group, Unit) -- #1574 thanks to @bbirchnz!
     self:T(self.lid .. " _ExtractTroops")
     -- landed or hovering over load zone?
@@ -1624,7 +1623,7 @@ function CTLD:_UnloadTroops(Group, Unit)
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
       local dropped = cargo:WasDropped()
-      if type ~= CTLD_CARGO.Enum.TROOP and not dropped then
+      if type ~= CTLD_CARGO.Enum.TROOPS and not dropped then
         table.insert(loaded.Cargo,_cargo)
         loaded.Cratesloaded = loaded.Cratesloaded + 1
       end
@@ -1671,8 +1670,8 @@ function CTLD:_UnloadCrates(Group, Unit)
   -- Get what we have loaded
   local unitname = Unit:GetName()
   if self.Loaded_Cargo[unitname] and (grounded or hoverunload) then
-      local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
-    -- looking for troops
+    local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
+    -- looking for crate
     local cargotable = loadedcargo.Cargo
     for _,_cargo in pairs (cargotable) do
       local cargo = _cargo -- #CTLD_CARGO
@@ -1685,21 +1684,23 @@ function CTLD:_UnloadCrates(Group, Unit)
       end
     end
     -- cleanup load list
-    local    loaded = {} -- #CTLD.LoadedCargo
+    local loaded = {} -- #CTLD.LoadedCargo
     loaded.Troopsloaded = 0
     loaded.Cratesloaded = 0
     loaded.Cargo = {}
+    
     for _,_cargo in pairs (cargotable) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
       local size = cargo:GetCratesNeeded()
-      if type == CTLD_CARGO.Enum.TROOP then
+      if type == CTLD_CARGO.Enum.TROOPS then
         table.insert(loaded.Cargo,_cargo)
-        loaded.Cratesloaded = loaded.Troopsloaded + size
+        loaded.Troopsloaded = loaded.Troopsloaded + size
       end
     end
     self.Loaded_Cargo[unitname] = nil
     self.Loaded_Cargo[unitname] = loaded
+    
     self:_UpdateUnitCargoMass(Unit)
   else
     if IsHerc then
