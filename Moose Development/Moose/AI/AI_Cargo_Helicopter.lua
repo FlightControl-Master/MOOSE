@@ -207,6 +207,9 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
 
   self:SetCarrier( Helicopter )
   
+  self.landingspeed = 15 -- kph
+  self.landingheight = 5.5 -- meter
+  
   return self
 end
 
@@ -255,6 +258,25 @@ function AI_CARGO_HELICOPTER:SetCarrier( Helicopter )
   return self
 end
 
+--- Set landingspeed and -height for helicopter landings. Adjust after tracing if your helis get stuck after landing.
+-- @param #AI_CARGO_HELICOPTER self
+-- @param #number speed Landing speed in kph(!), e.g. 15
+-- @param #number height Landing height in meters(!), e.g. 5.5
+-- @return #AI_CARGO_HELICOPTER self
+-- @usage If your choppers get stuck, add tracing to your script to determine if they hit the right parameters like so:
+--    
+--        BASE:TraceOn()
+--        BASE:TraceClass("AI_CARGO_HELICOPTER")
+--        
+-- Watch the DCS.log for entries stating `Helicopter:<name>, Height = Helicopter:<number>, Velocity = Helicopter:<number>`
+-- Adjust if necessary.
+function AI_CARGO_HELICOPTER:SetLandingSpeedAndHeight(speed, height)
+  local _speed = speed or 15
+  local _height = height or 5.5
+  self.landingheight = _height
+  self.landingspeed = _speed
+  return self
+end
 
 --- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
@@ -271,13 +293,13 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
     -- 1 - When the helo lands normally on the ground.
     -- 2 - when the helo is hit and goes RTB or even when it is destroyed.
     -- For point 2, this is an issue, the infantry may not unload in this case!
-    -- So we check if the helo is on the ground, and velocity< 5.
+    -- So we check if the helo is on the ground, and velocity< 15.
     -- Only then the infantry can unload (and load too, for consistency)!
 
-    self:F( { Helicopter:GetName(), Height = Helicopter:GetHeight( true ), Velocity = Helicopter:GetVelocityKMH() } )
+    self:T( { Helicopter:GetName(), Height = Helicopter:GetHeight( true ), Velocity = Helicopter:GetVelocityKMH() } )
 
     if self.RoutePickup == true then
-      if Helicopter:GetHeight( true ) <= 5.5 and Helicopter:GetVelocityKMH() < 15 then
+      if Helicopter:GetHeight( true ) <= self.landingheight and Helicopter:GetVelocityKMH() < self.landingspeed then
         --self:Load( Helicopter:GetPointVec2() )
         self:Load( self.PickupZone )
         self.RoutePickup = false
@@ -285,7 +307,7 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
     end
     
     if self.RouteDeploy == true then
-      if Helicopter:GetHeight( true ) <= 5.5 and Helicopter:GetVelocityKMH() < 15 then
+      if Helicopter:GetHeight( true ) <= self.landingheight and Helicopter:GetVelocityKMH() < self.landingspeed then
         self:Unload( self.DeployZone )
         self.RouteDeploy = false
       end
