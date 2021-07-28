@@ -95,6 +95,8 @@
 --         self.approachdist_far = 5000 -- switch do 10 sec interval approach mode, meters
 --         self.approachdist_near = 3000 -- switch to 5 sec interval approach mode, meters
 --         self.pilotmustopendoors = false -- switch to true to enable check of open doors
+--         -- (added 0.1.9)
+--         self.suppressmessages = false -- switch off all messaging if you want to do your own
 -- 
 -- ## 2.1 Experimental Features
 -- 
@@ -214,26 +216,6 @@ CSAR = {
 -- @field Wrapper.Group#GROUP group Spawned group object.
 -- @field #number timestamp Timestamp for approach process
 -- @field #boolean alive Group is alive or dead/rescued
---   
---- Updated and sorted list of known NDB beacons (in kHz!) from the available maps.
-
---[[ Moved to Utils
--- @field #CSAR.SkipFrequencies
-CSAR.SkipFrequencies = {
-  214,274,291.5,295,297.5,
-  300.5,304,307,309.5,311,312,312.5,316,
-  320,324,328,329,330,336,337,
-  342,343,348,351,352,353,358,
-  363,365,368,372.5,374,
-  380,381,384,389,395,396,
-  414,420,430,432,435,440,450,455,462,470,485,
-  507,515,520,525,528,540,550,560,570,577,580,602,625,641,662,670,680,682,690,
-  705,720,722,730,735,740,745,750,770,795,
-  822,830,862,866,
-  905,907,920,935,942,950,995,
-  1000,1025,1030,1050,1065,1116,1175,1182,1210
-  }
---]]
 
 --- All slot / Limit settings
 -- @type CSAR.AircraftType
@@ -251,7 +233,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.8r3"
+CSAR.version="0.1.9r1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -378,6 +360,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.approachdist_far = 5000 -- switch do 10 sec interval approach mode, meters
   self.approachdist_near = 3000 -- switch to 5 sec interval approach mode, meters
   self.pilotmustopendoors = false -- switch to true to enable check on open doors
+  self.suppressmessages = false
     
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -642,7 +625,7 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   local _typeName = _typeName or "Pilot"
   
   if not noMessage then
-    self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, 10)
+    self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, self.messageTime)
   end
   
   if _freq then
@@ -806,8 +789,7 @@ function CSAR:_EventHandler(EventData)
           if self:_DoubleEjection(_unitname) then
             return
           end
-          self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!", self.coalition, 10)         
-          --local m = MESSAGE:New("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!",10,"Info"):ToCoalition(self.coalition)
+          self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!", self.coalition, self.messageTime)         
       else
           self:T(self.lid .. " Pilot has not taken off, ignore")
       end
@@ -1112,7 +1094,7 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
       player = grouptable.player,
   }
 
-  _woundedGroup:Destroy()
+  _woundedGroup:Destroy(false)
   self:_RemoveNameFromDownedPilots(_woundedGroupName,true)
   
   self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s I\'m in! Get to the MASH ASAP! ", _heliName, _pilotName), self.messageTime,true,true)
@@ -1403,7 +1385,9 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak)
   local group = _unit:GetGroup()
   local _clear = _clear or nil
   local _time = _time or self.messageTime
-  local m = MESSAGE:New(_text,_time,"Info",_clear):ToGroup(group)
+  if not self.suppressmessages then
+    local m = MESSAGE:New(_text,_time,"Info",_clear):ToGroup(group)
+  end
   -- integrate SRS
   if _speak and self.useSRS then
     local srstext = SOUNDTEXT:New(_text)
@@ -1570,12 +1554,11 @@ end
 -- @param #number _messagetime How long to show.
 function CSAR:_DisplayToAllSAR(_message, _side, _messagetime)
   self:T(self.lid .. " _DisplayToAllSAR")
+  local messagetime = _messagetime or self.messageTime
   for _, _unitName in pairs(self.csarUnits) do
     local _unit = self:_GetSARHeli(_unitName)
-    if _unit then
-      if not _messagetime then
-          self:_DisplayMessageToSAR(_unit, _message, _messagetime)
-      end
+    if _unit and not self.suppressmessages then
+       self:_DisplayMessageToSAR(_unit, _message, _messagetime)
     end
   end
   return self
