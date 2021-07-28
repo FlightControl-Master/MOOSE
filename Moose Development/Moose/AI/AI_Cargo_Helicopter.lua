@@ -64,20 +64,24 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   self.Zone = ZONE_GROUP:New( Helicopter:GetName(), Helicopter, 300 )
 
   self:SetStartState( "Unloaded" ) 
+  -- Boarding
+  self:AddTransition( "Unloaded",     "Pickup",     "Unloaded" )
+  self:AddTransition( "*",            "Landed",     "*" )
+  self:AddTransition( "*",            "Load",       "*" )
+  self:AddTransition( "*",            "Loaded",     "Loaded" )
+  self:AddTransition( "Loaded",       "PickedUp",   "Loaded" )
   
-  self:AddTransition( "Unloaded", "Pickup", "*" )
-  self:AddTransition( "Loaded", "Deploy", "*" )
-  self:AddTransition( "*", "Loaded", "Loaded" )
-  self:AddTransition( "Unboarding", "Pickup", "Unloaded" )  
-  self:AddTransition( "Unloaded", "Unboard", "Unloaded" )  
-  self:AddTransition( "Unloaded", "Unloaded", "Unloaded" )
-  self:AddTransition( "*", "PickedUp", "*" )
-  self:AddTransition( "*", "Landed", "*" )
-  self:AddTransition( "*", "Queue", "*" )
-  self:AddTransition( "*", "Orbit" , "*" ) 
+  -- Unboarding
+  self:AddTransition( "Loaded",       "Deploy",     "*" )
+  self:AddTransition( "*",            "Queue",      "*" )
+  self:AddTransition( "*",            "Orbit" ,     "*" )
+  self:AddTransition( "*",            "Destroyed",  "*" )
+  self:AddTransition( "*",            "Unload",     "*" )    
+  self:AddTransition( "*",            "Unloaded",   "Unloaded" )
+  self:AddTransition( "Unloaded",     "Deployed",   "Unloaded" )
+  
+  -- RTB
   self:AddTransition( "*", "Home" , "*" ) 
-  
-  self:AddTransition( "*", "Destroyed", "Destroyed" )
 
   --- Pickup Handler OnBefore for AI_CARGO_HELICOPTER
   -- @function [parent=#AI_CARGO_HELICOPTER] OnBeforePickup
@@ -299,7 +303,7 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
     self:T( { Helicopter:GetName(), Height = Helicopter:GetHeight( true ), Velocity = Helicopter:GetVelocityKMH() } )
 
     if self.RoutePickup == true then
-      if Helicopter:GetHeight( true ) <= self.landingheight and Helicopter:GetVelocityKMH() < self.landingspeed then
+      if Helicopter:GetHeight( true ) <= self.landingheight then --and Helicopter:GetVelocityKMH() < self.landingspeed then
         --self:Load( Helicopter:GetPointVec2() )
         self:Load( self.PickupZone )
         self.RoutePickup = false
@@ -307,7 +311,7 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
     end
     
     if self.RouteDeploy == true then
-      if Helicopter:GetHeight( true ) <= self.landingheight and Helicopter:GetVelocityKMH() < self.landingspeed then
+      if Helicopter:GetHeight( true ) <= self.landingheight then --and Helicopter:GetVelocityKMH() < self.landingspeed then
         self:Unload( self.DeployZone )
         self.RouteDeploy = false
       end
