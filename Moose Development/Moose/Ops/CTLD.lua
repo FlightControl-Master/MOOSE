@@ -659,6 +659,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- setup
   self.CrateDistance = 30 -- list/load crates in this radius
+  self.ExtractFactor = 3.33 -- factor for troops extraction, i.e. CrateDistance * Extractfactor
   self.prefixes = Prefixes or {"Cargoheli"}
   --self.I({prefixes = self.prefixes})
   self.useprefix = true
@@ -1116,8 +1117,10 @@ end
         nearestDistance = distance
       end
     end
-  
-    if nearestGroup == nil or nearestDistance > self.CrateDistance then
+    
+    local extractdistance = self.CrateDistance * self.ExtractFactor
+    
+    if nearestGroup == nil or nearestDistance > extractdistance then
       self:_SendMessage("No units close enough to extract!", 10, false, Group)
       return self
     end
@@ -1165,7 +1168,7 @@ end
   
       -- clean up:
       table.remove(self.DroppedTroops, nearestGroupIndex)
-      nearestGroup:Destroy()
+      nearestGroup:Destroy(false)
     end
     return self
   end
@@ -1390,8 +1393,13 @@ function CTLD:_LoadCratesNearby(Group, Unit)
     -- get nearby crates
     local finddist = self.CrateDistance or 30
     local nearcrates,number = self:_FindCratesNearby(Group,Unit,finddist) -- #table
-    if number == 0 or numberonboard == cratelimit then
-      self:_SendMessage("Sorry no loadable crates nearby or fully loaded!", 10, false, Group) 
+    if number == 0 and self.hoverautoloading then
+      return -- exit
+    elseif number == 0 then
+      self:_SendMessage("Sorry no loadable crates nearby!", 10, false, Group) 
+      return -- exit
+    elseif numberonboard == cratelimit then
+      self:_SendMessage("Sorry no fully loaded!", 10, false, Group) 
       return -- exit
     else
       -- go through crates and load
@@ -1415,7 +1423,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
           table.insert(loaded.Cargo, crate)
           table.insert(crateidsloaded,crate:GetID())
           -- destroy crate
-          crate:GetPositionable():Destroy()
+          crate:GetPositionable():Destroy(false)
           crate.Positionable = nil
           self:_SendMessage(string.format("Crate ID %d for %s loaded!",crate:GetID(),crate:GetName()), 10, false, Group)
           self:_UpdateUnitCargoMass(Unit) 
@@ -1967,7 +1975,7 @@ function CTLD:_CleanUpCrates(Crates,Build,Number)
     if name == nametype then -- matching crate type
       table.insert(destIDs,thisID)
       found = found + 1
-      nowcrate:GetPositionable():Destroy()
+      nowcrate:GetPositionable():Destroy(false)
       nowcrate.Positionable = nil
     end
     if found == numberdest then break end -- got enough
@@ -2651,7 +2659,7 @@ end
     if self.hoverautoloading then
       for _,_pilot in pairs (self.CtldUnits) do
         local Unit = UNIT:FindByName(_pilot)
-        self:AutoHoverLoad(Unit)
+        if self:CanHoverLoad(Unit) then self:AutoHoverLoad(Unit) end
       end
     end
     return self
