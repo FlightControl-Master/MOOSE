@@ -1,4 +1,3 @@
-
 --- **Ops** -- Combat Search and Rescue.
 --
 -- ===
@@ -1125,6 +1124,8 @@ end
 -- @return #boolean outcome The outcome.
 function CSAR:_IsLoadingDoorOpen( unit_name )
   self:T(self.lid .. " _IsLoadingDoorOpen")
+  
+  --[[
   local ret_val = false
   local unit = Unit.getByName(unit_name)
   if unit ~= nil then
@@ -1156,8 +1157,9 @@ function CSAR:_IsLoadingDoorOpen( unit_name )
       return ret_val
           
   end -- nil
+  --]]
+  return UTILS.IsLoadingDoorOpen(unit_name)
   
-  return false
 end
 
 --- (Internal) Function to check if heli is close to group.

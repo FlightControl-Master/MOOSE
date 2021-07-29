@@ -61,6 +61,7 @@ function AI_CARGO:New( Carrier, CargoSet )
   self:AddTransition( "*",            "Unboard",    "*" )
   self:AddTransition( "*",            "Unloaded",   "Unloaded" )
   self:AddTransition( "Unloaded",     "Deployed",   "Unloaded" )
+
   
   --- Pickup Handler OnBefore for AI_CARGO
   -- @function [parent=#AI_CARGO] OnBeforePickup
@@ -394,7 +395,7 @@ end
 function AI_CARGO:onafterBoard( Carrier, From, Event, To, Cargo, CarrierUnit, PickupZone )
   self:F( { Carrier, From, Event, To, Cargo, CarrierUnit:GetName() } )
 
-  if Carrier and Carrier:IsAlive() and From == "Boarding" then
+  if Carrier and Carrier:IsAlive() then
     self:F({ IsLoaded = Cargo:IsLoaded(), Cargo:GetName(), Carrier:GetName() } )
     if not Cargo:IsLoaded() and not Cargo:IsDestroyed() then
       self:__Board( -10, Cargo, CarrierUnit, PickupZone )
@@ -510,7 +511,7 @@ end
 function AI_CARGO:onafterUnboard( Carrier, From, Event, To, Cargo, CarrierUnit, DeployZone, Defend )
   self:F( { Carrier, From, Event, To, Cargo:GetName(), DeployZone = DeployZone, Defend = Defend } )
 
-  if Carrier and Carrier:IsAlive() and From == "Unboarding" then
+  if Carrier and Carrier:IsAlive() then
     if not Cargo:IsUnLoaded() then
       self:__Unboard( 10, Cargo, CarrierUnit, DeployZone, Defend ) 
       return
@@ -581,4 +582,3 @@ function AI_CARGO:onafterDeployed( Carrier, From, Event, To, DeployZone, Defend 
   end
 
 end
-
