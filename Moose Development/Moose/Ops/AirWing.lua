@@ -612,9 +612,9 @@ function AIRWING:RemoveAssetFromSquadron(Asset)
   end
 end
 
---- Add mission to queue.
+--- Add a mission for the airwing. The airwing will pick the best available assets for the mission and lauch it when ready. 
 -- @param #AIRWING self
--- @param Ops.Auftrag#AUFTRAG Mission for this group.
+-- @param Ops.Auftrag#AUFTRAG Mission Mission for this airwing.
 -- @return #AIRWING self
 function AIRWING:AddMission(Mission)
 

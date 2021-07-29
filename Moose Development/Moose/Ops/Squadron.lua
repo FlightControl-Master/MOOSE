@@ -608,15 +608,22 @@ end
 -- @return #number TACAN channel or *nil* if no channel is free.
 function SQUADRON:FetchTacan()
 
+  -- Get the smallest free channel if there is one.
+  local freechannel=nil  
   for channel,free in pairs(self.tacanChannel) do
-    if free then
-      self:T(self.lid..string.format("Checking out Tacan channel %d", channel))
-      self.tacanChannel[channel]=false
-      return channel
+    if free then      
+      if freechannel==nil or channel<freechannel then
+        freechannel=channel
+      end      
     end
   end
+  
+  if freechannel then
+    self:T(self.lid..string.format("Checking out Tacan channel %d", freechannel))
+    self.tacanChannel[freechannel]=false
+  end
 
-  return nil
+  return freechannel
 end
 
 --- "Return" a used TACAN channel.

@@ -7,7 +7,7 @@
 --    * Set mission start/stop times
 --    * Set mission priority and urgency (can cancel running missions)
 --    * Specific mission options for ROE, ROT, formation, etc.
---    * Compatible with FLIGHTGROUP, NAVYGROUP, ARMYGROUP, AIRWING, WINGCOMMANDER and CHIEF classes
+--    * Compatible with OPS classes like FLIGHTGROUP, NAVYGROUP, ARMYGROUP, AIRWING, etc.
 --    * FSM events when a mission is done, successful or failed
 --
 -- ===
@@ -106,6 +106,7 @@
 -- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
 -- @field #number missionRange Mission range in meters. Used in AIRWING class.
 -- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
+-- @field Core.Point#COORDINATE missionEgressCoord Mission egress waypoint coordinate.
 -- 
 -- @field #table enrouteTasks Mission enroute tasks.
 -- 
@@ -434,8 +435,9 @@ AUFTRAG.TargetType={
 --- Group specific data. Each ops group subscribed to this mission has different data for this.
 -- @type AUFTRAG.GroupData
 -- @field Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @field Core.Point#COORDINATE waypointcoordinate Waypoint coordinate.
+-- @field Core.Point#COORDINATE waypointcoordinate Ingress waypoint coordinate.
 -- @field #number waypointindex Waypoint index.
+-- @field Core.Point#COORDINATE wpegresscoordinate Egress waypoint coordinate.
 -- @field Ops.OpsGroup#OPSGROUP.Task waypointtask Waypoint task.
 -- @field #string status Group mission status.
 -- @field Ops.AirWing#AIRWING.SquadronAsset asset The squadron asset.
@@ -443,7 +445,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.6.1"
+AUFTRAG.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -938,7 +940,7 @@ end
 
 --- Create a STRIKE mission. Flight will attack the closest map object to the specified coordinate.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT or STATIC object.
+-- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT, STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 2000 ft.
 -- @return #AUFTRAG self
 function AUFTRAG:NewSTRIKE(Target, Altitude)
@@ -966,7 +968,7 @@ end
 
 --- Create a BOMBING mission. Flight will drop bombs a specified coordinate.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT or STATIC object.
+-- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
 -- @return #AUFTRAG self
 function AUFTRAG:NewBOMBING(Target, Altitude)
@@ -1005,10 +1007,6 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
 
   if type(Airdrome)=="string" then
     Airdrome=AIRBASE:FindByName(Airdrome)
-  end
-  
-  if Airdrome:IsInstanceOf("AIRBASE") then
-  
   end
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BOMBRUNWAY)
@@ -1110,9 +1108,7 @@ end
 function AUFTRAG:NewRESCUEHELO(Carrier)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RESCUEHELO)
-  
-  --mission.carrier=Carrier
-  
+
   mission:_TargetFromObject(Carrier)
   
   -- Mission options:
@@ -3138,12 +3134,45 @@ function AUFTRAG:GetMissionTypesText(MissionTypes)
   return text
 end
 
---- Set the mission waypoint coordinate where the mission is executed.
+--- Set the mission waypoint coordinate where the mission is executed. Note that altitude is set via `:SetMissionAltitude`.
 -- @param #AUFTRAG self
--- @return Core.Point#COORDINATE Coordinate where the mission is executed.
+-- @param Core.Point#COORDINATE Coordinate Coordinate where the mission is executed.
 -- @return #AUFTRAG self
 function AUFTRAG:SetMissionWaypointCoord(Coordinate)
+
+  -- Obviously a zone was passed. We get the coordinate.  
+  if Coordinate:IsInstanceOf("ZONE_BASE") then
+    Coordinate=Coordinate:GetCoordinate()
+  end
+
   self.missionWaypointCoord=Coordinate
+  return self
+end
+
+--- Set the mission egress coordinate. This is the coordinate where the assigned group will go once the mission is finished.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Egrees coordinate.
+-- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate. 
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude)
+
+  -- Obviously a zone was passed. We get the coordinate.  
+  if Coordinate:IsInstanceOf("ZONE_BASE") then
+    Coordinate=Coordinate:GetCoordinate()
+  end
+
+  self.missionEgressCoord=Coordinate
+  
+  if Altitude then
+    self.missionEgressCoord.y=UTILS.FeetToMeters(Altitude)
+  end
+end
+
+--- Get the mission egress coordinate if this was defined.
+-- @param #AUFTRAG self
+-- @return Core.Point#COORDINATE Coordinate Coordinate or nil.
+function AUFTRAG:GetMissionEgressCoord()
+  return self.missionEgressCoord
 end
 
 --- Get coordinate of target. First unit/group of the set is used.

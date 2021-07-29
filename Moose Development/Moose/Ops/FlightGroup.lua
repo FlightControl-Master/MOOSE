@@ -134,8 +134,8 @@ FLIGHTGROUP = {
   fuelcritical       =   nil,
   fuelcriticalthresh =   nil,
   fuelcriticalrtb    = false,
-  outofAAMrtb        =  true,
-  outofAGMrtb        =  true,
+  outofAAMrtb        = false,
+  outofAGMrtb        = false,
   squadron           =   nil,
   flightcontrol      =   nil,
   flaghold           =   nil,
@@ -170,10 +170,6 @@ FLIGHTGROUP.Attribute = {
   UAV="UAV",
   OTHER="Other",
 }
-
---- Flight group element.
--- @type FLIGHTGROUP.Element
--- @extends Ops.OpsGroup#OPSGROUP.Element
 
 --- FLIGHTGROUP class version.
 -- @field #string version
@@ -251,9 +247,9 @@ function FLIGHTGROUP:New(group)
   self:AddTransition("*",             "FuelLow",           "*")          -- Fuel state of group is low. Default ~25%.
   self:AddTransition("*",             "FuelCritical",      "*")          -- Fuel state of group is critical. Default ~10%.
 
-  self:AddTransition("*",             "OutOfMissilesAA",   "*")          -- Group is out of A2A missiles.
-  self:AddTransition("*",             "OutOfMissilesAG",   "*")          -- Group is out of A2G missiles.
-  self:AddTransition("*",             "OutOfMissilesAS",   "*")          -- Group is out of A2S(ship) missiles. Not implemented yet!
+  self:AddTransition("*",             "OutOfMissilesAA",   "*")          -- Group is out of A2A (air) missiles.
+  self:AddTransition("*",             "OutOfMissilesAG",   "*")          -- Group is out of A2G (ground) missiles.
+  self:AddTransition("*",             "OutOfMissilesAS",   "*")          -- Group is out of A2S (ship) missiles.
 
   self:AddTransition("Airborne",      "EngageTarget",     "Engaging")    -- Engage targets.
   self:AddTransition("Engaging",      "Disengage",        "Airborne")    -- Engagement over.
@@ -1036,6 +1032,9 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
       self:FuelCritical()
     end
 
+    -- This causes severe problems as OutOfMissiles is called over and over again leading to many RTB calls.
+    if false then
+
     -- Out of AA Missiles? CAP, GCICAP, INTERCEPT
     local CurrIsCap = false
     -- Out of AG Missiles? BAI, SEAD, CAS, STRIKE
@@ -1056,6 +1055,8 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
     -- Check A2G
     if (not self:CanAirToGround(false)) and CurrIsA2G then
       self:OutOfMissilesAG()
+    end
+    
     end
 
   end
@@ -1595,6 +1596,34 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterSpawned(From, Event, To)
   self:T(self.lid..string.format("Flight spawned"))
+  
+  -- Debug info.
+  if self.verbose>=1 then
+    local text=string.format("Initialized Flight Group %s:\n", self.groupname)
+    text=text..string.format("Unit type     = %s\n", self.actype)
+    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
+    text=text..string.format("Range max    = %.1f km\n", self.rangemax/1000)
+    text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
+    text=text..string.format("Weight       = %.1f kg\n", self:GetWeightTotal())
+    text=text..string.format("Cargo bay    = %.1f kg\n", self:GetFreeCargobay())
+    text=text..string.format("Tanker type  = %s\n", tostring(self.tankertype))
+    text=text..string.format("Refuel type  = %s\n", tostring(self.refueltype))
+    text=text..string.format("AI           = %s\n", tostring(self.isAI))
+    text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
+    text=text..string.format("Elements     = %d\n", #self.elements)
+    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
+    text=text..string.format("Ammo         = %d (G=%d/R=%d/B=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Bombs, self.ammo.Missiles)
+    text=text..string.format("FSM state    = %s\n", self:GetState())
+    text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
+    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
+    text=text..string.format("Uncontrolled = %s\n", tostring(self:IsUncontrolled()))
+    text=text..string.format("Start Air    = %s\n", tostring(self:IsTakeoffAir()))
+    text=text..string.format("Start Cold   = %s\n", tostring(self:IsTakeoffCold()))
+    text=text..string.format("Start Hot    = %s\n", tostring(self:IsTakeoffHot()))
+    text=text..string.format("Start Rwy    = %s\n", tostring(self:IsTakeoffRunway()))
+    self:I(self.lid..text)
+  end  
 
   -- Update position.
   self:_UpdatePosition()
@@ -1858,9 +1887,10 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.ARRIVED)
   end
 
-  -- Despawn in 5 min.
+  -- Check what to do.
   if self.airwing then
-    -- Let airwing do its thing.
+    -- Add the asset back to the airwing.
+    self.airwing:AddAsset(self.group, 1)    
   elseif self.isLandingAtAirbase then
 
     local Template=UTILS.DeepCopy(self.template)  --DCS#Template
@@ -1963,7 +1993,7 @@ function FLIGHTGROUP:onafterDead(From, Event, To)
   else
     if self.airwing then
       -- Not all assets were destroyed (despawn) ==> Add asset back to airwing.
-      self.airwing:AddAsset(self.group, 1)
+      --self.airwing:AddAsset(self.group, 1)
     end
   end
 
@@ -2131,7 +2161,7 @@ function FLIGHTGROUP:onafterOutOfMissilesAA(From, Event, To)
   if self.outofAAMrtb then
     -- Back to destination or home.
     local airbase=self.destbase or self.homebase
-    self:__RTB(-5,airbase)
+    self:__RTB(-5, airbase)
   end
 end
 
@@ -2145,7 +2175,7 @@ function FLIGHTGROUP:onafterOutOfMissilesAG(From, Event, To)
   if self.outofAGMrtb then
     -- Back to destination or home.
     local airbase=self.destbase or self.homebase
-    self:__RTB(-5,airbase)
+    self:__RTB(-5, airbase)
   end
 end
 
@@ -2288,20 +2318,31 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
 
     -- Check that coaliton is okay. We allow same (blue=blue, red=red) or landing on neutral bases.
     if airbase and airbase:GetCoalition()~=self.group:GetCoalition() and airbase:GetCoalition()>0 then
-      self:E(self.lid..string.format("ERROR: Wrong airbase coalition %d in RTB() call! We allow only same as group %d or neutral airbases 0.", airbase:GetCoalition(), self.group:GetCoalition()))
-      allowed=false
+      self:E(self.lid..string.format("ERROR: Wrong airbase coalition %d in RTB() call! We allow only same as group %d or neutral airbases 0", airbase:GetCoalition(), self.group:GetCoalition()))
+      return false
+    end
+    
+    if self.currbase and self.currbase:GetName()==airbase:GetName() then
+      self:E(self.lid.."WARNING: Currbase is already same as RTB airbase. RTB canceled!")
+      return false
+    end
+    
+    -- Check if the group has landed at an airbase. If so, we lost control and RTBing is not possible (only after a respawn).
+    if self:IsLanded() then
+      self:E(self.lid.."WARNING: Flight has already landed. RTB canceled!")
+      return false    
     end
 
     if not self.group:IsAirborne(true) then
       -- this should really not happen, either the AUFTRAG is cancelled before the group was airborne or it is stuck at the ground for some reason
-      self:I(self.lid..string.format("WARNING: Group is not AIRBORNE  ==> RTB event is suspended for 20 sec."))
+      self:I(self.lid..string.format("WARNING: Group is not AIRBORNE  ==> RTB event is suspended for 20 sec"))
       allowed=false
       Tsuspend=-20
       local groupspeed = self.group:GetVelocityMPS()
       if groupspeed<=1 and not self:IsParking() then
         self.RTBRecallCount = self.RTBRecallCount+1
       end
-      if self.RTBRecallCount > 6 then
+      if self.RTBRecallCount>6 then
         self:I(self.lid..string.format("WARNING: Group is not moving and was called RTB %d times. Assuming a problem and despawning!", self.RTBRecallCount))
         self.RTBRecallCount=0
         self:Despawn(5)
@@ -3108,101 +3149,17 @@ function FLIGHTGROUP:_InitGroup(Template)
     self.tankertype=select(2, unit:IsTanker())
     self.refueltype=select(2, unit:IsRefuelable())
 
-    -- Debug info.
-    if self.verbose>=1 then
-      local text=string.format("Initialized Flight Group %s:\n", self.groupname)
-      text=text..string.format("Unit type     = %s\n", self.actype)
-      text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
-      text=text..string.format("Range max    = %.1f km\n", self.rangemax/1000)
-      text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
-      text=text..string.format("Weight       = %.1f kg\n", self:GetWeightTotal())
-      text=text..string.format("Cargo bay    = %.1f kg\n", self:GetFreeCargobay())
-      text=text..string.format("Tanker type  = %s\n", tostring(self.tankertype))
-      text=text..string.format("Refuel type  = %s\n", tostring(self.refueltype))
-      text=text..string.format("AI           = %s\n", tostring(self.isAI))
-      text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
-      text=text..string.format("Elements     = %d\n", #self.elements)
-      text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-      text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
-      text=text..string.format("Ammo         = %d (G=%d/R=%d/B=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Bombs, self.ammo.Missiles)
-      text=text..string.format("FSM state    = %s\n", self:GetState())
-      text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
-      text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
-      text=text..string.format("Uncontrolled = %s\n", tostring(self:IsUncontrolled()))
-      text=text..string.format("Start Air    = %s\n", tostring(self:IsTakeoffAir()))
-      text=text..string.format("Start Cold   = %s\n", tostring(self:IsTakeoffCold()))
-      text=text..string.format("Start Hot    = %s\n", tostring(self:IsTakeoffHot()))
-      text=text..string.format("Start Rwy    = %s\n", tostring(self:IsTakeoffRunway()))
-      self:I(self.lid..text)
-    end
-
     --env.info("DCS Unit BOOM_AND_RECEPTACLE="..tostring(Unit.RefuelingSystem.BOOM_AND_RECEPTACLE))
     --env.info("DCS Unit PROBE_AND_DROGUE="..tostring(Unit.RefuelingSystem.PROBE_AND_DROGUE))
 
     -- Init done.
     self.groupinitialized=true
-
+    
+  else
+    self:E(self.lid.."ERROR: no unit in _InigGroup!")
   end
 
   return self
-end
-
---- Add an element to the flight group.
--- @param #FLIGHTGROUP self
--- @param #string unitname Name of unit.
--- @return Ops.OpsGroup#OPSGROUP.Element The element or nil.
-function FLIGHTGROUP:AddElementByName(unitname)
-
-  local unit=UNIT:FindByName(unitname)
-
-  if unit then
-
-    local element={} --Ops.OpsGroup#OPSGROUP.Element
-
-    element.name=unitname
-    element.status=OPSGROUP.ElementStatus.INUTERO
-    element.unit=unit
-    element.group=unit:GetGroup()
-
-
-    -- TODO: this is wrong when grouping is used!
-    local unittemplate=element.unit:GetTemplate()
-
-    element.modex=unittemplate.onboard_num
-    element.skill=unittemplate.skill
-    element.payload=unittemplate.payload
-    element.pylons=unittemplate.payload and unittemplate.payload.pylons or nil --element.unit:GetTemplatePylons()
-    element.fuelmass0=unittemplate.payload and unittemplate.payload.fuel or 0 --element.unit:GetTemplatePayload().fuel
-    element.fuelmass=element.fuelmass0
-    element.fuelrel=element.unit:GetFuel()
-    element.category=element.unit:GetUnitCategory()
-    element.categoryname=element.unit:GetCategoryName()
-    element.callsign=element.unit:GetCallsign()
-    element.size=element.unit:GetObjectSize()
-
-    if element.skill=="Client" or element.skill=="Player" then
-      element.ai=false
-      element.client=CLIENT:FindByName(unitname)
-    else
-      element.ai=true
-    end
-
-    -- Debug text.
-    local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f (%d), category=%d, categoryname=%s, callsign=%s, ai=%s",
-    element.name, element.status, element.skill, element.modex, element.fuelmass, element.fuelrel*100, element.category, element.categoryname, element.callsign, tostring(element.ai))
-    self:T(self.lid..text)
-
-    -- Add element to table.
-    table.insert(self.elements, element)
-
-    if unit:IsAlive() then
-      self:ElementSpawned(element)
-    end
-
-    return element
-  end
-
-  return nil
 end
 
 

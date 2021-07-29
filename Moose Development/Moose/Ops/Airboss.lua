@@ -6118,6 +6118,11 @@ function AIRBOSS:_ScanCarrierZone()
 
     -- Get flight group if possible.
     local knownflight=self:_GetFlightFromGroupInQueue(group, self.flights)
+    
+        -- Unknown new AI flight. Create a new flight group.
+    if not knownflight and not self:_IsHuman(group) then
+      knownflight=self:_CreateFlightGroup(group)
+    end
 
     -- Get aircraft type name.
     local actype=group:GetTypeName()
@@ -6175,10 +6180,7 @@ function AIRBOSS:_ScanCarrierZone()
 
     else
 
-      -- Unknown new AI flight. Create a new flight group.
-      if not self:_IsHuman(group) then
-        self:_CreateFlightGroup(group)
-      end
+
 
     end
 

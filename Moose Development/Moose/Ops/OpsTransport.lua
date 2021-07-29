@@ -849,8 +849,8 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
         local carrier=cargo.opsgroup:_GetMyCarrierElement()
         local name=carrier and carrier.name or "none"
         local cstate=carrier and carrier.status or "N/A"
-        text=text..string.format("\n- %s: %s [%s], weight=%d kg, carrier=%s [%s], delivered=%s", 
-        cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name, cstate, tostring(cargo.delivered))
+        text=text..string.format("\n- %s: %s [%s], weight=%d kg, carrier=%s [%s], delivered=%s [UID=%s]", 
+        cargo.opsgroup:GetName(), cargo.opsgroup.cargoStatus:upper(), cargo.opsgroup:GetState(), cargo.opsgroup:GetWeightTotal(), name, cstate, tostring(cargo.delivered), tostring(cargo.opsgroup.cargoTransportUID))
       end
       
       text=text..string.format("\nCarriers:")

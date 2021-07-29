@@ -620,6 +620,7 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "Unloading",        "*")           -- Carrier is unloading the cargo.
   self:AddTransition("*",             "Unload",           "*")           -- Carrier unload a cargo group.
   self:AddTransition("*",             "Unloaded",         "*")           -- Carrier unloaded all its current cargo.
+  self:AddTransition("*",             "UnloadingDone",    "*")           -- Carrier is unloading the cargo.
   self:AddTransition("*",             "Delivered",        "*")           -- Carrier delivered ALL cargo of the transport assignment.
 
   ------------------------
@@ -1883,13 +1884,33 @@ end
 
 --- Check if the group is **not** cargo.
 -- @param #OPSGROUP self
--- @param #boolean CheckTransport If true or nil, also check if cargo is associated with a transport assignment. If not, we consider it not cargo.
+-- @param #boolean CheckTransport If `true` or `nil`, also check if cargo is associated with a transport assignment. If not, we consider it not cargo.
 -- @return #boolean If true, group is *not* cargo.
 function OPSGROUP:IsNotCargo(CheckTransport)
   local notcargo=self.cargoStatus==OPSGROUP.CargoStatus.NOTCARGO
-  if self.cargoTransportUID==nil then
-    --notcargo=true
+  
+  if notcargo then
+    -- Not cargo.
+    return true
+  else
+    -- Is cargo (e.g. loaded or boarding)
+    
+    if CheckTransport then
+      -- Check if transport UID was set.
+      if self.cargoTransportUID==nil then
+        return true
+      else
+        -- Some transport UID was assigned.
+        return false
+      end
+    else
+      -- Is cargo.
+      return false
+    end
+  
   end
+  
+  
   return notcargo
 end
 
@@ -2397,9 +2418,13 @@ function OPSGROUP:OnEventBirth(EventData)
 
     -- Get element.
     local element=self:GetElementByName(unitname)
+    
+    if element then
 
-    -- Set element to spawned state.
-    self:ElementSpawned(element)
+      -- Set element to spawned state.
+      self:ElementSpawned(element)
+      
+    end
     
   end
   
@@ -2412,7 +2437,7 @@ function OPSGROUP:OnEventDead(EventData)
 
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    self:T(self.lid..string.format("EVENT: Unit %s dead!", EventData.IniUnitName))
+    self:T2(self.lid..string.format("EVENT: Unit %s dead!", EventData.IniUnitName))
 
     local unit=EventData.IniUnit
     local group=EventData.IniGroup
@@ -2421,7 +2446,7 @@ function OPSGROUP:OnEventDead(EventData)
     -- Get element.
     local element=self:GetElementByName(unitname)
 
-    if element then
+    if element and element.status~=OPSGROUP.ElementStatus.DEAD then
       self:T(self.lid..string.format("EVENT: Element %s dead ==> destroyed", element.name))
       self:ElementDestroyed(element)
     end
@@ -2437,6 +2462,8 @@ function OPSGROUP:OnEventRemoveUnit(EventData)
 
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    self:T2(self.lid..string.format("EVENT: Unit %s removed!", EventData.IniUnitName))
+    
     local unit=EventData.IniUnit
     local group=EventData.IniGroup
     local unitname=EventData.IniUnitName
@@ -2444,7 +2471,7 @@ function OPSGROUP:OnEventRemoveUnit(EventData)
     -- Get element.
     local element=self:GetElementByName(unitname)
 
-    if element then
+    if element and element.status~=OPSGROUP.ElementStatus.DEAD then
       self:T(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
       self:ElementDead(element)
     end
@@ -3026,7 +3053,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
     -- If task is scheduled (not waypoint) set task.
     if Task.type==OPSGROUP.TaskType.SCHEDULED or Task.ismission then
-
+    
       local DCStasks={}
       if Task.dcstask.id=='ComboTask' then
         -- Loop over all combo tasks.
@@ -3053,7 +3080,12 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
       local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
 
       -- Set task for group.
-      self:SetTask(TaskFinal)
+      -- NOTE: I am pushing the task instead of setting it as it seems to keep the mission task alive.
+      --       There were issues that flights did not proceed to a later waypoint because the task did not finish until the fired missiles
+      --       impacted (took rather long). Then the flight flew to the nearest airbase and one lost completely the control over the group.
+      self:PushTask(TaskFinal)
+      --self:SetTask(TaskFinal)
+      
       
     elseif Task.type==OPSGROUP.TaskType.WAYPOINT then
       -- Waypoint tasks are executed elsewhere!
@@ -3780,6 +3812,8 @@ function OPSGROUP:RouteToMission(mission, delay)
     if self.isGround and mission.optionFormation then
       formation=mission.optionFormation
     end
+    
+    --waypointcoord:MarkToAll(string.format("Mission %s alt=%d m", mission:GetName(), waypointcoord.y))
 
     -- Add waypoint.
     local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, formation, false)
@@ -3793,6 +3827,11 @@ function OPSGROUP:RouteToMission(mission, delay)
 
     -- Set waypoint index.
     mission:SetGroupWaypointIndex(self, waypoint.uid)
+    
+    local egress=mission:GetMissionEgressCoord()
+    if egress then
+      local waypoint=self:AddWaypoint(egress, SpeedToMission, nil, formation, false)
+    end
 
     ---
     -- Mission Specific Settings
@@ -4038,6 +4077,7 @@ function OPSGROUP:_SetWaypointTasks(Waypoint)
   
   -- Check if there is mission task
   if missiontask then
+    self:T(self.lid.."Executing mission task")
     self:TaskExecute(missiontask)
     return 1
   end
@@ -5218,8 +5258,8 @@ function OPSGROUP:_CheckCargoTransport()
 
       -- Unloading finished ==> pickup next batch or call it a day.
       if delivered then
-        self:T(self.lid.."Unloading finished ==> Unloaded")
-        self:Unloaded()
+        self:T(self.lid.."Unloading finished ==> UnloadingDone")
+        self:UnloadingDone()
       else
         self:Unloading()
       end
@@ -5954,7 +5994,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
         Coordinate:SetAltitude(200)
-        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=true
+        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=1
 
       else
         self:E(self.lid.."ERROR: Carrier aircraft cannot land in Pickup zone! Specify a ZONE_AIRBASE as pickup zone")
@@ -5982,7 +6022,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
       end
 
       -- NAVYGROUP
-      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=true
+      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=1
 
       -- Give cruise command.
       self:__Cruise(-2)
@@ -6010,7 +6050,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
       end
 
       -- ARMYGROUP
-      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=true
+      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=1
       
       self:__Cruise(-2)
 
@@ -6045,7 +6085,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
 
       -- Check that group is NOT cargo and NOT acting as carrier already
       -- TODO: Need a better :IsBusy() function or :IsReadyForMission() :IsReadyForBoarding() :IsReadyForTransport()
-      if cargo.opsgroup:IsNotCargo() and not (cargo.opsgroup:IsPickingup() or cargo.opsgroup:IsLoading() or cargo.opsgroup:IsTransporting() or cargo.opsgroup:IsUnloading()) then
+      if cargo.opsgroup:IsNotCargo(true) and not (cargo.opsgroup:IsPickingup() or cargo.opsgroup:IsLoading() or cargo.opsgroup:IsTransporting() or cargo.opsgroup:IsUnloading()) then
 
         -- Check if cargo is in embark/pickup zone.
         local inzone=self.cargoTransport.embarkzone:IsCoordinateInZone(cargo.opsgroup:GetCoordinate())
@@ -6333,7 +6373,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
         Coordinate:SetAltitude(200)
-        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=true
+        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=1
 
       else
         self:E(self.lid.."ERROR: Carrier aircraft cannot land in Deploy zone! Specify a ZONE_AIRBASE as deploy zone")
@@ -6356,7 +6396,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
       end
 
       -- ARMYGROUP
-      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid) ; waypoint.detour=true
+      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid) ; waypoint.detour=1
 
       -- Give cruise command.
       self:Cruise()
@@ -6379,7 +6419,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
       end
 
       -- NAVYGROUP
-      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=true
+      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=1
 
       -- Give cruise command.
       self:Cruise()
@@ -6612,6 +6652,9 @@ function OPSGROUP:onafterUnload(From, Event, To, OpsGroup, Coordinate, Activated
 
   -- Trigger "Disembarked" event.
   OpsGroup:Disembarked(OpsGroup:_GetMyCarrierGroup(), OpsGroup:_GetMyCarrierElement())
+  
+  -- Trigger "Unloaded" event.
+  self:Unloaded(OpsGroup)
 
   -- Remove my carrier.
   OpsGroup:_RemoveMyCarrier()
@@ -6623,10 +6666,21 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function OPSGROUP:onafterUnloaded(From, Event, To)
+-- @param #OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
+function OPSGROUP:onafterUnloaded(From, Event, To, OpsGroupCargo)
+  self:I(self.lid..string.format("Unloaded OPSGROUP %s", OpsGroupCargo:GetName()))
+end
+
+
+--- On after "UnloadingDone" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterUnloadingDone(From, Event, To)
 
   -- Debug info
-  self:T(self.lid.."Cargo unloaded..")
+  self:T(self.lid.."Cargo unloading done..")
 
   -- Cancel landedAt task.
   if self:IsFlightgroup() and self:IsLandedAt() then
@@ -6777,10 +6831,10 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       self:ClearWaypoints(self.currentwp+1)
 
       if self.isArmygroup then
-        local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=0
+        local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=1
         self:Cruise()
       else
-        local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=0
+        local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=1
         self:Cruise()
       end
 
@@ -7216,7 +7270,7 @@ function OPSGROUP:_CheckAmmoStatus()
 
     -- Guns.
     if self.outofGuns and ammo.Guns>0 then
-      self.outoffGuns=false
+      self.outofGuns=false
     end
     if ammo.Guns==0 and self.ammo.Guns>0 and not self.outofGuns then
       self.outofGuns=true
@@ -7225,7 +7279,7 @@ function OPSGROUP:_CheckAmmoStatus()
 
     -- Rockets.
     if self.outofRockets and ammo.Rockets>0 then
-      self.outoffRockets=false
+      self.outofRockets=false
     end
     if ammo.Rockets==0 and self.ammo.Rockets>0 and not self.outofRockets then
       self.outofRockets=true
@@ -7234,21 +7288,49 @@ function OPSGROUP:_CheckAmmoStatus()
 
     -- Bombs.
     if self.outofBombs and ammo.Bombs>0 then
-      self.outoffBombs=false
+      self.outofBombs=false
     end
     if ammo.Bombs==0 and self.ammo.Bombs>0 and not self.outofBombs then
       self.outofBombs=true
       self:OutOfBombs()
     end
 
-    -- Missiles.
+    -- Missiles (All).
     if self.outofMissiles and ammo.Missiles>0 then
-      self.outoffMissiles=false
+      self.outofMissiles=false
     end
     if ammo.Missiles==0 and self.ammo.Missiles>0 and not self.outofMissiles then
       self.outofMissiles=true
       self:OutOfMissiles()
     end
+
+    -- Missiles AA.
+    if self.outofMissilesAA and ammo.MissilesAA>0 then
+      self.outofMissilesAA=false
+    end    
+    if ammo.MissilesAA and self.ammo.MissilesAA>0 and not self.outofMissilesAA then
+      self.outofMissilesAA=true
+      self:OutOfMissilesAA()    
+    end
+    
+    -- Missiles AG.
+    if self.outofMissilesAG and ammo.MissilesAG>0 then
+      self.outofMissilesAG=false
+    end    
+    if ammo.MissilesAG and self.ammo.MissilesAG>0 and not self.outofMissilesAG then
+      self.outofMissilesAG=true
+      self:OutOfMissilesAG()    
+    end    
+
+    -- Missiles AS.
+    if self.outofMissilesAS and ammo.MissilesAS>0 then
+      self.outofMissilesAS=false
+    end    
+    if ammo.MissilesAS and self.ammo.MissilesAS>0 and not self.outofMissilesAS then
+      self.outofMissilesAS=true
+      self:OutOfMissilesAS()    
+    end    
+
 
     -- Check if group is engaging.
     if self:IsEngaging() and ammo.Total==0 then
@@ -7725,7 +7807,7 @@ function OPSGROUP._TaskDone(group, opsgroup, task)
 
   -- Debug message.
   local text=string.format("_TaskDone %s", task.description)
-  opsgroup:T3(opsgroup.lid..text)
+  opsgroup:T(opsgroup.lid..text)
 
   -- Set current task to nil so that the next in line can be executed.
   if opsgroup then
@@ -9352,7 +9434,8 @@ function OPSGROUP:_AddElementByName(unitname)
 
     -- Trigger spawned event if alive.
     if unit:IsAlive() then
-      self:ElementSpawned(element)
+      -- This needs to be slightly delayed (or moved elsewhere) or the first element will always trigger the group spawned event as it is not known that more elements are in the group.
+      self:__ElementSpawned(0.05, element)
     end
 
     return element

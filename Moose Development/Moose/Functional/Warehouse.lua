@@ -4882,6 +4882,13 @@ function WAREHOUSE:onbeforeArrived(From, Event, To, group)
   local asset=self:FindAssetInDB(group)
 
   if asset then
+
+    if asset.flightgroup and not asset.arrived then
+      --env.info("FF asset has a flightgroup. arrival will be handled there!")
+      asset.arrived=true
+      return false
+    end  
+  
     if asset.arrived==true then
       -- Asset already arrived (e.g. if multiple units trigger the event via landing).
       return false
@@ -4889,6 +4896,7 @@ function WAREHOUSE:onbeforeArrived(From, Event, To, group)
       asset.arrived=true  --ensure this is not called again from the same asset group.
       return true
     end
+    
   end
 
 end
@@ -6042,7 +6050,7 @@ function WAREHOUSE:_RouteGround(group, request)
     end
 
     for n,wp in ipairs(Waypoints) do
-      env.info(n)
+      --env.info(n)
       local tf=self:_SimpleTaskFunctionWP("warehouse:_PassingWaypoint",group, n, #Waypoints)
       group:SetTaskWaypoint(wp, tf)
     end
@@ -9046,11 +9054,11 @@ function WAREHOUSE:_GetFlightplan(asset, departure, destination)
 
   -- Hot start.
   if asset.takeoffType and asset.takeoffType==COORDINATE.WaypointType.TakeOffParkingHot then
-    env.info("FF hot")
+    --env.info("FF hot")
     _type=COORDINATE.WaypointType.TakeOffParkingHot
     _action=COORDINATE.WaypointAction.FromParkingAreaHot
   else
-    env.info("FF cold")      
+    --env.info("FF cold")      
   end
 
 
