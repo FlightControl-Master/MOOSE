@@ -232,7 +232,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.9r1"
+CSAR.version="0.1.10r1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1487,10 +1487,17 @@ function CSAR:_GetClosestDownedPilot(_heli)
   local _shortestDistance = -1
   local _distance = 0
   local _closestGroupInfo = nil
-  local _heliCoord = _heli:GetCoordinate()
+  local _heliCoord = _heli:GetCoordinate() or _heli:GetCoordinate()
+  
+  if _heliCoord == nil then 
+    self:E("****Error obtaining coordinate!")
+    return nil 
+  end
   
   local DownedPilotsTable = self.downedPilots
-  for _, _groupInfo in pairs(DownedPilotsTable) do
+  
+  for _, _groupInfo in UTILS.spairs(DownedPilotsTable) do 
+  --for _, _groupInfo in pairs(DownedPilotsTable) do
       local _woundedName = _groupInfo.name
       local _tempWounded = _groupInfo.group
       
@@ -1732,9 +1739,21 @@ end
 function CSAR:_GetDistance(_point1, _point2)
   self:T(self.lid .. " _GetDistance")
   if _point1 and _point2 then
-    local distance = _point1:DistanceFromPointVec2(_point2)
-   return distance
+    local distance1 = _point1:Get2DDistance(_point2)
+    local distance2 = _point1:DistanceFromPointVec2(_point2)
+    self:I({dist1=distance1, dist2=distance2})
+    if distance1 and type(distance1) == "number" then
+      return distance1
+    elseif distance2 and type(distance2) == "number" then
+      return distance2
+    else
+      self:E("*****Cannot calculate distance!")
+      self:E({_point1,_point2})
+      return -1
+    end
   else
+    self:E("******Cannot calculate distance!")
+    self:E({_point1,_point2})
     return -1
   end
 end
@@ -1900,19 +1919,19 @@ end
 -- @param #CSAR self
 function CSAR:_CheckDownedPilotTable()
   local pilots = self.downedPilots
-  for _,_entry in pairs (pilots) do
-    self:T("Checking for " .. _entry.name)
-    self:T({entry=_entry})
-    local group = _entry.group    
-    if not group:IsAlive() then
-      self:T("Group is dead")
-      if _entry.alive == true then
-        self:T("Switching .alive to false")
+  local npilots = {}
+  
+  for _ind,_entry in pairs(pilots) do
+    local _group = _entry.group
+    if _group:IsAlive() then
+      npilots[_ind] = _entry      
+    else
+      if _entry.alive then
         self:__KIA(1,_entry.desc)
-        self:_RemoveNameFromDownedPilots(_entry.name,true)
       end
     end
   end
+  self.downedPilots = npilots
   return self
 end
 
