@@ -232,7 +232,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.10r1"
+CSAR.version="0.1.10r2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -342,6 +342,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.loadtimemax = 135 -- seconds
   self.radioSound = "beacon.ogg" -- the name of the sound file to use for the Pilot radio beacons. If this isnt added to the mission BEACONS WONT WORK!
   self.allowFARPRescue = true --allows pilot to be rescued by landing at a FARP or Airbase
+  self.FARPRescueDistance = 250 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
   self.max_units = 6 --max number of pilots that can be carried
   self.useprefix = true  -- Use the Prefixed defined below, Requires Unit have the Prefix defined below 
   self.csarPrefix = { "helicargo", "MEDEVAC"} -- prefixes used for useprefix=true - DON\'T use # in names!
@@ -875,11 +876,14 @@ function CSAR:_EventHandler(EventData)
           end
    
           if _place:GetCoalition() == self.coalition or _place:GetCoalition() == coalition.side.NEUTRAL then
+            self:_ScheduledSARFlight(_event.IniUnitName,_event.IniGroupName)
+            --[[
             if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_event.IniUnitName) then
               self:_DisplayMessageToSAR(_unit, "Open the door to let me out!", self.messageTime, true)
             else
               self:_RescuePilots(_unit)
             end  
+            --]]
           else
               self:T(string.format("Airfield %d, Unit %d", _place:GetCoalition(), _unit:GetCoalition()))
               end
@@ -1321,8 +1325,8 @@ function CSAR:_ScheduledSARFlight(heliname,groupname)
       return
   end
 
-  if _dist < 200 and _heliUnit:InAir() == false then
-    if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(heliname) then
+  if _dist < self.FARPRescueDistance and _heliUnit:InAir() == false then
+    if self.pilotmustopendoors and self:_IsLoadingDoorOpen(heliname) == false then
       self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me out!", self.messageTime, true)
     else
       self:_RescuePilots(_heliUnit)
