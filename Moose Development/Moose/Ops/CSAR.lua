@@ -69,6 +69,7 @@
 --
 --         self.allowDownedPilotCAcontrol = false -- Set to false if you don\'t want to allow control by Combined Arms.
 --         self.allowFARPRescue = true -- allows pilots to be rescued by landing at a FARP or Airbase. Else MASH only!
+--         self.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
 --         self.autosmoke = false -- automatically smoke a downed pilot\'s location when a heli is near.
 --         self.autosmokedistance = 1000 -- distance for autosmoke
 --         self.coordtype = 1 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
@@ -342,7 +343,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.loadtimemax = 135 -- seconds
   self.radioSound = "beacon.ogg" -- the name of the sound file to use for the Pilot radio beacons. If this isnt added to the mission BEACONS WONT WORK!
   self.allowFARPRescue = true --allows pilot to be rescued by landing at a FARP or Airbase
-  self.FARPRescueDistance = 250 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
+  self.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
   self.max_units = 6 --max number of pilots that can be carried
   self.useprefix = true  -- Use the Prefixed defined below, Requires Unit have the Prefix defined below 
   self.csarPrefix = { "helicargo", "MEDEVAC"} -- prefixes used for useprefix=true - DON\'T use # in names!
@@ -876,7 +877,7 @@ function CSAR:_EventHandler(EventData)
           end
    
           if _place:GetCoalition() == self.coalition or _place:GetCoalition() == coalition.side.NEUTRAL then
-            self:_ScheduledSARFlight(_event.IniUnitName,_event.IniGroupName)
+            self:_ScheduledSARFlight(_event.IniUnitName,_event.IniGroupName,true)
             --[[
             if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_event.IniUnitName) then
               self:_DisplayMessageToSAR(_unit, "Open the door to let me out!", self.messageTime, true)
@@ -1302,7 +1303,8 @@ end
 -- @param #CSAR self
 -- @param #string heliname Heli name
 -- @param #string groupname Group name
-function CSAR:_ScheduledSARFlight(heliname,groupname)
+-- @param #boolean isairport If true, EVENT.Landing took place at an airport or FARP
+function CSAR:_ScheduledSARFlight(heliname,groupname, isairport)
   self:T(self.lid .. " _ScheduledSARFlight")
   self:T({heliname,groupname})
   local _heliUnit = self:_GetSARHeli(heliname)
@@ -1325,7 +1327,7 @@ function CSAR:_ScheduledSARFlight(heliname,groupname)
       return
   end
 
-  if _dist < self.FARPRescueDistance and _heliUnit:InAir() == false then
+  if ( _dist < self.FARPRescueDistance or isairport ) and _heliUnit:InAir() == false then
     if self.pilotmustopendoors and self:_IsLoadingDoorOpen(heliname) == false then
       self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me out!", self.messageTime, true)
     else
