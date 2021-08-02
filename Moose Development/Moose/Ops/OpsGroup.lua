@@ -2932,41 +2932,40 @@ function OPSGROUP:onbeforeTaskExecute(From, Event, To, Task)
   -- Get mission of this task (if any).
   local Mission=self:GetMissionByTaskID(Task.id)
   
-  if Mission then
+  if Mission and (Mission.Tpush or #Mission.conditionPush>0) then
+    
+    if Mission:IsReadyToPush() then
 
-    if Mission.Tpush then
+      -- Not waiting any more.
+      self.Twaiting=nil
+      self.dTwait=nil
     
-      local Tnow=timer.getAbsTime()
+    else
       
-      -- Time to push
-      local dt=Mission.Tpush-Tnow
-      
-      -- Push time not reached.
-      if Tnow<Mission.Tpush then
-      
-        if self:IsWaiting() then
-          -- Group is already waiting
-        else
-          self:Wait()
-        end
-        
-        -- Debug info.
-        self:T(self.lid..string.format("Mission %s task execute suspended for %d seconds", Mission.name, dt))
-        
-        -- Reexecute task.
-        self:__TaskExecute(-dt, Task)
-        
-        return false        
+      ---
+      -- Not ready to push yet
+      ---
+
+      if self:IsWaiting() then
+        -- Group is already waiting
       else
-        -- Not waiting any more.
-        self.Twaiting=nil
-        self.dTwait=nil
+        self:Wait()
       end
-    
+
+      -- Time to for the next try.
+      local dt=Mission.Tpush and Mission.Tpush-timer.getAbsTime() or 20
+
+      
+      -- Debug info.
+      self:T(self.lid..string.format("Mission %s task execute suspended for %d seconds", Mission.name, dt))
+      
+      -- Reexecute task.
+      self:__TaskExecute(-dt, Task)
+      
+      -- Deny transition.
+      return false      
     end
     
-  else
-    --env.info("FF no mission task execute")  
   end
 
   return true

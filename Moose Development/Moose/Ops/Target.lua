@@ -128,7 +128,7 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.3.1"
+TARGET.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -231,12 +231,24 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create target data from a given object.
+--- Create target data from a given object. Valid objects are:
+-- 
+-- * GROUP
+-- * UNIT
+-- * STATIC
+-- * AIRBASE
+-- * COORDINATE
+-- * ZONE
+-- * SET_GROUP
+-- * SET_UNIT
+-- * SET_STATIC
+-- * SET_OPSGROUP
+-- 
 -- @param #TARGET self
 -- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, AIRBASE or COORDINATE.
 function TARGET:AddObject(Object)
     
-  if Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") then
+  if Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") or Object:IsInstanceOf("SET_STATIC") or Object:IsInstanceOf("SET_OPSGROUP") then
 
     ---
     -- Sets
@@ -247,14 +259,18 @@ function TARGET:AddObject(Object)
     for _,object in pairs(set.Set) do
       self:AddObject(object)
     end
-
+    
   else
   
     ---
     -- Groups, Units, Statics, Airbases, Coordinates
     ---
   
-    self:_AddObject(Object)
+    if Object:IsInstanceOf("OPSGROUP") then
+      self:_AddObject(Object:GetGroup()) -- We add the MOOSE GROUP object not the OPSGROUP object.
+    else
+      self:_AddObject(Object)
+    end
     
   end
 

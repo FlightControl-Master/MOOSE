@@ -823,10 +823,10 @@ function FLIGHTGROUP:onbeforeStatus(From, Event, To)
 
       -- This one is dead.
       if isdead then
-        local text=string.format("Element %s is dead at t=%.3f! Maybe despawned without notice or landed at a too small airbase. Calling ElementDead in 60 sec to give other events a chance",
-        tostring(element.name), timer.getTime())
+        local text=string.format("Element %s is dead at t=%.3f but has status %s! Maybe despawned without notice or landed at a too small airbase. Calling ElementDead in 60 sec to give other events a chance",
+        tostring(element.name), timer.getTime(), tostring(element.status))
         self:E(self.lid..text)
-        --self:__ElementDead(60, element)
+        self:__ElementDead(60, element)
       end
 
     end
@@ -925,6 +925,8 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
       local unit=element.unit
       local fuel=unit:GetFuel() or 0
       local life=unit:GetLifeRelative() or 0
+      local lp=unit:GetLife()
+      local lp0=unit:GetLife0()
       local parking=element.parking and tostring(element.parking.TerminalID) or "X"
 
       -- Check if element is not dead and we missed an event.
@@ -936,8 +938,8 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
       local ammo=self:GetAmmoElement(element)
 
       -- Output text for element.
-      text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d (AA=%d, AG=%d, AS=%s), parking=%s",
-      i, name, status, fuel*100, life*100, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles, ammo.MissilesAA, ammo.MissilesAG, ammo.MissilesAS, parking)
+      text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f [%.1f/%.1f], guns=%d, rockets=%d, bombs=%d, missiles=%d (AA=%d, AG=%d, AS=%s), parking=%s",
+      i, name, status, fuel*100, life*100, lp, lp0, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles, ammo.MissilesAA, ammo.MissilesAG, ammo.MissilesAS, parking)
     end
     if #self.elements==0 then
       text=text.." none!"

@@ -155,7 +155,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.6.0"
+AIRWING.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -745,6 +745,11 @@ end
 -- @return #AIRWING.PatrolData Patrol point table.
 function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegLength, RefuelSystem)
 
+  -- Check if a zone was passed instead of a coordinate.
+  if Coordinate:IsInstanceOf("ZONE_BASE") then
+    Coordinate=Coordinate:GetCoordinate()
+  end
+
   local patrolpoint={}  --#AIRWING.PatrolData
   patrolpoint.type=Type or "Unknown"
   patrolpoint.coord=Coordinate or self:GetCoordinate():Translate(UTILS.NMToMeters(math.random(10, 15)), math.random(360))
@@ -994,7 +999,7 @@ function AIRWING:CheckTANKER()
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
-    if mission:IsNotOver() and mission.type==AUFTRAG.Type.TANKER then
+    if mission:IsNotOver() and mission.type==AUFTRAG.Type.TANKER and mission.patroldata then
       if mission.refuelSystem==Unit.RefuelingSystem.BOOM_AND_RECEPTACLE then
         Nboom=Nboom+1
       elseif mission.refuelSystem==Unit.RefuelingSystem.PROBE_AND_DROGUE then
@@ -1566,6 +1571,9 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
 
       -- Set takeoff type.
       asset.takeoffType=squad.takeoffType
+      
+      -- Set parking IDs.
+      asset.parkingIDs=squad.parkingIDs
 
       -- Create callsign and modex (needs to be after grouping).
       squad:GetCallsign(asset)
@@ -2027,6 +2035,23 @@ function AIRWING:CountAssets()
   for _,_squad in pairs(self.squadrons) do
     local squad=_squad --Ops.Squadron#SQUADRON
     N=N+#squad.assets
+  end
+
+  return N
+end
+
+
+--- Count total number of assets that are in the warehouse stock (not spawned).
+-- @param #AIRWING self
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @return #number Amount of asset groups in stock.
+function AIRWING:CountAssetsInStock(MissionTypes)
+
+  local N=0
+
+  for _,_squad in pairs(self.squadrons) do
+    local squad=_squad --Ops.Squadron#SQUADRON
+    N=N+squad:CountAssetsInStock(MissionTypes)
   end
 
   return N

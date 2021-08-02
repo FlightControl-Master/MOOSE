@@ -3601,36 +3601,39 @@ function AIRBOSS:_CheckAIStatus()
         -- Unit
         local unit=element.unit
 
-        -- Get lineup and distance to carrier.
-        local lineup=self:_Lineup(unit, true)
+        if unit and unit:IsAlive() then
 
-        local unitcoord=unit:GetCoord()
+          -- Get lineup and distance to carrier.
+          local lineup=self:_Lineup(unit, true)
 
-        local dist=unitcoord:Get2DDistance(self:GetCoord())
+          local unitcoord=unit:GetCoord()
 
-        -- Distance in NM.
-        local distance=UTILS.MetersToNM(dist)
+          local dist=unitcoord:Get2DDistance(self:GetCoord())
 
-        -- Altitude in ft.
-        local alt=UTILS.MetersToFeet(unitcoord.y)
+          -- Distance in NM.
+          local distance=UTILS.MetersToNM(dist)
 
-        -- Check if parameters are right and flight is in the groove.
-        if lineup<2 and distance<=0.75 and alt<500 and not element.ballcall then
+          -- Altitude in ft.
+          local alt=UTILS.MetersToFeet(unitcoord.y)
 
-          -- Paddles: Call the ball!
-          self:RadioTransmission(self.LSORadio, self.LSOCall.CALLTHEBALL, nil, nil, nil, true)
+          -- Check if parameters are right and flight is in the groove.
+          if lineup<2 and distance<=0.75 and alt<500 and not element.ballcall then
 
-          -- Pilot: "405, Hornet Ball, 3.2"
-          self:_LSOCallAircraftBall(element.onboard,self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)
+            -- Paddles: Call the ball!
+            self:RadioTransmission(self.LSORadio, self.LSOCall.CALLTHEBALL, nil, nil, nil, true)
 
-          -- Paddles: Roger ball after 0.5 seconds.
-          self:RadioTransmission(self.LSORadio, self.LSOCall.ROGERBALL, nil, nil, 0.5, true)
+            -- Pilot: "405, Hornet Ball, 3.2"
+            self:_LSOCallAircraftBall(element.onboard,self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)
 
-          -- Flight element called the ball.
-          element.ballcall=true
+            -- Paddles: Roger ball after 0.5 seconds.
+            self:RadioTransmission(self.LSORadio, self.LSOCall.ROGERBALL, nil, nil, 0.5, true)
 
-          -- This is for the whole flight. Maybe we need it.
-          flight.ballcall=true
+            -- Flight element called the ball.
+            element.ballcall=true
+
+            -- This is for the whole flight. Maybe we need it.
+            flight.ballcall=true
+          end
         end
 
       end

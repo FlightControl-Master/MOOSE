@@ -53,8 +53,9 @@
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
 -- @field #number Tover Mission abs. time stamp, when mission was over. 
 -- @field #table conditionStart Condition(s) that have to be true, before the mission will be started.
--- @field #table conditionSuccess If all stop conditions are true, the mission is cancelled.
--- @field #table conditionFailure If all stop conditions are true, the mission is cancelled.
+-- @field #table conditionSuccess If all conditions are true, the mission is cancelled.
+-- @field #table conditionFailure If all conditions are true, the mission is cancelled.
+-- @field #table conditionPush If all conditions are true, the mission is executed. Before, the group(s) wait at the mission execution waypoint.
 -- 
 -- @field #number orbitSpeed Orbit speed in m/s.
 -- @field #number orbitAltitude Orbit altitude in meters.
@@ -288,6 +289,7 @@ AUFTRAG = {
   conditionStart     =    {},
   conditionSuccess   =    {},
   conditionFailure   =    {},
+  conditionPush      =    {},
 }
 
 --- Global mission counter.
@@ -445,7 +447,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.7.0"
+AUFTRAG.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1825,6 +1827,26 @@ function AUFTRAG:AddConditionFailure(ConditionFunction, ...)
   return self
 end
 
+--- Add push condition.
+-- @param #AUFTRAG self
+-- @param #function ConditionFunction If this function returns `true`, the mission is executed.
+-- @param ... Condition function arguments if any.
+-- @return #AUFTRAG self
+function AUFTRAG:AddConditionPush(ConditionFunction, ...)
+  
+  local condition={} --#AUFTRAG.Condition
+  
+  condition.func=ConditionFunction
+  condition.arg={}
+  if arg then
+    condition.arg=arg
+  end
+  
+  table.insert(self.conditionPush, condition)
+  
+  return self
+end
+
 
 --- Assign airwing squadron(s) to the mission. Only these squads will be considered for the job.
 -- @param #AUFTRAG self
@@ -1983,12 +2005,12 @@ function AUFTRAG:IsReadyToGo()
   local Tnow=timer.getAbsTime()
 
   -- Start time did not pass yet.
-  if self.Tstart and Tnow<self.Tstart or false then
+  if self.Tstart and Tnow<self.Tstart then
     return false
   end
   
   -- Stop time already passed.
-  if self.Tstop and Tnow>self.Tstop or false then
+  if self.Tstop and Tnow>self.Tstop then
     return false
   end
   
@@ -2014,7 +2036,7 @@ function AUFTRAG:IsReadyToCancel()
   local Tnow=timer.getAbsTime()
 
   -- Stop time already passed.
-  if self.Tstop and Tnow>self.Tstop then
+  if self.Tstop and Tnow>=self.Tstop then
     return true
   end
 
@@ -2036,6 +2058,26 @@ function AUFTRAG:IsReadyToCancel()
   
   -- No criterion matched.
   return false
+end
+
+--- Check if mission is ready to be pushed.
+-- * Mission push time already passed.
+-- * All push conditions are true.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission groups can push.
+function AUFTRAG:IsReadyToPush()
+  
+  local Tnow=timer.getAbsTime()
+
+  -- Push time passed?
+  if self.Tpush and Tnow<self.Tpush then
+    return false
+  end
+
+  -- Evaluate push condition(s) if any. All need to be true.
+  local push=self:EvalConditionsAll(self.conditionPush)
+  
+  return push
 end
 
 --- Check if all given condition are true.
