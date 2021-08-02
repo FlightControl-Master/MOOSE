@@ -83,6 +83,7 @@ Ops/AirWing.lua
 Ops/Intelligence.lua
 Ops/WingCommander.lua
 Ops/ChiefOfStaff.lua
+Ops/FlightControl.lua
 Ops/CSAR.lua
 Ops/CTLD.lua
 
