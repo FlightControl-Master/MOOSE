@@ -26,13 +26,15 @@
 -- ===
 --
 -- ## Youtube Videos:
- --
+--
 --    * [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg)
 --    * [MOOSE - On the Range - Demonstration Video](https://www.youtube.com/watch?v=kIXcxNB9_3M)
 -- 
 -- ===
 --
--- ## Missions: Example missions will be added later.
+-- ## Missions:
+--
+--    * [MAR - On the Range - MOOSE - SC](https://www.digitalcombatsimulator.com/en/files/3317765/) by shagrat
 -- 
 -- ===
 --
