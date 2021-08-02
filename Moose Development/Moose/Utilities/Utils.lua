@@ -1535,8 +1535,8 @@ function UTILS.IsLoadingDoorOpen( unit_name )
   if unit ~= nil then
       local type_name = unit:getTypeName()
       
-      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
-          BASE:T(unit_name .. " Cargo doors are open or cargo door not present")
+     if type_name == "Mi-8MT" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
+        BASE:T(unit_name .. " Cargo doors are open or cargo door not present")
           ret_val =  true
       end
       
