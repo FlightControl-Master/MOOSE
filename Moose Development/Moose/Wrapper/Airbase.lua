@@ -473,6 +473,13 @@ AIRBASE.MarianaIslands={
 -- @field #boolean Free This spot is currently free, i.e. there is no alive aircraft on it at the present moment.
 -- @field #number TerminalID0 Unknown what this means. If you know, please tell us!
 -- @field #number DistToRwy Distance to runway in meters. Currently bugged and giving the same number as the TerminalID.
+-- @field #string AirbaseName Name of the airbase.
+-- @field #number MarkerID Numerical ID of marker placed at parking spot.
+-- @field Wrapper.Marker#MARKER Marker The marker on the F10 map.
+-- @field #string ClientSpot Client unit sitting at this spot or *nil*.
+-- @field #string Status Status of spot e.g. AIRBASE.SpotStatus.FREE.
+-- @field #string OccupiedBy Name of the aircraft occupying the spot or "unknown". Can be *nil* if spot is not occupied.
+-- @field #string ReservedBy Name of the aircraft for which this spot is reserved. Can be *nil* if spot is not reserved.
 
 --- Terminal Types of parking spots. See also https://wiki.hoggitworld.com/view/DCS_func_getParking
 --
@@ -505,6 +512,17 @@ AIRBASE.TerminalType = {
   OpenMedOrBig=176,
   HelicopterUsable=216,
   FighterAircraft=244,
+}
+
+--- Status of a parking spot.
+-- @type AIRBASE.SpotStatus
+-- @field #string FREE Spot is free.
+-- @field #string OCCUPIED Spot is occupied.
+-- @field #string RESERVED Spot is reserved.
+AIRBASE.SpotStatus = {
+  FREE="Free",
+  OCCUPIED="Occupied",
+  RESERVED="Reserved",
 }
 
 --- Runway data.
@@ -1029,6 +1047,8 @@ function AIRBASE:GetParkingSpotsTable(termtype)
 
         spot.Free=_isfree(_spot) -- updated
         spot.TOAC=_spot.TO_AC    -- updated
+        spot.AirbaseName=self.AirbaseName
+        spot.ClientSpot=nil  --TODO
 
         table.insert(spots, spot)
 
@@ -1065,6 +1085,8 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
 
         spot.Free=true -- updated
         spot.TOAC=_spot.TO_AC    -- updated
+        spot.AirbaseName=self.AirbaseName
+        spot.ClientSpot=nil  --TODO
 
         table.insert(freespots, spot)
 

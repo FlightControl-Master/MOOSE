@@ -1481,7 +1481,7 @@ end
 function FLIGHTCONTROL:_PlayerRequestParking(groupname)
 
   -- Get flight group.
-  local flight=_DATABASE:GetFlightGroup(groupname)
+  local flight=_DATABASE:GetOpsGroup(groupname)
   
   if flight then
   
@@ -1535,7 +1535,7 @@ end
 function FLIGHTCONTROL:_PlayerRequestInfoATIS(groupname)
 
   -- Get flight group.
-  local flight=_DATABASE:GetFlightGroup(groupname)
+  local flight=_DATABASE:GetOpsGroup(groupname)
   
   if flight then
   
@@ -1725,7 +1725,7 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
   MESSAGE:New("Request taxi to runway", 5):ToAll()
   
     
-  local flight=_DATABASE:GetFlightGroup(groupname)
+  local flight=_DATABASE:GetOpsGroup(groupname)
   
   if flight then
     
@@ -1840,7 +1840,7 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   self:I(self.lid..string.format("Creating new flight for group %s of aircraft type %s.", group:GetName(), group:GetTypeName()))
   
   -- Get flightgroup from data base.
-  local flight=_DATABASE:GetFlightGroup(group:GetName())
+  local flight=_DATABASE:GetOpsGroup(group:GetName())
   
   -- If it does not exist yet, create one.
   if not flight then
