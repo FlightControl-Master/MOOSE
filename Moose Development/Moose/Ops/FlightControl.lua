@@ -590,7 +590,7 @@ function FLIGHTCONTROL:_CheckQueues()
     
           -- Give AI the landing signal.
           -- TODO: Humans have to confirm via F10 menu.
-          if flight.ai then
+          if flight.isAI then
             self:_LandAI(flight, parking)
           end
         
@@ -612,7 +612,7 @@ function FLIGHTCONTROL:_CheckQueues()
       if ntakeoff==0 and nlanding==0 then
      
         -- Check if flight is AI. Humans have to request taxi via F10 menu.
-        if flight.ai then
+        if flight.isAI then
         
           ---
           -- AI
@@ -822,7 +822,7 @@ function FLIGHTCONTROL:_GetNextFightParking()
   -- Get the first AI flight.
   for i,_flight in pairs(Qparking) do
     local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
-    if flight.ai then
+    if flight.isAI then
       return flight
     end
   end
@@ -851,7 +851,7 @@ function FLIGHTCONTROL:_PrintQueue(queue, name)
       
       -- Gather info.
       local fuel=flight.group:GetFuelMin()*100
-      local ai=tostring(flight.ai)
+      local ai=tostring(flight.isAI)
       local actype=tostring(flight.actype)
       
       -- Holding and parking time.
@@ -916,7 +916,7 @@ function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight, queuename)
       self:I(self.lid..string.format("Removing flight group %s from %s queue.", flight.groupname, queuename))
       table.remove(queue, i)
       
-      if not flight.ai then      
+      if not flight.isAI then      
         flight:_UpdateMenu()
       end
       

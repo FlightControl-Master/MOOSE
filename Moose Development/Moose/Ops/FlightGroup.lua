@@ -902,11 +902,14 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
 
     local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
     local nMissions=self:CountRemainingMissison()
+    local home=self.homebase and self.homebase:GetName() or "unknown"
+    local dest=self.destbase and self.destbase:GetName() or "unknown"
+    local fc=self.flightcontrol and self.flightcontrol.airbasename or "N/A"
+    local curr=self.currbase and self.currbase:GetName() or "N/A"
 
-
-    local text=string.format("Status %s [%d/%d]: Tasks=%d (%d,%d) Curr=%d, Missions=%s, Waypoint=%d/%d, Detected=%d, Home=%s, Destination=%s",
-    fsmstate, #self.elements, #self.elements, nTaskTot, nTaskSched, nTaskWP, self.taskcurrent, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0,
-    self.detectedunits:Count(), self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "unknown")
+    local text=string.format("Status %s [%d/%d]: Tasks=%d, Missions=%s, Waypoint=%d/%d, Detected=%d, Home=%s, Destination=%s, Current=%s, FC=%s",
+    fsmstate, #self.elements, #self.elements, nTaskTot, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0,
+    self.detectedunits:Count(), home, dest, curr, fc)
     self:I(self.lid..text)
 
   end
