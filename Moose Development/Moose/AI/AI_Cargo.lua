@@ -1,4 +1,4 @@
---- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
+--- **AI** - Models the intelligent transportation of infantry and other cargo.
 --
 -- ===
 -- 
@@ -35,10 +35,9 @@ AI_CARGO = {
 
 --- Creates a new AI_CARGO object.
 -- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param Core.Set#SET_CARGO CargoSet
--- @param #number CombatRadius
--- @return #AI_CARGO
+-- @param Wrapper.Group#GROUP Carrier Cargo carrier group.
+-- @param Core.Set#SET_CARGO CargoSet Set of cargo(s) to transport.
+-- @return #AI_CARGO self
 function AI_CARGO:New( Carrier, CargoSet )
 
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( Carrier ) ) -- #AI_CARGO
@@ -52,7 +51,8 @@ function AI_CARGO:New( Carrier, CargoSet )
   self:AddTransition( "Loaded", "Deploy", "*" )
   
   self:AddTransition( "*", "Load", "Boarding" )
-  self:AddTransition( { "Boarding", "Loaded" }, "Board", "Boarding" )
+  self:AddTransition( "Boarding", "Board", "Boarding" )
+  self:AddTransition( "Loaded", "Board", "Loaded" )
   self:AddTransition( "Boarding", "Loaded", "Boarding" )
   self:AddTransition( "Boarding", "PickedUp", "Loaded" )
   
@@ -393,7 +393,7 @@ end
 function AI_CARGO:onafterBoard( Carrier, From, Event, To, Cargo, CarrierUnit, PickupZone )
   self:F( { Carrier, From, Event, To, Cargo, CarrierUnit:GetName() } )
 
-  if Carrier and Carrier:IsAlive() then
+  if Carrier and Carrier:IsAlive() and From == "Boarding" then
     self:F({ IsLoaded = Cargo:IsLoaded(), Cargo:GetName(), Carrier:GetName() } )
     if not Cargo:IsLoaded() and not Cargo:IsDestroyed() then
       self:__Board( -10, Cargo, CarrierUnit, PickupZone )
@@ -509,7 +509,7 @@ end
 function AI_CARGO:onafterUnboard( Carrier, From, Event, To, Cargo, CarrierUnit, DeployZone, Defend )
   self:F( { Carrier, From, Event, To, Cargo:GetName(), DeployZone = DeployZone, Defend = Defend } )
 
-  if Carrier and Carrier:IsAlive() then
+  if Carrier and Carrier:IsAlive() and From == "Unboarding" then
     if not Cargo:IsUnLoaded() then
       self:__Unboard( 10, Cargo, CarrierUnit, DeployZone, Defend ) 
       return

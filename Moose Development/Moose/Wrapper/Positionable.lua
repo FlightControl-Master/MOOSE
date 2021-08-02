@@ -590,26 +590,29 @@ end
 
 --- Returns the POSITIONABLE heading in degrees.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number The POSITIONABLE heading
--- @return #nil The POSITIONABLE is not existing or alive.
+-- @return #number The POSITIONABLE heading in degrees or `nil` if not existing or alive.
 function POSITIONABLE:GetHeading()
+
   local DCSPositionable = self:GetDCSObject()
 
   if DCSPositionable then
 
     local PositionablePosition = DCSPositionable:getPosition()
+
     if PositionablePosition then
       local PositionableHeading = math.atan2( PositionablePosition.x.z, PositionablePosition.x.x )
+
       if PositionableHeading < 0 then
         PositionableHeading = PositionableHeading + 2 * math.pi
       end
+
       PositionableHeading = PositionableHeading * 180 / math.pi
-      self:T2( PositionableHeading )
+
       return PositionableHeading
     end
   end
 
-  BASE:E( { "Cannot GetHeading", Positionable = self, Alive = self:IsAlive() } )
+  self:E({"Cannot GetHeading", Positionable = self, Alive = self:IsAlive()})
 
   return nil
 end
@@ -675,6 +678,27 @@ function POSITIONABLE:IsShip()
     local IsShip = ( UnitDescriptor.category == Unit.Category.SHIP )
 
     return IsShip
+  end
+
+  return nil
+end
+
+
+--- Returns if the unit is a submarine.
+-- @param #POSITIONABLE self
+-- @return #boolean Submarines attributes result.
+function POSITIONABLE:IsSubmarine()
+  self:F2()
+
+  local DCSUnit = self:GetDCSObject()
+
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+		if UnitDescriptor.attributes["Submarines"] == true then
+			return true
+		else
+			return false
+		end
   end
 
   return nil
@@ -814,8 +838,7 @@ end
 -- @return #number The velocity in knots.
 function POSITIONABLE:GetVelocityKNOTS()
   self:F2( self.PositionableName )
-  local velmps=self:GetVelocityMPS()
-  return UTILS.MpsToKnots(velmps)
+  return UTILS.MpsToKnots(self:GetVelocityMPS())
 end
 
 --- Returns the Angle of Attack of a positionable.
@@ -1391,18 +1414,6 @@ do -- Cargo
     return ItemCount
   end
 
---  --- Get Cargo Bay Free Volume in m3.
---  -- @param #POSITIONABLE self
---  -- @return #number CargoBayFreeVolume
---  function POSITIONABLE:GetCargoBayFreeVolume()
---    local CargoVolume = 0
---    for CargoName, Cargo in pairs( self.__.Cargo ) do
---      CargoVolume = CargoVolume + Cargo:GetVolume()
---    end
---    return self.__.CargoBayVolumeLimit - CargoVolume
---  end
---
-
   --- Get Cargo Bay Free Weight in kg.
   -- @param #POSITIONABLE self
   -- @return #number CargoBayFreeWeight
@@ -1419,13 +1430,6 @@ do -- Cargo
     end
     return self.__.CargoBayWeightLimit - CargoWeight
   end
-
---  --- Get Cargo Bay Volume Limit in m3.
---  -- @param #POSITIONABLE self
---  -- @param #number VolumeLimit
---  function POSITIONABLE:SetCargoBayVolumeLimit( VolumeLimit )
---    self.__.CargoBayVolumeLimit = VolumeLimit
---  end
 
   --- Set Cargo Bay Weight Limit in kg.
   -- @param #POSITIONABLE self
@@ -1445,55 +1449,82 @@ do -- Cargo
         self:F({Desc=Desc})
 
         local Weights = {
-          ["C-17A"] = 35000,   --77519 cannot be used, because it loads way too much apcs and infantry.,
-          ["C-130"] = 22000    --The real value cannot be used, because it loads way too much apcs and infantry.,
+          ["C-17A"] = 35000,   --77519 cannot be used, because it loads way too much apcs and infantry.
+          ["C-130"] = 22000    --The real value cannot be used, because it loads way too much apcs and infantry.
         }
 
         self.__.CargoBayWeightLimit = Weights[Desc.typeName] or ( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
+      elseif self:IsShip() then
+        local Desc = self:GetDesc()
+        self:F({Desc=Desc})
+
+        local Weights = {
+          ["Type_071"]         =   245000,
+          ["LHA_Tarawa"]       =   500000,
+          ["Ropucha-class"]    =   150000,
+          ["Dry-cargo ship-1"] =    70000,
+          ["Dry-cargo ship-2"] =    70000,
+          ["Higgins_boat"]     =     3700, -- Higgins Boat can load 3700 kg of general cargo or 36 men (source wikipedia).
+          ["USS_Samuel_Chase"] =    25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.
+          ["LST_Mk2"]          =  2100000, -- Can carry 2100 tons according to wiki source!
+          ["speedboat"]        =      500, -- 500 kg ~ 5 persons
+          ["Seawise_Giant"]    =261000000, -- Gross tonnage is 261,000 tonns.
+        }
+        self.__.CargoBayWeightLimit = ( Weights[Desc.typeName] or 50000 )
+
       else
         local Desc = self:GetDesc()
 
         local Weights = {
-          ["M1126 Stryker ICV"] = 9,
-          ["M-113"] = 9,
           ["AAV7"] = 25,
-          ["M2A1_halftrack"] = 9,
-          ["BMD-1"] = 9,
+          ["Bedford_MWD"] = 8, -- new by kappa
+          ["Blitz_36-6700A"] = 10, -- new by kappa
+          ["BMD-1"] = 9,  -- IRL should be 4 passengers
           ["BMP-1"] = 8,
           ["BMP-2"] = 7,
-          ["BMP-3"] = 8,
+          ["BMP-3"] = 8,  -- IRL should be 7+2 passengers
           ["Boman"] = 25,
-          ["BTR-80"] = 9,
-          ["BTR_D"] = 12,
+          ["BTR-80"] = 9, -- IRL should be 7 passengers
+          ["BTR-82A"] = 9, -- new by kappa -- IRL should be 7 passengers
+          ["BTR_D"] = 12,  -- IRL should be 10 passengers
           ["Cobra"] = 8,
+          ["Land_Rover_101_FC"] = 11, -- new by kappa
+          ["Land_Rover_109_S3"] = 7, -- new by kappa
           ["LAV-25"] = 6,
           ["M-2 Bradley"] = 6,
           ["M1043 HMMWV Armament"] = 4,
           ["M1045 HMMWV TOW"] = 4,
           ["M1126 Stryker ICV"] = 9,
           ["M1134 Stryker ATGM"] = 9,
+          ["M2A1_halftrack"] = 9,
+          ["M-113"] = 9,   -- IRL should be 11 passengers
           ["Marder"] = 6,
-          ["MCV-80"] = 9,
+          ["MCV-80"] = 9, -- IRL should be 7 passengers
           ["MLRS FDDM"] = 4,
-          ["MTLB"] = 25,
-          ["TPZ"] = 10,
-          ["Ural-4320 APA-5D"] = 10,
+          ["MTLB"] = 25,    -- IRL should be 11 passengers
           ["GAZ-66"] = 8,
           ["GAZ-3307"] = 12,
           ["GAZ-3308"] = 14,
-          ["Tigr_233036"] = 6,
+          ["Grad_FDDM"] = 6, -- new by kappa
           ["KAMAZ Truck"] = 12,
           ["KrAZ6322"] = 12,
           ["M 818"] = 12,
+          ["Tigr_233036"] = 6,
+          ["TPZ"] = 10,
+          ["UAZ-469"] = 4, -- new by kappa
           ["Ural-375"] = 12,
           ["Ural-4320-31"] = 14,
+          ["Ural-4320 APA-5D"] = 10,
           ["Ural-4320T"] = 14,
+          ["ZBD04A"] = 7, -- new by kappa
         }
 
         local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 95
+
         self.__.CargoBayWeightLimit = CargoBayWeightLimit
       end
     end
+
     self:F({CargoBayWeightLimit = self.__.CargoBayWeightLimit})
   end
 end --- Cargo

@@ -310,8 +310,7 @@ end
 
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Position The 3D position vectors of the POSITIONABLE.
--- @return #nil The POSITIONABLE is not existing or alive.  
+-- @return DCS#Position The 3D position vectors of the POSITIONABLE or #nil if the groups not existing or alive.  
 function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3()
   self:F2( self.PositionableName )
 
@@ -340,8 +339,7 @@ end
 -- 
 -- @param #GROUP self
 -- @return #boolean true if the group is alive and active.
--- @return #boolean false if the group is alive but inactive.
--- @return #nil if the group does not exist anymore.
+-- @return #boolean false if the group is alive but inactive or #nil if the group does not exist anymore.
 function GROUP:IsAlive()
   self:F2( self.GroupName )
 
@@ -363,8 +361,7 @@ end
 
 --- Returns if the group is activated.
 -- @param #GROUP self
--- @return #boolean true if group is activated.
--- @return #nil The group is not existing or alive.  
+-- @return #boolean true if group is activated or #nil The group is not existing or alive.  
 function GROUP:IsActive()
   self:F2( self.GroupName )
 
@@ -412,7 +409,6 @@ function GROUP:Destroy( GenerateEvent, delay )
   self:F2( self.GroupName )
   
   if delay and delay>0 then
-    --SCHEDULER:New(nil, GROUP.Destroy, {self, GenerateEvent}, delay)
     self:ScheduleOnce(delay, GROUP.Destroy, self, GenerateEvent)
   else
 
@@ -2169,40 +2165,6 @@ function GROUP:GetThreatLevel()
   return threatlevelMax
 end
 
---- Get the unit in the group with the highest threat level, which is still alive.
--- @param #GROUP self
--- @return Wrapper.Unit#UNIT The most dangerous unit in the group.
--- @return #number Threat level of the unit.
-function GROUP:GetHighestThreat()
-
-  -- Get units of the group.
-  local units=self:GetUnits()
-  
-  if units then
-    
-    local threat=nil ; local maxtl=0
-    for _,_unit in pairs(units or {}) do
-      local unit=_unit --Wrapper.Unit#UNIT
-      
-      if unit and unit:IsAlive() then
-    
-        -- Threat level of group.
-        local tl=unit:GetThreatLevel()
-        
-        -- Check if greater the current threat.
-        if tl>maxtl then
-          maxtl=tl
-          threat=unit
-        end        
-      end
-    end
-        
-    return threat, maxtl    
-  end
-  
-  return nil, nil
-end
-
 
 --- Returns true if the first unit of the GROUP is in the air.
 -- @param Wrapper.Group#GROUP self
@@ -2583,6 +2545,49 @@ do -- Players
     return PlayerCount
   end
   
+end
+
+--- GROUND - Switch on/off radar emissions for the group.
+-- @param #GROUP self
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @return #GROUP self 
+function GROUP:EnableEmission(switch)
+  self:F2( self.GroupName )
+  local switch = switch or false
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+  
+    DCSUnit:enableEmission(switch)
+
+  end
+
+  return self
+end
+
+--- Switch on/off invisible flag for the group.
+-- @param #GROUP self
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @return #GROUP self 
+function GROUP:SetCommandInvisible(switch)
+  self:F2( self.GroupName )
+  local switch = switch or false
+  local SetInvisible = {id = 'SetInvisible', params = {value = true}}
+  self:SetCommand(SetInvisible)
+  return self
+end
+
+--- Switch on/off immortal flag for the group.
+-- @param #GROUP self
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @return #GROUP self 
+function GROUP:SetCommandImmortal(switch)
+  self:F2( self.GroupName )
+  local switch = switch or false
+  local SetInvisible = {id = 'SetImmortal', params = {value = true}}
+  self:SetCommand(SetInvisible)
+  return self
 end
 
 --do -- Smoke

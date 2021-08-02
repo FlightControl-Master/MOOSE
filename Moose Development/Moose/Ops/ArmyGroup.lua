@@ -38,7 +38,7 @@
 -- @field Core.Set#SET_ZONE retreatZones Set of retreat zones.
 -- @extends Ops.OpsGroup#OPSGROUP
 
---- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B. Sledge
+--- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B Sledge
 --
 -- ===
 --
@@ -55,16 +55,6 @@ ARMYGROUP = {
   engage          = {},
 }
 
---- Army group element.
--- @type ARMYGROUP.Element
--- @field #string name Name of the element, i.e. the unit.
--- @field Wrapper.Unit#UNIT unit The UNIT object.
--- @field #string status The element status.
--- @field #string typename Type name.
--- @field #number length Length of element in meters.
--- @field #number width Width of element in meters.
--- @field #number height Height of element in meters.
-
 --- Target
 -- @type ARMYGROUP.Target
 -- @field Ops.Target#TARGET Target The target.
@@ -72,16 +62,16 @@ ARMYGROUP = {
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="0.4.0"
+ARMYGROUP.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Retreat.
 -- TODO: Suppression of fire. 
 -- TODO: Check if group is mobile.
 -- TODO: F10 menu.
+-- DONE: Retreat.
 -- DONE: Rearm. Specify a point where to go and wait until ammo is full.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -90,17 +80,25 @@ ARMYGROUP.version="0.4.0"
 
 --- Create a new ARMYGROUP class object.
 -- @param #ARMYGROUP self
--- @param Wrapper.Group#GROUP Group The group object. Can also be given by its group name as `#string`.
+-- @param Wrapper.Group#GROUP group The GROUP object. Can also be given by its group name as `#string`.
 -- @return #ARMYGROUP self
-function ARMYGROUP:New(Group)
+function ARMYGROUP:New(group)
+
+  -- First check if we already have an OPS group for this group.
+  local og=_DATABASE:GetOpsGroup(group)
+  if og then
+    og:I(og.lid..string.format("WARNING: OPS group already exists in data base!"))
+    return og
+  end
 
   -- Inherit everything from FSM class.
-  local self=BASE:Inherit(self, OPSGROUP:New(Group)) -- #ARMYGROUP
+  local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #ARMYGROUP
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("ARMYGROUP %s | ", self.groupname)
   
   -- Defaults
+  self.isArmygroup=true
   self:SetDefaultROE()
   self:SetDefaultAlarmstate()
   self:SetDetection()
@@ -115,13 +113,13 @@ function ARMYGROUP:New(Group)
   self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
   self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
   
-  self:AddTransition("*",             "Retreat",          "Retreating")  --
-  self:AddTransition("Retreating",    "Retreated",        "Retreated")   --
+  self:AddTransition("*",             "Retreat",          "Retreating")  -- Order a retreat.
+  self:AddTransition("Retreating",    "Retreated",        "Retreated")   -- Group retreated.
   
-  self:AddTransition("Cruising",      "EngageTarget",     "Engaging")    -- Engage a target
-  self:AddTransition("Holding",       "EngageTarget",     "Engaging")    -- Engage a target
-  self:AddTransition("OnDetour",      "EngageTarget",     "Engaging")    -- Engage a target
-  self:AddTransition("Engaging",      "Disengage",        "Cruising")    -- Engage a target
+  self:AddTransition("Cruising",      "EngageTarget",     "Engaging")    -- Engage a target from Cruising state
+  self:AddTransition("Holding",       "EngageTarget",     "Engaging")    -- Engage a target from Holding state
+  self:AddTransition("OnDetour",      "EngageTarget",     "Engaging")    -- Engage a target from OnDetour state
+  self:AddTransition("Engaging",      "Disengage",        "Cruising")    -- Disengage and back to cruising.
 
   self:AddTransition("*",             "Rearm",            "Rearm")       -- Group is send to a coordinate and waits until ammo is refilled.
   self:AddTransition("Rearm",         "Rearming",         "Rearming")    -- Group has arrived at the rearming coodinate and is waiting to be fully rearmed.
@@ -143,7 +141,7 @@ function ARMYGROUP:New(Group)
 
 
   -- Init waypoints.
-  self:InitWaypoints()
+  self:_InitWaypoints()
   
   -- Initialize the group.
   self:_InitGroup()
@@ -151,8 +149,7 @@ function ARMYGROUP:New(Group)
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
   self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
-  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)
-  
+  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
   --self:HandleEvent(EVENTS.Hit,        self.OnEventHit)
   
   -- Start the status monitoring.
@@ -163,6 +160,9 @@ function ARMYGROUP:New(Group)
   
   -- Start check zone timer.
   self.timerCheckZone=TIMER:New(self._CheckInZones, self):Start(2, 30)
+  
+  -- Add OPSGROUP to _DATABASE.
+  _DATABASE:AddOpsGroup(self)
    
   return self  
 end
@@ -263,6 +263,26 @@ function ARMYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clo
   return task
 end
 
+--- Add a *scheduled* task to transport group(s).
+-- @param #ARMYGROUP self
+-- @param Core.Set#SET_GROUP GroupSet Set of cargo groups. Can also be a singe @{Wrapper.Group#GROUP} object.
+-- @param Core.Zone#ZONE PickupZone Zone where the cargo is picked up.
+-- @param Core.Zone#ZONE DeployZone Zone where the cargo is delivered to.
+-- @param #string Clock Time when to start the attack.
+-- @param #number Prio Priority of the task.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+function ARMYGROUP:AddTaskCargoGroup(GroupSet, PickupZone, DeployZone, Clock, Prio)
+
+  local DCStask={}
+  DCStask.id="CargoTransport"
+  DCStask.params={}
+  DCStask.params.cargoqueu=1
+
+  local task=self:AddTask(DCStask, Clock, nil, Prio)
+
+  return task
+end
+
 --- Define a set of possible retreat zones.
 -- @param #ARMYGROUP self
 -- @param Core.Set#SET_ZONE RetreatZoneSet The retreat zone set. Default is an empty set.
@@ -342,7 +362,9 @@ function ARMYGROUP:onafterStatus(From, Event, To)
   -- FSM state.
   local fsmstate=self:GetState()
   
-  if self:IsAlive() then
+  local alive=self:IsAlive()
+  
+  if alive then
 
     ---
     -- Detection
@@ -370,6 +392,21 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       self:_UpdateEngageTarget()
     end
     
+    -- Check if group is waiting.
+    if self:IsWaiting() then
+      if self.Twaiting and self.dTwait then
+        if timer.getAbsTime()>self.Twaiting+self.dTwait then
+          self.Twaiting=nil
+          self.dTwait=nil
+          self:Cruise()
+        end
+      end
+    end
+    
+  end
+  
+  if alive~=nil then
+    
     if self.verbose>=1 then
   
       -- Get number of tasks and missions.
@@ -378,14 +415,20 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       
       local roe=self:GetROE()
       local alarm=self:GetAlarmstate()
-      local speed=UTILS.MpsToKnots(self.velocity)
+      local speed=UTILS.MpsToKnots(self.velocity or 0)
       local speedEx=UTILS.MpsToKnots(self:GetExpectedSpeed())
       local formation=self.option.Formation or "unknown"      
       local ammo=self:GetAmmoTot()
+      
+      local cargo=0
+      for _,_element in pairs(self.elements) do
+        local element=_element --Ops.OpsGroup#OPSGROUP.Element
+        cargo=cargo+element.weightCargo
+      end
     
       -- Info text.
-      local text=string.format("%s [ROE-AS=%d-%d T/M=%d/%d]: Wp=%d/%d-->%d (final %s), Life=%.1f, Speed=%.1f (%d), Heading=%03d, Ammo=%d", 
-      fsmstate, roe, alarm, nTaskTot, nMissions, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), tostring(self.passedfinalwp), self.life or 0, speed, speedEx, self.heading, ammo.Total)
+      local text=string.format("%s [ROE-AS=%d-%d T/M=%d/%d]: Wp=%d/%d-->%d (final %s), Life=%.1f, Speed=%.1f (%d), Heading=%03d, Ammo=%d, Cargo=%.1f", 
+      fsmstate, roe, alarm, nTaskTot, nMissions, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), tostring(self.passedfinalwp), self.life or 0, speed, speedEx, self.heading or 0, ammo.Total, cargo)
       self:I(self.lid..text)
       
     end
@@ -393,10 +436,49 @@ function ARMYGROUP:onafterStatus(From, Event, To)
   else
 
     -- Info text.
-    local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
-    self:T2(self.lid..text)
+    if self.verbose>=1 then
+      local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
+      self:I(self.lid..text)
+    end
   
   end
+
+  ---
+  -- Elements
+  ---
+  
+  if self.verbose>=2 then
+    local text="Elements:"
+    for i,_element in pairs(self.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+
+      local name=element.name
+      local status=element.status
+      local unit=element.unit
+      --local life=unit:GetLifeRelative() or 0
+      local life,life0=self:GetLifePoints(element)
+      
+      local life0=element.life0
+
+      -- Get ammo.
+      local ammo=self:GetAmmoElement(element)
+
+      -- Output text for element.
+      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d, cargo=%d/%d kg",
+      i, name, status, life, life0, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles, element.weightCargo, element.weightMaxCargo)
+    end
+    if #self.elements==0 then
+      text=text.." none!"
+    end
+    self:I(self.lid..text)
+  end
+  
+  
+  ---
+  -- Cargo
+  ---
+  
+  self:_CheckCargoTransport()
 
 
   ---
@@ -411,6 +493,26 @@ function ARMYGROUP:onafterStatus(From, Event, To)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- DCS Events ==> See OPSGROUP
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Event function handling when a unit is hit.
+-- @param #ARMYGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function ARMYGROUP:OnEventHit(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+    
+    -- TODO: suppression
+
+  end
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -419,7 +521,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #ARMYGROUP.Element Element The group element.
+-- @param Ops.OpsGroup#OPSGROUP.Element Element The group element.
 function ARMYGROUP:onafterElementSpawned(From, Event, To, Element)
   self:T(self.lid..string.format("Element spawned %s", Element.name))
 
@@ -436,8 +538,30 @@ end
 function ARMYGROUP:onafterSpawned(From, Event, To)
   self:T(self.lid..string.format("Group spawned!"))
 
+  -- Debug info.
+  if self.verbose>=1 then
+    local text=string.format("Initialized Army Group %s:\n", self.groupname)
+    text=text..string.format("Unit type    = %s\n", self.actype)
+    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
+    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
+    text=text..string.format("Weight       = %.1f kg\n", self:GetWeightTotal())
+    text=text..string.format("Cargo bay    = %.1f kg\n", self:GetFreeCargobay())
+    text=text..string.format("Elements     = %d\n", #self.elements)
+    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
+    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles)
+    text=text..string.format("FSM state    = %s\n", self:GetState())
+    text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
+    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
+    self:I(self.lid..text)
+  end
+
   -- Update position.
   self:_UpdatePosition()
+  
+  -- Not dead or destroyed yet.
+  self.isDead=false
+  self.isDestroyed=false  
 
   if self.isAI then
   
@@ -461,16 +585,34 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     if not self.option.Formation then
       self.option.Formation=self.optionDefault.Formation
     end
+
+    -- Update route.
+    if #self.waypoints>1 then
+      self:Cruise(nil, self.option.Formation or self.optionDefault.Formation)
+    else
+      self:FullStop()
+    end
+
+    -- Update status.
+    self:__Status(-0.1)
     
   end
   
-  -- Update route.
-  if #self.waypoints>1 then
-    self:Cruise(nil, self.option.Formation or self.optionDefault.Formation)
-  else
-    self:FullStop()
+end
+
+--- On before "UpdateRoute" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Waypoint number. Default is next waypoint.
+-- @param #number Speed Speed in knots. Default cruise speed.
+-- @param #number Formation Formation of the group.
+function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Formation)
+  if self:IsWaiting() then
+    return false
   end
-  
+  return true
 end
 
 --- On after "UpdateRoute" event.
@@ -830,7 +972,7 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
 
 end
 
---- On after "EngageTarget" event.
+--- Update engage target.
 -- @param #ARMYGROUP self
 function ARMYGROUP:_UpdateEngageTarget()
 
@@ -926,129 +1068,12 @@ end
 -- @param #number Formation Formation.
 function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
 
+  -- Not waiting anymore.
+  self.Twaiting=nil
+  self.dTwait=nil
+
   self:__UpdateRoute(-1, nil, Speed, Formation)
 
-end
-
---- On after "Stop" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function ARMYGROUP:onafterStop(From, Event, To)
-
-  -- Handle events:
-  self:UnHandleEvent(EVENTS.Birth)
-  self:UnHandleEvent(EVENTS.Dead)
-  self:UnHandleEvent(EVENTS.RemoveUnit)
-  
-  -- Call OPSGROUP function.
-  self:GetParent(self).onafterStop(self, From, Event, To)  
-  
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Events DCS
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Event function handling the birth of a unit.
--- @param #ARMYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function ARMYGROUP:OnEventBirth(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-    
-    if self.respawning then
-    
-      local function reset()
-        self.respawning=nil
-      end
-      
-      -- Reset switch in 1 sec. This should allow all birth events of n>1 groups to have passed.
-      -- TODO: Can I do this more rigorously?
-      self:ScheduleOnce(1, reset)
-    
-    else
-          
-      -- Get element.
-      local element=self:GetElementByName(unitname)
-
-      -- Set element to spawned state.
-      self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", element.name))            
-      self:ElementSpawned(element)
-      
-    end    
-    
-  end
-
-end
-
---- Event function handling the crash of a unit.
--- @param #ARMYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function ARMYGROUP:OnEventDead(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    self:T(self.lid..string.format("EVENT: Unit %s dead!", EventData.IniUnitName))
-    
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-
-    -- Get element.
-    local element=self:GetElementByName(unitname)
-
-    if element then
-      self:T(self.lid..string.format("EVENT: Element %s dead ==> destroyed", element.name))
-      self:ElementDestroyed(element)
-    end
-    
-  end
-
-end
-
---- Event function handling when a unit is removed from the game.
--- @param #ARMYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function ARMYGROUP:OnEventRemoveUnit(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-
-    -- Get element.
-    local element=self:GetElementByName(unitname)
-
-    if element then
-      self:T(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
-      self:ElementDead(element)
-    end
-
-  end
-
-end
-
---- Event function handling when a unit is hit.
--- @param #ARMYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function ARMYGROUP:OnEventHit(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-    
-    -- TODO: suppression
-
-  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1108,17 +1133,18 @@ end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #ARMYGROUP self
+-- @param #table Template Template used to init the group. Default is `self.template`.
 -- @return #ARMYGROUP self
-function ARMYGROUP:_InitGroup()
+function ARMYGROUP:_InitGroup(Template)
 
   -- First check if group was already initialized.
   if self.groupinitialized then
-    self:E(self.lid.."WARNING: Group was already initialized!")
+    self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
     return
   end
 
   -- Get template of group.
-  self.template=self.group:GetTemplate()
+  local template=Template or self:_GetTemplate()
 
   -- Define category.
   self.isAircraft=false
@@ -1129,7 +1155,7 @@ function ARMYGROUP:_InitGroup()
   self.isAI=true
   
   -- Is (template) group late activated.
-  self.isLateActivated=self.template.lateActivation
+  self.isLateActivated=template.lateActivation
   
   -- Ground groups cannot be uncontrolled.
   self.isUncontrolled=false
@@ -1161,64 +1187,16 @@ function ARMYGROUP:_InitGroup()
   -- Units of the group.
   local units=self.group:GetUnits()
   
-  for _,_unit in pairs(units) do
-    local unit=_unit --Wrapper.Unit#UNIT
-
-    -- TODO: this is wrong when grouping is used!
-    local unittemplate=unit:GetTemplate()
-    
-    local element={} --#ARMYGROUP.Element
-    element.name=unit:GetName()
-    element.unit=unit    
-    element.status=OPSGROUP.ElementStatus.INUTERO
-    element.typename=unit:GetTypeName()
-    element.skill=unittemplate.skill or "Unknown"
-    element.ai=true
-    element.category=element.unit:GetUnitCategory()
-    element.categoryname=element.unit:GetCategoryName()
-    element.size, element.length, element.height, element.width=unit:GetObjectSize()
-    element.ammo0=self:GetAmmoUnit(unit, false)
-    element.life0=unit:GetLife0()
-    element.life=element.life0
-
-    -- Debug text.
-    if self.verbose>=2 then
-      local text=string.format("Adding element %s: status=%s, skill=%s, life=%.3f category=%s (%d), size: %.1f (L=%.1f H=%.1f W=%.1f)",
-      element.name, element.status, element.skill, element.life, element.categoryname, element.category, element.size, element.length, element.height, element.width)
-      self:I(self.lid..text)
-    end
+  -- Add elemets.
+  for _,unit in pairs(units) do
+    self:_AddElementByName(unit:GetName())
+  end
+      
+  -- Get Descriptors.
+  self.descriptors=units[1]:GetDesc()
   
-    -- Add element to table.
-    table.insert(self.elements, element)
-    
-    -- Get Descriptors.
-    self.descriptors=self.descriptors or unit:GetDesc()
-    
-    -- Set type name.
-    self.actype=self.actype or unit:GetTypeName()
-    
-    if unit:IsAlive() then    
-      -- Trigger spawned event.
-      self:ElementSpawned(element)
-    end
-    
-  end
-
-  -- Debug info.
-  if self.verbose>=1 then
-    local text=string.format("Initialized Army Group %s:\n", self.groupname)
-    text=text..string.format("Unit type    = %s\n", self.actype)
-    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
-    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
-    text=text..string.format("Elements     = %d\n", #self.elements)
-    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
-    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles)
-    text=text..string.format("FSM state    = %s\n", self:GetState())
-    text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
-    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
-    self:I(self.lid..text)
-  end
+  -- Set type name.
+  self.actype=units[1]:GetTypeName()
     
   -- Init done.
   self.groupinitialized=true

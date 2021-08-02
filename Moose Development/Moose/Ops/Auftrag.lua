@@ -7,7 +7,7 @@
 --    * Set mission start/stop times
 --    * Set mission priority and urgency (can cancel running missions)
 --    * Specific mission options for ROE, ROT, formation, etc.
---    * Compatible with FLIGHTGROUP, NAVYGROUP, ARMYGROUP, AIRWING, WINGCOMMANDER and CHIEF classes
+--    * Compatible with OPS classes like FLIGHTGROUP, NAVYGROUP, ARMYGROUP, AIRWING, etc.
 --    * FSM events when a mission is done, successful or failed
 --
 -- ===
@@ -39,9 +39,10 @@
 -- @field #number prio Mission priority.
 -- @field #boolean urgent Mission is urgent. Running missions with lower prio might be cancelled.
 -- @field #number importance Importance.
--- @field #number Tstart Mission start time in seconds.
--- @field #number Tstop Mission stop time in seconds.
+-- @field #number Tstart Mission start time in abs. seconds.
+-- @field #number Tstop Mission stop time in abs. seconds.
 -- @field #number duration Mission duration in seconds.
+-- @field #number Tpush Mission push/execute time in abs. seconds.
 -- @field Wrapper.Marker#MARKER marker F10 map marker.
 -- @field #boolean markerOn If true, display marker on F10 map with the AUFTRAG status.
 -- @field #number markerCoaliton Coalition to which the marker is dispayed.
@@ -52,8 +53,9 @@
 -- @field #number dTevaluate Time interval in seconds before the mission result is evaluated after mission is over.
 -- @field #number Tover Mission abs. time stamp, when mission was over. 
 -- @field #table conditionStart Condition(s) that have to be true, before the mission will be started.
--- @field #table conditionSuccess If all stop conditions are true, the mission is cancelled.
--- @field #table conditionFailure If all stop conditions are true, the mission is cancelled.
+-- @field #table conditionSuccess If all conditions are true, the mission is cancelled.
+-- @field #table conditionFailure If all conditions are true, the mission is cancelled.
+-- @field #table conditionPush If all conditions are true, the mission is executed. Before, the group(s) wait at the mission execution waypoint.
 -- 
 -- @field #number orbitSpeed Orbit speed in m/s.
 -- @field #number orbitAltitude Orbit altitude in meters.
@@ -101,9 +103,11 @@
 -- 
 -- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
 -- @field #number missionAltitude Mission altitude in meters.
+-- @field #number missionSpeed Mission speed in km/h.
 -- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
 -- @field #number missionRange Mission range in meters. Used in AIRWING class.
 -- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
+-- @field Core.Point#COORDINATE missionEgressCoord Mission egress waypoint coordinate.
 -- 
 -- @field #table enrouteTasks Mission enroute tasks.
 -- 
@@ -285,6 +289,7 @@ AUFTRAG = {
   conditionStart     =    {},
   conditionSuccess   =    {},
   conditionFailure   =    {},
+  conditionPush      =    {},
 }
 
 --- Global mission counter.
@@ -315,6 +320,7 @@ _AUFTRAGSNR=0
 -- @field #string TANKER Tanker mission.
 -- @field #string TROOPTRANSPORT Troop transport mission.
 -- @field #string ARTY Fire at point.
+-- @field #string PATROLZONE Patrol a zone.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -338,6 +344,7 @@ AUFTRAG.Type={
   TANKER="Tanker",
   TROOPTRANSPORT="Troop Transport",
   ARTY="Fire At Point",
+  PATROLZONE="Patrol Zone",
 }
 
 --- Mission status.
@@ -430,8 +437,9 @@ AUFTRAG.TargetType={
 --- Group specific data. Each ops group subscribed to this mission has different data for this.
 -- @type AUFTRAG.GroupData
 -- @field Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
--- @field Core.Point#COORDINATE waypointcoordinate Waypoint coordinate.
+-- @field Core.Point#COORDINATE waypointcoordinate Ingress waypoint coordinate.
 -- @field #number waypointindex Waypoint index.
+-- @field Core.Point#COORDINATE wpegresscoordinate Egress waypoint coordinate.
 -- @field Ops.OpsGroup#OPSGROUP.Task waypointtask Waypoint task.
 -- @field #string status Group mission status.
 -- @field Ops.AirWing#AIRWING.SquadronAsset asset The squadron asset.
@@ -439,7 +447,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.5.0"
+AUFTRAG.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -934,7 +942,7 @@ end
 
 --- Create a STRIKE mission. Flight will attack the closest map object to the specified coordinate.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT or STATIC object.
+-- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT, STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 2000 ft.
 -- @return #AUFTRAG self
 function AUFTRAG:NewSTRIKE(Target, Altitude)
@@ -962,7 +970,7 @@ end
 
 --- Create a BOMBING mission. Flight will drop bombs a specified coordinate.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT or STATIC object.
+-- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
 -- @return #AUFTRAG self
 function AUFTRAG:NewBOMBING(Target, Altitude)
@@ -1001,10 +1009,6 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
 
   if type(Airdrome)=="string" then
     Airdrome=AIRBASE:FindByName(Airdrome)
-  end
-  
-  if Airdrome:IsInstanceOf("AIRBASE") then
-  
   end
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BOMBRUNWAY)
@@ -1106,9 +1110,7 @@ end
 function AUFTRAG:NewRESCUEHELO(Carrier)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RESCUEHELO)
-  
-  --mission.carrier=Carrier
-  
+
   mission:_TargetFromObject(Carrier)
   
   -- Mission options:
@@ -1190,6 +1192,32 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius)
 
   return mission
 end
+
+--- Create a PATROLZONE mission. Group(s) will go to the zone and patrol it randomly.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE Zone The patrol zone.
+-- @param #number Speed Speed in knots.
+-- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+-- @return #AUFTRAG self
+function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.PATROLZONE)
+  
+  mission:_TargetFromObject(Zone)
+    
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  
+  mission.missionFraction=1.0  
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
 
 --- Create a mission to attack a group. Mission type is automatically chosen from the group category.
 -- @param #AUFTRAG self
@@ -1403,6 +1431,24 @@ function AUFTRAG:SetTime(ClockStart, ClockStop)
   if Tstop then
     self.duration=self.Tstop-self.Tstart
   end  
+
+  return self
+end
+
+
+--- Set mission push time. This is the time the mission is executed. If the push time is not passed, the group will wait at the mission execution waypoint.
+-- @param #AUFTRAG self
+-- @param #string ClockPush Time the mission is executed, e.g. "05:00" for 5 am. Can also be given as a `#number`, where it is interpreted as relative push time in seconds.
+-- @return #AUFTRAG self
+function AUFTRAG:SetPushTime(ClockPush)
+
+  if ClockPush then
+    if type(ClockPush)=="string" then
+      self.Tpush=UTILS.ClockToSeconds(ClockPush)
+    elseif type(ClockPush)=="number" then
+      self.Tpush=timer.getAbsTime()+ClockPush
+    end
+  end
 
   return self
 end
@@ -1781,6 +1827,26 @@ function AUFTRAG:AddConditionFailure(ConditionFunction, ...)
   return self
 end
 
+--- Add push condition.
+-- @param #AUFTRAG self
+-- @param #function ConditionFunction If this function returns `true`, the mission is executed.
+-- @param ... Condition function arguments if any.
+-- @return #AUFTRAG self
+function AUFTRAG:AddConditionPush(ConditionFunction, ...)
+  
+  local condition={} --#AUFTRAG.Condition
+  
+  condition.func=ConditionFunction
+  condition.arg={}
+  if arg then
+    condition.arg=arg
+  end
+  
+  table.insert(self.conditionPush, condition)
+  
+  return self
+end
+
 
 --- Assign airwing squadron(s) to the mission. Only these squads will be considered for the job.
 -- @param #AUFTRAG self
@@ -1794,6 +1860,8 @@ function AUFTRAG:AssignSquadrons(Squadrons)
   end
 
   self.squadrons=Squadrons
+  
+  return self
 end
 
 --- Add a required payload for this mission. Only these payloads will be used for this mission. If they are not available, the mission cannot start. Only available for use with an AIRWING.
@@ -1806,12 +1874,14 @@ function AUFTRAG:AddRequiredPayload(Payload)
 
   table.insert(self.payloads, Payload)
   
+  return self
 end
 
 
 --- Add a Ops group to the mission.
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
+-- @return #AUFTRAG self
 function AUFTRAG:AddOpsGroup(OpsGroup)
   self:T(self.lid..string.format("Adding Ops group %s", OpsGroup.groupname))
 
@@ -1824,11 +1894,13 @@ function AUFTRAG:AddOpsGroup(OpsGroup)
 
   self.groupdata[OpsGroup.groupname]=groupdata
 
+  return self
 end
 
 --- Remove an Ops  group from the mission.
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
+-- @return #AUFTRAG self
 function AUFTRAG:DelOpsGroup(OpsGroup)
   self:T(self.lid..string.format("Removing OPS group %s", OpsGroup and OpsGroup.groupname or "nil (ERROR)!"))
 
@@ -1841,6 +1913,7 @@ function AUFTRAG:DelOpsGroup(OpsGroup)
     
   end
 
+  return self
 end
 
 --- Check if mission is PLANNED.
@@ -1932,12 +2005,12 @@ function AUFTRAG:IsReadyToGo()
   local Tnow=timer.getAbsTime()
 
   -- Start time did not pass yet.
-  if self.Tstart and Tnow<self.Tstart or false then
+  if self.Tstart and Tnow<self.Tstart then
     return false
   end
   
   -- Stop time already passed.
-  if self.Tstop and Tnow>self.Tstop or false then
+  if self.Tstop and Tnow>self.Tstop then
     return false
   end
   
@@ -1963,7 +2036,7 @@ function AUFTRAG:IsReadyToCancel()
   local Tnow=timer.getAbsTime()
 
   -- Stop time already passed.
-  if self.Tstop and Tnow>self.Tstop then
+  if self.Tstop and Tnow>=self.Tstop then
     return true
   end
 
@@ -1985,6 +2058,26 @@ function AUFTRAG:IsReadyToCancel()
   
   -- No criterion matched.
   return false
+end
+
+--- Check if mission is ready to be pushed.
+-- * Mission push time already passed.
+-- * All push conditions are true.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission groups can push.
+function AUFTRAG:IsReadyToPush()
+  
+  local Tnow=timer.getAbsTime()
+
+  -- Push time passed?
+  if self.Tpush and Tnow<self.Tpush then
+    return false
+  end
+
+  -- Evaluate push condition(s) if any. All need to be true.
+  local push=self:EvalConditionsAll(self.conditionPush)
+  
+  return push
 end
 
 --- Check if all given condition are true.
@@ -2926,7 +3019,7 @@ end
 -- @param #AUFTRAG self
 -- @return Wrapper.Positionable#POSITIONABLE The target object. Could be many things.
 function AUFTRAG:GetObjective()
-  return self:GetTargetData().Target
+  return self:GetTargetData():GetObject()
 end
 
 --- Get type of target.
@@ -3083,19 +3176,53 @@ function AUFTRAG:GetMissionTypesText(MissionTypes)
   return text
 end
 
---- Set the mission waypoint coordinate where the mission is executed.
+--- Set the mission waypoint coordinate where the mission is executed. Note that altitude is set via `:SetMissionAltitude`.
 -- @param #AUFTRAG self
--- @return Core.Point#COORDINATE Coordinate where the mission is executed.
+-- @param Core.Point#COORDINATE Coordinate Coordinate where the mission is executed.
 -- @return #AUFTRAG self
 function AUFTRAG:SetMissionWaypointCoord(Coordinate)
+
+  -- Obviously a zone was passed. We get the coordinate.  
+  if Coordinate:IsInstanceOf("ZONE_BASE") then
+    Coordinate=Coordinate:GetCoordinate()
+  end
+
   self.missionWaypointCoord=Coordinate
+  return self
+end
+
+--- Set the mission egress coordinate. This is the coordinate where the assigned group will go once the mission is finished.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Egrees coordinate.
+-- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate. 
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude)
+
+  -- Obviously a zone was passed. We get the coordinate.  
+  if Coordinate:IsInstanceOf("ZONE_BASE") then
+    Coordinate=Coordinate:GetCoordinate()
+  end
+
+  self.missionEgressCoord=Coordinate
+  
+  if Altitude then
+    self.missionEgressCoord.y=UTILS.FeetToMeters(Altitude)
+  end
+end
+
+--- Get the mission egress coordinate if this was defined.
+-- @param #AUFTRAG self
+-- @return Core.Point#COORDINATE Coordinate Coordinate or nil.
+function AUFTRAG:GetMissionEgressCoord()
+  return self.missionEgressCoord
 end
 
 --- Get coordinate of target. First unit/group of the set is used.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP group Group.
+-- @param #number randomradius Random radius in meters.
 -- @return Core.Point#COORDINATE Coordinate where the mission is executed.
-function AUFTRAG:GetMissionWaypointCoord(group)
+function AUFTRAG:GetMissionWaypointCoord(group, randomradius)
 
   -- Check if a coord has been explicitly set.
   if self.missionWaypointCoord then
@@ -3111,7 +3238,9 @@ function AUFTRAG:GetMissionWaypointCoord(group)
   local alt=waypointcoord.y
   
   -- Add some randomization.
-  waypointcoord=ZONE_RADIUS:New("Temp", waypointcoord:GetVec2(), 1000):GetRandomCoordinate():SetAltitude(alt, false)
+  if randomradius then
+    waypointcoord=ZONE_RADIUS:New("Temp", waypointcoord:GetVec2(), randomradius):GetRandomCoordinate():SetAltitude(alt, false)
+  end
   
   -- Set altitude of mission waypoint.
   if self.missionAltitude then
@@ -3388,6 +3517,26 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, self:GetTargetVec2(), self.artyRadius, self.artyShots, self.engageWeaponType)
     
     table.insert(DCStasks, DCStask)    
+
+  elseif self.type==AUFTRAG.Type.PATROLZONE then
+
+    -------------------------
+    -- PATROL ZONE Mission --
+    -------------------------
+  
+    local DCStask={}
+    
+    DCStask.id="PatrolZone"
+    
+    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+    param.altitude=self.missionAltitude
+    param.speed=self.missionSpeed
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)
   
   else
     self:E(self.lid..string.format("ERROR: Unknown mission task!"))

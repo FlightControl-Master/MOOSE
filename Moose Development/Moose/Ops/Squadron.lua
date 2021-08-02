@@ -45,6 +45,8 @@
 -- @field #table tacanChannel List of TACAN channels available to the squadron.
 -- @field #number radioFreq Radio frequency in MHz the squad uses.
 -- @field #number radioModu Radio modulation the squad uses.
+-- @field #number takeoffType Take of type.
+-- @field #table parkingIDs Parking IDs for this squadron.
 -- @extends Core.Fsm#FSM
 
 --- *It is unbelievable what a squadron of twelve aircraft did to tip the balance.* -- Adolf Galland
@@ -87,12 +89,13 @@ SQUADRON = {
 
 --- SQUADRON class version.
 -- @field #string version
-SQUADRON.version="0.5.0"
+SQUADRON.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Parking spots for squadrons?
 -- DONE: Engage radius.
 -- DONE: Modex.
 -- DONE: Call signs.
@@ -134,7 +137,6 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   self.Ngroups=Ngroups or 3  
   self:SetMissionRange()
   self:SetSkill(AI.Skill.GOOD)
-  --self:SetVerbosity(0)
   
   -- Everyone can ORBIT.
   self:AddMissionCapability(AUFTRAG.Type.ORBIT)
@@ -281,6 +283,53 @@ function SQUADRON:SetGrouping(nunits)
   if self.ngrouping>4 then self.ngrouping=4 end
   return self
 end
+
+--- Set valid parking spot IDs. Assets of this squad are only allowed to be spawned at these parking spots. **Note** that the IDs are different from the ones displayed in the mission editor!
+-- @param #SQUADRON self
+-- @param #table ParkingIDs Table of parking ID numbers or a single `#number`.
+-- @return #SQUADRON self
+function SQUADRON:SetParkingIDs(ParkingIDs)
+  if type(ParkingIDs)~="table" then
+    ParkingIDs={ParkingIDs}
+  end
+  self.parkingIDs=ParkingIDs
+  return self
+end
+
+
+--- Set takeoff type. All assets of this squadron will be spawned with cold (default) or hot engines.
+-- Spawning on runways is not supported.
+-- @param #SQUADRON self
+-- @param #string TakeoffType Take off type: "Cold" (default) or "Hot" with engines on.
+-- @return #SQUADRON self
+function SQUADRON:SetTakeoffType(TakeoffType)
+  TakeoffType=TakeoffType or "Cold"
+  if TakeoffType:lower()=="hot" then
+    self.takeoffType=COORDINATE.WaypointType.TakeOffParkingHot
+  elseif TakeoffType:lower()=="cold" then
+    self.takeoffType=COORDINATE.WaypointType.TakeOffParking
+  else
+    self.takeoffType=COORDINATE.WaypointType.TakeOffParking
+  end
+  return self
+end
+
+--- Set takeoff type cold (default). All assets of this squadron will be spawned with engines off (cold).
+-- @param #SQUADRON self
+-- @return #SQUADRON self
+function SQUADRON:SetTakeoffCold()
+  self:SetTakeoffType("Cold")
+  return self
+end
+
+--- Set takeoff type hot. All assets of this squadron will be spawned with engines on (hot).
+-- @param #SQUADRON self
+-- @return #SQUADRON self
+function SQUADRON:SetTakeoffHot()
+  self:SetTakeoffType("Hot")
+  return self
+end
+
 
 --- Set mission types this squadron is able to perform.
 -- @param #SQUADRON self
@@ -571,15 +620,22 @@ end
 -- @return #number TACAN channel or *nil* if no channel is free.
 function SQUADRON:FetchTacan()
 
+  -- Get the smallest free channel if there is one.
+  local freechannel=nil  
   for channel,free in pairs(self.tacanChannel) do
-    if free then
-      self:T(self.lid..string.format("Checking out Tacan channel %d", channel))
-      self.tacanChannel[channel]=false
-      return channel
+    if free then      
+      if freechannel==nil or channel<freechannel then
+        freechannel=channel
+      end      
     end
   end
+  
+  if freechannel then
+    self:T(self.lid..string.format("Checking out Tacan channel %d", freechannel))
+    self.tacanChannel[freechannel]=false
+  end
 
-  return nil
+  return freechannel
 end
 
 --- "Return" a used TACAN channel.
@@ -764,7 +820,8 @@ end
 -- @param #string To To state.
 function SQUADRON:onafterStop(From, Event, To)
 
-  self:I(self.lid.."STOPPING Squadron!")
+  -- Debug info.
+  self:I(self.lid.."STOPPING Squadron and removing all assets!")
 
   -- Remove all assets.
   for i=#self.assets,1,-1 do
@@ -772,6 +829,7 @@ function SQUADRON:onafterStop(From, Event, To)
     self:DelAsset(asset)
   end
 
+  -- Clear call scheduler.
   self.CallScheduler:Clear()
   
 end
@@ -830,8 +888,9 @@ end
 
 --- Count assets in airwing (warehous) stock.
 -- @param #SQUADRON self
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
 -- @return #number Assets not spawned.
-function SQUADRON:CountAssetsInStock()
+function SQUADRON:CountAssetsInStock(MissionTypes)
 
   local N=0
   for _,_asset in pairs(self.assets) do
@@ -839,7 +898,9 @@ function SQUADRON:CountAssetsInStock()
     if asset.spawned then
     
     else
-      N=N+1
+      if MissionTypes==nil or self:CheckMissionCapability(MissionTypes, self.missiontypes) then
+        N=N+1
+      end
     end
   end
 
@@ -1017,16 +1078,22 @@ end
 
 --- Check if a mission type is contained in a list of possible capabilities.
 -- @param #SQUADRON self
--- @param #string MissionType The requested mission type.
+-- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
 -- @param #table Capabilities A table with possible capabilities.
 -- @return #boolean If true, the requested mission type is part of the possible mission types.
-function SQUADRON:CheckMissionCapability(MissionType, Capabilities)
+function SQUADRON:CheckMissionCapability(MissionTypes, Capabilities)
+
+  if type(MissionTypes)~="table" then
+    MissionTypes={MissionTypes}
+  end
 
   for _,cap in pairs(Capabilities) do
     local capability=cap --Ops.Auftrag#AUFTRAG.Capability
-    if capability.MissionType==MissionType then
-      return true
-    end   
+    for _,MissionType in pairs(MissionTypes) do
+      if capability.MissionType==MissionType then
+        return true
+      end
+    end
   end
 
   return false

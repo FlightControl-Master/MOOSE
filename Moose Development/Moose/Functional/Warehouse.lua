@@ -199,7 +199,13 @@
 --     warehouseBatumi:AddAsset("Huey", 5, WAREHOUSE.Attribute.AIR_TRANSPORTHELO)
 --
 -- This becomes important when assets are requested from other warehouses as described below. In this case, the five Hueys are now marked as transport helicopters and
--- not attack helicopters.
+-- not attack helicopters. This is also particularly useful when adding assets to a warehouse with the intention of using them to transport other units that are part of 
+-- a subsequent request (see below). Setting the attribute will help to ensure that warehouse module can find the correct unit when attempting to service a request in its
+-- queue. For example, if we want to add an Amphibious Landing Ship, even though most are indeed armed, it's recommended to do the following:
+-- 
+--     warehouseBatumi:AddAsset("Landing Ship", 1, WAREHOUSE.Attribute.NAVAL_UNARMEDSHIP)
+--
+-- Then when adding the request, you can simply specify WAREHOUSE.TransportType.SHIP (which corresponds to NAVAL_UNARMEDSHIP) as the TransportType.
 --
 -- ### Setting the Cargo Bay Weight Limit
 -- You can ajust the cargo bay weight limit, in case it is not calculated correctly automatically. For example, the cargo bay of a C-17A is much smaller in DCS than that of a C-130, which is
@@ -1575,6 +1581,7 @@ WAREHOUSE = {
   delivered     =    {},
   defending     =    {},
   portzone      =   nil,
+  harborzone    =   nil,
   shippinglanes =    {},
   offroadpaths  =    {},
   autodefence   = false,
@@ -1733,12 +1740,15 @@ WAREHOUSE.Attribute = {
 -- @field #string TRAIN Transports are conducted by trains. Not implemented yet. Also trains are buggy in DCS.
 -- @field #string SELFPROPELLED Assets go to their destination by themselves. No transport carrier needed.
 WAREHOUSE.TransportType = {
-  AIRPLANE      = "Air_TransportPlane",
-  HELICOPTER    = "Air_TransportHelo",
-  APC           = "Ground_APC",
-  TRAIN         = "Ground_Train",
-  SHIP          = "Naval_UnarmedShip",
-  SELFPROPELLED = "Selfpropelled",
+  AIRPLANE         = "Air_TransportPlane",
+  HELICOPTER       = "Air_TransportHelo",
+  APC              = "Ground_APC",
+  TRAIN            = "Ground_Train",
+  SHIP             = "Naval_UnarmedShip",
+  AIRCRAFTCARRIER  = "Naval_AircraftCarrier",
+  WARSHIP          = "Naval_WarShip",
+  ARMEDSHIP        = "Naval_ArmedShip",
+  SELFPROPELLED    = "Selfpropelled",
 }
 
 --- Warehouse quantity enumerator for selecting number of assets, e.g. all, half etc. of what is in stock rather than an absolute number.
@@ -1783,7 +1793,7 @@ WAREHOUSE.version="1.0.2"
 -- TODO: Make more examples: ARTY, CAP, ...
 -- TODO: Check also general requests like all ground. Is this a problem for self propelled if immobile units are among the assets? Check if transport.
 -- TODO: Handle the case when units of a group die during the transfer.
--- TODO: Added habours as interface for transport to from warehouses? Could make a rudimentary shipping dispatcher.
+-- DONE: Added harbours as interface for transport to/from warehouses. Simplifies process of spawning units near the ship, especially if cargo not self-propelled.
 -- DONE: Test capturing a neutral warehouse.
 -- DONE: Add save/load capability of warehouse <==> persistance after mission restart. Difficult in lua!
 -- DONE: Get cargo bay and weight from CARGO_GROUP and GROUP. No necessary any more!
@@ -2623,11 +2633,31 @@ end
 -- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot Parking spot.
 -- @return #boolean If true, parking is valid.
 function WAREHOUSE:_CheckParkingValid(spot)
+
   if self.parkingIDs==nil then
     return true
   end
 
   for _,id in pairs(self.parkingIDs or {}) do
+    if spot.TerminalID==id then
+      return true
+    end
+  end
+
+  return false
+end
+
+--- Check parking ID for an asset.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot Parking spot.
+-- @return #boolean If true, parking is valid.
+function WAREHOUSE:_CheckParkingAsset(spot, asset)
+
+  if asset.parkingIDs==nil then
+    return true
+  end
+
+  for _,id in pairs(asset.parkingIDs or {}) do
     if spot.TerminalID==id then
       return true
     end
@@ -2725,6 +2755,18 @@ end
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetPortZone(zone)
   self.portzone=zone
+  return self
+end
+
+--- Add a Harbor Zone for this warehouse where naval cargo units will spawn and be received.
+-- Both warehouses must have the harbor zone defined for units to properly spawn on both the 
+-- sending and receiving side. The harbor zone should be within 3km of the port zone used for 
+-- warehouse in order to facilitate the boarding process.
+-- @param #WAREHOUSE self
+-- @param Core.Zone#ZONE zone The zone defining the naval embarcation/debarcation point for cargo units
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetHarborZone(zone)
+  self.harborzone=zone
   return self
 end
 
@@ -3059,6 +3101,21 @@ end
 function WAREHOUSE:GetCoordinate()
   return self.warehouse:GetCoordinate()
 end
+
+--- Get 3D vector of warehouse static.
+-- @param #WAREHOUSE self
+-- @return DCS#Vec3 The 3D vector of the warehouse.
+function WAREHOUSE:GetVec3()
+  return self.warehouse:GetVec3()
+end
+
+--- Get 2D vector of warehouse static.
+-- @param #WAREHOUSE self
+-- @return DCS#Vec2 The 2D vector of the warehouse.
+function WAREHOUSE:GetVec2()
+  return self.warehouse:GetVec2()
+end
+
 
 --- Get coalition side of warehouse static.
 -- @param #WAREHOUSE self
@@ -4413,10 +4470,10 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       self:_ErrorMessage("ERROR: Cargo transport by train not supported yet!")
       return
 
-    elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
+    elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.NAVALCARRIER then
 
-      self:_ErrorMessage("ERROR: Cargo transport by ship not supported yet!")
-      return
+      -- Spawn Ship in port zone
+      spawngroup=self:_SpawnAssetGroundNaval(_alias, _assetitem, Request, self.portzone)
 
     elseif Request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
 
@@ -4544,6 +4601,9 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     --_boardradius=nil
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
     --_boardradius=nil
+  elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
+      or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
+    _boardradius=6000
   end
 
   -- Empty cargo group set.
@@ -4554,7 +4614,6 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
 
     -- Find asset belonging to this group.
     local asset=self:FindAssetInDB(_group)
-
     -- New cargo group object.
     local cargogroup=CARGO_GROUP:New(_group, _cargotype,_group:GetName(),_boardradius, asset.loadradius)
 
@@ -4563,6 +4622,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
 
     -- Add group to group set.
     CargoGroups:AddCargo(cargogroup)
+
   end
 
   ------------------------
@@ -4608,23 +4668,54 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     -- Set home zone.
     CargoTransport:SetHomeZone(self.spawnzone)
 
+  elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
+      or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
+
+    -- Pickup and deploy zones.
+    local PickupZoneSet = SET_ZONE:New():AddZone(self.portzone)
+    PickupZoneSet:AddZone(self.harborzone)
+    local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.harborzone)
+
+
+    -- Get the shipping lane to use and pass it to the Dispatcher
+    local remotename = Request.warehouse.warehouse:GetName()
+    local ShippingLane = self.shippinglanes[remotename][math.random(#self.shippinglanes[remotename])]
+
+    -- Define dispatcher for this task.
+    CargoTransport = AI_CARGO_DISPATCHER_SHIP:New(TransportGroupSet, CargoGroups, PickupZoneSet, DeployZoneSet, ShippingLane)
+
+    -- Set home zone
+    CargoTransport:SetHomeZone(self.portzone)
+
   else
     self:E(self.lid.."ERROR: Unknown transporttype!")
   end
 
   -- Set pickup and deploy radii.
   -- The 20 m inner radius are to ensure that the helo does not land on the warehouse itself in the middle of the default spawn zone.
-  local pickupouter=200
-  local pickupinner=0
-  if self.spawnzone.Radius~=nil then
-    pickupouter=self.spawnzone.Radius
+  local pickupouter = 200
+  local pickupinner = 0
+  local deployouter = 200
+  local deployinner = 0
+  if Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
+    or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
+    pickupouter=1000
     pickupinner=20
-  end
-  local deployouter=200
-  local deployinner=0
-  if self.spawnzone.Radius~=nil then
-    deployouter=Request.warehouse.spawnzone.Radius
-    deployinner=20
+    deployouter=1000
+    deployinner=0
+  else 
+    pickupouter=200
+    pickupinner=0
+    if self.spawnzone.Radius~=nil then
+      pickupouter=self.spawnzone.Radius
+      pickupinner=20
+    end
+    deployouter=200
+    deployinner=0
+    if self.spawnzone.Radius~=nil then
+      deployouter=Request.warehouse.spawnzone.Radius
+      deployinner=20
+    end
   end
   CargoTransport:SetPickupRadius(pickupouter, pickupinner)
   CargoTransport:SetDeployRadius(deployouter, deployinner)
@@ -4703,7 +4794,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     -- Get cargo group object.
     local group=Cargo:GetObject() --Wrapper.Group#GROUP
 
-    -- Get request.
+     -- Get request.
     local request=warehouse:_GetRequestOfGroup(group, warehouse.pending)
 
     -- Add cargo group to this carrier.
@@ -4810,6 +4901,13 @@ function WAREHOUSE:onbeforeArrived(From, Event, To, group)
   local asset=self:FindAssetInDB(group)
 
   if asset then
+
+    if asset.flightgroup and not asset.arrived then
+      --env.info("FF asset has a flightgroup. arrival will be handled there!")
+      asset.arrived=true
+      return false
+    end  
+  
     if asset.arrived==true then
       -- Asset already arrived (e.g. if multiple units trigger the event via landing).
       return false
@@ -4817,6 +4915,7 @@ function WAREHOUSE:onbeforeArrived(From, Event, To, group)
       asset.arrived=true  --ensure this is not called again from the same asset group.
       return true
     end
+    
   end
 
 end
@@ -5717,21 +5816,32 @@ end
 -- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
 -- @param #table parking Parking data for this asset.
 -- @param #boolean uncontrolled Spawn aircraft in uncontrolled state.
--- @param #boolean hotstart Spawn aircraft with engines already on. Default is a cold start with engines off.
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
-function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrolled, hotstart)
+function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrolled)
 
   if asset and asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
 
     -- Prepare the spawn template.
     local template=self:_SpawnAssetPrepareTemplate(asset, alias)
 
+    -- Cold start (default).
+    local _type=COORDINATE.WaypointType.TakeOffParking
+    local _action=COORDINATE.WaypointAction.FromParkingArea
+
+    -- Hot start.
+    if asset.takeoffType and asset.takeoffType==COORDINATE.WaypointType.TakeOffParkingHot then
+      _type=COORDINATE.WaypointType.TakeOffParkingHot
+      _action=COORDINATE.WaypointAction.FromParkingAreaHot
+      uncontrolled=false
+    end
+
+
     -- Set route points.
     if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
 
       -- Get flight path if the group goes to another warehouse by itself.
       if request.toself then
-        local wp=self.airbase:GetCoordinate():WaypointAir("RADIO", COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, 0, false, self.airbase, {}, "Parking")
+        local wp=self.airbase:GetCoordinate():WaypointAir("RADIO", _type, _action, 0, false, self.airbase, {}, "Parking")
         template.route.points={wp}
       else
         template.route.points=self:_GetFlightplan(asset, self.airbase, request.warehouse.airbase)
@@ -5739,18 +5849,8 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
 
     else
 
-      -- Cold start (default).
-      local _type=COORDINATE.WaypointType.TakeOffParking
-      local _action=COORDINATE.WaypointAction.FromParkingArea
-
-      -- Hot start.
-      if hotstart then
-        _type=COORDINATE.WaypointType.TakeOffParkingHot
-        _action=COORDINATE.WaypointAction.FromParkingAreaHot
-      end
-
       -- First route point is the warehouse airbase.
-      template.route.points[1]=self.airbase:GetCoordinate():WaypointAir("BARO",_type,_action, 0, true, self.airbase, nil, "Spawnpoint")
+      template.route.points[1]=self.airbase:GetCoordinate():WaypointAir("BARO", _type, _action, 0, true, self.airbase, nil, "Spawnpoint")
 
     end
 
@@ -5969,7 +6069,7 @@ function WAREHOUSE:_RouteGround(group, request)
     end
 
     for n,wp in ipairs(Waypoints) do
-      env.info(n)
+      --env.info(n)
       local tf=self:_SimpleTaskFunctionWP("warehouse:_PassingWaypoint",group, n, #Waypoints)
       group:SetTaskWaypoint(wp, tf)
     end
@@ -7035,11 +7135,16 @@ function WAREHOUSE:_CheckRequestValid(request)
         valid=false
       end
 
-    elseif request.transporttype==WAREHOUSE.TransportType.SHIP then
+    elseif request.transporttype==WAREHOUSE.TransportType.SHIP or request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
+        or request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or request.transporttype==WAREHOUSE.TransportType.WARSHIP then
 
       -- Transport by ship.
-      self:E("ERROR: Incorrect request. Transport by SHIP not implemented yet!")
-      valid=false
+      local shippinglane=self:HasConnectionNaval(request.warehouse)
+
+      if not shippinglane then
+        self:E("ERROR: Incorrect request. No shipping lane has been defined between warehouses!")
+        valid=false
+      end
 
     elseif request.transporttype==WAREHOUSE.TransportType.TRAIN then
 
@@ -7164,24 +7269,35 @@ function WAREHOUSE:_CheckRequestNow(request)
     _assetcategory=_assets[1].category
 
     -- Check available parking for air asset units.
-    if self.airbase and (_assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER) then
+    if _assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER then
     
-      if self:IsRunwayOperational() then
-
-        local Parking=self:_FindParkingForAssets(self.airbase,_assets)
+      if self.airbase and self.airbase:GetCoalition()==self:GetCoalition() then
+    
+        if self:IsRunwayOperational() then
   
-        --if Parking==nil and not (self.category==Airbase.Category.HELIPAD) then
-        if Parking==nil then
-          local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all requested assets at the moment.", self.alias)
+          local Parking=self:_FindParkingForAssets(self.airbase,_assets)
+    
+          --if Parking==nil and not (self.category==Airbase.Category.HELIPAD) then
+          if Parking==nil then
+            local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all requested assets at the moment.", self.alias)
+            self:_InfoMessage(text, 5)
+            return false
+          end
+          
+        else
+          -- Runway destroyed.
+          local text=string.format("Warehouse %s: Request denied! Runway is still destroyed", self.alias)
           self:_InfoMessage(text, 5)
-          return false
+          return false                
         end
         
       else
-        -- Runway destroyed.
-        local text=string.format("Warehouse %s: Request denied! Runway is still destroyed", self.alias)
+      
+        -- No airbase!
+        local text=string.format("Warehouse %s: Request denied! No airbase", self.alias)
         self:_InfoMessage(text, 5)
         return false                
+      
       end
 
     end
@@ -7205,14 +7321,37 @@ function WAREHOUSE:_CheckRequestNow(request)
       local _transportcategory=_transports[1].category
 
       -- Check available parking for transport units.
-      if self.airbase and (_transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER) then
-        local Parking=self:_FindParkingForAssets(self.airbase,_transports)
-        if Parking==nil then
-          local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all transports at the moment.", self.alias)
-          self:_InfoMessage(text, 5)
-
-          return false
+      if _transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER then
+      
+        if self.airbase and self.airbase:GetCoalition()==self:GetCoalition() then
+        
+          if self:IsRunwayOperational() then        
+      
+            local Parking=self:_FindParkingForAssets(self.airbase,_transports)
+            
+            -- No parking ==> return false
+            if Parking==nil then           
+              local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all transports at the moment.", self.alias)
+              self:_InfoMessage(text, 5)  
+              return false
+            end
+            
+          else
+          
+             -- Runway destroyed.
+            local text=string.format("Warehouse %s: Request denied! Runway is still destroyed", self.alias)
+            self:_InfoMessage(text, 5)
+            return false
+                                     
+          end
+          
+        else
+          -- No airbase
+          local text=string.format("Warehouse %s: Request denied! No airbase currently!", self.alias)
+          self:_InfoMessage(text, 5)  
+          return false        
         end
+          
       end
 
     else
@@ -7488,7 +7627,7 @@ function WAREHOUSE:_CheckQueue()
 
     -- Check if request is possible now.
     local okay=false
-    if valid then
+    if valid then    
       okay=self:_CheckRequestNow(qitem)
     else
       -- Remember invalid request and delete later in order not to confuse the loop.
@@ -7728,7 +7867,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
         local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
 
         -- Check correct terminal type for asset. We don't want helos in shelters etc.
-        if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) and self:_CheckParkingValid(parkingspot) then
+        if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) and self:_CheckParkingValid(parkingspot) and self:_CheckParkingAsset(parkingspot, asset) and airbase:_CheckParkingLists(parkingspot.TerminalID) then
 
           -- Coordinate of the parking spot.
           local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
@@ -8163,9 +8302,8 @@ function WAREHOUSE:_GetAttribute(group)
     -- Ships
     local aircraftcarrier=group:HasAttribute("Aircraft Carriers")
     local warship=group:HasAttribute("Heavy armed ships")
-    local armedship=group:HasAttribute("Armed ships")
+    local armedship=group:HasAttribute("Armed ships") or group:HasAttribute("Armed Ship")
     local unarmedship=group:HasAttribute("Unarmed ships")
-
 
     -- Define attribute. Order is important.
     if transportplane then
@@ -8929,9 +9067,23 @@ function WAREHOUSE:_GetFlightplan(asset, departure, destination)
   local wp={}
   local c={}
 
+  -- Cold start (default).
+  local _type=COORDINATE.WaypointType.TakeOffParking
+  local _action=COORDINATE.WaypointAction.FromParkingArea
+
+  -- Hot start.
+  if asset.takeoffType and asset.takeoffType==COORDINATE.WaypointType.TakeOffParkingHot then
+    --env.info("FF hot")
+    _type=COORDINATE.WaypointType.TakeOffParkingHot
+    _action=COORDINATE.WaypointAction.FromParkingAreaHot
+  else
+    --env.info("FF cold")      
+  end
+
+
   --- Departure/Take-off
   c[#c+1]=Pdeparture
-  wp[#wp+1]=Pdeparture:WaypointAir("RADIO", COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, VxClimb*3.6, true, departure, nil, "Departure")
+  wp[#wp+1]=Pdeparture:WaypointAir("RADIO", _type, _action, VxClimb*3.6, true, departure, nil, "Departure")
 
   --- Begin of Cruise
   local Pcruise=Pdeparture:Translate(d_climb, heading)

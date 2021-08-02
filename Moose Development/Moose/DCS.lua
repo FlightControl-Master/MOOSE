@@ -295,6 +295,17 @@ do -- country
   -- @field QATAR
   -- @field OMAN
   -- @field UNITED_ARAB_EMIRATES
+  -- @field SOUTH_AFRICA
+  -- @field CUBA
+  -- @field PORTUGAL
+  -- @field GDR
+  -- @field LEBANON
+  -- @field CJTF_BLUE
+  -- @field CJTF_RED
+  -- @field UN_PEACEKEEPERS
+  -- @field Argentinia
+  -- @field Cyprus
+  -- @field Slovenia
 
   country = {} --#country
 
@@ -459,6 +470,22 @@ do -- Types
   --@type WaypointAir
   --@field #boolean lateActivated
   --@field #boolean uncontrolled
+
+  --- DCS template data structure.
+  -- @type Template
+  -- @field #boolean uncontrolled Aircraft is uncontrolled.
+  -- @field #boolean lateActivation Group is late activated.
+  -- @field #number x 2D Position on x-axis in meters.
+  -- @field #number y 2D Position on y-axis in meters.
+  -- @field #table units Unit list.
+  -- 
+  
+  --- Unit data structure.
+  --@type Template.Unit
+  --@field #string name Name of the unit.
+  --@field #number x
+  --@field #number y
+  --@field #number alt
 
 end --
 
@@ -1152,6 +1179,10 @@ do -- Unit
   -- @param #Unit self
   -- @return #Unit.Desc
   
+  --- GROUND - Switch on/off radar emissions
+  -- @function [parent=#Unit] enableEmission
+  -- @param #Unit self
+  -- @param #boolean switch
   
   Unit = {} --#Unit
 
@@ -1222,7 +1253,7 @@ do -- Group
   -- @param #Group self 
   -- @return #number
   
-  --- Returns initial size of the group. If some of the units will be destroyed, initial size of the group will not be changed. Initial size limits the unitNumber parameter for Group.getUnit() function.
+  --- Returns initial size of the group. If some of the units will be destroyed, initial size of the group will not be changed; Initial size limits the unitNumber parameter for Group.getUnit() function.
   -- @function [parent=#Group] getInitialSize
   -- @param #Group self 
   -- @return #number
@@ -1236,6 +1267,11 @@ do -- Group
   -- @function [parent=#Group] getController
   -- @param #Group self 
   -- @return #Controller
+  
+    --- GROUND - Switch on/off radar emissions
+  -- @function [parent=#Group] enableEmission
+  -- @param #Group self
+  -- @param #boolean switch
   
   Group = {} --#Group
 

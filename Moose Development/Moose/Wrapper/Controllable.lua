@@ -129,6 +129,7 @@
 --   * @{#CONTROLLABLE.Route}(): Make the Controllable to follow a given route.
 --   * @{#CONTROLLABLE.RouteGroundTo}(): Make the GROUND Controllable to drive towards a specific coordinate.
 --   * @{#CONTROLLABLE.RouteAirTo}(): Make the AIR Controllable to fly towards a specific coordinate.
+--   * @{#CONTROLLABLE.RelocateGroundRandomInRadius}(): Relocate the GROUND controllable to a random point in a given radius.
 --
 -- # 5) Option methods
 --
@@ -172,6 +173,9 @@
 --
 --   * @{#CONTROLLABLE.OptionAllowJettisonWeaponsOnThreat}
 --   * @{#CONTROLLABLE.OptionKeepWeaponsOnThreat}
+--
+-- ## 5.5) Air-2-Air missile attack range:
+--   * @{#CONTROLLABLE.OptionAAAttackRange}(): Defines the usage of A2A missiles against possible targets .
 --
 -- @field #CONTROLLABLE
 CONTROLLABLE = {
@@ -500,7 +504,7 @@ function CONTROLLABLE:TaskCombo( DCSTasks )
       tasks = DCSTasks
     }
   }
-  
+
   return DCSTaskCombo
 end
 
@@ -798,12 +802,12 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandSetFrequency(Frequency, Modulation, Delay)
 
-  local CommandSetFrequency = { 
-    id = 'SetFrequency', 
-    params = { 
-      frequency = Frequency*1000000, 
-      modulation = Modulation or radio.modulation.AM, 
-    } 
+  local CommandSetFrequency = {
+    id = 'SetFrequency',
+    params = {
+      frequency = Frequency*1000000,
+      modulation = Modulation or radio.modulation.AM,
+    }
   }
 
   if Delay and Delay>0 then
@@ -877,7 +881,7 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
       groupId          = AttackGroup:GetID(),
       weaponType       = WeaponType or 1073741822,
       expend           = WeaponExpend or "Auto",
-      attackQtyLimit   = AttackQty and true or false,      
+      attackQtyLimit   = AttackQty and true or false,
       attackQty        = AttackQty or 1,
       directionEnabled = Direction and true or false,
       direction        = Direction and math.rad(Direction) or 0,
@@ -917,7 +921,7 @@ function CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, Atta
       weaponType       = WeaponType or 1073741822,
     }
   }
-  
+
   return DCSTask
 end
 
@@ -1081,7 +1085,7 @@ function CONTROLLABLE:TaskEmbarking(Coordinate, GroupSetForEmbarking, Duration, 
   -- Distribution
   --local distribution={}
   --distribution[id]=gids
-  
+
   local groupID=self and self:GetID()
 
   local DCSTask = {
@@ -1310,7 +1314,7 @@ function CONTROLLABLE:TaskLandAtVec2(Vec2, Duration)
       duration     = Duration,
     },
   }
-  
+
   return DCSTask
 end
 
@@ -1424,16 +1428,22 @@ end
 -- @param DCS#Distance Radius The radius of the zone to deploy the fire at.
 -- @param #number AmmoCount (optional) Quantity of ammunition to expand (omit to fire until ammunition is depleted).
 -- @param #number WeaponType (optional) Enum for weapon type ID. This value is only required if you want the group firing to use a specific weapon, for instance using the task on a ship to force it to fire guided missiles at targets within cannon range. See http://wiki.hoggit.us/view/DCS_enum_weapon_flag
+-- @param #number Altitude (Optional) Altitude in meters.
+-- @param #number ASL Altitude is above mean sea level. Default is above ground level.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
+function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Altitude, ASL )
 
   local DCSTask = {
     id = 'FireAtPoint',
     params = {
       point            = Vec2,
+      x=Vec2.x,
+      y=Vec2.y,
       zoneRadius       = Radius,
+      radius           = Radius,
       expendQty        = 100, -- dummy value
       expendQtyEnabled = false,
+      alt_type         = ASL and 0 or 1
     }
   }
 
@@ -1442,9 +1452,15 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
     DCSTask.params.expendQtyEnabled = true
   end
 
+  if Altitude then
+    DCSTask.params.altitude=Altitude
+  end
+
   if WeaponType then
     DCSTask.params.weaponType=WeaponType
   end
+
+  --self:I(DCSTask)
 
   return DCSTask
 end
@@ -1463,6 +1479,7 @@ end
 --- (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.
 -- The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
 -- If the task is assigned to the controllable lead unit will be a FAC.
+-- It's important to note that depending on the type of unit that is being assigned the task (AIR or GROUND), you must choose the correct type of callsign enumerator. For airborne controllables use CALLSIGN.Aircraft and for ground based use CALLSIGN.JTAC enumerators.
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Group#GROUP AttackGroup Target GROUP object.
 -- @param #number WeaponType Bitmask of weapon types, which are allowed to use.
@@ -1470,7 +1487,7 @@ end
 -- @param #boolean Datalink (Optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default.
 -- @param #number Frequency Frequency in MHz used to communicate with the FAC. Default 133 MHz.
 -- @param #number Modulation Modulation of radio for communication. Default 0=AM.
--- @param #number CallsignName Callsign enumerator name of the FAC.
+-- @param #number CallsignName Callsign enumerator name of the FAC. (CALLSIGN.Aircraft.{name} for airborne controllables, CALLSIGN.JTACS.{name} for ground units)
 -- @param #number CallsignNumber Callsign number, e.g. Axeman-**1**.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation, Datalink, Frequency, Modulation, CallsignName, CallsignNumber )
@@ -1792,7 +1809,7 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
 
   -- DCS task.
   local DCSTask = self:TaskWrappedAction(self:CommandDoScript(table.concat( DCSScript )))
-  
+
   return DCSTask
 end
 
@@ -1815,7 +1832,7 @@ end
 
 do -- Patrol methods
 
-  --- (GROUND) Patrol iteratively using the waypoints the for the (parent) group.
+  --- (GROUND) Patrol iteratively using the waypoints of the (parent) group.
   -- @param #CONTROLLABLE self
   -- @return #CONTROLLABLE
   function CONTROLLABLE:PatrolRoute()
@@ -1834,8 +1851,27 @@ do -- Patrol methods
 
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
-      local From = FromCoord:WaypointGround( 120 )
-
+      
+      -- test for submarine
+      local depth = 0
+      local IsSub = false
+      if PatrolGroup:IsShip() then
+        local navalvec3 = FromCoord:GetVec3()
+        if navalvec3.y < 0 then 
+          depth = navalvec3.y
+          IsSub = true
+        end
+      end
+      
+     
+      local Waypoint = Waypoints[1]
+      local Speed = Waypoint.speed or (20 / 3.6)
+       local From = FromCoord:WaypointGround( Speed )
+       
+      if IsSub then 
+         From = FromCoord:WaypointNaval( Speed, Waypoint.alt )
+      end
+      
       table.insert( Waypoints, 1, From )
 
       local TaskRoute = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRoute" )
@@ -1875,7 +1911,16 @@ do -- Patrol methods
       if ToWaypoint then
         FromWaypoint = ToWaypoint
       end
-
+      -- test for submarine
+      local depth = 0
+      local IsSub = false
+      if PatrolGroup:IsShip() then
+        local navalvec3 = FromCoord:GetVec3()
+        if navalvec3.y < 0 then 
+          depth = navalvec3.y
+          IsSub = true
+        end
+      end
       -- Loop until a waypoint has been found that is not the same as the current waypoint.
       -- Otherwise the object zon't move or drive in circles and the algorithm would not do exactly
       -- what it is supposed to do, which is making groups drive around.
@@ -1890,9 +1935,13 @@ do -- Patrol methods
       local ToCoord = COORDINATE:NewFromVec2( { x = Waypoint.x, y = Waypoint.y } )
       -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
       local Route = {}
-      Route[#Route+1] = FromCoord:WaypointGround( 0 )
-      Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
-
+      if IsSub then
+        Route[#Route+1] = FromCoord:WaypointNaval( Speed, depth )
+        Route[#Route+1] = ToCoord:WaypointNaval( Speed, Waypoint.alt )
+      else
+        Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
+        Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
+      end
 
       local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRouteRandom", Speed, Formation, ToWaypoint )
 
@@ -1933,9 +1982,20 @@ do -- Patrol methods
     self:F( { PatrolGroup = PatrolGroup:GetName() } )
 
     if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
-
+    
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
+      
+      -- test for submarine
+      local depth = 0
+      local IsSub = false
+      if PatrolGroup:IsShip() then
+        local navalvec3 = FromCoord:GetVec3()
+        if navalvec3.y < 0 then 
+          depth = navalvec3.y
+          IsSub = true
+        end
+      end
 
       -- Select a random Zone and get the Coordinate of the new Zone.
       local RandomZone = ZoneList[ math.random( 1, #ZoneList ) ] -- Core.Zone#ZONE
@@ -1943,9 +2003,13 @@ do -- Patrol methods
 
       -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
       local Route = {}
-      Route[#Route+1] = FromCoord:WaypointGround( 20 )
-      Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
-
+      if IsSub then
+        Route[#Route+1] = FromCoord:WaypointNaval( Speed, depth )
+        Route[#Route+1] = ToCoord:WaypointNaval( Speed, depth )
+      else
+        Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
+        Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
+      end
 
       local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolZones", ZoneList, Speed, Formation, DelayMin, DelayMax )
 
@@ -1969,7 +2033,7 @@ function CONTROLLABLE:TaskRoute( Points )
     id = 'Mission',
     params = {
       airborne = self:IsAir(),
-      route = {points = Points}, 
+      route = {points = Points},
     },
   }
 
@@ -2891,13 +2955,13 @@ end
 --- Set option for Rules of Engagement (ROE).
 -- @param Wrapper.Controllable#CONTROLLABLE self
 -- @param #number ROEvalue ROE value. See ENUMS.ROE.
--- @return Wrapper.Controllable#CONTROLLABLE self
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionROE(ROEvalue)
 
   local DCSControllable = self:GetDCSObject()
-  
+
   if DCSControllable then
-  
+
     local Controller = self:_GetController()
 
     if self:IsAir() then
@@ -2933,8 +2997,8 @@ function CONTROLLABLE:OptionROEHoldFirePossible()
 end
 
 --- Weapons Hold: AI will hold fire under all circumstances.
--- @param Wrapper.Controllable#CONTROLLABLE self
--- @return Wrapper.Controllable#CONTROLLABLE self
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionROEHoldFire()
   self:F2( { self.ControllableName } )
 
@@ -3461,13 +3525,13 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionProhibitAfterburner(Prohibit)
   self:F2( { self.ControllableName } )
-  
+
   if Prohibit==nil then
     Prohibit=true
   end
 
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.PROHIBIT_AB, Prohibit)      
+    self:SetOption(AI.Option.Air.id.PROHIBIT_AB, Prohibit)
   end
 
   return self
@@ -3478,9 +3542,9 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_Never()
   self:F2( { self.ControllableName } )
-  
+
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 0)      
+    self:SetOption(AI.Option.Air.id.ECM_USING, 0)
   end
 
   return self
@@ -3491,9 +3555,9 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_OnlyLockByRadar()
   self:F2( { self.ControllableName } )
-  
+
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 1)      
+    self:SetOption(AI.Option.Air.id.ECM_USING, 1)
   end
 
   return self
@@ -3505,9 +3569,9 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_DetectedLockByRadar()
   self:F2( { self.ControllableName } )
-  
+
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 2)      
+    self:SetOption(AI.Option.Air.id.ECM_USING, 2)
   end
 
   return self
@@ -3518,9 +3582,9 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_AlwaysOn()
   self:F2( { self.ControllableName } )
-  
+
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 3)      
+    self:SetOption(AI.Option.Air.id.ECM_USING, 3)
   end
 
   return self
@@ -3532,7 +3596,7 @@ end
 -- Note that when WayPointInitialize is called, the Mission of the controllable is RESTARTED!
 -- @param #CONTROLLABLE self
 -- @param #table WayPoints If WayPoints is given, then use the route.
--- @return #CONTROLLABLE
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:WayPointInitialize( WayPoints )
   self:F( { WayPoints } )
 
@@ -3563,7 +3627,7 @@ end
 -- @param #number WayPoint The waypoint number. Note that the start waypoint on the route is WayPoint 1!
 -- @param #number WayPointIndex When defining multiple WayPoint functions for one WayPoint, use WayPointIndex to set the sequence of actions.
 -- @param #function WayPointFunction The waypoint function to be called when the controllable moves over the waypoint. The waypoint function takes variable parameters.
--- @return #CONTROLLABLE
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:WayPointFunction( WayPoint, WayPointIndex, WayPointFunction, ... )
   self:F2( { WayPoint, WayPointIndex, WayPointFunction } )
 
@@ -3579,7 +3643,7 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number WayPoint The WayPoint from where to execute the mission.
 -- @param #number WaitTime The amount seconds to wait before initiating the mission.
--- @return #CONTROLLABLE
+-- @return #CONTROLLABLE self
 function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
   self:F( { WayPoint, WaitTime } )
 
@@ -3658,4 +3722,125 @@ function CONTROLLABLE:OptionRestrictBurner(RestrictBurner)
     end
   end
 
+end
+
+--- Sets Controllable Option for A2A attack range for AIR FIGHTER units.
+-- @param #CONTROLLABLE self
+-- @param #number range Defines the range
+-- @return #CONTROLLABLE self
+-- @usage Range can be one of MAX_RANGE = 0, NEZ_RANGE = 1, HALF_WAY_RMAX_NEZ = 2, TARGET_THREAT_EST = 3, RANDOM_RANGE = 4. Defaults to 3. See: https://wiki.hoggitworld.com/view/DCS_option_missileAttack
+function CONTROLLABLE:OptionAAAttackRange(range)
+  self:F2( { self.ControllableName } )
+  -- defaults to 3
+  local range = range or 3
+  if range < 0  or range > 4 then
+    range = 3
+  end
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then
+     if self:IsAir() then
+        self:SetOption(AI.Option.Air.val.MISSILE_ATTACK, range)
+     end
+    end
+    return self
+  end
+  return nil
+end
+
+--- Defines the range at which a GROUND unit/group is allowed to use its weapons automatically.
+-- @param #CONTROLLABLE self
+-- @param #number EngageRange Engage range limit in percent (a number between 0 and 100). Default 100.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionEngageRange(EngageRange)
+  self:F2( { self.ControllableName } )
+  -- Set default if not specified.
+  EngageRange=EngageRange or 100
+  if EngageRange < 0  or EngageRange > 100 then
+    EngageRange = 100
+  end
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then
+     if self:IsGround() then
+        self:SetOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION, EngageRange)
+     end
+    end
+   return self
+  end
+  return nil
+end
+
+--- (GROUND) Relocate controllable to a random point within a given radius; use e.g.for evasive actions; Note that not all ground controllables can actually drive, also the alarm state of the controllable might stop it from moving.
+-- @param #CONTROLLABLE self
+-- @param  #number speed Speed of the controllable, default 20
+-- @param  #number radius Radius of the relocation zone, default 500
+-- @param  #boolean onroad If true, route on road (less problems with AI way finding), default true
+-- @param  #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortcut)
+  self:F2( { self.ControllableName } )
+
+    local _coord = self:GetCoordinate()
+    local _radius = radius or 500
+    local _speed = speed or 20
+    local _tocoord = _coord:GetRandomCoordinateInRadius(_radius,100)
+    local _onroad = onroad or true
+    local _grptsk = {}
+    local _candoroad = false
+    local _shortcut = shortcut or false
+
+    -- create a DCS Task an push it on the group
+    -- TaskGroundOnRoad(ToCoordinate,Speed,OffRoadFormation,Shortcut,FromCoordinate,WaypointFunction,WaypointFunctionArguments)
+    if onroad then
+      _grptsk, _candoroad = self:TaskGroundOnRoad(_tocoord,_speed,"Off Road",_shortcut)
+      self:Route(_grptsk,5)
+    else
+      self:TaskRouteToVec2(_tocoord:GetVec2(),_speed,"Off Road")
+    end
+
+  return self
+end
+
+--- Defines how long a GROUND unit/group will move to avoid an ongoing attack.
+-- @param #CONTROLLABLE self
+-- @param #number Seconds Any positive number: AI will disperse, but only for the specified time before continuing their route. 0: AI will not disperse.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionDisperseOnAttack(Seconds)
+  self:F2( { self.ControllableName } )
+  -- Set default if not specified.
+  local seconds = Seconds or 0
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then
+     if self:IsGround() then
+        self:SetOption(AI.Option.Ground.id.DISPERSE_ON_ATTACK, seconds)
+     end
+    end
+   return self
+  end
+  return nil
+end
+
+--- Returns if the unit is a submarine.
+-- @param #POSITIONABLE self
+-- @return #boolean Submarines attributes result.
+function POSITIONABLE:IsSubmarine()
+  self:F2()
+
+  local DCSUnit = self:GetDCSObject()
+
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+        if UnitDescriptor.attributes["Submarines"] == true then
+            return true
+        else
+            return false
+        end
+  end
+
+  return nil
 end

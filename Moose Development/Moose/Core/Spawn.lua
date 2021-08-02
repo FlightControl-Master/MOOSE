@@ -1718,27 +1718,29 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           self:T(string.format("Group %s is spawned on farp/ship/runway %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
           nfree=SpawnAirbase:GetFreeParkingSpotsNumber(termtype, true)
           spots=SpawnAirbase:GetFreeParkingSpotsTable(termtype, true)
+        --[[
         elseif Parkingdata~=nil then
           -- Parking data explicitly set by user as input parameter.
           nfree=#Parkingdata
           spots=Parkingdata
+        ]]
         else
           if ishelo then
             if termtype==nil then
               -- Helo is spawned. Try exclusive helo spots first.
               self:T(string.format("Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.HelicopterOnly))
-              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
               nfree=#spots
               if nfree<nunits then
                 -- Not enough helo ports. Let's try also other terminal types.
                 self:T(string.format("Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.HelicopterUsable))
-                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
                 nfree=#spots
               end
             else
               -- No terminal type specified. We try all spots except shelters.
               self:T(string.format("Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), termtype))
-              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
               nfree=#spots              
             end
           else
@@ -1747,29 +1749,30 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
               if isbomber or istransport or istanker or isawacs then
                 -- First we fill the potentially bigger spots.
                 self:T(string.format("Transport/bomber group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.OpenBig))
-                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
                 nfree=#spots
                 if nfree<nunits then
                   -- Now we try the smaller ones.
                   self:T(string.format("Transport/bomber group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.OpenMedOrBig))         
-                  spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenMedOrBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+                  spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenMedOrBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
                   nfree=#spots
                 end
               else
                 self:T(string.format("Fighter group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.FighterAircraft))
-                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.FighterAircraft, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.FighterAircraft, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
                 nfree=#spots              
               end            
             else
               -- Terminal type explicitly given.
               self:T(string.format("Plane group %s is at %s using terminal type %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), tostring(termtype)))
-              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
               nfree=#spots
             end
           end
         end
       
-        -- Get parking data.
+        -- Debug: Get parking data.
+        --[[
         local parkingdata=SpawnAirbase:GetParkingSpotsTable(termtype)
         self:T(string.format("Parking at %s, terminal type %s:", SpawnAirbase:GetName(), tostring(termtype)))
         for _,_spot in pairs(parkingdata) do        
@@ -1777,6 +1780,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           SpawnAirbase:GetName(), _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy))
         end
         self:T(string.format("%s at %s: free parking spots = %d - number of units = %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), nfree, nunits))
+        ]]
         
         -- Set this to true if not enough spots are available for emergency air start.
         local _notenough=false
@@ -2144,27 +2148,29 @@ function SPAWN:ParkAircraft( SpawnAirbase, TerminalType, Parkingdata, SpawnIndex
         self:T(string.format("Group %s is spawned on farp/ship/runway %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
         nfree=SpawnAirbase:GetFreeParkingSpotsNumber(termtype, true)
         spots=SpawnAirbase:GetFreeParkingSpotsTable(termtype, true)
+      --[[
       elseif Parkingdata~=nil then
         -- Parking data explicitly set by user as input parameter.
         nfree=#Parkingdata
         spots=Parkingdata
+      ]]
       else
         if ishelo then
           if termtype==nil then
             -- Helo is spawned. Try exclusive helo spots first.
             self:T(string.format("Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.HelicopterOnly))
-            spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+            spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
             nfree=#spots
             if nfree<nunits then
               -- Not enough helo ports. Let's try also other terminal types.
               self:T(string.format("Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.HelicopterUsable))
-              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
               nfree=#spots
             end
           else
             -- No terminal type specified. We try all spots except shelters.
             self:T(string.format("Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), termtype))
-            spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+            spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
             nfree=#spots              
           end
         else
@@ -2176,29 +2182,30 @@ function SPAWN:ParkAircraft( SpawnAirbase, TerminalType, Parkingdata, SpawnIndex
             if isbomber or istransport then
               -- First we fill the potentially bigger spots.
               self:T(string.format("Transport/bomber group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.OpenBig))
-              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
               nfree=#spots
               if nfree<nunits then
                 -- Now we try the smaller ones.
                 self:T(string.format("Transport/bomber group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.OpenMedOrBig))         
-                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenMedOrBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenMedOrBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
                 nfree=#spots
               end
             else
               self:T(string.format("Fighter group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.FighterAircraft))
-              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.FighterAircraft, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.FighterAircraft, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
               nfree=#spots              
             end            
           else
             -- Terminal type explicitly given.
             self:T(string.format("Plane group %s is at %s using terminal type %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), tostring(termtype)))
-            spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
+            spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata)
             nfree=#spots
           end
         end
       end
     
-      -- Get parking data.
+      -- Debug: Get parking data.
+      --[[
       local parkingdata=SpawnAirbase:GetParkingSpotsTable(termtype)
       self:T2(string.format("Parking at %s, terminal type %s:", SpawnAirbase:GetName(), tostring(termtype)))
       for _,_spot in pairs(parkingdata) do        
@@ -2206,6 +2213,7 @@ function SPAWN:ParkAircraft( SpawnAirbase, TerminalType, Parkingdata, SpawnIndex
         SpawnAirbase:GetName(), _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy))
       end
       self:T(string.format("%s at %s: free parking spots = %d - number of units = %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), nfree, nunits))
+      ]]
       
       -- Set this to true if not enough spots are available for emergency air start.
       local _notenough=false
@@ -2415,8 +2423,7 @@ end
 -- @param #SPAWN self
 -- @param DCS#Vec3 Vec3 The Vec3 coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
   self:F( { self.SpawnTemplatePrefix, Vec3, SpawnIndex } )
 
@@ -2485,8 +2492,7 @@ end
 -- @param #SPAWN self
 -- @param Core.Point#Coordinate Coordinate The Coordinate coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 function SPAWN:SpawnFromCoordinate( Coordinate, SpawnIndex )
   self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 
@@ -2502,8 +2508,7 @@ end
 -- @param #SPAWN self
 -- @param Core.Point#POINT_VEC3 PointVec3 The PointVec3 coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 -- 
 --   local SpawnPointVec3 = ZONE:New( ZoneName ):GetPointVec3( 2000 ) -- Get the center of the ZONE object at 2000 meters from the ground.
@@ -2527,8 +2532,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 -- 
 --   local SpawnVec2 = ZONE:New( ZoneName ):GetVec2()
@@ -2561,8 +2565,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 -- 
 --   local SpawnPointVec2 = ZONE:New( ZoneName ):GetPointVec2()
@@ -2618,8 +2621,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 -- 
 --   local SpawnStatic = STATIC:FindByName( StaticName )
@@ -2650,8 +2652,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil when nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned. 
 -- @usage
 -- 
 --   local SpawnZone = ZONE:New( ZoneName )
@@ -3400,8 +3401,8 @@ function SPAWN:_SpawnCleanUpScheduler()
 	    if Stamp.Vec2 then
     		if SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() < 1 then
     		  local NewVec2 = SpawnUnit:GetVec2()
-    		  if Stamp.Vec2.x == NewVec2.x and Stamp.Vec2.y == NewVec2.y then
-      		  -- If the plane is not moving, and is on the ground, assign it with a timestamp...
+    		  if (Stamp.Vec2.x == NewVec2.x and Stamp.Vec2.y == NewVec2.y) or (SpawnUnit:GetLife() <= 1) then
+      		  -- If the plane is not moving or dead , and is on the ground, assign it with a timestamp...
     				if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
     					self:T( { "CleanUp Scheduler:", "ReSpawning:", SpawnGroup:GetName() } )
     					self:ReSpawn( SpawnCursor )
@@ -3419,7 +3420,7 @@ function SPAWN:_SpawnCleanUpScheduler()
     	else
         if SpawnUnit:InAir() == false then
           Stamp.Vec2 = SpawnUnit:GetVec2()
-          if SpawnUnit:GetVelocityKMH() < 1 then
+          if (SpawnUnit:GetVelocityKMH() < 1) then
             Stamp.Time = timer.getTime()
           end
         else

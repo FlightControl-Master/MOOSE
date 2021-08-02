@@ -13,7 +13,7 @@
 -- 
 -- ### Author: **FlightControl**
 -- 
--- ### Contributions: 
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -22,6 +22,8 @@
 
 
 --- @type UNIT
+-- @field #string ClassName Name of the class.
+-- @field #string UnitName Name of the unit.
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
 --- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
@@ -61,7 +63,7 @@
 -- 
 -- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
 -- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
--- If you want to obtain the complete **3D position** including ori�ntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
+-- If you want to obtain the complete **3D position** including orientation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
 -- 
 -- ## Test if alive
 -- 
@@ -87,6 +89,7 @@
 -- @field #UNIT UNIT
 UNIT = {
 	ClassName="UNIT",
+	UnitName=nil,
 }
 
 
@@ -103,12 +106,18 @@ UNIT = {
 --- Create a new UNIT from DCSUnit.
 -- @param #UNIT self
 -- @param #string UnitName The name of the DCS unit.
--- @return #UNIT
+-- @return #UNIT self
 function UNIT:Register( UnitName )
+
+  -- Inherit CONTROLLABLE.
   local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) )
+  
+  -- Set unit name.
   self.UnitName = UnitName
   
+  -- Set event prio.
   self:SetEventPriority( 3 )
+  
   return self
 end
 
@@ -145,8 +154,8 @@ function UNIT:Name()
   return self.UnitName
 end
 
-
---- @param #UNIT self
+--- Get the DCS unit object.
+-- @param #UNIT self
 -- @return DCS#Unit
 function UNIT:GetDCSObject()
 
@@ -371,6 +380,32 @@ function UNIT:GetPlayerName()
 
   return nil
 
+end
+
+--- Checks is the unit is a *Player* or *Client* slot.  
+-- @param #UNIT self
+-- @return #boolean If true, unit is a player or client aircraft  
+function UNIT:IsClient()
+
+  if _DATABASE.CLIENTS[self.UnitName] then
+    return true
+  end
+
+  return false
+end
+
+--- Get the CLIENT of the unit  
+-- @param #UNIT self
+-- @return Wrapper.Client#CLIENT  
+function UNIT:GetClient()
+
+  local client=_DATABASE.CLIENTS[self.UnitName]
+
+  if client then
+    return client
+  end
+
+  return nil
 end
 
 --- Returns the unit's number in the group. 
@@ -725,6 +760,7 @@ function UNIT:GetFuel()
   
   return nil
 end
+
 
 --- Returns a list of one @{Wrapper.Unit}.
 -- @param #UNIT self
@@ -1139,8 +1175,9 @@ end
 
 --- Returns true if the UNIT is in the air.
 -- @param #UNIT self
+-- @param #boolean NoHeloCheck If true, no additonal checks for helos are performed.
 -- @return #boolean Return true if in the air or #nil if the UNIT is not existing or alive.   
-function UNIT:InAir()
+function UNIT:InAir(NoHeloCheck)
   self:F2( self.UnitName )
 
   -- Get DCS unit object.
@@ -1150,14 +1187,14 @@ function UNIT:InAir()
 
     -- Get DCS result of whether unit is in air or not.
     local UnitInAir = DCSUnit:inAir()
-    
+
     -- Get unit category.
     local UnitCategory = DCSUnit:getDesc().category
 
     -- If DCS says that it is in air, check if this is really the case, since we might have landed on a building where inAir()=true but actually is not.
     -- This is a workaround since DCS currently does not acknoledge that helos land on buildings.
     -- Note however, that the velocity check will fail if the ground is moving, e.g. on an aircraft carrier!    
-    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER then
+    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER and (not NoHeloCheck) then
       local VelocityVec3 = DCSUnit:getVelocity()
       local Velocity = UTILS.VecNorm(VelocityVec3)
       local Coordinate = DCSUnit:getPoint()
@@ -1356,4 +1393,24 @@ function UNIT:GetTemplateFuel()
   end
 
   return nil
+end
+
+--- GROUND - Switch on/off radar emissions of a unit.
+-- @param #UNIT self
+-- @param #boolean switch If true, emission is enabled. If false, emission is disabled. 
+-- @return #UNIT self
+function UNIT:EnableEmission(switch)
+  self:F2( self.UnitName )
+  
+  local switch = switch or false
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+  
+    DCSUnit:enableEmission(switch)
+
+  end
+
+  return self
 end

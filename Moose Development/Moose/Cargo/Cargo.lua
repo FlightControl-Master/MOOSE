@@ -1,4 +1,4 @@
---- **Core** -- Management of CARGO logistics, that can be transported from and to transportation carriers.
+--- **Cargo** - Management of CARGO logistics, that can be transported from and to transportation carriers.
 --
 -- ===
 -- 
@@ -1066,18 +1066,26 @@ do -- CARGO_REPRESENTABLE
 
   --- CARGO_REPRESENTABLE Constructor.
   -- @param #CARGO_REPRESENTABLE self
-  -- @param #string Type
-  -- @param #string Name
-  -- @param #number LoadRadius (optional)
-  -- @param #number NearRadius (optional)
+  -- @param Wrapper.Positionable#POSITIONABLE CargoObject The cargo object.
+  -- @param #string Type Type name
+  -- @param #string Name Name.
+  -- @param #number LoadRadius (optional) Radius in meters.
+  -- @param #number NearRadius (optional) Radius in meters when the cargo is loaded into the carrier.
   -- @return #CARGO_REPRESENTABLE
   function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, LoadRadius, NearRadius )
+  
+    -- Inherit CARGO.
     local self = BASE:Inherit( self, CARGO:New( Type, Name, 0, LoadRadius, NearRadius ) ) -- #CARGO_REPRESENTABLE
     self:F( { Type, Name, LoadRadius, NearRadius } )
 
-    local Desc = CargoObject:GetDesc()
-    self:I( { Desc = Desc } )
+    -- Descriptors.
+    local Desc=CargoObject:GetDesc()
+    self:T({Desc=Desc})
+    
+    -- Weight.
     local Weight = math.random( 80, 120 )
+    
+    -- Adjust weight..
     if Desc then
       if Desc.typeName == "2B11 mortar" then
         Weight = 210
@@ -1086,13 +1094,8 @@ do -- CARGO_REPRESENTABLE
       end
     end
 
+    -- Set weight.
     self:SetWeight( Weight )      
-
---      local Box = CargoUnit:GetBoundingBox()
---      local VolumeUnit = ( Box.max.x - Box.min.x ) * ( Box.max.y - Box.min.y ) * ( Box.max.z - Box.min.z ) 
---      self:I( { VolumeUnit = VolumeUnit, WeightUnit = WeightUnit } )
-    --self:SetVolume( VolumeUnit )
-
     
     return self
   end

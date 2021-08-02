@@ -18,12 +18,21 @@ local.properties
 # External tool builders
 .externalToolBuilders/
 
+# AppVeyor
+.appveyor/
 
 # CDT-specific
 .cproject
 
 # PDT-specific
 .buildpath
+
+
+#####################
+## Visual Studio Code
+#####################
+*.code-workspace
+.vscode/
 
 
 #################

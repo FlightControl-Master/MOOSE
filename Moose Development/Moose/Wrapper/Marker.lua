@@ -13,7 +13,7 @@
 --
 -- ### Author: **funkyfranky**
 -- @module Wrapper.Marker
--- @image Wrapper_Marker.png
+-- @image MOOSE_Core.JPG
 
 
 --- Marker class.
@@ -646,7 +646,7 @@ function MARKER:OnEventMarkRemoved(EventData)
 
     local MarkID=EventData.MarkID
 
-    self:T3(self.lid..string.format("Captured event MarkAdded for Mark ID=%s", tostring(MarkID)))
+    self:T3(self.lid..string.format("Captured event MarkRemoved for Mark ID=%s", tostring(MarkID)))
 
     if MarkID==self.mid then
 
@@ -673,9 +673,9 @@ function MARKER:OnEventMarkChange(EventData)
 
     if MarkID==self.mid then
 
-      self:Changed(EventData)
+      self.text=tostring(EventData.MarkText)
 
-      self:TextChanged(tostring(EventData.MarkText))
+      self:Changed(EventData)
 
     end
 
