@@ -16,7 +16,7 @@
 --- FLIGHTCONTROL class.
 -- @type FLIGHTCONTROL
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #number verbose Verbosity level.
 -- @field #string theatre The DCS map used in the mission.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string airbasename Name of airbase.
@@ -52,7 +52,7 @@
 -- @field #FLIGHTCONTROL
 FLIGHTCONTROL = {
   ClassName      = "FLIGHTCONTROL",
-  Debug          = false,
+  verbose        =     3,
   lid            =   nil,
   theatre        =   nil,
   airbasename    =   nil,
@@ -135,16 +135,14 @@ FLIGHTCONTROL.Sound = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.4.0"
+FLIGHTCONTROL.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
--- 
--- TODO: Define holding zone
--- TODO: 
--- 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- 
+
+-- TODO: Runway destroyed.
+-- TODO: Define holding zone
 -- DONE: Add parking guard.
 -- TODO: Accept and forbit parking spots.
 -- NOGO: Add FARPS?
@@ -213,14 +211,6 @@ function FLIGHTCONTROL:New(airbasename)
   --                 From State  -->   Event      -->     To State
   self:AddTransition("Stopped",       "Start",           "Running")     -- Start FSM.
   self:AddTransition("*",             "Status",          "*")           -- Update status.
-
-  -- Debug trace.
-  if false then
-    self.Debug=true
-    BASE:TraceOnOff(true)
-    BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
-  end
   
   -- Add to data base.
   _DATABASE:AddFlightControl(self)
@@ -379,14 +369,33 @@ function FLIGHTCONTROL:onafterStatus()
   end
 
   -- Info text.
-  local text=string.format("State %s - Runway %s - Parking F=%d/O=%d/R=%d of %d - Flights=%s: Qpark=%d Qtxout=%d Qready=%d Qto=%d | Qinbound=%d Qhold=%d Qland=%d Qtxinb=%d Qarr=%d", 
-  self:GetState(), runway.idx, Nfree, Noccu, Nresv, self.Nparkingspots, Nflights, NQparking, NQtaxiout, NQreadyto, NQtakeoff, NQinbound, NQholding, NQlanding, NQtaxiinb, NQarrived)
-  self:I(self.lid..text)
+  if self.verbose>0 then
+    local text=string.format("State %s - Runway %s - Parking F=%d/O=%d/R=%d of %d - Flights=%s", self:GetState(), runway.idx, Nfree, Noccu, Nresv, self.Nparkingspots, Nflights)
+    self:I(self.lid..text)
+  end
   
   if Nflights==Nqueues then
     --Check!
   else
     self:E(string.format("WARNING: Number of total flights %d!=%d number of flights in all queues!", Nflights, Nqueues))
+  end
+  
+  if self.verbose>1 then
+    local text="Queue:"
+    text=text..string.format("\n- Flights  = %d", Nflights)
+    text=text..string.format("\n---------------------------------------------")    
+    text=text..string.format("\n- Parking  = %d", NQparking)
+    text=text..string.format("\n- Taxi Out = %d", NQtaxiout)
+    text=text..string.format("\n- Ready TO = %d", NQreadyto)
+    text=text..string.format("\n- Take off = %d", NQtakeoff)
+    text=text..string.format("\n---------------------------------------------")
+    text=text..string.format("\n- Inbound  = %d", NQinbound)
+    text=text..string.format("\n- Holding  = %d", NQholding)
+    text=text..string.format("\n- Landing  = %d", NQlanding)
+    text=text..string.format("\n- Taxi Inb = %d", NQtaxiinb)
+    text=text..string.format("\n- Arrived  = %d", NQarrived)
+    text=text..string.format("\n---------------------------------------------")
+    self:I(self.lid..text)        
   end
 
   -- Next status update in ~30 seconds.
@@ -420,30 +429,30 @@ function FLIGHTCONTROL:OnEventBirth(EventData)
     
   if EventData and EventData.IniGroupName and EventData.IniUnit then
   
-    self:I(self.lid..string.format("BIRTH: unit  = %s", tostring(EventData.IniUnitName)))
+    -- Debug
+    self:T2(self.lid..string.format("BIRTH: unit  = %s", tostring(EventData.IniUnitName)))
     self:T2(self.lid..string.format("BIRTH: group = %s", tostring(EventData.IniGroupName)))
 
     -- Unit that was born.
-    local unit=EventData.IniUnit    
+    local unit=EventData.IniUnit
+    
+    -- Check if birth took place at this airfield.
+    local bornhere=EventData.Place and EventData.Place:GetName()==self.airbasename or false    
   
     -- We delay this, to have all elements of the group in the game.
-    if unit:IsAir() then
-    
-      local bornhere=EventData.Place and EventData.Place:GetName()==self.airbasename or false
-      env.info("FF born here ".. tostring(bornhere))
-    
+    if unit:IsAir() and bornhere then
+        
       -- We got a player?
       local playerunit, playername=self:_GetPlayerUnitAndName(EventData.IniUnitName)
       
-      if playername or bornhere then
-    
-        self:ScheduleOnce(0.5, self._CreateFlightGroup, self, EventData.IniGroup)
-        
-      end    
-      
-      if bornhere then
-        self:SpawnParkingGuard(unit)
+      -- Create flight group.
+      if playername then    
+        --self:ScheduleOnce(0.5, self._CreateFlightGroup, self, EventData.IniGroup)
       end
+      self:ScheduleOnce(0.5, self._CreateFlightGroup, self, EventData.IniGroup)
+
+      -- Spawn parking guard.      
+      self:SpawnParkingGuard(unit)
 
     end
       
@@ -933,10 +942,16 @@ end
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
 -- @param #string status New status.
+-- @param #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetFlightStatus(flight, status)
 
+  -- Debug info.
+  self:I(self.lid..string.format("New Flight Status for %s [%s]: %s-->%s", flight:GetName(), flight:GetState(), tostring(flight.controlstatus), status))
+
+  -- Set control status
   flight.controlstatus=status
 
+  return self
 end
 
 --- Get flight status.
@@ -955,14 +970,10 @@ end
 --- Check if FC has control over this flight.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
--- @return #boolean 
+-- @return #boolean If true, this FC is controlling this flight group.
 function FLIGHTCONTROL:IsControlling(flight)
-
-  return flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename or false
-  
+  return flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename or false  
 end
-
-
 
 
 --- Check if a group is in a queue.
@@ -1158,6 +1169,9 @@ function FLIGHTCONTROL:SetParkingFree(spot)
 
   local spot=self:GetParkingSpotByID(spot.TerminalID)
   
+  -- Debug info.
+  self:I(self.lid..string.format("Parking spot %d: %s-->%s", spot.TerminalID, tostring(spot.Status), AIRBASE.SpotStatus.FREE))  
+  
   spot.Status=AIRBASE.SpotStatus.FREE
   spot.OccupiedBy=nil
   spot.ReservedBy=nil
@@ -1174,6 +1188,9 @@ function FLIGHTCONTROL:SetParkingReserved(spot, unitname)
 
   local spot=self:GetParkingSpotByID(spot.TerminalID)
   
+  -- Debug info.
+  self:I(self.lid..string.format("Parking spot %d: %s-->%s", spot.TerminalID, tostring(spot.Status), AIRBASE.SpotStatus.RESERVED))
+  
   spot.Status=AIRBASE.SpotStatus.RESERVED
   spot.ReservedBy=unitname or "unknown"
   
@@ -1188,7 +1205,10 @@ end
 function FLIGHTCONTROL:SetParkingOccupied(spot, unitname)
 
   local spot=self:GetParkingSpotByID(spot.TerminalID)
-  
+
+  -- Debug info.
+  self:I(self.lid..string.format("Parking spot %d: %s-->%s", spot.TerminalID, tostring(spot.Status), AIRBASE.SpotStatus.OCCUPIED))    
+ 
   spot.Status=AIRBASE.SpotStatus.OCCUPIED
   spot.OccupiedBy=unitname or "unknown"
   
@@ -1203,7 +1223,7 @@ function FLIGHTCONTROL:UpdateParkingMarker(spot)
 
   local spot=self:GetParkingSpotByID(spot.TerminalID)
   
-  env.info(string.format("FF updateing spot %d  status=%s", spot.TerminalID, spot.Status))
+  --env.info(string.format("FF updateing spot %d  status=%s", spot.TerminalID, spot.Status))
   
   -- Only mark OCCUPIED and RESERVED spots.
   if spot.Status==AIRBASE.SpotStatus.FREE then
@@ -1851,7 +1871,9 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   if flight.homebase and flight.homebase:GetName()==self.airbasename then
     flight:SetFlightControl(self)
   end
-
+  
+  flight:SetVerbosity(2)
+  
   return flight
 end
 
