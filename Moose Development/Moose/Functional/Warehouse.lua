@@ -3989,9 +3989,21 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     -- Destroy group if it is alive.
     if group:IsAlive()==true then
       self:_DebugMessage(string.format("Removing group %s", group:GetName()), 5)
-      -- Setting parameter to false, i.e. creating NO dead or remove unit event, seems to not confuse the dispatcher logic.
-      -- TODO: It would be nice, however, to have the remove event.
-      group:Destroy() --(false)
+
+      local opsgroup=_DATABASE:GetOpsGroup(group:GetName())
+      if opsgroup then
+        opsgroup:Despawn(0)
+        opsgroup:__Stop(-0.01)
+      else
+        -- Setting parameter to false, i.e. creating NO dead or remove unit event, seems to not confuse the dispatcher logic.
+        -- TODO: It would be nice, however, to have the remove event.      
+        group:Destroy() --(false)
+      end
+    else
+      local opsgroup=_DATABASE:GetOpsGroup(group:GetName())
+      if opsgroup then
+        opsgroup:Stop()
+      end
     end
 
   else
@@ -8766,7 +8778,7 @@ end
 -- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
 function WAREHOUSE:_DebugMessage(text, duration)
   duration=duration or 20
-  if duration>0 then
+  if self.Debug and duration>0 then
     MESSAGE:New(text, duration):ToAllIf(self.Debug)
   end
   self:T(self.lid..text)

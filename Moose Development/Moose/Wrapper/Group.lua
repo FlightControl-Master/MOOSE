@@ -338,8 +338,7 @@ end
 -- If the first @{Wrapper.Unit} of the group is inactive, it will return false.
 -- 
 -- @param #GROUP self
--- @return #boolean true if the group is alive and active.
--- @return #boolean false if the group is alive but inactive or #nil if the group does not exist anymore.
+-- @return #boolean `true` if the group is alive *and* active, `false` if the group is alive but inactive or `#nil` if the group does not exist anymore.
 function GROUP:IsAlive()
   self:F2( self.GroupName )
 
@@ -361,7 +360,7 @@ end
 
 --- Returns if the group is activated.
 -- @param #GROUP self
--- @return #boolean true if group is activated or #nil The group is not existing or alive.  
+-- @return #boolean `true` if group is activated or `#nil` The group is not existing or alive.  
 function GROUP:IsActive()
   self:F2( self.GroupName )
 

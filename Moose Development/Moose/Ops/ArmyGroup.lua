@@ -1178,7 +1178,7 @@ function ARMYGROUP:_InitGroup(Template)
   self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
   
   -- Set default formation from first waypoint.
-  self.optionDefault.Formation=self:GetWaypoint(1).action
+  self.optionDefault.Formation=template.route.points[1].action --self:GetWaypoint(1).action
 
   -- Default TACAN off.
   self:SetDefaultTACAN(nil, nil, nil, nil, true)

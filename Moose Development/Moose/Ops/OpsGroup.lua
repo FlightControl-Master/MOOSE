@@ -546,7 +546,7 @@ function OPSGROUP:New(group)
   --                 From State  -->   Event      -->     To State
   self:AddTransition("InUtero",       "Spawned",          "Spawned")     -- The whole group was spawned.
   self:AddTransition("*",             "Respawn",          "InUtero")     -- Respawn group.
-  self:AddTransition("*",             "Dead",             "Dead")        -- The whole group is dead.
+  self:AddTransition("*",             "Dead",             "InUtero")     -- The whole group is dead and goes back to mummy.
   self:AddTransition("*",             "InUtero",          "InUtero")     -- Deactivated group goes back to mummy.
   self:AddTransition("*",             "Stop",             "Stopped")     -- Stop FSM.
 
@@ -1326,8 +1326,10 @@ end
 function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, OPSGROUP.Despawn, self, 0, NoEventRemoveUnit)
+    self.scheduleIDDespawn=self:ScheduleOnce(Delay, OPSGROUP.Despawn, self, 0, NoEventRemoveUnit)
   else
+  
+    self:I(self.lid..string.format("Despawning Group!"))
 
     local DCSGroup=self:GetDCSGroup()
 
@@ -1422,8 +1424,8 @@ end
 function OPSGROUP:Activate(delay)
 
   if delay and delay>0 then
-      self:T2(self.lid..string.format("Activating late activated group in %d seconds", delay))
-      self:ScheduleOnce(delay, OPSGROUP.Activate, self)
+    self:T2(self.lid..string.format("Activating late activated group in %d seconds", delay))
+    self:ScheduleOnce(delay, OPSGROUP.Activate, self)
   else
 
     if self:IsAlive()==false then
@@ -1750,16 +1752,11 @@ function OPSGROUP:IsSpawned()
   return is
 end
 
---- Check if group is dead.
+--- Check if group is dead. Could be destroyed or despawned. FSM state of dead group is `InUtero` though.
 -- @param #OPSGROUP self
 -- @return #boolean If true, all units/elements of the group are dead.
 function OPSGROUP:IsDead()
-  if self.isDead then
-    return true
-  else
-    local is=self:Is("Dead")
-    return is
-  end
+  return self.isDead
 end
 
 --- Check if group was destroyed.
@@ -4960,6 +4957,16 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
   return self
 end
 
+--- On after "InUtero" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterInUtero(From, Event, To)
+  self:T(self.lid..string.format("Group inutero at t=%.3f", timer.getTime()))
+  --TODO: set element status to inutero
+end
+
 --- On after "Destroyed" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -5031,8 +5038,7 @@ function OPSGROUP:onafterDead(From, Event, To)
   
   -- No current cargo transport.
   self.cargoTransport=nil
-  
-  
+   
   -- Stop in a sec.
   --self:__Stop(-5)
 end
@@ -5083,6 +5089,9 @@ function OPSGROUP:onafterStop(From, Event, To)
 
   -- Stop FSM scheduler.
   self.CallScheduler:Clear()
+  if self.Scheduler then
+    self.Scheduler:Clear()
+  end
 
   if self:IsAlive() and not (self:IsDead() or self:IsStopped()) then
     local life, life0=self:GetLifePoints()

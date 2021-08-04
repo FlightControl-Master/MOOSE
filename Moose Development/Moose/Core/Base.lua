@@ -873,7 +873,7 @@ do -- Scheduling
   -- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
   -- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
   -- @param #table ... Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
-  -- @return #number The ScheduleID of the planned schedule.
+  -- @return #string The Schedule ID of the planned schedule.
   function BASE:ScheduleOnce( Start, SchedulerFunction, ... )
     self:F2( { Start } )
     self:T3( { ... } )
@@ -887,6 +887,8 @@ do -- Scheduling
       self.Scheduler = SCHEDULER:New( self )
     end
   
+    -- FF this was wrong!
+    --[[
     local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
       self, 
       SchedulerFunction,
@@ -896,6 +898,10 @@ do -- Scheduling
       nil,
       nil
     )
+    ]]
+    
+    -- NOTE: MasterObject (first parameter) needs to be nil or it will be the first argument passed to the SchedulerFunction!
+    local ScheduleID = self.Scheduler:Schedule(nil, SchedulerFunction, {...}, Start, nil, nil, nil)
     
     self._.Schedules[#self._.Schedules+1] = ScheduleID
   
@@ -910,7 +916,7 @@ do -- Scheduling
   -- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
   -- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
   -- @param #table ... Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
-  -- @return #number The ScheduleID of the planned schedule.
+  -- @return #string The Schedule ID of the planned schedule.
   function BASE:ScheduleRepeat( Start, Repeat, RandomizeFactor, Stop, SchedulerFunction, ... )
     self:F2( { Start } )
     self:T3( { ... } )
@@ -924,6 +930,7 @@ do -- Scheduling
       self.Scheduler = SCHEDULER:New( self )
     end
     
+    -- NOTE: MasterObject (first parameter) should(!) be nil as it will be the first argument passed to the SchedulerFunction!
     local ScheduleID = self.Scheduler:Schedule( 
       self, 
       SchedulerFunction,
@@ -942,13 +949,13 @@ do -- Scheduling
 
   --- Stops the Schedule.
   -- @param #BASE self
-  -- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
-  function BASE:ScheduleStop( SchedulerFunction )
-  
+  -- @param #string SchedulerID (Optional) Scheduler ID to be stopped. If nil, all pending schedules are stopped.
+  function BASE:ScheduleStop( SchedulerID )  
     self:F3( { "ScheduleStop:" } )
   
     if self.Scheduler then
-      _SCHEDULEDISPATCHER:Stop( self.Scheduler, self._.Schedules[SchedulerFunction] )
+      --_SCHEDULEDISPATCHER:Stop( self.Scheduler, self._.Schedules[SchedulerFunction] )
+      _SCHEDULEDISPATCHER:Stop(self.Scheduler, SchedulerID)
     end
   end
 
