@@ -1431,7 +1431,7 @@ do -- FSM_SET
   -- @param #FSM_SET self
   -- @return Core.Set#SET_BASE
   function FSM_SET:Get()
-    return self.Controllable
+    return self.Set
   end
   
   function FSM_SET:_call_handler( step, trigger, params, EventName  )

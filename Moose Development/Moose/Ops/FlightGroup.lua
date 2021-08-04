@@ -1973,6 +1973,7 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
 
   else
     -- Depawn after 5 min. Important to trigger dead events before DCS despawns on its own without any notification.
+    self:T(self.lid..string.format("Despawning group in 5 minutes after arrival!"))
     self:Despawn(5*60)
   end
 end

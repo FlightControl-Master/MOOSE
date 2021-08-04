@@ -317,7 +317,7 @@ end
 --- Stop dispatcher.
 -- @param #SCHEDULEDISPATCHER self
 -- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
--- @param #table CallID Call ID.
+-- @param #string CallID (Optional) Scheduler Call ID. If nil, all pending schedules are stopped recursively.
 function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
   self:F2( { Stop = CallID, Scheduler = Scheduler } )
 
