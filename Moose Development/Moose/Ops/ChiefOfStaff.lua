@@ -14,7 +14,7 @@
 --- CHIEF class.
 -- @type CHIEF
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table missionqueue Mission queue.
 -- @field Core.Set#SET_ZONE borderzoneset Set of zones defining the border of our territory.
@@ -145,7 +145,6 @@ function CHIEF:New(AgentSet, Coalition)
 
   -- Debug trace.
   if false then
-    self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)

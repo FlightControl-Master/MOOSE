@@ -112,12 +112,10 @@ function WINGCOMMANDER:New()
 
   -- Debug trace.
   if false then
-    self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
   end
-  self.Debug=true
 
   return self
 end
@@ -213,6 +211,30 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
 
   -- Check mission queue and assign one PLANNED mission.
   self:CheckMissionQueue()
+  
+  -- Status.
+  local text=string.format(self.lid.."Status %s: Airwings=%d, Missions=%d", fsmstate, #self.airwings, #self.missionqueue)
+  self:I(self.lid..text)
+  
+  -- Airwing Info
+  if #self.airwings>0 then
+    local text="Airwings:"
+    for _,_airwing in pairs(self.airwings) do
+      local airwing=_airwing --Ops.AirWing#AIRWING
+      local Nassets=airwing:CountAssets()
+      local Nastock=airwing:CountAssetsInStock()
+      text=text..string.format("\n* %s [%s]: Assets=%s stock=%s", airwing.alias, airwing:GetState(), Nassets, Nastock)
+      for _,aname in pairs(AUFTRAG.Type) do
+        local na=airwing:CountAssetsInStock({aname})
+        local np=airwing:CountPayloadsInStock({aname})
+        local nm=airwing:CountAssetsOnMission({aname})
+        if na>0 or np>0 then
+          text=text..string.format("\n   - %s: assets=%d, payloads=%d, on mission=%d", aname, na, np, nm)
+        end
+      end            
+    end
+    self:I(self.lid..text)
+  end
   
   -- Mission queue.
   if #self.missionqueue>0 then
