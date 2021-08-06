@@ -642,6 +642,7 @@ function AIRWING:RemoveMission(Mission)
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
     if mission.auftragsnummer==Mission.auftragsnummer then
+      mission.airwing=nil
       table.remove(self.missionqueue, i)
       break
     end

@@ -91,6 +91,7 @@
 -- @field #number artyRadius Radius in meters.
 -- @field #number artyShots Number of shots fired.
 -- 
+-- @field Ops.ChiefOfStaff#CHIEF chief The CHIEF managing this mission.
 -- @field Ops.WingCommander#WINGCOMMANDER wingcommander The WINGCOMMANDER managing this mission.
 -- @field Ops.AirWing#AIRWING airwing The assigned airwing.
 -- @field #table assets Airwing Assets assigned for this mission.
@@ -2185,10 +2186,10 @@ function AUFTRAG:onafterStatus(From, Event, To)
     local targetname=self:GetTargetName() or "unknown"
     
     local airwing=self.airwing and self.airwing.alias or "N/A"
-    local commander=self.wingcommander and tostring(self.wingcommander.coalition) or "N/A"
+    local chief=self.chief and tostring(self.chief.coalition) or "N/A"
   
     -- Info message.
-    self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, commander=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, commander))
+    self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, chief=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, chief))
   end
 
   -- Group info.
@@ -2204,11 +2205,6 @@ function AUFTRAG:onafterStatus(From, Event, To)
 
   -- Ready to evaluate mission outcome?
   local ready2evaluate=self.Tover and Tnow-self.Tover>=self.dTevaluate or false
-  
-  --env.info("FF Tover="..tostring(self.Tover))
-  --if self.Tover then
-  --  env.info("FF Tnow-Tover="..tostring(Tnow-self.Tover))
-  --end
 
   -- Check if mission is OVER (done or cancelled) and enough time passed to evaluate the result.
   if self:IsOver() and ready2evaluate then
@@ -2714,11 +2710,17 @@ function AUFTRAG:onafterCancel(From, Event, To)
   -- Not necessary to delay the evaluaton?!
   self.dTevaluate=0
   
-  if self.wingcommander then
+  if self.chief then
+
+    self:T(self.lid..string.format("Chief will cancel the mission. Will wait for mission DONE before evaluation!"))
+    
+    self.chief:MissionCancel(self)
+  
+  elseif self.wingcommander then
   
     self:T(self.lid..string.format("Wingcommander will cancel the mission. Will wait for mission DONE before evaluation!"))
     
-    self.wingcommander:CancelMission(self)
+    self.wingcommander:MissionCancel(self)
 
   elseif self.airwing then
     
@@ -2729,7 +2731,7 @@ function AUFTRAG:onafterCancel(From, Event, To)
   
   else
   
-    self:T(self.lid..string.format("No airwing or wingcommander. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
+    self:T(self.lid..string.format("No airwing, wingcommander or chief. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
   
     for _,_groupdata in pairs(self.groupdata) do
       local groupdata=_groupdata --#AUFTRAG.GroupData
@@ -2831,8 +2833,16 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   self.repeated=self.repeated+1
   
   if self.chief then
-  
-    --TODO
+
+    -- Remove mission from wingcommander because Cheif will assign it again.
+    if self.wingcommander then
+      self.wingcommander:RemoveMission(self)
+    end  
+      
+    -- Remove mission from airwing because WC will assign it again but maybe to a different wing.
+    if self.airwing then
+      self.airwing:RemoveMission(self)
+    end  
     
   elseif self.wingcommander then
   
@@ -2849,6 +2859,7 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   else
     self:E(self.lid.."ERROR: Mission can only be repeated by a CHIEF, WINGCOMMANDER or AIRWING! Stopping AUFTRAG")
     self:Stop()
+    return
   end
   
   
@@ -2882,19 +2893,27 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterStop(From, Event, To)
 
+  -- Debug info.
   self:I(self.lid..string.format("STOPPED mission in status=%s. Removing missions from queues. Stopping CallScheduler!", self.status))
-
-  -- TODO: remove missions from queues in WINGCOMMANDER, AIRWING and FLIGHGROUPS!  
+  
   -- TODO: Mission should be OVER! we dont want to remove running missions from any queues.
   
+  -- Remove mission from CHIEF queue.
+  if self.chief then
+    self.chief:RemoveMission(self)
+  end
+  
+  -- Remove mission from WINGCOMMANDER queue.
   if self.wingcommander then
     self.wingcommander:RemoveMission(self)
   end
   
+  -- Remove mission from AIRWING queue.
   if self.airwing then
     self.airwing:RemoveMission(self)
   end
 
+  -- Remove mission from OPSGROUP queue
   for _,_groupdata in pairs(self.groupdata) do
     local groupdata=_groupdata --#AUFTRAG.GroupData
     groupdata.opsgroup:RemoveMission(self)

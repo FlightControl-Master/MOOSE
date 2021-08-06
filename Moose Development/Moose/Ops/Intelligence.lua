@@ -95,9 +95,9 @@ INTEL = {
   ContactsUnknown =    {},
   Clusters        =    {},
   clustercounter  =     1,
-  clusterradius   =   15,
-  clusteranalysis =   true,
-  clustermarkers  =   false,
+  clusterradius   =    15,
+  clusteranalysis =  true,
+  clustermarkers  = false,
   prediction      =   300,
 }
 

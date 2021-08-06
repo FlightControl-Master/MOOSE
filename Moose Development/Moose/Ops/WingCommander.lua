@@ -77,7 +77,7 @@ function WINGCOMMANDER:New()
   self:AddTransition("*",                  "Stop",                "Stopped")     -- Stop WC.
   
   self:AddTransition("*",                  "AssignMission",       "*")           -- Mission was assigned to an AIRWING.
-  self:AddTransition("*",                  "CancelMission",       "*")           -- Cancel mission.
+  self:AddTransition("*",                  "MissionCancel",       "*")           -- Cancel mission.
 
   ------------------------
   --- Pseudo Functions ---
@@ -162,6 +162,7 @@ function WINGCOMMANDER:RemoveMission(Mission)
     
     if mission.auftragsnummer==Mission.auftragsnummer then
       self:I(self.lid..string.format("Removing mission %s (%s) status=%s from queue", Mission.name, Mission.type, Mission.status))
+      mission.wingcommander=nil
       table.remove(self.missionqueue, i)
       break
     end
@@ -272,13 +273,13 @@ function WINGCOMMANDER:onafterAssignMission(From, Event, To, Airwing, Mission)
 
 end
 
---- On after "CancelMission" event.
+--- On after "MissionCancel" event.
 -- @param #WINGCOMMANDER self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function WINGCOMMANDER:onafterCancelMission(From, Event, To, Mission)
+function WINGCOMMANDER:onafterMissionCancel(From, Event, To, Mission)
 
   self:I(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
   
@@ -291,7 +292,7 @@ function WINGCOMMANDER:onafterCancelMission(From, Event, To, Mission)
   
     -- Airwing will cancel mission.
     if Mission.airwing then
-      Mission.airwing:CancelMission(Mission)
+      Mission.airwing:MissionCancel(Mission)
     end
     
   end

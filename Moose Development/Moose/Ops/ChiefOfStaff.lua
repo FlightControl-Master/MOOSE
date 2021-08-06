@@ -17,6 +17,7 @@
 -- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table missionqueue Mission queue.
+-- @field #table targetqueue Target queue.
 -- @field Core.Set#SET_ZONE borderzoneset Set of zones defining the border of our territory.
 -- @field Core.Set#SET_ZONE yellowzoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
 -- @field Core.Set#SET_ZONE engagezoneset Set of zones where enemies are actively engaged.
@@ -42,11 +43,12 @@
 -- @field #CHIEF
 CHIEF = {
   ClassName      = "CHIEF",
-  Debug          =   nil,
+  verbose        =     0,
   lid            =   nil,
   wingcommander  =   nil,
   admiral        =   nil,
   general        =   nil,
+  targetqueue    =    {},
   missionqueue   =    {},
   borderzoneset  =   nil,
   yellowzoneset  =   nil,
@@ -88,8 +90,6 @@ CHIEF.version="0.0.1"
 -- @return #CHIEF self
 function CHIEF:New(AgentSet, Coalition)
 
-  AgentSet=AgentSet or SET_GROUP:New()
-
   -- Inherit everything from INTEL class.
   local self=BASE:Inherit(self, INTEL:New(AgentSet, Coalition)) --#CHIEF
 
@@ -108,8 +108,11 @@ function CHIEF:New(AgentSet, Coalition)
   self:AddTransition("*",                "AssignMissionAirforce", "*")   -- Assign mission to a WINGCOMMANDER.
   self:AddTransition("*",                "AssignMissionNavy",     "*")   -- Assign mission to an ADMIRAL.
   self:AddTransition("*",                "AssignMissionArmy",     "*")   -- Assign mission to a GENERAL.
-  self:AddTransition("*",                "CancelMission",         "*")   -- Cancel mission.
+  
+  self:AddTransition("*",                "MissionCancel",         "*")   -- Cancel mission.
+  
   self:AddTransition("*",                "Defcon",                "*")   -- Change defence condition.
+  
   self:AddTransition("*",                "DeclareWar",            "*")   -- Declare War.
 
   ------------------------
@@ -253,6 +256,8 @@ end
 -- @return #CHIEF self
 function CHIEF:AddMission(Mission)
 
+  Mission.chief=self
+
   table.insert(self.missionqueue, Mission)
 
   return self
@@ -269,6 +274,7 @@ function CHIEF:RemoveMission(Mission)
     
     if mission.auftragsnummer==Mission.auftragsnummer then
       self:I(self.lid..string.format("Removing mission %s (%s) status=%s from queue", Mission.name, Mission.type, Mission.status))
+      Mission.chief=nil
       table.remove(self.missionqueue, i)
       break
     end
@@ -277,6 +283,18 @@ function CHIEF:RemoveMission(Mission)
 
   return self
 end
+
+--- Add target.
+-- @param #CHIEF self
+-- @param Ops.Target#TARGET Target Target object to be added.
+-- @return #CHIEF self
+function CHIEF:AddTarget(Target)
+
+  table.insert(self.targetqueue, Target)
+
+  return self
+end
+
 
 --- Set border zone set.
 -- @param #CHIEF self
@@ -371,7 +389,7 @@ function CHIEF:onafterStatus(From, Event, To)
   
   -- Clean up missions where the contact was lost.
   for _,_contact in pairs(self.ContactsLost) do
-    local contact=_contact --#INTEL.Contact
+    local contact=_contact --Ops.Intelligence#INTEL.Contact
     
     if contact.mission and contact.mission:IsNotOver() then
     
@@ -389,7 +407,7 @@ function CHIEF:onafterStatus(From, Event, To)
   -- Create missions for all new contacts.
   local Nred=0 ; local Nyellow=0 ; local Nengage=0
   for _,_contact in pairs(self.Contacts) do
-    local contact=_contact --#CHIEF.Contact
+    local contact=_contact    --Ops.Intelligence#INTEL.Contact
     local group=contact.group --Wrapper.Group#GROUP
     
     local inred=self:CheckGroupInBorder(group)
@@ -455,8 +473,25 @@ function CHIEF:onafterStatus(From, Event, To)
   -- Check mission queue and assign one PLANNED mission.
   self:CheckMissionQueue()
   
-  local text=string.format("Defcon=%s   Missions=%d   Contacts: Total=%d Yellow=%d Red=%d", self.Defcon, #self.missionqueue, #self.Contacts, Nyellow, Nred)
+  local text=string.format("Defcon=%s Missions=%d, Contacts: Total=%d Yellow=%d Red=%d", self.Defcon, #self.missionqueue, #self.Contacts, Nyellow, Nred)
   self:I(self.lid..text)
+  
+  ---
+  -- Target Queue
+  ---
+
+  for _,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    
+    if target:IsAlive() then
+    
+      if self:CheckTargetInZones(target, self.borderzoneset) then
+      
+      end
+    
+    end
+  
+  end
 
   ---
   -- Contacts
@@ -466,7 +501,7 @@ function CHIEF:onafterStatus(From, Event, To)
   if #self.Contacts>0 then
     local text="Contacts:"
     for i,_contact in pairs(self.Contacts) do
-      local contact=_contact --#CHIEF.Contact
+      local contact=_contact --Ops.Intelligence#INTEL.Contact
       local mtext="N/A"
       if contact.mission then
         mtext=string.format("Mission %s (%s) %s", contact.mission.name, contact.mission.type, contact.mission.status:upper())
@@ -512,13 +547,13 @@ function CHIEF:onafterAssignMissionAirforce(From, Event, To, Mission)
 
 end
 
---- On after "CancelMission" event.
+--- On after "MissionCancel" event.
 -- @param #CHIEF self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function CHIEF:onafterCancelMission(From, Event, To, Mission)
+function CHIEF:onafterMissionCancel(From, Event, To, Mission)
 
   self:I(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
   
@@ -527,11 +562,16 @@ function CHIEF:onafterCancelMission(From, Event, To, Mission)
     -- Mission is still in planning stage. Should not have an airbase assigned ==> Just remove it form the queue.
     self:RemoveMission(Mission)
     
+    -- Remove Mission from WC queue.
+    if Mission.wingcommander then
+      Mission.wingcommander:RemoveMission(Mission)
+    end
+    
   else
   
-    -- Airwing will cancel mission.
-    if Mission.airwing then
-      Mission.airwing:MissionCancel(Mission)
+    -- Wingcommander will cancel mission.
+    if Mission.wingcommander then
+      Mission.wingcommander:MissionCancel(Mission)
     end
     
   end
@@ -687,6 +727,24 @@ function CHIEF:CheckGroupInZones(group, zoneset)
     local zone=_zone --Core.Zone#ZONE
     
     if group:IsPartlyOrCompletelyInZone(zone) then
+      return true
+    end
+  end
+
+  return false
+end
+
+--- Check if group is inside a zone.
+-- @param #CHIEF self
+-- @param Ops.Target#TARGET target The target.
+-- @param Core.Set#SET_ZONE zoneset Set of zones.
+-- @return #boolean If true, group is in any zone.
+function CHIEF:CheckTargetInZones(target, zoneset)
+
+  for _,_zone in pairs(zoneset.Set or {}) do
+    local zone=_zone --Core.Zone#ZONE
+    
+    if zone:IsCoordinateInZone(target:GetCoordinate()) then
       return true
     end
   end
