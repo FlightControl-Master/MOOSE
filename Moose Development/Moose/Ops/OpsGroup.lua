@@ -556,7 +556,6 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "Damaged",          "*")           -- Someone in the group took damage.
 
   self:AddTransition("*",             "UpdateRoute",      "*")           -- Update route of group. Only if airborne.
-  self:AddTransition("*",             "PassingWaypoint",  "*")           -- Passing waypoint.
 
   self:AddTransition("*",             "Wait",              "*")           -- Group will wait for further orders.
 
@@ -3031,10 +3030,46 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
     -- Parameters.
     local zone=Task.dcstask.params.zone --Core.Zone#ZONE
+    
+    -- Random coordinate in zone.
     local Coordinate=zone:GetRandomCoordinate()
-    Coordinate:MarkToAll("Random Patrol Zone Coordinate")
+        
+    --Coordinate:MarkToAll("Random Patrol Zone Coordinate")
+    
+    -- Speed and altitude.
     local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil
+
+    -- New waypoint.
+    if self.isFlightgroup then
+      FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+    elseif self.isNavygroup then
+      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+    elseif self.isArmygroup then
+      NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+    end
+
+  elseif Task.dcstask.id=="ReconMission" then
+
+    ---
+    -- Task recon.
+    ---
+  
+    -- Target
+    local target=Task.dcstask.params.target --Ops.Target#TARGET
+    Task.dcstask.params.lastindex=1
+    
+    local object=target.targets[1] --Ops.Target#TARGET.Object    
+    local zone=object.Object --Core.Zone#ZONE
+    
+    -- Random coordinate in zone.
+    local Coordinate=zone:GetRandomCoordinate()
+    
+    -- Speed and altitude.
+    local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
+    local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil      
+    
+    --Coordinate:MarkToAll("Next waypoint", ReadOnly,Text)
 
     -- New waypoint.
     if self.isFlightgroup then
@@ -3135,6 +3170,8 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
         done=true
       elseif Task.dcstask.id=="PatrolZone" then
         done=true
+      elseif Task.dcstask.id=="ReconMission" then
+        done=true      
       elseif stopflag==1 or (not self:IsAlive()) or self:IsDead() or self:IsStopped() then
         -- Manual call TaskDone if setting flag to one was not successful.
         done=true
@@ -4000,8 +4037,13 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     -- Remove old waypoint.
     self:RemoveWaypointByID(Waypoint.uid)
 
+    -- Zone object.
     local zone=task.dcstask.params.zone --Core.Zone#ZONE
+    
+    -- Random coordinate in zone.
     local Coordinate=zone:GetRandomCoordinate()
+    
+    -- Speed and altitude.
     local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)
     local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil
 
@@ -4011,6 +4053,59 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
     elseif self.isArmygroup then
       NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+    end
+    
+  elseif task and task.dcstask.id=="ReconMission" then
+  
+    local target=task.dcstask.params.target --Ops.Target#TARGET
+    
+    local n=task.dcstask.params.lastindex+1
+    
+    if n<=#target.targets then
+    
+      -- Zone object.    
+      local object=target.targets[n] --Ops.Target#TARGET.Object
+      local zone=object.Object --Core.Zone#ZONE
+      
+      -- Random coordinate in zone.
+      local Coordinate=zone:GetRandomCoordinate()
+      
+      -- Speed and altitude.
+      local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)
+      local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil      
+      
+      -- Debug.
+      --Coordinate:MarkToAll("Recon Waypoint n="..tostring(n))
+  
+      if self.isFlightgroup then
+        FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+      elseif self.isNavygroup then
+        ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+      elseif self.isArmygroup then
+        NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+      end
+      
+      -- Increase counter.
+      task.dcstask.params.lastindex=task.dcstask.params.lastindex+1
+      
+    else
+          
+      -- Get waypoint index.
+      local wpindex=self:GetWaypointIndex(Waypoint.uid)
+  
+      -- Final waypoint reached?
+      if wpindex==nil or wpindex==#self.waypoints then
+  
+        -- Set switch to true.
+        if not self.adinfinitum or #self.waypoints<=1 then
+          self.passedfinalwp=true
+        end
+  
+      end
+      
+      -- Final zone reached ==> task done.
+      self:TaskDone(task)            
+      
     end
 
   else

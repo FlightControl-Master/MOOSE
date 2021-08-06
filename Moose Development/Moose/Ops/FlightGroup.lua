@@ -2060,7 +2060,9 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
 
     if task then
       if task.dcstask.id=="PatrolZone" then
-        -- For patrol zone, we need to allow the update.
+        -- For patrol zone, we need to allow the update as we insert new waypoints.
+      elseif task.dcstask.id=="ReconMission" then
+        -- For recon missions, we need to allow the update as we insert new waypoints.
       else
         local taskname=task and task.description or "No description"
         self:E(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))

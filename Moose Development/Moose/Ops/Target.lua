@@ -260,6 +260,17 @@ function TARGET:AddObject(Object)
       self:AddObject(object)
     end
     
+  elseif  Object:IsInstanceOf("SET_ZONE") then
+  
+    local set=Object --Core.Set#SET_ZONE
+    
+    set:SortByName()
+  
+    for index,ZoneName in pairs(set.Index) do
+      local zone=set.Set[ZoneName] --Core.Zone#ZONE
+      self:_AddObject(zone)
+    end
+    
   else
   
     ---
@@ -971,6 +982,12 @@ function TARGET:GetTargetName(Target)
     local coord=Target.Object  --Core.Point#COORDINATE
     
     return coord:ToStringMGRS()
+
+  elseif Target.Type==TARGET.ObjectType.ZONE then
+  
+    local Zone=Target.Object  --Core.Zone#ZONE
+    
+    return Zone:GetName()
     
   end
 

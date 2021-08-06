@@ -1219,6 +1219,31 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
   return mission
 end
 
+--- Create a RECON mission.
+-- @param #AUFTRAG self
+-- @param Core.Set#SET_ZONE ZoneSet The recon zones.
+-- @param #number Speed Speed in knots.
+-- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+-- @return #AUFTRAG self
+function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.RECON)
+  
+  mission:_TargetFromObject(ZoneSet)
+    
+  mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  
+  mission.missionFraction=0.5
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or UTILS.FeetToMeters(2000)
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
 
 --- Create a mission to attack a group. Mission type is automatically chosen from the group category.
 -- @param #AUFTRAG self
@@ -3071,7 +3096,8 @@ function AUFTRAG:GetTargetCoordinate()
     
   elseif self.engageTarget then
 
-    return self.engageTarget:GetCoordinate()
+    local coord=self.engageTarget:GetCoordinate()
+    return coord
     
   else
     self:E(self.lid.."ERROR: Cannot get target coordinate!")
@@ -3453,8 +3479,21 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -------------------
     -- RECON Mission --
     -------------------  
-
-    -- TODO: What? Table of coordinates?
+    
+    local DCStask={}
+    
+    DCStask.id="ReconMission"
+    
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
+    local param={}
+    param.target=self.engageTarget
+    param.altitude=self.missionAltitude
+    param.speed=self.missionSpeed 
+    param.lastindex=nil   
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)    
 
   elseif self.type==AUFTRAG.Type.SEAD then
   
@@ -3517,7 +3556,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     
     -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
     local param={}
-    param.unitname=self:GetTargetName() --self.carrier:GetName()
+    param.unitname=self:GetTargetName()
     param.offsetX=200
     param.offsetZ=240
     param.altitude=70

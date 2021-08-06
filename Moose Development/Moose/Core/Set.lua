@@ -265,6 +265,18 @@ do -- SET_BASE
 
   end
 
+  --- Sort the set by name.
+  -- @param #SET_BASE self
+  -- @return Core.Base#BASE The added BASE Object.
+  function SET_BASE:SortByName()
+  
+    local function sort(a, b)
+      return a<b
+    end
+  
+    table.sort(self.Index)
+  
+  end
 
   --- Get the *union* of two sets.
   -- @param #SET_BASE self
