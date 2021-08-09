@@ -1224,8 +1224,10 @@ end
 -- @param Core.Set#SET_ZONE ZoneSet The recon zones.
 -- @param #number Speed Speed in knots.
 -- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+-- @param #boolean Adinfinitum If true, the group will start over again after reaching the final zone.
+-- @param #boolean Randomly If true, the group will select a random zone.
 -- @return #AUFTRAG self
-function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude)
+function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RECON)
   
@@ -1238,8 +1240,10 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude)
   mission.missionFraction=0.5
   mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
   mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or UTILS.FeetToMeters(2000)
-  
+    
   mission.DCStask=mission:GetDCSMissionTask()
+  mission.DCStask.params.adinfitum=Adinfinitum
+  mission.DCStask.params.randomly=Randomly
 
   return mission
 end

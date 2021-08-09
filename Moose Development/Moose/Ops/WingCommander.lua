@@ -223,10 +223,10 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
     for _,_airwing in pairs(self.airwings) do
       local airwing=_airwing --Ops.AirWing#AIRWING
       local Nassets=airwing:CountAssets()
-      local Nastock=airwing:CountAssetsInStock()
+      local Nastock=airwing:CountAssets(true)
       text=text..string.format("\n* %s [%s]: Assets=%s stock=%s", airwing.alias, airwing:GetState(), Nassets, Nastock)
       for _,aname in pairs(AUFTRAG.Type) do
-        local na=airwing:CountAssetsInStock({aname})
+        local na=airwing:CountAssets(true, {aname})
         local np=airwing:CountPayloadsInStock({aname})
         local nm=airwing:CountAssetsOnMission({aname})
         if na>0 or np>0 then
@@ -403,6 +403,22 @@ function WINGCOMMANDER:GetAirwingForMission(Mission)
   end
 
   return nil
+end
+
+--- Check mission queue and assign ONE planned mission.
+-- @param #WINGCOMMANDER self
+-- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return #number Amount of asset groups in stock.
+function WINGCOMMANDER:CountAssets(InStock, MissionTypes, Attributes)
+  local N=0
+  for _,_airwing in pairs(self.airwings) do
+    local airwing=_airwing --Ops.AirWing#AIRWING
+    N=N+airwing:CountAssets(InStock, MissionTypes, Attributes)
+  end
+
+  return N
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

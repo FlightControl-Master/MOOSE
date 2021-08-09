@@ -1,128 +1,109 @@
---- **Ops** - Airwing Squadron.
+--- **Ops** - Cohort encompassed all characteristics of SQUADRONs, PLATOONs and FLOTILLAs.
 --
 -- **Main Features:**
 --
---    * Set parameters like livery, skill valid for all squadron members.
+--    * Set parameters like livery, skill valid for all platoon members.
 --    * Define modex and callsigns.
---    * Define mission types, this squadron can perform (see Ops.Auftrag#AUFTRAG).
---    * Pause/unpause squadron operations.
+--    * Define mission types, this platoon can perform (see Ops.Auftrag#AUFTRAG).
+--    * Pause/unpause platoon operations.
 --
 -- ===
 --
 -- ### Author: **funkyfranky**
--- @module Ops.Squadron
--- @image OPS_Squadron.png
+-- @module Ops.Cohort
+-- @image OPS_Cohort.png
 
 
---- SQUADRON class.
--- @type SQUADRON
+--- COHORT class.
+-- @type COHORT
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
--- @field #string name Name of the squadron.
+-- @field #string name Name of the platoon.
 -- @field #string templatename Name of the template group.
--- @field #string aircrafttype Type of the airframe the squadron is using.
+-- @field #string aircrafttype Type of the airframe the platoon is using.
 -- @field Wrapper.Group#GROUP templategroup Template group.
--- @field #number ngrouping User defined number of units in the asset group.
--- @field #table assets Squadron assets.
--- @field #table missiontypes Capabilities (mission types and performances) of the squadron.
--- @field #number fuellow Low fuel threshold.
--- @field #boolean fuellowRefuel If `true`, flight tries to refuel at the nearest tanker.
+-- @field #table assets Cohort assets.
+-- @field #table missiontypes Capabilities (mission types and performances) of the platoon.
 -- @field #number maintenancetime Time in seconds needed for maintenance of a returned flight.
 -- @field #number repairtime Time in seconds for each
--- @field #string livery Livery of the squadron.
--- @field #number skill Skill of squadron members.
--- @field #number modex Modex.
--- @field #number modexcounter Counter to incease modex number for assets.
--- @field #string callsignName Callsign name.
--- @field #number callsigncounter Counter to increase callsign names for new assets.
--- @field Ops.AirWing#AIRWING airwing The AIRWING object the squadron belongs to.
--- @field #number Ngroups Number of asset flight groups this squadron has. 
+-- @field #string livery Livery of the platoon.
+-- @field #number skill Skill of platoon members.
+-- @field Ops.Legion#LEGION legion The LEGION object the cohort belongs to.
+-- @field #number Ngroups Number of asset flight groups this platoon has. 
 -- @field #number engageRange Mission range in meters.
--- @field #string attribute Generalized attribute of the squadron template group.
--- @field #number tankerSystem For tanker squads, the refuel system used (boom=0 or probpe=1). Default nil.
--- @field #number refuelSystem For refuelable squads, the refuel system used (boom=0 or probe=1). Default nil.
--- @field #table tacanChannel List of TACAN channels available to the squadron.
--- @field #number radioFreq Radio frequency in MHz the squad uses.
--- @field #number radioModu Radio modulation the squad uses.
--- @field #number takeoffType Take of type.
--- @field #table parkingIDs Parking IDs for this squadron.
+-- @field #string attribute Generalized attribute of the platoon template group.
+-- @field #table tacanChannel List of TACAN channels available to the platoon.
+-- @field #number radioFreq Radio frequency in MHz the cohort uses.
+-- @field #number radioModu Radio modulation the cohort uses.
+-- @field #table tacanChannel List of TACAN channels available to the cohort.
 -- @extends Core.Fsm#FSM
 
---- *It is unbelievable what a squadron of twelve aircraft did to tip the balance.* -- Adolf Galland
+--- *It is unbelievable what a platoon of twelve aircraft did to tip the balance.* -- Adolf Galland
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\OPS\Squadron\_Main.png)
+-- ![Banner Image](..\Presentations\OPS\Cohort\_Main.png)
 --
--- # The SQUADRON Concept
+-- # The COHORT Concept
 -- 
--- A SQUADRON is essential part of an AIRWING and consists of **one** type of aircraft. 
+-- A COHORT is essential part of an BRIGADE and consists of **one** type of aircraft. 
 --
 --
 --
--- @field #SQUADRON
-SQUADRON = {
-  ClassName      = "SQUADRON",
+-- @field #COHORT
+COHORT = {
+  ClassName      = "COHORT",
   verbose        =     0,
   lid            =   nil,
   name           =   nil,
   templatename   =   nil,
-  aircrafttype   =   nil,
   assets         =    {},
   missiontypes   =    {},
   repairtime     =     0,
   maintenancetime=     0,
   livery         =   nil,
   skill          =   nil,
-  modex          =   nil,
-  modexcounter   =     0,
-  callsignName   =   nil,
-  callsigncounter=    11,
-  airwing        =   nil,
+  legion         =   nil,
   Ngroups        =   nil,
   engageRange    =   nil,
-  tankerSystem   =   nil,
-  refuelSystem   =   nil,
-  tacanChannel   =    {},
+  tacanChannel   =    {},  
 }
 
---- SQUADRON class version.
+--- COHORT class version.
 -- @field #string version
-SQUADRON.version="0.7.0"
+COHORT.version="0.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Parking spots for squadrons?
--- DONE: Engage radius.
--- DONE: Modex.
--- DONE: Call signs.
+-- TODO: A lot!
+-- TODO: Make general so that PLATOON and SQUADRON can inherit this class.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new SQUADRON object and start the FSM.
--- @param #SQUADRON self
+--- Create a new COHORT object and start the FSM.
+-- @param #COHORT self
 -- @param #string TemplateGroupName Name of the template group.
--- @param #number Ngroups Number of asset groups of this squadron. Default 3.
--- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
--- @return #SQUADRON self
-function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
+-- @param #number Ngroups Number of asset groups of this platoon. Default 3.
+-- @param #string CohortName Name of the platoon, e.g. "VFA-37".
+-- @return #COHORT self
+function COHORT:New(TemplateGroupName, Ngroups, CohortName)
 
   -- Inherit everything from FSM class.
-  local self=BASE:Inherit(self, FSM:New()) -- #SQUADRON
+  local self=BASE:Inherit(self, FSM:New()) -- #COHORT
 
   -- Name of the template group.
   self.templatename=TemplateGroupName
 
-  -- Squadron name.
-  self.name=tostring(SquadronName or TemplateGroupName)
+  -- Cohort name.
+  self.name=tostring(CohortName or TemplateGroupName)
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("SQUADRON %s | ", self.name)
+  self.lid=string.format("COHORT %s | ", self.name)
   
   -- Template group.
   self.templategroup=GROUP:FindByName(self.templatename)
@@ -139,18 +120,13 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   self:SetSkill(AI.Skill.GOOD)
   
   -- Everyone can ORBIT.
-  self:AddMissionCapability(AUFTRAG.Type.ORBIT)
+  --self:AddMissionCapability(AUFTRAG.Type.ORBIT)
   
   -- Generalized attribute.
   self.attribute=self.templategroup:GetAttribute()
   
   -- Aircraft type.
   self.aircrafttype=self.templategroup:GetTypeName()
-  
-  -- Refueling system.
-  self.refuelSystem=select(2, self.templategroup:GetUnit(1):IsRefuelable())
-  self.tankerSystem=select(2, self.templategroup:GetUnit(1):IsTanker())
-
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -160,49 +136,41 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
   self:AddTransition("Stopped",       "Start",              "OnDuty")      -- Start FSM.
   self:AddTransition("*",             "Status",             "*")           -- Status update.
   
-  self:AddTransition("OnDuty",        "Pause",              "Paused")      -- Pause squadron.
-  self:AddTransition("Paused",        "Unpause",            "OnDuty")      -- Unpause squadron.
+  self:AddTransition("OnDuty",        "Pause",              "Paused")      -- Pause platoon.
+  self:AddTransition("Paused",        "Unpause",            "OnDuty")      -- Unpause platoon.
   
-  self:AddTransition("*",             "Stop",               "Stopped")     -- Stop squadron.
+  self:AddTransition("*",             "Stop",               "Stopped")     -- Stop platoon.
 
 
   ------------------------
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Start". Starts the SQUADRON. Initializes parameters and starts event handlers.
-  -- @function [parent=#SQUADRON] Start
-  -- @param #SQUADRON self
+  --- Triggers the FSM event "Start". Starts the COHORT. Initializes parameters and starts event handlers.
+  -- @function [parent=#COHORT] Start
+  -- @param #COHORT self
 
-  --- Triggers the FSM event "Start" after a delay. Starts the SQUADRON. Initializes parameters and starts event handlers.
-  -- @function [parent=#SQUADRON] __Start
-  -- @param #SQUADRON self
+  --- Triggers the FSM event "Start" after a delay. Starts the COHORT. Initializes parameters and starts event handlers.
+  -- @function [parent=#COHORT] __Start
+  -- @param #COHORT self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Stop". Stops the SQUADRON and all its event handlers.
-  -- @param #SQUADRON self
+  --- Triggers the FSM event "Stop". Stops the COHORT and all its event handlers.
+  -- @param #COHORT self
 
-  --- Triggers the FSM event "Stop" after a delay. Stops the SQUADRON and all its event handlers.
-  -- @function [parent=#SQUADRON] __Stop
-  -- @param #SQUADRON self
+  --- Triggers the FSM event "Stop" after a delay. Stops the COHORT and all its event handlers.
+  -- @function [parent=#COHORT] __Stop
+  -- @param #COHORT self
   -- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Status".
-  -- @function [parent=#SQUADRON] Status
-  -- @param #SQUADRON self
+  -- @function [parent=#COHORT] Status
+  -- @param #COHORT self
 
   --- Triggers the FSM event "Status" after a delay.
-  -- @function [parent=#SQUADRON] __Status
-  -- @param #SQUADRON self
+  -- @function [parent=#COHORT] __Status
+  -- @param #COHORT self
   -- @param #number delay Delay in seconds.
-
-
-  -- Debug trace.
-  if false then
-    BASE:TraceOnOff(true)
-    BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
-  end
 
   return self
 end
@@ -211,7 +179,7 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set livery painted on all squadron aircraft.
+--- Set livery painted on all platoon aircraft.
 -- Note that the livery name in general is different from the name shown in the mission editor.
 -- 
 -- Valid names are the names of the **livery directories**. Check out the folder in your DCS installation for:
@@ -223,120 +191,73 @@ end
 -- 
 -- Or personal liveries you have installed somewhere in your saved games folder.
 --  
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param #string LiveryName Name of the livery.
--- @return #SQUADRON self
-function SQUADRON:SetLivery(LiveryName)
+-- @return #COHORT self
+function COHORT:SetLivery(LiveryName)
   self.livery=LiveryName
   return self
 end
 
---- Set skill level of all squadron team members.
--- @param #SQUADRON self
+--- Set skill level of all platoon team members.
+-- @param #COHORT self
 -- @param #string Skill Skill of all flights.
--- @usage mysquadron:SetSkill(AI.Skill.EXCELLENT)
--- @return #SQUADRON self
-function SQUADRON:SetSkill(Skill)
+-- @usage myplatoon:SetSkill(AI.Skill.EXCELLENT)
+-- @return #COHORT self
+function COHORT:SetSkill(Skill)
   self.skill=Skill
   return self
 end
 
 --- Set verbosity level.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param #number VerbosityLevel Level of output (higher=more). Default 0.
--- @return #SQUADRON self
-function SQUADRON:SetVerbosity(VerbosityLevel)
+-- @return #COHORT self
+function COHORT:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
   return self
 end
 
---- Set turnover and repair time. If an asset returns from a mission to the airwing, it will need some time until the asset is available for further missions.
--- @param #SQUADRON self
+--- Set turnover and repair time. If an asset returns from a mission, it will need some time until the asset is available for further missions.
+-- @param #COHORT self
 -- @param #number MaintenanceTime Time in minutes it takes until a flight is combat ready again. Default is 0 min.
 -- @param #number RepairTime Time in minutes it takes to repair a flight for each life point taken. Default is 0 min.
--- @return #SQUADRON self
-function SQUADRON:SetTurnoverTime(MaintenanceTime, RepairTime)
+-- @return #COHORT self
+function COHORT:SetTurnoverTime(MaintenanceTime, RepairTime)
   self.maintenancetime=MaintenanceTime and MaintenanceTime*60 or 0
   self.repairtime=RepairTime and RepairTime*60 or 0
   return self
 end
 
---- Set radio frequency and modulation the squad uses.
--- @param #SQUADRON self
+--- Set radio frequency and modulation the cohort uses.
+-- @param #COHORT self
 -- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
 -- @param #number Modulation Radio modulation. Default 0=AM.
--- @usage mysquadron:SetSkill(AI.Skill.EXCELLENT)
--- @return #SQUADRON self
-function SQUADRON:SetRadio(Frequency, Modulation)
+-- @usage myplatoon:SetSkill(AI.Skill.EXCELLENT)
+-- @return #COHORT self
+function COHORT:SetRadio(Frequency, Modulation)
   self.radioFreq=Frequency or 251
   self.radioModu=Modulation or radio.modulation.AM
   return self
 end
 
 --- Set number of units in groups.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param #number nunits Number of units. Must be >=1 and <=4. Default 2.
--- @return #SQUADRON self
-function SQUADRON:SetGrouping(nunits)
+-- @return #COHORT self
+function COHORT:SetGrouping(nunits)
   self.ngrouping=nunits or 2
   if self.ngrouping<1 then self.ngrouping=1 end
   if self.ngrouping>4 then self.ngrouping=4 end
   return self
 end
 
---- Set valid parking spot IDs. Assets of this squad are only allowed to be spawned at these parking spots. **Note** that the IDs are different from the ones displayed in the mission editor!
--- @param #SQUADRON self
--- @param #table ParkingIDs Table of parking ID numbers or a single `#number`.
--- @return #SQUADRON self
-function SQUADRON:SetParkingIDs(ParkingIDs)
-  if type(ParkingIDs)~="table" then
-    ParkingIDs={ParkingIDs}
-  end
-  self.parkingIDs=ParkingIDs
-  return self
-end
-
-
---- Set takeoff type. All assets of this squadron will be spawned with cold (default) or hot engines.
--- Spawning on runways is not supported.
--- @param #SQUADRON self
--- @param #string TakeoffType Take off type: "Cold" (default) or "Hot" with engines on.
--- @return #SQUADRON self
-function SQUADRON:SetTakeoffType(TakeoffType)
-  TakeoffType=TakeoffType or "Cold"
-  if TakeoffType:lower()=="hot" then
-    self.takeoffType=COORDINATE.WaypointType.TakeOffParkingHot
-  elseif TakeoffType:lower()=="cold" then
-    self.takeoffType=COORDINATE.WaypointType.TakeOffParking
-  else
-    self.takeoffType=COORDINATE.WaypointType.TakeOffParking
-  end
-  return self
-end
-
---- Set takeoff type cold (default). All assets of this squadron will be spawned with engines off (cold).
--- @param #SQUADRON self
--- @return #SQUADRON self
-function SQUADRON:SetTakeoffCold()
-  self:SetTakeoffType("Cold")
-  return self
-end
-
---- Set takeoff type hot. All assets of this squadron will be spawned with engines on (hot).
--- @param #SQUADRON self
--- @return #SQUADRON self
-function SQUADRON:SetTakeoffHot()
-  self:SetTakeoffType("Hot")
-  return self
-end
-
-
---- Set mission types this squadron is able to perform.
--- @param #SQUADRON self
+--- Set mission types this platoon is able to perform.
+-- @param #COHORT self
 -- @param #table MissionTypes Table of mission types. Can also be passed as a #string if only one type.
 -- @param #number Performance Performance describing how good this mission can be performed. Higher is better. Default 50. Max 100.
--- @return #SQUADRON self
-function SQUADRON:AddMissionCapability(MissionTypes, Performance)
+-- @return #COHORT self
+function COHORT:AddMissionCapability(MissionTypes, Performance)
 
   -- Ensure Missiontypes is a table.
   if MissionTypes and type(MissionTypes)~="table" then
@@ -368,10 +289,10 @@ function SQUADRON:AddMissionCapability(MissionTypes, Performance)
   return self
 end
 
---- Get mission types this squadron is able to perform.
--- @param #SQUADRON self
+--- Get mission types this platoon is able to perform.
+-- @param #COHORT self
 -- @return #table Table of mission types. Could be empty {}.
-function SQUADRON:GetMissionTypes()
+function COHORT:GetMissionTypes()
 
   local missiontypes={}
   
@@ -383,18 +304,18 @@ function SQUADRON:GetMissionTypes()
   return missiontypes
 end
 
---- Get mission capabilities of this squadron.
--- @param #SQUADRON self
+--- Get mission capabilities of this platoon.
+-- @param #COHORT self
 -- @return #table Table of mission capabilities.
-function SQUADRON:GetMissionCapabilities()
+function COHORT:GetMissionCapabilities()
   return self.missiontypes
 end
 
 --- Get mission performance for a given type of misson.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param #string MissionType Type of mission.
 -- @return #number Performance or -1.
-function SQUADRON:GetMissionPeformance(MissionType)
+function COHORT:GetMissionPeformance(MissionType)
 
   for _,Capability in pairs(self.missiontypes) do
     local capability=Capability --Ops.Auftrag#AUFTRAG.Capability
@@ -406,88 +327,66 @@ function SQUADRON:GetMissionPeformance(MissionType)
   return -1
 end
 
---- Set max mission range. Only missions in a circle of this radius around the squadron airbase are executed.
--- @param #SQUADRON self
+--- Set max mission range. Only missions in a circle of this radius around the platoon airbase are executed.
+-- @param #COHORT self
 -- @param #number Range Range in NM. Default 100 NM.
--- @return #SQUADRON self
-function SQUADRON:SetMissionRange(Range)
+-- @return #COHORT self
+function COHORT:SetMissionRange(Range)
   self.engageRange=UTILS.NMToMeters(Range or 100)
   return self
 end
 
 --- Set call sign.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param #number Callsign Callsign from CALLSIGN.Aircraft, e.g. "Chevy" for CALLSIGN.Aircraft.CHEVY.
 -- @param #number Index Callsign index, Chevy-**1**.
--- @return #SQUADRON self
-function SQUADRON:SetCallsign(Callsign, Index)
+-- @return #COHORT self
+function COHORT:SetCallsign(Callsign, Index)
   self.callsignName=Callsign
   self.callsignIndex=Index
   return self
 end
 
 --- Set modex.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param #number Modex A number like 100.
 -- @param #string Prefix A prefix string, which is put before the `Modex` number.
 -- @param #string Suffix A suffix string, which is put after the `Modex` number. 
--- @return #SQUADRON self
-function SQUADRON:SetModex(Modex, Prefix, Suffix)
+-- @return #COHORT self
+function COHORT:SetModex(Modex, Prefix, Suffix)
   self.modex=Modex
   self.modexPrefix=Prefix
   self.modexSuffix=Suffix
   return self
 end
 
---- Set low fuel threshold.
--- @param #SQUADRON self
--- @param #number LowFuel Low fuel threshold in percent. Default 25.
--- @return #SQUADRON self
-function SQUADRON:SetFuelLowThreshold(LowFuel)
-  self.fuellow=LowFuel or 25
+--- Set Legion.
+-- @param #COHORT self
+-- @param Ops.Legion#LEGION Legion The Legion.
+-- @return #COHORT self
+function COHORT:SetLegion(Legion)
+  self.legion=Legion
   return self
 end
 
---- Set if low fuel threshold is reached, flight tries to refuel at the neares tanker.
--- @param #SQUADRON self
--- @param #boolean switch If true or nil, flight goes for refuelling. If false, turn this off.
--- @return #SQUADRON self
-function SQUADRON:SetFuelLowRefuel(switch)
-  if switch==false then
-    self.fuellowRefuel=false
-  else
-    self.fuellowRefuel=true
-  end
-  return self
-end
-
---- Set airwing.
--- @param #SQUADRON self
--- @param Ops.AirWing#AIRWING Airwing The airwing.
--- @return #SQUADRON self
-function SQUADRON:SetAirwing(Airwing)
-  self.airwing=Airwing
-  return self
-end
-
---- Add airwing asset to squadron.
--- @param #SQUADRON self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
--- @return #SQUADRON self
-function SQUADRON:AddAsset(Asset)
+--- Add asset to cohort.
+-- @param #COHORT self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The warehouse asset.
+-- @return #COHORT self
+function COHORT:AddAsset(Asset)
   self:T(self.lid..string.format("Adding asset %s of type %s", Asset.spawngroupname, Asset.unittype))
   Asset.squadname=self.name
   table.insert(self.assets, Asset)
   return self
 end
 
---- Remove airwing asset from squadron.
--- @param #SQUADRON self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
--- @return #SQUADRON self
-function SQUADRON:DelAsset(Asset)
+--- Remove asset from chort.
+-- @param #COHORT self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
+-- @return #COHORT self
+function COHORT:DelAsset(Asset)
   for i,_asset in pairs(self.assets) do
-    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     if Asset.uid==asset.uid then
       self:T2(self.lid..string.format("Removing asset %s", asset.spawngroupname))
       table.remove(self.assets, i)
@@ -497,13 +396,13 @@ function SQUADRON:DelAsset(Asset)
   return self
 end
 
---- Remove airwing asset group from squadron.
--- @param #SQUADRON self
+--- Remove asset group from cohort.
+-- @param #COHORT self
 -- @param #string GroupName Name of the asset group.
--- @return #SQUADRON self
-function SQUADRON:DelGroup(GroupName)
+-- @return #COHORT self
+function COHORT:DelGroup(GroupName)
   for i,_asset in pairs(self.assets) do
-    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     if GroupName==asset.spawngroupname then
       self:T2(self.lid..string.format("Removing asset %s", asset.spawngroupname))
       table.remove(self.assets, i)
@@ -513,26 +412,26 @@ function SQUADRON:DelGroup(GroupName)
   return self
 end
 
---- Get name of the squadron
--- @param #SQUADRON self
--- @return #string Name of the squadron.
-function SQUADRON:GetName()
+--- Get name of the platoon
+-- @param #COHORT self
+-- @return #string Name of the platoon.
+function COHORT:GetName()
   return self.name
 end
 
 --- Get radio frequency and modulation.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @return #number Radio frequency in MHz.
 -- @return #number Radio Modulation (0=AM, 1=FM).
-function SQUADRON:GetRadio()
+function COHORT:GetRadio()
   return self.radioFreq, self.radioModu
 end
 
 --- Create a callsign for the asset.
--- @param #SQUADRON self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
--- @return #SQUADRON self
-function SQUADRON:GetCallsign(Asset)
+-- @param #COHORT self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The warehouse asset.
+-- @return #COHORT self
+function COHORT:GetCallsign(Asset)
 
   if self.callsignName then
   
@@ -565,10 +464,10 @@ function SQUADRON:GetCallsign(Asset)
 end
 
 --- Create a modex for the asset.
--- @param #SQUADRON self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
--- @return #SQUADRON self
-function SQUADRON:GetModex(Asset)
+-- @param #COHORT self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The warehouse asset.
+-- @return #COHORT self
+function COHORT:GetModex(Asset)
 
   if self.modex then
   
@@ -589,13 +488,13 @@ function SQUADRON:GetModex(Asset)
 end
 
 
---- Add TACAN channels to the squadron. Note that channels can only range from 1 to 126.
--- @param #SQUADRON self
+--- Add TACAN channels to the platoon. Note that channels can only range from 1 to 126.
+-- @param #COHORT self
 -- @param #number ChannelMin Channel.
 -- @param #number ChannelMax Channel.
--- @return #SQUADRON self
+-- @return #COHORT self
 -- @usage mysquad:AddTacanChannel(64,69)  -- adds channels 64, 65, 66, 67, 68, 69
-function SQUADRON:AddTacanChannel(ChannelMin, ChannelMax)
+function COHORT:AddTacanChannel(ChannelMin, ChannelMax)
 
   ChannelMax=ChannelMax or ChannelMin
   
@@ -616,9 +515,9 @@ function SQUADRON:AddTacanChannel(ChannelMin, ChannelMax)
 end
 
 --- Get an unused TACAN channel.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @return #number TACAN channel or *nil* if no channel is free.
-function SQUADRON:FetchTacan()
+function COHORT:FetchTacan()
 
   -- Get the smallest free channel if there is one.
   local freechannel=nil  
@@ -639,31 +538,31 @@ function SQUADRON:FetchTacan()
 end
 
 --- "Return" a used TACAN channel.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param #number channel The channel that is available again.
-function SQUADRON:ReturnTacan(channel)
+function COHORT:ReturnTacan(channel)
   self:T(self.lid..string.format("Returning Tacan channel %d", channel))
   self.tacanChannel[channel]=true
 end
 
---- Check if squadron is "OnDuty".
--- @param #SQUADRON self
+--- Check if platoon is "OnDuty".
+-- @param #COHORT self
 -- @return #boolean If true, squdron is in state "OnDuty".
-function SQUADRON:IsOnDuty()
+function COHORT:IsOnDuty()
   return self:Is("OnDuty")
 end
 
---- Check if squadron is "Stopped".
--- @param #SQUADRON self
+--- Check if platoon is "Stopped".
+-- @param #COHORT self
 -- @return #boolean If true, squdron is in state "Stopped".
-function SQUADRON:IsStopped()
+function COHORT:IsStopped()
   return self:Is("Stopped")
 end
 
---- Check if squadron is "Paused".
--- @param #SQUADRON self
+--- Check if platoon is "Paused".
+-- @param #COHORT self
 -- @return #boolean If true, squdron is in state "Paused".
-function SQUADRON:IsPaused()
+function COHORT:IsPaused()
   return self:Is("Paused")
 end
 
@@ -673,68 +572,29 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function SQUADRON:onafterStart(From, Event, To)
+function COHORT:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting SQUADRON", self.name)
+  local text=string.format("Starting COHORT %s", self.name)
   self:T(self.lid..text)
 
   -- Start the status monitoring.
   self:__Status(-1)
 end
 
---- On after "Status" event.
--- @param #SQUADRON self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function SQUADRON:onafterStatus(From, Event, To)
-
-  if self.verbose>=1 then
-
-    -- FSM state.
-    local fsmstate=self:GetState()
-  
-    local callsign=self.callsignName and UTILS.GetCallsignName(self.callsignName) or "N/A"
-    local modex=self.modex and self.modex or -1
-    local skill=self.skill and tostring(self.skill) or "N/A"
-    
-    local NassetsTot=#self.assets
-    local NassetsInS=self:CountAssets(true)
-    local NassetsQP=0 ; local NassetsP=0 ; local NassetsQ=0  
-    if self.airwing then
-      NassetsQP, NassetsP, NassetsQ=self.airwing:CountAssetsOnMission(nil, self)
-    end
-    
-    -- Short info.
-    local text=string.format("%s [Type=%s, Call=%s, Modex=%d, Skill=%s]: Assets Total=%d, Stock=%d, Mission=%d [Active=%d, Queue=%d]", 
-    fsmstate, self.aircrafttype, callsign, modex, skill, NassetsTot, NassetsInS, NassetsQP, NassetsP, NassetsQ)
-    self:I(self.lid..text)
-    
-    -- Check if group has detected any units.
-    self:_CheckAssetStatus()
-    
-  end  
-  
-  if not self:IsStopped() then
-    self:__Status(-60)
-  end
-end
-
-
 --- Check asset status.
--- @param #SQUADRON self
-function SQUADRON:_CheckAssetStatus()
+-- @param #COHORT self
+function COHORT:_CheckAssetStatus()
 
   if self.verbose>=2 and #self.assets>0 then
   
     local text=""
     for j,_asset in pairs(self.assets) do
-      local asset=_asset  --Ops.AirWing#AIRWING.SquadronAsset
+      local asset=_asset  --Functional.Warehouse#WAREHOUSE.Assetitem
   
       -- Text.
       text=text..string.format("\n[%d] %s (%s*%d): ", j, asset.spawngroupname, asset.unittype, asset.nunits)
@@ -746,7 +606,7 @@ function SQUADRON:_CheckAssetStatus()
         ---
   
         -- Mission info.
-        local mission=self.airwing and self.airwing:GetAssetCurrentMission(asset) or false
+        local mission=self.legion and self.legion:GetAssetCurrentMission(asset) or false
         if mission then
           local distance=asset.flightgroup and UTILS.MetersToNM(mission:GetTargetDistance(asset.flightgroup.group:GetCoordinate())) or 0
           text=text..string.format("Mission %s - %s: Status=%s, Dist=%.1f NM", mission.name, mission.type, mission.status, distance)
@@ -779,7 +639,7 @@ function SQUADRON:_CheckAssetStatus()
         end
 
         -- Payload info.
-        local payload=asset.payload and table.concat(self.airwing:GetPayloadMissionTypes(asset.payload), ", ") or "None"
+        local payload=asset.payload and table.concat(self.legion:GetPayloadMissionTypes(asset.payload), ", ") or "None"
         text=text..", Payload={"..payload.."}"
      
       else
@@ -814,14 +674,14 @@ function SQUADRON:_CheckAssetStatus()
 end
 
 --- On after "Stop" event.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function SQUADRON:onafterStop(From, Event, To)
+function COHORT:onafterStop(From, Event, To)
 
   -- Debug info.
-  self:I(self.lid.."STOPPING Squadron and removing all assets!")
+  self:I(self.lid.."STOPPING Cohort and removing all assets!")
 
   -- Remove all assets.
   for i=#self.assets,1,-1 do
@@ -838,18 +698,18 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Check if there is a squadron that can execute a given mission.
+--- Check if there is a platoon that can execute a given mission.
 -- We check the mission type, the refuelling system, engagement range
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return #boolean If true, Squadron can do that type of mission.
-function SQUADRON:CanMission(Mission)
+-- @return #boolean If true, Cohort can do that type of mission.
+function COHORT:CanMission(Mission)
   
   local cando=true
   
   -- On duty?=  
   if not self:IsOnDuty() then
-    self:T(self.lid..string.format("Squad in not OnDuty but in state %s. Cannot do mission %s with target %s", self:GetState(), Mission.name, Mission:GetTargetName()))
+    self:T(self.lid..string.format("Cohort in not OnDuty but in state %s. Cannot do mission %s with target %s", self:GetState(), Mission.name, Mission:GetTargetName()))
     return false
   end
 
@@ -859,7 +719,7 @@ function SQUADRON:CanMission(Mission)
     return false
   end
   
-  -- Check that tanker mission
+  -- Check that tanker mission has the correct refuelling system.
   if Mission.type==AUFTRAG.Type.TANKER then
   
     if Mission.refuelSystem and Mission.refuelSystem==self.tankerSystem then
@@ -872,7 +732,7 @@ function SQUADRON:CanMission(Mission)
   end
   
   -- Distance to target.
-  local TargetDistance=Mission:GetTargetDistance(self.airwing:GetCoordinate())
+  local TargetDistance=Mission:GetTargetDistance(self.legion:GetCoordinate())
   
   -- Max engage range.
   local engagerange=Mission.engageRange and math.max(self.engageRange, Mission.engageRange) or self.engageRange
@@ -886,17 +746,17 @@ function SQUADRON:CanMission(Mission)
   return true
 end
 
---- Count assets in airwing (warehous) stock.
--- @param #SQUADRON self
+--- Count assets in legion warehouse stock.
+-- @param #COHORT self
 -- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
 -- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
 -- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
 -- @return #number Number of assets.
-function SQUADRON:CountAssets(InStock, MissionTypes, Attributes)
+function COHORT:CountAssets(InStock, MissionTypes, Attributes)
 
   local N=0
   for _,_asset in pairs(self.assets) do
-    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
     if MissionTypes==nil or self:CheckMissionCapability(MissionTypes, self.missiontypes) then
       if Attributes==nil or self:CheckAttribute(Attributes) then
@@ -915,31 +775,31 @@ function SQUADRON:CountAssets(InStock, MissionTypes, Attributes)
 end
 
 --- Get assets for a mission.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 -- @param #number Nplayloads Number of payloads available.
 -- @return #table Assets that can do the required mission.
-function SQUADRON:RecruitAssets(Mission, Npayloads)
+function COHORT:RecruitAssets(Mission, Npayloads)
 
   -- Number of payloads available.
-  Npayloads=Npayloads or self.airwing:CountPayloadsInStock(Mission.type, self.aircrafttype, Mission.payloads)      
+  Npayloads=Npayloads or self.legion:CountPayloadsInStock(Mission.type, self.aircrafttype, Mission.payloads)      
 
   local assets={}
 
   -- Loop over assets.
   for _,_asset in pairs(self.assets) do  
-    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
     
     -- Check if asset is currently on a mission (STARTED or QUEUED).
-    if self.airwing:IsAssetOnMission(asset) then
+    if self.legion:IsAssetOnMission(asset) then
 
       ---
       -- Asset is already on a mission.
       ---
 
       -- Check if this asset is currently on a GCICAP mission (STARTED or EXECUTING).
-      if self.airwing:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and Mission.type==AUFTRAG.Type.INTERCEPT then
+      if self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and Mission.type==AUFTRAG.Type.INTERCEPT then
 
         -- Check if the payload of this asset is compatible with the mission.
         -- Note: we do not check the payload as an asset that is on a GCICAP mission should be able to do an INTERCEPT as well!
@@ -1019,10 +879,10 @@ end
 
 
 --- Get the time an asset needs to be repaired.
--- @param #SQUADRON self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
+-- @param #COHORT self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
 -- @return #number Time in seconds until asset is repaired.
-function SQUADRON:GetRepairTime(Asset)
+function COHORT:GetRepairTime(Asset)
 
   if Asset.Treturned then
   
@@ -1042,10 +902,10 @@ function SQUADRON:GetRepairTime(Asset)
 end
 
 --- Checks if a mission type is contained in a table of possible types.
--- @param #SQUADRON self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
+-- @param #COHORT self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
 -- @return #boolean If true, the requested mission type is part of the possible mission types.
-function SQUADRON:IsRepaired(Asset)
+function COHORT:IsRepaired(Asset)
 
   if Asset.Treturned then
     local Tnow=timer.getAbsTime()
@@ -1064,11 +924,11 @@ end
 
 
 --- Checks if a mission type is contained in a table of possible types.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param #string MissionType The requested mission type.
 -- @param #table PossibleTypes A table with possible mission types.
 -- @return #boolean If true, the requested mission type is part of the possible mission types.
-function SQUADRON:CheckMissionType(MissionType, PossibleTypes)
+function COHORT:CheckMissionType(MissionType, PossibleTypes)
 
   if type(PossibleTypes)=="string" then
     PossibleTypes={PossibleTypes}
@@ -1084,11 +944,11 @@ function SQUADRON:CheckMissionType(MissionType, PossibleTypes)
 end
 
 --- Check if a mission type is contained in a list of possible capabilities.
--- @param #SQUADRON self
+-- @param #COHORT self
 -- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
 -- @param #table Capabilities A table with possible capabilities.
 -- @return #boolean If true, the requested mission type is part of the possible mission types.
-function SQUADRON:CheckMissionCapability(MissionTypes, Capabilities)
+function COHORT:CheckMissionCapability(MissionTypes, Capabilities)
 
   if type(MissionTypes)~="table" then
     MissionTypes={MissionTypes}
@@ -1106,11 +966,11 @@ function SQUADRON:CheckMissionCapability(MissionTypes, Capabilities)
   return false
 end
 
---- Check if the squadron attribute matches the given attribute(s).
--- @param #SQUADRON self
+--- Check if the platoon attribute matches the given attribute(s).
+-- @param #COHORT self
 -- @param #table Attributes The requested attributes. See `WAREHOUSE.Attribute` enum. Can also be passed as a single attribute `#string`.
 -- @return #boolean If true, the squad has the requested attribute.
-function SQUADRON:CheckAttribute(Attributes)
+function COHORT:CheckAttribute(Attributes)
 
   if type(Attributes)~="table" then
     Attributes={Attributes}

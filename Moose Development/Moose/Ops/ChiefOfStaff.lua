@@ -66,6 +66,19 @@ CHIEF.DEFCON = {
   RED="Red",
 }
 
+--- Strategy.
+-- @type CHIEF.Strategy
+-- @field #string DEFENSIVE Only target in our own terretory are engaged.
+-- @field #string OFFENSIVE Targets in own terretory and yellow zones are engaged.
+-- @field #string AGGRESSIVE Targets in own terretroy, yellow zones and engage zones are engaged.
+-- @field #string TOTALWAR Anything is engaged anywhere.
+CHIEF.Strategy = {
+  DEFENSIVE="Defensive",
+  OFFENSIVE="Offensive",
+  AGGRESSIVE="Aggressive",
+  TOTALWAR="Total War"
+}
+
 --- CHIEF class version.
 -- @field #string version
 CHIEF.version="0.0.1"
@@ -74,6 +87,10 @@ CHIEF.version="0.0.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Get list of own assets and capabilities.
+-- TODO: Get list/overview of enemy assets etc.
+-- TODO: Put all contacts into target list. Then make missions from them.
+-- TODO: Set of interesting zones.
 -- TODO: Define A2A and A2G parameters.
 -- DONE: Add/remove spawned flightgroups to detection set.
 -- DONE: Borderzones.
@@ -112,6 +129,8 @@ function CHIEF:New(AgentSet, Coalition)
   self:AddTransition("*",                "MissionCancel",         "*")   -- Cancel mission.
   
   self:AddTransition("*",                "Defcon",                "*")   -- Change defence condition.
+  
+  self:AddTransition("*",                "Stategy",               "*")   -- Change strategy condition.
   
   self:AddTransition("*",                "DeclareWar",            "*")   -- Declare War.
 
@@ -393,6 +412,7 @@ function CHIEF:onafterStatus(From, Event, To)
     
     if contact.mission and contact.mission:IsNotOver() then
     
+      -- Debug info.
       local text=string.format("Lost contact to target %s! %s mission %s will be cancelled.", contact.groupname, contact.mission.type:upper(), contact.mission.name)
       MESSAGE:New(text, 120, "CHIEF"):ToAll()
       self:I(self.lid..text)
@@ -473,24 +493,58 @@ function CHIEF:onafterStatus(From, Event, To)
   -- Check mission queue and assign one PLANNED mission.
   self:CheckMissionQueue()
   
-  local text=string.format("Defcon=%s Missions=%d, Contacts: Total=%d Yellow=%d Red=%d", self.Defcon, #self.missionqueue, #self.Contacts, Nyellow, Nred)
+  ---
+  -- Mission Queue
+  ---  
+  
+  local Nassets=self.wingcommander:CountAssets()
+  
+  local text=string.format("Defcon=%s Assets=%d, Missions=%d, Contacts: Total=%d Yellow=%d Red=%d", self.Defcon, Nassets, #self.missionqueue, #self.Contacts, Nyellow, Nred)
+  self:I(self.lid..text)
+
+  ---
+  -- Assets
+  ---
+
+  local text="Assets:"
+  for _,missiontype in pairs(AUFTRAG.Type) do
+    local N=self.wingcommander:CountAssets(nil, missiontype)
+    if N>0 then
+      text=text..string.format("\n- %s %d", missiontype, N)
+    end
+  end
+  self:I(self.lid..text)
+  local text="Assets:"
+  for _,attribute in pairs(WAREHOUSE.Attribute) do
+    local N=self.wingcommander:CountAssets(nil, nil, attribute)
+    if N>0 or self.verbose>=10 then
+      text=text..string.format("\n- %s %d", attribute, N)
+    end
+  end
   self:I(self.lid..text)
   
   ---
   -- Target Queue
   ---
 
-  for _,_target in pairs(self.targetqueue) do
-    local target=_target --Ops.Target#TARGET
-    
-    if target:IsAlive() then
-    
-      if self:CheckTargetInZones(target, self.borderzoneset) then
+  if #self.targetqueue>0 then
+    local text="Targets:"
+    for i,_target in pairs(self.targetqueue) do
+      local target=_target --Ops.Target#TARGET
+      
+      text=text..string.format("\n[%d] %s: Category=%s, alive=%s [%.1f/%.1f]", i, target:GetName(), target.category, tostring(target:IsAlive()), target:GetLife(), target:GetLife0())
+      
+      
+      if target:IsAlive() then
+      
+        if self:CheckTargetInZones(target, self.borderzoneset) then
+        
+        end
       
       end
     
     end
-  
+    self:I(self.lid..text)
   end
 
   ---

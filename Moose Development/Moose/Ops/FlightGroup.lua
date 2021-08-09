@@ -346,19 +346,19 @@ function FLIGHTGROUP:SetAirwing(airwing)
   return self
 end
 
+--- Get airwing the flight group belongs to.
+-- @param #FLIGHTGROUP self
+-- @return Ops.AirWing#AIRWING The AIRWING object.
+function FLIGHTGROUP:GetAirWing()
+  return self.airwing
+end
+
 --- Set if aircraft is VTOL capable. Unfortunately, there is no DCS way to determine this via scripting.
 -- @param #FLIGHTGROUP self
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetVTOL()
   self.isVTOL=true
   return self
-end
-
---- Get airwing the flight group belongs to.
--- @param #FLIGHTGROUP self
--- @return Ops.AirWing#AIRWING The AIRWING object.
-function FLIGHTGROUP:GetAirWing()
-  return self.airwing
 end
 
 --- Set the FLIGHTCONTROL controlling this flight group.

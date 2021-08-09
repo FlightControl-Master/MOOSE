@@ -701,6 +701,15 @@ function OPSGROUP:SetVerbosity(VerbosityLevel)
   return self
 end
 
+--- Set legion this ops group belongs to.
+-- @param #OPSGROUP self
+-- @param Ops.Legion#LEGION Legion The Legion.
+-- @return #OPSGROUP self
+function OPSGROUP:_SetLegion(Legion)
+  self.legion=Legion
+  return self
+end
+
 --- Set default cruise speed.
 -- @param #OPSGROUP self
 -- @param #number Speed Speed in knots.

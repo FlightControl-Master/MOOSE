@@ -125,10 +125,6 @@ AIRWING = {
 
 --- Squadron asset.
 -- @type AIRWING.SquadronAsset
--- @field #AIRWING.Payload payload The payload of the asset.
--- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flightgroup object.
--- @field #string squadname Name of the squadron this asset belongs to.
--- @field #number Treturned Time stamp when asset returned to the airwing.
 -- @extends Functional.Warehouse#WAREHOUSE.Assetitem
 
 --- Payload data.
@@ -251,7 +247,7 @@ function AIRWING:New(warehousename, airwingname)
     -- @param #string Event Event.
     -- @param #string To To state.
     -- @param Ops.Squadron#SQUADRON Squadron The asset squadron.
-    -- @param #AIRWING.SquadronAsset Asset The asset that returned.
+    -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
 
   return self
 end
@@ -513,7 +509,7 @@ end
 
 --- Return payload from asset back to stock.
 -- @param #AIRWING self
--- @param #AIRWING.SquadronAsset asset The squadron asset.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The squadron asset.
 function AIRWING:ReturnPayloadFromAsset(asset)
 
   local payload=asset.payload
@@ -596,7 +592,7 @@ end
 
 --- Get squadron of an asset.
 -- @param #AIRWING self
--- @param #AIRWING.SquadronAsset Asset The squadron asset.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The squadron asset.
 -- @return Ops.Squadron#SQUADRON The squadron object.
 function AIRWING:GetSquadronOfAsset(Asset)
   return self:GetSquadron(Asset.squadname)
@@ -604,7 +600,7 @@ end
 
 --- Remove asset from squadron.
 -- @param #AIRWING self
--- @param #AIRWING.SquadronAsset Asset The squad asset.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The squad asset.
 function AIRWING:RemoveAssetFromSquadron(Asset)
   local squad=self:GetSquadronOfAsset(Asset)
   if squad then
@@ -908,7 +904,7 @@ function AIRWING:onafterStatus(From, Event, To)
       local skill=squadron.skill and tostring(squadron.skill) or "N/A"
 
       -- Squadron text
-      text=text..string.format("\n* %s %s: %s*%d/%d, Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, squadron:CountAssetsInStock(), #squadron.assets, callsign, modex, skill)
+      text=text..string.format("\n* %s %s: %s*%d/%d, Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, squadron:CountAssets(true), #squadron.assets, callsign, modex, skill)
     end
     self:I(self.lid..text)
   end
@@ -1105,7 +1101,7 @@ end
 --- Check how many AWACS missions are assigned and add number of missing missions.
 -- @param #AIRWING self
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flightgroup.
--- @return #AIRWING.SquadronAsset The tanker asset.
+-- @return Functional.Warehouse#WAREHOUSE.Assetitem The tanker asset.
 function AIRWING:GetTankerForFlight(flightgroup)
 
   local tankers=self:GetAssetsOnMission(AUFTRAG.Type.TANKER)
@@ -1114,7 +1110,7 @@ function AIRWING:GetTankerForFlight(flightgroup)
 
     local tankeropt={}
     for _,_tanker in pairs(tankers) do
-      local tanker=_tanker --#AIRWING.SquadronAsset
+      local tanker=_tanker --Functional.Warehouse#WAREHOUSE.Assetitem
 
       -- Check that donor and acceptor use the same refuelling system.
       if flightgroup.refueltype and flightgroup.refueltype==tanker.flightgroup.tankertype then
@@ -1214,7 +1210,7 @@ function AIRWING:_GetNextMission()
         local remove={}
         local gotpayload={}
         for i=1,#assets do
-          local asset=assets[i] --#AIRWING.SquadronAsset
+          local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
 
           -- Get payload for the asset.
           if not asset.payload then
@@ -1231,7 +1227,7 @@ function AIRWING:_GetNextMission()
 
         -- Now remove assets for which we don't have a payload.
         for i=#assets,1,-1 do
-          local asset=assets[i] --#AIRWING.SquadronAsset
+          local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
           for _,uid in pairs(remove) do
             if uid==asset.uid then
               table.remove(assets, i)
@@ -1255,7 +1251,7 @@ function AIRWING:_GetNextMission()
 
         -- Assign assets to mission.
         for i=1,mission.nassets do
-          local asset=assets[i] --#AIRWING.SquadronAsset
+          local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
 
           -- Should not happen as we just checked!
           if not asset.payload then
@@ -1268,7 +1264,7 @@ function AIRWING:_GetNextMission()
 
         -- Now return the remaining payloads.
         for i=mission.nassets+1,#assets do
-          local asset=assets[i] --#AIRWING.SquadronAsset
+          local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
           for _,uid in pairs(gotpayload) do
             if uid==asset.uid then
               self:ReturnPayloadFromAsset(asset)
@@ -1288,7 +1284,7 @@ end
 
 --- Calculate the mission score of an asset.
 -- @param #AIRWING self
--- @param #AIRWING.SquadronAsset asset Asset
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset Asset
 -- @param Ops.Auftrag#AUFTRAG Mission Mission for which the best assets are desired.
 -- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
 -- @return #number Mission score.
@@ -1351,7 +1347,7 @@ function AIRWING:_OptimizeAssetSelection(assets, Mission, includePayload)
   local distmin=math.huge
   local distmax=0
   for _,_asset in pairs(assets) do
-    local asset=_asset --#AIRWING.SquadronAsset
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
 
     if asset.spawned then
       local group=GROUP:FindByName(asset.spawngroupname)
@@ -1373,15 +1369,15 @@ function AIRWING:_OptimizeAssetSelection(assets, Mission, includePayload)
 
   -- Calculate the mission score of all assets.
   for _,_asset in pairs(assets) do
-    local asset=_asset --#AIRWING.SquadronAsset
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     --self:I(string.format("FF asset %s has payload %s", asset.spawngroupname, asset.payload and "yes" or "no!"))
     asset.score=self:CalculateAssetMissionScore(asset, Mission, includePayload)
   end
 
   --- Sort assets wrt to their mission score. Higher is better.
   local function optimize(a, b)
-    local assetA=a --#AIRWING.SquadronAsset
-    local assetB=b --#AIRWING.SquadronAsset
+    local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
+    local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
 
     -- Higher score wins. If equal score ==> closer wins.
     -- TODO: Need to include the distance in a smarter way!
@@ -1392,7 +1388,7 @@ function AIRWING:_OptimizeAssetSelection(assets, Mission, includePayload)
   -- Remove distance parameter.
   local text=string.format("Optimized assets for %s mission (payload=%s):", Mission.type, tostring(includePayload))
   for i,Asset in pairs(assets) do
-    local asset=Asset --#AIRWING.SquadronAsset
+    local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
     text=text..string.format("\n%s %s: score=%d, distance=%.1f km", asset.squadname, asset.spawngroupname, asset.score, asset.dist/1000)
     asset.dist=nil
     asset.score=nil
@@ -1425,7 +1421,7 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
   local Assetlist={}
 
   for _,_asset in pairs(Mission.assets) do
-    local asset=_asset --#AIRWING.SquadronAsset
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
 
     if asset.spawned then
 
@@ -1452,7 +1448,7 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
 
     --local text=string.format("Requesting assets for mission %s:", Mission.name)
     for i,_asset in pairs(Assetlist) do
-      local asset=_asset --#AIRWING.SquadronAsset
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
 
       -- Set asset to requested! Important so that new requests do not use this asset!
       asset.requested=true
@@ -1493,7 +1489,7 @@ function AIRWING:onafterMissionCancel(From, Event, To, Mission)
   else
 
     for _,_asset in pairs(Mission.assets) do
-      local asset=_asset --#AIRWING.SquadronAsset
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
 
       local flightgroup=asset.flightgroup
 
@@ -1519,7 +1515,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #AIRWING.SquadronAsset asset The asset that has just been added.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that has just been added.
 -- @param #string assignment The (optional) assignment for the asset.
 function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
 
@@ -1604,7 +1600,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Ops.Squadron#SQUADRON Squadron The asset squadron.
--- @param #AIRWING.SquadronAsset Asset The asset that returned.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
 function AIRWING:onafterSquadAssetReturned(From, Event, To, Squadron, Asset)
   -- Debug message.
   self:T(self.lid..string.format("Asset %s from squadron %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Squadron.name, tostring(Asset.assignment)))
@@ -1634,7 +1630,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Group#GROUP group The group spawned.
--- @param #AIRWING.SquadronAsset asset The asset that was spawned.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that was spawned.
 -- @param Functional.Warehouse#WAREHOUSE.Pendingitem request The request of the dead asset.
 function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
 
@@ -1731,7 +1727,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #AIRWING.SquadronAsset asset The asset that is dead.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that is dead.
 -- @param Functional.Warehouse#WAREHOUSE.Pendingitem request The request of the dead asset.
 function AIRWING:onafterAssetDead(From, Event, To, asset, request)
 
@@ -1793,7 +1789,7 @@ function AIRWING:onafterRequest(From, Event, To, Request)
   if Mission and assets then
 
     for _,_asset in pairs(assets) do
-      local asset=_asset --#AIRWING.SquadronAsset
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
       -- This would be the place to modify the asset table before the asset is spawned.
     end
 
@@ -1820,7 +1816,7 @@ function AIRWING:onafterSelfRequest(From, Event, To, groupset, request)
   local mission=self:GetMissionByID(request.assignment)
 
   for _,_asset in pairs(request.assets) do
-    local asset=_asset --#AIRWING.SquadronAsset
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
   end
 
   for _,_group in pairs(groupset:GetSet()) do
@@ -1835,7 +1831,7 @@ end
 
 --- Create a new flight group after an asset was spawned.
 -- @param #AIRWING self
--- @param #AIRWING.SquadronAsset asset The asset.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
 -- @return Ops.FlightGroup#FLIGHTGROUP The created flightgroup object.
 function AIRWING:_CreateFlightGroup(asset)
 
@@ -1857,7 +1853,7 @@ end
 
 --- Check if an asset is currently on a mission (STARTED or EXECUTING).
 -- @param #AIRWING self
--- @param #AIRWING.SquadronAsset asset The asset.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
 -- @param #table MissionTypes Types on mission to be checked. Default all.
 -- @return #boolean If true, asset has at least one mission of that type in the queue.
 function AIRWING:IsAssetOnMission(asset, MissionTypes)
@@ -1900,7 +1896,7 @@ function AIRWING:IsAssetOnMission(asset, MissionTypes)
 
     if mission:IsNotOver() then
       for _,_asset in pairs(mission.assets) do
-        local sqasset=_asset --#AIRWING.SquadronAsset
+        local sqasset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
 
         if sqasset.uid==asset.uid then
           return true
@@ -1917,7 +1913,7 @@ end
 
 --- Get the current mission of the asset.
 -- @param #AIRWING self
--- @param #AIRWING.SquadronAsset asset The asset.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
 -- @return Ops.Auftrag#AUFTRAG Current mission or *nil*.
 function AIRWING:GetAssetCurrentMission(asset)
 
@@ -2026,33 +2022,19 @@ function AIRWING:CountMissionsInQueue(MissionTypes)
   return N
 end
 
---- Count total number of assets. This is the sum of all squadron assets.
--- @param #AIRWING self
--- @return #number Amount of asset groups.
-function AIRWING:CountAssets()
-
-  local N=0
-
-  for _,_squad in pairs(self.squadrons) do
-    local squad=_squad --Ops.Squadron#SQUADRON
-    N=N+#squad.assets
-  end
-
-  return N
-end
-
-
 --- Count total number of assets that are in the warehouse stock (not spawned).
 -- @param #AIRWING self
+-- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
 -- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
 -- @return #number Amount of asset groups in stock.
-function AIRWING:CountAssetsInStock(MissionTypes)
+function AIRWING:CountAssets(InStock, MissionTypes, Attributes)
 
   local N=0
 
   for _,_squad in pairs(self.squadrons) do
     local squad=_squad --Ops.Squadron#SQUADRON
-    N=N+squad:CountAssetsInStock(MissionTypes)
+    N=N+squad:CountAssets(InStock, MissionTypes, Attributes)
   end
 
   return N
@@ -2077,7 +2059,7 @@ function AIRWING:CountAssetsOnMission(MissionTypes, Squadron)
     if self:CheckMissionType(mission.type, MissionTypes or AUFTRAG.Type) then
 
       for _,_asset in pairs(mission.assets or {}) do
-        local asset=_asset --#AIRWING.SquadronAsset
+        local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
 
         if Squadron==nil or Squadron.name==asset.squadname then
 
@@ -2115,7 +2097,7 @@ function AIRWING:GetAssetsOnMission(MissionTypes)
     if self:CheckMissionType(mission.type, MissionTypes) then
 
       for _,_asset in pairs(mission.assets or {}) do
-        local asset=_asset --#AIRWING.SquadronAsset
+        local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
 
         table.insert(assets, asset)
 

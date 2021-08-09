@@ -1623,6 +1623,10 @@ WAREHOUSE = {
 -- @field #number rid The request ID of this asset.
 -- @field #boolean arrived If true, asset arrived at its destination.
 -- @field #number damage Damage of asset group in percent.
+-- @field Ops.AirWing#AIRWING.Payload payload The payload of the asset.
+-- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flightgroup object.
+-- @field #string squadname Name of the squadron this asset belongs to.
+-- @field #number Treturned Time stamp when asset returned to the airwing.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -1842,8 +1846,8 @@ WAREHOUSE.version="1.0.2"
 
 --- The WAREHOUSE constructor. Creates a new WAREHOUSE object from a static object. Parameters like the coalition and country are taken from the static object structure.
 -- @param #WAREHOUSE self
--- @param Wrapper.Static#STATIC warehouse The physical structure representing the warehouse.
--- @param #string alias (Optional) Alias of the warehouse, i.e. the name it will be called when sending messages etc. Default is the name of the static
+-- @param Wrapper.Static#STATIC warehouse The physical structure representing the warehouse. Can also be a @{Wrapper.Unit#UNIT}.
+-- @param #string alias (Optional) Alias of the warehouse, i.e. the name it will be called when sending messages etc. Default is the name of the static/unit representing the warehouse.
 -- @return #WAREHOUSE self
 function WAREHOUSE:New(warehouse, alias)
 
