@@ -920,7 +920,7 @@ function CSAR:_InitSARForPilot(_downedGroup, _GroupName, _freq, _nomessage)
   end
 
    -- trigger FSM event
-  self:__PilotDown(2,_downedGroup, _freqk, _leadername, _coordinatesText)
+  self:__PilotDown(2,_downedGroup, _freqk, _groupName, _coordinatesText)
   
   return self
 end
