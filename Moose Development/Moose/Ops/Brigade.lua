@@ -86,7 +86,7 @@ end
 -- @return #BRIGADE self
 function BRIGADE:AddPlatoon(Platoon)
 
-  -- Add squadron to airwing.
+  -- Add platoon to brigade.
   table.insert(self.cohorts, Platoon)
 
   -- Add assets to squadron.

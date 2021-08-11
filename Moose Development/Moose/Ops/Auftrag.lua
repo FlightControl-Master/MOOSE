@@ -443,7 +443,7 @@ AUFTRAG.TargetType={
 -- @field Core.Point#COORDINATE wpegresscoordinate Egress waypoint coordinate.
 -- @field Ops.OpsGroup#OPSGROUP.Task waypointtask Waypoint task.
 -- @field #string status Group mission status.
--- @field Ops.AirWing#AIRWING.SquadronAsset asset The squadron asset.
+-- @field Functional.Warehouse#WAREHOUSE.Assetitem asset The warehouse asset.
 
 
 --- AUFTRAG class version.
@@ -2689,7 +2689,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
 function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
  
   -- Number of groups alive. 
@@ -3147,7 +3147,7 @@ end
 
 --- Add asset to mission.
 -- @param #AUFTRAG self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset to be added to the mission.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added to the mission.
 -- @return #AUFTRAG self
 function AUFTRAG:AddAsset(Asset)
 
@@ -3160,12 +3160,12 @@ end
 
 --- Delete asset from mission.
 -- @param #AUFTRAG self
--- @param Ops.AirWing#AIRWING.SquadronAsset Asset  The asset to be removed.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset  The asset to be removed.
 -- @return #AUFTRAG self
 function AUFTRAG:DelAsset(Asset)
 
   for i,_asset in pairs(self.assets or {}) do
-    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
     if asset.uid==Asset.uid then
       self:T(self.lid..string.format("Removing asset \"%s\" from mission", tostring(asset.spawngroupname)))
@@ -3181,11 +3181,11 @@ end
 --- Get asset by its spawn group name.
 -- @param #AUFTRAG self
 -- @param #string Name Asset spawn group name.
--- @return Ops.AirWing#AIRWING.SquadronAsset
+-- @return Functional.Warehouse#WAREHOUSE.Assetitem Asset.
 function AUFTRAG:GetAssetByName(Name)
 
   for i,_asset in pairs(self.assets or {}) do
-    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
     if asset.spawngroupname==Name then
       return asset
@@ -3196,9 +3196,9 @@ function AUFTRAG:GetAssetByName(Name)
   return nil
 end
 
---- Count alive ops groups assigned for this mission.
+--- Count alive OPS groups assigned for this mission.
 -- @param #AUFTRAG self
--- @return #number Number of alive flight groups.
+-- @return #number Number of alive OPS groups.
 function AUFTRAG:CountOpsGroups()
   local N=0
   for _,_groupdata in pairs(self.groupdata) do

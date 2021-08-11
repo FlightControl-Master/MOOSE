@@ -44,8 +44,6 @@
 -- @field #boolean fuelcritical Fuel critical switch.
 -- @field #number fuelcriticalthresh Critical fuel threshold in percent.
 -- @field #boolean fuelcriticalrtb RTB on critical fuel switch.
--- @field Ops.Squadron#SQUADRON squadron The squadron of this flight group.
--- @field Ops.AirWing#AIRWING airwing The airwing the flight group belongs to.
 -- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol handling this group.
 -- @field Ops.Airboss#AIRBOSS airboss The airboss handling this group.
 -- @field Core.UserFlag#USERFLAG flaghold Flag for holding.
@@ -136,7 +134,6 @@ FLIGHTGROUP = {
   fuelcriticalrtb    = false,
   outofAAMrtb        = false,
   outofAGMrtb        = false,
-  squadron           =   nil,
   flightcontrol      =   nil,
   flaghold           =   nil,
   Tholding           =   nil,
@@ -336,21 +333,11 @@ function FLIGHTGROUP:AddTaskEnrouteEngageTargetsInZone(ZoneRadius, TargetTypes, 
   self:AddTaskEnroute(Task)
 end
 
---- Set AIRWING the flight group belongs to.
--- @param #FLIGHTGROUP self
--- @param Ops.AirWing#AIRWING airwing The AIRWING object.
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetAirwing(airwing)
-  self:T(self.lid..string.format("Add flight to AIRWING %s", airwing.alias))
-  self.airwing=airwing
-  return self
-end
-
 --- Get airwing the flight group belongs to.
 -- @param #FLIGHTGROUP self
 -- @return Ops.AirWing#AIRWING The AIRWING object.
 function FLIGHTGROUP:GetAirWing()
-  return self.airwing
+  return self.legion
 end
 
 --- Set if aircraft is VTOL capable. Unfortunately, there is no DCS way to determine this via scripting.
@@ -1891,11 +1878,15 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
     -- Add flight to arrived queue.
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.ARRIVED)
   end
+  
+  local airwing=self:GetAirWing()
 
   -- Check what to do.
-  if self.airwing then
+  if airwing then
+  
     -- Add the asset back to the airwing.
-    self.airwing:AddAsset(self.group, 1)    
+    airwing:AddAsset(self.group, 1)
+        
   elseif self.isLandingAtAirbase then
 
     local Template=UTILS.DeepCopy(self.template)  --DCS#Template
@@ -1989,18 +1980,6 @@ function FLIGHTGROUP:onafterDead(From, Event, To)
   if self.flightcontrol then
     self.flightcontrol:_RemoveFlight(self)
     self.flightcontrol=nil
-  end
-
-  if self.Ndestroyed==#self.elements then
-    if self.squadron then
-      -- All elements were destroyed ==> Asset group is gone.
-      self.squadron:DelGroup(self.groupname)
-    end
-  else
-    if self.airwing then
-      -- Not all assets were destroyed (despawn) ==> Add asset back to airwing.
-      --self.airwing:AddAsset(self.group, 1)
-    end
   end
 
   -- Call OPSGROUP function.
@@ -2912,11 +2891,13 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
 
   -- Back to destination or home.
   local airbase=self.destbase or self.homebase
+  
+  local airwing=self:GetAirWing()
 
-  if self.airwing then
+  if airwing then
 
     -- Get closest tanker from airwing that can refuel this flight.
-    local tanker=self.airwing:GetTankerForFlight(self)
+    local tanker=airwing:GetTankerForFlight(self)
 
     if tanker and self.fuellowrefuel then
 

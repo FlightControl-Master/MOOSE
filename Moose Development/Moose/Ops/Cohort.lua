@@ -119,9 +119,6 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   self:SetMissionRange()
   self:SetSkill(AI.Skill.GOOD)
   
-  -- Everyone can ORBIT.
-  --self:AddMissionCapability(AUFTRAG.Type.ORBIT)
-  
   -- Generalized attribute.
   self.attribute=self.templategroup:GetAttribute()
   
@@ -718,9 +715,9 @@ function COHORT:CanMission(Mission)
     return false
   end
 
-  -- Check mission type. WARNING: This assumes that all assets of the squad can do the same mission types!
+  -- Check mission type. WARNING: This assumes that all assets of the cohort can do the same mission types!
   if not self:CheckMissionType(Mission.type, self:GetMissionTypes()) then
-    self:T(self.lid..string.format("INFO: Squad cannot do mission type %s (%s, %s)", Mission.type, Mission.name, Mission:GetTargetName()))
+    self:T(self.lid..string.format("INFO: Cohort cannot do mission type %s (%s, %s)", Mission.type, Mission.name, Mission:GetTargetName()))
     return false
   end
   
@@ -742,9 +739,9 @@ function COHORT:CanMission(Mission)
   -- Max engage range.
   local engagerange=Mission.engageRange and math.max(self.engageRange, Mission.engageRange) or self.engageRange
       
-  -- Set range is valid. Mission engage distance can overrule the squad engage range.
+  -- Set range is valid. Mission engage distance can overrule the cohort engage range.
   if TargetDistance>engagerange then
-    self:I(self.lid..string.format("INFO: Squad is not in range. Target dist=%d > %d NM max mission Range", UTILS.MetersToNM(TargetDistance), UTILS.MetersToNM(engagerange)))
+    self:I(self.lid..string.format("INFO: Cohort is not in range. Target dist=%d > %d NM max mission Range", UTILS.MetersToNM(TargetDistance), UTILS.MetersToNM(engagerange)))
     return false
   end
   
@@ -974,7 +971,7 @@ end
 --- Check if the platoon attribute matches the given attribute(s).
 -- @param #COHORT self
 -- @param #table Attributes The requested attributes. See `WAREHOUSE.Attribute` enum. Can also be passed as a single attribute `#string`.
--- @return #boolean If true, the squad has the requested attribute.
+-- @return #boolean If true, the cohort has the requested attribute.
 function COHORT:CheckAttribute(Attributes)
 
   if type(Attributes)~="table" then

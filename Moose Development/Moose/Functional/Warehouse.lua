@@ -3996,7 +3996,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
 
       local opsgroup=_DATABASE:GetOpsGroup(group:GetName())
       if opsgroup then
-        opsgroup:Despawn(0)
+        opsgroup:Despawn(0, true)
         opsgroup:__Stop(-0.01)
       else
         -- Setting parameter to false, i.e. creating NO dead or remove unit event, seems to not confuse the dispatcher logic.

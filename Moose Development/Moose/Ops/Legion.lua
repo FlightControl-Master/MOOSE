@@ -616,7 +616,7 @@ function LEGION:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
 
 end
 
---- On after "NewAsset" event. Asset is added to the given squadron (asset assignment).
+--- On after "NewAsset" event. Asset is added to the given cohort (asset assignment).
 -- @param #LEGION self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -632,26 +632,25 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
   local text=string.format("New asset %s with assignment %s and request assignment %s", asset.spawngroupname, tostring(asset.assignment), tostring(assignment))
   self:T3(self.lid..text)
 
-  -- Get squadron.
-  --local squad=self:GetSquadron(asset.assignment)
-  local squad=self:_GetCohort(asset.assignment)
+  -- Get cohort.
+  local cohort=self:_GetCohort(asset.assignment)
 
   -- Check if asset is already part of the squadron. If an asset returns, it will be added again! We check that asset.assignment is also assignment.
-  if squad then
+  if cohort then
 
     if asset.assignment==assignment then
 
       local nunits=#asset.template.units
 
       -- Debug text.
-      local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s, nunits=%d %s", squad.name, assignment, asset.unittype, asset.attribute, nunits, tostring(squad.ngrouping))
+      local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s, nunits=%d %s", cohort.name, assignment, asset.unittype, asset.attribute, nunits, tostring(cohort.ngrouping))
       self:T(self.lid..text)
 
       -- Adjust number of elements in the group.
-      if squad.ngrouping then
+      if cohort.ngrouping then
         local template=asset.template
 
-        local N=math.max(#template.units, squad.ngrouping)
+        local N=math.max(#template.units, cohort.ngrouping)
 
         -- Handle units.
         for i=1,N do
@@ -665,36 +664,36 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
           end
 
           -- Remove units if original template contains more than in grouping.
-          if squad.ngrouping<nunits and i>nunits then
+          if cohort.ngrouping<nunits and i>nunits then
             unit=nil
           end
         end
 
-        asset.nunits=squad.ngrouping
+        asset.nunits=cohort.ngrouping
       end
 
       -- Set takeoff type.
-      asset.takeoffType=squad.takeoffType
+      asset.takeoffType=cohort.takeoffType
       
       -- Set parking IDs.
-      asset.parkingIDs=squad.parkingIDs
+      asset.parkingIDs=cohort.parkingIDs
 
       -- Create callsign and modex (needs to be after grouping).
-      squad:GetCallsign(asset)
-      squad:GetModex(asset)
+      cohort:GetCallsign(asset)
+      cohort:GetModex(asset)
 
       -- Set spawn group name. This has to include "AID-" for warehouse.
-      asset.spawngroupname=string.format("%s_AID-%d", squad.name, asset.uid)
+      asset.spawngroupname=string.format("%s_AID-%d", cohort.name, asset.uid)
 
       -- Add asset to squadron.
-      squad:AddAsset(asset)
+      cohort:AddAsset(asset)
 
       -- TODO
       --asset.terminalType=AIRBASE.TerminalType.OpenBig
     else
 
       --env.info("FF squad asset returned")
-      self:AssetReturned(squad, asset)
+      self:AssetReturned(cohort, asset)
 
     end
 
@@ -753,10 +752,10 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
   self:GetParent(self, LEGION).onafterAssetSpawned(self, From, Event, To, group, asset, request)
 
   -- Get the SQUADRON of the asset.
-  local squadron=self:_GetCohortOfAsset(asset)
+  local cohort=self:_GetCohortOfAsset(asset)
 
   -- Check if we have a squadron or if this was some other request.
-  if squadron then
+  if cohort then
 
     -- Create a flight group.
     local flightgroup=self:_CreateFlightGroup(asset)
@@ -779,7 +778,7 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
     ---
 
     -- Get TACAN channel.
-    local Tacan=squadron:FetchTacan()
+    local Tacan=cohort:FetchTacan()
     if Tacan then
       asset.tacan=Tacan
       --flightgroup:SetDefaultTACAN(Tacan,Morse,UnitName,Band,OffSwitch)
@@ -787,17 +786,17 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
     end
 
     -- Set radio frequency and modulation
-    local radioFreq, radioModu=squadron:GetRadio()
+    local radioFreq, radioModu=cohort:GetRadio()
     if radioFreq then
       flightgroup:SwitchRadio(radioFreq, radioModu)
     end
 
-    if squadron.fuellow then
-      flightgroup:SetFuelLowThreshold(squadron.fuellow)
+    if cohort.fuellow then
+      flightgroup:SetFuelLowThreshold(cohort.fuellow)
     end
 
-    if squadron.fuellowRefuel then
-      flightgroup:SetFuelLowRefuel(squadron.fuellowRefuel)
+    if cohort.fuellowRefuel then
+      flightgroup:SetFuelLowRefuel(cohort.fuellowRefuel)
     end
 
     ---
@@ -858,7 +857,7 @@ function LEGION:onafterAssetDead(From, Event, To, asset, request)
   -- Remove asset from squadron same
 end
 
---- On after "Destroyed" event. Remove assets from squadrons. Stop squadrons. Remove airwing from wingcommander.
+--- On after "Destroyed" event. Remove assets from cohorts. Stop squadrons.
 -- @param #LEGION self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -874,11 +873,11 @@ function LEGION:onafterDestroyed(From, Event, To)
     mission:Cancel()
   end
 
-  -- Remove all squadron assets.
-  for _,_squadron in pairs(self.cohorts) do
-    local squadron=_squadron --Ops.Squadron#SQUADRON
-    -- Stop Squadron. This also removes all assets.
-    squadron:Stop()
+  -- Remove all cohort assets.
+  for _,_cohort in pairs(self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    -- Stop Cohort. This also removes all assets.
+    cohort:Stop()
   end
 
   -- Call parent warehouse function first.
@@ -964,7 +963,7 @@ function LEGION:_CreateFlightGroup(asset)
   flightgroup:_SetLegion(self)
 
   -- Set squadron.
-  flightgroup.squadron=self:_GetCohortOfAsset(asset)
+  flightgroup.cohort=self:_GetCohortOfAsset(asset)
 
   -- Set home base.
   flightgroup.homebase=self.airbase

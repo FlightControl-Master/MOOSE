@@ -1329,7 +1329,9 @@ function OPSGROUP:DespawnElement(Element, Delay, NoEventRemoveUnit)
   return self
 end
 
---- Despawn the group. The whole group is despawned and (optionally) a "Remove Unit" event is generated for all current units of the group.
+--- Despawn the group. The whole group is despawned and a "`Remove Unit`" event is generated for all current units of the group.
+-- If no `Remove Unit` event should be generated, the second optional parameter needs to be set to `true`.
+-- If this group belongs to an AIRWING, BRIGADE or FLEET, it will be added to the warehouse stock if the `NoEventRemoveUnit` parameter is `false` or `nil`.
 -- @param #OPSGROUP self
 -- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
 -- @param #boolean NoEventRemoveUnit If `true`, **no** event "Remove Unit" is generated.
@@ -1339,14 +1341,16 @@ function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
   if Delay and Delay>0 then
     self.scheduleIDDespawn=self:ScheduleOnce(Delay, OPSGROUP.Despawn, self, 0, NoEventRemoveUnit)
   else
-  
-    -- Debug info.
-    self:I(self.lid..string.format("Despawning Group!"))
-    
+      
     if self.legion and not NoEventRemoveUnit then
       -- Add asset back in 10 seconds.
-      self.legion:AddAsset(self.group, 1)    
+      self:I(self.lid..string.format("Despawning Group by adding asset to LEGION!"))
+      self.legion:AddAsset(self.group, 1)
+      return
     end
+
+    -- Debug info.
+    self:I(self.lid..string.format("Despawning Group!"))
 
     -- DCS group obejct.
     local DCSGroup=self:GetDCSGroup()
@@ -3754,10 +3758,10 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
     -- Switch to default.
     self:_SwitchTACAN()
 
-    -- Return Squadron TACAN channel.
-    local squadron=self.squadron --Ops.Squadron#SQUADRON
-    if squadron then
-      squadron:ReturnTacan(Mission.tacan.Channel)
+    -- Return Cohort's TACAN channel.
+    local cohort=self.cohort --Ops.Cohort#COHORT
+    if cohort then
+      cohort:ReturnTacan(Mission.tacan.Channel)
     end
 
     -- Set asset TACAN to nil.
@@ -5174,6 +5178,18 @@ function OPSGROUP:onafterDead(From, Event, To)
   
   -- No current cargo transport.
   self.cargoTransport=nil
+
+  if self.Ndestroyed==#self.elements then
+    if self.cohort then
+      -- All elements were destroyed ==> Asset group is gone.
+      self.cohort:DelGroup(self.groupname)
+    end
+  else
+    if self.airwing then
+      -- Not all assets were destroyed (despawn) ==> Add asset back to airwing.
+      --self.airwing:AddAsset(self.group, 1)
+    end
+  end
    
   -- Stop in a sec.
   --self:__Stop(-5)
