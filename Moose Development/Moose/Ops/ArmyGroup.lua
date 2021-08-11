@@ -109,6 +109,9 @@ function ARMYGROUP:New(group)
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "FullStop",         "Holding")     -- Hold position.
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Cruise along the given route of waypoints.
+  
+  self:AddTransition("*",             "RTZ",              "Returning")   -- Group is returning to (home) zone.
+  self:AddTransition("Returning",     "Returned",         "Returned")    -- Group is returned to (home) zone.
     
   self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
   self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
@@ -626,7 +629,7 @@ end
 function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
 
   -- Debug info.
-  local text=string.format("Update route n=%s, Speed=%s, Formation=%s", tostring(n), tostring(Speed), tostring(Formation))
+  local text=string.format("Update route state=%s: n=%s, Speed=%s, Formation=%s", self:GetState(), tostring(n), tostring(Speed), tostring(Formation))
   self:T(self.lid..text)
 
   -- Update route from this waypoint number onwards.
@@ -820,6 +823,60 @@ function ARMYGROUP:onafterRearm(From, Event, To, Coordinate, Formation)
   
   -- Set if we want to resume route after reaching the detour waypoint.
   wp.detour=0
+
+end
+
+--- On after "RTZ" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE Zone The zone to return to.
+-- @param #number Formation Formation of the group.
+function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
+
+  -- ID of current waypoint.
+  local uid=self:GetWaypointCurrent().uid
+  
+  -- Zone.
+  local zone=Zone or self.homezone
+  
+  if zone then
+  
+    -- Debug info.
+    self:I(self.lid..string.format("RTZ to Zone %s", zone:GetName()))  
+    
+    local Coordinate=zone:GetRandomCoordinate()
+    
+    -- Add waypoint after current.
+    local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
+    
+    -- Set if we want to resume route after reaching the detour waypoint.
+    wp.detour=0
+    
+  else
+    self:E(self.lid.."ERROR: No RTZ zone given!")
+  end
+
+end
+
+--- On after "Returned" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function ARMYGROUP:onafterReturned(From, Event, To)
+
+  -- Debug info.
+  self:T(self.lid..string.format("Group returned"))
+  
+  if self.legion then
+    -- Debug info.
+    self:T(self.lid..string.format("Adding group back to warehouse stock"))
+    
+    -- Add asset back in 10 seconds.
+    self.legion:__AddAsset(10, self.group, 1)
+  end
 
 end
 
@@ -1048,6 +1105,8 @@ end
 -- @param #string To To state.
 function ARMYGROUP:onafterFullStop(From, Event, To)
 
+  self:I(self.lid..string.format("Full stop!"))
+
   -- Get current position.
   local pos=self:GetCoordinate()
   
@@ -1125,7 +1184,8 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   
   -- Update route.
   if Updateroute==nil or Updateroute==true then
-    self:_CheckGroupDone(1)
+    self:UpdateRoute()
+    --self:_CheckGroupDone(1)
   end
   
   return waypoint

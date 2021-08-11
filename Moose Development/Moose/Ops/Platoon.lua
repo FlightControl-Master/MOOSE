@@ -18,6 +18,7 @@
 -- @type PLATOON
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity level.
+-- @field Ops.OpsGroup#OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
 -- @extends Ops.Cohort#COHORT
 
 --- *Some cool cohort quote* -- Known Author
@@ -34,6 +35,7 @@
 PLATOON = {
   ClassName      = "PLATOON",
   verbose        =     0,
+  weaponData     =    {},
 }
 
 --- PLATOON class version.
@@ -87,6 +89,29 @@ function PLATOON:GetBrigade()
   return self.legion
 end
 
+--- Add a weapon range for ARTY auftrag.
+-- @param #PLATOON self
+-- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
+-- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
+-- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
+-- @return #PLATOON self
+function PLATOON:AddWeaponRange(RangeMin, RangeMax, BitType)
+
+  RangeMin=UTILS.NMToMeters(RangeMin or 0)
+  RangeMax=UTILS.NMToMeters(RangeMax or 10)
+
+  local weapon={} --Ops.OpsGroup#OPSGROUP.WeaponData
+
+  weapon.BitType=BitType or ENUMS.WeaponFlag.Auto
+  weapon.RangeMax=RangeMax
+  weapon.RangeMin=RangeMin
+
+  self.weaponData=self.weaponData or {}
+  self.weaponData[weapon.BitType]=weapon
+
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -99,7 +124,7 @@ end
 function PLATOON:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting PLATOON %s", self.name)
+  local text=string.format("Starting %s v%s %s", self.ClassName, self.version, self.name)
   self:I(self.lid..text)
 
   -- Start the status monitoring.

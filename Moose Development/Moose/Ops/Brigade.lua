@@ -71,7 +71,7 @@ function BRIGADE:New(WarehouseName, BrigadeName)
 
   -- Add FSM transitions.
   --                 From State  -->   Event          -->     To State
-  self:AddTransition("*",             "PlatoonOnMission",     "*")           -- Add a (mission) request to the warehouse.
+  self:AddTransition("*",             "PlatoonAssetReturned",      "*")           -- An asset returned (from a mission) to the Brigade warehouse.
 
   return self
 end
@@ -266,7 +266,23 @@ end
 -- FSM Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
+--- On after "ArmyOnMission".
+-- @param #BRIGADE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup Ops army group on mission.
+-- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+function BRIGADE:onafterArmyOnMission(From, Event, To, ArmyGroup, Mission)
+  local armygroup=ArmyGroup --Ops.ArmyGroup#ARMYGROUP
+  local mission=Mission --Ops.Auftrag#AUFTRAG
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Group %s on %s mission %s", armygroup:GetName(), mission:GetType(), mission:GetName()))
+  
+  
+  
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

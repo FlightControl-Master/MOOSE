@@ -23,8 +23,10 @@
 -- ===
 --
 -- # The LEGION Concept
---
--- An LEGION consists of multiple COHORTs. These cohorts "live" in a WAREHOUSE, i.e. a physical structure that is connected to an airbase (airdrome, FRAP or ship).
+-- 
+-- The LEGION class contains all functions that are common for the AIRWING, BRIGADE and XXX classes, which inherit the LEGION class.
+-- 
+-- An LEGION consists of multiple COHORTs. These cohorts "live" in a WAREHOUSE, i.e. a physical structure that can be destroyed or captured.
 --
 -- @field #LEGION
 LEGION = {
@@ -78,6 +80,8 @@ function LEGION:New(WarehouseName, LegionName)
   self:AddTransition("*",             "FlightOnMission",    "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
   self:AddTransition("*",             "ArmyOnMission",      "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
   self:AddTransition("*",             "NavyOnMission",      "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
+  
+  self:AddTransition("*",             "AssetReturned",      "*")           -- An asset returned (from a mission) to the Legion warehouse.
   
   -- Defaults:
   -- TODO
@@ -598,10 +602,16 @@ end
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup Ops group on mission
 -- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function LEGION:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
+  -- Debug info.
+  self:T2(self.lid..string.format("Group %s on %s mission %s", OpsGroup:GetName(), Mission:GetType(), Mission:GetName()))
+
   if self:IsAirwing() then
-  
+    -- Trigger event for Airwings.
+    self:FlightOnMission(OpsGroup, Mission)
+  elseif self:IsBrigade() then
+    -- Trigger event for Brigades.
+    self:ArmyOnMission(OpsGroup, Mission)
   else
-  
   end
 
 end
@@ -684,7 +694,7 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
     else
 
       --env.info("FF squad asset returned")
-      self:SquadAssetReturned(squad, asset)
+      self:AssetReturned(squad, asset)
 
     end
 
@@ -696,11 +706,11 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.Squadron#SQUADRON Squadron The asset squadron.
+-- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
-function LEGION:onafterSquadAssetReturned(From, Event, To, Squadron, Asset)
+function LEGION:onafterAssetReturned(From, Event, To, Cohort, Asset)
   -- Debug message.
-  self:T(self.lid..string.format("Asset %s from squadron %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Squadron.name, tostring(Asset.assignment)))
+  self:T(self.lid..string.format("Asset %s from Cohort %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Cohort.name, tostring(Asset.assignment)))
 
   -- Stop flightgroup.
   if Asset.flightgroup and not Asset.flightgroup:IsStopped() then
@@ -708,15 +718,23 @@ function LEGION:onafterSquadAssetReturned(From, Event, To, Squadron, Asset)
   end
 
   -- Return payload.
-  self:ReturnPayloadFromAsset(Asset)
+  if Asset.flightgroup:IsFlightgroup() then
+    self:ReturnPayloadFromAsset(Asset)
+  end
 
   -- Return tacan channel.
   if Asset.tacan then
-    Squadron:ReturnTacan(Asset.tacan)
+    Cohort:ReturnTacan(Asset.tacan)
   end
 
   -- Set timestamp.
   Asset.Treturned=timer.getAbsTime()
+  
+  if self:IsAirwing() then
+    self:SquadronAssetReturned(Cohort, Asset)
+  elseif self:IsBrigade() then
+    self:PlatoonAssetReturned(Cohort, Asset)
+  end
 end
 
 
@@ -1251,8 +1269,6 @@ end
 -- @return #boolean If true, enough assets are available.
 -- @return #table Assets that can do the required mission.
 function LEGION:CanMission(Mission)
-
-  env.info("FF CanMission Classname "..self.ClassName)
 
   -- Assume we CAN and NO assets are available.
   local Can=true

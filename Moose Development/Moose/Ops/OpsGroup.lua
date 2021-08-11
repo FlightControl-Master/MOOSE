@@ -70,6 +70,9 @@
 -- @field Ops.Auftrag#AUFTRAG missionpaused Paused mission.
 -- @field #number Ndestroyed Number of destroyed units.
 -- @field #number Nkills Number kills of this groups.
+-- 
+-- @field Ops.Legion#LEGION legion Legion the group belongs to.
+-- @field Ops.Cohort#COHORT cohort Cohort the group belongs to.
 --
 -- @field Core.Point#COORDINATE coordinate Current coordinate.
 --
@@ -1329,7 +1332,7 @@ end
 --- Despawn the group. The whole group is despawned and (optionally) a "Remove Unit" event is generated for all current units of the group.
 -- @param #OPSGROUP self
 -- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
--- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
+-- @param #boolean NoEventRemoveUnit If `true`, **no** event "Remove Unit" is generated.
 -- @return #OPSGROUP self
 function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
 
@@ -1337,8 +1340,15 @@ function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
     self.scheduleIDDespawn=self:ScheduleOnce(Delay, OPSGROUP.Despawn, self, 0, NoEventRemoveUnit)
   else
   
+    -- Debug info.
     self:I(self.lid..string.format("Despawning Group!"))
+    
+    if self.legion and not NoEventRemoveUnit then
+      -- Add asset back in 10 seconds.
+      self.legion:AddAsset(self.group, 1)    
+    end
 
+    -- DCS group obejct.
     local DCSGroup=self:GetDCSGroup()
 
     if DCSGroup then
@@ -1816,6 +1826,14 @@ end
 -- @return #boolean If true, group is retreating.
 function OPSGROUP:IsRetreating()
   local is=self:is("Retreating")
+  return is
+end
+
+--- Check if the group is currently returning to a zone.
+-- @param #OPSGROUP self
+-- @return #boolean If true, group is returning.
+function OPSGROUP:IsReturning()
+  local is=self:is("Returning")
   return is
 end
 
@@ -2424,7 +2442,7 @@ function OPSGROUP:OnEventBirth(EventData)
     -- Get element.
     local element=self:GetElementByName(unitname)
     
-    if element then
+    if element and element.status~=OPSGROUP.ElementStatus.SPAWNED then
 
       -- Set element to spawned state.
       self:ElementSpawned(element)
@@ -2715,7 +2733,7 @@ function OPSGROUP:AddTaskWaypoint(task, Waypoint, description, prio, duration)
     self:T3({newtask=newtask})
 
     -- Update route.
-    self:__UpdateRoute(-1)
+    --self:__UpdateRoute(-1)
 
     return newtask
   end
@@ -3269,7 +3287,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
     if Task.description=="Engage_Target" then
       self:Disengage()
     end
-
+    
     self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 1 sec")
     self:_CheckGroupDone(1)
   end
@@ -3429,7 +3447,7 @@ function OPSGROUP:_GetNextMission()
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
-    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.airwing) and (mission.importance==nil or mission.importance<=vip) then
+    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.legion) and (mission.importance==nil or mission.importance<=vip) then
       return mission
     end
   end
@@ -3714,7 +3732,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
     self:SwitchROE()
   end
   -- ROT to default
-  if Mission.optionROT then
+  if self:IsFlightgroup() and Mission.optionROT then
     self:SwitchROT()
   end
   -- Alarm state to default.
@@ -3753,9 +3771,14 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   if Mission.icls then
     self:_SwitchICLS()
   end
+  
+  local delay=1
+  if Mission.type==AUFTRAG.Type.ARTY then
+    delay=10
+  end
 
   -- Check if group is done.
-  self:_CheckGroupDone(1)
+  self:_CheckGroupDone(delay)
 
 end
 
@@ -3769,6 +3792,9 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Delayed call.
     self:ScheduleOnce(delay, OPSGROUP.RouteToMission, self, mission)
   else
+    
+    -- Debug info.
+    self:T(self.lid..string.format("Route To Mission"))
 
     if self:IsDead() or self:IsStopped() then
       return
@@ -3906,6 +3932,12 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- ICLS settings.
     if mission.icls then
       self:SwitchICLS(mission.icls.Channel, mission.icls.Morse, mission.icls.UnitName)
+    end
+    
+    if self:IsArmygroup() then
+      self:Cruise(mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise())
+    elseif self:IsNavygroup() then
+      self:Cruise(mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise())
     end
 
   end
@@ -7165,6 +7197,11 @@ function OPSGROUP:_CheckGroupDone(delay)
         self:UpdateRoute()
         return
       end
+      
+      -- Group is returning
+      if self:IsReturning() then
+        return
+      end
 
       -- Group is waiting. We deny all updates.
       if self:IsWaiting() then
@@ -7224,10 +7261,19 @@ function OPSGROUP:_CheckGroupDone(delay)
           -- Passed FINAL waypoint
           ---
 
-          -- No further waypoints. Command a full stop.
-          self:__FullStop(-1)
+          if self.legion then
+          
+            self:T(self.lid..string.format("Passed final WP, adinfinitum=FALSE, LEGION set ==> RTZ"))
+            self:RTZ(self.legion.spawnzone)
+          
+          else
 
-          self:T(self.lid..string.format("Passed final WP, adinfinitum=FALSE ==> Full Stop"))
+            -- No further waypoints. Command a full stop.
+            self:__FullStop(-1)
+  
+            self:T(self.lid..string.format("Passed final WP, adinfinitum=FALSE ==> Full Stop"))
+            
+          end
 
         else
 
@@ -7237,7 +7283,6 @@ function OPSGROUP:_CheckGroupDone(delay)
 
           if #self.waypoints>0 then
             self:T(self.lid..string.format("NOT Passed final WP, #WP>0 ==> Update Route"))
-            --self:UpdateRoute()
             self:Cruise()
           else
             self:E(self.lid..string.format("WARNING: No waypoints left! Commanding a Full Stop"))
@@ -7810,6 +7855,10 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
 
         -- Trigger Retreated event.
         opsgroup:Retreated()
+        
+      elseif opsgroup:IsReturning() then
+      
+        opsgroup:Returned()
 
       elseif opsgroup:IsPickingup() then
 
@@ -8008,23 +8057,27 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchROT(rot)
 
-  if self:IsAlive() or self:IsInUtero() then
+  if self:IsFlightgroup() then
 
-    self.option.ROT=rot or self.optionDefault.ROT
-
-    if self:IsInUtero() then
-      self:T2(self.lid..string.format("Setting current ROT=%d when GROUP is SPAWNED", self.option.ROT))
+    if self:IsAlive() or self:IsInUtero() then
+  
+      self.option.ROT=rot or self.optionDefault.ROT
+  
+      if self:IsInUtero() then
+        self:T2(self.lid..string.format("Setting current ROT=%d when GROUP is SPAWNED", self.option.ROT))
+      else
+  
+        self.group:OptionROT(self.option.ROT)
+  
+        -- Debug info.
+        self:T(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
+      end
+  
+  
     else
-
-      self.group:OptionROT(self.option.ROT)
-
-      -- Debug info.
-      self:T(self.lid..string.format("Setting current ROT=%d (0=NoReaction, 1=Passive, 2=Evade, 3=ByPass, 4=AllowAbort)", self.option.ROT))
+      self:E(self.lid.."WARNING: Cannot switch ROT! Group is not alive")
     end
-
-
-  else
-    self:E(self.lid.."WARNING: Cannot switch ROT! Group is not alive")
+    
   end
 
   return self
@@ -9545,7 +9598,7 @@ function OPSGROUP:_AddElementByName(unitname)
     end
 
     -- Trigger spawned event if alive.
-    if unit:IsAlive() then
+    if unit:IsAlive() and element.status~=OPSGROUP.ElementStatus.SPAWNED then
       -- This needs to be slightly delayed (or moved elsewhere) or the first element will always trigger the group spawned event as it is not known that more elements are in the group.
       self:__ElementSpawned(0.05, element)
     end

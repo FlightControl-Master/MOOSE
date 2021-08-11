@@ -579,8 +579,8 @@ end
 function COHORT:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting COHORT %s", self.name)
-  self:T(self.lid..text)
+  local text=string.format("Starting %s v%s %s", self.ClassName, self.version, self.name)
+  self:I(self.lid..text)
 
   -- Start the status monitoring.
   self:__Status(-1)
@@ -618,15 +618,18 @@ function COHORT:_CheckAssetStatus()
         text=text..", Flight: "
         if asset.flightgroup and asset.flightgroup:IsAlive() then
           local status=asset.flightgroup:GetState()
-          local fuelmin=asset.flightgroup:GetFuelMin()
-          local fuellow=asset.flightgroup:IsFuelLow()
-          local fuelcri=asset.flightgroup:IsFuelCritical()
+          text=text..string.format("%s", status)
           
-          text=text..string.format("%s Fuel=%d", status, fuelmin)
-          if fuelcri then
-            text=text.." (Critical!)"
-          elseif fuellow then
-            text=text.." (Low)"
+          if asset.flightgroup:IsFlightgroup() then
+            local fuelmin=asset.flightgroup:GetFuelMin()
+            local fuellow=asset.flightgroup:IsFuelLow()
+            local fuelcri=asset.flightgroup:IsFuelCritical()            
+            text=text..string.format("Fuel=%d", fuelmin)
+            if fuelcri then
+              text=text.." (Critical!)"
+            elseif fuellow then
+              text=text.." (Low)"
+            end
           end
           
           local lifept, lifept0=asset.flightgroup:GetLifePoints()
@@ -639,8 +642,10 @@ function COHORT:_CheckAssetStatus()
         end
 
         -- Payload info.
-        local payload=asset.payload and table.concat(self.legion:GetPayloadMissionTypes(asset.payload), ", ") or "None"
-        text=text..", Payload={"..payload.."}"
+        if asset.flightgroup:IsFlightgroup() then
+          local payload=asset.payload and table.concat(self.legion:GetPayloadMissionTypes(asset.payload), ", ") or "None"
+          text=text..", Payload={"..payload.."}"
+        end
      
       else
   
