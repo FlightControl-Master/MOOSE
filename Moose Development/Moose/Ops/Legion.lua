@@ -183,7 +183,7 @@ end
 
 --- Get cohort of an asset.
 -- @param #LEGION self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The squadron asset.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
 -- @return Ops.Cohort#COHORT The Cohort object.
 function LEGION:_GetCohortOfAsset(Asset)
   local cohort=self:_GetCohort(Asset.squadname)
@@ -392,8 +392,8 @@ function LEGION:CalculateAssetMissionScore(asset, Mission, includePayload)
   end
 
   -- Add mission performance to score.
-  local squad=self:_GetCohortOfAsset(asset)
-  local missionperformance=squad:GetMissionPeformance(Mission.type)
+  local cohort=self:_GetCohortOfAsset(asset)
+  local missionperformance=cohort:GetMissionPeformance(Mission.type)
   score=score+missionperformance
 
   -- Add payload performance to score.
@@ -685,14 +685,14 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
       -- Set spawn group name. This has to include "AID-" for warehouse.
       asset.spawngroupname=string.format("%s_AID-%d", cohort.name, asset.uid)
 
-      -- Add asset to squadron.
+      -- Add asset to cohort.
       cohort:AddAsset(asset)
 
       -- TODO
       --asset.terminalType=AIRBASE.TerminalType.OpenBig
     else
 
-      --env.info("FF squad asset returned")
+      --env.info("FF cohort asset returned")
       self:AssetReturned(cohort, asset)
 
     end
@@ -730,8 +730,10 @@ function LEGION:onafterAssetReturned(From, Event, To, Cohort, Asset)
   Asset.Treturned=timer.getAbsTime()
   
   if self:IsAirwing() then
+    -- Trigger airwing/squadron event.
     self:SquadronAssetReturned(Cohort, Asset)
   elseif self:IsBrigade() then
+    -- Trigger brigade/platoon event.
     self:PlatoonAssetReturned(Cohort, Asset)
   end
 end
@@ -751,10 +753,10 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
   -- Call parent warehouse function first.
   self:GetParent(self, LEGION).onafterAssetSpawned(self, From, Event, To, group, asset, request)
 
-  -- Get the SQUADRON of the asset.
+  -- Get the COHORT of the asset.
   local cohort=self:_GetCohortOfAsset(asset)
 
-  -- Check if we have a squadron or if this was some other request.
+  -- Check if we have a cohort or if this was some other request.
   if cohort then
 
     -- Create a flight group.
@@ -774,7 +776,7 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
     asset.Treturned=nil
 
     ---
-    -- Squadron
+    -- Cohort
     ---
 
     -- Get TACAN channel.
@@ -857,7 +859,7 @@ function LEGION:onafterAssetDead(From, Event, To, asset, request)
   -- Remove asset from squadron same
 end
 
---- On after "Destroyed" event. Remove assets from cohorts. Stop squadrons.
+--- On after "Destroyed" event. Remove assets from cohorts. Stop cohorts.
 -- @param #LEGION self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -959,10 +961,10 @@ function LEGION:_CreateFlightGroup(asset)
     self:E(self.lid.."ERROR: not airwing or brigade!")
   end
 
-  -- Set airwing.
+  -- Set legion.
   flightgroup:_SetLegion(self)
 
-  -- Set squadron.
+  -- Set cohort.
   flightgroup.cohort=self:_GetCohortOfAsset(asset)
 
   -- Set home base.
@@ -1153,9 +1155,9 @@ function LEGION:CountAssets(InStock, MissionTypes, Attributes)
 
   local N=0
 
-  for _,_squad in pairs(self.cohorts) do
-    local squad=_squad --Ops.Squadron#SQUADRON
-    N=N+squad:CountAssets(InStock, MissionTypes, Attributes)
+  for _,_cohort in pairs(self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    N=N+cohort:CountAssets(InStock, MissionTypes, Attributes)
   end
 
   return N
@@ -1164,11 +1166,11 @@ end
 --- Count assets on mission.
 -- @param #LEGION self
 -- @param #table MissionTypes Types on mission to be checked. Default all.
--- @param Ops.Squadron#SQUADRON Squadron Only count assets of this squadron. Default count assets of all squadrons.
+-- @param Ops.Cohort#COHORT Cohort Only count assets of this cohort. Default count assets of all cohorts.
 -- @return #number Number of pending and queued assets.
 -- @return #number Number of pending assets.
 -- @return #number Number of queued assets.
-function LEGION:CountAssetsOnMission(MissionTypes, Squadron)
+function LEGION:CountAssetsOnMission(MissionTypes, Cohort)
 
   local Nq=0
   local Np=0
@@ -1182,7 +1184,7 @@ function LEGION:CountAssetsOnMission(MissionTypes, Squadron)
       for _,_asset in pairs(mission.assets or {}) do
         local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
 
-        if Squadron==nil or Squadron.name==asset.squadname then
+        if Cohort==nil or Cohort.name==asset.squadname then
 
           local request, isqueued=self:GetRequestByID(mission.requestID)
 
@@ -1232,28 +1234,28 @@ end
 --- Get the aircraft types of this airwing.
 -- @param #LEGION self
 -- @param #boolean onlyactive Count only the active ones.
--- @param #table squadrons Table of squadrons. Default all.
+-- @param #table cohorts Table of cohorts. Default all.
 -- @return #table Table of unit types.
-function LEGION:GetAircraftTypes(onlyactive, squadrons)
+function LEGION:GetAircraftTypes(onlyactive, cohorts)
 
   -- Get all unit types that can do the job.
   local unittypes={}
 
-  -- Loop over all squadrons.
-  for _,_squadron in pairs(squadrons or self.cohorts) do
-    local squadron=_squadron --Ops.Squadron#SQUADRON
+  -- Loop over all cohorts.
+  for _,_cohort in pairs(cohorts or self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
 
-    if (not onlyactive) or squadron:IsOnDuty() then
+    if (not onlyactive) or cohort:IsOnDuty() then
 
       local gotit=false
       for _,unittype in pairs(unittypes) do
-        if squadron.aircrafttype==unittype then
+        if cohort.aircrafttype==unittype then
           gotit=true
           break
         end
       end
       if not gotit then
-        table.insert(unittypes, squadron.aircrafttype)
+        table.insert(unittypes, cohort.aircrafttype)
       end
 
     end
@@ -1274,10 +1276,10 @@ function LEGION:CanMission(Mission)
   local Assets={}
 
   -- Squadrons for the job. If user assigned to mission or simply all.
-  local squadrons=Mission.squadrons or self.cohorts
+  local cohorts=Mission.squadrons or self.cohorts
 
   -- Get aircraft unit types for the job.
-  local unittypes=self:GetAircraftTypes(true, squadrons)
+  local unittypes=self:GetAircraftTypes(true, cohorts)
 
   -- Count all payloads in stock.
   if self:IsAirwing() then
@@ -1289,18 +1291,18 @@ function LEGION:CanMission(Mission)
     end
   end
 
-  for squadname,_squadron in pairs(squadrons) do
-    local squadron=_squadron --Ops.Cohort#COHORT
+  for cohortname,_cohort in pairs(cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
 
     -- Check if this squadron can.
-    local can=squadron:CanMission(Mission)
+    local can=cohort:CanMission(Mission)
 
     if can then
 
       -- Number of payloads available.
-      local Npayloads=self:IsAirwing() and self:CountPayloadsInStock(Mission.type, squadron.aircrafttype, Mission.payloads) or 999
+      local Npayloads=self:IsAirwing() and self:CountPayloadsInStock(Mission.type, cohort.aircrafttype, Mission.payloads) or 999
 
-      local assets=squadron:RecruitAssets(Mission, Npayloads)
+      local assets=cohort:RecruitAssets(Mission, Npayloads)
 
       -- Total number.
       for _,asset in pairs(assets) do
@@ -1308,7 +1310,7 @@ function LEGION:CanMission(Mission)
       end
 
       -- Debug output.
-      local text=string.format("Mission=%s, squadron=%s, payloads=%d, can=%s, assets=%d. Found %d/%d", Mission.type, squadron.name, Npayloads, tostring(can), #assets, #Assets, Mission.nassets)
+      local text=string.format("Mission=%s, cohort=%s, payloads=%d, can=%s, assets=%d. Found %d/%d", Mission.type, cohort.name, Npayloads, tostring(can), #assets, #Assets, Mission.nassets)
       self:T(self.lid..text)
 
     end

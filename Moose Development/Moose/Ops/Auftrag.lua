@@ -454,12 +454,12 @@ AUFTRAG.version="0.7.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- DONE: Option to assign a specific payload for the mission (requires an AIRWING).
 -- TODO: Mission success options damaged, destroyed.
--- TODO: Recon mission. What input? Set of coordinates?
--- NOPE: Clone mission. How? Deepcopy? ==> Create a new auftrag.
 -- TODO: F10 marker to create new missions.
 -- TODO: Add recovery tanker mission for boat ops.
+-- DONE: Option to assign a specific payload for the mission (requires an AIRWING).
+-- NOPE: Clone mission. How? Deepcopy? ==> Create a new auftrag.
+-- DONE: Recon mission. What input? Set of coordinates?
 -- DONE: Option to assign mission to specific squadrons (requires an AIRWING).
 -- DONE: Add mission start conditions.
 -- DONE: Add rescue helo mission for boat ops.
@@ -1877,6 +1877,21 @@ function AUFTRAG:AddConditionPush(ConditionFunction, ...)
   return self
 end
 
+--- Assign a legion cohort to the mission. Only these cohorts will be considered for the job.
+-- @param #AUFTRAG self
+-- @param Ops.Cohort#COHORT Cohort The cohort.
+-- @return #AUFTRAG self
+function AUFTRAG:_AssignCohort(Cohort)
+
+  self.squadrons=self.squadrons or {}
+  
+  self:T3(self.lid..string.format("Assigning cohort %s", tostring(Cohort.name)))
+  table.insert(self.squadrons, Cohort)
+  
+
+  return self
+end
+
 
 --- Assign airwing squadron(s) to the mission. Only these squads will be considered for the job.
 -- @param #AUFTRAG self
@@ -1887,9 +1902,8 @@ function AUFTRAG:AssignSquadrons(Squadrons)
   for _,_squad in pairs(Squadrons) do
     local squadron=_squad --Ops.Squadron#SQUADRON
     self:I(self.lid..string.format("Assigning squadron %s", tostring(squadron.name)))
+    self:_AssignCohort(squadron)
   end
-
-  self.squadrons=Squadrons
   
   return self
 end

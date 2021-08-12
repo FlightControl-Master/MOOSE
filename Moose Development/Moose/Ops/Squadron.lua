@@ -80,7 +80,7 @@ SQUADRON.version="0.8.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Parking spots for squadrons?
+-- DONE: Parking spots for squadrons?
 -- DONE: Engage radius.
 -- DONE: Modex.
 -- DONE: Call signs.

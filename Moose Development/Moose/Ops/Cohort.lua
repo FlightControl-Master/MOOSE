@@ -2,10 +2,10 @@
 --
 -- **Main Features:**
 --
---    * Set parameters like livery, skill valid for all platoon members.
+--    * Set parameters like livery, skill valid for all cohort members.
 --    * Define modex and callsigns.
---    * Define mission types, this platoon can perform (see Ops.Auftrag#AUFTRAG).
---    * Pause/unpause platoon operations.
+--    * Define mission types, this cohort can perform (see Ops.Auftrag#AUFTRAG).
+--    * Pause/unpause cohort operations.
 --
 -- ===
 --
@@ -19,21 +19,21 @@
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
--- @field #string name Name of the platoon.
+-- @field #string name Name of the cohort.
 -- @field #string templatename Name of the template group.
--- @field #string aircrafttype Type of the airframe the platoon is using.
+-- @field #string aircrafttype Type of the units the cohort is using.
 -- @field Wrapper.Group#GROUP templategroup Template group.
 -- @field #table assets Cohort assets.
--- @field #table missiontypes Capabilities (mission types and performances) of the platoon.
+-- @field #table missiontypes Capabilities (mission types and performances) of the cohort.
 -- @field #number maintenancetime Time in seconds needed for maintenance of a returned flight.
 -- @field #number repairtime Time in seconds for each
--- @field #string livery Livery of the platoon.
--- @field #number skill Skill of platoon members.
+-- @field #string livery Livery of the cohort.
+-- @field #number skill Skill of cohort members.
 -- @field Ops.Legion#LEGION legion The LEGION object the cohort belongs to.
--- @field #number Ngroups Number of asset flight groups this platoon has. 
+-- @field #number Ngroups Number of asset OPS groups this cohort has. 
 -- @field #number engageRange Mission range in meters.
--- @field #string attribute Generalized attribute of the platoon template group.
--- @field #table tacanChannel List of TACAN channels available to the platoon.
+-- @field #string attribute Generalized attribute of the cohort template group.
+-- @field #table tacanChannel List of TACAN channels available to the cohort.
 -- @field #number radioFreq Radio frequency in MHz the cohort uses.
 -- @field #number radioModu Radio modulation the cohort uses.
 -- @field #table tacanChannel List of TACAN channels available to the cohort.
@@ -72,7 +72,7 @@ COHORT = {
 
 --- COHORT class version.
 -- @field #string version
-COHORT.version="0.0.1"
+COHORT.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -88,8 +88,8 @@ COHORT.version="0.0.1"
 --- Create a new COHORT object and start the FSM.
 -- @param #COHORT self
 -- @param #string TemplateGroupName Name of the template group.
--- @param #number Ngroups Number of asset groups of this platoon. Default 3.
--- @param #string CohortName Name of the platoon, e.g. "VFA-37".
+-- @param #number Ngroups Number of asset groups of this Cohort. Default 3.
+-- @param #string CohortName Name of the cohort.
 -- @return #COHORT self
 function COHORT:New(TemplateGroupName, Ngroups, CohortName)
 
@@ -133,10 +133,10 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   self:AddTransition("Stopped",       "Start",              "OnDuty")      -- Start FSM.
   self:AddTransition("*",             "Status",             "*")           -- Status update.
   
-  self:AddTransition("OnDuty",        "Pause",              "Paused")      -- Pause platoon.
-  self:AddTransition("Paused",        "Unpause",            "OnDuty")      -- Unpause platoon.
+  self:AddTransition("OnDuty",        "Pause",              "Paused")      -- Pause cohort.
+  self:AddTransition("Paused",        "Unpause",            "OnDuty")      -- Unpause cohort.
   
-  self:AddTransition("*",             "Stop",               "Stopped")     -- Stop platoon.
+  self:AddTransition("*",             "Stop",               "Stopped")     -- Stop cohort.
 
 
   ------------------------
@@ -176,7 +176,7 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set livery painted on all platoon aircraft.
+--- Set livery painted on all cohort units.
 -- Note that the livery name in general is different from the name shown in the mission editor.
 -- 
 -- Valid names are the names of the **livery directories**. Check out the folder in your DCS installation for:
@@ -196,10 +196,10 @@ function COHORT:SetLivery(LiveryName)
   return self
 end
 
---- Set skill level of all platoon team members.
+--- Set skill level of all cohort team members.
 -- @param #COHORT self
 -- @param #string Skill Skill of all flights.
--- @usage myplatoon:SetSkill(AI.Skill.EXCELLENT)
+-- @usage mycohort:SetSkill(AI.Skill.EXCELLENT)
 -- @return #COHORT self
 function COHORT:SetSkill(Skill)
   self.skill=Skill
@@ -230,7 +230,6 @@ end
 -- @param #COHORT self
 -- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
 -- @param #number Modulation Radio modulation. Default 0=AM.
--- @usage myplatoon:SetSkill(AI.Skill.EXCELLENT)
 -- @return #COHORT self
 function COHORT:SetRadio(Frequency, Modulation)
   self.radioFreq=Frequency or 251
@@ -249,7 +248,7 @@ function COHORT:SetGrouping(nunits)
   return self
 end
 
---- Set mission types this platoon is able to perform.
+--- Set mission types this cohort is able to perform.
 -- @param #COHORT self
 -- @param #table MissionTypes Table of mission types. Can also be passed as a #string if only one type.
 -- @param #number Performance Performance describing how good this mission can be performed. Higher is better. Default 50. Max 100.
@@ -286,7 +285,7 @@ function COHORT:AddMissionCapability(MissionTypes, Performance)
   return self
 end
 
---- Get mission types this platoon is able to perform.
+--- Get mission types this cohort is able to perform.
 -- @param #COHORT self
 -- @return #table Table of mission types. Could be empty {}.
 function COHORT:GetMissionTypes()
@@ -301,7 +300,7 @@ function COHORT:GetMissionTypes()
   return missiontypes
 end
 
---- Get mission capabilities of this platoon.
+--- Get mission capabilities of this cohort.
 -- @param #COHORT self
 -- @return #table Table of mission capabilities.
 function COHORT:GetMissionCapabilities()
@@ -324,7 +323,7 @@ function COHORT:GetMissionPeformance(MissionType)
   return -1
 end
 
---- Set max mission range. Only missions in a circle of this radius around the platoon airbase are executed.
+--- Set max mission range. Only missions in a circle of this radius around the cohort base are executed.
 -- @param #COHORT self
 -- @param #number Range Range in NM. Default 100 NM.
 -- @return #COHORT self
@@ -409,9 +408,9 @@ function COHORT:DelGroup(GroupName)
   return self
 end
 
---- Get name of the platoon
+--- Get name of the cohort.
 -- @param #COHORT self
--- @return #string Name of the platoon.
+-- @return #string Name of the cohort.
 function COHORT:GetName()
   return self.name
 end
@@ -485,7 +484,7 @@ function COHORT:GetModex(Asset)
 end
 
 
---- Add TACAN channels to the platoon. Note that channels can only range from 1 to 126.
+--- Add TACAN channels to the cohort. Note that channels can only range from 1 to 126.
 -- @param #COHORT self
 -- @param #number ChannelMin Channel.
 -- @param #number ChannelMax Channel.
@@ -542,21 +541,21 @@ function COHORT:ReturnTacan(channel)
   self.tacanChannel[channel]=true
 end
 
---- Check if platoon is "OnDuty".
+--- Check if cohort is "OnDuty".
 -- @param #COHORT self
 -- @return #boolean If true, squdron is in state "OnDuty".
 function COHORT:IsOnDuty()
   return self:Is("OnDuty")
 end
 
---- Check if platoon is "Stopped".
+--- Check if cohort is "Stopped".
 -- @param #COHORT self
 -- @return #boolean If true, squdron is in state "Stopped".
 function COHORT:IsStopped()
   return self:Is("Stopped")
 end
 
---- Check if platoon is "Paused".
+--- Check if cohort is "Paused".
 -- @param #COHORT self
 -- @return #boolean If true, squdron is in state "Paused".
 function COHORT:IsPaused()
@@ -700,7 +699,7 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Check if there is a platoon that can execute a given mission.
+--- Check if there is a cohort that can execute a given mission.
 -- We check the mission type, the refuelling system, engagement range
 -- @param #COHORT self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
@@ -968,7 +967,7 @@ function COHORT:CheckMissionCapability(MissionTypes, Capabilities)
   return false
 end
 
---- Check if the platoon attribute matches the given attribute(s).
+--- Check if the cohort attribute matches the given attribute(s).
 -- @param #COHORT self
 -- @param #table Attributes The requested attributes. See `WAREHOUSE.Attribute` enum. Can also be passed as a single attribute `#string`.
 -- @return #boolean If true, the cohort has the requested attribute.

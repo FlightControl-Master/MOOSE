@@ -142,9 +142,7 @@ end
 -- @param #string PlatoonName Name of the platoon.
 -- @return Ops.Platoon#PLATOON The Platoon object.
 function BRIGADE:GetPlatoon(PlatoonName)
-
   local platoon=self:_GetCohort(PlatoonName)
-
   return platoon
 end
 
@@ -152,7 +150,7 @@ end
 -- @param #BRIGADE self
 -- @param Ops.Warehouse#WAREHOUSE.Assetitem Asset The platoon asset.
 -- @return Ops.Platoon#PLATOON The platoon object.
-function BRIGADE:GetSquadronOfAsset(Asset)
+function BRIGADE:GetPlatoonOfAsset(Asset)
   local platoon=self:GetPlatoon(Asset.squadname)
   return platoon
 end
@@ -160,8 +158,8 @@ end
 --- Remove asset from squadron.
 -- @param #BRIGADE self
 -- @param #BRIGADE.SquadronAsset Asset The squad asset.
-function BRIGADE:RemoveAssetFromSquadron(Asset)
-  local squad=self:GetSquadronOfAsset(Asset)
+function BRIGADE:RemoveAssetFromPlatoon(Asset)
+  local squad=self:GetPlatoonOfAsset(Asset)
   if squad then
     squad:DelAsset(Asset)
   end

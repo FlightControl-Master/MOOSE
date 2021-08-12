@@ -557,17 +557,8 @@ end
 -- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
 -- @return Ops.Squadron#SQUADRON The squadron object.
 function AIRWING:GetSquadron(SquadronName)
-
-  for _,_squadron in pairs(self.cohorts) do
-    local squadron=_squadron --Ops.Squadron#SQUADRON
-
-    if squadron.name==SquadronName then
-      return squadron
-    end
-
-  end
-
-  return nil
+  local squad=self:_GetCohort(SquadronName)
+  return squad
 end
 
 --- Get squadron of an asset.
