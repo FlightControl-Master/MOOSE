@@ -3942,6 +3942,8 @@ function OPSGROUP:RouteToMission(mission, delay)
       self:Cruise(mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise())
     elseif self:IsNavygroup() then
       self:Cruise(mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise())
+    elseif self:IsFlightgroup() then
+      self:UpdateRoute()
     end
 
   end
