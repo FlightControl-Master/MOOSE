@@ -514,6 +514,10 @@ do -- Object
   --- @function [parent=#Object] isExist
   -- @param #Object self
   -- @return #boolean
+
+  --- @function [parent=#Object] isActive
+  -- @param #Object self
+  -- @return #boolean
   
   --- @function [parent=#Object] destroy
   -- @param #Object self

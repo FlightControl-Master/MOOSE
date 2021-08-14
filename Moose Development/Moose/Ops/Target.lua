@@ -30,6 +30,8 @@
 -- @field #number Ndead Number of target elements/units that are dead (destroyed or despawned).
 -- @field #table elements Table of target elements/units.
 -- @field #table casualties Table of dead element names.
+-- @field #number prio Priority.
+-- @field #number importance Importance
 -- @extends Core.Fsm#FSM
 
 --- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D. Eisenhower
@@ -285,6 +287,24 @@ function TARGET:AddObject(Object)
     
   end
 
+end
+
+--- Set priority of the target.
+-- @param #TARGET self
+-- @param #number Priority Priority of the target. Default 50.
+-- @return #TARGET self
+function TARGET:SetPriority(Priority)
+  self.prio=Priority or 50
+  return self
+end
+
+--- Set importance of the target.
+-- @param #TARGET self
+-- @param #number Priority Priority of the target. Default `nil`.
+-- @return #TARGET self
+function TARGET:SetImportance(Importance)
+  self.importance=Importance
+  return self
 end
 
 --- Check if TARGET is alive.

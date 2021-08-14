@@ -117,8 +117,9 @@ INTEL = {
 -- @field #boolean isship
 -- @field #boolean ishelo
 -- @field #boolean isground
--- @field Ops.Auftrag#AUFTRAG mission The current Auftrag attached to this contact
--- @field #string recce The name of the recce unit that detected this contact
+-- @field Ops.Auftrag#AUFTRAG mission The current Auftrag attached to this contact.
+-- @field Ops.Target#TARGET target The Target attached to this contact.
+-- @field #string recce The name of the recce unit that detected this contact.
 
 --- Cluster info.
 -- @type INTEL.Cluster

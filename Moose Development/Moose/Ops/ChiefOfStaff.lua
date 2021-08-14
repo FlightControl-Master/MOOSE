@@ -309,6 +309,9 @@ end
 -- @return #CHIEF self
 function CHIEF:AddTarget(Target)
 
+  Target:SetPriority()
+  Target:SetImportance()
+
   table.insert(self.targetqueue, Target)
 
   return self
@@ -424,7 +427,7 @@ function CHIEF:onafterStatus(From, Event, To)
     
   end
   
-  -- Create missions for all new contacts.
+  -- Create TARGETs for all new contacts.
   local Nred=0 ; local Nyellow=0 ; local Nengage=0
   for _,_contact in pairs(self.Contacts) do
     local contact=_contact    --Ops.Intelligence#INTEL.Contact
@@ -448,7 +451,13 @@ function CHIEF:onafterStatus(From, Event, To)
       redalert=inred
     end
     
-    if redalert and threat and not contact.mission then
+    if redalert and threat and not contact.target then
+    
+      local Target=TARGET:New(contact.group)
+      
+      self:AddTarget(Target)
+      
+      --[[
     
       -- Create a mission based on group category.
       local mission=AUFTRAG:NewAUTO(group)      
@@ -469,6 +478,8 @@ function CHIEF:onafterStatus(From, Event, To)
         self:AddMission(mission)
       end
       
+      ]]
+      
     end
     
   end
@@ -485,25 +496,35 @@ function CHIEF:onafterStatus(From, Event, To)
   else
     self:SetDefcon(CHIEF.DEFCON.GREEN)
   end
+  
+  ---
+  -- Check Target Queue
+  ---
+    
+  -- Check target queue and assign missions to new targets.
+  self:CheckTargetQueue()
+  
 
   ---
-  -- Mission Queue
+  -- Check Mission Queue
   ---
     
   -- Check mission queue and assign one PLANNED mission.
   self:CheckMissionQueue()
+ 
+ 
   
   ---
-  -- Mission Queue
+  -- Info General
   ---  
   
   local Nassets=self.wingcommander:CountAssets()
   
-  local text=string.format("Defcon=%s Assets=%d, Missions=%d, Contacts: Total=%d Yellow=%d Red=%d", self.Defcon, Nassets, #self.missionqueue, #self.Contacts, Nyellow, Nred)
+  local text=string.format("Defcon=%s Assets=%d, Contacts: Total=%d Yellow=%d Red=%d, Targets=%d, Missions=%d", self.Defcon, Nassets, #self.Contacts, Nyellow, Nred, #self.targetqueue, #self.missionqueue)
   self:I(self.lid..text)
 
   ---
-  -- Assets
+  -- Info Assets
   ---
 
   local text="Assets:"
@@ -524,31 +545,7 @@ function CHIEF:onafterStatus(From, Event, To)
   self:I(self.lid..text)
   
   ---
-  -- Target Queue
-  ---
-
-  if #self.targetqueue>0 then
-    local text="Targets:"
-    for i,_target in pairs(self.targetqueue) do
-      local target=_target --Ops.Target#TARGET
-      
-      text=text..string.format("\n[%d] %s: Category=%s, alive=%s [%.1f/%.1f]", i, target:GetName(), target.category, tostring(target:IsAlive()), target:GetLife(), target:GetLife0())
-      
-      
-      if target:IsAlive() then
-      
-        if self:CheckTargetInZones(target, self.borderzoneset) then
-        
-        end
-      
-      end
-    
-    end
-    self:I(self.lid..text)
-  end
-
-  ---
-  -- Contacts
+  -- Info Contacts
   ---
   
   -- Info about contacts.
@@ -564,6 +561,26 @@ function CHIEF:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)
   end
+
+  ---
+  -- Info Targets
+  ---
+
+  if #self.targetqueue>0 then
+    local text="Targets:"
+    for i,_target in pairs(self.targetqueue) do
+      local target=_target --Ops.Target#TARGET
+      
+      text=text..string.format("\n[%d] %s: Category=%s, prio=%d, importance=%d, alive=%s [%.1f/%.1f]",
+      i, target:GetName(), target.category, target.prio, target.importance or -1, tostring(target:IsAlive()), target:GetLife(), target:GetLife0())
+          
+    end
+    self:I(self.lid..text)
+  end
+
+  ---
+  -- Info Missions
+  ---
   
   -- Mission queue.
   if #self.missionqueue>0 then
@@ -686,6 +703,73 @@ function CHIEF:onafterDeclareWar(From, Event, To, Chief)
     self:AddWarOnChief(Chief)
   end
 
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Target Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check mission queue and assign ONE planned mission.
+-- @param #CHIEF self 
+function CHIEF:CheckTargetQueue()
+
+  -- TODO: Sort mission queue. wrt what? Threat level?
+
+  for _,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+
+    if target:IsAlive() and not target.mission then
+
+      -- TODO: stategry
+      self.strategy=CHIEF.Strategy.TOTALWAR
+    
+      local valid=false
+      if self.strategy==CHIEF.Strategy.DEFENSIVE then
+      
+        if self:CheckTargetInZones(target, self.borderzoneset) then
+          valid=true
+        end
+      
+      elseif self.strategy==CHIEF.Strategy.OFFENSIVE then
+      
+        if self:CheckTargetInZones(target, self.borderzoneset) or self:CheckTargetInZones(target, self.yellowzoneset) then
+          valid=true
+        end
+      
+      elseif self.strategy==CHIEF.Strategy.AGGRESSIVE then
+
+        if self:CheckTargetInZones(target, self.borderzoneset) or self:CheckTargetInZones(target, self.yellowzoneset) or self:CheckTargetInZones(target, self.engagezoneset) then
+          valid=true
+        end
+      
+      elseif self.strategy==CHIEF.Strategy.TOTALWAR then
+        valid=true
+      end 
+      
+      -- Valid target?
+      if valid then
+  
+        -- Create mission  
+        local mission=AUFTRAG:NewTargetAir(target)
+        
+        if mission then
+        
+          -- Set target mission entry.
+          target.mission=mission
+          
+          -- Mission parameters.
+          mission.prio=target.prio
+          mission.importance=target.importance
+          
+          -- Add mission to queue.
+          self:AddMission(mission)
+        end
+                
+      end
+          
+    end
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
