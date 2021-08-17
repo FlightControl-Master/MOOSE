@@ -1599,6 +1599,8 @@ WAREHOUSE = {
 --- Item of the warehouse stock table.
 -- @type WAREHOUSE.Assetitem
 -- @field #number uid Unique id of the asset.
+-- @field #number wid ID of the warehouse this asset belongs to.
+-- @field #number rid Request ID of this asset (if any).
 -- @field #string templatename Name of the template group.
 -- @field #table template The spawn template of the group.
 -- @field DCS#Group.Category category Category of the group.

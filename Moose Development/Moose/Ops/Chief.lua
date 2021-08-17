@@ -22,16 +22,12 @@
 -- @field Core.Set#SET_ZONE yellowzoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
 -- @field Core.Set#SET_ZONE engagezoneset Set of zones where enemies are actively engaged.
 -- @field #string Defcon Defence condition.
--- @field Ops.WingCommander#WINGCOMMANDER wingcommander Wing commander, commanding airborne forces.
--- @field Ops.Admiral#ADMIRAL admiral Admiral commanding navy forces.
--- @field Ops.General#GENERAL genaral General commanding army forces.
+-- @field Ops.Commander#COMMANDER commander Commander of assigned legions.
 -- @extends Ops.Intelligence#INTEL
 
 --- Be surprised!
 --
 -- ===
---
--- ![Banner Image](..\Presentations\WingCommander\CHIEF_Main.jpg)
 --
 -- # The CHIEF Concept
 -- 
@@ -45,9 +41,6 @@ CHIEF = {
   ClassName      = "CHIEF",
   verbose        =     0,
   lid            =   nil,
-  wingcommander  =   nil,
-  admiral        =   nil,
-  general        =   nil,
   targetqueue    =    {},
   missionqueue   =    {},
   borderzoneset  =   nil,
@@ -87,6 +80,7 @@ CHIEF.version="0.0.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Capture OPSZONEs.
 -- TODO: Get list of own assets and capabilities.
 -- TODO: Get list/overview of enemy assets etc.
 -- TODO: Put all contacts into target list. Then make missions from them.
@@ -138,22 +132,24 @@ function CHIEF:New(AgentSet, Coalition)
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Start". Starts the CHIEF. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start".
   -- @function [parent=#CHIEF] Start
   -- @param #CHIEF self
 
-  --- Triggers the FSM event "Start" after a delay. Starts the CHIEF. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start" after a delay.
   -- @function [parent=#CHIEF] __Start
   -- @param #CHIEF self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Stop". Stops the CHIEF and all its event handlers.
+
+  --- Triggers the FSM event "Stop".
   -- @param #CHIEF self
 
-  --- Triggers the FSM event "Stop" after a delay. Stops the CHIEF and all its event handlers.
+  --- Triggers the FSM event "Stop" after a delay.
   -- @function [parent=#CHIEF] __Stop
   -- @param #CHIEF self
   -- @param #number delay Delay in seconds.
+
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#CHIEF] Status
@@ -165,12 +161,18 @@ function CHIEF:New(AgentSet, Coalition)
   -- @param #number delay Delay in seconds.
 
 
-  -- Debug trace.
-  if false then
-    BASE:TraceOnOff(true)
-    BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
-  end
+  --- Triggers the FSM event "MissionCancel".
+  -- @function [parent=#CHIEF] MissionCancel
+  -- @param #CHIEF self
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionCancel" event.
+  -- @function [parent=#CHIEF] OnAfterMissionCancel
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   return self
 end
@@ -262,9 +264,9 @@ end
 -- @return #CHIEF self
 function CHIEF:SetWingCommander(WingCommander)
 
-  self.wingcommander=WingCommander
+  self.commander=WingCommander
   
-  self.wingcommander.chief=self
+  self.commander.chief=self
   
   return self
 end
@@ -276,6 +278,8 @@ end
 function CHIEF:AddMission(Mission)
 
   Mission.chief=self
+  
+  Mission.statusChief=AUFTRAG.Status.QUEUED
 
   table.insert(self.missionqueue, Mission)
 
@@ -385,10 +389,10 @@ function CHIEF:onafterStart(From, Event, To)
   -- Start parent INTEL.
   self:GetParent(self).onafterStart(self, From, Event, To)
   
-  -- Start wingcommander.
-  if self.wingcommander then
-    if self.wingcommander:GetState()=="NotReadyYet" then
-      self.wingcommander:Start()
+  -- Start commander.
+  if self.commander then
+    if self.commander:GetState()=="NotReadyYet" then
+      self.commander:Start()
     end
   end
 
@@ -457,29 +461,6 @@ function CHIEF:onafterStatus(From, Event, To)
       
       self:AddTarget(Target)
       
-      --[[
-    
-      -- Create a mission based on group category.
-      local mission=AUFTRAG:NewAUTO(group)      
-      
-      -- Add mission to queue.
-      if mission then
-      
-        --TODO: Better amount of necessary assets. Count units in asset and in contact. Might need nassetMin/Max.
-        mission.nassets=1
-        
-        -- Missons are repeated max 3 times on failure.
-        mission.NrepeatFailure=3
-        
-        -- Set mission contact.
-        contact.mission=mission
-        
-        -- Add mission to queue.
-        self:AddMission(mission)
-      end
-      
-      ]]
-      
     end
     
   end
@@ -518,9 +499,13 @@ function CHIEF:onafterStatus(From, Event, To)
   -- Info General
   ---  
   
-  local Nassets=self.wingcommander:CountAssets()
+  local Nassets=self.commander:CountAssets()
+  local Ncontacts=#self.contacts
+  local Nmissions=#self.missionqueue
+  local Ntargets=#self.targetqueue
   
-  local text=string.format("Defcon=%s Assets=%d, Contacts: Total=%d Yellow=%d Red=%d, Targets=%d, Missions=%d", self.Defcon, Nassets, #self.Contacts, Nyellow, Nred, #self.targetqueue, #self.missionqueue)
+  -- Info message
+  local text=string.format("Defcon=%s Assets=%d, Contacts: Total=%d Yellow=%d Red=%d, Targets=%d, Missions=%d", self.Defcon, Nassets, Ncontacts, Nyellow, Nred, Ntargets, Nmissions)
   self:I(self.lid..text)
 
   ---
@@ -529,15 +514,16 @@ function CHIEF:onafterStatus(From, Event, To)
 
   local text="Assets:"
   for _,missiontype in pairs(AUFTRAG.Type) do
-    local N=self.wingcommander:CountAssets(nil, missiontype)
+    local N=self.commander:CountAssets(nil, missiontype)
     if N>0 then
       text=text..string.format("\n- %s %d", missiontype, N)
     end
   end
   self:I(self.lid..text)
+  
   local text="Assets:"
   for _,attribute in pairs(WAREHOUSE.Attribute) do
-    local N=self.wingcommander:CountAssets(nil, nil, attribute)
+    local N=self.commander:CountAssets(nil, nil, attribute)
     if N>0 or self.verbose>=10 then
       text=text..string.format("\n- %s %d", attribute, N)
     end
@@ -609,9 +595,9 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 function CHIEF:onafterAssignMissionAirforce(From, Event, To, Mission)
 
-  if self.wingcommander then
+  if self.commander then
     self:I(self.lid..string.format("Assigning mission %s (%s) to WINGCOMMANDER", Mission.name, Mission.type))
-    self.wingcommander:AddMission(Mission)
+    self.commander:AddMission(Mission)
   else
     self:E(self.lid..string.format("Mission cannot be assigned as no WINGCOMMANDER is defined."))
   end
@@ -626,6 +612,7 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 function CHIEF:onafterMissionCancel(From, Event, To, Mission)
 
+  -- Debug info.
   self:I(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
   
   if Mission.status==AUFTRAG.Status.PLANNED then
@@ -786,14 +773,14 @@ function CHIEF:CheckMissionQueue()
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     -- We look for PLANNED missions.
-    if mission.status==AUFTRAG.Status.PLANNED then
+    if mission:IsPlanned() then
     
       ---
       -- PLANNNED Mission
       ---
     
       -- Check if there is an airwing that can do the mission.
-      local airwing=self:GetAirwingForMission(mission)
+      local legions=self.commander:GetLegionsForMission(mission)
         
       if airwing then
       
@@ -821,11 +808,12 @@ end
 --- Check all airwings if they are able to do a specific mission type at a certain location with a given number of assets.
 -- @param #CHIEF self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return Ops.AirWing#AIRWING The airwing best for this mission.
+-- @return #table The best LEGIONs for this mission or `nil`.
 function CHIEF:GetAirwingForMission(Mission)
 
-  if self.wingcommander then
-    return self.wingcommander:GetAirwingForMission(Mission)
+  if self.commander then
+    local legions=self.commander:GetLegionsForMission(Mission)
+    return legions
   end
 
   return nil

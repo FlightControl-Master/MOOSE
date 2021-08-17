@@ -33,7 +33,6 @@
 -- @field #table pointsTANKER Table of Tanker points.
 -- @field #table pointsAWACS Table of AWACS points.
 -- @field #boolean markpoints Display markers on the F10 map.
--- @field Ops.WingCommander#WINGCOMMANDER wingcommander The wing commander responsible for this airwing.
 --
 -- @field Ops.RescueHelo#RESCUEHELO rescuehelo The rescue helo.
 -- @field Ops.RecoveryTanker#RECOVERYTANKER recoverytanker The recoverytanker.
@@ -816,8 +815,9 @@ function AIRWING:onafterStatus(From, Event, To)
       local prio=string.format("%d/%s", mission.prio, tostring(mission.importance)) ; if mission.urgent then prio=prio.." (!)" end
       local assets=string.format("%d/%d", mission:CountOpsGroups(), mission.nassets)
       local target=string.format("%d/%d Damage=%.1f", mission:CountMissionTargets(), mission:GetTargetInitialNumber(), mission:GetTargetDamage())
+      local mystatus=mission:GetLegionStatus(self)
 
-      text=text..string.format("\n[%d] %s %s: Status=%s, Prio=%s, Assets=%s, Targets=%s", i, mission.name, mission.type, mission.status, prio, assets, target)
+      text=text..string.format("\n[%d] %s %s: Status=%s [%s], Prio=%s, Assets=%s, Targets=%s", i, mission.name, mission.type, mystatus, mission.status, prio, assets, target)
     end
     self:I(self.lid..text)
   end

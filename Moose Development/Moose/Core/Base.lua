@@ -1099,7 +1099,7 @@ end
 
 --- Set tracing for a class
 -- @param #BASE self
--- @param #string Class
+-- @param #string Class Class name.
 function BASE:TraceClass( Class )
   _TraceClass[Class] = true
   _TraceClassMethod[Class] = {}
@@ -1108,8 +1108,8 @@ end
 
 --- Set tracing for a specific method of  class
 -- @param #BASE self
--- @param #string Class
--- @param #string Method
+-- @param #string Class Class name.
+-- @param #string Method Method.
 function BASE:TraceClassMethod( Class, Method )
   if not _TraceClassMethod[Class] then
     _TraceClassMethod[Class] = {}

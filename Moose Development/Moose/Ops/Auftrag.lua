@@ -28,12 +28,15 @@
 --- AUFTRAG class.
 -- @type AUFTRAG
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number auftragsnummer Auftragsnummer.
 -- @field #string type Mission type.
 -- @field #string status Mission status.
+-- @field #table legions Assigned legions.
+-- @field #table statusLegion Mission status of all assigned LEGIONSs.
+-- @field #string statusCommander Mission status of the COMMANDER.
+-- @field #string statusChief Mission status of the CHIF.
 -- @field #table groupdata Group specific data.
 -- @field #string name Mission name.
 -- @field #number prio Mission priority.
@@ -91,15 +94,15 @@
 -- @field #number artyRadius Radius in meters.
 -- @field #number artyShots Number of shots fired.
 -- 
--- @field Ops.ChiefOfStaff#CHIEF chief The CHIEF managing this mission.
--- @field Ops.WingCommander#WINGCOMMANDER wingcommander The WINGCOMMANDER managing this mission.
--- @field Ops.AirWing#AIRWING airwing The assigned airwing.
--- @field #table assets Airwing Assets assigned for this mission.
--- @field #number nassets Number of required assets by the Airwing.
--- @field #number requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
--- @field #boolean cancelContactLost If true, cancel mission if the contact is lost.
+-- @field Ops.Chief#CHIEF chief The CHIEF managing this mission.
+-- @field Ops.Commander#COMMANDER commander The COMMANDER managing this mission.
+-- @field #table assets Warehouse assets assigned for this mission.
+-- @field #number nassets Number of required warehouse assets.
+-- @field #table Nassets Number of required warehouse assets for each assigned legion.
+-- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
 -- @field #table squadrons User specified airwing squadrons assigned for this mission. Only these will be considered for the job!
 -- @field #table payloads User specified airwing payloads for this mission. Only these will be considered for the job! 
+-- @field #table mylegions User specified legions for this mission. Only these will be considered for the job!
 -- @field Ops.AirWing#AIRWING.PatrolData patroldata Patrol data.
 -- 
 -- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
@@ -276,12 +279,15 @@
 -- @field #AUFTRAG
 AUFTRAG = {
   ClassName          = "AUFTRAG",
-  Debug              = false,
   verbose            =     0,
   lid                =   nil,
   auftragsnummer     =   nil,
-  groupdata         =     {},
+  groupdata          =    {},
+  legions            =    {},
+  statusLegion       =    {},
+  requestID          =    {},
   assets             =    {},
+  Nassets            =    {},
   missionFraction    =   0.5,
   enrouteTasks       =    {},
   marker             =   nil,
@@ -350,10 +356,10 @@ AUFTRAG.Type={
 
 --- Mission status.
 -- @type AUFTRAG.Status
--- @field #string PLANNED Mission is at the early planning stage.
--- @field #string QUEUED Mission is queued at an airwing.
+-- @field #string PLANNED Mission is at the early planning stage and has not been added to any queue.
+-- @field #string QUEUED Mission is queued at a LEGION.
 -- @field #string REQUESTED Mission assets were requested from the warehouse.
--- @field #string SCHEDULED Mission is scheduled in a FLIGHGROUP queue waiting to be started.
+-- @field #string SCHEDULED Mission is scheduled in an OPSGROUP queue waiting to be started.
 -- @field #string STARTED Mission has started but is not executed yet.
 -- @field #string EXECUTING Mission is being executed.
 -- @field #string DONE Mission is over.
@@ -454,6 +460,7 @@ AUFTRAG.version="0.7.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Missions can be assigned to multiple legions.
 -- TODO: Mission success options damaged, destroyed.
 -- TODO: F10 marker to create new missions.
 -- TODO: Add recovery tanker mission for boat ops.
@@ -531,12 +538,12 @@ function AUFTRAG:New(Type)
   
   self:AddTransition(AUFTRAG.Status.PLANNED,   "Scheduled",        AUFTRAG.Status.SCHEDULED)   -- From planned directly to scheduled.
   
-  self:AddTransition(AUFTRAG.Status.SCHEDULED, "Started",          AUFTRAG.Status.STARTED)     -- First asset has started the mission
+  self:AddTransition(AUFTRAG.Status.SCHEDULED, "Started",          AUFTRAG.Status.STARTED)     -- First asset has started the mission.
   self:AddTransition(AUFTRAG.Status.STARTED,   "Executing",        AUFTRAG.Status.EXECUTING)   -- First asset is executing the mission.
   
   self:AddTransition("*",                      "Done",             AUFTRAG.Status.DONE)        -- All assets have reported that mission is done.
   
-  self:AddTransition("*",                      "Cancel",           "*")                        -- Command to cancel the mission.
+  self:AddTransition("*",                      "Cancel",           AUFTRAG.Status.CANCELLED)   -- Command to cancel the mission.
   
   self:AddTransition("*",                      "Success",          AUFTRAG.Status.SUCCESS)
   self:AddTransition("*",                      "Failed",           AUFTRAG.Status.FAILED)
@@ -1523,13 +1530,28 @@ function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
   return self
 end
 
---- Define how many assets are required to do the job. Only valid if the mission is handled by an AIRWING or higher level.
+--- Define how many assets are required to do the job. Only valid if the mission is handled by an AIRWING, BRIGADE etc or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nassets Number of asset groups. Default 1.
 -- @return #AUFTRAG self
 function AUFTRAG:SetRequiredAssets(Nassets)
   self.nassets=Nassets or 1
   return self
+end
+
+--- Get number of required assets.
+-- @param #AUFTRAG self
+-- @param Ops.Legion#Legion Legion (Optional) Only get the required assets for a specific legion.
+-- @param #number Number of required assets.
+function AUFTRAG:GetRequiredAssets(Legion)
+
+  local N=self.nassets
+
+  if Legion then
+    N=self.Nassets[Legion.alias] or 0
+  end
+
+  return N
 end
 
 --- Set mission name.
@@ -1967,35 +1989,45 @@ function AUFTRAG:IsPlanned()
   return self.status==AUFTRAG.Status.PLANNED
 end
 
---- Check if mission is QUEUED at an AIRWING mission queue.
+--- Check if mission is QUEUED at a LEGION mission queue.
 -- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion (Optional) Check if mission is queued at this legion.
 -- @return #boolean If true, mission is queued.
-function AUFTRAG:IsQueued()
-  return self.status==AUFTRAG.Status.QUEUED
+function AUFTRAG:IsQueued(Legion)
+  local is=self.status==AUFTRAG.Status.QUEUED
+  if Legion then
+    is=self:GetLegionStatus(Legion)==AUFTRAG.Status.QUEUED
+  end
+  return is
 end
 
---- Check if mission is REQUESTED, i.e. request for WAREHOUSE assets is done.
+--- Check if mission is REQUESTED. The mission request out to the WAREHOUSE.
 -- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion (Optional) Check if mission is requested at this legion.
 -- @return #boolean If true, mission is requested.
-function AUFTRAG:IsRequested()
-  return self.status==AUFTRAG.Status.REQUESTED
+function AUFTRAG:IsRequested(Legion)
+  local is=self.status==AUFTRAG.Status.REQUESTED
+  if Legion then
+    is=self:GetLegionStatus(Legion)==AUFTRAG.Status.REQUESTED
+  end
+  return is
 end
 
---- Check if mission is SCHEDULED, i.e. request for WAREHOUSE assets is done.
+--- Check if mission is SCHEDULED. The first OPSGROUP has been assigned.
 -- @param #AUFTRAG self
 -- @return #boolean If true, mission is queued.
 function AUFTRAG:IsScheduled()
   return self.status==AUFTRAG.Status.SCHEDULED
 end
 
---- Check if mission is STARTED, i.e. group is on its way to the mission execution waypoint.
+--- Check if mission is STARTED. The first OPSGROUP is on its way to the mission execution waypoint.
 -- @param #AUFTRAG self
 -- @return #boolean If true, mission is started.
 function AUFTRAG:IsStarted()
   return self.status==AUFTRAG.Status.STARTED
 end
 
---- Check if mission is executing.
+--- Check if mission is EXECUTING. The first OPSGROUP has reached the mission execution waypoint and is not executing the mission task.
 -- @param #AUFTRAG self
 -- @return #boolean If true, mission is currently executing.
 function AUFTRAG:IsExecuting()
@@ -2228,11 +2260,13 @@ function AUFTRAG:onafterStatus(From, Event, To)
     
     local targetname=self:GetTargetName() or "unknown"
     
-    local airwing=self.airwing and self.airwing.alias or "N/A"
-    local chief=self.chief and tostring(self.chief.coalition) or "N/A"
+    local Nlegions=#self.legions
+    local commander=self.commander and self.statusCommander or "N/A"
+    local chief=self.chief and self.statusChief or "N/A"
   
     -- Info message.
-    self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, wing=%s, chief=%s", self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, airwing, chief))
+    self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, legions=%d, commander=%s, chief=%s", 
+    self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, Nlegions, commander, chief))
   end
 
   -- Group info.
@@ -2407,8 +2441,11 @@ end
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
 -- @param #string status New status.
+-- @return #AUFTRAG self
 function AUFTRAG:SetGroupStatus(opsgroup, status)
-  self:T(self.lid..string.format("Setting flight %s to status %s", opsgroup and opsgroup.groupname or "nil", tostring(status)))
+
+  -- Debug info.
+  self:T(self.lid..string.format("Setting OPSGROUP %s to status %s", opsgroup and opsgroup.groupname or "nil", tostring(status)))
 
   if self:GetGroupStatus(opsgroup)==AUFTRAG.GroupStatus.CANCELLED and status==AUFTRAG.GroupStatus.DONE then
     -- Do not overwrite a CANCELLED status with a DONE status.
@@ -2432,11 +2469,13 @@ function AUFTRAG:SetGroupStatus(opsgroup, status)
     self:T3(self.lid.."Mission NOT DONE yet!")
   end  
   
+  return self
 end
 
 --- Get ops group mission status.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+-- @return #string The group status.
 function AUFTRAG:GetGroupStatus(opsgroup)
   self:T3(self.lid..string.format("Trying to get Flight status for flight group %s", opsgroup and opsgroup.groupname or "nil"))
   
@@ -2450,6 +2489,73 @@ function AUFTRAG:GetGroupStatus(opsgroup)
     return AUFTRAG.GroupStatus.DONE
     
   end
+end
+
+--- Add LEGION to mission.
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion.
+-- @return #AUFTRAG self
+function AUFTRAG:AddLegion(Legion)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Adding legion %s", Legion.alias))
+
+  -- Add legion to table.
+  table.insert(self.legions, Legion)
+  
+  return self
+end
+
+--- Remove LEGION from mission.
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion.
+-- @return #AUFTRAG self
+function AUFTRAG:RemoveLegion(Legion)
+
+  -- Loop over legions
+  for i=#self.legions,1,-1 do
+    local legion=self.legions[i] --Ops.Legion#LEGION
+    if legion.alias==Legion.alias then
+      -- Debug info.
+      self:I(self.lid..string.format("Removing legion %s", Legion.alias))    
+      table.remove(self.legions, i)
+      return self
+    end
+  end
+  
+  self:E(self.lid..string.format("ERROR: Legion %s not found and could not be removed!", Legion.alias))
+  return self
+end
+
+--- Set LEGION mission status.
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion.
+-- @param #string Status New status.
+-- @return #AUFTRAG self
+function AUFTRAG:SetLegionStatus(Legion, Status)
+
+  -- Old status
+  local status=self:GetLegionStatus(Legion)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Setting LEGION %s to status %s-->%s", Legion.alias, tostring(status), tostring(Status)))
+
+  -- New status.
+  self.statusLegion[Legion.alias]=Status
+
+  return self
+end
+
+--- Get LEGION mission status.
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion.
+-- @return #string status Current status.
+function AUFTRAG:GetLegionStatus(Legion)
+
+  -- New status.
+  local status=self.statusLegion[Legion.alias] or "unknown"
+
+  return status
 end
 
 
@@ -2527,7 +2633,42 @@ end
 -- @return #boolean If true, all flights are done with the mission.
 function AUFTRAG:CheckGroupsDone()
 
-  -- These are early stages, where we might not even have a opsgroup defined to be checked.
+  -- Check status of all OPS groups.
+  for groupname,data in pairs(self.groupdata) do
+    local groupdata=data --#AUFTRAG.GroupData
+    if groupdata then
+      if not (groupdata.status==AUFTRAG.GroupStatus.DONE or groupdata.status==AUFTRAG.GroupStatus.CANCELLED) then
+        -- At least this flight is not DONE or CANCELLED.
+        return false      
+      end
+    end
+  end
+  
+  -- Check status of all LEGIONs.
+  for _,_legion in pairs(self.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    local status=self:GetLegionStatus(legion)
+    if not status==AUFTRAG.Status.CANCELLED then
+      -- At least one LEGION has not CANCELLED.
+      return false
+    end
+  end
+  
+  -- Check commander status.
+  if self.commander then
+    if not self.statusCommander==AUFTRAG.Status.CANCELLED then
+      return false
+    end
+  end
+  
+  -- Check chief status.
+  if self.chief then
+    if not self.statusChief==AUFTRAG.Status.CANCELLED then
+      return false
+    end
+  end
+  
+  -- These are early stages, where we might not even have a opsgroup defined to be checked. If there were any groups, we checked above.
   if self:IsPlanned() or self:IsQueued() or self:IsRequested() then 
     return false
   end
@@ -2538,19 +2679,6 @@ function AUFTRAG:CheckGroupsDone()
     return true
   end
   
-  -- Check status of all flight groups.
-  for groupname,data in pairs(self.groupdata) do
-    local groupdata=data --#AUFTRAG.GroupData
-    if groupdata then
-      if groupdata.status==AUFTRAG.GroupStatus.DONE or groupdata.status==AUFTRAG.GroupStatus.CANCELLED then
-        -- This one is done or cancelled.
-      else
-        -- At least this flight is not DONE or CANCELLED.
-        return false      
-      end
-    end
-  end
-
   return true
 end
 
@@ -2595,16 +2723,14 @@ function AUFTRAG:onafterPlanned(From, Event, To)
   self:T(self.lid..string.format("New mission status=%s", self.status))
 end
 
---- On after "Queue" event. Mission is added to the mission queue of an AIRWING.
+--- On after "Queue" event. Mission is added to the mission queue of a LEGION.
 -- @param #AUFTRAG self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.AirWing#AIRWING Airwing The airwing.
 function AUFTRAG:onafterQueued(From, Event, To, Airwing)
   self.status=AUFTRAG.Status.QUEUED
-  self.airwing=Airwing
-  self:T(self.lid..string.format("New mission status=%s at airwing %s", self.status, tostring(Airwing.alias)))
+  self:T(self.lid..string.format("New mission status=%s", self.status))
 end
 
 
@@ -2628,7 +2754,7 @@ function AUFTRAG:onafterAssign(From, Event, To)
   self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
 
---- On after "Schedule" event. Mission is added to the mission queue of a FLIGHTGROUP.
+--- On after "Schedule" event. Mission is added to the mission queue of an OPSGROUP.
 -- @param #AUFTRAG self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -2656,20 +2782,6 @@ end
 function AUFTRAG:onafterExecuting(From, Event, To)
   self.status=AUFTRAG.Status.EXECUTING
   self:T(self.lid..string.format("New mission status=%s", self.status))  
-end
-
---- On after "Done" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function AUFTRAG:onafterDone(From, Event, To)
-  self.status=AUFTRAG.Status.DONE
-  self:T(self.lid..string.format("New mission status=%s", self.status))
-  
-  -- Set time stamp.
-  self.Tover=timer.getAbsTime()
-  
 end
 
 --- On after "ElementDestroyed" event.
@@ -2739,8 +2851,11 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterCancel(From, Event, To)
 
+  -- Number of OPSGROUPS assigned and alive.
+  local Ngroups = self:CountOpsGroups()
+
   -- Debug info.
-  self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for groups to report mission DONE before evaluation", self.status))
+  self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for %d groups to report mission DONE before evaluation", self.status, Ngroups))
   
   -- Time stamp.
   self.Tover=timer.getAbsTime()
@@ -2755,40 +2870,70 @@ function AUFTRAG:onafterCancel(From, Event, To)
   
   if self.chief then
 
-    self:T(self.lid..string.format("Chief will cancel the mission. Will wait for mission DONE before evaluation!"))
+    self:T(self.lid..string.format("CHIEF will cancel the mission. Will wait for mission DONE before evaluation!"))
     
     self.chief:MissionCancel(self)
-  
-  elseif self.wingcommander then
-  
-    self:T(self.lid..string.format("Wingcommander will cancel the mission. Will wait for mission DONE before evaluation!"))
     
-    self.wingcommander:MissionCancel(self)
+  end
+  
+  if self.commander then
+  
+    self:T(self.lid..string.format("COMMANDER will cancel the mission. Will wait for mission DONE before evaluation!"))
+    
+    self.commander:MissionCancel(self)
+    
+  end
 
-  elseif self.airwing then
+  if #self.legions>0 then
+  
+    for _,_legion in pairs(self.legions) do
+      local legion=_legion --Ops.Legion#LEGION
     
-    self:T(self.lid..string.format("Airwing %s will cancel the mission. Will wait for mission DONE before evaluation!", self.airwing.alias))
+      self:T(self.lid..string.format("LEGION %s will cancel the mission. Will wait for mission DONE before evaluation!", legion.alias))
     
-    -- Airwing will cancel all flight missions and remove queued request from warehouse queue.
-    self.airwing:MissionCancel(self)
-  
-  else
-  
-    self:T(self.lid..string.format("No airwing, wingcommander or chief. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
-  
-    for _,_groupdata in pairs(self.groupdata) do
-      local groupdata=_groupdata --#AUFTRAG.GroupData
-      groupdata.opsgroup:MissionCancel(self)
+      -- Legion will cancel all flight missions and remove queued request from warehouse queue.
+      legion:MissionCancel(self)
+      
     end
     
   end
   
+  
+  self:T(self.lid..string.format("No legion, commander or chief. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
+
+  for _,_groupdata in pairs(self.groupdata or {}) do
+    local groupdata=_groupdata --#AUFTRAG.GroupData
+    groupdata.opsgroup:MissionCancel(self)
+  end
+
   -- Special mission states.
-  if self.status==AUFTRAG.Status.PLANNED then
-    self:T(self.lid..string.format("Cancelled mission was in planned stage. Call it done!"))
+  if self:IsPlanned() or self:IsQueued() or self:IsRequested() or Ngroups==0 then
+    self:T(self.lid..string.format("Cancelled mission was in %s stage with %d groups assigned and alive. Call it done!", self.status, Ngroups))
     self:Done()
   end
 
+end
+
+--- On after "Done" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterDone(From, Event, To)
+  self.status=AUFTRAG.Status.DONE
+  self:T(self.lid..string.format("New mission status=%s", self.status))
+  
+  -- Set time stamp.
+  self.Tover=timer.getAbsTime()
+  
+  -- Set status for CHIEF, COMMANDER and LEGIONs
+  self.statusChief=AUFTRAG.Status.DONE 
+  self.statusCommander=AUFTRAG.Status.DONE  
+  for _,_legion in pairs(self.legions) do
+    local Legion=_legion --Ops.Legion#LEGION
+    self:SetLegionStatus(Legion, AUFTRAG.Status.DONE)
+  end
+  
 end
 
 --- On after "Success" event.
@@ -2800,6 +2945,14 @@ function AUFTRAG:onafterSuccess(From, Event, To)
 
   self.status=AUFTRAG.Status.SUCCESS
   self:T(self.lid..string.format("New mission status=%s", self.status))
+  
+  -- Set status for CHIEF, COMMANDER and LEGIONs
+  self.statusChief=self.status 
+  self.statusCommander=self.status  
+  for _,_legion in pairs(self.legions) do
+    local Legion=_legion --Ops.Legion#LEGION
+    self:SetLegionStatus(Legion, self.status)
+  end  
   
   local repeatme=self.repeatedSuccess<self.NrepeatSuccess or self.repeated<self.Nrepeat
   
@@ -2834,6 +2987,14 @@ function AUFTRAG:onafterFailed(From, Event, To)
 
   self.status=AUFTRAG.Status.FAILED
   self:T(self.lid..string.format("New mission status=%s", self.status))
+
+  -- Set status for CHIEF, COMMANDER and LEGIONs
+  self.statusChief=self.status 
+  self.statusCommander=self.status  
+  for _,_legion in pairs(self.legions) do
+    local Legion=_legion --Ops.Legion#LEGION
+    self:SetLegionStatus(Legion, self.status)
+  end  
   
   local repeatme=self.repeatedFailure<self.NrepeatFailure or self.repeated<self.Nrepeat
   
@@ -2859,6 +3020,21 @@ function AUFTRAG:onafterFailed(From, Event, To)
 
 end
 
+--- On before "Repeat" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onbeforeRepeat(From, Event, To)
+
+  if not (self.chief or self.commander or #self.legions==0) then
+    self:E(self.lid.."ERROR: Mission can only be repeated by a CHIEF, COMMANDER or LEGION! Stopping AUFTRAG")
+    self:Stop()  
+    return false
+  end
+
+  return true
+end
 
 --- On after "Repeat" event.
 -- @param #AUFTRAG self
@@ -2869,35 +3045,57 @@ function AUFTRAG:onafterRepeat(From, Event, To)
 
   -- Set mission status to PLANNED.
   self.status=AUFTRAG.Status.PLANNED
-  
+    
+  -- Debug info.
   self:T(self.lid..string.format("New mission status=%s (on Repeat)", self.status))
+  
+  -- Set status for CHIEF, COMMANDER and LEGIONs
+  self.statusChief=self.status 
+  self.statusCommander=self.status  
+  for _,_legion in pairs(self.legions) do
+    local Legion=_legion --Ops.Legion#LEGION
+    self:SetLegionStatus(Legion, self.status)
+  end    
 
   -- Increase repeat counter.
   self.repeated=self.repeated+1
   
   if self.chief then
+  
+    self.statusChief=AUFTRAG.Status.PLANNED
 
-    -- Remove mission from wingcommander because Cheif will assign it again.
-    if self.wingcommander then
-      self.wingcommander:RemoveMission(self)
+    -- Remove mission from wingcommander because Chief will assign it again.
+    if self.commander then
+      self.commander:RemoveMission(self)
+      self.statusCommander=AUFTRAG.Status.PLANNED
     end  
       
     -- Remove mission from airwing because WC will assign it again but maybe to a different wing.
-    if self.airwing then
-      self.airwing:RemoveMission(self)
+    for _,_legion in pairs(self.legions) do
+      local legion=_legion --Ops.Legion#LEGION
+      legion:RemoveMission(self)
     end  
     
-  elseif self.wingcommander then
+  elseif self.commander then
+  
+    self.statusCommander=AUFTRAG.Status.PLANNED
   
     -- Remove mission from airwing because WC will assign it again but maybe to a different wing.
-    if self.airwing then
-      self.airwing:RemoveMission(self)
-    end
+    for _,_legion in pairs(self.legions) do
+      local legion=_legion --Ops.Legion#LEGION
+      legion:RemoveMission(self)
+      self:SetLegionStatus(legion, AUFTRAG.Status.PLANNED)
+    end  
   
-  elseif self.airwing then
+  elseif #self.legions>0 then
   
-    -- Already at the airwing ==> Queued()
-    self:Queued(self.airwing)
+    -- Remove mission from airwing because WC will assign it again but maybe to a different wing.
+    for _,_legion in pairs(self.legions) do
+      local legion=_legion --Ops.Legion#LEGION
+      legion:RemoveMission(self)
+      self:SetLegionStatus(legion, AUFTRAG.Status.PLANNED)
+      legion:AddMission(self)
+    end  
     
   else
     self:E(self.lid.."ERROR: Mission can only be repeated by a CHIEF, WINGCOMMANDER or AIRWING! Stopping AUFTRAG")
@@ -2947,13 +3145,16 @@ function AUFTRAG:onafterStop(From, Event, To)
   end
   
   -- Remove mission from WINGCOMMANDER queue.
-  if self.wingcommander then
-    self.wingcommander:RemoveMission(self)
+  if self.commander then
+    self.commander:RemoveMission(self)
   end
   
-  -- Remove mission from AIRWING queue.
-  if self.airwing then
-    self.airwing:RemoveMission(self)
+  -- Remove mission from LEGION queues.
+  if #self.legions>0 then
+    for _,_legion in pairs(self.legions) do
+      local legion=_legion --Ops.Legion#LEGION
+      legion:RemoveMission(self)
+    end
   end
 
   -- Remove mission from OPSGROUP queue

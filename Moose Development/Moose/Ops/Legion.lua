@@ -107,6 +107,21 @@ function LEGION:New(WarehouseName, LegionName)
   -- @param #LEGION self
   -- @param #number delay Delay in seconds.
 
+
+  --- Triggers the FSM event "MissionCancel".
+  -- @function [parent=#LEGION] MissionCancel
+  -- @param #LEGION self
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionCancel" event.
+  -- @function [parent=#LEGION] OnAfterMissionCancel
+  -- @param #LEGION self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
   return self
 end
 
@@ -129,8 +144,14 @@ end
 -- @return #LEGION self
 function LEGION:AddMission(Mission)
 
-  -- Set status to QUEUED. This also attaches the airwing to this mission.
-  Mission:Queued(self)
+  -- Set status to QUEUED. This event is only allowed for the first legion that calls it.
+  Mission:Queued()
+  
+  -- Set legion status.
+  Mission:SetLegionStatus(self, AUFTRAG.Status.QUEUED)
+  
+  -- Add legion to mission.
+  Mission:AddLegion(self)
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -153,7 +174,7 @@ function LEGION:RemoveMission(Mission)
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
     if mission.auftragsnummer==Mission.auftragsnummer then
-      mission.airwing=nil
+      mission:RemoveLegion(self)
       table.remove(self.missionqueue, i)
       break
     end
@@ -242,7 +263,7 @@ function LEGION:_CheckMissions()
 end
 --- Get next mission.
 -- @param #LEGION self
--- @return Ops.Auftrag#AUFTRAG Next mission or *nil*.
+-- @return Ops.Auftrag#AUFTRAG Next mission or `#nil`.
 function LEGION:_GetNextMission()
 
   -- Number of missions.
@@ -278,7 +299,7 @@ function LEGION:_GetNextMission()
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
     -- Firstly, check if mission is due?
-    if mission:IsQueued() and mission:IsReadyToGo() and (mission.importance==nil or mission.importance<=vip) then
+    if mission:IsQueued(self) and mission:IsReadyToGo() and (mission.importance==nil or mission.importance<=vip) then
 
       -- Check if airwing can do the mission and gather required assets.
       local can, assets=self:CanMission(mission)
@@ -333,10 +354,10 @@ function LEGION:_GetNextMission()
         if mission.assets and #mission.assets>0 then
           self:E(self.lid..string.format("ERROR: mission %s of type %s has already assets attached!", mission.name, mission.type))
         end
-        mission.assets={}
+        --mission.assets={}
 
         -- Assign assets to mission.
-        for i=1,mission.nassets do
+        for i=1,mission.Nassets[self.alias] do
           local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
 
           -- Should not happen as we just checked!
@@ -350,7 +371,7 @@ function LEGION:_GetNextMission()
 
         -- Now return the remaining payloads.
         if self:IsAirwing() then
-          for i=mission.nassets+1,#assets do
+          for i=mission.Nassets[self.alias]+1,#assets do
             local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
             for _,uid in pairs(gotpayload) do
               if uid==asset.uid then
@@ -493,8 +514,11 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function LEGION:onafterMissionRequest(From, Event, To, Mission)
 
-  -- Set mission status from QUEUED to REQUESTED. Ensures that it is not considered in the next selection.
+  -- Set mission status from QUEUED to REQUESTED.
   Mission:Requested()
+  
+  -- Set legion status. Ensures that it is not considered in the next selection.
+  Mission:SetLegionStatus(self, AUFTRAG.Status.REQUESTED)  
 
   ---
   -- Some assets might already be spawned and even on a different mission (orbit).
@@ -507,23 +531,28 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
   for _,_asset in pairs(Mission.assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
 
-    if asset.spawned then
+    -- Check that this asset belongs to this Legion warehouse.
+    if asset.wid==self.uid then
 
-      if asset.flightgroup then
-
-        -- Add new mission.
-        asset.flightgroup:AddMission(Mission)
-
-        -- Trigger event.
-        self:__OpsOnMission(5, asset.flightgroup, Mission)
-
+      if asset.spawned then
+  
+        if asset.flightgroup then
+  
+          -- Add new mission.
+          asset.flightgroup:AddMission(Mission)
+  
+          -- Trigger event.
+          self:__OpsOnMission(5, asset.flightgroup, Mission)
+  
+        else
+          self:E(self.lid.."ERROR: flight group for asset does NOT exist!")
+        end
+  
       else
-        self:E(self.lid.."ERROR: flight group for asset does NOT exist!")
+        -- These assets need to be requested and spawned.
+        table.insert(Assetlist, asset)
       end
-
-    else
-      -- These assets need to be requested and spawned.
-      table.insert(Assetlist, asset)
+      
     end
   end
 
@@ -548,7 +577,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
     self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, nil, nil, Mission.prio, tostring(Mission.auftragsnummer))
 
     -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
-    Mission.requestID=self.queueid
+    Mission.requestID[self.alias]=self.queueid
   end
 
 end
@@ -564,8 +593,31 @@ function LEGION:onafterMissionCancel(From, Event, To, Mission)
   -- Info message.
   self:I(self.lid..string.format("Cancel mission %s", Mission.name))
 
-  local Ngroups = Mission:CountOpsGroups()
+  -- Set status to cancelled.
+  Mission:SetLegionStatus(self, AUFTRAG.Status.CANCELLED)
 
+  for _,_asset in pairs(Mission.assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    -- Asset should belong to this legion.
+    if asset.wid==self.uid then
+
+      local opsgroup=asset.flightgroup
+
+      if opsgroup then
+        opsgroup:MissionCancel(Mission)
+      end
+      
+      -- TODO: remove asset from mission
+
+      -- Not requested any more (if it was).
+      asset.requested=nil
+      
+    end      
+  end
+
+
+  --[[
   if Mission:IsPlanned() or Mission:IsQueued() or Mission:IsRequested() or Ngroups == 0 then
 
     Mission:Done()
@@ -574,22 +626,28 @@ function LEGION:onafterMissionCancel(From, Event, To, Mission)
 
     for _,_asset in pairs(Mission.assets) do
       local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      
+      -- Asset should belong to this legion.
+      if asset.wid==self.uid then
 
-      local flightgroup=asset.flightgroup
-
-      if flightgroup then
-        flightgroup:MissionCancel(Mission)
-      end
-
-      -- Not requested any more (if it was).
-      asset.requested=nil
+        local opsgroup=asset.flightgroup
+  
+        if opsgroup then
+          opsgroup:MissionCancel(Mission)
+        end
+  
+        -- Not requested any more (if it was).
+        asset.requested=nil
+        
+      end      
     end
 
   end
+  ]]
 
   -- Remove queued request (if any).
-  if Mission.requestID then
-    self:_DeleteQueueItemByID(Mission.requestID, self.queue)
+  if Mission.requestID[self.alias] then
+    self:_DeleteQueueItemByID(Mission.requestID[self.alias], self.queue)
   end
 
 end
@@ -1186,7 +1244,7 @@ function LEGION:CountAssetsOnMission(MissionTypes, Cohort)
 
         if Cohort==nil or Cohort.name==asset.squadname then
 
-          local request, isqueued=self:GetRequestByID(mission.requestID)
+          local request, isqueued=self:GetRequestByID(mission.requestID[self.alias])
 
           if isqueued then
             Nq=Nq+1
@@ -1277,6 +1335,11 @@ function LEGION:CanMission(Mission)
 
   -- Squadrons for the job. If user assigned to mission or simply all.
   local cohorts=Mission.squadrons or self.cohorts
+  
+  local Nassets=Mission.nassets or 1
+  if Mission.Nassets and Mission.Nassets[self.alias] then
+    Nassets=Mission.Nassets[self.alias]
+  end
 
   -- Get aircraft unit types for the job.
   local unittypes=self:GetAircraftTypes(true, cohorts)
@@ -1285,7 +1348,7 @@ function LEGION:CanMission(Mission)
   if self:IsAirwing() then
     local Npayloads=self:CountPayloadsInStock(Mission.type, unittypes, Mission.payloads)
   
-    if Npayloads<Mission.nassets then
+    if Npayloads<Nassets then
       self:T(self.lid..string.format("INFO: Not enough PAYLOADS available! Got %d but need at least %d", Npayloads, Mission.nassets))
       return false, Assets
     end
@@ -1302,6 +1365,7 @@ function LEGION:CanMission(Mission)
       -- Number of payloads available.
       local Npayloads=self:IsAirwing() and self:CountPayloadsInStock(Mission.type, cohort.aircrafttype, Mission.payloads) or 999
 
+      -- Recruit assets.
       local assets=cohort:RecruitAssets(Mission, Npayloads)
 
       -- Total number.
@@ -1318,7 +1382,7 @@ function LEGION:CanMission(Mission)
   end
 
   -- Check if required assets are present.
-  if Mission.nassets and Mission.nassets>#Assets then
+  if Nassets>#Assets then
     self:T(self.lid..string.format("INFO: Not enough assets available! Got %d but need at least %d", #Assets, Mission.nassets))
     Can=false
   end
@@ -1436,7 +1500,8 @@ end
 function LEGION:GetMissionFromRequestID(RequestID)
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
-    if mission.requestID and mission.requestID==RequestID then
+    local mid=mission.requestID[self.alias]
+    if  mid and mid==RequestID then
       return mission
     end
   end

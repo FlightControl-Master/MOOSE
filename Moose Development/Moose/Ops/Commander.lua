@@ -1,9 +1,9 @@
---- **Ops** - Commander Air Wing.
+--- **Ops** - Commander of an Airwing, Brigade or Flotilla.
 --
 -- **Main Features:**
 --
---    * Manages AIRWINGS
---    * Handles missions (AUFTRAG) and finds the best airwing able to do the job
+--    * Manages AIRWINGS, BRIGADEs and FLOTILLAs
+--    * Handles missions (AUFTRAG) and finds the best airwing for the job 
 --
 -- ===
 --
@@ -12,12 +12,12 @@
 -- @image OPS_WingCommander.png
 
 
---- WINGCOMMANDER class.
--- @type WINGCOMMANDER
+--- COMMANDER class.
+-- @type COMMANDER
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
--- @field #table airwings Table of airwings which are commanded.
+-- @field #table legions Table of legions which are commanded.
 -- @field #table missionqueue Mission queue.
 -- @field Ops.ChiefOfStaff#CHIEF chief Chief of staff.
 -- @extends Core.Fsm#FSM
@@ -26,25 +26,23 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\WingCommander\WINGCOMMANDER_Main.jpg)
---
--- # The WINGCOMMANDER Concept
+-- # The COMMANDER Concept
 -- 
--- A wing commander is the head of airwings. He will find the best AIRWING to perform an assigned AUFTRAG (mission).
+-- A wing commander is the head of legions. He will find the best AIRWING to perform an assigned AUFTRAG (mission).
 --
 --
--- @field #WINGCOMMANDER
-WINGCOMMANDER = {
-  ClassName      = "WINGCOMMANDER",
+-- @field #COMMANDER
+COMMANDER = {
+  ClassName      = "COMMANDER",
   Debug          =   nil,
   lid            =   nil,
-  airwings       =    {},
+  legions       =    {},
   missionqueue   =    {},
 }
 
---- WINGCOMMANDER class version.
+--- COMMANDER class version.
 -- @field #string version
-WINGCOMMANDER.version="0.1.0"
+COMMANDER.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -57,65 +55,88 @@ WINGCOMMANDER.version="0.1.0"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new WINGCOMMANDER object and start the FSM.
--- @param #WINGCOMMANDER self
--- @return #WINGCOMMANDER self
-function WINGCOMMANDER:New()
+--- Create a new COMMANDER object and start the FSM.
+-- @param #COMMANDER self
+-- @return #COMMANDER self
+function COMMANDER:New()
 
   -- Inherit everything from INTEL class.
-  local self=BASE:Inherit(self, FSM:New()) --#WINGCOMMANDER
+  local self=BASE:Inherit(self, FSM:New()) --#COMMANDER
   
-  self.lid="WINGCOMMANDER | "
+  -- Log ID.
+  self.lid="COMMANDER | "
 
   -- Start state.
   self:SetStartState("NotReadyYet")
 
   -- Add FSM transitions.
   --                 From State     -->      Event        -->     To State
-  self:AddTransition("NotReadyYet",        "Start",               "OnDuty")      -- Start WC.
+  self:AddTransition("NotReadyYet",        "Start",               "OnDuty")      -- Start COMMANDER.
   self:AddTransition("*",                  "Status",              "*")           -- Status report.
-  self:AddTransition("*",                  "Stop",                "Stopped")     -- Stop WC.
+  self:AddTransition("*",                  "Stop",                "Stopped")     -- Stop COMMANDER.
   
-  self:AddTransition("*",                  "AssignMission",       "*")           -- Mission was assigned to an AIRWING.
+  self:AddTransition("*",                  "MissionAssign",       "*")           -- Mission was assigned to a LEGION.
   self:AddTransition("*",                  "MissionCancel",       "*")           -- Cancel mission.
 
   ------------------------
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Start". Starts the WINGCOMMANDER. Initializes parameters and starts event handlers.
-  -- @function [parent=#WINGCOMMANDER] Start
-  -- @param #WINGCOMMANDER self
+  --- Triggers the FSM event "Start". Starts the COMMANDER.
+  -- @function [parent=#COMMANDER] Start
+  -- @param #COMMANDER self
 
-  --- Triggers the FSM event "Start" after a delay. Starts the WINGCOMMANDER. Initializes parameters and starts event handlers.
-  -- @function [parent=#WINGCOMMANDER] __Start
-  -- @param #WINGCOMMANDER self
+  --- Triggers the FSM event "Start" after a delay. Starts the COMMANDER.
+  -- @function [parent=#COMMANDER] __Start
+  -- @param #COMMANDER self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Stop". Stops the WINGCOMMANDER and all its event handlers.
-  -- @param #WINGCOMMANDER self
+  --- Triggers the FSM event "Stop". Stops the COMMANDER.
+  -- @param #COMMANDER self
 
-  --- Triggers the FSM event "Stop" after a delay. Stops the WINGCOMMANDER and all its event handlers.
-  -- @function [parent=#WINGCOMMANDER] __Stop
-  -- @param #WINGCOMMANDER self
+  --- Triggers the FSM event "Stop" after a delay. Stops the COMMANDER.
+  -- @function [parent=#COMMANDER] __Stop
+  -- @param #COMMANDER self
   -- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Status".
-  -- @function [parent=#WINGCOMMANDER] Status
-  -- @param #WINGCOMMANDER self
+  -- @function [parent=#COMMANDER] Status
+  -- @param #COMMANDER self
 
   --- Triggers the FSM event "Status" after a delay.
-  -- @function [parent=#WINGCOMMANDER] __Status
-  -- @param #WINGCOMMANDER self
+  -- @function [parent=#COMMANDER] __Status
+  -- @param #COMMANDER self
   -- @param #number delay Delay in seconds.
 
 
-  -- Debug trace.
-  if false then
-    BASE:TraceOnOff(true)
-    BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
-  end
+  --- Triggers the FSM event "MissionAssign".
+  -- @function [parent=#COMMANDER] MissionAssign
+  -- @param #COMMANDER self
+  -- @param Ops.Legion#LEGION Legion The Legion.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionAssign" event.
+  -- @function [parent=#COMMANDER] OnAfterMissionAssign
+  -- @param #COMMANDER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Legion#LEGION Legion The Legion.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
+  --- Triggers the FSM event "MissionCancel".
+  -- @function [parent=#COMMANDER] MissionCancel
+  -- @param #COMMANDER self
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionCancel" event.
+  -- @function [parent=#COMMANDER] OnAfterMissionCancel
+  -- @param #COMMANDER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   return self
 end
@@ -125,26 +146,28 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add an airwing to the wingcommander.
--- @param #WINGCOMMANDER self
+-- @param #COMMANDER self
 -- @param Ops.AirWing#AIRWING Airwing The airwing to add.
--- @return #WINGCOMMANDER self
-function WINGCOMMANDER:AddAirwing(Airwing)
+-- @return #COMMANDER self
+function COMMANDER:AddAirwing(Airwing)
 
   -- This airwing is managed by this wing commander. 
-  Airwing.wingcommander=self
+  Airwing.commander=self
 
-  table.insert(self.airwings, Airwing)  
+  table.insert(self.legions, Airwing)  
   
   return self
 end
 
 --- Add mission to mission queue.
--- @param #WINGCOMMANDER self
+-- @param #COMMANDER self
 -- @param Ops.Auftrag#AUFTRAG Mission Mission to be added.
--- @return #WINGCOMMANDER self
-function WINGCOMMANDER:AddMission(Mission)
+-- @return #COMMANDER self
+function COMMANDER:AddMission(Mission)
 
-  Mission.wingcommander=self
+  Mission.commander=self
+  
+  Mission.statusCommander=AUFTRAG.Status.PLANNED
 
   table.insert(self.missionqueue, Mission)
 
@@ -152,17 +175,17 @@ function WINGCOMMANDER:AddMission(Mission)
 end
 
 --- Remove mission from queue.
--- @param #WINGCOMMANDER self
+-- @param #COMMANDER self
 -- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
--- @return #WINGCOMMANDER self
-function WINGCOMMANDER:RemoveMission(Mission)
+-- @return #COMMANDER self
+function COMMANDER:RemoveMission(Mission)
 
   for i,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     if mission.auftragsnummer==Mission.auftragsnummer then
       self:I(self.lid..string.format("Removing mission %s (%s) status=%s from queue", Mission.name, Mission.type, Mission.status))
-      mission.wingcommander=nil
+      mission.commander=nil
       table.remove(self.missionqueue, i)
       break
     end
@@ -177,22 +200,22 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #WINGCOMMANDER self
+-- @param #COMMANDER self
 -- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function WINGCOMMANDER:onafterStart(From, Event, To)
+function COMMANDER:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting Wing Commander")
+  local text=string.format("Starting Commander")
   self:I(self.lid..text)
   
-  -- Start attached airwings.
-  for _,_airwing in pairs(self.airwings) do
-    local airwing=_airwing --Ops.AirWing#AIRWING
-    if airwing:GetState()=="NotReadyYet" then
-      airwing:Start()
+  -- Start attached legions.
+  for _,_legion in pairs(self.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    if legion:GetState()=="NotReadyYet" then
+      legion:Start()
     end
   end
 
@@ -200,12 +223,12 @@ function WINGCOMMANDER:onafterStart(From, Event, To)
 end
 
 --- On after "Status" event.
--- @param #WINGCOMMANDER self
+-- @param #COMMANDER self
 -- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function WINGCOMMANDER:onafterStatus(From, Event, To)
+function COMMANDER:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
@@ -214,13 +237,13 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
   self:CheckMissionQueue()
   
   -- Status.
-  local text=string.format(self.lid.."Status %s: Airwings=%d, Missions=%d", fsmstate, #self.airwings, #self.missionqueue)
+  local text=string.format("Status %s: Airwings=%d, Missions=%d", fsmstate, #self.legions, #self.missionqueue)
   self:I(self.lid..text)
   
   -- Airwing Info
-  if #self.airwings>0 then
+  if #self.legions>0 then
     local text="Airwings:"
-    for _,_airwing in pairs(self.airwings) do
+    for _,_airwing in pairs(self.legions) do
       local airwing=_airwing --Ops.AirWing#AIRWING
       local Nassets=airwing:CountAssets()
       local Nastock=airwing:CountAssets(true)
@@ -259,40 +282,57 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after "AssignMission" event. Mission is added to the AIRWING mission queue.
--- @param #WINGCOMMANDER self
+--- On after "MissionAssign" event. Mission is added to a LEGION mission queue.
+-- @param #COMMANDER self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.AirWing#AIRWING Airwing The AIRWING.
+-- @param Ops.Legion#LEGION Legion The LEGION.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function WINGCOMMANDER:onafterAssignMission(From, Event, To, Airwing, Mission)
+function COMMANDER:onafterMissionAssign(From, Event, To, Legion, Mission)
 
-  self:I(self.lid..string.format("Assigning mission %s (%s) to airwing %s", Mission.name, Mission.type, Airwing.alias))
-  Airwing:AddMission(Mission)
+  -- Debug info.
+  self:I(self.lid..string.format("Assigning mission %s (%s) to legion %s", Mission.name, Mission.type, Legion.alias))
+  
+  -- Set mission commander status to QUEUED as it is now queued at a legion.
+  Mission.statusCommander=AUFTRAG.Status.QUEUED
+  
+  -- Add mission to legion.
+  Legion:AddMission(Mission)
 
 end
 
 --- On after "MissionCancel" event.
--- @param #WINGCOMMANDER self
+-- @param #COMMANDER self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function WINGCOMMANDER:onafterMissionCancel(From, Event, To, Mission)
+function COMMANDER:onafterMissionCancel(From, Event, To, Mission)
 
+  -- Debug info.
   self:I(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
   
-  if Mission.status==AUFTRAG.Status.PLANNED then
+  -- Set commander status.
+  Mission.statusCommander=AUFTRAG.Status.CANCELLED
   
-    -- Mission is still in planning stage. Should not have an airbase assigned ==> Just remove it form the queue.
+  if Mission:IsPlanned() then
+  
+    -- Mission is still in planning stage. Should not have a legion assigned ==> Just remove it form the queue.
     self:RemoveMission(Mission)
     
   else
   
-    -- Airwing will cancel mission.
-    if Mission.airwing then
-      Mission.airwing:MissionCancel(Mission)
+    -- Legion will cancel mission.
+    if #Mission.legions>0 then
+      for _,_legion in pairs(Mission.legions) do
+        local legion=_legion --Ops.Legion#LEGION
+        
+        -- TODO: Should check that this legions actually belongs to this commander.
+        
+        -- Legion will cancel the mission.
+        legion:MissionCancel(Mission)
+      end
     end
     
   end
@@ -304,8 +344,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check mission queue and assign ONE planned mission.
--- @param #WINGCOMMANDER self 
-function WINGCOMMANDER:CheckMissionQueue()
+-- @param #COMMANDER self 
+function COMMANDER:CheckMissionQueue()
 
   -- TODO: Sort mission queue. wrt what? Threat level?
 
@@ -319,12 +359,16 @@ function WINGCOMMANDER:CheckMissionQueue()
       -- PLANNNED Mission
       ---
     
-      local airwing=self:GetAirwingForMission(mission)
+      local airwings=self:GetLegionsForMission(mission)
         
-      if airwing then
+      if airwings then
       
-        -- Add mission to airwing.
-        self:AssignMission(airwing, mission)
+        for _,airwing in pairs(airwings) do
+      
+          -- Add mission to airwing.
+          self:MissionAssign(airwing, mission)
+          
+        end
     
         return
       end
@@ -341,24 +385,24 @@ function WINGCOMMANDER:CheckMissionQueue()
   
 end
 
---- Check all airwings if they are able to do a specific mission type at a certain location with a given number of assets.
--- @param #WINGCOMMANDER self
+--- Check all legions if they are able to do a specific mission type at a certain location with a given number of assets.
+-- @param #COMMANDER self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return Ops.AirWing#AIRWING The airwing best for this mission.
-function WINGCOMMANDER:GetAirwingForMission(Mission)
+-- @return #table Table of LEGIONs that can do the mission and have at least one asset available right now.
+function COMMANDER:GetLegionsForMission(Mission)
 
-  -- Table of airwings that can do the mission.
-  local airwings={}
+  -- Table of legions that can do the mission.
+  local legions={}
   
-  -- Loop over all airwings.
-  for _,_airwing in pairs(self.airwings) do
+  -- Loop over all legions.
+  for _,_airwing in pairs(self.legions) do
     local airwing=_airwing --Ops.AirWing#AIRWING
     
     -- Check if airwing can do this mission.
     local can,assets=airwing:CanMission(Mission)
     
-    -- Can it?
-    if can then        
+    -- Has it assets that can?
+    if #assets>0 then        
       
       -- Get coordinate of the target.
       local coord=Mission:GetTargetCoordinate()
@@ -366,10 +410,16 @@ function WINGCOMMANDER:GetAirwingForMission(Mission)
       if coord then
       
         -- Distance from airwing to target.
-        local dist=UTILS.MetersToNM(coord:Get2DDistance(airwing:GetCoordinate()))
+        local distance=UTILS.MetersToNM(coord:Get2DDistance(airwing:GetCoordinate()))
+        
+        -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
+        local dist=UTILS.Round(distance/10, 0)
+        
+        -- Debug info.
+        self:I(self.lid..string.format("Got legion %s with Nassets=%d and dist=%.1f NM, rounded=%.1f", airwing.alias, #assets, distance, dist))
       
-        -- Add airwing to table of airwings that can.
-        table.insert(airwings, {airwing=airwing, dist=dist, targetcoord=coord, nassets=#assets})
+        -- Add airwing to table of legions that can.
+        table.insert(legions, {airwing=airwing, distance=distance, dist=dist, targetcoord=coord, nassets=#assets})
         
       end
       
@@ -378,7 +428,7 @@ function WINGCOMMANDER:GetAirwingForMission(Mission)
   end
   
   -- Can anyone?
-  if #airwings>0 then
+  if #legions>0 then
   
     --- Something like:
     -- * Closest airwing that can should be first prio.
@@ -386,34 +436,61 @@ function WINGCOMMANDER:GetAirwingForMission(Mission)
     local function score(a)
       local d=math.round(a.dist/10)
     end
+    
+    env.info(self.lid.."FF #legions="..#legions)
   
     -- Sort table wrt distance and number of assets.
     -- Distances within 10 NM are equal and the airwing with more assets is preferred.
     local function sortdist(a,b)
-      local ad=math.round(a.dist/10)  -- dist 55 NM ==> 5.5 ==> 6
-      local bd=math.round(b.dist/10)  -- dist 63 NM ==> 6.3 ==> 6
+      local ad=a.dist
+      local bd=b.dist 
       return ad<bd or (ad==bd and a.nassets>b.nassets)
     end
-    table.sort(airwings, sortdist)    
-  
-    -- This is the closest airwing to the target.
-    local airwing=airwings[1].airwing  --Ops.AirWing#AIRWING
+    table.sort(legions, sortdist)
+
     
-    return airwing
+    -- Loops over all legions and stop if enough assets are summed up.
+    local selection={} ; local N=0
+    for _,leg in ipairs(legions) do
+      local legion=leg.airwing --Ops.Legion#LEGION
+      
+      Mission.Nassets=Mission.Nassets or {}
+      Mission.Nassets[legion.alias]=leg.nassets
+          
+      table.insert(selection, legion)
+      
+      N=N+leg.nassets
+      
+      if N>=Mission.nassets then
+        self:I(self.lid..string.format("Found enough assets!"))
+        break
+      end
+    end
+    
+    if N>=Mission.nassets then
+      self:I(self.lid..string.format("Found %d legions that can do mission %s (%s) requiring %d assets", #selection, Mission:GetName(), Mission:GetType(), Mission.nassets))
+      return selection
+    else
+      self:T(self.lid..string.format("Not enough LEGIONs found that could do the job :/"))
+      return nil
+    end
+    
+  else
+    self:T(self.lid..string.format("No LEGION found that could do the job :/"))
   end
 
   return nil
 end
 
 --- Check mission queue and assign ONE planned mission.
--- @param #WINGCOMMANDER self
+-- @param #COMMANDER self
 -- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
 -- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
 -- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
 -- @return #number Amount of asset groups in stock.
-function WINGCOMMANDER:CountAssets(InStock, MissionTypes, Attributes)
+function COMMANDER:CountAssets(InStock, MissionTypes, Attributes)
   local N=0
-  for _,_airwing in pairs(self.airwings) do
+  for _,_airwing in pairs(self.legions) do
     local airwing=_airwing --Ops.AirWing#AIRWING
     N=N+airwing:CountAssets(InStock, MissionTypes, Attributes)
   end

@@ -778,7 +778,7 @@ end
 --- Get assets for a mission.
 -- @param #COHORT self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @param #number Nplayloads Number of payloads available.
+-- @param #number Npayloads Number of payloads available.
 -- @return #table Assets that can do the required mission.
 function COHORT:RecruitAssets(Mission, Npayloads)
 
@@ -845,6 +845,8 @@ function COHORT:RecruitAssets(Mission, Npayloads)
           if flightgroup:IsHolding() or flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() or flightgroup:IsDead() or flightgroup:IsStopped() then
             combatready=false
           end
+          
+          --TODO: Check transport for combat readyness!
       
           -- This asset is "combatready".
           if combatready then

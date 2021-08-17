@@ -78,11 +78,15 @@ Ops/Auftrag.lua
 Ops/OpsGroup.lua
 Ops/FlightGroup.lua
 Ops/NavyGroup.lua
+Ops/Cohort.lua
 Ops/Squadron.lua
+Ops/Platoon.lua
+Ops/Legion.lua
 Ops/AirWing.lua
+Ops/Brigade.lua
 Ops/Intelligence.lua
-Ops/WingCommander.lua
-Ops/ChiefOfStaff.lua
+Ops/Commander.lua
+Ops/Chief.lua
 Ops/FlightControl.lua
 Ops/CSAR.lua
 Ops/CTLD.lua

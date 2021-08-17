@@ -646,6 +646,20 @@ function OPSGROUP:New(group)
   -- @param #OPSGROUP self
   -- @param #number delay Delay in seconds.
 
+
+  --- Triggers the FSM event "MissionCancel".
+  -- @function [parent=#OPSGROUP] MissionCancel
+  -- @param #CHIEF self
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionCancel" event.
+  -- @function [parent=#OPSGROUP] OnAfterMissionCancel
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
   -- TODO: Add pseudo functions.
 
   return self
