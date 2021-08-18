@@ -791,7 +791,7 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
         if (missile.targetPlayer and player.unitname==missile.targetPlayer.unitname) or (distance<missile.missileRange)  then
               
           -- Inform player.
-          local text=string.format("Missile launch detected! Distance %.1f NM, bearing %03dÂ°.", UTILS.MetersToNM(distance), bearing)
+          local text=string.format("Missile launch detected! Distance %.1f NM, bearing %03d°.", UTILS.MetersToNM(distance), bearing)
           
           -- Say notching headings.
           BASE:ScheduleOnce(5, FOX._SayNotchingHeadings, self, player, missile.weapon)
@@ -988,7 +988,7 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
           local eta=distance/missileVelocity
         
           -- Debug distance check.
-          self:I(self.lid..string.format("Missile %s Target %s: Distance = %.1f m, v=%.1f m/s, bearing=%03dÂ°, ETA=%.1f sec", missile.missileType, target:GetName(), distance, missileVelocity, bearing, eta))
+          self:I(self.lid..string.format("Missile %s Target %s: Distance = %.1f m, v=%.1f m/s, bearing=%03d°, ETA=%.1f sec", missile.missileType, target:GetName(), distance, missileVelocity, bearing, eta))
         end
         
         -- Distroy missile if it's getting too close.
@@ -1696,7 +1696,7 @@ function FOX:_SayNotchingHeadings(playerData, weapon)
     local nr, nl=self:_GetNotchingHeadings(weapon)
     
     if nr and nl then
-      local text=string.format("Notching heading %03dÂ° or %03dÂ°", nr, nl)    
+      local text=string.format("Notching heading %03d° or %03d°", nr, nl)    
       MESSAGE:New(text, 5, "FOX"):ToClient(playerData.client)
     end
   
@@ -1707,8 +1707,8 @@ end
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
 -- @param #FOX self
 -- @param DCS#Weapon weapon The weapon.
--- @return #number Notching heading right, i.e. missile heading +90ï¿½
--- @return #number Notching heading left, i.e. missile heading -90ï¿½.
+-- @return #number Notching heading right, i.e. missile heading +90°.
+-- @return #number Notching heading left, i.e. missile heading -90°.
 function FOX:_GetNotchingHeadings(weapon)
 
   if weapon then

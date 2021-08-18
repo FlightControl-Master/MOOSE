@@ -507,9 +507,9 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
       secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
     end
 
-    -- 024ï¿½ 23' 12"N or 024ï¿½ 23' 12.03"N
-    return string.format('%03dÂ°', latDeg)..string.format('%02d', latMin)..'\''..string.format(secFrmtStr, latSec)..'"'..latHemi..' '
-        .. string.format('%03dÂ°', lonDeg)..string.format('%02d', lonMin)..'\''..string.format(secFrmtStr, lonSec)..'"'..lonHemi
+    -- 024° 23' 12"N or 024° 23' 12.03"N
+    return string.format('%03d°', latDeg)..string.format('%02d', latMin)..'\''..string.format(secFrmtStr, latSec)..'"'..latHemi..' '
+        .. string.format('%03d°', lonDeg)..string.format('%02d', lonMin)..'\''..string.format(secFrmtStr, lonSec)..'"'..lonHemi
 
   else  -- degrees, decimal minutes.
     latMin = UTILS.Round(latMin, acc)
@@ -534,8 +534,8 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
     end
 
     -- 024 23'N or 024 23.123'N
-    return string.format('%03dÂ°', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
-        .. string.format('%03dÂ°', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
+    return string.format('%03d°', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
+        .. string.format('%03d°', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
 
   end
 end
@@ -923,7 +923,7 @@ function UTILS.RandomGaussian(x0, sigma, xmin, xmax, imax)
     local x1=math.random()
     local x2=math.random()
 
-    -- Transform to Gaussian exp(-(x-x0)Â²/(2*sigmaÂ²).
+    -- Transform to Gaussian exp(-(x-x0)²/(2*sigma²).
     r = math.sqrt(-2*sigma*sigma * math.log(x1)) * math.cos(2*math.pi * x2) + x0
 
     i=i+1
@@ -1553,7 +1553,7 @@ end
 --@return #table
 function UTILS.ShuffleTable(t)
   if t == nil or type(t) ~= "table" then
-    BASE:I("Error in ShuffleTable: Missing or wrong tyÃ¥e of Argument")
+    BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
     return
   end
   math.random()

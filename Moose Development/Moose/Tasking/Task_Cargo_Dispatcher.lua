@@ -574,7 +574,7 @@ do -- TASK_CARGO_DISPATCHER
   --   local Coordinate = PlaneUnit:GetPointVec2()
   --   TaskA2ADispatcher:AddCSARTask( "CSAR Task", Coordinate )
   --   
-  --   -- Add a CSAR task to rescue a downed pilot from within a coordinate of country RUSSIA, which is pointing to the west (270Â°).
+  --   -- Add a CSAR task to rescue a downed pilot from within a coordinate of country RUSSIA, which is pointing to the west (270°).
   --   local Coordinate = PlaneUnit:GetPointVec2()
   --   TaskA2ADispatcher:AddCSARTask( "CSAR Task", Coordinate, 270, Country.RUSSIA )
   --   
