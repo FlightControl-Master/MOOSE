@@ -22,7 +22,7 @@
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: July 2021
+-- Date: Aug 2021
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -233,7 +233,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.10r2"
+CSAR.version="0.1.10r3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1337,7 +1337,7 @@ function CSAR:_ScheduledSARFlight(heliname,groupname, isairport)
   end
 
   --queue up
-  self:__Returning(-5,heliname,_woundedGroupName)
+  self:__Returning(-5,heliname,_woundedGroupName, isairport)
   return self
 end
 
@@ -2058,9 +2058,10 @@ end
 -- @param #string To To state.
 -- @param #string Heliname Name of the helicopter group.
 -- @param #string Woundedgroupname Name of the downed pilot\'s group.
-function CSAR:onbeforeReturning(From, Event, To, Heliname, Woundedgroupname)
+-- @param #boolean IsAirport True if heli has landed on an AFB (from event land).
+function CSAR:onbeforeReturning(From, Event, To, Heliname, Woundedgroupname, IsAirPort)
   self:T({From, Event, To, Heliname, Woundedgroupname})
-  self:_ScheduledSARFlight(Heliname,Woundedgroupname)
+  self:_ScheduledSARFlight(Heliname,Woundedgroupname, IsAirPort)
   return self
 end
 
