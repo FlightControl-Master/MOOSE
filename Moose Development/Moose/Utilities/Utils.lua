@@ -1510,7 +1510,7 @@ end
 --@return #table
 function UTILS.ShuffleTable(t)
   if t == nil or type(t) ~= "table" then
-    BASE:I("Error in ShuffleTable: Missing or wrong tyÃ¥e of Argument")
+    BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
     return
   end
   math.random()
