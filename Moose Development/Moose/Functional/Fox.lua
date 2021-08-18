@@ -1707,8 +1707,8 @@ end
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
 -- @param #FOX self
 -- @param DCS#Weapon weapon The weapon.
--- @return #number Notching heading right, i.e. missile heading +90ï¿½
--- @return #number Notching heading left, i.e. missile heading -90ï¿½.
+-- @return #number Notching heading right, i.e. missile heading +90°.
+-- @return #number Notching heading left, i.e. missile heading -90°.
 function FOX:_GetNotchingHeadings(weapon)
 
   if weapon then
