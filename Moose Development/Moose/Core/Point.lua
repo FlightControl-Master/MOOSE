@@ -806,13 +806,13 @@ do -- COORDINATE
   --- Returns a text of the temperature according the measurement system @{Settings}.
   -- The text will reflect the temperature like this:
   -- 
-  --   - For Russian and European aircraft using the metric system - Degrees Celcius (Â°C)
-  --   - For Americain aircraft we link to the imperial system - Degrees Farenheit (Â°F)
+  --   - For Russian and European aircraft using the metric system - Degrees Celcius (°C)
+  --   - For Americain aircraft we link to the imperial system - Degrees Farenheit (°F)
   -- 
   -- A text containing a pressure will look like this: 
   -- 
-  --   - `Temperature: %n.d Â°C`  
-  --   - `Temperature: %n.d Â°F`
+  --   - `Temperature: %n.d °C`  
+  --   - `Temperature: %n.d °F`
   --   
    -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL.
@@ -825,9 +825,9 @@ do -- COORDINATE
 
     if DegreesCelcius then
       if Settings:IsMetric() then
-        return string.format( " %-2.2f Â°C", DegreesCelcius )
+        return string.format( " %-2.2f °C", DegreesCelcius )
       else
-        return string.format( " %-2.2f Â°F", UTILS.CelciusToFarenheit( DegreesCelcius ) )
+        return string.format( " %-2.2f °F", UTILS.CelciusToFarenheit( DegreesCelcius ) )
       end
     else
       return " no temperature"
@@ -945,13 +945,13 @@ do -- COORDINATE
   --- Returns a text documenting the wind direction (from) and strength according the measurement system @{Settings}.
   -- The text will reflect the wind like this:
   -- 
-  --   - For Russian and European aircraft using the metric system - Wind direction in degrees (Â°) and wind speed in meters per second (mps).
-  --   - For Americain aircraft we link to the imperial system - Wind direction in degrees (Â°) and wind speed in knots per second (kps).
+  --   - For Russian and European aircraft using the metric system - Wind direction in degrees (°) and wind speed in meters per second (mps).
+  --   - For Americain aircraft we link to the imperial system - Wind direction in degrees (°) and wind speed in knots per second (kps).
   -- 
   -- A text containing a pressure will look like this: 
   -- 
-  --   - `Wind: %n Â° at n.d mps`  
-  --   - `Wind: %n Â° at n.d kps`
+  --   - `Wind: %n ° at n.d mps`  
+  --   - `Wind: %n ° at n.d kps`
   --   
   -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
@@ -964,9 +964,9 @@ do -- COORDINATE
 
     if Direction and Strength then
       if Settings:IsMetric() then
-        return string.format( " %d Â° at %3.2f mps", Direction, UTILS.MpsToKmph( Strength ) )
+        return string.format( " %d ° at %3.2f mps", Direction, UTILS.MpsToKmph( Strength ) )
       else
-        return string.format( " %d Â° at %3.2f kps", Direction, UTILS.MpsToKnots( Strength ) )
+        return string.format( " %d ° at %3.2f kps", Direction, UTILS.MpsToKnots( Strength ) )
       end
     else
       return " no wind"
@@ -998,7 +998,7 @@ do -- COORDINATE
 
     local AngleDegrees = UTILS.Round( UTILS.ToDegree( AngleRadians ), Precision )
   
-    local s = string.format( '%03dÂ°', AngleDegrees ) 
+    local s = string.format( '%03d°', AngleDegrees ) 
     
     return s
   end
@@ -1085,7 +1085,7 @@ do -- COORDINATE
   function COORDINATE:GetHeadingText( Settings )
     local Heading = self:GetHeading()
     if Heading then
-      return string.format( " bearing %3dÂ°", Heading )
+      return string.format( " bearing %3d°", Heading )
     else
       return " bearing unknown"
     end

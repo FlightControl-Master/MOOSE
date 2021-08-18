@@ -492,8 +492,8 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
     end
 
     -- 024ï¿½ 23' 12"N or 024ï¿½ 23' 12.03"N
-    return string.format('%03dÂ°', latDeg)..string.format('%02d', latMin)..'\''..string.format(secFrmtStr, latSec)..'"'..latHemi..' '
-        .. string.format('%03dÂ°', lonDeg)..string.format('%02d', lonMin)..'\''..string.format(secFrmtStr, lonSec)..'"'..lonHemi
+    return string.format('%03d°', latDeg)..string.format('%02d', latMin)..'\''..string.format(secFrmtStr, latSec)..'"'..latHemi..' '
+        .. string.format('%03d°', lonDeg)..string.format('%02d', lonMin)..'\''..string.format(secFrmtStr, lonSec)..'"'..lonHemi
 
   else  -- degrees, decimal minutes.
     latMin = UTILS.Round(latMin, acc)
@@ -518,8 +518,8 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
     end
 
     -- 024 23'N or 024 23.123'N
-    return string.format('%03dÂ°', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
-        .. string.format('%03dÂ°', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
+    return string.format('%03d°', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
+        .. string.format('%03d°', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
 
   end
 end

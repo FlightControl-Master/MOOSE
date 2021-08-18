@@ -383,13 +383,13 @@ ATIS.Alphabet = {
 
 --- Runway correction for converting true to magnetic heading.
 -- @type ATIS.RunwayM2T
--- @field #number Caucasus 0Â° (East).
--- @field #number Nevada +12Â° (East).
--- @field #number Normandy -10Â° (West).
--- @field #number PersianGulf +2Â° (East).
--- @field #number TheChannel -10Â° (West).
--- @field #number Syria +5Â° (East).
--- @field #number MarianaIslands +2Â° (East).
+-- @field #number Caucasus 0° (East).
+-- @field #number Nevada +12° (East).
+-- @field #number Normandy -10° (West).
+-- @field #number PersianGulf +2° (East).
+-- @field #number TheChannel -10° (West).
+-- @field #number Syria +5° (East).
+-- @field #number MarianaIslands +2° (East).
 ATIS.RunwayM2T={
   Caucasus=0,
   Nevada=12,
@@ -839,9 +839,9 @@ function ATIS:SetMapMarks(switch)
   return self
 end
 
---- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130Â° or "25L" for the left runway with magnetic heading 250Â°.
+--- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130° or "25L" for the left runway with magnetic heading 250°.
 -- @param #ATIS self
--- @param #table headings Magnetic headings. Inverse (-180Â°) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
+-- @param #table headings Magnetic headings. Inverse (-180°) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
 -- @return #ATIS self
 function ATIS:SetRunwayHeadingsMagnetic(headings)
 
@@ -974,12 +974,12 @@ end
 --
 -- To get *true* from *magnetic* heading one has to add easterly or substract westerly variation, e.g
 --
--- A magnetic heading of 180Â° corresponds to a true heading of
+-- A magnetic heading of 180° corresponds to a true heading of
 --
---   * 186Â° on the Caucaus map
---   * 192Â° on the Nevada map
---   * 170Â° on the Normany map
---   * 182Â° on the Persian Gulf map
+--   * 186° on the Caucaus map
+--   * 192° on the Nevada map
+--   * 170° on the Normany map
+--   * 182° on the Persian Gulf map
 --
 -- Likewise, to convert *true* into *magnetic* heading, one has to substract easterly and add westerly variation.
 -- 
@@ -1314,7 +1314,7 @@ function ATIS:onafterBroadcast(From, Event, To)
     local g= 9.80665   --[m/s^2]
     local M= 0.0289644 --[kg/mol]
     local T0=coord:GetTemperature(0)+273.15 --[K] Temp at sea level.
-    local TS=288.15   -- Standard Temperature assumed by Altimeter is 15Â°C
+    local TS=288.15   -- Standard Temperature assumed by Altimeter is 15°C
     local q=qnh*100
 
     -- Calculate Pressure.
@@ -1451,13 +1451,13 @@ function ATIS:onafterBroadcast(From, Event, To)
   --- Temperature and Dew Point ---
   ---------------------------------
 
-  -- Temperature in Â°C.
+  -- Temperature in °C.
   local temperature=coord:GetTemperature(height+5)
   
-  -- Dew point in Â°C.
+  -- Dew point in °C.
   local dewpoint=temperature-(100-self.relHumidity)/5
 
-  -- Convert to Â°F.
+  -- Convert to °F.
   if self.TDegF then
     temperature=UTILS.CelciusToFarenheit(temperature)
     dewpoint=UTILS.CelciusToFarenheit(dewpoint)
@@ -1901,15 +1901,15 @@ function ATIS:onafterBroadcast(From, Event, To)
   -- Temperature
   if self.TDegF then
     if temperature<0 then
-      subtitle=string.format("Temperature -%s Â°F", TEMPERATURE)
+      subtitle=string.format("Temperature -%s °F", TEMPERATURE)
     else
-      subtitle=string.format("Temperature %s Â°F", TEMPERATURE)
+      subtitle=string.format("Temperature %s °F", TEMPERATURE)
     end
   else
     if temperature<0 then
-      subtitle=string.format("Temperature -%s Â°C", TEMPERATURE)
+      subtitle=string.format("Temperature -%s °C", TEMPERATURE)
     else
-      subtitle=string.format("Temperature %s Â°C", TEMPERATURE)
+      subtitle=string.format("Temperature %s °C", TEMPERATURE)
     end
   end
   local _TEMPERATURE=subtitle
@@ -1930,15 +1930,15 @@ function ATIS:onafterBroadcast(From, Event, To)
   -- Dew point
   if self.TDegF then
     if dewpoint<0 then
-      subtitle=string.format("Dew point -%s Â°F", DEWPOINT)
+      subtitle=string.format("Dew point -%s °F", DEWPOINT)
     else
-      subtitle=string.format("Dew point %s Â°F", DEWPOINT)
+      subtitle=string.format("Dew point %s °F", DEWPOINT)
     end
   else
     if dewpoint<0 then
-      subtitle=string.format("Dew point -%s Â°C", DEWPOINT)
+      subtitle=string.format("Dew point -%s °C", DEWPOINT)
     else
-      subtitle=string.format("Dew point %s Â°C", DEWPOINT)
+      subtitle=string.format("Dew point %s °C", DEWPOINT)
     end
   end
   local _DEWPOINT=subtitle
@@ -2276,8 +2276,8 @@ function ATIS:onafterReport(From, Event, To, Text)
     
     -- Replace other stuff.
     local text=string.gsub(text, "SM", "statute miles")  
-    local text=string.gsub(text, "Â°C", "degrees Celsius")
-    local text=string.gsub(text, "Â°F", "degrees Fahrenheit")  
+    local text=string.gsub(text, "°C", "degrees Celsius")
+    local text=string.gsub(text, "°F", "degrees Fahrenheit")  
     local text=string.gsub(text, "inHg", "inches of Mercury")
     local text=string.gsub(text, "mmHg", "millimeters of Mercury")
     local text=string.gsub(text, "hPa", "hecto Pascals")
@@ -2397,7 +2397,7 @@ end
 --- Get runway from user supplied magnetic heading.
 -- @param #ATIS self
 -- @param #number windfrom Wind direction (from) in degrees.
--- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130Â°.
+-- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130°.
 function ATIS:GetMagneticRunway(windfrom)
 
   local diffmin=nil
@@ -2440,7 +2440,7 @@ function ATIS:GetNavPoint(navpoints, runway, left)
       local navL=self:GetRunwayLR(nav.runway)
       local hdgD=UTILS.HdgDiff(navy,rwyy)
 
-      if hdgD<=15 then --We allow an error of +-15Â° here.
+      if hdgD<=15 then --We allow an error of +-15° here.
         if navL==nil or (navL==true and left==true) or (navL==false and left==false) then
           return nav
         end

@@ -742,9 +742,9 @@ function PSEUDOATC:ReportWeather(GID, UID, position, location)
   local T=position:GetTemperature()
     
   -- Correct unit system.
-  local _T=string.format('%d째F', UTILS.CelciusToFarenheit(T))
+  local _T=string.format('%d캟', UTILS.CelciusToFarenheit(T))
   if settings:IsMetric() then
-    _T=string.format('%d째C', T)
+    _T=string.format('%d캜', T)
   end
   
   -- Message text.  
@@ -757,7 +757,7 @@ function PSEUDOATC:ReportWeather(GID, UID, position, location)
   local Bn,Bd=UTILS.BeaufortScale(Vel)
   
   -- Formatted wind direction.
-  local Ds = string.format('%03d째', Dir)
+  local Ds = string.format('%03d�', Dir)
     
   -- Velocity in player units.
   local Vs=string.format("%.1f knots", UTILS.MpsToKnots(Vel))
@@ -793,7 +793,7 @@ function PSEUDOATC:ReportBR(GID, UID, position, location)
   local range=coord:Get2DDistance(position)
   
   -- Bearing string.
-  local Bs=string.format('%03d째', angle)
+  local Bs=string.format('%03d�', angle)
   
   -- Settings.
   local settings=_DATABASE:GetPlayerSettings(self.group[GID].player[UID].playername) or _SETTINGS --Core.Settings#SETTINGS
