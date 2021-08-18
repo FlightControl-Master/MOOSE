@@ -5,7 +5,7 @@
 -- ## Features:
 -- 
 --   * Track the missiles fired at you and other players, providing bearing and range information of the missiles towards the airplanes.
---   * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range �
+--   * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range °
 --   * Provide alerts when a missile would have killed your aircraft.
 --   * Provide alerts when the missile self destructs.
 --   * Enable / Disable and Configure the Missile Trainer using the various menu options.

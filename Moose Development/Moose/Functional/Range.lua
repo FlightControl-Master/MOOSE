@@ -2009,7 +2009,7 @@ function RANGE:onafterImpact(From, Event, To, result, player)
   end
 
   -- Send message to player.
-  local text=string.format("%s, impact %03d° for %d ft", player.playername, result.radial, UTILS.MetersToFeet(result.distance))
+  local text=string.format("%s, impact %03dÂ° for %d ft", player.playername, result.radial, UTILS.MetersToFeet(result.distance))
   if targetname then
     text=text..string.format(" from bulls of target %s.")
   else
@@ -2364,11 +2364,11 @@ function RANGE:_DisplayMyBombingResults(_unitName)
         local result=_result --#RANGE.BombResult
 
         -- Message with name, weapon and distance.
-        _message = _message.."\n"..string.format("[%d] %d m %03d° - %s - %s - %s hit", i, result.distance, result.radial, result.name, result.weapon, result.quality)
+        _message = _message.."\n"..string.format("[%d] %d m %03dÂ° - %s - %s - %s hit", i, result.distance, result.radial, result.name, result.weapon, result.quality)
 
         -- Store best/first result.
         if _bestMsg == "" then
-          _bestMsg = string.format("%d m %03d° - %s - %s - %s hit", result.distance, result.radial, result.name, result.weapon,  result.quality)
+          _bestMsg = string.format("%d m %03dÂ° - %s - %s - %s hit", result.distance, result.radial, result.name, result.weapon,  result.quality)
         end
 
         -- Best 10 runs only.
@@ -2476,7 +2476,7 @@ function RANGE:_DisplayRangeInfo(_unitname)
       local range=coord:Get2DDistance(position)
 
       -- Bearing string.
-      local Bs=string.format('%03d°', angle)
+      local Bs=string.format('%03dÂ°', angle)
 
       local texthit
       if self.PlayerSettings[playername].flaredirecthits then
@@ -2607,7 +2607,7 @@ function RANGE:_DisplayStrafePits(_unitname)
       end
 
       local mycoord=coord:ToStringA2G(_unit, _settings)
-      _text=_text..string.format("\n- %s: heading %03d°\n%s",_strafepit.name, heading, mycoord)
+      _text=_text..string.format("\n- %s: heading %03dÂ°\n%s",_strafepit.name, heading, mycoord)
     end
 
     self:_DisplayMessageToGroup(_unit,_text, nil, true, true)
@@ -2644,18 +2644,18 @@ function RANGE:_DisplayRangeWeather(_unitname)
       -- Get Beaufort wind scale.
       local Bn,Bd=UTILS.BeaufortScale(Ws)
 
-      local WD=string.format('%03d°', Wd)
-      local Ts=string.format("%d°C",T)
+      local WD=string.format('%03dÂ°', Wd)
+      local Ts=string.format("%dÂ°C",T)
 
       local hPa2inHg=0.0295299830714
       local hPa2mmHg=0.7500615613030
 
       local settings=_DATABASE:GetPlayerSettings(playername) or _SETTINGS --Core.Settings#SETTINGS
-      local tT=string.format("%d°C",T)
+      local tT=string.format("%dÂ°C",T)
       local tW=string.format("%.1f m/s", Ws)
       local tP=string.format("%.1f mmHg", P*hPa2mmHg)
       if settings:IsImperial() then
-        --tT=string.format("%d°F", UTILS.CelciusToFarenheit(T))
+        --tT=string.format("%dÂ°F", UTILS.CelciusToFarenheit(T))
         tW=string.format("%.1f knots", UTILS.MpsToKnots(Ws))
         tP=string.format("%.2f inHg", P*hPa2inHg)
       end

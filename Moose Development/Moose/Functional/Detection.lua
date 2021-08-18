@@ -153,12 +153,12 @@ do -- DETECTION_BASE
   -- Upon a **visual** detection, the higher the unit is during the detecting process, the more likely the detected unit is to be detected properly.
   -- A detection at a 90% alpha angle is the most optimal, a detection at 10% is less and a detection at 0% is less likely to be correct.
   -- 
-  -- A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0° angle.
+  -- A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0Â° angle.
   -- 
   -- For example, if a alpha angle probability factor of 0.7 is given, the extrapolated probabilities of the different angles would look like:
-  -- 0°: 70%, 10°: 75,21%, 20°: 80,26%, 30°: 85%, 40°: 89,28%, 50°: 92,98%, 60°: 95,98%, 70°: 98,19%, 80°: 99,54%, 90°: 100%
+  -- 0Â°: 70%, 10Â°: 75,21%, 20Â°: 80,26%, 30Â°: 85%, 40Â°: 89,28%, 50Â°: 92,98%, 60Â°: 95,98%, 70Â°: 98,19%, 80Â°: 99,54%, 90Â°: 100%
   -- 
-  -- Use the method @{Functional.Detection#DETECTION_BASE.SetAlphaAngleProbability}() to set the probability factor if 0°.
+  -- Use the method @{Functional.Detection#DETECTION_BASE.SetAlphaAngleProbability}() to set the probability factor if 0Â°.
   -- 
   -- ### Cloudy Zones detection probability
   -- 
@@ -1155,10 +1155,10 @@ do -- DETECTION_BASE
     --- Upon a **visual** detection, the higher the unit is during the detecting process, the more likely the detected unit is to be detected properly.
     -- A detection at a 90% alpha angle is the most optimal, a detection at 10% is less and a detection at 0% is less likely to be correct.
     -- 
-    -- A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0° angle.
+    -- A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0Â° angle.
     -- 
     -- For example, if a alpha angle probability factor of 0.7 is given, the extrapolated probabilities of the different angles would look like:
-    -- 0°: 70%, 10°: 75,21%, 20°: 80,26%, 30°: 85%, 40°: 89,28%, 50°: 92,98%, 60°: 95,98%, 70°: 98,19%, 80°: 99,54%, 90°: 100%
+    -- 0Â°: 70%, 10Â°: 75,21%, 20Â°: 80,26%, 30Â°: 85%, 40Â°: 89,28%, 50Â°: 92,98%, 60Â°: 95,98%, 70Â°: 98,19%, 80Â°: 99,54%, 90Â°: 100%
     -- @param #DETECTION_BASE self
     -- @param AlphaAngleProbability The probability factor.
     -- @return #DETECTION_BASE self

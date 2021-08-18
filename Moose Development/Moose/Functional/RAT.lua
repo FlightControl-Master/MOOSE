@@ -5371,7 +5371,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
                
         if spawnonground then
           
-          -- Sh�ps and FARPS seem to have a build in queue.
+          -- Sh°ps and FARPS seem to have a build in queue.
           if spawnonship or spawnonfarp or spawnonrunway or automatic then
             self:T(RAT.id..string.format("RAT group %s spawning at farp, ship or runway %s.", self.alias, departure:GetName()))
 
