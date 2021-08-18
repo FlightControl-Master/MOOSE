@@ -286,7 +286,7 @@ do -- DETECTION MANAGER
       self.CC:MessageToCoalition( Message )
     end
     
-    Message = Message:gsub( "°", " degrees " )
+    Message = Message:gsub( "Â°", " degrees " )
     Message = Message:gsub( "(%d)%.(%d)", "%1 dot %2" )
     
   -- Here we handle the transmission of the voice over.

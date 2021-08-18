@@ -59,7 +59,7 @@
 -- @extends Core.Base#BASE
 
 
---- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - Frédéric Bastiat 
+--- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - FrÃ©dÃ©ric Bastiat 
 -- 
 -- Simple Class for a more intelligent Air Defense System
 -- 
