@@ -92,7 +92,7 @@ function SEAD:New( SEADGroupPrefixes )
   end
   
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
-  self:I("*** SEAD - Started Version 0.2.8")
+  self:I("*** SEAD - Started Version 0.2.9")
   return self
 end
 
@@ -102,7 +102,7 @@ end
 -- @return #SEAD self
 function SEAD:UpdateSet( SEADGroupPrefixes )
 
-  self:F( SEADGroupPrefixes )
+  self:T( SEADGroupPrefixes )
   
   if type( SEADGroupPrefixes ) == 'table' then
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
@@ -120,7 +120,7 @@ end
 -- @param #number range Set the engagement range in percent, e.g. 50
 -- @return self
 function SEAD:SetEngagementRange(range)
-  self:F( { range } )
+  self:T( { range } )
   range = range or 75
   if range < 0 or range > 100 then
     range = 75
@@ -135,7 +135,7 @@ end
   -- @param #string WeaponName
   -- @return #boolean Returns true for a match
   function SEAD:_CheckHarms(WeaponName)
-    self:F( { WeaponName } )
+    self:T( { WeaponName } )
     local hit = false
       for _,_name in pairs (SEAD.Harms) do
         if string.find(WeaponName,_name,1) then hit = true end
@@ -166,7 +166,7 @@ function SEAD:HandleEventShot( EventData )
     local _targetUnit = UNIT:Find(_targetMim) -- Unit name by DCS Object
     if _targetUnit and _targetUnit:IsAlive() then
       local _targetMimgroup = _targetUnit:GetGroup()
-      local _targetMimgroupName = _targetMimgroup:GetName() -- group name
+      _targetMimgroupName = _targetMimgroup:GetName() -- group name
       --local _targetskill =  _DATABASE.Templates.Units[_targetUnit].Template.skill
       self:T( self.SEADGroupPrefixes )
       self:T( _targetMimgroupName )
@@ -174,6 +174,7 @@ function SEAD:HandleEventShot( EventData )
     -- see if we are shot at
     local SEADGroupFound = false
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( self.SEADGroupPrefixes ) do
+      self:T( SEADGroupPrefix )
       if string.find( _targetMimgroupName, SEADGroupPrefix, 1, true ) then
         SEADGroupFound = true
         self:T( '*** SEAD - Group Found' )
