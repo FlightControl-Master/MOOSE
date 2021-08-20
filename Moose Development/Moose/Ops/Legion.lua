@@ -15,7 +15,9 @@
 -- @field #number verbose Verbosity of output.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table missionqueue Mission queue table.
+-- @field #table transportqueue Transport queue.
 -- @field #table cohorts Cohorts of this legion.
+-- @field Ops.Commander#COMMANDER commander Commander of this legion.
 -- @extends Functional.Warehouse#WAREHOUSE
 
 --- Be surprised!
@@ -34,6 +36,7 @@ LEGION = {
   verbose        =     0,
   lid            =   nil,
   missionqueue   =    {},
+  transportqueue =    {},
   cohorts        =    {},
 }
 
@@ -75,6 +78,8 @@ function LEGION:New(WarehouseName, LegionName)
   --                 From State  -->   Event        -->     To State
   self:AddTransition("*",             "MissionRequest",     "*")           -- Add a (mission) request to the warehouse.
   self:AddTransition("*",             "MissionCancel",      "*")           -- Cancel mission.
+  
+  self:AddTransition("*",             "TransportRequest",   "*")           -- Add a (mission) request to the warehouse.
   
   self:AddTransition("*",             "OpsOnMission",       "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
   self:AddTransition("*",             "FlightOnMission",    "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
@@ -138,9 +143,9 @@ function LEGION:SetVerbosity(VerbosityLevel)
   return self
 end
 
---- Add a mission for the airwing. The airwing will pick the best available assets for the mission and lauch it when ready. 
+--- Add a mission for the legion. It will pick the best available assets for the mission and lauch it when ready. 
 -- @param #LEGION self
--- @param Ops.Auftrag#AUFTRAG Mission Mission for this airwing.
+-- @param Ops.Auftrag#AUFTRAG Mission Mission for this legion.
 -- @return #LEGION self
 function LEGION:AddMission(Mission)
 
@@ -183,6 +188,27 @@ function LEGION:RemoveMission(Mission)
 
   return self
 end
+
+--- Add transport assignment to queue. 
+-- @param #LEGION self
+-- @param Ops.OpsTransport#OPSTRANSPORT OpsTransport Transport assignment.
+-- @return #LEGION self
+function LEGION:AddOpsTransport(OpsTransport)
+
+  -- Is not queued at a legion.
+  OpsTransport:Queued()
+
+  -- Add mission to queue.
+  table.insert(self.transportqueue, OpsTransport)
+
+  -- Info text.
+  local text=string.format("Added Transport %s. Starting at %s-%s",
+  tostring(OpsTransport.uid), UTILS.SecondsToClock(OpsTransport.Tstart, true), OpsTransport.Tstop and UTILS.SecondsToClock(OpsTransport.Tstop, true) or "INF")
+  self:T(self.lid..text)
+
+  return self
+end
+
 
 --- Get cohort by name.
 -- @param #LEGION self
@@ -261,6 +287,7 @@ function LEGION:_CheckMissions()
   end
 
 end
+
 --- Get next mission.
 -- @param #LEGION self
 -- @return Ops.Auftrag#AUFTRAG Next mission or `#nil`.
@@ -301,7 +328,7 @@ function LEGION:_GetNextMission()
     -- Firstly, check if mission is due?
     if mission:IsQueued(self) and mission:IsReadyToGo() and (mission.importance==nil or mission.importance<=vip) then
 
-      -- Check if airwing can do the mission and gather required assets.
+      -- Check if legion can do the mission and gather required assets.
       local can, assets=self:CanMission(mission)
 
       -- Check that mission is still scheduled, time has passed and enough assets are available.
@@ -388,6 +415,72 @@ function LEGION:_GetNextMission()
     end -- mission due?
   end -- mission loop
 
+  return nil
+end
+
+--- Get next transport.
+-- @param #LEGION self
+-- @return Ops.OpsTransport#OPSTRANSPORT Next transport or `#nil`.
+function LEGION:_GetNextTransport()
+
+  -- Number of missions.
+  local Ntransports=#self.transportqueue
+
+  -- Treat special cases.
+  if Ntransports==0 then
+    return nil
+  end
+
+
+  local function getAssets(n)
+    local assets={}
+  
+    -- Loop over assets.
+    for _,_cohort in pairs(self.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      
+      if cohort:CheckMissionCapability({AUFTRAG.Type.OPSTRANSPORT}, cohort.missiontypes) then
+      
+        for _,_asset in pairs(cohort.assets) do  
+          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+                  
+          -- Check if asset is currently on a mission (STARTED or QUEUED).
+          if not asset.spawned then
+          
+            -- Add to assets.    
+            table.insert(assets, asset)
+            
+            if #assets==n then
+              return assets
+            end
+          end
+          
+        end
+        
+      end
+    end
+  end
+
+  
+  -- Look for first task that is not accomplished.
+  for _,_transport in pairs(self.transportqueue) do
+    local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+
+    -- Check if transport is still queued and ready.
+    if transport:IsQueued() and transport:IsReadyToGo() then
+    
+      local assets=getAssets(1)
+
+      if #assets>0 then
+        transport.assets=assets  
+        return transport    
+      end
+       
+    end
+    
+  end
+  
+  
   return nil
 end
 
@@ -518,7 +611,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
   Mission:Requested()
   
   -- Set legion status. Ensures that it is not considered in the next selection.
-  Mission:SetLegionStatus(self, AUFTRAG.Status.REQUESTED)  
+  Mission:SetLegionStatus(self, AUFTRAG.Status.REQUESTED)
 
   ---
   -- Some assets might already be spawned and even on a different mission (orbit).
@@ -556,7 +649,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
     end
   end
 
-  -- Add request to airwing warehouse.
+  -- Add request to legion warehouse.
   if #Assetlist>0 then
 
     --local text=string.format("Requesting assets for mission %s:", Mission.name)
@@ -572,12 +665,58 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
 
     end
 
-    -- Add request to airwing warehouse.
-    -- TODO: better Assignment string.
-    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, nil, nil, Mission.prio, tostring(Mission.auftragsnummer))
+    -- TODO: Get/set functions for assignment string.
+    local assignment=string.format("Mission-%d", Mission.auftragsnummer)
+
+    -- Add request to legion warehouse.
+    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, nil, nil, Mission.prio, assignment)
 
     -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
     Mission.requestID[self.alias]=self.queueid
+  end
+
+end
+
+--- On after "MissionRequest" event. Performs a self request to the warehouse for the mission assets. Sets mission status to REQUESTED.
+-- @param #LEGION self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsTransport#OPSTRANSPORT Opstransport The requested mission.
+function LEGION:onafterTransportRequest(From, Event, To, OpsTransport)
+
+  -- Set mission status from QUEUED to REQUESTED.
+  OpsTransport:Requested()
+  
+  -- Set legion status. Ensures that it is not considered in the next selection.
+  --Mission:SetLegionStatus(self, AUFTRAG.Status.REQUESTED)
+
+  -- Add request to legion warehouse.
+  if #OpsTransport.assets>0 then
+
+    --local text=string.format("Requesting assets for mission %s:", Mission.name)
+    for i,_asset in pairs(OpsTransport.assets) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+
+      -- Set asset to requested! Important so that new requests do not use this asset!
+      asset.requested=true
+      
+      -- Check max required transports.
+      if i==1 then
+        break
+      end
+      
+    end
+    
+    -- TODO: Get/set functions for assignment string.
+    local assignment=string.format("Transport-%d", OpsTransport.uid)
+
+    -- Add request to legion warehouse.
+    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, OpsTransport.assets, #OpsTransport.assets, nil, nil, OpsTransport.prio, assignment)
+
+    -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
+    OpsTransport.requestID=OpsTransport.requestID or {}
+    OpsTransport.requestID[self.alias]=self.queueid
   end
 
 end
@@ -615,35 +754,6 @@ function LEGION:onafterMissionCancel(From, Event, To, Mission)
       
     end      
   end
-
-
-  --[[
-  if Mission:IsPlanned() or Mission:IsQueued() or Mission:IsRequested() or Ngroups == 0 then
-
-    Mission:Done()
-
-  else
-
-    for _,_asset in pairs(Mission.assets) do
-      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-      
-      -- Asset should belong to this legion.
-      if asset.wid==self.uid then
-
-        local opsgroup=asset.flightgroup
-  
-        if opsgroup then
-          opsgroup:MissionCancel(Mission)
-        end
-  
-        -- Not requested any more (if it was).
-        asset.requested=nil
-        
-      end      
-    end
-
-  end
-  ]]
 
   -- Remove queued request (if any).
   if Mission.requestID[self.alias] then
@@ -683,7 +793,7 @@ end
 -- @param #string assignment The (optional) assignment for the asset.
 function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
 
-  -- Call parent warehouse function first.
+  -- Call parent WAREHOUSE function first.
   self:GetParent(self, LEGION).onafterNewAsset(self, From, Event, To, asset, assignment)
 
   -- Debug text.
@@ -697,6 +807,10 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
   if cohort then
 
     if asset.assignment==assignment then
+    
+      ---
+      -- Asset is added to the COHORT for the first time
+      ---
 
       local nunits=#asset.template.units
 
@@ -750,7 +864,11 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
       --asset.terminalType=AIRBASE.TerminalType.OpenBig
     else
 
-      --env.info("FF cohort asset returned")
+      ---
+      -- Asset is returned to the COHORT
+      ---
+      
+      -- Trigger event.
       self:AssetReturned(cohort, asset)
 
     end
@@ -758,7 +876,7 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
   end
 end
 
---- On after "AssetReturned" event. Triggered when an asset group returned to its airwing.
+--- On after "AssetReturned" event. Triggered when an asset group returned to its legion.
 -- @param #LEGION self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -859,41 +977,66 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
       flightgroup:SetFuelLowRefuel(cohort.fuellowRefuel)
     end
 
-    ---
-    -- Mission
-    ---
+    -- Assignment.
+    local assignment=request.assignment
+    
+    if string.find(assignment, "Mission-") then
 
-    -- Get Mission (if any).
-    local mission=self:GetMissionByID(request.assignment)
-
-    -- Add mission to flightgroup queue.
-    if mission then
-
-      if Tacan then
-        --mission:SetTACAN(Tacan, Morse, UnitName, Band)
-      end
-
+      ---
+      -- Mission
+      ---
+      
+      local uid=UTILS.Split(assignment, "-")[2]
+  
+      -- Get Mission (if any).
+      local mission=self:GetMissionByID(uid)
+  
       -- Add mission to flightgroup queue.
-      asset.flightgroup:AddMission(mission)
-
-      -- Trigger event.
-      self:__OpsOnMission(5, flightgroup, mission)
-
-    else
-
-      if Tacan then
-        --flightgroup:SwitchTACAN(Tacan, Morse, UnitName, Band)
+      if mission then
+  
+        if Tacan then
+          --mission:SetTACAN(Tacan, Morse, UnitName, Band)
+        end
+  
+        -- Add mission to flightgroup queue.
+        flightgroup:AddMission(mission)
+          
+        -- Trigger event.
+        self:__OpsOnMission(5, flightgroup, mission)
+  
+      else
+  
+        if Tacan then
+          --flightgroup:SwitchTACAN(Tacan, Morse, UnitName, Band)
+        end
+  
       end
+  
+      -- Add group to the detection set of the CHIEF (INTEL).
+      if self.commander and self.commander.chief then
+        self.commander.chief.detectionset:AddGroup(asset.flightgroup.group)
+      end
+      
+    elseif string.find(assignment, "Transport-") then
+    
+      ---
+      -- Transport
+      ---
+      
+      local uid=UTILS.Split(assignment, "-")[2] 
 
+            -- Get Mission (if any).
+      local transport=self:GetTransportByID(uid)
+  
+      -- Add mission to flightgroup queue.
+      if transport then
+        flightgroup:AddOpsTransport(transport)
+      end
+  
     end
-
-    -- Add group to the detection set of the WINGCOMMANDER.
-    if self.wingcommander and self.wingcommander.chief then
-      self.wingcommander.chief.detectionset:AddGroup(asset.flightgroup.group)
-    end
-
+    
   end
-
+  
 end
 
 --- On after "AssetDead" event triggered when an asset group died.
@@ -907,11 +1050,11 @@ function LEGION:onafterAssetDead(From, Event, To, asset, request)
 
   -- Call parent warehouse function first.
   self:GetParent(self, LEGION).onafterAssetDead(self, From, Event, To, asset, request)
-
-  -- Add group to the detection set of the WINGCOMMANDER.
-  if self.wingcommander and self.wingcommander.chief then
-    self.wingcommander.chief.detectionset:RemoveGroupsByName({asset.spawngroupname})
-  end
+  
+  -- Remove group from the detection set of the CHIEF (INTEL).
+  if self.commander and self.commander.chief then
+    self.commander.chief.detectionset:RemoveGroupsByName({asset.spawngroupname})
+  end  
 
   -- Remove asset from mission is done via Mission:AssetDead() call from flightgroup onafterFlightDead function
   -- Remove asset from squadron same
@@ -1203,7 +1346,7 @@ function LEGION:CountMissionsInQueue(MissionTypes)
   return N
 end
 
---- Count total number of assets that are in the warehouse stock (not spawned).
+--- Count total number of assets of the legion.
 -- @param #LEGION self
 -- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
 -- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
@@ -1216,6 +1359,54 @@ function LEGION:CountAssets(InStock, MissionTypes, Attributes)
   for _,_cohort in pairs(self.cohorts) do
     local cohort=_cohort --Ops.Cohort#COHORT
     N=N+cohort:CountAssets(InStock, MissionTypes, Attributes)
+  end
+
+  return N
+end
+
+--- Count total number of assets in LEGION warehouse stock that also have a payload.
+-- @param #LEGION self
+-- @param #boolean Payloads (Optional) Specifc payloads to consider. Default all.
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return #number Amount of asset groups in stock.
+function LEGION:CountAssetsWithPayloadsInStock(Payloads, MissionTypes, Attributes)
+
+  -- Total number counted.
+  local N=0
+  
+  -- Number of payloads in stock per aircraft type.
+  local Npayloads={}
+  
+  -- First get payloads for aircraft types of squadrons.
+  for _,_cohort in pairs(self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    if Npayloads[cohort.aircrafttype]==nil then    
+      Npayloads[cohort.aircrafttype]=self:CountPayloadsInStock(MissionTypes, cohort.aircrafttype, Payloads)
+      env.info(string.format("FF got Npayloads=%d for type=%s",Npayloads[cohort.aircrafttype], cohort.aircrafttype))
+    end
+  end
+
+  for _,_cohort in pairs(self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    
+    -- Number of assets in stock.
+    local n=cohort:CountAssets(true, MissionTypes, Attributes)
+    
+    -- Number of payloads.
+    local p=Npayloads[cohort.aircrafttype] or 0
+    
+    -- Only the smaller number of assets or paylods is really available.        
+    local m=math.min(n, p)
+    
+    env.info("FF n="..n)
+    env.info("FF p="..p)
+    
+    -- Add up what we have. Could also be zero.
+    N=N+m
+    
+    -- Reduce number of available payloads.
+    Npayloads[cohort.aircrafttype]=Npayloads[cohort.aircrafttype]-m
   end
 
   return N
@@ -1241,19 +1432,23 @@ function LEGION:CountAssetsOnMission(MissionTypes, Cohort)
 
       for _,_asset in pairs(mission.assets or {}) do
         local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+        
+        -- Ensure asset belongs to this letion.
+        if asset.wid==self.uid then
 
-        if Cohort==nil or Cohort.name==asset.squadname then
-
-          local request, isqueued=self:GetRequestByID(mission.requestID[self.alias])
-
-          if isqueued then
-            Nq=Nq+1
-          else
-            Np=Np+1
+          if Cohort==nil or Cohort.name==asset.squadname then
+  
+            local request, isqueued=self:GetRequestByID(mission.requestID[self.alias])
+  
+            if isqueued then
+              Nq=Nq+1
+            else
+              Np=Np+1
+            end
+  
           end
-
+          
         end
-
       end
     end
   end
@@ -1279,8 +1474,13 @@ function LEGION:GetAssetsOnMission(MissionTypes)
 
       for _,_asset in pairs(mission.assets or {}) do
         local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+        
+        -- Ensure asset belongs to this legion.
+        if asset.wid==self.uid then
 
-        table.insert(assets, asset)
+          table.insert(assets, asset)
+          
+        end
 
       end
     end
@@ -1289,7 +1489,7 @@ function LEGION:GetAssetsOnMission(MissionTypes)
   return assets
 end
 
---- Get the aircraft types of this airwing.
+--- Get the unit types of this legion. These are the unit types of all assigned cohorts.
 -- @param #LEGION self
 -- @param #boolean onlyactive Count only the active ones.
 -- @param #table cohorts Table of cohorts. Default all.
@@ -1332,24 +1532,24 @@ function LEGION:CanMission(Mission)
   -- Assume we CAN and NO assets are available.
   local Can=true
   local Assets={}
-
+  
   -- Squadrons for the job. If user assigned to mission or simply all.
   local cohorts=Mission.squadrons or self.cohorts
   
-  local Nassets=Mission.nassets or 1
-  if Mission.Nassets and Mission.Nassets[self.alias] then
-    Nassets=Mission.Nassets[self.alias]
-  end
+  -- Number of required assets.
+  local Nassets=Mission:GetRequiredAssets(self)
 
   -- Get aircraft unit types for the job.
   local unittypes=self:GetAircraftTypes(true, cohorts)
 
   -- Count all payloads in stock.
   if self:IsAirwing() then
+  
+    -- Number of payloads in stock.
     local Npayloads=self:CountPayloadsInStock(Mission.type, unittypes, Mission.payloads)
   
     if Npayloads<Nassets then
-      self:T(self.lid..string.format("INFO: Not enough PAYLOADS available! Got %d but need at least %d", Npayloads, Mission.nassets))
+      self:T(self.lid..string.format("INFO: Not enough PAYLOADS available! Got %d but need at least %d", Npayloads, Nassets))
       return false, Assets
     end
   end
@@ -1486,6 +1686,24 @@ function LEGION:GetMissionByID(mid)
 
     if mission.auftragsnummer==tonumber(mid) then
       return mission
+    end
+
+  end
+
+  return nil
+end
+
+--- Returns the mission for a given ID.
+-- @param #LEGION self
+-- @param #number uid Transport UID.
+-- @return Ops.OpsTransport#OPSTRANSPORT Transport assignment.
+function LEGION:GetTransportByID(uid)
+
+  for _,_transport in pairs(self.transportqueue) do
+    local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+
+    if transport.uid==tonumber(uid) then
+      return transport
     end
 
   end

@@ -14,7 +14,6 @@
 --- OPSGROUP class.
 -- @type OPSGROUP
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #number verbose Verbosity level. 0=silent.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string groupname Name of the group.
@@ -60,9 +59,9 @@
 -- @field #number speedWp Speed to the next waypoint in m/s.
 -- @field #boolean passedfinalwp Group has passed the final waypoint.
 -- @field #number wpcounter Running number counting waypoints.
--- @field #boolean respawning Group is being respawned.
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
+-- @field Core.Timer#TIMER timerStatus Timer for status update.
 -- @field Core.Timer#TIMER timerCheckZone Timer for check zones.
 -- @field Core.Timer#TIMER timerQueueUpdate Timer for queue updates.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
@@ -145,7 +144,6 @@
 -- @field #OPSGROUP
 OPSGROUP = {
   ClassName          = "OPSGROUP",
-  Debug              = false,
   verbose            =     0,
   lid                =   nil,
   groupname          =   nil,
@@ -169,7 +167,6 @@ OPSGROUP = {
   checkzones         =   nil,
   inzones            =   nil,
   groupinitialized   =   nil,
-  respawning         =   nil,
   wpcounter          =     1,
   radio              =    {},
   option             =    {},
@@ -553,7 +550,7 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "InUtero",          "InUtero")     -- Deactivated group goes back to mummy.
   self:AddTransition("*",             "Stop",             "Stopped")     -- Stop FSM.
 
-  self:AddTransition("*",             "Status",           "*")           -- Status update.
+  --self:AddTransition("*",             "Status",           "*")           -- Status update.
 
   self:AddTransition("*",             "Destroyed",        "*")           -- The whole group is dead.
   self:AddTransition("*",             "Damaged",          "*")           -- Someone in the group took damage.
@@ -580,6 +577,11 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "OutOfRockets",      "*")          -- Group is out of rockets.
   self:AddTransition("*",             "OutOfBombs",        "*")          -- Group is out of bombs.
   self:AddTransition("*",             "OutOfMissiles",     "*")          -- Group is out of missiles.
+  self:AddTransition("*",             "OutOfTorpedos",     "*")          -- Group is out of torpedos.
+  
+  self:AddTransition("*",             "OutOfMissilesAA",   "*")          -- Group is out of A2A (air) missiles.
+  self:AddTransition("*",             "OutOfMissilesAG",   "*")          -- Group is out of A2G (ground) missiles.
+  self:AddTransition("*",             "OutOfMissilesAS",   "*")          -- Group is out of A2S (ship) missiles.
 
   self:AddTransition("*",             "EnterZone",        "*")           -- Group entered a certain zone.
   self:AddTransition("*",             "LeaveZone",        "*")           -- Group leaves a certain zone.
@@ -2127,16 +2129,21 @@ end
 -- @return #number Next waypoint index.
 function OPSGROUP:GetWaypointIndexNext(cyclic, i)
 
+  -- If not specified, we take the adinititum value.
   if cyclic==nil then
     cyclic=self.adinfinitum
   end
 
+  -- Total number of waypoints.
   local N=#self.waypoints
 
+  -- Default is currentwp.
   i=i or self.currentwp
 
+  -- If no next waypoint exists, because the final waypoint was reached, we return the last waypoint.
   local n=math.min(i+1, N)
 
+  -- If last waypoint was reached, the first waypoint is the next in line.
   if cyclic and i==N then
     n=1
   end
@@ -2388,7 +2395,7 @@ function OPSGROUP:RemoveWaypoint(wpindex)
       -- TODO: patrol adinfinitum.
 
       if self.currentwp>=n then
-        self.passedfinalwp=true
+        self:_PassedFinalWaypoint(true, "Removed FUTURE waypoint")
       end
 
       self:_CheckGroupDone(1)
@@ -3088,9 +3095,9 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- New waypoint.
     if self.isFlightgroup then
       FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
-    elseif self.isNavygroup then
-      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
     elseif self.isArmygroup then
+      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+    elseif self.isNavygroup then
       NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
     end
 
@@ -3119,9 +3126,9 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- New waypoint.
     if self.isFlightgroup then
       FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
-    elseif self.isNavygroup then
-      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
     elseif self.isArmygroup then
+      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+    elseif self.isNavygroup then
       NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
     end
 
@@ -3464,10 +3471,28 @@ function OPSGROUP:_GetNextMission()
   -- Look for first mission that is SCHEDULED.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    -- Local transport.
+    local transport=true
+    if mission.opstransport then
+      local cargos=mission.opstransport:GetCargoOpsGroups(false) or {}
+      for _,_opsgroup in pairs(cargos) do
+        local opscargo=_opsgroup --Ops.OpsGroup#OPSGROUP
+        if opscargo.groupname==self.groupname then
+          transport=false
+          break
+        end
+      end
+    end
+    
+    -- TODO: One could think of opsgroup specific start conditions. A legion also checks if "ready" but it can be other criteria for the group to actually start the mission.
+    --       Good example is the above transport. The legion should start the mission but the group should only start after the transport is finished.
 
-    if mission:GetGroupStatus(self)==AUFTRAG.Status.SCHEDULED and (mission:IsReadyToGo() or self.legion) and (mission.importance==nil or mission.importance<=vip) then
+    -- Check necessary conditions.
+    if mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.SCHEDULED and (mission:IsReadyToGo() or self.legion) and (mission.importance==nil or mission.importance<=vip)  and transport then
       return mission
     end
+    
   end
 
   return nil
@@ -3817,6 +3842,11 @@ function OPSGROUP:RouteToMission(mission, delay)
     if self:IsDead() or self:IsStopped() then
       return
     end
+    
+    if mission.type==AUFTRAG.Type.OPSTRANSPORT then
+      self:AddOpsTransport(mission.opstransport)
+      return
+    end
 
     -- ID of current waypoint.
     local uid=self:GetWaypointCurrent().uid
@@ -4110,9 +4140,9 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
     if self.isFlightgroup then
       FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
-    elseif self.isNavygroup then
-      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
     elseif self.isArmygroup then
+      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+    elseif self.isNavygroup then
       NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
     end
     
@@ -4140,9 +4170,9 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   
       if self.isFlightgroup then
         FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
-      elseif self.isNavygroup then
-        ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
       elseif self.isArmygroup then
+        ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+      elseif self.isNavygroup then
         NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
       end
       
@@ -4158,8 +4188,8 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       if wpindex==nil or wpindex==#self.waypoints then
   
         -- Set switch to true.
-        if not self.adinfinitum or #self.waypoints<=1 then
-          self.passedfinalwp=true
+        if not self.adinfinitum or #self.waypoints<=1 then        
+          self:_PassedFinalWaypoint(true, "Passing waypoint and NOT adinfinitum and #self.waypoints<=1")
         end
   
       end
@@ -4182,7 +4212,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
       -- Set switch to true.
       if not self.adinfinitum or #self.waypoints<=1 then
-        self.passedfinalwp=true
+        self:_PassedFinalWaypoint(true, "PassingWaypoint: wpindex=nil or wpindex=#self.waypoints")
       end
 
     end
@@ -4846,6 +4876,22 @@ function OPSGROUP:_UpdateLaser()
 
 end
 
+--- On before "ElementSpawned" event. Check that element is not in status spawned already.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+function OPSGROUP:onbeforeElementSpawned(From, Event, To, Element)
+
+  if Element and Element.status==OPSGROUP.ElementStatus.SPAWNED then
+    self:I(self.lid..string.format("FF element %s is already spawned", Element.name))
+    return false
+  end
+
+  return true
+end
+
 --- On after "ElementInUtero" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -5254,6 +5300,7 @@ function OPSGROUP:onafterStop(From, Event, To)
   -- Stop check timers.
   self.timerCheckZone:Stop()
   self.timerQueueUpdate:Stop()
+  self.timerStatus:Stop()
 
   -- Stop FSM scheduler.
   self.CallScheduler:Clear()
@@ -7518,7 +7565,16 @@ function OPSGROUP:_CheckAmmoStatus()
     if ammo.MissilesAS and self.ammo.MissilesAS>0 and not self.outofMissilesAS then
       self.outofMissilesAS=true
       self:OutOfMissilesAS()    
-    end    
+    end
+    
+    -- Torpedos.
+    if self.outofTorpedos and ammo.Torpedos>0 then
+      self.outofTorpedos=false
+    end
+    if ammo.Torpedos==0 and self.ammo.Torpedos>0 and not self.outofTorpedos then
+      self.outofTorpedos=true
+      self:OutOfTorpedos()
+    end     
 
 
     -- Check if group is engaging.
@@ -7647,7 +7703,7 @@ function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
 
   -- Now we obviously did not pass the final waypoint.
   if self.currentwp and wpnumber>self.currentwp then  
-    self.passedfinalwp=false
+    self:_PassedFinalWaypoint(false, "_AddWaypoint self.currentwp and wpnumber>self.currentwp")
   end
   
 end
@@ -7733,7 +7789,7 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
 
     -- Check if only 1 wp?
     if #self.waypoints==1 then
-      self.passedfinalwp=true
+      self:_PassedFinalWaypoint(true, "_InitWaypoints: #self.waypoints==1")
     end
   
   else
@@ -7825,40 +7881,61 @@ end
 --@param #number uid Waypoint UID.
 function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
 
+  -- Debug message.
+  local text=string.format("Group passing waypoint uid=%d", uid)
+  opsgroup:T(opsgroup.lid..text)
+
   -- Get waypoint data.
   local waypoint=opsgroup:GetWaypointByID(uid)
 
   if waypoint then
+  
+    -- Increase passing counter.
+    waypoint.npassed=waypoint.npassed+1
 
     -- Current wp.
     local currentwp=opsgroup.currentwp
 
     -- Get the current waypoint index.
     opsgroup.currentwp=opsgroup:GetWaypointIndex(uid)
+    
+    local wpistemp=waypoint.temp or waypoint.detour or waypoint.astar
+    
+    -- Remove temp waypoints.
+    if wpistemp then
+      opsgroup:RemoveWaypointByID(uid)    
+    end
 
-    -- Set expected speed and formation from the next WP.
+    -- Get next waypoint. Tricky part is that if 
     local wpnext=opsgroup:GetWaypointNext()
-    if wpnext then
+    
+    if wpnext and (opsgroup.currentwp<#opsgroup.waypoints or opsgroup.adinfinitum or wpistemp) then
+    
+      opsgroup:I(opsgroup.lid..string.format("Next waypoint UID=%d index=%d", wpnext.uid, opsgroup:GetWaypointIndex(wpnext.uid)))
 
       -- Set formation.
       if opsgroup.isGround then
         opsgroup.formation=wpnext.action
       end
 
-      -- Set speed.
+      -- Set speed to next wp.
       opsgroup.speed=wpnext.speed
-
+      
+      if opsgroup.speed<0.01 then
+        opsgroup.speed=UTILS.KmphToMps(opsgroup.speedCruise)
+      end
+      
+    else
+    
+      env.info(opsgroup.lid.."FF 300")
+    
+      -- Set passed final waypoint.
+      opsgroup:_PassedFinalWaypoint(true, "_PassingWaypoint No next Waypoint found")
+      
     end
-
-    -- Debug message.
-    local text=string.format("Group passing waypoint uid=%d", uid)
-    opsgroup:T(opsgroup.lid..text)
 
     -- Trigger PassingWaypoint event.
     if waypoint.temp then
-
-      -- Remove temp waypoint.
-      opsgroup:RemoveWaypointByID(uid)
 
       if opsgroup:IsNavygroup() or opsgroup:IsArmygroup() then
         --TODO: not sure if this works with FLIGHTGROUPS
@@ -7867,16 +7944,10 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
 
     elseif waypoint.astar then
 
-      -- Remove Astar waypoint.
-      opsgroup:RemoveWaypointByID(uid)
-
       -- Cruise.
       opsgroup:Cruise()
 
     elseif waypoint.detour then
-
-      -- Remove detour waypoint.
-      opsgroup:RemoveWaypointByID(uid)
 
       if opsgroup:IsRearming() then
 
@@ -7890,6 +7961,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
         
       elseif opsgroup:IsReturning() then
       
+        -- Trigger Returned event.
         opsgroup:Returned()
 
       elseif opsgroup:IsPickingup() then
@@ -7964,9 +8036,6 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
       if opsgroup.ispathfinding then
         opsgroup.ispathfinding=false
       end
-
-      -- Increase passing counter.
-      waypoint.npassed=waypoint.npassed+1
 
       -- Call event function.
       opsgroup:PassingWaypoint(waypoint)
@@ -9398,7 +9467,7 @@ function OPSGROUP:GetAmmoUnit(unit, display)
           nmissilesAS=nmissilesAS+Nammo
         elseif MissileCategory==Weapon.MissileCategory.BM then
           nmissiles=nmissiles+Nammo
-          nmissilesAG=nmissilesAG+Nammo
+          nmissilesBM=nmissilesBM+Nammo
         elseif MissileCategory==Weapon.MissileCategory.CRUISE then
           nmissiles=nmissiles+Nammo
           nmissilesCR=nmissilesCR+Nammo
@@ -9476,6 +9545,20 @@ function OPSGROUP:_MissileCategoryName(categorynumber)
   end
   return cat
 end
+
+--- Set passed final waypoint value.
+-- @param #OPSGROUP self
+-- @param #boolean final If `true`, final waypoint was passed.
+-- @param #string comment Some comment as to why the final waypoint was passed.
+function OPSGROUP:_PassedFinalWaypoint(final, comment)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Passed final waypoint=%s [from %s]: comment \"%s\"", tostring(final), tostring(self.passedfinalwp), tostring(comment)))
+
+  -- Set value.
+  self.passedfinalwp=final
+end
+
 
 --- Get coordinate from an object.
 -- @param #OPSGROUP self

@@ -230,13 +230,13 @@ function FLIGHTGROUP:New(group)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->      To State
-  self:AddTransition("*",             "LandAtAirbase",     "Inbound")     -- Helo group is ordered to land at a specific point.
-  self:AddTransition("*",             "RTB",               "Inbound")     -- Group is returning to destination base.
+  self:AddTransition("*",             "LandAtAirbase",     "Inbound")     -- Group is ordered to land at an airbase.
+  self:AddTransition("*",             "RTB",               "Inbound")     -- Group is returning to (home/destination) airbase.
   self:AddTransition("*",             "RTZ",               "Inbound")     -- Group is returning to destination zone. Not implemented yet!
   self:AddTransition("Inbound",       "Holding",           "Holding")     -- Group is in holding pattern.
 
   self:AddTransition("*",             "Refuel",            "Going4Fuel")  -- Group is send to refuel at a tanker.
-  self:AddTransition("Going4Fuel",    "Refueled",          "Airborne")    -- Group finished refueling.
+  self:AddTransition("Going4Fuel",    "Refueled",          "Cruising")    -- Group finished refueling.
 
   self:AddTransition("*",             "LandAt",            "LandingAt")   -- Helo group is ordered to land at a specific point.
   self:AddTransition("LandingAt",     "LandedAt",          "LandedAt")    -- Helo group landed landed at a specific point.
@@ -244,12 +244,8 @@ function FLIGHTGROUP:New(group)
   self:AddTransition("*",             "FuelLow",           "*")          -- Fuel state of group is low. Default ~25%.
   self:AddTransition("*",             "FuelCritical",      "*")          -- Fuel state of group is critical. Default ~10%.
 
-  self:AddTransition("*",             "OutOfMissilesAA",   "*")          -- Group is out of A2A (air) missiles.
-  self:AddTransition("*",             "OutOfMissilesAG",   "*")          -- Group is out of A2G (ground) missiles.
-  self:AddTransition("*",             "OutOfMissilesAS",   "*")          -- Group is out of A2S (ship) missiles.
-
-  self:AddTransition("Airborne",      "EngageTarget",     "Engaging")    -- Engage targets.
-  self:AddTransition("Engaging",      "Disengage",        "Airborne")    -- Engagement over.
+  self:AddTransition("Cruising",      "EngageTarget",     "Engaging")    -- Engage targets.
+  self:AddTransition("Engaging",      "Disengage",        "Cruising")    -- Engagement over.
 
   self:AddTransition("*",             "ElementParking",   "*")           -- An element is parking.
   self:AddTransition("*",             "ElementEngineOn",  "*")           -- An element spooled up the engines.
@@ -305,7 +301,7 @@ function FLIGHTGROUP:New(group)
   self:_InitGroup()
 
   -- Start the status monitoring.
-  self:__Status(-1)
+  self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
 
   -- Start queue update timer.
   self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(2, 5)
@@ -662,6 +658,15 @@ function FLIGHTGROUP:IsFuelCritical()
   return self.fuelcritical
 end
 
+--- Check if flight is good on fuel (not below low or even critical state).
+-- @param #FLIGHTGROUP self
+-- @return #boolean If true, flight is good on fuel.
+function FLIGHTGROUP:IsFuelGood()
+  local isgood=not (self.fuellow or self.fuelcritical)
+  return isgood
+end
+
+
 --- Check if flight can do air-to-ground tasks.
 -- @param #FLIGHTGROUP self
 -- @param #boolean ExcludeGuns If true, exclude gun
@@ -830,15 +835,14 @@ function FLIGHTGROUP:onbeforeStatus(From, Event, To)
   return true
 end
 
---- On after "Status" event.
+--- Status update.
 -- @param #FLIGHTGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function FLIGHTGROUP:onafterStatus(From, Event, To)
+function FLIGHTGROUP:Status()
 
   -- FSM state.
   local fsmstate=self:GetState()
+  
+  env.info(self.lid.."FF status="..fsmstate)
 
   -- Update position.
   self:_UpdatePosition()
@@ -894,8 +898,8 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
     local fc=self.flightcontrol and self.flightcontrol.airbasename or "N/A"
     local curr=self.currbase and self.currbase:GetName() or "N/A"
 
-    local text=string.format("Status %s [%d/%d]: Tasks=%d, Missions=%s, Waypoint=%d/%d, Detected=%d, Home=%s, Destination=%s, Current=%s, FC=%s",
-    fsmstate, #self.elements, #self.elements, nTaskTot, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0,
+    local text=string.format("Status %s [%d/%d]: Tasks=%d, Missions=%s, Waypoint=%d/%d [%s], Detected=%d, Home=%s, Destination=%s, Current=%s, FC=%s",
+    fsmstate, #self.elements, #self.elements, nTaskTot, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0, tostring(self.passedfinalwp),
     self.detectedunits:Count(), home, dest, curr, fc)
     self:I(self.lid..text)
 
@@ -1024,33 +1028,6 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
       self:FuelCritical()
     end
 
-    -- This causes severe problems as OutOfMissiles is called over and over again leading to many RTB calls.
-    if false then
-
-    -- Out of AA Missiles? CAP, GCICAP, INTERCEPT
-    local CurrIsCap = false
-    -- Out of AG Missiles? BAI, SEAD, CAS, STRIKE
-    local CurrIsA2G = false
-    -- Check AUFTRAG Type
-    local CurrAuftrag = self:GetMissionCurrent()
-    if CurrAuftrag then
-      local CurrAuftragType = CurrAuftrag:GetType()
-      if CurrAuftragType == "CAP" or CurrAuftragType == "GCICAP" or CurrAuftragType == "INTERCEPT" then CurrIsCap = true end
-      if CurrAuftragType == "BAI" or CurrAuftragType == "CAS" or CurrAuftragType == "SEAD" or CurrAuftragType == "STRIKE"  then CurrIsA2G = true end
-    end
-
-    -- Check A2A
-    if (not self:CanAirToAir(true)) and CurrIsCap then
-      self:OutOfMissilesAA()
-    end
-
-    -- Check A2G
-    if (not self:CanAirToGround(false)) and CurrIsA2G then
-      self:OutOfMissilesAG()
-    end
-    
-    end
-
   end
 
   ---
@@ -1065,7 +1042,7 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
   ---
   -- Engage Detected Targets
   ---
-  if self:IsAirborne() and self.detectionOn and self.engagedetectedOn and not (self.fuellow or self.fuelcritical) then
+  if self:IsAirborne() and self:IsFuelGood() and self.detectionOn and self.engagedetectedOn then
 
     -- Target.
     local targetgroup=nil --Wrapper.Group#GROUP
@@ -1153,11 +1130,6 @@ function FLIGHTGROUP:onafterStatus(From, Event, To)
 
   self:_CheckCargoTransport()
 
-
-  -- Next check in ~30 seconds.
-  if not self:IsStopped() then
-    self:__Status(-30)
-  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1657,9 +1629,6 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB,   true)   -- Does not seem to work. AI still used the after burner.
     self:GetGroup():SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
     --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)
-
-    -- Update status.
-    self:__Status(-0.1)
 
     -- Update route.
     self:__UpdateRoute(-0.5)
@@ -2338,7 +2307,7 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
     end
 
     -- Only if fuel is not low or critical.
-    if not (self:IsFuelLow() or self:IsFuelCritical()) then
+    if self:IsFuelGood() then
 
       -- Check if there are remaining tasks.
       local Ntot,Nsched, Nwp=self:CountRemainingTasks()
@@ -2442,7 +2411,7 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   self.currbase=airbase
   
   -- Passed final waypoint!
-  self.passedfinalwp=true
+  self:_PassedFinalWaypoint(true, "_LandAtAirbase")
   
   -- Not waiting any more.
   self.Twaiting=nil
@@ -2477,7 +2446,7 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
     p1=HoldingPoint.pos1
 
     -- Debug marks.
-    if self.Debug then
+    if false then
       p0:MarkToAll("Holding point P0")
       p1:MarkToAll("Holding point P1")
     end
@@ -3453,7 +3422,7 @@ function FLIGHTGROUP:InitWaypoints()
 
     -- Check if only 1 wp?
     if #self.waypoints==1 then
-      self.passedfinalwp=true
+      self:_PassedFinalWaypoint(true, "FLIGHTGROUP:InitWaypoints #self.waypoints==1")
     end
 
   end
@@ -3475,7 +3444,7 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
 
   if wpnumber>self.currentwp then
-    self.passedfinalwp=false
+    self:_PassedFinalWaypoint(false, "FLIGHTGROUP:AddWaypoint wpnumber>self.currentwp")
   end
 
   -- Speed in knots.
@@ -3520,7 +3489,7 @@ function FLIGHTGROUP:AddWaypointLanding(Airbase, Speed, AfterWaypointWithID, Alt
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
 
   if wpnumber>self.currentwp then
-    self.passedfinalwp=false
+    self:_PassedFinalWaypoint(false, "AddWaypointLanding")
   end
 
   -- Speed in knots.
@@ -3929,11 +3898,6 @@ function FLIGHTGROUP:GetParking(airbase)
 
           -- Debug output for occupied spots.
           self:T2(self.lid..string.format("Parking spot %d is occupied or not big enough!", parkingspot.TerminalID))
-          --if self.Debug then
-          --  local coord=problem.coord --Core.Point#COORDINATE
-          --  local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
-          --  coord:MarkToAll(string.format(text))
-          --end
 
         end
 

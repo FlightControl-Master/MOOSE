@@ -119,16 +119,21 @@ OPSTRANSPORT = {
   pathsTransport  =  {},
   pathsPickup     =  {},
   requiredCargos  =  {},
+  assets          =  {},
 }
 
 --- Cargo transport status.
 -- @type OPSTRANSPORT.Status
 -- @field #string PLANNED Planning state.
+-- @field #string QUEUED Queued state.
+-- @field #string REQUESTED Requested state.
 -- @field #string SCHEDULED Transport is scheduled in the cargo queue.
 -- @field #string EXECUTING Transport is being executed.
 -- @field #string DELIVERED Transport was delivered. 
 OPSTRANSPORT.Status={
   PLANNED="planned",
+  QUEUED="queued",
+  REQUESTED="requested",
   SCHEDULED="scheduled",
   EXECUTING="executing",
   DELIVERED="delivered",
@@ -207,7 +212,10 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   
   -- PLANNED --> SCHEDULED --> EXECUTING --> DELIVERED  
   self:AddTransition("*",                           "Planned",          OPSTRANSPORT.Status.PLANNED)     -- Cargo transport was planned.
-  self:AddTransition(OPSTRANSPORT.Status.PLANNED,   "Scheduled",        OPSTRANSPORT.Status.SCHEDULED)   -- Cargo is queued at at least one carrier.
+  self:AddTransition(OPSTRANSPORT.Status.PLANNED,   "Queued",           OPSTRANSPORT.Status.QUEUED)      -- Cargo is queued at at least one carrier.
+  self:AddTransition(OPSTRANSPORT.Status.QUEUED,    "Requested",        OPSTRANSPORT.Status.REQUESTED)   -- Transport assets have been requested from a warehouse.
+  self:AddTransition(OPSTRANSPORT.Status.QUEUED,    "Scheduled",        OPSTRANSPORT.Status.SCHEDULED)   -- Cargo is queued at at least one carrier.
+  self:AddTransition(OPSTRANSPORT.Status.PLANNED,   "Scheduled",        OPSTRANSPORT.Status.SCHEDULED)   -- Cargo is queued at at least one carrier.  
   self:AddTransition(OPSTRANSPORT.Status.SCHEDULED, "Executing",        OPSTRANSPORT.Status.EXECUTING)   -- Cargo is being transported.  
   self:AddTransition("*",                           "Delivered",        OPSTRANSPORT.Status.DELIVERED)   -- Cargo was delivered.
   
@@ -812,6 +820,41 @@ function OPSTRANSPORT:IsReadyToGo()
   text=text.."Yes!"
   self:T(text)
   return true
+end
+
+--- Check if state is PLANNED.
+-- @param #OPSTRANSPORT self
+-- @return #boolean If true, status is PLANNED. 
+function OPSTRANSPORT:IsPlanned()
+  return self:is(OPSTRANSPORT.Status.PLANNED)
+end
+
+--- Check if state is QUEUED.
+-- @param #OPSTRANSPORT self
+-- @return #boolean If true, status is QUEUED. 
+function OPSTRANSPORT:IsQueued()
+  return self:is(OPSTRANSPORT.Status.QUEUED)
+end
+
+--- Check if state is REQUESTED.
+-- @param #OPSTRANSPORT self
+-- @return #boolean If true, status is REQUESTED. 
+function OPSTRANSPORT:IsRequested()
+  return self:is(OPSTRANSPORT.Status.REQUESTED)
+end
+
+--- Check if state is SCHEDULED.
+-- @param #OPSTRANSPORT self
+-- @return #boolean If true, status is SCHEDULED. 
+function OPSTRANSPORT:IsScheduled()
+  return self:is(OPSTRANSPORT.Status.SCHEDULED)
+end
+
+--- Check if state is EXECUTING.
+-- @param #OPSTRANSPORT self
+-- @return #boolean If true, status is EXECUTING. 
+function OPSTRANSPORT:IsExecuting()
+  return self:is(OPSTRANSPORT.Status.EXECUTING)
 end
 
 --- Check if all cargo was delivered (or is dead).

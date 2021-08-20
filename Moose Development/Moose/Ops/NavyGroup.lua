@@ -88,7 +88,8 @@ NAVYGROUP.version="0.7.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Extend, shorten turn into wind windows
+-- TODO: Submaries.
+-- TODO: Extend, shorten turn into wind windows.
 -- TODO: Skipper menu.
 -- DONE: Collision warning.
 -- DONE: Detour, add temporary waypoint and resume route.
@@ -176,7 +177,7 @@ function NAVYGROUP:New(group)
   self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
   
   -- Start the status monitoring.
-  self:__Status(-1)
+  self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
 
   -- Start queue update timer.
   self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(2, 5)
@@ -454,24 +455,9 @@ end
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
----- Update status.
--- @param #NAVYGROUP self
-function NAVYGROUP:onbeforeStatus(From, Event, To)
-
-  if self:IsDead() then  
-    self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
-    return false   
-  elseif self:IsStopped() then
-    self:T(self.lid..string.format("Onbefore Status STOPPED ==> false"))
-    return false
-  end
-
-  return true
-end
-
 --- Update status.
 -- @param #NAVYGROUP self
-function NAVYGROUP:onafterStatus(From, Event, To)
+function NAVYGROUP:Status(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
@@ -628,9 +614,6 @@ function NAVYGROUP:onafterStatus(From, Event, To)
 
   self:_PrintTaskAndMissionStatus()
 
-
-  -- Next status update in 30 seconds.
-  self:__Status(-30)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -897,7 +880,7 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   
   IntoWind.waypoint=wptiw
   
-  if IntoWind.Uturn and self.Debug then
+  if IntoWind.Uturn and false then
     IntoWind.Coordinate:MarkToAll("Return coord")
   end
   
@@ -1120,7 +1103,7 @@ function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Up
 
   -- Check if final waypoint is still passed.  
   if wpnumber>self.currentwp then
-    self.passedfinalwp=false
+    self:_PassedFinalWaypoint(false, "NAVYGROUP:AddWaypoint wpnumber>self.currentwp")
   end
   
   -- Speed in knots.

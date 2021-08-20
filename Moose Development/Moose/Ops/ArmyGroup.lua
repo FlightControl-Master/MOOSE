@@ -156,7 +156,7 @@ function ARMYGROUP:New(group)
   --self:HandleEvent(EVENTS.Hit,        self.OnEventHit)
   
   -- Start the status monitoring.
-  self:__Status(-1)
+  self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
   
   -- Start queue update timer.
   self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(2, 5)  
@@ -343,29 +343,16 @@ end
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
----- Update status.
--- @param #ARMYGROUP self
-function ARMYGROUP:onbeforeStatus(From, Event, To)
-
-  if self:IsDead() then  
-    self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
-    return false   
-  elseif self:IsStopped() then
-    self:T(self.lid..string.format("Onbefore Status STOPPED ==> false"))
-    return false
-  end
-
-  return true
-end
-
 --- Update status.
 -- @param #ARMYGROUP self
-function ARMYGROUP:onafterStatus(From, Event, To)
+function ARMYGROUP:Status()
 
   -- FSM state.
   local fsmstate=self:GetState()
   
   local alive=self:IsAlive()
+  
+  env.info(self.lid.."FF status="..fsmstate)
   
   if alive then
 
@@ -490,9 +477,6 @@ function ARMYGROUP:onafterStatus(From, Event, To)
 
   self:_PrintTaskAndMissionStatus()
 
-
-  -- Next status update.
-  self:__Status(-30)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -596,9 +580,6 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
       self:FullStop()
     end
 
-    -- Update status.
-    self:__Status(-0.1)
-    
   end
   
 end
@@ -652,7 +633,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
     wp.speed=UTILS.KnotsToMps(Speed)
   else
     -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
-    if self.adinfinitum and wp.speed<0.1 then
+    if wp.speed<0.1 then --self.adinfinitum and 
       wp.speed=UTILS.KmphToMps(self.speedCruise)
     end
   end
@@ -1156,7 +1137,7 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
 
   -- Check if final waypoint is still passed.  
   if wpnumber>self.currentwp then
-    self.passedfinalwp=false
+    self:_PassedFinalWaypoint(false, "ARMYGROUP.AddWaypoint: wpnumber>self.currentwp")
   end
   
   -- Speed in knots.

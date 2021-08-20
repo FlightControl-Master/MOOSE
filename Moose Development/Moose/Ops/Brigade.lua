@@ -243,6 +243,21 @@ function BRIGADE:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end
 
+  ----------------
+  -- Transport ---
+  ----------------
+
+  -- Check if any transports should be cancelled.
+  --self:_CheckTransports()
+
+  -- Get next mission.
+  local transport=self:_GetNextTransport()
+
+  -- Request mission execution.
+  if transport then
+    self:TransportRequest(transport)
+  end
+
   --------------
   -- Mission ---
   --------------

@@ -842,9 +842,20 @@ function COHORT:RecruitAssets(Mission, Npayloads)
           end
           
           -- Check if in a state where we really do not want to fight any more.
-          if flightgroup:IsHolding() or flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() or flightgroup:IsDead() or flightgroup:IsStopped() then
+          if flightgroup:IsFlightgroup() then
+            if flightgroup:IsHolding() or flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() then
+              combatready=false
+            end          
+          else
+            if flightgroup:IsRearming() or flightgroup:IsRetreating() or flightgroup:IsReturning() then
+              combatready=false
+            end
+          end
+          -- Applies to all opsgroups.
+          if flightgroup:IsDead() or flightgroup:IsStopped() then
             combatready=false
           end
+          
           
           --TODO: Check transport for combat readyness!
       

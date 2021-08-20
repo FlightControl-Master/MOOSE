@@ -1,15 +1,15 @@
---- **Ops** - Commander of an Airwing, Brigade or Flotilla.
+--- **Ops** - Commander of Airwings, Brigades and Flotillas.
 --
 -- **Main Features:**
 --
 --    * Manages AIRWINGS, BRIGADEs and FLOTILLAs
---    * Handles missions (AUFTRAG) and finds the best airwing for the job 
+--    * Handles missions (AUFTRAG) and finds the best man for the job 
 --
 -- ===
 --
 -- ### Author: **funkyfranky**
--- @module Ops.WingCommander
--- @image OPS_WingCommander.png
+-- @module Ops.Commander
+-- @image OPS_Commander.png
 
 
 --- COMMANDER class.
@@ -28,7 +28,7 @@
 --
 -- # The COMMANDER Concept
 -- 
--- A wing commander is the head of legions. He will find the best AIRWING to perform an assigned AUFTRAG (mission).
+-- A commander is the head of legions. He will find the best LEGIONs to perform an assigned AUFTRAG (mission).
 --
 --
 -- @field #COMMANDER
@@ -36,7 +36,7 @@ COMMANDER = {
   ClassName      = "COMMANDER",
   Debug          =   nil,
   lid            =   nil,
-  legions       =    {},
+  legions       =     {},
   missionqueue   =    {},
 }
 
@@ -48,7 +48,8 @@ COMMANDER.version="0.1.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Improve airwing selection. Mostly done!
+-- TODO: Improve legion selection. Mostly done!
+-- TODO: Allow multiple Legions for one mission.
 -- NOGO: Maybe it's possible to preselect the assets for the mission.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -145,16 +146,29 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Add an airwing to the wingcommander.
+--- Add an AIRWING to the commander.
 -- @param #COMMANDER self
 -- @param Ops.AirWing#AIRWING Airwing The airwing to add.
 -- @return #COMMANDER self
 function COMMANDER:AddAirwing(Airwing)
 
-  -- This airwing is managed by this wing commander. 
-  Airwing.commander=self
+  -- Add legion.
+  self:AddLegion(Airwing)
+  
+  return self
+end
 
-  table.insert(self.legions, Airwing)  
+--- Add a LEGION to the commander.
+-- @param #COMMANDER self
+-- @param Ops.Legion#LEGION Legion The legion to add.
+-- @return #COMMANDER self
+function COMMANDER:AddLegion(Legion)
+
+  -- This legion is managed by the commander. 
+  Legion.commander=self
+
+  -- Add to legions.
+  table.insert(self.legions, Legion)  
   
   return self
 end
@@ -237,21 +251,21 @@ function COMMANDER:onafterStatus(From, Event, To)
   self:CheckMissionQueue()
   
   -- Status.
-  local text=string.format("Status %s: Airwings=%d, Missions=%d", fsmstate, #self.legions, #self.missionqueue)
+  local text=string.format("Status %s: Legions=%d, Missions=%d", fsmstate, #self.legions, #self.missionqueue)
   self:I(self.lid..text)
   
-  -- Airwing Info
+  -- Legion info.
   if #self.legions>0 then
-    local text="Airwings:"
-    for _,_airwing in pairs(self.legions) do
-      local airwing=_airwing --Ops.AirWing#AIRWING
-      local Nassets=airwing:CountAssets()
-      local Nastock=airwing:CountAssets(true)
-      text=text..string.format("\n* %s [%s]: Assets=%s stock=%s", airwing.alias, airwing:GetState(), Nassets, Nastock)
+    local text="Legions:"
+    for _,_legion in pairs(self.legions) do
+      local legion=_legion --Ops.Legion#LEGION
+      local Nassets=legion:CountAssets()
+      local Nastock=legion:CountAssets(true)
+      text=text..string.format("\n* %s [%s]: Assets=%s stock=%s", legion.alias, legion:GetState(), Nassets, Nastock)
       for _,aname in pairs(AUFTRAG.Type) do
-        local na=airwing:CountAssets(true, {aname})
-        local np=airwing:CountPayloadsInStock({aname})
-        local nm=airwing:CountAssetsOnMission({aname})
+        local na=legion:CountAssets(true, {aname})
+        local np=legion:CountPayloadsInStock({aname})
+        local nm=legion:CountAssetsOnMission({aname})
         if na>0 or np>0 then
           text=text..string.format("\n   - %s: assets=%d, payloads=%d, on mission=%d", aname, na, np, nm)
         end
@@ -353,23 +367,26 @@ function COMMANDER:CheckMissionQueue()
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     -- We look for PLANNED missions.
-    if mission.status==AUFTRAG.Status.PLANNED then
+    if mission:IsPlanned() then
     
       ---
       -- PLANNNED Mission
       ---
     
-      local airwings=self:GetLegionsForMission(mission)
+      -- Get legions for mission.
+      local legions=self:GetLegionsForMission(mission)
         
-      if airwings then
+      if legions then
       
-        for _,airwing in pairs(airwings) do
+        for _,_legion in pairs(legions) do
+          local legion=_legion --Ops.Legion#LEGION
       
-          -- Add mission to airwing.
-          self:MissionAssign(airwing, mission)
+          -- Add mission to legion.
+          self:MissionAssign(legion, mission)
           
         end
     
+        -- Only ONE mission is assigned.
         return
       end
       
@@ -395,31 +412,36 @@ function COMMANDER:GetLegionsForMission(Mission)
   local legions={}
   
   -- Loop over all legions.
-  for _,_airwing in pairs(self.legions) do
-    local airwing=_airwing --Ops.AirWing#AIRWING
+  for _,_legion in pairs(self.legions) do
+    local legion=_legion --Ops.Legion#LEGION
     
-    -- Check if airwing can do this mission.
-    local can,assets=airwing:CanMission(Mission)
+    -- Count number of assets in stock.
+    local Nassets=0    
+    if legion:IsAirwing() then
+      Nassets=legion:CountAssetsWithPayloadsInStock(Mission.payloads, {Mission.type}, Attributes)
+    else    
+      Nassets=legion:CountAssets(true, {Mission.type}, Attributes) --Could also specify the attribute if Air or Ground mission.
+    end    
     
     -- Has it assets that can?
-    if #assets>0 then        
+    if Nassets>0 then        
       
       -- Get coordinate of the target.
       local coord=Mission:GetTargetCoordinate()
       
       if coord then
       
-        -- Distance from airwing to target.
-        local distance=UTILS.MetersToNM(coord:Get2DDistance(airwing:GetCoordinate()))
+        -- Distance from legion to target.
+        local distance=UTILS.MetersToNM(coord:Get2DDistance(legion:GetCoordinate()))
         
         -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
         local dist=UTILS.Round(distance/10, 0)
         
         -- Debug info.
-        self:I(self.lid..string.format("Got legion %s with Nassets=%d and dist=%.1f NM, rounded=%.1f", airwing.alias, #assets, distance, dist))
+        self:I(self.lid..string.format("Got legion %s with Nassets=%d and dist=%.1f NM, rounded=%.1f", legion.alias, Nassets, distance, dist))
       
-        -- Add airwing to table of legions that can.
-        table.insert(legions, {airwing=airwing, distance=distance, dist=dist, targetcoord=coord, nassets=#assets})
+        -- Add legion to table of legions that can.
+        table.insert(legions, {airwing=legion, distance=distance, dist=dist, targetcoord=coord, nassets=Nassets})
         
       end
       
@@ -431,8 +453,8 @@ function COMMANDER:GetLegionsForMission(Mission)
   if #legions>0 then
   
     --- Something like:
-    -- * Closest airwing that can should be first prio.
-    -- * However, there should be a certain "quantization". if wing is 50 or 60 NM way should not really matter. In that case, the airwing with more resources should get the job.
+    -- * Closest legion that can should be first prio.
+    -- * However, there should be a certain "quantization". if wing is 50 or 60 NM way should not really matter. In that case, the legion with more resources should get the job.
     local function score(a)
       local d=math.round(a.dist/10)
     end
@@ -440,7 +462,7 @@ function COMMANDER:GetLegionsForMission(Mission)
     env.info(self.lid.."FF #legions="..#legions)
   
     -- Sort table wrt distance and number of assets.
-    -- Distances within 10 NM are equal and the airwing with more assets is preferred.
+    -- Distances within 10 NM are equal and the legion with more assets is preferred.
     local function sortdist(a,b)
       local ad=a.dist
       local bd=b.dist 
@@ -471,7 +493,7 @@ function COMMANDER:GetLegionsForMission(Mission)
       self:I(self.lid..string.format("Found %d legions that can do mission %s (%s) requiring %d assets", #selection, Mission:GetName(), Mission:GetType(), Mission.nassets))
       return selection
     else
-      self:T(self.lid..string.format("Not enough LEGIONs found that could do the job :/"))
+      self:T(self.lid..string.format("Not enough LEGIONs found that could do the job :/ Number of assets avail %d < %d required for the mission", N, Mission.nassets))
       return nil
     end
     
@@ -482,17 +504,18 @@ function COMMANDER:GetLegionsForMission(Mission)
   return nil
 end
 
---- Check mission queue and assign ONE planned mission.
+--- Count assets of all assigned legions.
 -- @param #COMMANDER self
 -- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
 -- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
 -- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
--- @return #number Amount of asset groups in stock.
+-- @return #number Amount of asset groups.
 function COMMANDER:CountAssets(InStock, MissionTypes, Attributes)
+
   local N=0
-  for _,_airwing in pairs(self.legions) do
-    local airwing=_airwing --Ops.AirWing#AIRWING
-    N=N+airwing:CountAssets(InStock, MissionTypes, Attributes)
+  for _,_legion in pairs(self.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    N=N+legion:CountAssets(InStock, MissionTypes, Attributes)
   end
 
   return N

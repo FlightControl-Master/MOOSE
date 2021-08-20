@@ -90,6 +90,7 @@
 -- @field Core.Set#SET_GROUP transportGroupSet Groups to be transported.
 -- @field Core.Point#COORDINATE transportPickup Coordinate where to pickup the cargo.
 -- @field Core.Point#COORDINATE transportDropoff Coordinate where to drop off the cargo.
+-- @field Ops.OpsTransport#OPSTRANSPORT opstransport OPS transport assignment.
 -- 
 -- @field #number artyRadius Radius in meters.
 -- @field #number artyShots Number of shots fired.
@@ -328,6 +329,7 @@ _AUFTRAGSNR=0
 -- @field #string TROOPTRANSPORT Troop transport mission.
 -- @field #string ARTY Fire at point.
 -- @field #string PATROLZONE Patrol a zone.
+-- @field #string OPSTRANSPORT Ops transport.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -352,6 +354,7 @@ AUFTRAG.Type={
   TROOPTRANSPORT="Troop Transport",
   ARTY="Fire At Point",
   PATROLZONE="Patrol Zone",
+  OPSTRANSPORT="Ops Transport",
 }
 
 --- Mission status.
@@ -1171,6 +1174,48 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
   return mission
 end
 
+
+--- Create a OPS TRANSPORT mission.
+-- @param #AUFTRAG self
+-- @param Core.Set#SET_GROUP CargoGroupSet The set group(s) to be transported.
+-- @param Core.Zone#ZONE PickupZone Pick up zone
+-- @param Core.Zone#ZONE DeployZone Deploy zone
+-- @return #AUFTRAG self
+function AUFTRAG:NewOPSTRANSPORT(CargoGroupSet, PickupZone, DeployZone)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.OPSTRANSPORT)
+  
+  mission.transportGroupSet=CargoGroupSet
+  
+  mission:_TargetFromObject(mission.transportGroupSet)
+  
+  --mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()  
+  --mission.transportDropoff=DropoffCoordinate
+  
+  -- Debug.
+  --mission.transportPickup:MarkToAll("Pickup")
+  --mission.transportDropoff:MarkToAll("Drop off")
+  
+  mission.opstransport=OPSTRANSPORT:New(CargoGroupSet, PickupZone, DeployZone)
+  
+  function mission.opstransport:OnAfterExecuting(From, Event, To)
+    mission:Executing()
+  end
+  
+  function mission.opstransport:OnAfterDelivered(From, Event, To)
+    mission:Done()
+  end
+  
+  -- TODO: what's the best ROE here?
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+
 --- Create an ARTY mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Center of the firing solution.
@@ -1210,6 +1255,11 @@ end
 function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.PATROLZONE)
+  
+  -- Ensure we got a ZONE and not just the zone name.
+  if type(Zone)=="string" then
+    Zone=ZONE:New(Zone)
+  end
   
   mission:_TargetFromObject(Zone)
     
@@ -1541,14 +1591,14 @@ end
 
 --- Get number of required assets.
 -- @param #AUFTRAG self
--- @param Ops.Legion#Legion Legion (Optional) Only get the required assets for a specific legion.
--- @param #number Number of required assets.
+-- @param Ops.Legion#Legion Legion (Optional) Only get the required assets for a specific legion. If required assets for this legion are not defined, the total number is returned.
+-- @return #number Number of required assets.
 function AUFTRAG:GetRequiredAssets(Legion)
 
   local N=self.nassets
 
-  if Legion then
-    N=self.Nassets[Legion.alias] or 0
+  if Legion and self.Nassets[Legion.alias] then
+    N=self.Nassets[Legion.alias]
   end
 
   return N
@@ -1666,6 +1716,43 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:SetMissionRange(Range)
   self.engageRange=UTILS.NMToMeters(Range or 100)
+  return self
+end
+
+--- Attach OPS transport to the mission. Mission assets will be transported before the mission is started at the OPSGROUP level.
+-- @param #AUFTRAG self
+-- @param Ops.OpsTransport#OPSTRANSPORT OpsTransport The OPS transport assignment attached to the mission.
+-- @return #AUFTRAG self
+function AUFTRAG:SetOpsTransport(OpsTransport)
+  self.opstransport=OpsTransport
+  return self
+end
+
+--- Attach OPS transport to the mission. Mission assets will be transported before the mission is started at the OPSGROUP level.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE PickupZone Zone where assets are picked up.
+-- @param Core.Zone#ZONE DeployZone Zone where assets are deployed.
+-- @param Core.Set#SET_OPSGROUP Carriers Set of carriers. Can also be a single group. Can also be added via the AddTransportCarriers functions.
+-- @return #AUFTRAG self
+function AUFTRAG:SetTransportForAssets(PickupZone, DeployZone, Carriers)
+
+  -- OPS transport from pickup to deploy zone.
+  self.opstransport=OPSTRANSPORT:New(nil, PickupZone, DeployZone)
+  
+  if Carriers then
+    if Carriers:IsInstanceOf("SET_OPSGROUP") then
+    
+      for _,_carrier in pairs(Carriers.Set) do
+        local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+        carrier:AddOpsTransport(self.opstransport)
+      end
+    
+    elseif Carriers:IsInstanceOf("OPSGROUP") then
+      Carriers:AddOpsTransport(self.opstransport)
+    end
+  
+  end
+  
   return self
 end
 
@@ -1959,6 +2046,11 @@ function AUFTRAG:AddOpsGroup(OpsGroup)
   groupdata.waypointtask=nil
 
   self.groupdata[OpsGroup.groupname]=groupdata
+  
+  -- Add ops transport to new group.
+  if self.opstransport then
+    self.opstransport:AddCargoGroups(OpsGroup)
+  end
 
   return self
 end
@@ -2237,7 +2329,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
     elseif (self.Tstop and Tnow>self.Tstop+10) or (Ntargets0>0 and Ntargets==0) then
     
       -- Cancel mission if stop time passed.
-      self:Cancel()
+      --self:Cancel()
             
     end
     
@@ -3762,6 +3854,23 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     
     table.insert(DCStasks, TaskEmbark)
     table.insert(DCStasks, TaskDisEmbark)
+
+  elseif self.type==AUFTRAG.Type.OPSTRANSPORT then
+
+    --------------------------
+    -- OPSTRANSPORT Mission --
+    --------------------------
+
+    local DCStask={}
+    
+    DCStask.id="OpsTransport"
+    
+    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    local param={}    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)
+    
 
   elseif self.type==AUFTRAG.Type.RESCUEHELO then
 
