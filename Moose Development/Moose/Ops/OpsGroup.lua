@@ -5732,6 +5732,9 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:AddOpsTransport(OpsTransport)
 
+  -- Scheduled.
+  OpsTransport:Scheduled()
+
   -- Add this group as carrier for the transport.
   OpsTransport:_AddCarrier(self)
 

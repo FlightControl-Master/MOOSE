@@ -157,6 +157,12 @@ function LEGION:AddMission(Mission)
   
   -- Add legion to mission.
   Mission:AddLegion(self)
+  
+  if Mission.opstransport then
+    Mission.opstransport:SetPickupZone(self.spawnzone)
+    Mission.opstransport:SetEmbarkZone(self.spawnzone)
+    self:AddOpsTransport(Mission.opstransport)
+  end
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -333,6 +339,9 @@ function LEGION:_GetNextMission()
 
       -- Check that mission is still scheduled, time has passed and enough assets are available.
        if can then
+       
+        -- Number of required assets.
+        local Nassets=mission:GetRequiredAssets(self)
 
         -- Optimize the asset selection. Most useful assets will come first. We do not include the payload as some assets have and some might not.
         self:_OptimizeAssetSelection(assets, mission, false)
@@ -384,7 +393,7 @@ function LEGION:_GetNextMission()
         --mission.assets={}
 
         -- Assign assets to mission.
-        for i=1,mission.Nassets[self.alias] do
+        for i=1,Nassets do
           local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
 
           -- Should not happen as we just checked!
@@ -398,7 +407,7 @@ function LEGION:_GetNextMission()
 
         -- Now return the remaining payloads.
         if self:IsAirwing() then
-          for i=mission.Nassets[self.alias]+1,#assets do
+          for i=Nassets+1,#assets do
             local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
             for _,uid in pairs(gotpayload) do
               if uid==asset.uid then
@@ -997,9 +1006,14 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
         if Tacan then
           --mission:SetTACAN(Tacan, Morse, UnitName, Band)
         end
+        
+        -- Transport for mission assets.
+        if mission.opstransport then
+          mission.opstransport:AddCargoGroups(self)
+        end
   
         -- Add mission to flightgroup queue.
-        flightgroup:AddMission(mission)
+        flightgroup:AddMission(mission)        
           
         -- Trigger event.
         self:__OpsOnMission(5, flightgroup, mission)

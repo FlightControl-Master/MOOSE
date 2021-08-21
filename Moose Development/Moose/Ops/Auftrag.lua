@@ -533,7 +533,6 @@ function AUFTRAG:New(Type)
   self:SetStartState(self.status)
   
   -- PLANNED --> (QUEUED) --> (REQUESTED) --> SCHEDULED --> STARTED --> EXECUTING --> DONE
-  
   self:AddTransition("*",                      "Planned",          AUFTRAG.Status.PLANNED)     -- Mission is in planning stage.
   self:AddTransition(AUFTRAG.Status.PLANNED,   "Queued",           AUFTRAG.Status.QUEUED)      -- Mission is in queue of an AIRWING.
   self:AddTransition(AUFTRAG.Status.QUEUED,    "Requested",        AUFTRAG.Status.REQUESTED)   -- Mission assets have been requested from the warehouse.
@@ -1728,6 +1727,13 @@ function AUFTRAG:SetOpsTransport(OpsTransport)
   return self
 end
 
+--- Get the attach OPS transport of the mission.
+-- @param #AUFTRAG self
+-- @return Ops.OpsTransport#OPSTRANSPORT The OPS transport assignment attached to the mission.
+function AUFTRAG:GetOpsTransport()
+  return self.opstransport
+end
+
 --- Attach OPS transport to the mission. Mission assets will be transported before the mission is started at the OPSGROUP level.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE PickupZone Zone where assets are picked up.
@@ -2180,6 +2186,15 @@ function AUFTRAG:IsReadyToGo()
   -- Stop time already passed.
   if self.Tstop and Tnow>self.Tstop then
     return false
+  end
+  
+  -- Ops transport at 
+  if self.opstransport then
+    if #self.legions>0 then
+    end
+    if self.opstransport:IsPlanned() or self.opstransport:IsQueued() or self.opstransport:IsRequested() then
+      return false
+    end
   end
   
   -- All start conditions true?

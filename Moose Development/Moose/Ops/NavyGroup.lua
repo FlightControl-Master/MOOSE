@@ -133,16 +133,16 @@ function NAVYGROUP:New(group)
   self:AddTransition("*",             "FullStop",         "Holding")     -- Hold position.
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Hold position.
   
-  self:AddTransition("*",             "TurnIntoWind",     "IntoWind")    -- Command the group to turn into the wind.
-  self:AddTransition("IntoWind",      "TurnedIntoWind",   "IntoWind")    -- Group turned into wind.
-  self:AddTransition("IntoWind",      "TurnIntoWindStop", "IntoWind")    -- Stop a turn into wind.  
-  self:AddTransition("IntoWind",      "TurnIntoWindOver", "Cruising")    -- Turn into wind is over.
+  self:AddTransition("*",             "TurnIntoWind",     "Cruising")    -- Command the group to turn into the wind.
+  self:AddTransition("*",             "TurnedIntoWind",   "*")           -- Group turned into wind.
+  self:AddTransition("*",             "TurnIntoWindStop", "*")           -- Stop a turn into wind.  
+  self:AddTransition("*",             "TurnIntoWindOver", "*")           -- Turn into wind is over.
   
   self:AddTransition("*",             "TurningStarted",   "*")           -- Group started turning.
   self:AddTransition("*",             "TurningStopped",   "*")           -- Group stopped turning.
   
-  self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
-  self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
+  self:AddTransition("*",             "Detour",           "Cruising")    -- Make a detour to a coordinate and resume route afterwards.
+  self:AddTransition("*",             "DetourReached",    "*")           -- Group reached the detour coordinate.
   
   self:AddTransition("*",             "CollisionWarning", "*")           -- Collision warning.
   self:AddTransition("*",             "ClearAhead",       "*")           -- Clear ahead.
@@ -701,9 +701,6 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     else
       self:FullStop()
     end
-
-    -- Update status.
-    self:__Status(-0.1)
     
   end
   
@@ -938,8 +935,12 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
     
       -- Detour to where we left the route.
       self:T(self.lid.."FF Turn Into Wind Over ==> Uturn!")
-      self:Detour(self.intowind.Coordinate, self:GetSpeedCruise(), 0, true)
-      
+
+      -- ID of current waypoint.
+      local uid=self:GetWaypointCurrent().uid
+  
+      self:AddWaypoint(self.intowind.Coordinate, self:GetSpeedCruise(), uid)      
+
     else
     
       ---

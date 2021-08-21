@@ -186,12 +186,13 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("OPSTRANSPORT [UID=%d] | ", _OPSTRANSPORTID)
   
-  -- Defaults.
+  -- UID of this transport.
   self.uid=_OPSTRANSPORTID
     
-  self.pickupzone=Pickupzone
-  self.deployzone=Deployzone
-  self.embarkzone=Pickupzone
+  -- Defaults.
+  self:SetPickupZone(Pickupzone)
+  self:SetDeployZone(Deployzone)
+  self:SetEmbarkZone() -- Default is pickup zone.
   self.cargos={}
   self.carriers={}
   self.Ncargo=0
@@ -214,7 +215,7 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   self:AddTransition("*",                           "Planned",          OPSTRANSPORT.Status.PLANNED)     -- Cargo transport was planned.
   self:AddTransition(OPSTRANSPORT.Status.PLANNED,   "Queued",           OPSTRANSPORT.Status.QUEUED)      -- Cargo is queued at at least one carrier.
   self:AddTransition(OPSTRANSPORT.Status.QUEUED,    "Requested",        OPSTRANSPORT.Status.REQUESTED)   -- Transport assets have been requested from a warehouse.
-  self:AddTransition(OPSTRANSPORT.Status.QUEUED,    "Scheduled",        OPSTRANSPORT.Status.SCHEDULED)   -- Cargo is queued at at least one carrier.
+  self:AddTransition(OPSTRANSPORT.Status.REQUESTED, "Scheduled",        OPSTRANSPORT.Status.SCHEDULED)   -- Cargo is queued at at least one carrier.
   self:AddTransition(OPSTRANSPORT.Status.PLANNED,   "Scheduled",        OPSTRANSPORT.Status.SCHEDULED)   -- Cargo is queued at at least one carrier.  
   self:AddTransition(OPSTRANSPORT.Status.SCHEDULED, "Executing",        OPSTRANSPORT.Status.EXECUTING)   -- Cargo is being transported.  
   self:AddTransition("*",                           "Delivered",        OPSTRANSPORT.Status.DELIVERED)   -- Cargo was delivered.
@@ -287,6 +288,24 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet)
   end
 
 
+  return self
+end
+
+--- Set pickup zone.
+-- @param #OPSTRANSPORT self
+-- @param Core.Zone#ZONE PickupZone Zone where the troops are picked up.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetPickupZone(PickupZone)
+  self.pickupzone=PickupZone
+  return self
+end
+
+--- Set deploy zone.
+-- @param #OPSTRANSPORT self
+-- @param Core.Zone#ZONE DeployZone Zone where the troops are deployed.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetDeployZone(DeployZone)
+  self.deployzone=DeployZone
   return self
 end
 
@@ -792,6 +811,16 @@ function OPSTRANSPORT:IsReadyToGo()
   
   -- Current abs time.
   local Tnow=timer.getAbsTime()
+  
+  -- Pickup and deploy zones must be set.
+  if not self.pickupzone then
+    text=text.."No, pickup zone not defined!"
+    return false  
+  end
+  if not self.deployzone then
+    text=text.."No, deploy zone not defined!"
+    return false  
+  end
 
   -- Start time did not pass yet.
   if self.Tstart and Tnow<self.Tstart or false then
@@ -878,10 +907,12 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
   -- Current FSM state.
   local fsmstate=self:GetState()
   
-  if self.verbose>=1 then  
+  if self.verbose>=1 then
   
-    -- Info text.
-    local text=string.format("%s [%s --> %s]: Ncargo=%d/%d, Ncarrier=%d/%d", fsmstate:upper(), self.pickupzone:GetName(), self.deployzone:GetName(), self.Ncargo, self.Ndelivered, #self.carriers,self.Ncarrier)
+    -- Info text.    
+    local pickupname=self.pickupzone and self.pickupzone:GetName() or "Unknown"
+    local deployname=self.deployzone and self.deployzone:GetName() or "Unknown"    
+    local text=string.format("%s [%s --> %s]: Ncargo=%d/%d, Ncarrier=%d/%d", fsmstate:upper(), pickupname, deployname, self.Ncargo, self.Ndelivered, #self.carriers, self.Ncarrier)
 
     -- Info about cargo and carrier.    
     if self.verbose>=2 then
