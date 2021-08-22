@@ -1418,11 +1418,11 @@ function CTLD:_LoadCratesNearby(Group, Unit)
           crate:GetPositionable():Destroy()
           crate.Positionable = nil
           self:_SendMessage(string.format("Crate ID %d for %s loaded!",crate:GetID(),crate:GetName()), 10, false, Group)
-          self:_UpdateUnitCargoMass(Unit) 
           self:__CratesPickedUp(1, Group, Unit, crate)
         end
       end
       self.Loaded_Cargo[unitname] = loaded
+      self:_UpdateUnitCargoMass(Unit) 
       -- clean up real world crates
       local existingcrates = self.Spawned_Cargo -- #table
       local newexcrates = {}
@@ -1893,17 +1893,16 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation)
   end
   for _,_template in pairs(temptable) do
     self.TroopCounter = self.TroopCounter + 1
-    if canmove then
     local alias = string.format("%s-%d", _template, math.random(1,100000))
-    self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
-      :InitRandomizeUnits(true,20,2)
-      :InitDelayOff()
-      :SpawnFromVec2(randomcoord)
+    if canmove then
+      self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
+        :InitRandomizeUnits(true,20,2)
+        :InitDelayOff()
+        :SpawnFromVec2(randomcoord)
     else -- don't random position of e.g. SAM units build as FOB
       self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
-      --:InitRandomizeUnits(true,20,2)
-      :InitDelayOff()
-      :SpawnFromVec2(randomcoord)
+        :InitDelayOff()
+        :SpawnFromVec2(randomcoord)
     end
     if self.movetroopstowpzone and canmove then
       self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
