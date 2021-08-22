@@ -2558,7 +2558,7 @@ function RANGE:_DisplayBombTargets(_unitname)
         -- Get elevation
         local elevation=coord:GetLandHeight()
         local eltxt=string.format("%d m", elevation)
-        if _settings:IsImperial() then
+        if not _settings:IsMetric() then
           elevation=UTILS.MetersToFeet(elevation)
           eltxt=string.format("%d ft", elevation)
         end
