@@ -507,7 +507,7 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
       secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
     end
 
-    -- 024� 23' 12"N or 024� 23' 12.03"N
+    -- 024° 23' 12"N or 024° 23' 12.03"N
     return string.format('%03d°', latDeg)..string.format('%02d', latMin)..'\''..string.format(secFrmtStr, latSec)..'"'..latHemi..' '
         .. string.format('%03d°', lonDeg)..string.format('%02d', lonMin)..'\''..string.format(secFrmtStr, lonSec)..'"'..lonHemi
 
@@ -923,7 +923,7 @@ function UTILS.RandomGaussian(x0, sigma, xmin, xmax, imax)
     local x1=math.random()
     local x2=math.random()
 
-    -- Transform to Gaussian exp(-(x-x0)²/(2*sigma²).
+    -- Transform to Gaussian exp(-(x-x0)°/(2*sigma°).
     r = math.sqrt(-2*sigma*sigma * math.log(x1)) * math.cos(2*math.pi * x2) + x0
 
     i=i+1
@@ -1553,7 +1553,7 @@ end
 --@return #table
 function UTILS.ShuffleTable(t)
   if t == nil or type(t) ~= "table" then
-    BASE:I("Error in ShuffleTable: Missing or wrong tyåe of Argument")
+    BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
     return
   end
   math.random()
@@ -1578,7 +1578,7 @@ function UTILS.IsLoadingDoorOpen( unit_name )
   if unit ~= nil then
       local type_name = unit:getTypeName()
       
-      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
+      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
           BASE:T(unit_name .. " Cargo doors are open or cargo door not present")
           ret_val =  true
       end

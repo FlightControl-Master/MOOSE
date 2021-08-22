@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Date: July 2021
+-- Date: Aug 2021
 
 do
 ------------------------------------------------------
@@ -264,7 +264,7 @@ do
 --  Add zones for loading troops and crates and dropping, building crates
 --  
 --        -- Add a zone of type LOAD to our setup. Players can load troops and crates.
---        -- "Loadzone" is the name of the zone from the ME. Players can load, if they are inside of the zone.
+--        -- "Loadzone" is the name of the zone from the ME. Players can load, if they are inside the zone.
 --        -- Smoke and Flare color for this zone is blue, it is active (can be used) and has a radio beacon.
 --        my_ctld:AddCTLDZone("Loadzone",CTLD.CargoZoneType.LOAD,SMOKECOLOR.Blue,true,true)
 --        
@@ -279,6 +279,13 @@ do
 --        
 --        my_ctld:AddCTLDZone("Movezone2",CTLD.CargoZoneType.MOVE,SMOKECOLOR.White,true,true)
 --        
+--        -- Add a zone of type SHIP to our setup. Players can load troops and crates from this ship
+--        -- "Tarawa" is the unitname (callsign) of the ship from the ME. Players can load, if they are inside the zone.
+--        -- The ship is 240 meters long and 20 meters wide.
+--        -- Note that smoke, flares, beacons don't work for this type of loadzone (yet). Also, you need to adjust
+--        -- the max hover height to deck height plus 5 meters or so for loading to work.
+--        -- When the ship is moving, forcing hoverload might not be a good idea.
+--        my_ctld:AddCTLDZone("Tarawa",CTLD.CargoZoneType.SHIP,SMOKECOLOR.Blue,true,true,240,20)
 -- 
 -- ## 2. Options
 -- 
@@ -511,11 +518,13 @@ CTLD = {
 -- @field #string name Name of Zone.
 -- @field #string color Smoke color for zone, e.g. SMOKECOLOR.Red.
 -- @field #boolean active Active or not.
--- @field #string type Type of zone, i.e. load,drop,move
+-- @field #string type Type of zone, i.e. load,drop,move,ship
 -- @field #boolean hasbeacon Create and run radio beacons if active.
 -- @field #table fmbeacon Beacon info as #CTLD.ZoneBeacon
 -- @field #table uhfbeacon Beacon info as #CTLD.ZoneBeacon
 -- @field #table vhfbeacon Beacon info as #CTLD.ZoneBeacon
+-- @field #number shiplength For ships - length of ship
+-- @field #number shipwidth For ships - width of ship
 
 --- Zone Type Info.
 -- @type CTLD.CargoZoneType
@@ -523,6 +532,7 @@ CTLD.CargoZoneType = {
   LOAD = "load",
   DROP = "drop",
   MOVE = "move",
+  SHIP = "ship",
 }
 
 --- Buildable table info.
@@ -557,7 +567,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.4r3"
+CTLD.version="0.1.5a1"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -643,6 +653,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.pickupZones  = {}
   self.dropOffZones = {}
   self.wpZones = {}
+  self.shipZones = {}
   
   -- Cargo
   self.Cargo_Crates = {}
@@ -659,6 +670,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- setup
   self.CrateDistance = 30 -- list/load crates in this radius
+  self.ExtractFactor = 3.33 -- factor for troops extraction, i.e. CrateDistance * Extractfactor
   self.prefixes = Prefixes or {"Cargoheli"}
   --self.I({prefixes = self.prefixes})
   self.useprefix = true
@@ -928,6 +940,9 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   -- check if we are in LOAD zone
   local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
   if not inzone then
+    inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP)
+  end
+  if not inzone then
     self:_SendMessage("You are not close enough to a logistics zone!", 10, false, Group)
     if not self.debug then return self end
   elseif not grounded and not hoverload then
@@ -1116,8 +1131,10 @@ end
         nearestDistance = distance
       end
     end
-  
-    if nearestGroup == nil or nearestDistance > self.CrateDistance then
+    
+    local extractdistance = self.CrateDistance * self.ExtractFactor
+    
+    if nearestGroup == nil or nearestDistance > extractdistance then
       self:_SendMessage("No units close enough to extract!", 10, false, Group)
       return self
     end
@@ -1165,7 +1182,7 @@ end
   
       -- clean up:
       table.remove(self.DroppedTroops, nearestGroupIndex)
-      nearestGroup:Destroy()
+      nearestGroup:Destroy(false)
     end
     return self
   end
@@ -1183,8 +1200,13 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     -- check if we are in LOAD zone
   local inzone = false 
   local drop = drop or false
+  local ship = nil
+  local width = 20
   if not drop then 
     inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
+    if not inzone then
+      inzone, ship, zone, distance, width  = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP)
+    end
   else
     if self.dropcratesanywhere then -- #1570
       inzone = true
@@ -1230,18 +1252,33 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     for i=1,50 do
       math.random(90,270)
     end
-    local rheading = math.floor(math.random(90,270) * heading + 1 / 360)
+    local rheading = math.floor(((math.random(90,270) * heading) + 1) / 360)
     if not IsHerc then
       rheading = rheading + 180 -- mirror for Helis
     end
     if rheading > 360 then rheading = rheading - 360 end -- catch > 360
     local cratecoord = position:Translate(cratedistance,rheading)
     local cratevec2 = cratecoord:GetVec2()
-    self.CrateCounter = self.CrateCounter + 1   
+    self.CrateCounter = self.CrateCounter + 1
+    if type(ship) == "string" then
+      self:T("Spawning on ship "..ship)
+      local Ship = UNIT:FindByName(ship)
+      local shipcoord = Ship:GetCoordinate()
+      local unitcoord = Unit:GetCoordinate()
+      local dist = shipcoord:Get2DDistance(unitcoord)
+      dist = dist - (20 + math.random(1,10))
+      local width = width / 2
+      local Offy = math.random(-width,width)
+      self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType("container_cargo","Cargos",country.id.GERMANY)
+      --:InitCoordinate(cratecoord)
+      :InitLinkToUnit(Ship,dist,Offy,0)
+      :Spawn(270,cratealias)
+    else   
     self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType("container_cargo","Cargos",country.id.GERMANY)
       :InitCoordinate(cratecoord)
+      --:InitLinkToUnit(Unit,OffsetX,OffsetY,OffsetAngle)
       :Spawn(270,cratealias)
-
+    end
     local templ = cargotype:GetTemplates()
     local sorte = cargotype:GetType()
     self.CargoCounter = self.CargoCounter +1
@@ -1390,8 +1427,13 @@ function CTLD:_LoadCratesNearby(Group, Unit)
     -- get nearby crates
     local finddist = self.CrateDistance or 30
     local nearcrates,number = self:_FindCratesNearby(Group,Unit,finddist) -- #table
-    if number == 0 or numberonboard == cratelimit then
-      self:_SendMessage("Sorry no loadable crates nearby or fully loaded!", 10, false, Group) 
+    if number == 0 and self.hoverautoloading then
+      return -- exit
+    elseif number == 0 then
+      self:_SendMessage("Sorry no loadable crates nearby!", 10, false, Group) 
+      return -- exit
+    elseif numberonboard == cratelimit then
+      self:_SendMessage("Sorry no fully loaded!", 10, false, Group) 
       return -- exit
     else
       -- go through crates and load
@@ -1415,7 +1457,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
           table.insert(loaded.Cargo, crate)
           table.insert(crateidsloaded,crate:GetID())
           -- destroy crate
-          crate:GetPositionable():Destroy()
+          crate:GetPositionable():Destroy(false)
           crate.Positionable = nil
           self:_SendMessage(string.format("Crate ID %d for %s loaded!",crate:GetID(),crate:GetName()), 10, false, Group)
           self:__CratesPickedUp(1, Group, Unit, crate)
@@ -1474,9 +1516,10 @@ function CTLD:_UpdateUnitCargoMass(Unit)
   self:T(self.lid .. " _UpdateUnitCargoMass")
   local calculatedMass = self:_GetUnitCargoMass(Unit)
   Unit:SetUnitInternalCargo(calculatedMass)
-  local report = REPORT:New("Loadmaster report")
-  report:Add("Carrying " .. calculatedMass .. "Kg")
-  self:_SendMessage(report:Text(),10,false,Unit:GetGroup())
+  --local report = REPORT:New("Loadmaster report")
+  --report:Add("Carrying " .. calculatedMass .. "Kg")
+  --self:_SendMessage(report:Text(),10,false,Unit:GetGroup())
+  return self
 end
 
 --- (Internal) Function to list loaded cargo.
@@ -1557,6 +1600,9 @@ function CTLD:_UnloadTroops(Group, Unit)
   -- check if we are in LOAD zone
   local droppingatbase = false
   local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
+  if not inzone then
+    inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP)
+  end
   if inzone then
     droppingatbase = true
   end
@@ -1966,7 +2012,7 @@ function CTLD:_CleanUpCrates(Crates,Build,Number)
     if name == nametype then -- matching crate type
       table.insert(destIDs,thisID)
       found = found + 1
-      nowcrate:GetPositionable():Destroy()
+      nowcrate:GetPositionable():Destroy(false)
       nowcrate.Positionable = nil
     end
     if found == numberdest then break end -- got enough
@@ -2132,6 +2178,8 @@ function CTLD:AddZone(Zone)
     table.insert(self.pickupZones,zone)
   elseif zone.type == CTLD.CargoZoneType.DROP then
     table.insert(self.dropOffZones,zone)
+  elseif zone.type == CTLD.CargoZoneType.SHIP then
+    table.insert(self.shipZones,zone)  
   else
     table.insert(self.wpZones,zone)
   end
@@ -2157,6 +2205,8 @@ function CTLD:ActivateZone(Name,ZoneType,NewState)
     table = self.pickupZones
   elseif ZoneType == CTLD.CargoZoneType.DROP then
     table = self.dropOffZones
+  elseif ZoneType == CTLD.CargoZoneType.SHIP then
+    table = self.shipZones
   else
     table = self.wpZones
   end
@@ -2254,8 +2304,10 @@ end
 -- @param #number Color Smoke/Flare color e.g. #SMOKECOLOR.Red
 -- @param #string Active Is this zone currently active?
 -- @param #string HasBeacon Does this zone have a beacon if it is active?
+-- @param #number Shiplength Length of Ship for shipzones
+-- @param #number Shipwidth Width of Ship for shipzones
 -- @return #CTLD self
-function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon)
+function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon, Shiplength, Shipwidth)
   self:T(self.lid .. " AddCTLDZone")
 
   local ctldzone = {} -- #CTLD.CargoZone
@@ -2273,6 +2325,11 @@ function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon)
     ctldzone.fmbeacon = nil
     ctldzone.uhfbeacon = nil
     ctldzone.vhfbeacon = nil
+  end
+  
+  if Type == CTLD.CargoZoneType.SHIP then
+   ctldzone.shiplength = Shiplength or 100
+   ctldzone.shipwidth = Shipwidth or 10
   end
   
   self:AddZone(ctldzone)
@@ -2366,10 +2423,12 @@ end
 -- @param #CTLD.CargoZoneType Zonetype Zonetype
 -- @return #boolean Outcome Is in zone or not
 -- @return #string name Closest zone name
--- @return #string zone Closest Core.Zone#ZONE object
+-- @return Core.Zone#ZONE zone Closest Core.Zone#ZONE object
 -- @return #number distance Distance to closest zone
+-- @return #number width Radius of zone or width of ship
 function CTLD:IsUnitInZone(Unit,Zonetype)
   self:T(self.lid .. " IsUnitInZone")
+  self:T(Zonetype)
   local unitname = Unit:GetName()
   local zonetable = {}
   local outcome = false
@@ -2377,6 +2436,8 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
     zonetable = self.pickupZones -- #table
   elseif Zonetype == CTLD.CargoZoneType.DROP then
     zonetable = self.dropOffZones -- #table
+  elseif Zonetype == CTLD.CargoZoneType.SHIP then
+    zonetable = self.shipZones -- #table
   else 
    zonetable = self.wpZones -- #table
   end
@@ -2385,16 +2446,29 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
   local colorret = nil
   local maxdist = 1000000 -- 100km
   local zoneret = nil
+  local zonewret = nil
   local zonenameret = nil
   for _,_cargozone in pairs(zonetable) do
     local czone = _cargozone -- #CTLD.CargoZone
     local unitcoord = Unit:GetCoordinate()
     local zonename = czone.name
-    local zone = ZONE:FindByName(zonename)
-    zonecoord = zone:GetCoordinate()
     local active = czone.active
     local color = czone.color
-    local zoneradius = zone:GetRadius()
+    local zone = nil
+    local zoneradius = 100
+    local zonewidth = 20
+    if Zonetype == CTLD.CargoZoneType.SHIP then
+      self:T("Checking Type Ship: "..zonename)
+      zone = UNIT:FindByName(zonename)
+      zonecoord = zone:GetCoordinate()
+      zoneradius = czone.shiplength
+      zonewidth = czone.shipwidth
+    else
+      zone = ZONE:FindByName(zonename)
+      zonecoord = zone:GetCoordinate()
+      zoneradius = zone:GetRadius()
+      zonewidth = zoneradius
+    end
     local distance = self:_GetDistance(zonecoord,unitcoord)
     if distance <= zoneradius and active then 
       outcome = true
@@ -2403,10 +2477,15 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
       maxdist = distance
       zoneret = zone 
       zonenameret = zonename
+      zonewret = zonewidth
       colorret = color 
     end
   end
-  return outcome, zonenameret, zoneret, maxdist
+  if Zonetype == CTLD.CargoZoneType.SHIP then
+    return outcome, zonenameret, zoneret, maxdist, zonewret
+  else
+    return outcome, zonenameret, zoneret, maxdist
+  end
 end
 
 --- User function - Start smoke in a zone close to the Unit.
@@ -2589,6 +2668,9 @@ end
     self:T(self.lid .. " CanHoverLoad")
     if self:IsHercules(Unit) then return false end
     local outcome = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD) and self:IsCorrectHover(Unit)
+    if not outcome then
+      outcome = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP) --and self:IsCorrectHover(Unit)
+    end
     return outcome
   end
   
@@ -2650,7 +2732,7 @@ end
     if self.hoverautoloading then
       for _,_pilot in pairs (self.CtldUnits) do
         local Unit = UNIT:FindByName(_pilot)
-        self:AutoHoverLoad(Unit)
+        if self:CanHoverLoad(Unit) then self:AutoHoverLoad(Unit) end
       end
     end
     return self
@@ -2682,7 +2764,7 @@ end
   -- @return #CTLD self
   function CTLD:onafterStart(From, Event, To)
     self:T({From, Event, To})
-    self:I(self.lid .. "Started.")
+    self:I(self.lid .. "Started ("..self.version..")")
     if self.useprefix or self.enableHercules then
       local prefix = self.prefixes
       if self.enableHercules then
