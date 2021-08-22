@@ -26,7 +26,7 @@
 -- ===
 --
 -- ## Youtube Videos:
---
+ --
 --    * [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg)
 --    * [MOOSE - On the Range - Demonstration Video](https://www.youtube.com/watch?v=kIXcxNB9_3M)
 -- 
@@ -2560,7 +2560,7 @@ function RANGE:_DisplayBombTargets(_unitname)
         -- Get elevation
         local elevation=coord:GetLandHeight()
         local eltxt=string.format("%d m", elevation)
-        if _settings:IsImperial() then
+        if not _settings:IsMetric() then
           elevation=UTILS.MetersToFeet(elevation)
           eltxt=string.format("%d ft", elevation)
         end
