@@ -248,11 +248,11 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet)
 
   -- Check type of GroupSet provided.
   if GroupSet:IsInstanceOf("GROUP") or GroupSet:IsInstanceOf("OPSGROUP") then
-  
+
     -- We got a single GROUP or OPSGROUP object.
     local cargo=self:_CreateCargoGroupData(GroupSet)
     
-    if cargo  then
+    if cargo then
       table.insert(self.cargos, cargo)
       self.Ncargo=self.Ncargo+1
     end

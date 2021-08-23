@@ -2596,6 +2596,12 @@ function WAREHOUSE:SetSpawnZone(zone, maxdist)
   return self
 end
 
+--- Get the spawn zone.
+-- @param #WAREHOUSE self
+-- @return Core.Zone#ZONE The spawn zone.
+function WAREHOUSE:GetSpawnZone()
+  return self.spawnzone
+end
 
 --- Set a warehouse zone. If this zone is captured, the warehouse and all its assets fall into the hands of the enemy.
 -- @param #WAREHOUSE self
@@ -6331,9 +6337,17 @@ function WAREHOUSE:_OnEventBirth(EventData)
         
         -- Set born to true.
         request.born=true
+        
+        
+        if not asset.spawned then
+          asset.spawned=1
+        else
+          asset.spawned=asset.spawned+1
+        end
+                
   
         -- Birth is triggered for each unit. We need to make sure not to call this too often!
-        if not asset.spawned then
+        if asset.spawned==asset.nunits then
   
           -- Remove asset from stock.
           self:_DeleteStockItem(asset)
@@ -6355,9 +6369,9 @@ function WAREHOUSE:_OnEventBirth(EventData)
           group:SetState(group, "WAREHOUSE", self)
   
           -- Asset spawned FSM function.
-          --self:__AssetSpawned(1, group, asset, request)
-          --env.info(string.format("FF asset spawned %s, %s", asset.spawngroupname, EventData.IniUnitName))
-          self:AssetSpawned(group, asset, request)
+          -- This needs to be delayed a bit for all units to be present. Especially, since MOOSE needs a birth event for UNITs to be added to the _DATABASE.
+          self:__AssetSpawned(0.1, group, asset, request)
+          --self:AssetSpawned(group, asset, request)
   
         end
         

@@ -1414,7 +1414,7 @@ function OPSGROUP:DestroyUnit(UnitName, Delay)
       -- Create a "Unit Lost" event.
       local EventTime=timer.getTime()
 
-      if self.isAircraft then
+      if self:IsFlightgroup() then
         self:CreateEventUnitLost(EventTime, unit)
       else
         self:CreateEventDead(EventTime, unit)
@@ -2469,8 +2469,8 @@ function OPSGROUP:OnEventBirth(EventData)
     
     if element and element.status~=OPSGROUP.ElementStatus.SPAWNED then
 
-      -- Set element to spawned state.
-      self:ElementSpawned(element)
+      -- Set element to spawned state. We need to delay this.
+      self:__ElementSpawned(0.05, element)
       
     end
     
@@ -2646,12 +2646,11 @@ end
 
 --- Clear DCS tasks.
 -- @param #OPSGROUP self
--- @param #table DCSTask DCS task structure.
 -- @return #OPSGROUP self
 function OPSGROUP:ClearTasks()
   if self:IsAlive() then
-    self.group:ClearTasks()
     self:I(self.lid..string.format("CLEARING Tasks"))
+    self.group:ClearTasks()    
   end
   return self
 end
@@ -3166,8 +3165,8 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
       -- NOTE: I am pushing the task instead of setting it as it seems to keep the mission task alive.
       --       There were issues that flights did not proceed to a later waypoint because the task did not finish until the fired missiles
       --       impacted (took rather long). Then the flight flew to the nearest airbase and one lost completely the control over the group.
-      self:PushTask(TaskFinal)
-      --self:SetTask(TaskFinal)
+      --self:PushTask(TaskFinal)
+      self:SetTask(TaskFinal)
       
       
     elseif Task.type==OPSGROUP.TaskType.WAYPOINT then
@@ -3307,14 +3306,16 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
     else
       --Mission paused. Do nothing!
     end
+    
   else
 
     if Task.description=="Engage_Target" then
       self:Disengage()
     end
     
-    self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 1 sec")
-    self:_CheckGroupDone(1)
+    -- 
+    self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 0 sec")
+    self:_CheckGroupDone()
   end
 
 end
@@ -3575,7 +3576,7 @@ function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
   end
 
   -- Startup group if it is uncontrolled.
-  if self.isAircraft and self:IsUncontrolled() then
+  if self:IsFlightgroup() and self:IsUncontrolled() then
     self:StartUncontrolled(delay)
   end
 
@@ -3966,7 +3967,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       self:SwitchAlarmstate(mission.optionAlarm)
     end
     -- Formation
-    if mission.optionFormation and self.isAircraft then
+    if mission.optionFormation and self:IsFlightgroup() then
       self:SwitchFormation(mission.optionFormation)
     end
     -- Radio frequency and modulation.
@@ -4036,7 +4037,7 @@ function OPSGROUP:_QueueUpdate()
   local ready=true
 
   -- For aircraft check airborne.
-  if self.isAircraft then
+  if self:IsFlightgroup() then
     ready=self:IsAirborne()
   end
 
@@ -4219,8 +4220,8 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
     -- Check if all tasks/mission are done?
     -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
-    if ntasks==0 then
-      self:_CheckGroupDone(0.1)
+    if ntasks==0 and self:HasPassedFinalWaypoint() then
+      self:_CheckGroupDone(0.01)
     end
 
     -- Debug info.
@@ -5356,7 +5357,10 @@ function OPSGROUP:_CheckCargoTransport()
     local text=""
     for i,_transport in pairs(self.cargoqueue) do
       local transport=_transport --#Ops.OpsTransport#OPSTRANSPORT
-      text=text..string.format("\n[%d] UID=%d Status=%s: %s --> %s", i, transport.uid, transport:GetState(), transport.pickupzone:GetName(), transport.deployzone:GetName())
+      
+      local pickupname=transport.pickupzone and transport.pickupzone:GetName() or "unknown"
+      local deployname=transport.deployzone and transport.deployzone:GetName() or "unknown"
+      text=text..string.format("\n[%d] UID=%d Status=%s: %s --> %s", i, transport.uid, transport:GetState(), pickupname, deployname)
       for j,_cargo in pairs(transport.cargos) do
         local cargo=_cargo --#OPSGROUP.CargoGroup
         local state=cargo.opsgroup:GetState()
@@ -5386,7 +5390,9 @@ function OPSGROUP:_CheckCargoTransport()
 
     -- Debug info.
     if self.verbose>=2 then
-      local text=string.format("Carrier [%s]: %s --> %s", self.carrierStatus, self.cargoTransport.pickupzone:GetName(), self.cargoTransport.deployzone:GetName())
+      local pickupname=self.cargoTransport.pickupzone and self.cargoTransport.pickupzone:GetName() or "unknown"
+      local deployname=self.cargoTransport.deployzone and self.cargoTransport.deployzone:GetName() or "unknown"    
+      local text=string.format("Carrier [%s]: %s --> %s", self.carrierStatus, pickupname, deployname)
       for _,_cargo in pairs(self.cargoTransport.cargos) do
         local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
         local name=cargo.opsgroup:GetName()
@@ -6483,7 +6489,7 @@ function OPSGROUP:onafterLoaded(From, Event, To)
   -- Cancel landedAt task.
   if self:IsFlightgroup() and self:IsLandedAt() then
     local Task=self:GetTaskCurrent()
-    self:TaskCancel(Task)
+    self:__TaskCancel(1, Task)
   end
 
   -- Order group to transport.
@@ -6552,7 +6558,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
       self:FullStop()
     end
 
-    -- Start loading.
+    -- Start unloading.
     self:__UnLoading(-5)
 
   else
@@ -6598,8 +6604,9 @@ function OPSGROUP:onafterTransport(From, Event, To)
         ---
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
-        Coordinate:SetAltitude(200)
-        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate) ; waypoint.detour=1
+        Coordinate:MarkToAll("landing",ReadOnly,Text)
+        env.info("FF helo add waypoint detour")
+        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, 200) ; waypoint.detour=1
 
       else
         self:E(self.lid.."ERROR: Carrier aircraft cannot land in Deploy zone! Specify a ZONE_AIRBASE as deploy zone")
@@ -7817,6 +7824,8 @@ function OPSGROUP:Route(waypoints, delay)
 
       -- DCS task combo.
       local Tasks={}
+      
+      self:ClearTasks(DCSTask)
 
       -- Route (Mission) task.
       local TaskRoute=self.group:TaskRoute(waypoints)
@@ -7914,7 +7923,8 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
     
     if wpnext and (opsgroup.currentwp<#opsgroup.waypoints or opsgroup.adinfinitum or wpistemp) then
     
-      opsgroup:I(opsgroup.lid..string.format("Next waypoint UID=%d index=%d", wpnext.uid, opsgroup:GetWaypointIndex(wpnext.uid)))
+      -- Debug info.
+      opsgroup:T(opsgroup.lid..string.format("Next waypoint UID=%d index=%d", wpnext.uid, opsgroup:GetWaypointIndex(wpnext.uid)))
 
       -- Set formation.
       if opsgroup.isGround then
@@ -7929,8 +7939,6 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
       end
       
     else
-    
-      env.info(opsgroup.lid.."FF 300")
     
       -- Set passed final waypoint.
       opsgroup:_PassedFinalWaypoint(true, "_PassingWaypoint No next Waypoint found")
@@ -7972,6 +7980,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
         if opsgroup.isFlightgroup then
 
           -- Land at current pos and wait for 60 min max.
+          env.info("FF LandAt for Pickup")
           opsgroup:LandAt(opsgroup:GetCoordinate(), 60*60)
 
         else
@@ -7985,6 +7994,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
        if opsgroup.isFlightgroup then
 
           -- Land at current pos and wait for 60 min max.
+          env.info("FF LandAt for Transporting")
           opsgroup:LandAt(opsgroup:GetCoordinate(), 60*60)
 
         else
@@ -8271,7 +8281,7 @@ function OPSGROUP:SetDefaultTACAN(Channel, Morse, UnitName, Band, OffSwitch)
   self.tacanDefault.Morse=Morse or "XXX"
   self.tacanDefault.BeaconName=UnitName
 
-  if self.isAircraft then
+  if self:IsFlightgroup() then
     Band=Band or "Y"
   else
     Band=Band or "X"
@@ -8356,7 +8366,7 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 
       -- System
       local System=BEACON.System.TACAN
-      if self.isAircraft then
+      if self:IsFlightgroup() then
         System=BEACON.System.TACAN_TANKER_Y
       end
 
@@ -8592,7 +8602,7 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
     Frequency=Frequency or self.radioDefault.Freq
     Modulation=Modulation or self.radioDefault.Modu
 
-    if self.isAircraft and not self.radio.On then
+    if self:IsFlightgroup() and not self.radio.On then
       self.group:SetOption(AI.Option.Air.id.SILENCE, false)
     end
 
@@ -8621,7 +8631,7 @@ function OPSGROUP:TurnOffRadio()
 
   if self:IsAlive() then
 
-    if self.isAircraft then
+    if self:IsFlightgroup() then
 
       -- Set group to be silient.
       self.group:SetOption(AI.Option.Air.id.SILENCE, true)
@@ -8662,7 +8672,7 @@ function OPSGROUP:SwitchFormation(Formation)
 
     Formation=Formation or self.optionDefault.Formation
 
-    if self.isAircraft then
+    if self:IsFlightgroup() then
 
       self.group:SetOption(AI.Option.Air.id.FORMATION, Formation)
 
@@ -9556,7 +9566,7 @@ end
 function OPSGROUP:_PassedFinalWaypoint(final, comment)
 
   -- Debug info.
-  self:I(self.lid..string.format("Passed final waypoint=%s [from %s]: comment \"%s\"", tostring(final), tostring(self.passedfinalwp), tostring(comment)))
+  self:T(self.lid..string.format("Passed final waypoint=%s [from %s]: comment \"%s\"", tostring(final), tostring(self.passedfinalwp), tostring(comment)))
 
   -- Set value.
   self.passedfinalwp=final

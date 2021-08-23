@@ -158,11 +158,13 @@ function LEGION:AddMission(Mission)
   -- Add legion to mission.
   Mission:AddLegion(self)
   
+  --[[
   if Mission.opstransport then
     Mission.opstransport:SetPickupZone(self.spawnzone)
     Mission.opstransport:SetEmbarkZone(self.spawnzone)
     self:AddOpsTransport(Mission.opstransport)
   end
+  ]]
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -1007,12 +1009,7 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
           --mission:SetTACAN(Tacan, Morse, UnitName, Band)
         end
         
-        -- Transport for mission assets.
-        if mission.opstransport then
-          mission.opstransport:AddCargoGroups(self)
-        end
-  
-        -- Add mission to flightgroup queue.
+        -- Add mission to flightgroup queue. If mission has an OPSTRANSPORT attached, all added OPSGROUPS are added as CARGO for a transport.
         flightgroup:AddMission(mission)        
           
         -- Trigger event.

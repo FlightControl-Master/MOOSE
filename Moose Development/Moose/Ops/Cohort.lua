@@ -960,13 +960,15 @@ end
 --- Check if a mission type is contained in a list of possible capabilities.
 -- @param #COHORT self
 -- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
--- @param #table Capabilities A table with possible capabilities.
+-- @param #table Capabilities (Optional) A table with possible capabilities `Ops.Auftrag#AUFTRAG.Capability`. Default is capabilities of the cohort.
 -- @return #boolean If true, the requested mission type is part of the possible mission types.
 function COHORT:CheckMissionCapability(MissionTypes, Capabilities)
 
   if type(MissionTypes)~="table" then
     MissionTypes={MissionTypes}
   end
+
+  Capabilities=Capabilities or self.missiontypes
 
   for _,cap in pairs(Capabilities) do
     local capability=cap --Ops.Auftrag#AUFTRAG.Capability

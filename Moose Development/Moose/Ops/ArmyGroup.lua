@@ -350,10 +350,9 @@ function ARMYGROUP:Status()
   -- FSM state.
   local fsmstate=self:GetState()
   
+  -- Is group alive?
   local alive=self:IsAlive()
-  
-  env.info(self.lid.."FF status="..fsmstate)
-  
+
   if alive then
 
     ---
@@ -1228,19 +1227,35 @@ function ARMYGROUP:_InitGroup(Template)
   -- Units of the group.
   local units=self.group:GetUnits()
   
+  -- DCS group.
+  local dcsgroup=Group.getByName(self.groupname)
+  local size0=dcsgroup:getInitialSize()
+  
+  -- Quick check.
+  if #units~=size0 then
+    self:E(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+  end
+  
   -- Add elemets.
   for _,unit in pairs(units) do
     self:_AddElementByName(unit:GetName())
   end
-      
-  -- Get Descriptors.
-  self.descriptors=units[1]:GetDesc()
+
+  -- Get first unit. This is used to extract other parameters.
+  local unit=units[1] --Wrapper.Unit#UNIT
   
-  -- Set type name.
-  self.actype=units[1]:GetTypeName()
+  if unit then
+      
+    -- Get Descriptors.
+    self.descriptors=unit:GetDesc()
     
-  -- Init done.
-  self.groupinitialized=true
+    -- Set type name.
+    self.actype=unit:GetTypeName()
+      
+    -- Init done.
+    self.groupinitialized=true
+    
+  end
   
   return self
 end

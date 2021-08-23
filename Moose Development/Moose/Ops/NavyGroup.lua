@@ -461,8 +461,11 @@ function NAVYGROUP:Status(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
+
+  -- Is group alive?
+  local alive=self:IsAlive()
   
-  if self:IsAlive() then
+  if alive then
   
     ---
     -- Detection
@@ -518,7 +521,11 @@ function NAVYGROUP:Status(From, Event, To)
           self:Cruise()
         end
       end
-    end    
+    end
+    
+  end
+  
+  if alive~=nil then
 
     if self.verbose>=1 then
   
@@ -548,19 +555,7 @@ function NAVYGROUP:Status(From, Event, To)
       local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] (of %d) Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
       fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, #self.waypoints or 0, wpDist, wpETA, speed, speedExpected, alt, self.heading, turning, freepath, intowind)
       self:I(self.lid..text)
-      
-      if false then
-        local text="Waypoints:"
-        for i,wp in pairs(self.waypoints) do
-          local waypoint=wp --Ops.OpsGroup#OPSGROUP.Waypoint
-          text=text..string.format("\n%d. UID=%d", i, waypoint.uid)
-          if i==self.currentwp then
-            text=text.." current!"
-          end
-        end
-        env.info(text)
-      end
-      
+            
     end
     
   else
@@ -575,7 +570,7 @@ function NAVYGROUP:Status(From, Event, To)
   -- Recovery Windows
   ---
 
-  if self.verbose>=2 and #self.Qintowind>0 then
+  if alive and self.verbose>=2 and #self.Qintowind>0 then
   
     -- Debug output:
     local text=string.format(self.lid.."Turn into wind time windows:")
@@ -1190,20 +1185,36 @@ function NAVYGROUP:_InitGroup(Template)
   
   -- Get all units of the group.
   local units=self.group:GetUnits()
+
+  -- DCS group.
+  local dcsgroup=Group.getByName(self.groupname)
+  local size0=dcsgroup:getInitialSize()
+  
+  -- Quick check.
+  if #units~=size0 then
+    self:E(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+  end
   
   -- Add elemets.
   for _,unit in pairs(units) do
     self:_AddElementByName(unit:GetName())
   end
   
-  -- Get Descriptors.
-  self.descriptors=units[1]:GetDesc()
+  -- Get first unit. This is used to extract other parameters.
+  local unit=units[1] --Wrapper.Unit#UNIT
   
-  -- Set type name.
-  self.actype=units[1]:GetTypeName()
+  if unit then  
   
-  -- Init done.
-  self.groupinitialized=true
+    -- Get Descriptors.
+    self.descriptors=unit:GetDesc()
+    
+    -- Set type name.
+    self.actype=unit:GetTypeName()
+    
+    -- Init done.
+    self.groupinitialized=true
+    
+  end
   
   return self
 end

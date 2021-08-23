@@ -1983,6 +1983,13 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
     trepeat=-5
     allowed=false
   end
+  
+  if self:IsUncontrolled() then
+    -- Not airborne yet. Try again in 5 sec.
+    self:T(self.lid.."Update route denied. Group is UNCONTROLLED ==> checking back in 5 sec")
+    trepeat=-5
+    allowed=false  
+  end
 
   if n and n<1 then
     self:E(self.lid.."Update route denied because waypoint n<1!")
@@ -2065,13 +2072,16 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
 
   -- Waypoint type.
   local waypointType=COORDINATE.WaypointType.TurningPoint
+  local waypointAction=COORDINATE.WaypointAction.TurningPoint
   if self:IsLanded() or self:IsLandedAt() or self:IsAirborne()==false then
     -- Had some issues with passing waypoint function of the next WP called too ealy when the type is TurningPoint. Setting it to TakeOff solved it!
     waypointType=COORDINATE.WaypointType.TakeOff
+    env.info("FF takeoff type waypoint")
+    --waypointAction=COORDINATE.WaypointAction.FromParkingArea
   end
 
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
-  local current=self.group:GetCoordinate():WaypointAir(COORDINATE.WaypointAltType.BARO, waypointType, COORDINATE.WaypointAction.TurningPoint, speed, true, nil, {}, "Current")
+  local current=self.group:GetCoordinate():WaypointAir(COORDINATE.WaypointAltType.BARO, waypointType, waypointAction, speed, true, nil, {}, "Current")
   table.insert(wp, current)
 
   local Nwp=self.waypoints and #self.waypoints or 0
@@ -2084,7 +2094,13 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destbase and self.destbase:GetName() or "unknown"
-  self:T(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
+  self:T(self.lid..string.format("Updating route for WP #%d-%d [%s], homebase=%s destination=%s", n, #wp, self:GetState(), hb, db))
+  
+  -- Print waypoints.
+  for i,w in pairs(wp) do
+    env.info("FF waypoint index="..i)
+    self:I(w)
+  end
 
 
   if #wp>1 then
@@ -2243,7 +2259,7 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
         self:T(self.lid..string.format("Flight (status=%s) did NOT pass the final waypoint yet ==> update route", self:GetState()))
         
         -- Update route.
-        self:__UpdateRoute(-1)
+        self:__UpdateRoute(-0.01)
         
       end
     end
@@ -3086,13 +3102,25 @@ function FLIGHTGROUP:_InitGroup(Template)
     self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC")
   end
 
+  -- Units of the group.
+  local units=self.group:GetUnits()
+  
+  -- DCS group.
+  local dcsgroup=Group.getByName(self.groupname)
+  local size0=dcsgroup:getInitialSize()
+  
+  -- Quick check.
+  if #units~=size0 then
+    self:E(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+  end  
+
   -- Add elemets.
-  for _,unit in pairs(self.group:GetUnits()) do
+  for _,unit in pairs(units) do
     self:_AddElementByName(unit:GetName())
   end
 
   -- Get first unit. This is used to extract other parameters.
-  local unit=self.group:GetUnit(1)
+  local unit=units[1] --Wrapper.Unit#UNIT
 
   if unit then
 
@@ -3469,7 +3497,7 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
 
   -- Update route.
   if Updateroute==nil or Updateroute==true then
-    self:__UpdateRoute(-1)
+    self:__UpdateRoute(-0.01)
   end
 
   return waypoint
