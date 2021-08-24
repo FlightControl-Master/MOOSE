@@ -208,6 +208,9 @@ function FLIGHTGROUP:New(group)
     return og
   end
 
+  -- First set FLIGHTGROUP.
+    self.isFlightgroup=true
+
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #FLIGHTGROUP
 
@@ -215,7 +218,6 @@ function FLIGHTGROUP:New(group)
   self.lid=string.format("FLIGHTGROUP %s | ", self.groupname)
 
   -- Defaults
-  self.isFlightgroup=true
   self:SetFuelLowThreshold()
   self:SetFuelLowRTB()
   self:SetFuelCriticalThreshold()
@@ -1853,6 +1855,9 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
   -- Check what to do.
   if airwing then
   
+    -- Debug info.
+    self:T(self.lid..string.format("Airwing asset group %s arrived ==> Adding asset back to stock of airwing %s", self.groupname, airwing.alias))
+  
     -- Add the asset back to the airwing.
     airwing:AddAsset(self.group, 1)
         
@@ -2018,6 +2023,9 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
         -- For patrol zone, we need to allow the update as we insert new waypoints.
       elseif task.dcstask.id=="ReconMission" then
         -- For recon missions, we need to allow the update as we insert new waypoints.
+      elseif task.description and task.description=="Task_Land_At" then
+        -- We allow this
+        env.info("FF allowing update route for Task_Land_At")
       else
         local taskname=task and task.description or "No description"
         self:E(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
@@ -2075,9 +2083,9 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   local waypointAction=COORDINATE.WaypointAction.TurningPoint
   if self:IsLanded() or self:IsLandedAt() or self:IsAirborne()==false then
     -- Had some issues with passing waypoint function of the next WP called too ealy when the type is TurningPoint. Setting it to TakeOff solved it!
-    waypointType=COORDINATE.WaypointType.TakeOff
-    env.info("FF takeoff type waypoint")
-    --waypointAction=COORDINATE.WaypointAction.FromParkingArea
+    --waypointType=COORDINATE.WaypointType.TakeOff
+    waypointType=COORDINATE.WaypointType.TakeOffGroundHot
+    waypointAction=COORDINATE.WaypointAction.FromGroundAreaHot
   end
 
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
@@ -2097,10 +2105,12 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   self:T(self.lid..string.format("Updating route for WP #%d-%d [%s], homebase=%s destination=%s", n, #wp, self:GetState(), hb, db))
   
   -- Print waypoints.
+  --[[
   for i,w in pairs(wp) do
     env.info("FF waypoint index="..i)
     self:I(w)
   end
+  ]]
 
 
   if #wp>1 then
@@ -2164,15 +2174,21 @@ end
 -- @param #number waittime Time to wait if group is done.
 function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
 
+  -- FSM state.
+  local fsmstate=self:GetState()
+
   if self:IsAlive() and self.isAI then
 
     if delay and delay>0 then
+      -- Debug info.
+      self:T(self.lid..string.format("Check FLIGHTGROUP [state=%s] done in %.3f seconds...", fsmstate, delay))
+    
       -- Delayed call.
       self:ScheduleOnce(delay, FLIGHTGROUP._CheckGroupDone, self)
     else
 
       -- Debug info.
-      self:T(self.lid.."Check FLIGHTGROUP done?")
+      self:T(self.lid..string.format("Check FLIGHTGROUP [state=%s] done?", fsmstate))
 
       -- First check if there is a paused mission that
       if self.missionpaused then
@@ -2188,7 +2204,7 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
 
       -- Group is ordered to land at an airbase.
       if self.isLandingAtAirbase then
-        self:T(self.lid.."Landing at airbase! Group NOT done...")
+        self:T(self.lid..string.format("Landing at airbase %s! Group NOT done...", self.isLandingAtAirbase:GetName()))
         return
       end
       
@@ -2211,7 +2227,7 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
       self:T(self.lid..string.format("Remaining (final=%s): missions=%d, tasks=%d, transports=%d", tostring(self.passedfinalwp), nMissions, nTasks, nTransports))
 
       -- Final waypoint passed?
-      if self.passedfinalwp then
+      if self:HasPassedFinalWaypoint() then
       
         ---
         -- Final Waypoint PASSED
@@ -2445,6 +2461,7 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   local text=string.format("Flight group set to hold at airbase %s. SpeedTo=%d, SpeedHold=%d, SpeedLand=%d", airbase:GetName(), SpeedTo, SpeedHold, SpeedLand)
   self:T(self.lid..text)
 
+  -- Holding altitude.
   local althold=self.isHelo and 1000+math.random(10)*100 or math.random(4,10)*1000
 
   -- Holding points.
@@ -2481,11 +2498,13 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   local h1=x1*math.tan(alpha)
   local h2=x2*math.tan(alpha)
 
+  -- Get active runway.
   local runway=airbase:GetActiveRunway()
 
   -- Set holding flag to 0=false.
   self.flaghold:Set(0)
 
+  -- Set holding time.
   local holdtime=2*60
   if fc or self.airboss then
     holdtime=nil
@@ -2557,14 +2576,14 @@ function FLIGHTGROUP:onbeforeWait(From, Event, To, Duration, Altitude, Speed)
   local Tsuspend=nil
 
   -- Check for a current task.
-  if self.taskcurrent>0 then
+  if self.taskcurrent>0 and not self:IsLandedAt() then
     self:I(self.lid..string.format("WARNING: Got current task ==> WAIT event is suspended for 30 sec!"))
     Tsuspend=-30
     allowed=false
   end
   
   -- Check for a current transport assignment.
-  if self.cargoTransport then
+  if self.cargoTransport and not self:IsLandedAt() then
     self:I(self.lid..string.format("WARNING: Got current TRANSPORT assignment ==> WAIT event is suspended for 30 sec!"))
     Tsuspend=-30
     allowed=false  
@@ -2603,14 +2622,6 @@ function FLIGHTGROUP:onafterWait(From, Event, To, Duration, Altitude, Speed)
   self:T(self.lid..text)
 
   --TODO: set ROE passive. introduce roe event/state/variable.
-
-  -- Orbit task.
-  local TaskOrbit=self.group:TaskOrbit(Coord, UTILS.FeetToMeters(Altitude), UTILS.KnotsToMps(Speed))
-  
-  -- Orbit task.
-  local TaskFunction=self.group:TaskFunction("FLIGHTGROUP._FinishedWaiting", self)
-  local DCSTasks=self.group:TaskCombo({TaskOrbit, TaskFunction})
-  
 
   -- Orbit until flaghold=1 (true) but max 5 min if no FC is giving the landing clearance.
   local TaskOrbit = self.group:TaskOrbit(Coord, UTILS.FeetToMeters(Altitude), UTILS.KnotsToMps(Speed))
@@ -2842,11 +2853,11 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to land. Default is current position.
--- @param #number Duration The duration in seconds to remain on ground. Default 600 sec (10 min).
+-- @param #number Duration The duration in seconds to remain on ground. Default `nil` = forever.
 function FLIGHTGROUP:onafterLandAt(From, Event, To, Coordinate, Duration)
 
   -- Duration.
-  Duration=Duration or 600
+  --Duration=Duration or 600
 
   Coordinate=Coordinate or self:GetCoordinate()
 
@@ -2855,7 +2866,7 @@ function FLIGHTGROUP:onafterLandAt(From, Event, To, Coordinate, Duration)
   local Task=self:NewTaskScheduled(DCStask, 1, "Task_Land_At", 0)
 
   self:TaskExecute(Task)
-
+  
 end
 
 --- On after "FuelLow" event.
@@ -3012,7 +3023,7 @@ function FLIGHTGROUP._FinishedWaiting(group, flightgroup)
   flightgroup.dTwait=nil
 
   -- Trigger Holding event.
-  flightgroup:_CheckGroupDone(1)
+  flightgroup:_CheckGroupDone(0.1)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

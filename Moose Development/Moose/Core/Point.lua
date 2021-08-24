@@ -225,6 +225,8 @@ do -- COORDINATE
   -- @field #string FlyoverPoint Fly over point.
   -- @field #string FromParkingArea From parking area.
   -- @field #string FromParkingAreaHot From parking area hot.
+  -- @field #string FromGroundAreaHot From ground area hot.
+  -- @field #string FromGroundArea From ground area.
   -- @field #string FromRunway From runway.
   -- @field #string Landing Landing.
   -- @field #string LandingReFuAr Landing and refuel and rearm.
@@ -233,6 +235,8 @@ do -- COORDINATE
     FlyoverPoint       = "Fly Over Point",
     FromParkingArea    = "From Parking Area",
     FromParkingAreaHot = "From Parking Area Hot",
+    FromGroundAreaHot  = "From Ground Area Hot",
+    FromGroundArea     = "From Ground Area",
     FromRunway         = "From Runway",
     Landing            = "Landing",
     LandingReFuAr      = "LandingReFuAr",
@@ -243,6 +247,7 @@ do -- COORDINATE
   -- @field #string TakeOffParking Take of parking.
   -- @field #string TakeOffParkingHot Take of parking hot.
   -- @field #string TakeOff Take off parking hot.
+  -- @field #string TakeOffGroundHot Take of from ground hot.
   -- @field #string TurningPoint Turning point.
   -- @field #string Land Landing point.
   -- @field #string LandingReFuAr Landing and refuel and rearm.
@@ -250,9 +255,11 @@ do -- COORDINATE
     TakeOffParking    = "TakeOffParking",
     TakeOffParkingHot = "TakeOffParkingHot",
     TakeOff           = "TakeOffParkingHot",
+    TakeOffGroundHot  = "TakeOffGroundHot",
+    TakeOffGround     = "TakeOffGround",
     TurningPoint      = "Turning Point",
     Land              = "Land",
-    LandingReFuAr     = "LandingReFuAr",
+    LandingReFuAr     = "LandingReFuAr",    
   }
 
 

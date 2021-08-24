@@ -114,6 +114,9 @@ function NAVYGROUP:New(group)
     return og
   end
 
+  -- First set NAVYGROUP.
+  self.isNavygroup=true
+
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #NAVYGROUP
   
@@ -126,7 +129,6 @@ function NAVYGROUP:New(group)
   self:SetDefaultAlarmstate()
   self:SetPatrolAdInfinitum(true)
   self:SetPathfinding(false)
-  self.isNavygroup=true
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State

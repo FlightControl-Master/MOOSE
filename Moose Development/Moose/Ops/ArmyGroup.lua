@@ -83,13 +83,16 @@ ARMYGROUP.version="0.7.0"
 -- @param Wrapper.Group#GROUP group The GROUP object. Can also be given by its group name as `#string`.
 -- @return #ARMYGROUP self
 function ARMYGROUP:New(group)
-
+  
   -- First check if we already have an OPS group for this group.
   local og=_DATABASE:GetOpsGroup(group)
   if og then
     og:I(og.lid..string.format("WARNING: OPS group already exists in data base!"))
     return og
   end
+
+  -- First set ARMYGROUP.
+  self.isArmygroup=true
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #ARMYGROUP
@@ -98,7 +101,6 @@ function ARMYGROUP:New(group)
   self.lid=string.format("ARMYGROUP %s | ", self.groupname)
   
   -- Defaults
-  self.isArmygroup=true
   self:SetDefaultROE()
   self:SetDefaultAlarmstate()
   self:SetDetection()
