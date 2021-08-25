@@ -20,18 +20,16 @@
 -- @field Wrapper.Group#GROUP group Group object.
 -- @field DCS#Controller controller The DCS controller of the group.
 -- @field DCS#Template template Template table of the group.
+-- @field #table elements Table of elements, i.e. units of the group.
 -- @field #boolean isLateActivated Is the group late activated.
 -- @field #boolean isUncontrolled Is the group uncontrolled.
 -- @field #boolean isFlightgroup Is a FLIGHTGROUP.
 -- @field #boolean isArmygroup Is an ARMYGROUP.
 -- @field #boolean isNavygroup Is a NAVYGROUP.
--- @field #boolean isHelo If true, the is a helicopter group.
--- @field #boolean isVTOL If true, the is capable of Vertical TakeOff and Landing (VTOL).
--- @field #table elements Table of elements, i.e. units of the group.
+-- @field #boolean isHelo If true, this is a helicopter group.
+-- @field #boolean isVTOL If true, this is capable of Vertical TakeOff and Landing (VTOL).
+-- @field #boolean isSubmarine If true, this is a submarine group.
 -- @field #boolean isAI If true, group is purely AI.
--- @field #boolean isAircraft If true, group is airplane or helicopter.
--- @field #boolean isNaval If true, group is ships or submarine.
--- @field #boolean isGround If true, group is some ground unit.
 -- @field #boolean isDestroyed If true, the whole group was destroyed.
 -- @field #boolean isDead If true, the whole group is dead.
 -- @field #table waypoints Table of waypoints.
@@ -504,6 +502,7 @@ function OPSGROUP:New(group)
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("OPSGROUP %s | ", tostring(self.groupname))
 
+  -- Check if group exists.
   if self.group then
     if not self:IsExist() then
       self:E(self.lid.."ERROR: GROUP does not exist! Returning nil")
@@ -517,6 +516,34 @@ function OPSGROUP:New(group)
   -- Set DCS group and controller.  
   self.dcsgroup=self:GetDCSGroup()
   self.controller=self.dcsgroup:getController()
+  
+  local units=self.group:GetUnits()
+  if units then
+    local masterunit=units[1] --Wrapper.Unit#UNIT
+    
+    -- Get Descriptors.
+    self.descriptors=masterunit:GetDesc()
+    
+    -- Set type name.
+    self.actype=masterunit:GetTypeName()
+    
+    if self:IsFlightgroup() then
+
+      self.rangemax=masterunit:GetRange()
+  
+      self.descriptors=masterunit:GetDesc()
+  
+      self.ceiling=self.descriptors.Hmax
+  
+      self.tankertype=select(2, masterunit:IsTanker())
+      self.refueltype=select(2, masterunit:IsRefuelable())
+  
+      --env.info("DCS Unit BOOM_AND_RECEPTACLE="..tostring(Unit.RefuelingSystem.BOOM_AND_RECEPTACLE))
+      --env.info("DCS Unit PROBE_AND_DROGUE="..tostring(Unit.RefuelingSystem.PROBE_AND_DROGUE))
+    
+    end    
+    
+  end
 
   -- Init set of detected units.
   self.detectedunits=SET_UNIT:New()
@@ -876,7 +903,7 @@ function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
   weapon.RangeMin=RangeMin
 
   self.weaponData=self.weaponData or {}
-  self.weaponData[weapon.BitType]=weapon
+  self.weaponData[tostring(weapon.BitType)]=weapon
 
   return self
 end
@@ -887,12 +914,12 @@ end
 -- @return #OPSGROUP.WeaponData Weapon range data.
 function OPSGROUP:GetWeaponData(BitType)
 
-  BitType=BitType or ENUMS.WeaponFlag.Auto
+  BitType=tostring(BitType or ENUMS.WeaponFlag.Auto)
 
   if self.weaponData[BitType] then
     return self.weaponData[BitType]
   else
-    return self.weaponData[ENUMS.WeaponFlag.Auto]
+    return self.weaponData[tostring(ENUMS.WeaponFlag.Auto)]
   end
 
 end
@@ -3937,7 +3964,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       end
 
     elseif mission.type==AUFTRAG.Type.ARTY then
-
+    
       -- Get weapon range.
       local weapondata=self:GetWeaponData(mission.engageWeaponType)
 
@@ -3959,8 +3986,9 @@ function OPSGROUP:RouteToMission(mission, delay)
 
           -- New waypoint coord.
           waypointcoord=self:GetCoordinate():Translate(d, heading)
-
-          self:T(self.lid..string.format("Out of max range = %.1f km for weapon %d", weapondata.RangeMax/1000, mission.engageWeaponType))
+          
+          -- Debug info.
+          self:T(self.lid..string.format("Out of max range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(mission.engageWeaponType)))
         elseif dist<weapondata.RangeMin then
 
           local d=(dist-weapondata.RangeMin)*1.1
@@ -3968,15 +3996,18 @@ function OPSGROUP:RouteToMission(mission, delay)
           -- New waypoint coord.
           waypointcoord=self:GetCoordinate():Translate(d, heading)
 
-          self:T(self.lid..string.format("Out of min range = %.1f km for weapon %d", weapondata.RangeMax/1000, mission.engageWeaponType))
+          -- Debug info.
+          self:T(self.lid..string.format("Out of min range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(mission.engageWeaponType)))
         end
 
+      else
+        self:T(self.lid..string.format("No weapon data for weapon type %s", tostring(mission.engageWeaponType)))
       end
     end
 
     -- Formation.
     local formation=nil
-    if self.isGround and mission.optionFormation then
+    if self.isArmygroup and mission.optionFormation then
       formation=mission.optionFormation
     end
     
@@ -4526,7 +4557,7 @@ function OPSGROUP:onbeforeLaserOn(From, Event, To, Target)
 
     -- Height offset. No offset for aircraft. We take the height for ground or naval.
     local offsetY=0
-    if self.isGround or self.isNaval then
+    if self.isFlightgroup or self.isNavygroup then
       offsetY=element.height
     end
 
@@ -6288,7 +6319,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
         end
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
-        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, 200, false) ; waypoint.detour=1
+        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, self.altitudeCruise, false) ; waypoint.detour=1
         
       else
         self:E(self.lid.."ERROR: Carrier aircraft cannot land in Pickup zone! Specify a ZONE_AIRBASE as pickup zone")
@@ -6660,7 +6691,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
         ---
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
-        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, 200, false) ; waypoint.detour=1
+        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, self.altitudeCruise, false) ; waypoint.detour=1
         
         -- Cancel landedAt task. This should trigger Cruise once airborne.
         if self:IsFlightgroup() and self:IsLandedAt() then
@@ -7870,14 +7901,20 @@ function OPSGROUP:Route(waypoints, delay)
 
     if self:IsAlive() then
 
-      -- Clear all DCS tasks.
+      -- Clear all DCS tasks. NOTE: This can make DCS crash!
       --self:ClearTasks()
 
-      -- Route (Mission) task.
-      local TaskRoute=self.group:TaskRoute(waypoints)
+      -- DCS mission task.      
+      local DCSTask = {
+        id = 'Mission',
+        params = {
+          airborne = self:IsFlightgroup(),
+          route={points=waypoints},
+        },
+      }      
 
       -- Set mission task.
-      self:SetTask(TaskRoute)
+      self:SetTask(DCSTask)
       
     else
       self:E(self.lid.."ERROR: Group is not alive! Cannot route group.")
@@ -7965,7 +8002,7 @@ function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
       opsgroup:T(opsgroup.lid..string.format("Next waypoint UID=%d index=%d", wpnext.uid, opsgroup:GetWaypointIndex(wpnext.uid)))
 
       -- Set formation.
-      if opsgroup.isGround then
+      if opsgroup.isArmygroup then
         opsgroup.formation=wpnext.action
       end
 
@@ -8733,7 +8770,7 @@ function OPSGROUP:SwitchFormation(Formation)
 
       self.group:SetOption(AI.Option.Air.id.FORMATION, Formation)
 
-    elseif self.isGround then
+    elseif self.isArmygroup then
 
       -- Polymorphic and overwritten in ARMYGROUP.
 
@@ -9682,6 +9719,38 @@ function OPSGROUP:_IsElement(unitname)
   end
 
   return false
+end
+
+--- Count elements of the group.
+-- @param #OPSGROUP self
+-- @param #table States (Optional) Only count elements in specific states. Can also be a single state passed as #string.
+-- @return #number Number of elements.
+function OPSGROUP:CountElements(States)
+
+  if States then
+    if type(States)=="string" then
+      States={States}
+    end
+  else
+    States=OPSGROUP.ElementStatus
+  end
+  
+  local IncludeDeads=true
+  
+  local N=0
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    if element and (IncludeDeads or element.status~=OPSGROUP.ElementStatus.DEAD) then
+      for _,state in pairs(States) do
+        if element.status==state then      
+          N=N+1
+          break
+        end
+      end
+    end
+  end
+
+  return N
 end
 
 --- Add a unit/element to the OPS group.

@@ -1142,11 +1142,6 @@ function NAVYGROUP:_InitGroup(Template)
   -- Get template of group.
   local template=Template or self:_GetTemplate()
 
-  -- Define category.
-  self.isAircraft=false
-  self.isNaval=true
-  self.isGround=false
-
   --TODO: Submarine check
   --self.isSubmarine=self.group:IsSubmarine()
   
@@ -1202,21 +1197,8 @@ function NAVYGROUP:_InitGroup(Template)
     self:_AddElementByName(unit:GetName())
   end
   
-  -- Get first unit. This is used to extract other parameters.
-  local unit=units[1] --Wrapper.Unit#UNIT
-  
-  if unit then  
-  
-    -- Get Descriptors.
-    self.descriptors=unit:GetDesc()
-    
-    -- Set type name.
-    self.actype=unit:GetTypeName()
-    
-    -- Init done.
-    self.groupinitialized=true
-    
-  end
+  -- Init done.
+  self.groupinitialized=true
   
   return self
 end

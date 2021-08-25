@@ -46,7 +46,7 @@ PLATOON.version="0.0.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot!
+-- TODO: Add weapon data.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -60,7 +60,7 @@ PLATOON.version="0.0.1"
 -- @return #PLATOON self
 function PLATOON:New(TemplateGroupName, Ngroups, PlatoonName)
 
-  -- Inherit everything from FSM class.
+  -- Inherit everything from COHORT class.
   local self=BASE:Inherit(self, COHORT:New(TemplateGroupName, Ngroups, PlatoonName)) -- #PLATOON
 
 
@@ -107,7 +107,17 @@ function PLATOON:AddWeaponRange(RangeMin, RangeMax, BitType)
   weapon.RangeMin=RangeMin
 
   self.weaponData=self.weaponData or {}
-  self.weaponData[weapon.BitType]=weapon
+  self.weaponData[tostring(weapon.BitType)]=weapon
+  
+  -- Debug info.
+  env.info(string.format("FF Adding weapon data: Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapon.BitType), weapon.RangeMin, weapon.RangeMax))
+  
+  local text="Weapon data:"
+  for _,_weapondata in pairs(self.weaponData) do
+    local weapondata=_weapondata
+    text=text..string.format("\n- Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapondata.BitType), weapondata.RangeMin, weapondata.RangeMax)
+  end
+  self:I(self.lid..text)
 
   return self
 end
@@ -150,14 +160,24 @@ function PLATOON:onafterStatus(From, Event, To)
     local NassetsTot=#self.assets
     local NassetsInS=self:CountAssets(true)
     local NassetsQP=0 ; local NassetsP=0 ; local NassetsQ=0  
-    if self.brigade then
-      NassetsQP, NassetsP, NassetsQ=self.brigade:CountAssetsOnMission(nil, self)
+    if self.legion then
+      NassetsQP, NassetsP, NassetsQ=self.legion:CountAssetsOnMission(nil, self)
     end
     
     -- Short info.
     local text=string.format("%s [Type=%s, Call=%s, Modex=%d, Skill=%s]: Assets Total=%d, Stock=%d, Mission=%d [Active=%d, Queue=%d]", 
     fsmstate, self.aircrafttype, callsign, modex, skill, NassetsTot, NassetsInS, NassetsQP, NassetsP, NassetsQ)
     self:I(self.lid..text)
+    
+    -- Weapon data info.
+    if self.weaponData then
+      local text="Weapon Data:"
+      for bit,_weapondata in pairs(self.weaponData) do
+        local weapondata=_weapondata --Ops.OpsGroup#OPSGROUP.WeaponData
+        text=text..string.format("\n- Bit=%s: Rmin=%.1f km, Rmax=%.1f km", bit, weapondata.RangeMin/1000, weapondata.RangeMax/1000)
+      end
+      self:I(self.lid..text)
+    end
     
     -- Check if group has detected any units.
     self:_CheckAssetStatus()

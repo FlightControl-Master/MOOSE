@@ -783,109 +783,115 @@ end
 function COHORT:RecruitAssets(Mission, Npayloads)
 
   -- Number of payloads available.
-  Npayloads=Npayloads or self.legion:CountPayloadsInStock(Mission.type, self.aircrafttype, Mission.payloads)      
+  Npayloads=Npayloads or self.legion:CountPayloadsInStock(Mission.type, self.aircrafttype, Mission.payloads)
 
+  -- Recruited assets.
   local assets={}
 
   -- Loop over assets.
   for _,_asset in pairs(self.assets) do  
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
+    -- First check that asset is not requested. This could happen if multiple requests are processed simultaniously.
+    if not asset.requested then
     
-    -- Check if asset is currently on a mission (STARTED or QUEUED).
-    if self.legion:IsAssetOnMission(asset) then
-
-      ---
-      -- Asset is already on a mission.
-      ---
-
-      -- Check if this asset is currently on a GCICAP mission (STARTED or EXECUTING).
-      if self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and Mission.type==AUFTRAG.Type.INTERCEPT then
-
-        -- Check if the payload of this asset is compatible with the mission.
-        -- Note: we do not check the payload as an asset that is on a GCICAP mission should be able to do an INTERCEPT as well!
-        self:I(self.lid.."Adding asset on GCICAP mission for an INTERCEPT mission")
-        table.insert(assets, asset)
-        
-      end      
     
-    else
-    
-      ---
-      -- Asset as NO current mission
-      ---
-
-      if asset.spawned then
-      
-        ---
-        -- Asset is already SPAWNED (could be uncontrolled on the airfield or inbound after another mission)
-        ---
-      
-        local flightgroup=asset.flightgroup
-      
-        -- Firstly, check if it has the right payload.
-        if self:CheckMissionCapability(Mission.type, asset.payload.capabilities) and flightgroup and flightgroup:IsAlive() then
-      
-          -- Assume we are ready and check if any condition tells us we are not.
-          local combatready=true
+      -- Check if asset is currently on a mission (STARTED or QUEUED).
+      if self.legion:IsAssetOnMission(asset) then
   
-          if Mission.type==AUFTRAG.Type.INTERCEPT then
-            combatready=flightgroup:CanAirToAir()
-          else
-            local excludeguns=Mission.type==AUFTRAG.Type.BOMBING or Mission.type==AUFTRAG.Type.BOMBRUNWAY or Mission.type==AUFTRAG.Type.BOMBCARPET or Mission.type==AUFTRAG.Type.SEAD or Mission.type==AUFTRAG.Type.ANTISHIP
-            combatready=flightgroup:CanAirToGround(excludeguns)
-          end
+        ---
+        -- Asset is already on a mission.
+        ---
+  
+        -- Check if this asset is currently on a GCICAP mission (STARTED or EXECUTING).
+        if self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and Mission.type==AUFTRAG.Type.INTERCEPT then
+  
+          -- Check if the payload of this asset is compatible with the mission.
+          -- Note: we do not check the payload as an asset that is on a GCICAP mission should be able to do an INTERCEPT as well!
+          self:I(self.lid.."Adding asset on GCICAP mission for an INTERCEPT mission")
+          table.insert(assets, asset)
           
-          -- No more attacks if fuel is already low. Safety first!
-          if flightgroup:IsFuelLow() then
-            combatready=false
-          end
-          
-          -- Check if in a state where we really do not want to fight any more.
-          if flightgroup:IsFlightgroup() then
-            if flightgroup:IsHolding() or flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() then
-              combatready=false
-            end          
-          else
-            if flightgroup:IsRearming() or flightgroup:IsRetreating() or flightgroup:IsReturning() then
-              combatready=false
-            end
-          end
-          -- Applies to all opsgroups.
-          if flightgroup:IsDead() or flightgroup:IsStopped() then
-            combatready=false
-          end
-          
-          
-          --TODO: Check transport for combat readyness!
+        end      
       
-          -- This asset is "combatready".
-          if combatready then
-            self:I(self.lid.."Adding SPAWNED asset to ANOTHER mission as it is COMBATREADY")
-            table.insert(assets, asset)
-          end
-        
-        end
-        
       else
       
         ---
-        -- Asset is still in STOCK
-        ---          
-      
-        -- Check that asset is not already requested for another mission.
-        if Npayloads>0 and self:IsRepaired(asset) and (not asset.requested) then
-                    
-          -- Add this asset to the selection.
-          table.insert(assets, asset)
-          
-          -- Reduce number of payloads so we only return the number of assets that could do the job.
-          Npayloads=Npayloads-1
-          
-        end
+        -- Asset as NO current mission
+        ---
+  
+        if asset.spawned then
         
-      end      
-    end    
+          ---
+          -- Asset is already SPAWNED (could be uncontrolled on the airfield or inbound after another mission)
+          ---
+        
+          local flightgroup=asset.flightgroup
+        
+          -- Firstly, check if it has the right payload.
+          if self:CheckMissionCapability(Mission.type, asset.payload.capabilities) and flightgroup and flightgroup:IsAlive() then
+        
+            -- Assume we are ready and check if any condition tells us we are not.
+            local combatready=true
+    
+            if Mission.type==AUFTRAG.Type.INTERCEPT then
+              combatready=flightgroup:CanAirToAir()
+            else
+              local excludeguns=Mission.type==AUFTRAG.Type.BOMBING or Mission.type==AUFTRAG.Type.BOMBRUNWAY or Mission.type==AUFTRAG.Type.BOMBCARPET or Mission.type==AUFTRAG.Type.SEAD or Mission.type==AUFTRAG.Type.ANTISHIP
+              combatready=flightgroup:CanAirToGround(excludeguns)
+            end
+            
+            -- No more attacks if fuel is already low. Safety first!
+            if flightgroup:IsFuelLow() then
+              combatready=false
+            end
+            
+            -- Check if in a state where we really do not want to fight any more.
+            if flightgroup:IsFlightgroup() then
+              if flightgroup:IsHolding() or flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() then
+                combatready=false
+              end          
+            else
+              if flightgroup:IsRearming() or flightgroup:IsRetreating() or flightgroup:IsReturning() then
+                combatready=false
+              end
+            end
+            -- Applies to all opsgroups.
+            if flightgroup:IsDead() or flightgroup:IsStopped() then
+              combatready=false
+            end
+            
+            
+            --TODO: Check transport for combat readyness!
+        
+            -- This asset is "combatready".
+            if combatready then
+              self:I(self.lid.."Adding SPAWNED asset to ANOTHER mission as it is COMBATREADY")
+              table.insert(assets, asset)
+            end
+          
+          end
+          
+        else
+        
+          ---
+          -- Asset is still in STOCK
+          ---          
+        
+          -- Check that we have payloads and asset is repaired.
+          if Npayloads>0 and self:IsRepaired(asset) then
+                      
+            -- Add this asset to the selection.
+            table.insert(assets, asset)
+            
+            -- Reduce number of payloads so we only return the number of assets that could do the job.
+            Npayloads=Npayloads-1
+            
+          end
+          
+        end      
+      end
+      
+    end -- not requested check
   end -- loop over assets
 
   return assets

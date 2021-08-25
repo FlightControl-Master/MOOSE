@@ -2022,22 +2022,20 @@ do -- Patrol methods
 end
 
 
---- Return a Misson task to follow a given route defined by Points.
+--- Return a "Misson" task to follow a given route defined by Points.
 -- @param #CONTROLLABLE self
 -- @param #table Points A table of route points.
--- @return DCS#Task
+-- @return DCS#Task DCS mission task. Has entries `.id="Mission"`, `params`, were params has entries `airborne` and `route`, which is a table of `points`.
 function CONTROLLABLE:TaskRoute( Points )
-  self:F2( Points )
 
   local DCSTask = {
     id = 'Mission',
     params = {
-      airborne = self:IsAir(),
+      airborne = self:IsAir(),  -- This is important to make aircraft land without respawning them (which was a long standing DCS issue).
       route = {points = Points},
     },
   }
-
-  self:T3( { DCSTask } )
+  
   return DCSTask
 end
 

@@ -2612,7 +2612,11 @@ function FLIGHTGROUP:onafterWait(From, Event, To, Duration, Altitude, Speed)
   local Coord=self.group:GetCoordinate()
   
   -- Set altitude: 1000 ft for helos and 10,000 ft for panes.
-  Altitude=Altitude or (self.isHelo and 1000 or 10000)
+  if Altitude then
+    Altitude=UTILS.FeetToMeters(Altitude)
+  else
+    Altitude=self.altitudeCruise
+  end 
   
   -- Set speed.
   Speed=Speed or (self.isHelo and 20 or 250)
@@ -2624,7 +2628,7 @@ function FLIGHTGROUP:onafterWait(From, Event, To, Duration, Altitude, Speed)
   --TODO: set ROE passive. introduce roe event/state/variable.
 
   -- Orbit until flaghold=1 (true) but max 5 min if no FC is giving the landing clearance.
-  local TaskOrbit = self.group:TaskOrbit(Coord, UTILS.FeetToMeters(Altitude), UTILS.KnotsToMps(Speed))
+  local TaskOrbit = self.group:TaskOrbit(Coord, Altitude, UTILS.KnotsToMps(Speed))
   local TaskStop  = self.group:TaskCondition(nil, nil, nil, nil, Duration)
   local TaskCntr  = self.group:TaskControlled(TaskOrbit, TaskStop)
   local TaskOver  = self.group:TaskFunction("FLIGHTGROUP._FinishedWaiting", self)
@@ -3022,7 +3026,7 @@ function FLIGHTGROUP._FinishedWaiting(group, flightgroup)
   flightgroup.Twaiting=nil
   flightgroup.dTwait=nil
 
-  -- Trigger Holding event.
+  -- Check group done.
   flightgroup:_CheckGroupDone(0.1)
 end
 
@@ -3047,11 +3051,6 @@ function FLIGHTGROUP:_InitGroup(Template)
 
   -- Get template of group.
   local template=Template or self:_GetTemplate()
-
-  -- Define category.
-  self.isAircraft=true
-  self.isNaval=false
-  self.isGround=false
 
   -- Helo group.
   self.isHelo=group:IsHelicopter()
@@ -3130,32 +3129,9 @@ function FLIGHTGROUP:_InitGroup(Template)
     self:_AddElementByName(unit:GetName())
   end
 
-  -- Get first unit. This is used to extract other parameters.
-  local unit=units[1] --Wrapper.Unit#UNIT
-
-  if unit then
-
-    self.rangemax=unit:GetRange()
-
-    self.descriptors=unit:GetDesc()
-
-    self.actype=unit:GetTypeName()
-
-    self.ceiling=self.descriptors.Hmax
-
-    self.tankertype=select(2, unit:IsTanker())
-    self.refueltype=select(2, unit:IsRefuelable())
-
-    --env.info("DCS Unit BOOM_AND_RECEPTACLE="..tostring(Unit.RefuelingSystem.BOOM_AND_RECEPTACLE))
-    --env.info("DCS Unit PROBE_AND_DROGUE="..tostring(Unit.RefuelingSystem.PROBE_AND_DROGUE))
-
-    -- Init done.
-    self.groupinitialized=true
+  -- Init done.
+  self.groupinitialized=true
     
-  else
-    self:E(self.lid.."ERROR: no unit in _InigGroup!")
-  end
-
   return self
 end
 

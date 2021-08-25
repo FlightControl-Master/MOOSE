@@ -16,7 +16,6 @@
 -- @type BRIGADE
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity of output.
--- @field Ops.General#GENERAL general The genral responsible for this brigade.
 -- @extends Ops.Legion#LEGION
 
 --- Be surprised!
@@ -31,8 +30,7 @@
 -- @field #BRIGADE
 BRIGADE = {
   ClassName      = "BRIGADE",
-  verbose        =     3,
-  genral         =   nil,
+  verbose        =     0,
 }
 
 
@@ -44,7 +42,7 @@ BRIGADE.version="0.0.1"
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot!
+-- TODO: Add weapon range.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -89,13 +87,13 @@ function BRIGADE:AddPlatoon(Platoon)
   -- Add platoon to brigade.
   table.insert(self.cohorts, Platoon)
 
-  -- Add assets to squadron.
+  -- Add assets to platoon.
   self:AddAssetToPlatoon(Platoon, Platoon.Ngroups)
 
-  -- Set airwing to squadron.
+  -- Set brigade of platoon.
   Platoon:SetBrigade(self)
 
-  -- Start squadron.
+  -- Start platoon.
   if Platoon:IsStopped() then
     Platoon:Start()
   end
@@ -114,7 +112,7 @@ function BRIGADE:AddAssetToPlatoon(Platoon, Nassets)
 
   if Platoon then
 
-    -- Get the template group of the squadron.
+    -- Get the template group of the platoon.
     local Group=GROUP:FindByName(Platoon.templatename)
 
     if Group then
@@ -131,7 +129,7 @@ function BRIGADE:AddAssetToPlatoon(Platoon, Nassets)
     end
 
   else
-    self:E(self.lid.."ERROR: Squadron does not exit!")
+    self:E(self.lid.."ERROR: Platoon does not exit!")
   end
 
   return self
@@ -148,20 +146,20 @@ end
 
 --- Get platoon of an asset.
 -- @param #BRIGADE self
--- @param Ops.Warehouse#WAREHOUSE.Assetitem Asset The platoon asset.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The platoon asset.
 -- @return Ops.Platoon#PLATOON The platoon object.
 function BRIGADE:GetPlatoonOfAsset(Asset)
   local platoon=self:GetPlatoon(Asset.squadname)
   return platoon
 end
 
---- Remove asset from squadron.
+--- Remove asset from platoon.
 -- @param #BRIGADE self
--- @param #BRIGADE.SquadronAsset Asset The squad asset.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The platoon asset.
 function BRIGADE:RemoveAssetFromPlatoon(Asset)
-  local squad=self:GetPlatoonOfAsset(Asset)
-  if squad then
-    squad:DelAsset(Asset)
+  local platoon=self:GetPlatoonOfAsset(Asset)
+  if platoon then
+    platoon:DelAsset(Asset)
   end
 end
 
@@ -188,9 +186,8 @@ function BRIGADE:onafterStatus(From, Event, To)
   -- Status of parent Warehouse.
   self:GetParent(self).onafterStatus(self, From, Event, To)
 
+  -- FSM state.
   local fsmstate=self:GetState()
-  
-  env.info("FF Brigade status "..fsmstate)
 
   -- General info:
   if self.verbose>=1 then
@@ -198,13 +195,14 @@ function BRIGADE:onafterStatus(From, Event, To)
     -- Count missions not over yet.
     local Nmissions=self:CountMissionsInQueue()
 
-    -- Assets tot
+    -- Asset count.
     local Npq, Np, Nq=self:CountAssetsOnMission()
 
-    local assets=string.format("%d (OnMission: Total=%d, Active=%d, Queued=%d)", self:CountAssets(), Npq, Np, Nq)
+    -- Asset string.
+    local assets=string.format("%d [OnMission: Total=%d, Active=%d, Queued=%d]", self:CountAssets(), Npq, Np, Nq)
 
     -- Output.
-    local text=string.format("%s: Missions=%d, Squads=%d, Assets=%s", fsmstate, Nmissions, #self.cohorts, assets)
+    local text=string.format("%s: Missions=%d, Platoons=%d, Assets=%s", fsmstate, Nmissions, #self.cohorts, assets)
     self:I(self.lid..text)
   end
 
@@ -226,19 +224,19 @@ function BRIGADE:onafterStatus(From, Event, To)
   end
 
   -------------------
-  -- Squadron Info --
+  -- Platoon Info --
   -------------------
   if self.verbose>=3 then
     local text="Platoons:"
-    for i,_squadron in pairs(self.cohorts) do
-      local squadron=_squadron --Ops.Squadron#SQUADRON
+    for i,_platoon in pairs(self.cohorts) do
+      local platoon=_platoon --Ops.Platoon#PLATOON
 
-      local callsign=squadron.callsignName and UTILS.GetCallsignName(squadron.callsignName) or "N/A"
-      local modex=squadron.modex and squadron.modex or -1
-      local skill=squadron.skill and tostring(squadron.skill) or "N/A"
+      local callsign=platoon.callsignName and UTILS.GetCallsignName(platoon.callsignName) or "N/A"
+      local modex=platoon.modex and platoon.modex or -1
+      local skill=platoon.skill and tostring(platoon.skill) or "N/A"
 
-      -- Squadron text
-      text=text..string.format("\n* %s %s: %s*%d/%d, Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, squadron:CountAssets(true), #squadron.assets, callsign, modex, skill)
+      -- Platoon text.
+      text=text..string.format("\n* %s %s: %s*%d/%d, Callsign=%s, Modex=%d, Skill=%s", platoon.name, platoon:GetState(), platoon.aircrafttype, platoon:CountAssets(true), #platoon.assets, callsign, modex, skill)
     end
     self:I(self.lid..text)
   end

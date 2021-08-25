@@ -1164,25 +1164,54 @@ end
 function LEGION:_CreateFlightGroup(asset)
 
   -- Create flightgroup.
-  local flightgroup=nil --Ops.OpsGroup#OPSGROUP  
+  local opsgroup=nil --Ops.OpsGroup#OPSGROUP  
+  
   if self:IsAirwing() then
-    flightgroup=FLIGHTGROUP:New(asset.spawngroupname)
+  
+    ---
+    -- FLIGHTGROUP
+    ---
+  
+    opsgroup=FLIGHTGROUP:New(asset.spawngroupname)
+    
+    
   elseif self:IsBrigade() then
-    flightgroup=ARMYGROUP:New(asset.spawngroupname)
+  
+    ---
+    -- ARMYGROUP
+    ---  
+  
+    opsgroup=ARMYGROUP:New(asset.spawngroupname)
+    
+
+    
   else
     self:E(self.lid.."ERROR: not airwing or brigade!")
   end
 
   -- Set legion.
-  flightgroup:_SetLegion(self)
+  opsgroup:_SetLegion(self)
 
   -- Set cohort.
-  flightgroup.cohort=self:_GetCohortOfAsset(asset)
+  opsgroup.cohort=self:_GetCohortOfAsset(asset)
 
   -- Set home base.
-  flightgroup.homebase=self.airbase
+  opsgroup.homebase=self.airbase
+  
 
-  return flightgroup
+  -- Set weapon data.
+  if opsgroup.cohort.weaponData then
+    local text="Weapon data for group:"
+    opsgroup.weaponData=opsgroup.weaponData or {}
+    for bittype,_weapondata in pairs(opsgroup.cohort.weaponData) do
+      local weapondata=_weapondata --Ops.OpsGroup#OPSGROUP.WeaponData
+      opsgroup.weaponData[bittype]=UTILS.DeepCopy(weapondata) -- Careful with the units.
+      text=text..string.format("\n- Bit=%s: Rmin=%.1f km, Rmax=%.1f km", bittype, weapondata.RangeMin/1000, weapondata.RangeMax/1000)
+    end
+    self:T3(self.lid..text)
+  end      
+
+  return opsgroup
 end
 
 
