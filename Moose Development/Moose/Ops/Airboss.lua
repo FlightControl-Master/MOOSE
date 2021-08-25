@@ -51,7 +51,7 @@
 -- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) and A-4E community mod as aircraft and the USS John C. Stennis as carrier.
 --
 -- The AV-8B Harrier and the USS Tarawa, USS America and Juan Carlos I are WIP. Those two can only be used together, i.e. these ships are the only carriers the harrier is supposed to land on and
--- the no other fixed wing aircraft (human or AI controlled) are supposed to land on these Ships. Currently only Case I is supported. Case II/III take slightly steps from the CVN carrier.
+-- the no other fixed wing aircraft (human or AI controlled) are supposed to land on these ships. Currently only Case I is supported. Case II/III take slightly different steps from the CVN carrier.
 -- However, the two Case II/III pattern are very similar so this is not a big drawback.
 --
 -- Heatblur's mighty F-14B Tomcat has been added (March 13th 2019) as well. Same goes for the A version.
