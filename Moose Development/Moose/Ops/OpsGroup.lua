@@ -7520,9 +7520,17 @@ function OPSGROUP:_CheckStuck()
 
     if holdtime>=10*60 then
 
+      -- Debug warning.
       self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
 
       --TODO: Stuck event!
+      
+      -- Look for a current mission and cancel it as we do not seem to be able to perform it.
+      local mission=self:GetMissionCurrent()
+      if mission then
+        self:E(self.lid..string.format("WARNING: Cancelling mission %s [%s] due to being stuck", mission:GetName(), mission:GetType()))
+        self:MissionCancel(mission)
+      end
 
     end
 
