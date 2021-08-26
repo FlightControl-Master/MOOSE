@@ -118,6 +118,12 @@ function LEGION:New(WarehouseName, LegionName)
   -- @param #LEGION self
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
+  --- Triggers the FSM event "MissionCancel" after a delay.
+  -- @function [parent=#LEGION] __MissionCancel
+  -- @param #LEGION self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
   --- On after "MissionCancel" event.
   -- @function [parent=#LEGION] OnAfterMissionCancel
   -- @param #LEGION self
@@ -446,12 +452,14 @@ function LEGION:_GetNextTransport()
   local function getAssets(n)
     local assets={}
   
-    -- Loop over assets.
+    -- Loop over cohorts.
     for _,_cohort in pairs(self.cohorts) do
       local cohort=_cohort --Ops.Cohort#COHORT
       
+      -- Check if chort can do a transport.
       if cohort:CheckMissionCapability({AUFTRAG.Type.OPSTRANSPORT}, cohort.missiontypes) then
       
+        -- Loop over cohort assets.
         for _,_asset in pairs(cohort.assets) do  
           local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
                   
@@ -533,6 +541,23 @@ function LEGION:CalculateAssetMissionScore(asset, Mission, includePayload)
       score=score+25
     end
   end
+  
+  -- Get coordinate of the target.
+  local coord=Mission:GetTargetCoordinate()
+  local dist=0
+  if coord then
+      
+    -- Distance from legion to target.
+    local distance=UTILS.MetersToNM(coord:Get2DDistance(self:GetCoordinate()))
+        
+    -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
+    dist=UTILS.Round(distance/10, 0)
+    
+  end
+  
+  -- Reduce score for legions that are futher away.
+  score=score-dist
+  
 
   -- TODO: This could be vastly improved. Need to gather ideas during testing.
   -- Calculate ETA? Assets on orbit missions should arrive faster even if they are further away.
@@ -669,6 +694,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
 
       -- Set asset to requested! Important so that new requests do not use this asset!
       asset.requested=true
+      asset.isReserved=false
 
       if Mission.missionTask then
         asset.missionTask=Mission.missionTask
@@ -728,6 +754,7 @@ function LEGION:onafterTransportRequest(From, Event, To, OpsTransport)
     -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
     OpsTransport.requestID=OpsTransport.requestID or {}
     OpsTransport.requestID[self.alias]=self.queueid
+    
   end
 
 end
@@ -1174,7 +1201,6 @@ function LEGION:_CreateFlightGroup(asset)
   
     opsgroup=FLIGHTGROUP:New(asset.spawngroupname)
     
-    
   elseif self:IsBrigade() then
   
     ---
@@ -1182,8 +1208,6 @@ function LEGION:_CreateFlightGroup(asset)
     ---  
   
     opsgroup=ARMYGROUP:New(asset.spawngroupname)
-    
-
     
   else
     self:E(self.lid.."ERROR: not airwing or brigade!")
@@ -1198,6 +1222,8 @@ function LEGION:_CreateFlightGroup(asset)
   -- Set home base.
   opsgroup.homebase=self.airbase
   
+  -- Set home zone.
+  opsgroup.homezone=self.spawnzone  
 
   -- Set weapon data.
   if opsgroup.cohort.weaponData then
@@ -1594,10 +1620,11 @@ function LEGION:CanMission(Mission)
     end
   end
 
+  -- Loop over cohorts and recruit assets.
   for cohortname,_cohort in pairs(cohorts) do
     local cohort=_cohort --Ops.Cohort#COHORT
 
-    -- Check if this squadron can.
+    -- Check if this cohort can.
     local can=cohort:CanMission(Mission)
 
     if can then
@@ -1772,6 +1799,26 @@ end
 -- @return Ops.Auftrag#AUFTRAG Mission table or *nil*.
 function LEGION:GetMissionFromRequest(Request)
   return self:GetMissionFromRequestID(Request.uid)
+end
+
+--- Fetch a payload from the airwing resources for a given unit and mission type.
+-- The payload with the highest priority is preferred.
+-- @param #LEGION self
+-- @param #string UnitType The type of the unit.
+-- @param #string MissionType The mission type.
+-- @param #table Payloads Specific payloads only to be considered.
+-- @return Ops.Airwing#AIRWING.Payload Payload table or *nil*.
+function LEGION:FetchPayloadFromStock(UnitType, MissionType, Payloads)
+  -- Polymorphic. Will return something when called by airwing.
+  return nil
+end
+
+--- Return payload from asset back to stock.
+-- @param #LEGION self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The squadron asset.
+function LEGION:ReturnPayloadFromAsset(asset)
+  -- Polymorphic.
+  return nil
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

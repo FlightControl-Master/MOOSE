@@ -52,6 +52,8 @@
 -- @field #number Ndelivered Total number of cargo groups delivered.
 -- @field #table pathsTransport Transport paths of `#OPSGROUP.Path`. 
 -- @field #table pathsPickup Pickup paths of `#OPSGROUP.Path`.
+-- @field Ops.Auftrag#AUFTRAG mission The mission attached to this transport.
+-- @field #table assets Warehouse assets assigned for this transport.
 -- @extends Core.Fsm#FSM
 
 --- *Victory is the beautiful, bright-colored flower. Transport is the stem without which it could never have blossomed.* -- Winston Churchill

@@ -1622,13 +1622,17 @@ WAREHOUSE = {
 -- @field #boolean spawned If true, asset was spawned into the cruel world. If false, it is still in stock.
 -- @field #string spawngroupname Name of the spawned group.
 -- @field #boolean iscargo If true, asset is cargo. If false asset is transport. Nil if in stock.
--- @field #number rid The request ID of this asset.
 -- @field #boolean arrived If true, asset arrived at its destination.
+-- 
 -- @field #number damage Damage of asset group in percent.
 -- @field Ops.AirWing#AIRWING.Payload payload The payload of the asset.
--- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flightgroup object.
+-- @field Ops.OpsGroup#OPSGROUP flightgroup The flightgroup object.
+-- @field Ops.Cohort#COHORT cohort The cohort this asset belongs to.
+-- @field Ops.Legion#LEGION legion The legion this asset belonts to.
 -- @field #string squadname Name of the squadron this asset belongs to.
--- @field #number Treturned Time stamp when asset returned to the airwing.
+-- @field #number Treturned Time stamp when asset returned to its legion (airwing, brigade).
+-- @field #boolean requested If `true`, asset was requested and cannot be selected by another request.
+-- @field #boolean isReserved If `true`, asset was reserved and cannot be selected by another request.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -3118,14 +3122,16 @@ end
 -- @param #WAREHOUSE self
 -- @return DCS#Vec3 The 3D vector of the warehouse.
 function WAREHOUSE:GetVec3()
-  return self.warehouse:GetVec3()
+  local vec3=self.warehouse:GetVec3()
+  return vec3
 end
 
 --- Get 2D vector of warehouse static.
 -- @param #WAREHOUSE self
 -- @return DCS#Vec2 The 2D vector of the warehouse.
 function WAREHOUSE:GetVec2()
-  return self.warehouse:GetVec2()
+  local vec2=self.warehouse:GetVec2()
+  return vec2
 end
 
 
@@ -3193,18 +3199,6 @@ end
 function WAREHOUSE:GetAssignment(request)
   return tostring(request.assignment)
 end
-
---[[
---- Get warehouse unique ID from static warehouse object. This is the ID under which you find the @{#WAREHOUSE} object in the global data base.
--- @param #WAREHOUSE self
--- @param #string staticname Name of the warehouse static object.
--- @return #number Warehouse unique ID.
-function WAREHOUSE:GetWarehouseID(staticname)
-  local warehouse=STATIC:FindByName(staticname, true)
-  local uid=tonumber(warehouse:GetID())
-  return uid
-end
-]]
 
 --- Find a warehouse in the global warehouse data base.
 -- @param #WAREHOUSE self
@@ -3951,6 +3945,8 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
 
         -- Asset is not spawned.
         asset.spawned=false
+        asset.requested=false
+        asset.isReserved=false
         asset.iscargo=nil
         asset.arrived=nil
         
@@ -4141,6 +4137,8 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
     asset.skill=skill
     asset.assignment=assignment
     asset.spawned=false
+    asset.requested=false
+    asset.isReserved=false
     asset.life0=group:GetLife0()
     asset.damage=0
     asset.spawngroupname=string.format("%s_AID-%d", templategroupname, asset.uid)

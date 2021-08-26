@@ -28,15 +28,13 @@
 --
 -- # The COMMANDER Concept
 -- 
--- A commander is the head of legions. He will find the best LEGIONs to perform an assigned AUFTRAG (mission).
+-- A commander is the head of legions. He/she will find the best LEGIONs to perform an assigned AUFTRAG (mission).
 --
 --
 -- @field #COMMANDER
 COMMANDER = {
   ClassName      = "COMMANDER",
-  Debug          =   nil,
-  lid            =   nil,
-  legions       =     {},
+  legions        =    {},
   missionqueue   =    {},
 }
 
@@ -50,6 +48,8 @@ COMMANDER.version="0.1.0"
 
 -- TODO: Improve legion selection. Mostly done!
 -- TODO: Allow multiple Legions for one mission.
+-- TODO: Add ops transports.
+-- TODO: Find solution for missions, which require a transport. This is not as easy as it sounds since the selected mission assets restrict the possible transport assets.
 -- NOGO: Maybe it's possible to preselect the assets for the mission.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -247,15 +247,19 @@ function COMMANDER:onafterStatus(From, Event, To)
   -- FSM state.
   local fsmstate=self:GetState()
 
-  -- Check mission queue and assign one PLANNED mission.
-  self:CheckMissionQueue()
-  
   -- Status.
   local text=string.format("Status %s: Legions=%d, Missions=%d", fsmstate, #self.legions, #self.missionqueue)
   self:I(self.lid..text)
-  
-  -- Legion info.
+
+  -- Check mission queue and assign one PLANNED mission.
+  self:CheckMissionQueue()
+    
+  ---
+  -- LEGIONS
+  ---
+ 
   if #self.legions>0 then
+  
     local text="Legions:"
     for _,_legion in pairs(self.legions) do
       local legion=_legion --Ops.Legion#LEGION
@@ -272,8 +276,70 @@ function COMMANDER:onafterStatus(From, Event, To)
       end            
     end
     self:I(self.lid..text)
+    
+    
+    local assets={}
+    
+    local Ntotal=0
+    local Nspawned=0
+    local Nrequested=0
+    local Nreserved=0
+    local Nstock=0
+    
+    local text="===========================================\n"
+    text=text.."Assets:"
+    for _,_legion in pairs(self.legions) do
+      local legion=_legion --Ops.Legion#LEGION
+
+      for _,_cohort in pairs(legion.cohorts) do
+        local cohort=_cohort --Ops.Cohort#COHORT
+        
+        for _,_asset in pairs(cohort.assets) do
+          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+          
+          table.insert(assets, asset)
+          
+          text=text..string.format("\n- %s [UID=%d] Legion=%s, Cohort=%s: Spawned=%s, Requested=%s [RID=%s], Reserved=%s", 
+          asset.spawngroupname, asset.uid, legion.alias, cohort.name, tostring(asset.spawned), tostring(asset.requested), tostring(asset.rid), tostring(asset.isReserved))
+          
+          if asset.spawned then
+            Nspawned=Nspawned+1
+          end
+          
+          if asset.requested then
+            Nrequested=Nrequested+1
+          end
+
+          if asset.isReserved then
+            Nreserved=Nreserved+1
+          end          
+          
+          if not (asset.spawned or asset.requested or asset.isReserved) then
+            Nstock=Nstock+1
+          end
+          
+          Ntotal=Ntotal+1
+          
+        end
+        
+      end
+
+    end
+    text=text.."\n-------------------------------------------"
+    text=text..string.format("\nNstock     = %d", Nstock)
+    text=text..string.format("\nNreserved  = %d", Nreserved)
+    text=text..string.format("\nNrequested = %d", Nrequested)
+    text=text..string.format("\nNspawned   = %d", Nspawned)
+    text=text..string.format("\nNtotal     = %d (=%d)", Ntotal, Nstock+Nspawned+Nrequested+Nreserved)
+    text=text.."\n==========================================="
+    self:I(self.lid..text)
+    
   end
   
+  ---
+  -- MISSIONS
+  ---
+    
   -- Mission queue.
   if #self.missionqueue>0 then
   
@@ -313,6 +379,9 @@ function COMMANDER:onafterMissionAssign(From, Event, To, Legion, Mission)
   
   -- Add mission to legion.
   Legion:AddMission(Mission)
+  
+  -- Directly request the mission as the assets have already been selected.
+  Legion:MissionRequest(Mission)
 
 end
 
@@ -362,24 +431,126 @@ end
 function COMMANDER:CheckMissionQueue()
 
   -- TODO: Sort mission queue. wrt what? Threat level?
+  --       Currently, we sort wrt to priority. So that should reflect the threat level of the mission target.
 
+  -- Number of missions.
+  local Nmissions=#self.missionqueue
+
+  -- Treat special cases.
+  if Nmissions==0 then
+    return nil
+  end
+
+  -- Sort results table wrt prio and start time.
+  local function _sort(a, b)
+    local taskA=a --Ops.Auftrag#AUFTRAG
+    local taskB=b --Ops.Auftrag#AUFTRAG
+    return (taskA.prio<taskB.prio) or (taskA.prio==taskB.prio and taskA.Tstart<taskB.Tstart)
+  end
+  table.sort(self.missionqueue, _sort)
+
+  -- Get the lowest importance value (lower means more important).
+  -- If a mission with importance 1 exists, mission with importance 2 will not be assigned. Missions with no importance (nil) can still be selected. 
+  local vip=math.huge
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    if mission.importance and mission.importance<vip then
+      vip=mission.importance
+    end
+  end
+
+  -- Loop over missions in queue.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     -- We look for PLANNED missions.
-    if mission:IsPlanned() then
+    if mission:IsPlanned() and mission:IsReadyToGo() and (mission.importance==nil or mission.importance<=vip) then
     
       ---
       -- PLANNNED Mission
       ---
     
+      ---
+      -- 1. Select best assets from legions
+      ---    
+    
       -- Get legions for mission.
       local legions=self:GetLegionsForMission(mission)
+      
+      -- Get ALL assets from pre-selected legions.
+      local assets=self:GetAssets(InStock, legions, MissionTypes, Attributes)
+      
+      -- Now we select the best assets from all legions.
+      legions={}
+      if #assets>=mission.nassets then
+      
+        for _,_asset in pairs(assets) do
+          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+          asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, mission.type, mission.payloads)
+          asset.score=asset.legion:CalculateAssetMissionScore(asset, mission, true)
+        end
         
+        --- Sort assets wrt to their mission score. Higher is better.
+        local function optimize(assetA, assetB)
+          return (assetA.score>assetB.score)
+        end        
+        table.sort(assets, optimize)
+
+        -- Remove distance parameter.
+        local text=string.format("Optimized assets for %s mission:", mission.type)
+        for i,Asset in pairs(assets) do
+          local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
+          
+          -- Score text.
+          text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
+          
+          -- Nillify score.
+          asset.score=nil
+          
+          -- Add assets to mission.
+          if i<=mission.nassets then
+          
+            -- Add asset to mission.
+            mission:AddAsset(Asset)
+            
+            -- Put into table.
+            legions[asset.legion.alias]=asset.legion
+            
+            -- Number of assets requested from this legion.
+            -- TODO: Check if this is really necessary as we do not go through the selection process.
+            mission.Nassets=mission.Nassets or {}
+            if mission.Nassets[asset.legion.alias] then
+              mission.Nassets[asset.legion.alias]=mission.Nassets[asset.legion.alias]+1
+            else
+              mission.Nassets[asset.legion.alias]=1
+            end 
+            
+          else
+          
+            -- Return payload of asset (if any).
+            if asset.payload then
+              asset.legion:ReturnPayloadFromAsset(asset)
+            end
+          
+          end
+        end
+        self:T2(self.lid..text)
+      
+      else  
+        self:T2(self.lid..string.format("Not enough assets available for mission"))
+      end
+      
+      ---
+      -- Assign Mission to Legions
+      ---
+      
       if legions then
       
         for _,_legion in pairs(legions) do
           local legion=_legion --Ops.Legion#LEGION
+          
+          -- Debug message.
+          self:I(self.lid..string.format("Assigning mission %s [%s] to legion %s", mission:GetName(), mission:GetType(), legion.alias))
       
           -- Add mission to legion.
           self:MissionAssign(legion, mission)
@@ -424,7 +595,7 @@ function COMMANDER:GetLegionsForMission(Mission)
     end    
     
     -- Has it assets that can?
-    if Nassets>0 then        
+    if Nassets>0  and false then        
       
       -- Get coordinate of the target.
       local coord=Mission:GetTargetCoordinate()
@@ -446,62 +617,15 @@ function COMMANDER:GetLegionsForMission(Mission)
       end
       
     end
+    
+    -- Add legion if it can provide at least 1 asset.    
+    if Nassets>0 then
+      table.insert(legions, legion)
+    end
             
   end
   
-  -- Can anyone?
-  if #legions>0 then
-  
-    --- Something like:
-    -- * Closest legion that can should be first prio.
-    -- * However, there should be a certain "quantization". if wing is 50 or 60 NM way should not really matter. In that case, the legion with more resources should get the job.
-    local function score(a)
-      local d=math.round(a.dist/10)
-    end
-    
-    env.info(self.lid.."FF #legions="..#legions)
-  
-    -- Sort table wrt distance and number of assets.
-    -- Distances within 10 NM are equal and the legion with more assets is preferred.
-    local function sortdist(a,b)
-      local ad=a.dist
-      local bd=b.dist 
-      return ad<bd or (ad==bd and a.nassets>b.nassets)
-    end
-    table.sort(legions, sortdist)
-
-    
-    -- Loops over all legions and stop if enough assets are summed up.
-    local selection={} ; local N=0
-    for _,leg in ipairs(legions) do
-      local legion=leg.airwing --Ops.Legion#LEGION
-      
-      Mission.Nassets=Mission.Nassets or {}
-      Mission.Nassets[legion.alias]=leg.nassets
-          
-      table.insert(selection, legion)
-      
-      N=N+leg.nassets
-      
-      if N>=Mission.nassets then
-        self:I(self.lid..string.format("Found enough assets!"))
-        break
-      end
-    end
-    
-    if N>=Mission.nassets then
-      self:I(self.lid..string.format("Found %d legions that can do mission %s (%s) requiring %d assets", #selection, Mission:GetName(), Mission:GetType(), Mission.nassets))
-      return selection
-    else
-      self:T(self.lid..string.format("Not enough LEGIONs found that could do the job :/ Number of assets avail %d < %d required for the mission", N, Mission.nassets))
-      return nil
-    end
-    
-  else
-    self:T(self.lid..string.format("No LEGION found that could do the job :/"))
-  end
-
-  return nil
+  return legions
 end
 
 --- Count assets of all assigned legions.
@@ -519,6 +643,42 @@ function COMMANDER:CountAssets(InStock, MissionTypes, Attributes)
   end
 
   return N
+end
+
+--- Count assets of all assigned legions.
+-- @param #COMMANDER self
+-- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
+-- @param #table Legions (Optional) Table of legions. Default is all legions.
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return #number Amount of asset groups.
+function COMMANDER:GetAssets(InStock, Legions, MissionTypes, Attributes)
+
+  -- Selected assets.
+  local assets={}
+
+  for _,_legion in pairs(Legions or self.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    
+    --TODO Check if legion is running and maybe if runway is operational if air assets are requested.
+
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      
+      for _,_asset in pairs(cohort.assets) do
+        local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+        
+        -- TODO: Check if repaired.
+        -- TODO: currently we take only unspawned assets.
+        if not (asset.spawned or asset.isReserved or asset.requested) then
+          table.insert(assets, asset)
+        end
+        
+      end
+    end
+  end
+  
+  return assets
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -372,6 +372,8 @@ end
 function COHORT:AddAsset(Asset)
   self:T(self.lid..string.format("Adding asset %s of type %s", Asset.spawngroupname, Asset.unittype))
   Asset.squadname=self.name
+  Asset.legion=self.legion
+  Asset.cohort=self
   table.insert(self.assets, Asset)
   return self
 end
@@ -700,7 +702,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check if there is a cohort that can execute a given mission.
--- We check the mission type, the refuelling system, engagement range
+-- We check the mission type, the refuelling system, mission range.
 -- @param #COHORT self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 -- @return #boolean If true, Cohort can do that type of mission.
