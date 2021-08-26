@@ -34,6 +34,7 @@
 -- @field #COMMANDER
 COMMANDER = {
   ClassName      = "COMMANDER",
+  verbose        =     0,
   legions        =    {},
   missionqueue   =    {},
 }
@@ -76,8 +77,8 @@ function COMMANDER:New()
   self:AddTransition("*",                  "Status",              "*")           -- Status report.
   self:AddTransition("*",                  "Stop",                "Stopped")     -- Stop COMMANDER.
   
-  self:AddTransition("*",                  "MissionAssign",       "*")           -- Mission was assigned to a LEGION.
-  self:AddTransition("*",                  "MissionCancel",       "*")           -- Cancel mission.
+  self:AddTransition("*",                  "MissionAssign",       "*")           -- Mission is assigned to a or multiple LEGIONs.
+  self:AddTransition("*",                  "MissionCancel",       "*")           -- COMMANDER cancels a mission.
 
   ------------------------
   --- Pseudo Functions ---
@@ -92,6 +93,7 @@ function COMMANDER:New()
   -- @param #COMMANDER self
   -- @param #number delay Delay in seconds.
 
+
   --- Triggers the FSM event "Stop". Stops the COMMANDER.
   -- @param #COMMANDER self
 
@@ -99,6 +101,7 @@ function COMMANDER:New()
   -- @function [parent=#COMMANDER] __Stop
   -- @param #COMMANDER self
   -- @param #number delay Delay in seconds.
+
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#COMMANDER] Status
@@ -113,6 +116,13 @@ function COMMANDER:New()
   --- Triggers the FSM event "MissionAssign".
   -- @function [parent=#COMMANDER] MissionAssign
   -- @param #COMMANDER self
+  -- @param Ops.Legion#LEGION Legion The Legion.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "MissionAssign" after a delay.
+  -- @function [parent=#COMMANDER] __MissionAssign
+  -- @param #COMMANDER self
+  -- @param #number delay Delay in seconds.
   -- @param Ops.Legion#LEGION Legion The Legion.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
@@ -131,6 +141,12 @@ function COMMANDER:New()
   -- @param #COMMANDER self
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
+  --- Triggers the FSM event "MissionCancel" after a delay.
+  -- @function [parent=#COMMANDER] __MissionCancel
+  -- @param #COMMANDER self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
   --- On after "MissionCancel" event.
   -- @function [parent=#COMMANDER] OnAfterMissionCancel
   -- @param #COMMANDER self
@@ -145,6 +161,15 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set verbosity level.
+-- @param #COMMANDER self
+-- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @return #COMMANDER self
+function COMMANDER:SetVerbosity(VerbosityLevel)
+  self.verbose=VerbosityLevel or 0
+  return self
+end
 
 --- Add an AIRWING to the commander.
 -- @param #COMMANDER self
@@ -248,8 +273,10 @@ function COMMANDER:onafterStatus(From, Event, To)
   local fsmstate=self:GetState()
 
   -- Status.
-  local text=string.format("Status %s: Legions=%d, Missions=%d", fsmstate, #self.legions, #self.missionqueue)
-  self:I(self.lid..text)
+  if self.verbose>=1 then
+    local text=string.format("Status %s: Legions=%d, Missions=%d", fsmstate, #self.legions, #self.missionqueue)
+    self:I(self.lid..text)
+  end
 
   -- Check mission queue and assign one PLANNED mission.
   self:CheckMissionQueue()
@@ -258,7 +285,7 @@ function COMMANDER:onafterStatus(From, Event, To)
   -- LEGIONS
   ---
  
-  if #self.legions>0 then
+  if self.verbose>=2 and #self.legions>0 then
   
     local text="Legions:"
     for _,_legion in pairs(self.legions) do
@@ -278,61 +305,59 @@ function COMMANDER:onafterStatus(From, Event, To)
     self:I(self.lid..text)
     
     
-    local assets={}
+    if self.verbose>=3 then
     
-    local Ntotal=0
-    local Nspawned=0
-    local Nrequested=0
-    local Nreserved=0
-    local Nstock=0
-    
-    local text="===========================================\n"
-    text=text.."Assets:"
-    for _,_legion in pairs(self.legions) do
-      local legion=_legion --Ops.Legion#LEGION
-
-      for _,_cohort in pairs(legion.cohorts) do
-        local cohort=_cohort --Ops.Cohort#COHORT
-        
-        for _,_asset in pairs(cohort.assets) do
-          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      -- Count numbers
+      local Ntotal=0
+      local Nspawned=0
+      local Nrequested=0
+      local Nreserved=0
+      local Nstock=0
+      
+      local text="\n===========================================\n"
+      text=text.."Assets:"
+      for _,_legion in pairs(self.legions) do
+        local legion=_legion --Ops.Legion#LEGION
+  
+        for _,_cohort in pairs(legion.cohorts) do
+          local cohort=_cohort --Ops.Cohort#COHORT
           
-          table.insert(assets, asset)
-          
-          text=text..string.format("\n- %s [UID=%d] Legion=%s, Cohort=%s: Spawned=%s, Requested=%s [RID=%s], Reserved=%s", 
-          asset.spawngroupname, asset.uid, legion.alias, cohort.name, tostring(asset.spawned), tostring(asset.requested), tostring(asset.rid), tostring(asset.isReserved))
-          
-          if asset.spawned then
-            Nspawned=Nspawned+1
+          for _,_asset in pairs(cohort.assets) do
+            local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+            
+            -- Text.
+            text=text..string.format("\n- %s [UID=%d] Legion=%s, Cohort=%s: Spawned=%s, Requested=%s [RID=%s], Reserved=%s", 
+            asset.spawngroupname, asset.uid, legion.alias, cohort.name, tostring(asset.spawned), tostring(asset.requested), tostring(asset.rid), tostring(asset.isReserved))
+            
+            if asset.spawned then
+              Nspawned=Nspawned+1
+            end            
+            if asset.requested then
+              Nrequested=Nrequested+1
+            end  
+            if asset.isReserved then
+              Nreserved=Nreserved+1
+            end                      
+            if not (asset.spawned or asset.requested or asset.isReserved) then
+              Nstock=Nstock+1
+            end
+            
+            Ntotal=Ntotal+1
+            
           end
-          
-          if asset.requested then
-            Nrequested=Nrequested+1
-          end
-
-          if asset.isReserved then
-            Nreserved=Nreserved+1
-          end          
-          
-          if not (asset.spawned or asset.requested or asset.isReserved) then
-            Nstock=Nstock+1
-          end
-          
-          Ntotal=Ntotal+1
           
         end
-        
+  
       end
-
+      text=text.."\n-------------------------------------------"
+      text=text..string.format("\nNstock     = %d", Nstock)
+      text=text..string.format("\nNreserved  = %d", Nreserved)
+      text=text..string.format("\nNrequested = %d", Nrequested)
+      text=text..string.format("\nNspawned   = %d", Nspawned)
+      text=text..string.format("\nNtotal     = %d (=%d)", Ntotal, Nstock+Nspawned+Nrequested+Nreserved)
+      text=text.."\n==========================================="
+      self:I(self.lid..text)
     end
-    text=text.."\n-------------------------------------------"
-    text=text..string.format("\nNstock     = %d", Nstock)
-    text=text..string.format("\nNreserved  = %d", Nreserved)
-    text=text..string.format("\nNrequested = %d", Nrequested)
-    text=text..string.format("\nNspawned   = %d", Nspawned)
-    text=text..string.format("\nNtotal     = %d (=%d)", Ntotal, Nstock+Nspawned+Nrequested+Nreserved)
-    text=text.."\n==========================================="
-    self:I(self.lid..text)
     
   end
   
@@ -341,19 +366,15 @@ function COMMANDER:onafterStatus(From, Event, To)
   ---
     
   -- Mission queue.
-  if #self.missionqueue>0 then
-  
+  if self.verbose>=2 and #self.missionqueue>0 then
     local text="Mission queue:"
     for i,_mission in pairs(self.missionqueue) do
-      local mission=_mission --Ops.Auftrag#AUFTRAG
-      
-      local target=mission:GetTargetName() or "unknown"
-      
+      local mission=_mission --Ops.Auftrag#AUFTRAG      
+      local target=mission:GetTargetName() or "unknown"      
       text=text..string.format("\n[%d] %s (%s): status=%s, target=%s", i, mission.name, mission.type, mission.status, target)
     end
-    self:I(self.lid..text)
-    
-  end  
+    self:I(self.lid..text)    
+  end
 
   self:__Status(-30)
 end

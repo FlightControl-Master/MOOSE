@@ -16,7 +16,6 @@
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
--- @field #table missionqueue Mission queue.
 -- @field #table targetqueue Target queue.
 -- @field Core.Set#SET_ZONE borderzoneset Set of zones defining the border of our territory.
 -- @field Core.Set#SET_ZONE yellowzoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
@@ -42,7 +41,6 @@ CHIEF = {
   verbose        =     0,
   lid            =   nil,
   targetqueue    =    {},
-  missionqueue   =    {},
   borderzoneset  =   nil,
   yellowzoneset  =   nil,
   engagezoneset  =   nil,
@@ -80,6 +78,7 @@ CHIEF.version="0.0.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Create a good mission, which can be passed on to the COMMANDER.
 -- TODO: Capture OPSZONEs.
 -- TODO: Get list of own assets and capabilities.
 -- TODO: Get list/overview of enemy assets etc.
@@ -111,6 +110,9 @@ function CHIEF:New(AgentSet, Coalition)
   self:SetYellowZones()
   
   self:SetThreatLevelRange()
+  
+  -- Create a new COMMANDER.
+  self.commander=COMMANDER:New()
   
   self.Defcon=CHIEF.DEFCON.GREEN
 
@@ -258,20 +260,14 @@ function CHIEF:SetDefcon(Defcon)
 end
 
 
---- Set the wing commander for the airforce.
+--- Get the commander.
 -- @param #CHIEF self
--- @param Ops.WingCommander#WINGCOMMANDER WingCommander The WINGCOMMANDER object.
--- @return #CHIEF self
-function CHIEF:SetWingCommander(WingCommander)
-
-  self.commander=WingCommander
-  
-  self.commander.chief=self
-  
-  return self
+-- @return Ops.Commander#COMMANDER The commander.
+function CHIEF:GetCommander()
+  return self.commander
 end
 
---- Add mission to mission queue.
+--- Add mission to mission queue of the COMMANDER.
 -- @param #CHIEF self
 -- @param Ops.Auftrag#AUFTRAG Mission Mission to be added.
 -- @return #CHIEF self
@@ -279,10 +275,8 @@ function CHIEF:AddMission(Mission)
 
   Mission.chief=self
   
-  Mission.statusChief=AUFTRAG.Status.QUEUED
-
-  table.insert(self.missionqueue, Mission)
-
+  self.commander:AddMission(Mission)
+  
   return self
 end
 
@@ -292,17 +286,9 @@ end
 -- @return #CHIEF self
 function CHIEF:RemoveMission(Mission)
 
-  for i,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-    
-    if mission.auftragsnummer==Mission.auftragsnummer then
-      self:I(self.lid..string.format("Removing mission %s (%s) status=%s from queue", Mission.name, Mission.type, Mission.status))
-      Mission.chief=nil
-      table.remove(self.missionqueue, i)
-      break
-    end
-    
-  end
+  Mission.chief=nil
+  
+  self.commander:RemoveMission(Mission)
 
   return self
 end
@@ -412,7 +398,10 @@ function CHIEF:onafterStatus(From, Event, To)
   -- FSM state.
   local fsmstate=self:GetState()
 
-  
+  ---
+  -- CONTACTS: Mission Cleanup
+  ---
+
   -- Clean up missions where the contact was lost.
   for _,_contact in pairs(self.ContactsLost) do
     local contact=_contact --Ops.Intelligence#INTEL.Contact
@@ -426,10 +415,16 @@ function CHIEF:onafterStatus(From, Event, To)
     
       -- Cancel this mission.
       contact.mission:Cancel()
+      
+      -- TODO: contact.target
           
     end
     
   end
+
+  ---
+  -- CONTACTS: Create new TARGETS
+  ---
   
   -- Create TARGETs for all new contacts.
   local Nred=0 ; local Nyellow=0 ; local Nengage=0
@@ -485,57 +480,28 @@ function CHIEF:onafterStatus(From, Event, To)
   -- Check target queue and assign missions to new targets.
   self:CheckTargetQueue()
   
-
-  ---
-  -- Check Mission Queue
-  ---
-    
-  -- Check mission queue and assign one PLANNED mission.
-  self:CheckMissionQueue()
- 
- 
-  
   ---
   -- Info General
   ---  
   
-  local Nassets=self.commander:CountAssets()
-  local Ncontacts=#self.contacts
-  local Nmissions=#self.missionqueue
-  local Ntargets=#self.targetqueue
-  
-  -- Info message
-  local text=string.format("Defcon=%s Assets=%d, Contacts: Total=%d Yellow=%d Red=%d, Targets=%d, Missions=%d", self.Defcon, Nassets, Ncontacts, Nyellow, Nred, Ntargets, Nmissions)
-  self:I(self.lid..text)
-
-  ---
-  -- Info Assets
-  ---
-
-  local text="Assets:"
-  for _,missiontype in pairs(AUFTRAG.Type) do
-    local N=self.commander:CountAssets(nil, missiontype)
-    if N>0 then
-      text=text..string.format("\n- %s %d", missiontype, N)
-    end
+  if self.verbose>=1 then
+    local Nassets=self.commander:CountAssets()
+    local Ncontacts=#self.contacts
+    local Nmissions=#self.commander.missionqueue
+    local Ntargets=#self.targetqueue
+    
+    -- Info message
+    local text=string.format("Defcon=%s Assets=%d, Contacts: Total=%d Yellow=%d Red=%d, Targets=%d, Missions=%d", self.Defcon, Nassets, Ncontacts, Nyellow, Nred, Ntargets, Nmissions)
+    self:I(self.lid..text)
+    
   end
-  self:I(self.lid..text)
-  
-  local text="Assets:"
-  for _,attribute in pairs(WAREHOUSE.Attribute) do
-    local N=self.commander:CountAssets(nil, nil, attribute)
-    if N>0 or self.verbose>=10 then
-      text=text..string.format("\n- %s %d", attribute, N)
-    end
-  end
-  self:I(self.lid..text)
   
   ---
   -- Info Contacts
   ---
   
   -- Info about contacts.
-  if #self.Contacts>0 then
+  if self.verbose>=2 and #self.Contacts>0 then
     local text="Contacts:"
     for i,_contact in pairs(self.Contacts) do
       local contact=_contact --Ops.Intelligence#INTEL.Contact
@@ -552,7 +518,7 @@ function CHIEF:onafterStatus(From, Event, To)
   -- Info Targets
   ---
 
-  if #self.targetqueue>0 then
+  if self.verbose>=3 and #self.targetqueue>0 then
     local text="Targets:"
     for i,_target in pairs(self.targetqueue) do
       local target=_target --Ops.Target#TARGET
@@ -569,7 +535,7 @@ function CHIEF:onafterStatus(From, Event, To)
   ---
   
   -- Mission queue.
-  if #self.missionqueue>0 then
+  if self.verbose>=4 and #self.commander.missionqueue>0 then
     local text="Mission queue:"
     for i,_mission in pairs(self.missionqueue) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
@@ -580,6 +546,30 @@ function CHIEF:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)
   end  
+
+  ---
+  -- Info Assets
+  ---
+
+  if self.verbose>=5 then
+    local text="Assets:"
+    for _,missiontype in pairs(AUFTRAG.Type) do
+      local N=self.commander:CountAssets(nil, missiontype)
+      if N>0 then
+        text=text..string.format("\n- %s %d", missiontype, N)
+      end
+    end
+    self:I(self.lid..text)
+    
+    local text="Assets:"
+    for _,attribute in pairs(WAREHOUSE.Attribute) do
+      local N=self.commander:CountAssets(nil, nil, attribute)
+      if N>0 or self.verbose>=10 then
+        text=text..string.format("\n- %s %d", attribute, N)
+      end
+    end
+    self:I(self.lid..text)
+  end
 
 end
 
@@ -615,21 +605,16 @@ function CHIEF:onafterMissionCancel(From, Event, To, Mission)
   -- Debug info.
   self:I(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
   
-  if Mission.status==AUFTRAG.Status.PLANNED then
+  if Mission:IsPlanned() then
   
-    -- Mission is still in planning stage. Should not have an airbase assigned ==> Just remove it form the queue.
+    -- Mission is still in planning stage. Should not have any LEGIONS assigned ==> Just remove it form the COMMANDER queue.
     self:RemoveMission(Mission)
-    
-    -- Remove Mission from WC queue.
-    if Mission.wingcommander then
-      Mission.wingcommander:RemoveMission(Mission)
-    end
     
   else
   
-    -- Wingcommander will cancel mission.
-    if Mission.wingcommander then
-      Mission.wingcommander:MissionCancel(Mission)
+    -- COMMANDER will cancel mission.
+    if Mission.commander then
+      Mission.commander:MissionCancel(Mission)
     end
     
   end
@@ -658,7 +643,7 @@ function CHIEF:onbeforeDefcon(From, Event, To, Defcon)
   
   -- Defcon did not change.
   if Defcon==self.Defcon then
-    self:I(self.lid..string.format("Defcon %s unchanged. No processing transition.", tostring(Defcon)))
+    self:I(self.lid..string.format("Defcon %s unchanged. Not processing transition!", tostring(Defcon)))
     return false
   end
 
@@ -735,8 +720,10 @@ function CHIEF:CheckTargetQueue()
       
       -- Valid target?
       if valid then
+      
+        --TODO: Create a good mission, which can be passed on to the COMMANDER.
   
-        -- Create mission  
+        -- Create mission.
         local mission=AUFTRAG:NewTargetAir(target)
         
         if mission then
@@ -748,7 +735,7 @@ function CHIEF:CheckTargetQueue()
           mission.prio=target.prio
           mission.importance=target.importance
           
-          -- Add mission to queue.
+          -- Add mission to COMMANDER queue.
           self:AddMission(mission)
         end
                 
@@ -762,62 +749,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Resources
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Check mission queue and assign ONE planned mission.
--- @param #CHIEF self 
-function CHIEF:CheckMissionQueue()
-
-  -- TODO: Sort mission queue. wrt what? Threat level?
-
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-    
-    -- We look for PLANNED missions.
-    if mission:IsPlanned() then
-    
-      ---
-      -- PLANNNED Mission
-      ---
-    
-      -- Check if there is an airwing that can do the mission.
-      local legions=self.commander:GetLegionsForMission(mission)
-        
-      if airwing then
-      
-        -- Add mission to airwing.
-        self:AssignMissionAirforce(mission)
-    
-        return
-        
-      else
-        self:T(self.lid.."NO airwing")
-      end
-      
-    else
-
-      ---
-      -- Missions NOT in PLANNED state
-      ---    
-    
-    end
-  
-  end
-  
-end
-
---- Check all airwings if they are able to do a specific mission type at a certain location with a given number of assets.
--- @param #CHIEF self
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return #table The best LEGIONs for this mission or `nil`.
-function CHIEF:GetAirwingForMission(Mission)
-
-  if self.commander then
-    local legions=self.commander:GetLegionsForMission(Mission)
-    return legions
-  end
-
-  return nil
-end
 
 --- Check if group is inside our border.
 -- @param #CHIEF self
@@ -878,10 +809,16 @@ function CHIEF:CheckTargetInZones(target, zoneset)
   return false
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Resources
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- Check resources.
 -- @param #CHIEF self
 -- @return #table 
 function CHIEF:CheckResources()
+
+  -- TODO: look at lower classes to do this! it's all there...
 
   local capabilities={}
    

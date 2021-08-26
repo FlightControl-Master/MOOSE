@@ -110,7 +110,7 @@
 -- @field #number missionAltitude Mission altitude in meters.
 -- @field #number missionSpeed Mission speed in km/h.
 -- @field #number missionFraction Mission coordiante fraction. Default is 0.5.
--- @field #number missionRange Mission range in meters. Used in AIRWING class.
+-- @field #number missionRange Mission range in meters. Used by LEGION classes (AIRWING, BRIGADE, ...).
 -- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
 -- @field Core.Point#COORDINATE missionEgressCoord Mission egress waypoint coordinate.
 -- 
@@ -463,6 +463,7 @@ AUFTRAG.version="0.7.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Replace engageRange by missionRange. Here and in other classes. CTRL+H is your friend!
 -- TODO: Missions can be assigned to multiple legions.
 -- TODO: Mission success options damaged, destroyed.
 -- TODO: F10 marker to create new missions.
@@ -1552,7 +1553,7 @@ function AUFTRAG:SetPriority(Prio, Urgent, Importance)
   return self
 end
 
---- Set how many times the mission is repeated. Only valid if the mission is handled by an AIRWING or higher level.
+--- Set how many times the mission is repeated. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, ...) or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nrepeat Number of repeats. Default 0.
 -- @return #AUFTRAG self
@@ -1561,7 +1562,7 @@ function AUFTRAG:SetRepeat(Nrepeat)
   return self
 end
 
---- Set how many times the mission is repeated if it fails. Only valid if the mission is handled by an AIRWING or higher level.
+--- Set how many times the mission is repeated if it fails. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, ...) or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nrepeat Number of repeats. Default 0.
 -- @return #AUFTRAG self
@@ -1570,7 +1571,7 @@ function AUFTRAG:SetRepeatOnFailure(Nrepeat)
   return self
 end
 
---- Set how many times the mission is repeated if it was successful. Only valid if the mission is handled by an AIRWING or higher level.
+--- Set how many times the mission is repeated if it was successful. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, ...) or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nrepeat Number of repeats. Default 0.
 -- @return #AUFTRAG self
@@ -1579,7 +1580,7 @@ function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
   return self
 end
 
---- Define how many assets are required to do the job. Only valid if the mission is handled by an AIRWING, BRIGADE etc or higher level.
+--- Define how many assets are required to do the job. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, ...) or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nassets Number of asset groups. Default 1.
 -- @return #AUFTRAG self
@@ -2977,25 +2978,27 @@ function AUFTRAG:onafterCancel(From, Event, To)
   
   if self.chief then
 
+    -- Debug info.
     self:T(self.lid..string.format("CHIEF will cancel the mission. Will wait for mission DONE before evaluation!"))
     
+    -- CHIEF will cancel the mission.
     self.chief:MissionCancel(self)
-    
-  end
   
-  if self.commander then
+  elseif self.commander then
   
+    -- Debug info.
     self:T(self.lid..string.format("COMMANDER will cancel the mission. Will wait for mission DONE before evaluation!"))
     
+    -- COMMANDER will cancel the mission.
     self.commander:MissionCancel(self)
-    
-  end
 
-  if #self.legions>0 then
+  elseif self.legions then
   
-    for _,_legion in pairs(self.legions) do
+    -- Loop over all LEGIONs.
+    for _,_legion in pairs(self.legions or {}) do
       local legion=_legion --Ops.Legion#LEGION
     
+      -- Debug info.
       self:T(self.lid..string.format("LEGION %s will cancel the mission. Will wait for mission DONE before evaluation!", legion.alias))
     
       -- Legion will cancel all flight missions and remove queued request from warehouse queue.
@@ -3003,14 +3006,17 @@ function AUFTRAG:onafterCancel(From, Event, To)
       
     end
     
-  end
+  else  
   
+    -- Debug info.
+    self:T(self.lid..string.format("No legion, commander or chief. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
   
-  self:T(self.lid..string.format("No legion, commander or chief. Attached flights will cancel the mission on their own. Will wait for mission DONE before evaluation!"))
-
-  for _,_groupdata in pairs(self.groupdata or {}) do
-    local groupdata=_groupdata --#AUFTRAG.GroupData
-    groupdata.opsgroup:MissionCancel(self)
+    -- Loop over all groups.
+    for _,_groupdata in pairs(self.groupdata or {}) do
+      local groupdata=_groupdata --#AUFTRAG.GroupData
+      groupdata.opsgroup:MissionCancel(self)
+    end
+    
   end
 
   -- Special mission states.

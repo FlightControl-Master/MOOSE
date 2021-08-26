@@ -843,8 +843,6 @@ function FLIGHTGROUP:Status()
 
   -- FSM state.
   local fsmstate=self:GetState()
-  
-  env.info(self.lid.."FF status="..fsmstate)
 
   -- Update position.
   self:_UpdatePosition()
@@ -899,10 +897,13 @@ function FLIGHTGROUP:Status()
     local dest=self.destbase and self.destbase:GetName() or "unknown"
     local fc=self.flightcontrol and self.flightcontrol.airbasename or "N/A"
     local curr=self.currbase and self.currbase:GetName() or "N/A"
+    local nelem=self:CountElements()
+    local Nelem=#self.elements
+    local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "OFF"
 
-    local text=string.format("Status %s [%d/%d]: Tasks=%d, Missions=%s, Waypoint=%d/%d [%s], Detected=%d, Home=%s, Destination=%s, Current=%s, FC=%s",
-    fsmstate, #self.elements, #self.elements, nTaskTot, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0, tostring(self.passedfinalwp),
-    self.detectedunits:Count(), home, dest, curr, fc)
+    local text=string.format("Status %s [%d/%d]: Tasks=%d, Missions=%s, Waypoint=%d/%d [%s], Detected=%s, Home=%s, Destination=%s, Current=%s, FC=%s",
+    fsmstate, nelem, Nelem, nTaskTot, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0, tostring(self.passedfinalwp),
+    ndetected, home, dest, curr, fc)
     self:I(self.lid..text)
 
   end

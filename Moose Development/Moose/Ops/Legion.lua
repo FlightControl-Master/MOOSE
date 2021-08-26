@@ -785,10 +785,12 @@ function LEGION:onafterMissionCancel(From, Event, To, Mission)
         opsgroup:MissionCancel(Mission)
       end
       
-      -- TODO: remove asset from mission
+      -- Remove asset from mission.
+      Mission:DelAsset(asset)
 
       -- Not requested any more (if it was).
       asset.requested=nil
+      asset.isReserved=nil
       
     end      
   end
