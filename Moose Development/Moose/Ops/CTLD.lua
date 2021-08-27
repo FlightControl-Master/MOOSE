@@ -51,7 +51,7 @@ CTLD_ENGINEERING = {
   
   --- CTLD_ENGINEERING class version.
   -- @field #string version
-  CTLD_ENGINEERING.Version = "0.0.1"
+  CTLD_ENGINEERING.Version = "0.0.2"
   
   --- Create a new instance.
   -- @param #CTLD_ENGINEERING self
@@ -78,6 +78,7 @@ CTLD_ENGINEERING = {
     self.lid = string.format("%s (%s) | ",self.Name, self.Version)
       -- Start State.
     self.State = "Stopped"
+    self.marktimer = 300 -- wait this many secs before trying a crate again
   
     --[[ Add FSM transitions.
     --                 From State  -->   Event        -->      To State
@@ -161,6 +162,8 @@ CTLD_ENGINEERING = {
   -- @return #CTLD_ENGINEERING self
   function CTLD_ENGINEERING:Done()
     self:T(self.lid.."Done")
+    local grp = self.Group -- Wrapper.Group#GROUP
+    grp:RelocateGroundRandomInRadius(7,100,false,false,"Diamond")
     self:SetStatus("Running")
     return self
   end
@@ -183,12 +186,36 @@ CTLD_ENGINEERING = {
     if number > 0 then
       -- get set of dropped only
       for _,_cargo in pairs (crates) do
-         if _cargo:WasDropped() then
-           ind = ind + 1
-           table.insert(ctable,ind,_cargo)
-         end
-      end
-    end
+       if _cargo:WasDropped() then
+        local ok = false
+        local chalk = _cargo:GetMark()
+        if chalk == nil then
+          ok = true
+        else
+         -- have we tried this cargo recently?
+         local tag = chalk.tag or "none"
+         local timestamp = chalk.timestamp or 0
+         self:I({chalk})
+         -- enough time gone?
+         local gone = timer.getAbsTime() - timestamp
+         self:I({time=gone})
+         if gone >= self.marktimer then
+            ok = true
+            _cargo:WipeMark()
+         end -- end time check
+        end -- end chalk
+        if ok then
+          local chalk = {}
+          chalk.tag = "Engineers"
+          chalk.timestamp = timer.getAbsTime()
+          _cargo:AddMark(chalk)
+          ind = ind + 1
+          table.insert(ctable,ind,_cargo)
+        end     
+       end -- end dropped
+      end -- end for
+    end -- end number
+    
     if ind > 0 then
       local crate = ctable[1] -- Ops.CTLD#CTLD_CARGO
       local static = crate:GetPositionable() -- Wrapper.Static#STATIC
@@ -253,9 +280,21 @@ CTLD_ENGINEERING = {
   function CTLD_ENGINEERING:_GetDistance(_point1, _point2)
     self:T(self.lid .. " _GetDistance")
     if _point1 and _point2 then
-      local distance = _point1:DistanceFromPointVec2(_point2)
-     return distance
+      local distance1 = _point1:Get2DDistance(_point2)
+      local distance2 = _point1:DistanceFromPointVec2(_point2)
+      --self:I({dist1=distance1, dist2=distance2})
+      if distance1 and type(distance1) == "number" then
+        return distance1
+      elseif distance2 and type(distance2) == "number" then
+        return distance2
+      else
+        self:E("*****Cannot calculate distance!")
+        self:E({_point1,_point2})
+        return -1
+      end
     else
+      self:E("******Cannot calculate distance!")
+      self:E({_point1,_point2})
       return -1
     end
   end
@@ -287,6 +326,7 @@ CTLD_CARGO = {
   HasBeenDropped = false,
   PerCrateMass = 0,
   Stock = nil,
+  Mark = nil,
   }
   
   --- Define cargo types.
@@ -330,6 +370,7 @@ CTLD_CARGO = {
     self.HasBeenDropped = Dropped or false --#boolean
     self.PerCrateMass = PerCrateMass or 0 -- #number
     self.Stock = Stock or nil --#number
+    self.Mark = nil
     return self
   end
   
@@ -466,6 +507,20 @@ CTLD_CARGO = {
    else
     return false
    end
+  end
+  
+  function CTLD_CARGO:AddMark(Mark)
+    self.Mark = Mark
+    return self
+  end
+  
+  function CTLD_CARGO:GetMark(Mark)
+    return self.Mark
+  end
+  
+    function CTLD_CARGO:WipeMark()
+    self.Mark = nil
+    return self
   end
    
 end
@@ -864,7 +919,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.7a1"
+CTLD.version="0.1.7a2"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1707,9 +1762,21 @@ end
 function CTLD:_GetDistance(_point1, _point2)
   self:T(self.lid .. " _GetDistance")
   if _point1 and _point2 then
-    local distance = _point1:DistanceFromPointVec2(_point2)
-   return distance
+    local distance1 = _point1:Get2DDistance(_point2)
+    local distance2 = _point1:DistanceFromPointVec2(_point2)
+    --self:I({dist1=distance1, dist2=distance2})
+    if distance1 and type(distance1) == "number" then
+      return distance1
+    elseif distance2 and type(distance2) == "number" then
+      return distance2
+    else
+      self:E("*****Cannot calculate distance!")
+      self:E({_point1,_point2})
+      return -1
+    end
   else
+    self:E("******Cannot calculate distance!")
+    self:E({_point1,_point2})
     return -1
   end
 end
