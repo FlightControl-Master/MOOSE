@@ -102,10 +102,7 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
 
   -- Everyone can ORBIT.
   self:AddMissionCapability(AUFTRAG.Type.ORBIT)
-  
-  -- Aircraft type.
-  self.aircrafttype=self.templategroup:GetTypeName()
-  
+
   -- Refueling system.
   self.refuelSystem=select(2, self.templategroup:GetUnit(1):IsRefuelable())
   self.tankerSystem=select(2, self.templategroup:GetUnit(1):IsTanker())

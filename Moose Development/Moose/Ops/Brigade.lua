@@ -36,13 +36,13 @@ BRIGADE = {
 
 --- BRIGADE class version.
 -- @field #string version
-BRIGADE.version="0.0.1"
+BRIGADE.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add weapon range.
+-- DONE: Add weapon range.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -68,8 +68,53 @@ function BRIGADE:New(WarehouseName, BrigadeName)
   self.lid=string.format("BRIGADE %s | ", self.alias)
 
   -- Add FSM transitions.
-  --                 From State  -->   Event          -->     To State
-  self:AddTransition("*",             "PlatoonAssetReturned",      "*")           -- An asset returned (from a mission) to the Brigade warehouse.
+  --                 From State  -->   Event         -->      To State
+  self:AddTransition("*",             "ArmyOnMission",       "*")           -- An ARMYGROUP was send on a Mission (AUFTRAG).
+
+  ------------------------
+  --- Pseudo Functions ---
+  ------------------------
+
+  --- Triggers the FSM event "Start". Starts the BRIGADE. Initializes parameters and starts event handlers.
+  -- @function [parent=#BRIGADE] Start
+  -- @param #BRIGADE self
+
+  --- Triggers the FSM event "Start" after a delay. Starts the BRIGADE. Initializes parameters and starts event handlers.
+  -- @function [parent=#BRIGADE] __Start
+  -- @param #BRIGADE self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Stop". Stops the BRIGADE and all its event handlers.
+  -- @param #BRIGADE self
+
+  --- Triggers the FSM event "Stop" after a delay. Stops the BRIGADE and all its event handlers.
+  -- @function [parent=#BRIGADE] __Stop
+  -- @param #BRIGADE self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "ArmyOnMission".
+  -- @function [parent=#BRIGADE] ArmyOnMission
+  -- @param #BRIGADE self
+  -- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup The ARMYGROUP on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "ArmyOnMission" after a delay.
+  -- @function [parent=#BRIGADE] __ArmyOnMission
+  -- @param #BRIGADE self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup The ARMYGROUP on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "ArmyOnMission" event.
+  -- @function [parent=#BRIGADE] OnAfterArmyOnMission
+  -- @param #BRIGADE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup The ARMYGROUP on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   return self
 end
@@ -285,14 +330,8 @@ end
 -- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup Ops army group on mission.
 -- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function BRIGADE:onafterArmyOnMission(From, Event, To, ArmyGroup, Mission)
-  local armygroup=ArmyGroup --Ops.ArmyGroup#ARMYGROUP
-  local mission=Mission --Ops.Auftrag#AUFTRAG
-  
   -- Debug info.
-  self:T(self.lid..string.format("Group %s on %s mission %s", armygroup:GetName(), mission:GetType(), mission:GetName()))
-  
-  
-  
+  self:T(self.lid..string.format("Group %s on %s mission %s", ArmyGroup:GetName(), Mission:GetType(), Mission:GetName()))  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

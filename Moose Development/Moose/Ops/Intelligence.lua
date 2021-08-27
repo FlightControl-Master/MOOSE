@@ -222,7 +222,8 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   -- Add FSM transitions.
   --                 From State  -->   Event        -->     To State
   self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
-  self:AddTransition("*",             "Status",             "*")           -- INTEL status update
+  self:AddTransition("*",             "Status",             "*")           -- INTEL status update.
+  self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
   self:AddTransition("*",             "Detect",             "*")           -- Start detection run. Not implemented yet!
   
@@ -231,7 +232,7 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   
   self:AddTransition("*",             "NewCluster",         "*")           -- New cluster has been detected.
   self:AddTransition("*",             "LostCluster",        "*")          -- Cluster could not be detected any more.
-  self:AddTransition("*",             "Stop",               "Stopped")
+
   
   -- Defaults
   self:SetForgetTime()

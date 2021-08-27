@@ -94,7 +94,7 @@
 --
 -- Once you created an AUFTRAG you can add it to the AIRWING with the :AddMission(mission) function.
 --
--- This mission will be put into the AIRWING queue. Once the mission start time is reached and all resources (airframes and pylons) are available, the mission is started.
+-- This mission will be put into the AIRWING queue. Once the mission start time is reached and all resources (airframes and payloads) are available, the mission is started.
 -- If the mission stop time is over (and the mission is not finished), it will be cancelled and removed from the queue. This applies also to mission that were not even
 -- started.
 --
@@ -116,7 +116,6 @@ AIRWING = {
   pointsCAP      =    {},
   pointsTANKER   =    {},
   pointsAWACS    =    {},
-  wingcommander  =   nil,
   markpoints     =   false,
 }
 
@@ -144,7 +143,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.8.0"
+AIRWING.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -183,20 +182,19 @@ function AIRWING:New(warehousename, airwingname)
 
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AIRWING %s | ", self.alias)
-
-  -- Add FSM transitions.
-  --                 From State  -->   Event           -->     To State
-  self:AddTransition("*",             "SquadronAssetReturned", "*")           -- Flight was spawned with a mission.
-
+  
   -- Defaults:
-  --self:SetVerbosity(0)
   self.nflightsCAP=0
   self.nflightsAWACS=0
   self.nflightsTANKERboom=0
   self.nflightsTANKERprobe=0
   self.nflightsRecoveryTanker=0
   self.nflightsRescueHelo=0
-  self.markpoints=false
+  self.markpoints=false  
+
+  -- Add FSM transitions.
+  --                 From State  -->   Event         -->      To State
+  self:AddTransition("*",             "FlightOnMission",       "*")           -- A FLIGHTGROUP was send on a Mission (AUFTRAG).
 
   ------------------------
   --- Pseudo Functions ---
@@ -211,6 +209,7 @@ function AIRWING:New(warehousename, airwingname)
   -- @param #AIRWING self
   -- @param #number delay Delay in seconds.
 
+
   --- Triggers the FSM event "Stop". Stops the AIRWING and all its event handlers.
   -- @param #AIRWING self
 
@@ -219,23 +218,28 @@ function AIRWING:New(warehousename, airwingname)
   -- @param #AIRWING self
   -- @param #number delay Delay in seconds.
 
-  --- On after "FlightOnMission" event. Triggered when an asset group starts a mission.
-   -- @function [parent=#AIRWING] OnAfterFlightOnMission
-   -- @param #AIRWING self
-   -- @param #string From The From state
-   -- @param #string Event The Event called
-   -- @param #string To The To state
-   -- @param Ops.FlightGroup#FLIGHTGROUP Flightgroup The Flightgroup on mission
-   -- @param Ops.Auftrag#AUFTRAG Mission The Auftrag of the Flightgroup
 
-   --- On after "AssetReturned" event. Triggered when an asset group returned to its airwing.
-    -- @function [parent=#AIRWING] OnAfterAssetReturned
-    -- @param #AIRWING self
-    -- @param #string From From state.
-    -- @param #string Event Event.
-    -- @param #string To To state.
-    -- @param Ops.Squadron#SQUADRON Squadron The asset squadron.
-    -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
+  --- Triggers the FSM event "FlightOnMission".
+  -- @function [parent=#AIRWING] FlightOnMission
+  -- @param #AIRWING self
+  -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FLIGHTGROUP on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "FlightOnMission" after a delay.
+  -- @function [parent=#AIRWING] __FlightOnMission
+  -- @param #AIRWING self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FLIGHTGROUP on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "FlightOnMission" event.
+  -- @function [parent=#AIRWING] OnAfterFlightOnMission
+  -- @param #AIRWING self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup  The FLIGHTGROUP on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   return self
 end
@@ -1092,16 +1096,16 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after "SquadAssetReturned" event. Triggered when an asset group returned to its airwing.
+--- On after "FlightOnMission".
 -- @param #AIRWING self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.Squadron#SQUADRON Squadron The asset squadron.
--- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
-function AIRWING:onafterSquadAssetReturned(From, Event, To, Squadron, Asset)
-  -- Debug message.
-  self:T(self.lid..string.format("Asset %s from squadron %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Squadron.name, tostring(Asset.assignment)))
+-- @param Ops.FlightGroup#FLIGHTGROUP ArmyGroup Ops army group on mission.
+-- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+function AIRWING:onafterFlightOnMission(From, Event, To, FlightGroup, Mission)
+  -- Debug info.
+  self:T(self.lid..string.format("Group %s on %s mission %s", FlightGroup:GetName(), Mission:GetType(), Mission:GetName()))  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -42,14 +42,15 @@ LEGION = {
 
 --- LEGION class version.
 -- @field #string version
-LEGION.version="0.0.1"
+LEGION.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot.
--- TODO: Make general so it can be inherited by AIRWING and BRIGADE classes.
+-- TODO: Create FLOTILLA class.
+-- TODO: OPS transport.
+-- DONE: Make general so it can be inherited by AIRWING and BRIGADE classes.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -73,24 +74,21 @@ function LEGION:New(WarehouseName, LegionName)
 
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("LEGION %s | ", self.alias)
-
-  -- Add FSM transitions.
-  --                 From State  -->   Event        -->     To State
-  self:AddTransition("*",             "MissionRequest",     "*")           -- Add a (mission) request to the warehouse.
-  self:AddTransition("*",             "MissionCancel",      "*")           -- Cancel mission.
-  
-  self:AddTransition("*",             "TransportRequest",   "*")           -- Add a (mission) request to the warehouse.
-  
-  self:AddTransition("*",             "OpsOnMission",       "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
-  self:AddTransition("*",             "FlightOnMission",    "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
-  self:AddTransition("*",             "ArmyOnMission",      "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
-  self:AddTransition("*",             "NavyOnMission",      "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
-  
-  self:AddTransition("*",             "AssetReturned",      "*")           -- An asset returned (from a mission) to the Legion warehouse.
   
   -- Defaults:
-  -- TODO
+  -- TODO: What?  
 
+  -- Add FSM transitions.
+  --                 From State  -->   Event        -->      To State
+  self:AddTransition("*",             "MissionRequest",      "*")           -- Add a (mission) request to the warehouse.
+  self:AddTransition("*",             "MissionCancel",       "*")           -- Cancel mission.
+  
+  self:AddTransition("*",             "TransportRequest",    "*")           -- Add a (mission) request to the warehouse.
+  
+  self:AddTransition("*",             "OpsOnMission",        "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
+  
+  self:AddTransition("*",             "LegionAssetReturned", "*")           -- An asset returned (from a mission) to the Legion warehouse.
+  
   ------------------------
   --- Pseudo Functions ---
   ------------------------
@@ -131,6 +129,92 @@ function LEGION:New(WarehouseName, LegionName)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
+  --- Triggers the FSM event "MissionRequest".
+  -- @function [parent=#LEGION] MissionRequest
+  -- @param #LEGION self
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "MissionRequest" after a delay.
+  -- @function [parent=#LEGION] __MissionRequest
+  -- @param #LEGION self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionRequest" event.
+  -- @function [parent=#LEGION] OnAfterMissionRequest
+  -- @param #LEGION self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
+  --- Triggers the FSM event "TransportRequest".
+  -- @function [parent=#LEGION] TransportRequest
+  -- @param #LEGION self
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- Triggers the FSM event "TransportRequest" after a delay.
+  -- @function [parent=#LEGION] __TransportRequest
+  -- @param #LEGION self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- On after "TransportRequest" event.
+  -- @function [parent=#LEGION] OnAfterTransportRequest
+  -- @param #LEGION self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+
+  --- Triggers the FSM event "OpsOnMission".
+  -- @function [parent=#LEGION] OpsOnMission
+  -- @param #LEGION self
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "OpsOnMission" after a delay.
+  -- @function [parent=#LEGION] __OpsOnMission
+  -- @param #LEGION self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "OpsOnMission" event.
+  -- @function [parent=#LEGION] OnAfterOpsOnMission
+  -- @param #LEGION self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
+  --- Triggers the FSM event "LegionAssetReturned".
+  -- @function [parent=#LEGION] LegionAssetReturned
+  -- @param #LEGION self
+  -- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
+  -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
+
+  --- Triggers the FSM event "LegionAssetReturned" after a delay.
+  -- @function [parent=#LEGION] __LegionAssetReturned
+  -- @param #LEGION self
+  -- @param #number delay Delay in seconds. 
+  -- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
+  -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
+
+  --- On after "LegionAssetReturned" event. Triggered when an asset group returned to its Legion.
+  -- @function [parent=#LEGION] OnAfterLegionAssetReturned
+  -- @param #LEGION self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
+  -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
 
 
   return self
@@ -773,8 +857,8 @@ function LEGION:onafterMissionCancel(From, Event, To, Mission)
   -- Set status to cancelled.
   Mission:SetLegionStatus(self, AUFTRAG.Status.CANCELLED)
 
-  for _,_asset in pairs(Mission.assets) do
-    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+  for i=#Mission.assets, 1, -1 do
+    local asset=Mission.assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
     
     -- Asset should belong to this legion.
     if asset.wid==self.uid then
@@ -909,21 +993,21 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
       ---
       
       -- Trigger event.
-      self:AssetReturned(cohort, asset)
+      self:LegionAssetReturned(cohort, asset)
 
     end
 
   end
 end
 
---- On after "AssetReturned" event. Triggered when an asset group returned to its legion.
+--- On after "LegionAssetReturned" event. Triggered when an asset group returned to its legion.
 -- @param #LEGION self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
-function LEGION:onafterAssetReturned(From, Event, To, Cohort, Asset)
+function LEGION:onafterLegionAssetReturned(From, Event, To, Cohort, Asset)
   -- Debug message.
   self:T(self.lid..string.format("Asset %s from Cohort %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Cohort.name, tostring(Asset.assignment)))
 
@@ -945,13 +1029,6 @@ function LEGION:onafterAssetReturned(From, Event, To, Cohort, Asset)
   -- Set timestamp.
   Asset.Treturned=timer.getAbsTime()
   
-  if self:IsAirwing() then
-    -- Trigger airwing/squadron event.
-    self:SquadronAssetReturned(Cohort, Asset)
-  elseif self:IsBrigade() then
-    -- Trigger brigade/platoon event.
-    self:PlatoonAssetReturned(Cohort, Asset)
-  end
 end
 
 
@@ -1366,7 +1443,7 @@ function LEGION:CountPayloadsInStock(MissionTypes, UnitTypes, Payloads)
 
   local n=0
   for _,_payload in pairs(self.payloads or {}) do
-    local payload=_payload --#LEGION.Payload
+    local payload=_payload --Ops.Airwing#AIRWING.Payload
 
     for _,MissionType in pairs(MissionTypes) do
 
@@ -1451,7 +1528,7 @@ function LEGION:CountAssetsWithPayloadsInStock(Payloads, MissionTypes, Attribute
     local cohort=_cohort --Ops.Cohort#COHORT
     if Npayloads[cohort.aircrafttype]==nil then    
       Npayloads[cohort.aircrafttype]=self:CountPayloadsInStock(MissionTypes, cohort.aircrafttype, Payloads)
-      env.info(string.format("FF got Npayloads=%d for type=%s",Npayloads[cohort.aircrafttype], cohort.aircrafttype))
+      self:T3(self.lid..string.format("Got Npayloads=%d for type=%s",Npayloads[cohort.aircrafttype], cohort.aircrafttype))
     end
   end
 
@@ -1466,9 +1543,6 @@ function LEGION:CountAssetsWithPayloadsInStock(Payloads, MissionTypes, Attribute
     
     -- Only the smaller number of assets or paylods is really available.        
     local m=math.min(n, p)
-    
-    env.info("FF n="..n)
-    env.info("FF p="..p)
     
     -- Add up what we have. Could also be zero.
     N=N+m
@@ -1707,7 +1781,7 @@ end
 
 --- Get payload performance for a given type of misson type.
 -- @param #LEGION self
--- @param #LEGION.Payload Payload The payload table.
+-- @param Ops.Airwing#AIRWING.Payload Payload The payload table.
 -- @param #string MissionType Type of mission.
 -- @return #number Performance or -1.
 function LEGION:GetPayloadPeformance(Payload, MissionType)
@@ -1730,7 +1804,7 @@ end
 
 --- Get mission types a payload can perform.
 -- @param #LEGION self
--- @param #LEGION.Payload Payload The payload table.
+-- @param Ops.Airwing#AIRWING.Payload Payload The payload table.
 -- @return #table Mission types.
 function LEGION:GetPayloadMissionTypes(Payload)
 

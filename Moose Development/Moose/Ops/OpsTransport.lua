@@ -231,6 +231,8 @@ function OPSTRANSPORT:New(GroupSet, Pickupzone, Deployzone)
   self:AddTransition("*",                           "DeadCarrierUnit",  "*")
   self:AddTransition("*",                           "DeadCarrierGroup", "*")
   self:AddTransition("*",                           "DeadCarrierAll",   "*")
+  
+  --TODO: Psydofunctions
 
   -- Call status update.
   self:__Status(-1)

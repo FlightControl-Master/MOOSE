@@ -152,6 +152,7 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @param #COHORT self
   -- @param #number delay Delay in seconds.
 
+
   --- Triggers the FSM event "Stop". Stops the COHORT and all its event handlers.
   -- @param #COHORT self
 
@@ -159,6 +160,7 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @function [parent=#COHORT] __Stop
   -- @param #COHORT self
   -- @param #number delay Delay in seconds.
+
 
   --- Triggers the FSM event "Status".
   -- @function [parent=#COHORT] Status

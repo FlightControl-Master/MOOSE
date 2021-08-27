@@ -40,7 +40,7 @@ PLATOON = {
 
 --- PLATOON class version.
 -- @field #string version
-PLATOON.version="0.0.1"
+PLATOON.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -170,7 +170,7 @@ function PLATOON:onafterStatus(From, Event, To)
     self:I(self.lid..text)
     
     -- Weapon data info.
-    if self.weaponData then
+    if self.verbose>=3 and self.weaponData then
       local text="Weapon Data:"
       for bit,_weapondata in pairs(self.weaponData) do
         local weapondata=_weapondata --Ops.OpsGroup#OPSGROUP.WeaponData
