@@ -68,7 +68,7 @@ SEAD = {
   ["Kh25"] = "Kh25",
   }
   
-  --- Missile enumerators
+  --- Missile enumerators - from DCS ME and Wikipedia
   -- @field HarmData
   SEAD.HarmData = {
   -- km and mach
@@ -109,7 +109,7 @@ function SEAD:New( SEADGroupPrefixes )
   end
   
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
-  self:I("*** SEAD - Started Version 0.2.10")
+  self:I("*** SEAD - Started Version 0.3.1")
   return self
 end
 
@@ -176,7 +176,7 @@ end
     if _point1 and _point2 then
       local distance1 = _point1:Get2DDistance(_point2)
       local distance2 = _point1:DistanceFromPointVec2(_point2)
-      self:I({dist1=distance1, dist2=distance2})
+      --self:T({dist1=distance1, dist2=distance2})
       if distance1 and type(distance1) == "number" then
         return distance1
       elseif distance2 and type(distance2) == "number" then
@@ -198,7 +198,7 @@ end
 -- @param #SEAD
 -- @param Core.Event#EVENTDATA EventData
 function SEAD:HandleEventShot( EventData )
-  self:T( { EventData } )
+  self:T( { EventData.id } )
   local SEADPlane = EventData.IniUnit -- Wrapper.Unit#UNIT
   local SEADPlanePos = SEADPlane:GetCoordinate() -- Core.Point#COORDINATE
   local SEADUnit = EventData.IniDCSUnit
@@ -207,31 +207,29 @@ function SEAD:HandleEventShot( EventData )
   local SEADWeaponName = EventData.WeaponName -- return weapon type
 
   self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
-  self:T({ SEADWeapon })
+  --self:T({ SEADWeapon })
   
   if self:_CheckHarms(SEADWeaponName) then
+    self:T( '*** SEAD - Weapon Match' )
     local _targetskill = "Random"
-    local _targetMimgroupName = "none"
-    local _evade = math.random (1,100) -- random number for chance of evading action
-    local _targetMim = EventData.Weapon:getTarget() -- Identify target
-    local _targetUnit = UNIT:Find(_targetMim) -- Wrapper.Unit#UNIT
-    local _targetMimgroup = nil -- Wrapper.Group#GROUP
+    local _targetgroupname = "none"
+    local _target = EventData.Weapon:getTarget() -- Identify target
+    local _targetUnit = UNIT:Find(_target) -- Wrapper.Unit#UNIT
+    local _targetgroup = nil -- Wrapper.Group#GROUP
     if _targetUnit and _targetUnit:IsAlive() then
-      _targetMimgroup = _targetUnit:GetGroup()
-      _targetMimgroupName = _targetMimgroup:GetName() -- group name
+      _targetgroup = _targetUnit:GetGroup()
+      _targetgroupname = _targetgroup:GetName() -- group name
       local _targetUnitName = _targetUnit:GetName()
       _targetUnit:GetSkill()
       _targetskill = _targetUnit:GetSkill()
-      self:T( self.SEADGroupPrefixes )
-      self:T( _targetMimgroupName )
     end
     -- see if we are shot at
     local SEADGroupFound = false
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( self.SEADGroupPrefixes ) do
       self:T( SEADGroupPrefix )
-      if string.find( _targetMimgroupName, SEADGroupPrefix, 1, true ) then
+      if string.find( _targetgroupname, SEADGroupPrefix, 1, true ) then
         SEADGroupFound = true
-        self:T( '*** SEAD - Group Found' )
+        self:T( '*** SEAD - Group Match Found' )
         break
       end
     end   
@@ -240,25 +238,26 @@ function SEAD:HandleEventShot( EventData )
         local Skills = { "Average", "Good", "High", "Excellent" }
         _targetskill = Skills[ math.random(1,4) ]
       end
-      self:T( _targetskill )
+      --self:T( _targetskill )
       if self.TargetSkill[_targetskill] then
+        local _evade = math.random (1,100) -- random number for chance of evading action
         if (_evade > self.TargetSkill[_targetskill].Evade) then
-          
+          self:T("*** SEAD - Evading")
           -- calculate distance of attacker
-          local _targetpos = _targetMimgroup:GetCoordinate()
+          local _targetpos = _targetgroup:GetCoordinate()
           local _distance = self:_GetDistance(SEADPlanePos, _targetpos)
           -- weapon speed
           local hit, data = self:_CheckHarms(SEADWeaponName)
-          local wpnpeed = 666
+          local wpnspeed = 666 -- ;)
           local reach = 10
           if hit then
             local wpndata = SEAD.HarmData[data]
             reach = wpndata[1] * 1,1
             local mach = wpndata[2]
-            wpnpeed = math.floor(mach * 340.29)
+            wpnspeed = math.floor(mach * 340.29)
           end
           -- time to impact
-          local _tti = math.floor(_distance / wpnpeed) -- estimated impact time
+          local _tti = math.floor(_distance / wpnspeed) -- estimated impact time
           if _distance > 0 then
             _distance = math.floor(_distance / 1000) -- km
           else
@@ -266,44 +265,40 @@ function SEAD:HandleEventShot( EventData )
           end
           
           self:T( string.format("*** SEAD - target skill %s, distance %dkm, reach %dkm, tti %dsec", _targetskill, _distance,reach,_tti ))
-        
-          local _targetMimgroup1 = Unit.getGroup(Weapon.getTarget(SEADWeapon))
-          local _targetMimcont1 = _targetMimgroup1:getController()
           
           if reach >= _distance then
-            self:T("*** SEAD - Relocating")
-            _targetMimgroup:RelocateGroundRandomInRadius(20,300,false,false,"Diamond")
-            --routines.groupRandomDistSelf(_targetMimgroup,300,'Diamond',250,20) -- move randomly
+            self:T("*** SEAD - Shot in Reach")
             
-            --tracker ID table to switch groups off and on again
-            local id = { 
-            groupName = _targetMimgroup1,
-            ctrl = _targetMimcont1
-            }
-  
-            local function SuppressionEnd(id) --switch group back on
-             local range = self.EngagementRange -- Feature Request #1355
-              --self:T(string.format("*** SEAD - Engagement Range is %d", range))
-              self:T("*** SEAD - Radar On")
-              id.ctrl:setOption(AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.RED)
-              --id.groupName:enableEmission(true)
-              id.ctrl:setOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION,range) --Feature Request #1355
-              self.SuppressedGroups[id.groupName] = nil  --delete group id from table when done
+            local function SuppressionStart(args)
+              self:T(string.format("*** SEAD - %s Radar Off & Relocating",args[2]))
+              local grp = args[1] -- Wrapper.Group#GROUP
+              grp:OptionAlarmStateGreen()
+              grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond")
             end
+            
+            local function SuppressionStop(args)
+              self:T(string.format("*** SEAD - %s Radar On",args[2]))
+              local grp = args[1]  -- Wrapper.Group#GROUP
+              grp:OptionAlarmStateRed()
+              grp:OptionEngageRange(self.EngagementRange)
+              self.SuppressedGroups[args[2]] = false
+            end
+            
             -- randomize switch-on time
             local delay = math.random(self.TargetSkill[_targetskill].DelayOn[1], self.TargetSkill[_targetskill].DelayOn[2])
-            if delay < _tti then delay = _tti * 1,1 end
-            local SuppressionEndTime = timer.getTime() + delay
-            --create entry
-            if self.SuppressedGroups[id.groupName] == nil then  --no timer entry for this group yet
-              self.SuppressedGroups[id.groupName] = {
-                SuppressionEndTime = delay
-                }
-              self:T(string.format("*** SEAD - Radar Off for %dsecs",delay))  
-              Controller.setOption(_targetMimcont1, AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.GREEN)
-              --_targetMimgroup:enableEmission(false)
-              timer.scheduleFunction(SuppressionEnd, id, SuppressionEndTime)  --Schedule the SuppressionEnd() function
+            if delay > _tti then delay = delay / 2 end -- speed up
+            if _tti > (3*delay) then delay = (_tti / 2) * 0.9 end -- shot from afar
+            
+            local SuppressionStartTime = timer.getTime() + delay     
+            local SuppressionEndTime = timer.getTime() + _tti + 10
+            
+            if not self.SuppressedGroups[_targetgroupname] then
+              self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Switch-Off in %ds",_targetgroupname,_tti,delay))
+              timer.scheduleFunction(SuppressionStart,{_targetgroup,_targetgroupname},SuppressionStartTime)
+              timer.scheduleFunction(SuppressionStop,{_targetgroup,_targetgroupname},SuppressionEndTime)
+              self.SuppressedGroups[_targetgroupname] = true
             end
+            
           end
         end
       end
