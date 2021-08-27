@@ -2594,6 +2594,17 @@ function GROUP:SetCommandImmortal(switch)
   return self
 end
 
+--- Get skill from Group. Effectively gets the skill from Unit 1 as the group holds no skill value.
+-- @param #GROUP self
+-- @return #string Skill String of skill name.
+function GROUP:GetSkill()
+  self:F2( self.GroupName )
+  local unit = self:GetUnit(1)
+  local name = unit:GetName()
+  local skill = _DATABASE.Templates.Units[name].Template.skill or "Random"
+  return skill
+end
+
 --do -- Smoke
 --
 ----- Signal a flare at the position of the GROUP.

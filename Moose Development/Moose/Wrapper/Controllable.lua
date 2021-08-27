@@ -3779,8 +3779,9 @@ end
 -- @param  #number radius Radius of the relocation zone, default 500
 -- @param  #boolean onroad If true, route on road (less problems with AI way finding), default true
 -- @param  #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
+-- @param #string formation Formation string as in the mission editor, e.g. "Vee", "Diamond", "Line abreast", etc. Defaults to "Off Road"
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortcut)
+function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortcut, formation)
   self:F2( { self.ControllableName } )
 
     local _coord = self:GetCoordinate()
@@ -3791,14 +3792,14 @@ function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortc
     local _grptsk = {}
     local _candoroad = false
     local _shortcut = shortcut or false
+    local _formation = formation or "Off Road"
 
     -- create a DCS Task an push it on the group
-    -- TaskGroundOnRoad(ToCoordinate,Speed,OffRoadFormation,Shortcut,FromCoordinate,WaypointFunction,WaypointFunctionArguments)
     if onroad then
-      _grptsk, _candoroad = self:TaskGroundOnRoad(_tocoord,_speed,"Off Road",_shortcut)
+      _grptsk, _candoroad = self:TaskGroundOnRoad(_tocoord,_speed,_formation,_shortcut)
       self:Route(_grptsk,5)
     else
-      self:TaskRouteToVec2(_tocoord:GetVec2(),_speed,"Off Road")
+      self:TaskRouteToVec2(_tocoord:GetVec2(),_speed,_formation)
     end
 
   return self
