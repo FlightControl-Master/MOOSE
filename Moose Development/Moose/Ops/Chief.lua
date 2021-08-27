@@ -118,9 +118,9 @@ function CHIEF:New(AgentSet, Coalition)
 
   -- Add FSM transitions.
   --                 From State    -->   Event             -->              To State
-  self:AddTransition("*",                "AssignMissionAirforce", "*")   -- Assign mission to a WINGCOMMANDER.
-  self:AddTransition("*",                "AssignMissionNavy",     "*")   -- Assign mission to an ADMIRAL.
-  self:AddTransition("*",                "AssignMissionArmy",     "*")   -- Assign mission to a GENERAL.
+  self:AddTransition("*",                "AssignMissionAirforce", "*")   -- Assign mission to a COMMANDER but request only AIR assets.
+  self:AddTransition("*",                "AssignMissionNavy",     "*")   -- Assign mission to a COMMANDER but request only NAVAL assets.
+  self:AddTransition("*",                "AssignMissionArmy",     "*")   -- Assign mission to a COMMANDER but request only GROUND assets.
   
   self:AddTransition("*",                "MissionCancel",         "*")   -- Cancel mission.
   
@@ -166,6 +166,12 @@ function CHIEF:New(AgentSet, Coalition)
   --- Triggers the FSM event "MissionCancel".
   -- @function [parent=#CHIEF] MissionCancel
   -- @param #CHIEF self
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "MissionCancel" after a delay.
+  -- @function [parent=#CHIEF] MissionCancel
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "MissionCancel" event.
@@ -586,10 +592,29 @@ end
 function CHIEF:onafterAssignMissionAirforce(From, Event, To, Mission)
 
   if self.commander then
-    self:I(self.lid..string.format("Assigning mission %s (%s) to WINGCOMMANDER", Mission.name, Mission.type))
+    self:I(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
+    --TODO: Request only air assets.
     self.commander:AddMission(Mission)
   else
-    self:E(self.lid..string.format("Mission cannot be assigned as no WINGCOMMANDER is defined."))
+    self:E(self.lid..string.format("Mission cannot be assigned as no COMMANDER is defined!"))
+  end
+
+end
+
+--- On after "AssignMissionAssignArmy" event.
+-- @param #CHIEF self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+function CHIEF:onafterAssignMissionArmy(From, Event, To, Mission)
+
+  if self.commander then
+    self:I(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
+    --TODO: Request only ground assets.
+    self.commander:AddMission(Mission)
+  else
+    self:E(self.lid..string.format("Mission cannot be assigned as no COMMANDER is defined!"))
   end
 
 end
@@ -681,7 +706,7 @@ end
 -- Target Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Check mission queue and assign ONE planned mission.
+--- Check target queue and assign ONE valid target by adding it to the mission queue of the COMMANDER.
 -- @param #CHIEF self 
 function CHIEF:CheckTargetQueue()
 
@@ -737,6 +762,9 @@ function CHIEF:CheckTargetQueue()
           
           -- Add mission to COMMANDER queue.
           self:AddMission(mission)
+          
+          -- Only ONE target is assigned per check.
+          return
         end
                 
       end
