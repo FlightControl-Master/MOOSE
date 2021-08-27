@@ -115,6 +115,7 @@
 -- @field #table cargoqueue Table containing cargo groups to be transported.
 -- @field #table cargoBay Table containing OPSGROUP loaded into this group.
 -- @field Ops.OpsTransport#OPSTRANSPORT cargoTransport Current cargo transport assignment.
+-- @field Ops.OpsTransport#OPSTRANSPORT.TransportZone transportZone Transport zones (pickup, deploy etc.).
 -- @field #string cargoStatus Cargo status of this group acting as cargo.
 -- @field #number cargoTransportUID Unique ID of the transport assignment this cargo group is associated with.
 -- @field #string carrierStatus Carrier status of this group acting as cargo carrier. 
@@ -476,6 +477,7 @@ OPSGROUP.version="0.7.5"
 -- TODO: Damage?
 -- TODO: Shot events?
 -- TODO: Marks to add waypoints/tasks on-the-fly.
+-- DONE: A lot.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -687,7 +689,13 @@ function OPSGROUP:New(group)
 
   --- Triggers the FSM event "MissionCancel".
   -- @function [parent=#OPSGROUP] MissionCancel
-  -- @param #CHIEF self
+  -- @param #OPSGROUP self
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "MissionCancel" after a delay
+  -- @function [parent=#OPSGROUP] MissionCancel
+  -- @param #OPSGROUP self
+  -- @param #number delay Delay in seconds.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- On after "MissionCancel" event.
@@ -1769,6 +1777,36 @@ function OPSGROUP:SetCarrierUnloaderPort(Length, Width)
   return self
 end
 
+--- Check if group is currently inside a zone.
+-- @param #OPSGROUP self
+-- @param Core.Zone#ZONE Zone The zone.
+-- @return #boolean If true, group is in this zone
+function OPSGROUP:IsInZone(Zone)
+  local vec2=self:GetVec2()
+  local is=Zone:IsVec2InZone(vec2)
+  return is
+end
+
+--- Get 2D distance to a coordinate.
+-- @param #OPSGROUP self
+-- @param Core.Point#COORDINATE Coordinate. Can also be a DCS#Vec2 or DCS#Vec3.
+-- @return #number Distance in meters.
+function OPSGROUP:Get2DDistance(Coordinate)
+  
+  local a=self:GetVec2()
+  local b={}
+  if Coordinate.z then
+    b.x=Coordinate.x
+    b.y=Coordinate.z
+  else
+    b.x=Coordinate.x
+    b.y=Coordinate.y
+  end
+  
+  local dist=UTILS.VecDist2D(a, b)
+
+  return dist
+end
 
 --- Check if this is a FLIGHTGROUP.
 -- @param #OPSGROUP self
@@ -3567,7 +3605,7 @@ function OPSGROUP:_GetNextMission()
     --       Good example is the above transport. The legion should start the mission but the group should only start after the transport is finished.
 
     -- Check necessary conditions.
-    if mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.SCHEDULED and (mission:IsReadyToGo() or self.legion) and (mission.importance==nil or mission.importance<=vip)  and transport then
+    if mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.SCHEDULED and (mission:IsReadyToGo() or self.legion) and (mission.importance==nil or mission.importance<=vip) and transport then
       return mission
     end
     
@@ -4972,11 +5010,11 @@ function OPSGROUP:_UpdateLaser()
 end
 
 --- On before "ElementSpawned" event. Check that element is not in status spawned already.
--- @param #FLIGHTGROUP self
+-- @param #OPSGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP.Element Element The flight group element.
+-- @param #OPSGROUP.Element Element The flight group element.
 function OPSGROUP:onbeforeElementSpawned(From, Event, To, Element)
 
   if Element and Element.status==OPSGROUP.ElementStatus.SPAWNED then
@@ -5505,10 +5543,19 @@ function OPSGROUP:_CheckCargoTransport()
     if self:IsNotCarrier() then
 
       -- Debug info.
-      self:T(self.lid.."Not carrier ==> pickup")
+      self:T(self.lid.."Not carrier ==> pickup?")
+      
+      -- Get transport zones.
+      local transportZone=self.cargoTransport:_GetPickupZone(self)
+      
+      if transportZone then
 
-      -- Initiate the cargo transport process.
-      self:__Pickup(-1)
+        -- Initiate the cargo transport process.
+        self:__Pickup(-1, transportZone)
+        
+      else
+        self:T(self.lid.."Not carrier ==> pickup")
+      end
 
     elseif self:IsPickingup() then
 
@@ -5730,13 +5777,16 @@ function OPSGROUP:_GetNextCargoTransport()
   local function _sort(a, b)
     local transportA=a --Ops.OpsTransport#OPSTRANSPORT
     local transportB=b --Ops.OpsTransport#OPSTRANSPORT
-    local distA=transportA.pickupzone:GetCoordinate():Get2DDistance(coord)
-    local distB=transportB.pickupzone:GetCoordinate():Get2DDistance(coord)
-    return (transportA.prio<transportB.prio) or (transportA.prio==transportB.prio and distA<distB)
+    --TODO: Include distance
+    --local distA=transportA.pickupzone:GetCoordinate():Get2DDistance(coord)
+    --local distB=transportB.pickupzone:GetCoordinate():Get2DDistance(coord)
+    return (transportA.prio<transportB.prio) --or (transportA.prio==transportB.prio and distA<distB)
   end
   table.sort(self.cargoqueue, _sort)
+  
+  -- TODO: Find smarter next transport.
 
-  -- Look for first mission that is SCHEDULED.
+  -- Importance.
   local vip=math.huge
   for _,_cargotransport in pairs(self.cargoqueue) do
     local cargotransport=_cargotransport --Ops.OpsTransport#OPSTRANSPORT
@@ -6231,16 +6281,19 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function OPSGROUP:onafterPickup(From, Event, To)
+-- @param Ops.OpsTransport#OPSTRANSPORT.TransportZone TransportZone The transport zones data table.
+function OPSGROUP:onafterPickup(From, Event, To, TransportZone)
 
   -- Set carrier status.
   self:_NewCarrierStatus(OPSGROUP.CarrierStatus.PICKUP)
+  
+  self.transportZone=TransportZone
 
   -- Pickup zone.
-  local Zone=self.cargoTransport.pickupzone
+  local Zone=TransportZone.PickupZone
 
   -- Check if already in the pickup zone.
-  local inzone=Zone:IsCoordinateInZone(self:GetCoordinate())
+  local inzone=self:IsInZone(Zone)
 
   local airbasePickup=nil --Wrapper.Airbase#AIRBASE
   if Zone and Zone:IsInstanceOf("ZONE_AIRBASE") then
@@ -6278,7 +6331,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
     local Coordinate=Zone:GetRandomCoordinate()
 
     -- Add waypoint.
-    if self.isFlightgroup then
+    if self:IsFlightgroup() then
     
       ---
       -- Flight Group
@@ -6377,6 +6430,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
       -- ARMYGROUP
       local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=1
       
+      -- Give cruise command.
       self:__Cruise(-2)
 
     end
@@ -6406,14 +6460,15 @@ function OPSGROUP:onafterLoading(From, Event, To)
     local cargo=_cargo --#OPSGROUP.CargoGroup
 
     -- Check that cargo weight is
-    if self:CanCargo(cargo.opsgroup) and not (cargo.delivered or cargo.opsgroup:IsDead()) then
+    if self:CanCargo(cargo.opsgroup) and (not (cargo.delivered or cargo.opsgroup:IsDead())) then
 
       -- Check that group is NOT cargo and NOT acting as carrier already
       -- TODO: Need a better :IsBusy() function or :IsReadyForMission() :IsReadyForBoarding() :IsReadyForTransport()
       if cargo.opsgroup:IsNotCargo(true) and not (cargo.opsgroup:IsPickingup() or cargo.opsgroup:IsLoading() or cargo.opsgroup:IsTransporting() or cargo.opsgroup:IsUnloading()) then
 
         -- Check if cargo is in embark/pickup zone.
-        local inzone=self.cargoTransport.embarkzone:IsCoordinateInZone(cargo.opsgroup:GetCoordinate())
+        --local inzone=self.cargoTransport.embarkzone:IsCoordinateInZone(cargo.opsgroup:GetCoordinate())
+        local inzone=cargo.opsgroup:IsInZone(self.transportZone.EmbarkZone)
 
         -- Cargo MUST be inside zone or it will not be loaded!
         if inzone then
@@ -6448,22 +6503,6 @@ function OPSGROUP:onafterLoading(From, Event, To)
 
   end
 
-end
-
---- Clear waypoints.
--- @param #OPSGROUP self
--- @param #number IndexMin Clear waypoints up to this min WP index. Default 1.
--- @param #number IndexMax Clear waypoints up to this max WP index. Default `#self.waypoints`.
-function OPSGROUP:ClearWaypoints(IndexMin, IndexMax)
-
-  IndexMin=IndexMin or 1
-  IndexMax=IndexMax or #self.waypoints
-
-  -- Clear all waypoints.
-  for i=IndexMax,IndexMin,-1 do
-    table.remove(self.waypoints, i)
-  end
-  --self.waypoints={}
 end
 
 --- Set (new) cargo status.
@@ -6614,10 +6653,10 @@ function OPSGROUP:onafterTransport(From, Event, To)
   --TODO: This is all very similar to the onafterPickup() function. Could make it general.
 
   -- Deploy zone.
-  local Zone=self.cargoTransport.deployzone
+  local Zone=self.transportZone.DeployZone
 
   -- Check if already in deploy zone.
-  local inzone=Zone:IsCoordinateInZone(self:GetCoordinate())
+  local inzone=self:IsInZone(Zone) --Zone:IsCoordinateInZone(self:GetCoordinate())
 
   local airbaseDeploy=nil --Wrapper.Airbase#AIRBASE
   if Zone and Zone:IsInstanceOf("ZONE_AIRBASE") then
@@ -7018,10 +7057,18 @@ function OPSGROUP:onafterUnloadingDone(From, Event, To)
   local delivered=self:_CheckGoPickup(self.cargoTransport)
 
   if not delivered then
+  
+    local transportZone=self.cargoTransport:_GetPathPickup()
+    
+    if transportZone then
 
-    -- Pickup the next batch.
-    self:I(self.lid.."Unloaded: Still cargo left ==> Pickup")
-    self:Pickup(self.cargoTransport.pickupzone)
+      -- Pickup the next batch.
+      self:I(self.lid.."Unloaded: Still cargo left ==> Pickup")
+      self:Pickup(transportZone)
+      
+    else
+      env.info("FF error not implemented case!")
+    end
 
   else
 
@@ -9918,6 +9965,22 @@ function OPSGROUP:_GetTemplate(Copy)
   end
 
   return nil
+end
+
+--- Clear waypoints.
+-- @param #OPSGROUP self
+-- @param #number IndexMin Clear waypoints up to this min WP index. Default 1.
+-- @param #number IndexMax Clear waypoints up to this max WP index. Default `#self.waypoints`.
+function OPSGROUP:ClearWaypoints(IndexMin, IndexMax)
+
+  IndexMin=IndexMin or 1
+  IndexMax=IndexMax or #self.waypoints
+
+  -- Clear all waypoints.
+  for i=IndexMax,IndexMin,-1 do
+    table.remove(self.waypoints, i)
+  end
+  --self.waypoints={}
 end
 
 

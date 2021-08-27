@@ -288,6 +288,23 @@ function ZONE_BASE:GetCoordinate( Height ) --R2.1
   return self.Coordinate
 end
 
+--- Get 2D distance to a coordinate.
+-- @param #ZONE_BASE self
+-- @param Core.Point#COORDINATE Coordinate Reference coordinate. Can also be a DCS#Vec2 or DCS#Vec3 object.
+-- @return #number Distance to the reference coordinate in meters.
+function ZONE_BASE:Get2DDistance(Coordinate)
+  local a=self:GetVec2()
+  local b={}
+  if Coordinate.z then
+    b.x=Coordinate.x
+    b.y=Coordinate.z
+  else
+    b.x=Coordinate.x
+    b.y=Coordinate.y
+  end  
+  local dist=UTILS.VecDist2D(a,b)
+  return dist
+end
 
 --- Define a random @{DCS#Vec2} within the zone.
 -- @param #ZONE_BASE self

@@ -38,11 +38,11 @@
 -- @field #number Tstop Stop time in *abs.* seconds. Default `#nil` (never stops).
 -- @field #number duration Duration (`Tstop-Tstart`) of the transport in seconds.
 -- @field #table conditionStart Start conditions.
+-- @field #table transportZones Table of transport zones. Each element of the table is of type `#OPSTRANSPORT.TransportZone`.
 -- @field Core.Zone#ZONE pickupzone Zone where the cargo is picked up.
 -- @field Core.Zone#ZONE deployzone Zone where the cargo is dropped off.
 -- @field Core.Zone#ZONE embarkzone (Optional) Zone where the cargo is supposed to embark. Default is the pickup zone.
 -- @field Core.Zone#ZONE disembarkzone (Optional) Zone where the cargo is disembarked. Default is the deploy zone.
--- @field Core.Zone#ZONE unboardzone (Optional) Zone where the cargo is going to after disembarkment.
 -- @field #boolean disembarkActivation Activation setting when group is disembared from carrier.
 -- @field #boolean disembarkInUtero Do not spawn the group in any any state but leave it "*in utero*". For example, to directly load it into another carrier.
 -- @field #table disembarkCarriers Table of carriers to which the cargo is disembared. This is a direct transfer from the old to the new carrier.
@@ -117,6 +117,7 @@ OPSTRANSPORT = {
   cargos          = {},
   carriers        = {},
   carrierTransportStatus = {},
+  transportZones  =  {},
   conditionStart  =  {},
   pathsTransport  =  {},
   pathsPickup     =  {},
@@ -141,13 +142,22 @@ OPSTRANSPORT.Status={
   DELIVERED="delivered",
 }
 
---- Path.
+--- Pickup and deploy set.
+-- @type OPSTRANSPORT.TransportZone
+-- @field Core.Zone#ZONE PickupZone Pickup zone.
+-- @field Core.Zone#ZONE DeployZone Deploy zone.
+-- @field Core.Zone#ZONE EmbarkZone Embark zone if different from pickup zone.
+-- @field #OPSTRANSPORT.Path PickupPath Path for pickup.
+-- @field #OPSTRANSPORT.Path TransportPath Path for Transport.
+-- @field #numberr Ncarriers Number of carrier groups using this transport zone.
+
+--- Path used for pickup or transport.
 -- @type OPSTRANSPORT.Path
 -- @field #table coords Table of coordinates.
 -- @field #number radius Radomization radius in meters. Default 0 m.
 -- @field #number altitude Altitude in feet AGL. Only for aircraft.
 
---- Generic mission condition.
+--- Generic transport condition.
 -- @type OPSTRANSPORT.Condition
 -- @field #function func Callback function to check for a condition. Should return a #boolean.
 -- @field #table arg Optional arguments passed to the condition callback function.
@@ -163,6 +173,7 @@ OPSTRANSPORT.version="0.3.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Allow multiple pickup/depoly zones.
 -- TODO: Stop/abort transport.
 -- DONE: Add start conditions.
 -- DONE: Check carrier(s) dead.
@@ -293,6 +304,31 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet)
 
 
   return self
+end
+
+--- Add pickup and deploy zone combination. Optionally, embark and disembark zones can be specified.
+-- 
+-- * The pickup zone is a zone where
+-- * bla
+-- 
+-- @param #OPSTRANSPORT self
+-- @param Core.Zone#ZONE PickupZone Zone where the troops are picked up.
+-- @return #OPSTRANSPORT.TransportZone Transport zone table.
+function OPSTRANSPORT:AddTransportZones(PickupZone, DeployZone, EmbarkZone, DisembarkZone, PickupPath, TransportPath)
+  
+  local transport={} --#OPSTRANSPORT.TransportZone
+  
+  transport.PickupZone=PickupZone
+  transport.DeployZone=DeployZone
+  transport.EmbarkZone=EmbarkZone or PickupZone
+  transport.DisembarkZone=DisembarkZone
+  transport.PickupPath=PickupPath
+  transport.TransportPath=TransportPath
+  transport.Ncarriers=0
+    
+  table.insert(self.transportZones, transport)
+  
+  return transport
 end
 
 --- Set pickup zone.
@@ -501,15 +537,18 @@ end
 --- Get (all) cargo @{Ops.OpsGroup#OPSGROUP}s. Optionally, only delivered or undelivered groups can be returned.
 -- @param #OPSTRANSPORT self
 -- @param #boolean Delivered If `true`, only delivered groups are returned. If `false` only undelivered groups are returned. If `nil`, all groups are returned.
--- @return #table Cargo Ops groups.
-function OPSTRANSPORT:GetCargoOpsGroups(Delivered)
+-- @param Ops.OpsGroup#OPSGROUP Carrier (Optional) Only count cargo groups that fit into the given carrier group. Current cargo is not a factor.
+-- @return #table Cargo Ops groups. Can be and empty table `{}`.
+function OPSTRANSPORT:GetCargoOpsGroups(Delivered, Carrier)
 
   local opsgroups={}
   for _,_cargo in pairs(self.cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-    if Delivered==nil or cargo.delivered==Delivered then
+    if Delivered==nil or cargo.delivered==Delivered  then
       if cargo.opsgroup and not (cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped()) then
-        table.insert(opsgroups, cargo.opsgroup)
+        if Carrier==nil or Carrier:CanCargo(cargo.opsgroup) then
+          table.insert(opsgroups, cargo.opsgroup)
+        end
       end
     end
   end
@@ -816,24 +855,27 @@ function OPSTRANSPORT:IsReadyToGo()
   -- Current abs time.
   local Tnow=timer.getAbsTime()
   
-  -- Pickup and deploy zones must be set.
-  if not self.pickupzone then
-    text=text.."No, pickup zone not defined!"
-    return false  
+  -- Pickup AND deploy zones must be set.
+  local gotzones=false
+  for _,_tz in pairs(self.transportZones) do
+    local tz=_tz --#OPSTRANSPORT.TransportZone
+    if tz.PickupZone and tz.DeployZone then
+      gotzones=true
+      break
+    end
   end
-  if not self.deployzone then
-    text=text.."No, deploy zone not defined!"
-    return false  
+  if not gotzones then
+    text=text.."No, pickup/deploy zone combo not yet defined!"
   end
-
+  
   -- Start time did not pass yet.
-  if self.Tstart and Tnow<self.Tstart or false then
+  if self.Tstart and Tnow<self.Tstart then
     text=text.."No, start time not passed!"
     return false
   end
   
   -- Stop time already passed.
-  if self.Tstop and Tnow>self.Tstop or false then
+  if self.Tstop and Tnow>self.Tstop then
     text=text.."Nope, stop time already passed!"
     self:T(text)
     return false
@@ -914,12 +956,20 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
   if self.verbose>=1 then
   
     -- Info text.    
-    local pickupname=self.pickupzone and self.pickupzone:GetName() or "Unknown"
-    local deployname=self.deployzone and self.deployzone:GetName() or "Unknown"    
-    local text=string.format("%s [%s --> %s]: Ncargo=%d/%d, Ncarrier=%d/%d", fsmstate:upper(), pickupname, deployname, self.Ncargo, self.Ndelivered, #self.carriers, self.Ncarrier)
+    local text=string.format("%s: Ncargo=%d/%d, Ncarrier=%d/%d", fsmstate:upper(), self.Ncargo, self.Ndelivered, #self.carriers, self.Ncarrier)
 
     -- Info about cargo and carrier.    
     if self.verbose>=2 then
+    
+      for i,_tz in pairs(self.transportZones) do
+        local tz=_tz --#OPSTRANSPORT.TransportZone
+        text=text..string.format("\n[%d] %s --> %s", i, tz.PickupZone and tz.PickupZone:GetName() or "Unknown", tz.DeployZone and tz.DeployZone and tz.DeployZone:GetName() or "Unknown", tz.Ncarriers)
+      end
+    
+    end
+
+    -- Info about cargo and carrier.    
+    if self.verbose>=3 then
     
       text=text..string.format("\nCargos:")
       for _,_cargo in pairs(self.cargos) do
@@ -1220,6 +1270,62 @@ function OPSTRANSPORT:_CreateCargoGroupData(group)
   cargo.disembarkCarrierGroup=nil
 
   return cargo
+end
+
+--- Count how many cargo groups are inside a zone.
+-- @param #OPSTRANSPORT self
+-- @param Core.Zone#ZONE Zone The zone object.
+-- @param #boolean Delivered If `true`, only delivered groups are returned. If `false` only undelivered groups are returned. If `nil`, all groups are returned.
+-- @param Ops.OpsGroup#OPSGROUP Carrier (Optional) Only count cargo groups that fit into the given carrier group. Current cargo is not a factor.
+-- @return #number Number of cargo groups.
+function OPSTRANSPORT:_CountCargosInZone(Zone, Delivered, Carrier)
+
+  local cargos=self:GetCargoOpsGroups(Delivered, Carrier)
+  
+  local N=0
+  for _,_cargo in pairs(cargos) do
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP
+    if cargo:IsInZone(Zone) then
+      N=N+1
+    end
+  end
+
+  return N
+end
+
+--- Get a pickup zone for a carrier group. This will be a zone, where the most cargo groups are located that fit into the carrier.
+-- @param #OPSTRANSPORT self
+-- @param Ops.OpsGroup#OPSGROUP Carrier The carrier OPS group.
+-- @return Core.Zone#ZONE Pickup zone or `#nil`.
+function OPSTRANSPORT:_GetPickupZone(Carrier)
+
+  env.info(string.format("FF GetPickupZone"))
+  local pickup=nil
+  
+  local distmin=nil
+  for i,_transportzone in pairs(self.transportZones) do
+    local tz=_transportzone --#OPSTRANSPORT.TransportZone
+    
+    -- Count cargos in pickup zone.
+    local ncargo=self:_CountCargosInZone(tz.PickupZone, false, Carrier)
+    
+    env.info(string.format("FF GetPickupZone i=%d, ncargo=%d", i, ncargo))
+    
+    if ncargo>0 then
+    
+      local vec2=Carrier:GetVec2()
+      
+      local dist=tz.PickupZone:Get2DDistance(vec2)
+            
+      if distmin==nil or dist<distmin then
+        distmin=dist
+        pickup=tz
+      end
+      
+    end
+  end
+
+  return pickup
 end
 
 --- Get an OPSGROUP from a given OPSGROUP or GROUP object. If the object is a GROUUP, an OPSGROUP is created automatically. 
