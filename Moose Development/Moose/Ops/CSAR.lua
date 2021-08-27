@@ -1747,7 +1747,7 @@ function CSAR:_GetDistance(_point1, _point2)
   if _point1 and _point2 then
     local distance1 = _point1:Get2DDistance(_point2)
     local distance2 = _point1:DistanceFromPointVec2(_point2)
-    self:I({dist1=distance1, dist2=distance2})
+    --self:I({dist1=distance1, dist2=distance2})
     if distance1 and type(distance1) == "number" then
       return distance1
     elseif distance2 and type(distance2) == "number" then
