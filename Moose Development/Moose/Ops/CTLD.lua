@@ -26,7 +26,241 @@
 
 do
 ------------------------------------------------------
---- **CTLD_CARGO** class, extends #Core.Base#BASE
+--- **CTLD_ENGINEERING** class, extends Core.Base#BASE
+-- @type CTLD_ENGINEERING
+-- @field #string ClassName
+-- @field #string lid
+-- @field #string Name
+-- @field Wrapper.Group#GROUP Group
+-- @field Wrapper.Unit#UNIT Unit
+-- @field Wrapper.Group#GROUP HeliGroup
+-- @field Wrapper.Unit#UNIT HeliUnit
+-- @field #string State
+-- @extends Core.Base#BASE
+CTLD_ENGINEERING = {
+  ClassName = "CTLD_ENGINEERING",
+  lid = "",
+  Name = "none",
+  Group = nil,
+  Unit = nil,
+  --C_Ops = nil,
+  HeliGroup = nil,
+  HeliUnit = nil,
+  State = "",
+  }
+  
+  --- CTLD_ENGINEERING class version.
+  -- @field #string version
+  CTLD_ENGINEERING.Version = "0.0.1"
+  
+  --- Create a new instance.
+  -- @param #CTLD_ENGINEERING self
+  -- @param #string Name
+  -- @param #string GroupName
+  -- @param Wrapper.Group#GROUP HeliGroup HeliGroup
+  -- @param Wrapper.Unit#UNIT HeliGroup HeliUnit
+  -- @return #CTLD_ENGINEERING self 
+  function CTLD_ENGINEERING:New(Name, GroupName, HeliGroup, HeliUnit)
+  
+      -- Inherit everything from BASE class.
+    local self=BASE:Inherit(self, BASE:New()) -- #CTLD_ENGINEERING
+    
+   BASE:I({Name, GroupName, HeliGroup:GetName(), HeliUnit:GetName()})
+    
+    self.Name = Name or "Engineer Squad" -- #string
+    self.Group = GROUP:FindByName(GroupName) -- Wrapper.Group#GROUP
+    self.Unit = self.Group:GetUnit(1) -- Wrapper.Unit#UNIT
+    --self.C_Ops = C_Ops -- Ops.CTLD#CTLD
+    self.HeliGroup = HeliGroup -- Wrapper.Group#GROUP
+    self.HeliUnit = HeliUnit -- Wrapper.Unit#UNIT
+    --self.distance = Distance or UTILS.NMToMeters(1)
+    self.currwpt = nil -- Core.Point#COORDINATE
+    self.lid = string.format("%s (%s) | ",self.Name, self.Version)
+      -- Start State.
+    self.State = "Stopped"
+  
+    --[[ Add FSM transitions.
+    --                 From State  -->   Event        -->      To State
+    self:AddTransition("Stopped",       "Start",               "Running")     -- Start FSM.
+    self:AddTransition("*",             "Status",              "*")
+    self:AddTransition("*",             "Search",              "Searching")
+    self:AddTransition("*",             "Move",                "Moving")
+    self:AddTransition("*",             "Arrive",              "Arrived")
+    self:AddTransition("*",             "Build",               "Building")
+    self:AddTransition("*",             "Done",                "Running")
+    self:AddTransition("*",             "Stop",                "Stopped")     -- Stop FSM. 
+    
+    self:__Start(5)
+    --]]
+    self:Start()
+    local parent = self:GetParent(self)
+    return self
+  end
+  
+  --- (Internal) Set the status
+  -- @param #CTLD_ENGINEERING self
+  -- @param #string State
+  -- @return #CTLD_ENGINEERING self
+  function CTLD_ENGINEERING:SetStatus(State)
+    self.State = State
+    return self
+  end
+  
+  --- (Internal) Get the status
+  -- @param #CTLD_ENGINEERING self
+  -- @return #string State
+  function CTLD_ENGINEERING:GetStatus()
+    return self.State
+  end
+  
+  --- (Internal) Check the status
+  -- @param #CTLD_ENGINEERING self
+  -- @param #string State
+  -- @return #boolean Outcome
+  function CTLD_ENGINEERING:IsStatus(State)
+    return self.State == State
+  end
+  
+  --- (Internal) Check the negative status
+  -- @param #CTLD_ENGINEERING self
+  -- @param #string State
+  -- @return #boolean Outcome
+  function CTLD_ENGINEERING:IsNotStatus(State)
+    return self.State ~= State
+  end
+  
+  --- (Internal) Set start status.
+  -- @param #CTLD_ENGINEERING self
+  -- @return #CTLD_ENGINEERING self
+  function CTLD_ENGINEERING:Start()
+    self:T(self.lid.."Start")
+    self:SetStatus("Running")
+    return self
+  end
+  
+  --- (Internal) Set stop status.
+  -- @param #CTLD_ENGINEERING self
+  -- @return #CTLD_ENGINEERING self
+  function CTLD_ENGINEERING:Stop()
+    self:T(self.lid.."Stop")
+    self:SetStatus("Stopped")
+    return self
+  end
+  
+  --- (Internal) Set build status.
+  -- @param #CTLD_ENGINEERING self
+  -- @return #CTLD_ENGINEERING self
+  function CTLD_ENGINEERING:Build()
+    self:T(self.lid.."Build")
+    self:SetStatus("Building")
+    return self
+  end
+  
+  --- (Internal) Set done status.
+  -- @param #CTLD_ENGINEERING self
+  -- @return #CTLD_ENGINEERING self
+  function CTLD_ENGINEERING:Done()
+    self:T(self.lid.."Done")
+    self:SetStatus("Running")
+    return self
+  end
+  
+  --- (Internal) Search for crates in reach.
+  -- @param #CTLD_ENGINEERING self
+  -- @param #table crates Table of found crate Ops.CTLD#CTLD_CARGO objects.
+  -- @param #number number Number of crates found.
+  -- @return #CTLD_ENGINEERING self
+  function CTLD_ENGINEERING:Search(crates,number)
+    self:T(self.lid.."Search")
+    self:SetStatus("Searching")
+    -- find crates close by
+    --local COps = self.C_Ops -- Ops.CTLD#CTLD
+    local dist = self.distance -- #number
+    local group = self.Group -- Wrapper.Group#GROUP
+    --local crates,number = COps:_FindCratesNearby(group,nil, dist) -- #table
+    local ctable = {}
+    local ind = 0
+    if number > 0 then
+      -- get set of dropped only
+      for _,_cargo in pairs (crates) do
+         if _cargo:WasDropped() then
+           ind = ind + 1
+           table.insert(ctable,ind,_cargo)
+         end
+      end
+    end
+    if ind > 0 then
+      local crate = ctable[1] -- Ops.CTLD#CTLD_CARGO
+      local static = crate:GetPositionable() -- Wrapper.Static#STATIC
+      local crate_pos = static:GetCoordinate() -- Core.Point#COORDINATE
+      local gpos = group:GetCoordinate() -- Core.Point#COORDINATE
+      -- see how far we are from the crate
+      local distance = self:_GetDistance(gpos,crate_pos)
+      self:T(string.format("%s Distance to crate: %d", self.lid, distance))
+      -- move there
+      if distance > 30 and distance ~= -1 and self:IsStatus("Searching") then
+        group:RouteGroundTo(crate_pos,15,"Line abreast",1)
+        self.currwpt = crate_pos -- Core.Point#COORDINATE
+        self:Move()
+      elseif distance <= 30 and distance ~= -1 then
+        -- arrived
+        self:Arrive()
+      end
+    else
+      self:T(self.lid.."No crates in reach!")
+    end
+    return self
+  end
+  
+  --- (Internal) Move towards crates in reach.
+  -- @param #CTLD_ENGINEERING self
+  -- @return #CTLD_ENGINEERING self
+  function CTLD_ENGINEERING:Move()
+    self:T(self.lid.."Move")
+    self:SetStatus("Moving")
+    -- check if we arrived on target
+    --local COps = self.C_Ops -- Ops.CTLD#CTLD
+    local group = self.Group -- Wrapper.Group#GROUP
+    local tgtpos = self.currwpt -- Core.Point#COORDINATE
+    local gpos = group:GetCoordinate() -- Core.Point#COORDINATE
+    -- see how far we are from the crate
+    local distance = self:_GetDistance(gpos,tgtpos)
+    self:T(string.format("%s Distance remaining: %d", self.lid, distance))
+    if distance <= 30 and distance ~= -1 then
+        -- arrived
+        self:Arrive()
+    end
+    return self
+  end
+  
+  --- (Internal) Arrived at crates in reach. Stop group.
+  -- @param #CTLD_ENGINEERING self
+  -- @return #CTLD_ENGINEERING self
+  function CTLD_ENGINEERING:Arrive()
+    self:T(self.lid.."Arrive")
+    self:SetStatus("Arrived")
+    self.currwpt = nil
+    local Grp = self.Group -- Wrapper.Group#GROUP
+    Grp:RouteStop()
+    return self
+  end
+  
+  --- (Internal) Return distance in meters between two coordinates.
+  -- @param #CTLD_ENGINEERING self
+  -- @param Core.Point#COORDINATE _point1 Coordinate one
+  -- @param Core.Point#COORDINATE _point2 Coordinate two
+  -- @return #number Distance in meters or -1
+  function CTLD_ENGINEERING:_GetDistance(_point1, _point2)
+    self:T(self.lid .. " _GetDistance")
+    if _point1 and _point2 then
+      local distance = _point1:DistanceFromPointVec2(_point2)
+     return distance
+    else
+      return -1
+    end
+  end
+------------------------------------------------------
+--- **CTLD_CARGO** class, extends Core.Base#BASE
 -- @type CTLD_CARGO
 -- @field #number ID ID of this cargo.
 -- @field #string Name Name for menu.
@@ -39,7 +273,7 @@ do
 -- @field #boolean HasBeenDropped True if dropped from heli.
 -- @field #number PerCrateMass Mass in kg
 -- @field #number Stock Number of builds available, -1 for unlimited
--- @extends Core.Fsm#FSM
+-- @extends Core.Base#BASE
 CTLD_CARGO = {
   ClassName = "CTLD_CARGO",
   ID = 0,
@@ -51,7 +285,8 @@ CTLD_CARGO = {
   CratesNeeded = 0,
   Positionable = nil,
   HasBeenDropped = false,
-  PerCrateMass = 0
+  PerCrateMass = 0,
+  Stock = nil,
   }
   
   --- Define cargo types.
@@ -63,6 +298,7 @@ CTLD_CARGO = {
     ["FOB"] = "FOB", -- #string FOB
     ["CRATE"] = "Crate", -- #string crate
     ["REPAIR"] = "Repair", -- #string repair
+    ["ENGINEERS"] = "Engineers", -- #string engineers
   }
   
   --- Function to create new CTLD_CARGO object.
@@ -565,7 +801,7 @@ CTLD = {
 -- DONE: Stats Running
 -- DONE: Added support for Hercules
 -- TODO: Possibly - either/or loading crates and troops
--- TODO: (WIP) Limit of troops, crates buildable?
+-- DONE: (WIP) Limit of troops, crates buildable?
 ------------------------------
 
 --- Radio Beacons
@@ -628,7 +864,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.6a1"
+CTLD.version="0.1.7a1"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -728,6 +964,11 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.CargoCounter = 0
   self.CrateCounter = 0
   self.TroopCounter = 0
+  
+  -- added engineering
+  self.Engineers = 0 -- #number use as counter
+  self.EngineersInField = {} -- #table holds #CTLD_ENGINEERING objects
+  self.EngineerSearch = 2000 -- #number search distance for crates to build or repair
   
   -- setup
   self.CrateDistance = 30 -- list/load crates in this radius
@@ -998,6 +1239,7 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   -- check if we have stock
   local instock = Cargotype:GetStock()
   local cgoname = Cargotype:GetName()
+  local cgotype = Cargotype:GetType()
   if type(instock) == "number" and tonumber(instock) <= 0 and tonumber(instock) ~= -1 then
     -- nothing left over
     self:_SendMessage(string.format("Sorry, all %s are gone!", cgoname), 10, false, Group)
@@ -1050,7 +1292,7 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
     return
   else
     self.CargoCounter = self.CargoCounter + 1
-    local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, CTLD_CARGO.Enum.TROOPS, true, true, Cargotype.CratesNeeded,nil,nil,Cargotype.PerCrateMass)
+    local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, cgotype, true, true, Cargotype.CratesNeeded,nil,nil,Cargotype.PerCrateMass)
     self:T({cargotype=loadcargotype})
     loaded.Troopsloaded = loaded.Troopsloaded + troopsize
     table.insert(loaded.Cargo,loadcargotype)
@@ -1069,24 +1311,26 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
     -- find nearest group of deployed groups
     local nearestGroup = nil
     local nearestGroupIndex = -1
-    local nearestDistance = 10000000
+    local nearestDistance = 10000
     for k,v in pairs(self.DroppedTroops) do
       local distance = self:_GetDistance(v:GetCoordinate(),unitcoord)
-      if distance < nearestDistance and distance ~= -1 then
+      local unit = v:GetUnit(1) -- Wrapper.Unit#UNIT
+      local desc = unit:GetDesc() or nil
+      --self:I({desc = desc.attributes})
+      if distance < nearestDistance and distance ~= -1 and not desc.attributes.Infantry then
         nearestGroup = v
         nearestGroupIndex = k
         nearestDistance = distance
       end
     end
-    
+
     -- found one and matching distance?  
-    if nearestGroup == nil or nearestDistance > 1000 then
+    if nearestGroup == nil or nearestDistance > self.EngineerSearch then
       self:_SendMessage("No unit close enough to repair!", 10, false, Group)
       return nil, nil
     end
     
     local groupname = nearestGroup:GetName()
-    --self:I(string.format("***** Found Group %s",groupname))
     
     -- helper to find matching template
     local function matchstring(String,Table)
@@ -1132,7 +1376,8 @@ end
 -- @param #table Crates Table of #CTLD_CARGO objects near the unit.
 -- @param #CTLD.Buildable Build Table build object.
 -- @param #number Number Number of objects in Crates (found) to limit search.
-function CTLD:_RepairObjectFromCrates(Group,Unit,Crates,Build,Number)
+-- @param #boolean Engineering If true it is an Engineering repair.
+function CTLD:_RepairObjectFromCrates(Group,Unit,Crates,Build,Number,Engineering)
   self:T(self.lid .. " _RepairObjectFromCrates")
   local build = Build -- -- #CTLD.Buildable
   --self:I({Build=Build})
@@ -1141,7 +1386,9 @@ function CTLD:_RepairObjectFromCrates(Group,Unit,Crates,Build,Number)
   --self:I({Repairtype=Repairtype, CargoType=CargoType, NearestGroup=NearestGroup})
   if NearestGroup ~= nil then
     if self.repairtime < 2 then self.repairtime = 30 end -- noob catch
-    self:_SendMessage(string.format("Repair started using %s taking %d secs", build.Name, self.repairtime), 10, false, Group)
+    if not Engineering then
+      self:_SendMessage(string.format("Repair started using %s taking %d secs", build.Name, self.repairtime), 10, false, Group)
+    end
     -- now we can build ....
     --NearestGroup:Destroy(false)
     local name = CargoType:GetName()
@@ -1162,7 +1409,11 @@ function CTLD:_RepairObjectFromCrates(Group,Unit,Crates,Build,Number)
     buildtimer:Start(self.repairtime)
     --self:_BuildObjectFromCrates(Group,Unit,object)
   else
-    self:_SendMessage("Can't repair this unit with " .. build.Name, 10, false, Group)
+    if not Engineering then
+      self:_SendMessage("Can't repair this unit with " .. build.Name, 10, false, Group)
+    else
+      self:T("Can't repair this unit with " .. build.Name)
+    end
   end
   return self
 end
@@ -1195,67 +1446,98 @@ end
     local nearestGroup = nil
     local nearestGroupIndex = -1
     local nearestDistance = 10000000
+    local nearestList = {}
+    local distancekeys = {}
+    local extractdistance = self.CrateDistance * self.ExtractFactor
     for k,v in pairs(self.DroppedTroops) do
       local distance = self:_GetDistance(v:GetCoordinate(),unitcoord)
-      if distance < nearestDistance and distance ~= -1 then
+      if distance <= extractdistance and distance ~= -1 then
         nearestGroup = v
         nearestGroupIndex = k
         nearestDistance = distance
+        table.insert(nearestList, math.floor(distance), v)
+        distancekeys[#distancekeys+1] = math.floor(distance)
       end
     end
-    
-    local extractdistance = self.CrateDistance * self.ExtractFactor
     
     if nearestGroup == nil or nearestDistance > extractdistance then
       self:_SendMessage("No units close enough to extract!", 10, false, Group)
       return self
     end
-    -- find matching cargo type
-    local groupType = string.match(nearestGroup:GetName(), "(.+)-(.+)$")
-    local Cargotype = nil
-    for k,v in pairs(self.Cargo_Troops) do
-      if v.Name == groupType then
-        Cargotype = v
-        break
+    
+    -- sort reference keys
+    table.sort(distancekeys)
+    
+    local secondarygroups = {}
+    
+    for i=1,#distancekeys do
+      local nearestGroup = nearestList[distancekeys[i]]
+          -- find matching cargo type
+      local groupType = string.match(nearestGroup:GetName(), "(.+)-(.+)$")
+      local Cargotype = nil
+      for k,v in pairs(self.Cargo_Troops) do
+        local comparison = ""
+        if type(v.Templates) == "string" then comparison = v.Templates else comparison = v.Templates[1] end
+        if comparison == groupType then
+          Cargotype = v
+          break
+        end
+      end
+      if Cargotype == nil then
+        self:_SendMessage("Can't onboard " .. groupType, 10, false, Group)
+      else
+      
+        local troopsize = Cargotype:GetCratesNeeded() -- #number
+        -- have we loaded stuff already?
+        local numberonboard = 0
+        local loaded = {}
+        if self.Loaded_Cargo[unitname] then
+          loaded = self.Loaded_Cargo[unitname] -- #CTLD.LoadedCargo
+          numberonboard = loaded.Troopsloaded or 0
+        else
+          loaded = {} -- #CTLD.LoadedCargo
+          loaded.Troopsloaded = 0
+          loaded.Cratesloaded = 0
+          loaded.Cargo = {}
+        end
+        if troopsize + numberonboard > trooplimit then
+          self:_SendMessage("Sorry, we\'re crammed already!", 10, false, Group)
+          --return self
+        else
+          self.CargoCounter = self.CargoCounter + 1
+          local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, Cargotype.CargoType, true, true, Cargotype.CratesNeeded,nil,nil,Cargotype.PerCrateMass)
+          self:T({cargotype=loadcargotype})
+          loaded.Troopsloaded = loaded.Troopsloaded + troopsize
+          table.insert(loaded.Cargo,loadcargotype)
+          self.Loaded_Cargo[unitname] = loaded
+          self:_SendMessage("Troops boarded!", 10, false, Group)
+          self:_UpdateUnitCargoMass(Unit)
+          self:__TroopsExtracted(1,Group, Unit, nearestGroup)
+      
+          -- clean up:
+          --table.remove(self.DroppedTroops, nearestGroupIndex)
+          if type(Cargotype.Templates) == "table" and  Cargotype.Templates[2] then
+            --self:I("*****This CargoType has multiple templates: "..Cargotype.Name)
+            for _,_key in pairs (Cargotype.Templates) do
+              table.insert(secondarygroups,_key)
+            end
+          end
+          nearestGroup:Destroy(false)
+        end
       end
     end
-  
-    if Cargotype == nil then
-      self:_SendMessage("Can't find a matching cargo type for " .. groupType, 10, false, Group)
-      return self
+    -- clean up secondary groups
+    for _,_name in pairs(secondarygroups) do
+      for _,_group in pairs(nearestList) do
+        if _group and _group:IsAlive() then
+          local groupname = string.match(_group:GetName(), "(.+)-(.+)$")
+          if _name == groupname then
+            _group:Destroy(false)
+          end
+        end
+      end
     end
-  
-    local troopsize = Cargotype:GetCratesNeeded() -- #number
-    -- have we loaded stuff already?
-    local numberonboard = 0
-    local loaded = {}
-    if self.Loaded_Cargo[unitname] then
-      loaded = self.Loaded_Cargo[unitname] -- #CTLD.LoadedCargo
-      numberonboard = loaded.Troopsloaded or 0
-    else
-      loaded = {} -- #CTLD.LoadedCargo
-      loaded.Troopsloaded = 0
-      loaded.Cratesloaded = 0
-      loaded.Cargo = {}
-    end
-    if troopsize + numberonboard > trooplimit then
-      self:_SendMessage("Sorry, we\'re crammed already!", 10, false, Group)
-      return
-    else
-      self.CargoCounter = self.CargoCounter + 1
-      local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, CTLD_CARGO.Enum.TROOPS, true, true, Cargotype.CratesNeeded,nil,nil,Cargotype.PerCrateMass)
-      self:T({cargotype=loadcargotype})
-      loaded.Troopsloaded = loaded.Troopsloaded + troopsize
-      table.insert(loaded.Cargo,loadcargotype)
-      self.Loaded_Cargo[unitname] = loaded
-      self:_SendMessage("Troops boarded!", 10, false, Group)
-      self:_UpdateUnitCargoMass(Unit)
-      self:__TroopsExtracted(1,Group, Unit, nearestGroup)
-  
-      -- clean up:
-      table.remove(self.DroppedTroops, nearestGroupIndex)
-      nearestGroup:Destroy(false)
-    end
+    self:CleanDroppedTroops()
     return self
   end
   
@@ -1582,10 +1864,10 @@ function CTLD:_GetUnitCargoMass(Unit)
     for _,_cargo in pairs(cargotable) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
-      if type == CTLD_CARGO.Enum.TROOPS and not cargo:WasDropped() then
+      if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS) and not cargo:WasDropped() then
         loadedmass = loadedmass + (cargo.PerCrateMass * cargo:GetCratesNeeded())
       end
-      if type ~= CTLD_CARGO.Enum.TROOPS and not cargo:WasDropped() then
+      if type ~= CTLD_CARGO.Enum.TROOPS and type ~=  CTLD_CARGO.Enum.ENGINEERS and not cargo:WasDropped() then
         loadedmass = loadedmass + cargo.PerCrateMass
       end
     end
@@ -1632,7 +1914,7 @@ function CTLD:_ListCargo(Group, Unit)
     for _,_cargo in pairs(cargotable) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
-      if type == CTLD_CARGO.Enum.TROOPS and not cargo:WasDropped() then
+      if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS) and not cargo:WasDropped() then
         report:Add(string.format("Troop: %s size %d",cargo:GetName(),cargo:GetCratesNeeded()))
       end
     end
@@ -1645,7 +1927,7 @@ function CTLD:_ListCargo(Group, Unit)
     for _,_cargo in pairs(cargotable) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
-      if type ~= CTLD_CARGO.Enum.TROOPS and not cargo:WasDropped() then
+      if (type ~= CTLD_CARGO.Enum.TROOPS and type ~= CTLD_CARGO.Enum.ENGINEERS) and not cargo:WasDropped() then
         report:Add(string.format("Crate: %s size 1",cargo:GetName()))
         cratecount = cratecount + 1
       end
@@ -1709,7 +1991,7 @@ function CTLD:_UnloadTroops(Group, Unit)
       for _,_cargo in pairs (cargotable) do
         local cargo = _cargo -- #CTLD_CARGO
         local type = cargo:GetType() -- #CTLD_CARGO.Enum
-        if type == CTLD_CARGO.Enum.TROOPS and not cargo:WasDropped() then
+        if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS) and not cargo:WasDropped() then
           -- unload troops
           local name = cargo:GetName() or "none"
           local temptable = cargo:GetTemplates() or {}
@@ -1729,12 +2011,21 @@ function CTLD:_UnloadTroops(Group, Unit)
               :InitRandomizeUnits(true,20,2)
               :InitDelayOff()
               :SpawnFromVec2(randomcoord)
-            if self.movetroopstowpzone then
+            if self.movetroopstowpzone and type ~= CTLD_CARGO.Enum.ENGINEERS then
               self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
             end
           end -- template loop
           cargo:SetWasDropped(true)
-          self:_SendMessage(string.format("Dropped Troops %s into action!",name), 10, false, Group) 
+          -- engineering group?
+          --self:I("Dropped Troop Type: "..type)
+          if type == CTLD_CARGO.Enum.ENGINEERS then
+            self.Engineers = self.Engineers + 1
+            local grpname = self.DroppedTroops[self.TroopCounter]:GetName()
+            self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname, Group, Unit)
+            self:_SendMessage(string.format("Dropped Engineers %s into action!",name), 10, false, Group)
+          else
+            self:_SendMessage(string.format("Dropped Troops %s into action!",name), 10, false, Group)
+          end
           self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter])
         end -- if type end
       end  -- cargotable loop
@@ -1753,12 +2044,12 @@ function CTLD:_UnloadTroops(Group, Unit)
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
       local dropped = cargo:WasDropped()
-      if type ~= CTLD_CARGO.Enum.TROOPS and not dropped then
+      if type ~= CTLD_CARGO.Enum.TROOPS and type ~= CTLD_CARGO.Enum.ENGINEERS and not dropped then
         table.insert(loaded.Cargo,_cargo)
         loaded.Cratesloaded = loaded.Cratesloaded + 1
       else
         -- add troops back to stock
-        if type == CTLD_CARGO.Enum.TROOPS and droppingatbase then
+        if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS) and droppingatbase then
           -- find right generic type
           local name = cargo:GetName()
           local gentroops = self.Cargo_Troops
@@ -1788,7 +2079,7 @@ end
 --- (Internal) Function to unload crates from heli.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
--- @param Wrappe.Unit#UNIT Unit
+-- @param Wrapper.Unit#UNIT Unit
 function CTLD:_UnloadCrates(Group, Unit)
   self:T(self.lid .. " _UnloadCrates")
   
@@ -1820,7 +2111,7 @@ function CTLD:_UnloadCrates(Group, Unit)
     for _,_cargo in pairs (cargotable) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
-      if type ~= CTLD_CARGO.Enum.TROOPS and not cargo:WasDropped() then
+      if type ~= CTLD_CARGO.Enum.TROOPS and type ~= CTLD_CARGO.Enum.ENGINEERS and not cargo:WasDropped() then
         -- unload crates
         self:_GetCrates(Group, Unit, cargo, 1, true)
         cargo:SetWasDropped(true)
@@ -1837,7 +2128,7 @@ function CTLD:_UnloadCrates(Group, Unit)
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
       local size = cargo:GetCratesNeeded()
-      if type == CTLD_CARGO.Enum.TROOPS then
+      if type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS then
         table.insert(loaded.Cargo,_cargo)
         loaded.Troopsloaded = loaded.Troopsloaded + size
       end
@@ -1860,11 +2151,12 @@ end
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
-function CTLD:_BuildCrates(Group, Unit)
+-- @param #boolean Engineering If true build is by an engineering team.
+function CTLD:_BuildCrates(Group, Unit,Engineering)
   self:T(self.lid .. " _BuildCrates")
   -- avoid users trying to build from flying Hercs
   local type = Unit:GetTypeName()
-  if type == "Hercules" and self.enableHercules then
+  if type == "Hercules" and self.enableHercules and not Engineering then
     local speed = Unit:GetVelocityKMH()
     if speed > 1 then
       self:_SendMessage("You need to land / stop to build something, Pilot!", 10, false, Group) 
@@ -1926,7 +2218,11 @@ function CTLD:_BuildCrates(Group, Unit)
     if not foundbuilds then report:Add("     --- None Found ---") end
     report:Add("------------------------------------------------------------")
     local text = report:Text()
-    self:_SendMessage(text, 30, true, Group) 
+    if not Engineering then
+      self:_SendMessage(text, 30, true, Group) 
+    else
+      self:T(text)
+    end
     -- let\'s get going
     if canbuild then
       -- loop again
@@ -1939,7 +2235,7 @@ function CTLD:_BuildCrates(Group, Unit)
       end
     end
   else
-    self:_SendMessage(string.format("No crates within %d meters!",finddist), 10, false, Group) 
+    if not Engineering then self:_SendMessage(string.format("No crates within %d meters!",finddist), 10, false, Group) end
   end -- number > 0
   return self
 end
@@ -1947,12 +2243,13 @@ end
 --- (Internal) Function to repair nearby vehicles / FOBs
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
--- @param Wrappe.Unit#UNIT Unit
-function CTLD:_RepairCrates(Group, Unit)
+-- @param Wrapper.Unit#UNIT Unit
+-- @param #boolean Engineering If true, this is an engineering role
+function CTLD:_RepairCrates(Group, Unit, Engineering)
   self:T(self.lid .. " _RepairCrates")
   -- get nearby crates
   local finddist = self.CrateDistance or 30
-  local crates,number = self:_FindCratesNearby(Group,Unit, finddist) -- #table
+  local crates,number = self:_FindCratesNearby(Group,Unit,finddist) -- #table
   local buildables = {}
   local foundbuilds = false
   local canbuild = false
@@ -2005,19 +2302,23 @@ function CTLD:_RepairCrates(Group, Unit)
     if not foundbuilds then report:Add("     --- None Found ---") end
     report:Add("------------------------------------------------------------")
     local text = report:Text()
-    self:_SendMessage(text, 30, true, Group) 
+    if not Engineering then
+      self:_SendMessage(text, 30, true, Group) 
+    else
+      self:T(text)
+    end
     -- let\'s get going
     if canbuild then
       -- loop again
       for _,_build in pairs(buildables) do
         local build = _build -- #CTLD.Buildable
         if build.CanBuild then
-          self:_RepairObjectFromCrates(Group,Unit,crates,build,number)
+          self:_RepairObjectFromCrates(Group,Unit,crates,build,number,Engineering)
         end
       end
     end
   else
-    self:_SendMessage(string.format("No crates within %d meters!",finddist), 10, false, Group) 
+    if not Engineering then self:_SendMessage(string.format("No crates within %d meters!",finddist), 10, false, Group) end 
   end -- number > 0
   return self
 end
@@ -2032,40 +2333,44 @@ end
 function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation)
   self:T(self.lid .. " _BuildObjectFromCrates")
   -- Spawn-a-crate-content
-  local position = Unit:GetCoordinate() or Group:GetCoordinate()
-  local unitname = Unit:GetName() or Group:GetName()
-  local name = Build.Name
-  local type = Build.Type -- #CTLD_CARGO.Enum
-  local canmove = false
-  if type == CTLD_CARGO.Enum.VEHICLE then canmove = true end
-  local temptable = Build.Template or {}
-  local zone = ZONE_GROUP:New(string.format("Unload zone-%s",unitname),Group,100)
-  local randomcoord = zone:GetRandomCoordinate(35):GetVec2()
-  if Repair then
-    randomcoord = RepairLocation:GetVec2()
-  end
-  for _,_template in pairs(temptable) do
-    self.TroopCounter = self.TroopCounter + 1
-    local alias = string.format("%s-%d", _template, math.random(1,100000))
-    if canmove then
-      self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
-        :InitRandomizeUnits(true,20,2)
-        :InitDelayOff()
-        :SpawnFromVec2(randomcoord)
-    else -- don't random position of e.g. SAM units build as FOB
-      self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
-        :InitDelayOff()
-        :SpawnFromVec2(randomcoord)
-    end
-    if self.movetroopstowpzone and canmove then
-      self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
-    end
+  if Group and Group:IsAlive() then
+    local position = Unit:GetCoordinate() or Group:GetCoordinate()
+    local unitname = Unit:GetName() or Group:GetName()
+    local name = Build.Name
+    local type = Build.Type -- #CTLD_CARGO.Enum
+    local canmove = false
+    if type == CTLD_CARGO.Enum.VEHICLE then canmove = true end
+    local temptable = Build.Template or {}
+    local zone = ZONE_GROUP:New(string.format("Unload zone-%s",unitname),Group,100)
+    local randomcoord = zone:GetRandomCoordinate(35):GetVec2()
     if Repair then
-      self:__CratesRepaired(1,Group,Unit,self.DroppedTroops[self.TroopCounter])
-    else
-      self:__CratesBuild(1,Group,Unit,self.DroppedTroops[self.TroopCounter])
+      randomcoord = RepairLocation:GetVec2()
     end
-  end -- template loop
+    for _,_template in pairs(temptable) do
+      self.TroopCounter = self.TroopCounter + 1
+      local alias = string.format("%s-%d", _template, math.random(1,100000))
+      if canmove then
+        self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
+          :InitRandomizeUnits(true,20,2)
+          :InitDelayOff()
+          :SpawnFromVec2(randomcoord)
+      else -- don't random position of e.g. SAM units build as FOB
+        self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
+          :InitDelayOff()
+          :SpawnFromVec2(randomcoord)
+      end
+      if self.movetroopstowpzone and canmove then
+        self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
+      end
+      if Repair then
+        self:__CratesRepaired(1,Group,Unit,self.DroppedTroops[self.TroopCounter])
+      else
+        self:__CratesBuild(1,Group,Unit,self.DroppedTroops[self.TroopCounter])
+      end
+    end -- template loop
+  else
+    self:T(self.lid.."Group KIA while building!")
+  end
   return self
 end
 
@@ -2237,6 +2542,7 @@ function CTLD:_RefreshF10Menus()
 -- @param #number Stock Number of groups in stock. Nil for unlimited.
 function CTLD:AddTroopsCargo(Name,Templates,Type,NoTroops,PerTroopMass,Stock)
   self:T(self.lid .. " AddTroopsCargo")
+  self:T({Name,Templates,Type,NoTroops,PerTroopMass,Stock})
   self.CargoCounter = self.CargoCounter + 1
   -- Troops are directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,true,NoTroops,nil,nil,PerTroopMass,Stock)
@@ -2852,17 +3158,31 @@ end
   -- @param #CTLD self
   -- @return #CTLD self
   function CTLD:CleanDroppedTroops()
+    -- Troops
     local troops = self.DroppedTroops
     local newtable = {}
     for _index, _group in pairs (troops) do
-      if _group and _group:IsAlive() then
-        newtable[_index] = _group
+      self:T({_group.ClassName})
+      if _group and _group.ClassName == "GROUP" then
+        if _group:IsAlive() then
+          newtable[_index] = _group
+        end
       end
     end
     self.DroppedTroops = newtable
+    -- Engineers
+    local engineers = self.EngineersInField
+    local engtable = {}
+    for _index, _group in pairs (engineers) do
+      self:T({_group.ClassName})
+      if _group and _group:IsNotStatus("Stopped") then
+        engtable[_index] = _group
+      end
+    end
+    self.EngineersInField = engtable
     return self
   end
-  
+
   --- User - function to add stock of a certain troops type
   -- @param #CTLD self
   -- @param #string Name Name as defined in the generic cargo.
@@ -2932,6 +3252,36 @@ end
     return self
   end
   
+  --- (Internal) Check on engineering teams
+  -- @param #CTLD self
+  -- @return #CTLD self
+  function CTLD:_CheckEngineers()
+    self:T(self.lid.." CheckEngineers")
+    local engtable = self.EngineersInField
+    for _ind,_engineers in pairs (engtable) do
+      local engineers = _engineers -- #CTLD_ENGINEERING
+      local wrenches = engineers.Group -- Wrapper.Group#GROUP
+      self:T(_engineers.lid .. _engineers:GetStatus())
+      if wrenches and wrenches:IsAlive() then
+        if engineers:IsStatus("Running") or engineers:IsStatus("Searching") then
+          local crates,number = self:_FindCratesNearby(wrenches,nil, self.EngineerSearch) -- #table
+          engineers:Search(crates,number)
+        elseif engineers:IsStatus("Moving") then
+          engineers:Move()
+        elseif engineers:IsStatus("Arrived") then
+          engineers:Build()
+          local unit = wrenches:GetUnit(1)
+          self:_BuildCrates(wrenches,unit,true)
+          self:_RepairCrates(wrenches,unit,true)
+          engineers:Done()
+        end
+      else
+        engineers:Stop()
+      end
+    end
+    return self
+  end
+  
 ------------------------------------------------------------------- 
 -- FSM functions
 ------------------------------------------------------------------- 
@@ -2975,6 +3325,7 @@ end
     self:_RefreshF10Menus()
     self:_RefreshRadioBeacons()
     self:CheckAutoHoverload()
+    self:_CheckEngineers()
     return self
   end
   
@@ -3005,16 +3356,18 @@ end
     if self.debug or self.verbose > 0 then 
       local text = string.format("%s Pilots %d | Live Crates %d |\nCargo Counter %d | Troop Counter %d", self.lid, pilots, boxes, cc, tc)
       local m = MESSAGE:New(text,10,"CTLD"):ToAll()
-      self:I(self.lid.."Cargo and Troops in Stock:")
-      for _,_troop in pairs (self.Cargo_Crates) do
-        local name = _troop:GetName()
-        local stock = _troop:GetStock()
-        self:I(string.format("-- %s \t\t\t %d", name, stock))
-      end
-      for _,_troop in pairs (self.Cargo_Troops) do
-        local name = _troop:GetName()
-        local stock = _troop:GetStock()
-        self:I(string.format("-- %s \t\t %d", name, stock))
+      if self.verbose > 0 then
+        self:I(self.lid.."Cargo and Troops in Stock:")
+        for _,_troop in pairs (self.Cargo_Crates) do
+          local name = _troop:GetName()
+          local stock = _troop:GetStock()
+          self:I(string.format("-- %s \t\t\t %d", name, stock))
+        end
+        for _,_troop in pairs (self.Cargo_Troops) do
+          local name = _troop:GetName()
+          local stock = _troop:GetStock()
+          self:I(string.format("-- %s \t\t %d", name, stock))
+        end
       end
     end
     self:__Status(-30)
