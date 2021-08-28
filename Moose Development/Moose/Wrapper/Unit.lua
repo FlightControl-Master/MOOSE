@@ -1426,3 +1426,13 @@ function UNIT:EnableEmission(switch)
 
   return self
 end
+
+--- Get skill from Unit.
+-- @param #UNIT self
+-- @return #string Skill String of skill name.
+function UNIT:GetSkill()
+  self:F2( self.UnitName )
+  local name = self.UnitName
+  local skill = _DATABASE.Templates.Units[name].Template.skill or "Random"
+  return skill
+end
