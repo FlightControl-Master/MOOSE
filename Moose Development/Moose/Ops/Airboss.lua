@@ -1492,6 +1492,7 @@ AIRBOSS.GroovePos={
 -- @field #AIRBOSS.RadioCall DEPARTANDREENTER "Depart and re-enter" call.
 -- @field #AIRBOSS.RadioCall EXPECTHEAVYWAVEOFF "Expect heavy wavoff" call.
 -- @field #AIRBOSS.RadioCall EXPECTSPOT75 "Expect spot 7.5" call.
+-- @field #AIRBOSS.RadioCall EXPECTSPOT5 "Expect spot 5" call.
 -- @field #AIRBOSS.RadioCall FAST "You're fast" call.
 -- @field #AIRBOSS.RadioCall FOULDECK "Foul Deck" call.
 -- @field #AIRBOSS.RadioCall HIGH "You're high" call.
@@ -4969,6 +4970,14 @@ function AIRBOSS:_InitVoiceOvers()
       suffix="ogg",
       loud=false,
       subtitle="Expect spot 7.5",
+      duration=2.0,
+      subduration=5,
+    },
+	EXPECTSPOT5={
+      file="LSO-ExpectSpot5",
+      suffix="ogg",
+      loud=false,
+      subtitle="Expect spot 5",
       duration=2.0,
       subduration=5,
     },
@@ -9625,8 +9634,10 @@ function AIRBOSS:_Bullseye(playerData)
     -- Hint for player about altitude, AoA etc.
     self:_PlayerHint(playerData)
 
-    -- LSO expect spot 7.5 call
-    if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+    -- LSO expect spot 5 or 7.5 call
+	if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+      self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, nil, nil, nil, true)
+    elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT75, nil, nil, nil, true)
     end
 
@@ -9808,8 +9819,10 @@ function AIRBOSS:_Abeam(playerData)
     -- Paddles contact.
     self:RadioTransmission(self.LSORadio, self.LSOCall.PADDLESCONTACT, nil, nil, nil, true)
 
-     -- LSO expect spot 7.5 call
-    if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+     -- LSO expect spot 5 or 7.5 call
+	if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+      self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, false, 5, nil, true)
+    elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT75, false, 5, nil, true)
     end
 
@@ -11607,7 +11620,7 @@ function AIRBOSS:_GetAltCarrier(unit)
   return h
 end
 
---- Get optimal landing position of the aircraft. Usually between second and third wire. In case of Tarawa we take the abeam landing spot 120 ft abeam the 7.5 position.
+--- Get optimal landing position of the aircraft. Usually between second and third wire. In case of Tarawa and America we take the abeam landing spot 120 ft abeam the 7.5 position, for the Juan Carlos I it is 120 ft and abeam the 5 position.
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Optimal landing coordinate.
 function AIRBOSS:_GetOptLandingCoordinate()
