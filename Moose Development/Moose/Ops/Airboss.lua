@@ -926,7 +926,7 @@
 --
 -- The AIRBOSS currently has two different "sound packs" for LSO and three different "sound Packs" for Marshal radios. These contain voice overs by different actors.
 -- These can be set by @{#AIRBOSS.SetVoiceOversLSOByRaynor}() and @{#AIRBOSS.SetVoiceOversMarshalByRaynor}(). These are the default settings.
--- The other sound files can be set by @{#AIRBOSS.SetVoiceOversLSOByFF}(),@{#AIRBOSS.SetVoiceOversMarshalByGabriella}() and @{#AIRBOSS.SetVoiceOversMarshalByFF}().
+-- The other sound files can be set by @{#AIRBOSS.SetVoiceOversLSOByFF}(), @{#AIRBOSS.SetVoiceOversMarshalByGabriella}() and @{#AIRBOSS.SetVoiceOversMarshalByFF}().
 -- Also combinations can be used, e.g.
 --
 --     airbossStennis:SetVoiceOversLSOByFF()
