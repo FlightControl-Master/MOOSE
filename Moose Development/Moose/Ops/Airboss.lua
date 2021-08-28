@@ -4647,6 +4647,7 @@ function AIRBOSS:SetVoiceOversLSOByRaynor(mizfolder)
   self.LSOCall.DEPARTANDREENTER.duration=1.10
   self.LSOCall.EXPECTHEAVYWAVEOFF.duration=1.30
   self.LSOCall.EXPECTSPOT75.duration=1.85
+  self.LSOCall.EXPECTSPOT5.duration=1.3
   self.LSOCall.FAST.duration=0.75
   self.LSOCall.FOULDECK.duration=0.75
   self.LSOCall.HIGH.duration=0.65
@@ -4705,6 +4706,7 @@ function AIRBOSS:SetVoiceOversLSOByFF(mizfolder)
   self.LSOCall.DEPARTANDREENTER.duration=1.10
   self.LSOCall.EXPECTHEAVYWAVEOFF.duration=1.20
   self.LSOCall.EXPECTSPOT75.duration=2.00
+  self.LSOCall.EXPECTSPOT5.duration=1.3
   self.LSOCall.FAST.duration=0.70
   self.LSOCall.FOULDECK.duration=0.62
   self.LSOCall.HIGH.duration=0.65
@@ -5640,14 +5642,14 @@ function AIRBOSS:_GetAircraftAoA(playerData)
     aoa.Fast       = 8.25       --=17.5/2
     aoa.FAST       = 8.00       --=16.5/2
   elseif harrier then
-    -- AV-8B Harrier parameters. This might need further tuning.
+    -- AV-8B Harrier parameters. Tuning done on the Fast AoA to allow for abeam and ninety at Nozzles 60 - 73.
     aoa.SLOW       = 14.0
     aoa.Slow       = 13.0
     aoa.OnSpeedMax = 12.0
     aoa.OnSpeed    = 11.0
     aoa.OnSpeedMin = 10.0
-    aoa.Fast       =  9.0
-    aoa.FAST       =  8.0
+    aoa.Fast       =  8.0
+    aoa.FAST       =  7.5
   end
 
   return aoa
@@ -5907,7 +5909,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
       alt=UTILS.FeetToMeters(300) --?
     elseif harrier then
       -- 300-325 ft
-      alt=UTILS.FeetToMeters(300)
+      alt=UTILS.FeetToMeters(300)-- Need to verify 
     end
 
     aoa=aoaac.OnSpeed
