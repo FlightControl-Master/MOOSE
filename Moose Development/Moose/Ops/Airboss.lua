@@ -110,6 +110,7 @@
 -- ### AV-8B Harrier at USS Tarawa
 --
 --    * [Harrier Ship Landing Mission with Auto LSO!](https://www.youtube.com/watch?v=lqmVvpunk2c)
+--    * [Harrier Practice pattern USS America](https://youtu.be/99NigITYmcI)
 --
 -- ===
 --
@@ -297,6 +298,8 @@
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case1_Landing.png)
 --
 -- Once the aircraft reaches the Initial, the landing pattern begins. The important steps of the pattern are shown in the image above.
+-- The AV-8B Harrier pattern is very similar, the only differences are as there is no angled deck there is no wake check. from the ninety you wil fly strait in to 26 ft to port of the tram line.
+-- The aim is to arrive abeam the landing spot in a stable hover at 120 ft with forward speed matched to the boat. From there the LSO will call "cleared to land". You then cross to the tram line at the designated landing spot at land vertcally. 
 --
 --
 -- ## CASE III
@@ -921,9 +924,9 @@
 --
 -- ## Sound Packs
 --
--- The AIRBOSS currently has two different "sound packs" for both LSO and Marshal radios. These contain voice overs by different actors.
+-- The AIRBOSS currently has two different "sound packs" for LSO and three different "sound Packs" for Marshal radios. These contain voice overs by different actors.
 -- These can be set by @{#AIRBOSS.SetVoiceOversLSOByRaynor}() and @{#AIRBOSS.SetVoiceOversMarshalByRaynor}(). These are the default settings.
--- The other sound files can be set by @{#AIRBOSS.SetVoiceOversLSOByFF}() and @{#AIRBOSS.SetVoiceOversMarshalByFF}().
+-- The other sound files can be set by @{#AIRBOSS.SetVoiceOversLSOByFF}(),@{#AIRBOSS.SetVoiceOversMarshalByGabriella}() and @{#AIRBOSS.SetVoiceOversMarshalByFF}().
 -- Also combinations can be used, e.g.
 --
 --     airbossStennis:SetVoiceOversLSOByFF()
