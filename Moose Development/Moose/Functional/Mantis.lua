@@ -23,9 +23,9 @@
 -- Date: July 2021
 
 -------------------------------------------------------------------------
---- **MANTIS** class, extends #Core.Base#BASE
+--- **MANTIS** class, extends Core.Base#BASE
 -- @type MANTIS
--- @field #string Classname
+-- @field #string ClassName
 -- @field #string name Name of this Mantis
 -- @field #string SAM_Templates_Prefix Prefix to build the #SET_GROUP for SAM sites
 -- @field Core.Set#SET_GROUP SAM_Group The SAM #SET_GROUP
@@ -197,6 +197,7 @@ MANTIS = {
   SamStateTracker       = {},
   DLink                 = false,
   DLTimeStamp           = 0,
+  Padding               = 10,
 }
 
 --- Advanced state enumerator
@@ -221,7 +222,8 @@ do
   --@param #string coaltion Coalition side of your setup, e.g. "blue", "red" or "neutral"
   --@param #boolean dynamic Use constant (true) filtering or just filter once (false, default) (optional)
   --@param #string awacs Group name of your Awacs (optional)
-  --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN
+  --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN (optional) 
+  --@param #number Padding For #SEAD - Extra number of seconds to add to radar switch-back-on time (optional) 
   --@return #MANTIS self
   --@usage Start up your MANTIS with a basic setting
   --
@@ -243,7 +245,7 @@ do
   --    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`  
   --    `mybluemantis:Start()`
   --    
-  function MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic,awacs, EmOnOff)
+  function MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic,awacs, EmOnOff, Padding)
     
     -- DONE: Create some user functions for these
     -- DONE: Make HQ useful
@@ -281,6 +283,7 @@ do
     self.state2flag = false
     self.SamStateTracker = {} -- table to hold alert states, so we don't trigger state changes twice in adv mode
     self.DLink = false
+    self.Padding = Padding or 10
     
     if EmOnOff then
       if EmOnOff == false then
@@ -596,7 +599,7 @@ do
   -- E.g. `mymantis:SetAdvancedMode(true, 90)`
   function MANTIS:SetAdvancedMode(onoff, ratio)
     self:T(self.lid .. "SetAdvancedMode")
-    --self.T({onoff, ratio})
+    --self:T({onoff, ratio})
     local onoff = onoff or false
     local ratio = ratio or 100
     if (type(self.HQ_Template_CC) == "string") and onoff and self.dynamic then
@@ -647,10 +650,10 @@ do
       local hqgrp = GROUP:FindByName(hq)
       if hqgrp then
         if hqgrp:IsAlive() then -- ok we're on, hq exists and as alive
-          --self.T(self.lid.." HQ is alive!")
+          --self:T(self.lid.." HQ is alive!")
           return true
         else
-          --self.T(self.lid.." HQ is dead!")
+          --self:T(self.lid.." HQ is dead!")
           return false  
         end
       end
@@ -664,7 +667,7 @@ do
   function MANTIS:_CheckEWRState()
     self:T(self.lid .. "CheckEWRState")
     local text = self.lid.." Checking EWR State"
-    --self.T(text)
+    --self:T(text)
     local m= MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
     if self.verbose then self:I(text) end
     -- start check
@@ -680,7 +683,7 @@ do
           end
         end
       end
-      --self.T(self.lid..string.format(" No of EWR alive is %d", nalive))
+      --self:T(self.lid..string.format(" No of EWR alive is %d", nalive))
       if nalive > 0 then
         return true
       else
@@ -717,7 +720,7 @@ do
     local newinterval = interval + (interval * ratio) -- e.g. 30+(30*1.6) = 78
     if self.debug or self.verbose then
       local text = self.lid..string.format(" Calculated OldState/NewState/Interval: %d / %d / %d", currstate, self.adv_state, newinterval)
-      --self.T(text)
+      --self:T(text)
       local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
       if self.verbose then self:I(text) end
     end
@@ -730,13 +733,13 @@ do
   -- @param #boolean ewr If true, will relocate  EWR objects
   function MANTIS:SetAutoRelocate(hq, ewr)
     self:T(self.lid .. "SetAutoRelocate")
-    --self.T({hq, ewr})
+    --self:T({hq, ewr})
     local hqrel = hq or false
     local ewrel = ewr or false
     if hqrel or ewrel then
       self.autorelocate = true
       self.autorelocateunits = { HQ = hqrel, EWR = ewrel }
-      --self.T({self.autorelocate, self.autorelocateunits})
+      --self:T({self.autorelocate, self.autorelocateunits})
     end
     return self
   end    
@@ -753,7 +756,7 @@ do
       local HQGroup = self.HQ_CC
       if self.autorelocateunits.HQ and self.HQ_CC and HQGroup:IsAlive() then --only relocate if HQ exists
         local _hqgrp = self.HQ_CC
-        --self.T(self.lid.." Relocating HQ")
+        --self:T(self.lid.." Relocating HQ")
         local text = self.lid.." Relocating HQ"
         --local m= MESSAGE:New(text,10,"MANTIS"):ToAll()
           _hqgrp:RelocateGroundRandomInRadius(20,500,true,true)
@@ -766,7 +769,7 @@ do
          local EWR_Grps = EWR_GRP.Set --table of objects in SET_GROUP
          for _,_grp in pairs (EWR_Grps) do
              if _grp:IsAlive() and _grp:IsGround() then
-              --self.T(self.lid.." Relocating EWR ".._grp:GetName())
+              --self:T(self.lid.." Relocating EWR ".._grp:GetName())
               local text = self.lid.." Relocating EWR ".._grp:GetName()
               local m= MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
               if self.verbose then self:I(text) end
@@ -904,7 +907,7 @@ do
      end
      self.SAM_Table = SAM_Tbl
      -- make SAMs evasive
-     local mysead = SEAD:New( SEAD_Grps )
+     local mysead = SEAD:New( SEAD_Grps, self.Padding ) -- Functional.Sead#SEAD
      mysead:SetEngagementRange(engagerange)
      self.mysead = mysead
      return self
