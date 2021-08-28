@@ -110,6 +110,7 @@
 -- ### AV-8B Harrier at USS Tarawa
 --
 --    * [Harrier Ship Landing Mission with Auto LSO!](https://www.youtube.com/watch?v=lqmVvpunk2c)
+--    * [Harrier Practice pattern USS America](https://youtu.be/99NigITYmcI)
 --
 -- ===
 --
@@ -297,6 +298,8 @@
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case1_Landing.png)
 --
 -- Once the aircraft reaches the Initial, the landing pattern begins. The important steps of the pattern are shown in the image above.
+-- The AV-8B Harrier pattern is very similar, the only differences are as there is no angled deck there is no wake check. from the ninety you wil fly strait in to 26 ft to port of the tram line.
+-- The aim is to arrive abeam the landing spot in a stable hover at 120 ft with forward speed matched to the boat. From there the LSO will call "cleared to land". You then cross to the tram line at the designated landing spot at land vertcally. 
 --
 --
 -- ## CASE III
@@ -921,9 +924,9 @@
 --
 -- ## Sound Packs
 --
--- The AIRBOSS currently has two different "sound packs" for both LSO and Marshal radios. These contain voice overs by different actors.
+-- The AIRBOSS currently has two different "sound packs" for LSO and three different "sound Packs" for Marshal radios. These contain voice overs by different actors.
 -- These can be set by @{#AIRBOSS.SetVoiceOversLSOByRaynor}() and @{#AIRBOSS.SetVoiceOversMarshalByRaynor}(). These are the default settings.
--- The other sound files can be set by @{#AIRBOSS.SetVoiceOversLSOByFF}() and @{#AIRBOSS.SetVoiceOversMarshalByFF}().
+-- The other sound files can be set by @{#AIRBOSS.SetVoiceOversLSOByFF}(), @{#AIRBOSS.SetVoiceOversMarshalByGabriella}() and @{#AIRBOSS.SetVoiceOversMarshalByFF}().
 -- Also combinations can be used, e.g.
 --
 --     airbossStennis:SetVoiceOversLSOByFF()
@@ -1492,6 +1495,7 @@ AIRBOSS.GroovePos={
 -- @field #AIRBOSS.RadioCall DEPARTANDREENTER "Depart and re-enter" call.
 -- @field #AIRBOSS.RadioCall EXPECTHEAVYWAVEOFF "Expect heavy wavoff" call.
 -- @field #AIRBOSS.RadioCall EXPECTSPOT75 "Expect spot 7.5" call.
+-- @field #AIRBOSS.RadioCall EXPECTSPOT5 "Expect spot 5" call.
 -- @field #AIRBOSS.RadioCall FAST "You're fast" call.
 -- @field #AIRBOSS.RadioCall FOULDECK "Foul Deck" call.
 -- @field #AIRBOSS.RadioCall HIGH "You're high" call.
@@ -4646,6 +4650,7 @@ function AIRBOSS:SetVoiceOversLSOByRaynor(mizfolder)
   self.LSOCall.DEPARTANDREENTER.duration=1.10
   self.LSOCall.EXPECTHEAVYWAVEOFF.duration=1.30
   self.LSOCall.EXPECTSPOT75.duration=1.85
+  self.LSOCall.EXPECTSPOT5.duration=1.3
   self.LSOCall.FAST.duration=0.75
   self.LSOCall.FOULDECK.duration=0.75
   self.LSOCall.HIGH.duration=0.65
@@ -4704,6 +4709,7 @@ function AIRBOSS:SetVoiceOversLSOByFF(mizfolder)
   self.LSOCall.DEPARTANDREENTER.duration=1.10
   self.LSOCall.EXPECTHEAVYWAVEOFF.duration=1.20
   self.LSOCall.EXPECTSPOT75.duration=2.00
+  self.LSOCall.EXPECTSPOT5.duration=1.3
   self.LSOCall.FAST.duration=0.70
   self.LSOCall.FOULDECK.duration=0.62
   self.LSOCall.HIGH.duration=0.65
@@ -4970,6 +4976,14 @@ function AIRBOSS:_InitVoiceOvers()
       loud=false,
       subtitle="Expect spot 7.5",
       duration=2.0,
+      subduration=5,
+    },
+	EXPECTSPOT5={
+      file="LSO-ExpectSpot5",
+      suffix="ogg",
+      loud=false,
+      subtitle="Expect spot 5",
+      duration=1.3,
       subduration=5,
     },
     STABILIZED={
@@ -5631,14 +5645,14 @@ function AIRBOSS:_GetAircraftAoA(playerData)
     aoa.Fast       = 8.25       --=17.5/2
     aoa.FAST       = 8.00       --=16.5/2
   elseif harrier then
-    -- AV-8B Harrier parameters. This might need further tuning.
+    -- AV-8B Harrier parameters. Tuning done on the Fast AoA to allow for abeam and ninety at Nozzles 60 - 73.
     aoa.SLOW       = 14.0
     aoa.Slow       = 13.0
     aoa.OnSpeedMax = 12.0
     aoa.OnSpeed    = 11.0
     aoa.OnSpeedMin = 10.0
-    aoa.Fast       =  9.0
-    aoa.FAST       =  8.0
+    aoa.Fast       =  8.0
+    aoa.FAST       =  7.5
   end
 
   return aoa
@@ -5898,7 +5912,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
       alt=UTILS.FeetToMeters(300) --?
     elseif harrier then
       -- 300-325 ft
-      alt=UTILS.FeetToMeters(300)
+      alt=UTILS.FeetToMeters(300)-- Need to verify 
     end
 
     aoa=aoaac.OnSpeed
@@ -9625,8 +9639,10 @@ function AIRBOSS:_Bullseye(playerData)
     -- Hint for player about altitude, AoA etc.
     self:_PlayerHint(playerData)
 
-    -- LSO expect spot 7.5 call
-    if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+    -- LSO expect spot 5 or 7.5 call
+	if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+      self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, nil, nil, nil, true)
+    elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT75, nil, nil, nil, true)
     end
 
@@ -9808,8 +9824,10 @@ function AIRBOSS:_Abeam(playerData)
     -- Paddles contact.
     self:RadioTransmission(self.LSORadio, self.LSOCall.PADDLESCONTACT, nil, nil, nil, true)
 
-     -- LSO expect spot 7.5 call
-    if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+     -- LSO expect spot 5 or 7.5 call
+	if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+      self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, false, 5, nil, true)
+    elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT75, false, 5, nil, true)
     end
 
@@ -11607,7 +11625,7 @@ function AIRBOSS:_GetAltCarrier(unit)
   return h
 end
 
---- Get optimal landing position of the aircraft. Usually between second and third wire. In case of Tarawa we take the abeam landing spot 120 ft abeam the 7.5 position.
+--- Get optimal landing position of the aircraft. Usually between second and third wire. In case of Tarawa and America we take the abeam landing spot 120 ft abeam the 7.5 position, for the Juan Carlos I it is 120 ft and abeam the 5 position.
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Optimal landing coordinate.
 function AIRBOSS:_GetOptLandingCoordinate()
