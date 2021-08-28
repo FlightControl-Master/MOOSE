@@ -4978,7 +4978,7 @@ function AIRBOSS:_InitVoiceOvers()
       suffix="ogg",
       loud=false,
       subtitle="Expect spot 5",
-      duration=2.0,
+      duration=1.3,
       subduration=5,
     },
     STABILIZED={
