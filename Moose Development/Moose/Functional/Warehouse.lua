@@ -6329,6 +6329,10 @@ function WAREHOUSE:_OnEventBirth(EventData)
       local request=self:GetRequestByID(rid)
             
       if asset and request then
+      
+        if asset.spawned and type(asset.spawned)=="boolean" and asset.spawned==true then
+          return
+        end
               
         -- Debug message.
         self:T(self.lid..string.format("Warehouse %s captured event birth of request ID=%d, asset ID=%d, unit %s spawned=%s", self.alias, request.uid, asset.uid, EventData.IniUnitName, tostring(asset.spawned)))

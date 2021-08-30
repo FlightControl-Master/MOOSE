@@ -114,9 +114,6 @@ function NAVYGROUP:New(group)
     return og
   end
 
-  -- First set NAVYGROUP.
-  self.isNavygroup=true
-
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #NAVYGROUP
   
@@ -467,6 +464,9 @@ function NAVYGROUP:Status(From, Event, To)
   -- Is group alive?
   local alive=self:IsAlive()
   
+  --
+  local freepath=0
+  
   if alive then
   
     ---
@@ -485,7 +485,7 @@ function NAVYGROUP:Status(From, Event, To)
     self:_CheckTurning()
     
     local disttoWP=math.min(self:GetDistanceToWaypoint(), UTILS.NMToMeters(10))
-    local freepath=disttoWP
+    freepath=disttoWP
     
     -- Only check if not currently turning.
     if not self:IsTurning() then
@@ -713,6 +713,16 @@ end
 -- @param #number Depth Depth in meters to the next waypoint.
 function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
   if self:IsWaiting() then
+    self:E(self.lid.."Update route denied. Group is WAIRING!")
+    return false
+  elseif self:IsInUtero() then
+    self:E(self.lid.."Update route denied. Group is INUTERO!")
+    return false
+  elseif self:IsDead() then
+    self:E(self.lid.."Update route denied. Group is DEAD!")
+    return false
+  elseif self:IsStopped() then
+    self:E(self.lid.."Update route denied. Group is STOPPED!")
     return false
   end
   return true
@@ -771,7 +781,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   table.insert(waypoints, 1, current)  
 
   
-  if not self.passedfinalwp then
+  if self:IsEngaging() or not self.passedfinalwp then
 
     -- Debug info.
     self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), wp.alt))

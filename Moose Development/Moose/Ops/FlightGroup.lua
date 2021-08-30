@@ -32,7 +32,7 @@
 --- FLIGHTGROUP class.
 -- @type FLIGHTGROUP
 -- @field #string actype Type name of the aircraft.
--- @field #number rangemax Max range in km.
+-- @field #number rangemax Max range in meters.
 -- @field #number ceiling Max altitude the aircraft can fly at in meters.
 -- @field #number tankertype The refueling system type (0=boom, 1=probe), if the group is a tanker.
 -- @field #number refueltype The refueling system type (0=boom, 1=probe), if the group can refuel from a tanker.
@@ -207,9 +207,6 @@ function FLIGHTGROUP:New(group)
     og:I(og.lid..string.format("WARNING: OPS group already exists in data base!"))
     return og
   end
-
-  -- First set FLIGHTGROUP.
-    self.isFlightgroup=true
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #FLIGHTGROUP
@@ -1766,14 +1763,12 @@ function FLIGHTGROUP:onafterCruise(From, Event, To)
     ---
   
     if self:IsTransporting() then
-      if self.cargoTransport and self.cargoTransport.deployzone and self.cargoTransport.deployzone:IsInstanceOf("ZONE_AIRBASE") then
-        local airbase=self.cargoTransport.deployzone:GetAirbase()
-        self:LandAtAirbase(airbase)
+      if self.cargoTransport and self.cargoTZC and self.cargoTZC.DeployAirbase then
+        self:LandAtAirbase(self.cargoTZC.DeployAirbase)
       end
     elseif self:IsPickingup() then
-      if self.cargoTransport and self.cargoTransport.pickupzone and self.cargoTransport.pickupzone:IsInstanceOf("ZONE_AIRBASE") then
-        local airbase=self.cargoTransport.pickupzone:GetAirbase()
-        self:LandAtAirbase(airbase)
+      if self.cargoTransport and self.cargoTZC and self.cargoTZC.PickupAirbase then
+        self:LandAtAirbase(self.cargoTZC.PickupAirbase)
       end
     else
       self:_CheckGroupDone(nil, 120)
@@ -1983,6 +1978,9 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
     -- Group is dead! No more updates.
     self:E(self.lid.."Update route denied. Group is DEAD!")
     allowed=false
+  elseif self:IsInUtero() then
+    self:E(self.lid.."Update route denied. Group is INUTERO!")
+    allowed=false    
   else
     -- Not airborne yet. Try again in 5 sec.
     self:T(self.lid.."Update route denied ==> checking back in 5 sec")
@@ -2084,9 +2082,9 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   local waypointAction=COORDINATE.WaypointAction.TurningPoint
   if self:IsLanded() or self:IsLandedAt() or self:IsAirborne()==false then
     -- Had some issues with passing waypoint function of the next WP called too ealy when the type is TurningPoint. Setting it to TakeOff solved it!
-    --waypointType=COORDINATE.WaypointType.TakeOff
-    waypointType=COORDINATE.WaypointType.TakeOffGroundHot
-    waypointAction=COORDINATE.WaypointAction.FromGroundAreaHot
+    waypointType=COORDINATE.WaypointType.TakeOff
+    --waypointType=COORDINATE.WaypointType.TakeOffGroundHot
+    --waypointAction=COORDINATE.WaypointAction.FromGroundAreaHot
   end
 
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
@@ -2585,9 +2583,9 @@ function FLIGHTGROUP:onbeforeWait(From, Event, To, Duration, Altitude, Speed)
   
   -- Check for a current transport assignment.
   if self.cargoTransport and not self:IsLandedAt() then
-    self:I(self.lid..string.format("WARNING: Got current TRANSPORT assignment ==> WAIT event is suspended for 30 sec!"))
-    Tsuspend=-30
-    allowed=false  
+    --self:I(self.lid..string.format("WARNING: Got current TRANSPORT assignment ==> WAIT event is suspended for 30 sec!"))
+    --Tsuspend=-30
+    --allowed=false  
   end
 
   -- Call wait again.

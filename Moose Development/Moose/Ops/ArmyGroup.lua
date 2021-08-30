@@ -90,10 +90,7 @@ function ARMYGROUP:New(group)
     og:I(og.lid..string.format("WARNING: OPS group already exists in data base!"))
     return og
   end
-
-  -- First set ARMYGROUP.
-  self.isArmygroup=true
-
+  
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #ARMYGROUP
   
@@ -595,6 +592,16 @@ end
 -- @param #number Formation Formation of the group.
 function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Formation)
   if self:IsWaiting() then
+    self:E(self.lid.."Update route denied. Group is WAIRING!")
+    return false
+  elseif self:IsInUtero() then
+    self:E(self.lid.."Update route denied. Group is INUTERO!")
+    return false
+  elseif self:IsDead() then
+    self:E(self.lid.."Update route denied. Group is DEAD!")
+    return false
+  elseif self:IsStopped() then
+    self:E(self.lid.."Update route denied. Group is STOPPED!")
     return false
   end
   return true
