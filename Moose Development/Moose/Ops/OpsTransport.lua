@@ -173,7 +173,7 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.4.0"
+OPSTRANSPORT.version="0.4.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -243,6 +243,130 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   self:AddTransition("*",                           "DeadCarrierUnit",  "*")
   self:AddTransition("*",                           "DeadCarrierGroup", "*")
   self:AddTransition("*",                           "DeadCarrierAll",   "*")
+
+  ------------------------
+  --- Pseudo Functions ---
+  ------------------------
+
+  --- Triggers the FSM event "Status".
+  -- @function [parent=#OPSTRANSPORT] Status
+  -- @param #OPSTRANSPORT self
+
+  --- Triggers the FSM event "Status" after a delay.
+  -- @function [parent=#OPSTRANSPORT] __Status
+  -- @param #OPSTRANSPORT self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Planned".
+  -- @function [parent=#OPSTRANSPORT] Planned
+  -- @param #OPSTRANSPORT self
+
+  --- Triggers the FSM event "Planned" after a delay.
+  -- @function [parent=#OPSTRANSPORT] __Planned
+  -- @param #OPSTRANSPORT self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Queued".
+  -- @function [parent=#OPSTRANSPORT] Queued
+  -- @param #OPSTRANSPORT self
+
+  --- Triggers the FSM event "Queued" after a delay.
+  -- @function [parent=#OPSTRANSPORT] __Queued
+  -- @param #OPSTRANSPORT self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Requested".
+  -- @function [parent=#OPSTRANSPORT] Requested
+  -- @param #OPSTRANSPORT self
+
+  --- Triggers the FSM event "Requested" after a delay.
+  -- @function [parent=#OPSTRANSPORT] __Requested
+  -- @param #OPSTRANSPORT self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Scheduled".
+  -- @function [parent=#OPSTRANSPORT] Scheduled
+  -- @param #OPSTRANSPORT self
+
+  --- Triggers the FSM event "Scheduled" after a delay.
+  -- @function [parent=#OPSTRANSPORT] __Scheduled
+  -- @param #OPSTRANSPORT self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Executing".
+  -- @function [parent=#OPSTRANSPORT] Executing
+  -- @param #OPSTRANSPORT self
+
+  --- Triggers the FSM event "Executing" after a delay.
+  -- @function [parent=#OPSTRANSPORT] __Executing
+  -- @param #OPSTRANSPORT self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Delivered".
+  -- @function [parent=#OPSTRANSPORT] Delivered
+  -- @param #OPSTRANSPORT self
+
+  --- Triggers the FSM event "Delivered" after a delay.
+  -- @function [parent=#OPSTRANSPORT] __Delivered
+  -- @param #OPSTRANSPORT self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Loaded".
+  -- @function [parent=#OPSTRANSPORT] Loaded
+  -- @param #OPSTRANSPORT self
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo OPSGROUP that was loaded into a carrier.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier OPSGROUP that was loaded into a carrier.
+  -- @param Ops.OpsGroup#OPSGROUP.Element CarrierElement Carrier element.
+
+  --- Triggers the FSM event "Loaded" after a delay.
+  -- @function [parent=#OPSTRANSPORT] __Loaded
+  -- @param #OPSTRANSPORT self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo OPSGROUP that was loaded into a carrier.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier OPSGROUP that was loaded into a carrier.
+  -- @param Ops.OpsGroup#OPSGROUP.Element CarrierElement Carrier element.
+
+  --- On after "Loaded" event.
+  -- @function [parent=#OPSTRANSPORT] OnAfterLoaded
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo OPSGROUP that was loaded into a carrier.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier OPSGROUP that was loaded into a carrier.
+  -- @param Ops.OpsGroup#OPSGROUP.Element CarrierElement Carrier element.
+
+
+  --- Triggers the FSM event "Unloaded".
+  -- @function [parent=#OPSTRANSPORT] Unloaded
+  -- @param #OPSTRANSPORT self
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier Carrier OPSGROUP that unloaded the cargo.
+
+  --- Triggers the FSM event "Unloaded" after a delay.
+  -- @function [parent=#OPSTRANSPORT] __Unloaded
+  -- @param #OPSTRANSPORT self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier Carrier OPSGROUP that unloaded the cargo.
+
+
+  --- On after "Unloaded" event.
+  -- @function [parent=#OPSTRANSPORT] OnAfterUnloaded
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier Carrier OPSGROUP that unloaded the cargo.
+
   
   --TODO: Psydofunctions
 
@@ -1146,9 +1270,18 @@ end
 
 --- Check if all cargo was delivered (or is dead).
 -- @param #OPSTRANSPORT self
+-- @param #number Nmin Number of groups that must be actually delivered (and are not dead). Default 0.
 -- @return #boolean If true, all possible cargo was delivered. 
-function OPSTRANSPORT:IsDelivered()
-  return self:is(OPSTRANSPORT.Status.DELIVERED)
+function OPSTRANSPORT:IsDelivered(Nmin)
+  local is=self:is(OPSTRANSPORT.Status.DELIVERED)
+  Nmin=Nmin or 0
+  if Nmin>self.Ncargo then
+    Nmin=self.Ncargo
+  end
+  if self.Ndelivered<Nmin then
+    is=false
+  end
+  return is
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1503,12 +1636,15 @@ end
 -- @return #number Number of cargo groups.
 function OPSTRANSPORT:_CountCargosInZone(Zone, Delivered, Carrier, TransportZoneCombo)
 
+  -- Get cargo ops groups.
   local cargos=self:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
   
   local N=0
   for _,_cargo in pairs(cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP
-    if cargo:IsInZone(Zone) then
+    
+    -- We look for groups that are not cargo, in the zone or in utero.
+    if cargo:IsNotCargo(true) and (cargo:IsInZone(Zone) or cargo:IsInUtero()) then
       N=N+1
     end
   end

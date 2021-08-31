@@ -715,7 +715,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
     -- Passed final WP ==> Full Stop
     ---
   
-    self:E(self.lid..string.format("WARNING: Passed final WP ==> Full Stop!"))
+    self:E(self.lid..string.format("WARNING: Passed final WP when UpdateRoute() ==> Full Stop!"))
     self:FullStop()  
   
   end
@@ -991,6 +991,7 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Group#GROUP Group the group to be engaged.
 function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
+  self:T(self.lid.."Engaging Target")
 
   if Target:IsInstanceOf("TARGET") then
     self.engage.Target=Target
@@ -1062,6 +1063,8 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARMYGROUP:onafterDisengage(From, Event, To)
+  self:T(self.lid.."Disengage Target")
+
   -- TODO: Reset ROE and alarm state.
   self:_CheckGroupDone(1)    
 end
@@ -1072,9 +1075,11 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARMYGROUP:onafterRearmed(From, Event, To)
+  self:I(self.lid.."Group rearmed")
 
+  -- Check group done.
   self:_CheckGroupDone(1)
-    
+      
 end
 
 --- On after "DetourReached" event.
@@ -1083,7 +1088,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARMYGROUP:onafterDetourReached(From, Event, To)
-  self:I(self.lid.."Group reached detour coordinate.")
+  self:T(self.lid.."Group reached detour coordinate")
 end
 
 
@@ -1094,7 +1099,8 @@ end
 -- @param #string To To state.
 function ARMYGROUP:onafterFullStop(From, Event, To)
 
-  self:I(self.lid..string.format("Full stop!"))
+  -- Debug info.
+  self:T(self.lid..string.format("Full stop!"))
 
   -- Get current position.
   local pos=self:GetCoordinate()

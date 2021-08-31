@@ -712,8 +712,8 @@ function OPSGROUP:New(group)
   -- @param #OPSGROUP self
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
-  --- Triggers the FSM event "MissionCancel" after a delay
-  -- @function [parent=#OPSGROUP] MissionCancel
+  --- Triggers the FSM event "MissionCancel" after a delay.
+  -- @function [parent=#OPSGROUP] __MissionCancel
   -- @param #OPSGROUP self
   -- @param #number delay Delay in seconds.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
@@ -1197,6 +1197,11 @@ function OPSGROUP:GetVec3(UnitName)
       return vec3
     end
 
+  end
+  
+  -- Return last known position.
+  if self.position then
+    return self.position
   end
 
   return nil
@@ -1806,6 +1811,8 @@ function OPSGROUP:IsInZone(Zone)
   local is=false
   if vec2 then
     is=Zone:IsVec2InZone(vec2)
+  else
+    env.info(self.lid.."FF cannot get vec2")
   end
   return is
 end
@@ -1901,11 +1908,11 @@ function OPSGROUP:IsLateActivated()
   return self.isLateActivated
 end
 
---- Check if group is in state in utero.
+--- Check if group is in state in utero. Note that dead groups are also in utero but will return `false` here.
 -- @param #OPSGROUP self
 -- @return #boolean If true, group is not spawned yet.
 function OPSGROUP:IsInUtero()
-  local is=self:Is("InUtero")
+  local is=self:Is("InUtero") and not self:IsDead()
   return is
 end
 
@@ -2047,9 +2054,10 @@ end
 
 --- Check if the group is assigned as cargo.
 -- @param #OPSGROUP self
+-- @param #boolean CheckTransport If `true` or `nil`, also check if cargo is associated with a transport assignment. If not, we consider it not cargo.
 -- @return #boolean If true, group is cargo.
-function OPSGROUP:IsCargo()
-  return not self:IsNotCargo()
+function OPSGROUP:IsCargo(CheckTransport)
+  return not self:IsNotCargo(CheckTransport)
 end
 
 --- Check if the group is **not** cargo.
@@ -3310,8 +3318,8 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
       -- NOTE: I am pushing the task instead of setting it as it seems to keep the mission task alive.
       --       There were issues that flights did not proceed to a later waypoint because the task did not finish until the fired missiles
       --       impacted (took rather long). Then the flight flew to the nearest airbase and one lost completely the control over the group.
-      self:PushTask(TaskFinal)
-      --self:SetTask(TaskFinal)
+      --self:PushTask(TaskFinal)
+      self:SetTask(TaskFinal)
       
       
     elseif Task.type==OPSGROUP.TaskType.WAYPOINT then
@@ -5567,19 +5575,19 @@ function OPSGROUP:_CheckCargoTransport()
 
     if self:IsNotCarrier() then
 
-      -- Debug info.
-      self:T(self.lid.."Not carrier ==> pickup?")
-      
       -- Get transport zone combo (TZC).
       self.cargoTZC=self.cargoTransport:_GetTransportZoneCombo(self)
       
       if self.cargoTZC then
+      
+        -- Found TZC
+        self:T(self.lid..string.format("Not carrier ==> pickup at %s [TZC UID=%d]", self.cargoTZC.PickupZone and self.cargoTZC.PickupZone:GetName() or "unknown", self.cargoTZC.uid))
 
         -- Initiate the cargo transport process.
         self:__Pickup(-1)
         
       else
-        self:T(self.lid.."Not carrier ==> pickup")
+        self:T2(self.lid.."Not carrier ==> No TZC found")
       end
 
     elseif self:IsPickingup() then
@@ -6422,7 +6430,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
         end
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
-        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, self.altitudeCruise, false) ; waypoint.detour=1
+        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, UTILS.MetersToFeet(self.altitudeCruise), false) ; waypoint.detour=1
         
       else
         self:E(self.lid.."ERROR: Transportcarrier aircraft cannot land in Pickup zone! Specify a ZONE_AIRBASE as pickup zone")
@@ -6513,10 +6521,13 @@ function OPSGROUP:onafterLoading(From, Event, To)
 
     -- Check that cargo weight is
     if self:CanCargo(cargo.opsgroup) and (not (cargo.delivered or cargo.opsgroup:IsDead())) then
+    
+      -- Check if cargo is currently acting as carrier.
+      local isCarrier=cargo.opsgroup:IsPickingup() or cargo.opsgroup:IsLoading() or cargo.opsgroup:IsTransporting() or cargo.opsgroup:IsUnloading()
 
       -- Check that group is NOT cargo and NOT acting as carrier already
       -- TODO: Need a better :IsBusy() function or :IsReadyForMission() :IsReadyForBoarding() :IsReadyForTransport()
-      if cargo.opsgroup:IsNotCargo(true) and not (cargo.opsgroup:IsPickingup() or cargo.opsgroup:IsLoading() or cargo.opsgroup:IsTransporting() or cargo.opsgroup:IsUnloading()) then
+      if cargo.opsgroup:IsNotCargo(true) and not isCarrier then
 
         -- Check if cargo is in embark/pickup zone.
         local inzone=cargo.opsgroup:IsInZone(self.cargoTZC.EmbarkZone)
@@ -6734,7 +6745,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
     end
 
     -- Start unloading.
-    self:__UnLoading(-5)
+    self:__Unloading(-5)
 
   else
 
@@ -6780,7 +6791,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
         ---
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
-        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, self.altitudeCruise, false) ; waypoint.detour=1
+        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, UTILS.MetersToFeet(self.altitudeCruise), false) ; waypoint.detour=1
         
         -- Cancel landedAt task. This should trigger Cruise once airborne.
         if self:IsFlightgroup() and self:IsLandedAt() then
@@ -6916,13 +6927,17 @@ function OPSGROUP:onafterUnloading(From, Event, To)
             self:Unload(cargo.opsgroup)
 
           else
+          
+            -- Get disembark zone of this TZC.
+            local DisembarkZone=self.cargoTransport:GetDisembarkZone(self.cargoTZC)
 
             local Coordinate=nil
+            
 
-            if self.cargoTransport:GetDisembarkZone(self.cargoTZC) then
+            if  DisembarkZone then
 
               -- Random coordinate in disembark zone.
-              Coordinate=self.cargoTransport:GetDisembarkZone(self.cargoTZC):GetRandomCoordinate()
+              Coordinate=DisembarkZone:GetRandomCoordinate()
 
             else
 

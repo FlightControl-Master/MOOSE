@@ -1179,6 +1179,7 @@ end
 -- @param #FLIGHTGROUP self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function FLIGHTGROUP:OnEventTakeOff(EventData)
+  self:T3(self.lid.."EVENT: TakeOff")
 
   -- Check that this is the right group.
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
@@ -1190,7 +1191,7 @@ function FLIGHTGROUP:OnEventTakeOff(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:T3(self.lid..string.format("EVENT: Element %s took off ==> airborne", element.name))
+      self:T2(self.lid..string.format("EVENT: Element %s took off ==> airborne", element.name))
       self:ElementTakeoff(element, EventData.Place)
     end
 
@@ -1812,6 +1813,10 @@ function FLIGHTGROUP:onafterLanded(From, Event, To, airbase)
     -- Add flight to taxiinb queue.
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIINB)
   end
+  
+  if airbase and self.isHelo then
+    self:Arrived()
+  end
 
 end
 
@@ -2020,19 +2025,21 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
     if task then
       if task.dcstask.id=="PatrolZone" then
         -- For patrol zone, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: PatrolZone")
       elseif task.dcstask.id=="ReconMission" then
         -- For recon missions, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: ReconMission")
       elseif task.description and task.description=="Task_Land_At" then
         -- We allow this
-        env.info("FF allowing update route for Task_Land_At")
+        self:T2(self.lid.."Allowing update route for Task: Task_Land_At")
       else
         local taskname=task and task.description or "No description"
         self:E(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
         allowed=false
       end
     else
-      -- Now this can happen, if we directly use TaskExecute as the task is not in the task queue and cannot be removed.
-      self:T(self.lid..string.format("WARNING: before update route taskcurrent=%d>0 but no task?!", self.taskcurrent))
+      -- Now this can happen, if we directly use TaskExecute as the task is not in the task queue and cannot be removed. Therefore, also directly executed tasks should be added to the queue!
+      self:T(self.lid..string.format("WARNING: before update route taskcurrent=%d (>0!) but no task?!", self.taskcurrent))
       -- Anyhow, a task is running so we do not allow to update the route!
       allowed=false
     end
@@ -2102,15 +2109,6 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destbase and self.destbase:GetName() or "unknown"
   self:T(self.lid..string.format("Updating route for WP #%d-%d [%s], homebase=%s destination=%s", n, #wp, self:GetState(), hb, db))
-  
-  -- Print waypoints.
-  --[[
-  for i,w in pairs(wp) do
-    env.info("FF waypoint index="..i)
-    self:I(w)
-  end
-  ]]
-
 
   if #wp>1 then
 
@@ -2489,6 +2487,10 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
     -- Add flight to inbound queue.
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.INBOUND)
   end
+  
+  -- Some intermediate coordinate to climb to the default cruise alitude.
+  local c1=c0:GetIntermediateCoordinate(p0, 0.25):SetAltitude(self.altitudeCruise, true)
+  local c2=c0:GetIntermediateCoordinate(p0, 0.75):SetAltitude(self.altitudeCruise, true)
 
    -- Altitude above ground for a glide slope of 3 degrees.
   local x1=self.isHelo and UTILS.NMToMeters(5.0) or UTILS.NMToMeters(10)
@@ -2521,6 +2523,8 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   -- Waypoints from current position to holding point.
   local wp={}
   wp[#wp+1]=c0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
+  wp[#wp+1]=c1:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Climb")
+  wp[#wp+1]=c2:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Descent")
   wp[#wp+1]=p0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskHold, TaskKlar}, "Holding Point")
 
   -- Approach point: 10 NN in direction of runway.

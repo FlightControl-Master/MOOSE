@@ -875,12 +875,12 @@ do -- Scheduling
   -- @param #table ... Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
   -- @return #string The Schedule ID of the planned schedule.
   function BASE:ScheduleOnce( Start, SchedulerFunction, ... )
-    self:F2( { Start } )
-    self:T3( { ... } )
   
+    -- Object name.
     local ObjectName = "-"
     ObjectName = self.ClassName .. self.ClassID
     
+    -- Debug info.
     self:F3( { "ScheduleOnce: ", ObjectName,  Start } )
     
     if not self.Scheduler then
@@ -930,7 +930,7 @@ do -- Scheduling
       self.Scheduler = SCHEDULER:New( self )
     end
     
-    -- NOTE: MasterObject (first parameter) should(!) be nil as it will be the first argument passed to the SchedulerFunction!
+    -- NOTE: MasterObject (first parameter) should(!) be nil as it will be the first argument passed to the SchedulerFunction!s
     local ScheduleID = self.Scheduler:Schedule( 
       self, 
       SchedulerFunction,

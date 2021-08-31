@@ -278,6 +278,20 @@ do -- SET_BASE
   
   end
 
+  --- Add a SET to this set.
+  -- @param #SET_BASE self
+  -- @param Core.Set#SET_BASE SetToAdd Set to add.
+  -- @return #SET_BASE self
+  function SET_BASE:AddSet(SetToAdd)
+
+    for _,ObjectB in pairs(SetToAdd.Set) do
+      self:AddObject(ObjectB)
+    end
+
+    return self
+  end
+
+
   --- Get the *union* of two sets.
   -- @param #SET_BASE self
   -- @param Core.Set#SET_BASE SetB Set *B*.
