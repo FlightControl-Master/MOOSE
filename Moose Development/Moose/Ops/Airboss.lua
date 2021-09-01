@@ -12206,6 +12206,7 @@ end
 -- * > 24 seconds: No Grade "--"
 --
 -- If you manage to be between 16.4 and and 16.6 seconds, you will even get and okay underline "\_OK\_".
+-- No groove time for Harrier on LHA, LHD set to Tgroove Unicorn as starting point to allow possible _OK_ 5.0.
 --
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
@@ -12224,6 +12225,8 @@ function AIRBOSS:_EvalGrooveTime(playerData)
     grade="OK Groove"
   elseif t<=24 then
     grade="(LIG)"
+  elseif t>=25 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then -- VSTOL Operations with AV-8B
+    grade="OK V/STOL Groove"
   else
     grade="LIG"
   end
@@ -12258,7 +12261,7 @@ function AIRBOSS:_LSOgrade(playerData)
   -- Put everything together.
   local G=GXX.." "..GIM.." ".." "..GIC.." "..GAR
 
-  -- Count number of minor, normal and major deviations.
+  -- Count number of minor, normal and major deviations. TODO - work on Harrier counts due slower approach speed.
   local N=nXX+nIM+nIC+nAR
   local nL=count(G, '_')/2
   local nS=count(G, '%(')
@@ -12270,8 +12273,8 @@ function AIRBOSS:_LSOgrade(playerData)
 
   local grade
   local points
-  if N==0 and TgrooveUnicorn then
-    -- No deviations, should be REALLY RARE!
+  if N==0 and (TgrooveUnicorn or aircrafttype~=AIRBOSS.AircraftCarrier.AV8B) then
+    -- No deviations, should be REALLY RARE! Grove time for AV-8B Harrier not required, possible to still get Unicorn.
     grade="_OK_"
     points=5.0
     G="Unicorn"
