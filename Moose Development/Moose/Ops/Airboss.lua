@@ -12252,7 +12252,7 @@ function AIRBOSS:_LSOgrade(playerData)
     return select(2, string.gsub(base, pattern, ""))
   end
 
-  -- Analyse flight data and conver to LSO text.
+  -- Analyse flight data and convert to LSO text.
   local GXX,nXX=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.XX)
   local GIM,nIM=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.IM)
   local GIC,nIC=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.IC)
@@ -12285,6 +12285,22 @@ function AIRBOSS:_LSOgrade(playerData)
       points=2.0
     elseif nN>0 then
       -- No larger but average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
+      grade="(OK)"
+      points=3.0
+    else
+      -- Only minor corrections
+      grade="OK"
+      points=4.0
+    end
+	  -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe. (WIP requires feedback)
+      -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
+	if nL>2 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then 
+      -- Larger deviations ==> "No grade" 2.0 points.
+      grade="--"
+      points=2.0
+	  
+	elseif nN>2 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then
+      -- Only average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
       grade="(OK)"
       points=3.0
     else
