@@ -2831,6 +2831,7 @@ function RANGE:_CheckInZone(_unitName)
           local accur=0
           if shots>0 then
             accur=_result.hits/shots*100
+            if accur > 100 then accur = 100 end
           end
 
           -- Message text.
