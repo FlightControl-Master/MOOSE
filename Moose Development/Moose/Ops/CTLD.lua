@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Date: Aug 2021
+-- Date: Sep 2021
 
 do
 ------------------------------------------------------
@@ -51,21 +51,21 @@ CTLD_ENGINEERING = {
   
   --- CTLD_ENGINEERING class version.
   -- @field #string version
-  CTLD_ENGINEERING.Version = "0.0.2"
+  CTLD_ENGINEERING.Version = "0.0.3"
   
   --- Create a new instance.
   -- @param #CTLD_ENGINEERING self
   -- @param #string Name
-  -- @param #string GroupName
+  -- @param #string GroupName Name of Engineering #GROUP object
   -- @param Wrapper.Group#GROUP HeliGroup HeliGroup
-  -- @param Wrapper.Unit#UNIT HeliGroup HeliUnit
+  -- @param Wrapper.Unit#UNIT HeliUnit HeliUnit
   -- @return #CTLD_ENGINEERING self 
   function CTLD_ENGINEERING:New(Name, GroupName, HeliGroup, HeliUnit)
   
       -- Inherit everything from BASE class.
     local self=BASE:Inherit(self, BASE:New()) -- #CTLD_ENGINEERING
     
-   BASE:I({Name, GroupName, HeliGroup:GetName(), HeliUnit:GetName()})
+   --BASE:I({Name, GroupName})
     
     self.Name = Name or "Engineer Squad" -- #string
     self.Group = GROUP:FindByName(GroupName) -- Wrapper.Group#GROUP
@@ -195,10 +195,10 @@ CTLD_ENGINEERING = {
          -- have we tried this cargo recently?
          local tag = chalk.tag or "none"
          local timestamp = chalk.timestamp or 0
-         self:I({chalk})
+         --self:I({chalk})
          -- enough time gone?
          local gone = timer.getAbsTime() - timestamp
-         self:I({time=gone})
+         --self:I({time=gone})
          if gone >= self.marktimer then
             ok = true
             _cargo:WipeMark()
@@ -919,7 +919,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.7a2"
+CTLD.version="0.1.7a3"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2088,7 +2088,7 @@ function CTLD:_UnloadTroops(Group, Unit)
           if type == CTLD_CARGO.Enum.ENGINEERS then
             self.Engineers = self.Engineers + 1
             local grpname = self.DroppedTroops[self.TroopCounter]:GetName()
-            self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname, Group, Unit)
+            self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname)
             self:_SendMessage(string.format("Dropped Engineers %s into action!",name), 10, false, Group)
           else
             self:_SendMessage(string.format("Dropped Troops %s into action!",name), 10, false, Group)
@@ -3349,6 +3349,56 @@ end
     return self
   end
   
+  --- (User) Pre-populate troops in the field.
+  -- @param #CTLD self
+  -- @param Core.Zone#ZONE Zone The zone where to drop the troops.
+  -- @param Ops.CTLD#CTLD_CARGO Cargo The #CTLD_CARGO object to spawn.
+  -- @return #CTLD self
+  -- @usage Use this function to pre-populate the field with Troops or Engineers at a random coordinate in a zone:
+  --            -- create a matching #CTLD_CARGO type
+  --            local InjectTroopsType = CTLD_CARGO:New(nil,"Injected Infantry",{"Inf12"},CTLD_CARGO.Enum.TROOPS,true,true,12,nil,false,80)
+  --            -- get a #ZONE object
+  --            local dropzone = ZONE:New("InjectZone") -- Core.Zone#ZONE
+  --            -- and go:
+  --            my_ctld:InjectTroops(dropzone,InjectTroopsType)
+  function CTLD:InjectTroops(Zone,Cargo)
+    self:T(self.lid.." InjectTroops")
+    local cargo = Cargo -- #CTLD_CARGO
+    self.CargoCounter = self.CargoCounter + 1
+    cargo.ID = self.CargoCounter
+    table.insert(self.Cargo_Troops,cargo)
+    local type = cargo:GetType() -- #CTLD_CARGO.Enum
+    if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS) and not cargo:WasDropped() then
+      -- unload troops
+      local name = cargo:GetName() or "none"
+      local temptable = cargo:GetTemplates() or {}
+      local factor = 1.5
+      local zone = Zone
+      local randomcoord = zone:GetRandomCoordinate(10,30*factor):GetVec2()
+      for _,_template in pairs(temptable) do
+        self.TroopCounter = self.TroopCounter + 1
+        local alias = string.format("%s-%d", _template, math.random(1,100000))
+        self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
+          :InitRandomizeUnits(true,20,2)
+          :InitDelayOff()
+          :SpawnFromVec2(randomcoord)
+        if self.movetroopstowpzone and type ~= CTLD_CARGO.Enum.ENGINEERS then
+          self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
+        end
+      end -- template loop
+      cargo:SetWasDropped(true)
+      -- engineering group?
+      if type == CTLD_CARGO.Enum.ENGINEERS then
+        self.Engineers = self.Engineers + 1
+        local grpname = self.DroppedTroops[self.TroopCounter]:GetName()
+        self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname)
+        self:I(string.format("%s Injected Engineers %s into action!",self.lid, name))
+      else
+        self:I(string.format("%s Injected Troops %s into action!",self.lid, name))
+      end
+    end -- if type end
+    return self
+  end
 ------------------------------------------------------------------- 
 -- FSM functions
 ------------------------------------------------------------------- 

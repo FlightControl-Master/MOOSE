@@ -24,7 +24,8 @@
 -- @module Functional.Sead
 -- @image SEAD.JPG
 
---- @type SEAD
+--- 
+-- @type SEAD
 -- @extends Core.Base#BASE
 
 --- Make SAM sites execute evasive and defensive behaviour when being fired upon.
@@ -48,7 +49,8 @@ SEAD = {
   }, 
   SEADGroupPrefixes = {},
   SuppressedGroups = {},
-  EngagementRange = 75 --  default 75% engagement range Feature Request #1355
+  EngagementRange = 75, --  default 75% engagement range Feature Request #1355
+  Padding = 10,
 }
 
   --- Missile enumerators
@@ -89,13 +91,14 @@ SEAD = {
 -- When an anti radiation missile is fired (KH-58, KH-31P, KH-31A, KH-25MPU, HARM missiles), the SA will shut down their radars and will take evasive actions...
 -- Chances are big that the missile will miss.
 -- @param #SEAD self
--- @param table{string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Groups in the DCS mission editor on which evasive actions need to be taken.
+-- @param #table SEADGroupPrefixes Table of #string entries or single #string, which is a table of Prefixes of the SA Groups in the DCS mission editor on which evasive actions need to be taken.
+-- @param #number Padding (Optional) Extra number of seconds to add to radar switch-back-on time
 -- @return SEAD
 -- @usage
 -- -- CCCP SEAD Defenses
 -- -- Defends the Russian SA installations from SEAD attacks.
 -- SEAD_RU_SAM_Defenses = SEAD:New( { 'RU SA-6 Kub', 'RU SA-6 Defenses', 'RU MI-26 Troops', 'RU Attack Gori' } )
-function SEAD:New( SEADGroupPrefixes )
+function SEAD:New( SEADGroupPrefixes, Padding )
 
   local self = BASE:Inherit( self, BASE:New() )
   self:F( SEADGroupPrefixes )
@@ -108,7 +111,12 @@ function SEAD:New( SEADGroupPrefixes )
     self.SEADGroupPrefixes[SEADGroupPrefixes] = SEADGroupPrefixes
   end
   
+  local padding = Padding or 10
+  if padding < 10 then padding = 10 end
+  self.Padding = padding
+  
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
+  
   self:I("*** SEAD - Started Version 0.3.1")
   return self
 end
@@ -144,6 +152,17 @@ function SEAD:SetEngagementRange(range)
   end
   self.EngagementRange = range
   self:T(string.format("*** SEAD - Engagement range set to %s",range))
+  return self
+end
+
+--- Set the padding in seconds, which extends the radar off time calculated by SEAD
+-- @param #SEAD self
+-- @param #number Padding Extra number of seconds to add for the switch-on
+function SEAD:SetPadding(Padding)
+  self:T( { Padding } )
+  local padding = Padding or 10
+  if padding < 10 then padding = 10 end
+  self.Padding = padding
   return self
 end
 
@@ -290,7 +309,7 @@ function SEAD:HandleEventShot( EventData )
             if _tti > (3*delay) then delay = (_tti / 2) * 0.9 end -- shot from afar
             
             local SuppressionStartTime = timer.getTime() + delay     
-            local SuppressionEndTime = timer.getTime() + _tti + 10
+            local SuppressionEndTime = timer.getTime() + _tti + self.Padding
             
             if not self.SuppressedGroups[_targetgroupname] then
               self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Switch-Off in %ds",_targetgroupname,_tti,delay))
