@@ -12206,6 +12206,7 @@ end
 -- * > 24 seconds: No Grade "--"
 --
 -- If you manage to be between 16.4 and and 16.6 seconds, you will even get and okay underline "\_OK\_".
+-- No groove time for Harrier on LHA, LHD set to Tgroove Unicorn as starting point to allow possible _OK_ 5.0.
 --
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
@@ -12224,6 +12225,8 @@ function AIRBOSS:_EvalGrooveTime(playerData)
     grade="OK Groove"
   elseif t<=24 then
     grade="(LIG)"
+  elseif t>=25 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then -- VSTOL Operations with AV-8B
+    grade="OK V/STOL Groove"
   else
     grade="LIG"
   end
@@ -12249,7 +12252,7 @@ function AIRBOSS:_LSOgrade(playerData)
     return select(2, string.gsub(base, pattern, ""))
   end
 
-  -- Analyse flight data and conver to LSO text.
+  -- Analyse flight data and convert to LSO text.
   local GXX,nXX=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.XX)
   local GIM,nIM=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.IM)
   local GIC,nIC=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.IC)
@@ -12258,7 +12261,7 @@ function AIRBOSS:_LSOgrade(playerData)
   -- Put everything together.
   local G=GXX.." "..GIM.." ".." "..GIC.." "..GAR
 
-  -- Count number of minor, normal and major deviations.
+  -- Count number of minor, normal and major deviations. TODO - work on Harrier counts due slower approach speed.
   local N=nXX+nIM+nIC+nAR
   local nL=count(G, '_')/2
   local nS=count(G, '%(')
@@ -12270,8 +12273,8 @@ function AIRBOSS:_LSOgrade(playerData)
 
   local grade
   local points
-  if N==0 and TgrooveUnicorn then
-    -- No deviations, should be REALLY RARE!
+  if N==0 and (TgrooveUnicorn or aircrafttype~=AIRBOSS.AircraftCarrier.AV8B) then
+    -- No deviations, should be REALLY RARE! Grove time for AV-8B Harrier not required, possible to still get Unicorn.
     grade="_OK_"
     points=5.0
     G="Unicorn"
@@ -12282,6 +12285,22 @@ function AIRBOSS:_LSOgrade(playerData)
       points=2.0
     elseif nN>0 then
       -- No larger but average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
+      grade="(OK)"
+      points=3.0
+    else
+      -- Only minor corrections
+      grade="OK"
+      points=4.0
+    end
+	  -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe. (WIP requires feedback)
+      -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
+	if nL>2 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then 
+      -- Larger deviations ==> "No grade" 2.0 points.
+      grade="--"
+      points=2.0
+	  
+	elseif nN>2 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then
+      -- Only average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
       grade="(OK)"
       points=3.0
     else
