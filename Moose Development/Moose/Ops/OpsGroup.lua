@@ -512,8 +512,6 @@ function OPSGROUP:New(group)
     end
   end
   
-  self.group:IsAir()
-  
   -- Set the template.
   self:_SetTemplate()
 
@@ -1812,7 +1810,7 @@ function OPSGROUP:IsInZone(Zone)
   if vec2 then
     is=Zone:IsVec2InZone(vec2)
   else
-    env.info(self.lid.."FF cannot get vec2")
+    self:T3(self.lid.."WARNING: Cannot get vec2 at IsInZone()!")
   end
   return is
 end
@@ -2783,14 +2781,13 @@ end
 
 --- Returns true if the DCS controller currently has a task.
 -- @param #OPSGROUP self
--- @param #number Delay Delay in seconds.
 -- @return #boolean True or false if the controller has a task. Nil if no controller.
-function OPSGROUP:HasTaskController(Delay)
+function OPSGROUP:HasTaskController()
   local hastask=nil
   if self.controller then    
     hastask=self.controller:hasTask() 
   end
-  self:I(self.lid..string.format("Controller hasTask=%s", tostring(hastask)))
+  self:T3(self.lid..string.format("Controller hasTask=%s", tostring(hastask)))
   return hastask
 end
 
@@ -3199,6 +3196,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
   
   -- Insert into task queue. Not sure any more, why I added this. But probably if a task is just executed without having been put into the queue.
   if self:GetTaskCurrent()==nil then
+    --env.info("FF adding current task to queue")
     table.insert(self.taskqueue, Task)
   end
 
@@ -3318,8 +3316,8 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
       -- NOTE: I am pushing the task instead of setting it as it seems to keep the mission task alive.
       --       There were issues that flights did not proceed to a later waypoint because the task did not finish until the fired missiles
       --       impacted (took rather long). Then the flight flew to the nearest airbase and one lost completely the control over the group.
-      --self:PushTask(TaskFinal)
-      self:SetTask(TaskFinal)
+      self:PushTask(TaskFinal)
+      --self:SetTask(TaskFinal)
       
       
     elseif Task.type==OPSGROUP.TaskType.WAYPOINT then
@@ -3467,7 +3465,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
     end
 
     if Task.description=="Task_Land_At" then
-      self:Wait(60, 100)
+      self:Wait(20, 100)
     else
       self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 0 sec")
       self:_CheckGroupDone()      
@@ -5065,7 +5063,7 @@ end
 function OPSGROUP:onbeforeElementSpawned(From, Event, To, Element)
 
   if Element and Element.status==OPSGROUP.ElementStatus.SPAWNED then
-    self:I(self.lid..string.format("FF element %s is already spawned", Element.name))
+    self:T2(self.lid..string.format("Element %s is already spawned ==> Transition denied!", Element.name))
     return false
   end
 
@@ -5333,7 +5331,7 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     self:_InitWaypoints()
 
     -- Init Group.
-    self:_InitGroup()
+    self:_InitGroup(Template)
 
     -- Reset events.
     --self:ResetEvents()
@@ -5883,7 +5881,6 @@ function OPSGROUP:_CheckDelivered(CargoTransport)
       elseif cargo.opsgroup==nil or cargo.opsgroup:IsDead() or cargo.opsgroup:IsStopped() then
         -- This one is dead.
       else
-        --env.info(string.format())
         done=false --Someone is not done!
       end
 
@@ -6416,7 +6413,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
         end
 
         -- Order group to land at an airbase.
-        self:__LandAtAirbase(-0.5, airbasePickup)
+        self:__LandAtAirbase(-0.1, airbasePickup)
 
       elseif self.isHelo then
 
@@ -6426,7 +6423,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
         
         -- Activate uncontrolled group.
         if self:IsParking() and self:IsUncontrolled() then
-          self:StartUncontrolled(1)
+          self:StartUncontrolled(0.5)
         end
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
@@ -6435,6 +6432,16 @@ function OPSGROUP:onafterPickup(From, Event, To)
       else
         self:E(self.lid.."ERROR: Transportcarrier aircraft cannot land in Pickup zone! Specify a ZONE_AIRBASE as pickup zone")
       end
+      
+      -- Cancel landedAt task. This should trigger Cruise once airborne.
+      if self.isHelo and self:IsLandedAt() then
+        local Task=self:GetTaskCurrent()
+        if Task then
+          self:TaskCancel(Task)
+        else
+          self:E(self.lid.."ERROR: No current task but landed at?!")
+        end
+      end            
       
     elseif self:IsNavygroup() then
 
@@ -6793,15 +6800,19 @@ function OPSGROUP:onafterTransport(From, Event, To)
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
         local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, UTILS.MetersToFeet(self.altitudeCruise), false) ; waypoint.detour=1
         
-        -- Cancel landedAt task. This should trigger Cruise once airborne.
-        if self:IsFlightgroup() and self:IsLandedAt() then
-          local Task=self:GetTaskCurrent()
-          self:__TaskCancel(5, Task)
-        end
-
       else
-        self:E(self.lid.."ERROR: Carrier aircraft cannot land in Deploy zone! Specify a ZONE_AIRBASE as deploy zone")
+        self:E(self.lid.."ERROR: Aircraft (cargo carrier) cannot land in Deploy zone! Specify a ZONE_AIRBASE as deploy zone")
       end
+      
+      -- Cancel landedAt task. This should trigger Cruise once airborne.
+      if self.isHelo and self:IsLandedAt() then
+        local Task=self:GetTaskCurrent()
+        if Task then
+          self:TaskCancel(Task)
+        else
+          self:E(self.lid.."ERROR: No current task but landed at?!")
+        end
+      end      
 
     elseif self:IsArmygroup() then
 
@@ -7179,9 +7190,22 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
 
     -- Startup uncontrolled aircraft to allow it to go back.
     if self:IsFlightgroup() then
-      if self:IsUncontrolled() then
+    
+      local function atbase(_airbase)
+        local airbase=_airbase --Wrapper.Airbase#AIRBASE
+        if airbase and self.currbase then
+          if airbase.AirbaseName==self.currbase.AirbaseName then
+            return true
+          end
+        end
+        return false
+      end
+    
+      -- Check if uncontrolled and NOT at destination. If so, start up uncontrolled and let flight return to whereever it wants to go.
+      if self:IsUncontrolled() and not atbase(self.destbase) then
         self:StartUncontrolled()
-      elseif self:IsLandedAt() then
+      end
+      if self:IsLandedAt() then
         local Task=self:GetTaskCurrent()
         self:TaskCancel(Task)
       end
@@ -7191,7 +7215,7 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
     end
 
     -- Check group done.
-    self:T(self.lid.."All cargo delivered ==> check group done")
+    self:T(self.lid.."All cargo delivered ==> check group done in 0.2 sec")
     self:_CheckGroupDone(0.2)
 
     -- No current transport any more.

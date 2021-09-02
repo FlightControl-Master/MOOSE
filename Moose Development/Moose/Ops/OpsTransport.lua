@@ -173,7 +173,7 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.4.1"
+OPSTRANSPORT.version="0.4.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -356,7 +356,6 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   -- @param #number delay Delay in seconds.
   -- @param Ops.OpsGroup#OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
   -- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier Carrier OPSGROUP that unloaded the cargo.
-
 
   --- On after "Unloaded" event.
   -- @function [parent=#OPSTRANSPORT] OnAfterUnloaded

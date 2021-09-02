@@ -1460,7 +1460,9 @@ end
 -- @param #NAVYGROUP self
 -- @return #boolean If true, a path was found.
 function NAVYGROUP:_FindPathToNextWaypoint()
-  env.info("FF Path finding")
+  self:T3(self.lid.."Path finding")
+  
+  --TODO: Do not create a new ASTAR object each time this function is called but make it self.astar and reuse. Should be better for performance.
 
   -- Pathfinding A*
   local astar=ASTAR:New()

@@ -888,19 +888,25 @@ function FLIGHTGROUP:Status()
   -- Short info.
   if self.verbose>=1 then
 
+    local nelem=self:CountElements()
+    local Nelem=#self.elements
     local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
     local nMissions=self:CountRemainingMissison()
+    local currT=self.taskcurrent or "None"
+    local currM=self.currentmission or "None"
+    local currW=self.currentwp or 0
+    local nWp=self.waypoints and #self.waypoints or 0
     local home=self.homebase and self.homebase:GetName() or "unknown"
     local dest=self.destbase and self.destbase:GetName() or "unknown"
     local fc=self.flightcontrol and self.flightcontrol.airbasename or "N/A"
     local curr=self.currbase and self.currbase:GetName() or "N/A"
-    local nelem=self:CountElements()
-    local Nelem=#self.elements
+    
     local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "OFF"
 
-    local text=string.format("Status %s [%d/%d]: Tasks=%d, Missions=%s, Waypoint=%d/%d [%s], Detected=%s, Home=%s, Destination=%s, Current=%s, FC=%s",
-    fsmstate, nelem, Nelem, nTaskTot, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0, tostring(self.passedfinalwp),
-    ndetected, home, dest, curr, fc)
+    local text=string.format("Status %s [%d/%d]: T/M=%d/%d [Current %s/%s] [%s], Waypoint=%d/%d [%s], Base=%s [%s-->%s]",
+    fsmstate, nelem, Nelem, 
+    nTaskTot, nMissions, currT, currM, tostring(self:HasTaskController()), 
+    currW, nWp, tostring(self.passedfinalwp), curr, home, dest)
     self:I(self.lid..text)
 
   end
@@ -1813,10 +1819,6 @@ function FLIGHTGROUP:onafterLanded(From, Event, To, airbase)
     -- Add flight to taxiinb queue.
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.TAXIINB)
   end
-  
-  if airbase and self.isHelo then
-    self:Arrived()
-  end
 
 end
 
@@ -1993,7 +1995,7 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
     allowed=false
   end
   
-  if self:IsUncontrolled() then
+  if allowed and self:IsUncontrolled() then
     -- Not airborne yet. Try again in 5 sec.
     self:T(self.lid.."Update route denied. Group is UNCONTROLLED ==> checking back in 5 sec")
     trepeat=-5
@@ -2244,9 +2246,13 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
               self:T(self.lid..string.format("Passed Final WP and No current and/or future missions/tasks/transports. Waittime given ==> Waiting for %d sec!", waittime))
               self:Wait(waittime)
             elseif destbase then
-              self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports ==> RTB!")
-              --self:RTB(destbase)
-              self:__RTB(-0.1, destbase)
+              if self.currbase and self.currbase.AirbaseName==destbase.AirbaseName and self:IsParking() then
+                self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports AND parking at destination airbase ==> Arrived!")
+                self:__Arrived(0.1)
+              else
+                self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports ==> RTB!")
+                self:__RTB(-0.1, destbase)
+              end
             elseif destzone then
               self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports ==> RTZ!")
               self:__RTZ(-0.1, destzone)
@@ -2493,8 +2499,8 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   local c2=c0:GetIntermediateCoordinate(p0, 0.75):SetAltitude(self.altitudeCruise, true)
 
    -- Altitude above ground for a glide slope of 3 degrees.
-  local x1=self.isHelo and UTILS.NMToMeters(5.0) or UTILS.NMToMeters(10)
-  local x2=self.isHelo and UTILS.NMToMeters(2.5) or UTILS.NMToMeters(5)
+  local x1=self.isHelo and UTILS.NMToMeters(2.0) or UTILS.NMToMeters(10)
+  local x2=self.isHelo and UTILS.NMToMeters(1.0) or UTILS.NMToMeters(5)
   local alpha=math.rad(3)
   local h1=x1*math.tan(alpha)
   local h2=x2*math.tan(alpha)
@@ -2865,6 +2871,8 @@ function FLIGHTGROUP:onafterLandAt(From, Event, To, Coordinate, Duration)
 
   -- Duration.
   --Duration=Duration or 600
+  
+  self:T(self.lid..string.format("Landing at Coordinate for %s seconds", tostring(Duration)))
 
   Coordinate=Coordinate or self:GetCoordinate()
 
