@@ -1741,7 +1741,7 @@ function UTILS.GenerateLaserCodes()
     while _code < 1777 and _count < 30 do
         while true do
            _code = _code + 1
-            if not self:_ContainsDigit(_code, 8)
+            if not ContainsDigit(_code, 8)
                     and not ContainsDigit(_code, 9)
                     and not ContainsDigit(_code, 0) then
                 table.insert(jtacGeneratedLaserCodes, _code)
