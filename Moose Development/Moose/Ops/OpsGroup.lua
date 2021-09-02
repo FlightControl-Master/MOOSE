@@ -4097,7 +4097,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     --waypointcoord:MarkToAll(string.format("Mission %s alt=%d m", mission:GetName(), waypointcoord.y))
 
     -- Add waypoint.
-    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, formation, false)
+    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, formation, false) ; waypoint.ismission=true
 
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, waypoint, mission.name, mission.prio, mission.duration)
@@ -4111,7 +4111,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     
     local egress=mission:GetMissionEgressCoord()
     if egress then
-      local waypoint=self:AddWaypoint(egress, SpeedToMission, nil, formation, false)
+      local waypoint=self:AddWaypoint(egress, SpeedToMission, nil, formation, false) ; waypoint.ismission=true
     end
 
     ---
@@ -4384,7 +4384,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
     -- Check if all tasks/mission are done?
     -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
-    if ntasks==0 and self:HasPassedFinalWaypoint() then
+    if ntasks==0 and (self:HasPassedFinalWaypoint()) then-- or self:IsArmygroup() or self:IsNavygroup()) then
       self:_CheckGroupDone(0.01)
     end
 
@@ -7910,6 +7910,26 @@ end
 -- Waypoints & Routing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Simple task function. Can be used to call a function which has the warehouse and the executing group as parameters.
+-- @param #OPSGROUP self
+-- @param #string Function The name of the function to call passed as string.
+-- @param #number uid Waypoint UID.
+function OPSGROUP:_SimpleTaskFunction(Function, uid)
+
+  -- Task script.
+  local DCSScript = {}
+  
+  --_DATABASE:FindOpsGroup(groupname)
+
+  DCSScript[#DCSScript+1]   = string.format('local mygroup = _DATABASE:FindOpsGroup(\"%s\") ', self.groupname)  -- The group that executes the task function. Very handy with the "...".
+  DCSScript[#DCSScript+1]   = string.format('%s(mygroup, %d)', Function, uid)                                   -- Call the function, e.g. myfunction.(warehouse,mygroup)
+
+  -- Create task.
+  local DCSTask=CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
+
+  return DCSTask
+end
+
 --- Enhance waypoint table.
 -- @param #OPSGROUP self
 -- @param #OPSGROUP.Waypoint Waypoint data.
@@ -7933,6 +7953,17 @@ function OPSGROUP:_CreateWaypoint(waypoint)
   waypoint.detour=false
   waypoint.astar=false
   waypoint.temp=false
+  
+  -- Tasks of this waypoint
+  local taskswp={}
+
+  -- At each waypoint report passing.
+  --local TaskPassingWaypoint=self.group:TaskFunction("OPSGROUP._PassingWaypoint", self, waypoint.uid)
+  local TaskPassingWaypoint=self:_SimpleTaskFunction("OPSGROUP._PassingWaypoint", waypoint.uid)
+  table.insert(taskswp, TaskPassingWaypoint)
+
+  -- Waypoint task combo.
+  waypoint.task=self.group:TaskCombo(taskswp)  
 
   -- Increase UID counter.
   self.wpcounter=self.wpcounter+1
@@ -8117,10 +8148,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function called when a group is passing a waypoint.
---@param Wrapper.Group#GROUP group Group that passed the waypoint.
 --@param #OPSGROUP opsgroup Ops group object.
 --@param #number uid Waypoint UID.
-function OPSGROUP._PassingWaypoint(group, opsgroup, uid)
+function OPSGROUP._PassingWaypoint(opsgroup, uid)
 
   -- Debug message.
   local text=string.format("Group passing waypoint uid=%d", uid)

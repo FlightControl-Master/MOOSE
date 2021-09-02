@@ -190,7 +190,8 @@ end
 -- @param #ARMYGROUP self
 -- @return Core.Point#COORDINATE Coordinate of a road closest to the group.
 function ARMYGROUP:GetClosestRoad()
-  return self:GetCoordinate():GetClosestPointToRoad()
+  local coord=self:GetCoordinate():GetClosestPointToRoad()
+  return coord
 end
 
 --- Get 2D distance to the closest road.
@@ -568,12 +569,13 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     
     -- Formation
     if not self.option.Formation then
-      self.option.Formation=self.optionDefault.Formation
+      -- Will be set in update route.
+      --self.option.Formation=self.optionDefault.Formation
     end
 
     -- Update route.
     if #self.waypoints>1 then
-      self:Cruise(nil, self.option.Formation or self.optionDefault.Formation)
+      self:Cruise(nil, self.option.Formation)
     else
       self:FullStop()
     end
@@ -624,72 +626,76 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
   -- Update route from this waypoint number onwards.
   n=n or self:GetWaypointIndexNext(self.adinfinitum)
   
-  -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
-  self:_UpdateWaypointTasks(n)
-
+  -- Update waypoint tasks, i.e. inject WP tasks into waypoint table. OBSOLETE!
+  --self:_UpdateWaypointTasks(n)
+  
   -- Waypoints.
   local waypoints={}
   
-  -- Next waypoint.
-  local wp=UTILS.DeepCopy(self.waypoints[n]) --Ops.OpsGroup#OPSGROUP.Waypoint
+  local formationlast=nil
+  for i=n, #self.waypoints do
   
-  -- Do we want to drive on road to the next wp?
-  local onroad=wp.action==ENUMS.Formation.Vehicle.OnRoad
-        
-  -- Speed.
-  if Speed then
-    wp.speed=UTILS.KnotsToMps(Speed)
-  else
-    -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
-    if wp.speed<0.1 then --self.adinfinitum and 
-      wp.speed=UTILS.KmphToMps(self.speedCruise)
+    -- Next waypoint.
+    local wp=UTILS.DeepCopy(self.waypoints[i]) --Ops.OpsGroup#OPSGROUP.Waypoint
+ 
+    -- Speed.
+    if Speed then
+      wp.speed=UTILS.KnotsToMps(Speed)
+    else
+      -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
+      if wp.speed<0.1 then --self.adinfinitum and 
+        wp.speed=UTILS.KmphToMps(self.speedCruise)
+      end
     end
+    
+    -- Formation.
+    if self.formationPerma then
+      wp.action=self.formationPerma
+    elseif Formation then 
+      wp.action=Formation
+    end
+  
+    -- Add waypoint in between because this waypoint is "On Road" but lies "Off Road".
+    if wp.action==ENUMS.Formation.Vehicle.OnRoad and wp.roaddist>10 then
+    
+      -- The real waypoint is actually off road.
+      wp.action=ENUMS.Formation.Vehicle.OffRoad
+  
+      -- Add "On Road" waypoint in between.
+      local wproad=wp.roadcoord:WaypointGround(wp.speed, ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
+      
+      -- Insert road waypoint.
+      table.insert(waypoints, wproad)
+    end    
+          
+    -- Add waypoint.
+    table.insert(waypoints, wp)
+    
+    -- Last formation.
+    formationlast=wp.action  
   end
   
-  -- Formation.
-  if self.formationPerma then
-    wp.action=self.formationPerma
-  elseif Formation then 
-    wp.action=Formation
-  end
+  -- First (next wp).
+  local wp=waypoints[1] --Ops.OpsGroup#OPSGROUP.Waypoint
   
   -- Current set formation.
   self.option.Formation=wp.action
-  
-  -- Current set speed in m/s.
-  self.speedWp=wp.speed
-
-  -- Add waypoint in between because this waypoint is "On Road" but lies "Off Road".
-  if onroad then
-  
-    -- The real waypoint is actually off road.
-    wp.action=ENUMS.Formation.Vehicle.OffRoad
-
-    -- Add "On Road" waypoint in between.
-    local wproad=wp.roadcoord:WaypointGround(wp.speed, ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
     
-    -- Insert road waypoint.
-    table.insert(waypoints, wproad)
-  end    
-        
-  -- Add waypoint.
-  table.insert(waypoints, wp)
+  -- Current set speed in m/s.
+  self.speedWp=wp.speed  
   
-  -- Apply formation at the current position or it will only be changed when reaching the next waypoint.
-  local formation=ENUMS.Formation.Vehicle.OffRoad
-  if wp.action~=ENUMS.Formation.Vehicle.OnRoad then
-    formation=wp.action
-  end
+  local formation0=wp.action==ENUMS.Formation.Vehicle.OnRoad and ENUMS.Formation.Vehicle.OffRoad or wp.action
 
   -- Current point.
-  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), formation)
+  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), formation0)
   table.insert(waypoints, 1, current)
 
   -- Insert a point on road.
-  if onroad then
+  if wp.action==ENUMS.Formation.Vehicle.OnRoad then
     local current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
     table.insert(waypoints, 2, current)
   end
+ 
   
   -- Debug output.
   if false then

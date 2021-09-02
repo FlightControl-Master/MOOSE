@@ -1521,6 +1521,15 @@ function AUFTRAG:SetTime(ClockStart, ClockStop)
   return self
 end
 
+--- Set time how low the mission is executed. Once this time limit has passed, the mission is cancelled.
+-- @param #AUFTRAG self
+-- @param #number Duration Duration in seconds.
+-- @return #AUFTRAG self
+function AUFTRAG:SetDuration(Duration)
+  self.durationExe=Duration
+  return self
+end
+
 
 --- Set mission push time. This is the time the mission is executed. If the push time is not passed, the group will wait at the mission execution waypoint.
 -- @param #AUFTRAG self
@@ -2341,10 +2350,21 @@ function AUFTRAG:onafterStatus(From, Event, To)
       -- All groups have reported MISSON DONE.
       self:Done()
       
-    elseif (self.Tstop and Tnow>self.Tstop+10) or (Ntargets0>0 and Ntargets==0) then
-    
+    elseif (self.Tstop and Tnow>self.Tstop+10) then
+
       -- Cancel mission if stop time passed.
-      --self:Cancel()
+      self:Cancel()
+      
+    elseif self.durationExe and self.Texecuting and Tnow-self.Texecuting>self.durationExe then
+
+      -- Cancel mission if stop time passed.
+      self:Cancel()    
+    
+    elseif (Ntargets0>0 and Ntargets==0) then
+
+      -- Cancel mission if mission targets are gone (if there were any in the beginning).
+      -- TODO: I commented this out for some reason but I forgot why...
+      self:Cancel()
             
     end
     
@@ -2893,6 +2913,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterStarted(From, Event, To)
   self.status=AUFTRAG.Status.STARTED
+  self.Tstarted=timer.getAbsTime()
   self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
 
@@ -2903,6 +2924,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterExecuting(From, Event, To)
   self.status=AUFTRAG.Status.EXECUTING
+  self.Texecuting=timer.getAbsTime()
   self:T(self.lid..string.format("New mission status=%s", self.status))  
 end
 
@@ -3006,7 +3028,7 @@ function AUFTRAG:onafterCancel(From, Event, To)
     -- COMMANDER will cancel the mission.
     self.commander:MissionCancel(self)
 
-  elseif self.legions then
+  elseif self.legions and #self.legions>0 then
   
     -- Loop over all LEGIONs.
     for _,_legion in pairs(self.legions or {}) do

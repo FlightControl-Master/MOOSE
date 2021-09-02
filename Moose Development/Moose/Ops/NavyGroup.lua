@@ -539,13 +539,15 @@ function NAVYGROUP:Status(From, Event, To)
       local turning=tostring(self:IsTurning())
       local alt=self.position.y
       local speed=UTILS.MpsToKnots(self.velocity)
-      local speedExpected=UTILS.MpsToKnots(self:GetExpectedSpeed()) --UTILS.MpsToKnots(self.speedWp or 0)
+      local speedExpected=UTILS.MpsToKnots(self:GetExpectedSpeed())
       
       -- Waypoint stuff.
       local wpidxCurr=self.currentwp
       local wpuidCurr=self:GetWaypointUIDFromIndex(wpidxCurr) or 0
       local wpidxNext=self:GetWaypointIndexNext() or 0
       local wpuidNext=self:GetWaypointUIDFromIndex(wpidxNext) or 0
+      local wpN=#self.waypoints or 0
+      local wpF=tostring(self.passedfinalwp)
       local wpDist=UTILS.MetersToNM(self:GetDistanceToWaypoint() or 0)
       local wpETA=UTILS.SecondsToClock(self:GetTimeToWaypoint() or 0, true)
       
@@ -554,8 +556,8 @@ function NAVYGROUP:Status(From, Event, To)
       local als=self:GetAlarmstate() or 0
     
       -- Info text.
-      local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] (of %d) Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
-      fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, #self.waypoints or 0, wpDist, wpETA, speed, speedExpected, alt, self.heading, turning, freepath, intowind)
+      local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] /%d [%s]  Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
+      fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, wpDist, wpETA, speed, speedExpected, alt, self.heading, turning, freepath, intowind)
       self:I(self.lid..text)
             
     end
@@ -742,49 +744,57 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
   n=n or self:GetWaypointIndexNext()
   
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
-  self:_UpdateWaypointTasks(n)
+  --self:_UpdateWaypointTasks(n)
 
   -- Waypoints.
   local waypoints={}
   
-  -- Waypoint.
-  local wp=UTILS.DeepCopy(self.waypoints[n])  --Ops.OpsGroup#OPSGROUP.Waypoint
-    
-  -- Speed.
-  if Speed then
-    -- Take speed specified.
-    wp.speed=UTILS.KnotsToMps(Speed)
-  else
-    -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
-    if self.adinfinitum and wp.speed<0.1 then
-      wp.speed=UTILS.KmphToMps(self.speedCruise)
+  for i=n, #self.waypoints do
+  
+    -- Waypoint.
+    local wp=UTILS.DeepCopy(self.waypoints[i])  --Ops.OpsGroup#OPSGROUP.Waypoint
+      
+    -- Speed.
+    if Speed then
+      -- Take speed specified.
+      wp.speed=UTILS.KnotsToMps(Speed)
+    else
+      -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
+      if self.adinfinitum and wp.speed<0.1 then
+        wp.speed=UTILS.KmphToMps(self.speedCruise)
+      end
     end
-  end
+    
+    -- Depth.
+    if Depth then
+      wp.alt=-Depth
+    elseif self.depth then
+      wp.alt=-self.depth
+    else
+      -- Take default waypoint alt.
+      wp.alt=wp.alt or 0
+    end
+    
+    -- Current set speed in m/s.
+    if i==n then
+      self.speedWp=wp.speed
+      self.altWp=wp.alt
+    end
   
-  if Depth then
-    wp.alt=-Depth
-  elseif self.depth then
-    wp.alt=-self.depth
-  else
-    -- Take default waypoint alt.
-    wp.alt=wp.alt or 0
-  end
+    -- Add waypoint.
+    table.insert(waypoints, wp)
   
-  -- Current set speed in m/s.
-  self.speedWp=wp.speed
-
-  -- Add waypoint.
-  table.insert(waypoints, wp)
+  end
   
   -- Current waypoint.
-  local current=self:GetCoordinate():WaypointNaval(UTILS.MpsToKmph(self.speedWp), wp.alt)
+  local current=self:GetCoordinate():WaypointNaval(UTILS.MpsToKmph(self.speedWp), self.altWp)
   table.insert(waypoints, 1, current)  
 
   
   if self:IsEngaging() or not self.passedfinalwp then
 
     -- Debug info.
-    self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), wp.alt))
+    self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), self.altWp))
 
     -- Route group to all defined waypoints remaining.
     self:Route(waypoints)
