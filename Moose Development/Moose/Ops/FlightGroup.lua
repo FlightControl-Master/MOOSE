@@ -2275,7 +2275,7 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
         ---      
       
         -- Debug info.
-        self:T(self.lid..string.format("Flight (status=%s) did NOT pass the final waypoint yet ==> update route", self:GetState()))
+        self:T(self.lid..string.format("Flight (status=%s) did NOT pass the final waypoint yet ==> update route in -0.01 sec", self:GetState()))
         
         -- Update route.
         self:__UpdateRoute(-0.01)
@@ -3466,18 +3466,17 @@ end
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitude, Updateroute)
 
+  -- Create coordinate.
+  local coordinate=self:_CoordinateFromObject(Coordinate)  
+
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
-
-  if wpnumber>self.currentwp then
-    self:_PassedFinalWaypoint(false, "FLIGHTGROUP:AddWaypoint wpnumber>self.currentwp")
-  end
 
   -- Speed in knots.
   Speed=Speed or self.speedCruise
 
   -- Create air waypoint.
-  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
+  local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)

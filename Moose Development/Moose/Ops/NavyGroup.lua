@@ -146,8 +146,8 @@ function NAVYGROUP:New(group)
   self:AddTransition("*",             "CollisionWarning", "*")           -- Collision warning.
   self:AddTransition("*",             "ClearAhead",       "*")           -- Clear ahead.
   
-  self:AddTransition("*",             "Dive",             "Diving")      -- Command a submarine to dive.
-  self:AddTransition("Diving",        "Surface",          "Cruising")    -- Command a submarine to go to the surface.
+  self:AddTransition("*",             "Dive",             "*")           -- Command a submarine to dive.
+  self:AddTransition("Diving",        "Surface",          "*")           -- Command a submarine to go to the surface.
   
   ------------------------
   --- Pseudo Functions ---
@@ -1105,30 +1105,17 @@ end
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Updateroute)
 
-  -- Check if a coordinate was given or at least a positionable.
-  if not Coordinate:IsInstanceOf("COORDINATE") then
-    if Coordinate:IsInstanceOf("POSITIONABLE") or Coordinate:IsInstanceOf("ZONE_BASE") then
-      self:T(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE or ZONE. Trying to get coordinate")
-      Coordinate=Coordinate:GetCoordinate()
-    else
-      self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE or ZONE!")
-      return nil
-    end
-  end
+  -- Create coordinate.
+  local coordinate=self:_CoordinateFromObject(Coordinate)  
   
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
 
-  -- Check if final waypoint is still passed.  
-  if wpnumber>self.currentwp then
-    self:_PassedFinalWaypoint(false, "NAVYGROUP:AddWaypoint wpnumber>self.currentwp")
-  end
-  
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
 
   -- Create a Naval waypoint.
-  local wp=Coordinate:WaypointNaval(UTILS.KnotsToKmph(Speed), Depth)
+  local wp=coordinate:WaypointNaval(UTILS.KnotsToKmph(Speed), Depth)
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
@@ -1141,7 +1128,7 @@ function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Up
 
   -- Update route.
   if Updateroute==nil or Updateroute==true then
-    self:_CheckGroupDone(1)
+    self:__UpdateRoute(-0.01)
   end
   
   return waypoint

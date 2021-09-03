@@ -1150,16 +1150,12 @@ end
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation, Updateroute)
 
+  -- Create coordinate.
   local coordinate=self:_CoordinateFromObject(Coordinate)
 
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
 
-  -- Check if final waypoint is still passed.  
-  if wpnumber>self.currentwp then
-    self:_PassedFinalWaypoint(false, "ARMYGROUP.AddWaypoint: wpnumber>self.currentwp")
-  end
-  
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
 
@@ -1185,8 +1181,7 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   
   -- Update route.
   if Updateroute==nil or Updateroute==true then
-    self:UpdateRoute()
-    --self:_CheckGroupDone(1)
+    self:__UpdateRoute(-0.01)
   end
   
   return waypoint

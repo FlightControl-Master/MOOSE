@@ -402,6 +402,7 @@ OPSGROUP.TaskType={
 -- @field #number roaddist Distance to closest point on road.
 -- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
 -- @field #string formation Ground formation. Similar to action but on/off road.
+-- @field #number missionUID Mission UID (Auftragsnr) this waypoint belongs to.
 
 --- Cargo Carrier status.
 -- @type OPSGROUP.CarrierStatus
@@ -2502,6 +2503,18 @@ function OPSGROUP:RemoveWaypoint(wpindex)
 
     -- Number of waypoints before delete.
     local N=#self.waypoints
+    
+    -- Always keep at least one waypoint.
+    if N==1 then
+      self:E(self.lid..string.format("ERROR: Cannot remove waypoint with index=%d! It is the only waypoint and a group needs at least ONE waypoint", wpindex))
+      return self
+    end
+    
+    -- Check that wpindex is not larger than the number of waypoints in the table.
+    if wpindex>N then
+      self:E(self.lid..string.format("ERROR: Cannot remove waypoint with index=%d as there are only N=%d waypoints!", wpindex, N))
+      return self    
+    end
 
     -- Remove waypoint marker.
     local wp=self:GetWaypoint(wpindex)
@@ -2525,12 +2538,14 @@ function OPSGROUP:RemoveWaypoint(wpindex)
       -- Removed a FUTURE waypoint
       ---
 
-      -- TODO: patrol adinfinitum.
+      -- TODO: patrol adinfinitum. Not sure this is handled correctly. If patrol adinfinitum and we have now only one WP left, we should at least go back.
 
-      if self.currentwp>=n then
-        self:_PassedFinalWaypoint(true, "Removed FUTURE waypoint")
+      -- Could be that the waypoint we are currently moving to was the LAST waypoint. Then we now passed the final waypoint.
+      if self.currentwp>=n and not self.adinfinitum then
+        self:_PassedFinalWaypoint(true, "Removed FUTURE waypoint we are currently moving to and that was the LAST waypoint")
       end
 
+      -- Check if group is done.
       self:_CheckGroupDone(1)
 
     else
@@ -3199,6 +3214,9 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     --env.info("FF adding current task to queue")
     table.insert(self.taskqueue, Task)
   end
+  
+  -- Get mission of this task (if any).
+  local Mission=self:GetMissionByTaskID(self.taskcurrent)  
 
   if Task.dcstask.id=="Formation" then
 
@@ -3241,15 +3259,21 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- Speed and altitude.
     local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil
+    
+    local currUID=self:GetWaypointCurrent().uid
 
     -- New waypoint.
+    local wp=nil --#OPSGROUP.Waypoint
     if self.isFlightgroup then
-      FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+      wp=FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, currUID, Altitude)
     elseif self.isArmygroup then
-      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Formation)
     elseif self.isNavygroup then
-      NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+      wp=NAVYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Altitude)
     end
+    
+    -- Set mission UID.
+    wp.missionUID=Mission and Mission.auftragsnummer or nil
 
   elseif Task.dcstask.id=="ReconMission" then
 
@@ -3272,16 +3296,22 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil      
     
     --Coordinate:MarkToAll("Next waypoint", ReadOnly,Text)
+    
+    local currUID=self:GetWaypointCurrent().uid
 
     -- New waypoint.
+    local wp=nil --#OPSGROUP.Waypoint    
     if self.isFlightgroup then
-      FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+      wp=FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, currUID, Altitude)
     elseif self.isArmygroup then
-      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Formation)
     elseif self.isNavygroup then
-      NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+      wp=NAVYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Altitude)
     end
-
+    
+    -- Set mission UID.
+    wp.missionUID=Mission and Mission.auftragsnummer or nil
+    
   else
 
     -- If task is scheduled (not waypoint) set task.
@@ -3328,10 +3358,9 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
   end
   
-  -- Get mission of this task (if any).
-  local Mission=self:GetMissionByTaskID(self.taskcurrent)
+
+  -- Set AUFTRAG status.
   if Mission then
-    -- Set AUFTRAG status.
     self:MissionExecute(Mission)
   end
 
@@ -3922,7 +3951,15 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   -- Remove mission waypoint.
   local wpidx=Mission:GetGroupWaypointIndex(self)
   if wpidx then
-    self:RemoveWaypointByID(wpidx)
+    --self:RemoveWaypointByID(wpidx)
+  end
+  
+  for i=#self.waypoints,1,-1 do
+    local wp=self.waypoints[i] --#OPSGROUP.Waypoint
+    if wp.missionUID==Mission.auftragsnummer then
+    --table.remove(self.waypoints, i)
+      self:RemoveWaypoint(i)
+    end
   end
 
   -- Decrease patrol data.
@@ -4097,7 +4134,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     --waypointcoord:MarkToAll(string.format("Mission %s alt=%d m", mission:GetName(), waypointcoord.y))
 
     -- Add waypoint.
-    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, formation, false) ; waypoint.ismission=true
+    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, uid, formation, false) ; waypoint.missionUID=mission.auftragsnummer
 
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, waypoint, mission.name, mission.prio, mission.duration)
@@ -4109,9 +4146,10 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Set waypoint index.
     mission:SetGroupWaypointIndex(self, waypoint.uid)
     
+    -- Add egress waypoint.
     local egress=mission:GetMissionEgressCoord()
     if egress then
-      local waypoint=self:AddWaypoint(egress, SpeedToMission, nil, formation, false) ; waypoint.ismission=true
+      local waypointEgress=self:AddWaypoint(egress, SpeedToMission, waypoint.uid, formation, false) ; waypointEgress.missionUID=mission.auftragsnummer
     end
 
     ---
@@ -4287,6 +4325,12 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
   -- Get the current task.
   local task=self:GetTaskCurrent()
+  
+  -- Get the corresponding mission.
+  local mission=nil  --Ops.Auftrag#AUFTRAG
+  if task then
+    mission=self:GetMissionByTaskID(task.id)
+  end
 
   if task and task.dcstask.id=="PatrolZone" then
 
@@ -4302,14 +4346,18 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     -- Speed and altitude.
     local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)
     local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil
+    
+    local currUID=self:GetWaypointCurrent().uid
 
+    local wp=nil --#OPSGROUP.Waypoint
     if self.isFlightgroup then
-      FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+      wp=FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, currUID, Altitude)
     elseif self.isArmygroup then
-      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Formation)
     elseif self.isNavygroup then
-      NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+      wp=NAVYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Altitude)
     end
+    wp.missionUID=mission and mission.auftragsnummer or nil
     
   elseif task and task.dcstask.id=="ReconMission" then
   
@@ -4332,14 +4380,18 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       
       -- Debug.
       --Coordinate:MarkToAll("Recon Waypoint n="..tostring(n))
+      
+      local currUID=self:GetWaypointCurrent().uid
   
+      local wp=nil --#OPSGROUP.Waypoint
       if self.isFlightgroup then
-        FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+        wp=FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, currUID, Altitude)
       elseif self.isArmygroup then
-        ARMYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Formation)
+        wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Formation)
       elseif self.isNavygroup then
-        NAVYGROUP.AddWaypoint(self, Coordinate, Speed, AfterWaypointWithID, Altitude)
+        wp=NAVYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Altitude)
       end
+      wp.missionUID=mission and mission.auftragsnummer or nil
       
       -- Increase counter.
       task.dcstask.params.lastindex=task.dcstask.params.lastindex+1
@@ -4365,26 +4417,43 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     end
 
   else
+  
+    ---
+    -- No special task active
+    ---
 
     -- Apply tasks of this waypoint.
     local ntasks=self:_SetWaypointTasks(Waypoint)
 
     -- Get waypoint index.
-    local wpindex=self:GetWaypointIndex(Waypoint.uid)
+    local wpindex=self:GetWaypointIndex(Waypoint.uid)    
 
     -- Final waypoint reached?
     if wpindex==nil or wpindex==#self.waypoints then
 
       -- Set switch to true.
-      if not self.adinfinitum or #self.waypoints<=1 then
+      if self.adinfinitum then
+        if #self.waypoints<=1 then
+          self:_PassedFinalWaypoint(true, "PassingWaypoint: adinfinitum but only ONE WAYPOINT left")
+        else
+          local uid=self:GetWaypointID(1)
+          self:GotoWaypoint(uid)
+        end
+      else      
         self:_PassedFinalWaypoint(true, "PassingWaypoint: wpindex=nil or wpindex=#self.waypoints")
       end
 
     end
+    
+    -- Passing mission waypoint?
+    if Waypoint.missionUID then
+      self:T(self.lid.."FF passing mission waypoint")
+      --self:RemoveWaypointByID(Waypoint.uid)
+    end
 
     -- Check if all tasks/mission are done?
     -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
-    if ntasks==0 and (self:HasPassedFinalWaypoint()) then-- or self:IsArmygroup() or self:IsNavygroup()) then
+    if ntasks==0 and self:HasPassedFinalWaypoint() then
       self:_CheckGroupDone(0.01)
     end
 
@@ -7958,7 +8027,6 @@ function OPSGROUP:_CreateWaypoint(waypoint)
   local taskswp={}
 
   -- At each waypoint report passing.
-  --local TaskPassingWaypoint=self.group:TaskFunction("OPSGROUP._PassingWaypoint", self, waypoint.uid)
   local TaskPassingWaypoint=self:_SimpleTaskFunction("OPSGROUP._PassingWaypoint", waypoint.uid)
   table.insert(taskswp, TaskPassingWaypoint)
 
@@ -7988,7 +8056,7 @@ function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
 
   -- Now we obviously did not pass the final waypoint.
   if self.currentwp and wpnumber>self.currentwp then  
-    self:_PassedFinalWaypoint(false, "_AddWaypoint self.currentwp and wpnumber>self.currentwp")
+    self:_PassedFinalWaypoint(false, string.format("_AddWaypoint: wpnumber/index %d>%d self.currentwp", wpnumber, self.currentwp))
   end
   
 end
@@ -8017,7 +8085,7 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
     local wp=self.waypoints0[i] --DCS#Waypoint
 
     -- Coordinate of the waypoint.
-    local coordinate=COORDINATE:NewFromWaypoint(wp)   
+    local Coordinate=COORDINATE:NewFromWaypoint(wp)   
 
     -- Strange!
     wp.speed=wp.speed or 0
@@ -8025,14 +8093,25 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
     -- Speed at the waypoint.
     local speedknots=UTILS.MpsToKnots(wp.speed)
 
-    if i==1 then
+    -- Expected speed to the first waypoint.
+    if i<=2 then
       self.speedWp=wp.speed
     end
     
-    local waypoint=self:_CreateWaypoint(wp)
+    -- Speed in knots.
+    local Speed=UTILS.MpsToKnots(wp.speed)
     
-    self:_AddWaypoint(waypoint)
-
+    --local waypoint=self:_CreateWaypoint(wp)    
+    --self:_AddWaypoint(waypoint)
+    
+    if self:IsFlightgroup() then
+      FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, nil, Altitude, false)
+    elseif self:IsArmygroup() then
+      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, nil, wp.action, false)
+    elseif self:IsNavygroup() then
+      NAVYGROUP.AddWaypoint(self, Coordinate, Speed, nil, Depth, false)
+    end
+    
   end
 
   -- Debug info.
@@ -8052,6 +8131,7 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
       table.remove(self.waypoints, #self.waypoints)
     end
     
+    -- Set destination to homebase.
     if self.destbase==nil then
       self.destbase=self.homebase
     end
@@ -9890,7 +9970,8 @@ function OPSGROUP:_CoordinateFromObject(Object)
     else
       if Object:IsInstanceOf("POSITIONABLE") or Object:IsInstanceOf("ZONE_BASE") then
         self:T(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE or ZONE. Trying to get coordinate")
-        return Object:GetCoordinate()
+        local coord=Object:GetCoordinate()
+        return coord
       else
         self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE or ZONE!")
       end
