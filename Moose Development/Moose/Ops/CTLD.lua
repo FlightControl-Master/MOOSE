@@ -636,6 +636,7 @@ do
 --          my_ctld.smokedistance = 2000 -- Only smoke or flare zones if requesting player unit is this far away (in meters)
 --          my_ctld.suppressmessages = false -- Set to true if you want to script your own messages.
 --          my_ctld.repairtime = 300 -- Number of seconds it takes to repair a unit.
+--          my_ctld.cratecountry = country.id.GERMANY -- ID of crates. Don't forget to change this fitting to your coalition!
 -- 
 -- ## 2.1 User functions
 -- 
@@ -909,18 +910,18 @@ CTLD.UnitTypes = {
     ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12},
     ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12},
     ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8, length = 15},
-    ["Mi-8MTV2"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 22},
-    ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 22},
+    ["Mi-8MTV2"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15},
+    ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15},
     ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 15},
     ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
     ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
-    ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 28}, -- 19t cargo, 64 paratroopers. 
+    ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25}, -- 19t cargo, 64 paratroopers. 
     --Actually it's longer, but the center coord is off-center of the model.
 }
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.7a4"
+CTLD.version="0.1.7a5"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1054,6 +1055,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- time to repair a unit/group
   self.repairtime = 300
+  
+  -- country of crates spawned
+  self.cratecountry = country.id.GERMANY
   
   for i=1,100 do
     math.random()
@@ -1690,12 +1694,12 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
       dist = dist - (20 + math.random(1,10))
       local width = width / 2
       local Offy = math.random(-width,width)
-      self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType("container_cargo","Cargos",country.id.GERMANY)
+      self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType("container_cargo","Cargos",self.cratecountry)
       --:InitCoordinate(cratecoord)
       :InitLinkToUnit(Ship,dist,Offy,0)
       :Spawn(270,cratealias)
     else   
-    self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType("container_cargo","Cargos",country.id.GERMANY)
+    self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType("container_cargo","Cargos",self.cratecountry)
       :InitCoordinate(cratecoord)
       --:InitLinkToUnit(Unit,OffsetX,OffsetY,OffsetAngle)
       :Spawn(270,cratealias)
@@ -1712,13 +1716,13 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     end
     table.insert(self.Spawned_Cargo, realcargo)
   end
-    local text = string.format("Crates for %s have been positioned near you!",cratename)
-    if drop then
-      text = string.format("Crates for %s have been dropped!",cratename)
-      self:__CratesDropped(1, Group, Unit, droppedcargo)
-    end
-    self:_SendMessage(text, 10, false, Group) 
-    return self
+  local text = string.format("Crates for %s have been positioned near you!",cratename)
+  if drop then
+    text = string.format("Crates for %s have been dropped!",cratename)
+    self:__CratesDropped(1, Group, Unit, droppedcargo)
+  end
+  self:_SendMessage(text, 10, false, Group) 
+  return self
 end
 
 --- (Internal) Function to find and list nearby crates.
