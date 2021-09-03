@@ -904,22 +904,23 @@ CTLD.CargoZoneType = {
 -- @field #number cratelimit Number of crates transportable.
 -- @field #number trooplimit Number of troop units transportable.
 CTLD.UnitTypes = {
-    ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4},
-    ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2},
-    ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4},
-    ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2},
-    ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8},
-    ["Mi-8MTV2"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12},
-    ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12},
-    ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0},
-    ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8},
-    ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8},
-    ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64}, -- 19t cargo, 64 paratroopers
+    ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12},
+    ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12},
+    ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12},
+    ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12},
+    ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8, length = 15},
+    ["Mi-8MTV2"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 22},
+    ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 22},
+    ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 15},
+    ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
+    ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
+    ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 28}, -- 19t cargo, 64 paratroopers. 
+    --Actually it's longer, but the center coord is off-center of the model.
 }
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.7a3"
+CTLD.version="0.1.7a4"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1026,7 +1027,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.EngineerSearch = 2000 -- #number search distance for crates to build or repair
   
   -- setup
-  self.CrateDistance = 30 -- list/load crates in this radius
+  self.CrateDistance = 35 -- list/load crates in this radius
   self.ExtractFactor = 3.33 -- factor for troops extraction, i.e. CrateDistance * Extractfactor
   self.prefixes = Prefixes or {"Cargoheli"}
   --self.I({prefixes = self.prefixes})
@@ -1202,6 +1203,7 @@ function CTLD:_GetUnitCapabilities(Unit)
     capabilities.cratelimit = 0
     capabilities.trooplimit = 0
     capabilities.type = "generic"
+    capabilities.length = 20
   end
   return capabilities
 end
@@ -1665,20 +1667,18 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   -- loop crates needed
   for i=1,number do
     local cratealias = string.format("%s-%d", cratetemplate, math.random(1,100000))
-    local cratedistance = i*4 + 8
+    local cratedistance = (i-1)*2.5 + capabilities.length
+    if cratedistance > self.CrateDistance then cratedistance = self.CrateDistance end
+    local addon = 0
     if IsHerc then 
-      -- wider radius
-      cratedistance = i*4 + 12
+      -- spawn behind the Herc
+      addon = 180
     end
-    for i=1,50 do
-      math.random(90,270)
-    end
-    local rheading = math.floor(((math.random(90,270) * heading) + 1) / 360)
-    if not IsHerc then
-      rheading = rheading + 180 -- mirror for Helis
-    end
-    if rheading > 360 then rheading = rheading - 360 end -- catch > 360
-    local cratecoord = position:Translate(cratedistance,rheading)
+    -- altered heading logic
+    -- TODO: right standard deviation?
+    local randomheading = UTILS.RandomGaussian(0,30,-90,90,100)
+    randomheading = math.fmod((heading + randomheading + addon), 360)
+    local cratecoord = position:Translate(cratedistance,randomheading)
     local cratevec2 = cratecoord:GetVec2()
     self.CrateCounter = self.CrateCounter + 1
     if type(ship) == "string" then
@@ -1702,7 +1702,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     end
     local templ = cargotype:GetTemplates()
     local sorte = cargotype:GetType()
-    self.CargoCounter = self.CargoCounter +1
+    self.CargoCounter = self.CargoCounter + 1
     local realcargo = nil
     if drop then
       realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass)
@@ -1825,7 +1825,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
   local unitname = unit:GetName()
   -- see if this heli can load crates
   local unittype = unit:GetTypeName()
-  local capabilities = self:_GetUnitCapabilities(Unit)
+  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
   --local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
   local cancrates = capabilities.crates -- #boolean
   local cratelimit = capabilities.cratelimit -- #number
@@ -3017,11 +3017,12 @@ end
   --- User - Function to add/adjust unittype capabilities.
   -- @param #CTLD self
   -- @param #string Unittype The unittype to adjust. If passed as Wrapper.Unit#UNIT, it will search for the unit in the mission.
-  -- @param #boolean Cancrates Unit can load crates.
-  -- @param #boolean Cantroops Unit can load troops.
-  -- @param #number Cratelimit Unit can carry number of crates.
-  -- @param #number Trooplimit Unit can carry number of troops.
-  function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit)
+  -- @param #boolean Cancrates Unit can load crates. Default false.
+  -- @param #boolean Cantroops Unit can load troops. Default false.
+  -- @param #number Cratelimit Unit can carry number of crates. Default 0.
+  -- @param #number Trooplimit Unit can carry number of troops. Default 0.
+  -- @param #number Length Unit lenght (in mteres) for the load radius. Default 20.
+  function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length)
     self:T(self.lid .. " UnitCapabilities")
     local unittype =  nil
     local unit = nil
@@ -3040,6 +3041,7 @@ end
     capabilities.troops = Cantroops or false
     capabilities.cratelimit = Cratelimit or  0
     capabilities.trooplimit = Trooplimit or 0
+    capabilities.length = Length or 20
     self.UnitTypes[unittype] = capabilities
     return self
   end
