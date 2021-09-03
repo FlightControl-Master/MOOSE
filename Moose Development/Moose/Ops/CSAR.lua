@@ -233,7 +233,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.10r3"
+CSAR.version="0.1.10r4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -790,7 +790,7 @@ function CSAR:_EventHandler(EventData)
           if self:_DoubleEjection(_unitname) then
             return
           end
-          self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!", self.coalition, self.messageTime)         
+          --self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!", self.coalition, self.messageTime)         
       else
           self:T(self.lid .. " Pilot has not taken off, ignore")
       end
