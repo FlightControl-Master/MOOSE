@@ -50,8 +50,8 @@
 --
 -- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) and A-4E community mod as aircraft and the USS John C. Stennis as carrier.
 --
--- The AV-8B Harrier and the USS Tarawa, USS America and Juan Carlos I are WIP. Those two can only be used together, i.e. these ships are the only carriers the harrier is supposed to land on and
--- the no other fixed wing aircraft (human or AI controlled) are supposed to land on these ships. Currently only Case I is supported. Case II/III take slightly different steps from the CVN carrier.
+-- The AV-8B Harrier, the USS Tarawa, USS America and Juan Carlos I are WIP. The AV-8B harrier and the LHA's and LHD can only be used together, i.e. these ships are the only carriers the harrier is supposed to land on and
+-- no other fixed wing aircraft (human or AI controlled) are supposed to land on these ships. Currently only Case I is supported. Case II/III take slightly different steps from the CVN carrier.
 -- However, the two Case II/III pattern are very similar so this is not a big drawback.
 --
 -- Heatblur's mighty F-14B Tomcat has been added (March 13th 2019) as well. Same goes for the A version.
@@ -298,8 +298,8 @@
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case1_Landing.png)
 --
 -- Once the aircraft reaches the Initial, the landing pattern begins. The important steps of the pattern are shown in the image above.
--- The AV-8B Harrier pattern is very similar, the only differences are as there is no angled deck there is no wake check. from the ninety you wil fly strait in to 26 ft to port of the tram line.
--- The aim is to arrive abeam the landing spot in a stable hover at 120 ft with forward speed matched to the boat. From there the LSO will call "cleared to land". You then cross to the tram line at the designated landing spot at land vertcally. 
+-- The AV-8B Harrier pattern is very similar, the only differences are as there is no angled deck there is no wake check. from the ninety you wil fly a straight approach offset 26 ft to port (left) of the tram line.
+-- The aim is to arrive abeam the landing spot in a stable hover at 120 ft with forward speed matched to the boat. From there the LSO will call "cleared to land". You then level cross to the tram line at the designated landing spot at land vertcally. 
 --
 --
 -- ## CASE III
@@ -1261,7 +1261,7 @@ AIRBOSS = {
 
 --- Aircraft types capable of landing on carrier (human+AI).
 -- @type AIRBOSS.AircraftCarrier
--- @field #string AV8B AV-8B Night Harrier. Works only with the USS Tarawa.
+-- @field #string AV8B AV-8B Night Harrier. Works only with the USS Tarawa, USS America and Juan Carlos I.
 -- @field #string A4EC A-4E Community mod.
 -- @field #string HORNET F/A-18C Lot 20 Hornet by Eagle Dynamics.
 -- @field #string F14A F-14A by Heatblur.
@@ -1429,8 +1429,8 @@ AIRBOSS.PatternStep={
 -- @field #string IM "IM": In the middle.
 -- @field #string IC "IC": In close.
 -- @field #string AR "AR": At the ramp.
--- @field #string AL "AL": Abeam landing position (Tarawa).
--- @field #string LC "LC": Level crossing (Tarawa).
+-- @field #string AL "AL": Abeam landing position (V/STOL).
+-- @field #string LC "LC": Level crossing (V/STOL).
 -- @field #string IW "IW": In the wires.
 AIRBOSS.GroovePos={
   X0="X0",
@@ -12204,8 +12204,13 @@ end
 -- * 12-21 seconds: OK (15-18 is ideal)
 -- * 22-24 seconds: Fair "(OK)
 -- * > 24 seconds: No Grade "--"
---
+-- 
 -- If you manage to be between 16.4 and and 16.6 seconds, you will even get and okay underline "\_OK\_".
+-- No groove time for Harrier on LHA, LHD set to Tgroove Unicorn as starting point to allow possible _OK_ 5.0.
+-- If time in the AV-8B 
+--
+-- * < 90 seconds: OK V/STOL
+-- * > 91 Seconds: SLOW V/STOL (Early hover stop selection)
 --
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
@@ -12224,6 +12229,10 @@ function AIRBOSS:_EvalGrooveTime(playerData)
     grade="OK Groove"
   elseif t<=24 then
     grade="(LIG)"
+  elseif t<90 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then -- VSTOL Operations with AV-8B
+    grade="OK V/STOL Groove"
+  elseif t>=91 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then -- VSTOL Early Hover stop selection slow to Abeam LDG Spot AV-8B
+    grade="SLOW V/STOL Groove"
   else
     grade="LIG"
   end
@@ -12231,6 +12240,10 @@ function AIRBOSS:_EvalGrooveTime(playerData)
   -- The unicorn!
   if t>=16.4 and t<=16.6 then
     grade="_OK_"
+  end
+  -- V/STOL Unicorn!
+  if aircrafttype~=AIRBOSS.AircraftCarrier.AV8B and (t>=65.0 and t<=75.0) then
+    grade="_OK_ V/STOL"
   end
 
   return grade
@@ -12249,7 +12262,7 @@ function AIRBOSS:_LSOgrade(playerData)
     return select(2, string.gsub(base, pattern, ""))
   end
 
-  -- Analyse flight data and conver to LSO text.
+  -- Analyse flight data and convert to LSO text.
   local GXX,nXX=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.XX)
   local GIM,nIM=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.IM)
   local GIC,nIC=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.IC)
@@ -12258,19 +12271,20 @@ function AIRBOSS:_LSOgrade(playerData)
   -- Put everything together.
   local G=GXX.." "..GIM.." ".." "..GIC.." "..GAR
 
-  -- Count number of minor, normal and major deviations.
+  -- Count number of minor, normal and major deviations. TODO - work on Harrier counts due slower approach speed.
   local N=nXX+nIM+nIC+nAR
   local nL=count(G, '_')/2
   local nS=count(G, '%(')
   local nN=N-nS-nL
 
-  -- Groove time 15-18.99 sec for a unicorn.
+  -- Groove time 15-18.99 sec for a unicorn. Or 65-75 for V/STOL unicorn.
   local Tgroove=playerData.Tgroove
   local TgrooveUnicorn=Tgroove and (Tgroove>=15.0 and Tgroove<=18.99) or false
-
+  local TgrooveVstolUnicorn=Tgroove and (Tgroove>=65.0 and Tgroove<=75.0)and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B or false
+  
   local grade
   local points
-  if N==0 and TgrooveUnicorn then
+  if N==0 and (TgrooveUnicorn or TgrooveVstolUnicorn ) then
     -- No deviations, should be REALLY RARE!
     grade="_OK_"
     points=5.0
@@ -12282,6 +12296,22 @@ function AIRBOSS:_LSOgrade(playerData)
       points=2.0
     elseif nN>0 then
       -- No larger but average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
+      grade="(OK)"
+      points=3.0
+    else
+      -- Only minor corrections
+      grade="OK"
+      points=4.0
+    end
+	  -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe. (WIP requires feedback)
+      -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
+	if nL>3 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then 
+      -- Larger deviations ==> "No grade" 2.0 points.
+      grade="--"
+      points=2.0
+	  
+	elseif nN>3 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then
+      -- Only average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
       grade="(OK)"
       points=3.0
     else
