@@ -830,35 +830,53 @@ function COHORT:RecruitAssets(Mission, Npayloads)
           ---
         
           local flightgroup=asset.flightgroup
-        
-          -- Firstly, check if it has the right payload.
-          if self:CheckMissionCapability(Mission.type, asset.payload.capabilities) and flightgroup and flightgroup:IsAlive() then
+          
+          
+          if flightgroup and flightgroup:IsAlive() then
         
             -- Assume we are ready and check if any condition tells us we are not.
             local combatready=true
-    
-            if Mission.type==AUFTRAG.Type.INTERCEPT then
-              combatready=flightgroup:CanAirToAir()
-            else
-              local excludeguns=Mission.type==AUFTRAG.Type.BOMBING or Mission.type==AUFTRAG.Type.BOMBRUNWAY or Mission.type==AUFTRAG.Type.BOMBCARPET or Mission.type==AUFTRAG.Type.SEAD or Mission.type==AUFTRAG.Type.ANTISHIP
-              combatready=flightgroup:CanAirToGround(excludeguns)
-            end
-            
-            -- No more attacks if fuel is already low. Safety first!
-            if flightgroup:IsFuelLow() then
-              combatready=false
-            end
-            
+                
             -- Check if in a state where we really do not want to fight any more.
             if flightgroup:IsFlightgroup() then
+            
+              ---
+              -- FLIGHTGROUP combat ready?
+              ---
+            
+              -- No more attacks if fuel is already low. Safety first!
+              if flightgroup:IsFuelLow() then
+                combatready=false
+              end
+                        
+              if Mission.type==AUFTRAG.Type.INTERCEPT and not flightgroup:CanAirToAir() then
+                combatready=false
+              else
+                local excludeguns=Mission.type==AUFTRAG.Type.BOMBING or Mission.type==AUFTRAG.Type.BOMBRUNWAY or Mission.type==AUFTRAG.Type.BOMBCARPET or Mission.type==AUFTRAG.Type.SEAD or Mission.type==AUFTRAG.Type.ANTISHIP
+                if excludeguns and not flightgroup:CanAirToGround(excludeguns) then
+                  combatready=false
+                end 
+              end
+                        
               if flightgroup:IsHolding() or flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() then
                 combatready=false
-              end          
+              end
+              if asset.payload and not self:CheckMissionCapability(Mission.type, asset.payload.capabilities) then
+                combatready=false
+              end
+              
             else
+
+              ---
+              -- ARMY/NAVYGROUP combat ready?
+              ---
+            
               if flightgroup:IsRearming() or flightgroup:IsRetreating() or flightgroup:IsReturning() then
                 combatready=false
               end
+              
             end
+            
             -- Applies to all opsgroups.
             if flightgroup:IsDead() or flightgroup:IsStopped() then
               combatready=false
