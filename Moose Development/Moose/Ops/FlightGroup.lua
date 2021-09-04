@@ -1970,9 +1970,10 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Waypoint number.
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
 -- @return #boolean Transision allowed?
-function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
+function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
 
   -- Is transition allowed? We assume yes until proven otherwise.
   local allowed=true
@@ -2012,8 +2013,8 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
     allowed=false
   end
 
-  local N=n or self.currentwp+1
-  if not N or N<1 then
+  local Nn=n or self.currentwp+1
+  if not Nn or Nn<1 then
     self:E(self.lid.."Update route denied because N=nil or N<1")
     trepeat=-5
     allowed=false
@@ -2071,14 +2072,16 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Waypoint number. Default is next waypoint.
-function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n, N)
 
   -- Update route from this waypoint number onwards.
   n=n or self.currentwp+1
 
-  -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
-  self:_UpdateWaypointTasks(n)
+  -- Max index.
+  N=N or #self.waypoints  
+  N=math.min(N, #self.waypoints)
 
   -- Waypoints.
   local wp={}
@@ -2100,10 +2103,8 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   local current=self.group:GetCoordinate():WaypointAir(COORDINATE.WaypointAltType.BARO, waypointType, waypointAction, speed, true, nil, {}, "Current")
   table.insert(wp, current)
 
-  local Nwp=self.waypoints and #self.waypoints or 0
-
   -- Add remaining waypoints to route.
-  for i=n, Nwp do
+  for i=n, N do
     table.insert(wp, self.waypoints[i])
   end
 

@@ -710,12 +710,13 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Waypoint number. Default is next waypoint.
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
 -- @param #number Speed Speed in knots to the next waypoint.
 -- @param #number Depth Depth in meters to the next waypoint.
 function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
   if self:IsWaiting() then
-    self:E(self.lid.."Update route denied. Group is WAIRING!")
+    self:E(self.lid.."Update route denied. Group is WAITING!")
     return false
   elseif self:IsInUtero() then
     self:E(self.lid.."Update route denied. Group is INUTERO!")
@@ -735,21 +736,24 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Waypoint number. Default is next waypoint.
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
 -- @param #number Speed Speed in knots to the next waypoint.
 -- @param #number Depth Depth in meters to the next waypoint.
-function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
+function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
 
   -- Update route from this waypoint number onwards.
   n=n or self:GetWaypointIndexNext()
   
-  -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
-  --self:_UpdateWaypointTasks(n)
+  -- Max index.
+  N=N or #self.waypoints  
+  N=math.min(N, #self.waypoints)
+  
 
   -- Waypoints.
   local waypoints={}
   
-  for i=n, #self.waypoints do
+  for i=n, N do
   
     -- Waypoint.
     local wp=UTILS.DeepCopy(self.waypoints[i])  --Ops.OpsGroup#OPSGROUP.Waypoint
@@ -956,7 +960,8 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
       -- ID of current waypoint.
       local uid=self:GetWaypointCurrent().uid
   
-      self:AddWaypoint(self.intowind.Coordinate, self:GetSpeedCruise(), uid)      
+      -- Add temp waypoint.
+      local wp=self:AddWaypoint(self.intowind.Coordinate, self:GetSpeedCruise(), uid) ; wp.temp=true
 
     else
     
@@ -966,11 +971,11 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
     
       -- Next waypoint index and speed.
       local indx=self:GetWaypointIndexNext()
-      local speed=self:GetWaypointSpeed(indx)
+      local speed=self:GetSpeedToWaypoint(indx)
       
       -- Update route.
       self:T(self.lid..string.format("FF Turn Into Wind Over ==> Next WP Index=%d at %.1f knots via update route!", indx, speed))
-      self:__UpdateRoute(-1, indx, speed)
+      self:__UpdateRoute(-1, indx, nil, speed)
       
     end
     
@@ -1018,7 +1023,7 @@ function NAVYGROUP:onafterCruise(From, Event, To, Speed)
   -- No set depth.
   self.depth=nil
 
-  self:__UpdateRoute(-1, nil, Speed)
+  self:__UpdateRoute(-1, nil, nil, Speed)
 
 end
 
@@ -1037,7 +1042,7 @@ function NAVYGROUP:onafterDive(From, Event, To, Depth, Speed)
   
   self.depth=Depth
   
-  self:__UpdateRoute(-1, nil, Speed)
+  self:__UpdateRoute(-1, nil, nil, Speed)
 
 end
 
@@ -1051,7 +1056,7 @@ function NAVYGROUP:onafterSurface(From, Event, To, Speed)
 
   self.depth=0
 
-  self:__UpdateRoute(-1, nil, Speed)
+  self:__UpdateRoute(-1, nil, nil, Speed)
 
 end
 

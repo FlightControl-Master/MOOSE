@@ -589,10 +589,11 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Waypoint number. Default is next waypoint.
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
 -- @param #number Speed Speed in knots. Default cruise speed.
 -- @param #number Formation Formation of the group.
-function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Formation)
+function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
   if self:IsWaiting() then
     self:E(self.lid.."Update route denied. Group is WAIRING!")
     return false
@@ -614,20 +615,22 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Waypoint number. Default is next waypoint.
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
 -- @param #number Speed Speed in knots. Default cruise speed.
 -- @param #number Formation Formation of the group.
-function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
+function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
   -- Debug info.
-  local text=string.format("Update route state=%s: n=%s, Speed=%s, Formation=%s", self:GetState(), tostring(n), tostring(Speed), tostring(Formation))
+  local text=string.format("Update route state=%s: n=%s, N=%s, Speed=%s, Formation=%s", self:GetState(), tostring(n), tostring(N), tostring(Speed), tostring(Formation))
   self:T(self.lid..text)
 
   -- Update route from this waypoint number onwards.
   n=n or self:GetWaypointIndexNext(self.adinfinitum)
   
-  -- Update waypoint tasks, i.e. inject WP tasks into waypoint table. OBSOLETE!
-  --self:_UpdateWaypointTasks(n)
+  -- Max index.
+  N=N or #self.waypoints  
+  N=math.min(N, #self.waypoints)
   
   -- Waypoints.
   local waypoints={}
@@ -740,26 +743,13 @@ function ARMYGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed, Formation)
 
   local n=self:GetWaypointIndex(UID)
   
-  --env.info(string.format("FF AG Goto waypoint UID=%s Index=%s, Speed=%s, Formation=%s", tostring(UID), tostring(n), tostring(Speed), tostring(Formation)))
-  
   if n then
-  
-    -- TODO: switch to re-enable waypoint tasks.
-    if false then
-      local tasks=self:GetTasksWaypoint(n)
-      
-      for _,_task in pairs(tasks) do
-        local task=_task --Ops.OpsGroup#OPSGROUP.Task
-        task.status=OPSGROUP.TaskStatus.SCHEDULED
-      end
-      
-    end
     
     -- Speed to waypoint.
     Speed=Speed or self:GetSpeedToWaypoint(n)
         
     -- Update the route.
-    self:UpdateRoute(n, Speed, Formation)
+    self:__UpdateRoute(-0.01, n, nil, Speed, Formation)
     
   end
   
@@ -1132,7 +1122,7 @@ function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
   self.Twaiting=nil
   self.dTwait=nil
 
-  self:__UpdateRoute(-1, nil, Speed, Formation)
+  self:__UpdateRoute(-1, nil, nil, Speed, Formation)
 
 end
 

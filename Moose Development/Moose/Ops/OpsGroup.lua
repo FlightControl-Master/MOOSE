@@ -2411,7 +2411,7 @@ function OPSGROUP:GetSpeedToWaypoint(indx)
 
   local speed=self:GetWaypointSpeed(indx)
 
-  if speed<=0.1 then
+  if speed<=0.01 then
     speed=self:GetSpeedCruise()
   end
 
@@ -4333,6 +4333,10 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   end
 
   if task and task.dcstask.id=="PatrolZone" then
+  
+    ---
+    -- SPECIAL TASK: Patrol Zone
+    ---
 
     -- Remove old waypoint.
     self:RemoveWaypointByID(Waypoint.uid)
@@ -4360,6 +4364,10 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     wp.missionUID=mission and mission.auftragsnummer or nil
     
   elseif task and task.dcstask.id=="ReconMission" then
+
+    ---
+    -- SPECIAL TASK: Recon Mission
+    ---
   
     local target=task.dcstask.params.target --Ops.Target#TARGET
     
@@ -4412,7 +4420,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       end
       
       -- Final zone reached ==> task done.
-      self:TaskDone(task)            
+      self:TaskDone(task)
       
     end
 
@@ -4431,24 +4439,41 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     -- Final waypoint reached?
     if wpindex==nil or wpindex==#self.waypoints then
 
-      -- Set switch to true.
+      -- Ad infinitum?
       if self.adinfinitum then
+      
+        ---
+        -- Ad Infinitum and last waypoint reached.
+        ---
+      
         if #self.waypoints<=1 then
+          -- Only one waypoint. Ad infinitum does not really make sense. However, another waypoint could be added later...
           self:_PassedFinalWaypoint(true, "PassingWaypoint: adinfinitum but only ONE WAYPOINT left")
         else
-          local uid=self:GetWaypointID(1)
-          self:GotoWaypoint(uid)
-        end
-      else      
-        self:_PassedFinalWaypoint(true, "PassingWaypoint: wpindex=nil or wpindex=#self.waypoints")
-      end
+          
+          -- Looks like the passing waypoint function is triggered over and over again if the group is near the final waypoint.
+          -- So the only good solution is to guide the group away from that waypoint and then update the route.
 
+          -- Get first waypoint.
+          local wp1=self:GetWaypointByIndex(1)
+          
+          -- Get a waypoint 
+          local Coordinate=Waypoint.coordinate:GetIntermediateCoordinate(wp1.coordinate, 0.1)
+
+          -- Detour to the temp waypoint. When reached, the normal route is resumed.
+          self:Detour(Coordinate, self.speedCruise, nil, true)
+          
+        end
+      else
+        -- Final waypoint reached.
+        self:_PassedFinalWaypoint(true, "PassingWaypoint: wpindex=#self.waypoints (or wpindex=nil)")
+      end
+      
     end
     
     -- Passing mission waypoint?
     if Waypoint.missionUID then
       self:T(self.lid.."FF passing mission waypoint")
-      --self:RemoveWaypointByID(Waypoint.uid)
     end
 
     -- Check if all tasks/mission are done?
@@ -4537,7 +4562,7 @@ function OPSGROUP:onafterPassedFinalWaypoint(From, Event, To)
   self:T(self.lid..string.format("Group passed final waypoint"))
   
   -- Check if group is done? No tasks mission running.
-  self:_CheckGroupDone()
+  --self:_CheckGroupDone()
   
 end
 
@@ -4547,28 +4572,22 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #number UID The goto waypoint unique ID.
-function OPSGROUP:onafterGotoWaypoint(From, Event, To, UID)
+-- @param #number Speed (Optional) Speed to waypoint in knots.
+function OPSGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed)
 
   local n=self:GetWaypointIndex(UID)
 
   if n then
-
-    -- TODO: Switch to re-enable waypoint tasks?
-    if false then
-      local tasks=self:GetTasksWaypoint(n)
-
-      for _,_task in pairs(tasks) do
-        local task=_task --#OPSGROUP.Task
-        task.status=OPSGROUP.TaskStatus.SCHEDULED
-      end
-
-    end
-
-    local Speed=self:GetSpeedToWaypoint(n)
+  
+    -- Speed to waypoint.
+    Speed=Speed or self:GetSpeedToWaypoint(n)
+    
+    -- Debug message
+    self:T(self.lid..string.format("Goto Waypoint UID=%d index=%d from %d at speed %.1f knots", UID, n, self.currentwp, Speed))    
 
     -- Update the route.
-    self:__UpdateRoute(-1, n, Speed)
-
+    self:__UpdateRoute(-0.01, n, nil, Speed)
+    
   end
 
 end
@@ -6826,16 +6845,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
   else
 
     -- Coord where the carrier goes to unload.
-    local Coordinate=nil --Core.Point#COORDINATE
-
-    if self.cargoTransport.carrierGroup and self.cargoTransport.carrierGroup:IsLoading() then
-      --TODO: What the heck is self.cargoTransport.carrierGroup and where is this set?!
-      -- Coordinate of the new carrier.
-      Coordinate=self.cargoTransport.carrierGroup:GetCoordinate()
-    else
-      -- Get a random coordinate in the deploy zone and let the carrier go there.
-      Coordinate=Zone:GetRandomCoordinate()
-    end
+    local Coordinate=Zone:GetRandomCoordinate() --Core.Point#COORDINATE
 
     -- Add waypoint.
     if self:IsFlightgroup() then
