@@ -50,8 +50,8 @@
 --
 -- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) and A-4E community mod as aircraft and the USS John C. Stennis as carrier.
 --
--- The AV-8B Harrier and the USS Tarawa, USS America and Juan Carlos I are WIP. Those two can only be used together, i.e. these ships are the only carriers the harrier is supposed to land on and
--- the no other fixed wing aircraft (human or AI controlled) are supposed to land on these ships. Currently only Case I is supported. Case II/III take slightly different steps from the CVN carrier.
+-- The AV-8B Harrier, the USS Tarawa, USS America and Juan Carlos I are WIP. The AV-8B harrier and the LHA's and LHD can only be used together, i.e. these ships are the only carriers the harrier is supposed to land on and
+-- no other fixed wing aircraft (human or AI controlled) are supposed to land on these ships. Currently only Case I is supported. Case II/III take slightly different steps from the CVN carrier.
 -- However, the two Case II/III pattern are very similar so this is not a big drawback.
 --
 -- Heatblur's mighty F-14B Tomcat has been added (March 13th 2019) as well. Same goes for the A version.
@@ -298,8 +298,8 @@
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case1_Landing.png)
 --
 -- Once the aircraft reaches the Initial, the landing pattern begins. The important steps of the pattern are shown in the image above.
--- The AV-8B Harrier pattern is very similar, the only differences are as there is no angled deck there is no wake check. from the ninety you wil fly strait in to 26 ft to port of the tram line.
--- The aim is to arrive abeam the landing spot in a stable hover at 120 ft with forward speed matched to the boat. From there the LSO will call "cleared to land". You then cross to the tram line at the designated landing spot at land vertcally. 
+-- The AV-8B Harrier pattern is very similar, the only differences are as there is no angled deck there is no wake check. from the ninety you wil fly a straight approach offset 26 ft to port (left) of the tram line.
+-- The aim is to arrive abeam the landing spot in a stable hover at 120 ft with forward speed matched to the boat. From there the LSO will call "cleared to land". You then level cross to the tram line at the designated landing spot at land vertcally. 
 --
 --
 -- ## CASE III
@@ -1261,7 +1261,7 @@ AIRBOSS = {
 
 --- Aircraft types capable of landing on carrier (human+AI).
 -- @type AIRBOSS.AircraftCarrier
--- @field #string AV8B AV-8B Night Harrier. Works only with the USS Tarawa.
+-- @field #string AV8B AV-8B Night Harrier. Works only with the USS Tarawa, USS America and Juan Carlos I.
 -- @field #string A4EC A-4E Community mod.
 -- @field #string HORNET F/A-18C Lot 20 Hornet by Eagle Dynamics.
 -- @field #string F14A F-14A by Heatblur.
@@ -1429,8 +1429,8 @@ AIRBOSS.PatternStep={
 -- @field #string IM "IM": In the middle.
 -- @field #string IC "IC": In close.
 -- @field #string AR "AR": At the ramp.
--- @field #string AL "AL": Abeam landing position (Tarawa).
--- @field #string LC "LC": Level crossing (Tarawa).
+-- @field #string AL "AL": Abeam landing position (V/STOL).
+-- @field #string LC "LC": Level crossing (V/STOL).
 -- @field #string IW "IW": In the wires.
 AIRBOSS.GroovePos={
   X0="X0",
