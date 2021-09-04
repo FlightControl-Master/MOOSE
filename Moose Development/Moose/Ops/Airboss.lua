@@ -12204,9 +12204,13 @@ end
 -- * 12-21 seconds: OK (15-18 is ideal)
 -- * 22-24 seconds: Fair "(OK)
 -- * > 24 seconds: No Grade "--"
---
+-- 
 -- If you manage to be between 16.4 and and 16.6 seconds, you will even get and okay underline "\_OK\_".
 -- No groove time for Harrier on LHA, LHD set to Tgroove Unicorn as starting point to allow possible _OK_ 5.0.
+-- If time in the AV-8B 
+--
+-- * < 90 seconds: OK V/STOL
+-- * > 91 Seconds: SLOW V/STOL (Early hover stop selection)
 --
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
@@ -12225,8 +12229,10 @@ function AIRBOSS:_EvalGrooveTime(playerData)
     grade="OK Groove"
   elseif t<=24 then
     grade="(LIG)"
-  elseif t>=25 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then -- VSTOL Operations with AV-8B
+  elseif t<90 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then -- VSTOL Operations with AV-8B
     grade="OK V/STOL Groove"
+  elseif t>=91 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then -- VSTOL Early Hover stop selection slow to Abeam LDG Spot AV-8B
+    grade="SLOW V/STOL Groove"
   else
     grade="LIG"
   end
@@ -12234,6 +12240,10 @@ function AIRBOSS:_EvalGrooveTime(playerData)
   -- The unicorn!
   if t>=16.4 and t<=16.6 then
     grade="_OK_"
+  end
+  -- V/STOL Unicorn!
+  if aircrafttype~=AIRBOSS.AircraftCarrier.AV8B and (t>=65.0 and t<=75.0) then
+    grade="_OK_ V/STOL"
   end
 
   return grade
@@ -12267,14 +12277,15 @@ function AIRBOSS:_LSOgrade(playerData)
   local nS=count(G, '%(')
   local nN=N-nS-nL
 
-  -- Groove time 15-18.99 sec for a unicorn.
+  -- Groove time 15-18.99 sec for a unicorn. Or 65-75 for V/STOL unicorn.
   local Tgroove=playerData.Tgroove
   local TgrooveUnicorn=Tgroove and (Tgroove>=15.0 and Tgroove<=18.99) or false
-
+  local TgrooveVstolUnicorn=Tgroove and (Tgroove>=65.0 and Tgroove<=75.0)and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B or false
+  
   local grade
   local points
-  if N==0 and (TgrooveUnicorn or aircrafttype~=AIRBOSS.AircraftCarrier.AV8B) then
-    -- No deviations, should be REALLY RARE! Grove time for AV-8B Harrier not required, possible to still get Unicorn.
+  if N==0 and (TgrooveUnicorn or TgrooveVstolUnicorn ) then
+    -- No deviations, should be REALLY RARE!
     grade="_OK_"
     points=5.0
     G="Unicorn"
@@ -12294,12 +12305,12 @@ function AIRBOSS:_LSOgrade(playerData)
     end
 	  -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe. (WIP requires feedback)
       -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
-	if nL>2 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then 
+	if nL>3 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then 
       -- Larger deviations ==> "No grade" 2.0 points.
       grade="--"
       points=2.0
 	  
-	elseif nN>2 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then
+	elseif nN>3 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then
       -- Only average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
       grade="(OK)"
       points=3.0
