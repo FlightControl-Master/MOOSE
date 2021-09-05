@@ -12219,7 +12219,7 @@ function AIRBOSS:_EvalGrooveTime(playerData)
 
   -- Time in groove.
   local t=playerData.Tgroove
-
+  
   local grade=""
   if t<9 then
     grade="_NESA_"
@@ -12229,20 +12229,24 @@ function AIRBOSS:_EvalGrooveTime(playerData)
     grade="OK Groove"
   elseif t<=24 then
     grade="(LIG)"
-  elseif t<90 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then -- VSTOL Operations with AV-8B
+  -- Time in groove for AV-8B
+  elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B and t<55 then -- VSTOL Late Hover stop selection too fast to Abeam LDG Spot AV-8B.
+    grade="FAST V/STOL Groove"
+  elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B and t<90 then -- VSTOL Operations with AV-8B.
     grade="OK V/STOL Groove"
-  elseif t>=91 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then -- VSTOL Early Hover stop selection slow to Abeam LDG Spot AV-8B
+  elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B and t>=91 then -- VSTOL Early Hover stop selection slow to Abeam LDG Spot AV-8B.
     grade="SLOW V/STOL Groove"
   else
     grade="LIG"
   end
-
+    
   -- The unicorn!
   if t>=16.4 and t<=16.6 then
     grade="_OK_"
   end
+  
   -- V/STOL Unicorn!
-  if aircrafttype~=AIRBOSS.AircraftCarrier.AV8B and (t>=65.0 and t<=75.0) then
+  if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and (t>=65.0 and t<=75.0) then
     grade="_OK_ V/STOL"
   end
 
@@ -12277,10 +12281,10 @@ function AIRBOSS:_LSOgrade(playerData)
   local nS=count(G, '%(')
   local nN=N-nS-nL
 
-  -- Groove time 15-18.99 sec for a unicorn. Or 65-75 for V/STOL unicorn.
+  -- Groove time 15-18.99 sec for a unicorn. Or 65-70 for V/STOL unicorn.
   local Tgroove=playerData.Tgroove
   local TgrooveUnicorn=Tgroove and (Tgroove>=15.0 and Tgroove<=18.99) or false
-  local TgrooveVstolUnicorn=Tgroove and (Tgroove>=65.0 and Tgroove<=75.0)and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B or false
+  local TgrooveVstolUnicorn=Tgroove and (Tgroove>=65.0 and Tgroove<=70.0)and playerData.actype==AIRBOSS.AircraftCarrier.AV8B or false
   
   local grade
   local points
@@ -12298,28 +12302,24 @@ function AIRBOSS:_LSOgrade(playerData)
       -- No larger but average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
       grade="(OK)"
       points=3.0
-    else
-      -- Only minor corrections
-      grade="OK"
-      points=4.0
-    end
-	  -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe. (WIP requires feedback)
+      -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe. (WIP requires feedback)
       -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
-	if nL>3 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then 
+	elseif nL>3 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then 
       -- Larger deviations ==> "No grade" 2.0 points.
       grade="--"
       points=2.0
 	  
-	elseif nN>3 and aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then
+	elseif nN>2 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       -- Only average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
       grade="(OK)"
       points=3.0
-    else
+	else
       -- Only minor corrections
       grade="OK"
       points=4.0
     end
-  end
+	
+end
 
   -- Replace" )"( and "__"
   G=G:gsub("%)%(", "")
