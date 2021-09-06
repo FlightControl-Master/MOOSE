@@ -1053,6 +1053,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- time to repair a unit/group
   self.repairtime = 300
+
+  -- place spawned crates in front of aircraft
+  self.placeCratesAhead = false
   
   for i=1,100 do
     math.random()
@@ -1662,24 +1665,47 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   local heading = Unit:GetHeading() + 1
   local height = Unit:GetHeight()
   local droppedcargo = {}
-  -- loop crates needed
+  local cratedistance = 0
+  local rheading = 0
+  local angleOffNose = 0
   for i=1,number do
-    local cratealias = string.format("%s-%d", cratetemplate, math.random(1,100000))
-    local cratedistance = i*4 + 8
-    if IsHerc then 
-      -- wider radius
-      cratedistance = i*4 + 12
-    end
-    for i=1,50 do
-      math.random(90,270)
-    end
-    local rheading = math.floor(((math.random(90,270) * heading) + 1) / 360)
-    if not IsHerc then
-      rheading = rheading + 180 -- mirror for Helis
-    end
-    if rheading > 360 then rheading = rheading - 360 end -- catch > 360
-    local cratecoord = position:Translate(cratedistance,rheading)
-    local cratevec2 = cratecoord:GetVec2()
+      local cratealias = string.format("%s-%d", cratetemplate, math.random(1,100000))
+      
+      if not self.placeCratesAhead then
+          cratedistance = (i-1)*2.5 + capabilities.length
+          if cratedistance > self.CrateDistance then cratedistance = self.CrateDistance end
+          local addon = 0
+          if IsHerc then 
+            -- spawn behind the Herc
+            addon = 180
+          end
+          -- altered heading logic
+          -- TODO: right standard deviation?
+          local randomheading = UTILS.RandomGaussian(0,30,-90,90,100)
+          rheading = math.fmod((heading + randomheading + addon), 360)
+      else
+        local initialSpacing = IsHerc and 16 or 12 -- initial spacing of the first crates
+        local crateSpacing = 4 -- further spacing of remaining crates
+        local lateralSpacing = 4 -- lateral spacing of crates
+      local nrSideBySideCrates = 3 -- number of crates that are placed side-by-side
+        
+        if cratesneeded == 1 then
+          -- single crate needed spawns straight ahead
+          cratedistance = initialSpacing
+          rheading = heading
+        else
+          if (i - 1) % nrSideBySideCrates == 0 then
+              cratedistance = i == 1 and initialSpacing or cratedistance + crateSpacing
+              angleOffNose = math.ceil(math.deg(math.atan(lateralSpacing / cratedistance)))
+              rheading = heading - angleOffNose
+          else
+              rheading = rheading + angleOffNose
+          end
+        end
+      end
+
+  local cratecoord=position:Translate(cratedistance,rheading)
+  local cratevec2=cratecoord:GetVec2()
     self.CrateCounter = self.CrateCounter + 1
     if type(ship) == "string" then
       self:T("Spawning on ship "..ship)
