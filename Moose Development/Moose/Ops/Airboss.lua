@@ -12294,7 +12294,18 @@ function AIRBOSS:_LSOgrade(playerData)
     points=5.0
     G="Unicorn"
   else
-    if nL>0 then
+    
+	  -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe. (WIP requires feedback)
+      -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
+	if nL>3 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then 
+      -- Larger deviations ==> "No grade" 2.0 points.
+      grade="--"
+      points=2.0
+	elseif nN>2 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+      -- Only average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
+      grade="(OK)"
+      points=3.0
+	elseif nL>0 then
       -- Larger deviations ==> "No grade" 2.0 points.
       grade="--"
       points=2.0
@@ -12302,18 +12313,7 @@ function AIRBOSS:_LSOgrade(playerData)
       -- No larger but average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
       grade="(OK)"
       points=3.0
-      -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe. (WIP requires feedback)
-      -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
-	elseif nL>3 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then 
-      -- Larger deviations ==> "No grade" 2.0 points.
-      grade="--"
-      points=2.0
-	  
-	elseif nN>2 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
-      -- Only average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
-      grade="(OK)"
-      points=3.0
-	else
+    else
       -- Only minor corrections
       grade="OK"
       points=4.0
