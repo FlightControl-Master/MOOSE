@@ -489,10 +489,9 @@ function COMMANDER:CheckMissionQueue()
     
       ---
       -- PLANNNED Mission
-      ---
-    
-      ---
+      -- 
       -- 1. Select best assets from legions
+      -- 2. Assign mission to legions that have the best assets.
       ---    
     
       -- Recruite assets from legions.      
@@ -514,98 +513,6 @@ function COMMANDER:CheckMissionQueue()
         -- Only ONE mission is assigned.
         return        
       end
-      
-      if false then
-      
-      -- Get legions for mission.
-      local Legions=self:GetLegionsForMission(mission)
-      
-      -- Get ALL assets from pre-selected legions.
-      local assets=self:GetAssets(InStock, legions, MissionTypes, Attributes)
-      
-      
-      -- Now we select the best assets from all legions.
-      legions={}
-      if #assets>=mission.nassets then
-      
-        for _,_asset in pairs(assets) do
-          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-          asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, mission.type, mission.payloads)
-          asset.score=asset.legion:CalculateAssetMissionScore(asset, mission, true)
-        end
-        
-        --- Sort assets wrt to their mission score. Higher is better.
-        local function optimize(assetA, assetB)
-          return (assetA.score>assetB.score)
-        end        
-        table.sort(assets, optimize)
-
-        -- Remove distance parameter.
-        local text=string.format("Optimized assets for %s mission:", mission.type)
-        for i,Asset in pairs(assets) do
-          local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
-          
-          -- Score text.
-          text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
-          
-          -- Nillify score.
-          asset.score=nil
-          
-          -- Add assets to mission.
-          if i<=mission.nassets then
-          
-            -- Add asset to mission.
-            mission:AddAsset(Asset)
-            
-            -- Put into table.
-            legions[asset.legion.alias]=asset.legion
-            
-            -- Number of assets requested from this legion.
-            -- TODO: Check if this is really necessary as we do not go through the selection process.
-            mission.Nassets=mission.Nassets or {}
-            if mission.Nassets[asset.legion.alias] then
-              mission.Nassets[asset.legion.alias]=mission.Nassets[asset.legion.alias]+1
-            else
-              mission.Nassets[asset.legion.alias]=1
-            end 
-            
-          else
-          
-            -- Return payload of asset (if any).
-            if asset.payload then
-              asset.legion:ReturnPayloadFromAsset(asset)
-            end
-          
-          end
-        end
-        self:T2(self.lid..text)
-      
-      else  
-        self:T2(self.lid..string.format("Not enough assets available for mission"))
-      end
-      
-      ---
-      -- Assign Mission to Legions
-      ---
-      
-      if legions then
-      
-        for _,_legion in pairs(legions) do
-          local legion=_legion --Ops.Legion#LEGION
-          
-          -- Debug message.
-          self:I(self.lid..string.format("Assigning mission %s [%s] to legion %s", mission:GetName(), mission:GetType(), legion.alias))
-      
-          -- Add mission to legion.
-          self:MissionAssign(legion, mission)
-          
-        end
-    
-        -- Only ONE mission is assigned.
-        return
-      end
-      
-      end -- if false then
       
     else
 
@@ -733,14 +640,14 @@ end
 -- @return #boolean If `true` enough assets could be recruited.
 -- @return #table Legions that have recruited assets.
 function COMMANDER:RecruitAssets(Mission)
-
-  env.info("FF recruit assets")
   
   -- The recruited assets.
   local Assets={}
   
+  -- Legions we consider for selecting assets.
   local legions=Mission.mylegions or self.legions
   
+  -- Legions which have the best assets for the Mission.
   local Legions={}
   
   for _,_legion in pairs(legions) do
@@ -766,14 +673,10 @@ function COMMANDER:RecruitAssets(Mission)
       
       if cohort:CanMission(Mission) and npayloads>0 then
       
-        env.info("FF npayloads="..Npayloads[cohort.aircrafttype])
-      
         -- Recruit assets from squadron.
         local assets, npayloads=cohort:RecruitAssets(Mission, npayloads)
         
         Npayloads[cohort.aircrafttype]=npayloads
-        
-        env.info("FF npayloads="..Npayloads[cohort.aircrafttype])
         
         for _,asset in pairs(assets) do
           table.insert(Assets, asset)
@@ -827,7 +730,7 @@ function COMMANDER:RecruitAssets(Mission)
     -- Add assets to mission.
     for i=1,Nassets do
       local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-      self:I(self.lid..string.format("Adding asset %s to mission %s [%s]", asset.spawngroupname, Mission.name, Mission.type))
+      self:T(self.lid..string.format("Adding asset %s to mission %s [%s]", asset.spawngroupname, Mission.name, Mission.type))
       Mission:AddAsset(asset)
       Legions[asset.legion.alias]=asset.legion
     end
@@ -837,7 +740,7 @@ function COMMANDER:RecruitAssets(Mission)
     for i=Nassets+1,#Assets do
       local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
       if asset.legion:IsAirwing() and not asset.spawned then
-        self:I(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+        self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
         asset.legion:ReturnPayloadFromAsset(asset)
       end
     end
@@ -855,7 +758,7 @@ function COMMANDER:RecruitAssets(Mission)
       for i=1,#Assets do
         local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
         if asset.legion:IsAirwing() and not asset.spawned then
-          self:I(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+          self:T2(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
           asset.legion:ReturnPayloadFromAsset(asset)
         end
       end      

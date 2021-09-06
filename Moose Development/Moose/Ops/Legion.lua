@@ -432,98 +432,7 @@ function LEGION:_GetNextMission()
       if recruited then
         return mission
       end
-      
-      -- OBSOLETE
-      if false then
 
-      -- Check if legion can do the mission and gather required assets.
-      local can, assets=self:CanMission(mission)
-
-      -- Check that mission is still scheduled, time has passed and enough assets are available.
-       if can then
-       
-        -- Number of required assets.
-        local Nassets=mission:GetRequiredAssets(self)
-
-        -- Optimize the asset selection. Most useful assets will come first. We do not include the payload as some assets have and some might not.
-        self:_OptimizeAssetSelection(assets, mission, false)
-
-        -- Assign assets to mission.
-        local remove={}
-        local gotpayload={}                
-        if self:IsAirwing() then
-          for i=1,#assets do
-            local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-  
-            -- Get payload for the asset.
-            if not asset.payload then
-              local payload=self:FetchPayloadFromStock(asset.unittype, mission.type, mission.payloads)
-              if payload then
-                asset.payload=payload
-                table.insert(gotpayload, asset.uid)
-              else
-                table.insert(remove, asset.uid)
-              end
-            end
-          end
-          self:T(self.lid..string.format("Provided %d assets with payloads. Could not get payload for %d assets", #gotpayload, #remove))
-  
-          -- Now remove assets for which we don't have a payload.
-          for i=#assets,1,-1 do
-            local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-            for _,uid in pairs(remove) do
-              if uid==asset.uid then
-                table.remove(assets, i)
-              end
-            end
-          end
-  
-          -- Another check.
-          if #assets<mission.nassets then
-            self:E(self.lid..string.format("ERROR: Not enough payloads for mission assets! Can only do %d/%d", #assets, mission.nassets))
-          end
-  
-          -- Optimize the asset selection. Now we include the payload performance as this could change the result.
-          self:_OptimizeAssetSelection(assets, mission, true)
-          
-        end
-
-        -- Check that mission.assets table is clean.
-        if mission.assets and #mission.assets>0 then
-          self:E(self.lid..string.format("ERROR: mission %s of type %s has already assets attached!", mission.name, mission.type))
-        end
-        --mission.assets={}
-
-        -- Assign assets to mission.
-        for i=1,Nassets do
-          local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-
-          -- Should not happen as we just checked!
-          if self:IsAirwing() and not asset.payload then
-            self:E(self.lid.."ERROR: No payload for asset! This should not happen!")
-          end
-
-          -- Add asset to mission.
-          mission:AddAsset(asset)
-        end
-
-        -- Now return the remaining payloads.
-        if self:IsAirwing() then
-          for i=Nassets+1,#assets do
-            local asset=assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-            for _,uid in pairs(gotpayload) do
-              if uid==asset.uid then
-                self:ReturnPayloadFromAsset(asset)
-                break
-              end
-            end
-          end
-        end
-
-        return mission
-      end
-      
-      end -- OBSOLETE
 
     end -- mission due?
   end -- mission loop
@@ -1765,8 +1674,6 @@ end
 -- @return #boolean If `true` enough assets could be recruited.
 function LEGION:RecruitAssets(Mission)
 
-  env.info("FF recruit assets")
-
   -- Number of payloads in stock per aircraft type.
   local Npayloads={}
   
@@ -1790,14 +1697,10 @@ function LEGION:RecruitAssets(Mission)
     
     if cohort:CanMission(Mission) and npayloads>0 then
     
-      env.info("FF npayloads="..Npayloads[cohort.aircrafttype])
-    
       -- Recruit assets from squadron.
       local assets, npayloads=cohort:RecruitAssets(Mission, npayloads)
       
       Npayloads[cohort.aircrafttype]=npayloads
-      
-      env.info("FF npayloads="..Npayloads[cohort.aircrafttype])
       
       for _,asset in pairs(assets) do
         table.insert(Assets, asset)
@@ -1850,7 +1753,7 @@ function LEGION:RecruitAssets(Mission)
     -- Add assets to mission.
     for i=1,Nassets do
       local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-      self:I(self.lid..string.format("Adding asset %s to mission %s [%s]", asset.spawngroupname, Mission.name, Mission.type))
+      self:T(self.lid..string.format("Adding asset %s to mission %s [%s]", asset.spawngroupname, Mission.name, Mission.type))
       Mission:AddAsset(asset)
     end
     
@@ -1860,7 +1763,7 @@ function LEGION:RecruitAssets(Mission)
       for i=Nassets+1,#Assets do
         local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
         if not asset.spawned then
-          self:I(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+          self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
           self:ReturnPayloadFromAsset(asset)
         end
       end
@@ -1880,7 +1783,7 @@ function LEGION:RecruitAssets(Mission)
       for i=1,#Assets do
         local asset=Assets[i]
         if not asset.spawned then
-          self:I(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+          self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
           self:ReturnPayloadFromAsset(asset)
         end
       end      

@@ -3355,7 +3355,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil      
     
-    Coordinate:MarkToAll("Recon Waypoint Execute")
+    --Coordinate:MarkToAll("Recon Waypoint Execute")
     
     local currUID=self:GetWaypointCurrent().uid
 
@@ -4448,7 +4448,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil      
       
       -- Debug.
-      Coordinate:MarkToAll("Recon Waypoint n="..tostring(n))
+      --Coordinate:MarkToAll("Recon Waypoint n="..tostring(n))
       
       local currUID=self:GetWaypointCurrent().uid
   
