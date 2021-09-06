@@ -2192,6 +2192,7 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
 
       -- First check if there is a paused mission that
       if self.missionpaused then
+        self:T(self.lid..string.format("Found paused mission %s [%s]. Unpausing mission...", self.missionpaused.name, self.missionpaused.type))
         self:UnpauseMission()
         return
       end

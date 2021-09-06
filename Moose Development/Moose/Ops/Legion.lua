@@ -426,6 +426,16 @@ function LEGION:_GetNextMission()
     -- Firstly, check if mission is due?
     if mission:IsQueued(self) and mission:IsReadyToGo() and (mission.importance==nil or mission.importance<=vip) then
 
+      -- Recruit best assets for the job.    
+      local recruited=self:RecruitAssets(mission)
+      
+      if recruited then
+        return mission
+      end
+      
+      -- OBSOLETE
+      if false then
+
       -- Check if legion can do the mission and gather required assets.
       local can, assets=self:CanMission(mission)
 
@@ -512,6 +522,8 @@ function LEGION:_GetNextMission()
 
         return mission
       end
+      
+      end -- OBSOLETE
 
     end -- mission due?
   end -- mission loop
@@ -704,7 +716,7 @@ function LEGION:_OptimizeAssetSelection(assets, Mission, includePayload)
   table.sort(assets, optimize)
 
   -- Remove distance parameter.
-  local text=string.format("Optimized assets for %s mission (payload=%s):", Mission.type, tostring(includePayload))
+  local text=string.format("Optimized %d assets for %s mission (payload=%s):", #assets, Mission.type, tostring(includePayload))
   for i,Asset in pairs(assets) do
     local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
     text=text..string.format("\n%s %s: score=%d, distance=%.1f km", asset.squadname, asset.spawngroupname, asset.score, asset.dist/1000)
@@ -753,6 +765,20 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
   
           -- Add new mission.
           asset.flightgroup:AddMission(Mission)
+          
+          ---
+          -- Special Missions
+          ---
+          
+          -- Check if mission is INTERCEPT and asset is currently on GCI mission. If so, GCI is paused.
+          if Mission.type==AUFTRAG.Type.INTERCEPT then
+            local currM=asset.flightgroup:GetMissionCurrent()
+            
+            if currM and currM.type==AUFTRAG.Type.GCICAP then
+              self:I(self.lid..string.format("Pausing %s mission %s to send flight on intercept mission %s", currM.type, currM.name, Mission.name))
+              asset.flightgroup:PauseMission()
+            end
+          end
   
           -- Trigger event.
           self:__OpsOnMission(5, asset.flightgroup, Mission)
@@ -1116,8 +1142,8 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
         end
         
         -- Add mission to flightgroup queue. If mission has an OPSTRANSPORT attached, all added OPSGROUPS are added as CARGO for a transport.
-        flightgroup:AddMission(mission)        
-          
+        flightgroup:AddMission(mission)
+                  
         -- Trigger event.
         self:__OpsOnMission(5, flightgroup, mission)
   
@@ -1733,11 +1759,136 @@ function LEGION:CanMission(Mission)
   return Can, Assets
 end
 
---- Check if assets for a given mission type are available.
+--- Recruit assets for a given mission.
 -- @param #LEGION self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return #table Assets that can do the required mission.
+-- @return #boolean If `true` enough assets could be recruited.
 function LEGION:RecruitAssets(Mission)
+
+  env.info("FF recruit assets")
+
+  -- Number of payloads in stock per aircraft type.
+  local Npayloads={}
+  
+  -- First get payloads for aircraft types of squadrons.
+  for _,_cohort in pairs(self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    if Npayloads[cohort.aircrafttype]==nil then    
+      Npayloads[cohort.aircrafttype]=self:IsAirwing() and self:CountPayloadsInStock(Mission.type, cohort.aircrafttype, Mission.payloads) or 999
+      self:I(self.lid..string.format("Got Npayloads=%d for type=%s",Npayloads[cohort.aircrafttype], cohort.aircrafttype))
+    end
+  end
+
+  -- The recruited assets.
+  local Assets={}
+  
+  -- Loops over cohorts.
+  for _,_cohort in pairs(self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    
+    local npayloads=Npayloads[cohort.aircrafttype]
+    
+    if cohort:CanMission(Mission) and npayloads>0 then
+    
+      env.info("FF npayloads="..Npayloads[cohort.aircrafttype])
+    
+      -- Recruit assets from squadron.
+      local assets, npayloads=cohort:RecruitAssets(Mission, npayloads)
+      
+      Npayloads[cohort.aircrafttype]=npayloads
+      
+      env.info("FF npayloads="..Npayloads[cohort.aircrafttype])
+      
+      for _,asset in pairs(assets) do
+        table.insert(Assets, asset)
+      end
+      
+    end
+    
+  end
+  
+  -- Now we have a long list with assets.
+  self:_OptimizeAssetSelection(Assets, Mission, false)
+  
+  -- If airwing, get the best payload available.
+  if self:IsAirwing() then
+  
+    for _,_asset in pairs(Assets) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+       
+      -- Only assets that have no payload. Should be only spawned assets!
+      if not asset.payload then
+      
+        -- Fetch payload for asset. This can be nil!
+        asset.payload=self:FetchPayloadFromStock(asset.unittype, Mission.type, Mission.payloads)
+                
+      end
+      
+    end
+    
+    -- Remove assets that dont have a payload.
+    for i=#Assets,1,-1 do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      if not asset.payload then
+        table.remove(Assets, i)
+      end
+    end
+    
+    -- Now find the best asset for the given payloads.
+    self:_OptimizeAssetSelection(Assets, Mission, true)    
+    
+  end
+  
+  local Nassets=Mission:GetRequiredAssets(self)
+  
+  if #Assets>=Nassets then
+  
+    ---
+    -- Found enough assets
+    ---
+  
+    -- Add assets to mission.
+    for i=1,Nassets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      self:I(self.lid..string.format("Adding asset %s to mission %s [%s]", asset.spawngroupname, Mission.name, Mission.type))
+      Mission:AddAsset(asset)
+    end
+    
+    if self:IsAirwing() then
+    
+      -- Return payloads of not needed assets.
+      for i=Nassets+1,#Assets do
+        local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+        if not asset.spawned then
+          self:I(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+          self:ReturnPayloadFromAsset(asset)
+        end
+      end
+      
+    end
+    
+    -- Found enough assets.
+    return true
+  else
+
+    ---
+    -- NOT enough assets
+    ---
+  
+    -- Return payloads of assets.
+    if self:IsAirwing() then    
+      for i=1,#Assets do
+        local asset=Assets[i]
+        if not asset.spawned then
+          self:I(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+          self:ReturnPayloadFromAsset(asset)
+        end
+      end      
+    end
+      
+    -- Not enough assets found.
+    return false
+  end
 
 end
 

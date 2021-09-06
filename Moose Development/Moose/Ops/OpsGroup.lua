@@ -706,6 +706,46 @@ function OPSGROUP:New(group)
   -- @param #number delay Delay in seconds.
 
 
+  --- Triggers the FSM event "MissionStart".
+  -- @function [parent=#OPSGROUP] MissionStart
+  -- @param #OPSGROUP self
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "MissionStart" after a delay.
+  -- @function [parent=#OPSGROUP] __MissionStart
+  -- @param #OPSGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionStart" event.
+  -- @function [parent=#OPSGROUP] OnAfterMissionStart
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
+  --- Triggers the FSM event "MissionExecute".
+  -- @function [parent=#OPSGROUP] MissionExecute
+  -- @param #OPSGROUP self
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "MissionExecute" after a delay.
+  -- @function [parent=#OPSGROUP] __MissionExecute
+  -- @param #OPSGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionExecute" event.
+  -- @function [parent=#OPSGROUP] OnAfterMissionExecute
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
   --- Triggers the FSM event "MissionCancel".
   -- @function [parent=#OPSGROUP] MissionCancel
   -- @param #OPSGROUP self
@@ -719,6 +759,26 @@ function OPSGROUP:New(group)
 
   --- On after "MissionCancel" event.
   -- @function [parent=#OPSGROUP] OnAfterMissionCancel
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
+  --- Triggers the FSM event "MissionDone".
+  -- @function [parent=#OPSGROUP] MissionDone
+  -- @param #OPSGROUP self
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "MissionDone" after a delay.
+  -- @function [parent=#OPSGROUP] __MissionDone
+  -- @param #OPSGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionDone" event.
+  -- @function [parent=#OPSGROUP] OnAfterMissionDone
   -- @param #OPSGROUP self
   -- @param #string From From state.
   -- @param #string Event Event.
@@ -3295,7 +3355,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil      
     
-    --Coordinate:MarkToAll("Next waypoint", ReadOnly,Text)
+    Coordinate:MarkToAll("Recon Waypoint Execute")
     
     local currUID=self:GetWaypointCurrent().uid
 
@@ -3484,7 +3544,11 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       self:T(self.lid.."Task Done ==> Mission Done!")
       self:MissionDone(Mission)
     else
-      --Mission paused. Do nothing!
+      --Mission paused. Do nothing! Just set the current mission to nil so we can launch a new one.
+      if self.currentmission and self.currentmission==Mission.auftragsnummer then
+        self.currentmission=nil
+      end
+      self:_RemoveMissionWaypoints(Mission, false)
     end
     
   else
@@ -3798,17 +3862,6 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
 
 end
 
---- On before "MissionExecute" event.
--- @param #OPSGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission table.
-function OPSGROUP:onbeforeMissionExecute(From, Event, To, Mission)
-
-  return true
-end
-
 --- On after "MissionExecute" event. Mission execution began.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -3930,10 +3983,29 @@ end
 
 --- On after "MissionDone" event.
 -- @param #OPSGROUP self
+-- @param Ops.Auftrag#AUFTRAG Mission
+-- @param #boolean Silently Remove waypoints by `table.remove()` and do not update the route.
+function OPSGROUP:_RemoveMissionWaypoints(Mission, Silently)
+
+  for i=#self.waypoints,1,-1 do
+    local wp=self.waypoints[i] --#OPSGROUP.Waypoint
+    if wp.missionUID==Mission.auftragsnummer then
+      if Silently then
+        table.remove(self.waypoints, i)
+      else
+        self:RemoveWaypoint(i)
+      end
+    end
+  end  
+
+end
+
+--- On after "MissionDone" event.
+-- @param #OPSGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission
+-- @param Ops.Auftrag#AUFTRAG Mission The mission that is done.
 function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
 
   -- Debug info.
@@ -3947,20 +4019,9 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   if self.currentmission and Mission.auftragsnummer==self.currentmission then
     self.currentmission=nil
   end
-
-  -- Remove mission waypoint.
-  local wpidx=Mission:GetGroupWaypointIndex(self)
-  if wpidx then
-    --self:RemoveWaypointByID(wpidx)
-  end
   
-  for i=#self.waypoints,1,-1 do
-    local wp=self.waypoints[i] --#OPSGROUP.Waypoint
-    if wp.missionUID==Mission.auftragsnummer then
-    --table.remove(self.waypoints, i)
-      self:RemoveWaypoint(i)
-    end
-  end
+  -- Remove mission waypoints.
+  self:_RemoveMissionWaypoints(Mission)
 
   -- Decrease patrol data.
   if Mission.patroldata then
@@ -4387,7 +4448,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil      
       
       -- Debug.
-      --Coordinate:MarkToAll("Recon Waypoint n="..tostring(n))
+      Coordinate:MarkToAll("Recon Waypoint n="..tostring(n))
       
       local currUID=self:GetWaypointCurrent().uid
   

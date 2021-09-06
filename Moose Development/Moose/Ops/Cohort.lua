@@ -753,7 +753,7 @@ end
 
 --- Count assets in legion warehouse stock.
 -- @param #COHORT self
--- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
+-- @param #boolean InStock If `true`, only assets that are in the warehouse stock/inventory are counted. If `false`, only assets that are NOT in stock (i.e. spawned) are counted. If `nil`, all assets are counted.
 -- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
 -- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
 -- @return #number Number of assets.
@@ -766,11 +766,13 @@ function COHORT:CountAssets(InStock, MissionTypes, Attributes)
     if MissionTypes==nil or self:CheckMissionCapability(MissionTypes, self.missiontypes) then
       if Attributes==nil or self:CheckAttribute(Attributes) then
         if asset.spawned then
-          if not InStock then
+          if InStock==true or InStock==nil then
             N=N+1 --Spawned but we also count the spawned ones.
           end      
         else
-          N=N+1 --This is in stock.
+          if InStock==false or InStock==nil then
+            N=N+1 --This is in stock.
+          end
         end
       end
     end
@@ -784,6 +786,7 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 -- @param #number Npayloads Number of payloads available.
 -- @return #table Assets that can do the required mission.
+-- @return #number Number of payloads still available after recruiting the assets.
 function COHORT:RecruitAssets(Mission, Npayloads)
 
   -- Number of payloads available.
@@ -796,8 +799,8 @@ function COHORT:RecruitAssets(Mission, Npayloads)
   for _,_asset in pairs(self.assets) do  
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
-    -- First check that asset is not requested. This could happen if multiple requests are processed simultaniously.
-    if not asset.requested then
+    -- First check that asset is not requested or reserved. This could happen if multiple requests are processed simultaniously.
+    if not (asset.requested or asset.isReserved) then
     
     
       -- Check if asset is currently on a mission (STARTED or QUEUED).
@@ -815,7 +818,7 @@ function COHORT:RecruitAssets(Mission, Npayloads)
           self:I(self.lid.."Adding asset on GCICAP mission for an INTERCEPT mission")
           table.insert(assets, asset)
           
-        end      
+        end
       
       else
       
@@ -829,6 +832,7 @@ function COHORT:RecruitAssets(Mission, Npayloads)
           -- Asset is already SPAWNED (could be uncontrolled on the airfield or inbound after another mission)
           ---
         
+          -- Opsgroup.
           local flightgroup=asset.flightgroup
           
           
@@ -916,7 +920,7 @@ function COHORT:RecruitAssets(Mission, Npayloads)
     end -- not requested check
   end -- loop over assets
 
-  return assets
+  return assets, Npayloads
 end
 
 

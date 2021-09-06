@@ -495,11 +495,34 @@ function COMMANDER:CheckMissionQueue()
       -- 1. Select best assets from legions
       ---    
     
+      -- Recruite assets from legions.      
+      local recruited, legions=self:RecruitAssets(mission)
+      
+      if recruited then
+
+        for _,_legion in pairs(legions) do
+          local legion=_legion --Ops.Legion#LEGION
+          
+          -- Debug message.
+          self:I(self.lid..string.format("Assigning mission %s [%s] to legion %s", mission:GetName(), mission:GetType(), legion.alias))
+      
+          -- Add mission to legion.
+          self:MissionAssign(legion, mission)
+          
+        end
+    
+        -- Only ONE mission is assigned.
+        return        
+      end
+      
+      if false then
+      
       -- Get legions for mission.
-      local legions=self:GetLegionsForMission(mission)
+      local Legions=self:GetLegionsForMission(mission)
       
       -- Get ALL assets from pre-selected legions.
       local assets=self:GetAssets(InStock, legions, MissionTypes, Attributes)
+      
       
       -- Now we select the best assets from all legions.
       legions={}
@@ -581,6 +604,8 @@ function COMMANDER:CheckMissionQueue()
         -- Only ONE mission is assigned.
         return
       end
+      
+      end -- if false then
       
     else
 
@@ -700,6 +725,209 @@ function COMMANDER:GetAssets(InStock, Legions, MissionTypes, Attributes)
   end
   
   return assets
+end
+
+--- Recruit assets for a given mission.
+-- @param #COMMANDER self
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @return #boolean If `true` enough assets could be recruited.
+-- @return #table Legions that have recruited assets.
+function COMMANDER:RecruitAssets(Mission)
+
+  env.info("FF recruit assets")
+  
+  -- The recruited assets.
+  local Assets={}
+  
+  local legions=Mission.mylegions or self.legions
+  
+  local Legions={}
+  
+  for _,_legion in pairs(legions) do
+    local legion=_legion --Ops.Legion#LEGION
+
+    -- Number of payloads in stock per aircraft type.
+    local Npayloads={}
+    
+    -- First get payloads for aircraft types of squadrons.
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      if Npayloads[cohort.aircrafttype]==nil then    
+        Npayloads[cohort.aircrafttype]=legion:IsAirwing() and legion:CountPayloadsInStock(Mission.type, cohort.aircrafttype, Mission.payloads) or 999
+        self:I(self.lid..string.format("Got Npayloads=%d for type=%s", Npayloads[cohort.aircrafttype], cohort.aircrafttype))
+      end
+    end
+    
+    -- Loops over cohorts.
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      
+      local npayloads=Npayloads[cohort.aircrafttype]
+      
+      if cohort:CanMission(Mission) and npayloads>0 then
+      
+        env.info("FF npayloads="..Npayloads[cohort.aircrafttype])
+      
+        -- Recruit assets from squadron.
+        local assets, npayloads=cohort:RecruitAssets(Mission, npayloads)
+        
+        Npayloads[cohort.aircrafttype]=npayloads
+        
+        env.info("FF npayloads="..Npayloads[cohort.aircrafttype])
+        
+        for _,asset in pairs(assets) do
+          table.insert(Assets, asset)
+        end
+        
+      end
+      
+    end
+    
+  end
+  
+  -- Now we have a long list with assets.
+  self:_OptimizeAssetSelection(Assets, Mission, false)
+    
+  for _,_asset in pairs(Assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    if asset.legion:IsAirwing() then
+     
+      -- Only assets that have no payload. Should be only spawned assets!
+      if not asset.payload then
+      
+        -- Fetch payload for asset. This can be nil!
+        asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, Mission.type, Mission.payloads)
+                
+      end
+      
+    end
+    
+  end
+  
+  -- Remove assets that dont have a payload.
+  for i=#Assets,1,-1 do
+    local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+    if asset.legion:IsAirwing() and not asset.payload then
+      table.remove(Assets, i)
+    end
+  end
+  
+  -- Now find the best asset for the given payloads.
+  self:_OptimizeAssetSelection(Assets, Mission, true)    
+  
+  local Nassets=Mission:GetRequiredAssets(self)
+  
+  if #Assets>=Nassets then
+  
+    ---
+    -- Found enough assets
+    ---
+  
+    -- Add assets to mission.
+    for i=1,Nassets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      self:I(self.lid..string.format("Adding asset %s to mission %s [%s]", asset.spawngroupname, Mission.name, Mission.type))
+      Mission:AddAsset(asset)
+      Legions[asset.legion.alias]=asset.legion
+    end
+    
+    
+    -- Return payloads of not needed assets.
+    for i=Nassets+1,#Assets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      if asset.legion:IsAirwing() and not asset.spawned then
+        self:I(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+        asset.legion:ReturnPayloadFromAsset(asset)
+      end
+    end
+    
+    -- Found enough assets.
+    return true, Legions
+  else
+
+    ---
+    -- NOT enough assets
+    ---
+  
+    -- Return payloads of assets.
+    if self:IsAirwing() then    
+      for i=1,#Assets do
+        local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+        if asset.legion:IsAirwing() and not asset.spawned then
+          self:I(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+          asset.legion:ReturnPayloadFromAsset(asset)
+        end
+      end      
+    end
+      
+    -- Not enough assets found.
+    return false, {}
+  end
+
+  return nil, {}
+end
+
+--- Optimize chosen assets for the mission at hand.
+-- @param #COMMANDER self
+-- @param #table assets Table of (unoptimized) assets.
+-- @param Ops.Auftrag#AUFTRAG Mission Mission for which the best assets are desired.
+-- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
+function COMMANDER:_OptimizeAssetSelection(assets, Mission, includePayload)
+
+  -- Get target position.
+  local TargetVec2=Mission:GetTargetVec2()
+
+  -- Calculate distance to mission target.
+  local distmin=math.huge
+  local distmax=0
+  for _,_asset in pairs(assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+
+    if asset.spawned then
+      local group=GROUP:FindByName(asset.spawngroupname)
+      asset.dist=UTILS.VecDist2D(group:GetVec2(), TargetVec2)
+    else
+      asset.dist=UTILS.VecDist2D(asset.legion:GetVec2(), TargetVec2)
+    end
+
+    if asset.dist<distmin then
+      distmin=asset.dist
+    end
+
+    if asset.dist>distmax then
+      distmax=asset.dist
+    end
+
+  end
+
+  -- Calculate the mission score of all assets.
+  for _,_asset in pairs(assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    asset.score=asset.legion:CalculateAssetMissionScore(asset, Mission, includePayload)
+  end
+
+  --- Sort assets wrt to their mission score. Higher is better.
+  local function optimize(a, b)
+    local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
+    local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
+
+    -- Higher score wins. If equal score ==> closer wins.
+    -- TODO: Need to include the distance in a smarter way!
+    return (assetA.score>assetB.score) or (assetA.score==assetB.score and assetA.dist<assetB.dist)
+  end
+  table.sort(assets, optimize)
+
+  -- Remove distance parameter.
+  local text=string.format("Optimized %d assets for %s mission (payload=%s):", #assets, Mission.type, tostring(includePayload))
+  for i,Asset in pairs(assets) do
+    local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    text=text..string.format("\n%s %s: score=%d, distance=%.1f km", asset.squadname, asset.spawngroupname, asset.score, asset.dist/1000)
+    asset.dist=nil
+    asset.score=nil
+  end
+  self:T2(self.lid..text)
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
