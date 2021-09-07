@@ -121,9 +121,10 @@ function NAVYGROUP:New(group)
   self.lid=string.format("NAVYGROUP %s | ", self.groupname)
   
   -- Defaults
-  self:SetDetection()
   self:SetDefaultROE()
   self:SetDefaultAlarmstate()
+  self:SetDefaultEPLRS(self.isEPLRS)
+  self:SetDetection()  
   self:SetPatrolAdInfinitum(true)
   self:SetPathfinding(false)
 
@@ -654,7 +655,9 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
     text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Weight       = %.1f kg\n", self:GetWeightTotal())
-    text=text..string.format("Cargo bay    = %.1f kg\n", self:GetFreeCargobay())    
+    text=text..string.format("Cargo bay    = %.1f kg\n", self:GetFreeCargobay())
+    text=text..string.format("Has EPLRS    = %s\n", tostring(self.isEPLRS))    
+    text=text..string.format("Is Submarine = %s\n", tostring(self.isSubmarine))    
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
     text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
@@ -679,6 +682,9 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     
     -- Set default Alarm State.
     self:SwitchAlarmstate(self.option.Alarm)
+    
+    -- Set default EPLRS.
+    self:SwitchEPLRS(self.option.EPLRS)    
     
     -- Set TACAN beacon.
     self:_SwitchTACAN()

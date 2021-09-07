@@ -131,6 +131,7 @@
 -- @field #number optionROT ROT.
 -- @field #number optionAlarm Alarm state.
 -- @field #number optionFormation Formation.
+-- @field #boolean optionEPLRS EPLRS datalink.
 -- @field #number optionCM Counter measures.
 -- @field #number optionRTBammo RTB on out-of-ammo.
 -- @field #number optionRTBfuel RTB on out-of-fuel.
@@ -1801,6 +1802,21 @@ end
 function AUFTRAG:SetAlarmstate(Alarmstate)
   
   self.optionAlarm=Alarmstate
+  
+  return self
+end
+
+--- Set EPLRS datalink setting for this mission.
+-- @param #AUFTRAG self
+-- @param #boolean OnOffSwitch If `true` or `nil`, EPLRS is on. If `false`, EPLRS is off.
+-- @return #AUFTRAG self
+function AUFTRAG:SetEPLRS(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionEPLRS=true
+  else
+    self.optionEPLRS=OnOffSwitch
+  end
   
   return self
 end

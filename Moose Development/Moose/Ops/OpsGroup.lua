@@ -97,7 +97,7 @@
 -- @field #OPSGROUP.Beacon iclsDefault Default ICLS settings.
 --
 -- @field #OPSGROUP.Option option Current optional settings.
--- @field #OPSGROUP.Option optionDefault Default option settings.
+-- @field #OPSGROUP.Option optionDefault Default option settings. 
 --
 -- @field #OPSGROUP.Callsign callsign Current callsign settings.
 -- @field #OPSGROUP.Callsign callsignDefault Default callsign settings.
@@ -296,11 +296,6 @@ OPSGROUP.TaskType={
 -- @field #number waypoint Waypoint index if task is a waypoint task.
 -- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
 -- @field #number backupROE Rules of engagement that are restored once the task is over.
-
---- Enroute task.
--- @type OPSGROUP.EnrouteTask
--- @field DCS#Task DCStask DCS task structure table.
--- @field #number WaypointIndex Waypoint number at which the enroute task is added.
 
 --- Beacon data.
 -- @type OPSGROUP.Beacon
@@ -549,6 +544,12 @@ function OPSGROUP:New(group)
     
     -- Set type name.
     self.actype=masterunit:GetTypeName()
+    
+    -- Is this a submarine.
+    self.isSubmarine=masterunit:HasAttribute("Submarines")
+    
+    -- Has this a datalink?
+    self.isEPLRS=masterunit:HasAttribute("Datalink")
     
     if self:IsFlightgroup() then
 
@@ -4041,6 +4042,10 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   if Mission.optionAlarm then
     self:SwitchAlarmstate()
   end
+  -- Alarm state to default.
+  if Mission.optionEPLRS then
+    self:SwitchEPLRS()
+  end  
   -- Formation to default.
   if Mission.optionFormation then
     self:SwitchFormation()
@@ -4225,10 +4230,14 @@ function OPSGROUP:RouteToMission(mission, delay)
     if mission.optionROT then
       self:SwitchROT(mission.optionROT)
     end
-    -- Alarm state.
+    -- Alarm state
     if mission.optionAlarm then
       self:SwitchAlarmstate(mission.optionAlarm)
     end
+    -- EPLRS
+    if mission.optionEPLRS then
+      self:SwitchEPLRS(mission.optionEPLRS)
+    end    
     -- Formation
     if mission.optionFormation and self:IsFlightgroup() then
       self:SwitchFormation(mission.optionFormation)
@@ -8709,6 +8718,65 @@ end
 function OPSGROUP:GetAlarmstate()
   return self.option.Alarm or self.optionDefault.Alarm
 end
+
+--- Set the default Alarm State for the group. This is the state gets when the group is spawned or to which it defaults back after a mission.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultEPLRS(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionDefault.EPLRS=self.isEPLRS
+  else
+    self.optionDefault.EPLRS=OnOffSwitch
+  end
+  
+  return self
+end
+
+--- Switch EPLRS datalink on or off.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true` or `nil`, switch EPLRS on. If `false` EPLRS switched off.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchEPLRS(OnOffSwitch)
+
+  if self:IsAlive() or self:IsInUtero() then
+  
+    if OnOffSwitch==nil then
+
+      self.option.EPLRS=self.optionDefault.EPLRS
+      
+    else
+    
+      self.option.EPLRS=OnOffSwitch
+      
+    end
+
+    if self:IsInUtero() then
+      self:T2(self.lid..string.format("Setting current EPLRS=%s when GROUP is SPAWNED", tostring(self.option.EPLRS)))
+    else
+    
+      self.group:CommandEPLRS(self.option.EPLRS)      
+      self:T(self.lid..string.format("Setting current EPLRS=%s", tostring(self.option.EPLRS)))
+
+    end
+  else
+    self:E(self.lid.."WARNING: Cannot switch Alarm State! Group is not alive")
+  end
+
+  return self
+end
+
+--- Get current EPLRS state.
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, EPLRS is on.
+function OPSGROUP:GetEPLRS()
+  return self.option.EPLRS or self.optionDefault.EPLRS
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- SETTINGS FUNCTIONS
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set default TACAN parameters.
 -- @param #OPSGROUP self

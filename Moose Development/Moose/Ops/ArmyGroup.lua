@@ -100,6 +100,7 @@ function ARMYGROUP:New(group)
   -- Defaults
   self:SetDefaultROE()
   self:SetDefaultAlarmstate()
+  self:SetDefaultEPLRS(self.isEPLRS)  
   self:SetDetection()
   self:SetPatrolAdInfinitum(false)
   self:SetRetreatZones()
@@ -532,6 +533,7 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
     text=text..string.format("Weight       = %.1f kg\n", self:GetWeightTotal())
     text=text..string.format("Cargo bay    = %.1f kg\n", self:GetFreeCargobay())
+    text=text..string.format("Has EPLRS    = %s\n", tostring(self.isEPLRS))    
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
     text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
@@ -556,6 +558,9 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     
     -- Set default Alarm State.
     self:SwitchAlarmstate(self.option.Alarm)
+    
+    -- Set default EPLRS.
+    self:SwitchEPLRS(self.option.EPLRS)
     
     -- Set TACAN to default.
     self:_SwitchTACAN()

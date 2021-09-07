@@ -48,9 +48,9 @@ COMMANDER.version="0.1.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Improve legion selection. Mostly done!
--- TODO: Allow multiple Legions for one mission.
--- TODO: Add ops transports.
 -- TODO: Find solution for missions, which require a transport. This is not as easy as it sounds since the selected mission assets restrict the possible transport assets.
+-- TODO: Add ops transports.
+-- DONE: Allow multiple Legions for one mission.
 -- NOGO: Maybe it's possible to preselect the assets for the mission.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -179,6 +179,18 @@ function COMMANDER:AddAirwing(Airwing)
 
   -- Add legion.
   self:AddLegion(Airwing)
+  
+  return self
+end
+
+--- Add an BRIGADE to the commander.
+-- @param #COMMANDER self
+-- @param Ops.Brigade#BRIGADE Briagde The brigade to add.
+-- @return #COMMANDER self
+function COMMANDER:AddBrigade(Brigade)
+
+  -- Add legion.
+  self:AddLegion(Brigade)
   
   return self
 end

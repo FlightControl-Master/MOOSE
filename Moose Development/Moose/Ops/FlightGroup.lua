@@ -215,13 +215,14 @@ function FLIGHTGROUP:New(group)
   self.lid=string.format("FLIGHTGROUP %s | ", self.groupname)
 
   -- Defaults
+  self:SetDefaultROE()
+  self:SetDefaultROT()
+  self:SetDefaultEPLRS(self.isEPLRS)
+  self:SetDetection()
   self:SetFuelLowThreshold()
   self:SetFuelLowRTB()
   self:SetFuelCriticalThreshold()
-  self:SetFuelCriticalRTB()
-  self:SetDefaultROE()
-  self:SetDefaultROT()
-  self:SetDetection()
+  self:SetFuelCriticalRTB()  
 
   -- Holding flag.
   self.flaghold=USERFLAG:New(string.format("%s_FlagHold", self.groupname))
@@ -1580,7 +1581,8 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     text=text..string.format("Tanker type  = %s\n", tostring(self.tankertype))
     text=text..string.format("Refuel type  = %s\n", tostring(self.refueltype))
     text=text..string.format("AI           = %s\n", tostring(self.isAI))
-    text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
+    text=text..string.format("Has EPLRS    = %s\n", tostring(self.isEPLRS))    
+    text=text..string.format("Helicopter   = %s\n", tostring(self.isHelo))
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
     text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
@@ -1610,6 +1612,9 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
 
     -- Set ROT.
     self:SwitchROT(self.option.ROT)
+
+    -- Set default EPLRS.
+    self:SwitchEPLRS(self.option.EPLRS)
 
     -- Set Formation
     self:SwitchFormation(self.option.Formation)
