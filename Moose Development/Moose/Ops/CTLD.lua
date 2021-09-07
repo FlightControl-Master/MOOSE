@@ -577,6 +577,12 @@ do
 --        -- add infantry unit called "Anti-Tank" using templates "AA" and "AA"", of type TROOP with size 4. No weight. We only have 2 in stock:
 --        my_ctld:AddTroopsCargo("Anti-Air",{"AA","AA2"},CTLD_CARGO.Enum.TROOPS,4,nil,2)
 --        
+--        -- add an engineers unit called "Wrenches" using template "Engineers", of type ENGINEERS with size 2. Engineers can be loaded, dropped,
+--        -- and extracted like troops. However, they will seek to build and/or repair crates found in a given radius. Handy if you can\'t stay
+--        -- to build or repair or under fire.
+--        my_ctld:AddTroopsCargo("Wrenches",{"Engineers"},CTLD_CARGO.Enum.ENGINEERS,4)
+--        myctld.EngineerSearch = 2000 -- teams will search for crates in this radius.
+--        
 --        -- add vehicle called "Humvee" using template "Humvee", of type VEHICLE, size 2, i.e. needs two crates to be build
 --        -- vehicles and FOB will be spawned as crates in a LOAD zone first. Once transported to DROP zones, they can be build into the objects
 --        my_ctld:AddCratesCargo("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,2)
@@ -590,6 +596,7 @@ do
 --        
 --        -- add crates to repair FOB or VEHICLE type units - the 2nd parameter needs to match the template you want to repair
 --        my_ctld:AddCratesRepair("Humvee Repair","Humvee",CTLD_CARGO.Enum.REPAIR,1)
+--        my_ctld.repairtime = 300 -- takes 300 seconds to repair something
 --        
 -- ## 1.3 Add logistics zones
 --  
@@ -614,8 +621,7 @@ do
 --        -- Add a zone of type SHIP to our setup. Players can load troops and crates from this ship
 --        -- "Tarawa" is the unitname (callsign) of the ship from the ME. Players can load, if they are inside the zone.
 --        -- The ship is 240 meters long and 20 meters wide.
---        -- Note that smoke, flares, beacons don't work for this type of loadzone (yet). Also, you need to adjust
---        -- the max hover height to deck height plus 5 meters or so for loading to work.
+--        -- Note that you need to adjust the max hover height to deck height plus 5 meters or so for loading to work.
 --        -- When the ship is moving, forcing hoverload might not be a good idea.
 --        my_ctld:AddCTLDZone("Tarawa",CTLD.CargoZoneType.SHIP,SMOKECOLOR.Blue,true,true,240,20)
 -- 
@@ -636,6 +642,7 @@ do
 --          my_ctld.smokedistance = 2000 -- Only smoke or flare zones if requesting player unit is this far away (in meters)
 --          my_ctld.suppressmessages = false -- Set to true if you want to script your own messages.
 --          my_ctld.repairtime = 300 -- Number of seconds it takes to repair a unit.
+--          my_ctld.cratecountry = country.id.GERMANY -- ID of crates. Don\'t forget to change this matching your coalition!
 -- 
 -- ## 2.1 User functions
 -- 
@@ -645,19 +652,20 @@ do
 -- 
 --        -- E.g. update unit capabilities for testing. Please stay realistic in your mission design.
 --        -- Make a Gazelle into a heavy truck, this type can load both crates and troops and eight of each type:
---        my_ctld:UnitCapabilities("SA342L", true, true, 8, 8)
+--        my_ctld:UnitCapabilities("SA342L", true, true, 8, 8, 12)
 --        
---        Default unit type capabilities are:
+--        -- Default unit type capabilities are:
 --    
---        ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4},
---        ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2},
---        ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4},
---        ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2},
---        ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8},
---        ["Mi-8MT"] = {type="Mi-8MT", crates=true, troops=true, cratelimit = 2, trooplimit = 12},
---        ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0},
---        ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 1, trooplimit = 8},
---        ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 1, trooplimit = 8},
+--        ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12},
+--        ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12},
+--        ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12},
+--        ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12},
+--        ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8, length = 15},
+--        ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15},
+--        ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 15},
+--        ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
+--        ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
+--        ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25},
 --
 --        
 -- ### 2.1.2 Activate and deactivate zones
@@ -904,22 +912,23 @@ CTLD.CargoZoneType = {
 -- @field #number cratelimit Number of crates transportable.
 -- @field #number trooplimit Number of troop units transportable.
 CTLD.UnitTypes = {
-    ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4},
-    ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2},
-    ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4},
-    ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2},
-    ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8},
-    ["Mi-8MTV2"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12},
-    ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12},
-    ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0},
-    ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8},
-    ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8},
-    ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64}, -- 19t cargo, 64 paratroopers
+    ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12},
+    ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12},
+    ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12},
+    ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12},
+    ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8, length = 15},
+    ["Mi-8MTV2"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15},
+    ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15},
+    ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 15},
+    ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
+    ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
+    ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25}, -- 19t cargo, 64 paratroopers. 
+    --Actually it's longer, but the center coord is off-center of the model.
 }
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.7a3"
+CTLD.version="0.1.7a5"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1026,7 +1035,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.EngineerSearch = 2000 -- #number search distance for crates to build or repair
   
   -- setup
-  self.CrateDistance = 30 -- list/load crates in this radius
+  self.CrateDistance = 35 -- list/load crates in this radius
   self.ExtractFactor = 3.33 -- factor for troops extraction, i.e. CrateDistance * Extractfactor
   self.prefixes = Prefixes or {"Cargoheli"}
   --self.I({prefixes = self.prefixes})
@@ -1053,6 +1062,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- time to repair a unit/group
   self.repairtime = 300
+  
+  -- country of crates spawned
+  self.cratecountry = country.id.GERMANY
   
   for i=1,100 do
     math.random()
@@ -1202,6 +1214,7 @@ function CTLD:_GetUnitCapabilities(Unit)
     capabilities.cratelimit = 0
     capabilities.trooplimit = 0
     capabilities.type = "generic"
+    capabilities.length = 20
   end
   return capabilities
 end
@@ -1665,20 +1678,18 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   -- loop crates needed
   for i=1,number do
     local cratealias = string.format("%s-%d", cratetemplate, math.random(1,100000))
-    local cratedistance = i*4 + 8
+    local cratedistance = (i-1)*2.5 + capabilities.length
+    if cratedistance > self.CrateDistance then cratedistance = self.CrateDistance end
+    local addon = 0
     if IsHerc then 
-      -- wider radius
-      cratedistance = i*4 + 12
+      -- spawn behind the Herc
+      addon = 180
     end
-    for i=1,50 do
-      math.random(90,270)
-    end
-    local rheading = math.floor(((math.random(90,270) * heading) + 1) / 360)
-    if not IsHerc then
-      rheading = rheading + 180 -- mirror for Helis
-    end
-    if rheading > 360 then rheading = rheading - 360 end -- catch > 360
-    local cratecoord = position:Translate(cratedistance,rheading)
+    -- altered heading logic
+    -- TODO: right standard deviation?
+    local randomheading = UTILS.RandomGaussian(0,30,-90,90,100)
+    randomheading = math.fmod((heading + randomheading + addon), 360)
+    local cratecoord = position:Translate(cratedistance,randomheading)
     local cratevec2 = cratecoord:GetVec2()
     self.CrateCounter = self.CrateCounter + 1
     if type(ship) == "string" then
@@ -1690,19 +1701,19 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
       dist = dist - (20 + math.random(1,10))
       local width = width / 2
       local Offy = math.random(-width,width)
-      self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType("container_cargo","Cargos",country.id.GERMANY)
+      self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType("container_cargo","Cargos",self.cratecountry)
       --:InitCoordinate(cratecoord)
       :InitLinkToUnit(Ship,dist,Offy,0)
       :Spawn(270,cratealias)
     else   
-    self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType("container_cargo","Cargos",country.id.GERMANY)
-      :InitCoordinate(cratecoord)
-      --:InitLinkToUnit(Unit,OffsetX,OffsetY,OffsetAngle)
-      :Spawn(270,cratealias)
+      self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType("container_cargo","Cargos",self.cratecountry)
+        :InitCoordinate(cratecoord)
+        --:InitLinkToUnit(Unit,OffsetX,OffsetY,OffsetAngle)
+        :Spawn(270,cratealias)
     end
     local templ = cargotype:GetTemplates()
     local sorte = cargotype:GetType()
-    self.CargoCounter = self.CargoCounter +1
+    self.CargoCounter = self.CargoCounter + 1
     local realcargo = nil
     if drop then
       realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass)
@@ -1712,13 +1723,13 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     end
     table.insert(self.Spawned_Cargo, realcargo)
   end
-    local text = string.format("Crates for %s have been positioned near you!",cratename)
-    if drop then
-      text = string.format("Crates for %s have been dropped!",cratename)
-      self:__CratesDropped(1, Group, Unit, droppedcargo)
-    end
-    self:_SendMessage(text, 10, false, Group) 
-    return self
+  local text = string.format("Crates for %s have been positioned near you!",cratename)
+  if drop then
+    text = string.format("Crates for %s have been dropped!",cratename)
+    self:__CratesDropped(1, Group, Unit, droppedcargo)
+  end
+  self:_SendMessage(text, 10, false, Group) 
+  return self
 end
 
 --- (Internal) Function to find and list nearby crates.
@@ -1825,7 +1836,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
   local unitname = unit:GetName()
   -- see if this heli can load crates
   local unittype = unit:GetTypeName()
-  local capabilities = self:_GetUnitCapabilities(Unit)
+  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
   --local capabilities = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
   local cancrates = capabilities.crates -- #boolean
   local cratelimit = capabilities.cratelimit -- #number
@@ -2827,8 +2838,8 @@ function CTLD:_ListRadioBeacons(Group, Unit)
   self:T(self.lid .. " _ListRadioBeacons")
   local report = REPORT:New("Active Zone Beacons")
   report:Add("------------------------------------------------------------")
-  local zones = {[1] = self.pickupZones, [2] = self.wpZones, [3] = self.dropOffZones}
-  for i=1,3 do
+  local zones = {[1] = self.pickupZones, [2] = self.wpZones, [3] = self.dropOffZones, [4] = self.shipZones}
+  for i=1,4 do
     for index,cargozone in pairs(zones[i]) do
       -- Get Beacon object from zone
       local czone = cargozone -- #CTLD.CargoZone
@@ -2858,9 +2869,15 @@ end
 -- @param #string Sound Name of soundfile.
 -- @param #number Mhz Frequency in Mhz.
 -- @param #number Modulation Modulation AM or FM.
-function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation)
+-- @param #boolean IsShip If true zone is a ship.
+function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip)
   self:T(self.lid .. " _AddRadioBeacon")
-  local Zone = ZONE:FindByName(Name)
+  local Zone = nil
+  if IsShip then
+    Zone = UNIT:FindByName(Name)
+  else
+    Zone = ZONE:FindByName(Name)
+  end
   local Sound = Sound or "beacon.ogg"
   if Zone then
     local ZoneCoord = Zone:GetCoordinate()
@@ -2877,8 +2894,10 @@ end
 function CTLD:_RefreshRadioBeacons()
   self:T(self.lid .. " _RefreshRadioBeacons")
 
-  local zones = {[1] = self.pickupZones, [2] = self.wpZones, [3] = self.dropOffZones}
-  for i=1,3 do
+  local zones = {[1] = self.pickupZones, [2] = self.wpZones, [3] = self.dropOffZones, [4] = self.shipZones}
+  for i=1,4 do
+    local IsShip = false
+    if i == 4 then IsShip = true end
     for index,cargozone in pairs(zones[i]) do
       -- Get Beacon object from zone
       local czone = cargozone -- #CTLD.CargoZone
@@ -2891,9 +2910,9 @@ function CTLD:_RefreshRadioBeacons()
         local FM = FMbeacon.frequency  -- MHz
         local VHF = VHFbeacon.frequency -- KHz
         local UHF = UHFbeacon.frequency  -- MHz      
-        self:_AddRadioBeacon(Name,Sound,FM,radio.modulation.FM)
-        self:_AddRadioBeacon(Name,Sound,VHF,radio.modulation.FM)
-        self:_AddRadioBeacon(Name,Sound,UHF,radio.modulation.AM)
+        self:_AddRadioBeacon(Name,Sound,FM,radio.modulation.FM, IsShip)
+        self:_AddRadioBeacon(Name,Sound,VHF,radio.modulation.FM, IsShip)
+        self:_AddRadioBeacon(Name,Sound,UHF,radio.modulation.AM, IsShip)
       end
     end
   end
@@ -2982,12 +3001,17 @@ function CTLD:SmokeZoneNearBy(Unit, Flare)
   local Group = Unit:GetGroup()
   local smokedistance = self.smokedistance
   local smoked = false
-  local zones = {[1] = self.pickupZones, [2] = self.wpZones, [3] = self.dropOffZones}
-  for i=1,3 do
+  local zones = {[1] = self.pickupZones, [2] = self.wpZones, [3] = self.dropOffZones, [4] = self.shipZones}
+  for i=1,4 do
     for index,cargozone in pairs(zones[i]) do
       local CZone = cargozone --#CTLD.CargoZone
       local zonename = CZone.name
-      local zone = ZONE:FindByName(zonename)
+      local zone = nil
+      if i == 4 then
+        zone = UNIT:FindByName(zonename)
+      else
+        zone = ZONE:FindByName(zonename)
+      end
       local zonecoord = zone:GetCoordinate()
       local active = CZone.active
       local color = CZone.color
@@ -3017,11 +3041,12 @@ end
   --- User - Function to add/adjust unittype capabilities.
   -- @param #CTLD self
   -- @param #string Unittype The unittype to adjust. If passed as Wrapper.Unit#UNIT, it will search for the unit in the mission.
-  -- @param #boolean Cancrates Unit can load crates.
-  -- @param #boolean Cantroops Unit can load troops.
-  -- @param #number Cratelimit Unit can carry number of crates.
-  -- @param #number Trooplimit Unit can carry number of troops.
-  function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit)
+  -- @param #boolean Cancrates Unit can load crates. Default false.
+  -- @param #boolean Cantroops Unit can load troops. Default false.
+  -- @param #number Cratelimit Unit can carry number of crates. Default 0.
+  -- @param #number Trooplimit Unit can carry number of troops. Default 0.
+  -- @param #number Length Unit lenght (in mteres) for the load radius. Default 20.
+  function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length)
     self:T(self.lid .. " UnitCapabilities")
     local unittype =  nil
     local unit = nil
@@ -3040,6 +3065,7 @@ end
     capabilities.troops = Cantroops or false
     capabilities.cratelimit = Cratelimit or  0
     capabilities.trooplimit = Trooplimit or 0
+    capabilities.length = Length or 20
     self.UnitTypes[unittype] = capabilities
     return self
   end
