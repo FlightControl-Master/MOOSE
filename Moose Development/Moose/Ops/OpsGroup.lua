@@ -3373,6 +3373,29 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- Set mission UID.
     wp.missionUID=Mission and Mission.auftragsnummer or nil
     
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.AMMOSUPPLY or Task.dcstask.id==AUFTRAG.SpecialTask.FUELSUPPLY then
+
+    ---
+    -- Task "Ammo Supply" or "Fuel Supply" mission.
+    ---
+
+    -- Parameters.
+    local zone=Task.dcstask.params.zone --Core.Zone#ZONE
+    
+    -- Random coordinate in zone.
+    local Coordinate=zone:GetRandomCoordinate()
+    
+    -- Speed and altitude.
+    local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
+    
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
+
+    ---
+    -- Task Alert 5 mission.
+    ---
+    
+    -- Just stay put on the airfield and wait until something happens.
+    
   else
 
     -- If task is scheduled (not waypoint) set task.
@@ -3463,7 +3486,13 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
       elseif Task.dcstask.id=="PatrolZone" then
         done=true
       elseif Task.dcstask.id=="ReconMission" then
-        done=true      
+        done=true
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.AMMOSUPPLY then
+        done=true
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.FUELSUPPLY then
+        done=true
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
+        done=true        
       elseif stopflag==1 or (not self:IsAlive()) or self:IsDead() or self:IsStopped() then
         -- Manual call TaskDone if setting flag to one was not successful.
         done=true
@@ -3829,8 +3858,8 @@ function OPSGROUP:onbeforeMissionStart(From, Event, To, Mission)
 
   end
 
-  -- Startup group if it is uncontrolled.
-  if self:IsFlightgroup() and self:IsUncontrolled() then
+  -- Startup group if it is uncontrolled. Alert 5 aircraft will not be started though!
+  if self:IsFlightgroup() and self:IsUncontrolled() and Mission.type~=AUFTRAG.Type.ALERT5 then
     self:StartUncontrolled(delay)
   end
 
@@ -3949,6 +3978,12 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     ---
     -- Current Mission
     ---
+
+    -- Alert 5 missoins dont have a task set, which could be cancelled.
+    if Mission.type==AUFTRAG.Type.ALERT5 then
+      self:MissionDone(Mission)
+      return
+    end
 
     -- Get mission waypoint task.
     local Task=Mission:GetGroupWaypointTask(self)
@@ -4103,14 +4138,22 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Debug info.
     self:T(self.lid..string.format("Route To Mission"))
 
+    -- Catch dead or stopped groups.
     if self:IsDead() or self:IsStopped() then
       return
     end
     
+    -- OPSTRANSPORT: Just add the ops transport to the queue.
     if mission.type==AUFTRAG.Type.OPSTRANSPORT then
       self:AddOpsTransport(mission.opstransport)
       return
     end
+    
+    -- ALERT 5: Just set the mission to executing.
+    if mission.type==AUFTRAG.Type.ALERT5 then
+      self:MissionExecute(mission)
+      return
+    end    
 
     -- ID of current waypoint.
     local uid=self:GetWaypointCurrent().uid
@@ -4134,6 +4177,10 @@ function OPSGROUP:RouteToMission(mission, delay)
 
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
+    
+      ---
+      -- TROOP TRANSPORT
+      ---
 
       -- Refresh DCS task with the known controllable.
       mission.DCStask=mission:GetDCSMissionTask(self.group)
@@ -4221,39 +4268,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     ---
     -- Mission Specific Settings
     ---
-
-    -- ROE
-    if mission.optionROE then
-      self:SwitchROE(mission.optionROE)
-    end
-    -- ROT
-    if mission.optionROT then
-      self:SwitchROT(mission.optionROT)
-    end
-    -- Alarm state
-    if mission.optionAlarm then
-      self:SwitchAlarmstate(mission.optionAlarm)
-    end
-    -- EPLRS
-    if mission.optionEPLRS then
-      self:SwitchEPLRS(mission.optionEPLRS)
-    end    
-    -- Formation
-    if mission.optionFormation and self:IsFlightgroup() then
-      self:SwitchFormation(mission.optionFormation)
-    end
-    -- Radio frequency and modulation.
-    if mission.radio then
-      self:SwitchRadio(mission.radio.Freq, mission.radio.Modu)
-    end
-    -- TACAN settings.
-    if mission.tacan then
-      self:SwitchTACAN(mission.tacan.Channel, mission.tacan.Morse, mission.tacan.BeaconName, mission.tacan.Band)
-    end
-    -- ICLS settings.
-    if mission.icls then
-      self:SwitchICLS(mission.icls.Channel, mission.icls.Morse, mission.icls.UnitName)
-    end
+    self:_SetMissionOptions(mission)
     
     if self:IsArmygroup() then
       self:Cruise(mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise())
@@ -4264,6 +4279,46 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
 
   end
+end
+
+--- Set mission specific options for ROE, Alarm state, etc.
+-- @param #OPSGROUP self
+-- @param Ops.Auftrag#AUFTRAG mission The mission table.
+function OPSGROUP:_SetMissionOptions(mission)
+  
+  -- ROE
+  if mission.optionROE then
+    self:SwitchROE(mission.optionROE)
+  end
+  -- ROT
+  if mission.optionROT then
+    self:SwitchROT(mission.optionROT)
+  end
+  -- Alarm state
+  if mission.optionAlarm then
+    self:SwitchAlarmstate(mission.optionAlarm)
+  end
+  -- EPLRS
+  if mission.optionEPLRS then
+    self:SwitchEPLRS(mission.optionEPLRS)
+  end    
+  -- Formation
+  if mission.optionFormation and self:IsFlightgroup() then
+    self:SwitchFormation(mission.optionFormation)
+  end
+  -- Radio frequency and modulation.
+  if mission.radio then
+    self:SwitchRadio(mission.radio.Freq, mission.radio.Modu)
+  end
+  -- TACAN settings.
+  if mission.tacan then
+    self:SwitchTACAN(mission.tacan.Channel, mission.tacan.Morse, mission.tacan.BeaconName, mission.tacan.Band)
+  end
+  -- ICLS settings.
+  if mission.icls then
+    self:SwitchICLS(mission.icls.Channel, mission.icls.Morse, mission.icls.UnitName)
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -2001,18 +2001,25 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
     allowed=false
   end
   
+  -- Check if group is uncontrolled. If so, the mission task cannot be set yet!
   if allowed and self:IsUncontrolled() then
-    -- Not airborne yet. Try again in 5 sec.
-    self:T(self.lid.."Update route denied. Group is UNCONTROLLED ==> checking back in 5 sec")
-    trepeat=-5
+    self:T(self.lid.."Update route denied. Group is UNCONTROLLED!")
+    local mission=self:GetMissionCurrent()
+    if mission and mission.type==AUFTRAG.Type.ALERT5 then
+      trepeat=nil --Alert 5 is just waiting for the real mission. No need to try to update the route.
+    else
+      trepeat=-5
+    end
     allowed=false  
   end
 
+  -- Requested waypoint index <1. Something is seriously wrong here!
   if n and n<1 then
     self:E(self.lid.."Update route denied because waypoint n<1!")
     allowed=false
   end
 
+  -- No current waypoint. Something is serously wrong!
   if not self.currentwp then
     self:E(self.lid.."Update route denied because self.currentwp=nil!")
     allowed=false
@@ -2025,9 +2032,10 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
     allowed=false
   end
 
+  -- Check for a current task.
   if self.taskcurrent>0 then
 
-    --local task=self:GetTaskCurrent()
+    -- Get the current task. Must not be executing already.
     local task=self:GetTaskByID(self.taskcurrent)
 
     if task then
@@ -2063,8 +2071,9 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
   end
 
   -- Debug info.
-  self:T2(self.lid..string.format("Onbefore Updateroute allowed=%s state=%s repeat in %s", tostring(allowed), self:GetState(), tostring(trepeat)))
+  self:T2(self.lid..string.format("Onbefore Updateroute in state %s: allowed=%s (repeat in %s)", self:GetState(), tostring(allowed), tostring(trepeat)))
 
+  -- Try again?
   if trepeat then
     self:__UpdateRoute(trepeat, n)
   end

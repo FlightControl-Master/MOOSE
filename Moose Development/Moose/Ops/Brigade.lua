@@ -3,6 +3,8 @@
 -- **Main Features:**
 --
 --    * Manage platoons
+--    * Carry out ARTY and PATROLZONE missions (AUFTRAG)
+--    * Define rearming zones
 --
 -- ===
 --
@@ -16,6 +18,8 @@
 -- @type BRIGADE
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity of output.
+-- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.RearmingZone`.
+-- @field Core.Set#SET_ZONE retreatZones Retreat zone set.
 -- @extends Ops.Legion#LEGION
 
 --- Be surprised!
@@ -31,8 +35,14 @@
 BRIGADE = {
   ClassName      = "BRIGADE",
   verbose        =     0,
+  rearmingZones  =    {},
 }
 
+--- Rearming Zone.
+-- @type BRIGADE.RearmingZone
+-- @field Core.Zone#ZONE zone The zone.
+-- @field #boolean occupied If `true`, a rearming truck is present in the zone.
+-- @field Wrapper.Marker#MARKER marker F10 marker.
 
 --- BRIGADE class version.
 -- @field #string version
@@ -66,6 +76,9 @@ function BRIGADE:New(WarehouseName, BrigadeName)
 
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("BRIGADE %s | ", self.alias)
+  
+  -- Defaults
+  self:SetRetreatZones()
 
   -- Add FSM transitions.
   --                 From State  -->   Event         -->      To State
@@ -179,6 +192,49 @@ function BRIGADE:AddAssetToPlatoon(Platoon, Nassets)
 
   return self
 end
+
+--- Define a set of retreat zones.
+-- @param #BRIGADE self
+-- @param Core.Set#SET_ZONE RetreatZoneSet Set of retreat zones.
+-- @return #BRIGADE self
+function BRIGADE:SetRetreatZones(RetreatZoneSet)
+  self.retreatZones=RetreatZoneSet or SET_ZONE:New()
+  return self
+end
+
+--- Add a retreat zone.
+-- @param #BRIGADE self
+-- @param Core.Zone#ZONE RetreatZone Retreat zone.
+-- @return #BRIGADE self
+function BRIGADE:AddRetreatZone(RetreatZone)
+  self.retreatZones:AddZone(RetreatZone)
+  return self
+end
+
+--- Get retreat zones.
+-- @param #BRIGADE self
+-- @return Core.Set#SET_ZONE Set of retreat zones.
+function BRIGADE:GetRetreatZones()
+  return self.retreatZones
+end
+
+--- Add a patrol Point for CAP missions.
+-- @param #BRIGADE self
+-- @param Core.Zone#ZONE Rearming zone.
+-- @return #AIRWING self
+function BRIGADE:AddRearmingZone(RearmingZone)
+
+  local rearmingzone={} --#BRIGADE.RearmingZone
+  
+  rearmingzone.zone=RearmingZone
+  rearmingzone.occupied=false
+  rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Rearming Zone"):ToCoalition(self:GetCoalition())
+
+  table.insert(self.rearmingZones, rearmingzone)
+
+  return self
+end
+
 
 --- Get platoon by name.
 -- @param #BRIGADE self

@@ -331,6 +331,10 @@ _AUFTRAGSNR=0
 -- @field #string ARTY Fire at point.
 -- @field #string PATROLZONE Patrol a zone.
 -- @field #string OPSTRANSPORT Ops transport.
+-- @field #string AMMOSUPPLY Ammo supply.
+-- @field #string FUELSUPPLY Fuel supply.
+-- @field #string ALERT5 Alert 5.
+-- @field #string ONWATCH On watch.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -356,6 +360,27 @@ AUFTRAG.Type={
   ARTY="Fire At Point",
   PATROLZONE="Patrol Zone",
   OPSTRANSPORT="Ops Transport",
+  AMMOSUPPLY="Ammo Supply",
+  FUELSUPPLY="Fuel Supply",
+  ALERT5="Alert 5",
+  ONWATCH="On Watch",
+}
+
+--- Mission status of an assigned group.
+-- @type AUFTRAG.GroupStatus
+-- @field #string PATROLZONE Patrol zone task.
+-- @field #string RECON Recon task
+-- @field #string AMMOSUPPLY Ammo Supply.
+-- @field #string FUELSUPPLY Fuel Supply.
+-- @field #string ALERT5 Alert 5 task.
+-- @field #string ONWATCH On Watch
+AUFTRAG.SpecialTask={
+  PATROLZONE="PatrolZone",
+  RECON="ReconMission",
+  AMMOSUPPLY="Ammo Supply",
+  FUELSUPPLY="Fuel Supply",
+  ALERT5="Alert 5",
+  ONWATCH="On Watch",
 }
 
 --- Mission status.
@@ -458,17 +483,17 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.7.1"
+AUFTRAG.version="0.8.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Replace engageRange by missionRange. Here and in other classes. CTRL+H is your friend!
--- TODO: Missions can be assigned to multiple legions.
 -- TODO: Mission success options damaged, destroyed.
 -- TODO: F10 marker to create new missions.
 -- TODO: Add recovery tanker mission for boat ops.
+-- DONE: Missions can be assigned to multiple legions.
 -- DONE: Option to assign a specific payload for the mission (requires an AIRWING).
 -- NOPE: Clone mission. How? Deepcopy? ==> Create a new auftrag.
 -- DONE: Recon mission. What input? Set of coordinates?
@@ -570,7 +595,7 @@ end
 -- Create Missions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create an ANTI-SHIP mission.
+--- **[AIR]** Create an ANTI-SHIP mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be passed as a @{Wrapper.Group#GROUP} or @{Wrapper.Unit#UNIT} object.
 -- @param #number Altitude Engage altitude in feet. Default 2000 ft.
@@ -598,7 +623,7 @@ function AUFTRAG:NewANTISHIP(Target, Altitude)
   return mission
 end
 
---- Create an ORBIT mission, which can be either a circular orbit or a race-track pattern.
+--- **[AIR]** Create an ORBIT mission, which can be either a circular orbit or a race-track pattern.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
@@ -640,7 +665,7 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
   return mission
 end
 
---- Create an ORBIT mission, where the aircraft will go in a circle around the specified coordinate.
+--- **[AIR]** Create an ORBIT mission, where the aircraft will go in a circle around the specified coordinate.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Position where to orbit around.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
@@ -653,7 +678,7 @@ function AUFTRAG:NewORBIT_CIRCLE(Coordinate, Altitude, Speed)
   return mission
 end
 
---- Create an ORBIT mission, where the aircraft will fly a race-track pattern.
+--- **[AIR]** Create an ORBIT mission, where the aircraft will fly a race-track pattern.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
@@ -671,7 +696,7 @@ function AUFTRAG:NewORBIT_RACETRACK(Coordinate, Altitude, Speed, Heading, Leg)
   return mission
 end
 
---- Create a Ground Controlled CAP (GCICAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a compat air patrol but not engage by
+--- **[AIR]** Create a Ground Controlled CAP (GCICAP) mission. Flights with this task are considered for A2A INTERCEPT missions by the CHIEF class. They will perform a compat air patrol but not engage by
 -- themselfs. They wait for the CHIEF to tell them whom to engage.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
@@ -697,7 +722,7 @@ function AUFTRAG:NewGCICAP(Coordinate, Altitude, Speed, Heading, Leg)
   return mission
 end
 
---- Create a TANKER mission.
+--- **[AIR]** Create a TANKER mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
@@ -728,7 +753,7 @@ function AUFTRAG:NewTANKER(Coordinate, Altitude, Speed, Heading, Leg, RefuelSyst
   return mission
 end
 
---- Create a AWACS mission.
+--- **[AIR]** Create a AWACS mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit. Altitude is also taken from the coordinate.
 -- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
@@ -758,7 +783,7 @@ end
 
 
 
---- Create an INTERCEPT mission.
+--- **[AIR]** Create an INTERCEPT mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to intercept. Can also be passed as simple @{Wrapper.Group#GROUP} or @{Wrapper.Unit#UNIT} object.
 -- @return #AUFTRAG self
@@ -779,7 +804,7 @@ function AUFTRAG:NewINTERCEPT(Target)
   return mission
 end
 
---- Create a CAP mission.
+--- **[AIR]** Create a CAP mission.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE_RADIUS ZoneCAP Circular CAP zone. Detected targets in this zone will be engaged.
 -- @param #number Altitude Altitude at which to orbit in feet. Default is 10,000 ft.
@@ -819,7 +844,7 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   return mission
 end
 
---- Create a CAS mission.
+--- **[AIR]** Create a CAS mission.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE_RADIUS ZoneCAS Circular CAS zone. Detected targets in this zone will be engaged.
 -- @param #number Altitude Altitude at which to orbit. Default is 10,000 ft.
@@ -859,7 +884,7 @@ function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, Targ
   return mission
 end
 
---- Create a FACA mission.
+--- **[AIR]** Create a FACA mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP Target Target group. Must be a GROUP object.
 -- @param #string Designation Designation of target. See `AI.Task.Designation`. Default `AI.Task.Designation.AUTO`.
@@ -894,7 +919,7 @@ function AUFTRAG:NewFACA(Target, Designation, DataLink, Frequency, Modulation)
 end
 
 
---- Create a BAI mission.
+--- **[AIR]** Create a BAI mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
 -- @param #number Altitude Engage altitude in feet. Default 2000 ft.
@@ -922,7 +947,7 @@ function AUFTRAG:NewBAI(Target, Altitude)
   return mission
 end
 
---- Create a SEAD mission.
+--- **[AIR]** Create a SEAD mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP or UNIT object.
 -- @param #number Altitude Engage altitude in feet. Default 2000 ft.
@@ -951,7 +976,7 @@ function AUFTRAG:NewSEAD(Target, Altitude)
   return mission
 end
 
---- Create a STRIKE mission. Flight will attack the closest map object to the specified coordinate.
+--- **[AIR]** Create a STRIKE mission. Flight will attack the closest map object to the specified coordinate.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT, STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 2000 ft.
@@ -979,7 +1004,7 @@ function AUFTRAG:NewSTRIKE(Target, Altitude)
   return mission
 end
 
---- Create a BOMBING mission. Flight will drop bombs a specified coordinate.
+--- **[AIR]** Create a BOMBING mission. Flight will drop bombs a specified coordinate.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
@@ -1011,7 +1036,7 @@ function AUFTRAG:NewBOMBING(Target, Altitude)
   return mission
 end
 
---- Create a BOMBRUNWAY mission.
+--- **[AIR]** Create a BOMBRUNWAY mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Airbase#AIRBASE Airdrome The airbase to bomb. This must be an airdrome (not a FARP or ship) as these to not have a runway.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
@@ -1047,7 +1072,7 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
   return mission
 end
 
---- Create a CARPET BOMBING mission.
+--- **[AIR]** Create a CARPET BOMBING mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT or STATIC object.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
@@ -1084,7 +1109,7 @@ function AUFTRAG:NewBOMBCARPET(Target, Altitude, CarpetLength)
 end
 
 
---- Create an ESCORT (or FOLLOW) mission. Flight will escort another group and automatically engage certain target types.
+--- **[AIR]** Create an ESCORT (or FOLLOW) mission. Flight will escort another group and automatically engage certain target types.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP EscortGroup The group to escort.
 -- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=-100, y=0, z=200} for z=200 meters to the right, same alitude, x=100 meters behind.
@@ -1114,7 +1139,7 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   return mission
 end
 
---- Create a RESCUE HELO mission.
+--- **[AIR ROTARY]** Create a RESCUE HELO mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Unit#UNIT Carrier The carrier unit.
 -- @return #AUFTRAG self
@@ -1136,7 +1161,7 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
 end
 
 
---- Create a TROOP TRANSPORT mission.
+--- **[AIR ROTARY]** Create a TROOP TRANSPORT mission.
 -- @param #AUFTRAG self
 -- @param Core.Set#SET_GROUP TransportGroupSet The set group(s) to be transported.
 -- @param Core.Point#COORDINATE DropoffCoordinate Coordinate where the helo will land drop off the the troops.
@@ -1175,7 +1200,7 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
 end
 
 
---- Create a OPS TRANSPORT mission.
+--- **[AIR, GROUND, NAVAL]** Create a OPS TRANSPORT mission.
 -- @param #AUFTRAG self
 -- @param Core.Set#SET_GROUP CargoGroupSet The set group(s) to be transported.
 -- @param Core.Zone#ZONE PickupZone Pick up zone
@@ -1188,13 +1213,6 @@ function AUFTRAG:NewOPSTRANSPORT(CargoGroupSet, PickupZone, DeployZone)
   mission.transportGroupSet=CargoGroupSet
   
   mission:_TargetFromObject(mission.transportGroupSet)
-  
-  --mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()  
-  --mission.transportDropoff=DropoffCoordinate
-  
-  -- Debug.
-  --mission.transportPickup:MarkToAll("Pickup")
-  --mission.transportDropoff:MarkToAll("Drop off")
   
   mission.opstransport=OPSTRANSPORT:New(CargoGroupSet, PickupZone, DeployZone)
   
@@ -1216,7 +1234,7 @@ function AUFTRAG:NewOPSTRANSPORT(CargoGroupSet, PickupZone, DeployZone)
 end
 
 
---- Create an ARTY mission.
+--- **[GROUND, NAVAL]** Create an ARTY mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Center of the firing solution.
 -- @param #number Nshots Number of shots to be fired. Default 3.
@@ -1246,7 +1264,7 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius)
   return mission
 end
 
---- Create a PATROLZONE mission. Group(s) will go to the zone and patrol it randomly.
+--- **[AIR, GROUND, NAVAL]** Create a PATROLZONE mission. Group(s) will go to the zone and patrol it randomly.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE Zone The patrol zone.
 -- @param #number Speed Speed in knots.
@@ -1276,7 +1294,7 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
   return mission
 end
 
---- Create a RECON mission.
+--- **[AIR, GROUND, NAVAL]** Create a RECON mission.
 -- @param #AUFTRAG self
 -- @param Core.Set#SET_ZONE ZoneSet The recon zones.
 -- @param #number Speed Speed in knots.
@@ -1301,6 +1319,70 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
   mission.DCStask=mission:GetDCSMissionTask()
   mission.DCStask.params.adinfitum=Adinfinitum
   mission.DCStask.params.randomly=Randomly
+
+  return mission
+end
+
+--- **[GROUND]** Create a AMMO SUPPLY mission.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE Zone The zone, where supply units go.
+-- @return #AUFTRAG self
+function AUFTRAG:NewAMMOSUPPLY(Zone)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.AMMOSUPPLY)
+  
+  mission:_TargetFromObject(Zone)
+    
+  mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  
+  mission.missionFraction=0.9
+    
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+--- **[GROUND]** Create a FUEL SUPPLY mission.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE Zone The zone, where supply units go.
+-- @return #AUFTRAG self
+function AUFTRAG:NewFUELSUPPLY(Zone)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.FUELSUPPLY)
+  
+  mission:_TargetFromObject(Zone)
+    
+  mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  
+  mission.missionFraction=0.9
+    
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+
+--- **[AIR]** Create an ALERT 5 mission.
+-- @param #AUFTRAG self
+-- @param #string MissionType Mission type `AUFTRAG.Type.XXX`.
+-- @return #AUFTRAG self
+function AUFTRAG:NewALERT5(MissionType)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.ALERT5)
+  
+  --mission:_TargetFromObject(Coordinate)
+  
+  mission.missionTask=self:GetMissionTaskforMissionType(MissionType)
+  mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionROT=ENUMS.ROT.NoReaction
+  
+  mission.alert5MissionType=MissionType
+  
+  mission.missionFraction=0.0
+    
+  mission.DCStask=mission:GetDCSMissionTask()
 
   return mission
 end
@@ -3996,6 +4078,59 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     DCStask.params=param
     
     table.insert(DCStasks, DCStask)
+
+  elseif self.type==AUFTRAG.Type.AMMOSUPPLY then
+
+    -------------------------
+    -- AMMO SUPPLY Mission --
+    -------------------------
+  
+    local DCStask={}
+    
+    DCStask.id=AUFTRAG.SpecialTask.AMMOSUPPLY
+    
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)
+
+  elseif self.type==AUFTRAG.Type.FUELSUPPLY then
+
+    -------------------------
+    -- FUEL SUPPLY Mission --
+    -------------------------
+  
+    local DCStask={}
+    
+    DCStask.id=AUFTRAG.SpecialTask.FUELSUPPLY
+    
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)
+    
+  elseif self.type==AUFTRAG.Type.ALERT5 then
+
+    ---------------------
+    -- ALERT 5 Mission --
+    ---------------------
+  
+    local DCStask={}
+    
+    DCStask.id=AUFTRAG.SpecialTask.ALERT5
+    
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
+    local param={}
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)    
   
   else
     self:E(self.lid..string.format("ERROR: Unknown mission task!"))
@@ -4064,6 +4199,53 @@ function AUFTRAG:_GetDCSAttackTask(Target, DCStasks)
   end
   
   return DCStasks
+end
+
+--- Get DCS task table for an attack group or unit task.
+-- @param #AUFTRAG self
+-- @param #string MissionType Mission (AUFTAG) type.
+-- @return #string DCS mission task for the auftrag type.
+function AUFTRAG:GetMissionTaskforMissionType(MissionType)
+
+  local mtask=ENUMS.MissionTask.NOTHING
+  
+  if MissionType==AUFTRAG.Type.ANTISHIP then
+    mtask=ENUMS.MissionTask.ANTISHIPSTRIKE
+  elseif MissionType==AUFTRAG.Type.AWACS then
+    mtask=ENUMS.MissionTask.AWACS
+  elseif MissionType==AUFTRAG.Type.BAI then
+    mtask=ENUMS.MissionTask.GROUNDATTACK
+  elseif MissionType==AUFTRAG.Type.BOMBCARPET then
+    mtask=ENUMS.MissionTask.GROUNDATTACK
+  elseif MissionType==AUFTRAG.Type.BOMBING then
+    mtask=ENUMS.MissionTask.GROUNDATTACK
+  elseif MissionType==AUFTRAG.Type.BOMBRUNWAY then
+    mtask=ENUMS.MissionTask.RUNWAYATTACK
+  elseif MissionType==AUFTRAG.Type.CAP then
+    mtask=ENUMS.MissionTask.CAP
+  elseif MissionType==AUFTRAG.Type.CAS then
+    mtask=ENUMS.MissionTask.CAS
+  elseif MissionType==AUFTRAG.Type.ESCORT then
+    mtask=ENUMS.MissionTask.ESCORT
+  elseif MissionType==AUFTRAG.Type.FACA then
+    mtask=ENUMS.MissionTask.AFAC
+  elseif MissionType==AUFTRAG.Type.FERRY then
+    mtask=ENUMS.MissionTask.NOTHING
+  elseif MissionType==AUFTRAG.Type.INTERCEPT then
+    mtask=ENUMS.MissionTask.INTERCEPT
+  elseif MissionType==AUFTRAG.Type.RECON then
+    mtask=ENUMS.MissionTask.RECONNAISSANCE
+  elseif MissionType==AUFTRAG.Type.SEAD then
+    mtask=ENUMS.MissionTask.SEAD
+  elseif MissionType==AUFTRAG.Type.STRIKE then
+    mtask=ENUMS.MissionTask.GROUNDATTACK
+  elseif MissionType==AUFTRAG.Type.TANKER then
+    mtask=ENUMS.MissionTask.REFUELING
+  elseif MissionType==AUFTRAG.Type.TROOPTRANSPORT then
+    mtask=ENUMS.MissionTask.TRANSPORT
+  end
+
+  return mtask
 end
 
 

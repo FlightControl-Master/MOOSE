@@ -43,8 +43,6 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\OPS\AirWing\_Main.png)
---
 -- # The AIRWING Concept
 --
 -- An AIRWING consists of multiple SQUADRONS. These squadrons "live" in a WAREHOUSE, i.e. a physical structure that is connected to an airbase (airdrome, FRAP or ship).

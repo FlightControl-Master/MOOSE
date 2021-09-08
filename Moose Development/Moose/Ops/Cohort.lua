@@ -818,6 +818,12 @@ function COHORT:RecruitAssets(Mission, Npayloads)
           self:I(self.lid.."Adding asset on GCICAP mission for an INTERCEPT mission")
           table.insert(assets, asset)
           
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and self:CheckMissionCapability(Mission.Type, asset.payload.capabilities) then
+                  
+          -- Check if the payload of this asset is compatible with the mission.
+          self:I(self.lid.."Adding asset on ALERT 5 mission for XXX mission")
+          table.insert(assets, asset)        
+          
         end
       
       else

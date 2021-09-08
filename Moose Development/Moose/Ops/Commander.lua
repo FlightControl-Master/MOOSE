@@ -671,9 +671,13 @@ function COMMANDER:RecruitAssets(Mission)
     -- First get payloads for aircraft types of squadrons.
     for _,_cohort in pairs(legion.cohorts) do
       local cohort=_cohort --Ops.Cohort#COHORT
-      if Npayloads[cohort.aircrafttype]==nil then    
-        Npayloads[cohort.aircrafttype]=legion:IsAirwing() and legion:CountPayloadsInStock(Mission.type, cohort.aircrafttype, Mission.payloads) or 999
-        self:I(self.lid..string.format("Got Npayloads=%d for type=%s", Npayloads[cohort.aircrafttype], cohort.aircrafttype))
+      if Npayloads[cohort.aircrafttype]==nil then
+        local MissionType=Mission.type
+        if MissionType==AUFTRAG.Type.ALERT5 then
+          MissionType=Mission.alert5MissionType
+        end      
+        Npayloads[cohort.aircrafttype]=legion:IsAirwing() and legion:CountPayloadsInStock(MissionType, cohort.aircrafttype, Mission.payloads) or 999
+        self:I(self.lid..string.format("Got N=%d payloads for mission type %s [%s]", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
       end
     end
     
@@ -711,8 +715,16 @@ function COMMANDER:RecruitAssets(Mission)
       -- Only assets that have no payload. Should be only spawned assets!
       if not asset.payload then
       
+        -- Set mission type.
+        local MissionType=Mission.Type
+        
+        -- Get a loadout for the actual mission this group is waiting for.
+        if Mission.type==AUFTRAG.Type.ALERT5 and Mission.alert5MissionType then
+          MissionType=Mission.alert5MissionType
+        end      
+      
         -- Fetch payload for asset. This can be nil!
-        asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, Mission.type, Mission.payloads)
+        asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, MissionType, Mission.payloads)
                 
       end
       
@@ -790,32 +802,6 @@ end
 -- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
 function COMMANDER:_OptimizeAssetSelection(assets, Mission, includePayload)
 
-  -- Get target position.
-  local TargetVec2=Mission:GetTargetVec2()
-
-  -- Calculate distance to mission target.
-  local distmin=math.huge
-  local distmax=0
-  for _,_asset in pairs(assets) do
-    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-
-    if asset.spawned then
-      local group=GROUP:FindByName(asset.spawngroupname)
-      asset.dist=UTILS.VecDist2D(group:GetVec2(), TargetVec2)
-    else
-      asset.dist=UTILS.VecDist2D(asset.legion:GetVec2(), TargetVec2)
-    end
-
-    if asset.dist<distmin then
-      distmin=asset.dist
-    end
-
-    if asset.dist>distmax then
-      distmax=asset.dist
-    end
-
-  end
-
   -- Calculate the mission score of all assets.
   for _,_asset in pairs(assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
@@ -826,10 +812,8 @@ function COMMANDER:_OptimizeAssetSelection(assets, Mission, includePayload)
   local function optimize(a, b)
     local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
     local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
-
     -- Higher score wins. If equal score ==> closer wins.
-    -- TODO: Need to include the distance in a smarter way!
-    return (assetA.score>assetB.score) or (assetA.score==assetB.score and assetA.dist<assetB.dist)
+    return (assetA.score>assetB.score)
   end
   table.sort(assets, optimize)
 
@@ -837,7 +821,7 @@ function COMMANDER:_OptimizeAssetSelection(assets, Mission, includePayload)
   local text=string.format("Optimized %d assets for %s mission (payload=%s):", #assets, Mission.type, tostring(includePayload))
   for i,Asset in pairs(assets) do
     local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    text=text..string.format("\n%s %s: score=%d, distance=%.1f km", asset.squadname, asset.spawngroupname, asset.score, asset.dist/1000)
+    text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
     asset.dist=nil
     asset.score=nil
   end

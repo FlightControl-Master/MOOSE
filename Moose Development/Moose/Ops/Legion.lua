@@ -248,6 +248,11 @@ function LEGION:AddMission(Mission)
   -- Add legion to mission.
   Mission:AddLegion(self)
   
+  -- Set target for ALERT 5.
+  if Mission.type==AUFTRAG.Type.ALERT5 then
+    Mission:_TargetFromObject(self:GetCoordinate())
+  end
+  
   --[[
   if Mission.opstransport then
     Mission.opstransport:SetPickupZone(self.spawnzone)
@@ -515,7 +520,8 @@ end
 -- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
 -- @return #number Mission score.
 function LEGION:CalculateAssetMissionScore(asset, Mission, includePayload)
-
+  
+  -- Mission score.
   local score=0
 
   -- Prefer highly skilled assets.
@@ -530,39 +536,38 @@ function LEGION:CalculateAssetMissionScore(asset, Mission, includePayload)
   end
 
   -- Add mission performance to score.
-  local cohort=self:_GetCohortOfAsset(asset)
-  local missionperformance=cohort:GetMissionPeformance(Mission.type)
-  score=score+missionperformance
+  score=score+asset.cohort:GetMissionPeformance(Mission.Type)
 
   -- Add payload performance to score.
   if includePayload and asset.payload then
     score=score+self:GetPayloadPeformance(asset.payload, Mission.type)
   end
-
+  
+  -- Target position.
+  local TargetVec2=Mission.type~=AUFTRAG.Type.ALERT5 and Mission:GetTargetVec2() or nil --Mission:GetTargetVec2()
+  
+  -- Origin: We take the flightgroups position or the one of the legion.
+  local OrigVec2=asset.flightgroup and asset.flightgroup:GetVec2() or self:GetVec2()
+  
+  -- Distance factor.
+  local distance=0
+  if TargetVec2 and OrigVec2 then
+    -- Distance in NM.
+    distance=UTILS.MetersToNM(UTILS.VecDist2D(OrigVec2, TargetVec2))
+    -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
+    distance=UTILS.Round(distance/10, 0)
+  end
+  
+  -- Reduce score for legions that are futher away.
+  score=score-distance
+  
   -- Intercepts need to be carried out quickly. We prefer spawned assets.
-  if Mission.type==AUFTRAG.Type.INTERCEPT then
+  if Mission.type==AUFTRAG.Type.INTERCEPT then  
     if asset.spawned then
       self:T(self.lid.."Adding 25 to asset because it is spawned")
       score=score+25
     end
   end
-  
-  -- Get coordinate of the target.
-  local coord=Mission:GetTargetCoordinate()
-  local dist=0
-  if coord then
-      
-    -- Distance from legion to target.
-    local distance=UTILS.MetersToNM(coord:Get2DDistance(self:GetCoordinate()))
-        
-    -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
-    dist=UTILS.Round(distance/10, 0)
-    
-  end
-  
-  -- Reduce score for legions that are futher away.
-  score=score-dist
-  
 
   -- TODO: This could be vastly improved. Need to gather ideas during testing.
   -- Calculate ETA? Assets on orbit missions should arrive faster even if they are further away.
@@ -580,33 +585,6 @@ end
 -- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
 function LEGION:_OptimizeAssetSelection(assets, Mission, includePayload)
 
-  local TargetVec2=Mission:GetTargetVec2()
-
-  local dStock=UTILS.VecDist2D(TargetVec2, self:GetVec2())
-
-  -- Calculate distance to mission target.
-  local distmin=math.huge
-  local distmax=0
-  for _,_asset in pairs(assets) do
-    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-
-    if asset.spawned then
-      local group=GROUP:FindByName(asset.spawngroupname)
-      asset.dist=UTILS.VecDist2D(group:GetVec2(), TargetVec2)
-    else
-      asset.dist=dStock
-    end
-
-    if asset.dist<distmin then
-      distmin=asset.dist
-    end
-
-    if asset.dist>distmax then
-      distmax=asset.dist
-    end
-
-  end
-
   -- Calculate the mission score of all assets.
   for _,_asset in pairs(assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
@@ -617,10 +595,8 @@ function LEGION:_OptimizeAssetSelection(assets, Mission, includePayload)
   local function optimize(a, b)
     local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
     local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
-
     -- Higher score wins. If equal score ==> closer wins.
-    -- TODO: Need to include the distance in a smarter way!
-    return (assetA.score>assetB.score) or (assetA.score==assetB.score and assetA.dist<assetB.dist)
+    return (assetA.score>assetB.score)
   end
   table.sort(assets, optimize)
 
@@ -628,7 +604,7 @@ function LEGION:_OptimizeAssetSelection(assets, Mission, includePayload)
   local text=string.format("Optimized %d assets for %s mission (payload=%s):", #assets, Mission.type, tostring(includePayload))
   for i,Asset in pairs(assets) do
     local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    text=text..string.format("\n%s %s: score=%d, distance=%.1f km", asset.squadname, asset.spawngroupname, asset.score, asset.dist/1000)
+    text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
     asset.dist=nil
     asset.score=nil
   end
@@ -679,15 +655,21 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
           -- Special Missions
           ---
           
+          local currM=asset.flightgroup:GetMissionCurrent()
+          
           -- Check if mission is INTERCEPT and asset is currently on GCI mission. If so, GCI is paused.
-          if Mission.type==AUFTRAG.Type.INTERCEPT then
-            local currM=asset.flightgroup:GetMissionCurrent()
-            
+          if Mission.type==AUFTRAG.Type.INTERCEPT then                        
             if currM and currM.type==AUFTRAG.Type.GCICAP then
               self:I(self.lid..string.format("Pausing %s mission %s to send flight on intercept mission %s", currM.type, currM.name, Mission.name))
               asset.flightgroup:PauseMission()
-            end
+            end            
           end
+          
+          -- Cancel the current ALERT 5 mission.
+          if currM and currM.type==AUFTRAG.Type.ALERT5 then
+              asset.flightgroup:MissionCancel(currM)
+          end
+          
   
           -- Trigger event.
           self:__OpsOnMission(5, asset.flightgroup, Mission)
@@ -1680,9 +1662,13 @@ function LEGION:RecruitAssets(Mission)
   -- First get payloads for aircraft types of squadrons.
   for _,_cohort in pairs(self.cohorts) do
     local cohort=_cohort --Ops.Cohort#COHORT
-    if Npayloads[cohort.aircrafttype]==nil then    
-      Npayloads[cohort.aircrafttype]=self:IsAirwing() and self:CountPayloadsInStock(Mission.type, cohort.aircrafttype, Mission.payloads) or 999
-      self:I(self.lid..string.format("Got Npayloads=%d for type=%s",Npayloads[cohort.aircrafttype], cohort.aircrafttype))
+    if Npayloads[cohort.aircrafttype]==nil then
+      local MissionType=Mission.type
+      if MissionType==AUFTRAG.Type.ALERT5 then
+        MissionType=Mission.alert5MissionType
+      end
+      Npayloads[cohort.aircrafttype]=self:IsAirwing() and self:CountPayloadsInStock(MissionType, cohort.aircrafttype, Mission.payloads) or 999
+      self:I(self.lid..string.format("Got N=%d payloads for mission type=%s and unit type=%s", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
     end
   end
 
@@ -1722,8 +1708,16 @@ function LEGION:RecruitAssets(Mission)
       -- Only assets that have no payload. Should be only spawned assets!
       if not asset.payload then
       
+        -- Set mission type.
+        local MissionType=Mission.Type
+        
+        -- Get a loadout for the actual mission this group is waiting for.
+        if Mission.type==AUFTRAG.Type.ALERT5 and Mission.alert5MissionType then
+          MissionType=Mission.alert5MissionType
+        end
+      
         -- Fetch payload for asset. This can be nil!
-        asset.payload=self:FetchPayloadFromStock(asset.unittype, Mission.type, Mission.payloads)
+        asset.payload=self:FetchPayloadFromStock(asset.unittype, MissionType, Mission.payloads)
                 
       end
       
