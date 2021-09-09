@@ -256,7 +256,6 @@ function LEGION:AddMission(Mission)
   -- Add ops transport to transport Legions.
   if Mission.opstransport then
   
-
     -- Add a new TZC: from pickup here to the deploy zone.
     local tzc=Mission.opstransport:AddTransportZoneCombo(self.spawnzone, Mission.opstransport.tzcDefault.DeployZone)
 
@@ -315,9 +314,15 @@ function LEGION:AddOpsTransport(OpsTransport)
 
   -- Is not queued at a legion.
   OpsTransport:Queued()
+  
+  -- Set legion status.
+  OpsTransport:SetLegionStatus(self, AUFTRAG.Status.QUEUED)  
 
   -- Add mission to queue.
   table.insert(self.transportqueue, OpsTransport)
+  
+  -- Add this legion to the transport.
+  OpsTransport:AddLegion(self)
 
   -- Info text.
   local text=string.format("Added Transport %s. Starting at %s-%s",
@@ -427,7 +432,7 @@ function LEGION:_GetNextMission()
   end
   table.sort(self.missionqueue, _sort)
 
-  -- Look for first mission that is SCHEDULED.
+  -- Search min importance.
   local vip=math.huge
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
@@ -435,9 +440,6 @@ function LEGION:_GetNextMission()
       vip=mission.importance
     end
   end
-
-  -- Current time.
-  local time=timer.getAbsTime()
 
   -- Look for first task that is not accomplished.
   for _,_mission in pairs(self.missionqueue) do
@@ -452,7 +454,6 @@ function LEGION:_GetNextMission()
       if recruited then
         return mission
       end
-
 
     end -- mission due?
   end -- mission loop
@@ -474,7 +475,7 @@ function LEGION:_GetNextTransport()
   end
 
   --- Function to get carrier assets from all cohorts.
-  local function getAssets(n, weightGroup)
+  local function getAssets(n, N , weightGroup)
   
     -- Selected assets.
     local assets={}
@@ -496,7 +497,12 @@ function LEGION:_GetNextTransport()
             -- Add to assets.    
             table.insert(assets, asset)
             
-            if #assets==n then
+            --TODO: Optimize Asset Selection!
+            
+            --TODO: Check if deploy and (any) pickup zone is an airbase, so airplanes can be used.
+            
+            -- Max number of assets reached.
+            if #assets==N then
               return assets
             end
           end
@@ -506,16 +512,22 @@ function LEGION:_GetNextTransport()
       end
     end
     
-    return nil
+    -- At least min number reached?
+    if #assets>=n then
+      return assets
+    else
+      return nil
+    end
   end
-
+  
+  --TODO: Sort transports wrt to prio and importance. See mission sorting!
   
   -- Look for first task that is not accomplished.
   for _,_transport in pairs(self.transportqueue) do
     local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
 
     -- Check if transport is still queued and ready.
-    if transport:IsQueued() and transport:IsReadyToGo() then
+    if transport:IsQueued(self) and transport:IsReadyToGo() then
     
       -- Get all undelivered cargo ops groups.
       local cargoOpsGroups=transport:GetCargoOpsGroups(false)
@@ -534,10 +546,14 @@ function LEGION:_GetNextTransport()
         end
       
         -- Get assets. If not enough assets can be found, nil is returned.
-        local assets=getAssets(1, weightGroup)
+        local assets=getAssets(transport.nCarriersMin, transport.nCarriersMax, weightGroup)
   
         if assets then
-          transport.assets=assets  
+          for _,_asset in pairs(assets) do
+            local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+            asset.isReserved=true
+            transport:AddAsset(asset)
+          end  
           return transport
         end
         
@@ -547,7 +563,7 @@ function LEGION:_GetNextTransport()
     
   end
   
-  
+  -- No transport found.
   return nil
 end
 
@@ -735,6 +751,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
       asset.requested=true
       asset.isReserved=false
 
+      -- Set missin task so that the group is spawned with the right one.
       if Mission.missionTask then
         asset.missionTask=Mission.missionTask
       end
@@ -760,38 +777,46 @@ end
 -- @param #string To To state.
 -- @param Ops.OpsTransport#OPSTRANSPORT Opstransport The requested mission.
 function LEGION:onafterTransportRequest(From, Event, To, OpsTransport)
-
-  -- Set mission status from QUEUED to REQUESTED.
-  OpsTransport:Requested()
   
-  -- Set legion status. Ensures that it is not considered in the next selection.
-  --Mission:SetLegionStatus(self, AUFTRAG.Status.REQUESTED)
+  -- List of assets that will be requested.
+  local AssetList={}
+  
+  --TODO: Find spawned assets on ALERT 5 mission OPSTRANSPORT.
 
-  -- Add request to legion warehouse.
-  if #OpsTransport.assets>0 then
-
-    --local text=string.format("Requesting assets for mission %s:", Mission.name)
-    for i,_asset in pairs(OpsTransport.assets) do
-      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+  --local text=string.format("Requesting assets for mission %s:", Mission.name)
+  for i,_asset in pairs(OpsTransport.assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    -- Check that this asset belongs to this Legion warehouse.
+    if asset.wid==self.uid then      
 
       -- Set asset to requested! Important so that new requests do not use this asset!
       asset.requested=true
+      asset.isReserved=false
+
+      -- Set transport mission task.
+      asset.missionTask=ENUMS.MissionTask.TRANSPORT
       
-      -- Check max required transports.
-      if i==1 then
-        break
-      end
-      
+      -- Add asset to list.
+      table.insert(AssetList, asset)      
     end
+  end
+  
+  if #AssetList>0 then
+
+    -- Set mission status from QUEUED to REQUESTED.
+    OpsTransport:Requested()
+    
+    -- Set legion status. Ensures that it is not considered in the next selection.
+    OpsTransport:SetLegionStatus(self, OPSTRANSPORT.Status.REQUESTED)
     
     -- TODO: Get/set functions for assignment string.
     local assignment=string.format("Transport-%d", OpsTransport.uid)
 
     -- Add request to legion warehouse.
-    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, OpsTransport.assets, #OpsTransport.assets, nil, nil, OpsTransport.prio, assignment)
+    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, AssetList, #AssetList, nil, nil, OpsTransport.prio, assignment)
 
     -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
-    OpsTransport.requestID=OpsTransport.requestID or {}
     OpsTransport.requestID[self.alias]=self.queueid
     
   end
@@ -1619,11 +1644,14 @@ function LEGION:GetAircraftTypes(onlyactive, cohorts)
 end
 
 --- Check if assets for a given mission type are available.
+-- 
+-- OBSOLETE and renamed to _CanMission (to see if it is still used somewhere)
+-- 
 -- @param #LEGION self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 -- @return #boolean If true, enough assets are available.
 -- @return #table Assets that can do the required mission.
-function LEGION:CanMission(Mission)
+function LEGION:_CanMission(Mission)
 
   -- Assume we CAN and NO assets are available.
   local Can=true

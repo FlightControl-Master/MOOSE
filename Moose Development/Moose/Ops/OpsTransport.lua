@@ -2,10 +2,10 @@
 -- 
 -- ## Main Features:
 --
---    * Transport troops from A to B.
+--    * Transport troops from A to B
 --    * Supports ground, naval and airborne (airplanes and helicopters) units as carriers
---    * Use combined forces (ground, naval, air) to transport the troops.
---    * Additional FSM events to hook into and customize your mission design. 
+--    * Use combined forces (ground, naval, air) to transport the troops
+--    * Additional FSM events to hook into and customize your mission design
 --
 -- ===
 --
@@ -51,14 +51,15 @@
 -- 
 -- @field Ops.Auftrag#AUFTRAG mission The mission attached to this transport.
 -- @field #table assets Warehouse assets assigned for this transport.
+-- @field #table legions Assigned legions.
+-- @field #table statusLegion Transport status of all assigned LEGIONs.
+-- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the transport was cancelled before the request is processed.
 -- 
 -- @extends Core.Fsm#FSM
 
 --- *Victory is the beautiful, bright-colored flower. Transport is the stem without which it could never have blossomed.* -- Winston Churchill
 --
 -- ===
---
--- ![Banner Image](..\Presentations\OPS\Transport\_Main.png)
 --
 -- # The OPSTRANSPORT Concept
 -- 
@@ -119,6 +120,9 @@ OPSTRANSPORT = {
   tzcCounter      =   0,
   conditionStart  =  {},
   assets          =  {},
+  legions         =  {},
+  statusLegion    =  {},
+  requestID       =  {},
 }
 
 --- Cargo transport status.
@@ -209,16 +213,17 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   self.uid=_OPSTRANSPORTID
       
   -- Defaults.
-  self.cargos={}
-  self.carriers={}
+  self:SetPriority()
+  self:SetTime()
+  self:SetRequiredCarriers()
   
+  -- Init arrays and counters.
+  self.cargos={}
+  self.carriers={}  
   self.Ncargo=0
   self.Ncarrier=0
   self.Ndelivered=0
   
-  self:SetPriority()
-  self:SetTime()
-
   -- Set default TZC.
   self.tzcDefault=self:AddTransportZoneCombo(PickupZone, DeployZone, CargoGroups)  
   
@@ -772,6 +777,33 @@ function OPSTRANSPORT:GetRequiredCargos(TransportZoneCombo)
   return TransportZoneCombo.RequiredCargos
 end
 
+--- Set number of required carrier groups for an OPSTRANSPORT assignment. Only used if transport is assigned at **LEGION** or higher level.
+-- @param #OPSTRANSPORT self
+-- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
+-- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetRequiredCarriers(NcarriersMin, NcarriersMax)
+
+  self.nCarriersMin=NcarriersMin or 1
+  
+  self.nCarriersMax=NcarriersMax or self.nCarriersMin
+
+  -- Ensure that max is at least equal to min.
+  if self.nCarriersMax<self.nCarriersMin then
+    self.nCarriersMax=self.nCarriersMin
+  end
+
+  return self
+end
+
+--- Get the number of required carrier groups for an OPSTRANSPORT assignment. Only used if transport is assigned at **LEGION** or higher level.
+-- @param #OPSTRANSPORT self
+-- @return #number Number of carriers *at least* required.
+-- @return #number Number of carriers *at most* used for transportation.
+function OPSTRANSPORT:GetRequiredCarriers()
+  return self.nCarriersMin, self.nCarriersMax
+end
+
 
 --- Add a carrier assigned for this transport.
 -- @param #OPSTRANSPORT self
@@ -1174,6 +1206,78 @@ function OPSTRANSPORT:GetNcarrier()
   return self.Ncarrier
 end
 
+--- Add asset to transport.
+-- @param #OPSTRANSPORT self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:AddAsset(Asset)
+
+  -- Debug info
+  self:T(self.lid..string.format("Adding asset \"%s\" to transport", tostring(Asset.spawngroupname)))
+
+  -- Add asset to table.
+  self.assets=self.assets or {}  
+  table.insert(self.assets, Asset)
+
+  return self
+end
+
+--- Delete asset from mission.
+-- @param #OPSTRANSPORT self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be removed.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:DelAsset(Asset)
+
+  for i,_asset in pairs(self.assets or {}) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    if asset.uid==Asset.uid then
+      self:T(self.lid..string.format("Removing asset \"%s\" from transport", tostring(Asset.spawngroupname)))
+      table.remove(self.assets, i)
+      return self
+    end
+    
+  end
+
+  return self
+end
+
+--- Add LEGION to the transport.
+-- @param #OPSTRANSPORT self
+-- @param Ops.Legion#LEGION Legion The legion.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:AddLegion(Legion)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Adding legion %s", Legion.alias))
+
+  -- Add legion to table.
+  table.insert(self.legions, Legion)
+  
+  return self
+end
+
+--- Remove LEGION from transport.
+-- @param #OPSTRANSPORT self
+-- @param Ops.Legion#LEGION Legion The legion.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:RemoveLegion(Legion)
+
+  -- Loop over legions
+  for i=#self.legions,1,-1 do
+    local legion=self.legions[i] --Ops.Legion#LEGION
+    if legion.alias==Legion.alias then
+      -- Debug info.
+      self:I(self.lid..string.format("Removing legion %s", Legion.alias))    
+      table.remove(self.legions, i)
+      return self
+    end
+  end
+  
+  self:E(self.lid..string.format("ERROR: Legion %s not found and could not be removed!", Legion.alias))
+  return self
+end
+
 --- Check if an OPS group is assigned as carrier for this transport.
 -- @param #OPSTRANSPORT self
 -- @param Ops.OpsGroup#OPSGROUP CarrierGroup Potential carrier OPSGROUP.
@@ -1215,6 +1319,7 @@ function OPSTRANSPORT:IsReadyToGo()
   end
   if not gotzones then
     text=text.."No, pickup/deploy zone combo not yet defined!"
+    return false
   end
   
   -- Start time did not pass yet.
@@ -1246,39 +1351,83 @@ function OPSTRANSPORT:IsReadyToGo()
   return true
 end
 
+--- Set LEGION transport status.
+-- @param #OPSTRANSPORT self
+-- @param Ops.Legion#LEGION Legion The legion.
+-- @param #string Status New status.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetLegionStatus(Legion, Status)
+
+  -- Old status
+  local status=self:GetLegionStatus(Legion)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Setting LEGION %s to status %s-->%s", Legion.alias, tostring(status), tostring(Status)))
+
+  -- New status.
+  self.statusLegion[Legion.alias]=Status
+
+  return self
+end
+
+--- Get LEGION transport status.
+-- @param #OPSTRANSPORT self
+-- @param Ops.Legion#LEGION Legion The legion.
+-- @return #string status Current status.
+function OPSTRANSPORT:GetLegionStatus(Legion)
+
+  -- Current status.
+  local status=self.statusLegion[Legion.alias] or "unknown"
+
+  return status
+end
+
 --- Check if state is PLANNED.
 -- @param #OPSTRANSPORT self
 -- @return #boolean If true, status is PLANNED. 
 function OPSTRANSPORT:IsPlanned()
-  return self:is(OPSTRANSPORT.Status.PLANNED)
+  local is=self:is(OPSTRANSPORT.Status.PLANNED)
+  return is
 end
 
 --- Check if state is QUEUED.
 -- @param #OPSTRANSPORT self
+-- @param Ops.Legion#LEGION Legion (Optional) Check if transport is queued at this legion.
 -- @return #boolean If true, status is QUEUED. 
-function OPSTRANSPORT:IsQueued()
-  return self:is(OPSTRANSPORT.Status.QUEUED)
+function OPSTRANSPORT:IsQueued(Legion)
+  local is=self:is(OPSTRANSPORT.Status.QUEUED)
+  if Legion then
+    is=self:GetLegionStatus(Legion)==OPSTRANSPORT.Status.QUEUED
+  end  
+  return is
 end
 
 --- Check if state is REQUESTED.
 -- @param #OPSTRANSPORT self
+-- @param Ops.Legion#LEGION Legion (Optional) Check if transport is queued at this legion.
 -- @return #boolean If true, status is REQUESTED. 
-function OPSTRANSPORT:IsRequested()
-  return self:is(OPSTRANSPORT.Status.REQUESTED)
+function OPSTRANSPORT:IsRequested(Legion)
+  local is=self:is(OPSTRANSPORT.Status.REQUESTED)
+  if Legion then
+    is=self:GetLegionStatus(Legion)==OPSTRANSPORT.Status.REQUESTED
+  end  
+  return is
 end
 
 --- Check if state is SCHEDULED.
 -- @param #OPSTRANSPORT self
 -- @return #boolean If true, status is SCHEDULED. 
 function OPSTRANSPORT:IsScheduled()
-  return self:is(OPSTRANSPORT.Status.SCHEDULED)
+  local is=self:is(OPSTRANSPORT.Status.SCHEDULED)
+  return is
 end
 
 --- Check if state is EXECUTING.
 -- @param #OPSTRANSPORT self
 -- @return #boolean If true, status is EXECUTING. 
 function OPSTRANSPORT:IsExecuting()
-  return self:is(OPSTRANSPORT.Status.EXECUTING)
+  local is=self:is(OPSTRANSPORT.Status.EXECUTING)
+  return is
 end
 
 --- Check if all cargo was delivered (or is dead).
@@ -1314,7 +1463,7 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
   if self.verbose>=1 then
   
     -- Info text.    
-    local text=string.format("%s: Ncargo=%d/%d, Ncarrier=%d/%d", fsmstate:upper(), self.Ncargo, self.Ndelivered, #self.carriers, self.Ncarrier)
+    local text=string.format("%s: Ncargo=%d/%d, Ncarrier=%d/%d, Nlegions=%d", fsmstate:upper(), self.Ncargo, self.Ndelivered, #self.carriers, self.Ncarrier, #self.legions)
 
     -- Info about cargo and carrier.    
     if self.verbose>=2 then
@@ -1701,13 +1850,17 @@ function OPSTRANSPORT:_GetTransportZoneCombo(Carrier)
     -- Check that pickup and deploy zones were defined.
     if tz.PickupZone and tz.DeployZone and tz.EmbarkZone then
     
+      --TODO: Check if Carrier is an aircraft and if so, check that pickup AND deploy zones are airbases (not ships, not farps).
+    
       -- Count undelivered cargos in embark(!) zone that fit into the carrier.
       local ncargo=self:_CountCargosInZone(tz.EmbarkZone, false, Carrier, tz)
       
       --env.info(string.format("FF GetPickupZone i=%d, ncargo=%d", i, ncargo))
       
-      if ncargo>0 then
+      -- At least one group in the zone.
+      if ncargo>=1 then
         
+        -- Distance to the carrier in meters.
         local dist=tz.PickupZone:Get2DDistance(vec2)
               
         if distmin==nil or dist<distmin then

@@ -324,6 +324,22 @@ function BRIGADE:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end
 
+  --------------------
+  -- Transport Info --
+  --------------------
+  if self.verbose>=2 then
+    local text=string.format("Transports Total=%d:", #self.transportqueue)
+    for i,_transport in pairs(self.transportqueue) do
+      local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+
+      local prio=string.format("%d/%s", transport.prio, tostring(transport.importance)) ; if transport.urgent then prio=prio.." (!)" end
+      local carriers=string.format("Ncargo=%d/%d, Ncarriers=%d", transport.Ncargo, transport.Ndelivered, transport.Ncarrier)
+
+      text=text..string.format("\n[%d] UID=%d: Status=%s, Prio=%s, Cargo: %s", i, transport.uid, transport:GetState(), prio, carriers)
+    end
+    self:I(self.lid..text)
+  end
+
   -------------------
   -- Platoon Info --
   -------------------

@@ -34,7 +34,7 @@
 -- @field #string type Mission type.
 -- @field #string status Mission status.
 -- @field #table legions Assigned legions.
--- @field #table statusLegion Mission status of all assigned LEGIONSs.
+-- @field #table statusLegion Mission status of all assigned LEGIONs.
 -- @field #string statusCommander Mission status of the COMMANDER.
 -- @field #string statusChief Mission status of the CHIF.
 -- @field #table groupdata Group specific data.
@@ -538,19 +538,22 @@ function AUFTRAG:New(Type)
   -- State is planned.
   self.status=AUFTRAG.Status.PLANNED
   
-  -- Defaults  
+  -- Defaults  .
   self:SetName()
   self:SetPriority()
   self:SetTime()
+  self:SetRequiredAssets()
+  self:SetRequiredCarriers()
   self.engageAsGroup=true
+  self.dTevaluate=5
+  
+  -- Init counters and stuff.
   self.repeated=0
   self.repeatedSuccess=0
   self.repeatedFailure=0
   self.Nrepeat=0
   self.NrepeatFailure=0
   self.NrepeatSuccess=0
-  self.nassets=1
-  self.dTevaluate=5
   self.Ncasualties=0
   self.Nkills=0
   self.Nelements=0
@@ -1854,10 +1857,38 @@ function AUFTRAG:SetTransportForAssets(DeployZone, DisembarkZone, Carriers)
   
   end
   
+  -- Set min/max number of carriers to be assigned.
+  self.opstransport.nCarriersMin=self.nCarriersMin
+  self.opstransport.nCarriersMax=self.nCarriersMax
+  
   return self
 end
 
---- Add a transport Legion. This requires an OPSTRANSPORT to be set via `AUFTRAG:SetTransportForAssets`.
+--- Set number of required carrier groups if an OPSTRANSPORT assignment is required.
+-- @param #AUFTRAG self
+-- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
+-- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
+-- @return #AUFTRAG self
+function AUFTRAG:SetRequiredCarriers(NcarriersMin, NcarriersMax)
+
+  self.nCarriersMin=NcarriersMin or 1
+  
+  self.nCarriersMax=NcarriersMax or self.nCarriersMin
+
+  -- Ensure that max is at least equal to min.
+  if self.nCarriersMax<self.nCarriersMin then
+    self.nCarriersMax=self.nCarriersMin
+  end
+  
+  -- Pass this on to the ops transport.
+  if self.opstransport then
+    self.opstransport:SetRequiredCarriers(NcarriersMin, NcarriersMax)
+  end
+
+  return self
+end
+
+--- Add a transport Legion.
 -- @param #AUFTRAG self
 -- @param Ops.Legion#LEGION Legion The legion.
 function AUFTRAG:AddTransportLegion(Legion)
@@ -3633,8 +3664,11 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:AddAsset(Asset)
 
+  -- Debug info
+  self:T(self.lid..string.format("Adding asset \"%s\" to mission", tostring(Asset.spawngroupname)))
+
+  -- Add to table.
   self.assets=self.assets or {}
-  
   table.insert(self.assets, Asset)
 
   return self
@@ -3650,7 +3684,7 @@ function AUFTRAG:DelAsset(Asset)
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
     if asset.uid==Asset.uid then
-      self:T(self.lid..string.format("Removing asset \"%s\" from mission", tostring(asset.spawngroupname)))
+      self:T(self.lid..string.format("Removing asset \"%s\" from mission", tostring(Asset.spawngroupname)))
       table.remove(self.assets, i)
       return self
     end
