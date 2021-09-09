@@ -37,6 +37,8 @@
 -- @field #number radioFreq Radio frequency in MHz the cohort uses.
 -- @field #number radioModu Radio modulation the cohort uses.
 -- @field #table tacanChannel List of TACAN channels available to the cohort.
+-- @field #number weightAsset Weight of one assets group in kg.
+-- @field #number cargobayLimit Cargo bay capacity in kg.
 -- @extends Core.Fsm#FSM
 
 --- *It is unbelievable what a platoon of twelve aircraft did to tip the balance.* -- Adolf Galland
@@ -67,7 +69,9 @@ COHORT = {
   legion         =   nil,
   Ngroups        =   nil,
   engageRange    =   nil,
-  tacanChannel   =    {},  
+  tacanChannel   =    {},
+  weightAsset    = 99999,
+  cargobayLimit  =     0,
 }
 
 --- COHORT class version.
@@ -124,7 +128,20 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   
   -- Aircraft type.
   self.aircrafttype=self.templategroup:GetTypeName()
-
+  
+  local units=self.templategroup:GetUnits()
+  
+  -- Weight of the whole group.
+  self.weightAsset=0
+  for i,_unit in pairs(units) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    local desc=unit:GetDesc()
+    self.weightAsset=self.weightAsset + (desc.massMax or 666)
+    if i==1 then
+      self.cargobayLimit=unit:GetCargoBayFreeWeight()  
+    end
+  end
+  
   -- Start State.
   self:SetStartState("Stopped")
   

@@ -1364,15 +1364,14 @@ function AUFTRAG:NewFUELSUPPLY(Zone)
 end
 
 
---- **[AIR]** Create an ALERT 5 mission.
+--- **[AIR]** Create an ALERT 5 mission. Aircraft will be spawned uncontrolled and wait for an assignment. You must specify **one** mission type which is performed.
+-- This determines the payload and the DCS mission task which are used when the aircraft is spawned.
 -- @param #AUFTRAG self
--- @param #string MissionType Mission type `AUFTRAG.Type.XXX`.
+-- @param #string MissionType Mission type `AUFTRAG.Type.XXX`. Determines payload and mission task (intercept, ground attack, etc.).
 -- @return #AUFTRAG self
 function AUFTRAG:NewALERT5(MissionType)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ALERT5)
-  
-  --mission:_TargetFromObject(Coordinate)
   
   mission.missionTask=self:GetMissionTaskforMissionType(MissionType)
   mission.optionROE=ENUMS.ROE.WeaponHold
@@ -1380,7 +1379,7 @@ function AUFTRAG:NewALERT5(MissionType)
   
   mission.alert5MissionType=MissionType
   
-  mission.missionFraction=0.0
+  mission.missionFraction=1.0
     
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -1828,14 +1827,18 @@ end
 
 --- Attach OPS transport to the mission. Mission assets will be transported before the mission is started at the OPSGROUP level.
 -- @param #AUFTRAG self
--- @param Core.Zone#ZONE PickupZone Zone where assets are picked up.
 -- @param Core.Zone#ZONE DeployZone Zone where assets are deployed.
+-- @param Core.Zone#ZONE DisembarkZone Zone where assets are disembarked to.
 -- @param Core.Set#SET_OPSGROUP Carriers Set of carriers. Can also be a single group. Can also be added via the AddTransportCarriers functions.
 -- @return #AUFTRAG self
-function AUFTRAG:SetTransportForAssets(PickupZone, DeployZone, Carriers)
+function AUFTRAG:SetTransportForAssets(DeployZone, DisembarkZone, Carriers)
 
   -- OPS transport from pickup to deploy zone.
-  self.opstransport=OPSTRANSPORT:New(nil, PickupZone, DeployZone)
+  self.opstransport=OPSTRANSPORT:New(nil, nil, DeployZone)
+  
+  if DisembarkZone then
+    self.opstransport:SetDisembarkZone(DisembarkZone)
+  end
   
   if Carriers then
     if Carriers:IsInstanceOf("SET_OPSGROUP") then
@@ -1850,6 +1853,18 @@ function AUFTRAG:SetTransportForAssets(PickupZone, DeployZone, Carriers)
     end
   
   end
+  
+  return self
+end
+
+--- Add a transport Legion. This requires an OPSTRANSPORT to be set via `AUFTRAG:SetTransportForAssets`.
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion.
+function AUFTRAG:AddTransportLegion(Legion)
+
+  self.transportLegions=self.transportLegions or {}
+  
+  table.insert(self.transportLegions, Legion)
   
   return self
 end
@@ -2162,7 +2177,12 @@ function AUFTRAG:AddOpsGroup(OpsGroup)
   
   -- Add ops transport to new group.
   if self.opstransport then
-    self.opstransport:AddCargoGroups(OpsGroup)
+    for _,_tzc in pairs(self.opstransport.tzCombos) do
+      local tzc=_tzc --Ops.OpsTransport#OPSTRANSPORT.TransportZoneCombo
+      if tzc.uid~=self.opstransport.tzcDefault.uid then
+        self.opstransport:AddCargoGroups(OpsGroup, tzc)
+      end
+    end
   end
 
   return self
@@ -2300,7 +2320,7 @@ function AUFTRAG:IsReadyToGo()
     if #self.legions>0 then
     end
     if self.opstransport:IsPlanned() or self.opstransport:IsQueued() or self.opstransport:IsRequested() then
-      return false
+      --return false
     end
   end
   

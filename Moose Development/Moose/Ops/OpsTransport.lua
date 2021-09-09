@@ -432,9 +432,10 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo)
   if GroupSet:IsInstanceOf("GROUP") or GroupSet:IsInstanceOf("OPSGROUP") then
 
     -- We got a single GROUP or OPSGROUP object.
-    local cargo=self:_CreateCargoGroupData(GroupSet)
+    local cargo=self:_CreateCargoGroupData(GroupSet, TransportZoneCombo)
     
     if cargo then
+    
       -- Add to main table.
       table.insert(self.cargos, cargo)
       self.Ncargo=self.Ncargo+1
@@ -442,6 +443,7 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo)
       -- Add to TZC table.
       table.insert(TransportZoneCombo.Cargos, cargo)
       TransportZoneCombo.Ncargo=TransportZoneCombo.Ncargo+1
+      
     end
     
   else
@@ -450,6 +452,10 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo)
     
     for _,group in pairs(GroupSet.Set) do
     
+      -- Call iteravely for each group.
+      self:AddCargoGroups(group, TransportZoneCombo)
+    
+      --[[
       local cargo=self:_CreateCargoGroupData(group)
       
       if cargo then
@@ -461,6 +467,7 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo)
         table.insert(TransportZoneCombo.Cargos, cargo)
         TransportZoneCombo.Ncargo=TransportZoneCombo.Ncargo+1        
       end
+      ]]
       
     end
   end
@@ -469,7 +476,7 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo)
   if self.verbose>=1 then
     local text=string.format("Added cargo groups:")
     local Weight=0
-    for _,_cargo in pairs(self.cargos) do
+    for _,_cargo in pairs(self:GetCargos()) do
       local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
       local weight=cargo.opsgroup:GetWeightTotal()
       Weight=Weight+weight
@@ -874,7 +881,14 @@ function OPSTRANSPORT:GetCargos(TransportZoneCombo)
   if TransportZoneCombo then
     return TransportZoneCombo.Cargos
   else
-    return self.cargos
+    local cargos={}
+    for _,_tzc in pairs(self.tzCombos) do
+      local tzc=_tzc --#OPSTRANSPORT.TransportZoneCombo
+      for _,cargo in pairs(tzc.Cargos) do
+        table.insert(cargos, cargo)
+      end
+    end
+    return cargos
   end
 
 end
@@ -1316,7 +1330,7 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
     if self.verbose>=3 then
     
       text=text..string.format("\nCargos:")
-      for _,_cargo in pairs(self.cargos) do
+      for _,_cargo in pairs(self:GetCargos()) do
         local cargo=_cargo  --Ops.OpsGroup#OPSGROUP.CargoGroup
         local carrier=cargo.opsgroup:_GetMyCarrierElement()
         local name=carrier and carrier.name or "none"
@@ -1472,7 +1486,7 @@ function OPSTRANSPORT:_CheckDelivered()
 
     local done=true
     local dead=true
-    for _,_cargo in pairs(self.cargos) do
+    for _,_cargo in pairs(self:GetCargos()) do
       local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
       
       if cargo.delivered then
@@ -1611,17 +1625,31 @@ end
 -- @param #OPSTRANSPORT self
 -- @param Wrapper.Group#GROUP group The GROUP or OPSGROUP object.
 -- @return Ops.OpsGroup#OPSGROUP.CargoGroup Cargo group data.
-function OPSTRANSPORT:_CreateCargoGroupData(group)
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+function OPSTRANSPORT:_CreateCargoGroupData(group, TransportZoneCombo)
 
+  -- Get ops group.
   local opsgroup=self:_GetOpsGroupFromObject(group)
 
+  -- First check that this group is not already contained in this TZC.  
+  for _,_cargo in pairs(TransportZoneCombo.Cargos or {}) do
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+    if cargo.opsgroup.groupname==opsgroup.groupname then
+      -- Group is already contained.
+      return nil
+    end
+  end
+
+
+  -- Create a new data item.
   local cargo={} --Ops.OpsGroup#OPSGROUP.CargoGroup
-  
+    
   cargo.opsgroup=opsgroup
   cargo.delivered=false
   cargo.status="Unknown"
   cargo.disembarkCarrierElement=nil
   cargo.disembarkCarrierGroup=nil
+  cargo.tzcUID=TransportZoneCombo
 
   return cargo
 end

@@ -5751,13 +5751,13 @@ function OPSGROUP:_CheckCargoTransport()
   if self.verbose>=3 then
     local text=""
     for i,_transport in pairs(self.cargoqueue) do
-      local transport=_transport --#Ops.OpsTransport#OPSTRANSPORT      
+      local transport=_transport --Ops.OpsTransport#OPSTRANSPORT      
       local pickupzone=transport:GetPickupZone()
       local deployzone=transport:GetDeployZone()      
       local pickupname=pickupzone and pickupzone:GetName() or "unknown"
       local deployname=deployzone and deployzone:GetName() or "unknown"
       text=text..string.format("\n[%d] UID=%d Status=%s: %s --> %s", i, transport.uid, transport:GetState(), pickupname, deployname)
-      for j,_cargo in pairs(transport.cargos) do
+      for j,_cargo in pairs(transport:GetCargos()) do
         local cargo=_cargo --#OPSGROUP.CargoGroup
         local state=cargo.opsgroup:GetState()
         local status=cargo.opsgroup.cargoStatus
@@ -5785,6 +5785,12 @@ function OPSGROUP:_CheckCargoTransport()
   if self.cargoTransport then
 
     if self:IsNotCarrier() then
+    
+      -- Unset time stamps.
+      self.Tpickingup=nil
+      self.Tloading=nil
+      self.Ttransporting=nil
+      self.Tunloading=nil
 
       -- Get transport zone combo (TZC).
       self.cargoTZC=self.cargoTransport:_GetTransportZoneCombo(self)
@@ -5802,18 +5808,28 @@ function OPSGROUP:_CheckCargoTransport()
       end
 
     elseif self:IsPickingup() then
+    
+      -- Set time stamp.
+      self.Tpickingup=self.Tpickingup or Time
+      
+      -- Current pickup time.
+      local tpickingup=Time-self.Tpickingup
 
       -- Debug Info.
-      self:T(self.lid.."Picking up...")
+      self:T(self.lid..string.format("Picking up at %s [TZC UID=%d] for %s sec...", self.cargoTZC.PickupZone and self.cargoTZC.PickupZone:GetName() or "unknown", self.cargoTZC.uid, tpickingup))
 
     elseif self:IsLoading() then
 
       -- Set loading time stamp.
-      --TODO: Check max loading time. If exceeded ==> abort transport.
       self.Tloading=self.Tloading or Time
+      
+      -- Current pickup time.
+      local tloading=Time-self.Tloading
+      
+      --TODO: Check max loading time. If exceeded ==> abort transport.
 
       -- Debug info.
-      self:T(self.lid.."Loading...")
+      self:T(self.lid..string.format("Loading at %s [TZC UID=%d] for %s sec...", self.cargoTZC.PickupZone and self.cargoTZC.PickupZone:GetName() or "unknown", self.cargoTZC.uid, tloading))
 
       local boarding=false
       local gotcargo=false
@@ -5847,11 +5863,23 @@ function OPSGROUP:_CheckCargoTransport()
       end
 
     elseif self:IsTransporting() then
+    
+      -- Set time stamp.
+      self.Ttransporting=self.Ttransporting or Time
+      
+      -- Current pickup time.
+      local ttransporting=Time-self.Ttransporting    
 
       -- Debug info.
       self:T(self.lid.."Transporting (nothing to do)")
 
     elseif self:IsUnloading() then
+    
+      -- Set time stamp.
+      self.Tunloading=self.Tunloading or Time
+      
+      -- Current pickup time.
+      local tunloading=Time-self.Tunloading        
 
       -- Debug info.
       self:T(self.lid.."Unloading ==> Checking if all cargo was delivered")
@@ -6084,7 +6112,7 @@ end
 function OPSGROUP:_CheckDelivered(CargoTransport)
 
   local done=true
-  for _,_cargo in pairs(CargoTransport.cargos) do
+  for _,_cargo in pairs(CargoTransport:GetCargos()) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
 
     if self:CanCargo(cargo.opsgroup) then
@@ -6118,7 +6146,7 @@ function OPSGROUP:_CheckGoPickup(CargoTransport)
   
   if CargoTransport then
   
-    for _,_cargo in pairs(CargoTransport.cargos) do
+    for _,_cargo in pairs(CargoTransport:GetCargos()) do
       local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
   
       if self:CanCargo(cargo.opsgroup) then
@@ -8236,15 +8264,25 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
     -- Speed in knots.
     local Speed=UTILS.MpsToKnots(wp.speed)
     
-    --local waypoint=self:_CreateWaypoint(wp)    
-    --self:_AddWaypoint(waypoint)
-    
+    -- Add waypoint.
+    local Waypoint=nil
     if self:IsFlightgroup() then
-      FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, nil, Altitude, false)
+      Waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, nil, Altitude,  false)
     elseif self:IsArmygroup() then
-      ARMYGROUP.AddWaypoint(self, Coordinate, Speed, nil, wp.action, false)
+      Waypoint=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, nil, wp.action, false)
     elseif self:IsNavygroup() then
-      NAVYGROUP.AddWaypoint(self, Coordinate, Speed, nil, Depth, false)
+      Waypoint=NAVYGROUP.AddWaypoint(self,   Coordinate, Speed, nil, Depth,     false)
+    end
+    
+    -- Get DCS waypoint tasks set in the ME. EXPERIMENTAL!
+    local DCStasks=wp.task and wp.task.params.tasks or nil
+    if DCStasks then
+      for _,DCStask in pairs(DCStasks) do
+        -- Wrapped Actions are commands. We do not take those.
+        if DCStask.id and DCStask.id~="WrappedAction" then
+          self:AddTaskWaypoint(DCStask,Waypoint, "ME Task")
+        end
+      end
     end
     
   end

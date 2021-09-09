@@ -253,13 +253,28 @@ function LEGION:AddMission(Mission)
     Mission:_TargetFromObject(self:GetCoordinate())
   end
   
-  --[[
+  -- Add ops transport to transport Legions.
   if Mission.opstransport then
-    Mission.opstransport:SetPickupZone(self.spawnzone)
-    Mission.opstransport:SetEmbarkZone(self.spawnzone)
-    self:AddOpsTransport(Mission.opstransport)
+  
+
+    -- Add a new TZC: from pickup here to the deploy zone.
+    local tzc=Mission.opstransport:AddTransportZoneCombo(self.spawnzone, Mission.opstransport.tzcDefault.DeployZone)
+
+    --TODO: Depending on "from where to where" the assets need to transported, we need to set ZONE_AIRBASE etc.
+      
+    --Mission.opstransport:SetPickupZone(self.spawnzone)
+    --Mission.opstransport:SetEmbarkZone(self.spawnzone)
+  
+  
+    -- Loop over all defined transport legions.
+    for _,_legion in pairs(Mission.transportLegions) do
+      local legion=_legion --Ops.Legion#LEGION
+            
+      -- Add ops transport to legion.
+      legion:AddOpsTransport(Mission.opstransport)
+    end
+  
   end
-  ]]
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -458,8 +473,10 @@ function LEGION:_GetNextTransport()
     return nil
   end
 
-
-  local function getAssets(n)
+  --- Function to get carrier assets from all cohorts.
+  local function getAssets(n, weightGroup)
+  
+    -- Selected assets.
     local assets={}
   
     -- Loop over cohorts.
@@ -467,14 +484,14 @@ function LEGION:_GetNextTransport()
       local cohort=_cohort --Ops.Cohort#COHORT
       
       -- Check if chort can do a transport.
-      if cohort:CheckMissionCapability({AUFTRAG.Type.OPSTRANSPORT}, cohort.missiontypes) then
+      if cohort:CheckMissionCapability({AUFTRAG.Type.OPSTRANSPORT}) and cohort.cargobayLimit>=weightGroup then
       
         -- Loop over cohort assets.
         for _,_asset in pairs(cohort.assets) do  
           local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
                   
           -- Check if asset is currently on a mission (STARTED or QUEUED).
-          if not asset.spawned then
+          if not (asset.spawned or asset.isReserved or asset.requested) then
           
             -- Add to assets.    
             table.insert(assets, asset)
@@ -488,6 +505,8 @@ function LEGION:_GetNextTransport()
         
       end
     end
+    
+    return nil
   end
 
   
@@ -498,11 +517,30 @@ function LEGION:_GetNextTransport()
     -- Check if transport is still queued and ready.
     if transport:IsQueued() and transport:IsReadyToGo() then
     
-      local assets=getAssets(1)
-
-      if #assets>0 then
-        transport.assets=assets  
-        return transport    
+      -- Get all undelivered cargo ops groups.
+      local cargoOpsGroups=transport:GetCargoOpsGroups(false)
+      
+      -- At least one group should be spawned.
+      if #cargoOpsGroups>0 then
+      
+        -- Calculate the max weight so we know which cohorts can provide carriers.
+        local weightGroup=0
+        for _,_opsgroup in pairs(cargoOpsGroups) do
+          local opsgroup=_opsgroup --Ops.OpsGroup#OPSGROUP
+          local weight=opsgroup:GetWeightTotal()
+          if weight>weightGroup then
+            weightGroup=weight
+          end
+        end
+      
+        -- Get assets. If not enough assets can be found, nil is returned.
+        local assets=getAssets(1, weightGroup)
+  
+        if assets then
+          transport.assets=assets  
+          return transport
+        end
+        
       end
        
     end
@@ -821,6 +859,7 @@ function LEGION:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
     -- Trigger event for Brigades.
     self:ArmyOnMission(OpsGroup, Mission)
   else
+    --TODO: Flotilla
   end
 
 end
@@ -901,8 +940,6 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
       -- Add asset to cohort.
       cohort:AddAsset(asset)
 
-      -- TODO
-      --asset.terminalType=AIRBASE.TerminalType.OpenBig
     else
 
       ---
