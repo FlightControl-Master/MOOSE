@@ -4114,6 +4114,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
     self:_SwitchICLS()
   end
   
+  -- We add a 10 sec delay for ARTY. Found that they need some time to readjust the barrel of their gun. Not sure if necessary for all. Needs some more testing!
   local delay=1
   if Mission.type==AUFTRAG.Type.ARTY then
     delay=10

@@ -659,6 +659,8 @@ function COMMANDER:RecruitAssets(Mission)
   -- Legions we consider for selecting assets.
   local legions=Mission.mylegions or self.legions
   
+  --TODO: Setting of Mission.squadrons (cohorts) will not work here!
+  
   -- Legions which have the best assets for the Mission.
   local Legions={}
   
@@ -690,7 +692,7 @@ function COMMANDER:RecruitAssets(Mission)
       if cohort:CanMission(Mission) and npayloads>0 then
       
         -- Recruit assets from squadron.
-        local assets, npayloads=cohort:RecruitAssets(Mission, npayloads)
+        local assets, npayloads=cohort:RecruitAssets(Mission.type, npayloads)
         
         Npayloads[cohort.aircrafttype]=npayloads
         
@@ -743,6 +745,7 @@ function COMMANDER:RecruitAssets(Mission)
   -- Now find the best asset for the given payloads.
   self:_OptimizeAssetSelection(Assets, Mission, true)    
   
+  -- Get number of required assets.
   local Nassets=Mission:GetRequiredAssets(self)
   
   if #Assets>=Nassets then

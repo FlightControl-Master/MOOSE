@@ -451,6 +451,7 @@ function LEGION:_GetNextMission()
       -- Recruit best assets for the job.    
       local recruited=self:RecruitAssets(mission)
       
+      -- Did we find enough assets?
       if recruited then
         return mission
       end
@@ -473,52 +474,6 @@ function LEGION:_GetNextTransport()
   if Ntransports==0 then
     return nil
   end
-
-  --- Function to get carrier assets from all cohorts.
-  local function getAssets(n, N , weightGroup)
-  
-    -- Selected assets.
-    local assets={}
-  
-    -- Loop over cohorts.
-    for _,_cohort in pairs(self.cohorts) do
-      local cohort=_cohort --Ops.Cohort#COHORT
-      
-      -- Check if chort can do a transport.
-      if cohort:CheckMissionCapability({AUFTRAG.Type.OPSTRANSPORT}) and cohort.cargobayLimit>=weightGroup then
-      
-        -- Loop over cohort assets.
-        for _,_asset in pairs(cohort.assets) do  
-          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-                  
-          -- Check if asset is currently on a mission (STARTED or QUEUED).
-          if not (asset.spawned or asset.isReserved or asset.requested) then
-          
-            -- Add to assets.    
-            table.insert(assets, asset)
-            
-            --TODO: Optimize Asset Selection!
-            
-            --TODO: Check if deploy and (any) pickup zone is an airbase, so airplanes can be used.
-            
-            -- Max number of assets reached.
-            if #assets==N then
-              return assets
-            end
-          end
-          
-        end
-        
-      end
-    end
-    
-    -- At least min number reached?
-    if #assets>=n then
-      return assets
-    else
-      return nil
-    end
-  end
   
   --TODO: Sort transports wrt to prio and importance. See mission sorting!
   
@@ -529,142 +484,22 @@ function LEGION:_GetNextTransport()
     -- Check if transport is still queued and ready.
     if transport:IsQueued(self) and transport:IsReadyToGo() then
     
-      -- Get all undelivered cargo ops groups.
-      local cargoOpsGroups=transport:GetCargoOpsGroups(false)
+      -- Recruit assets for transport.
+      local recruited=self:RecruitAssetsForTransport(transport)
       
-      -- At least one group should be spawned.
-      if #cargoOpsGroups>0 then
-      
-        -- Calculate the max weight so we know which cohorts can provide carriers.
-        local weightGroup=0
-        for _,_opsgroup in pairs(cargoOpsGroups) do
-          local opsgroup=_opsgroup --Ops.OpsGroup#OPSGROUP
-          local weight=opsgroup:GetWeightTotal()
-          if weight>weightGroup then
-            weightGroup=weight
-          end
-        end
-      
-        -- Get assets. If not enough assets can be found, nil is returned.
-        local assets=getAssets(transport.nCarriersMin, transport.nCarriersMax, weightGroup)
-  
-        if assets then
-          for _,_asset in pairs(assets) do
-            local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-            asset.isReserved=true
-            transport:AddAsset(asset)
-          end  
-          return transport
-        end
-        
+      -- Did we find enough assets?
+      if recruited then
+        return transport
       end
-       
+      
     end
-    
   end
   
   -- No transport found.
   return nil
 end
 
---- Calculate the mission score of an asset.
--- @param #LEGION self
--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset Asset
--- @param Ops.Auftrag#AUFTRAG Mission Mission for which the best assets are desired.
--- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
--- @return #number Mission score.
-function LEGION:CalculateAssetMissionScore(asset, Mission, includePayload)
-  
-  -- Mission score.
-  local score=0
 
-  -- Prefer highly skilled assets.
-  if asset.skill==AI.Skill.AVERAGE then
-    score=score+0
-  elseif asset.skill==AI.Skill.GOOD then
-    score=score+10
-  elseif asset.skill==AI.Skill.HIGH then
-    score=score+20
-  elseif asset.skill==AI.Skill.EXCELLENT then
-    score=score+30
-  end
-
-  -- Add mission performance to score.
-  score=score+asset.cohort:GetMissionPeformance(Mission.Type)
-
-  -- Add payload performance to score.
-  if includePayload and asset.payload then
-    score=score+self:GetPayloadPeformance(asset.payload, Mission.type)
-  end
-  
-  -- Target position.
-  local TargetVec2=Mission.type~=AUFTRAG.Type.ALERT5 and Mission:GetTargetVec2() or nil --Mission:GetTargetVec2()
-  
-  -- Origin: We take the flightgroups position or the one of the legion.
-  local OrigVec2=asset.flightgroup and asset.flightgroup:GetVec2() or self:GetVec2()
-  
-  -- Distance factor.
-  local distance=0
-  if TargetVec2 and OrigVec2 then
-    -- Distance in NM.
-    distance=UTILS.MetersToNM(UTILS.VecDist2D(OrigVec2, TargetVec2))
-    -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
-    distance=UTILS.Round(distance/10, 0)
-  end
-  
-  -- Reduce score for legions that are futher away.
-  score=score-distance
-  
-  -- Intercepts need to be carried out quickly. We prefer spawned assets.
-  if Mission.type==AUFTRAG.Type.INTERCEPT then  
-    if asset.spawned then
-      self:T(self.lid.."Adding 25 to asset because it is spawned")
-      score=score+25
-    end
-  end
-
-  -- TODO: This could be vastly improved. Need to gather ideas during testing.
-  -- Calculate ETA? Assets on orbit missions should arrive faster even if they are further away.
-  -- Max speed of assets.
-  -- Fuel amount?
-  -- Range of assets?
-
-  return score
-end
-
---- Optimize chosen assets for the mission at hand.
--- @param #LEGION self
--- @param #table assets Table of (unoptimized) assets.
--- @param Ops.Auftrag#AUFTRAG Mission Mission for which the best assets are desired.
--- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
-function LEGION:_OptimizeAssetSelection(assets, Mission, includePayload)
-
-  -- Calculate the mission score of all assets.
-  for _,_asset in pairs(assets) do
-    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    asset.score=self:CalculateAssetMissionScore(asset, Mission, includePayload)
-  end
-
-  --- Sort assets wrt to their mission score. Higher is better.
-  local function optimize(a, b)
-    local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
-    local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
-    -- Higher score wins. If equal score ==> closer wins.
-    return (assetA.score>assetB.score)
-  end
-  table.sort(assets, optimize)
-
-  -- Remove distance parameter.
-  local text=string.format("Optimized %d assets for %s mission (payload=%s):", #assets, Mission.type, tostring(includePayload))
-  for i,Asset in pairs(assets) do
-    local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
-    asset.dist=nil
-    asset.score=nil
-  end
-  self:T2(self.lid..text)
-
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Events
@@ -1239,7 +1074,7 @@ function LEGION:onafterSelfRequest(From, Event, To, groupset, request)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Misc Functions
+-- Mission Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new flight group after an asset was spawned.
@@ -1691,7 +1526,7 @@ function LEGION:_CanMission(Mission)
       local Npayloads=self:IsAirwing() and self:CountPayloadsInStock(Mission.type, cohort.aircrafttype, Mission.payloads) or 999
 
       -- Recruit assets.
-      local assets=cohort:RecruitAssets(Mission, Npayloads)
+      local assets=cohort:RecruitAssets(Mission.type, Npayloads)
 
       -- Total number.
       for _,asset in pairs(assets) do
@@ -1723,9 +1558,12 @@ function LEGION:RecruitAssets(Mission)
 
   -- Number of payloads in stock per aircraft type.
   local Npayloads={}
+
+  -- Squadrons for the job. If user assigned to mission or simply all.
+  local cohorts=Mission.squadrons or self.cohorts
   
   -- First get payloads for aircraft types of squadrons.
-  for _,_cohort in pairs(self.cohorts) do
+  for _,_cohort in pairs(cohorts) do
     local cohort=_cohort --Ops.Cohort#COHORT
     if Npayloads[cohort.aircrafttype]==nil then
       local MissionType=Mission.type
@@ -1741,7 +1579,7 @@ function LEGION:RecruitAssets(Mission)
   local Assets={}
   
   -- Loops over cohorts.
-  for _,_cohort in pairs(self.cohorts) do
+  for _,_cohort in pairs(cohorts) do
     local cohort=_cohort --Ops.Cohort#COHORT
     
     local npayloads=Npayloads[cohort.aircrafttype]
@@ -1749,7 +1587,7 @@ function LEGION:RecruitAssets(Mission)
     if cohort:CanMission(Mission) and npayloads>0 then
     
       -- Recruit assets from squadron.
-      local assets, npayloads=cohort:RecruitAssets(Mission, npayloads)
+      local assets, npayloads=cohort:RecruitAssets(Mission.type, npayloads)
       
       Npayloads[cohort.aircrafttype]=npayloads
       
@@ -1801,6 +1639,7 @@ function LEGION:RecruitAssets(Mission)
     
   end
   
+  -- Get number of required assets.
   local Nassets=Mission:GetRequiredAssets(self)
   
   if #Assets>=Nassets then
@@ -1854,6 +1693,346 @@ function LEGION:RecruitAssets(Mission)
 
 end
 
+--- Calculate the mission score of an asset.
+-- @param #LEGION self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset Asset
+-- @param Ops.Auftrag#AUFTRAG Mission Mission for which the best assets are desired.
+-- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
+-- @return #number Mission score.
+function LEGION:CalculateAssetMissionScore(asset, Mission, includePayload)
+  
+  -- Mission score.
+  local score=0
+
+  -- Prefer highly skilled assets.
+  if asset.skill==AI.Skill.AVERAGE then
+    score=score+0
+  elseif asset.skill==AI.Skill.GOOD then
+    score=score+10
+  elseif asset.skill==AI.Skill.HIGH then
+    score=score+20
+  elseif asset.skill==AI.Skill.EXCELLENT then
+    score=score+30
+  end
+
+  -- Add mission performance to score.
+  score=score+asset.cohort:GetMissionPeformance(Mission.Type)
+
+  -- Add payload performance to score.
+  if includePayload and asset.payload then
+    score=score+self:GetPayloadPeformance(asset.payload, Mission.type)
+  end
+  
+  -- Target position.
+  local TargetVec2=Mission.type~=AUFTRAG.Type.ALERT5 and Mission:GetTargetVec2() or nil --Mission:GetTargetVec2()
+  
+  -- Origin: We take the flightgroups position or the one of the legion.
+  local OrigVec2=asset.flightgroup and asset.flightgroup:GetVec2() or self:GetVec2()
+  
+  -- Distance factor.
+  local distance=0
+  if TargetVec2 and OrigVec2 then
+    -- Distance in NM.
+    distance=UTILS.MetersToNM(UTILS.VecDist2D(OrigVec2, TargetVec2))
+    -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
+    distance=UTILS.Round(distance/10, 0)
+  end
+  
+  -- Reduce score for legions that are futher away.
+  score=score-distance
+  
+  -- Intercepts need to be carried out quickly. We prefer spawned assets.
+  if Mission.type==AUFTRAG.Type.INTERCEPT then  
+    if asset.spawned then
+      self:T(self.lid.."Adding 25 to asset because it is spawned")
+      score=score+25
+    end
+  end
+
+  -- TODO: This could be vastly improved. Need to gather ideas during testing.
+  -- Calculate ETA? Assets on orbit missions should arrive faster even if they are further away.
+  -- Max speed of assets.
+  -- Fuel amount?
+  -- Range of assets?
+
+  return score
+end
+
+--- Optimize chosen assets for the mission at hand.
+-- @param #LEGION self
+-- @param #table assets Table of (unoptimized) assets.
+-- @param Ops.Auftrag#AUFTRAG Mission Mission for which the best assets are desired.
+-- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
+function LEGION:_OptimizeAssetSelection(assets, Mission, includePayload)
+
+  -- Calculate the mission score of all assets.
+  for _,_asset in pairs(assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    asset.score=self:CalculateAssetMissionScore(asset, Mission, includePayload)
+  end
+
+  --- Sort assets wrt to their mission score. Higher is better.
+  local function optimize(a, b)
+    local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
+    local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
+    -- Higher score wins. If equal score ==> closer wins.
+    return (assetA.score>assetB.score)
+  end
+  table.sort(assets, optimize)
+
+  -- Remove distance parameter.
+  local text=string.format("Optimized %d assets for %s mission (payload=%s):", #assets, Mission.type, tostring(includePayload))
+  for i,Asset in pairs(assets) do
+    local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
+    asset.dist=nil
+    asset.score=nil
+  end
+  self:T2(self.lid..text)
+
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Transport Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Recruit assets for a given OPS transport.
+-- @param #LEGION self
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport.
+-- @return #boolean If `true`, enough assets could be recruited.
+function LEGION:RecruitAssetsForTransport(Transport)
+
+  -- Get all undelivered cargo ops groups.
+  local cargoOpsGroups=Transport:GetCargoOpsGroups(false)
+  
+  local weightGroup=0
+  
+  -- At least one group should be spawned.
+  if #cargoOpsGroups>0 then
+  
+    -- Calculate the max weight so we know which cohorts can provide carriers.
+    for _,_opsgroup in pairs(cargoOpsGroups) do
+      local opsgroup=_opsgroup --Ops.OpsGroup#OPSGROUP
+      local weight=opsgroup:GetWeightTotal()
+      if weight>weightGroup then
+        weightGroup=weight
+      end
+    end
+  end
+
+
+  -- Number of payloads in stock per aircraft type.
+  local Npayloads={}
+  
+  -- First get payloads for aircraft types of squadrons.
+  for _,_cohort in pairs(self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    if Npayloads[cohort.aircrafttype]==nil then
+      Npayloads[cohort.aircrafttype]=self:IsAirwing() and self:CountPayloadsInStock(AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype) or 999
+      self:I(self.lid..string.format("Got N=%d payloads for mission type=%s and unit type=%s", Npayloads[cohort.aircrafttype], AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype))
+    end
+  end
+
+  -- The recruited assets.
+  local Assets={}
+  
+  -- Loops over cohorts.
+  for _,_cohort in pairs(self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    
+    local npayloads=Npayloads[cohort.aircrafttype]
+    
+    if cohort:IsOnDuty() and npayloads>0 and cohort:CheckMissionCapability({AUFTRAG.Type.OPSTRANSPORT}) and cohort.cargobayLimit>=weightGroup then
+    
+      -- Recruit assets from squadron.
+      local assets, npayloads=cohort:RecruitAssets(AUFTRAG.Type.OPSTRANSPORT, npayloads)
+      
+      Npayloads[cohort.aircrafttype]=npayloads
+      
+      for _,asset in pairs(assets) do
+        table.insert(Assets, asset)
+      end
+      
+    end
+    
+  end
+  
+  -- Sort asset list. Best ones come first.
+  self:_OptimizeAssetSelectionForTransport(Assets, Transport, false)
+  
+  -- If airwing, get the best payload available.
+  if self:IsAirwing() then
+  
+    for _,_asset in pairs(Assets) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+       
+      -- Only assets that have no payload. Should be only spawned assets!
+      if not asset.payload then
+      
+        -- Fetch payload for asset. This can be nil!
+        asset.payload=self:FetchPayloadFromStock(asset.unittype, AUFTRAG.Type.OPSTRANSPORT)
+                
+      end
+      
+    end
+    
+    -- Remove assets that dont have a payload.
+    for i=#Assets,1,-1 do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      if not asset.payload then
+        table.remove(Assets, i)
+      end
+    end
+ 
+  end
+  
+  -- Number of required carriers.
+  local NreqMin,NreqMax=Transport:GetRequiredCarriers()
+  
+  -- Number of assets. At most NreqMax.
+  local Nassets=math.min(#Assets, NreqMax)
+  
+  if Nassets>=NreqMin then
+  
+    ---
+    -- Found enough assets
+    ---
+  
+    -- Add assets to mission.
+    for i=1,Nassets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      asset.isReserved=true
+      Transport:AddAsset(asset)
+    end
+    
+    if self:IsAirwing() then
+    
+      -- Return payloads of not needed assets.
+      for i=Nassets+1,#Assets do
+        local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+        if not asset.spawned then
+          self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+          self:ReturnPayloadFromAsset(asset)
+        end
+      end
+      
+    end
+    
+    -- Found enough assets.
+    return true
+  else
+
+    ---
+    -- NOT enough assets
+    ---
+  
+    -- Return payloads of assets.
+    if self:IsAirwing() then    
+      for i=1,#Assets do
+        local asset=Assets[i]
+        if not asset.spawned then
+          self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+          self:ReturnPayloadFromAsset(asset)
+        end
+      end      
+    end
+      
+    -- Not enough assets found.
+    return false
+  end
+
+end
+
+
+--- Optimize chosen assets for the mission at hand.
+-- @param #LEGION self
+-- @param #table assets Table of (unoptimized) assets.
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+function LEGION:_OptimizeAssetSelectionForTransport(assets, Transport)
+
+  -- Calculate the mission score of all assets.
+  for _,_asset in pairs(assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    asset.score=self:CalculateAssetTransportScore(asset, Transport)
+  end
+
+  --- Sort assets wrt to their mission score. Higher is better.
+  local function optimize(a, b)
+    local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
+    local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
+    -- Higher score wins. If equal score ==> closer wins.
+    return (assetA.score>assetB.score)
+  end
+  table.sort(assets, optimize)
+
+  -- Remove distance parameter.
+  local text=string.format("Optimized %d assets for transport:", #assets)
+  for i,Asset in pairs(assets) do
+    local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
+    asset.dist=nil
+    asset.score=nil
+  end
+  self:T2(self.lid..text)
+
+end
+
+--- Calculate the mission score of an asset.
+-- @param #LEGION self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset Asset
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+-- @return #number Mission score.
+function LEGION:CalculateAssetTransportScore(asset, Transport)
+  
+  -- Mission score.
+  local score=0
+
+  -- Prefer highly skilled assets.
+  if asset.skill==AI.Skill.AVERAGE then
+    score=score+0
+  elseif asset.skill==AI.Skill.GOOD then
+    score=score+10
+  elseif asset.skill==AI.Skill.HIGH then
+    score=score+20
+  elseif asset.skill==AI.Skill.EXCELLENT then
+    score=score+30
+  end
+
+  -- Add mission performance to score.
+  score=score+asset.cohort:GetMissionPeformance(AUFTRAG.Type.OPSTRANSPORT)
+
+  -- Target position.
+  local TargetVec2=Transport:GetDeployZone():GetVec2()
+  
+  -- Origin: We take the flightgroups position or the one of the legion.
+  local OrigVec2=asset.flightgroup and asset.flightgroup:GetVec2() or self:GetVec2()
+  
+  -- Distance factor.
+  local distance=0
+  if TargetVec2 and OrigVec2 then
+    -- Distance in NM.
+    distance=UTILS.MetersToNM(UTILS.VecDist2D(OrigVec2, TargetVec2))
+    -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
+    distance=UTILS.Round(distance/10, 0)
+  end
+  
+  -- Reduce score for legions that are futher away.
+  score=score-distance
+  
+  --TODO: Check cargo bay capacity.
+  
+  --TODO: Check ALERT 5 for Transports.  
+  if asset.spawned then
+    self:T(self.lid.."Adding 25 to asset because it is spawned")
+    score=score+25
+  end
+
+  return score
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Misc Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check if a mission type is contained in a list of possible types.
 -- @param #LEGION self

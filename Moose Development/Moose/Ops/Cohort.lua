@@ -800,14 +800,11 @@ end
 
 --- Get assets for a mission.
 -- @param #COHORT self
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @param #string MissionType Mission type.
 -- @param #number Npayloads Number of payloads available.
 -- @return #table Assets that can do the required mission.
 -- @return #number Number of payloads still available after recruiting the assets.
-function COHORT:RecruitAssets(Mission, Npayloads)
-
-  -- Number of payloads available.
-  Npayloads=Npayloads or self.legion:CountPayloadsInStock(Mission.type, self.aircrafttype, Mission.payloads)
+function COHORT:RecruitAssets(MissionType, Npayloads)
 
   -- Recruited assets.
   local assets={}
@@ -828,14 +825,14 @@ function COHORT:RecruitAssets(Mission, Npayloads)
         ---
   
         -- Check if this asset is currently on a GCICAP mission (STARTED or EXECUTING).
-        if self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and Mission.type==AUFTRAG.Type.INTERCEPT then
+        if self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and MissionType==AUFTRAG.Type.INTERCEPT then
   
           -- Check if the payload of this asset is compatible with the mission.
           -- Note: we do not check the payload as an asset that is on a GCICAP mission should be able to do an INTERCEPT as well!
           self:I(self.lid.."Adding asset on GCICAP mission for an INTERCEPT mission")
           table.insert(assets, asset)
           
-        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and self:CheckMissionCapability(Mission.Type, asset.payload.capabilities) then
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and self:CheckMissionCapability(MissionType, asset.payload.capabilities) then
                   
           -- Check if the payload of this asset is compatible with the mission.
           self:I(self.lid.."Adding asset on ALERT 5 mission for XXX mission")
@@ -876,10 +873,10 @@ function COHORT:RecruitAssets(Mission, Npayloads)
                 combatready=false
               end
                         
-              if Mission.type==AUFTRAG.Type.INTERCEPT and not flightgroup:CanAirToAir() then
+              if MissionType==AUFTRAG.Type.INTERCEPT and not flightgroup:CanAirToAir() then
                 combatready=false
               else
-                local excludeguns=Mission.type==AUFTRAG.Type.BOMBING or Mission.type==AUFTRAG.Type.BOMBRUNWAY or Mission.type==AUFTRAG.Type.BOMBCARPET or Mission.type==AUFTRAG.Type.SEAD or Mission.type==AUFTRAG.Type.ANTISHIP
+                local excludeguns=MissionType==AUFTRAG.Type.BOMBING or MissionType==AUFTRAG.Type.BOMBRUNWAY or MissionType==AUFTRAG.Type.BOMBCARPET or MissionType==AUFTRAG.Type.SEAD or MissionType==AUFTRAG.Type.ANTISHIP
                 if excludeguns and not flightgroup:CanAirToGround(excludeguns) then
                   combatready=false
                 end 
@@ -888,7 +885,7 @@ function COHORT:RecruitAssets(Mission, Npayloads)
               if flightgroup:IsHolding() or flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() then
                 combatready=false
               end
-              if asset.payload and not self:CheckMissionCapability(Mission.type, asset.payload.capabilities) then
+              if asset.payload and not self:CheckMissionCapability(MissionType, asset.payload.capabilities) then
                 combatready=false
               end
               
