@@ -4746,7 +4746,7 @@ do -- SET_AIRBASE
 
     local airbaseName, airbase=self:FindInDatabase(EventData)
 
-    if airbase and airbase:IsShip() or airbase:IsHelipad() then
+    if airbase and (airbase:IsShip() or airbase:IsHelipad()) then
       self:RemoveAirbasesByName(airbaseName)
     end
 
