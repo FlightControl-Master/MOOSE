@@ -932,7 +932,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.8a1"
+CTLD.version="0.1.8a2"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1323,9 +1323,6 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
     -- nothing left over
     self:_SendMessage(string.format("Sorry, all %s are gone!", cgoname), 10, false, Group)
     return self
-  else
-    -- remove one
-    Cargotype:RemoveStock()
   end
   -- landed or hovering over load zone?
   local grounded = not self:IsUnitInAir(Unit)
@@ -1379,6 +1376,7 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
     self:_SendMessage("Troops boarded!", 10, false, Group)
     self:__TroopsPickedUp(1,Group, Unit, Cargotype)
     self:_UpdateUnitCargoMass(Unit)
+    Cargotype:RemoveStock()
   end
   return self
 end
@@ -1637,9 +1635,6 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
       -- nothing left over
       self:_SendMessage(string.format("Sorry, we ran out of %s", cgoname), 10, false, Group)
       return self
-    else
-      -- remove one
-      Cargo:RemoveStock()
     end
   end
   -- check if we are in LOAD zone
@@ -1755,6 +1750,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
       table.insert(droppedcargo,realcargo)
     else
       realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],nil,cargotype.PerCrateMass)
+      Cargo:RemoveStock()
     end
     table.insert(self.Spawned_Cargo, realcargo)
   end
