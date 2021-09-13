@@ -572,6 +572,43 @@ function COMMANDER:onafterTransportAssign(From, Event, To, Legion, Transport)
 
 end
 
+--- On after "TransportCancel" event.
+-- @param #COMMANDER self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+function COMMANDER:onafterTransportCancel(From, Event, To, Transport)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Cancelling Transport UID=%d in status %s", Transport.uid, Transport:GetState()))
+  
+  -- Set commander status.
+  Transport.statusCommander=OPSTRANSPORT.Status.CANCELLED
+  
+  if Transport:IsPlanned() then
+  
+    -- Transport is still in planning stage. Should not have a legion assigned ==> Just remove it form the queue.
+    self:RemoveTransport(Transport)
+    
+  else
+  
+    -- Legion will cancel mission.
+    if #Transport.legions>0 then
+      for _,_legion in pairs(Transport.legions) do
+        local legion=_legion --Ops.Legion#LEGION
+        
+        -- TODO: Should check that this legions actually belongs to this commander.
+        
+        -- Legion will cancel the mission.
+        legion:TransportCancel(Transport)
+      end
+    end
+    
+  end
+
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Mission Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -689,7 +726,7 @@ function COMMANDER:RecruitAssets(Mission)
           MissionType=Mission.alert5MissionType
         end      
         Npayloads[cohort.aircrafttype]=legion:IsAirwing() and legion:CountPayloadsInStock(MissionType, cohort.aircrafttype, Mission.payloads) or 999
-        self:I(self.lid..string.format("Got N=%d payloads for mission type %s [%s]", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
+        self:T2(self.lid..string.format("Got N=%d payloads for mission type %s [%s]", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
       end
     end
     
@@ -728,16 +765,16 @@ function COMMANDER:RecruitAssets(Mission)
       if not asset.payload then
       
         -- Set mission type.
-        local MissionType=Mission.Type
+        local MissionType=Mission.type
         
         -- Get a loadout for the actual mission this group is waiting for.
         if Mission.type==AUFTRAG.Type.ALERT5 and Mission.alert5MissionType then
           MissionType=Mission.alert5MissionType
-        end      
-      
+        end
+    
         -- Fetch payload for asset. This can be nil!
         asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, MissionType, Mission.payloads)
-                
+        
       end
       
     end
@@ -748,6 +785,7 @@ function COMMANDER:RecruitAssets(Mission)
   for i=#Assets,1,-1 do
     local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
     if asset.legion:IsAirwing() and not asset.payload then
+      self:T3(self.lid..string.format("Remove asset %s with no payload", tostring(asset.spawngroupname)))
       table.remove(Assets, i)
     end
   end
@@ -791,13 +829,12 @@ function COMMANDER:RecruitAssets(Mission)
     ---
   
     -- Return payloads of assets.
-    if self:IsAirwing() then    
-      for i=1,#Assets do
-        local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-        if asset.legion:IsAirwing() and not asset.spawned then
-          self:T2(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
-          asset.legion:ReturnPayloadFromAsset(asset)
-        end
+    
+    for i=1,#Assets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem      
+      if asset.legion:IsAirwing() and not asset.spawned then
+        self:T2(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+        asset.legion:ReturnPayloadFromAsset(asset)
       end      
     end
       
@@ -972,7 +1009,7 @@ function COMMANDER:RecruitAssetsForTransport(Transport)
       local cohort=_cohort --Ops.Cohort#COHORT
       if Npayloads[cohort.aircrafttype]==nil then
         Npayloads[cohort.aircrafttype]=legion:IsAirwing() and legion:CountPayloadsInStock(AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype) or 999
-        self:I(self.lid..string.format("Got N=%d payloads for mission type %s [%s]", Npayloads[cohort.aircrafttype], AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype))
+        self:T2(self.lid..string.format("Got N=%d payloads for mission type %s [%s]", Npayloads[cohort.aircrafttype], AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype))
       end
     end
     

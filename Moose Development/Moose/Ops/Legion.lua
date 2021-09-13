@@ -84,6 +84,7 @@ function LEGION:New(WarehouseName, LegionName)
   self:AddTransition("*",             "MissionCancel",       "*")           -- Cancel mission.
   
   self:AddTransition("*",             "TransportRequest",    "*")           -- Add a (mission) request to the warehouse.
+  self:AddTransition("*",             "TransportCancel",     "*")           -- Cancel transport.
   
   self:AddTransition("*",             "OpsOnMission",        "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
   
@@ -164,6 +165,26 @@ function LEGION:New(WarehouseName, LegionName)
 
   --- On after "TransportRequest" event.
   -- @function [parent=#LEGION] OnAfterTransportRequest
+  -- @param #LEGION self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+
+  --- Triggers the FSM event "TransportCancel".
+  -- @function [parent=#LEGION] TransportCancel
+  -- @param #LEGION self
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- Triggers the FSM event "TransportCancel" after a delay.
+  -- @function [parent=#LEGION] __TransportCancel
+  -- @param #LEGION self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- On after "TransportCancel" event.
+  -- @function [parent=#LEGION] OnAfterTransportCancel
   -- @param #LEGION self
   -- @param #string From From state.
   -- @param #string Event Event.
@@ -670,6 +691,50 @@ function LEGION:onafterTransportRequest(From, Event, To, OpsTransport)
   end
 
 end
+
+--- On after "TransportCancel" event.
+-- @param #LEGION self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport to be cancelled.
+function LEGION:onafterTransportCancel(From, Event, To, Transport)
+
+  -- Info message.
+  self:I(self.lid..string.format("Cancel transport UID=%d", Transport.uid))
+
+  -- Set status to cancelled.
+  Transport:SetLegionStatus(self, OPSTRANSPORT.Status.CANCELLED)
+
+  for i=#Transport.assets, 1, -1 do
+    local asset=Transport.assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    -- Asset should belong to this legion.
+    if asset.wid==self.uid then
+
+      local opsgroup=asset.flightgroup
+
+      if opsgroup then
+        opsgroup:TransportCancel(Transport)
+      end
+      
+      -- Remove asset from mission.
+      Transport:DelAsset(asset)
+
+      -- Not requested any more (if it was).
+      asset.requested=nil
+      asset.isReserved=nil
+      
+    end      
+  end
+
+  -- Remove queued request (if any).
+  if Transport.requestID[self.alias] then
+    self:_DeleteQueueItemByID(Transport.requestID[self.alias], self.queue)
+  end
+
+end
+
 
 --- On after "MissionCancel" event. Cancels the missions of all flightgroups. Deletes request from warehouse queue.
 -- @param #LEGION self
@@ -1625,7 +1690,7 @@ function LEGION:RecruitAssets(Mission)
       if not asset.payload then
       
         -- Set mission type.
-        local MissionType=Mission.Type
+        local MissionType=Mission.type
         
         -- Get a loadout for the actual mission this group is waiting for.
         if Mission.type==AUFTRAG.Type.ALERT5 and Mission.alert5MissionType then
@@ -1729,7 +1794,7 @@ function LEGION:CalculateAssetMissionScore(asset, Mission, includePayload)
   end
 
   -- Add mission performance to score.
-  score=score+asset.cohort:GetMissionPeformance(Mission.Type)
+  score=score+asset.cohort:GetMissionPeformance(Mission.type)
 
   -- Add payload performance to score.
   if includePayload and asset.payload then

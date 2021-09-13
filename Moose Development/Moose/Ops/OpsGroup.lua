@@ -659,7 +659,7 @@ function OPSGROUP:New(group)
 
   self:AddTransition("*",             "MissionStart",     "*")           -- Mission is started.
   self:AddTransition("*",             "MissionExecute",   "*")           -- Mission execution began.
-  self:AddTransition("*",             "MissionCancel",     "*")          -- Cancel current mission.
+  self:AddTransition("*",             "MissionCancel",    "*")           -- Cancel current mission.
   self:AddTransition("*",             "PauseMission",     "*")           -- Pause the current mission.
   self:AddTransition("*",             "UnpauseMission",   "*")           -- Unpause the the paused mission.
   self:AddTransition("*",             "MissionDone",      "*")           -- Mission is over.
@@ -684,6 +684,8 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "Unloaded",         "*")           -- Carrier unloaded all its current cargo.
   self:AddTransition("*",             "UnloadingDone",    "*")           -- Carrier is unloading the cargo.
   self:AddTransition("*",             "Delivered",        "*")           -- Carrier delivered ALL cargo of the transport assignment.
+  
+  self:AddTransition("*",             "TransportCancel",  "*")           -- Cancel (current) transport.
 
   ------------------------
   --- Pseudo Functions ---
@@ -785,6 +787,26 @@ function OPSGROUP:New(group)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
+  --- Triggers the FSM event "TransportCancel".
+  -- @function [parent=#OPSGROUP] TransportCancel
+  -- @param #OPSGROUP self
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- Triggers the FSM event "TransportCancel" after a delay.
+  -- @function [parent=#OPSGROUP] __TransportCancel
+  -- @param #OPSGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- On after "TransportCancel" event.
+  -- @function [parent=#OPSGROUP] OnAfterTransportCancel
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   -- TODO: Add pseudo functions.
 
@@ -6206,11 +6228,17 @@ function OPSGROUP:DelOpsTransport(CargoTransport)
   for i=#self.cargoqueue,1,-1 do
     local transport=self.cargoqueue[i] --Ops.OpsTransport#OPSTRANSPORT
     if transport.uid==CargoTransport.uid then
+    
+      -- Remove from queue.
       table.remove(self.cargoqueue, i)
+      
+      -- Remove carrier from ops transport.
+      CargoTransport:_DelCarrier(self)      
+      
       return self
     end    
   end
-
+  
   return self
 end
 
@@ -7442,6 +7470,112 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
 
   -- Remove cargo transport from cargo queue.
   self:DelOpsTransport(CargoTransport)
+
+end
+
+--- On after "TransportCancel" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsTransport#OPSTRANSPORT The transport to be cancelled.
+function OPSGROUP:onafterTransportCancel(From, Event, To, Transport)
+
+  if self.cargoTransport and self.cargoTransport.uid==Transport.uid then
+
+    ---
+    -- Current Transport
+    ---
+
+    -- Debug info.
+    self:T(self.lid..string.format("Cancel current transport %d", Transport.uid))
+
+    -- Call delivered=
+    local calldelivered=false    
+
+    if self:IsPickingup() then
+    
+      -- On its way to the pickup zone. Remove waypoint. Will be done in delivered.
+      calldelivered=true
+    
+    elseif self:IsLoading() then
+    
+      -- Handle cargo groups.
+      local cargos=Transport:GetCargoOpsGroups(false)
+      
+      for _,_opsgroup in pairs(cargos) do
+        local opsgroup=_opsgroup --#OPSGROUP
+        
+        if opsgroup:IsBoarding(self.groupname) then
+        
+          -- Remove boarding waypoint.
+          opsgroup:RemoveWaypoint(self.currentwp+1)
+          
+          -- Remove from cargo bay (reserved), remove mycarrier, set cargo status.
+          self:_DelCargobay(opsgroup)
+          opsgroup:_RemoveMyCarrier()
+          opsgroup:_NewCargoStatus(OPSGROUP.CargoStatus.NOTCARGO)
+                    
+        elseif opsgroup:IsLoaded(self.groupname) then        
+          
+            -- Get random point in disembark zone.
+          local zoneCarrier=self:GetElementZoneUnload(opsgroup:_GetMyCarrierElement().name)
+
+            -- Random coordinate/heading in the zone.
+          local Coordinate=zoneCarrier and zoneCarrier:GetRandomCoordinate() or self.cargoTransport:GetEmbarkZone(self.cargoTZC):GetRandomCoordinate()           
+        
+          -- Random heading of the group.
+          local Heading=math.random(0,359)
+
+          -- Unload to Coordinate.
+          self:Unload(opsgroup, Coordinate, self.cargoTransport:GetDisembarkActivation(self.cargoTZC), Heading)
+
+          -- Trigger "Unloaded" event for current cargo transport
+          self.cargoTransport:Unloaded(opsgroup, self)
+          
+        end
+        
+      end
+      
+      -- Call delivered.
+      calldelivered=true          
+    
+    elseif self:IsTransporting() then
+    
+      -- Well, we cannot just unload the cargo anywhere.
+      
+      -- TODO: Best would be to bring the cargo back to the pickup zone!
+      
+    elseif self:IsUnloading() then
+      -- Unloading anyway... delivered will be called when done.
+    else
+    
+    end
+    
+    -- Transport delivered.
+    if calldelivered then
+      self:Delivered(Transport)
+    end
+
+  else
+
+    ---
+    -- NOT the current transport
+    ---
+
+    -- Set mission group status.
+    --Transport:SetGroupStatus(self, AUFTRAG.GroupStatus.CANCELLED)
+
+    -- Remove transport from queue.
+    self:DelOpsTransport(Transport)
+    
+    -- Remove carrier.
+    Transport:_DelCarrier(self)
+
+    -- Send group RTB or WAIT if nothing left to do.
+    self:_CheckGroupDone(1)
+
+  end
 
 end
 

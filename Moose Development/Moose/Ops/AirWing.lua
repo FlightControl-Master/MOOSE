@@ -463,12 +463,12 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
 
   -- Debug.
   if self.verbose>=4 then
-    self:I(self.lid..string.format("Sorted payloads for mission type X and aircraft type=Y:"))
+    self:I(self.lid..string.format("Sorted payloads for mission type %s and aircraft type=%s:", MissionType, UnitType))
     for _,_payload in ipairs(self.payloads) do
       local payload=_payload --#AIRWING.Payload
       if payload.aircrafttype==UnitType and self:CheckMissionCapability(MissionType, payload.capabilities) then
         local performace=self:GetPayloadPeformance(payload, MissionType)
-        self:I(self.lid..string.format("FF %s payload for %s: avail=%d performace=%d", MissionType, payload.aircrafttype, payload.navail, performace))
+        self:I(self.lid..string.format("- %s payload for %s: avail=%d performace=%d", MissionType, payload.aircrafttype, payload.navail, performace))
       end
     end
   end
@@ -476,7 +476,7 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
   -- Cases:
   if #payloads==0 then
     -- No payload available.
-    self:T(self.lid.."Warning could not find a payload for airframe X mission type Y!")
+    self:T(self.lid..string.format("WARNING: Could not find a payload for airframe %s mission type %s!", UnitType, MissionType))
     return nil
   elseif #payloads==1 then
     -- Only one payload anyway.

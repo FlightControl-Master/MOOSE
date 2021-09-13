@@ -250,6 +250,8 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   self:AddTransition("*",                           "Status",           "*")
   self:AddTransition("*",                           "Stop",             "*")
   
+  self:AddTransition("*",                           "Cancel",           OPSTRANSPORT.Status.CANCELLED)   -- Command to cancel the transport.  
+  
   self:AddTransition("*",                           "Loaded",           "*")
   self:AddTransition("*",                           "Unloaded",         "*")
   
@@ -331,6 +333,26 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   -- @param #number delay Delay in seconds.
 
 
+  --- Triggers the FSM event "Cancel".
+  -- @function [parent=#OPSTRANSPORT] Cancel
+  -- @param #OPSTRANSPORT self
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- Triggers the FSM event "Cancel" after a delay.
+  -- @function [parent=#OPSTRANSPORT] __Cancel
+  -- @param #OPSTRANSPORT self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- On after "Cancel" event.
+  -- @function [parent=#OPSTRANSPORT] OnAfterCancel
+  -- @param #OPSTRANSPORT self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+
   --- Triggers the FSM event "Loaded".
   -- @function [parent=#OPSTRANSPORT] Loaded
   -- @param #OPSTRANSPORT self
@@ -348,7 +370,7 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
 
   --- On after "Loaded" event.
   -- @function [parent=#OPSTRANSPORT] OnAfterLoaded
-  -- @param #OPSGROUP self
+  -- @param #OPSTRANSPORT self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -372,7 +394,7 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
 
   --- On after "Unloaded" event.
   -- @function [parent=#OPSTRANSPORT] OnAfterUnloaded
-  -- @param #OPSGROUP self
+  -- @param #OPSTRANSPORT self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -1616,6 +1638,74 @@ function OPSTRANSPORT:onafterDeadCarrierAll(From, Event, To)
   end
 end
 
+--- On after "Cancel" event.
+-- @param #OPSTRANSPORT self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSTRANSPORT:onafterCancel(From, Event, To)
+
+  -- Number of OPSGROUPS assigned and alive.
+  local Ngroups = #self.carriers
+
+  -- Debug info.
+  self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for %d groups to report mission DONE before evaluation", self.status, Ngroups))
+  
+  -- Time stamp.
+  self.Tover=timer.getAbsTime()
+  
+  
+  if self.chief then
+
+    -- Debug info.
+    self:T(self.lid..string.format("CHIEF will cancel the transport. Will wait for mission DONE before evaluation!"))
+    
+    -- CHIEF will cancel the transport.
+    self.chief:TransportCancel(self)
+  
+  elseif self.commander then
+  
+    -- Debug info.
+    self:T(self.lid..string.format("COMMANDER will cancel the transport. Will wait for transport DELIVERED before evaluation!"))
+    
+    -- COMMANDER will cancel the transport.
+    self.commander:TransportCancel(self)
+
+  elseif self.legions and #self.legions>0 then
+  
+    -- Loop over all LEGIONs.
+    for _,_legion in pairs(self.legions or {}) do
+      local legion=_legion --Ops.Legion#LEGION
+    
+      -- Debug info.
+      self:T(self.lid..string.format("LEGION %s will cancel the transport. Will wait for transport DELIVERED before evaluation!", legion.alias))
+    
+      -- Legion will cancel all flight missions and remove queued request from warehouse queue.
+      legion:TransportCancel(self)
+      
+    end
+    
+  else  
+  
+    -- Debug info.
+    self:T(self.lid..string.format("No legion, commander or chief. Attached OPS groups will cancel the transport on their own. Will wait for transport DELIVERED before evaluation!"))
+  
+    -- Loop over all carrier groups.
+    for _,_carrier in pairs(self:GetCarriers()) do
+      local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+      carrier:TransportCancel(self)
+    end
+    
+  end
+
+  -- Special mission states.
+  if self:IsPlanned() or self:IsQueued() or self:IsRequested() or Ngroups==0 then
+    self:T(self.lid..string.format("Cancelled transport was in %s stage with %d carrier groups assigned and alive. Call it DELIVERED!", self.status, Ngroups))
+    self:Delivered()
+  end
+
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1653,11 +1743,10 @@ function OPSTRANSPORT:_CheckDelivered()
     end
     
     if dead then
-      --self:CargoDead()
-      self:I(self.lid.."All cargo DEAD!")
+      self:I(self.lid.."All cargo DEAD ==> Delivered!")
       self:Delivered()
     elseif done then
-      self:I(self.lid.."All cargo delivered")
+      self:I(self.lid.."All cargo DONE ==> Delivered!")
       self:Delivered()  
     end
     

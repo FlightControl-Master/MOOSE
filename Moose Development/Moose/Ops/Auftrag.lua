@@ -3420,6 +3420,9 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   self.Ncasualties=0
   self.Nelements=0
   
+  -- Update DCS mission task. Could be that the initial task (e.g. for bombing) was destroyed. Then we need to update the coordinate.
+  self.DCStask=self:GetDCSMissionTask()
+  
   -- Call status again.
   self:__Status(-30)
 

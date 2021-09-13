@@ -182,6 +182,26 @@ function CHIEF:New(AgentSet, Coalition)
   -- @param #string To To state.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
+
+  --- Triggers the FSM event "TransportCancel".
+  -- @function [parent=#CHIEF] TransportCancel
+  -- @param #CHIEF self
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- Triggers the FSM event "TransportCancel" after a delay.
+  -- @function [parent=#CHIEF] TransportCancel
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- On after "TransportCancel" event.
+  -- @function [parent=#CHIEF] OnAfterTransportCancel
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
   return self
 end
 
@@ -666,6 +686,33 @@ function CHIEF:onafterMissionCancel(From, Event, To, Mission)
     -- COMMANDER will cancel mission.
     if Mission.commander then
       Mission.commander:MissionCancel(Mission)
+    end
+    
+  end
+
+end
+
+--- On after "TransportCancel" event.
+-- @param #CHIEF self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+function CHIEF:onafterTransportCancel(From, Event, To, Transport)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Cancelling transport UID=%d in status %s", Transport.uid, Transport:GetState()))
+  
+  if Transport:IsPlanned() then
+  
+    -- Mission is still in planning stage. Should not have any LEGIONS assigned ==> Just remove it form the COMMANDER queue.
+    self:RemoveTransport(Transport)
+    
+  else
+  
+    -- COMMANDER will cancel mission.
+    if Transport.commander then
+      Transport.commander:TransportCancel(Transport)
     end
     
   end
