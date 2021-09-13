@@ -1374,15 +1374,16 @@ end
 -- @param Wrapper.Airbase#AIRBASE.ParkingSpot Spot Parking Spot.
 function FLIGHTGROUP:onafterElementParking(From, Event, To, Element, Spot)
 
+  -- Set parking spot.
+  if Spot then
+    self:_SetElementParkingAt(Element, Spot)
+  end
+
   -- Debug info.
   self:T(self.lid..string.format("Element parking %s at spot %s", Element.name, Element.parking and tostring(Element.parking.TerminalID) or "N/A"))
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.PARKING)
-
-  if Spot then
-    self:_SetElementParkingAt(Element, Spot)
-  end
 
   if self:IsTakeoffCold() then
     -- Wait for engine startup event.
@@ -1660,11 +1661,16 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterParking(From, Event, To)
-  self:T(self.lid..string.format("Flight is parking"))
 
+  -- Get closest airbase
   local airbase=self:GetClosestAirbase() --self.group:GetCoordinate():GetClosestAirbase()
-
   local airbasename=airbase:GetName() or "unknown"
+  
+  -- Debug info
+  self:T(self.lid..string.format("Flight is parking at airbase %s", airbasename))  
+  
+  -- Set current airbase.
+  self.currbase=airbase
 
   -- Parking time stamp.
   self.Tparking=timer.getAbsTime()

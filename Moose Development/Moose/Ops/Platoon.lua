@@ -110,14 +110,16 @@ function PLATOON:AddWeaponRange(RangeMin, RangeMax, BitType)
   self.weaponData[tostring(weapon.BitType)]=weapon
   
   -- Debug info.
-  env.info(string.format("FF Adding weapon data: Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapon.BitType), weapon.RangeMin, weapon.RangeMax))
+  self:T(self.lid..string.format("Adding weapon data: Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapon.BitType), weapon.RangeMin, weapon.RangeMax))
   
-  local text="Weapon data:"
-  for _,_weapondata in pairs(self.weaponData) do
-    local weapondata=_weapondata
-    text=text..string.format("\n- Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapondata.BitType), weapondata.RangeMin, weapondata.RangeMax)
+  if self.verbose>=2 then
+    local text="Weapon data:"
+    for _,_weapondata in pairs(self.weaponData) do
+      local weapondata=_weapondata
+      text=text..string.format("\n- Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapondata.BitType), weapondata.RangeMin, weapondata.RangeMax)
+    end
+    self:I(self.lid..text)
   end
-  self:I(self.lid..text)
 
   return self
 end

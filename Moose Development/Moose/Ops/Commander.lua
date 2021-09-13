@@ -19,6 +19,7 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table legions Table of legions which are commanded.
 -- @field #table missionqueue Mission queue.
+-- @field #table transportqueue Transport queue.
 -- @field Ops.ChiefOfStaff#CHIEF chief Chief of staff.
 -- @extends Core.Fsm#FSM
 
@@ -37,6 +38,7 @@ COMMANDER = {
   verbose        =     0,
   legions        =    {},
   missionqueue   =    {},
+  transportqueue =    {},
 }
 
 --- COMMANDER class version.
@@ -79,6 +81,9 @@ function COMMANDER:New()
   
   self:AddTransition("*",                  "MissionAssign",       "*")           -- Mission is assigned to a or multiple LEGIONs.
   self:AddTransition("*",                  "MissionCancel",       "*")           -- COMMANDER cancels a mission.
+
+  self:AddTransition("*",                  "TransportAssign",     "*")           -- Transport is assigned to a or multiple LEGIONs.
+  self:AddTransition("*",                  "TransportCancel",     "*")           -- COMMANDER cancels a Transport.
 
   ------------------------
   --- Pseudo Functions ---
@@ -155,6 +160,43 @@ function COMMANDER:New()
   -- @param #string To To state.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
+
+  --- Triggers the FSM event "TransportAssign" after a delay.
+  -- @function [parent=#COMMANDER] __TransportAssign
+  -- @param #COMMANDER self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Legion#LEGION Legion The Legion.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- On after "TransportAssign" event.
+  -- @function [parent=#COMMANDER] OnAfterTransportAssign
+  -- @param #COMMANDER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Legion#LEGION Legion The Legion.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+
+  --- Triggers the FSM event "TransportCancel".
+  -- @function [parent=#COMMANDER] TransportCancel
+  -- @param #COMMANDER self
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- Triggers the FSM event "TransportCancel" after a delay.
+  -- @function [parent=#COMMANDER] __TransportCancel
+  -- @param #COMMANDER self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- On after "TransportCancel" event.
+  -- @function [parent=#COMMANDER] OnAfterTransportCancel
+  -- @param #COMMANDER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
   return self
 end
 
@@ -225,6 +267,21 @@ function COMMANDER:AddMission(Mission)
   return self
 end
 
+--- Add transport to queue.
+-- @param #COMMANDER self
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport to be added.
+-- @return #COMMANDER self
+function COMMANDER:AddOpsTransport(Transport)
+
+  Transport.commander=self
+  
+  Transport.statusCommander=TRANSPORT.Status.PLANNED
+
+  table.insert(self.transportqueue, Transport)
+
+  return self
+end
+
 --- Remove mission from queue.
 -- @param #COMMANDER self
 -- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
@@ -238,6 +295,27 @@ function COMMANDER:RemoveMission(Mission)
       self:I(self.lid..string.format("Removing mission %s (%s) status=%s from queue", Mission.name, Mission.type, Mission.status))
       mission.commander=nil
       table.remove(self.missionqueue, i)
+      break
+    end
+    
+  end
+
+  return self
+end
+
+--- Remove transport from queue.
+-- @param #COMMANDER self
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport to be removed.
+-- @return #COMMANDER self
+function COMMANDER:RemoveTransport(Transport)
+
+  for i,_transport in pairs(self.transportqueue) do
+    local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+    
+    if transport.uid==Transport.uid then
+      self:I(self.lid..string.format("Removing mission %s (%s) status=%s from queue", transport.uid, transport:GetState()))
+      transport.commander=nil
+      table.remove(self.transportqueue, i)
       break
     end
     
@@ -292,6 +370,8 @@ function COMMANDER:onafterStatus(From, Event, To)
 
   -- Check mission queue and assign one PLANNED mission.
   self:CheckMissionQueue()
+  
+  -- Check mission queue and assign one PLANNED mission  
     
   ---
   -- LEGIONS
@@ -387,6 +467,20 @@ function COMMANDER:onafterStatus(From, Event, To)
     end
     self:I(self.lid..text)    
   end
+  
+  ---
+  -- TRANSPORTS
+  ---
+    
+  -- Transport queue.
+  if self.verbose>=2 and #self.transportqueue>0 then
+    local text="Transport queue:"
+    for i,_transport in pairs(self.transportqueue) do
+      local transport=_transport --Ops.OpsTransport#OPSTRANSPORT            
+      text=text..string.format("\n[%d] UID=%d: status=%s", i, transport.uid, transport:GetState())
+    end
+    self:I(self.lid..text)    
+  end  
 
   self:__Status(-30)
 end
@@ -455,8 +549,31 @@ function COMMANDER:onafterMissionCancel(From, Event, To, Mission)
 
 end
 
+--- On after "MissionAssign" event. Mission is added to a LEGION mission queue.
+-- @param #COMMANDER self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Legion#LEGION Legion The LEGION.
+-- @param Ops.OpsTransport#OPSTRANSPORT
+function COMMANDER:onafterTransportAssign(From, Event, To, Legion, Transport)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Assigning transport %d to legion %s", Transport.uid, Legion.alias))
+  
+  -- Set mission commander status to QUEUED as it is now queued at a legion.
+  Transport.statusCommander=OPSTRANSPORT.Status.QUEUED
+  
+  -- Add mission to legion.
+  Legion:AddOpsTransport(Transport)
+  
+  -- Directly request the mission as the assets have already been selected.
+  Legion:TransportRequest(Transport)
+
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Resources
+-- Mission Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check mission queue and assign ONE planned mission.
@@ -538,113 +655,6 @@ function COMMANDER:CheckMissionQueue()
   
 end
 
---- Check all legions if they are able to do a specific mission type at a certain location with a given number of assets.
--- @param #COMMANDER self
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return #table Table of LEGIONs that can do the mission and have at least one asset available right now.
-function COMMANDER:GetLegionsForMission(Mission)
-
-  -- Table of legions that can do the mission.
-  local legions={}
-  
-  -- Loop over all legions.
-  for _,_legion in pairs(self.legions) do
-    local legion=_legion --Ops.Legion#LEGION
-    
-    -- Count number of assets in stock.
-    local Nassets=0    
-    if legion:IsAirwing() then
-      Nassets=legion:CountAssetsWithPayloadsInStock(Mission.payloads, {Mission.type}, Attributes)
-    else    
-      Nassets=legion:CountAssets(true, {Mission.type}, Attributes) --Could also specify the attribute if Air or Ground mission.
-    end    
-    
-    -- Has it assets that can?
-    if Nassets>0  and false then        
-      
-      -- Get coordinate of the target.
-      local coord=Mission:GetTargetCoordinate()
-      
-      if coord then
-      
-        -- Distance from legion to target.
-        local distance=UTILS.MetersToNM(coord:Get2DDistance(legion:GetCoordinate()))
-        
-        -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
-        local dist=UTILS.Round(distance/10, 0)
-        
-        -- Debug info.
-        self:I(self.lid..string.format("Got legion %s with Nassets=%d and dist=%.1f NM, rounded=%.1f", legion.alias, Nassets, distance, dist))
-      
-        -- Add legion to table of legions that can.
-        table.insert(legions, {airwing=legion, distance=distance, dist=dist, targetcoord=coord, nassets=Nassets})
-        
-      end
-      
-    end
-    
-    -- Add legion if it can provide at least 1 asset.    
-    if Nassets>0 then
-      table.insert(legions, legion)
-    end
-            
-  end
-  
-  return legions
-end
-
---- Count assets of all assigned legions.
--- @param #COMMANDER self
--- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
--- @return #number Amount of asset groups.
-function COMMANDER:CountAssets(InStock, MissionTypes, Attributes)
-
-  local N=0
-  for _,_legion in pairs(self.legions) do
-    local legion=_legion --Ops.Legion#LEGION
-    N=N+legion:CountAssets(InStock, MissionTypes, Attributes)
-  end
-
-  return N
-end
-
---- Count assets of all assigned legions.
--- @param #COMMANDER self
--- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
--- @param #table Legions (Optional) Table of legions. Default is all legions.
--- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
--- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
--- @return #number Amount of asset groups.
-function COMMANDER:GetAssets(InStock, Legions, MissionTypes, Attributes)
-
-  -- Selected assets.
-  local assets={}
-
-  for _,_legion in pairs(Legions or self.legions) do
-    local legion=_legion --Ops.Legion#LEGION
-    
-    --TODO Check if legion is running and maybe if runway is operational if air assets are requested.
-
-    for _,_cohort in pairs(legion.cohorts) do
-      local cohort=_cohort --Ops.Cohort#COHORT
-      
-      for _,_asset in pairs(cohort.assets) do
-        local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-        
-        -- TODO: Check if repaired.
-        -- TODO: currently we take only unspawned assets.
-        if not (asset.spawned or asset.isReserved or asset.requested) then
-          table.insert(assets, asset)
-        end
-        
-      end
-    end
-  end
-  
-  return assets
-end
 
 --- Recruit assets for a given mission.
 -- @param #COMMANDER self
@@ -757,7 +767,7 @@ function COMMANDER:RecruitAssets(Mission)
     -- Add assets to mission.
     for i=1,Nassets do
       local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-      self:T(self.lid..string.format("Adding asset %s to mission %s [%s]", asset.spawngroupname, Mission.name, Mission.type))
+      asset.isReserved=true
       Mission:AddAsset(asset)
       Legions[asset.legion.alias]=asset.legion
     end
@@ -830,6 +840,393 @@ function COMMANDER:_OptimizeAssetSelection(assets, Mission, includePayload)
   end
   self:T2(self.lid..text)
 
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Transport Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check transport queue and assign ONE planned transport.
+-- @param #COMMANDER self 
+function COMMANDER:CheckTransportQueue()
+
+  -- Number of missions.
+  local Ntransports=#self.transportqueue
+
+  -- Treat special cases.
+  if Ntransports==0 then
+    return nil
+  end
+
+  -- Sort results table wrt prio and start time.
+  local function _sort(a, b)
+    local taskA=a --Ops.Auftrag#AUFTRAG
+    local taskB=b --Ops.Auftrag#AUFTRAG
+    return (taskA.prio<taskB.prio) or (taskA.prio==taskB.prio and taskA.Tstart<taskB.Tstart)
+  end
+  table.sort(self.transportqueue, _sort)
+
+  -- Get the lowest importance value (lower means more important).
+  -- If a mission with importance 1 exists, mission with importance 2 will not be assigned. Missions with no importance (nil) can still be selected. 
+  local vip=math.huge
+  for _,_transport in pairs(self.transportqueue) do
+    local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+    if transport.importance and transport.importance<vip then
+      vip=transport.importance
+    end
+  end
+
+  for _,_transport in pairs(self.transportqueue) do
+    local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+    
+    -- We look for PLANNED missions.
+    if transport:IsPlanned() and transport:IsReadyToGo() and (transport.importance==nil or transport.importance<=vip) then
+    
+      ---
+      -- PLANNNED Mission
+      -- 
+      -- 1. Select best assets from legions
+      -- 2. Assign mission to legions that have the best assets.
+      ---    
+    
+      -- Recruite assets from legions.      
+      local recruited, legions=self:RecruitAssetsForTransport(transport)
+      
+      if recruited then
+
+        for _,_legion in pairs(legions) do
+          local legion=_legion --Ops.Legion#LEGION
+          
+          -- Debug message.
+          self:I(self.lid..string.format("Assigning transport UID=%d to legion %s", transport.uid, legion.alias))
+      
+          -- Add mission to legion.
+          self:TransportAssign(legion, transport)
+          
+        end
+    
+        -- Only ONE transport is assigned.
+        return        
+      end
+      
+    else
+
+      ---
+      -- Missions NOT in PLANNED state
+      ---    
+    
+    end
+  
+  end
+  
+end
+
+--- Recruit assets for a given transport.
+-- @param #COMMANDER self
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+-- @return #boolean If `true`, enough assets could be recruited.
+-- @return #table Legions that have recruited assets.
+function COMMANDER:RecruitAssetsForTransport(Transport)
+ 
+   -- Get all undelivered cargo ops groups.
+  local cargoOpsGroups=Transport:GetCargoOpsGroups(false)
+  
+  local weightGroup=0
+  
+  -- At least one group should be spawned.
+  if #cargoOpsGroups>0 then
+  
+    -- Calculate the max weight so we know which cohorts can provide carriers.
+    for _,_opsgroup in pairs(cargoOpsGroups) do
+      local opsgroup=_opsgroup --Ops.OpsGroup#OPSGROUP
+      local weight=opsgroup:GetWeightTotal()
+      if weight>weightGroup then
+        weightGroup=weight
+      end
+    end
+    
+  else
+    -- No cargo groups!
+    return false, {}
+  end
+  
+  -- The recruited assets.
+  local Assets={}
+  
+  -- Legions we consider for selecting assets.
+  local legions=self.legions
+  
+  --TODO: Setting of Mission.squadrons (cohorts) will not work here!
+  
+  -- Legions which have the best assets for the Mission.
+  local Legions={}
+  
+  for _,_legion in pairs(legions) do
+    local legion=_legion --Ops.Legion#LEGION
+
+    -- Number of payloads in stock per aircraft type.
+    local Npayloads={}
+    
+    -- First get payloads for aircraft types of squadrons.
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      if Npayloads[cohort.aircrafttype]==nil then
+        Npayloads[cohort.aircrafttype]=legion:IsAirwing() and legion:CountPayloadsInStock(AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype) or 999
+        self:I(self.lid..string.format("Got N=%d payloads for mission type %s [%s]", Npayloads[cohort.aircrafttype], AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype))
+      end
+    end
+    
+    -- Loops over cohorts.
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      
+      local npayloads=Npayloads[cohort.aircrafttype]
+      
+      if cohort:IsOnDuty() and npayloads>0 and cohort:CheckMissionCapability({AUFTRAG.Type.OPSTRANSPORT}) and cohort.cargobayLimit>=weightGroup then
+      
+        -- Recruit assets from squadron.
+        local assets, npayloads=cohort:RecruitAssets(AUFTRAG.Type.OPSTRANSPORT, npayloads)
+        
+        Npayloads[cohort.aircrafttype]=npayloads
+        
+        for _,asset in pairs(assets) do
+          table.insert(Assets, asset)
+        end
+        
+      end
+      
+    end
+    
+  end
+  
+  -- Now we have a long list with assets.
+  self:_OptimizeAssetSelectionForTransport(Assets, Transport)
+    
+  for _,_asset in pairs(Assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    if asset.legion:IsAirwing() then
+     
+      -- Only assets that have no payload. Should be only spawned assets!
+      if not asset.payload then
+      
+        -- Fetch payload for asset. This can be nil!
+        asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, AUFTRAG.Type.OPSTRANSPORT)
+                
+      end
+      
+    end
+    
+  end
+  
+  -- Remove assets that dont have a payload.
+  for i=#Assets,1,-1 do
+    local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+    if asset.legion:IsAirwing() and not asset.payload then
+      table.remove(Assets, i)
+    end
+  end
+
+  
+  -- Number of required carriers.
+  local NreqMin,NreqMax=Transport:GetRequiredCarriers()
+  
+  -- Number of assets. At most NreqMax.
+  local Nassets=math.min(#Assets, NreqMax)  
+  
+  if Nassets>=NreqMin then
+  
+    ---
+    -- Found enough assets
+    ---
+  
+    -- Add assets to transport.
+    for i=1,Nassets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      asset.isReserved=true
+      Transport:AddAsset(asset)
+      Legions[asset.legion.alias]=asset.legion
+    end
+    
+    
+    -- Return payloads of not needed assets.
+    for i=Nassets+1,#Assets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      if asset.legion:IsAirwing() and not asset.spawned then
+        self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+        asset.legion:ReturnPayloadFromAsset(asset)
+      end
+    end
+    
+    -- Found enough assets.
+    return true, Legions
+  else
+
+    ---
+    -- NOT enough assets
+    ---
+  
+    -- Return payloads of assets.
+    if self:IsAirwing() then    
+      for i=1,#Assets do
+        local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+        if asset.legion:IsAirwing() and not asset.spawned then
+          self:T2(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+          asset.legion:ReturnPayloadFromAsset(asset)
+        end
+      end      
+    end
+      
+    -- Not enough assets found.
+    return false, {}
+  end
+
+  return nil, {}
+end
+
+--- Optimize chosen assets for the given transport.
+-- @param #COMMANDER self
+-- @param #table assets Table of (unoptimized) assets.
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport Transport assignment.
+function COMMANDER:_OptimizeAssetSelectionForTransport(assets, Transport)
+
+  -- Calculate the mission score of all assets.
+  for _,_asset in pairs(assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    asset.score=asset.legion:CalculateAssetTransportScore(asset, Transport)
+  end
+
+  --- Sort assets wrt to their mission score. Higher is better.
+  local function optimize(a, b)
+    local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
+    local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
+    -- Higher score wins. If equal score ==> closer wins.
+    return (assetA.score>assetB.score)
+  end
+  table.sort(assets, optimize)
+
+  -- Remove distance parameter.
+  local text=string.format("Optimized %d assets for %s mission (payload=%s):", #assets, Mission.type, tostring(includePayload))
+  for i,Asset in pairs(assets) do
+    local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
+    asset.dist=nil
+    asset.score=nil
+  end
+  self:T2(self.lid..text)
+
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Resources
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Count assets of all assigned legions.
+-- @param #COMMANDER self
+-- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return #number Amount of asset groups.
+function COMMANDER:CountAssets(InStock, MissionTypes, Attributes)
+
+  local N=0
+  for _,_legion in pairs(self.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    N=N+legion:CountAssets(InStock, MissionTypes, Attributes)
+  end
+
+  return N
+end
+
+--- Count assets of all assigned legions.
+-- @param #COMMANDER self
+-- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
+-- @param #table Legions (Optional) Table of legions. Default is all legions.
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return #number Amount of asset groups.
+function COMMANDER:GetAssets(InStock, Legions, MissionTypes, Attributes)
+
+  -- Selected assets.
+  local assets={}
+
+  for _,_legion in pairs(Legions or self.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    
+    --TODO Check if legion is running and maybe if runway is operational if air assets are requested.
+
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      
+      for _,_asset in pairs(cohort.assets) do
+        local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+        
+        -- TODO: Check if repaired.
+        -- TODO: currently we take only unspawned assets.
+        if not (asset.spawned or asset.isReserved or asset.requested) then
+          table.insert(assets, asset)
+        end
+        
+      end
+    end
+  end
+  
+  return assets
+end
+
+--- Check all legions if they are able to do a specific mission type at a certain location with a given number of assets.
+-- @param #COMMANDER self
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @return #table Table of LEGIONs that can do the mission and have at least one asset available right now.
+function COMMANDER:GetLegionsForMission(Mission)
+
+  -- Table of legions that can do the mission.
+  local legions={}
+  
+  -- Loop over all legions.
+  for _,_legion in pairs(self.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    
+    -- Count number of assets in stock.
+    local Nassets=0    
+    if legion:IsAirwing() then
+      Nassets=legion:CountAssetsWithPayloadsInStock(Mission.payloads, {Mission.type}, Attributes)
+    else    
+      Nassets=legion:CountAssets(true, {Mission.type}, Attributes) --Could also specify the attribute if Air or Ground mission.
+    end    
+    
+    -- Has it assets that can?
+    if Nassets>0  and false then        
+      
+      -- Get coordinate of the target.
+      local coord=Mission:GetTargetCoordinate()
+      
+      if coord then
+      
+        -- Distance from legion to target.
+        local distance=UTILS.MetersToNM(coord:Get2DDistance(legion:GetCoordinate()))
+        
+        -- Round: 55 NM ==> 5.5 ==> 6, 63 NM ==> 6.3 ==> 6
+        local dist=UTILS.Round(distance/10, 0)
+        
+        -- Debug info.
+        self:I(self.lid..string.format("Got legion %s with Nassets=%d and dist=%.1f NM, rounded=%.1f", legion.alias, Nassets, distance, dist))
+      
+        -- Add legion to table of legions that can.
+        table.insert(legions, {airwing=legion, distance=distance, dist=dist, targetcoord=coord, nassets=Nassets})
+        
+      end
+      
+    end
+    
+    -- Add legion if it can provide at least 1 asset.    
+    if Nassets>0 then
+      table.insert(legions, legion)
+    end
+            
+  end
+  
+  return legions
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

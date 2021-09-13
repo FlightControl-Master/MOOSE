@@ -1866,6 +1866,9 @@ function WAREHOUSE:New(warehouse, alias)
       self.isunit=false
     else
       self.isunit=true
+      if warehouse:IsShip() then
+        self.isShip=true
+      end
     end
   end
 
@@ -1909,8 +1912,14 @@ function WAREHOUSE:New(warehouse, alias)
   end
 
   -- Define warehouse and default spawn zone.
-  self.zone=ZONE_RADIUS:New(string.format("Warehouse zone %s", self.warehouse:GetName()), warehouse:GetVec2(), 500)
-  self.spawnzone=ZONE_RADIUS:New(string.format("Warehouse %s spawn zone", self.warehouse:GetName()), warehouse:GetVec2(), 250)
+  if self.isShip then
+    self.zone=ZONE_AIRBASE:New(self.warehouse:GetName(), 1000)
+    self.spawnzone=ZONE_AIRBASE:New(self.warehouse:GetName(), 1000)  
+  else
+    self.zone=ZONE_RADIUS:New(string.format("Warehouse zone %s", self.warehouse:GetName()), warehouse:GetVec2(), 500)
+    self.spawnzone=ZONE_RADIUS:New(string.format("Warehouse %s spawn zone", self.warehouse:GetName()), warehouse:GetVec2(), 250)
+  end
+    
 
   -- Defaults
   self:SetMarker(true)
@@ -4507,6 +4516,11 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       return
     end
 
+    -- Trigger event.
+    if spawngroup then
+      self:__AssetSpawned(0.01, spawngroup, _assetitem, Request)
+    end
+
   end
 
   -- Init problem table.
@@ -5336,24 +5350,6 @@ function WAREHOUSE:onafterRunwayRepaired(From, Event, To)
 end
 
 
---- On before "AssetSpawned" event. Checks whether the asset was already set to "spawned" for groups with multiple units.
--- @param #WAREHOUSE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP group The group spawned.
--- @param #WAREHOUSE.Assetitem asset The asset that is dead.
--- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
-function WAREHOUSE:onbeforeAssetSpawned(From, Event, To, group, asset, request)
-  if asset.spawned then
-    --return false
-  else
-    --return true
-  end
-
-  return true
-end
-
 --- On after "AssetSpawned" event triggered when an asset group is spawned into the cruel world.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -5368,6 +5364,24 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
 
   -- Sete asset state to spawned.
   asset.spawned=true
+  
+  -- Set spawn group name.
+  asset.spawngroupname=group:GetName()
+  
+  -- Remove asset from stock.
+  self:_DeleteStockItem(asset)          
+
+  -- Add group.
+  if asset.iscargo==true then
+    request.cargogroupset=request.cargogroupset or SET_GROUP:New()
+    request.cargogroupset:AddGroup(group)
+  else
+    request.transportgroupset=request.transportgroupset or SET_GROUP:New()
+    request.transportgroupset:AddGroup(group)
+  end
+
+  -- Set warehouse state.
+  group:SetState(group, "WAREHOUSE", self)  
 
   -- Check if all assets groups are spawned and trigger events.
   local n=0
@@ -5718,15 +5732,15 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     if asset.category==Group.Category.GROUND then
 
       -- Spawn ground troops.
-      _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.spawnzone)
+      _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.spawnzone, Request.lateActivation)
 
     elseif asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
 
       -- Spawn air units.
       if Parking[asset.uid] then
-        _group=self:_SpawnAssetAircraft(_alias, asset, Request, Parking[asset.uid], UnControlled)
+        _group=self:_SpawnAssetAircraft(_alias, asset, Request, Parking[asset.uid], UnControlled, Request.lateActivation)
       else
-        _group=self:_SpawnAssetAircraft(_alias, asset, Request, nil, UnControlled)
+        _group=self:_SpawnAssetAircraft(_alias, asset, Request, nil, UnControlled, Request.lateActivation)
       end
 
     elseif asset.category==Group.Category.TRAIN then
@@ -5736,7 +5750,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
         --TODO: Rail should only get one asset because they would spawn on top!
 
         -- Spawn naval assets.
-        _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.spawnzone)
+        _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.spawnzone, Request.lateActivation)
       end
 
       --self:E(self.lid.."ERROR: Spawning of TRAIN assets not possible yet!")
@@ -5744,11 +5758,16 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     elseif asset.category==Group.Category.SHIP then
 
       -- Spawn naval assets.
-      _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.portzone)
+      _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.portzone, Request.lateActivation)
 
     else
       self:E(self.lid.."ERROR: Unknown asset category!")
     end
+    
+    -- Trigger event.
+    if _group then
+      self:__AssetSpawned(0.01, _group, asset, Request)
+    end    
 
   end
 
@@ -5761,9 +5780,9 @@ end
 -- @param #WAREHOUSE.Assetitem asset Ground asset that will be spawned.
 -- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
 -- @param Core.Zone#ZONE spawnzone Zone where the assets should be spawned.
--- @param #boolean aioff If true, AI of ground units are set to off.
+-- @param #boolean lateactivated If true, groups are spawned late activated.
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
-function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aioff)
+function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, lateactivated)
 
   if asset and (asset.category==Group.Category.GROUND or asset.category==Group.Category.SHIP or asset.category==Group.Category.TRAIN) then
 
@@ -5806,6 +5825,11 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aiof
       end
 
     end
+    
+    -- Late activation.
+    template.lateActivation=lateactivated
+    
+    env.info("FF lateActivation="..tostring(template.lateActivation))
 
     template.route.points[1].x = coord.x
     template.route.points[1].y = coord.z
@@ -5816,14 +5840,6 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aiof
 
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
-
-    -- Activate group. Should only be necessary for late activated groups.
-    --group:Activate()
-
-    -- Switch AI off if desired. This works only for ground and naval groups.
-    if aioff then
-      group:SetAIOff()
-    end
 
     return group
   end
@@ -5838,8 +5854,9 @@ end
 -- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
 -- @param #table parking Parking data for this asset.
 -- @param #boolean uncontrolled Spawn aircraft in uncontrolled state.
+-- @param #boolean lateactivated If true, groups are spawned late activated.
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
-function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrolled)
+function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrolled, lateactivated)
 
   if asset and asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
 
@@ -6329,53 +6346,12 @@ function WAREHOUSE:_OnEventBirth(EventData)
       local request=self:GetRequestByID(rid)
             
       if asset and request then
-      
-        if asset.spawned and type(asset.spawned)=="boolean" and asset.spawned==true then
-          return
-        end
-              
+
         -- Debug message.
         self:T(self.lid..string.format("Warehouse %s captured event birth of request ID=%d, asset ID=%d, unit %s spawned=%s", self.alias, request.uid, asset.uid, EventData.IniUnitName, tostring(asset.spawned)))
         
         -- Set born to true.
         request.born=true
-        
-        
-        if not asset.spawned then
-          asset.spawned=1
-        else
-          asset.spawned=asset.spawned+1
-        end
-                
-  
-        -- Birth is triggered for each unit. We need to make sure not to call this too often!
-        if asset.spawned==asset.nunits then
-  
-          -- Remove asset from stock.
-          self:_DeleteStockItem(asset)
-  
-          -- Set spawned switch.
-          asset.spawned=true
-          asset.spawngroupname=group:GetName()
-  
-          -- Add group.
-          if asset.iscargo==true then
-            request.cargogroupset=request.cargogroupset or SET_GROUP:New()
-            request.cargogroupset:AddGroup(group)
-          else
-            request.transportgroupset=request.transportgroupset or SET_GROUP:New()
-            request.transportgroupset:AddGroup(group)
-          end
-  
-          -- Set warehouse state.
-          group:SetState(group, "WAREHOUSE", self)
-  
-          -- Asset spawned FSM function.
-          -- This needs to be delayed a bit for all units to be present. Especially, since MOOSE needs a birth event for UNITs to be added to the _DATABASE.
-          self:__AssetSpawned(0.1, group, asset, request)
-          --self:AssetSpawned(group, asset, request)
-  
-        end
         
       else
         self:E(self.lid..string.format("ERROR: Either asset AID=%s or request RID=%s are nil in event birth of unit %s", tostring(aid), tostring(rid), tostring(EventData.IniUnitName)))
@@ -7076,10 +7052,9 @@ function WAREHOUSE:_CheckRequestValid(request)
       -- Check that both spawn zones are not in water.
       local inwater=self.spawnzone:GetCoordinate():IsSurfaceTypeWater() or request.warehouse.spawnzone:GetCoordinate():IsSurfaceTypeWater()
 
-      if inwater then
+      if inwater and not request.lateActivation then
         self:E("ERROR: Incorrect request. Ground asset requested but at least one spawn zone is in water!")
-        --valid=false
-        valid=false
+        return false
       end
 
       -- No ground assets directly to or from ships.

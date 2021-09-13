@@ -467,12 +467,12 @@ OPSGROUP.version="0.7.5"
 -- TODO: Invisible/immortal.
 -- TODO: F10 menu.
 -- TODO: Add pseudo function.
--- TODO: Options EPLRS
 -- TODO: Afterburner restrict
 -- TODO: What more options?
 -- TODO: Damage?
 -- TODO: Shot events?
 -- TODO: Marks to add waypoints/tasks on-the-fly.
+-- DONE: Options EPLRS
 -- DONE: A lot.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3344,8 +3344,9 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
   
     -- Target
     local target=Task.dcstask.params.target --Ops.Target#TARGET
-    Task.dcstask.params.lastindex=1
+    self.lastindex=1
     
+    -- Target object and zone.
     local object=target.targets[1] --Ops.Target#TARGET.Object    
     local zone=object.Object --Core.Zone#ZONE
     
@@ -4495,9 +4496,10 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     -- SPECIAL TASK: Recon Mission
     ---
   
+    -- TARGET.
     local target=task.dcstask.params.target --Ops.Target#TARGET
     
-    local n=task.dcstask.params.lastindex+1
+    local n=self.lastindex+1
     
     if n<=#target.targets then
     
@@ -4528,7 +4530,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       wp.missionUID=mission and mission.auftragsnummer or nil
       
       -- Increase counter.
-      task.dcstask.params.lastindex=task.dcstask.params.lastindex+1
+      self.lastindex=self.lastindex+1
       
     else
           
@@ -4599,7 +4601,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     
     -- Passing mission waypoint?
     if Waypoint.missionUID then
-      self:T(self.lid.."FF passing mission waypoint")
+      self:T2(self.lid..string.format("Passing mission waypoint"))
     end
 
     -- Check if all tasks/mission are done?
@@ -6636,23 +6638,16 @@ function OPSGROUP:onafterPickup(From, Event, To)
       -- Flight Group
       ---    
 
+      -- Activate uncontrolled group.
+      if self:IsParking() and self:IsUncontrolled() then
+        self:StartUncontrolled()
+      end
+
       if airbasePickup then
 
         ---
         -- Pickup at airbase
         ---
-
-        -- Current airbase.
-        local airbaseCurrent=self.currbase
-
-        if airbaseCurrent then
-
-          -- Activate uncontrolled group.
-          if self:IsParking() and self:IsUncontrolled() then
-            self:StartUncontrolled()
-          end
-
-        end
 
         -- Order group to land at an airbase.
         self:__LandAtAirbase(-0.1, airbasePickup)
@@ -6662,11 +6657,6 @@ function OPSGROUP:onafterPickup(From, Event, To)
         ---
         -- Helo can also land in a zone (NOTE: currently VTOL cannot!)
         ---
-        
-        -- Activate uncontrolled group.
-        if self:IsParking() and self:IsUncontrolled() then
-          self:StartUncontrolled(0.5)
-        end
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
         local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, UTILS.MetersToFeet(self.altitudeCruise), false) ; waypoint.detour=1
@@ -7004,22 +6994,16 @@ function OPSGROUP:onafterTransport(From, Event, To)
     -- Add waypoint.
     if self:IsFlightgroup() then
 
+      -- Activate uncontrolled group.
+      if self:IsParking() and self:IsUncontrolled() then
+        self:StartUncontrolled()
+      end
+
       if airbaseDeploy then
       
         ---
         -- Deploy at airbase
         ---
-      
-        local airbaseCurrent=self.currbase
-
-        if airbaseCurrent then
-
-          -- Activate uncontrolled group.
-          if self:IsParking() and self:IsUncontrolled() then
-            self:StartUncontrolled()
-          end
-
-        end
         
         -- Order group to land at an airbase.
         self:__LandAtAirbase(-0.1, airbaseDeploy)

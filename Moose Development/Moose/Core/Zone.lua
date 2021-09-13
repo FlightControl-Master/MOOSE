@@ -2223,6 +2223,20 @@ do -- ZONE_AIRBASE
 
     self._.ZoneAirbase = Airbase
     self._.ZoneVec2Cache = self._.ZoneAirbase:GetVec2()
+    
+    if Airbase:IsShip() then
+      self.isShip=true
+      self.isHelipad=false
+      self.isAirdrome=false
+    elseif Airbase:IsHelipad() then
+      self.isShip=false
+      self.isHelipad=true
+      self.isAirdrome=false    
+    elseif Airbase:IsAirdrome() then
+      self.isShip=false
+      self.isHelipad=false
+      self.isAirdrome=true    
+    end
 
     -- Zone objects are added to the _DATABASE and SET_ZONE objects.
     _EVENTDISPATCHER:CreateEventNewZone( self )

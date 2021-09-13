@@ -299,6 +299,32 @@ function CHIEF:RemoveMission(Mission)
   return self
 end
 
+--- Add transport to transport queue of the COMMANDER.
+-- @param #CHIEF self
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport Transport to be added.
+-- @return #CHIEF self
+function CHIEF:AddOpsTransport(Transport)
+
+  Transport.chief=self
+  
+  self.commander:AddOpsTransport(Transport)
+  
+  return self
+end
+
+--- Remove transport from queue.
+-- @param #CHIEF self
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport Transport to be removed.
+-- @return #CHIEF self
+function CHIEF:RemoveTransport(Transport)
+
+  Transport.chief=nil
+  
+  self.commander:RemoveTransport(Transport)
+
+  return self
+end
+
 --- Add target.
 -- @param #CHIEF self
 -- @param Ops.Target#TARGET Target Target object to be added.

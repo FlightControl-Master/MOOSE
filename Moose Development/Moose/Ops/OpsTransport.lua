@@ -53,6 +53,8 @@
 -- @field #table assets Warehouse assets assigned for this transport.
 -- @field #table legions Assigned legions.
 -- @field #table statusLegion Transport status of all assigned LEGIONs.
+-- @field #string statusCommander Staus of the COMMANDER.
+-- @field Ops.Commander#COMMANDER commander Commander of the transport.
 -- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the transport was cancelled before the request is processed.
 -- 
 -- @extends Core.Fsm#FSM
@@ -133,6 +135,9 @@ OPSTRANSPORT = {
 -- @field #string SCHEDULED Transport is scheduled in the cargo queue.
 -- @field #string EXECUTING Transport is being executed.
 -- @field #string DELIVERED Transport was delivered. 
+-- @field #string CANCELLED Transport was cancelled.
+-- @field #string SUCCESS Transport was a success.
+-- @field #string FAILED Transport failed.
 OPSTRANSPORT.Status={
   PLANNED="planned",
   QUEUED="queued",
@@ -140,6 +145,9 @@ OPSTRANSPORT.Status={
   SCHEDULED="scheduled",
   EXECUTING="executing",
   DELIVERED="delivered",
+  CANCELLED="cancelled",
+  SUCCESS="success",
+  FAILED="failed",  
 }
 
 --- Pickup and deploy set.
@@ -177,14 +185,14 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.4.2"
+OPSTRANSPORT.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Allow multiple pickup/depoly zones.
 -- TODO: Stop/abort transport.
+-- DONE: Allow multiple pickup/depoly zones.
 -- DONE: Add start conditions.
 -- DONE: Check carrier(s) dead.
 
@@ -459,20 +467,6 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo)
     
       -- Call iteravely for each group.
       self:AddCargoGroups(group, TransportZoneCombo)
-    
-      --[[
-      local cargo=self:_CreateCargoGroupData(group)
-      
-      if cargo then
-        -- Add to main table.
-        table.insert(self.cargos, cargo)
-        self.Ncargo=self.Ncargo+1
-
-        -- Add to TZC table.
-        table.insert(TransportZoneCombo.Cargos, cargo)
-        TransportZoneCombo.Ncargo=TransportZoneCombo.Ncargo+1        
-      end
-      ]]
       
     end
   end

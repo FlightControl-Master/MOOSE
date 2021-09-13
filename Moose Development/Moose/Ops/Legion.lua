@@ -256,8 +256,11 @@ function LEGION:AddMission(Mission)
   -- Add ops transport to transport Legions.
   if Mission.opstransport then
   
+    local PickupZone=self.spawnzone
+    local DeployZone=Mission.opstransport.tzcDefault.DeployZone
+  
     -- Add a new TZC: from pickup here to the deploy zone.
-    local tzc=Mission.opstransport:AddTransportZoneCombo(self.spawnzone, Mission.opstransport.tzcDefault.DeployZone)
+    local tzc=Mission.opstransport:AddTransportZoneCombo(PickupZone, DeployZone)
 
     --TODO: Depending on "from where to where" the assets need to transported, we need to set ZONE_AIRBASE etc.
       
@@ -601,6 +604,17 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
 
     -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
     Mission.requestID[self.alias]=self.queueid
+    
+    -- Get request.
+    local request=self:GetRequestByID(self.queueid)
+    
+    if request then
+      if self.isShip then
+        self:T(self.lid.."FF request late activated")
+        request.lateActivation=true
+      end
+    end    
+    
   end
 
 end
@@ -653,7 +667,6 @@ function LEGION:onafterTransportRequest(From, Event, To, OpsTransport)
 
     -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
     OpsTransport.requestID[self.alias]=self.queueid
-    
   end
 
 end
@@ -1571,7 +1584,7 @@ function LEGION:RecruitAssets(Mission)
         MissionType=Mission.alert5MissionType
       end
       Npayloads[cohort.aircrafttype]=self:IsAirwing() and self:CountPayloadsInStock(MissionType, cohort.aircrafttype, Mission.payloads) or 999
-      self:I(self.lid..string.format("Got N=%d payloads for mission type=%s and unit type=%s", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
+      self:T2(self.lid..string.format("Got N=%d payloads for mission type=%s and unit type=%s", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
     end
   end
 
@@ -1818,6 +1831,9 @@ function LEGION:RecruitAssetsForTransport(Transport)
         weightGroup=weight
       end
     end
+  else
+    -- No cargo groups!
+    return false
   end
 
 
@@ -1829,7 +1845,7 @@ function LEGION:RecruitAssetsForTransport(Transport)
     local cohort=_cohort --Ops.Cohort#COHORT
     if Npayloads[cohort.aircrafttype]==nil then
       Npayloads[cohort.aircrafttype]=self:IsAirwing() and self:CountPayloadsInStock(AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype) or 999
-      self:I(self.lid..string.format("Got N=%d payloads for mission type=%s and unit type=%s", Npayloads[cohort.aircrafttype], AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype))
+      self:T2(self.lid..string.format("Got N=%d payloads for mission type=%s and unit type=%s", Npayloads[cohort.aircrafttype], AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype))
     end
   end
 
@@ -1858,7 +1874,7 @@ function LEGION:RecruitAssetsForTransport(Transport)
   end
   
   -- Sort asset list. Best ones come first.
-  self:_OptimizeAssetSelectionForTransport(Assets, Transport, false)
+  self:_OptimizeAssetSelectionForTransport(Assets, Transport)
   
   -- If airwing, get the best payload available.
   if self:IsAirwing() then
@@ -2019,7 +2035,8 @@ function LEGION:CalculateAssetTransportScore(asset, Transport)
   -- Reduce score for legions that are futher away.
   score=score-distance
   
-  --TODO: Check cargo bay capacity.
+  -- Add 1 score point for each 10 kg of cargo bay.
+  score=score+UTILS.Round(asset.cargobaymax/10, 0)
   
   --TODO: Check ALERT 5 for Transports.  
   if asset.spawned then
