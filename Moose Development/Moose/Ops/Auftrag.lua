@@ -1390,24 +1390,37 @@ function AUFTRAG:NewALERT5(MissionType)
 end
 
 
---- Create a mission to attack a group. Mission type is automatically chosen from the group category.
+--- Create a mission to attack a TARGET object.
 -- @param #AUFTRAG self
 -- @param Ops.Target#TARGET Target The target.
+-- @param #string MissionType The mission type.
 -- @return #AUFTRAG self
-function AUFTRAG:NewTargetAir(Target)
+function AUFTRAG:NewFromTarget(Target, MissionType)
 
   local mission=nil --#AUFTRAG
   
-  self.engageTarget=Target
-    
-  local target=self.engageTarget:GetObject()
-  
-  local mission=self:NewAUTO(target)
-  
-  if mission then
-    mission:SetPriority(10, true)
+  if MissionType==AUFTRAG.Type.ANTISHIP then
+    mission=self:NewANTISHIP(Target, Altitude)
+  elseif MissionType==AUFTRAG.Type.ARTY then
+    mission=self:NewARTY(Target, Nshots, Radius)
+  elseif MissionType==AUFTRAG.Type.BAI then
+    mission=self:NewBAI(Target, Altitude)
+  elseif MissionType==AUFTRAG.Type.BOMBCARPET then
+    mission=self:NewBOMBCARPET(Target, Altitude, CarpetLength)
+  elseif MissionType==AUFTRAG.Type.BOMBING then
+    mission=self:NewBOMBING(Target, Altitude)
+  elseif MissionType==AUFTRAG.Type.BOMBRUNWAY then
+    mission=self:NewBOMBRUNWAY(Target, Altitude)
+  elseif MissionType==AUFTRAG.Type.INTERCEPT then
+    mission=self:NewINTERCEPT(Target)
+  elseif MissionType==AUFTRAG.Type.SEAD then
+    mission=self:NewSEAD(Target, Altitude)
+  elseif MissionType==AUFTRAG.Type.STRIKE then
+    mission=self:NewSTRIKE(Target, Altitude)
+  else
+    return nil
   end
-
+  
   return mission
 end
 

@@ -17,6 +17,7 @@
 -- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table targetqueue Target queue.
+-- @field #table zonequeue Strategic zone queue.
 -- @field Core.Set#SET_ZONE borderzoneset Set of zones defining the border of our territory.
 -- @field Core.Set#SET_ZONE yellowzoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
 -- @field Core.Set#SET_ZONE engagezoneset Set of zones where enemies are actively engaged.
@@ -30,9 +31,7 @@
 --
 -- # The CHIEF Concept
 -- 
--- The Chief of staff gathers intel and assigns missions (AUFTRAG) the airforce (WINGCOMMANDER), army (GENERAL) or navy (ADMIRAL).
--- 
--- **Note** that currently only assignments to airborne forces (WINGCOMMANDER) are implemented.
+-- The Chief of staff gathers INTEL and assigns missions (AUFTRAG) the airforce, army and/or navy.
 --
 --
 -- @field #CHIEF
@@ -41,6 +40,7 @@ CHIEF = {
   verbose        =     0,
   lid            =   nil,
   targetqueue    =    {},
+  zonequeue      =    {},
   borderzoneset  =   nil,
   yellowzoneset  =   nil,
   engagezoneset  =   nil,
@@ -70,6 +70,18 @@ CHIEF.Strategy = {
   TOTALWAR="Total War"
 }
 
+--- Strategy.
+-- @type CHIEF.MissionTypePerformance
+-- @field #string MissionType Mission Type.
+-- @field #number Performance Performance: a number between 0 and 100, where 100 is best performance.
+
+
+--- Strategy.
+-- @type CHIEF.MissionTypeMapping
+-- @field #string Attribute Generalized attibute
+-- @field #table MissionTypes 
+
+
 --- CHIEF class version.
 -- @field #string version
 CHIEF.version="0.0.1"
@@ -97,15 +109,17 @@ CHIEF.version="0.0.1"
 -- @param #CHIEF self
 -- @param Core.Set#SET_GROUP AgentSet Set of agents (groups) providing intel. Default is an empty set.
 -- @param #number Coalition Coalition side, e.g. `coaliton.side.BLUE`. Can also be passed as a string "red", "blue" or "neutral".
+-- @param #string Alias An *optional* alias how this object is called in the logs etc.
 -- @return #CHIEF self
-function CHIEF:New(AgentSet, Coalition)
+function CHIEF:New(AgentSet, Coalition, Alias)
+
+  -- Set alias.
+  Alias=Alias or "CHIEF"
 
   -- Inherit everything from INTEL class.
-  local self=BASE:Inherit(self, INTEL:New(AgentSet, Coalition)) --#CHIEF
+  local self=BASE:Inherit(self, INTEL:New(AgentSet, Coalition, Alias)) --#CHIEF
 
-  -- Set some string id for output to DCS.log file.
-  --self.lid=string.format("CHIEF | ")
-
+  -- Define zones.
   self:SetBorderZones()
   self:SetYellowZones()
   
@@ -114,21 +128,25 @@ function CHIEF:New(AgentSet, Coalition)
   -- Create a new COMMANDER.
   self.commander=COMMANDER:New()
   
+  -- Init DEFCON.
   self.Defcon=CHIEF.DEFCON.GREEN
 
   -- Add FSM transitions.
-  --                 From State    -->   Event             -->              To State
-  self:AddTransition("*",                "AssignMissionAirforce", "*")   -- Assign mission to a COMMANDER but request only AIR assets.
-  self:AddTransition("*",                "AssignMissionNavy",     "*")   -- Assign mission to a COMMANDER but request only NAVAL assets.
-  self:AddTransition("*",                "AssignMissionArmy",     "*")   -- Assign mission to a COMMANDER but request only GROUND assets.
+  --                 From State   -->    Event                     -->    To State
+  self:AddTransition("*",                "MissionAssignToAny",            "*")   -- Assign mission to a COMMANDER.
   
-  self:AddTransition("*",                "MissionCancel",         "*")   -- Cancel mission.
+  self:AddTransition("*",                "MissionAssignToAirfore",        "*")   -- Assign mission to a COMMANDER but request only AIR assets.
+  self:AddTransition("*",                "MissionAssignToNavy",           "*")   -- Assign mission to a COMMANDER but request only NAVAL assets.
+  self:AddTransition("*",                "MissionAssignToArmy",           "*")   -- Assign mission to a COMMANDER but request only GROUND assets.
   
-  self:AddTransition("*",                "Defcon",                "*")   -- Change defence condition.
+  self:AddTransition("*",                "MissionCancel",                 "*")   -- Cancel mission.
+  self:AddTransition("*",                "TransportCancel",               "*")   -- Cancel transport.
   
-  self:AddTransition("*",                "Stategy",               "*")   -- Change strategy condition.
+  self:AddTransition("*",                "Defcon",                        "*")   -- Change defence condition.
   
-  self:AddTransition("*",                "DeclareWar",            "*")   -- Declare War.
+  self:AddTransition("*",                "Stategy",                       "*")   -- Change strategy condition.
+  
+  self:AddTransition("*",                "DeclareWar",                    "*")   -- Declare War.
 
   ------------------------
   --- Pseudo Functions ---
@@ -163,13 +181,33 @@ function CHIEF:New(AgentSet, Coalition)
   -- @param #number delay Delay in seconds.
 
 
+  --- Triggers the FSM event "MissionAssignToAny".
+  -- @function [parent=#CHIEF] MissionAssignToAny
+  -- @param #CHIEF self
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "MissionAssignToAny" after a delay.
+  -- @function [parent=#CHIEF] __MissionAssignToAny
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionAssignToAny" event.
+  -- @function [parent=#CHIEF] OnAfterMissionAssignToAny
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
   --- Triggers the FSM event "MissionCancel".
   -- @function [parent=#CHIEF] MissionCancel
   -- @param #CHIEF self
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
   --- Triggers the FSM event "MissionCancel" after a delay.
-  -- @function [parent=#CHIEF] MissionCancel
+  -- @function [parent=#CHIEF] __MissionCancel
   -- @param #CHIEF self
   -- @param #number delay Delay in seconds.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
@@ -189,7 +227,7 @@ function CHIEF:New(AgentSet, Coalition)
   -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- Triggers the FSM event "TransportCancel" after a delay.
-  -- @function [parent=#CHIEF] TransportCancel
+  -- @function [parent=#CHIEF] __TransportCancel
   -- @param #CHIEF self
   -- @param #number delay Delay in seconds.
   -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
@@ -355,6 +393,19 @@ function CHIEF:AddTarget(Target)
   Target:SetImportance()
 
   table.insert(self.targetqueue, Target)
+
+  return self
+end
+
+--- Add strategically important zone.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE_RADIUS Zone Strategic zone.
+-- @return #CHIEF self
+function CHIEF:AddStrateticZone(Zone)
+
+  local opszone=OPSZONE:New(Zone, CoalitionOwner)
+
+  table.insert(self.zonequeue, opszone)
 
   return self
 end
@@ -538,7 +589,7 @@ function CHIEF:onafterStatus(From, Event, To)
   
   if self.verbose>=1 then
     local Nassets=self.commander:CountAssets()
-    local Ncontacts=#self.contacts
+    local Ncontacts=#self.Contacts
     local Nmissions=#self.commander.missionqueue
     local Ntargets=#self.targetqueue
     
@@ -589,7 +640,7 @@ function CHIEF:onafterStatus(From, Event, To)
   -- Mission queue.
   if self.verbose>=4 and #self.commander.missionqueue>0 then
     local text="Mission queue:"
-    for i,_mission in pairs(self.missionqueue) do
+    for i,_mission in pairs(self.commander.missionqueue) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
       
       local target=mission:GetTargetName() or "unknown"
@@ -629,13 +680,13 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after "AssignMissionAssignAirforce" event.
+--- On after "MissionAssignToAny" event.
 -- @param #CHIEF self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function CHIEF:onafterAssignMissionAirforce(From, Event, To, Mission)
+function CHIEF:onafterMissionAssignToAny(From, Event, To, Mission)
 
   if self.commander then
     self:I(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
@@ -647,13 +698,31 @@ function CHIEF:onafterAssignMissionAirforce(From, Event, To, Mission)
 
 end
 
---- On after "AssignMissionAssignArmy" event.
+--- On after "MissionAssignToAirforce" event.
 -- @param #CHIEF self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function CHIEF:onafterAssignMissionArmy(From, Event, To, Mission)
+function CHIEF:onafterMissionAssignToAirforce(From, Event, To, Mission)
+
+  if self.commander then
+    self:I(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
+    --TODO: Request only air assets.
+    self.commander:AddMission(Mission)
+  else
+    self:E(self.lid..string.format("Mission cannot be assigned as no COMMANDER is defined!"))
+  end
+
+end
+
+--- On after "MissionAssignToArmy" event.
+-- @param #CHIEF self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+function CHIEF:onafterMissionAssignToArmy(From, Event, To, Mission)
 
   if self.commander then
     self:I(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
@@ -819,10 +888,33 @@ function CHIEF:CheckTargetQueue()
       -- Valid target?
       if valid then
       
-        --TODO: Create a good mission, which can be passed on to the COMMANDER.
-  
-        -- Create mission.
-        local mission=AUFTRAG:NewTargetAir(target)
+        env.info("FF got valid target "..target:GetName())
+              
+        -- Get mission performances for the given target.  
+        local MissionPerformances=self:_GetMissionPerformanceFromTarget(target)
+        
+        -- Mission.
+        local mission=nil --Ops.Auftrag#AUFTRAG
+        
+        if #MissionPerformances>0 then
+        
+          env.info(string.format("FF found mission performance N=%d", #MissionPerformances))
+        
+          -- Mission Type.
+          local MissionType=nil
+          
+          for _,_mp in pairs(MissionPerformances) do
+            local mp=_mp --#CHIEF.MissionTypePerformance
+            local n=self.commander:CountAssets(true, {mp.MissionType})
+            env.info(string.format("FF Found N=%d assets in stock for mission type %s [Performance=%d]", n, mp.MissionType, mp.Performance))
+            if n>0 then
+              mission=AUFTRAG:NewFromTarget(target, mp.MissionType)              
+              break
+            end
+          end
+        
+          
+        end
         
         if mission then
         
@@ -846,6 +938,7 @@ function CHIEF:CheckTargetQueue()
   end
   
 end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Resources
@@ -916,29 +1009,209 @@ end
 
 --- Check resources.
 -- @param #CHIEF self
+-- @param Ops.Target#TARGET Target Target.
 -- @return #table 
-function CHIEF:CheckResources()
+function CHIEF:CheckResources(Target)
 
-  -- TODO: look at lower classes to do this! it's all there...
-
-  local capabilities={}
-   
-  for _,MissionType in pairs(AUFTRAG.Type) do
-    capabilities[MissionType]=0
+  local objective=Target:GetObjective()
   
-    for _,_airwing in pairs(self.airwings) do
-      local airwing=_airwing --Ops.AirWing#AIRWING
-        
-      -- Get Number of assets that can do this type of missions.
-      local _,assets=airwing:CanMission(MissionType)
-      
-      -- Add up airwing resources.
-      capabilities[MissionType]=capabilities[MissionType]+#assets
-    end
+  local missionperformances={}
+  
+  for _,missionperformance in pairs(missionperformances) do
+    local mp=missionperformance --#CHIEF.MissionTypePerformance
+    
   
   end
 
-  return capabilities
+
+end
+
+--- Create a mission performance table.
+-- @param #CHIEF self
+-- @param #string MissionType Mission type.
+-- @param #number Performance Performance.
+-- @return #CHIEF.MissionPerformance Mission performance.
+function CHIEF:_CreateMissionPerformance(MissionType, Performance)
+  local mp={} --#CHIEF.MissionTypePerformance
+  mp.MissionType=MissionType
+  mp.Performance=Performance
+  return mp
+end
+
+--- Create a mission to attack a group. Mission type is automatically chosen from the group category.
+-- @param #CHIEF self
+-- @param Ops.Target#TARGET Target
+-- @return #table Mission performances of type #CHIEF.MissionPerformance
+function CHIEF:_GetMissionPerformanceFromTarget(Target)
+
+  local group=nil      --Wrapper.Group#GROUP
+  local airbase=nil    --Wrapper.Airbase#AIRBASE
+  local scenery=nil    --Wrapper.Scenery#SCENERY
+  local coordinate=nil --Core.Point#COORDINATE
+  
+  -- Get target objective.
+  local target=Target:GetObject()
+
+  if target:IsInstanceOf("GROUP") then
+    group=target --Target is already a group.  
+  elseif target:IsInstanceOf("UNIT") then
+    group=target:GetGroup()
+  elseif target:IsInstanceOf("AIRBASE") then
+    airbase=target
+  elseif target:IsInstanceOf("SCENERY") then
+    scenery=target
+  end
+ 
+  local TargetCategory=Target:GetCategory()
+    
+  local missionperf={} --#CHIEF.MissionTypePerformance
+  
+  if group then
+
+    local category=group:GetCategory()
+    local attribute=group:GetAttribute()
+
+    if category==Group.Category.AIRPLANE or category==Group.Category.HELICOPTER then
+    
+      ---
+      -- A2A: Intercept
+      ---
+    
+      table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.INTERCEPT, 100))
+    
+    elseif category==Group.Category.GROUND or category==Group.Category.TRAIN then
+    
+      ---
+      -- GROUND
+      ---
+
+      if attribute==GROUP.Attribute.GROUND_SAM then
+          
+        -- SEAD/DEAD
+          
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
+        
+      elseif attribute==GROUP.Attribute.GROUND_AAA then
+      
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
+        
+      elseif attribute==GROUP.Attribute.GROUND_ARTILLERY then
+      
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 70))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
+      
+      elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
+      
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
+          
+      else
+
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
+      
+      end
+
+    
+    elseif category==Group.Category.SHIP then
+    
+      ---
+      -- NAVAL
+      ---
+    
+      table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ANTISHIP, 100))
+  
+    else
+      self:E(self.lid.."ERROR: Unknown Group category!")
+    end
+    
+  elseif airbase then
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBRUNWAY, 100))   
+  elseif scenery then
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.STRIKE, 100))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 70))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
+  elseif coordinate then
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 100))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
+  end
+
+  return missionperf
+end
+
+--- Check if group is inside our border.
+-- @param #CHIEF self
+-- @param #string Attribute Group attibute.
+-- @return #table Mission types
+function CHIEF:_GetMissionTypeForGroupAttribute(Attribute)
+
+  local missiontypes={}
+
+  if Attribute==GROUP.Attribute.AIR_ATTACKHELO then
+  
+    local mt={} --#CHIEF.MissionTypePerformance
+    mt.MissionType=AUFTRAG.Type.INTERCEPT
+    mt.Performance=100
+    table.insert(missiontypes, mt)
+    
+  elseif Attribute==GROUP.Attribute.GROUND_AAA then
+  
+    local mt={} --#CHIEF.MissionTypePerformance
+    mt.MissionType=AUFTRAG.Type.BAI
+    mt.Performance=100        
+    table.insert(missiontypes, mt)
+
+    local mt={} --#CHIEF.MissionTypePerformance
+    mt.MissionType=AUFTRAG.Type.BOMBING
+    mt.Performance=70
+    table.insert(missiontypes, mt)
+
+    local mt={} --#CHIEF.MissionTypePerformance
+    mt.MissionType=AUFTRAG.Type.BOMBCARPET
+    mt.Performance=70
+    table.insert(missiontypes, mt)
+
+    local mt={} --#CHIEF.MissionTypePerformance
+    mt.MissionType=AUFTRAG.Type.ARTY
+    mt.Performance=30
+    table.insert(missiontypes, mt)
+
+  elseif Attribute==GROUP.Attribute.GROUND_SAM then
+  
+    local mt={} --#CHIEF.MissionTypePerformance
+    mt.MissionType=AUFTRAG.Type.SEAD
+    mt.Performance=100        
+    table.insert(missiontypes, mt)
+
+    local mt={} --#CHIEF.MissionTypePerformance
+    mt.MissionType=AUFTRAG.Type.BAI
+    mt.Performance=100        
+    table.insert(missiontypes, mt)
+
+    local mt={} --#CHIEF.MissionTypePerformance
+    mt.MissionType=AUFTRAG.Type.ARTY
+    mt.Performance=50
+    table.insert(missiontypes, mt)
+
+  elseif Attribute==GROUP.Attribute.GROUND_EWR then
+  
+    local mt={} --#CHIEF.MissionTypePerformance
+    mt.MissionType=AUFTRAG.Type.SEAD
+    mt.Performance=100        
+    table.insert(missiontypes, mt)
+
+    local mt={} --#CHIEF.MissionTypePerformance
+    mt.MissionType=AUFTRAG.Type.BAI
+    mt.Performance=100        
+    table.insert(missiontypes, mt)
+
+    local mt={} --#CHIEF.MissionTypePerformance
+    mt.MissionType=AUFTRAG.Type.ARTY
+    mt.Performance=50
+    table.insert(missiontypes, mt)
+  
+    
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

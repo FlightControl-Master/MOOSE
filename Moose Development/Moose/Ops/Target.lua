@@ -31,14 +31,13 @@
 -- @field #table elements Table of target elements/units.
 -- @field #table casualties Table of dead element names.
 -- @field #number prio Priority.
--- @field #number importance Importance
+-- @field #number importance Importance.
+-- @field #boolean isDestroyed If true, target objects were destroyed.
 -- @extends Core.Fsm#FSM
 
 --- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D. Eisenhower
 --
 -- ===
---
--- ![Banner Image](..\Presentations\OPS\Target\_Main.pngs)
 --
 -- # The TARGET Concept
 -- 
@@ -130,13 +129,13 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.5.0"
+TARGET.version="0.5.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot.
+-- TODO: Add pseudo functions.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -189,7 +188,7 @@ function TARGET:New(TargetObject)
   
   self:AddTransition("*",                  "Damaged",             "*")           -- Target was damaged.
   self:AddTransition("*",                  "Destroyed",           "Dead")        -- Target was completely destroyed.
-  self:AddTransition("*",                  "Dead",                "Dead")        -- Target was completely destroyed.
+  self:AddTransition("*",                  "Dead",                "Dead")        -- Target is dead. Could be destroyed or despawned.
 
   ------------------------
   --- Pseudo Functions ---
@@ -220,7 +219,6 @@ function TARGET:New(TargetObject)
   -- @function [parent=#TARGET] __Status
   -- @param #TARGET self
   -- @param #number delay Delay in seconds.
-
 
 
   -- Start.
@@ -300,7 +298,7 @@ end
 
 --- Set importance of the target.
 -- @param #TARGET self
--- @param #number Priority Priority of the target. Default `nil`.
+-- @param #number Importance Importance of the target. Default `nil`.
 -- @return #TARGET self
 function TARGET:SetImportance(Importance)
   self.importance=Importance
@@ -311,14 +309,24 @@ end
 -- @param #TARGET self
 -- @return #boolean If true, target is alive.
 function TARGET:IsAlive()
-  return self:Is("Alive")
+  local is=self:Is("Alive")
+  return is
 end
+
+--- Check if TARGET is destroyed.
+-- @param #TARGET self
+-- @return #boolean If true, target is destroyed.
+function TARGET:IsDestroyed()
+  return self.isDestroyed
+end
+
 
 --- Check if TARGET is dead.
 -- @param #TARGET self
 -- @return #boolean If true, target is dead.
 function TARGET:IsDead()
-  return self:Is("Dead")
+  local is=self:Is("Dead")
+  return is
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -469,6 +477,8 @@ function TARGET:onafterObjectDead(From, Event, To, Target)
   
     if self.Ndestroyed==self.Ntargets0 then
   
+      self.isDestroyed=true
+      
       self:Destroyed()
       
     else
@@ -1041,6 +1051,12 @@ function TARGET:GetCoordinate()
   return nil
 end
 
+--- Get category.
+-- @param #TARGET self
+-- @return #string Target category. See `TARGET.Category.X`, where `X=AIRCRAFT, GROUND`.
+function TARGET:GetCategory()
+  return self.category
+end
 
 --- Get target category.
 -- @param #TARGET self

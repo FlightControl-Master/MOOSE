@@ -549,7 +549,7 @@ function COMMANDER:onafterMissionCancel(From, Event, To, Mission)
 
 end
 
---- On after "MissionAssign" event. Mission is added to a LEGION mission queue.
+--- On after "TransportAssign" event. Transport is added to a LEGION mission queue.
 -- @param #COMMANDER self
 -- @param #string From From state.
 -- @param #string Event Event.

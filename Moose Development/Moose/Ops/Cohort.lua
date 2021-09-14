@@ -294,7 +294,7 @@ function COHORT:AddMissionCapability(MissionTypes, Performance)
       capability.MissionType=missiontype
       capability.Performance=Performance or 50
       table.insert(self.missiontypes, capability)
-      
+      env.info("FF adding mission capability "..tostring(capability.MissionType))
     end
   end
   
@@ -783,11 +783,11 @@ function COHORT:CountAssets(InStock, MissionTypes, Attributes)
     if MissionTypes==nil or self:CheckMissionCapability(MissionTypes, self.missiontypes) then
       if Attributes==nil or self:CheckAttribute(Attributes) then
         if asset.spawned then
-          if InStock==true or InStock==nil then
+          if InStock==false or InStock==nil then
             N=N+1 --Spawned but we also count the spawned ones.
           end      
         else
-          if InStock==false or InStock==nil then
+          if InStock==true or InStock==nil then
             N=N+1 --This is in stock.
           end
         end
