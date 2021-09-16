@@ -294,7 +294,7 @@ function COHORT:AddMissionCapability(MissionTypes, Performance)
       capability.MissionType=missiontype
       capability.Performance=Performance or 50
       table.insert(self.missiontypes, capability)
-      env.info("FF adding mission capability "..tostring(capability.MissionType))
+      self:T(self.lid..string.format("Adding mission capability %s, performance=%d", tostring(capability.MissionType), capability.Performance))
     end
   end
   
@@ -829,13 +829,13 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
   
           -- Check if the payload of this asset is compatible with the mission.
           -- Note: we do not check the payload as an asset that is on a GCICAP mission should be able to do an INTERCEPT as well!
-          self:I(self.lid.."Adding asset on GCICAP mission for an INTERCEPT mission")
+          self:I(self.lid..string.format("Adding asset on GCICAP mission for an INTERCEPT mission"))
           table.insert(assets, asset)
           
         elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and self:CheckMissionCapability(MissionType, asset.payload.capabilities) then
                   
           -- Check if the payload of this asset is compatible with the mission.
-          self:I(self.lid.."Adding asset on ALERT 5 mission for XXX mission")
+          self:I(self.lid..string.format("Adding asset on ALERT 5 mission for %s mission", MissionType))
           table.insert(assets, asset)        
           
         end

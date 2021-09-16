@@ -663,10 +663,7 @@ function CHIEF:onafterStatus(From, Event, To)
       self:AddTarget(Target)
 
     end
-    
-    -- Is this a threat?
-    local threat=contact.threatlevel>=self.threatLevelMin and contact.threatlevel<=self.threatLevelMax
-    
+        
     --[[
     local redalert=true
     if self.borderzoneset:Count()>0 then
@@ -986,9 +983,12 @@ function CHIEF:CheckTargetQueue()
   -- Loop over targets.
   for _,_target in pairs(self.targetqueue) do
     local target=_target --Ops.Target#TARGET
+    
+    -- Is this a threat?
+    local isThreat=target.threatlevel0>=self.threatLevelMin and target.threatlevel0<=self.threatLevelMax    
 
     -- Check that target is alive and not already a mission has been assigned.
-    if target:IsAlive() and (target.importance==nil or target.importance<=vip) and not target.mission then
+    if target:IsAlive() and (target.importance==nil or target.importance<=vip) and isThreat and not target.mission then
     
       -- Check if this target is "valid", i.e. fits with the current strategy.
       local valid=false
@@ -1425,7 +1425,7 @@ function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMa
   end
   
   -- Now we have a long list with assets.
-  self:_OptimizeAssetSelection(Assets, MissionType, TargetVec2, false)
+  LEGION._OptimizeAssetSelection(self, Assets, MissionType, TargetVec2, false)
     
   for _,_asset in pairs(Assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
@@ -1454,7 +1454,7 @@ function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMa
   end
   
   -- Now find the best asset for the given payloads.
-  self:_OptimizeAssetSelection(Assets, MissionType, TargetVec2, true)    
+  LEGION._OptimizeAssetSelection(self, Assets, MissionType, TargetVec2, true)
 
   -- Number of assets. At most NreqMax.
   local Nassets=math.min(#Assets, NassetsMax)
@@ -1506,41 +1506,6 @@ function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMa
 
   return nil, {}, {}
 end
-
---- Optimize chosen assets for the mission at hand.
--- @param #CHIEF self
--- @param #table assets Table of (unoptimized) assets.
--- @param #string MissionType MissionType for which the best assets are desired.
--- @param DCS#Vec2 TargetVec2 Target 2D vector.
--- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
-function CHIEF:_OptimizeAssetSelection(assets, MissionType, TargetVec2, includePayload)
-
-  -- Calculate the mission score of all assets.
-  for _,_asset in pairs(assets) do
-    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    asset.score=asset.legion:CalculateAssetMissionScore(asset, MissionType, TargetVec2, includePayload)
-  end
-
-  --- Sort assets wrt to their mission score. Higher is better.
-  local function optimize(a, b)
-    local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
-    local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
-    -- Higher score wins. If equal score ==> closer wins.
-    return (assetA.score>assetB.score)
-  end
-  table.sort(assets, optimize)
-
-  -- Remove distance parameter.
-  local text=string.format("Optimized %d assets for %s mission (payload=%s):", #assets, MissionType, tostring(includePayload))
-  for i,Asset in pairs(assets) do
-    local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
-    asset.score=nil
-  end
-  self:T2(self.lid..text)
-
-end
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

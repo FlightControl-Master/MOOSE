@@ -775,8 +775,11 @@ function COMMANDER:RecruitAssets(Mission)
     
   end
   
+  -- Target position.
+  local TargetVec2=Mission.type~=AUFTRAG.Type.ALERT5 and Mission:GetTargetVec2() or nil
+  
   -- Now we have a long list with assets.
-  self:_OptimizeAssetSelection(Assets, Mission, false)
+  LEGION._OptimizeAssetSelection(self, Assets, Mission.type, TargetVec2, false)
     
   for _,_asset in pairs(Assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
@@ -813,7 +816,7 @@ function COMMANDER:RecruitAssets(Mission)
   end
   
   -- Now find the best asset for the given payloads.
-  self:_OptimizeAssetSelection(Assets, Mission, true)    
+  LEGION._OptimizeAssetSelection(self, Assets, Mission.type, TargetVec2, true)    
   
   -- Get number of required assets.
   local Nassets=Mission:GetRequiredAssets(self)
@@ -865,43 +868,6 @@ function COMMANDER:RecruitAssets(Mission)
   end
 
   return nil, {}
-end
-
---- Optimize chosen assets for the mission at hand.
--- @param #COMMANDER self
--- @param #table assets Table of (unoptimized) assets.
--- @param Ops.Auftrag#AUFTRAG Mission Mission for which the best assets are desired.
--- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
-function COMMANDER:_OptimizeAssetSelection(assets, Mission, includePayload)
-
-  -- Target position.
-  local TargetVec2=Mission.type~=AUFTRAG.Type.ALERT5 and Mission:GetTargetVec2() or nil
-
-  -- Calculate the mission score of all assets.
-  for _,_asset in pairs(assets) do
-    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    asset.score=asset.legion:CalculateAssetMissionScore(asset, Mission, TargetVec2, includePayload)
-  end
-
-  --- Sort assets wrt to their mission score. Higher is better.
-  local function optimize(a, b)
-    local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
-    local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
-    -- Higher score wins. If equal score ==> closer wins.
-    return (assetA.score>assetB.score)
-  end
-  table.sort(assets, optimize)
-
-  -- Remove distance parameter.
-  local text=string.format("Optimized %d assets for %s mission (payload=%s):", #assets, Mission.type, tostring(includePayload))
-  for i,Asset in pairs(assets) do
-    local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
-    asset.dist=nil
-    asset.score=nil
-  end
-  self:T2(self.lid..text)
-
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1061,8 +1027,12 @@ function COMMANDER:RecruitAssetsForTransport(Transport)
     
   end
   
+  -- Target position.
+  local TargetVec2=Transport:GetDeployZone():GetVec2()
+  
   -- Now we have a long list with assets.
-  self:_OptimizeAssetSelectionForTransport(Assets, Transport)
+  LEGION._OptimizeAssetSelection(self, Assets, AUFTRAG.Type.OPSTRANSPORT, TargetVec2, false)
+  
     
   for _,_asset in pairs(Assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
@@ -1144,39 +1114,6 @@ function COMMANDER:RecruitAssetsForTransport(Transport)
   end
 
   return nil, {}
-end
-
---- Optimize chosen assets for the given transport.
--- @param #COMMANDER self
--- @param #table assets Table of (unoptimized) assets.
--- @param Ops.OpsTransport#OPSTRANSPORT Transport Transport assignment.
-function COMMANDER:_OptimizeAssetSelectionForTransport(assets, Transport)
-
-  -- Calculate the mission score of all assets.
-  for _,_asset in pairs(assets) do
-    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    asset.score=asset.legion:CalculateAssetTransportScore(asset, Transport)
-  end
-
-  --- Sort assets wrt to their mission score. Higher is better.
-  local function optimize(a, b)
-    local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
-    local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
-    -- Higher score wins. If equal score ==> closer wins.
-    return (assetA.score>assetB.score)
-  end
-  table.sort(assets, optimize)
-
-  -- Remove distance parameter.
-  local text=string.format("Optimized %d assets for %s mission (payload=%s):", #assets, Mission.type, tostring(includePayload))
-  for i,Asset in pairs(assets) do
-    local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
-    asset.dist=nil
-    asset.score=nil
-  end
-  self:T2(self.lid..text)
-
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
