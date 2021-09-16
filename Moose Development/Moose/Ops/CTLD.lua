@@ -304,7 +304,7 @@ CTLD_ENGINEERING = {
 -- @field #number ID ID of this cargo.
 -- @field #string Name Name for menu.
 -- @field #table Templates Table of #POSITIONABLE objects.
--- @field #CTLD_CARGO.Enum Type Enumerator of Type.
+-- @field #CTLD_CARGO.Enum CargoType Enumerator of Type.
 -- @field #boolean HasBeenMoved Flag for moving.
 -- @field #boolean LoadDirectly Flag for direct loading.
 -- @field #number CratesNeeded Crates needed to build.
@@ -803,7 +803,11 @@ do
 -- ## 4.6 Show hover parameters
 -- 
 -- Lists hover parameters and indicates if these are curently fulfilled. Also @see options on hover heights.
---  
+-- 
+-- ## 4.7 List Inventory
+-- 
+-- Lists invetory of available units to drop or build.
+-- 
 -- ## 5. Support for Hercules mod by Anubis
 -- 
 -- Basic support for the Hercules mod By Anubis has been build into CTLD. Currently this does **not** cover objects and troops which can
@@ -825,6 +829,26 @@ do
 -- Standard transport capabilities as per the real Hercules are:
 -- 
 --               ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64}, -- 19t cargo, 64 paratroopers
+--  
+-- ## 6. Save and load back units - persistance
+-- 
+-- You can save and later load back units dropped or build to make your mission persistent.
+-- For this to work, you need to de-sanitize **io** and **lfs** in your MissionScripting.lua, which is located in your DCS installtion folder under Scripts.
+-- There is a risk involved in doing that; if you do not know what that means, this is possibly not for you.
+-- 
+-- Use the following options to manage your saves:
+-- 
+--              my_ctld.enableLoadSave = true -- allow auto-saving and loading of files
+--              my_ctld.saveinterval = 600 -- save every 10 minutes
+--              my_ctld.filename = "missionsave.csv" -- example filename
+--              my_ctld.filepath = "C:\\Users\\myname\\Saved Games\\DCS\Missions\\MyMission" -- example path
+--  
+--  Then use an initial load at the beginning of your mission:
+--  
+--            my_ctld:__Load(10)
+--            
+-- **Caveat:**
+-- If you use units build by multiple templates, they will effectively double on loading. Dropped crates are not saved. Current stock is not saved.
 --  
 -- @field #CTLD
 CTLD = {
@@ -869,6 +893,7 @@ CTLD = {
 -- TODO: Add statics as cargo
 -- DONE: List cargo in stock
 -- DONE: Limit of troops, crates buildable?
+-- DONE: Allow saving of Troops & Vehicles
 ------------------------------
 
 --- Radio Beacons
@@ -932,7 +957,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.1.8a2"
+CTLD.version="0.2.1a1"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -996,7 +1021,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self:AddTransition("*",             "TroopsRTB",           "*")           -- CTLD deploy  event.   
   self:AddTransition("*",             "CratesDropped",       "*")           -- CTLD deploy  event.  
   self:AddTransition("*",             "CratesBuild",         "*")           -- CTLD build  event.
-  self:AddTransition("*",             "CratesRepaired",      "*")           -- CTLD repair  event.    
+  self:AddTransition("*",             "CratesRepaired",      "*")           -- CTLD repair  event.
+  self:AddTransition("*",             "Load",                "*")           -- CTLD load  event.  
+  self:AddTransition("*",             "Save",                "*")           -- CTLD save  event.      
   self:AddTransition("*",             "Stop",                "Stopped")     -- Stop FSM.
   
   -- tables
@@ -1076,6 +1103,13 @@ function CTLD:New(Coalition, Prefixes, Alias)
   if self.coalition == coalition.side.RED then
      self.cratecountry = country.id.RUSSIA
   end
+  
+  -- load and save dropped TROOPS
+  self.enableLoadSave = false
+  self.filepath = nil
+  self.saveinterval = 600
+  local AliaS = string.gsub(self.alias," ","_")
+  self.filename = string.format("CTLD_%s_Persist.csv",AliaS)
   
   for i=1,100 do
     math.random()
@@ -1200,6 +1234,24 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  
+  --- FSM Function OnAfterLoad.
+  -- @function [parent=#CTLD] OnAfterLoad
+  -- @param #CTLD self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  -- @param #string filename (Optional) File name for loading. Default is "CTLD_<alias>_Persist.csv".
+  
+  --- FSM Function OnAfterSave.
+  -- @function [parent=#CTLD] OnAfterSave
+  -- @param #CTLD self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  -- @param #string filename (Optional) File name for saving. Default is "CTLD_<alias>_Persist.csv".
   
   return self
 end
@@ -3483,7 +3535,6 @@ end
     return self
   end
   
-  -- DONE: Make inject respect existing cargo types
   --- (User) Pre-populate troops in the field.
   -- @param #CTLD self
   -- @param Core.Zone#ZONE Zone The zone where to drop the troops.
@@ -3491,7 +3542,7 @@ end
   -- @return #CTLD self
   -- @usage Use this function to pre-populate the field with Troops or Engineers at a random coordinate in a zone:
   --            -- create a matching #CTLD_CARGO type
-  --            local InjectTroopsType = CTLD_CARGO:New(nil,"Injected Infantry",{"Inf12"},CTLD_CARGO.Enum.TROOPS,true,true,12,nil,false,80)
+  --            local InjectTroopsType = CTLD_CARGO:New(nil,"Infantry",{"Inf12"},CTLD_CARGO.Enum.TROOPS,true,true,12,nil,false,80)
   --            -- get a #ZONE object
   --            local dropzone = ZONE:New("InjectZone") -- Core.Zone#ZONE
   --            -- and go:
@@ -3517,16 +3568,18 @@ end
     if not IsTroopsMatch(cargo) then
       self.CargoCounter = self.CargoCounter + 1
       cargo.ID = self.CargoCounter
+      cargo.Stock = 1
       table.insert(self.Cargo_Troops,cargo)
     end
     
     local type = cargo:GetType() -- #CTLD_CARGO.Enum
-    if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS) and not cargo:WasDropped() then
-      -- unload troops
+    if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS) then
+      -- unload 
       local name = cargo:GetName() or "none"
       local temptable = cargo:GetTemplates() or {}
       local factor = 1.5
       local zone = Zone
+     
       local randomcoord = zone:GetRandomCoordinate(10,30*factor):GetVec2()
       for _,_template in pairs(temptable) do
         self.TroopCounter = self.TroopCounter + 1
@@ -3545,10 +3598,79 @@ end
         self.Engineers = self.Engineers + 1
         local grpname = self.DroppedTroops[self.TroopCounter]:GetName()
         self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname)
-        self:I(string.format("%s Injected Engineers %s into action!",self.lid, name))
+        --self:I(string.format("%s Injected Engineers %s into action!",self.lid, name))
       else
-        self:I(string.format("%s Injected Troops %s into action!",self.lid, name))
+        --self:I(string.format("%s Injected Troops %s into action!",self.lid, name))
       end
+    end -- if type end
+    return self
+  end
+  
+    --- (User) Pre-populate vehicles in the field.
+  -- @param #CTLD self
+  -- @param Core.Zone#ZONE Zone The zone where to drop the troops.
+  -- @param Ops.CTLD#CTLD_CARGO Cargo The #CTLD_CARGO object to spawn.
+  -- @return #CTLD self
+  -- @usage Use this function to pre-populate the field with Vehicles or FOB at a random coordinate in a zone:
+  --            -- create a matching #CTLD_CARGO type
+  --            local InjectVehicleType = CTLD_CARGO:New(nil,"Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,true,true,1,nil,false,1000)
+  --            -- get a #ZONE object
+  --            local dropzone = ZONE:New("InjectZone") -- Core.Zone#ZONE
+  --            -- and go:
+  --            my_ctld:InjectVehicles(dropzone,InjectVehicleType)
+  function CTLD:InjectVehicles(Zone,Cargo)
+    self:T(self.lid.." InjectVehicles")
+    local cargo = Cargo -- #CTLD_CARGO
+    
+    local function IsVehicMatch(cargo)
+      local match = false
+      local cgotbl = self.Cargo_Crates
+      local name = cargo:GetName()
+      for _,_cgo in pairs (cgotbl) do
+        local cname = _cgo:GetName()
+        if name == cname then
+          match = true
+          break
+        end
+      end
+      return match
+    end
+    
+    if not IsVehicMatch(cargo) then
+      self.CargoCounter = self.CargoCounter + 1
+      cargo.ID = self.CargoCounter
+      cargo.Stock = 1
+      table.insert(self.Cargo_Crates,cargo)
+    end
+    
+    local type = cargo:GetType() -- #CTLD_CARGO.Enum
+    if (type == CTLD_CARGO.Enum.VEHICLE or type == CTLD_CARGO.Enum.FOB) then
+      -- unload 
+      local name = cargo:GetName() or "none"
+      local temptable = cargo:GetTemplates() or {}
+      local factor = 1.5
+      local zone = Zone
+      local randomcoord = zone:GetRandomCoordinate(10,30*factor):GetVec2()
+      cargo:SetWasDropped(true)
+      local canmove = false
+      if type == CTLD_CARGO.Enum.VEHICLE then canmove = true end
+      for _,_template in pairs(temptable) do
+        self.TroopCounter = self.TroopCounter + 1
+        local alias = string.format("%s-%d", _template, math.random(1,100000))
+        if canmove then
+          self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
+            :InitRandomizeUnits(true,20,2)
+            :InitDelayOff()
+            :SpawnFromVec2(randomcoord)
+        else -- don't random position of e.g. SAM units build as FOB
+          self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
+            :InitDelayOff()
+            :SpawnFromVec2(randomcoord)
+        end
+        if self.movetroopstowpzone and canmove then
+          self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
+        end
+      end -- end loop
     end -- if type end
     return self
   end
@@ -3581,6 +3703,14 @@ end
     self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
     self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)   
     self:__Status(-5)
+    
+    -- AutoSave
+    if self.enableLoadSave then
+      local interval = self.saveinterval
+      local filename = self.filename
+      local filepath = self.filepath
+      self:__Save(interval,filepath,filename)
+    end
     return self
   end
 
@@ -3757,6 +3887,287 @@ end
     return self
   end
   
+  --- On before "Save" event. Checks if io and lfs are available.
+  -- @param #CTLD self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  -- @param #string filename (Optional) File name for saving. Default is "CTLD_<alias>_Persist.csv".
+  function CTLD:onbeforeSave(From, Event, To, path, filename)
+    self:T({From, Event, To, path, filename})
+    if not self.enableLoadSave then
+      return self
+    end
+    -- Thanks to @FunkyFranky 
+    -- Check io module is available.
+    if not io then
+      self:E(self.lid.."ERROR: io not desanitized. Can't save current state.")
+      return false
+    end
+  
+    -- Check default path.
+    if path==nil and not lfs then
+      self:E(self.lid.."WARNING: lfs not desanitized. State will be saved in DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
+    end
+  
+    return true
+  end
+  
+  --- On after "Save" event. Player data is saved to file.
+  -- @param #CTLD self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory or your "Saved Games" folder if lfs was desanitized.
+  -- @param #string filename (Optional) File name for saving. Default is Default is "CTLD_<alias>_Persist.csv".
+  function CTLD:onafterSave(From, Event, To, path, filename)
+    self:T({From, Event, To, path, filename})
+    -- Thanks to @FunkyFranky 
+    if not self.enableLoadSave then
+      return self
+    end
+    --- Function that saves data to file
+    local function _savefile(filename, data)
+      local f = assert(io.open(filename, "wb"))
+      f:write(data)
+      f:close()
+    end
+  
+    -- Set path or default.
+    if lfs then
+      path=self.filepath or lfs.writedir()
+    end
+    
+    -- Set file name.
+    filename=filename or self.filename
+  
+    -- Set path.
+    if path~=nil then
+      filename=path.."\\"..filename
+    end
+    
+    local grouptable = self.DroppedTroops -- #table
+    local cgovehic = self.Cargo_Crates
+    local cgotable = self.Cargo_Troops
+    
+    -- find matching cargo
+    local function FindCargoType(name,table)
+      -- name matching a template in the table
+      local match = false
+      local cargo = nil
+      for _ind,_cargo in pairs (table) do
+        local thiscargo = _cargo -- #CTLD_CARGO
+        local template = thiscargo:GetTemplates()
+        if type(template) == "string" then
+          template = { template }
+        end
+        for _,_name in pairs (template) do
+          --self:I(string.format("*** Saving CTLD: Matching %s with %s",name,_name))
+          if string.find(name,_name) then
+            match = true
+            cargo = thiscargo
+          end
+        end
+        if match then break end
+      end
+      return match, cargo
+    end
+    
+      
+    --local data = "LoadedData = {\n"
+    local data = "Group,x,y,z,CargoName,CargoTemplates,CargoType,CratesNeeded,CrateMass\n"
+    local n = 0
+    for _,_grp in pairs(grouptable) do
+      local group = _grp -- Wrapper.Group#GROUP
+      if group and group:IsAlive() then
+        -- get template name
+        local name = group:GetName()
+        local template = string.gsub(name,"-(.+)$","")
+        if string.find(template,"#") then
+          template = string.gsub(name,"#(%d+)$","")
+        end
+        
+        local match, cargo = FindCargoType(template,cgotable)
+        if not match then
+          match, cargo = FindCargoType(template,cgovehic)
+        end
+        if match then
+          n = n + 1
+          local cargo = cargo -- #CTLD_CARGO
+          local cgoname = cargo.Name
+          local cgotemp = cargo.Templates
+          local cgotype = cargo.CargoType
+          local cgoneed = cargo.CratesNeeded
+          local cgomass = cargo.PerCrateMass
+          
+          local templates = "{"
+          for _,_tmpl in pairs(cgotemp) do
+            templates = templates .. _tmpl .. ";"
+          end
+          templates = templates .. "}"
+          --self:I({cgoname,templates,cgotype,cgoneed,cgomass})
+          --CTLD01238.function({[1]=Infantry Squad,[2]={'Inf12',},[4]=12,[5]=80,})
+          local location = group:GetVec3()
+          local txt = string.format("%s,%d,%d,%d,%s,%s,%s,%d,%d\n"
+              ,template,location.x,location.y,location.z,cgoname,templates,cgotype,cgoneed,cgomass)
+          --BASE:I(txt)
+          data = data .. txt
+        end
+      end
+    end
+    --data = data .. "\n"
+    
+    _savefile(filename, data)
+     
+    -- AutoSave
+    if self.enableLoadSave then
+      local interval = self.saveinterval
+      local filename = self.filename
+      local filepath = self.filepath
+      self:__Save(interval,filepath,filename)
+    end
+    return self
+  end
+
+  --- On before "Load" event. Checks if io and lfs and the file are available.
+  -- @param #CTLD self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  -- @param #string filename (Optional) File name for loading. Default is "CTLD_<alias>_Persist.csv".
+  function CTLD:onbeforeLoad(From, Event, To, path, filename)
+    self:T({From, Event, To, path, filename})
+    if not self.enableLoadSave then
+      return self
+    end
+    --- Function that check if a file exists.
+    local function _fileexists(name)
+       local f=io.open(name,"r")
+       if f~=nil then
+        io.close(f)
+        return true
+      else
+        return false
+      end
+    end
+  
+    -- Check io module is available.
+    if not io then
+      self:E(self.lid.."WARNING: io not desanitized. Cannot load file.")
+      return false
+    end
+  
+    -- Check default path.
+    if path==nil and not lfs then
+      self:E(self.lid.."WARNING: lfs not desanitized. State will be saved in DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
+    end
+  
+    -- Set path or default.
+    if lfs then
+      path=path or lfs.writedir()
+    end
+  
+    -- Set file name.
+    filename=filename or self.filename
+  
+    -- Set path.
+    if path~=nil then
+      filename=path.."\\"..filename
+    end
+  
+    -- Check if file exists.
+    local exists=_fileexists(filename)
+  
+    if exists then
+      return true
+    else
+      self:E(self.lid..string.format("WARNING: State file %s does not exist.", filename))
+      return false
+    end
+  
+  end
+
+  --- On after "Load" event. Loads dropped units from file.
+  -- @param #CTLD self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+  -- @param #string filename (Optional) File name for loading. Default is "CTLD_<alias>_Persist.csv".
+  function CTLD:onafterLoad(From, Event, To, path, filename)
+    self:T({From, Event, To, path, filename})
+    if not self.enableLoadSave then
+      return self
+    end
+    --- Function that loads data from a file.
+    local function _loadfile(filename)
+      local f=assert(io.open(filename, "rb"))
+      local data=f:read("*all")
+      f:close()
+      return data
+    end
+  
+    -- Set path or default.
+    if lfs then
+      path=path or lfs.writedir()
+    end
+  
+    -- Set file name.
+    filename=filename or self.filename
+  
+    -- Set path.
+    if path~=nil then
+      filename=path.."\\"..filename
+    end
+  
+    -- Info message.
+    local text=string.format("Loading CTLD state from file %s", filename)
+    MESSAGE:New(text,10):ToAllIf(self.Debug)
+    self:I(self.lid..text)
+    
+    local file=assert(io.open(filename, "rb"))
+    
+    local loadeddata = {}
+    for line in file:lines() do
+      --self:I({line=type(line)})
+        loadeddata[#loadeddata+1] = line
+    end
+    file:close()
+    
+    -- remove header
+    table.remove(loadeddata, 1)
+    
+    for _id,_entry in pairs (loadeddata) do
+      local dataset = UTILS.Split(_entry,",")     
+      -- 1=Group,2=x,3=y,4=z,5=CargoName,6=CargoTemplates,7=CargoType,8=CratesNeeded,9=CrateMass
+      local groupname = dataset[1]
+      local vec2 = {}
+      vec2.x = dataset[2]
+      vec2.y = dataset[4]
+      local cargoname = dataset[5]
+      local cargotemplates = dataset[6]
+      cargotemplates = string.gsub(cargotemplates,"{","")
+      cargotemplates = string.gsub(cargotemplates,"}","")
+      cargotemplates = UTILS.Split(cargotemplates,";")
+      local cargotype = dataset[7]
+      local size = dataset[8]
+      local mass = dataset[9]
+      --self:I({groupname,vec3,cargoname,cargotemplates,cargotype,size,mass})
+      -- inject at Vec2
+      local dropzone = ZONE_RADIUS:New("DropZone",vec2,100)
+      if cargotype == CTLD_CARGO.Enum.VEHICLE or cargotype == CTLD_CARGO.Enum.FOB then
+        local injectvehicle = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,false,mass)      
+        self:InjectVehicles(dropzone,injectvehicle)
+      elseif cargotype == CTLD_CARGO.Enum.TROOPS or cargotype == CTLD_CARGO.Enum.ENGINEERS then
+        local injecttroops = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,false,mass)      
+        self:InjectTroops(dropzone,injecttroops)
+      end     
+    end
+    
+    return self
+  end
 end -- end do
 -------------------------------------------------------------------
 -- End Ops.CTLD.lua
