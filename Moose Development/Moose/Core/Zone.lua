@@ -183,12 +183,12 @@ function ZONE_BASE:IsCoordinateInZone( Coordinate )
   return InZone
 end
 
---- Returns if a PointVec2 is within the zone.
+--- Returns if a PointVec2 is within the zone. (Name is misleading, actually takes a #COORDINATE)
 -- @param #ZONE_BASE self
--- @param Core.Point#POINT_VEC2 PointVec2 The PointVec2 to test.
+-- @param Core.Point#COORDINATE PointVec2 The coordinate to test.
 -- @return #boolean true if the PointVec2 is within the zone.
-function ZONE_BASE:IsPointVec2InZone( PointVec2 )
-  local InZone = self:IsVec2InZone( PointVec2:GetVec2() )
+function ZONE_BASE:IsPointVec2InZone( Coordinate )
+  local InZone = self:IsVec2InZone( Coordinate:GetVec2() )
   return InZone
 end
 
