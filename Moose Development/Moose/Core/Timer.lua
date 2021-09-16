@@ -34,8 +34,6 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\Timer\TIMER_Main.jpg)
---
 -- # The TIMER Concept
 -- 
 -- The TIMER class is the little sister of the @{Core.Scheduler#SCHEDULER} class. It does the same thing but is a bit easier to use and has less overhead. It should be sufficient in many cases.
@@ -107,9 +105,6 @@ TIMER = {
 --- Timer ID.
 _TIMERID=0
 
---- Timer data base.
---_TIMERDB={}
-
 --- TIMER class version.
 -- @field #string version
 TIMER.version="0.1.1"
@@ -118,7 +113,7 @@ TIMER.version="0.1.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot.
+-- TODO: Pause/unpause.
 -- TODO: Write docs.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -155,9 +150,6 @@ function TIMER:New(Function, ...)
   
   -- Log id.
   self.lid=string.format("TIMER UID=%d | ", self.uid)
-  
-  -- Add to DB.
-  --_TIMERDB[self.uid]=self
   
   return self
 end
@@ -219,10 +211,7 @@ function TIMER:Stop(Delay)
       
       -- Not running any more.
       self.isrunning=false
-      
-      -- Remove DB entry.
-      --_TIMERDB[self.uid]=nil
-      
+
     end
     
   end

@@ -17,6 +17,7 @@
 -- @type TARGET
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity level.
+-- @field #number uid Unique ID of the target.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table targets Table of target objects.
 -- @field #number targetcounter Running number to generate target object IDs.
@@ -152,6 +153,9 @@ function TARGET:New(TargetObject)
 
   -- Increase counter.
   _TARGETID=_TARGETID+1
+  
+  -- Set UID.
+  self.uid=_TARGETID
  
   -- Add object.
   self:AddObject(TargetObject)
@@ -163,6 +167,10 @@ function TARGET:New(TargetObject)
     self:E("ERROR: No valid TARGET!")
     return nil
   end
+  
+  -- Defaults.
+  self:SetPriority()
+  self:SetImportance()
     
   -- Target Name.
   self.name=self:GetTargetName(Target)
@@ -862,10 +870,25 @@ function TARGET:GetLife()
   return N
 end
 
+--- Get target 2D position vector.
+-- @param #TARGET self
+-- @param #TARGET.Object Target Target object.
+-- @return DCS#Vec2 Vector with x,y components.
+function TARGET:GetTargetVec2(Target)
+
+  local vec3=self:GetTargetVec3(Target)
+  
+  if vec3 then
+    return {x=vec3.x, y=vec3.z}
+  end
+  
+  return nil
+end
+
 --- Get target 3D position vector.
 -- @param #TARGET self
 -- @param #TARGET.Object Target Target object.
--- @return DCS#Vec3 Vector with x,y,z components
+-- @return DCS#Vec3 Vector with x,y,z components.
 function TARGET:GetTargetVec3(Target)
 
   if Target.Type==TARGET.ObjectType.GROUP then
@@ -1029,6 +1052,46 @@ end
 -- @return #string Name of the target usually the first object.
 function TARGET:GetName()
   return self.name
+end
+
+--- Get 2D vector.
+-- @param #TARGET self
+-- @return DCS#Vec2 2D vector of the target.
+function TARGET:GetVec2()
+
+  for _,_target in pairs(self.targets) do
+    local Target=_target --#TARGET.Object
+    
+    local coordinate=self:GetTargetVec2(Target)
+    
+    if coordinate then
+      return coordinate
+    end
+
+  end
+
+  self:E(self.lid..string.format("ERROR: Cannot get Vec2 of target %s", self.name))
+  return nil
+end
+
+--- Get 3D vector.
+-- @param #TARGET self
+-- @return DCS#Vec3 3D vector of the target.
+function TARGET:GetVec3()
+
+  for _,_target in pairs(self.targets) do
+    local Target=_target --#TARGET.Object
+    
+    local coordinate=self:GetTargetVec3(Target)
+    
+    if coordinate then
+      return coordinate
+    end
+
+  end
+
+  self:E(self.lid..string.format("ERROR: Cannot get Vec3 of target %s", self.name))
+  return nil
 end
 
 --- Get coordinate.

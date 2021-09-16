@@ -2550,10 +2550,11 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
   -- Waypoints from current position to holding point.
   local wp={}
-  wp[#wp+1]=c0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
-  wp[#wp+1]=c1:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Climb")
-  wp[#wp+1]=c2:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Descent")
-  wp[#wp+1]=p0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskHold, TaskKlar}, "Holding Point")
+  -- NOTE: Currently, this first waypoint confuses the AI. It makes them go in circles. Looks like they cannot find the waypoint and are flying around it.
+  --wp[#wp+1]=c0:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
+  wp[#wp+1]=c1:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Climb")
+  wp[#wp+1]=c2:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Descent")
+  wp[#wp+1]=p0:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskHold, TaskKlar}, "Holding Point")
 
   -- Approach point: 10 NN in direction of runway.
   if airbase:IsAirdrome() then
@@ -2563,7 +2564,7 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
     ---
 
     local papp=airbase:GetCoordinate():Translate(x1, runway.heading-180):SetAltitude(h1)
-    wp[#wp+1]=papp:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")
+    wp[#wp+1]=papp:WaypointAirTurningPoint("BARO", UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")
 
     -- Okay, it looks like it's best to specify the coordinates not at the airbase but a bit away. This causes a more direct landing approach.
     local pland=airbase:GetCoordinate():Translate(x2, runway.heading-180):SetAltitude(h2)

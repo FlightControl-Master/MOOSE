@@ -196,12 +196,12 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   if Alias then
     self.alias=tostring(Alias)
   else
-    self.alias="SPECTRE"  
+    self.alias="INTEL SPECTRE"  
     if self.coalition then
       if self.coalition==coalition.side.RED then
-        self.alias="KGB"
+        self.alias="INTEL KGB"
       elseif self.coalition==coalition.side.BLUE then
-        self.alias="CIA"
+        self.alias="INTEL CIA"
       end
     end
   end 
@@ -214,7 +214,7 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   self.DetectDLINK = true
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("INTEL %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
+  self.lid=string.format("%s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
 
   -- Start State.
   self:SetStartState("Stopped")

@@ -416,10 +416,32 @@ function COMMANDER:onafterStatus(From, Event, To)
           
           for _,_asset in pairs(cohort.assets) do
             local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-            
+
+            local state="In Stock"
+            if asset.flightgroup then
+              state=asset.flightgroup:GetState()
+              local mission=legion:GetAssetCurrentMission(asset)
+              if mission then
+                state=state..string.format("Mission %s [%s]", mission:GetName(), mission:GetType())
+              end
+            else
+              if asset.spawned then
+                env.info("FF ERROR: asset has opsgroup but is NOT spawned!")
+              end
+              if asset.requested and asset.isReserved then
+                env.info("FF ERROR: asset is requested and reserved. Should not be both!")
+                state="Reserved+Requested!"
+              elseif asset.isReserved then
+                state="Reserved"
+              elseif asset.requested then
+                state="Requested"
+              end
+            end
+                        
             -- Text.
-            text=text..string.format("\n- %s [UID=%d] Legion=%s, Cohort=%s: Spawned=%s, Requested=%s [RID=%s], Reserved=%s", 
-            asset.spawngroupname, asset.uid, legion.alias, cohort.name, tostring(asset.spawned), tostring(asset.requested), tostring(asset.rid), tostring(asset.isReserved))
+            text=text..string.format("\n[UID=%03d] %s Legion=%s [%s]: State=%s [RID=%s]", 
+            asset.uid, asset.spawngroupname, legion.alias, cohort.name, state, tostring(asset.rid))
+            
             
             if asset.spawned then
               Nspawned=Nspawned+1
@@ -852,10 +874,13 @@ end
 -- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
 function COMMANDER:_OptimizeAssetSelection(assets, Mission, includePayload)
 
+  -- Target position.
+  local TargetVec2=Mission.type~=AUFTRAG.Type.ALERT5 and Mission:GetTargetVec2() or nil
+
   -- Calculate the mission score of all assets.
   for _,_asset in pairs(assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    asset.score=asset.legion:CalculateAssetMissionScore(asset, Mission, includePayload)
+    asset.score=asset.legion:CalculateAssetMissionScore(asset, Mission, TargetVec2, includePayload)
   end
 
   --- Sort assets wrt to their mission score. Higher is better.

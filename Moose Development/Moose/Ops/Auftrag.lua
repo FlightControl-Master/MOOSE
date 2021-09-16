@@ -2169,7 +2169,6 @@ function AUFTRAG:_AssignCohort(Cohort)
   self:T3(self.lid..string.format("Assigning cohort %s", tostring(Cohort.name)))
   table.insert(self.squadrons, Cohort)
   
-
   return self
 end
 

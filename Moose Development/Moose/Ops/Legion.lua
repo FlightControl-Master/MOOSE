@@ -1775,9 +1775,10 @@ end
 -- @param #LEGION self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem asset Asset
 -- @param Ops.Auftrag#AUFTRAG Mission Mission for which the best assets are desired.
+-- @param DCS#Vec2 TargetVec2 Target 2D vector.
 -- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
 -- @return #number Mission score.
-function LEGION:CalculateAssetMissionScore(asset, Mission, includePayload)
+function LEGION:CalculateAssetMissionScore(asset, Mission, TargetVec2, includePayload)
   
   -- Mission score.
   local score=0
@@ -1800,10 +1801,7 @@ function LEGION:CalculateAssetMissionScore(asset, Mission, includePayload)
   if includePayload and asset.payload then
     score=score+self:GetPayloadPeformance(asset.payload, Mission.type)
   end
-  
-  -- Target position.
-  local TargetVec2=Mission.type~=AUFTRAG.Type.ALERT5 and Mission:GetTargetVec2() or nil --Mission:GetTargetVec2()
-  
+    
   -- Origin: We take the flightgroups position or the one of the legion.
   local OrigVec2=asset.flightgroup and asset.flightgroup:GetVec2() or self:GetVec2()
   
@@ -1843,10 +1841,13 @@ end
 -- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
 function LEGION:_OptimizeAssetSelection(assets, Mission, includePayload)
 
+  -- Target position.
+  local TargetVec2=Mission.type~=AUFTRAG.Type.ALERT5 and Mission:GetTargetVec2() or nil
+
   -- Calculate the mission score of all assets.
   for _,_asset in pairs(assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    asset.score=self:CalculateAssetMissionScore(asset, Mission, includePayload)
+    asset.score=self:CalculateAssetMissionScore(asset, Mission, TargetVec2, includePayload)
   end
 
   --- Sort assets wrt to their mission score. Higher is better.

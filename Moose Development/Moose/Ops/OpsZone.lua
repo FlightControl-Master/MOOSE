@@ -30,6 +30,7 @@
 -- @field #number Tattacked Abs. mission time stamp when an attack was started.
 -- @field #number dTCapture Time interval in seconds until a zone is captured.
 -- @field #boolean neutralCanCapture Neutral units can capture. Default `false`.
+-- @field #drawZone If `true`, draw the zone on the F10 map.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!

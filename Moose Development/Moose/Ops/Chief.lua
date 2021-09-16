@@ -22,6 +22,7 @@
 -- @field Core.Set#SET_ZONE yellowzoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
 -- @field Core.Set#SET_ZONE engagezoneset Set of zones where enemies are actively engaged.
 -- @field #string Defcon Defence condition.
+-- @field #string strategy Strategy of the CHIEF.
 -- @field Ops.Commander#COMMANDER commander Commander of assigned legions.
 -- @extends Ops.Intelligence#INTEL
 
@@ -70,17 +71,10 @@ CHIEF.Strategy = {
   TOTALWAR="Total War"
 }
 
---- Strategy.
--- @type CHIEF.MissionTypePerformance
+--- Mission performance.
+-- @type CHIEF.MissionPerformance
 -- @field #string MissionType Mission Type.
 -- @field #number Performance Performance: a number between 0 and 100, where 100 is best performance.
-
-
---- Strategy.
--- @type CHIEF.MissionTypeMapping
--- @field #string Attribute Generalized attibute
--- @field #table MissionTypes 
-
 
 --- CHIEF class version.
 -- @field #string version
@@ -93,8 +87,8 @@ CHIEF.version="0.0.1"
 -- TODO: Create a good mission, which can be passed on to the COMMANDER.
 -- TODO: Capture OPSZONEs.
 -- TODO: Get list of own assets and capabilities.
--- TODO: Get list/overview of enemy assets etc.
--- TODO: Put all contacts into target list. Then make missions from them.
+-- DONE: Get list/overview of enemy assets etc.
+-- DONE: Put all contacts into target list. Then make missions from them.
 -- TODO: Set of interesting zones.
 -- TODO: Define A2A and A2G parameters.
 -- DONE: Add/remove spawned flightgroups to detection set.
@@ -119,17 +113,17 @@ function CHIEF:New(AgentSet, Coalition, Alias)
   -- Inherit everything from INTEL class.
   local self=BASE:Inherit(self, INTEL:New(AgentSet, Coalition, Alias)) --#CHIEF
 
-  -- Define zones.
+  -- Defaults.
   self:SetBorderZones()
   self:SetYellowZones()
-  
   self:SetThreatLevelRange()
   
-  -- Create a new COMMANDER.
-  self.commander=COMMANDER:New()
-  
-  -- Init DEFCON.
+  -- Init stuff.
   self.Defcon=CHIEF.DEFCON.GREEN
+  self.strategy=CHIEF.Strategy.DEFENSIVE
+  
+  -- Create a new COMMANDER.
+  self.commander=COMMANDER:New()  
 
   -- Add FSM transitions.
   --                 From State   -->    Event                     -->    To State
@@ -142,11 +136,11 @@ function CHIEF:New(AgentSet, Coalition, Alias)
   self:AddTransition("*",                "MissionCancel",                 "*")   -- Cancel mission.
   self:AddTransition("*",                "TransportCancel",               "*")   -- Cancel transport.
   
-  self:AddTransition("*",                "Defcon",                        "*")   -- Change defence condition.
+  self:AddTransition("*",                "DefconChange",                  "*")   -- Change defence condition.
   
-  self:AddTransition("*",                "Stategy",                       "*")   -- Change strategy condition.
+  self:AddTransition("*",                "StategyChange",                 "*")   -- Change strategy condition.
   
-  self:AddTransition("*",                "DeclareWar",                    "*")   -- Declare War.
+  self:AddTransition("*",                "DeclareWar",                    "*")   -- Declare War. Not implemented.
 
   ------------------------
   --- Pseudo Functions ---
@@ -179,6 +173,46 @@ function CHIEF:New(AgentSet, Coalition, Alias)
   -- @function [parent=#CHIEF] __Status
   -- @param #CHIEF self
   -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "DefconChange".
+  -- @function [parent=#CHIEF] DefconChange
+  -- @param #CHIEF self
+  -- @param #string Defcon New Defence Condition.
+
+  --- Triggers the FSM event "DefconChange" after a delay.
+  -- @function [parent=#CHIEF] __DefconChange
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
+  -- @param #string Defcon New Defence Condition.
+
+  --- On after "DefconChange" event.
+  -- @function [parent=#CHIEF] OnAfterDefconChange
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string Defcon New Defence Condition.
+
+
+  --- Triggers the FSM event "StrategyChange".
+  -- @function [parent=#CHIEF] StrategyChange
+  -- @param #CHIEF self
+  -- @param #string Strategy New strategy.
+
+  --- Triggers the FSM event "StrategyChange" after a delay.
+  -- @function [parent=#CHIEF] __StrategyChange
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
+  -- @param #string Strategy New strategy.
+
+  --- On after "StrategyChange" event.
+  -- @function [parent=#CHIEF] OnAfterStrategyChange
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string Strategy New stragegy.
 
 
   --- Triggers the FSM event "MissionAssignToAny".
@@ -317,10 +351,58 @@ end
 -- @return #CHIEF self
 function CHIEF:SetDefcon(Defcon)
 
+  -- Check if valid string was passed.
+  local gotit=false
+  for _,defcon in pairs(CHIEF.DEFCON) do
+    if defcon==Defcon then
+      gotit=true
+    end
+  end  
+  if not gotit then
+    self:E(self.lid..string.format("ERROR: Unknown DEFCON specified! Dont know defcon=%s", tostring(Defcon)))
+    return self
+  end
+  
+  -- Trigger event if defcon changed.
+  if Defcon~=self.Defcon then
+    self:DefconChange(Defcon)
+  end
+
+  -- Set new DEFCON.
   self.Defcon=Defcon
-  --self:Defcon(Defcon)
   
   return self
+end
+
+--- Get defence condition.
+-- @param #CHIEF self
+-- @param #string Current Defence condition. See @{#CHIEF.DEFCON}, e.g. `CHIEF.DEFCON.RED`.
+function CHIEF:GetDefcon(Defcon)  
+  return self.Defcon
+end
+
+--- Set stragegy.
+-- @param #CHIEF self
+-- @param #string Strategy Strategy. See @{#CHIEF.Stragegy}, e.g. `CHIEF.Strategy.DEFENSIVE` (default).
+-- @return #CHIEF self
+function CHIEF:SetStragety(Strategy)
+
+  -- Trigger event if Strategy changed.
+  if Strategy~=self.strategy then
+    self:StrategyChange(Strategy)
+  end
+
+  -- Set new Strategy.
+  self.strategy=Strategy
+  
+  return self
+end
+
+--- Get defence condition.
+-- @param #CHIEF self
+-- @param #string Current Defence condition. See @{#CHIEF.DEFCON}, e.g. `CHIEF.DEFCON.RED`.
+function CHIEF:GetDefcon(Defcon)  
+  return self.Defcon
 end
 
 
@@ -389,10 +471,27 @@ end
 -- @return #CHIEF self
 function CHIEF:AddTarget(Target)
 
-  Target:SetPriority()
-  Target:SetImportance()
-
   table.insert(self.targetqueue, Target)
+
+  return self
+end
+
+--- Remove target from queue.
+-- @param #CHIEF self
+-- @param Ops.Target#TARGET Target The target.
+-- @return #CHIEF self
+function CHIEF:RemoveTarget(Target)
+
+  for i,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    
+    if target.uid==Target.uid then
+      self:I(self.lid..string.format("Removing target %s from queue", Target.name))
+      table.remove(self.targetqueue, i)
+      break
+    end
+    
+  end
 
   return self
 end
@@ -519,7 +618,8 @@ function CHIEF:onafterStatus(From, Event, To)
       -- Cancel this mission.
       contact.mission:Cancel()
       
-      -- TODO: contact.target
+      -- Remove a target from the queue.
+      self:RemoveTarget(contact.target)
           
     end
     
@@ -535,19 +635,39 @@ function CHIEF:onafterStatus(From, Event, To)
     local contact=_contact    --Ops.Intelligence#INTEL.Contact
     local group=contact.group --Wrapper.Group#GROUP
     
+    -- Check if contact inside of out border.
     local inred=self:CheckGroupInBorder(group)
     if inred then
       Nred=Nred+1
     end
     
+    -- Check if contact is in the yellow zones.
     local inyellow=self:CheckGroupInYellow(group)
     if inyellow then
       Nyellow=Nyellow+1
+    end
+
+    -- Check if this is not already a target.
+    if not contact.target then
+
+      -- Create a new TARGET of the contact group.
+      local Target=TARGET:New(contact.group)
+      
+      -- Set to contact.
+      contact.target=Target
+      
+      -- Set contact to target. Might be handy.
+      Target.contact=contact
+      
+      -- Add target to queue.
+      self:AddTarget(Target)
+
     end
     
     -- Is this a threat?
     local threat=contact.threatlevel>=self.threatLevelMin and contact.threatlevel<=self.threatLevelMax
     
+    --[[
     local redalert=true
     if self.borderzoneset:Count()>0 then
       redalert=inred
@@ -555,11 +675,17 @@ function CHIEF:onafterStatus(From, Event, To)
     
     if redalert and threat and not contact.target then
     
+      -- Create a new TARGET of the contact group.
       local Target=TARGET:New(contact.group)
       
+      -- Set to contact.
+      contact.target=Target
+      
+      -- Add target to queue.
       self:AddTarget(Target)
       
     end
+    ]]
     
   end
   
@@ -594,7 +720,7 @@ function CHIEF:onafterStatus(From, Event, To)
     local Ntargets=#self.targetqueue
     
     -- Info message
-    local text=string.format("Defcon=%s Assets=%d, Contacts: Total=%d Yellow=%d Red=%d, Targets=%d, Missions=%d", self.Defcon, Nassets, Ncontacts, Nyellow, Nred, Ntargets, Nmissions)
+    local text=string.format("Defcon=%s: Assets=%d, Contacts=%d [Yellow=%d Red=%d], Targets=%d, Missions=%d", self.Defcon, Nassets, Ncontacts, Nyellow, Nred, Ntargets, Nmissions)
     self:I(self.lid..text)
     
   end
@@ -788,47 +914,26 @@ function CHIEF:onafterTransportCancel(From, Event, To, Transport)
 
 end
 
---- On before "Defcon" event.
+--- On after "DefconChange" event.
 -- @param #CHIEF self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #string Defcon New defence condition.
-function CHIEF:onbeforeDefcon(From, Event, To, Defcon)
-
-  local gotit=false
-  for _,defcon in pairs(CHIEF.DEFCON) do
-    if defcon==Defcon then
-      gotit=true
-    end
-  end
-  
-  if not gotit then
-    self:E(self.lid..string.format("ERROR: Unknown DEFCON specified! Dont know defcon=%s", tostring(Defcon)))
-    return false
-  end
-  
-  -- Defcon did not change.
-  if Defcon==self.Defcon then
-    self:I(self.lid..string.format("Defcon %s unchanged. Not processing transition!", tostring(Defcon)))
-    return false
-  end
-
-  return true
-end
-
---- On after "Defcon" event.
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string Defcon New defence condition.
-function CHIEF:onafterDefcon(From, Event, To, Defcon)
+function CHIEF:onafterDefconChange(From, Event, To, Defcon)
   self:I(self.lid..string.format("Changing Defcon from %s --> %s", self.Defcon, Defcon))
-  
-  -- Set new defcon.
-  self.Defcon=Defcon
 end
+
+--- On after "StrategyChange" event.
+-- @param #CHIEF self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string Strategy
+function CHIEF:onafterDefconChange(From, Event, To, Strategy)
+  self:I(self.lid..string.format("Changing Strategy from %s --> %s", self.strategy, Strategy))
+end
+
 
 --- On after "DeclareWar" event.
 -- @param #CHIEF self
@@ -852,71 +957,134 @@ end
 -- @param #CHIEF self 
 function CHIEF:CheckTargetQueue()
 
-  -- TODO: Sort mission queue. wrt what? Threat level?
+  -- Number of missions.
+  local Ntargets=#self.targetqueue
 
+  -- Treat special cases.
+  if Ntargets==0 then
+    return nil
+  end
+
+  -- Sort results table wrt prio and threatlevel.
+  local function _sort(a, b)
+    local taskA=a --Ops.Target#TARGET
+    local taskB=b --Ops.Target#TARGET
+    return (taskA.prio<taskB.prio) or (taskA.prio==taskB.prio and taskA.threatlevel0>taskB.threatlevel0)
+  end
+  table.sort(self.targetqueue, _sort)
+
+  -- Get the lowest importance value (lower means more important).
+  -- If a target with importance 1 exists, targets with importance 2 will not be assigned. Targets with no importance (nil) can still be selected. 
+  local vip=math.huge
+  for _,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    if target.importance and target.importance<vip then
+      vip=target.importance
+    end
+  end
+
+  -- Loop over targets.
   for _,_target in pairs(self.targetqueue) do
     local target=_target --Ops.Target#TARGET
 
-    if target:IsAlive() and not target.mission then
-
-      -- TODO: stategry
-      self.strategy=CHIEF.Strategy.TOTALWAR
+    -- Check that target is alive and not already a mission has been assigned.
+    if target:IsAlive() and (target.importance==nil or target.importance<=vip) and not target.mission then
     
+      -- Check if this target is "valid", i.e. fits with the current strategy.
       local valid=false
       if self.strategy==CHIEF.Strategy.DEFENSIVE then
+
+        ---
+        -- DEFENSIVE: Attack inside borders only.
+        ---
       
         if self:CheckTargetInZones(target, self.borderzoneset) then
           valid=true
         end
       
       elseif self.strategy==CHIEF.Strategy.OFFENSIVE then
+
+        ---
+        -- OFFENSIVE: Attack inside borders and in yellow zones.
+        ---
       
         if self:CheckTargetInZones(target, self.borderzoneset) or self:CheckTargetInZones(target, self.yellowzoneset) then
           valid=true
         end
       
       elseif self.strategy==CHIEF.Strategy.AGGRESSIVE then
+      
+        ---
+        -- AGGRESSIVE: Attack in all zone sets.
+        ---
 
         if self:CheckTargetInZones(target, self.borderzoneset) or self:CheckTargetInZones(target, self.yellowzoneset) or self:CheckTargetInZones(target, self.engagezoneset) then
           valid=true
         end
       
       elseif self.strategy==CHIEF.Strategy.TOTALWAR then
+      
+        ---
+        -- TOTAL WAR: We attack anything we find.
+        ---
+      
         valid=true
       end 
       
       -- Valid target?
       if valid then
       
-        env.info("FF got valid target "..target:GetName())
+        -- Debug info.
+        self:I(self.lid..string.format("Got valid target %s: category=%s, threatlevel=%d", target:GetName(), target.category, target.threatlevel0))
               
         -- Get mission performances for the given target.  
         local MissionPerformances=self:_GetMissionPerformanceFromTarget(target)
         
         -- Mission.
         local mission=nil --Ops.Auftrag#AUFTRAG
+        local Legions=nil
         
         if #MissionPerformances>0 then
-        
-          env.info(string.format("FF found mission performance N=%d", #MissionPerformances))
-        
-          -- Mission Type.
-          local MissionType=nil
+
+          --TODO: Number of required assets. How many do we want? Should depend on:
+          --      * number of enemy units
+          --      * target threatlevel
+          --      * how many assets are still in stock
+          --      * is it inside of our border         
+          local NassetsMin=1
+          local NassetsMax=3
           
           for _,_mp in pairs(MissionPerformances) do
-            local mp=_mp --#CHIEF.MissionTypePerformance
-            local n=self.commander:CountAssets(true, {mp.MissionType})
-            env.info(string.format("FF Found N=%d assets in stock for mission type %s [Performance=%d]", n, mp.MissionType, mp.Performance))
-            if n>0 then
-              mission=AUFTRAG:NewFromTarget(target, mp.MissionType)              
-              break
+            local mp=_mp --#CHIEF.MissionPerformance
+
+            -- Debug info.
+            self:I(self.lid..string.format("Recruiting assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
+            
+            -- Recruit assets.
+            local recruited, legions, assets=self:RecruitAssetsForTarget(target, mp.MissionType, NassetsMin, NassetsMax)
+            
+            if recruited then
+            
+              -- Create a mission.
+              mission=AUFTRAG:NewFromTarget(target, mp.MissionType)
+                            
+              -- Add asset to mission.
+              if mission then
+                for _,asset in pairs(assets) do
+                  mission:AddAsset(asset)
+                end
+                Legions=legions
+                
+                -- We got what we wanted ==> leave loop.
+                break
+              end
+              
             end
           end
-        
-          
         end
         
-        if mission then
+        -- Check if mission could be defined.
+        if mission and Legions then
         
           -- Set target mission entry.
           target.mission=mission
@@ -924,9 +1092,11 @@ function CHIEF:CheckTargetQueue()
           -- Mission parameters.
           mission.prio=target.prio
           mission.importance=target.importance
-          
-          -- Add mission to COMMANDER queue.
-          self:AddMission(mission)
+                    
+          -- Assign mission to legions.
+          for _,Legion in pairs(Legions) do
+            self.commander:MissionAssign(Legion, mission)
+          end
           
           -- Only ONE target is assigned per check.
           return
@@ -941,7 +1111,7 @@ end
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Resources
+-- Zone Check Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check if group is inside our border.
@@ -1007,32 +1177,13 @@ end
 -- Resources
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Check resources.
--- @param #CHIEF self
--- @param Ops.Target#TARGET Target Target.
--- @return #table 
-function CHIEF:CheckResources(Target)
-
-  local objective=Target:GetObjective()
-  
-  local missionperformances={}
-  
-  for _,missionperformance in pairs(missionperformances) do
-    local mp=missionperformance --#CHIEF.MissionTypePerformance
-    
-  
-  end
-
-
-end
-
 --- Create a mission performance table.
 -- @param #CHIEF self
 -- @param #string MissionType Mission type.
 -- @param #number Performance Performance.
 -- @return #CHIEF.MissionPerformance Mission performance.
 function CHIEF:_CreateMissionPerformance(MissionType, Performance)
-  local mp={} --#CHIEF.MissionTypePerformance
+  local mp={} --#CHIEF.MissionPerformance
   mp.MissionType=MissionType
   mp.Performance=Performance
   return mp
@@ -1064,7 +1215,7 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
  
   local TargetCategory=Target:GetCategory()
     
-  local missionperf={} --#CHIEF.MissionTypePerformance
+  local missionperf={} --#CHIEF.MissionPerformance
   
   if group then
 
@@ -1148,63 +1299,63 @@ function CHIEF:_GetMissionTypeForGroupAttribute(Attribute)
 
   if Attribute==GROUP.Attribute.AIR_ATTACKHELO then
   
-    local mt={} --#CHIEF.MissionTypePerformance
+    local mt={} --#CHIEF.MissionPerformance
     mt.MissionType=AUFTRAG.Type.INTERCEPT
     mt.Performance=100
     table.insert(missiontypes, mt)
     
   elseif Attribute==GROUP.Attribute.GROUND_AAA then
   
-    local mt={} --#CHIEF.MissionTypePerformance
+    local mt={} --#CHIEF.MissionPerformance
     mt.MissionType=AUFTRAG.Type.BAI
     mt.Performance=100        
     table.insert(missiontypes, mt)
 
-    local mt={} --#CHIEF.MissionTypePerformance
+    local mt={} --#CHIEF.MissionPerformance
     mt.MissionType=AUFTRAG.Type.BOMBING
     mt.Performance=70
     table.insert(missiontypes, mt)
 
-    local mt={} --#CHIEF.MissionTypePerformance
+    local mt={} --#CHIEF.MissionPerformance
     mt.MissionType=AUFTRAG.Type.BOMBCARPET
     mt.Performance=70
     table.insert(missiontypes, mt)
 
-    local mt={} --#CHIEF.MissionTypePerformance
+    local mt={} --#CHIEF.MissionPerformance
     mt.MissionType=AUFTRAG.Type.ARTY
     mt.Performance=30
     table.insert(missiontypes, mt)
 
   elseif Attribute==GROUP.Attribute.GROUND_SAM then
   
-    local mt={} --#CHIEF.MissionTypePerformance
+    local mt={} --#CHIEF.MissionPerformance
     mt.MissionType=AUFTRAG.Type.SEAD
     mt.Performance=100        
     table.insert(missiontypes, mt)
 
-    local mt={} --#CHIEF.MissionTypePerformance
+    local mt={} --#CHIEF.MissionPerformance
     mt.MissionType=AUFTRAG.Type.BAI
     mt.Performance=100        
     table.insert(missiontypes, mt)
 
-    local mt={} --#CHIEF.MissionTypePerformance
+    local mt={} --#CHIEF.MissionPerformance
     mt.MissionType=AUFTRAG.Type.ARTY
     mt.Performance=50
     table.insert(missiontypes, mt)
 
   elseif Attribute==GROUP.Attribute.GROUND_EWR then
   
-    local mt={} --#CHIEF.MissionTypePerformance
+    local mt={} --#CHIEF.MissionPerformance
     mt.MissionType=AUFTRAG.Type.SEAD
     mt.Performance=100        
     table.insert(missiontypes, mt)
 
-    local mt={} --#CHIEF.MissionTypePerformance
+    local mt={} --#CHIEF.MissionPerformance
     mt.MissionType=AUFTRAG.Type.BAI
     mt.Performance=100        
     table.insert(missiontypes, mt)
 
-    local mt={} --#CHIEF.MissionTypePerformance
+    local mt={} --#CHIEF.MissionPerformance
     mt.MissionType=AUFTRAG.Type.ARTY
     mt.Performance=50
     table.insert(missiontypes, mt)
@@ -1213,6 +1364,183 @@ function CHIEF:_GetMissionTypeForGroupAttribute(Attribute)
   end
 
 end
+
+--- Recruit assets for a given mission.
+-- @param #CHIEF self
+-- @param Ops.Target#TARGET Target The target.
+-- @param #string MissionType Mission Type.
+-- @return #boolean If `true` enough assets could be recruited.
+-- @return #table Legions that have recruited assets.
+-- @return #table Assets that have been recruited from all legions.
+function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMax)
+  
+  -- The recruited assets.
+  local Assets={}
+  
+  -- Legions which have the best assets for the Mission.
+  local Legions={}
+  
+  -- Target vector.
+  local TargetVec2=Target:GetVec2()
+  
+  for _,_legion in pairs(self.commander.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    
+    -- Distance to target.
+    local TargetDistance=Target:GetCoordinate():Get2DDistance(legion:GetCoordinate())
+
+    -- Number of payloads in stock per aircraft type.
+    local Npayloads={}
+    
+    -- First get payloads for aircraft types of squadrons.
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      if Npayloads[cohort.aircrafttype]==nil then
+        Npayloads[cohort.aircrafttype]=legion:IsAirwing() and legion:CountPayloadsInStock(MissionType, cohort.aircrafttype) or 999
+        self:T2(self.lid..string.format("Got N=%d payloads for mission type %s [%s]", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
+      end
+    end
+    
+    -- Loops over cohorts.
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      
+      local npayloads=Npayloads[cohort.aircrafttype]
+      
+      if cohort:IsOnDuty() and cohort:CheckMissionCapability({MissionType}) and cohort.engageRange>=TargetDistance and npayloads>0 then
+      
+        -- Recruit assets from squadron.
+        local assets, npayloads=cohort:RecruitAssets(MissionType, npayloads)
+        
+        Npayloads[cohort.aircrafttype]=npayloads
+        
+        for _,asset in pairs(assets) do
+          table.insert(Assets, asset)
+        end
+        
+      end
+      
+    end
+    
+  end
+  
+  -- Now we have a long list with assets.
+  self:_OptimizeAssetSelection(Assets, MissionType, TargetVec2, false)
+    
+  for _,_asset in pairs(Assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    if asset.legion:IsAirwing() then
+     
+      -- Only assets that have no payload. Should be only spawned assets!
+      if not asset.payload then     
+    
+        -- Fetch payload for asset. This can be nil!
+        asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, MissionType)
+        
+      end
+      
+    end
+    
+  end
+  
+  -- Remove assets that dont have a payload.
+  for i=#Assets,1,-1 do
+    local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+    if asset.legion:IsAirwing() and not asset.payload then
+      self:T3(self.lid..string.format("Remove asset %s with no payload", tostring(asset.spawngroupname)))
+      table.remove(Assets, i)
+    end
+  end
+  
+  -- Now find the best asset for the given payloads.
+  self:_OptimizeAssetSelection(Assets, MissionType, TargetVec2, true)    
+
+  -- Number of assets. At most NreqMax.
+  local Nassets=math.min(#Assets, NassetsMax)
+  
+  if #Assets>=Nassets then
+  
+    ---
+    -- Found enough assets
+    ---
+  
+    -- Get Legions of assets and put into table.
+    for i=1,Nassets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      Legions[asset.legion.alias]=asset.legion
+    end
+    
+    
+    -- Return payloads and remove not needed assets.
+    for i=#Assets,Nassets+1,-1 do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      if asset.legion:IsAirwing() and not asset.spawned then
+        self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+        asset.legion:ReturnPayloadFromAsset(asset)
+      end
+      table.remove(Assets, i)
+    end
+    
+    -- Found enough assets.
+    return true, Legions, Assets
+  else
+
+    ---
+    -- NOT enough assets
+    ---
+  
+    -- Return payloads of assets.
+    
+    for i=1,#Assets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem      
+      if asset.legion:IsAirwing() and not asset.spawned then
+        self:T2(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+        asset.legion:ReturnPayloadFromAsset(asset)
+      end      
+    end
+      
+    -- Not enough assets found.
+    return false, {}, {}
+  end
+
+  return nil, {}, {}
+end
+
+--- Optimize chosen assets for the mission at hand.
+-- @param #CHIEF self
+-- @param #table assets Table of (unoptimized) assets.
+-- @param #string MissionType MissionType for which the best assets are desired.
+-- @param DCS#Vec2 TargetVec2 Target 2D vector.
+-- @param #boolean includePayload If true, include the payload in the calulation if the asset has one attached.
+function CHIEF:_OptimizeAssetSelection(assets, MissionType, TargetVec2, includePayload)
+
+  -- Calculate the mission score of all assets.
+  for _,_asset in pairs(assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    asset.score=asset.legion:CalculateAssetMissionScore(asset, MissionType, TargetVec2, includePayload)
+  end
+
+  --- Sort assets wrt to their mission score. Higher is better.
+  local function optimize(a, b)
+    local assetA=a --Functional.Warehouse#WAREHOUSE.Assetitem
+    local assetB=b --Functional.Warehouse#WAREHOUSE.Assetitem
+    -- Higher score wins. If equal score ==> closer wins.
+    return (assetA.score>assetB.score)
+  end
+  table.sort(assets, optimize)
+
+  -- Remove distance parameter.
+  local text=string.format("Optimized %d assets for %s mission (payload=%s):", #assets, MissionType, tostring(includePayload))
+  for i,Asset in pairs(assets) do
+    local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
+    asset.score=nil
+  end
+  self:T2(self.lid..text)
+
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
