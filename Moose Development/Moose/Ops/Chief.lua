@@ -1373,6 +1373,36 @@ end
 -- @return #table Legions that have recruited assets.
 -- @return #table Assets that have been recruited from all legions.
 function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMax)
+
+  -- Cohorts.
+  local Cohorts={}
+  for _,_legion in pairs(self.commander.legions) do
+    local legion=_legion --Ops.Legion#LEGION      
+    -- Loops over cohorts.
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      table.insert(Cohorts, cohort)
+    end
+  end  
+
+  -- Target position.
+  local TargetVec2=Target:GetVec2()
+  
+  -- Recruite assets.
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2)
+
+  return recruited, assets, legions
+
+end
+
+--- Recruit assets for a given mission. OLD!
+-- @param #CHIEF self
+-- @param Ops.Target#TARGET Target The target.
+-- @param #string MissionType Mission Type.
+-- @return #boolean If `true` enough assets could be recruited.
+-- @return #table Legions that have recruited assets.
+-- @return #table Assets that have been recruited from all legions.
+function CHIEF:_RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMax)
   
   -- The recruited assets.
   local Assets={}

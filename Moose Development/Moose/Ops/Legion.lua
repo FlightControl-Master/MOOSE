@@ -472,10 +472,16 @@ function LEGION:_GetNextMission()
     if mission:IsQueued(self) and mission:IsReadyToGo() and (mission.importance==nil or mission.importance<=vip) then
 
       -- Recruit best assets for the job.    
-      local recruited=self:RecruitAssets(mission)
-      
+      local recruited, assets, legions=self:RecruitAssetsForMission(mission)
+           
       -- Did we find enough assets?
       if recruited then
+        for _,_asset in pairs(assets) do
+          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+          asset.isReserved=true
+          mission:AddAsset(asset)
+        end
+      
         return mission
       end
 
@@ -1559,8 +1565,19 @@ end
 -- @param #LEGION self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 -- @return #boolean If `true` enough assets could be recruited.
-function LEGION:RecruitAssets(Mission)
+-- @return #table Recruited assets.
+-- @return #table Legions of recruited assets.
+function LEGION:RecruitAssetsForMission(Mission)
 
+  local NreqMin=Mission:GetRequiredAssets()
+  local NreqMax=NreqMin
+  
+  local TargetVec2=Mission:GetTargetVec2()
+  local Payloads=Mission.payloads
+  
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(self.cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem, nil)
+
+  return recruited, assets, legions
 end
 
 --- Recruit assets for a given mission.
@@ -1868,17 +1885,153 @@ function LEGION:RecruitAssetsForTransport(Transport)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Optimization Functions
+-- Recruiting and Optimization Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Recruit assets from Cohorts for the given parameters.
+-- @param #table Cohorts Cohorts included.
+-- @param #string MissionTypeRecruit Mission type for recruiting the cohort assets.
+-- @param #string MissionTypeOpt Mission type for which the assets are optimized. Default is the same as `MissionTypeRecruit`.
+-- @param #number NreqMin Minimum number of required assets.
+-- @param #number NreqMax Maximum number of required assets.
+-- @param DCS#Vec2 TargetVec2 Target position as 2D vector.
+-- @param #table Payloads Special payloads.
+-- @param #number RangeMax Max range in meters.
+-- @param #number RefuelSystem Refuelsystem.
+-- @param #number CargoWeight Cargo weight for recruiting transport carriers.
+-- @return #boolean If `true` enough assets could be recruited.
+-- @return #table Recruited assets.
+-- @return #table Legions of recruited assets.
+function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight)
+
+  -- The recruited assets.
+  local Assets={}
+
+  -- Legions of recruited assets.
+  local Legions={}
+  
+  if MissionTypeOpt==nil then
+    MissionTypeOpt=MissionTypeRecruit
+  end
+  
+  -- Loops over cohorts.
+  for _,_cohort in pairs(Cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    
+    -- Distance to target.
+    local TargetDistance=TargetVec2 and UTILS.VecDist2D(TargetVec2, cohort.legion:GetVec2()) or 0
+    
+    -- Is in range?
+    local InRange=(RangeMax and math.max(RangeMax, cohort.engageRange) or cohort.engageRange) >= TargetDistance
+    
+    -- Has the requested refuelsystem?
+    local Refuel=RefuelSystem and RefuelSystem==cohort.tankerSystem or true
+    
+    -- Is capable of the mission type?
+    local Capable=AUFTRAG.CheckMissionCapability({MissionTypeRecruit}, cohort.missiontypes)
+    
+    -- Can carry the cargo?
+    local CanCarry=CargoWeight and cohort.cargobayLimit>=CargoWeight or true
+    
+    -- Check OnDuty, capable, in range and refueling type (if TANKER).
+    if cohort:IsOnDuty() and Capable and InRange and Refuel and CanCarry then
+    
+      -- Recruit assets from cohort.
+      local assets, npayloads=cohort:RecruitAssets(MissionTypeRecruit, 999)
+      
+      -- Add assets to the list.
+      for _,asset in pairs(assets) do
+        table.insert(Assets, asset)
+      end
+      
+    end
+    
+  end
+  
+  -- Now we have a long list with assets.
+  LEGION._OptimizeAssetSelection(Assets, MissionTypeOpt, TargetVec2, false)
+  
+  
+  -- Get payloads for air assets.
+  for _,_asset in pairs(Assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    -- Only assets that have no payload. Should be only spawned assets!
+    if asset.legion:IsAirwing() and not asset.payload then
+    
+      -- Fetch payload for asset. This can be nil!
+      asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, MissionTypeOpt, Payloads)
+              
+    end    
+  end
+    
+  -- Remove assets that dont have a payload.
+  for i=#Assets,1,-1 do
+    local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+    if asset.legion:IsAirwing() and not asset.payload then
+      table.remove(Assets, i)
+    end
+  end
+    
+  -- Now find the best asset for the given payloads.
+  LEGION._OptimizeAssetSelection(Assets, MissionTypeOpt, TargetVec2, true)
+
+  -- Number of assets. At most NreqMax.
+  local Nassets=math.min(#Assets, NreqMax)
+  
+  if #Assets>=NreqMin then
+  
+    ---
+    -- Found enough assets
+    ---
+  
+    -- Add assets to mission.
+    for i=1,Nassets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      Legions[asset.legion.alias]=asset.legion
+    end
+    
+    -- Return payloads of not needed assets.
+    for i=Nassets+1,#Assets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      if asset.legion:IsAirwing() and not asset.spawned then
+        asset.legion:T2(asset.legion.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+        asset.legion:ReturnPayloadFromAsset(asset)
+      end
+    end
+    
+    -- Found enough assets.
+    return true, Assets, Legions
+  else
+
+    ---
+    -- NOT enough assets
+    ---
+  
+    -- Return payloads of assets.    
+    for i=1,#Assets do
+      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      if asset.legion:IsAirwing() and not asset.spawned then
+        asset.legion:T2(asset.legion.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+        asset.legion:ReturnPayloadFromAsset(asset)
+      end
+    end
+      
+    -- Not enough assets found.
+    return false, {}, {}
+  end
+
+  return false, {}, {}
+end
+
+
 --- Calculate the mission score of an asset.
--- @param #LEGION self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem asset Asset
 -- @param #string MissionType Mission type for which the best assets are desired.
 -- @param DCS#Vec2 TargetVec2 Target 2D vector.
 -- @param #boolean IncludePayload If `true`, include the payload in the calulation if the asset has one attached.
 -- @return #number Mission score.
-function LEGION:CalculateAssetMissionScore(asset, MissionType, TargetVec2, IncludePayload)
+function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, IncludePayload)
   
   -- Mission score.
   local score=0
@@ -1898,8 +2051,18 @@ function LEGION:CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
   score=score+asset.cohort:GetMissionPeformance(MissionType)
 
   -- Add payload performance to score.
+  local function scorePayload(Payload, MissionType)
+    for _,Capability in pairs(Payload.capabilities) do
+      local capability=Capability --Ops.Auftrag#AUFTRAG.Capability
+      if capability.MissionType==MissionType then
+        return capability.Performance
+      end
+    end
+    return 0
+  end
+  
   if IncludePayload and asset.payload then
-    score=score+LEGION.GetPayloadPeformance(self, asset.payload, MissionType)
+    score=score+scorePayload(asset.payload, MissionType)
   end
     
   -- Origin: We take the OPSGROUP position or the one of the legion.
@@ -1920,7 +2083,6 @@ function LEGION:CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
   -- Intercepts need to be carried out quickly. We prefer spawned assets.
   if MissionType==AUFTRAG.Type.INTERCEPT then  
     if asset.spawned then
-      self:T(self.lid.."Adding 25 to asset because it is spawned")
       score=score+25
     end
   end
@@ -1941,17 +2103,16 @@ function LEGION:CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
 end
 
 --- Optimize chosen assets for the mission at hand.
--- @param #LEGION self
 -- @param #table assets Table of (unoptimized) assets.
 -- @param #string MissionType Mission type.
 -- @param DCS#Vec2 TargetVec2 Target position as 2D vector.
 -- @param #boolean IncludePayload If `true`, include the payload in the calulation if the asset has one attached.
-function LEGION:_OptimizeAssetSelection(assets, MissionType, TargetVec2, IncludePayload)
+function LEGION._OptimizeAssetSelection(assets, MissionType, TargetVec2, IncludePayload)
 
   -- Calculate the mission score of all assets.
   for _,_asset in pairs(assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    asset.score=LEGION.CalculateAssetMissionScore(self, asset, MissionType, TargetVec2, IncludePayload)
+    asset.score=LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, IncludePayload)
   end
 
   --- Sort assets wrt to their mission score. Higher is better.
@@ -1970,52 +2131,13 @@ function LEGION:_OptimizeAssetSelection(assets, MissionType, TargetVec2, Include
     text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
     asset.score=nil
   end
-  self:T2(self.lid..text)
+  env.info(text)
 
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Get payload performance for a given type of misson type.
--- @param #LEGION self
--- @param Ops.Airwing#AIRWING.Payload Payload The payload table.
--- @param #string MissionType Type of mission.
--- @return #number Performance or -1.
-function LEGION:GetPayloadPeformance(Payload, MissionType)
-
-  if Payload then
-
-    for _,Capability in pairs(Payload.capabilities) do
-      local capability=Capability --Ops.Auftrag#AUFTRAG.Capability
-      if capability.MissionType==MissionType then
-        return capability.Performance
-      end
-    end
-
-  else
-    self:E(self.lid.."ERROR: Payload is nil!")
-  end
-
-  return -1
-end
-
---- Get mission types a payload can perform.
--- @param #LEGION self
--- @param Ops.Airwing#AIRWING.Payload Payload The payload table.
--- @return #table Mission types.
-function LEGION:GetPayloadMissionTypes(Payload)
-
-  local missiontypes={}
-
-  for _,Capability in pairs(Payload.capabilities) do
-    local capability=Capability --Ops.Auftrag#AUFTRAG.Capability
-    table.insert(missiontypes, capability.MissionType)
-  end
-
-  return missiontypes
-end
 
 --- Returns the mission for a given mission ID (Autragsnummer).
 -- @param #LEGION self

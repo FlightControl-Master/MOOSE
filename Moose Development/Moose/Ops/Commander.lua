@@ -714,6 +714,43 @@ function COMMANDER:CheckMissionQueue()
   
 end
 
+--- Recruit assets for a given mission.
+-- @param #COMMANDER self
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @return #boolean If `true` enough assets could be recruited.
+-- @return #table Recruited assets.
+-- @return #table Legions that have recruited assets.
+function COMMANDER:RecruitAssetsForMission(Mission)
+
+  -- Cohorts.
+  local Cohorts=Mission.squadrons
+  if not Cohorts then
+    Cohorts={}
+    for _,_legion in pairs(Mission.mylegions or self.legions) do
+      local legion=_legion --Ops.Legion#LEGION      
+      -- Loops over cohorts.
+      for _,_cohort in pairs(legion.cohorts) do
+        local cohort=_cohort --Ops.Cohort#COHORT
+        table.insert(Cohorts, cohort)
+      end
+    end  
+  end
+
+  -- Number of required assets.
+  local NreqMin=Mission:GetRequiredAssets()
+  local NreqMax=NreqMin
+  
+  -- Target position.
+  local TargetVec2=Mission:GetTargetVec2()
+  
+  -- Special payloads.
+  local Payloads=Mission.payloads
+  
+  -- Recruite assets.
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem, nil)
+
+  return recruited, assets, legions
+end
 
 --- Recruit assets for a given mission.
 -- @param #COMMANDER self
