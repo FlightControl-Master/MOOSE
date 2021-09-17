@@ -1388,31 +1388,15 @@ function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMa
     
     -- Distance to target.
     local TargetDistance=Target:GetCoordinate():Get2DDistance(legion:GetCoordinate())
-
-    -- Number of payloads in stock per aircraft type.
-    local Npayloads={}
-    
-    -- First get payloads for aircraft types of squadrons.
-    for _,_cohort in pairs(legion.cohorts) do
-      local cohort=_cohort --Ops.Cohort#COHORT
-      if Npayloads[cohort.aircrafttype]==nil then
-        Npayloads[cohort.aircrafttype]=legion:IsAirwing() and legion:CountPayloadsInStock(MissionType, cohort.aircrafttype) or 999
-        self:T2(self.lid..string.format("Got N=%d payloads for mission type %s [%s]", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
-      end
-    end
     
     -- Loops over cohorts.
     for _,_cohort in pairs(legion.cohorts) do
       local cohort=_cohort --Ops.Cohort#COHORT
       
-      local npayloads=Npayloads[cohort.aircrafttype]
-      
-      if cohort:IsOnDuty() and cohort:CheckMissionCapability({MissionType}) and cohort.engageRange>=TargetDistance and npayloads>0 then
+      if cohort:IsOnDuty() and AUFTRAG.CheckMissionCapability({MissionType}, cohort.missiontypes) and cohort.engageRange>=TargetDistance then
       
         -- Recruit assets from squadron.
-        local assets, npayloads=cohort:RecruitAssets(MissionType, npayloads)
-        
-        Npayloads[cohort.aircrafttype]=npayloads
+        local assets, npayloads=cohort:RecruitAssets(MissionType, 999)
         
         for _,asset in pairs(assets) do
           table.insert(Assets, asset)

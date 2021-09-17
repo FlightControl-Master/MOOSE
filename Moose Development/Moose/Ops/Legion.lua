@@ -288,7 +288,6 @@ function LEGION:AddMission(Mission)
     --Mission.opstransport:SetPickupZone(self.spawnzone)
     --Mission.opstransport:SetEmbarkZone(self.spawnzone)
   
-  
     -- Loop over all defined transport legions.
     for _,_legion in pairs(Mission.transportLegions) do
       local legion=_legion --Ops.Legion#LEGION
@@ -1240,7 +1239,7 @@ function LEGION:IsAssetOnMission(asset, MissionTypes)
         local status=mission:GetGroupStatus(asset.flightgroup)
 
         -- Only if mission is started or executing.
-        if (status==AUFTRAG.GroupStatus.STARTED or status==AUFTRAG.GroupStatus.EXECUTING) and self:CheckMissionType(mission.type, MissionTypes) then
+        if (status==AUFTRAG.GroupStatus.STARTED or status==AUFTRAG.GroupStatus.EXECUTING) and AUFTRAG.CheckMissionType(mission.type, MissionTypes) then
           return true
         end
 
@@ -1340,7 +1339,7 @@ function LEGION:CountPayloadsInStock(MissionTypes, UnitTypes, Payloads)
     for _,MissionType in pairs(MissionTypes) do
 
       local specialpayload=_checkPayloads(payload)
-      local compatible=self:CheckMissionCapability(MissionType, payload.capabilities)
+      local compatible=AUFTRAG.CheckMissionCapability(MissionType, payload.capabilities)
 
       local goforit = specialpayload or (specialpayload==nil and compatible)
 
@@ -1374,7 +1373,7 @@ function LEGION:CountMissionsInQueue(MissionTypes)
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
     -- Check if this mission type is requested.
-    if mission:IsNotOver() and self:CheckMissionType(mission.type, MissionTypes) then
+    if mission:IsNotOver() and AUFTRAG.CheckMissionType(mission.type, MissionTypes) then
       N=N+1
     end
 
@@ -1462,7 +1461,7 @@ function LEGION:CountAssetsOnMission(MissionTypes, Cohort)
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
     -- Check if this mission type is requested.
-    if self:CheckMissionType(mission.type, MissionTypes or AUFTRAG.Type) then
+    if AUFTRAG.CheckMissionType(mission.type, MissionTypes or AUFTRAG.Type) then
 
       for _,_asset in pairs(mission.assets or {}) do
         local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
@@ -1504,7 +1503,7 @@ function LEGION:GetAssetsOnMission(MissionTypes)
     local mission=_mission --Ops.Auftrag#AUFTRAG
 
     -- Check if this mission type is requested.
-    if self:CheckMissionType(mission.type, MissionTypes) then
+    if AUFTRAG.CheckMissionType(mission.type, MissionTypes) then
 
       for _,_asset in pairs(mission.assets or {}) do
         local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
@@ -1556,76 +1555,12 @@ function LEGION:GetAircraftTypes(onlyactive, cohorts)
   return unittypes
 end
 
---- Check if assets for a given mission type are available.
--- 
--- OBSOLETE and renamed to _CanMission (to see if it is still used somewhere)
--- 
+--- Recruit assets for a given mission.
 -- @param #LEGION self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return #boolean If true, enough assets are available.
--- @return #table Assets that can do the required mission.
-function LEGION:_CanMission(Mission)
+-- @return #boolean If `true` enough assets could be recruited.
+function LEGION:RecruitAssets(Mission)
 
-  -- Assume we CAN and NO assets are available.
-  local Can=true
-  local Assets={}
-  
-  -- Squadrons for the job. If user assigned to mission or simply all.
-  local cohorts=Mission.squadrons or self.cohorts
-  
-  -- Number of required assets.
-  local Nassets=Mission:GetRequiredAssets(self)
-
-  -- Get aircraft unit types for the job.
-  local unittypes=self:GetAircraftTypes(true, cohorts)
-
-  -- Count all payloads in stock.
-  if self:IsAirwing() then
-  
-    -- Number of payloads in stock.
-    local Npayloads=self:CountPayloadsInStock(Mission.type, unittypes, Mission.payloads)
-  
-    if Npayloads<Nassets then
-      self:T(self.lid..string.format("INFO: Not enough PAYLOADS available! Got %d but need at least %d", Npayloads, Nassets))
-      return false, Assets
-    end
-  end
-
-  -- Loop over cohorts and recruit assets.
-  for cohortname,_cohort in pairs(cohorts) do
-    local cohort=_cohort --Ops.Cohort#COHORT
-
-    -- Check if this cohort can.
-    local can=cohort:CanMission(Mission)
-
-    if can then
-
-      -- Number of payloads available.
-      local Npayloads=self:IsAirwing() and self:CountPayloadsInStock(Mission.type, cohort.aircrafttype, Mission.payloads) or 999
-
-      -- Recruit assets.
-      local assets=cohort:RecruitAssets(Mission.type, Npayloads)
-
-      -- Total number.
-      for _,asset in pairs(assets) do
-        table.insert(Assets, asset)
-      end
-
-      -- Debug output.
-      local text=string.format("Mission=%s, cohort=%s, payloads=%d, can=%s, assets=%d. Found %d/%d", Mission.type, cohort.name, Npayloads, tostring(can), #assets, #Assets, Mission.nassets)
-      self:T(self.lid..text)
-
-    end
-
-  end
-
-  -- Check if required assets are present.
-  if Nassets>#Assets then
-    self:T(self.lid..string.format("INFO: Not enough assets available! Got %d but need at least %d", #Assets, Mission.nassets))
-    Can=false
-  end
-
-  return Can, Assets
 end
 
 --- Recruit assets for a given mission.
@@ -1634,41 +1569,36 @@ end
 -- @return #boolean If `true` enough assets could be recruited.
 function LEGION:RecruitAssets(Mission)
 
-  -- Number of payloads in stock per aircraft type.
-  local Npayloads={}
+  -- The recruited assets.
+  local Assets={}
+  
+  -- Get number of required assets.
+  local Nassets=Mission:GetRequiredAssets(self)  
 
   -- Squadrons for the job. If user assigned to mission or simply all.
   local cohorts=Mission.squadrons or self.cohorts
   
-  -- First get payloads for aircraft types of squadrons.
-  for _,_cohort in pairs(cohorts) do
-    local cohort=_cohort --Ops.Cohort#COHORT
-    if Npayloads[cohort.aircrafttype]==nil then
-      local MissionType=Mission.type
-      if MissionType==AUFTRAG.Type.ALERT5 then
-        MissionType=Mission.alert5MissionType
-      end
-      Npayloads[cohort.aircrafttype]=self:IsAirwing() and self:CountPayloadsInStock(MissionType, cohort.aircrafttype, Mission.payloads) or 999
-      self:T2(self.lid..string.format("Got N=%d payloads for mission type=%s and unit type=%s", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
-    end
+  -- Target position.
+  local TargetVec2=Mission.type~=AUFTRAG.Type.ALERT5 and Mission:GetTargetVec2() or nil  
+  
+  -- Set mission type.
+  local MissionType=Mission.type
+  if MissionType==AUFTRAG.Type.ALERT5 and Mission.alert5MissionType then
+    -- If this is an Alert5 mission, we try to find the assets that are
+    MissionType=Mission.alert5MissionType
   end
-
-  -- The recruited assets.
-  local Assets={}
   
   -- Loops over cohorts.
   for _,_cohort in pairs(cohorts) do
     local cohort=_cohort --Ops.Cohort#COHORT
     
-    local npayloads=Npayloads[cohort.aircrafttype]
+    -- Check OnDuty, mission type, range and refueling type (if TANKER).
+    if cohort:CanMission(Mission) then
     
-    if cohort:CanMission(Mission) and npayloads>0 then
-    
-      -- Recruit assets from squadron.
-      local assets, npayloads=cohort:RecruitAssets(Mission.type, npayloads)
+      -- Recruit assets from cohort.
+      local assets, npayloads=cohort:RecruitAssets(Mission.type, 999)
       
-      Npayloads[cohort.aircrafttype]=npayloads
-      
+      -- Add assets to the list.
       for _,asset in pairs(assets) do
         table.insert(Assets, asset)
       end
@@ -1676,9 +1606,6 @@ function LEGION:RecruitAssets(Mission)
     end
     
   end
-  
-  -- Target position.
-  local TargetVec2=Mission.type~=AUFTRAG.Type.ALERT5 and Mission:GetTargetVec2() or nil
   
   -- Now we have a long list with assets.
   self:_OptimizeAssetSelection(Assets, Mission.type, TargetVec2, false)
@@ -1691,14 +1618,6 @@ function LEGION:RecruitAssets(Mission)
        
       -- Only assets that have no payload. Should be only spawned assets!
       if not asset.payload then
-      
-        -- Set mission type.
-        local MissionType=Mission.type
-        
-        -- Get a loadout for the actual mission this group is waiting for.
-        if Mission.type==AUFTRAG.Type.ALERT5 and Mission.alert5MissionType then
-          MissionType=Mission.alert5MissionType
-        end
       
         -- Fetch payload for asset. This can be nil!
         asset.payload=self:FetchPayloadFromStock(asset.unittype, MissionType, Mission.payloads)
@@ -1719,9 +1638,6 @@ function LEGION:RecruitAssets(Mission)
     self:_OptimizeAssetSelection(Assets, Mission.type, TargetVec2, true)
     
   end
-  
-  -- Get number of required assets.
-  local Nassets=Mission:GetRequiredAssets(self)
   
   if #Assets>=Nassets then
   
@@ -1774,6 +1690,35 @@ function LEGION:RecruitAssets(Mission)
 
 end
 
+--- Recruit assets for a given mission.
+-- @param #LEGION self
+-- @param #string MissionType Mission type.
+-- @param #table Cohorts Cohorts included.
+-- @param #table Payloads (Optional) Special payloads.
+-- @return #table Table of payloads for each unit type.
+function LEGION:_CountPayloads(MissionType, Cohorts, Payloads)
+
+  -- Number of payloads in stock per aircraft type.
+  local Npayloads={}
+
+  -- First get payloads for aircraft types of squadrons.
+  for _,_cohort in pairs(Cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    
+    -- We only need that element once.
+    if Npayloads[cohort.aircrafttype]==nil then
+      
+      -- Count number of payloads in stock for the cohort aircraft type.
+      Npayloads[cohort.aircrafttype]=cohort.legion:IsAirwing() and self:CountPayloadsInStock(MissionType, cohort.aircrafttype, Payloads) or 999
+      
+      -- Debug info.
+      self:T2(self.lid..string.format("Got N=%d payloads for mission type=%s and unit type=%s", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
+    end
+  end
+
+  return Npayloads
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Transport Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1806,18 +1751,15 @@ function LEGION:RecruitAssetsForTransport(Transport)
   end
 
 
-  -- Number of payloads in stock per aircraft type.
-  local Npayloads={}
-  
-  -- First get payloads for aircraft types of squadrons.
-  for _,_cohort in pairs(self.cohorts) do
-    local cohort=_cohort --Ops.Cohort#COHORT
-    if Npayloads[cohort.aircrafttype]==nil then
-      Npayloads[cohort.aircrafttype]=self:IsAirwing() and self:CountPayloadsInStock(AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype) or 999
-      self:T2(self.lid..string.format("Got N=%d payloads for mission type=%s and unit type=%s", Npayloads[cohort.aircrafttype], AUFTRAG.Type.OPSTRANSPORT, cohort.aircrafttype))
-    end
-  end
+  -- Target is the deploy zone.
+  local TargetVec2=Transport:GetDeployZone():GetVec2()
 
+  -- Number of payloads in stock per aircraft type.
+  local Npayloads=self:_CountPayloads(AUFTRAG.Type.OPSTRANSPORT, self.cohorts)
+  
+  -- Number of required carriers.
+  local NreqMin,NreqMax=Transport:GetRequiredCarriers()  
+  
   -- The recruited assets.
   local Assets={}
   
@@ -1825,9 +1767,9 @@ function LEGION:RecruitAssetsForTransport(Transport)
   for _,_cohort in pairs(self.cohorts) do
     local cohort=_cohort --Ops.Cohort#COHORT
     
-    local npayloads=Npayloads[cohort.aircrafttype]
+    local npayloads=999 --Npayloads[cohort.aircrafttype]
     
-    if cohort:IsOnDuty() and npayloads>0 and cohort:CheckMissionCapability({AUFTRAG.Type.OPSTRANSPORT}) and cohort.cargobayLimit>=weightGroup then
+    if cohort:IsOnDuty() and npayloads>0 and AUFTRAG.CheckMissionCapability({AUFTRAG.Type.OPSTRANSPORT}, cohort.missiontypes) and cohort.cargobayLimit>=weightGroup then
     
       -- Recruit assets from squadron.
       local assets, npayloads=cohort:RecruitAssets(AUFTRAG.Type.OPSTRANSPORT, npayloads)
@@ -1841,9 +1783,6 @@ function LEGION:RecruitAssetsForTransport(Transport)
     end
     
   end
-  
-  -- Target is the deploy zone.
-  local TargetVec2=Transport:GetDeployZone():GetVec2()
   
   -- Sort asset list. Best ones come first.
   self:_OptimizeAssetSelection(Assets, AUFTRAG.Type.OPSTRANSPORT, TargetVec2, false)
@@ -1873,9 +1812,6 @@ function LEGION:RecruitAssetsForTransport(Transport)
     end
  
   end
-  
-  -- Number of required carriers.
-  local NreqMin,NreqMax=Transport:GetRequiredCarriers()
   
   -- Number of assets. At most NreqMax.
   local Nassets=math.min(#Assets, NreqMax)
@@ -2041,43 +1977,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Check if a mission type is contained in a list of possible types.
--- @param #LEGION self
--- @param #string MissionType The requested mission type.
--- @param #table PossibleTypes A table with possible mission types.
--- @return #boolean If true, the requested mission type is part of the possible mission types.
-function LEGION:CheckMissionType(MissionType, PossibleTypes)
-
-  if type(PossibleTypes)=="string" then
-    PossibleTypes={PossibleTypes}
-  end
-
-  for _,canmission in pairs(PossibleTypes) do
-    if canmission==MissionType then
-      return true
-    end
-  end
-
-  return false
-end
-
---- Check if a mission type is contained in a list of possible capabilities.
--- @param #LEGION self
--- @param #string MissionType The requested mission type.
--- @param #table Capabilities A table with possible capabilities.
--- @return #boolean If true, the requested mission type is part of the possible mission types.
-function LEGION:CheckMissionCapability(MissionType, Capabilities)
-
-  for _,cap in pairs(Capabilities) do
-    local capability=cap --Ops.Auftrag#AUFTRAG.Capability
-    if capability.MissionType==MissionType then
-      return true
-    end
-  end
-
-  return false
-end
 
 --- Get payload performance for a given type of misson type.
 -- @param #LEGION self

@@ -735,35 +735,15 @@ function COMMANDER:RecruitAssets(Mission)
   
   for _,_legion in pairs(legions) do
     local legion=_legion --Ops.Legion#LEGION
-
-    -- Number of payloads in stock per aircraft type.
-    local Npayloads={}
-    
-    -- First get payloads for aircraft types of squadrons.
-    for _,_cohort in pairs(legion.cohorts) do
-      local cohort=_cohort --Ops.Cohort#COHORT
-      if Npayloads[cohort.aircrafttype]==nil then
-        local MissionType=Mission.type
-        if MissionType==AUFTRAG.Type.ALERT5 then
-          MissionType=Mission.alert5MissionType
-        end      
-        Npayloads[cohort.aircrafttype]=legion:IsAirwing() and legion:CountPayloadsInStock(MissionType, cohort.aircrafttype, Mission.payloads) or 999
-        self:T2(self.lid..string.format("Got N=%d payloads for mission type %s [%s]", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
-      end
-    end
     
     -- Loops over cohorts.
     for _,_cohort in pairs(legion.cohorts) do
       local cohort=_cohort --Ops.Cohort#COHORT
       
-      local npayloads=Npayloads[cohort.aircrafttype]
-      
-      if cohort:CanMission(Mission) and npayloads>0 then
+      if cohort:CanMission(Mission) then
       
         -- Recruit assets from squadron.
-        local assets, npayloads=cohort:RecruitAssets(Mission.type, npayloads)
-        
-        Npayloads[cohort.aircrafttype]=npayloads
+        local assets, npayloads=cohort:RecruitAssets(Mission.type, 999)
         
         for _,asset in pairs(assets) do
           table.insert(Assets, asset)

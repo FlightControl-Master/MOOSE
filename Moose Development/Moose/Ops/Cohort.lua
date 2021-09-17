@@ -45,11 +45,9 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\OPS\Cohort\_Main.png)
---
 -- # The COHORT Concept
 -- 
--- A COHORT is essential part of an BRIGADE and consists of **one** type of aircraft. 
+-- A COHORT is essential part of a LEGION and consists of **one**  unit type. 
 --
 --
 --
@@ -83,7 +81,7 @@ COHORT.version="0.0.2"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: A lot!
--- TODO: Make general so that PLATOON and SQUADRON can inherit this class.
+-- DONE: Make general so that PLATOON and SQUADRON can inherit this class.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -285,7 +283,7 @@ function COHORT:AddMissionCapability(MissionTypes, Performance)
   for _,missiontype in pairs(MissionTypes) do
   
     -- Check not to add the same twice.  
-    if self:CheckMissionCapability(missiontype, self.missiontypes) then
+    if AUFTRAG.CheckMissionCapability(missiontype, self.missiontypes) then
       self:E(self.lid.."WARNING: Mission capability already present! No need to add it twice.")
       -- TODO: update performance.
     else
@@ -736,7 +734,7 @@ function COHORT:CanMission(Mission)
   end
 
   -- Check mission type. WARNING: This assumes that all assets of the cohort can do the same mission types!
-  if not self:CheckMissionType(Mission.type, self:GetMissionTypes()) then
+  if not AUFTRAG.CheckMissionType(Mission.type, self:GetMissionTypes()) then
     self:T(self.lid..string.format("INFO: Cohort cannot do mission type %s (%s, %s)", Mission.type, Mission.name, Mission:GetTargetName()))
     return false
   end
@@ -780,7 +778,7 @@ function COHORT:CountAssets(InStock, MissionTypes, Attributes)
   for _,_asset in pairs(self.assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
-    if MissionTypes==nil or self:CheckMissionCapability(MissionTypes, self.missiontypes) then
+    if MissionTypes==nil or AUFTRAG.CheckMissionCapability(MissionTypes, self.missiontypes) then
       if Attributes==nil or self:CheckAttribute(Attributes) then
         if asset.spawned then
           if InStock==false or InStock==nil then
@@ -805,6 +803,9 @@ end
 -- @return #table Assets that can do the required mission.
 -- @return #number Number of payloads still available after recruiting the assets.
 function COHORT:RecruitAssets(MissionType, Npayloads)
+
+  -- Debug info.
+  self:T3(self.lid..string.format("Recruiting asset for Mission type=%s", MissionType))
 
   -- Recruited assets.
   local assets={}
@@ -832,7 +833,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
           self:I(self.lid..string.format("Adding asset on GCICAP mission for an INTERCEPT mission"))
           table.insert(assets, asset)
           
-        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and self:CheckMissionCapability(MissionType, asset.payload.capabilities) then
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and AUFTRAG.CheckMissionCapability(MissionType, asset.payload.capabilities) then
                   
           -- Check if the payload of this asset is compatible with the mission.
           self:I(self.lid..string.format("Adding asset on ALERT 5 mission for %s mission", MissionType))
@@ -856,7 +857,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
           local flightgroup=asset.flightgroup
           
           
-          if flightgroup and flightgroup:IsAlive() then
+          if flightgroup and flightgroup:IsAlive() and not (flightgroup:IsDead() or flightgroup:IsStopped()) then
         
             -- Assume we are ready and check if any condition tells us we are not.
             local combatready=true
@@ -885,7 +886,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
               if flightgroup:IsHolding() or flightgroup:IsLanding() or flightgroup:IsLanded() or flightgroup:IsArrived() then
                 combatready=false
               end
-              if asset.payload and not self:CheckMissionCapability(MissionType, asset.payload.capabilities) then
+              if asset.payload and not AUFTRAG.CheckMissionCapability(MissionType, asset.payload.capabilities) then
                 combatready=false
               end
               
@@ -900,12 +901,6 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
               end
               
             end
-            
-            -- Applies to all opsgroups.
-            if flightgroup:IsDead() or flightgroup:IsStopped() then
-              combatready=false
-            end
-            
             
             --TODO: Check transport for combat readyness!
         
@@ -939,6 +934,8 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
       
     end -- not requested check
   end -- loop over assets
+
+  self:T2(self.lid..string.format("Recruited %d assets for Mission type=%s", #assets, MissionType))
 
   return assets, Npayloads
 end
@@ -986,52 +983,6 @@ function COHORT:IsRepaired(Asset)
     return true
   end
 
-end
-
-
---- Checks if a mission type is contained in a table of possible types.
--- @param #COHORT self
--- @param #string MissionType The requested mission type.
--- @param #table PossibleTypes A table with possible mission types.
--- @return #boolean If true, the requested mission type is part of the possible mission types.
-function COHORT:CheckMissionType(MissionType, PossibleTypes)
-
-  if type(PossibleTypes)=="string" then
-    PossibleTypes={PossibleTypes}
-  end
-
-  for _,canmission in pairs(PossibleTypes) do
-    if canmission==MissionType then
-      return true
-    end   
-  end
-
-  return false
-end
-
---- Check if a mission type is contained in a list of possible capabilities.
--- @param #COHORT self
--- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
--- @param #table Capabilities (Optional) A table with possible capabilities `Ops.Auftrag#AUFTRAG.Capability`. Default is capabilities of the cohort.
--- @return #boolean If true, the requested mission type is part of the possible mission types.
-function COHORT:CheckMissionCapability(MissionTypes, Capabilities)
-
-  if type(MissionTypes)~="table" then
-    MissionTypes={MissionTypes}
-  end
-
-  Capabilities=Capabilities or self.missiontypes
-
-  for _,cap in pairs(Capabilities) do
-    local capability=cap --Ops.Auftrag#AUFTRAG.Capability
-    for _,MissionType in pairs(MissionTypes) do
-      if capability.MissionType==MissionType then
-        return true
-      end
-    end
-  end
-
-  return false
 end
 
 --- Check if the cohort attribute matches the given attribute(s).

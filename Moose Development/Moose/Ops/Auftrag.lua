@@ -4317,6 +4317,86 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
   return mtask
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Global Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Checks if a mission type is contained in a table of possible types.
+-- @param #string MissionType The requested mission type.
+-- @param #table PossibleTypes A table with possible mission types.
+-- @return #boolean If true, the requested mission type is part of the possible mission types.
+function AUFTRAG.CheckMissionType(MissionType, PossibleTypes)
+
+  if type(PossibleTypes)=="string" then
+    PossibleTypes={PossibleTypes}
+  end
+
+  for _,canmission in pairs(PossibleTypes) do
+    if canmission==MissionType then
+      return true
+    end   
+  end
+
+  return false
+end
+
+--- Check if a mission type is contained in a list of possible capabilities.
+-- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
+-- @param #table Capabilities A table with possible capabilities `Ops.Auftrag#AUFTRAG.Capability`.
+-- @param #boolean All If `true`, given mission type must be includedin ALL capabilities. If `false` or `nil`, it must only match one.
+-- @return #boolean If true, the requested mission type is part of the possible mission types.
+function AUFTRAG.CheckMissionCapability(MissionTypes, Capabilities, All)
+
+  -- Ensure table.
+  if type(MissionTypes)~="table" then
+    MissionTypes={MissionTypes}
+  end
+
+  for _,cap in pairs(Capabilities) do
+    local capability=cap --Ops.Auftrag#AUFTRAG.Capability
+    for _,MissionType in pairs(MissionTypes) do
+      if All==true then
+        if capability.MissionType~=MissionType then
+          return false
+        end
+      else
+        if capability.MissionType==MissionType then
+          return true
+        end      
+      end
+    end
+  end
+
+  if All==true then
+    return true
+  else
+    return false
+  end
+end
+
+
+--- Check if a mission type is contained in a list of possible capabilities.
+-- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
+-- @param #table Capabilities A table with possible capabilities `Ops.Auftrag#AUFTRAG.Capability`.
+-- @return #boolean If true, the requested mission type is part of the possible mission types.
+function AUFTRAG.CheckMissionCapabilityAny(MissionTypes, Capabilities)
+
+  local res=AUFTRAG.CheckMissionCapability(MissionTypes, Capabilities, false)
+  
+  return res
+end
+
+
+--- Check if a mission type is contained in a list of possible capabilities.
+-- @param #table MissionTypes The requested mission type. Can also be passed as a single mission type `#string`.
+-- @param #table Capabilities A table with possible capabilities `Ops.Auftrag#AUFTRAG.Capability`.
+-- @return #boolean If true, the requested mission type is part of the possible mission types.
+function AUFTRAG.CheckMissionCapabilityAll(MissionTypes, Capabilities)
+
+  local res=AUFTRAG.CheckMissionCapability(MissionTypes, Capabilities, true)
+  
+  return res
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -330,7 +330,7 @@ function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
     end
 
     -- Add ORBIT for all.
-    if not self:CheckMissionType(AUFTRAG.Type.ORBIT, MissionTypes) then
+    if not AUFTRAG.CheckMissionType(AUFTRAG.Type.ORBIT, MissionTypes) then
       local capability={}  --Ops.Auftrag#AUFTRAG.Capability
       capability.MissionType=AUFTRAG.Type.ORBIT
       capability.Performance=50
@@ -452,7 +452,7 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
     local payload=_payload --#AIRWING.Payload
 
     local specialpayload=_checkPayloads(payload)
-    local compatible=self:CheckMissionCapability(MissionType, payload.capabilities)
+    local compatible=AUFTRAG.CheckMissionCapability(MissionType, payload.capabilities)
 
     local goforit = specialpayload or (specialpayload==nil and compatible)
 
@@ -466,7 +466,7 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
     self:I(self.lid..string.format("Sorted payloads for mission type %s and aircraft type=%s:", MissionType, UnitType))
     for _,_payload in ipairs(self.payloads) do
       local payload=_payload --#AIRWING.Payload
-      if payload.aircrafttype==UnitType and self:CheckMissionCapability(MissionType, payload.capabilities) then
+      if payload.aircrafttype==UnitType and AUFTRAG.CheckMissionCapability(MissionType, payload.capabilities) then
         local performace=self:GetPayloadPeformance(payload, MissionType)
         self:I(self.lid..string.format("- %s payload for %s: avail=%d performace=%d", MissionType, payload.aircrafttype, payload.navail, performace))
       end
@@ -1165,7 +1165,7 @@ function AIRWING:CountPayloadsInStock(MissionTypes, UnitTypes, Payloads)
     for _,MissionType in pairs(MissionTypes) do
 
       local specialpayload=_checkPayloads(payload)
-      local compatible=self:CheckMissionCapability(MissionType, payload.capabilities)
+      local compatible=AUFTRAG.CheckMissionCapability(MissionType, payload.capabilities)
 
       local goforit = specialpayload or (specialpayload==nil and compatible)
 
