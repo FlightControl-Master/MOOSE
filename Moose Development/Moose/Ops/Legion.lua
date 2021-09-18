@@ -1794,12 +1794,13 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     end
     
     -- Return payloads of not needed assets.
-    for i=Nassets+1,#Assets do
+    for i=#Assets,Nassets+1,-1 do
       local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
       if asset.legion:IsAirwing() and not asset.spawned then
         asset.legion:T2(asset.legion.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
         asset.legion:ReturnPayloadFromAsset(asset)
       end
+      table.remove(Assets, i)
     end
     
     -- Found enough assets.
