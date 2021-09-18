@@ -1070,7 +1070,9 @@ function CHIEF:CheckTargetQueue()
                             
               -- Add asset to mission.
               if mission then
-                for _,asset in pairs(assets) do
+                for _,_asset in pairs(assets) do
+                  local asset=_asset
+                  asset.isReserved=true
                   mission:AddAsset(asset)
                 end
                 Legions=legions
@@ -1393,132 +1395,6 @@ function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMa
 
   return recruited, assets, legions
 
-end
-
---- Recruit assets for a given mission. OLD!
--- @param #CHIEF self
--- @param Ops.Target#TARGET Target The target.
--- @param #string MissionType Mission Type.
--- @return #boolean If `true` enough assets could be recruited.
--- @return #table Legions that have recruited assets.
--- @return #table Assets that have been recruited from all legions.
-function CHIEF:_RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMax)
-  
-  -- The recruited assets.
-  local Assets={}
-  
-  -- Legions which have the best assets for the Mission.
-  local Legions={}
-  
-  -- Target vector.
-  local TargetVec2=Target:GetVec2()
-  
-  for _,_legion in pairs(self.commander.legions) do
-    local legion=_legion --Ops.Legion#LEGION
-    
-    -- Distance to target.
-    local TargetDistance=Target:GetCoordinate():Get2DDistance(legion:GetCoordinate())
-    
-    -- Loops over cohorts.
-    for _,_cohort in pairs(legion.cohorts) do
-      local cohort=_cohort --Ops.Cohort#COHORT
-      
-      if cohort:IsOnDuty() and AUFTRAG.CheckMissionCapability({MissionType}, cohort.missiontypes) and cohort.engageRange>=TargetDistance then
-      
-        -- Recruit assets from squadron.
-        local assets, npayloads=cohort:RecruitAssets(MissionType, 999)
-        
-        for _,asset in pairs(assets) do
-          table.insert(Assets, asset)
-        end
-        
-      end
-      
-    end
-    
-  end
-  
-  -- Now we have a long list with assets.
-  LEGION._OptimizeAssetSelection(self, Assets, MissionType, TargetVec2, false)
-    
-  for _,_asset in pairs(Assets) do
-    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    
-    if asset.legion:IsAirwing() then
-     
-      -- Only assets that have no payload. Should be only spawned assets!
-      if not asset.payload then     
-    
-        -- Fetch payload for asset. This can be nil!
-        asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, MissionType)
-        
-      end
-      
-    end
-    
-  end
-  
-  -- Remove assets that dont have a payload.
-  for i=#Assets,1,-1 do
-    local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-    if asset.legion:IsAirwing() and not asset.payload then
-      self:T3(self.lid..string.format("Remove asset %s with no payload", tostring(asset.spawngroupname)))
-      table.remove(Assets, i)
-    end
-  end
-  
-  -- Now find the best asset for the given payloads.
-  LEGION._OptimizeAssetSelection(self, Assets, MissionType, TargetVec2, true)
-
-  -- Number of assets. At most NreqMax.
-  local Nassets=math.min(#Assets, NassetsMax)
-  
-  if #Assets>=Nassets then
-  
-    ---
-    -- Found enough assets
-    ---
-  
-    -- Get Legions of assets and put into table.
-    for i=1,Nassets do
-      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-      Legions[asset.legion.alias]=asset.legion
-    end
-    
-    
-    -- Return payloads and remove not needed assets.
-    for i=#Assets,Nassets+1,-1 do
-      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-      if asset.legion:IsAirwing() and not asset.spawned then
-        self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
-        asset.legion:ReturnPayloadFromAsset(asset)
-      end
-      table.remove(Assets, i)
-    end
-    
-    -- Found enough assets.
-    return true, Legions, Assets
-  else
-
-    ---
-    -- NOT enough assets
-    ---
-  
-    -- Return payloads of assets.
-    
-    for i=1,#Assets do
-      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem      
-      if asset.legion:IsAirwing() and not asset.spawned then
-        self:T2(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
-        asset.legion:ReturnPayloadFromAsset(asset)
-      end      
-    end
-      
-    -- Not enough assets found.
-    return false, {}, {}
-  end
-
-  return nil, {}, {}
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

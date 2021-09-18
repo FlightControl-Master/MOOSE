@@ -1585,6 +1585,39 @@ function LEGION:GetAircraftTypes(onlyactive, cohorts)
   return unittypes
 end
 
+--- Count payloads of all cohorts for all unit types.
+-- @param #LEGION self
+-- @param #string MissionType Mission type.
+-- @param #table Cohorts Cohorts included.
+-- @param #table Payloads (Optional) Special payloads.
+-- @return #table Table of payloads for each unit type.
+function LEGION:_CountPayloads(MissionType, Cohorts, Payloads)
+
+  -- Number of payloads in stock per aircraft type.
+  local Npayloads={}
+
+  -- First get payloads for aircraft types of squadrons.
+  for _,_cohort in pairs(Cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    
+    -- We only need that element once.
+    if Npayloads[cohort.aircrafttype]==nil then
+      
+      -- Count number of payloads in stock for the cohort aircraft type.
+      Npayloads[cohort.aircrafttype]=cohort.legion:IsAirwing() and self:CountPayloadsInStock(MissionType, cohort.aircrafttype, Payloads) or 999
+      
+      -- Debug info.
+      self:T2(self.lid..string.format("Got N=%d payloads for mission type=%s and unit type=%s", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
+    end
+  end
+
+  return Npayloads
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Recruiting Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- Recruit assets for a given mission.
 -- @param #LEGION self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
@@ -1593,14 +1626,20 @@ end
 -- @return #table Legions of recruited assets.
 function LEGION:RecruitAssetsForMission(Mission)
 
+  -- Get required assets.
   local NreqMin=Mission:GetRequiredAssets()
   local NreqMax=NreqMin
   
+  -- Target position vector.
   local TargetVec2=Mission:GetTargetVec2()
+  
+  -- Payloads.
   local Payloads=Mission.payloads
   
+  -- Cohorts.
   local Cohorts=Mission.squadrons or self.cohorts
   
+  -- Recuit assets.
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem, nil)
 
   return recruited, assets, legions
@@ -1645,311 +1684,6 @@ function LEGION:RecruitAssetsForTransport(Transport)
   local recruited, assets, legions=LEGION.RecruitCohortAssets(self.cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NreqMin, NreqMax, TargetVec2, nil, nil, nil, weightGroup)
 
   return recruited, assets, legions  
-end
-
-
---- Recruit assets for a given mission.
--- @param #LEGION self
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @return #boolean If `true` enough assets could be recruited.
-function LEGION:RecruitAssets(Mission)
-
-  -- The recruited assets.
-  local Assets={}
-  
-  -- Get number of required assets.
-  local Nassets=Mission:GetRequiredAssets(self)  
-
-  -- Squadrons for the job. If user assigned to mission or simply all.
-  local cohorts=Mission.squadrons or self.cohorts
-  
-  -- Target position.
-  local TargetVec2=Mission.type~=AUFTRAG.Type.ALERT5 and Mission:GetTargetVec2() or nil  
-  
-  -- Set mission type.
-  local MissionType=Mission.type
-  if MissionType==AUFTRAG.Type.ALERT5 and Mission.alert5MissionType then
-    -- If this is an Alert5 mission, we try to find the assets that are
-    MissionType=Mission.alert5MissionType
-  end
-  
-  -- Loops over cohorts.
-  for _,_cohort in pairs(cohorts) do
-    local cohort=_cohort --Ops.Cohort#COHORT
-    
-    -- Check OnDuty, mission type, range and refueling type (if TANKER).
-    if cohort:CanMission(Mission) then
-    
-      -- Recruit assets from cohort.
-      local assets, npayloads=cohort:RecruitAssets(Mission.type, 999)
-      
-      -- Add assets to the list.
-      for _,asset in pairs(assets) do
-        table.insert(Assets, asset)
-      end
-      
-    end
-    
-  end
-  
-  -- Now we have a long list with assets.
-  self:_OptimizeAssetSelection(Assets, Mission.type, TargetVec2, false)
-  
-  -- If airwing, get the best payload available.
-  if self:IsAirwing() then
-  
-    for _,_asset in pairs(Assets) do
-      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-       
-      -- Only assets that have no payload. Should be only spawned assets!
-      if not asset.payload then
-      
-        -- Fetch payload for asset. This can be nil!
-        asset.payload=self:FetchPayloadFromStock(asset.unittype, MissionType, Mission.payloads)
-                
-      end
-      
-    end
-    
-    -- Remove assets that dont have a payload.
-    for i=#Assets,1,-1 do
-      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-      if not asset.payload then
-        table.remove(Assets, i)
-      end
-    end
-    
-    -- Now find the best asset for the given payloads.
-    self:_OptimizeAssetSelection(Assets, Mission.type, TargetVec2, true)
-    
-  end
-  
-  if #Assets>=Nassets then
-  
-    ---
-    -- Found enough assets
-    ---
-  
-    -- Add assets to mission.
-    for i=1,Nassets do
-      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-      self:T(self.lid..string.format("Adding asset %s to mission %s [%s]", asset.spawngroupname, Mission.name, Mission.type))
-      Mission:AddAsset(asset)
-    end
-    
-    if self:IsAirwing() then
-    
-      -- Return payloads of not needed assets.
-      for i=Nassets+1,#Assets do
-        local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-        if not asset.spawned then
-          self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
-          self:ReturnPayloadFromAsset(asset)
-        end
-      end
-      
-    end
-    
-    -- Found enough assets.
-    return true
-  else
-
-    ---
-    -- NOT enough assets
-    ---
-  
-    -- Return payloads of assets.
-    if self:IsAirwing() then    
-      for i=1,#Assets do
-        local asset=Assets[i]
-        if not asset.spawned then
-          self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
-          self:ReturnPayloadFromAsset(asset)
-        end
-      end      
-    end
-      
-    -- Not enough assets found.
-    return false
-  end
-
-end
-
---- Recruit assets for a given mission.
--- @param #LEGION self
--- @param #string MissionType Mission type.
--- @param #table Cohorts Cohorts included.
--- @param #table Payloads (Optional) Special payloads.
--- @return #table Table of payloads for each unit type.
-function LEGION:_CountPayloads(MissionType, Cohorts, Payloads)
-
-  -- Number of payloads in stock per aircraft type.
-  local Npayloads={}
-
-  -- First get payloads for aircraft types of squadrons.
-  for _,_cohort in pairs(Cohorts) do
-    local cohort=_cohort --Ops.Cohort#COHORT
-    
-    -- We only need that element once.
-    if Npayloads[cohort.aircrafttype]==nil then
-      
-      -- Count number of payloads in stock for the cohort aircraft type.
-      Npayloads[cohort.aircrafttype]=cohort.legion:IsAirwing() and self:CountPayloadsInStock(MissionType, cohort.aircrafttype, Payloads) or 999
-      
-      -- Debug info.
-      self:T2(self.lid..string.format("Got N=%d payloads for mission type=%s and unit type=%s", Npayloads[cohort.aircrafttype], MissionType, cohort.aircrafttype))
-    end
-  end
-
-  return Npayloads
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Transport Functions
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Recruit assets for a given OPS transport.
--- @param #LEGION self
--- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport.
--- @return #boolean If `true`, enough assets could be recruited.
-function LEGION:_RecruitAssetsForTransport(Transport)
-
-  -- Get all undelivered cargo ops groups.
-  local cargoOpsGroups=Transport:GetCargoOpsGroups(false)
-  
-  local weightGroup=0
-  
-  -- At least one group should be spawned.
-  if #cargoOpsGroups>0 then
-  
-    -- Calculate the max weight so we know which cohorts can provide carriers.
-    for _,_opsgroup in pairs(cargoOpsGroups) do
-      local opsgroup=_opsgroup --Ops.OpsGroup#OPSGROUP
-      local weight=opsgroup:GetWeightTotal()
-      if weight>weightGroup then
-        weightGroup=weight
-      end
-    end
-  else
-    -- No cargo groups!
-    return false
-  end
-
-
-  -- Target is the deploy zone.
-  local TargetVec2=Transport:GetDeployZone():GetVec2()
-
-  -- Number of payloads in stock per aircraft type.
-  local Npayloads=self:_CountPayloads(AUFTRAG.Type.OPSTRANSPORT, self.cohorts)
-  
-  -- Number of required carriers.
-  local NreqMin,NreqMax=Transport:GetRequiredCarriers()  
-  
-  -- The recruited assets.
-  local Assets={}
-  
-  -- Loops over cohorts.
-  for _,_cohort in pairs(self.cohorts) do
-    local cohort=_cohort --Ops.Cohort#COHORT
-    
-    local npayloads=999 --Npayloads[cohort.aircrafttype]
-    
-    if cohort:IsOnDuty() and npayloads>0 and AUFTRAG.CheckMissionCapability({AUFTRAG.Type.OPSTRANSPORT}, cohort.missiontypes) and cohort.cargobayLimit>=weightGroup then
-    
-      -- Recruit assets from squadron.
-      local assets, npayloads=cohort:RecruitAssets(AUFTRAG.Type.OPSTRANSPORT, npayloads)
-      
-      Npayloads[cohort.aircrafttype]=npayloads
-      
-      for _,asset in pairs(assets) do
-        table.insert(Assets, asset)
-      end
-      
-    end
-    
-  end
-  
-  -- Sort asset list. Best ones come first.
-  self:_OptimizeAssetSelection(Assets, AUFTRAG.Type.OPSTRANSPORT, TargetVec2, false)
-  
-  -- If airwing, get the best payload available.
-  if self:IsAirwing() then
-  
-    for _,_asset in pairs(Assets) do
-      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-       
-      -- Only assets that have no payload. Should be only spawned assets!
-      if not asset.payload then
-      
-        -- Fetch payload for asset. This can be nil!
-        asset.payload=self:FetchPayloadFromStock(asset.unittype, AUFTRAG.Type.OPSTRANSPORT)
-                
-      end
-      
-    end
-    
-    -- Remove assets that dont have a payload.
-    for i=#Assets,1,-1 do
-      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-      if not asset.payload then
-        table.remove(Assets, i)
-      end
-    end
- 
-  end
-  
-  -- Number of assets. At most NreqMax.
-  local Nassets=math.min(#Assets, NreqMax)
-  
-  if Nassets>=NreqMin then
-  
-    ---
-    -- Found enough assets
-    ---
-  
-    -- Add assets to mission.
-    for i=1,Nassets do
-      local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-      asset.isReserved=true
-      Transport:AddAsset(asset)
-    end
-    
-    if self:IsAirwing() then
-    
-      -- Return payloads of not needed assets.
-      for i=Nassets+1,#Assets do
-        local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
-        if not asset.spawned then
-          self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
-          self:ReturnPayloadFromAsset(asset)
-        end
-      end
-      
-    end
-    
-    -- Found enough assets.
-    return true
-  else
-
-    ---
-    -- NOT enough assets
-    ---
-  
-    -- Return payloads of assets.
-    if self:IsAirwing() then    
-      for i=1,#Assets do
-        local asset=Assets[i]
-        if not asset.spawned then
-          self:T(self.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
-          self:ReturnPayloadFromAsset(asset)
-        end
-      end      
-    end
-      
-    -- Not enough assets found.
-    return false
-  end
-
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
