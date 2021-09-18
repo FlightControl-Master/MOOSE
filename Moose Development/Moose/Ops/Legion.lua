@@ -504,20 +504,44 @@ function LEGION:_GetNextTransport()
     return nil
   end
   
-  --TODO: Sort transports wrt to prio and importance. See mission sorting!
+  -- Sort results table wrt prio and start time.
+  local function _sort(a, b)
+    local taskA=a --Ops.Auftrag#AUFTRAG
+    local taskB=b --Ops.Auftrag#AUFTRAG
+    return (taskA.prio<taskB.prio) or (taskA.prio==taskB.prio and taskA.Tstart<taskB.Tstart)
+  end
+  table.sort(self.transportqueue, _sort)
+
+  -- Get the lowest importance value (lower means more important).
+  -- If a mission with importance 1 exists, mission with importance 2 will not be assigned. Missions with no importance (nil) can still be selected. 
+  local vip=math.huge
+  for _,_transport in pairs(self.transportqueue) do
+    local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+    if transport.importance and transport.importance<vip then
+      vip=transport.importance
+    end
+  end
   
   -- Look for first task that is not accomplished.
   for _,_transport in pairs(self.transportqueue) do
     local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
 
     -- Check if transport is still queued and ready.
-    if transport:IsQueued(self) and transport:IsReadyToGo() then
+    if transport:IsQueued(self) and transport:IsReadyToGo() and (transport.importance==nil or transport.importance<=vip) then
     
       -- Recruit assets for transport.
-      local recruited=self:RecruitAssetsForTransport(transport)
+      local recruited, assets, _=self:RecruitAssetsForTransport(transport)
       
       -- Did we find enough assets?
       if recruited then
+      
+        -- Add asset to transport.
+        for _,_asset in pairs(assets) do
+          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+          asset.isReserved=true
+          transport:AddAsset(asset)
+        end
+        
         return transport
       end
       
@@ -1575,10 +1599,54 @@ function LEGION:RecruitAssetsForMission(Mission)
   local TargetVec2=Mission:GetTargetVec2()
   local Payloads=Mission.payloads
   
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(self.cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem, nil)
+  local Cohorts=Mission.squadrons or self.cohorts
+  
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem, nil)
 
   return recruited, assets, legions
 end
+
+--- Recruit assets for a given OPS transport.
+-- @param #LEGION self
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport.
+-- @return #boolean If `true`, enough assets could be recruited.
+function LEGION:RecruitAssetsForTransport(Transport)
+
+  -- Get all undelivered cargo ops groups.
+  local cargoOpsGroups=Transport:GetCargoOpsGroups(false)
+  
+  local weightGroup=0
+  
+  -- At least one group should be spawned.
+  if #cargoOpsGroups>0 then
+  
+    -- Calculate the max weight so we know which cohorts can provide carriers.
+    for _,_opsgroup in pairs(cargoOpsGroups) do
+      local opsgroup=_opsgroup --Ops.OpsGroup#OPSGROUP
+      local weight=opsgroup:GetWeightTotal()
+      if weight>weightGroup then
+        weightGroup=weight
+      end
+    end
+  else
+    -- No cargo groups!
+    return false
+  end
+
+
+  -- Target is the deploy zone.
+  local TargetVec2=Transport:GetDeployZone():GetVec2()
+  
+  -- Number of required carriers.
+  local NreqMin,NreqMax=Transport:GetRequiredCarriers()
+  
+
+  -- Recruit assets and legions.
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(self.cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NreqMin, NreqMax, TargetVec2, nil, nil, nil, weightGroup)
+
+  return recruited, assets, legions  
+end
+
 
 --- Recruit assets for a given mission.
 -- @param #LEGION self
@@ -1744,7 +1812,7 @@ end
 -- @param #LEGION self
 -- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport.
 -- @return #boolean If `true`, enough assets could be recruited.
-function LEGION:RecruitAssetsForTransport(Transport)
+function LEGION:_RecruitAssetsForTransport(Transport)
 
   -- Get all undelivered cargo ops groups.
   local cargoOpsGroups=Transport:GetCargoOpsGroups(false)

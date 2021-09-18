@@ -683,9 +683,16 @@ function COMMANDER:CheckMissionQueue()
       ---    
     
       -- Recruite assets from legions.      
-      local recruited, legions=self:RecruitAssets(mission)
+      local recruited, assets, legions=self:RecruitAssetsForMission(mission)
       
       if recruited then
+      
+        -- Add asset to transport.
+        for _,_asset in pairs(assets) do
+          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+          asset.isReserved=true
+          mission:AddAsset(asset)
+        end              
 
         for _,_legion in pairs(legions) do
           local legion=_legion --Ops.Legion#LEGION
@@ -935,9 +942,16 @@ function COMMANDER:CheckTransportQueue()
       ---    
     
       -- Recruite assets from legions.      
-      local recruited, legions=self:RecruitAssetsForTransport(transport)
+      local recruited, assets, legions=self:RecruitAssetsForTransport(transport)
       
       if recruited then
+      
+        -- Add asset to transport.
+        for _,_asset in pairs(assets) do
+          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+          asset.isReserved=true
+          transport:AddAsset(asset)
+        end        
 
         for _,_legion in pairs(legions) do
           local legion=_legion --Ops.Legion#LEGION
@@ -966,12 +980,65 @@ function COMMANDER:CheckTransportQueue()
   
 end
 
+--- Recruit assets for a given OPS transport.
+-- @param #COMMANDER self
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport.
+-- @return #boolean If `true`, enough assets could be recruited.
+-- @return #table Recruited assets.
+-- @return #table Legions that have recruited assets.
+function COMMANDER:RecruitAssetsForTransport(Transport)
+
+  -- Get all undelivered cargo ops groups.
+  local cargoOpsGroups=Transport:GetCargoOpsGroups(false)
+  
+  local weightGroup=0
+  
+  -- At least one group should be spawned.
+  if #cargoOpsGroups>0 then
+  
+    -- Calculate the max weight so we know which cohorts can provide carriers.
+    for _,_opsgroup in pairs(cargoOpsGroups) do
+      local opsgroup=_opsgroup --Ops.OpsGroup#OPSGROUP
+      local weight=opsgroup:GetWeightTotal()
+      if weight>weightGroup then
+        weightGroup=weight
+      end
+    end
+  else
+    -- No cargo groups!
+    return false
+  end
+  
+  -- Cohorts.
+  local Cohorts={}
+  for _,_legion in pairs(self.legions) do
+    local legion=_legion --Ops.Legion#LEGION      
+    -- Loops over cohorts.
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      table.insert(Cohorts, cohort)
+    end
+  end    
+
+
+  -- Target is the deploy zone.
+  local TargetVec2=Transport:GetDeployZone():GetVec2()
+
+  -- Number of required carriers.
+  local NreqMin,NreqMax=Transport:GetRequiredCarriers()
+  
+  -- Recruit assets and legions.
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NreqMin, NreqMax, TargetVec2, nil, nil, nil, weightGroup)
+
+  return recruited, assets, legions  
+end
+
 --- Recruit assets for a given transport.
 -- @param #COMMANDER self
 -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 -- @return #boolean If `true`, enough assets could be recruited.
 -- @return #table Legions that have recruited assets.
-function COMMANDER:RecruitAssetsForTransport(Transport)
+function COMMANDER:_RecruitAssetsForTransport(Transport)
  
    -- Get all undelivered cargo ops groups.
   local cargoOpsGroups=Transport:GetCargoOpsGroups(false)
