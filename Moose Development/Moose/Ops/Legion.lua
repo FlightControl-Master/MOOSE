@@ -473,17 +473,30 @@ function LEGION:_GetNextMission()
 
       -- Recruit best assets for the job.    
       local recruited, assets, legions=self:RecruitAssetsForMission(mission)
-           
+
       -- Did we find enough assets?
       if recruited then
+    
+        -- Reserve assets and add to mission.
         for _,_asset in pairs(assets) do
           local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
           asset.isReserved=true
           mission:AddAsset(asset)
         end
-      
-        return mission
-      end
+        
+        -- Recruit asset for escorting recruited mission assets.
+        local EscortAvail=self:RecruitAssetsForEscort(mission, assets)
+        
+        -- Is escort required and available?
+        if EscortAvail then
+          -- Got a missin.
+          return mission
+        else
+          -- Recruited assets but no requested escort available. Unrecruit assets!
+          LEGION.UnRecruitAssets(assets, mission)
+        end
+        
+      end -- recruited mission assets
 
     end -- mission due?
   end -- mission loop
@@ -1627,8 +1640,7 @@ end
 function LEGION:RecruitAssetsForMission(Mission)
 
   -- Get required assets.
-  local NreqMin=Mission:GetRequiredAssets()
-  local NreqMax=NreqMin
+  local NreqMin, NreqMax=Mission:GetRequiredAssets()
   
   -- Target position vector.
   local TargetVec2=Mission:GetTargetVec2()
@@ -1684,6 +1696,97 @@ function LEGION:RecruitAssetsForTransport(Transport)
   local recruited, assets, legions=LEGION.RecruitCohortAssets(self.cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NreqMin, NreqMax, TargetVec2, nil, nil, nil, weightGroup)
 
   return recruited, assets, legions  
+end
+
+--- Recruit assets performing an escort mission for a given asset.
+-- @param #LEGION self
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @param #table Assets Table of assets.
+-- @return #boolean If `true`, enough assets could be recruited or no escort was required in the first place.
+function LEGION:RecruitAssetsForEscort(Mission, Assets)
+
+  -- Is an escort requested in the first place?
+  if Mission.NescortMin and Mission.NescortMax and (Mission.NescortMin>0 or Mission.NescortMax>0) then
+  
+    -- Debug info.
+    self:I(self.lid..string.format("Reqested escort for mission %s [%s]. Required assets=%d-%d", Mission:GetName(), Mission:GetType(), Mission.NescortMin,Mission.NescortMax))
+    
+    -- Escorts for each asset.        
+    local Escorts={}
+    
+    local EscortAvail=true
+    for _,_asset in pairs(Assets) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      
+      -- Recruit escort asset for the mission asset.
+      local Erecruited, eassets, elegions=LEGION.RecruitCohortAssets(self.cohorts, AUFTRAG.Type.ESCORT, nil, Mission.NescortMin, Mission.NescortMax)
+      
+      if Erecruited then
+        Escorts[asset.spawngroupname]={EscortLegions=elegions, EscortAssets=eassets}
+      else
+        -- Could not find escort for this asset ==> Escort not possible ==> Break the loop.
+        EscortAvail=false
+        break
+      end
+    end
+    
+    -- ALL escorts could be recruited. 
+    if EscortAvail then
+    
+      local N=0
+      for groupname,value in pairs(Escorts) do
+      
+        local Elegions=value.EscortLegions
+        local Eassets=value.EscortAssets
+        
+        for _,_legion in pairs(Elegions) do
+          local legion=_legion --Ops.Legion#LEGION
+    
+          -- Create and ESCORT mission for this asset.
+          local escort=AUFTRAG:NewESCORT(groupname)
+          
+          -- Reserve assts and add to mission.
+          for _,_asset in pairs(Eassets) do
+            local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+            asset.isReserved=true
+            escort:AddAsset(asset)
+            N=N+1
+          end
+          
+          -- Add mission.
+          legion:AddMission(escort)
+        
+          -- Request mission.
+          legion:MissionRequest(escort)
+          
+        end
+      end
+      
+      -- Debug info.
+      self:I(self.lid..string.format("Recruited %d escort assets for mission %s [%s]", N, Mission:GetName(), Mission:GetType()))      
+    
+      -- Yup!
+      return true    
+    else
+
+      -- Debug info.
+      self:I(self.lid..string.format("Could not get at least one escort for mission %s [%s]! Unrecruit all recruited assets", Mission:GetName(), Mission:GetType()))      
+    
+      -- Could not get at least one escort. Unrecruit all recruited ones.
+      for groupname,value in pairs(Escorts) do      
+        local Eassets=value.EscortAssets
+        LEGION.UnRecruitAssets(Eassets)
+      end
+      
+      -- No,no!
+      return false      
+    end
+    
+  else
+    -- No escort required.
+    return true
+  end      
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1826,6 +1929,30 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
 
   return false, {}, {}
 end
+
+--- Unrecruit assets. Set `isReserved` to false, return payload to airwing and (optionally) remove from assigned mission.
+-- @param #table Assets List of assets.
+-- @param Ops.Auftrag#AUFTRAG Mission (Optional) The mission from which the assets will be deleted.
+function LEGION.UnRecruitAssets(Assets, Mission)
+
+  -- Return payloads of assets.    
+  for i=1,#Assets do
+    local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+    -- Not reserved any more.
+    asset.isReserved=false
+    -- Return payload.
+    if asset.legion:IsAirwing() and not asset.spawned then
+      asset.legion:T2(asset.legion.lid..string.format("Returning payload from asset %s", asset.spawngroupname))
+      asset.legion:ReturnPayloadFromAsset(asset)
+    end
+    -- Remove from mission.
+    if Mission then
+      Mission:DelAsset(asset)
+    end    
+  end  
+
+end
+
 
 
 --- Calculate the mission score of an asset.

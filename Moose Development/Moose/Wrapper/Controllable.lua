@@ -1407,7 +1407,7 @@ function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, E
   DCSTask = {
     id = 'Escort',
     params = {
-      groupId           = FollowControllable:GetID(),
+      groupId           = FollowControllable and FollowControllable:GetID() or nil,
       pos               = Vec3,
       lastWptIndexFlag  = LastWaypointIndex and true or false,
       lastWptIndex      = LastWaypointIndex,

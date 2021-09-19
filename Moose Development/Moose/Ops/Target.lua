@@ -130,13 +130,14 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.5.1"
+TARGET.version="0.5.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Add pseudo functions.
+-- DONE: Initial object can be nil.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -156,30 +157,20 @@ function TARGET:New(TargetObject)
   
   -- Set UID.
   self.uid=_TARGETID
+  
+  if TargetObject then
  
-  -- Add object.
-  self:AddObject(TargetObject)
-  
-  -- Get first target.
-  local Target=self.targets[1] --#TARGET.Object
-  
-  if not Target then
-    self:E("ERROR: No valid TARGET!")
-    return nil
+    -- Add object.
+    self:AddObject(TargetObject)
+    
   end
   
   -- Defaults.
   self:SetPriority()
   self:SetImportance()
-    
-  -- Target Name.
-  self.name=self:GetTargetName(Target)
-  
-  -- Target category.
-  self.category=self:GetTargetCategory(Target)
   
   -- Log ID.
-  self.lid=string.format("TARGET #%03d [%s] | ", _TARGETID, tostring(self.category))
+  self.lid=string.format("TARGET #%03d | ", _TARGETID)
 
   -- Start state.
   self:SetStartState("Stopped")
@@ -317,8 +308,15 @@ end
 -- @param #TARGET self
 -- @return #boolean If true, target is alive.
 function TARGET:IsAlive()
-  local is=self:Is("Alive")
-  return is
+
+  for _,_target in pairs(self.targets) do
+    local target=_target --Ops.Target#TARGET.Object
+    if target.Status==TARGET.ObjectStatus.ALIVE then
+      return true
+    end
+  end
+  
+  return false
 end
 
 --- Check if TARGET is destroyed.
@@ -756,6 +754,13 @@ function TARGET:_AddObject(Object)
   target.Object=Object
   
   table.insert(self.targets, target)
+  
+  if self.name==nil then
+    self.name=self:GetTargetName(target)
+  end
+  if self.category==nil then
+    self.category=self:GetTargetCategory(target)
+  end
 
 end
 
@@ -1051,7 +1056,7 @@ end
 -- @param #TARGET self
 -- @return #string Name of the target usually the first object.
 function TARGET:GetName()
-  return self.name
+  return self.name or "Unknown"
 end
 
 --- Get 2D vector.

@@ -692,19 +692,30 @@ function COMMANDER:CheckMissionQueue()
           local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
           asset.isReserved=true
           mission:AddAsset(asset)
-        end              
-
-        -- Assign mission to legion(s).
-        for _,_legion in pairs(legions) do
-          local legion=_legion --Ops.Legion#LEGION
-          
-          -- Debug message.
-          self:I(self.lid..string.format("Assigning mission %s [%s] to legion %s", mission:GetName(), mission:GetType(), legion.alias))
-      
-          -- Add mission to legion.
-          self:MissionAssign(legion, mission)
-          
         end
+        
+        -- Recruit asset for escorting recruited mission assets.
+        local EscortAvail=self:RecruitAssetsForEscort(mission, assets)
+        
+
+        if EscortAvail then
+
+          -- Assign mission to legion(s).
+          for _,_legion in pairs(legions) do
+            local legion=_legion --Ops.Legion#LEGION
+            
+            -- Debug message.
+            self:I(self.lid..string.format("Assigning mission %s [%s] to legion %s", mission:GetName(), mission:GetType(), legion.alias))
+        
+            -- Add mission to legion.
+            self:MissionAssign(legion, mission)
+            
+          end
+        
+        else
+          -- Recruited assets but no requested escort available. Unrecruit assets!
+          LEGION.UnRecruitAssets(assets, mission)
+        end        
     
         -- Only ONE mission is assigned.
         return        
@@ -745,8 +756,7 @@ function COMMANDER:RecruitAssetsForMission(Mission)
   end
 
   -- Number of required assets.
-  local NreqMin=Mission:GetRequiredAssets()
-  local NreqMax=NreqMin
+  local NreqMin, NreqMax=Mission:GetRequiredAssets()
   
   -- Target position.
   local TargetVec2=Mission:GetTargetVec2()
@@ -758,6 +768,111 @@ function COMMANDER:RecruitAssetsForMission(Mission)
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem, nil)
 
   return recruited, assets, legions
+end
+
+--- Recruit assets performing an escort mission for a given asset.
+-- @param #COMMANDER self
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @param #table Assets Table of assets.
+-- @return #boolean If `true`, enough assets could be recruited or no escort was required in the first place.
+function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
+
+  -- Cohorts.
+  local Cohorts=Mission.squadrons
+  if not Cohorts then
+    Cohorts={}
+    for _,_legion in pairs(Mission.mylegions or self.legions) do
+      local legion=_legion --Ops.Legion#LEGION      
+      -- Loops over cohorts.
+      for _,_cohort in pairs(legion.cohorts) do
+        local cohort=_cohort --Ops.Cohort#COHORT
+        table.insert(Cohorts, cohort)
+      end
+    end  
+  end
+
+  -- Is an escort requested in the first place?
+  if Mission.NescortMin and Mission.NescortMax and (Mission.NescortMin>0 or Mission.NescortMax>0) then
+  
+    -- Debug info.
+    self:I(self.lid..string.format("Reqested escort for mission %s [%s]. Required assets=%d-%d", Mission:GetName(), Mission:GetType(), Mission.NescortMin,Mission.NescortMax))
+    
+    -- Escorts for each asset.        
+    local Escorts={}
+    
+    local EscortAvail=true
+    for _,_asset in pairs(Assets) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      
+      -- Recruit escort asset for the mission asset.
+      local Erecruited, eassets, elegions=LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.ESCORT, nil, Mission.NescortMin, Mission.NescortMax)
+      
+      if Erecruited then
+        Escorts[asset.spawngroupname]={EscortLegions=elegions, EscortAssets=eassets}
+      else
+        -- Could not find escort for this asset ==> Escort not possible ==> Break the loop.
+        EscortAvail=false
+        break
+      end
+    end
+    
+    -- ALL escorts could be recruited. 
+    if EscortAvail then
+    
+      local N=0
+      for groupname,value in pairs(Escorts) do
+      
+        local Elegions=value.EscortLegions
+        local Eassets=value.EscortAssets
+        
+        for _,_legion in pairs(Elegions) do
+          local legion=_legion --Ops.Legion#LEGION
+    
+          -- Create and ESCORT mission for this asset.
+          local escort=AUFTRAG:NewESCORT(groupname)
+          
+          -- Reserve assts and add to mission.
+          for _,_asset in pairs(Eassets) do
+            local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+            asset.isReserved=true
+            escort:AddAsset(asset)
+            N=N+1
+          end
+          
+          -- Add mission.
+          legion:AddMission(escort)
+        
+          -- Request mission.
+          legion:MissionRequest(escort)
+          
+        end
+      end
+      
+      -- Debug info.
+      self:I(self.lid..string.format("Recruited %d escort assets for mission %s [%s]", N, Mission:GetName(), Mission:GetType()))      
+    
+      -- Yup!
+      return true    
+    else
+
+      -- Debug info.
+      self:I(self.lid..string.format("Could not get at least one escort for mission %s [%s]! Unrecruit all recruited assets", Mission:GetName(), Mission:GetType()))      
+    
+      -- Could not get at least one escort. Unrecruit all recruited ones.
+      for groupname,value in pairs(Escorts) do      
+        local Eassets=value.EscortAssets
+        LEGION.UnRecruitAssets(Eassets)
+      end
+      
+      -- No,no!
+      return false      
+    end
+    
+  else
+    -- No escort required.
+    return true
+  end      
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

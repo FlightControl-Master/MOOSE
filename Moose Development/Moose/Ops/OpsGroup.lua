@@ -3763,9 +3763,6 @@ function OPSGROUP:_GetNextMission()
   end
   table.sort(self.missionqueue, _sort)
 
-  -- Current time.
-  local time=timer.getAbsTime()
-
   -- Look for first mission that is SCHEDULED.
   local vip=math.huge
   for _,_mission in pairs(self.missionqueue) do
@@ -3794,9 +3791,23 @@ function OPSGROUP:_GetNextMission()
     
     -- TODO: One could think of opsgroup specific start conditions. A legion also checks if "ready" but it can be other criteria for the group to actually start the mission.
     --       Good example is the above transport. The legion should start the mission but the group should only start after the transport is finished.
+    
+    -- Escort mission. Check that escorted group is alive.
+    local isEscort=true
+    if mission.type==AUFTRAG.Type.ESCORT then
+      local target=mission:GetTargetData()
+      if not target:IsAlive() then
+        isEscort=false
+      end
+    end
+
+    local isScheduled=mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.SCHEDULED
+    local isReadyToGo=(mission:IsReadyToGo() or self.legion)
+    local isImportant=(mission.importance==nil or mission.importance<=vip)
+    local isTransport=transport
 
     -- Check necessary conditions.
-    if mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.SCHEDULED and (mission:IsReadyToGo() or self.legion) and (mission.importance==nil or mission.importance<=vip) and transport then
+    if isScheduled and isReadyToGo and isImportant and isTransport and isEscort then
       return mission
     end
     

@@ -32,6 +32,7 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number auftragsnummer Auftragsnummer.
 -- @field #string type Mission type.
+-- @field #table categories Mission categories.
 -- @field #string status Mission status.
 -- @field #table legions Assigned legions.
 -- @field #table statusLegion Mission status of all assigned LEGIONs.
@@ -95,15 +96,23 @@
 -- @field #number artyRadius Radius in meters.
 -- @field #number artyShots Number of shots fired.
 -- 
+-- @field #string alert5MissionType Alert 5 mission type. This is the mission type, the alerted assets will be able to carry out.
+-- 
 -- @field Ops.Chief#CHIEF chief The CHIEF managing this mission.
 -- @field Ops.Commander#COMMANDER commander The COMMANDER managing this mission.
 -- @field #table assets Warehouse assets assigned for this mission.
--- @field #number nassets Number of required warehouse assets.
--- @field #table Nassets Number of required warehouse assets for each assigned legion.
+-- @field #number NassetsMin Min. number of required warehouse assets.
+-- @field #number NassetsMax Max. number of required warehouse assets.
+-- @field #number NescortMin Min. number of required escort assets for each group the mission is assigned to.
+-- @field #number NescortMax Max. number of required escort assets for each group the mission is assigned to.
+-- @field #number Nassets Number of requested warehouse assets.
+-- @field #table NassetsLegMin Number of required warehouse assets for each assigned legion.
+-- @field #table NassetsLegMax Number of required warehouse assets for each assigned legion.
 -- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
+-- @field #table specialLegions User specified legions assigned for this mission. Only these will be considered for the job!
+-- @field #table specialCohorts User specified cohorts assigned for this mission. Only these will be considered for the job!
 -- @field #table squadrons User specified airwing squadrons assigned for this mission. Only these will be considered for the job!
 -- @field #table payloads User specified airwing payloads for this mission. Only these will be considered for the job! 
--- @field #table mylegions User specified legions for this mission. Only these will be considered for the job!
 -- @field Ops.AirWing#AIRWING.PatrolData patroldata Patrol data.
 -- 
 -- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
@@ -244,7 +253,9 @@
 -- 
 -- An arty mission can be created with the @{#AUFTRAG.NewARTY}() function.
 -- 
+-- 
 -- # Options and Parameters
+-- 
 -- 
 -- 
 -- # Assigning Missions
@@ -261,13 +272,19 @@
 -- 
 -- Assigning an AUFTRAG to a navy groups is done via the @{Ops.NavyGroup#NAVYGROUP.AddMission} function. See NAVYGROUP docs for details.
 -- 
--- ## Airwing Level
+-- ## Legion Level
 -- 
 -- Adding an AUFTRAG to an airwing is done via the @{Ops.AirWing#AIRWING.AddMission} function. See AIRWING docs for further details.
+-- Similarly, an AUFTRAG can be added to a brigade via the @{Ops.Brigade#BRIGADE.AddMission} function
 -- 
--- ## Wing Commander Level
+-- ## Commander Level
 -- 
--- Assigning an AUFTRAG to a wing commander is done via the @{Ops.WingCommander#WINGCOMMANDER.AddMission} function. See WINGCOMMADER docs for details. 
+-- Assigning an AUFTRAG to acommander is done via the @{Ops.Commander#COMMANDER.AddMission} function. See COMMADER docs for details.
+-- 
+-- ## Chief Level
+-- 
+-- Assigning an AUFTRAG to a wing commander is done via the @{Ops.Chief#CHIEF.AddMission} function. See CHIEF docs for details. 
+--  
 -- 
 -- 
 -- # Events
@@ -289,7 +306,8 @@ AUFTRAG = {
   statusLegion       =    {},
   requestID          =    {},
   assets             =    {},
-  Nassets            =    {},
+  NassetsLegMin      =    {},
+  NassetsLegMax      =    {},
   missionFraction    =   0.5,
   enrouteTasks       =    {},
   marker             =   nil,
@@ -444,6 +462,22 @@ AUFTRAG.TargetType={
   SETUNIT="SetUnit",
 }
 
+--- Mission category.
+-- @type AUFTRAG.Category
+-- @field #string AIRCRAFT Airplanes and helicopters.
+-- @field #string AIRPLANE Airplanes.
+-- @field #string HELICOPTER Helicopter.
+-- @field #string GROUND Ground troops.
+-- @field #string NAVAL Naval grous.
+AUFTRAG.Category={
+  ALL="All",
+  AIRCRAFT="Aircraft",
+  AIRPLANE="Airplane",
+  HELICOPTER="Helicopter",
+  GROUND="Ground",
+  NAVAL="Naval",
+}
+
 --- Target data.
 -- @type AUFTRAG.TargetData
 -- @field Wrapper.Positionable#POSITIONABLE Target Target Object.
@@ -483,7 +517,7 @@ AUFTRAG.TargetType={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.8.0"
+AUFTRAG.version="0.8.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -493,6 +527,7 @@ AUFTRAG.version="0.8.0"
 -- TODO: Mission success options damaged, destroyed.
 -- TODO: F10 marker to create new missions.
 -- TODO: Add recovery tanker mission for boat ops.
+-- DONE: Added auftrag category.
 -- DONE: Missions can be assigned to multiple legions.
 -- DONE: Option to assign a specific payload for the mission (requires an AIRWING).
 -- NOPE: Clone mission. How? Deepcopy? ==> Create a new auftrag.
@@ -621,6 +656,8 @@ function AUFTRAG:NewANTISHIP(Target, Altitude)
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
   
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  
   mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
@@ -662,6 +699,8 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
   mission.missionFraction=0.9  
   mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
+  
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
 
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -722,6 +761,8 @@ function AUFTRAG:NewGCICAP(Coordinate, Altitude, Speed, Heading, Leg)
   mission.missionTask=ENUMS.MissionTask.INTERCEPT
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  
   return mission
 end
 
@@ -751,6 +792,8 @@ function AUFTRAG:NewTANKER(Coordinate, Altitude, Speed, Heading, Leg, RefuelSyst
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  
   mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
@@ -779,6 +822,8 @@ function AUFTRAG:NewAWACS(Coordinate, Altitude, Speed, Heading, Leg)
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  
   mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
@@ -801,6 +846,8 @@ function AUFTRAG:NewINTERCEPT(Target)
   mission.missionFraction=0.1  
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
+  
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -842,6 +889,8 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
   
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  
   mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
@@ -881,6 +930,8 @@ function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, Targ
   mission.missionTask=ENUMS.MissionTask.CAS  
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
+  
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
 
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -915,6 +966,8 @@ function AUFTRAG:NewFACA(Target, Designation, DataLink, Frequency, Modulation)
   mission.missionFraction=0.5
   mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
+  
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
 
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -945,6 +998,8 @@ function AUFTRAG:NewBAI(Target, Altitude)
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  
   mission.DCStask=mission:GetDCSMissionTask()  
   
   return mission
@@ -974,6 +1029,8 @@ function AUFTRAG:NewSEAD(Target, Altitude)
   mission.optionROT=ENUMS.ROT.EvadeFire
   --mission.optionROT=ENUMS.ROT.AllowAbortMission
   
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  
   mission.DCStask=mission:GetDCSMissionTask()  
   
   return mission
@@ -1001,6 +1058,8 @@ function AUFTRAG:NewSTRIKE(Target, Altitude)
   mission.missionFraction=0.75
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
+  
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -1032,6 +1091,8 @@ function AUFTRAG:NewBOMBING(Target, Altitude)
   
   -- Evaluate result after 5 min. We might need time until the bombs have dropped and targets have been detroyed.
   mission.dTevaluate=5*60
+  
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
   
   -- Get DCS task.
   mission.DCStask=mission:GetDCSMissionTask()
@@ -1069,6 +1130,8 @@ function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
   -- Evaluate result after 5 min.
   mission.dTevaluate=5*60
   
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  
   -- Get DCS task.
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -1105,6 +1168,8 @@ function AUFTRAG:NewBOMBCARPET(Target, Altitude, CarpetLength)
   -- Evaluate result after 5 min.
   mission.dTevaluate=5*60
   
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  
   -- Get DCS task.
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -1123,7 +1188,13 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ESCORT)
   
-  mission:_TargetFromObject(EscortGroup)
+  -- If only a string is passed we set a variable and check later if the group exists.
+  if type(EscortGroup)=="string" then
+    mission.escortGroupName=EscortGroup
+    mission:_TargetFromObject()
+  else
+    mission:_TargetFromObject(EscortGroup)
+  end
   
   -- DCS task parameters:
   mission.escortVec3=OffsetVector or {x=-100, y=0, z=200}
@@ -1136,6 +1207,8 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   mission.missionAltitude=1000
   mission.optionROE=ENUMS.ROE.OpenFire       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
   mission.optionROT=ENUMS.ROT.PassiveDefense
+  
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -1158,13 +1231,15 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.NoReaction
   
+  mission.categories={AUFTRAG.Category.HELICOPTER}
+  
   mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
 end
 
 
---- **[AIR ROTARY]** Create a TROOP TRANSPORT mission.
+--- **[AIR ROTARY, GROUND]** Create a TROOP TRANSPORT mission.
 -- @param #AUFTRAG self
 -- @param Core.Set#SET_GROUP TransportGroupSet The set group(s) to be transported.
 -- @param Core.Point#COORDINATE DropoffCoordinate Coordinate where the helo will land drop off the the troops.
@@ -1196,6 +1271,8 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
   -- TODO: what's the best ROE here?
   mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
+  
+  mission.categories={AUFTRAG.Category.HELICOPTER, AUFTRAG.Category.GROUND}
   
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -1231,6 +1308,8 @@ function AUFTRAG:NewOPSTRANSPORT(CargoGroupSet, PickupZone, DeployZone)
   mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
+  mission.categories={AUFTRAG.Category.ALL}
+  
   mission.DCStask=mission:GetDCSMissionTask()
 
   return mission
@@ -1262,6 +1341,8 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius)
   -- Evaluate after 8 min.
   mission.dTevaluate=8*60
   
+  mission.categories={AUFTRAG.Category.GROUND}
+  
   mission.DCStask=mission:GetDCSMissionTask()
 
   return mission
@@ -1292,6 +1373,8 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
   mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
   mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
   
+  mission.categories={AUFTRAG.Category.ALL}
+  
   mission.DCStask=mission:GetDCSMissionTask()
 
   return mission
@@ -1318,6 +1401,8 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
   mission.missionFraction=0.5
   mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
   mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or UTILS.FeetToMeters(2000)
+  
+  mission.categories={AUFTRAG.Category.ALL}
     
   mission.DCStask=mission:GetDCSMissionTask()
   mission.DCStask.params.adinfitum=Adinfinitum
@@ -1340,6 +1425,8 @@ function AUFTRAG:NewAMMOSUPPLY(Zone)
   mission.optionAlarm=ENUMS.AlarmState.Auto
   
   mission.missionFraction=0.9
+  
+  mission.categories={AUFTRAG.Category.GROUND}
     
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -1360,6 +1447,8 @@ function AUFTRAG:NewFUELSUPPLY(Zone)
   mission.optionAlarm=ENUMS.AlarmState.Auto
   
   mission.missionFraction=0.9
+  
+  mission.categories={AUFTRAG.Category.GROUND}
     
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -1383,6 +1472,8 @@ function AUFTRAG:NewALERT5(MissionType)
   mission.alert5MissionType=MissionType
   
   mission.missionFraction=1.0
+  
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
     
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -1686,28 +1777,58 @@ function AUFTRAG:SetRepeatOnSuccess(Nrepeat)
   return self
 end
 
---- Define how many assets are required to do the job. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, ...) or higher level.
+--- Define how many assets are required to do the job. Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, ...) or higher level.
 -- @param #AUFTRAG self
--- @param #number Nassets Number of asset groups. Default 1.
+-- @param #number NassetsMin Minimum number of asset groups. Default 1.
+-- @param #number NassetsMax Maximum Number of asset groups. Default is same as `NassetsMin`.
 -- @return #AUFTRAG self
-function AUFTRAG:SetRequiredAssets(Nassets)
-  self.nassets=Nassets or 1
+function AUFTRAG:SetRequiredAssets(NassetsMin, NassetsMax)
+
+  self.NassetsMin=NassetsMin or 1
+  
+  self.NassetsMax=NassetsMax or self.NassetsMin
+
+  -- Ensure that max is at least equal to min.
+  if self.NassetsMax<self.NassetsMin then
+    self.NassetsMax=self.NassetsMin
+  end
+
   return self
 end
 
 --- Get number of required assets.
 -- @param #AUFTRAG self
 -- @param Ops.Legion#Legion Legion (Optional) Only get the required assets for a specific legion. If required assets for this legion are not defined, the total number is returned.
--- @return #number Number of required assets.
+-- @return #number Min. number of required assets.
+-- @return #number Max. number of required assets.
 function AUFTRAG:GetRequiredAssets(Legion)
 
-  local N=self.nassets
+  --local N=self.nassets
 
-  if Legion and self.Nassets[Legion.alias] then
-    N=self.Nassets[Legion.alias]
+  --if Legion and self.Nassets[Legion.alias] then
+  --  N=self.Nassets[Legion.alias]
+  --end
+
+  return self.NassetsMin, self.NassetsMax
+end
+
+--- Define how many assets are required to do the job. Only used if the mission is handled by a **LEGION** (AIRWING, BRIGADE, ...) or higher level.
+-- @param #AUFTRAG self
+-- @param #number NescortMin Minimum number of asset groups. Default 1.
+-- @param #number NescortMax Maximum Number of asset groups. Default is same as `NassetsMin`.
+-- @return #AUFTRAG self
+function AUFTRAG:SetRequiredEscorts(NescortMin, NescortMax)
+
+  self.NescortMin=NescortMin or 1
+  
+  self.NescortMax=NescortMax or self.NescortMin
+
+  -- Ensure that max is at least equal to min.
+  if self.NescortMax<self.NescortMin then
+    self.NescortMax=self.NescortMin
   end
 
-  return N
+  return self
 end
 
 --- Set mission name.
@@ -2039,7 +2160,7 @@ end
 -- @param #AUFTRAG self
 -- @return #number Numer of required assets.
 function AUFTRAG:GetNumberOfRequiredAssets()
-  return self.nassets
+  return self.Nassets or self.NassetsMin
 end
 
 --- Get mission priority.
@@ -2167,6 +2288,8 @@ function AUFTRAG:_AssignCohort(Cohort)
   self.squadrons=self.squadrons or {}
   
   self:T3(self.lid..string.format("Assigning cohort %s", tostring(Cohort.name)))
+  
+  -- Add cohort to table.
   table.insert(self.squadrons, Cohort)
   
   return self
@@ -2338,6 +2461,67 @@ function AUFTRAG:IsNotOver()
   return not self:IsOver()
 end
 
+--- Check if mission is for aircarft (airplanes and/or helicopters).
+-- @param #AUFTRAG self
+-- @return #boolean If `true`, mission is for aircraft.
+function AUFTRAG:IsAircraft()
+  for _,category in pairs(self.categories) do
+    if category==AUFTRAG.Category.AIRCRAFT or category==AUFTRAG.Category.AIRPLANE or category==AUFTRAG.Category.HELICOPTER then
+      return true
+    end 
+  end
+  return false
+end
+
+--- Check if mission is for airplanes.
+-- @param #AUFTRAG self
+-- @return #boolean If `true`, mission is for airplanes.
+function AUFTRAG:IsAirplane()
+  for _,category in pairs(self.categories) do
+    if category==AUFTRAG.Category.AIRPLANE then
+      return true
+    end 
+  end
+  return false
+end
+
+--- Check if mission is for helicopters.
+-- @param #AUFTRAG self
+-- @return #boolean If `true`, mission is for helicopters.
+function AUFTRAG:IsHelicopters()
+  for _,category in pairs(self.categories) do
+    if category==AUFTRAG.Category.HELICOPTER then
+      return true
+    end 
+  end
+  return false
+end
+
+--- Check if mission is for ground units.
+-- @param #AUFTRAG self
+-- @return #boolean If `true`, mission is for ground units.
+function AUFTRAG:IsGround()
+  for _,category in pairs(self.categories) do
+    if category==AUFTRAG.Category.GROUND then
+      return true
+    end 
+  end
+  return false
+end
+
+--- Check if mission is for naval units.
+-- @param #AUFTRAG self
+-- @return #boolean If `true`, mission is for naval units.
+function AUFTRAG:IsNaval()
+  for _,category in pairs(self.categories) do
+    if category==AUFTRAG.Category.NAVAL then
+      return true
+    end 
+  end
+  return false
+end
+
+
 --- Check if mission is ready to be started.
 -- * Mission start time passed.
 -- * Mission stop time did not pass already.
@@ -2495,6 +2679,26 @@ function AUFTRAG:onafterStatus(From, Event, To)
 
   -- Current abs. mission time.
   local Tnow=timer.getAbsTime()
+  
+  -- ESCORT: Check if only the group NAME of an escort had been specified.
+  if self.escortGroupName then
+    -- Try to find the group.
+    local group=GROUP:FindByName(self.escortGroupName)
+    if group and group:IsAlive() then
+    
+      -- Debug info.
+      self:T(self.lid..string.format("ESCORT group %s is now alive. Updating DCS task and adding group to TARGET", tostring(self.escortGroupName)))    
+    
+      -- Add TARGET object.
+      self.engageTarget:AddObject(group)
+      
+      -- Update DCS task with the known group ID.
+      self.DCStask=self:GetDCSMissionTask()
+      
+      -- Set value to nil so we do not do this again in the next cycle.
+      self.escortGroupName=nil      
+    end
+  end
 
   -- Number of alive mission targets.
   local Ntargets=self:CountMissionTargets()
@@ -3337,7 +3541,7 @@ end
 -- @param #string To To state.
 function AUFTRAG:onbeforeRepeat(From, Event, To)
 
-  if not (self.chief or self.commander or #self.legions==0) then
+  if not (self.chief or self.commander or #self.legions>0) then
     self:E(self.lid.."ERROR: Mission can only be repeated by a CHIEF, COMMANDER or LEGION! Stopping AUFTRAG")
     self:Stop()  
     return false
@@ -3498,7 +3702,7 @@ function AUFTRAG:_TargetFromObject(Object)
 
   if not self.engageTarget then
   
-    if Object:IsInstanceOf("TARGET") then
+    if Object and Object:IsInstanceOf("TARGET") then
     
       self.engageTarget=Object
     
@@ -3513,7 +3717,7 @@ function AUFTRAG:_TargetFromObject(Object)
     -- Target was already specified elsewhere.
   
   end
-
+  
   -- Debug info.
   --self:T2(self.lid..string.format("Mission Target %s Type=%s, Ntargets=%d, Lifepoints=%d", self.engageTarget.lid, self.engageTarget.lid, self.engageTarget.N0, self.engageTarget:GetLife()))
   
@@ -3848,7 +4052,7 @@ function AUFTRAG:UpdateMarker()
   local text=string.format("%s %s: %s", self.name, self.type:upper(), self.status:upper())
   text=text..string.format("\n%s", self:GetTargetName())
   text=text..string.format("\nTargets %d/%d, Life Points=%d/%d", self:CountMissionTargets(), self:GetTargetInitialNumber(), self:GetTargetLife(), self:GetTargetInitialLife())
-  text=text..string.format("\nFlights %d/%d", self:CountOpsGroups(), self.nassets)
+  text=text..string.format("\nOpsGroups %d/%d", self:CountOpsGroups(), self.nassets)
 
   if not self.marker then
   

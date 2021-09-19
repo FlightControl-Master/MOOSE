@@ -815,7 +815,7 @@ function AIRWING:onafterStatus(From, Event, To)
       local mission=_mission --Ops.Auftrag#AUFTRAG
 
       local prio=string.format("%d/%s", mission.prio, tostring(mission.importance)) ; if mission.urgent then prio=prio.." (!)" end
-      local assets=string.format("%d/%d", mission:CountOpsGroups(), mission.nassets)
+      local assets=string.format("%d/%d", mission:CountOpsGroups(), mission:GetNumberOfRequiredAssets())
       local target=string.format("%d/%d Damage=%.1f", mission:CountMissionTargets(), mission:GetTargetInitialNumber(), mission:GetTargetDamage())
       local mystatus=mission:GetLegionStatus(self)
 
