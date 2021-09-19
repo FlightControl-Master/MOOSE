@@ -839,12 +839,8 @@ function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
             N=N+1
           end
           
-          -- Add mission.
-          legion:AddMission(escort)
-        
-          -- Request mission.
-          legion:MissionRequest(escort)
-          
+          -- Assign mission to legion.
+          self:MissionAssign(legion, escort)                    
         end
       end
       
