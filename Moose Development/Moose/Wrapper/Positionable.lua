@@ -684,6 +684,27 @@ function POSITIONABLE:IsShip()
 end
 
 
+--- Returns if the unit is a submarine.
+-- @param #POSITIONABLE self
+-- @return #boolean Submarines attributes result.
+function POSITIONABLE:IsSubmarine()
+  self:F2()
+
+  local DCSUnit = self:GetDCSObject()
+
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+    if UnitDescriptor.attributes["Submarines"] == true then
+      return true
+    else
+      return false
+    end
+  end
+
+  return nil
+end
+
+
 --- Returns true if the POSITIONABLE is in the air.
 -- Polymorphic, is overridden in GROUP and UNIT.
 -- @param Wrapper.Positionable#POSITIONABLE self
@@ -1513,6 +1534,7 @@ do -- Cargo
           ["Ural-4320 APA-5D"] = 10,
           ["Ural-4320T"] = 14,
           ["ZBD04A"] = 7, -- new by kappa
+          ["VAB_Mephisto"] = 8, -- new by Apple
         }
 
         local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 95
