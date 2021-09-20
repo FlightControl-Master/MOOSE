@@ -385,7 +385,7 @@ AUFTRAG.Type={
 }
 
 --- Mission status of an assigned group.
--- @type AUFTRAG.GroupStatus
+-- @type AUFTRAG.SpecialTask
 -- @field #string PATROLZONE Patrol zone task.
 -- @field #string RECON Recon task
 -- @field #string AMMOSUPPLY Ammo Supply.
@@ -508,8 +508,10 @@ AUFTRAG.Category={
 -- @type AUFTRAG.GroupData
 -- @field Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
 -- @field Core.Point#COORDINATE waypointcoordinate Ingress waypoint coordinate.
--- @field #number waypointindex Waypoint index.
+-- @field #number waypointindex Mission (ingress) Waypoint UID.
+-- @field #number waypointEgressUID Egress Waypoint UID.
 -- @field Core.Point#COORDINATE wpegresscoordinate Egress waypoint coordinate.
+-- 
 -- @field Ops.OpsGroup#OPSGROUP.Task waypointtask Waypoint task.
 -- @field #string status Group mission status.
 -- @field Functional.Warehouse#WAREHOUSE.Assetitem asset The warehouse asset.
@@ -2599,7 +2601,7 @@ end
 
 --- Check if mission is ready to be pushed.
 -- * Mission push time already passed.
--- * All push conditions are true.
+-- * **All** push conditions are true.
 -- @param #AUFTRAG self
 -- @return #boolean If true, mission groups can push.
 function AUFTRAG:IsReadyToPush()
@@ -2607,7 +2609,7 @@ function AUFTRAG:IsReadyToPush()
   local Tnow=timer.getAbsTime()
 
   -- Push time passed?
-  if self.Tpush and Tnow<self.Tpush then
+  if self.Tpush and Tnow<=self.Tpush then
     return false
   end
 
@@ -3060,19 +3062,22 @@ function AUFTRAG:GetLegionStatus(Legion)
 end
 
 
---- Set Ops group waypoint coordinate.
+--- Set mission (ingress) waypoint coordinate for OPS group.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
 -- @param Core.Point#COORDINATE coordinate Waypoint Coordinate.
+-- @return #AUFTRAG self
 function AUFTRAG:SetGroupWaypointCoordinate(opsgroup, coordinate)
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     groupdata.waypointcoordinate=coordinate
   end
+  return self
 end
 
---- Get opsgroup waypoint coordinate.
+--- Get mission (ingress) waypoint coordinate of OPS group
 -- @param #AUFTRAG self
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
 -- @return Core.Point#COORDINATE Waypoint Coordinate.
 function AUFTRAG:GetGroupWaypointCoordinate(opsgroup)
   local groupdata=self:GetGroupData(opsgroup)
@@ -3082,9 +3087,9 @@ function AUFTRAG:GetGroupWaypointCoordinate(opsgroup)
 end
 
 
---- Set Ops group waypoint task.
+--- Set mission waypoint task for OPS group.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
 -- @param Ops.OpsGroup#OPSGROUP.Task task Waypoint task.
 function AUFTRAG:SetGroupWaypointTask(opsgroup, task)
   self:T2(self.lid..string.format("Setting waypoint task %s", task and task.description or "WTF"))
@@ -3094,9 +3099,9 @@ function AUFTRAG:SetGroupWaypointTask(opsgroup, task)
   end
 end
 
---- Get opsgroup waypoint task.
+--- Get mission waypoint task of OPS group.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
 -- @return Ops.OpsGroup#OPSGROUP.Task task Waypoint task. Waypoint task.
 function AUFTRAG:GetGroupWaypointTask(opsgroup)
   local groupdata=self:GetGroupData(opsgroup)
@@ -3105,28 +3110,56 @@ function AUFTRAG:GetGroupWaypointTask(opsgroup)
   end
 end
 
---- Set opsgroup waypoint index.
+--- Set mission (ingress) waypoint UID for OPS group.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
--- @param #number waypointindex Waypoint index.
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+-- @param #number waypointindex Waypoint UID.
+-- @return #AUFTRAG self
 function AUFTRAG:SetGroupWaypointIndex(opsgroup, waypointindex)
-  self:T2(self.lid..string.format("Setting waypoint index %d", waypointindex))
+  self:T2(self.lid..string.format("Setting Mission waypoint UID=%d", waypointindex))
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     groupdata.waypointindex=waypointindex
   end
+  return self
 end
 
---- Get opsgroup waypoint index.
+--- Get mission (ingress) waypoint UID of OPS group.
 -- @param #AUFTRAG self
--- @param Ops.OpsGroup#OPSGROUP opsgroup The flight group.
--- @return #number Waypoint index
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+-- @return #number Waypoint UID.
 function AUFTRAG:GetGroupWaypointIndex(opsgroup)
   local groupdata=self:GetGroupData(opsgroup)
   if groupdata then
     return groupdata.waypointindex
   end
 end
+
+--- Set Egress waypoint UID for OPS group.
+-- @param #AUFTRAG self
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+-- @param #number waypointindex Waypoint UID.
+-- @return #AUFTRAG self
+function AUFTRAG:SetGroupEgressWaypointUID(opsgroup, waypointindex)
+  self:T2(self.lid..string.format("Setting Egress waypoint UID=%d", waypointindex))
+  local groupdata=self:GetGroupData(opsgroup)
+  if groupdata then
+    groupdata.waypointEgressUID=waypointindex
+  end
+  return self
+end
+
+--- Get Egress waypoint UID of OPS group.
+-- @param #AUFTRAG self
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
+-- @return #number Waypoint UID.
+function AUFTRAG:GetGroupEgressWaypointUID(opsgroup)
+  local groupdata=self:GetGroupData(opsgroup)
+  if groupdata then
+    return groupdata.waypointEgressUID
+  end
+end
+
 
 
 --- Check if all flights are done with their mission (or dead).
@@ -4052,7 +4085,7 @@ function AUFTRAG:UpdateMarker()
   local text=string.format("%s %s: %s", self.name, self.type:upper(), self.status:upper())
   text=text..string.format("\n%s", self:GetTargetName())
   text=text..string.format("\nTargets %d/%d, Life Points=%d/%d", self:CountMissionTargets(), self:GetTargetInitialNumber(), self:GetTargetLife(), self:GetTargetInitialLife())
-  text=text..string.format("\nOpsGroups %d/%d", self:CountOpsGroups(), self.nassets)
+  text=text..string.format("\nOpsGroups %d/%d", self:CountOpsGroups(), self:GetNumberOfRequiredAssets())
 
   if not self.marker then
   

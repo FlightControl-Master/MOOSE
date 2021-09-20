@@ -2654,19 +2654,20 @@ function FLIGHTGROUP:onafterWait(From, Event, To, Duration, Altitude, Speed)
   Speed=Speed or (self.isHelo and 20 or 250)
 
   -- Debug message.
-  local text=string.format("Flight group set to wait/orbit at altitude %d m and speed %.1f km/h", Altitude, Speed)
+  local text=string.format("Group set to wait/orbit at altitude %d m and speed %.1f km/h for %s seconds", Altitude, Speed, tostring(Duration))
   self:T(self.lid..text)
 
   --TODO: set ROE passive. introduce roe event/state/variable.
 
   -- Orbit until flaghold=1 (true) but max 5 min if no FC is giving the landing clearance.
+  self.flaghold:Set(0)
   local TaskOrbit = self.group:TaskOrbit(Coord, Altitude, UTILS.KnotsToMps(Speed))
-  local TaskStop  = self.group:TaskCondition(nil, nil, nil, nil, Duration)
+  local TaskStop  = self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, Duration)
   local TaskCntr  = self.group:TaskControlled(TaskOrbit, TaskStop)
   local TaskOver  = self.group:TaskFunction("FLIGHTGROUP._FinishedWaiting", self)
   
   local DCSTasks
-  if Duration then
+  if Duration or true then
     DCSTasks=self.group:TaskCombo({TaskCntr, TaskOver})
   else
     DCSTasks=self.group:TaskCombo({TaskOrbit, TaskOver})
@@ -2674,7 +2675,7 @@ function FLIGHTGROUP:onafterWait(From, Event, To, Duration, Altitude, Speed)
 
   
   -- Set task.
-  self:SetTask(DCSTasks)
+  self:PushTask(DCSTasks)
   
   -- Set time stamp.
   self.Twaiting=timer.getAbsTime()
@@ -3175,7 +3176,7 @@ end
 -- @return Wrapper.Airbase#AIRBASE Final destination airbase or #nil.
 function FLIGHTGROUP:GetHomebaseFromWaypoints()
 
-  local wp=self:GetWaypoint(1)
+  local wp=self.waypoints0 and self.waypoints0[1] or nil --self:GetWaypoint(1)
 
   if wp then
 
@@ -3289,7 +3290,7 @@ end
 -- @return Wrapper.Airbase#AIRBASE Final destination airbase or #nil.
 function FLIGHTGROUP:GetDestinationFromWaypoints()
 
-  local wp=self:GetWaypointFinal()
+  local wp=self.waypoints0 and self.waypoints0[#self.waypoints0] or nil --self:GetWaypointFinal()
 
   if wp then
 

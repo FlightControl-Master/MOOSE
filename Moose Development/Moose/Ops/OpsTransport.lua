@@ -700,7 +700,7 @@ end
 --- Get transfer carrier(s). These are carrier groups, where the cargo is directly loaded into when disembarked.
 -- @param #OPSTRANSPORT self
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #table Table of carriers.
+-- @return #table Table of carrier OPS groups.
 function OPSTRANSPORT:GetDisembarkCarriers(TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
@@ -909,7 +909,7 @@ function OPSTRANSPORT:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
       end
     end
   end
-  
+    
   return opsgroups
 end
 
@@ -1898,15 +1898,49 @@ function OPSTRANSPORT:_CountCargosInZone(Zone, Delivered, Carrier, TransportZone
   -- Get cargo ops groups.
   local cargos=self:GetCargoOpsGroups(Delivered, Carrier, TransportZoneCombo)
   
+  --- Function to check if carrier is supposed to be disembarked to.
+  local function iscarrier(_cargo)
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP
+    
+    local mycarrier=cargo:_GetMyCarrierGroup()
+    
+    if mycarrier and mycarrier:IsUnloading() then
+    
+      local carriers=mycarrier.cargoTransport:GetDisembarkCarriers(mycarrier.cargoTZC)
+    
+      for _,_carrier in pairs(carriers) do
+        local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+        if Carrier:GetName()==carrier:GetName() then
+          return true
+        end
+      end
+      
+    end
+    
+    return false
+  end
+  
   local N=0
   for _,_cargo in pairs(cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP
+ 
+    local isNotCargo=cargo:IsNotCargo(true)
+    if not isNotCargo then
+      isNotCargo=iscarrier(cargo)
+    end
     
+    -- Debug info.
+    --self:T2(self.lid..string.format("Cargo=%s: notcargo=%s, iscarrier=%s inzone=%s, inutero=%s", cargo:GetName(), tostring(cargo:IsNotCargo(true)), tostring(iscarrier(cargo)), tostring(cargo:IsInZone(Zone)), tostring(cargo:IsInUtero()) ))
+    
+
     -- We look for groups that are not cargo, in the zone or in utero.
-    if cargo:IsNotCargo(true) and (cargo:IsInZone(Zone) or cargo:IsInUtero()) then
+    if isNotCargo and (cargo:IsInZone(Zone) or cargo:IsInUtero()) then
       N=N+1
     end
   end
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Found %d units in zone %s", N, Zone:GetName()))
 
   return N
 end

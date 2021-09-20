@@ -3230,26 +3230,47 @@ function OPSGROUP:onbeforeTaskExecute(From, Event, To, Task)
   if Mission and (Mission.Tpush or #Mission.conditionPush>0) then
     
     if Mission:IsReadyToPush() then
-
-      -- Not waiting any more.
-      self.Twaiting=nil
-      self.dTwait=nil
+    
+      ---
+      -- READY to push yet
+      ---    
+    
+      -- Group is currently waiting.
+      if self:IsWaiting() then
+      
+        -- Not waiting any more.
+        self.Twaiting=nil
+        self.dTwait=nil      
+        
+        -- For a flight group, we must cancel the wait/orbit task.
+        if self:IsFlightgroup() then
+        
+          -- Set hold flag to 1. This is a condition in the wait/orbit task.
+          self.flaghold:Set(1)
+          
+          -- Reexecute task in 1 sec to allow to flag to take effect.
+          --self:__TaskExecute(-1, Task)
+      
+          -- Deny transition for now.
+          --return false          
+        end                
+      end
     
     else
       
       ---
-      -- Not ready to push yet
+      -- NOT READY to push yet
       ---
 
       if self:IsWaiting() then
         -- Group is already waiting
       else
+        -- Wait indefinately.
         self:Wait()
       end
 
-      -- Time to for the next try.
+      -- Time to for the next try. Best guess is when push time is reached or 20 sec when push conditions are not true yet.
       local dt=Mission.Tpush and Mission.Tpush-timer.getAbsTime() or 20
-
       
       -- Debug info.
       self:T(self.lid..string.format("Mission %s task execute suspended for %d seconds", Mission.name, dt))
@@ -3594,8 +3615,13 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
     local status=Mission:GetGroupStatus(self)
 
     if status~=AUFTRAG.GroupStatus.PAUSED then
-      self:T(self.lid.."Task Done ==> Mission Done!")
-      self:MissionDone(Mission)
+      local EgressUID=Mission:GetGroupEgressWaypointUID(self)
+      if EgressUID then
+        self:T(self.lid..string.format("Task Done but Egress waypoint defined ==> Will call Mission Done once group passed waypoint UID=%d!", EgressUID))
+      else
+        self:T(self.lid.."Task Done ==> Mission Done!")
+        self:MissionDone(Mission)
+      end
     else
       --Mission paused. Do nothing! Just set the current mission to nil so we can launch a new one.
       if self.currentmission and self.currentmission==Mission.auftragsnummer then
@@ -3800,7 +3826,8 @@ function OPSGROUP:_GetNextMission()
         isEscort=false
       end
     end
-
+  
+    -- Conditons to start.
     local isScheduled=mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.SCHEDULED
     local isReadyToGo=(mission:IsReadyToGo() or self.legion)
     local isImportant=(mission.importance==nil or mission.importance<=vip)
@@ -4297,7 +4324,9 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Add egress waypoint.
     local egress=mission:GetMissionEgressCoord()
     if egress then
+      --egress:MarkToAll(string.format("Egress Mission %s alt=%d m", mission:GetName(), waypointcoord.y))
       local waypointEgress=self:AddWaypoint(egress, SpeedToMission, waypoint.uid, formation, false) ; waypointEgress.missionUID=mission.auftragsnummer
+      mission:SetGroupEgressWaypointUID(self, waypointEgress.uid)
     end
 
     ---
@@ -4633,13 +4662,26 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     end
     
     -- Passing mission waypoint?
+    local isEgress=false
     if Waypoint.missionUID then
-      self:T2(self.lid..string.format("Passing mission waypoint"))
+    
+      -- Debug info.
+      self:T2(self.lid..string.format("Passing mission waypoint UID=%s", tostring(Waypoint.uid)))
+      
+      -- Get the mission.
+      local mission=self:GetMissionByID(Waypoint.missionUID)      
+    
+      -- Check if this was an Egress waypoint of the mission. If so, call Mission Done! This will call CheckGroupDone.
+      local EgressUID=mission and mission:GetGroupEgressWaypointUID(self) or nil      
+      isEgress=EgressUID and Waypoint.uid==EgressUID
+      if isEgress and mission:GetGroupStatus(self)~=AUFTRAG.GroupStatus.DONE then
+        self:MissionDone(mission)
+      end
     end
 
     -- Check if all tasks/mission are done?
     -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
-    if ntasks==0 and self:HasPassedFinalWaypoint() then
+    if ntasks==0 and self:HasPassedFinalWaypoint() and not isEgress then
       self:_CheckGroupDone(0.01)
     end
 
@@ -6788,10 +6830,24 @@ function OPSGROUP:onafterLoading(From, Event, To)
   -- Loading time stamp.
   self.Tloading=timer.getAbsTime()
 
-  --TODO: sort cargos wrt weight.
-
   -- Cargo group table.
-  local cargos=self.cargoTZC.Cargos
+  --local cargos=self.cargoTZC.Cargos
+  
+  local cargos={}
+  for _,_cargo in pairs(self.cargoTZC.Cargos) do
+    local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+    if self:CanCargo(cargo.opsgroup) and (not (cargo.delivered or cargo.opsgroup:IsDead())) then
+      table.insert(cargos, cargo)
+    end
+  end
+  
+  -- Sort results table wrt descending weight.
+  local function _sort(a, b)
+    local cargoA=a --Ops.OpsGroup#OPSGROUP.CargoGroup
+    local cargoB=b --Ops.OpsGroup#OPSGROUP.CargoGroup
+    return cargoA.opsgroup:GetWeightTotal()>cargoB.opsgroup:GetWeightTotal()
+  end
+  table.sort(cargos, _sort)  
 
   -- Loop over all cargos.
   for _,_cargo in pairs(cargos) do
@@ -8019,8 +8075,16 @@ function OPSGROUP:_CheckStuck()
 
     -- Time we are holding.
     local holdtime=Tnow-self.stuckTimestamp
+    
+    if holdtime>=5*60 and holdtime<10*60 then
 
-    if holdtime>=10*60 then
+      -- Debug warning.
+      self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
+      
+      -- Give cruise command again.
+      self:__Cruise(1)
+
+    elseif holdtime>=10*60 then
 
       -- Debug warning.
       self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
@@ -8428,6 +8492,9 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
     local destbase=self:GetDestinationFromWaypoints()
     self.destbase=self.destbase or destbase
     self.currbase=self:GetHomebaseFromWaypoints()
+    
+    --env.info("FF home base "..(self.homebase and self.homebase:GetName() or "unknown"))
+    --env.info("FF dest base "..(self.destbase and self.destbase:GetName() or "unknown"))    
   
     -- Remove the landing waypoint. We use RTB for that. It makes adding new waypoints easier as we do not have to check if the last waypoint is the landing waypoint.
     if destbase and #self.waypoints>1 then
