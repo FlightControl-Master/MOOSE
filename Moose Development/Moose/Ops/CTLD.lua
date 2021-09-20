@@ -763,16 +763,20 @@ do
 --
 --        function CTLD_Cargotransport:OnAfterCratesDropped(From, Event, To, Group, Unit, Cargotable)
 --            local points = 10
---            local PlayerName = Unit:GetPlayerName()
---            my_scoring:_AddPlayerFromUnit( Unit )
---            my_scoring:AddGoalScore(Unit, "CTLD", string.format("Pilot %s has been awarded %d points for transporting cargo crates!", PlayerName, points), points)
+--            if Unit then
+--              local PlayerName = Unit:GetPlayerName()
+--              my_scoring:_AddPlayerFromUnit( Unit )
+--              my_scoring:AddGoalScore(Unit, "CTLD", string.format("Pilot %s has been awarded %d points for transporting cargo crates!", PlayerName, points), points)
+--            end
 --        end
 --        
 --        function CTLD_Cargotransport:OnAfterCratesBuild(From, Event, To, Group, Unit, Vehicle)
 --          local points = 5
---          local PlayerName = Unit:GetPlayerName()
---          my_scoring:_AddPlayerFromUnit( Unit )
---          my_scoring:AddGoalScore(Unit, "CTLD", string.format("Pilot %s has been awarded %d points for the construction of Units!", PlayerName, points), points)
+--          if Unit then
+  --          local PlayerName = Unit:GetPlayerName()
+  --          my_scoring:_AddPlayerFromUnit( Unit )
+  --          my_scoring:AddGoalScore(Unit, "CTLD", string.format("Pilot %s has been awarded %d points for the construction of Units!", PlayerName, points), points)
+--          end
 --         end
 --  
 -- ## 4. F10 Menu structure
@@ -842,6 +846,7 @@ do
 --              my_ctld.saveinterval = 600 -- save every 10 minutes
 --              my_ctld.filename = "missionsave.csv" -- example filename
 --              my_ctld.filepath = "C:\\Users\\myname\\Saved Games\\DCS\Missions\\MyMission" -- example path
+--              my_ctld.eventoninject = true -- fire OnAfterCratesBuild and OnAfterTroopsDeployed events when loading (uses Inject functions)
 --  
 --  Then use an initial load at the beginning of your mission:
 --  
@@ -957,7 +962,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.2.1a1"
+CTLD.version="0.2.1a2"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1108,6 +1113,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.enableLoadSave = false
   self.filepath = nil
   self.saveinterval = 600
+  self.eventoninject = true
+  
   local AliaS = string.gsub(self.alias," ","_")
   self.filename = string.format("CTLD_%s_Persist.csv",AliaS)
   
@@ -1146,6 +1153,24 @@ function CTLD:New(Coalition, Prefixes, Alias)
 
   --- Triggers the FSM event "Status" after a delay.
   -- @function [parent=#CTLD] __Status
+  -- @param #CTLD self
+  -- @param #number delay Delay in seconds.
+  
+  --- Triggers the FSM event "Load".
+  -- @function [parent=#CTLD] Load
+  -- @param #CTLD self
+
+  --- Triggers the FSM event "Load" after a delay.
+  -- @function [parent=#CTLD] __Load
+  -- @param #CTLD self
+  -- @param #number delay Delay in seconds.
+  
+  --- Triggers the FSM event "Save".
+  -- @function [parent=#CTLD] Load
+  -- @param #CTLD self
+
+  --- Triggers the FSM event "Save" after a delay.
+  -- @function [parent=#CTLD] __Save
   -- @param #CTLD self
   -- @param #number delay Delay in seconds.
   
@@ -3602,6 +3627,9 @@ end
       else
         --self:I(string.format("%s Injected Troops %s into action!",self.lid, name))
       end
+      if self.eventoninject then
+         self:__TroopsDeployed(1,nil,nil,self.DroppedTroops[self.TroopCounter])
+      end
     end -- if type end
     return self
   end
@@ -3669,6 +3697,9 @@ end
         end
         if self.movetroopstowpzone and canmove then
           self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
+        end
+        if self.eventoninject then
+          self:__CratesBuild(1,nil,nil,self.DroppedTroops[self.TroopCounter])
         end
       end -- end loop
     end -- if type end
@@ -4147,22 +4178,24 @@ end
       vec2.x = dataset[2]
       vec2.y = dataset[4]
       local cargoname = dataset[5]
-      local cargotemplates = dataset[6]
-      cargotemplates = string.gsub(cargotemplates,"{","")
-      cargotemplates = string.gsub(cargotemplates,"}","")
-      cargotemplates = UTILS.Split(cargotemplates,";")
-      local cargotype = dataset[7]
-      local size = dataset[8]
-      local mass = dataset[9]
-      --self:I({groupname,vec3,cargoname,cargotemplates,cargotype,size,mass})
-      -- inject at Vec2
-      local dropzone = ZONE_RADIUS:New("DropZone",vec2,100)
-      if cargotype == CTLD_CARGO.Enum.VEHICLE or cargotype == CTLD_CARGO.Enum.FOB then
-        local injectvehicle = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,false,mass)      
-        self:InjectVehicles(dropzone,injectvehicle)
-      elseif cargotype == CTLD_CARGO.Enum.TROOPS or cargotype == CTLD_CARGO.Enum.ENGINEERS then
-        local injecttroops = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,false,mass)      
-        self:InjectTroops(dropzone,injecttroops)
+      if type(cargoname) == "string" then
+        local cargotemplates = dataset[6]
+        cargotemplates = string.gsub(cargotemplates,"{","")
+        cargotemplates = string.gsub(cargotemplates,"}","")
+        cargotemplates = UTILS.Split(cargotemplates,";")
+        local cargotype = dataset[7]
+        local size = dataset[8]
+        local mass = dataset[9]
+        --self:I({groupname,vec3,cargoname,cargotemplates,cargotype,size,mass})
+        -- inject at Vec2
+        local dropzone = ZONE_RADIUS:New("DropZone",vec2,100)
+        if cargotype == CTLD_CARGO.Enum.VEHICLE or cargotype == CTLD_CARGO.Enum.FOB then
+          local injectvehicle = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,false,mass)      
+          self:InjectVehicles(dropzone,injectvehicle)
+        elseif cargotype == CTLD_CARGO.Enum.TROOPS or cargotype == CTLD_CARGO.Enum.ENGINEERS then
+          local injecttroops = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,false,mass)      
+          self:InjectTroops(dropzone,injecttroops)
+        end
       end     
     end
     
