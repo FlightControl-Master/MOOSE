@@ -962,7 +962,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.2.1a2"
+CTLD.version="0.2.1a3"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -4083,7 +4083,11 @@ end
         return false
       end
     end
-  
+    
+    -- Set file name and path
+    filename=filename or self.filename
+    path = path or self.filepath
+    
     -- Check io module is available.
     if not io then
       self:E(self.lid.."WARNING: io not desanitized. Cannot load file.")
@@ -4100,9 +4104,6 @@ end
       path=path or lfs.writedir()
     end
   
-    -- Set file name.
-    filename=filename or self.filename
-  
     -- Set path.
     if path~=nil then
       filename=path.."\\"..filename
@@ -4114,8 +4115,9 @@ end
     if exists then
       return true
     else
-      self:E(self.lid..string.format("WARNING: State file %s does not exist.", filename))
+      self:E(self.lid..string.format("WARNING: State file %s might not exist.", filename))
       return false
+      --return self
     end
   
   end
@@ -4139,14 +4141,15 @@ end
       f:close()
       return data
     end
-  
+    
+    -- Set file name and path
+    filename=filename or self.filename
+    path = path or self.filepath
+    
     -- Set path or default.
     if lfs then
       path=path or lfs.writedir()
     end
-  
-    -- Set file name.
-    filename=filename or self.filename
   
     -- Set path.
     if path~=nil then
