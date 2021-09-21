@@ -3998,7 +3998,25 @@ do -- SET_CLIENT
 
     return self
   end
+  
+  --- Iterate the SET_CLIENT and count alive units.
+  -- @param #SET_CLIENT self
+  -- @return #number count
+  function SET_CLIENT:CountAlive()
 
+    local Set = self:GetSet()
+
+    local CountU = 0
+    for UnitID, UnitData in pairs(Set) do -- For each GROUP in SET_GROUP
+      if UnitData and UnitData:IsAlive() then
+        CountU = CountU + 1
+      end
+
+    end
+
+    return CountU
+  end
+  
   ---
   -- @param #SET_CLIENT self
   -- @param Wrapper.Client#CLIENT MClient
