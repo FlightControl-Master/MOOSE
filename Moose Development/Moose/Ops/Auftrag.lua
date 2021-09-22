@@ -1968,9 +1968,10 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE DeployZone Zone where assets are deployed.
 -- @param Core.Zone#ZONE DisembarkZone Zone where assets are disembarked to.
--- @param Core.Set#SET_OPSGROUP Carriers Set of carriers. Can also be a single group. Can also be added via the AddTransportCarriers functions.
+-- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
+-- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
 -- @return #AUFTRAG self
-function AUFTRAG:SetTransportForAssets(DeployZone, DisembarkZone, Carriers)
+function AUFTRAG:SetTransportForAssets(DeployZone, DisembarkZone, NcarriersMin, NcarriersMax)
 
   -- OPS transport from pickup to deploy zone.
   self.opstransport=OPSTRANSPORT:New(nil, nil, DeployZone)
@@ -1978,8 +1979,20 @@ function AUFTRAG:SetTransportForAssets(DeployZone, DisembarkZone, Carriers)
   if DisembarkZone then
     self.opstransport:SetDisembarkZone(DisembarkZone)
   end
-  
-  if Carriers then
+
+  -- Set required carriers.
+  self:SetRequiredCarriers(NcarriersMin, NcarriersMax)
+
+  return self
+end
+
+--- Add carriers for a transport of mission assets.
+-- @param #AUFTRAG self
+-- @param Core.Set#SET_OPSGROUP Carriers Set of carriers. Can also be a single group.
+-- @return #AUFTRAG self
+function AUFTRAG:AddTransportCarriers(Carriers)
+
+  if self.opstransport then
     if Carriers:IsInstanceOf("SET_OPSGROUP") then
     
       for _,_carrier in pairs(Carriers.Set) do
@@ -1992,12 +2005,7 @@ function AUFTRAG:SetTransportForAssets(DeployZone, DisembarkZone, Carriers)
     end
   
   end
-  
-  -- Set min/max number of carriers to be assigned.
-  self.opstransport.nCarriersMin=self.nCarriersMin
-  self.opstransport.nCarriersMax=self.nCarriersMax
-  
-  return self
+
 end
 
 --- Set number of required carrier groups if an OPSTRANSPORT assignment is required.
@@ -2347,9 +2355,11 @@ function AUFTRAG:AddOpsGroup(OpsGroup)
   if self.opstransport then
     for _,_tzc in pairs(self.opstransport.tzCombos) do
       local tzc=_tzc --Ops.OpsTransport#OPSTRANSPORT.TransportZoneCombo
-      if tzc.uid~=self.opstransport.tzcDefault.uid then
+      
+      if tzc.assetsCargo and tzc.assetsCargo[OpsGroup:GetName()] then
         self.opstransport:AddCargoGroups(OpsGroup, tzc)
       end
+      
     end
   end
 
@@ -2542,15 +2552,6 @@ function AUFTRAG:IsReadyToGo()
   -- Stop time already passed.
   if self.Tstop and Tnow>self.Tstop then
     return false
-  end
-  
-  -- Ops transport at 
-  if self.opstransport then
-    if #self.legions>0 then
-    end
-    if self.opstransport:IsPlanned() or self.opstransport:IsQueued() or self.opstransport:IsRequested() then
-      --return false
-    end
   end
   
   -- All start conditions true?

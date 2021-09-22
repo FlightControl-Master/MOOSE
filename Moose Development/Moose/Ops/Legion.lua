@@ -275,7 +275,7 @@ function LEGION:AddMission(Mission)
   end
   
   -- Add ops transport to transport Legions.
-  if Mission.opstransport then
+  if Mission.opstransport and false then
   
     local PickupZone=self.spawnzone
     local DeployZone=Mission.opstransport.tzcDefault.DeployZone
@@ -622,7 +622,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
           
           -- Cancel the current ALERT 5 mission.
           if currM and currM.type==AUFTRAG.Type.ALERT5 then
-              asset.flightgroup:MissionCancel(currM)
+            asset.flightgroup:MissionCancel(currM)
           end
           
   
@@ -673,8 +673,8 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
     
     if request then
       if self.isShip then
-        self:T(self.lid.."FF request late activated")
-        request.lateActivation=true
+        --self:T(self.lid.."FF request late activated")
+        --request.lateActivation=true
       end
     end    
     
@@ -1793,7 +1793,7 @@ end
 -- Recruiting and Optimization Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Recruit assets from Cohorts for the given parameters.
+--- Recruit assets from Cohorts for the given parameters. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
 -- @param #table Cohorts Cohorts included.
 -- @param #string MissionTypeRecruit Mission type for recruiting the cohort assets.
 -- @param #string MissionTypeOpt Mission type for which the assets are optimized. Default is the same as `MissionTypeRecruit`.
@@ -1804,10 +1804,12 @@ end
 -- @param #number RangeMax Max range in meters.
 -- @param #number RefuelSystem Refuelsystem.
 -- @param #number CargoWeight Cargo weight for recruiting transport carriers.
+-- @param #table Categories Group categories. 
+-- @param #table Attributes Group attributes. See `GROUP.Attribute.`
 -- @return #boolean If `true` enough assets could be recruited.
--- @return #table Recruited assets.
+-- @return #table Recruited assets. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
 -- @return #table Legions of recruited assets.
-function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight)
+function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight, Categories, Attributes)
 
   -- The recruited assets.
   local Assets={}
@@ -1815,9 +1817,38 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
   -- Legions of recruited assets.
   local Legions={}
   
+  -- Set MissionTypeOpt to Recruit if nil.
   if MissionTypeOpt==nil then
     MissionTypeOpt=MissionTypeRecruit
   end
+  
+  --- Function to check category.
+  local function CheckCategory(_cohort)
+    local cohort=_cohort --Ops.Cohort#COHORT
+    if Categories and #Categories>0 then
+      for _,category in pairs(Categories) do
+        if category==cohort.category then
+          return true
+        end
+      end
+    else
+      return true
+    end
+  end
+  
+  --- Function to check attribute.
+  local function CheckAttribute(_cohort)
+    local cohort=_cohort --Ops.Cohort#COHORT
+    if Attributes and #Attributes>0 then
+      for _,attribute in pairs(Attributes) do
+        if attribute==cohort.attribute then
+          return true
+        end
+      end
+    else
+      return true
+    end
+  end  
   
   -- Loops over cohorts.
   for _,_cohort in pairs(Cohorts) do
@@ -1838,9 +1869,19 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     -- Can carry the cargo?
     local CanCarry=CargoWeight and cohort.cargobayLimit>=CargoWeight or true
     
-    -- Check OnDuty, capable, in range and refueling type (if TANKER).
-    if cohort:IsOnDuty() and Capable and InRange and Refuel and CanCarry then
+    -- Right category.
+    local RightCategory=CheckCategory(cohort)
     
+    -- Right attribute.
+    local RightAttribute=CheckAttribute(cohort)
+    
+    -- Debug info.
+    cohort:I(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, RightCategory=%s, RightAttribute=%s",
+    cohort:GetState(), tostring(Capable), tostring(InRange), tostring(Refuel), tostring(CanCarry), tostring(RightCategory), tostring(RightAttribute)))
+    
+    -- Check OnDuty, capable, in range and refueling type (if TANKER).
+    if cohort:IsOnDuty() and Capable and InRange and Refuel and CanCarry and RightCategory and RightAttribute then
+
       -- Recruit assets from cohort.
       local assets, npayloads=cohort:RecruitAssets(MissionTypeRecruit, 999)
       
@@ -1893,6 +1934,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     -- Add assets to mission.
     for i=1,Nassets do
       local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      asset.isReserved=true
       Legions[asset.legion.alias]=asset.legion
     end
     

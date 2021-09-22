@@ -2,7 +2,8 @@
 --
 -- **Main Features:**
 --
---    * Monitor if zone is captured.
+--    * Monitor if a zone is captured.
+--    * Monitor if an airbase is captured.
 --
 -- ===
 --
@@ -17,6 +18,8 @@
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity of output.
 -- @field Core.Zone#ZONE zone The zone.
+-- @field Wrapper.Airbase#AIRBASE airbase The airbase that is monitored.
+-- @field #string airbaseName Name of the airbase that is monitored.
 -- @field #string zoneName Name of the zone.
 -- @field #number zoneRadius Radius of the zone in meters.
 -- @field #number ownerCurrent Coalition of the current owner of the zone.
@@ -30,7 +33,7 @@
 -- @field #number Tattacked Abs. mission time stamp when an attack was started.
 -- @field #number dTCapture Time interval in seconds until a zone is captured.
 -- @field #boolean neutralCanCapture Neutral units can capture. Default `false`.
--- @field #drawZone If `true`, draw the zone on the F10 map.
+-- @field #boolean drawZone If `true`, draw the zone on the F10 map.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -63,6 +66,7 @@ OPSZONE.version="0.1.0"
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Capture airbases.
 -- TODO: Pause/unpause evaluations.
 -- TODO: Capture time, i.e. time how long a single coalition has to be inside the zone to capture it.
 -- TODO: Can neutrals capture? No, since they are _neutral_!
@@ -113,17 +117,19 @@ function OPSZONE:New(Zone, CoalitionOwner)
   self:SetObjectCategories()
   self:SetUnitCategories()
   
+  self.drawZone=true
+  
   -- Status timer.
   self.timerStatus=TIMER:New(OPSZONE.Status, self)
 
 
   -- FMS start state is EMPTY.
-  self:SetStartState("Empty")
+  self:SetStartState("Stopped")
   
   -- Add FSM transitions.
   --                 From State    -->      Event       -->     To State
-  self:AddTransition("*",                  "Start",             "*")           -- Start FSM.
-  self:AddTransition("*",                  "Stop",              "*")           -- Stop FSM.
+  self:AddTransition("Stopped",            "Start",             "Empty")       -- Start FSM.
+  self:AddTransition("*",                  "Stop",              "Stopped")     -- Stop FSM.
 
   self:AddTransition("*",                  "Captured",          "Guarded")     -- Zone was captured.
   self:AddTransition("*",                  "Empty",             "Empty")       -- No red or blue units inside the zone.
@@ -372,9 +378,16 @@ function OPSZONE:IsContested()
   return self.isContested
 end
 
+--- Check if FMS is stopped.
+-- @param #OPSZONE self 
+-- @return #boolean If `true`, FSM is stopped
+function OPSZONE:IsStopped()
+  local is=self:is("Stopped")
+  return is
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Start/Stop and Status Functions
+-- Start/Stop Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start OPSZONE FSM.
@@ -394,6 +407,25 @@ function OPSZONE:onafterStart(From, Event, To)
   self.timerStatus:Start(1, 60)
   
 end
+
+--- Stop OPSZONE FSM.
+-- @param #OPSZONE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSZONE:onafterStop(From, Event, To)
+
+  -- Info.
+  self:I(self.lid..string.format("Stopping OPSZONE"))
+  
+  -- Reinit the timer.
+  self.timerStatus:Stop()
+  
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Status Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Update status.
 -- @param #OPSZONE self
@@ -434,7 +466,7 @@ function OPSZONE:onafterCaptured(From, Event, To, NewOwnerCoalition)
   -- Set owners.
   self.ownerPrevious=self.ownerCurrent
   self.ownerCurrent=NewOwnerCoalition
-  
+    
 end
 
 --- On after "Empty" event.
@@ -445,7 +477,7 @@ end
 function OPSZONE:onafterEmpty(From, Event, To)
 
   -- Debug info.
-  self:T(self.lid..string.format("Zone is empty now"))
+  self:T(self.lid..string.format("Zone is empty EVENT"))
   
 end
 
@@ -459,19 +491,6 @@ function OPSZONE:onafterAttacked(From, Event, To, AttackerCoalition)
 
   -- Debug info.
   self:T(self.lid..string.format("Zone is being attacked by coalition=%s!", tostring(AttackerCoalition)))
-  
-end
-
-
---- On after "Empty" event.
--- @param #OPSZONE self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function OPSZONE:onafterEmpty(From, Event, To)
-
-  -- Debug info.
-  self:T(self.lid..string.format("Zone is empty now"))
   
 end
 
@@ -504,6 +523,14 @@ function OPSZONE:onenterGuarded(From, Event, To)
   -- Not attacked any more.
   self.Tattacked=nil
 
+  if self.drawZone then
+    self.zone:UndrawZone()
+    
+    local color=self:_GetZoneColor()
+    
+    self.zone:DrawZone(nil, color, 1.0, color, 0.7)
+  end
+
 end
 
 --- On enter "Guarded" state.
@@ -519,6 +546,34 @@ function OPSZONE:onenterAttacked(From, Event, To)
   -- Time stamp when the attack started.
   self.Tattacked=timer.getAbsTime()
 
+  if self.drawZone then
+    self.zone:UndrawZone()
+    
+    local color={1,1,1}
+    
+    self.zone:DrawZone(nil, color, 1.0, color, 0.9)
+  end
+
+end
+
+--- On enter "Empty" event.
+-- @param #OPSZONE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSZONE:onenterEmpty(From, Event, To)
+
+  -- Debug info.
+  self:T(self.lid..string.format("Zone is empty now"))
+
+  if self.drawZone then
+    self.zone:UndrawZone()
+    
+    local color=self:_GetZoneColor()
+    
+    self.zone:DrawZone(nil, color, 1.0, color, 0.2)
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -835,6 +890,49 @@ function OPSZONE:OnEventHit(EventData)
 
   end
 
+end
+
+--- Monitor hit events.
+-- @param #OPSZONE self
+-- @param Core.Event#EVENTDATA EventData The event data.
+function OPSZONE:OnEventBaseCaptured(EventData)
+
+  if EventData and EventData.Place and self.airbase and self.airbaseName then
+
+    -- Place is the airbase that was captured.
+    local airbase=EventData.Place --Wrapper.Airbase#AIRBASE
+
+    -- Check that this airbase belongs or did belong to this warehouse.
+    if EventData.PlaceName==self.airbaseName then
+    
+    end
+    
+  end  
+
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Misc Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get RGB color of zone depending on current owner.
+-- @param #OPSZONE self
+-- @return #table RGB color.
+function OPSZONE:_GetZoneColor()
+
+  local color={0,0,0}
+  
+  if self.ownerCurrent==coalition.side.NEUTRAL then
+    color={0, 1, 0}
+  elseif self.ownerCurrent==coalition.side.BLUE then
+    color={1, 0, 0}
+  elseif self.ownerCurrent==coalition.side.RED then
+    color={0, 0, 1}
+  else
+  
+  end
+
+  return color
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

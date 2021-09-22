@@ -509,6 +509,23 @@ function CHIEF:AddStrateticZone(Zone)
   return self
 end
 
+--- Add strategically important zone.
+-- @param #CHIEF self
+-- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
+-- @return #CHIEF self
+function CHIEF:AddOpsZone(OpsZone)
+
+  -- Start ops zone.
+  if OpsZone:IsStopped() then
+    OpsZone:Start()
+  end
+
+  -- Add to table.
+  table.insert(self.zonequeue, OpsZone)
+
+  return self
+end
+
 
 --- Set border zone set.
 -- @param #CHIEF self
@@ -663,27 +680,7 @@ function CHIEF:onafterStatus(From, Event, To)
       self:AddTarget(Target)
 
     end
-        
-    --[[
-    local redalert=true
-    if self.borderzoneset:Count()>0 then
-      redalert=inred
-    end
-    
-    if redalert and threat and not contact.target then
-    
-      -- Create a new TARGET of the contact group.
-      local Target=TARGET:New(contact.group)
-      
-      -- Set to contact.
-      contact.target=Target
-      
-      -- Add target to queue.
-      self:AddTarget(Target)
-      
-    end
-    ]]
-    
+
   end
   
   ---
@@ -705,6 +702,13 @@ function CHIEF:onafterStatus(From, Event, To)
     
   -- Check target queue and assign missions to new targets.
   self:CheckTargetQueue()
+  
+  ---
+  -- Check Strategic Zone Queue
+  ---
+    
+  -- Check target queue and assign missions to new targets.
+  self:CheckOpsZoneQueue()  
   
   ---
   -- Info General
@@ -771,7 +775,24 @@ function CHIEF:onafterStatus(From, Event, To)
       text=text..string.format("\n[%d] %s (%s): status=%s, target=%s", i, mission.name, mission.type, mission.status, target)
     end
     self:I(self.lid..text)
-  end  
+  end
+  
+  ---
+  -- Info Strategic Zones
+  ---
+
+  -- Loop over targets.
+  if self.verbose>=4 and #self.zonequeue>0 then
+    local text="Zone queue:"  
+    for i,_opszone in pairs(self.zonequeue) do
+      local opszone=_opszone --Ops.OpsZone#OPSZONE
+      
+      text=text..string.format("\n[%d] %s [%s]: owner=%d [%d]: Blue=%d, Red=%d, Neutral=%d", i, opszone.zone:GetName(), opszone:GetState(), opszone:GetOwner(), opszone:GetPreviousOwner(), opszone.Nblu, opszone.Nred, opszone.Nnut)
+            
+    end
+    self:I(self.lid..text)
+  end
+  
 
   ---
   -- Info Assets
@@ -1111,6 +1132,63 @@ function CHIEF:CheckTargetQueue()
   
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Strategic Zone Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--- Check strategic zone queue.
+-- @param #CHIEF self 
+function CHIEF:CheckOpsZoneQueue()
+
+  -- Number of zones.
+  local Nzones=#self.zonequeue
+
+  -- Treat special cases.
+  if Nzones==0 then
+    return nil
+  end
+
+  -- Sort results table wrt ?.
+  local function _sort(a, b)
+    local taskA=a --Ops.Target#TARGET
+    local taskB=b --Ops.Target#TARGET
+    return (taskA.prio<taskB.prio)
+  end
+  --table.sort(self.zonequeue, _sort)
+
+  -- Get the lowest importance value (lower means more important).
+  -- If a target with importance 1 exists, targets with importance 2 will not be assigned. Targets with no importance (nil) can still be selected. 
+  local vip=math.huge
+  for _,_target in pairs(self.zonequeue) do
+    local target=_target --Ops.Target#TARGET
+    if target.importance and target.importance<vip then
+      vip=target.importance
+    end
+  end
+
+  -- Loop over targets.
+  for _,_opszone in pairs(self.zonequeue) do
+    local opszone=_opszone --Ops.OpsZone#OPSZONE
+    
+    -- Current owner of the zone.
+    local ownercoalition=opszone:GetOwner()
+    
+    local hasMission=opszone.missionPatrol and opszone.missionPatrol:IsNotOver() or false
+    
+    if ownercoalition~=self.coalition and not hasMission then
+    
+      env.info(string.format("Zone %s is owned by coalition %d", opszone.zone:GetName(), ownercoalition))
+      
+      -- Recruit ground assets that
+      local recruited, assets, legions=self:RecruitAssetsForZone(opszone, AUFTRAG.Type.PATROLZONE, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY})
+      
+
+    
+    end
+    
+  end
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Zone Check Functions
@@ -1367,10 +1445,12 @@ function CHIEF:_GetMissionTypeForGroupAttribute(Attribute)
 
 end
 
---- Recruit assets for a given mission.
+--- Recruit assets for a given TARGET.
 -- @param #CHIEF self
 -- @param Ops.Target#TARGET Target The target.
 -- @param #string MissionType Mission Type.
+-- @param #number NassetsMin Min number of required assets.
+-- @param #number NassetsMax Max number of required assets.
 -- @return #boolean If `true` enough assets could be recruited.
 -- @return #table Assets that have been recruited from all legions.
 -- @return #table Legions that have recruited assets.
@@ -1379,11 +1459,19 @@ function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMa
   -- Cohorts.
   local Cohorts={}
   for _,_legion in pairs(self.commander.legions) do
-    local legion=_legion --Ops.Legion#LEGION      
-    -- Loops over cohorts.
-    for _,_cohort in pairs(legion.cohorts) do
-      local cohort=_cohort --Ops.Cohort#COHORT
-      table.insert(Cohorts, cohort)
+    local legion=_legion --Ops.Legion#LEGION
+    
+    -- Check that runway is operational.    
+    local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
+    
+    if legion:IsRunning() and Runway then    
+    
+      -- Loops over cohorts.
+      for _,_cohort in pairs(legion.cohorts) do
+        local cohort=_cohort --Ops.Cohort#COHORT
+        table.insert(Cohorts, cohort)
+      end
+      
     end
   end  
 
@@ -1393,8 +1481,123 @@ function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMa
   -- Recruite assets.
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2)
 
-  return recruited, assets, legions
 
+  return recruited, assets, legions
+end
+
+--- Recruit assets for a given OPS zone.
+-- @param #CHIEF self
+-- @param Ops.OpsZone#OPSZONE OpsZone The OPS zone
+-- @param #string MissionType Mission Type.
+-- @param #number NassetsMin Min number of required assets.
+-- @param #number NassetsMax Max number of required assets.
+-- @param #table Categories Group categories of the assets.
+-- @param #table Attributes Generalized group attributes.
+-- @return #boolean If `true` enough assets could be recruited.
+-- @return #table Assets that have been recruited from all legions.
+-- @return #table Legions that have recruited assets.
+function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax, Categories, Attributes)
+
+  -- Cohorts.
+  local Cohorts={}
+  for _,_legion in pairs(self.commander.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    
+    -- Check that runway is operational.    
+    local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
+    
+    if legion:IsRunning() and Runway then    
+    
+      -- Loops over cohorts.
+      for _,_cohort in pairs(legion.cohorts) do
+        local cohort=_cohort --Ops.Cohort#COHORT
+        table.insert(Cohorts, cohort)
+      end
+      
+    end
+  end  
+
+  -- Target position.
+  local TargetVec2=OpsZone.zone:GetVec2()
+  
+  -- Recruite assets.
+  local recruitedInf, assetsInf, legionsInf=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, nil, nil, nil, Categories, Attributes)
+  
+  if recruitedInf then
+  
+    env.info(string.format("Recruited %d assets from for PATROL mission", #assetsInf))
+    
+    -- Get max weight.
+    local weightMax=nil
+    for _,_asset in pairs(assetsInf) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      if weightMax==nil or weightMax<=asset.weight then
+        weightMax=asset.weight
+      end
+    end
+    
+    -- Recruite assets.
+    local recruitedTrans, assetsTrans, legionsTrans=
+    LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NassetsMin, NassetsMax, TargetVec2, nil, nil, nil, weightMax, {Group.Category.HELICOPTER, Group.Category.GROUND})
+    
+    local transport=nil --Ops.OpsTransport#OPSTRANSPORT
+    if recruitedTrans then
+      env.info(string.format("Recruited %d assets for OPSTRANSPORT mission", #assetsTrans))
+      
+      -- Create an OPSTRANSPORT assignment.
+      transport=OPSTRANSPORT:New(nil, nil, OpsZone.zone)
+      
+      -- Add cargo assets to transport.
+      for _,_legion in pairs(legionsInf) do
+        local legion=_legion --Ops.Legion#LEGION
+        local tpz=transport:AddTransportZoneCombo(legion.spawnzone, OpsZone.zone)
+        for _,_asset in pairs(assetsInf) do
+          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+          if asset.legion.alias==legion.alias then
+            transport:AddAssetCargo(asset, tpz)
+          end
+        end
+      end
+      
+      -- Add carrier assets.
+      for _,_asset in pairs(assetsTrans) do
+        local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+        transport:AddAsset(asset)
+      end
+      
+      
+      -- Assign TRANSPORT to legions. This also sends the request for the assets.
+      for _,_legion in pairs(legionsTrans) do
+        local legion=_legion --Ops.Legion#LEGION
+        self.commander:TransportAssign(legion, transport)
+      end
+  
+    else
+      -- Uncrecruite 
+      LEGION.UnRecruitAssets(assetsTrans)
+    end
+    
+    -- Create Patrol zone mission.  
+    local mission=AUFTRAG:NewPATROLZONE(OpsZone.zone)
+    
+    for _,asset in pairs(assetsInf) do
+      mission:AddAsset(asset)
+    end
+    
+    mission.opstransport=transport
+        
+    for _,_legion in pairs(legionsInf) do
+      local legion=_legion --Ops.Legion#LEGION
+      self.commander:MissionAssign(legion, mission)
+    end
+  
+    OpsZone.missionPatrol=mission
+    
+  else
+    LEGION.UnRecruitAssets(assetsInf)
+  end  
+
+  return recruited, assets, legions
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

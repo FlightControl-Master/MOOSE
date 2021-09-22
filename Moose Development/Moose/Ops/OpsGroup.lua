@@ -3801,20 +3801,7 @@ function OPSGROUP:_GetNextMission()
   -- Look for first mission that is SCHEDULED.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
-    
-    -- Local transport.
-    local transport=true
-    if mission.opstransport then
-      local cargos=mission.opstransport:GetCargoOpsGroups(false) or {}
-      for _,_opsgroup in pairs(cargos) do
-        local opscargo=_opsgroup --Ops.OpsGroup#OPSGROUP
-        if opscargo.groupname==self.groupname then
-          transport=false
-          break
-        end
-      end
-    end
-    
+        
     -- TODO: One could think of opsgroup specific start conditions. A legion also checks if "ready" but it can be other criteria for the group to actually start the mission.
     --       Good example is the above transport. The legion should start the mission but the group should only start after the transport is finished.
     
@@ -3826,12 +3813,24 @@ function OPSGROUP:_GetNextMission()
         isEscort=false
       end
     end
+    
+    -- Local transport.
+    local isTransport=true
+    if mission.opstransport then
+      local cargos=mission.opstransport:GetCargoOpsGroups(false) or {}
+      for _,_opsgroup in pairs(cargos) do
+        local opscargo=_opsgroup --Ops.OpsGroup#OPSGROUP
+        if opscargo.groupname==self.groupname then
+          isTransport=false
+          break
+        end
+      end
+    end    
   
     -- Conditons to start.
     local isScheduled=mission:GetGroupStatus(self)==AUFTRAG.GroupStatus.SCHEDULED
     local isReadyToGo=(mission:IsReadyToGo() or self.legion)
     local isImportant=(mission.importance==nil or mission.importance<=vip)
-    local isTransport=transport
 
     -- Check necessary conditions.
     if isScheduled and isReadyToGo and isImportant and isTransport and isEscort then

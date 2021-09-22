@@ -1867,6 +1867,7 @@ function WAREHOUSE:New(warehouse, alias)
     else
       self.isunit=true
       if warehouse:IsShip() then
+        env.info("FF warehouse is ship!")
         self.isShip=true
       end
     end
@@ -1925,7 +1926,6 @@ function WAREHOUSE:New(warehouse, alias)
   self:SetMarker(true)
   self:SetReportOff()
   self:SetRunwayRepairtime()
-  --self:SetVerbosityLevel(0)
 
   -- Add warehouse to database.
   _WAREHOUSEDB.Warehouses[self.uid]=self
@@ -5829,7 +5829,7 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, late
     -- Late activation.
     template.lateActivation=lateactivated
     
-    env.info("FF lateActivation="..tostring(template.lateActivation))
+    --env.info("FF lateActivation="..tostring(template.lateActivation))
 
     template.route.points[1].x = coord.x
     template.route.points[1].y = coord.z

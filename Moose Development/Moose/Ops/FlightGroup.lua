@@ -1864,10 +1864,11 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
     self.flightcontrol:SetFlightStatus(self, FLIGHTCONTROL.FlightStatus.ARRIVED)
   end
   
-  local airwing=self:GetAirWing()
+  --TODO: Check that current base is airwing base.
+  local airwing=self:GetAirWing()  --airwing:GetAirbaseName()==self.currbase:GetName()
 
   -- Check what to do.
-  if airwing then
+  if airwing and not (self:IsPickingup() or self:IsTransporting()) then
   
     -- Debug info.
     self:T(self.lid..string.format("Airwing asset group %s arrived ==> Adding asset back to stock of airwing %s", self.groupname, airwing.alias))

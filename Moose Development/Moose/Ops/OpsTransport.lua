@@ -168,6 +168,7 @@ OPSTRANSPORT.Status={
 -- @field #table DisembarkCarriers Carriers where the cargo is directly disembarked to.
 -- @field #boolean disembarkActivation If true, troops are spawned in late activated state when disembarked from carrier.
 -- @field #boolean disembarkInUtero If true, troops are disembarked "in utero".
+-- @field #boolean assets Cargo assets.
 
 --- Path used for pickup or transport.
 -- @type OPSTRANSPORT.Path
@@ -1225,14 +1226,16 @@ end
 --- Add asset to transport.
 -- @param #OPSTRANSPORT self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
 -- @return #OPSTRANSPORT self
-function OPSTRANSPORT:AddAsset(Asset)
+function OPSTRANSPORT:AddAsset(Asset, TransportZoneCombo)
 
   -- Debug info
-  self:T(self.lid..string.format("Adding asset \"%s\" to transport", tostring(Asset.spawngroupname)))
+  self:T(self.lid..string.format("Adding asset carrier \"%s\" to transport", tostring(Asset.spawngroupname)))
 
   -- Add asset to table.
-  self.assets=self.assets or {}  
+  self.assets=self.assets or {}
+    
   table.insert(self.assets, Asset)
 
   return self
@@ -1255,6 +1258,28 @@ function OPSTRANSPORT:DelAsset(Asset)
     
   end
 
+  return self
+end
+
+--- Add cargo asset.
+-- @param #OPSTRANSPORT self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:AddAssetCargo(Asset, TransportZoneCombo)
+
+  -- Debug info
+  self:T(self.lid..string.format("Adding asset cargo \"%s\" to transport and TZC=%s", tostring(Asset.spawngroupname), TransportZoneCombo and TransportZoneCombo.uid or "N/A"))
+
+  -- Add asset to table.
+  self.assetsCargo=self.assetsCargo or {}
+    
+  table.insert(self.assetsCargo, Asset)
+  
+  TransportZoneCombo.assetsCargo=TransportZoneCombo.assetsCargo or {}
+  
+  TransportZoneCombo.assetsCargo[Asset.spawngroupname]=Asset
+  
   return self
 end
 

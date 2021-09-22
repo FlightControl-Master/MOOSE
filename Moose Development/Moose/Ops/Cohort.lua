@@ -22,6 +22,7 @@
 -- @field #string name Name of the cohort.
 -- @field #string templatename Name of the template group.
 -- @field #string aircrafttype Type of the units the cohort is using.
+-- @field #number category Group category of the assets: `Group.Category.AIRPLANE`, `Group.Category.HELICOPTER`, `Group.Category.GROUND`, `Group.Category.SHIP`, `Group.Category.TRAIN`.
 -- @field Wrapper.Group#GROUP templategroup Template group.
 -- @field #table assets Cohort assets.
 -- @field #table missiontypes Capabilities (mission types and performances) of the cohort.
@@ -123,6 +124,9 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   
   -- Generalized attribute.
   self.attribute=self.templategroup:GetAttribute()
+  
+  -- Group category.
+  self.category=self.templategroup:GetCategory()
   
   -- Aircraft type.
   self.aircrafttype=self.templategroup:GetTypeName()
