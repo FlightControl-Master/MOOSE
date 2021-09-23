@@ -887,7 +887,6 @@ CTLD = {
   FreeUHFFrequencies = {}, -- Table of UHF
   FreeFMFrequencies = {}, -- Table of FM
   CargoCounter = 0,
-  dropOffZones = {},
   wpZones = {},
   Cargo_Troops = {}, -- generic troops objects
   Cargo_Crates = {}, -- generic crate objects
@@ -897,8 +896,8 @@ CTLD = {
   CrateDistance = 35, -- list crates in this radius
   debug = false,
   wpZones = {},
-  pickupZones  = {},
   dropOffZones = {},
+  pickupZones  = {},
 }
 
 ------------------------------
@@ -981,7 +980,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.2.2a1"
+CTLD.version="0.2.2a3"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2237,7 +2236,7 @@ function CTLD:_ListInventory(Group, Unit)
   local troopno = countcargo(trptypes)
   local staticno = countcargo(stctypes)
   
-  if (crateno > 0 or troopno > 0) then
+  if (crateno > 0 or troopno > 0 or staticno > 0) then
 
     local report = REPORT:New("Inventory Sheet")
     report:Add("------------------------------------------------------------")
@@ -2945,9 +2944,6 @@ end
 --- User function - Add *generic* static-type loadable as cargo. This type will create cargo that needs to be loaded, moved and dropped.
 -- @param #CTLD self
 -- @param #string Name Unique name of this type of cargo as set in the mission editor (not: UNIT name!), e.g. "Ammunition-1".
--- @param #string Template Name of Wrapper.Static#STATIC to us as template.
--- @param #CTLD_CARGO.Enum Type Type of cargo, here STATIC.
--- @param #number NoCrates Number of crates needed to build this cargo.
 -- @param #number Mass Mass in kg of each static in kg, e.g. 100.
 -- @param #number Stock Number of groups in stock. Nil for unlimited.
 function CTLD:AddStaticsCargo(Name,Mass,Stock)
