@@ -1134,7 +1134,9 @@ end
 -- @param #table parkingdata (Optional) Parking spots data table. If not given it is automatically derived from the GetParkingSpotsTable() function.
 -- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
 function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nspots, parkingdata)
-
+  
+  if group and group:IsAlive() then
+  
   -- Init default
   scanradius=scanradius or 50
   if scanunits==nil then
@@ -1307,6 +1309,10 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
 
   -- Retrun spots we found, even if there were not enough.
   return validspots
+  
+  else
+    return {}
+  end
 end
 
 --- Check black and white lists.
