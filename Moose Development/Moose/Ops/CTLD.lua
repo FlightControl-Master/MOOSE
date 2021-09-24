@@ -383,6 +383,12 @@ CTLD_CARGO = {
     return self.ID
   end
   
+  --- Query Mass.
+  -- @param #CTLD_CARGO self
+  -- @return #number Mass in kg
+  function CTLD_CARGO:GetMass()
+    return self.PerCrateMass
+  end  
   --- Query Name.
   -- @param #CTLD_CARGO self
   -- @return #string Name
@@ -531,7 +537,7 @@ CTLD_CARGO = {
     return self.Mark
   end
   
-    function CTLD_CARGO:WipeMark()
+  function CTLD_CARGO:WipeMark()
     self.Mark = nil
     return self
   end
@@ -662,6 +668,7 @@ do
 --          my_ctld.repairtime = 300 -- Number of seconds it takes to repair a unit.
 --          my_ctld.cratecountry = country.id.GERMANY -- ID of crates. Will default to country.id.RUSSIA for RED coalition setups.
 --          my_ctld.allowcratepickupagain = true  -- allow re-pickup crates that were dropped.
+--          my_ctld.enableslingload = false -- allow cargos to be slingloaded - might not work for all cargo types
 -- 
 -- ## 2.1 User functions
 -- 
@@ -980,7 +987,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.2.2a3"
+CTLD.version="0.2.2a4"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1139,6 +1146,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- allow re-pickup crates
   self.allowcratepickupagain = true
+  
+  -- slingload
+  self.enableslingload = false
   
   for i=1,100 do
     math.random()
@@ -1770,12 +1780,13 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   end
   -- spawn crates in front of helicopter
   local IsHerc = self:IsHercules(Unit) -- Herc
-  local cargotype = Cargo -- #CTLD_CARGO
+  local cargotype = Cargo -- Ops.CTLD#CTLD_CARGO
   local number = number or cargotype:GetCratesNeeded() --#number
   local cratesneeded = cargotype:GetCratesNeeded() --#number
   local cratename = cargotype:GetName()
   local cratetemplate = "Container"-- #string
   local cgotype = cargotype:GetType()
+  local cgomass = cargotype:GetMass()
   local isstatic = false
   if cgotype == CTLD_CARGO.Enum.STATIC then
     cratetemplate = cargotype:GetTemplates()
@@ -1842,11 +1853,15 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
       local Offy = math.random(-width,width)
       self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
       --:InitCoordinate(cratecoord)
+      :InitCargoMass(cgomass)
+      :InitCargo(self.enableslingload)
       :InitLinkToUnit(Ship,dist,Offy,0)
       :Spawn(270,cratealias)
     else   
       self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
         :InitCoordinate(cratecoord)
+        :InitCargoMass(cgomass)
+        :InitCargo(self.enableslingload)
         --:InitLinkToUnit(Unit,OffsetX,OffsetY,OffsetAngle)
         :Spawn(270,cratealias)
     end
@@ -1891,6 +1906,7 @@ function CTLD:InjectStatics(Zone, Cargo)
   local cratealias = string.format("%s-%d", cratetemplate, math.random(1,100000))
   local cratename = cargotype:GetName()
   local cgotype = cargotype:GetType()
+  local cgomass = cargotype:GetMass()
   local isstatic = false
   if cgotype == CTLD_CARGO.Enum.STATIC then
     cratetemplate = cargotype:GetTemplates()
@@ -1902,6 +1918,8 @@ function CTLD:InjectStatics(Zone, Cargo)
   end
   self.CrateCounter = self.CrateCounter + 1
   self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
+    :InitCargoMass(cgomass)
+    :InitCargo(self.enableslingload)
     :InitCoordinate(cratecoord)
     :Spawn(270,cratealias)
   local templ = cargotype:GetTemplates()
@@ -1929,9 +1947,9 @@ function CTLD:_ListCratesNearby( _group, _unit)
       local name = entry:GetName() --#string
       local dropped = entry:WasDropped()
       if dropped then
-        text:Add(string.format("Dropped crate for %s",name))
+        text:Add(string.format("Dropped crate for %s, %dkg",name, entry.PerCrateMass))
       else
-        text:Add(string.format("Crate for %s, %d Kg",name, entry.PerCrateMass))
+        text:Add(string.format("Crate for %s, %dkg",name, entry.PerCrateMass))
       end
     end
     if text:GetCount() == 1 then
@@ -2851,35 +2869,14 @@ function CTLD:_RefreshF10Menus()
           local cancrates = capabilities.crates
           -- top menu
           local topmenu = MENU_GROUP:New(_group,"CTLD",nil)
-          local topcrates = MENU_GROUP:New(_group,"Manage Crates",topmenu)
           local toptroops = MENU_GROUP:New(_group,"Manage Troops",topmenu)
+          local topcrates = MENU_GROUP:New(_group,"Manage Crates",topmenu)
           local listmenu = MENU_GROUP_COMMAND:New(_group,"List boarded cargo",topmenu, self._ListCargo, self, _group, _unit)
           local invtry = MENU_GROUP_COMMAND:New(_group,"Inventory",topmenu, self._ListInventory, self, _group, _unit)
           local rbcns = MENU_GROUP_COMMAND:New(_group,"List active zone beacons",topmenu, self._ListRadioBeacons, self, _group, _unit)
           local smokemenu = MENU_GROUP_COMMAND:New(_group,"Smoke zones nearby",topmenu, self.SmokeZoneNearBy, self, _unit, false)
           local smokemenu = MENU_GROUP_COMMAND:New(_group,"Flare zones nearby",topmenu, self.SmokeZoneNearBy, self, _unit, true):Refresh()
           -- sub menus
-          -- sub menu crates management
-          if cancrates then 
-            local loadmenu = MENU_GROUP_COMMAND:New(_group,"Load crates",topcrates, self._LoadCratesNearby, self, _group, _unit)
-            local cratesmenu = MENU_GROUP:New(_group,"Get Crates",topcrates)
-            for _,_entry in pairs(self.Cargo_Crates) do
-              local entry = _entry -- #CTLD_CARGO
-              menucount = menucount + 1
-              local menutext = string.format("Get crate for %s",entry.Name)
-              menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
-            end
-            for _,_entry in pairs(self.Cargo_Statics) do
-              local entry = _entry -- #CTLD_CARGO
-              menucount = menucount + 1
-              local menutext = string.format("Get crate for %s",entry.Name)
-              menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
-            end
-            listmenu = MENU_GROUP_COMMAND:New(_group,"List crates nearby",topcrates, self._ListCratesNearby, self, _group, _unit)
-            local unloadmenu = MENU_GROUP_COMMAND:New(_group,"Drop crates",topcrates, self._UnloadCrates, self, _group, _unit)
-            local buildmenu = MENU_GROUP_COMMAND:New(_group,"Build crates",topcrates, self._BuildCrates, self, _group, _unit)
-            local repairmenu = MENU_GROUP_COMMAND:New(_group,"Repair",topcrates, self._RepairCrates, self, _group, _unit):Refresh()
-          end
           -- sub menu troops management
           if cantroops then 
             local troopsmenu = MENU_GROUP:New(_group,"Load troops",toptroops)
@@ -2890,6 +2887,27 @@ function CTLD:_RefreshF10Menus()
             end
             local unloadmenu1 = MENU_GROUP_COMMAND:New(_group,"Drop troops",toptroops, self._UnloadTroops, self, _group, _unit):Refresh()
               local extractMenu1 = MENU_GROUP_COMMAND:New(_group, "Extract troops", toptroops, self._ExtractTroops, self, _group, _unit):Refresh()
+          end
+          -- sub menu crates management
+          if cancrates then 
+            local loadmenu = MENU_GROUP_COMMAND:New(_group,"Load crates",topcrates, self._LoadCratesNearby, self, _group, _unit)
+            local cratesmenu = MENU_GROUP:New(_group,"Get Crates",topcrates)
+            for _,_entry in pairs(self.Cargo_Crates) do
+              local entry = _entry -- #CTLD_CARGO
+              menucount = menucount + 1
+              local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+              menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
+            end
+            for _,_entry in pairs(self.Cargo_Statics) do
+              local entry = _entry -- #CTLD_CARGO
+              menucount = menucount + 1
+              local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+              menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
+            end
+            listmenu = MENU_GROUP_COMMAND:New(_group,"List crates nearby",topcrates, self._ListCratesNearby, self, _group, _unit)
+            local unloadmenu = MENU_GROUP_COMMAND:New(_group,"Drop crates",topcrates, self._UnloadCrates, self, _group, _unit)
+            local buildmenu = MENU_GROUP_COMMAND:New(_group,"Build crates",topcrates, self._BuildCrates, self, _group, _unit)
+            local repairmenu = MENU_GROUP_COMMAND:New(_group,"Repair",topcrates, self._RepairCrates, self, _group, _unit):Refresh()
           end
           if unittype == "Hercules" then
             local hoverpars = MENU_GROUP_COMMAND:New(_group,"Show flight parameters",topmenu, self._ShowFlightParams, self, _group, _unit):Refresh()
