@@ -422,7 +422,11 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   end
   
   if self.InitCargo~=nil then
-    Template.isCargo=self.InitCargo
+    Template.canCargo=self.InitCargo
+  end
+  
+  if self.InitCargoMass~=nil then
+    Template.mass=self.InitCargoMass
   end
   
   if self.InitLinkUnit then
