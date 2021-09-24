@@ -501,55 +501,6 @@ function FLIGHTGROUP:SetFuelCriticalRTB(switch)
   return self
 end
 
---- Enable to automatically engage detected targets.
--- @param #FLIGHTGROUP self
--- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
--- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
--- @param Core.Set#SET_ZONE EngageZoneSet Set of zones in which targets are engaged. Default is anywhere.
--- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetEngageDetectedOn(RangeMax, TargetTypes, EngageZoneSet, NoEngageZoneSet)
-
-  -- Ensure table.
-  if TargetTypes then
-    if type(TargetTypes)~="table" then
-      TargetTypes={TargetTypes}
-    end
-  else
-    TargetTypes={"All"}
-  end
-
-  -- Ensure SET_ZONE if ZONE is provided.
-  if EngageZoneSet and EngageZoneSet:IsInstanceOf("ZONE_BASE") then
-    local zoneset=SET_ZONE:New():AddZone(EngageZoneSet)
-    EngageZoneSet=zoneset
-  end
-  if NoEngageZoneSet and NoEngageZoneSet:IsInstanceOf("ZONE_BASE") then
-    local zoneset=SET_ZONE:New():AddZone(NoEngageZoneSet)
-    NoEngageZoneSet=zoneset
-  end
-
-  -- Set parameters.
-  self.engagedetectedOn=true
-  self.engagedetectedRmax=UTILS.NMToMeters(RangeMax or 25)
-  self.engagedetectedTypes=TargetTypes
-  self.engagedetectedEngageZones=EngageZoneSet
-  self.engagedetectedNoEngageZones=NoEngageZoneSet
-
-  -- Ensure detection is ON or it does not make any sense.
-  self:SetDetection(true)
-
-  return self
-end
-
---- Disable to automatically engage detected targets.
--- @param #FLIGHTGROUP self
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetEngageDetectedOff()
-  self.engagedetectedOn=false
-  return self
-end
-
 
 --- Enable that the group is despawned after landing. This can be useful to avoid DCS taxi issues with other AI or players or jamming taxiways.
 -- @param #FLIGHTGROUP self
@@ -841,22 +792,27 @@ function FLIGHTGROUP:Status()
 
   -- FSM state.
   local fsmstate=self:GetState()
+  
+  -- Is group alive?
+  local alive=self:IsAlive()  
 
   -- Update position.
   self:_UpdatePosition()
 
-  ---
-  -- Detection
-  ---
-
   -- Check if group has detected any units.
-  if self.detectionOn then
-    self:_CheckDetectedUnits()
-  end
-
+  self:_CheckDetectedUnits()
+  
+  -- Check ammo status.
+  self:_CheckAmmoStatus()
+  
+    -- Check damage.
+  self:_CheckDamage()
+  
   ---
   -- Parking
   ---
+
+  -- TODO: _CheckParking() function
 
   -- Check if flight began to taxi (if it was parking).
   if self:IsParking() then
@@ -930,11 +886,6 @@ function FLIGHTGROUP:Status()
       local lp0=unit:GetLife0()
       local parking=element.parking and tostring(element.parking.TerminalID) or "X"
 
-      -- Check if element is not dead and we missed an event.
-      --if life<=0 and element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
-      --  self:ElementDead(element)
-      --end
-
       -- Get ammo.
       local ammo=self:GetAmmoElement(element)
 
@@ -952,7 +903,9 @@ function FLIGHTGROUP:Status()
   -- Distance travelled
   ---
 
-  if self.verbose>=4 and self:IsAlive() then
+  if self.verbose>=4 and alive then
+  
+    -- TODO: _Check distance travelled.
 
     -- Travelled distance since last check.
     local ds=self.travelds
@@ -999,17 +952,13 @@ function FLIGHTGROUP:Status()
   end
 
   ---
-  -- Tasks & Missions
-  ---
-
-  self:_PrintTaskAndMissionStatus()
-
-  ---
   -- Fuel State
   ---
 
+  -- TODO: _CheckFuelState() function.
+
   -- Only if group is in air.
-  if self:IsAlive() and self.group:IsAirborne(true) then
+  if alive and self.group:IsAirborne(true) then
 
     local fuelmin=self:GetFuelMin()
 
@@ -1051,77 +1000,7 @@ function FLIGHTGROUP:Status()
   ---
   if self:IsAirborne() and self:IsFuelGood() and self.detectionOn and self.engagedetectedOn then
 
-    -- Target.
-    local targetgroup=nil --Wrapper.Group#GROUP
-    local targetdist=math.huge
-
-    -- Loop over detected groups.
-    for _,_group in pairs(self.detectedgroups:GetSet()) do
-      local group=_group --Wrapper.Group#GROUP
-
-      if group and group:IsAlive() then
-
-        -- Get 3D vector of target.
-        local targetVec3=group:GetVec3()
-
-        -- Distance to target.
-        local distance=UTILS.VecDist3D(self.position, targetVec3)
-
-        if distance<=self.engagedetectedRmax and distance<targetdist then
-
-          -- Check type attribute.
-          local righttype=false
-          for _,attribute in pairs(self.engagedetectedTypes) do
-            local gotit=group:HasAttribute(attribute, false)
-            self:I(self.lid..string.format("Group %s has attribute %s = %s", group:GetName(), attribute, tostring(gotit)))
-            if gotit then
-              righttype=true
-              break
-            end
-          end
-
-          -- We got the right type.
-          if righttype then
-
-            local insideEngage=true
-            local insideNoEngage=false
-
-            -- Check engage zones.
-            if self.engagedetectedEngageZones then
-              insideEngage=false
-              for _,_zone in pairs(self.engagedetectedEngageZones.Set) do
-                local zone=_zone --Core.Zone#ZONE
-                local inzone=zone:IsVec3InZone(targetVec3)
-                if inzone then
-                  insideEngage=true
-                  break
-                end
-              end
-            end
-
-            -- Check no engage zones.
-            if self.engagedetectedNoEngageZones then
-              for _,_zone in pairs(self.engagedetectedNoEngageZones.Set) do
-                local zone=_zone --Core.Zone#ZONE
-                local inzone=zone:IsVec3InZone(targetVec3)
-                if inzone then
-                  insideNoEngage=true
-                  break
-                end
-              end
-            end
-
-            -- If inside engage but not inside no engage zones.
-            if insideEngage and not insideNoEngage then
-              targetdist=distance
-              targetgroup=group
-            end
-
-          end
-
-        end
-      end
-    end
+    local targetgroup, targetdist=self:_GetDetectedTarget()
 
     -- If we found a group, we engage it.
     if targetgroup then
@@ -1136,6 +1015,12 @@ function FLIGHTGROUP:Status()
   ---
 
   self:_CheckCargoTransport()
+
+  ---
+  -- Tasks & Missions
+  ---
+
+  self:_PrintTaskAndMissionStatus()
 
 end
 

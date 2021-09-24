@@ -85,6 +85,12 @@
 --
 -- @field Core.Astar#ASTAR Astar path finding.
 -- @field #boolean ispathfinding If true, group is on pathfinding route.
+-- 
+-- @field #boolean engagedetectedOn If `true`, auto engage detected targets.
+-- @field #number engagedetectedRmax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
+-- @field #table engagedetectedTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
+-- @field Core.Set#SET_ZONE engagedetectedEngageZones Set of zones in which targets are engaged. Default is anywhere.
+-- @field Core.Set#SET_ZONE engagedetectedNoEngageZones Set of zones in which targets are *not* engaged. Default is nowhere.
 --
 -- @field #OPSGROUP.Radio radio Current radio settings.
 -- @field #OPSGROUP.Radio radioDefault Default radio settings.
@@ -607,8 +613,6 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "InUtero",          "InUtero")     -- Deactivated group goes back to mummy.
   self:AddTransition("*",             "Stop",             "Stopped")     -- Stop FSM.
 
-  --self:AddTransition("*",             "Status",           "*")           -- Status update.
-
   self:AddTransition("*",             "Destroyed",        "*")           -- The whole group is dead.
   self:AddTransition("*",             "Damaged",          "*")           -- Someone in the group took damage.
 
@@ -929,6 +933,7 @@ end
 -- @param #boolean Switch If `true`, detection is on. If `false` or `nil`, detection is off. Default is off.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDetection(Switch)
+  self:T(self.lid..string.format("Detection is %s", tostring(Switch)))
   self.detectionOn=Switch
   return self
 end
@@ -1110,6 +1115,59 @@ function OPSGROUP:GetHighestThreat()
   end
 
   return threat, levelmax
+end
+
+--- Enable to automatically engage detected targets.
+-- @param #OPSGROUP self
+-- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
+-- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
+-- @param Core.Set#SET_ZONE EngageZoneSet Set of zones in which targets are engaged. Default is anywhere.
+-- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
+-- @return #OPSGROUP self
+function OPSGROUP:SetEngageDetectedOn(RangeMax, TargetTypes, EngageZoneSet, NoEngageZoneSet)
+
+  -- Ensure table.
+  if TargetTypes then
+    if type(TargetTypes)~="table" then
+      TargetTypes={TargetTypes}
+    end
+  else
+    TargetTypes={"All"}
+  end
+
+  -- Ensure SET_ZONE if ZONE is provided.
+  if EngageZoneSet and EngageZoneSet:IsInstanceOf("ZONE_BASE") then
+    local zoneset=SET_ZONE:New():AddZone(EngageZoneSet)
+    EngageZoneSet=zoneset
+  end
+  if NoEngageZoneSet and NoEngageZoneSet:IsInstanceOf("ZONE_BASE") then
+    local zoneset=SET_ZONE:New():AddZone(NoEngageZoneSet)
+    NoEngageZoneSet=zoneset
+  end
+
+  -- Set parameters.
+  self.engagedetectedOn=true
+  self.engagedetectedRmax=UTILS.NMToMeters(RangeMax or 25)
+  self.engagedetectedTypes=TargetTypes
+  self.engagedetectedEngageZones=EngageZoneSet
+  self.engagedetectedNoEngageZones=NoEngageZoneSet
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Engage detected ON: Rmax=%d NM", UTILS.MetersToNM(self.engagedetectedRmax)))
+
+  -- Ensure detection is ON or it does not make any sense.
+  self:SetDetection(true)
+
+  return self
+end
+
+--- Disable to automatically engage detected targets.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:SetEngageDetectedOff()
+  self:T(self.lid..string.format("Engage detected OFF"))
+  self.engagedetectedOn=false
+  return self
 end
 
 --- Check if an element of the group has line of sight to a coordinate.
@@ -2042,13 +2100,49 @@ function OPSGROUP:HasPassedFinalWaypoint()
   return self.passedfinalwp
 end
 
---- Check if the group is currently rearming.
+--- Check if the group is currently rearming or on its way to the rearming place.
 -- @param #OPSGROUP self
 -- @return #boolean If true, group is rearming.
 function OPSGROUP:IsRearming()
   local rearming=self:Is("Rearming") or self:Is("Rearm")
   return rearming
 end
+
+--- Check if the group is completely out of ammo.
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, group is out-of-ammo.
+function OPSGROUP:IsOutOfAmmo()
+  return self.outofAmmo
+end
+
+--- Check if the group is out of bombs.
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, group is out of bombs.
+function OPSGROUP:IsOutOfBombs()
+  return self.outofBombs
+end
+
+--- Check if the group is out of guns.
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, group is out of guns.
+function OPSGROUP:IsOutOfGuns()
+  return self.outofGuns
+end
+
+--- Check if the group is out of missiles.
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, group is out of missiles.
+function OPSGROUP:IsOutOfMissiles()
+  return self.outofMissiles
+end
+
+--- Check if the group is out of torpedos.
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, group is out of torpedos.
+function OPSGROUP:IsOutOfTorpedos()
+  return self.outofTorpedos
+end
+
 
 --- Check if the group has currently switched a LASER on.
 -- @param #OPSGROUP self
@@ -2057,13 +2151,22 @@ function OPSGROUP:IsLasing()
   return self.spot.On
 end
 
---- Check if the group is currently retreating.
+--- Check if the group is currently retreating or retreated.
 -- @param #OPSGROUP self
--- @return #boolean If true, group is retreating.
+-- @return #boolean If true, group is retreating or retreated.
 function OPSGROUP:IsRetreating()
-  local is=self:is("Retreating")
+  local is=self:is("Retreating") or self:is("Retreated")
   return is
 end
+
+--- Check if the group is retreated (has reached its retreat zone).
+-- @param #OPSGROUP self
+-- @return #boolean If true, group is retreated.
+function OPSGROUP:IsRetreated()
+  local is=self:is("Retreated")
+  return is
+end
+
 
 --- Check if the group is currently returning to a zone.
 -- @param #OPSGROUP self
@@ -2812,15 +2915,6 @@ function OPSGROUP:SetTask(DCSTask)
 
   if self:IsAlive() then
 
-    if self.taskcurrent>0 then
-
-      -- TODO: Why the hell did I do this? It breaks scheduled tasks. I comment it out for now to see where it fails.
-      --local task=self:GetTaskCurrent()
-      --self:RemoveTask(task)
-      --self.taskcurrent=0
-
-    end
-
     -- Inject enroute tasks.
     if self.taskenroute and #self.taskenroute>0 then
       if tostring(DCSTask.id)=="ComboTask" then
@@ -2836,7 +2930,6 @@ function OPSGROUP:SetTask(DCSTask)
     end
 
     -- Set task.
-    --self.group:SetTask(DCSTask)
     self.controller:setTask(DCSTask)
 
     -- Debug info.
@@ -2861,7 +2954,6 @@ function OPSGROUP:PushTask(DCSTask)
   if self:IsAlive() then
 
     -- Push task.
-    --self.group:PushTask(DCSTask)
     self.controller:pushTask(DCSTask)
 
     -- Debug info.
@@ -3315,7 +3407,6 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
   
   -- Insert into task queue. Not sure any more, why I added this. But probably if a task is just executed without having been put into the queue.
   if self:GetTaskCurrent()==nil then
-    --env.info("FF adding current task to queue")
     table.insert(self.taskqueue, Task)
   end
   
@@ -3355,8 +3446,15 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- Parameters.
     local zone=Task.dcstask.params.zone --Core.Zone#ZONE
     
+    local surfacetypes=nil
+    if self:IsArmygroup() then
+      surfacetypes={land.SurfaceType.LAND, land.SurfaceType.ROAD}
+    elseif self:IsNavygroup() then
+      surfacetypes={land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER}    
+    end
+    
     -- Random coordinate in zone.
-    local Coordinate=zone:GetRandomCoordinate()
+    local Coordinate=zone:GetRandomCoordinate(nil, nil, surfacetypes)
         
     --Coordinate:MarkToAll("Random Patrol Zone Coordinate")
     
@@ -3968,6 +4066,11 @@ function OPSGROUP:onafterMissionExecute(From, Event, To, Mission)
 
   -- Set mission status to EXECUTING.
   Mission:Executing()
+  
+  -- Set auto engage detected targets.
+  if Mission.engagedetectedOn then
+    self:SetEngageDetectedOn(UTILS.MetersToNM(Mission.engagedetectedRmax), Mission.engagedetectedTypes, Mission.engagedetectedEngageZones, Mission.engagedetectedNoEngageZones)
+  end
 
 end
 
@@ -4124,6 +4227,11 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
     Mission.patroldata.noccupied=Mission.patroldata.noccupied-1
     AIRWING.UpdatePatrolPointMarker(Mission.patroldata)
   end
+  
+  -- Switch auto engage detected off. This IGNORES that engage detected had been activated for the group!
+  if Mission.engagedetectedOn then
+    self:SetEngageDetectedOff()
+  end
 
   -- ROE to default.
   if Mission.optionROE then
@@ -4201,17 +4309,20 @@ function OPSGROUP:RouteToMission(mission, delay)
 
     -- Catch dead or stopped groups.
     if self:IsDead() or self:IsStopped() then
+      self:T(self.lid..string.format("Route To Mission: I am DEAD or STOPPED! Ooops..."))
       return
     end
     
     -- OPSTRANSPORT: Just add the ops transport to the queue.
     if mission.type==AUFTRAG.Type.OPSTRANSPORT then
+      self:T(self.lid..string.format("Route To Mission: I am OPSTRANSPORT! Add transport and return..."))
       self:AddOpsTransport(mission.opstransport)
       return
     end
     
-    -- ALERT 5: Just set the mission to executing.
+    -- ALERT5: Just set the mission to executing.
     if mission.type==AUFTRAG.Type.ALERT5 then
+      self:T(self.lid..string.format("Route To Mission: I am ALERT5! Go right to MissionExecute()..."))
       self:MissionExecute(mission)
       return
     end    
@@ -4219,15 +4330,28 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- ID of current waypoint.
     local uid=self:GetWaypointCurrent().uid
     
-    -- Random radius.
+    -- Ingress waypoint coordinate where the mission is executed.
+    local waypointcoord=nil --Core.Point#COORDINATE
+    
+    -- Random radius of 1000 meters.
     local randomradius=1000
+
+    -- Surface types.
+    local surfacetypes=nil
+    if self:IsArmygroup() then
+      surfacetypes={land.SurfaceType.LAND, land.SurfaceType.ROAD}
+    elseif self:IsNavygroup() then
+      surfacetypes={land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER}    
+    end    
+    
+    -- Get ingress waypoint.    
     if mission.type==AUFTRAG.Type.PATROLZONE then
-      randomradius=nil
+      local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
+      waypointcoord=zone:GetRandomCoordinate(nil , nil, surfacetypes)
+    else
+      waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius, surfacetypes)
     end
     
-    -- Get coordinate where the mission is executed.
-    local waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius)
-
     -- Add enroute tasks.
     for _,task in pairs(mission.enrouteTasks) do
       self:AddTaskEnroute(task)
@@ -4532,9 +4656,17 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     -- Zone object.
     local zone=task.dcstask.params.zone --Core.Zone#ZONE
     
-    -- Random coordinate in zone.
-    local Coordinate=zone:GetRandomCoordinate()
+    -- Surface types.
+    local surfacetypes=nil
+    if self:IsArmygroup() then
+      surfacetypes={land.SurfaceType.LAND, land.SurfaceType.ROAD}
+    elseif self:IsNavygroup() then
+      surfacetypes={land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER}    
+    end
     
+    -- Random coordinate in zone.
+    local Coordinate=zone:GetRandomCoordinate(nil, nil, surfacetypes)    
+        
     -- Speed and altitude.
     local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)
     local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil
@@ -7820,7 +7952,7 @@ end
 -- @param #OPSGROUP self
 function OPSGROUP:_CheckDetectedUnits()
 
-  if self.group and not self:IsDead() then
+  if self.detectionOn and self.group and not self:IsDead() then
 
     -- Get detected DCS units.
     local detectedtargets=self.group:GetDetectedTargets()
@@ -10634,6 +10766,87 @@ function OPSGROUP:ClearWaypoints(IndexMin, IndexMax)
     table.remove(self.waypoints, i)
   end
   --self.waypoints={}
+end
+
+--- Get target group.
+-- @param #OPSGROUP self
+-- @return Wrapper.Group#GROUP Detected target group.
+-- @return #number Distance to target.
+function OPSGROUP:_GetDetectedTarget()
+
+  -- Target.
+  local targetgroup=nil --Wrapper.Group#GROUP
+  local targetdist=math.huge
+  
+  -- Loop over detected groups.
+  for _,_group in pairs(self.detectedgroups:GetSet()) do
+    local group=_group --Wrapper.Group#GROUP
+  
+    if group and group:IsAlive() then
+  
+      -- Get 3D vector of target.
+      local targetVec3=group:GetVec3()
+  
+      -- Distance to target.
+      local distance=UTILS.VecDist3D(self.position, targetVec3)
+  
+      if distance<=self.engagedetectedRmax and distance<targetdist then
+  
+        -- Check type attribute.
+        local righttype=false
+        for _,attribute in pairs(self.engagedetectedTypes) do
+          local gotit=group:HasAttribute(attribute, false)
+          self:I(self.lid..string.format("Group %s has attribute %s = %s", group:GetName(), attribute, tostring(gotit)))
+          if gotit then
+            righttype=true
+            break
+          end
+        end
+  
+        -- We got the right type.
+        if righttype then
+  
+          local insideEngage=true
+          local insideNoEngage=false
+  
+          -- Check engage zones.
+          if self.engagedetectedEngageZones then
+            insideEngage=false
+            for _,_zone in pairs(self.engagedetectedEngageZones.Set) do
+              local zone=_zone --Core.Zone#ZONE
+              local inzone=zone:IsVec3InZone(targetVec3)
+              if inzone then
+                insideEngage=true
+                break
+              end
+            end
+          end
+  
+          -- Check no engage zones.
+          if self.engagedetectedNoEngageZones then
+            for _,_zone in pairs(self.engagedetectedNoEngageZones.Set) do
+              local zone=_zone --Core.Zone#ZONE
+              local inzone=zone:IsVec3InZone(targetVec3)
+              if inzone then
+                insideNoEngage=true
+                break
+              end
+            end
+          end
+  
+          -- If inside engage but not inside no engage zones.
+          if insideEngage and not insideNoEngage then
+            targetdist=distance
+            targetgroup=group
+          end
+  
+        end
+  
+      end
+    end
+  end
+
+  return targetgroup, targetdist
 end
 
 

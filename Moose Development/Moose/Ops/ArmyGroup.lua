@@ -55,10 +55,13 @@ ARMYGROUP = {
   engage          = {},
 }
 
---- Target
+--- Engage Target.
 -- @type ARMYGROUP.Target
 -- @field Ops.Target#TARGET Target The target.
 -- @field Core.Point#COORDINATE Coordinate Last known coordinate of the target.
+-- @field Ops.OpsGroup#OPSGROUP.Waypoint Waypoint the waypoint created to go to the target.
+-- @field #number roe ROE backup.
+-- @field #number alarmstate Alarm state backup.
 
 --- Army Group version.
 -- @field #string version
@@ -332,7 +335,11 @@ end
 function ARMYGROUP:IsCombatReady()
   local combatready=true
   
-  if self:IsRearming() or self:IsRetreating() or self.outofAmmo or self:IsEngaging() or self:is("Retreated") or self:IsDead() or self:IsStopped() or self:IsInUtero() then
+  if self:IsRearming() or self:IsRetreating() or self:IsOutOfAmmo() or self:IsEngaging() or self:IsDead() or self:IsStopped() or self:IsInUtero() then
+    combatready=false
+  end
+  
+  if self:IsPickingup() or self:IsLoading() or self:IsTransporting() or self:IsLoaded() or self:IsCargo() or self:IsCarrier() then
     combatready=false
   end
   
@@ -356,26 +363,20 @@ function ARMYGROUP:Status()
 
   if alive then
 
-    ---
-    -- Detection
-    ---
+    -- Update position etc.    
+    self:_UpdatePosition()
     
     -- Check if group has detected any units.
-    if self.detectionOn then
-      self:_CheckDetectedUnits()
-    end
+    self:_CheckDetectedUnits()
     
     -- Check ammo status.
     self:_CheckAmmoStatus()
-
-    -- Update position etc.    
-    self:_UpdatePosition()
-      
-    -- Check if group got stuck.
-    self:_CheckStuck()
-    
+          
     -- Check damage of elements and group.
     self:_CheckDamage()
+
+    -- Check if group got stuck.
+    self:_CheckStuck()
     
     -- Update engagement.
     if self:IsEngaging() then
@@ -461,6 +462,21 @@ function ARMYGROUP:Status()
       text=text.." none!"
     end
     self:I(self.lid..text)
+  end
+
+  ---
+  -- Engage Detected Targets
+  ---
+  if self:IsCruising() and self.detectionOn and self.engagedetectedOn then
+
+    local targetgroup, targetdist=self:_GetDetectedTarget()
+
+    -- If we found a group, we engage it.
+    if targetgroup then
+      self:I(self.lid..string.format("Engaging target group %s at distance %d meters", targetgroup:GetName(), targetdist))
+      self:EngageTarget(targetgroup)
+    end
+
   end
   
   
@@ -580,7 +596,7 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
 
     -- Update route.
     if #self.waypoints>1 then
-      self:Cruise(nil, self.option.Formation)
+      self:__Cruise(-0.1, nil, self.option.Formation)
     else
       self:FullStop()
     end
@@ -1003,11 +1019,13 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
   -- Target coordinate.
   self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate())
   
-  -- TODO: Backup current ROE and alarm state and reset after disengage.
+  -- Backup ROE and alarm state.
+  self.engage.roe=self:GetROE()
+  self.engage.alarmstate=self:GetAlarmstate()
   
   -- Switch ROE and alarm state.
   self:SwitchAlarmstate(ENUMS.AlarmState.Auto)
-  self:SwitchROE(ENUMS.ROE.WeaponFree)
+  self:SwitchROE(ENUMS.ROE.OpenFire)
 
   -- ID of current waypoint.
   local uid=self:GetWaypointCurrent().uid
@@ -1025,17 +1043,19 @@ end
 function ARMYGROUP:_UpdateEngageTarget()
 
   if self.engage.Target and self.engage.Target:IsAlive() then
-  
-    --env.info("FF Update Engage Target "..self.engage.Target:GetName())
 
-    local vec3=self.engage.Target:GetCoordinate():GetVec3()
+    -- Get current position vector.
+    local vec3=self.engage.Target:GetVec3()
   
-    local dist=UTILS.VecDist2D(vec3, self.engage.Coordinate:GetVec3())
+    -- Distance to last known position of target.
+    local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
     
+    -- Check if target moved more than 100 meters.
     if dist>100 then
     
       --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
     
+      -- Update new position.
       self.engage.Coordinate:UpdateFromVec3(vec3)
 
       -- ID of current waypoint.
@@ -1053,7 +1073,10 @@ function ARMYGROUP:_UpdateEngageTarget()
     end
     
   else
+  
+    -- Target not alive any more == Disengage.
     self:Disengage()
+    
   end
 
 end
@@ -1066,8 +1089,17 @@ end
 function ARMYGROUP:onafterDisengage(From, Event, To)
   self:T(self.lid.."Disengage Target")
 
-  -- TODO: Reset ROE and alarm state.
-  self:_CheckGroupDone(1)    
+  -- Restore previous ROE and alarm state.
+  self:SwitchROE(self.engage.roe)
+  self:SwitchAlarmstate(self.engage.alarmstate)
+  
+  -- Remove current waypoint
+  if self.engage.Waypoint then
+    self:RemoveWaypointByID(self.engage.Waypoint.uid)    
+  end
+
+  -- Check group is done
+  self:_CheckGroupDone(1)
 end
 
 --- On after "Rearmed" event.

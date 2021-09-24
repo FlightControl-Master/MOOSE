@@ -465,26 +465,22 @@ function NAVYGROUP:Status(From, Event, To)
   -- Is group alive?
   local alive=self:IsAlive()
   
-  --
+  -- Free path.
   local freepath=0
   
+  -- Check if group is exists and is active.
   if alive then
-  
-    ---
-    -- Detection
-    ---  
-  
-    -- Check if group has detected any units.
-    if self.detectionOn then
-      self:_CheckDetectedUnits()
-    end
-    
+
     -- Update last known position, orientation, velocity.
     self:_UpdatePosition()
+  
+    -- Check if group has detected any units.
+    self:_CheckDetectedUnits()
     
     -- Check if group started or stopped turning.
     self:_CheckTurning()
-    
+  
+    -- Distance to next Waypoint.  
     local disttoWP=math.min(self:GetDistanceToWaypoint(), UTILS.NMToMeters(10))
     freepath=disttoWP
     
@@ -527,7 +523,8 @@ function NAVYGROUP:Status(From, Event, To)
     end
     
   end
-  
+
+  -- Group exists but can also be inactive.  
   if alive~=nil then
 
     if self.verbose>=1 then
@@ -702,7 +699,7 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
 
     -- Update route.
     if #self.waypoints>1 then  
-      self:Cruise()
+      self:__Cruise(-0.1)
     else
       self:FullStop()
     end

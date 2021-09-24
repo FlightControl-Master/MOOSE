@@ -18,6 +18,7 @@
 -- @field #table transportqueue Transport queue.
 -- @field #table cohorts Cohorts of this legion.
 -- @field Ops.Commander#COMMANDER commander Commander of this legion.
+-- @field Ops.Chief#CHIEF chief Chief of this legion.
 -- @extends Functional.Warehouse#WAREHOUSE
 
 --- Be surprised!
@@ -672,9 +673,9 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
     local request=self:GetRequestByID(self.queueid)
     
     if request then
-      if self.isShip then
-        --self:T(self.lid.."FF request late activated")
-        --request.lateActivation=true
+      if self:IsShip() then
+        self:T(self.lid.."Warehouse phyiscal structure is SHIP. Requestes assets will be late activated!")
+        request.lateActivation=true
       end
     end    
     
@@ -985,6 +986,8 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
 
   -- Check if we have a cohort or if this was some other request.
   if cohort then
+  
+    self:I(self.lid..string.format("Cohort asset spawned %s", asset.spawngroupname))
 
     -- Create a flight group.
     local flightgroup=self:_CreateFlightGroup(asset)
@@ -1064,8 +1067,10 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
       end
   
       -- Add group to the detection set of the CHIEF (INTEL).
-      if self.commander and self.commander.chief then
-        self.commander.chief.detectionset:AddGroup(asset.flightgroup.group)
+      local chief=self.chief or (self.commander and self.commander.chief or nil) --Ops.Chief#CHIEF
+      if chief then
+        self:I(self.lid..string.format("Adding group %s to agents of CHIEF", group:GetName()))
+        chief.detectionset:AddGroup(asset.flightgroup.group)
       end
       
     elseif string.find(assignment, "Transport-") then

@@ -413,6 +413,47 @@ function CHIEF:GetCommander()
   return self.commander
 end
 
+
+--- Add an AIRWING to the chief's commander.
+-- @param #CHIEF self
+-- @param Ops.AirWing#AIRWING Airwing The airwing to add.
+-- @return #CHIEF self
+function CHIEF:AddAirwing(Airwing)
+
+  -- Add airwing to the commander.
+  self:AddLegion(Airwing)
+  
+  return self
+end
+
+--- Add a BRIGADE to the chief's commander.
+-- @param #CHIEF self
+-- @param Ops.Brigade#BRIGADE Brigade The brigade to add.
+-- @return #CHIEF self
+function CHIEF:AddBrigade(Brigade)
+
+  -- Add brigade to the commander
+  self:AddLegion(Brigade)
+  
+  return self
+end
+
+--- Add a LEGION to the chief's commander.
+-- @param #CHIEF self
+-- @param Ops.Legion#LEGION Legion The legion to add.
+-- @return #CHIEF self
+function CHIEF:AddLegion(Legion)
+
+  -- Set chief of the legion.
+  Legion.chief=self
+
+  -- Add legion to the commander.
+  self.commander:AddLegion(Legion)
+  
+  return self
+end
+
+
 --- Add mission to mission queue of the COMMANDER.
 -- @param #CHIEF self
 -- @param Ops.Auftrag#AUFTRAG Mission Mission to be added.
@@ -1181,10 +1222,8 @@ function CHIEF:CheckOpsZoneQueue()
       env.info(string.format("Zone %s is owned by coalition %d", opszone.zone:GetName(), ownercoalition))
       
       -- Recruit ground assets that
-      local recruited, assets, legions=self:RecruitAssetsForZone(opszone, AUFTRAG.Type.PATROLZONE, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY})
-      
-
-    
+      local recruited=self:RecruitAssetsForZone(opszone, AUFTRAG.Type.PATROLZONE, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY})
+          
     end
     
   end
@@ -1494,8 +1533,6 @@ end
 -- @param #table Categories Group categories of the assets.
 -- @param #table Attributes Generalized group attributes.
 -- @return #boolean If `true` enough assets could be recruited.
--- @return #table Assets that have been recruited from all legions.
--- @return #table Legions that have recruited assets.
 function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax, Categories, Attributes)
 
   -- Cohorts.
@@ -1520,7 +1557,7 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
   -- Target position.
   local TargetVec2=OpsZone.zone:GetVec2()
   
-  -- Recruite assets.
+  -- Recruite infantry assets.
   local recruitedInf, assetsInf, legionsInf=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, nil, nil, nil, Categories, Attributes)
   
   if recruitedInf then
@@ -1536,9 +1573,9 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
       end
     end
     
-    -- Recruite assets.
+    -- Recruite carrier assets. This need to be ground or helicopters to deploy at a zone.
     local recruitedTrans, assetsTrans, legionsTrans=
-    LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NassetsMin, NassetsMax, TargetVec2, nil, nil, nil, weightMax, {Group.Category.HELICOPTER, Group.Category.GROUND})
+    LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, 1, 1, TargetVec2, nil, nil, nil, weightMax, {Group.Category.HELICOPTER, Group.Category.GROUND})
     
     local transport=nil --Ops.OpsTransport#OPSTRANSPORT
     if recruitedTrans then
@@ -1550,7 +1587,15 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
       -- Add cargo assets to transport.
       for _,_legion in pairs(legionsInf) do
         local legion=_legion --Ops.Legion#LEGION
-        local tpz=transport:AddTransportZoneCombo(legion.spawnzone, OpsZone.zone)
+
+        -- Pickup at spawnzone or at airbase if the legion warehouse has one.
+        local pickupzone=legion.spawnzone
+        if legion.airbase and legion:IsRunwayOperational() then
+          pickupzone=ZONE_AIRBASE:New(legion.airbasename, 4000)
+        end
+        
+        local tpz=transport:AddTransportZoneCombo(pickupzone, OpsZone.zone)
+        
         for _,_asset in pairs(assetsInf) do
           local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
           if asset.legion.alias==legion.alias then
@@ -1579,6 +1624,7 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
     
     -- Create Patrol zone mission.  
     local mission=AUFTRAG:NewPATROLZONE(OpsZone.zone)
+    mission:SetEngageDetected()
     
     for _,asset in pairs(assetsInf) do
       mission:AddAsset(asset)
@@ -1593,11 +1639,13 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
   
     OpsZone.missionPatrol=mission
     
+    return true
   else
     LEGION.UnRecruitAssets(assetsInf)
+    return false
   end  
 
-  return recruited, assets, legions
+  return nil
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

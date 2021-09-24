@@ -152,16 +152,21 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\OPS\Auftrag\_Main.png)
---
 -- # The AUFTRAG Concept
 -- 
 -- The AUFTRAG class significantly simplifies the workflow of using DCS tasks.
 --
 -- You can think of an AUFTRAG as document, which contains the mission briefing, i.e. information about the target location, mission altitude, speed and various other parameters.
 -- This document can be handed over directly to a pilot (or multiple pilots) via the @{Ops.FlightGroup#FLIGHTGROUP} class. The pilots will then execute the mission.
--- The AUFTRAG document can also be given to an AIRWING. The airwing will then determine the best assets (pilots and payloads) available for the job. 
--- One more up the food chain, an AUFTRAG can be passed to a WINGCOMMANDER. The wing commander will find the best AIRWING and pass the job over to it.
+-- 
+-- The AUFTRAG document can also be given to an AIRWING. The airwing will then determine the best assets (pilots and payloads) available for the job.
+-- 
+-- Similarly, an AUFTRAG can be given to ground or navel groups via the @{Ops.ArmyGroup#ARMYGROUP} or @{Ops.NavyGroup#NAVYGROUP} classes, respectively. These classes have also
+-- AIRWING analouges, which are called BRIGADE and FLEET. Brigades and fleets will likewise select the best assets they have available and pass on the AUFTRAG to them. 
+-- 
+--  
+-- One more up the food chain, an AUFTRAG can be passed to a COMMANDER. The commander will recruit the best assets of AIRWINGs, BRIGADEs and/or FLEETs and pass the job over to it.
+-- 
 --
 -- # Airborne Missions
 -- 
@@ -169,7 +174,7 @@
 -- 
 -- ## Anti-Ship
 -- 
--- An anti-ship mission can be created with the @{#AUFTRAG.NewANTISHIP}(*Target, Altitude*) function.
+-- An anti-ship mission can be created with the @{#AUFTRAG.NewANTISHIP}() function.
 -- 
 -- ## AWACS
 -- 
@@ -225,7 +230,7 @@
 -- 
 -- ## RECON
 -- 
--- Not implemented yet.
+-- An reconnaissance mission can be created with the @{#AUFTRAG.NewRECON}() function.
 -- 
 -- ## RESCUE HELO
 -- 
@@ -260,39 +265,42 @@
 -- 
 -- # Assigning Missions
 -- 
--- An AUFTRAG can be assigned to groups, airwings or wingcommanders
+-- An AUFTRAG can be assigned to groups (FLIGHTGROUP, ARMYGROUP, NAVYGROUP), legions (AIRWING, BRIGADE, FLEET) or to a COMMANDER.
 -- 
 -- ## Group Level
 -- 
 -- ### Flight Group
 -- 
--- Assigning an AUFTRAG to a flight groups is done via the @{Ops.FlightGroup#FLIGHTGROUP.AddMission} function. See FLIGHTGROUP docs for details.
+-- Assigning an AUFTRAG to a flight group is done via the @{Ops.FlightGroup#FLIGHTGROUP.AddMission} function. See FLIGHTGROUP docs for details.
+-- 
+-- ### Army Group
+-- 
+-- Assigning an AUFTRAG to an army group is done via the @{Ops.ArmyGroup#ARMYGROUP.AddMission} function. See ARMYGROUP docs for details.
 -- 
 -- ### Navy Group
 -- 
--- Assigning an AUFTRAG to a navy groups is done via the @{Ops.NavyGroup#NAVYGROUP.AddMission} function. See NAVYGROUP docs for details.
+-- Assigning an AUFTRAG to a navy group is done via the @{Ops.NavyGroup#NAVYGROUP.AddMission} function. See NAVYGROUP docs for details.
 -- 
 -- ## Legion Level
 -- 
 -- Adding an AUFTRAG to an airwing is done via the @{Ops.AirWing#AIRWING.AddMission} function. See AIRWING docs for further details.
--- Similarly, an AUFTRAG can be added to a brigade via the @{Ops.Brigade#BRIGADE.AddMission} function
+-- Similarly, an AUFTRAG can be added to a brigade via the @{Ops.Brigade#BRIGADE.AddMission} function.
 -- 
 -- ## Commander Level
 -- 
--- Assigning an AUFTRAG to acommander is done via the @{Ops.Commander#COMMANDER.AddMission} function. See COMMADER docs for details.
+-- Assigning an AUFTRAG to acommander is done via the @{Ops.Commander#COMMANDER.AddMission} function. See COMMANDER docs for details.
 -- 
--- ## Chief Level
--- 
--- Assigning an AUFTRAG to a wing commander is done via the @{Ops.Chief#CHIEF.AddMission} function. See CHIEF docs for details. 
 --  
--- 
--- 
 -- # Events
 -- 
--- The AUFTRAG class creates many useful (FSM) events, which can be used in the mission designers script.  
+-- The AUFTRAG class creates many useful (FSM) events, which can be used in the mission designers script.
+-- 
+-- TODO  
 -- 
 -- 
 -- # Examples
+-- 
+-- TODO
 -- 
 --
 -- @field #AUFTRAG
@@ -599,8 +607,8 @@ function AUFTRAG:New(Type)
   self:SetStartState(self.status)
   
   -- PLANNED --> (QUEUED) --> (REQUESTED) --> SCHEDULED --> STARTED --> EXECUTING --> DONE
-  self:AddTransition("*",                      "Planned",          AUFTRAG.Status.PLANNED)     -- Mission is in planning stage.
-  self:AddTransition(AUFTRAG.Status.PLANNED,   "Queued",           AUFTRAG.Status.QUEUED)      -- Mission is in queue of an AIRWING.
+  self:AddTransition("*",                      "Planned",          AUFTRAG.Status.PLANNED)     -- Mission is in planning stage. Could be in the queue of a COMMANDER or CHIEF.
+  self:AddTransition(AUFTRAG.Status.PLANNED,   "Queued",           AUFTRAG.Status.QUEUED)      -- Mission is in queue of a LEGION.
   self:AddTransition(AUFTRAG.Status.QUEUED,    "Requested",        AUFTRAG.Status.REQUESTED)   -- Mission assets have been requested from the warehouse.
   self:AddTransition(AUFTRAG.Status.REQUESTED, "Scheduled",        AUFTRAG.Status.SCHEDULED)   -- Mission added to the first ops group queue.
   
@@ -624,6 +632,171 @@ function AUFTRAG:New(Type)
   self:AddTransition("*",                      "ElementDestroyed", "*")
   self:AddTransition("*",                      "GroupDead",        "*")  
   self:AddTransition("*",                      "AssetDead",        "*")
+
+  ------------------------
+  --- Pseudo Functions ---
+  ------------------------
+
+  --- Triggers the FSM event "Status".
+  -- @function [parent=#AUFTRAG] Status
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Status" after a delay.
+  -- @function [parent=#AUFTRAG] __Status
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Stop".
+  -- @function [parent=#AUFTRAG] Stop
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Stop" after a delay.
+  -- @function [parent=#AUFTRAG] __Stop
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Planned".
+  -- @function [parent=#AUFTRAG] Planned
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Planned" after a delay.
+  -- @function [parent=#AUFTRAG] __Planned
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Queued".
+  -- @function [parent=#AUFTRAG] Queued
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Queued" after a delay.
+  -- @function [parent=#AUFTRAG] __Queued
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Requested".
+  -- @function [parent=#AUFTRAG] Requested
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Requested" after a delay.
+  -- @function [parent=#AUFTRAG] __Requested
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Scheduled".
+  -- @function [parent=#AUFTRAG] Scheduled
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Scheduled" after a delay.
+  -- @function [parent=#AUFTRAG] __Scheduled
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Started".
+  -- @function [parent=#AUFTRAG] Started
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Started" after a delay.
+  -- @function [parent=#AUFTRAG] __Started
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Executing".
+  -- @function [parent=#AUFTRAG] Executing
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Executing" after a delay.
+  -- @function [parent=#AUFTRAG] __Executing
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Cancel".
+  -- @function [parent=#AUFTRAG] Cancel
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Cancel" after a delay.
+  -- @function [parent=#AUFTRAG] __Cancel
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Cancel" event.
+  -- @function [parent=#AUFTRAG] OnAfterCancel
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+
+  --- Triggers the FSM event "Done".
+  -- @function [parent=#AUFTRAG] Done
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Done" after a delay.
+  -- @function [parent=#AUFTRAG] __Done
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Done" event.
+  -- @function [parent=#AUFTRAG] OnAfterDone
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Success".
+  -- @function [parent=#AUFTRAG] Success
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Success" after a delay.
+  -- @function [parent=#AUFTRAG] __Success
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Success" event.
+  -- @function [parent=#AUFTRAG] OnAfterSuccess
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- Triggers the FSM event "Failure".
+  -- @function [parent=#AUFTRAG] Failure
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Failure" after a delay.
+  -- @function [parent=#AUFTRAG] __Failure
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Failure" event.
+  -- @function [parent=#AUFTRAG] OnAfterFailure
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- Triggers the FSM event "Repeat".
+  -- @function [parent=#AUFTRAG] Repeat
+  -- @param #AUFTRAG self
+
+  --- Triggers the FSM event "Repeat" after a delay.
+  -- @function [parent=#AUFTRAG] __Repeat
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Repeat" event.
+  -- @function [parent=#AUFTRAG] OnAfterRepeat
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.  
   
   -- Init status update.
   self:__Status(-1)
@@ -1918,6 +2091,44 @@ function AUFTRAG:SetEngageAltitude(Altitude)
    -- Update the DCS task parameter.
   self.DCStask=self:GetDCSMissionTask()
    
+  return self
+end
+
+--- Enable to automatically engage detected targets.
+-- @param #AUFTRAG self
+-- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
+-- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
+-- @param Core.Set#SET_ZONE EngageZoneSet Set of zones in which targets are engaged. Default is anywhere.
+-- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
+-- @return #AUFTRAG self
+function AUFTRAG:SetEngageDetected(RangeMax, TargetTypes, EngageZoneSet, NoEngageZoneSet)
+
+  -- Ensure table.
+  if TargetTypes then
+    if type(TargetTypes)~="table" then
+      TargetTypes={TargetTypes}
+    end
+  else
+    TargetTypes={"All"}
+  end
+
+  -- Ensure SET_ZONE if ZONE is provided.
+  if EngageZoneSet and EngageZoneSet:IsInstanceOf("ZONE_BASE") then
+    local zoneset=SET_ZONE:New():AddZone(EngageZoneSet)
+    EngageZoneSet=zoneset
+  end
+  if NoEngageZoneSet and NoEngageZoneSet:IsInstanceOf("ZONE_BASE") then
+    local zoneset=SET_ZONE:New():AddZone(NoEngageZoneSet)
+    NoEngageZoneSet=zoneset
+  end
+
+  -- Set parameters.
+  self.engagedetectedOn=true
+  self.engagedetectedRmax=UTILS.NMToMeters(RangeMax or 25)
+  self.engagedetectedTypes=TargetTypes
+  self.engagedetectedEngageZones=EngageZoneSet
+  self.engagedetectedNoEngageZones=NoEngageZoneSet
+
   return self
 end
 
@@ -4039,8 +4250,9 @@ end
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP group Group.
 -- @param #number randomradius Random radius in meters.
+-- @param #table surfacetypes Surface types of random zone.
 -- @return Core.Point#COORDINATE Coordinate where the mission is executed.
-function AUFTRAG:GetMissionWaypointCoord(group, randomradius)
+function AUFTRAG:GetMissionWaypointCoord(group, randomradius, surfacetypes)
 
   -- Check if a coord has been explicitly set.
   if self.missionWaypointCoord then
@@ -4052,12 +4264,12 @@ function AUFTRAG:GetMissionWaypointCoord(group, randomradius)
   end
 
   -- Create waypoint coordinate half way between us and the target.
-  local waypointcoord=group:GetCoordinate():GetIntermediateCoordinate(self:GetTargetCoordinate(), self.missionFraction)
+  local waypointcoord=group:GetCoordinate():GetIntermediateCoordinate(self:GetTargetCoordinate(), self.missionFraction)  
   local alt=waypointcoord.y
   
   -- Add some randomization.
   if randomradius then
-    waypointcoord=ZONE_RADIUS:New("Temp", waypointcoord:GetVec2(), randomradius):GetRandomCoordinate():SetAltitude(alt, false)
+    waypointcoord=ZONE_RADIUS:New("Temp", waypointcoord:GetVec2(), randomradius):GetRandomCoordinate(nil, nil, surfacetypes):SetAltitude(alt, false)
   end
   
   -- Set altitude of mission waypoint.

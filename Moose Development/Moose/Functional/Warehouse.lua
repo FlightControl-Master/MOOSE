@@ -80,7 +80,8 @@
 -- @field #string autosavepath Path where the asset file is saved on auto save.
 -- @field #string autosavefile File name of the auto asset save file. Default is auto generated from warehouse id and name.
 -- @field #boolean safeparking If true, parking spots for aircraft are considered as occupied if e.g. a client aircraft is parked there. Default false.
--- @field #boolean isunit If true, warehouse is represented by a unit instead of a static.
+-- @field #boolean isUnit If `true`, warehouse is represented by a unit instead of a static.
+-- @field #boolean isShip If `true`, warehouse is represented by a ship unit.
 -- @field #number lowfuelthresh Low fuel threshold. Triggers the event AssetLowFuel if for any unit fuel goes below this number.
 -- @field #boolean respawnafterdestroyed If true, warehouse is respawned after it was destroyed. Assets are kept.
 -- @field #number respawndelay Delay before respawn in seconds.
@@ -1590,7 +1591,8 @@ WAREHOUSE = {
   autosavepath  =   nil,
   autosavefile  =   nil,
   saveparking   = false,
-  isunit        = false,
+  isUnit        = false,
+  isShip        = false,
   lowfuelthresh =  0.15,
   respawnafterdestroyed=false,
   respawndelay  =   nil,
@@ -1655,6 +1657,7 @@ WAREHOUSE = {
 -- @field #table transportassets Table of transport carrier assets. Each element of the table is a @{#WAREHOUSE.Assetitem}.
 -- @field #number transportattribute Attribute of transport assets of type @{#WAREHOUSE.Attribute}.
 -- @field #number transportcategory Category of transport assets of type @{#WAREHOUSE.Category}.
+-- @field #boolean lateActivation Assets are spawned in late activated state.
 
 --- Item of the warehouse pending queue table.
 -- @type WAREHOUSE.Pendingitem
@@ -1857,39 +1860,45 @@ WAREHOUSE.version="1.0.2"
 -- @return #WAREHOUSE self
 function WAREHOUSE:New(warehouse, alias)
 
+  -- Inherit everthing from FSM class.
+  local self=BASE:Inherit(self, FSM:New()) -- #WAREHOUSE
+
   -- Check if just a string was given and convert to static.
   if type(warehouse)=="string" then
-    local warehousename=warehouse
+    local warehousename=warehouse    
     warehouse=UNIT:FindByName(warehousename)
     if warehouse==nil then
       warehouse=STATIC:FindByName(warehousename, true)
-      self.isunit=false
-    else
-      self.isunit=true
-      if warehouse:IsShip() then
-        env.info("FF warehouse is ship!")
-        self.isShip=true
-      end
     end
   end
 
   -- Nil check.
   if warehouse==nil then
-    BASE:E("ERROR: Warehouse does not exist!")
+    env.error("ERROR: Warehouse does not exist!")
     return nil
+  end
+  
+  -- Check if we have a STATIC or UNIT object.
+  if warehouse:IsInstanceOf("STATIC") then
+    self.isUnit=false
+  elseif warehouse:IsInstanceOf("UNIT") then
+    self.isUnit=true
+    if warehouse:IsShip() then
+      self.isShip=true
+    end  
+  else
+    env.error("ERROR: Warehouse is neither STATIC nor UNIT object!")
+    return nil    
   end
 
   -- Set alias.
   self.alias=alias or warehouse:GetName()
 
-  -- Print version.
-  env.info(string.format("Adding warehouse v%s for structure %s with alias %s", WAREHOUSE.version, warehouse:GetName(), self.alias))
-
-  -- Inherit everthing from FSM class.
-  local self=BASE:Inherit(self, FSM:New()) -- #WAREHOUSE
-
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("WAREHOUSE %s | ", self.alias)
+  
+  -- Print version.
+  self:I(self.lid..string.format("Adding warehouse v%s for structure %s [isUnit=%s, isShip=%s]", WAREHOUSE.version, warehouse:GetName(), tostring(self:IsUnit()), tostring(self:IsShip())))  
 
   -- Set some variables.
   self.warehouse=warehouse
@@ -3324,7 +3333,7 @@ end
 
 --- Check if runway is operational.
 -- @param #WAREHOUSE self
--- @return #boolean If true, runway is operational.
+-- @return #boolean If `true`, runway is operational.
 function WAREHOUSE:IsRunwayOperational()
   if self.airbase then
     if self.runwaydestroyed then
@@ -3358,6 +3367,27 @@ function WAREHOUSE:GetRunwayRepairtime()
     return Trepair
   end
   return 0
+end
+
+--- Check if warehouse physical representation is a unit (not a static) object.
+-- @param #WAREHOUSE self
+-- @return #boolean If `true`, warehouse object is a unit.
+function WAREHOUSE:IsUnit()
+  return self.isUnit
+end
+
+--- Check if warehouse physical representation is a static (not a unit) object.
+-- @param #WAREHOUSE self
+-- @return #boolean If `true`, warehouse object is a static.
+function WAREHOUSE:IsStatic()
+  return not self.isUnit
+end
+
+--- Check if warehouse physical representation is a ship.
+-- @param #WAREHOUSE self
+-- @return #boolean If `true`, warehouse object is a ship.
+function WAREHOUSE:IsShip()
+  return self.isShip
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4399,7 +4429,7 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
 
       -- Delete request from queue because it will never be possible.
       -- Unless(!) at least one is a moving warehouse, which could, e.g., be an aircraft carrier.
-      if not (self.isunit or Request.warehouse.isunit) then
+      if not (self.isUnit or Request.warehouse.isUnit) then
         self:_DeleteQueueItem(Request, self.queue)
       end
 
@@ -5828,8 +5858,6 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, late
     
     -- Late activation.
     template.lateActivation=lateactivated
-    
-    --env.info("FF lateActivation="..tostring(template.lateActivation))
 
     template.route.points[1].x = coord.x
     template.route.points[1].y = coord.z
@@ -6108,17 +6136,9 @@ function WAREHOUSE:_RouteGround(group, request)
     end
 
     for n,wp in ipairs(Waypoints) do
-      --env.info(n)
       local tf=self:_SimpleTaskFunctionWP("warehouse:_PassingWaypoint",group, n, #Waypoints)
       group:SetTaskWaypoint(wp, tf)
     end
-
-    -- Task function triggering the arrived event at the last waypoint.
-    --local TaskFunction = self:_SimpleTaskFunction("warehouse:_Arrived", group)
-
-    -- Put task function on last waypoint.
-    --local Waypoint = Waypoints[#Waypoints]
-    --group:SetTaskWaypoint(Waypoint, TaskFunction)
 
     -- Route group to destination.
     group:Route(Waypoints, 1)
@@ -7676,7 +7696,7 @@ function WAREHOUSE:_SimpleTaskFunction(Function, group)
   local DCSScript = {}
 
   DCSScript[#DCSScript+1]   = string.format('local mygroup     = GROUP:FindByName(\"%s\") ', groupname)               -- The group that executes the task function. Very handy with the "...".
-  if self.isunit then
+  if self.isUnit then
     DCSScript[#DCSScript+1] = string.format("local mywarehouse = UNIT:FindByName(\"%s\") ", warehouse)                -- The unit that holds the warehouse self object.
   else
     DCSScript[#DCSScript+1] = string.format("local mywarehouse = STATIC:FindByName(\"%s\") ", warehouse)              -- The static that holds the warehouse self object.
@@ -7707,7 +7727,7 @@ function WAREHOUSE:_SimpleTaskFunctionWP(Function, group, n, N)
   local DCSScript = {}
 
   DCSScript[#DCSScript+1]   = string.format('local mygroup     = GROUP:FindByName(\"%s\") ', groupname)               -- The group that executes the task function. Very handy with the "...".
-  if self.isunit then
+  if self.isUnit then
     DCSScript[#DCSScript+1] = string.format("local mywarehouse = UNIT:FindByName(\"%s\") ", warehouse)                -- The unit that holds the warehouse self object.
   else
     DCSScript[#DCSScript+1] = string.format("local mywarehouse = STATIC:FindByName(\"%s\") ", warehouse)              -- The static that holds the warehouse self object.

@@ -16,6 +16,7 @@
 --- OPSZONE class.
 -- @type OPSZONE
 -- @field #string ClassName Name of the class.
+-- @field #string lid DCS log ID string.
 -- @field #number verbose Verbosity of output.
 -- @field Core.Zone#ZONE zone The zone.
 -- @field Wrapper.Airbase#AIRBASE airbase The airbase that is monitored.
@@ -34,6 +35,7 @@
 -- @field #number dTCapture Time interval in seconds until a zone is captured.
 -- @field #boolean neutralCanCapture Neutral units can capture. Default `false`.
 -- @field #boolean drawZone If `true`, draw the zone on the F10 map.
+-- @field #boolean markZone If `true`, mark the zone on the F10 map.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -132,7 +134,11 @@ function OPSZONE:New(Zone, CoalitionOwner)
   self:AddTransition("*",                  "Stop",              "Stopped")     -- Stop FSM.
 
   self:AddTransition("*",                  "Captured",          "Guarded")     -- Zone was captured.
+  
+  self:AddTransition("Empty",              "Guarded",           "Guarded")     -- Owning coalition left the zone and returned.
+  
   self:AddTransition("*",                  "Empty",             "Empty")       -- No red or blue units inside the zone.
+  
   
   self:AddTransition("*",                  "Attacked",          "Attacked")    -- A guarded zone is under attack.
   self:AddTransition("*",                  "Defeated",          "Guarded")     -- The owning coalition defeated an attack.
@@ -178,6 +184,23 @@ function OPSZONE:New(Zone, CoalitionOwner)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #number Coalition Coalition side that captured the zone.
+
+
+  --- Triggers the FSM event "Guarded".
+  -- @function [parent=#OPSZONE] Guarded
+  -- @param #OPSZONE self
+
+  --- Triggers the FSM event "Guarded" after a delay.
+  -- @function [parent=#OPSZONE] __Guarded
+  -- @param #OPSZONE self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Guarded" event.
+  -- @function [parent=#OPSZONE] OnAfterGuarded
+  -- @param #OPSZONE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.  
 
 
   --- Triggers the FSM event "Empty".
@@ -403,6 +426,18 @@ function OPSZONE:onafterStart(From, Event, To)
   -- Reinit the timer.
   self.timerStatus=self.timerStatus or TIMER:New(OPSZONE.Status, self)
   
+  -- Perform initial scan.
+  self:Scan()
+  
+  if self.Nblu==0 and self.Nred==0 then
+  elseif self.Nblu>0 and self.Nred>0 then
+  
+  elseif self.Nblu>0 then
+  
+  elseif self.Nred>0 then
+  
+  end
+  
   -- Status update.
   self.timerStatus:Start(1, 60)
   
@@ -528,12 +563,12 @@ function OPSZONE:onenterGuarded(From, Event, To)
     
     local color=self:_GetZoneColor()
     
-    self.zone:DrawZone(nil, color, 1.0, color, 0.7)
+    self.zone:DrawZone(nil, color, 1.0, color, 0.5)
   end
 
 end
 
---- On enter "Guarded" state.
+--- On enter "Attacked" state.
 -- @param #OPSZONE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -549,9 +584,10 @@ function OPSZONE:onenterAttacked(From, Event, To)
   if self.drawZone then
     self.zone:UndrawZone()
     
-    local color={1,1,1}
     
-    self.zone:DrawZone(nil, color, 1.0, color, 0.9)
+    local color={1,204/255,204/255}
+    
+    self.zone:DrawZone(nil, color, 1.0, color, 0.5)
   end
 
 end
@@ -580,7 +616,7 @@ end
 -- Scan Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Add a platoon to the brigade.
+--- Scan zone.
 -- @param #OPSZONE self
 -- @return #OPSZONE self
 function OPSZONE:Scan()
@@ -720,7 +756,20 @@ function OPSZONE:Scan()
   self.Nred=Nred
   self.Nblu=Nblu
   self.Nnut=Nnut
-  
+
+  return self
+end
+
+--- Evaluate zone.
+-- @param #OPSZONE self
+-- @return #OPSZONE self
+function OPSZONE:EvaluateZone()
+
+  -- Set values.
+  local Nred=self.Nred
+  local Nblu=self.Nblu
+  local Nnut=self.Nnut
+
   if self:IsRed() then
   
     ---
@@ -746,7 +795,7 @@ function OPSZONE:Scan()
       
     else
     
-      -- Still red units in red zone.
+      -- Red units in red zone.
       
       if Nblu>0 then
       
@@ -758,6 +807,9 @@ function OPSZONE:Scan()
       
         if self:IsAttacked() and self:IsContested() then
           self:Defeated(coalition.side.BLUE)
+        elseif self:IsEmpty() then
+          -- Red units left zone and returned (or from initial Empty state).
+          self:Guarded()
         end
       
       end
@@ -810,6 +862,9 @@ function OPSZONE:Scan()
         if self:IsAttacked() and self:IsContested() then
           -- Blue defeated read attack.
           self:Defeated(coalition.side.RED)
+        elseif self:IsEmpty() then
+          -- Blue units left zone and returned (or from initial Empty state).
+          self:Guarded()          
         end
 
       end
@@ -858,7 +913,7 @@ function OPSZONE:Scan()
     self:E(self.lid.."ERROR!")
   end
 
-  return self
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -923,11 +978,11 @@ function OPSZONE:_GetZoneColor()
   local color={0,0,0}
   
   if self.ownerCurrent==coalition.side.NEUTRAL then
-    color={0, 1, 0}
+    color={1, 1, 1}
   elseif self.ownerCurrent==coalition.side.BLUE then
-    color={1, 0, 0}
-  elseif self.ownerCurrent==coalition.side.RED then
     color={0, 0, 1}
+  elseif self.ownerCurrent==coalition.side.RED then
+    color={1, 0, 0}
   else
   
   end

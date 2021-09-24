@@ -20,7 +20,7 @@
 -- @field #table legions Table of legions which are commanded.
 -- @field #table missionqueue Mission queue.
 -- @field #table transportqueue Transport queue.
--- @field Ops.ChiefOfStaff#CHIEF chief Chief of staff.
+-- @field Ops.Chief#CHIEF chief Chief of staff.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -736,6 +736,7 @@ function COMMANDER:CheckMissionQueue()
               for _,_legion in pairs(legions) do
                 local legion=_legion --Ops.Legion#LEGION
                 
+                -- Set pickup zone to spawn zone or airbase if the legion has one that is operational.
                 local pickupzone=legion.spawnzone
                 if legion.airbase and legion:IsRunwayOperational() then
                   pickupzone=ZONE_AIRBASE:New(legion.airbasename, 4000)

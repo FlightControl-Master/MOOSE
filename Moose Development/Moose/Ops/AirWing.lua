@@ -147,9 +147,10 @@ AIRWING.version="0.9.0"
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Spawn in air or hot ==> Needs WAREHOUSE update.
+-- TODO: Spawn in air ==> Needs WAREHOUSE update.
+-- DONE: Spawn in air.
 -- TODO: Make special request to transfer squadrons to anther airwing (or warehouse).
--- TODO: Check that airbase has enough parking spots if a request is BIG. Alternatively, split requests.
+-- TODO: Check that airbase has enough parking spots if a request is BIG.
 -- DONE: Add squadrons to warehouse.
 -- DONE: Build mission queue.
 -- DONE: Find way to start missions.
