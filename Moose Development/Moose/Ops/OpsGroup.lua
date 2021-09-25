@@ -2311,6 +2311,43 @@ function OPSGROUP:IsLoaded(CarrierGroupName)
   return self.cargoStatus==OPSGROUP.CargoStatus.LOADED
 end
 
+--- Check if the group is currently busy doing something.
+-- 
+-- * Boarding
+-- * Rearming
+-- * Returning
+-- * Pickingup, Loading, Transporting, Unloading
+-- * Engageing
+-- 
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, group is busy.
+function OPSGROUP:IsBusy()
+
+  if self:IsBoarding() then
+    return true
+  end
+  
+  if self:IsRearming() then
+    return true
+  end
+  
+  if self:IsReturning() then
+    return true
+  end
+  
+  -- Busy as carrier?
+  if self:IsPickingup() or self:IsLoading() or self:IsTransporting() or self:IsUnloading() then
+    return true
+  end
+  
+  if self:IsEngaging() then
+    return true
+  end
+  
+
+  return false
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Waypoint Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -6995,7 +7032,8 @@ function OPSGROUP:onafterLoading(From, Event, To)
       if cargo.opsgroup:IsNotCargo(true) and not isCarrier then
 
         -- Check if cargo is in embark/pickup zone.
-        local inzone=cargo.opsgroup:IsInZone(self.cargoTZC.EmbarkZone)
+        -- Added InUtero here, if embark zone is moving (ship) and cargo has been spawned late activated and its position is not updated. Not sure if that breaks something else!
+        local inzone=cargo.opsgroup:IsInZone(self.cargoTZC.EmbarkZone) --or cargo.opsgroup:IsInUtero()
 
         -- Cargo MUST be inside zone or it will not be loaded!
         if inzone then
@@ -7018,7 +7056,7 @@ function OPSGROUP:onafterLoading(From, Event, To)
 
         else
           -- Debug info.
-          self:T(self.lid..string.format("Cargo %s NOT in embark zone %s", cargo.opsgroup:GetName(), self.cargoTZC.EmbarkZone:GetName()))
+          self:T(self.lid..string.format("Cargo %s NOT in embark zone %s (and not InUTERO)", cargo.opsgroup:GetName(), self.cargoTZC.EmbarkZone:GetName()))
         end
 
       end

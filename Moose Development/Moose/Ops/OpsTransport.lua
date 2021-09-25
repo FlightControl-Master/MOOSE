@@ -864,7 +864,8 @@ function OPSTRANSPORT:_DelCarrier(CarrierGroup)
       end
     end    
   
-    if #self.carriers==0 then  
+    if #self.carriers==0 then
+      -- TODO: This call can be WRONG!
       self:DeadCarrierAll()
     end
     
@@ -1948,18 +1949,24 @@ function OPSTRANSPORT:_CountCargosInZone(Zone, Delivered, Carrier, TransportZone
   local N=0
   for _,_cargo in pairs(cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP
- 
+
+    -- Is not cargo? 
     local isNotCargo=cargo:IsNotCargo(true)
     if not isNotCargo then
       isNotCargo=iscarrier(cargo)
-    end
+    end    
+
+    -- Is in zone?
+    local isInZone=cargo:IsInZone(Zone)
     
+    -- Is in utero?
+    local isInUtero=cargo:IsInUtero()
+
     -- Debug info.
-    --self:T2(self.lid..string.format("Cargo=%s: notcargo=%s, iscarrier=%s inzone=%s, inutero=%s", cargo:GetName(), tostring(cargo:IsNotCargo(true)), tostring(iscarrier(cargo)), tostring(cargo:IsInZone(Zone)), tostring(cargo:IsInUtero()) ))
-    
+    self:I(self.lid..string.format("Cargo=%s: notcargo=%s, iscarrier=%s inzone=%s, inutero=%s", cargo:GetName(), tostring(cargo:IsNotCargo(true)), tostring(iscarrier(cargo)), tostring(isInZone), tostring(isInUtero)))
 
     -- We look for groups that are not cargo, in the zone or in utero.
-    if isNotCargo and (cargo:IsInZone(Zone) or cargo:IsInUtero()) then
+    if isNotCargo and (isInZone or isInUtero) then
       N=N+1
     end
   end

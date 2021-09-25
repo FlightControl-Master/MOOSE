@@ -989,7 +989,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #string Strategy
-function CHIEF:onafterDefconChange(From, Event, To, Strategy)
+function CHIEF:onafterStrategyChange(From, Event, To, Strategy)
   self:I(self.lid..string.format("Changing Strategy from %s --> %s", self.strategy, Strategy))
 end
 
@@ -1563,80 +1563,31 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
   if recruitedInf then
   
     env.info(string.format("Recruited %d assets from for PATROL mission", #assetsInf))
-    
-    -- Get max weight.
-    local weightMax=nil
-    for _,_asset in pairs(assetsInf) do
-      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-      if weightMax==nil or weightMax<=asset.weight then
-        weightMax=asset.weight
-      end
-    end
-    
-    -- Recruite carrier assets. This need to be ground or helicopters to deploy at a zone.
-    local recruitedTrans, assetsTrans, legionsTrans=
-    LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, 1, 1, TargetVec2, nil, nil, nil, weightMax, {Group.Category.HELICOPTER, Group.Category.GROUND})
-    
-    local transport=nil --Ops.OpsTransport#OPSTRANSPORT
-    if recruitedTrans then
-      env.info(string.format("Recruited %d assets for OPSTRANSPORT mission", #assetsTrans))
-      
-      -- Create an OPSTRANSPORT assignment.
-      transport=OPSTRANSPORT:New(nil, nil, OpsZone.zone)
-      
-      -- Add cargo assets to transport.
-      for _,_legion in pairs(legionsInf) do
-        local legion=_legion --Ops.Legion#LEGION
 
-        -- Pickup at spawnzone or at airbase if the legion warehouse has one.
-        local pickupzone=legion.spawnzone
-        if legion.airbase and legion:IsRunwayOperational() then
-          pickupzone=ZONE_AIRBASE:New(legion.airbasename, 4000)
-        end
-        
-        local tpz=transport:AddTransportZoneCombo(pickupzone, OpsZone.zone)
-        
-        for _,_asset in pairs(assetsInf) do
-          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-          if asset.legion.alias==legion.alias then
-            transport:AddAssetCargo(asset, tpz)
-          end
-        end
-      end
-      
-      -- Add carrier assets.
-      for _,_asset in pairs(assetsTrans) do
-        local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-        transport:AddAsset(asset)
-      end
-      
-      
-      -- Assign TRANSPORT to legions. This also sends the request for the assets.
-      for _,_legion in pairs(legionsTrans) do
-        local legion=_legion --Ops.Legion#LEGION
-        self.commander:TransportAssign(legion, transport)
-      end
-  
-    else
-      -- Uncrecruite 
-      LEGION.UnRecruitAssets(assetsTrans)
-    end
+    -- Recruit transport assets for infantry.    
+    local recruitedTrans, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, assetsInf, 1, 1, OpsZone.zone, nil, {Group.Category.HELICOPTER, Group.Category.GROUND})
+
     
     -- Create Patrol zone mission.  
     local mission=AUFTRAG:NewPATROLZONE(OpsZone.zone)
     mission:SetEngageDetected()
     
+    -- Add assets to mission.
     for _,asset in pairs(assetsInf) do
       mission:AddAsset(asset)
     end
     
+    -- Attach OPS transport to mission.
     mission.opstransport=transport
         
+    -- Assign mission to legions.
     for _,_legion in pairs(legionsInf) do
       local legion=_legion --Ops.Legion#LEGION
       self.commander:MissionAssign(legion, mission)
     end
   
+    -- Attach mission to ops zone.
+    -- TODO: Need a better way!
     OpsZone.missionPatrol=mission
     
     return true

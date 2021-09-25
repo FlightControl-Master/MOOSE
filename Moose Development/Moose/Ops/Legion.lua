@@ -83,9 +83,11 @@ function LEGION:New(WarehouseName, LegionName)
   --                 From State  -->   Event        -->      To State
   self:AddTransition("*",             "MissionRequest",      "*")           -- Add a (mission) request to the warehouse.
   self:AddTransition("*",             "MissionCancel",       "*")           -- Cancel mission.
+  self:AddTransition("*",             "MissionAssign",       "*")           -- Recruit assets, add to queue and request immediately.
   
   self:AddTransition("*",             "TransportRequest",    "*")           -- Add a (mission) request to the warehouse.
   self:AddTransition("*",             "TransportCancel",     "*")           -- Cancel transport.
+  self:AddTransition("*",             "TransportAssign",     "*")           -- Recruit assets, add to queue and request immediately.  
   
   self:AddTransition("*",             "OpsOnMission",        "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
   
@@ -118,18 +120,27 @@ function LEGION:New(WarehouseName, LegionName)
   -- @param #LEGION self
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
-  --- Triggers the FSM event "MissionCancel" after a delay.
-  -- @function [parent=#LEGION] __MissionCancel
+
+  --- Triggers the FSM event "MissionAssign".
+  -- @function [parent=#LEGION] MissionAssign
   -- @param #LEGION self
-  -- @param #number delay Delay in seconds.
+  -- @param Ops.Legion#LEGION Legion The legion from which the mission assets are requested.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
-  --- On after "MissionCancel" event.
-  -- @function [parent=#LEGION] OnAfterMissionCancel
+  --- Triggers the FSM event "MissionAssign" after a delay.
+  -- @function [parent=#LEGION] __MissionAssign
+  -- @param #LEGION self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Legion#LEGION Legion The legion from which the mission assets are requested.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionAssign" event.
+  -- @function [parent=#LEGION] OnAfterMissionAssign
   -- @param #LEGION self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+  -- @param Ops.Legion#LEGION Legion The legion from which the mission assets are requested.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
@@ -151,6 +162,44 @@ function LEGION:New(WarehouseName, LegionName)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
+  --- Triggers the FSM event "MissionCancel" after a delay.
+  -- @function [parent=#LEGION] __MissionCancel
+  -- @param #LEGION self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "MissionCancel" event.
+  -- @function [parent=#LEGION] OnAfterMissionCancel
+  -- @param #LEGION self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
+  --- Triggers the FSM event "TransportAssign".
+  -- @function [parent=#LEGION] TransportAssign
+  -- @param #LEGION self
+  -- @param Ops.Legion#LEGION Legion The legion from which the transport assets are requested.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- Triggers the FSM event "TransportAssign" after a delay.
+  -- @function [parent=#LEGION] __TransportAssign
+  -- @param #LEGION self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.Legion#LEGION Legion The legion from which the transport assets are requested.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+  --- On after "TransportAssign" event.
+  -- @function [parent=#LEGION] OnAfterTransportAssign
+  -- @param #LEGION self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.Legion#LEGION Legion The legion from which the transport assets are requested.
+  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
 
   --- Triggers the FSM event "TransportRequest".
@@ -273,30 +322,6 @@ function LEGION:AddMission(Mission)
   -- Set target for ALERT 5.
   if Mission.type==AUFTRAG.Type.ALERT5 then
     Mission:_TargetFromObject(self:GetCoordinate())
-  end
-  
-  -- Add ops transport to transport Legions.
-  if Mission.opstransport and false then
-  
-    local PickupZone=self.spawnzone
-    local DeployZone=Mission.opstransport.tzcDefault.DeployZone
-  
-    -- Add a new TZC: from pickup here to the deploy zone.
-    local tzc=Mission.opstransport:AddTransportZoneCombo(PickupZone, DeployZone)
-
-    --TODO: Depending on "from where to where" the assets need to transported, we need to set ZONE_AIRBASE etc.
-      
-    --Mission.opstransport:SetPickupZone(self.spawnzone)
-    --Mission.opstransport:SetEmbarkZone(self.spawnzone)
-  
-    -- Loop over all defined transport legions.
-    for _,_legion in pairs(Mission.transportLegions) do
-      local legion=_legion --Ops.Legion#LEGION
-            
-      -- Add ops transport to legion.
-      legion:AddOpsTransport(Mission.opstransport)
-    end
-  
   end
 
   -- Add mission to queue.
@@ -481,20 +506,38 @@ function LEGION:_GetNextMission()
         -- Reserve assets and add to mission.
         for _,_asset in pairs(assets) do
           local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-          asset.isReserved=true
           mission:AddAsset(asset)
         end
-        
+  
         -- Recruit asset for escorting recruited mission assets.
         local EscortAvail=self:RecruitAssetsForEscort(mission, assets)
+
+        -- Transport available (or not required).
+        local TransportAvail=true
         
         -- Is escort required and available?
         if EscortAvail then
+        
+          -- Recruit carrier assets for transport.
+          local Transport=nil
+          if mission.NcarriersMin then
+            local Legions=mission.transportLegions or {self}
+            TransportAvail, Transport=self:AssignAssetsForTransport(Legions, assets, mission.NcarriersMin, mission.NcarriersMax, mission.transportDeployZone, mission.transportDisembarkZone)
+          end
+          
+          -- Add opstransport to mission.
+          if TransportAvail and Transport then
+            mission.opstransport=Transport
+          end
+          
+        end
+        
+        if EscortAvail and TransportAvail then
           -- Got a missin.
-          return mission
+          return mission        
         else
           -- Recruited assets but no requested escort available. Unrecruit assets!
-          LEGION.UnRecruitAssets(assets, mission)
+          LEGION.UnRecruitAssets(assets, mission)        
         end
         
       end -- recruited mission assets
@@ -552,7 +595,6 @@ function LEGION:_GetNextTransport()
         -- Add asset to transport.
         for _,_asset in pairs(assets) do
           local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-          asset.isReserved=true
           transport:AddAsset(asset)
         end
         
@@ -571,6 +613,27 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "MissionAssign" event. Mission is added to a LEGION mission queue and already requested. Needs assets to be added to the mission already.
+-- @param #LEGION self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Legion#LEGION Legion The LEGION.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+function LEGION:onafterMissionAssign(From, Event, To, Legion, Mission)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Assigning mission %s (%s) to legion %s", Mission.name, Mission.type, Legion.alias))
+  
+  -- Add mission to legion.
+  Legion:AddMission(Mission)
+  
+  -- Directly request the mission as the assets have already been selected.
+  Legion:MissionRequest(Mission)
+
+end
+
 
 --- On after "MissionRequest" event. Performs a self request to the warehouse for the mission assets. Sets mission status to REQUESTED.
 -- @param #LEGION self
@@ -683,7 +746,27 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
 
 end
 
---- On after "MissionRequest" event. Performs a self request to the warehouse for the mission assets. Sets mission status to REQUESTED.
+--- On after "TransportAssign" event. Transport is added to a LEGION transport queue and assets are requested from the LEGION warehouse.
+-- @param #LEGION self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Legion#LEGION Legion The LEGION.
+-- @param Ops.OpsTransport#OPSTRANSPORT The transport.
+function LEGION:onafterTransportAssign(From, Event, To, Legion, Transport)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Assigning transport %d to legion %s", Transport.uid, Legion.alias))
+    
+  -- Add mission to legion.
+  Legion:AddOpsTransport(Transport)
+  
+  -- Directly request the mission as the assets have already been selected.
+  Legion:TransportRequest(Transport)
+
+end
+
+--- On after "TransportRequest" event. Performs a self request to the warehouse for the transport assets. Sets transport status to REQUESTED.
 -- @param #LEGION self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -987,6 +1070,7 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
   -- Check if we have a cohort or if this was some other request.
   if cohort then
   
+    -- Debug info.
     self:I(self.lid..string.format("Cohort asset spawned %s", asset.spawngroupname))
 
     -- Create a flight group.
@@ -1666,6 +1750,8 @@ end
 -- @param #LEGION self
 -- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport.
 -- @return #boolean If `true`, enough assets could be recruited.
+-- @return #table assets Recruited assets.
+-- @return #table legions Legions of recruited assets.
 function LEGION:RecruitAssetsForTransport(Transport)
 
   -- Get all undelivered cargo ops groups.
@@ -1716,82 +1802,15 @@ function LEGION:RecruitAssetsForEscort(Mission, Assets)
     -- Debug info.
     self:I(self.lid..string.format("Reqested escort for mission %s [%s]. Required assets=%d-%d", Mission:GetName(), Mission:GetType(), Mission.NescortMin,Mission.NescortMax))
     
-    -- Escorts for each asset.        
-    local Escorts={}
+    --TODO: Maybe add escortCohorts as mission option?
     
-    local EscortAvail=true
-    for _,_asset in pairs(Assets) do
-      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-      
-      -- Recruit escort asset for the mission asset.
-      local Erecruited, eassets, elegions=LEGION.RecruitCohortAssets(self.cohorts, AUFTRAG.Type.ESCORT, nil, Mission.NescortMin, Mission.NescortMax)
-      
-      if Erecruited then
-        Escorts[asset.spawngroupname]={EscortLegions=elegions, EscortAssets=eassets}
-      else
-        -- Could not find escort for this asset ==> Escort not possible ==> Break the loop.
-        EscortAvail=false
-        break
-      end
-    end
+    -- Call LEGION function but provide COMMANDER as self.
+    local assigned=LEGION.AssignAssetsForEscort(self, self.cohorts, Assets, Mission.NescortMin, Mission.NescortMin)
     
-    -- ALL escorts could be recruited. 
-    if EscortAvail then
-    
-      local N=0
-      for groupname,value in pairs(Escorts) do
-      
-        local Elegions=value.EscortLegions
-        local Eassets=value.EscortAssets
-        
-        for _,_legion in pairs(Elegions) do
-          local legion=_legion --Ops.Legion#LEGION
-    
-          -- Create and ESCORT mission for this asset.
-          local escort=AUFTRAG:NewESCORT(groupname)
-          
-          -- Reserve assts and add to mission.
-          for _,_asset in pairs(Eassets) do
-            local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-            asset.isReserved=true
-            escort:AddAsset(asset)
-            N=N+1
-          end
-          
-          -- Add mission.
-          legion:AddMission(escort)
-        
-          -- Request mission.
-          legion:MissionRequest(escort)
-          
-        end
-      end
-      
-      -- Debug info.
-      self:I(self.lid..string.format("Recruited %d escort assets for mission %s [%s]", N, Mission:GetName(), Mission:GetType()))      
-    
-      -- Yup!
-      return true    
-    else
+    return assigned
+  end
 
-      -- Debug info.
-      self:I(self.lid..string.format("Could not get at least one escort for mission %s [%s]! Unrecruit all recruited assets", Mission:GetName(), Mission:GetType()))      
-    
-      -- Could not get at least one escort. Unrecruit all recruited ones.
-      for groupname,value in pairs(Escorts) do      
-        local Eassets=value.EscortAssets
-        LEGION.UnRecruitAssets(Eassets)
-      end
-      
-      -- No,no!
-      return false      
-    end
-    
-  else
-    -- No escort required.
-    return true
-  end      
-
+  return true
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2000,6 +2019,215 @@ function LEGION.UnRecruitAssets(Assets, Mission)
 
 end
 
+
+--- Recruit and assign assets performing an escort mission for a given asset list. Note that each asset gets an escort.
+-- @param #LEGION self
+-- @param #table Cohorts Cohorts for escorting assets.
+-- @param #table Assets Table of assets to be escorted.
+-- @param #number NescortMin Min number of escort groups required per escorted asset.
+-- @param #number NescortMax Max number of escort groups required per escorted asset.
+-- @return #boolean If `true`, enough assets could be recruited or no escort was required in the first place.
+function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax)
+
+  -- Is an escort requested in the first place?
+  if NescortMin and NescortMax and (NescortMin>0 or NescortMax>0) then
+  
+    -- Debug info.
+    self:I(self.lid..string.format("Reqested escort for %d assets from %d cohorts. Required escort assets=%d-%d", #Assets, #Cohorts, NescortMin, NescortMax))
+    
+    -- Escorts for each asset.        
+    local Escorts={}
+    
+    local EscortAvail=true
+    for _,_asset in pairs(Assets) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      
+      -- Target vector is the legion of the asset.
+      local TargetVec2=asset.legion:GetVec2()
+      
+      -- We want airplanes for airplanes and helos for everything else.
+      local Categories={Group.Category.HELICOPTER}
+      if asset.category==Group.Category.AIRPLANE then
+        Categories={Group.Category.AIRPLANE}
+      end
+      
+      -- Recruit escort asset for the mission asset.
+      local Erecruited, eassets, elegions=LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.ESCORT, nil, NescortMin, NescortMax, TargetVec2, nil, nil, nil, nil, Categories)
+      
+      if Erecruited then
+        Escorts[asset.spawngroupname]={EscortLegions=elegions, EscortAssets=eassets}
+      else
+        -- Could not find escort for this asset ==> Escort not possible ==> Break the loop.
+        EscortAvail=false
+        break
+      end
+    end
+    
+    -- ALL escorts could be recruited. 
+    if EscortAvail then
+    
+      local N=0
+      for groupname,value in pairs(Escorts) do
+      
+        local Elegions=value.EscortLegions
+        local Eassets=value.EscortAssets
+        
+        for _,_legion in pairs(Elegions) do
+          local legion=_legion --Ops.Legion#LEGION
+    
+          -- Create and ESCORT mission for this asset.
+          local escort=AUFTRAG:NewESCORT(groupname)
+          
+          -- Reserve assts and add to mission.
+          for _,_asset in pairs(Eassets) do
+            local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+            escort:AddAsset(asset)
+            N=N+1
+          end
+          
+          -- Assign mission to legion.
+          self:MissionAssign(legion, escort)
+        end
+      end
+      
+      -- Debug info.
+      self:I(self.lid..string.format("Recruited %d escort assets", N))
+    
+      -- Yup!
+      return true    
+    else
+
+      -- Debug info.
+      self:I(self.lid..string.format("Could not get at least one escort!"))      
+    
+      -- Could not get at least one escort. Unrecruit all recruited ones.
+      for groupname,value in pairs(Escorts) do      
+        local Eassets=value.EscortAssets
+        LEGION.UnRecruitAssets(Eassets)
+      end
+      
+      -- No,no!
+      return false      
+    end
+    
+  else
+    -- No escort required.
+    return true
+  end      
+
+end
+
+--- Recruit and assign assets performing an OPSTRANSPORT for a given asset list.
+-- @param #LEGION self
+-- @param #table Legions Transport legions.
+-- @param #table CargoAssets Weight of the heaviest cargo group to be transported.
+-- @param #number NcarriersMin Min number of carrier assets.
+-- @param #number NcarriersMax Max number of carrier assets.
+-- @param Core.Zone#ZONE DeployZone Deploy zone.
+-- @param Core.Zone#ZONE DisembarkZone (Optional) Disembark zone. 
+-- @return #boolean If `true`, enough assets could be recruited and an OPSTRANSPORT object was created.
+-- @return Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, NcarriersMax, DeployZone, DisembarkZone, Categories, Attributes)
+
+  -- Is an escort requested in the first place?
+  if NcarriersMin and NcarriersMax and (NcarriersMin>0 or NcarriersMax>0) then
+
+    -- Cohorts.
+    local Cohorts={}
+    for _,_legion in pairs(Legions) do
+      local legion=_legion --Ops.Legion#LEGION
+      
+      -- Check that runway is operational.    
+      local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
+      
+      if legion:IsRunning() and Runway then
+      
+        -- Loops over cohorts.
+        for _,_cohort in pairs(legion.cohorts) do
+          local cohort=_cohort --Ops.Cohort#COHORT
+          table.insert(Cohorts, cohort)
+        end
+        
+      end
+    end
+    
+    -- Get all legions and heaviest cargo group weight
+    local CargoLegions={} ; local CargoWeight=nil
+    for _,_asset in pairs(CargoAssets) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      CargoLegions[asset.legion.alias]=asset.legion
+      if CargoWeight==nil or asset.weight>CargoWeight then
+        CargoWeight=asset.weight
+      end
+    end
+  
+    -- Target is the deploy zone.
+    local TargetVec2=DeployZone:GetVec2()
+    
+    -- Recruit assets and legions.
+    local TransportAvail, CarrierAssets, CarrierLegions=
+    LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NcarriersMin, NcarriersMax, TargetVec2, nil, nil, nil, CargoWeight, Categories, Attributes)
+  
+    if TransportAvail then
+      
+      -- Create and OPSTRANSPORT assignment.
+      local Transport=OPSTRANSPORT:New(nil, nil, DeployZone)
+      if DisembarkZone then
+        Transport:SetDisembarkZone(DisembarkZone)
+      end
+      
+      -- Debug info.    
+      env.info(string.format("FF Transport available with %d carrier assets", #CarrierAssets))
+    
+      -- Add cargo assets to transport.
+      for _,_legion in pairs(CargoLegions) do
+        local legion=_legion --Ops.Legion#LEGION
+        
+        -- Set pickup zone to spawn zone or airbase if the legion has one that is operational.
+        local pickupzone=legion.spawnzone
+        if legion.airbase and legion:IsRunwayOperational() then
+          pickupzone=ZONE_AIRBASE:New(legion.airbasename, 4000)
+        end
+        
+        -- Add TZC from legion spawn zone to deploy zone.
+        local tpz=Transport:AddTransportZoneCombo(pickupzone, Transport:GetDeployZone())
+        Transport:SetEmbarkZone(legion.spawnzone, tpz)
+        
+        -- Add cargo assets to transport.
+        for _,_asset in pairs(CargoAssets) do
+          local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+          if asset.legion.alias==legion.alias then
+            Transport:AddAssetCargo(asset, tpz)
+          end
+        end
+      end
+      
+      -- Add carrier assets.
+      for _,_asset in pairs(CarrierAssets) do
+        local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+        Transport:AddAsset(asset)
+      end
+          
+      -- Assign TRANSPORT to legions. This also sends the request for the assets.
+      for _,_legion in pairs(CarrierLegions) do
+        local legion=_legion --Ops.Legion#LEGION
+        self:TransportAssign(legion, Transport)
+      end
+      
+      -- Got transport.
+      return true, Transport
+    else
+      -- Uncrecruit transport assets.
+      LEGION.UnRecruitAssets(CarrierAssets)
+      return false, nil
+    end
+  
+    return nil, nil  
+  end
+  
+  -- No transport requested in the first place.
+  return true, nil
+end
 
 
 --- Calculate the mission score of an asset.

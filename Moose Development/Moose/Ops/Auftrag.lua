@@ -91,7 +91,13 @@
 -- @field Core.Set#SET_GROUP transportGroupSet Groups to be transported.
 -- @field Core.Point#COORDINATE transportPickup Coordinate where to pickup the cargo.
 -- @field Core.Point#COORDINATE transportDropoff Coordinate where to drop off the cargo.
+-- 
 -- @field Ops.OpsTransport#OPSTRANSPORT opstransport OPS transport assignment.
+-- @field #number NcarriersMin Min number of required carrier assets.
+-- @field #number NcarriersMax Max number of required carrier assets.
+-- @field Core.Zone#ZONE transportDeployZone Deploy zone of an OPSTRANSPORT.
+-- @field Core.Zone#ZONE transportDisembarkZone Disembark zone of an OPSTRANSPORT.
+-- @field #table transportLegions Legions explicitly requested for providing carrier assets.
 -- 
 -- @field #number artyRadius Radius in meters.
 -- @field #number artyShots Number of shots fired.
@@ -588,7 +594,7 @@ function AUFTRAG:New(Type)
   self:SetPriority()
   self:SetTime()
   self:SetRequiredAssets()
-  self:SetRequiredCarriers()
+  --self:SetRequiredCarriers()
   self.engageAsGroup=true
   self.dTevaluate=5
   
@@ -2182,14 +2188,11 @@ end
 -- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
 -- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
 -- @return #AUFTRAG self
-function AUFTRAG:SetTransportForAssets(DeployZone, DisembarkZone, NcarriersMin, NcarriersMax)
+function AUFTRAG:SetRequiredTransport(DeployZone, DisembarkZone, NcarriersMin, NcarriersMax)
 
   -- OPS transport from pickup to deploy zone.
-  self.opstransport=OPSTRANSPORT:New(nil, nil, DeployZone)
-  
-  if DisembarkZone then
-    self.opstransport:SetDisembarkZone(DisembarkZone)
-  end
+  self.transportDeployZone=DeployZone
+  self.transportDisembarkZone=DisembarkZone
 
   -- Set required carriers.
   self:SetRequiredCarriers(NcarriersMin, NcarriersMax)
@@ -2226,18 +2229,13 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:SetRequiredCarriers(NcarriersMin, NcarriersMax)
 
-  self.nCarriersMin=NcarriersMin or 1
+  self.NcarriersMin=NcarriersMin or 1
   
-  self.nCarriersMax=NcarriersMax or self.nCarriersMin
+  self.NcarriersMax=NcarriersMax or self.NcarriersMin
 
   -- Ensure that max is at least equal to min.
-  if self.nCarriersMax<self.nCarriersMin then
-    self.nCarriersMax=self.nCarriersMin
-  end
-  
-  -- Pass this on to the ops transport.
-  if self.opstransport then
-    self.opstransport:SetRequiredCarriers(NcarriersMin, NcarriersMax)
+  if self.NcarriersMax<self.NcarriersMin then
+    self.NcarriersMax=self.NcarriersMin
   end
 
   return self

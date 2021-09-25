@@ -224,7 +224,7 @@ end
 --- Add a patrol Point for CAP missions.
 -- @param #BRIGADE self
 -- @param Core.Zone#ZONE Rearming zone.
--- @return #AIRWING self
+-- @return #BRIGADE self
 function BRIGADE:AddRearmingZone(RearmingZone)
 
   local rearmingzone={} --#BRIGADE.RearmingZone

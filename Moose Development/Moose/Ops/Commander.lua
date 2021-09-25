@@ -645,9 +645,6 @@ end
 -- @param #COMMANDER self 
 function COMMANDER:CheckMissionQueue()
 
-  -- TODO: Sort mission queue. wrt what? Threat level?
-  --       Currently, we sort wrt to priority. So that should reflect the threat level of the mission target.
-
   -- Number of missions.
   local Nmissions=#self.missionqueue
 
@@ -708,69 +705,18 @@ function COMMANDER:CheckMissionQueue()
         -- Escort requested and available.
         if EscortAvail then
 
-          -- Check if mission assets need a transport.        
-          if mission.opstransport then
+          -- Check if mission assets need a transport.
+          if mission.NcarriersMin then
           
-            -- Weight of the heaviest cargo group. Necessary condition that this fits into on carrier unit!
-            local weightGroup=0
-                    
-            -- Calculate the max weight of the cargo assets.
-            for _,_asset in pairs(assets) do
-              local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem      
-              local weight=asset.weight
-              if weight>weightGroup then
-                weightGroup=weight
-              end      
-            end
+            -- Recruit carrier assets for transport.
+            local Transport=nil
+            local Legions=mission.transportLegions or self.legions
             
-            env.info(string.format("FF mission requires transport for cargo weight %d", weightGroup))
+            TransportAvail, Transport=LEGION.AssignAssetsForTransport(self, Legions, assets, mission.NcarriersMin, mission.NcarriersMax, mission.transportDeployZone, mission.transportDisembarkZone)
             
-            -- Recruit transport assets.
-            local TransportAvail, assetsTrans, legionsTrans=self:RecruitAssetsForTransport(mission.opstransport, weightGroup)
-            
-            if TransportAvail then
-            
-              env.info(string.format("FF Transport available with %d carrier assets", #assetsTrans))
-            
-              -- Add cargo assets to transport.
-              for _,_legion in pairs(legions) do
-                local legion=_legion --Ops.Legion#LEGION
-                
-                -- Set pickup zone to spawn zone or airbase if the legion has one that is operational.
-                local pickupzone=legion.spawnzone
-                if legion.airbase and legion:IsRunwayOperational() then
-                  pickupzone=ZONE_AIRBASE:New(legion.airbasename, 4000)
-                end
-                
-                -- Add TZC from legion spawn zone to deploy zone.
-                local tpz=mission.opstransport:AddTransportZoneCombo(pickupzone, mission.opstransport:GetDeployZone())
-                mission.opstransport:SetEmbarkZone(legion.spawnzone, tpz)
-                
-                -- Add cargo assets to transport.
-                for _,_asset in pairs(assets) do
-                  local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-                  if asset.legion.alias==legion.alias then
-                    mission.opstransport:AddAssetCargo(asset, tpz)
-                  end
-                end
-              end
-              
-              -- Add carrier assets.
-              for _,_asset in pairs(assetsTrans) do
-                local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-                mission.opstransport:AddAsset(asset)
-              end
-              
-              
-              -- Assign TRANSPORT to legions. This also sends the request for the assets.
-              for _,_legion in pairs(legionsTrans) do
-                local legion=_legion --Ops.Legion#LEGION
-                self:TransportAssign(legion, mission.opstransport)
-              end
-              
-            else
-              -- Uncrecruit transport assets.
-              LEGION.UnRecruitAssets(assetsTrans)
+            -- Add opstransport to mission.
+            if TransportAvail and Transport then
+              mission.opstransport=Transport
             end
           
           end
@@ -856,102 +802,34 @@ end
 --- Recruit assets performing an escort mission for a given asset.
 -- @param #COMMANDER self
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
--- @param #table Assets Table of assets.
+-- @param #table Assets Table of assets to be escorted.
 -- @return #boolean If `true`, enough assets could be recruited or no escort was required in the first place.
 function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
 
-  -- Cohorts.
-  local Cohorts=Mission.squadrons
-  if not Cohorts then
-    Cohorts={}
-    for _,_legion in pairs(Mission.specialLegions or self.legions) do
-      local legion=_legion --Ops.Legion#LEGION      
-      -- Loops over cohorts.
-      for _,_cohort in pairs(legion.cohorts) do
-        local cohort=_cohort --Ops.Cohort#COHORT
-        table.insert(Cohorts, cohort)
-      end
-    end  
-  end
-
   -- Is an escort requested in the first place?
   if Mission.NescortMin and Mission.NescortMax and (Mission.NescortMin>0 or Mission.NescortMax>0) then
-  
-    -- Debug info.
-    self:I(self.lid..string.format("Reqested escort for mission %s [%s]. Required assets=%d-%d", Mission:GetName(), Mission:GetType(), Mission.NescortMin,Mission.NescortMax))
-    
-    -- Escorts for each asset.        
-    local Escorts={}
-    
-    local EscortAvail=true
-    for _,_asset in pairs(Assets) do
-      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-      
-      -- Recruit escort asset for the mission asset.
-      local Erecruited, eassets, elegions=LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.ESCORT, nil, Mission.NescortMin, Mission.NescortMax)
-      
-      if Erecruited then
-        Escorts[asset.spawngroupname]={EscortLegions=elegions, EscortAssets=eassets}
-      else
-        -- Could not find escort for this asset ==> Escort not possible ==> Break the loop.
-        EscortAvail=false
-        break
-      end
-    end
-    
-    -- ALL escorts could be recruited. 
-    if EscortAvail then
-    
-      local N=0
-      for groupname,value in pairs(Escorts) do
-      
-        local Elegions=value.EscortLegions
-        local Eassets=value.EscortAssets
-        
-        for _,_legion in pairs(Elegions) do
-          local legion=_legion --Ops.Legion#LEGION
-    
-          -- Create and ESCORT mission for this asset.
-          local escort=AUFTRAG:NewESCORT(groupname)
-          
-          -- Reserve assts and add to mission.
-          for _,_asset in pairs(Eassets) do
-            local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-            asset.isReserved=true
-            escort:AddAsset(asset)
-            N=N+1
-          end
-          
-          -- Assign mission to legion.
-          self:MissionAssign(legion, escort)                    
+
+    -- Cohorts.
+    local Cohorts=Mission.squadrons
+    if not Cohorts then
+      Cohorts={}
+      for _,_legion in pairs(Mission.specialLegions or self.legions) do
+        local legion=_legion --Ops.Legion#LEGION      
+        -- Loops over cohorts.
+        for _,_cohort in pairs(legion.cohorts) do
+          local cohort=_cohort --Ops.Cohort#COHORT
+          table.insert(Cohorts, cohort)
         end
-      end
-      
-      -- Debug info.
-      self:I(self.lid..string.format("Recruited %d escort assets for mission %s [%s]", N, Mission:GetName(), Mission:GetType()))      
-    
-      -- Yup!
-      return true    
-    else
-
-      -- Debug info.
-      self:I(self.lid..string.format("Could not get at least one escort for mission %s [%s]! Unrecruit all recruited assets", Mission:GetName(), Mission:GetType()))      
-    
-      -- Could not get at least one escort. Unrecruit all recruited ones.
-      for groupname,value in pairs(Escorts) do      
-        local Eassets=value.EscortAssets
-        LEGION.UnRecruitAssets(Eassets)
-      end
-      
-      -- No,no!
-      return false      
+      end  
     end
     
-  else
-    -- No escort required.
-    return true
-  end      
+    -- Call LEGION function but provide COMMANDER as self.
+    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMin)
+    
+    return assigned    
+  end
 
+  return true
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1072,7 +950,7 @@ end
 -- @return #table Legions that have recruited assets.
 function COMMANDER:RecruitAssetsForTransport(Transport, CargoWeight)
   
-  if weightGroup==0 then
+  if CargoWeight==0 then
     -- No cargo groups!
     return false, {}, {}
   end
@@ -1219,6 +1097,30 @@ function COMMANDER:GetLegionsForMission(Mission)
   end
   
   return legions
+end
+
+--- Get assets on given mission or missions.
+-- @param #COMMANDER self
+-- @param #table MissionTypes Types on mission to be checked. Default all.
+-- @return #table Assets on pending requests.
+function COMMANDER:GetAssetsOnMission(MissionTypes)
+
+  local assets={}
+
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    -- Check if this mission type is requested.
+    if AUFTRAG.CheckMissionType(mission.type, MissionTypes) then
+
+      for _,_asset in pairs(mission.assets or {}) do
+        local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+          table.insert(assets, asset)
+       end
+    end
+  end
+
+  return assets
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
