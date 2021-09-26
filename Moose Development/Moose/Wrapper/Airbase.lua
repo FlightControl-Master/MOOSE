@@ -1100,7 +1100,7 @@ function AIRBASE:MarkParkingSpots(termtype, mark)
 
   -- Get airbase name.
   local airbasename=self:GetName()
-  self:E(string.format("Parking spots at %s for termial type %s:", airbasename, tostring(termtype)))
+  self:E(string.format("Parking spots at %s for terminal type %s:", airbasename, tostring(termtype)))
 
   for _,_spot in pairs(parkingdata) do
 
@@ -1134,8 +1134,6 @@ end
 -- @param #table parkingdata (Optional) Parking spots data table. If not given it is automatically derived from the GetParkingSpotsTable() function.
 -- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
 function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nspots, parkingdata)
-  
-  if group and group:IsAlive() then
   
   -- Init default
   scanradius=scanradius or 50
@@ -1179,14 +1177,24 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   parkingdata=parkingdata or self:GetParkingSpotsTable(terminaltype)
 
   -- Get the aircraft size, i.e. it's longest side of x,z.
+  local _aircraftsize, ax,ay,az
+  if group and group.ClassName == "GROUP" then
   local aircraft=group:GetUnit(1)
-  local _aircraftsize, ax,ay,az=aircraft:GetObjectSize()
+    _aircraftsize, ax,ay,az=aircraft:GetObjectSize()
+  else
+    -- SU27 dimensions
+    _aircraftsize = 23
+    ax = 23 -- length
+    ay = 7 -- height
+    az = 17 -- width
+  end
 
+    
   -- Number of spots we are looking for. Note that, e.g. grouping can require a number different from the group size!
   local _nspots=nspots or group:GetSize()
 
   -- Debug info.
-  self:E(string.format("%s: Looking for %d parking spot(s) for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at termial type %s.", airport, _nspots, _aircraftsize, ax, ay, az, tostring(terminaltype)))
+  self:E(string.format("%s: Looking for %d parking spot(s) for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at terminal type %s.", airport, _nspots, _aircraftsize, ax, ay, az, tostring(terminaltype)))
 
   -- Table of valid spots.
   local validspots={}
@@ -1310,9 +1318,6 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   -- Retrun spots we found, even if there were not enough.
   return validspots
   
-  else
-    return {}
-  end
 end
 
 --- Check black and white lists.
