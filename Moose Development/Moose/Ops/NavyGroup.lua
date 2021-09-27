@@ -5,7 +5,7 @@
 --    * Let the group steam into the wind
 --    * Command a full stop
 --    * Patrol waypoints *ad infinitum*
---    * Collision warning, if group is heading towards a land mass
+--    * Collision warning, if group is heading towards a land mass or another obstacle
 --    * Automatic pathfinding, e.g. around islands
 --    * Let a submarine dive and surface
 --    * Manage TACAN and ICLS beacons
@@ -48,9 +48,7 @@
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
 --
 -- ===
---
--- ![Banner Image](..\Presentations\OPS\NavyGroup\_Main.png)
---
+-- 
 -- # The NAVYGROUP Concept
 -- 
 -- This class enhances naval groups.
@@ -88,6 +86,9 @@ NAVYGROUP.version="0.7.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Add RTZ.
+-- TODO: Add Retreat.
+-- TODO: Add EngageTarget.
 -- TODO: Submaries.
 -- TODO: Extend, shorten turn into wind windows.
 -- TODO: Skipper menu.
@@ -132,6 +133,20 @@ function NAVYGROUP:New(group)
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "FullStop",         "Holding")     -- Hold position.
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Hold position.
+
+  self:AddTransition("*",             "RTZ",              "Returning")   -- Group is returning to (home) zone.
+  self:AddTransition("Returning",     "Returned",         "Returned")    -- Group is returned to (home) zone.
+
+  self:AddTransition("*",             "Detour",           "Cruising")    -- Make a detour to a coordinate and resume route afterwards.
+  self:AddTransition("*",             "DetourReached",    "*")           -- Group reached the detour coordinate.
+
+  self:AddTransition("*",             "Retreat",          "Retreating")  -- Order a retreat.
+  self:AddTransition("Retreating",    "Retreated",        "Retreated")   -- Group retreated.
+
+  self:AddTransition("Cruising",      "EngageTarget",     "Engaging")    -- Engage a target from Cruising state
+  self:AddTransition("Holding",       "EngageTarget",     "Engaging")    -- Engage a target from Holding state
+  self:AddTransition("OnDetour",      "EngageTarget",     "Engaging")    -- Engage a target from OnDetour state
+  self:AddTransition("Engaging",      "Disengage",        "Cruising")    -- Disengage and back to cruising.
   
   self:AddTransition("*",             "TurnIntoWind",     "Cruising")    -- Command the group to turn into the wind.
   self:AddTransition("*",             "TurnedIntoWind",   "*")           -- Group turned into wind.
@@ -140,9 +155,6 @@ function NAVYGROUP:New(group)
   
   self:AddTransition("*",             "TurningStarted",   "*")           -- Group started turning.
   self:AddTransition("*",             "TurningStopped",   "*")           -- Group stopped turning.
-  
-  self:AddTransition("*",             "Detour",           "Cruising")    -- Make a detour to a coordinate and resume route afterwards.
-  self:AddTransition("*",             "DetourReached",    "*")           -- Group reached the detour coordinate.
   
   self:AddTransition("*",             "CollisionWarning", "*")           -- Collision warning.
   self:AddTransition("*",             "ClearAhead",       "*")           -- Clear ahead.
@@ -154,15 +166,190 @@ function NAVYGROUP:New(group)
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Stop". Stops the NAVYGROUP and all its event handlers.
+  --- Triggers the FSM event "TurnIntoWind".
+  -- @function [parent=#NAVYGROUP] TurnIntoWind
   -- @param #NAVYGROUP self
+  -- @param #NAVYGROUP.IntoWind Into wind parameters.
 
-  --- Triggers the FSM event "Stop" after a delay. Stops the NAVYGROUP and all its event handlers.
-  -- @function [parent=#NAVYGROUP] __Stop
+  --- Triggers the FSM event "TurnIntoWind" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurnIntoWind
   -- @param #NAVYGROUP self
   -- @param #number delay Delay in seconds.
-  
-  -- TODO: Add pseudo functions.
+  -- @param #NAVYGROUP.IntoWind Into wind parameters.
+
+  --- On after "TurnIntoWind" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurnIntoWind
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #NAVYGROUP.IntoWind Into wind parameters.
+
+
+  --- Triggers the FSM event "TurnedIntoWind".
+  -- @function [parent=#NAVYGROUP] TurnedIntoWind
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "TurnedIntoWind" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurnedIntoWind
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "TurnedIntoWind" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurnedIntoWind
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "TurnIntoWindStop".
+  -- @function [parent=#NAVYGROUP] TurnIntoWindStop
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "TurnIntoWindStop" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurnIntoWindStop
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "TurnIntoWindStop" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurnIntoWindStop
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "TurnIntoWindOver".
+  -- @function [parent=#NAVYGROUP] TurnIntoWindOver
+  -- @param #NAVYGROUP self
+  -- @param #NAVYGROUP.IntoWind IntoWindData Data table.
+
+  --- Triggers the FSM event "TurnIntoWindOver" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurnIntoWindOver
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param #NAVYGROUP.IntoWind IntoWindData Data table.
+
+  --- On after "TurnIntoWindOver" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurnIntoWindOver
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #NAVYGROUP.IntoWind IntoWindData Data table.
+
+
+
+  --- Triggers the FSM event "TurningStarted".
+  -- @function [parent=#NAVYGROUP] TurningStarted
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "TurningStarted" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurningStarted
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "TurningStarted" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurningStarted
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "TurningStopped".
+  -- @function [parent=#NAVYGROUP] TurningStopped
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "TurningStopped" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurningStopped
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "TurningStopped" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurningStopped
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "CollisionWarning".
+  -- @function [parent=#NAVYGROUP] CollisionWarning
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "CollisionWarning" after a delay.
+  -- @function [parent=#NAVYGROUP] __CollisionWarning
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "CollisionWarning" event.
+  -- @function [parent=#NAVYGROUP] OnAfterCollisionWarning
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "ClearAhead".
+  -- @function [parent=#NAVYGROUP] ClearAhead
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "ClearAhead" after a delay.
+  -- @function [parent=#NAVYGROUP] __ClearAhead
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "ClearAhead" event.
+  -- @function [parent=#NAVYGROUP] OnAfterClearAhead
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Dive".
+  -- @function [parent=#NAVYGROUP] Dive
+  -- @param #NAVYGROUP self
+  -- @param #number Depth Dive depth in meters. Default 50 meters.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+  --- Triggers the FSM event "Dive" after a delay.
+  -- @function [parent=#NAVYGROUP] __Dive
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param #number Depth Dive depth in meters. Default 50 meters.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+  --- On after "Dive" event.
+  -- @function [parent=#NAVYGROUP] OnAfterDive
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number Depth Dive depth in meters. Default 50 meters.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+
+  --- Triggers the FSM event "Surface".
+  -- @function [parent=#NAVYGROUP] Surface
+  -- @param #NAVYGROUP self
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+  --- Triggers the FSM event "Surface" after a delay.
+  -- @function [parent=#NAVYGROUP] __Surface
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+  --- On after "Surface" event.
+  -- @function [parent=#NAVYGROUP] OnAfterSurface
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
 
 
   -- Init waypoints.
@@ -385,7 +572,6 @@ function NAVYGROUP:RemoveTurnIntoWind(IntoWindData)
 
   -- Check if this is a window currently open.
   if self.intowind and self.intowind.Id==IntoWindData.Id then
-    --env.info("FF stop in remove")
     self:TurnIntoWindStop()
     return
   end  

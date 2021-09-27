@@ -393,7 +393,7 @@ OPSGROUP.TaskType={
 -- @field #string name Waypoint description. Shown in the F10 map.
 -- @field #number x Waypoint x-coordinate.
 -- @field #number y Waypoint y-coordinate.
--- @field #boolean detour If true, this waypoint is not part of the normal route.
+-- @field #number detour Signifies that this waypoint is not part of the normal route: 0=Hold, 1=Resume Route.
 -- @field #boolean intowind If true, this waypoint is a turn into wind route point.
 -- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
 -- @field #boolean temp If true, this is a temporary waypoint and will be deleted when passed. Also the passing waypoint FSM event is not triggered.
@@ -2693,7 +2693,7 @@ end
 -- @return #number Expected speed in m/s.
 function OPSGROUP:GetExpectedSpeed()
 
-  if self:IsHolding() then
+  if self:IsHolding() or self:Is("Rearming") or self:IsWaiting() or self:IsRetreated() then
     return 0
   else
     return self.speedWp or 0
@@ -2723,6 +2723,12 @@ end
 function OPSGROUP:RemoveWaypoint(wpindex)
 
   if self.waypoints then
+  
+    -- The waypoitn to be removed.
+    local wp=self:GetWaypoint(wpindex)
+    
+    -- Is this a temporary waypoint.
+    local istemp=wp.temp or wp.detour or wp.astar or wp.missionUID
 
     -- Number of waypoints before delete.
     local N=#self.waypoints
@@ -2740,7 +2746,6 @@ function OPSGROUP:RemoveWaypoint(wpindex)
     end
 
     -- Remove waypoint marker.
-    local wp=self:GetWaypoint(wpindex)
     if wp and wp.marker then
       wp.marker:Remove()
     end
@@ -2752,7 +2757,7 @@ function OPSGROUP:RemoveWaypoint(wpindex)
     local n=#self.waypoints
 
     -- Debug info.
-    self:T(self.lid..string.format("Removing waypoint index %d, current wp index %d. N %d-->%d", wpindex, self.currentwp, N, n))
+    self:T(self.lid..string.format("Removing waypoint UID=%d [temp=%s]: index=%d [currentwp=%d]. N %d-->%d", wp.uid, tostring(istemp), wpindex, self.currentwp, N, n))
 
     -- Waypoint was not reached yet.
     if wpindex > self.currentwp then
@@ -2764,7 +2769,7 @@ function OPSGROUP:RemoveWaypoint(wpindex)
       -- TODO: patrol adinfinitum. Not sure this is handled correctly. If patrol adinfinitum and we have now only one WP left, we should at least go back.
 
       -- Could be that the waypoint we are currently moving to was the LAST waypoint. Then we now passed the final waypoint.
-      if self.currentwp>=n and not self.adinfinitum then
+      if self.currentwp>=n and not (self.adinfinitum or istemp) then
         self:_PassedFinalWaypoint(true, "Removed FUTURE waypoint we are currently moving to and that was the LAST waypoint")
       end
 
@@ -2989,6 +2994,20 @@ end
 function OPSGROUP:PushTask(DCSTask)
 
   if self:IsAlive() then
+
+    -- Inject enroute tasks.
+    if self.taskenroute and #self.taskenroute>0 then
+      if tostring(DCSTask.id)=="ComboTask" then
+        for _,task in pairs(self.taskenroute) do
+          table.insert(DCSTask.params.tasks, 1, task)
+        end
+      else
+        local tasks=UTILS.DeepCopy(self.taskenroute)
+        table.insert(tasks, DCSTask)
+
+        DCSTask=self.group.TaskCombo(self, tasks)
+      end
+    end
 
     -- Push task.
     self.controller:pushTask(DCSTask)
@@ -3762,6 +3781,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       if self.currentmission and self.currentmission==Mission.auftragsnummer then
         self.currentmission=nil
       end
+      env.info("Remove mission waypoints")
       self:_RemoveMissionWaypoints(Mission, false)
     end
     
@@ -5964,6 +5984,15 @@ function OPSGROUP:onafterStop(From, Event, To)
   self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from _DATABASE")
 end
 
+--- On after "OutOfAmmo" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterOutOfAmmo(From, Event, To)
+  self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Cargo Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -8091,32 +8120,54 @@ end
 -- @param #number delay Delay in seconds.
 function OPSGROUP:_CheckGroupDone(delay)
 
+  -- FSM state.
+  local fsmstate=self:GetState()
+
   if self:IsAlive() and self.isAI then
 
     if delay and delay>0 then
+      -- Debug info.
+      self:T(self.lid..string.format("Check OPSGROUP [state=%s] done in %.3f seconds...", fsmstate, delay))
+    
       -- Delayed call.
       self:ScheduleOnce(delay, self._CheckGroupDone, self)
     else
 
       -- Debug info.
-      self:T(self.lid.."Check OPSGROUP done?")
+      self:T(self.lid..string.format("Check OSGROUP [state=%s] done?", fsmstate))      
 
       -- Group is engaging something.
       if self:IsEngaging() then
+        self:T(self.lid.."Engaging! Group NOT done ==> UpdateRoute()")
         self:UpdateRoute()
         return
       end
       
       -- Group is returning
       if self:IsReturning() then
+        self:T(self.lid.."Returning! Group NOT done...")
         return
       end
+      
+      -- Group is returning
+      if self:IsRearming() then
+        self:T(self.lid.."Rearming! Group NOT done...")
+        return
+      end      
 
       -- Group is waiting. We deny all updates.
       if self:IsWaiting() then
         -- If group is waiting, we assume that is the way it is meant to be.
+        self:T(self.lid.."Waiting! Group NOT done...")
         return
       end
+      
+      -- First check if there is a paused mission that
+      if self.missionpaused then
+        self:T(self.lid..string.format("Found paused mission %s [%s]. Unpausing mission...", self.missionpaused.name, self.missionpaused.type))
+        self:UnpauseMission()
+        return
+      end            
 
       -- Get current waypoint.
       local waypoint=self:GetWaypoint(self.currentwp)
@@ -8226,7 +8277,7 @@ function OPSGROUP:_CheckStuck()
   local speed=self:GetVelocity()
 
   -- Check speed.
-  if speed<0.5 then
+  if speed<0.1 then
 
     if ExpectedSpeed>0 and not self.stuckTimestamp then
       self:T2(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected", speed, ExpectedSpeed))
@@ -8824,9 +8875,9 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
     end
     
     -- Check if final waypoint was reached.
-    if opsgroup.currentwp==#opsgroup.waypoints and not opsgroup.adinfinitum then
+    if opsgroup.currentwp==#opsgroup.waypoints and not (opsgroup.adinfinitum or wpistemp) then
       -- Set passed final waypoint.
-      opsgroup:_PassedFinalWaypoint(true, "_PassingWaypoint currentwp==#waypoints and NOT adinfinitum")    
+      opsgroup:_PassedFinalWaypoint(true, "_PassingWaypoint currentwp==#waypoints and NOT adinfinitum and NOT a temporary waypoint")    
     end
 
     -- Trigger PassingWaypoint event.
@@ -8934,7 +8985,8 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
       elseif opsgroup:IsEngaging() then
 
         -- Nothing to do really.
-
+        opsgroup:T(opsgroup.lid.."Passing engaging waypoint")
+        
       else
 
         -- Trigger DetourReached event.
@@ -9574,6 +9626,7 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
     Modulation=Modulation or self.radioDefault.Modu
 
     if self:IsFlightgroup() and not self.radio.On then
+      env.info("FF radio OFF")
       self.group:SetOption(AI.Option.Air.id.SILENCE, false)
     end
 

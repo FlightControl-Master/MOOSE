@@ -787,6 +787,20 @@ function AIRWING:onafterStatus(From, Event, To)
   -- Check Rescue Helo missions.
   self:CheckRescuhelo()
 
+  ----------------
+  -- Transport ---
+  ----------------
+
+  -- Check transport queue.
+  self:CheckTransportQueue()
+
+  --------------
+  -- Mission ---
+  --------------
+
+  -- Check mission queue.
+  self:CheckMissionQueue()
+
 
   -- General info:
   if self.verbose>=1 then
@@ -841,36 +855,6 @@ function AIRWING:onafterStatus(From, Event, To)
       text=text..string.format("\n* %s %s: %s*%d/%d, Callsign=%s, Modex=%d, Skill=%s", squadron.name, squadron:GetState(), squadron.aircrafttype, squadron:CountAssets(true), #squadron.assets, callsign, modex, skill)
     end
     self:I(self.lid..text)
-  end
-
-  ----------------
-  -- Transport ---
-  ----------------
-
-  -- Check if any transports should be cancelled.
-  --self:_CheckTransports()
-
-  -- Get next mission.
-  local transport=self:_GetNextTransport()
-
-  -- Request mission execution.
-  if transport then
-    self:TransportRequest(transport)
-  end
-
-  --------------
-  -- Mission ---
-  --------------
-
-  -- Check if any missions should be cancelled.
-  self:_CheckMissions()
-
-  -- Get next mission.
-  local mission=self:_GetNextMission()
-
-  -- Request mission execution.
-  if mission then
-    self:MissionRequest(mission)
   end
 
 end

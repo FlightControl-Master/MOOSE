@@ -3148,13 +3148,13 @@ function FLIGHTGROUP:FindNearestTanker(Radius)
 
       local istanker, refuelsystem=unit:IsTanker()
 
-      if istanker and self.refueltype==refuelsystem then
+      if istanker and self.refueltype==refuelsystem and unit:GetCoalition()==self:GetCoalition() then
 
         -- Distance.
         local d=unit:GetCoordinate():Get2DDistance(coord)
 
         if d<dmin then
-          d=dmin
+          dmin=d
           tanker=unit
         end
 

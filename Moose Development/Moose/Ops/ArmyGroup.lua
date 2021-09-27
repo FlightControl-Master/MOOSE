@@ -812,6 +812,44 @@ function ARMYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Formation, 
 
 end
 
+--- On before "Rearm" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+-- @param #number Formation Formation of the group.
+function ARMYGROUP:onbeforeRearm(From, Event, To, Coordinate, Formation)
+
+  local dt=nil
+  local allowed=true
+
+  -- Pause current mission.
+  if self.currentmission and self.currentmission>0 then
+    self:T(self.lid.."Rearm command but have current mission ==> Pausing mission!")
+    self:PauseMission()
+    dt=-0.1
+    allowed=false
+  end
+
+  -- Disengage.
+  if self:IsEngaging() then
+    self:T(self.lid.."Rearm command but currently engaging ==> Disengage!")
+    self:Disengage()
+    dt=-0.1
+    allowed=false
+  end
+  
+  -- Try again...
+  if dt then
+    self:T(self.lid..string.format("Trying Rearm again in %.2f sec", dt))
+    self:__Rearm(dt, Coordinate, Formation)
+    allowed=false
+  end
+  
+  return allowed
+end
+
 --- On after "Rearm" event.
 -- @param #ARMYGROUP self
 -- @param #string From From state.
@@ -820,6 +858,9 @@ end
 -- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
 -- @param #number Formation Formation of the group.
 function ARMYGROUP:onafterRearm(From, Event, To, Coordinate, Formation)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Group send to rearm"))
 
   -- ID of current waypoint.
   local uid=self:GetWaypointCurrent().uid
@@ -830,6 +871,18 @@ function ARMYGROUP:onafterRearm(From, Event, To, Coordinate, Formation)
   -- Set if we want to resume route after reaching the detour waypoint.
   wp.detour=0
 
+end
+
+--- On after "Rearmed" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function ARMYGROUP:onafterRearmed(From, Event, To)
+  self:I(self.lid.."Group rearmed")
+
+  -- Check group done.
+  self:_CheckGroupDone(1)      
 end
 
 --- On after "RTZ" event.
@@ -991,14 +1044,32 @@ end
 -- @param Wrapper.Group#GROUP Group the group to be engaged.
 function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target)
 
+  local dt=nil
+  local allowed=true
+
   local ammo=self:GetAmmoTot()
   
   if ammo.Total==0 then
     self:E(self.lid.."WARNING: Cannot engage TARGET because no ammo left!")
     return false
   end
+  
+  -- Pause current mission.
+  if self.currentmission and self.currentmission>0 then
+    self:T(self.lid.."Engage command but have current mission ==> Pausing mission!")
+    self:PauseMission()
+    dt=-0.1
+    allowed=false
+  end  
 
-  return true
+  -- Try again...
+  if dt then
+    self:T(self.lid..string.format("Trying Engage again in %.2f sec", dt))
+    self:__EngageTarget(dt, Target)
+    allowed=false
+  end
+
+  return allowed
 end
 
 --- On after "EngageTarget" event.
@@ -1015,9 +1086,14 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
   else
     self.engage.Target=TARGET:New(Target)
   end
-
+ 
   -- Target coordinate.
-  self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate())
+  self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate()) 
+ 
+  
+  local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+
+
   
   -- Backup ROE and alarm state.
   self.engage.roe=self:GetROE()
@@ -1031,7 +1107,7 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
   local uid=self:GetWaypointCurrent().uid
   
   -- Add waypoint after current.
-  self.engage.Waypoint=self:AddWaypoint(self.engage.Coordinate, nil, uid, Formation, true)
+  self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
   
   -- Set if we want to resume route after reaching the detour waypoint.
   self.engage.Waypoint.detour=1
@@ -1063,9 +1139,11 @@ function ARMYGROUP:_UpdateEngageTarget()
     
       -- Remove current waypoint
       self:RemoveWaypointByID(self.engage.Waypoint.uid)
+      
+      local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
   
         -- Add waypoint after current.
-      self.engage.Waypoint=self:AddWaypoint(self.engage.Coordinate, nil, uid, Formation, true)
+      self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
     
       -- Set if we want to resume route after reaching the detour waypoint.
       self.engage.Waypoint.detour=0      
@@ -1100,19 +1178,6 @@ function ARMYGROUP:onafterDisengage(From, Event, To)
 
   -- Check group is done
   self:_CheckGroupDone(1)
-end
-
---- On after "Rearmed" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function ARMYGROUP:onafterRearmed(From, Event, To)
-  self:I(self.lid.."Group rearmed")
-
-  -- Check group done.
-  self:_CheckGroupDone(1)
-      
 end
 
 --- On after "DetourReached" event.
@@ -1334,7 +1399,48 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Find the neares ammo supply group within a given radius.
+-- @param #ARMYGROUP self
+-- @param #number Radius Search radius in NM. Default 30 NM.
+-- @return Wrapper.Group#GROUP Closest ammo supplying group or `nil` if no group is in the given radius.
+function ARMYGROUP:FindNearestAmmoSupply(Radius)
 
+  -- Radius in meters.
+  Radius=UTILS.NMToMeters(Radius or 30)
+
+  -- Current positon.
+  local coord=self:GetCoordinate()
+
+  -- Scanned units.
+  local units=coord:ScanUnits(Radius)
+
+  -- Find closest 
+  local dmin=math.huge
+  local truck=nil --Wrapper.Unit#UNIT
+  for _,_unit in pairs(units.Set) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    -- Check coaliton and if unit can supply ammo.
+    if unit:GetCoalition()==self:GetCoalition() and unit:IsAmmoSupply() then
+
+      -- Distance.
+      local d=unit:GetCoordinate():Get2DDistance(coord)
+
+      -- Check if distance is smaller.
+      if d<dmin then
+        dmin=d
+        truck=unit
+      end
+
+    end
+  end
+
+  if truck then
+    return truck:GetGroup()
+  end
+
+  return nil
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

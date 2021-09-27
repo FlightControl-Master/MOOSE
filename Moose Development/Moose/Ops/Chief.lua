@@ -567,6 +567,18 @@ function CHIEF:AddOpsZone(OpsZone)
   return self
 end
 
+--- Add a rearming zone.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE RearmingZone Rearming zone.
+-- @return Ops.Brigade#BRIGADE.RearmingZone The rearming zone data.
+function CHIEF:AddRearmingZone(RearmingZone)
+
+  -- Hand over to commander.
+  local rearmingzone=self.commander:AddRearmingZone(RearmingZone)
+
+  return rearmingzone
+end
+
 
 --- Set border zone set.
 -- @param #CHIEF self

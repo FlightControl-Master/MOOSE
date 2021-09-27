@@ -20,6 +20,7 @@
 -- @field #table legions Table of legions which are commanded.
 -- @field #table missionqueue Mission queue.
 -- @field #table transportqueue Transport queue.
+-- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.RearmingZone`.
 -- @field Ops.Chief#CHIEF chief Chief of staff.
 -- @extends Core.Fsm#FSM
 
@@ -39,6 +40,7 @@ COMMANDER = {
   legions        =    {},
   missionqueue   =    {},
   transportqueue =    {},
+  rearmingZones  =    {},
 }
 
 --- COMMANDER class version.
@@ -330,6 +332,24 @@ function COMMANDER:RemoveTransport(Transport)
   return self
 end
 
+--- Add a rearming zone.
+-- @param #COMMANDER self
+-- @param Core.Zone#ZONE RearmingZone Rearming zone.
+-- @return Ops.Brigade#BRIGADE.RearmingZone The rearming zone data.
+function COMMANDER:AddRearmingZone(RearmingZone)
+
+  local rearmingzone={} --Ops.Brigade#BRIGADE.RearmingZone
+  
+  rearmingzone.zone=RearmingZone
+  rearmingzone.occupied=false
+  rearmingzone.mission=nil
+  rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Rearming Zone"):ToCoalition(self:GetCoalition())
+
+  table.insert(self.rearmingZones, rearmingzone)
+
+  return rearmingzone
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -370,14 +390,25 @@ function COMMANDER:onafterStatus(From, Event, To)
 
   -- Status.
   if self.verbose>=1 then
-    local text=string.format("Status %s: Legions=%d, Missions=%d", fsmstate, #self.legions, #self.missionqueue)
+    local text=string.format("Status %s: Legions=%d, Missions=%d, Transports", fsmstate, #self.legions, #self.missionqueue, #self.transportqueue)
     self:I(self.lid..text)
   end
 
   -- Check mission queue and assign one PLANNED mission.
   self:CheckMissionQueue()
   
-  -- Check mission queue and assign one PLANNED mission  
+  -- Check transport queue and assign one PLANNED transport.
+  self:CheckTransportQueue()
+  
+  -- Check rearming zones.
+  for _,_rearmingzone in pairs(self.rearmingZones) do
+    local rearmingzone=_rearmingzone --#BRIGADE.RearmingZone
+    -- Check if mission is nil or over.      
+    if (not rearmingzone.mission) or rearmingzone.mission:IsOver() then
+      rearmingzone.mission=AUFTRAG:NewAMMOSUPPLY(rearmingzone.zone)
+      self:AddMission(rearmingzone.mission)
+    end
+  end  
     
   ---
   -- LEGIONS
@@ -769,20 +800,31 @@ function COMMANDER:RecruitAssetsForMission(Mission)
 
   -- Debug info.
   env.info(string.format("FF recruiting assets for mission %s [%s]", Mission:GetName(), Mission:GetType()))
-
+  
   -- Cohorts.
-  local Cohorts=Mission.squadrons
-  if not Cohorts then
-    Cohorts={}
-    for _,_legion in pairs(Mission.specialLegions or self.legions) do
-      local legion=_legion --Ops.Legion#LEGION      
-      -- Loops over cohorts.
+  local Cohorts={}
+  for _,_legion in pairs(Mission.specialLegions or {}) do
+    local legion=_legion --Ops.Legion#LEGION
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      table.insert(Cohorts, cohort)
+    end
+  end
+  for _,_cohort in pairs(Mission.specialCohorts or {}) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    table.insert(Cohorts, cohort)
+  end
+  
+  -- No special mission legions/cohorts found ==> take own legions.
+  if #Cohorts==0 then
+    for _,_legion in pairs(self.legions) do
+      local legion=_legion --Ops.Legion#LEGION
       for _,_cohort in pairs(legion.cohorts) do
         local cohort=_cohort --Ops.Cohort#COHORT
         table.insert(Cohorts, cohort)
       end
-    end  
-  end
+    end      
+  end  
 
   -- Number of required assets.
   local NreqMin, NreqMax=Mission:GetRequiredAssets()
@@ -810,18 +852,30 @@ function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
   if Mission.NescortMin and Mission.NescortMax and (Mission.NescortMin>0 or Mission.NescortMax>0) then
 
     -- Cohorts.
-    local Cohorts=Mission.squadrons
-    if not Cohorts then
-      Cohorts={}
-      for _,_legion in pairs(Mission.specialLegions or self.legions) do
-        local legion=_legion --Ops.Legion#LEGION      
-        -- Loops over cohorts.
+    local Cohorts={}
+    for _,_legion in pairs(Mission.escortLegions or {}) do
+      local legion=_legion --Ops.Legion#LEGION
+      for _,_cohort in pairs(legion.cohorts) do
+        local cohort=_cohort --Ops.Cohort#COHORT
+        table.insert(Cohorts, cohort)
+      end
+    end
+    for _,_cohort in pairs(Mission.escortCohorts or {}) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      table.insert(Cohorts, cohort)
+    end
+    
+    -- No special escort legions/cohorts found ==> take own legions.
+    if #Cohorts==0 then
+      for _,_legion in pairs(self.legions) do
+        local legion=_legion --Ops.Legion#LEGION
         for _,_cohort in pairs(legion.cohorts) do
           local cohort=_cohort --Ops.Cohort#COHORT
           table.insert(Cohorts, cohort)
         end
-      end  
+      end      
     end
+        
     
     -- Call LEGION function but provide COMMANDER as self.
     local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMin)

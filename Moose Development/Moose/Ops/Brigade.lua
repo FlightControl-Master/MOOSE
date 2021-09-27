@@ -28,7 +28,7 @@
 --
 -- # The BRIGADE Concept
 --
--- An BRIGADE consists of multiple PLATOONS. These platoons "live" in a WAREHOUSE that has a phyiscal struction (STATIC or UNIT) and can be captured or destroyed.
+-- An BRIGADE consists of one or multiple PLATOONs. These platoons "live" in a WAREHOUSE that has a phyiscal struction (STATIC or UNIT) and can be captured or destroyed.
 --
 --
 -- @field #BRIGADE
@@ -42,6 +42,7 @@ BRIGADE = {
 -- @type BRIGADE.RearmingZone
 -- @field Core.Zone#ZONE zone The zone.
 -- @field #boolean occupied If `true`, a rearming truck is present in the zone.
+-- @field Ops.Auftrag#AUFTRAG mission Mission assigned to supply ammo.
 -- @field Wrapper.Marker#MARKER marker F10 marker.
 
 --- BRIGADE class version.
@@ -221,21 +222,22 @@ function BRIGADE:GetRetreatZones()
   return self.retreatZones
 end
 
---- Add a patrol Point for CAP missions.
+--- Add a rearming zone.
 -- @param #BRIGADE self
--- @param Core.Zone#ZONE Rearming zone.
--- @return #BRIGADE self
+-- @param Core.Zone#ZONE RearmingZone Rearming zone.
+-- @return #BRIGADE.RearmingZone The rearming zone data.
 function BRIGADE:AddRearmingZone(RearmingZone)
 
   local rearmingzone={} --#BRIGADE.RearmingZone
   
   rearmingzone.zone=RearmingZone
   rearmingzone.occupied=false
+  rearmingzone.mission=nil
   rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Rearming Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.rearmingZones, rearmingzone)
 
-  return self
+  return rearmingzone
 end
 
 
@@ -292,6 +294,36 @@ function BRIGADE:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
+  
+  ----------------
+  -- Transport ---
+  ----------------
+  
+  self:CheckTransportQueue()
+
+  --------------
+  -- Mission ---
+  --------------
+
+  -- Check if any missions should be cancelled.
+  self:CheckMissionQueue()
+
+  ---------------------
+  -- Rearming Zones ---
+  ---------------------
+
+  for i,_rearmingzone in pairs(self.rearmingZones) do
+    local rearmingzone=_rearmingzone --#BRIGADE.RearmingZone
+    if (not rearmingzone.mission) or rearmingzone.mission:IsOver() then
+      rearmingzone.mission=AUFTRAG:NewAMMOSUPPLY(rearmingzone.zone)
+      self:AddMission(rearmingzone.mission)
+    end
+  end
+
+
+  -----------
+  -- Info ---
+  -----------    
 
   -- General info:
   if self.verbose>=1 then
@@ -361,34 +393,21 @@ function BRIGADE:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end
 
-  ----------------
-  -- Transport ---
-  ----------------
+  -------------------
+  -- Rearming Info --
+  -------------------
+  if self.verbose>=0 then
+    local text="Rearming Zones:"
+    for i,_rearmingzone in pairs(self.rearmingZones) do
+      local rearmingzone=_rearmingzone --#BRIGADE.RearmingZone
+      
+      local name=rearmingzone.zone:GetName()
 
-  -- Check if any transports should be cancelled.
-  --self:_CheckTransports()
-
-  -- Get next mission.
-  local transport=self:_GetNextTransport()
-
-  -- Request mission execution.
-  if transport then
-    self:TransportRequest(transport)
-  end
-
-  --------------
-  -- Mission ---
-  --------------
-
-  -- Check if any missions should be cancelled.
-  self:_CheckMissions()
-
-  -- Get next mission.
-  local mission=self:_GetNextMission()
-
-  -- Request mission execution.
-  if mission then
-    self:MissionRequest(mission)
+      -- Platoon text.
+      text=text..string.format("\n* %s: Mission status=%s, suppliers=%d", name, rearmingzone.mission:GetState(), rearmingzone.mission:CountOpsGroups())
+      
+    end
+    self:I(self.lid..text)
   end
 
 end

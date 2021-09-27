@@ -8100,10 +8100,10 @@ function WAREHOUSE:_GetIDsFromGroup(group)
     end
 
     -- Debug info
-    self:T(self.lid..string.format("Group Name   = %s", tostring(name)))
-    self:T(self.lid..string.format("Warehouse ID = %s", tostring(wid)))
-    self:T(self.lid..string.format("Asset     ID = %s", tostring(aid)))
-    self:T(self.lid..string.format("Request   ID = %s", tostring(rid)))
+    self:T3(self.lid..string.format("Group Name   = %s", tostring(name)))
+    self:T3(self.lid..string.format("Warehouse ID = %s", tostring(wid)))
+    self:T3(self.lid..string.format("Asset     ID = %s", tostring(aid)))
+    self:T3(self.lid..string.format("Request   ID = %s", tostring(rid)))
 
     return wid,aid,rid
   else

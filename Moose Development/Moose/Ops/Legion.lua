@@ -443,11 +443,18 @@ function LEGION:onafterStart(From, Event, To)
 
 end
 
-
-
---- Check if mission is not over and ready to cancel.
+--- Check mission queue and assign ONE mission.
 -- @param #LEGION self
-function LEGION:_CheckMissions()
+-- @return #boolean If `true`, a mission was found and requested.
+function LEGION:CheckMissionQueue()
+
+  -- Number of missions.
+  local Nmissions=#self.missionqueue
+
+  -- Treat special cases.
+  if Nmissions==0 then
+    return nil
+  end
 
   -- Loop over missions in queue.
   for _,_mission in pairs(self.missionqueue) do
@@ -456,21 +463,6 @@ function LEGION:_CheckMissions()
     if mission:IsNotOver() and mission:IsReadyToCancel() then
       mission:Cancel()
     end
-  end
-
-end
-
---- Get next mission.
--- @param #LEGION self
--- @return Ops.Auftrag#AUFTRAG Next mission or `#nil`.
-function LEGION:_GetNextMission()
-
-  -- Number of missions.
-  local Nmissions=#self.missionqueue
-
-  -- Treat special cases.
-  if Nmissions==0 then
-    return nil
   end
 
   -- Sort results table wrt prio and start time.
@@ -533,8 +525,9 @@ function LEGION:_GetNextMission()
         end
         
         if EscortAvail and TransportAvail then
-          -- Got a missin.
-          return mission        
+          -- Got a mission.
+          self:MissionRequest(mission)
+          return true
         else
           -- Recruited assets but no requested escort available. Unrecruit assets!
           LEGION.UnRecruitAssets(assets, mission)        
@@ -548,10 +541,10 @@ function LEGION:_GetNextMission()
   return nil
 end
 
---- Get next transport.
+--- Check transport queue and assign ONE transport.
 -- @param #LEGION self
--- @return Ops.OpsTransport#OPSTRANSPORT Next transport or `#nil`.
-function LEGION:_GetNextTransport()
+-- @return #boolean If `true`, a transport was found and requested.
+function LEGION:CheckTransportQueue()
 
   -- Number of missions.
   local Ntransports=#self.transportqueue
@@ -560,6 +553,8 @@ function LEGION:_GetNextTransport()
   if Ntransports==0 then
     return nil
   end
+  
+  -- TODO: Remove transports that are over!
   
   -- Sort results table wrt prio and start time.
   local function _sort(a, b)
@@ -598,7 +593,9 @@ function LEGION:_GetNextTransport()
           transport:AddAsset(asset)
         end
         
-        return transport
+        -- Got transport ==> Request and return.
+        self:TransportRequest(transport)
+        return true
       end
       
     end
@@ -1736,9 +1733,25 @@ function LEGION:RecruitAssetsForMission(Mission)
   
   -- Payloads.
   local Payloads=Mission.payloads
-  
-  -- Cohorts.
-  local Cohorts=Mission.squadrons or self.cohorts
+
+  -- Get special escort legions and/or cohorts.
+  local Cohorts={}
+  for _,_legion in pairs(Mission.specialLegions or {}) do
+    local legion=_legion --Ops.Legion#LEGION
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      table.insert(Cohorts, cohort)
+    end
+  end
+  for _,_cohort in pairs(Mission.specialCohorts or {}) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    table.insert(Cohorts, cohort)
+  end
+
+  -- No escort cohorts/legions given ==> take own cohorts.    
+  if #Cohorts==0 then
+    Cohorts=self.cohorts
+  end    
   
   -- Recuit assets.
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem, nil)
@@ -1776,6 +1789,8 @@ function LEGION:RecruitAssetsForTransport(Transport)
   end
 
 
+  -- TODO: Special transport cohorts/legions.
+
   -- Target is the deploy zone.
   local TargetVec2=Transport:GetDeployZone():GetVec2()
   
@@ -1802,10 +1817,27 @@ function LEGION:RecruitAssetsForEscort(Mission, Assets)
     -- Debug info.
     self:I(self.lid..string.format("Reqested escort for mission %s [%s]. Required assets=%d-%d", Mission:GetName(), Mission:GetType(), Mission.NescortMin,Mission.NescortMax))
     
-    --TODO: Maybe add escortCohorts as mission option?
+    -- Get special escort legions and/or cohorts.
+    local Cohorts={}
+    for _,_legion in pairs(Mission.escortLegions or {}) do
+      local legion=_legion --Ops.Legion#LEGION
+      for _,_cohort in pairs(legion.cohorts) do
+        local cohort=_cohort --Ops.Cohort#COHORT
+        table.insert(Cohorts, cohort)
+      end
+    end
+    for _,_cohort in pairs(Mission.escortCohorts or {}) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      table.insert(Cohorts, cohort)
+    end
+
+    -- No escort cohorts/legions given ==> take own cohorts.    
+    if #Cohorts==0 then
+      Cohorts=self.cohorts
+    end    
     
     -- Call LEGION function but provide COMMANDER as self.
-    local assigned=LEGION.AssignAssetsForEscort(self, self.cohorts, Assets, Mission.NescortMin, Mission.NescortMin)
+    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMin)
     
     return assigned
   end
@@ -2047,15 +2079,17 @@ function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax)
       
       -- We want airplanes for airplanes and helos for everything else.
       local Categories={Group.Category.HELICOPTER}
+      local TargetTypes={"Ground Units"}
       if asset.category==Group.Category.AIRPLANE then
         Categories={Group.Category.AIRPLANE}
+        TargetTypes={"Air"}
       end
       
       -- Recruit escort asset for the mission asset.
       local Erecruited, eassets, elegions=LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.ESCORT, nil, NescortMin, NescortMax, TargetVec2, nil, nil, nil, nil, Categories)
       
       if Erecruited then
-        Escorts[asset.spawngroupname]={EscortLegions=elegions, EscortAssets=eassets}
+        Escorts[asset.spawngroupname]={EscortLegions=elegions, EscortAssets=eassets, ecategory=asset.category, TargetTypes=TargetTypes}
       else
         -- Could not find escort for this asset ==> Escort not possible ==> Break the loop.
         EscortAvail=false
@@ -2071,12 +2105,22 @@ function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax)
       
         local Elegions=value.EscortLegions
         local Eassets=value.EscortAssets
+        local ecategory=value.ecategory
         
         for _,_legion in pairs(Elegions) do
           local legion=_legion --Ops.Legion#LEGION
     
+          local OffsetVector=nil --DCS#Vec3
+          if ecategory==Group.Category.GROUND then
+            -- Overhead
+            OffsetVector={}
+            OffsetVector.x=0
+            OffsetVector.y=UTILS.FeetToMeters(1000)
+            OffsetVector.z=0
+          end
+    
           -- Create and ESCORT mission for this asset.
-          local escort=AUFTRAG:NewESCORT(groupname)
+          local escort=AUFTRAG:NewESCORT(groupname, OffsetVector, nil, value.TargetTypes)
           
           -- Reserve assts and add to mission.
           for _,_asset in pairs(Eassets) do

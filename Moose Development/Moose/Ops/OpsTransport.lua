@@ -48,6 +48,8 @@
 -- @field #number Ncargo Total number of cargo groups.
 -- @field #number Ncarrier Total number of assigned carriers.
 -- @field #number Ndelivered Total number of cargo groups delivered.
+-- @field #number NcarrierDead Total number of dead carrier groups
+-- @field #number NcargoDead Totalnumber of dead cargo groups.
 -- 
 -- @field Ops.Auftrag#AUFTRAG mission The mission attached to this transport.
 -- @field #table assets Warehouse assets assigned for this transport.
@@ -192,6 +194,7 @@ OPSTRANSPORT.version="0.5.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Special transport cohorts/legions. Similar to mission.
 -- TODO: Stop/abort transport.
 -- DONE: Allow multiple pickup/depoly zones.
 -- DONE: Add start conditions.
@@ -232,6 +235,8 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   self.Ncargo=0
   self.Ncarrier=0
   self.Ndelivered=0
+  self.NcargoDead=0
+  self.NcarrierDead=0
   
   -- Set default TZC.
   self.tzcDefault=self:AddTransportZoneCombo(PickupZone, DeployZone, CargoGroups)  
@@ -1648,6 +1653,7 @@ end
 function OPSTRANSPORT:onafterDeadCarrierGroup(From, Event, To, OpsGroup)
   self:I(self.lid..string.format("Carrier OPSGROUP %s dead!", OpsGroup:GetName()))
   -- Remove group from carrier list/table.
+  self.NdeadCarrier=self.NdeadCarrier+1
   self:_DelCarrier(OpsGroup)
 end
 

@@ -37,7 +37,7 @@
 -- @field #table legions Assigned legions.
 -- @field #table statusLegion Mission status of all assigned LEGIONs.
 -- @field #string statusCommander Mission status of the COMMANDER.
--- @field #string statusChief Mission status of the CHIF.
+-- @field #string statusChief Mission status of the CHIEF.
 -- @field #table groupdata Group specific data.
 -- @field #string name Mission name.
 -- @field #number prio Mission priority.
@@ -97,7 +97,6 @@
 -- @field #number NcarriersMax Max number of required carrier assets.
 -- @field Core.Zone#ZONE transportDeployZone Deploy zone of an OPSTRANSPORT.
 -- @field Core.Zone#ZONE transportDisembarkZone Disembark zone of an OPSTRANSPORT.
--- @field #table transportLegions Legions explicitly requested for providing carrier assets.
 -- 
 -- @field #number artyRadius Radius in meters.
 -- @field #number artyShots Number of shots fired.
@@ -115,11 +114,15 @@
 -- @field #table NassetsLegMin Number of required warehouse assets for each assigned legion.
 -- @field #table NassetsLegMax Number of required warehouse assets for each assigned legion.
 -- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
--- @field #table specialLegions User specified legions assigned for this mission. Only these will be considered for the job!
--- @field #table specialCohorts User specified cohorts assigned for this mission. Only these will be considered for the job!
--- @field #table squadrons User specified airwing squadrons assigned for this mission. Only these will be considered for the job!
 -- @field #table payloads User specified airwing payloads for this mission. Only these will be considered for the job! 
 -- @field Ops.AirWing#AIRWING.PatrolData patroldata Patrol data.
+-- 
+-- @field #table specialLegions User specified legions assigned for this mission. Only these will be considered for the job!
+-- @field #table specialCohorts User specified cohorts assigned for this mission. Only these will be considered for the job!
+-- @field #table transportLegions Legions explicitly requested for providing transport carrier assets.
+-- @field #table transportCohorts Cohorts explicitly requested for providing transport carrier assets. 
+-- @field #table escortLegions Legions explicitly requested for providing escorting assets.
+-- @field #table escortCohorts Cohorts explicitly requested for providing escorting assets.
 -- 
 -- @field #string missionTask Mission task. See `ENUMS.MissionTask`.
 -- @field #number missionAltitude Mission altitude in meters.
@@ -671,6 +674,13 @@ function AUFTRAG:New(Type)
   -- @param #AUFTRAG self
   -- @param #number delay Delay in seconds.
 
+  --- On after "Planned" event.
+  -- @function [parent=#AUFTRAG] OnAfterPlanned
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.  
+
 
   --- Triggers the FSM event "Queued".
   -- @function [parent=#AUFTRAG] Queued
@@ -680,6 +690,13 @@ function AUFTRAG:New(Type)
   -- @function [parent=#AUFTRAG] __Queued
   -- @param #AUFTRAG self
   -- @param #number delay Delay in seconds.
+
+  --- On after "Queued" event.
+  -- @function [parent=#AUFTRAG] OnAfterQueued
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.  
 
 
   --- Triggers the FSM event "Requested".
@@ -691,6 +708,13 @@ function AUFTRAG:New(Type)
   -- @param #AUFTRAG self
   -- @param #number delay Delay in seconds.
 
+  --- On after "Requested" event.
+  -- @function [parent=#AUFTRAG] OnAfterRequested
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.  
+
 
   --- Triggers the FSM event "Scheduled".
   -- @function [parent=#AUFTRAG] Scheduled
@@ -700,6 +724,13 @@ function AUFTRAG:New(Type)
   -- @function [parent=#AUFTRAG] __Scheduled
   -- @param #AUFTRAG self
   -- @param #number delay Delay in seconds.
+
+  --- On after "Scheduled" event.
+  -- @function [parent=#AUFTRAG] OnAfterScheduled
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.  
 
 
   --- Triggers the FSM event "Started".
@@ -711,6 +742,13 @@ function AUFTRAG:New(Type)
   -- @param #AUFTRAG self
   -- @param #number delay Delay in seconds.
 
+  --- On after "Started" event.
+  -- @function [parent=#AUFTRAG] OnAfterStarted
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.  
+
 
   --- Triggers the FSM event "Executing".
   -- @function [parent=#AUFTRAG] Executing
@@ -720,6 +758,13 @@ function AUFTRAG:New(Type)
   -- @function [parent=#AUFTRAG] __Executing
   -- @param #AUFTRAG self
   -- @param #number delay Delay in seconds.
+
+  --- On after "Executing" event.
+  -- @function [parent=#AUFTRAG] OnAfterExecuting
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.  
 
 
   --- Triggers the FSM event "Cancel".
@@ -1361,7 +1406,7 @@ end
 --- **[AIR]** Create an ESCORT (or FOLLOW) mission. Flight will escort another group and automatically engage certain target types.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP EscortGroup The group to escort.
--- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=-100, y=0, z=200} for z=200 meters to the right, same alitude, x=100 meters behind.
+-- @param DCS#Vec3 OffsetVector A table with x, y and z components specifying the offset of the flight to the escorted group. Default {x=-100, y=0, z=200} for z=200 meters to the right, same alitude (y=0), x=-100 meters behind.
 -- @param #number EngageMaxDistance Max engage distance of targets in nautical miles. Default auto (*nil*).
 -- @param #table TargetTypes Types of targets to engage automatically. Default is {"Air"}, i.e. all enemy airborne units. Use an empty set {} for a simple "FOLLOW" mission.
 -- @return #AUFTRAG self
@@ -1386,7 +1431,7 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   mission.missionTask=ENUMS.MissionTask.ESCORT  
   mission.missionFraction=0.1
   mission.missionAltitude=1000
-  mission.optionROE=ENUMS.ROE.OpenFire       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
+  mission.optionROE=ENUMS.ROE.OpenFireWeaponFree       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
   mission.categories={AUFTRAG.Category.AIRCRAFT}
@@ -2241,10 +2286,60 @@ function AUFTRAG:SetRequiredCarriers(NcarriersMin, NcarriersMax)
   return self
 end
 
---- Add a transport Legion.
+
+--- Assign a legion cohort to the mission. Only these cohorts will be considered for the job.
+-- @param #AUFTRAG self
+-- @param Ops.Cohort#COHORT Cohort The cohort.
+-- @return #AUFTRAG self
+function AUFTRAG:AssignCohort(Cohort)
+
+  self.specialCohorts=self.specialCohorts or {}
+  
+  self:T3(self.lid..string.format("Assigning cohort %s", tostring(Cohort.name)))
+  
+  -- Add cohort to table.
+  table.insert(self.specialCohorts, Cohort)
+  
+  return self
+end
+
+--- Assign a legion to the mission. Only cohorts of this legion will be considered for the job. You can assign multiple legions.
 -- @param #AUFTRAG self
 -- @param Ops.Legion#LEGION Legion The legion.
-function AUFTRAG:AddTransportLegion(Legion)
+-- @return #AUFTRAG self
+function AUFTRAG:AssignLegion(Legion)
+
+  self.specialLegions=self.specialLegions or {}
+  
+  self:T3(self.lid..string.format("Assigning Legion %s", tostring(Legion.alias)))
+  
+  -- Add Legion to table.
+  table.insert(self.specialLegions, Legion)
+  
+  return self
+end
+
+
+--- Assign airwing squadron(s) to the mission. Only these squads will be considered for the job.
+-- @param #AUFTRAG self
+-- @param #table Squadrons A table of SQUADRON(s). **Has to be a table {}** even if a single squad is given.
+-- @return #AUFTRAG self
+function AUFTRAG:AssignSquadrons(Squadrons)
+  
+  for _,_squad in pairs(Squadrons) do
+    local squadron=_squad --Ops.Squadron#SQUADRON
+    self:I(self.lid..string.format("Assigning squadron %s", tostring(squadron.name)))
+    self:AssignCohort(squadron)
+  end
+  
+  return self
+end
+
+
+--- Assign a transport Legion.
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion.
+function AUFTRAG:AssignTransportLegion(Legion)
 
   self.transportLegions=self.transportLegions or {}
   
@@ -2252,6 +2347,45 @@ function AUFTRAG:AddTransportLegion(Legion)
   
   return self
 end
+
+--- Assign a transport cohort.
+-- @param #AUFTRAG self
+-- @param Ops.Cohort#Cohort Cohort The cohort.
+function AUFTRAG:AssignTransportCohort(Cohort)
+
+  self.transportCohorts=self.transportCohorts or {}
+  
+  table.insert(self.transportCohorts, Cohort)
+  
+  return self
+end
+
+
+--- Add an escort Legion.
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The legion.
+function AUFTRAG:AssignEscortLegion(Legion)
+
+  self.escortLegions=self.escortLegions or {}
+  
+  table.insert(self.escortLegions, Legion)
+  
+  return self
+end
+
+--- Assign an escort cohort.
+-- @param #AUFTRAG self
+-- @param Ops.Cohort#Cohort Cohort The cohort.
+function AUFTRAG:AssignEscortCohort(Cohort)
+
+  self.escortCohorts=self.escortCohorts or {}
+  
+  table.insert(self.escortCohorts, Cohort)
+  
+  return self
+end
+
+
 
 --- Set Rules of Engagement (ROE) for this mission.
 -- @param #AUFTRAG self
@@ -2494,38 +2628,6 @@ function AUFTRAG:AddConditionPush(ConditionFunction, ...)
   end
   
   table.insert(self.conditionPush, condition)
-  
-  return self
-end
-
---- Assign a legion cohort to the mission. Only these cohorts will be considered for the job.
--- @param #AUFTRAG self
--- @param Ops.Cohort#COHORT Cohort The cohort.
--- @return #AUFTRAG self
-function AUFTRAG:_AssignCohort(Cohort)
-
-  self.squadrons=self.squadrons or {}
-  
-  self:T3(self.lid..string.format("Assigning cohort %s", tostring(Cohort.name)))
-  
-  -- Add cohort to table.
-  table.insert(self.squadrons, Cohort)
-  
-  return self
-end
-
-
---- Assign airwing squadron(s) to the mission. Only these squads will be considered for the job.
--- @param #AUFTRAG self
--- @param #table Squadrons A table of SQUADRON(s). **Has to be a table {}** even if a single squad is given.
--- @return #AUFTRAG self
-function AUFTRAG:AssignSquadrons(Squadrons)
-  
-  for _,_squad in pairs(Squadrons) do
-    local squadron=_squad --Ops.Squadron#SQUADRON
-    self:I(self.lid..string.format("Assigning squadron %s", tostring(squadron.name)))
-    self:_AssignCohort(squadron)
-  end
   
   return self
 end
