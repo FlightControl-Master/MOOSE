@@ -93,7 +93,7 @@ SEAD = {
 -- @param #SEAD self
 -- @param #table SEADGroupPrefixes Table of #string entries or single #string, which is a table of Prefixes of the SA Groups in the DCS mission editor on which evasive actions need to be taken.
 -- @param #number Padding (Optional) Extra number of seconds to add to radar switch-back-on time
--- @return SEAD
+-- @return #SEAD self
 -- @usage
 -- -- CCCP SEAD Defenses
 -- -- Defends the Russian SA installations from SEAD attacks.
@@ -143,7 +143,7 @@ end
 --- Sets the engagement range of the SAMs. Defaults to 75% to make it more deadly. Feature Request #1355
 -- @param #SEAD self
 -- @param #number range Set the engagement range in percent, e.g. 50
--- @return self
+-- @return #SEAD self
 function SEAD:SetEngagementRange(range)
   self:T( { range } )
   range = range or 75
@@ -158,6 +158,7 @@ end
 --- Set the padding in seconds, which extends the radar off time calculated by SEAD
 -- @param #SEAD self
 -- @param #number Padding Extra number of seconds to add for the switch-on
+-- @return #SEAD self
 function SEAD:SetPadding(Padding)
   self:T( { Padding } )
   local padding = Padding or 10
@@ -216,6 +217,7 @@ end
 -- @see SEAD
 -- @param #SEAD
 -- @param Core.Event#EVENTDATA EventData
+-- @return #SEAD self
 function SEAD:HandleEventShot( EventData )
   self:T( { EventData.id } )
   local SEADPlane = EventData.IniUnit -- Wrapper.Unit#UNIT
@@ -245,8 +247,8 @@ function SEAD:HandleEventShot( EventData )
     -- see if we are shot at
     local SEADGroupFound = false
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( self.SEADGroupPrefixes ) do
-      self:T( SEADGroupPrefix )
-      if string.find( _targetgroupname, SEADGroupPrefix, 1, true ) then
+      self:T( _targetgroupname, SEADGroupPrefix )
+      if string.find( _targetgroupname, SEADGroupPrefix ) then
         SEADGroupFound = true
         self:T( '*** SEAD - Group Match Found' )
         break
@@ -323,4 +325,5 @@ function SEAD:HandleEventShot( EventData )
       end
     end
   end
+  return self
 end
