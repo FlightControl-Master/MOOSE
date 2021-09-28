@@ -841,6 +841,13 @@ function LEGION:onafterTransportCancel(From, Event, To, Transport)
         opsgroup:TransportCancel(Transport)
       end
       
+      -- Delete awaited transport.
+      local cargos=Transport:GetCargoOpsGroups(false)
+      for _,_cargo in pairs(cargos) do
+        local cargo=_cargo --Ops.OpsGroup#OPSGROUP
+        cargo:_DelMyLift(Transport)
+      end
+      
       -- Remove asset from mission.
       Transport:DelAsset(asset)
 
@@ -1068,7 +1075,7 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
   if cohort then
   
     -- Debug info.
-    self:I(self.lid..string.format("Cohort asset spawned %s", asset.spawngroupname))
+    self:T(self.lid..string.format("Cohort asset spawned %s", asset.spawngroupname))
 
     -- Create a flight group.
     local flightgroup=self:_CreateFlightGroup(asset)
@@ -1150,7 +1157,7 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
       -- Add group to the detection set of the CHIEF (INTEL).
       local chief=self.chief or (self.commander and self.commander.chief or nil) --Ops.Chief#CHIEF
       if chief then
-        self:I(self.lid..string.format("Adding group %s to agents of CHIEF", group:GetName()))
+        self:T(self.lid..string.format("Adding group %s to agents of CHIEF", group:GetName()))
         chief.detectionset:AddGroup(asset.flightgroup.group)
       end
       
@@ -1932,7 +1939,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     local RightAttribute=CheckAttribute(cohort)
     
     -- Debug info.
-    cohort:I(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, RightCategory=%s, RightAttribute=%s",
+    cohort:T(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, RightCategory=%s, RightAttribute=%s",
     cohort:GetState(), tostring(Capable), tostring(InRange), tostring(Refuel), tostring(CanCarry), tostring(RightCategory), tostring(RightAttribute)))
     
     -- Check OnDuty, capable, in range and refueling type (if TANKER).

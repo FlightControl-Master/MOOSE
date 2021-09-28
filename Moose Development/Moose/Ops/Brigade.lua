@@ -18,7 +18,8 @@
 -- @type BRIGADE
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity of output.
--- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.RearmingZone`.
+-- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
+-- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field Core.Set#SET_ZONE retreatZones Retreat zone set.
 -- @extends Ops.Legion#LEGION
 
@@ -33,16 +34,17 @@
 --
 -- @field #BRIGADE
 BRIGADE = {
-  ClassName      = "BRIGADE",
-  verbose        =     0,
-  rearmingZones  =    {},
+  ClassName       = "BRIGADE",
+  verbose         =     0,
+  rearmingZones   =    {},
+  refuellingZones =    {}, 
 }
 
---- Rearming Zone.
--- @type BRIGADE.RearmingZone
+--- Supply Zone.
+-- @type BRIGADE.SupplyZone
 -- @field Core.Zone#ZONE zone The zone.
--- @field #boolean occupied If `true`, a rearming truck is present in the zone.
--- @field Ops.Auftrag#AUFTRAG mission Mission assigned to supply ammo.
+-- @field Ops.Auftrag#AUFTRAG mission Mission assigned to supply ammo or fuel.
+-- @field #boolean markerOn If `true`, marker is on.
 -- @field Wrapper.Marker#MARKER marker F10 marker.
 
 --- BRIGADE class version.
@@ -225,19 +227,36 @@ end
 --- Add a rearming zone.
 -- @param #BRIGADE self
 -- @param Core.Zone#ZONE RearmingZone Rearming zone.
--- @return #BRIGADE.RearmingZone The rearming zone data.
+-- @return #BRIGADE.SupplyZone The rearming zone data.
 function BRIGADE:AddRearmingZone(RearmingZone)
 
-  local rearmingzone={} --#BRIGADE.RearmingZone
+  local rearmingzone={} --#BRIGADE.SupplyZone
   
   rearmingzone.zone=RearmingZone
-  rearmingzone.occupied=false
   rearmingzone.mission=nil
   rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Rearming Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.rearmingZones, rearmingzone)
 
   return rearmingzone
+end
+
+
+--- Add a refuelling zone.
+-- @param #BRIGADE self
+-- @param Core.Zone#ZONE RefuellingZone Refuelling zone.
+-- @return #BRIGADE.SupplyZone The refuelling zone data.
+function BRIGADE:AddRefuellingZone(RefuellingZone)
+
+  local supplyzone={} --#BRIGADE.SupplyZone
+  
+  supplyzone.zone=RefuellingZone
+  supplyzone.mission=nil
+  supplyzone.marker=MARKER:New(supplyzone.zone:GetCoordinate(), "Refuelling Zone"):ToCoalition(self:GetCoalition())
+
+  table.insert(self.rearmingZones, supplyzone)
+
+  return supplyzone
 end
 
 
@@ -312,13 +331,27 @@ function BRIGADE:onafterStatus(From, Event, To)
   -- Rearming Zones ---
   ---------------------
 
-  for i,_rearmingzone in pairs(self.rearmingZones) do
-    local rearmingzone=_rearmingzone --#BRIGADE.RearmingZone
+  for _,_rearmingzone in pairs(self.rearmingZones) do
+    local rearmingzone=_rearmingzone --#BRIGADE.SupplyZone
     if (not rearmingzone.mission) or rearmingzone.mission:IsOver() then
       rearmingzone.mission=AUFTRAG:NewAMMOSUPPLY(rearmingzone.zone)
       self:AddMission(rearmingzone.mission)
     end
   end
+
+  -----------------------
+  -- Refuelling Zones ---
+  -----------------------
+
+  -- Check refuelling zones.
+  for _,_supplyzone in pairs(self.refuellingZones) do
+    local supplyzone=_supplyzone --#BRIGADE.SupplyZone
+    -- Check if mission is nil or over.      
+    if (not supplyzone.mission) or supplyzone.mission:IsOver() then
+      supplyzone.mission=AUFTRAG:NewFUELSUPPLY(supplyzone.zone)
+      self:AddMission(supplyzone.mission)
+    end
+  end    
 
 
   -----------
@@ -396,19 +429,28 @@ function BRIGADE:onafterStatus(From, Event, To)
   -------------------
   -- Rearming Info --
   -------------------
-  if self.verbose>=0 then
+  if self.verbose>=4 then
     local text="Rearming Zones:"
     for i,_rearmingzone in pairs(self.rearmingZones) do
-      local rearmingzone=_rearmingzone --#BRIGADE.RearmingZone
-      
-      local name=rearmingzone.zone:GetName()
-
-      -- Platoon text.
-      text=text..string.format("\n* %s: Mission status=%s, suppliers=%d", name, rearmingzone.mission:GetState(), rearmingzone.mission:CountOpsGroups())
-      
+      local rearmingzone=_rearmingzone --#BRIGADE.SupplyZone
+      -- Info text.
+      text=text..string.format("\n* %s: Mission status=%s, suppliers=%d", rearmingzone.zone:GetName(), rearmingzone.mission:GetState(), rearmingzone.mission:CountOpsGroups())      
     end
     self:I(self.lid..text)
   end
+  
+  -------------------
+  -- Refuelling Info --
+  -------------------
+  if self.verbose>=4 then
+    local text="Refuelling Zones:"
+    for i,_refuellingzone in pairs(self.refuellingZones) do
+      local refuellingzone=_refuellingzone --#BRIGADE.SupplyZone
+      -- Info text.
+      text=text..string.format("\n* %s: Mission status=%s, suppliers=%d", refuellingzone.zone:GetName(), refuellingzone.mission:GetState(), refuellingzone.mission:CountOpsGroups())      
+    end
+    self:I(self.lid..text)
+  end  
 
 end
 

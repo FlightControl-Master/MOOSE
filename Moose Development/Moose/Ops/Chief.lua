@@ -60,11 +60,13 @@ CHIEF.DEFCON = {
 
 --- Strategy.
 -- @type CHIEF.Strategy
+-- @field #string PASSIVE No targets at all are engaged.
 -- @field #string DEFENSIVE Only target in our own terretory are engaged.
 -- @field #string OFFENSIVE Targets in own terretory and yellow zones are engaged.
--- @field #string AGGRESSIVE Targets in own terretroy, yellow zones and engage zones are engaged.
+-- @field #string AGGRESSIVE Targets in own terretory, conflict zones and attack zones are engaged.
 -- @field #string TOTALWAR Anything is engaged anywhere.
 CHIEF.Strategy = {
+  PASSIVE="Passive",
   DEFENSIVE="Defensive",
   OFFENSIVE="Offensive",
   AGGRESSIVE="Aggressive",
@@ -570,13 +572,25 @@ end
 --- Add a rearming zone.
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE RearmingZone Rearming zone.
--- @return Ops.Brigade#BRIGADE.RearmingZone The rearming zone data.
+-- @return Ops.Brigade#BRIGADE.SupplyZone The rearming zone data.
 function CHIEF:AddRearmingZone(RearmingZone)
 
   -- Hand over to commander.
-  local rearmingzone=self.commander:AddRearmingZone(RearmingZone)
+  local supplyzone=self.commander:AddRearmingZone(RearmingZone)
 
-  return rearmingzone
+  return supplyzone
+end
+
+--- Add a refuelling zone.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE RefuellingZone Refuelling zone.
+-- @return Ops.Brigade#BRIGADE.SupplyZone The refuelling zone data.
+function CHIEF:AddRefuellingZone(RefuellingZone)
+
+  -- Hand over to commander.
+  local supplyzone=self.commander:AddRefuellingZone(RefuellingZone)
+
+  return supplyzone
 end
 
 
@@ -840,7 +854,8 @@ function CHIEF:onafterStatus(From, Event, To)
     for i,_opszone in pairs(self.zonequeue) do
       local opszone=_opszone --Ops.OpsZone#OPSZONE
       
-      text=text..string.format("\n[%d] %s [%s]: owner=%d [%d]: Blue=%d, Red=%d, Neutral=%d", i, opszone.zone:GetName(), opszone:GetState(), opszone:GetOwner(), opszone:GetPreviousOwner(), opszone.Nblu, opszone.Nred, opszone.Nnut)
+      text=text..string.format("\n[%d] %s [%s]: owner=%d [%d] (prio=%d, importance=%s): Blue=%d, Red=%d, Neutral=%d", i, 
+      opszone.zone:GetName(), opszone:GetState(), opszone:GetOwner(), opszone:GetPreviousOwner(), opszone.prio, tostring(opszone.importance), opszone.Nblu, opszone.Nred, opszone.Nnut)
             
     end
     self:I(self.lid..text)
@@ -1059,14 +1074,22 @@ function CHIEF:CheckTargetQueue()
     local target=_target --Ops.Target#TARGET
     
     -- Is this a threat?
-    local isThreat=target.threatlevel0>=self.threatLevelMin and target.threatlevel0<=self.threatLevelMax    
+    local isThreat=target.threatlevel0>=self.threatLevelMin and target.threatlevel0<=self.threatLevelMax
 
     -- Check that target is alive and not already a mission has been assigned.
     if target:IsAlive() and (target.importance==nil or target.importance<=vip) and isThreat and not target.mission then
     
       -- Check if this target is "valid", i.e. fits with the current strategy.
       local valid=false
-      if self.strategy==CHIEF.Strategy.DEFENSIVE then
+      if self.strategy==CHIEF.Strategy.PASSIVE then
+
+        ---
+        -- PASSIVE: No targets at all are attacked.
+        ---
+
+        valid=false
+      
+      elseif self.strategy==CHIEF.Strategy.DEFENSIVE then
 
         ---
         -- DEFENSIVE: Attack inside borders only.
@@ -1146,7 +1169,6 @@ function CHIEF:CheckTargetQueue()
               if mission then
                 for _,_asset in pairs(assets) do
                   local asset=_asset
-                  asset.isReserved=true
                   mission:AddAsset(asset)
                 end
                 Legions=legions
@@ -1204,19 +1226,20 @@ function CHIEF:CheckOpsZoneQueue()
 
   -- Sort results table wrt ?.
   local function _sort(a, b)
-    local taskA=a --Ops.Target#TARGET
-    local taskB=b --Ops.Target#TARGET
+    local taskA=a --Ops.OpsZone#OPSZONE
+    local taskB=b --Ops.OpsZone#OPSZONE
     return (taskA.prio<taskB.prio)
   end
-  --table.sort(self.zonequeue, _sort)
+  table.sort(self.zonequeue, _sort)
 
   -- Get the lowest importance value (lower means more important).
-  -- If a target with importance 1 exists, targets with importance 2 will not be assigned. Targets with no importance (nil) can still be selected. 
+  -- If a zone with importance 1 exists that is not owned by us, zones with importance 2 will not be assigned. Zone with no importance (nil) can still be selected. 
   local vip=math.huge
-  for _,_target in pairs(self.zonequeue) do
-    local target=_target --Ops.Target#TARGET
-    if target.importance and target.importance<vip then
-      vip=target.importance
+  for _,_opszone in pairs(self.zonequeue) do
+    local opszone=_opszone --Ops.OpsZone#OPSZONE
+    if opszone.importance and opszone.importance<vip and opszone:GetOwner()~=self.coalition then
+      -- Most important zone that is NOT owned by us.
+      vip=opszone.importance
     end
   end
 
@@ -1226,15 +1249,43 @@ function CHIEF:CheckOpsZoneQueue()
     
     -- Current owner of the zone.
     local ownercoalition=opszone:GetOwner()
+        
+    -- Check coalition and importance.
+    if ownercoalition~=self.coalition and (opszone.importance==nil or opszone.importance<=vip) then
     
-    local hasMission=opszone.missionPatrol and opszone.missionPatrol:IsNotOver() or false
+      -- Has a patrol mission?
+      local hasMissionPatrol=opszone.missionPatrol and opszone.missionPatrol:IsNotOver() or false
+      -- Has a CAS mission?
+      local hasMissionCAS=opszone.missionCAS and opszone.missionCAS:IsNotOver() or false    
+
+      -- Debug info.
+      self:T(self.lid..string.format("Zone %s [%s] is owned by coalition %d", opszone.zone:GetName(), opszone:GetState(), ownercoalition))
     
-    if ownercoalition~=self.coalition and not hasMission then
-    
-      env.info(string.format("Zone %s is owned by coalition %d", opszone.zone:GetName(), ownercoalition))
+      if opszone:IsEmpty() then
       
-      -- Recruit ground assets that
-      local recruited=self:RecruitAssetsForZone(opszone, AUFTRAG.Type.PATROLZONE, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY})
+        if not hasMissionPatrol then
+      
+          -- Debug info.
+          self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets"))
+      
+          -- Recruit ground assets that
+          local recruited=self:RecruitAssetsForZone(opszone, AUFTRAG.Type.PATROLZONE, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY})
+          
+        end
+        
+      else
+      
+        if not hasMissionCAS then
+      
+          -- Debug message.
+          self:T(self.lid..string.format("Zone is NOT empty ==> recruit CAS assets"))
+      
+          -- Recruite CAS assets.
+          local recruited=self:RecruitAssetsForZone(opszone, AUFTRAG.Type.CAS, 1, 3)
+          
+        end
+      
+      end
           
     end
     
@@ -1568,45 +1619,78 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
 
   -- Target position.
   local TargetVec2=OpsZone.zone:GetVec2()
-  
+
   -- Recruite infantry assets.
-  local recruitedInf, assetsInf, legionsInf=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, nil, nil, nil, Categories, Attributes)
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, nil, nil, nil, Categories, Attributes)
   
-  if recruitedInf then
+  if recruited then
   
-    env.info(string.format("Recruited %d assets from for PATROL mission", #assetsInf))
-
-    -- Recruit transport assets for infantry.    
-    local recruitedTrans, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, assetsInf, 1, 1, OpsZone.zone, nil, {Group.Category.HELICOPTER, Group.Category.GROUND})
-
-    
-    -- Create Patrol zone mission.  
-    local mission=AUFTRAG:NewPATROLZONE(OpsZone.zone)
-    mission:SetEngageDetected()
-    
-    -- Add assets to mission.
-    for _,asset in pairs(assetsInf) do
-      mission:AddAsset(asset)
-    end
-    
-    -- Attach OPS transport to mission.
-    mission.opstransport=transport
+    if MissionType==AUFTRAG.Type.PATROLZONE then
+              
+      -- Debug messgage.
+      self:T2(self.lid..string.format("Recruited %d assets from for PATROL mission", #assets))
+      
+      local recruitedTrans=true
+      local transport=nil
+      if Attributes and Attributes[1]==GROUP.Attribute.GROUND_INFANTRY then
+  
+        -- Recruit transport assets for infantry.    
+        recruitedTrans, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, assets, 1, 1, OpsZone.zone, nil, {Group.Category.HELICOPTER, Group.Category.GROUND})
         
-    -- Assign mission to legions.
-    for _,_legion in pairs(legionsInf) do
-      local legion=_legion --Ops.Legion#LEGION
-      self.commander:MissionAssign(legion, mission)
-    end
-  
-    -- Attach mission to ops zone.
-    -- TODO: Need a better way!
-    OpsZone.missionPatrol=mission
+      end
+      
+      if recruitedTrans then
     
-    return true
-  else
-    LEGION.UnRecruitAssets(assetsInf)
-    return false
-  end  
+        -- Create Patrol zone mission.
+        local mission=AUFTRAG:NewPATROLZONE(OpsZone.zone)
+        mission:SetEngageDetected()
+            
+            
+        -- Add assets to mission.
+        for _,asset in pairs(assets) do
+          mission:AddAsset(asset)
+        end
+            
+        -- Attach OPS transport to mission.
+        mission.opstransport=transport
+            
+        -- Assign mission to legions.
+        for _,_legion in pairs(legions) do
+          local legion=_legion --Ops.Legion#LEGION
+          self.commander:MissionAssign(legion, mission)
+        end
+      
+        -- Attach mission to ops zone.
+        -- TODO: Need a better way!
+        OpsZone.missionPatrol=mission
+        
+      else
+        LEGION.UnRecruitAssets(assets)
+      end
+      
+    elseif MissionType==AUFTRAG.Type.CAS then
+
+      -- Create Patrol zone mission.
+      local mission=AUFTRAG:NewCAS(OpsZone.zone)
+                      
+      -- Add assets to mission.
+      for _,asset in pairs(assets) do
+        mission:AddAsset(asset)
+      end
+          
+      -- Assign mission to legions.
+      for _,_legion in pairs(legions) do
+        local legion=_legion --Ops.Legion#LEGION
+        self.commander:MissionAssign(legion, mission)
+      end
+    
+      -- Attach mission to ops zone.
+      -- TODO: Need a better way!
+      OpsZone.missionCAS=mission
+
+    end
+    
+  end
 
   return nil
 end

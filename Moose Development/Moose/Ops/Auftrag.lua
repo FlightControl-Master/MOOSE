@@ -369,7 +369,7 @@ _AUFTRAGSNR=0
 -- @field #string AMMOSUPPLY Ammo supply.
 -- @field #string FUELSUPPLY Fuel supply.
 -- @field #string ALERT5 Alert 5.
--- @field #string ONWATCH On watch.
+-- @field #string ONGUARD On guard.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -397,8 +397,8 @@ AUFTRAG.Type={
   OPSTRANSPORT="Ops Transport",
   AMMOSUPPLY="Ammo Supply",
   FUELSUPPLY="Fuel Supply",
-  ALERT5="Alert 5",
-  ONWATCH="On Watch",
+  ALERT5="Alert5",
+  ONGUARD="On Guard",
 }
 
 --- Mission status of an assigned group.
@@ -408,14 +408,14 @@ AUFTRAG.Type={
 -- @field #string AMMOSUPPLY Ammo Supply.
 -- @field #string FUELSUPPLY Fuel Supply.
 -- @field #string ALERT5 Alert 5 task.
--- @field #string ONWATCH On Watch
+-- @field #string ONGUARD On guard.
 AUFTRAG.SpecialTask={
   PATROLZONE="PatrolZone",
   RECON="ReconMission",
   AMMOSUPPLY="Ammo Supply",
   FUELSUPPLY="Fuel Supply",
-  ALERT5="Alert 5",
-  ONWATCH="On Watch",
+  ALERT5="Alert5",
+  ONGUARD="On Guard",
 }
 
 --- Mission status.
@@ -1692,6 +1692,7 @@ function AUFTRAG:NewALERT5(MissionType)
   local mission=AUFTRAG:New(AUFTRAG.Type.ALERT5)
   
   mission.missionTask=self:GetMissionTaskforMissionType(MissionType)
+  
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.NoReaction
   
@@ -1700,6 +1701,28 @@ function AUFTRAG:NewALERT5(MissionType)
   mission.missionFraction=1.0
   
   mission.categories={AUFTRAG.Category.AIRCRAFT}
+    
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+--- **[GROUND, NAVAL]** Create an ON GUARD mission.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Coordinate, were to be on guard.
+-- @return #AUFTRAG self
+function AUFTRAG:NewONGUARD(Coordinate)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.ONGUARD)
+  
+  mission:_TargetFromObject(Coordinate)
+  
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionAlarm=ENUMS.AlarmState.Red
+  
+  mission.missionFraction=1.0
+  
+  mission.categories={AUFTRAG.Category.GROUND, AUFTRAG.Category.NAVAL}
     
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -2328,7 +2351,7 @@ function AUFTRAG:AssignSquadrons(Squadrons)
   
   for _,_squad in pairs(Squadrons) do
     local squadron=_squad --Ops.Squadron#SQUADRON
-    self:I(self.lid..string.format("Assigning squadron %s", tostring(squadron.name)))
+    self:T(self.lid..string.format("Assigning squadron %s", tostring(squadron.name)))
     self:AssignCohort(squadron)
   end
   
@@ -3313,7 +3336,7 @@ end
 function AUFTRAG:AddLegion(Legion)
 
   -- Debug info.
-  self:I(self.lid..string.format("Adding legion %s", Legion.alias))
+  self:T(self.lid..string.format("Adding legion %s", Legion.alias))
 
   -- Add legion to table.
   table.insert(self.legions, Legion)
@@ -3332,7 +3355,7 @@ function AUFTRAG:RemoveLegion(Legion)
     local legion=self.legions[i] --Ops.Legion#LEGION
     if legion.alias==Legion.alias then
       -- Debug info.
-      self:I(self.lid..string.format("Removing legion %s", Legion.alias))    
+      self:T(self.lid..string.format("Removing legion %s", Legion.alias))    
       table.remove(self.legions, i)
       return self
     end
@@ -3353,7 +3376,7 @@ function AUFTRAG:SetLegionStatus(Legion, Status)
   local status=self:GetLegionStatus(Legion)
 
   -- Debug info.
-  self:I(self.lid..string.format("Setting LEGION %s to status %s-->%s", Legion.alias, tostring(status), tostring(Status)))
+  self:T(self.lid..string.format("Setting LEGION %s to status %s-->%s", Legion.alias, tostring(status), tostring(Status)))
 
   -- New status.
   self.statusLegion[Legion.alias]=Status
@@ -4747,6 +4770,24 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
     
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)    
+
+  elseif self.type==AUFTRAG.Type.ONGUARD then
+
+    ----------------------
+    -- ON GUARD Mission --
+    ----------------------
+  
+    local DCStask={}
+    
+    DCStask.id=AUFTRAG.SpecialTask.ONGUARD
+    
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
+    local param={}
+    param.coordinate=self:GetObjective()
+        
     DCStask.params=param
     
     table.insert(DCStasks, DCStask)    

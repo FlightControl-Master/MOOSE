@@ -906,8 +906,14 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
               
             end
             
-            --TODO: Check transport for combat readyness!
-        
+            -- Check transport/cargo for combat readyness!
+            if flightgroup:IsLoading() or flightgroup:IsTransporting() or flightgroup:IsUnloading() or flightgroup:IsPickingup() or flightgroup:IsCarrier() then
+              combatready=false
+            end            
+            if flightgroup:IsCargo() or flightgroup:IsBoarding() or flightgroup:IsAwaitingLift() then
+              combatready=false
+            end
+                    
             -- This asset is "combatready".
             if combatready then
               self:I(self.lid.."Adding SPAWNED asset to ANOTHER mission as it is COMBATREADY")

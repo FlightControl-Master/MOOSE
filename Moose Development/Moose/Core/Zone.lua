@@ -1342,7 +1342,7 @@ function ZONE:New( ZoneName )
 
   -- Error!
   if not Zone then
-    error( "Zone " .. ZoneName .. " does not exist." )
+    env.error( "ERROR: Zone " .. ZoneName .. " does not exist!" )
     return nil
   end
 

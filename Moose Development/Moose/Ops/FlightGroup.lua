@@ -1140,7 +1140,7 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
       if element.unit and element.unit:IsAlive() then
 
         local airbase=self:GetClosestAirbase()
-        local parking=self:GetParkingSpot(element, 10, airbase)
+        local parking=self:GetParkingSpot(element, 100, airbase)
 
         if airbase and parking then
           self:ElementArrived(element, airbase, parking)
@@ -1548,7 +1548,7 @@ end
 function FLIGHTGROUP:onafterParking(From, Event, To)
 
   -- Get closest airbase
-  local airbase=self:GetClosestAirbase() --self.group:GetCoordinate():GetClosestAirbase()
+  local airbase=self:GetClosestAirbase()
   local airbasename=airbase:GetName() or "unknown"
   
   -- Debug info
@@ -2006,7 +2006,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n, N)
   end
 
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
-  local current=self.group:GetCoordinate():WaypointAir(COORDINATE.WaypointAltType.BARO, waypointType, waypointAction, speed, true, nil, {}, "Current")
+  local current=self:GetCoordinate():WaypointAir(COORDINATE.WaypointAltType.BARO, waypointType, waypointAction, speed, true, nil, {}, "Current")
   table.insert(wp, current)
 
   -- Add remaining waypoints to route.
@@ -2087,14 +2087,14 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
 
     if delay and delay>0 then
       -- Debug info.
-      self:T(self.lid..string.format("Check FLIGHTGROUP [state=%s] done in %.3f seconds...", fsmstate, delay))
+      self:T(self.lid..string.format("Check FLIGHTGROUP [state=%s] done in %.3f seconds... (t=%.4f)", fsmstate, delay, timer.getTime()))
     
       -- Delayed call.
       self:ScheduleOnce(delay, FLIGHTGROUP._CheckGroupDone, self)
     else
 
       -- Debug info.
-      self:T(self.lid..string.format("Check FLIGHTGROUP [state=%s] done?", fsmstate))
+      self:T(self.lid..string.format("Check FLIGHTGROUP [state=%s] done? (t=%.4f)", fsmstate, timer.getTime()))
 
       -- First check if there is a paused mission that
       if self.missionpaused then
@@ -2134,7 +2134,9 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
       self:T(self.lid..string.format("Remaining (final=%s): missions=%d, tasks=%d, transports=%d", tostring(self.passedfinalwp), nMissions, nTasks, nTransports))
 
       -- Final waypoint passed?
-      if self:HasPassedFinalWaypoint() then
+      -- Or next waypoint index is the first waypoint. Could be that the group was on a mission and the mission waypoints were deleted. then the final waypoint is FALSE but no real waypoint left.
+      -- Since we do not do ad infinitum, this leads to a rapid oscillation between UpdateRoute and CheckGroupDone!
+      if self:HasPassedFinalWaypoint() or self:GetWaypointIndexNext()==1 then
       
         ---
         -- Final Waypoint PASSED
@@ -2376,7 +2378,7 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   local althold=self.isHelo and 1000+math.random(10)*100 or math.random(4,10)*1000
 
   -- Holding points.
-  local c0=self.group:GetCoordinate()
+  local c0=self:GetCoordinate()
   local p0=airbase:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(althold))
   local p1=nil
   local wpap=nil
@@ -2527,7 +2529,7 @@ end
 function FLIGHTGROUP:onafterWait(From, Event, To, Duration, Altitude, Speed)
 
   -- Group will orbit at its current position.
-  local Coord=self.group:GetCoordinate()
+  local Coord=self:GetCoordinate()
   
   -- Set altitude: 1000 ft for helos and 10,000 ft for panes.
   if Altitude then
@@ -2597,7 +2599,7 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
 
   local Speed=self.speedCruise
 
-  local coordinate=self.group:GetCoordinate()
+  local coordinate=self:GetCoordinate()
 
   Coordinate=Coordinate or coordinate:Translate(UTILS.NMToMeters(5), self.group:GetHeading(), true)
 
@@ -3972,7 +3974,7 @@ function FLIGHTGROUP:_UpdateMenu(delay)
     self:I(self.lid.."FF updating menu NOW")
 
     -- Get current position of group.
-    local position=self.group:GetCoordinate()
+    local position=self:GetCoordinate()
 
     -- Get all FLIGHTCONTROLS
     local fc={}

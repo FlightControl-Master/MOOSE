@@ -812,6 +812,39 @@ function ARMYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Formation, 
 
 end
 
+--- On after "OutOfAmmo" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
+  self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
+  
+  -- Fist, check if we want to rearm once out-of-ammo.
+  if self.rearmOnOutOfAmmo then
+    local truck=self:FindNearestAmmoSupply(30)
+    if truck then
+      self:T(self.lid..string.format("Found Ammo Truck %s [%s]"))
+      local Coordinate=truck:GetCoordinate()
+      self:Rearm(Coordinate, Formation)
+      return
+    end
+  end
+  
+  -- Second, check if we want to retreat once out of ammo.
+  if self.retreatOnOutOfAmmo then
+    self:Retreat()
+    return
+  end
+  
+  -- Third, check if we want to RTZ once out of ammo.
+  if self.rtzOnOutOfAmmo then    
+    self:RTZ()
+  end
+    
+end
+
+
 --- On before "Rearm" event.
 -- @param #ARMYGROUP self
 -- @param #string From From state.
@@ -1403,6 +1436,7 @@ end
 -- @param #ARMYGROUP self
 -- @param #number Radius Search radius in NM. Default 30 NM.
 -- @return Wrapper.Group#GROUP Closest ammo supplying group or `nil` if no group is in the given radius.
+-- @return #number Distance to closest group in meters.
 function ARMYGROUP:FindNearestAmmoSupply(Radius)
 
   -- Radius in meters.
@@ -1410,6 +1444,9 @@ function ARMYGROUP:FindNearestAmmoSupply(Radius)
 
   -- Current positon.
   local coord=self:GetCoordinate()
+  
+  -- Get my coalition.
+  local myCoalition=self:GetCoalition()
 
   -- Scanned units.
   local units=coord:ScanUnits(Radius)
@@ -1421,10 +1458,10 @@ function ARMYGROUP:FindNearestAmmoSupply(Radius)
     local unit=_unit --Wrapper.Unit#UNIT
     
     -- Check coaliton and if unit can supply ammo.
-    if unit:GetCoalition()==self:GetCoalition() and unit:IsAmmoSupply() then
+    if unit:GetCoalition()==myCoalition and unit:IsAmmoSupply() then
 
       -- Distance.
-      local d=unit:GetCoordinate():Get2DDistance(coord)
+      local d=coord:Get2DDistance(unit:GetCoord())
 
       -- Check if distance is smaller.
       if d<dmin then
@@ -1436,10 +1473,10 @@ function ARMYGROUP:FindNearestAmmoSupply(Radius)
   end
 
   if truck then
-    return truck:GetGroup()
+    return truck:GetGroup(), dmin
   end
 
-  return nil
+  return nil, nil
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

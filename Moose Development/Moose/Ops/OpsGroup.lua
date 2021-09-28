@@ -69,6 +69,8 @@
 -- @field #number Ndestroyed Number of destroyed units.
 -- @field #number Nkills Number kills of this groups.
 -- 
+-- @field #boolean rearmOnOutOfAmmo If `true`, group will go to rearm once it runs out of ammo.
+-- 
 -- @field Ops.Legion#LEGION legion Legion the group belongs to.
 -- @field Ops.Cohort#COHORT cohort Cohort the group belongs to.
 --
@@ -424,11 +426,13 @@ OPSGROUP.CarrierStatus={
 
 --- Cargo status.
 -- @type OPSGROUP.CargoStatus
+-- @field #string AWAITING Group is awaiting carrier.
 -- @field #string NOTCARGO This group is no cargo yet.
 -- @field #string ASSIGNED Cargo is assigned to a carrier.
 -- @field #string BOARDING Cargo is boarding a carrier.
 -- @field #string LOADED Cargo is loaded into a carrier.
 OPSGROUP.CargoStatus={
+  AWAITING="Awaiting carrier",
   NOTCARGO="not cargo",
   ASSIGNED="assigned to carrier",
   BOARDING="boarding",
@@ -1167,6 +1171,14 @@ end
 function OPSGROUP:SetEngageDetectedOff()
   self:T(self.lid..string.format("Engage detected OFF"))
   self.engagedetectedOn=false
+  return self
+end
+
+--- Set that group is going to rearm once it runs out of ammo.
+-- @param #OPSGROUP self
+-- @return #OPSGROUP self
+function OPSGROUP:SetRearmOnOutOfAmmo()
+  self.rearmOnOutOfAmmo=true
   return self
 end
 
@@ -2275,6 +2287,49 @@ function OPSGROUP:IsNotCargo(CheckTransport)
   
   
   return notcargo
+end
+
+--- Check if awaiting a transport.
+-- @param #OPSGROUP self
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+-- @return #OPSGROUP self
+function OPSGROUP:_AddMyLift(Transport)
+  self.mylifts=self.mylifts or {}
+  self.mylifts[Transport.uid]=true
+  return self  
+end
+
+--- Remove my lift.
+-- @param #OPSGROUP self
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+-- @return #OPSGROUP self
+function OPSGROUP:_DelMyLift(Transport)
+  if self.mylifts then
+    self.mylifts[Transport.uid]=nil
+  end
+  return self  
+end
+
+
+--- Check if awaiting a transport lift.
+-- @param #OPSGROUP self
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport (Optional) The transport.
+-- @return #boolean If true, group is awaiting transport lift..
+function OPSGROUP:IsAwaitingLift(Transport)
+
+  if self.mylifts then
+  
+    for uid,iswaiting in pairs(self.mylifts) do
+      if Transport==nil or Transport.uid==uid then
+        if iswaiting==true then
+          return true
+        end
+      end
+    end
+  
+  end
+  
+  return false
 end
 
 --- Check if the group is currently boarding a carrier.
@@ -3589,10 +3644,20 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
 
     ---
-    -- Task Alert 5 mission.
+    -- Task "Alert 5" mission.
     ---
     
     -- Just stay put on the airfield and wait until something happens.
+
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD then
+
+    ---
+    -- Task "On Guard" Mission.
+    ---
+    
+    -- Just stay put.
+    --TODO: Change ALARM STATE
+    
     
   else
 
@@ -3690,7 +3755,9 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.FUELSUPPLY then
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
-        done=true        
+        done=true
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD then
+        done=true                        
       elseif stopflag==1 or (not self:IsAlive()) or self:IsDead() or self:IsStopped() then
         -- Manual call TaskDone if setting flag to one was not successful.
         done=true
@@ -4200,7 +4267,7 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     ---
 
     -- Alert 5 missoins dont have a task set, which could be cancelled.
-    if Mission.type==AUFTRAG.Type.ALERT5 then
+    if Mission.type==AUFTRAG.Type.ALERT5 or Mission.type==AUFTRAG.Type.ONGUARD then
       self:MissionDone(Mission)
       return
     end
@@ -4439,6 +4506,10 @@ function OPSGROUP:RouteToMission(mission, delay)
       end
 
     elseif mission.type==AUFTRAG.Type.ARTY then
+    
+      ---
+      -- ARTY
+      ---    
     
       -- Get weapon range.
       local weapondata=self:GetWeaponData(mission.engageWeaponType)
@@ -5990,7 +6061,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function OPSGROUP:onafterOutOfAmmo(From, Event, To)
-  self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
+  self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -7174,7 +7245,7 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
     
     -- New cargo status.
     CargoGroup:_NewCargoStatus(OPSGROUP.CargoStatus.LOADED)
-
+    
     -- Clear all waypoints.
     CargoGroup:ClearWaypoints()
 
@@ -7191,6 +7262,7 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
     
     -- Trigger "Loaded" event for current cargo transport.
     if self.cargoTransport then
+      CargoGroup:_DelMyLift(self.cargoTransport)
       self.cargoTransport:Loaded(CargoGroup, self, carrier)
     else
       self:T(self.lid..string.format("WARNING: Loaded cargo but no current OPSTRANSPORT assignment!"))
@@ -7341,7 +7413,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
       end
 
       -- ARMYGROUP
-      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid) ; waypoint.detour=1
+      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, ENUMS.Formation.Vehicle.OnRoad) ; waypoint.detour=1
 
       -- Give cruise command.
       self:Cruise()
@@ -8444,7 +8516,7 @@ function OPSGROUP:_CheckAmmoStatus()
     if self.outofMissilesAA and ammo.MissilesAA>0 then
       self.outofMissilesAA=false
     end    
-    if ammo.MissilesAA and self.ammo.MissilesAA>0 and not self.outofMissilesAA then
+    if ammo.MissilesAA==0 and self.ammo.MissilesAA>0 and not self.outofMissilesAA then
       self.outofMissilesAA=true
       self:OutOfMissilesAA()    
     end
@@ -8453,7 +8525,7 @@ function OPSGROUP:_CheckAmmoStatus()
     if self.outofMissilesAG and ammo.MissilesAG>0 then
       self.outofMissilesAG=false
     end    
-    if ammo.MissilesAG and self.ammo.MissilesAG>0 and not self.outofMissilesAG then
+    if ammo.MissilesAG==0 and self.ammo.MissilesAG>0 and not self.outofMissilesAG then
       self.outofMissilesAG=true
       self:OutOfMissilesAG()    
     end    
@@ -8462,7 +8534,7 @@ function OPSGROUP:_CheckAmmoStatus()
     if self.outofMissilesAS and ammo.MissilesAS>0 then
       self.outofMissilesAS=false
     end    
-    if ammo.MissilesAS and self.ammo.MissilesAS>0 and not self.outofMissilesAS then
+    if ammo.MissilesAS==0 and self.ammo.MissilesAS>0 and not self.outofMissilesAS then
       self.outofMissilesAS=true
       self:OutOfMissilesAS()    
     end

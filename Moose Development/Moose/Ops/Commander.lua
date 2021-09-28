@@ -20,7 +20,8 @@
 -- @field #table legions Table of legions which are commanded.
 -- @field #table missionqueue Mission queue.
 -- @field #table transportqueue Transport queue.
--- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.RearmingZone`.
+-- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
+-- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field Ops.Chief#CHIEF chief Chief of staff.
 -- @extends Core.Fsm#FSM
 
@@ -35,12 +36,13 @@
 --
 -- @field #COMMANDER
 COMMANDER = {
-  ClassName      = "COMMANDER",
-  verbose        =     0,
-  legions        =    {},
-  missionqueue   =    {},
-  transportqueue =    {},
-  rearmingZones  =    {},
+  ClassName       = "COMMANDER",
+  verbose         =     0,
+  legions         =    {},
+  missionqueue    =    {},
+  transportqueue  =    {},
+  rearmingZones   =    {},
+  refuellingZones =    {},
 }
 
 --- COMMANDER class version.
@@ -335,17 +337,33 @@ end
 --- Add a rearming zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE RearmingZone Rearming zone.
--- @return Ops.Brigade#BRIGADE.RearmingZone The rearming zone data.
+-- @return Ops.Brigade#BRIGADE.SupplyZone The rearming zone data.
 function COMMANDER:AddRearmingZone(RearmingZone)
 
-  local rearmingzone={} --Ops.Brigade#BRIGADE.RearmingZone
+  local rearmingzone={} --Ops.Brigade#BRIGADE.SupplyZone
   
   rearmingzone.zone=RearmingZone
-  rearmingzone.occupied=false
   rearmingzone.mission=nil
   rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Rearming Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.rearmingZones, rearmingzone)
+
+  return rearmingzone
+end
+
+--- Add a refuelling zone.
+-- @param #COMMANDER self
+-- @param Core.Zone#ZONE RefuellingZone Refuelling zone.
+-- @return Ops.Brigade#BRIGADE.SupplyZone The refuelling zone data.
+function COMMANDER:AddRefuellingZone(RefuellingZone)
+
+  local rearmingzone={} --Ops.Brigade#BRIGADE.SupplyZone
+  
+  rearmingzone.zone=RefuellingZone
+  rearmingzone.mission=nil
+  rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Refuelling Zone"):ToCoalition(self:GetCoalition())
+
+  table.insert(self.refuellingZones, rearmingzone)
 
   return rearmingzone
 end
@@ -402,13 +420,23 @@ function COMMANDER:onafterStatus(From, Event, To)
   
   -- Check rearming zones.
   for _,_rearmingzone in pairs(self.rearmingZones) do
-    local rearmingzone=_rearmingzone --#BRIGADE.RearmingZone
+    local rearmingzone=_rearmingzone --#BRIGADE.SupplyZone
     -- Check if mission is nil or over.      
     if (not rearmingzone.mission) or rearmingzone.mission:IsOver() then
       rearmingzone.mission=AUFTRAG:NewAMMOSUPPLY(rearmingzone.zone)
       self:AddMission(rearmingzone.mission)
     end
-  end  
+  end
+  
+  -- Check refuelling zones.
+  for _,_supplyzone in pairs(self.refuellingZones) do
+    local supplyzone=_supplyzone --#BRIGADE.SupplyZone
+    -- Check if mission is nil or over.      
+    if (not supplyzone.mission) or supplyzone.mission:IsOver() then
+      supplyzone.mission=AUFTRAG:NewFUELSUPPLY(supplyzone.zone)
+      self:AddMission(supplyzone.mission)
+    end
+  end    
     
   ---
   -- LEGIONS

@@ -485,6 +485,8 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo)
       table.insert(TransportZoneCombo.Cargos, cargo)
       TransportZoneCombo.Ncargo=TransportZoneCombo.Ncargo+1
       
+      cargo.opsgroup:_AddMyLift(self)
+      
     end
     
   else
@@ -1296,7 +1298,7 @@ end
 function OPSTRANSPORT:AddLegion(Legion)
 
   -- Debug info.
-  self:I(self.lid..string.format("Adding legion %s", Legion.alias))
+  self:T(self.lid..string.format("Adding legion %s", Legion.alias))
 
   -- Add legion to table.
   table.insert(self.legions, Legion)
@@ -1315,7 +1317,7 @@ function OPSTRANSPORT:RemoveLegion(Legion)
     local legion=self.legions[i] --Ops.Legion#LEGION
     if legion.alias==Legion.alias then
       -- Debug info.
-      self:I(self.lid..string.format("Removing legion %s", Legion.alias))    
+      self:T(self.lid..string.format("Removing legion %s", Legion.alias))    
       table.remove(self.legions, i)
       return self
     end
@@ -1409,7 +1411,7 @@ function OPSTRANSPORT:SetLegionStatus(Legion, Status)
   local status=self:GetLegionStatus(Legion)
 
   -- Debug info.
-  self:I(self.lid..string.format("Setting LEGION %s to status %s-->%s", Legion.alias, tostring(status), tostring(Status)))
+  self:T(self.lid..string.format("Setting LEGION %s to status %s-->%s", Legion.alias, tostring(status), tostring(Status)))
 
   -- New status.
   self.statusLegion[Legion.alias]=Status
@@ -1681,7 +1683,7 @@ function OPSTRANSPORT:onafterCancel(From, Event, To)
   local Ngroups = #self.carriers
 
   -- Debug info.
-  self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for %d groups to report mission DONE before evaluation", self.status, Ngroups))
+  self:I(self.lid..string.format("CANCELLING transport in status %s. Will wait for %d carrier groups to report DONE before evaluation", self.status, Ngroups))
   
   -- Time stamp.
   self.Tover=timer.getAbsTime()
@@ -1727,6 +1729,14 @@ function OPSTRANSPORT:onafterCancel(From, Event, To)
       local carrier=_carrier --Ops.OpsGroup#OPSGROUP
       carrier:TransportCancel(self)
     end
+    
+    -- Delete awaited transport.
+    local cargos=self:GetCargoOpsGroups(false)
+    for _,_cargo in pairs(cargos) do
+      local cargo=_cargo --Ops.OpsGroup#OPSGROUP
+        cargo:_DelMyLift(self)
+    end
+    
     
   end
 
@@ -1969,7 +1979,7 @@ function OPSTRANSPORT:_CountCargosInZone(Zone, Delivered, Carrier, TransportZone
     local isInUtero=cargo:IsInUtero()
 
     -- Debug info.
-    self:I(self.lid..string.format("Cargo=%s: notcargo=%s, iscarrier=%s inzone=%s, inutero=%s", cargo:GetName(), tostring(cargo:IsNotCargo(true)), tostring(iscarrier(cargo)), tostring(isInZone), tostring(isInUtero)))
+    self:T(self.lid..string.format("Cargo=%s: notcargo=%s, iscarrier=%s inzone=%s, inutero=%s", cargo:GetName(), tostring(cargo:IsNotCargo(true)), tostring(iscarrier(cargo)), tostring(isInZone), tostring(isInUtero)))
 
     -- We look for groups that are not cargo, in the zone or in utero.
     if isNotCargo and (isInZone or isInUtero) then

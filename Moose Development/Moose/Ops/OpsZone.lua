@@ -36,6 +36,8 @@
 -- @field #boolean neutralCanCapture Neutral units can capture. Default `false`.
 -- @field #boolean drawZone If `true`, draw the zone on the F10 map.
 -- @field #boolean markZone If `true`, mark the zone on the F10 map.
+-- @field #number prio Priority of the zone (for CHIEF queue).
+-- @field #number importance Importance of the zone (for CHIEF queue).
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -90,15 +92,34 @@ function OPSZONE:New(Zone, CoalitionOwner)
   local self=BASE:Inherit(self, FSM:New()) -- #OPSZONE
   
   -- Check if zone name instead of ZONE object was passed.
-  if type(Zone)=="string" then
-    Zone=ZONE:New(Zone)
+  if Zone then
+    if type(Zone)=="string" then
+      -- Convert string into a ZONE or ZONE_AIRBASE    
+      local Name=Zone      
+      Zone=ZONE:New(Name)
+      if not Zone then
+        local airbase=AIRBASE:FindByName(Name)
+        if airbase then
+          Zone=ZONE_AIRBASE:New(Name, 2000)
+        end
+      end
+      if not Zone then
+        self:E(string.format("ERROR: No ZONE or ZONE_AIRBASE found for name: %s", Name))
+        return nil
+      end
+    end
+  else
+    self:E("ERROR: First parameter Zone is nil in OPSZONE:New(Zone) call!")
+    return nil    
   end
   
   -- Basic checks.
-  if not Zone then
-    self:E("ERROR: OPSZONE not found!")
-    return nil  
-  elseif not Zone:IsInstanceOf("ZONE_RADIUS") then
+  if Zone:IsInstanceOf("ZONE_AIRBASE") then
+    self.airbase=Zone._.ZoneAirbase
+    self.airbaseName=self.airbase:GetName()
+  elseif Zone:IsInstanceOf("ZONE_RADIUS") then
+    -- Nothing to do.
+  else  
     self:E("ERROR: OPSZONE must be a SPHERICAL zone due to DCS restrictions!")
     return nil
   end
@@ -115,10 +136,21 @@ function OPSZONE:New(Zone, CoalitionOwner)
   self.ownerCurrent=CoalitionOwner or coalition.side.NEUTRAL
   self.ownerPrevious=CoalitionOwner or coalition.side.NEUTRAL
   
+  -- We take the airbase coalition.
+  if self.airbase then
+    self.ownerCurrent=self.airbase:GetCoalition()
+    self.ownerPrevious=self.airbase:GetCoalition()
+  end
+  
+  -- Set priority (default 50) and importance (default nil).
+  self:SetPriority()
+  self:SetImportance()
+  
   -- Set object categories.
   self:SetObjectCategories()
   self:SetUnitCategories()
   
+  -- TODO: make input function
   self.drawZone=true
   
   -- Status timer.
@@ -138,8 +170,7 @@ function OPSZONE:New(Zone, CoalitionOwner)
   self:AddTransition("Empty",              "Guarded",           "Guarded")     -- Owning coalition left the zone and returned.
   
   self:AddTransition("*",                  "Empty",             "Empty")       -- No red or blue units inside the zone.
-  
-  
+   
   self:AddTransition("*",                  "Attacked",          "Attacked")    -- A guarded zone is under attack.
   self:AddTransition("*",                  "Defeated",          "Guarded")     -- The owning coalition defeated an attack.
 
@@ -318,6 +349,25 @@ function OPSZONE:SetNeutralCanCapture(CanCapture)
   return self
 end
 
+--- **[CHIEF]** Set mission priority.
+-- @param #OPSZONE self
+-- @param #number Prio Priority 1=high, 100=low. Default 50.
+-- @return #OPSZONE self
+function OPSZONE:SetPriority(Prio)
+  self.prio=Prio or 50
+  return self
+end
+
+--- **[CHIEF]** Set importance.
+-- @param #OPSZONE self
+-- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is `nil`.
+-- @return #OPSZONE self
+function OPSZONE:SetImportance(Importance)
+  self.importance=Importance
+  return self
+end
+
+
 --- Get current owner of the zone.
 -- @param #OPSZONE self
 -- @return #number Owner coalition.
@@ -426,20 +476,13 @@ function OPSZONE:onafterStart(From, Event, To)
   -- Reinit the timer.
   self.timerStatus=self.timerStatus or TIMER:New(OPSZONE.Status, self)
   
-  -- Perform initial scan.
-  self:Scan()
-  
-  if self.Nblu==0 and self.Nred==0 then
-  elseif self.Nblu>0 and self.Nred>0 then
-  
-  elseif self.Nblu>0 then
-  
-  elseif self.Nred>0 then
-  
-  end
-  
   -- Status update.
   self.timerStatus:Start(1, 60)
+  
+  -- Handle base captured event.
+  if self.airbase then
+    self:HandleEvent(EVENTS.BaseCaptured)
+  end
   
 end
 
@@ -455,6 +498,9 @@ function OPSZONE:onafterStop(From, Event, To)
   
   -- Reinit the timer.
   self.timerStatus:Stop()
+  
+  -- Unhandle events.
+  self:UnHandleEvent(EVENTS.BaseCaptured)
   
 end
 
@@ -480,6 +526,9 @@ function OPSZONE:Status()
 
   -- Scanning zone.
   self:Scan()
+  
+  -- Evaluate the scan result.
+  self:EvaluateZone()
   
 end
 
@@ -782,10 +831,14 @@ function OPSZONE:EvaluateZone()
     
       if Nblu>0 then
         -- Blue captured red zone.
-        self:Captured(coalition.side.BLUE)
+        if not self.airbase then
+          self:Captured(coalition.side.BLUE)
+        end
       elseif Nnut>0 and self.neutralCanCapture then
         -- Neutral captured red zone.
-        self:Captured(coalition.side.NEUTRAL)
+        if not self.airbase then
+          self:Captured(coalition.side.NEUTRAL)
+        end
       else
         -- Red zone is now empty (but will remain red).
         if not self:IsEmpty() then
@@ -835,10 +888,14 @@ function OPSZONE:EvaluateZone()
     
       if Nred>0 then
         -- Red captured blue zone.
-        self:Captured(coalition.side.RED)
+        if not self.airbase then
+          self:Captured(coalition.side.RED)
+        end
       elseif Nnut>0 and self.neutralCanCapture then
         -- Neutral captured blue zone.
-        self:Captured(coalition.side.NEUTRAL)
+        if not self.airbase then
+          self:Captured(coalition.side.NEUTRAL)
+        end
       else
         -- Blue zone is empty now.
         if not self:IsEmpty() then
@@ -896,10 +953,14 @@ function OPSZONE:EvaluateZone()
         self.isContested=true
       elseif Nred>0 then
         -- Red captured neutral zone.
-        self:Captured(coalition.side.RED)
+        if not self.airbase then
+          self:Captured(coalition.side.RED)
+        end
       elseif Nblu>0 then
         -- Blue captured neutral zone.
-        self:Captured(coalition.side.BLUE)
+        if not self.airbase then
+          self:Captured(coalition.side.BLUE)
+        end
       else
         -- Neutral zone is empty now.
         if not self:IsEmpty() then
@@ -947,7 +1008,7 @@ function OPSZONE:OnEventHit(EventData)
 
 end
 
---- Monitor hit events.
+--- Monitor base captured events.
 -- @param #OPSZONE self
 -- @param Core.Event#EVENTDATA EventData The event data.
 function OPSZONE:OnEventBaseCaptured(EventData)
@@ -959,6 +1020,17 @@ function OPSZONE:OnEventBaseCaptured(EventData)
 
     -- Check that this airbase belongs or did belong to this warehouse.
     if EventData.PlaceName==self.airbaseName then
+    
+      -- New coalition of the airbase
+      local CoalitionNew=airbase:GetCoalition()
+
+      -- Debug info.      
+      self:I(self.lid..string.format("EVENT BASE CAPTURED: New coalition of airbase %s: %d [previous=%d]", self.airbaseName, CoalitionNew, self.ownerCurrent))
+      
+      -- Check that coalition actually changed.
+      if CoalitionNew~=self.ownerCurrent then
+        self:Captured(CoalitionNew)
+      end
     
     end
     
