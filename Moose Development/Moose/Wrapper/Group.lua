@@ -1137,7 +1137,7 @@ end
 -- @return #number Number of shells left.
 -- @return #number Number of rockets left.
 -- @return #number Number of bombs left.
--- @return #number Number of missiles left. 
+-- @return #number Number of missiles left.  
 function GROUP:GetAmmunition()
   self:F( self.ControllableName )
 
@@ -1147,6 +1147,7 @@ function GROUP:GetAmmunition()
   local Nshells=0
   local Nrockets=0
   local Nmissiles=0
+  local Nbombs=0
   
   if DCSControllable then
     
@@ -1155,18 +1156,19 @@ function GROUP:GetAmmunition()
       local Unit = UnitData -- Wrapper.Unit#UNIT
       
       -- Get ammo of the unit
-      local ntot, nshells, nrockets, nmissiles = Unit:GetAmmunition()
+      local ntot, nshells, nrockets, nbombs, nmissiles = Unit:GetAmmunition()
       
       Ntot=Ntot+ntot
       Nshells=Nshells+nshells
       Nrockets=Nrockets+nrockets
-      Nmissiles=Nmissiles+nmissiles 
+      Nmissiles=Nmissiles+nmissiles
+      Nbombs=Nbombs+nbombs
       
     end
     
   end
   
-  return Ntot, Nshells, Nrockets, Nmissiles
+  return Ntot, Nshells, Nrockets, Nbombs, Nmissiles
 end
 
 
