@@ -767,12 +767,12 @@ end
 function UTILS.GetCharacters(str)
 
   local chars={}
-  
+
   for i=1,#str do
     local c=str:sub(i,i)
     table.insert(chars, c)
   end
-  
+
   return chars
 end
 
@@ -1379,7 +1379,7 @@ function UTILS.GMTToLocalTimeDifference()
   elseif theatre==DCSMAP.Syria then
     return 3   -- Damascus is UTC+3 hours
   elseif theatre==DCSMAP.MarianaIslands then
-    return 10  -- Guam is UTC+10 hours.    
+    return 10  -- Guam is UTC+10 hours.
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
@@ -1577,17 +1577,17 @@ function UTILS.IsLoadingDoorOpen( unit_name )
   local unit = Unit.getByName(unit_name)
   if unit ~= nil then
       local type_name = unit:getTypeName()
-      
+
       if type_name == "Mi-8MT" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
           BASE:T(unit_name .. " Cargo doors are open or cargo door not present")
           ret_val =  true
       end
-      
+
       if type_name == "Mi-24P" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 then
           BASE:T(unit_name .. " a side door is open")
           ret_val =  true
       end
-      
+
       if type_name == "UH-1H" and unit:getDrawArgumentValue(43) == 1 or unit:getDrawArgumentValue(44) == 1 then
           BASE:T(unit_name .. " a side door is open ")
           ret_val =  true
@@ -1602,9 +1602,9 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           BASE:T(unit_name .. " all doors are closed")
       end
       return ret_val
-          
+
   end -- nil
-  
+
   return nil
 end
 
@@ -1643,13 +1643,13 @@ function UTILS.GenerateVHFrequencies()
   905,907,920,935,942,950,995,
   1000,1025,1030,1050,1065,1116,1175,1182,1210
   }
-      
+
   local FreeVHFFrequencies = {}
-    
+
     -- first range
   local _start = 200000
   while _start < 400000 do
-  
+
       -- skip existing NDB frequencies#
       local _found = false
       for _, value in pairs(_skipFrequencies) do
@@ -1663,7 +1663,7 @@ function UTILS.GenerateVHFrequencies()
       end
        _start = _start + 10000
   end
- 
+
    -- second range
   _start = 400000
   while _start < 850000 do
@@ -1680,7 +1680,7 @@ function UTILS.GenerateVHFrequencies()
       end
       _start = _start + 10000
   end
-  
+
   -- third range
   _start = 850000
   while _start <= 999000 do -- adjusted for Gazelle
@@ -1720,7 +1720,7 @@ end
 -- @return #table Laser Codes.
 function UTILS.GenerateLaserCodes()
     local jtacGeneratedLaserCodes = {}
-    
+
     -- helper function
     local function ContainsDigit(_number, _numberToFind)
       local _thisNumber = _number
@@ -1734,7 +1734,7 @@ function UTILS.GenerateLaserCodes()
       end
       return false
     end
-    
+
     -- generate list of laser codes
     local _code = 1111
     local _count = 1

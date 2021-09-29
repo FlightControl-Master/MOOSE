@@ -1851,27 +1851,27 @@ do -- Patrol methods
 
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
-      
+
       -- test for submarine
       local depth = 0
       local IsSub = false
       if PatrolGroup:IsShip() then
         local navalvec3 = FromCoord:GetVec3()
-        if navalvec3.y < 0 then 
+        if navalvec3.y < 0 then
           depth = navalvec3.y
           IsSub = true
         end
       end
-      
-     
+
+
       local Waypoint = Waypoints[1]
       local Speed = Waypoint.speed or (20 / 3.6)
        local From = FromCoord:WaypointGround( Speed )
-       
-      if IsSub then 
+
+      if IsSub then
          From = FromCoord:WaypointNaval( Speed, Waypoint.alt )
       end
-      
+
       table.insert( Waypoints, 1, From )
 
       local TaskRoute = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRoute" )
@@ -1916,7 +1916,7 @@ do -- Patrol methods
       local IsSub = false
       if PatrolGroup:IsShip() then
         local navalvec3 = FromCoord:GetVec3()
-        if navalvec3.y < 0 then 
+        if navalvec3.y < 0 then
           depth = navalvec3.y
           IsSub = true
         end
@@ -1982,16 +1982,16 @@ do -- Patrol methods
     self:F( { PatrolGroup = PatrolGroup:GetName() } )
 
     if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
-    
+
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
-      
+
       -- test for submarine
       local depth = 0
       local IsSub = false
       if PatrolGroup:IsShip() then
         local navalvec3 = FromCoord:GetVec3()
-        if navalvec3.y < 0 then 
+        if navalvec3.y < 0 then
           depth = navalvec3.y
           IsSub = true
         end

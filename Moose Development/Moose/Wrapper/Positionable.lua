@@ -598,16 +598,16 @@ function POSITIONABLE:GetHeading()
   if DCSPositionable then
 
     local PositionablePosition = DCSPositionable:getPosition()
-    
+
     if PositionablePosition then
       local PositionableHeading = math.atan2( PositionablePosition.x.z, PositionablePosition.x.x )
-      
+
       if PositionableHeading < 0 then
         PositionableHeading = PositionableHeading + 2 * math.pi
       end
-      
+
       PositionableHeading = PositionableHeading * 180 / math.pi
-      
+
       return PositionableHeading
     end
   end
@@ -1484,7 +1484,7 @@ do -- Cargo
           ["Dry-cargo ship-1"] =  70000,
           ["Dry-cargo ship-2"] =  70000,
           ["Higgins_boat"]     =   3700, -- Higgins Boat can load 3700 kg of general cargo or 36 men (source wikipedia).
-          ["USS_Samuel_Chase"] =  25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.   
+          ["USS_Samuel_Chase"] =  25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.
           ["LST_Mk2"]          =2100000, -- Can carry 2100 tons according to wiki source!
         }
         self.__.CargoBayWeightLimit = ( Weights[Desc.typeName] or 50000 )

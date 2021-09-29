@@ -1,52 +1,52 @@
 --- **Functional** -- Make SAM sites execute evasive and defensive behaviour when being fired upon.
--- 
+--
 -- ===
--- 
+--
 -- ## Features:
--- 
+--
 --   * When SAM sites are being fired upon, the SAMs will take evasive action will reposition themselves when possible.
 --   * When SAM sites are being fired upon, the SAMs will take defensive action by shutting down their radars.
--- 
+--
 -- ===
--- 
+--
 -- ## Missions:
--- 
+--
 -- [SEV - SEAD Evasion](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SEV%20-%20SEAD%20Evasion)
--- 
+--
 -- ===
--- 
+--
 -- ### Authors: **FlightControl**, **applevangelist**
--- 
+--
 -- Last Update: Aug 2021
--- 
+--
 -- ===
--- 
+--
 -- @module Functional.Sead
 -- @image SEAD.JPG
 
---- 
+---
 -- @type SEAD
 -- @extends Core.Base#BASE
 
 --- Make SAM sites execute evasive and defensive behaviour when being fired upon.
--- 
+--
 -- This class is very easy to use. Just setup a SEAD object by using @{#SEAD.New}() and SAMs will evade and take defensive action when being fired upon.
--- 
+--
 -- # Constructor:
--- 
+--
 -- Use the @{#SEAD.New}() constructor to create a new SEAD object.
--- 
+--
 --       SEAD_RU_SAM_Defenses = SEAD:New( { 'RU SA-6 Kub', 'RU SA-6 Defenses', 'RU MI-26 Troops', 'RU Attack Gori' } )
--- 
+--
 -- @field #SEAD
 SEAD = {
-  ClassName = "SEAD", 
+  ClassName = "SEAD",
   TargetSkill = {
     Average   = { Evade = 30, DelayOn = { 40, 60 } } ,
     Good      = { Evade = 20, DelayOn = { 30, 50 } } ,
     High      = { Evade = 15, DelayOn = { 20, 40 } } ,
-    Excellent = { Evade = 10, DelayOn = { 10, 30 } } 
-  }, 
+    Excellent = { Evade = 10, DelayOn = { 10, 30 } }
+  },
   SEADGroupPrefixes = {},
   SuppressedGroups = {},
   EngagementRange = 75, --  default 75% engagement range Feature Request #1355
@@ -69,7 +69,7 @@ SEAD = {
   ["X_31"] = "X_31",
   ["Kh25"] = "Kh25",
   }
-  
+
   --- Missile enumerators - from DCS ME and Wikipedia
   -- @field HarmData
   SEAD.HarmData = {
@@ -86,7 +86,7 @@ SEAD = {
   ["X_31"] = {150, 3},
   ["Kh25"] = {25, 0.8},
   }
-  
+
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
 -- When an anti radiation missile is fired (KH-58, KH-31P, KH-31A, KH-25MPU, HARM missiles), the SA will shut down their radars and will take evasive actions...
 -- Chances are big that the missile will miss.
@@ -102,7 +102,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
 
   local self = BASE:Inherit( self, BASE:New() )
   self:F( SEADGroupPrefixes )
-  
+
   if type( SEADGroupPrefixes ) == 'table' then
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
       self.SEADGroupPrefixes[SEADGroupPrefix] = SEADGroupPrefix
@@ -110,13 +110,13 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   else
     self.SEADGroupPrefixes[SEADGroupPrefixes] = SEADGroupPrefixes
   end
-  
+
   local padding = Padding or 10
   if padding < 10 then padding = 10 end
   self.Padding = padding
-  
+
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
-  
+
   self:I("*** SEAD - Started Version 0.3.1")
   return self
 end
@@ -128,7 +128,7 @@ end
 function SEAD:UpdateSet( SEADGroupPrefixes )
 
   self:T( SEADGroupPrefixes )
-  
+
   if type( SEADGroupPrefixes ) == 'table' then
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
       self.SEADGroupPrefixes[SEADGroupPrefix] = SEADGroupPrefix
@@ -177,9 +177,9 @@ end
     local hit = false
     local name = ""
       for _,_name in pairs (SEAD.Harms) do
-        if string.find(WeaponName,_name,1) then 
+        if string.find(WeaponName,_name,1) then
           hit = true
-          name = _name 
+          name = _name
           break
         end
       end
@@ -212,7 +212,7 @@ end
       return -1
     end
   end
-  
+
 --- Detects if an SAM site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @see SEAD
 -- @param #SEAD
@@ -229,7 +229,7 @@ function SEAD:HandleEventShot( EventData )
 
   self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
   --self:T({ SEADWeapon })
-  
+
   if self:_CheckHarms(SEADWeaponName) then
     self:T( '*** SEAD - Weapon Match' )
     local _targetskill = "Random"
@@ -253,7 +253,7 @@ function SEAD:HandleEventShot( EventData )
         self:T( '*** SEAD - Group Match Found' )
         break
       end
-    end   
+    end
     if SEADGroupFound == true then -- yes we are being attacked
       if _targetskill == "Random" then -- when skill is random, choose a skill
         local Skills = { "Average", "Good", "High", "Excellent" }
@@ -284,19 +284,19 @@ function SEAD:HandleEventShot( EventData )
           else
             _distance = 0
           end
-          
+
           self:T( string.format("*** SEAD - target skill %s, distance %dkm, reach %dkm, tti %dsec", _targetskill, _distance,reach,_tti ))
-          
+
           if reach >= _distance then
             self:T("*** SEAD - Shot in Reach")
-            
+
             local function SuppressionStart(args)
               self:T(string.format("*** SEAD - %s Radar Off & Relocating",args[2]))
               local grp = args[1] -- Wrapper.Group#GROUP
               grp:OptionAlarmStateGreen()
               grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond")
             end
-            
+
             local function SuppressionStop(args)
               self:T(string.format("*** SEAD - %s Radar On",args[2]))
               local grp = args[1]  -- Wrapper.Group#GROUP
@@ -304,22 +304,22 @@ function SEAD:HandleEventShot( EventData )
               grp:OptionEngageRange(self.EngagementRange)
               self.SuppressedGroups[args[2]] = false
             end
-            
+
             -- randomize switch-on time
             local delay = math.random(self.TargetSkill[_targetskill].DelayOn[1], self.TargetSkill[_targetskill].DelayOn[2])
             if delay > _tti then delay = delay / 2 end -- speed up
             if _tti > (3*delay) then delay = (_tti / 2) * 0.9 end -- shot from afar
-            
-            local SuppressionStartTime = timer.getTime() + delay     
+
+            local SuppressionStartTime = timer.getTime() + delay
             local SuppressionEndTime = timer.getTime() + _tti + self.Padding
-            
+
             if not self.SuppressedGroups[_targetgroupname] then
               self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Switch-Off in %ds",_targetgroupname,_tti,delay))
               timer.scheduleFunction(SuppressionStart,{_targetgroup,_targetgroupname},SuppressionStartTime)
               timer.scheduleFunction(SuppressionStop,{_targetgroup,_targetgroupname},SuppressionEndTime)
               self.SuppressedGroups[_targetgroupname] = true
             end
-            
+
           end
         end
       end

@@ -32,7 +32,9 @@
 -- 
 -- ===
 --
--- ## Missions: Example missions will be added later.
+-- ## Missions:
+--
+--    * [MAR - On the Range - MOOSE - SC](https://www.digitalcombatsimulator.com/en/files/3317765/) by shagrat
 -- 
 -- ===
 --

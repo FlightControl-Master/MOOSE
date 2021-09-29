@@ -138,24 +138,24 @@ SPAWNSTATIC = {
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:NewFromStatic(SpawnTemplateName, SpawnCountryID)
 
-	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
+  local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
   
-	local TemplateStatic, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate(SpawnTemplateName)
-	
-	if TemplateStatic then
-		self.SpawnTemplatePrefix = SpawnTemplateName
-		self.TemplateStaticUnit  = UTILS.DeepCopy(TemplateStatic.units[1])
-		self.CountryID           = SpawnCountryID or CountryID
-		self.CategoryID          = CategoryID
-		self.CoalitionID         = CoalitionID
-		self.SpawnIndex          = 0
-	else
-		error( "SPAWNSTATIC:New: There is no static declared in the mission editor with SpawnTemplatePrefix = '" .. tostring(SpawnTemplateName) .. "'" )
-	end
+  local TemplateStatic, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate(SpawnTemplateName)
+  
+  if TemplateStatic then
+    self.SpawnTemplatePrefix = SpawnTemplateName
+    self.TemplateStaticUnit  = UTILS.DeepCopy(TemplateStatic.units[1])
+    self.CountryID           = SpawnCountryID or CountryID
+    self.CategoryID          = CategoryID
+    self.CoalitionID         = CoalitionID
+    self.SpawnIndex          = 0
+  else
+    error( "SPAWNSTATIC:New: There is no static declared in the mission editor with SpawnTemplatePrefix = '" .. tostring(SpawnTemplateName) .. "'" )
+  end
 
   self:SetEventPriority( 5 )
 
-	return self
+  return self
 end
 
 --- Creates the main object to spawn a @{Static} given a template table.
