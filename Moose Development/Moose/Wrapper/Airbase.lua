@@ -552,7 +552,8 @@ function AIRBASE:Register(AirbaseName)
       self.isHelipad=true
       self.isShip=false
       self.category=Airbase.Category.HELIPAD
-      _DATABASE:AddStatic(AirbaseName)	
+      _DATABASE:AddStatic(AirbaseName)
+	end
   else
     self:E("ERROR: Unknown airbase category!")
   end
