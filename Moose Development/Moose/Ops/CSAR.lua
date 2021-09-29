@@ -1,4 +1,3 @@
-
 --- **Ops** -- Combat Search and Rescue.
 --
 -- ===
@@ -23,7 +22,7 @@
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: July 2021
+-- Date: Sep 2021
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -70,6 +69,7 @@
 --
 --         self.allowDownedPilotCAcontrol = false -- Set to false if you don\'t want to allow control by Combined Arms.
 --         self.allowFARPRescue = true -- allows pilots to be rescued by landing at a FARP or Airbase. Else MASH only!
+--         self.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
 --         self.autosmoke = false -- automatically smoke a downed pilot\'s location when a heli is near.
 --         self.autosmokedistance = 1000 -- distance for autosmoke
 --         self.coordtype = 1 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
@@ -95,6 +95,8 @@
 --         self.approachdist_far = 5000 -- switch do 10 sec interval approach mode, meters
 --         self.approachdist_near = 3000 -- switch to 5 sec interval approach mode, meters
 --         self.pilotmustopendoors = false -- switch to true to enable check of open doors
+--         -- (added 0.1.9)
+--         self.suppressmessages = false -- switch off all messaging if you want to do your own
 -- 
 -- ## 2.1 Experimental Features
 -- 
@@ -214,26 +216,6 @@ CSAR = {
 -- @field Wrapper.Group#GROUP group Spawned group object.
 -- @field #number timestamp Timestamp for approach process
 -- @field #boolean alive Group is alive or dead/rescued
---   
---- Updated and sorted list of known NDB beacons (in kHz!) from the available maps.
-
---[[ Moved to Utils
--- @field #CSAR.SkipFrequencies
-CSAR.SkipFrequencies = {
-  214,274,291.5,295,297.5,
-  300.5,304,307,309.5,311,312,312.5,316,
-  320,324,328,329,330,336,337,
-  342,343,348,351,352,353,358,
-  363,365,368,372.5,374,
-  380,381,384,389,395,396,
-  414,420,430,432,435,440,450,455,462,470,485,
-  507,515,520,525,528,540,550,560,570,577,580,602,625,641,662,670,680,682,690,
-  705,720,722,730,735,740,745,750,770,795,
-  822,830,862,866,
-  905,907,920,935,942,950,995,
-  1000,1025,1030,1050,1065,1116,1175,1182,1210
-  }
---]]
 
 --- All slot / Limit settings
 -- @type CSAR.AircraftType
@@ -251,7 +233,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.8r3"
+CSAR.version="0.1.10r5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -361,12 +343,13 @@ function CSAR:New(Coalition, Template, Alias)
   self.loadtimemax = 135 -- seconds
   self.radioSound = "beacon.ogg" -- the name of the sound file to use for the Pilot radio beacons. If this isnt added to the mission BEACONS WONT WORK!
   self.allowFARPRescue = true --allows pilot to be rescued by landing at a FARP or Airbase
+  self.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
   self.max_units = 6 --max number of pilots that can be carried
   self.useprefix = true  -- Use the Prefixed defined below, Requires Unit have the Prefix defined below 
   self.csarPrefix = { "helicargo", "MEDEVAC"} -- prefixes used for useprefix=true - DON\'T use # in names!
   self.template = Template or "generic" -- template for downed pilot
   self.mashprefix = {"MASH"} -- prefixes used to find MASHes
-  self.mash = SET_GROUP:New():FilterCoalitions(self.coalition):FilterPrefixes(self.mashprefix):FilterOnce() -- currently only GROUP objects, maybe support STATICs also?
+ 
   self.autosmoke = false -- automatically smoke location when heli is near
   self.autosmokedistance = 2000 -- distance for autosmoke
   -- added 0.1.4
@@ -378,6 +361,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.approachdist_far = 5000 -- switch do 10 sec interval approach mode, meters
   self.approachdist_near = 3000 -- switch to 5 sec interval approach mode, meters
   self.pilotmustopendoors = false -- switch to true to enable check on open doors
+  self.suppressmessages = false
     
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -642,7 +626,7 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   local _typeName = _typeName or "Pilot"
   
   if not noMessage then
-    self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, 10)
+    self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, self.messageTime)
   end
   
   if _freq then
@@ -734,7 +718,6 @@ function CSAR:SpawnCSARAtZone(Zone, Coalition, Description, RandomPoint, Nomessa
   return self
 end
 
--- TODO: Split in functions per Event type
 --- (Internal) Event handler.
 -- @param #CSAR self
 function CSAR:_EventHandler(EventData)
@@ -806,8 +789,7 @@ function CSAR:_EventHandler(EventData)
           if self:_DoubleEjection(_unitname) then
             return
           end
-          self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!", self.coalition, 10)         
-          --local m = MESSAGE:New("MAYDAY MAYDAY! " .. _unit:GetTypeName() .. " shot down. No Chute!",10,"Info"):ToCoalition(self.coalition)
+
       else
           self:T(self.lid .. " Pilot has not taken off, ignore")
       end
@@ -886,13 +868,15 @@ function CSAR:_EventHandler(EventData)
               self:T(self.lid .. " Landing Place Nil")
               return -- error!
           end
+          
+          -- anyone on board?
+          if self.inTransitGroups[_event.IniUnitName] == nil then
+            -- ignore
+            return
+          end
    
           if _place:GetCoalition() == self.coalition or _place:GetCoalition() == coalition.side.NEUTRAL then
-            if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_event.IniUnitName) then
-              self:_DisplayMessageToSAR(_unit, "Open the door to let me out!", self.messageTime, true)
-            else
-              self:_RescuePilots(_unit)
-            end  
+            self:_ScheduledSARFlight(_event.IniUnitName,_event.IniGroupName,true)
           else
               self:T(string.format("Airfield %d, Unit %d", _place:GetCoalition(), _unit:GetCoalition()))
               end
@@ -912,7 +896,6 @@ end
 function CSAR:_InitSARForPilot(_downedGroup, _GroupName, _freq, _nomessage)
   self:T(self.lid .. " _InitSARForPilot")
   local _leader = _downedGroup:GetUnit(1)
-  --local _groupName = _downedGroup:GetName()
   local _groupName = _GroupName
   local _freqk = _freq / 1000
   local _coordinatesText = self:_GetPositionOfWounded(_downedGroup)
@@ -928,7 +911,7 @@ function CSAR:_InitSARForPilot(_downedGroup, _GroupName, _freq, _nomessage)
   end
 
    -- trigger FSM event
-  self:__PilotDown(2,_downedGroup, _freqk, _leadername, _coordinatesText)
+  self:__PilotDown(2,_downedGroup, _freqk, _groupName, _coordinatesText)
   
   return self
 end
@@ -1098,7 +1081,6 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
   local grouptable = downedgrouptable --#CSAR.DownedPilot
   self.inTransitGroups[_heliName][_woundedGroupName] =
   {
-      -- DONE: Fix with #CSAR.DownedPilot
       originalUnit = grouptable.originalUnit,
       woundedGroup = _woundedGroupName,
       side = self.coalition,
@@ -1106,7 +1088,7 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
       player = grouptable.player,
   }
 
-  _woundedGroup:Destroy()
+  _woundedGroup:Destroy(false)
   self:_RemoveNameFromDownedPilots(_woundedGroupName,true)
   
   self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s I\'m in! Get to the MASH ASAP! ", _heliName, _pilotName), self.messageTime,true,true)
@@ -1137,39 +1119,8 @@ end
 -- @return #boolean outcome The outcome.
 function CSAR:_IsLoadingDoorOpen( unit_name )
   self:T(self.lid .. " _IsLoadingDoorOpen")
-  local ret_val = false
-  local unit = Unit.getByName(unit_name)
-  if unit ~= nil then
-      local type_name = unit:getTypeName()
-      
-      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
-          self:T(unit_name .. " Cargo doors are open or cargo door not present")
-          ret_val =  true
-      end
-      
-      if type_name == "Mi-24P" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 then
-          self:T(unit_name .. " a side door is open")
-          ret_val =  true
-      end
-      
-      if type_name == "UH-1H" and unit:getDrawArgumentValue(43) == 1 or unit:getDrawArgumentValue(44) == 1 then
-          self:T(unit_name .. " a side door is open ")
-          ret_val =  true
-      end
-
-      if string.find(type_name, "SA342" ) and unit:getDrawArgumentValue(34) == 1 or unit:getDrawArgumentValue(38) == 1 then
-          self:T(unit_name .. " front door(s) are open")
-          ret_val =  true
-      end
-
-      if ret_val == false then
-          self:T(unit_name .. " all doors are closed")
-      end
-      return ret_val
-          
-  end -- nil
+  return UTILS.IsLoadingDoorOpen(unit_name)
   
-  return false
 end
 
 --- (Internal) Function to check if heli is close to group.
@@ -1200,14 +1151,12 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
           else
             self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land in a safe place, I will go there ", _heliName, _pilotName), self.messageTime,false,true)
           end
-          --mark as shown for THIS heli and THIS group
           self.heliCloseMessage[_lookupKeyHeli] = true
       end
   
       -- have we landed close enough?
       if not _heliUnit:InAir() then
   
-          -- if you land on them, doesnt matter if they were heading to someone else as you\'re closer, you win! :)
         if self.pilotRuntoExtractPoint == true then
             if (_distance < self.extractDistance) then
               local _time = self.landedStatus[_lookupKeyHeli]
@@ -1308,7 +1257,8 @@ end
 -- @param #CSAR self
 -- @param #string heliname Heli name
 -- @param #string groupname Group name
-function CSAR:_ScheduledSARFlight(heliname,groupname)
+-- @param #boolean isairport If true, EVENT.Landing took place at an airport or FARP
+function CSAR:_ScheduledSARFlight(heliname,groupname, isairport)
   self:T(self.lid .. " _ScheduledSARFlight")
   self:T({heliname,groupname})
   local _heliUnit = self:_GetSARHeli(heliname)
@@ -1331,8 +1281,8 @@ function CSAR:_ScheduledSARFlight(heliname,groupname)
       return
   end
 
-  if _dist < 200 and _heliUnit:InAir() == false then
-    if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(heliname) then
+  if ( _dist < self.FARPRescueDistance or isairport ) and _heliUnit:InAir() == false then
+    if self.pilotmustopendoors and self:_IsLoadingDoorOpen(heliname) == false then
       self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me out!", self.messageTime, true)
     else
       self:_RescuePilots(_heliUnit)
@@ -1341,7 +1291,7 @@ function CSAR:_ScheduledSARFlight(heliname,groupname)
   end
 
   --queue up
-  self:__Returning(-5,heliname,_woundedGroupName)
+  self:__Returning(-5,heliname,_woundedGroupName, isairport)
   return self
 end
 
@@ -1357,8 +1307,7 @@ function CSAR:_RescuePilots(_heliUnit)
       -- Groups already rescued
       return
   end
-  
-  -- DONE: count saved units?
+
   local PilotsSaved = self:_PilotsOnboard(_heliName)
   
   self.inTransitGroups[_heliName] = nil
@@ -1397,7 +1346,9 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak)
   local group = _unit:GetGroup()
   local _clear = _clear or nil
   local _time = _time or self.messageTime
-  local m = MESSAGE:New(_text,_time,"Info",_clear):ToGroup(group)
+  if not self.suppressmessages then
+    local m = MESSAGE:New(_text,_time,"Info",_clear):ToGroup(group)
+  end
   -- integrate SRS
   if _speak and self.useSRS then
     local srstext = SOUNDTEXT:New(_text)
@@ -1452,7 +1403,6 @@ function CSAR:_DisplayActiveSAR(_unitName)
     local _groupName = _value.name
     self:T(string.format("Display Active Pilot: %s", tostring(_groupName)))
     self:T({Table=_value})
-    --local _woundedGroup = GROUP:FindByName(_groupName)
     local _woundedGroup = _value.group
     if _woundedGroup and _value.alive then  
         local _coordinatesText = self:_GetPositionOfWounded(_woundedGroup) 
@@ -1495,10 +1445,17 @@ function CSAR:_GetClosestDownedPilot(_heli)
   local _shortestDistance = -1
   local _distance = 0
   local _closestGroupInfo = nil
-  local _heliCoord = _heli:GetCoordinate()
+  local _heliCoord = _heli:GetCoordinate() or _heli:GetCoordinate()
+  
+  if _heliCoord == nil then 
+    self:E("****Error obtaining coordinate!")
+    return nil 
+  end
   
   local DownedPilotsTable = self.downedPilots
-  for _, _groupInfo in pairs(DownedPilotsTable) do
+  
+  for _, _groupInfo in UTILS.spairs(DownedPilotsTable) do 
+  --for _, _groupInfo in pairs(DownedPilotsTable) do
       local _woundedName = _groupInfo.name
       local _tempWounded = _groupInfo.group
       
@@ -1564,12 +1521,11 @@ end
 -- @param #number _messagetime How long to show.
 function CSAR:_DisplayToAllSAR(_message, _side, _messagetime)
   self:T(self.lid .. " _DisplayToAllSAR")
+  local messagetime = _messagetime or self.messageTime
   for _, _unitName in pairs(self.csarUnits) do
     local _unit = self:_GetSARHeli(_unitName)
-    if _unit then
-      if not _messagetime then
-          self:_DisplayMessageToSAR(_unit, _message, _messagetime)
-      end
+    if _unit and not self.suppressmessages then
+       self:_DisplayMessageToSAR(_unit, _message, _messagetime)
     end
   end
   return self
@@ -1741,9 +1697,20 @@ end
 function CSAR:_GetDistance(_point1, _point2)
   self:T(self.lid .. " _GetDistance")
   if _point1 and _point2 then
-    local distance = _point1:DistanceFromPointVec2(_point2)
-   return distance
+    local distance1 = _point1:Get2DDistance(_point2)
+    local distance2 = _point1:DistanceFromPointVec2(_point2)
+    if distance1 and type(distance1) == "number" then
+      return distance1
+    elseif distance2 and type(distance2) == "number" then
+      return distance2
+    else
+      self:E("*****Cannot calculate distance!")
+      self:E({_point1,_point2})
+      return -1
+    end
   else
+    self:E("******Cannot calculate distance!")
+    self:E({_point1,_point2})
     return -1
   end
 end
@@ -1752,7 +1719,6 @@ end
 -- @param #CSAR self
 function CSAR:_GenerateVHFrequencies()
   self:T(self.lid .. " _GenerateVHFrequencies")
-  --local _skipFrequencies = self.SkipFrequencies
       
   local FreeVHFFrequencies = {}
   FreeVHFFrequencies = UTILS.GenerateVHFrequencies()
@@ -1792,7 +1758,6 @@ function CSAR:_GetClockDirection(_heli, _group)
   if _heading then
     local Aspect = Angle - _heading
     if Aspect == 0 then Aspect = 360 end
-    --clock = math.floor(Aspect / 30)
     clock = math.abs(UTILS.Round((Aspect / 30),0))
     if clock == 0 then clock = 12 end
   end    
@@ -1901,6 +1866,7 @@ function CSAR:onafterStart(From, Event, To)
   else
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterCategoryHelicopter():FilterStart()
   end
+  self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart() -- currently only GROUP objects, maybe support STATICs also?
   self:__Status(-10)
   return self
 end
@@ -1909,19 +1875,19 @@ end
 -- @param #CSAR self
 function CSAR:_CheckDownedPilotTable()
   local pilots = self.downedPilots
-  for _,_entry in pairs (pilots) do
-    self:T("Checking for " .. _entry.name)
-    self:T({entry=_entry})
-    local group = _entry.group    
-    if not group:IsAlive() then
-      self:T("Group is dead")
-      if _entry.alive == true then
-        self:T("Switching .alive to false")
+  local npilots = {}
+  
+  for _ind,_entry in pairs(pilots) do
+    local _group = _entry.group
+    if _group:IsAlive() then
+      npilots[_ind] = _entry      
+    else
+      if _entry.alive then
         self:__KIA(1,_entry.desc)
-        self:_RemoveNameFromDownedPilots(_entry.name,true)
       end
     end
   end
+  self.downedPilots = npilots
   return self
 end
 
@@ -2041,9 +2007,10 @@ end
 -- @param #string To To state.
 -- @param #string Heliname Name of the helicopter group.
 -- @param #string Woundedgroupname Name of the downed pilot\'s group.
-function CSAR:onbeforeReturning(From, Event, To, Heliname, Woundedgroupname)
+-- @param #boolean IsAirport True if heli has landed on an AFB (from event land).
+function CSAR:onbeforeReturning(From, Event, To, Heliname, Woundedgroupname, IsAirPort)
   self:T({From, Event, To, Heliname, Woundedgroupname})
-  self:_ScheduledSARFlight(Heliname,Woundedgroupname)
+  self:_ScheduledSARFlight(Heliname,Woundedgroupname, IsAirPort)
   return self
 end
 

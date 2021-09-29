@@ -98,7 +98,8 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   self:AddTransition( "*", "Guard", "Unloaded" )
   self:AddTransition( "*", "Home", "*" )
   self:AddTransition( "*", "Reload", "Boarding" )
-  
+  self:AddTransition( "*", "Deployed", "*" )
+  self:AddTransition( "*", "PickedUp", "*" )
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
   self:SetCombatRadius( CombatRadius )

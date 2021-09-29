@@ -1,9 +1,9 @@
 --- **Core** - Makes the radio talk.
--- 
+--
 -- ===
--- 
+--
 -- ## Features:
--- 
+--
 --   * Send text strings using a vocabulary that is converted in spoken language.
 --   * Possiblity to implement multiple language.
 --
@@ -15,10 +15,10 @@
 -- @image Core_Radio.JPG
 
 --- Makes the radio speak.
--- 
+--
 -- # RADIOSPEECH usage
--- 
---   
+--
+--
 -- @type RADIOSPEECH
 -- @extends Core.RadioQueue#RADIOQUEUE
 RADIOSPEECH = {
@@ -59,24 +59,24 @@ RADIOSPEECH.Vocabulary.EN = {
   ["70"] = { "70", 0.48 },
   ["80"] = { "80", 0.26 },
   ["90"] = { "90", 0.36 },
-  ["100"] = { "100", 0.55 },    
-  ["200"] = { "200", 0.55 },    
-  ["300"] = { "300", 0.61 },    
-  ["400"] = { "400", 0.60 },    
-  ["500"] = { "500", 0.61 },    
-  ["600"] = { "600", 0.65 },    
-  ["700"] = { "700", 0.70 },    
-  ["800"] = { "800", 0.54 },    
-  ["900"] = { "900", 0.60 },    
-  ["1000"] = { "1000", 0.60 },    
-  ["2000"] = { "2000", 0.61 },    
-  ["3000"] = { "3000", 0.64 },    
-  ["4000"] = { "4000", 0.62 },    
-  ["5000"] = { "5000", 0.69 },    
-  ["6000"] = { "6000", 0.69 },    
-  ["7000"] = { "7000", 0.75 },    
-  ["8000"] = { "8000", 0.59 },    
-  ["9000"] = { "9000", 0.65 },    
+  ["100"] = { "100", 0.55 },
+  ["200"] = { "200", 0.55 },
+  ["300"] = { "300", 0.61 },
+  ["400"] = { "400", 0.60 },
+  ["500"] = { "500", 0.61 },
+  ["600"] = { "600", 0.65 },
+  ["700"] = { "700", 0.70 },
+  ["800"] = { "800", 0.54 },
+  ["900"] = { "900", 0.60 },
+  ["1000"] = { "1000", 0.60 },
+  ["2000"] = { "2000", 0.61 },
+  ["3000"] = { "3000", 0.64 },
+  ["4000"] = { "4000", 0.62 },
+  ["5000"] = { "5000", 0.69 },
+  ["6000"] = { "6000", 0.69 },
+  ["7000"] = { "7000", 0.75 },
+  ["8000"] = { "8000", 0.59 },
+  ["9000"] = { "9000", 0.65 },
 
   ["chevy"] = { "chevy", 0.35 },
   ["colt"] = { "colt", 0.35 },
@@ -94,10 +94,10 @@ RADIOSPEECH.Vocabulary.EN = {
   ["meters"] = { "meters", 0.41 },
   ["mi"] = { "miles", 0.45 },
   ["feet"] = { "feet", 0.29 },
-  
+
   ["br"] = { "br", 1.1 },
   ["bra"] = { "bra", 0.3 },
-  
+
 
   ["returning to base"] = { "returning_to_base", 0.85 },
   ["on route to ground target"] = { "on_route_to_ground_target", 1.05 },
@@ -143,52 +143,52 @@ RADIOSPEECH.Vocabulary.RU = {
   ["70"] = { "70", 0.68 },
   ["80"] = { "80", 0.84 },
   ["90"] = { "90", 0.71 },
-  ["100"] = { "100", 0.35 },    
-  ["200"] = { "200", 0.59 },    
-  ["300"] = { "300", 0.53 },    
-  ["400"] = { "400", 0.70 },    
-  ["500"] = { "500", 0.50 },    
-  ["600"] = { "600", 0.58 },    
-  ["700"] = { "700", 0.64 },    
-  ["800"] = { "800", 0.77 },    
-  ["900"] = { "900", 0.75 },    
-  ["1000"] = { "1000", 0.87 },    
-  ["2000"] = { "2000", 0.83 },    
-  ["3000"] = { "3000", 0.84 },    
-  ["4000"] = { "4000", 1.00 },    
-  ["5000"] = { "5000", 0.77 },    
-  ["6000"] = { "6000", 0.90 },    
-  ["7000"] = { "7000", 0.77 },    
-  ["8000"] = { "8000", 0.92 },    
-  ["9000"] = { "9000", 0.87 },    
+  ["100"] = { "100", 0.35 },
+  ["200"] = { "200", 0.59 },
+  ["300"] = { "300", 0.53 },
+  ["400"] = { "400", 0.70 },
+  ["500"] = { "500", 0.50 },
+  ["600"] = { "600", 0.58 },
+  ["700"] = { "700", 0.64 },
+  ["800"] = { "800", 0.77 },
+  ["900"] = { "900", 0.75 },
+  ["1000"] = { "1000", 0.87 },
+  ["2000"] = { "2000", 0.83 },
+  ["3000"] = { "3000", 0.84 },
+  ["4000"] = { "4000", 1.00 },
+  ["5000"] = { "5000", 0.77 },
+  ["6000"] = { "6000", 0.90 },
+  ["7000"] = { "7000", 0.77 },
+  ["8000"] = { "8000", 0.92 },
+  ["9000"] = { "9000", 0.87 },
 
-  ["Ñ�Ñ‚ÐµÐ¿ÐµÐ½Ð¸"] = { "degrees", 0.5 },
-  ["ÐºÐ¸Ð»Ð¾Ð¼ÐµÑ‚Ñ€Ð¾Ð²"] = { "kilometers", 0.65 },
+  ["градусы"] = { "degrees", 0.5 },
+  ["километры"] = { "kilometers", 0.65 },
   ["km"] = { "kilometers", 0.65 },
-  ["Ð¼Ð¸Ð»ÑŒ"] = { "miles", 0.45 },
+  ["мили"] = { "miles", 0.45 },
   ["mi"] = { "miles", 0.45 },
-  ["Ð¼ÐµÑ‚Ñ€Ñ‹"] = { "meters", 0.41 },
+  ["метров"] = { "meters", 0.41 },
   ["m"] = { "meters", 0.41 },
-  ["Ð½Ð¾Ð³Ð¸"] = { "feet", 0.37 },
-  
+  ["ноги"] = { "feet", 0.37 },
+
   ["br"] = { "br", 1.1 },
   ["bra"] = { "bra", 0.3 },
-  
 
-  ["Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°Ñ�Ñ�ÑŒ Ð½Ð° Ð±Ð°Ð·Ñƒ"] = { "returning_to_base", 1.40 },
-  ["Ð½Ð° Ð¿ÑƒÑ‚Ð¸ Ðº Ð½Ð°Ð·ÐµÐ¼Ð½Ð¾Ð¹ Ñ†ÐµÐ»Ð¸"] = { "on_route_to_ground_target", 1.45 },
-  ["Ð¿ÐµÑ€ÐµÑ…Ð²Ð°Ñ‚ Ñ�Ð°Ð¼Ð¾Ð»ÐµÑ‚Ð¾Ð²"] = { "intercepting_bogeys", 1.22 },
-  ["Ð¿Ð¾Ñ€Ð°Ð¶ÐµÐ½Ð¸Ðµ Ð½Ð°Ð·ÐµÐ¼Ð½Ð¾Ð¹ Ñ†ÐµÐ»Ð¸"] = { "engaging_ground_target", 1.53 },
-  ["Ð·Ð°Ñ…Ð²Ð°Ñ‚Ñ‹Ð²Ð°ÑŽÑ‰Ð¸Ðµ Ñ�Ð°Ð¼Ð¾Ð»ÐµÑ‚Ñ‹"] = { "engaging_bogeys", 1.68 },
-  ["ÐºÐ¾Ð»ÐµÑ�Ð° Ð²Ð²ÐµÑ€Ñ…"] = { "wheels_up", 0.92 },
-  ["Ð¿Ð¾Ñ�Ð°Ð´ÐºÐ° Ð½Ð° Ð±Ð°Ð·Ñƒ"] = { "landing at base", 1.04 },
-  ["Ð¿Ð°Ñ‚Ñ€ÑƒÐ»Ð¸Ñ€ÑƒÑŽÑ‰Ð¸Ð¹"] = { "patrolling", 0.96 },
 
-  ["Ð·Ð°"] = { "for", 0.27 },
-  ["Ð¸"] = { "and", 0.17 },
-  ["Ð²"] = { "at", 0.19 },
-  ["dot"] = { "dot", 0.51 },
-  ["defender"] = { "defender", 0.45 },
+  ["возвращение на базу"] = { "returning_to_base", 1.40 },
+  ["на пути к наземной цели"] = { "on_route_to_ground_target", 1.45 },
+  ["перехват боги"] = { "intercepting_bogeys", 1.22 },
+  ["поражение наземной цели"] = { "engaging_ground_target", 1.53 },
+  ["привлечение болотных птиц"] = { "engaging_bogeys", 1.68 },
+  ["колёса вверх..."] = { "wheels_up", 0.92 },
+  ["посадка на базу"] = { "landing at base", 1.04 },
+  ["патрулирование"] = { "patrolling", 0.96 },
+
+  ["для"] = { "for", 0.27 },
+  ["и"] = { "and", 0.17 },
+  ["на сайте"] = { "at", 0.19 },
+  ["точка"] = { "dot", 0.51 },
+  ["защитник"] = { "defender", 0.45 },
 }
 
 --- Create a new RADIOSPEECH object for a given radio frequency/modulation.
@@ -200,11 +200,11 @@ function RADIOSPEECH:New(frequency, modulation)
 
   -- Inherit base
   local self = BASE:Inherit( self, RADIOQUEUE:New( frequency, modulation ) ) -- #RADIOSPEECH
-  
+
   self.Language = "EN"
-  
+
   self:BuildTree()
-  
+
   return self
 end
 
@@ -262,7 +262,7 @@ end
 function RADIOSPEECH:BuildTree()
 
   self.Speech = {}
-  
+
   for Language, Sentences in pairs( self.Vocabulary ) do
     self:I( { Language = Language, Sentences = Sentences })
     self.Speech[Language] = {}
@@ -271,7 +271,7 @@ function RADIOSPEECH:BuildTree()
       self:AddSentenceToSpeech( Sentence, self.Speech[Language], Sentence, Data )
     end
   end
-  
+
   self:I( { Speech = self.Speech } )
 
   return self
@@ -290,7 +290,7 @@ function RADIOSPEECH:SpeakWords( Sentence, Speech, Language )
   local Word, RemainderSentence = Sentence:match( "^[., ]*([^ .,]+)(.*)" )
 
   self:I( { Word = Word, Speech = Speech[Word], RemainderSentence = RemainderSentence } )
-  
+
 
   if Word then
     if Word ~= "" and tonumber(Word) == nil then
@@ -302,7 +302,7 @@ function RADIOSPEECH:SpeakWords( Sentence, Speech, Language )
         if Speech[Word].Next == nil then
           self:I( { Sentence = Speech[Word].Sentence, Data = Speech[Word].Data } )
           self:NewTransmission( Speech[Word].Data[1] .. ".wav", Speech[Word].Data[2], Language .. "/" )
-        else 
+        else
           if RemainderSentence and RemainderSentence ~= "" then
             return self:SpeakWords( RemainderSentence, Speech[Word].Next, Language )
           end
@@ -310,11 +310,11 @@ function RADIOSPEECH:SpeakWords( Sentence, Speech, Language )
       end
       return RemainderSentence
     end
-    return OriginalSentence  
+    return OriginalSentence
   else
     return ""
-  end        
-  
+  end
+
 end
 
 --- Speak a sentence.
@@ -333,7 +333,7 @@ function RADIOSPEECH:SpeakDigits( Sentence, Speech, Langauge )
 
   if Digits then
     if Digits ~= "" and tonumber( Digits ) ~= nil then
-    
+
       -- Construct numbers
       local Number = tonumber( Digits )
       local Multiple = nil
@@ -357,7 +357,7 @@ function RADIOSPEECH:SpeakDigits( Sentence, Speech, Langauge )
       end
       return RemainderSentence
     end
-    return OriginalSentence  
+    return OriginalSentence
   else
     return ""
   end
@@ -374,26 +374,26 @@ function RADIOSPEECH:Speak( Sentence, Language )
   self:I( { Sentence, Language } )
 
   local Language = Language or "EN"
-  
+
   self:I( { Language = Language } )
-  
+
   -- If there is no node for Speech, then we start at the first nodes of the language.
   local Speech = self.Speech[Language]
-  
+
   self:I( { Speech = Speech, Language = Language } )
-  
+
   self:NewTransmission( "_In.wav", 0.52, Language .. "/" )
-  
+
   repeat
 
     Sentence = self:SpeakWords( Sentence, Speech, Language )
-    
+
     self:I( { Sentence = Sentence } )
 
     Sentence = self:SpeakDigits( Sentence, Speech, Language )
 
     self:I( { Sentence = Sentence } )
-    
+
 --    Sentence = self:SpeakSymbols( Sentence, Speech )
 --
 --    self:I( { Sentence = Sentence } )

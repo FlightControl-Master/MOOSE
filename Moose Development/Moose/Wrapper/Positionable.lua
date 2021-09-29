@@ -1517,6 +1517,7 @@ do -- Cargo
           ["Ural-4320 APA-5D"] = 10,
           ["Ural-4320T"] = 14,
           ["ZBD04A"] = 7, -- new by kappa
+          ["VAB_Mephisto"] = 8, -- new by Apple
         }
 
         local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 95

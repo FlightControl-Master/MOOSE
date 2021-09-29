@@ -1132,7 +1132,7 @@ end
 -- @return #number Number of shells left.
 -- @return #number Number of rockets left.
 -- @return #number Number of bombs left.
--- @return #number Number of missiles left. 
+-- @return #number Number of missiles left.  
 function GROUP:GetAmmunition()
   self:F( self.ControllableName )
 
@@ -1142,6 +1142,7 @@ function GROUP:GetAmmunition()
   local Nshells=0
   local Nrockets=0
   local Nmissiles=0
+  local Nbombs=0
   
   if DCSControllable then
     
@@ -1150,18 +1151,19 @@ function GROUP:GetAmmunition()
       local Unit = UnitData -- Wrapper.Unit#UNIT
       
       -- Get ammo of the unit
-      local ntot, nshells, nrockets, nmissiles = Unit:GetAmmunition()
+      local ntot, nshells, nrockets, nbombs, nmissiles = Unit:GetAmmunition()
       
       Ntot=Ntot+ntot
       Nshells=Nshells+nshells
       Nrockets=Nrockets+nrockets
-      Nmissiles=Nmissiles+nmissiles 
+      Nmissiles=Nmissiles+nmissiles
+      Nbombs=Nbombs+nbombs
       
     end
     
   end
   
-  return Ntot, Nshells, Nrockets, Nmissiles
+  return Ntot, Nshells, Nrockets, Nbombs, Nmissiles
 end
 
 
@@ -2587,6 +2589,17 @@ function GROUP:SetCommandImmortal(switch)
   local SetInvisible = {id = 'SetImmortal', params = {value = true}}
   self:SetCommand(SetInvisible)
   return self
+end
+
+--- Get skill from Group. Effectively gets the skill from Unit 1 as the group holds no skill value.
+-- @param #GROUP self
+-- @return #string Skill String of skill name.
+function GROUP:GetSkill()
+  self:F2( self.GroupName )
+  local unit = self:GetUnit(1)
+  local name = unit:GetName()
+  local skill = _DATABASE.Templates.Units[name].Template.skill or "Random"
+  return skill
 end
 
 --do -- Smoke

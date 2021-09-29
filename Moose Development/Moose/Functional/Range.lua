@@ -32,7 +32,9 @@
 -- 
 -- ===
 --
--- ## Missions: Example missions will be added later.
+-- ## Missions:
+--
+--    * [MAR - On the Range - MOOSE - SC](https://www.digitalcombatsimulator.com/en/files/3317765/) by shagrat
 -- 
 -- ===
 --
@@ -2558,7 +2560,7 @@ function RANGE:_DisplayBombTargets(_unitname)
         -- Get elevation
         local elevation=coord:GetLandHeight()
         local eltxt=string.format("%d m", elevation)
-        if _settings:IsImperial() then
+        if not _settings:IsMetric() then
           elevation=UTILS.MetersToFeet(elevation)
           eltxt=string.format("%d ft", elevation)
         end
@@ -2829,6 +2831,7 @@ function RANGE:_CheckInZone(_unitName)
           local accur=0
           if shots>0 then
             accur=_result.hits/shots*100
+            if accur > 100 then accur = 100 end
           end
 
           -- Message text.

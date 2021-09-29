@@ -174,8 +174,8 @@ function AI_CARGO_DISPATCHER_HELICOPTER:New( HelicopterSet, CargoSet, PickupZone
   self:SetPickupSpeed( 350, 150 )
   self:SetDeploySpeed( 350, 150 )
 
-  self:SetPickupRadius( 0, 0 )
-  self:SetDeployRadius( 0, 0 )
+  self:SetPickupRadius( 40, 12 )
+  self:SetDeployRadius( 40, 12 )
   
   self:SetPickupHeight( 500, 200 )
   self:SetDeployHeight( 500, 200 )
@@ -186,6 +186,9 @@ end
 
 function AI_CARGO_DISPATCHER_HELICOPTER:AICargo( Helicopter, CargoSet )
 
-  return AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
+  local dispatcher = AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
+  dispatcher:SetLandingSpeedAndHeight(27, 6)
+  return dispatcher
+  
 end
 
