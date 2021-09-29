@@ -136,7 +136,7 @@ function DATABASE:New()
   self:_RegisterGroupsAndUnits()
   self:_RegisterClients()
   self:_RegisterStatics()
-  self:_RegisterAirbases()
+  --self:_RegisterAirbases()
   --self:_RegisterPlayers()
 
   self.UNITS_Position = 0
