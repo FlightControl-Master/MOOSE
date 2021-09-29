@@ -18,6 +18,7 @@ _DATABASE:_RegisterCargos()
 
 --- Register zones.
 _DATABASE:_RegisterZones()
+_DATABASE:_RegisterAirbases()
 
 --- Check if os etc is available.
 BASE:I("Checking de-sanitization of os, io and lfs:")
