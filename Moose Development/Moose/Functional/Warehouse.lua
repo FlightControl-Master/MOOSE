@@ -3600,7 +3600,7 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   self:_PrintQueue(self.pending, "Queue pending")
 
   -- Check fuel for all assets.
-  self:_CheckFuel()
+  --self:_CheckFuel()
 
   -- Update warhouse marker on F10 map.
   self:_UpdateWarehouseMarkText()
