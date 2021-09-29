@@ -142,7 +142,7 @@ AIRBASE.Caucasus = {
 --   * AIRBASE.Nevada.Pahute_Mesa_Airstrip
 --   * AIRBASE.Nevada.Tonopah_Airport
 --   * AIRBASE.Nevada.Tonopah_Test_Range_Airfield
---   
+--
 -- @field Nevada
 AIRBASE.Nevada = {
   ["Creech_AFB"] = "Creech AFB",
@@ -197,7 +197,7 @@ AIRBASE.Nevada = {
 --   * AIRBASE.Normandy.Funtington
 --   * AIRBASE.Normandy.Tangmere
 --   * AIRBASE.Normandy.Ford_AF
---   
+--
 -- @field Normandy
 AIRBASE.Normandy = {
   ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
@@ -271,7 +271,7 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Sirri_Island
 -- * AIRBASE.PersianGulf.Tunb_Island_AFB
 -- * AIRBASE.PersianGulf.Tunb_Kochak
--- 
+--
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Abu_Dhabi_International_Airport"] = "Abu Dhabi Intl",
@@ -536,7 +536,7 @@ function AIRBASE:Register(AirbaseName)
 
   -- Get descriptors.
   self.descriptors=self:GetDesc()
-  
+
   -- Debug info.
   --self:I({airbase=AirbaseName, descriptors=self.descriptors})
 
@@ -1112,7 +1112,7 @@ function AIRBASE:MarkParkingSpots(termtype, mark)
 
   -- Get airbase name.
   local airbasename=self:GetName()
-  self:E(string.format("Parking spots at %s for termial type %s:", airbasename, tostring(termtype)))
+  self:E(string.format("Parking spots at %s for terminal type %s:", airbasename, tostring(termtype)))
 
   for _,_spot in pairs(parkingdata) do
 
@@ -1189,14 +1189,25 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   parkingdata=parkingdata or self:GetParkingSpotsTable(terminaltype)
 
   -- Get the aircraft size, i.e. it's longest side of x,z.
-  local aircraft=group:GetUnit(1)
-  local _aircraftsize, ax,ay,az=aircraft:GetObjectSize()
+  local aircraft = nil
+  local _aircraftsize, ax,ay,az
+  if group and group.ClassName == "GROUP" then
+    aircraft=group:GetUnit(1)
+    _aircraftsize, ax,ay,az=aircraft:GetObjectSize()
+  else
+    -- SU27 dimensions
+    _aircraftsize = 23
+    ax = 23 -- length
+    ay = 7 -- height
+    az = 17 -- width
+  end
+
 
   -- Number of spots we are looking for. Note that, e.g. grouping can require a number different from the group size!
   local _nspots=nspots or group:GetSize()
 
   -- Debug info.
-  self:E(string.format("%s: Looking for %d parking spot(s) for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at termial type %s.", airport, _nspots, _aircraftsize, ax, ay, az, tostring(terminaltype)))
+  self:E(string.format("%s: Looking for %d parking spot(s) for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at terminal type %s.", airport, _nspots, _aircraftsize, ax, ay, az, tostring(terminaltype)))
 
   -- Table of valid spots.
   local validspots={}
@@ -1319,6 +1330,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
 
   -- Retrun spots we found, even if there were not enough.
   return validspots
+
 end
 
 --- Check black and white lists.
@@ -1337,7 +1349,7 @@ function AIRBASE:_CheckParkingLists(TerminalID)
     end
   end
 
-  
+
   -- Check if a whitelist was defined.
   if self.parkingWhitelist and #self.parkingWhitelist>0 then
     for _,terminalID in pairs(self.parkingWhitelist or {}) do
@@ -1447,7 +1459,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
      name==AIRBASE.PersianGulf.Abu_Dhabi_International_Airport or
      name==AIRBASE.PersianGulf.Dubai_Intl or
      name==AIRBASE.PersianGulf.Shiraz_International_Airport or
-     name==AIRBASE.PersianGulf.Kish_International_Airport or 
+     name==AIRBASE.PersianGulf.Kish_International_Airport or
      name==AIRBASE.MarianaIslands.Andersen_AFB then
 
     -- 1-->4, 2-->3, 3-->2, 4-->1

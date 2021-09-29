@@ -580,6 +580,18 @@ function UNIT:GetAmmo()
   return nil
 end
 
+--- Sets the Unit's Internal Cargo Mass, in kg
+-- @param #UNIT self
+-- @param #number mass to set cargo to
+-- @return #UNIT self
+function UNIT:SetUnitInternalCargo(mass)
+  local DCSUnit = self:GetDCSObject()
+  if DCSUnit then
+    trigger.action.setUnitInternalCargo(DCSUnit:getName(), mass)
+  end
+  return self
+end
+
 --- Get the number of ammunition and in particular the number of shells, rockets, bombs and missiles a unit currently has.
 -- @param #UNIT self
 -- @return #number Total amount of ammo the unit has left. This is the sum of shells, rockets, bombs and missiles.
@@ -1413,4 +1425,14 @@ function UNIT:EnableEmission(switch)
   end
 
   return self
+end
+
+--- Get skill from Unit.
+-- @param #UNIT self
+-- @return #string Skill String of skill name.
+function UNIT:GetSkill()
+  self:F2( self.UnitName )
+  local name = self.UnitName
+  local skill = _DATABASE.Templates.Units[name].Template.skill or "Random"
+  return skill
 end

@@ -507,7 +507,7 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
       secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
     end
 
-    -- 024� 23' 12"N or 024� 23' 12.03"N
+    -- 024° 23' 12"N or 024° 23' 12.03"N
     return string.format('%03d°', latDeg)..string.format('%02d', latMin)..'\''..string.format(secFrmtStr, latSec)..'"'..latHemi..' '
         .. string.format('%03d°', lonDeg)..string.format('%02d', lonMin)..'\''..string.format(secFrmtStr, lonSec)..'"'..lonHemi
 
@@ -767,12 +767,12 @@ end
 function UTILS.GetCharacters(str)
 
   local chars={}
-  
+
   for i=1,#str do
     local c=str:sub(i,i)
     table.insert(chars, c)
   end
-  
+
   return chars
 end
 
@@ -923,7 +923,7 @@ function UTILS.RandomGaussian(x0, sigma, xmin, xmax, imax)
     local x1=math.random()
     local x2=math.random()
 
-    -- Transform to Gaussian exp(-(x-x0)²/(2*sigma²).
+    -- Transform to Gaussian exp(-(x-x0)°/(2*sigma°).
     r = math.sqrt(-2*sigma*sigma * math.log(x1)) * math.cos(2*math.pi * x2) + x0
 
     i=i+1
@@ -1441,7 +1441,7 @@ function UTILS.GMTToLocalTimeDifference()
   elseif theatre==DCSMAP.Syria then
     return 3   -- Damascus is UTC+3 hours
   elseif theatre==DCSMAP.MarianaIslands then
-    return 10  -- Guam is UTC+10 hours.    
+    return 10  -- Guam is UTC+10 hours.
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
@@ -1615,7 +1615,7 @@ end
 --@return #table
 function UTILS.ShuffleTable(t)
   if t == nil or type(t) ~= "table" then
-    BASE:I("Error in ShuffleTable: Missing or wrong tyåe of Argument")
+    BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
     return
   end
   math.random()
@@ -1639,17 +1639,17 @@ function UTILS.IsLoadingDoorOpen( unit_name )
   local unit = Unit.getByName(unit_name)
   if unit ~= nil then
       local type_name = unit:getTypeName()
-      
-      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
+
+      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
           BASE:T(unit_name .. " Cargo doors are open or cargo door not present")
           ret_val =  true
       end
-      
+
       if type_name == "Mi-24P" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 then
           BASE:T(unit_name .. " a side door is open")
           ret_val =  true
       end
-      
+
       if type_name == "UH-1H" and unit:getDrawArgumentValue(43) == 1 or unit:getDrawArgumentValue(44) == 1 then
           BASE:T(unit_name .. " a side door is open ")
           ret_val =  true
@@ -1664,9 +1664,9 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           BASE:T(unit_name .. " all doors are closed")
       end
       return ret_val
-          
+
   end -- nil
-  
+
   return nil
 end
 
@@ -1705,13 +1705,13 @@ function UTILS.GenerateVHFrequencies()
   905,907,920,935,942,950,995,
   1000,1025,1030,1050,1065,1116,1175,1182,1210
   }
-      
+
   local FreeVHFFrequencies = {}
-    
+
     -- first range
   local _start = 200000
   while _start < 400000 do
-  
+
       -- skip existing NDB frequencies#
       local _found = false
       for _, value in pairs(_skipFrequencies) do
@@ -1725,7 +1725,7 @@ function UTILS.GenerateVHFrequencies()
       end
        _start = _start + 10000
   end
- 
+
    -- second range
   _start = 400000
   while _start < 850000 do
@@ -1742,7 +1742,7 @@ function UTILS.GenerateVHFrequencies()
       end
       _start = _start + 10000
   end
-  
+
   -- third range
   _start = 850000
   while _start <= 999000 do -- adjusted for Gazelle
@@ -1782,7 +1782,7 @@ end
 -- @return #table Laser Codes.
 function UTILS.GenerateLaserCodes()
     local jtacGeneratedLaserCodes = {}
-    
+
     -- helper function
     local function ContainsDigit(_number, _numberToFind)
       local _thisNumber = _number
@@ -1796,14 +1796,14 @@ function UTILS.GenerateLaserCodes()
       end
       return false
     end
-    
+
     -- generate list of laser codes
     local _code = 1111
     local _count = 1
     while _code < 1777 and _count < 30 do
         while true do
            _code = _code + 1
-            if not self:_ContainsDigit(_code, 8)
+            if not ContainsDigit(_code, 8)
                     and not ContainsDigit(_code, 9)
                     and not ContainsDigit(_code, 0) then
                 table.insert(jtacGeneratedLaserCodes, _code)

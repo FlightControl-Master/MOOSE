@@ -183,12 +183,12 @@ function ZONE_BASE:IsCoordinateInZone( Coordinate )
   return InZone
 end
 
---- Returns if a PointVec2 is within the zone.
+--- Returns if a PointVec2 is within the zone. (Name is misleading, actually takes a #COORDINATE)
 -- @param #ZONE_BASE self
--- @param Core.Point#POINT_VEC2 PointVec2 The PointVec2 to test.
+-- @param Core.Point#COORDINATE PointVec2 The coordinate to test.
 -- @return #boolean true if the PointVec2 is within the zone.
-function ZONE_BASE:IsPointVec2InZone( PointVec2 )
-  local InZone = self:IsVec2InZone( PointVec2:GetVec2() )
+function ZONE_BASE:IsPointVec2InZone( Coordinate )
+  local InZone = self:IsVec2InZone( Coordinate:GetVec2() )
   return InZone
 end
 
@@ -498,8 +498,8 @@ end
 --
 -- @field #ZONE_RADIUS
 ZONE_RADIUS = {
-	ClassName="ZONE_RADIUS",
-	}
+  ClassName="ZONE_RADIUS",
+  }
 
 --- Constructor of @{#ZONE_RADIUS}, taking the zone name, the zone location and a radius.
 -- @param #ZONE_RADIUS self
@@ -510,15 +510,15 @@ ZONE_RADIUS = {
 function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
 
   -- Inherit ZONE_BASE.
-	local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) ) -- #ZONE_RADIUS
-	self:F( { ZoneName, Vec2, Radius } )
+  local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) ) -- #ZONE_RADIUS
+  self:F( { ZoneName, Vec2, Radius } )
 
-	self.Radius = Radius
-	self.Vec2 = Vec2
+  self.Radius = Radius
+  self.Vec2 = Vec2
 
-	--self.Coordinate=COORDINATE:NewFromVec2(Vec2)
+  --self.Coordinate=COORDINATE:NewFromVec2(Vec2)
 
-	return self
+  return self
 end
 
 --- Update zone from a 2D vector.
@@ -746,11 +746,11 @@ end
 -- @param #ZONE_RADIUS self
 -- @return DCS#Vec2 The location of the zone.
 function ZONE_RADIUS:GetVec2()
-	self:F2( self.ZoneName )
+  self:F2( self.ZoneName )
 
-	self:T2( { self.Vec2 } )
+  self:T2( { self.Vec2 } )
 
-	return self.Vec2
+  return self.Vec2
 end
 
 --- Sets the @{DCS#Vec2} of the zone.

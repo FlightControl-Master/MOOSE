@@ -1851,27 +1851,27 @@ do -- Patrol methods
 
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
-      
+
       -- test for submarine
       local depth = 0
       local IsSub = false
       if PatrolGroup:IsShip() then
         local navalvec3 = FromCoord:GetVec3()
-        if navalvec3.y < 0 then 
+        if navalvec3.y < 0 then
           depth = navalvec3.y
           IsSub = true
         end
       end
-      
-     
+
+
       local Waypoint = Waypoints[1]
       local Speed = Waypoint.speed or (20 / 3.6)
        local From = FromCoord:WaypointGround( Speed )
-       
-      if IsSub then 
+
+      if IsSub then
          From = FromCoord:WaypointNaval( Speed, Waypoint.alt )
       end
-      
+
       table.insert( Waypoints, 1, From )
 
       local TaskRoute = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRoute" )
@@ -1916,7 +1916,7 @@ do -- Patrol methods
       local IsSub = false
       if PatrolGroup:IsShip() then
         local navalvec3 = FromCoord:GetVec3()
-        if navalvec3.y < 0 then 
+        if navalvec3.y < 0 then
           depth = navalvec3.y
           IsSub = true
         end
@@ -1982,16 +1982,16 @@ do -- Patrol methods
     self:F( { PatrolGroup = PatrolGroup:GetName() } )
 
     if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
-    
+
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
-      
+
       -- test for submarine
       local depth = 0
       local IsSub = false
       if PatrolGroup:IsShip() then
         local navalvec3 = FromCoord:GetVec3()
-        if navalvec3.y < 0 then 
+        if navalvec3.y < 0 then
           depth = navalvec3.y
           IsSub = true
         end
@@ -3775,12 +3775,13 @@ end
 
 --- (GROUND) Relocate controllable to a random point within a given radius; use e.g.for evasive actions; Note that not all ground controllables can actually drive, also the alarm state of the controllable might stop it from moving.
 -- @param #CONTROLLABLE self
--- @param  #number speed Speed of the controllable, default 20
--- @param  #number radius Radius of the relocation zone, default 500
--- @param  #boolean onroad If true, route on road (less problems with AI way finding), default true
--- @param  #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
+-- @param #number speed Speed of the controllable, default 20
+-- @param #number radius Radius of the relocation zone, default 500
+-- @param #boolean onroad If true, route on road (less problems with AI way finding), default true
+-- @param #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
+-- @param #string formation Formation string as in the mission editor, e.g. "Vee", "Diamond", "Line abreast", etc. Defaults to "Off Road"
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortcut)
+function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortcut, formation)
   self:F2( { self.ControllableName } )
 
     local _coord = self:GetCoordinate()
@@ -3791,14 +3792,14 @@ function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortc
     local _grptsk = {}
     local _candoroad = false
     local _shortcut = shortcut or false
+    local _formation = formation or "Off Road"
 
     -- create a DCS Task an push it on the group
-    -- TaskGroundOnRoad(ToCoordinate,Speed,OffRoadFormation,Shortcut,FromCoordinate,WaypointFunction,WaypointFunctionArguments)
     if onroad then
-      _grptsk, _candoroad = self:TaskGroundOnRoad(_tocoord,_speed,"Off Road",_shortcut)
+      _grptsk, _candoroad = self:TaskGroundOnRoad(_tocoord,_speed,_formation,_shortcut)
       self:Route(_grptsk,5)
     else
-      self:TaskRouteToVec2(_tocoord:GetVec2(),_speed,"Off Road")
+      self:TaskRouteToVec2(_tocoord:GetVec2(),_speed,_formation)
     end
 
   return self
