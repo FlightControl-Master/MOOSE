@@ -547,6 +547,12 @@ function AIRBASE:Register(AirbaseName)
     self.isHelipad=true
   elseif self.category==Airbase.Category.SHIP then
     self.isShip=true
+    -- DCS bug: Oil rigs and gas platforms have category=2 (ship). Also they cannot be retrieved by coalition.getStaticObjects()
+    if self.descriptors.typeName=="Oil rig" or self.descriptors.typeName=="Ga" then
+      self.isHelipad=true
+      self.isShip=false
+      self.category=Airbase.Category.HELIPAD
+      _DATABASE:AddStatic(AirbaseName)	
   else
     self:E("ERROR: Unknown airbase category!")
   end
