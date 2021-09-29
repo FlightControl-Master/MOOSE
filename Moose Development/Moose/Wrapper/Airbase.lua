@@ -1184,7 +1184,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   parkingdata=parkingdata or self:GetParkingSpotsTable(terminaltype)
 
   -- Get the aircraft size, i.e. it's longest side of x,z.
-  local aircraft = nil
+  local aircraft = nil -- fix local problem below
   local _aircraftsize, ax,ay,az
   if group and group.ClassName == "GROUP" then
     aircraft=group:GetUnit(1)
