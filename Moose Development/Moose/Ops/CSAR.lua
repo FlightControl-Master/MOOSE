@@ -97,6 +97,9 @@
 --         self.pilotmustopendoors = false -- switch to true to enable check of open doors
 --         -- (added 0.1.9)
 --         self.suppressmessages = false -- switch off all messaging if you want to do your own
+--         -- (added 0.1.11)
+--         self.rescuehoverheight = 20 -- max height for a hovering rescue in meters
+--         self.rescuehoverdistance = 10 -- max distance for a hovering rescue in meters
 -- 
 -- ## 2.1 Experimental Features
 -- 
@@ -233,7 +236,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.10r5"
+CSAR.version="0.1.11r1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -362,6 +365,10 @@ function CSAR:New(Coalition, Template, Alias)
   self.approachdist_near = 3000 -- switch to 5 sec interval approach mode, meters
   self.pilotmustopendoors = false -- switch to true to enable check on open doors
   self.suppressmessages = false
+  
+  -- added 0.1.11r1
+  self.rescuehoverheight = 20
+  self.rescuehoverdistance = 10
     
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -1200,15 +1207,16 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
           end
           
           if _heliUnit:InAir() and _unitsInHelicopter + 1 <= _maxUnits then
-  
-              if _distance < 8.0 then
+              -- TODO - make variable
+              if _distance < self.rescuehoverdistance then
   
                   --check height!
                   local leaderheight = _woundedLeader:GetHeight()
                   if leaderheight < 0 then leaderheight = 0 end
                   local _height = _heliUnit:GetHeight() - leaderheight
-  
-                  if _height <= 20.0 then
+                  
+                  -- TODO - make variable
+                  if _height <= self.rescuehoverheight then
   
                       local _time = self.hoverStatus[_lookupKeyHeli]
   
