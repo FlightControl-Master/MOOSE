@@ -748,6 +748,8 @@ function INTEL:CreateDetectedItems(DetectedGroups, RecceDetecting)
       item.velocity=group:GetVelocityVec3()
       item.speed=group:GetVelocityMPS()
       item.recce=RecceDetecting[groupname]
+      item.isground = group:IsGround() or false
+      item.isship = group:IsShip() or false
       self:T(string.format("%s group detect by %s/%s", groupname, RecceDetecting[groupname] or "unknown", item.recce or "unknown"))
       -- Add contact to table.    
       self:AddContact(item)
@@ -792,8 +794,8 @@ end
 function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
 
   -- Get detected DCS units.
-  local detectedtargets=Unit:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
   local reccename = Unit:GetName()
+  local detectedtargets=Unit:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
   
   for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
     local DetectedObject=Detection.object -- DCS#Object
