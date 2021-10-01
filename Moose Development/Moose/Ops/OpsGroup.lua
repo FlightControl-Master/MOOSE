@@ -477,13 +477,12 @@ OPSGROUP.version="0.7.5"
 -- TODO: Invisible/immortal.
 -- TODO: F10 menu.
 -- TODO: Add pseudo function.
--- TODO: Afterburner restrict
+-- TODO: Afterburner restrict.
 -- TODO: What more options?
 -- TODO: Damage?
 -- TODO: Shot events?
 -- TODO: Marks to add waypoints/tasks on-the-fly.
 -- DONE: Options EPLRS
--- DONE: A lot.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -849,6 +848,7 @@ function OPSGROUP:GetLifePoints(Element)
     if unit then
       life=unit:GetLife()
       life0=unit:GetLife0()
+      life=math.min(life, life0) -- Some units have more life than life0 returns!
     end
 
   else
@@ -5901,6 +5901,33 @@ function OPSGROUP:onafterInUtero(From, Event, To)
   --TODO: set element status to inutero
 end
 
+--- On after "Damaged" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function OPSGROUP:onafterDamaged(From, Event, To)
+  self:T(self.lid..string.format("Group damaged at t=%.3f", timer.getTime()))
+  
+  --[[
+  local lifemin=nil
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
+      local life, life0=self:GetLifePoints(element)
+      if lifemin==nil or life<lifemin then
+        lifemin=life
+      end
+    end
+  end
+  
+  if lifemin and lifemin/self.life<0.5 then
+    self:RTB()
+  end
+  ]]
+  
+end
+
 --- On after "Destroyed" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -7064,16 +7091,19 @@ function OPSGROUP:onafterPickup(From, Event, To)
       -- Get a (random) pre-defined transport path.
       local path=self.cargoTransport:_GetPathPickup(self.cargoTZC)
 
+      -- Formation used to go to the pickup zone..
+      local Formation=self.cargoTransport:_GetFormationPickup(self.cargoTZC)
+
       if path then
         -- Loop over coordinates.
         for i,coordinate in pairs(path) do
-          local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
+          local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, Formation) ; waypoint.temp=true
           uid=waypoint.uid
         end
       end
 
       -- ARMYGROUP
-      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=1
+      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, uid, Formation) ; waypoint.detour=1
       
       -- Give cruise command.
       self:__Cruise(-2)
@@ -7404,16 +7434,19 @@ function OPSGROUP:onafterTransport(From, Event, To)
       -- Get transport path.
       local path=self.cargoTransport:_GetPathTransport(self.cargoTZC)
       
+      -- Formation used for transporting.
+      local Formation=self.cargoTransport:_GetFormationTransport(self.cargoTZC)
+      
       if path then
         -- Loop over coordinates.
         for i,coordinate in pairs(path) do
-          local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
+          local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, Formation) ; waypoint.temp=true
           uid=waypoint.uid
         end
       end
 
       -- ARMYGROUP
-      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, ENUMS.Formation.Vehicle.OnRoad) ; waypoint.detour=1
+      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, Formation) ; waypoint.detour=1
 
       -- Give cruise command.
       self:Cruise()
@@ -8022,7 +8055,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
     self:T(self.lid.."Carrier not ready for boarding yet ==> repeating boarding call in 10 sec")
     self:__Board(-10, CarrierGroup, Carrier)
     
-    -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.´
+    -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.ï¿½
     CarrierGroup:_AddCargobay(self, Carrier, true)
     
   end
@@ -10767,7 +10800,8 @@ function OPSGROUP:_AddElementByName(unitname)
   if unit then
 
     -- Get unit template.
-    local unittemplate=unit:GetTemplate()
+    --local unittemplate=unit:GetTemplate()
+    local unittemplate=_DATABASE:GetUnitTemplateFromUnitName(unitname)
 
     -- Element table.
     local element={} --#OPSGROUP.Element
@@ -10781,7 +10815,7 @@ function OPSGROUP:_AddElementByName(unitname)
     element.DCSunit=Unit.getByName(unitname)
     element.gid=element.DCSunit:getNumber()
     element.uid=element.DCSunit:getID()
-    element.group=unit:GetGroup()
+    --element.group=unit:GetGroup()
     element.opsgroup=self
 
     -- Skill etc.

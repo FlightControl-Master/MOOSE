@@ -361,6 +361,7 @@ function ARMYGROUP:Status()
   -- Is group alive?
   local alive=self:IsAlive()
 
+  -- Check that group EXISTS and is ACTIVE.
   if alive then
 
     -- Update position etc.    
@@ -396,6 +397,7 @@ function ARMYGROUP:Status()
     
   end
   
+  -- Check that group EXISTS.
   if alive~=nil then
     
     if self.verbose>=1 then
@@ -1376,6 +1378,7 @@ function ARMYGROUP:_InitGroup(Template)
   for _,unit in pairs(units) do
     self:_AddElementByName(unit:GetName())
   end
+  
 
   -- Init done.
   self.groupinitialized=true

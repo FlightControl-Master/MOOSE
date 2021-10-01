@@ -17,11 +17,14 @@
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity level.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #number coalition Coalition side of the commander.
+-- @field #string alias Alias name.
 -- @field #table legions Table of legions which are commanded.
 -- @field #table missionqueue Mission queue.
 -- @field #table transportqueue Transport queue.
 -- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
+-- @field #table awacsZones AWACS zones. Each element is of type `#AIRWING.AwacsZone`.
 -- @field Ops.Chief#CHIEF chief Chief of staff.
 -- @extends Core.Fsm#FSM
 
@@ -38,11 +41,13 @@
 COMMANDER = {
   ClassName       = "COMMANDER",
   verbose         =     0,
+  coalition       =   nil,
   legions         =    {},
   missionqueue    =    {},
   transportqueue  =    {},
   rearmingZones   =    {},
   refuellingZones =    {},
+  awacsZones      =    {},
 }
 
 --- COMMANDER class version.
@@ -53,9 +58,9 @@ COMMANDER.version="0.1.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Improve legion selection. Mostly done!
--- TODO: Find solution for missions, which require a transport. This is not as easy as it sounds since the selected mission assets restrict the possible transport assets.
--- TODO: Add ops transports.
+-- DONE: Improve legion selection. Mostly done!
+-- DONE: Find solution for missions, which require a transport. This is not as easy as it sounds since the selected mission assets restrict the possible transport assets.
+-- DONE: Add ops transports.
 -- DONE: Allow multiple Legions for one mission.
 -- NOGO: Maybe it's possible to preselect the assets for the mission.
 
@@ -65,14 +70,21 @@ COMMANDER.version="0.1.0"
 
 --- Create a new COMMANDER object and start the FSM.
 -- @param #COMMANDER self
+-- @param #number Coalition Coaliton of the commander.
+-- @param #string Alias Some name you want the commander to be called.
 -- @return #COMMANDER self
-function COMMANDER:New()
+function COMMANDER:New(Coalition, Alias)
 
   -- Inherit everything from INTEL class.
   local self=BASE:Inherit(self, FSM:New()) --#COMMANDER
   
+  -- Set coaliton.
+  self.coalition=Coalition
+  -- Alias name.
+  self.alias=Alias or string.format("Jon Doe")
+  
   -- Log ID.
-  self.lid="COMMANDER | "
+  self.lid=string.format("COMMANDER %s [%s] | ", self.alias, UTILS.GetCoalitionName(self.coalition))
 
   -- Start state.
   self:SetStartState("NotReadyYet")
@@ -88,6 +100,8 @@ function COMMANDER:New()
 
   self:AddTransition("*",                  "TransportAssign",     "*")           -- Transport is assigned to a or multiple LEGIONs.
   self:AddTransition("*",                  "TransportCancel",     "*")           -- COMMANDER cancels a Transport.
+
+  self:AddTransition("*",                  "OpsOnMission",        "*")           -- An OPSGROUP was send on a Mission (AUFTRAG).
 
   ------------------------
   --- Pseudo Functions ---
@@ -207,6 +221,29 @@ function COMMANDER:New()
   -- @param #string To To state.
   -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
+
+  --- Triggers the FSM event "OpsOnMission".
+  -- @function [parent=#COMMANDER] OpsOnMission
+  -- @param #COMMANDER self
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "OpsOnMission" after a delay.
+  -- @function [parent=#COMMANDER] __OpsOnMission
+  -- @param #COMMANDER self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "OpsOnMission" event.
+  -- @function [parent=#COMMANDER] OnAfterOpsOnMission
+  -- @param #COMMANDER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
   return self
 end
 
@@ -221,6 +258,13 @@ end
 function COMMANDER:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
   return self
+end
+
+--- Get coalition.
+-- @param #COMMANDER self
+-- @return #number Coalition.
+function COMMANDER:GetCoalition()
+  return self.coalition
 end
 
 --- Add an AIRWING to the commander.
@@ -268,11 +312,15 @@ end
 -- @return #COMMANDER self
 function COMMANDER:AddMission(Mission)
 
-  Mission.commander=self
-  
-  Mission.statusCommander=AUFTRAG.Status.PLANNED
+  if not self:IsMission(Mission) then
 
-  table.insert(self.missionqueue, Mission)
+    Mission.commander=self
+    
+    Mission.statusCommander=AUFTRAG.Status.PLANNED
+  
+    table.insert(self.missionqueue, Mission)
+    
+  end
 
   return self
 end
@@ -368,6 +416,47 @@ function COMMANDER:AddRefuellingZone(RefuellingZone)
   return rearmingzone
 end
 
+--- Add an AWACS zone.
+-- @param #COMMANDER self
+-- @param Core.Zone#ZONE AwacsZone Zone.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @return Ops.AirWing#AIRWING.AwacsZone The AWACS zone.
+function COMMANDER:AddAwacsZone(AwacsZone, Altitude, Speed, Heading, Leg)
+
+  local awacszone={} --Ops.AirWing#AIRWING.AwacsZone
+  
+  awacszone.zone=AwacsZone
+  awacszone.altitude=Altitude or 12000
+  awacszone.heading=Heading or 270
+  awacszone.speed=UTILS.KnotsToAltKIAS(Speed or 350, awacszone.altitude)
+  awacszone.leg=Leg or 30
+  awacszone.mission=nil
+  awacszone.marker=MARKER:New(awacszone.zone:GetCoordinate(), "AWACS Zone"):ToCoalition(self:GetCoalition())
+
+  table.insert(self.awacsZones, awacszone)
+
+  return awacszone
+end
+
+--- Check if this mission is already in the queue.
+-- @param #COMMANDER self
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @return #boolean If `true`, this mission is in the queue.
+function COMMANDER:IsMission(Mission)
+
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    if mission.auftragsnummer==Mission.auftragsnummer then
+      return true
+    end 
+  end
+
+  return false
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -420,7 +509,7 @@ function COMMANDER:onafterStatus(From, Event, To)
   
   -- Check rearming zones.
   for _,_rearmingzone in pairs(self.rearmingZones) do
-    local rearmingzone=_rearmingzone --#BRIGADE.SupplyZone
+    local rearmingzone=_rearmingzone --Ops.Brigade#BRIGADE.SupplyZone
     -- Check if mission is nil or over.      
     if (not rearmingzone.mission) or rearmingzone.mission:IsOver() then
       rearmingzone.mission=AUFTRAG:NewAMMOSUPPLY(rearmingzone.zone)
@@ -430,13 +519,24 @@ function COMMANDER:onafterStatus(From, Event, To)
   
   -- Check refuelling zones.
   for _,_supplyzone in pairs(self.refuellingZones) do
-    local supplyzone=_supplyzone --#BRIGADE.SupplyZone
+    local supplyzone=_supplyzone --Ops.Brigade#BRIGADE.SupplyZone
     -- Check if mission is nil or over.      
     if (not supplyzone.mission) or supplyzone.mission:IsOver() then
       supplyzone.mission=AUFTRAG:NewFUELSUPPLY(supplyzone.zone)
       self:AddMission(supplyzone.mission)
     end
-  end    
+  end
+  
+  -- Check AWACS zones.
+  for _,_awacszone in pairs(self.awacsZones) do
+    local awacszone=_awacszone --Ops.AirWing#AIRWING.AwacsZone
+    -- Check if mission is nil or over.
+    if (not awacszone.mission) or awacszone.mission:IsOver() then
+      local Coordinate=awacszone.zone:GetCoordinate()
+      awacszone.mission=AUFTRAG:NewAWACS(Coordinate, awacszone.altitude, awacszone.speed, awacszone.heading, awacszone.leg)
+      self:AddMission(awacszone.mission)
+    end
+  end      
     
   ---
   -- LEGIONS
@@ -587,7 +687,10 @@ function COMMANDER:onafterMissionAssign(From, Event, To, Legion, Mission)
 
   -- Debug info.
   self:I(self.lid..string.format("Assigning mission %s (%s) to legion %s", Mission.name, Mission.type, Legion.alias))
-  
+    
+  -- Add mission to queue.
+  self:AddMission(Mission)
+
   -- Set mission commander status to QUEUED as it is now queued at a legion.
   Mission.statusCommander=AUFTRAG.Status.QUEUED
   
@@ -694,6 +797,18 @@ function COMMANDER:onafterTransportCancel(From, Event, To, Transport)
     
   end
 
+end
+
+--- On after "OpsOnMission".
+-- @param #COMMANDER self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup Ops group on mission
+-- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+function COMMANDER:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
+  -- Debug info.
+  self:T2(self.lid..string.format("Group %s on %s mission %s", OpsGroup:GetName(), Mission:GetType(), Mission:GetName()))
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

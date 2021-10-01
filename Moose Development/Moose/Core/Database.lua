@@ -860,6 +860,20 @@ function DATABASE:GetGroupTemplateFromUnitName( UnitName )
   end
 end
 
+--- Get group template from unit name.
+-- @param #DATABASE self
+-- @param #string UnitName Name of the unit.
+-- @return #table Group template.
+function DATABASE:GetUnitTemplateFromUnitName( UnitName )
+  if self.Templates.Units[UnitName] then
+    return self.Templates.Units[UnitName]
+  else
+    self:E("ERROR: Unit template does not exist for unit "..tostring(UnitName))
+    return nil
+  end
+end
+
+
 --- Get coalition ID from client name.
 -- @param #DATABASE self
 -- @param #string ClientName Name of the Client.

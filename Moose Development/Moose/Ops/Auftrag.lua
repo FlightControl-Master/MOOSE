@@ -1130,7 +1130,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate Where to orbit. Default is the center of the CAS zone.
 -- @param #number Heading Heading of race-track pattern in degrees. If not specified, a simple circular orbit is performed.
 -- @param #number Leg Length of race-track in NM. If not specified, a simple circular orbit is performed.
--- @param #table TargetTypes (Optional) Table of target types. Default {"Helicopters", "Ground Units", "Light armed ships"}.
+-- @param #table TargetTypes (Optional) Table of target types. Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
 -- @return #AUFTRAG self
 function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, TargetTypes)
 
@@ -1718,7 +1718,7 @@ function AUFTRAG:NewONGUARD(Coordinate)
   mission:_TargetFromObject(Coordinate)
   
   mission.optionROE=ENUMS.ROE.OpenFire
-  mission.optionAlarm=ENUMS.AlarmState.Red
+  mission.optionAlarm=ENUMS.AlarmState.Auto
   
   mission.missionFraction=1.0
   

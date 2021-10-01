@@ -77,7 +77,8 @@ function LEGION:New(WarehouseName, LegionName)
   self.lid=string.format("LEGION %s | ", self.alias)
   
   -- Defaults:
-  -- TODO: What?  
+  -- TODO: What?
+  self:SetMarker(false)
 
   -- Add FSM transitions.
   --                 From State  -->   Event        -->      To State
@@ -928,6 +929,16 @@ function LEGION:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
     self:ArmyOnMission(OpsGroup, Mission)
   else
     --TODO: Flotilla
+  end
+  
+  -- Trigger event for chief.
+  if self.chief then
+    self.chief:OpsOnMission(OpsGroup, Mission)
+  end
+  
+  -- Trigger event for commander.
+  if self.commander then
+    self.commander:OpsOnMission(OpsGroup, Mission)
   end
 
 end

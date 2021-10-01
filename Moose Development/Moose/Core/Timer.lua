@@ -107,14 +107,15 @@ _TIMERID=0
 
 --- TIMER class version.
 -- @field #string version
-TIMER.version="0.1.1"
+TIMER.version="0.1.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Randomization.
 -- TODO: Pause/unpause.
--- TODO: Write docs.
+-- DONE: Write docs.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -225,6 +226,15 @@ end
 -- @return #TIMER self
 function TIMER:SetMaxFunctionCalls(Nmax)
   self.ncallsMax=Nmax
+  return self
+end
+
+--- Set time interval. Can also be set when the timer is already running and is applied after the next function call.
+-- @param #TIMER self
+-- @param #number dT Time interval in seconds.
+-- @return #TIMER self
+function TIMER:SetTimeInterval(dT)
+  self.dT=dT
   return self
 end
 

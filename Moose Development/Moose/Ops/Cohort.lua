@@ -116,12 +116,7 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
     self:E(self.lid..string.format("ERROR: Template group %s does not exist!", tostring(self.templatename)))
     return nil
   end
-  
-  -- Defaults.
-  self.Ngroups=Ngroups or 3  
-  self:SetMissionRange()
-  self:SetSkill(AI.Skill.GOOD)
-  
+    
   -- Generalized attribute.
   self.attribute=self.templategroup:GetAttribute()
   
@@ -130,7 +125,25 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   
   -- Aircraft type.
   self.aircrafttype=self.templategroup:GetTypeName()
+
+  -- Defaults.
+  self.Ngroups=Ngroups or 3  
+  self:SetSkill(AI.Skill.GOOD)
   
+  -- Mission range depends on 
+  if self.category==Group.Category.AIRPLANE then
+    self:SetMissionRange(150)
+  elseif self.category==Group.Category.HELICOPTER then
+    self:SetMissionRange(150)
+  elseif self.category==Group.Category.GROUND then
+    self:SetMissionRange(75)
+  elseif self.category==Group.Category.SHIP then
+    self:SetMissionRange(100)
+  elseif self.category==Group.Category.TRAIN then
+    self:SetMissionRange(100)
+  end    
+  
+  -- Units.
   local units=self.templategroup:GetUnits()
   
   -- Weight of the whole group.
@@ -346,10 +359,10 @@ end
 
 --- Set max mission range. Only missions in a circle of this radius around the cohort base are executed.
 -- @param #COHORT self
--- @param #number Range Range in NM. Default 100 NM.
+-- @param #number Range Range in NM. Default 150 NM.
 -- @return #COHORT self
 function COHORT:SetMissionRange(Range)
-  self.engageRange=UTILS.NMToMeters(Range or 100)
+  self.engageRange=UTILS.NMToMeters(Range or 150)
   return self
 end
 
@@ -913,6 +926,9 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
             if flightgroup:IsCargo() or flightgroup:IsBoarding() or flightgroup:IsAwaitingLift() then
               combatready=false
             end
+            
+            -- Disable this for now as it can cause problems - at least with transport and cargo assets.
+            combatready=false
                     
             -- This asset is "combatready".
             if combatready then

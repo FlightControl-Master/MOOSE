@@ -49,8 +49,8 @@ CHIEF = {
 
 --- Defence condition.
 -- @type CHIEF.DEFCON
--- @field #string GREEN No enemy activities detected.
--- @field #string YELLOW Enemy near our border.
+-- @field #string GREEN No enemy activities detected in our terretory or conflict zones.
+-- @field #string YELLOW Enemy in conflict zones.
 -- @field #string RED Enemy within our border.
 CHIEF.DEFCON = {
   GREEN="Green",
@@ -78,6 +78,15 @@ CHIEF.Strategy = {
 -- @field #string MissionType Mission Type.
 -- @field #number Performance Performance: a number between 0 and 100, where 100 is best performance.
 
+--- Strategic zone.
+-- @type CHIEF.StrategicZone
+-- @field Ops.OpsZone#OPSZONE opszone OPS zone.
+-- @field #number prio Priority.
+-- @field #number importance Importance
+-- @field Ops.Auftrag#AUFTRAG missionPatrol Patrol mission.
+-- @field Ops.Auftrag#AUFTRAG missionCAS CAS mission.
+
+
 --- CHIEF class version.
 -- @field #string version
 CHIEF.version="0.0.1"
@@ -86,13 +95,16 @@ CHIEF.version="0.0.1"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Create a good mission, which can be passed on to the COMMANDER.
--- TODO: Capture OPSZONEs.
--- TODO: Get list of own assets and capabilities.
+-- TODO: Tactical overview.
+-- DONE: Add event for opsgroups on mission.
+-- DONE: Add event for zone captured. 
+-- TODO: Limits of missions?
+-- DONE: Create a good mission, which can be passed on to the COMMANDER.
+-- DONE: Capture OPSZONEs.
+-- DONE: Get list of own assets and capabilities.
 -- DONE: Get list/overview of enemy assets etc.
 -- DONE: Put all contacts into target list. Then make missions from them.
--- TODO: Set of interesting zones.
--- TODO: Define A2A and A2G parameters.
+-- DONE: Set of interesting zones.
 -- DONE: Add/remove spawned flightgroups to detection set.
 -- DONE: Borderzones.
 -- NOGO: Maybe it's possible to preselect the assets for the mission.
@@ -117,7 +129,8 @@ function CHIEF:New(AgentSet, Coalition, Alias)
 
   -- Defaults.
   self:SetBorderZones()
-  self:SetYellowZones()
+  self:SetConflictZones()
+  self:SetAttackZones()
   self:SetThreatLevelRange()
   
   -- Init stuff.
@@ -125,24 +138,24 @@ function CHIEF:New(AgentSet, Coalition, Alias)
   self.strategy=CHIEF.Strategy.DEFENSIVE
   
   -- Create a new COMMANDER.
-  self.commander=COMMANDER:New()  
+  self.commander=COMMANDER:New(Coalition)  
 
   -- Add FSM transitions.
   --                 From State   -->    Event                     -->    To State
-  self:AddTransition("*",                "MissionAssignToAny",            "*")   -- Assign mission to a COMMANDER.
-  
-  self:AddTransition("*",                "MissionAssignToAirfore",        "*")   -- Assign mission to a COMMANDER but request only AIR assets.
-  self:AddTransition("*",                "MissionAssignToNavy",           "*")   -- Assign mission to a COMMANDER but request only NAVAL assets.
-  self:AddTransition("*",                "MissionAssignToArmy",           "*")   -- Assign mission to a COMMANDER but request only GROUND assets.
-  
+  self:AddTransition("*",                "MissionAssign",                 "*")   -- Assign mission to a COMMANDER.  
   self:AddTransition("*",                "MissionCancel",                 "*")   -- Cancel mission.
+  
   self:AddTransition("*",                "TransportCancel",               "*")   -- Cancel transport.
   
-  self:AddTransition("*",                "DefconChange",                  "*")   -- Change defence condition.
+  self:AddTransition("*",                "OpsOnMission",                  "*")   -- An OPSGROUP was send on a Mission (AUFTRAG).
   
-  self:AddTransition("*",                "StategyChange",                 "*")   -- Change strategy condition.
+  self:AddTransition("*",                "ZoneCaptured",                  "*")   -- 
+  self:AddTransition("*",                "ZoneLost",                      "*")   --
+  self:AddTransition("*",                "ZoneEmpty",                     "*")   --
+  self:AddTransition("*",                "ZoneAttacked",                  "*")   --
   
-  self:AddTransition("*",                "DeclareWar",                    "*")   -- Declare War. Not implemented.
+  self:AddTransition("*",                "DefconChange",                  "*")   -- Change defence condition. 
+  self:AddTransition("*",                "StrategyChange",                "*")   -- Change strategy condition.
 
   ------------------------
   --- Pseudo Functions ---
@@ -217,23 +230,26 @@ function CHIEF:New(AgentSet, Coalition, Alias)
   -- @param #string Strategy New stragegy.
 
 
-  --- Triggers the FSM event "MissionAssignToAny".
-  -- @function [parent=#CHIEF] MissionAssignToAny
+  --- Triggers the FSM event "MissionAssign".
+  -- @function [parent=#CHIEF] MissionAssign
   -- @param #CHIEF self
+  -- @param Ops.Legion#LEGION Legion The legion.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
-  --- Triggers the FSM event "MissionAssignToAny" after a delay.
-  -- @function [parent=#CHIEF] __MissionAssignToAny
+  --- Triggers the FSM event "MissionAssign" after a delay.
+  -- @function [parent=#CHIEF] __MissionAssign
   -- @param #CHIEF self
   -- @param #number delay Delay in seconds.
+  -- @param Ops.Legion#LEGION Legion The legion.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
-  --- On after "MissionAssignToAny" event.
-  -- @function [parent=#CHIEF] OnAfterMissionAssignToAny
+  --- On after "MissionAssign" event.
+  -- @function [parent=#CHIEF] OnAfterMissionAssign
   -- @param #CHIEF self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+  -- @param Ops.Legion#LEGION Legion The legion.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
 
@@ -275,6 +291,106 @@ function CHIEF:New(AgentSet, Coalition, Alias)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+
+
+  --- Triggers the FSM event "OpsOnMission".
+  -- @function [parent=#CHIEF] OpsOnMission
+  -- @param #CHIEF self
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- Triggers the FSM event "OpsOnMission" after a delay.
+  -- @function [parent=#CHIEF] __OpsOnMission
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+  --- On after "OpsOnMission" event.
+  -- @function [parent=#CHIEF] OnAfterOpsOnMission
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPS group on mission.
+  -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+
+
+  --- Triggers the FSM event "ZoneCaptured".
+  -- @function [parent=#CHIEF] ZoneCaptured
+  -- @param #CHIEF self
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was captured.
+
+  --- Triggers the FSM event "ZoneCaptured" after a delay.
+  -- @function [parent=#CHIEF] __ZoneCaptured
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was captured.
+
+  --- On after "ZoneCaptured" event.
+  -- @function [parent=#CHIEF] OnAfterZoneCaptured
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was captured. 
+
+  --- Triggers the FSM event "ZoneLost".
+  -- @function [parent=#CHIEF] ZoneLost
+  -- @param #CHIEF self
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was lost.
+
+  --- Triggers the FSM event "ZoneLost" after a delay.
+  -- @function [parent=#CHIEF] __ZoneLost
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was lost.
+
+  --- On after "ZoneLost" event.
+  -- @function [parent=#CHIEF] OnAfterZoneLost
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that was lost. 
+
+  --- Triggers the FSM event "ZoneEmpty".
+  -- @function [parent=#CHIEF] ZoneEmpty
+  -- @param #CHIEF self
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is empty now.
+
+  --- Triggers the FSM event "ZoneEmpty" after a delay.
+  -- @function [parent=#CHIEF] __ZoneEmpty
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is empty now.
+
+  --- On after "ZoneEmpty" event.
+  -- @function [parent=#CHIEF] OnAfterZoneEmpty
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is empty now.
+
+  --- Triggers the FSM event "ZoneAttacked".
+  -- @function [parent=#CHIEF] ZoneAttacked
+  -- @param #CHIEF self
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is beeing attacked.
+
+  --- Triggers the FSM event "ZoneAttacked" after a delay.
+  -- @function [parent=#CHIEF] __ZoneAttacked
+  -- @param #CHIEF self
+  -- @param #number delay Delay in seconds.
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is beeing attacked.
+
+  --- On after "ZoneAttacked" event.
+  -- @function [parent=#CHIEF] OnAfterZoneAttacked
+  -- @param #CHIEF self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is beeing attacked. 
 
   return self
 end
@@ -514,9 +630,27 @@ end
 -- @return #CHIEF self
 function CHIEF:AddTarget(Target)
 
-  table.insert(self.targetqueue, Target)
+  if not self:IsTarget(Target) then
+    table.insert(self.targetqueue, Target)
+  end
 
   return self
+end
+
+--- Check if a TARGET is already in the queue. 
+-- @param #CHIEF self
+-- @param Ops.Target#TARGET Target Target object to be added.
+-- @return #boolean If `true`, target exists in the target queue.
+function CHIEF:IsTarget(Target)
+
+  for _,_target in pairs(self.targetqueue) do
+    local target=_target --Ops.Target#TARGET
+    if target.uid==Target.uid then
+      return true
+    end
+  end
+
+  return false
 end
 
 --- Remove target from queue.
@@ -541,22 +675,17 @@ end
 
 --- Add strategically important zone.
 -- @param #CHIEF self
--- @param Core.Zone#ZONE_RADIUS Zone Strategic zone.
--- @return #CHIEF self
-function CHIEF:AddStrateticZone(Zone)
-
-  local opszone=OPSZONE:New(Zone, CoalitionOwner)
-
-  table.insert(self.zonequeue, opszone)
-
-  return self
-end
-
---- Add strategically important zone.
--- @param #CHIEF self
 -- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
+-- @param #number Priority Priority.
+-- @param #number Importance Importance.
 -- @return #CHIEF self
-function CHIEF:AddOpsZone(OpsZone)
+function CHIEF:AddStrateticZone(OpsZone, Priority, Importance)
+
+  local stratzone={} --#CHIEF.StrategicZone
+  
+  stratzone.opszone=OpsZone
+  stratzone.prio=Priority or 50
+  stratzone.importance=Importance
 
   -- Start ops zone.
   if OpsZone:IsStopped() then
@@ -564,7 +693,10 @@ function CHIEF:AddOpsZone(OpsZone)
   end
 
   -- Add to table.
-  table.insert(self.zonequeue, OpsZone)
+  table.insert(self.zonequeue, stratzone)
+  
+  -- Add chief so we get informed when something happens.
+  OpsZone:_AddChief(self)
 
   return self
 end
@@ -593,8 +725,28 @@ function CHIEF:AddRefuellingZone(RefuellingZone)
   return supplyzone
 end
 
+--- Add an AWACS zone.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE AwacsZone Zone.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @return Ops.AirWing#AIRWING.AwacsZone The AWACS zone.
+function CHIEF:AddAwacsZone(AwacsZone, Altitude, Speed, Heading, Leg)
 
---- Set border zone set.
+  -- Hand over to commander.
+  local awacszone=self.commander:AddAwacsZone(AwacsZone, Altitude, Speed, Heading, Leg)
+
+  return awacszone
+end
+
+
+--- Set border zone set, defining your territory.
+-- 
+-- * Detected enemy troops in these zones will trigger defence condition `RED`.
+-- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.DEFENSIVE`.
+-- 
 -- @param #CHIEF self
 -- @param Core.Set#SET_ZONE BorderZoneSet Set of zones, defining our borders.
 -- @return #CHIEF self
@@ -607,40 +759,118 @@ function CHIEF:SetBorderZones(BorderZoneSet)
 end
 
 --- Add a zone defining your territory.
+-- 
+-- * Detected enemy troops in these zones will trigger defence condition `RED`.
+-- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.DEFENSIVE`.
+-- 
 -- @param #CHIEF self
--- @param Core.Zone#ZONE BorderZone The zone defining the border of your territory.
+-- @param Core.Zone#ZONE Zone The zone.
 -- @return #CHIEF self
-function CHIEF:AddBorderZone(BorderZone)
+function CHIEF:AddBorderZone(Zone)
 
   -- Add a border zone.
-  self.borderzoneset:AddZone(BorderZone)
+  self.borderzoneset:AddZone(Zone)
   
   return self
 end
 
---- Set yellow zone set. Detected enemy troops in this zone will trigger defence condition YELLOW.
+--- Set conflict zone set.
+-- 
+-- * Detected enemy troops in these zones will trigger defence condition `YELLOW`.
+-- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.OFFENSIVE`.
+-- 
 -- @param #CHIEF self
--- @param Core.Set#SET_ZONE YellowZoneSet Set of zones, defining our borders.
+-- @param Core.Set#SET_ZONE ZoneSet Set of zones.
 -- @return #CHIEF self
-function CHIEF:SetYellowZones(YellowZoneSet)
+function CHIEF:SetConflictZones(ZoneSet)
 
-  -- Border zones.
-  self.yellowzoneset=YellowZoneSet or SET_ZONE:New()
+  -- Conflict zones.
+  self.yellowzoneset=ZoneSet or SET_ZONE:New()
   
   return self
 end
 
---- Add a zone defining an area outside your territory that is monitored for enemy activity.
+--- Add a conflict zone.
+-- 
+-- * Detected enemy troops in these zones will trigger defence condition `YELLOW`.
+-- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.OFFENSIVE`.
+-- 
 -- @param #CHIEF self
--- @param Core.Zone#ZONE YellowZone The zone defining the border of your territory.
+-- @param Core.Zone#ZONE Zone The zone to add.
 -- @return #CHIEF self
-function CHIEF:AddYellowZone(YellowZone)
+function CHIEF:AddConflictZone(Zone)
 
-  -- Add a border zone.
-  self.yellowzoneset:AddZone(YellowZone)
+  -- Add a conflict zone.
+  self.yellowzoneset:AddZone(Zone)
   
   return self
 end
+
+--- Set attack zone set.
+-- 
+-- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.AGGRESSIVE`.
+-- 
+-- @param #CHIEF self
+-- @param Core.Set#SET_ZONE ZoneSet Set of zones.
+-- @return #CHIEF self
+function CHIEF:SetAttackZones(ZoneSet)
+
+  -- Attacak zones.
+  self.engagezoneset=ZoneSet or SET_ZONE:New()
+  
+  return self
+end
+
+--- Add an attack zone.
+-- 
+-- * Enemies in these zones will only be engaged if strategy is at least `CHIEF.STRATEGY.AGGRESSIVE`.
+-- 
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone The zone to add.
+-- @return #CHIEF self
+function CHIEF:AddAttackZone(Zone)
+
+  -- Add an attack zone.
+  self.engagezoneset:AddZone(Zone)
+  
+  return self
+end
+
+--- Check if current strategy is passive.
+-- @param #CHIEF self
+-- @return #boolean If `true`, strategy is passive.
+function CHIEF:IsPassive()
+  return self.strategy==CHIEF.Strategy.PASSIVE
+end
+
+--- Check if current strategy is defensive.
+-- @param #CHIEF self
+-- @return #boolean If `true`, strategy is defensive.
+function CHIEF:IsDefensive()
+  return self.strategy==CHIEF.Strategy.DEFENSIVE
+end
+
+--- Check if current strategy is offensive.
+-- @param #CHIEF self
+-- @return #boolean If `true`, strategy is offensive.
+function CHIEF:IsOffensive()
+  return self.strategy==CHIEF.Strategy.OFFENSIVE
+end
+
+--- Check if current strategy is aggressive.
+-- @param #CHIEF self
+-- @return #boolean If `true`, strategy is agressive.
+function CHIEF:IsAgressive()
+  return self.strategy==CHIEF.Strategy.AGGRESSIVE
+end
+
+--- Check if current strategy is total war.
+-- @param #CHIEF self
+-- @return #boolean If `true`, strategy is total war.
+function CHIEF:IsTotalWar()
+  return self.strategy==CHIEF.Strategy.TOTALWAR
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -714,22 +944,29 @@ function CHIEF:onafterStatus(From, Event, To)
   ---
   
   -- Create TARGETs for all new contacts.
-  local Nred=0 ; local Nyellow=0 ; local Nengage=0
+  local Nborder=0 ; local Nconflict=0 ; local Nattack=0
   for _,_contact in pairs(self.Contacts) do
     local contact=_contact    --Ops.Intelligence#INTEL.Contact
     local group=contact.group --Wrapper.Group#GROUP
     
-    -- Check if contact inside of out border.
+    -- Check if contact inside of our borders.
     local inred=self:CheckGroupInBorder(group)
     if inred then
-      Nred=Nred+1
+      Nborder=Nborder+1
     end
     
-    -- Check if contact is in the yellow zones.
-    local inyellow=self:CheckGroupInYellow(group)
+    -- Check if contact is in the conflict zones.
+    local inyellow=self:CheckGroupInConflict(group)
     if inyellow then
-      Nyellow=Nyellow+1
+      Nconflict=Nconflict+1
     end
+    
+    -- Check if contact is in the attack zones.
+    local inattack=self:CheckGroupInAttack(group)
+    if inattack then
+      Nattack=Nattack+1
+    end
+    
 
     -- Check if this is not already a target.
     if not contact.target then
@@ -755,9 +992,9 @@ function CHIEF:onafterStatus(From, Event, To)
   ---
   
   -- TODO: Need to introduce time check to avoid fast oscillation between different defcon states in case groups move in and out of the zones.
-  if Nred>0 then
+  if Nborder>0 then
     self:SetDefcon(CHIEF.DEFCON.RED)
-  elseif Nyellow>0 then
+  elseif Nconflict>0 then
     self:SetDefcon(CHIEF.DEFCON.YELLOW)
   else
     self:SetDefcon(CHIEF.DEFCON.GREEN)
@@ -788,7 +1025,8 @@ function CHIEF:onafterStatus(From, Event, To)
     local Ntargets=#self.targetqueue
     
     -- Info message
-    local text=string.format("Defcon=%s: Assets=%d, Contacts=%d [Yellow=%d Red=%d], Targets=%d, Missions=%d", self.Defcon, Nassets, Ncontacts, Nyellow, Nred, Ntargets, Nmissions)
+    local text=string.format("Defcon=%s Strategy=%s: Assets=%d, Contacts=%d [Border=%d, Conflict=%d, Attack=%d], Targets=%d, Missions=%d", 
+    self.Defcon, self.strategy, Nassets, Ncontacts, Nborder, Nconflict, Nattack, Ntargets, Nmissions)
     self:I(self.lid..text)
     
   end
@@ -851,11 +1089,17 @@ function CHIEF:onafterStatus(From, Event, To)
   -- Loop over targets.
   if self.verbose>=4 and #self.zonequeue>0 then
     local text="Zone queue:"  
-    for i,_opszone in pairs(self.zonequeue) do
-      local opszone=_opszone --Ops.OpsZone#OPSZONE
+    for i,_stratzone in pairs(self.zonequeue) do
+      local stratzone=_stratzone --#CHIEF.StrategicZone
       
-      text=text..string.format("\n[%d] %s [%s]: owner=%d [%d] (prio=%d, importance=%s): Blue=%d, Red=%d, Neutral=%d", i, 
-      opszone.zone:GetName(), opszone:GetState(), opszone:GetOwner(), opszone:GetPreviousOwner(), opszone.prio, tostring(opszone.importance), opszone.Nblu, opszone.Nred, opszone.Nnut)
+      -- OPS zone object.
+      local opszone=stratzone.opszone
+      
+      local owner=UTILS.GetCoalitionName(opszone.ownerCurrent)
+      local prevowner=UTILS.GetCoalitionName(opszone.ownerPrevious)
+      
+      text=text..string.format("\n[%d] %s [%s]: owner=%s [%s] (prio=%d, importance=%s): Blue=%d, Red=%d, Neutral=%d", 
+      i, opszone.zone:GetName(), opszone:GetState(), owner, prevowner, stratzone.prio, tostring(stratzone.importance), opszone.Nblu, opszone.Nred, opszone.Nnut)
             
     end
     self:I(self.lid..text)
@@ -871,7 +1115,7 @@ function CHIEF:onafterStatus(From, Event, To)
     for _,missiontype in pairs(AUFTRAG.Type) do
       local N=self.commander:CountAssets(nil, missiontype)
       if N>0 then
-        text=text..string.format("\n- %s %d", missiontype, N)
+        text=text..string.format("\n- %s: %d", missiontype, N)
       end
     end
     self:I(self.lid..text)
@@ -880,7 +1124,7 @@ function CHIEF:onafterStatus(From, Event, To)
     for _,attribute in pairs(WAREHOUSE.Attribute) do
       local N=self.commander:CountAssets(nil, nil, attribute)
       if N>0 or self.verbose>=10 then
-        text=text..string.format("\n- %s %d", attribute, N)
+        text=text..string.format("\n- %s: %d", attribute, N)
       end
     end
     self:I(self.lid..text)
@@ -897,49 +1141,15 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
+-- @param Ops.Legion#LEGION Legion The legion.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function CHIEF:onafterMissionAssignToAny(From, Event, To, Mission)
+function CHIEF:onafterMissionAssign(From, Event, To, Legion, Mission)
 
   if self.commander then
     self:I(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
-    --TODO: Request only air assets.
-    self.commander:AddMission(Mission)
-  else
-    self:E(self.lid..string.format("Mission cannot be assigned as no COMMANDER is defined!"))
-  end
-
-end
-
---- On after "MissionAssignToAirforce" event.
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function CHIEF:onafterMissionAssignToAirforce(From, Event, To, Mission)
-
-  if self.commander then
-    self:I(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
-    --TODO: Request only air assets.
-    self.commander:AddMission(Mission)
-  else
-    self:E(self.lid..string.format("Mission cannot be assigned as no COMMANDER is defined!"))
-  end
-
-end
-
---- On after "MissionAssignToArmy" event.
--- @param #CHIEF self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function CHIEF:onafterMissionAssignToArmy(From, Event, To, Mission)
-
-  if self.commander then
-    self:I(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
-    --TODO: Request only ground assets.
-    self.commander:AddMission(Mission)
+    Mission.chief=self
+    Mission.statusChief=AUFTRAG.Status.QUEUED
+    self.commander:MissionAssign(Legion, Mission)
   else
     self:E(self.lid..string.format("Mission cannot be assigned as no COMMANDER is defined!"))
   end
@@ -956,6 +1166,9 @@ function CHIEF:onafterMissionCancel(From, Event, To, Mission)
 
   -- Debug info.
   self:I(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
+  
+  -- Set status to CANCELLED.
+  Mission.statusChief=AUFTRAG.Status.CANCELLED  
   
   if Mission:IsPlanned() then
   
@@ -1020,20 +1233,64 @@ function CHIEF:onafterStrategyChange(From, Event, To, Strategy)
   self:I(self.lid..string.format("Changing Strategy from %s --> %s", self.strategy, Strategy))
 end
 
-
---- On after "DeclareWar" event.
+--- On after "OpsOnMission".
 -- @param #CHIEF self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #CHIEF Chief The Chief we declared war on.
-function CHIEF:onafterDeclareWar(From, Event, To, Chief)
-
-  if Chief then
-    self:AddWarOnChief(Chief)
-  end
-
+-- @param Ops.OpsGroup#OPSGROUP OpsGroup Ops group on mission
+-- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+function CHIEF:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
+  -- Debug info.
+  self:T(self.lid..string.format("Group %s on mission %s [%s]", OpsGroup:GetName(), Mission:GetName(), Mission:GetType()))
 end
+
+
+--- On after "ZoneCaptured".
+-- @param #CHIEF self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsZone#OPSZONE OpsZone The zone that was captured by us.
+function CHIEF:onafterZoneCaptured(From, Event, To, OpsZone)
+  -- Debug info.
+  self:T(self.lid..string.format("Zone %s captured!", OpsZone:GetName()))
+end
+
+
+--- On after "ZoneLost".
+-- @param #CHIEF self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsZone#OPSZONE OpsZone The zone that was lost.
+function CHIEF:onafterZoneLost(From, Event, To, OpsZone)
+  -- Debug info.
+  self:T(self.lid..string.format("Zone %s lost!", OpsZone:GetName()))
+end
+
+--- On after "ZoneEmpty".
+-- @param #CHIEF self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsZone#OPSZONE OpsZone The zone that is empty now.
+function CHIEF:onafterZoneEmpty(From, Event, To, OpsZone)
+  -- Debug info.
+  self:T(self.lid..string.format("Zone %s empty!", OpsZone:GetName()))
+end
+
+--- On after "ZoneAttacked".
+-- @param #CHIEF self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.OpsZone#OPSZONE OpsZone The zone that beeing attacked.
+function CHIEF:onafterZoneAttacked(From, Event, To, OpsZone)
+  -- Debug info.
+  self:T(self.lid..string.format("Zone %s attacked!", OpsZone:GetName()))
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Target Functions
@@ -1193,7 +1450,7 @@ function CHIEF:CheckTargetQueue()
                     
           -- Assign mission to legions.
           for _,Legion in pairs(Legions) do
-            self.commander:MissionAssign(Legion, mission)
+            self:MissionAssign(Legion, mission)
           end
           
           -- Only ONE target is assigned per check.
@@ -1211,10 +1468,14 @@ end
 -- Strategic Zone Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 --- Check strategic zone queue.
 -- @param #CHIEF self 
 function CHIEF:CheckOpsZoneQueue()
+
+  -- Passive strategy ==> Do not act.
+  if self:IsPassive() then
+    return
+  end
 
   -- Number of zones.
   local Nzones=#self.zonequeue
@@ -1224,10 +1485,10 @@ function CHIEF:CheckOpsZoneQueue()
     return nil
   end
 
-  -- Sort results table wrt ?.
+  -- Sort results table wrt prio.
   local function _sort(a, b)
-    local taskA=a --Ops.OpsZone#OPSZONE
-    local taskB=b --Ops.OpsZone#OPSZONE
+    local taskA=a --#CHIEF.StrategicZone
+    local taskB=b --#CHIEF.StrategicZone
     return (taskA.prio<taskB.prio)
   end
   table.sort(self.zonequeue, _sort)
@@ -1235,61 +1496,104 @@ function CHIEF:CheckOpsZoneQueue()
   -- Get the lowest importance value (lower means more important).
   -- If a zone with importance 1 exists that is not owned by us, zones with importance 2 will not be assigned. Zone with no importance (nil) can still be selected. 
   local vip=math.huge
-  for _,_opszone in pairs(self.zonequeue) do
-    local opszone=_opszone --Ops.OpsZone#OPSZONE
-    if opszone.importance and opszone.importance<vip and opszone:GetOwner()~=self.coalition then
+  for _,_stratzone in pairs(self.zonequeue) do
+    local stratzone=_stratzone --#CHIEF.StrategicZone
+    if stratzone.importance and stratzone.importance<vip and stratzone.opszone:GetOwner()~=self.coalition then
       -- Most important zone that is NOT owned by us.
-      vip=opszone.importance
+      vip=stratzone.importance
     end
   end
 
-  -- Loop over targets.
-  for _,_opszone in pairs(self.zonequeue) do
-    local opszone=_opszone --Ops.OpsZone#OPSZONE
+  -- Loop over strategic zones.
+  for _,_startzone in pairs(self.zonequeue) do
+    local stratzone=_startzone --#CHIEF.StrategicZone
     
     -- Current owner of the zone.
-    local ownercoalition=opszone:GetOwner()
+    local ownercoalition=stratzone.opszone:GetOwner()
         
     -- Check coalition and importance.
-    if ownercoalition~=self.coalition and (opszone.importance==nil or opszone.importance<=vip) then
+    if ownercoalition~=self.coalition and (stratzone.importance==nil or stratzone.importance<=vip) then
     
       -- Has a patrol mission?
-      local hasMissionPatrol=opszone.missionPatrol and opszone.missionPatrol:IsNotOver() or false
+      local hasMissionPatrol=stratzone.missionPatrol and stratzone.missionPatrol:IsNotOver() or false
       -- Has a CAS mission?
-      local hasMissionCAS=opszone.missionCAS and opszone.missionCAS:IsNotOver() or false    
+      local hasMissionCAS=stratzone.missionCAS and stratzone.missionCAS:IsNotOver() or false    
 
       -- Debug info.
-      self:T(self.lid..string.format("Zone %s [%s] is owned by coalition %d", opszone.zone:GetName(), opszone:GetState(), ownercoalition))
+      self:T(self.lid..string.format("Zone %s [%s] is owned by coalition %d", stratzone.opszone.zone:GetName(), stratzone.opszone:GetState(), ownercoalition))
     
-      if opszone:IsEmpty() then
+      if stratzone.opszone:IsEmpty() then
+      
+        ---
+        -- Zone is EMPTY
+        -- 
+        -- We send ground troops to capture the zone.
+        ---
       
         if not hasMissionPatrol then
       
           -- Debug info.
-          self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets"))
+          self:T3(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets"))
       
           -- Recruit ground assets that
-          local recruited=self:RecruitAssetsForZone(opszone, AUFTRAG.Type.PATROLZONE, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY})
+          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ONGUARD, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY})
+
+          -- Debug info.
+          self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets=%s", tostring(recruited)))
           
         end
         
       else
+
+        ---
+        -- Zone is NOT EMPTY
+        -- 
+        -- We first send a CAS flight to eliminate enemy activity.
+        ---
       
         if not hasMissionCAS then
-      
+
           -- Debug message.
-          self:T(self.lid..string.format("Zone is NOT empty ==> recruit CAS assets"))
-      
+          self:T3(self.lid..string.format("Zone is NOT empty ==> Recruit CAS assets"))          
+
+            
           -- Recruite CAS assets.
-          local recruited=self:RecruitAssetsForZone(opszone, AUFTRAG.Type.CAS, 1, 3)
+          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.CAS, 1, 1)
+          
+          -- Debug message.
+          self:T(self.lid..string.format("Zone is NOT empty ==> Recruit CAS assets=%s", tostring(recruited)))
           
         end
       
       end
           
+    end    
+  end
+
+  -- Loop over strategic zone.
+  for _,_startzone in pairs(self.zonequeue) do
+    local stratzone=_startzone --#CHIEF.StrategicZone
+    
+    -- Current owner of the zone.
+    local ownercoalition=stratzone.opszone:GetOwner()
+            
+    -- Has a patrol mission?
+    local hasMissionPatrol=stratzone.missionPatrol and stratzone.missionPatrol:IsNotOver() or false
+    
+    -- Has a CAS mission?
+    local hasMissionCAS=stratzone.missionCAS and stratzone.missionCAS:IsNotOver() or false
+    
+    if ownercoalition==self.coalition and stratzone.opszone:IsEmpty() and hasMissionCAS then
+      -- Cancel CAS mission if zone is ours and no enemies are present.
+      -- TODO: Might want to check if we still have CAS capable assets in stock?!
+      stratzone.missionCAS:Cancel()
     end
     
+     
+        
   end
+  
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1299,7 +1603,7 @@ end
 --- Check if group is inside our border.
 -- @param #CHIEF self
 -- @param Wrapper.Group#GROUP group The group.
--- @return #boolean If true, group is in any zone.
+-- @return #boolean If true, group is in any border zone.
 function CHIEF:CheckGroupInBorder(group)
 
   local inside=self:CheckGroupInZones(group, self.borderzoneset)
@@ -1307,14 +1611,26 @@ function CHIEF:CheckGroupInBorder(group)
   return inside
 end
 
---- Check if group is near our border (yellow zone).
+--- Check if group is in a conflict zone.
 -- @param #CHIEF self
 -- @param Wrapper.Group#GROUP group The group.
--- @return #boolean If true, group is in any zone.
-function CHIEF:CheckGroupInYellow(group)
+-- @return #boolean If true, group is in any conflict zone.
+function CHIEF:CheckGroupInConflict(group)
 
   -- Check inside yellow but not inside our border.
-  local inside=self:CheckGroupInZones(group, self.yellowzoneset) and not self:CheckGroupInZones(group, self.borderzoneset)
+  local inside=self:CheckGroupInZones(group, self.yellowzoneset) --and not self:CheckGroupInZones(group, self.borderzoneset)
+
+  return inside
+end
+
+--- Check if group is in a attack zone.
+-- @param #CHIEF self
+-- @param Wrapper.Group#GROUP group The group.
+-- @return #boolean If true, group is in any attack zone.
+function CHIEF:CheckGroupInAttack(group)
+
+  -- Check inside yellow but not inside our border.
+  local inside=self:CheckGroupInZones(group, self.engagezoneset) --and not self:CheckGroupInZones(group, self.borderzoneset)
 
   return inside
 end
@@ -1329,7 +1645,7 @@ function CHIEF:CheckGroupInZones(group, zoneset)
   for _,_zone in pairs(zoneset.Set or {}) do
     local zone=_zone --Core.Zone#ZONE
     
-    if group:IsPartlyOrCompletelyInZone(zone) then
+    if group:IsInZone(zone) then
       return true
     end
   end
@@ -1371,12 +1687,13 @@ function CHIEF:_CreateMissionPerformance(MissionType, Performance)
   return mp
 end
 
---- Create a mission to attack a group. Mission type is automatically chosen from the group category.
+--- Get mission performance for a given TARGET.
 -- @param #CHIEF self
 -- @param Ops.Target#TARGET Target
--- @return #table Mission performances of type #CHIEF.MissionPerformance
+-- @return #table Mission performances of type `#CHIEF.MissionPerformance`.
 function CHIEF:_GetMissionPerformanceFromTarget(Target)
 
+  -- Possible target objects.
   local group=nil      --Wrapper.Group#GROUP
   local airbase=nil    --Wrapper.Airbase#AIRBASE
   local scenery=nil    --Wrapper.Scenery#SCENERY
@@ -1395,8 +1712,10 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
     scenery=target
   end
  
+  -- Target category.
   local TargetCategory=Target:GetCategory()
     
+  -- Mission performances.
   local missionperf={} --#CHIEF.MissionPerformance
   
   if group then
@@ -1458,93 +1777,55 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
     end
     
   elseif airbase then
-    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBRUNWAY, 100))   
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBRUNWAY, 100))
   elseif scenery then
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.STRIKE, 100))
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 70))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBCARPET, 50))
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
   elseif coordinate then
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 100))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBCARPET, 50))
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
   end
 
   return missionperf
 end
 
---- Check if group is inside our border.
+--- Get mission performances for a given Group Attribute.
 -- @param #CHIEF self
 -- @param #string Attribute Group attibute.
--- @return #table Mission types
+-- @return #table Mission performances of type `#CHIEF.MissionPerformance`.
 function CHIEF:_GetMissionTypeForGroupAttribute(Attribute)
 
-  local missiontypes={}
+  local missionperf={} --#CHIEF.MissionPerformance
 
   if Attribute==GROUP.Attribute.AIR_ATTACKHELO then
   
-    local mt={} --#CHIEF.MissionPerformance
-    mt.MissionType=AUFTRAG.Type.INTERCEPT
-    mt.Performance=100
-    table.insert(missiontypes, mt)
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.INTERCEPT), 100)
     
   elseif Attribute==GROUP.Attribute.GROUND_AAA then
   
-    local mt={} --#CHIEF.MissionPerformance
-    mt.MissionType=AUFTRAG.Type.BAI
-    mt.Performance=100        
-    table.insert(missiontypes, mt)
-
-    local mt={} --#CHIEF.MissionPerformance
-    mt.MissionType=AUFTRAG.Type.BOMBING
-    mt.Performance=70
-    table.insert(missiontypes, mt)
-
-    local mt={} --#CHIEF.MissionPerformance
-    mt.MissionType=AUFTRAG.Type.BOMBCARPET
-    mt.Performance=70
-    table.insert(missiontypes, mt)
-
-    local mt={} --#CHIEF.MissionPerformance
-    mt.MissionType=AUFTRAG.Type.ARTY
-    mt.Performance=30
-    table.insert(missiontypes, mt)
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI),       100)
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING),    80)
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBCARPET), 70)
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY),       30)
 
   elseif Attribute==GROUP.Attribute.GROUND_SAM then
   
-    local mt={} --#CHIEF.MissionPerformance
-    mt.MissionType=AUFTRAG.Type.SEAD
-    mt.Performance=100        
-    table.insert(missiontypes, mt)
-
-    local mt={} --#CHIEF.MissionPerformance
-    mt.MissionType=AUFTRAG.Type.BAI
-    mt.Performance=100        
-    table.insert(missiontypes, mt)
-
-    local mt={} --#CHIEF.MissionPerformance
-    mt.MissionType=AUFTRAG.Type.ARTY
-    mt.Performance=50
-    table.insert(missiontypes, mt)
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD), 100)
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI),   90)
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY),  50)
 
   elseif Attribute==GROUP.Attribute.GROUND_EWR then
   
-    local mt={} --#CHIEF.MissionPerformance
-    mt.MissionType=AUFTRAG.Type.SEAD
-    mt.Performance=100        
-    table.insert(missiontypes, mt)
-
-    local mt={} --#CHIEF.MissionPerformance
-    mt.MissionType=AUFTRAG.Type.BAI
-    mt.Performance=100        
-    table.insert(missiontypes, mt)
-
-    local mt={} --#CHIEF.MissionPerformance
-    mt.MissionType=AUFTRAG.Type.ARTY
-    mt.Performance=50
-    table.insert(missiontypes, mt)
-  
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD), 100)
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI),  100)
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY),  50)
     
   end
 
+  return missionperf
 end
 
 --- Recruit assets for a given TARGET.
@@ -1589,14 +1870,14 @@ end
 
 --- Recruit assets for a given OPS zone.
 -- @param #CHIEF self
--- @param Ops.OpsZone#OPSZONE OpsZone The OPS zone
+-- @param #CHIEF.StrategicZone StratZone The stratetic zone.
 -- @param #string MissionType Mission Type.
 -- @param #number NassetsMin Min number of required assets.
 -- @param #number NassetsMax Max number of required assets.
 -- @param #table Categories Group categories of the assets.
 -- @param #table Attributes Generalized group attributes.
 -- @return #boolean If `true` enough assets could be recruited.
-function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax, Categories, Attributes)
+function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsMax, Categories, Attributes)
 
   -- Cohorts.
   local Cohorts={}
@@ -1618,14 +1899,14 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
   end  
 
   -- Target position.
-  local TargetVec2=OpsZone.zone:GetVec2()
+  local TargetVec2=StratZone.opszone.zone:GetVec2()
 
   -- Recruite infantry assets.
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, nil, nil, nil, Categories, Attributes)
   
   if recruited then
   
-    if MissionType==AUFTRAG.Type.PATROLZONE then
+    if MissionType==AUFTRAG.Type.PATROLZONE or MissionType==AUFTRAG.Type.ONGUARD then
               
       -- Debug messgage.
       self:T2(self.lid..string.format("Recruited %d assets from for PATROL mission", #assets))
@@ -1633,18 +1914,28 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
       local recruitedTrans=true
       local transport=nil
       if Attributes and Attributes[1]==GROUP.Attribute.GROUND_INFANTRY then
+      
+        -- Categories. Currently only helicopters are allowed due to problems with ground transports (might get stuck, might not be a land connection.
+        -- TODO: Check if ground transport is possible. For example, by trying land.getPathOnRoad or something.
+        local Categories={Group.Category.HELICOPTER}
+        --local Categories={Group.Category.HELICOPTER, Group.Category.GROUND}
   
         -- Recruit transport assets for infantry.    
-        recruitedTrans, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, assets, 1, 1, OpsZone.zone, nil, {Group.Category.HELICOPTER, Group.Category.GROUND})
+        recruitedTrans, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, assets, 1, 1, StratZone.opszone.zone, nil, Categories)
         
       end
       
       if recruitedTrans then
     
         -- Create Patrol zone mission.
-        local mission=AUFTRAG:NewPATROLZONE(OpsZone.zone)
-        mission:SetEngageDetected()
-            
+        local mission=nil  --Ops.Auftrag#AUFTRAG
+        
+        if MissionType==AUFTRAG.Type.PATROLZONE then
+          mission=AUFTRAG:NewPATROLZONE(StratZone.opszone.zone)
+        elseif MissionType==AUFTRAG.Type.ONGUARD then 
+          mission=AUFTRAG:NewONGUARD(StratZone.opszone.zone:GetRandomCoordinate(), nil, nil, {land.SurfaceType.LAND})
+        end
+        mission:SetEngageDetected()            
             
         -- Add assets to mission.
         for _,asset in pairs(assets) do
@@ -1657,12 +1948,12 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
         -- Assign mission to legions.
         for _,_legion in pairs(legions) do
           local legion=_legion --Ops.Legion#LEGION
-          self.commander:MissionAssign(legion, mission)
+          self:MissionAssign(legion, mission)
         end
       
         -- Attach mission to ops zone.
         -- TODO: Need a better way!
-        OpsZone.missionPatrol=mission
+        StratZone.missionPatrol=mission
         
       else
         LEGION.UnRecruitAssets(assets)
@@ -1671,7 +1962,7 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
     elseif MissionType==AUFTRAG.Type.CAS then
 
       -- Create Patrol zone mission.
-      local mission=AUFTRAG:NewCAS(OpsZone.zone)
+      local mission=AUFTRAG:NewCAS(StratZone.opszone.zone, 7000)
                       
       -- Add assets to mission.
       for _,asset in pairs(assets) do
@@ -1681,12 +1972,12 @@ function CHIEF:RecruitAssetsForZone(OpsZone, MissionType, NassetsMin, NassetsMax
       -- Assign mission to legions.
       for _,_legion in pairs(legions) do
         local legion=_legion --Ops.Legion#LEGION
-        self.commander:MissionAssign(legion, mission)
+        self:MissionAssign(legion, mission)
       end
     
       -- Attach mission to ops zone.
       -- TODO: Need a better way!
-      OpsZone.missionCAS=mission
+      StratZone.missionCAS=mission
 
     end
     

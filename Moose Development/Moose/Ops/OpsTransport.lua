@@ -171,6 +171,8 @@ OPSTRANSPORT.Status={
 -- @field #boolean disembarkActivation If true, troops are spawned in late activated state when disembarked from carrier.
 -- @field #boolean disembarkInUtero If true, troops are disembarked "in utero".
 -- @field #boolean assets Cargo assets.
+-- @field #number PickupFormation Formation used to pickup.
+-- @field #number TransportFormation Formation used to transport.
 
 --- Path used for pickup or transport.
 -- @type OPSTRANSPORT.Path
@@ -194,6 +196,7 @@ OPSTRANSPORT.version="0.5.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Trains.
 -- TODO: Special transport cohorts/legions. Similar to mission.
 -- TODO: Stop/abort transport.
 -- DONE: Allow multiple pickup/depoly zones.
@@ -748,6 +751,61 @@ function OPSTRANSPORT:GetDisembarkInUtero(TransportZoneCombo)
 
   return TransportZoneCombo.disembarkInUtero
 end
+
+--- Set pickup formation.
+-- @param #OPSTRANSPORT self
+-- @param #number Formation Pickup formation.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetFormationPickup(Formation, TransportZoneCombo)
+
+  -- Use default TZC if no transport zone combo is provided.
+  TransportZoneCombo=TransportZoneCombo or self.tzcDefault  
+
+  TransportZoneCombo.PickupFormation=Formation
+  
+  return self
+end
+
+--- Get pickup formation.
+-- @param #OPSTRANSPORT self
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @return #number Formation.
+function OPSTRANSPORT:_GetFormationPickup(TransportZoneCombo)
+
+  -- Use default TZC if no transport zone combo is provided.
+  TransportZoneCombo=TransportZoneCombo or self.tzcDefault
+
+  return TransportZoneCombo.PickupFormation
+end
+
+--- Set transport formation.
+-- @param #OPSTRANSPORT self
+-- @param #number Formation Pickup formation.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @return #OPSTRANSPORT self
+function OPSTRANSPORT:SetFormationTransport(Formation, TransportZoneCombo)
+
+  -- Use default TZC if no transport zone combo is provided.
+  TransportZoneCombo=TransportZoneCombo or self.tzcDefault  
+
+  TransportZoneCombo.TransportFormation=Formation
+  
+  return self
+end
+
+--- Get transport formation.
+-- @param #OPSTRANSPORT self
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+-- @return #number Formation.
+function OPSTRANSPORT:_GetFormationTransport(TransportZoneCombo)
+
+  -- Use default TZC if no transport zone combo is provided.
+  TransportZoneCombo=TransportZoneCombo or self.tzcDefault
+
+  return TransportZoneCombo.TransportFormation
+end
+
 
 
 --- Set required cargo. This is a list of cargo groups that need to be loaded before the **first** transport will start.

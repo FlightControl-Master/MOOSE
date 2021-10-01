@@ -36,8 +36,9 @@
 -- @field #boolean neutralCanCapture Neutral units can capture. Default `false`.
 -- @field #boolean drawZone If `true`, draw the zone on the F10 map.
 -- @field #boolean markZone If `true`, mark the zone on the F10 map.
--- @field #number prio Priority of the zone (for CHIEF queue).
--- @field #number importance Importance of the zone (for CHIEF queue).
+-- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
+-- @field #string markerText Text shown in the maker.
+-- @field #table chiefs Chiefs that monitor this zone.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -59,23 +60,24 @@ OPSZONE = {
   Nred           =     0,
   Nblu           =     0,
   Nnut           =     0,
+  chiefs         =    {},
 }
 
 
 --- OPSZONE class version.
 -- @field #string version
-OPSZONE.version="0.1.0"
+OPSZONE.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Capture airbases.
 -- TODO: Pause/unpause evaluations.
 -- TODO: Capture time, i.e. time how long a single coalition has to be inside the zone to capture it.
 -- TODO: Can neutrals capture? No, since they are _neutral_!
--- TODO: Can statics capture or hold a zone? No, unless explicitly requested by mission designer.
 -- TODO: Differentiate between ground attack and boming by air or arty.
+-- DONE: Capture airbases.
+-- DONE: Can statics capture or hold a zone? No, unless explicitly requested by mission designer.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -136,22 +138,22 @@ function OPSZONE:New(Zone, CoalitionOwner)
   self.ownerCurrent=CoalitionOwner or coalition.side.NEUTRAL
   self.ownerPrevious=CoalitionOwner or coalition.side.NEUTRAL
   
+  -- Contested.
+  self.isContested=false
+  
   -- We take the airbase coalition.
   if self.airbase then
     self.ownerCurrent=self.airbase:GetCoalition()
     self.ownerPrevious=self.airbase:GetCoalition()
   end
   
-  -- Set priority (default 50) and importance (default nil).
-  self:SetPriority()
-  self:SetImportance()
-  
   -- Set object categories.
   self:SetObjectCategories()
   self:SetUnitCategories()
   
-  -- TODO: make input function
-  self.drawZone=true
+  -- Draw zone. Default is on.
+  self:SetDrawZone()
+  self:SetMarkZone(true)
   
   -- Status timer.
   self.timerStatus=TIMER:New(OPSZONE.Status, self)
@@ -307,8 +309,14 @@ function OPSZONE:SetVerbosity(VerbosityLevel)
 end
 
 --- Set categories of objects that can capture or hold the zone.
+-- 
+-- * Default is {Object.Category.UNIT} so only units can capture and hold zones.
+-- * Set to `{Object.Category.UNIT, Object.Category.STATIC}` if static objects can capture and hold zones
+-- 
+-- Which units can capture zones can be further refined by `:SetUnitCategories()`.
+-- 
 -- @param #OPSZONE self
--- @param #table Categories Object categories. Default is `{Object.Category.UNIT, Object.Category.STATIC}`, i.e. UNITs and STATICs.
+-- @param #table Categories Object categories. Default is `{Object.Category.UNIT}`.
 -- @return #OPSZONE self
 function OPSZONE:SetObjectCategories(Categories)
 
@@ -349,21 +357,43 @@ function OPSZONE:SetNeutralCanCapture(CanCapture)
   return self
 end
 
---- **[CHIEF]** Set mission priority.
+--- Set if zone is drawn on the F10 map. Color will change depending on current owning coalition.
 -- @param #OPSZONE self
--- @param #number Prio Priority 1=high, 100=low. Default 50.
+-- @param #boolean Switch If `true` or `nil`, draw zone. If `false`, zone is not drawn.
 -- @return #OPSZONE self
-function OPSZONE:SetPriority(Prio)
-  self.prio=Prio or 50
+function OPSZONE:SetDrawZone(Switch)
+  if Switch==false then
+    self.drawZone=false
+  else
+    self.drawZone=true
+  end
   return self
 end
 
---- **[CHIEF]** Set importance.
+--- Set if a marker on the F10 map shows the current zone status.
 -- @param #OPSZONE self
--- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is `nil`.
+-- @param #boolean Switch If `true`, zone is marked. If `false` or `nil`, zone is not marked.
+-- @param #boolean ReadOnly If `true` or `nil` then mark is read only.
 -- @return #OPSZONE self
-function OPSZONE:SetImportance(Importance)
-  self.importance=Importance
+function OPSZONE:SetMarkZone(Switch, ReadOnly)
+  if Switch then
+    self.markZone=true
+    local Coordinate=self:GetCoordinate()
+    self.markerText=self:_GetMarkerText()
+    self.marker=self.marker or MARKER:New(Coordinate, self.markerText)
+    if ReadOnly==false then
+      self.marker.readonly=false
+    else
+      self.marker.readonly=true
+    end    
+    self.marker:ToAll()
+  else
+    if self.marker then
+      self.marker:Remove()
+    end
+    self.marker=nil
+    self.marker=false
+  end
   return self
 end
 
@@ -373,6 +403,21 @@ end
 -- @return #number Owner coalition.
 function OPSZONE:GetOwner()
   return self.ownerCurrent
+end
+
+--- Get coordinate of zone.
+-- @param #OPSZONE self
+-- @return Core.Point#COORDINATE Coordinate of the zone.
+function OPSZONE:GetCoordinate()
+  local coordinate=self.zone:GetCoordinate()
+  return coordinate
+end
+
+--- Get name.
+-- @param #OPSZONE self
+-- @return #string Name of the zone.
+function OPSZONE:GetName()
+  return self.zoneName
 end
 
 --- Get previous owner of the zone.
@@ -477,7 +522,7 @@ function OPSZONE:onafterStart(From, Event, To)
   self.timerStatus=self.timerStatus or TIMER:New(OPSZONE.Status, self)
   
   -- Status update.
-  self.timerStatus:Start(1, 60)
+  self.timerStatus:Start(1, 120)
   
   -- Handle base captured event.
   if self.airbase then
@@ -529,6 +574,9 @@ function OPSZONE:Status()
   
   -- Evaluate the scan result.
   self:EvaluateZone()
+   
+  -- Update F10 marker (only if enabled).
+  self:_UpdateMarker()
   
 end
 
@@ -550,6 +598,15 @@ function OPSZONE:onafterCaptured(From, Event, To, NewOwnerCoalition)
   -- Set owners.
   self.ownerPrevious=self.ownerCurrent
   self.ownerCurrent=NewOwnerCoalition
+
+  for _,_chief in pairs(self.chiefs) do
+    local chief=_chief --Ops.Chief#CHIEF
+    if chief.coalition==self.ownerCurrent then
+      chief:ZoneCaptured(self)
+    else
+      chief:ZoneLost(self)
+    end
+  end
     
 end
 
@@ -562,6 +619,12 @@ function OPSZONE:onafterEmpty(From, Event, To)
 
   -- Debug info.
   self:T(self.lid..string.format("Zone is empty EVENT"))
+
+  -- Inform chief.
+  for _,_chief in pairs(self.chiefs) do
+    local chief=_chief --Ops.Chief#CHIEF  
+    chief:ZoneEmpty(self)
+  end
   
 end
 
@@ -575,6 +638,16 @@ function OPSZONE:onafterAttacked(From, Event, To, AttackerCoalition)
 
   -- Debug info.
   self:T(self.lid..string.format("Zone is being attacked by coalition=%s!", tostring(AttackerCoalition)))
+
+  -- Inform chief.
+  if AttackerCoalition then
+    for _,_chief in pairs(self.chiefs) do
+      local chief=_chief --Ops.Chief#CHIEF
+      if chief.coalition~=AttackerCoalition then
+        chief:ZoneAttacked(self)
+      end
+    end
+  end
   
 end
 
@@ -630,12 +703,14 @@ function OPSZONE:onenterAttacked(From, Event, To)
   -- Time stamp when the attack started.
   self.Tattacked=timer.getAbsTime()
 
+  -- Draw zone?
   if self.drawZone then
     self.zone:UndrawZone()
     
+    -- Color.
+    local color={1, 204/255, 204/255}
     
-    local color={1,204/255,204/255}
-    
+    -- Draw zone.
     self.zone:DrawZone(nil, color, 1.0, color, 0.5)
   end
 
@@ -947,9 +1022,10 @@ function OPSZONE:EvaluateZone()
       -- No neutral units in neutral zone any more.
 
       if Nred>0 and Nblu>0 then
-        env.info(self.lid.."FF neutrals left neutral zone and red and blue are present! What to do?")
-        -- TODO Contested!
-        self:Attacked()
+        self:T(self.lid.."FF neutrals left neutral zone and red and blue are present! What to do?")
+        if not self:IsAttacked() then
+          self:Attacked()
+        end
         self.isContested=true
       elseif Nred>0 then
         -- Red captured neutral zone.
@@ -964,16 +1040,29 @@ function OPSZONE:EvaluateZone()
       else
         -- Neutral zone is empty now.
         if not self:IsEmpty() then
-          self:Emtpy()
+          self:Empty()
         end
       end
       
     --end
   
   else
-    self:E(self.lid.."ERROR!")
+    self:E(self.lid.."ERROR: Unknown coaliton!")
   end
 
+
+  -- Finally, check airbase coalition
+  if self.airbase then
+
+    -- Current coalition.
+    local airbasecoalition=self.airbase:GetCoalition()
+    
+    if airbasecoalition~=self.ownerCurrent then
+      self:T(self.lid..string.format("Captured airbase %s: Coaltion %d-->%d", self.airbaseName, self.ownerCurrent, airbasecoalition))
+      self:Captured(airbasecoalition)
+    end
+  
+  end
 
 end
 
@@ -1060,6 +1149,53 @@ function OPSZONE:_GetZoneColor()
   end
 
   return color
+end
+
+--- Update marker on the F10 map.
+-- @param #OPSZONE self
+function OPSZONE:_UpdateMarker()
+
+  if self.markZone then
+  
+    -- Get marker text.
+    local text=self:_GetMarkerText()
+    
+    -- Chck if marker text changed and if so, update the marker.
+    if text~=self.markerText then
+      self.markerText=text
+      self.marker:UpdateText(self.markerText)
+    end
+    
+    --TODO: Update position if changed.
+  
+  end
+
+end
+
+--- Get marker text
+-- @param #OPSZONE self
+-- @return #string Marker text.
+function OPSZONE:_GetMarkerText()
+
+  local owner=UTILS.GetCoalitionName(self.ownerCurrent)
+  local prevowner=UTILS.GetCoalitionName(self.ownerPrevious)
+
+  -- Get marker text.
+  local text=string.format("%s: Owner=%s [%s]\nState=%s [Contested=%s]\nBlue=%d, Red=%d, Neutral=%d", 
+  self.zoneName, owner, prevowner, self:GetState(), tostring(self:IsContested()), self.Nblu, self.Nred, self.Nnut)
+  
+  return text
+end
+
+--- Add a chief that monitors this zone. Chief will be informed about capturing etc.
+-- @param #OPSZONE self
+-- @param Ops.Chief#CHIEF Chief The chief.
+-- @return #table RGB color.
+function OPSZONE:_AddChief(Chief)
+
+  -- Add chief.
+  table.insert(self.chiefs, Chief)
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

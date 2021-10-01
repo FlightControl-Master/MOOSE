@@ -139,6 +139,28 @@ AIRWING = {
 -- @field #number noccupied Number of flights on this patrol point.
 -- @field Wrapper.Marker#MARKER marker F10 marker.
 
+--- AWACS zone.
+-- @type AIRWING.AwacsZone
+-- @field Core.Zone#ZONE zone Zone.
+-- @field #number altitude Altitude in feet.
+-- @field #number heading Heading in degrees.
+-- @field #number leg Leg length in NM.
+-- @field #number speed Speed in knots.
+-- @field #number refuelsystem Refueling system type: `0=Unit.RefuelingSystem.BOOM_AND_RECEPTACLE`, `1=Unit.RefuelingSystem.PROBE_AND_DROGUE`.
+-- @field Ops.Auftrag#AUFTRAG mission Mission assigned.
+-- @field Wrapper.Marker#MARKER marker F10 marker.
+
+--- Tanker zone.
+-- @type AIRWING.TankerZone
+-- @field Core.Point#COORDINATE coord Patrol coordinate.
+-- @field #number altitude Altitude in feet.
+-- @field #number heading Heading in degrees.
+-- @field #number leg Leg length in NM.
+-- @field #number speed Speed in knots.
+-- @field #number refuelsystem Refueling system type: `0=Unit.RefuelingSystem.BOOM_AND_RECEPTACLE`, `1=Unit.RefuelingSystem.PROBE_AND_DROGUE`.
+-- @field Ops.Auftrag#AUFTRAG mission Mission assigned.
+-- @field Wrapper.Marker#MARKER marker F10 marker.
+
 --- AIRWING class version.
 -- @field #string version
 AIRWING.version="0.9.0"

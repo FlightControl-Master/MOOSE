@@ -794,50 +794,62 @@ function FLIGHTGROUP:Status()
   local fsmstate=self:GetState()
   
   -- Is group alive?
-  local alive=self:IsAlive()  
-
-  -- Update position.
-  self:_UpdatePosition()
-
-  -- Check if group has detected any units.
-  self:_CheckDetectedUnits()
+  local alive=self:IsAlive()
   
-  -- Check ammo status.
-  self:_CheckAmmoStatus()
+  if alive then
+
+    -- Update position.
+    self:_UpdatePosition()
   
-    -- Check damage.
-  self:_CheckDamage()
-  
-  ---
-  -- Parking
-  ---
-
-  -- TODO: _CheckParking() function
-
-  -- Check if flight began to taxi (if it was parking).
-  if self:IsParking() then
-    for _,_element in pairs(self.elements) do
-      local element=_element --Ops.OpsGroup#OPSGROUP.Element
-      if element.parking then
-
-        -- Get distance to assigned parking spot.
-        local dist=element.unit:GetCoordinate():Get2DDistance(element.parking.Coordinate)
-
-        -- If distance >10 meters, we consider the unit as taxiing.
-        -- TODO: Check distance threshold! If element is taxiing, the parking spot is free again.
-        --       When the next plane is spawned on this spot, collisions should be avoided!
-        if dist>10 then
-          if element.status==OPSGROUP.ElementStatus.ENGINEON then
-            self:ElementTaxiing(element)
-          end
+    -- Check if group has detected any units.
+    self:_CheckDetectedUnits()
+    
+    -- Check ammo status.
+    self:_CheckAmmoStatus()
+    
+      -- Check damage.
+    self:_CheckDamage()
+ 
+     -- TODO: Check if group is waiting?
+    if self:IsWaiting() then
+      if self.Twaiting and self.dTwait then
+        if timer.getAbsTime()>self.Twaiting+self.dTwait then
+          --self.Twaiting=nil
+          --self.dTwait=nil
+          --self:Cruise()
         end
-
-      else
-        --self:E(self.lid..string.format("Element %s is in PARKING queue but has no parking spot assigned!", element.name))
       end
     end
+    
+  
+    -- TODO: _CheckParking() function
+  
+    -- Check if flight began to taxi (if it was parking).
+    if self:IsParking() then
+      for _,_element in pairs(self.elements) do
+        local element=_element --Ops.OpsGroup#OPSGROUP.Element
+        if element.parking then
+  
+          -- Get distance to assigned parking spot.
+          local dist=element.unit:GetCoordinate():Get2DDistance(element.parking.Coordinate)
+  
+          -- If distance >10 meters, we consider the unit as taxiing.
+          -- TODO: Check distance threshold! If element is taxiing, the parking spot is free again.
+          --       When the next plane is spawned on this spot, collisions should be avoided!
+          if dist>10 then
+            if element.status==OPSGROUP.ElementStatus.ENGINEON then
+              self:ElementTaxiing(element)
+            end
+          end
+  
+        else
+          --self:E(self.lid..string.format("Element %s is in PARKING queue but has no parking spot assigned!", element.name))
+        end
+      end
+    end
+    
   end
-
+    
   ---
   -- Group
   ---
