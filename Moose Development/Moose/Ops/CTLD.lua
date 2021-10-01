@@ -987,7 +987,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.2.2a4"
+CTLD.version="0.2.3"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1887,14 +1887,18 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   return self
 end
 
---- Inject crates and static cargo objects.
+--- (Internal) Inject crates and static cargo objects.
 -- @param #CTLD self
 -- @param Core.Zone#ZONE Zone Zone to spawn in.
 -- @param #CTLD_CARGO Cargo The cargo type to spawn.
+-- @param #boolean RandomCoord Randomize coordinate.
 -- @return #CTLD self
-function CTLD:InjectStatics(Zone, Cargo)
+function CTLD:InjectStatics(Zone, Cargo, RandomCoord)
   self:T(self.lid .. " InjectStatics")
   local cratecoord = Zone:GetCoordinate()
+  if RandomCoord then
+    cratecoord = Zone:GetRandomCoordinate(5,20)
+  end
   local surface = cratecoord:GetSurfaceType()
   if surface == land.SurfaceType.WATER then
     return self
@@ -1927,6 +1931,19 @@ function CTLD:InjectStatics(Zone, Cargo)
   self.CargoCounter = self.CargoCounter + 1
   cargotype.Positionable = self.Spawned_Crates[self.CrateCounter]
   table.insert(self.Spawned_Cargo, cargotype)
+  return self
+end
+
+--- (User) Inject static cargo objects.
+-- @param #CTLD self
+-- @param Core.Zone#ZONE Zone Zone to spawn in. Will be a somewhat random coordinate.
+-- @param #string Template Unit(!) name of the static cargo object to be used as template.
+-- @param #number Mass Mass of the static in kg.
+-- @return #CTLD self
+function CTLD:InjectStaticFromTemplate(Zone, Template, Mass)
+  self:T(self.lid .. " InjectStaticFromTemplate")
+  local cargotype = self:GetStaticsCargoFromTemplate(Template,Mass) -- #CTLD_CARGO
+  self:InjectStatics(Zone,cargotype,true)
   return self
 end
 
@@ -2961,7 +2978,7 @@ end
 
 --- User function - Add *generic* static-type loadable as cargo. This type will create cargo that needs to be loaded, moved and dropped.
 -- @param #CTLD self
--- @param #string Name Unique name of this type of cargo as set in the mission editor (not: UNIT name!), e.g. "Ammunition-1".
+-- @param #string Name Unique name of this type of cargo as set in the mission editor (note: UNIT name!), e.g. "Ammunition-1".
 -- @param #number Mass Mass in kg of each static in kg, e.g. 100.
 -- @param #number Stock Number of groups in stock. Nil for unlimited.
 function CTLD:AddStaticsCargo(Name,Mass,Stock)
@@ -2973,6 +2990,22 @@ function CTLD:AddStaticsCargo(Name,Mass,Stock)
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,template,type,false,false,1,nil,nil,Mass,Stock)
   table.insert(self.Cargo_Statics,cargo)
   return self
+end
+
+--- User function - Get a *generic* static-type loadable as #CTLD_CARGO object.
+-- @param #CTLD self
+-- @param #string Name Unique Unit(!) name of this type of cargo as set in the mission editor (not: GROUP name!), e.g. "Ammunition-1".
+-- @param #number Mass Mass in kg of each static in kg, e.g. 100.
+-- @return #CTLD_CARGO Cargo object
+function CTLD:GetStaticsCargoFromTemplate(Name,Mass)
+  self:T(self.lid .. " GetStaticsCargoFromTemplate")
+  self.CargoCounter = self.CargoCounter + 1
+  local type = CTLD_CARGO.Enum.STATIC
+  local template = STATIC:FindByName(Name,true):GetTypeName()
+  -- Crates are not directly loadable
+  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,template,type,false,false,1,nil,nil,Mass,1)
+  --table.insert(self.Cargo_Statics,cargo)
+  return cargo
 end
 
 --- User function - Add *generic* repair crates loadable as cargo. This type will create crates that need to be loaded, moved, dropped and built.
