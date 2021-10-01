@@ -2,7 +2,7 @@
 --
 -- **Main Features:**
 --
---    * Detect and lase contacts automaticallyt
+--    * Detect and lase contacts automatically
 --    * Targets are lased by threat priority order
 --    * Use FSM events to link functionality into your scripts
 --    * Easy setup 
@@ -13,7 +13,7 @@
 -- @module Functional.Autolase
 -- @image Designation.JPG
 -- 
--- Date: Oct 2021
+-- Date: 01 Oct 2021
 
 ---
 --- Class AUTOLASE
