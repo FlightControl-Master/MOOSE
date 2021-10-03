@@ -1,4 +1,4 @@
---- **OPS** - Manage recovery of aircraft at airdromes.
+--- **OPS** - Manage launching and recovery of aircraft at airdromes.
 -- 
 -- 
 --
@@ -42,8 +42,6 @@
 --  **Ground Control**: No bad news at the moment, but you probably want to get gone before I find any.
 --
 -- ===
---
--- ![Banner Image](..\Presentations\FLIGHTCONTROL\FlightControl_Main.jpg)
 --
 -- # The FLIGHTCONTROL Concept
 -- 
@@ -1536,7 +1534,7 @@ end
 function FLIGHTCONTROL:_PlayerRequestInfo(groupname)
 
   -- Get flight group.
-  local flight=_DATABASE:GetFlightGroup(groupname)
+  local flight=_DATABASE:GetOpsGroup(groupname)
   
   if flight then
  
@@ -1596,7 +1594,7 @@ end
 function FLIGHTCONTROL:_PlayerRequestInfoQueues(groupname)
 
   -- Get flight group.
-  local flight=_DATABASE:GetFlightGroup(groupname)
+  local flight=_DATABASE:GetOpsGroup(groupname)
   
   if flight then
   
@@ -1628,7 +1626,7 @@ end
 function FLIGHTCONTROL:_PlayerInbound(groupname)
 
   -- Get flight group.
-  local flight=_DATABASE:GetFlightGroup(groupname)
+  local flight=_DATABASE:GetOpsGroup(groupname)
   
   if flight then
       
@@ -1681,7 +1679,7 @@ end
 function FLIGHTCONTROL:_PlayerHolding(groupname)
 
   -- Get flight group.
-  local flight=_DATABASE:GetFlightGroup(groupname)
+  local flight=_DATABASE:GetOpsGroup(groupname)
   
   if flight then
       
@@ -1719,11 +1717,11 @@ end
 function FLIGHTCONTROL:_PlayerMyStatus(groupname)
 
   -- Get flight group.
-  local flight=_DATABASE:GetFlightGroup(groupname)
+  local flight=_DATABASE:GetOpsGroup(groupname)
   
   if flight then
     
-    local fc=flight.flightcontrol
+    local fc=flight.flightcontrol  --Ops.FlightControl#FLIGHTCONTROL
   
     local text=string.format("My Status:")
     text=text..string.format("\nFlight status: %s", tostring(flight:GetState()))
@@ -1757,12 +1755,15 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
       
       for _,_element in pairs(flight.elements) do
         local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
+        env.info("FF 100")
         if element.parking then
           local spot=self:GetParkingSpotByID(element.parking.TerminalID)
           if element.ai then
+            env.info("FF 200")
             self:RemoveParkingGuard(spot, 30)
           else
             self:RemoveParkingGuard(spot, 3)
+            env.info("FF 300")
           end
         end
         --flight:ElementTaxiing(element)        
@@ -1785,7 +1786,7 @@ function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
 
   MESSAGE:New("Request takeoff", 5):ToAll()
       
-  local flight=_DATABASE:GetFlightGroup(groupname)
+  local flight=_DATABASE:GetOpsGroup(groupname)
   
   if flight then
   
@@ -1819,7 +1820,7 @@ function FLIGHTCONTROL:_PlayerAbortTakeoff(groupname)
 
   MESSAGE:New("Abort takeoff", 5):ToAll()
       
-  local flight=_DATABASE:GetFlightGroup(groupname)
+  local flight=_DATABASE:GetOpsGroup(groupname)
   
   if flight then
   

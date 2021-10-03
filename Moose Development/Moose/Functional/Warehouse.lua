@@ -87,6 +87,7 @@
 -- @field #number respawndelay Delay before respawn in seconds.
 -- @field #number runwaydestroyed Time stamp timer.getAbsTime() when the runway was destroyed.
 -- @field #number runwayrepairtime Time in seconds until runway will be repaired after it was destroyed. Default is 3600 sec (one hour).
+-- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol Flight control of this warehouse.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -6217,9 +6218,11 @@ function WAREHOUSE:_RouteAir(aircraft)
     self:T2(self.lid..string.format("RouteAir aircraft group %s alive=%s", aircraft:GetName(), tostring(aircraft:IsAlive())))
 
     -- Give start command to activate uncontrolled aircraft within the next 60 seconds.
-    local starttime=math.random(60)
+    if not self.flightcontrol then
+      local starttime=math.random(60)
 
-    aircraft:StartUncontrolled(starttime)
+      aircraft:StartUncontrolled(starttime)
+    end
 
     -- Debug info.
     self:T2(self.lid..string.format("RouteAir aircraft group %s alive=%s (after start command)", aircraft:GetName(), tostring(aircraft:IsAlive())))

@@ -6068,8 +6068,15 @@ function OPSGROUP:onafterStop(From, Event, To)
     self.Scheduler:Clear()
   end
   
+  -- Flightcontrol.
   if self.flightcontrol then
-  
+    self.flightcontrol:_RemoveFlight(self)
+    for _,_element in pairs(self.elements) do
+      local element=_element --#OPSGROUP.Element
+      if element.parking then
+        self.flightcontrol:SetParkingFree(element.parking)
+      end
+    end
   end
 
   if self:IsAlive() and not (self:IsDead() or self:IsStopped()) then
@@ -10804,8 +10811,8 @@ function OPSGROUP:_AddElementByName(unitname)
   if unit then
 
     -- Get unit template.
-    --local unittemplate=unit:GetTemplate()
-    local unittemplate=_DATABASE:GetUnitTemplateFromUnitName(unitname)
+    local unittemplate=unit:GetTemplate()
+    --local unittemplate=_DATABASE:GetUnitTemplateFromUnitName(unitname)
 
     -- Element table.
     local element={} --#OPSGROUP.Element
@@ -10897,7 +10904,7 @@ function OPSGROUP:_AddElementByName(unitname)
     local text=string.format("Adding element %s: status=%s, skill=%s, life=%.1f/%.1f category=%s (%d), type=%s, size=%.1f (L=%.1f H=%.1f W=%.1f), weight=%.1f/%.1f (cargo=%.1f/%.1f)",
     element.name, element.status, element.skill, element.life, element.life0, element.categoryname, element.category, element.typename,
     element.size, element.length, element.height, element.width, element.weight, element.weightMaxTotal, element.weightCargo, element.weightMaxCargo)
-    self:T(self.lid..text)
+    self:I(self.lid..text)
 
     -- Add element to table.
     if not self:_IsElement(unitname) then
