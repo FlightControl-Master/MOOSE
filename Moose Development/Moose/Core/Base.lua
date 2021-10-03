@@ -234,7 +234,8 @@ FORMATION = {
 -- @param #BASE self
 -- @return #BASE
 function BASE:New()
-  local self = routines.utils.deepCopy( self ) -- Create a new self instance
+  --local self = routines.utils.deepCopy( self ) -- Create a new self instance
+  local self = UTILS.DeepCopy(self)
 
 	_ClassID = _ClassID + 1
 	self.ClassID = _ClassID

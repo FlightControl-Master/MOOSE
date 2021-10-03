@@ -2161,6 +2161,7 @@ function FLIGHTCONTROL:RemoveParkingGuard(spot, delay)
   else
   
     if spot.ParkingGuard then
+      self:I(self.lid..string.format("Removing parking guard at spot %d", spot.TerminalID))
       spot.ParkingGuard:Destroy()
       spot.ParkingGuard=nil
     end

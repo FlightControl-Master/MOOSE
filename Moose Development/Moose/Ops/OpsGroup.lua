@@ -6067,6 +6067,10 @@ function OPSGROUP:onafterStop(From, Event, To)
   if self.Scheduler then
     self.Scheduler:Clear()
   end
+  
+  if self.flightcontrol then
+  
+  end
 
   if self:IsAlive() and not (self:IsDead() or self:IsStopped()) then
     local life, life0=self:GetLifePoints()

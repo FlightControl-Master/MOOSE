@@ -136,6 +136,7 @@ TARGET.version="0.5.2"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Had cases where target life was 0 but target was not dead. Need to figure out why!
 -- TODO: Add pseudo functions.
 -- DONE: Initial object can be nil.
 
@@ -381,6 +382,11 @@ function TARGET:onafterStatus(From, Event, To)
     if target.Life<life then
       self:ObjectDamaged(target)
       damaged=true
+    end
+    
+    if life==0 then
+      self:I(self.lid..string.format("FF life is zero but no object dead event fired ==> object dead now for traget object %s!", tostring(target.Name)))
+      self:ObjectDead(target)
     end
     
   end
@@ -1056,7 +1062,8 @@ end
 -- @param #TARGET self
 -- @return #string Name of the target usually the first object.
 function TARGET:GetName()
-  return self.name or "Unknown"
+  local name=self.name or "Unknown"
+  return name
 end
 
 --- Get 2D vector.

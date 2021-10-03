@@ -49,8 +49,8 @@ LEGION.version="0.1.0"
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Create FLOTILLA class.
--- TODO: OPS transport.
+-- TODO: Create FLEED class.
+-- DONE: OPS transport.
 -- DONE: Make general so it can be inherited by AIRWING and BRIGADE classes.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -440,7 +440,7 @@ function LEGION:onafterStart(From, Event, To)
   self:GetParent(self, LEGION).onafterStart(self, From, Event, To)
 
   -- Info.
-  self:I(self.lid..string.format("Starting LEGION v%s", LEGION.version))
+  self:T3(self.lid..string.format("Starting LEGION v%s", LEGION.version))
 
 end
 

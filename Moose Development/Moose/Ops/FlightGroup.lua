@@ -2487,8 +2487,9 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
     -- Warning, looks like this can make DCS CRASH! Had this after calling RTB once passed the final waypoint.
     --self:ClearTasks()
 
-     -- Just route the group. Respawn might happen when going from holding to final.
-    self:Route(wp)
+    -- Just route the group. Respawn might happen when going from holding to final.
+    -- NOTE: I have delayed that here because of RTB calling _LandAtAirbase which resets current task immediately. So the stop flag change to 1 will not trigger TaskDone() and a current mission is not done either
+    self:Route(wp, 0.1)
 
   end
 

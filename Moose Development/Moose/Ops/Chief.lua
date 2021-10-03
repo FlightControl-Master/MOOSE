@@ -645,7 +645,7 @@ function CHIEF:IsTarget(Target)
 
   for _,_target in pairs(self.targetqueue) do
     local target=_target --Ops.Target#TARGET
-    if target.uid==Target.uid then
+    if target.uid==Target.uid or target:GetName()==Target:GetName() then
       return true
     end
   end
@@ -725,20 +725,54 @@ function CHIEF:AddRefuellingZone(RefuellingZone)
   return supplyzone
 end
 
---- Add an AWACS zone.
+--- Add a CAP zone.
 -- @param #CHIEF self
--- @param Core.Zone#ZONE AwacsZone Zone.
+-- @param Core.Zone#ZONE Zone Zone.
 -- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.AwacsZone The AWACS zone.
-function CHIEF:AddAwacsZone(AwacsZone, Altitude, Speed, Heading, Leg)
+-- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+function CHIEF:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 
   -- Hand over to commander.
-  local awacszone=self.commander:AddAwacsZone(AwacsZone, Altitude, Speed, Heading, Leg)
+  local zone=self.commander:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 
-  return awacszone
+  return zone
+end
+
+
+--- Add an AWACS zone.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone Zone.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @return Ops.AirWing#AIRWING.PatrolZone The AWACS zone data.
+function CHIEF:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
+
+  -- Hand over to commander.
+  local zone=self.commander:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
+
+  return zone
+end
+
+--- Add a refuelling tanker zone.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone Zone.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @param #number RefuelSystem Refuelling system.
+-- @return Ops.AirWing#AIRWING.TankerZone The tanker zone data.
+function CHIEF:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSystem)
+
+  -- Hand over to commander.
+  local zone=self.commander:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSystem)
+
+  return zone
 end
 
 
@@ -931,11 +965,13 @@ function CHIEF:onafterStatus(From, Event, To)
     
       -- Cancel this mission.
       contact.mission:Cancel()
-      
-      -- Remove a target from the queue.
-      self:RemoveTarget(contact.target)
           
     end
+    
+    -- Remove a target from the queue.
+    if contact.target then
+      self:RemoveTarget(contact.target)
+    end    
     
   end
 
@@ -1330,11 +1366,17 @@ function CHIEF:CheckTargetQueue()
   for _,_target in pairs(self.targetqueue) do
     local target=_target --Ops.Target#TARGET
     
+    local isAlive=target:IsAlive()
+    local isImportant=(target.importance==nil or target.importance<=vip)
+    
     -- Is this a threat?
     local isThreat=target.threatlevel0>=self.threatLevelMin and target.threatlevel0<=self.threatLevelMax
+    
+    -- Debug message.
+    self:T(self.lid..string.format("Target %s: Alive=%s, Threat=%s, Important=%s", target:GetName(), tostring(isAlive), tostring(isThreat), tostring(isImportant)))
 
     -- Check that target is alive and not already a mission has been assigned.
-    if target:IsAlive() and (target.importance==nil or target.importance<=vip) and isThreat and not target.mission then
+    if isAlive and isThreat and isImportant and not target.mission then
     
       -- Check if this target is "valid", i.e. fits with the current strategy.
       local valid=false

@@ -24,7 +24,9 @@
 -- @field #table transportqueue Transport queue.
 -- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
--- @field #table awacsZones AWACS zones. Each element is of type `#AIRWING.AwacsZone`.
+-- @field #table capZones CAP zones. Each element is of type `#AIRWING.PatrolZone`.
+-- @field #table awacsZones AWACS zones. Each element is of type `#AIRWING.PatrolZone`.
+-- @field #table tankerZones Tanker zones. Each element is of type `#AIRWING.TankerZone`.
 -- @field Ops.Chief#CHIEF chief Chief of staff.
 -- @extends Core.Fsm#FSM
 
@@ -47,7 +49,9 @@ COMMANDER = {
   transportqueue  =    {},
   rearmingZones   =    {},
   refuellingZones =    {},
+  capZones        =    {},
   awacsZones      =    {},
+  tankerZones     =    {},
 }
 
 --- COMMANDER class version.
@@ -58,6 +62,8 @@ COMMANDER.version="0.1.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Add CAP zones.
+-- TODO: Add tanker zones.
 -- DONE: Improve legion selection. Mostly done!
 -- DONE: Find solution for missions, which require a transport. This is not as easy as it sounds since the selected mission assets restrict the possible transport assets.
 -- DONE: Add ops transports.
@@ -81,7 +87,7 @@ function COMMANDER:New(Coalition, Alias)
   -- Set coaliton.
   self.coalition=Coalition
   -- Alias name.
-  self.alias=Alias or string.format("Jon Doe")
+  self.alias=Alias or string.format("John Doe")
   
   -- Log ID.
   self.lid=string.format("COMMANDER %s [%s] | ", self.alias, UTILS.GetCoalitionName(self.coalition))
@@ -416,19 +422,44 @@ function COMMANDER:AddRefuellingZone(RefuellingZone)
   return rearmingzone
 end
 
---- Add an AWACS zone.
+--- Add a CAP zone.
 -- @param #COMMANDER self
--- @param Core.Zone#ZONE AwacsZone Zone.
+-- @param Core.Zone#ZONE CapZone Zone.
 -- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.AwacsZone The AWACS zone.
-function COMMANDER:AddAwacsZone(AwacsZone, Altitude, Speed, Heading, Leg)
+-- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+function COMMANDER:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 
-  local awacszone={} --Ops.AirWing#AIRWING.AwacsZone
+  local patrolzone={} --Ops.AirWing#AIRWING.PatrolZone
   
-  awacszone.zone=AwacsZone
+  patrolzone.zone=Zone
+  patrolzone.altitude=Altitude or 12000
+  patrolzone.heading=Heading or 270
+  patrolzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, patrolzone.altitude)
+  patrolzone.leg=Leg or 30
+  patrolzone.mission=nil
+  patrolzone.marker=MARKER:New(patrolzone.zone:GetCoordinate(), "AWACS Zone"):ToCoalition(self:GetCoalition())
+
+  table.insert(self.capZones, patrolzone)
+
+  return awacszone
+end
+
+--- Add an AWACS zone.
+-- @param #COMMANDER self
+-- @param Core.Zone#ZONE Zone Zone.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @return Ops.AirWing#AIRWING.PatrolZone The AWACS zone data.
+function COMMANDER:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
+
+  local awacszone={} --Ops.AirWing#AIRWING.PatrolZone
+  
+  awacszone.zone=Zone
   awacszone.altitude=Altitude or 12000
   awacszone.heading=Heading or 270
   awacszone.speed=UTILS.KnotsToAltKIAS(Speed or 350, awacszone.altitude)
@@ -437,6 +468,33 @@ function COMMANDER:AddAwacsZone(AwacsZone, Altitude, Speed, Heading, Leg)
   awacszone.marker=MARKER:New(awacszone.zone:GetCoordinate(), "AWACS Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.awacsZones, awacszone)
+
+  return awacszone
+end
+
+--- Add a refuelling tanker zone.
+-- @param #COMMANDER self
+-- @param Core.Zone#ZONE Zone Zone.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @param #number RefuelSystem Refuelling system.
+-- @return Ops.AirWing#AIRWING.TankerZone The tanker zone data.
+function COMMANDER:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSystem)
+
+  local tankerzone={} --Ops.AirWing#AIRWING.TankerZone
+  
+  tankerzone.zone=Zone
+  tankerzone.altitude=Altitude or 12000
+  tankerzone.heading=Heading or 270
+  tankerzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, tankerzone.altitude)
+  tankerzone.leg=Leg or 30
+  tankerzone.refuelsystem=RefuelSystem
+  tankerzone.mission=nil
+  tankerzone.marker=MARKER:New(tankerzone.zone:GetCoordinate(), "Tanker Zone"):ToCoalition(self:GetCoalition())
+
+  table.insert(self.tankerZones, tankerzone)
 
   return awacszone
 end
@@ -526,15 +584,38 @@ function COMMANDER:onafterStatus(From, Event, To)
       self:AddMission(supplyzone.mission)
     end
   end
+
+
+  -- Check CAP zones.
+  for _,_patrolzone in pairs(self.capZones) do
+    local patrolzone=_patrolzone --Ops.AirWing#AIRWING.PatrolZone
+    -- Check if mission is nil or over.
+    if (not patrolzone.mission) or patrolzone.mission:IsOver() then
+      local Coordinate=patrolzone.zone:GetCoordinate()
+      patrolzone.mission=AUFTRAG:NewCAP(patrolzone.zone, patrolzone.altitude, patrolzone.speed, Coordinate, patrolzone.heading, patrolzone.leg)
+      self:AddMission(patrolzone.mission)
+    end
+  end
   
   -- Check AWACS zones.
   for _,_awacszone in pairs(self.awacsZones) do
-    local awacszone=_awacszone --Ops.AirWing#AIRWING.AwacsZone
+    local awacszone=_awacszone --Ops.AirWing#AIRWING.Patrol
     -- Check if mission is nil or over.
     if (not awacszone.mission) or awacszone.mission:IsOver() then
       local Coordinate=awacszone.zone:GetCoordinate()
       awacszone.mission=AUFTRAG:NewAWACS(Coordinate, awacszone.altitude, awacszone.speed, awacszone.heading, awacszone.leg)
       self:AddMission(awacszone.mission)
+    end
+  end 
+
+  -- Check Tanker zones.
+  for _,_tankerzone in pairs(self.tankerZones) do
+    local tankerzone=_tankerzone --Ops.AirWing#AIRWING.TankerZone
+    -- Check if mission is nil or over.
+    if (not tankerzone.mission) or tankerzone.mission:IsOver() then
+      local Coordinate=tankerzone.zone:GetCoordinate()
+      tankerzone.mission=AUFTRAG:NewTANKER(Coordinate, tankerzone.altitude, tankerzone.speed, tankerzone.heading, tankerzone.leg, tankerzone.refuelsystem)
+      self:AddMission(tankerzone.mission)
     end
   end      
     

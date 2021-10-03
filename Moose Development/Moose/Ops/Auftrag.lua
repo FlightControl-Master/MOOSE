@@ -4098,12 +4098,13 @@ end
 -- @return #number Number of alive target units.
 function AUFTRAG:CountMissionTargets()
 
+  local N=0
+  
   if self.engageTarget then
-    return self.engageTarget:CountTargets()
-  else
-    return 0
+    N=self.engageTarget:CountTargets()
   end
   
+  return N
 end
 
 --- Get initial number of targets.
@@ -4167,14 +4168,16 @@ end
 -- @param #AUFTRAG self
 -- @return Wrapper.Positionable#POSITIONABLE The target object. Could be many things.
 function AUFTRAG:GetObjective()
-  return self:GetTargetData():GetObject()
+  local objective=self:GetTargetData():GetObject()
+  return objective
 end
 
 --- Get type of target.
 -- @param #AUFTRAG self
 -- @return #string The target type.
 function AUFTRAG:GetTargetType()
-  return self:GetTargetData().Type
+  local ttype=self:GetTargetData().Type
+  return ttype
 end
 
 --- Get 2D vector of target.
@@ -4183,7 +4186,8 @@ end
 function AUFTRAG:GetTargetVec2()
   local coord=self:GetTargetCoordinate()
   if coord then
-    return coord:GetVec2()
+    local vec2=coord:GetVec2()
+    return vec2
   end
   return nil
 end
@@ -4216,7 +4220,8 @@ end
 function AUFTRAG:GetTargetName()
   
   if self.engageTarget then
-    return self.engageTarget:GetName()
+    local name=self.engageTarget:GetName()
+    return name
   end
     
   return "N/A"

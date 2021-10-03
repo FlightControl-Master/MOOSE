@@ -1053,7 +1053,7 @@ function UNIT:GetThreatLevel()
       elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
              not Attributes["ATGM"]                                                   then ThreatLevel = 3
       elseif Attributes["Old Tanks"] or Attributes["APC"] or Attributes["Artillery"]  then ThreatLevel = 2
-      elseif Attributes["Infantry"]                                                   then ThreatLevel = 1
+      elseif Attributes["Infantry"]  or Attributes["EWR"]                             then ThreatLevel = 1
       end
       
       ThreatText = ThreatLevels[ThreatLevel+1]
