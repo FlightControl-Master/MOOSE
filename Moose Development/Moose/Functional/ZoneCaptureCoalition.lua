@@ -715,20 +715,21 @@ do -- ZONE_CAPTURE_COALITION
   
       local UnitHit = EventData.TgtUnit
       
+      if UnitHit.ClassName ~= "SCENERY" then
       -- Check if unit is inside the capture zone and that it is of the defending coalition.
-      if UnitHit and UnitHit:IsInZone(self) and UnitHit:GetCoalition()==self.Coalition then
-      
-        -- Update last hit time.
-        self.HitTimeLast=timer.getTime()
-        
-        -- Only trigger attacked event if not already in state "Attacked".
-        if self:GetState()~="Attacked" then
-          self:F2("Hit ==> Attack")
-          self:Attack()
-        end
-        
+          if UnitHit and UnitHit:IsInZone(self) and UnitHit:GetCoalition()==self.Coalition then
+          
+            -- Update last hit time.
+            self.HitTimeLast=timer.getTime()
+            
+            -- Only trigger attacked event if not already in state "Attacked".
+            if self:GetState()~="Attacked" then
+              self:F2("Hit ==> Attack")
+              self:Attack()
+            end
+            
+          end
       end
-
     end
   
   end
