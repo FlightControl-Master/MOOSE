@@ -90,6 +90,7 @@ FLIGHTCONTROL = {
 
 --- Parking spot data.
 -- @type FLIGHTCONTROL.FlightStatus
+-- @field #string UNKNOWN Flight state is unknown.
 -- @field #string INBOUND Flight is inbound.
 -- @field #string HOLDING Flight is holding.
 -- @field #string LANDING Flight is landing.
@@ -99,6 +100,7 @@ FLIGHTCONTROL = {
 -- @field #string READYTO Flight is ready for takeoff.
 -- @field #string TAKEOFF Flight is taking off.
 FLIGHTCONTROL.FlightStatus={
+  UNKNOWN="Unknown",
   INBOUND="Inbound",
   HOLDING="Holding",
   LANDING="Landing",
@@ -923,8 +925,11 @@ function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight, queuename)
       self:I(self.lid..string.format("Removing flight group %s from %s queue.", flight.groupname, queuename))
       table.remove(queue, i)
       
-      if not flight.isAI then      
-        flight:_UpdateMenu()
+      if not flight.isAI then
+        if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
+          flight.flightcontrol=nil
+        end
+        flight:_UpdateMenu(0.1)
       end
       
       return true, i
@@ -1413,7 +1418,7 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   local airbaseName=airbasename
   local airbaseName2=airbaseName
   if gotcontrol then
-    airbaseName2=airbaseName2.." *"
+    --airbaseName2=airbaseName2.." *"
   end
   local Tag=airbasename
   local Tnow=timer.getTime()
@@ -1465,6 +1470,10 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
 
       MENU_GROUP_COMMAND_DELAYED:New(group, "Holding", rootmenu, self._PlayerHolding, self, groupname):SetTime(Tnow):SetTag(Tag)
       
+    end
+
+    if flight:IsInbound() or flight:IsHolding() or flight:IsLanding() or flight:IsLanded() then
+      MENU_GROUP_COMMAND_DELAYED:New(group, "Abort Inbound", rootmenu, self._PlayerAbortInbound, self, groupname):SetTime(Tnow):SetTag(Tag)
     end
   
     if flight:IsInbound() or flight:IsHolding() or flight:IsLanding() or flight:IsLanded() then
@@ -1692,7 +1701,7 @@ function FLIGHTCONTROL:_PlayerHolding(groupname)
         local text=string.format("Roger, you are added to the holding queue!")
         MESSAGE:New(text, 5):ToGroup(flight.group)              
 
-        -- Call holding event.        
+        -- Call holding event. Updates the menu.
         flight:Holding()
                 
       else
@@ -1835,6 +1844,40 @@ function FLIGHTCONTROL:_PlayerAbortTakeoff(groupname)
       
     else
       MESSAGE:New("Negative, You are NOT in the takeoff queue", 5):ToAll()
+    end
+  
+  end
+  
+end
+
+--- Player wants to abort inbound.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerAbortInbound(groupname)
+
+  MESSAGE:New("Abort inbound", 5):ToAll()
+      
+  local flight=_DATABASE:GetOpsGroup(groupname)
+  
+  if flight then
+  
+    local flightstatus=self:GetFlightStatus(flight)
+    if flightstatus==FLIGHTCONTROL.FlightStatus.INBOUND or flightstatus==FLIGHTCONTROL.FlightStatus.HOLDING or flightstatus==FLIGHTCONTROL.FlightStatus.LANDING then    
+    
+      MESSAGE:New("Afirm, You are removed from all queues queue", 5):ToAll()      
+      
+      --TODO: what now? taxi inbound? or just another later attempt to takeoff.
+      self:SetFlightStatus(flight,FLIGHTCONTROL.FlightStatus.UNKNOWN)
+      
+      -- Remove flight.
+      self:_RemoveFlight(flight)
+      
+      -- Trigger cruise event.
+      flight:Cruise()
+      
+      
+    else
+      MESSAGE:New("Negative, You are NOT in the state INBOUND, HOLDING or LANDING!", 5):ToAll()
     end
   
   end

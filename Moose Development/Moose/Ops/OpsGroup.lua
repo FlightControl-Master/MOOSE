@@ -3469,7 +3469,8 @@ function OPSGROUP:onbeforeTaskExecute(From, Event, To, Task)
         -- Group is already waiting
       else
         -- Wait indefinately.
-        self:Wait()
+        local alt=Mission.missionAltitude and UTILS.MetersToFeet(Mission.missionAltitude) or nil
+        self:Wait(nil, alt)
       end
 
       -- Time to for the next try. Best guess is when push time is reached or 20 sec when push conditions are not true yet.
@@ -8762,7 +8763,7 @@ end
 function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
 
   -- Template waypoints.
-  self.waypoints0=self.group:GetTemplateRoutePoints()
+  self.waypoints0=UTILS.DeepCopy(_DATABASE:GetGroupTemplate(self.groupname).route.points) --self.group:GetTemplateRoutePoints()
 
   -- Waypoints empty!
   self.waypoints={}
@@ -10904,7 +10905,7 @@ function OPSGROUP:_AddElementByName(unitname)
     local text=string.format("Adding element %s: status=%s, skill=%s, life=%.1f/%.1f category=%s (%d), type=%s, size=%.1f (L=%.1f H=%.1f W=%.1f), weight=%.1f/%.1f (cargo=%.1f/%.1f)",
     element.name, element.status, element.skill, element.life, element.life0, element.categoryname, element.category, element.typename,
     element.size, element.length, element.height, element.width, element.weight, element.weightMaxTotal, element.weightCargo, element.weightMaxCargo)
-    self:I(self.lid..text)
+    self:T(self.lid..text)
 
     -- Add element to table.
     if not self:_IsElement(unitname) then
@@ -10930,7 +10931,7 @@ end
 function OPSGROUP:_SetTemplate(Template)
 
   -- Set the template.
-  self.template=Template or self.group:GetTemplate()
+  self.template=Template or UTILS.DeepCopy(_DATABASE:GetGroupTemplate(self.groupname))  --self.group:GetTemplate()
   
   -- Debug info.
   self:T3(self.lid.."Setting group template")

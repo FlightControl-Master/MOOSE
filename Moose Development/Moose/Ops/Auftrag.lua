@@ -2076,6 +2076,9 @@ function AUFTRAG:SetRequiredEscorts(NescortMin, NescortMax)
   if self.NescortMax<self.NescortMin then
     self.NescortMax=self.NescortMin
   end
+  
+  -- Debug info.
+  self:T(self.lid..string.format("NescortMin=%s, NescortMax=%s", tostring(self.NescortMin), tostring(self.NescortMax)))
 
   return self
 end

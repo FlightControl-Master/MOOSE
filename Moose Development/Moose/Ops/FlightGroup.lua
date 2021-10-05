@@ -1544,6 +1544,8 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     self:__UpdateRoute(-0.5)
 
   else
+  
+    env.info("FF Spawned update menu")
 
     -- F10 other menu.
     self:_UpdateMenu()
@@ -1695,7 +1697,7 @@ function FLIGHTGROUP:onafterCruise(From, Event, To)
     -- CLIENT
     ---
   
-    self:_UpdateMenu()
+    self:_UpdateMenu(0.1)
     
   end
     
@@ -3218,7 +3220,7 @@ end
 -- @return #boolean Hot start?
 function FLIGHTGROUP:IsTakeoffHot()
 
-  local wp=self:GetWaypoint(1)
+  local wp=self.waypoints0 and self.waypoints0[1] or nil --self:GetWaypoint(1)
 
   if wp then
 
@@ -3238,7 +3240,7 @@ end
 -- @return #boolean Cold start, i.e. engines off when spawned?
 function FLIGHTGROUP:IsTakeoffCold()
 
-  local wp=self:GetWaypoint(1)
+  local wp=self.waypoints0 and self.waypoints0[1] or nil --self:GetWaypoint(1)
 
   if wp then
 
@@ -3258,7 +3260,7 @@ end
 -- @return #boolean Runway start?
 function FLIGHTGROUP:IsTakeoffRunway()
 
-  local wp=self:GetWaypoint(1)
+  local wp=self.waypoints0 and self.waypoints0[1] or nil --self:GetWaypoint(1)
 
   if wp then
 
@@ -3278,7 +3280,7 @@ end
 -- @return #boolean Air start?
 function FLIGHTGROUP:IsTakeoffAir()
 
-  local wp=self:GetWaypoint(1)
+  local wp=self.waypoints0 and self.waypoints0[1] or nil --self:GetWaypoint(1)  
 
   if wp then
 
@@ -4009,19 +4011,28 @@ function FLIGHTGROUP:_UpdateMenu(delay)
       return a.dist<b.dist
     end
     table.sort(fc, _sort)
+    
+    for _,_menu in pairs(self.menu.atc or {}) do
+      local menu=_menu
+        
+    end
 
     -- If there is a designated FC, we put it first.
     local N=8
+    local gotairbase=nil
     if self.flightcontrol then
       self.flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
+      gotairbase=self.flightcontrol.airbasename
       N=7
     end
 
     -- Max 8 entries in F10 menu.
     for i=1,math.min(#fc,N) do
       local airbasename=fc[i].airbasename
-      local flightcontrol=_DATABASE:GetFlightControl(airbasename)
-      flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
+      if gotairbase==nil or airbasename~=gotairbase then
+        local flightcontrol=_DATABASE:GetFlightControl(airbasename)
+        flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
+      end
     end
   end
 

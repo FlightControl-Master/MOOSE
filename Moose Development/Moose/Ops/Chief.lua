@@ -1446,9 +1446,17 @@ function CHIEF:CheckTargetQueue()
           --      * number of enemy units
           --      * target threatlevel
           --      * how many assets are still in stock
-          --      * is it inside of our border         
+          --      * is it inside of our border
           local NassetsMin=1
-          local NassetsMax=3
+          local NassetsMax=1
+          
+          if target.threatlevel0>=8 then
+            NassetsMax=3
+          elseif target.threatlevel0>=5 then
+            NassetsMax=2
+          else
+            NassetsMax=1          
+          end
           
           for _,_mp in pairs(MissionPerformances) do
             local mp=_mp --#CHIEF.MissionPerformance

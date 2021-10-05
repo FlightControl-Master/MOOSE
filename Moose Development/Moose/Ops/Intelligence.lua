@@ -710,6 +710,7 @@ end
 -- @param #table RecceDetecting Table of detecting recce names
 function INTEL:CreateDetectedItems(DetectedGroups, RecceDetecting)
   self:F({RecceDetecting=RecceDetecting})
+  
   -- Current time.
   local Tnow=timer.getAbsTime()
   
@@ -750,7 +751,10 @@ function INTEL:CreateDetectedItems(DetectedGroups, RecceDetecting)
       item.velocity=group:GetVelocityVec3()
       item.speed=group:GetVelocityMPS()
       item.recce=RecceDetecting[groupname]
+      
+      -- Debug info.
       self:T(string.format("%s group detect by %s/%s", groupname, RecceDetecting[groupname] or "unknown", item.recce or "unknown"))
+      
       -- Add contact to table.    
       self:AddContact(item)
       

@@ -1833,7 +1833,7 @@ function LEGION:RecruitAssetsForEscort(Mission, Assets)
   if Mission.NescortMin and Mission.NescortMax and (Mission.NescortMin>0 or Mission.NescortMax>0) then
   
     -- Debug info.
-    self:I(self.lid..string.format("Reqested escort for mission %s [%s]. Required assets=%d-%d", Mission:GetName(), Mission:GetType(), Mission.NescortMin,Mission.NescortMax))
+    self:I(self.lid..string.format("Requested escort for mission %s [%s]. Required assets=%d-%d", Mission:GetName(), Mission:GetType(), Mission.NescortMin,Mission.NescortMax))
     
     -- Get special escort legions and/or cohorts.
     local Cohorts={}
@@ -1855,7 +1855,7 @@ function LEGION:RecruitAssetsForEscort(Mission, Assets)
     end    
     
     -- Call LEGION function but provide COMMANDER as self.
-    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMin)
+    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMax)
     
     return assigned
   end
@@ -2083,7 +2083,7 @@ function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax)
   if NescortMin and NescortMax and (NescortMin>0 or NescortMax>0) then
   
     -- Debug info.
-    self:I(self.lid..string.format("Reqested escort for %d assets from %d cohorts. Required escort assets=%d-%d", #Assets, #Cohorts, NescortMin, NescortMax))
+    self:T(self.lid..string.format("Requested escort for %d assets from %d cohorts. Required escort assets=%d-%d", #Assets, #Cohorts, NescortMin, NescortMax))
     
     -- Escorts for each asset.        
     local Escorts={}
@@ -2153,14 +2153,14 @@ function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax)
       end
       
       -- Debug info.
-      self:I(self.lid..string.format("Recruited %d escort assets", N))
+      self:T(self.lid..string.format("Recruited %d escort assets", N))
     
       -- Yup!
       return true    
     else
 
       -- Debug info.
-      self:I(self.lid..string.format("Could not get at least one escort!"))      
+      self:T(self.lid..string.format("Could not get at least one escort!"))      
     
       -- Could not get at least one escort. Unrecruit all recruited ones.
       for groupname,value in pairs(Escorts) do      
@@ -2174,6 +2174,7 @@ function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax)
     
   else
     -- No escort required.
+    self:T(self.lid..string.format("No escort required! NescortMin=%s, NescortMax=%s", tostring(NescortMin), tostring(NescortMax)))
     return true
   end      
 
@@ -2392,6 +2393,7 @@ function LEGION._OptimizeAssetSelection(assets, MissionType, TargetVec2, Include
   table.sort(assets, optimize)
 
   -- Remove distance parameter.
+  --[[
   local text=string.format("Optimized %d assets for %s mission/transport (payload=%s):", #assets, MissionType, tostring(IncludePayload))
   for i,Asset in pairs(assets) do
     local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
@@ -2399,6 +2401,7 @@ function LEGION._OptimizeAssetSelection(assets, MissionType, TargetVec2, Include
     asset.score=nil
   end
   env.info(text)
+  ]]
 
 end
 

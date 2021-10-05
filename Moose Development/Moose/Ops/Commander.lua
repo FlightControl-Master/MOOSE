@@ -668,7 +668,7 @@ function COMMANDER:onafterStatus(From, Event, To)
               state=asset.flightgroup:GetState()
               local mission=legion:GetAssetCurrentMission(asset)
               if mission then
-                state=state..string.format("Mission %s [%s]", mission:GetName(), mission:GetType())
+                state=state..string.format(", Mission \"%s\" [%s]", mission:GetName(), mission:GetType())
               end
             else
               if asset.spawned then
@@ -1023,7 +1023,7 @@ end
 function COMMANDER:RecruitAssetsForMission(Mission)
 
   -- Debug info.
-  env.info(string.format("FF recruiting assets for mission %s [%s]", Mission:GetName(), Mission:GetType()))
+  self:T2(self.lid..string.format("Recruiting assets for mission \"%s\" [%s]", Mission:GetName(), Mission:GetType()))
   
   -- Cohorts.
   local Cohorts={}
@@ -1102,7 +1102,7 @@ function COMMANDER:RecruitAssetsForEscort(Mission, Assets)
         
     
     -- Call LEGION function but provide COMMANDER as self.
-    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMin)
+    local assigned=LEGION.AssignAssetsForEscort(self, Cohorts, Assets, Mission.NescortMin, Mission.NescortMax)
     
     return assigned    
   end
