@@ -20,24 +20,7 @@
 --    * Easy setup
 --
 -- ===
---
--- ### Author: **applevangelist**
--- @module Functional.Autolase
--- @image Designation.JPG
-
--- Date: Oct 2021
-
----
---- Class AUTOLASE
--- @type AUTOLASE
--- @field #string ClassName
--- @field #string lid
--- @field #number verbose
--- @field #string alias
--- @field #boolean debug
--- @field #string version
--- @extends Ops.Intel#INTEL
-
+-- 
 --- Spot on!
 -- 
 -- ===
@@ -83,6 +66,24 @@
 --            autolaser:SetNotifyPilots(true) -- defaults to true, also shown if debug == true
 --            -- Note - message are shown to pilots in the #SET_CLIENT only if using the pilotset option, else to the coalition.
 --
+--
+-- ### Author: **applevangelist**
+-- @module Functional.Autolase
+-- @image Designation.JPG
+
+-- Date: Oct 2021
+
+--- Class AUTOLASE
+-- @type AUTOLASE
+-- @field #string ClassName
+-- @field #string lid
+-- @field #number verbose
+-- @field #string alias
+-- @field #boolean debug
+-- @field #string version
+-- @extends Ops.Intel#INTEL
+
+---
 -- @field #AUTOLASE
 AUTOLASE = {
   ClassName = "AUTOLASE",
@@ -92,7 +93,7 @@ AUTOLASE = {
   debug = false,
 }
 
----Laser spot info
+--- Laser spot info
 -- @type AUTOLASE.LaserSpot
 -- @field Core.Spot#SPOT laserspot 
 -- @field Wrapper.Unit#UNIT lasedunit
@@ -106,7 +107,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.2"
+AUTOLASE.version = "0.0.3"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -156,13 +157,13 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   
   self.DetectVisual = true
   self.DetectOptical = true
-  self.DetectRadar = false
+  self.DetectRadar = true
   self.DetectIRST = true
-  self.DetectRWR = false
+  self.DetectRWR = true
   self.DetectDLINK = true
   self.LaserCodes = UTILS.GenerateLaserCodes()
-  self.LaseDistance = 4000
-  self.LaseDuration = 120
+  self.LaseDistance = 5000
+  self.LaseDuration = 300
   self.GroupsByThreat = {}
   self.UnitsByThreat = {}
   self.RecceNames = {}
