@@ -3046,7 +3046,7 @@ end
 --- User function - Activate Name #CTLD.CargoZone.Type ZoneType for this CTLD instance.
 -- @param #CTLD self
 -- @param #string Name Name of the zone to change in the ME.
--- @param #CTLD.CargoZoneTyp ZoneType Type of zone this belongs to.
+-- @param #CTLD.CargoZoneType ZoneType Type of zone this belongs to.
 -- @param #boolean NewState (Optional) Set to true to activate, false to switch off.
 function CTLD:ActivateZone(Name,ZoneType,NewState)
   self:T(self.lid .. " AddZone")
@@ -3082,7 +3082,7 @@ end
 --- User function - Deactivate Name #CTLD.CargoZoneType ZoneType for this CTLD instance.
 -- @param #CTLD self
 -- @param #string Name Name of the zone to change in the ME.
--- @param #CTLD.CargoZoneTyp ZoneType Type of zone this belongs to.
+-- @param #CTLD.CargoZoneType ZoneType Type of zone this belongs to.
 function CTLD:DeactivateZone(Name,ZoneType)
   self:T(self.lid .. " AddZone")
   self:ActivateZone(Name,ZoneType,false)
