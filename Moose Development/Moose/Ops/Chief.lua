@@ -21,6 +21,8 @@
 -- @field Core.Set#SET_ZONE borderzoneset Set of zones defining the border of our territory.
 -- @field Core.Set#SET_ZONE yellowzoneset Set of zones defining the extended border. Defcon is set to YELLOW if enemy activity is detected.
 -- @field Core.Set#SET_ZONE engagezoneset Set of zones where enemies are actively engaged.
+-- @field #number threatLevelMin Lowest threat level of targets to attack.
+-- @field #number threatLevelMax Highest threat level of targets to attack.
 -- @field #string Defcon Defence condition.
 -- @field #string strategy Strategy of the CHIEF.
 -- @field Ops.Commander#COMMANDER commander Commander of assigned legions.
@@ -115,11 +117,11 @@ CHIEF.version="0.0.1"
 
 --- Create a new CHIEF object and start the FSM.
 -- @param #CHIEF self
--- @param Core.Set#SET_GROUP AgentSet Set of agents (groups) providing intel. Default is an empty set.
 -- @param #number Coalition Coalition side, e.g. `coaliton.side.BLUE`. Can also be passed as a string "red", "blue" or "neutral".
+-- @param Core.Set#SET_GROUP AgentSet Set of agents (groups) providing intel. Default is an empty set.
 -- @param #string Alias An *optional* alias how this object is called in the logs etc.
 -- @return #CHIEF self
-function CHIEF:New(AgentSet, Coalition, Alias)
+function CHIEF:New(Coalition, AgentSet, Alias)
 
   -- Set alias.
   Alias=Alias or "CHIEF"
@@ -1076,9 +1078,10 @@ function CHIEF:onafterStatus(From, Event, To)
     local text="Contacts:"
     for i,_contact in pairs(self.Contacts) do
       local contact=_contact --Ops.Intelligence#INTEL.Contact
+      
       local mtext="N/A"
       if contact.mission then
-        mtext=string.format("Mission %s (%s) %s", contact.mission.name, contact.mission.type, contact.mission.status:upper())
+        mtext=string.format("\"%s\" [%s] %s", contact.mission:GetName(), contact.mission:GetType(), contact.mission.status:upper())
       end
       text=text..string.format("\n[%d] %s Type=%s (%s): Threat=%d Mission=%s", i, contact.groupname, contact.categoryname, contact.typename, contact.threatlevel, mtext)
     end
@@ -1093,10 +1096,13 @@ function CHIEF:onafterStatus(From, Event, To)
     local text="Targets:"
     for i,_target in pairs(self.targetqueue) do
       local target=_target --Ops.Target#TARGET
-      
-      text=text..string.format("\n[%d] %s: Category=%s, prio=%d, importance=%d, alive=%s [%.1f/%.1f]",
-      i, target:GetName(), target.category, target.prio, target.importance or -1, tostring(target:IsAlive()), target:GetLife(), target:GetLife0())
-          
+
+      local mtext="N/A"
+      if target.mission then
+        mtext=string.format("\"%s\" [%s] %s", target.mission:GetName(), target.mission:GetType(), target.mission.status:upper())
+      end      
+      text=text..string.format("\n[%d] %s: Category=%s, prio=%d, importance=%d, alive=%s [%.1f/%.1f], Mission=%s",
+      i, target:GetName(), target.category, target.prio, target.importance or -1, tostring(target:IsAlive()), target:GetLife(), target:GetLife0(), mtext)          
     end
     self:I(self.lid..text)
   end
@@ -1357,7 +1363,7 @@ function CHIEF:CheckTargetQueue()
   local vip=math.huge
   for _,_target in pairs(self.targetqueue) do
     local target=_target --Ops.Target#TARGET
-    if target.importance and target.importance<vip then
+    if target:IsAlive() and target.importance and target.importance<vip then
       vip=target.importance
     end
   end
@@ -1372,8 +1378,25 @@ function CHIEF:CheckTargetQueue()
     -- Is this a threat?
     local isThreat=target.threatlevel0>=self.threatLevelMin and target.threatlevel0<=self.threatLevelMax
     
+    -- Airbases, Zones and Coordinates have threat level 0. We consider them threads independent of min/max threat level set.
+    if target.category==TARGET.Category.AIRBASE or target.category==TARGET.Category.ZONE or target.Category==TARGET.Category.COORDINATE then
+      isThreat=true
+    end
+    
     -- Debug message.
-    self:T(self.lid..string.format("Target %s: Alive=%s, Threat=%s, Important=%s", target:GetName(), tostring(isAlive), tostring(isThreat), tostring(isImportant)))
+    local text=string.format("Target %s: Alive=%s, Threat=%s, Important=%s", target:GetName(), tostring(isAlive), tostring(isThreat), tostring(isImportant))
+        
+    -- Check if mission is done.
+    if target.mission then
+      text=text..string.format(", Mission \"%s\" (%s) [%s]", target.mission:GetName(), target.mission:GetState(), target.mission:GetType())
+      if target.mission:IsOver() then
+        text=text..string.format(" - DONE ==> removing mission")
+        target.mission=nil
+      end
+    else
+      text=text..string.format(", NO mission yet")
+    end
+    self:I(self.lid..text)
 
     -- Check that target is alive and not already a mission has been assigned.
     if isAlive and isThreat and isImportant and not target.mission then
@@ -1469,6 +1492,8 @@ function CHIEF:CheckTargetQueue()
             
             if recruited then
             
+              self:I(self.lid..string.format("Recruited %d assets for mission type %s [performance=%d] of target %s", #assets, mp.MissionType, mp.Performance, target:GetName()))
+            
               -- Create a mission.
               mission=AUFTRAG:NewFromTarget(target, mp.MissionType)
                             
@@ -1483,7 +1508,8 @@ function CHIEF:CheckTargetQueue()
                 -- We got what we wanted ==> leave loop.
                 break
               end
-              
+            else
+              self:I(self.lid..string.format("Could NOT recruit assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
             end
           end
         end
@@ -1793,17 +1819,30 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
           
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
         
+      elseif attribute==GROUP.Attribute.GROUND_EWR then
+
+        -- EWR
+          
+        --table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,  100))
+        
       elseif attribute==GROUP.Attribute.GROUND_AAA then
+      
+        -- AAA
       
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
         
       elseif attribute==GROUP.Attribute.GROUND_ARTILLERY then
+      
+        -- ARTY
       
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 70))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
       
       elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
+      
+        -- Infantry
       
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
           
@@ -1827,16 +1866,35 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
     end
     
   elseif airbase then
+  
+    ---
+    -- AIRBASE
+    ---
+  
+    -- Bomb runway.
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBRUNWAY, 100))
+    
   elseif scenery then
+  
+    ---
+    -- SCENERY
+    ---
+  
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.STRIKE, 100))
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 70))
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBCARPET, 50))
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
+    
   elseif coordinate then
+  
+    ---
+    -- COORDINATE
+    ---
+  
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 100))
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBCARPET, 50))
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
+    
   end
 
   return missionperf

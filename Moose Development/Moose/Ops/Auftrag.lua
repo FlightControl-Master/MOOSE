@@ -1204,7 +1204,7 @@ end
 --- **[AIR]** Create a BAI mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
--- @param #number Altitude Engage altitude in feet. Default 2000 ft.
+-- @param #number Altitude Engage altitude in feet. Default 5000 ft.
 -- @return #AUFTRAG self
 function AUFTRAG:NewBAI(Target, Altitude)
   
@@ -1215,7 +1215,7 @@ function AUFTRAG:NewBAI(Target, Altitude)
   -- DCS Task options:
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
-  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 2000)
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 5000)
   
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
@@ -1234,7 +1234,7 @@ end
 --- **[AIR]** Create a SEAD mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP or UNIT object.
--- @param #number Altitude Engage altitude in feet. Default 2000 ft.
+-- @param #number Altitude Engage altitude in feet. Default 8000 ft.
 -- @return #AUFTRAG self
 function AUFTRAG:NewSEAD(Target, Altitude)
   
@@ -1245,7 +1245,7 @@ function AUFTRAG:NewSEAD(Target, Altitude)
   -- DCS Task options:
   mission.engageWeaponType=ENUMS.WeaponFlag.AnyAG  --ENUMS.WeaponFlag.Cannons
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
-  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 2000)
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 8000)
   
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.SEAD
