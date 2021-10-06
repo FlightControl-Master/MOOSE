@@ -132,7 +132,7 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   
   -- Mission range depends on 
   if self.category==Group.Category.AIRPLANE then
-    self:SetMissionRange(150)
+    self:SetMissionRange(200)
   elseif self.category==Group.Category.HELICOPTER then
     self:SetMissionRange(150)
   elseif self.category==Group.Category.GROUND then

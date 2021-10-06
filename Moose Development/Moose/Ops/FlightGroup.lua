@@ -2172,7 +2172,7 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
             elseif destbase then
               if self.currbase and self.currbase.AirbaseName==destbase.AirbaseName and self:IsParking() then
                 self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports AND parking at destination airbase ==> Arrived!")
-                self:__Arrived(0.1)
+                self:Arrived()
               else
                 self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports ==> RTB!")
                 self:__RTB(-0.1, destbase)
@@ -2818,6 +2818,7 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFuelLow(From, Event, To)
 
+  -- Current min fuel.
   local fuel=self:GetFuelMin() or 0
 
   -- Debug message.
@@ -2829,58 +2830,31 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
 
   -- Back to destination or home.
   local airbase=self.destbase or self.homebase
-  
-  local airwing=self:GetAirWing()
 
-  if airwing then
+  if self.fuellowrefuel and self.refueltype then
 
-    -- Get closest tanker from airwing that can refuel this flight.
-    local tanker=airwing:GetTankerForFlight(self)
+    -- Find nearest tanker within 50 NM.
+    local tanker=self:FindNearestTanker(50)
 
-    if tanker and self.fuellowrefuel then
+    if tanker then
 
       -- Debug message.
-      self:I(self.lid..string.format("Send to refuel at tanker %s", tanker.flightgroup:GetName()))
+      self:I(self.lid..string.format("Send to refuel at tanker %s", tanker:GetName()))
 
       -- Get a coordinate towards the tanker.
-      local coordinate=self:GetCoordinate():GetIntermediateCoordinate(tanker.flightgroup:GetCoordinate(), 0.75)
+      local coordinate=self:GetCoordinate():GetIntermediateCoordinate(tanker:GetCoordinate(), 0.75)
 
-      -- Send flight to tanker with refueling task.
+      -- Trigger refuel even.
       self:Refuel(coordinate)
 
-    else
-
-      if airbase and self.fuellowrtb then
-        self:RTB(airbase)
-        --TODO: RTZ
-      end
-
+      return
     end
+  end
 
-  else
-
-    if self.fuellowrefuel and self.refueltype then
-
-      local tanker=self:FindNearestTanker(50)
-
-      if tanker then
-
-        self:I(self.lid..string.format("Send to refuel at tanker %s", tanker:GetName()))
-
-        -- Get a coordinate towards the tanker.
-        local coordinate=self:GetCoordinate():GetIntermediateCoordinate(tanker:GetCoordinate(), 0.75)
-
-        self:Refuel(coordinate)
-
-        return
-      end
-    end
-
-    if airbase and self.fuellowrtb then
-      self:RTB(airbase)
-      --TODO: RTZ
-    end
-
+  -- Send back to airbase.
+  if airbase and self.fuellowrtb then
+    self:RTB(airbase)
+    --TODO: RTZ
   end
 
 end

@@ -804,17 +804,29 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
   for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
     local DetectedObject=Detection.object -- DCS#Object
 
+    -- NOTE: Got an object that exists but when trying UNIT:Find() the DCS getName() function failed. ID of the object was 5,000,031
     if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
     
-      local unit=UNIT:Find(DetectedObject)
-
-      if unit and unit:IsAlive() then
+      -- Protected call to get the name of the object.
+      local status,name =  pcall(
+      function()
+        local name=DetectedObject:getName()
+        return name
+      end)
       
-        local unitname=unit:GetName()
+      if status then
+          
+        local unit=UNIT:FindByName(name)
+  
+        if unit and unit:IsAlive() then
+          DetectedUnits[name]=unit
+          RecceDetecting[name]=reccename
+          self:T(string.format("Unit %s detect by %s", name, reccename))
+        end
         
-        DetectedUnits[unitname]=unit
-        RecceDetecting[unitname]=reccename
-        self:T(string.format("Unit %s detect by %s", unitname, reccename))
+      else
+        -- Warning!
+        self:T(self.lid..string.format("WARNING: Could not get name of detected object ID=%s! Detected by %s", DetectedObject.id_, reccename))
       end
     end
   end

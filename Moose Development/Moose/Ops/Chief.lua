@@ -1396,7 +1396,7 @@ function CHIEF:CheckTargetQueue()
     else
       text=text..string.format(", NO mission yet")
     end
-    self:I(self.lid..text)
+    self:T2(self.lid..text)
 
     -- Check that target is alive and not already a mission has been assigned.
     if isAlive and isThreat and isImportant and not target.mission then
@@ -1485,14 +1485,14 @@ function CHIEF:CheckTargetQueue()
             local mp=_mp --#CHIEF.MissionPerformance
 
             -- Debug info.
-            self:I(self.lid..string.format("Recruiting assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
+            self:T2(self.lid..string.format("Recruiting assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
             
             -- Recruit assets.
             local recruited, assets, legions=self:RecruitAssetsForTarget(target, mp.MissionType, NassetsMin, NassetsMax)
             
             if recruited then
             
-              self:I(self.lid..string.format("Recruited %d assets for mission type %s [performance=%d] of target %s", #assets, mp.MissionType, mp.Performance, target:GetName()))
+              self:T(self.lid..string.format("Recruited %d assets for mission type %s [performance=%d] of target %s", #assets, mp.MissionType, mp.Performance, target:GetName()))
             
               -- Create a mission.
               mission=AUFTRAG:NewFromTarget(target, mp.MissionType)
@@ -1509,7 +1509,7 @@ function CHIEF:CheckTargetQueue()
                 break
               end
             else
-              self:I(self.lid..string.format("Could NOT recruit assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
+              self:T(self.lid..string.format("Could NOT recruit assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
             end
           end
         end

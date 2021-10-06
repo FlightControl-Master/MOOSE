@@ -6008,10 +6008,7 @@ function OPSGROUP:onafterDead(From, Event, To)
       self.cohort:DelGroup(self.groupname)
     end
   else
-    if self.airwing then
-      -- Not all assets were destroyed (despawn) ==> Add asset back to airwing.
-      --self.airwing:AddAsset(self.group, 1)
-    end
+    -- Not all assets were destroyed (despawn) ==> Add asset back to legion?
   end
    
   -- Stop in a sec.
