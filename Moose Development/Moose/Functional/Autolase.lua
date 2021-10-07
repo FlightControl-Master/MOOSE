@@ -108,7 +108,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.4"
+AUTOLASE.version = "0.0.6"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -156,6 +156,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   -- inherit from INTEL
   local self=BASE:Inherit(self, INTEL:New(RecceSet, Coalition, Alias)) -- #AUTOLASE
   
+  self.RecceSet = RecceSet
   self.DetectVisual = true
   self.DetectOptical = true
   self.DetectRadar = true
@@ -182,6 +183,9 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.notifypilots = true
   --self.statusupdate = -28 -- for #INTEL
   self.targetsperrecce = {}
+  self.RecceUnits = {}
+  self.forcecooldown = true
+  self.cooldowntime = 60
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -353,6 +357,17 @@ function AUTOLASE:SetRecceLaserCode(RecceName, Code)
   return self
 end
 
+--- (User) Function to force laser cooldown and cool down time
+-- @param #AUTOLASE self
+-- @param #boolean OnOff Switch cool down on (true) or off (false) - defaults to true
+-- @param #number Seconds Number of seconds for cooldown - dafaults to 60 seconds
+-- @return #AUTOLASE self 
+function AUTOLASE:SetLaserCoolDown(OnOff, Seconds)
+  self.forcecooldown = OnOff and true
+  self.cooldowntime = Seconds or 60
+  return self
+end
+  
 --- (User) Function to set message show times.
 -- @param #AUTOLASE self
 -- @param #number long Longer show time
@@ -366,8 +381,8 @@ end
 
 --- (User) Function to set lasing distance in meters and duration in seconds
 -- @param #AUTOLASE self
--- @param #number Distance (Max) distance for lasing in meters
--- @param #number Duration (Max) duration for lasing in seconds
+-- @param #number Distance (Max) distance for lasing in meters - default 5000 meters
+-- @param #number Duration (Max) duration for lasing in seconds - default 300 secs
 -- @return #AUTOLASE self 
 function AUTOLASE:SetLasingParameters(Distance, Duration)
   self.LaseDistance = Distance or 5000
@@ -420,12 +435,24 @@ function AUTOLASE:CleanCurrentLasing()
     end
   end
   
+  for _,_recce in pairs (self.RecceSet:GetSetObjects()) do
+    local recce = _recce --Wrapper.Group#GROUP
+    if recce and recce:IsAlive() then
+      local unit = recce:GetUnit(1)
+      local name = unit:GetName()
+      if not self.RecceUnits[name] then
+        self.RecceUnits[name] = { name=name, unit=unit, cooldown = false, timestamp = timer.getAbsTime() }
+      end
+    end
+  end
+  
   for _ind,_entry in pairs(lasingtable) do
     local entry = _entry -- #AUTOLASE.LaserSpot
     local valid = 0
     local reccedead = false
     local unitdead = false
     local lostsight = false
+    local timeout = false
     local Tnow = timer.getAbsTime()
     -- check recce dead
     local recce = entry.lasingunit
@@ -452,11 +479,7 @@ function AUTOLASE:CleanCurrentLasing()
     end
     -- check entry out of sight
     if not reccedead and not unitdead then
-      local coord = unit:GetCoordinate() -- Core.Point#COORDINATE
-      local coord2 = recce:GetCoordinate() -- Core.Point#COORDINATE
-      local dist = coord2:Get3DDistance(coord)
-      local lasedistance = self:GetLosFromUnit(recce)
-      if dist <= lasedistance then
+      if self:CanLase(recce,unit) then
         valid = valid + 1
       else
         lostsight = true
@@ -468,14 +491,20 @@ function AUTOLASE:CleanCurrentLasing()
     end
     -- check timed out
     local timestamp = entry.timestamp
-    if Tnow - timestamp < self.LaseDuration then
+    if Tnow - timestamp < self.LaseDuration and not lostsight then
       valid = valid + 1
     else
-      lostsight = true
+      timeout = true
       entry.laserspot:LaseOff()
       --local text = string.format("Lost sight of unit %s.",entry.unitname)
       --local m = MESSAGE:New(text,15,"Autolase"):ToAll()
-      self:__LaserTimeout(2,entry.unitname,entry.reccename)
+      
+      self.RecceUnits[entry.reccename].cooldown = true
+      self.RecceUnits[entry.reccename].timestamp = timer.getAbsTime()
+      
+      if not lostsight then
+        self:__LaserTimeout(2,entry.unitname,entry.reccename)
+      end
     end
     if valid == 4 then
      self.lasingindex = self.lasingindex + 1
@@ -558,6 +587,37 @@ function AUTOLASE:CheckIsLased(unitname)
     end
   end
   return outcome
+end
+
+--- (Internal) Function to check if a unit can be lased.
+-- @param #AUTOLASE self
+-- @param Wrapper.Unit#UNIT Recce The Recce #UNIT
+-- @param Wrapper.Unit#UNIT Unit The lased #UNIT
+-- @return #boolean outcome True or false
+function AUTOLASE:CanLase(Recce,Unit)
+  local canlase = false
+  -- cooldown?
+  local name = Recce:GetName()
+  local cooldown = self.RecceUnits[name].cooldown and self.forcecooldown
+  if cooldown then
+    local Tdiff = timer.getAbsTime() - self.RecceUnits[name].timestamp
+    if Tdiff < self.cooldowntime then
+      return false
+    else
+      self.RecceUnits[name].cooldown = false
+    end
+  end
+  -- calculate LOS
+  local reccecoord = Recce:GetCoordinate()
+  local unitcoord = Unit:GetCoordinate()
+  local islos = reccecoord:IsLOS(unitcoord,2.5)
+  -- calculate distance
+  local distance = math.floor(reccecoord:Get3DDistance(unitcoord))
+  local lasedistance = self:GetLosFromUnit(Recce)
+  if distance <= lasedistance and islos then
+    canlase = true
+  end
+  return canlase
 end
 
 -------------------------------------------------------------------
@@ -688,16 +748,26 @@ function AUTOLASE:onafterMonitor(From, Event, To)
   end
   
   -- lase targets
-  local targets = countlases or 0
+  --local maxtargets = targets * self.RecceSet:CountAlive()
+  
+  for _,_detectingunit in pairs(self.RecceUnits) do
+    
+    local reccename = _detectingunit.name
+    local recce = _detectingunit.unit
+    local reccecount = self.targetsperrecce[reccename] or 0
+    --self:I("*****Run for: "..reccename)
+    local targets = 0
     for _,_entry in pairs(self.UnitsByThreat) do
       local unit = _entry[1] -- Wrapper.Unit#UNIT
       local unitname = unit:GetName()
-      local reccename = self.RecceUnitNames[unitname]
-      local recce = UNIT:FindByName(reccename)
-      local reccecount = self.targetsperrecce[reccename] or 0
-      if (targets < self.maxlasing or reccecount < targets) and not self:CheckIsLased(unitname) and unit:IsAlive() == true then
+      --local unithreat = _entry[2]
+      --local text = string.format("Recce %s Checking %s Threat %d",reccename, unitname,unithreat)
+      --local m=MESSAGE:New(text,10,"Autolase"):ToAll()
+      --self:I(text)
+      local canlase = self:CanLase(recce,unit)
+      if targets+reccecount < self.maxlasing and not self:CheckIsLased(unitname) and unit:IsAlive() and canlase then
         targets = targets + 1
-        self.targetsperrecce[reccename] = reccecount + 1
+        --self.targetsperrecce[reccename] = reccecount + 1
         local code = self:GetLaserCode(reccename)
         local spot = SPOT:New(recce)
         spot:LaseOn(unit,code,self.LaseDuration)
@@ -724,7 +794,8 @@ function AUTOLASE:onafterMonitor(From, Event, To)
        self:__Lasing(2,laserspot)  
       end
     end
-
+  end
+  
   self:__Monitor(-30)
   return self
 end
