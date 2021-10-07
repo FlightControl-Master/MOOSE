@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Date: Sep 2021
+-- Date: Oct 2021
 
 do
 ------------------------------------------------------
@@ -669,6 +669,7 @@ do
 --          my_ctld.cratecountry = country.id.GERMANY -- ID of crates. Will default to country.id.RUSSIA for RED coalition setups.
 --          my_ctld.allowcratepickupagain = true  -- allow re-pickup crates that were dropped.
 --          my_ctld.enableslingload = false -- allow cargos to be slingloaded - might not work for all cargo types
+--          my_ctld.pilotmustopendoors = false -- -- force opening of doors
 -- 
 -- ## 2.1 User functions
 -- 
@@ -987,7 +988,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.2.3"
+CTLD.version="0.2.4"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1130,6 +1131,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- country of crates spawned
   self.cratecountry = country.id.GERMANY
+  
+  -- for opening doors
+  self.pilotmustopendoors = false
   
   if self.coalition == coalition.side.RED then
      self.cratecountry = country.id.RUSSIA
@@ -1436,6 +1440,7 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   -- landed or hovering over load zone?
   local grounded = not self:IsUnitInAir(Unit)
   local hoverload = self:CanHoverLoad(Unit)
+  local dooropen = UTILS.IsLoadingDoorOpen(Unit:GetName()) and self.pilotmustopendoors
   -- check if we are in LOAD zone
   local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
   if not inzone then
@@ -1447,6 +1452,9 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   elseif not grounded and not hoverload then
     self:_SendMessage("You need to land or hover in position to load!", 10, false, Group)
     if not self.debug then return self end
+  elseif not dooropen then
+    self:_SendMessage("You need to open the door(s) to load troops!", 10, false, Group)
+    if not self.debug then return self end  
   end
   -- load troops into heli
   local group = Group -- Wrapper.Group#GROUP
@@ -1617,6 +1625,10 @@ end
     if not grounded and not hoverload then
       self:_SendMessage("You need to land or hover in position to load!", 10, false, Group)
       if not self.debug then return self end
+    end
+    if self.pilotmustopendoors and not UTILS.IsLoadingDoorOpen(Unit:GetName()) then
+      self:_SendMessage("You need to open the door(s) to extract troops!", 10, false, Group)
+      if not self.debug then return self end 
     end
     -- load troops into heli
     local unit = Unit -- Wrapper.Unit#UNIT
@@ -2360,6 +2372,11 @@ function CTLD:_UnloadTroops(Group, Unit)
   self:T(self.lid .. " _UnloadTroops")
   -- check if we are in LOAD zone
   local droppingatbase = false
+  local canunload = true
+  if self.pilotmustopendoors and not UTILS.IsLoadingDoorOpen(Unit:GetName()) then
+    self:_SendMessage("You need to open the door(s) to unload troops!", 10, false, Group)
+    if not self.debug then return self end 
+  end
   local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
   if not inzone then
     inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP)
