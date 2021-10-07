@@ -135,7 +135,7 @@ INTEL = {
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.2.6"
+INTEL.version="0.2.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -211,6 +211,8 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   self.DetectIRST = true
   self.DetectRWR = true
   self.DetectDLINK = true
+  
+  self.statusupdate = -60
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("INTEL %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -585,7 +587,7 @@ function INTEL:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end  
 
-  self:__Status(-60) 
+  self:__Status(self.statusupdate) 
 end
 
 
