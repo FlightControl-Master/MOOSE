@@ -556,6 +556,7 @@ function CSAR:_SpawnPilotInField(country,point,frequency)
   for i=1,10 do
     math.random(i,10000)
   end
+  if point:IsSurfaceTypeWater() then point.y = 0 end
   local template = self.template
   local alias = string.format("Pilot %.2fkHz-%d", freq, math.random(1,99))
   local coalition = self.coalition
@@ -1127,7 +1128,6 @@ end
 function CSAR:_IsLoadingDoorOpen( unit_name )
   self:T(self.lid .. " _IsLoadingDoorOpen")
   return UTILS.IsLoadingDoorOpen(unit_name)
-  
 end
 
 --- (Internal) Function to check if heli is close to group.
