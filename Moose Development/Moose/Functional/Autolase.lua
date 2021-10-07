@@ -53,7 +53,8 @@
 --              :InitDelayOff()
 --              :OnSpawnGroup(
 --                function (group)
---                  local name = group:GetName()
+--                  local unit = group:GetUnit(1)
+--                  local name = unit:GetName()
 --                  autolaser:SetRecceLaserCode(name,1688)
 --                end
 --              )
@@ -107,7 +108,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.3"
+AUTOLASE.version = "0.0.4"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -179,6 +180,8 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.smoketargets = false
   self.smokecolor = SMOKECOLOR.Red
   self.notifypilots = true
+  --self.statusupdate = -28 -- for #INTEL
+  self.targetsperrecce = {}
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -308,7 +311,7 @@ end
 
 --- Function to get a laser code by recce name
 -- @param #AUTOLASE self
--- @param #string RecceName Name of the Recce
+-- @param #string RecceName Unit(!) name of the Recce
 -- @return #AUTOLASE self 
 function AUTOLASE:GetLaserCode(RecceName)
   local code = 1688
@@ -341,7 +344,7 @@ end
 
 --- (User) Function to set a specific code to a Recce.
 -- @param #AUTOLASE self
--- @param #string RecceName Name of the Recce
+-- @param #string RecceName (Unit!) Name of the Recce
 -- @param #number Code The lase code
 -- @return #AUTOLASE self 
 function AUTOLASE:SetRecceLaserCode(RecceName, Code)
@@ -367,8 +370,8 @@ end
 -- @param #number Duration (Max) duration for lasing in seconds
 -- @return #AUTOLASE self 
 function AUTOLASE:SetLasingParameters(Distance, Duration)
-  self.LaseDistance = distance or 4000
-  self.LaseDuration = duration or 120
+  self.LaseDistance = Distance or 5000
+  self.LaseDuration = Duration or 300
   return self
 end
 
@@ -383,13 +386,39 @@ function AUTOLASE:SetSmokeTargets(OnOff,Color)
   return self
 end
 
+--- (Internal) Function to calculate line of sight.
+-- @param #AUTOLASE self
+-- @param Wrapper.Unit#UNIT Unit 
+-- @return #number LOS Line of sight in meters
+function AUTOLASE:GetLosFromUnit(Unit)
+  local lasedistance = self.LaseDistance
+  local unitheight = Unit:GetHeight()
+  local coord = Unit:GetCoordinate()
+  local landheight = coord:GetLandHeight()
+  local asl = unitheight - landheight
+  if asl > 100 then
+    local absquare = lasedistance^2+asl^2
+    lasedistance = math.sqrt(absquare)
+  end
+  --self:I({lasedistance=lasedistance})
+  return lasedistance
+end
+
 --- (Internal) Function to check on lased targets.
 -- @param #AUTOLASE self
 -- @return #AUTOLASE self
 function AUTOLASE:CleanCurrentLasing()
   local lasingtable = self.CurrentLasing
   local newtable = {}
+  local newreccecount = {}
   local lasing = 0
+  
+  for _ind,_entry in pairs(lasingtable) do
+    local entry = _entry -- #AUTOLASE.LaserSpot
+    if not newreccecount[entry.reccename] then
+      newreccecount[entry.reccename] = 0
+    end
+  end
   
   for _ind,_entry in pairs(lasingtable) do
     local entry = _entry -- #AUTOLASE.LaserSpot
@@ -425,8 +454,9 @@ function AUTOLASE:CleanCurrentLasing()
     if not reccedead and not unitdead then
       local coord = unit:GetCoordinate() -- Core.Point#COORDINATE
       local coord2 = recce:GetCoordinate() -- Core.Point#COORDINATE
-      local dist = coord2:Get2DDistance(coord)
-      if dist <= self.LaseDistance then
+      local dist = coord2:Get3DDistance(coord)
+      local lasedistance = self:GetLosFromUnit(recce)
+      if dist <= lasedistance then
         valid = valid + 1
       else
         lostsight = true
@@ -450,10 +480,13 @@ function AUTOLASE:CleanCurrentLasing()
     if valid == 4 then
      self.lasingindex = self.lasingindex + 1
      newtable[self.lasingindex] = entry
+     newreccecount[entry.reccename] = newreccecount[entry.reccename] + 1
      lasing = lasing + 1
     end
   end
   self.CurrentLasing = newtable
+  self.targetsperrecce = newreccecount
+  --self:I({newreccecount})
   return lasing
 end
 
@@ -507,7 +540,24 @@ function AUTOLASE:NotifyPilots(Message,Duration)
   else
     local m = MESSAGE:New(Message,Duration,"Autolase"):ToAll()
   end
+  if self.debug then self:I(Message) end
   return self
+end
+
+--- (Internal) Function to check if a unit is already lased.
+-- @param #AUTOLASE self
+-- @param #string unitname Name of the unit to check
+-- @return #boolean outcome True or false
+function AUTOLASE:CheckIsLased(unitname)
+  local outcome = false
+  for _,_laserspot in pairs(self.CurrentLasing) do
+    local spot = _laserspot -- #AUTOLASE.LaserSpot
+    if spot.unitname == unitname then
+      outcome = true
+      break
+    end
+  end
+  return outcome
 end
 
 -------------------------------------------------------------------
@@ -520,9 +570,22 @@ end
 -- @param #string Event The event
 -- @param #string To The to state
 -- @return #AUTOLASE self
+function AUTOLASE:onbeforeMonitor(From, Event, To)
+  self:T({From, Event, To})
+  -- Check if group has detected any units.
+  self:UpdateIntel()
+  return self
+end
+
+--- (Internal) FSM Function for monitoring
+-- @param #AUTOLASE self
+-- @param #string From The from state
+-- @param #string Event The event
+-- @param #string To The to state
+-- @return #AUTOLASE self
 function AUTOLASE:onafterMonitor(From, Event, To)
   self:T({From, Event, To})
-  
+
   -- Housekeeping
   local countlases = self:CleanCurrentLasing()
   
@@ -541,13 +604,15 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     local reccename = contact.recce
     local reccegrp = UNIT:FindByName(reccename)
     local reccecoord = reccegrp:GetCoordinate()
-    local distance = math.floor(reccecoord:Get2DDistance(coord))
-    local text = string.format("%s of %s | Distance %d km | Threatlevel %d",contact.attribute, contact.groupname, distance/ 1000, contact.threatlevel)
+    local distance = math.floor(reccecoord:Get3DDistance(coord))
+    local text = string.format("%s of %s | Distance %d km | Threatlevel %d",contact.attribute, contact.groupname, math.floor(distance/1000), contact.threatlevel)
     report:Add(text)
     self:T(text)
+    if self.debug then self:I(text) end
     lines = lines  +  1
     -- sort out groups beyond sight
-    if distance <= self.LaseDistance then
+    local lasedistance = self:GetLosFromUnit(reccegrp)
+    if grp:IsGround() and lasedistance >= distance then
       table.insert(groupsbythreat,{contact.group,contact.threatlevel})
       self.RecceNames[contact.groupname] = contact.recce
     end
@@ -565,20 +630,24 @@ function AUTOLASE:onafterMonitor(From, Event, To)
       return aNum > bNum -- Return their comparisons, < for ascending, > for descending
     end)
   
-  --self:T("Groups by Threat")
+ -- self:T("Groups by Threat")
   --self:T({self.GroupsByThreat})
   
   -- build table of Units
   local unitsbythreat = {}
-  for _,_entry in ipairs(self.GroupsByThreat) do
+  for _,_entry in pairs(self.GroupsByThreat) do
     local group = _entry[1] -- Wrapper.Group#GROUP
     if group and group:IsAlive() then
       local units = group:GetUnits()
       local reccename = self.RecceNames[group:GetName()]
+      --local recceunit  UNIT:FindByName(reccename)
+      --local reccecoord = recceunit:GetCoordinate()
       for _,_unit in pairs(units) do
         local unit = _unit -- Wrapper.Unit#UNIT
         if unit and unit:IsAlive() then
           local threat = unit:GetThreatLevel()
+          local coord = unit:GetCoordinate()
+          --local distance = math.floor(reccecoord:Get3DDistance(coord))
           if threat > 0 then
             local unitname = unit:GetName()
             table.insert(unitsbythreat,{unit,threat})
@@ -597,10 +666,13 @@ function AUTOLASE:onafterMonitor(From, Event, To)
       return aNum > bNum -- Return their comparisons, < for ascending, > for descending
     end)
   
+ -- self:I("Units by Threat")
+ -- self:I({self.UnitsByThreat})
+  
   local unitreport = REPORT:New("Detected Units")
   
   local lines = 0 
-  for _,_entry in ipairs(self.UnitsByThreat) do
+  for _,_entry in pairs(self.UnitsByThreat) do
     local threat = _entry[2]
     local unit = _entry[1]
     local unitname = unit:GetName()
@@ -608,6 +680,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     unitreport:Add(text)
     lines = lines + 1
     self:T(text)
+    if self.debug then self:I(text) end
   end
   
   if self.verbose > 2 and lines > 0 then
@@ -621,8 +694,10 @@ function AUTOLASE:onafterMonitor(From, Event, To)
       local unitname = unit:GetName()
       local reccename = self.RecceUnitNames[unitname]
       local recce = UNIT:FindByName(reccename)
-      if targets < self.maxlasing and unit:IsAlive() == true then
+      local reccecount = self.targetsperrecce[reccename] or 0
+      if (targets < self.maxlasing or reccecount < targets) and not self:CheckIsLased(unitname) and unit:IsAlive() == true then
         targets = targets + 1
+        self.targetsperrecce[reccename] = reccecount + 1
         local code = self:GetLaserCode(reccename)
         local spot = SPOT:New(recce)
         spot:LaseOn(unit,code,self.LaseDuration)
