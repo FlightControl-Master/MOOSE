@@ -31,7 +31,6 @@
 -- * Targets are lased by threat priority order
 -- * Use FSM events to link functionality into your scripts
 -- * Easy set-up
--- * Targets are lased by threat priority order
 -- 
 -- # 2 Basic usage
 -- 
@@ -71,9 +70,9 @@
 -- ### Author: **applevangelist**
 -- @module Functional.Autolase
 -- @image Designation.JPG
-
+--
 -- Date: Oct 2021
-
+--
 --- Class AUTOLASE
 -- @type AUTOLASE
 -- @field #string ClassName
@@ -108,7 +107,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.6"
+AUTOLASE.version = "0.0.7"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -181,11 +180,14 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.smoketargets = false
   self.smokecolor = SMOKECOLOR.Red
   self.notifypilots = true
-  --self.statusupdate = -28 -- for #INTEL
   self.targetsperrecce = {}
   self.RecceUnits = {}
   self.forcecooldown = true
   self.cooldowntime = 60
+  self.useSRS = false
+  self.SRSPath = ""
+  self.SRSFreq = 251
+  self.SRSMod = radio.modulation.AM
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -313,7 +315,7 @@ function AUTOLASE:OnEventPlayerEnterAircraft(EventData)
   return self
 end
 
---- Function to get a laser code by recce name
+--- (Internal) Function to get a laser code by recce name
 -- @param #AUTOLASE self
 -- @param #string RecceName Unit(!) name of the Recce
 -- @return #AUTOLASE self 
@@ -328,7 +330,22 @@ function AUTOLASE:GetLaserCode(RecceName)
   return code
 end
 
---- Function set max lasing targets
+--- (User) Function enable sending messages via SRS.
+-- @param #AUTOLASE self
+-- @param #boolean OnOff Switch usage on and off
+-- @param #string Path Path to SRS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalon
+-- @param #number Frequency Frequency to send, e.g. 243
+-- @param #number Modulation Modulation i.e. radio.modulation.AM or radio.modulation.FM
+-- @return #AUTOLASE self 
+function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation)
+  self.useSRS = OnOff or true
+  self.SRSPath = Path or "E:\\Program Files\\DCS-SimpleRadio-Standalone"
+  self.SRSFreq = Frequency or 271
+  self.SRSMod = Modulation or radio.modulation.AM
+  return self
+end
+
+--- (User) Function set max lasing targets
 -- @param #AUTOLASE self
 -- @param #number Number Max number of targets to lase at once
 -- @return #AUTOLASE self 
@@ -337,7 +354,7 @@ function AUTOLASE:SetMaxLasingTargets(Number)
   return self
 end
 
---- Function set notify pilots on events
+--- (Internal) Function set notify pilots on events
 -- @param #AUTOLASE self
 -- @param #boolean OnOff Switch messaging on (true) or off (false)
 -- @return #AUTOLASE self 
@@ -415,7 +432,6 @@ function AUTOLASE:GetLosFromUnit(Unit)
     local absquare = lasedistance^2+asl^2
     lasedistance = math.sqrt(absquare)
   end
-  --self:I({lasedistance=lasedistance})
   return lasedistance
 end
 
@@ -460,8 +476,6 @@ function AUTOLASE:CleanCurrentLasing()
       valid = valid + 1
     else
       reccedead = true
-      --local text = string.format("Recce %s KIA!",entry.reccename)
-      --local m = MESSAGE:New(text,15,"Autolase"):ToAll()
       self:__RecceKIA(2,entry.reccename)
     end
     -- check entry dead
@@ -471,8 +485,6 @@ function AUTOLASE:CleanCurrentLasing()
     else
       unitdead = true
       if not self.deadunitnotes[entry.unitname] then
-        --local text = string.format("Unit %s destroyed! Good job!",entry.unitname)
-        --local m = MESSAGE:New(text,15,"Autolase"):ToAll()
         self.deadunitnotes[entry.unitname] = true
         self:__TargetDestroyed(2,entry.unitname,entry.reccename)
       end
@@ -484,8 +496,6 @@ function AUTOLASE:CleanCurrentLasing()
       else
         lostsight = true
         entry.laserspot:LaseOff()
-        --local text = string.format("Lost sight of unit %s.",entry.unitname)
-        --local m = MESSAGE:New(text,15,"Autolase"):ToAll()
         self:__TargetLost(2,entry.unitname,entry.reccename)
       end
     end
@@ -495,9 +505,7 @@ function AUTOLASE:CleanCurrentLasing()
       valid = valid + 1
     else
       timeout = true
-      entry.laserspot:LaseOff()
-      --local text = string.format("Lost sight of unit %s.",entry.unitname)
-      --local m = MESSAGE:New(text,15,"Autolase"):ToAll()
+      entry.laserspot:LaseOff()()
       
       self.RecceUnits[entry.reccename].cooldown = true
       self.RecceUnits[entry.reccename].timestamp = timer.getAbsTime()
@@ -515,7 +523,6 @@ function AUTOLASE:CleanCurrentLasing()
   end
   self.CurrentLasing = newtable
   self.targetsperrecce = newreccecount
-  --self:I({newreccecount})
   return lasing
 end
 
@@ -568,6 +575,37 @@ function AUTOLASE:NotifyPilots(Message,Duration)
     local m = MESSAGE:New(Message,Duration,"Autolase"):ToCoalition(self.coalition)
   else
     local m = MESSAGE:New(Message,Duration,"Autolase"):ToAll()
+  end
+  if self.debug then self:I(Message) end
+  return self
+end
+
+--- (User) Send messages via SRS.
+-- @param #AUTOLASE self
+-- @param #string Message The (short!) message to be sent, e.g. "Lasing target!"
+-- @return #AUTOLASE self
+-- @usage Step 1 - set up the radio basics **once** with
+--            my_autolase:SetUsingSRS(true,"C:\\path\\SRS-Folder",251,radio.modulation.AM)
+-- Step 2 - send a message, e.g.
+--            function my_autolase:OnAfterLasing(From, Event, To, LaserSpot)
+--                my_autolase:NotifyPilotsWithSRS("Reaper lasing new target!")
+--            end
+function AUTOLASE:NotifyPilotsWithSRS(Message)
+  if self.useSRS then
+   -- Create a SOUNDTEXT object.
+   if self.debug then
+     BASE:TraceOn()
+     BASE:TraceClass("SOUNDTEXT")
+     BASE:TraceClass("MSRS")
+   end
+   local path = self.SRSPath or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+   local freq = self.SRSFreq or 271
+   local mod = self.SRSMod or radio.modulation.AM
+   local text=SOUNDTEXT:New(Message)  
+   -- MOOSE SRS 
+   local msrs=MSRS:New(path, freq, mod)
+   -- Text-to speech with default voice after 2 seconds.
+   msrs:PlaySoundText(text, 2)
   end
   if self.debug then self:I(Message) end
   return self
@@ -653,8 +691,6 @@ function AUTOLASE:onafterMonitor(From, Event, To)
   
   local detecteditems = self.Contacts or {} -- #table of Ops.Intelligence#INTEL.Contact
   local groupsbythreat = {}
-  --self:T("Detected Items:")
-  --self:T({detecteditems})
   local report = REPORT:New("Detections")
   local lines = 0
   for _,_contact in pairs(detecteditems) do
@@ -690,9 +726,6 @@ function AUTOLASE:onafterMonitor(From, Event, To)
       return aNum > bNum -- Return their comparisons, < for ascending, > for descending
     end)
   
- -- self:T("Groups by Threat")
-  --self:T({self.GroupsByThreat})
-  
   -- build table of Units
   local unitsbythreat = {}
   for _,_entry in pairs(self.GroupsByThreat) do
@@ -700,14 +733,11 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     if group and group:IsAlive() then
       local units = group:GetUnits()
       local reccename = self.RecceNames[group:GetName()]
-      --local recceunit  UNIT:FindByName(reccename)
-      --local reccecoord = recceunit:GetCoordinate()
       for _,_unit in pairs(units) do
         local unit = _unit -- Wrapper.Unit#UNIT
         if unit and unit:IsAlive() then
           local threat = unit:GetThreatLevel()
           local coord = unit:GetCoordinate()
-          --local distance = math.floor(reccecoord:Get3DDistance(coord))
           if threat > 0 then
             local unitname = unit:GetName()
             table.insert(unitsbythreat,{unit,threat})
@@ -725,9 +755,6 @@ function AUTOLASE:onafterMonitor(From, Event, To)
       local bNum = b[2] -- Coin value of b
       return aNum > bNum -- Return their comparisons, < for ascending, > for descending
     end)
-  
- -- self:I("Units by Threat")
- -- self:I({self.UnitsByThreat})
   
   local unitreport = REPORT:New("Detected Units")
   
@@ -747,33 +774,22 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     local m=MESSAGE:New(unitreport:Text(),self.reporttimeshort,"Autolase"):ToAll()
   end
   
-  -- lase targets
-  --local maxtargets = targets * self.RecceSet:CountAlive()
-  
   for _,_detectingunit in pairs(self.RecceUnits) do
     
     local reccename = _detectingunit.name
     local recce = _detectingunit.unit
     local reccecount = self.targetsperrecce[reccename] or 0
-    --self:I("*****Run for: "..reccename)
     local targets = 0
     for _,_entry in pairs(self.UnitsByThreat) do
       local unit = _entry[1] -- Wrapper.Unit#UNIT
       local unitname = unit:GetName()
-      --local unithreat = _entry[2]
-      --local text = string.format("Recce %s Checking %s Threat %d",reccename, unitname,unithreat)
-      --local m=MESSAGE:New(text,10,"Autolase"):ToAll()
-      --self:I(text)
       local canlase = self:CanLase(recce,unit)
       if targets+reccecount < self.maxlasing and not self:CheckIsLased(unitname) and unit:IsAlive() and canlase then
         targets = targets + 1
-        --self.targetsperrecce[reccename] = reccecount + 1
         local code = self:GetLaserCode(reccename)
         local spot = SPOT:New(recce)
         spot:LaseOn(unit,code,self.LaseDuration)
         local locationstring = unit:GetCoordinate():ToStringLLDDM()
-        --local text = string.format("%s is lasing %s code %d\nat %s",reccename,unit:GetTypeName(),code,locationstring)
-        --local m = MESSAGE:New(text,15,"Autolase"):ToAllIf(self.debug)
         local laserspot = { -- #AUTOLASE.LaserSpot
           laserspot = spot,
           lasedunit = unit,
@@ -879,7 +895,7 @@ function AUTOLASE:onbeforeLasing(From,Event,To,LaserSpot)
   if self.notifypilots or self.debug then
     local laserspot = LaserSpot -- #AUTOLASE.LaserSpot
     local text = string.format("%s is lasing %s code %d\nat %s",laserspot.reccename,laserspot.unittype,laserspot.lasercode,laserspot.location)
-    self:NotifyPilots(text,self.reporttimeshort)
+    self:NotifyPilots(text,self.reporttimeshort+5)
   end
   return self
 end
