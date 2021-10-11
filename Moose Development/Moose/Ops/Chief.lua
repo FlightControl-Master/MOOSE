@@ -235,15 +235,15 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   --- Triggers the FSM event "MissionAssign".
   -- @function [parent=#CHIEF] MissionAssign
   -- @param #CHIEF self
-  -- @param Ops.Legion#LEGION Legion The legion.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  -- @param #table Legions The Legion(s) to which the mission is assigned.
 
   --- Triggers the FSM event "MissionAssign" after a delay.
   -- @function [parent=#CHIEF] __MissionAssign
   -- @param #CHIEF self
   -- @param #number delay Delay in seconds.
-  -- @param Ops.Legion#LEGION Legion The legion.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  -- @param #table Legions The Legion(s) to which the mission is assigned.
 
   --- On after "MissionAssign" event.
   -- @function [parent=#CHIEF] OnAfterMissionAssign
@@ -251,9 +251,8 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param Ops.Legion#LEGION Legion The legion.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-
+  -- @param #table Legions The Legion(s) to which the mission is assigned.
 
   --- Triggers the FSM event "MissionCancel".
   -- @function [parent=#CHIEF] MissionCancel
@@ -1183,15 +1182,15 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.Legion#LEGION Legion The legion.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function CHIEF:onafterMissionAssign(From, Event, To, Legion, Mission)
+  -- @param #table Legions The Legion(s) to which the mission is assigned.
+function CHIEF:onafterMissionAssign(From, Event, To, Mission, Legions)
 
   if self.commander then
     self:I(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
     Mission.chief=self
     Mission.statusChief=AUFTRAG.Status.QUEUED
-    self.commander:MissionAssign(Legion, Mission)
+    self.commander:MissionAssign(Mission, Legions)
   else
     self:E(self.lid..string.format("Mission cannot be assigned as no COMMANDER is defined!"))
   end
@@ -1523,11 +1522,9 @@ function CHIEF:CheckTargetQueue()
           -- Mission parameters.
           mission.prio=target.prio
           mission.importance=target.importance
-                    
-          -- Assign mission to legions.
-          for _,Legion in pairs(Legions) do
-            self:MissionAssign(Legion, mission)
-          end
+
+          -- Assign mission to legions.                    
+          self:MissionAssign(mission, Legions)
           
           -- Only ONE target is assigned per check.
           return
@@ -2054,10 +2051,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
         mission.opstransport=transport
             
         -- Assign mission to legions.
-        for _,_legion in pairs(legions) do
-          local legion=_legion --Ops.Legion#LEGION
-          self:MissionAssign(legion, mission)
-        end
+        self:MissionAssign(mission, legions)
       
         -- Attach mission to ops zone.
         -- TODO: Need a better way!
@@ -2078,10 +2072,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       end
           
       -- Assign mission to legions.
-      for _,_legion in pairs(legions) do
-        local legion=_legion --Ops.Legion#LEGION
-        self:MissionAssign(legion, mission)
-      end
+      self:MissionAssign(mission, legions)
     
       -- Attach mission to ops zone.
       -- TODO: Need a better way!

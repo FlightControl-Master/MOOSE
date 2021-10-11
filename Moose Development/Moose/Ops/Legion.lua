@@ -125,15 +125,15 @@ function LEGION:New(WarehouseName, LegionName)
   --- Triggers the FSM event "MissionAssign".
   -- @function [parent=#LEGION] MissionAssign
   -- @param #LEGION self
-  -- @param Ops.Legion#LEGION Legion The legion from which the mission assets are requested.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  -- @param #table Legions The legion(s) from which the mission assets are requested.
 
   --- Triggers the FSM event "MissionAssign" after a delay.
   -- @function [parent=#LEGION] __MissionAssign
   -- @param #LEGION self
   -- @param #number delay Delay in seconds.
-  -- @param Ops.Legion#LEGION Legion The legion from which the mission assets are requested.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  -- @param #table Legions The legion(s) from which the mission assets are requested.
 
   --- On after "MissionAssign" event.
   -- @function [parent=#LEGION] OnAfterMissionAssign
@@ -141,8 +141,8 @@ function LEGION:New(WarehouseName, LegionName)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param Ops.Legion#LEGION Legion The legion from which the mission assets are requested.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  -- @param #table Legions The legion(s) from which the mission assets are requested.
 
 
   --- Triggers the FSM event "MissionRequest".
@@ -183,15 +183,15 @@ function LEGION:New(WarehouseName, LegionName)
   --- Triggers the FSM event "TransportAssign".
   -- @function [parent=#LEGION] TransportAssign
   -- @param #LEGION self
-  -- @param Ops.Legion#LEGION Legion The legion from which the transport assets are requested.
   -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  -- @param #table Legions The legion(s) to which this transport is assigned.
 
   --- Triggers the FSM event "TransportAssign" after a delay.
   -- @function [parent=#LEGION] __TransportAssign
   -- @param #LEGION self
   -- @param #number delay Delay in seconds.
-  -- @param Ops.Legion#LEGION Legion The legion from which the transport assets are requested.
   -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  -- @param #table Legions The legion(s) to which this transport is assigned.
 
   --- On after "TransportAssign" event.
   -- @function [parent=#LEGION] OnAfterTransportAssign
@@ -199,8 +199,8 @@ function LEGION:New(WarehouseName, LegionName)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param Ops.Legion#LEGION Legion The legion from which the transport assets are requested.
   -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  -- @param #table Legions The legion(s) to which this transport is assigned.
 
 
   --- Triggers the FSM event "TransportRequest".
@@ -617,18 +617,23 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.Legion#LEGION Legion The LEGION.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function LEGION:onafterMissionAssign(From, Event, To, Legion, Mission)
+-- @param #table Legions The LEGIONs.
+function LEGION:onafterMissionAssign(From, Event, To, Mission, Legions)
+  
+  for _,_Legion in pairs(Legions) do
+    local Legion=_Legion --Ops.Legion#LEGION
 
-  -- Debug info.
-  self:I(self.lid..string.format("Assigning mission %s (%s) to legion %s", Mission.name, Mission.type, Legion.alias))
-  
-  -- Add mission to legion.
-  Legion:AddMission(Mission)
-  
-  -- Directly request the mission as the assets have already been selected.
-  Legion:MissionRequest(Mission)
+    -- Debug info.
+    self:I(self.lid..string.format("Assigning mission %s (%s) to legion %s", Mission.name, Mission.type, Legion.alias))
+ 
+    -- Add mission to legion.
+    Legion:AddMission(Mission)
+    
+    -- Directly request the mission as the assets have already been selected.
+    Legion:MissionRequest(Mission)
+    
+  end
 
 end
 
@@ -749,18 +754,23 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.Legion#LEGION Legion The LEGION.
--- @param Ops.OpsTransport#OPSTRANSPORT The transport.
-function LEGION:onafterTransportAssign(From, Event, To, Legion, Transport)
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+-- @param #table Legions The legion(s) to which the transport is assigned.
+function LEGION:onafterTransportAssign(From, Event, To, Transport, Legions)
 
-  -- Debug info.
-  self:I(self.lid..string.format("Assigning transport %d to legion %s", Transport.uid, Legion.alias))
+  for _,_Legion in pairs(Legions) do
+    local Legion=_Legion --Ops.Legion#LEGION
+
+    -- Debug info.
+    self:I(self.lid..string.format("Assigning transport %d to legion %s", Transport.uid, Legion.alias))
+      
+    -- Add mission to legion.
+    Legion:AddOpsTransport(Transport)
     
-  -- Add mission to legion.
-  Legion:AddOpsTransport(Transport)
-  
-  -- Directly request the mission as the assets have already been selected.
-  Legion:TransportRequest(Transport)
+    -- Directly request the mission as the assets have already been selected.
+    Legion:TransportRequest(Transport)
+
+  end
 
 end
 
@@ -2148,7 +2158,7 @@ function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax)
           end
           
           -- Assign mission to legion.
-          self:MissionAssign(legion, escort)
+          self:MissionAssign(escort, {legion})
         end
       end
       
@@ -2240,7 +2250,7 @@ function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, Nca
       end
       
       -- Debug info.    
-      env.info(string.format("FF Transport available with %d carrier assets", #CarrierAssets))
+      self:T(self.lid..string.format("Transport available with %d carrier assets", #CarrierAssets))
     
       -- Add cargo assets to transport.
       for _,_legion in pairs(CargoLegions) do
@@ -2272,10 +2282,7 @@ function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, Nca
       end
           
       -- Assign TRANSPORT to legions. This also sends the request for the assets.
-      for _,_legion in pairs(CarrierLegions) do
-        local legion=_legion --Ops.Legion#LEGION
-        self:TransportAssign(legion, Transport)
-      end
+      self:TransportAssign(Transport, CarrierLegions)
       
       -- Got transport.
       return true, Transport
@@ -2393,15 +2400,15 @@ function LEGION._OptimizeAssetSelection(assets, MissionType, TargetVec2, Include
   table.sort(assets, optimize)
 
   -- Remove distance parameter.
-  --[[
-  local text=string.format("Optimized %d assets for %s mission/transport (payload=%s):", #assets, MissionType, tostring(IncludePayload))
-  for i,Asset in pairs(assets) do
-    local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
-    asset.score=nil
+  if LEGION.verbose>0 then
+    local text=string.format("Optimized %d assets for %s mission/transport (payload=%s):", #assets, MissionType, tostring(IncludePayload))
+    for i,Asset in pairs(assets) do
+      local asset=Asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      text=text..string.format("\n%s %s: score=%d", asset.squadname, asset.spawngroupname, asset.score)
+      asset.score=nil
+    end
+    env.info(text)
   end
-  env.info(text)
-  ]]
 
 end
 

@@ -159,12 +159,37 @@ function NAVYGROUP:New(group)
   self:AddTransition("*",             "CollisionWarning", "*")           -- Collision warning.
   self:AddTransition("*",             "ClearAhead",       "*")           -- Clear ahead.
   
-  self:AddTransition("*",             "Dive",             "*")           -- Command a submarine to dive.
-  self:AddTransition("Diving",        "Surface",          "*")           -- Command a submarine to go to the surface.
+  self:AddTransition("Cruising",      "Dive",             "Cruising")    -- Command a submarine to dive.
+  self:AddTransition("Cruising",      "Surface",          "Cruising")    -- Command a submarine to go to the surface.
   
   ------------------------
   --- Pseudo Functions ---
   ------------------------
+
+  --- Triggers the FSM event "Cruise".
+  -- @function [parent=#NAVYGROUP] Cruise
+  -- @param #NAVYGROUP self
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+  --- Triggers the FSM event "Cruise" after a delay.
+  -- @function [parent=#NAVYGROUP] __Cruise
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+  --- On after "Cruise" event.
+  -- @function [parent=#NAVYGROUP] OnAfterCruise
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+
+
+
+
+
 
   --- Triggers the FSM event "TurnIntoWind".
   -- @function [parent=#NAVYGROUP] TurnIntoWind
@@ -238,7 +263,6 @@ function NAVYGROUP:New(group)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #NAVYGROUP.IntoWind IntoWindData Data table.
-
 
 
   --- Triggers the FSM event "TurningStarted".

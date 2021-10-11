@@ -2255,11 +2255,11 @@ end
 --- Attach OPS transport to the mission. Mission assets will be transported before the mission is started at the OPSGROUP level.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE DeployZone Zone where assets are deployed.
--- @param Core.Zone#ZONE DisembarkZone Zone where assets are disembarked to.
 -- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
 -- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
+-- @param Core.Zone#ZONE DisembarkZone Zone where assets are disembarked to.
 -- @return #AUFTRAG self
-function AUFTRAG:SetRequiredTransport(DeployZone, DisembarkZone, NcarriersMin, NcarriersMax)
+function AUFTRAG:SetRequiredTransport(DeployZone, NcarriersMin, NcarriersMax, DisembarkZone)
 
   -- OPS transport from pickup to deploy zone.
   self.transportDeployZone=DeployZone

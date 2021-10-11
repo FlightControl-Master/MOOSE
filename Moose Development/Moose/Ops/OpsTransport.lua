@@ -38,8 +38,8 @@
 -- @field #number duration Duration (`Tstop-Tstart`) of the transport in seconds.
 -- @field #table conditionStart Start conditions.
 -- 
--- @field #table cargos Cargos. Each element is a @{Ops.OpsGroup#OPSGROUP.CargoGroup}.
 -- @field #table carriers Carriers assigned for this transport.
+-- @field #table carrierTransportStatus Status of each carrier.
 --  
 -- @field #table tzCombos Table of transport zone combos. Each element of the table is of type `#OPSTRANSPORT.TransportZoneCombo`.
 -- @field #number tzcCounter Running number of added transport zone combos.
@@ -117,7 +117,6 @@
 OPSTRANSPORT = {
   ClassName       = "OPSTRANSPORT",
   verbose         =   0,
-  cargos          =  {},
   carriers        =  {},
   carrierTransportStatus = {},
   tzCombos        =  {},
@@ -152,7 +151,7 @@ OPSTRANSPORT.Status={
   FAILED="failed",  
 }
 
---- Pickup and deploy set.
+--- Transport zone combination.
 -- @type OPSTRANSPORT.TransportZoneCombo
 -- @field #number uid Unique ID of the TZ combo.
 -- @field #number Ncarriers Number of carrier groups using this transport zone.
@@ -233,7 +232,6 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   self:SetRequiredCarriers()
   
   -- Init arrays and counters.
-  self.cargos={}
   self.carriers={}  
   self.Ncargo=0
   self.Ncarrier=0
@@ -256,7 +254,7 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   self:AddTransition(OPSTRANSPORT.Status.SCHEDULED, "Executing",        OPSTRANSPORT.Status.EXECUTING)   -- Cargo is being transported.  
   self:AddTransition("*",                           "Delivered",        OPSTRANSPORT.Status.DELIVERED)   -- Cargo was delivered.
   
-  self:AddTransition("*",                           "Status",           "*")
+  self:AddTransition("*",                           "StatusUpdate",     "*")
   self:AddTransition("*",                           "Stop",             "*")
   
   self:AddTransition("*",                           "Cancel",           OPSTRANSPORT.Status.CANCELLED)   -- Command to cancel the transport.  
@@ -272,12 +270,12 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Status".
-  -- @function [parent=#OPSTRANSPORT] Status
+  --- Triggers the FSM event "StatusUpdate".
+  -- @function [parent=#OPSTRANSPORT] StatusUpdate
   -- @param #OPSTRANSPORT self
 
   --- Triggers the FSM event "Status" after a delay.
-  -- @function [parent=#OPSTRANSPORT] __Status
+  -- @function [parent=#OPSTRANSPORT] __StatusUpdate
   -- @param #OPSTRANSPORT self
   -- @param #number delay Delay in seconds.
 
@@ -291,6 +289,13 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   -- @param #OPSTRANSPORT self
   -- @param #number delay Delay in seconds.
 
+  --- On after "Planned" event.
+  -- @function [parent=#OPSTRANSPORT] OnAfterPlanned
+  -- @param #OPSTRANSPORT self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
 
   --- Triggers the FSM event "Queued".
   -- @function [parent=#OPSTRANSPORT] Queued
@@ -300,6 +305,13 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   -- @function [parent=#OPSTRANSPORT] __Queued
   -- @param #OPSTRANSPORT self
   -- @param #number delay Delay in seconds.
+
+  --- On after "Queued" event.
+  -- @function [parent=#OPSTRANSPORT] OnAfterQueued
+  -- @param #OPSTRANSPORT self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
 
   --- Triggers the FSM event "Requested".
@@ -311,6 +323,13 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   -- @param #OPSTRANSPORT self
   -- @param #number delay Delay in seconds.
 
+  --- On after "Requested" event.
+  -- @function [parent=#OPSTRANSPORT] OnAfterRequested
+  -- @param #OPSTRANSPORT self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
 
   --- Triggers the FSM event "Scheduled".
   -- @function [parent=#OPSTRANSPORT] Scheduled
@@ -320,6 +339,13 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   -- @function [parent=#OPSTRANSPORT] __Scheduled
   -- @param #OPSTRANSPORT self
   -- @param #number delay Delay in seconds.
+
+  --- On after "Scheduled" event.
+  -- @function [parent=#OPSTRANSPORT] OnAfterScheduled
+  -- @param #OPSTRANSPORT self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
 
   --- Triggers the FSM event "Executing".
@@ -331,6 +357,13 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   -- @param #OPSTRANSPORT self
   -- @param #number delay Delay in seconds.
 
+  --- On after "Executing" event.
+  -- @function [parent=#OPSTRANSPORT] OnAfterExecuting
+  -- @param #OPSTRANSPORT self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
 
   --- Triggers the FSM event "Delivered".
   -- @function [parent=#OPSTRANSPORT] Delivered
@@ -340,6 +373,13 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   -- @function [parent=#OPSTRANSPORT] __Delivered
   -- @param #OPSTRANSPORT self
   -- @param #number delay Delay in seconds.
+
+  --- On after "Delivered" event.
+  -- @function [parent=#OPSTRANSPORT] OnAfterDelivered
+  -- @param #OPSTRANSPORT self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
 
   --- Triggers the FSM event "Cancel".
@@ -414,7 +454,7 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   --TODO: Psydofunctions
 
   -- Call status update.
-  self:__Status(-1)
+  self:__StatusUpdate(-1)
   
   return self
 end
@@ -481,7 +521,7 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo)
     if cargo then
     
       -- Add to main table.
-      table.insert(self.cargos, cargo)
+      --table.insert(self.cargos, cargo)
       self.Ncargo=self.Ncargo+1
       
       -- Add to TZC table.
@@ -514,7 +554,7 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo)
       Weight=Weight+weight
       text=text..string.format("\n- %s [%s] weight=%.1f kg", cargo.opsgroup:GetName(), cargo.opsgroup:GetState(), weight)
     end
-    text=text..string.format("\nTOTAL: Ncargo=%d, Weight=%.1f kg", #self.cargos, Weight)
+    text=text..string.format("\nTOTAL: Ncargo=%d, Weight=%.1f kg", self.Ncargo, Weight)
     self:I(self.lid..text)
   end
 
@@ -927,13 +967,8 @@ function OPSTRANSPORT:_DelCarrier(CarrierGroup)
         self:T(self.lid..string.format("Removing carrier %s", CarrierGroup.groupname))
         table.remove(self.carriers, i)
       end
-    end    
-  
-    if #self.carriers==0 then
-      -- TODO: This call can be WRONG!
-      self:DeadCarrierAll()
     end
-    
+        
   end 
   
   return self
@@ -1557,12 +1592,12 @@ end
 -- Status Update
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after "Status" event.
+--- On after "StatusUpdate" event.
 -- @param #OPSTRANSPORT self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function OPSTRANSPORT:onafterStatus(From, Event, To)
+function OPSTRANSPORT:onafterStatusUpdate(From, Event, To)
 
   -- Current FSM state.
   local fsmstate=self:GetState()
@@ -1577,7 +1612,9 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
     
       for i,_tz in pairs(self.tzCombos) do
         local tz=_tz --#OPSTRANSPORT.TransportZoneCombo
-        text=text..string.format("\n[%d] %s --> %s", i, tz.PickupZone and tz.PickupZone:GetName() or "Unknown", tz.DeployZone and tz.DeployZone and tz.DeployZone:GetName() or "Unknown", tz.Ncarriers)
+        local pickupzone=tz.PickupZone and tz.PickupZone:GetName() or "Unknown"
+        local deployzone=tz.DeployZone and tz.DeployZone:GetName() or "Unknown"
+        text=text..string.format("\n[%d] %s --> %s: Ncarriers=%d, Ncargo=%d (%d)", i, pickupzone, deployzone, tz.Ncarriers, #tz.Cargos, tz.Ncargo)
       end
     
     end
@@ -1613,7 +1650,7 @@ function OPSTRANSPORT:onafterStatus(From, Event, To)
 
   -- Update status again.
   if not self:IsDelivered() then
-    self:__Status(-30)
+    self:__StatusUpdate(-30)
   end
 end
 
@@ -1671,9 +1708,9 @@ end
 function OPSTRANSPORT:onafterDelivered(From, Event, To)
   self:T(self.lid..string.format("New status: %s-->%s", From, To))
   
-  -- Inform all assigned carriers that cargo was delivered. They can have this in the queue or are currently processing this transport.  
-  for _,_carrier in pairs(self.carriers) do
-    local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+  -- Inform all assigned carriers that cargo was delivered. They can have this in the queue or are currently processing this transport.
+  for i=#self.carriers, 1, -1 do
+    local carrier=self.carriers[i] --Ops.OpsGroup#OPSGROUP
     if self:GetCarrierTransportStatus(carrier)~=OPSTRANSPORT.Status.DELIVERED then
       carrier:Delivered(self)
     end 
@@ -1712,8 +1749,15 @@ end
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup Carrier OPSGROUP that is dead. 
 function OPSTRANSPORT:onafterDeadCarrierGroup(From, Event, To, OpsGroup)
   self:I(self.lid..string.format("Carrier OPSGROUP %s dead!", OpsGroup:GetName()))
-  -- Remove group from carrier list/table.
-  self.NdeadCarrier=self.NdeadCarrier+1
+
+  -- Increase dead counter.
+  self.NcarrierDead=self.NcarrierDead+1
+
+  if #self.carriers==0 then
+    self:DeadCarrierAll()
+  end  
+
+  -- Remove group from carrier list/table.  
   self:_DelCarrier(OpsGroup)
 end
 
@@ -1724,7 +1768,11 @@ end
 -- @param #string To To state. 
 function OPSTRANSPORT:onafterDeadCarrierAll(From, Event, To)
   self:I(self.lid..string.format("ALL Carrier OPSGROUPs are dead! Setting stage to PLANNED if not all cargo was delivered."))
+  
+  -- Check if cargo was delivered.
   self:_CheckDelivered()
+  
+  -- Set state back to PLANNED if not delivered.
   if not self:IsDelivered() then
     self:Planned()
   end
@@ -2064,9 +2112,16 @@ function OPSTRANSPORT:_GetTransportZoneCombo(Carrier)
   
   -- Get carrier position.
   local vec2=Carrier:GetVec2()
+
+  --- Penalty function.
+  local function penalty(candidate)      
+    local p=candidate.ncarriers*10-candidate.ncargo+candidate.distance/10
+    return p
+  end
   
-  local pickup=nil --#OPSTRANSPORT.TransportZoneCombo
-  local distmin=nil
+  -- TZC candidates.
+  local candidates={}
+  
   for i,_transportzone in pairs(self.tzCombos) do
     local tz=_transportzone --#OPSTRANSPORT.TransportZoneCombo
     
@@ -2078,31 +2133,58 @@ function OPSTRANSPORT:_GetTransportZoneCombo(Carrier)
       -- Count undelivered cargos in embark(!) zone that fit into the carrier.
       local ncargo=self:_CountCargosInZone(tz.EmbarkZone, false, Carrier, tz)
       
-      --env.info(string.format("FF GetPickupZone i=%d, ncargo=%d", i, ncargo))
-      
       -- At least one group in the zone.
       if ncargo>=1 then
         
         -- Distance to the carrier in meters.
         local dist=tz.PickupZone:Get2DDistance(vec2)
-              
-        if distmin==nil or dist<distmin then
-          distmin=dist
-          pickup=tz
+        
+        local ncarriers=0
+        for _,_carrier in pairs(self.carriers) do
+          local carrier=_carrier --Ops.OpsGroup#OPSGROUP
+          if carrier and carrier:IsAlive() and carrier.cargoTZC and carrier.cargoTZC.uid==tz.uid then
+            ncarriers=ncarriers+1
+          end
         end
+        
+        -- New candidate.
+        local candidate={tzc=tz, distance=dist/1000, ncargo=ncargo, ncarriers=ncarriers}
+        
+        -- Calculdate penalty of candidate.
+        candidate.penalty=penalty(candidate)
+        
+        -- Add candidate.
+        table.insert(candidates, candidate)
         
       end
     end
   end
   
-  -- Debug info.
-  if pickup then
-    self:T(self.lid..string.format("Found pickupzone %s for carrier group %s", pickup.PickupZone:GetName(), Carrier:GetName()))
+  if #candidates>0 then
+   
+    -- Minimize penalty.
+    local function optTZC(candA, candB)
+      return candA.penalty<candB.penalty
+    end
+    table.sort(candidates, optTZC)
+    
+    -- Debug output.
+    if self.verbose>=3 then
+      local text="TZC optimized"
+      for i,candidate in pairs(candidates) do
+        text=text..string.format("\n[%d] TPZ=%d, Ncarriers=%d, Ncargo=%d, Distance=%.1f km, PENALTY=%d", i, candidate.tzc.uid, candidate.ncarriers, candidate.ncargo, candidate.distance, candidate.penalty)
+      end
+      self:I(self.lid..text)
+    end
+    
+    -- Return best candidate.
+    return candidates[1].tzc    
   else
+    -- No candidates.
     self:T(self.lid..string.format("Could NOT find a pickup zone (with cargo) for carrier group %s", Carrier:GetName()))
-  end
+  end  
 
-  return pickup
+  return nil
 end
 
 --- Get an OPSGROUP from a given OPSGROUP or GROUP object. If the object is a GROUUP, an OPSGROUP is created automatically. 

@@ -2899,6 +2899,9 @@ function OPSGROUP:OnEventBirth(EventData)
     local element=self:GetElementByName(unitname)
     
     if element and element.status~=OPSGROUP.ElementStatus.SPAWNED then
+    
+      -- Debug info.
+      self:T(self.lid..string.format("EVENT: Element %s born ==> spawned", unitname))
 
       -- Set element to spawned state.
       self:ElementSpawned(element)
@@ -6113,7 +6116,6 @@ function OPSGROUP:_CheckCargoTransport()
   local Time=timer.getAbsTime()
 
   -- Cargo bay debug info.
-  -- Check cargo bay and declare cargo groups dead.
   if self.verbose>=1 then
     local text=""  
     for _,_element in pairs(self.elements) do
@@ -8046,10 +8048,15 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       -- Debug info.
       self:T(self.lid..string.format("Board with direct load to carrier %s", CarrierGroup:GetName()))
       
-      local mycarriergroup=self:_GetMyCarrierGroup()
+      -- Get current carrier group.
+      local mycarriergroup=self:_GetMyCarrierGroup()      
+      if mycarriergroup then
+        self:T(self.lid..string.format("Current carrier group %s", mycarriergroup:GetName()))
+      end      
       
       -- Unload cargo first.
-      if mycarriergroup then
+      if mycarriergroup and mycarriergroup:GetName()~=CarrierGroup:GetName() and self:IsLoaded() then
+        -- TODO: Unload triggers other stuff like Disembarked. This can be a problem!
         mycarriergroup:Unload(self)
       end
 
@@ -8880,8 +8887,8 @@ function OPSGROUP:Route(waypoints, delay)
           airborne = self:IsFlightgroup(),
           route={points=waypoints},
         },
-      }      
-
+      }
+      
       -- Set mission task.
       self:SetTask(DCSTask)
       
@@ -10813,11 +10820,20 @@ function OPSGROUP:_AddElementByName(unitname)
     --local unittemplate=_DATABASE:GetUnitTemplateFromUnitName(unitname)
 
     -- Element table.
-    local element={} --#OPSGROUP.Element
+    local element=self:GetElementByName(unitname)
+
+    -- Add element to table.
+    if element then
+      -- We already know this element.
+    else
+      -- Add a new element.
+      element={}
+      element.status=OPSGROUP.ElementStatus.INUTERO
+      table.insert(self.elements, element)
+    end
 
     -- Name and status.
     element.name=unitname
-    element.status=OPSGROUP.ElementStatus.INUTERO
 
     -- Unit and group.
     element.unit=unit
@@ -10903,11 +10919,6 @@ function OPSGROUP:_AddElementByName(unitname)
     element.name, element.status, element.skill, element.life, element.life0, element.categoryname, element.category, element.typename,
     element.size, element.length, element.height, element.width, element.weight, element.weightMaxTotal, element.weightCargo, element.weightMaxCargo)
     self:T(self.lid..text)
-
-    -- Add element to table.
-    if not self:_IsElement(unitname) then
-      table.insert(self.elements, element)
-    end
 
     -- Trigger spawned event if alive.
     if unit:IsAlive() and element.status~=OPSGROUP.ElementStatus.SPAWNED then

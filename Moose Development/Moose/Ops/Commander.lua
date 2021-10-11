@@ -1,4 +1,4 @@
---- **Ops** - Commander of Airwings, Brigades and Flotillas.
+--- **Ops** - Commander of Airwings, Brigades and Fleets.
 --
 -- **Main Features:**
 --
@@ -36,8 +36,81 @@
 --
 -- # The COMMANDER Concept
 -- 
--- A commander is the head of legions. He/she will find the best LEGIONs to perform an assigned AUFTRAG (mission).
+-- A commander is the head of legions. He/she will find the best LEGIONs to perform an assigned AUFTRAG (mission) or OPSTRANSPORT.
+-- A legion can be an AIRWING, BRIGADE or FLEET.
 --
+-- # Constructor
+-- 
+-- A new CHIEF object is created with the @{#CHIEF.New}(*Coalition, Alias*) function, where the parameter *Coalition* is the coalition side.
+-- It can be `coalition.side.RED`, `coalition.side.BLUE` or `coalition.side.NEUTRAL`. This parameter is mandatory.
+-- The second parameter *Alias* is optional and can be used to give the COMMANDER a "name", which is used for output in the dcs.log file.
+-- 
+--     local myCommander=COMANDER:New(coalition.side.BLUE, "General Patton")
+-- 
+-- # Adding Legions
+-- 
+-- Legions, i.e. AIRWINGS, BRIGADES and FLEETS can be added via the @{#COMMANDER.AddLegion}(*Legion*) command:
+-- 
+--     myCommander:AddLegion(myLegion)
+-- 
+-- ## Adding Airwings
+-- 
+-- It is also possible to use @{#COMMANDER.AddAirwing}(*myAirwing*) function. This does the same as the `AddLegion` function but might be a bit more intuitive.
+-- 
+-- ## Adding Brigades
+-- 
+-- It is also possible to use @{#COMMANDER.AddBrigade}(*myBrigade*) function. This does the same as the `AddLegion` function but might be a bit more intuitive.
+-- 
+-- ## Adding Fleets
+-- 
+-- It is also possible to use @{#COMMANDER.AddFleet}(*myFleet*) function. This does the same as the `AddLegion` function but might be a bit more intuitive.
+-- 
+-- # Adding Missions
+-- 
+-- Mission can be added via the @{#COMMANDER.AddMission}(*myMission*) function.
+-- 
+-- # Adding OPS Transports
+-- 
+-- Transportation assignments can be added via the @{#COMMANDER.AddOpsTransport}(*myTransport*) function.
+-- 
+-- # Adding CAP Zones
+-- 
+-- A CAP zone can be added via the @{#COMMANDER.AddCapZone}() function.
+-- 
+-- # Adding Rearming Zones
+-- 
+-- A rearming zone can be added via the @{#COMMANDER.AddRearmingZone}() function.
+-- 
+-- # Adding Refuelling Zones
+-- 
+-- A refuelling zone can be added via the @{#COMMANDER.AddRefuellingZone}() function.
+-- 
+-- 
+-- # FSM Events
+-- 
+-- The COMMANDER will 
+-- 
+-- # OPSGROUP on Mission
+-- 
+-- Whenever an OPSGROUP (FLIGHTGROUP, ARMYGROUP or NAVYGROUP) is send on a mission, the `OnAfterOpsOnMission()` event is triggered.
+-- Mission designers can hook into the event with the @{#COMMANDER.OnAfterOpsOnMission}() function
+-- 
+--     function myCommander:OnAfterOpsOnMission(From, Event, To, OpsGroup, Mission)
+--       -- Your code
+--     end
+--     
+-- # Canceling a Mission
+-- 
+-- A mission can be cancelled with the @{#COMMMANDER.MissionCancel}() function
+-- 
+--     myCommander:MissionCancel(myMission)
+--     
+-- or
+--     myCommander:__MissionCancel(5*60, myMission)
+--     
+-- The last commander cancels the mission after 5 minutes (300 seconds).
+-- 
+-- The cancel command will be forwarded to all assigned legions and OPS groups, which will abort their mission or remove it from their queue.
 --
 -- @field #COMMANDER
 COMMANDER = {
@@ -62,8 +135,8 @@ COMMANDER.version="0.1.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add CAP zones.
--- TODO: Add tanker zones.
+-- DONE: Add CAP zones.
+-- DONE: Add tanker zones.
 -- DONE: Improve legion selection. Mostly done!
 -- DONE: Find solution for missions, which require a transport. This is not as easy as it sounds since the selected mission assets restrict the possible transport assets.
 -- DONE: Add ops transports.
@@ -83,11 +156,28 @@ function COMMANDER:New(Coalition, Alias)
 
   -- Inherit everything from INTEL class.
   local self=BASE:Inherit(self, FSM:New()) --#COMMANDER
+
+  if Coalition==nil then
+    env.error("ERROR: Coalition parameter is nil in COMMANDER:New() call!")
+    return nil
+  end
   
   -- Set coaliton.
   self.coalition=Coalition
+  
   -- Alias name.
-  self.alias=Alias or string.format("John Doe")
+  self.alias=Alias
+  
+  -- Choose a name for red or blue.
+  if self.alias==nil then
+    if Coalition==coalition.side.BLUE then
+      self.alias="George S. Patton"
+    elseif Coalition==coalition.side.RED then
+      self.alias="Georgy Zhukov"
+    elseif Coalition==coalition.side.NEUTRAL then
+      self.alias="Mahatma Gandhi"
+    end
+  end
   
   -- Log ID.
   self.lid=string.format("COMMANDER %s [%s] | ", self.alias, UTILS.GetCoalitionName(self.coalition))
@@ -145,15 +235,15 @@ function COMMANDER:New(Coalition, Alias)
   --- Triggers the FSM event "MissionAssign". Mission is added to a LEGION mission queue and already requested. Needs assets to be added to the mission!
   -- @function [parent=#COMMANDER] MissionAssign
   -- @param #COMMANDER self
-  -- @param Ops.Legion#LEGION Legion The Legion.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  -- @param #table Legions The Legion(s) to which the mission is assigned.
 
   --- Triggers the FSM event "MissionAssign" after a delay. Mission is added to a LEGION mission queue and already requested. Needs assets to be added to the mission!
   -- @function [parent=#COMMANDER] __MissionAssign
   -- @param #COMMANDER self
   -- @param #number delay Delay in seconds.
-  -- @param Ops.Legion#LEGION Legion The Legion.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  -- @param #table Legions The Legion(s) to which the mission is assigned.
 
   --- On after "MissionAssign" event.
   -- @function [parent=#COMMANDER] OnAfterMissionAssign
@@ -161,8 +251,8 @@ function COMMANDER:New(Coalition, Alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param Ops.Legion#LEGION Legion The Legion.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
+  -- @param #table Legions The Legion(s) to which the mission is assigned.
 
 
   --- Triggers the FSM event "MissionCancel".
@@ -188,15 +278,15 @@ function COMMANDER:New(Coalition, Alias)
   --- Triggers the FSM event "TransportAssign".
   -- @function [parent=#COMMANDER] TransportAssign
   -- @param #COMMANDER self
-  -- @param Ops.Legion#LEGION Legion The Legion.
   -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  -- @param #table Legions The legion(s) to which this transport is assigned.
 
   --- Triggers the FSM event "TransportAssign" after a delay.
   -- @function [parent=#COMMANDER] __TransportAssign
   -- @param #COMMANDER self
   -- @param #number delay Delay in seconds.
-  -- @param Ops.Legion#LEGION Legion The Legion.
   -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  -- @param #table Legions The legion(s) to which this transport is assigned.
 
   --- On after "TransportAssign" event.
   -- @function [parent=#COMMANDER] OnAfterTransportAssign
@@ -204,8 +294,8 @@ function COMMANDER:New(Coalition, Alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param Ops.Legion#LEGION Legion The Legion.
   -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  -- @param #table Legions The legion(s) to which this transport is assigned.
 
 
   --- Triggers the FSM event "TransportCancel".
@@ -377,7 +467,7 @@ function COMMANDER:RemoveTransport(Transport)
     local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
     
     if transport.uid==Transport.uid then
-      self:I(self.lid..string.format("Removing mission %s (%s) status=%s from queue", transport.uid, transport:GetState()))
+      self:I(self.lid..string.format("Removing transport UID=%d status=%s from queue", transport.uid, transport:GetState()))
       transport.commander=nil
       table.remove(self.transportqueue, i)
       break
@@ -444,7 +534,7 @@ function COMMANDER:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 
   table.insert(self.capZones, patrolzone)
 
-  return awacszone
+  return patrolzone
 end
 
 --- Add an AWACS zone.
@@ -496,7 +586,7 @@ function COMMANDER:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSyst
 
   table.insert(self.tankerZones, tankerzone)
 
-  return awacszone
+  return tankerzone
 end
 
 --- Check if this mission is already in the queue.
@@ -762,24 +852,29 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.Legion#LEGION Legion The LEGION.
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
-function COMMANDER:onafterMissionAssign(From, Event, To, Legion, Mission)
-
-  -- Debug info.
-  self:I(self.lid..string.format("Assigning mission %s (%s) to legion %s", Mission.name, Mission.type, Legion.alias))
+-- @param #table Legions The Legion(s) to which the mission is assigned.
+function COMMANDER:onafterMissionAssign(From, Event, To, Mission, Legions)
     
   -- Add mission to queue.
   self:AddMission(Mission)
 
   -- Set mission commander status to QUEUED as it is now queued at a legion.
   Mission.statusCommander=AUFTRAG.Status.QUEUED
-  
-  -- Add mission to legion.
-  Legion:AddMission(Mission)
-  
-  -- Directly request the mission as the assets have already been selected.
-  Legion:MissionRequest(Mission)
+
+  for _,_Legion in pairs(Legions) do
+    local Legion=_Legion --Ops.Legion#LEGION
+
+    -- Debug info.
+    self:I(self.lid..string.format("Assigning mission \"%s\" [%s] to legion \"%s\"", Mission.name, Mission.type, Legion.alias))
+
+    -- Add mission to legion.
+    Legion:AddMission(Mission)
+    
+    -- Directly request the mission as the assets have already been selected.
+    Legion:MissionRequest(Mission)
+    
+  end
 
 end
 
@@ -792,7 +887,7 @@ end
 function COMMANDER:onafterMissionCancel(From, Event, To, Mission)
 
   -- Debug info.
-  self:I(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
+  self:I(self.lid..string.format("Cancelling mission \"%s\" [%s] in status %s", Mission.name, Mission.type, Mission.status))
   
   -- Set commander status.
   Mission.statusCommander=AUFTRAG.Status.CANCELLED
@@ -825,21 +920,26 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.Legion#LEGION Legion The LEGION.
--- @param Ops.OpsTransport#OPSTRANSPORT
-function COMMANDER:onafterTransportAssign(From, Event, To, Legion, Transport)
-
-  -- Debug info.
-  self:I(self.lid..string.format("Assigning transport %d to legion %s", Transport.uid, Legion.alias))
+-- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
+  -- @param #table Legions The legion(s) to which this transport is assigned.
+function COMMANDER:onafterTransportAssign(From, Event, To, Transport, Legions)
   
   -- Set mission commander status to QUEUED as it is now queued at a legion.
   Transport.statusCommander=OPSTRANSPORT.Status.QUEUED
   
-  -- Add mission to legion.
-  Legion:AddOpsTransport(Transport)
+  for _,_Legion in pairs(Legions) do
+    local Legion=_Legion --Ops.Legion#LEGION
+
+    -- Debug info.
+    self:I(self.lid..string.format("Assigning transport UID=%d to legion \"%s\"", Transport.uid, Legion.alias))
   
-  -- Directly request the mission as the assets have already been selected.
-  Legion:TransportRequest(Transport)
+    -- Add mission to legion.
+    Legion:AddOpsTransport(Transport)
+    
+    -- Directly request the mission as the assets have already been selected.
+    Legion:TransportRequest(Transport)
+    
+  end
 
 end
 
@@ -889,7 +989,7 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function COMMANDER:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
   -- Debug info.
-  self:T2(self.lid..string.format("Group %s on %s mission %s", OpsGroup:GetName(), Mission:GetType(), Mission:GetName()))
+  self:T2(self.lid..string.format("Group \"%s\" on mission \"%s\" [%s]", OpsGroup:GetName(), Mission:GetName(), Mission:GetType()))
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -981,17 +1081,8 @@ function COMMANDER:CheckMissionQueue()
         -- Escort and transport must be available (or not required).
         if EscortAvail and TransportAvail then
         
-          -- Assign mission to legion(s).
-          for _,_legion in pairs(legions) do
-            local legion=_legion --Ops.Legion#LEGION
-            
-            -- Debug message.
-            self:I(self.lid..string.format("Assigning mission %s [%s] to legion %s", mission:GetName(), mission:GetType(), legion.alias))
-        
-            -- Add mission to legion.
-            self:MissionAssign(legion, mission)
-            
-          end
+          -- Add mission to legion.
+          self:MissionAssign(mission, legions)
         
         else
           -- Recruited assets but no requested escort available. Unrecruit assets!
@@ -1188,16 +1279,7 @@ function COMMANDER:CheckTransportQueue()
           end        
   
           -- Assign transport to legion(s).
-          for _,_legion in pairs(legions) do
-            local legion=_legion --Ops.Legion#LEGION
-            
-            -- Debug message.
-            self:I(self.lid..string.format("Assigning transport UID=%d to legion %s", transport.uid, legion.alias))
-        
-            -- Add mission to legion.
-            self:TransportAssign(legion, transport)
-            
-          end
+          self:TransportAssign(transport, legions)
       
           -- Only ONE transport is assigned.
           return

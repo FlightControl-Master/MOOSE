@@ -134,17 +134,234 @@ function ARMYGROUP:New(group)
   ------------------------
   --- Pseudo Functions ---
   ------------------------
-
-  --- Triggers the FSM event "Stop". Stops the ARMYGROUP and all its event handlers.
+  --- Triggers the FSM event "Cruise".
+  -- @function [parent=#ARMYGROUP] Cruise
   -- @param #ARMYGROUP self
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+  -- @param #number Formation Formation.
 
-  --- Triggers the FSM event "Stop" after a delay. Stops the ARMYGROUP and all its event handlers.
-  -- @function [parent=#ARMYGROUP] __Stop
+  --- Triggers the FSM event "Cruise" after a delay.
+  -- @function [parent=#ARMYGROUP] __Cruise
   -- @param #ARMYGROUP self
   -- @param #number delay Delay in seconds.
-  
-  -- TODO: Add pseudo functions.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+  -- @param #number Formation Formation.
 
+  --- On after "Cruise" event.
+  -- @function [parent=#ARMYGROUP] OnAfterCruise
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+  -- @param #number Formation Formation. 
+
+
+  --- Triggers the FSM event "FullStop".
+  -- @function [parent=#ARMYGROUP] FullStop
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "FullStop" after a delay.
+  -- @function [parent=#ARMYGROUP] __FullStop
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "FullStop" event.
+  -- @function [parent=#ARMYGROUP] OnAfterFullStop
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "RTZ".
+  -- @function [parent=#ARMYGROUP] RTZ
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "RTZ" after a delay.
+  -- @function [parent=#ARMYGROUP] __RTZ
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "RTZ" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRTZ
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Returned".
+  -- @function [parent=#ARMYGROUP] Returned
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Returned" after a delay.
+  -- @function [parent=#ARMYGROUP] __Returned
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Returned" event.
+  -- @function [parent=#ARMYGROUP] OnAfterReturned
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Detour".
+  -- @function [parent=#ARMYGROUP] Detour
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Detour" after a delay.
+  -- @function [parent=#ARMYGROUP] __Detour
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Detour" event.
+  -- @function [parent=#ARMYGROUP] OnAfterDetour
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "DetourReached".
+  -- @function [parent=#ARMYGROUP] DetourReached
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "DetourReached" after a delay.
+  -- @function [parent=#ARMYGROUP] __DetourReached
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "DetourReached" event.
+  -- @function [parent=#ARMYGROUP] OnAfterDetourReached
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Retreat".
+  -- @function [parent=#ARMYGROUP] Retreat
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Retreat" after a delay.
+  -- @function [parent=#ARMYGROUP] __Retreat
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Retreat" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRetreat
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Retreated".
+  -- @function [parent=#ARMYGROUP] Retreated
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Retreated" after a delay.
+  -- @function [parent=#ARMYGROUP] __Retreated
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Retreated" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRetreated
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "EngageTarget".
+  -- @function [parent=#ARMYGROUP] EngageTarget
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "EngageTarget" after a delay.
+  -- @function [parent=#ARMYGROUP] __EngageTarget
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "EngageTarget" event.
+  -- @function [parent=#ARMYGROUP] OnAfterEngageTarget
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Disengage".
+  -- @function [parent=#ARMYGROUP] Disengage
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Disengage" after a delay.
+  -- @function [parent=#ARMYGROUP] __Disengage
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Disengage" event.
+  -- @function [parent=#ARMYGROUP] OnAfterDisengage
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Rearm".
+  -- @function [parent=#ARMYGROUP] Rearm
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Rearm" after a delay.
+  -- @function [parent=#ARMYGROUP] __Rearm
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Rearm" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRearm
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Rearming".
+  -- @function [parent=#ARMYGROUP] Rearming
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Rearming" after a delay.
+  -- @function [parent=#ARMYGROUP] __Rearming
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Rearming" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRearming
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Rearmed".
+  -- @function [parent=#ARMYGROUP] Rearmed
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Rearmed" after a delay.
+  -- @function [parent=#ARMYGROUP] __Rearmed
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Rearmed" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRearmed
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  -- TODO: Add pseudo functions.
 
   -- Init waypoints.
   self:_InitWaypoints()
@@ -598,8 +815,10 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
 
     -- Update route.
     if #self.waypoints>1 then
+      self:T(self.lid.."Got waypoints on spawn ==> Cruise in -0.1 sec!")
       self:__Cruise(-0.1, nil, self.option.Formation)
     else
+      self:T(self.lid.."No waypoints on spawn ==> Full Stop!")
       self:FullStop()
     end
 
@@ -629,6 +848,8 @@ function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
   elseif self:IsStopped() then
     self:E(self.lid.."Update route denied. Group is STOPPED!")
     return false
+  elseif self:IsHolding() then
+  self:E(self.lid.."Update route denied. Group is holding position! Use Cruise()")
   end
   return true
 end
@@ -724,10 +945,10 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
  
   
   -- Debug output.
-  if false then
+  if self.verbose>=5 then
     for i,_wp in pairs(waypoints) do
       local wp=_wp
-      local text=string.format("WP #%d UID=%d type=%s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.uid and wp.uid or 0, wp.type, wp.speed, wp.alt, wp.action)
+      local text=string.format("WP #%d UID=%d type=%s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.uid and wp.uid or -1, wp.type, wp.speed, wp.alt, wp.action)
       self:T(text)
     end
   end
@@ -1376,7 +1597,8 @@ function ARMYGROUP:_InitGroup(Template)
   
   -- Add elemets.
   for _,unit in pairs(units) do
-    self:_AddElementByName(unit:GetName())
+    local unitname=unit:GetName()
+    self:_AddElementByName(unitname)
   end
   
 
