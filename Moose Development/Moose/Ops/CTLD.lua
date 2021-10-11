@@ -1440,7 +1440,7 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   -- landed or hovering over load zone?
   local grounded = not self:IsUnitInAir(Unit)
   local hoverload = self:CanHoverLoad(Unit)
-  local dooropen = UTILS.IsLoadingDoorOpen(Unit:GetName()) and self.pilotmustopendoors
+  --local dooropen = UTILS.IsLoadingDoorOpen(Unit:GetName()) and self.pilotmustopendoors
   -- check if we are in LOAD zone
   local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
   if not inzone then
@@ -1452,7 +1452,7 @@ function CTLD:_LoadTroops(Group, Unit, Cargotype)
   elseif not grounded and not hoverload then
     self:_SendMessage("You need to land or hover in position to load!", 10, false, Group)
     if not self.debug then return self end
-  elseif not dooropen then
+  elseif self.pilotmustopendoors and not  UTILS.IsLoadingDoorOpen(Unit:GetName()) then
     self:_SendMessage("You need to open the door(s) to load troops!", 10, false, Group)
     if not self.debug then return self end  
   end
