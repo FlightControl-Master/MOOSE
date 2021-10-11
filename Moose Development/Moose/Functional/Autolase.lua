@@ -107,7 +107,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.7"
+AUTOLASE.version = "0.0.8"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -505,7 +505,7 @@ function AUTOLASE:CleanCurrentLasing()
       valid = valid + 1
     else
       timeout = true
-      entry.laserspot:LaseOff()()
+      entry.laserspot:LaseOff()
       
       self.RecceUnits[entry.reccename].cooldown = true
       self.RecceUnits[entry.reccename].timestamp = timer.getAbsTime()
@@ -532,6 +532,15 @@ end
 -- @return #AUTOLASE self
 function AUTOLASE:ShowStatus(Group)
   local report = REPORT:New("Autolase")
+  local reccetable = self.RecceSet:GetSetObjects()
+  for _,_recce in pairs(reccetable) do
+    if _recce and _recce:IsAlive() then
+      local unit = _recce:GetUnit(1)
+      local name = unit:GetName()
+      local code = self:GetLaserCode(name)
+      report:Add(string.format("Recce %s has code %d",name,code))
+    end
+  end
   local lines = 0
   for _ind,_entry in pairs(self.CurrentLasing) do
     local entry = _entry -- #AUTOLASE.LaserSpot
@@ -540,11 +549,11 @@ function AUTOLASE:ShowStatus(Group)
     local code = entry.lasercode
     local locationstring = entry.location
     local text = string.format("%s lasing %s code %d\nat %s",reccename,typename,code,locationstring)
-    report:AddIndent(text,"|")
+    report:Add(text)
     lines = lines + 1
   end
   if lines == 0 then
-    report:AddIndent("No targets!","|")
+    report:Add("No targets!")
   end
   local reporttime = self.reporttimelong
   if lines == 0 then reporttime = self.reporttimeshort end
