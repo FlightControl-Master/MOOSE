@@ -1604,7 +1604,7 @@ function UTILS.IsLoadingDoorOpen( unit_name )
       end
 
       if string.find(type_name, "Hercules") and (unit:getDrawArgumentValue(1220) == 1 or unit:getDrawArgumentValue(1221) == 1) then
-          BASE:T(unit_name .. " para door(s) are open")
+          BASE:T(unit_name .. " para doors are open")
           ret_val =  true
       end
 
