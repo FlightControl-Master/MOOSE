@@ -2573,8 +2573,10 @@ end
 -- @return #GROUP self 
 function GROUP:SetCommandInvisible(switch)
   self:F2( self.GroupName )
-  local switch = switch or false
-  local SetInvisible = {id = 'SetInvisible', params = {value = true}}
+  if switch==nil then
+    switch=false
+  end
+  local SetInvisible = {id = 'SetInvisible', params = {value = switch}}
   self:SetCommand(SetInvisible)
   return self
 end
@@ -2585,9 +2587,11 @@ end
 -- @return #GROUP self 
 function GROUP:SetCommandImmortal(switch)
   self:F2( self.GroupName )
-  local switch = switch or false
-  local SetInvisible = {id = 'SetImmortal', params = {value = true}}
-  self:SetCommand(SetInvisible)
+  if switch==nil then
+    switch=false
+  end
+  local SetImmortal = {id = 'SetImmortal', params = {value = switch}}
+  self:SetCommand(SetImmortal)
   return self
 end
 

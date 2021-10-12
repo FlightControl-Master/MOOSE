@@ -74,6 +74,6 @@ MOOSE has a living (chat and video) community of users, beta testers and contrib
    
 
 Kind regards,
-FlightControl (FC)
+The Moose Team
   
    

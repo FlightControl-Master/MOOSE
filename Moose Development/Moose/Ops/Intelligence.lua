@@ -135,7 +135,7 @@ INTEL = {
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.2.6"
+INTEL.version="0.2.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -211,6 +211,8 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   self.DetectIRST = true
   self.DetectRWR = true
   self.DetectDLINK = true
+  
+  self.statusupdate = -60
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("INTEL %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -585,7 +587,7 @@ function INTEL:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end  
 
-  self:__Status(-60) 
+  self:__Status(self.statusupdate) 
 end
 
 
@@ -748,6 +750,8 @@ function INTEL:CreateDetectedItems(DetectedGroups, RecceDetecting)
       item.velocity=group:GetVelocityVec3()
       item.speed=group:GetVelocityMPS()
       item.recce=RecceDetecting[groupname]
+      item.isground = group:IsGround() or false
+      item.isship = group:IsShip() or false
       self:T(string.format("%s group detect by %s/%s", groupname, RecceDetecting[groupname] or "unknown", item.recce or "unknown"))
       -- Add contact to table.    
       self:AddContact(item)
@@ -792,8 +796,8 @@ end
 function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
 
   -- Get detected DCS units.
-  local detectedtargets=Unit:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
   local reccename = Unit:GetName()
+  local detectedtargets=Unit:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
   
   for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
     local DetectedObject=Detection.object -- DCS#Object

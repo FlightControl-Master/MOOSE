@@ -1611,7 +1611,7 @@ function UTILS.GetOSTime()
 end
 
 --- Shuffle a table accoring to Fisher Yeates algorithm
---@param #table table to be shuffled
+--@param #table t Table to be shuffled
 --@return #table
 function UTILS.ShuffleTable(t)
   if t == nil or type(t) ~= "table" then
@@ -1640,7 +1640,7 @@ function UTILS.IsLoadingDoorOpen( unit_name )
   if unit ~= nil then
       local type_name = unit:getTypeName()
 
-      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) == 1 then
+      if type_name == "Mi-8MT" and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(86) == 1 or unit:getDrawArgumentValue(250) < 0 then
           BASE:T(unit_name .. " Cargo doors are open or cargo door not present")
           ret_val =  true
       end
@@ -1657,6 +1657,21 @@ function UTILS.IsLoadingDoorOpen( unit_name )
 
       if string.find(type_name, "SA342" ) and unit:getDrawArgumentValue(34) == 1 or unit:getDrawArgumentValue(38) == 1 then
           BASE:T(unit_name .. " front door(s) are open")
+          ret_val =  true
+      end
+
+      if string.find(type_name, "Hercules") and unit:getDrawArgumentValue(1215) == 1 and unit:getDrawArgumentValue(1216) == 1 then
+          BASE:T(unit_name .. " rear doors are open")
+          ret_val =  true
+      end
+
+      if string.find(type_name, "Hercules") and (unit:getDrawArgumentValue(1220) == 1 or unit:getDrawArgumentValue(1221) == 1) then
+          BASE:T(unit_name .. " para doors are open")
+          ret_val =  true
+      end
+
+      if string.find(type_name, "Hercules") and unit:getDrawArgumentValue(1217) == 1 then
+          BASE:T(unit_name .. " side door is open")
           ret_val =  true
       end
 

@@ -69,6 +69,7 @@ Functional/Warehouse.lua
 Functional/Fox.lua
 Functional/Mantis.lua
 Functional/Shorad.lua
+Functional/Autolase.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua
