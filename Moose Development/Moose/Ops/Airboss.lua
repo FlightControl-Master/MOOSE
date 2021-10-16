@@ -31,6 +31,7 @@
 --	  * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72)) (CVN-72) [Super Carrier Module]
 --	  * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73)) (CVN-73) [Super Carrier Module]
 --	  * [USS Harry S. Truman](https://en.wikipedia.org/wiki/USS_Harry_S._Truman) (CVN-75) [Super Carrier Module]
+--	  * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59)) (CV-59) [Heatblur Carrier Module]
 --    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1)) (LHA-1) [**WIP**]
 --    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6)) (LHA-6) [**WIP**]
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61) [**WIP**]
@@ -1295,6 +1296,7 @@ AIRBOSS.AircraftCarrier={
 -- @field #string WASHINGTON USS George Washington (CVN-73) [Super Carrier Module]
 -- @field #string STENNIS USS John C. Stennis (CVN-74)
 -- @field #string TRUMAN USS Harry S. Truman (CVN-75) [Super Carrier Module]
+-- @field #string FORRESTAL USS Forrestal (CV-59) [Heatblur Carrier Module]
 -- @field #string VINSON USS Carl Vinson (CVN-70) [Obsolete]
 -- @field #string TARAWA USS Tarawa (LHA-1)
 -- @field #string AMERICA USS America (LHA-6)
@@ -1306,6 +1308,7 @@ AIRBOSS.CarrierType={
   WASHINGTON="CVN_73",
   TRUMAN="CVN_75",
   STENNIS="Stennis",
+  FORRESTAL="Forrestal",
   VINSON="VINSON",
   TARAWA="LHA_Tarawa",
   AMERICA="USS America LHA-6",
@@ -1723,7 +1726,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.1.6"
+AIRBOSS.version="1.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1974,6 +1977,8 @@ function AIRBOSS:New(carriername, alias)
     self:_InitNimitz()
   elseif self.carriertype==AIRBOSS.CarrierType.TRUMAN then
     self:_InitNimitz()
+  elseif self.carriertype==AIRBOSS.CarrierType.FORRESTAL then
+    self:_InitForrestal()
   elseif self.carriertype==AIRBOSS.CarrierType.VINSON then
     -- TODO: Carl Vinson parameters.
     self:_InitStennis()
@@ -2041,7 +2046,7 @@ function AIRBOSS:New(carriername, alias)
     local stern=self:_GetSternCoord()
 
     -- Bow pos.
-    local bow=stern:Translate(self.carrierparam.totlength, hdg)
+    local bow=stern:Translate(self.carrierparam.totlength, hdg, true)
 
     -- End of rwy.
     local rwy=stern:Translate(self.carrierparam.rwylength, FB, true)
@@ -2059,31 +2064,31 @@ function AIRBOSS:New(carriername, alias)
       bow:FlareYellow()
 
       -- Runway half width = 10 m.
-      local r1=stern:Translate(self.carrierparam.rwywidth*0.5, FB+90)
-      local r2=stern:Translate(self.carrierparam.rwywidth*0.5, FB-90)
-      r1:FlareWhite()
-      r2:FlareWhite()
+      local r1=stern:Translate(self.carrierparam.rwywidth*0.5, FB+90, true)
+      local r2=stern:Translate(self.carrierparam.rwywidth*0.5, FB-90, true)
+      --r1:FlareWhite()
+      --r2:FlareWhite()
 
       -- End of runway.
       rwy:FlareRed()
 
       -- Right 30 meters from stern.
-      local cR=stern:Translate(self.carrierparam.totwidthstarboard, hdg+90)
-      cR:FlareYellow()
+      local cR=stern:Translate(self.carrierparam.totwidthstarboard, hdg+90, true)
+      --cR:FlareYellow()
 
       -- Left 40 meters from stern.
-      local cL=stern:Translate(self.carrierparam.totwidthport, hdg-90)
-      cL:FlareYellow()
+      local cL=stern:Translate(self.carrierparam.totwidthport, hdg-90, true)
+      --cL:FlareYellow()
 
 
       -- Carrier specific.
       if self.carrier:GetTypeName()~=AIRBOSS.CarrierType.TARAWA or self.carrier:GetTypeName()~=AIRBOSS.CarrierType.AMERICA or self.carrier:GetTypeName()~=AIRBOSS.CarrierType.JCARLOS then
 
         -- Flare wires.
-        local w1=stern:Translate(self.carrierparam.wire1, FB)
-        local w2=stern:Translate(self.carrierparam.wire2, FB)
-        local w3=stern:Translate(self.carrierparam.wire3, FB)
-        local w4=stern:Translate(self.carrierparam.wire4, FB)
+        local w1=stern:Translate(self.carrierparam.wire1, FB, true)
+        local w2=stern:Translate(self.carrierparam.wire2, FB, true)
+        local w3=stern:Translate(self.carrierparam.wire3, FB, true)
+        local w4=stern:Translate(self.carrierparam.wire4, FB, true)
         w1:FlareWhite()
         w2:FlareYellow()
         w3:FlareWhite()
@@ -4377,6 +4382,35 @@ function AIRBOSS:_InitNimitz()
   self.carrierparam.wire2      =  67
   self.carrierparam.wire3      =  79
   self.carrierparam.wire4      =  92
+
+end
+
+--- Init parameters for Forrestal class super carriers.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitForrestal()
+
+  -- Init Nimitz as default.
+  self:_InitNimitz()
+
+  -- Carrier Parameters.
+  self.carrierparam.sterndist  =-135.5
+  self.carrierparam.deckheight =  20 --20.1494  --DCS World OpenBeta\CoreMods\tech\USS_Nimitz\Database\USS_CVN_7X.lua
+
+  -- Total size of the carrier (approx as rectangle).
+  self.carrierparam.totlength=315         -- Wiki says 325 meters overall length.
+  self.carrierparam.totwidthport=45         -- Wiki says  73 meters overall beam.
+  self.carrierparam.totwidthstarboard=35
+
+  -- Landing runway.
+  self.carrierparam.rwyangle   =  -9.1359  --DCS World OpenBeta\CoreMods\tech\USS_Nimitz\scripts\USS_Nimitz_RunwaysAndRoutes.lua
+  self.carrierparam.rwylength  = 212
+  self.carrierparam.rwywidth   =  25
+
+  -- Wires.
+  self.carrierparam.wire1      =  42        -- Distance from stern to first wire.
+  self.carrierparam.wire2      =  51.5
+  self.carrierparam.wire3      =  62
+  self.carrierparam.wire4      =  72.5
 
 end
 
@@ -10549,6 +10583,9 @@ function AIRBOSS:_GetSternCoord()
   elseif self.carriertype==AIRBOSS.CarrierType.STENNIS then
     -- Stennis: translate 7 meters starboard wrt Final bearing.
     self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(7, FB+90, true, true)
+  elseif self.carriertype==AIRBOSS.CarrierType.FORRESTAL then
+    -- Forrestal
+    self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(7.5, FB+90, true, true)
   else
     -- Nimitz SC: translate 8 meters starboard wrt Final bearing.
     self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(9.5, FB+90, true, true)
