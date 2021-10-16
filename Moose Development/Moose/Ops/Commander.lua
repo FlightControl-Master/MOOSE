@@ -3,7 +3,7 @@
 -- **Main Features:**
 --
 --    * Manages AIRWINGS, BRIGADEs and FLOTILLAs
---    * Handles missions (AUFTRAG) and finds the best man for the job 
+--    * Handles missions (AUFTRAG) and finds the best assets for the job 
 --
 -- ===
 --
@@ -30,7 +30,7 @@
 -- @field Ops.Chief#CHIEF chief Chief of staff.
 -- @extends Core.Fsm#FSM
 
---- Be surprised!
+--- *He who has never leared to obey cannot be a good commander* -- Aristotle
 --
 -- ===
 --

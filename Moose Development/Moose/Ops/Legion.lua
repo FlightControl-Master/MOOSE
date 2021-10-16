@@ -1,6 +1,6 @@
 --- **Ops** - Legion Warehouse.
 --
--- Parent class of Airwings and Brigades.
+-- Parent class of Airwings, Brigades and Fleets.
 --
 -- ===
 --
@@ -21,15 +21,17 @@
 -- @field Ops.Chief#CHIEF chief Chief of this legion.
 -- @extends Functional.Warehouse#WAREHOUSE
 
---- Be surprised!
+--- *Per aspera ad astra*
 --
 -- ===
 --
 -- # The LEGION Concept
 -- 
--- The LEGION class contains all functions that are common for the AIRWING, BRIGADE and XXX classes, which inherit the LEGION class.
+-- The LEGION class contains all functions that are common for the AIRWING, BRIGADE and FLEET classes, which inherit the LEGION class.
 -- 
 -- An LEGION consists of multiple COHORTs. These cohorts "live" in a WAREHOUSE, i.e. a physical structure that can be destroyed or captured.
+-- 
+-- ** The LEGION class is not meant to be used directly. Use AIRWING, BRIGADE or FLEET instead! **
 --
 -- @field #LEGION
 LEGION = {

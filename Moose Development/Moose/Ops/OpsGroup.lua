@@ -6731,7 +6731,7 @@ function OPSGROUP:GetWeightCargo(UnitName, IncludeReserved)
 
     if (UnitName==nil or UnitName==element.name) and element.status~=OPSGROUP.ElementStatus.DEAD then
 
-      weight=weight+element.weightCargo
+      weight=weight+element.weightCargo or 0
 
     end
 
@@ -10871,12 +10871,6 @@ function OPSGROUP:_AddElementByName(unitname)
 
     -- Weight and cargo.
     element.weightEmpty=element.descriptors.massEmpty or 666
-    element.weightCargo=0
-    element.weight=element.weightEmpty+element.weightCargo
-
-    -- Looks like only aircraft have a massMax value in the descriptors.
-    element.weightMaxTotal=element.descriptors.massMax or element.weightEmpty+8*95 --If max mass is not given, we assume 8 soldiers.
-
 
     if self.isArmygroup then
 
@@ -10886,6 +10880,11 @@ function OPSGROUP:_AddElementByName(unitname)
 
       element.weightMaxTotal=element.weightEmpty+10*1000
 
+    else
+
+      -- Looks like only aircraft have a massMax value in the descriptors.
+      element.weightMaxTotal=element.descriptors.massMax or element.weightEmpty+8*95 --If max mass is not given, we assume 8 soldiers.
+
     end
 
     -- Max cargo weight:
@@ -10893,7 +10892,14 @@ function OPSGROUP:_AddElementByName(unitname)
     element.weightMaxCargo=unit.__.CargoBayWeightLimit
     
     -- Cargo bay (empty).
-    element.cargoBay={}
+    if element.cargoBay then
+      -- After a respawn, the cargo bay might not be empty!
+      element.weightCargo=self:GetWeightCargo(element.name, false)
+    else
+      element.cargoBay={}
+      element.weightCargo=0
+    end
+    element.weight=element.weightEmpty+element.weightCargo
 
     -- FLIGHTGROUP specific.
     if self.isFlightgroup then

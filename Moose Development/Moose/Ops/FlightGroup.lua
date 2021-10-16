@@ -60,8 +60,6 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\OPS\FlightGroup\_Main.png)
---
 -- # The FLIGHTGROUP Concept
 --
 -- # Events

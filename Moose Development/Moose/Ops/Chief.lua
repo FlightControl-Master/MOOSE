@@ -2,7 +2,13 @@
 --
 -- **Main Features:**
 --
---    * Stuff
+--    * Automatic target engagement based on detection network
+--    * Define multiple border, conflict and attack zones
+--    * Define strategic "capture" zones 
+--    * Set stragegy of chief from passive to agressive
+--    * Manual target engagement via AUFTRAG and TARGET classes
+--    * Add AIRWINGS, BRIGADES and FLEETS as resources
+--    * Seamless air-to-air, air-to-ground, ground-to-ground dispatching
 --
 -- ===
 --
@@ -28,14 +34,95 @@
 -- @field Ops.Commander#COMMANDER commander Commander of assigned legions.
 -- @extends Ops.Intelligence#INTEL
 
---- Be surprised!
+--- *In preparing for battle I have always found that plans are useless, but planning is indispensable* -- Dwight D Eisenhower
 --
 -- ===
 --
 -- # The CHIEF Concept
 -- 
 -- The Chief of staff gathers INTEL and assigns missions (AUFTRAG) the airforce, army and/or navy.
+-- 
+-- # Territory
+-- 
+-- The chief class allows you to define boarder zones, conflict zones and attack zones.
+-- 
+-- ## Border Zones
+-- 
+-- Border zones define your own territory.
+-- They can be set via the @{#CHIEF.SetBorderZones}() function as a set or added zone by zone via the @{#CHIEF.AddBorderZone}() function.
+-- 
+-- ## Conflict Zones
+-- 
+-- Conflict zones define areas, which usually are under dispute of different coalitions.
+-- They can be set via the @{#CHIEF.SetConflictZones}() function as a set or added zone by zone via the @{#CHIEF.AddConflictZone}() function.
+-- 
+-- ## Attack Zones
+-- 
+-- Attack zones are zones that usually lie within the enemy territory. They are only enganged with an agressive strategy.
+-- They can be set via the @{#CHIEF.SetAttackZones}() function as a set or added zone by zone via the @{#CHIEF.AddAttackZone}() function.
 --
+-- # Defense Condition
+-- 
+-- The defence condition (DEFCON) depends on enemy activity detected in the different zone types and is set automatically.
+-- 
+-- * `CHIEF.Defcon.GREEN`: No enemy activities detected.
+-- * `CHIEF.Defcon.YELLOW`: Enemy activity detected in conflict zones.
+-- * `CHIEF.Defcon.RED`: Enemy activity detected in border zones.
+-- 
+-- The current DEFCON can be retrieved with the @(#CHIEF.GetDefcon)() function.
+-- 
+-- When the DEFCON changed, an FSM event @{#CHIEF.DefconChange} is triggered. Mission designers can hook into this event via the @{#CHIEF.OnAfterDefconChange}() function:
+--
+--     --- Function called when the DEFCON changes.
+--     function myChief:OnAfterDefconChange(From, Event, To, Defcon)
+--       local text=string.format("Changed DEFCON to %s", Defcon)
+--       MESSAGE:New(text, 120):ToAll()    
+--     end
+--
+-- # Strategy
+-- 
+-- The strategy of the chief determines, in which areas targets are engaged automatically.
+-- 
+-- * `CHIEF.Strategy.PASSIVE`: Chief is completely passive. No targets at all are engaged automatically.
+-- * `CHIEF.Strategy.DEFENSIVE`: Chief acts defensively. Only targets in his own territory are engaged.
+-- * `CHIEF.Strategy.OFFENSIVE`: Chief behaves offensively. Targets in his own territory and in conflict zones are enganged.
+-- * `CHIEF.Strategy.AGGRESSIVE`: Chief is aggressive. Targets in his own territory, in conflict zones and in attack zones are enganged.
+-- * `CHIEF.Strategy.TOTALWAR`: Anything anywhere is enganged.
+-- 
+-- The strategy can be set by the @(#CHIEF.SetStrategy)() and retrieved with the @(#CHIEF.GetStrategy)() function.
+-- 
+-- When the strategy is changed, the FSM event @{#CHIEF.StrategyChange} is triggered and customized code can be added to the @{#CHIEF.OnAfterStrategyChange}() function:
+-- 
+--     --- Function called when the STRATEGY changes.
+--     function myChief:OnAfterStrategyChange(From, Event, To, Strategy)
+--       local text=string.format("Strategy changd to %s", Strategy)
+--       MESSAGE:New(text, 120):ToAll()
+--     end
+--  
+-- # Strategic (Capture) Zones
+-- 
+-- Strategically important zones, which should be captured can be added via the @{#CHIEF.AddStrateticZone}() function.
+-- 
+-- If the zone is currently owned by another coalition and enemy ground troops are present in the zone, a CAS mission is lauchned.
+-- 
+-- Once the zone is cleaned of enemy forces, ground (infantry) troops are send there. These require a transportation via helicopters.
+-- So in order to deploy our own troops, infantry assets with `AUFTRAG.Type.ONGUARD` and helicopters with `AUFTRAG.Type.OPSTRANSPORT` need to be available.
+-- 
+-- Whenever a strategic zone is captured by us the FSM event @{#CHIEF.ZoneCaptured} is triggered and customized further actions can be executed 
+-- with the @{#CHIEF.OnAfterZoneCaptured}() function.
+-- 
+-- Whenever a strategic zone is lost (captured by the enemy), the FSM event @{#CHIEF.ZoneLost} is triggered and customized further actions can be executed 
+-- with the @{#CHIEF.OnAfterZoneLost}() function.
+-- 
+-- Further events are 
+-- 
+-- * @{#CHIEF.ZoneEmpty}, once the zone is completely empty of ground troops. Code can be added to the  @{#CHIEF.OnAfterZoneEmpty}() function.
+-- * @{#CHIEF.ZoneAttacked}, once the zone is under attack. Code can be added to the  @{#CHIEF.OnAfterZoneAttacked}() function.
+-- 
+-- Note that the ownership of a zone is determined via zone scans, i.e. not via the detection network. In other words, there is an all knowing eye.
+-- Think of it as the local population providing the intel. It's not totally realistic but the best compromise within the limits of DCS.
+-- 
+-- 
 --
 -- @field #CHIEF
 CHIEF = {
@@ -377,13 +464,13 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   --- Triggers the FSM event "ZoneAttacked".
   -- @function [parent=#CHIEF] ZoneAttacked
   -- @param #CHIEF self
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is beeing attacked.
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is being attacked.
 
   --- Triggers the FSM event "ZoneAttacked" after a delay.
   -- @function [parent=#CHIEF] __ZoneAttacked
   -- @param #CHIEF self
   -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is beeing attacked.
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is being attacked.
 
   --- On after "ZoneAttacked" event.
   -- @function [parent=#CHIEF] OnAfterZoneAttacked
@@ -391,7 +478,7 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is beeing attacked. 
+  -- @param Ops.OpsZone#OPSZONE OpsZone Zone that is being attacked. 
 
   return self
 end
@@ -1326,7 +1413,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.OpsZone#OPSZONE OpsZone The zone that beeing attacked.
+-- @param Ops.OpsZone#OPSZONE OpsZone The zone that being attacked.
 function CHIEF:onafterZoneAttacked(From, Event, To, OpsZone)
   -- Debug info.
   self:T(self.lid..string.format("Zone %s attacked!", OpsZone:GetName()))
@@ -2005,9 +2092,17 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
 
   -- Target position.
   local TargetVec2=StratZone.opszone.zone:GetVec2()
+  
+  -- Max range in meters.
+  local RangeMax=nil
+  
+  -- Set max range to 250 NM because we use helos as transport for the infantry.
+  if MissionType==AUFTRAG.Type.PATROLZONE or MissionType==AUFTRAG.Type.ONGUARD then
+    RangeMax=UTILS.NMToMeters(250)
+  end
 
   -- Recruite infantry assets.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, nil, nil, nil, Categories, Attributes)
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, RangeMax, nil, nil, Categories, Attributes)
   
   if recruited then
   
@@ -2057,8 +2152,10 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
         -- TODO: Need a better way!
         StratZone.missionPatrol=mission
         
+        return true
       else
         LEGION.UnRecruitAssets(assets)
+        return false
       end
       
     elseif MissionType==AUFTRAG.Type.CAS then
@@ -2078,11 +2175,12 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       -- TODO: Need a better way!
       StratZone.missionCAS=mission
 
+      return true
     end
     
   end
 
-  return nil
+  return false
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
