@@ -22,7 +22,7 @@
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: Sep 2021
+-- Date: Oct 2021
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -97,6 +97,14 @@
 --         self.pilotmustopendoors = false -- switch to true to enable check of open doors
 --         -- (added 0.1.9)
 --         self.suppressmessages = false -- switch off all messaging if you want to do your own
+--         -- (added 0.1.11)
+--         self.rescuehoverheight = 20 -- max height for a hovering rescue in meters
+--         self.rescuehoverdistance = 10 -- max distance for a hovering rescue in meters
+--         -- (added 0.1.12)
+--         -- Country codes for spawned pilots
+--         self.countryblue= country.id.USA
+--         self.countryred = country.id.RUSSIA
+--         self.countryneutral = country.id.UN_PEACEKEEPERS
 -- 
 -- ## 2.1 Experimental Features
 -- 
@@ -233,7 +241,7 @@ CSAR.AircraftType["Mi-24V"] = 8
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.10r5"
+CSAR.version="0.1.11r1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -362,6 +370,15 @@ function CSAR:New(Coalition, Template, Alias)
   self.approachdist_near = 3000 -- switch to 5 sec interval approach mode, meters
   self.pilotmustopendoors = false -- switch to true to enable check on open doors
   self.suppressmessages = false
+  
+  -- added 0.1.11r1
+  self.rescuehoverheight = 20
+  self.rescuehoverdistance = 10
+ 
+  -- added 0.1.12
+  self.countryblue= country.id.USA
+  self.countryred = country.id.RUSSIA
+  self.countryneutral = country.id.UN_PEACEKEEPERS
     
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -549,6 +566,7 @@ function CSAR:_SpawnPilotInField(country,point,frequency)
   for i=1,10 do
     math.random(i,10000)
   end
+  if point:IsSurfaceTypeWater() then point.y = 0 end
   local template = self.template
   local alias = string.format("Pilot %.2fkHz-%d", freq, math.random(1,99))
   local coalition = self.coalition
@@ -687,11 +705,11 @@ function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _
   
   local _country = 0
   if _coalition == coalition.side.BLUE then
-    _country = country.id.USA
+    _country = self.countryblue
   elseif _coalition == coalition.side.RED then
-    _country = country.id.RUSSIA
+    _country = self.countryred
   else
-    _country = country.id.UN_PEACEKEEPERS
+    _country = self.countryneutral
   end
   
   self:_AddCsar(_coalition, _country, pos, typename, unitname, _description, freq, _nomessage, _description, forcedesc)
@@ -1120,7 +1138,6 @@ end
 function CSAR:_IsLoadingDoorOpen( unit_name )
   self:T(self.lid .. " _IsLoadingDoorOpen")
   return UTILS.IsLoadingDoorOpen(unit_name)
-  
 end
 
 --- (Internal) Function to check if heli is close to group.
@@ -1200,15 +1217,16 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
           end
           
           if _heliUnit:InAir() and _unitsInHelicopter + 1 <= _maxUnits then
-  
-              if _distance < 8.0 then
+              -- TODO - make variable
+              if _distance < self.rescuehoverdistance then
   
                   --check height!
                   local leaderheight = _woundedLeader:GetHeight()
                   if leaderheight < 0 then leaderheight = 0 end
                   local _height = _heliUnit:GetHeight() - leaderheight
-  
-                  if _height <= 20.0 then
+                  
+                  -- TODO - make variable
+                  if _height <= self.rescuehoverheight then
   
                       local _time = self.hoverStatus[_lookupKeyHeli]
   
