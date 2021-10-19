@@ -384,7 +384,7 @@ function BRIGADE:onafterStatus(From, Event, To)
       local mission=_mission --Ops.Auftrag#AUFTRAG
 
       local prio=string.format("%d/%s", mission.prio, tostring(mission.importance)) ; if mission.urgent then prio=prio.." (!)" end
-      local assets=string.format("%d/%d", mission:CountOpsGroups(), mission.nassets)
+      local assets=string.format("%d/%d", mission:CountOpsGroups(), mission.Nassets or 0)
       local target=string.format("%d/%d Damage=%.1f", mission:CountMissionTargets(), mission:GetTargetInitialNumber(), mission:GetTargetDamage())
 
       text=text..string.format("\n[%d] %s %s: Status=%s, Prio=%s, Assets=%s, Targets=%s", i, mission.name, mission.type, mission.status, prio, assets, target)

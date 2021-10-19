@@ -940,6 +940,9 @@ function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
   elseif self:IsStopped() then
     self:E(self.lid.."Update route denied. Group is STOPPED!")
     return false
+  elseif self:IsHolding() then
+    self:T(self.lid.."Update route denied. Group is holding position!")
+    return false    
   end
   return true
 end

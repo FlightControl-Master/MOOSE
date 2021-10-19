@@ -1452,8 +1452,20 @@ do -- Cargo
           ["C-17A"] = 35000,   --77519 cannot be used, because it loads way too much apcs and infantry.
           ["C-130"] = 22000    --The real value cannot be used, because it loads way too much apcs and infantry.
         }
+        
+        local Weight=Weights[Desc.typeName]
+        
+        if not Weight then
+          local fuelrel=self:GetFuel() or 1.0
+          local Mmax=Desc.massMax or 0
+          local Mempty=Desc.massEmpty or 0
+          local Mfuel=Desc.fuelMassMax and Desc.fuelMassMax*fuelrel or 0
+          Weight=Mmax-(Mempty+Mfuel)
+          self:I(string.format("Setting Cargo bay weight limit [%s]=%d kg (Mass max=%d, empty=%d, fuel=%d kg, fuelrel=%.3f)", Desc.typeName or "unknown type", Weight, Mmax, Mempty, Mfuel, fuelrel))
+        end
 
-        self.__.CargoBayWeightLimit = Weights[Desc.typeName] or ( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
+        self.__.CargoBayWeightLimit = Weight
+        
       elseif self:IsShip() then
         local Desc = self:GetDesc()
         self:F({Desc=Desc})

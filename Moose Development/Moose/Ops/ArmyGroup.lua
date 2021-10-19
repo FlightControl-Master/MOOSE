@@ -849,7 +849,8 @@ function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
     self:E(self.lid.."Update route denied. Group is STOPPED!")
     return false
   elseif self:IsHolding() then
-  self:E(self.lid.."Update route denied. Group is holding position! Use Cruise()")
+    self:T(self.lid.."Update route denied. Group is holding position!")
+    return false
   end
   return true
 end

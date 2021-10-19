@@ -46,6 +46,8 @@
 -- @field #number Tstart Mission start time in abs. seconds.
 -- @field #number Tstop Mission stop time in abs. seconds.
 -- @field #number duration Mission duration in seconds.
+-- @field #number durationExe Mission execution time in seconds.
+-- @field #number Texecuting Mission time stamp (abs) when it started to execute. Is #nil on start.
 -- @field #number Tpush Mission push/execute time in abs. seconds.
 -- @field Wrapper.Marker#MARKER marker F10 map marker.
 -- @field #boolean markerOn If true, display marker on F10 map with the AUFTRAG status.
@@ -2703,7 +2705,7 @@ function AUFTRAG:AddOpsGroup(OpsGroup)
   return self
 end
 
---- Remove an Ops  group from the mission.
+--- Remove an Ops group from the mission.
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP OpsGroup The OPSGROUP object.
 -- @return #AUFTRAG self
@@ -3061,9 +3063,18 @@ function AUFTRAG:onafterStatus(From, Event, To)
       self:Cancel()
       
     elseif self.durationExe and self.Texecuting and Tnow-self.Texecuting>self.durationExe then
+    
+      -- Backup repeat values
+      local Nrepeat=self.Nrepeat
+      local NrepeatS=self.NrepeatSuccess
+      local NrepeatF=self.NrepeatFailure
 
       -- Cancel mission if stop time passed.
       self:Cancel()    
+      
+      self.Nrepeat=Nrepeat
+      self.NrepeatSuccess=NrepeatS
+      self.NrepeatFailure=NrepeatF
     
     elseif (Ntargets0>0 and Ntargets==0) then
 
@@ -3811,6 +3822,9 @@ function AUFTRAG:onafterDone(From, Event, To)
   -- Set time stamp.
   self.Tover=timer.getAbsTime()
   
+  -- Not executing any more.
+  self.Texecuting=nil
+  
   -- Set status for CHIEF, COMMANDER and LEGIONs
   self.statusChief=AUFTRAG.Status.DONE 
   self.statusCommander=AUFTRAG.Status.DONE  
@@ -3983,7 +3997,7 @@ function AUFTRAG:onafterRepeat(From, Event, To)
     end  
     
   else
-    self:E(self.lid.."ERROR: Mission can only be repeated by a CHIEF, WINGCOMMANDER or AIRWING! Stopping AUFTRAG")
+    self:E(self.lid.."ERROR: Mission can only be repeated by a CHIEF, COMMANDER or LEGION! Stopping AUFTRAG")
     self:Stop()
     return
   end
@@ -3992,7 +4006,9 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   -- No mission assets.
   self.assets={}
   
-  for _,_groupdata in pairs(self.groupdata) do
+  
+  -- Remove OPS groups. This also removes the mission from the OPSGROUP mission queue.
+  for groupname,_groupdata in pairs(self.groupdata) do
     local groupdata=_groupdata --#AUFTRAG.GroupData
     local opsgroup=groupdata.opsgroup
     if opsgroup then

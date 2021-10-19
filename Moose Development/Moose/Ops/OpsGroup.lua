@@ -684,12 +684,13 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "Pickup",           "*")           -- Carrier and is on route to pick up cargo.
   self:AddTransition("*",             "Loading",          "*")           -- Carrier is loading cargo.
   self:AddTransition("*",             "Load",             "*")           -- Carrier loads cargo into carrier.
-  self:AddTransition("*",             "Loaded",           "*")           -- Carrier loaded all assigned/possible cargo into carrier.
+  self:AddTransition("*",             "Loaded",           "*")           -- Carrier loaded cargo into carrier.
+  self:AddTransition("*",             "LoadingDone",      "*")           -- Carrier loaded all assigned/possible cargo into carrier.
   self:AddTransition("*",             "Transport",        "*")           -- Carrier is transporting cargo.
   self:AddTransition("*",             "Unloading",        "*")           -- Carrier is unloading the cargo.
-  self:AddTransition("*",             "Unload",           "*")           -- Carrier unload a cargo group.
-  self:AddTransition("*",             "Unloaded",         "*")           -- Carrier unloaded all its current cargo.
-  self:AddTransition("*",             "UnloadingDone",    "*")           -- Carrier is unloading the cargo.
+  self:AddTransition("*",             "Unload",           "*")           -- Carrier unloads a cargo group.
+  self:AddTransition("*",             "Unloaded",         "*")           -- Carrier unloaded a cargo group.
+  self:AddTransition("*",             "UnloadingDone",    "*")           -- Carrier unloaded all its current cargo.
   self:AddTransition("*",             "Delivered",        "*")           -- Carrier delivered ALL cargo of the transport assignment.
   
   self:AddTransition("*",             "TransportCancel",  "*")           -- Cancel (current) transport.
@@ -904,7 +905,7 @@ end
 
 --- Set default cruise altitude.
 -- @param #OPSGROUP self
--- @param #number Altitude Altitude in feet. Default is 10,000 ft for airplanes and 1,000 feet for helicopters.
+-- @param #number Altitude Altitude in feet. Default is 10,000 ft for airplanes and 1,500 feet for helicopters.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultAltitude(Altitude)
   if Altitude then
@@ -912,7 +913,7 @@ function OPSGROUP:SetDefaultAltitude(Altitude)
   else
     if self:IsFlightgroup() then
       if self.isHelo then
-        self.altitudeCruise=UTILS.FeetToMeters(1000)        
+        self.altitudeCruise=UTILS.FeetToMeters(1500)        
       else
         self.altitudeCruise=UTILS.FeetToMeters(10000)
       end
@@ -6235,7 +6236,7 @@ function OPSGROUP:_CheckCargoTransport()
       -- Boarding finished ==> Transport cargo.
       if gotcargo and self.cargoTransport:_CheckRequiredCargos(self.cargoTZC) and not boarding then
         self:T(self.lid.."Boarding finished ==> Loaded")
-        self:Loaded()
+        self:LoadingDone()
       else
         -- No cargo and no one is boarding ==> check again if we can make anyone board.
         self:Loading()
@@ -7301,6 +7302,9 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
     -- Trigger embarked event for cargo group.
     CargoGroup:Embarked(self, carrier)
     
+    -- Trigger Loaded event.
+    self:Loaded(CargoGroup)
+    
     -- Trigger "Loaded" event for current cargo transport.
     if self.cargoTransport then
       CargoGroup:_DelMyLift(self.cargoTransport)
@@ -7315,15 +7319,15 @@ function OPSGROUP:onafterLoad(From, Event, To, CargoGroup, Carrier)
 
 end
 
---- On after "Loaded" event. Carrier has loaded all (possible) cargo at the pickup zone.
+--- On after "LoadingDone" event. Carrier has loaded all (possible) cargo at the pickup zone.
 -- @param #OPSGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function OPSGROUP:onafterLoaded(From, Event, To)
+function OPSGROUP:onafterLoadingDone(From, Event, To)
 
   -- Debug info.
-  self:T(self.lid.."Carrier Loaded ==> Transport")
+  self:T(self.lid.."Carrier Loading Done ==> Transport")
 
   -- Order group to transport.
   self:__Transport(1)
