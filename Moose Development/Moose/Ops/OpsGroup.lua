@@ -4414,7 +4414,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   -- We add a 10 sec delay for ARTY. Found that they need some time to readjust the barrel of their gun. Not sure if necessary for all. Needs some more testing!
   local delay=1
   if Mission.type==AUFTRAG.Type.ARTY then
-    delay=10
+    delay=60
   end
 
   -- Check if group is done.
@@ -8427,16 +8427,17 @@ function OPSGROUP:_CheckStuck()
       self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
       
       -- Give cruise command again.
-      self:__Cruise(1)
+      if self:IsReturning() then
+        self:__RTZ(1)
+      else
+        self:__Cruise(1)
+      end
 
-    elseif holdtime>=10*60 then
+    elseif holdtime>=10*60 and holdtime<30*60 then
 
       -- Debug warning.
       self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
       
-      -- Give cruise command again.
-      self:__Cruise(1)
-
       --TODO: Stuck event!
       
       -- Look for a current mission and cancel it as we do not seem to be able to perform it.
@@ -8444,7 +8445,19 @@ function OPSGROUP:_CheckStuck()
       if mission then
         self:E(self.lid..string.format("WARNING: Cancelling mission %s [%s] due to being stuck", mission:GetName(), mission:GetType()))
         self:MissionCancel(mission)
+      else
+        -- Give cruise command again.
+        if self:IsReturning() then
+          self:__RTZ(1)
+        else
+          self:__Cruise(1)
+        end        
       end
+      
+    elseif holdtime>=30*60 then
+
+      -- Debug warning.
+      self:E(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
 
     end
 

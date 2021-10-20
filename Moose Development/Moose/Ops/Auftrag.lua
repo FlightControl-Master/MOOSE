@@ -102,6 +102,7 @@
 -- 
 -- @field #number artyRadius Radius in meters.
 -- @field #number artyShots Number of shots fired.
+-- @field #number artyAltitude Altitude in meters. Can be used for a Barrage.
 -- 
 -- @field #string alert5MissionType Alert 5 mission type. This is the mission type, the alerted assets will be able to carry out.
 -- 
@@ -1549,8 +1550,9 @@ end
 -- @param Core.Point#COORDINATE Target Center of the firing solution.
 -- @param #number Nshots Number of shots to be fired. Default 3.
 -- @param #number Radius Radius of the shells in meters. Default 100 meters.
+-- @param #number Altitude Altitude in meters. Can be used to setup a Barrage. Default `#nil`.
 -- @return #AUFTRAG self
-function AUFTRAG:NewARTY(Target, Nshots, Radius)
+function AUFTRAG:NewARTY(Target, Nshots, Radius, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ARTY)
   
@@ -1558,6 +1560,7 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius)
   
   mission.artyShots=Nshots or 3
   mission.artyRadius=Radius or 100
+  mission.artyAltitude=Altitude
   
   mission.engageWeaponType=ENUMS.WeaponFlag.Auto
   
@@ -4721,7 +4724,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- ARTY Mission --
     ------------------
   
-    local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, self:GetTargetVec2(), self.artyRadius, self.artyShots, self.engageWeaponType)
+    local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, self:GetTargetVec2(), self.artyRadius, self.artyShots, self.engageWeaponType, self.artyAltitude)
     
     table.insert(DCStasks, DCStask)    
 

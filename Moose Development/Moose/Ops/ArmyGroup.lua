@@ -1169,7 +1169,7 @@ function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
     
     -- Set if we want to resume route after reaching the detour waypoint.
     wp.detour=0
-    
+        
   else
     self:E(self.lid.."ERROR: No RTZ zone given!")
   end
