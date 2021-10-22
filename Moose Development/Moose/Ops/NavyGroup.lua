@@ -43,6 +43,7 @@
 -- @field #boolean pathfindingOn If true, enable pathfining.
 -- @field #number pathCorridor Path corrdidor width in meters.
 -- @field #boolean ispathfinding If true, group is currently path finding.
+-- @field #NAVYGROUP.Target engage Engage target.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -61,6 +62,7 @@ NAVYGROUP = {
   intowindcounter = 0,
   Qintowind       = {},
   pathCorridor    = 400,
+  engage          = {},  
 }
 
 --- Turn into wind parameters.
@@ -77,6 +79,13 @@ NAVYGROUP = {
 -- @field #boolean Open Currently active.
 -- @field #boolean Over This turn is over.
 
+--- Engage Target.
+-- @type NAVYGROUP.Target
+-- @field Ops.Target#TARGET Target The target.
+-- @field Core.Point#COORDINATE Coordinate Last known coordinate of the target.
+-- @field Ops.OpsGroup#OPSGROUP.Waypoint Waypoint the waypoint created to go to the target.
+-- @field #number roe ROE backup.
+-- @field #number alarmstate Alarm state backup.
 
 --- NavyGroup version.
 -- @field #string version
@@ -160,7 +169,9 @@ function NAVYGROUP:New(group)
   self:AddTransition("*",             "ClearAhead",       "*")           -- Clear ahead.
   
   self:AddTransition("Cruising",      "Dive",             "Cruising")    -- Command a submarine to dive.
+  self:AddTransition("Engaging",      "Dive",             "Engaging")    -- Command a submarine to dive.
   self:AddTransition("Cruising",      "Surface",          "Cruising")    -- Command a submarine to go to the surface.
+  self:AddTransition("Engaging",      "Surface",          "Engaging")    -- Command a submarine to go to the surface.
   
   ------------------------
   --- Pseudo Functions ---
@@ -745,8 +756,8 @@ function NAVYGROUP:Status(From, Event, To)
   
       local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"    
       local turning=tostring(self:IsTurning())
-      local alt=self.position.y
-      local speed=UTILS.MpsToKnots(self.velocity)
+      local alt=self.position and self.position.y or 0
+      local speed=UTILS.MpsToKnots(self.velocity or 0)
       local speedExpected=UTILS.MpsToKnots(self:GetExpectedSpeed())
       
       -- Waypoint stuff.
@@ -765,7 +776,7 @@ function NAVYGROUP:Status(From, Event, To)
     
       -- Info text.
       local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] /%d [%s]  Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
-      fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, wpDist, wpETA, speed, speedExpected, alt, self.heading, turning, freepath, intowind)
+      fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, wpDist, wpETA, speed, speedExpected, alt, self.heading or 0, turning, freepath, intowind)
       self:I(self.lid..text)
             
     end
@@ -807,6 +818,21 @@ function NAVYGROUP:Status(From, Event, To)
     -- Debug output.
     self:I(self.lid..text)
   
+  end
+
+  ---
+  -- Engage Detected Targets
+  ---
+  if self:IsCruising() and self.detectionOn and self.engagedetectedOn then
+
+    local targetgroup, targetdist=self:_GetDetectedTarget()
+
+    -- If we found a group, we engage it.
+    if targetgroup then
+      self:I(self.lid..string.format("Engaging target group %s at distance %d meters", targetgroup:GetName(), targetdist))
+      self:EngageTarget(targetgroup)
+    end
+
   end
 
   ---
@@ -973,6 +999,8 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
   
     -- Waypoint.
     local wp=UTILS.DeepCopy(self.waypoints[i])  --Ops.OpsGroup#OPSGROUP.Waypoint
+    
+    --env.info(string.format("FF i=%d UID=%d   n=%d, N=%d", i, wp.uid, n, N))
       
     -- Speed.
     if Speed then
@@ -1012,9 +1040,17 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
 
   
   if self:IsEngaging() or not self.passedfinalwp then
+  
+    --[[
+    env.info("FF:")
+    for i=2,#waypoints do
+      local wp=waypoints[i] --Ops.OpsGroup#OPSGROUP.Waypoint      
+      self:I(self.lid..string.format("[%d] UID=%d", i-1, wp.uid))
+    end
+    ]]
 
     -- Debug info.
-    self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), self.altWp))
+    self:I(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), self.altWp))
 
     -- Route group to all defined waypoints remaining.
     self:Route(waypoints)
@@ -1309,6 +1345,114 @@ end
 function NAVYGROUP:onafterCollisionWarning(From, Event, To, Distance)
   self:T(self.lid..string.format("Iceberg ahead in %d meters!", Distance or -1))
   self.collisionwarning=true
+end
+
+--- On after "EngageTarget" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP Group the group to be engaged.
+function NAVYGROUP:onafterEngageTarget(From, Event, To, Target)
+  self:T(self.lid.."Engaging Target")
+
+  if Target:IsInstanceOf("TARGET") then
+    self.engage.Target=Target
+  else
+    self.engage.Target=TARGET:New(Target)
+  end
+ 
+  -- Target coordinate.
+  self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate()) 
+ 
+  
+  local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+
+
+  
+  -- Backup ROE and alarm state.
+  self.engage.roe=self:GetROE()
+  self.engage.alarmstate=self:GetAlarmstate()
+  
+  -- Switch ROE and alarm state.
+  self:SwitchAlarmstate(ENUMS.AlarmState.Auto)
+  self:SwitchROE(ENUMS.ROE.OpenFire)
+
+  -- ID of current waypoint.
+  local uid=self:GetWaypointCurrent().uid
+  
+  -- Add waypoint after current.
+  self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+  
+  -- Set if we want to resume route after reaching the detour waypoint.
+  self.engage.Waypoint.detour=1
+
+end
+
+--- Update engage target.
+-- @param #NAVYGROUP self
+function NAVYGROUP:_UpdateEngageTarget()
+
+  if self.engage.Target and self.engage.Target:IsAlive() then
+
+    -- Get current position vector.
+    local vec3=self.engage.Target:GetVec3()
+  
+    -- Distance to last known position of target.
+    local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
+    
+    -- Check if target moved more than 100 meters.
+    if dist>100 then
+    
+      --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
+    
+      -- Update new position.
+      self.engage.Coordinate:UpdateFromVec3(vec3)
+
+      -- ID of current waypoint.
+      local uid=self:GetWaypointCurrent().uid
+    
+      -- Remove current waypoint
+      self:RemoveWaypointByID(self.engage.Waypoint.uid)
+      
+      local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+  
+        -- Add waypoint after current.
+      self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+    
+      -- Set if we want to resume route after reaching the detour waypoint.
+      self.engage.Waypoint.detour=0      
+    
+    end
+    
+  else
+  
+    -- Target not alive any more == Disengage.
+    self:Disengage()
+    
+  end
+
+end
+
+--- On after "Disengage" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterDisengage(From, Event, To)
+  self:T(self.lid.."Disengage Target")
+
+  -- Restore previous ROE and alarm state.
+  self:SwitchROE(self.engage.roe)
+  self:SwitchAlarmstate(self.engage.alarmstate)
+  
+  -- Remove current waypoint
+  if self.engage.Waypoint then
+    self:RemoveWaypointByID(self.engage.Waypoint.uid)    
+  end
+
+  -- Check group is done
+  self:_CheckGroupDone(1)
 end
 
 

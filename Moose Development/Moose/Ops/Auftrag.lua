@@ -47,8 +47,9 @@
 -- @field #number Tstop Mission stop time in abs. seconds.
 -- @field #number duration Mission duration in seconds.
 -- @field #number durationExe Mission execution time in seconds.
--- @field #number Texecuting Mission time stamp (abs) when it started to execute. Is #nil on start.
+-- @field #number Texecuting Time stamp (abs) when mission is executing. Is `#nil` on start.
 -- @field #number Tpush Mission push/execute time in abs. seconds.
+-- @field #number Tstarted Time stamp (abs) when mission is started.
 -- @field Wrapper.Marker#MARKER marker F10 map marker.
 -- @field #boolean markerOn If true, display marker on F10 map with the AUFTRAG status.
 -- @field #number markerCoaliton Coalition to which the marker is dispayed.
@@ -103,6 +104,8 @@
 -- @field #number artyRadius Radius in meters.
 -- @field #number artyShots Number of shots fired.
 -- @field #number artyAltitude Altitude in meters. Can be used for a Barrage.
+-- @field #number artyHeading Heading in degrees (for Barrage).
+-- @field #number artyDistance Distance in meters (for barrage).
 -- 
 -- @field #string alert5MissionType Alert 5 mission type. This is the mission type, the alerted assets will be able to carry out.
 -- 
@@ -373,6 +376,7 @@ _AUFTRAGSNR=0
 -- @field #string FUELSUPPLY Fuel supply.
 -- @field #string ALERT5 Alert 5.
 -- @field #string ONGUARD On guard.
+-- @field #string BARRAGE Barrage.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -402,6 +406,7 @@ AUFTRAG.Type={
   FUELSUPPLY="Fuel Supply",
   ALERT5="Alert5",
   ONGUARD="On Guard",
+  BARRAGE="Barrage",
 }
 
 --- Mission status of an assigned group.
@@ -412,6 +417,7 @@ AUFTRAG.Type={
 -- @field #string FUELSUPPLY Fuel Supply.
 -- @field #string ALERT5 Alert 5 task.
 -- @field #string ONGUARD On guard.
+-- @field #string BARRAGE Barrage.
 AUFTRAG.SpecialTask={
   PATROLZONE="PatrolZone",
   RECON="ReconMission",
@@ -419,6 +425,7 @@ AUFTRAG.SpecialTask={
   FUELSUPPLY="Fuel Supply",
   ALERT5="Alert5",
   ONGUARD="On Guard",
+  BARRAGE="Barrage",
 }
 
 --- Mission status.
@@ -1572,7 +1579,45 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius, Altitude)
   -- Evaluate after 8 min.
   mission.dTevaluate=8*60
   
-  mission.categories={AUFTRAG.Category.GROUND}
+  mission.categories={AUFTRAG.Category.GROUND, AUFTRAG.Category.NAVAL}
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+--- **[GROUND, NAVAL]** Create an BARRAGE mission. Assigned groups will move to a random coordinate within a given zone and start firing into the air.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE Zone The zone where the unit will go.
+-- @param #number Radius Radius of the shells in meters. Default 100 meters.
+-- @param #number Altitude Altitude in meters. Default 500 m.
+-- @param #number Heading Heading in degrees. Default random heading [0, 360).
+-- @param #number Distance Distance in meters. Default 500 m.
+-- @param #number Nshots Number of shots to be fired. Default is until ammo is empty (`#nil`).
+-- @return #AUFTRAG self
+function AUFTRAG:NewBARRAGE(Zone, Radius, Altitude, Heading, Distance, Nshots)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.BARRAGE)
+  
+  mission:_TargetFromObject(Zone)
+  
+  mission.artyShots=Nshots
+  mission.artyRadius=Radius or 100
+  mission.artyAltitude=Altitude
+  mission.artyHeading=Heading
+  mission.artyDistance=Distance
+  
+  mission.engageWeaponType=ENUMS.WeaponFlag.Auto
+  
+  mission.optionROE=ENUMS.ROE.OpenFire   -- Ground/naval need open fire!
+  mission.optionAlarm=0
+  
+  mission.missionFraction=0.0
+  
+  -- Evaluate after instantly.
+  mission.dTevaluate=10
+  
+  mission.categories={AUFTRAG.Category.GROUND, AUFTRAG.Category.NAVAL}
   
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -4726,7 +4771,31 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
   
     local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, self:GetTargetVec2(), self.artyRadius, self.artyShots, self.engageWeaponType, self.artyAltitude)
     
-    table.insert(DCStasks, DCStask)    
+    table.insert(DCStasks, DCStask)
+    
+  elseif self.type==AUFTRAG.Type.BARRAGE then
+
+    ---------------------
+    -- BARRAGE Mission --
+    ---------------------
+
+    local DCStask={}
+    
+    DCStask.id=AUFTRAG.SpecialTask.BARRAGE
+    
+    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+    param.altitude=self.artyAltitude
+    param.radius=self.artyRadius
+    param.heading=self.artyHeading
+    param.distance=self.artyDistance
+    param.shots=self.artyShots
+    param.weaponTypoe=self.engageWeaponType
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)
 
   elseif self.type==AUFTRAG.Type.PATROLZONE then
 

@@ -3663,20 +3663,34 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- Just stay put.
     --TODO: Change ALARM STATE
     
-    
   else
 
     -- If task is scheduled (not waypoint) set task.
     if Task.type==OPSGROUP.TaskType.SCHEDULED or Task.ismission then
     
+      local DCSTask=nil --UTILS.DeepCopy(Task.dcstask)
+      
+      -- BARRAGE is special!
+      if Task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
+        --env.info("FF Barrage")
+        local vec2=self:GetVec2()
+        local param=Task.dcstask.params
+        local heading=param.heading or math.random(1, 360)
+        local distance=param.distance or 100
+        local tvec2=UTILS.Vec2Translate(vec2, distance, heading)
+        DCSTask=CONTROLLABLE.TaskFireAtPoint(nil, tvec2, param.radius, param.shots, param.weaponType, param.altitude)
+      else
+        DCSTask=Task.dcstask
+      end
+    
       local DCStasks={}
-      if Task.dcstask.id=='ComboTask' then
+      if DCSTask.id=='ComboTask' then
         -- Loop over all combo tasks.
-        for TaskID, Task in ipairs(Task.dcstask.params.tasks) do
+        for TaskID, Task in ipairs(DCSTask.params.tasks) do
           table.insert(DCStasks, Task)
         end
       else
-        table.insert(DCStasks, Task.dcstask)
+        table.insert(DCStasks, DCSTask)
       end
 
       -- Combo task.
@@ -3853,7 +3867,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       if self.currentmission and self.currentmission==Mission.auftragsnummer then
         self.currentmission=nil
       end
-      env.info("Remove mission waypoints")
+      self:T(self.lid.."Remove mission waypoints")
       self:_RemoveMissionWaypoints(Mission, false)
     end
     
@@ -4474,7 +4488,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end    
     
     -- Get ingress waypoint.    
-    if mission.type==AUFTRAG.Type.PATROLZONE then
+    if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE then
       local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
       waypointcoord=zone:GetRandomCoordinate(nil , nil, surfacetypes)
     else
@@ -5041,6 +5055,8 @@ end
 -- @param #number UID The goto waypoint unique ID.
 -- @param #number Speed (Optional) Speed to waypoint in knots.
 function OPSGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed)
+  
+  --env.info("FF goto waypoint uid="..tostring(UID))
 
   local n=self:GetWaypointIndex(UID)
 
@@ -5050,10 +5066,10 @@ function OPSGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed)
     Speed=Speed or self:GetSpeedToWaypoint(n)
     
     -- Debug message
-    self:T(self.lid..string.format("Goto Waypoint UID=%d index=%d from %d at speed %.1f knots", UID, n, self.currentwp, Speed))    
+    self:I(self.lid..string.format("Goto Waypoint UID=%d index=%d from %d at speed %.1f knots", UID, n, self.currentwp, Speed))    
 
     -- Update the route.
-    self:__UpdateRoute(-0.01, n, nil, Speed)
+    self:__UpdateRoute(0.1, n, nil, Speed)
     
   end
 
@@ -8388,7 +8404,7 @@ end
 function OPSGROUP:_CheckStuck()
 
   -- Cases we are not stuck.
-  if self:IsHolding() or self:Is("Rearming") or self:IsWaiting() then
+  if self:IsHolding() or self:Is("Rearming") or self:IsWaiting() or self:HasPassedFinalWaypoint() then
     return
   end
 
@@ -9764,7 +9780,7 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
     Modulation=Modulation or self.radioDefault.Modu
 
     if self:IsFlightgroup() and not self.radio.On then
-      env.info("FF radio OFF")
+      --env.info("FF radio OFF")
       self.group:SetOption(AI.Option.Air.id.SILENCE, false)
     end
 

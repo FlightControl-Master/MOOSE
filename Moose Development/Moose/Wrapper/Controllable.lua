@@ -1437,8 +1437,8 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
     id = 'FireAtPoint',
     params = {
       point            = Vec2,
-      x=Vec2.x,
-      y=Vec2.y,
+      x                = Vec2.x,
+      y                = Vec2.y,
       zoneRadius       = Radius,
       radius           = Radius,
       expendQty        = 100, -- dummy value
@@ -1460,7 +1460,7 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
     DCSTask.params.weaponType=WeaponType
   end
 
-  --self:I(DCSTask)
+  --BASE:I(DCSTask)
 
   return DCSTask
 end

@@ -1046,9 +1046,9 @@ function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
   
   -- Fist, check if we want to rearm once out-of-ammo.
   if self.rearmOnOutOfAmmo then
-    local truck=self:FindNearestAmmoSupply(30)
+    local truck, dist=self:FindNearestAmmoSupply(30)
     if truck then
-      self:T(self.lid..string.format("Found Ammo Truck %s [%s]"))
+      self:T(self.lid..string.format("Found Ammo Truck %s [%s]", truck:GetName(), truck:GetTypeName()))
       local Coordinate=truck:GetCoordinate()
       self:Rearm(Coordinate, Formation)
       return
@@ -1159,16 +1159,22 @@ function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
   
   if zone then
   
-    -- Debug info.
-    self:I(self.lid..string.format("RTZ to Zone %s", zone:GetName()))  
-    
-    local Coordinate=zone:GetRandomCoordinate()
-    
-    -- Add waypoint after current.
-    local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
-    
-    -- Set if we want to resume route after reaching the detour waypoint.
-    wp.detour=0
+    if self:IsInZone(zone) then
+      self:Returned()
+    else
+  
+      -- Debug info.
+      self:I(self.lid..string.format("RTZ to Zone %s", zone:GetName()))  
+      
+      local Coordinate=zone:GetRandomCoordinate()
+      
+      -- Add waypoint after current.
+      local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
+      
+      -- Set if we want to resume route after reaching the detour waypoint.
+      wp.detour=0
+      
+    end
         
   else
     self:E(self.lid.."ERROR: No RTZ zone given!")
@@ -1684,7 +1690,7 @@ function ARMYGROUP:FindNearestAmmoSupply(Radius)
     local unit=_unit --Wrapper.Unit#UNIT
     
     -- Check coaliton and if unit can supply ammo.
-    if unit:GetCoalition()==myCoalition and unit:IsAmmoSupply() then
+    if unit:IsAlive() and unit:GetCoalition()==myCoalition and unit:IsAmmoSupply() and unit:GetVelocityKMH()<1 then
 
       -- Distance.
       local d=coord:Get2DDistance(unit:GetCoord())
@@ -1693,8 +1699,10 @@ function ARMYGROUP:FindNearestAmmoSupply(Radius)
       if d<dmin then
         dmin=d
         truck=unit
+        -- Debug message.
+        self:T(self.lid..string.format("Ammo truck %s [%s] at dist=%d meters", unit:GetName(), unit:GetTypeName(), d))
       end
-
+      
     end
   end
 
