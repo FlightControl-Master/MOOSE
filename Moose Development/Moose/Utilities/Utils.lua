@@ -1612,7 +1612,12 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           BASE:T(unit_name .. " side door is open")
           ret_val =  true
       end
-
+      
+      if string.find(type_name, "Bell-47") then -- bell aint got no doors so always ready to load injured soldiers
+          BASE:T(unit_name .. " door is open")
+          ret_val =  true
+      end
+      
       if ret_val == false then
           BASE:T(unit_name .. " all doors are closed")
       end
