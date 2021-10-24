@@ -4404,10 +4404,10 @@ function AIRBOSS:_InitForrestal()
   self.carrierparam.rwywidth   =  25
 
   -- Wires.
-  self.carrierparam.wire1      =  42        -- Distance from stern to first wire.
-  self.carrierparam.wire2      =  51.5
-  self.carrierparam.wire3      =  62
-  self.carrierparam.wire4      =  72.5
+  self.carrierparam.wire1      =  44        -- Distance from stern to first wire. Original from Frank - 42
+  self.carrierparam.wire2      =  54        --51.5
+  self.carrierparam.wire3      =  64        --62
+  self.carrierparam.wire4      =  74        --72.5
 
 end
 
