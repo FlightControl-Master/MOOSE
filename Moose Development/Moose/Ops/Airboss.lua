@@ -27,11 +27,11 @@
 -- **Supported Carriers:**
 --
 --    * [USS John C. Stennis](https://en.wikipedia.org/wiki/USS_John_C._Stennis) (CVN-74)
---	  * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71)) (CVN-71) [Super Carrier Module]
---	  * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72)) (CVN-72) [Super Carrier Module]
---	  * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73)) (CVN-73) [Super Carrier Module]
---	  * [USS Harry S. Truman](https://en.wikipedia.org/wiki/USS_Harry_S._Truman) (CVN-75) [Super Carrier Module]
---	  * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59)) (CV-59) [Heatblur Carrier Module]
+--    * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71)) (CVN-71) [Super Carrier Module]
+--    * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72)) (CVN-72) [Super Carrier Module]
+--    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73)) (CVN-73) [Super Carrier Module]
+--    * [USS Harry S. Truman](https://en.wikipedia.org/wiki/USS_Harry_S._Truman) (CVN-75) [Super Carrier Module]
+--    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59)) (CV-59) [Heatblur Carrier Module]
 --    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1)) (LHA-1) [**WIP**]
 --    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6)) (LHA-6) [**WIP**]
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61) [**WIP**]
@@ -300,7 +300,7 @@
 --
 -- Once the aircraft reaches the Initial, the landing pattern begins. The important steps of the pattern are shown in the image above.
 -- The AV-8B Harrier pattern is very similar, the only differences are as there is no angled deck there is no wake check. from the ninety you wil fly a straight approach offset 26 ft to port (left) of the tram line.
--- The aim is to arrive abeam the landing spot in a stable hover at 120 ft with forward speed matched to the boat. From there the LSO will call "cleared to land". You then level cross to the tram line at the designated landing spot at land vertcally. 
+-- The aim is to arrive abeam the landing spot in a stable hover at 120 ft with forward speed matched to the boat. From there the LSO will call "cleared to land". You then level cross to the tram line at the designated landing spot at land vertcally.
 --
 --
 -- ## CASE III
@@ -2028,10 +2028,10 @@ function AIRBOSS:New(carriername, alias)
     self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Blue, 45)
     self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
     self:_GetZoneHolding(case, 1):SmokeZone(SMOKECOLOR.White, 45)
-	  self:_GetZoneHolding(case, 2):SmokeZone(SMOKECOLOR.White, 45)
+    self:_GetZoneHolding(case, 2):SmokeZone(SMOKECOLOR.White, 45)
     self:_GetZoneInitial(case):SmokeZone(SMOKECOLOR.Orange, 45)
     self:_GetZoneCommence(case, 1):SmokeZone(SMOKECOLOR.Red, 45)
-	  self:_GetZoneCommence(case, 2):SmokeZone(SMOKECOLOR.Red, 45)
+    self:_GetZoneCommence(case, 2):SmokeZone(SMOKECOLOR.Red, 45)
     self:_GetZoneAbeamLandingSpot():SmokeZone(SMOKECOLOR.Red, 5)
     self:_GetZoneLandingSpot():SmokeZone(SMOKECOLOR.Red, 5)
   end
@@ -2855,7 +2855,7 @@ function AIRBOSS:SetLineupErrorThresholds(_max,_min, Left, LeftMed, LEFT, Right,
   self.lue.LeftMed=LeftMed   or -2.0
   self.lue.LEFT=LEFT   or -3.0
   self.lue.Right=Right or  1.0
-  self.lue.RightMed=RightMed or  2.0 
+  self.lue.RightMed=RightMed or  2.0
   self.lue.RIGHT=RIGHT or  3.0
   return self
 end
@@ -4404,10 +4404,10 @@ function AIRBOSS:_InitForrestal()
   self.carrierparam.rwywidth   =  25
 
   -- Wires.
-  self.carrierparam.wire1      =  42        -- Distance from stern to first wire.
-  self.carrierparam.wire2      =  51.5
-  self.carrierparam.wire3      =  62
-  self.carrierparam.wire4      =  72.5
+  self.carrierparam.wire1      =  44        -- Distance from stern to first wire. Original from Frank - 42
+  self.carrierparam.wire2      =  54        --51.5
+  self.carrierparam.wire3      =  64        --62
+  self.carrierparam.wire4      =  74        --72.5
 
 end
 
@@ -5012,7 +5012,7 @@ function AIRBOSS:_InitVoiceOvers()
       duration=2.0,
       subduration=5,
     },
-	EXPECTSPOT5={
+  EXPECTSPOT5={
       file="LSO-ExpectSpot5",
       suffix="ogg",
       loud=false,
@@ -5851,8 +5851,8 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
       speed=UTILS.KnotsToMps(250)
-	elseif goshawk then
-	  alt=UTILS.FeetToMeters(800)
+  elseif goshawk then
+    alt=UTILS.FeetToMeters(800)
       speed=UTILS.KnotsToMps(300)
     end
 
@@ -5864,8 +5864,8 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
       speed=UTILS.KnotsToMps(250)
-	elseif goshawk then
-	  alt=UTILS.FeetToMeters(800)
+  elseif goshawk then
+    alt=UTILS.FeetToMeters(800)
       speed=UTILS.KnotsToMps(300)
     end
 
@@ -5902,7 +5902,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
       dist=UTILS.NMToMeters(1.2)
     end
 
-	if goshawk then
+  if goshawk then
       -- 0.9 to 1.1 NM per natops ch.4 page 48
       dist=UTILS.NMToMeters(0.9)
     else
@@ -5913,7 +5913,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
 
     if hornet or tomcat then
       alt=UTILS.FeetToMeters(500)
-	elseif goshawk then
+  elseif goshawk then
       alt=UTILS.FeetToMeters(450)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(500)
@@ -5946,7 +5946,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
       alt=UTILS.FeetToMeters(300) --?
     elseif harrier then
       -- 300-325 ft
-      alt=UTILS.FeetToMeters(300)-- Need to verify 
+      alt=UTILS.FeetToMeters(300)-- Need to verify
     end
 
     aoa=aoaac.OnSpeed
@@ -6415,8 +6415,8 @@ function AIRBOSS:_MarshalPlayer(playerData, stack)
       -- Set stack flag.
       flight.flag=stack
 
-	  -- Trigger Marshal event.
-	  self:Marshal(flight)
+    -- Trigger Marshal event.
+    self:Marshal(flight)
     end
 
   else
@@ -9674,7 +9674,7 @@ function AIRBOSS:_Bullseye(playerData)
     self:_PlayerHint(playerData)
 
     -- LSO expect spot 5 or 7.5 call
-	if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+  if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, nil, nil, nil, true)
     elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT75, nil, nil, nil, true)
@@ -9859,7 +9859,7 @@ function AIRBOSS:_Abeam(playerData)
     self:RadioTransmission(self.LSORadio, self.LSOCall.PADDLESCONTACT, nil, nil, nil, true)
 
      -- LSO expect spot 5 or 7.5 call
-	if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+  if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, false, 5, nil, true)
     elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT75, false, 5, nil, true)
@@ -10249,25 +10249,25 @@ function AIRBOSS:_Groove(playerData)
       -- Distance in NM.
       local d=UTILS.MetersToNM(rho)
 
-	-- Drift on lineup.
-	  if rho>=RAR and rho<=RIM then
-	    if gd.LUE>0.22 and lineupError<-0.22 then 
-			env.info" Drift Right across centre ==> DR-"
-			gd.Drift=" DR"
-			self:T(self.lid..string.format("Got Drift Right across centre step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
-		 elseif gd.LUE<-0.22 and lineupError>0.22 then
-			env.info" Drift Left ==> DL-"
-			gd.Drift=" DL"
-			self:T(self.lid..string.format("Got Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
-		 elseif gd.LUE>0.13 and lineupError<-0.14 then
-			env.info" Little Drift Right across centre ==> (DR-)"
-			gd.Drift=" (DR)"
-			self:T(self.lid..string.format("Got Little Drift Right across centre at step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
-		 elseif gd.LUE<-0.13 and lineupError>0.14 then
-			env.info" Little Drift Left across centre ==> (DL-)"
-			gd.Drift=" (DL)"
-			self:E(self.lid..string.format("Got Little Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))	
-		end
+  -- Drift on lineup.
+    if rho>=RAR and rho<=RIM then
+      if gd.LUE>0.22 and lineupError<-0.22 then
+      env.info" Drift Right across centre ==> DR-"
+      gd.Drift=" DR"
+      self:T(self.lid..string.format("Got Drift Right across centre step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
+     elseif gd.LUE<-0.22 and lineupError>0.22 then
+      env.info" Drift Left ==> DL-"
+      gd.Drift=" DL"
+      self:T(self.lid..string.format("Got Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
+     elseif gd.LUE>0.13 and lineupError<-0.14 then
+      env.info" Little Drift Right across centre ==> (DR-)"
+      gd.Drift=" (DR)"
+      self:T(self.lid..string.format("Got Little Drift Right across centre at step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
+     elseif gd.LUE<-0.13 and lineupError>0.14 then
+      env.info" Little Drift Left across centre ==> (DL-)"
+      gd.Drift=" (DL)"
+      self:E(self.lid..string.format("Got Little Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError))
+    end
       end
 
       -- Update max deviation of line up error.
@@ -10613,10 +10613,10 @@ function AIRBOSS:_GetWire(Lcoord, dc)
 
   -- Corrected landing distance wrt to stern. Landing distance needs to be reduced due to delayed landing event for human players.
   local d=Ldist-dc
-  
+
   -- Multiplayer wire correction.
   if self.mpWireCorrection then
-	d=d-self.mpWireCorrection
+  d=d-self.mpWireCorrection
   end
 
   -- Shift wires from stern to their correct position.
@@ -10709,7 +10709,7 @@ function AIRBOSS:_Trapped(playerData)
     elseif playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
       -- A-4E gets slowed down much faster the the F/A-18C!
       dcorr=56
-	elseif playerData.actype==AIRBOSS.AircraftCarrier.T45C then
+  elseif playerData.actype==AIRBOSS.AircraftCarrier.T45C then
      -- T-45 also gets slowed down much faster the the F/A-18C.
      dcorr=56
     end
@@ -11340,7 +11340,7 @@ function AIRBOSS:_GetZoneHolding(case, stack)
     -- So stay 0-5 NM (+1 NM error margin) port of carrier.
     self.zoneHolding=self.zoneHolding or ZONE_POLYGON_BASE:New("CASE II/III Holding Zone")
 
-	self.zoneHolding:UpdateFromVec2(p)
+  self.zoneHolding:UpdateFromVec2(p)
   end
 
   return self.zoneHolding
@@ -11386,12 +11386,12 @@ function AIRBOSS:_GetZoneCommence(case, stack)
     -- Create holding zone.
     self.zoneCommence=self.zoneCommence or ZONE_RADIUS:New("CASE I Commence Zone")
 
-	self.zoneCommence:UpdateFromVec2(Three:GetVec2(), R)
+  self.zoneCommence:UpdateFromVec2(Three:GetVec2(), R)
 
   else
     -- Case II/III
 
-	stack=stack or 1
+  stack=stack or 1
 
      -- Start point at 21 NM for stack=1.
     local l=20+stack
@@ -11419,7 +11419,7 @@ function AIRBOSS:_GetZoneCommence(case, stack)
     -- Zone polygon.
     self.zoneCommence=self.zoneCommence or ZONE_POLYGON_BASE:New("CASE II/III Commence Zone")
 
-	self.zoneCommence:UpdateFromVec2(p)
+  self.zoneCommence:UpdateFromVec2(p)
 
   end
 
@@ -11679,7 +11679,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
   if self.carriertype==AIRBOSS.CarrierType.TARAWA then
 
     -- Landing 100 ft abeam, 120 ft alt.
-	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
+  self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
     --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
 
     -- Alitude 120 ft.
@@ -11687,21 +11687,21 @@ function AIRBOSS:_GetOptLandingCoordinate()
   elseif self.carriertype==AIRBOSS.CarrierType.AMERICA then
 
     -- Landing 100 ft abeam, 120 ft alt. To allow adjustments to match different deck configurations.
-	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
+  self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
     --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
 
     -- Alitude 120 ft.
     self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
-	
+
   elseif self.carriertype==AIRBOSS.CarrierType.JCARLOS then
 
     -- Landing 100 ft abeam, 120 ft alt.
-	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-100, true, true)
+  self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-100, true, true)
     --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-100)
 
     -- Alitude 120 ft.
     self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
-	
+
   else
 
     -- Ideally we want to land between 2nd and 3rd wire.
@@ -11743,7 +11743,7 @@ function AIRBOSS:_GetLandingSpotCoordinate()
 
     -- Primary landing spot 7.5 a little further forwad on the America
     self.landingspotcoord:Translate(59, hdg, true, true):SetAltitude(self.carrierparam.deckheight)
-	
+
   elseif self.carriertype==AIRBOSS.CarrierType.JCARLOS then
 
     -- Landing 100 ft abeam, 120 alt.
@@ -11751,7 +11751,7 @@ function AIRBOSS:_GetLandingSpotCoordinate()
 
     -- Primary landing spot 5.0 -- TODO voice for different landing Spots.
     self.landingspotcoord:Translate(89, hdg, true, true):SetAltitude(self.carrierparam.deckheight)
-	
+
   end
 
   return self.landingspotcoord
@@ -12241,10 +12241,10 @@ end
 -- * 12-21 seconds: OK (15-18 is ideal)
 -- * 22-24 seconds: Fair "(OK)
 -- * > 24 seconds: No Grade "--"
--- 
+--
 -- If you manage to be between 16.4 and and 16.6 seconds, you will even get and okay underline "\_OK\_".
 -- No groove time for Harrier on LHA, LHD set to Tgroove Unicorn as starting point to allow possible _OK_ 5.0.
--- If time in the AV-8B 
+-- If time in the AV-8B
 --
 -- * < 90 seconds: OK V/STOL
 -- * > 91 Seconds: SLOW V/STOL (Early hover stop selection)
@@ -12256,7 +12256,7 @@ function AIRBOSS:_EvalGrooveTime(playerData)
 
   -- Time in groove.
   local t=playerData.Tgroove
-  
+
   local grade=""
   if t<9 then
     grade="_NESA_"
@@ -12276,12 +12276,12 @@ function AIRBOSS:_EvalGrooveTime(playerData)
   else
     grade="LIG"
   end
-    
+
   -- The unicorn!
   if t>=16.4 and t<=16.6 then
     grade="_OK_"
   end
-  
+
   -- V/STOL Unicorn!
   if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and (t>=65.0 and t<=75.0) then
     grade="_OK_ V/STOL"
@@ -12322,7 +12322,7 @@ function AIRBOSS:_LSOgrade(playerData)
   local Tgroove=playerData.Tgroove
   local TgrooveUnicorn=Tgroove and (Tgroove>=15.0 and Tgroove<=18.99) or false
   local TgrooveVstolUnicorn=Tgroove and (Tgroove>=65.0 and Tgroove<=70.0)and playerData.actype==AIRBOSS.AircraftCarrier.AV8B or false
-  
+
   local grade
   local points
   if N==0 and (TgrooveUnicorn or TgrooveVstolUnicorn ) then
@@ -12331,18 +12331,18 @@ function AIRBOSS:_LSOgrade(playerData)
     points=5.0
     G="Unicorn"
   else
-    
-	  -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe. (WIP requires feedback)
+
+    -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe. (WIP requires feedback)
       -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
-	if nL>3 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then 
+  if nL>3 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       -- Larger deviations ==> "No grade" 2.0 points.
       grade="--"
       points=2.0
-	elseif nN>2 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+  elseif nN>2 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       -- Only average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
       grade="(OK)"
       points=3.0
-	elseif nL>0 then
+  elseif nL>0 then
       -- Larger deviations ==> "No grade" 2.0 points.
       grade="--"
       points=2.0
@@ -12355,7 +12355,7 @@ function AIRBOSS:_LSOgrade(playerData)
       grade="OK"
       points=4.0
     end
-	
+
 end
 
   -- Replace" )"( and "__"
@@ -12466,35 +12466,35 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
 
   -- Aircraft specific AoA values.
   local acaoa=self:_GetAircraftAoA(playerData)
-  
+
   --Angled Approach.
   local P=nil
   if step==AIRBOSS.PatternStep.GROOVE_XX and ROL<=4.0 and playerData.case<3 then
-	  if LUE>self.lue.RIGHT then
-		P=underline("AA")
-	  elseif 
-		LUE>self.lue.RightMed then
-		P="AA "
-	  elseif 
-		LUE>self.lue.Right then
-		P=little("AA")
-	  end
+    if LUE>self.lue.RIGHT then
+    P=underline("AA")
+    elseif
+    LUE>self.lue.RightMed then
+    P="AA "
+    elseif
+    LUE>self.lue.Right then
+    P=little("AA")
+    end
   end
- 
+
   --Overshoot Start.
   local O=nil
   if step==AIRBOSS.PatternStep.GROOVE_XX then
-	  if LUE<self.lue.LEFT then 
-		O=underline("OS")
-	  elseif 
-		LUE<self.lue.Left then
-		O="OS"
-	  elseif 
-		LUE<self.lue._min then
-		O=little("OS")
-	  end	
+    if LUE<self.lue.LEFT then
+    O=underline("OS")
+    elseif
+    LUE<self.lue.Left then
+    O="OS"
+    elseif
+    LUE<self.lue._min then
+    O=little("OS")
+    end
   end
-  
+
   -- Speed via AoA. Depends on aircraft type.
   local S=nil
   if AOA>acaoa.SLOW then
@@ -12536,21 +12536,21 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
   elseif LUE>self.lue._max then
     D=little("LUL")
   elseif playerData.case<3 then
-	  if LUE<self.lue.LEFT and step~=AIRBOSS.PatternStep.GROOVE_XX then
-		D=underline("LUR")
-	  elseif LUE<self.lue.Left and step~=AIRBOSS.PatternStep.GROOVE_XX then
-		D="LUR"
-	  elseif LUE<self.lue._min and step~=AIRBOSS.PatternStep.GROOVE_XX then
-		D=little("LUR")
-	 end
+    if LUE<self.lue.LEFT and step~=AIRBOSS.PatternStep.GROOVE_XX then
+    D=underline("LUR")
+    elseif LUE<self.lue.Left and step~=AIRBOSS.PatternStep.GROOVE_XX then
+    D="LUR"
+    elseif LUE<self.lue._min and step~=AIRBOSS.PatternStep.GROOVE_XX then
+    D=little("LUR")
+   end
   elseif playerData.case==3 then
-	  if LUE<self.lue.LEFT then
-		D=underline("LUR")
-	  elseif LUE<self.lue.Left then
-		D="LUR"
-	  elseif LUE<self.lue._min then
-		D=little("LUR")
-	 end
+    if LUE<self.lue.LEFT then
+    D=underline("LUR")
+    elseif LUE<self.lue.Left then
+    D="LUR"
+    elseif LUE<self.lue._min then
+    D=little("LUR")
+   end
   end
 
   -- Compile.
@@ -12564,7 +12564,7 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
   if P then
     G=G..P
     n=n
-  end  
+  end
   -- Speed.
   if S then
     G=G..S
@@ -12583,14 +12583,14 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
   --Drift in Lineup
   if fdata.Drift then
     G=G..fdata.Drift
-	n=n -- Drift doesn't affect score, advisory only.
+  n=n -- Drift doesn't affect score, advisory only.
   end
   -- Overshoot.
   if O then
     G=G..O
     n=n+1
   end
-  
+
   -- Add current step.
   local step=self:_GS(step)
   step=step:gsub("XX","X")
@@ -14855,8 +14855,8 @@ end
 -- @param #table param Parameters.
 -- @param #number time Time.
 function AIRBOSS._CheckRadioQueueT(param, time)
-	AIRBOSS._CheckRadioQueue(param.airboss, param.radioqueue, param.name)
-	return time+0.05
+  AIRBOSS._CheckRadioQueue(param.airboss, param.radioqueue, param.name)
+  return time+0.05
 end
 
 --- Radio queue item.
@@ -14880,15 +14880,15 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
   -- Check if queue is empty.
   if #radioqueue==0 then
 
-  	if name=="LSO" then
-  	  self:T(self.lid..string.format("Stopping LSO radio queue."))
-  	  self.radiotimer:Stop(self.RQLid)
-  	  self.RQLid=nil
-  	elseif name=="MARSHAL" then
-  	  self:T(self.lid..string.format("Stopping Marshal radio queue."))
-  	  self.radiotimer:Stop(self.RQMid)
-  	  self.RQMid=nil
-  	end
+    if name=="LSO" then
+      self:T(self.lid..string.format("Stopping LSO radio queue."))
+      self.radiotimer:Stop(self.RQLid)
+      self.RQLid=nil
+    elseif name=="MARSHAL" then
+      self:T(self.lid..string.format("Stopping Marshal radio queue."))
+      self.radiotimer:Stop(self.RQMid)
+      self.RQMid=nil
+    end
 
     return
   end
@@ -15030,11 +15030,11 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click, pi
 
     caller="LSOCall"
 
-  	-- Schedule radio queue checks.
-  	if not self.RQLid then
+    -- Schedule radio queue checks.
+    if not self.RQLid then
       self:T(self.lid..string.format("Starting LSO radio queue."))
-  	  self.RQLid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQLSO, "LSO"}, 0.02, 0.05)
-  	end
+      self.RQLid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQLSO, "LSO"}, 0.02, 0.05)
+    end
 
   elseif radio.alias=="MARSHAL" then
 
@@ -15042,10 +15042,10 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click, pi
 
     caller="MarshalCall"
 
-  	if not self.RQMid then
-  		self:T(self.lid..string.format("Starting Marhal radio queue."))
-  		self.RQMid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQMarshal, "MARSHAL"}, 0.02, 0.05)
-  	end
+    if not self.RQMid then
+      self:T(self.lid..string.format("Starting Marhal radio queue."))
+      self.RQMid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQMarshal, "MARSHAL"}, 0.02, 0.05)
+    end
 
   end
 
@@ -16212,9 +16212,9 @@ function AIRBOSS:_SkipperStartRecovery(_unitName, case)
 
       -- Inform player.
       local text=string.format("affirm, Case %d recovery will start in 5 min for %d min. Wind on deck %d knots. U-turn=%s.", case, self.skipperTime, self.skipperSpeed, tostring(self.skipperUturn))
-	  if case>1 then
-		text=text..string.format(" Marshal radial %d°.", self.skipperOffset)
-	  end
+    if case>1 then
+    text=text..string.format(" Marshal radial %d°.", self.skipperOffset)
+    end
       if self:IsRecovering() then
         text="negative, carrier is already recovering."
         self:MessageToPlayer(playerData, text, "AIRBOSS")
@@ -18065,12 +18065,12 @@ function AIRBOSS:_SaveTrapSheet(playerData, grade)
   for i=1,9999 do
 
     -- Create file name
-	if self.trapprefix then
-		filename=string.format("%s_%s-%04d.csv", self.trapprefix, playerData.actype, i)
-	else
-		local name=UTILS.ReplaceIllegalCharacters(playerData.name, "_")
-		filename=string.format("AIRBOSS-%s_Trapsheet-%s_%s-%04d.csv", self.alias, name, playerData.actype, i)
-	end
+  if self.trapprefix then
+    filename=string.format("%s_%s-%04d.csv", self.trapprefix, playerData.actype, i)
+  else
+    local name=UTILS.ReplaceIllegalCharacters(playerData.name, "_")
+    filename=string.format("AIRBOSS-%s_Trapsheet-%s_%s-%04d.csv", self.alias, name, playerData.actype, i)
+  end
 
     -- Set path.
     if path~=nil then
