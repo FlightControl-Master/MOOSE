@@ -216,7 +216,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
           local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", CommandCenterMenu )
           local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportSummary, self, EventGroup )
           local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Players Report", MenuReporting, self.ReportMissionsPlayers, self, EventGroup )
-          self:ReportSummary( EventGroup )
+          --self:ReportSummary( EventGroup )
           local PlayerUnit = EventData.IniUnit
           for MissionID, Mission in pairs( self:GetMissions() ) do
             local Mission = Mission -- Tasking.Mission#MISSION
