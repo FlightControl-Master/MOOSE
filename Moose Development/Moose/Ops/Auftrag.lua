@@ -137,6 +137,7 @@
 -- @field #number missionRange Mission range in meters. Used by LEGION classes (AIRWING, BRIGADE, ...).
 -- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
 -- @field Core.Point#COORDINATE missionEgressCoord Mission egress waypoint coordinate.
+-- @field #number missionWaypointRadius Random radius in meters.
 -- 
 -- @field #table enrouteTasks Mission enroute tasks.
 -- 
@@ -4412,6 +4413,15 @@ function AUFTRAG:SetMissionWaypointCoord(Coordinate)
   end
 
   self.missionWaypointCoord=Coordinate
+  return self
+end
+
+--- Set randomization of the mission waypoint coordinate. Each assigned group will get a random ingress coordinate, where the mission is executed.
+-- @param #AUFTRAG self
+-- @param #number Radius Distance in meters. Default `#nil`.
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionWaypointRandomization(Radius)
+  self.missionWaypointRadius=Radius
   return self
 end
 

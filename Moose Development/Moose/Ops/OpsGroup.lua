@@ -4134,6 +4134,13 @@ function OPSGROUP:GetMissionCurrent()
   return self:GetMissionByID(self.currentmission)
 end
 
+--- Check if group is currently on a mission.
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, group is currently on a mission
+function OPSGROUP:IsOnMission()
+  return self.currentmission~=nil
+end
+
 --- On before "MissionStart" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -4477,8 +4484,8 @@ function OPSGROUP:RouteToMission(mission, delay)
     local waypointcoord=nil --Core.Point#COORDINATE
     
     -- Random radius of 1000 meters.
-    local randomradius=1000
-
+    local randomradius=mission.missionWaypointRadius or 1000
+    
     -- Surface types.
     local surfacetypes=nil
     if self:IsArmygroup() then
@@ -4491,6 +4498,8 @@ function OPSGROUP:RouteToMission(mission, delay)
     if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE then
       local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
       waypointcoord=zone:GetRandomCoordinate(nil , nil, surfacetypes)
+    elseif mission.type==AUFTRAG.Type.ONGUARD then
+      waypointcoord=mission:GetMissionWaypointCoord(self.group, nil, surfacetypes)
     else
       waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius, surfacetypes)
     end
@@ -6175,7 +6184,7 @@ function OPSGROUP:_CheckCargoTransport()
   end
 
   -- Check if there is anything in the queue.
-  if not self.cargoTransport then
+  if not self.cargoTransport and not self:IsOnMission() then
     self.cargoTransport=self:_GetNextCargoTransport()
     if self.cargoTransport and not self:IsActive() then
       self:Activate()
@@ -7156,13 +7165,21 @@ function OPSGROUP:onafterLoading(From, Event, To)
   -- Loading time stamp.
   self.Tloading=timer.getAbsTime()
 
-  -- Cargo group table.
-  --local cargos=self.cargoTZC.Cargos
-  
+  -- Get valid cargos of the TZC.  
   local cargos={}
   for _,_cargo in pairs(self.cargoTZC.Cargos) do
     local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-    if self:CanCargo(cargo.opsgroup) and (not (cargo.delivered or cargo.opsgroup:IsDead())) then
+    
+    local isCarrier=cargo.opsgroup:IsPickingup() or cargo.opsgroup:IsLoading() or cargo.opsgroup:IsTransporting() or cargo.opsgroup:IsUnloading()
+    
+    local isOnMission=cargo.opsgroup:IsOnMission()
+
+    -- Check if cargo is in embark/pickup zone.
+    -- Added InUtero here, if embark zone is moving (ship) and cargo has been spawned late activated and its position is not updated. Not sure if that breaks something else!
+    local inzone=cargo.opsgroup:IsInZone(self.cargoTZC.EmbarkZone) --or cargo.opsgroup:IsInUtero()
+    
+    -- TODO: Need a better :IsBusy() function or :IsReadyForMission() :IsReadyForBoarding() :IsReadyForTransport()
+    if self:CanCargo(cargo.opsgroup) and inzone and cargo.opsgroup:IsNotCargo(true) and (not (cargo.delivered or cargo.opsgroup:IsDead() or isCarrier or isOnMission)) then
       table.insert(cargos, cargo)
     end
   end
@@ -7179,53 +7196,20 @@ function OPSGROUP:onafterLoading(From, Event, To)
   for _,_cargo in pairs(cargos) do
     local cargo=_cargo --#OPSGROUP.CargoGroup
 
-    -- Check that cargo weight is
-    if self:CanCargo(cargo.opsgroup) and (not (cargo.delivered or cargo.opsgroup:IsDead())) then
-    
-      -- Check if cargo is currently acting as carrier.
-      local isCarrier=cargo.opsgroup:IsPickingup() or cargo.opsgroup:IsLoading() or cargo.opsgroup:IsTransporting() or cargo.opsgroup:IsUnloading()
+    -- Find a carrier for this cargo.          
+    local carrier=self:FindCarrierForCargo(cargo.opsgroup)
 
-      -- Check that group is NOT cargo and NOT acting as carrier already
-      -- TODO: Need a better :IsBusy() function or :IsReadyForMission() :IsReadyForBoarding() :IsReadyForTransport()
-      if cargo.opsgroup:IsNotCargo(true) and not isCarrier then
+    if carrier then
 
-        -- Check if cargo is in embark/pickup zone.
-        -- Added InUtero here, if embark zone is moving (ship) and cargo has been spawned late activated and its position is not updated. Not sure if that breaks something else!
-        local inzone=cargo.opsgroup:IsInZone(self.cargoTZC.EmbarkZone) --or cargo.opsgroup:IsInUtero()
+      -- Set cargo status.
+      cargo.opsgroup:_NewCargoStatus(OPSGROUP.CargoStatus.ASSIGNED)
 
-        -- Cargo MUST be inside zone or it will not be loaded!
-        if inzone then
-
-          -- Find a carrier for this cargo.          
-          local carrier=self:FindCarrierForCargo(cargo.opsgroup)
-
-          if carrier then
-
-            -- Set cargo status.
-            cargo.opsgroup:_NewCargoStatus(OPSGROUP.CargoStatus.ASSIGNED)
-
-            -- Order cargo group to board the carrier.
-            cargo.opsgroup:Board(self, carrier)
-
-          else
-            -- Debug info.
-            self:T(self.lid..string.format("Cannot board carrier! Group %s is NOT (yet) in zone %s", cargo.opsgroup:GetName(), self.cargoTZC.EmbarkZone:GetName()))                        
-          end
-
-        else
-          -- Debug info.
-          self:T(self.lid..string.format("Cargo %s NOT in embark zone %s (and not InUTERO)", cargo.opsgroup:GetName(), self.cargoTZC.EmbarkZone:GetName()))
-        end
-
-      end
-
-    else
-      -- Debug info.
-      self:T3(self.lid.."Cargo already delivered, is dead or carrier cannot")
+      -- Order cargo group to board the carrier.
+      cargo.opsgroup:Board(self, carrier)
+      
     end
 
   end
-
 end
 
 --- Set (new) cargo status.
