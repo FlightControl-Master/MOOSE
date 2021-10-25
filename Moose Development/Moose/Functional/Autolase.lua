@@ -31,6 +31,7 @@
 -- * Targets are lased by threat priority order
 -- * Use FSM events to link functionality into your scripts
 -- * Easy set-up
+-- * Set laser codes and smoke colors per Recce unit
 -- 
 -- # 2 Basic usage
 -- 
@@ -46,7 +47,7 @@
 -- 
 --            local autolaser = AUTOLASE:New(FoxSet,coalition.side.BLUE,"Wolfpack",Pilotset)
 --            
--- ## 2.5 Example - Using a fixed laser code for a specific Recce unit:
+-- ## 2.5 Example - Using a fixed laser code and color for a specific Recce unit:
 -- 
 --            local recce = SPAWN:New("Reaper")
 --              :InitDelayOff()
@@ -55,6 +56,7 @@
 --                  local unit = group:GetUnit(1)
 --                  local name = unit:GetName()
 --                  autolaser:SetRecceLaserCode(name,1688)
+--                  autolaser:SetRecceSmokeColor(name,SMOKECOLOR.Red)
 --                end
 --              )
 --              :InitCleanUp(60)
@@ -107,7 +109,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.8"
+AUTOLASE.version = "0.0.9"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -169,6 +171,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.UnitsByThreat = {}
   self.RecceNames = {}
   self.RecceLaserCode = {}
+  self.RecceSmokeColor = {}
   self.RecceUnitNames= {}
   self.maxlasing = 4
   self.CurrentLasing = {}
@@ -330,6 +333,20 @@ function AUTOLASE:GetLaserCode(RecceName)
   return code
 end
 
+--- (Internal) Function to get a smoke color by recce name
+-- @param #AUTOLASE self
+-- @param #string RecceName Unit(!) name of the Recce
+-- @return #AUTOLASE self 
+function AUTOLASE:GetSmokeColor(RecceName)
+  local color = self.smokecolor
+  if self.RecceSmokeColor[RecceName] == nil then
+    self.RecceSmokeColor[RecceName] = color
+  else
+    color = self.RecceLaserCode[RecceName]
+  end
+  return color
+end
+
 --- (User) Function enable sending messages via SRS.
 -- @param #AUTOLASE self
 -- @param #boolean OnOff Switch usage on and off
@@ -371,6 +388,17 @@ end
 function AUTOLASE:SetRecceLaserCode(RecceName, Code)
   local code = Code or 1688
   self.RecceLaserCode[RecceName] = code
+  return self
+end
+
+--- (User) Function to set a specific smoke color for a Recce.
+-- @param #AUTOLASE self
+-- @param #string RecceName (Unit!) Name of the Recce
+-- @param #number Color The color, e.g. SMOKECOLOR.Red, SMOKECOLOR.Green etc
+-- @return #AUTOLASE self 
+function AUTOLASE:SetRecceSmokeColor(RecceName, Color)
+  local color = Color or self.smokecolor
+  self.RecceSmokeColor[RecceName] = color
   return self
 end
 
@@ -812,7 +840,8 @@ function AUTOLASE:onafterMonitor(From, Event, To)
           }
        if self.smoketargets then
           local coord = unit:GetCoordinate()
-          coord:Smoke(self.smokecolor)
+          local color = self:GetSmokeColor(reccename)
+          coord:Smoke(color)
        end
        self.lasingindex = self.lasingindex + 1 
        self.CurrentLasing[self.lasingindex] = laserspot
