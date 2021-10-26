@@ -30,8 +30,8 @@
 -- * Detect and lase contacts automatically
 -- * Targets are lased by threat priority order
 -- * Use FSM events to link functionality into your scripts
--- * Easy set-up
 -- * Set laser codes and smoke colors per Recce unit
+-- * Easy set-up
 -- 
 -- # 2 Basic usage
 -- 
@@ -73,7 +73,7 @@
 -- @module Functional.Autolase
 -- @image Designation.JPG
 --
--- Date: Oct 2021
+-- Date: 24 Oct 2021
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
