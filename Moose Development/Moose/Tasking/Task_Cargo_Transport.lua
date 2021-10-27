@@ -57,7 +57,7 @@
 
 do -- TASK_CARGO_TRANSPORT
 
-  --- @type TASK_CARGO_TRANSPORT
+  -- @type TASK_CARGO_TRANSPORT
   -- @extends Tasking.Task_CARGO#TASK_CARGO
 
   --- Orchestrates the task for players to transport cargo to or between deployment zones.
