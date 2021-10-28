@@ -6846,7 +6846,7 @@ function OPSGROUP:AddWeightCargo(UnitName, Weight)
 
     -- For airborne units, we set the weight in game.
     if self.isFlightgroup then
-      --trigger.action.setUnitInternalCargo(element.name, element.weightCargo)  --https://wiki.hoggitworld.com/view/DCS_func_setUnitInternalCargo
+      trigger.action.setUnitInternalCargo(element.name, element.weightCargo)  --https://wiki.hoggitworld.com/view/DCS_func_setUnitInternalCargo
     end
 
   end
@@ -7515,10 +7515,18 @@ function OPSGROUP:onafterUnloading(From, Event, To)
     if cargo.opsgroup:IsLoaded(self.groupname) and not cargo.opsgroup:IsDead() then
 
       -- Disembark to carrier.
-      local needscarrier=false
-      local carrier=nil
-      local carrierGroup=nil
+      local needscarrier=false --#boolean
+      local carrier=nil        --Ops.OpsGroup#OPSGROUP.Element
+      local carrierGroup=nil   --Ops.OpsGroup#OPSGROUP
 
+      -- Try to get the OPSGROUP if deploy zone is a ship.
+      if zone and zone:IsInstanceOf("ZONE_AIRBASE") and zone:GetAirbase():IsShip() then
+        local shipname=zone:GetAirbase():GetName()
+        local ship=UNIT:FindByName(shipname)
+        local group=ship:GetGroup()
+        carrierGroup=_DATABASE:GetOpsGroup(group:GetName())
+        carrier=carrierGroup:GetElementByName(shipname)
+      end
 
       if self.cargoTZC.DisembarkCarriers and #self.cargoTZC.DisembarkCarriers>0 then
 
@@ -7554,8 +7562,10 @@ function OPSGROUP:onafterUnloading(From, Event, To)
 
           -- Issue warning.
           self:E(self.lid.."ERROR: Deploy/disembark zone is a ZONE_AIRBASE of a ship! Where to put the cargo? Dumping into the sea, sorry!")
-          --TODO: Dumb into sea.
-
+          
+          -- Unload but keep "in utero" (no coordinate provided).
+          self:Unload(cargo.opsgroup)
+          
         else
 
           ---
@@ -7800,9 +7810,6 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
   -- Check if this was the current transport.
   if self.cargoTransport and self.cargoTransport.uid==CargoTransport.uid then
     
-    -- This is not a carrier anymore.
-    self:_NewCarrierStatus(OPSGROUP.CarrierStatus.NOTCARRIER)
-
     -- Checks
     if self:IsPickingup() then
       -- Delete pickup waypoint?
@@ -7810,6 +7817,8 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
       if wpindex then
         self:RemoveWaypoint(wpindex)
       end
+      -- Remove landing airbase.
+      self.isLandingAtAirbase=nil
     elseif self:IsLoading() then
       -- Nothing to do?
     elseif self:IsTransporting() then
@@ -7817,6 +7826,9 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
     elseif self:IsUnloading() then
       -- Nothing to do?
     end
+
+    -- This is not a carrier anymore.
+    self:_NewCarrierStatus(OPSGROUP.CarrierStatus.NOTCARRIER)
 
     -- Startup uncontrolled aircraft to allow it to go back.
     if self:IsFlightgroup() then
@@ -7939,7 +7951,7 @@ function OPSGROUP:onafterTransportCancel(From, Event, To, Transport)
     
     -- Transport delivered.
     if calldelivered then
-      self:Delivered(Transport)
+      self:__Delivered(-2, Transport)
     end
 
   else
@@ -9067,7 +9079,7 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
           -- Land at current pos and wait for 60 min max.
           local coordinate=nil
           if opsgroup.cargoTZC then
-            coordinate=opsgroup.cargoTZC.PickupZone:GetCoordinate()
+            coordinate=opsgroup.cargoTZC.PickupZone:GetRandomCoordinate(nil, nil, {land.SurfaceType.LAND})
           else
             coordinate=opsgroup:GetCoordinate()
           end          
@@ -9088,7 +9100,7 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
           -- Land at current pos and wait for 60 min max.
           local coordinate=nil
           if opsgroup.cargoTZC then
-            coordinate=opsgroup.cargoTZC.DeployZone:GetCoordinate()
+            coordinate=opsgroup.cargoTZC.DeployZone:GetRandomCoordinate(nil, nil, {land.SurfaceType.LAND})
           else
             coordinate=opsgroup:GetCoordinate()
           end          

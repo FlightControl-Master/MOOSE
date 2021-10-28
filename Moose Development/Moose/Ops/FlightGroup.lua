@@ -2248,7 +2248,7 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
 
     if not self.group:IsAirborne(true) then
       -- this should really not happen, either the AUFTRAG is cancelled before the group was airborne or it is stuck at the ground for some reason
-      self:I(self.lid..string.format("WARNING: Group is not AIRBORNE  ==> RTB event is suspended for 20 sec"))
+      self:I(self.lid..string.format("WARNING: Group [%s] is not AIRBORNE  ==> RTB event is suspended for 20 sec", self:GetState()))
       allowed=false
       Tsuspend=-20
       local groupspeed = self.group:GetVelocityMPS()
@@ -2256,7 +2256,7 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
         self.RTBRecallCount = self.RTBRecallCount+1
       end
       if self.RTBRecallCount>6 then
-        self:I(self.lid..string.format("WARNING: Group is not moving and was called RTB %d times. Assuming a problem and despawning!", self.RTBRecallCount))
+        self:I(self.lid..string.format("WARNING: Group [%s] is not moving and was called RTB %d times. Assuming a problem and despawning!", self:GetState(), self.RTBRecallCount))
         self.RTBRecallCount=0
         self:Despawn(5)
         return
@@ -2341,6 +2341,65 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   self:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
 end
+
+
+--- On before "LandAtAirbase" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
+function FLIGHTGROUP:onbeforeLandAtAirbase(From, Event, To, airbase)
+
+  if self:IsAlive() then
+
+    local allowed=true
+    local Tsuspend=nil
+
+    if airbase==nil then
+      self:E(self.lid.."ERROR: Airbase is nil in LandAtAirase() call!")
+      allowed=false
+    end
+
+    -- Check that coaliton is okay. We allow same (blue=blue, red=red) or landing on neutral bases.
+    if airbase and airbase:GetCoalition()~=self.group:GetCoalition() and airbase:GetCoalition()>0 then
+      self:E(self.lid..string.format("ERROR: Wrong airbase coalition %d in LandAtAirbase() call! We allow only same as group %d or neutral airbases 0", airbase:GetCoalition(), self.group:GetCoalition()))
+      return false
+    end
+    
+    if self.currbase and self.currbase:GetName()==airbase:GetName() then
+      self:E(self.lid.."WARNING: Currbase is already same as LandAtAirbase airbase. LandAtAirbase canceled!")
+      return false
+    end
+    
+    -- Check if the group has landed at an airbase. If so, we lost control and RTBing is not possible (only after a respawn).
+    if self:IsLanded() then
+      self:E(self.lid.."WARNING: Flight has already landed. LandAtAirbase canceled!")
+      return false    
+    end
+    
+    if self:IsParking() then      
+      allowed=false
+      Tsuspend=-30
+      self:E(self.lid.."WARNING: Flight is parking. LandAtAirbase call delayed by 30 sec")
+    elseif self:IsTaxiing() then
+      allowed=false
+      Tsuspend=-1
+      self:E(self.lid.."WARNING: Flight is parking. LandAtAirbase call delayed by 1 sec")
+    end
+    
+    if Tsuspend and not allowed then
+      self:__LandAtAirbase(Tsuspend, airbase)
+    end
+
+    return allowed
+  else
+    self:E(self.lid.."WARNING: Group is not alive! LandAtAirbase call not allowed")
+    return false
+  end
+
+end
+
 
 --- On after "LandAtAirbase" event.
 -- @param #FLIGHTGROUP self

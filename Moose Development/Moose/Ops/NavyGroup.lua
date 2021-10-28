@@ -1462,7 +1462,7 @@ end
 
 --- Add an a waypoint to the route.
 -- @param #NAVYGROUP self
--- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
+-- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use `COORDINATE:SetAltitude()` to define the altitude.
 -- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
 -- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
 -- @param #number Depth Depth at waypoint in meters. Only for submarines.
@@ -1514,9 +1514,6 @@ function NAVYGROUP:_InitGroup(Template)
   -- Get template of group.
   local template=Template or self:_GetTemplate()
 
-  --TODO: Submarine check
-  --self.isSubmarine=self.group:IsSubmarine()
-  
   -- Ships are always AI.
   self.isAI=true
   

@@ -385,13 +385,11 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   --- Triggers the FSM event "Cancel".
   -- @function [parent=#OPSTRANSPORT] Cancel
   -- @param #OPSTRANSPORT self
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- Triggers the FSM event "Cancel" after a delay.
   -- @function [parent=#OPSTRANSPORT] __Cancel
   -- @param #OPSTRANSPORT self
   -- @param #number delay Delay in seconds.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
   --- On after "Cancel" event.
   -- @function [parent=#OPSTRANSPORT] OnAfterCancel
@@ -399,7 +397,6 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param Ops.OpsTransport#OPSTRANSPORT Transport The transport.
 
 
   --- Triggers the FSM event "Loaded".
@@ -1789,7 +1786,7 @@ function OPSTRANSPORT:onafterCancel(From, Event, To)
   local Ngroups = #self.carriers
 
   -- Debug info.
-  self:I(self.lid..string.format("CANCELLING transport in status %s. Will wait for %d carrier groups to report DONE before evaluation", self.status, Ngroups))
+  self:I(self.lid..string.format("CANCELLING transport in status %s. Will wait for %d carrier groups to report DONE before evaluation", self:GetState(), Ngroups))
   
   -- Time stamp.
   self.Tover=timer.getAbsTime()
@@ -1848,7 +1845,7 @@ function OPSTRANSPORT:onafterCancel(From, Event, To)
 
   -- Special mission states.
   if self:IsPlanned() or self:IsQueued() or self:IsRequested() or Ngroups==0 then
-    self:T(self.lid..string.format("Cancelled transport was in %s stage with %d carrier groups assigned and alive. Call it DELIVERED!", self.status, Ngroups))
+    self:T(self.lid..string.format("Cancelled transport was in %s stage with %d carrier groups assigned and alive. Call it DELIVERED!", self:GetState(), Ngroups))
     self:Delivered()
   end
 

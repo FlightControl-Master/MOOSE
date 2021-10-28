@@ -1150,6 +1150,11 @@ do -- Unit
   -- @function [parent=#Unit] getAmmo
   -- @param #Unit self
   -- @return #Unit.Ammo
+
+  --- Returns the number of infantry that can be embark onto the aircraft. Only returns a value if run on airplanes or helicopters. Returns nil if run on ground or ship units.
+  -- @function [parent=#Unit] getDescentCapacity
+  -- @param #Unit self
+  -- @return #number Number of soldiers that embark.
   
   --- Returns the unit sensors. 
   -- @function [parent=#Unit] getSensors
