@@ -207,7 +207,7 @@ end
 do -- MENU_BASE
   
   ---
-  -- @type MENU_BASE
+  --- @type MENU_BASE
   -- @extends Core.Base#BASE
 
   --- Defines the main MENU class where other MENU classes are derived from.
@@ -328,7 +328,7 @@ end
 do -- MENU_COMMAND_BASE
   
   ---
-  -- @type MENU_COMMAND_BASE
+  --- @type MENU_COMMAND_BASE
   -- @field #function MenuCallHandler
   -- @extends Core.Menu#MENU_BASE
   
@@ -400,7 +400,7 @@ end
 do -- MENU_MISSION
 
   ---
-  -- @type MENU_MISSION
+  --- @type MENU_MISSION
   -- @extends Core.Menu#MENU_BASE
 
   --- Manages the main menus for a complete mission.  
@@ -497,7 +497,7 @@ end
 do -- MENU_MISSION_COMMAND
   
   ---
-  -- @type MENU_MISSION_COMMAND
+  ---- @type MENU_MISSION_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
   --- Manages the command menus for a complete mission, which allow players to execute functions during mission execution.  
@@ -584,7 +584,7 @@ end
 do -- MENU_COALITION
 
   ---
-  -- @type MENU_COALITION
+  ---- @type MENU_COALITION
   -- @extends Core.Menu#MENU_BASE
   
   --- Manages the main menus for @{DCS.coalition}s.  
@@ -722,7 +722,7 @@ end
 do -- MENU_COALITION_COMMAND
   
   ---
-  -- @type MENU_COALITION_COMMAND
+  ---- @type MENU_COALITION_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
   --- Manages the command menus for coalitions, which allow players to execute functions during mission execution.  
@@ -821,7 +821,7 @@ do
   local _MENUGROUPS = {}
   
   ---
-  -- @type MENU_GROUP
+  --- @type MENU_GROUP
   -- @extends Core.Menu#MENU_BASE
   
   
@@ -979,7 +979,7 @@ do
   end
   
   ---
-  -- @type MENU_GROUP_COMMAND
+  --- @type MENU_GROUP_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
   --- The @{Core.Menu#MENU_GROUP_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
@@ -1073,7 +1073,7 @@ end
 
 do
   ---
-  -- @type MENU_GROUP_DELAYED
+  --- @type MENU_GROUP_DELAYED
   -- @extends Core.Menu#MENU_BASE
   
   
@@ -1208,7 +1208,7 @@ do
   end
   
   ---
-  -- @type MENU_GROUP_COMMAND_DELAYED
+  --- @type MENU_GROUP_COMMAND_DELAYED
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
   --- Manages the command menus for coalitions, which allow players to execute functions during mission execution.  
