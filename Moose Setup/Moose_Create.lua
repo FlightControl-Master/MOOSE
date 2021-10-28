@@ -15,7 +15,7 @@ print( "Commit Hash ID            : " .. MooseCommitHash )
 print( "Moose development path    : " .. MooseDevelopmentPath )
 print( "Moose setup path          : " .. MooseSetupPath )
 print( "Moose target path         : " .. MooseTargetPath )
-print( "isWidows                  : " .. isWindows)
+print( "isWindows                  : " .. isWindows)
 
   
 function PathConvert(splatnixPath)
