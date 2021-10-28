@@ -33,15 +33,15 @@
 -- 
 -- ### To manage **main menus**, the classes begin with **MENU_**:
 -- 
---   * @{Core.Menu#MENU_MISSION}: Manages main menus for whole mission file.
---   * @{Core.Menu#MENU_COALITION}: Manages main menus for whole coalition.
---   * @{Core.Menu#MENU_GROUP}: Manages main menus for GROUPs.
+--   * Core.Menu#MENU_MISSION: Manages main menus for whole mission file.
+--   * Core.Menu#MENU_COALITION: Manages main menus for whole coalition.
+--   * Core.Menu#MENU_GROUP: Manages main menus for GROUPs.
 --   
 -- ### To manage **command menus**, which are menus that allow the player to issue **functions**, the classes begin with **MENU_COMMAND_**:
 --   
---   * @{Core.Menu#MENU_MISSION_COMMAND}: Manages command menus for whole mission file.
---   * @{Core.Menu#MENU_COALITION_COMMAND}: Manages command menus for whole coalition.
---   * @{Core.Menu#MENU_GROUP_COMMAND}: Manages command menus for GROUPs.
+--   * Core.Menu#MENU_MISSION_COMMAND: Manages command menus for whole mission file.
+--   * Core.Menu#MENU_COALITION_COMMAND: Manages command menus for whole coalition.
+--   * Core.Menu#MENU_GROUP_COMMAND: Manages command menus for GROUPs.
 -- 
 -- ===
 --- 
@@ -205,9 +205,10 @@ end
 
 
 do -- MENU_BASE
-
-  --- @type MENU_BASE
-  -- @extends Base#BASE
+  
+  ---
+  -- @type MENU_BASE
+  -- @extends Core.Base#BASE
 
   --- Defines the main MENU class where other MENU classes are derived from.
   -- This is an abstract class, so don't use it.
@@ -325,8 +326,9 @@ do -- MENU_BASE
 end
 
 do -- MENU_COMMAND_BASE
-
-  --- @type MENU_COMMAND_BASE
+  
+  ---
+  -- @type MENU_COMMAND_BASE
   -- @field #function MenuCallHandler
   -- @extends Core.Menu#MENU_BASE
   
@@ -397,7 +399,8 @@ end
 
 do -- MENU_MISSION
 
-  --- @type MENU_MISSION
+  ---
+  -- @type MENU_MISSION
   -- @extends Core.Menu#MENU_BASE
 
   --- Manages the main menus for a complete mission.  
@@ -493,7 +496,8 @@ end
 
 do -- MENU_MISSION_COMMAND
   
-  --- @type MENU_MISSION_COMMAND
+  ---
+  -- @type MENU_MISSION_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
   --- Manages the command menus for a complete mission, which allow players to execute functions during mission execution.  
@@ -579,7 +583,8 @@ end
 
 do -- MENU_COALITION
 
-  --- @type MENU_COALITION
+  ---
+  -- @type MENU_COALITION
   -- @extends Core.Menu#MENU_BASE
   
   --- Manages the main menus for @{DCS.coalition}s.  
@@ -716,7 +721,8 @@ end
 
 do -- MENU_COALITION_COMMAND
   
-  --- @type MENU_COALITION_COMMAND
+  ---
+  -- @type MENU_COALITION_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
   --- Manages the command menus for coalitions, which allow players to execute functions during mission execution.  
@@ -813,8 +819,9 @@ do
   -- the same menus twice during initialization logic.
   -- These menu classes are handling this logic with this variable.
   local _MENUGROUPS = {}
-
-  --- @type MENU_GROUP
+  
+  ---
+  -- @type MENU_GROUP
   -- @extends Core.Menu#MENU_BASE
   
   
@@ -845,7 +852,7 @@ do
   --    MenuStatus[MenuGroupName]:Remove()
   --  end
   --
-  --  --- @param Wrapper.Group#GROUP MenuGroup
+  --  -- @param Wrapper.Group#GROUP MenuGroup
   --  local function AddStatusMenu( MenuGroup )
   --    local MenuGroupName = MenuGroup:GetName()
   --    -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
@@ -971,8 +978,8 @@ do
     return self
   end
   
-  
-  --- @type MENU_GROUP_COMMAND
+  ---
+  -- @type MENU_GROUP_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
   --- The @{Core.Menu#MENU_GROUP_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
@@ -1065,8 +1072,8 @@ end
 --- MENU_GROUP_DELAYED
 
 do
-
-  --- @type MENU_GROUP_DELAYED
+  ---
+  -- @type MENU_GROUP_DELAYED
   -- @extends Core.Menu#MENU_BASE
   
   
@@ -1200,8 +1207,8 @@ do
     return self
   end
   
-  
-  --- @type MENU_GROUP_COMMAND_DELAYED
+  ---
+  -- @type MENU_GROUP_COMMAND_DELAYED
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
   --- Manages the command menus for coalitions, which allow players to execute functions during mission execution.  
