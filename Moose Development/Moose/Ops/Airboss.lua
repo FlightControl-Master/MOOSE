@@ -27,11 +27,11 @@
 -- **Supported Carriers:**
 --
 --    * [USS John C. Stennis](https://en.wikipedia.org/wiki/USS_John_C._Stennis) (CVN-74)
---	  * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71)) (CVN-71) [Super Carrier Module]
---	  * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72)) (CVN-72) [Super Carrier Module]
---	  * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73)) (CVN-73) [Super Carrier Module]
---	  * [USS Harry S. Truman](https://en.wikipedia.org/wiki/USS_Harry_S._Truman) (CVN-75) [Super Carrier Module]
---	  * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59)) (CV-59) [Heatblur Carrier Module]
+--    * [USS Theodore Roosevelt](https://en.wikipedia.org/wiki/USS_Theodore_Roosevelt_(CVN-71)) (CVN-71) [Super Carrier Module]
+--    * [USS Abraham Lincoln](https://en.wikipedia.org/wiki/USS_Abraham_Lincoln_(CVN-72)) (CVN-72) [Super Carrier Module]
+--    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_(CVN-73)) (CVN-73) [Super Carrier Module]
+--    * [USS Harry S. Truman](https://en.wikipedia.org/wiki/USS_Harry_S._Truman) (CVN-75) [Super Carrier Module]
+--    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_(CV-59)) (CV-59) [Heatblur Carrier Module]
 --    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1)) (LHA-1) [**WIP**]
 --    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6)) (LHA-6) [**WIP**]
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61) [**WIP**]
@@ -2028,10 +2028,10 @@ function AIRBOSS:New(carriername, alias)
     self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Blue, 45)
     self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
     self:_GetZoneHolding(case, 1):SmokeZone(SMOKECOLOR.White, 45)
-	  self:_GetZoneHolding(case, 2):SmokeZone(SMOKECOLOR.White, 45)
+    self:_GetZoneHolding(case, 2):SmokeZone(SMOKECOLOR.White, 45)
     self:_GetZoneInitial(case):SmokeZone(SMOKECOLOR.Orange, 45)
     self:_GetZoneCommence(case, 1):SmokeZone(SMOKECOLOR.Red, 45)
-	  self:_GetZoneCommence(case, 2):SmokeZone(SMOKECOLOR.Red, 45)
+    self:_GetZoneCommence(case, 2):SmokeZone(SMOKECOLOR.Red, 45)
     self:_GetZoneAbeamLandingSpot():SmokeZone(SMOKECOLOR.Red, 5)
     self:_GetZoneLandingSpot():SmokeZone(SMOKECOLOR.Red, 5)
   end
@@ -5012,7 +5012,7 @@ function AIRBOSS:_InitVoiceOvers()
       duration=2.0,
       subduration=5,
     },
-	EXPECTSPOT5={
+  EXPECTSPOT5={
       file="LSO-ExpectSpot5",
       suffix="ogg",
       loud=false,
@@ -5851,8 +5851,8 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
       speed=UTILS.KnotsToMps(250)
-	elseif goshawk then
-	  alt=UTILS.FeetToMeters(800)
+  elseif goshawk then
+    alt=UTILS.FeetToMeters(800)
       speed=UTILS.KnotsToMps(300)
     end
 
@@ -5864,8 +5864,8 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)
       speed=UTILS.KnotsToMps(250)
-	elseif goshawk then
-	  alt=UTILS.FeetToMeters(800)
+  elseif goshawk then
+    alt=UTILS.FeetToMeters(800)
       speed=UTILS.KnotsToMps(300)
     end
 
@@ -5902,7 +5902,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
       dist=UTILS.NMToMeters(1.2)
     end
 
-	if goshawk then
+  if goshawk then
       -- 0.9 to 1.1 NM per natops ch.4 page 48
       dist=UTILS.NMToMeters(0.9)
     else
@@ -5913,7 +5913,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
 
     if hornet or tomcat then
       alt=UTILS.FeetToMeters(500)
-	elseif goshawk then
+  elseif goshawk then
       alt=UTILS.FeetToMeters(450)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(500)
@@ -6415,8 +6415,8 @@ function AIRBOSS:_MarshalPlayer(playerData, stack)
       -- Set stack flag.
       flight.flag=stack
 
-	  -- Trigger Marshal event.
-	  self:Marshal(flight)
+    -- Trigger Marshal event.
+    self:Marshal(flight)
     end
 
   else
@@ -9674,7 +9674,7 @@ function AIRBOSS:_Bullseye(playerData)
     self:_PlayerHint(playerData)
 
     -- LSO expect spot 5 or 7.5 call
-	if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+  if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, nil, nil, nil, true)
     elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT75, nil, nil, nil, true)
@@ -9859,7 +9859,7 @@ function AIRBOSS:_Abeam(playerData)
     self:RadioTransmission(self.LSORadio, self.LSOCall.PADDLESCONTACT, nil, nil, nil, true)
 
      -- LSO expect spot 5 or 7.5 call
-	if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+  if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, false, 5, nil, true)
     elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT75, false, 5, nil, true)
@@ -10616,7 +10616,7 @@ function AIRBOSS:_GetWire(Lcoord, dc)
 
   -- Multiplayer wire correction.
   if self.mpWireCorrection then
-	d=d-self.mpWireCorrection
+  d=d-self.mpWireCorrection
   end
 
   -- Shift wires from stern to their correct position.
@@ -10709,7 +10709,7 @@ function AIRBOSS:_Trapped(playerData)
     elseif playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
       -- A-4E gets slowed down much faster the the F/A-18C!
       dcorr=56
-	elseif playerData.actype==AIRBOSS.AircraftCarrier.T45C then
+  elseif playerData.actype==AIRBOSS.AircraftCarrier.T45C then
      -- T-45 also gets slowed down much faster the the F/A-18C.
      dcorr=56
     end
@@ -11340,7 +11340,7 @@ function AIRBOSS:_GetZoneHolding(case, stack)
     -- So stay 0-5 NM (+1 NM error margin) port of carrier.
     self.zoneHolding=self.zoneHolding or ZONE_POLYGON_BASE:New("CASE II/III Holding Zone")
 
-	self.zoneHolding:UpdateFromVec2(p)
+  self.zoneHolding:UpdateFromVec2(p)
   end
 
   return self.zoneHolding
@@ -11386,12 +11386,12 @@ function AIRBOSS:_GetZoneCommence(case, stack)
     -- Create holding zone.
     self.zoneCommence=self.zoneCommence or ZONE_RADIUS:New("CASE I Commence Zone")
 
-	self.zoneCommence:UpdateFromVec2(Three:GetVec2(), R)
+  self.zoneCommence:UpdateFromVec2(Three:GetVec2(), R)
 
   else
     -- Case II/III
 
-	stack=stack or 1
+  stack=stack or 1
 
      -- Start point at 21 NM for stack=1.
     local l=20+stack
@@ -11419,7 +11419,7 @@ function AIRBOSS:_GetZoneCommence(case, stack)
     -- Zone polygon.
     self.zoneCommence=self.zoneCommence or ZONE_POLYGON_BASE:New("CASE II/III Commence Zone")
 
-	self.zoneCommence:UpdateFromVec2(p)
+  self.zoneCommence:UpdateFromVec2(p)
 
   end
 
@@ -11679,7 +11679,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
   if self.carriertype==AIRBOSS.CarrierType.TARAWA then
 
     -- Landing 100 ft abeam, 120 ft alt.
-	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
+  self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
     --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
 
     -- Alitude 120 ft.
@@ -11687,7 +11687,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
   elseif self.carriertype==AIRBOSS.CarrierType.AMERICA then
 
     -- Landing 100 ft abeam, 120 ft alt. To allow adjustments to match different deck configurations.
-	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
+  self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
     --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
 
     -- Alitude 120 ft.
@@ -11696,7 +11696,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
   elseif self.carriertype==AIRBOSS.CarrierType.JCARLOS then
 
     -- Landing 100 ft abeam, 120 ft alt.
-	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-100, true, true)
+  self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-100, true, true)
     --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-100)
 
     -- Alitude 120 ft.
@@ -12338,11 +12338,11 @@ function AIRBOSS:_LSOgrade(playerData)
       -- Larger deviations ==> "No grade" 2.0 points.
       grade="--"
       points=2.0
-	elseif nN>2 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+  elseif nN>2 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       -- Only average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
       grade="(OK)"
       points=3.0
-	elseif nL>0 then
+  elseif nL>0 then
       -- Larger deviations ==> "No grade" 2.0 points.
       grade="--"
       points=2.0
@@ -12536,21 +12536,21 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
   elseif LUE>self.lue._max then
     D=little("LUL")
   elseif playerData.case<3 then
-	  if LUE<self.lue.LEFT and step~=AIRBOSS.PatternStep.GROOVE_XX then
-		D=underline("LUR")
-	  elseif LUE<self.lue.Left and step~=AIRBOSS.PatternStep.GROOVE_XX then
-		D="LUR"
-	  elseif LUE<self.lue._min and step~=AIRBOSS.PatternStep.GROOVE_XX then
-		D=little("LUR")
-	 end
+    if LUE<self.lue.LEFT and step~=AIRBOSS.PatternStep.GROOVE_XX then
+    D=underline("LUR")
+    elseif LUE<self.lue.Left and step~=AIRBOSS.PatternStep.GROOVE_XX then
+    D="LUR"
+    elseif LUE<self.lue._min and step~=AIRBOSS.PatternStep.GROOVE_XX then
+    D=little("LUR")
+   end
   elseif playerData.case==3 then
-	  if LUE<self.lue.LEFT then
-		D=underline("LUR")
-	  elseif LUE<self.lue.Left then
-		D="LUR"
-	  elseif LUE<self.lue._min then
-		D=little("LUR")
-	 end
+    if LUE<self.lue.LEFT then
+    D=underline("LUR")
+    elseif LUE<self.lue.Left then
+    D="LUR"
+    elseif LUE<self.lue._min then
+    D=little("LUR")
+   end
   end
 
   -- Compile.
@@ -12583,7 +12583,7 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
   --Drift in Lineup
   if fdata.Drift then
     G=G..fdata.Drift
-	n=n -- Drift doesn't affect score, advisory only.
+  n=n -- Drift doesn't affect score, advisory only.
   end
   -- Overshoot.
   if O then
@@ -14855,8 +14855,8 @@ end
 -- @param #table param Parameters.
 -- @param #number time Time.
 function AIRBOSS._CheckRadioQueueT(param, time)
-	AIRBOSS._CheckRadioQueue(param.airboss, param.radioqueue, param.name)
-	return time+0.05
+  AIRBOSS._CheckRadioQueue(param.airboss, param.radioqueue, param.name)
+  return time+0.05
 end
 
 --- Radio queue item.
@@ -14880,15 +14880,15 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
   -- Check if queue is empty.
   if #radioqueue==0 then
 
-  	if name=="LSO" then
-  	  self:T(self.lid..string.format("Stopping LSO radio queue."))
-  	  self.radiotimer:Stop(self.RQLid)
-  	  self.RQLid=nil
-  	elseif name=="MARSHAL" then
-  	  self:T(self.lid..string.format("Stopping Marshal radio queue."))
-  	  self.radiotimer:Stop(self.RQMid)
-  	  self.RQMid=nil
-  	end
+    if name=="LSO" then
+      self:T(self.lid..string.format("Stopping LSO radio queue."))
+      self.radiotimer:Stop(self.RQLid)
+      self.RQLid=nil
+    elseif name=="MARSHAL" then
+      self:T(self.lid..string.format("Stopping Marshal radio queue."))
+      self.radiotimer:Stop(self.RQMid)
+      self.RQMid=nil
+    end
 
     return
   end
@@ -15030,11 +15030,11 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click, pi
 
     caller="LSOCall"
 
-  	-- Schedule radio queue checks.
-  	if not self.RQLid then
+    -- Schedule radio queue checks.
+    if not self.RQLid then
       self:T(self.lid..string.format("Starting LSO radio queue."))
-  	  self.RQLid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQLSO, "LSO"}, 0.02, 0.05)
-  	end
+      self.RQLid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQLSO, "LSO"}, 0.02, 0.05)
+    end
 
   elseif radio.alias=="MARSHAL" then
 
@@ -15042,10 +15042,10 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click, pi
 
     caller="MarshalCall"
 
-  	if not self.RQMid then
-  		self:T(self.lid..string.format("Starting Marhal radio queue."))
-  		self.RQMid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQMarshal, "MARSHAL"}, 0.02, 0.05)
-  	end
+    if not self.RQMid then
+      self:T(self.lid..string.format("Starting Marhal radio queue."))
+      self.RQMid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQMarshal, "MARSHAL"}, 0.02, 0.05)
+    end
 
   end
 
@@ -16212,9 +16212,9 @@ function AIRBOSS:_SkipperStartRecovery(_unitName, case)
 
       -- Inform player.
       local text=string.format("affirm, Case %d recovery will start in 5 min for %d min. Wind on deck %d knots. U-turn=%s.", case, self.skipperTime, self.skipperSpeed, tostring(self.skipperUturn))
-	  if case>1 then
-		text=text..string.format(" Marshal radial %d°.", self.skipperOffset)
-	  end
+    if case>1 then
+    text=text..string.format(" Marshal radial %d°.", self.skipperOffset)
+    end
       if self:IsRecovering() then
         text="negative, carrier is already recovering."
         self:MessageToPlayer(playerData, text, "AIRBOSS")
@@ -18065,12 +18065,12 @@ function AIRBOSS:_SaveTrapSheet(playerData, grade)
   for i=1,9999 do
 
     -- Create file name
-	if self.trapprefix then
-		filename=string.format("%s_%s-%04d.csv", self.trapprefix, playerData.actype, i)
-	else
-		local name=UTILS.ReplaceIllegalCharacters(playerData.name, "_")
-		filename=string.format("AIRBOSS-%s_Trapsheet-%s_%s-%04d.csv", self.alias, name, playerData.actype, i)
-	end
+  if self.trapprefix then
+    filename=string.format("%s_%s-%04d.csv", self.trapprefix, playerData.actype, i)
+  else
+    local name=UTILS.ReplaceIllegalCharacters(playerData.name, "_")
+    filename=string.format("AIRBOSS-%s_Trapsheet-%s_%s-%04d.csv", self.alias, name, playerData.actype, i)
+  end
 
     -- Set path.
     if path~=nil then
