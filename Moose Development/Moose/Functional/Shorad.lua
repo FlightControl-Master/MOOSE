@@ -41,6 +41,7 @@
 -- @field #boolean UseEmOnOff Decide if we are using Emission on/off (default) or AlarmState red/green.
 -- @extends Core.Base#BASE
 
+
 --- *Good friends are worth defending.* Mr Tushman, Wonder (the Movie) 
 -- 
 -- Simple Class for a more intelligent Short Range Air Defense System
