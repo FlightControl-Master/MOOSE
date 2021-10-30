@@ -308,17 +308,14 @@ do -- SET_BASE
   -- @return Core.Set#SET_BASE The set of objects that are in set *B* but **not** in this set *A*.
   function SET_BASE:GetSetComplement(SetB)
 
-    local complement=SET_BASE:New()
+    local complement = self:GetSetUnion(SetB)
+    local intersection = self:GetSetIntersection(SetB)
 
-    local union=self:GetSetUnion(SetA, SetB)
-
-    for _,Object in pairs(union.Set) do
-      if SetA:IsIncludeObject(Object) and SetB:IsIncludeObject(Object) then
-        intersection:Add(intersection)
-      end
+    for _,Object in pairs(intersection.Set) do
+        complement:Remove(Object.ObjectName,true)
     end
 
-    return intersection
+    return complement
   end
 
 
