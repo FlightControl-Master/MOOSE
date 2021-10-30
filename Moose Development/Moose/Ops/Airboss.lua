@@ -51,7 +51,7 @@
 --
 -- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) and A-4E community mod as aircraft and the USS John C. Stennis as carrier.
 --
--- The AV-8B Harrier, the USS Tarawa, USS America and Juan Carlos I are WIP. The AV-8B harrier and the LHA's and LHD can only be used together, i.e. these ships are the only carriers the harrier is supposed to land on and
+-- The AV-8B Harrier, the USS Tarawa, USS America, HMAS Canberra and Juan Carlos I are WIP. The AV-8B harrier and the LHA's and LHD can only be used together, i.e. these ships are the only carriers the harrier is supposed to land on and
 -- no other fixed wing aircraft (human or AI controlled) are supposed to land on these ships. Currently only Case I is supported. Case II/III take slightly different steps from the CVN carrier.
 -- However, the two Case II/III pattern are very similar so this is not a big drawback.
 --
@@ -108,9 +108,10 @@
 --    * [DCS: F/A-18C Hornet â€“ Episode 16: CASE III Introduction](https://www.youtube.com/watch?v=DvlMHnLjbDQ)
 --    * [DCS: F/A-18C Hornet Case I Carrier Landing Training Lesson Recording](https://www.youtube.com/watch?v=D33uM9q4xgA)
 --
--- ### AV-8B Harrier at USS Tarawa
+-- ### AV-8B Harrier and V/STOL Operations:
 --
 --    * [Harrier Ship Landing Mission with Auto LSO!](https://www.youtube.com/watch?v=lqmVvpunk2c)
+--    * [Updated Airboss V/STOL Features USS Tarawa](https://youtu.be/K7I4pU6j718)
 --    * [Harrier Practice pattern USS America](https://youtu.be/99NigITYmcI)
 --
 -- ===
@@ -300,7 +301,7 @@
 --
 -- Once the aircraft reaches the Initial, the landing pattern begins. The important steps of the pattern are shown in the image above.
 -- The AV-8B Harrier pattern is very similar, the only differences are as there is no angled deck there is no wake check. from the ninety you wil fly a straight approach offset 26 ft to port (left) of the tram line.
--- The aim is to arrive abeam the landing spot in a stable hover at 120 ft with forward speed matched to the boat. From there the LSO will call "cleared to land". You then level cross to the tram line at the designated landing spot at land vertcally.
+-- The aim is to arrive abeam the landing spot in a stable hover at 120 ft with forward speed matched to the boat. From there the LSO will call "cleared to land". You then level cross to the tram line at the designated landing spot at land vertcally. When you stabalise over the landing spot LSO will call Stabalise to indicate you are centered at the correct spot.
 --
 --
 -- ## CASE III
@@ -634,12 +635,12 @@
 --
 -- Furthermore, we have the cases:
 --
---    * 2.5 Points **B**: "Bolder", when the player landed but did not catch a wire.
+--    * 2.5 Points **B**: "Bolter", when the player landed but did not catch a wire.
 --    * 2.0 Points **WOP**: "Pattern Wave-Off", when pilot was far away from where he should be in the pattern.
 --    * 2.0 Points **OWO**: "Own Wave-Off**, when pilot flies past the deck without touching it.
 --    * 1.0 Points **WO**: "Technique Wave-Off": Player got waved off in the final parts of the groove.
 --    * 1.0 Points **LIG**: "Long In the Groove", when pilot extents the downwind leg too far and screws up the timing for the following aircraft.
---    * 0.0 Points **CUT**: "Cut pass", when player was waved off but landed anyway.
+--    * 0.0 Points **CUT**: "Cut pass", when player was waved off but landed anyway. In addition if a V/STOL lands without having been Cleared to Land.
 --
 -- ## Foul Deck Waveoff
 --
@@ -1298,9 +1299,10 @@ AIRBOSS.AircraftCarrier={
 -- @field #string TRUMAN USS Harry S. Truman (CVN-75) [Super Carrier Module]
 -- @field #string FORRESTAL USS Forrestal (CV-59) [Heatblur Carrier Module]
 -- @field #string VINSON USS Carl Vinson (CVN-70) [Obsolete]
--- @field #string TARAWA USS Tarawa (LHA-1)
--- @field #string AMERICA USS America (LHA-6)
--- @field #string JCARLOS Juan Carlos I (L61)
+-- @field #string TARAWA USS Tarawa (LHA-1) [V/STOL Carrier]
+-- @field #string AMERICA USS America (LHA-6) [V/STOL Carrier]
+-- @field #string JCARLOS Juan Carlos I (L61) [V/STOL Carrier]
+-- @field #string HMAS Canberra (L02) [V/STOL Carrier]
 -- @field #string KUZNETSOV Admiral Kuznetsov (CV 1143.5)
 AIRBOSS.CarrierType={
   ROOSEVELT="CVN_71",
@@ -1313,6 +1315,7 @@ AIRBOSS.CarrierType={
   TARAWA="LHA_Tarawa",
   AMERICA="USS America LHA-6",
   JCARLOS="L61",
+  CANBERRA="L02",
   KUZNETSOV="KUZNECOW",
 }
 
@@ -1726,7 +1729,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.2.0"
+AIRBOSS.version="1.2.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1991,6 +1994,9 @@ function AIRBOSS:New(carriername, alias)
   elseif self.carriertype==AIRBOSS.CarrierType.JCARLOS then
     -- Use Juan Carlos parameters.
     self:_InitJcarlos()
+  elseif self.carriertype==AIRBOSS.CarrierType.CANBERRA then
+    -- Use Juan Carlos parameters at this stage --TODO Check primary Landing spot.
+    self:_InitJcarlos()
   elseif self.carriertype==AIRBOSS.CarrierType.KUZNETSOV then
     -- Kusnetsov parameters - maybe...
     self:_InitStennis()
@@ -2082,7 +2088,7 @@ function AIRBOSS:New(carriername, alias)
 
 
       -- Carrier specific.
-      if self.carrier:GetTypeName()~=AIRBOSS.CarrierType.TARAWA or self.carrier:GetTypeName()~=AIRBOSS.CarrierType.AMERICA or self.carrier:GetTypeName()~=AIRBOSS.CarrierType.JCARLOS then
+      if self.carrier:GetTypeName()~=AIRBOSS.CarrierType.TARAWA or self.carrier:GetTypeName()~=AIRBOSS.CarrierType.AMERICA or self.carrier:GetTypeName()~=AIRBOSS.CarrierType.JCARLOS or self.carrier:GetTypeName()~=AIRBOSS.CarrierType.CANBERRA then
 
         -- Flare wires.
         local w1=stern:Translate(self.carrierparam.wire1, FB, true)
@@ -6886,7 +6892,7 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
     p2=Carrier:Translate(UTILS.NMToMeters(1.5), hdg)
 
     -- Tarawa,LHA,LHD Delta patterns.
-    if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+    if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
 
       -- Pattern is directly overhead the carrier.
       p1=Carrier:Translate(UTILS.NMToMeters(1.0), hdg+90)
@@ -7714,6 +7720,8 @@ function AIRBOSS:_InitPlayer(playerData, step)
   playerData.wofd=false
   playerData.owo=false
   playerData.boltered=false
+  playerData.hover=false
+  playerData.stable=false
   playerData.landed=false
   playerData.Tlso=timer.getTime()
   playerData.Tgroove=nil
@@ -8731,7 +8739,7 @@ function AIRBOSS:OnEventLand(EventData)
           self:T(self.lid..text)
 
           -- Check carrier type.
-          if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+          if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
 
             -- Power "Idle".
             self:RadioTransmission(self.LSORadio, self.LSOCall.IDLE, false, 1, nil, true)
@@ -8766,7 +8774,7 @@ function AIRBOSS:OnEventLand(EventData)
       -- AI unit landed --
       --------------------
 
-      if self.carriertype~=AIRBOSS.CarrierType.TARAWA or self.carriertype~=AIRBOSS.CarrierType.AMERICA or self.carriertype~=AIRBOSS.CarrierType.JCARLOS then
+      if self.carriertype~=AIRBOSS.CarrierType.TARAWA or self.carriertype~=AIRBOSS.CarrierType.AMERICA or self.carriertype~=AIRBOSS.CarrierType.JCARLOS or self.carriertype~=AIRBOSS.CarrierType.CANBERRA then
 
         -- Coordinate at landing event
         local coord=EventData.IniUnit:GetCoordinate()
@@ -9676,6 +9684,8 @@ function AIRBOSS:_Bullseye(playerData)
     -- LSO expect spot 5 or 7.5 call
   if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, nil, nil, nil, true)
+	elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.CANBERRA then
+      self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, nil, nil, nil, true)
     elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT75, nil, nil, nil, true)
     end
@@ -9813,7 +9823,7 @@ function AIRBOSS:_CheckForLongDownwind(playerData)
   local limit=UTILS.NMToMeters(-1.6)
 
   -- For the tarawa, other LHA and LHD we give a bit more space.
-  if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+  if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
     limit=UTILS.NMToMeters(-2.0)
   end
 
@@ -9861,7 +9871,9 @@ function AIRBOSS:_Abeam(playerData)
      -- LSO expect spot 5 or 7.5 call
   if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.JCARLOS then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, false, 5, nil, true)
-    elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+    elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B and self.carriertype==AIRBOSS.CarrierType.CANBERRA then
+      self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT5, false, 5, nil, true)
+	elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       self:RadioTransmission(self.LSORadio, self.LSOCall.EXPECTSPOT75, false, 5, nil, true)
     end
 
@@ -9898,7 +9910,7 @@ function AIRBOSS:_Ninety(playerData)
     self:_PlayerHint(playerData)
 
     -- Next step: wake.
-    if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+    if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
       -- Harrier has no wake stop. It stays port of the boat.
       self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.FINAL)
     else
@@ -10155,8 +10167,8 @@ function AIRBOSS:_Groove(playerData)
     -- Speed difference.
     local dv=math.abs(vplayer-vcarrier)
 
-    -- Stable when speed difference < 10 km/h.
-    local stable=dv<10
+    -- Stable when speed difference < 20 km/h.
+    local stable=dv<20
 
     -- Check if player is inside the zone.
     if playerData.unit:IsInZone(ZoneALS) and stable then
@@ -10166,6 +10178,9 @@ function AIRBOSS:_Groove(playerData)
 
       -- Next step: Level cross.
       self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_LC)
+	  -- Set Stable Hover
+	  playerData.stable=true
+      playerData.hover=true
     end
 
   elseif rho<=RAR and playerData.step==AIRBOSS.PatternStep.GROOVE_LC then
@@ -10185,13 +10200,14 @@ function AIRBOSS:_Groove(playerData)
     -- Speed difference.
     local dv=math.abs(vplayer-vcarrier)
 
-    -- Stable when v<7.5 km/h.
-    local stable=dv<7.5
+    -- Stable when v<10 km/h.
+    local stable=dv<10
 
-    -- Radio Transmission "Cleared to land" once the aircraft is inside the zone.
-    if playerData.unit:IsInZone(ZoneLS) and stable and playerData.warning==false then
-      self:RadioTransmission(self.LSORadio, self.LSOCall.STABILIZED, nil, nil, nil, true)
-      playerData.warning=true
+    -- Radio Transmission "Stabilized" once the aircraft has been cleared to cross and is over the Landing Spot and stable.
+    if playerData.unit:IsInZone(ZoneLS) and stable and playerData.stable==true then
+      self:RadioTransmission(self.LSORadio, self.LSOCall.STABILIZED, nil, nil, nil, false)
+	  playerData.stable=false
+	  playerData.warning=true
     end
 
     -- We keep it in this step until landed.
@@ -10224,8 +10240,25 @@ function AIRBOSS:_Groove(playerData)
       -- Nothing else necessary.
       return
     end
-
-  end
+   end   
+	  
+	  -- Long V/STOL groove time Wave Off over 75 seconds to IC - TOPGUN level Only. --pene testing (WIP)
+	 
+  --if rho>=RAR and rho<=RIC and not playerData.waveoff and playerData.difficulty==AIRBOSS.Difficulty.HARD and  playerData.actype==      AIRBOSS.AircraftCarrier.AV8B then
+   -- Get groove time
+   --local vSlow=groovedata.time
+   -- If too slow wave off.  
+   --if vSlow >75 then
+	
+   -- LSO Wave off!
+     --self:RadioTransmission(self.LSORadio, self.LSOCall.WAVEOFF, nil, nil, nil, true)
+     --playerData.Tlso=timer.getTime()
+	 
+   -- Player was waved Off
+     --playerData.waveoff=true
+     --return
+  --end	   
+ --end
 
   -- Groovedata step.
   groovedata.Step=playerData.step
@@ -10395,11 +10428,10 @@ function AIRBOSS:_CheckWaveOff(glideslopeError, lineupError, AoA, playerData)
 
   -- For the harrier, we allow a bit more room.
   if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
-    glMax= 4.0
-    glMin=-3.0
-    luAbs= 5.0
-    -- No waveoff for harrier pilots at the moment.
-    return false
+    glMax= 2.6
+    glMin=-2.0
+    luAbs= 4.1 -- Testing Pene (WIP) needs feedback to tighten up tolerences.
+    
   end
 
   -- Too high or too low?
@@ -10423,9 +10455,10 @@ function AIRBOSS:_CheckWaveOff(glideslopeError, lineupError, AoA, playerData)
     waveoff=true
   end
 
-  -- Too slow or too fast? Only for pros.
-  if playerData.difficulty==AIRBOSS.Difficulty.HARD then
-    -- Get aircraft specific AoA values
+  -- Too slow or too fast? Only for pros.  
+  
+  if playerData.difficulty==AIRBOSS.Difficulty.HARD and playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
+    -- Get aircraft specific AoA values. Not for AV-8B due to transition to Stable Hover.
     local aoaac=self:_GetAircraftAoA(playerData)
     -- Check too slow or too fast.
     if AoA<aoaac.FAST then
@@ -10438,6 +10471,7 @@ function AIRBOSS:_CheckWaveOff(glideslopeError, lineupError, AoA, playerData)
       self:T(self.lid..string.format("%s: %s", playerData.name, text))
       self:_AddToDebrief(playerData, text)
       waveoff=true
+	
     end
   end
 
@@ -10572,7 +10606,7 @@ function AIRBOSS:_GetSternCoord()
   --local stern=self:GetCoordinate()
 
   -- Stern coordinate (sterndist<0).
-  if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+  if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
     -- Tarawa: Translate 8 meters port.
     self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
   elseif self.carriertype==AIRBOSS.CarrierType.STENNIS then
@@ -11213,7 +11247,8 @@ function AIRBOSS:_GetZoneRunwayBox()
 end
 
 
---- Get zone of primary abeam landing position of USS Tarawa. Box length and width 30 meters.
+--- Get zone of primary abeam landing position of USS Tarawa, USS America and Juan Carlos. Box length 50 meters  and width 30 meters.
+--- Allow for Clear to land call from LSO approaching abeam the landing spot if stable as per NATOPS 00-80T
 -- @param #AIRBOSS self
 -- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
 function AIRBOSS:_GetZoneAbeamLandingSpot()
@@ -11229,8 +11264,8 @@ function AIRBOSS:_GetZoneAbeamLandingSpot()
 
   -- Points.
   p[1]=S:Translate( 15, FB):Translate(15, FB+90)  -- Top-Right
-  p[2]=S:Translate(-15, FB):Translate(15, FB+90)  -- Bottom-Right
-  p[3]=S:Translate(-15, FB):Translate(15, FB-90)  -- Bottom-Left
+  p[2]=S:Translate(-45, FB):Translate(15, FB+90)  -- Bottom-Right
+  p[3]=S:Translate(-45, FB):Translate(15, FB-90)  -- Bottom-Left
   p[4]=S:Translate( 15, FB):Translate(15, FB-90)  -- Top-Left
 
   -- Convert to vec2.
@@ -11318,7 +11353,7 @@ function AIRBOSS:_GetZoneHolding(case, stack)
     self.zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", Post:GetVec2(), self.marshalradius)
 
     -- Delta pattern.
-    if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+    if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
       self.zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", self.carrier:GetVec2(), UTILS.NMToMeters(5))
     end
 
@@ -11371,7 +11406,7 @@ function AIRBOSS:_GetZoneCommence(case, stack)
     -- Three position
     local Three=self:GetCoordinate():Translate(D, hdg+275)
 
-    if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+    if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
 
       local Dx=UTILS.NMToMeters(2.25)
 
@@ -11696,12 +11731,21 @@ function AIRBOSS:_GetOptLandingCoordinate()
   elseif self.carriertype==AIRBOSS.CarrierType.JCARLOS then
 
     -- Landing 100 ft abeam, 120 ft alt.
-  self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-100, true, true)
-    --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-100)
+  self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
+    --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
 
     -- Alitude 120 ft.
     self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
+	
+  elseif self.carriertype==AIRBOSS.CarrierType.CANBERRA then
 
+    -- Landing 100 ft abeam, 120 ft alt.
+  self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
+    --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
+
+    -- Alitude 120 ft.
+    self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
+	
   else
 
     -- Ideally we want to land between 2nd and 3rd wire.
@@ -11749,9 +11793,16 @@ function AIRBOSS:_GetLandingSpotCoordinate()
     -- Landing 100 ft abeam, 120 alt.
     local hdg=self:GetHeading()
 
-    -- Primary landing spot 5.0 -- TODO voice for different landing Spots.
+    -- Primary landing spot 5.0 -- Done voice for different landing Spots.
     self.landingspotcoord:Translate(89, hdg, true, true):SetAltitude(self.carrierparam.deckheight)
+  
+  elseif self.carriertype==AIRBOSS.CarrierType.CANBERRA then
 
+    -- Landing 100 ft abeam, 120 alt.
+    local hdg=self:GetHeading()
+
+    -- Primary landing spot 5.0 -- Done voice for different landing Spots.
+    self.landingspotcoord:Translate(89, hdg, true, true):SetAltitude(self.carrierparam.deckheight)
   end
 
   return self.landingspotcoord
@@ -12244,10 +12295,14 @@ end
 --
 -- If you manage to be between 16.4 and and 16.6 seconds, you will even get and okay underline "\_OK\_".
 -- No groove time for Harrier on LHA, LHD set to Tgroove Unicorn as starting point to allow possible _OK_ 5.0.
+--
 -- If time in the AV-8B
 --
--- * < 90 seconds: OK V/STOL
--- * > 91 Seconds: SLOW V/STOL (Early hover stop selection)
+-- * < 55 seconds: Fast V/STOL
+-- * < 75 seconds: OK V/STOL
+-- * > 76 Seconds: SLOW V/STOL (Early hover stop selection)
+--
+-- If you manage to be between 60.0 and 65.0 seconds in the AV-8B, you will even get and okay underline "\_OK\_"
 --
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
@@ -12269,9 +12324,9 @@ function AIRBOSS:_EvalGrooveTime(playerData)
   -- Time in groove for AV-8B
   elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B and t<55 then -- VSTOL Late Hover stop selection too fast to Abeam LDG Spot AV-8B.
     grade="FAST V/STOL Groove"
-  elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B and t<90 then -- VSTOL Operations with AV-8B.
+  elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B and t<75 then -- VSTOL Operations with AV-8B.
     grade="OK V/STOL Groove"
-  elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B and t>=91 then -- VSTOL Early Hover stop selection slow to Abeam LDG Spot AV-8B.
+  elseif playerData.actype==AIRBOSS.AircraftCarrier.AV8B and t>=76 then -- VSTOL Early Hover stop selection slow to Abeam LDG Spot AV-8B.
     grade="SLOW V/STOL Groove"
   else
     grade="LIG"
@@ -12283,7 +12338,7 @@ function AIRBOSS:_EvalGrooveTime(playerData)
   end
 
   -- V/STOL Unicorn!
-  if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and (t>=65.0 and t<=75.0) then
+  if playerData.actype==AIRBOSS.AircraftCarrier.AV8B and (t>=60.0 and t<=65.0) then
     grade="_OK_ V/STOL"
   end
 
@@ -12312,7 +12367,7 @@ function AIRBOSS:_LSOgrade(playerData)
   -- Put everything together.
   local G=GXX.." "..GIM.." ".." "..GIC.." "..GAR
 
-  -- Count number of minor, normal and major deviations. TODO - work on Harrier counts due slower approach speed.
+  -- Count number of minor, normal and major deviations.
   local N=nXX+nIM+nIC+nAR
   local nL=count(G, '_')/2
   local nS=count(G, '%(')
@@ -12321,7 +12376,7 @@ function AIRBOSS:_LSOgrade(playerData)
   -- Groove time 15-18.99 sec for a unicorn. Or 65-70 for V/STOL unicorn.
   local Tgroove=playerData.Tgroove
   local TgrooveUnicorn=Tgroove and (Tgroove>=15.0 and Tgroove<=18.99) or false
-  local TgrooveVstolUnicorn=Tgroove and (Tgroove>=65.0 and Tgroove<=70.0)and playerData.actype==AIRBOSS.AircraftCarrier.AV8B or false
+  local TgrooveVstolUnicorn=Tgroove and (Tgroove>=60.0 and Tgroove<=65.0)and playerData.actype==AIRBOSS.AircraftCarrier.AV8B or false
 
   local grade
   local points
@@ -12371,7 +12426,7 @@ end
   text=text.."# of normal deviations  = "..nN.."\n"
   text=text.."# of small deviations ( = "..nS.."\n"
   self:T2(self.lid..text)
-
+  
   -- Special cases.
   if playerData.wop then
     ---------------------
@@ -12427,8 +12482,18 @@ end
     -- Bolter
     grade="-- (BOLTER)"
     points=2.5
-  end
-
+  
+  elseif not playerData.hover and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+    -------------------------------
+    -- AV-8B not cleared to land -- -- Landing clearence is carrier from LC to Landing 
+	-------------------------------
+    if playerData.landed then
+      -- AIRBOSS wants your balls!
+      grade="CUT"
+      points=0.0
+    end
+	
+  end	
   return grade, points, G
 end
 
@@ -12652,7 +12717,7 @@ function AIRBOSS:_GS(step, n)
     if n==-1 then
       gp=AIRBOSS.GroovePos.IC
     elseif n==1 then
-      if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+      if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
         gp=AIRBOSS.GroovePos.AL
       else
         gp=AIRBOSS.GroovePos.IW
@@ -14544,7 +14609,7 @@ function AIRBOSS:_IsCarrierAircraft(unit)
 
   -- Special case for Harrier which can only land on Tarawa, LHA and LHD.
   if aircrafttype==AIRBOSS.AircraftCarrier.AV8B then
-    if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+    if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
       return true
     else
       return false
@@ -14552,7 +14617,7 @@ function AIRBOSS:_IsCarrierAircraft(unit)
   end
 
   -- Also only Harriers can land on the Tarawa, LHA and LHD.
-  if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+  if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
     if aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then
       return false
     end
@@ -17922,7 +17987,7 @@ function AIRBOSS:_MarkCaseZones(_unitName, flare)
         end
 
         -- Tarawa, LHA and LHD landing spots.
-        if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS then
+        if self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
           text=text.."\n* abeam landing stop with RED flares"
           -- Abeam landing spot zone.
           local ALSPT=self:_GetZoneAbeamLandingSpot()
