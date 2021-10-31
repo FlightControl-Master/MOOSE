@@ -2145,21 +2145,36 @@ function CTLD:_LoadCratesNearby(Group, Unit)
       self.Loaded_Cargo[unitname] = loaded
       self:_UpdateUnitCargoMass(Unit) 
       -- clean up real world crates
-      local existingcrates = self.Spawned_Cargo -- #table
-      local newexcrates = {}
-      for _,_crate in pairs(existingcrates) do
-        local excrate = _crate -- #CTLD_CARGO
-        local ID = excrate:GetID()
-        for _,_ID in pairs(crateidsloaded) do
-          if ID ~= _ID then
-            table.insert(newexcrates,_crate)
-          end
-        end
-      end
-      self.Spawned_Cargo = nil
-      self.Spawned_Cargo = newexcrates
+      self:_CleanupTrackedCrates(crateidsloaded)
     end
   end
+  return self
+end
+
+--- (Internal) Function to clean up tracked cargo crates
+function CTLD:_CleanupTrackedCrates(crateIdsToRemove)
+  local existingcrates = self.Spawned_Cargo -- #table
+  local newexcrates = {}
+  for _,_crate in pairs(existingcrates) do
+    local excrate = _crate -- #CTLD_CARGO
+    local ID = excrate:GetID()
+    local keep = true
+    for _,_ID in pairs(crateIdsToRemove) do
+      if ID == _ID then
+        keep = false
+      end
+    end
+    -- remove destroyed crates here too
+    local static = _crate:GetPositionable() -- Wrapper.Static#STATIC -- crates
+    if not static or not static:IsAlive() then
+      keep = false
+    end
+    if keep then
+      table.insert(newexcrates,_crate)
+    end
+  end
+  self.Spawned_Cargo = nil
+  self.Spawned_Cargo = newexcrates
   return self
 end
 
@@ -2849,19 +2864,7 @@ function CTLD:_CleanUpCrates(Crates,Build,Number)
     if found == numberdest then break end -- got enough
   end
   -- loop and remove from real world representation
-  for _,_crate in pairs(existingcrates) do
-    local excrate = _crate -- #CTLD_CARGO
-    local ID = excrate:GetID()
-    for _,_ID in pairs(destIDs) do
-      if ID ~= _ID then
-        table.insert(newexcrates,_crate)
-      end
-    end
-  end
-  
-  -- reset Spawned_Cargo
-  self.Spawned_Cargo = nil
-  self.Spawned_Cargo = newexcrates
+  self:_CleanupTrackedCrates(destIDs)
   return self
 end
 
