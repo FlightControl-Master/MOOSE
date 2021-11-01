@@ -109,7 +109,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.9"
+AUTOLASE.version = "0.0.10"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -297,13 +297,15 @@ end
 -- @param #AUTOLASE self
 -- @return #AUTOLASE self 
 function AUTOLASE:SetPilotMenu()
-  local pilottable = self.pilotset:GetSetObjects() or {}
-  for _,_unit in pairs (pilottable) do
-    local Unit = _unit -- Wrapper.Unit#UNIT
-    if Unit and Unit:IsAlive() then
-      local Group = Unit:GetGroup()
-      local lasemenu = MENU_GROUP_COMMAND:New(Group,"Autolase Status",nil,self.ShowStatus,self,Group)
-      lasemenu:Refresh()
+  if self.usepilotset then
+    local pilottable = self.pilotset:GetSetObjects() or {}
+    for _,_unit in pairs (pilottable) do
+      local Unit = _unit -- Wrapper.Unit#UNIT
+      if Unit and Unit:IsAlive() then
+        local Group = Unit:GetGroup()
+        local lasemenu = MENU_GROUP_COMMAND:New(Group,"Autolase Status",nil,self.ShowStatus,self,Group)
+        lasemenu:Refresh()
+      end
     end
   end
   return self
