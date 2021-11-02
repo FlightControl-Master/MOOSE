@@ -460,8 +460,7 @@ OPSGROUP.CargoStatus={
 -- @type OPSGROUP.CargoGroup
 -- @field #OPSGROUP opsgroup The cargo opsgroup.
 -- @field #boolean delivered If `true`, group was delivered.
--- @field #OPSGROUP disembarkCarrierGroup Carrier group where the cargo group is directly loaded to.
--- @field #OPSGROUP disembarkCarrierElement Carrier element to which the cargo group is directly loaded to.
+-- @field #boolean disembarkActivation If `true`, group is activated. If `false`, group is late activated.
 -- @field #string status Status of the cargo group. Not used yet.
 
 --- OpsGroup version.
@@ -533,7 +532,6 @@ function OPSGROUP:New(group)
     self.isTrain=true
   elseif self.category==Group.Category.SHIP then
     self.isNavygroup=true
-    -- TODO submarine
   elseif self.category==Group.Category.AIRPLANE then
     self.isFlightgroup=true
   elseif self.category==Group.Category.HELICOPTER then
@@ -3663,6 +3661,13 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- Just stay put.
     --TODO: Change ALARM STATE
     
+    if self:IsArmygroup() or self:IsNavygroup() then
+      -- Especially NAVYGROUP needs a full stop as patrol ad infinitum
+      self:FullStop()
+    else
+      -- FLIGHTGROUP not implemented (intended!) for this AUFTRAG type.
+    end
+    
   else
 
     -- If task is scheduled (not waypoint) set task.
@@ -3874,10 +3879,17 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
   else
 
     if Task.description=="Engage_Target" then
+      self:T(self.lid.."Taske DONE Engage_Target ==> Cruise")
       self:Disengage()
+    end
+    
+    if Task.description==AUFTRAG.SpecialTask.ONGUARD then
+      self:T(self.lid.."Taske DONE OnGuard ==> Cruise")
+      self:Cruise()
     end
 
     if Task.description=="Task_Land_At" then
+      self:T(self.lid.."Taske DONE Task_Land_At ==> Wait")
       self:Wait(20, 100)
     else
       self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 0 sec")
@@ -3997,7 +4009,7 @@ function OPSGROUP:CountRemainingTransports()
   end
   
   -- In case we directly set the cargo transport (not in queue).
-  if N==0 and self.cargoTransport then
+  if N==0 and self.cargoTransport and self.cargoTransport:GetState()~=OPSTRANSPORT.Status.DELIVERED then
     N=1
   end
 
@@ -4916,32 +4928,46 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     -- Final waypoint reached?
     if wpindex==nil or wpindex==#self.waypoints then
 
-      -- Ad infinitum?
-      if self.adinfinitum then
-      
+      -- Ad infinitum and not mission waypoint?
+      if self.adinfinitum then      
         ---
-        -- Ad Infinitum and last waypoint reached.
+        -- Ad Infinitum
         ---
-      
-        if #self.waypoints<=1 then
-          -- Only one waypoint. Ad infinitum does not really make sense. However, another waypoint could be added later...
-          self:_PassedFinalWaypoint(true, "PassingWaypoint: adinfinitum but only ONE WAYPOINT left")
+
+        if Waypoint.missionUID then
+          ---
+          -- Last waypoint was a mission waypoint ==> Do nothing (when mission is over, it should take care of this)
+          ---        
         else
-          
-          -- Looks like the passing waypoint function is triggered over and over again if the group is near the final waypoint.
-          -- So the only good solution is to guide the group away from that waypoint and then update the route.
-
-          -- Get first waypoint.
-          local wp1=self:GetWaypointByIndex(1)
-          
-          -- Get a waypoint 
-          local Coordinate=Waypoint.coordinate:GetIntermediateCoordinate(wp1.coordinate, 0.1)
-
-          -- Detour to the temp waypoint. When reached, the normal route is resumed.
-          self:Detour(Coordinate, self.speedCruise, nil, true)
-          
+      
+          ---
+          -- Last waypoint reached.
+          ---
+        
+          if #self.waypoints<=1 then
+            -- Only one waypoint. Ad infinitum does not really make sense. However, another waypoint could be added later...
+            self:_PassedFinalWaypoint(true, "PassingWaypoint: adinfinitum but only ONE WAYPOINT left")
+          else
+            
+            -- Looks like the passing waypoint function is triggered over and over again if the group is near the final waypoint.
+            -- So the only good solution is to guide the group away from that waypoint and then update the route.
+  
+            -- Get first waypoint.
+            local wp1=self:GetWaypointByIndex(1)
+            
+            -- Get a waypoint 
+            local Coordinate=Waypoint.coordinate:GetIntermediateCoordinate(wp1.coordinate, 0.1)
+  
+            -- Detour to the temp waypoint. When reached, the normal route is resumed.
+            self:Detour(Coordinate, self.speedCruise, nil, true)
+            
+          end          
         end
       else
+        ---
+        -- NOT Ad Infinitum
+        ---
+            
         -- Final waypoint reached.
         self:_PassedFinalWaypoint(true, "PassingWaypoint: wpindex=#self.waypoints (or wpindex=nil)")
       end
@@ -6182,6 +6208,14 @@ function OPSGROUP:_CheckCargoTransport()
       self:I(self.lid.."Cargo queue:"..text)
     end
   end
+  
+  if self.cargoTransport and self.cargoTransport:GetCarrierTransportStatus(self)==OPSTRANSPORT.Status.DELIVERED then
+    -- Remove transport from queue.
+    self:DelOpsTransport(self.cargoTransport)
+    -- No current transport any more.
+    self.cargoTransport=nil
+    self.cargoTZC=nil    
+  end
 
   -- Check if there is anything in the queue.
   if not self.cargoTransport and not self:IsOnMission() then
@@ -6311,7 +6345,7 @@ function OPSGROUP:_CheckCargoTransport()
       -- Unloading finished ==> pickup next batch or call it a day.
       if delivered then
         self:T(self.lid.."Unloading finished ==> UnloadingDone")
-        self:__UnloadingDone(10)
+        self:UnloadingDone()
       else
         self:Unloading()
       end
@@ -6614,17 +6648,36 @@ function OPSGROUP:DelOpsTransport(CargoTransport)
     local transport=self.cargoqueue[i] --Ops.OpsTransport#OPSTRANSPORT
     if transport.uid==CargoTransport.uid then
     
+      -- Debug info.
+      self:T(self.lid..string.format("Removing transport UID=%d", transport.uid))
+    
       -- Remove from queue.
       table.remove(self.cargoqueue, i)
       
       -- Remove carrier from ops transport.
-      CargoTransport:_DelCarrier(self)      
+      CargoTransport:_DelCarrier(self, 1)      
       
       return self
     end    
   end
   
   return self
+end
+
+--- Get cargo transport assignment from the cargo queue by its unique ID.
+-- @param #OPSGROUP self
+-- @param #number uid Unique ID of the transport
+-- @return Ops.OpsTransport#OPSTRANSPORT Transport.
+function OPSGROUP:GetOpsTransportByUID(uid)
+  
+  for i=#self.cargoqueue,1,-1 do
+    local transport=self.cargoqueue[i] --Ops.OpsTransport#OPSTRANSPORT
+    if transport.uid==uid then      
+      return transport
+    end    
+  end
+  
+  return nil
 end
 
 
@@ -7110,7 +7163,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
       end
 
       -- NAVYGROUP
-      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=1
+      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid, self.altitudeCruise) ; waypoint.detour=1
 
       -- Give cruise command.
       self:__Cruise(-2)
@@ -7397,9 +7450,16 @@ function OPSGROUP:onafterTransport(From, Event, To)
     self:__Unloading(-5)
 
   else
+  
+    local surfacetypes=nil
+    if self:IsArmygroup() then
+      surfacetypes={land.SurfaceType.LAND}
+    elseif self:IsNavygroup() then
+      surfacetypes={land.SurfaceType.WATER}    
+    end
 
     -- Coord where the carrier goes to unload.
-    local Coordinate=Zone:GetRandomCoordinate() --Core.Point#COORDINATE
+    local Coordinate=Zone:GetRandomCoordinate(nil, nil, surfacetypes) --Core.Point#COORDINATE
 
     -- Add waypoint.
     if self:IsFlightgroup() then
@@ -7452,6 +7512,14 @@ function OPSGROUP:onafterTransport(From, Event, To)
       -- Formation used for transporting.
       local Formation=self.cargoTransport:_GetFormationTransport(self.cargoTZC)
       
+      --[[
+      local coordinate=self:GetCoordinate()
+      local pathonroad=coordinate:GetPathOnRoad(Coordinate, false, false, true)
+      if pathonroad then
+        env.info("FF got path on road")
+      end
+      ]]
+            
       if path then
         -- Loop over coordinates.
         for i,coordinate in pairs(path) do
@@ -7483,7 +7551,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
       end
 
       -- NAVYGROUP
-      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid) ; waypoint.detour=1
+      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid, self.altitudeCruise) ; waypoint.detour=1
 
       -- Give cruise command.
       self:Cruise()
@@ -7585,26 +7653,40 @@ function OPSGROUP:onafterUnloading(From, Event, To)
             local Coordinate=nil
             
 
-            if  DisembarkZone then
+            if DisembarkZone then
 
               -- Random coordinate in disembark zone.
               Coordinate=DisembarkZone:GetRandomCoordinate()
 
             else
+            
+              local element=cargo.opsgroup:_GetMyCarrierElement()
+              
+              if element then
 
-              -- Get random point in disembark zone.
-              local zoneCarrier=self:GetElementZoneUnload(cargo.opsgroup:_GetMyCarrierElement().name)
-
-              -- Random coordinate/heading in the zone.
-              Coordinate=zoneCarrier:GetRandomCoordinate()
+                -- Get random point in disembark zone.
+                local zoneCarrier=self:GetElementZoneUnload(element.name)
+                
+                -- Random coordinate/heading in the zone.
+                Coordinate=zoneCarrier:GetRandomCoordinate()
+                
+              else
+                env.info(string.format("FF ERROR carrier element nil!"))
+              end
 
             end
 
             -- Random heading of the group.
             local Heading=math.random(0,359)
+            
+            -- Activation on/off.
+            local activation=self.cargoTransport:GetDisembarkActivation(self.cargoTZC)
+            if cargo.disembarkActivation~=nil then
+              activation=cargo.disembarkActivation
+            end           
 
             -- Unload to Coordinate.
-            self:Unload(cargo.opsgroup, Coordinate, self.cargoTransport:GetDisembarkActivation(self.cargoTZC), Heading)
+            self:Unload(cargo.opsgroup, Coordinate, activation, Heading)
 
           end
 
@@ -7771,6 +7853,7 @@ function OPSGROUP:onafterUnloadingDone(From, Event, To)
 
   if not delivered then
   
+    -- Get new TZC.
     self.cargoTZC=self.cargoTransport:_GetTransportZoneCombo(self)
     
     if self.cargoTZC then
@@ -7856,17 +7939,18 @@ function OPSGROUP:onafterDelivered(From, Event, To, CargoTransport)
       self:__Cruise(0.1)
     end
 
-    -- Check group done.
-    self:T(self.lid.."All cargo delivered ==> check group done in 0.2 sec")
-    self:_CheckGroupDone(0.2)
+    -- Set carrier transport status.
+    self.cargoTransport:SetCarrierTransportStatus(self, OPSTRANSPORT.Status.DELIVERED)
 
-    -- No current transport any more.
-    self.cargoTransport=nil
-    self.cargoTZC=nil
+    -- Check group done.
+    self:T(self.lid..string.format("All cargo of transport UID=%d delivered ==> check group done in 0.2 sec", self.cargoTransport.uid))
+    self:_CheckGroupDone(0.2)
+    
+
   end
 
   -- Remove cargo transport from cargo queue.
-  self:DelOpsTransport(CargoTransport)
+  --self:DelOpsTransport(CargoTransport)
 
 end
 
@@ -8023,7 +8107,8 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
   local CargoIsArmyOrNavy=self:IsArmygroup() or self:IsNavygroup()
 
   -- Check that carrier is standing still.
-  if (CarrierIsArmyOrNavy and (CarrierGroup:IsHolding() and CarrierGroup:GetVelocity(Carrier.name)<=1)) or (CarrierGroup:IsFlightgroup() and (CarrierGroup:IsParking() or CarrierGroup:IsLandedAt())) then
+  --if (CarrierIsArmyOrNavy and (CarrierGroup:IsHolding() and CarrierGroup:GetVelocity(Carrier.name)<=1)) or (CarrierGroup:IsFlightgroup() and (CarrierGroup:IsParking() or CarrierGroup:IsLandedAt())) then
+  if (CarrierIsArmyOrNavy and (CarrierGroup:GetVelocity(Carrier.name)<=1)) or (CarrierGroup:IsFlightgroup() and (CarrierGroup:IsParking() or CarrierGroup:IsLandedAt())) then
 
     -- Board if group is mobile, not late activated and army or navy. Everything else is loaded directly.
     local board=self.speedMax>0 and CargoIsArmyOrNavy and self:IsAlive() and CarrierGroup:IsAlive()
@@ -8036,7 +8121,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
     if board then
 
       -- Debug info.
-      self:T(self.lid..string.format("Boarding group=%s [%s], carrier=%s", CarrierGroup:GetName(), CarrierGroup:GetState(), Carrier.name))
+      self:T(self.lid..string.format("Boarding group=%s [%s], carrier=%s", CarrierGroup:GetName(), CarrierGroup:GetState(), tostring(Carrier.name)))
 
       -- TODO: Implement embarkzone.
       local Coordinate=Carrier.unit:GetCoordinate()
@@ -8062,7 +8147,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       ---
 
       -- Debug info.
-      self:T(self.lid..string.format("Board with direct load to carrier %s", CarrierGroup:GetName()))
+      self:T(self.lid..string.format("Board [loaded=%s] with direct load to carrier group=%s, element=%s", tostring(self:IsLoaded()), CarrierGroup:GetName(), tostring(Carrier.name)))
       
       -- Get current carrier group.
       local mycarriergroup=self:_GetMyCarrierGroup()      
@@ -8071,8 +8156,9 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
       end      
       
       -- Unload cargo first.
-      if mycarriergroup and mycarriergroup:GetName()~=CarrierGroup:GetName() and self:IsLoaded() then
+      if mycarriergroup and mycarriergroup:GetName()~=CarrierGroup:GetName() then
         -- TODO: Unload triggers other stuff like Disembarked. This can be a problem!
+        self:T(self.lid.."Unloading from mycarrier")
         mycarriergroup:Unload(self)
       end
 
@@ -8340,7 +8426,7 @@ function OPSGROUP:_CheckGroupDone(delay)
 
           -- Debug info.
           self:T(self.lid..string.format("Adinfinitum=TRUE ==> Goto WP index=%d at speed=%d knots", i, speed))
-
+          
         else
           self:E(self.lid..string.format("WARNING: No waypoints left! Commanding a Full Stop"))
           self:__FullStop(-1)

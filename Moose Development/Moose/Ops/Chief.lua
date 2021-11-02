@@ -2161,7 +2161,9 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
     elseif MissionType==AUFTRAG.Type.CAS then
 
       -- Create Patrol zone mission.
-      local mission=AUFTRAG:NewCAS(StratZone.opszone.zone, 7000)
+      --local mission=AUFTRAG:NewCAS(StratZone.opszone.zone, 7000)
+      local mission=AUFTRAG:NewPATROLZONE(StratZone.opszone.zone, 250, 7000)
+      mission:SetEngageDetected(25, TargetTypes,EngageZoneSet,NoEngageZoneSet)
                       
       -- Add assets to mission.
       for _,asset in pairs(assets) do

@@ -2155,7 +2155,7 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
         ---
 
         -- Got current mission or task?
-        if self.currentmission==nil and self.taskcurrent==0 and self.cargoTransport==nil then
+        if self.currentmission==nil and self.taskcurrent==0 and (self.cargoTransport==nil or self.cargoTransport:GetCarrierTransportStatus(self)==OPSTRANSPORT.Status.DELIVERED) then
 
           -- Number of remaining tasks/missions?
           if nTasks==0 and nMissions==0 and nTransports==0 then

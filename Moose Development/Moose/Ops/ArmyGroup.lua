@@ -816,7 +816,7 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     -- Update route.
     if #self.waypoints>1 then
       self:T(self.lid.."Got waypoints on spawn ==> Cruise in -0.1 sec!")
-      self:__Cruise(-0.1, nil, self.option.Formation)
+      self:__Cruise(-1, nil, self.option.Formation)
     else
       self:T(self.lid.."No waypoints on spawn ==> Full Stop!")
       self:FullStop()
@@ -910,7 +910,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
       wp.action=ENUMS.Formation.Vehicle.OffRoad
   
       -- Add "On Road" waypoint in between.
-      local wproad=wp.roadcoord:WaypointGround(wp.speed, ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
+      local wproad=wp.roadcoord:WaypointGround(UTILS.MpsToKmph(wp.speed), ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
       
       -- Insert road waypoint.
       table.insert(waypoints, wproad)
@@ -946,10 +946,12 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
  
   
   -- Debug output.
-  if self.verbose>=5 then
+  if self.verbose>=0 then
     for i,_wp in pairs(waypoints) do
-      local wp=_wp
+      local wp=_wp --Ops.OpsGroup#OPSGROUP.Waypoint
       local text=string.format("WP #%d UID=%d type=%s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.uid and wp.uid or -1, wp.type, wp.speed, wp.alt, wp.action)
+      local coord=COORDINATE:NewFromWaypoint(wp):MarkToAll(text)
+      --wp.coordinate:MarkToAll(text)
       self:T(text)
     end
   end
@@ -1487,7 +1489,7 @@ function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
   self.Twaiting=nil
   self.dTwait=nil
 
-  self:__UpdateRoute(-1, nil, nil, Speed, Formation)
+  self:__UpdateRoute(-0.1, nil, nil, Speed, Formation)
 
 end
 

@@ -1760,7 +1760,7 @@ end
 
 --- **[GROUND, NAVAL]** Create an ON GUARD mission.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Coordinate, were to be on guard.
+-- @param Core.Point#COORDINATE Coordinate Coordinate, where to stand guard.
 -- @return #AUFTRAG self
 function AUFTRAG:NewONGUARD(Coordinate)
 

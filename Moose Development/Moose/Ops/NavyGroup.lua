@@ -1008,7 +1008,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
       wp.speed=UTILS.KnotsToMps(Speed)
     else
       -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
-      if self.adinfinitum and wp.speed<0.1 then
+      if wp.speed<0.1 then --self.adinfinitum and 
         wp.speed=UTILS.KmphToMps(self.speedCruise)
       end
     end
@@ -1275,7 +1275,7 @@ function NAVYGROUP:onafterCruise(From, Event, To, Speed)
   -- No set depth.
   self.depth=nil
 
-  self:__UpdateRoute(-1, nil, nil, Speed)
+  self:__UpdateRoute(-0.1, nil, nil, Speed)
 
 end
 
