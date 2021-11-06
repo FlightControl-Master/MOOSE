@@ -3998,18 +3998,23 @@ function OPSGROUP:CountRemainingTransports()
   -- Loop over mission queue.
   for _,_transport in pairs(self.cargoqueue) do
     local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+    
+    local mystatus=transport:GetCarrierTransportStatus(self)
+    local status=transport:GetState()
 
     -- Debug info.
-    self:T(self.lid..string.format("Transport status=%s [%s]", transport:GetCarrierTransportStatus(self), transport:GetState()))
+    self:T(self.lid..string.format("Transport my status=%s [%s]", mystatus, status))
 
     -- Count not delivered (executing or scheduled) assignments.
-    if transport and transport:GetCarrierTransportStatus(self)==OPSTRANSPORT.Status.SCHEDULED and transport:GetState()~=OPSTRANSPORT.Status.DELIVERED then
+    if transport and mystatus==OPSTRANSPORT.Status.SCHEDULED and status~=OPSTRANSPORT.Status.DELIVERED and status~=OPSTRANSPORT.Status.CANCELLED then
       N=N+1
     end
   end
   
   -- In case we directly set the cargo transport (not in queue).
-  if N==0 and self.cargoTransport and self.cargoTransport:GetState()~=OPSTRANSPORT.Status.DELIVERED then
+  if N==0 and self.cargoTransport and 
+    self.cargoTransport:GetState()~=OPSTRANSPORT.Status.DELIVERED and self.cargoTransport:GetCarrierTransportStatus(self)~=OPSTRANSPORT.Status.DELIVERED and
+    self.cargoTransport:GetState()~=OPSTRANSPORT.Status.CANCELLED and self.cargoTransport:GetCarrierTransportStatus(self)~=OPSTRANSPORT.Status.CANCELLED then
     N=1
   end
 
@@ -6440,6 +6445,28 @@ function OPSGROUP:_AddCargobay(CargoGroup, CarrierElement, Reserved)
   return self
 end
 
+--- Get all groups currently loaded as cargo.
+-- @param #OPSGROUP self
+-- @param #string CarrierName (Optional) Only return cargo groups loaded into a particular carrier unit.
+-- @return #table Cargo ops groups.
+function OPSGROUP:GetCargoGroups(CarrierName)
+  local cargos={}
+  
+  for _,_element in pairs(self.elements) do
+    local element=_element --#OPSGROUP.Element
+    if CarrierName==nil or element.name==CarrierName then
+      for _,_cargo in pairs(element.cargoBay) do
+        local cargo=_cargo --#OPSGROUP.MyCargo
+        if not cargo.reserved then
+          table.insert(cargos, cargo.group)
+        end    
+      end
+    end
+  end
+  
+  return cargos
+end
+
 --- Get cargo bay item.
 -- @param #OPSGROUP self
 -- @param #OPSGROUP CargoGroup Cargo group.
@@ -6655,7 +6682,7 @@ function OPSGROUP:DelOpsTransport(CargoTransport)
       table.remove(self.cargoqueue, i)
       
       -- Remove carrier from ops transport.
-      CargoTransport:_DelCarrier(self, 1)      
+      CargoTransport:_DelCarrier(self)      
       
       return self
     end    
@@ -7049,6 +7076,9 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterPickup(From, Event, To)
 
+  -- Old status.
+  local oldstatus=self.carrierStatus
+
   -- Set carrier status.
   self:_NewCarrierStatus(OPSGROUP.CarrierStatus.PICKUP)
   
@@ -7094,8 +7124,18 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
   else
 
+    -- Set surface type of random coordinate.
+    local surfacetypes=nil
+    if self:IsArmygroup() or self:IsFlightgroup() then
+      surfacetypes={land.SurfaceType.LAND}
+    elseif self:IsNavygroup() then
+      surfacetypes={land.SurfaceType.WATER}    
+    end
+
     -- Get a random coordinate in the pickup zone and let the carrier go there.
-    local Coordinate=Zone:GetRandomCoordinate()
+    local Coordinate=Zone:GetRandomCoordinate(nil, nil, surfacetypes)
+    
+    --Coordinate:MarkToAll(string.format("Pickup coordinate for group %s [Surface type=%d]", self:GetName(), Coordinate:GetSurfaceType()))
 
     -- Add waypoint.
     if self:IsFlightgroup() then
@@ -7151,19 +7191,29 @@ function OPSGROUP:onafterPickup(From, Event, To)
       local uid=cwp and cwp.uid or nil
 
       -- Get a (random) pre-defined transport path.
-      local path=self.cargoTransport:_GetPathPickup(self.cargoTZC)
+      local path=self.cargoTransport:_GetPathPickup(self.category, self.cargoTZC)
 
-      if path then
-        -- Loop over coordinates.
-        for i,coordinate in pairs(path) do
-          local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
-          uid=waypoint.uid
-          --coordinate:MarkToAll(string.format("Path i=%d, UID=%d", i, uid))
+      -- Get transport path.
+      if path and oldstatus~=OPSGROUP.CarrierStatus.NOTCARRIER then
+        if path.reverse then
+          for i=#path.waypoints,1,-1 do
+            local wp=path.waypoints[i]
+            local coordinate=COORDINATE:NewFromWaypoint(wp)
+            local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid, nil, false) ; waypoint.temp=true
+            uid=waypoint.uid
+          end        
+        else
+          for i=1,#path.waypoints do
+            local wp=path.waypoints[i]
+            local coordinate=COORDINATE:NewFromWaypoint(wp)
+            local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid, nil, false) ; waypoint.temp=true
+            uid=waypoint.uid
+          end
         end
       end
 
       -- NAVYGROUP
-      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid, self.altitudeCruise) ; waypoint.detour=1
+      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid, self.altitudeCruise, false) ; waypoint.detour=1
 
       -- Give cruise command.
       self:__Cruise(-2)
@@ -7179,21 +7229,32 @@ function OPSGROUP:onafterPickup(From, Event, To)
       local uid=cwp and cwp.uid or nil
 
       -- Get a (random) pre-defined transport path.
-      local path=self.cargoTransport:_GetPathPickup(self.cargoTZC)
+      local path=self.cargoTransport:_GetPathPickup(self.category, self.cargoTZC)
 
       -- Formation used to go to the pickup zone..
       local Formation=self.cargoTransport:_GetFormationPickup(self.cargoTZC)
 
+      -- Get transport path.
       if path then
-        -- Loop over coordinates.
-        for i,coordinate in pairs(path) do
-          local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, Formation) ; waypoint.temp=true
-          uid=waypoint.uid
+        if path.reverse then
+          for i=#path.waypoints,1,-1 do
+            local wp=path.waypoints[i]
+            local coordinate=COORDINATE:NewFromWaypoint(wp)
+            local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, wp.action, false) ; waypoint.temp=true
+            uid=waypoint.uid
+          end        
+        else
+          for i=1,#path.waypoints do
+            local wp=path.waypoints[i]
+            local coordinate=COORDINATE:NewFromWaypoint(wp)
+            local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, wp.action, false) ; waypoint.temp=true
+            uid=waypoint.uid
+          end
         end
       end
 
       -- ARMYGROUP
-      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, uid, Formation) ; waypoint.detour=1
+      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, uid, Formation, false) ; waypoint.detour=1
       
       -- Give cruise command.
       self:__Cruise(-2)
@@ -7452,7 +7513,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
   else
   
     local surfacetypes=nil
-    if self:IsArmygroup() then
+    if self:IsArmygroup() or self:IsFlightgroup() then
       surfacetypes={land.SurfaceType.LAND}
     elseif self:IsNavygroup() then
       surfacetypes={land.SurfaceType.WATER}    
@@ -7460,6 +7521,8 @@ function OPSGROUP:onafterTransport(From, Event, To)
 
     -- Coord where the carrier goes to unload.
     local Coordinate=Zone:GetRandomCoordinate(nil, nil, surfacetypes) --Core.Point#COORDINATE
+    
+    --Coordinate:MarkToAll(string.format("Deploy coordinate for group %s [Surface type=%d]", self:GetName(), Coordinate:GetSurfaceType()))
 
     -- Add waypoint.
     if self:IsFlightgroup() then
@@ -7507,29 +7570,34 @@ function OPSGROUP:onafterTransport(From, Event, To)
       local uid=cwp and cwp.uid or nil
 
       -- Get transport path.
-      local path=self.cargoTransport:_GetPathTransport(self.cargoTZC)
+      local path=self.cargoTransport:_GetPathTransport(self.category, self.cargoTZC)
       
       -- Formation used for transporting.
       local Formation=self.cargoTransport:_GetFormationTransport(self.cargoTZC)
-      
-      --[[
-      local coordinate=self:GetCoordinate()
-      local pathonroad=coordinate:GetPathOnRoad(Coordinate, false, false, true)
-      if pathonroad then
-        env.info("FF got path on road")
-      end
-      ]]
             
+      -- Get transport path.
       if path then
-        -- Loop over coordinates.
-        for i,coordinate in pairs(path) do
-          local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, Formation) ; waypoint.temp=true
-          uid=waypoint.uid
+        env.info("FF 100")
+        if path.reverse then
+          for i=#path.waypoints,1,-1 do
+            local wp=path.waypoints[i]
+            local coordinate=COORDINATE:NewFromWaypoint(wp)
+            local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, wp.action, false) ; waypoint.temp=true
+            uid=waypoint.uid
+          end        
+        else
+          for i=1,#path.waypoints do
+            local wp=path.waypoints[i]
+            local coordinate=COORDINATE:NewFromWaypoint(wp)
+            coordinate:MarkToAll("Path")
+            local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, wp.action, false) ; waypoint.temp=true
+            uid=waypoint.uid
+          end
         end
       end
 
       -- ARMYGROUP
-      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, Formation) ; waypoint.detour=1
+      local waypoint=ARMYGROUP.AddWaypoint(self, Coordinate, nil, uid, Formation, false) ; waypoint.detour=1
 
       -- Give cruise command.
       self:Cruise()
@@ -7540,13 +7608,24 @@ function OPSGROUP:onafterTransport(From, Event, To)
       local uid=cwp and cwp.uid or nil
 
       -- Get a (random) pre-defined transport path.
-      local path=self.cargoTransport:_GetPathTransport(self.cargoTZC)
+      local path=self.cargoTransport:_GetPathTransport(self.category, self.cargoTZC)
 
+      -- Get transport path.
       if path then
-        -- Loop over coordinates.
-        for i,coordinate in pairs(path) do
-          local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
-          uid=waypoint.uid
+        if path.reverse then
+          for i=#path.waypoints,1,-1 do
+            local wp=path.waypoints[i]
+            local coordinate=COORDINATE:NewFromWaypoint(wp)
+            local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
+            uid=waypoint.uid
+          end        
+        else
+          for i=1,#path.waypoints do
+            local wp=path.waypoints[i]
+            local coordinate=COORDINATE:NewFromWaypoint(wp)
+            local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
+            uid=waypoint.uid
+          end
         end
       end
 
@@ -8045,13 +8124,13 @@ function OPSGROUP:onafterTransportCancel(From, Event, To, Transport)
     ---
 
     -- Set mission group status.
-    --Transport:SetGroupStatus(self, AUFTRAG.GroupStatus.CANCELLED)
+    Transport:SetCarrierTransportStatus(self, AUFTRAG.GroupStatus.CANCELLED)
 
-    -- Remove transport from queue.
+    -- Remove transport from queue. This also removes the carrier from the transport.
     self:DelOpsTransport(Transport)
     
     -- Remove carrier.
-    Transport:_DelCarrier(self)
+    --Transport:_DelCarrier(self)
 
     -- Send group RTB or WAIT if nothing left to do.
     self:_CheckGroupDone(1)

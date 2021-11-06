@@ -175,9 +175,10 @@ OPSTRANSPORT.Status={
 
 --- Path used for pickup or transport.
 -- @type OPSTRANSPORT.Path
--- @field #table coords Table of coordinates.
--- @field #number radius Radomization radius in meters. Default 0 m.
--- @field #number altitude Altitude in feet AGL. Only for aircraft.
+-- @field #table waypoints Table of waypoints.
+-- @field #number category Category for which carriers this path is used.
+-- @field #number radius Radomization radius for waypoints in meters. Default 0 m.
+-- @field #boolean reverse If `true`, path is used in reversed order.
 
 --- Generic transport condition.
 -- @type OPSTRANSPORT.Condition
@@ -189,15 +190,17 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.5.0"
+OPSTRANSPORT.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Trains.
--- TODO: Special transport cohorts/legions. Similar to mission.
--- TODO: Stop/abort transport.
+-- TODO: Stop transport.
+-- TODO: Improve pickup and transport paths.
+-- DONE: Special transport cohorts/legions. Similar to mission.
+-- DONE: Cancel transport.
 -- DONE: Allow multiple pickup/depoly zones.
 -- DONE: Add start conditions.
 -- DONE: Check carrier(s) dead.
@@ -1011,7 +1014,7 @@ end
 function OPSTRANSPORT:_DelCarrier(CarrierGroup, Delay)
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, OPSTRANSPORT._DelCarrier, CarrierGroup)
+    self:ScheduleOnce(Delay, OPSTRANSPORT._DelCarrier, self, CarrierGroup)
   else
     if self:IsCarrier(CarrierGroup) then
    
@@ -1180,41 +1183,34 @@ function OPSTRANSPORT:AddConditionStart(ConditionFunction, ...)
   return self
 end
 
---- Add path used for transportation from the pickup to the deploy zone. If multiple paths are defined, a random one is chosen.
+--- Add path used for transportation from the pickup to the deploy zone for **ground** and **naval** carriers.
+-- If multiple paths are defined, a random one is chosen. The path is retrieved from the waypoints of a given group.
+-- **NOTE** that the category group defines for which carriers this path is valid.
+-- For example, if you specify a GROUND group to provide the waypoints, only assigned GROUND carriers will use the
+-- path. 
 -- @param #OPSTRANSPORT self
 -- @param Wrapper.Group#GROUP PathGroup A (late activated) GROUP defining a transport path by their waypoints.
 -- @param #boolean Reversed If `true`, add waypoints of group in reversed order.
 -- @param #number Radius Randomization radius in meters. Default 0 m.
--- @param #number Altitude Altitude in feet AGL. Only for aircraft.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
 -- @return #OPSTRANSPORT self
-function OPSTRANSPORT:AddPathTransport(PathGroup, Reversed, Radius, Altitude, TransportZoneCombo)
+function OPSTRANSPORT:AddPathTransport(PathGroup, Reversed, Radius, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
   TransportZoneCombo=TransportZoneCombo or self.tzcDefault  
 
-  local path={} --#OPSTRANSPORT.Path
-  path.coords={}
-  path.radius=Radius or 0
-  path.altitude=Altitude
-
-  -- Get route points.  
-  local waypoints=PathGroup:GetTaskRoute()
-  
-  if Reversed then
-    for i=#waypoints,1,-1 do
-      local wp=waypoints[i]
-      local coord=COORDINATE:New(wp.x, wp.alt, wp.y)
-      table.insert(path.coords, coord)    
-    end
-  else
-    for i=1,#waypoints do
-      local wp=waypoints[i]
-      local coord=COORDINATE:New(wp.x, wp.alt, wp.y)
-      table.insert(path.coords, coord)    
-    end  
+  if type(PathGroup)=="string" then
+    PathGroup=GROUP:FindByName(PathGroup)
   end
 
+  local path={} --#OPSTRANSPORT.Path
+  path.coords={}
+  path.category=PathGroup:GetCategory()
+  path.radius=Radius or 0
+  path.reverse=Reversed
+  path.waypoints=PathGroup:GetTaskRoute()
+  
+  -- TODO: Check that only flyover waypoints are given for aircraft.
 
   -- Add path.
   table.insert(TransportZoneCombo.TransportPaths, path)
@@ -1224,9 +1220,10 @@ end
 
 --- Get a path for transportation.
 -- @param #OPSTRANSPORT self
+-- @param #number Category Group category.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
--- @return #table The path of COORDINATEs.
-function OPSTRANSPORT:_GetPathTransport(TransportZoneCombo)
+-- @return #OPSTRANSPORT.Path The path object.
+function OPSTRANSPORT:_GetPathTransport(Category, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
   TransportZoneCombo=TransportZoneCombo or self.tzcDefault
@@ -1235,21 +1232,21 @@ function OPSTRANSPORT:_GetPathTransport(TransportZoneCombo)
 
   if pathsTransport and #pathsTransport>0 then
   
-    -- Get a random path for transport.
-    local path=pathsTransport[math.random(#pathsTransport)] --#OPSTRANSPORT.Path
-
+    local paths={}
     
-    local coordinates={}
-    for _,_coord in ipairs(path.coords) do
-      local coord=_coord --Core.Point#COORDINATE 
-      
-      -- Get random coordinate.
-      local c=coord:GetRandomCoordinateInRadius(path.radius)
-    
-      table.insert(coordinates, c)
+    for _,_path in pairs(pathsTransport) do
+      local path=_path --#OPSTRANSPORT.Path
+      if path.category==Category then
+        table.insert(paths, path)
+      end
     end
-        
-    return coordinates
+    
+    if #paths>0 then
+    
+      local path=paths[math.random(#paths)] --#OPSTRANSPORT.Path
+      
+      return path
+    end
   end
 
   return nil
@@ -1261,35 +1258,22 @@ end
 -- @param Wrapper.Group#GROUP PathGroup A (late activated) GROUP defining a transport path by their waypoints.
 -- @param #boolean Reversed If `true`, add waypoints of group in reversed order.
 -- @param #number Radius Randomization radius in meters. Default 0 m.
--- @param #number Altitude Altitude in feet AGL. Only for aircraft.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
 -- @return #OPSTRANSPORT self
-function OPSTRANSPORT:AddPathPickup(PathGroup, Reversed, Radius, Altitude, TransportZoneCombo)
+function OPSTRANSPORT:AddPathPickup(PathGroup, Reversed, Radius, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
   TransportZoneCombo=TransportZoneCombo or self.tzcDefault
 
-  local path={} --#OPSTRANSPORT.Path
-  path.coords={}
-  path.radius=Radius or 0
-  path.altitude=Altitude
-
-  -- Get route points.  
-  local waypoints=PathGroup:GetTaskRoute()
-  
-  if Reversed then
-    for i=#waypoints,1,-1 do    
-      local wp=waypoints[i]
-      local coord=COORDINATE:New(wp.x, wp.alt, wp.y)
-      table.insert(path.coords, coord)    
-    end
-  else
-    for i=1,#waypoints do
-      local wp=waypoints[i]
-      local coord=COORDINATE:New(wp.x, wp.alt, wp.y)
-      table.insert(path.coords, coord)    
-    end  
+  if type(PathGroup)=="string" then
+    PathGroup=GROUP:FindByName(PathGroup)
   end
+
+  local path={} --#OPSTRANSPORT.Path
+  path.category=PathGroup:GetCategory()
+  path.radius=Radius or 0
+  path.reverse=Reversed
+  path.waypoints=PathGroup:GetTaskRoute()
   
   -- Add path.
   table.insert(TransportZoneCombo.PickupPaths, path)
@@ -1299,32 +1283,33 @@ end
 
 --- Get a path for pickup.
 -- @param #OPSTRANSPORT self
+-- @param #number Category Group category.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
 -- @return #table The path of COORDINATEs.
-function OPSTRANSPORT:_GetPathPickup(TransportZoneCombo)
+function OPSTRANSPORT:_GetPathPickup(Category, TransportZoneCombo)
 
   -- Use default TZC if no transport zone combo is provided.
   TransportZoneCombo=TransportZoneCombo or self.tzcDefault
 
-  local paths=TransportZoneCombo.PickupPaths
+  local Paths=TransportZoneCombo.PickupPaths
 
-  if paths and #paths>0 then
+  if Paths and #Paths>0 then
   
-    -- Get a random path for transport.
-    local path=paths[math.random(#paths)] --#OPSTRANSPORT.Path
-
+    local paths={}
     
-    local coordinates={}
-    for _,_coord in ipairs(path.coords) do
-      local coord=_coord --Core.Point#COORDINATE 
-      
-      -- Get random coordinate.
-      local c=coord:GetRandomCoordinateInRadius(path.radius)
-    
-      table.insert(coordinates, c)
+    for _,_path in pairs(Paths) do
+      local path=_path --#OPSTRANSPORT.Path
+      if path.category==Category then
+        table.insert(paths, path)
+      end
     end
-        
-    return coordinates
+    
+    if #paths>0 then
+    
+      local path=paths[math.random(#paths)] --#OPSTRANSPORT.Path
+      
+      return path
+    end
   end
 
   return nil

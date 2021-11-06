@@ -1201,8 +1201,9 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
   end
 
   local function _checkSurface(point)
+    local stype=land.getSurfaceType(point)
     for _,sf in pairs(surfacetypes) do
-      if sf==land.getSurfaceType(point) then
+      if sf==stype then
         return true
       end
     end
@@ -1212,10 +1213,15 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
 	local point=_getpoint()
 
 	if surfacetypes then
-	  local N=1 ; local Nmax=1000
-    while _checkSurface(point)==false and N<=Nmax do
-      point=_getpoint()
-      N=N+1
+	  local N=1 ; local Nmax=1000 ; local gotit=false
+    while gotit==false and N<=Nmax do
+      gotit=_checkSurface(point)
+      if gotit then
+        env.info(string.format("Got random coordinate with surface type %d after N=%d/%d iterations", land.getSurfaceType(point), N, Nmax))
+      else
+        point=_getpoint()
+        N=N+1      
+      end
     end
   end
 
@@ -2195,6 +2201,9 @@ end
 do -- ZONE_AIRBASE
 
   --- @type ZONE_AIRBASE
+  -- @field #boolean isShip If `true`, airbase is a ship.
+  -- @field #boolean isHelipad If `true`, airbase is a helipad.
+  -- @field #boolean isAirdrome If `true`, airbase is an airdrome.
   -- @extends #ZONE_RADIUS
 
 
@@ -2251,9 +2260,9 @@ do -- ZONE_AIRBASE
     return self._.ZoneAirbase
   end
 
-  --- Returns the current location of the @{Wrapper.Group}.
+  --- Returns the current location of the AIRBASE.
   -- @param #ZONE_AIRBASE self
-  -- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Group} location.
+  -- @return DCS#Vec2 The location of the zone based on the AIRBASE location.
   function ZONE_AIRBASE:GetVec2()
     self:F( self.ZoneName )
 
@@ -2269,24 +2278,6 @@ do -- ZONE_AIRBASE
     self:T( { ZoneVec2 } )
 
     return ZoneVec2
-  end
-
-  --- Returns a random location within the zone of the @{Wrapper.Group}.
-  -- @param #ZONE_AIRBASE self
-  -- @return DCS#Vec2 The random location of the zone based on the @{Wrapper.Group} location.
-  function ZONE_AIRBASE:GetRandomVec2()
-    self:F( self.ZoneName )
-
-    local Point = {}
-    local Vec2 = self._.ZoneAirbase:GetVec2()
-
-    local angle = math.random() * math.pi*2;
-    Point.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
-    Point.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
-
-    self:T( { Point } )
-
-    return Point
   end
 
   --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
