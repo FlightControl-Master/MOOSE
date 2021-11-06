@@ -671,10 +671,10 @@ function SCORING:_AddPlayerFromUnit( UnitData )
         self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + self.CoalitionChangePenalty or 50
         self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
         MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' changed coalition from " .. _SCORINGCoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. _SCORINGCoalition[UnitCoalition] ..
-          "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.",
+          "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). ".. self.CoalitionChangePenalty .."Penalty points added.",
           MESSAGE.Type.Information
         ):ToAll()
-        self:ScoreCSV( PlayerName, "", "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, _SCORINGCoalition[self.Players[PlayerName].UnitCoalition], _SCORINGCategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
+        self:ScoreCSV( PlayerName, "", "COALITION_PENALTY",  1, -1*self.CoalitionChangePenalty, self.Players[PlayerName].UnitName, _SCORINGCoalition[self.Players[PlayerName].UnitCoalition], _SCORINGCategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
           UnitName, _SCORINGCoalition[UnitCoalition], _SCORINGCategory[UnitCategory], UnitData:GetTypeName() )
       end
     end
@@ -1142,9 +1142,9 @@ function SCORING:_EventOnHit( Event )
           if InitCoalition then -- A coalition object was hit, probably a static.
             if InitCoalition == TargetCoalition then
               -- TODO: Penalty according scale
-              Player.Penalty = Player.Penalty + 10
-              PlayerHit.Penalty = PlayerHit.Penalty + 10
-              PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1
+              Player.Penalty = Player.Penalty + 10 --* self.ScaleDestroyPenalty
+              PlayerHit.Penalty = PlayerHit.Penalty + 10 --* self.ScaleDestroyPenalty
+              PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1 * self.ScaleDestroyPenalty
       
               MESSAGE
                 :NewType( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit friendly target " .. 
