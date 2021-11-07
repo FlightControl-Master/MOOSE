@@ -2132,6 +2132,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
         
         if MissionType==AUFTRAG.Type.PATROLZONE then
           mission=AUFTRAG:NewPATROLZONE(StratZone.opszone.zone)
+          mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})
         elseif MissionType==AUFTRAG.Type.ONGUARD then 
           mission=AUFTRAG:NewONGUARD(StratZone.opszone.zone:GetRandomCoordinate(), nil, nil, {land.SurfaceType.LAND})
         end
@@ -2161,9 +2162,8 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
     elseif MissionType==AUFTRAG.Type.CAS then
 
       -- Create Patrol zone mission.
-      --local mission=AUFTRAG:NewCAS(StratZone.opszone.zone, 7000)
-      local mission=AUFTRAG:NewPATROLZONE(StratZone.opszone.zone, 250, 7000)
-      mission:SetEngageDetected(25, TargetTypes,EngageZoneSet,NoEngageZoneSet)
+      local mission=AUFTRAG:NewPATROLZONE(StratZone.opszone.zone)
+      mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})
                       
       -- Add assets to mission.
       for _,asset in pairs(assets) do

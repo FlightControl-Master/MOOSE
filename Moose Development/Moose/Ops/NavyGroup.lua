@@ -1465,7 +1465,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use `COORDINATE:SetAltitude()` to define the altitude.
 -- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
 -- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Depth Depth at waypoint in meters. Only for submarines.
+-- @param #number Depth Depth at waypoint in feet. Only for submarines.
 -- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Updateroute)
@@ -1484,6 +1484,11 @@ function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Up
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
+
+  -- Set altitude.
+  if Depth then
+    waypoint.alt=UTILS.FeetToMeters(Depth)
+  end
 
   -- Add waypoint to table.
   self:_AddWaypoint(waypoint, wpnumber)

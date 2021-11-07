@@ -4631,7 +4631,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       elseif self:IsArmygroup() then
         waypoint=ARMYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, uid, mission.optionFormation, false)
       elseif self:IsNavygroup() then
-        waypoint=NAVYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, uid, mission.missionAltitude or self.altitudeCruise, false)
+        waypoint=NAVYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
       end
       waypoint.missionUID=mission.auftragsnummer
       mission:SetGroupEgressWaypointUID(self, waypoint.uid)
@@ -4854,7 +4854,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
     -- Speed and altitude.
     local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)
-    local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil
+    local Altitude=UTILS.MetersToFeet(task.dcstask.params.altitude or self.altitudeCruise)
 
     local currUID=self:GetWaypointCurrent().uid
 
