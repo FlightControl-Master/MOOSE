@@ -4596,17 +4596,19 @@ function OPSGROUP:RouteToMission(mission, delay)
       end
     end
 
-    -- Formation.
-    local formation=nil
-    if self.isArmygroup and mission.optionFormation then
-      formation=mission.optionFormation
-    end
-
     -- UID of this waypoint.
     local uid=self:GetWaypointCurrent().uid
 
     -- Add waypoint.
-    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, uid, formation, false) ; waypoint.missionUID=mission.auftragsnummer
+    local waypoint=nil --#OPSGROUP.Waypoint
+    if self:IsFlightgroup() then
+      waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+    elseif self:IsArmygroup() then
+      waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
+    elseif self:IsNavygroup() then
+      waypoint=NAVYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.missionAltitude or self.altitudeCruise, false)
+    end
+    waypoint.missionUID=mission.auftragsnummer
 
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, waypoint, mission.name, mission.prio, mission.duration)
@@ -4619,11 +4621,20 @@ function OPSGROUP:RouteToMission(mission, delay)
     mission:SetGroupWaypointIndex(self, waypoint.uid)
 
     -- Add egress waypoint.
-    local egress=mission:GetMissionEgressCoord()
-    if egress then
-      --egress:MarkToAll(string.format("Egress Mission %s alt=%d m", mission:GetName(), waypointcoord.y))
-      local waypointEgress=self:AddWaypoint(egress, SpeedToMission, waypoint.uid, formation, false) ; waypointEgress.missionUID=mission.auftragsnummer
-      mission:SetGroupEgressWaypointUID(self, waypointEgress.uid)
+    local egresscoord=mission:GetMissionEgressCoord()
+    if egresscoord then
+      --egresscoord:MarkToAll(string.format("Egress Mission %s alt=%d m", mission:GetName(), waypointcoord.y))
+      -- Add waypoint.
+      local waypoint=nil --#OPSGROUP.Waypoint
+      if self:IsFlightgroup() then
+        waypoint=FLIGHTGROUP.AddWaypoint(self, egresscoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+      elseif self:IsArmygroup() then
+        waypoint=ARMYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, uid, mission.optionFormation, false)
+      elseif self:IsNavygroup() then
+        waypoint=NAVYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, uid, mission.missionAltitude or self.altitudeCruise, false)
+      end
+      waypoint.missionUID=mission.auftragsnummer
+      mission:SetGroupEgressWaypointUID(self, waypoint.uid)
     end
 
     ---
