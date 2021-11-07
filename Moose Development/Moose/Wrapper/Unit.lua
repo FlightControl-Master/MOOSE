@@ -442,7 +442,7 @@ function UNIT:GetSpeedMax()
     return SpeedMax*3.6
   end
 
-  return nil
+  return 0
 end
 
 --- Returns the unit's max range in meters derived from the DCS descriptors.

@@ -19,7 +19,7 @@
 --
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
-
+--
 -- Date: July 2021
 
 -------------------------------------------------------------------------

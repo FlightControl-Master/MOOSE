@@ -2,7 +2,7 @@
 -- 
 -- **Specific features:**
 -- 
---   * Creates a task to transport @{Cargo.Cargo} to and between deployment zones.
+--   * Creates a task to transport #Cargo.Cargo to and between deployment zones.
 --   * Derived from the TASK_CARGO class, which is derived from the TASK class.
 --   * Orchestrate the task flow, so go from Planned to Assigned to Success, Failed or Cancelled.
 --   * Co-operation tasking, so a player joins a group of players executing the same task.
@@ -44,7 +44,7 @@
 --
 -- ===
 -- 
--- Please read through the @{Tasking.Task_Cargo} process to understand the mechanisms of tasking and cargo tasking and handling.
+-- Please read through the #Tasking.Task_Cargo process to understand the mechanisms of tasking and cargo tasking and handling.
 -- 
 -- Enjoy!
 -- FC
@@ -57,7 +57,7 @@
 
 do -- TASK_CARGO_TRANSPORT
 
-  --- @type TASK_CARGO_TRANSPORT
+  -- @type TASK_CARGO_TRANSPORT
   -- @extends Tasking.Task_CARGO#TASK_CARGO
 
   --- Orchestrates the task for players to transport cargo to or between deployment zones.
@@ -76,7 +76,7 @@ do -- TASK_CARGO_TRANSPORT
   -- 
   -- ## 1.1) Create a command center.
   -- 
-  -- First you need to create a command center using the @{Tasking.CommandCenter#COMMANDCENTER.New}() constructor.
+  -- First you need to create a command center using the Tasking.CommandCenter#COMMANDCENTER.New constructor.
   -- 
   --     local CommandCenter = COMMANDCENTER
   --        :New( HQ, "Lima" ) -- Create the CommandCenter.
@@ -85,7 +85,7 @@ do -- TASK_CARGO_TRANSPORT
   -- 
   -- Tasks work in a mission, which groups these tasks to achieve a joint mission goal.
   -- A command center can govern multiple missions.
-  -- Create a new mission, using the @{Tasking.Mission#MISSION.New}() constructor.
+  -- Create a new mission, using the Tasking.Mission#MISSION.New constructor.
   -- 
   --     -- Declare the Mission for the Command Center.
   --     local Mission = MISSION
@@ -99,7 +99,7 @@ do -- TASK_CARGO_TRANSPORT
   -- ## 1.3) Create the transport cargo task.
   -- 
   -- So, now that we have a command center and a mission, we now create the transport task.
-  -- We create the transport task using the @{#TASK_CARGO_TRANSPORT.New}() constructor.
+  -- We create the transport task using the #TASK_CARGO_TRANSPORT.New constructor.
   -- 
   -- Because a transport task will not generate the cargo itself, you'll need to create it first.
   -- The cargo in this case will be the downed pilot!
@@ -118,7 +118,7 @@ do -- TASK_CARGO_TRANSPORT
   --     -- The cargoset "CargoSet" will embed all defined cargo of type "Pilots" (prefix) into its set.
   --     local CargoGroup = CARGO_GROUP:New( PilotGroup, "Cargo", "Engineer Team 1", 500 )
   -- 
-  -- What is also needed, is to have a set of @{Core.Group}s defined that contains the clients of the players.
+  -- What is also needed, is to have a set of Core.Groups defined that contains the clients of the players.
   -- 
   --     -- Allocate the Transport, which are the helicopter to retrieve the pilot, that can be manned by players.
   --     local GroupSet = SET_GROUP:New():FilterPrefixes( "Transport" ):FilterStart()
@@ -139,48 +139,48 @@ do -- TASK_CARGO_TRANSPORT
   -- By doing this, cargo transport tasking will become a dynamic experience.
   -- 
   -- 
-  -- # 2) Create a task using the @{Tasking.Task_Cargo_Dispatcher} module.
+  -- # 2) Create a task using the Tasking.Task_Cargo_Dispatcher module.
   -- 
-  -- Actually, it is better to **GENERATE** these tasks using the @{Tasking.Task_Cargo_Dispatcher} module.
-  -- Using the dispatcher module, transport tasks can be created much more easy.
+  -- Actually, it is better to **GENERATE** these tasks using the Tasking.Task_Cargo_Dispatcher module.
+  -- Using the dispatcher module, transport tasks can be created easier.
   -- 
   -- Find below an example how to use the TASK_CARGO_DISPATCHER class:
   -- 
   -- 
-  --    -- Find the HQ group.
-  --    HQ = GROUP:FindByName( "HQ", "Bravo" )
+  --        -- Find the HQ group.
+  --        HQ = GROUP:FindByName( "HQ", "Bravo" )
   --    
-  --    -- Create the command center with the name "Lima".
-  --    CommandCenter = COMMANDCENTER
-  --      :New( HQ, "Lima" )
+  --        -- Create the command center with the name "Lima".
+  --        CommandCenter = COMMANDCENTER
+  --          :New( HQ, "Lima" )
   --    
-  --    -- Create the mission, for the command center, with the name "Operation Cargo Fun", a "Tactical" mission, with the mission briefing "Transport Cargo", for the BLUE coalition.
-  --    Mission = MISSION
-  --      :New( CommandCenter, "Operation Cargo Fun", "Tactical", "Transport Cargo", coalition.side.BLUE )
+  --        -- Create the mission, for the command center, with the name "Operation Cargo Fun", a "Tactical" mission, with the mission briefing "Transport Cargo", for the BLUE coalition.
+  --        Mission = MISSION
+  --          :New( CommandCenter, "Operation Cargo Fun", "Tactical", "Transport Cargo", coalition.side.BLUE )
   --    
-  --    -- Create the SET of GROUPs containing clients (players) that will transport the cargo.
-  --    -- These are have a name that start with "Transport" and are of the "blue" coalition.
-  --    TransportGroups = SET_GROUP:New():FilterCoalitions( "blue" ):FilterPrefixes( "Transport" ):FilterStart()
-  --    
-  --    
-  --    -- Here we create the TASK_CARGO_DISPATCHER object! This is where we assign the dispatcher to generate tasks in the Mission for the TransportGroups.
-  --    TaskDispatcher = TASK_CARGO_DISPATCHER:New( Mission, TransportGroups )
+  --        -- Create the SET of GROUPs containing clients (players) that will transport the cargo.
+  --        -- These are have a name that start with "Transport" and are of the "blue" coalition.
+  --        TransportGroups = SET_GROUP:New():FilterCoalitions( "blue" ):FilterPrefixes( "Transport" ):FilterStart()
   --    
   --    
-  --    -- Here we declare the SET of CARGOs called "Workmaterials".
-  --    local CargoSetWorkmaterials = SET_CARGO:New():FilterTypes( "Workmaterials" ):FilterStart()
+  --        -- Here we create the TASK_CARGO_DISPATCHER object! This is where we assign the dispatcher to generate tasks in the Mission for the TransportGroups.
+  --        TaskDispatcher = TASK_CARGO_DISPATCHER:New( Mission, TransportGroups )
   --    
-  --    -- Here we declare (add) CARGO_GROUP objects of various types, that are filtered and added in the CargoSetworkmaterials cargo set.
-  --    -- These cargo objects have the type "Workmaterials" which is exactly the type of cargo the CargoSetworkmaterials is filtering on.
-  --    local EngineerCargoGroup = CARGO_GROUP:New( GROUP:FindByName( "Engineers" ), "Workmaterials", "Engineers", 250 )
-  --    local ConcreteCargo = CARGO_SLINGLOAD:New( STATIC:FindByName( "Concrete" ), "Workmaterials", "Concrete", 150, 50 )
-  --    local CrateCargo = CARGO_CRATE:New( STATIC:FindByName( "Crate" ), "Workmaterials", "Crate", 150, 50 )
-  --    local EnginesCargo = CARGO_CRATE:New( STATIC:FindByName( "Engines" ), "Workmaterials", "Engines", 150, 50 )
-  --    local MetalCargo = CARGO_CRATE:New( STATIC:FindByName( "Metal" ), "Workmaterials", "Metal", 150, 50 )
   --    
-  --    -- And here we create a new WorkplaceTask, using the :AddTransportTask method of the TaskDispatcher.
-  --    local WorkplaceTask = TaskDispatcher:AddTransportTask( "Build a Workplace", CargoSetWorkmaterials, "Transport the workers, engineers and the equipment near the Workplace." )
-  --    TaskDispatcher:SetTransportDeployZone( WorkplaceTask, ZONE:New( "Workplace" ) )
+  --        -- Here we declare the SET of CARGOs called "Workmaterials".
+  --        local CargoSetWorkmaterials = SET_CARGO:New():FilterTypes( "Workmaterials" ):FilterStart()
+  --    
+  --        -- Here we declare (add) CARGO_GROUP objects of various types, that are filtered and added in the CargoSetworkmaterials cargo set.
+  --        -- These cargo objects have the type "Workmaterials" which is exactly the type of cargo the CargoSetworkmaterials is filtering on.
+  --        local EngineerCargoGroup = CARGO_GROUP:New( GROUP:FindByName( "Engineers" ), "Workmaterials", "Engineers", 250 )
+  --        local ConcreteCargo = CARGO_SLINGLOAD:New( STATIC:FindByName( "Concrete" ), "Workmaterials", "Concrete", 150, 50 )
+  --        local CrateCargo = CARGO_CRATE:New( STATIC:FindByName( "Crate" ), "Workmaterials", "Crate", 150, 50 )
+  --        local EnginesCargo = CARGO_CRATE:New( STATIC:FindByName( "Engines" ), "Workmaterials", "Engines", 150, 50 )
+  --        local MetalCargo = CARGO_CRATE:New( STATIC:FindByName( "Metal" ), "Workmaterials", "Metal", 150, 50 )
+  --    
+  --          -- And here we create a new WorkplaceTask, using the :AddTransportTask method of the TaskDispatcher.
+  --          local WorkplaceTask = TaskDispatcher:AddTransportTask( "Build a Workplace", CargoSetWorkmaterials, "Transport the workers, engineers and the equipment near the Workplace." )
+  --          TaskDispatcher:SetTransportDeployZone( WorkplaceTask, ZONE:New( "Workplace" ) )
   -- 
   -- # 3) Handle cargo task events.
   -- 
@@ -189,7 +189,7 @@ do -- TASK_CARGO_TRANSPORT
   -- In order to properly capture the events and avoid mistakes using the documentation, it is advised that you execute the following actions:
   -- 
   --   * **Copy / Paste** the code section into your script.
-  --   * **Change** the CLASS literal to the task object name you have in your script.
+  --   * **Change** the "myclass" literal to the task object name you have in your script.
   --   * Within the function, you can now **write your own code**!
   --   * **IntelliSense** will recognize the type of the variables provided by the function. Note: the From, Event and To variables can be safely ignored, 
   --     but you need to declare them as they are automatically provided by the event handling system of MOOSE.
@@ -210,14 +210,13 @@ do -- TASK_CARGO_TRANSPORT
   -- If you want to code your own event handler, use this code fragment to tailor the event when a player carrier has picked up a cargo object in the CarrierGroup.
   -- You can use this event handler to post messages to players, or provide status updates etc.
   -- 
-  --      --- CargoPickedUp event handler OnAfter for CLASS.
-  --      -- @param #CLASS self
+  --      --- CargoPickedUp event handler OnAfter for "myclass".
   --      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
   --      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
   --      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
   --      -- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has picked up the cargo.
   --      -- @param Cargo.Cargo#CARGO Cargo The cargo object that has been picked up. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
-  --      function CLASS:OnAfterCargoPickedUp( From, Event, To, TaskUnit, Cargo )
+  --      function myclass:OnAfterCargoPickedUp( From, Event, To, TaskUnit, Cargo )
   --      
   --        -- Write here your own code.
   --      
@@ -240,15 +239,14 @@ do -- TASK_CARGO_TRANSPORT
   -- You can use this event handler to post messages to players, or provide status updates etc.
   -- 
   -- 
-  --      --- CargoDeployed event handler OnAfter for CLASS.
-  --      -- @param #CLASS self
+  --      --- CargoDeployed event handler OnAfter foR "myclass".
   --      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
   --      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
   --      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
   --      -- @param Wrapper.Unit#UNIT TaskUnit The unit (client) of the player that has deployed the cargo.
   --      -- @param Cargo.Cargo#CARGO Cargo The cargo object that has been deployed. Note that this can be a CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD object!
   --      -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
-  --      function CLASS:OnAfterCargoDeployed( From, Event, To, TaskUnit, Cargo, DeployZone )
+  --      function myclass:OnAfterCargoDeployed( From, Event, To, TaskUnit, Cargo, DeployZone )
   --      
   --        -- Write here your own code.
   --      
