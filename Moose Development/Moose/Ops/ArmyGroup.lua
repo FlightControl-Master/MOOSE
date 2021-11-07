@@ -946,13 +946,12 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
  
   
   -- Debug output.
-  if self.verbose>=0 then
+  if self.verbose>=10 then
     for i,_wp in pairs(waypoints) do
       local wp=_wp --Ops.OpsGroup#OPSGROUP.Waypoint
       local text=string.format("WP #%d UID=%d type=%s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.uid and wp.uid or -1, wp.type, wp.speed, wp.alt, wp.action)
       local coord=COORDINATE:NewFromWaypoint(wp):MarkToAll(text)
-      --wp.coordinate:MarkToAll(text)
-      self:T(text)
+      self:I(text)
     end
   end
 

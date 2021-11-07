@@ -7133,9 +7133,14 @@ function OPSGROUP:onafterPickup(From, Event, To)
     end
 
     -- Get a random coordinate in the pickup zone and let the carrier go there.
-    local Coordinate=Zone:GetRandomCoordinate(nil, nil, surfacetypes)
-    
+    local Coordinate=Zone:GetRandomCoordinate(nil, nil, surfacetypes)    
     --Coordinate:MarkToAll(string.format("Pickup coordinate for group %s [Surface type=%d]", self:GetName(), Coordinate:GetSurfaceType()))
+
+    -- Current Waypoint.
+    local cwp=self:GetWaypointCurrent()
+    
+    -- Current waypoint ID.
+    local uid=cwp and cwp.uid or nil
 
     -- Add waypoint.
     if self:IsFlightgroup() then
@@ -7155,8 +7160,33 @@ function OPSGROUP:onafterPickup(From, Event, To)
         -- Pickup at airbase
         ---
 
-        -- Order group to land at an airbase.
-        self:__LandAtAirbase(-0.1, airbasePickup)
+        -- Get a (random) pre-defined transport path.
+        local path=self.cargoTransport:_GetPathTransport(self.category, self.cargoTZC)
+
+        -- Get transport path.
+        if path and oldstatus~=OPSGROUP.CarrierStatus.NOTCARRIER then
+        
+          for i=#path.waypoints,1,-1 do
+            local wp=path.waypoints[i]
+            local coordinate=COORDINATE:NewFromWaypoint(wp)
+            local waypoint=FLIGHTGROUP.AddWaypoint(self, coordinate, nil, uid, nil, false) ; waypoint.temp=true
+            uid=waypoint.uid
+            if i==1 then
+              waypoint.temp=false
+              waypoint.detour=1 --Needs to trigger the landatairbase function.
+            end
+          end
+          
+        else
+  
+          local coordinate=self:GetCoordinate():GetIntermediateCoordinate(Coordinate, 0.5)
+          
+          --coordinate:MarkToAll("Pickup Inter Coord")
+  
+          -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
+          local waypoint=FLIGHTGROUP.AddWaypoint(self, coordinate, nil, uid, UTILS.MetersToFeet(self.altitudeCruise), true) ; waypoint.detour=1
+  
+        end
 
       elseif self.isHelo then
 
@@ -7165,7 +7195,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
         ---
 
         -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
-        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, self:GetWaypointCurrent().uid, UTILS.MetersToFeet(self.altitudeCruise), false) ; waypoint.detour=1
+        local waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, nil, uid, UTILS.MetersToFeet(self.altitudeCruise), false) ; waypoint.detour=1
         
       else
         self:E(self.lid.."ERROR: Transportcarrier aircraft cannot land in Pickup zone! Specify a ZONE_AIRBASE as pickup zone")
@@ -7179,7 +7209,11 @@ function OPSGROUP:onafterPickup(From, Event, To)
         else
           self:E(self.lid.."ERROR: No current task but landed at?!")
         end
-      end            
+      end
+      
+      if self:IsWaiting() then
+        self:__Cruise(-2)
+      end       
       
     elseif self:IsNavygroup() then
 
@@ -7187,29 +7221,17 @@ function OPSGROUP:onafterPickup(From, Event, To)
       -- Navy Group
       ---
 
-      local cwp=self:GetWaypointCurrent()
-      local uid=cwp and cwp.uid or nil
-
       -- Get a (random) pre-defined transport path.
-      local path=self.cargoTransport:_GetPathPickup(self.category, self.cargoTZC)
+      local path=self.cargoTransport:_GetPathTransport(self.category, self.cargoTZC)
 
       -- Get transport path.
-      if path and oldstatus~=OPSGROUP.CarrierStatus.NOTCARRIER then
-        if path.reverse then
-          for i=#path.waypoints,1,-1 do
-            local wp=path.waypoints[i]
-            local coordinate=COORDINATE:NewFromWaypoint(wp)
-            local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid, nil, false) ; waypoint.temp=true
-            uid=waypoint.uid
-          end        
-        else
-          for i=1,#path.waypoints do
-            local wp=path.waypoints[i]
-            local coordinate=COORDINATE:NewFromWaypoint(wp)
-            local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid, nil, false) ; waypoint.temp=true
-            uid=waypoint.uid
-          end
-        end
+      if path then --and oldstatus~=OPSGROUP.CarrierStatus.NOTCARRIER then
+        for i=#path.waypoints,1,-1 do
+          local wp=path.waypoints[i]
+          local coordinate=COORDINATE:NewFromWaypoint(wp)
+          local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid, nil, false) ; waypoint.temp=true
+          uid=waypoint.uid
+        end        
       end
 
       -- NAVYGROUP
@@ -7223,34 +7245,22 @@ function OPSGROUP:onafterPickup(From, Event, To)
 
       ---
       -- Army Group
-      ---    
-
-      local cwp=self:GetWaypointCurrent()
-      local uid=cwp and cwp.uid or nil
+      ---
 
       -- Get a (random) pre-defined transport path.
-      local path=self.cargoTransport:_GetPathPickup(self.category, self.cargoTZC)
+      local path=self.cargoTransport:_GetPathTransport(self.category, self.cargoTZC)
 
       -- Formation used to go to the pickup zone..
-      local Formation=self.cargoTransport:_GetFormationPickup(self.cargoTZC)
+      local Formation=self.cargoTransport:_GetFormationTransport(self.cargoTZC)
 
       -- Get transport path.
-      if path then
-        if path.reverse then
-          for i=#path.waypoints,1,-1 do
-            local wp=path.waypoints[i]
-            local coordinate=COORDINATE:NewFromWaypoint(wp)
-            local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, wp.action, false) ; waypoint.temp=true
-            uid=waypoint.uid
-          end        
-        else
-          for i=1,#path.waypoints do
-            local wp=path.waypoints[i]
-            local coordinate=COORDINATE:NewFromWaypoint(wp)
-            local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, wp.action, false) ; waypoint.temp=true
-            uid=waypoint.uid
-          end
-        end
+      if path and oldstatus~=OPSGROUP.CarrierStatus.NOTCARRIER then
+        for i=#path.waypoints,1,-1 do
+          local wp=path.waypoints[i]
+          local coordinate=COORDINATE:NewFromWaypoint(wp)
+          local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, wp.action, false) ; waypoint.temp=true
+          uid=waypoint.uid
+        end        
       end
 
       -- ARMYGROUP
@@ -7537,9 +7547,40 @@ function OPSGROUP:onafterTransport(From, Event, To)
         ---
         -- Deploy at airbase
         ---
+
+        local cwp=self:GetWaypointCurrent()
+        local uid=cwp and cwp.uid or nil
+  
+        -- Get a (random) pre-defined transport path.
+        local path=self.cargoTransport:_GetPathTransport(self.category, self.cargoTZC)
+
+        -- Get transport path.
+        if path then
+        
+          for i=1, #path.waypoints do
+            local wp=path.waypoints[i]
+            local coordinate=COORDINATE:NewFromWaypoint(wp)
+            local waypoint=FLIGHTGROUP.AddWaypoint(self, coordinate, nil, uid, nil, false) ; waypoint.temp=true
+            uid=waypoint.uid
+            if i==#path.waypoints then
+              waypoint.temp=false
+              waypoint.detour=1 --Needs to trigger the landatairbase function.
+            end
+          end
+          
+        else
+  
+          local coordinate=self:GetCoordinate():GetIntermediateCoordinate(Coordinate, 0.5)
+          
+          --coordinate:MarkToAll("Transport Inter Waypoint")
+  
+          -- If this is a helo and no ZONE_AIRBASE was given, we make the helo land in the pickup zone.
+          local waypoint=FLIGHTGROUP.AddWaypoint(self, coordinate, nil, uid, UTILS.MetersToFeet(self.altitudeCruise), true) ; waypoint.detour=1
+  
+        end
         
         -- Order group to land at an airbase.
-        self:__LandAtAirbase(-0.1, airbaseDeploy)
+        --self:__LandAtAirbase(-0.1, airbaseDeploy)
 
       elseif self.isHelo then
 
@@ -7577,22 +7618,11 @@ function OPSGROUP:onafterTransport(From, Event, To)
             
       -- Get transport path.
       if path then
-        env.info("FF 100")
-        if path.reverse then
-          for i=#path.waypoints,1,-1 do
-            local wp=path.waypoints[i]
-            local coordinate=COORDINATE:NewFromWaypoint(wp)
-            local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, wp.action, false) ; waypoint.temp=true
-            uid=waypoint.uid
-          end        
-        else
-          for i=1,#path.waypoints do
-            local wp=path.waypoints[i]
-            local coordinate=COORDINATE:NewFromWaypoint(wp)
-            coordinate:MarkToAll("Path")
-            local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, wp.action, false) ; waypoint.temp=true
-            uid=waypoint.uid
-          end
+        for i=1,#path.waypoints do
+          local wp=path.waypoints[i]
+          local coordinate=COORDINATE:NewFromWaypoint(wp)
+          local waypoint=ARMYGROUP.AddWaypoint(self, coordinate, nil, uid, wp.action, false) ; waypoint.temp=true
+          uid=waypoint.uid
         end
       end
 
@@ -7612,25 +7642,16 @@ function OPSGROUP:onafterTransport(From, Event, To)
 
       -- Get transport path.
       if path then
-        if path.reverse then
-          for i=#path.waypoints,1,-1 do
-            local wp=path.waypoints[i]
-            local coordinate=COORDINATE:NewFromWaypoint(wp)
-            local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
-            uid=waypoint.uid
-          end        
-        else
-          for i=1,#path.waypoints do
-            local wp=path.waypoints[i]
-            local coordinate=COORDINATE:NewFromWaypoint(wp)
-            local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid) ; waypoint.temp=true
-            uid=waypoint.uid
-          end
+        for i=1,#path.waypoints do
+          local wp=path.waypoints[i]
+          local coordinate=COORDINATE:NewFromWaypoint(wp)
+          local waypoint=NAVYGROUP.AddWaypoint(self, coordinate, nil, uid, nil, false) ; waypoint.temp=true
+          uid=waypoint.uid
         end
       end
 
       -- NAVYGROUP
-      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid, self.altitudeCruise) ; waypoint.detour=1
+      local waypoint=NAVYGROUP.AddWaypoint(self, Coordinate, nil, uid, self.altitudeCruise, false) ; waypoint.detour=1
 
       -- Give cruise command.
       self:Cruise()
@@ -9242,13 +9263,23 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
         if opsgroup:IsFlightgroup() then
 
           -- Land at current pos and wait for 60 min max.
-          local coordinate=nil
           if opsgroup.cargoTZC then
-            coordinate=opsgroup.cargoTZC.PickupZone:GetRandomCoordinate(nil, nil, {land.SurfaceType.LAND})
+
+            if opsgroup.cargoTZC.PickupAirbase then
+              -- Pickup airbase specified. Land there.
+              env.info(opsgroup.lid.."FF Land at Pickup Airbase")
+              opsgroup:LandAtAirbase(opsgroup.cargoTZC.PickupAirbase)              
+            else
+              -- Land somewhere in the pickup zone. Only helos can do that.
+              local coordinate=opsgroup.cargoTZC.PickupZone:GetRandomCoordinate(nil, nil, {land.SurfaceType.LAND})
+              opsgroup:LandAt(coordinate, 60*60)
+            end
+            
           else
-            coordinate=opsgroup:GetCoordinate()
+            local coordinate=opsgroup:GetCoordinate()
+            opsgroup:LandAt(coordinate, 60*60)
           end          
-          opsgroup:LandAt(coordinate, 60*60)
+          
 
         else
         
@@ -9263,13 +9294,23 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
        if opsgroup:IsFlightgroup() then
 
           -- Land at current pos and wait for 60 min max.
-          local coordinate=nil
           if opsgroup.cargoTZC then
-            coordinate=opsgroup.cargoTZC.DeployZone:GetRandomCoordinate(nil, nil, {land.SurfaceType.LAND})
+
+            if opsgroup.cargoTZC.DeployAirbase then
+              -- Pickup airbase specified. Land there.
+              env.info(opsgroup.lid.."FF Land at Deploy Airbase")
+              opsgroup:LandAtAirbase(opsgroup.cargoTZC.DeployAirbase)              
+            else
+              -- Land somewhere in the pickup zone. Only helos can do that.
+              local coordinate=opsgroup.cargoTZC.DeployZone:GetRandomCoordinate(nil, nil, {land.SurfaceType.LAND})
+              opsgroup:LandAt(coordinate, 60*60)
+            end
+
           else
             coordinate=opsgroup:GetCoordinate()
+            opsgroup:LandAt(coordinate, 60*60)
           end          
-          opsgroup:LandAt(coordinate, 60*60)
+          
 
         else
           -- Stop and unload.

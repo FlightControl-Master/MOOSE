@@ -1677,6 +1677,7 @@ function FLIGHTGROUP:onafterCruise(From, Event, To)
     -- AI
     ---
   
+    --[[
     if self:IsTransporting() then
       if self.cargoTransport and self.cargoTZC and self.cargoTZC.DeployAirbase then
         self:LandAtAirbase(self.cargoTZC.DeployAirbase)
@@ -1688,6 +1689,9 @@ function FLIGHTGROUP:onafterCruise(From, Event, To)
     else
       self:_CheckGroupDone(nil, 120)
     end
+    ]]
+    
+    self:_CheckGroupDone(nil, 120)
     
   else
   
