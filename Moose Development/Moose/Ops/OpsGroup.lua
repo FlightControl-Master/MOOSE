@@ -9437,7 +9437,7 @@ function OPSGROUP:SwitchROE(roe)
     if self:IsInUtero() then
       self:T2(self.lid..string.format("Setting current ROE=%d when GROUP is SPAWNED", self.option.ROE))
     else
-
+    
       self.group:OptionROE(self.option.ROE)
 
       self:T(self.lid..string.format("Setting current ROE=%d (%s)", self.option.ROE, self:_GetROEName(self.option.ROE)))
