@@ -2903,9 +2903,12 @@ function OPSGROUP:RouteToMission(mission, delay)
     if self.isGround and mission.optionFormation then
       formation=mission.optionFormation
     end
+    
+    -- UID of this waypoint.
+    local uid=self:GetWaypointCurrent().uid
 
     -- Add waypoint.
-    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, nil, formation, false)
+    local waypoint=self:AddWaypoint(waypointcoord, SpeedToMission, uid, formation, false)
     
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, waypoint, mission.name, mission.prio, mission.duration)
