@@ -28,7 +28,6 @@ Core/SpawnStatic.lua
 Core/Timer.lua
 Core/Goal.lua
 Core/Spot.lua
-Core/F10Menu.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua
@@ -89,7 +88,6 @@ Ops/Brigade.lua
 Ops/Intelligence.lua
 Ops/Commander.lua
 Ops/Chief.lua
-Ops/FlightControl.lua
 Ops/CSAR.lua
 Ops/CTLD.lua
 
