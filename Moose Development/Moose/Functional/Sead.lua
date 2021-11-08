@@ -17,7 +17,7 @@
 --
 -- ### Authors: **FlightControl**, **applevangelist**
 --
--- Last Update: Aug 2021
+-- Last Update: Nov 2021
 --
 -- ===
 --
@@ -51,6 +51,8 @@ SEAD = {
   SuppressedGroups = {},
   EngagementRange = 75, --  default 75% engagement range Feature Request #1355
   Padding = 10,
+  CallBack = nil,
+  UseCallBack = false,
 }
 
   --- Missile enumerators
@@ -114,10 +116,14 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   local padding = Padding or 10
   if padding < 10 then padding = 10 end
   self.Padding = padding
-
+  self.UseEmissionsOnOff = false
+  
+  self.CallBack = nil
+  self.UseCallBack = false
+  
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
 
-  self:I("*** SEAD - Started Version 0.3.1")
+  self:I("*** SEAD - Started Version 0.3.2")
   return self
 end
 
@@ -167,51 +173,75 @@ function SEAD:SetPadding(Padding)
   return self
 end
 
-  --- Check if a known HARM was fired
-  -- @param #SEAD self
-  -- @param #string WeaponName
-  -- @return #boolean Returns true for a match
-  -- @return #string name Name of hit in table
-  function SEAD:_CheckHarms(WeaponName)
-    self:T( { WeaponName } )
-    local hit = false
-    local name = ""
-      for _,_name in pairs (SEAD.Harms) do
-        if string.find(WeaponName,_name,1) then
-          hit = true
-          name = _name
-          break
-        end
-      end
-    return hit, name
-  end
+--- Set SEAD to use emissions on/off in addition to alarm state.
+-- @param #SEAD self
+-- @param #boolean Switch True for on, false for off.
+-- @return #SEAD self
+function SEAD:SwitchEmissions(Switch)
+  self:T({Switch})
+  self.UseEmissionsOnOff = Switch
+  return self
+end
 
-  --- (Internal) Return distance in meters between two coordinates or -1 on error.
-  -- @param #SEAD self
-  -- @param Core.Point#COORDINATE _point1 Coordinate one
-  -- @param Core.Point#COORDINATE _point2 Coordinate two
-  -- @return #number Distance in meters
-  function SEAD:_GetDistance(_point1, _point2)
-    self:T("_GetDistance")
-    if _point1 and _point2 then
-      local distance1 = _point1:Get2DDistance(_point2)
-      local distance2 = _point1:DistanceFromPointVec2(_point2)
-      --self:T({dist1=distance1, dist2=distance2})
-      if distance1 and type(distance1) == "number" then
-        return distance1
-      elseif distance2 and type(distance2) == "number" then
-        return distance2
-      else
-        self:E("*****Cannot calculate distance!")
-        self:E({_point1,_point2})
-        return -1
+--- Add an object to call back when going evasive.
+-- @param #SEAD self
+-- @param #table Object The object to call. Needs to have object functions as follows:
+-- `:SeadSuppressionPlanned(Group, Name, SuppressionStartTime, SuppressionEndTime)` 
+-- `:SeadSuppressionStart(Group, Name)`, 
+-- `:SeadSuppressionEnd(Group, Name)`, 
+-- @return #SEAD self
+function SEAD:AddCallBack(Object)
+  self:T({Class=Object.ClassName})
+  self.CallBack = Object
+  self.UseCallBack = true
+  return self
+end
+
+--- Check if a known HARM was fired
+-- @param #SEAD self
+-- @param #string WeaponName
+-- @return #boolean Returns true for a match
+-- @return #string name Name of hit in table
+function SEAD:_CheckHarms(WeaponName)
+  self:T( { WeaponName } )
+  local hit = false
+  local name = ""
+    for _,_name in pairs (SEAD.Harms) do
+      if string.find(WeaponName,_name,1) then
+        hit = true
+        name = _name
+        break
       end
+    end
+  return hit, name
+end
+
+--- (Internal) Return distance in meters between two coordinates or -1 on error.
+-- @param #SEAD self
+-- @param Core.Point#COORDINATE _point1 Coordinate one
+-- @param Core.Point#COORDINATE _point2 Coordinate two
+-- @return #number Distance in meters
+function SEAD:_GetDistance(_point1, _point2)
+  self:T("_GetDistance")
+  if _point1 and _point2 then
+    local distance1 = _point1:Get2DDistance(_point2)
+    local distance2 = _point1:DistanceFromPointVec2(_point2)
+    --self:T({dist1=distance1, dist2=distance2})
+    if distance1 and type(distance1) == "number" then
+      return distance1
+    elseif distance2 and type(distance2) == "number" then
+      return distance2
     else
-      self:E("******Cannot calculate distance!")
+      self:E("*****Cannot calculate distance!")
       self:E({_point1,_point2})
       return -1
     end
+  else
+    self:E("******Cannot calculate distance!")
+    self:E({_point1,_point2})
+    return -1
   end
+end
 
 --- Detects if an SAM site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @see SEAD
@@ -293,16 +323,34 @@ function SEAD:HandleEventShot( EventData )
             local function SuppressionStart(args)
               self:T(string.format("*** SEAD - %s Radar Off & Relocating",args[2]))
               local grp = args[1] -- Wrapper.Group#GROUP
-              grp:OptionAlarmStateGreen()
+              local name = args[2] -- #string Group Name 
+              if self.UseEmissionsOnOff then
+                grp:EnableEmission(false)
+              else
+               grp:OptionAlarmStateGreen()
+              end
               grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond")
+              if self.UseCallBack then
+                local object = self.CallBack
+                object:SeadSuppressionStart(grp,name)
+              end
             end
 
             local function SuppressionStop(args)
               self:T(string.format("*** SEAD - %s Radar On",args[2]))
               local grp = args[1]  -- Wrapper.Group#GROUP
-              grp:OptionAlarmStateRed()
+              local name = args[2] -- #string Group Nam
+              if self.UseEmissionsOnOff then
+                grp:EnableEmission(true)
+              else
+                grp:OptionAlarmStateRed()
+              end
               grp:OptionEngageRange(self.EngagementRange)
-              self.SuppressedGroups[args[2]] = false
+              self.SuppressedGroups[name] = false
+              if self.UseCallBack then
+                local object = self.CallBack
+                object:SeadSuppressionEnd(grp,name)
+              end
             end
 
             -- randomize switch-on time
@@ -318,6 +366,10 @@ function SEAD:HandleEventShot( EventData )
               timer.scheduleFunction(SuppressionStart,{_targetgroup,_targetgroupname},SuppressionStartTime)
               timer.scheduleFunction(SuppressionStop,{_targetgroup,_targetgroupname},SuppressionEndTime)
               self.SuppressedGroups[_targetgroupname] = true
+              if self.UseCallBack then
+                local object = self.CallBack
+                object:SeadSuppressionPlanned(_targetgroup,_targetgroupname,SuppressionStartTime,SuppressionEndTime)
+              end
             end
 
           end
