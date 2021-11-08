@@ -158,6 +158,29 @@
 --
 --        `mymantis:RemoveShorad()`
 --
+-- # 6. Integrated SEAD
+--  
+--  MANTIS is using @{Functional.Sead#SEAD} internally to both detect and evade HARM attacks. No extra efforts needed to set this up! 
+--  Once a HARM attack is detected, MANTIS (via SEAD) will shut down the radars of the attacked SAM site and take evasive action by moving the SAM
+--  vehicles around (*if they are __drivable__*, that is). There's a component of randomness in detection and evasion, which is based on the
+--  skill set of the SAM set (the higher the skill, the more likely). When a missile is fired from far away, the SAM will stay active for a 
+--  period of time to stay defensive, before it takes evasive actions.
+--  
+--  You can link into the SEAD driven events of MANTIS like so:
+--  
+--       `function mymantis:OnAfterSeadSuppressionPlanned(From, Event, To, Group, Name, SuppressionStartTime, SuppressionEndTime)`
+--          -- your code here - SAM site shutdown and evasion planned, but not yet executed
+--          -- Time entries relate to timer.getTime() 
+--        end`
+--        
+--        `function mymantis:OnAfterSeadSuppressionStart(From, Event, To, Group, Name)`
+--          -- your code here - SAM site is emissions off and possibly moving
+--        end`
+--        
+--        `function mymantis:OnAfterSeadSuppressionEnd(From, Event, To, Group, Name)`
+--          -- your code here - SAM site is back online
+--        end`
+--  
 -- @field #MANTIS
 MANTIS = {
   ClassName             = "MANTIS",

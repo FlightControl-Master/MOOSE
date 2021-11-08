@@ -6,6 +6,8 @@
 --
 --   * When SAM sites are being fired upon, the SAMs will take evasive action will reposition themselves when possible.
 --   * When SAM sites are being fired upon, the SAMs will take defensive action by shutting down their radars.
+--   * SEAD calculates the time it takes for a HARM to reach the target - and will attempt to minimize the shut-down time.
+--   * Detection and evasion of shots has a random component based on the skill level of the SAM groups.
 --
 -- ===
 --
@@ -31,7 +33,11 @@
 --- Make SAM sites execute evasive and defensive behaviour when being fired upon.
 --
 -- This class is very easy to use. Just setup a SEAD object by using @{#SEAD.New}() and SAMs will evade and take defensive action when being fired upon.
---
+-- Once a HARM attack is detected, SEADwill shut down the radars of the attacked SAM site and take evasive action by moving the SAM
+-- vehicles around (*if* they are drivable, that is). There's a component of randomness in detection and evasion, which is based on the
+-- skill set of the SAM set (the higher the skill, the more likely). When a missile is fired from far away, the SAM will stay active for a 
+-- period of time to stay defensive, before it takes evasive actions.
+-- 
 -- # Constructor:
 --
 -- Use the @{#SEAD.New}() constructor to create a new SEAD object.
@@ -148,7 +154,7 @@ end
 
 --- Sets the engagement range of the SAMs. Defaults to 75% to make it more deadly. Feature Request #1355
 -- @param #SEAD self
--- @param #number range Set the engagement range in percent, e.g. 50
+-- @param #number range Set the engagement range in percent, e.g. 55 (default 75)
 -- @return #SEAD self
 function SEAD:SetEngagementRange(range)
   self:T( { range } )
@@ -163,7 +169,7 @@ end
 
 --- Set the padding in seconds, which extends the radar off time calculated by SEAD
 -- @param #SEAD self
--- @param #number Padding Extra number of seconds to add for the switch-on
+-- @param #number Padding Extra number of seconds to add for the switch-on (default 10 seconds)
 -- @return #SEAD self
 function SEAD:SetPadding(Padding)
   self:T( { Padding } )
@@ -197,7 +203,7 @@ function SEAD:AddCallBack(Object)
   return self
 end
 
---- Check if a known HARM was fired
+--- (Internal) Check if a known HARM was fired
 -- @param #SEAD self
 -- @param #string WeaponName
 -- @return #boolean Returns true for a match
@@ -243,9 +249,8 @@ function SEAD:_GetDistance(_point1, _point2)
   end
 end
 
---- Detects if an SAM site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
--- @see SEAD
--- @param #SEAD
+--- (Internal) Detects if an SAM site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
+-- @param #SEAD self
 -- @param Core.Event#EVENTDATA EventData
 -- @return #SEAD self
 function SEAD:HandleEventShot( EventData )
@@ -326,9 +331,8 @@ function SEAD:HandleEventShot( EventData )
               local name = args[2] -- #string Group Name 
               if self.UseEmissionsOnOff then
                 grp:EnableEmission(false)
-              else
-               grp:OptionAlarmStateGreen()
               end
+              grp:OptionAlarmStateGreen() -- needed else we cannot move around
               grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond")
               if self.UseCallBack then
                 local object = self.CallBack
@@ -342,9 +346,8 @@ function SEAD:HandleEventShot( EventData )
               local name = args[2] -- #string Group Nam
               if self.UseEmissionsOnOff then
                 grp:EnableEmission(true)
-              else
-                grp:OptionAlarmStateRed()
               end
+              grp:OptionAlarmStateAuto()
               grp:OptionEngageRange(self.EngagementRange)
               self.SuppressedGroups[name] = false
               if self.UseCallBack then
