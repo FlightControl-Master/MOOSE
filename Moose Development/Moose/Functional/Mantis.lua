@@ -20,7 +20,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Date: July 2021
+-- Date: Nov 2021
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -198,6 +198,7 @@ MANTIS = {
   DLink                 = false,
   DLTimeStamp           = 0,
   Padding               = 10,
+  SuppressedGroups       = {},
 }
 
 --- Advanced state enumerator
@@ -284,6 +285,7 @@ do
     self.SamStateTracker = {} -- table to hold alert states, so we don't trigger state changes twice in adv mode
     self.DLink = false
     self.Padding = Padding or 10
+    self.SuppressedGroups = {}
 
     if EmOnOff then
       if EmOnOff == false then
@@ -331,7 +333,7 @@ do
     end
 
     -- @field #string version
-    self.version="0.6.2"
+    self.version="0.7.1"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -340,15 +342,18 @@ do
   self:SetStartState("Stopped")
 
   -- Add FSM transitions.
-  --                 From State  -->   Event        -->     To State
-  self:AddTransition("Stopped",       "Start",               "Running")     -- Start FSM.
-  self:AddTransition("*",             "Status",              "*")           -- MANTIS status update.
-  self:AddTransition("*",             "Relocating",          "*")           -- MANTIS HQ and EWR are relocating.
-  self:AddTransition("*",             "GreenState",          "*")           -- MANTIS A SAM switching to GREEN state.
-  self:AddTransition("*",             "RedState",            "*")           -- MANTIS A SAM switching to RED state.
-  self:AddTransition("*",             "AdvStateChange",      "*")           -- MANTIS advanced mode state change.
-  self:AddTransition("*",             "ShoradActivated",     "*")           -- MANTIS woke up a connected SHORAD.
-  self:AddTransition("*",             "Stop",                "Stopped")     -- Stop FSM.
+  --                 From State  -->   Event            -->     To State
+  self:AddTransition("Stopped",       "Start",                   "Running")     -- Start FSM.
+  self:AddTransition("*",             "Status",                  "*")           -- MANTIS status update.
+  self:AddTransition("*",             "Relocating",              "*")           -- MANTIS HQ and EWR are relocating.
+  self:AddTransition("*",             "GreenState",              "*")           -- MANTIS A SAM switching to GREEN state.
+  self:AddTransition("*",             "RedState",                "*")           -- MANTIS A SAM switching to RED state.
+  self:AddTransition("*",             "AdvStateChange",          "*")           -- MANTIS advanced mode state change.
+  self:AddTransition("*",             "ShoradActivated",         "*")           -- MANTIS woke up a connected SHORAD.
+  self:AddTransition("*",             "SeadSuppressionStart",    "*")           -- SEAD has switched off one group.
+  self:AddTransition("*",             "SeadSuppressionEnd",      "*")           -- SEAD has switched on one group.
+  self:AddTransition("*",             "SeadSuppressionPlanned",  "*")           -- SEAD has planned a suppression.
+  self:AddTransition("*",             "Stop",                    "Stopped")     -- Stop FSM.
 
   ------------------------
   --- Pseudo Functions ---
@@ -427,6 +432,35 @@ do
   -- @param #number Radius Radius around the named group to find SHORAD groups
   -- @param #number Ontime Seconds the SHORAD will stay active
 
+  --- On After "SeadSuppressionPlanned" event. Mantis has planned to switch off a site to defend SEAD attack.
+  -- @function [parent=#MANTIS] OnAfterSeadSuppressionPlanned
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed group
+  -- @param #number SuppressionStartTime Model start time of the suppression from `timer.getTime()`
+  -- @param #number SuppressionEndTime Model end time of the suppression from `timer.getTime()`
+
+  --- On After "SeadSuppressionStart" event. Mantis has switched off a site to defend a SEAD attack.
+  -- @function [parent=#MANTIS] OnAfterSeadSuppressionStart
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed groupe
+
+  --- On After "SeadSuppressionEnd" event. Mantis has switched on a site after a SEAD attack.
+  -- @function [parent=#MANTIS] OnAfterSeadSuppressionEnd
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed group
+  
   return self
  end
 
@@ -891,6 +925,7 @@ do
         local group = _group -- Wrapper.Group#GROUP
         -- TODO: add emissions on/off
         if self.UseEmOnOff then
+          group:OptionAlarmStateRed()
           group:EnableEmission(false)
           --group:SetAIOff()
         else
@@ -909,6 +944,10 @@ do
      -- make SAMs evasive
      local mysead = SEAD:New( SEAD_Grps, self.Padding ) -- Functional.Sead#SEAD
      mysead:SetEngagementRange(engagerange)
+     mysead:AddCallBack(self)
+     if self.UseEmOnOff then
+      mysead:SwitchEmissions(true)
+     end
      self.mysead = mysead
      return self
   end
@@ -995,22 +1034,24 @@ do
       local name = _data[1]
       local samgroup = GROUP:FindByName(name)
       local IsInZone, Distance = self:CheckObjectInZone(detset, samcoordinate)
-      if IsInZone then --check any target in zone
+      local suppressed = self.SuppressedGroups[name] or false
+      if IsInZone then --check any target in zone and not curr managed by SEAD
         if samgroup:IsAlive() then
           -- switch on SAM
-          if self.UseEmOnOff then
-            -- TODO: add emissions on/off
+          if self.UseEmOnOff and not suppressed then
+            -- DONE: add emissions on/off
             --samgroup:SetAIOn()
             samgroup:EnableEmission(true)
+          elseif not self.UseEmOnOff and not suppressed then
+            samgroup:OptionAlarmStateRed()
           end
-          samgroup:OptionAlarmStateRed()
-          if self.SamStateTracker[name] ~= "RED" then
+          if self.SamStateTracker[name] ~= "RED" and not suppressed then
             self:__RedState(1,samgroup)
             self.SamStateTracker[name] = "RED"
           end
           -- link in to SHORAD if available
           -- DONE: Test integration fully
-          if self.ShoradLink and Distance < self.ShoradActDistance then -- don't give SHORAD position away too early
+          if self.ShoradLink and (Distance < self.ShoradActDistance or suppressed) then -- don't give SHORAD position away too early
             local Shorad = self.Shorad
             local radius = self.checkradius
             local ontime = self.ShoradTime
@@ -1018,7 +1059,7 @@ do
             self:__ShoradActivated(1,name, radius, ontime)
           end
           -- debug output
-          if self.debug or self.verbose then
+          if self.debug or self.verbose and not suppressed then
             local text = string.format("SAM %s switched to alarm state RED!", name)
             local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
             if self.verbose then self:I(self.lid..text) end
@@ -1027,15 +1068,16 @@ do
       else
         if samgroup:IsAlive() then
           -- switch off SAM
-          if self.UseEmOnOff then
+          if self.UseEmOnOff and not suppressed then
             samgroup:EnableEmission(false)
-          end
+          elseif not self.UseEmOnOff and not suppressed then
             samgroup:OptionAlarmStateGreen()
-            if self.SamStateTracker[name] ~= "GREEN" then
-              self:__GreenState(1,samgroup)
-              self.SamStateTracker[name] = "GREEN"
-            end
-          if self.debug or self.verbose then
+          end
+          if self.SamStateTracker[name] ~= "GREEN" and not suppressed then
+            self:__GreenState(1,samgroup)
+            self.SamStateTracker[name] = "GREEN"
+          end
+          if self.debug or self.verbose and not suppressed then
             local text = string.format("SAM %s switched to alarm state GREEN!", name)
             local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
             if self.verbose then self:I(self.lid..text) end
@@ -1264,6 +1306,47 @@ do
     self:T({From, Event, To, Name, Radius, Ontime})
     return self
   end
+  
+    --- [Internal] Function triggered by Event SeadSuppressionStart
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed group
+  function MANTIS:onafterSeadSuppressionStart(From, Event, To, Group, Name)
+    self:T({From, Event, To, Name})
+    self.SuppressedGroups[Name] = true
+    return self
+  end
+  
+    --- [Internal] Function triggered by Event SeadSuppressionEnd
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed group
+  function MANTIS:onafterSeadSuppressionEnd(From, Event, To, Group, Name)
+    self:T({From, Event, To, Name})
+    self.SuppressedGroups[Name] = false
+    return self
+  end
+  
+    --- [Internal] Function triggered by Event SeadSuppressionPlanned
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed group
+  -- @param #number SuppressionStartTime Model start time of the suppression from `timer.getTime()`
+  -- @param #number SuppressionEndTime Model end time of the suppression from `timer.getTime()`
+  function MANTIS:onafterSeadSuppressionPlanned(From, Event, To, Group, Name, SuppressionStartTime, SuppressionEndTime)
+    self:T({From, Event, To, Name})
+    return self
+  end
+  
 end
 -----------------------------------------------------------------------
 -- MANTIS end
