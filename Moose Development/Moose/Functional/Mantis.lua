@@ -1,26 +1,26 @@
 --- **Functional** -- Modular, Automatic and Network capable Targeting and Interception System for Air Defenses
--- 
+--
 -- ===
--- 
+--
 -- **MANTIS** - Moose derived  Modular, Automatic and Network capable Targeting and Interception System
 -- Controls a network of SAM sites. Use detection to switch on the AA site closest to the enemy
 -- Leverage evasiveness from SEAD
 -- Leverage attack range setup added by DCS in 11/20
--- 
+--
 -- ===
--- 
+--
 -- ## Missions:
 --
 -- ### [MANTIS - Modular, Automatic and Network capable Targeting and Interception System](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/MTS%20-%20Mantis/MTS-010%20-%20Basic%20Mantis%20Demo)
--- 
+--
 -- ===
--- 
+--
 -- ### Author : **applevangelist **
--- 
+--
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
-
--- Date: July 2021
+--
+-- Date: Nov 2021
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -59,10 +59,10 @@
 -- @extends Core.Base#BASE
 
 
---- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - Frédéric Bastiat 
--- 
+--- *The worst thing that can happen to a good cause is, not to be skillfully attacked, but to be ineptly defended.* - Frédéric Bastiat
+--
 -- Simple Class for a more intelligent Air Defense System
--- 
+--
 -- #MANTIS
 -- Moose derived  Modular, Automatic and Network capable Targeting and Interception System.
 -- Controls a network of SAM sites. Use detection to switch on the AA site closest to the enemy.
@@ -72,62 +72,62 @@
 -- Set up your SAM sites in the mission editor. Name the groups with common prefix like "Red SAM".
 -- Set up your EWR system in the mission editor. Name the groups with common prefix like "Red EWR". Can be e.g. AWACS or a combination of AWACS and Search Radars like e.g. EWR 1L13 etc.
 -- [optional] Set up your HQ. Can be any group, e.g. a command vehicle.
--- 
+--
 -- # 1. Basic tactical considerations when setting up your SAM sites
--- 
+--
 -- ## 1.1 Radar systems and AWACS
--- 
+--
 --  Typically, your setup should consist of EWR (early warning) radars to detect and track targets, accompanied by AWACS if your scenario forsees that. Ensure that your EWR radars have a good coverage of the area you want to track.
 --  **Location** is of highest importantance here. Whilst AWACS in DCS has almost the "all seeing eye", EWR don't have that. Choose your location wisely, against a mountain backdrop or inside a valley even the best EWR system
 --  doesn't work well. Prefer higher-up locations with a good view; use F7 in-game to check where you actually placed your EWR and have a look around. Apart from the obvious choice, do also consider other radar units
---  for this role, most have "SR" (search radar) or "STR" (search and track radar) in their names, use the encyclopedia to see what they actually do.  
---  
+--  for this role, most have "SR" (search radar) or "STR" (search and track radar) in their names, use the encyclopedia to see what they actually do.
+--
 -- ## 1.2 SAM sites
--- 
--- Typically your SAM should cover all attack ranges. The closer the enemy gets, the more systems you will need to deploy to defend your location. Use a combination of long-range systems like the SA-10/11, midrange like SA-6 and short-range like 
--- SA-2 for defense (Patriot, Hawk, Gepard, Blindfire for the blue side). For close-up defense and defense against HARMs or low-flying aircraft, helicopters it is also advisable to deploy SA-15 TOR systems, Shilka, Strela and Tunguska units, as well as manpads (Think Gepard, Avenger, Chaparral, 
+--
+-- Typically your SAM should cover all attack ranges. The closer the enemy gets, the more systems you will need to deploy to defend your location. Use a combination of long-range systems like the SA-10/11, midrange like SA-6 and short-range like
+-- SA-2 for defense (Patriot, Hawk, Gepard, Blindfire for the blue side). For close-up defense and defense against HARMs or low-flying aircraft, helicopters it is also advisable to deploy SA-15 TOR systems, Shilka, Strela and Tunguska units, as well as manpads (Think Gepard, Avenger, Chaparral,
 -- Linebacker, Roland systems for the blue side). If possible, overlap ranges for mutual coverage.
--- 
+--
 -- ## 1.3 Typical problems
--- 
--- Often times, people complain because the detection cannot "see" oncoming targets and/or Mantis switches on too late. Three typial problems here are  
---  
---   * bad placement of radar units, 
---   * overestimation how far units can "see" and 
---   * not taking into account that a SAM site will take (e.g for a SA-6) 30-40 seconds between switching to RED, acquiring the target and firing. 
--- 
+--
+-- Often times, people complain because the detection cannot "see" oncoming targets and/or Mantis switches on too late. Three typial problems here are
+--
+--   * bad placement of radar units,
+--   * overestimation how far units can "see" and
+--   * not taking into account that a SAM site will take (e.g for a SA-6) 30-40 seconds between switching to RED, acquiring the target and firing.
+--
 -- An attacker doing 350knots will cover ca 180meters/second or thus more than 6km until the SA-6 fires. Use triggers zones and the ruler in the missione editor to understand distances and zones. Take into account that the ranges given by the circles
 -- in the mission editor are absolute maximum ranges; in-game this is rather 50-75% of that depending on the system. Fiddle with placement and options to see what works best for your scenario, and remember **everything in here is in meters**.
--- 
+--
 -- # 2. Start up your MANTIS with a basic setting
--- 
---    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`  
---    `myredmantis:Start()`
---    
--- [optional] Use  
--- 
---  * `MANTIS:SetEWRGrouping(radius)`  
---  * `MANTIS:SetEWRRange(radius)`  
---  * `MANTIS:SetSAMRadius(radius)`  
---  * `MANTIS:SetDetectInterval(interval)`
---  * `MANTIS:SetAutoRelocate(hq, ewr)`
---        
+--
+--        myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)
+--        myredmantis:Start()
+--
+-- [optional] Use
+--
+--  *     MANTIS:SetEWRGrouping(radius)
+--  *     MANTIS:SetEWRRange(radius)
+--  *     MANTIS:SetSAMRadius(radius)
+--  *     MANTIS:SetDetectInterval(interval)
+--  *     MANTIS:SetAutoRelocate(hq, ewr)
+--
 -- before starting #MANTIS to fine-tune your setup.
--- 
+--
 -- If you want to use a separate AWACS unit (default detection range: 250km) to support your EWR system, use e.g. the following setup:
--- 
---    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`  
---    `mybluemantis:Start()`
+--
+--        mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
+--        mybluemantis:Start()
 --
 -- # 3. Default settings
--- 
+--
 -- By default, the following settings are active:
 --
 --  * SAM_Templates_Prefix = "Red SAM" - SAM site group names in the mission editor begin with "Red SAM"
 --  * EWR_Templates_Prefix = "Red EWR" - EWR group names in the mission editor begin with "Red EWR" - can also be combined with an AWACS unit
 --  * checkradius = 25000 (meters) - SAMs will engage enemy flights, if they are within a 25km around each SAM site - `MANTIS:SetSAMRadius(radius)`
 --  * grouping = 5000 (meters) - Detection (EWR) will group enemy flights to areas of 5km for tracking - `MANTIS:SetEWRGrouping(radius)`
---  * acceptrange = 80000 (meters) - Detection (EWR) will on consider flights inside a 80km radius - `MANTIS:SetEWRRange(radius)`  
+--  * acceptrange = 80000 (meters) - Detection (EWR) will on consider flights inside a 80km radius - `MANTIS:SetEWRRange(radius)`
 --  * detectinterval = 30 (seconds) - MANTIS will decide every 30 seconds which SAM to activate - `MANTIS:SetDetectInterval(interval)`
 --  * engagerange = 85 (percent) - SAMs will only fire if flights are inside of a 85% radius of their max firerange - `MANTIS:SetSAMRange(range)`
 --  * dynamic = false - Group filtering is set to once, i.e. newly added groups will not be part of the setup by default - `MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic)`
@@ -135,29 +135,52 @@
 --  * debug = false - Debugging reports on screen are set to off - `MANTIS:Debug(onoff)`
 --
 -- # 4. Advanced Mode
--- 
---  Advanced mode will *decrease* reactivity of MANTIS, if HQ and/or EWR  network dies.  Awacs is counted as one EWR unit. It will set SAMs to RED state if both are dead.  Requires usage of an **HQ** object and the **dynamic** option.  
---  
---  E.g.        `mymantis:SetAdvancedMode( true, 90 )`  
---  
---  Use this option if you want to make use of or allow advanced SEAD tactics.  
---  
+--
+--  Advanced mode will *decrease* reactivity of MANTIS, if HQ and/or EWR  network dies.  Awacs is counted as one EWR unit. It will set SAMs to RED state if both are dead.  Requires usage of an **HQ** object and the **dynamic** option.
+--
+--  E.g.        mymantis:SetAdvancedMode( true, 90 )
+--
+--  Use this option if you want to make use of or allow advanced SEAD tactics.
+--
 -- # 5. Integrate SHORAD
---  
+--
 --  You can also choose to integrate Mantis with @{Functional.Shorad#SHORAD} for protection against HARMs and AGMs. When SHORAD detects a missile fired at one of MANTIS' SAM sites, it will activate SHORAD systems in
 --  the given defense checkradius around that SAM site. Create a SHORAD object first, then integrate with MANTIS like so:
---  
---      `local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()`
---      `myshorad = SHORAD:New("BlueShorad", "Blue SHORAD", SamSet, 22000, 600, "blue")`
---      `-- now set up MANTIS`
---      `mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`
---      `mymantis:AddShorad(myshorad,720)`
---      `mymantis:Start()`
--- 
---  and (optionally) remove the link later on with
---  
---        `mymantis:RemoveShorad()`    
 --
+--          local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()
+--          myshorad = SHORAD:New("BlueShorad", "Blue SHORAD", SamSet, 22000, 600, "blue")
+--          -- now set up MANTIS
+--          mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
+--          mymantis:AddShorad(myshorad,720)
+--          mymantis:Start()
+--
+--  and (optionally) remove the link later on with
+--
+--          mymantis:RemoveShorad()
+--
+-- # 6. Integrated SEAD
+--  
+--  MANTIS is using @{Functional.Sead#SEAD} internally to both detect and evade HARM attacks. No extra efforts needed to set this up! 
+--  Once a HARM attack is detected, MANTIS (via SEAD) will shut down the radars of the attacked SAM site and take evasive action by moving the SAM
+--  vehicles around (*if they are __drivable__*, that is). There's a component of randomness in detection and evasion, which is based on the
+--  skill set of the SAM set (the higher the skill, the more likely). When a missile is fired from far away, the SAM will stay active for a 
+--  period of time to stay defensive, before it takes evasive actions.
+--  
+--  You can link into the SEAD driven events of MANTIS like so:
+--  
+--        function mymantis:OnAfterSeadSuppressionPlanned(From, Event, To, Group, Name, SuppressionStartTime, SuppressionEndTime)
+--          -- your code here - SAM site shutdown and evasion planned, but not yet executed
+--          -- Time entries relate to timer.getTime() - see https://wiki.hoggitworld.com/view/DCS_func_getTime
+--        end
+--        
+--        function mymantis:OnAfterSeadSuppressionStart(From, Event, To, Group, Name)
+--          -- your code here - SAM site is emissions off and possibly moving
+--        end
+--        
+--        function mymantis:OnAfterSeadSuppressionEnd(From, Event, To, Group, Name)
+--          -- your code here - SAM site is back online
+--        end
+--  
 -- @field #MANTIS
 MANTIS = {
   ClassName             = "MANTIS",
@@ -198,6 +221,7 @@ MANTIS = {
   DLink                 = false,
   DLTimeStamp           = 0,
   Padding               = 10,
+  SuppressedGroups       = {},
 }
 
 --- Advanced state enumerator
@@ -222,31 +246,31 @@ do
   --@param #string coaltion Coalition side of your setup, e.g. "blue", "red" or "neutral"
   --@param #boolean dynamic Use constant (true) filtering or just filter once (false, default) (optional)
   --@param #string awacs Group name of your Awacs (optional)
-  --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN (optional) 
-  --@param #number Padding For #SEAD - Extra number of seconds to add to radar switch-back-on time (optional) 
+  --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN (optional)
+  --@param #number Padding For #SEAD - Extra number of seconds to add to radar switch-back-on time (optional)
   --@return #MANTIS self
   --@usage Start up your MANTIS with a basic setting
   --
-  --    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`  
-  --    `myredmantis:Start()`
-  --    
-  -- [optional] Use  
-  -- 
-  --  * `MANTIS:SetEWRGrouping(radius)`  
-  --  * `MANTIS:SetEWRRange(radius)`  
-  --  * `MANTIS:SetSAMRadius(radius)`  
-  --  * `MANTIS:SetDetectInterval(interval)`
-  --  * `MANTIS:SetAutoRelocate(hq, ewr)`
-  --        
+  --        myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)
+  --        myredmantis:Start()
+  --
+  -- [optional] Use
+  --
+  --  * MANTIS:SetEWRGrouping(radius)
+  --  * MANTIS:SetEWRRange(radius)
+  --  * MANTIS:SetSAMRadius(radius)
+  --  * MANTIS:SetDetectInterval(interval)
+  --  * MANTIS:SetAutoRelocate(hq, ewr)
+  --
   -- before starting #MANTIS to fine-tune your setup.
-  -- 
+  --
   -- If you want to use a separate AWACS unit (default detection range: 250km) to support your EWR system, use e.g. the following setup:
-  -- 
-  --    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`  
-  --    `mybluemantis:Start()`
-  --    
+  --
+  --        mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
+  --        mybluemantis:Start()
+  --
   function MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic,awacs, EmOnOff, Padding)
-    
+
     -- DONE: Create some user functions for these
     -- DONE: Make HQ useful
     -- DONE: Set SAMs to auto if EWR dies
@@ -269,7 +293,7 @@ do
     self.autorelocateunits = { HQ = false, EWR = false}
     self.advanced = false
     self.adv_ratio = 100
-    self.adv_state = 0 
+    self.adv_state = 0
     self.verbose = false
     self.Adv_EWR_Group = nil
     self.AWACS_Prefix = awacs or nil
@@ -284,27 +308,28 @@ do
     self.SamStateTracker = {} -- table to hold alert states, so we don't trigger state changes twice in adv mode
     self.DLink = false
     self.Padding = Padding or 10
-    
+    self.SuppressedGroups = {}
+
     if EmOnOff then
       if EmOnOff == false then
         self.UseEmOnOff = false
       else
         self.UseEmOnOff = true
       end
-    end    
-     
+    end
+
     if type(awacs) == "string" then
       self.advAwacs = true
     else
       self.advAwacs = false
     end
-    
+
     -- Inherit everything from BASE class.
     local self = BASE:Inherit(self, FSM:New()) -- #MANTIS
-    
+
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("MANTIS %s | ", self.name)
-  
+
     -- Debug trace.
     if self.debug then
       BASE:TraceOnOff(true)
@@ -312,7 +337,7 @@ do
       --BASE:TraceClass("SEAD")
       BASE:TraceLevel(1)
     end
-    
+
     if self.dynamic then
       -- Set SAM SET_GROUP
       self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition):FilterStart()
@@ -324,36 +349,39 @@ do
       -- Set EWR SET_GROUP
       self.EWR_Group = SET_GROUP:New():FilterPrefixes({self.SAM_Templates_Prefix,self.EWR_Templates_Prefix}):FilterCoalitions(self.Coalition):FilterOnce()
     end
-    
+
     -- set up CC
     if self.HQ_Template_CC then
       self.HQ_CC = GROUP:FindByName(self.HQ_Template_CC)
     end
-    
+
     -- @field #string version
-    self.version="0.6.2"
+    self.version="0.7.1"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
-    
+
     --- FSM Functions ---
-    
+
       -- Start State.
   self:SetStartState("Stopped")
 
   -- Add FSM transitions.
-  --                 From State  -->   Event        -->     To State
-  self:AddTransition("Stopped",       "Start",               "Running")     -- Start FSM.
-  self:AddTransition("*",             "Status",              "*")           -- MANTIS status update.
-  self:AddTransition("*",             "Relocating",          "*")           -- MANTIS HQ and EWR are relocating.
-  self:AddTransition("*",             "GreenState",          "*")           -- MANTIS A SAM switching to GREEN state.
-  self:AddTransition("*",             "RedState",            "*")           -- MANTIS A SAM switching to RED state.
-  self:AddTransition("*",             "AdvStateChange",      "*")           -- MANTIS advanced mode state change.
-  self:AddTransition("*",             "ShoradActivated",     "*")           -- MANTIS woke up a connected SHORAD.
-  self:AddTransition("*",             "Stop",                "Stopped")     -- Stop FSM.
-  
+  --                 From State  -->   Event            -->     To State
+  self:AddTransition("Stopped",       "Start",                   "Running")     -- Start FSM.
+  self:AddTransition("*",             "Status",                  "*")           -- MANTIS status update.
+  self:AddTransition("*",             "Relocating",              "*")           -- MANTIS HQ and EWR are relocating.
+  self:AddTransition("*",             "GreenState",              "*")           -- MANTIS A SAM switching to GREEN state.
+  self:AddTransition("*",             "RedState",                "*")           -- MANTIS A SAM switching to RED state.
+  self:AddTransition("*",             "AdvStateChange",          "*")           -- MANTIS advanced mode state change.
+  self:AddTransition("*",             "ShoradActivated",         "*")           -- MANTIS woke up a connected SHORAD.
+  self:AddTransition("*",             "SeadSuppressionStart",    "*")           -- SEAD has switched off one group.
+  self:AddTransition("*",             "SeadSuppressionEnd",      "*")           -- SEAD has switched on one group.
+  self:AddTransition("*",             "SeadSuppressionPlanned",  "*")           -- SEAD has planned a suppression.
+  self:AddTransition("*",             "Stop",                    "Stopped")     -- Stop FSM.
+
   ------------------------
   --- Pseudo Functions ---
   ------------------------
-  
+
   --- Triggers the FSM event "Start". Starts the MANTIS. Initializes parameters and starts event handlers.
   -- @function [parent=#MANTIS] Start
   -- @param #MANTIS self
@@ -379,7 +407,7 @@ do
   -- @function [parent=#MANTIS] __Status
   -- @param #MANTIS self
   -- @param #number delay Delay in seconds.
-  
+
   --- On After "Relocating" event. HQ and/or EWR moved.
   -- @function [parent=#MANTIS] OnAfterRelocating
   -- @param #MANTIS self
@@ -387,7 +415,7 @@ do
   -- @param #string Event The Event
   -- @param #string To The To State
   -- @return #MANTIS self
-  
+
   --- On After "GreenState" event. A SAM group was switched to GREEN alert.
   -- @function [parent=#MANTIS] OnAfterGreenState
   -- @param #MANTIS self
@@ -396,7 +424,7 @@ do
   -- @param #string To The To State
   -- @param Wrapper.Group#GROUP Group The GROUP object whose state was changed
   -- @return #MANTIS self
-  
+
   --- On After "RedState" event. A SAM group was switched to RED alert.
   -- @function [parent=#MANTIS] OnAfterRedState
   -- @param #MANTIS self
@@ -405,7 +433,7 @@ do
   -- @param #string To The To State
   -- @param Wrapper.Group#GROUP Group The GROUP object whose state was changed
   -- @return #MANTIS self
-  
+
   --- On After "AdvStateChange" event. Advanced state changed, influencing detection speed.
   -- @function [parent=#MANTIS] OnAfterAdvStateChange
   -- @param #MANTIS self
@@ -416,7 +444,7 @@ do
   -- @param #number Newstate New state - 0 = green, 1 = amber, 2 = red
   -- @param #number Interval Calculated detection interval based on state and advanced feature setting
   -- @return #MANTIS self
-  
+
   --- On After "ShoradActivated" event. Mantis has activated a SHORAD.
   -- @function [parent=#MANTIS] OnAfterShoradActivated
   -- @param #MANTIS self
@@ -427,21 +455,50 @@ do
   -- @param #number Radius Radius around the named group to find SHORAD groups
   -- @param #number Ontime Seconds the SHORAD will stay active
 
-  return self    
+  --- On After "SeadSuppressionPlanned" event. Mantis has planned to switch off a site to defend SEAD attack.
+  -- @function [parent=#MANTIS] OnAfterSeadSuppressionPlanned
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed group
+  -- @param #number SuppressionStartTime Model start time of the suppression from `timer.getTime()`
+  -- @param #number SuppressionEndTime Model end time of the suppression from `timer.getTime()`
+
+  --- On After "SeadSuppressionStart" event. Mantis has switched off a site to defend a SEAD attack.
+  -- @function [parent=#MANTIS] OnAfterSeadSuppressionStart
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed groupe
+
+  --- On After "SeadSuppressionEnd" event. Mantis has switched on a site after a SEAD attack.
+  -- @function [parent=#MANTIS] OnAfterSeadSuppressionEnd
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed group
+  
+  return self
  end
 
 -----------------------------------------------------------------------
 -- MANTIS helper functions
------------------------------------------------------------------------  
-  
+-----------------------------------------------------------------------
+
   --- [Internal] Function to get the self.SAM_Table
   -- @param #MANTIS self
-  -- @return #table table  
+  -- @return #table table
   function MANTIS:_GetSAMTable()
     self:T(self.lid .. "GetSAMTable")
     return self.SAM_Table
   end
-  
+
   --- [Internal] Function to set the self.SAM_Table
   -- @param #MANTIS self
   -- @return #MANTIS self
@@ -450,7 +507,7 @@ do
     self.SAM_Table = table
     return self
   end
- 
+
   --- Function to set the grouping radius of the detection in meters
   -- @param #MANTIS self
   -- @param #number radius Radius upon which detected objects will be grouped
@@ -470,17 +527,17 @@ do
     self.acceptrange = radius
     return self
   end
-  
+
   --- Function to set switch-on/off zone for the SAM sites in meters
   -- @param #MANTIS self
-  -- @param #number radius Radius of the firing zone  
+  -- @param #number radius Radius of the firing zone
   function MANTIS:SetSAMRadius(radius)
     self:T(self.lid .. "SetSAMRadius")
     local radius = radius or 25000
     self.checkradius = radius
     return self
   end
-  
+
   --- Function to set SAM firing engage range, 0-100 percent, e.g. 75
   -- @param #MANTIS self
   -- @param #number range Percent of the max fire range
@@ -493,7 +550,7 @@ do
     self.engagerange = range
     return self
   end
-  
+
   --- Function to set a new SAM firing engage range, use this method to adjust range while running MANTIS, e.g. for different setups day and night
   -- @param #MANTIS self
   -- @param #number range Percent of the max fire range
@@ -508,7 +565,7 @@ do
     self.mysead.EngagementRange = range
     return self
   end
-  
+
   --- Function to set switch-on/off the debug state
   -- @param #MANTIS self
   -- @param #boolean onoff Set true to switch on
@@ -526,7 +583,7 @@ do
     end
     return self
   end
-     
+
   --- Function to get the HQ object for further use
   -- @param #MANTIS self
   -- @return Wrapper.GROUP#GROUP The HQ #GROUP object or *nil* if it doesn't exist
@@ -535,10 +592,10 @@ do
     if self.HQ_CC then
       return self.HQ_CC
     else
-      return nil      
-    end   
+      return nil
+    end
   end
-  
+
   --- Function to set separate AWACS detection instance
   -- @param #MANTIS self
   -- @param #string prefix Name of the AWACS group in the mission editor
@@ -562,7 +619,7 @@ do
     self.awacsrange = range
     return self
   end
-  
+
   --- Function to set the HQ object for further use
   -- @param #MANTIS self
   -- @param Wrapper.GROUP#GROUP group The #GROUP object to be set as HQ
@@ -580,7 +637,7 @@ do
     end
     return self
   end
-          
+
   --- Function to set the detection interval
   -- @param #MANTIS self
   -- @param #number interval The interval in seconds
@@ -589,8 +646,8 @@ do
     local interval = interval or 30
     self.detectinterval = interval
     return self
-  end  
-  
+  end
+
   --- Function to set Advanded Mode
   -- @param #MANTIS self
   -- @param #boolean onoff If true, will activate Advanced Mode
@@ -615,7 +672,7 @@ do
     end
     return self
   end
-  
+
   --- Set using Emissions on/off instead of changing alarm state
   -- @param #MANTIS self
   -- @param #boolean switch Decide if we are changing alarm state or Emission state
@@ -624,8 +681,8 @@ do
     self.UseEmOnOff = switch or false
     return self
   end
-  
-  --- Set using an #INTEL_DLINK object instead of #DETECTION. Requires Develop branch of Moose.lua.
+
+  --- Set using an #INTEL_DLINK object instead of #DETECTION
   -- @param #MANTIS self
   -- @param Ops.Intelligence#INTEL_DLINK DLink The data link object to be used.
   function MANTIS:SetUsingDLink(DLink)
@@ -635,7 +692,7 @@ do
     self.DLTimeStamp = timer.getAbsTime()
     return self
   end
-  
+
   --- [Internal] Function to check if HQ is alive
   -- @param #MANTIS self
   -- @return #boolean True if HQ is alive, else false
@@ -654,11 +711,11 @@ do
           return true
         else
           --self:T(self.lid.." HQ is dead!")
-          return false  
+          return false
         end
       end
     end
-    return self 
+    return self
   end
 
   --- [Internal] Function to check if EWR is (at least partially) alive
@@ -690,7 +747,7 @@ do
         return false
       end
     end
-    return self 
+    return self
   end
 
   --- [Internal] Function to determine state of the advanced mode
@@ -726,7 +783,7 @@ do
     end
     return newinterval, currstate
   end
-  
+
   --- Function to set autorelocation for HQ and EWR objects. Note: Units must be actually mobile in DCS!
   -- @param #MANTIS self
   -- @param #boolean hq If true, will relocate HQ object
@@ -742,8 +799,8 @@ do
       --self:T({self.autorelocate, self.autorelocateunits})
     end
     return self
-  end    
-  
+  end
+
   --- [Internal] Function to execute the relocation
   -- @param #MANTIS self
   function MANTIS:_RelocateGroups()
@@ -780,7 +837,7 @@ do
     end
     return self
   end
-     
+
   --- [Internal] Function to check if any object is in the given SAM zone
   -- @param #MANTIS self
   -- @param #table dectset Table of coordinates of detected items
@@ -796,12 +853,12 @@ do
       local coord = _coord  -- get current coord to check
       -- output for cross-check
       local targetdistance = samcoordinate:DistanceFromPointVec2(coord)
-      if self.verbose or self.debug then 
+      if self.verbose or self.debug then
         local dectstring = coord:ToStringLLDMS()
         local samstring = samcoordinate:ToStringLLDMS()
         local text = string.format("Checking SAM at % s - Distance %d m - Target %s", samstring, targetdistance, dectstring)
         local m = MESSAGE:New(text,10,"Check"):ToAllIf(self.debug)
-        self:I(self.lid..text) 
+        self:I(self.lid..text)
       end
       -- end output to cross-check
       if targetdistance <= radius then
@@ -816,20 +873,20 @@ do
   -- @return Functional.Detection #DETECTION_AREAS The running detection set
   function MANTIS:StartDetection()
     self:T(self.lid.."Starting Detection")
-    
+
     -- start detection
     local groupset = self.EWR_Group
     local grouping = self.grouping or 5000
     local acceptrange = self.acceptrange or 80000
     local interval = self.detectinterval or 60
-    
+
     --@param Functional.Detection #DETECTION_AREAS _MANTISdetection [Internal] The MANTIS detection object
     local MANTISdetection = DETECTION_AREAS:New( groupset, grouping ) --[Internal] Grouping detected objects to 5000m zones
     MANTISdetection:FilterCategories({ Unit.Category.AIRPLANE, Unit.Category.HELICOPTER })
     MANTISdetection:SetAcceptRange(acceptrange)
     MANTISdetection:SetRefreshTimeInterval(interval)
     MANTISdetection:Start()
-    
+
     function MANTISdetection:OnAfterDetectedItem(From,Event,To,DetectedItem)
       --BASE:I( { From, Event, To, DetectedItem })
       local debug = false
@@ -838,30 +895,30 @@ do
         local text = "MANTIS: Detection at "..Coordinate:ToStringLLDMS()
         local m = MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
       end
-    end  
+    end
     return MANTISdetection
   end
-  
+
  --- [Internal] Function to start the detection via AWACS if defined as separate
   -- @param #MANTIS self
   -- @return Functional.Detection #DETECTION_AREAS The running detection set
   function MANTIS:StartAwacsDetection()
     self:T(self.lid.."Starting Awacs Detection")
-    
+
     -- start detection
     local group = self.AWACS_Prefix
     local groupset = SET_GROUP:New():FilterPrefixes(group):FilterCoalitions(self.Coalition):FilterStart()
     local grouping = self.grouping or 5000
     --local acceptrange = self.acceptrange or 80000
     local interval = self.detectinterval or 60
-    
+
     --@param Functional.Detection #DETECTION_AREAS _MANTISdetection [Internal] The MANTIS detection object
     local MANTISAwacs = DETECTION_AREAS:New( groupset, grouping ) --[Internal] Grouping detected objects to 5000m zones
     MANTISAwacs:FilterCategories({ Unit.Category.AIRPLANE, Unit.Category.HELICOPTER })
     MANTISAwacs:SetAcceptRange(self.awacsrange)  --250km
     MANTISAwacs:SetRefreshTimeInterval(interval)
     MANTISAwacs:Start()
-    
+
     function MANTISAwacs:OnAfterDetectedItem(From,Event,To,DetectedItem)
       --BASE:I( { From, Event, To, DetectedItem })
       local debug = false
@@ -870,10 +927,10 @@ do
         local text = "Awacs Detection at "..Coordinate:ToStringLLDMS()
         local m = MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
       end
-    end  
+    end
     return MANTISAwacs
   end
-  
+
   --- [Internal] Function to set the SAM start state
   -- @param #MANTIS self
   -- @return #MANTIS self
@@ -891,6 +948,7 @@ do
         local group = _group -- Wrapper.Group#GROUP
         -- TODO: add emissions on/off
         if self.UseEmOnOff then
+          group:OptionAlarmStateRed()
           group:EnableEmission(false)
           --group:SetAIOff()
         else
@@ -909,10 +967,14 @@ do
      -- make SAMs evasive
      local mysead = SEAD:New( SEAD_Grps, self.Padding ) -- Functional.Sead#SEAD
      mysead:SetEngagementRange(engagerange)
+     mysead:AddCallBack(self)
+     if self.UseEmOnOff then
+      mysead:SwitchEmissions(true)
+     end
      self.mysead = mysead
      return self
   end
-  
+
   --- [Internal] Function to update SAM table and SEAD state
   -- @param #MANTIS self
   -- @return #MANTIS self
@@ -944,7 +1006,7 @@ do
      end
      return self
   end
-  
+
   --- Function to link up #MANTIS with a #SHORAD installation
   -- @param #MANTIS self
   -- @param Functional.Shorad#SHORAD Shorad The #SHORAD object
@@ -961,7 +1023,7 @@ do
     end
     return self
   end
-  
+
   --- Function to unlink #MANTIS from a #SHORAD installation
   -- @param #MANTIS self
   function MANTIS:RemoveShorad()
@@ -969,11 +1031,11 @@ do
     self.ShoradLink = false
     return self
   end
-  
+
 -----------------------------------------------------------------------
 -- MANTIS main functions
------------------------------------------------------------------------    
-  
+-----------------------------------------------------------------------
+
   --- [Internal] Check detection function
   -- @param #MANTIS self
   -- @param Functional.Detection#DETECTION_AREAS detection Detection object
@@ -995,22 +1057,24 @@ do
       local name = _data[1]
       local samgroup = GROUP:FindByName(name)
       local IsInZone, Distance = self:CheckObjectInZone(detset, samcoordinate)
-      if IsInZone then --check any target in zone
+      local suppressed = self.SuppressedGroups[name] or false
+      if IsInZone then --check any target in zone and not curr managed by SEAD
         if samgroup:IsAlive() then
           -- switch on SAM
-          if self.UseEmOnOff then
-            -- TODO: add emissions on/off
+          if self.UseEmOnOff and not suppressed then
+            -- DONE: add emissions on/off
             --samgroup:SetAIOn()
             samgroup:EnableEmission(true)
+          elseif not self.UseEmOnOff and not suppressed then
+            samgroup:OptionAlarmStateRed()
           end
-          samgroup:OptionAlarmStateRed()
-          if self.SamStateTracker[name] ~= "RED" then
+          if self.SamStateTracker[name] ~= "RED" and not suppressed then
             self:__RedState(1,samgroup)
             self.SamStateTracker[name] = "RED"
           end
           -- link in to SHORAD if available
           -- DONE: Test integration fully
-          if self.ShoradLink and Distance < self.ShoradActDistance then -- don't give SHORAD position away too early
+          if self.ShoradLink and (Distance < self.ShoradActDistance or suppressed) then -- don't give SHORAD position away too early
             local Shorad = self.Shorad
             local radius = self.checkradius
             local ontime = self.ShoradTime
@@ -1018,24 +1082,25 @@ do
             self:__ShoradActivated(1,name, radius, ontime)
           end
           -- debug output
-          if self.debug or self.verbose then
+          if self.debug or self.verbose and not suppressed then
             local text = string.format("SAM %s switched to alarm state RED!", name)
             local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
             if self.verbose then self:I(self.lid..text) end
           end
         end --end alive
-      else 
+      else
         if samgroup:IsAlive() then
           -- switch off SAM
-          if self.UseEmOnOff then
+          if self.UseEmOnOff and not suppressed then
             samgroup:EnableEmission(false)
-          end
+          elseif not self.UseEmOnOff and not suppressed then
             samgroup:OptionAlarmStateGreen()
-            if self.SamStateTracker[name] ~= "GREEN" then
-              self:__GreenState(1,samgroup)
-              self.SamStateTracker[name] = "GREEN"
-            end
-          if self.debug or self.verbose then  
+          end
+          if self.SamStateTracker[name] ~= "GREEN" and not suppressed then
+            self:__GreenState(1,samgroup)
+            self.SamStateTracker[name] = "GREEN"
+          end
+          if self.debug or self.verbose and not suppressed then
             local text = string.format("SAM %s switched to alarm state GREEN!", name)
             local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
             if self.verbose then self:I(self.lid..text) end
@@ -1044,8 +1109,8 @@ do
       end --end check
     end --for for loop
     return self
-  end 
-  
+  end
+
   --- [Internal] Relocation relay function
   -- @param #MANTIS self
   -- @return #MANTIS self
@@ -1054,7 +1119,7 @@ do
     self:_RelocateGroups()
     return self
   end
-  
+
   --- [Internal] Check advanced state
   -- @param #MANTIS self
   -- @return #MANTIS self
@@ -1089,7 +1154,7 @@ do
     end -- end newstate vs oldstate
     return self
   end
-  
+
   --- [Internal] Check DLink state
   -- @param #MANTIS self
   -- @return #MANTIS self
@@ -1103,7 +1168,7 @@ do
       self:I(self.lid .. "Intel DLink not running - switching back to single detection!")
     end
   end
-    
+
   --- [Internal] Function to set start state
   -- @param #MANTIS self
   -- @param #string From The From State
@@ -1120,10 +1185,10 @@ do
     if self.advAwacs then
       self.AWACS_Detection = self:StartAwacsDetection()
     end
-    self:__Status(-math.random(1,10))   
+    self:__Status(-math.random(1,10))
     return self
   end
-  
+
   --- [Internal] Before status function for MANTIS
   -- @param #MANTIS self
   -- @param #string From The From State
@@ -1141,7 +1206,7 @@ do
     if self.advAwacs and not self.state2flag then
       self:_Check(self.AWACS_Detection)
     end
-    
+
     -- relocate HQ and EWR
     if self.autorelocate then
       local relointerval = self.relointerval
@@ -1149,26 +1214,26 @@ do
       local timepassed = thistime - self.TimeStamp
 
       local halfintv = math.floor(timepassed / relointerval)
-      
+
       --self:T({timepassed=timepassed, halfintv=halfintv})
-      
+
       if halfintv >= 1 then
         self.TimeStamp = timer.getAbsTime()
         self:_Relocate()
         self:__Relocating(1)
       end
     end
-    
+
     -- advanced state check
     if self.advanced then
       self:_CheckAdvState()
     end
-    
+
     -- check DLink state
     if self.DLink then
       self:_CheckDLinkState()
     end
-    
+
     return self
   end
 
@@ -1191,7 +1256,7 @@ do
     self:__Status(interval)
     return self
   end
-  
+
   --- [Internal] Function to stop MANTIS
   -- @param #MANTIS self
   -- @param #string From The From State
@@ -1200,9 +1265,9 @@ do
   -- @return #MANTIS self
   function MANTIS:onafterStop(From, Event, To)
     self:T({From, Event, To})
-    return self        
+    return self
   end
-  
+
   --- [Internal] Function triggered by Event Relocating
   -- @param #MANTIS self
   -- @param #string From The From State
@@ -1211,9 +1276,9 @@ do
   -- @return #MANTIS self
   function MANTIS:onafterRelocating(From, Event, To)
     self:T({From, Event, To})
-    return self        
+    return self
   end
-  
+
   --- [Internal] Function triggered by Event GreenState
   -- @param #MANTIS self
   -- @param #string From The From State
@@ -1223,9 +1288,9 @@ do
   -- @return #MANTIS self
   function MANTIS:onafterGreenState(From, Event, To, Group)
     self:T({From, Event, To, Group})
-    return self        
+    return self
   end
-  
+
   --- [Internal] Function triggered by Event RedState
   -- @param #MANTIS self
   -- @param #string From The From State
@@ -1235,9 +1300,9 @@ do
   -- @return #MANTIS self
   function MANTIS:onafterRedState(From, Event, To, Group)
     self:T({From, Event, To, Group})
-    return self        
+    return self
   end
-  
+
   --- [Internal] Function triggered by Event AdvStateChange
   -- @param #MANTIS self
   -- @param #string From The From State
@@ -1249,9 +1314,9 @@ do
   -- @return #MANTIS self
   function MANTIS:onafterAdvStateChange(From, Event, To, Oldstate, Newstate, Interval)
     self:T({From, Event, To, Oldstate, Newstate, Interval})
-    return self        
+    return self
   end
-  
+
   --- [Internal] Function triggered by Event ShoradActivated
   -- @param #MANTIS self
   -- @param #string From The From State
@@ -1262,8 +1327,49 @@ do
   -- @param #number Ontime Seconds the SHORAD will stay active
   function MANTIS:onafterShoradActivated(From, Event, To, Name, Radius, Ontime)
     self:T({From, Event, To, Name, Radius, Ontime})
-    return self   
+    return self
   end
+  
+    --- [Internal] Function triggered by Event SeadSuppressionStart
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed group
+  function MANTIS:onafterSeadSuppressionStart(From, Event, To, Group, Name)
+    self:T({From, Event, To, Name})
+    self.SuppressedGroups[Name] = true
+    return self
+  end
+  
+    --- [Internal] Function triggered by Event SeadSuppressionEnd
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed group
+  function MANTIS:onafterSeadSuppressionEnd(From, Event, To, Group, Name)
+    self:T({From, Event, To, Name})
+    self.SuppressedGroups[Name] = false
+    return self
+  end
+  
+    --- [Internal] Function triggered by Event SeadSuppressionPlanned
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
+  -- @param #string Name Name of the suppressed group
+  -- @param #number SuppressionStartTime Model start time of the suppression from `timer.getTime()`
+  -- @param #number SuppressionEndTime Model end time of the suppression from `timer.getTime()`
+  function MANTIS:onafterSeadSuppressionPlanned(From, Event, To, Group, Name, SuppressionStartTime, SuppressionEndTime)
+    self:T({From, Event, To, Name})
+    return self
+  end
+  
 end
 -----------------------------------------------------------------------
 -- MANTIS end
