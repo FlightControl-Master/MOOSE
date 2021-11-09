@@ -1772,3 +1772,137 @@ function UTILS.GenerateLaserCodes()
     end
     return jtacGeneratedLaserCodes
 end
+
+--- Function to save an object to a file
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file. Existing file will be overwritten.
+-- @param #table Data The LUA data structure to save. This will be e.g. a table of text lines with an \\n at the end of each line.
+-- @return #boolean outcome True if saving is possible, else false.
+function UTILS.SaveToFile(Path,Filename,Data)
+  -- Thanks to @FunkyFranky 
+  -- Check io module is available.
+  if not io then
+    BASE:E("ERROR: io not desanitized. Can't save current file.")
+    return false
+  end
+  
+  -- Check default path.
+  if Path==nil and not lfs then
+    BASE:E("WARNING: lfs not desanitized. File will be saved in DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
+  end
+  
+  -- Set path or default.
+  local path = nil
+  if lfs then
+    path=Path or lfs.writedir()
+  end
+  
+  -- Set file name.
+  local filename=Filename
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+  
+  -- write
+  local f = assert(io.open(filename, "wb"))
+  f:write(Data)
+  f:close()
+  return true
+end
+
+--- Function to save an object to a file
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if reading is possible and successful, else false.
+-- @return #table data The data read from the filesystem (table of lines of text). Each line is one single #string!
+function UTILS.LoadFromFile(Path,Filename)
+  -- Thanks to @FunkyFranky    
+  -- Check io module is available.
+  if not io then
+    BASE:E("ERROR: io not desanitized. Can't save current state.")
+    return false
+  end
+  
+  -- Check default path.
+  if Path==nil and not lfs then
+    BASE:E("WARNING: lfs not desanitized. Loading will look into your DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
+  end
+  
+  -- Set path or default.
+  local path = nil
+  if lfs then
+    path=Path or lfs.writedir()
+  end
+  
+  -- Set file name.
+  local filename=Filename
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+  
+  -- Check if file exists.
+  local exists=UTILS.CheckFileExists(Path,Filename)
+  if not exists then
+    BASE:E(string.format("ERROR: File %s does not exist!",filename))
+    return false
+  end
+    
+  -- read
+  local file=assert(io.open(filename, "rb"))
+  local loadeddata = {}
+  for line in file:lines() do
+      loadeddata[#loadeddata+1] = line
+  end
+  file:close()
+  return true, loadeddata
+end
+
+--- Function to check if a file exists.
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if reading is possible, else false.
+function UTILS.CheckFileExists(Path,Filename)
+  -- Thanks to @FunkyFranky
+  -- Function that check if a file exists.
+  local function _fileexists(name)
+     local f=io.open(name,"r")
+     if f~=nil then
+      io.close(f)
+      return true
+    else
+      return false
+    end
+  end
+     
+  -- Check io module is available.
+  if not io then
+    BASE:E("ERROR: io not desanitized. Can't save current state.")
+    return false
+  end
+  
+  -- Check default path.
+  if Path==nil and not lfs then
+    BASE:E("WARNING: lfs not desanitized. Loading will look into your DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
+  end
+  
+  -- Set path or default.
+  local path = nil
+  if lfs then
+    path=Path or lfs.writedir()
+  end
+  
+  -- Set file name.
+  local filename=Filename
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+  
+  -- Check if file exists.
+  local exists=_fileexists(filename)
+  if not exists then
+    BASE:E(string.format("ERROR: File %s does not exist!",filename))
+    return false
+  else
+    return true
+  end
+end
