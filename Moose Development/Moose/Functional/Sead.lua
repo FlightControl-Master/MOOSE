@@ -1,56 +1,64 @@
 --- **Functional** -- Make SAM sites execute evasive and defensive behaviour when being fired upon.
--- 
+--
 -- ===
--- 
+--
 -- ## Features:
--- 
+--
 --   * When SAM sites are being fired upon, the SAMs will take evasive action will reposition themselves when possible.
 --   * When SAM sites are being fired upon, the SAMs will take defensive action by shutting down their radars.
--- 
+--   * SEAD calculates the time it takes for a HARM to reach the target - and will attempt to minimize the shut-down time.
+--   * Detection and evasion of shots has a random component based on the skill level of the SAM groups.
+--
 -- ===
--- 
+--
 -- ## Missions:
--- 
+--
 -- [SEV - SEAD Evasion](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SEV%20-%20SEAD%20Evasion)
--- 
+--
 -- ===
--- 
+--
 -- ### Authors: **FlightControl**, **applevangelist**
--- 
--- Last Update: Aug 2021
--- 
+--
+-- Last Update: Nov 2021
+--
 -- ===
--- 
+--
 -- @module Functional.Sead
 -- @image SEAD.JPG
 
---- 
+---
 -- @type SEAD
 -- @extends Core.Base#BASE
 
 --- Make SAM sites execute evasive and defensive behaviour when being fired upon.
--- 
+--
 -- This class is very easy to use. Just setup a SEAD object by using @{#SEAD.New}() and SAMs will evade and take defensive action when being fired upon.
+-- Once a HARM attack is detected, SEAD will shut down the radars of the attacked SAM site and take evasive action by moving the SAM
+-- vehicles around (*if* they are drivable, that is). There's a component of randomness in detection and evasion, which is based on the
+-- skill set of the SAM set (the higher the skill, the more likely). When a missile is fired from far away, the SAM will stay active for a 
+-- period of time to stay defensive, before it takes evasive actions.
 -- 
 -- # Constructor:
--- 
+--
 -- Use the @{#SEAD.New}() constructor to create a new SEAD object.
--- 
+--
 --       SEAD_RU_SAM_Defenses = SEAD:New( { 'RU SA-6 Kub', 'RU SA-6 Defenses', 'RU MI-26 Troops', 'RU Attack Gori' } )
--- 
+--
 -- @field #SEAD
 SEAD = {
-  ClassName = "SEAD", 
+  ClassName = "SEAD",
   TargetSkill = {
     Average   = { Evade = 30, DelayOn = { 40, 60 } } ,
     Good      = { Evade = 20, DelayOn = { 30, 50 } } ,
     High      = { Evade = 15, DelayOn = { 20, 40 } } ,
-    Excellent = { Evade = 10, DelayOn = { 10, 30 } } 
-  }, 
+    Excellent = { Evade = 10, DelayOn = { 10, 30 } }
+  },
   SEADGroupPrefixes = {},
   SuppressedGroups = {},
   EngagementRange = 75, --  default 75% engagement range Feature Request #1355
   Padding = 10,
+  CallBack = nil,
+  UseCallBack = false,
 }
 
   --- Missile enumerators
@@ -69,7 +77,7 @@ SEAD = {
   ["X_31"] = "X_31",
   ["Kh25"] = "Kh25",
   }
-  
+
   --- Missile enumerators - from DCS ME and Wikipedia
   -- @field HarmData
   SEAD.HarmData = {
@@ -86,14 +94,14 @@ SEAD = {
   ["X_31"] = {150, 3},
   ["Kh25"] = {25, 0.8},
   }
-  
+
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
 -- When an anti radiation missile is fired (KH-58, KH-31P, KH-31A, KH-25MPU, HARM missiles), the SA will shut down their radars and will take evasive actions...
 -- Chances are big that the missile will miss.
 -- @param #SEAD self
 -- @param #table SEADGroupPrefixes Table of #string entries or single #string, which is a table of Prefixes of the SA Groups in the DCS mission editor on which evasive actions need to be taken.
 -- @param #number Padding (Optional) Extra number of seconds to add to radar switch-back-on time
--- @return SEAD
+-- @return #SEAD self
 -- @usage
 -- -- CCCP SEAD Defenses
 -- -- Defends the Russian SA installations from SEAD attacks.
@@ -102,7 +110,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
 
   local self = BASE:Inherit( self, BASE:New() )
   self:F( SEADGroupPrefixes )
-  
+
   if type( SEADGroupPrefixes ) == 'table' then
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
       self.SEADGroupPrefixes[SEADGroupPrefix] = SEADGroupPrefix
@@ -110,25 +118,29 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   else
     self.SEADGroupPrefixes[SEADGroupPrefixes] = SEADGroupPrefixes
   end
-  
+
   local padding = Padding or 10
   if padding < 10 then padding = 10 end
   self.Padding = padding
+  self.UseEmissionsOnOff = false
+  
+  self.CallBack = nil
+  self.UseCallBack = false
   
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
-  
-  self:I("*** SEAD - Started Version 0.3.1")
+
+  self:I("*** SEAD - Started Version 0.3.3")
   return self
 end
 
---- Update the active SEAD Set
+--- Update the active SEAD Set (while running)
 -- @param #SEAD self
 -- @param #table SEADGroupPrefixes The prefixes to add, note: can also be a single #string
 -- @return #SEAD self
 function SEAD:UpdateSet( SEADGroupPrefixes )
 
   self:T( SEADGroupPrefixes )
-  
+
   if type( SEADGroupPrefixes ) == 'table' then
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
       self.SEADGroupPrefixes[SEADGroupPrefix] = SEADGroupPrefix
@@ -142,8 +154,8 @@ end
 
 --- Sets the engagement range of the SAMs. Defaults to 75% to make it more deadly. Feature Request #1355
 -- @param #SEAD self
--- @param #number range Set the engagement range in percent, e.g. 50
--- @return self
+-- @param #number range Set the engagement range in percent, e.g. 55 (default 75)
+-- @return #SEAD self
 function SEAD:SetEngagementRange(range)
   self:T( { range } )
   range = range or 75
@@ -157,7 +169,8 @@ end
 
 --- Set the padding in seconds, which extends the radar off time calculated by SEAD
 -- @param #SEAD self
--- @param #number Padding Extra number of seconds to add for the switch-on
+-- @param #number Padding Extra number of seconds to add for the switch-on (default 10 seconds)
+-- @return #SEAD self
 function SEAD:SetPadding(Padding)
   self:T( { Padding } )
   local padding = Padding or 10
@@ -166,56 +179,80 @@ function SEAD:SetPadding(Padding)
   return self
 end
 
-  --- Check if a known HARM was fired
-  -- @param #SEAD self
-  -- @param #string WeaponName
-  -- @return #boolean Returns true for a match
-  -- @return #string name Name of hit in table
-  function SEAD:_CheckHarms(WeaponName)
-    self:T( { WeaponName } )
-    local hit = false
-    local name = ""
-      for _,_name in pairs (SEAD.Harms) do
-        if string.find(WeaponName,_name,1) then 
-          hit = true
-          name = _name 
-          break
-        end
-      end
-    return hit, name
-  end
+--- Set SEAD to use emissions on/off in addition to alarm state.
+-- @param #SEAD self
+-- @param #boolean Switch True for on, false for off.
+-- @return #SEAD self
+function SEAD:SwitchEmissions(Switch)
+  self:T({Switch})
+  self.UseEmissionsOnOff = Switch
+  return self
+end
 
-  --- (Internal) Return distance in meters between two coordinates or -1 on error.
-  -- @param #SEAD self
-  -- @param Core.Point#COORDINATE _point1 Coordinate one
-  -- @param Core.Point#COORDINATE _point2 Coordinate two
-  -- @return #number Distance in meters
-  function SEAD:_GetDistance(_point1, _point2)
-    self:T("_GetDistance")
-    if _point1 and _point2 then
-      local distance1 = _point1:Get2DDistance(_point2)
-      local distance2 = _point1:DistanceFromPointVec2(_point2)
-      --self:T({dist1=distance1, dist2=distance2})
-      if distance1 and type(distance1) == "number" then
-        return distance1
-      elseif distance2 and type(distance2) == "number" then
-        return distance2
-      else
-        self:E("*****Cannot calculate distance!")
-        self:E({_point1,_point2})
-        return -1
+--- Add an object to call back when going evasive.
+-- @param #SEAD self
+-- @param #table Object The object to call. Needs to have object functions as follows:
+-- `:SeadSuppressionPlanned(Group, Name, SuppressionStartTime, SuppressionEndTime)` 
+-- `:SeadSuppressionStart(Group, Name)`, 
+-- `:SeadSuppressionEnd(Group, Name)`, 
+-- @return #SEAD self
+function SEAD:AddCallBack(Object)
+  self:T({Class=Object.ClassName})
+  self.CallBack = Object
+  self.UseCallBack = true
+  return self
+end
+
+--- (Internal) Check if a known HARM was fired
+-- @param #SEAD self
+-- @param #string WeaponName
+-- @return #boolean Returns true for a match
+-- @return #string name Name of hit in table
+function SEAD:_CheckHarms(WeaponName)
+  self:T( { WeaponName } )
+  local hit = false
+  local name = ""
+    for _,_name in pairs (SEAD.Harms) do
+      if string.find(WeaponName,_name,1) then
+        hit = true
+        name = _name
+        break
       end
+    end
+  return hit, name
+end
+
+--- (Internal) Return distance in meters between two coordinates or -1 on error.
+-- @param #SEAD self
+-- @param Core.Point#COORDINATE _point1 Coordinate one
+-- @param Core.Point#COORDINATE _point2 Coordinate two
+-- @return #number Distance in meters
+function SEAD:_GetDistance(_point1, _point2)
+  self:T("_GetDistance")
+  if _point1 and _point2 then
+    local distance1 = _point1:Get2DDistance(_point2)
+    local distance2 = _point1:DistanceFromPointVec2(_point2)
+    --self:T({dist1=distance1, dist2=distance2})
+    if distance1 and type(distance1) == "number" then
+      return distance1
+    elseif distance2 and type(distance2) == "number" then
+      return distance2
     else
-      self:E("******Cannot calculate distance!")
+      self:E("*****Cannot calculate distance!")
       self:E({_point1,_point2})
       return -1
     end
+  else
+    self:E("******Cannot calculate distance!")
+    self:E({_point1,_point2})
+    return -1
   end
-  
---- Detects if an SAM site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
--- @see SEAD
--- @param #SEAD
+end
+
+--- (Internal) Detects if an SAM site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
+-- @param #SEAD self
 -- @param Core.Event#EVENTDATA EventData
+-- @return #SEAD self
 function SEAD:HandleEventShot( EventData )
   self:T( { EventData.id } )
   local SEADPlane = EventData.IniUnit -- Wrapper.Unit#UNIT
@@ -227,7 +264,7 @@ function SEAD:HandleEventShot( EventData )
 
   self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
   --self:T({ SEADWeapon })
-  
+
   if self:_CheckHarms(SEADWeaponName) then
     self:T( '*** SEAD - Weapon Match' )
     local _targetskill = "Random"
@@ -245,13 +282,13 @@ function SEAD:HandleEventShot( EventData )
     -- see if we are shot at
     local SEADGroupFound = false
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( self.SEADGroupPrefixes ) do
-      self:T( SEADGroupPrefix )
+      self:T( _targetgroupname, SEADGroupPrefix )
       if string.find( _targetgroupname, SEADGroupPrefix, 1, true ) then
         SEADGroupFound = true
         self:T( '*** SEAD - Group Match Found' )
         break
       end
-    end   
+    end
     if SEADGroupFound == true then -- yes we are being attacked
       if _targetskill == "Random" then -- when skill is random, choose a skill
         local Skills = { "Average", "Good", "High", "Excellent" }
@@ -282,45 +319,66 @@ function SEAD:HandleEventShot( EventData )
           else
             _distance = 0
           end
-          
+
           self:T( string.format("*** SEAD - target skill %s, distance %dkm, reach %dkm, tti %dsec", _targetskill, _distance,reach,_tti ))
-          
+
           if reach >= _distance then
             self:T("*** SEAD - Shot in Reach")
-            
+
             local function SuppressionStart(args)
               self:T(string.format("*** SEAD - %s Radar Off & Relocating",args[2]))
               local grp = args[1] -- Wrapper.Group#GROUP
-              grp:OptionAlarmStateGreen()
+              local name = args[2] -- #string Group Name 
+              if self.UseEmissionsOnOff then
+                grp:EnableEmission(false)
+              end
+              grp:OptionAlarmStateGreen() -- needed else we cannot move around
               grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond")
+              if self.UseCallBack then
+                local object = self.CallBack
+                object:SeadSuppressionStart(grp,name)
+              end
             end
-            
+
             local function SuppressionStop(args)
               self:T(string.format("*** SEAD - %s Radar On",args[2]))
               local grp = args[1]  -- Wrapper.Group#GROUP
-              grp:OptionAlarmStateRed()
+              local name = args[2] -- #string Group Nam
+              if self.UseEmissionsOnOff then
+                grp:EnableEmission(true)
+              end
+              grp:OptionAlarmStateAuto()
               grp:OptionEngageRange(self.EngagementRange)
-              self.SuppressedGroups[args[2]] = false
+              self.SuppressedGroups[name] = false
+              if self.UseCallBack then
+                local object = self.CallBack
+                object:SeadSuppressionEnd(grp,name)
+              end
             end
-            
+
             -- randomize switch-on time
             local delay = math.random(self.TargetSkill[_targetskill].DelayOn[1], self.TargetSkill[_targetskill].DelayOn[2])
             if delay > _tti then delay = delay / 2 end -- speed up
             if _tti > (3*delay) then delay = (_tti / 2) * 0.9 end -- shot from afar
-            
-            local SuppressionStartTime = timer.getTime() + delay     
+
+            local SuppressionStartTime = timer.getTime() + delay
             local SuppressionEndTime = timer.getTime() + _tti + self.Padding
-            
+
             if not self.SuppressedGroups[_targetgroupname] then
               self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Switch-Off in %ds",_targetgroupname,_tti,delay))
               timer.scheduleFunction(SuppressionStart,{_targetgroup,_targetgroupname},SuppressionStartTime)
               timer.scheduleFunction(SuppressionStop,{_targetgroup,_targetgroupname},SuppressionEndTime)
               self.SuppressedGroups[_targetgroupname] = true
+              if self.UseCallBack then
+                local object = self.CallBack
+                object:SeadSuppressionPlanned(_targetgroup,_targetgroupname,SuppressionStartTime,SuppressionEndTime)
+              end
             end
-            
+
           end
         end
       end
     end
   end
+  return self
 end
