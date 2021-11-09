@@ -129,11 +129,11 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
 
-  self:I("*** SEAD - Started Version 0.3.2")
+  self:I("*** SEAD - Started Version 0.3.3")
   return self
 end
 
---- Update the active SEAD Set
+--- Update the active SEAD Set (while running)
 -- @param #SEAD self
 -- @param #table SEADGroupPrefixes The prefixes to add, note: can also be a single #string
 -- @return #SEAD self
@@ -283,7 +283,7 @@ function SEAD:HandleEventShot( EventData )
     local SEADGroupFound = false
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( self.SEADGroupPrefixes ) do
       self:T( _targetgroupname, SEADGroupPrefix )
-      if string.find( _targetgroupname, SEADGroupPrefix ) then
+      if string.find( _targetgroupname, SEADGroupPrefix, 1, true ) then
         SEADGroupFound = true
         self:T( '*** SEAD - Group Match Found' )
         break
