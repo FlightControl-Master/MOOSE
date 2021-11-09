@@ -101,23 +101,23 @@
 --
 -- # 2. Start up your MANTIS with a basic setting
 --
---    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`
---    `myredmantis:Start()`
+--        myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)
+--        myredmantis:Start()
 --
 -- [optional] Use
 --
---  * `MANTIS:SetEWRGrouping(radius)`
---  * `MANTIS:SetEWRRange(radius)`
---  * `MANTIS:SetSAMRadius(radius)`
---  * `MANTIS:SetDetectInterval(interval)`
---  * `MANTIS:SetAutoRelocate(hq, ewr)`
+--  *     MANTIS:SetEWRGrouping(radius)
+--  *     MANTIS:SetEWRRange(radius)
+--  *     MANTIS:SetSAMRadius(radius)
+--  *     MANTIS:SetDetectInterval(interval)
+--  *     MANTIS:SetAutoRelocate(hq, ewr)
 --
 -- before starting #MANTIS to fine-tune your setup.
 --
 -- If you want to use a separate AWACS unit (default detection range: 250km) to support your EWR system, use e.g. the following setup:
 --
---    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`
---    `mybluemantis:Start()`
+--        mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
+--        mybluemantis:Start()
 --
 -- # 3. Default settings
 --
@@ -138,7 +138,7 @@
 --
 --  Advanced mode will *decrease* reactivity of MANTIS, if HQ and/or EWR  network dies.  Awacs is counted as one EWR unit. It will set SAMs to RED state if both are dead.  Requires usage of an **HQ** object and the **dynamic** option.
 --
---  E.g.        `mymantis:SetAdvancedMode( true, 90 )`
+--  E.g.        mymantis:SetAdvancedMode( true, 90 )
 --
 --  Use this option if you want to make use of or allow advanced SEAD tactics.
 --
@@ -147,16 +147,16 @@
 --  You can also choose to integrate Mantis with @{Functional.Shorad#SHORAD} for protection against HARMs and AGMs. When SHORAD detects a missile fired at one of MANTIS' SAM sites, it will activate SHORAD systems in
 --  the given defense checkradius around that SAM site. Create a SHORAD object first, then integrate with MANTIS like so:
 --
---      `local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()`
---      `myshorad = SHORAD:New("BlueShorad", "Blue SHORAD", SamSet, 22000, 600, "blue")`
---      `-- now set up MANTIS`
---      `mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`
---      `mymantis:AddShorad(myshorad,720)`
---      `mymantis:Start()`
+--          local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()
+--          myshorad = SHORAD:New("BlueShorad", "Blue SHORAD", SamSet, 22000, 600, "blue")
+--          -- now set up MANTIS
+--          mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
+--          mymantis:AddShorad(myshorad,720)
+--          mymantis:Start()
 --
 --  and (optionally) remove the link later on with
 --
---        `mymantis:RemoveShorad()`
+--          mymantis:RemoveShorad()
 --
 -- # 6. Integrated SEAD
 --  
@@ -168,18 +168,18 @@
 --  
 --  You can link into the SEAD driven events of MANTIS like so:
 --  
---       `function mymantis:OnAfterSeadSuppressionPlanned(From, Event, To, Group, Name, SuppressionStartTime, SuppressionEndTime)`
+--        function mymantis:OnAfterSeadSuppressionPlanned(From, Event, To, Group, Name, SuppressionStartTime, SuppressionEndTime)
 --          -- your code here - SAM site shutdown and evasion planned, but not yet executed
---          -- Time entries relate to timer.getTime() 
---        end`
+--          -- Time entries relate to timer.getTime() - see https://wiki.hoggitworld.com/view/DCS_func_getTime
+--        end
 --        
---        `function mymantis:OnAfterSeadSuppressionStart(From, Event, To, Group, Name)`
+--        function mymantis:OnAfterSeadSuppressionStart(From, Event, To, Group, Name)
 --          -- your code here - SAM site is emissions off and possibly moving
---        end`
+--        end
 --        
---        `function mymantis:OnAfterSeadSuppressionEnd(From, Event, To, Group, Name)`
+--        function mymantis:OnAfterSeadSuppressionEnd(From, Event, To, Group, Name)
 --          -- your code here - SAM site is back online
---        end`
+--        end
 --  
 -- @field #MANTIS
 MANTIS = {
@@ -251,23 +251,23 @@ do
   --@return #MANTIS self
   --@usage Start up your MANTIS with a basic setting
   --
-  --    `myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)`
-  --    `myredmantis:Start()`
+  --        myredmantis = MANTIS:New("myredmantis","Red SAM","Red EWR",nil,"red",false)
+  --        myredmantis:Start()
   --
   -- [optional] Use
   --
-  --  * `MANTIS:SetEWRGrouping(radius)`
-  --  * `MANTIS:SetEWRRange(radius)`
-  --  * `MANTIS:SetSAMRadius(radius)`
-  --  * `MANTIS:SetDetectInterval(interval)`
-  --  * `MANTIS:SetAutoRelocate(hq, ewr)`
+  --  * MANTIS:SetEWRGrouping(radius)
+  --  * MANTIS:SetEWRRange(radius)
+  --  * MANTIS:SetSAMRadius(radius)
+  --  * MANTIS:SetDetectInterval(interval)
+  --  * MANTIS:SetAutoRelocate(hq, ewr)
   --
   -- before starting #MANTIS to fine-tune your setup.
   --
   -- If you want to use a separate AWACS unit (default detection range: 250km) to support your EWR system, use e.g. the following setup:
   --
-  --    `mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")`
-  --    `mybluemantis:Start()`
+  --        mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
+  --        mybluemantis:Start()
   --
   function MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic,awacs, EmOnOff, Padding)
 
