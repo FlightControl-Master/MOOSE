@@ -232,6 +232,43 @@ MANTIS.AdvancedState = {
   RED = 2,
 }
 
+--- SAM Type
+-- @type MANTIS.SamType
+MANTIS.SamType = {
+  SHORT = "Short",
+  MEDIUM = "Medium",
+  LONG = "Long",
+}
+
+--- SAM data
+-- @type MANTIS.SamData
+-- @field #number Range Max firing range in km
+-- @field #number Blindspot no-firing range (green circle)
+-- @field #number Height Max firing height in km
+-- @field #string Type #MANTIS.SamType of SAM, i.e. SHORT, MEDIUM or LONG (range)
+MANTIS.SamData = {
+  ["Hawk"] = { Range=44, Blindspot=0, Height=9, Type="Medium" }, -- measures in km
+  ["NASAMS"] = { Range=14, Blindspot=0, Height=3, Type="Short" },
+  ["Patriot"] = { Range=99, Blindspot=0, Height=9, Type="Long" },
+  ["Rapier"] = { Range=6, Blindspot=0, Height=3, Type="Short" },
+  ["SA-5"] = { Range=250, Blindspot=7, Height=40, Type="Long" },
+  ["SA-6"] = { Range=25, Blindspot=0, Height=8, Type="Medium" },
+  ["SA-3"] = { Range=18, Blindspot=0, Height=18, Type="Short" },
+  ["SA-2"] = { Range=40, Blindspot=7, Height=25, Type="Medium" },
+  ["SA-11"] = { Range=35, Blindspot=0, Height=20, Type="Medium" },
+  ["SA-10"] = { Range=119, Blindspot=0, Height=18, Type="Long" },
+  ["Roland"] = { Range=8, Blindspot=0, Height=3, Type="Short" },
+  ["HQ-7"] = { Range=12, Blindspot=0, Height=3, Type="Short" },
+  ["SA-9"] = { Range=4, Blindspot=0, Height=3, Type="Short" },
+  ["SA-8"] = { Range=10, Blindspot=0, Height=5, Type="Short" },
+  ["SA-19"] = { Range=8, Blindspot=0, Height=3, Type="Short" },
+  ["SA-15"] = { Range=11, Blindspot=0, Height=6, Type="Short" },
+  ["SA-13"] = { Range=5, Blindspot=0, Height=3, Type="Short" },
+  ["Avenger"] = { Range=4, Blindspot=0, Height=3, Type="Short" },
+  ["Chaparrel"] = { Range=8, Blindspot=0, Height=3, Type="Short" },
+  ["Linebacker"] = { Range=4, Blindspot=0, Height=3, Type="Short" },
+}
+
 -----------------------------------------------------------------------
 -- MANTIS System
 -----------------------------------------------------------------------
@@ -276,8 +313,9 @@ do
     -- DONE: Set SAMs to auto if EWR dies
     -- DONE: Refresh SAM table in dynamic mode
     -- DONE: Treat Awacs separately, since they might be >80km off site
+    -- TODO: Allow tables of prefixes for the setup
+    -- TODO: Auto-Mode with range setups for various known SAM types.
 
-    self.name = name or "mymantis"
     self.SAM_Templates_Prefix = samprefix or "Red SAM"
     self.EWR_Templates_Prefix = ewrprefix or "Red EWR"
     self.HQ_Template_CC = hq or nil
@@ -337,17 +375,34 @@ do
       --BASE:TraceClass("SEAD")
       BASE:TraceLevel(1)
     end
-
+    
+    local ewr_templates = {}
+    if type(samprefix) ~= "table" then
+      self.SAM_Templates_Prefix = {samprefix}
+    end
+    
+    if type(ewrprefix) ~= "table" then
+      self.EWR_Templates_Prefix = {ewrprefix}
+    end
+    
+    for _,_group in pairs (self.SAM_Templates_Prefix) do
+      table.insert(ewr_templates,_group)
+    end
+    
+    for _,_group in pairs (self.EWR_Templates_Prefix) do
+      table.insert(ewr_templates,_group)
+    end
+    
     if self.dynamic then
       -- Set SAM SET_GROUP
       self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition):FilterStart()
       -- Set EWR SET_GROUP
-      self.EWR_Group = SET_GROUP:New():FilterPrefixes({self.SAM_Templates_Prefix,self.EWR_Templates_Prefix}):FilterCoalitions(self.Coalition):FilterStart()
+      self.EWR_Group = SET_GROUP:New():FilterPrefixes(ewr_templates):FilterCoalitions(self.Coalition):FilterStart()
     else
       -- Set SAM SET_GROUP
       self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition):FilterOnce()
       -- Set EWR SET_GROUP
-      self.EWR_Group = SET_GROUP:New():FilterPrefixes({self.SAM_Templates_Prefix,self.EWR_Templates_Prefix}):FilterCoalitions(self.Coalition):FilterOnce()
+      self.EWR_Group = SET_GROUP:New():FilterPrefixes(ewr_templates):FilterCoalitions(self.Coalition):FilterOnce()
     end
 
     -- set up CC
@@ -356,7 +411,7 @@ do
     end
 
     -- @field #string version
-    self.version="0.7.1"
+    self.version="0.8.1"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
