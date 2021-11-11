@@ -3,9 +3,9 @@
 -- ===
 --
 -- **MANTIS** - Moose derived  Modular, Automatic and Network capable Targeting and Interception System
--- Controls a network of SAM sites. Use detection to switch on the AA site closest to the enemy
--- Automatic mode (default since 0.8) can set-up your SAM site network automatically for you
--- Leverage evasiveness from SEAD, leverage attack range setting
+-- Controls a network of SAM sites. Uses detection to switch on the AA site closest to the enemy.   
+-- Automatic mode (default since 0.8) can set-up your SAM site network automatically for you.   
+-- Leverage evasiveness from SEAD, leverage attack range setting.   
 --
 -- ===
 --
@@ -99,14 +99,14 @@
 -- * Roland
 -- * SA-2, SA-3, SA-5, SA-6, SA-7, SA-8, SA-9, SA-10, SA-11, SA-13, SA-15, SA-19
 -- 
--- Folowing the example started above, an SA-6 site group name should start with "Red SAM SA-6" then, or a blue Patriot installation with e.g. "Blue SAM Patriot"
+-- Following the example started above, an SA-6 site group name should start with "Red SAM SA-6" then, or a blue Patriot installation with e.g. "Blue SAM Patriot"
 -- 
 -- # 0.1 Set-up in the mission editor
 -- 
--- Set up your SAM sites in the mission editor. Name the groups as stated above.
--- Set up your EWR system in the mission editor. Name the groups as stated above. Can be e.g. AWACS or a combination of AWACS and Search Radars like e.g. EWR 1L13 etc. 
--- Search Radars usually have "SR" or "STR" in their names.
--- Set up your SHORAD systems. They need to be close to the SAM sites to be effective. Use **one** group per SAM location. SA-15 TOR systems offer a good missile defense.
+-- Set up your SAM sites in the mission editor. Name the groups using a systematic approach like above.
+-- Set up your EWR system in the mission editor. Name the groups using a systematic approach like above. Can be e.g. AWACS or a combination of AWACS and Search Radars like e.g. EWR 1L13 etc. 
+-- Search Radars usually have "SR" or "STR" in their names. Use the encyclopedia in the mission editor to inform yourself.
+-- Set up your SHORAD systems. They need to be **close** to (i.e. around) the SAM sites to be effective. Use **one** group per SAM location. SA-15 TOR systems offer a good missile defense.
 -- 
 -- [optional] Set up your HQ. Can be any group, e.g. a command vehicle.
 -- 
@@ -115,13 +115,13 @@
 -- ## 1.1 Radar systems and AWACS
 --
 --  Typically, your setup should consist of EWR (early warning) radars to detect and track targets, accompanied by AWACS if your scenario forsees that. Ensure that your EWR radars have a good coverage of the area you want to track.
---  **Location** is of highest importantance here. Whilst AWACS in DCS has almost the "all seeing eye", EWR don't have that. Choose your location wisely, against a mountain backdrop or inside a valley even the best EWR system
+--  **Location** is of highest importance here. Whilst AWACS in DCS has almost the "all seeing eye", EWR don't have that. Choose your location wisely, against a mountain backdrop or inside a valley even the best EWR system
 --  doesn't work well. Prefer higher-up locations with a good view; use F7 in-game to check where you actually placed your EWR and have a look around. Apart from the obvious choice, do also consider other radar units
 --  for this role, most have "SR" (search radar) or "STR" (search and track radar) in their names, use the encyclopedia to see what they actually do.
 --
 -- ## 1.2 SAM sites
 --
--- Typically your SAM should cover all attack ranges. The closer the enemy gets, the more systems you will need to deploy to defend your location. Use a combination of long-range systems like the SA-10/11, midrange like SA-6 and short-range like
+-- Typically your SAM should cover all attack ranges. The closer the enemy gets, the more systems you will need to deploy to defend your location. Use a combination of long-range systems like the SA-5/10/11, midrange like SA-6 and short-range like
 -- SA-2 for defense (Patriot, Hawk, Gepard, Blindfire for the blue side). For close-up defense and defense against HARMs or low-flying aircraft, helicopters it is also advisable to deploy SA-15 TOR systems, Shilka, Strela and Tunguska units, as well as manpads (Think Gepard, Avenger, Chaparral,
 -- Linebacker, Roland systems for the blue side). If possible, overlap ranges for mutual coverage.
 --
@@ -131,7 +131,7 @@
 --
 --   * bad placement of radar units,
 --   * overestimation how far units can "see" and
---   * not taking into account that a SAM site will take (e.g for a SA-6) 30-40 seconds between switching to RED, acquiring the target and firing.
+--   * not taking into account that a SAM site will take (e.g for a SA-6) 30-40 seconds between switching on, acquiring the target and firing.
 --
 -- An attacker doing 350knots will cover ca 180meters/second or thus more than 6km until the SA-6 fires. Use triggers zones and the ruler in the missione editor to understand distances and zones. Take into account that the ranges given by the circles
 -- in the mission editor are absolute maximum ranges; in-game this is rather 50-75% of that depending on the system. Fiddle with placement and options to see what works best for your scenario, and remember **everything in here is in meters**.
@@ -159,7 +159,7 @@
 -- 
 -- You can now add Accept- and Reject-Zones to your setup, e.g. to consider borders or de-militarized zones:
 -- 
---        -- paramters are tables of @{Core.Zone#ZONE} objects!
+--        -- parameters are tables of Core.Zone#ZONE objects!
 --        mybluemantis:AddZones(AcceptZones,RejectZones)
 --        
 -- Change the number of long-, mid- and short-range systems going live on a detected target:
@@ -171,7 +171,8 @@
 -- 
 --        -- switch off auto mode **before** you start MANTIS
 --        mybluemantis.automode = false
---        -- scale of the firing range, i.e. don't fire at the fringes of max range, default 90%
+--        -- scale of the activation range, i.e. don't activate at the fringes of max range, default 90%
+--        -- also see engagerange below
 --        mybluemantis.radiusscale = 0.9
 -- 
 -- # 3. Default settings [both modes unless stated otherwise]
