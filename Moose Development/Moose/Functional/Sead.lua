@@ -109,7 +109,7 @@ SEAD = {
 function SEAD:New( SEADGroupPrefixes, Padding )
 
   local self = BASE:Inherit( self, BASE:New() )
-  self:F( SEADGroupPrefixes )
+  self:T( SEADGroupPrefixes )
 
   if type( SEADGroupPrefixes ) == 'table' then
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
@@ -122,14 +122,14 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   local padding = Padding or 10
   if padding < 10 then padding = 10 end
   self.Padding = padding
-  self.UseEmissionsOnOff = false
+  self.UseEmissionsOnOff = true
   
   self.CallBack = nil
   self.UseCallBack = false
   
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
 
-  self:I("*** SEAD - Started Version 0.3.3")
+  self:I("*** SEAD - Started Version 0.3.4")
   return self
 end
 
@@ -213,7 +213,7 @@ function SEAD:_CheckHarms(WeaponName)
   local hit = false
   local name = ""
     for _,_name in pairs (SEAD.Harms) do
-      if string.find(WeaponName,_name,1) then
+      if string.find(WeaponName,_name,1,true) then
         hit = true
         name = _name
         break
@@ -282,8 +282,8 @@ function SEAD:HandleEventShot( EventData )
     -- see if we are shot at
     local SEADGroupFound = false
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( self.SEADGroupPrefixes ) do
-      self:T( _targetgroupname, SEADGroupPrefix )
-      if string.find( _targetgroupname, SEADGroupPrefix, 1, true ) then
+      self:T("Target = ".. _targetgroupname .. " | Prefix = " .. SEADGroupPrefix )
+      if string.find( _targetgroupname, SEADGroupPrefix,1,true ) then
         SEADGroupFound = true
         self:T( '*** SEAD - Group Match Found' )
         break
@@ -347,7 +347,7 @@ function SEAD:HandleEventShot( EventData )
               if self.UseEmissionsOnOff then
                 grp:EnableEmission(true)
               end
-              grp:OptionAlarmStateAuto()
+              grp:OptionAlarmStateRed()
               grp:OptionEngageRange(self.EngagementRange)
               self.SuppressedGroups[name] = false
               if self.UseCallBack then
