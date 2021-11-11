@@ -454,7 +454,7 @@ end
 -- @param #NAVYGROUP self
 -- @return #NAVYGROUP self
 function NAVYGROUP:SetPathfindingOff()
-  self:SetPathfinding(true, self.pathCorridor)
+  self:SetPathfinding(false, self.pathCorridor)
   return self
 end
 
@@ -583,7 +583,7 @@ end
 -- @param #NAVYGROUP self
 -- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
 -- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
--- @param #number speed Speed in knots during turn into wind leg.
+-- @param #number speed Wind speed on deck in knots during turn into wind leg. Default 20 knots.
 -- @param #boolean uturn If `true` (or `nil`), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
 -- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
 -- @return #NAVYGROUP.IntoWind Turn into window data table.
@@ -1041,16 +1041,17 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
   
   if self:IsEngaging() or not self.passedfinalwp then
   
-    --[[
-    env.info("FF:")
-    for i=2,#waypoints do
-      local wp=waypoints[i] --Ops.OpsGroup#OPSGROUP.Waypoint      
-      self:I(self.lid..string.format("[%d] UID=%d", i-1, wp.uid))
+    if self.verbose>=10 then
+      for i=1,#waypoints do
+        local wp=waypoints[i] --Ops.OpsGroup#OPSGROUP.Waypoint
+        local text=string.format("%s Waypoint [%d] UID=%d speed=%d", self.groupname, i-1, wp.uid or -1, wp.speed)
+        self:I(self.lid..text)
+        COORDINATE:NewFromWaypoint(wp):MarkToAll(text)            
+      end
     end
-    ]]
 
     -- Debug info.
-    self:I(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), self.altWp))
+    self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), self.altWp))
 
     -- Route group to all defined waypoints remaining.
     self:Route(waypoints)

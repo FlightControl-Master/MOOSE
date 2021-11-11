@@ -1441,7 +1441,7 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
       y                = Vec2.y,
       zoneRadius       = Radius,
       radius           = Radius,
-      expendQty        = 100, -- dummy value
+      expendQty        = 1, -- dummy value
       expendQtyEnabled = false,
       alt_type         = ASL and 0 or 1
     }
@@ -1460,6 +1460,7 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
     DCSTask.params.weaponType=WeaponType
   end
 
+  --env.info("FF fireatpoint")
   --BASE:I(DCSTask)
 
   return DCSTask

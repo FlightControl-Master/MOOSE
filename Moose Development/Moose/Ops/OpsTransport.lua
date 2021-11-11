@@ -243,7 +243,7 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   self.NcarrierDead=0
   
   -- Set default TZC.
-  self.tzcDefault=self:AddTransportZoneCombo(PickupZone, DeployZone, CargoGroups)  
+  self.tzcDefault=self:AddTransportZoneCombo(CargoGroups, PickupZone, DeployZone)  
   
   -- FMS start state is PLANNED.
   self:SetStartState(OPSTRANSPORT.Status.PLANNED)
@@ -465,11 +465,11 @@ end
 
 --- Add pickup and deploy zone combination.
 -- @param #OPSTRANSPORT self
+-- @param Core.Set#SET_GROUP CargoGroups Groups to be transported as cargo. Can also be a single @{Wrapper.Group#GROUP} or @{Ops.OpsGroup#OPSGROUP} object.
 -- @param Core.Zone#ZONE PickupZone Zone where the troops are picked up.
 -- @param Core.Zone#ZONE DeployZone Zone where the troops are picked up.
--- @param Core.Set#SET_GROUP CargoGroups Groups to be transported as cargo. Can also be a single @{Wrapper.Group#GROUP} or @{Ops.OpsGroup#OPSGROUP} object.
 -- @return #OPSTRANSPORT.TransportZoneCombo Transport zone table.
-function OPSTRANSPORT:AddTransportZoneCombo(PickupZone, DeployZone, CargoGroups)
+function OPSTRANSPORT:AddTransportZoneCombo(CargoGroups, PickupZone, DeployZone)
 
   -- Increase counter.
   self.tzcCounter=self.tzcCounter+1  
@@ -1183,14 +1183,13 @@ function OPSTRANSPORT:AddConditionStart(ConditionFunction, ...)
   return self
 end
 
---- Add path used for transportation from the pickup to the deploy zone for **ground** and **naval** carriers.
+--- Add path used for transportation from the pickup to the deploy zone.
 -- If multiple paths are defined, a random one is chosen. The path is retrieved from the waypoints of a given group.
 -- **NOTE** that the category group defines for which carriers this path is valid.
 -- For example, if you specify a GROUND group to provide the waypoints, only assigned GROUND carriers will use the
 -- path. 
 -- @param #OPSTRANSPORT self
 -- @param Wrapper.Group#GROUP PathGroup A (late activated) GROUP defining a transport path by their waypoints.
--- @param #boolean Reversed If `true`, add waypoints of group in reversed order.
 -- @param #number Radius Randomization radius in meters. Default 0 m.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
 -- @return #OPSTRANSPORT self
@@ -1204,10 +1203,8 @@ function OPSTRANSPORT:AddPathTransport(PathGroup, Reversed, Radius, TransportZon
   end
 
   local path={} --#OPSTRANSPORT.Path
-  path.coords={}
   path.category=PathGroup:GetCategory()
   path.radius=Radius or 0
-  path.reverse=Reversed
   path.waypoints=PathGroup:GetTaskRoute()
   
   -- TODO: Check that only flyover waypoints are given for aircraft.
@@ -1251,70 +1248,6 @@ function OPSTRANSPORT:_GetPathTransport(Category, TransportZoneCombo)
 
   return nil
 end
-
-
---- Add path used to go to the pickup zone. If multiple paths are defined, a random one is chosen.
--- @param #OPSTRANSPORT self
--- @param Wrapper.Group#GROUP PathGroup A (late activated) GROUP defining a transport path by their waypoints.
--- @param #boolean Reversed If `true`, add waypoints of group in reversed order.
--- @param #number Radius Randomization radius in meters. Default 0 m.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
--- @return #OPSTRANSPORT self
-function OPSTRANSPORT:AddPathPickup(PathGroup, Reversed, Radius, TransportZoneCombo)
-
-  -- Use default TZC if no transport zone combo is provided.
-  TransportZoneCombo=TransportZoneCombo or self.tzcDefault
-
-  if type(PathGroup)=="string" then
-    PathGroup=GROUP:FindByName(PathGroup)
-  end
-
-  local path={} --#OPSTRANSPORT.Path
-  path.category=PathGroup:GetCategory()
-  path.radius=Radius or 0
-  path.reverse=Reversed
-  path.waypoints=PathGroup:GetTaskRoute()
-  
-  -- Add path.
-  table.insert(TransportZoneCombo.PickupPaths, path)
-
-  return self
-end
-
---- Get a path for pickup.
--- @param #OPSTRANSPORT self
--- @param #number Category Group category.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
--- @return #table The path of COORDINATEs.
-function OPSTRANSPORT:_GetPathPickup(Category, TransportZoneCombo)
-
-  -- Use default TZC if no transport zone combo is provided.
-  TransportZoneCombo=TransportZoneCombo or self.tzcDefault
-
-  local Paths=TransportZoneCombo.PickupPaths
-
-  if Paths and #Paths>0 then
-  
-    local paths={}
-    
-    for _,_path in pairs(Paths) do
-      local path=_path --#OPSTRANSPORT.Path
-      if path.category==Category then
-        table.insert(paths, path)
-      end
-    end
-    
-    if #paths>0 then
-    
-      local path=paths[math.random(#paths)] --#OPSTRANSPORT.Path
-      
-      return path
-    end
-  end
-
-  return nil
-end
-
 
 --- Add a carrier assigned for this transport.
 -- @param #OPSTRANSPORT self

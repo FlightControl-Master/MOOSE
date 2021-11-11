@@ -3635,15 +3635,8 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- Task "Ammo Supply" or "Fuel Supply" mission.
     ---
 
-    -- Parameters.
-    local zone=Task.dcstask.params.zone --Core.Zone#ZONE
-
-    -- Random coordinate in zone.
-    local Coordinate=zone:GetRandomCoordinate()
-
-    -- Speed and altitude.
-    local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
-
+    -- Just stay put and wait until something happens.
+    
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
 
     ---
@@ -3677,13 +3670,16 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
       -- BARRAGE is special!
       if Task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
-        --env.info("FF Barrage")
+        env.info("FF Barrage")
         local vec2=self:GetVec2()
         local param=Task.dcstask.params
         local heading=param.heading or math.random(1, 360)
-        local distance=param.distance or 100
+        local Altitude=param.altitude or 500
+        local Alpha=param.angle or math.random(45, 85)
+        local distance=Altitude/math.tan(math.rad(Alpha))
         local tvec2=UTILS.Vec2Translate(vec2, distance, heading)
-        DCSTask=CONTROLLABLE.TaskFireAtPoint(nil, tvec2, param.radius, param.shots, param.weaponType, param.altitude)
+        self:T(self.lid..string.format("Barrage: Shots=%s, Altitude=%d m, Angle=%d°, heading=%03d°, distance=%d m", tostring(param.shots), Altitude, Alpha, heading, distance))
+        DCSTask=CONTROLLABLE.TaskFireAtPoint(nil, tvec2, param.radius, param.shots, param.weaponType, Altitude)
       else
         DCSTask=Task.dcstask
       end
@@ -3892,8 +3888,8 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       self:T(self.lid.."Taske DONE Task_Land_At ==> Wait")
       self:Wait(20, 100)
     else
-      self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 0 sec")
-      self:_CheckGroupDone()
+      self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 1 sec")
+      self:_CheckGroupDone(1)
     end
 
   end
@@ -3949,6 +3945,11 @@ function OPSGROUP:RemoveMission(Mission)
 
       if Task then
         self:RemoveTask(Task)
+      end
+      
+      -- Take care of a paused mission.
+      if self.missionpaused and self.missionpaused.auftragsnummer==Mission.auftragsnummer then
+        self.missionpaused=nil
       end
 
       -- Remove mission from queue.
@@ -4213,7 +4214,28 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
   Mission:__Started(3)
 
   -- Route group to mission zone.
-  self:RouteToMission(Mission, 3)
+  if self.speedMax>3.6 then
+  
+    self:RouteToMission(Mission, 3)
+    
+  else
+    ---
+    -- IMMOBILE Group
+    ---
+  
+    env.info("FF Immobile GROUP")
+
+    -- Add waypoint task. UpdateRoute is called inside.
+    local Clock=Mission.Tpush and UTILS.SecondsToClock(Mission.Tpush) or 5
+    local Task=self:AddTask(Mission.DCStask, Clock, Mission.name, Mission.prio, Mission.duration)
+    Task.ismission=true
+
+    -- Set waypoint task.
+    Mission:SetGroupWaypointTask(self, Task)
+
+    -- Execute task. This calls mission execute.    
+    self:__TaskExecute(3, Task)
+  end
 
 end
 
@@ -4285,7 +4307,9 @@ function OPSGROUP:onafterUnpauseMission(From, Event, To)
 
     local mission=self:GetMissionByID(self.missionpaused.auftragsnummer)
 
-    self:MissionStart(mission)
+    if mission then
+      self:MissionStart(mission)
+    end
 
     self.missionpaused=nil
   else
@@ -4512,7 +4536,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
 
     -- Get ingress waypoint.
-    if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE then
+    if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE or mission.type==AUFTRAG.Type.AMMOSUPPLY or mission.type.FUELSUPPLY then
       local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
       waypointcoord=zone:GetRandomCoordinate(nil , nil, surfacetypes)
     elseif mission.type==AUFTRAG.Type.ONGUARD then
@@ -4597,7 +4621,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
 
     -- UID of this waypoint.
-    local uid=self:GetWaypointCurrent().uid
+    --local uid=self:GetWaypointCurrent().uid
 
     -- Add waypoint.
     local waypoint=nil --#OPSGROUP.Waypoint
@@ -4625,16 +4649,16 @@ function OPSGROUP:RouteToMission(mission, delay)
     if egresscoord then
       --egresscoord:MarkToAll(string.format("Egress Mission %s alt=%d m", mission:GetName(), waypointcoord.y))
       -- Add waypoint.
-      local waypoint=nil --#OPSGROUP.Waypoint
+      local Ewaypoint=nil --#OPSGROUP.Waypoint
       if self:IsFlightgroup() then
-        waypoint=FLIGHTGROUP.AddWaypoint(self, egresscoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+        Ewaypoint=FLIGHTGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
       elseif self:IsArmygroup() then
-        waypoint=ARMYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, uid, mission.optionFormation, false)
+        Ewaypoint=ARMYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, mission.optionFormation, false)
       elseif self:IsNavygroup() then
-        waypoint=NAVYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+        Ewaypoint=NAVYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
       end
-      waypoint.missionUID=mission.auftragsnummer
-      mission:SetGroupEgressWaypointUID(self, waypoint.uid)
+      Ewaypoint.missionUID=mission.auftragsnummer
+      mission:SetGroupEgressWaypointUID(self, Ewaypoint.uid)
     end
 
     ---
@@ -7115,7 +7139,7 @@ function OPSGROUP:onafterPickup(From, Event, To)
   else
 
     -- Aircraft is already parking at the pickup airbase.
-    ready4loading=self.currbase and self.currbase:GetName()==Zone:GetName() and self:IsParking()
+    ready4loading=self.currbase and airbasePickup and self.currbase:GetName()==airbasePickup:GetName() and self:IsParking()
 
     -- If a helo is landed in the zone, we also are ready for loading.
     if ready4loading==false and self.isHelo and self:IsLandedAt() and inzone then
@@ -7503,7 +7527,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
   local Zone=self.cargoTZC.DeployZone
 
   -- Check if already in deploy zone.
-  local inzone=self:IsInZone(Zone) --Zone:IsCoordinateInZone(self:GetCoordinate())
+  local inzone=self:IsInZone(Zone)
 
   -- Deploy airbase (if any).
   local airbaseDeploy=self.cargoTZC.DeployAirbase --Wrapper.Airbase#AIRBASE
@@ -7514,7 +7538,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
     ready2deploy=inzone
   else
     -- Aircraft is already parking at the pickup airbase.
-    ready2deploy=self.currbase and self.currbase:GetName()==Zone:GetName() and self:IsParking()
+    ready2deploy=self.currbase and airbaseDeploy and self.currbase:GetName()==airbaseDeploy:GetName() and self:IsParking()
 
     -- If a helo is landed in the zone, we also are ready for loading.
     if ready2deploy==false and (self.isHelo or self.isVTOL) and self:IsLandedAt() and inzone then
@@ -7538,7 +7562,7 @@ function OPSGROUP:onafterTransport(From, Event, To)
     if self:IsArmygroup() or self:IsFlightgroup() then
       surfacetypes={land.SurfaceType.LAND}
     elseif self:IsNavygroup() then
-      surfacetypes={land.SurfaceType.WATER}
+      surfacetypes={land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER}
     end
 
     -- Coord where the carrier goes to unload.
@@ -9235,8 +9259,10 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
       -- Temporary Waypoint
       ---
 
-      if opsgroup:IsNavygroup() or opsgroup:IsArmygroup() then
+      if (opsgroup:IsNavygroup() or opsgroup:IsArmygroup()) and opsgroup.currentwp==#opsgroup.waypoints then
         --TODO: not sure if this works with FLIGHTGROUPS
+        
+        -- Removing this for now.
         opsgroup:Cruise()
       end
 
@@ -9279,7 +9305,7 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
 
             if opsgroup.cargoTZC.PickupAirbase then
               -- Pickup airbase specified. Land there.
-              env.info(opsgroup.lid.."FF Land at Pickup Airbase")
+              --env.info(opsgroup.lid.."FF Land at Pickup Airbase")
               opsgroup:LandAtAirbase(opsgroup.cargoTZC.PickupAirbase)
             else
               -- Land somewhere in the pickup zone. Only helos can do that.
@@ -9310,7 +9336,7 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
 
             if opsgroup.cargoTZC.DeployAirbase then
               -- Pickup airbase specified. Land there.
-              env.info(opsgroup.lid.."FF Land at Deploy Airbase")
+              --env.info(opsgroup.lid.."FF Land at Deploy Airbase")
               opsgroup:LandAtAirbase(opsgroup.cargoTZC.DeployAirbase)
             else
               -- Land somewhere in the pickup zone. Only helos can do that.
@@ -9319,7 +9345,7 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
             end
 
           else
-            coordinate=opsgroup:GetCoordinate()
+            local coordinate=opsgroup:GetCoordinate()
             opsgroup:LandAt(coordinate, 60*60)
           end
 

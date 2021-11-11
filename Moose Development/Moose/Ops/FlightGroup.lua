@@ -2252,7 +2252,7 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
 
     if not self.group:IsAirborne(true) then
       -- this should really not happen, either the AUFTRAG is cancelled before the group was airborne or it is stuck at the ground for some reason
-      self:I(self.lid..string.format("WARNING: Group [%s] is not AIRBORNE  ==> RTB event is suspended for 20 sec", self:GetState()))
+      self:T(self.lid..string.format("WARNING: Group [%s] is not AIRBORNE  ==> RTB event is suspended for 20 sec", self:GetState()))
       allowed=false
       Tsuspend=-20
       local groupspeed = self.group:GetVelocityMPS()

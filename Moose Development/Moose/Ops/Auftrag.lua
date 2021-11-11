@@ -105,7 +105,7 @@
 -- @field #number artyShots Number of shots fired.
 -- @field #number artyAltitude Altitude in meters. Can be used for a Barrage.
 -- @field #number artyHeading Heading in degrees (for Barrage).
--- @field #number artyDistance Distance in meters (for barrage).
+-- @field #number artyAngle Shooting angle in degrees (for Barrage).
 -- 
 -- @field #string alert5MissionType Alert 5 mission type. This is the mission type, the alerted assets will be able to carry out.
 -- 
@@ -1566,7 +1566,7 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius, Altitude)
   
   mission:_TargetFromObject(Target)
   
-  mission.artyShots=Nshots or 3
+  mission.artyShots=Nshots or nil
   mission.artyRadius=Radius or 100
   mission.artyAltitude=Altitude
   
@@ -1590,13 +1590,13 @@ end
 --- **[GROUND, NAVAL]** Create an BARRAGE mission. Assigned groups will move to a random coordinate within a given zone and start firing into the air.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE Zone The zone where the unit will go.
+-- @param #number Heading Heading in degrees. Default random heading [0, 360).
+-- @param #number Angle Shooting angle in degrees. Default random [45, 85].
 -- @param #number Radius Radius of the shells in meters. Default 100 meters.
 -- @param #number Altitude Altitude in meters. Default 500 m.
--- @param #number Heading Heading in degrees. Default random heading [0, 360).
--- @param #number Distance Distance in meters. Default 500 m.
 -- @param #number Nshots Number of shots to be fired. Default is until ammo is empty (`#nil`).
 -- @return #AUFTRAG self
-function AUFTRAG:NewBARRAGE(Zone, Radius, Altitude, Heading, Distance, Nshots)
+function AUFTRAG:NewBARRAGE(Zone, Heading, Angle, Radius, Altitude, Nshots)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BARRAGE)
   
@@ -1606,7 +1606,7 @@ function AUFTRAG:NewBARRAGE(Zone, Radius, Altitude, Heading, Distance, Nshots)
   mission.artyRadius=Radius or 100
   mission.artyAltitude=Altitude
   mission.artyHeading=Heading
-  mission.artyDistance=Distance
+  mission.artyAngle=Angle
   
   mission.engageWeaponType=ENUMS.WeaponFlag.Auto
   
@@ -1701,7 +1701,9 @@ function AUFTRAG:NewAMMOSUPPLY(Zone)
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionAlarm=ENUMS.AlarmState.Auto
   
-  mission.missionFraction=0.9
+  mission.missionFraction=1.0
+  
+  mission.missionWaypointRadius=0
   
   mission.categories={AUFTRAG.Category.GROUND}
     
@@ -1723,7 +1725,7 @@ function AUFTRAG:NewFUELSUPPLY(Zone)
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionAlarm=ENUMS.AlarmState.Auto
   
-  mission.missionFraction=0.9
+  mission.missionFraction=1.0
   
   mission.categories={AUFTRAG.Category.GROUND}
     
@@ -2568,6 +2570,17 @@ function AUFTRAG:SetICLS(Channel, Morse, UnitName)
   self.icls.Channel=Channel
   self.icls.Morse=Morse or "XXX"
   self.icls.UnitName=UnitName
+  
+  return self
+end
+
+--- Set time interval between mission done and success/failure evaluation.
+-- @param #AUFTRAG self
+-- @param #number Teval Time in seconds before the mission result is evaluated. Default depends on mission type.
+-- @return #AUFTRAG self
+function AUFTRAG:SetEvaluationTime(Teval)
+  
+  self.dTevaluate=Teval or 60
   
   return self
 end
@@ -4799,7 +4812,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     param.altitude=self.artyAltitude
     param.radius=self.artyRadius
     param.heading=self.artyHeading
-    param.distance=self.artyDistance
+    param.angle=self.artyAngle
     param.shots=self.artyShots
     param.weaponTypoe=self.engageWeaponType
     

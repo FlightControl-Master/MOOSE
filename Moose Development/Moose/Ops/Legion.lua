@@ -2261,12 +2261,14 @@ function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, Nca
         -- Set pickup zone to spawn zone or airbase if the legion has one that is operational.
         local pickupzone=legion.spawnzone
         if legion.airbase and legion:IsRunwayOperational() then
-          pickupzone=ZONE_AIRBASE:New(legion.airbasename, 4000)
+          --pickupzone=ZONE_AIRBASE:New(legion.airbasename, 4000)
         end
         
         -- Add TZC from legion spawn zone to deploy zone.
-        local tpz=Transport:AddTransportZoneCombo(pickupzone, Transport:GetDeployZone())
+        local tpz=Transport:AddTransportZoneCombo(nil, pickupzone, Transport:GetDeployZone())
+        tpz.PickupAirbase=legion:IsRunwayOperational() and legion.airbase or nil
         Transport:SetEmbarkZone(legion.spawnzone, tpz)
+        
         
         -- Add cargo assets to transport.
         for _,_asset in pairs(CargoAssets) do

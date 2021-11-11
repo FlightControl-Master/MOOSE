@@ -313,11 +313,15 @@ function ARMYGROUP:New(group)
   --- Triggers the FSM event "Rearm".
   -- @function [parent=#ARMYGROUP] Rearm
   -- @param #ARMYGROUP self
+  -- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+  -- @param #number Formation Formation of the group.
 
   --- Triggers the FSM event "Rearm" after a delay.
   -- @function [parent=#ARMYGROUP] __Rearm
   -- @param #ARMYGROUP self
   -- @param #number delay Delay in seconds.
+  -- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+  -- @param #number Formation Formation of the group.
 
   --- On after "Rearm" event.
   -- @function [parent=#ARMYGROUP] OnAfterRearm
@@ -325,6 +329,8 @@ function ARMYGROUP:New(group)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+  -- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+  -- @param #number Formation Formation of the group.
 
 
   --- Triggers the FSM event "Rearming".
@@ -442,6 +448,40 @@ function ARMYGROUP:AddTaskFireAtPoint(Coordinate, Clock, Radius, Nshots, WeaponT
   Coordinate=self:_CoordinateFromObject(Coordinate)
 
   local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
+
+  local task=self:AddTask(DCStask, Clock, nil, Prio)
+
+  return task
+end
+
+--- Add a *scheduled* task to fire at a given coordinate.
+-- @param #ARMYGROUP self
+-- @param #string Clock Time when to start the attack.
+-- @param #number Heading Heading min in Degrees.
+-- @param #number Alpha Shooting angle in Degrees.
+-- @param #number Altitude Altitude in meters.
+-- @param #number Radius Radius in meters. Default 100 m.
+-- @param #number Nshots Number of shots to fire. Default nil.
+-- @param #number WeaponType Type of weapon. Default auto.
+-- @param #number Prio Priority of the task.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+function ARMYGROUP:AddTaskBarrage(Clock, Heading, Alpha, Altitude, Radius, Nshots, WeaponType, Prio)
+
+  Heading=Heading or 0
+  
+  Alpha=Alpha or 60
+  
+  Altitude=Altitude or 100
+  
+  local distance=Altitude/math.tan(math.rad(Alpha))
+  
+  local a=self:GetVec2()
+  
+  local vec2=UTILS.Vec2Translate(a, distance, Heading)
+  
+  --local coord=COORDINATE:NewFromVec2(vec2):MarkToAll("Fire At Point",ReadOnly,Text)
+  
+  local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, vec2, Radius, Nshots, WeaponType, Altitude)
 
   local task=self:AddTask(DCStask, Clock, nil, Prio)
 
@@ -1043,28 +1083,39 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
-  self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
+  self:I(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
+
+  -- Get current task.
+  local task=self:GetTaskCurrent()
+  
+  if task then
+    if task.dcstask.id=="FireAtPoint" or task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
+      self:I(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
+      self:TaskCancel(task)
+    end
+  end
   
   -- Fist, check if we want to rearm once out-of-ammo.
+  --TODO: IsMobile() check
   if self.rearmOnOutOfAmmo then
     local truck, dist=self:FindNearestAmmoSupply(30)
     if truck then
       self:T(self.lid..string.format("Found Ammo Truck %s [%s]", truck:GetName(), truck:GetTypeName()))
       local Coordinate=truck:GetCoordinate()
-      self:Rearm(Coordinate, Formation)
+      self:__Rearm(-1, Coordinate)
       return
     end
   end
   
   -- Second, check if we want to retreat once out of ammo.
   if self.retreatOnOutOfAmmo then
-    self:Retreat()
+    self:__Retreat(-1)
     return
   end
   
   -- Third, check if we want to RTZ once out of ammo.
   if self.rtzOnOutOfAmmo then    
-    self:RTZ()
+    self:__RTZ(-1)
   end
     
 end
