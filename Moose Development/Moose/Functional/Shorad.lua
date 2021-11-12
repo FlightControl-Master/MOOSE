@@ -139,7 +139,7 @@ do
   -- @param #string Name Name of this SHORAD
   -- @param #string ShoradPrefix Filter for the Shorad #SET_GROUP
   -- @param Core.Set#SET_GROUP Samset The #SET_GROUP of SAM sites to defend
-  -- @param #number Radius Defense radius in meters, used to switch on groups
+  -- @param #number Radius Defense radius in meters, used to switch on SHORAD groups **within** this radius
   -- @param #number ActiveTimer Determines how many seconds the systems stay on red alert after wake-up call
   -- @param #string Coalition Coalition, i.e. "blue", "red", or "neutral"
   -- @param #boolean UseEmOnOff Use Emissions On/Off rather than Alarm State Red/Green (default: use Emissions switch)
