@@ -1947,7 +1947,19 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     local InRange=(RangeMax and math.max(RangeMax, cohort.engageRange) or cohort.engageRange) >= TargetDistance
     
     -- Has the requested refuelsystem?
-    local Refuel=RefuelSystem and RefuelSystem==cohort.tankerSystem or true
+    local Refuel=RefuelSystem~=nil and (RefuelSystem==cohort.tankerSystem) or true
+    
+    -- STRANGE: Why did the above line did not give the same result?! Above Refuel is always true!
+    local Refuel=true
+    if RefuelSystem then
+      if cohort.tankerSystem then
+        Refuel=RefuelSystem==cohort.tankerSystem
+      else
+        Refuel=false
+      end
+    end
+    
+    --env.info(string.format("Cohort=%s: RefuelSystem=%s, TankerSystem=%s ==> Refuel=%s", cohort.name, tostring(RefuelSystem), tostring(cohort.tankerSystem), tostring(Refuel)))
     
     -- Is capable of the mission type?
     local Capable=AUFTRAG.CheckMissionCapability({MissionTypeRecruit}, cohort.missiontypes)
