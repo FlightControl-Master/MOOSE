@@ -333,7 +333,7 @@ function SEAD:HandleEventShot( EventData )
                 grp:EnableEmission(false)
               end
               grp:OptionAlarmStateGreen() -- needed else we cannot move around
-              grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond")
+              grp:RelocateGroundRandomInRadius(20,500,false,false,"Diamond")
               if self.UseCallBack then
                 local object = self.CallBack
                 object:SeadSuppressionStart(grp,name)
