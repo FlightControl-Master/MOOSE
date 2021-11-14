@@ -1494,18 +1494,18 @@ do -- Cargo
         
         -- Fuel. The descriptor provides the max fuel mass in kg. This needs to be multiplied by the relative fuel amount to calculate the actual fuel mass on board.
         local massFuelMax=Desc.fuelMassMax or 0
-        local relFuel=self:GetFuel() or 1.0
+        local relFuel=math.max(self:GetFuel() or 1.0, 1.0)  -- We take 1.0 as max in case of external fuel tanks.
         local massFuel=massFuelMax*relFuel
         
         -- Number of soldiers according to DCS function 
-        local troopcapacity=self:GetTroopCapacity() or 0
+        --local troopcapacity=self:GetTroopCapacity() or 0
         
         -- Calculate max cargo weight, which is the max (takeoff) weight minus the empty weight minus the actual fuel weight.
         local CargoWeight=massMax-(massEmpty+massFuel)
         
         -- Debug info.
-        self:I(string.format("Setting Cargo bay weight limit [%s]=%d kg (Mass max=%d, empty=%d, fuelMax=%d kg (rel=%.3f), fuel=%d kg", TypeName, CargoWeight, massMax, massEmpty, massFuelMax, relFuel, massFuel))
-        self:I(string.format("Descent Troop Capacity=%d ==> %d kg (for 95 kg soldier)", troopcapacity, troopcapacity*95))        
+        self:T(string.format("Setting Cargo bay weight limit [%s]=%d kg (Mass max=%d, empty=%d, fuelMax=%d kg (rel=%.3f), fuel=%d kg", TypeName, CargoWeight, massMax, massEmpty, massFuelMax, relFuel, massFuel))
+        --self:T(string.format("Descent Troop Capacity=%d ==> %d kg (for 95 kg soldier)", troopcapacity, troopcapacity*95))        
         
         -- Set value.
         self.__.CargoBayWeightLimit = CargoWeight

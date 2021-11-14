@@ -41,8 +41,9 @@
 --
 -- # Constructor
 -- 
--- A new CHIEF object is created with the @{#CHIEF.New}(*Coalition, Alias*) function, where the parameter *Coalition* is the coalition side.
--- It can be `coalition.side.RED`, `coalition.side.BLUE` or `coalition.side.NEUTRAL`. This parameter is mandatory.
+-- A new COMMANDER object is created with the @{#COMMANDER.New}(*Coalition, Alias*) function, where the parameter *Coalition* is the coalition side.
+-- It can be `coalition.side.RED`, `coalition.side.BLUE` or `coalition.side.NEUTRAL`. This parameter is mandatory!
+-- 
 -- The second parameter *Alias* is optional and can be used to give the COMMANDER a "name", which is used for output in the dcs.log file.
 -- 
 --     local myCommander=COMANDER:New(coalition.side.BLUE, "General Patton")

@@ -1516,6 +1516,7 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
   return mission
 end
 
+--[[
 
 --- **[AIR, GROUND, NAVAL]** Create a OPS TRANSPORT mission.
 -- @param #AUFTRAG self
@@ -1552,6 +1553,7 @@ function AUFTRAG:NewOPSTRANSPORT(CargoGroupSet, PickupZone, DeployZone)
   return mission
 end
 
+]]
 
 --- **[GROUND, NAVAL]** Create an ARTY mission.
 -- @param #AUFTRAG self

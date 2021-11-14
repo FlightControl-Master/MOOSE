@@ -1260,7 +1260,7 @@ function OPSTRANSPORT:SetCarrierTransportStatus(CarrierGroup, Status)
   local oldstatus=self:GetCarrierTransportStatus(CarrierGroup)
   
   -- Debug info.
-  self:I(self.lid..string.format("New carrier transport status for %s: %s --> %s", CarrierGroup:GetName(), oldstatus, Status))
+  self:T(self.lid..string.format("New carrier transport status for %s: %s --> %s", CarrierGroup:GetName(), oldstatus, Status))
 
   -- Set new status.
   self.carrierTransportStatus[CarrierGroup.groupname]=Status

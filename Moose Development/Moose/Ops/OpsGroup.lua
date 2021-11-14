@@ -1610,13 +1610,13 @@ function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
 
     if self.legion and not NoEventRemoveUnit then
       -- Add asset back in 10 seconds.
-      self:I(self.lid..string.format("Despawning Group by adding asset to LEGION!"))
+      self:T(self.lid..string.format("Despawning Group by adding asset to LEGION!"))
       self.legion:AddAsset(self.group, 1)
       return
     end
 
     -- Debug info.
-    self:I(self.lid..string.format("Despawning Group!"))
+    self:T(self.lid..string.format("Despawning Group!"))
 
     -- DCS group obejct.
     local DCSGroup=self:GetDCSGroup()
@@ -1822,7 +1822,7 @@ function OPSGROUP:RadioTransmission(Text, Delay)
       self.msrs:SetModulations(modu)
 
       -- Debug info.
-      self:I(self.lid..string.format("Radio transmission on %.3f MHz %s: %s", freq, UTILS.GetModulationName(modu), Text))
+      self:T(self.lid..string.format("Radio transmission on %.3f MHz %s: %s", freq, UTILS.GetModulationName(modu), Text))
 
       self.msrs:PlayText(Text)
     end
@@ -4796,14 +4796,14 @@ function OPSGROUP:onbeforeWait(From, Event, To, Duration)
 
   -- Check for a current task.
   if self.taskcurrent>0 then
-    self:I(self.lid..string.format("WARNING: Got current task ==> WAIT event is suspended for 30 sec!"))
+    self:T(self.lid..string.format("WARNING: Got current task ==> WAIT event is suspended for 30 sec!"))
     Tsuspend=-30
     allowed=false
   end
 
   -- Check for a current transport assignment.
   if self.cargoTransport then
-    self:I(self.lid..string.format("WARNING: Got current TRANSPORT assignment ==> WAIT event is suspended for 30 sec!"))
+    self:T(self.lid..string.format("WARNING: Got current TRANSPORT assignment ==> WAIT event is suspended for 30 sec!"))
     Tsuspend=-30
     allowed=false
   end
@@ -5142,7 +5142,7 @@ function OPSGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed)
     Speed=Speed or self:GetSpeedToWaypoint(n)
 
     -- Debug message
-    self:I(self.lid..string.format("Goto Waypoint UID=%d index=%d from %d at speed %.1f knots", UID, n, self.currentwp, Speed))
+    self:T(self.lid..string.format("Goto Waypoint UID=%d index=%d from %d at speed %.1f knots", UID, n, self.currentwp, Speed))
 
     -- Update the route.
     self:__UpdateRoute(0.1, n, nil, Speed)
@@ -6054,7 +6054,7 @@ end
 function OPSGROUP:onafterDead(From, Event, To)
 
   -- Debug info.
-  self:I(self.lid..string.format("Group dead at t=%.3f", timer.getTime()))
+  self:T(self.lid..string.format("Group dead at t=%.3f", timer.getTime()))
 
   -- Is dead now.
   self.isDead=true
@@ -11292,7 +11292,7 @@ function OPSGROUP:_GetDetectedTarget()
         local righttype=false
         for _,attribute in pairs(self.engagedetectedTypes) do
           local gotit=group:HasAttribute(attribute, false)
-          self:I(self.lid..string.format("Group %s has attribute %s = %s", group:GetName(), attribute, tostring(gotit)))
+          self:T(self.lid..string.format("Group %s has attribute %s = %s", group:GetName(), attribute, tostring(gotit)))
           if gotit then
             righttype=true
             break
