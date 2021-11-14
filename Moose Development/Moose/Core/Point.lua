@@ -26,19 +26,28 @@
 --
 -- ### Authors:
 --
---   * FlightControl : Design & Programming
+--   * FlightControl (Design & Programming)
 --
 -- ### Contributions:
+-- 
+--   * funkyfranky
+--   * Applevangelist
+--   
+-- ===
 --
 -- @module Core.Point
 -- @image Core_Coordinate.JPG
 
 
-
-
 do -- COORDINATE
 
   --- @type COORDINATE
+  -- @field #string ClassName Name of the class
+  -- @field #number x Component of the 3D vector.
+  -- @field #number y Component of the 3D vector.
+  -- @field #number z Component of the 3D vector.
+  -- @field #number Heading Heading in degrees. Needs to be set first.
+  -- @field #number Velocity Velocity in meters per second. Needs to be set first.
   -- @extends Core.Base#BASE
 
 
@@ -201,44 +210,69 @@ do -- COORDINATE
     ClassName = "COORDINATE",
   }
 
-  --- @field COORDINATE.WaypointAltType
+  --- Waypoint altitude types.
+  -- @type COORDINATE.WaypointAltType
+  -- @field #string BARO Barometric altitude.
+  -- @field #string RADIO Radio altitude.
   COORDINATE.WaypointAltType = {
     BARO = "BARO",
     RADIO = "RADIO",
   }
 
-  --- @field COORDINATE.WaypointAction
+  --- Waypoint actions.
+  -- @type COORDINATE.WaypointAction
+  -- @field #string TurningPoint Turning point.
+  -- @field #string FlyoverPoint Fly over point.
+  -- @field #string FromParkingArea From parking area.
+  -- @field #string FromParkingAreaHot From parking area hot.
+  -- @field #string FromGroundAreaHot From ground area hot.
+  -- @field #string FromGroundArea From ground area.
+  -- @field #string FromRunway From runway.
+  -- @field #string Landing Landing.
+  -- @field #string LandingReFuAr Landing and refuel and rearm.
   COORDINATE.WaypointAction = {
     TurningPoint       = "Turning Point",
     FlyoverPoint       = "Fly Over Point",
     FromParkingArea    = "From Parking Area",
     FromParkingAreaHot = "From Parking Area Hot",
+    FromGroundAreaHot  = "From Ground Area Hot",
+    FromGroundArea     = "From Ground Area",
     FromRunway         = "From Runway",
     Landing            = "Landing",
     LandingReFuAr      = "LandingReFuAr",
   }
 
-  --- @field COORDINATE.WaypointType
+  --- Waypoint types.
+  -- @type COORDINATE.WaypointType
+  -- @field #string TakeOffParking Take of parking.
+  -- @field #string TakeOffParkingHot Take of parking hot.
+  -- @field #string TakeOff Take off parking hot.
+  -- @field #string TakeOffGroundHot Take of from ground hot.
+  -- @field #string TurningPoint Turning point.
+  -- @field #string Land Landing point.
+  -- @field #string LandingReFuAr Landing and refuel and rearm.
   COORDINATE.WaypointType = {
     TakeOffParking    = "TakeOffParking",
     TakeOffParkingHot = "TakeOffParkingHot",
     TakeOff           = "TakeOffParkingHot",
+    TakeOffGroundHot  = "TakeOffGroundHot",
+    TakeOffGround     = "TakeOffGround",
     TurningPoint      = "Turning Point",
     Land              = "Land",
-    LandingReFuAr     = "LandingReFuAr",
+    LandingReFuAr     = "LandingReFuAr",    
   }
 
 
   --- COORDINATE constructor.
   -- @param #COORDINATE self
   -- @param DCS#Distance x The x coordinate of the Vec3 point, pointing to the North.
-  -- @param DCS#Distance y The y coordinate of the Vec3 point, pointing to the Right.
-  -- @param DCS#Distance z The z coordinate of the Vec3 point, pointing to the Right.
-  -- @return #COORDINATE
+  -- @param DCS#Distance y The y coordinate of the Vec3 point, pointing to up.
+  -- @param DCS#Distance z The z coordinate of the Vec3 point, pointing to the right.
+  -- @return #COORDINATE self
   function COORDINATE:New( x, y, z )
 
-    --env.info("FF COORDINATE New")
-    local self = BASE:Inherit( self, BASE:New() ) -- #COORDINATE
+    local self=BASE:Inherit(self, BASE:New()) -- #COORDINATE
+    
     self.x = x
     self.y = y
     self.z = z
@@ -249,7 +283,7 @@ do -- COORDINATE
   --- COORDINATE constructor.
   -- @param #COORDINATE self
   -- @param #COORDINATE Coordinate.
-  -- @return #COORDINATE
+  -- @return #COORDINATE self
   function COORDINATE:NewFromCoordinate( Coordinate )
 
     local self = BASE:Inherit( self, BASE:New() ) -- #COORDINATE
@@ -263,8 +297,8 @@ do -- COORDINATE
   --- Create a new COORDINATE object from  Vec2 coordinates.
   -- @param #COORDINATE self
   -- @param DCS#Vec2 Vec2 The Vec2 point.
-  -- @param DCS#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
-  -- @return #COORDINATE
+  -- @param DCS#Distance LandHeightAdd (Optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
+  -- @return #COORDINATE self
   function COORDINATE:NewFromVec2( Vec2, LandHeightAdd )
 
     local LandHeight = land.getHeight( Vec2 )
@@ -274,8 +308,6 @@ do -- COORDINATE
 
     local self = self:New( Vec2.x, LandHeight, Vec2.y ) -- #COORDINATE
 
-    self:F2( self )
-
     return self
 
   end
@@ -283,7 +315,7 @@ do -- COORDINATE
   --- Create a new COORDINATE object from  Vec3 coordinates.
   -- @param #COORDINATE self
   -- @param DCS#Vec3 Vec3 The Vec3 point.
-  -- @return #COORDINATE
+  -- @return #COORDINATE self
   function COORDINATE:NewFromVec3( Vec3 )
 
     local self = self:New( Vec3.x, Vec3.y, Vec3.z ) -- #COORDINATE
@@ -292,6 +324,22 @@ do -- COORDINATE
 
     return self
   end
+  
+  --- Create a new COORDINATE object from a waypoint. This uses the components
+  -- 
+  --  * `waypoint.x`
+  --  * `waypoint.alt`
+  --  * `waypoint.y`
+  --  
+  -- @param #COORDINATE self
+  -- @param DCS#Waypoint Waypoint The waypoint.
+  -- @return #COORDINATE self
+  function COORDINATE:NewFromWaypoint(Waypoint)
+
+    local self=self:New(Waypoint.x, Waypoint.alt, Waypoint.y) -- #COORDINATE
+    
+    return self
+  end  
 
   --- Return the coordinates itself. Sounds stupid but can be useful for compatibility.
   -- @param #COORDINATE self
@@ -647,7 +695,8 @@ do -- COORDINATE
     local y=X*math.sin(phi)+Y*math.cos(phi)
 
     -- Coordinate assignment looks bit strange but is correct.
-    return COORDINATE:NewFromVec3({x=y, y=self.y, z=x})
+    local coord=COORDINATE:NewFromVec3({x=y, y=self.y, z=x})
+    return coord
   end
 
   --- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
@@ -690,7 +739,8 @@ do -- COORDINATE
   function COORDINATE:GetRandomCoordinateInRadius( OuterRadius, InnerRadius )
     self:F2( { OuterRadius, InnerRadius } )
 
-    return COORDINATE:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
+    local coord=COORDINATE:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
+    return coord
   end
 
 
@@ -1611,8 +1661,8 @@ do -- COORDINATE
     if x and y then
       local vec2={ x = x, y = y }
       coord=COORDINATE:NewFromVec2(vec2)
-    end    
-    return coord 
+    end
+    return coord
   end
 
 
@@ -1718,7 +1768,7 @@ do -- COORDINATE
     return self:GetSurfaceType()==land.SurfaceType.LAND
   end
 
-  --- Checks if the surface type is road.
+  --- Checks if the surface type is land.
   -- @param #COORDINATE self
   -- @return #boolean If true, the surface type at the coordinate is land.
   function COORDINATE:IsSurfaceTypeLand()
@@ -1758,10 +1808,9 @@ do -- COORDINATE
   --- Creates an explosion at the point of a certain intensity.
   -- @param #COORDINATE self
   -- @param #number ExplosionIntensity Intensity of the explosion in kg TNT. Default 100 kg.
-  -- @param #number Delay Delay before explosion in seconds.
+  -- @param #number Delay (Optional) Delay before explosion is triggered in seconds.
   -- @return #COORDINATE self
   function COORDINATE:Explosion( ExplosionIntensity, Delay )
-    self:F2( { ExplosionIntensity } )
     ExplosionIntensity=ExplosionIntensity or 100
     if Delay and Delay>0 then
       self:ScheduleOnce(Delay, self.Explosion, self, ExplosionIntensity)
@@ -1773,11 +1822,17 @@ do -- COORDINATE
 
   --- Creates an illumination bomb at the point.
   -- @param #COORDINATE self
-  -- @param #number power Power of illumination bomb in Candela.
+  -- @param #number Power Power of illumination bomb in Candela. Default 1000 cd.
+  -- @param #number Delay (Optional) Delay before bomb is ignited in seconds.
   -- @return #COORDINATE self
-  function COORDINATE:IlluminationBomb(power)
-    self:F2()
-    trigger.action.illuminationBomb( self:GetVec3(), power )
+  function COORDINATE:IlluminationBomb(Power, Delay)
+    Power=Power or 1000
+    if Delay and Delay>0 then
+      self:ScheduleOnce(Delay, self.IlluminationBomb, self, Power)
+    else
+      trigger.action.illuminationBomb(self:GetVec3(), Power)
+    end
+    return self
   end
 
 
@@ -2075,7 +2130,7 @@ do -- COORDINATE
     --- Circle to all.
     -- Creates a circle on the map with a given radius, color, fill color, and outline.
     -- @param #COORDINATE self
-    -- @param #numberr Radius Radius in meters. Default 1000 m.
+    -- @param #number Radius Radius in meters. Default 1000 m.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.

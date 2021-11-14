@@ -524,6 +524,63 @@ function UNIT:IsTanker()
   return tanker, system
 end
 
+--- Check if the unit can supply ammo. Currently, we have
+-- 
+-- * M 818
+-- * Ural-375
+-- * ZIL-135
+-- 
+-- This list needs to be extended, if DCS adds other units capable of supplying ammo.
+-- 
+-- @param #UNIT self
+-- @return #boolean If `true`, unit can supply ammo.
+function UNIT:IsAmmoSupply()
+
+  -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
+  local typename=self:GetTypeName()
+  
+  if typename=="M 818" then
+    -- Blue ammo truck.
+    return true
+  elseif typename=="Ural-375" then  
+    -- Red ammo truck.
+    return true
+  elseif typename=="ZIL-135" then
+    -- Red ammo truck. Checked that it can also provide ammo.
+    return true    
+  end
+
+  return false
+end
+
+--- Check if the unit can supply fuel. Currently, we have
+-- 
+-- * M978 HEMTT Tanker
+-- * ATMZ-5
+-- * ATMZ-10
+-- * ATZ-5
+-- 
+-- This list needs to be extended, if DCS adds other units capable of supplying fuel.
+-- 
+-- @param #UNIT self
+-- @return #boolean If `true`, unit can supply fuel.
+function UNIT:IsFuelSupply()
+
+  -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
+  local typename=self:GetTypeName()
+  
+  if typename=="M978 HEMTT Tanker" then
+    return true
+  elseif typename=="ATMZ-5" then
+    return true
+  elseif typename=="ATMZ-10" then
+    return true
+  elseif typename=="ATZ-5" then
+    return true    
+  end
+
+  return false
+end
 
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
@@ -999,7 +1056,7 @@ function UNIT:GetThreatLevel()
       elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
              not Attributes["ATGM"]                                                   then ThreatLevel = 3
       elseif Attributes["Old Tanks"] or Attributes["APC"] or Attributes["Artillery"]  then ThreatLevel = 2
-      elseif Attributes["Infantry"]                                                   then ThreatLevel = 1
+      elseif Attributes["Infantry"]  or Attributes["EWR"]                             then ThreatLevel = 1
       end
       
       ThreatText = ThreatLevels[ThreatLevel+1]

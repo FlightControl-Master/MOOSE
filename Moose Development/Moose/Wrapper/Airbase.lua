@@ -142,7 +142,7 @@ AIRBASE.Caucasus = {
 --   * AIRBASE.Nevada.Pahute_Mesa_Airstrip
 --   * AIRBASE.Nevada.Tonopah_Airport
 --   * AIRBASE.Nevada.Tonopah_Test_Range_Airfield
---   
+--
 -- @field Nevada
 AIRBASE.Nevada = {
   ["Creech_AFB"] = "Creech AFB",
@@ -197,7 +197,7 @@ AIRBASE.Nevada = {
 --   * AIRBASE.Normandy.Funtington
 --   * AIRBASE.Normandy.Tangmere
 --   * AIRBASE.Normandy.Ford_AF
---   
+--
 -- @field Normandy
 AIRBASE.Normandy = {
   ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
@@ -271,7 +271,7 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Sirri_Island
 -- * AIRBASE.PersianGulf.Tunb_Island_AFB
 -- * AIRBASE.PersianGulf.Tunb_Kochak
--- 
+--
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Abu_Dhabi_International_Airport"] = "Abu Dhabi Intl",
@@ -473,6 +473,13 @@ AIRBASE.MarianaIslands={
 -- @field #boolean Free This spot is currently free, i.e. there is no alive aircraft on it at the present moment.
 -- @field #number TerminalID0 Unknown what this means. If you know, please tell us!
 -- @field #number DistToRwy Distance to runway in meters. Currently bugged and giving the same number as the TerminalID.
+-- @field #string AirbaseName Name of the airbase.
+-- @field #number MarkerID Numerical ID of marker placed at parking spot.
+-- @field Wrapper.Marker#MARKER Marker The marker on the F10 map.
+-- @field #string ClientSpot Client unit sitting at this spot or *nil*.
+-- @field #string Status Status of spot e.g. AIRBASE.SpotStatus.FREE.
+-- @field #string OccupiedBy Name of the aircraft occupying the spot or "unknown". Can be *nil* if spot is not occupied.
+-- @field #string ReservedBy Name of the aircraft for which this spot is reserved. Can be *nil* if spot is not reserved.
 
 --- Terminal Types of parking spots. See also https://wiki.hoggitworld.com/view/DCS_func_getParking
 --
@@ -507,6 +514,17 @@ AIRBASE.TerminalType = {
   FighterAircraft=244,
 }
 
+--- Status of a parking spot.
+-- @type AIRBASE.SpotStatus
+-- @field #string FREE Spot is free.
+-- @field #string OCCUPIED Spot is occupied.
+-- @field #string RESERVED Spot is reserved.
+AIRBASE.SpotStatus = {
+  FREE="Free",
+  OCCUPIED="Occupied",
+  RESERVED="Reserved",
+}
+
 --- Runway data.
 -- @type AIRBASE.Runway
 -- @field #number heading Heading of the runway in degrees.
@@ -537,6 +555,9 @@ function AIRBASE:Register(AirbaseName)
   -- Get descriptors.
   self.descriptors=self:GetDesc()
 
+  -- Debug info.
+  --self:I({airbase=AirbaseName, descriptors=self.descriptors})
+
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
 
@@ -553,13 +574,15 @@ function AIRBASE:Register(AirbaseName)
       self.isShip=false
       self.category=Airbase.Category.HELIPAD
       _DATABASE:AddStatic(AirbaseName)
-	end
+    end
   else
     self:E("ERROR: Unknown airbase category!")
   end
 
+  -- Init parking spots.
   self:_InitParkingSpots()
 
+  -- Get 2D position vector.
   local vec2=self:GetVec2()
 
   -- Init coordinate.
@@ -1024,6 +1047,8 @@ function AIRBASE:GetParkingSpotsTable(termtype)
 
         spot.Free=_isfree(_spot) -- updated
         spot.TOAC=_spot.TO_AC    -- updated
+        spot.AirbaseName=self.AirbaseName
+        spot.ClientSpot=nil  --TODO
 
         table.insert(spots, spot)
 
@@ -1060,6 +1085,8 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
 
         spot.Free=true -- updated
         spot.TOAC=_spot.TO_AC    -- updated
+        spot.AirbaseName=self.AirbaseName
+        spot.ClientSpot=nil  --TODO
 
         table.insert(freespots, spot)
 
@@ -1141,7 +1168,7 @@ end
 -- @param #table parkingdata (Optional) Parking spots data table. If not given it is automatically derived from the GetParkingSpotsTable() function.
 -- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
 function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nspots, parkingdata)
-  
+
   -- Init default
   scanradius=scanradius or 50
   if scanunits==nil then
@@ -1197,7 +1224,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     az = 17 -- width
   end
 
-    
+
   -- Number of spots we are looking for. Note that, e.g. grouping can require a number different from the group size!
   local _nspots=nspots or group:GetSize()
 
@@ -1325,7 +1352,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
 
   -- Retrun spots we found, even if there were not enough.
   return validspots
-  
+
 end
 
 --- Check black and white lists.
@@ -1344,7 +1371,7 @@ function AIRBASE:_CheckParkingLists(TerminalID)
     end
   end
 
-  
+
   -- Check if a whitelist was defined.
   if self.parkingWhitelist and #self.parkingWhitelist>0 then
     for _,terminalID in pairs(self.parkingWhitelist or {}) do
@@ -1454,7 +1481,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
      name==AIRBASE.PersianGulf.Abu_Dhabi_International_Airport or
      name==AIRBASE.PersianGulf.Dubai_Intl or
      name==AIRBASE.PersianGulf.Shiraz_International_Airport or
-     name==AIRBASE.PersianGulf.Kish_International_Airport or 
+     name==AIRBASE.PersianGulf.Kish_International_Airport or
      name==AIRBASE.MarianaIslands.Andersen_AFB then
 
     -- 1-->4, 2-->3, 3-->2, 4-->1

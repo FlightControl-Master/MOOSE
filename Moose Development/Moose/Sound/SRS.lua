@@ -671,7 +671,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   else
     -- Add gender.
     if gender and gender~="female" then
-      command=command..string.format(" --gender=%s", tostring(gender))
+      command=command..string.format(" -g %s", tostring(gender))
     end
     -- Add culture.
     if culture and culture~="en-GB" then

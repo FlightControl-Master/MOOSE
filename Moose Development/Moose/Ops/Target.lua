@@ -17,6 +17,7 @@
 -- @type TARGET
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity level.
+-- @field #number uid Unique ID of the target.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table targets Table of target objects.
 -- @field #number targetcounter Running number to generate target object IDs.
@@ -30,13 +31,16 @@
 -- @field #number Ndead Number of target elements/units that are dead (destroyed or despawned).
 -- @field #table elements Table of target elements/units.
 -- @field #table casualties Table of dead element names.
+-- @field #number prio Priority.
+-- @field #number importance Importance.
+-- @field Ops.Auftrag#AUFTRAG mission Mission attached to this target.
+-- @field Ops.Intelligence#INTEL.Contact contact Contact attached to this target.
+-- @field #boolean isDestroyed If true, target objects were destroyed.
 -- @extends Core.Fsm#FSM
 
---- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D. Eisenhower
+--- **It is far more important to be able to hit the target than it is to haggle over who makes a weapon or who pulls a trigger** -- Dwight D Eisenhower
 --
 -- ===
---
--- ![Banner Image](..\Presentations\OPS\Target\_Main.pngs)
 --
 -- # The TARGET Concept
 -- 
@@ -128,13 +132,15 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.3.1"
+TARGET.version="0.5.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot.
+-- TODO: Had cases where target life was 0 but target was not dead. Need to figure out why!
+-- TODO: Add pseudo functions.
+-- DONE: Initial object can be nil.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -151,26 +157,23 @@ function TARGET:New(TargetObject)
 
   -- Increase counter.
   _TARGETID=_TARGETID+1
+  
+  -- Set UID.
+  self.uid=_TARGETID
+  
+  if TargetObject then
  
-  -- Add object.
-  self:AddObject(TargetObject)
-  
-  -- Get first target.
-  local Target=self.targets[1] --#TARGET.Object
-  
-  if not Target then
-    self:E("ERROR: No valid TARGET!")
-    return nil
-  end
+    -- Add object.
+    self:AddObject(TargetObject)
     
-  -- Target Name.
-  self.name=self:GetTargetName(Target)
+  end
   
-  -- Target category.
-  self.category=self:GetTargetCategory(Target)
+  -- Defaults.
+  self:SetPriority()
+  self:SetImportance()
   
   -- Log ID.
-  self.lid=string.format("TARGET #%03d [%s] | ", _TARGETID, tostring(self.category))
+  self.lid=string.format("TARGET #%03d | ", _TARGETID)
 
   -- Start state.
   self:SetStartState("Stopped")
@@ -187,7 +190,7 @@ function TARGET:New(TargetObject)
   
   self:AddTransition("*",                  "Damaged",             "*")           -- Target was damaged.
   self:AddTransition("*",                  "Destroyed",           "Dead")        -- Target was completely destroyed.
-  self:AddTransition("*",                  "Dead",                "Dead")        -- Target was completely destroyed.
+  self:AddTransition("*",                  "Dead",                "Dead")        -- Target is dead. Could be destroyed or despawned.
 
   ------------------------
   --- Pseudo Functions ---
@@ -220,7 +223,6 @@ function TARGET:New(TargetObject)
   -- @param #number delay Delay in seconds.
 
 
-
   -- Start.
   self:__Start(-1)
 
@@ -231,12 +233,24 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create target data from a given object.
+--- Create target data from a given object. Valid objects are:
+-- 
+-- * GROUP
+-- * UNIT
+-- * STATIC
+-- * AIRBASE
+-- * COORDINATE
+-- * ZONE
+-- * SET_GROUP
+-- * SET_UNIT
+-- * SET_STATIC
+-- * SET_OPSGROUP
+-- 
 -- @param #TARGET self
 -- @param Wrapper.Positionable#POSITIONABLE Object The target GROUP, UNIT, STATIC, AIRBASE or COORDINATE.
 function TARGET:AddObject(Object)
     
-  if Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") then
+  if Object:IsInstanceOf("SET_GROUP") or Object:IsInstanceOf("SET_UNIT") or Object:IsInstanceOf("SET_STATIC") or Object:IsInstanceOf("SET_OPSGROUP") then
 
     ---
     -- Sets
@@ -247,31 +261,81 @@ function TARGET:AddObject(Object)
     for _,object in pairs(set.Set) do
       self:AddObject(object)
     end
-
+    
+  elseif  Object:IsInstanceOf("SET_ZONE") then
+  
+    local set=Object --Core.Set#SET_ZONE
+    
+    set:SortByName()
+  
+    for index,ZoneName in pairs(set.Index) do
+      local zone=set.Set[ZoneName] --Core.Zone#ZONE
+      self:_AddObject(zone)
+    end
+    
   else
   
     ---
     -- Groups, Units, Statics, Airbases, Coordinates
     ---
   
-    self:_AddObject(Object)
+    if Object:IsInstanceOf("OPSGROUP") then
+      self:_AddObject(Object:GetGroup()) -- We add the MOOSE GROUP object not the OPSGROUP object.
+    else
+      self:_AddObject(Object)
+    end
     
   end
 
+end
+
+--- Set priority of the target.
+-- @param #TARGET self
+-- @param #number Priority Priority of the target. Default 50.
+-- @return #TARGET self
+function TARGET:SetPriority(Priority)
+  self.prio=Priority or 50
+  return self
+end
+
+--- Set importance of the target.
+-- @param #TARGET self
+-- @param #number Importance Importance of the target. Default `nil`.
+-- @return #TARGET self
+function TARGET:SetImportance(Importance)
+  self.importance=Importance
+  return self
 end
 
 --- Check if TARGET is alive.
 -- @param #TARGET self
 -- @return #boolean If true, target is alive.
 function TARGET:IsAlive()
-  return self:Is("Alive")
+
+  for _,_target in pairs(self.targets) do
+    local target=_target --Ops.Target#TARGET.Object
+    if target.Status==TARGET.ObjectStatus.ALIVE then
+      return true
+    end
+  end
+  
+  return false
 end
+
+--- Check if TARGET is destroyed.
+-- @param #TARGET self
+-- @return #boolean If true, target is destroyed.
+function TARGET:IsDestroyed()
+  return self.isDestroyed
+end
+
 
 --- Check if TARGET is dead.
 -- @param #TARGET self
 -- @return #boolean If true, target is dead.
 function TARGET:IsDead()
-  return self:Is("Dead")
+  local is=self:Is("Dead")
+  return is
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -320,6 +384,11 @@ function TARGET:onafterStatus(From, Event, To)
     if target.Life<life then
       self:ObjectDamaged(target)
       damaged=true
+    end
+    
+    if life==0 then
+      self:I(self.lid..string.format("FF life is zero but no object dead event fired ==> object dead now for traget object %s!", tostring(target.Name)))
+      self:ObjectDead(target)
     end
     
   end
@@ -422,6 +491,8 @@ function TARGET:onafterObjectDead(From, Event, To, Target)
   
     if self.Ndestroyed==self.Ntargets0 then
   
+      self.isDestroyed=true
+      
       self:Destroyed()
       
     else
@@ -691,6 +762,13 @@ function TARGET:_AddObject(Object)
   target.Object=Object
   
   table.insert(self.targets, target)
+  
+  if self.name==nil then
+    self.name=self:GetTargetName(target)
+  end
+  if self.category==nil then
+    self.category=self:GetTargetCategory(target)
+  end
 
 end
 
@@ -805,10 +883,25 @@ function TARGET:GetLife()
   return N
 end
 
+--- Get target 2D position vector.
+-- @param #TARGET self
+-- @param #TARGET.Object Target Target object.
+-- @return DCS#Vec2 Vector with x,y components.
+function TARGET:GetTargetVec2(Target)
+
+  local vec3=self:GetTargetVec3(Target)
+  
+  if vec3 then
+    return {x=vec3.x, y=vec3.z}
+  end
+  
+  return nil
+end
+
 --- Get target 3D position vector.
 -- @param #TARGET self
 -- @param #TARGET.Object Target Target object.
--- @return DCS#Vec3 Vector with x,y,z components
+-- @return DCS#Vec3 Vector with x,y,z components.
 function TARGET:GetTargetVec3(Target)
 
   if Target.Type==TARGET.ObjectType.GROUP then
@@ -955,6 +1048,12 @@ function TARGET:GetTargetName(Target)
     local coord=Target.Object  --Core.Point#COORDINATE
     
     return coord:ToStringMGRS()
+
+  elseif Target.Type==TARGET.ObjectType.ZONE then
+  
+    local Zone=Target.Object  --Core.Zone#ZONE
+    
+    return Zone:GetName()
     
   end
 
@@ -965,7 +1064,48 @@ end
 -- @param #TARGET self
 -- @return #string Name of the target usually the first object.
 function TARGET:GetName()
-  return self.name
+  local name=self.name or "Unknown"
+  return name
+end
+
+--- Get 2D vector.
+-- @param #TARGET self
+-- @return DCS#Vec2 2D vector of the target.
+function TARGET:GetVec2()
+
+  for _,_target in pairs(self.targets) do
+    local Target=_target --#TARGET.Object
+    
+    local coordinate=self:GetTargetVec2(Target)
+    
+    if coordinate then
+      return coordinate
+    end
+
+  end
+
+  self:E(self.lid..string.format("ERROR: Cannot get Vec2 of target %s", self.name))
+  return nil
+end
+
+--- Get 3D vector.
+-- @param #TARGET self
+-- @return DCS#Vec3 3D vector of the target.
+function TARGET:GetVec3()
+
+  for _,_target in pairs(self.targets) do
+    local Target=_target --#TARGET.Object
+    
+    local coordinate=self:GetTargetVec3(Target)
+    
+    if coordinate then
+      return coordinate
+    end
+
+  end
+
+  self:E(self.lid..string.format("ERROR: Cannot get Vec3 of target %s", self.name))
+  return nil
 end
 
 --- Get coordinate.
@@ -988,6 +1128,12 @@ function TARGET:GetCoordinate()
   return nil
 end
 
+--- Get category.
+-- @param #TARGET self
+-- @return #string Target category. See `TARGET.Category.X`, where `X=AIRCRAFT, GROUND`.
+function TARGET:GetCategory()
+  return self.category
+end
 
 --- Get target category.
 -- @param #TARGET self

@@ -349,7 +349,6 @@ RANGE.Defaults={
   boxlength=3000,
   boxwidth=300,
   goodpass=20,
-  goodhitrange=25,
   foulline=610,
 }
 
@@ -2570,7 +2569,7 @@ function RANGE:_DisplayBombTargets(_unitname)
       end
     end
 
-    self:_DisplayMessageToGroup(_unit,_text, 60, true, true)
+    self:_DisplayMessageToGroup(_unit,_text, 120, true, true)
   end
 end
 

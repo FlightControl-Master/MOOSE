@@ -1368,8 +1368,6 @@ do -- Cargo
     return self.__.Cargo
   end
 
-
-
   --- Remove cargo.
   -- @param #POSITIONABLE self
   -- @param Core.Cargo#CARGO Cargo
@@ -1414,17 +1412,15 @@ do -- Cargo
     return ItemCount
   end
 
---  --- Get Cargo Bay Free Volume in m3.
---  -- @param #POSITIONABLE self
---  -- @return #number CargoBayFreeVolume
---  function POSITIONABLE:GetCargoBayFreeVolume()
---    local CargoVolume = 0
---    for CargoName, Cargo in pairs( self.__.Cargo ) do
---      CargoVolume = CargoVolume + Cargo:GetVolume()
---    end
---    return self.__.CargoBayVolumeLimit - CargoVolume
---  end
---
+  --- Get the number of infantry soldiers that can be embarked into an aircraft (airplane or helicopter).
+  -- Returns `nil` for ground or ship units.
+  -- @param #POSITIONABLE self
+  -- @return #number Descent number of soldiers that fit into the unit. Returns `#nil` for ground and ship units. 
+  function POSITIONABLE:GetTroopCapacity()
+    local DCSunit=self:GetDCSObject() --DCS#Unit
+    local capacity=DCSunit:getDescentCapacity()
+    return capacity
+  end
 
   --- Get Cargo Bay Free Weight in kg.
   -- @param #POSITIONABLE self
@@ -1443,55 +1439,97 @@ do -- Cargo
     return self.__.CargoBayWeightLimit - CargoWeight
   end
 
---  --- Get Cargo Bay Volume Limit in m3.
---  -- @param #POSITIONABLE self
---  -- @param #number VolumeLimit
---  function POSITIONABLE:SetCargoBayVolumeLimit( VolumeLimit )
---    self.__.CargoBayVolumeLimit = VolumeLimit
---  end
-
   --- Set Cargo Bay Weight Limit in kg.
   -- @param #POSITIONABLE self
-  -- @param #number WeightLimit
+  -- @param #number WeightLimit (Optional) Weight limit in kg. If not given, the value is taken from the descriptors or hard coded. 
   function POSITIONABLE:SetCargoBayWeightLimit( WeightLimit )
 
-    if WeightLimit then
+    if WeightLimit then 
+      ---
+      -- User defined value
+      ---
       self.__.CargoBayWeightLimit = WeightLimit
     elseif self.__.CargoBayWeightLimit~=nil then
       -- Value already set ==> Do nothing!
     else
-      -- If weightlimit is not provided, we will calculate it depending on the type of unit.
+      ---
+      -- Weightlimit is not provided, we will calculate it depending on the type of unit.
+      ---
+
+      -- Descriptors that contain the type name and for aircraft also weights.
+      local Desc = self:GetDesc()
+      self:F({Desc=Desc})
+      
+      -- Unit type name.
+      local TypeName=Desc.typeName or "Unknown Type"
 
       -- When an airplane or helicopter, we calculate the weightlimit based on the descriptor.
       if self:IsAir() then
-        local Desc = self:GetDesc()
-        self:F({Desc=Desc})
 
+        -- Max takeoff weight if DCS descriptors have unrealstic values.
         local Weights = {
-          ["C-17A"] = 35000,   --77519 cannot be used, because it loads way too much apcs and infantry.,
-          ["C-130"] = 22000    --The real value cannot be used, because it loads way too much apcs and infantry.,
+          -- C-17A
+          -- Wiki says: max=265,352, empty=128,140, payload=77,516 (134 troops, 1 M1 Abrams tank, 2 M2 Bradley or 3 Stryker)
+          -- DCS  says: max=265,350, empty=125,645, fuel=132,405 ==> Cargo Bay=7300 kg with a full fuel load (lot of fuel!) and 73300 with half a fuel load.
+          --["C-17A"] = 35000,   --77519 cannot be used, because it loads way too much apcs and infantry.
+          -- C-130:
+          -- DCS  says: max=79,380, empty=36,400, fuel=10,415 kg ==> Cargo Bay=32,565 kg with fuel load.
+          -- Wiki says: max=70,307, empty=34,382, payload=19,000 kg (92 passengers, 2-3 Humvees or 2 M113s), max takeoff weight 70,037 kg.
+          -- Here we say two M113s should be transported. Each one weights 11,253 kg according to DCS. So the cargo weight should be 23,000 kg with a full load of fuel.
+          -- This results in a max takeoff weight of 69,815 kg (23,000+10,415+36,400), which is very close to the Wiki value of 70,037 kg.
+          ["C-130"] = 70000,
         }
-
-        self.__.CargoBayWeightLimit = Weights[Desc.typeName] or ( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
+        
+        -- Max (takeoff) weight (empty+fuel+cargo weight).
+        local massMax= Desc.massMax or 0
+        
+        -- Adjust value if set above.
+        local maxTakeoff=Weights[TypeName]
+        if maxTakeoff then
+          massMax=maxTakeoff
+        end
+        
+        -- Empty weight.
+        local massEmpty=Desc.massEmpty or 0
+        
+        -- Fuel. The descriptor provides the max fuel mass in kg. This needs to be multiplied by the relative fuel amount to calculate the actual fuel mass on board.
+        local massFuelMax=Desc.fuelMassMax or 0
+        local relFuel=math.max(self:GetFuel() or 1.0, 1.0)  -- We take 1.0 as max in case of external fuel tanks.
+        local massFuel=massFuelMax*relFuel
+        
+        -- Number of soldiers according to DCS function 
+        --local troopcapacity=self:GetTroopCapacity() or 0
+        
+        -- Calculate max cargo weight, which is the max (takeoff) weight minus the empty weight minus the actual fuel weight.
+        local CargoWeight=massMax-(massEmpty+massFuel)
+        
+        -- Debug info.
+        self:T(string.format("Setting Cargo bay weight limit [%s]=%d kg (Mass max=%d, empty=%d, fuelMax=%d kg (rel=%.3f), fuel=%d kg", TypeName, CargoWeight, massMax, massEmpty, massFuelMax, relFuel, massFuel))
+        --self:T(string.format("Descent Troop Capacity=%d ==> %d kg (for 95 kg soldier)", troopcapacity, troopcapacity*95))        
+        
+        -- Set value.
+        self.__.CargoBayWeightLimit = CargoWeight
+        
       elseif self:IsShip() then
-        local Desc = self:GetDesc()
-        self:F({Desc=Desc})
 
+        -- Hard coded cargo weights in kg.
         local Weights = {
-          ["Type_071"]         = 245000,
-          ["LHA_Tarawa"]       = 500000,
-          ["Ropucha-class"]    = 150000,
-          ["Dry-cargo ship-1"] =  70000,
-          ["Dry-cargo ship-2"] =  70000,
-          ["Higgins_boat"]     =   3700, -- Higgins Boat can load 3700 kg of general cargo or 36 men (source wikipedia).
-          ["USS_Samuel_Chase"] =  25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.
-          ["LST_Mk2"]          =2100000, -- Can carry 2100 tons according to wiki source!
+          ["Type_071"]         =   245000,
+          ["LHA_Tarawa"]       =   500000,
+          ["Ropucha-class"]    =   150000,
+          ["Dry-cargo ship-1"] =    70000,
+          ["Dry-cargo ship-2"] =    70000,
+          ["Higgins_boat"]     =     3700, -- Higgins Boat can load 3700 kg of general cargo or 36 men (source wikipedia).
+          ["USS_Samuel_Chase"] =    25000, -- Let's say 25 tons for now. Wiki says 33 Higgins boats, which would be 264 tons (can't be right!) and/or 578 troops.
+          ["LST_Mk2"]          =  2100000, -- Can carry 2100 tons according to wiki source!
+          ["speedboat"]        =      500, -- 500 kg ~ 5 persons
+          ["Seawise_Giant"]    =261000000, -- Gross tonnage is 261,000 tonns.
         }
-        self.__.CargoBayWeightLimit = ( Weights[Desc.typeName] or 50000 )
+        self.__.CargoBayWeightLimit = ( Weights[TypeName] or 50000 )
 
       else
-        local Desc = self:GetDesc()
 
+        -- Hard coded number of soldiers.
         local Weights = {
           ["AAV7"] = 25,
           ["Bedford_MWD"] = 8, -- new by kappa
@@ -1537,12 +1575,28 @@ do -- Cargo
           ["VAB_Mephisto"] = 8, -- new by Apple
         }
 
-        local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 95
+        -- Assuming that each passenger weighs 95 kg on average.
+        local CargoBayWeightLimit = ( Weights[TypeName] or 0 ) * 95
+
         self.__.CargoBayWeightLimit = CargoBayWeightLimit
       end
     end
+
     self:F({CargoBayWeightLimit = self.__.CargoBayWeightLimit})
   end
+  
+  --- Get Cargo Bay Weight Limit in kg.
+  -- @param #POSITIONABLE self
+  -- @return #number Max cargo weight in kg. 
+  function POSITIONABLE:GetCargoBayWeightLimit()
+  
+    if self.__.CargoBayWeightLimit==nil then
+      self:SetCargoBayWeightLimit()
+    end
+  
+    return self.__.CargoBayWeightLimit  
+  end
+  
 end --- Cargo
 
 --- Signal a flare at the position of the POSITIONABLE.
