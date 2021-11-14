@@ -247,7 +247,7 @@ CSAR.AircraftType["Bell-47"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.12r2"
+CSAR.version="0.1.12r3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -387,7 +387,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.countryneutral = country.id.UN_PEACEKEEPERS
   
   -- added 0.1.3
-  self.csarUsePara = true -- shagrat set to true, will use the LandingAfterEjection Event instead of Ejection
+  self.csarUsePara = false -- shagrat set to true, will use the LandingAfterEjection Event instead of Ejection
       
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -817,10 +817,15 @@ function CSAR:_EventHandler(EventData)
   
   local _event = EventData -- Core.Event#EVENTDATA
   
+    -- no Player  
+  if self.enableForAI == false and _event.IniPlayerName == nil then
+      return
+  end 
+   
   -- no event  
   if _event == nil or _event.initiator == nil then
     return false
-  	
+  
   -- take off
   elseif _event.id == EVENTS.Takeoff then -- taken off
     self:T(self.lid .. " Event unit - Takeoff")
@@ -905,10 +910,6 @@ function CSAR:_EventHandler(EventData)
       if _coalition ~= self.coalition then
           return --ignore!
       end
-   
-      if self.enableForAI == false and _event.IniPlayerName == nil then
-          return
-      end
 
       if not self.takenOff[_event.IniUnitName] and not _group:IsAirborne() then
           self:T(self.lid .. " Pilot has not taken off, ignore")
@@ -930,6 +931,7 @@ function CSAR:_EventHandler(EventData)
 		 self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate() , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, "none")
 		return true
 	  end
+	  
 	  ---- shagrat on event LANDING_AFTER_EJECTION spawn pilot at parachute location
 	elseif (_event.id == EVENTS.LandingAfterEjection and self.csarUsePara == true) then
 	  self:I({EVENT=_event})
@@ -938,12 +940,13 @@ function CSAR:_EventHandler(EventData)
 	  local _typename = "Ejected Pilot" --_event.Initiator.getTypeName() or "Ejected Pilot" 
 	  local _country = _event.initiator:getCountry()
 	  local _coalition = coalition.getCountryCoalition( _country )
-	  local _freq = self:_GenerateADFFrequency()
-	  self:I({coalition=_coalition,country= _country, coord=_LandingPos, name=_unitname, player=_event.IniPlayerName, freq=_freq})
-	  self:_AddCsar(_coalition, _country, _LandingPos, nil, _unitname, _event.IniPlayerName, _freq, false, "none")--shagrat add CSAR at Parachute location.
-	
-	  Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
-	
+	  if _coalition == self.coalition then
+  	  local _freq = self:_GenerateADFFrequency()
+  	  self:I({coalition=_coalition,country= _country, coord=_LandingPos, name=_unitname, player=_event.IniPlayerName, freq=_freq})
+  	  self:_AddCsar(_coalition, _country, _LandingPos, nil, _unitname, _event.IniPlayerName, _freq, false, "none")--shagrat add CSAR at Parachute location.
+  	
+  	  Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
+	  end 
 	  return true
   
   elseif _event.id == EVENTS.Land then
