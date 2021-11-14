@@ -626,8 +626,8 @@ function UNIT:GetAmmunition()
       -- Type name of current weapon.
       local Tammo=ammotable[w]["desc"]["typeName"]
 
-      local _weaponString = UTILS.Split(Tammo,"%.")
-      local _weaponName   = _weaponString[#_weaponString]
+      --local _weaponString = UTILS.Split(Tammo,"%.")
+      --local _weaponName   = _weaponString[#_weaponString]
 
       -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3
       local Category=ammotable[w].desc.category
@@ -655,8 +655,9 @@ function UNIT:GetAmmunition()
         nbombs=nbombs+Nammo
         
       elseif Category==Weapon.Category.MISSILE then
-
-        -- Add up all cruise missiles (category 5)
+        
+        
+        -- Add up all  missiles (category 5)
         if MissileCategory==Weapon.MissileCategory.AAM then
           nmissiles=nmissiles+Nammo
         elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
@@ -664,6 +665,10 @@ function UNIT:GetAmmunition()
         elseif MissileCategory==Weapon.MissileCategory.BM then
           nmissiles=nmissiles+Nammo
         elseif MissileCategory==Weapon.MissileCategory.OTHER then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.SAM then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.CRUISE then
           nmissiles=nmissiles+Nammo
         end
 
