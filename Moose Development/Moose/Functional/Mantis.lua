@@ -69,6 +69,7 @@
 -- * **Automatic mode** (default since 0.8) can set-up your SAM site network automatically for you
 -- * **Classic mode** behaves like before
 -- * Leverage evasiveness from SEAD, leverage attack range setting
+-- * Automatic setup of SHORAD based on groups of the class "short-range"
 --
 -- # 0. Base considerations and naming conventions
 -- 
@@ -169,22 +170,28 @@
 -- 
 -- # 2.1 Auto mode features
 -- 
--- You can now add Accept- and Reject-Zones to your setup, e.g. to consider borders or de-militarized zones:
+-- * You can now add Accept- and Reject-Zones to your setup, e.g. to consider borders or de-militarized zones:   
 -- 
 --        -- parameters are tables of Core.Zone#ZONE objects!
 --        mybluemantis:AddZones(AcceptZones,RejectZones)
 --        
--- Change the number of long-, mid- and short-range systems going live on a detected target:
+-- * Change the number of long-, mid- and short-range systems going live on a detected target:   
 -- 
 --        -- parameters are numbers. Defaults are 1,2,2,6 respectively
 --        mybluemantis:SetMaxActiveSAMs(Short,Mid,Long,Classic)
---        
--- Advanced feature
 -- 
---        -- switch off auto mode **before** you start MANTIS
+-- * SHORAD will automatically be added from SAM sites of type "short-range"   
+--        
+-- * Advanced features   
+-- 
+--        -- switch off auto mode **before** you start MANTIS.   
 --        mybluemantis.automode = false
---        -- scale of the activation range, i.e. don't activate at the fringes of max range, default 90%
---        -- also see engagerange below
+--        
+--        -- switch off auto shorad **before** you start MANTIS.   
+--        mybluemantis.autoshorad = false
+--        
+--        -- scale of the activation range, i.e. don't activate at the fringes of max range, default 90%.   
+--        -- also see engagerange below.   
 --        mybluemantis.radiusscale = 0.9
 -- 
 -- # 3. Default settings [both modes unless stated otherwise]
@@ -209,7 +216,7 @@
 --
 --  Use this option if you want to make use of or allow advanced SEAD tactics.
 --
--- # 5. Integrate SHORAD
+-- # 5. Integrate SHORAD [classic mode]
 --
 --  You can also choose to integrate Mantis with @{Functional.Shorad#SHORAD} for protection against HARMs and AGMs. When SHORAD detects a missile fired at one of MANTIS' SAM sites, it will activate SHORAD systems in
 --  the given defense checkradius around that SAM site. Create a SHORAD object first, then integrate with MANTIS like so:
@@ -293,7 +300,10 @@ MANTIS = {
   DLink                 = false,
   DLTimeStamp           = 0,
   Padding               = 10,
-  SuppressedGroups       = {},
+  SuppressedGroups      = {},
+  automode              = true,
+  autoshorad            = true,
+  ShoradGroupSet        = nil,
 }
 
 --- Advanced state enumerator
@@ -458,6 +468,8 @@ do
     self.maxmidrange = 2
     self.maxshortrange = 2
     self.maxclassic = 6
+    self.autoshorad = true
+    self.ShoradGroupSet = SET_GROUP:New() -- Core.Set#SET_GROUP
     
     self.UseEmOnOff = true
     if EmOnOff == false then
@@ -525,7 +537,7 @@ do
     end
 
     -- @field #string version
-    self.version="0.8.2"
+    self.version="0.8.5"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -1344,16 +1356,22 @@ do
         local grpcoord = group:GetCoordinate()
         local grprange,grpheight,type,blind  = self:_GetSAMRange(grpname)
         table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind})
-        table.insert( SEAD_Grps, grpname )
+        --table.insert( SEAD_Grps, grpname )
         if type == MANTIS.SamType.LONG then
           table.insert( SAM_Tbl_lg, {grpname, grpcoord, grprange, grpheight, blind})
+          table.insert( SEAD_Grps, grpname )
           --self:T("SAM "..grpname.." is type LONG")
         elseif type == MANTIS.SamType.MEDIUM then
          table.insert( SAM_Tbl_md, {grpname, grpcoord, grprange, grpheight, blind})
+         table.insert( SEAD_Grps, grpname )
          --self:T("SAM "..grpname.." is type MEDIUM")
         elseif type == MANTIS.SamType.SHORT then
           table.insert( SAM_Tbl_sh, {grpname, grpcoord, grprange, grpheight, blind})
           --self:T("SAM "..grpname.." is type SHORT")
+          self.ShoradGroupSet:Add(grpname,group)
+          if not self.autoshorad then
+            table.insert( SEAD_Grps, grpname )
+          end
         end
         self.SamStateTracker[grpname] = "GREEN"
         end
@@ -1407,6 +1425,10 @@ do
           elseif type == MANTIS.SamType.SHORT then
             table.insert( SAM_Tbl_sh, {grpname, grpcoord, grprange, grpheight, blind})
             -- self:I({grpname,grprange, grpheight})
+            self.ShoradGroupSet:Add(grpname,group)
+            if self.autoshorad then
+              self.Shorad.Groupset = self.ShoradGroupSet
+            end
           end
         end
      end
@@ -1470,7 +1492,8 @@ do
       local samgroup = GROUP:FindByName(name)
       local IsInZone, Distance = self:_CheckObjectInZone(detset, samcoordinate, radius, height, dlink)
       local suppressed = self.SuppressedGroups[name] or false
-      if IsInZone and not suppressed then --check any target in zone and not currently managed by SEAD
+      local activeshorad = self.Shorad.ActiveGroups[name] or false
+      if IsInZone and not suppressed and not activeshorad then --check any target in zone and not currently managed by SEAD
         if samgroup:IsAlive() then
           -- switch on SAM
           local switch = false
@@ -1499,13 +1522,13 @@ do
           end
           -- debug output
           if (self.debug or self.verbose) and switch then
-            local text = string.format("SAM %s switched to alarm state RED!", name)
+            local text = string.format("SAM %s in alarm state RED!", name)
             local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
             if self.verbose then self:I(self.lid..text) end
           end
         end --end alive
       else
-        if samgroup:IsAlive() and not suppressed then
+        if samgroup:IsAlive() and not suppressed and not activeshorad then
           -- switch off SAM
           if self.UseEmOnOff  then
             samgroup:EnableEmission(false)
@@ -1517,7 +1540,7 @@ do
             self.SamStateTracker[name] = "GREEN"
           end
           if self.debug or self.verbose then
-            local text = string.format("SAM %s switched to alarm state GREEN!", name)
+            local text = string.format("SAM %s in alarm state GREEN!", name)
             local m=MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
             if self.verbose then self:I(self.lid..text) end
           end
@@ -1548,7 +1571,7 @@ do
       self:_CheckLoop(samset,detset,dlink,self.maxlongrange)
       local samset = self.SAM_Table_Medium -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
       self:_CheckLoop(samset,detset,dlink,self.maxmidrange)
-      local samset = self.SAM_Table_Long -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
+      local samset = self.SAM_Table_Short -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
       self:_CheckLoop(samset,detset,dlink,self.maxshortrange)
     else
       local samset = self:_GetSAMTable() -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
@@ -1636,6 +1659,12 @@ do
       self.AWACS_Detection = self:StartAwacsDetection()
     end
     --]]
+    if self.autoshorad then
+      self.Shorad = SHORAD:New(self.name.."-SHORAD",self.name.."-SHORAD",self.SAM_Group,25000,600,self.coalition,self.UseEmOnOff)
+      self.Shorad:SetDefenseLimits(80,95)
+      self.ShoradLink = true
+      self.Shorad.Groupset=self.ShoradGroupSet
+    end
     self:__Status(-math.random(1,10))
     return self
   end
