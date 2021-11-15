@@ -932,7 +932,7 @@ do -- Scheduling
     end
     
     -- NOTE: MasterObject (first parameter) should(!) be nil as it will be the first argument passed to the SchedulerFunction!s
-    local ScheduleID = self.Scheduler:Schedule( 
+    local ScheduleID = self.Scheduler:Schedule(
       self, 
       SchedulerFunction,
       { ... },
@@ -953,7 +953,7 @@ do -- Scheduling
   -- @param #string SchedulerID (Optional) Scheduler ID to be stopped. If nil, all pending schedules are stopped.
   function BASE:ScheduleStop( SchedulerID )  
     self:F3( { "ScheduleStop:" } )
-  
+
     if self.Scheduler then
       --_SCHEDULEDISPATCHER:Stop( self.Scheduler, self._.Schedules[SchedulerFunction] )
       _SCHEDULEDISPATCHER:Stop(self.Scheduler, SchedulerID)

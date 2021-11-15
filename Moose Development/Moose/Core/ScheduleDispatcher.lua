@@ -109,9 +109,11 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } ) 
   
   if Scheduler.MasterObject then
+    --env.info("FF Object Scheduler")
     self.ObjectSchedulers[CallID] = Scheduler
     self:F3( { CallID = CallID, ObjectScheduler = tostring(self.ObjectSchedulers[CallID]), MasterObject = tostring(Scheduler.MasterObject) } )
   else
+    --env.info("FF Persistent Scheduler")
     self.PersistentSchedulers[CallID] = Scheduler
     self:F3( { CallID = CallID, PersistentScheduler = self.PersistentSchedulers[CallID] } )
   end
@@ -219,7 +221,8 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
           if ShowTrace then
             SchedulerObject:T( Prefix .. Name .. ":" .. Line .. " (" .. Source .. ")" )
           end
-          return ScheduleFunction( SchedulerObject, unpack( ScheduleArguments ) ) 
+          return ScheduleFunction( unpack( ScheduleArguments ) ) 
+          --return ScheduleFunction( SchedulerObject, unpack( ScheduleArguments ) ) 
         end
         Status, Result = xpcall( Timer, ErrorHandler )
       else

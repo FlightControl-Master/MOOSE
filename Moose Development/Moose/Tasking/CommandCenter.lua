@@ -560,9 +560,11 @@ function COMMANDCENTER:SetAutoAssignTasks( AutoAssign )
   self.AutoAssignTasks = AutoAssign or false
   
   if self.AutoAssignTasks == true then
-    self:ScheduleRepeat( 10, 30, 0, nil, self.AssignTasks, self )
+    self.autoAssignTasksScheduleID=self:ScheduleRepeat( 10, 30, 0, nil, self.AssignTasks, self )
   else
-    self:ScheduleStop( self.AssignTasks )
+    self:ScheduleStop()
+    -- FF this is not the schedule ID
+    --self:ScheduleStop( self.AssignTasks )
   end
   
 end
