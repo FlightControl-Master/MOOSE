@@ -76,6 +76,8 @@ SEAD = {
   ["X_25"] = "X_25",
   ["X_31"] = "X_31",
   ["Kh25"] = "Kh25",
+  ["BGM_109"] = "BGM_109",
+  ["AGM_154"] = "AGM_154",
   }
 
   --- Missile enumerators - from DCS ME and Wikipedia
@@ -85,7 +87,7 @@ SEAD = {
   ["AGM_88"] = { 150, 3},
   ["AGM_45"] = { 12, 2},
   ["AGM_122"] = { 16.5, 2.3},
-  ["AGM_84"] = { 280, 0.85},
+  ["AGM_84"] = { 280, 0.8},
   ["ALARM"] = { 45, 2},
   ["LD-10"] = { 60, 4},
   ["X_58"] = { 70, 4},
@@ -93,6 +95,8 @@ SEAD = {
   ["X_25"] = { 25, 0.76},
   ["X_31"] = {150, 3},
   ["Kh25"] = {25, 0.8},
+  ["BGM_109"] = {460, 0.77},
+  ["AGM_154"] = {130, 0.6},
   }
 
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
@@ -129,7 +133,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
 
-  self:I("*** SEAD - Started Version 0.3.4")
+  self:I("*** SEAD - Started Version 0.3.5")
   return self
 end
 
@@ -256,6 +260,7 @@ end
 function SEAD:HandleEventShot( EventData )
   self:T( { EventData.id } )
   local SEADPlane = EventData.IniUnit -- Wrapper.Unit#UNIT
+  local SEADGroup = EventData.IniGroup -- Wrapper.Group#GROUP
   local SEADPlanePos = SEADPlane:GetCoordinate() -- Core.Point#COORDINATE
   local SEADUnit = EventData.IniDCSUnit
   local SEADUnitName = EventData.IniDCSUnitName
@@ -270,14 +275,31 @@ function SEAD:HandleEventShot( EventData )
     local _targetskill = "Random"
     local _targetgroupname = "none"
     local _target = EventData.Weapon:getTarget() -- Identify target
-    local _targetUnit = UNIT:Find(_target) -- Wrapper.Unit#UNIT
+    local targetcat = _target:getCategory() -- Identify category
+    local _targetUnit = nil -- Wrapper.Unit#UNIT
     local _targetgroup = nil -- Wrapper.Group#GROUP
-    if _targetUnit and _targetUnit:IsAlive() then
-      _targetgroup = _targetUnit:GetGroup()
-      _targetgroupname = _targetgroup:GetName() -- group name
-      local _targetUnitName = _targetUnit:GetName()
-      _targetUnit:GetSkill()
-      _targetskill = _targetUnit:GetSkill()
+    self:T(string.format("*** Targetcat = %d",targetcat))
+    if targetcat == Object.Category.UNIT then -- UNIT
+      self:T("*** Target Category UNIT")
+      _targetUnit = UNIT:Find(_target) -- Wrapper.Unit#UNIT
+      if _targetUnit and _targetUnit:IsAlive() then
+        _targetgroup = _targetUnit:GetGroup()
+        _targetgroupname = _targetgroup:GetName() -- group name
+        local _targetUnitName = _targetUnit:GetName()
+        _targetUnit:GetSkill()
+        _targetskill = _targetUnit:GetSkill()
+      end
+    elseif targetcat == Object.Category.STATIC then
+      self:T("*** Target Category STATIC")
+      local seadset = SET_GROUP:New():FilterPrefixes(self.SEADGroupPrefixes):FilterOnce()
+      local tgtcoord = COORDINATE:NewFromVec3(_target:getPoint())
+      local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
+      if tgtgrp and tgtgrp:IsAlive() then
+        _targetgroup = tgtgrp
+        _targetgroupname = tgtgrp:GetName() -- group name
+        _targetskill = tgtgrp:GetUnit(1):GetSkill()
+        self:T("*** Found Target = ".. _targetgroupname)
+      end
     end
     -- see if we are shot at
     local SEADGroupFound = false
@@ -328,15 +350,16 @@ function SEAD:HandleEventShot( EventData )
             local function SuppressionStart(args)
               self:T(string.format("*** SEAD - %s Radar Off & Relocating",args[2]))
               local grp = args[1] -- Wrapper.Group#GROUP
-              local name = args[2] -- #string Group Name 
+              local name = args[2] -- #string Group Name
+              local attacker = args[3] -- Wrapper.Group#GROUP
               if self.UseEmissionsOnOff then
                 grp:EnableEmission(false)
               end
               grp:OptionAlarmStateGreen() -- needed else we cannot move around
-              grp:RelocateGroundRandomInRadius(20,500,false,false,"Diamond")
+              grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond")
               if self.UseCallBack then
                 local object = self.CallBack
-                object:SeadSuppressionStart(grp,name)
+                object:SeadSuppressionStart(grp,name,attacker)
               end
             end
 
@@ -366,12 +389,12 @@ function SEAD:HandleEventShot( EventData )
 
             if not self.SuppressedGroups[_targetgroupname] then
               self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Switch-Off in %ds",_targetgroupname,_tti,delay))
-              timer.scheduleFunction(SuppressionStart,{_targetgroup,_targetgroupname},SuppressionStartTime)
+              timer.scheduleFunction(SuppressionStart,{_targetgroup,_targetgroupname, SEADGroup},SuppressionStartTime)
               timer.scheduleFunction(SuppressionStop,{_targetgroup,_targetgroupname},SuppressionEndTime)
               self.SuppressedGroups[_targetgroupname] = true
               if self.UseCallBack then
                 local object = self.CallBack
-                object:SeadSuppressionPlanned(_targetgroup,_targetgroupname,SuppressionStartTime,SuppressionEndTime)
+                object:SeadSuppressionPlanned(_targetgroup,_targetgroupname,SuppressionStartTime,SuppressionEndTime, SEADGroup)
               end
             end
 
