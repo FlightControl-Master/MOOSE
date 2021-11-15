@@ -18,7 +18,7 @@
 -- @module Functional.Shorad
 -- @image Functional.Shorad.jpg
 --
--- Date: July 2021
+-- Date: Nov 2021
 
 -------------------------------------------------------------------------
 --- **SHORAD** class, extends Core.Base#BASE
@@ -132,6 +132,7 @@ do
   ["Kh29"] = "Kh29",
   ["Kh31"] = "Kh31",
   ["Kh66"] = "Kh66",
+  --["BGM_109"] = "BGM_109",
   }
   
   --- Instantiates a new SHORAD object
@@ -163,7 +164,7 @@ do
     self.DefenseLowProb = 70 -- probability to detect a missile shot, low margin
     self.DefenseHighProb = 90  -- probability to detect a missile shot, high margin
     self.UseEmOnOff = UseEmOnOff or false -- Decide if we are using Emission on/off (default) or AlarmState red/green
-    self:I("*** SHORAD - Started Version 0.2.8")
+    self:I("*** SHORAD - Started Version 0.2.9")
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("SHORAD %s | ", self.name)
     self:_InitState()
@@ -311,7 +312,7 @@ do
     local hit = false
     if self.DefendHarms then
       for _,_name in pairs (SHORAD.Harms) do
-        if string.find(WeaponName,_name,1) then hit = true end
+        if string.find(WeaponName,_name,1,true) then hit = true end
       end
     end
     return hit
@@ -327,7 +328,7 @@ do
     local hit = false
     if self.DefendMavs then
       for _,_name in pairs (SHORAD.Mavs) do
-        if string.find(WeaponName,_name,1) then hit = true end
+        if string.find(WeaponName,_name,1,true) then hit = true end
       end
     end
     return hit
@@ -368,7 +369,7 @@ do
     local returnname = false
     for _,_groups in pairs (shoradset) do
       local groupname = _groups:GetName()
-      if string.find(groupname, tgtgrp, 1) then
+      if string.find(groupname, tgtgrp, 1, true) then
         returnname = true
         --_groups:RelocateGroundRandomInRadius(7,100,false,false) -- be a bit evasive
       end
@@ -389,7 +390,7 @@ do
     local returnname = false
     for _,_groups in pairs (shoradset) do
       local groupname = _groups:GetName()
-      if string.find(groupname, tgtgrp, 1) then
+      if string.find(groupname, tgtgrp, 1, true) then
         returnname = true
       end
     end
@@ -507,11 +508,35 @@ do
         local targetdata = EventData.Weapon:getTarget() -- Identify target
         local targetcat = targetdata:getCategory() -- Identify category
         self:T(string.format("Target Category (3=STATIC, 1=UNIT)= %s",tostring(targetcat)))
+        self:T({targetdata})
         local targetunit = nil
         if targetcat == Object.Category.UNIT then -- UNIT
           targetunit = UNIT:Find(targetdata)
         elseif targetcat == Object.Category.STATIC then  -- STATIC
-          targetunit = STATIC:Find(targetdata)
+          --self:T("Static Target Data")
+          --self:T({targetdata:isExist()})
+          --self:T({targetdata:getPoint()})
+          local tgtcoord = COORDINATE:NewFromVec3(targetdata:getPoint())
+          --tgtcoord:MarkToAll("Missile Target",true)
+          
+          local tgtgrp1 = self.Samset:FindNearestGroupFromPointVec2(tgtcoord)
+          local tgtcoord1 = tgtgrp1:GetCoordinate()
+          --tgtcoord1:MarkToAll("Close target SAM",true)
+          
+          local tgtgrp2 = self.Groupset:FindNearestGroupFromPointVec2(tgtcoord)
+          local tgtcoord2 = tgtgrp2:GetCoordinate()
+          --tgtcoord2:MarkToAll("Close target SHORAD",true)
+          
+          local dist1 = tgtcoord:Get2DDistance(tgtcoord1)
+          local dist2 = tgtcoord:Get2DDistance(tgtcoord2)
+          
+          if dist1 < dist2 then
+            targetunit = tgtgrp1
+            targetcat = Object.Category.UNIT
+          else
+            targetunit = tgtgrp2
+            targetcat = Object.Category.UNIT
+          end
         end   
         --local targetunitname = Unit.getName(targetdata) -- Unit name
         if targetunit and targetunit:IsAlive() then
@@ -520,7 +545,11 @@ do
           local targetgroup = nil
           local targetgroupname = "none"
           if targetcat == Object.Category.UNIT then
-            targetgroup = targetunit:GetGroup()
+            if targetunit.ClassName == "UNIT" then
+              targetgroup = targetunit:GetGroup()
+            elseif targetunit.ClassName == "GROUP" then
+              targetgroup = targetunit
+            end
             targetgroupname = targetgroup:GetName() -- group name
           elseif targetcat == Object.Category.STATIC then
             targetgroup = targetunit
