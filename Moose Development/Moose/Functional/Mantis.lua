@@ -537,7 +537,7 @@ do
     end
 
     -- @field #string version
-    self.version="0.8.5"
+    self.version="0.8.6"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -646,6 +646,7 @@ do
   -- @param #string Name Name of the suppressed group
   -- @param #number SuppressionStartTime Model start time of the suppression from `timer.getTime()`
   -- @param #number SuppressionEndTime Model end time of the suppression from `timer.getTime()`
+  -- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
 
   --- On After "SeadSuppressionStart" event. Mantis has switched off a site to defend a SEAD attack.
   -- @function [parent=#MANTIS] OnAfterSeadSuppressionStart
@@ -654,7 +655,8 @@ do
   -- @param #string Event The Event
   -- @param #string To The To State
   -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
-  -- @param #string Name Name of the suppressed groupe
+  -- @param #string Name Name of the suppressed group
+  -- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
 
   --- On After "SeadSuppressionEnd" event. Mantis has switched on a site after a SEAD attack.
   -- @function [parent=#MANTIS] OnAfterSeadSuppressionEnd
@@ -1818,7 +1820,8 @@ do
   -- @param #string To The To State
   -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
   -- @param #string Name Name of the suppressed group
-  function MANTIS:onafterSeadSuppressionStart(From, Event, To, Group, Name)
+  -- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
+  function MANTIS:onafterSeadSuppressionStart(From, Event, To, Group, Name, Attacker)
     self:T({From, Event, To, Name})
     self.SuppressedGroups[Name] = true
     if self.ShoradLink then
@@ -1853,7 +1856,8 @@ do
   -- @param #string Name Name of the suppressed group
   -- @param #number SuppressionStartTime Model start time of the suppression from `timer.getTime()`
   -- @param #number SuppressionEndTime Model end time of the suppression from `timer.getTime()`
-  function MANTIS:onafterSeadSuppressionPlanned(From, Event, To, Group, Name, SuppressionStartTime, SuppressionEndTime)
+  -- @param Wrapper.Group#GROUP Attacker The attacking GROUP object
+  function MANTIS:onafterSeadSuppressionPlanned(From, Event, To, Group, Name, SuppressionStartTime, SuppressionEndTime, Attacker)
     self:T({From, Event, To, Name})
     return self
   end
