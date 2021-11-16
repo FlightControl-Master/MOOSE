@@ -5,7 +5,7 @@
 --    * Automatic target engagement based on detection network
 --    * Define multiple border, conflict and attack zones
 --    * Define strategic "capture" zones 
---    * Set stragegy of chief from passive to agressive
+--    * Set strategy of chief from passive to agressive
 --    * Manual target engagement via AUFTRAG and TARGET classes
 --    * Add AIRWINGS, BRIGADES and FLEETS as resources
 --    * Seamless air-to-air, air-to-ground, ground-to-ground dispatching
@@ -101,7 +101,7 @@
 --  
 -- # Strategic (Capture) Zones
 -- 
--- Strategically important zones, which should be captured can be added via the @{#CHIEF.AddStrateticZone}() function.
+-- Strategically important zones, which should be captured can be added via the @{#CHIEF.AddStrategicZone}() function.
 -- 
 -- If the zone is currently owned by another coalition and enemy ground troops are present in the zone, a CAS mission is lauchned.
 -- 
@@ -316,7 +316,7 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #string Strategy New stragegy.
+  -- @param #string Strategy New strategy.
 
 
   --- Triggers the FSM event "MissionAssign".
@@ -587,11 +587,11 @@ function CHIEF:GetDefcon(Defcon)
   return self.Defcon
 end
 
---- Set stragegy.
+--- Set strategy.
 -- @param #CHIEF self
--- @param #string Strategy Strategy. See @{#CHIEF.Stragegy}, e.g. `CHIEF.Strategy.DEFENSIVE` (default).
+-- @param #string Strategy Strategy. See @{#CHIEF.strategy}, e.g. `CHIEF.Strategy.DEFENSIVE` (default).
 -- @return #CHIEF self
-function CHIEF:SetStragety(Strategy)
+function CHIEF:SetStrategy(Strategy)
 
   -- Trigger event if Strategy changed.
   if Strategy~=self.strategy then
@@ -767,7 +767,7 @@ end
 -- @param #number Priority Priority.
 -- @param #number Importance Importance.
 -- @return #CHIEF self
-function CHIEF:AddStrateticZone(OpsZone, Priority, Importance)
+function CHIEF:AddStrategicZone(OpsZone, Priority, Importance)
 
   local stratzone={} --#CHIEF.StrategicZone
   
@@ -2062,7 +2062,7 @@ end
 
 --- Recruit assets for a given OPS zone.
 -- @param #CHIEF self
--- @param #CHIEF.StrategicZone StratZone The stratetic zone.
+-- @param #CHIEF.StrategicZone StratZone The strategic zone.
 -- @param #string MissionType Mission Type.
 -- @param #number NassetsMin Min number of required assets.
 -- @param #number NassetsMax Max number of required assets.
