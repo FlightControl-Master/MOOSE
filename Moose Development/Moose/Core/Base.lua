@@ -902,7 +902,7 @@ do -- Scheduling
     ]]
     
     -- NOTE: MasterObject (first parameter) needs to be nil or it will be the first argument passed to the SchedulerFunction!
-    local ScheduleID = self.Scheduler:Schedule(self, SchedulerFunction, {...}, Start, nil, nil, nil)
+    local ScheduleID = self.Scheduler:Schedule(nil, SchedulerFunction, {...}, Start)
     
     self._.Schedules[#self._.Schedules+1] = ScheduleID
   
@@ -931,9 +931,9 @@ do -- Scheduling
       self.Scheduler = SCHEDULER:New( self )
     end
     
-    -- NOTE: MasterObject (first parameter) should(!) be nil as it will be the first argument passed to the SchedulerFunction!s
+    -- NOTE: MasterObject (first parameter) should(!) be nil as it will be the first argument passed to the SchedulerFunction!
     local ScheduleID = self.Scheduler:Schedule(
-      self, 
+      nil, 
       SchedulerFunction,
       { ... },
       Start,

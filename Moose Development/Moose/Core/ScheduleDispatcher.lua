@@ -221,8 +221,8 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
           if ShowTrace then
             SchedulerObject:T( Prefix .. Name .. ":" .. Line .. " (" .. Source .. ")" )
           end
-          return ScheduleFunction( unpack( ScheduleArguments ) ) 
-          --return ScheduleFunction( SchedulerObject, unpack( ScheduleArguments ) ) 
+          -- The master object is passed as first parameter. A few :Schedule() calls in MOOSE expect this currently. But in principle it should be removed.
+          return ScheduleFunction( SchedulerObject, unpack( ScheduleArguments ) ) 
         end
         Status, Result = xpcall( Timer, ErrorHandler )
       else
