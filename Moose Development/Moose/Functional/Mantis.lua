@@ -1685,7 +1685,7 @@ do
     end
     --]]
     if self.autoshorad then
-      self.Shorad = SHORAD:New(self.name.."-SHORAD",self.name.."-SHORAD",self.SAM_Group,25000,600,self.coalition,self.UseEmOnOff)
+      self.Shorad = SHORAD:New(self.name.."-SHORAD",self.name.."-SHORAD",self.SAM_Group,self.ShoradActDistance,self.ShoradTime,self.coalition,self.UseEmOnOff)
       self.Shorad:SetDefenseLimits(80,95)
       self.ShoradLink = true
       self.Shorad.Groupset=self.ShoradGroupSet
