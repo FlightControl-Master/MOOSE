@@ -95,8 +95,8 @@ SEAD = {
   ["X_25"] = { 25, 0.76},
   ["X_31"] = {150, 3},
   ["Kh25"] = {25, 0.8},
-  ["BGM_109"] = {460, 0.77},
-  ["AGM_154"] = {130, 0.6},
+  ["BGM_109"] = {460, 0.705}, --in-game ~465kn
+  ["AGM_154"] = {130, 0.61},
   }
 
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
@@ -133,7 +133,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
 
-  self:I("*** SEAD - Started Version 0.3.5")
+  self:I("*** SEAD - Started Version 0.3.6")
   return self
 end
 
@@ -382,7 +382,7 @@ function SEAD:HandleEventShot( EventData )
             -- randomize switch-on time
             local delay = math.random(self.TargetSkill[_targetskill].DelayOn[1], self.TargetSkill[_targetskill].DelayOn[2])
             if delay > _tti then delay = delay / 2 end -- speed up
-            if _tti > (3*delay) then delay = (_tti / 2) * 0.9 end -- shot from afar
+            if _tti > 600 then delay =  _tti - 90 end -- shot from afar, 600 is default shorad ontime
 
             local SuppressionStartTime = timer.getTime() + delay
             local SuppressionEndTime = timer.getTime() + _tti + self.Padding
