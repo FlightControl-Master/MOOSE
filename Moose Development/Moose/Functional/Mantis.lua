@@ -168,31 +168,35 @@
 --        mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
 --        mybluemantis:Start()
 -- 
--- # 2.1 Auto mode features
+-- ## 2.1 Auto mode features
 -- 
--- * You can now add Accept- and Reject-Zones to your setup, e.g. to consider borders or de-militarized zones:   
+-- ### 2.1.1 You can now add Accept-, Reject- and Conflict-Zones to your setup, e.g. to consider borders or de-militarized zones:   
 -- 
---        -- parameters are tables of Core.Zone#ZONE objects!
---        mybluemantis:AddZones(AcceptZones,RejectZones)
+--        -- Parameters are tables of Core.Zone#ZONE objects!   
+--        -- This is effectively a 3-stage filter allowing for zone overlap. A coordinate is accepted first when   
+--        -- it is inside any AcceptZone. Then RejectZones are checked, which enforces both borders, but also overlaps of   
+--        -- Accept- and RejectZones. Last, if it is inside a conflict zone, it is accepted.   
+--        `mybluemantis:AddZones(AcceptZones,RejectZones,ConflictZones)`   
 --        
--- * Change the number of long-, mid- and short-range systems going live on a detected target:   
+--        
+-- ### 2.1.2 Change the number of long-, mid- and short-range systems going live on a detected target:   
 -- 
 --        -- parameters are numbers. Defaults are 1,2,2,6 respectively
---        mybluemantis:SetMaxActiveSAMs(Short,Mid,Long,Classic)
+--        `mybluemantis:SetMaxActiveSAMs(Short,Mid,Long,Classic)`
 -- 
--- * SHORAD will automatically be added from SAM sites of type "short-range"   
+-- ### 2.1.3 SHORAD will automatically be added from SAM sites of type "short-range"   
 --        
--- * Advanced features   
+-- ### 2.1.4 Advanced features   
 -- 
 --        -- switch off auto mode **before** you start MANTIS.   
---        mybluemantis.automode = false
+--        `mybluemantis.automode = false`
 --        
 --        -- switch off auto shorad **before** you start MANTIS.   
---        mybluemantis.autoshorad = false
+--        `mybluemantis.autoshorad = false`
 --        
 --        -- scale of the activation range, i.e. don't activate at the fringes of max range, default 90%.   
 --        -- also see engagerange below.   
---        mybluemantis.radiusscale = 0.9
+--        `mybluemantis.radiusscale = 0.9`
 -- 
 -- # 3. Default settings [both modes unless stated otherwise]
 --
@@ -403,8 +407,8 @@ do
   --
   -- [optional] Use
   --
-  --  * MANTIS:SetDetectInterval(interval)
-  --  * MANTIS:SetAutoRelocate(hq, ewr)
+  --        myredmantis:SetDetectInterval(interval)
+  --        myredmantis:SetAutoRelocate(hq, ewr)
   --
   -- before starting #MANTIS to fine-tune your setup.
   --
@@ -464,6 +468,7 @@ do
     self.usezones = false
     self.AcceptZones = {}
     self.RejectZones = {}
+    self.ConflictZones = {}
     self.maxlongrange = 1
     self.maxmidrange = 2
     self.maxshortrange = 2
@@ -537,7 +542,7 @@ do
     end
 
     -- @field #string version
-    self.version="0.8.6"
+    self.version="0.8.7"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -705,12 +710,19 @@ do
   -- @param #MANTIS self
   -- @param #table AcceptZones Table of @{Core.Zone#ZONE} objects
   -- @param #table RejectZones Table of @{Core.Zone#ZONE} objects
+  -- @param #table ConflictZones Table of @{Core.Zone#ZONE} objects
   -- @return #MANTIS self
-  function MANTIS:AddZones(AcceptZones,RejectZones)
+  -- @usage
+  -- Parameters are **tables of Core.Zone#ZONE** objects!   
+  -- This is effectively a 3-stage filter allowing for zone overlap. A coordinate is accepted first when   
+  -- it is inside any AcceptZone. Then RejectZones are checked, which enforces both borders, but also overlaps of   
+  -- Accept- and RejectZones. Last, if it is inside a conflict zone, it is accepted.   
+  function MANTIS:AddZones(AcceptZones,RejectZones, ConflictZones)
     self:T(self.lid .. "AddZones")
     self.AcceptZones = AcceptZones or {}
     self.RejectZones = RejectZones or {}
-    if #AcceptZones > 0 or #RejectZones > 0 then
+    self.ConflictZones = ConflictZones or {}
+    if #AcceptZones > 0 or #RejectZones > 0 or #ConflictZones > 0 then
       self.usezones = true
     end
     return self
@@ -1082,7 +1094,18 @@ do
           break
         end
       end
-    end  
+    end
+    -- conflictzones
+    if #self.ConflictZones > 0 and not inzone then -- if not already accepted, might be in conflict zones
+      for _,_zone in pairs(self.ConflictZones) do
+        local zone = _zone -- Core.Zone#ZONE
+        if zone:IsCoordinateInZone(coord) then
+          inzone = true
+          self:T(self.lid.."Target coord in Conflict Zone!")
+          break
+        end
+      end
+    end   
     return inzone
   end
   
@@ -1260,7 +1283,7 @@ do
     for _,_unit in pairs(units) do
       local unit = _unit -- Wrapper.Unit#UNIT
       local type = string.lower(unit:GetTypeName())
-      self:I(string.format("Matching typename: %s",type))
+      --self:I(string.format("Matching typename: %s",type))
       for idx,entry in pairs(SAMData) do
         local _entry = entry -- #MANTIS.SamData
         local _radar = string.lower(_entry.Radar)
