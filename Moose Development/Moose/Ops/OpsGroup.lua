@@ -3678,7 +3678,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
         local Alpha=param.angle or math.random(45, 85)
         local distance=Altitude/math.tan(math.rad(Alpha))
         local tvec2=UTILS.Vec2Translate(vec2, distance, heading)
-        self:T(self.lid..string.format("Barrage: Shots=%s, Altitude=%d m, Angle=%d°, heading=%03d°, distance=%d m", tostring(param.shots), Altitude, Alpha, heading, distance))
+        self:T(self.lid..string.format("Barrage: Shots=%s, Altitude=%d m, Angle=%dÂ°, heading=%03dÂ°, distance=%d m", tostring(param.shots), Altitude, Alpha, heading, distance))
         DCSTask=CONTROLLABLE.TaskFireAtPoint(nil, tvec2, param.radius, param.shots, param.weaponType, Altitude)
       else
         DCSTask=Task.dcstask
@@ -4553,6 +4553,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Speed to mission waypoint.
     local SpeedToMission=UTILS.KmphToKnots(self.speedCruise)
 
+    
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
 
@@ -4626,6 +4627,9 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Add waypoint.
     local waypoint=nil --#OPSGROUP.Waypoint
     if self:IsFlightgroup() then
+      SpeedToMission = UTILS.MpsToKnots(mission.orbitSpeed) or UTILS.KmphToKnots(self.speedCruise)
+      local MissionAlt = UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise)
+      SpeedToMission = UTILS.KnotsToAltKIAS(SpeedToMission,MissionAlt)
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
     elseif self:IsArmygroup() then
       waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
@@ -4651,6 +4655,9 @@ function OPSGROUP:RouteToMission(mission, delay)
       -- Add waypoint.
       local Ewaypoint=nil --#OPSGROUP.Waypoint
       if self:IsFlightgroup() then
+        SpeedToMission = UTILS.MpsToKnots(mission.orbitSpeed) or UTILS.KmphToKnots(self.speedCruise)
+        local MissionAlt = UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise)
+        SpeedToMission = UTILS.KnotsToAltKIAS(SpeedToMission,MissionAlt)
         Ewaypoint=FLIGHTGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
       elseif self:IsArmygroup() then
         Ewaypoint=ARMYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, mission.optionFormation, false)
