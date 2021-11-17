@@ -4551,7 +4551,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
 
     -- Speed to mission waypoint.
-    local SpeedToMission=UTILS.KmphToKnots(self.speedCruise)
+    local SpeedToMission=mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise() --UTILS.KmphToKnots(self.speedCruise)
 
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
@@ -4667,9 +4667,9 @@ function OPSGROUP:RouteToMission(mission, delay)
     self:_SetMissionOptions(mission)
 
     if self:IsArmygroup() then
-      self:Cruise(mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise())
+      self:Cruise(SpeedToMission)
     elseif self:IsNavygroup() then
-      self:Cruise(mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise())
+      self:Cruise(SpeedToMission)
     elseif self:IsFlightgroup() then
       self:UpdateRoute()
     end

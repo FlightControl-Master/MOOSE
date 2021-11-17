@@ -25,6 +25,7 @@
 -- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table capZones CAP zones. Each element is of type `#AIRWING.PatrolZone`.
+-- @field #table gcicapZones GCICAP zones. Each element is of type `#AIRWING.PatrolZone`.
 -- @field #table awacsZones AWACS zones. Each element is of type `#AIRWING.PatrolZone`.
 -- @field #table tankerZones Tanker zones. Each element is of type `#AIRWING.TankerZone`.
 -- @field Ops.Chief#CHIEF chief Chief of staff.
@@ -124,6 +125,7 @@ COMMANDER = {
   rearmingZones   =    {},
   refuellingZones =    {},
   capZones        =    {},
+  gcicapZones     =    {},
   awacsZones      =    {},
   tankerZones     =    {},
 }
@@ -489,7 +491,7 @@ function COMMANDER:AddRearmingZone(RearmingZone)
   
   rearmingzone.zone=RearmingZone
   rearmingzone.mission=nil
-  rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Rearming Zone"):ToCoalition(self:GetCoalition())
+  --rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Rearming Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.rearmingZones, rearmingzone)
 
@@ -506,7 +508,7 @@ function COMMANDER:AddRefuellingZone(RefuellingZone)
   
   rearmingzone.zone=RefuellingZone
   rearmingzone.mission=nil
-  rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Refuelling Zone"):ToCoalition(self:GetCoalition())
+  --rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Refuelling Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.refuellingZones, rearmingzone)
 
@@ -531,9 +533,34 @@ function COMMANDER:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
   patrolzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, patrolzone.altitude)
   patrolzone.leg=Leg or 30
   patrolzone.mission=nil
-  patrolzone.marker=MARKER:New(patrolzone.zone:GetCoordinate(), "AWACS Zone"):ToCoalition(self:GetCoalition())
+  --patrolzone.marker=MARKER:New(patrolzone.zone:GetCoordinate(), "CAP Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.capZones, patrolzone)
+
+  return patrolzone
+end
+
+--- Add a GCICAP zone.
+-- @param #COMMANDER self
+-- @param Core.Zone#ZONE CapZone Zone.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+function COMMANDER:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
+
+  local patrolzone={} --Ops.AirWing#AIRWING.PatrolZone
+  
+  patrolzone.zone=Zone
+  patrolzone.altitude=Altitude or 12000
+  patrolzone.heading=Heading or 270
+  patrolzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, patrolzone.altitude)
+  patrolzone.leg=Leg or 30
+  patrolzone.mission=nil
+  --patrolzone.marker=MARKER:New(patrolzone.zone:GetCoordinate(), "GCICAP Zone"):ToCoalition(self:GetCoalition())
+
+  table.insert(self.gcicapZones, patrolzone)
 
   return patrolzone
 end
@@ -556,7 +583,7 @@ function COMMANDER:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
   awacszone.speed=UTILS.KnotsToAltKIAS(Speed or 350, awacszone.altitude)
   awacszone.leg=Leg or 30
   awacszone.mission=nil
-  awacszone.marker=MARKER:New(awacszone.zone:GetCoordinate(), "AWACS Zone"):ToCoalition(self:GetCoalition())
+  --awacszone.marker=MARKER:New(awacszone.zone:GetCoordinate(), "AWACS Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.awacsZones, awacszone)
 
@@ -684,6 +711,17 @@ function COMMANDER:onafterStatus(From, Event, To)
     if (not patrolzone.mission) or patrolzone.mission:IsOver() then
       local Coordinate=patrolzone.zone:GetCoordinate()
       patrolzone.mission=AUFTRAG:NewCAP(patrolzone.zone, patrolzone.altitude, patrolzone.speed, Coordinate, patrolzone.heading, patrolzone.leg)
+      self:AddMission(patrolzone.mission)
+    end
+  end
+
+  -- Check GCICAP zones.
+  for _,_patrolzone in pairs(self.gcicapZones) do
+    local patrolzone=_patrolzone --Ops.AirWing#AIRWING.PatrolZone
+    -- Check if mission is nil or over.
+    if (not patrolzone.mission) or patrolzone.mission:IsOver() then
+      local Coordinate=patrolzone.zone:GetCoordinate()
+      patrolzone.mission=AUFTRAG:NewGCICAP(Coordinate, patrolzone.altitude, patrolzone.speed, patrolzone.heading, patrolzone.leg)
       self:AddMission(patrolzone.mission)
     end
   end
