@@ -923,6 +923,7 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
   mission:_TargetFromObject(Coordinate)
 
   mission.orbitSpeed = UTILS.KnotsToMps(Speed or 350)
+  mission.missionSpeed = UTILS.KnotsToMps(Speed or 350)
 
   if Heading and Leg then
     mission.orbitHeading=Heading
