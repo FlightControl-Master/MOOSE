@@ -4627,7 +4627,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Add waypoint.
     local waypoint=nil --#OPSGROUP.Waypoint
     if self:IsFlightgroup() then
-      SpeedToMission = UTILS.MpsToKnots(mission.orbitSpeed) or UTILS.KmphToKnots(self.speedCruise)
+      SpeedToMission = UTILS.MpsToKnots(mission.missionSpeed) or UTILS.KmphToKnots(self.speedCruise)
       local MissionAlt = UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise)
       SpeedToMission = UTILS.KnotsToAltKIAS(SpeedToMission,MissionAlt)
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
@@ -4655,7 +4655,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       -- Add waypoint.
       local Ewaypoint=nil --#OPSGROUP.Waypoint
       if self:IsFlightgroup() then
-        SpeedToMission = UTILS.MpsToKnots(mission.orbitSpeed) or UTILS.KmphToKnots(self.speedCruise)
+        SpeedToMission = UTILS.MpsToKnots(mission.missionSpeed) or UTILS.KmphToKnots(self.speedCruise)
         local MissionAlt = UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise)
         SpeedToMission = UTILS.KnotsToAltKIAS(SpeedToMission,MissionAlt)
         Ewaypoint=FLIGHTGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
