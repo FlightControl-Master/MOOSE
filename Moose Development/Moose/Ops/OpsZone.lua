@@ -1232,22 +1232,24 @@ end
 function OPSZONE:_GetMissions()
   return self.Missions
 end
-
 --- Add an entry to the OpsZone mission table
 -- @param #OPSZONE self
 -- @param #number Coalition Coalition of type e.g. coalition.side.NEUTRAL
 -- @param #string Type Type of mission, e.g. AUFTRAG.Type.CAS
+-- @return #boolean found True if we have that kind of mission, else false
 -- @return #table Missions Table of Ops.Auftrag#AUFTRAG entries
 function OPSZONE:_FindMissions(Coalition,Type)
   -- search the table
   local foundmissions = {}
+  local found = false
   for _,_entry in pairs(self.Missions) do
     local entry = _entry -- #OPSZONE.MISSION
     if entry.Coalition == Coalition and entry.Type == Type and entry.Mission and entry.Mission:IsNotOver() then
       table.insert(foundmissions,entry.Mission)
+      found = true
     end
   end
-  return foundmissions
+  return found, foundmissions
 end
 
 --- Housekeeping
