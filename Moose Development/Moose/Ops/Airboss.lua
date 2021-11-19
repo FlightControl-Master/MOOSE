@@ -1201,6 +1201,8 @@ AIRBOSS = {
   NmaxSection    = nil,
   NmaxStack      = nil,
   handleai       = nil,
+  xtVoiceOvers   = nil,
+  xtVoiceOversAI = nil,
   tanker         = nil,
   Corientation   = nil,
   Corientlast    = nil,
@@ -1899,6 +1901,12 @@ function AIRBOSS:New(carriername, alias)
 
   -- Set AI handling On.
   self:SetHandleAION()
+
+  -- No extra voiceover/calls from player by default
+  self:SetExtraVoiceOvers(false)
+
+  -- No extra voiceover/calls from AI by default
+  self:SetExtraVoiceOversAI(false)
 
   -- Airboss is a nice guy.
   self:SetAirbossNiceGuy()
@@ -3215,6 +3223,24 @@ function AIRBOSS:SetHandleAION()
   return self
 end
 
+--- Will play the inbound calls, commencing, initial, etc. from the player when requesteing marshal
+-- @param #AIRBOSS self
+-- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
+-- @return #AIRBOSS self
+function AIRBOSS:SetExtraVoiceOvers(status)
+  self.xtVoiceOvers=status
+  return self
+end
+
+--- Will simulate the inbound call, commencing, initial, etc from the AI when requested by Airboss
+-- @param #AIRBOSS self
+-- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
+-- @return #AIRBOSS self
+function AIRBOSS:SetExtraVoiceOversAI(status)
+  self.xtVoiceOversAI=status
+  return self
+end
+ 
 --- Do not handle AI aircraft.
 -- @param #AIRBOSS self
 -- @return #AIRBOSS self
@@ -5299,6 +5325,48 @@ function AIRBOSS:_InitVoiceOvers()
       subtitle="",
       duration=1.95,
     },
+    MARSHAL={
+      file="PILOT-Marshal",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.50,
+    },
+    MARKINGMOMS={
+      file="PILOT-MarkingMoms",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.90,
+    },
+    FOR={
+      file="PILOT-For",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.29,
+    },
+    ANGELS={
+      file="PILOT-Angels",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.50,
+    },
+    STATE={
+      file="PILOT-State",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.40,
+    },   
+    COMMENCING={
+      file="PILOT-Commencing",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.45,
+    },   
   }
 
   -------------------
@@ -6174,6 +6242,12 @@ function AIRBOSS:_ClearForLanding(flight)
     -- Cleared for Case X recovery.
     self:_MarshalCallClearedForRecovery(flight.onboard, flight.case)
 
+    -- Voice over of the commencing simulated call from AI
+    if self.xtVoiceOversAI then
+      local leader = flight.group:GetUnits()[1]
+      self:_CommencingCall(leader, flight.onboard)
+    end
+
   else
 
     -- Cleared for Case X recovery.
@@ -6545,6 +6619,11 @@ function AIRBOSS:_MarshalAI(flight, nstack, respawn)
 
   -- Check if flight is already in Marshal queue.
   if not self:_InQueue(self.Qmarshal,flight.group) then
+    -- Simulate inbound call
+    if self.xtVoiceOversAI then
+      local leader = flight.group:GetUnits()[1]
+      self:_MarshallInboundCall(leader, flight.onboard)
+    end
     -- Add group to marshal stack queue.
     self:_AddMarshalGroup(flight, nstack)
   end
@@ -15722,6 +15801,85 @@ function AIRBOSS:_Number2Radio(radio, number, delay, interval, pilotcall)
   return wait
 end
 
+--- Aircraft request marshal (Inbound call both for players and AI).
+-- @param #AIRBOSS self
+-- @return Wrapper.Unit#UNIT Unit of player or nil.
+-- @param #string modex Tail number.
+function AIRBOSS:_MarshallInboundCall(unit, modex)
+
+  -- Calculate 
+  local vectorCarrier = self:GetCoordinate():GetDirectionVec3(unit:GetCoordinate())
+  local bearing =  UTILS.Round(unit:GetCoordinate():GetAngleDegrees( vectorCarrier ), 0)
+  local distance = UTILS.Round(UTILS.MetersToNM(unit:GetCoordinate():Get2DDistance(self:GetCoordinate())),0)
+  local angels = UTILS.Round(UTILS.MetersToFeet(unit:GetHeight()/1000),0)
+  local state = UTILS.Round(self:_GetFuelState(unit)/1000,1)
+  
+  -- Pilot: "Marshall, [modex], marking mom's [bearing] for [distance], angels [XX], state [X.X]"
+  local text=string.format("Marshal, %s, marking mom's %d for %d, angels %d, state %.1f", modex, bearing, distance, angels, state)
+  -- Debug message.
+  self:I(self.lid..text)
+
+  -- Fuel state.
+  local FS=UTILS.Split(string.format("%.1f", state), ".")
+
+  -- Create new call to display complete subtitle.
+  local inboundcall=self:_NewRadioCall(self.MarshalCall.CLICK,  unit.UnitName:upper() , text, self.Tmessage, nil, unit.UnitName:upper())
+
+  -- CLICK!
+  self:RadioTransmission(self.MarshalRadio, inboundcall)
+  -- Marshal ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.MARSHAL, nil, nil, nil, nil, true)
+  -- Modex..
+  self:_Number2Radio(self.MarshalRadio, modex, nil, nil, true)
+  -- Marking Mom's,
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.MARKINGMOMS, nil, nil, nil, nil, true)
+  -- Bearing ..
+  self:_Number2Radio(self.MarshalRadio, tostring(bearing), nil, nil, true)
+  -- For ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.FOR, nil, nil, nil, nil, true)
+  -- Distance ..
+  self:_Number2Radio(self.MarshalRadio, tostring(distance), nil, nil, true)
+  -- Angels ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.ANGELS, nil, nil, nil, nil, true)
+  -- Angels Number ..
+  self:_Number2Radio(self.MarshalRadio, tostring(angels), nil, nil, true)
+  -- State ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.STATE, nil, nil, nil, nil, true)
+  -- X..
+  self:_Number2Radio(self.MarshalRadio, FS[1], nil, nil, true)
+  -- Point..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.POINT, nil, nil, nil, nil, true)
+  -- Y.
+  self:_Number2Radio(self.MarshalRadio, FS[2], nil, nil, true)
+  -- CLICK!
+  self:RadioTransmission(self.MarshalRadio, self.MarshalRadio.CLICK, nil, nil, nil, nil, true)
+
+end
+
+--- Aircraft commencing call (both for players and AI).
+-- @param #AIRBOSS self
+-- @return Wrapper.Unit#UNIT Unit of player or nil.
+-- @param #string modex Tail number.
+function AIRBOSS:_CommencingCall(unit, modex)
+
+  -- Pilot: "[modex], commencing"
+  local text=string.format("%s, commencing", modex)
+  -- Debug message.
+  self:I(self.lid..text)
+
+  -- Create new call to display complete subtitle.
+  local commencingCall=self:_NewRadioCall(self.MarshalCall.CLICK,  unit.UnitName:upper() , text, self.Tmessage, nil, unit.UnitName:upper())
+
+  -- Click
+  self:RadioTransmission(self.MarshalRadio, commencingCall)
+  -- Modex..
+  self:_Number2Radio(self.MarshalRadio, modex, nil, nil, true)
+  -- Commencing
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.COMMENCING, nil, nil, nil, nil, true)
+  -- CLICK!
+  self:RadioTransmission(self.MarshalRadio, self.MarshalRadio.CLICK, nil, nil, nil, nil, true)
+
+end
 
 --- AI aircraft calls the ball.
 -- @param #AIRBOSS self
@@ -16478,13 +16636,18 @@ function AIRBOSS:_RequestMarshal(_unitName)
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
-
+     
   -- Check if we have a unit which is a player.
   if _unit and _playername then
     local playerData=self.players[_playername] --#AIRBOSS.PlayerData
 
     if playerData then
 
+      -- Voice over of inbound call (regardless of airboss rejecting it or not)
+      if self.xtVoiceOvers then
+        self:_MarshallInboundCall(_unit, playerData.onboard)
+      end   
+    
       -- Check if player is in CCA
       local inCCA=playerData.unit:IsInZone(self.zoneCCA)
 
@@ -16726,13 +16889,18 @@ function AIRBOSS:_RequestCommence(_unitName)
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
-
+ 
   -- Check if we have a unit which is a player.
   if _unit and _playername then
     local playerData=self.players[_playername] --#AIRBOSS.PlayerData
 
     if playerData then
-
+   
+      -- Voice over of Commencing call (regardless of Airboss will rejected or not)
+      if self.xtVoiceOvers then
+        self:_CommencingCall(_unit, playerData.onboard)
+      end
+      
       -- Check if unit is in CCA.
       local text=""
       local cleared=false
