@@ -1201,8 +1201,8 @@ AIRBOSS = {
   NmaxSection    = nil,
   NmaxStack      = nil,
   handleai       = nil,
-  inbRadioCall   = nil,
-  inbRadioCallAI = nil,
+  xtVoiceOvers   = nil,
+  xtVoiceOversAI = nil,
   tanker         = nil,
   Corientation   = nil,
   Corientlast    = nil,
@@ -1902,11 +1902,11 @@ function AIRBOSS:New(carriername, alias)
   -- Set AI handling On.
   self:SetHandleAION()
 
-  -- No Inbound messages from Player by default
-  self:SetInboundMessagesPlayer(false)
+  -- No extra voiceover/calls from player by default
+  self:SetExtraVoiceOvers(false)
 
-  -- No Inbound messages from AI by default
-  self:SetInboundMessagesAI(false)
+  -- No extra voiceover/calls from AI by default
+  self:SetExtraVoiceOversAI(false)
 
   -- Airboss is a nice guy.
   self:SetAirbossNiceGuy()
@@ -3223,21 +3223,21 @@ function AIRBOSS:SetHandleAION()
   return self
 end
 
---- Will simulate the inbound call from the player when requesteing marshal
+--- Will play the inbound calls, commencing, initial, etc. from the player when requesteing marshal
 -- @param #AIRBOSS self
 -- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
 -- @return #AIRBOSS self
-function AIRBOSS:SetInboundMessagesPlayer(status)
-  self.inbRadioCall=status
+function AIRBOSS:SetExtraVoiceOvers(status)
+  self.xtVoiceOvers=status
   return self
 end
 
---- Will simulate the inbound call from the AI when sending to marshal (as if they have called for it)
+--- Will simulate the inbound call, commencing, initial, etc from the AI when requested by Airboss
 -- @param #AIRBOSS self
 -- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
 -- @return #AIRBOSS self
-function AIRBOSS:SetInboundMessagesAI(status)
-  self.inbRadioCallAI=status
+function AIRBOSS:SetExtraVoiceOversAI(status)
+  self.xtVoiceOversAI=status
   return self
 end
  
@@ -5359,7 +5359,14 @@ function AIRBOSS:_InitVoiceOvers()
       loud=false,
       subtitle="",
       duration=0.40,
-    },    
+    },   
+    COMMENCING={
+      file="PILOT-Commencing",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.45,
+    },   
   }
 
   -------------------
@@ -6235,6 +6242,12 @@ function AIRBOSS:_ClearForLanding(flight)
     -- Cleared for Case X recovery.
     self:_MarshalCallClearedForRecovery(flight.onboard, flight.case)
 
+    -- Voice over of the commencing simulated call from AI
+    if self.xtVoiceOversAI then
+      local leader = flight.group:GetUnits()[1]
+      self:_CommencingCall(leader, flight.onboard)
+    end
+
   else
 
     -- Cleared for Case X recovery.
@@ -6607,7 +6620,7 @@ function AIRBOSS:_MarshalAI(flight, nstack, respawn)
   -- Check if flight is already in Marshal queue.
   if not self:_InQueue(self.Qmarshal,flight.group) then
     -- Simulate inbound call
-    if self.inbRadioCallAI then
+    if self.xtVoiceOversAI then
       local leader = flight.group:GetUnits()[1]
       self:_MarshallInboundCall(leader, flight.onboard)
     end
@@ -15788,7 +15801,7 @@ function AIRBOSS:_Number2Radio(radio, number, delay, interval, pilotcall)
   return wait
 end
 
---- Aircraft request marshal (Inbound call).
+--- Aircraft request marshal (Inbound call both for players and AI).
 -- @param #AIRBOSS self
 -- @return Wrapper.Unit#UNIT Unit of player or nil.
 -- @param #string modex Tail number.
@@ -15838,6 +15851,31 @@ function AIRBOSS:_MarshallInboundCall(unit, modex)
   self:RadioTransmission(self.MarshalRadio, self.PilotCall.POINT, nil, nil, nil, nil, true)
   -- Y.
   self:_Number2Radio(self.MarshalRadio, FS[2], nil, nil, true)
+  -- CLICK!
+  self:RadioTransmission(self.MarshalRadio, self.MarshalRadio.CLICK, nil, nil, nil, nil, true)
+
+end
+
+--- Aircraft commencing call (both for players and AI).
+-- @param #AIRBOSS self
+-- @return Wrapper.Unit#UNIT Unit of player or nil.
+-- @param #string modex Tail number.
+function AIRBOSS:_CommencingCall(unit, modex)
+
+  -- Pilot: "[modex], commencing"
+  local text=string.format("%s, commencing", modex)
+  -- Debug message.
+  self:I(self.lid..text)
+
+  -- Create new call to display complete subtitle.
+  local commencingCall=self:_NewRadioCall(self.MarshalCall.CLICK,  unit.UnitName:upper() , text, self.Tmessage, nil, unit.UnitName:upper())
+
+  -- Click
+  self:RadioTransmission(self.MarshalRadio, commencingCall)
+  -- Modex..
+  self:_Number2Radio(self.MarshalRadio, modex, nil, nil, true)
+  -- Commencing
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.COMMENCING, nil, nil, nil, nil, true)
   -- CLICK!
   self:RadioTransmission(self.MarshalRadio, self.MarshalRadio.CLICK, nil, nil, nil, nil, true)
 
@@ -16598,17 +16636,18 @@ function AIRBOSS:_RequestMarshal(_unitName)
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
-    
-  if self.inbRadioCall then
-    self:_MarshallInboundCall(_unit, "202")
-  end
-  
+     
   -- Check if we have a unit which is a player.
   if _unit and _playername then
     local playerData=self.players[_playername] --#AIRBOSS.PlayerData
 
     if playerData then
 
+      -- Voice over of inbound call (regardless of airboss rejecting it or not)
+      if self.xtVoiceOvers then
+        self:_MarshallInboundCall(_unit, playerData.onboard)
+      end   
+    
       -- Check if player is in CCA
       local inCCA=playerData.unit:IsInZone(self.zoneCCA)
 
@@ -16850,13 +16889,18 @@ function AIRBOSS:_RequestCommence(_unitName)
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
-
+ 
   -- Check if we have a unit which is a player.
   if _unit and _playername then
     local playerData=self.players[_playername] --#AIRBOSS.PlayerData
 
     if playerData then
-
+   
+      -- Voice over of Commencing call (regardless of Airboss will rejected or not)
+      if self.xtVoiceOvers then
+        self:_CommencingCall(_unit, playerData.onboard)
+      end
+      
       -- Check if unit is in CCA.
       local text=""
       local cleared=false
