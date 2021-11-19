@@ -39,6 +39,7 @@
 -- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
 -- @field #string markerText Text shown in the maker.
 -- @field #table chiefs Chiefs that monitor this zone.
+-- @field #table Missions Missions that are attached to this OpsZone
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -61,8 +62,14 @@ OPSZONE = {
   Nblu           =     0,
   Nnut           =     0,
   chiefs         =    {},
+  Missions       =    {},
 }
 
+--- OPSZONE.MISSION
+-- @type OPSZONE.MISSION
+-- @field #number Coalition Coalition
+-- @field #string Type Type of mission
+-- @field Ops.Auftrag#AUFTRAG Mission The actual attached mission
 
 --- OPSZONE class version.
 -- @field #string version
@@ -74,7 +81,7 @@ OPSZONE.version="0.2.0"
 
 -- TODO: Pause/unpause evaluations.
 -- TODO: Capture time, i.e. time how long a single coalition has to be inside the zone to capture it.
--- TODO: Can neutrals capture? No, since they are _neutral_!
+-- DONE: Can neutrals capture? No, since they are _neutral_!
 -- TODO: Differentiate between ground attack and boming by air or arty.
 -- DONE: Capture airbases.
 -- DONE: Can statics capture or hold a zone? No, unless explicitly requested by mission designer.
@@ -133,6 +140,7 @@ function OPSZONE:New(Zone, CoalitionOwner)
   self.zone=Zone
   self.zoneName=Zone:GetName()
   self.zoneRadius=Zone:GetRadius()
+  self.Missions = {}
   
   -- Current and previous owners.
   self.ownerCurrent=CoalitionOwner or coalition.side.NEUTRAL
@@ -713,7 +721,8 @@ function OPSZONE:onenterAttacked(From, Event, To)
     -- Draw zone.
     self.zone:DrawZone(nil, color, 1.0, color, 0.5)
   end
-
+  
+  self:_CleanMissionTable()
 end
 
 --- On enter "Empty" event.
@@ -1198,6 +1207,63 @@ function OPSZONE:_AddChief(Chief)
 
 end
 
+--- Add an entry to the OpsZone mission table
+-- @param #OPSZONE self
+-- @param #number Coalition Coalition of type e.g. coalition.side.NEUTRAL
+-- @param #string Type Type of mission, e.g. AUFTRAG.Type.CAS
+-- @param Ops.Auftrag#AUFTRAG Auftrag The Auftrag itself
+-- @return #OPSZONE self
+function OPSZONE:_AddMission(Coalition,Type,Auftrag)
+  
+  -- Add a mission
+  local entry = {} -- #OPSZONE.MISSION
+  entry.Coalition = Coalition or coalition.side.NEUTRAL
+  entry.Type = Type or ""
+  entry.Mission = Auftrag or nil
+  
+  table.insert(self.Missions,entry)
+  
+  return self
+end
+
+--- Get the OpsZone mission table. #table of #OPSZONE.MISSION entries
+-- @param #OPSZONE self
+-- @return #table Missions
+function OPSZONE:_GetMissions()
+  return self.Missions
+end
+
+--- Add an entry to the OpsZone mission table
+-- @param #OPSZONE self
+-- @param #number Coalition Coalition of type e.g. coalition.side.NEUTRAL
+-- @param #string Type Type of mission, e.g. AUFTRAG.Type.CAS
+-- @return #table Missions Table of Ops.Auftrag#AUFTRAG entries
+function OPSZONE:_FindMissions(Coalition,Type)
+  -- search the table
+  local foundmissions = {}
+  for _,_entry in pairs(self.Missions) do
+    local entry = _entry -- #OPSZONE.MISSION
+    if entry.Coalition == Coalition and entry.Type == Type and entry.Mission and entry.Mission:IsNotOver() then
+      table.insert(foundmissions,entry.Mission)
+    end
+  end
+  return foundmissions
+end
+
+--- Housekeeping
+-- @param #OPSZONE self
+-- @return #OPSZONE self
+function OPSZONE:_CleanMissionTable()
+  local missions = {}
+  for _,_entry in pairs(self.Missions) do
+    local entry = _entry -- #OPSZONE.MISSION
+    if entry.Mission and entry.Mission:IsNotOver() then
+      table.insert(missions,entry)
+    end
+  end
+  self.Missions = missions
+  return self
+end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
