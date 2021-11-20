@@ -5,7 +5,7 @@
 --    * Automatic target engagement based on detection network
 --    * Define multiple border, conflict and attack zones
 --    * Define strategic "capture" zones 
---    * Set stragegy of chief from passive to agressive
+--    * Set strategy of chief from passive to agressive
 --    * Manual target engagement via AUFTRAG and TARGET classes
 --    * Add AIRWINGS, BRIGADES and FLEETS as resources
 --    * Seamless air-to-air, air-to-ground, ground-to-ground dispatching
@@ -101,7 +101,7 @@
 --  
 -- # Strategic (Capture) Zones
 -- 
--- Strategically important zones, which should be captured can be added via the @{#CHIEF.AddStrateticZone}() function.
+-- Strategically important zones, which should be captured can be added via the @{#CHIEF.AddStrategicZone}() function.
 -- 
 -- If the zone is currently owned by another coalition and enemy ground troops are present in the zone, a CAS mission is lauchned.
 -- 
@@ -174,11 +174,13 @@ CHIEF.Strategy = {
 -- @field #number importance Importance
 -- @field Ops.Auftrag#AUFTRAG missionPatrol Patrol mission.
 -- @field Ops.Auftrag#AUFTRAG missionCAS CAS mission.
+-- @field Ops.Auftrag#AUFTRAG missionPatrol Patrol mission.
+-- @field Ops.Auftrag#AUFTRAG missionARTY Artillery mission.
 
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.0.1"
+CHIEF.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -316,7 +318,7 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #string Strategy New stragegy.
+  -- @param #string Strategy New strategy.
 
 
   --- Triggers the FSM event "MissionAssign".
@@ -587,11 +589,11 @@ function CHIEF:GetDefcon(Defcon)
   return self.Defcon
 end
 
---- Set stragegy.
+--- Set strategy.
 -- @param #CHIEF self
--- @param #string Strategy Strategy. See @{#CHIEF.Stragegy}, e.g. `CHIEF.Strategy.DEFENSIVE` (default).
+-- @param #string Strategy Strategy. See @{#CHIEF.strategy}, e.g. `CHIEF.Strategy.DEFENSIVE` (default).
 -- @return #CHIEF self
-function CHIEF:SetStragety(Strategy)
+function CHIEF:SetStrategy(Strategy)
 
   -- Trigger event if Strategy changed.
   if Strategy~=self.strategy then
@@ -767,7 +769,7 @@ end
 -- @param #number Priority Priority.
 -- @param #number Importance Importance.
 -- @return #CHIEF self
-function CHIEF:AddStrateticZone(OpsZone, Priority, Importance)
+function CHIEF:AddStrategicZone(OpsZone, Priority, Importance)
 
   local stratzone={} --#CHIEF.StrategicZone
   
@@ -1556,12 +1558,18 @@ function CHIEF:CheckTargetQueue()
           --      * target threatlevel
           --      * how many assets are still in stock
           --      * is it inside of our border
+          --      * add damping factor
+          
           local NassetsMin=1
           local NassetsMax=1
           
-          if target.threatlevel0>=8 then
+          local threat = target.threatlevel0 / target.N0 -- avg threatlevel
+          local NoUnits = target.N0 -- no of units in here
+          
+          --if target.threatlevel0>=8 then
+          if threat>=8 and NoUnits >=10 then
             NassetsMax=3
-          elseif target.threatlevel0>=5 then
+          elseif threat>=5 then
             NassetsMax=2
           else
             NassetsMax=1          
@@ -1675,9 +1683,14 @@ function CHIEF:CheckOpsZoneQueue()
     if ownercoalition~=self.coalition and (stratzone.importance==nil or stratzone.importance<=vip) then
     
       -- Has a patrol mission?
-      local hasMissionPatrol=stratzone.missionPatrol and stratzone.missionPatrol:IsNotOver() or false
+      --local hasMissionPatrol=stratzone.missionPatrol and stratzone.missionPatrol:IsNotOver() or false
+      local hasMissionPatrol=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.PATROLZONE)
       -- Has a CAS mission?
-      local hasMissionCAS=stratzone.missionCAS and stratzone.missionCAS:IsNotOver() or false    
+      --local hasMissionCAS=stratzone.missionCAS and stratzone.missionCAS:IsNotOver() or false
+      local hasMissionCAS=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CAS)
+      -- Has a ARTY mission?
+      --local hasMissionARTY=stratzone.missionARTY and stratzone.missionARTY:IsNotOver() or false
+      local hasMissionARTY=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARTY) 
 
       -- Debug info.
       self:T(self.lid..string.format("Zone %s [%s] is owned by coalition %d", stratzone.opszone.zone:GetName(), stratzone.opszone:GetState(), ownercoalition))
@@ -1696,7 +1709,7 @@ function CHIEF:CheckOpsZoneQueue()
           self:T3(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets"))
       
           -- Recruit ground assets that
-          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ONGUARD, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY})
+          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ONGUARD, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY, GROUP.Attribute.GROUND_TANK})
 
           -- Debug info.
           self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets=%s", tostring(recruited)))
@@ -1724,6 +1737,19 @@ function CHIEF:CheckOpsZoneQueue()
           self:T(self.lid..string.format("Zone is NOT empty ==> Recruit CAS assets=%s", tostring(recruited)))
           
         end
+        if not hasMissionARTY then
+
+          -- Debug message.
+          self:T3(self.lid..string.format("Zone is NOT empty ==> Recruit ARTY assets"))          
+
+            
+          -- Recruite CAS assets.
+          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ARTY, 1, 1)
+          
+          -- Debug message.
+          self:T(self.lid..string.format("Zone is NOT empty ==> Recruit ARTY assets=%s", tostring(recruited)))
+          
+        end
       
       end
           
@@ -1738,17 +1764,31 @@ function CHIEF:CheckOpsZoneQueue()
     local ownercoalition=stratzone.opszone:GetOwner()
             
     -- Has a patrol mission?
-    local hasMissionPatrol=stratzone.missionPatrol and stratzone.missionPatrol:IsNotOver() or false
+    --local hasMissionPatrol=stratzone.missionPatrol and stratzone.missionPatrol:IsNotOver() or false
+    local hasMissionPATROL=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.PATROLZONE)
     
     -- Has a CAS mission?
-    local hasMissionCAS=stratzone.missionCAS and stratzone.missionCAS:IsNotOver() or false
+    --local hasMissionCAS=stratzone.missionCAS and stratzone.missionCAS:IsNotOver() or false
+    local hasMissionCAS, CASMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CAS)
+    local hasMissionARTY, ARTYMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARTY)
     
     if ownercoalition==self.coalition and stratzone.opszone:IsEmpty() and hasMissionCAS then
       -- Cancel CAS mission if zone is ours and no enemies are present.
       -- TODO: Might want to check if we still have CAS capable assets in stock?!
-      stratzone.missionCAS:Cancel()
+      --stratzone.missionCAS:Cancel()
+      for _,_auftrag in pairs(CASMissions) do
+        _auftrag:Cancel()
+      end
     end
     
+    if ownercoalition==self.coalition and hasMissionARTY then
+      -- Cancel CAS mission if zone is ours and no enemies are present.
+      -- TODO: Might want to check if we still have ARTY capable assets in stock?!
+      --stratzone.missionCAS:Cancel()
+      for _,_auftrag in pairs(ARTYMissions) do
+        _auftrag:Cancel()
+      end
+    end
      
         
   end
@@ -1907,8 +1947,8 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
 
         -- EWR
           
-        --table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,  100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
+        --table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,  100))
         
       elseif attribute==GROUP.Attribute.GROUND_AAA then
       
@@ -2036,7 +2076,7 @@ function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMa
   for _,_legion in pairs(self.commander.legions) do
     local legion=_legion --Ops.Legion#LEGION
     
-    -- Check that runway is operational.    
+    -- Check that runway is operational.d 
     local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
     
     if legion:IsRunning() and Runway then    
@@ -2062,7 +2102,7 @@ end
 
 --- Recruit assets for a given OPS zone.
 -- @param #CHIEF self
--- @param #CHIEF.StrategicZone StratZone The stratetic zone.
+-- @param #CHIEF.StrategicZone StratZone The strategic zone.
 -- @param #string MissionType Mission Type.
 -- @param #number NassetsMin Min number of required assets.
 -- @param #number NassetsMax Max number of required assets.
@@ -2151,7 +2191,8 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       
         -- Attach mission to ops zone.
         -- TODO: Need a better way!
-        StratZone.missionPatrol=mission
+        --StratZone.missionPatrol=mission
+        StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
         
         return true
       else
@@ -2162,8 +2203,34 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
     elseif MissionType==AUFTRAG.Type.CAS then
 
       -- Create Patrol zone mission.
-      local mission=AUFTRAG:NewPATROLZONE(StratZone.opszone.zone)
+      local caszone = StratZone.opszone.zone
+      local coord = caszone:GetCoordinate()
+      local height = UTILS.MetersToFeet(coord:GetLandHeight())+2000
+      local mission=AUFTRAG:NewPATROLZONE(caszone)
       mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})
+      mission:SetWeaponExpend(AI.Task.WeaponExpend.ALL)    
+                  
+      -- Add assets to mission.
+      for _,asset in pairs(assets) do
+        mission:AddAsset(asset)
+      end
+          
+      -- Assign mission to legions.
+      self:MissionAssign(mission, legions)
+    
+      -- Attach mission to ops zone.
+      -- TODO: Need a better way!
+      --StratZone.missionCAS=mission
+      StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
+
+      return true
+    elseif MissionType==AUFTRAG.Type.ARTY then
+      
+      -- Create ARTY zone mission.
+      local TargetZone = StratZone.opszone.zone
+      local Target = TargetZone:GetCoordinate()
+      local Radius = TargetZone:GetRadius()
+      local mission=AUFTRAG:NewARTY(Target,120,Radius)
                       
       -- Add assets to mission.
       for _,asset in pairs(assets) do
@@ -2175,8 +2242,9 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
     
       -- Attach mission to ops zone.
       -- TODO: Need a better way!
-      StratZone.missionCAS=mission
-
+      --StratZone.missionARTY=mission
+      StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
+    
       return true
     end
     

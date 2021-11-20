@@ -247,7 +247,7 @@ CSAR.AircraftType["Bell-47"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.12r3"
+CSAR.version="0.1.12r4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1122,9 +1122,9 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
               local dist = UTILS.MetersToNM(self.autosmokedistance)
               disttext = string.format("%.0fnm",dist)
             end
-            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Damn, that thing is loud!\nI'll pop a smoke when you are %s away.\nLand or hover by the smoke.", _heliName, _pilotName, disttext), self.messageTime,false,true)
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Finally, that is music in my ears!\nI'll pop a smoke when you are %s away.\nLand or hover by the smoke.", _heliName, _pilotName, disttext), self.messageTime,false,true)
           else
-            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Damn, that thing is loud!\nRequest a flare or smoke if you need.", _heliName, _pilotName), self.messageTime,false,true)
+            self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Finally, that is music in my ears!\nRequest a flare or smoke if you need.", _heliName, _pilotName), self.messageTime,false,true)
           end
           --mark as shown for THIS heli and THIS group
           self.heliVisibleMessage[_lookupKeyHeli] = true     
