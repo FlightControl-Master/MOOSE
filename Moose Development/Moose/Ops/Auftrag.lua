@@ -1442,7 +1442,7 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   mission.missionTask=ENUMS.MissionTask.ESCORT  
   mission.missionFraction=0.1
   mission.missionAltitude=1000
-  mission.optionROE=ENUMS.ROE.OpenFireWeaponFree       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
+  mission.optionROE=ENUMS.ROE.OpenFire       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
   mission.categories={AUFTRAG.Category.AIRCRAFT}
