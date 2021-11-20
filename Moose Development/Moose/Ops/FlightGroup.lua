@@ -2112,16 +2112,16 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
       -- Debug info.
       self:T(self.lid..string.format("Check FLIGHTGROUP [state=%s] done? (t=%.4f)", fsmstate, timer.getTime()))
 
-      -- First check if there is a paused mission that
-      if self.missionpaused then
-        self:T(self.lid..string.format("Found paused mission %s [%s]. Unpausing mission...", self.missionpaused.name, self.missionpaused.type))
-        self:UnpauseMission()
-        return
-      end
-
       -- Group is currently engaging.
       if self:IsEngaging() then
         self:T(self.lid.."Engaging! Group NOT done...")
+        return
+      end
+
+      -- First check if there is a paused mission.
+      if self.missionpaused then
+        self:T(self.lid..string.format("Found paused mission %s [%s]. Unpausing mission...", self.missionpaused.name, self.missionpaused.type))
+        self:UnpauseMission()
         return
       end
 

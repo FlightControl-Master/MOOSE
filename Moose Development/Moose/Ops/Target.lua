@@ -883,6 +883,86 @@ function TARGET:GetLife()
   return N
 end
 
+--- Get target threat level
+-- @param #TARGET self
+-- @param #TARGET.Object Target Target object.
+-- @return #number Threat level of target.
+function TARGET:GetTargetThreatLevelMax(Target)
+
+  if Target.Type==TARGET.ObjectType.GROUP then
+  
+    local group=Target.Object --Wrapper.Group#GROUP
+
+    if group and group:IsAlive() then
+    
+      local tl=group:GetThreatLevel()
+
+      return tl
+    else
+      return 0
+    end
+
+  elseif Target.Type==TARGET.ObjectType.UNIT then
+
+    local unit=Target.Object --Wrapper.Unit#UNIT
+
+    if unit and unit:IsAlive() then
+    
+      -- Note! According to the profiler, there is a big difference if we "return unit:GetLife()" or "local life=unit:GetLife(); return life"!
+      local life=unit:GetThreatLevel()
+      return life
+    else
+      return 0
+    end
+  
+  elseif Target.Type==TARGET.ObjectType.STATIC then
+  
+    return 0
+
+  elseif Target.Type==TARGET.ObjectType.SCENERY then
+  
+    return 0
+        
+  elseif Target.Type==TARGET.ObjectType.AIRBASE then
+
+    return 0  
+    
+  elseif Target.Type==TARGET.ObjectType.COORDINATE then
+  
+    return 0
+
+  elseif Target.Type==TARGET.ObjectType.ZONE then
+  
+    return 0
+    
+  else
+    self:E("ERROR: unknown target object type in GetTargetThreatLevel!")
+  end
+
+end
+
+
+--- Get threat level.
+-- @param #TARGET self
+-- @return #number Threat level.
+function TARGET:GetThreatLevelMax()
+  
+  local N=0
+
+  for _,_target in pairs(self.targets) do
+    local Target=_target --#TARGET.Object
+    
+    local n=self:GetTargetThreatLevelMax(Target)
+    
+    if n>N then
+      N=n
+    end
+
+  end
+  
+  return N
+end
+
 --- Get target 2D position vector.
 -- @param #TARGET self
 -- @param #TARGET.Object Target Target object.

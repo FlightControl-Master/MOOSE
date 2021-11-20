@@ -1443,7 +1443,7 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   mission.missionTask=ENUMS.MissionTask.ESCORT  
   mission.missionFraction=0.1
   mission.missionAltitude=1000
-  mission.optionROE=ENUMS.ROE.OpenFireWeaponFree       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
+  mission.optionROE=ENUMS.ROE.OpenFire       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
   mission.categories={AUFTRAG.Category.AIRCRAFT}
@@ -1501,6 +1501,8 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
   
   mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()  
   mission.transportDropoff=DropoffCoordinate
+
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.TROOPTRANSPORT)
   
   -- Debug.
   mission.transportPickup:MarkToAll("Pickup")
@@ -1644,6 +1646,8 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
   end
   
   mission:_TargetFromObject(Zone)
+  
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.PATROLZONE)
     
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
@@ -1673,6 +1677,8 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
   local mission=AUFTRAG:New(AUFTRAG.Type.RECON)
   
   mission:_TargetFromObject(ZoneSet)
+  
+ mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.RECON)
     
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.PassiveDefense
@@ -5005,7 +5011,11 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
     mtask=ENUMS.MissionTask.RUNWAYATTACK
   elseif MissionType==AUFTRAG.Type.CAP then
     mtask=ENUMS.MissionTask.CAP
+  elseif MissionType==AUFTRAG.Type.GCICAP then
+    mtask=ENUMS.MissionTask.CAP
   elseif MissionType==AUFTRAG.Type.CAS then
+    mtask=ENUMS.MissionTask.CAS
+  elseif MissionType==AUFTRAG.Type.PATROLZONE then
     mtask=ENUMS.MissionTask.CAS
   elseif MissionType==AUFTRAG.Type.ESCORT then
     mtask=ENUMS.MissionTask.ESCORT
