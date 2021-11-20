@@ -815,9 +815,9 @@ function CHIEF:AddRefuellingZone(RefuellingZone)
   return supplyzone
 end
 
---- Add a CAP zone.
+--- Add a CAP zone. Flights will engage detected targets inside this zone. 
 -- @param #CHIEF self
--- @param Core.Zone#ZONE Zone Zone.
+-- @param Core.Zone#ZONE Zone CAP Zone. Has to be a circular zone.
 -- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
@@ -831,6 +831,21 @@ function CHIEF:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
   return zone
 end
 
+--- Add a GCI CAP.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+function CHIEF:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
+
+  -- Hand over to commander.
+  local zone=self.commander:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
+
+  return zone
+end
 
 --- Add an AWACS zone.
 -- @param #CHIEF self
@@ -1460,11 +1475,17 @@ function CHIEF:CheckTargetQueue()
   for _,_target in pairs(self.targetqueue) do
     local target=_target --Ops.Target#TARGET
     
+    -- Is target still alive.
     local isAlive=target:IsAlive()
+    
+    -- Is this target important enough.
     local isImportant=(target.importance==nil or target.importance<=vip)
     
+    -- Get threat level of target.
+    local threatlevel=target:GetThreatLevelMax()
+    
     -- Is this a threat?
-    local isThreat=target.threatlevel0>=self.threatLevelMin and target.threatlevel0<=self.threatLevelMax
+    local isThreat=threatlevel>=self.threatLevelMin and threatlevel<=self.threatLevelMax
     
     -- Airbases, Zones and Coordinates have threat level 0. We consider them threads independent of min/max threat level set.
     if target.category==TARGET.Category.AIRBASE or target.category==TARGET.Category.ZONE or target.Category==TARGET.Category.COORDINATE then
@@ -1542,7 +1563,7 @@ function CHIEF:CheckTargetQueue()
       if valid then
       
         -- Debug info.
-        self:I(self.lid..string.format("Got valid target %s: category=%s, threatlevel=%d", target:GetName(), target.category, target.threatlevel0))
+        self:I(self.lid..string.format("Got valid target %s: category=%s, threatlevel=%d", target:GetName(), target.category, threatlevel))
               
         -- Get mission performances for the given target.  
         local MissionPerformances=self:_GetMissionPerformanceFromTarget(target)
@@ -1563,13 +1584,9 @@ function CHIEF:CheckTargetQueue()
           local NassetsMin=1
           local NassetsMax=1
           
-          local threat = target.threatlevel0 / target.N0 -- avg threatlevel
-          local NoUnits = target.N0 -- no of units in here
-          
-          --if target.threatlevel0>=8 then
-          if threat>=8 and NoUnits >=10 then
+          if threatlevel>=8 and target.N0 >=10 then
             NassetsMax=3
-          elseif threat>=5 then
+          elseif threatlevel>=5 then
             NassetsMax=2
           else
             NassetsMax=1          
@@ -1683,13 +1700,10 @@ function CHIEF:CheckOpsZoneQueue()
     if ownercoalition~=self.coalition and (stratzone.importance==nil or stratzone.importance<=vip) then
     
       -- Has a patrol mission?
-      --local hasMissionPatrol=stratzone.missionPatrol and stratzone.missionPatrol:IsNotOver() or false
-      local hasMissionPatrol=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.PATROLZONE)
+      local hasMissionPatrol=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ONGUARD)
       -- Has a CAS mission?
-      --local hasMissionCAS=stratzone.missionCAS and stratzone.missionCAS:IsNotOver() or false
       local hasMissionCAS=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CAS)
       -- Has a ARTY mission?
-      --local hasMissionARTY=stratzone.missionARTY and stratzone.missionARTY:IsNotOver() or false
       local hasMissionARTY=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARTY) 
 
       -- Debug info.
@@ -1764,11 +1778,9 @@ function CHIEF:CheckOpsZoneQueue()
     local ownercoalition=stratzone.opszone:GetOwner()
             
     -- Has a patrol mission?
-    --local hasMissionPatrol=stratzone.missionPatrol and stratzone.missionPatrol:IsNotOver() or false
     local hasMissionPATROL=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.PATROLZONE)
     
     -- Has a CAS mission?
-    --local hasMissionCAS=stratzone.missionCAS and stratzone.missionCAS:IsNotOver() or false
     local hasMissionCAS, CASMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CAS)
     local hasMissionARTY, ARTYMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARTY)
     
@@ -1782,17 +1794,13 @@ function CHIEF:CheckOpsZoneQueue()
     end
     
     if ownercoalition==self.coalition and hasMissionARTY then
-      -- Cancel CAS mission if zone is ours and no enemies are present.
-      -- TODO: Might want to check if we still have ARTY capable assets in stock?!
-      --stratzone.missionCAS:Cancel()
+      -- Cancel ARTY mission if zone is ours and no enemies are present.
       for _,_auftrag in pairs(ARTYMissions) do
         _auftrag:Cancel()
       end
     end
-     
-        
+    
   end
-  
   
 end
 
