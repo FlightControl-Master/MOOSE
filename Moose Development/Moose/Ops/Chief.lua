@@ -1770,6 +1770,7 @@ function CHIEF:CheckOpsZoneQueue()
     -- Has a CAS mission?
     --local hasMissionCAS=stratzone.missionCAS and stratzone.missionCAS:IsNotOver() or false
     local hasMissionCAS, CASMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CAS)
+    local hasMissionARTY, ARTYMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARTY)
     
     if ownercoalition==self.coalition and stratzone.opszone:IsEmpty() and hasMissionCAS then
       -- Cancel CAS mission if zone is ours and no enemies are present.
@@ -1780,6 +1781,14 @@ function CHIEF:CheckOpsZoneQueue()
       end
     end
     
+    if ownercoalition==self.coalition and hasMissionARTY then
+      -- Cancel CAS mission if zone is ours and no enemies are present.
+      -- TODO: Might want to check if we still have ARTY capable assets in stock?!
+      --stratzone.missionCAS:Cancel()
+      for _,_auftrag in pairs(ARTYMissions) do
+        _auftrag:Cancel()
+      end
+    end
      
         
   end
