@@ -65,7 +65,7 @@ ARMYGROUP = {
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="0.7.0"
+ARMYGROUP.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -679,7 +679,7 @@ function ARMYGROUP:Status()
       -- Info text.
       local text=string.format("%s [ROE-AS=%d-%d T/M=%d/%d]: Wp=%d/%d-->%d (final %s), Life=%.1f, Speed=%.1f (%d), Heading=%03d, Ammo=%d, Cargo=%.1f", 
       fsmstate, roe, alarm, nTaskTot, nMissions, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), tostring(self.passedfinalwp), self.life or 0, speed, speedEx, self.heading or 0, ammo.Total, cargo)
-      self:I(self.lid..text)
+      self:T(self.lid..text)
       
     end
     
@@ -720,7 +720,7 @@ function ARMYGROUP:Status()
     if #self.elements==0 then
       text=text.." none!"
     end
-    self:I(self.lid..text)
+    self:T(self.lid..text)
   end
 
   ---
@@ -732,7 +732,7 @@ function ARMYGROUP:Status()
 
     -- If we found a group, we engage it.
     if targetgroup then
-      self:I(self.lid..string.format("Engaging target group %s at distance %d meters", targetgroup:GetName(), targetdist))
+      self:T(self.lid..string.format("Engaging target group %s at distance %d meters", targetgroup:GetName(), targetdist))
       self:EngageTarget(targetgroup)
     end
 
@@ -925,13 +925,13 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
   
     -- Next waypoint.
     local wp=UTILS.DeepCopy(self.waypoints[i]) --Ops.OpsGroup#OPSGROUP.Waypoint
- 
+    self:T({wp})
     -- Speed.
     if Speed then
       wp.speed=UTILS.KnotsToMps(Speed)
     else
-      -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
-      if wp.speed<0.1 then --self.adinfinitum and 
+    -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
+    if wp.speed<0.1 then --self.adinfinitum and 
         wp.speed=UTILS.KmphToMps(self.speedCruise)
       end
     end
@@ -951,7 +951,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
   
       -- Add "On Road" waypoint in between.
       local wproad=wp.roadcoord:WaypointGround(UTILS.MpsToKmph(wp.speed), ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
-      
+
       -- Insert road waypoint.
       table.insert(waypoints, wproad)
     end    
@@ -972,21 +972,32 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
   -- Current set speed in m/s.
   self.speedWp=wp.speed  
   
-  local formation0=wp.action==ENUMS.Formation.Vehicle.OnRoad and ENUMS.Formation.Vehicle.OffRoad or wp.action
+  local formation0=wp.action==ENUMS.Formation.Vehicle.OnRoad and ENUMS.Formation.Vehicle.OnRoad or wp.action
 
   -- Current point.
   local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), formation0)
   table.insert(waypoints, 1, current)
 
   -- Insert a point on road.
-  if wp.action==ENUMS.Formation.Vehicle.OnRoad then
-    local current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
-    table.insert(waypoints, 2, current)
+  if wp.action==ENUMS.Formation.Vehicle.OnRoad and (wp.coordinate or wp.roadcoord) then
+    --local current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
+    local wptable,length,valid=self:GetCoordinate():GetPathOnRoad(wp.coordinate or wp.roadcoord,true,false,false,false) or {}
+    local count = 2
+    if valid then
+      for _,_coord in ipairs(wptable) do
+        local current = _coord:WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
+        table.insert(waypoints, count, current)
+        count=count+1
+      end
+    else
+      current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
+      table.insert(waypoints, count, current)
+    end
   end
- 
   
   -- Debug output.
   if self.verbose>=10 then
+  --if true then
     for i,_wp in pairs(waypoints) do
       local wp=_wp --Ops.OpsGroup#OPSGROUP.Waypoint
       local text=string.format("WP #%d UID=%d type=%s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.uid and wp.uid or -1, wp.type, wp.speed, wp.alt, wp.action)
@@ -1083,14 +1094,14 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
-  self:I(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
+  self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
 
   -- Get current task.
   local task=self:GetTaskCurrent()
   
   if task then
     if task.dcstask.id=="FireAtPoint" or task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
-      self:I(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
+      self:T(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
       self:TaskCancel(task)
     end
   end
@@ -1169,7 +1180,7 @@ end
 function ARMYGROUP:onafterRearm(From, Event, To, Coordinate, Formation)
 
   -- Debug info.
-  self:I(self.lid..string.format("Group send to rearm"))
+  self:T(self.lid..string.format("Group send to rearm"))
 
   -- ID of current waypoint.
   local uid=self:GetWaypointCurrent().uid
@@ -1188,7 +1199,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARMYGROUP:onafterRearmed(From, Event, To)
-  self:I(self.lid.."Group rearmed")
+  self:T(self.lid.."Group rearmed")
 
   -- Check group done.
   self:_CheckGroupDone(1)      
@@ -1216,7 +1227,7 @@ function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
     else
   
       -- Debug info.
-      self:I(self.lid..string.format("RTZ to Zone %s", zone:GetName()))  
+      self:T(self.lid..string.format("RTZ to Zone %s", zone:GetName()))  
       
       local Coordinate=zone:GetRandomCoordinate()
       
@@ -1552,11 +1563,11 @@ end
 -- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint.
 -- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
 -- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Formation Formation the group will use.
+-- @param #string Formation Formation the group will use.
 -- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation, Updateroute)
-
+  self:T(self.lid..string.format("AddWaypoint Formation = %s",tostring(Formation) or "none"))
   -- Create coordinate.
   local coordinate=self:_CoordinateFromObject(Coordinate)
 
@@ -1565,8 +1576,20 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
 
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
-
-  -- Create a Naval waypoint.
+  
+  -- Formation
+  
+  if not Formation then
+    if self.formationPerma then
+      Formation = self.formationPerma
+    elseif self.option.Formation then
+      Formation = self.option.Formation
+    else
+      Formation = "On Road"
+    end
+  end
+  
+  -- Create a Ground waypoint.
   local wp=coordinate:WaypointGround(UTILS.KnotsToKmph(Speed), Formation)
   
   -- Create waypoint data table.
