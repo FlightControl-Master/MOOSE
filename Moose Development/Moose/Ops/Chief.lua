@@ -180,7 +180,7 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.0.1"
+CHIEF.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1558,12 +1558,18 @@ function CHIEF:CheckTargetQueue()
           --      * target threatlevel
           --      * how many assets are still in stock
           --      * is it inside of our border
+          --      * add damping factor
+          
           local NassetsMin=1
           local NassetsMax=1
           
-          if target.threatlevel0>=8 then
+          local threat = target.threatlevel0 / target.N0 -- avg threatlevel
+          local NoUnits = target.N0 -- no of units in here
+          
+          --if target.threatlevel0>=8 then
+          if threat>=8 and NoUnits >=10 then
             NassetsMax=3
-          elseif target.threatlevel0>=5 then
+          elseif threat>=5 then
             NassetsMax=2
           else
             NassetsMax=1          
@@ -1932,8 +1938,8 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
 
         -- EWR
           
-        --table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,  100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
+        --table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,  100))
         
       elseif attribute==GROUP.Attribute.GROUND_AAA then
       
