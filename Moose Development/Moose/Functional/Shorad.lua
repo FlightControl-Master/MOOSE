@@ -164,7 +164,7 @@ do
     self.DefenseLowProb = 70 -- probability to detect a missile shot, low margin
     self.DefenseHighProb = 90  -- probability to detect a missile shot, high margin
     self.UseEmOnOff = UseEmOnOff or false -- Decide if we are using Emission on/off (default) or AlarmState red/green
-    self:I("*** SHORAD - Started Version 0.2.9")
+    self:I("*** SHORAD - Started Version 0.2.10")
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("SHORAD %s | ", self.name)
     self:_InitState()
@@ -506,6 +506,9 @@ do
       if (self:_CheckHarms(ShootingWeaponName) or self:_CheckMavs(ShootingWeaponName)) and IsDetected then
         -- get target data
         local targetdata = EventData.Weapon:getTarget() -- Identify target
+        -- Is there target data?
+        if not targetdata then return end
+        
         local targetcat = targetdata:getCategory() -- Identify category
         self:T(string.format("Target Category (3=STATIC, 1=UNIT)= %s",tostring(targetcat)))
         self:T({targetdata})
