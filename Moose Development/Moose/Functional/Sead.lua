@@ -133,16 +133,15 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   
   self.CallBack = nil
   self.UseCallBack = false
-  self:AddTransition("*",             "ManageEvasion",                "*")
-  self:AddTransition("*",             "CalculateHitZone",             "*")
     
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
   
   -- Start State.
   self:SetStartState("Running")
+  self:AddTransition("*",             "ManageEvasion",                "*")
+  self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  
-  self:I("*** SEAD - Started Version 0.4.1")
+  self:I("*** SEAD - Started Version 0.4.2")
   return self
 end
 
@@ -300,28 +299,32 @@ function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADG
       Ropt = Ropt * 0.98
     end
     
-    local predpos= pos0:Translate(Ropt,wph)
-    if predpos then
-
-      local targetzone = ZONE_RADIUS:New("Target Zone",predpos:GetVec2(),20000)
-      
-      if self.debug then
-        predpos:MarkToAll(string.format("height=%dm | heading=%d | velocity=%d | Ropt=%dm",mheight,wph,mveloc,Ropt),false)
-        targetzone:DrawZone(coalition.side.BLUE,{0,0,1},0.2,nil,nil,3,true)
-      end  
-      
-      local seadset = SET_GROUP:New():FilterPrefixes(self.SEADGroupPrefixes):FilterOnce()
-      local tgtcoord = targetzone:GetRandomPointVec2()
-      local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
-      local _targetgroup = nil
-      local _targetgroupname = "none"
-      local _targetskill = "Random"
-      if tgtgrp and tgtgrp:IsAlive() then
-        _targetgroup = tgtgrp
-        _targetgroupname = tgtgrp:GetName() -- group name
-        _targetskill = tgtgrp:GetUnit(1):GetSkill()
-        self:T("*** Found Target = ".. _targetgroupname)
-        self:ManageEvasion(_targetskill,_targetgroup,pos0,"AGM_88",SEADGroup, 20)
+    -- look at a couple of zones across the trajectory
+    for n=1,3 do
+      local dist = Ropt - ((n-1)*20000)
+      local predpos= pos0:Translate(dist,wph)
+      if predpos then
+  
+        local targetzone = ZONE_RADIUS:New("Target Zone",predpos:GetVec2(),20000)
+        
+        if self.debug then
+          predpos:MarkToAll(string.format("height=%dm | heading=%d | velocity=%ddeg | Ropt=%dm",mheight,wph,mveloc,Ropt),false)
+          targetzone:DrawZone(coalition.side.BLUE,{0,0,1},0.2,nil,nil,3,true)
+        end  
+        
+        local seadset = SET_GROUP:New():FilterPrefixes(self.SEADGroupPrefixes):FilterOnce()
+        local tgtcoord = targetzone:GetRandomPointVec2()
+        local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
+        local _targetgroup = nil
+        local _targetgroupname = "none"
+        local _targetskill = "Random"
+        if tgtgrp and tgtgrp:IsAlive() then
+          _targetgroup = tgtgrp
+          _targetgroupname = tgtgrp:GetName() -- group name
+          _targetskill = tgtgrp:GetUnit(1):GetSkill()
+          self:T("*** Found Target = ".. _targetgroupname)
+          self:ManageEvasion(_targetskill,_targetgroup,pos0,"AGM_88",SEADGroup, 20)
+        end
       end
     end     
   end
@@ -453,8 +456,9 @@ function SEAD:HandleEventShot( EventData )
     local _targetskill = "Random"
     local _targetgroupname = "none"
     local _target = EventData.Weapon:getTarget() -- Identify target
-    if not _target then
+    if not _target or self.debug  then -- AGM-88 w/o target data
       if string.find(SEADWeaponName,"AGM_88",1,true) then
+        self:I("**** Tracking AGM-88 with no target data.")
         local pos0 = SEADPlane:GetCoordinate()
         local fheight = SEADPlane:GetHeight()
         self:__CalculateHitZone(20,SEADWeapon,pos0,fheight,SEADGroup)
