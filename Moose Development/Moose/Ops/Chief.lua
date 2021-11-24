@@ -1984,7 +1984,7 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
       
         -- Tanks
         
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 175))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 75))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.CAS, 100))
         
       else
