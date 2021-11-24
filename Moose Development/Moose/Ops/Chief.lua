@@ -1971,13 +1971,22 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 70))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 75))
       
       elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
       
         -- Infantry
-      
+        
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 100))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
           
+      elseif attribute==GROUP.Attribute.GROUND_TANK then
+      
+        -- Tanks
+        
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 75))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.CAS, 100))
+        
       else
 
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
