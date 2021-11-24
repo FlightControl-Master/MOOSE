@@ -3678,7 +3678,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
         local Alpha=param.angle or math.random(45, 85)
         local distance=Altitude/math.tan(math.rad(Alpha))
         local tvec2=UTILS.Vec2Translate(vec2, distance, heading)
-        self:T(self.lid..string.format("Barrage: Shots=%s, Altitude=%d m, Angle=%d°, heading=%03d°, distance=%d m", tostring(param.shots), Altitude, Alpha, heading, distance))
+        self:T(self.lid..string.format("Barrage: Shots=%s, Altitude=%d m, Angle=%dÂ°, heading=%03dÂ°, distance=%d m", tostring(param.shots), Altitude, Alpha, heading, distance))
         DCSTask=CONTROLLABLE.TaskFireAtPoint(nil, tvec2, param.radius, param.shots, param.weaponType, Altitude)
       else
         DCSTask=Task.dcstask
@@ -4536,7 +4536,8 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
 
     -- Get ingress waypoint.
-    if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE or mission.type==AUFTRAG.Type.AMMOSUPPLY or mission.type.FUELSUPPLY then
+    if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE or mission.type==AUFTRAG.Type.AMMOSUPPLY 
+      or mission.type.FUELSUPPLY then
       local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
       waypointcoord=zone:GetRandomCoordinate(nil , nil, surfacetypes)
     elseif mission.type==AUFTRAG.Type.ONGUARD then
@@ -4544,7 +4545,17 @@ function OPSGROUP:RouteToMission(mission, delay)
     else
       waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius, surfacetypes)
     end
-
+    
+    local armorwaypointcoord = nil
+    if mission.type==AUFTRAG.Type.ARMORATTACK then
+      local target=mission.engageTarget:GetObject() -- Wrapper.Positionable#POSITIONABLE
+      local zone = ZONE_RADIUS:New("AttackZone",target:GetVec2(),1000)
+      -- final WP
+      waypointcoord=zone:GetRandomCoordinate(0, 100, surfacetypes) -- Core.Point#COORDINATE
+      -- Ingress - add formation to this one
+      armorwaypointcoord = zone:GetRandomCoordinate(1000, 500, surfacetypes) -- Core.Point#COORDINATE
+    end
+    
     -- Add enroute tasks.
     for _,task in pairs(mission.enrouteTasks) do
       self:AddTaskEnroute(task)
@@ -4628,7 +4639,13 @@ function OPSGROUP:RouteToMission(mission, delay)
     if self:IsFlightgroup() then
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
     elseif self:IsArmygroup() then
-      waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
+      if mission.type==AUFTRAG.Type.ARMORATTACK then
+        waypoint=ARMYGROUP.AddWaypoint(self, armorwaypointcoord, SpeedToMission, uid, mission.optionFormation, false)
+        local attackformation = mission.optionAttackFormation or "Vee"
+        waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, nil, attackformation, false)
+      else
+        waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
+      end
     elseif self:IsNavygroup() then
       waypoint=NAVYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.missionAltitude or self.altitudeCruise, false)
     end
