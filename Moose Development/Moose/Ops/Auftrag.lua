@@ -274,6 +274,9 @@
 -- 
 -- An arty mission can be created with the @{#AUFTRAG.NewARTY}() function.
 -- 
+-- ## ARMORATTACK
+-- 
+-- A mission to send a tank group can be created with the @{#AUFTRAG.NewARMORATTACK}() function.
 -- 
 -- # Options and Parameters
 -- 
@@ -378,6 +381,7 @@ _AUFTRAGSNR=0
 -- @field #string ALERT5 Alert 5.
 -- @field #string ONGUARD On guard.
 -- @field #string BARRAGE Barrage.
+-- @field #STRING ARMORATTACK Armor attack.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -408,6 +412,7 @@ AUFTRAG.Type={
   ALERT5="Alert5",
   ONGUARD="On Guard",
   BARRAGE="Barrage",
+  ARMORATTACK="Armor Attack",
 }
 
 --- Mission status of an assigned group.
@@ -427,6 +432,7 @@ AUFTRAG.SpecialTask={
   ALERT5="Alert5",
   ONGUARD="On Guard",
   BARRAGE="Barrage",
+  ARMORATTACK="AmorAttack",
 }
 
 --- Mission status.
@@ -1664,6 +1670,35 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
   return mission
 end
 
+--- **[GROUND]** Create a ARMORATTACK mission. Armoured ground group(s) will go to the zone and attack.
+-- @param #AUFTRAG self
+-- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
+-- @param #number Speed Speed in knots.
+-- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc. 
+-- @return #AUFTRAG self
+function AUFTRAG:NewARMORATTACK(Target, Speed, Formation)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.ARMORATTACK)
+  
+  mission:_TargetFromObject(Target)
+  
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.ARMORATTACK)
+    
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  mission.optionFormation="On Road"
+  mission.optionAttackFormation=Formation or "Wedge"
+  
+  mission.missionFraction=1.0  
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or 20
+  
+  mission.categories={AUFTRAG.Category.GROUND}
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
 --- **[AIR, GROUND, NAVAL]** Create a RECON mission.
 -- @param #AUFTRAG self
 -- @param Core.Set#SET_ZONE ZoneSet The recon zones.
@@ -1819,6 +1854,8 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
     mission=self:NewSEAD(Target, Altitude)
   elseif MissionType==AUFTRAG.Type.STRIKE then
     mission=self:NewSTRIKE(Target, Altitude)
+  elseif MissionType==AUFTRAG.Type.ARMORATTACK then
+    mission=self:NewARMORATTACK(Target,Speed)
   else
     return nil
   end
@@ -4848,6 +4885,26 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     DCStask.params=param
     
     table.insert(DCStasks, DCStask)
+    
+   elseif self.type==AUFTRAG.Type.ARMORATTACK then
+
+    -------------------------
+    -- ARMOR ATTACK Mission --
+    -------------------------
+  
+    local DCStask={}
+    
+    DCStask.id=AUFTRAG.SpecialTask.ARMORATTACK
+    
+    -- We create a "fake" DCS task and pass the parameters to the ARMYGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+    param.action="Wedge"
+    param.speed=self.missionSpeed
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)   
 
   elseif self.type==AUFTRAG.Type.AMMOSUPPLY then
 
@@ -5035,6 +5092,8 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
     mtask=ENUMS.MissionTask.REFUELING
   elseif MissionType==AUFTRAG.Type.TROOPTRANSPORT then
     mtask=ENUMS.MissionTask.TRANSPORT
+  elseif MissionType==AUFTRAG.Type.ARMORATTACK then
+    mtask=ENUMS.MissionTask.NOTHING
   end
 
   return mtask
