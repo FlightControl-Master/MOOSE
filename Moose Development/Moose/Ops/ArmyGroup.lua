@@ -1705,7 +1705,8 @@ function ARMYGROUP:SwitchFormation(Formation, Permanently, NoRouteUpdate)
   if self:IsAlive() or self:IsInUtero() then
   
     Formation=Formation or self.optionDefault.Formation
-
+    Permanently = Permanently or false
+    
     if Permanently then
       self.formationPerma=Formation
     else
