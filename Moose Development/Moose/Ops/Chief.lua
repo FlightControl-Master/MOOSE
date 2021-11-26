@@ -214,7 +214,18 @@ function CHIEF:New(Coalition, AgentSet, Alias)
 
   -- Set alias.
   Alias=Alias or "CHIEF"
-
+  
+  -- coalition
+  if type(Coalition) == "string" then
+    if string.lower(Coalition) == "blue" then
+      Coalition = coalition.side.BLUE
+    elseif string.lower(Coalition) == "red" then
+      Coalition = coalition.side.RED
+    else
+      Coalition = coalition.side.NEUTRAL
+    end
+  end
+  
   -- Inherit everything from INTEL class.
   local self=BASE:Inherit(self, INTEL:New(AgentSet, Coalition, Alias)) --#CHIEF
 
