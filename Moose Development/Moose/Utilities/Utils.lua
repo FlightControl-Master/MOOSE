@@ -1968,3 +1968,288 @@ function UTILS.CheckFileExists(Path,Filename)
     return true
   end
 end
+
+--- Function to save the state of a list of groups found by name
+-- @param #table List Table of strings with groupnames
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if saving is successful, else false.
+-- @usage
+-- We will go through the list and find the corresponding group and save the current group size (0 when dead).
+-- These groups are supposed to be put on the map in the ME and have *not* moved (e.g. stationary SAM sites). 
+-- Position is still saved for your usage.
+-- The idea is to reduce the number of units when reloading the data again to restart the saved mission.
+-- The data will be a simple comma separated list of groupname and size, with one header line.
+function UTILS.SaveStationaryListOfGroups(List,Path,Filename)
+  local filename = Filename or "StateListofGroups"
+  local data = "--Save Stationary List of Groups: "..Filename .."\n"
+  for _,_group in pairs (List) do
+    local group = GROUP:FindByName(_group) -- Wrapper.Group#GROUP
+    if group and group:IsAlive() then
+      local units = group:CountAliveUnits()
+      local position = group:GetVec3()
+      data = string.format("%s%s,%d,%d,%d,%d\n",data,_group,units,position.x,position.y,position.z)
+    else
+      data = string.format("%s%s,0,0,0,0\n",data,_group)
+    end
+  end
+  -- save the data
+  local outcome = UTILS.SaveToFile(Path,Filename,data)
+  return outcome
+end
+
+--- Function to save the state of a set of Wrapper.Group#GROUP objects.
+-- @param Core.Set#SET_BASE Set of objects to save
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if saving is successful, else false.
+-- @usage
+-- We will go through the set and find the corresponding group and save the current group size and current position.
+-- The idea is to respawn the groups **spawned during an earlier run of the mission** at the given location and reduce 
+-- the number of units in the group when reloading the data again to restart the saved mission. Note that *dead* groups 
+-- cannot be covered with this.
+-- **Note** Do NOT use dashes or hashes in group template names (-,#)!
+-- The data will be a simple comma separated list of groupname and size, with one header line.
+-- The current task/waypoint/etc cannot be restored. 
+function UTILS.SaveSetOfGroups(Set,Path,Filename)
+  local filename = Filename or "SetOfGroups"
+  local data = "--Save SET of groups: "..Filename .."\n"
+  local List = Set:GetSetObjects()
+  for _,_group in pairs (List) do
+    local group = _group -- Wrapper.Group#GROUP
+    if group and group:IsAlive() then
+      local name = group:GetName()
+      local template = string.gsub(name,"-(.+)$","")
+      if string.find(template,"#") then
+       template = string.gsub(name,"#(%d+)$","")
+      end 
+      local units = group:CountAliveUnits()
+      local position = group:GetVec3()
+      data = string.format("%s%s,%s,%d,%d,%d,%d\n",data,name,template,units,position.x,position.y,position.z)
+    end
+  end
+  -- save the data
+  local outcome = UTILS.SaveToFile(Path,Filename,data)
+  return outcome
+end
+
+--- Function to save the state of a set of Wrapper.Static#STATIC objects.
+-- @param Core.Set#SET_BASE Set of objects to save
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if saving is successful, else false.
+-- @usage
+-- We will go through the set and find the corresponding static and save the current name and postion when alive.
+-- The data will be a simple comma separated list of name and state etc, with one header line.
+function UTILS.SaveSetOfStatics(Set,Path,Filename)
+  local filename = Filename or "SetOfStatics"
+  local data = "--Save SET of statics: "..Filename .."\n"
+  local List = Set:GetSetObjects()
+  for _,_group in pairs (List) do
+    local group = _group -- Wrapper.Static#STATIC
+    if group and group:IsAlive() then
+      local name = group:GetName()
+      local position = group:GetVec3()
+      data = string.format("%s%s,%d,%d,%d\n",data,name,position.x,position.y,position.z)
+    end
+  end
+  -- save the data
+  local outcome = UTILS.SaveToFile(Path,Filename,data)
+  return outcome
+end
+
+--- Function to save the state of a list of statics found by name
+-- @param #table List Table of strings with statics names
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if saving is successful, else false.
+-- @usage
+-- We will go through the list and find the corresponding static and save the current alive state as 1 (0 when dead).
+-- Position is saved for your usage. **Note** this works on UNIT-name level.
+-- The idea is to reduce the number of units when reloading the data again to restart the saved mission.
+-- The data will be a simple comma separated list of name and state etc, with one header line.
+function UTILS.SaveStationaryListOfStatics(List,Path,Filename)
+  local filename = Filename or "StateListofStatics"
+  local data = "--Save Stationary List of Statics: "..Filename .."\n"
+  for _,_group in pairs (List) do
+    local group = STATIC:FindByName(_group,false) -- Wrapper.Static#STATIC
+    if group and group:IsAlive() then
+      local position = group:GetVec3()
+      data = string.format("%s%s,1,%d,%d,%d\n",data,_group,position.x,position.y,position.z)
+    else
+      data = string.format("%s%s,0,0,0,0\n",data,_group)
+    end
+  end
+  -- save the data
+  local outcome = UTILS.SaveToFile(Path,Filename,data)
+  return outcome
+end
+
+--- Load back a stationary list of groups from file.
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @param #boolean Reduce If false, existing loaded groups will not be reduced to fit the saved number.
+-- @return #table Table of data objects (tables) containing groupname, size and coordinate. Returns nil when file cannot be read.
+function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce)
+  local reduce = Reduce==false and false or true
+  local filename = Filename or "StateListofGroups"
+  local datatable = {}
+  if UTILS.CheckFileExists(Path,filename) then
+    local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
+    -- remove header
+    table.remove(loadeddata, 1)
+    for _id,_entry in pairs (loadeddata) do
+      local dataset = UTILS.Split(_entry,",")
+      -- groupname,units,position.x,position.y,position.z
+      local groupname = dataset[1]
+      local size = tonumber(dataset[2])
+      local posx = tonumber(dataset[3])
+      local posy = tonumber(dataset[4])
+      local posz = tonumber(dataset[5])
+      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
+      local data = { groupname=groupname, size=size, coordinate=coordinate, group=GROUP:FindByName(groupname) }
+      if reduce then
+        local actualgroup = GROUP:FindByName(groupname)
+        local actualsize = actualgroup:CountAliveUnits()
+        if actualsize > size then
+          local reduction = actualsize-size
+          BASE:I("Reducing groupsize by ".. reduction .. " units!")
+          -- reduce existing group
+          local units = actualgroup:GetUnits()
+          local units2 = UTILS.ShuffleTable(units) -- randomize table
+          for i=1,reduction do
+            units2[i]:Destroy(false)
+          end
+        end
+      end
+      table.insert(datatable,data)
+    end 
+  else
+    return nil
+  end
+  return datatable
+end
+
+--- Load back a SET of groups from file.
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @param #boolean Spawn If set to false, do not re-spawn the groups loaded in location and reduce to size.
+-- @return Core.Set#SET_GROUP Set of GROUP objects. 
+-- Returns nil when file cannot be read. Returns a table of data entries is Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate }`
+function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
+  local spawn = SPAWN==false and false or true
+  local filename = Filename or "SetOfGroups"
+  local setdata = SET_GROUP:New()
+  local datatable = {}
+  if UTILS.CheckFileExists(Path,filename) then
+    local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
+    -- remove header
+    table.remove(loadeddata, 1)
+    for _id,_entry in pairs (loadeddata) do
+      local dataset = UTILS.Split(_entry,",")
+      -- groupname,template,units,position.x,position.y,position.z
+      local groupname = dataset[1]
+      local template = dataset[2]
+      local size = tonumber(dataset[3])
+      local posx = tonumber(dataset[4])
+      local posy = tonumber(dataset[5])
+      local posz = tonumber(dataset[6])
+      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
+      local group=nil
+      local data = { groupname=groupname, size=size, coordinate=coordinate }
+      table.insert(datatable,data)
+      if spawn then
+        local group = SPAWN:New(groupname)
+          :InitDelayOff()
+          :OnSpawnGroup(
+            function(spwndgrp)
+              setdata:AddObject(spwndgrp)
+              local actualsize = spwndgrp:CountAliveUnits()
+              if actualsize > size then
+                local reduction = actualsize-size
+                -- reduce existing group
+                local units = spwndgrp:GetUnits()
+                local units2 = UTILS.ShuffleTable(units) -- randomize table
+                for i=1,reduction do
+                  units2[i]:Destroy(false)
+                end
+              end
+            end
+          )
+          :SpawnFromCoordinate(coordinate)
+      end
+    end 
+  else
+    return nil
+  end
+  if spawn then
+    return setdata
+  else
+   return datatable
+  end
+end
+
+--- Load back a SET of statics from file.
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return Core.Set#SET_STATIC Set SET_STATIC containing the static objects.
+function UTILS.LoadSetOfStatics(Path,Filename)
+  local filename = Filename or "SetOfStatics"
+  local datatable = SET_STATIC:New()
+  if UTILS.CheckFileExists(Path,filename) then
+    local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
+    -- remove header
+    table.remove(loadeddata, 1)
+    for _id,_entry in pairs (loadeddata) do
+      local dataset = UTILS.Split(_entry,",")
+      -- staticname,position.x,position.y,position.z
+      local staticname = dataset[1]
+      local posx = tonumber(dataset[2])
+      local posy = tonumber(dataset[3])
+      local posz = tonumber(dataset[4])
+      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
+      datatable:AddObject(STATIC:FindByName(staticname,false))
+    end 
+  else
+    return nil
+  end
+  return datatable
+end
+
+--- Load back a stationary list of statics from file.
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @param #boolean Reduce If false, do not destroy the units with size=0.
+-- @return #table Table of data objects (tables) containing staticname, size (0=dead else 1), coordinate and the static object. 
+-- Returns nil when file cannot be read.
+function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce)
+  local reduce = Reduce==false and false or true
+  local filename = Filename or "StateListofStatics"
+  local datatable = {}
+  if UTILS.CheckFileExists(Path,filename) then
+    local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
+    -- remove header
+    table.remove(loadeddata, 1)
+    for _id,_entry in pairs (loadeddata) do
+      local dataset = UTILS.Split(_entry,",")
+      -- staticname,units(1/0),position.x,position.y,position.z)
+      local staticname = dataset[1]
+      local size = tonumber(dataset[2])
+      local posx = tonumber(dataset[3])
+      local posy = tonumber(dataset[4])
+      local posz = tonumber(dataset[5])
+      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
+      local data = { staticname=staticname, size=size, coordinate=coordinate, static=STATIC:FindByName(staticname,false) }
+      table.insert(datatable,data)
+      if size==0 and reduce then
+        local static = STATIC:FindByName(staticname,false)
+        if static then
+          static:Destroy(false)
+        end
+      end
+    end 
+  else
+    return nil
+  end
+  return datatable
+end
