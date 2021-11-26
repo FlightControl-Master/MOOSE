@@ -35,7 +35,7 @@ IDENTIFIABLE = {
 
 local _CategoryName = { 
   [Unit.Category.AIRPLANE]      = "Airplane",
-  [Unit.Category.HELICOPTER]    = "Helicoper",
+  [Unit.Category.HELICOPTER]    = "Helicopter",
   [Unit.Category.GROUND_UNIT]   = "Ground Identifiable",
   [Unit.Category.SHIP]          = "Ship",
   [Unit.Category.STRUCTURE]     = "Structure",
