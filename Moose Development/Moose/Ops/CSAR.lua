@@ -1607,7 +1607,7 @@ function CSAR:_SignalFlare(_unitName)
   local _closest = self:_GetClosestDownedPilot(_heli)
   local smokedist = 8000
   if self.approachdist_far > smokedist then smokedist = self.approachdist_far end
-  if _closest ~= nil and _closest.pilot ~= nil and _closest.distance < smokedist then
+  if _closest ~= nil and _closest.pilot ~= nil and _closest.distance > 0 and _closest.distance < smokedist then
   
       local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
       local _distance = 0
@@ -1662,7 +1662,7 @@ function CSAR:_Reqsmoke( _unitName )
   local smokedist = 8000
   if smokedist < self.approachdist_far then smokedist = self.approachdist_far end
   local _closest = self:_GetClosestDownedPilot(_heli)
-  if _closest ~= nil and _closest.pilot ~= nil and _closest.distance < smokedist then
+  if _closest ~= nil and _closest.pilot ~= nil and _closest.distance > 0 and _closest.distance < smokedist then
       local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
       local _distance = 0
       if _SETTINGS:IsImperial() then
@@ -1670,7 +1670,7 @@ function CSAR:_Reqsmoke( _unitName )
       else
         _distance = string.format("%.1fkm",_closest.distance)
       end 
-      local _msg = string.format("%s - Popping signal smoke at your %s o\'clock. Distance %s", _unitName, _clockDir, _distance)
+      local _msg = string.format("%s - Popping smoke at your %s o\'clock. Distance %s", _unitName, _clockDir, _distance)
       self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true)
       local _coord = _closest.pilot:GetCoordinate()
       local color = self.smokecolor

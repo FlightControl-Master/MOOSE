@@ -2089,7 +2089,7 @@ end
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file.
 -- @param #boolean Reduce If false, existing loaded groups will not be reduced to fit the saved number.
--- @return #table Table of data objects (tables) containing groupname, size and coordinate. Returns nil when file cannot be read.
+-- @return #table Table of data objects (tables) containing groupname, coordinate and group object. Returns nil when file cannot be read.
 function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce)
   local reduce = Reduce==false and false or true
   local filename = Filename or "StateListofGroups"
@@ -2135,7 +2135,7 @@ end
 -- @param #string Filename The name of the file.
 -- @param #boolean Spawn If set to false, do not re-spawn the groups loaded in location and reduce to size.
 -- @return Core.Set#SET_GROUP Set of GROUP objects. 
--- Returns nil when file cannot be read. Returns a table of data entries is Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate }`
+-- Returns nil when file cannot be read. Returns a table of data entries if Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate }`
 function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
   local spawn = SPAWN==false and false or true
   local filename = Filename or "SetOfGroups"
