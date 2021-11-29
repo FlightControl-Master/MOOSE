@@ -473,14 +473,16 @@ do -- Event Handling
     return self
   end
   
-  -- Event handling function prototypes
+  -- Event handling function prototypes - Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   
   --- Occurs whenever any unit in a mission fires a weapon. But not any machine gun or autocannon based weapon, those are handled by EVENT.ShootingStart.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- @function [parent=#BASE] OnEventShot
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs whenever an object is hit by a weapon.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit object the fired the weapon
   -- weapon: Weapon object that hit the target
   -- target: The Object that was hit. 
@@ -489,6 +491,7 @@ do -- Event Handling
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when an aircraft takes off from an airbase, farp, or ship.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that tookoff
   -- place: Object from where the AI took-off from. Can be an Airbase Object, FARP, or Ships 
   -- @function [parent=#BASE] OnEventTakeoff
@@ -496,6 +499,7 @@ do -- Event Handling
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when an aircraft lands at an airbase, farp or ship
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that has landed
   -- place: Object that the unit landed on. Can be an Airbase Object, FARP, or Ships 
   -- @function [parent=#BASE] OnEventLand
@@ -503,101 +507,118 @@ do -- Event Handling
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when any aircraft crashes into the ground and is completely destroyed.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that has crashed 
   -- @function [parent=#BASE] OnEventCrash
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when a pilot ejects from an aircraft
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that has ejected 
   -- @function [parent=#BASE] OnEventEjection
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when an aircraft connects with a tanker and begins taking on fuel.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that is receiving fuel. 
   -- @function [parent=#BASE] OnEventRefueling
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when an object is dead.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that is dead. 
   -- @function [parent=#BASE] OnEventDead
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
-  --- Occurs when an object is completely destroyed.
-  -- initiator : The unit that is was destroyed. 
+  --- Occurs when an Event for an object is triggered.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
+  -- initiator : The unit that triggered the event. 
   -- @function [parent=#BASE] OnEvent
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when the pilot of an aircraft is killed. Can occur either if the player is alive and crashes or if a weapon kills the pilot without completely destroying the plane.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that the pilot has died in. 
   -- @function [parent=#BASE] OnEventPilotDead
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when a ground unit captures either an airbase or a farp.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that captured the base
   -- place: The airbase that was captured, can be a FARP or Airbase. When calling place:getCoalition() the faction will already be the new owning faction. 
   -- @function [parent=#BASE] OnEventBaseCaptured
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
-  --- Occurs when a mission starts 
+  --- Occurs when a mission starts
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes. 
   -- @function [parent=#BASE] OnEventMissionStart
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when a mission ends
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- @function [parent=#BASE] OnEventMissionEnd
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when an aircraft is finished taking fuel.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that was receiving fuel. 
   -- @function [parent=#BASE] OnEventRefuelingStop
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when any object is spawned into the mission.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that was spawned 
   -- @function [parent=#BASE] OnEventBirth
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when any system fails on a human controlled aircraft.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that had the failure 
   -- @function [parent=#BASE] OnEventHumanFailure
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when any aircraft starts its engines.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that is starting its engines. 
   -- @function [parent=#BASE] OnEventEngineStartup
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when any aircraft shuts down its engines.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that is stopping its engines. 
   -- @function [parent=#BASE] OnEventEngineShutdown
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
-  --- Occurs when any player assumes direct control of a unit.
+  --- Occurs when any player assumes direct control of a unit. Note - not Mulitplayer safe. Use PlayerEnterAircraft.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that is being taken control of. 
   -- @function [parent=#BASE] OnEventPlayerEnterUnit
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when any player relieves control of a unit to the AI.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that the player left. 
   -- @function [parent=#BASE] OnEventPlayerLeaveUnit
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when any unit begins firing a weapon that has a high rate of fire. Most common with aircraft cannons (GAU-8), autocannons, and machine guns.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that is doing the shooting.
   -- target: The unit that is being targeted. 
   -- @function [parent=#BASE] OnEventShootingStart
@@ -605,24 +626,28 @@ do -- Event Handling
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when any unit stops firing its weapon. Event will always correspond with a shooting start event.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- initiator : The unit that was doing the shooting. 
   -- @function [parent=#BASE] OnEventShootingEnd
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when a new mark was added.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- MarkID: ID of the mark. 
   -- @function [parent=#BASE] OnEventMarkAdded
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when a mark was removed.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- MarkID: ID of the mark. 
   -- @function [parent=#BASE] OnEventMarkRemoved
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when a mark text was changed.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- MarkID: ID of the mark. 
   -- @function [parent=#BASE] OnEventMarkChange
   -- @param #BASE self
@@ -639,11 +664,13 @@ do -- Event Handling
 
   --- Occurs when any modification to the "Score" as seen on the debrief menu would occur. 
   -- There is no information on what values the score was changed to. Event is likely similar to player_comment in this regard.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- @function [parent=#BASE] OnEventScore
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs on the death of a unit. Contains more and different information. Similar to unit_lost it will occur for aircraft before the aircraft crash event occurs.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- 
   -- * initiator: The unit that killed the target
   -- * target: Target Object
@@ -655,11 +682,13 @@ do -- Event Handling
 
   --- Occurs when any modification to the "Score" as seen on the debrief menu would occur. 
   -- There is no information on what values the score was changed to. Event is likely similar to player_comment in this regard.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- @function [parent=#BASE] OnEventScore
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when the game thinks an object is destroyed.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- 
   -- * initiator: The unit that is was destroyed.
   -- 
@@ -668,6 +697,7 @@ do -- Event Handling
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs shortly after the landing animation of an ejected pilot touching the ground and standing up. Event does not occur if the pilot lands in the water and sub combs to Davey Jones Locker.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- 
   -- * initiator: Static object representing the ejected pilot. Place : Aircraft that the pilot ejected from.
   -- * place: may not return as a valid object if the aircraft has crashed into the ground and no longer exists.
@@ -678,37 +708,44 @@ do -- Event Handling
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Paratrooper landing.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- @function [parent=#BASE] OnEventParatrooperLanding
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Discard chair after ejection.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- @function [parent=#BASE] OnEventDiscardChairAfterEjection
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Weapon add. Fires when entering a mission per pylon with the name of the weapon (double pylons not counted, infinite wep reload not counted.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- @function [parent=#BASE] OnEventParatrooperLanding
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Trigger zone.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- @function [parent=#BASE] OnEventTriggerZone
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Landing quality mark. 
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- @function [parent=#BASE] OnEventLandingQualityMark
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- BDA.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- @function [parent=#BASE] OnEventBDA
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
 
   --- Occurs when a player enters a slot and takes control of an aircraft.
+  -- Have a look at the class @{Core.EVENT#EVENT} as these are just the prototypes.
   -- **NOTE**: This is a workaround of a long standing DCS bug with the PLAYER_ENTER_UNIT event. 
   -- initiator : The unit that is being taken control of. 
   -- @function [parent=#BASE] OnEventPlayerEnterAircraft
@@ -834,8 +871,7 @@ end
   
     world.onEvent(Event)
   end  
-
--- TODO: Complete DCS#Event structure.                       
+                  
 --- The main event handling function... This function captures all events generated for the class.
 -- @param #BASE self
 -- @param DCS#Event event

@@ -2321,41 +2321,44 @@ function GROUP:GetAttribute()
     local unarmedship=self:HasAttribute("Unarmed ships")
 
 
-    -- Define attribute. Order is important.
-    if transportplane then
-      attribute=GROUP.Attribute.AIR_TRANSPORTPLANE
-    elseif awacs then
-      attribute=GROUP.Attribute.AIR_AWACS
-    elseif fighter then
+    -- Define attribute. Order of attack is important.
+    if fighter then
       attribute=GROUP.Attribute.AIR_FIGHTER
     elseif bomber then
       attribute=GROUP.Attribute.AIR_BOMBER
+    elseif awacs then
+      attribute=GROUP.Attribute.AIR_AWACS  
+    elseif transportplane then
+      attribute=GROUP.Attribute.AIR_TRANSPORTPLANE
     elseif tanker then
       attribute=GROUP.Attribute.AIR_TANKER
+      -- helos
+    elseif attackhelicopter then
+      attribute=GROUP.Attribute.AIR_ATTACKHELO  
     elseif transporthelo then
       attribute=GROUP.Attribute.AIR_TRANSPORTHELO
-    elseif attackhelicopter then
-      attribute=GROUP.Attribute.AIR_ATTACKHELO
     elseif uav then
       attribute=GROUP.Attribute.AIR_UAV
-    elseif apc then
-      attribute=GROUP.Attribute.GROUND_APC
-    elseif infantry then
-      attribute=GROUP.Attribute.GROUND_INFANTRY
-    elseif artillery then
-      attribute=GROUP.Attribute.GROUND_ARTILLERY
-    elseif tank then
-      attribute=GROUP.Attribute.GROUND_TANK
-    elseif aaa then
-      attribute=GROUP.Attribute.GROUND_AAA
+      -- ground - order of attack
     elseif ewr then
       attribute=GROUP.Attribute.GROUND_EWR
     elseif sam then
       attribute=GROUP.Attribute.GROUND_SAM
+    elseif aaa then
+      attribute=GROUP.Attribute.GROUND_AAA
+    elseif artillery then
+      attribute=GROUP.Attribute.GROUND_ARTILLERY         
+    elseif tank then
+      attribute=GROUP.Attribute.GROUND_TANK 
+    elseif apc then
+      attribute=GROUP.Attribute.GROUND_APC
+    elseif infantry then
+      attribute=GROUP.Attribute.GROUND_INFANTRY
     elseif truck then
       attribute=GROUP.Attribute.GROUND_TRUCK
     elseif train then
       attribute=GROUP.Attribute.GROUND_TRAIN
+      -- ships
     elseif aircraftcarrier then
       attribute=GROUP.Attribute.NAVAL_AIRCRAFTCARRIER
     elseif warship then
