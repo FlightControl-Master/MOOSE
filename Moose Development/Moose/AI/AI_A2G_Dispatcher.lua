@@ -1,4 +1,4 @@
---- **AI** - Create an automated A2G defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAP operations.
+--- **AI** - Create an automated A2G defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAS operations.
 -- 
 -- ===
 -- 
@@ -30,7 +30,7 @@
 -- 
 -- ## YouTube Channel:
 -- 
--- [DCS WORLD - MOOSE - A2G GCICAP - Build an automatic A2G Defense System](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0S4KMNUUJpaUs6zZHjLKNx)
+-- [DCS WORLD - MOOSE - A2G DISPATCHER - Build an automatic A2G Defense System - Introduction](https://www.youtube.com/watch?v=zwSxWRAGVH8)
 -- 
 -- ===
 -- 
@@ -157,7 +157,7 @@
 -- The A2G defense system will select from the given templates a random template to spawn a new plane (group).
 -- 
 -- 
--- ## 10. How to squadrons engage in a defensive action?
+-- ## 10. How do squadrons engage in a defensive action?
 -- 
 -- There are two ways how squadrons engage and execute your A2G defenses. 
 -- Squadrons can start the defense directly from the airbase, farp or carrier. When a squadron launches a defensive group, that group
@@ -183,23 +183,23 @@
 -- The COORDINATE_UNIT will help you to specify a defense coodinate that is attached to a moving unit.
 -- 
 -- 
--- ## 13. How much defense coordinates do I need to create?
+-- ## 13. How many defense coordinates do I need to create?
 -- 
 -- It depends, but the idea is to define only the necessary defense points that drive your mission.
--- If you define too much defense points, the performance of your mission may decrease. Per defense point defined,
--- all the possible enemies are evaluated. Note that each defense coordinate has a reach depending on the size of the defense radius.
--- The default defense radius is about 60km, and depending on the defense reactivity, defenses will be launched when the enemy is at
--- close or greater distance from the defense coordinate.
+-- If you define too many defense coordinates, the performance of your mission may decrease. For each defined defense coordinate,
+-- all the possible enemies are evaluated. Note that each defense coordinate has a reach depending on the size of the associated defense radius.
+-- The default defense radius is about 60km. Depending on the defense reactivity, defenses will be launched when the enemy is at a
+-- closer distance from the defense coordinate than the defense radius.
 -- 
 -- 
 -- ## 14. For each Squadron doing patrols, what are the time intervals and patrol amounts to be performed?
 -- 
 -- For each patrol:
 -- 
---    * **How many** patrol you want to have airborne at the same time?
+--    * **How many** patrols you want to have airborne at the same time?
 --    * **How frequent** you want the defense mechanism to check whether to start a new patrol?
 -- 
--- other considerations:   
+-- Other considerations:   
 -- 
 --    * **How far** is the patrol area from the engagement "hot zone". You want to ensure that the enemy is reached on time!
 --    * **How safe** is the patrol area taking into account air superiority. Is it well defended, are there nearby A2A bases?
@@ -214,9 +214,8 @@
 --    * From a parking spot with running engines
 --    * From a parking spot with cold engines
 -- 
--- **The default takeoff method is staight in the air.**
--- This takeoff method is the most useful if you want to avoid airplane clutter at airbases!
--- But it is the least realistic one!
+-- **The default takeoff method is straight in the air.**
+-- This takeoff method is the most useful if you want to avoid airplane clutter at airbases, but it is the least realistic one.
 -- 
 -- 
 -- ## 16. For each Squadron, which landing method will I use?
@@ -227,9 +226,8 @@
 --    * Despawn after landing on the runway
 --    * Despawn after engine shutdown after landing
 --    
--- **The default landing method is despawn when near the airbase when returning.**
--- This landing method is the most useful if you want to avoid airplane clutter at airbases!
--- But it is the least realistic one!
+-- **The default landing method is to despawn when near the airbase when returning.**
+-- This landing method is the most useful if you want to avoid airplane clutter at airbases, but it is the least realistic one.
 -- 
 -- 
 -- ## 19. For each Squadron, which **defense overhead** will I use?
@@ -270,7 +268,7 @@ do -- AI_A2G_DISPATCHER
   -- @type AI_A2G_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
-  --- Create an automated A2G defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAP operations.
+  --- Create an automated A2G defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAS operations.
   -- 
   -- ===
   -- 
@@ -345,7 +343,7 @@ do -- AI_A2G_DISPATCHER
   --        -- It uses the DetectionSetGroup, which defines the set of reconnaissance groups to detect for enemy ground targets.
   --        Detection = DETECTION_AREAS:New( DetectionSetGroup, 1000 )
   -- 
-  --        -- Setup the A2A dispatcher, and initialize it.
+  --        -- Setup the A2G dispatcher, and initialize it.
   --        A2GDispatcher = AI_A2G_DISPATCHER:New( Detection )
   --        
   --        
@@ -589,14 +587,14 @@ do -- AI_A2G_DISPATCHER
   --      -- Setup the Takeoff methods
   --      
   --      -- The default takeoff
-  --      A2ADispatcher:SetDefaultTakeOffFromRunway()
+  --      A2GDispatcher:SetDefaultTakeOffFromRunway()
   --      
   --      -- The individual takeoff per squadron
-  --      A2ADispatcher:SetSquadronTakeoff( "Mineralnye", AI_A2G_DISPATCHER.Takeoff.Air )
-  --      A2ADispatcher:SetSquadronTakeoffInAir( "Sochi" )
-  --      A2ADispatcher:SetSquadronTakeoffFromRunway( "Mozdok" )
-  --      A2ADispatcher:SetSquadronTakeoffFromParkingCold( "Maykop" )
-  --      A2ADispatcher:SetSquadronTakeoffFromParkingHot( "Novo" )  
+  --      A2GDispatcher:SetSquadronTakeoff( "Mineralnye", AI_A2G_DISPATCHER.Takeoff.Air )
+  --      A2GDispatcher:SetSquadronTakeoffInAir( "Sochi" )
+  --      A2GDispatcher:SetSquadronTakeoffFromRunway( "Mozdok" )
+  --      A2GDispatcher:SetSquadronTakeoffFromParkingCold( "Maykop" )
+  --      A2GDispatcher:SetSquadronTakeoffFromParkingHot( "Novo" )  
   -- 
   -- 
   -- ### 3.5.1. Set Squadron takeoff altitude when spawning new aircraft in the air.
@@ -635,7 +633,7 @@ do -- AI_A2G_DISPATCHER
   --      -- Aircraft will cold start from the FARP, and thus, a maximum of 4 aircraft can be launched at the same time.
   --      -- Additionally, depending on the group composition of the aircraft, defending units will be ordered for takeoff together.
   --      -- It takes about 3 to 4 minutes to takeoff helicopters from FARPs in cold start.
-  --      A2ADispatcher:SetSquadronTakeOffInterval( "Mineralnye", 60 * 4 )
+  --      A2GDispatcher:SetSquadronTakeOffInterval( "Mineralnye", 60 * 4 )
   -- 
   -- 
   -- ### 3.6. Set squadron landing methods
@@ -649,7 +647,7 @@ do -- AI_A2G_DISPATCHER
   -- 
   -- You can use these methods to minimize the airbase coodination overhead and to increase the airbase efficiency.
   -- When there are lots of aircraft returning for landing, at the same airbase, the takeoff process will be halted, which can cause a complete failure of the
-  -- A2A defense system, as no new CAP or GCI planes can takeoff.
+  -- A2G defense system, as no new SEAD, BAI or CAS planes can takeoff.
   -- Note that the method @{#AI_A2G_DISPATCHER.SetSquadronLandingNearAirbase}() will only work for returning aircraft, not for damaged or out of fuel aircraft.
   -- Damaged or out-of-fuel aircraft are returning to the nearest friendly airbase and will land, and are out of control from ground control.
   -- 
@@ -659,14 +657,14 @@ do -- AI_A2G_DISPATCHER
   --      -- Setup the Landing methods
   -- 
   --      -- The default landing method
-  --      A2ADispatcher:SetDefaultLandingAtRunway()
+  --      A2GDispatcher:SetDefaultLandingAtRunway()
   -- 
   --      -- The individual landing per squadron
-  --      A2ADispatcher:SetSquadronLandingAtRunway( "Mineralnye" )
-  --      A2ADispatcher:SetSquadronLandingNearAirbase( "Sochi" )
-  --      A2ADispatcher:SetSquadronLandingAtEngineShutdown( "Mozdok" )
-  --      A2ADispatcher:SetSquadronLandingNearAirbase( "Maykop" )
-  --      A2ADispatcher:SetSquadronLanding( "Novo", AI_A2G_DISPATCHER.Landing.AtRunway )
+  --      A2GDispatcher:SetSquadronLandingAtRunway( "Mineralnye" )
+  --      A2GDispatcher:SetSquadronLandingNearAirbase( "Sochi" )
+  --      A2GDispatcher:SetSquadronLandingAtEngineShutdown( "Mozdok" )
+  --      A2GDispatcher:SetSquadronLandingNearAirbase( "Maykop" )
+  --      A2GDispatcher:SetSquadronLanding( "Novo", AI_A2G_DISPATCHER.Landing.AtRunway )
   -- 
   -- 
   -- ### 3.7. Set squadron **grouping**.
@@ -822,10 +820,10 @@ do -- AI_A2G_DISPATCHER
   -- Note that you can still change the patrol limit and patrol time intervals for each patrol individually using 
   -- the @{#AI_A2G_DISPATCHER.SetSquadronPatrolTimeInterval}() method.
   -- 
-  -- ## 10.7.3. Default tanker for refuelling when executing CAP.
+  -- ## 10.7.3. Default tanker for refuelling when executing SEAD, BAI and CAS.
   -- 
-  -- Instead of sending CAP to RTB when out of fuel, you can let CAP refuel in mid air using a tanker.
-  -- This greatly increases the efficiency of your CAP operations.
+  -- Instead of sending SEAD, BAI and CAS to RTB when out of fuel, you can let SEAD, BAI and CAS refuel in mid air using a tanker.
+  -- This greatly increases the efficiency of your SEAD, BAI and CAS operations.
   -- 
   -- In the mission editor, setup a group with task Refuelling. A tanker unit of the correct coalition will be automatically selected.
   -- Then, use the method @{#AI_A2G_DISPATCHER.SetDefaultTanker}() to set the tanker for the dispatcher.
@@ -837,12 +835,6 @@ do -- AI_A2G_DISPATCHER
   -- 
   -- ![Banner Image](..\Presentations\AI_A2G_DISPATCHER\AI_A2G_DISPATCHER-ME_11.JPG)
   -- 
-  --      -- Define the CAP
-  --      A2ADispatcher:SetSquadron( "Sochi", AIRBASE.Caucasus.Sochi_Adler, { "SQ CCCP SU-34" }, 20 )
-  --      A2ADispatcher:SetSquadronCap( "Sochi", ZONE:New( "PatrolZone" ), 4000, 8000, 600, 800, 1000, 1300 )
-  --      A2ADispatcher:SetSquadronCapInterval("Sochi", 2, 30, 600, 1 ) 
-  --      A2ADispatcher:SetSquadronGci( "Sochi", 900, 1200 )
-  --      
   --      -- Set the default tanker for refuelling to "Tanker", when the default fuel treshold has reached 90% fuel left.
   --      A2ADispatcher:SetDefaultFuelThreshold( 0.9 )
   --      A2ADispatcher:SetDefaultTanker( "Tanker" )
@@ -878,8 +870,8 @@ do -- AI_A2G_DISPATCHER
   -- ## 11. Airbase capture:
   -- 
   -- Different squadrons can be located at one airbase.
-  -- If the airbase gets captured, that is, when there is an enemy unit near the airbase, and there aren't anymore friendlies at the airbase, the airbase will change coalition ownership.
-  -- As a result, the GCI and CAP will stop!
+  -- If the airbase gets captured, that is when there is an enemy unit near the airbase and there are no friendlies at the airbase, the airbase will change coalition ownership.
+  -- As a result, the SEAD, BAI and CAS will stop.
   -- However, the squadron will still stay alive. Any airplane that is airborne will continue its operations until all airborne airplanes
   -- of the squadron will be destroyed. This to keep consistency of air operations not to confuse the players.
   -- 
@@ -900,8 +892,8 @@ do -- AI_A2G_DISPATCHER
   -- @field Core.Spawn#SPAWN Spawn The spawning object.
   -- @field #number ResourceCount The number of resources available.
   -- @field #list<#string> TemplatePrefixes The list of template prefixes.
-  -- @field #boolean Captured true if the squadron is captured. 
-  -- @field #number Overhead The overhead for the squadron. 
+  -- @field #boolean Captured true if the squadron is captured.
+  -- @field #number Overhead The overhead for the squadron.
 
 
   --- List of defense coordinates.
@@ -911,14 +903,14 @@ do -- AI_A2G_DISPATCHER
   --- @field #AI_A2G_DISPATCHER.DefenseCoordinates DefenseCoordinates
   AI_A2G_DISPATCHER.DefenseCoordinates = {}
 
-  --- Enumerator for spawns at airbases
+  --- Enumerator for spawns at airbases.
   -- @type AI_A2G_DISPATCHER.Takeoff
   -- @extends Wrapper.Group#GROUP.Takeoff
   
   --- @field #AI_A2G_DISPATCHER.Takeoff Takeoff
   AI_A2G_DISPATCHER.Takeoff = GROUP.Takeoff
   
-  --- Defnes Landing location.
+  --- Defines Landing location.
   -- @field #AI_A2G_DISPATCHER.Landing
   AI_A2G_DISPATCHER.Landing = {
     NearAirbase = 1,
@@ -926,7 +918,7 @@ do -- AI_A2G_DISPATCHER
     AtEngineShutdown = 3,
   }
   
-  --- A defense queue item description
+  --- A defense queue item description.
   -- @type AI_A2G_DISPATCHER.DefenseQueueItem
   -- @field Squadron
   -- @field #AI_A2G_DISPATCHER.Squadron DefenderSquadron The squadron in the queue.
@@ -938,7 +930,7 @@ do -- AI_A2G_DISPATCHER
   -- @field #string SquadronName The name of the squadron.
   
   --- Queue of planned defenses to be launched.
-  -- This queue exists because defenses must be launched on FARPS, or in the air, or on an airbase, or on carriers.
+  -- This queue exists because defenses must be launched from FARPS, in the air, from airbases, or from carriers.
   -- And some of these platforms have very limited amount of "launching" platforms.
   -- Therefore, this queue concept is introduced that queues each defender request.
   -- Depending on the location of the launching site, the queued defenders will be launched at varying time intervals.
@@ -950,7 +942,7 @@ do -- AI_A2G_DISPATCHER
   AI_A2G_DISPATCHER.DefenseQueue = {}
   
   
-  --- Defense approach types
+  --- Defense approach types.
   -- @type #AI_A2G_DISPATCHER.DefenseApproach
   AI_A2G_DISPATCHER.DefenseApproach = {
     Random = 1,
