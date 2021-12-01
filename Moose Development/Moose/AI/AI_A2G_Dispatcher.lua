@@ -262,7 +262,6 @@
 -- @image AI_Air_To_Ground_Dispatching.JPG
 
 
-
 do -- AI_A2G_DISPATCHER
 
   --- AI_A2G_DISPATCHER class.
@@ -906,7 +905,6 @@ do -- AI_A2G_DISPATCHER
   -- @field #boolean Captured true if the squadron is captured.
   -- @field #number Overhead The overhead for the squadron.
 
-
   --- List of defense coordinates.
   -- @type AI_A2G_DISPATCHER.DefenseCoordinates
   -- @map <#string,Core.Point#COORDINATE> A list of all defense coordinates mapped per defense coordinate name.
@@ -951,7 +949,6 @@ do -- AI_A2G_DISPATCHER
   
   --- @field #AI_A2G_DISPATCHER.DefenseQueue DefenseQueue
   AI_A2G_DISPATCHER.DefenseQueue = {}
-  
   
   --- Defense approach types.
   -- @type #AI_A2G_DISPATCHER.DefenseApproach
@@ -1158,6 +1155,7 @@ do -- AI_A2G_DISPATCHER
     
   end
   
+
   --- Locks the DefenseItem from being defended.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string DetectedItemIndex The index of the detected item.
@@ -1241,11 +1239,13 @@ do -- AI_A2G_DISPATCHER
     end
   end
 
+
   --- @param #AI_A2G_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2G_DISPATCHER:OnEventCrashOrDead( EventData )
     self.Detection:ForgetDetectedUnit( EventData.IniUnitName ) 
   end
+
 
   --- @param #AI_A2G_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
@@ -1275,6 +1275,7 @@ do -- AI_A2G_DISPATCHER
     end 
   end
   
+
   --- @param #AI_A2G_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2G_DISPATCHER:OnEventEngineShutdown( EventData )
@@ -1296,6 +1297,7 @@ do -- AI_A2G_DISPATCHER
     end 
   end
 
+
   do -- Manage the defensive behaviour
   
     --- @param #AI_A2G_DISPATCHER self
@@ -1305,16 +1307,19 @@ do -- AI_A2G_DISPATCHER
       self.DefenseCoordinates[DefenseCoordinateName] = DefenseCoordinate
     end
     
+
     --- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityLow()
       self.DefenseReactivity = 0.05
     end
     
+
     --- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityMedium()
       self.DefenseReactivity = 0.15
     end
     
+
     --- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityHigh()
       self.DefenseReactivity = 0.5
@@ -1379,7 +1384,6 @@ do -- AI_A2G_DISPATCHER
   end
   
   
-  
   --- Define a border area to simulate a **cold war** scenario.
   -- A **cold war** is one where Patrol aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
   -- A **hot war** is one where Patrol aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send Patrol and GCI aircraft to attack it.
@@ -1404,7 +1408,6 @@ do -- AI_A2G_DISPATCHER
   --   local BorderZone2 = ZONE_POLYGON( "CCCP Border2", GROUP:FindByName( "CCCP Border2" ) ) -- The GROUP object is a late activate helicopter unit.
   --   A2GDispatcher:SetBorderZone( { BorderZone1, BorderZone2 } )
   --   
-  --   
   function AI_A2G_DISPATCHER:SetBorderZone( BorderZone )
 
     self.Detection:SetAcceptZones( BorderZone )
@@ -1412,6 +1415,7 @@ do -- AI_A2G_DISPATCHER
     return self
   end
   
+
   --- Display a tactical report every 30 seconds about which aircraft are:
   --   * Patrolling
   --   * Engaging
@@ -1563,17 +1567,20 @@ do -- AI_A2G_DISPATCHER
     return DefenderFriendliesNearBy
   end
 
+
   ---
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:GetDefenderTasks()
     return self.DefenderTasks or {}
   end
   
+
   ---
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:GetDefenderTask( Defender )
     return self.DefenderTasks[Defender]
   end
+
 
   ---
   -- @param #AI_A2G_DISPATCHER self
@@ -1581,11 +1588,13 @@ do -- AI_A2G_DISPATCHER
     return self:GetDefenderTask( Defender ).Fsm
   end
   
+  
   ---
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:GetDefenderTaskTarget( Defender )
     return self:GetDefenderTask( Defender ).Target
   end
+  
   
   ---
   -- @param #AI_A2G_DISPATCHER self
@@ -1593,6 +1602,7 @@ do -- AI_A2G_DISPATCHER
     return self:GetDefenderTask( Defender ).SquadronName
   end
 
+  
   ---
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:ClearDefenderTask( Defender )
@@ -1609,6 +1619,7 @@ do -- AI_A2G_DISPATCHER
     return self
   end
 
+  
   ---
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:ClearDefenderTaskTarget( Defender )
@@ -1778,6 +1789,7 @@ do -- AI_A2G_DISPATCHER
     return self
   end
   
+
   --- Get an item from the Squadron table.
   -- @param #AI_A2G_DISPATCHER self
   -- @return #table
@@ -1821,6 +1833,7 @@ do -- AI_A2G_DISPATCHER
 --
 --  end
 
+
   --- Check if the Squadron is visible before startup of the dispatcher.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
@@ -1844,6 +1857,7 @@ do -- AI_A2G_DISPATCHER
     
   end
 
+  
   --- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @param #number TakeoffInterval  Only Takeoff new units each specified interval in seconds in 10 seconds steps.
@@ -1865,7 +1879,6 @@ do -- AI_A2G_DISPATCHER
     
   end
   
-
   
   --- Set the squadron patrol parameters for a specific task type.  
   -- Mission designers should not use this method, instead use the below methods. This method is used by the below methods.
@@ -1917,7 +1930,6 @@ do -- AI_A2G_DISPATCHER
     end
 
   end
-
 
 
   --- Set the squadron Patrol parameters for SEAD tasks.  
@@ -2005,6 +2017,7 @@ do -- AI_A2G_DISPATCHER
     end
   end
 
+
   ---
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
@@ -2057,6 +2070,7 @@ do -- AI_A2G_DISPATCHER
     return nil
   end
 
+
   --- Set the squadron engage limit for a specific task type.  
   -- Mission designers should not use this method, instead use the below methods. This method is used by the below methods.
   -- 
@@ -2089,8 +2103,6 @@ do -- AI_A2G_DISPATCHER
   end
 
 
-
-  
   --- Set a squadron to engage for suppression of air defenses, when a defense point is under attack.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
@@ -2127,6 +2139,7 @@ do -- AI_A2G_DISPATCHER
     return self
   end
 
+
   --- Set a squadron to engage for suppression of air defenses, when a defense point is under attack.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
@@ -2147,6 +2160,7 @@ do -- AI_A2G_DISPATCHER
     return self:SetSquadronSead2( SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, "RADIO" )  
   end
 
+
   --- Set the squadron SEAD engage limit.  
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
@@ -2163,8 +2177,6 @@ do -- AI_A2G_DISPATCHER
     self:SetSquadronEngageLimit( SquadronName, EngageLimit, "SEAD" )  
 
   end
-
-
   
 
   --- Set a Sead patrol for a Squadron.
@@ -2277,6 +2289,7 @@ do -- AI_A2G_DISPATCHER
     
     return self
   end
+
 
   --- Set a squadron to engage for close air support, when a defense point is under attack.
   -- @param #AI_A2G_DISPATCHER self
@@ -2391,6 +2404,7 @@ do -- AI_A2G_DISPATCHER
   
   end
   
+
   --- Set a squadron to engage for a battlefield area interdiction, when a defense point is under attack.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
@@ -2426,6 +2440,7 @@ do -- AI_A2G_DISPATCHER
     
     return self
   end
+
 
   --- Set a squadron to engage for a battlefield area interdiction, when a defense point is under attack.
   -- @param #AI_A2G_DISPATCHER self
@@ -2514,6 +2529,7 @@ do -- AI_A2G_DISPATCHER
     self:I( { BAI = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
   end
   
+
   --- Set a Bai patrol for a Squadron.
   -- The Bai patrol will start a patrol of the aircraft at a specified zone, and will engage when commanded.
   -- @param #AI_A2G_DISPATCHER self
@@ -2542,7 +2558,7 @@ do -- AI_A2G_DISPATCHER
 
   --- Defines the default amount of extra planes that will takeoff as part of the defense system.
   -- @param #AI_A2G_DISPATCHER self
-  -- @param #number Overhead The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- @param #number Overhead The % of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
   -- The default overhead is 1, so equal balance. The @{#AI_A2G_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
   -- taking into account the plane types of the squadron. For example, a MIG-31 with full long-distance A2G missiles payload, may still be less effective than a F-15C with short missiles...
   -- So in this case, one may want to use the Overhead method to allocate more defending planes as the amount of detected attacking planes.
@@ -2581,7 +2597,7 @@ do -- AI_A2G_DISPATCHER
   --- Defines the amount of extra planes that will takeoff as part of the defense system.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
-  -- @param #number Overhead The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- @param #number Overhead The % of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
   -- The default overhead is 1, so equal balance. The @{#AI_A2G_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
   -- taking into account the plane types of the squadron. For example, a MIG-31 with full long-distance A2G missiles payload, may still be less effective than a F-15C with short missiles...
   -- So in this case, one may want to use the Overhead method to allocate more defending planes as the amount of detected attacking planes.
@@ -2621,7 +2637,7 @@ do -- AI_A2G_DISPATCHER
   --- Gets the overhead of planes as part of the defense system, in comparison with the attackers.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
-  -- @return #number The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- @return #number The % of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
   -- The default overhead is 1, so equal balance. The @{#AI_A2G_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
   -- taking into account the plane types of the squadron. For example, a MIG-31 with full long-distance A2G missiles payload, may still be less effective than a F-15C with short missiles...
   -- So in this case, one may want to use the Overhead method to allocate more defending planes as the amount of detected attacking planes.
@@ -3085,7 +3101,7 @@ do -- AI_A2G_DISPATCHER
   --   local A2GDispatcher = AI_A2G_DISPATCHER:New( ... )
   --   
   --   -- Let new flights by default despawn near the airbase when returning.
-  --   local LandingMethod = A2GDispatcher:GetDefaultLanding( AI_A2G_Dispatcher.Landing.NearAirbase )
+  --   local LandingMethod = A2GDispatcher:GetDefaultLanding()
   --   if LandingMethod == AI_A2G_Dispatcher.Landing.NearAirbase then
   --    ...
   --   end
@@ -4265,6 +4281,7 @@ do -- AI_A2G_DISPATCHER
     return ShortestDistance
   end
 
+
   --- Assigns A2G AI Tasks in relation to the detected items.
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:Order( DetectedItem )
@@ -4285,6 +4302,7 @@ do -- AI_A2G_DISPATCHER
     return ShortestDistance
   end
   
+
   --- Shows the tactical display.
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:ShowTacticalDisplay( Detection )
@@ -4385,6 +4403,7 @@ do -- AI_A2G_DISPATCHER
     trigger.action.outText( Report:Text( "\n" ), 25 )
     
   end
+
 
   --- Assigns A2G AI Tasks in relation to the detected items.
   -- @param #AI_A2G_DISPATCHER self
@@ -4624,7 +4643,7 @@ do
     local PlayersCount = 0
 
     if PlayersNearBy then
-      local DetectedTreatLevel = DetectedSet:CalculateThreatLevelA2G()
+      local DetectedThreatLevel = DetectedSet:CalculateThreatLevelA2G()
       for PlayerUnitName, PlayerUnitData in pairs( PlayersNearBy ) do
         local PlayerUnit = PlayerUnitData -- Wrapper.Unit#UNIT
         local PlayerName = PlayerUnit:GetPlayerName()
@@ -4634,7 +4653,7 @@ do
           PlayersCount = PlayersCount + 1
           local PlayerType = PlayerUnit:GetTypeName()
           PlayerTypes[PlayerName] = PlayerType
-          if DetectedTreatLevel < FriendlyUnitThreatLevel + 2 then
+          if DetectedThreatLevel < FriendlyUnitThreatLevel + 2 then
           end
         end
       end
@@ -4670,7 +4689,7 @@ do
     local FriendliesCount = 0
 
     if FriendlyUnitsNearBy then
-      local DetectedTreatLevel = DetectedSet:CalculateThreatLevelA2G()
+      local DetectedThreatLevel = DetectedSet:CalculateThreatLevelA2G()
       for FriendlyUnitName, FriendlyUnitData in pairs( FriendlyUnitsNearBy ) do
         local FriendlyUnit = FriendlyUnitData -- Wrapper.Unit#UNIT
         if FriendlyUnit:IsAirPlane() then
@@ -4678,7 +4697,7 @@ do
           FriendliesCount = FriendliesCount + 1
           local FriendlyType = FriendlyUnit:GetTypeName()
           FriendlyTypes[FriendlyType] = FriendlyTypes[FriendlyType] and ( FriendlyTypes[FriendlyType] + 1 ) or 1
-          if DetectedTreatLevel < FriendlyUnitThreatLevel + 2 then
+          if DetectedThreatLevel < FriendlyUnitThreatLevel + 2 then
           end
         end
       end
