@@ -932,8 +932,8 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
   
   mission:_TargetFromObject(Coordinate)
 
-  mission.orbitSpeed = UTILS.KnotsToKmph(Speed or 350)
-  mission.missionSpeed = UTILS.KnotsToKmph(Speed or 350)
+  mission.orbitSpeed = UTILS.KnotsToMps(Speed or 350) -- the DCS Task itself will shortly be build with this so MPS
+  mission.missionSpeed = UTILS.KnotsToKmph(Speed or 350) 
 
   if Heading and Leg then
     mission.orbitHeading=Heading
