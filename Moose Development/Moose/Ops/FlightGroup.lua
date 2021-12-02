@@ -360,7 +360,7 @@ function FLIGHTGROUP:SetFlightControl(flightcontrol)
   end
 
   -- Set FC.
-  self:I(self.lid..string.format("Setting FLIGHTCONTROL to airbase %s", flightcontrol.airbasename))
+  self:T(self.lid..string.format("Setting FLIGHTCONTROL to airbase %s", flightcontrol.airbasename))
   self.flightcontrol=flightcontrol
 
   -- Add flight to all flights.
@@ -1014,7 +1014,7 @@ function FLIGHTGROUP:Status()
 
     -- If we found a group, we engage it.
     if targetgroup then
-      self:I(self.lid..string.format("Engaging target group %s at distance %d meters", targetgroup:GetName(), targetdist))
+      self:T(self.lid..string.format("Engaging target group %s at distance %d meters", targetgroup:GetName(), targetdist))
       self:EngageTarget(targetgroup)
     end
 
@@ -1160,7 +1160,7 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
         end
 
       else
-        --self:I(self.lid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
+        --self:T(self.lid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
       end
 
     end -- element nil?
@@ -2061,7 +2061,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterOutOfMissilesAA(From, Event, To)
-  self:I(self.lid.."Group is out of AA Missiles!")
+  self:T(self.lid.."Group is out of AA Missiles!")
   if self.outofAAMrtb then
     -- Back to destination or home.
     local airbase=self.destbase or self.homebase
@@ -2075,7 +2075,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterOutOfMissilesAG(From, Event, To)
-  self:I(self.lid.."Group is out of AG Missiles!")
+  self:T(self.lid.."Group is out of AG Missiles!")
   if self.outofAGMrtb then
     -- Back to destination or home.
     local airbase=self.destbase or self.homebase
@@ -2660,7 +2660,7 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
 
   -- Debug message.
   local text=string.format("Flight group set to refuel at the nearest tanker")
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   --TODO: set ROE passive. introduce roe event/state/variable.
   --TODO: cancel current task
@@ -2695,7 +2695,7 @@ function FLIGHTGROUP:onafterRefueled(From, Event, To)
 
   -- Debug message.
   local text=string.format("Flight group finished refuelling")
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Check if flight is done.
   self:_CheckGroupDone(1)
@@ -2884,7 +2884,7 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
 
   -- Debug message.
   local text=string.format("Low fuel %d for flight group %s", fuel, self.groupname)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Set switch to true.
   self.fuellow=true
@@ -2900,7 +2900,7 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
     if tanker then
 
       -- Debug message.
-      self:I(self.lid..string.format("Send to refuel at tanker %s", tanker:GetName()))
+      self:T(self.lid..string.format("Send to refuel at tanker %s", tanker:GetName()))
 
       -- Get a coordinate towards the tanker.
       local coordinate=self:GetCoordinate():GetIntermediateCoordinate(tanker:GetCoordinate(), 0.75)
@@ -2929,7 +2929,7 @@ function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
 
   -- Debug message.
   local text=string.format("Critical fuel for flight group %s", self.groupname)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Set switch to true.
   self.fuelcritical=true
@@ -4017,11 +4017,11 @@ end
 function FLIGHTGROUP:_UpdateMenu(delay)
 
   if delay and delay>0 then
-    self:I(self.lid..string.format("FF updating menu in %.1f sec", delay))
+    self:T(self.lid..string.format("FF updating menu in %.1f sec", delay))
     self:ScheduleOnce(delay, FLIGHTGROUP._UpdateMenu, self)
   else
 
-    self:I(self.lid.."FF updating menu NOW")
+    self:T(self.lid.."FF updating menu NOW")
 
     -- Get current position of group.
     local position=self:GetCoordinate()

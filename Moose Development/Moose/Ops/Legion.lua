@@ -627,7 +627,7 @@ function LEGION:onafterMissionAssign(From, Event, To, Mission, Legions)
     local Legion=_Legion --Ops.Legion#LEGION
 
     -- Debug info.
-    self:I(self.lid..string.format("Assigning mission %s (%s) to legion %s", Mission.name, Mission.type, Legion.alias))
+    self:T(self.lid..string.format("Assigning mission %s (%s) to legion %s", Mission.name, Mission.type, Legion.alias))
  
     -- Add mission to legion.
     Legion:AddMission(Mission)
@@ -684,7 +684,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
           -- Check if mission is INTERCEPT and asset is currently on GCI mission. If so, GCI is paused.
           if Mission.type==AUFTRAG.Type.INTERCEPT then                        
             if currM and currM.type==AUFTRAG.Type.GCICAP then
-              self:I(self.lid..string.format("Pausing %s mission %s to send flight on intercept mission %s", currM.type, currM.name, Mission.name))
+              self:T(self.lid..string.format("Pausing %s mission %s to send flight on intercept mission %s", currM.type, currM.name, Mission.name))
               asset.flightgroup:PauseMission()
             end            
           end
@@ -764,7 +764,7 @@ function LEGION:onafterTransportAssign(From, Event, To, Transport, Legions)
     local Legion=_Legion --Ops.Legion#LEGION
 
     -- Debug info.
-    self:I(self.lid..string.format("Assigning transport %d to legion %s", Transport.uid, Legion.alias))
+    self:T(self.lid..string.format("Assigning transport %d to legion %s", Transport.uid, Legion.alias))
       
     -- Add mission to legion.
     Legion:AddOpsTransport(Transport)
@@ -837,7 +837,7 @@ end
 function LEGION:onafterTransportCancel(From, Event, To, Transport)
 
   -- Info message.
-  self:I(self.lid..string.format("Cancel transport UID=%d", Transport.uid))
+  self:T(self.lid..string.format("Cancel transport UID=%d", Transport.uid))
 
   -- Set status to cancelled.
   Transport:SetLegionStatus(self, OPSTRANSPORT.Status.CANCELLED)
@@ -888,7 +888,7 @@ end
 function LEGION:onafterMissionCancel(From, Event, To, Mission)
 
   -- Info message.
-  self:I(self.lid..string.format("Cancel mission %s", Mission.name))
+  self:T(self.lid..string.format("Cancel mission %s", Mission.name))
 
   -- Set status to cancelled.
   Mission:SetLegionStatus(self, AUFTRAG.Status.CANCELLED)
@@ -1235,7 +1235,7 @@ end
 function LEGION:onafterDestroyed(From, Event, To)
 
   -- Debug message.
-  self:I(self.lid.."Legion warehouse destroyed!")
+  self:T(self.lid.."Legion warehouse destroyed!")
 
   -- Cancel all missions.
   for _,_mission in pairs(self.missionqueue) do
@@ -1845,7 +1845,7 @@ function LEGION:RecruitAssetsForEscort(Mission, Assets)
   if Mission.NescortMin and Mission.NescortMax and (Mission.NescortMin>0 or Mission.NescortMax>0) then
   
     -- Debug info.
-    self:I(self.lid..string.format("Requested escort for mission %s [%s]. Required assets=%d-%d", Mission:GetName(), Mission:GetType(), Mission.NescortMin,Mission.NescortMax))
+    self:T(self.lid..string.format("Requested escort for mission %s [%s]. Required assets=%d-%d", Mission:GetName(), Mission:GetType(), Mission.NescortMin,Mission.NescortMax))
     
     -- Get special escort legions and/or cohorts.
     local Cohorts={}

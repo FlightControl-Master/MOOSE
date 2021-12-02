@@ -705,7 +705,7 @@ function COHORT:_CheckAssetStatus()
       
       end
     end
-    self:I(self.lid..text)
+    self:T(self.lid..text)
   end
 
 end
@@ -718,7 +718,7 @@ end
 function COHORT:onafterStop(From, Event, To)
 
   -- Debug info.
-  self:I(self.lid.."STOPPING Cohort and removing all assets!")
+  self:T(self.lid.."STOPPING Cohort and removing all assets!")
 
   -- Remove all assets.
   for i=#self.assets,1,-1 do
@@ -776,7 +776,7 @@ function COHORT:CanMission(Mission)
       
   -- Set range is valid. Mission engage distance can overrule the cohort engage range.
   if TargetDistance>engagerange then
-    self:I(self.lid..string.format("INFO: Cohort is not in range. Target dist=%d > %d NM max mission Range", UTILS.MetersToNM(TargetDistance), UTILS.MetersToNM(engagerange)))
+    self:T(self.lid..string.format("INFO: Cohort is not in range. Target dist=%d > %d NM max mission Range", UTILS.MetersToNM(TargetDistance), UTILS.MetersToNM(engagerange)))
     return false
   end
   
@@ -847,13 +847,13 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
   
           -- Check if the payload of this asset is compatible with the mission.
           -- Note: we do not check the payload as an asset that is on a GCICAP mission should be able to do an INTERCEPT as well!
-          self:I(self.lid..string.format("Adding asset on GCICAP mission for an INTERCEPT mission"))
+          self:T(self.lid..string.format("Adding asset on GCICAP mission for an INTERCEPT mission"))
           table.insert(assets, asset)
           
         elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and AUFTRAG.CheckMissionCapability(MissionType, asset.payload.capabilities) then
                   
           -- Check if the payload of this asset is compatible with the mission.
-          self:I(self.lid..string.format("Adding asset on ALERT 5 mission for %s mission", MissionType))
+          self:T(self.lid..string.format("Adding asset on ALERT 5 mission for %s mission", MissionType))
           table.insert(assets, asset)        
           
         end
@@ -932,7 +932,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
                     
             -- This asset is "combatready".
             if combatready then
-              self:I(self.lid.."Adding SPAWNED asset to ANOTHER mission as it is COMBATREADY")
+              self:T(self.lid.."Adding SPAWNED asset to ANOTHER mission as it is COMBATREADY")
               table.insert(assets, asset)
             end
           

@@ -2629,7 +2629,7 @@ function AIRBOSS:DeleteAllRecoveryWindows(delay)
 
   -- Loop over all recovery windows.
   for _,recovery in pairs(self.recoverytimes) do
-    self:I(self.lid..string.format("Deleting recovery window ID %s", tostring(recovery.ID)))
+    self:T(self.lid..string.format("Deleting recovery window ID %s", tostring(recovery.ID)))
     self:DeleteRecoveryWindow(recovery, delay)
   end
 
@@ -3126,7 +3126,7 @@ function AIRBOSS:SoundCheckLSO(delay)
     end
 
     -- Debug message.
-    self:I(self.lid..text)
+    self:T(self.lid..text)
 
   end
 end
@@ -3162,7 +3162,7 @@ function AIRBOSS:SoundCheckMarshal(delay)
     end
 
     -- Debug message.
-    self:I(self.lid..text)
+    self:T(self.lid..text)
 
   end
 end
@@ -3542,7 +3542,7 @@ function AIRBOSS:onafterStatus(From, Event, To)
     if i==0 then
       text=text.." none"
     end
-    self:I(self.lid..text)
+    self:T(self.lid..text)
 
     -- Check for collision.
     if collision then
@@ -4202,7 +4202,7 @@ end
 -- @param #number n Number of waypoint that was passed.
 function AIRBOSS:onafterPassingWaypoint(From, Event, To, n)
   -- Debug output.
-  self:I(self.lid..string.format("Carrier passed waypoint %d.", n))
+  self:T(self.lid..string.format("Carrier passed waypoint %d.", n))
 end
 
 --- On after "Idle" event. Carrier goes to state "Idle".
@@ -4221,7 +4221,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterStop(From, Event, To)
-  self:I(self.lid..string.format("Stopping airboss script."))
+  self:T(self.lid..string.format("Stopping airboss script."))
 
   -- Unhandle events.
   self:UnHandleEvent(EVENTS.Birth)
@@ -7375,7 +7375,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
 
   end
 
-  self:I(self.lid..string.format("Returning free stack %s", tostring(nfree)))
+  self:T(self.lid..string.format("Returning free stack %s", tostring(nfree)))
   return nfree
 end
 
@@ -8314,7 +8314,7 @@ function AIRBOSS:_RemoveFlight(flight, completely)
       -- Remove player from players table.
       local playerdata=self.players[flight.name]
       if playerdata then
-        self:I(self.lid..string.format("Removing player %s completely.", flight.name))
+        self:T(self.lid..string.format("Removing player %s completely.", flight.name))
         self.players[flight.name]=nil
       end
 
@@ -13953,7 +13953,7 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck, uturn)
   local distNM=UTILS.MetersToNM(dist)
 
   -- Debug output
-  self:I(self.lid..string.format("Carrier steaming into the wind (%.1f kts). Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", UTILS.MpsToKnots(vwind), distNM, speedknots, time))
+  self:T(self.lid..string.format("Carrier steaming into the wind (%.1f kts). Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", UTILS.MpsToKnots(vwind), distNM, speedknots, time))
 
   -- Get heading into the wind accounting for angled runway.
   local hiw=self:GetHeadingIntoWind()
@@ -15817,7 +15817,7 @@ function AIRBOSS:_MarshallInboundCall(unit, modex)
   -- Pilot: "Marshall, [modex], marking mom's [bearing] for [distance], angels [XX], state [X.X]"
   local text=string.format("Marshal, %s, marking mom's %d for %d, angels %d, state %.1f", modex, bearing, distance, angels, state)
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Fuel state.
   local FS=UTILS.Split(string.format("%.1f", state), ".")
@@ -15865,7 +15865,7 @@ function AIRBOSS:_CommencingCall(unit, modex)
   -- Pilot: "[modex], commencing"
   local text=string.format("%s, commencing", modex)
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call to display complete subtitle.
   local commencingCall=self:_NewRadioCall(self.MarshalCall.CLICK,  unit.UnitName:upper() , text, self.Tmessage, nil, unit.UnitName:upper())
@@ -15892,7 +15892,7 @@ function AIRBOSS:_LSOCallAircraftBall(modex, nickname, fuelstate)
   local text=string.format("%s Ball, %.1f.", nickname, fuelstate)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Nickname UPPERCASE.
   local NICKNAME=nickname:upper()
@@ -15928,7 +15928,7 @@ function AIRBOSS:_MarshalCallGasAtTanker(modex)
   local text=string.format("Bingo fuel! Going for gas at the recovery tanker.")
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call to display complete subtitle.
   local call=self:_NewRadioCall(self.PilotCall.BINGOFUEL, modex, text, self.Tmessage, nil, modex)
@@ -15951,7 +15951,7 @@ function AIRBOSS:_MarshalCallGasAtDivert(modex, divertname)
   local text=string.format("Bingo fuel! Going for gas at divert field %s.", divertname)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call to display complete subtitle.
   local call=self:_NewRadioCall(self.PilotCall.BINGOFUEL, modex, text, self.Tmessage, nil, modex)
@@ -15974,7 +15974,7 @@ function AIRBOSS:_MarshalCallRecoveryStopped(case)
   local text=string.format("Case %d recovery ops are stopped. Deck is closed.", case)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call to display complete subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.CASE, "AIRBOSS", text, self.Tmessage, "99")
@@ -16015,7 +16015,7 @@ function AIRBOSS:_MarshalCallRecoveryPausedResumedAt(clock)
   local text=string.format("aircraft recovery is paused and will be resumed at %s.", clock)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.RECOVERYPAUSEDRESUMED, "AIRBOSS", text, self.Tmessage, "99")
@@ -16043,7 +16043,7 @@ function AIRBOSS:_MarshalCallClearedForRecovery(modex, case)
   local text=string.format("you're cleared for Case %d recovery.", case)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.CLEAREDFORRECOVERY, "MARSHAL", text, self.Tmessage, modex)
@@ -16081,7 +16081,7 @@ function AIRBOSS:_MarshalCallNewFinalBearing(FB)
   local text=string.format("new final bearing %03d°.", FB)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.NEWFB, "AIRBOSS", text, self.Tmessage, "99")
@@ -16104,7 +16104,7 @@ function AIRBOSS:_MarshalCallCarrierTurnTo(hdg)
   local text=string.format("carrier is now starting turn to heading %03d°.", hdg)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.CARRIERTURNTOHEADING, "AIRBOSS", text, self.Tmessage, "99")
@@ -16135,7 +16135,7 @@ function AIRBOSS:_MarshalCallStackFull(modex, nwaiting)
   end
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.STACKFULL, "AIRBOSS", text, self.Tmessage, modex)
@@ -16206,7 +16206,7 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   local text=string.format("Case %d, expected BRC %03d°, hold at angels %d. Expected Charlie Time %s. Altimeter %.2f. Report see me.", case, brc, angels, charlie, qfe)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call to display complete subtitle.
   local casecall=self:_NewRadioCall(self.MarshalCall.CASE, "MARSHAL", text, self.Tmessage, modex)

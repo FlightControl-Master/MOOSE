@@ -169,7 +169,7 @@ function PLATOON:onafterStatus(From, Event, To)
     -- Short info.
     local text=string.format("%s [Type=%s, Call=%s, Modex=%d, Skill=%s]: Assets Total=%d, Stock=%d, Mission=%d [Active=%d, Queue=%d]", 
     fsmstate, self.aircrafttype, callsign, modex, skill, NassetsTot, NassetsInS, NassetsQP, NassetsP, NassetsQ)
-    self:I(self.lid..text)
+    self:T(self.lid..text)
     
     -- Weapon data info.
     if self.verbose>=3 and self.weaponData then

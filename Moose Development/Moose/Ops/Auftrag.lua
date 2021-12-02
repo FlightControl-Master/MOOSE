@@ -380,6 +380,7 @@ _AUFTRAGSNR=0
 -- @field #string FUELSUPPLY Fuel supply.
 -- @field #string ALERT5 Alert 5.
 -- @field #string ONGUARD On guard.
+-- @field #string ARMOREDGUARD On guard - with armored groups.
 -- @field #string BARRAGE Barrage.
 -- @field #STRING ARMORATTACK Armor attack.
 AUFTRAG.Type={
@@ -411,6 +412,7 @@ AUFTRAG.Type={
   FUELSUPPLY="Fuel Supply",
   ALERT5="Alert5",
   ONGUARD="On Guard",
+  ARMOREDGUARD="Armored Guard",
   BARRAGE="Barrage",
   ARMORATTACK="Armor Attack",
 }
@@ -423,6 +425,7 @@ AUFTRAG.Type={
 -- @field #string FUELSUPPLY Fuel Supply.
 -- @field #string ALERT5 Alert 5 task.
 -- @field #string ONGUARD On guard.
+-- @field #string ARMOREDGUARD On guard with armor.
 -- @field #string BARRAGE Barrage.
 AUFTRAG.SpecialTask={
   PATROLZONE="PatrolZone",
@@ -431,6 +434,7 @@ AUFTRAG.SpecialTask={
   FUELSUPPLY="Fuel Supply",
   ALERT5="Alert5",
   ONGUARD="On Guard",
+  ARMOREDGUARD="ArmoredGuard",
   BARRAGE="Barrage",
   ARMORATTACK="AmorAttack",
 }
@@ -1686,7 +1690,7 @@ function AUFTRAG:NewARMORATTACK(Target, Speed, Formation)
     
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionAlarm=ENUMS.AlarmState.Auto
-  mission.optionFormation="On Road"
+  mission.optionFormation="Off Road"
   mission.optionAttackFormation=Formation or "Wedge"
   
   mission.missionFraction=1.0  
@@ -1826,6 +1830,30 @@ function AUFTRAG:NewONGUARD(Coordinate)
   return mission
 end
 
+--- **[GROUND]** Create an ARMORED ON GUARD mission.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Coordinate, where to stand guard.
+-- @param #string Formation Formation to take, e.g. "on Road", "Vee" etc.
+-- @return #AUFTRAG self
+function AUFTRAG:NewARMOREDGUARD(Coordinate,Formation)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.ARMOREDGUARD)
+  
+  mission:_TargetFromObject(Coordinate)
+  
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  mission.optionFormation=Formation or "On Road"
+  --mission.optionAttackFormation=Formation or "Wedge"
+  
+  mission.missionFraction=1.0
+  
+  mission.categories={AUFTRAG.Category.GROUND}
+    
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
 
 --- Create a mission to attack a TARGET object.
 -- @param #AUFTRAG self
@@ -1920,6 +1948,10 @@ function AUFTRAG:_DetermineAuftragType(Target)
         auftrag=AUFTRAG.Type.BAI
       
       elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
+      
+        auftrag=AUFTRAG.Type.CAS
+      
+      elseif attribute==GROUP.Attribute.GROUND_TANK then
       
         auftrag=AUFTRAG.Type.BAI
           
@@ -4959,7 +4991,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     
     table.insert(DCStasks, DCStask)    
 
-  elseif self.type==AUFTRAG.Type.ONGUARD then
+  elseif self.type==AUFTRAG.Type.ONGUARD or self.type==AUFTRAG.Type.ARMOREDGUARD then
 
     ----------------------
     -- ON GUARD Mission --
@@ -4967,7 +4999,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
   
     local DCStask={}
     
-    DCStask.id=AUFTRAG.SpecialTask.ONGUARD
+    DCStask.id= self.type==AUFTRAG.Type.ONGUARD and AUFTRAG.SpecialTask.ONGUARD or AUFTRAG.SpecialTask.ARMOREDGUARD
     
     -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}

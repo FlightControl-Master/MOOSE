@@ -764,7 +764,7 @@ function CHIEF:RemoveTarget(Target)
     local target=_target --Ops.Target#TARGET
     
     if target.uid==Target.uid then
-      self:I(self.lid..string.format("Removing target %s from queue", Target.name))
+      self:T(self.lid..string.format("Removing target %s from queue", Target.name))
       table.remove(self.targetqueue, i)
       break
     end
@@ -1077,7 +1077,7 @@ function CHIEF:onafterStatus(From, Event, To)
       -- Debug info.
       local text=string.format("Lost contact to target %s! %s mission %s will be cancelled.", contact.groupname, contact.mission.type:upper(), contact.mission.name)
       MESSAGE:New(text, 120, "CHIEF"):ToAll()
-      self:I(self.lid..text)
+      self:T(self.lid..text)
     
       -- Cancel this mission.
       contact.mission:Cancel()
@@ -1283,7 +1283,7 @@ function CHIEF:onafterStatus(From, Event, To)
         text=text..string.format("\n- %s: %d", attribute, N)
       end
     end
-    self:I(self.lid..text)
+    self:T(self.lid..text)
   end
 
 end
@@ -1302,7 +1302,7 @@ end
 function CHIEF:onafterMissionAssign(From, Event, To, Mission, Legions)
 
   if self.commander then
-    self:I(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
+    self:T(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
     Mission.chief=self
     Mission.statusChief=AUFTRAG.Status.QUEUED
     self.commander:MissionAssign(Mission, Legions)
@@ -1321,7 +1321,7 @@ end
 function CHIEF:onafterMissionCancel(From, Event, To, Mission)
 
   -- Debug info.
-  self:I(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
+  self:T(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
   
   -- Set status to CANCELLED.
   Mission.statusChief=AUFTRAG.Status.CANCELLED  
@@ -1351,7 +1351,7 @@ end
 function CHIEF:onafterTransportCancel(From, Event, To, Transport)
 
   -- Debug info.
-  self:I(self.lid..string.format("Cancelling transport UID=%d in status %s", Transport.uid, Transport:GetState()))
+  self:T(self.lid..string.format("Cancelling transport UID=%d in status %s", Transport.uid, Transport:GetState()))
   
   if Transport:IsPlanned() then
   
@@ -1376,7 +1376,7 @@ end
 -- @param #string To To state.
 -- @param #string Defcon New defence condition.
 function CHIEF:onafterDefconChange(From, Event, To, Defcon)
-  self:I(self.lid..string.format("Changing Defcon from %s --> %s", self.Defcon, Defcon))
+  self:T(self.lid..string.format("Changing Defcon from %s --> %s", self.Defcon, Defcon))
 end
 
 --- On after "StrategyChange" event.
@@ -1386,7 +1386,7 @@ end
 -- @param #string To To state.
 -- @param #string Strategy
 function CHIEF:onafterStrategyChange(From, Event, To, Strategy)
-  self:I(self.lid..string.format("Changing Strategy from %s --> %s", self.strategy, Strategy))
+  self:T(self.lid..string.format("Changing Strategy from %s --> %s", self.strategy, Strategy))
 end
 
 --- On after "OpsOnMission".
@@ -1574,7 +1574,7 @@ function CHIEF:CheckTargetQueue()
       if valid then
       
         -- Debug info.
-        self:I(self.lid..string.format("Got valid target %s: category=%s, threatlevel=%d", target:GetName(), target.category, threatlevel))
+        self:T(self.lid..string.format("Got valid target %s: category=%s, threatlevel=%d", target:GetName(), target.category, threatlevel))
               
         -- Get mission performances for the given target.  
         local MissionPerformances=self:_GetMissionPerformanceFromTarget(target)
@@ -1711,7 +1711,7 @@ function CHIEF:CheckOpsZoneQueue()
     if ownercoalition~=self.coalition and (stratzone.importance==nil or stratzone.importance<=vip) then
     
       -- Has a patrol mission?
-      local hasMissionPatrol=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ONGUARD)
+      local hasMissionPatrol=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ONGUARD) or stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARMOREDGUARD)
       -- Has a CAS mission?
       local hasMissionCAS=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CAS)
       -- Has a ARTY mission?
@@ -1735,10 +1735,11 @@ function CHIEF:CheckOpsZoneQueue()
       
           -- Recruit ground assets that
           local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ONGUARD, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY, GROUP.Attribute.GROUND_TANK})
-
+          local recruited1=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ARMOREDGUARD, 1, 1, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_TANK})
+          
           -- Debug info.
           self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets=%s", tostring(recruited)))
-          
+          self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone armored assets=%s", tostring(recruited1)))
         end
         
       else
@@ -2168,6 +2169,11 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
   if MissionType==AUFTRAG.Type.PATROLZONE or MissionType==AUFTRAG.Type.ONGUARD then
     RangeMax=UTILS.NMToMeters(250)
   end
+  
+    -- Set max range to 50 NM because we use armor
+  if MissionType==AUFTRAG.Type.ARMOREDGUARD then
+    RangeMax=UTILS.NMToMeters(50)
+  end
 
   -- Recruite infantry assets.
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, RangeMax, nil, nil, Categories, Attributes)
@@ -2274,6 +2280,27 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
     
       return true
+    elseif MissionType==AUFTRAG.Type.ARMOREDGUARD then
+      
+      -- Create Armored on guard mission
+      local TargetZone = StratZone.opszone.zone
+      local Target = TargetZone:GetCoordinate()
+      local mission=AUFTRAG:NewARMOREDGUARD(Target)
+                      
+      -- Add assets to mission.
+      for _,asset in pairs(assets) do
+        mission:AddAsset(asset)
+      end
+          
+      -- Assign mission to legions.
+      self:MissionAssign(mission, legions)
+    
+      -- Attach mission to ops zone.
+      -- TODO: Need a better way!
+      --StratZone.missionARTY=mission
+      StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
+    
+      return true  
     end
     
   end

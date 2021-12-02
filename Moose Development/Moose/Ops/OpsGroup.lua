@@ -3645,7 +3645,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
     -- Just stay put on the airfield and wait until something happens.
 
-  elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD then
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD or Task.dcstask.id==AUFTRAG.SpecialTask.ARMOREDGUARD then
 
     ---
     -- Task "On Guard" Mission.
@@ -3678,7 +3678,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
         local Alpha=param.angle or math.random(45, 85)
         local distance=Altitude/math.tan(math.rad(Alpha))
         local tvec2=UTILS.Vec2Translate(vec2, distance, heading)
-        self:T(self.lid..string.format("Barrage: Shots=%s, Altitude=%d m, Angle=%d°, heading=%03d°, distance=%d m", tostring(param.shots), Altitude, Alpha, heading, distance))
+        self:T(self.lid..string.format("Barrage: Shots=%s, Altitude=%d m, Angle=%dÂ°, heading=%03dÂ°, distance=%d m", tostring(param.shots), Altitude, Alpha, heading, distance))
         DCSTask=CONTROLLABLE.TaskFireAtPoint(nil, tvec2, param.radius, param.shots, param.weaponType, Altitude)
       else
         DCSTask=Task.dcstask
@@ -3776,7 +3776,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
         done=true
-      elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD then
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD or Task.dcstask.id==AUFTRAG.SpecialTask.ARMOREDGUARD then
         done=true
       elseif stopflag==1 or (not self:IsAlive()) or self:IsDead() or self:IsStopped() then
         -- Manual call TaskDone if setting flag to one was not successful.
@@ -3879,7 +3879,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       self:Disengage()
     end
 
-    if Task.description==AUFTRAG.SpecialTask.ONGUARD then
+    if Task.description==AUFTRAG.SpecialTask.ONGUARD or Task.description==AUFTRAG.SpecialTask.ARMOREDGUARD then
       self:T(self.lid.."Taske DONE OnGuard ==> Cruise")
       self:Cruise()
     end
@@ -4334,7 +4334,7 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     ---
 
     -- Alert 5 missoins dont have a task set, which could be cancelled.
-    if Mission.type==AUFTRAG.Type.ALERT5 or Mission.type==AUFTRAG.Type.ONGUARD then
+    if Mission.type==AUFTRAG.Type.ALERT5 or Mission.type==AUFTRAG.Type.ONGUARD or Mission.type==AUFTRAG.Type.ARMOREDGUARD then
       self:MissionDone(Mission)
       return
     end
@@ -4540,7 +4540,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       or mission.type.FUELSUPPLY then
       local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
       waypointcoord=zone:GetRandomCoordinate(nil , nil, surfacetypes)
-    elseif mission.type==AUFTRAG.Type.ONGUARD then
+    elseif mission.type==AUFTRAG.Type.ONGUARD or mission.type==AUFTRAG.Type.ARMOREDGUARD then
       waypointcoord=mission:GetMissionWaypointCoord(self.group, nil, surfacetypes)
     else
       waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius, surfacetypes)
@@ -8326,7 +8326,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
     self:T(self.lid.."Carrier not ready for boarding yet ==> repeating boarding call in 10 sec")
     self:__Board(-10, CarrierGroup, Carrier)
 
-    -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.�
+    -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.ï¿½
     CarrierGroup:_AddCargobay(self, Carrier, true)
 
   end

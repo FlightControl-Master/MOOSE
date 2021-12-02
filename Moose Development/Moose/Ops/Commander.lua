@@ -449,7 +449,7 @@ function COMMANDER:RemoveMission(Mission)
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     if mission.auftragsnummer==Mission.auftragsnummer then
-      self:I(self.lid..string.format("Removing mission %s (%s) status=%s from queue", Mission.name, Mission.type, Mission.status))
+      self:T(self.lid..string.format("Removing mission %s (%s) status=%s from queue", Mission.name, Mission.type, Mission.status))
       mission.commander=nil
       table.remove(self.missionqueue, i)
       break
@@ -470,7 +470,7 @@ function COMMANDER:RemoveTransport(Transport)
     local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
     
     if transport.uid==Transport.uid then
-      self:I(self.lid..string.format("Removing transport UID=%d status=%s from queue", transport.uid, transport:GetState()))
+      self:T(self.lid..string.format("Removing transport UID=%d status=%s from queue", transport.uid, transport:GetState()))
       transport.commander=nil
       table.remove(self.transportqueue, i)
       break
@@ -674,7 +674,7 @@ function COMMANDER:onafterStatus(From, Event, To)
   -- Status.
   if self.verbose>=1 then
     local text=string.format("Status %s: Legions=%d, Missions=%d, Transports", fsmstate, #self.legions, #self.missionqueue, #self.transportqueue)
-    self:I(self.lid..text)
+    self:T(self.lid..text)
   end
 
   -- Check mission queue and assign one PLANNED mission.
@@ -769,7 +769,7 @@ function COMMANDER:onafterStatus(From, Event, To)
         end
       end            
     end
-    self:I(self.lid..text)
+    self:T(self.lid..text)
     
     
     if self.verbose>=3 then
@@ -905,7 +905,7 @@ function COMMANDER:onafterMissionAssign(From, Event, To, Mission, Legions)
     local Legion=_Legion --Ops.Legion#LEGION
 
     -- Debug info.
-    self:I(self.lid..string.format("Assigning mission \"%s\" [%s] to legion \"%s\"", Mission.name, Mission.type, Legion.alias))
+    self:T(self.lid..string.format("Assigning mission \"%s\" [%s] to legion \"%s\"", Mission.name, Mission.type, Legion.alias))
 
     -- Add mission to legion.
     Legion:AddMission(Mission)
@@ -926,7 +926,7 @@ end
 function COMMANDER:onafterMissionCancel(From, Event, To, Mission)
 
   -- Debug info.
-  self:I(self.lid..string.format("Cancelling mission \"%s\" [%s] in status %s", Mission.name, Mission.type, Mission.status))
+  self:T(self.lid..string.format("Cancelling mission \"%s\" [%s] in status %s", Mission.name, Mission.type, Mission.status))
   
   -- Set commander status.
   Mission.statusCommander=AUFTRAG.Status.CANCELLED
@@ -970,7 +970,7 @@ function COMMANDER:onafterTransportAssign(From, Event, To, Transport, Legions)
     local Legion=_Legion --Ops.Legion#LEGION
 
     -- Debug info.
-    self:I(self.lid..string.format("Assigning transport UID=%d to legion \"%s\"", Transport.uid, Legion.alias))
+    self:T(self.lid..string.format("Assigning transport UID=%d to legion \"%s\"", Transport.uid, Legion.alias))
   
     -- Add mission to legion.
     Legion:AddOpsTransport(Transport)
@@ -991,7 +991,7 @@ end
 function COMMANDER:onafterTransportCancel(From, Event, To, Transport)
 
   -- Debug info.
-  self:I(self.lid..string.format("Cancelling Transport UID=%d in status %s", Transport.uid, Transport:GetState()))
+  self:T(self.lid..string.format("Cancelling Transport UID=%d in status %s", Transport.uid, Transport:GetState()))
   
   -- Set commander status.
   Transport.statusCommander=OPSTRANSPORT.Status.CANCELLED
@@ -1479,7 +1479,7 @@ function COMMANDER:GetLegionsForMission(Mission)
         local dist=UTILS.Round(distance/10, 0)
         
         -- Debug info.
-        self:I(self.lid..string.format("Got legion %s with Nassets=%d and dist=%.1f NM, rounded=%.1f", legion.alias, Nassets, distance, dist))
+        self:T(self.lid..string.format("Got legion %s with Nassets=%d and dist=%.1f NM, rounded=%.1f", legion.alias, Nassets, distance, dist))
       
         -- Add legion to table of legions that can.
         table.insert(legions, {airwing=legion, distance=distance, dist=dist, targetcoord=coord, nassets=Nassets})
