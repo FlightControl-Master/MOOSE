@@ -5,7 +5,7 @@
 --    * Let the group steam into the wind
 --    * Command a full stop
 --    * Patrol waypoints *ad infinitum*
---    * Collision warning, if group is heading towards a land mass
+--    * Collision warning, if group is heading towards a land mass or another obstacle
 --    * Automatic pathfinding, e.g. around islands
 --    * Let a submarine dive and surface
 --    * Manage TACAN and ICLS beacons
@@ -43,14 +43,13 @@
 -- @field #boolean pathfindingOn If true, enable pathfining.
 -- @field #number pathCorridor Path corrdidor width in meters.
 -- @field #boolean ispathfinding If true, group is currently path finding.
+-- @field #NAVYGROUP.Target engage Engage target.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
 --
 -- ===
---
--- ![Banner Image](..\Presentations\OPS\NavyGroup\_Main.png)
---
+-- 
 -- # The NAVYGROUP Concept
 -- 
 -- This class enhances naval groups.
@@ -63,14 +62,10 @@ NAVYGROUP = {
   intowindcounter = 0,
   Qintowind       = {},
   pathCorridor    = 400,
+  engage          = {},  
 }
 
---- Navy group element.
--- @type NAVYGROUP.Element
--- @field #string name Name of the element, i.e. the unit.
--- @field #string typename Type name.
-
---- Navy group element.
+--- Turn into wind parameters.
 -- @type NAVYGROUP.IntoWind
 -- @field #number Tstart Time to start.
 -- @field #number Tstop Time to stop.
@@ -84,16 +79,27 @@ NAVYGROUP = {
 -- @field #boolean Open Currently active.
 -- @field #boolean Over This turn is over.
 
+--- Engage Target.
+-- @type NAVYGROUP.Target
+-- @field Ops.Target#TARGET Target The target.
+-- @field Core.Point#COORDINATE Coordinate Last known coordinate of the target.
+-- @field Ops.OpsGroup#OPSGROUP.Waypoint Waypoint the waypoint created to go to the target.
+-- @field #number roe ROE backup.
+-- @field #number alarmstate Alarm state backup.
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="0.5.0"
+NAVYGROUP.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Extend, shorten turn into wind windows
+-- TODO: Add RTZ.
+-- TODO: Add Retreat.
+-- TODO: Add EngageTarget.
+-- TODO: Submaries.
+-- TODO: Extend, shorten turn into wind windows.
 -- TODO: Skipper menu.
 -- DONE: Collision warning.
 -- DONE: Detour, add temporary waypoint and resume route.
@@ -107,63 +113,282 @@ NAVYGROUP.version="0.5.0"
 
 --- Create a new NAVYGROUP class object.
 -- @param #NAVYGROUP self
--- @param #string GroupName Name of the group.
+-- @param Wrapper.Group#GROUP group The group object. Can also be given by its group name as `#string`.
 -- @return #NAVYGROUP self
-function NAVYGROUP:New(GroupName)
+function NAVYGROUP:New(group)
+
+  -- First check if we already have an OPS group for this group.
+  local og=_DATABASE:GetOpsGroup(group)
+  if og then
+    og:I(og.lid..string.format("WARNING: OPS group already exists in data base!"))
+    return og
+  end
 
   -- Inherit everything from FSM class.
-  local self=BASE:Inherit(self, OPSGROUP:New(GroupName)) -- #NAVYGROUP
+  local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #NAVYGROUP
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("NAVYGROUP %s | ", self.groupname)
   
   -- Defaults
-  self:SetDetection()
   self:SetDefaultROE()
   self:SetDefaultAlarmstate()
+  self:SetDefaultEPLRS(self.isEPLRS)
+  self:SetDetection()  
   self:SetPatrolAdInfinitum(true)
   self:SetPathfinding(false)
-  self.isNavygroup=true
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "FullStop",         "Holding")     -- Hold position.
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Hold position.
+
+  self:AddTransition("*",             "RTZ",              "Returning")   -- Group is returning to (home) zone.
+  self:AddTransition("Returning",     "Returned",         "Returned")    -- Group is returned to (home) zone.
+
+  self:AddTransition("*",             "Detour",           "Cruising")    -- Make a detour to a coordinate and resume route afterwards.
+  self:AddTransition("*",             "DetourReached",    "*")           -- Group reached the detour coordinate.
+
+  self:AddTransition("*",             "Retreat",          "Retreating")  -- Order a retreat.
+  self:AddTransition("Retreating",    "Retreated",        "Retreated")   -- Group retreated.
+
+  self:AddTransition("Cruising",      "EngageTarget",     "Engaging")    -- Engage a target from Cruising state
+  self:AddTransition("Holding",       "EngageTarget",     "Engaging")    -- Engage a target from Holding state
+  self:AddTransition("OnDetour",      "EngageTarget",     "Engaging")    -- Engage a target from OnDetour state
+  self:AddTransition("Engaging",      "Disengage",        "Cruising")    -- Disengage and back to cruising.
   
-  self:AddTransition("*",             "TurnIntoWind",     "IntoWind")    -- Command the group to turn into the wind.
-  self:AddTransition("IntoWind",      "TurnedIntoWind",   "IntoWind")    -- Group turned into wind.
-  self:AddTransition("IntoWind",      "TurnIntoWindStop", "IntoWind")    -- Stop a turn into wind.  
-  self:AddTransition("IntoWind",      "TurnIntoWindOver", "Cruising")    -- Turn into wind is over.
+  self:AddTransition("*",             "TurnIntoWind",     "Cruising")    -- Command the group to turn into the wind.
+  self:AddTransition("*",             "TurnedIntoWind",   "*")           -- Group turned into wind.
+  self:AddTransition("*",             "TurnIntoWindStop", "*")           -- Stop a turn into wind.  
+  self:AddTransition("*",             "TurnIntoWindOver", "*")           -- Turn into wind is over.
   
   self:AddTransition("*",             "TurningStarted",   "*")           -- Group started turning.
   self:AddTransition("*",             "TurningStopped",   "*")           -- Group stopped turning.
   
-  self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
-  self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
-  
   self:AddTransition("*",             "CollisionWarning", "*")           -- Collision warning.
   self:AddTransition("*",             "ClearAhead",       "*")           -- Clear ahead.
   
-  self:AddTransition("*",             "Dive",             "Diving")      -- Command a submarine to dive.
-  self:AddTransition("Diving",        "Surface",          "Cruising")    -- Command a submarine to go to the surface.
+  self:AddTransition("Cruising",      "Dive",             "Cruising")    -- Command a submarine to dive.
+  self:AddTransition("Engaging",      "Dive",             "Engaging")    -- Command a submarine to dive.
+  self:AddTransition("Cruising",      "Surface",          "Cruising")    -- Command a submarine to go to the surface.
+  self:AddTransition("Engaging",      "Surface",          "Engaging")    -- Command a submarine to go to the surface.
   
   ------------------------
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Stop". Stops the NAVYGROUP and all its event handlers.
+  --- Triggers the FSM event "Cruise".
+  -- @function [parent=#NAVYGROUP] Cruise
   -- @param #NAVYGROUP self
+  -- @param #number Speed Speed in knots until next waypoint is reached.
 
-  --- Triggers the FSM event "Stop" after a delay. Stops the NAVYGROUP and all its event handlers.
-  -- @function [parent=#NAVYGROUP] __Stop
+  --- Triggers the FSM event "Cruise" after a delay.
+  -- @function [parent=#NAVYGROUP] __Cruise
   -- @param #NAVYGROUP self
   -- @param #number delay Delay in seconds.
-  
-  -- TODO: Add pseudo functions.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+  --- On after "Cruise" event.
+  -- @function [parent=#NAVYGROUP] OnAfterCruise
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+
+
+
+
+
+
+  --- Triggers the FSM event "TurnIntoWind".
+  -- @function [parent=#NAVYGROUP] TurnIntoWind
+  -- @param #NAVYGROUP self
+  -- @param #NAVYGROUP.IntoWind Into wind parameters.
+
+  --- Triggers the FSM event "TurnIntoWind" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurnIntoWind
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param #NAVYGROUP.IntoWind Into wind parameters.
+
+  --- On after "TurnIntoWind" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurnIntoWind
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #NAVYGROUP.IntoWind Into wind parameters.
+
+
+  --- Triggers the FSM event "TurnedIntoWind".
+  -- @function [parent=#NAVYGROUP] TurnedIntoWind
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "TurnedIntoWind" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurnedIntoWind
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "TurnedIntoWind" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurnedIntoWind
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "TurnIntoWindStop".
+  -- @function [parent=#NAVYGROUP] TurnIntoWindStop
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "TurnIntoWindStop" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurnIntoWindStop
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "TurnIntoWindStop" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurnIntoWindStop
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "TurnIntoWindOver".
+  -- @function [parent=#NAVYGROUP] TurnIntoWindOver
+  -- @param #NAVYGROUP self
+  -- @param #NAVYGROUP.IntoWind IntoWindData Data table.
+
+  --- Triggers the FSM event "TurnIntoWindOver" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurnIntoWindOver
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param #NAVYGROUP.IntoWind IntoWindData Data table.
+
+  --- On after "TurnIntoWindOver" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurnIntoWindOver
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #NAVYGROUP.IntoWind IntoWindData Data table.
+
+
+  --- Triggers the FSM event "TurningStarted".
+  -- @function [parent=#NAVYGROUP] TurningStarted
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "TurningStarted" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurningStarted
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "TurningStarted" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurningStarted
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "TurningStopped".
+  -- @function [parent=#NAVYGROUP] TurningStopped
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "TurningStopped" after a delay.
+  -- @function [parent=#NAVYGROUP] __TurningStopped
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "TurningStopped" event.
+  -- @function [parent=#NAVYGROUP] OnAfterTurningStopped
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "CollisionWarning".
+  -- @function [parent=#NAVYGROUP] CollisionWarning
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "CollisionWarning" after a delay.
+  -- @function [parent=#NAVYGROUP] __CollisionWarning
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "CollisionWarning" event.
+  -- @function [parent=#NAVYGROUP] OnAfterCollisionWarning
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "ClearAhead".
+  -- @function [parent=#NAVYGROUP] ClearAhead
+  -- @param #NAVYGROUP self
+
+  --- Triggers the FSM event "ClearAhead" after a delay.
+  -- @function [parent=#NAVYGROUP] __ClearAhead
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "ClearAhead" event.
+  -- @function [parent=#NAVYGROUP] OnAfterClearAhead
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Dive".
+  -- @function [parent=#NAVYGROUP] Dive
+  -- @param #NAVYGROUP self
+  -- @param #number Depth Dive depth in meters. Default 50 meters.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+  --- Triggers the FSM event "Dive" after a delay.
+  -- @function [parent=#NAVYGROUP] __Dive
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param #number Depth Dive depth in meters. Default 50 meters.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+  --- On after "Dive" event.
+  -- @function [parent=#NAVYGROUP] OnAfterDive
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number Depth Dive depth in meters. Default 50 meters.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+
+  --- Triggers the FSM event "Surface".
+  -- @function [parent=#NAVYGROUP] Surface
+  -- @param #NAVYGROUP self
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+  --- Triggers the FSM event "Surface" after a delay.
+  -- @function [parent=#NAVYGROUP] __Surface
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+
+  --- On after "Surface" event.
+  -- @function [parent=#NAVYGROUP] OnAfterSurface
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
 
 
   -- Init waypoints.
-  self:InitWaypoints()
+  self:_InitWaypoints()
   
   -- Initialize the group.
   self:_InitGroup()
@@ -174,13 +399,16 @@ function NAVYGROUP:New(GroupName)
   self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
   
   -- Start the status monitoring.
-  self:__Status(-1)
+  self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
 
   -- Start queue update timer.
   self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(2, 5)
   
   -- Start check zone timer.
   self.timerCheckZone=TIMER:New(self._CheckInZones, self):Start(2, 60)
+
+  -- Add OPSGROUP to _DATABASE.
+  _DATABASE:AddOpsGroup(self)
      
   return self  
 end
@@ -226,7 +454,7 @@ end
 -- @param #NAVYGROUP self
 -- @return #NAVYGROUP self
 function NAVYGROUP:SetPathfindingOff()
-  self:SetPathfinding(true, self.pathCorridor)
+  self:SetPathfinding(false, self.pathCorridor)
   return self
 end
 
@@ -355,7 +583,7 @@ end
 -- @param #NAVYGROUP self
 -- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
 -- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
--- @param #number speed Speed in knots during turn into wind leg.
+-- @param #number speed Wind speed on deck in knots during turn into wind leg. Default 20 knots.
 -- @param #boolean uturn If `true` (or `nil`), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
 -- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
 -- @return #NAVYGROUP.IntoWind Turn into window data table.
@@ -379,7 +607,6 @@ function NAVYGROUP:RemoveTurnIntoWind(IntoWindData)
 
   -- Check if this is a window currently open.
   if self.intowind and self.intowind.Id==IntoWindData.Id then
-    --env.info("FF stop in remove")
     self:TurnIntoWindStop()
     return
   end  
@@ -449,46 +676,34 @@ end
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
----- Update status.
--- @param #NAVYGROUP self
-function NAVYGROUP:onbeforeStatus(From, Event, To)
-
-  if self:IsDead() then  
-    self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
-    return false   
-  elseif self:IsStopped() then
-    self:T(self.lid..string.format("Onbefore Status STOPPED ==> false"))
-    return false
-  end
-
-  return true
-end
-
 --- Update status.
 -- @param #NAVYGROUP self
-function NAVYGROUP:onafterStatus(From, Event, To)
+function NAVYGROUP:Status(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
+
+  -- Is group alive?
+  local alive=self:IsAlive()
   
-  if self:IsAlive() then
+  -- Free path.
+  local freepath=0
   
-    ---
-    -- Detection
-    ---  
-  
-    -- Check if group has detected any units.
-    if self.detectionOn then
-      self:_CheckDetectedUnits()
-    end
-    
+  -- Check if group is exists and is active.
+  if alive then
+
     -- Update last known position, orientation, velocity.
     self:_UpdatePosition()
+  
+    -- Check if group has detected any units.
+    self:_CheckDetectedUnits()
     
     -- Check if group started or stopped turning.
     self:_CheckTurning()
-    
-    local freepath=UTILS.NMToMeters(10)
+  
+    -- Distance to next Waypoint.  
+    local disttoWP=math.min(self:GetDistanceToWaypoint(), UTILS.NMToMeters(10))
+    freepath=disttoWP
     
     -- Only check if not currently turning.
     if not self:IsTurning() then
@@ -496,7 +711,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
       -- Check free path ahead.
       freepath=self:_CheckFreePath(freepath, 100)
       
-      if freepath<5000 then
+      if disttoWP>1 and freepath<disttoWP then
       
         if not self.collisionwarning then
           -- Issue a collision warning event.
@@ -516,6 +731,22 @@ function NAVYGROUP:onafterStatus(From, Event, To)
     
     -- Check if group got stuck.
     self:_CheckStuck()
+    
+    -- Check if group is waiting.
+    if self:IsWaiting() then
+      if self.Twaiting and self.dTwait then
+        if timer.getAbsTime()>self.Twaiting+self.dTwait then
+          self.Twaiting=nil
+          self.dTwait=nil
+          self:Cruise()
+        end
+      end
+    end
+    
+  end
+
+  -- Group exists but can also be inactive.  
+  if alive~=nil then
 
     if self.verbose>=1 then
   
@@ -525,15 +756,17 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   
       local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"    
       local turning=tostring(self:IsTurning())
-      local alt=self.position.y
-      local speed=UTILS.MpsToKnots(self.velocity)
-      local speedExpected=UTILS.MpsToKnots(self:GetExpectedSpeed()) --UTILS.MpsToKnots(self.speedWp or 0)
+      local alt=self.position and self.position.y or 0
+      local speed=UTILS.MpsToKnots(self.velocity or 0)
+      local speedExpected=UTILS.MpsToKnots(self:GetExpectedSpeed())
       
       -- Waypoint stuff.
       local wpidxCurr=self.currentwp
       local wpuidCurr=self:GetWaypointUIDFromIndex(wpidxCurr) or 0
       local wpidxNext=self:GetWaypointIndexNext() or 0
       local wpuidNext=self:GetWaypointUIDFromIndex(wpidxNext) or 0
+      local wpN=#self.waypoints or 0
+      local wpF=tostring(self.passedfinalwp)
       local wpDist=UTILS.MetersToNM(self:GetDistanceToWaypoint() or 0)
       local wpETA=UTILS.SecondsToClock(self:GetTimeToWaypoint() or 0, true)
       
@@ -542,22 +775,10 @@ function NAVYGROUP:onafterStatus(From, Event, To)
       local als=self:GetAlarmstate() or 0
     
       -- Info text.
-      local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] (of %d) Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
-      fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, #self.waypoints or 0, wpDist, wpETA, speed, speedExpected, alt, self.heading, turning, freepath, intowind)
+      local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] /%d [%s]  Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
+      fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, wpDist, wpETA, speed, speedExpected, alt, self.heading or 0, turning, freepath, intowind)
       self:I(self.lid..text)
-      
-      if false then
-        local text="Waypoints:"
-        for i,wp in pairs(self.waypoints) do
-          local waypoint=wp --Ops.OpsGroup#OPSGROUP.Waypoint
-          text=text..string.format("\n%d. UID=%d", i, waypoint.uid)
-          if i==self.currentwp then
-            text=text.." current!"
-          end
-        end
-        env.info(text)
-      end
-      
+            
     end
     
   else
@@ -572,7 +793,7 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   -- Recovery Windows
   ---
 
-  if self.verbose>=2 then
+  if alive and self.verbose>=2 and #self.Qintowind>0 then
   
     -- Debug output:
     local text=string.format(self.lid.."Turn into wind time windows:")
@@ -599,6 +820,26 @@ function NAVYGROUP:onafterStatus(From, Event, To)
   
   end
 
+  ---
+  -- Engage Detected Targets
+  ---
+  if self:IsCruising() and self.detectionOn and self.engagedetectedOn then
+
+    local targetgroup, targetdist=self:_GetDetectedTarget()
+
+    -- If we found a group, we engage it.
+    if targetgroup then
+      self:I(self.lid..string.format("Engaging target group %s at distance %d meters", targetgroup:GetName(), targetdist))
+      self:EngageTarget(targetgroup)
+    end
+
+  end
+
+  ---
+  -- Cargo
+  ---
+  
+  self:_CheckCargoTransport()
 
   ---
   -- Tasks & Missions
@@ -606,10 +847,13 @@ function NAVYGROUP:onafterStatus(From, Event, To)
 
   self:_PrintTaskAndMissionStatus()
 
-
-  -- Next status update in 30 seconds.
-  self:__Status(-30)
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- DCS Events ==> See OPSGROUP
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- See OPSGROUP!
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Events
@@ -620,7 +864,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #NAVYGROUP.Element Element The group element.
+-- @param Ops.OpsGroup#OPSGROUP.Element Element The group element.
 function NAVYGROUP:onafterElementSpawned(From, Event, To, Element)
   self:T(self.lid..string.format("Element spawned %s", Element.name))
 
@@ -637,8 +881,32 @@ end
 function NAVYGROUP:onafterSpawned(From, Event, To)
   self:T(self.lid..string.format("Group spawned!"))
 
+  -- Debug info.
+  if self.verbose>=1 then
+    local text=string.format("Initialized Navy Group %s:\n", self.groupname)
+    text=text..string.format("Unit type     = %s\n", self.actype)
+    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
+    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
+    text=text..string.format("Weight       = %.1f kg\n", self:GetWeightTotal())
+    text=text..string.format("Cargo bay    = %.1f kg\n", self:GetFreeCargobay())
+    text=text..string.format("Has EPLRS    = %s\n", tostring(self.isEPLRS))    
+    text=text..string.format("Is Submarine = %s\n", tostring(self.isSubmarine))    
+    text=text..string.format("Elements     = %d\n", #self.elements)
+    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
+    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d/T=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles, self.ammo.Torpedos)
+    text=text..string.format("FSM state    = %s\n", self:GetState())
+    text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
+    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
+    self:I(self.lid..text)
+  end
+
   -- Update position.
   self:_UpdatePosition()
+  
+  -- Not dead or destroyed yet.
+  self.isDead=false
+  self.isDestroyed=false  
 
   if self.isAI then
  
@@ -648,6 +916,9 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     -- Set default Alarm State.
     self:SwitchAlarmstate(self.option.Alarm)
     
+    -- Set default EPLRS.
+    self:SwitchEPLRS(self.option.EPLRS)    
+    
     -- Set TACAN beacon.
     self:_SwitchTACAN()
     
@@ -656,20 +927,50 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
 
     -- Set radio.
     if self.radioDefault then
-      self:SwitchRadio()
+      -- CAREFUL: This makes DCS crash for some ships like speed boats or Higgins boats! (On a respawn for example). Looks like the command SetFrequency is causing this.
+      --self:SwitchRadio()
     else
       self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, false)
+    end
+
+    -- Update route.
+    if #self.waypoints>1 then  
+      self:__Cruise(-0.1)
+    else
+      self:FullStop()
     end
     
   end
   
-  -- Update route.
-  if #self.waypoints>1 then  
-    self:Cruise()
-  else
-    self:FullStop()
+end
+
+--- On before "UpdateRoute" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+-- @param #number Speed Speed in knots to the next waypoint.
+-- @param #number Depth Depth in meters to the next waypoint.
+function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
+  if self:IsWaiting() then
+    self:E(self.lid.."Update route denied. Group is WAITING!")
+    return false
+  elseif self:IsInUtero() then
+    self:E(self.lid.."Update route denied. Group is INUTERO!")
+    return false
+  elseif self:IsDead() then
+    self:E(self.lid.."Update route denied. Group is DEAD!")
+    return false
+  elseif self:IsStopped() then
+    self:E(self.lid.."Update route denied. Group is STOPPED!")
+    return false
+  elseif self:IsHolding() then
+    self:T(self.lid.."Update route denied. Group is holding position!")
+    return false    
   end
-  
+  return true
 end
 
 --- On after "UpdateRoute" event.
@@ -677,57 +978,80 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Waypoint number. Default is next waypoint.
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
 -- @param #number Speed Speed in knots to the next waypoint.
 -- @param #number Depth Depth in meters to the next waypoint.
-function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Depth)
+function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
 
   -- Update route from this waypoint number onwards.
   n=n or self:GetWaypointIndexNext()
   
-  -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
-  self:_UpdateWaypointTasks(n)
+  -- Max index.
+  N=N or #self.waypoints  
+  N=math.min(N, #self.waypoints)
+  
 
   -- Waypoints.
   local waypoints={}
   
-  -- Waypoint.
-  local wp=UTILS.DeepCopy(self.waypoints[n])  --Ops.OpsGroup#OPSGROUP.Waypoint
+  for i=n, N do
+  
+    -- Waypoint.
+    local wp=UTILS.DeepCopy(self.waypoints[i])  --Ops.OpsGroup#OPSGROUP.Waypoint
     
-  -- Speed.
-  if Speed then
-    -- Take speed specified.
-    wp.speed=UTILS.KnotsToMps(Speed)
-  else
-    -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
-    if self.adinfinitum and wp.speed<0.1 then
-      wp.speed=UTILS.KmphToMps(self.speedCruise)
+    --env.info(string.format("FF i=%d UID=%d   n=%d, N=%d", i, wp.uid, n, N))
+      
+    -- Speed.
+    if Speed then
+      -- Take speed specified.
+      wp.speed=UTILS.KnotsToMps(Speed)
+    else
+      -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
+      if wp.speed<0.1 then --self.adinfinitum and 
+        wp.speed=UTILS.KmphToMps(self.speedCruise)
+      end
     end
-  end
+    
+    -- Depth.
+    if Depth then
+      wp.alt=-Depth
+    elseif self.depth then
+      wp.alt=-self.depth
+    else
+      -- Take default waypoint alt.
+      wp.alt=wp.alt or 0
+    end
+    
+    -- Current set speed in m/s.
+    if i==n then
+      self.speedWp=wp.speed
+      self.altWp=wp.alt
+    end
   
-  if Depth then
-    wp.alt=-Depth
-  elseif self.depth then
-    wp.alt=-self.depth
-  else
-    -- Take default waypoint alt.
-  end
+    -- Add waypoint.
+    table.insert(waypoints, wp)
   
-  -- Current set speed in m/s.
-  self.speedWp=wp.speed
-
-  -- Add waypoint.
-  table.insert(waypoints, wp)
+  end
   
   -- Current waypoint.
-  local current=self:GetCoordinate():WaypointNaval(UTILS.MpsToKmph(self.speedWp), wp.alt)
+  local current=self:GetCoordinate():WaypointNaval(UTILS.MpsToKmph(self.speedWp), self.altWp)
   table.insert(waypoints, 1, current)  
 
   
-  if not self.passedfinalwp then
+  if self:IsEngaging() or not self.passedfinalwp then
+  
+    if self.verbose>=10 then
+      for i=1,#waypoints do
+        local wp=waypoints[i] --Ops.OpsGroup#OPSGROUP.Waypoint
+        local text=string.format("%s Waypoint [%d] UID=%d speed=%d", self.groupname, i-1, wp.uid or -1, wp.speed)
+        self:I(self.lid..text)
+        COORDINATE:NewFromWaypoint(wp):MarkToAll(text)            
+      end
+    end
 
     -- Debug info.
-    self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), wp.alt))
+    self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), self.altWp))
 
     -- Route group to all defined waypoints remaining.
     self:Route(waypoints)
@@ -827,7 +1151,7 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   
   IntoWind.waypoint=wptiw
   
-  if IntoWind.Uturn and self.Debug then
+  if IntoWind.Uturn and false then
     IntoWind.Coordinate:MarkToAll("Return coord")
   end
   
@@ -885,8 +1209,13 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
     
       -- Detour to where we left the route.
       self:T(self.lid.."FF Turn Into Wind Over ==> Uturn!")
-      self:Detour(self.intowind.Coordinate, self:GetSpeedCruise(), 0, true)
-      
+
+      -- ID of current waypoint.
+      local uid=self:GetWaypointCurrent().uid
+  
+      -- Add temp waypoint.
+      local wp=self:AddWaypoint(self.intowind.Coordinate, self:GetSpeedCruise(), uid) ; wp.temp=true
+
     else
     
       ---
@@ -895,11 +1224,11 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
     
       -- Next waypoint index and speed.
       local indx=self:GetWaypointIndexNext()
-      local speed=self:GetWaypointSpeed(indx)
+      local speed=self:GetSpeedToWaypoint(indx)
       
       -- Update route.
       self:T(self.lid..string.format("FF Turn Into Wind Over ==> Next WP Index=%d at %.1f knots via update route!", indx, speed))
-      self:__UpdateRoute(-1, indx, speed)
+      self:__UpdateRoute(-1, indx, nil, speed)
       
     end
     
@@ -940,10 +1269,14 @@ end
 -- @param #number Speed Speed in knots until next waypoint is reached. Default is speed set for waypoint.
 function NAVYGROUP:onafterCruise(From, Event, To, Speed)
 
+  -- Not waiting anymore.
+  self.Twaiting=nil
+  self.dTwait=nil
+
   -- No set depth.
   self.depth=nil
 
-  self:__UpdateRoute(-1, nil, Speed)
+  self:__UpdateRoute(-0.1, nil, nil, Speed)
 
 end
 
@@ -958,11 +1291,11 @@ function NAVYGROUP:onafterDive(From, Event, To, Depth, Speed)
 
   Depth=Depth or 50
 
-  self:T(self.lid..string.format("Diving to %d meters", Depth))
+  self:I(self.lid..string.format("Diving to %d meters", Depth))
   
   self.depth=Depth
   
-  self:__UpdateRoute(-1, nil, Speed)
+  self:__UpdateRoute(-1, nil, nil, Speed)
 
 end
 
@@ -976,7 +1309,7 @@ function NAVYGROUP:onafterSurface(From, Event, To, Speed)
 
   self.depth=0
 
-  self:__UpdateRoute(-1, nil, Speed)
+  self:__UpdateRoute(-1, nil, nil, Speed)
 
 end
 
@@ -1015,110 +1348,114 @@ function NAVYGROUP:onafterCollisionWarning(From, Event, To, Distance)
   self.collisionwarning=true
 end
 
---- On after Start event. Starts the NAVYGROUP FSM and event handlers.
+--- On after "EngageTarget" event.
 -- @param #NAVYGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function NAVYGROUP:onafterStop(From, Event, To)
+-- @param Wrapper.Group#GROUP Group the group to be engaged.
+function NAVYGROUP:onafterEngageTarget(From, Event, To, Target)
+  self:T(self.lid.."Engaging Target")
 
-  -- Handle events:
-  self:UnHandleEvent(EVENTS.Birth)
-  self:UnHandleEvent(EVENTS.Dead)
-  self:UnHandleEvent(EVENTS.RemoveUnit)
-  
-  -- Call OPSGROUP function.
-  self:GetParent(self).onafterStop(self, From, Event, To)
-  
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Events DCS
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Event function handling the birth of a unit.
--- @param #NAVYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function NAVYGROUP:OnEventBirth(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-    
-    if self.respawning then
-    
-      local function reset()
-        self.respawning=nil
-      end
-      
-      -- Reset switch in 1 sec. This should allow all birth events of n>1 groups to have passed.
-      -- TODO: Can I do this more rigorously?
-      self:ScheduleOnce(1, reset)
-    
-    else
-          
-      -- Get element.
-      local element=self:GetElementByName(unitname)
-
-      -- Set element to spawned state.
-      self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", element.name))            
-      self:ElementSpawned(element)
-      
-    end    
-    
+  if Target:IsInstanceOf("TARGET") then
+    self.engage.Target=Target
+  else
+    self.engage.Target=TARGET:New(Target)
   end
+ 
+  -- Target coordinate.
+  self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate()) 
+ 
+  
+  local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+
+
+  
+  -- Backup ROE and alarm state.
+  self.engage.roe=self:GetROE()
+  self.engage.alarmstate=self:GetAlarmstate()
+  
+  -- Switch ROE and alarm state.
+  self:SwitchAlarmstate(ENUMS.AlarmState.Auto)
+  self:SwitchROE(ENUMS.ROE.OpenFire)
+
+  -- ID of current waypoint.
+  local uid=self:GetWaypointCurrent().uid
+  
+  -- Add waypoint after current.
+  self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+  
+  -- Set if we want to resume route after reaching the detour waypoint.
+  self.engage.Waypoint.detour=1
 
 end
 
---- Flightgroup event function handling the crash of a unit.
+--- Update engage target.
 -- @param #NAVYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function NAVYGROUP:OnEventDead(EventData)
+function NAVYGROUP:_UpdateEngageTarget()
 
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    self:T(self.lid..string.format("EVENT: Unit %s dead!", EventData.IniUnitName))
+  if self.engage.Target and self.engage.Target:IsAlive() then
+
+    -- Get current position vector.
+    local vec3=self.engage.Target:GetVec3()
+  
+    -- Distance to last known position of target.
+    local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
     
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
+    -- Check if target moved more than 100 meters.
+    if dist>100 then
+    
+      --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
+    
+      -- Update new position.
+      self.engage.Coordinate:UpdateFromVec3(vec3)
 
-    -- Get element.
-    local element=self:GetElementByName(unitname)
-
-    if element then
-      self:T(self.lid..string.format("EVENT: Element %s dead ==> destroyed", element.name))
-      self:ElementDestroyed(element)
+      -- ID of current waypoint.
+      local uid=self:GetWaypointCurrent().uid
+    
+      -- Remove current waypoint
+      self:RemoveWaypointByID(self.engage.Waypoint.uid)
+      
+      local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+  
+        -- Add waypoint after current.
+      self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+    
+      -- Set if we want to resume route after reaching the detour waypoint.
+      self.engage.Waypoint.detour=0      
+    
     end
     
+  else
+  
+    -- Target not alive any more == Disengage.
+    self:Disengage()
+    
   end
 
 end
 
---- Flightgroup event function handling the crash of a unit.
+--- On after "Disengage" event.
 -- @param #NAVYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function NAVYGROUP:OnEventRemoveUnit(EventData)
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterDisengage(From, Event, To)
+  self:T(self.lid.."Disengage Target")
 
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-
-    -- Get element.
-    local element=self:GetElementByName(unitname)
-
-    if element then
-      self:T(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
-      self:ElementDead(element)
-    end
-
+  -- Restore previous ROE and alarm state.
+  self:SwitchROE(self.engage.roe)
+  self:SwitchAlarmstate(self.engage.alarmstate)
+  
+  -- Remove current waypoint
+  if self.engage.Waypoint then
+    self:RemoveWaypointByID(self.engage.Waypoint.uid)    
   end
 
+  -- Check group is done
+  self:_CheckGroupDone(1)
 end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Routing
@@ -1126,41 +1463,33 @@ end
 
 --- Add an a waypoint to the route.
 -- @param #NAVYGROUP self
--- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
+-- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use `COORDINATE:SetAltitude()` to define the altitude.
 -- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
 -- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Depth Depth at waypoint in meters. Only for submarines.
+-- @param #number Depth Depth at waypoint in feet. Only for submarines.
 -- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Updateroute)
 
-  -- Check if a coordinate was given or at least a positionable.
-  if not Coordinate:IsInstanceOf("COORDINATE") then
-    if Coordinate:IsInstanceOf("POSITIONABLE") or Coordinate:IsInstanceOf("ZONE_BASE") then
-      self:T(self.lid.."WARNING: Coordinate is not a COORDINATE but a POSITIONABLE or ZONE. Trying to get coordinate")
-      Coordinate=Coordinate:GetCoordinate()
-    else
-      self:E(self.lid.."ERROR: Coordinate is neither a COORDINATE nor any POSITIONABLE or ZONE!")
-      return nil
-    end
-  end
+  -- Create coordinate.
+  local coordinate=self:_CoordinateFromObject(Coordinate)  
   
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
 
-  -- Check if final waypoint is still passed.  
-  if wpnumber>self.currentwp then
-    self.passedfinalwp=false
-  end
-  
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
 
   -- Create a Naval waypoint.
-  local wp=Coordinate:WaypointNaval(UTILS.KnotsToKmph(Speed), Depth)
+  local wp=coordinate:WaypointNaval(UTILS.KnotsToKmph(Speed), Depth)
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
+
+  -- Set altitude.
+  if Depth then
+    waypoint.alt=UTILS.FeetToMeters(Depth)
+  end
 
   -- Add waypoint to table.
   self:_AddWaypoint(waypoint, wpnumber)
@@ -1170,7 +1499,7 @@ function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Up
 
   -- Update route.
   if Updateroute==nil or Updateroute==true then
-    self:_CheckGroupDone(1)
+    self:__UpdateRoute(-0.01)
   end
   
   return waypoint
@@ -1178,31 +1507,24 @@ end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #NAVYGROUP self
+-- @param #table Template Template used to init the group. Default is `self.template`.
 -- @return #NAVYGROUP self
-function NAVYGROUP:_InitGroup()
+function NAVYGROUP:_InitGroup(Template)
 
   -- First check if group was already initialized.
   if self.groupinitialized then
-    self:E(self.lid.."WARNING: Group was already initialized!")
+    self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
     return
   end
 
   -- Get template of group.
-  self.template=self.group:GetTemplate()
+  local template=Template or self:_GetTemplate()
 
-  -- Define category.
-  self.isAircraft=false
-  self.isNaval=true
-  self.isGround=false
-
-  --TODO: Submarine check
-  --self.isSubmarine=self.group:IsSubmarine()
-  
   -- Ships are always AI.
   self.isAI=true
   
   -- Is (template) group late activated.
-  self.isLateActivated=self.template.lateActivation
+  self.isLateActivated=template.lateActivation
   
   -- Naval groups cannot be uncontrolled.
   self.isUncontrolled=false
@@ -1218,8 +1540,8 @@ function NAVYGROUP:_InitGroup()
   
   -- Radio parameters from template. Default is set on spawn if not modified by the user.
   self.radio.On=true  -- Radio is always on for ships.
-  self.radio.Freq=tonumber(self.template.units[1].frequency)/1000000
-  self.radio.Modu=tonumber(self.template.units[1].modulation)
+  self.radio.Freq=tonumber(template.units[1].frequency)/1000000
+  self.radio.Modu=tonumber(template.units[1].modulation)
   
   -- Set default formation. No really applicable for ships.
   self.optionDefault.Formation="Off Road"
@@ -1235,63 +1557,19 @@ function NAVYGROUP:_InitGroup()
   
   -- Get all units of the group.
   local units=self.group:GetUnits()
+
+  -- DCS group.
+  local dcsgroup=Group.getByName(self.groupname)
+  local size0=dcsgroup:getInitialSize()
   
-  for _,_unit in pairs(units) do
-    local unit=_unit --Wrapper.Unit#UNIT
-    
-    -- Get unit template.
-    local unittemplate=unit:GetTemplate()    
-    
-    local element={} --#NAVYGROUP.Element
-    element.name=unit:GetName()
-    element.unit=unit
-    element.status=OPSGROUP.ElementStatus.INUTERO
-    element.typename=unit:GetTypeName()
-    element.skill=unittemplate.skill or "Unknown"
-    element.ai=true
-    element.category=element.unit:GetUnitCategory()
-    element.categoryname=element.unit:GetCategoryName()
-    element.size, element.length, element.height, element.width=unit:GetObjectSize()
-    element.ammo0=self:GetAmmoUnit(unit, false)    
-
-    -- Debug text.
-    if self.verbose>=2 then
-      local text=string.format("Adding element %s: status=%s, skill=%s, category=%s (%d), size: %.1f (L=%.1f H=%.1f W=%.1f)",
-      element.name, element.status, element.skill, element.categoryname, element.category, element.size, element.length, element.height, element.width)
-      self:I(self.lid..text)
-    end
-
-    -- Add element to table.    
-    table.insert(self.elements, element)
-
-    -- Get Descriptors.
-    self.descriptors=self.descriptors or unit:GetDesc()
-    
-    -- Set type name.
-    self.actype=self.actype or unit:GetTypeName()
-    
-    if unit:IsAlive() then
-      -- Trigger spawned event. 
-      self:ElementSpawned(element)
-    end
-    
+  -- Quick check.
+  if #units~=size0 then
+    self:E(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
   end
-
-    
-  -- Debug info.
-  if self.verbose>=1 then
-    local text=string.format("Initialized Navy Group %s:\n", self.groupname)
-    text=text..string.format("Unit type     = %s\n", self.actype)
-    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
-    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
-    text=text..string.format("Elements     = %d\n", #self.elements)
-    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
-    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d/T=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles, self.ammo.Torpedos)
-    text=text..string.format("FSM state    = %s\n", self:GetState())
-    text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
-    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
-    self:I(self.lid..text)
+  
+  -- Add elemets.
+  for _,unit in pairs(units) do
+    self:_AddElementByName(unit:GetName())
   end
   
   -- Init done.
@@ -1346,8 +1624,6 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
   --coordinate=coordinate:Translate(500, heading, true)
   
   local function LoS(dist)
-    --local checkcoord=coordinate:Translate(dist, heading, true)
-    --return coordinate:IsLOS(checkcoord, offsetY)
     local checkvec3=UTILS.VecTranslate(vec3, dist, heading)
     local los=land.isVisible(vec3, checkvec3)
     return los
@@ -1375,7 +1651,7 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
       local los=LoS(x)
       
       -- Debug message.
-      self:T2(self.lid..string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
+      self:T(self.lid..string.format("N=%d: xmin=%.1f xmax=%.1f x=%.1f d=%.3f los=%s", N, xmin, xmax, x, d, tostring(los)))
       
       if los and d<=eps then
         return x
@@ -1549,6 +1825,9 @@ end
 -- @param #NAVYGROUP self
 -- @return #boolean If true, a path was found.
 function NAVYGROUP:_FindPathToNextWaypoint()
+  self:T3(self.lid.."Path finding")
+  
+  --TODO: Do not create a new ASTAR object each time this function is called but make it self.astar and reuse. Should be better for performance.
 
   -- Pathfinding A*
   local astar=ASTAR:New()
@@ -1558,6 +1837,11 @@ function NAVYGROUP:_FindPathToNextWaypoint()
   
   -- Next waypoint.
   local wpnext=self:GetWaypointNext()
+  
+  -- No next waypoint.
+  if wpnext==nil then
+    return
+  end
   
   -- Next waypoint coordinate.
   local nextwp=wpnext.coordinate
@@ -1575,16 +1859,21 @@ function NAVYGROUP:_FindPathToNextWaypoint()
   
   -- Set end coordinate.
   astar:SetEndCoordinate(nextwp)
-  
+
   -- Distance to next waypoint.
   local dist=position:Get2DDistance(nextwp)
+  
+  -- Check distance >= 5 meters.
+  if dist<5 then
+    return
+  end
   
   local boxwidth=dist*2
   local spacex=dist*0.1
   local delta=dist/10
   
   -- Create a grid of nodes. We only want nodes of surface type water.
-  astar:CreateGrid({land.SurfaceType.WATER}, boxwidth, spacex, delta, delta*2, self.Debug)
+  astar:CreateGrid({land.SurfaceType.WATER}, boxwidth, spacex, delta, delta, self.verbose>10)
   
   -- Valid neighbour nodes need to have line of sight.
   astar:SetValidNeighbourLoS(self.pathCorridor)
@@ -1611,7 +1900,9 @@ function NAVYGROUP:_FindPathToNextWaypoint()
         uid=wp.uid
 
         -- Debug: smoke and mark path.
-        --node.coordinate:MarkToAll(string.format("Path node #%d", i))
+        if self.verbose>=10 then
+          node.coordinate:MarkToAll(string.format("Path node #%d", i))
+        end
         
       end
       

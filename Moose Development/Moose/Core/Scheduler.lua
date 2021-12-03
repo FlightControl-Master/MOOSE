@@ -238,7 +238,7 @@ end
 -- @param #number Stop Time interval in seconds after which the scheduler will be stoppe.
 -- @param #number TraceLevel Trace level [0,3]. Default 3.
 -- @param Core.Fsm#FSM Fsm Finite state model.
--- @return #table The ScheduleID of the planned schedule.
+-- @return #string The Schedule ID of the planned schedule.
 function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel, Fsm )
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )
   self:T3( { SchedulerArguments } )
@@ -273,7 +273,7 @@ end
 
 --- (Re-)Starts the schedules or a specific schedule if a valid ScheduleID is provided.
 -- @param #SCHEDULER self
--- @param #string ScheduleID (Optional) The ScheduleID of the planned (repeating) schedule.
+-- @param #string ScheduleID (Optional) The Schedule ID of the planned (repeating) schedule.
 function SCHEDULER:Start( ScheduleID )
   self:F3( { ScheduleID } )
   self:T(string.format("Starting scheduler ID=%s", tostring(ScheduleID)))

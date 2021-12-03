@@ -310,8 +310,7 @@ end
 
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Position The 3D position vectors of the POSITIONABLE.
--- @return #nil The POSITIONABLE is not existing or alive.  
+-- @return DCS#Position The 3D position vectors of the POSITIONABLE or #nil if the groups not existing or alive.  
 function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3()
   self:F2( self.PositionableName )
 
@@ -339,9 +338,7 @@ end
 -- If the first @{Wrapper.Unit} of the group is inactive, it will return false.
 -- 
 -- @param #GROUP self
--- @return #boolean true if the group is alive and active.
--- @return #boolean false if the group is alive but inactive.
--- @return #nil if the group does not exist anymore.
+-- @return #boolean `true` if the group is alive *and* active, `false` if the group is alive but inactive or `#nil` if the group does not exist anymore.
 function GROUP:IsAlive()
   self:F2( self.GroupName )
 
@@ -363,8 +360,7 @@ end
 
 --- Returns if the group is activated.
 -- @param #GROUP self
--- @return #boolean true if group is activated.
--- @return #nil The group is not existing or alive.  
+-- @return #boolean `true` if group is activated or `#nil` The group is not existing or alive.  
 function GROUP:IsActive()
   self:F2( self.GroupName )
 
@@ -412,7 +408,6 @@ function GROUP:Destroy( GenerateEvent, delay )
   self:F2( self.GroupName )
   
   if delay and delay>0 then
-    --SCHEDULER:New(nil, GROUP.Destroy, {self, GenerateEvent}, delay)
     self:ScheduleOnce(delay, GROUP.Destroy, self, GenerateEvent)
   else
 
@@ -568,12 +563,12 @@ function GROUP:GetSpeedMax()
   
     local Units=self:GetUnits()
     
-    local speedmax=nil
+    local speedmax=0
     
     for _,unit in pairs(Units) do
       local unit=unit --Wrapper.Unit#UNIT
       local speed=unit:GetSpeedMax()
-      if speedmax==nil then
+      if speedmax==0 then
         speedmax=speed
       elseif speed<speedmax then
         speedmax=speed
@@ -2326,41 +2321,44 @@ function GROUP:GetAttribute()
     local unarmedship=self:HasAttribute("Unarmed ships")
 
 
-    -- Define attribute. Order is important.
-    if transportplane then
-      attribute=GROUP.Attribute.AIR_TRANSPORTPLANE
-    elseif awacs then
-      attribute=GROUP.Attribute.AIR_AWACS
-    elseif fighter then
+    -- Define attribute. Order of attack is important.
+    if fighter then
       attribute=GROUP.Attribute.AIR_FIGHTER
     elseif bomber then
       attribute=GROUP.Attribute.AIR_BOMBER
+    elseif awacs then
+      attribute=GROUP.Attribute.AIR_AWACS  
+    elseif transportplane then
+      attribute=GROUP.Attribute.AIR_TRANSPORTPLANE
     elseif tanker then
       attribute=GROUP.Attribute.AIR_TANKER
+      -- helos
+    elseif attackhelicopter then
+      attribute=GROUP.Attribute.AIR_ATTACKHELO  
     elseif transporthelo then
       attribute=GROUP.Attribute.AIR_TRANSPORTHELO
-    elseif attackhelicopter then
-      attribute=GROUP.Attribute.AIR_ATTACKHELO
     elseif uav then
       attribute=GROUP.Attribute.AIR_UAV
-    elseif apc then
-      attribute=GROUP.Attribute.GROUND_APC
-    elseif infantry then
-      attribute=GROUP.Attribute.GROUND_INFANTRY
-    elseif artillery then
-      attribute=GROUP.Attribute.GROUND_ARTILLERY
-    elseif tank then
-      attribute=GROUP.Attribute.GROUND_TANK
-    elseif aaa then
-      attribute=GROUP.Attribute.GROUND_AAA
+      -- ground - order of attack
     elseif ewr then
       attribute=GROUP.Attribute.GROUND_EWR
     elseif sam then
       attribute=GROUP.Attribute.GROUND_SAM
+    elseif aaa then
+      attribute=GROUP.Attribute.GROUND_AAA
+    elseif artillery then
+      attribute=GROUP.Attribute.GROUND_ARTILLERY         
+    elseif tank then
+      attribute=GROUP.Attribute.GROUND_TANK 
+    elseif apc then
+      attribute=GROUP.Attribute.GROUND_APC
+    elseif infantry then
+      attribute=GROUP.Attribute.GROUND_INFANTRY
     elseif truck then
       attribute=GROUP.Attribute.GROUND_TRUCK
     elseif train then
       attribute=GROUP.Attribute.GROUND_TRAIN
+      -- ships
     elseif aircraftcarrier then
       attribute=GROUP.Attribute.NAVAL_AIRCRAFTCARRIER
     elseif warship then

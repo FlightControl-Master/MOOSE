@@ -860,6 +860,20 @@ function DATABASE:GetGroupTemplateFromUnitName( UnitName )
   end
 end
 
+--- Get group template from unit name.
+-- @param #DATABASE self
+-- @param #string UnitName Name of the unit.
+-- @return #table Group template.
+function DATABASE:GetUnitTemplateFromUnitName( UnitName )
+  if self.Templates.Units[UnitName] then
+    return self.Templates.Units[UnitName]
+  else
+    self:E("ERROR: Unit template does not exist for unit "..tostring(UnitName))
+    return nil
+  end
+end
+
+
 --- Get coalition ID from client name.
 -- @param #DATABASE self
 -- @param #string ClientName Name of the Client.
@@ -1474,19 +1488,19 @@ function DATABASE:SetPlayerSettings( PlayerName, Settings )
   self.PLAYERSETTINGS[PlayerName] = Settings
 end
 
---- Add a flight group to the data base.
+--- Add an OPS group (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) to the data base.
 -- @param #DATABASE self
--- @param Ops.FlightGroup#FLIGHTGROUP flightgroup
-function DATABASE:AddFlightGroup(flightgroup)
-  self:T({NewFlightGroup=flightgroup.groupname})
-  self.FLIGHTGROUPS[flightgroup.groupname]=flightgroup
+-- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group added to the DB.
+function DATABASE:AddOpsGroup(opsgroup)
+  --env.info("Adding OPSGROUP "..tostring(opsgroup.groupname))
+  self.FLIGHTGROUPS[opsgroup.groupname]=opsgroup
 end
 
---- Get a flight group from the data base.
+--- Get an OPS group (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) from the data base.
 -- @param #DATABASE self
--- @param #string groupname Group name of the flight group. Can also be passed as GROUP object.
--- @return Ops.FlightGroup#FLIGHTGROUP Flight group object.
-function DATABASE:GetFlightGroup(groupname)
+-- @param #string groupname Group name of the group. Can also be passed as GROUP object.
+-- @return Ops.OpsGroup#OPSGROUP OPS group object.
+function DATABASE:GetOpsGroup(groupname)
 
   -- Get group and group name.
   if type(groupname)=="string" then
@@ -1494,6 +1508,23 @@ function DATABASE:GetFlightGroup(groupname)
     groupname=groupname:GetName()
   end
 
+  --env.info("Getting OPSGROUP "..tostring(groupname))
+  return self.FLIGHTGROUPS[groupname]
+end
+
+--- Find an OPSGROUP (FLIGHTGROUP, ARMYGROUP, NAVYGROUP) in the data base.
+-- @param #DATABASE self
+-- @param #string groupname Group name of the group. Can also be passed as GROUP object.
+-- @return Ops.OpsGroup#OPSGROUP OPS group object.
+function DATABASE:FindOpsGroup(groupname)
+
+  -- Get group and group name.
+  if type(groupname)=="string" then
+  else
+    groupname=groupname:GetName()
+  end
+
+  --env.info("Getting OPSGROUP "..tostring(groupname))
   return self.FLIGHTGROUPS[groupname]
 end
 
@@ -1581,7 +1612,7 @@ function DATABASE:_RegisterTemplates()
 
                     if obj_type_name ~= "static" and Template and Template.units and type(Template.units) == 'table' then  --making sure again- this is a valid group
 
-                      self:_RegisterGroupTemplate(Template, CoalitionSide, _DATABASECategory[string.lower(CategoryName)], CountryID)
+                      self:_RegisterGroupTemplate(Template, CoalitionSide, _DATABASECategory[string.lower(CategoryName)], CountryID)                      
 
                     else
 

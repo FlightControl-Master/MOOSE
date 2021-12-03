@@ -288,6 +288,23 @@ function ZONE_BASE:GetCoordinate( Height ) --R2.1
   return self.Coordinate
 end
 
+--- Get 2D distance to a coordinate.
+-- @param #ZONE_BASE self
+-- @param Core.Point#COORDINATE Coordinate Reference coordinate. Can also be a DCS#Vec2 or DCS#Vec3 object.
+-- @return #number Distance to the reference coordinate in meters.
+function ZONE_BASE:Get2DDistance(Coordinate)
+  local a=self:GetVec2()
+  local b={}
+  if Coordinate.z then
+    b.x=Coordinate.x
+    b.y=Coordinate.z
+  else
+    b.x=Coordinate.x
+    b.y=Coordinate.y
+  end  
+  local dist=UTILS.VecDist2D(a,b)
+  return dist
+end
 
 --- Define a random @{DCS#Vec2} within the zone.
 -- @param #ZONE_BASE self
@@ -1161,24 +1178,54 @@ end
 
 --- Returns a random Vec2 location within the zone.
 -- @param #ZONE_RADIUS self
--- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
--- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @param #number inner (Optional) Minimal distance from the center of the zone. Default is 0.
+-- @param #number outer (Optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
 -- @return DCS#Vec2 The random location within the zone.
-function ZONE_RADIUS:GetRandomVec2( inner, outer )
-  self:F( self.ZoneName, inner, outer )
+function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
 
-  local Point = {}
-  local Vec2 = self:GetVec2()
-  local _inner = inner or 0
-  local _outer = outer or self:GetRadius()
+	local Vec2 = self:GetVec2()
+	local _inner = inner or 0
+	local _outer = outer or self:GetRadius()
 
-  local angle = math.random() * math.pi * 2;
-  Point.x = Vec2.x + math.cos( angle ) * math.random(_inner, _outer);
-  Point.y = Vec2.y + math.sin( angle ) * math.random(_inner, _outer);
+	if surfacetypes and type(surfacetypes)~="table" then
+    surfacetypes={surfacetypes}
+	end
 
-  self:T( { Point } )
+  local function _getpoint()
+    local point = {}
+    local angle = math.random() * math.pi * 2
+    point.x = Vec2.x + math.cos(angle) * math.random(_inner, _outer)
+    point.y = Vec2.y + math.sin(angle) * math.random(_inner, _outer)
+    return point
+  end
 
-  return Point
+  local function _checkSurface(point)
+    local stype=land.getSurfaceType(point)
+    for _,sf in pairs(surfacetypes) do
+      if sf==stype then
+        return true
+      end
+    end
+    return false
+  end
+
+	local point=_getpoint()
+
+	if surfacetypes then
+	  local N=1 ; local Nmax=1000 ; local gotit=false
+    while gotit==false and N<=Nmax do
+      gotit=_checkSurface(point)
+      if gotit then
+        env.info(string.format("Got random coordinate with surface type %d after N=%d/%d iterations", land.getSurfaceType(point), N, Nmax))
+      else
+        point=_getpoint()
+        N=N+1      
+      end
+    end
+  end
+
+	return point
 end
 
 --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
@@ -1230,15 +1277,15 @@ end
 
 --- Returns a @{Core.Point#COORDINATE} object reflecting a random 3D location within the zone.
 -- @param #ZONE_RADIUS self
--- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
--- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#COORDINATE
-function ZONE_RADIUS:GetRandomCoordinate( inner, outer )
-  self:F( self.ZoneName, inner, outer )
+-- @param #number inner (Optional) Minimal distance from the center of the zone. Default is 0.
+-- @param #number outer (Optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
+-- @return Core.Point#COORDINATE The random coordinate.
+function ZONE_RADIUS:GetRandomCoordinate(inner, outer, surfacetypes)
 
-  local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2(inner, outer) )
+  local vec2=self:GetRandomVec2(inner, outer, surfacetypes)
 
-  self:T3( { Coordinate = Coordinate } )
+  local Coordinate = COORDINATE:NewFromVec2(vec2)
 
   return Coordinate
 end
@@ -1301,7 +1348,7 @@ function ZONE:New( ZoneName )
 
   -- Error!
   if not Zone then
-    error( "Zone " .. ZoneName .. " does not exist." )
+    env.error( "ERROR: Zone " .. ZoneName .. " does not exist!" )
     return nil
   end
 
@@ -1941,26 +1988,28 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @return DCS#Vec2 The Vec2 coordinate.
 function ZONE_POLYGON_BASE:GetRandomVec2()
-  self:F2()
 
-  --- It is a bit tricky to find a random point within a polygon. Right now i am doing it the dirty and inefficient way...
-  local Vec2Found = false
-  local Vec2
+  -- It is a bit tricky to find a random point within a polygon. Right now i am doing it the dirty and inefficient way...
+
+  -- Get the bounding square.
   local BS = self:GetBoundingSquare()
 
-  self:T2( BS )
+  local Nmax=1000 ; local n=0
+  while n<Nmax do
 
-  while Vec2Found == false do
-    Vec2 = { x = math.random( BS.x1, BS.x2 ), y = math.random( BS.y1, BS.y2 ) }
-    self:T2( Vec2 )
-    if self:IsVec2InZone( Vec2 ) then
-      Vec2Found = true
+    -- Random point in the bounding square.
+    local Vec2={x=math.random(BS.x1, BS.x2), y=math.random(BS.y1, BS.y2)}
+
+    -- Check if this is in the polygon.
+    if self:IsVec2InZone(Vec2) then
+      return Vec2
     end
+
+    n=n+1
   end
 
-  self:T2( Vec2 )
-
-  return Vec2
+  self:E("Could not find a random point in the polygon zone!")
+  return nil
 end
 
 --- Return a @{Core.Point#POINT_VEC2} object representing a random 2D point at landheight within the zone.
@@ -2152,6 +2201,9 @@ end
 do -- ZONE_AIRBASE
 
   --- @type ZONE_AIRBASE
+  -- @field #boolean isShip If `true`, airbase is a ship.
+  -- @field #boolean isHelipad If `true`, airbase is a helipad.
+  -- @field #boolean isAirdrome If `true`, airbase is an airdrome.
   -- @extends #ZONE_RADIUS
 
 
@@ -2180,6 +2232,20 @@ do -- ZONE_AIRBASE
 
     self._.ZoneAirbase = Airbase
     self._.ZoneVec2Cache = self._.ZoneAirbase:GetVec2()
+    
+    if Airbase:IsShip() then
+      self.isShip=true
+      self.isHelipad=false
+      self.isAirdrome=false
+    elseif Airbase:IsHelipad() then
+      self.isShip=false
+      self.isHelipad=true
+      self.isAirdrome=false    
+    elseif Airbase:IsAirdrome() then
+      self.isShip=false
+      self.isHelipad=false
+      self.isAirdrome=true    
+    end
 
     -- Zone objects are added to the _DATABASE and SET_ZONE objects.
     _EVENTDISPATCHER:CreateEventNewZone( self )
@@ -2194,9 +2260,9 @@ do -- ZONE_AIRBASE
     return self._.ZoneAirbase
   end
 
-  --- Returns the current location of the @{Wrapper.Group}.
+  --- Returns the current location of the AIRBASE.
   -- @param #ZONE_AIRBASE self
-  -- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Group} location.
+  -- @return DCS#Vec2 The location of the zone based on the AIRBASE location.
   function ZONE_AIRBASE:GetVec2()
     self:F( self.ZoneName )
 
@@ -2212,24 +2278,6 @@ do -- ZONE_AIRBASE
     self:T( { ZoneVec2 } )
 
     return ZoneVec2
-  end
-
-  --- Returns a random location within the zone of the @{Wrapper.Group}.
-  -- @param #ZONE_AIRBASE self
-  -- @return DCS#Vec2 The random location of the zone based on the @{Wrapper.Group} location.
-  function ZONE_AIRBASE:GetRandomVec2()
-    self:F( self.ZoneName )
-
-    local Point = {}
-    local Vec2 = self._.ZoneAirbase:GetVec2()
-
-    local angle = math.random() * math.pi*2;
-    Point.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
-    Point.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
-
-    self:T( { Point } )
-
-    return Point
   end
 
   --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.

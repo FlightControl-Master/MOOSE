@@ -710,7 +710,7 @@ do -- TASK_CARGO_DISPATCHER
 
     self.TransportCount = self.TransportCount + 1
     
-    local verbose = Silent and true
+    local verbose = Silent or false
     
     local TaskName = string.format( ( TaskPrefix or "Transport" ) .. ".%03d", self.TransportCount )
     

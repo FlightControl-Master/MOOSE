@@ -216,7 +216,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
           local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", CommandCenterMenu )
           local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportSummary, self, EventGroup )
           local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Players Report", MenuReporting, self.ReportMissionsPlayers, self, EventGroup )
-          self:ReportSummary( EventGroup )
+          --self:ReportSummary( EventGroup )
           local PlayerUnit = EventData.IniUnit
           for MissionID, Mission in pairs( self:GetMissions() ) do
             local Mission = Mission -- Tasking.Mission#MISSION
@@ -560,9 +560,11 @@ function COMMANDCENTER:SetAutoAssignTasks( AutoAssign )
   self.AutoAssignTasks = AutoAssign or false
   
   if self.AutoAssignTasks == true then
-    self:ScheduleRepeat( 10, 30, 0, nil, self.AssignTasks, self )
+    self.autoAssignTasksScheduleID=self:ScheduleRepeat( 10, 30, 0, nil, self.AssignTasks, self )
   else
-    self:ScheduleStop( self.AssignTasks )
+    self:ScheduleStop()
+    -- FF this is not the schedule ID
+    --self:ScheduleStop( self.AssignTasks )
   end
   
 end
