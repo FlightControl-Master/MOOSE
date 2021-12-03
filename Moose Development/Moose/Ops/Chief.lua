@@ -180,7 +180,7 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.0.2"
+CHIEF.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -238,6 +238,7 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   -- Init stuff.
   self.Defcon=CHIEF.DEFCON.GREEN
   self.strategy=CHIEF.Strategy.DEFENSIVE
+  self.TransportCategories = {Group.Category.HELICOPTER}
   
   -- Create a new COMMANDER.
   self.commander=COMMANDER:New(Coalition)  
@@ -983,6 +984,23 @@ function CHIEF:AddAttackZone(Zone)
   -- Add an attack zone.
   self.engagezoneset:AddZone(Zone)
   
+  return self
+end
+
+--- Allow chief to use GROUND units for transport tasks. Helicopters are still preferred, and be aware there's no check as of now
+-- if a destination can be reached on land.
+-- @param #CHIEF self
+-- @return #CHIEF self
+function CHIEF:AllowGroundTransport()
+  self.TransportCategories = {Group.Category.GROUND, Group.Category.HELICOPTER}
+  return self
+end
+
+--- Forbid chief to use GROUND units for transport tasks. Restrict to Helicopters. This is the default
+-- @param #CHIEF self
+-- @return #CHIEF self
+function CHIEF:ForbidGroundTransport()
+  self.TransportCategories = {Group.Category.HELICOPTER}
   return self
 end
 
@@ -2191,7 +2209,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       
         -- Categories. Currently only helicopters are allowed due to problems with ground transports (might get stuck, might not be a land connection.
         -- TODO: Check if ground transport is possible. For example, by trying land.getPathOnRoad or something.
-        local Categories={Group.Category.HELICOPTER}
+        local Categories={self.TransportCategories}
         --local Categories={Group.Category.HELICOPTER, Group.Category.GROUND}
   
         -- Recruit transport assets for infantry.    
@@ -2243,10 +2261,14 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       local mission=AUFTRAG:NewPATROLZONE(caszone)
       mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})
       mission:SetWeaponExpend(AI.Task.WeaponExpend.ALL)    
-                  
+  
       -- Add assets to mission.
       for _,asset in pairs(assets) do
         mission:AddAsset(asset)
+        if asset.speedmax then
+          local speed = UTILS.KmphToKnots(asset.speedmax * 0.7) or 100
+          mission:SetMissionSpeed(speed)
+        end
       end
           
       -- Assign mission to legions.
