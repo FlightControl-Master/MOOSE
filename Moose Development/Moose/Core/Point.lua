@@ -314,39 +314,38 @@ do -- COORDINATE
   -- @param DCS#Vec3 Vec3 The 3D vector with x,y,z components.
   -- @return #COORDINATE The modified COORDINATE itself.
   function COORDINATE:UpdateFromVec3(Vec3)
-    
+
     self.x=Vec3.x
     self.y=Vec3.y
     self.z=Vec3.z
-  
+
     return self
   end
-  
+
   --- Update x,y,z coordinates from another given COORDINATE.
   -- @param #COORDINATE self
   -- @param #COORDINATE Coordinate The coordinate with the new x,y,z positions.
   -- @return #COORDINATE The modified COORDINATE itself.
   function COORDINATE:UpdateFromCoordinate(Coordinate)
-    
+
     self.x=Coordinate.x
     self.y=Coordinate.y
     self.z=Coordinate.z
-  
+
     return self
-  end  
+  end
 
   --- Update x and z coordinates from a given 2D vector.
   -- @param #COORDINATE self
   -- @param DCS#Vec2 Vec2 The 2D vector with x,y components. x is overwriting COORDINATE.x while y is overwriting COORDINATE.z.
   -- @return #COORDINATE The modified COORDINATE itself.
   function COORDINATE:UpdateFromVec2(Vec2)
-    
+
     self.x=Vec2.x
     self.z=Vec2.y
-  
+
     return self
   end
-  
 
   --- Returns the coordinate from the latitude and longitude given in decimal degrees.
   -- @param #COORDINATE self
@@ -355,13 +354,13 @@ do -- COORDINATE
   -- @param #number altitude (Optional) Altitude in meters. Default is the land height at the coordinate.
   -- @return #COORDINATE
   function COORDINATE:NewFromLLDD( latitude, longitude, altitude)
-    
+
     -- Returns a point from latitude and longitude in the vec3 format.
     local vec3=coord.LLtoLO(latitude, longitude)
-    
+
     -- Convert vec3 to coordinate object.
     local _coord=self:NewFromVec3(vec3)
-    
+
     -- Adjust height
     if altitude==nil then
       _coord.y=self:GetLandHeight()
@@ -372,23 +371,22 @@ do -- COORDINATE
     return _coord
   end
 
-  
   --- Returns if the 2 coordinates are at the same 2D position.
   -- @param #COORDINATE self
   -- @param #COORDINATE Coordinate
   -- @param #number Precision
   -- @return #boolean true if at the same position.
   function COORDINATE:IsAtCoordinate2D( Coordinate, Precision )
-    
+
     self:F( { Coordinate = Coordinate:GetVec2() } )
     self:F( { self = self:GetVec2() } )
-    
+
     local x = Coordinate.x
     local z = Coordinate.z
-    
+
     return x - Precision <= self.x and x + Precision >= self.x and z - Precision <= self.z and z + Precision >= self.z   
   end
-  
+
   --- Scan/find objects (units, statics, scenery) within a certain radius around the coordinate using the world.searchObjects() DCS API function.
   -- @param #COORDINATE self
   -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
@@ -423,7 +421,7 @@ do -- COORDINATE
     if scanscenery==nil then
       scanscenery=false
     end
-    
+
     --{Object.Category.UNIT, Object.Category.STATIC, Object.Category.SCENERY}
     local scanobjects={}
     if scanunits then
@@ -435,7 +433,7 @@ do -- COORDINATE
     if scanscenery then
       table.insert(scanobjects, Object.Category.SCENERY)
     end
-    
+
     -- Found stuff.
     local Units = {}
     local Statics = {}
@@ -443,40 +441,40 @@ do -- COORDINATE
     local gotstatics=false
     local gotunits=false
     local gotscenery=false
-    
+
     local function EvaluateZone(ZoneObject)
-    
+
       if ZoneObject then
-      
+
         -- Get category of scanned object.
         local ObjectCategory = ZoneObject:getCategory()
-        
+
         -- Check for unit or static objects
         if ObjectCategory==Object.Category.UNIT and ZoneObject:isExist() then
-        
+
           table.insert(Units, UNIT:Find(ZoneObject))
           gotunits=true
-          
+
         elseif ObjectCategory==Object.Category.STATIC and ZoneObject:isExist() then
-        
+
           table.insert(Statics, ZoneObject)
           gotstatics=true
-          
+
         elseif ObjectCategory==Object.Category.SCENERY then
-        
+
           table.insert(Scenery, ZoneObject)
           gotscenery=true
-          
+
         end
-        
+
       end
-      
+
       return true
     end
-  
+
     -- Search the world.
     world.searchObjects(scanobjects, SphereSearch, EvaluateZone)
-    
+
     for _,unit in pairs(Units) do
       self:T(string.format("Scan found unit %s", unit:GetName()))
     end
@@ -551,7 +549,7 @@ do -- COORDINATE
   -- @param DCS#Distance Distance The Distance to be added in meters.
   -- @param DCS#Angle Angle The Angle in degrees. Defaults to 0 if not specified (nil).
   -- @param #boolean Keepalt If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
-  -- @param #boolean Overwrite If true, overwrite the original COORDINATE with the translated one. Otherwise, create a new COODINATE.
+  -- @param #boolean Overwrite If true, overwrite the original COORDINATE with the translated one. Otherwise, create a new COORDINATE.
   -- @return #COORDINATE The new calculated COORDINATE.
   function COORDINATE:Translate( Distance, Angle, Keepalt, Overwrite )
 
@@ -2987,7 +2985,7 @@ do -- POINT_VEC3
 
     local self = BASE:Inherit( self, COORDINATE:New( x, y, z ) ) -- Core.Point#POINT_VEC3
     self:F2( self )
-    
+
     return self
   end
 
@@ -3004,7 +3002,6 @@ do -- POINT_VEC3
     return self
   end
 
-
   --- Create a new POINT_VEC3 object from  Vec3 coordinates.
   -- @param #POINT_VEC3 self
   -- @param DCS#Vec3 Vec3 The Vec3 point.
@@ -3013,11 +3010,9 @@ do -- POINT_VEC3
 
     local self = BASE:Inherit( self, COORDINATE:NewFromVec3( Vec3 ) ) -- Core.Point#POINT_VEC3
     self:F2( self )
-  
+
     return self
   end
-
-
 
   --- Return the x coordinate of the POINT_VEC3.
   -- @param #POINT_VEC3 self

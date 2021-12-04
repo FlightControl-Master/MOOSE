@@ -152,7 +152,7 @@
 --
 -- * The first parameter *targetnames* defines the target or targets. This can be a single item or a Table with the name(s) of @{Wrapper.Unit} or @{Static} objects defined in the mission editor.
 -- * The (optional) parameter *goodhitrange* specifies the radius in metres around the target within which a bomb/rocket hit is considered to be "good".
--- * If final (optional) parameter "*randommove*" can be enabled to create moving targets. If this parameter is set to true, the units of this bombing target will randomly move within the range zone.
+-- * If final (optional) parameter *randommove* can be enabled to create moving targets. If this parameter is set to true, the units of this bombing target will randomly move within the range zone.
 --   Note that there might be quirks since DCS units can get stuck in buildings etc. So it might be safer to manually define a route for the units in the mission editor if moving targets are desired.
 --
 -- ## Adding Groups
@@ -903,10 +903,10 @@ end
 
 --- Set player setting whether bomb impact points are smoked or not.
 -- @param #RANGE self
--- @param #boolean switch If true nor nil default is to smoke impact points of bombs.
+-- @param #boolean switch (Optional) If true, impact points of bombs will be smoked. Default is true.
 -- @return #RANGE self
 function RANGE:SetDefaultPlayerSmokeBomb(switch)
-  if switch==true or switch==nil then
+  if switch == nil or switch == true then
     self.defaultsmokebomb=true
   else
     self.defaultsmokebomb=false
@@ -1249,7 +1249,7 @@ end
 -- @param #number boxlength (Optional) Length of the approach box in meters. Default is 3000 m.
 -- @param #number boxwidth (Optional) Width of the approach box in meters. Default is 300 m.
 -- @param #number heading (Optional) Approach heading in Degrees. Default is heading of the unit as defined in the mission editor.
--- @param #boolean inverseheading (Optional) Take inverse heading (heading --> heading - 180 Degrees). Default is false.
+-- @param #boolean inverseheading (Optional) Use inverse heading (heading --> heading - 180 Degrees). Default is false.
 -- @param #number goodpass (Optional) Number of hits for a "good" strafing pass. Default is 20.
 -- @param #number foulline (Optional) Foul line distance. Hits from closer than this distance are not counted. Default 610 m = 2000 ft. Set to 0 for no foul line.
 -- @return #RANGE self
@@ -1284,8 +1284,8 @@ end
 --- Add bombing target(s) to range.
 -- @param #RANGE self
 -- @param #table targetnames Single or multiple (Table) names of unit or static objects serving as bomb targets.
--- @param #number goodhitrange (Optional) Max distance from target unit (in meters) which is considered as a good hit. Default is 25 m.
--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+-- @param #number goodhitrange (Optional) Max hit distance from target unit in meters which is considered as a good hit. Default is 25 m.
+-- @param #boolean randommove (Optional) If true, unit will move randomly within the range. Default is false.
 -- @return #RANGE self
 function RANGE:AddBombingTargets(targetnames, goodhitrange, randommove)
   self:F({targetnames=targetnames, goodhitrange=goodhitrange, randommove=randommove})
@@ -1323,8 +1323,8 @@ end
 --- Add a unit or static object as bombing target.
 -- @param #RANGE self
 -- @param Wrapper.Positionable#POSITIONABLE unit Positionable (unit or static) of the strafe target.
--- @param #number goodhitrange Max distance from unit which is considered as a good hit.
--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+-- @param #number goodhitrange (Optional) Max hit distance from target unit in meters which is considered as a good hit. Default is 25 m.
+-- @param #boolean randommove (Optional) If true, unit will move randomly within the range. Default is false.
 -- @return #RANGE self
 function RANGE:AddBombingTargetUnit(unit, goodhitrange, randommove)
   self:F({unit=unit, goodhitrange=goodhitrange, randommove=randommove})
@@ -1339,7 +1339,7 @@ function RANGE:AddBombingTargetUnit(unit, goodhitrange, randommove)
   goodhitrange=goodhitrange or RANGE.Defaults.goodhitrange
 
   -- Set randommove to false if it was not specified.
-  if randommove==nil or _isstatic==true then
+  if randommove == nil or _isstatic == true then
     randommove=false
   end
 
@@ -1354,7 +1354,7 @@ function RANGE:AddBombingTargetUnit(unit, goodhitrange, randommove)
 
   -- Get max speed of unit in km/h.
   local speed=0
-  if _isstatic==false then
+  if _isstatic == false then
     speed=self:_GetSpeed(unit)
   end
 
@@ -1377,12 +1377,23 @@ function RANGE:AddBombingTargetUnit(unit, goodhitrange, randommove)
   return self
 end
 
---- Add a coordinate of a bombing target. This
+--- Add a coordinate of a bombing target.
 -- @param #RANGE self
 -- @param Core.Point#COORDINATE coord The coordinate.
--- @param #string name Name of target.
--- @param #number goodhitrange Max distance from unit which is considered as a good hit.
+-- @param #string name (Optional) Name of target. Default is "Bomb Target".
+-- @param #number goodhitrange (Optional) Max hit distance from target unit in meters which is considered as a good hit. Default is 25 m.
 -- @return #RANGE self
+-- @usage
+--
+--   -- Setup a Range
+--   RangeOne = RANGE:New( "Range One" )
+--   -- Find the STATIC target object as setup in the ME
+--   RangeOneBombTarget = STATIC:FindByName( "RangeOneBombTarget" ):
+--   -- Add the coordinate of the STATIC target object as a bomb target (thus keeping the bomb function active, even if the STATIC target is destroyed)
+--   RangeOne:AddBombingTargetCoordinate( RangeOneBombTarget:GetCoordinate(), "RangeOneBombTarget", 50)
+--   -- Or, add the coordinate of the STATIC target object as a bomb target using default values (name will be "Bomb Target", goodhitrange will be 25 m)
+--   RangeOne:AddBombingTargetCoordinate( RangeOneBombTarget:GetCoordinate() )
+--
 function RANGE:AddBombingTargetCoordinate(coord, name, goodhitrange)
 
   local target={} --#RANGE.BombTarget
@@ -1403,8 +1414,8 @@ end
 --- Add all units of a group as bombing targets.
 -- @param #RANGE self
 -- @param Wrapper.Group#GROUP group Group of bombing targets.
--- @param #number goodhitrange Max distance from unit which is considered as a good hit.
--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+-- @param #number goodhitrange (Optional) Max hit distance from target unit in meters which is considered as a good hit. Default is 25 m.
+-- @param #boolean randommove (Optional) If true, unit will move randomly within the range. Default is false.
 -- @return #RANGE self
 function RANGE:AddBombingTargetGroup(group, goodhitrange, randommove)
   self:F({group=group, goodhitrange=goodhitrange, randommove=randommove})
@@ -1423,10 +1434,10 @@ function RANGE:AddBombingTargetGroup(group, goodhitrange, randommove)
   return self
 end
 
---- Measures the foule line distance between two unit or static objects.
+--- Returns the foul line distance between strafe pit target and a foul line distance marker object.
 -- @param #RANGE self
 -- @param #string namepit Name of the strafe pit target object.
--- @param #string namefoulline Name of the fould line distance marker object.
+-- @param #string namefoulline Name of the foul line distance marker object.
 -- @return #number Foul line distance in meters.
 function RANGE:GetFoullineDistance(namepit, namefoulline)
   self:F({namepit=namepit, namefoulline=namefoulline})
@@ -1437,7 +1448,7 @@ function RANGE:GetFoullineDistance(namepit, namefoulline)
 
   -- Get the unit or static pit object.
   local pit=nil
-  if _staticpit==true then
+  if _staticpit == true then
     pit=STATIC:FindByName(namepit, false)
   elseif _staticpit==false then
     pit=UNIT:FindByName(namepit)
@@ -1447,9 +1458,9 @@ function RANGE:GetFoullineDistance(namepit, namefoulline)
 
   -- Get the unit or static foul line object.
   local foul=nil
-  if _staticfoul==true then
+  if _staticfoul == true then
     foul=STATIC:FindByName(namefoulline, false)
-  elseif _staticfoul==false then
+  elseif _staticfoul == false then
     foul=UNIT:FindByName(namefoulline)
   else
     self:E(self.id..string.format("ERROR! Foul line object %s could not be found in GetFoullineDistance function. Check the name in the ME.", namefoulline))
@@ -1457,7 +1468,7 @@ function RANGE:GetFoullineDistance(namepit, namefoulline)
 
   -- Get the distance between the two objects.
   local fouldist=0
-  if pit~=nil and foul~=nil then
+  if pit ~= nil and foul ~= nil then
     fouldist=pit:GetCoordinate():Get2DDistance(foul:GetCoordinate())
   else
     self:E(self.id..string.format("ERROR! Foul line distance could not be determined. Check pit object name %s and foul line object name %s in the ME.", namepit, namefoulline))
@@ -1552,7 +1563,6 @@ function RANGE:OnEventBirth(EventData)
   self:T3(self.id.."BIRTH: player = "..tostring(_playername))
 
   if _unit and _playername then
-
     local _uid=_unit:GetID()
     local _group=_unit:GetGroup()
     local _gid=_group:GetID()
@@ -1589,8 +1599,8 @@ function RANGE:OnEventBirth(EventData)
       self.timerCheckZone=TIMER:New(self._CheckInZone, self, EventData.IniUnitName):Start(1, 1)
       self.planes[_uid] = true
     end
-
   end
+
 end
 
 --- Range event handler for event hit.
@@ -1607,7 +1617,7 @@ function RANGE:OnEventHit(EventData)
   -- Player info
   local _unitName = EventData.IniUnitName
   local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
-  if _unit==nil or _playername==nil then
+  if _unit == nil or _playername == nil then
     return
   end
 
@@ -1681,6 +1691,7 @@ function RANGE:OnEventHit(EventData)
       end
     end
   end
+
 end
 
 --- Range event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun).
@@ -1690,10 +1701,10 @@ function RANGE:OnEventShot(EventData)
   self:F({eventshot = EventData})
 
   -- Nil checks.
-  if EventData.Weapon==nil then
+  if EventData.Weapon == nil then
     return
   end
-  if EventData.IniDCSUnit==nil then
+  if EventData.IniDCSUnit == nil then
     return
   end
 
@@ -1741,7 +1752,6 @@ function RANGE:OnEventShot(EventData)
 
   -- Only track if distance player to range is < 25 km. Also check that a player shot. No need to track AI weapons.
   if _track and dPR<=self.BombtrackThreshold and _unit and _playername then
-
     -- Player data.
     local playerData=self.PlayerSettings[_playername] --#RANGE.PlayerData
 
@@ -1911,7 +1921,7 @@ function RANGE:onafterStatus(From, Event, To)
 
     local text=string.format("Range status: %s", fsmstate)
 
-    if self.instructor then  
+    if self.instructor then
       local alive="N/A"
       if self.instructorrelayname then
         local relay=UNIT:FindByName(self.instructorrelayname)
@@ -2363,7 +2373,7 @@ function RANGE:_DisplayMyBombingResults(_unitName)
         end
 
         -- Best 10 runs only.
-        if i==self.ndisplayresult then
+        if i == self.ndisplayresult then
           break
         end
 
@@ -2694,7 +2704,7 @@ function RANGE:_CheckPlayers()
 
         if not playersettings.inzone then
           playersettings.inzone=true
-          self:EnterRange(playersettings)          
+          self:EnterRange(playersettings)
         end
 
       else
@@ -2705,7 +2715,7 @@ function RANGE:_CheckPlayers()
 
         if playersettings.inzone==true then
           playersettings.inzone=false
-          self:ExitRange(playersettings)          
+          self:ExitRange(playersettings)
         end
 
       end
@@ -2738,12 +2748,12 @@ function RANGE:_CheckInZone(_unitName)
       if towardspit then
 
         local vec3=_unit:GetVec3()
-        local vec2={x=vec3.x, y=vec3.z} --DCS#Vec2        
-        local landheight=land.getHeight(vec2)        
+        local vec2={x=vec3.x, y=vec3.z} --DCS#Vec2
+        local landheight=land.getHeight(vec2)
         local unitalt=vec3.y-landheight
 
-        if unitalt<=self.strafemaxalt then        
-          local unitinzone=zone:IsVec2InZone(vec2)      
+        if unitalt<=self.strafemaxalt then
+          local unitinzone=zone:IsVec2InZone(vec2)
           return unitinzone
         end
       end
@@ -3008,7 +3018,7 @@ end
 -- Helper Functions
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Get the number of shells a unit currently has.
+--- Get the coordinate of a Bomb target.
 -- @param #RANGE self
 -- @param #RANGE.BombTarget target Bomb target data.
 -- @return Core.Point#COORDINATE Target coordinate.
@@ -3016,7 +3026,7 @@ function RANGE:_GetBombTargetCoordinate(target)
 
   local coord=nil --Core.Point#COORDINATE
 
-  if target.type==RANGE.TargetType.UNIT then
+  if target.type == RANGE.TargetType.UNIT then
 
     if not target.move then
       -- Target should not move.
@@ -3028,12 +3038,12 @@ function RANGE:_GetBombTargetCoordinate(target)
       end
     end
 
-  elseif target.type==RANGE.TargetType.STATIC then
+  elseif target.type == RANGE.TargetType.STATIC then
 
     -- Static targets dont move.
     coord=target.coordinate
 
-  elseif target.type==RANGE.TargetType.COORD then
+  elseif target.type == RANGE.TargetType.COORD then
 
     -- Coordinates dont move.
     coord=target.coordinate
