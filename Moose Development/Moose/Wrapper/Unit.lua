@@ -168,9 +168,6 @@ function UNIT:GetDCSObject()
   return nil
 end
 
-
-
-
 --- Respawn the @{Wrapper.Unit} using a (tweaked) template of the parent Group.
 -- 
 -- This function will:
@@ -263,8 +260,6 @@ function UNIT:ReSpawnAt( Coordinate, Heading )
   _DATABASE:Spawn( SpawnGroupTemplate )
 end
 
-
-
 --- Returns if the unit is activated.
 -- @param #UNIT self
 -- @return #boolean `true` if Unit is activated. `nil` The DCS Unit is not existing or alive.  
@@ -300,8 +295,6 @@ function UNIT:IsAlive()
   
   return nil
 end
-
-
 
 --- Returns the Unit's callsign - the localized string.
 -- @param #UNIT self
@@ -961,7 +954,6 @@ end
 -- @return #string Some text.
 function UNIT:GetThreatLevel()
 
-
   local ThreatLevel = 0
   local ThreatText = ""
   
@@ -986,7 +978,6 @@ function UNIT:GetThreatLevel()
         "MR SAMs",
         "LR SAMs"
       }
-      
       
       if     Attributes["LR SAM"]                                                     then ThreatLevel = 10
       elseif Attributes["MR SAM"]                                                     then ThreatLevel = 9
@@ -1022,7 +1013,6 @@ function UNIT:GetThreatLevel()
         "Multirole Fighter",
         "Fighter"
       }
-      
       
       if     Attributes["Fighters"]                                 then ThreatLevel = 10
       elseif Attributes["Multirole fighters"]                       then ThreatLevel = 9
@@ -1140,12 +1130,6 @@ function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
 
 	return nil
 end
-
-
-
-
-
-
 
 --- Returns if the unit is a friendly unit.
 -- @param #UNIT self
