@@ -3923,6 +3923,10 @@ function OPSGROUP:AddMission(Mission)
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
 
+  -- ad infinitum?
+  
+  self.adinfinitum = Mission.DCStask.params.adinfinitum and Mission.DCStask.params.adinfinitum or false
+    
   -- Info text.
   local text=string.format("Added %s mission %s starting at %s, stopping at %s",
   tostring(Mission.type), tostring(Mission.name), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "INF")
@@ -4954,7 +4958,9 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
       -- Increase counter.
       self.lastindex=self.lastindex+1
-
+      if self.adinfinitum and n==#target.targets then -- all targets done once
+        self.lastindex = 1
+      end
     else
 
       -- Get waypoint index.

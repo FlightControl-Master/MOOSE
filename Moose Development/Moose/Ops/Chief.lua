@@ -2257,18 +2257,24 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       -- Create Patrol zone mission.
       local caszone = StratZone.opszone.zone
       local coord = caszone:GetCoordinate()
-      local height = UTILS.MetersToFeet(coord:GetLandHeight())+2000
-      local mission=AUFTRAG:NewPATROLZONE(caszone)
+      local height = UTILS.MetersToFeet(coord:GetLandHeight())+2500
+      local Speed = 200
+      --local mission=AUFTRAG:NewPATROLZONE(caszone)
+      if assets[1] then
+        if assets[1].speedmax then
+          Speed = UTILS.KmphToKnots(assets[1].speedmax * 0.7) or 200
+        end
+      end
+      --local Speed = UTILS.KmphToKnots(assets[1].speedmax * 0.7) or 200
+      local Leg = caszone:GetRadius() <= 10000 and 5 or UTILS.MetersToNM(caszone:GetRadius())
+      local mission=AUFTRAG:NewCAS(caszone,height,Speed,coord,math.random(0,359),Leg)
       mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})
       mission:SetWeaponExpend(AI.Task.WeaponExpend.ALL)    
-  
+      mission:SetMissionSpeed(Speed)
+      
       -- Add assets to mission.
       for _,asset in pairs(assets) do
         mission:AddAsset(asset)
-        if asset.speedmax then
-          local speed = UTILS.KmphToKnots(asset.speedmax * 0.7) or 100
-          mission:SetMissionSpeed(speed)
-        end
       end
           
       -- Assign mission to legions.
@@ -2307,7 +2313,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       -- Create Armored on guard mission
       local TargetZone = StratZone.opszone.zone
       local Target = TargetZone:GetCoordinate()
-      local mission=AUFTRAG:NewARMOREDGUARD(Target)
+      local mission=AUFTRAG:NewARMOREDGUARD(Target,"Vee")
                       
       -- Add assets to mission.
       for _,asset in pairs(assets) do

@@ -1717,7 +1717,7 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
   
   mission:_TargetFromObject(ZoneSet)
   
- mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.RECON)
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.RECON)
     
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.PassiveDefense
@@ -1730,8 +1730,14 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
   mission.categories={AUFTRAG.Category.ALL}
     
   mission.DCStask=mission:GetDCSMissionTask()
-  mission.DCStask.params.adinfitum=Adinfinitum
+  mission.DCStask.params.adinfinitum=Adinfinitum
   mission.DCStask.params.randomly=Randomly
+  
+  if Randomly then
+    local targets = mission.DCStask.params.target.targets -- Ops.Target#TARGET
+    local shuffled = UTILS.ShuffleTable(targets)
+    mission.DCStask.params.target.targets = shuffled
+  end
 
   return mission
 end
