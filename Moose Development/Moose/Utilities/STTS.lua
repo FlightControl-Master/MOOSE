@@ -72,7 +72,13 @@
 --     STTS.PlayMP3("C:\\Users\\Ciaran\\Downloads\\PR-Music.mp3","255,31","AM,FM","0.5","Multiple",0)
 --
 -- @field #STTS
-STTS = { ClassName = "STTS", DIRECTORY = "", SRS_PORT = 5002, GOOGLE_CREDENTIALS = "C:\\Users\\Ciaran\\Downloads\\googletts.json", EXECUTABLE = "DCS-SR-ExternalAudio.exe" }
+STTS = {
+    ClassName = "STTS",
+    DIRECTORY = "",
+    SRS_PORT = 5002,
+    GOOGLE_CREDENTIALS = "C:\\Users\\Ciaran\\Downloads\\googletts.json",
+    EXECUTABLE = "DCS-SR-ExternalAudio.exe"
+}
 
 --- FULL Path to the FOLDER containing DCS-SR-ExternalAudio.exe - EDIT TO CORRECT FOLDER
 STTS.DIRECTORY = "D:/DCS/_SRS"
