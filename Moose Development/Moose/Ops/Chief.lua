@@ -1,4 +1,4 @@
----- **Ops** - Chief of Staff.
+--- **Ops** - Chief of Staff.
 --
 -- **Main Features:**
 --
@@ -2313,7 +2313,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       -- Create Armored on guard mission
       local TargetZone = StratZone.opszone.zone
       local Target = TargetZone:GetCoordinate()
-      local mission=AUFTRAG:NewARMOREDGUARD(Target,"Vee")
+      local mission=AUFTRAG:NewARMOREDGUARD(Target)
                       
       -- Add assets to mission.
       for _,asset in pairs(assets) do
