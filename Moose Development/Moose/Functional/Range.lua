@@ -2009,7 +2009,7 @@ function RANGE:onafterImpact( From, Event, To, result, player )
   end
 
   -- Send message to player.
-  local text = string.format( "%s, impact %03d° for %d ft", player.playername, result.radial, UTILS.MetersToFeet( result.distance ) )
+  local text = string.format( "%s, impact %03d° for %d m (%d ft)", player.playername, result.radial, result.distance, UTILS.MetersToFeet( result.distance ) )
   if targetname then
     text = text .. string.format( " from bulls of target %s." )
   else
