@@ -2002,16 +2002,11 @@ end
 -- @param #RANGE.PlayerData player Player data table.
 function RANGE:onafterImpact( From, Event, To, result, player )
 
-  -- Only display target name if there is more than one bomb target.
-  local targetname = nil
-  if #self.bombingTargets > 1 then
-    local targetname = result.name
-  end
-
   -- Send message to player.
   local text = string.format( "%s, impact %03d° for %d m (%d ft)", player.playername, result.radial, result.distance, UTILS.MetersToFeet( result.distance ) )
-  if targetname then
-    text = text .. string.format( " from bulls of target %s." )
+  -- Only display target name if there is more than one bomb target.
+  if #self.bombingTargets > 1 then
+    text = text .. string.format( " from bulls of target %s.", result.name )
   else
     text = text .. "."
   end
