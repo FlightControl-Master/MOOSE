@@ -208,7 +208,9 @@ do -- SET_BASE
   -- @param NoTriggerEvent (optional) When `true`, the :Remove() method will not trigger a **Removed** event.
   function SET_BASE:Remove( ObjectName, NoTriggerEvent )
     self:F2( { ObjectName = ObjectName } )
-
+    
+    local TriggerEvent = NoTriggerEvent==nil and true or (not NoTriggerEvent)
+    
     local Object = self.Set[ObjectName]
 
     if Object then
@@ -220,7 +222,7 @@ do -- SET_BASE
         end
       end
       -- When NoTriggerEvent is true, then no Removed event will be triggered.
-      if not NoTriggerEvent then
+      if TriggerEvent then
         self:Removed( ObjectName, Object )
       end
     end
