@@ -2091,7 +2091,8 @@ end
 -- @param #boolean Reduce If false, existing loaded groups will not be reduced to fit the saved number.
 -- @return #table Table of data objects (tables) containing groupname, coordinate and group object. Returns nil when file cannot be read.
 function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce)
-  local reduce = Reduce==false and false or true
+  local reduce = true
+  if Reduce == false then reduce = false end
   local filename = Filename or "StateListofGroups"
   local datatable = {}
   if UTILS.CheckFileExists(Path,filename) then
@@ -2137,7 +2138,9 @@ end
 -- @return Core.Set#SET_GROUP Set of GROUP objects. 
 -- Returns nil when file cannot be read. Returns a table of data entries if Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate }`
 function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
-  local spawn = Spawn==false and false or true
+  local spawn = true
+  if Spawn == false then spawn = false end
+  BASE:I("Spawn = "..tostring(spawn))
   local filename = Filename or "SetOfGroups"
   local setdata = SET_GROUP:New()
   local datatable = {}
@@ -2223,7 +2226,8 @@ end
 -- @return #table Table of data objects (tables) containing staticname, size (0=dead else 1), coordinate and the static object. 
 -- Returns nil when file cannot be read.
 function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce)
-  local reduce = Reduce==false and false or true
+  local reduce = true
+  if Reduce == false then reduce = false end
   local filename = Filename or "StateListofStatics"
   local datatable = {}
   if UTILS.CheckFileExists(Path,filename) then

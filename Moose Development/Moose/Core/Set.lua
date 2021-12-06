@@ -209,7 +209,8 @@ do -- SET_BASE
   function SET_BASE:Remove( ObjectName, NoTriggerEvent )
     self:F2( { ObjectName = ObjectName } )
     
-    local TriggerEvent = NoTriggerEvent==nil and true or (not NoTriggerEvent)
+    local TriggerEvent = true
+    if NoTriggerEvent == false then TriggerEvent = false end
     
     local Object = self.Set[ObjectName]
 
