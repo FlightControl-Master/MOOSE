@@ -2137,7 +2137,7 @@ end
 -- @return Core.Set#SET_GROUP Set of GROUP objects. 
 -- Returns nil when file cannot be read. Returns a table of data entries if Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate }`
 function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
-  local spawn = SPAWN==false and false or true
+  local spawn = Spawn==false and false or true
   local filename = Filename or "SetOfGroups"
   local setdata = SET_GROUP:New()
   local datatable = {}
