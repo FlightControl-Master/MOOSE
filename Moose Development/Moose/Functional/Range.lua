@@ -49,7 +49,7 @@
 -- ===
 -- @module Functional.Range
 -- @image Range.JPG
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- RANGE class
 -- @type RANGE
 -- @field #string ClassName Name of the Class.
@@ -91,15 +91,15 @@
 -- @field #boolean trackmissiles If true (default), all missile types are tracked and impact point to closest bombing target is evaluated.
 -- @field #boolean defaultsmokebomb If true, initialize player settings to smoke bomb.
 -- @field #boolean autosave If true, automatically save results every X seconds.
--- @field #number instructorfreq Frequency on which the range control transmitts.
+-- @field #number instructorfreq Frequency on which the range control transmits.
 -- @field Sound.RadioQueue#RADIOQUEUE instructor Instructor radio queue.
--- @field #number rangecontrolfreq Frequency on which the range control transmitts.
+-- @field #number rangecontrolfreq Frequency on which the range control transmits.
 -- @field Sound.RadioQueue#RADIOQUEUE rangecontrol Range control radio queue.
 -- @field #string rangecontrolrelayname Name of relay unit.
 -- @field #string instructorrelayname Name of relay unit.
 -- @field #string soundpath Path inside miz file where the sound files are located. Default is "Range Soundfiles/".
 -- @extends Core.Fsm#FSM
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- *Don't only practice your art, but force your way into its secrets; art deserves that, for it and knowledge can raise man to the Divine.* - Ludwig van Beethoven
 --
 -- ===
@@ -121,7 +121,7 @@
 --
 -- Due to a DCS bug, it is not possible to directly monitor when a player enters a plane. So in a mission with client slots, it is vital that
 -- a player first enters as spectator or hits ESC twice and **after that** jumps into the slot of his aircraft!
--- If that is not done, the script is not started correctly. This can be checked by looking at the radio menues. If the mission was entered correctly,
+-- If that is not done, the script is not started correctly. This can be checked by looking at the radio menus. If the mission was entered correctly,
 -- there should be an "On the Range" menu items in the "F10. Other..." menu.
 --
 -- # Strafe Pits
@@ -284,9 +284,8 @@
 -- Note that it can happen that the RANGE radio menu is not shown. Check that the range object is defined as a **global** variable rather than a local one.
 -- The could avoid the lua garbage collection to accidentally/falsely deallocate the RANGE objects.
 --
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- @field #RANGE
-RANGE = { -- LuaFormatter off
+RANGE = {
   ClassName           = "RANGE",
   Debug               = false,
   verbose             =   0,
@@ -331,11 +330,11 @@ RANGE = { -- LuaFormatter off
   rangecontrolfreq    = nil,
   rangecontrol        = nil,
   soundpath           = "Range Soundfiles/"
-} -- LuaFormatter on
+}
 
 --- Default range parameters.
 -- @list Defaults
-RANGE.Defaults = { -- LuaFormatter off
+RANGE.Defaults = {
   goodhitrange   = 25, -- meters
   strafemaxalt   = 914, -- meters AGL
   dtBombtrack    = 0.005, -- seconds
@@ -347,18 +346,18 @@ RANGE.Defaults = { -- LuaFormatter off
   boxwidth       = 300, -- meters
   goodpass       = 20, -- targethits per pass
   foulline       = 610 -- meters
-} -- LuaFormatter on
+}
 
 --- Target type, i.e. unit, static, or coordinate.
 -- @type RANGE.TargetType
 -- @field #string UNIT Target is a unit.
 -- @field #string STATIC Target is a static.
 -- @field #string COORD Target is a coordinate.
-RANGE.TargetType = { -- LuaFormatter off
+RANGE.TargetType = {
   UNIT   = "Unit",
   STATIC = "Static",
   COORD  = "Coordinate",
-} -- LuaFormatter on
+}
 
 --- Player settings.
 -- @type RANGE.PlayerData
@@ -563,7 +562,6 @@ function RANGE:New( rangename )
   -- Start State.
   self:SetStartState( "Stopped" )
 
-  -- LuaFormatter off
   ---
   -- Add FSM transitions.
   --                 From State   -->   Event        -->     To State
@@ -574,7 +572,6 @@ function RANGE:New( rangename )
   self:AddTransition("*",               "ExitRange",         "*")           -- Player leaves the range.
   self:AddTransition("*",               "Save",              "*")           -- Save player results.
   self:AddTransition("*",               "Load",              "*")           -- Load player results.
--- LuaFormatter on
 
   ------------------------
   --- Pseudo Functions ---
@@ -3497,7 +3494,7 @@ end
 --- Checks if a static object with a certain name exists. It also added it to the MOOSE data base, if it is not already in there.
 -- @param #RANGE self
 -- @param #string name Name of the potential static object.
--- @return #boolean Returns true if a static with this name exists. Retruns false if a unit with this name exists. Returns nil if neither unit or static exist.
+-- @return #boolean Returns true if a static with this name exists. Returns false if a unit with this name exists. Returns nil if neither unit or static exist.
 function RANGE:_CheckStatic( name )
   self:F2( name )
 
