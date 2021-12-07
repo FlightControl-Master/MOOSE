@@ -162,6 +162,8 @@
 -- @field #number optionRTBfuel RTB on out-of-fuel.
 -- @field #number optionECM ECM.
 -- 
+-- @field Core.Point#COORDINATE specialCoordinate Special point to reload Brigade units in place.
+-- 
 -- @extends Core.Fsm#FSM
 
 --- *A warrior's mission is to foster the success of others.* - Morihei Ueshiba

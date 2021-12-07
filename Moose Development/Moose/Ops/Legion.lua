@@ -324,7 +324,7 @@ function LEGION:AddMission(Mission)
   
   -- Set target for ALERT 5.
   if Mission.type==AUFTRAG.Type.ALERT5 then
-    Mission:_TargetFromObject(self:GetCoordinate())
+    --Mission:_TargetFromObject(self:GetCoordinate())
   end
 
   -- Add mission to queue.
@@ -694,6 +694,10 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
             asset.flightgroup:MissionCancel(currM)
           end
           
+          -- Cancel the current mission.
+          if currM and currM.type==AUFTRAG.Type.ONGUARD then
+            asset.flightgroup:MissionCancel(currM)
+          end
   
           -- Trigger event.
           self:__OpsOnMission(5, asset.flightgroup, Mission)
@@ -721,18 +725,23 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
       asset.requested=true
       asset.isReserved=false
 
-      -- Set missin task so that the group is spawned with the right one.
+      -- Set mission task so that the group is spawned with the right one.
       if Mission.missionTask then
         asset.missionTask=Mission.missionTask
       end
 
     end
-
+    
+    local coordinate = nil
+    if Mission.specialCoordinate then 
+      coordinate = Mission.specialCoordinate
+    end
+    
     -- TODO: Get/set functions for assignment string.
     local assignment=string.format("Mission-%d", Mission.auftragsnummer)
 
     -- Add request to legion warehouse.
-    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, nil, nil, Mission.prio, assignment)
+    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, nil, nil, Mission.prio, assignment, coordinate)
 
     -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
     Mission.requestID[self.alias]=self.queueid
