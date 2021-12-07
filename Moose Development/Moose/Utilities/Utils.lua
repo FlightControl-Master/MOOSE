@@ -2159,7 +2159,7 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
       local posz = tonumber(dataset[6])
       local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
       local group=nil
-      local data = { groupname=groupname, template=template, size=size, coordinate=coordinate }
+      local data = { groupname=groupname, size=size, coordinate=coordinate }
       table.insert(datatable,data)
       if spawn then
         local group = SPAWN:New(groupname)

@@ -302,8 +302,8 @@
 --
 -- Initial Spawn states is as follows:
 --    GROUND: ROE, "Return Fire" Alarm, "Green"
---    AIR:  ROE, "Return Fire" Reaction to Threat, "Passive Defense"
---    NAVAL ROE, "Return Fire" Alarm,"N/A"
+--    AIR: 	ROE, "Return Fire" Reaction to Threat, "Passive Defense"
+--    NAVAL	ROE, "Return Fire" Alarm,"N/A"
 --
 -- A request can be added by the @{#WAREHOUSE.AddRequest}(*warehouse*, *AssetDescriptor*, *AssetDescriptorValue*, *nAsset*, *TransportType*, *nTransport*, *Prio*, *Assignment*) function.
 -- The parameters are
@@ -1626,7 +1626,6 @@ WAREHOUSE = {
 -- @field #string spawngroupname Name of the spawned group.
 -- @field #boolean iscargo If true, asset is cargo. If false asset is transport. Nil if in stock.
 -- @field #boolean arrived If true, asset arrived at its destination.
--- @field Core.Point#COORDINATE spawncoordinate If set, spawn asst here and not in the designated spawn zone.
 -- 
 -- @field #number damage Damage of asset group in percent.
 -- @field Ops.AirWing#AIRWING.Payload payload The payload of the asset.
@@ -1796,7 +1795,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="1.0.3"
+WAREHOUSE.version="1.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -4250,11 +4249,9 @@ end
 -- @param #number nTransport Number of transport units requested.
 -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
 -- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
--- @param Core.Point#COORDINATE SpawnCoordinate Spawn group here instead of the SpawnZone.
 -- @return #boolean If true, request is okay at first glance.
-function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Assignment, Prio, SpawnCoordinate)
- -- self:I({From, Event, To})
-  --self:I({SpawnCoordinate=SpawnCoordinate})
+function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Assignment, Prio)
+
   -- Request is okay.
   local okay=true
 
@@ -4347,10 +4344,8 @@ end
 -- @param #number nTransport Number of transport units requested.
 -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
 -- @param #string Assignment A keyword or text that can later be used to identify this request and postprocess the assets.
--- @param Core.Point#COORDINATE SpawnCoordinate Spawn group here instead of the SpawnZone.
-function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio, Assignment, SpawnCoordinate)
-  --self:I({From, Event, To})
-  --self:I({SpawnCoordinate=SpawnCoordinate})
+function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio, Assignment)
+
   -- Defaults.
   nAsset=nAsset or 1
   TransportType=TransportType or WAREHOUSE.TransportType.SELFPROPELLED
@@ -4389,7 +4384,6 @@ function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor
   ntransporthome=0,
   assets={},
   toself=toself,
-  spawncoordinate=SpawnCoordinate,
   } --#WAREHOUSE.Queueitem
 
   -- Add request to queue.
@@ -5820,8 +5814,7 @@ end
 -- @param #boolean lateactivated If true, groups are spawned late activated.
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
 function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, lateactivated)
-  --self:I("_SpawnAssetGroundNaval - " .. tostring(asset.templatename))
-  --self:I({coordinate = request.spawncoordinate})
+
   if asset and (asset.category==Group.Category.GROUND or asset.category==Group.Category.SHIP or asset.category==Group.Category.TRAIN) then
 
     -- Prepare spawn template.
@@ -5832,12 +5825,7 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, late
 
     -- Get a random coordinate in the spawn zone.
     local coord=spawnzone:GetRandomCoordinate()
-    
-    -- Is a specific coordinate set?
-    if request.spawncoordinate then
-      coord = request.spawncoordinate
-    end
-    
+
     -- For trains, we use the rail connection point.
     if asset.category==Group.Category.TRAIN then
       coord=self.rail
@@ -7654,7 +7642,7 @@ end
 -- @param #WAREHOUSE self
 -- @return #WAREHOUSE.Queueitem Chosen request.
 function WAREHOUSE:_CheckQueue()
-  --self:T("_CheckQueue()")
+
   -- Sort queue wrt to first prio and then qid.
   self:_SortQueue()
 
@@ -7692,13 +7680,7 @@ function WAREHOUSE:_CheckQueue()
     self:_DeleteQueueItem(_request, self.queue)
   end
 
-  --[[ Execute request.
-  if request and type(request) == "table" then
-    for _key,_value in pairs(request) do
-      self:I("Key = ".. tostring(_key))
-    end
-  end
-  --]]
+  -- Execute request.
   return request
 end
 
