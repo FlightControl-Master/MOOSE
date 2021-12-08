@@ -1440,7 +1440,7 @@ end
 -- @return #number Foul line distance in meters.
 -- @usage
 --
--- Setup a Range
+--   -- Setup a Range
 --   RangeOne = RANGE:New( "Range One" )
 --   -- Get distance between strafe target objext and foul line distance marker object.
 --   RangeOneFoulDistance = RangeOne:GetFoullineDistance( "RangeOneStrafeTarget" , "RangeOneFoulLineObject" )
