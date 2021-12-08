@@ -260,7 +260,7 @@
 --      -- Add bombing targets. A good hit is if the bomb falls less then 50 m from the target.
 --      GoldwaterRange:AddBombingTargets(bombtargets, 50)
 --
---      -- Start range.
+--      -- Start Range.
 --      GoldwaterRange:Start()
 --
 -- The [476th - Air Weapons Range Objects mod](http://www.476vfightergroup.com/downloads.php?do=file&id=287) is (implicitly) used in this example.
@@ -288,7 +288,7 @@
 RANGE = {
   ClassName           = "RANGE",
   Debug               = false,
-  verbose             =   0,
+  verbose             = 0,
   id                  = nil,
   rangename           = nil,
   location            = nil,
@@ -329,7 +329,7 @@ RANGE = {
   instructor          = nil,
   rangecontrolfreq    = nil,
   rangecontrol        = nil,
-  soundpath           = "Range Soundfiles/"
+  soundpath           = "Range Soundfiles/",
 }
 
 --- Default range parameters.
@@ -345,7 +345,7 @@ RANGE.Defaults = {
   boxlength      = 3000, -- meters
   boxwidth       = 300, -- meters
   goodpass       = 20, -- targethits per pass
-  foulline       = 610 -- meters
+  foulline       = 610, -- meters
 }
 
 --- Target type, i.e. unit, static, or coordinate.
@@ -500,7 +500,7 @@ RANGE.Sound = {
   IRDecimal = { filename = "IR-Decimal.ogg", duration = 0.54 },
   IRMegaHertz = { filename = "IR-MegaHertz.ogg", duration = 0.87 },
   IREnterRange = { filename = "IR-EnterRange.ogg", duration = 4.83 },
-  IRExitRange = { filename = "IR-ExitRange.ogg", duration = 3.10 }
+  IRExitRange = { filename = "IR-ExitRange.ogg", duration = 3.10 },
 }
 
 --- Global list of all defined range names.
@@ -1089,7 +1089,7 @@ end
 
 --- Set sound files folder within miz file.
 -- @param #RANGE self
--- @param #string path Path for sound files. Default "ATIS Soundfiles/". Mind the slash "/" at the end!
+-- @param #string path Path for sound files. Default "Range Soundfiles/". Mind the slash "/" at the end!
 -- @return #RANGE self
 function RANGE:SetSoundfilesPath( path )
   self.soundpath = tostring( path or "Range Soundfiles/" )
@@ -1384,12 +1384,14 @@ end
 --
 --   -- Setup a Range
 --   RangeOne = RANGE:New( "Range One" )
---   -- Find the STATIC target object as setup in the ME
---   RangeOneBombTarget = STATIC:FindByName( "RangeOneBombTarget" ):
---   -- Add the coordinate of the STATIC target object as a bomb target (thus keeping the bomb function active, even if the STATIC target is destroyed)
+--   -- Find the STATIC target object as setup in the ME.
+--   RangeOneBombTarget = STATIC:FindByName( "RangeOneBombTarget" )
+--   -- Add the coordinate of the STATIC target object as a bomb target (thus keeping the bomb function active, even if the STATIC target is destroyed).
 --   RangeOne:AddBombingTargetCoordinate( RangeOneBombTarget:GetCoordinate(), "RangeOneBombTarget", 50)
---   -- Or, add the coordinate of the STATIC target object as a bomb target using default values (name will be "Bomb Target", goodhitrange will be 25 m)
+--   -- Or, add the coordinate of the STATIC target object as a bomb target using default values (name will be "Bomb Target", goodhitrange will be 25 m).
 --   RangeOne:AddBombingTargetCoordinate( RangeOneBombTarget:GetCoordinate() )
+--   -- Start Range.
+--   RangeOne:Start()
 --
 function RANGE:AddBombingTargetCoordinate( coord, name, goodhitrange )
 
@@ -1436,6 +1438,17 @@ end
 -- @param #string namepit Name of the strafe pit target object.
 -- @param #string namefoulline Name of the foul line distance marker object.
 -- @return #number Foul line distance in meters.
+-- @usage
+--
+--   -- Setup a Range
+--   RangeOne = RANGE:New( "Range One" )
+--   -- Get distance between strafe target objext and foul line distance marker object.
+--   RangeOneFoulDistance = RangeOne:GetFoullineDistance( "RangeOneStrafeTarget" , "RangeOneFoulLineObject" )
+--   -- Add a strafe pit using the measured foul line distance. Where nil is used, strafe pit default values will be used - adjust as required.
+--   RangeOne:AddStrafePit( "RangeOneStrafeTarget", nil, nil, nil, nil, nil, RangeOneFoulDistance )
+--   -- Start Range.
+--   RangeOne:Start()
+--
 function RANGE:GetFoullineDistance( namepit, namefoulline )
   self:F( { namepit = namepit, namefoulline = namefoulline } )
 
@@ -2107,7 +2120,7 @@ function RANGE:onafterSave( From, Event, To )
   _savefile( filename, scores )
 end
 
---- Function called before save event. Checks that io and lfs are desanitized.
+--- Function called before load event. Checks that io and lfs are desanitized.
 -- @param #RANGE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -2654,7 +2667,7 @@ function RANGE:_DisplayRangeWeather( _unitname )
       local tW = string.format( "%.1f m/s", Ws )
       local tP = string.format( "%.1f mmHg", P * hPa2mmHg )
       if settings:IsImperial() then
-        -- tT=string.format("%d°F", UTILS.CelciusToFarenheit(T))
+        -- tT=string.format("%d°F", UTILS.CelsiusToFahrenheit(T))
         tW = string.format( "%.1f knots", UTILS.MpsToKnots( Ws ) )
         tP = string.format( "%.2f inHg", P * hPa2inHg )
       end

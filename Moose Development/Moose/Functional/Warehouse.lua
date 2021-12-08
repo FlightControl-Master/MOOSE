@@ -1601,7 +1601,7 @@ WAREHOUSE = {
 -- @field #number range Range of the unit in meters.
 -- @field #number speedmax Maximum speed in km/h the group can do.
 -- @field #number size Maximum size in length and with of the asset in meters.
--- @field #number weight The weight of the whole asset group in kilo gramms.
+-- @field #number weight The weight of the whole asset group in kilograms.
 -- @field DCS#Object.Desc DCSdesc All DCS descriptors.
 -- @field #WAREHOUSE.Attribute attribute Generalized attribute of the group.
 -- @field #table cargobay Array of cargo bays of all units in an asset group.
