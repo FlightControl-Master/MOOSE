@@ -3,9 +3,11 @@
 --
 -- @module Utils.STTS
 -- @image MOOSE.JPG
+
 --- [DCS Enum world](https://wiki.hoggitworld.com/view/DCS_enum_world)
 -- @type STTS
 -- @field #string DIRECTORY Path of the SRS directory.
+
 --- Simple Text-To-Speech
 --
 -- Version 0.4 - Compatible with SRS version 1.9.6.0+
@@ -40,7 +42,7 @@
 --  * OPTIONAL - Speed -10 to +10
 --  * OPTIONAL - Gender male, female or neuter
 --  * OPTIONAL - Culture - en-US, en-GB etc
---  * OPTIONAL - Voice - a specfic voice by name. Run DCS-SR-ExternalAudio.exe with --help to get the ones you can use on the command line
+--  * OPTIONAL - Voice - a specific voice by name. Run DCS-SR-ExternalAudio.exe with --help to get the ones you can use on the command line
 --  * OPTIONAL - Google TTS - Switch to Google Text To Speech - Requires STTS.GOOGLE_CREDENTIALS path and Google project setup correctly
 --
 --
@@ -73,11 +75,11 @@
 --
 -- @field #STTS
 STTS = {
-    ClassName = "STTS",
-    DIRECTORY = "",
-    SRS_PORT = 5002,
-    GOOGLE_CREDENTIALS = "C:\\Users\\Ciaran\\Downloads\\googletts.json",
-    EXECUTABLE = "DCS-SR-ExternalAudio.exe"
+  ClassName = "STTS",
+  DIRECTORY = "",
+  SRS_PORT = 5002,
+  GOOGLE_CREDENTIALS = "C:\\Users\\Ciaran\\Downloads\\googletts.json",
+  EXECUTABLE = "DCS-SR-ExternalAudio.exe"
 }
 
 --- FULL Path to the FOLDER containing DCS-SR-ExternalAudio.exe - EDIT TO CORRECT FOLDER
@@ -89,7 +91,7 @@ STTS.SRS_PORT = 5002
 --- Google credentials file
 STTS.GOOGLE_CREDENTIALS = "C:\\Users\\Ciaran\\Downloads\\googletts.json"
 
---- DONT CHANGE THIS UNLESS YOU KNOW WHAT YOU'RE DOING
+--- DON'T CHANGE THIS UNLESS YOU KNOW WHAT YOU'RE DOING
 STTS.EXECUTABLE = "DCS-SR-ExternalAudio.exe"
 
 --- Function for UUID.
@@ -117,11 +119,11 @@ function STTS.round( x, n )
 end
 
 --- Function returns estimated speech time in seconds.
--- Assumptions for time calc: 100 Words per min, avarage of 5 letters for english word so
+-- Assumptions for time calc: 100 Words per min, average of 5 letters for english word so
 --
 --   * 5 chars * 100wpm = 500 characters per min = 8.3 chars per second
 --
--- So lengh of msg / 8.3 = number of seconds needed to read it. rounded down to 8 chars per sec map function:
+-- So length of msg / 8.3 = number of seconds needed to read it. rounded down to 8 chars per sec map function:
 --
 -- * (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 --
