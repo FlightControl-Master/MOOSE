@@ -67,7 +67,7 @@
 -- @field #string activerunway The active runway specified by the user.
 -- @field #number subduration Duration how long subtitles are displayed in seconds.
 -- @field #boolean metric If true, use metric units. If false, use imperial (default).
--- @field #boolean PmmHg If true, give pressure in millimeters of Mercury. Default is inHg for imperial and hecto Pascal (=mili Bars) for metric units.
+-- @field #boolean PmmHg If true, give pressure in millimeters of Mercury. Default is inHg for imperial and hectopascal (hPa, which is the same as millibar - mbar) for metric units.
 -- @field #boolean qnhonly If true, suppresses reporting QFE. Default is to report both QNH and QFE.
 -- @field #boolean TDegF If true, give temperature in degrees Fahrenheit. Default is in degrees Celsius independent of chosen unit system.
 -- @field #number zuludiff Time difference local vs. zulu in hours.
@@ -239,7 +239,7 @@
 --
 --     atisBatumi:SetMetricUnits()
 --
--- With this, wind speed is given in meters per second, pressure in hecto Pascal (mbar), visibility in kilometers etc.
+-- With this, wind speed is given in meters per second, pressure in hectopascal (hPa, which is the same as millibar - mbar), visibility in kilometers etc.
 --
 -- # Sound Files
 --
@@ -1459,8 +1459,8 @@ function ATIS:onafterBroadcast(From, Event, To)
 
   -- Convert to °F.
   if self.TDegF then
-    temperature=UTILS.CelciusToFarenheit(temperature)
-    dewpoint=UTILS.CelciusToFarenheit(dewpoint)
+    temperature=UTILS.CelsiusToFahrenheit(temperature)
+    dewpoint=UTILS.CelsiusToFahrenheit(dewpoint)
   end
 
   local TEMPERATURE=string.format("%d", math.abs(temperature))
@@ -2280,7 +2280,7 @@ function ATIS:onafterReport(From, Event, To, Text)
     local text=string.gsub(text, "°F", "degrees Fahrenheit")  
     local text=string.gsub(text, "inHg", "inches of Mercury")
     local text=string.gsub(text, "mmHg", "millimeters of Mercury")
-    local text=string.gsub(text, "hPa", "hecto Pascals")
+    local text=string.gsub(text, "hPa", "hectopascals")
     local text=string.gsub(text, "m/s", "meters per second")
     
     -- Replace ";" by "."
