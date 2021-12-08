@@ -694,7 +694,12 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
             asset.flightgroup:MissionCancel(currM)
           end
           
-  
+          -- Cancel the current mission.
+          if asset.flightgroup:IsArmygroup() then
+            if currM and (currM.type==AUFTRAG.Type.ONGUARD or currM.type==AUFTRAG.Type.ARMOREDGUARD) then
+              asset.flightgroup:MissionCancel(currM)
+            end
+          end
           -- Trigger event.
           self:__OpsOnMission(5, asset.flightgroup, Mission)
   
@@ -721,13 +726,19 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
       asset.requested=true
       asset.isReserved=false
 
-      -- Set missin task so that the group is spawned with the right one.
+      -- Set mission task so that the group is spawned with the right one.
       if Mission.missionTask then
         asset.missionTask=Mission.missionTask
       end
 
     end
-
+    
+    -- Special for reloading brigade units
+    --local coordinate = nil
+   -- if Mission.specialCoordinate then 
+    --  coordinate = Mission.specialCoordinate
+   -- end
+    
     -- TODO: Get/set functions for assignment string.
     local assignment=string.format("Mission-%d", Mission.auftragsnummer)
 
@@ -1087,7 +1098,8 @@ end
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that was spawned.
 -- @param Functional.Warehouse#WAREHOUSE.Pendingitem request The request of the dead asset.
 function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
-
+  self:T({From, Event, To, group:GetName(), asset.assignment, request.assignment})
+  
   -- Call parent warehouse function first.
   self:GetParent(self, LEGION).onafterAssetSpawned(self, From, Event, To, group, asset, request)
 

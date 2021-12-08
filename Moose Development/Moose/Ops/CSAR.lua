@@ -22,7 +22,7 @@
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: Oct 2021
+-- Date: Dec 2021
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -247,7 +247,7 @@ CSAR.AircraftType["Bell-47"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.12r4"
+CSAR.version="0.1.12r5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1668,7 +1668,7 @@ function CSAR:_Reqsmoke( _unitName )
       if _SETTINGS:IsImperial() then
         _distance = string.format("%.1fnm",UTILS.MetersToNM(_closest.distance))
       else
-        _distance = string.format("%.1fkm",_closest.distance)
+        _distance = string.format("%.1fkm",_closest.distance/1000)
       end 
       local _msg = string.format("%s - Popping smoke at your %s o\'clock. Distance %s", _unitName, _clockDir, _distance)
       self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true)

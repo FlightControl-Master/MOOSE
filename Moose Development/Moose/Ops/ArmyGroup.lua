@@ -980,8 +980,17 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
   -- Insert a point on road.
   if wp.action==ENUMS.Formation.Vehicle.OnRoad and (wp.coordinate or wp.roadcoord) then
-    --local current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
+    -- take direct line if on road is too long
     local wptable,length,valid=self:GetCoordinate():GetPathOnRoad(wp.coordinate or wp.roadcoord,true,false,false,false) or {}
+    
+    local lenghtdirect = self:GetCoordinate():Get2DDistance(wp.coordinate) or 100000
+    
+    if valid and length then
+      if length > lenghtdirect * 8 then
+        valid = false -- rather go directly
+      end
+    end
+    
     local count = 2
     if valid then
       for _,_coord in ipairs(wptable) do
