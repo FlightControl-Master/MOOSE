@@ -82,7 +82,7 @@ do -- TASK_A2A_DISPATCHER
   -- to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them.
   --
   -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia7.JPG)
-  -- 
+  --
   -- Additionally in a hot war situation where the border is no longer respected the placement of radars has a big effect on how fast the war escalates.
   -- For example if they are a long way forward and can detect enemy planes on the ground and taking off
   -- they will start to vector CAP and GCI flights to attack them straight away which will immediately draw a response from the other coalition.
@@ -182,7 +182,7 @@ do -- TASK_A2A_DISPATCHER
     Mission = nil,
     Detection = nil,
     Tasks = {},
-    SweepZones = {}
+    SweepZones = {},
   }
 
   --- TASK_A2A_DISPATCHER constructor.
@@ -292,7 +292,7 @@ do -- TASK_A2A_DISPATCHER
     self:F( { DetectedItem.ItemID } )
 
     local DetectedSet = DetectedItem.Set
-    local DetectedZone = DetectedItem.Zone
+    local DetectedZone = DetectedItem.Zone -- TODO: This seems unused, remove?
 
     if DetectedItem.IsDetected == false then
 
@@ -316,7 +316,7 @@ do -- TASK_A2A_DISPATCHER
     self:F( { DetectedItem.ItemID } )
 
     local DetectedSet = DetectedItem.Set
-    local DetectedZone = DetectedItem.Zone
+    local DetectedZone = DetectedItem.Zone -- TODO: This seems unused, remove?
 
     local PlayersCount, PlayersReport = self:GetPlayerFriendliesNearBy( DetectedItem )
 

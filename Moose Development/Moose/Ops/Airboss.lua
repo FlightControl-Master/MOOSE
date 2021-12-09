@@ -303,7 +303,6 @@
 -- The AV-8B Harrier pattern is very similar, the only differences are as there is no angled deck there is no wake check. from the ninety you wil fly a straight approach offset 26 ft to port (left) of the tram line.
 -- The aim is to arrive abeam the landing spot in a stable hover at 120 ft with forward speed matched to the boat. From there the LSO will call "cleared to land". You then level cross to the tram line at the designated landing spot at land vertcally. When you stabalise over the landing spot LSO will call Stabalise to indicate you are centered at the correct spot.
 --
---
 -- ## CASE III
 --
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case3.png)
@@ -958,8 +957,6 @@
 --
 -- Again, changing the file name, subtitle, subtitle duration is not required if you name the file exactly like the original one, which is this case would be "LSO-RogerBall.ogg".
 --
---
---
 -- ## The Radio Dilemma
 --
 -- DCS offers two (actually three) ways to send radio messages. Each one has its advantages and disadvantages and it is important to understand the differences.
@@ -1304,19 +1301,19 @@ AIRBOSS.AircraftCarrier={
 -- @field #string JCARLOS Juan Carlos I (L61) [V/STOL Carrier]
 -- @field #string HMAS Canberra (L02) [V/STOL Carrier]
 -- @field #string KUZNETSOV Admiral Kuznetsov (CV 1143.5)
-AIRBOSS.CarrierType={
-  ROOSEVELT="CVN_71",
-  LINCOLN="CVN_72",
-  WASHINGTON="CVN_73",
-  TRUMAN="CVN_75",
-  STENNIS="Stennis",
-  FORRESTAL="Forrestal",
-  VINSON="VINSON",
-  TARAWA="LHA_Tarawa",
-  AMERICA="USS America LHA-6",
-  JCARLOS="L61",
-  CANBERRA="L02",
-  KUZNETSOV="KUZNECOW",
+AIRBOSS.CarrierType = {
+  ROOSEVELT = "CVN_71",
+  LINCOLN = "CVN_72",
+  WASHINGTON = "CVN_73",
+  TRUMAN = "CVN_75",
+  STENNIS = "Stennis",
+  FORRESTAL = "Forrestal",
+  VINSON = "VINSON",
+  TARAWA = "LHA_Tarawa",
+  AMERICA = "USS America LHA-6",
+  JCARLOS = "L61",
+  CANBERRA = "L02",
+  KUZNETSOV = "KUZNECOW",
 }
 
 --- Carrier specific parameters.
@@ -1396,36 +1393,36 @@ AIRBOSS.CarrierType={
 -- @field #string BOLTER "Bolter Pattern".
 -- @field #string EMERGENCY "Emergency Landing".
 -- @field #string DEBRIEF "Debrief".
-AIRBOSS.PatternStep={
-  UNDEFINED="Undefined",
-  REFUELING="Refueling",
-  SPINNING="Spinning",
-  COMMENCING="Commencing",
-  HOLDING="Holding",
-  WAITING="Waiting for free Marshal stack",
-  PLATFORM="Platform",
-  ARCIN="Arc Turn In",
-  ARCOUT="Arc Turn Out",
-  DIRTYUP="Dirty Up",
-  BULLSEYE="Bullseye",
-  INITIAL="Initial",
-  BREAKENTRY="Break Entry",
-  EARLYBREAK="Early Break",
-  LATEBREAK="Late Break",
-  ABEAM="Abeam",
-  NINETY="Ninety",
-  WAKE="Wake",
-  FINAL="Turn Final",
-  GROOVE_XX="Groove X",
-  GROOVE_IM="Groove In the Middle",
-  GROOVE_IC="Groove In Close",
-  GROOVE_AR="Groove At the Ramp",
-  GROOVE_IW="Groove In the Wires",
-  GROOVE_AL="Groove Abeam Landing Spot",
-  GROOVE_LC="Groove Level Cross",
-  BOLTER="Bolter Pattern",
-  EMERGENCY="Emergency Landing",
-  DEBRIEF="Debrief",
+AIRBOSS.PatternStep = {
+  UNDEFINED = "Undefined",
+  REFUELING = "Refueling",
+  SPINNING = "Spinning",
+  COMMENCING = "Commencing",
+  HOLDING = "Holding",
+  WAITING = "Waiting for free Marshal stack",
+  PLATFORM = "Platform",
+  ARCIN = "Arc Turn In",
+  ARCOUT = "Arc Turn Out",
+  DIRTYUP = "Dirty Up",
+  BULLSEYE = "Bullseye",
+  INITIAL = "Initial",
+  BREAKENTRY = "Break Entry",
+  EARLYBREAK = "Early Break",
+  LATEBREAK = "Late Break",
+  ABEAM = "Abeam",
+  NINETY = "Ninety",
+  WAKE = "Wake",
+  FINAL = "Turn Final",
+  GROOVE_XX = "Groove X",
+  GROOVE_IM = "Groove In the Middle",
+  GROOVE_IC = "Groove In Close",
+  GROOVE_AR = "Groove At the Ramp",
+  GROOVE_IW = "Groove In the Wires",
+  GROOVE_AL = "Groove Abeam Landing Spot",
+  GROOVE_LC = "Groove Level Cross",
+  BOLTER = "Bolter Pattern",
+  EMERGENCY = "Emergency Landing",
+  DEBRIEF = "Debrief",
 }
 
 --- Groove position.
@@ -1438,15 +1435,15 @@ AIRBOSS.PatternStep={
 -- @field #string AL "AL": Abeam landing position (V/STOL).
 -- @field #string LC "LC": Level crossing (V/STOL).
 -- @field #string IW "IW": In the wires.
-AIRBOSS.GroovePos={
-  X0="X0",
-  XX="XX",
-  IM="IM",
-  IC="IC",
-  AR="AR",
-  AL="AL",
-  LC="LC",
-  IW="IW",
+AIRBOSS.GroovePos = {
+  X0 = "X0",
+  XX = "XX",
+  IM = "IM",
+  IC = "IC",
+  AR = "AR",
+  AL = "AL",
+  LC = "LC",
+  IW = "IW",
 }
 
 --- Radio.
@@ -1581,10 +1578,10 @@ AIRBOSS.GroovePos={
 -- @field #string EASY Flight Student. Shows tips and hints in important phases of the approach.
 -- @field #string NORMAL Naval aviator. Moderate number of hints but not really zip lip.
 -- @field #string HARD TOPGUN graduate. For people who know what they are doing. Nearly *ziplip*.
-AIRBOSS.Difficulty={
-  EASY="Flight Student",
-  NORMAL="Naval Aviator",
-  HARD="TOPGUN Graduate",
+AIRBOSS.Difficulty = {
+  EASY = "Flight Student",
+  NORMAL = "Naval Aviator",
+  HARD = "TOPGUN Graduate",
 }
 
 --- Recovery window parameters.
