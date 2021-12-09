@@ -2005,7 +2005,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
   end
   
   -- Now we have a long list with assets.
-  LEGION._OptimizeAssetSelection(Assets, MissionTypeOpt, TargetVec2, false)
+  LEGION._OptimizeAssetSelection(Assets, MissionTypeRecruit, TargetVec2, false)
   
   
   -- Get payloads for air assets.
@@ -2016,7 +2016,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     if asset.legion:IsAirwing() and not asset.payload then
     
       -- Fetch payload for asset. This can be nil!
-      asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, MissionTypeOpt, Payloads)
+      asset.payload=asset.legion:FetchPayloadFromStock(asset.unittype, MissionTypeRecruit, Payloads)
               
     end    
   end
@@ -2030,7 +2030,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
   end
     
   -- Now find the best asset for the given payloads.
-  LEGION._OptimizeAssetSelection(Assets, MissionTypeOpt, TargetVec2, true)
+  LEGION._OptimizeAssetSelection(Assets, MissionTypeRecruit, TargetVec2, true)
 
   -- Number of assets. At most NreqMax.
   local Nassets=math.min(#Assets, NreqMax)

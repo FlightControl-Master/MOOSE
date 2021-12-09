@@ -4239,10 +4239,16 @@ function AUFTRAG:_TargetFromObject(Object)
     
       self.engageTarget=Object
     
-    else
-  
+    elseif Object then
+    
       self.engageTarget=TARGET:New(Object)
       
+    end   
+      
+    if self.type == AUFTRAG.Type.ALERT5 then
+    
+      self.alert5Target = self.engageTarget
+    
     end
 
   else
@@ -4372,7 +4378,12 @@ function AUFTRAG:GetTargetCoordinate()
     local coord=self.engageTarget:GetCoordinate()
     return coord
     
-  else
+  elseif self.alert5Target then
+    
+    local coord=self.alert5Target:GetCoordinate()
+    return coord
+    
+  else  
     self:E(self.lid.."ERROR: Cannot get target coordinate!")
   end
 
