@@ -395,8 +395,8 @@ do -- COORDINATE
       id = world.VolumeType.SPHERE,
       params = {
         point = self:GetVec3(),
-        radius = radius
-      }
+        radius = radius,
+      },
     }
 
     -- Defaults
