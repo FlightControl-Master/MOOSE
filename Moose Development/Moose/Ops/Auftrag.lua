@@ -4239,7 +4239,7 @@ function AUFTRAG:_TargetFromObject(Object)
     
       self.engageTarget=Object
     
-    elseif Object then
+    else --if Object then
     
       self.engageTarget=TARGET:New(Object)
       
