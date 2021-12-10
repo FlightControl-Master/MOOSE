@@ -919,16 +919,12 @@ do -- SET_GROUP
   --    * @{#SET_GROUP.FilterCategoryGround}: Builds the SET_GROUP from ground vehicles or infantry.
   --    * @{#SET_GROUP.FilterCategoryShip}: Builds the SET_GROUP from ships.
   --    * @{#SET_GROUP.FilterCategoryStructure}: Builds the SET_GROUP from structures.
-  --
+  --    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Core.Zone#ZONE}.
   --
   -- Once the filter criteria have been set for the SET_GROUP, you can start filtering using:
   --
   --    * @{#SET_GROUP.FilterStart}: Starts the filtering of the groups within the SET_GROUP and add or remove GROUP objects **dynamically**.
   --    * @{#SET_GROUP.FilterOnce}: Filters of the groups **once**.
-  --
-  -- Planned filter criteria within development are (so these are not yet available):
-  --
-  --    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Core.Zone#ZONE}.
   --
   -- ## SET_GROUP iterators
   --
@@ -996,6 +992,7 @@ do -- SET_GROUP
       Categories = nil,
       Countries = nil,
       GroupPrefixes = nil,
+      Zones = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -1170,6 +1167,30 @@ do -- SET_GROUP
     return NearestGroup
   end
 
+
+  --- Builds a set of groups in zones.
+  -- @param #SET_GROUP self
+  -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
+  -- @return #SET_GROUP self
+  function SET_GROUP:FilterZones( Zones )
+    if not self.Filter.Zones then
+      self.Filter.Zones = {}
+    end
+    local zones = {}
+    if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
+      zones = Zones.Set
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
+    else
+      zones = Zones
+    end
+    for _,Zone in pairs( zones ) do
+      local zonename = Zone:GetName()
+      self.Filter.Zones[zonename] = Zone
+    end
+    return self
+  end
 
   --- Builds a set of groups of coalitions.
   -- Possible current coalitions are red, blue and neutral.
@@ -1828,7 +1849,18 @@ do -- SET_GROUP
       end
       MGroupInclude = MGroupInclude and MGroupPrefix
     end
-
+    
+    if self.Filter.Zones then
+      local MGroupZone = false
+      for ZoneName, Zone in pairs( self.Filter.Zones ) do
+        self:T3( "Zone:", ZoneName )
+        if MGroup:IsInZone(Zone) then
+          MGroupZone = true
+        end
+      end
+      MGroupInclude = MGroupInclude and MGroupZone
+    end
+     
     self:T2( MGroupInclude )
     return MGroupInclude
   end
@@ -1889,15 +1921,12 @@ do -- SET_UNIT
   --    * @{#SET_UNIT.FilterCountries}: Builds the SET_UNIT with the units belonging to the country(ies).
   --    * @{#SET_UNIT.FilterPrefixes}: Builds the SET_UNIT with the units sharing the same string(s) in their name. **ATTENTION!** Bad naming convention as this *does not* only filter *prefixes*.
   --    * @{#SET_UNIT.FilterActive}: Builds the SET_UNIT with the units that are only active. Units that are inactive (late activation) won't be included in the set!
-  --
+  --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Core.Zone#ZONE}.
+  --    
   -- Once the filter criteria have been set for the SET_UNIT, you can start filtering using:
   --
   --   * @{#SET_UNIT.FilterStart}: Starts the filtering of the units **dynamically**.
   --   * @{#SET_UNIT.FilterOnce}: Filters of the units **once**.
-  --
-  -- Planned filter criteria within development are (so these are not yet available):
-  --
-  --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Core.Zone#ZONE}.
   --
   -- ## 4) SET_UNIT iterators
   --
@@ -1975,6 +2004,7 @@ do -- SET_UNIT
       Types = nil,
       Countries = nil,
       UnitPrefixes = nil,
+      Zones = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -2166,7 +2196,31 @@ do -- SET_UNIT
     end
     return self
   end
-
+  
+  --- Builds a set of units in zones.
+  -- @param #SET_UNIT self
+  -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterZones( Zones )
+    if not self.Filter.Zones then
+      self.Filter.Zones = {}
+    end
+    local zones = {}
+    if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
+      zones = Zones.Set
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
+    else
+      zones = Zones
+    end
+    for _,Zone in pairs( zones ) do
+      local zonename = Zone:GetName()
+      self.Filter.Zones[zonename] = Zone
+    end
+    return self
+  end
+  
   --- Builds a set of units that are only active.
   -- Only the units that are active will be included within the set.
   -- @param #SET_UNIT self
@@ -2925,7 +2979,18 @@ do -- SET_UNIT
         MUnitInclude = MUnitInclude and MUnitSEAD
       end
     end
-
+    
+    if self.Filter.Zones then
+      local MGroupZone = false
+      for ZoneName, Zone in pairs( self.Filter.Zones ) do
+        self:T3( "Zone:", ZoneName )
+        if MUnit:IsInZone(Zone) then
+          MGroupZone = true
+        end
+      end
+      MUnitInclude = MUnitInclude  and MGroupZone
+    end
+    
     self:T2( MUnitInclude )
     return MUnitInclude
   end
@@ -3721,15 +3786,12 @@ do -- SET_CLIENT
   --    * @{#SET_CLIENT.FilterCountries}: Builds the SET_CLIENT with the clients belonging to the country(ies).
   --    * @{#SET_CLIENT.FilterPrefixes}: Builds the SET_CLIENT with the clients containing the same string(s) in their unit/pilot name. **ATTENTION!** Bad naming convention as this *does not* only filter *prefixes*.
   --    * @{#SET_CLIENT.FilterActive}: Builds the SET_CLIENT with the units that are only active. Units that are inactive (late activation) won't be included in the set!
-  --
+  --    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Core.Zone#ZONE}.
+  --    
   -- Once the filter criteria have been set for the SET_CLIENT, you can start filtering using:
   --
   --   * @{#SET_CLIENT.FilterStart}: Starts the filtering of the clients **dynamically**.
   --   * @{#SET_CLIENT.FilterOnce}: Filters the clients **once**.
-  --
-  -- Planned filter criteria within development are (so these are not yet available):
-  --
-  --    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Core.Zone#ZONE}.
   --
   -- ## 4) SET_CLIENT iterators
   --
@@ -3750,6 +3812,7 @@ do -- SET_CLIENT
       Types = nil,
       Countries = nil,
       ClientPrefixes = nil,
+      Zones = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -3946,7 +4009,29 @@ do -- SET_CLIENT
     return self
   end
 
-
+   --- Builds a set of clients in zones.
+  -- @param #SET_CLIENT self
+  -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
+  -- @return #SET_TABLE self
+  function SET_CLIENT:FilterZones( Zones )
+    if not self.Filter.Zones then
+      self.Filter.Zones = {}
+    end
+    local zones = {}
+    if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
+      zones = Zones.Set
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
+    else
+      zones = Zones
+    end
+    for _,Zone in pairs( zones ) do
+      local zonename = Zone:GetName()
+      self.Filter.Zones[zonename] = Zone
+    end
+    return self
+  end
 
   --- Starts the filtering.
   -- @param #SET_CLIENT self
@@ -4145,6 +4230,18 @@ do -- SET_CLIENT
       end
     end
 
+    if self.Filter.Zones then
+      local MClientZone = false
+      for ZoneName, Zone in pairs( self.Filter.Zones ) do
+        self:T3( "Zone:", ZoneName )
+        local unit = MClient:GetClientGroupUnit()
+        if unit and unit:IsInZone(Zone) then
+          MClientZone = true
+        end
+      end
+      MClientInclude = MClientInclude and MClientZone
+    end
+    
     self:T2( MClientInclude )
     return MClientInclude
   end
@@ -4205,6 +4302,7 @@ do -- SET_PLAYER
       Types = nil,
       Countries = nil,
       ClientPrefixes = nil,
+      Zones = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -4296,7 +4394,31 @@ do -- SET_PLAYER
     end
     return self
   end
-
+  
+  --- Builds a set of players in zones.
+  -- @param #SET_PLAYER self
+  -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
+  -- @return #SET_PLAYER self
+  function SET_PLAYER:FilterZones( Zones )
+    if not self.Filter.Zones then
+      self.Filter.Zones = {}
+    end
+    local zones = {}
+    if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
+      zones = Zones.Set
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
+    else
+      zones = Zones
+    end
+    for _,Zone in pairs( zones ) do
+      local zonename = Zone:GetName()
+      self.Filter.Zones[zonename] = Zone
+    end
+    return self
+  end
+  
 
   --- Builds a set of clients out of categories joined by players.
   -- Possible current categories are plane, helicopter, ground, ship.
@@ -4546,7 +4668,19 @@ do -- SET_PLAYER
         MClientInclude = MClientInclude and MClientPrefix
       end
     end
-
+    
+    if self.Filter.Zones then
+      local MClientZone = false
+      for ZoneName, Zone in pairs( self.Filter.Zones ) do
+        self:T3( "Zone:", ZoneName )
+        local unit = MClient:GetClientGroupUnit()
+        if unit and unit:IsInZone(Zone) then
+          MClientZone = true
+        end
+      end
+      MClientInclude = MClientInclude and MClientZone
+    end
+    
     self:T2( MClientInclude )
     return MClientInclude
   end
