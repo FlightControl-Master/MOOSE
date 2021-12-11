@@ -20,9 +20,9 @@
 -- Various types of SET_ classes are available:
 --
 --   * @{#SET_GROUP}: Defines a collection of @{Wrapper.Group}s filtered by filter criteria.
---   * @{#SET_UNIT}: Defines a colleciton of @{Wrapper.Unit}s filtered by filter criteria.
+--   * @{#SET_UNIT}: Defines a collection of @{Wrapper.Unit}s filtered by filter criteria.
 --   * @{#SET_STATIC}: Defines a collection of @{Wrapper.Static}s filtered by filter criteria.
---   * @{#SET_CLIENT}: Defines a collection of @{Client}s filterd by filter criteria.
+--   * @{#SET_CLIENT}: Defines a collection of @{Client}s filtered by filter criteria.
 --   * @{#SET_AIRBASE}: Defines a collection of @{Wrapper.Airbase}s filtered by filter criteria.
 --   * @{#SET_CARGO}: Defines a collection of @{Cargo.Cargo}s filtered by filter criteria.
 --   * @{#SET_ZONE}: Defines a collection of @{Core.Zone}s filtered by filter criteria.
@@ -50,14 +50,14 @@ do -- SET_BASE
   --- @type SET_BASE
   -- @field #table Filter Table of filters.
   -- @field #table Set Table of objects.
-  -- @field #table Index Table of indicies.
+  -- @field #table Index Table of indices.
   -- @field #table List Unused table.
   -- @field Core.Scheduler#SCHEDULER CallScheduler
   -- @extends Core.Base#BASE
 
 
   --- The @{Core.Set#SET_BASE} class defines the core functions that define a collection of objects.
-  -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
+  -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach iterator loop at defined **"intervals"** to the mail simulator loop.
   -- In this way, large loops can be done while not blocking the simulator main processing loop.
   -- The default **"yield interval"** is after 10 objects processed.
   -- The default **"time interval"** is after 0.001 seconds.
@@ -68,7 +68,7 @@ do -- SET_BASE
   --
   -- ## Define the SET iterator **"yield interval"** and the **"time interval"**
   --
-  -- Modify the iterator intervals with the @{Core.Set#SET_BASE.SetInteratorIntervals} method.
+  -- Modify the iterator intervals with the @{Core.Set#SET_BASE.SetIteratorIntervals} method.
   -- You can set the **"yield interval"**, and the **"time interval"**. (See above).
   --
   -- @field #SET_BASE SET_BASE
@@ -787,7 +787,7 @@ do -- SET_BASE
   end
 
 
-  ----- Iterate the SET_BASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+  ----- Iterate the SET_BASE and call an iterator function for each **alive** unit, providing the Unit and optional parameters.
   ---- @param #SET_BASE self
   ---- @param #function IteratorFunction The function that will be called when there is an alive unit in the SET_BASE. The function needs to accept a UNIT parameter.
   ---- @return #SET_BASE self
@@ -799,7 +799,7 @@ do -- SET_BASE
   --  return self
   --end
   --
-  ----- Iterate the SET_BASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+  ----- Iterate the SET_BASE and call an iterator function for each **alive** player, providing the Unit of the player and optional parameters.
   ---- @param #SET_BASE self
   ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a UNIT parameter.
   ---- @return #SET_BASE self
@@ -812,7 +812,7 @@ do -- SET_BASE
   --end
   --
   --
-  ----- Iterate the SET_BASE and call an interator function for each client, providing the Client to the function and optional parameters.
+  ----- Iterate the SET_BASE and call an iterator function for each client, providing the Client to the function and optional parameters.
   ---- @param #SET_BASE self
   ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a CLIENT parameter.
   ---- @return #SET_BASE self
@@ -945,7 +945,7 @@ do -- SET_GROUP
   -- ### When a GROUP object crashes or is dead, the SET_GROUP will trigger a **Dead** event.
   --
   -- You can handle the event using the OnBefore and OnAfter event handlers.
-  -- The event handlers need to have the paramters From, Event, To, GroupObject.
+  -- The event handlers need to have the parameters From, Event, To, GroupObject.
   -- The GroupObject is the GROUP object that is dead and within the SET_GROUP, and is passed as a parameter to the event handler.
   -- See the following example:
   --
@@ -960,7 +960,7 @@ do -- SET_GROUP
   --        end
   --
   -- While this is a good example, there is a catch.
-  -- Imageine you want to execute the code above, the the self would need to be from the object declared outside (above) the OnAfterDead method.
+  -- Imagine you want to execute the code above, the the self would need to be from the object declared outside (above) the OnAfterDead method.
   -- So, the self would need to contain another object. Fortunately, this can be done, but you must use then the **`.`** notation for the method.
   -- See the modified example:
   --
@@ -1534,7 +1534,7 @@ do -- SET_GROUP
   --- Iterate the SET_GROUP and return true if all the @{Wrapper.Group#GROUP} are completely in the @{Core.Zone#ZONE}
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
-  -- @return #boolean true if all the @{Wrapper.Group#GROUP} are completly in the @{Core.Zone#ZONE}, false otherwise
+  -- @return #boolean true if all the @{Wrapper.Group#GROUP} are completely in the @{Core.Zone#ZONE}, false otherwise
   -- @usage
   -- local MyZone = ZONE:New("Zone1")
   -- local MySetGroup = SET_GROUP:New()
@@ -1582,7 +1582,7 @@ do -- SET_GROUP
   --- Iterate the SET_GROUP and return true if at least one of the @{Wrapper.Group#GROUP} is completely inside the @{Core.Zone#ZONE}
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
-  -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}, false otherwise.
+  -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completely inside the @{Core.Zone#ZONE}, false otherwise.
   -- @usage
   -- local MyZone = ZONE:New("Zone1")
   -- local MySetGroup = SET_GROUP:New()
@@ -1607,7 +1607,7 @@ do -- SET_GROUP
   --- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
-  -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
+  -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completely inside the @{Core.Zone#ZONE}, false otherwise.
   -- @usage
   -- local MyZone = ZONE:New("Zone1")
   -- local MySetGroup = SET_GROUP:New()
@@ -1633,7 +1633,7 @@ do -- SET_GROUP
   -- Will return false if a @{GROUP} is fully in the @{ZONE}
   -- @param #SET_GROUP self
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
-  -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
+  -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completely inside the @{Core.Zone#ZONE}, false otherwise.
   -- @usage
   -- local MyZone = ZONE:New("Zone1")
   -- local MySetGroup = SET_GROUP:New()
@@ -1763,7 +1763,7 @@ do -- SET_GROUP
     return CountG,CountU
   end
 
-  ----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
+  ----- Iterate the SET_GROUP and call an iterator function for each **alive** player, providing the Group of the player and optional parameters.
   ---- @param #SET_GROUP self
   ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a GROUP parameter.
   ---- @return #SET_GROUP self
@@ -1776,7 +1776,7 @@ do -- SET_GROUP
   --end
   --
   --
-  ----- Iterate the SET_GROUP and call an interator function for each client, providing the Client to the function and optional parameters.
+  ----- Iterate the SET_GROUP and call an iterator function for each client, providing the Client to the function and optional parameters.
   ---- @param #SET_GROUP self
   ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a CLIENT parameter.
   ---- @return #SET_GROUP self
@@ -1957,7 +1957,7 @@ do -- SET_UNIT
   -- ### 6.1) When a UNIT object crashes or is dead, the SET_UNIT will trigger a **Dead** event.
   --
   -- You can handle the event using the OnBefore and OnAfter event handlers.
-  -- The event handlers need to have the paramters From, Event, To, GroupObject.
+  -- The event handlers need to have the parameters From, Event, To, GroupObject.
   -- The GroupObject is the UNIT object that is dead and within the SET_UNIT, and is passed as a parameter to the event handler.
   -- See the following example:
   --
@@ -1972,7 +1972,7 @@ do -- SET_UNIT
   --        end
   --
   -- While this is a good example, there is a catch.
-  -- Imageine you want to execute the code above, the the self would need to be from the object declared outside (above) the OnAfterDead method.
+  -- Imagine you want to execute the code above, the the self would need to be from the object declared outside (above) the OnAfterDead method.
   -- So, the self would need to contain another object. Fortunately, this can be done, but you must use then the **`.`** notation for the method.
   -- See the modified example:
   --
@@ -2398,7 +2398,7 @@ do -- SET_UNIT
   end
 
 
-  --- Iterate the SET_UNIT and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
+  --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT, providing the UNIT and optional parameters.
   -- @param #SET_UNIT self
   -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
   -- @return #SET_UNIT self
@@ -2458,7 +2458,7 @@ do -- SET_UNIT
   end
 
 
-  --- Iterate the SET_UNIT **sorted *per Threat Level** and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
+  --- Iterate the SET_UNIT **sorted *per Threat Level** and call an iterator function for each **alive** UNIT, providing the UNIT and optional parameters.
   --
   -- @param #SET_UNIT self
   -- @param #number FromThreatLevel The TreatLevel to start the evaluation **From** (this must be a value between 0 and 10).
@@ -2854,7 +2854,7 @@ do -- SET_UNIT
 
 
 
-  ----- Iterate the SET_UNIT and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+  ----- Iterate the SET_UNIT and call an iterator function for each **alive** player, providing the Unit of the player and optional parameters.
   ---- @param #SET_UNIT self
   ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a UNIT parameter.
   ---- @return #SET_UNIT self
@@ -2867,7 +2867,7 @@ do -- SET_UNIT
   --end
   --
   --
-  ----- Iterate the SET_UNIT and call an interator function for each client, providing the Client to the function and optional parameters.
+  ----- Iterate the SET_UNIT and call an iterator function for each client, providing the Client to the function and optional parameters.
   ---- @param #SET_UNIT self
   ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a CLIENT parameter.
   ---- @return #SET_UNIT self
@@ -3453,7 +3453,7 @@ do -- SET_STATIC
   end
 
 
-  --- Iterate the SET_STATIC and call an interator function for each **alive** STATIC, providing the STATIC and optional parameters.
+  --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC, providing the STATIC and optional parameters.
   -- @param #SET_STATIC self
   -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
   -- @return #SET_STATIC self
@@ -4100,7 +4100,7 @@ do -- SET_CLIENT
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
 
-  --- Iterate the SET_CLIENT and call an interator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
+  --- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
   -- @param #SET_CLIENT self
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
   -- @return #SET_CLIENT self
@@ -4565,7 +4565,7 @@ do -- SET_PLAYER
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
 
-  --- Iterate the SET_PLAYER and call an interator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
+  --- Iterate the SET_PLAYER and call an iterator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
   -- @param #SET_PLAYER self
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.
   -- @return #SET_PLAYER self
@@ -4999,7 +4999,7 @@ do -- SET_AIRBASE
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
 
-  --- Iterate the SET_AIRBASE and call an interator function for each AIRBASE, providing the AIRBASE and optional parameters.
+  --- Iterate the SET_AIRBASE and call an iterator function for each AIRBASE, providing the AIRBASE and optional parameters.
   -- @param #SET_AIRBASE self
   -- @param #function IteratorFunction The function that will be called when there is an alive AIRBASE in the SET_AIRBASE. The function needs to accept a AIRBASE parameter.
   -- @return #SET_AIRBASE self
@@ -5330,7 +5330,7 @@ do -- SET_CARGO
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
 
-  --- (R2.1) Iterate the SET_CARGO and call an interator function for each CARGO, providing the CARGO and optional parameters.
+  --- (R2.1) Iterate the SET_CARGO and call an iterator function for each CARGO, providing the CARGO and optional parameters.
   -- @param #SET_CARGO self
   -- @param #function IteratorFunction The function that will be called when there is an alive CARGO in the SET_CARGO. The function needs to accept a CARGO parameter.
   -- @return #SET_CARGO self
@@ -5751,7 +5751,7 @@ do -- SET_ZONE
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
 
-  --- Iterate the SET_ZONE and call an interator function for each ZONE, providing the ZONE and optional parameters.
+  --- Iterate the SET_ZONE and call an iterator function for each ZONE, providing the ZONE and optional parameters.
   -- @param #SET_ZONE self
   -- @param #function IteratorFunction The function that will be called when there is an alive ZONE in the SET_ZONE. The function needs to accept a AIRBASE parameter.
   -- @return #SET_ZONE self
@@ -6069,7 +6069,7 @@ do -- SET_ZONE_GOAL
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
 
-  --- Iterate the SET_ZONE_GOAL and call an interator function for each ZONE, providing the ZONE and optional parameters.
+  --- Iterate the SET_ZONE_GOAL and call an iterator function for each ZONE, providing the ZONE and optional parameters.
   -- @param #SET_ZONE_GOAL self
   -- @param #function IteratorFunction The function that will be called when there is an alive ZONE in the SET_ZONE_GOAL. The function needs to accept a AIRBASE parameter.
   -- @return #SET_ZONE_GOAL self
@@ -6239,7 +6239,7 @@ do -- SET_OPSGROUP
   -- ### When a GROUP object crashes or is dead, the SET_OPSGROUP will trigger a **Dead** event.
   --
   -- You can handle the event using the OnBefore and OnAfter event handlers.
-  -- The event handlers need to have the paramters From, Event, To, GroupObject.
+  -- The event handlers need to have the parameters From, Event, To, GroupObject.
   -- The GroupObject is the GROUP object that is dead and within the SET_OPSGROUP, and is passed as a parameter to the event handler.
   -- See the following example:
   --
