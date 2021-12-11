@@ -3073,14 +3073,11 @@ do -- SET_STATIC
   --    * @{#SET_STATIC.FilterTypes}: Builds the SET_STATIC with the units belonging to the unit type(s).
   --    * @{#SET_STATIC.FilterCountries}: Builds the SET_STATIC with the units belonging to the country(ies).
   --    * @{#SET_STATIC.FilterPrefixes}: Builds the SET_STATIC with the units containing the same string(s) in their name. **ATTENTION** bad naming convention as this *does not** only filter *prefixes*.
-  --
+  --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Core.Zone#ZONE}.
+  --    
   -- Once the filter criteria have been set for the SET_STATIC, you can start filtering using:
   --
   --   * @{#SET_STATIC.FilterStart}: Starts the filtering of the units within the SET_STATIC.
-  --
-  -- Planned filter criteria within development are (so these are not yet available):
-  --
-  --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Core.Zone#ZONE}.
   --
   -- ## SET_STATIC iterators
   --
@@ -3089,14 +3086,9 @@ do -- SET_STATIC
   -- The following iterator methods are currently available within the SET_STATIC:
   --
   --   * @{#SET_STATIC.ForEachStatic}: Calls a function for each alive unit it finds within the SET_STATIC.
-  --   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
-  --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
-  --
-  -- Planned iterators methods in development are (so these are not yet available):
-  --
-  --   * @{#SET_STATIC.ForEachStaticInZone}: Calls a function for each unit contained within the SET_STATIC.
-  --   * @{#SET_STATIC.ForEachStaticCompletelyInZone}: Iterate and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
-  --   * @{#SET_STATIC.ForEachStaticNotInZone}: Iterate and call an iterator function for each **alive** STATIC presence not in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  --   * @{#SET_STATIC.ForEachStaticCompletelyInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  --   * @{#SET_STATIC.ForEachStaticInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  --   * @{#SET_STATIC.ForEachStaticNotInZone}: Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence not in a @{Zone}, providing the STATIC and optional parameters to the called function.
   --
   -- ## SET_STATIC atomic methods
   --
@@ -3115,6 +3107,7 @@ do -- SET_STATIC
       Types = nil,
       Countries = nil,
       StaticPrefixes = nil,
+      Zones = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -3226,7 +3219,31 @@ do -- SET_STATIC
     end
     return self
   end
-
+  
+  
+   --- Builds a set of statics in zones.
+  -- @param #SET_STATIC self
+  -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
+  -- @return #SET_STATIC self
+  function SET_STATIC:FilterZones( Zones )
+    if not self.Filter.Zones then
+      self.Filter.Zones = {}
+    end
+    local zones = {}
+    if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
+      zones = Zones.Set
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
+    else
+      zones = Zones
+    end
+    for _,Zone in pairs( zones ) do
+      local zonename = Zone:GetName()
+      self.Filter.Zones[zonename] = Zone
+    end
+    return self
+  end
 
   --- Builds a set of units out of categories.
   -- Possible current categories are plane, helicopter, ground, ship.
@@ -3715,7 +3732,18 @@ do -- SET_STATIC
       end
       MStaticInclude = MStaticInclude and MStaticPrefix
     end
-
+    
+    if self.Filter.Zones then
+      local MStaticZone = false
+      for ZoneName, Zone in pairs( self.Filter.Zones ) do
+        self:T3( "Zone:", ZoneName )
+        if MStatic and MStatic:IsInZone(Zone) then
+          MStaticZone = true
+        end
+      end
+      MStaticInclude = MStaticInclude and MStaticZone
+    end
+    
     self:T2( MStaticInclude )
     return MStaticInclude
   end
