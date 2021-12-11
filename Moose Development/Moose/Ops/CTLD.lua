@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Date: Oct 2021
+-- Date: Dec 2021
 
 do
 ------------------------------------------------------
@@ -669,7 +669,9 @@ do
 --          my_ctld.cratecountry = country.id.GERMANY -- ID of crates. Will default to country.id.RUSSIA for RED coalition setups.
 --          my_ctld.allowcratepickupagain = true  -- allow re-pickup crates that were dropped.
 --          my_ctld.enableslingload = false -- allow cargos to be slingloaded - might not work for all cargo types
---          my_ctld.pilotmustopendoors = false -- -- force opening of doors
+--          my_ctld.pilotmustopendoors = false -- force opening of doors
+--          my_ctld.SmokeColor = SMOKECOLOR.Red -- color to use when dropping smoke from heli 
+--          my_ctld.FlareColor = FLARECOLOR.Red -- color to use when flaring from heli
 -- 
 -- ## 2.1 User functions
 -- 
@@ -812,7 +814,7 @@ do
 -- 
 -- ## 4.1 Manage Crates
 -- 
--- Use this entry to get, load, list nearby, drop, build and repair crates. Also @see options.
+-- Use this entry to get, load, list nearby, drop, build and repair crates. Also see options.
 -- 
 -- ## 4.2 Manage Troops
 -- 
@@ -823,7 +825,7 @@ do
 -- 
 -- Lists what you have loaded. Shows load capabilities for number of crates and number of seats for troops.
 -- 
--- ## 4.4 Smoke & Flare zones nearby
+-- ## 4.4 Smoke & Flare zones nearby or drop smoke or flare from Heli
 -- 
 -- Does what it says.
 -- 
@@ -920,7 +922,7 @@ CTLD = {
 -- DONE: Added support for Hercules
 -- TODO: Possibly - either/or loading crates and troops
 -- DONE: Make inject respect existing cargo types
--- TODO: Drop beacons or flares/smoke
+-- DONE: Drop beacons or flares/smoke
 -- DONE: Add statics as cargo
 -- DONE: List cargo in stock
 -- DONE: Limit of troops, crates buildable?
@@ -988,7 +990,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="0.2.4"
+CTLD.version="1.0.0"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1153,6 +1155,10 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- slingload
   self.enableslingload = false
+  
+  -- Smokes and Flares
+  self.SmokeColor = SMOKECOLOR.Red
+  self.FlareColor = FLARECOLOR.Red
   
   for i=1,100 do
     math.random()
@@ -2911,8 +2917,11 @@ function CTLD:_RefreshF10Menus()
           local listmenu = MENU_GROUP_COMMAND:New(_group,"List boarded cargo",topmenu, self._ListCargo, self, _group, _unit)
           local invtry = MENU_GROUP_COMMAND:New(_group,"Inventory",topmenu, self._ListInventory, self, _group, _unit)
           local rbcns = MENU_GROUP_COMMAND:New(_group,"List active zone beacons",topmenu, self._ListRadioBeacons, self, _group, _unit)
-          local smokemenu = MENU_GROUP_COMMAND:New(_group,"Smoke zones nearby",topmenu, self.SmokeZoneNearBy, self, _unit, false)
-          local smokemenu = MENU_GROUP_COMMAND:New(_group,"Flare zones nearby",topmenu, self.SmokeZoneNearBy, self, _unit, true):Refresh()
+          local smoketopmenu = MENU_GROUP:New(_group,"Smokes & Flares",topmenu)
+          local smokemenu = MENU_GROUP_COMMAND:New(_group,"Smoke zones nearby",smoketopmenu, self.SmokeZoneNearBy, self, _unit, false)
+          local smokeself = MENU_GROUP_COMMAND:New(_group,"Drop smoke now",smoketopmenu, self.SmokePositionNow, self, _unit, false)
+          local flaremenu = MENU_GROUP_COMMAND:New(_group,"Flare zones nearby",smoketopmenu, self.SmokeZoneNearBy, self, _unit, true)
+          local flareself = MENU_GROUP_COMMAND:New(_group,"Fire flare now",smoketopmenu, self.SmokePositionNow, self, _unit, true):Refresh()
           -- sub menus
           -- sub menu troops management
           if cantroops then 
@@ -3373,7 +3382,26 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
   end
 end
 
---- User function - Start smoke in a zone close to the Unit.
+--- User function - Drop a smoke or flare at current location.
+-- @param #CTLD self
+-- @param Wrapper.Unit#UNIT Unit The Unit.
+-- @param #boolean Flare If true, flare instead.
+function CTLD:SmokePositionNow(Unit, Flare)
+  self:T(self.lid .. " SmokePositionNow")
+  local SmokeColor = self.SmokeColor or SMOKECOLOR.Red
+  local FlareColor = self.FlareColor or FLARECOLOR.Red
+  -- table of #CTLD.CargoZone table
+  local unitcoord = Unit:GetCoordinate() -- Core.Point#COORDINATE
+  local Group = Unit:GetGroup()
+  if Flare then
+    unitcoord:Flare(FlareColor, 90)
+  else
+    unitcoord:Smoke(SmokeColor)
+  end
+  return self
+end
+
+--- User function - Start smoke/flare in a zone close to the Unit.
 -- @param #CTLD self
 -- @param Wrapper.Unit#UNIT Unit The Unit.
 -- @param #boolean Flare If true, flare instead.
