@@ -247,7 +247,7 @@ CSAR.AircraftType["Bell-47"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.12r5"
+CSAR.version="0.1.12r6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1456,12 +1456,13 @@ end
 -- @param #number _time Message show duration.
 -- @param #boolean _clear (optional) Clear screen.
 -- @param #boolean _speak (optional) Speak message via SRS.
-function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak)
+-- @param #boolean _override (optional) Override message suppression
+function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak, _override)
   self:T(self.lid .. " _DisplayMessageToSAR")
   local group = _unit:GetGroup()
   local _clear = _clear or nil
   local _time = _time or self.messageTime
-  if not self.suppressmessages then
+  if _override or not self.suppressmessages then
     local m = MESSAGE:New(_text,_time,"Info",_clear):ToGroup(group)
   end
   -- integrate SRS
@@ -1549,7 +1550,7 @@ function CSAR:_DisplayActiveSAR(_unitName)
       _msg = _msg .. "\n" .. _line.msg
   end
   
-  self:_DisplayMessageToSAR(_heli, _msg, self.messageTime*2)
+  self:_DisplayMessageToSAR(_heli, _msg, self.messageTime*2, false, false, true)
   return self
 end
 
@@ -1617,7 +1618,7 @@ function CSAR:_SignalFlare(_unitName)
         _distance = string.format("%.1fkm",_closest.distance)
       end 
       local _msg = string.format("%s - Popping signal flare at your %s o\'clock. Distance %s", _unitName, _clockDir, _distance)
-      self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true)
+      self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
       
       local _coord = _closest.pilot:GetCoordinate()
       _coord:FlareRed(_clockDir)
@@ -1628,7 +1629,7 @@ function CSAR:_SignalFlare(_unitName)
       else
         _distance = string.format("%.1fkm",smokedist/1000)
       end 
-      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",_distance), self.messageTime)
+      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",_distance), self.messageTime, false, false, true)
   end
   return self
 end
@@ -1671,7 +1672,7 @@ function CSAR:_Reqsmoke( _unitName )
         _distance = string.format("%.1fkm",_closest.distance/1000)
       end 
       local _msg = string.format("%s - Popping smoke at your %s o\'clock. Distance %s", _unitName, _clockDir, _distance)
-      self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true)
+      self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
       local _coord = _closest.pilot:GetCoordinate()
       local color = self.smokecolor
       _coord:Smoke(color)
@@ -1682,7 +1683,7 @@ function CSAR:_Reqsmoke( _unitName )
       else
         _distance = string.format("%.1fkm",smokedist/1000)
       end 
-      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",_distance), self.messageTime)
+      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",_distance), self.messageTime, false, false, true)
   end
   return self
 end
@@ -1754,13 +1755,13 @@ function CSAR:_CheckOnboard(_unitName)
     --list onboard pilots
     local _inTransit = self.inTransitGroups[_unitName]
     if _inTransit == nil then
-        self:_DisplayMessageToSAR(_unit, "No Rescued Pilots onboard", self.messageTime)
+        self:_DisplayMessageToSAR(_unit, "No Rescued Pilots onboard", self.messageTime, false, false, true)
     else
         local _text = "Onboard - RTB to FARP/Airfield or MASH: "
         for _, _onboard in pairs(self.inTransitGroups[_unitName]) do
             _text = _text .. "\n" .. _onboard.desc
         end
-        self:_DisplayMessageToSAR(_unit, _text, self.messageTime*2)
+        self:_DisplayMessageToSAR(_unit, _text, self.messageTime*2, false, false, true)
     end
     return self
 end
