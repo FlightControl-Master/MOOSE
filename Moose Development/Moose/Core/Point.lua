@@ -254,7 +254,7 @@ do -- COORDINATE
   --- Create a new COORDINATE object from  Vec2 coordinates.
   -- @param #COORDINATE self
   -- @param DCS#Vec2 Vec2 The Vec2 point.
-  -- @param DCS#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
+  -- @param DCS#Distance LandHeightAdd (Optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
   -- @return #COORDINATE
   function COORDINATE:NewFromVec2( Vec2, LandHeightAdd )
 
@@ -536,10 +536,10 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param DCS#Distance Distance The Distance to be added in meters.
   -- @param DCS#Angle Angle The Angle in degrees. Defaults to 0 if not specified (nil).
-  -- @param #boolean Keepalt If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
+  -- @param #boolean KeepAltitude If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
   -- @param #boolean Overwrite If true, overwrite the original COORDINATE with the translated one. Otherwise, create a new COORDINATE.
   -- @return #COORDINATE The new calculated COORDINATE.
-  function COORDINATE:Translate( Distance, Angle, Keepalt, Overwrite )
+  function COORDINATE:Translate( Distance, Angle, KeepAltitude, Overwrite )
 
     -- Angle in rad.  
     local alpha = math.rad( (Angle or 0) )
@@ -547,7 +547,7 @@ do -- COORDINATE
     local x = Distance * math.cos( alpha ) + self.x -- New x
     local z = Distance * math.sin( alpha ) + self.z -- New z
 
-    local y = Keepalt and self.y or land.getHeight( { x = x, y = z } )
+    local y = KeepAltitude and self.y or land.getHeight( { x = x, y = z } )
 
     if Overwrite then
       self.x = x
@@ -1725,89 +1725,89 @@ do -- COORDINATE
   --- Big smoke and fire at the coordinate.
   -- @param #COORDINATE self
   -- @param Utilities.Utils#BIGSMOKEPRESET preset Smoke preset (0=small smoke and fire, 1=medium smoke and fire, 2=large smoke and fire, 3=huge smoke and fire, 4=small smoke, 5=medium smoke, 6=large smoke, 7=huge smoke).
-  -- @param #number density (Optional) Smoke density. Number in [0,...,1]. Default 0.5.
-  function COORDINATE:BigSmokeAndFire( preset, density )
-    self:F2( { preset = preset, density = density } )
-    density = density or 0.5
-    trigger.action.effectSmokeBig( self:GetVec3(), preset, density )
+  -- @param #number Density (Optional) Smoke density. Number in [0,...,1]. Default 0.5.
+  function COORDINATE:BigSmokeAndFire( Preset, Density )
+    self:F2( { Preset = Preset, Density = Density } )
+    Density = Density or 0.5
+    trigger.action.effectSmokeBig( self:GetVec3(), Preset, Density )
   end
 
   --- Small smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireSmall( density )
-    self:F2( { density = density } )
-    density = density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.SmallSmokeAndFire, density )
+  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeAndFireSmall( Density )
+    self:F2( { Density = Density } )
+    Density = Density or 0.5
+    self:BigSmokeAndFire( BIGSMOKEPRESET.SmallSmokeAndFire, Density )
   end
 
   --- Medium smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireMedium( density )
-    self:F2( { density = density } )
-    density = density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.MediumSmokeAndFire, density )
+  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeAndFireMedium( Density )
+    self:F2( { Density = Density } )
+    Density = Density or 0.5
+    self:BigSmokeAndFire( BIGSMOKEPRESET.MediumSmokeAndFire, Density )
   end
 
   --- Large smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireLarge( density )
-    self:F2( { density = density } )
-    density = density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.LargeSmokeAndFire, density )
+  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeAndFireLarge( Density )
+    self:F2( { Density = Density } )
+    Density = Density or 0.5
+    self:BigSmokeAndFire( BIGSMOKEPRESET.LargeSmokeAndFire, Density )
   end
 
   --- Huge smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireHuge( density )
-    self:F2( { density = density } )
-    density = density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.HugeSmokeAndFire, density )
+  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeAndFireHuge( Density )
+    self:F2( { Density = Density } )
+    Density = Density or 0.5
+    self:BigSmokeAndFire( BIGSMOKEPRESET.HugeSmokeAndFire, Density )
   end
 
   --- Small smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeSmall( density )
-    self:F2( { density = density } )
-    density = density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.SmallSmoke, density )
+  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeSmall( Density )
+    self:F2( { Density = Density } )
+    Density = Density or 0.5
+    self:BigSmokeAndFire( BIGSMOKEPRESET.SmallSmoke, Density )
   end
 
   --- Medium smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeMedium( density )
-    self:F2( { density = density } )
-    density = density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.MediumSmoke, density )
+  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeMedium( Density )
+    self:F2( { Density = Density } )
+    Density = Density or 0.5
+    self:BigSmokeAndFire( BIGSMOKEPRESET.MediumSmoke, Density )
   end
 
   --- Large smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeLarge( density )
-    self:F2( { density = density } )
-    density = density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.LargeSmoke, density )
+  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeLarge( Density )
+    self:F2( { Density = Density } )
+    Density = Density or 0.5
+    self:BigSmokeAndFire( BIGSMOKEPRESET.LargeSmoke, Density )
   end
 
   --- Huge smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeHuge( density )
-    self:F2( { density = density } )
-    density = density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.HugeSmoke, density )
+  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeHuge( Density )
+    self:F2( { Density = Density } )
+    Density = Density or 0.5
+    self:BigSmokeAndFire( BIGSMOKEPRESET.HugeSmoke, Density )
   end
 
   --- Flares the point in a color.
   -- @param #COORDINATE self
   -- @param Utilities.Utils#FLARECOLOR FlareColor
-  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (Optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:Flare( FlareColor, Azimuth )
     self:F2( { FlareColor } )
     trigger.action.signalFlare( self:GetVec3(), FlareColor, Azimuth and Azimuth or 0 )
@@ -1815,7 +1815,7 @@ do -- COORDINATE
 
   --- Flare the COORDINATE White.
   -- @param #COORDINATE self
-  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (Optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:FlareWhite( Azimuth )
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.White, Azimuth )
@@ -1823,7 +1823,7 @@ do -- COORDINATE
 
   --- Flare the COORDINATE Yellow.
   -- @param #COORDINATE self
-  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (Optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:FlareYellow( Azimuth )
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.Yellow, Azimuth )
@@ -1831,7 +1831,7 @@ do -- COORDINATE
 
   --- Flare the COORDINATE Green.
   -- @param #COORDINATE self
-  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (Optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:FlareGreen( Azimuth )
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.Green, Azimuth )
@@ -2527,7 +2527,7 @@ do -- COORDINATE
   --- Return a BR string from a COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The BR text.
   function COORDINATE:ToStringBR( FromCoordinate, Settings )
     local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
@@ -2539,7 +2539,7 @@ do -- COORDINATE
   --- Return a BRAA string from a COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The BR text.
   function COORDINATE:ToStringBRA( FromCoordinate, Settings, Language )
     local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
@@ -2552,7 +2552,7 @@ do -- COORDINATE
   --- Return a BULLS string out of the BULLS of the coalition to the COORDINATE.
   -- @param #COORDINATE self
   -- @param DCS#coalition.side Coalition The coalition.
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The BR text.
   function COORDINATE:ToStringBULLS( Coalition, Settings )
     local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( Coalition ) )
@@ -2600,7 +2600,7 @@ do -- COORDINATE
 
   --- Provides a Lat Lon string in Degree Minute Second format.
   -- @param #COORDINATE self
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The LL DMS Text
   function COORDINATE:ToStringLLDMS( Settings )
 
@@ -2611,7 +2611,7 @@ do -- COORDINATE
 
   --- Provides a Lat Lon string in Degree Decimal Minute format.
   -- @param #COORDINATE self
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The LL DDM Text
   function COORDINATE:ToStringLLDDM( Settings )
 
@@ -2622,7 +2622,7 @@ do -- COORDINATE
 
   --- Provides a MGRS string
   -- @param #COORDINATE self
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The MGRS Text
   function COORDINATE:ToStringMGRS( Settings ) -- R2.1 Fixes issue #424.
 
@@ -2639,7 +2639,7 @@ do -- COORDINATE
   -- @param #COORDINATE ReferenceCoord The refrence coordinate.
   -- @param #string ReferenceName The refrence name.
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToStringFromRP( ReferenceCoord, ReferenceName, Controllable, Settings )
 
@@ -2668,7 +2668,7 @@ do -- COORDINATE
   --- Provides a coordinate string of the point, based on the A2G coordinate format system.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToStringA2G( Controllable, Settings )
 
@@ -2702,7 +2702,7 @@ do -- COORDINATE
   --- Provides a coordinate string of the point, based on the A2A coordinate format system.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToStringA2A( Controllable, Settings, Language ) -- R2.2
 
@@ -2741,7 +2741,7 @@ do -- COORDINATE
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable to retrieve the settings from, otherwise the default settings will be chosen.
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @param Tasking.Task#TASK Task The task for which coordinates need to be calculated.
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToString( Controllable, Settings, Task )
@@ -2793,7 +2793,7 @@ do -- COORDINATE
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The pressure text in the configured measurement system.
   function COORDINATE:ToStringPressure( Controllable, Settings ) -- R2.3
 
@@ -2809,7 +2809,7 @@ do -- COORDINATE
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The wind text in the configured measurement system.
   function COORDINATE:ToStringWind( Controllable, Settings )
 
@@ -2940,7 +2940,7 @@ do -- POINT_VEC3
   --- Create a new POINT_VEC3 object from Vec2 coordinates.
   -- @param #POINT_VEC3 self
   -- @param DCS#Vec2 Vec2 The Vec2 point.
-  -- @param DCS#Distance LandHeightAdd (optional) Add a landheight.
+  -- @param DCS#Distance LandHeightAdd (Optional) Add a landheight.
   -- @return Core.Point#POINT_VEC3 self
   function POINT_VEC3:NewFromVec2( Vec2, LandHeightAdd )
 
@@ -3088,7 +3088,7 @@ do -- POINT_VEC2
   -- @param #POINT_VEC2 self
   -- @param DCS#Distance x The x coordinate of the Vec3 point, pointing to the North.
   -- @param DCS#Distance y The y coordinate of the Vec3 point, pointing to the Right.
-  -- @param DCS#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
+  -- @param DCS#Distance LandHeightAdd (Optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
   -- @return Core.Point#POINT_VEC2
   function POINT_VEC2:New( x, y, LandHeightAdd )
 
