@@ -990,7 +990,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.0"
+CTLD.version="1.0.1"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3396,6 +3396,8 @@ function CTLD:SmokePositionNow(Unit, Flare)
   if Flare then
     unitcoord:Flare(FlareColor, 90)
   else
+    local height = unitcoord:GetLandHeight() + 2
+    unitcoord.y = height
     unitcoord:Smoke(SmokeColor)
   end
   return self
