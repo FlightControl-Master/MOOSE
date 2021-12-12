@@ -334,11 +334,13 @@ function POSITIONABLE:GetPointVec3()
   return nil
 end
 
---- Returns a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
--- If the POSITIONABLE has a COORDINATE OBJECT set, it updates it. If not, it creates a new COORDINATE object.
+--- Returns a reference to a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
+-- This function works similar to POSITIONABLE.GetCoordinate(), however, this function caches, updates and re-uses the same COORDINATE object stored
+-- within the POSITIONABLE. This has higher performance, but comes with all considerations associated with the possible referencing to the same COORDINATE object.
+-- This should only be used when performance is critical and there is sufficient awareness of the possible pitfalls. However, in most instances, GetCoordinate() is
+-- preferred as it will return a fresh new COORDINATE and thus avoid potentially unexpected issues.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return Core.Point#COORDINATE The COORDINATE of the POSITIONABLE.
--- TODO: Seems to have been introduced with Airboss. Should it be renamed to better reflect the difference to "GetCoordinate" (it is currently ambiguous)? Or perhaps just be a switch in the the GetCoordinate function; forceCoordinateUpate?
+-- @return Core.Point#COORDINATE A reference to the COORDINATE object of the POSITIONABLE.
 function POSITIONABLE:GetCoord()
 
   -- Get DCS object.
@@ -366,9 +368,9 @@ function POSITIONABLE:GetCoord()
   return nil
 end
 
---- Returns a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
+--- Returns a new COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return Core.Point#COORDINATE The COORDINATE of the POSITIONABLE.
+-- @return Core.Point#COORDINATE A new COORDINATE object of the POSITIONABLE.
 function POSITIONABLE:GetCoordinate()
 
   -- Get DCS object.
@@ -512,15 +514,15 @@ end
 
 --- Get the bounding radius of the underlying POSITIONABLE DCS Object.
 -- @param #POSITIONABLE self
--- @param #number mindist (Optional) If bounding box is smaller than this value, mindist is returned.
+-- @param #number MinDist (Optional) If bounding box is smaller than this value, MinDist is returned.
 -- @return DCS#Distance The bounding radius of the POSITIONABLE
 -- @return #nil The POSITIONABLE is not existing or alive.
-function POSITIONABLE:GetBoundingRadius( mindist )
+function POSITIONABLE:GetBoundingRadius( MinDist )
   self:F2()
 
   local Box = self:GetBoundingBox()
 
-  local boxmin = mindist or 0
+  local boxmin = MinDist or 0
   if Box then
     local X = Box.max.x - Box.min.x
     local Z = Box.max.z - Box.min.z
@@ -763,13 +765,13 @@ end
 
 --- Get relative velocity with respect to another POSITIONABLE.
 -- @param #POSITIONABLE self
--- @param #POSITIONABLE positionable Other POSITIONABLE.
+-- @param #POSITIONABLE Positionable Other POSITIONABLE.
 -- @return #number Relative velocity in m/s.
-function POSITIONABLE:GetRelativeVelocity( positionable )
+function POSITIONABLE:GetRelativeVelocity( Positionable )
   self:F2( self.PositionableName )
 
   local v1 = self:GetVelocityVec3()
-  local v2 = positionable:GetVelocityVec3()
+  local v2 = Positionable:GetVelocityVec3()
 
   local vtot = UTILS.VecAdd( v1, v2 )
 
@@ -1446,7 +1448,7 @@ do -- Cargo
   -- @return #number CargoBayFreeWeight
   function POSITIONABLE:GetCargoBayFreeWeight()
 
-    -- When there is no cargo bay weight limit set, then calculate this for this positionable!
+    -- When there is no cargo bay weight limit set, then calculate this for this POSITIONABLE!
     if not self.__.CargoBayWeightLimit then
       self:SetCargoBayWeightLimit()
     end
@@ -1475,9 +1477,9 @@ do -- Cargo
     elseif self.__.CargoBayWeightLimit ~= nil then
       -- Value already set ==> Do nothing!
     else
-      -- If weightlimit is not provided, we will calculate it depending on the type of unit.
+      -- If WeightLimit is not provided, we will calculate it depending on the type of unit.
 
-      -- When an airplane or helicopter, we calculate the weightlimit based on the descriptor.
+      -- When an airplane or helicopter, we calculate the WeightLimit based on the descriptor.
       if self:IsAir() then
         local Desc = self:GetDesc()
         self:F( { Desc = Desc } )
