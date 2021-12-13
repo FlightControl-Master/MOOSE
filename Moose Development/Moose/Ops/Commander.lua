@@ -25,6 +25,7 @@
 -- @field #table rearmingZones Rearming zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table refuellingZones Refuelling zones. Each element is of type `#BRIGADE.SupplyZone`.
 -- @field #table capZones CAP zones. Each element is of type `#AIRWING.PatrolZone`.
+-- @field #table gcicapZones GCICAP zones. Each element is of type `#AIRWING.PatrolZone`.
 -- @field #table awacsZones AWACS zones. Each element is of type `#AIRWING.PatrolZone`.
 -- @field #table tankerZones Tanker zones. Each element is of type `#AIRWING.TankerZone`.
 -- @field Ops.Chief#CHIEF chief Chief of staff.
@@ -124,6 +125,7 @@ COMMANDER = {
   rearmingZones   =    {},
   refuellingZones =    {},
   capZones        =    {},
+  gcicapZones     =    {},
   awacsZones      =    {},
   tankerZones     =    {},
 }
@@ -447,7 +449,7 @@ function COMMANDER:RemoveMission(Mission)
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     if mission.auftragsnummer==Mission.auftragsnummer then
-      self:I(self.lid..string.format("Removing mission %s (%s) status=%s from queue", Mission.name, Mission.type, Mission.status))
+      self:T(self.lid..string.format("Removing mission %s (%s) status=%s from queue", Mission.name, Mission.type, Mission.status))
       mission.commander=nil
       table.remove(self.missionqueue, i)
       break
@@ -468,7 +470,7 @@ function COMMANDER:RemoveTransport(Transport)
     local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
     
     if transport.uid==Transport.uid then
-      self:I(self.lid..string.format("Removing transport UID=%d status=%s from queue", transport.uid, transport:GetState()))
+      self:T(self.lid..string.format("Removing transport UID=%d status=%s from queue", transport.uid, transport:GetState()))
       transport.commander=nil
       table.remove(self.transportqueue, i)
       break
@@ -489,7 +491,7 @@ function COMMANDER:AddRearmingZone(RearmingZone)
   
   rearmingzone.zone=RearmingZone
   rearmingzone.mission=nil
-  rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Rearming Zone"):ToCoalition(self:GetCoalition())
+  --rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Rearming Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.rearmingZones, rearmingzone)
 
@@ -506,7 +508,7 @@ function COMMANDER:AddRefuellingZone(RefuellingZone)
   
   rearmingzone.zone=RefuellingZone
   rearmingzone.mission=nil
-  rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Refuelling Zone"):ToCoalition(self:GetCoalition())
+  --rearmingzone.marker=MARKER:New(rearmingzone.zone:GetCoordinate(), "Refuelling Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.refuellingZones, rearmingzone)
 
@@ -515,7 +517,7 @@ end
 
 --- Add a CAP zone.
 -- @param #COMMANDER self
--- @param Core.Zone#ZONE CapZone Zone.
+-- @param Core.Zone#ZONE Zone CapZone Zone.
 -- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
@@ -531,9 +533,34 @@ function COMMANDER:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
   patrolzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, patrolzone.altitude)
   patrolzone.leg=Leg or 30
   patrolzone.mission=nil
-  patrolzone.marker=MARKER:New(patrolzone.zone:GetCoordinate(), "AWACS Zone"):ToCoalition(self:GetCoalition())
+  --patrolzone.marker=MARKER:New(patrolzone.zone:GetCoordinate(), "CAP Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.capZones, patrolzone)
+
+  return patrolzone
+end
+
+--- Add a GCICAP zone.
+-- @param #COMMANDER self
+-- @param Core.Zone#ZONE Zone CapZone Zone.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+function COMMANDER:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
+
+  local patrolzone={} --Ops.AirWing#AIRWING.PatrolZone
+  
+  patrolzone.zone=Zone
+  patrolzone.altitude=Altitude or 12000
+  patrolzone.heading=Heading or 270
+  patrolzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, patrolzone.altitude)
+  patrolzone.leg=Leg or 30
+  patrolzone.mission=nil
+  --patrolzone.marker=MARKER:New(patrolzone.zone:GetCoordinate(), "GCICAP Zone"):ToCoalition(self:GetCoalition())
+
+  table.insert(self.gcicapZones, patrolzone)
 
   return patrolzone
 end
@@ -556,7 +583,7 @@ function COMMANDER:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
   awacszone.speed=UTILS.KnotsToAltKIAS(Speed or 350, awacszone.altitude)
   awacszone.leg=Leg or 30
   awacszone.mission=nil
-  awacszone.marker=MARKER:New(awacszone.zone:GetCoordinate(), "AWACS Zone"):ToCoalition(self:GetCoalition())
+  --awacszone.marker=MARKER:New(awacszone.zone:GetCoordinate(), "AWACS Zone"):ToCoalition(self:GetCoalition())
 
   table.insert(self.awacsZones, awacszone)
 
@@ -647,7 +674,7 @@ function COMMANDER:onafterStatus(From, Event, To)
   -- Status.
   if self.verbose>=1 then
     local text=string.format("Status %s: Legions=%d, Missions=%d, Transports", fsmstate, #self.legions, #self.missionqueue, #self.transportqueue)
-    self:I(self.lid..text)
+    self:T(self.lid..text)
   end
 
   -- Check mission queue and assign one PLANNED mission.
@@ -684,6 +711,17 @@ function COMMANDER:onafterStatus(From, Event, To)
     if (not patrolzone.mission) or patrolzone.mission:IsOver() then
       local Coordinate=patrolzone.zone:GetCoordinate()
       patrolzone.mission=AUFTRAG:NewCAP(patrolzone.zone, patrolzone.altitude, patrolzone.speed, Coordinate, patrolzone.heading, patrolzone.leg)
+      self:AddMission(patrolzone.mission)
+    end
+  end
+
+  -- Check GCICAP zones.
+  for _,_patrolzone in pairs(self.gcicapZones) do
+    local patrolzone=_patrolzone --Ops.AirWing#AIRWING.PatrolZone
+    -- Check if mission is nil or over.
+    if (not patrolzone.mission) or patrolzone.mission:IsOver() then
+      local Coordinate=patrolzone.zone:GetCoordinate()
+      patrolzone.mission=AUFTRAG:NewGCICAP(Coordinate, patrolzone.altitude, patrolzone.speed, patrolzone.heading, patrolzone.leg)
       self:AddMission(patrolzone.mission)
     end
   end
@@ -731,7 +769,7 @@ function COMMANDER:onafterStatus(From, Event, To)
         end
       end            
     end
-    self:I(self.lid..text)
+    self:T(self.lid..text)
     
     
     if self.verbose>=3 then
@@ -867,7 +905,7 @@ function COMMANDER:onafterMissionAssign(From, Event, To, Mission, Legions)
     local Legion=_Legion --Ops.Legion#LEGION
 
     -- Debug info.
-    self:I(self.lid..string.format("Assigning mission \"%s\" [%s] to legion \"%s\"", Mission.name, Mission.type, Legion.alias))
+    self:T(self.lid..string.format("Assigning mission \"%s\" [%s] to legion \"%s\"", Mission.name, Mission.type, Legion.alias))
 
     -- Add mission to legion.
     Legion:AddMission(Mission)
@@ -888,7 +926,7 @@ end
 function COMMANDER:onafterMissionCancel(From, Event, To, Mission)
 
   -- Debug info.
-  self:I(self.lid..string.format("Cancelling mission \"%s\" [%s] in status %s", Mission.name, Mission.type, Mission.status))
+  self:T(self.lid..string.format("Cancelling mission \"%s\" [%s] in status %s", Mission.name, Mission.type, Mission.status))
   
   -- Set commander status.
   Mission.statusCommander=AUFTRAG.Status.CANCELLED
@@ -932,7 +970,7 @@ function COMMANDER:onafterTransportAssign(From, Event, To, Transport, Legions)
     local Legion=_Legion --Ops.Legion#LEGION
 
     -- Debug info.
-    self:I(self.lid..string.format("Assigning transport UID=%d to legion \"%s\"", Transport.uid, Legion.alias))
+    self:T(self.lid..string.format("Assigning transport UID=%d to legion \"%s\"", Transport.uid, Legion.alias))
   
     -- Add mission to legion.
     Legion:AddOpsTransport(Transport)
@@ -953,7 +991,7 @@ end
 function COMMANDER:onafterTransportCancel(From, Event, To, Transport)
 
   -- Debug info.
-  self:I(self.lid..string.format("Cancelling Transport UID=%d in status %s", Transport.uid, Transport:GetState()))
+  self:T(self.lid..string.format("Cancelling Transport UID=%d in status %s", Transport.uid, Transport:GetState()))
   
   -- Set commander status.
   Transport.statusCommander=OPSTRANSPORT.Status.CANCELLED
@@ -1441,7 +1479,7 @@ function COMMANDER:GetLegionsForMission(Mission)
         local dist=UTILS.Round(distance/10, 0)
         
         -- Debug info.
-        self:I(self.lid..string.format("Got legion %s with Nassets=%d and dist=%.1f NM, rounded=%.1f", legion.alias, Nassets, distance, dist))
+        self:T(self.lid..string.format("Got legion %s with Nassets=%d and dist=%.1f NM, rounded=%.1f", legion.alias, Nassets, distance, dist))
       
         -- Add legion to table of legions that can.
         table.insert(legions, {airwing=legion, distance=distance, dist=dist, targetcoord=coord, nassets=Nassets})

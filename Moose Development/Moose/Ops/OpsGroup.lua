@@ -3573,7 +3573,8 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     --Coordinate:MarkToAll("Random Patrol Zone Coordinate")
 
     -- Speed and altitude.
-    local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
+    local Speed=UTILS.MpsToKnots(Task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
+    --local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil
 
     local currUID=self:GetWaypointCurrent().uid
@@ -3609,7 +3610,8 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     local Coordinate=zone:GetRandomCoordinate()
 
     -- Speed and altitude.
-    local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
+    local Speed=UTILS.MpsToKnots(Task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
+    --local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil
 
     --Coordinate:MarkToAll("Recon Waypoint Execute")
@@ -3645,7 +3647,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
     -- Just stay put on the airfield and wait until something happens.
 
-  elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD then
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD or Task.dcstask.id==AUFTRAG.SpecialTask.ARMOREDGUARD then
 
     ---
     -- Task "On Guard" Mission.
@@ -3678,7 +3680,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
         local Alpha=param.angle or math.random(45, 85)
         local distance=Altitude/math.tan(math.rad(Alpha))
         local tvec2=UTILS.Vec2Translate(vec2, distance, heading)
-        self:T(self.lid..string.format("Barrage: Shots=%s, Altitude=%d m, Angle=%d�, heading=%03d�, distance=%d m", tostring(param.shots), Altitude, Alpha, heading, distance))
+        self:T(self.lid..string.format("Barrage: Shots=%s, Altitude=%d m, Angle=%dÂ°, heading=%03dÂ°, distance=%d m", tostring(param.shots), Altitude, Alpha, heading, distance))
         DCSTask=CONTROLLABLE.TaskFireAtPoint(nil, tvec2, param.radius, param.shots, param.weaponType, Altitude)
       else
         DCSTask=Task.dcstask
@@ -3776,7 +3778,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
         done=true
-      elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD then
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD or Task.dcstask.id==AUFTRAG.SpecialTask.ARMOREDGUARD then
         done=true
       elseif stopflag==1 or (not self:IsAlive()) or self:IsDead() or self:IsStopped() then
         -- Manual call TaskDone if setting flag to one was not successful.
@@ -3879,7 +3881,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       self:Disengage()
     end
 
-    if Task.description==AUFTRAG.SpecialTask.ONGUARD then
+    if Task.description==AUFTRAG.SpecialTask.ONGUARD or Task.description==AUFTRAG.SpecialTask.ARMOREDGUARD then
       self:T(self.lid.."Taske DONE OnGuard ==> Cruise")
       self:Cruise()
     end
@@ -3921,6 +3923,10 @@ function OPSGROUP:AddMission(Mission)
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
 
+  -- ad infinitum?
+  
+  self.adinfinitum = Mission.DCStask.params.adinfinitum and Mission.DCStask.params.adinfinitum or false
+    
   -- Info text.
   local text=string.format("Added %s mission %s starting at %s, stopping at %s",
   tostring(Mission.type), tostring(Mission.name), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "INF")
@@ -4334,7 +4340,7 @@ function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
     ---
 
     -- Alert 5 missoins dont have a task set, which could be cancelled.
-    if Mission.type==AUFTRAG.Type.ALERT5 or Mission.type==AUFTRAG.Type.ONGUARD then
+    if Mission.type==AUFTRAG.Type.ALERT5 or Mission.type==AUFTRAG.Type.ONGUARD or Mission.type==AUFTRAG.Type.ARMOREDGUARD then
       self:MissionDone(Mission)
       return
     end
@@ -4536,22 +4542,33 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
 
     -- Get ingress waypoint.
-    if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE or mission.type==AUFTRAG.Type.AMMOSUPPLY or mission.type.FUELSUPPLY then
+    if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE or mission.type==AUFTRAG.Type.AMMOSUPPLY 
+      or mission.type.FUELSUPPLY then
       local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
       waypointcoord=zone:GetRandomCoordinate(nil , nil, surfacetypes)
-    elseif mission.type==AUFTRAG.Type.ONGUARD then
+    elseif mission.type==AUFTRAG.Type.ONGUARD or mission.type==AUFTRAG.Type.ARMOREDGUARD then
       waypointcoord=mission:GetMissionWaypointCoord(self.group, nil, surfacetypes)
     else
       waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius, surfacetypes)
     end
-
+    
+    local armorwaypointcoord = nil
+    if mission.type==AUFTRAG.Type.ARMORATTACK then
+      local target=mission.engageTarget:GetObject() -- Wrapper.Positionable#POSITIONABLE
+      local zone = ZONE_RADIUS:New("AttackZone",target:GetVec2(),1000)
+      -- final WP
+      waypointcoord=zone:GetRandomCoordinate(0, 100, surfacetypes) -- Core.Point#COORDINATE
+      -- Ingress - add formation to this one
+      armorwaypointcoord = zone:GetRandomCoordinate(1000, 500, surfacetypes) -- Core.Point#COORDINATE
+    end
+    
     -- Add enroute tasks.
     for _,task in pairs(mission.enrouteTasks) do
       self:AddTaskEnroute(task)
     end
 
     -- Speed to mission waypoint.
-    local SpeedToMission=UTILS.KmphToKnots(self.speedCruise)
+    local SpeedToMission=mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise() --UTILS.KmphToKnots(self.speedCruise)
 
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
@@ -4628,7 +4645,13 @@ function OPSGROUP:RouteToMission(mission, delay)
     if self:IsFlightgroup() then
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
     elseif self:IsArmygroup() then
-      waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
+      if mission.type==AUFTRAG.Type.ARMORATTACK then
+        waypoint=ARMYGROUP.AddWaypoint(self, armorwaypointcoord, SpeedToMission, uid, mission.optionFormation, false)
+        local attackformation = mission.optionAttackFormation or "Vee"
+        waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, nil, attackformation, false)
+      else
+        waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
+      end
     elseif self:IsNavygroup() then
       waypoint=NAVYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.missionAltitude or self.altitudeCruise, false)
     end
@@ -4667,9 +4690,9 @@ function OPSGROUP:RouteToMission(mission, delay)
     self:_SetMissionOptions(mission)
 
     if self:IsArmygroup() then
-      self:Cruise(mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise())
+      self:Cruise(SpeedToMission)
     elseif self:IsNavygroup() then
-      self:Cruise(mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise())
+      self:Cruise(SpeedToMission)
     elseif self:IsFlightgroup() then
       self:UpdateRoute()
     end
@@ -4877,7 +4900,8 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     local Coordinate=zone:GetRandomCoordinate(nil, nil, surfacetypes)
 
     -- Speed and altitude.
-    local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)
+    local Speed=UTILS.MpsToKnots(task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
+   -- local Speed=UTILS.KmphToKnots(speed or self.speedCruise)
     local Altitude=UTILS.MetersToFeet(task.dcstask.params.altitude or self.altitudeCruise)
 
     local currUID=self:GetWaypointCurrent().uid
@@ -4913,7 +4937,8 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       local Coordinate=zone:GetRandomCoordinate()
 
       -- Speed and altitude.
-      local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)
+      local Speed=UTILS.MpsToKnots(task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
+      --local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)
       local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil
 
       -- Debug.
@@ -4933,7 +4958,9 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
       -- Increase counter.
       self.lastindex=self.lastindex+1
-
+      if self.adinfinitum and n==#target.targets then -- all targets done once
+        self.lastindex = 1
+      end
     else
 
       -- Get waypoint index.
@@ -8309,7 +8336,7 @@ function OPSGROUP:onafterBoard(From, Event, To, CarrierGroup, Carrier)
     self:T(self.lid.."Carrier not ready for boarding yet ==> repeating boarding call in 10 sec")
     self:__Board(-10, CarrierGroup, Carrier)
 
-    -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.�
+    -- Set carrier. As long as the group is not loaded, we only reserve the cargo space.ï¿½
     CarrierGroup:_AddCargobay(self, Carrier, true)
 
   end

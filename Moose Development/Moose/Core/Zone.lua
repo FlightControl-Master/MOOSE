@@ -129,7 +129,9 @@ function ZONE_BASE:New( ZoneName )
   self:F( ZoneName )
 
   self.ZoneName = ZoneName
-
+  
+  --_DATABASE:AddZone(ZoneName,self)
+  
   return self
 end
 

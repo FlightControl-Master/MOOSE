@@ -274,6 +274,9 @@
 -- 
 -- An arty mission can be created with the @{#AUFTRAG.NewARTY}() function.
 -- 
+-- ## ARMORATTACK
+-- 
+-- A mission to send a tank group can be created with the @{#AUFTRAG.NewARMORATTACK}() function.
 -- 
 -- # Options and Parameters
 -- 
@@ -377,7 +380,9 @@ _AUFTRAGSNR=0
 -- @field #string FUELSUPPLY Fuel supply.
 -- @field #string ALERT5 Alert 5.
 -- @field #string ONGUARD On guard.
+-- @field #string ARMOREDGUARD On guard - with armored groups.
 -- @field #string BARRAGE Barrage.
+-- @field #STRING ARMORATTACK Armor attack.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -407,7 +412,9 @@ AUFTRAG.Type={
   FUELSUPPLY="Fuel Supply",
   ALERT5="Alert5",
   ONGUARD="On Guard",
+  ARMOREDGUARD="Armored Guard",
   BARRAGE="Barrage",
+  ARMORATTACK="Armor Attack",
 }
 
 --- Mission status of an assigned group.
@@ -418,6 +425,7 @@ AUFTRAG.Type={
 -- @field #string FUELSUPPLY Fuel Supply.
 -- @field #string ALERT5 Alert 5 task.
 -- @field #string ONGUARD On guard.
+-- @field #string ARMOREDGUARD On guard with armor.
 -- @field #string BARRAGE Barrage.
 AUFTRAG.SpecialTask={
   PATROLZONE="PatrolZone",
@@ -426,7 +434,9 @@ AUFTRAG.SpecialTask={
   FUELSUPPLY="Fuel Supply",
   ALERT5="Alert5",
   ONGUARD="On Guard",
+  ARMOREDGUARD="ArmoredGuard",
   BARRAGE="Barrage",
+  ARMORATTACK="AmorAttack",
 }
 
 --- Mission status.
@@ -922,7 +932,8 @@ function AUFTRAG:NewORBIT(Coordinate, Altitude, Speed, Heading, Leg)
   
   mission:_TargetFromObject(Coordinate)
 
-  mission.orbitSpeed = UTILS.KnotsToMps(Speed or 350)
+  mission.orbitSpeed = UTILS.KnotsToMps(Speed or 350) -- the DCS Task itself will shortly be build with this so MPS
+  mission.missionSpeed = UTILS.KnotsToKmph(Speed or 350) 
 
   if Heading and Leg then
     mission.orbitHeading=Heading
@@ -1442,7 +1453,7 @@ function AUFTRAG:NewESCORT(EscortGroup, OffsetVector, EngageMaxDistance, TargetT
   mission.missionTask=ENUMS.MissionTask.ESCORT  
   mission.missionFraction=0.1
   mission.missionAltitude=1000
-  mission.optionROE=ENUMS.ROE.OpenFireWeaponFree       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
+  mission.optionROE=ENUMS.ROE.OpenFire       -- TODO: what's the best ROE here? Make dependent on ESCORT or FOLLOW!
   mission.optionROT=ENUMS.ROT.PassiveDefense
   
   mission.categories={AUFTRAG.Category.AIRCRAFT}
@@ -1500,6 +1511,8 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
   
   mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()  
   mission.transportDropoff=DropoffCoordinate
+
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.TROOPTRANSPORT)
   
   -- Debug.
   mission.transportPickup:MarkToAll("Pickup")
@@ -1643,6 +1656,8 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
   end
   
   mission:_TargetFromObject(Zone)
+  
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.PATROLZONE)
     
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
@@ -1653,6 +1668,35 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
   mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
   
   mission.categories={AUFTRAG.Category.ALL}
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+--- **[GROUND]** Create a ARMORATTACK mission. Armoured ground group(s) will go to the zone and attack.
+-- @param #AUFTRAG self
+-- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
+-- @param #number Speed Speed in knots.
+-- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc. 
+-- @return #AUFTRAG self
+function AUFTRAG:NewARMORATTACK(Target, Speed, Formation)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.ARMORATTACK)
+  
+  mission:_TargetFromObject(Target)
+  
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.ARMORATTACK)
+    
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  mission.optionFormation="Off Road"
+  mission.optionAttackFormation=Formation or "Wedge"
+  
+  mission.missionFraction=1.0  
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or 20
+  
+  mission.categories={AUFTRAG.Category.GROUND}
   
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -1672,6 +1716,8 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
   local mission=AUFTRAG:New(AUFTRAG.Type.RECON)
   
   mission:_TargetFromObject(ZoneSet)
+  
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.RECON)
     
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.PassiveDefense
@@ -1684,8 +1730,14 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
   mission.categories={AUFTRAG.Category.ALL}
     
   mission.DCStask=mission:GetDCSMissionTask()
-  mission.DCStask.params.adinfitum=Adinfinitum
+  mission.DCStask.params.adinfinitum=Adinfinitum
   mission.DCStask.params.randomly=Randomly
+  
+  if Randomly then
+    local targets = mission.DCStask.params.target.targets -- Ops.Target#TARGET
+    local shuffled = UTILS.ShuffleTable(targets)
+    mission.DCStask.params.target.targets = shuffled
+  end
 
   return mission
 end
@@ -1784,6 +1836,30 @@ function AUFTRAG:NewONGUARD(Coordinate)
   return mission
 end
 
+--- **[GROUND]** Create an ARMORED ON GUARD mission.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Coordinate, where to stand guard.
+-- @param #string Formation Formation to take, e.g. "on Road", "Vee" etc.
+-- @return #AUFTRAG self
+function AUFTRAG:NewARMOREDGUARD(Coordinate,Formation)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.ARMOREDGUARD)
+  
+  mission:_TargetFromObject(Coordinate)
+  
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  mission.optionFormation=Formation or "On Road"
+  --mission.optionAttackFormation=Formation or "Wedge"
+  
+  mission.missionFraction=1.0
+  
+  mission.categories={AUFTRAG.Category.GROUND}
+    
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
 
 --- Create a mission to attack a TARGET object.
 -- @param #AUFTRAG self
@@ -1812,6 +1888,8 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
     mission=self:NewSEAD(Target, Altitude)
   elseif MissionType==AUFTRAG.Type.STRIKE then
     mission=self:NewSTRIKE(Target, Altitude)
+  elseif MissionType==AUFTRAG.Type.ARMORATTACK then
+    mission=self:NewARMORATTACK(Target,Speed)
   else
     return nil
   end
@@ -1876,6 +1954,10 @@ function AUFTRAG:_DetermineAuftragType(Target)
         auftrag=AUFTRAG.Type.BAI
       
       elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
+      
+        auftrag=AUFTRAG.Type.CAS
+      
+      elseif attribute==GROUP.Attribute.GROUND_TANK then
       
         auftrag=AUFTRAG.Type.BAI
           
@@ -4157,10 +4239,16 @@ function AUFTRAG:_TargetFromObject(Object)
     
       self.engageTarget=Object
     
-    else
-  
+    else --if Object then
+    
       self.engageTarget=TARGET:New(Object)
       
+    end   
+      
+    if self.type == AUFTRAG.Type.ALERT5 then
+    
+      self.alert5Target = self.engageTarget
+    
     end
 
   else
@@ -4290,7 +4378,12 @@ function AUFTRAG:GetTargetCoordinate()
     local coord=self.engageTarget:GetCoordinate()
     return coord
     
-  else
+  elseif self.alert5Target then
+    
+    local coord=self.alert5Target:GetCoordinate()
+    return coord
+    
+  else  
     self:E(self.lid.."ERROR: Cannot get target coordinate!")
   end
 
@@ -4841,6 +4934,26 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     DCStask.params=param
     
     table.insert(DCStasks, DCStask)
+    
+   elseif self.type==AUFTRAG.Type.ARMORATTACK then
+
+    -------------------------
+    -- ARMOR ATTACK Mission --
+    -------------------------
+  
+    local DCStask={}
+    
+    DCStask.id=AUFTRAG.SpecialTask.ARMORATTACK
+    
+    -- We create a "fake" DCS task and pass the parameters to the ARMYGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+    param.action="Wedge"
+    param.speed=self.missionSpeed
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)   
 
   elseif self.type==AUFTRAG.Type.AMMOSUPPLY then
 
@@ -4895,7 +5008,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     
     table.insert(DCStasks, DCStask)    
 
-  elseif self.type==AUFTRAG.Type.ONGUARD then
+  elseif self.type==AUFTRAG.Type.ONGUARD or self.type==AUFTRAG.Type.ARMOREDGUARD then
 
     ----------------------
     -- ON GUARD Mission --
@@ -4903,7 +5016,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
   
     local DCStask={}
     
-    DCStask.id=AUFTRAG.SpecialTask.ONGUARD
+    DCStask.id= self.type==AUFTRAG.Type.ONGUARD and AUFTRAG.SpecialTask.ONGUARD or AUFTRAG.SpecialTask.ARMOREDGUARD
     
     -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
@@ -5004,7 +5117,11 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
     mtask=ENUMS.MissionTask.RUNWAYATTACK
   elseif MissionType==AUFTRAG.Type.CAP then
     mtask=ENUMS.MissionTask.CAP
+  elseif MissionType==AUFTRAG.Type.GCICAP then
+    mtask=ENUMS.MissionTask.CAP
   elseif MissionType==AUFTRAG.Type.CAS then
+    mtask=ENUMS.MissionTask.CAS
+  elseif MissionType==AUFTRAG.Type.PATROLZONE then
     mtask=ENUMS.MissionTask.CAS
   elseif MissionType==AUFTRAG.Type.ESCORT then
     mtask=ENUMS.MissionTask.ESCORT
@@ -5024,6 +5141,8 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
     mtask=ENUMS.MissionTask.REFUELING
   elseif MissionType==AUFTRAG.Type.TROOPTRANSPORT then
     mtask=ENUMS.MissionTask.TRANSPORT
+  elseif MissionType==AUFTRAG.Type.ARMORATTACK then
+    mtask=ENUMS.MissionTask.NOTHING
   end
 
   return mtask

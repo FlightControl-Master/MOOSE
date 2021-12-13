@@ -701,7 +701,7 @@ end
 function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegLength, RefuelSystem)
 
   -- Check if a zone was passed instead of a coordinate.
-  if Coordinate:IsInstanceOf("ZONE_BASE") then
+  if Coordinate and Coordinate:IsInstanceOf("ZONE_BASE") then
     Coordinate=Coordinate:GetCoordinate()
   end
 
@@ -919,7 +919,17 @@ end
 -- @return #AIRWING self
 function AIRWING:CheckCAP()
 
-  local Ncap=self:CountMissionsInQueue({AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT})
+  local Ncap=0 --self:CountMissionsInQueue({AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT})
+
+  -- Count CAP missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    if mission:IsNotOver() and mission.type==AUFTRAG.Type.GCICAP and mission.patroldata then
+      Ncap=Ncap+1
+    end
+
+  end
 
   for i=1,self.nflightsCAP-Ncap do
 
@@ -1011,7 +1021,18 @@ end
 -- @return #AIRWING self
 function AIRWING:CheckAWACS()
 
-  local N=self:CountMissionsInQueue({AUFTRAG.Type.AWACS})
+  local N=0 --self:CountMissionsInQueue({AUFTRAG.Type.AWACS})
+
+  -- Count AWACS missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    if mission:IsNotOver() and mission.type==AUFTRAG.Type.AWACS and mission.patroldata then
+      N=N+1
+    end
+
+  end
+
 
   for i=1,self.nflightsAWACS-N do
 

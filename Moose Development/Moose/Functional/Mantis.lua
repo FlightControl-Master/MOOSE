@@ -20,7 +20,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Date: Nov 2021
+-- Date: Dec 2021
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -194,9 +194,11 @@
 --        -- switch off auto shorad **before** you start MANTIS.   
 --        `mybluemantis.autoshorad = false`
 --        
---        -- scale of the activation range, i.e. don't activate at the fringes of max range, default 90%.   
+--        -- scale of the activation range, i.e. don't activate at the fringes of max range, defaults below.   
 --        -- also see engagerange below.   
---        `mybluemantis.radiusscale = 0.9`
+--        `    self.radiusscale[MANTIS.SamType.LONG] = 1.1`   
+--        `    self.radiusscale[MANTIS.SamType.MEDIUM] = 1.2`   
+--        `    self.radiusscale[MANTIS.SamType.SHORT] = 1.3`   
 -- 
 -- # 3. Default settings [both modes unless stated otherwise]
 --
@@ -207,7 +209,7 @@
 --  * [classic mode] checkradius = 25000 (meters) - SAMs will engage enemy flights, if they are within a 25km around each SAM site - `MANTIS:SetSAMRadius(radius)`
 --  * grouping = 5000 (meters) - Detection (EWR) will group enemy flights to areas of 5km for tracking - `MANTIS:SetEWRGrouping(radius)`
 --  * detectinterval = 30 (seconds) - MANTIS will decide every 30 seconds which SAM to activate - `MANTIS:SetDetectInterval(interval)`
---  * engagerange = 85 (percent) - SAMs will only fire if flights are inside of a 85% radius of their max firerange - `MANTIS:SetSAMRange(range)`
+--  * engagerange = 95 (percent) - SAMs will only fire if flights are inside of a 95% radius of their max firerange - `MANTIS:SetSAMRange(range)`
 --  * dynamic = false - Group filtering is set to once, i.e. newly added groups will not be part of the setup by default - `MANTIS:New(name,samprefix,ewrprefix,hq,coaltion,dynamic)`
 --  * autorelocate = false - HQ and (mobile) EWR system will not relocate in random intervals between 30mins and 1 hour - `MANTIS:SetAutoRelocate(hq, ewr)`
 --  * debug = false - Debugging reports on screen are set to off - `MANTIS:Debug(onoff)`
@@ -284,7 +286,7 @@ MANTIS = {
   grouping              = 5000,
   acceptrange           = 80000,
   detectinterval        = 30,
-  engagerange           = 75,
+  engagerange           = 95,
   autorelocate          = false,
   advanced              = false,
   adv_ratio             = 100,
@@ -296,7 +298,7 @@ MANTIS = {
   Shorad                = nil,
   ShoradLink            = false,
   ShoradTime            = 600,
-  ShoradActDistance     = 15000,
+  ShoradActDistance     = 25000,
   UseEmOnOff            = false,
   TimeStamp             = 0,
   state2flag            = false,
@@ -440,7 +442,7 @@ do
     self.grouping = 5000
     self.acceptrange = 80000
     self.detectinterval = 30
-    self.engagerange = 85
+    self.engagerange = 95
     self.autorelocate = false
     self.autorelocateunits = { HQ = false, EWR = false}
     self.advanced = false
@@ -453,7 +455,7 @@ do
     self.Shorad = nil
     self.ShoradLink = false
     self.ShoradTime = 600
-    self.ShoradActDistance = 15000
+    self.ShoradActDistance = 25000
     self.TimeStamp = timer.getAbsTime()
     self.relointerval = math.random(1800,3600) -- random between 30 and 60 mins
     self.state2flag = false
@@ -463,8 +465,11 @@ do
     self.SuppressedGroups = {}
     -- 0.8 additions
     self.automode = true
-    self.radiusscale = 0.9
-    self.SAMCheckRanges = {}
+    self.radiusscale = {}
+    self.radiusscale[MANTIS.SamType.LONG] = 1.1
+    self.radiusscale[MANTIS.SamType.MEDIUM] = 1.2
+    self.radiusscale[MANTIS.SamType.SHORT] = 1.3
+    --self.SAMCheckRanges = {}
     self.usezones = false
     self.AcceptZones = {}
     self.RejectZones = {}
@@ -540,9 +545,10 @@ do
     if self.HQ_Template_CC then
       self.HQ_CC = GROUP:FindByName(self.HQ_Template_CC)
     end
-
+    
+    -- TODO Version
     -- @field #string version
-    self.version="0.8.7"
+    self.version="0.8.8"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -753,9 +759,9 @@ do
   -- @param #number range Percent of the max fire range
   function MANTIS:SetSAMRange(range)
     self:T(self.lid .. "SetSAMRange")
-    local range = range or 85
+    local range = range or 95
     if range < 0 or range > 100 then
-      range = 85
+      range = 95
     end
     self.engagerange = range
     return self
@@ -782,9 +788,9 @@ do
   -- @param #number range Percent of the max fire range
   function MANTIS:SetNewSAMRangeWhileRunning(range)
     self:T(self.lid .. "SetNewSAMRangeWhileRunning")
-    local range = range or 75
+    local range = range or 95
     if range < 0 or range > 100 then
-      range = 75
+      range = 95
     end
     self.engagerange = range
     self:_RefreshSAMTable()
@@ -1272,6 +1278,7 @@ do
     local range = self.checkradius
     local height = 3000
     local type = MANTIS.SamType.MEDIUM
+    local radiusscale = self.radiusscale[type]
     local blind = 0
     local group = GROUP:FindByName(grpname) -- Wrapper.Group#GROUP
     local units = group:GetUnits()
@@ -1289,9 +1296,10 @@ do
         local _radar = string.lower(_entry.Radar)
         --self:I(string.format("Trying typename: %s",_radar))
         if string.find(type,_radar,1,true) then
-          range = _entry.Range * 1000 * self.radiusscale -- max firing range
-          height = _entry.Height * 1000 -- max firing height
           type = _entry.Type
+          radiusscale = self.radiusscale[type]
+          range = _entry.Range * 1000 * radiusscale -- max firing range used as switch-on
+          height = _entry.Height * 1000 -- max firing height
           blind = _entry.Blindspot * 100 -- blind spot range 
           --self:I(string.format("Match: %s - %s",_radar,type))
           found = true
@@ -1318,6 +1326,7 @@ do
     local range = self.checkradius
     local height = 3000
     local type = MANTIS.SamType.MEDIUM
+    local radiusscale = self.radiusscale[type]
     local blind = 0
     local found = false
     local HDSmod = false
@@ -1329,9 +1338,10 @@ do
         --self:I("ID = " .. idx)
         if string.find(grpname,idx,1,true) then
           local _entry = entry -- #MANTIS.SamData
-          range = _entry.Range * 1000 * self.radiusscale -- max firing range
-          height = _entry.Height * 1000 -- max firing height
           type = _entry.Type
+          radiusscale = self.radiusscale[type]
+          range = _entry.Range * 1000 * radiusscale -- max firing range
+          height = _entry.Height * 1000 -- max firing height        
           blind = _entry.Blindspot 
           --self:I("Matching Groupname = " .. grpname .. " Range= " .. range)
           found = true
@@ -1376,7 +1386,7 @@ do
         else
           group:OptionAlarmStateGreen() -- AI off
         end
-        group:OptionEngageRange(engagerange)  --default engagement will be 85% of firing range
+        group:OptionEngageRange(engagerange)  --default engagement will be 95% of firing range
         local grpname = group:GetName()
         local grpcoord = group:GetCoordinate()
         local grprange,grpheight,type,blind  = self:_GetSAMRange(grpname)
@@ -1434,7 +1444,7 @@ do
      --cycle through groups and set alarm state etc
      for _i,_group in pairs (SAM_Grps) do
         local group = _group -- Wrapper.Group#GROUP
-        group:OptionEngageRange(engagerange)  --engagement will be 85% of firing range
+        group:OptionEngageRange(engagerange)  --engagement will be 95% of firing range
         if group:IsGround() and group:IsAlive() then
           local grpname = group:GetName()
           local grpcoord = group:GetCoordinate()

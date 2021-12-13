@@ -1201,6 +1201,8 @@ AIRBOSS = {
   NmaxSection    = nil,
   NmaxStack      = nil,
   handleai       = nil,
+  xtVoiceOvers   = nil,
+  xtVoiceOversAI = nil,
   tanker         = nil,
   Corientation   = nil,
   Corientlast    = nil,
@@ -1899,6 +1901,12 @@ function AIRBOSS:New(carriername, alias)
 
   -- Set AI handling On.
   self:SetHandleAION()
+
+  -- No extra voiceover/calls from player by default
+  self:SetExtraVoiceOvers(false)
+
+  -- No extra voiceover/calls from AI by default
+  self:SetExtraVoiceOversAI(false)
 
   -- Airboss is a nice guy.
   self:SetAirbossNiceGuy()
@@ -2621,7 +2629,7 @@ function AIRBOSS:DeleteAllRecoveryWindows(delay)
 
   -- Loop over all recovery windows.
   for _,recovery in pairs(self.recoverytimes) do
-    self:I(self.lid..string.format("Deleting recovery window ID %s", tostring(recovery.ID)))
+    self:T(self.lid..string.format("Deleting recovery window ID %s", tostring(recovery.ID)))
     self:DeleteRecoveryWindow(recovery, delay)
   end
 
@@ -3118,7 +3126,7 @@ function AIRBOSS:SoundCheckLSO(delay)
     end
 
     -- Debug message.
-    self:I(self.lid..text)
+    self:T(self.lid..text)
 
   end
 end
@@ -3154,7 +3162,7 @@ function AIRBOSS:SoundCheckMarshal(delay)
     end
 
     -- Debug message.
-    self:I(self.lid..text)
+    self:T(self.lid..text)
 
   end
 end
@@ -3215,6 +3223,24 @@ function AIRBOSS:SetHandleAION()
   return self
 end
 
+--- Will play the inbound calls, commencing, initial, etc. from the player when requesteing marshal
+-- @param #AIRBOSS self
+-- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
+-- @return #AIRBOSS self
+function AIRBOSS:SetExtraVoiceOvers(status)
+  self.xtVoiceOvers=status
+  return self
+end
+
+--- Will simulate the inbound call, commencing, initial, etc from the AI when requested by Airboss
+-- @param #AIRBOSS self
+-- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
+-- @return #AIRBOSS self
+function AIRBOSS:SetExtraVoiceOversAI(status)
+  self.xtVoiceOversAI=status
+  return self
+end
+ 
 --- Do not handle AI aircraft.
 -- @param #AIRBOSS self
 -- @return #AIRBOSS self
@@ -3516,7 +3542,7 @@ function AIRBOSS:onafterStatus(From, Event, To)
     if i==0 then
       text=text.." none"
     end
-    self:I(self.lid..text)
+    self:T(self.lid..text)
 
     -- Check for collision.
     if collision then
@@ -4176,7 +4202,7 @@ end
 -- @param #number n Number of waypoint that was passed.
 function AIRBOSS:onafterPassingWaypoint(From, Event, To, n)
   -- Debug output.
-  self:I(self.lid..string.format("Carrier passed waypoint %d.", n))
+  self:T(self.lid..string.format("Carrier passed waypoint %d.", n))
 end
 
 --- On after "Idle" event. Carrier goes to state "Idle".
@@ -4195,7 +4221,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterStop(From, Event, To)
-  self:I(self.lid..string.format("Stopping airboss script."))
+  self:T(self.lid..string.format("Stopping airboss script."))
 
   -- Unhandle events.
   self:UnHandleEvent(EVENTS.Birth)
@@ -5299,6 +5325,48 @@ function AIRBOSS:_InitVoiceOvers()
       subtitle="",
       duration=1.95,
     },
+    MARSHAL={
+      file="PILOT-Marshal",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.50,
+    },
+    MARKINGMOMS={
+      file="PILOT-MarkingMoms",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.90,
+    },
+    FOR={
+      file="PILOT-For",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.29,
+    },
+    ANGELS={
+      file="PILOT-Angels",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.50,
+    },
+    STATE={
+      file="PILOT-State",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.40,
+    },   
+    COMMENCING={
+      file="PILOT-Commencing",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.45,
+    },   
   }
 
   -------------------
@@ -6174,6 +6242,12 @@ function AIRBOSS:_ClearForLanding(flight)
     -- Cleared for Case X recovery.
     self:_MarshalCallClearedForRecovery(flight.onboard, flight.case)
 
+    -- Voice over of the commencing simulated call from AI
+    if self.xtVoiceOversAI then
+      local leader = flight.group:GetUnits()[1]
+      self:_CommencingCall(leader, flight.onboard)
+    end
+
   else
 
     -- Cleared for Case X recovery.
@@ -6545,6 +6619,11 @@ function AIRBOSS:_MarshalAI(flight, nstack, respawn)
 
   -- Check if flight is already in Marshal queue.
   if not self:_InQueue(self.Qmarshal,flight.group) then
+    -- Simulate inbound call
+    if self.xtVoiceOversAI then
+      local leader = flight.group:GetUnits()[1]
+      self:_MarshallInboundCall(leader, flight.onboard)
+    end
     -- Add group to marshal stack queue.
     self:_AddMarshalGroup(flight, nstack)
   end
@@ -7296,7 +7375,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
 
   end
 
-  self:I(self.lid..string.format("Returning free stack %s", tostring(nfree)))
+  self:T(self.lid..string.format("Returning free stack %s", tostring(nfree)))
   return nfree
 end
 
@@ -8235,7 +8314,7 @@ function AIRBOSS:_RemoveFlight(flight, completely)
       -- Remove player from players table.
       local playerdata=self.players[flight.name]
       if playerdata then
-        self:I(self.lid..string.format("Removing player %s completely.", flight.name))
+        self:T(self.lid..string.format("Removing player %s completely.", flight.name))
         self.players[flight.name]=nil
       end
 
@@ -13874,7 +13953,7 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck, uturn)
   local distNM=UTILS.MetersToNM(dist)
 
   -- Debug output
-  self:I(self.lid..string.format("Carrier steaming into the wind (%.1f kts). Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", UTILS.MpsToKnots(vwind), distNM, speedknots, time))
+  self:T(self.lid..string.format("Carrier steaming into the wind (%.1f kts). Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", UTILS.MpsToKnots(vwind), distNM, speedknots, time))
 
   -- Get heading into the wind accounting for angled runway.
   local hiw=self:GetHeadingIntoWind()
@@ -15722,6 +15801,85 @@ function AIRBOSS:_Number2Radio(radio, number, delay, interval, pilotcall)
   return wait
 end
 
+--- Aircraft request marshal (Inbound call both for players and AI).
+-- @param #AIRBOSS self
+-- @return Wrapper.Unit#UNIT Unit of player or nil.
+-- @param #string modex Tail number.
+function AIRBOSS:_MarshallInboundCall(unit, modex)
+
+  -- Calculate 
+  local vectorCarrier = self:GetCoordinate():GetDirectionVec3(unit:GetCoordinate())
+  local bearing =  UTILS.Round(unit:GetCoordinate():GetAngleDegrees( vectorCarrier ), 0)
+  local distance = UTILS.Round(UTILS.MetersToNM(unit:GetCoordinate():Get2DDistance(self:GetCoordinate())),0)
+  local angels = UTILS.Round(UTILS.MetersToFeet(unit:GetHeight()/1000),0)
+  local state = UTILS.Round(self:_GetFuelState(unit)/1000,1)
+  
+  -- Pilot: "Marshall, [modex], marking mom's [bearing] for [distance], angels [XX], state [X.X]"
+  local text=string.format("Marshal, %s, marking mom's %d for %d, angels %d, state %.1f", modex, bearing, distance, angels, state)
+  -- Debug message.
+  self:T(self.lid..text)
+
+  -- Fuel state.
+  local FS=UTILS.Split(string.format("%.1f", state), ".")
+
+  -- Create new call to display complete subtitle.
+  local inboundcall=self:_NewRadioCall(self.MarshalCall.CLICK,  unit.UnitName:upper() , text, self.Tmessage, nil, unit.UnitName:upper())
+
+  -- CLICK!
+  self:RadioTransmission(self.MarshalRadio, inboundcall)
+  -- Marshal ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.MARSHAL, nil, nil, nil, nil, true)
+  -- Modex..
+  self:_Number2Radio(self.MarshalRadio, modex, nil, nil, true)
+  -- Marking Mom's,
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.MARKINGMOMS, nil, nil, nil, nil, true)
+  -- Bearing ..
+  self:_Number2Radio(self.MarshalRadio, tostring(bearing), nil, nil, true)
+  -- For ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.FOR, nil, nil, nil, nil, true)
+  -- Distance ..
+  self:_Number2Radio(self.MarshalRadio, tostring(distance), nil, nil, true)
+  -- Angels ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.ANGELS, nil, nil, nil, nil, true)
+  -- Angels Number ..
+  self:_Number2Radio(self.MarshalRadio, tostring(angels), nil, nil, true)
+  -- State ..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.STATE, nil, nil, nil, nil, true)
+  -- X..
+  self:_Number2Radio(self.MarshalRadio, FS[1], nil, nil, true)
+  -- Point..
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.POINT, nil, nil, nil, nil, true)
+  -- Y.
+  self:_Number2Radio(self.MarshalRadio, FS[2], nil, nil, true)
+  -- CLICK!
+  self:RadioTransmission(self.MarshalRadio, self.MarshalRadio.CLICK, nil, nil, nil, nil, true)
+
+end
+
+--- Aircraft commencing call (both for players and AI).
+-- @param #AIRBOSS self
+-- @return Wrapper.Unit#UNIT Unit of player or nil.
+-- @param #string modex Tail number.
+function AIRBOSS:_CommencingCall(unit, modex)
+
+  -- Pilot: "[modex], commencing"
+  local text=string.format("%s, commencing", modex)
+  -- Debug message.
+  self:T(self.lid..text)
+
+  -- Create new call to display complete subtitle.
+  local commencingCall=self:_NewRadioCall(self.MarshalCall.CLICK,  unit.UnitName:upper() , text, self.Tmessage, nil, unit.UnitName:upper())
+
+  -- Click
+  self:RadioTransmission(self.MarshalRadio, commencingCall)
+  -- Modex..
+  self:_Number2Radio(self.MarshalRadio, modex, nil, nil, true)
+  -- Commencing
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.COMMENCING, nil, nil, nil, nil, true)
+  -- CLICK!
+  self:RadioTransmission(self.MarshalRadio, self.MarshalRadio.CLICK, nil, nil, nil, nil, true)
+
+end
 
 --- AI aircraft calls the ball.
 -- @param #AIRBOSS self
@@ -15734,7 +15892,7 @@ function AIRBOSS:_LSOCallAircraftBall(modex, nickname, fuelstate)
   local text=string.format("%s Ball, %.1f.", nickname, fuelstate)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Nickname UPPERCASE.
   local NICKNAME=nickname:upper()
@@ -15770,7 +15928,7 @@ function AIRBOSS:_MarshalCallGasAtTanker(modex)
   local text=string.format("Bingo fuel! Going for gas at the recovery tanker.")
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call to display complete subtitle.
   local call=self:_NewRadioCall(self.PilotCall.BINGOFUEL, modex, text, self.Tmessage, nil, modex)
@@ -15793,7 +15951,7 @@ function AIRBOSS:_MarshalCallGasAtDivert(modex, divertname)
   local text=string.format("Bingo fuel! Going for gas at divert field %s.", divertname)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call to display complete subtitle.
   local call=self:_NewRadioCall(self.PilotCall.BINGOFUEL, modex, text, self.Tmessage, nil, modex)
@@ -15816,7 +15974,7 @@ function AIRBOSS:_MarshalCallRecoveryStopped(case)
   local text=string.format("Case %d recovery ops are stopped. Deck is closed.", case)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call to display complete subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.CASE, "AIRBOSS", text, self.Tmessage, "99")
@@ -15857,7 +16015,7 @@ function AIRBOSS:_MarshalCallRecoveryPausedResumedAt(clock)
   local text=string.format("aircraft recovery is paused and will be resumed at %s.", clock)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.RECOVERYPAUSEDRESUMED, "AIRBOSS", text, self.Tmessage, "99")
@@ -15885,7 +16043,7 @@ function AIRBOSS:_MarshalCallClearedForRecovery(modex, case)
   local text=string.format("you're cleared for Case %d recovery.", case)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.CLEAREDFORRECOVERY, "MARSHAL", text, self.Tmessage, modex)
@@ -15923,7 +16081,7 @@ function AIRBOSS:_MarshalCallNewFinalBearing(FB)
   local text=string.format("new final bearing %03d°.", FB)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.NEWFB, "AIRBOSS", text, self.Tmessage, "99")
@@ -15946,7 +16104,7 @@ function AIRBOSS:_MarshalCallCarrierTurnTo(hdg)
   local text=string.format("carrier is now starting turn to heading %03d°.", hdg)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.CARRIERTURNTOHEADING, "AIRBOSS", text, self.Tmessage, "99")
@@ -15977,7 +16135,7 @@ function AIRBOSS:_MarshalCallStackFull(modex, nwaiting)
   end
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.STACKFULL, "AIRBOSS", text, self.Tmessage, modex)
@@ -16048,7 +16206,7 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   local text=string.format("Case %d, expected BRC %03d°, hold at angels %d. Expected Charlie Time %s. Altimeter %.2f. Report see me.", case, brc, angels, charlie, qfe)
 
   -- Debug message.
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   -- Create new call to display complete subtitle.
   local casecall=self:_NewRadioCall(self.MarshalCall.CASE, "MARSHAL", text, self.Tmessage, modex)
@@ -16478,13 +16636,18 @@ function AIRBOSS:_RequestMarshal(_unitName)
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
-
+     
   -- Check if we have a unit which is a player.
   if _unit and _playername then
     local playerData=self.players[_playername] --#AIRBOSS.PlayerData
 
     if playerData then
 
+      -- Voice over of inbound call (regardless of airboss rejecting it or not)
+      if self.xtVoiceOvers then
+        self:_MarshallInboundCall(_unit, playerData.onboard)
+      end   
+    
       -- Check if player is in CCA
       local inCCA=playerData.unit:IsInZone(self.zoneCCA)
 
@@ -16726,13 +16889,18 @@ function AIRBOSS:_RequestCommence(_unitName)
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
-
+ 
   -- Check if we have a unit which is a player.
   if _unit and _playername then
     local playerData=self.players[_playername] --#AIRBOSS.PlayerData
 
     if playerData then
-
+   
+      -- Voice over of Commencing call (regardless of Airboss will rejected or not)
+      if self.xtVoiceOvers then
+        self:_CommencingCall(_unit, playerData.onboard)
+      end
+      
       -- Check if unit is in CCA.
       local text=""
       local cleared=false

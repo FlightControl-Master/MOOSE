@@ -1,4 +1,4 @@
----- **Ops** - Chief of Staff.
+--- **Ops** - Chief of Staff.
 --
 -- **Main Features:**
 --
@@ -174,11 +174,13 @@ CHIEF.Strategy = {
 -- @field #number importance Importance
 -- @field Ops.Auftrag#AUFTRAG missionPatrol Patrol mission.
 -- @field Ops.Auftrag#AUFTRAG missionCAS CAS mission.
+-- @field Ops.Auftrag#AUFTRAG missionPatrol Patrol mission.
+-- @field Ops.Auftrag#AUFTRAG missionARTY Artillery mission.
 
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.0.1"
+CHIEF.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -212,7 +214,18 @@ function CHIEF:New(Coalition, AgentSet, Alias)
 
   -- Set alias.
   Alias=Alias or "CHIEF"
-
+  
+  -- coalition
+  if type(Coalition) == "string" then
+    if string.lower(Coalition) == "blue" then
+      Coalition = coalition.side.BLUE
+    elseif string.lower(Coalition) == "red" then
+      Coalition = coalition.side.RED
+    else
+      Coalition = coalition.side.NEUTRAL
+    end
+  end
+  
   -- Inherit everything from INTEL class.
   local self=BASE:Inherit(self, INTEL:New(AgentSet, Coalition, Alias)) --#CHIEF
 
@@ -225,6 +238,7 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   -- Init stuff.
   self.Defcon=CHIEF.DEFCON.GREEN
   self.strategy=CHIEF.Strategy.DEFENSIVE
+  self.TransportCategories = {Group.Category.HELICOPTER}
   
   -- Create a new COMMANDER.
   self.commander=COMMANDER:New(Coalition)  
@@ -751,7 +765,7 @@ function CHIEF:RemoveTarget(Target)
     local target=_target --Ops.Target#TARGET
     
     if target.uid==Target.uid then
-      self:I(self.lid..string.format("Removing target %s from queue", Target.name))
+      self:T(self.lid..string.format("Removing target %s from queue", Target.name))
       table.remove(self.targetqueue, i)
       break
     end
@@ -813,9 +827,9 @@ function CHIEF:AddRefuellingZone(RefuellingZone)
   return supplyzone
 end
 
---- Add a CAP zone.
+--- Add a CAP zone. Flights will engage detected targets inside this zone. 
 -- @param #CHIEF self
--- @param Core.Zone#ZONE Zone Zone.
+-- @param Core.Zone#ZONE Zone CAP Zone. Has to be a circular zone.
 -- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
@@ -829,6 +843,21 @@ function CHIEF:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
   return zone
 end
 
+--- Add a GCI CAP.
+-- @param #CHIEF self
+-- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Speed Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+function CHIEF:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
+
+  -- Hand over to commander.
+  local zone=self.commander:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
+
+  return zone
+end
 
 --- Add an AWACS zone.
 -- @param #CHIEF self
@@ -958,6 +987,23 @@ function CHIEF:AddAttackZone(Zone)
   return self
 end
 
+--- Allow chief to use GROUND units for transport tasks. Helicopters are still preferred, and be aware there's no check as of now
+-- if a destination can be reached on land.
+-- @param #CHIEF self
+-- @return #CHIEF self
+function CHIEF:AllowGroundTransport()
+  self.TransportCategories = {Group.Category.GROUND, Group.Category.HELICOPTER}
+  return self
+end
+
+--- Forbid chief to use GROUND units for transport tasks. Restrict to Helicopters. This is the default
+-- @param #CHIEF self
+-- @return #CHIEF self
+function CHIEF:ForbidGroundTransport()
+  self.TransportCategories = {Group.Category.HELICOPTER}
+  return self
+end
+
 --- Check if current strategy is passive.
 -- @param #CHIEF self
 -- @return #boolean If `true`, strategy is passive.
@@ -1049,7 +1095,7 @@ function CHIEF:onafterStatus(From, Event, To)
       -- Debug info.
       local text=string.format("Lost contact to target %s! %s mission %s will be cancelled.", contact.groupname, contact.mission.type:upper(), contact.mission.name)
       MESSAGE:New(text, 120, "CHIEF"):ToAll()
-      self:I(self.lid..text)
+      self:T(self.lid..text)
     
       -- Cancel this mission.
       contact.mission:Cancel()
@@ -1255,7 +1301,7 @@ function CHIEF:onafterStatus(From, Event, To)
         text=text..string.format("\n- %s: %d", attribute, N)
       end
     end
-    self:I(self.lid..text)
+    self:T(self.lid..text)
   end
 
 end
@@ -1274,7 +1320,7 @@ end
 function CHIEF:onafterMissionAssign(From, Event, To, Mission, Legions)
 
   if self.commander then
-    self:I(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
+    self:T(self.lid..string.format("Assigning mission %s (%s) to COMMANDER", Mission.name, Mission.type))
     Mission.chief=self
     Mission.statusChief=AUFTRAG.Status.QUEUED
     self.commander:MissionAssign(Mission, Legions)
@@ -1293,7 +1339,7 @@ end
 function CHIEF:onafterMissionCancel(From, Event, To, Mission)
 
   -- Debug info.
-  self:I(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
+  self:T(self.lid..string.format("Cancelling mission %s (%s) in status %s", Mission.name, Mission.type, Mission.status))
   
   -- Set status to CANCELLED.
   Mission.statusChief=AUFTRAG.Status.CANCELLED  
@@ -1323,7 +1369,7 @@ end
 function CHIEF:onafterTransportCancel(From, Event, To, Transport)
 
   -- Debug info.
-  self:I(self.lid..string.format("Cancelling transport UID=%d in status %s", Transport.uid, Transport:GetState()))
+  self:T(self.lid..string.format("Cancelling transport UID=%d in status %s", Transport.uid, Transport:GetState()))
   
   if Transport:IsPlanned() then
   
@@ -1348,7 +1394,7 @@ end
 -- @param #string To To state.
 -- @param #string Defcon New defence condition.
 function CHIEF:onafterDefconChange(From, Event, To, Defcon)
-  self:I(self.lid..string.format("Changing Defcon from %s --> %s", self.Defcon, Defcon))
+  self:T(self.lid..string.format("Changing Defcon from %s --> %s", self.Defcon, Defcon))
 end
 
 --- On after "StrategyChange" event.
@@ -1358,7 +1404,7 @@ end
 -- @param #string To To state.
 -- @param #string Strategy
 function CHIEF:onafterStrategyChange(From, Event, To, Strategy)
-  self:I(self.lid..string.format("Changing Strategy from %s --> %s", self.strategy, Strategy))
+  self:T(self.lid..string.format("Changing Strategy from %s --> %s", self.strategy, Strategy))
 end
 
 --- On after "OpsOnMission".
@@ -1458,11 +1504,17 @@ function CHIEF:CheckTargetQueue()
   for _,_target in pairs(self.targetqueue) do
     local target=_target --Ops.Target#TARGET
     
+    -- Is target still alive.
     local isAlive=target:IsAlive()
+    
+    -- Is this target important enough.
     local isImportant=(target.importance==nil or target.importance<=vip)
     
+    -- Get threat level of target.
+    local threatlevel=target:GetThreatLevelMax()
+    
     -- Is this a threat?
-    local isThreat=target.threatlevel0>=self.threatLevelMin and target.threatlevel0<=self.threatLevelMax
+    local isThreat=threatlevel>=self.threatLevelMin and threatlevel<=self.threatLevelMax
     
     -- Airbases, Zones and Coordinates have threat level 0. We consider them threads independent of min/max threat level set.
     if target.category==TARGET.Category.AIRBASE or target.category==TARGET.Category.ZONE or target.Category==TARGET.Category.COORDINATE then
@@ -1540,7 +1592,7 @@ function CHIEF:CheckTargetQueue()
       if valid then
       
         -- Debug info.
-        self:I(self.lid..string.format("Got valid target %s: category=%s, threatlevel=%d", target:GetName(), target.category, target.threatlevel0))
+        self:T(self.lid..string.format("Got valid target %s: category=%s, threatlevel=%d", target:GetName(), target.category, threatlevel))
               
         -- Get mission performances for the given target.  
         local MissionPerformances=self:_GetMissionPerformanceFromTarget(target)
@@ -1556,12 +1608,14 @@ function CHIEF:CheckTargetQueue()
           --      * target threatlevel
           --      * how many assets are still in stock
           --      * is it inside of our border
+          --      * add damping factor
+          
           local NassetsMin=1
           local NassetsMax=1
           
-          if target.threatlevel0>=8 then
+          if threatlevel>=8 and target.N0 >=10 then
             NassetsMax=3
-          elseif target.threatlevel0>=5 then
+          elseif threatlevel>=5 then
             NassetsMax=2
           else
             NassetsMax=1          
@@ -1675,9 +1729,11 @@ function CHIEF:CheckOpsZoneQueue()
     if ownercoalition~=self.coalition and (stratzone.importance==nil or stratzone.importance<=vip) then
     
       -- Has a patrol mission?
-      local hasMissionPatrol=stratzone.missionPatrol and stratzone.missionPatrol:IsNotOver() or false
+      local hasMissionPatrol=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ONGUARD) or stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARMOREDGUARD)
       -- Has a CAS mission?
-      local hasMissionCAS=stratzone.missionCAS and stratzone.missionCAS:IsNotOver() or false    
+      local hasMissionCAS=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CAS)
+      -- Has a ARTY mission?
+      local hasMissionARTY=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARTY) 
 
       -- Debug info.
       self:T(self.lid..string.format("Zone %s [%s] is owned by coalition %d", stratzone.opszone.zone:GetName(), stratzone.opszone:GetState(), ownercoalition))
@@ -1696,11 +1752,12 @@ function CHIEF:CheckOpsZoneQueue()
           self:T3(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets"))
       
           -- Recruit ground assets that
-          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ONGUARD, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY})
-
+          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ONGUARD, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY, GROUP.Attribute.GROUND_TANK})
+          local recruited1=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ARMOREDGUARD, 1, 1, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_TANK})
+          
           -- Debug info.
           self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets=%s", tostring(recruited)))
-          
+          self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone armored assets=%s", tostring(recruited1)))
         end
         
       else
@@ -1724,6 +1781,19 @@ function CHIEF:CheckOpsZoneQueue()
           self:T(self.lid..string.format("Zone is NOT empty ==> Recruit CAS assets=%s", tostring(recruited)))
           
         end
+        if not hasMissionARTY then
+
+          -- Debug message.
+          self:T3(self.lid..string.format("Zone is NOT empty ==> Recruit ARTY assets"))          
+
+            
+          -- Recruite CAS assets.
+          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ARTY, 1, 1)
+          
+          -- Debug message.
+          self:T(self.lid..string.format("Zone is NOT empty ==> Recruit ARTY assets=%s", tostring(recruited)))
+          
+        end
       
       end
           
@@ -1738,21 +1808,29 @@ function CHIEF:CheckOpsZoneQueue()
     local ownercoalition=stratzone.opszone:GetOwner()
             
     -- Has a patrol mission?
-    local hasMissionPatrol=stratzone.missionPatrol and stratzone.missionPatrol:IsNotOver() or false
+    local hasMissionPATROL=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.PATROLZONE)
     
     -- Has a CAS mission?
-    local hasMissionCAS=stratzone.missionCAS and stratzone.missionCAS:IsNotOver() or false
+    local hasMissionCAS, CASMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CAS)
+    local hasMissionARTY, ARTYMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARTY)
     
     if ownercoalition==self.coalition and stratzone.opszone:IsEmpty() and hasMissionCAS then
       -- Cancel CAS mission if zone is ours and no enemies are present.
       -- TODO: Might want to check if we still have CAS capable assets in stock?!
-      stratzone.missionCAS:Cancel()
+      --stratzone.missionCAS:Cancel()
+      for _,_auftrag in pairs(CASMissions) do
+        _auftrag:Cancel()
+      end
     end
     
-     
-        
+    if ownercoalition==self.coalition and hasMissionARTY then
+      -- Cancel ARTY mission if zone is ours and no enemies are present.
+      for _,_auftrag in pairs(ARTYMissions) do
+        _auftrag:Cancel()
+      end
+    end
+    
   end
-  
   
 end
 
@@ -1907,8 +1985,8 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
 
         -- EWR
           
-        --table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,  100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
+        --table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,  100))
         
       elseif attribute==GROUP.Attribute.GROUND_AAA then
       
@@ -1923,13 +2001,22 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 70))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 75))
       
       elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
       
         -- Infantry
-      
+        
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 100))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
           
+      elseif attribute==GROUP.Attribute.GROUND_TANK then
+      
+        -- Tanks
+        
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 75))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.CAS, 100))
+        
       else
 
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
@@ -2036,7 +2123,7 @@ function CHIEF:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMa
   for _,_legion in pairs(self.commander.legions) do
     local legion=_legion --Ops.Legion#LEGION
     
-    -- Check that runway is operational.    
+    -- Check that runway is operational.d 
     local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
     
     if legion:IsRunning() and Runway then    
@@ -2100,6 +2187,11 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
   if MissionType==AUFTRAG.Type.PATROLZONE or MissionType==AUFTRAG.Type.ONGUARD then
     RangeMax=UTILS.NMToMeters(250)
   end
+  
+    -- Set max range to 50 NM because we use armor
+  if MissionType==AUFTRAG.Type.ARMOREDGUARD then
+    RangeMax=UTILS.NMToMeters(50)
+  end
 
   -- Recruite infantry assets.
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, RangeMax, nil, nil, Categories, Attributes)
@@ -2117,7 +2209,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       
         -- Categories. Currently only helicopters are allowed due to problems with ground transports (might get stuck, might not be a land connection.
         -- TODO: Check if ground transport is possible. For example, by trying land.getPathOnRoad or something.
-        local Categories={Group.Category.HELICOPTER}
+        local Categories={self.TransportCategories}
         --local Categories={Group.Category.HELICOPTER, Group.Category.GROUND}
   
         -- Recruit transport assets for infantry.    
@@ -2151,7 +2243,8 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       
         -- Attach mission to ops zone.
         -- TODO: Need a better way!
-        StratZone.missionPatrol=mission
+        --StratZone.missionPatrol=mission
+        StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
         
         return true
       else
@@ -2162,8 +2255,44 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
     elseif MissionType==AUFTRAG.Type.CAS then
 
       -- Create Patrol zone mission.
-      local mission=AUFTRAG:NewPATROLZONE(StratZone.opszone.zone)
+      local caszone = StratZone.opszone.zone
+      local coord = caszone:GetCoordinate()
+      local height = UTILS.MetersToFeet(coord:GetLandHeight())+2500
+      local Speed = 200
+      --local mission=AUFTRAG:NewPATROLZONE(caszone)
+      if assets[1] then
+        if assets[1].speedmax then
+          Speed = UTILS.KmphToKnots(assets[1].speedmax * 0.7) or 200
+        end
+      end
+      --local Speed = UTILS.KmphToKnots(assets[1].speedmax * 0.7) or 200
+      local Leg = caszone:GetRadius() <= 10000 and 5 or UTILS.MetersToNM(caszone:GetRadius())
+      local mission=AUFTRAG:NewCAS(caszone,height,Speed,coord,math.random(0,359),Leg)
       mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})
+      mission:SetWeaponExpend(AI.Task.WeaponExpend.ALL)    
+      mission:SetMissionSpeed(Speed)
+      
+      -- Add assets to mission.
+      for _,asset in pairs(assets) do
+        mission:AddAsset(asset)
+      end
+          
+      -- Assign mission to legions.
+      self:MissionAssign(mission, legions)
+    
+      -- Attach mission to ops zone.
+      -- TODO: Need a better way!
+      --StratZone.missionCAS=mission
+      StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
+
+      return true
+    elseif MissionType==AUFTRAG.Type.ARTY then
+      
+      -- Create ARTY zone mission.
+      local TargetZone = StratZone.opszone.zone
+      local Target = TargetZone:GetCoordinate()
+      local Radius = TargetZone:GetRadius()
+      local mission=AUFTRAG:NewARTY(Target,120,Radius)
                       
       -- Add assets to mission.
       for _,asset in pairs(assets) do
@@ -2175,9 +2304,31 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
     
       -- Attach mission to ops zone.
       -- TODO: Need a better way!
-      StratZone.missionCAS=mission
-
+      --StratZone.missionARTY=mission
+      StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
+    
       return true
+    elseif MissionType==AUFTRAG.Type.ARMOREDGUARD then
+      
+      -- Create Armored on guard mission
+      local TargetZone = StratZone.opszone.zone
+      local Target = TargetZone:GetCoordinate()
+      local mission=AUFTRAG:NewARMOREDGUARD(Target)
+                      
+      -- Add assets to mission.
+      for _,asset in pairs(assets) do
+        mission:AddAsset(asset)
+      end
+          
+      -- Assign mission to legions.
+      self:MissionAssign(mission, legions)
+    
+      -- Attach mission to ops zone.
+      -- TODO: Need a better way!
+      --StratZone.missionARTY=mission
+      StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
+    
+      return true  
     end
     
   end
