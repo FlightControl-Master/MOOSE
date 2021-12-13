@@ -1258,7 +1258,7 @@ do -- SET_GROUP
   end
 
   --- Builds a set of groups that contain the given string in their group name.
-  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all groups that **contain** the string. 
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all groups that **contain** the string.
   -- @param #SET_GROUP self
   -- @param #string Prefixes The string pattern(s) that needs to be contained in the group name. Can also be passed as a `#table` of strings.
   -- @return #SET_GROUP self
@@ -1981,7 +1981,6 @@ do -- SET_UNIT
     },
   }
 
-
   --- Get the first unit from the set.
   -- @function [parent=#SET_UNIT] GetFirst
   -- @param #SET_UNIT self
@@ -2555,9 +2554,9 @@ do -- SET_UNIT
     return UnitThreatLevels
   end
 
-  --- Calculate the maxium A2G threat level of the SET_UNIT.
+  --- Calculate the maximum A2G threat level of the SET_UNIT.
   -- @param #SET_UNIT self
-  -- @return #number The maximum threatlevel
+  -- @return #number The maximum threat level
   function SET_UNIT:CalculateThreatLevelA2G()
 
     local MaxThreatLevelA2G = 0
@@ -3000,7 +2999,7 @@ do -- SET_STATIC
   --    * @{#SET_STATIC.FilterCountries}: Builds the SET_STATIC with the units belonging to the country(ies).
   --    * @{#SET_STATIC.FilterPrefixes}: Builds the SET_STATIC with the units containing the same string(s) in their name. **ATTENTION** bad naming convention as this *does not** only filter *prefixes*.
   --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Core.Zone#ZONE}.
-  --    
+  --
   -- Once the filter criteria have been set for the SET_STATIC, you can start filtering using:
   --
   --   * @{#SET_STATIC.FilterStart}: Starts the filtering of the units within the SET_STATIC.
@@ -3558,7 +3557,7 @@ do -- SET_STATIC
 
   end
 
-  --- Calculate the maxium A2G threat level of the SET_STATIC.
+  --- Calculate the maximum A2G threat level of the SET_STATIC.
   -- @param #SET_STATIC self
   -- @return #number The maximum threatlevel
   function SET_STATIC:CalculateThreatLevelA2G()
@@ -3761,7 +3760,6 @@ do -- SET_CLIENT
       },
     },
   }
-
 
   --- Creates a new SET_CLIENT object, building a set of clients belonging to a coalitions, categories, countries, types or with defined prefix names.
   -- @param #SET_CLIENT self
@@ -4986,7 +4984,6 @@ do -- SET_CARGO
   --   * @{#SET_CARGO.ForEachCargo}: Calls a function for each cargo it finds within the SET_CARGO.
   --
   -- @field #SET_CARGO SET_CARGO
-  --
   SET_CARGO = {
     ClassName = "SET_CARGO",
     Cargos = {},
@@ -5413,7 +5410,8 @@ do -- SET_ZONE
     Filter = {
       Prefixes = nil,
     },
-    FilterMeta = {},
+      FilterMeta = {
+    },
   }
 
   --- Creates a new SET_ZONE object, building a set of zones.
@@ -5674,7 +5672,7 @@ do -- SET_ZONE
   end
 
   --- Validate if a coordinate is in one of the zones in the set.
-  -- Returns the ZONE object where the coordiante is located.
+  -- Returns the ZONE object where the coordinate is located.
   -- If zones overlap, the first zone that validates the test is returned.
   -- @param #SET_ZONE self
   -- @param Core.Point#COORDINATE Coordinate The coordinate to be searched.
@@ -6302,14 +6300,14 @@ do -- SET_OPSGROUP
   end
 
   --- Builds a set of groups out of categories.
-  -- 
+  --
   -- Possible current categories are:
-  -- 
+  --
   -- * "plane" for fixed wing groups
   -- * "helicopter" for rotary wing groups
   -- * "ground" for ground groups
   -- * "ship" for naval groups
-  -- 
+  --
   -- @param #SET_OPSGROUP self
   -- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship" or combinations as a table, for example `{"plane", "helicopter"}`.
   -- @return #SET_OPSGROUP self
@@ -6346,7 +6344,7 @@ do -- SET_OPSGROUP
     return self
   end
 
-  --- Builds a set of groups out of aicraft category (planes and helicopters).
+  --- Builds a set of groups out of aircraft category (planes and helicopters).
   -- @param #SET_OPSGROUP self
   -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:FilterCategoryAircraft()
@@ -6395,7 +6393,7 @@ do -- SET_OPSGROUP
   end
 
   --- Builds a set of groups that contain the given string in their group name.
-  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all groups that **contain** the string. 
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all groups that **contain** the string.
   -- @param #SET_OPSGROUP self
   -- @param #string Prefixes The string pattern(s) that needs to be contained in the group name. Can also be passed as a `#table` of strings.
   -- @return #SET_OPSGROUP self
