@@ -247,7 +247,7 @@ CSAR.AircraftType["Bell-47"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.12r6"
+CSAR.version="1.0.1r1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -356,6 +356,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.extractDistance = 500 -- Distance the Downed pilot will run to the rescue helicopter
   self.loadtimemax = 135 -- seconds
   self.radioSound = "beacon.ogg" -- the name of the sound file to use for the Pilot radio beacons. If this isnt added to the mission BEACONS WONT WORK!
+  self.beaconRefresher = 29 -- seconds
   self.allowFARPRescue = true --allows pilot to be rescued by landing at a FARP or Airbase
   self.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
   self.max_units = 6 --max number of pilots that can be carried
@@ -2021,7 +2022,12 @@ function CSAR:onbeforeStatus(From, Event, To)
   self:T({From, Event, To})
   -- housekeeping
   self:_AddMedevacMenuItem()
-  self:_RefreshRadioBeacons()
+  
+  if not self.BeaconTimer or (self.BeaconTimer and not self.BeaconTimer:IsRunning()) then
+    self.BeaconTimer = TIMER:New(self._RefreshRadioBeacons,self)
+    self.BeaconTimer:Start(2,self.beaconRefresher)
+  end
+  
   self:_CheckDownedPilotTable()
   for _,_sar in pairs (self.csarUnits) do
     local PilotTable = self.downedPilots
