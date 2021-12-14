@@ -45,7 +45,7 @@
 --  * Object oriented refactoring of Ciribob\'s fantastic CSAR script.
 --  * No need for extra MIST loading. 
 --  * Additional events to tailor your mission.
---	* Optional SpawnCASEVAC to create casualties without beacon (e.g. handling dead ground vehicles and create CASVAC requests).
+--  * Optional SpawnCASEVAC to create casualties without beacon (e.g. handling dead ground vehicles and create CASVAC requests).
 -- 
 -- ## 0. Prerequisites
 -- 
@@ -117,7 +117,7 @@
 --       self.SRSchannel = 300 -- radio channel
 --       self.SRSModulation = radio.modulation.AM -- modulation
 --       --
--- 		   self.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection --shagrat
+--       self.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection --shagrat
 --
 -- ## 3. Results
 -- 
@@ -178,8 +178,8 @@
 --        -- Create downed "Pilot Wagner" in #ZONE "CSAR_Start_1" at a random point for the blue coalition
 --        my_csar:SpawnCSARAtZone( "CSAR_Start_1", coalition.side.BLUE, "Pilot Wagner", true )
 --
---		  --Create a casualty and CASEVAC request from a "Point" (VEC2) for the blue coalition --shagrat
---		  my_csar:SpawnCASEVAC(Point, coalition.side.BLUE)	
+--      --Create a casualty and CASEVAC request from a "Point" (VEC2) for the blue coalition --shagrat
+--      my_csar:SpawnCASEVAC(Point, coalition.side.BLUE)  
 --
 -- @field #CSAR
 CSAR = {
@@ -243,11 +243,11 @@ CSAR.AircraftType["Mi-8MTV2"] = 12
 CSAR.AircraftType["Mi-8MT"] = 12  
 CSAR.AircraftType["Mi-24P"] = 8 
 CSAR.AircraftType["Mi-24V"] = 8
-CSAR.AircraftType["Bell-47"] = 2								
+CSAR.AircraftType["Bell-47"] = 2                
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="0.1.12r6"
+CSAR.version="1.0.1r1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -356,6 +356,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.extractDistance = 500 -- Distance the Downed pilot will run to the rescue helicopter
   self.loadtimemax = 135 -- seconds
   self.radioSound = "beacon.ogg" -- the name of the sound file to use for the Pilot radio beacons. If this isnt added to the mission BEACONS WONT WORK!
+  self.beaconRefresher = 29 -- seconds
   self.allowFARPRescue = true --allows pilot to be rescued by landing at a FARP or Airbase
   self.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
   self.max_units = 6 --max number of pilots that can be carried
@@ -654,10 +655,10 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   
   if not noMessage then
     if _freq ~= 0 then --shagrat different CASEVAC msg
-		self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, self.messageTime)
-	else		
-		self:_DisplayToAllSAR("Troops In Contact. " .. _typeName .. " requests CASEVAC. ", self.coalition, self.messageTime)
-	end
+    self:_DisplayToAllSAR("MAYDAY MAYDAY! " .. _typeName .. " is down. ", self.coalition, self.messageTime)
+  else    
+    self:_DisplayToAllSAR("Troops In Contact. " .. _typeName .. " requests CASEVAC. ", self.coalition, self.messageTime)
+  end
   end
   
   if (_freq and _freq ~= 0) then --shagrat only add beacon if _freq is NOT 0 
@@ -669,18 +670,18 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   local _text = _description
   if not forcedesc then
     if _playerName ~= nil then
-		if _freq ~= 0 then --shagrat
-			_text = "Pilot " .. _playerName
-		else
-			_text = "TIC - " .. _playerName
-		end
+    if _freq ~= 0 then --shagrat
+      _text = "Pilot " .. _playerName
+    else
+      _text = "TIC - " .. _playerName
+    end
     elseif _unitName ~= nil then
         if _freq ~= 0 then --shagrat
-			_text = "AI Pilot of " .. _unitName
-		else
-			_text = "TIC - " .. _unitName
-		end
-	end
+      _text = "AI Pilot of " .. _unitName
+    else
+      _text = "TIC - " .. _unitName
+    end
+  end
   end   
   self:T({_spawnedGroup, _alias})
   
@@ -901,12 +902,12 @@ function CSAR:_EventHandler(EventData)
       local _unit = _event.IniUnit
       local _unitname = _event.IniUnitName
       local _group = _event.IniGroup
-      	  
+          
       if _unit == nil then
           return -- error!
       end
-	  
-	  local _coalition = _unit:GetCoalition() 
+    
+    local _coalition = _unit:GetCoalition() 
       if _coalition ~= self.coalition then
           return --ignore!
       end
@@ -926,28 +927,28 @@ function CSAR:_EventHandler(EventData)
       end
       
       -- all checks passed, get going.
-	  if self.csarUsePara == false then --shagrat check parameter LandingAfterEjection, if true don't spawn a Pilot from EJECTION event, wait for the Chute to land
-		local _freq = self:_GenerateADFFrequency()
-		 self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate() , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, "none")
-		return true
-	  end
-	  
-	  ---- shagrat on event LANDING_AFTER_EJECTION spawn pilot at parachute location
-	elseif (_event.id == EVENTS.LandingAfterEjection and self.csarUsePara == true) then
-	  self:I({EVENT=_event})
-	  local _LandingPos = COORDINATE:NewFromVec3(_event.initiator:getPosition().p)
-	  local _unitname = "Aircraft" --_event.initiator:getName() or "Aircraft" --shagrat Optional use of Object name which is unfortunately 'f15_Pilot_Parachute'
-	  local _typename = "Ejected Pilot" --_event.Initiator.getTypeName() or "Ejected Pilot" 
-	  local _country = _event.initiator:getCountry()
-	  local _coalition = coalition.getCountryCoalition( _country )
-	  if _coalition == self.coalition then
-  	  local _freq = self:_GenerateADFFrequency()
-  	  self:I({coalition=_coalition,country= _country, coord=_LandingPos, name=_unitname, player=_event.IniPlayerName, freq=_freq})
-  	  self:_AddCsar(_coalition, _country, _LandingPos, nil, _unitname, _event.IniPlayerName, _freq, false, "none")--shagrat add CSAR at Parachute location.
-  	
-  	  Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
-	  end 
-	  return true
+    if self.csarUsePara == false then --shagrat check parameter LandingAfterEjection, if true don't spawn a Pilot from EJECTION event, wait for the Chute to land
+    local _freq = self:_GenerateADFFrequency()
+     self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate() , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, "none")
+    return true
+    end
+    
+    ---- shagrat on event LANDING_AFTER_EJECTION spawn pilot at parachute location
+  elseif (_event.id == EVENTS.LandingAfterEjection and self.csarUsePara == true) then
+    self:I({EVENT=_event})
+    local _LandingPos = COORDINATE:NewFromVec3(_event.initiator:getPosition().p)
+    local _unitname = "Aircraft" --_event.initiator:getName() or "Aircraft" --shagrat Optional use of Object name which is unfortunately 'f15_Pilot_Parachute'
+    local _typename = "Ejected Pilot" --_event.Initiator.getTypeName() or "Ejected Pilot" 
+    local _country = _event.initiator:getCountry()
+    local _coalition = coalition.getCountryCoalition( _country )
+    if _coalition == self.coalition then
+      local _freq = self:_GenerateADFFrequency()
+      self:I({coalition=_coalition,country= _country, coord=_LandingPos, name=_unitname, player=_event.IniPlayerName, freq=_freq})
+      self:_AddCsar(_coalition, _country, _LandingPos, nil, _unitname, _event.IniPlayerName, _freq, false, "none")--shagrat add CSAR at Parachute location.
+    
+      Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
+    end 
+    return true
   
   elseif _event.id == EVENTS.Land then
       self:T(self.lid .. " Landing")
@@ -1012,13 +1013,13 @@ function CSAR:_InitSARForPilot(_downedGroup, _GroupName, _freq, _nomessage)
   local _leadername = _leader:GetName()
   
   if not _nomessage then
-	if _freq ~= 0 then --shagrat
-		local _text = string.format("%s requests SAR at %s, beacon at %.2f KHz", _groupName, _coordinatesText, _freqk)--shagrat _groupName to prevent 'f15_Pilot_Parachute'
-		self:_DisplayToAllSAR(_text,self.coalition,self.messageTime)
-	else --shagrat CASEVAC msg
-		local _text = string.format("Pickup Zone at %s.", _coordinatesText )
-		self:_DisplayToAllSAR(_text,self.coalition,self.messageTime)
-	end	
+  if _freq ~= 0 then --shagrat
+    local _text = string.format("%s requests SAR at %s, beacon at %.2f KHz", _groupName, _coordinatesText, _freqk)--shagrat _groupName to prevent 'f15_Pilot_Parachute'
+    self:_DisplayToAllSAR(_text,self.coalition,self.messageTime)
+  else --shagrat CASEVAC msg
+    local _text = string.format("Pickup Zone at %s.", _coordinatesText )
+    self:_DisplayToAllSAR(_text,self.coalition,self.messageTime)
+  end 
   end
   
   for _,_heliName in pairs(self.csarUnits) do
@@ -1532,11 +1533,11 @@ function CSAR:_DisplayActiveSAR(_unitName)
         else
           distancetext = string.format("%.1fkm", _distance/1000.0)
         end
-		if _value.frequency == 0 then--shagrat insert CASEVAC without Frequency
-			table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %s ", _value.desc, _coordinatesText, distancetext) })
-		else
-			table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %.2f KHz ADF - %s ", _value.desc, _coordinatesText, _value.frequency / 1000, distancetext) })
-		end
+    if _value.frequency == 0 then--shagrat insert CASEVAC without Frequency
+      table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %s ", _value.desc, _coordinatesText, distancetext) })
+    else
+      table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %.2f KHz ADF - %s ", _value.desc, _coordinatesText, _value.frequency / 1000, distancetext) })
+    end
     end
   end
   
@@ -2021,7 +2022,12 @@ function CSAR:onbeforeStatus(From, Event, To)
   self:T({From, Event, To})
   -- housekeeping
   self:_AddMedevacMenuItem()
-  self:_RefreshRadioBeacons()
+  
+  if not self.BeaconTimer or (self.BeaconTimer and not self.BeaconTimer:IsRunning()) then
+    self.BeaconTimer = TIMER:New(self._RefreshRadioBeacons,self)
+    self.BeaconTimer:Start(2,self.beaconRefresher)
+  end
+  
   self:_CheckDownedPilotTable()
   for _,_sar in pairs (self.csarUnits) do
     local PilotTable = self.downedPilots
