@@ -4218,7 +4218,7 @@ end
     
     local statics = nil
     local statics = {}
-    self:I(self.lid.."Bulding Statics Table for Saving")
+    self:T(self.lid.."Bulding Statics Table for Saving")
     for _,_cargo in pairs (stcstable) do     
       local cargo = _cargo -- #CTLD_CARGO
       local object = cargo:GetPositionable() -- Wrapper.Static#STATIC

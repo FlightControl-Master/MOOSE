@@ -1977,7 +1977,7 @@ function AUFTRAG:_DetermineAuftragType(Target)
       auftrag=AUFTRAG.Type.ANTISHIP
   
     else
-      self:E(self.lid.."ERROR: Unknown Group category!")
+      self:T(self.lid.."ERROR: Unknown Group category!")
     end
     
   elseif airbase then
@@ -3237,7 +3237,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
   
   -- Check for error.  
   if fsmstate~=self.status then
-    self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
+    self:T(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
   
   -- General info.
@@ -3447,7 +3447,7 @@ function AUFTRAG:SetGroupStatus(opsgroup, status)
     if groupdata then
       groupdata.status=status
     else
-      self:E(self.lid.."WARNING: Could not SET flight data for flight group. Setting status to DONE")
+      self:T(self.lid.."WARNING: Could not SET flight data for flight group. Setting status to DONE")
     end
   end
   
@@ -3484,7 +3484,7 @@ function AUFTRAG:GetGroupStatus(opsgroup)
     return groupdata.status
   else
   
-    self:E(self.lid..string.format("WARNING: Could not GET groupdata for opsgroup %s. Returning status DONE.", opsgroup and opsgroup.groupname or "nil"))
+    self:T(self.lid..string.format("WARNING: Could not GET groupdata for opsgroup %s. Returning status DONE.", opsgroup and opsgroup.groupname or "nil"))
     return AUFTRAG.GroupStatus.DONE
     
   end
@@ -3522,7 +3522,7 @@ function AUFTRAG:RemoveLegion(Legion)
     end
   end
   
-  self:E(self.lid..string.format("ERROR: Legion %s not found and could not be removed!", Legion.alias))
+  self:T(self.lid..string.format("ERROR: Legion %s not found and could not be removed!", Legion.alias))
   return self
 end
 
@@ -4385,7 +4385,7 @@ function AUFTRAG:GetTargetCoordinate()
     return coord
     
   else  
-    self:E(self.lid.."ERROR: Cannot get target coordinate!")
+    self:T(self.lid.."ERROR: Cannot get target coordinate!")
   end
 
   return nil
@@ -4416,7 +4416,7 @@ function AUFTRAG:GetTargetDistance(FromCoord)
   if TargetCoord and FromCoord then
     return TargetCoord:Get2DDistance(FromCoord)
   else
-    self:E(self.lid.."ERROR: TargetCoord or FromCoord does not exist in AUFTRAG:GetTargetDistance() function! Returning 0")
+    self:T(self.lid.."ERROR: TargetCoord or FromCoord does not exist in AUFTRAG:GetTargetDistance() function! Returning 0")
   end
   
   return 0
@@ -5028,7 +5028,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     table.insert(DCStasks, DCStask)    
   
   else
-    self:E(self.lid..string.format("ERROR: Unknown mission task!"))
+    self:T(self.lid..string.format("ERROR: Unknown mission task!"))
     return nil
   end
   
