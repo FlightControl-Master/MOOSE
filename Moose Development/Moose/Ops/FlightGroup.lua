@@ -668,7 +668,7 @@ function FLIGHTGROUP:StartUncontrolled(delay)
       self.group:StartUncontrolled(_delay)
       self.isUncontrolled=false
     else
-      self:E(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive!")
+      self:T(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive!")
     end
 
   end
@@ -766,7 +766,7 @@ function FLIGHTGROUP:onbeforeStatus(From, Event, To)
       if isdead then
         local text=string.format("Element %s is dead at t=%.3f but has status %s! Maybe despawned without notice or landed at a too small airbase. Calling ElementDead in 60 sec to give other events a chance",
         tostring(element.name), timer.getTime(), tostring(element.status))
-        self:E(self.lid..text)
+        self:T(self.lid..text)
         self:__ElementDead(60, element)
       end
 
@@ -841,7 +841,7 @@ function FLIGHTGROUP:Status()
           end
   
         else
-          --self:E(self.lid..string.format("Element %s is in PARKING queue but has no parking spot assigned!", element.name))
+          --self:T(self.lid..string.format("Element %s is in PARKING queue but has no parking spot assigned!", element.name))
         end
       end
     end
@@ -957,7 +957,7 @@ function FLIGHTGROUP:Status()
     end
 
     -- Log outut.
-    self:I(self.lid..string.format("Travelled ds=%.1f km dt=%.1f s ==> v=%.1f knots. Fuel left for %.1f min", self.traveldist/1000, dt, UTILS.MpsToKnots(v), TmaxFuel/60))
+    self:T(self.lid..string.format("Travelled ds=%.1f km dt=%.1f s ==> v=%.1f knots. Fuel left for %.1f min", self.traveldist/1000, dt, UTILS.MpsToKnots(v), TmaxFuel/60))
 
   end
 
@@ -1897,10 +1897,10 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
     self:T3(self.lid.."Update route possible. Group is ALIVE")
   elseif self:IsDead()  then
     -- Group is dead! No more updates.
-    self:E(self.lid.."Update route denied. Group is DEAD!")
+    self:T(self.lid.."Update route denied. Group is DEAD!")
     allowed=false
   elseif self:IsInUtero() then
-    self:E(self.lid.."Update route denied. Group is INUTERO!")
+    self:T(self.lid.."Update route denied. Group is INUTERO!")
     allowed=false    
   else
     -- Not airborne yet. Try again in 5 sec.
@@ -1923,19 +1923,19 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
 
   -- Requested waypoint index <1. Something is seriously wrong here!
   if n and n<1 then
-    self:E(self.lid.."Update route denied because waypoint n<1!")
+    self:T(self.lid.."Update route denied because waypoint n<1!")
     allowed=false
   end
 
   -- No current waypoint. Something is serously wrong!
   if not self.currentwp then
-    self:E(self.lid.."Update route denied because self.currentwp=nil!")
+    self:T(self.lid.."Update route denied because self.currentwp=nil!")
     allowed=false
   end
 
   local Nn=n or self.currentwp+1
   if not Nn or Nn<1 then
-    self:E(self.lid.."Update route denied because N=nil or N<1")
+    self:T(self.lid.."Update route denied because N=nil or N<1")
     trepeat=-5
     allowed=false
   end
@@ -1958,7 +1958,7 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
         self:T2(self.lid.."Allowing update route for Task: Task_Land_At")
       else
         local taskname=task and task.description or "No description"
-        self:E(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
+        self:T(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
         allowed=false
       end
     else
@@ -2229,24 +2229,24 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
     local Tsuspend=nil
 
     if airbase==nil then
-      self:E(self.lid.."ERROR: Airbase is nil in RTB() call!")
+      self:T(self.lid.."ERROR: Airbase is nil in RTB() call!")
       allowed=false
     end
 
     -- Check that coaliton is okay. We allow same (blue=blue, red=red) or landing on neutral bases.
     if airbase and airbase:GetCoalition()~=self.group:GetCoalition() and airbase:GetCoalition()>0 then
-      self:E(self.lid..string.format("ERROR: Wrong airbase coalition %d in RTB() call! We allow only same as group %d or neutral airbases 0", airbase:GetCoalition(), self.group:GetCoalition()))
+      self:T(self.lid..string.format("ERROR: Wrong airbase coalition %d in RTB() call! We allow only same as group %d or neutral airbases 0", airbase:GetCoalition(), self.group:GetCoalition()))
       return false
     end
     
     if self.currbase and self.currbase:GetName()==airbase:GetName() then
-      self:E(self.lid.."WARNING: Currbase is already same as RTB airbase. RTB canceled!")
+      self:T(self.lid.."WARNING: Currbase is already same as RTB airbase. RTB canceled!")
       return false
     end
     
     -- Check if the group has landed at an airbase. If so, we lost control and RTBing is not possible (only after a respawn).
     if self:IsLanded() then
-      self:E(self.lid.."WARNING: Flight has already landed. RTB canceled!")
+      self:T(self.lid.."WARNING: Flight has already landed. RTB canceled!")
       return false    
     end
 
@@ -2260,7 +2260,7 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
         self.RTBRecallCount = self.RTBRecallCount+1
       end
       if self.RTBRecallCount>6 then
-        self:I(self.lid..string.format("WARNING: Group [%s] is not moving and was called RTB %d times. Assuming a problem and despawning!", self:GetState(), self.RTBRecallCount))
+        self:T(self.lid..string.format("WARNING: Group [%s] is not moving and was called RTB %d times. Assuming a problem and despawning!", self:GetState(), self.RTBRecallCount))
         self.RTBRecallCount=0
         self:Despawn(5)
         return
@@ -2274,25 +2274,25 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
       local Ntot,Nsched, Nwp=self:CountRemainingTasks()
 
       if self.taskcurrent>0 then
-        self:I(self.lid..string.format("WARNING: Got current task ==> RTB event is suspended for 10 sec"))
+        self:T(self.lid..string.format("WARNING: Got current task ==> RTB event is suspended for 10 sec"))
         Tsuspend=-10
         allowed=false
       end
 
       if Nsched>0 then
-        self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> RTB event is suspended for 10 sec", Nsched))
+        self:T(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> RTB event is suspended for 10 sec", Nsched))
         Tsuspend=-10
         allowed=false
       end
 
       if Nwp>0 then
-        self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> RTB event is suspended for 10 sec", Nwp))
+        self:T(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> RTB event is suspended for 10 sec", Nwp))
         Tsuspend=-10
         allowed=false
       end
       
       if self.Twaiting and self.dTwait then
-        self:I(self.lid..string.format("WARNING: Group is Waiting for a specific duration ==> RTB event is canceled", Nwp))
+        self:T(self.lid..string.format("WARNING: Group is Waiting for a specific duration ==> RTB event is canceled", Nwp))
         allowed=false
       end
 
@@ -2305,7 +2305,7 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
     return allowed
 
   else
-    self:E(self.lid.."WARNING: Group is not alive! RTB call not allowed.")
+    self:T(self.lid.."WARNING: Group is not alive! RTB call not allowed.")
     return false
   end
 
@@ -2361,35 +2361,35 @@ function FLIGHTGROUP:onbeforeLandAtAirbase(From, Event, To, airbase)
     local Tsuspend=nil
 
     if airbase==nil then
-      self:E(self.lid.."ERROR: Airbase is nil in LandAtAirase() call!")
+      self:T(self.lid.."ERROR: Airbase is nil in LandAtAirase() call!")
       allowed=false
     end
 
     -- Check that coaliton is okay. We allow same (blue=blue, red=red) or landing on neutral bases.
     if airbase and airbase:GetCoalition()~=self.group:GetCoalition() and airbase:GetCoalition()>0 then
-      self:E(self.lid..string.format("ERROR: Wrong airbase coalition %d in LandAtAirbase() call! We allow only same as group %d or neutral airbases 0", airbase:GetCoalition(), self.group:GetCoalition()))
+      self:T(self.lid..string.format("ERROR: Wrong airbase coalition %d in LandAtAirbase() call! We allow only same as group %d or neutral airbases 0", airbase:GetCoalition(), self.group:GetCoalition()))
       return false
     end
     
     if self.currbase and self.currbase:GetName()==airbase:GetName() then
-      self:E(self.lid.."WARNING: Currbase is already same as LandAtAirbase airbase. LandAtAirbase canceled!")
+      self:T(self.lid.."WARNING: Currbase is already same as LandAtAirbase airbase. LandAtAirbase canceled!")
       return false
     end
     
     -- Check if the group has landed at an airbase. If so, we lost control and RTBing is not possible (only after a respawn).
     if self:IsLanded() then
-      self:E(self.lid.."WARNING: Flight has already landed. LandAtAirbase canceled!")
+      self:T(self.lid.."WARNING: Flight has already landed. LandAtAirbase canceled!")
       return false    
     end
     
     if self:IsParking() then      
       allowed=false
       Tsuspend=-30
-      self:E(self.lid.."WARNING: Flight is parking. LandAtAirbase call delayed by 30 sec")
+      self:T(self.lid.."WARNING: Flight is parking. LandAtAirbase call delayed by 30 sec")
     elseif self:IsTaxiing() then
       allowed=false
       Tsuspend=-1
-      self:E(self.lid.."WARNING: Flight is parking. LandAtAirbase call delayed by 1 sec")
+      self:T(self.lid.."WARNING: Flight is parking. LandAtAirbase call delayed by 1 sec")
     end
     
     if Tsuspend and not allowed then
@@ -2398,7 +2398,7 @@ function FLIGHTGROUP:onbeforeLandAtAirbase(From, Event, To, airbase)
 
     return allowed
   else
-    self:E(self.lid.."WARNING: Group is not alive! LandAtAirbase call not allowed")
+    self:T(self.lid.."WARNING: Group is not alive! LandAtAirbase call not allowed")
     return false
   end
 
@@ -2573,14 +2573,14 @@ function FLIGHTGROUP:onbeforeWait(From, Event, To, Duration, Altitude, Speed)
 
   -- Check for a current task.
   if self.taskcurrent>0 and not self:IsLandedAt() then
-    self:I(self.lid..string.format("WARNING: Got current task ==> WAIT event is suspended for 30 sec!"))
+    self:T(self.lid..string.format("WARNING: Got current task ==> WAIT event is suspended for 30 sec!"))
     Tsuspend=-30
     allowed=false
   end
   
   -- Check for a current transport assignment.
   if self.cargoTransport and not self:IsLandedAt() then
-    --self:I(self.lid..string.format("WARNING: Got current TRANSPORT assignment ==> WAIT event is suspended for 30 sec!"))
+    --self:T(self.lid..string.format("WARNING: Got current TRANSPORT assignment ==> WAIT event is suspended for 30 sec!"))
     --Tsuspend=-30
     --allowed=false  
   end
@@ -2803,7 +2803,7 @@ function FLIGHTGROUP:onafterEngageTarget(From, Event, To, Target)
     DCStask=self:GetGroup():TaskCombo(DCSTasks)
 
   else
-    self:E("ERROR: unknown Target in EngageTarget! Needs to be a UNIT, STATIC, GROUP, SET_UNIT or SET_GROUP")
+    self:T("ERROR: unknown Target in EngageTarget! Needs to be a UNIT, STATIC, GROUP, SET_UNIT or SET_GROUP")
     return
   end
 
@@ -3094,7 +3094,7 @@ function FLIGHTGROUP:_InitGroup(Template)
   
   -- Quick check.
   if #units~=size0 then
-    self:E(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+    self:T(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
   end  
 
   -- Add elemets.
@@ -3893,7 +3893,7 @@ function FLIGHTGROUP:GetParking(airbase)
 
     -- No parking spot for at least one asset :(
     if not gotit then
-      self:E(self.lid..string.format("WARNING: No free parking spot for element %s", element.name))
+      self:T(self.lid..string.format("WARNING: No free parking spot for element %s", element.name))
       return nil
     end
 

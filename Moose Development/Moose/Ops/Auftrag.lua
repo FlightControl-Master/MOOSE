@@ -3254,7 +3254,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
     local chief=self.chief and self.statusChief or "N/A"
   
     -- Info message.
-    self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, legions=%d, commander=%s, chief=%s", 
+    self:T(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, legions=%d, commander=%s, chief=%s", 
     self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, Nlegions, commander, chief))
   end
 
@@ -3366,22 +3366,23 @@ function AUFTRAG:Evaluate()
   end
   
   -- Debug text.
-  local text=string.format("Evaluating mission:\n")
-  text=text..string.format("Own casualties = %d/%d\n", self.Ncasualties, self.Nelements)
-  text=text..string.format("Own losses     = %.1f %%\n", owndamage)
-  text=text..string.format("Killed units   = %d\n", self.Nkills)
-  text=text..string.format("--------------------------\n")  
-  text=text..string.format("Targets left   = %d/%d\n", Ntargets, Ntargets0)
-  text=text..string.format("Targets life   = %.1f/%.1f\n", Life, Life0)
-  text=text..string.format("Enemy losses   = %.1f %%\n", targetdamage)
-  text=text..string.format("--------------------------\n")
-  text=text..string.format("Success Cond   = %s\n", tostring(successCondition))
-  text=text..string.format("Failure Cond   = %s\n", tostring(failureCondition))
-  text=text..string.format("--------------------------\n")
-  text=text..string.format("Final Success  = %s\n", tostring(not failed))
-  text=text..string.format("=========================")
-  self:I(self.lid..text)  
-  
+  if self.verbose > 0 then
+    local text=string.format("Evaluating mission:\n")
+    text=text..string.format("Own casualties = %d/%d\n", self.Ncasualties, self.Nelements)
+    text=text..string.format("Own losses     = %.1f %%\n", owndamage)
+    text=text..string.format("Killed units   = %d\n", self.Nkills)
+    text=text..string.format("--------------------------\n")  
+    text=text..string.format("Targets left   = %d/%d\n", Ntargets, Ntargets0)
+    text=text..string.format("Targets life   = %.1f/%.1f\n", Life, Life0)
+    text=text..string.format("Enemy losses   = %.1f %%\n", targetdamage)
+    text=text..string.format("--------------------------\n")
+    text=text..string.format("Success Cond   = %s\n", tostring(successCondition))
+    text=text..string.format("Failure Cond   = %s\n", tostring(failureCondition))
+    text=text..string.format("--------------------------\n")
+    text=text..string.format("Final Success  = %s\n", tostring(not failed))
+    text=text..string.format("=========================")
+    self:I(self.lid..text)  
+  end
   if failed then
     self:Failed()
   else
@@ -3735,7 +3736,7 @@ function AUFTRAG:OnEventUnitLost(EventData)
     for _,_groupdata in pairs(self.groupdata) do
       local groupdata=_groupdata --#AUFTRAG.GroupData
       if groupdata and groupdata.opsgroup and groupdata.opsgroup.groupname==EventData.IniGroupName then
-        self:I(self.lid..string.format("UNIT LOST event for opsgroup %s unit %s", groupdata.opsgroup.groupname, EventData.IniUnitName))
+        self:T(self.lid..string.format("UNIT LOST event for opsgroup %s unit %s", groupdata.opsgroup.groupname, EventData.IniUnitName))
       end
     end
     
@@ -3858,7 +3859,7 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
   -- Number of groups alive. 
   local N=self:CountOpsGroups()
   
-  self:I(self.lid..string.format("Asset %s dead! Number of ops groups remaining %d", tostring(Asset.spawngroupname), N))
+  self:T(self.lid..string.format("Asset %s dead! Number of ops groups remaining %d", tostring(Asset.spawngroupname), N))
   
   -- All assets dead?
   if N==0 then
@@ -3892,7 +3893,7 @@ function AUFTRAG:onafterCancel(From, Event, To)
   local Ngroups = self:CountOpsGroups()
 
   -- Debug info.
-  self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for %d groups to report mission DONE before evaluation", self.status, Ngroups))
+  self:T(self.lid..string.format("CANCELLING mission in status %s. Will wait for %d groups to report mission DONE before evaluation", self.status, Ngroups))
   
   -- Time stamp.
   self.Tover=timer.getAbsTime()
@@ -4010,13 +4011,13 @@ function AUFTRAG:onafterSuccess(From, Event, To)
     local N=math.max(self.NrepeatSuccess, self.Nrepeat)
         
     -- Repeat mission.
-    self:I(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
+    self:T(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
     self:Repeat()
     
   else
   
     -- Stop mission.
-    self:I(self.lid..string.format("Mission SUCCESS! Number of max repeats %d reached  ==> Stopping mission!", self.repeated+1))
+    self:T(self.lid..string.format("Mission SUCCESS! Number of max repeats %d reached  ==> Stopping mission!", self.repeated+1))
     self:Stop()
     
   end
@@ -4052,13 +4053,13 @@ function AUFTRAG:onafterFailed(From, Event, To)
     local N=math.max(self.NrepeatFailure, self.Nrepeat)
         
     -- Repeat mission.
-    self:I(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
+    self:T(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
     self:Repeat()
     
   else
   
     -- Stop mission.
-    self:I(self.lid..string.format("Mission FAILED! Number of max repeats %d reached ==> Stopping mission!", self.repeated+1))
+    self:T(self.lid..string.format("Mission FAILED! Number of max repeats %d reached ==> Stopping mission!", self.repeated+1))
     self:Stop()
     
   end  
@@ -4185,7 +4186,7 @@ end
 function AUFTRAG:onafterStop(From, Event, To)
 
   -- Debug info.
-  self:I(self.lid..string.format("STOPPED mission in status=%s. Removing missions from queues. Stopping CallScheduler!", self.status))
+  self:T(self.lid..string.format("STOPPED mission in status=%s. Removing missions from queues. Stopping CallScheduler!", self.status))
   
   -- TODO: Mission should be OVER! we dont want to remove running missions from any queues.
   
