@@ -907,7 +907,7 @@ end
 function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
   -- Debug info.
-  local text=string.format("Update route state=%s: n=%s, N=%s, Speed=%s, Formation=%s", self:GetState(), tostring(n), tostring(N), tostring(Speed), tostring(Formation))
+  local text=string.format("Update route state=%s: n=%s, N=%s, Speed=%d, Formation=%s", self:GetState(), tostring(n), tostring(N), tonumber(Speed), tostring(Formation))
   self:T(self.lid..text)
 
   -- Update route from this waypoint number onwards.
@@ -928,7 +928,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
     self:T({wp})
     -- Speed.
     if Speed then
-      wp.speed=UTILS.KnotsToMps(Speed)
+      wp.speed=UTILS.KnotsToMps(tonumber(Speed))
     else
     -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
     if wp.speed<0.1 then --self.adinfinitum and 
