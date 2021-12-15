@@ -404,7 +404,11 @@ end
 -- @param #number knots Speed in knots.
 -- @return #number Speed in m/s.
 UTILS.KnotsToMps = function( knots )
-  return knots / 1.94384 -- * 1852 / 3600
+  if type(knots) == "number" then
+    return knots / 1.94384 --* 1852 / 3600
+  else
+   return 0
+  end
 end
 
 --- Convert temperature from Celsius to Fahrenheit.
