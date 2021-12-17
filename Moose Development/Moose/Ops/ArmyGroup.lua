@@ -908,7 +908,7 @@ end
 function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
   -- Debug info.
-  local text=string.format("Update route state=%s: n=%s, N=%s, Speed=%d, Formation=%s", self:GetState(), tostring(n), tostring(N), tonumber(Speed), tostring(Formation))
+  local text=string.format("Update route state=%s: n=%s, N=%s, Speed=%s, Formation=%s", self:GetState(), tostring(n), tostring(N), tostring(Speed), tostring(Formation))
   self:T(self.lid..text)
 
   -- Update route from this waypoint number onwards.
