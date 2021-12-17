@@ -334,6 +334,7 @@ OPSGROUP.TaskType={
 -- @field #number Formation Formation.
 -- @field #boolean EPLRS data link.
 -- @field #boolean Disperse Disperse under fire.
+-- @field #boolen Emission Emission on/off.
 
 --- Weapon range data.
 -- @type OPSGROUP.WeaponData
@@ -3638,7 +3639,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     ---
 
     -- Just stay put and wait until something happens.
-    
+
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
 
     ---
@@ -3924,9 +3925,9 @@ function OPSGROUP:AddMission(Mission)
   table.insert(self.missionqueue, Mission)
 
   -- ad infinitum?
-  
+
   self.adinfinitum = Mission.DCStask.params.adinfinitum and Mission.DCStask.params.adinfinitum or false
-    
+
   -- Info text.
   local text=string.format("Added %s mission %s starting at %s, stopping at %s",
   tostring(Mission.type), tostring(Mission.name), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "INF")
@@ -3952,7 +3953,7 @@ function OPSGROUP:RemoveMission(Mission)
       if Task then
         self:RemoveTask(Task)
       end
-      
+
       -- Take care of a paused mission.
       if self.missionpaused and self.missionpaused.auftragsnummer==Mission.auftragsnummer then
         self.missionpaused=nil
@@ -4221,14 +4222,14 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
 
   -- Route group to mission zone.
   if self.speedMax>3.6 then
-  
+
     self:RouteToMission(Mission, 3)
-    
+
   else
     ---
     -- IMMOBILE Group
     ---
-  
+
     env.info("FF Immobile GROUP")
 
     -- Add waypoint task. UpdateRoute is called inside.
@@ -4239,7 +4240,7 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
     -- Set waypoint task.
     Mission:SetGroupWaypointTask(self, Task)
 
-    -- Execute task. This calls mission execute.    
+    -- Execute task. This calls mission execute.
     self:__TaskExecute(3, Task)
   end
 
@@ -4542,7 +4543,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
 
     -- Get ingress waypoint.
-    if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE or mission.type==AUFTRAG.Type.AMMOSUPPLY 
+    if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE or mission.type==AUFTRAG.Type.AMMOSUPPLY
       or mission.type.FUELSUPPLY then
       local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
       waypointcoord=zone:GetRandomCoordinate(nil , nil, surfacetypes)
@@ -4551,7 +4552,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     else
       waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius, surfacetypes)
     end
-    
+
     local armorwaypointcoord = nil
     if mission.type==AUFTRAG.Type.ARMORATTACK then
       local target=mission.engageTarget:GetObject() -- Wrapper.Positionable#POSITIONABLE
@@ -4561,7 +4562,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       -- Ingress - add formation to this one
       armorwaypointcoord = zone:GetRandomCoordinate(1000, 500, surfacetypes) -- Core.Point#COORDINATE
     end
-    
+
     -- Add enroute tasks.
     for _,task in pairs(mission.enrouteTasks) do
       self:AddTaskEnroute(task)
@@ -9288,7 +9289,7 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
 
       if (opsgroup:IsNavygroup() or opsgroup:IsArmygroup()) and opsgroup.currentwp==#opsgroup.waypoints then
         --TODO: not sure if this works with FLIGHTGROUPS
-        
+
         -- Removing this for now.
         opsgroup:Cruise()
       end
@@ -9501,7 +9502,7 @@ function OPSGROUP:SwitchROE(roe)
     if self:IsInUtero() then
       self:T2(self.lid..string.format("Setting current ROE=%d when GROUP is SPAWNED", self.option.ROE))
     else
-    
+
       self.group:OptionROE(self.option.ROE)
 
       self:T(self.lid..string.format("Setting current ROE=%d (%s)", self.option.ROE, self:_GetROEName(self.option.ROE)))
@@ -9651,7 +9652,7 @@ function OPSGROUP:GetAlarmstate()
   return self.option.Alarm or self.optionDefault.Alarm
 end
 
---- Set the default Alarm State for the group. This is the state gets when the group is spawned or to which it defaults back after a mission.
+--- Set the default EPLRS for the group.
 -- @param #OPSGROUP self
 -- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
 -- @return #OPSGROUP self
@@ -9693,7 +9694,7 @@ function OPSGROUP:SwitchEPLRS(OnOffSwitch)
 
     end
   else
-    self:T(self.lid.."WARNING: Cannot switch Alarm State! Group is not alive")
+    self:E(self.lid.."WARNING: Cannot switch EPLRS! Group is not alive")
   end
 
   return self
@@ -9704,6 +9705,61 @@ end
 -- @return #boolean If `true`, EPLRS is on.
 function OPSGROUP:GetEPLRS()
   return self.option.EPLRS or self.optionDefault.EPLRS
+end
+
+--- Set the default EPLRS for the group.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultEmission(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionDefault.Emission=true
+  else
+    self.optionDefault.EPLRS=OnOffSwitch
+  end
+
+  return self
+end
+
+--- Switch emission on or off.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true` or `nil`, switch emission on. If `false` emission switched off.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchEmission(OnOffSwitch)
+
+  if self:IsAlive() or self:IsInUtero() then
+
+    if OnOffSwitch==nil then
+
+      self.option.Emission=self.optionDefault.Emission
+
+    else
+
+      self.option.Emission=OnOffSwitch
+
+    end
+
+    if self:IsInUtero() then
+      self:T2(self.lid..string.format("Setting current EMISSION=%s when GROUP is SPAWNED", tostring(self.option.Emission)))
+    else
+
+      self.group:EnableEmission(self.option.Emission)
+      self:T(self.lid..string.format("Setting current EMISSION=%s", tostring(self.option.Emission)))
+
+    end
+  else
+    self:E(self.lid.."WARNING: Cannot switch Emission! Group is not alive")
+  end
+
+  return self
+end
+
+--- Get current emission state.
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, emission is on.
+function OPSGROUP:GetEmission()
+  return self.option.Emission or self.optionDefault.Emission
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -10134,7 +10190,7 @@ function OPSGROUP:SwitchFormation(Formation)
     self.option.Formation=Formation
 
     -- Debug info.
-    self:T(self.lid..string.format("Switching formation to %d", self.option.Formation))
+    self:T(self.lid..string.format("Switching formation to %s", tostring(self.option.Formation)))
 
   end
 
@@ -11157,6 +11213,8 @@ function OPSGROUP:_AddElementByName(unitname)
     element.category=unit:GetUnitCategory()
     element.categoryname=unit:GetCategoryName()
     element.typename=unit:GetTypeName()
+
+
     --self:I({desc=element.descriptors})
 
     -- Ammo.
