@@ -878,16 +878,16 @@ end
 -- @param #number Formation Formation of the group.
 function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
   if self:IsWaiting() then
-    self:E(self.lid.."Update route denied. Group is WAIRING!")
+    self:T(self.lid.."Update route denied. Group is WAIRING!")
     return false
   elseif self:IsInUtero() then
-    self:E(self.lid.."Update route denied. Group is INUTERO!")
+    self:T(self.lid.."Update route denied. Group is INUTERO!")
     return false
   elseif self:IsDead() then
-    self:E(self.lid.."Update route denied. Group is DEAD!")
+    self:T(self.lid.."Update route denied. Group is DEAD!")
     return false
   elseif self:IsStopped() then
-    self:E(self.lid.."Update route denied. Group is STOPPED!")
+    self:T(self.lid.."Update route denied. Group is STOPPED!")
     return false
   elseif self:IsHolding() then
     self:T(self.lid.."Update route denied. Group is holding position!")
@@ -908,7 +908,7 @@ end
 function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
   -- Debug info.
-  local text=string.format("Update route state=%s: n=%s, N=%s, Speed=%s, Formation=%s", self:GetState(), tostring(n), tostring(N), tostring(Speed), tostring(Formation))
+  local text=string.format("Update route state=%s: n=%s, N=%s, Speed=%d, Formation=%s", self:GetState(), tostring(n), tostring(N), tonumber(Speed), tostring(Formation))
   self:T(self.lid..text)
 
   -- Update route from this waypoint number onwards.
@@ -929,7 +929,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
     self:T({wp})
     -- Speed.
     if Speed then
-      wp.speed=UTILS.KnotsToMps(Speed)
+      wp.speed=UTILS.KnotsToMps(tonumber(Speed))
     else
     -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
     if wp.speed<0.1 then --self.adinfinitum and 
@@ -1031,7 +1031,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
     -- Passed final WP ==> Full Stop
     ---
   
-    self:E(self.lid..string.format("WARNING: Passed final WP when UpdateRoute() ==> Full Stop!"))
+    self:T(self.lid..string.format("WARNING: Passed final WP when UpdateRoute() ==> Full Stop!"))
     self:FullStop()  
   
   end
@@ -1250,7 +1250,7 @@ function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
     end
         
   else
-    self:E(self.lid.."ERROR: No RTZ zone given!")
+    self:T(self.lid.."ERROR: No RTZ zone given!")
   end
 
 end
@@ -1386,7 +1386,7 @@ function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target)
   local ammo=self:GetAmmoTot()
   
   if ammo.Total==0 then
-    self:E(self.lid.."WARNING: Cannot engage TARGET because no ammo left!")
+    self:T(self.lid.."WARNING: Cannot engage TARGET because no ammo left!")
     return false
   end
   
@@ -1684,7 +1684,7 @@ function ARMYGROUP:_InitGroup(Template)
   
   -- Quick check.
   if #units~=size0 then
-    self:E(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+    self:T(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
   end
   
   -- Add elemets.
@@ -1714,7 +1714,7 @@ function ARMYGROUP:SwitchFormation(Formation, Permanently, NoRouteUpdate)
 
   if self:IsAlive() or self:IsInUtero() then
   
-    Formation=Formation or self.optionDefault.Formation
+    Formation=Formation or (self.optionDefault.Formation or "Off road")
     Permanently = Permanently or false
     
     if Permanently then
@@ -1724,7 +1724,7 @@ function ARMYGROUP:SwitchFormation(Formation, Permanently, NoRouteUpdate)
     end    
     
     -- Set current formation.
-    self.option.Formation=Formation
+    self.option.Formation=Formation or "Off road"
     
     if self:IsInUtero() then
         self:T(self.lid..string.format("Will switch formation to %s (permanently=%s) when group is spawned", tostring(self.option.Formation), tostring(Permanently)))

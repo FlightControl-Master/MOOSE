@@ -49,7 +49,7 @@ BRIGADE = {
 
 --- BRIGADE class version.
 -- @field #string version
-BRIGADE.version="0.1.0"
+BRIGADE.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -287,6 +287,126 @@ function BRIGADE:RemoveAssetFromPlatoon(Asset)
     platoon:DelAsset(Asset)
   end
 end
+
+
+--- [ GROUND ] Function to load back an asset in the field that has been filed before.
+-- @param #BRIGADE self
+-- @param #string Templatename e.g."1 PzDv LogRg I\_AID-976" - that's the alias (name) of an platoon spawned as `"platoon - alias"_AID-"asset-ID"`
+-- @param Core.Point#COORDINATE Position where to spawn the platoon
+-- @return #BRIGADE self
+-- @usage
+-- Prerequisites:
+-- Save the assets spawned by BRIGADE/CHIEF regularly (~every 5 mins) into a file, e.g. like this: 
+--   
+--              local Path = FilePath or "C:\\Users\\<yourname>\\Saved Games\\DCS\\Missions\\" -- example path
+--              local BlueOpsFilename = BlueFileName or "ExamplePlatoonSave.csv" -- example filename 
+--              local BlueSaveOps = SET_GROUP:New():FilterCoalitions("blue"):FilterPrefixes("AID"):FilterCategoryGround():FilterOnce()
+--              UTILS.SaveSetOfGroups(BlueSaveOps,Path,BlueOpsFilename)
+--          
+-- where Path and Filename are strings, as chosen by you.
+-- You can then load back the assets at the start of your next mission run. Be aware that it takes a couple of seconds for the 
+-- platoon data to arrive in brigade, so make this an action after ~20 seconds, e.g. like so:
+-- 
+--            function LoadBackAssets()
+--              local Path = FilePath or "C:\\Users\\<yourname>\\Saved Games\\DCS\\Missions\\" -- example path
+--              local BlueOpsFilename = BlueFileName or "ExamplePlatoonSave.csv" -- example filename  
+--              if UTILS.CheckFileExists(Path,BlueOpsFilename) then
+--                local loadback = UTILS.LoadSetOfGroups(Path,BlueOpsFilename,false)
+--                for _,_platoondata in pairs (loadback) do
+--                  local groupname = _platoondata.groupname -- #string
+--                  local coordinate = _platoondata.coordinate -- Core.Point#COORDINATE
+--                  Your_Brigade:LoadBackAssetInPosition(groupname,coordinate)
+--                end
+--              end
+--            end
+--  
+--            local AssetLoader = TIMER:New(LoadBackAssets)
+--            AssetLoader:Start(20)
+-- 
+-- The assets loaded back into the mission will be considered for AUFTRAG type missions from CHIEF and BRIGADE.
+function BRIGADE:LoadBackAssetInPosition(Templatename,Position)
+  self:T(self.lid .. "LoadBackAssetInPosition: " .. tostring(Templatename))
+  
+  -- get Platoon alias from Templatename
+  local nametbl = UTILS.Split(Templatename,"_")
+
+  local name = nametbl[1]
+  
+  self:T(string.format("*** Target Platoon = %s ***",name))
+  
+  -- find a matching asset table from BRIGADE
+  local cohorts = self.cohorts or {}
+  local thisasset = nil --Functional.Warehouse#WAREHOUSE.Assetitem
+  local found = false
+  
+  for _,_cohort in pairs(cohorts) do
+    local asset = _cohort:GetName()
+    self:T(string.format("*** Looking at Platoon = %s ***",asset))
+    if asset == name then
+      self:T("**** Found Platoon ****")
+      local cohassets = _cohort.assets or {}
+      for _,_zug in pairs (cohassets) do
+        local zug = _zug -- Functional.Warehouse#WAREHOUSE.Assetitem   
+        if zug.assignment == name and zug.requested == false then
+          self:T("**** Found Asset ****")
+          found = true
+          thisasset = zug --Functional.Warehouse#WAREHOUSE.Assetitem         
+        break
+        end
+      end
+    end
+  end
+  
+  if found then
+  
+    -- prep asset
+    thisasset.rid = thisasset.uid
+    thisasset.requested = false
+    thisasset.score=100
+    thisasset.missionTask="CAS"
+    thisasset.spawned = true
+    local template = thisasset.templatename
+    local alias = thisasset.spawngroupname
+            
+    -- Spawn group
+    local spawnasset = SPAWN:NewWithAlias(template,alias)
+      :InitDelayOff()
+      :SpawnFromCoordinate(Position)
+    
+    -- build a new self request
+    local request = {} --Functional.Warehouse#WAREHOUSE.Pendingitem
+    request.assignment = name
+    request.warehouse = self
+    request.assets = {thisasset}
+    request.ntransporthome = 0
+    request.ndelivered = 0
+    request.ntransport = 0
+    request.cargoattribute = thisasset.attribute
+    request.category = thisasset.category
+    request.cargoassets = {thisasset}
+    request.assetdesc = WAREHOUSE.Descriptor.ASSETLIST
+    request.cargocategory = thisasset.category
+    request.toself = true
+    request.transporttype = WAREHOUSE.TransportType.SELFPROPELLED
+    request.assetproblem = {}
+    request.born = true
+    request.prio = 50
+    request.uid = thisasset.uid
+    request.airbase = nil
+    request.timestamp = timer.getAbsTime()
+    request.assetdescval = {thisasset}
+    request.nasset = 1
+    request.cargogroupset = SET_GROUP:New()
+    request.cargogroupset:AddGroup(spawnasset)
+    request.iscargo = true
+    
+    -- Call Brigade self
+    self:__AssetSpawned(2, spawnasset, thisasset, request) 
+     
+  end
+  return self
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Functions
