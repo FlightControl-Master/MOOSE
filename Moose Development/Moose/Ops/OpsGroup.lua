@@ -334,6 +334,7 @@ OPSGROUP.TaskType={
 -- @field #number Formation Formation.
 -- @field #boolean EPLRS data link.
 -- @field #boolean Disperse Disperse under fire.
+-- @field #boolen Emission Emission on/off.
 
 --- Weapon range data.
 -- @type OPSGROUP.WeaponData
@@ -9651,7 +9652,7 @@ function OPSGROUP:GetAlarmstate()
   return self.option.Alarm or self.optionDefault.Alarm
 end
 
---- Set the default Alarm State for the group. This is the state gets when the group is spawned or to which it defaults back after a mission.
+--- Set the default EPLRS for the group.
 -- @param #OPSGROUP self
 -- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
 -- @return #OPSGROUP self
@@ -9693,7 +9694,7 @@ function OPSGROUP:SwitchEPLRS(OnOffSwitch)
 
     end
   else
-    self:E(self.lid.."WARNING: Cannot switch Alarm State! Group is not alive")
+    self:E(self.lid.."WARNING: Cannot switch EPLRS! Group is not alive")
   end
 
   return self
@@ -9704,6 +9705,61 @@ end
 -- @return #boolean If `true`, EPLRS is on.
 function OPSGROUP:GetEPLRS()
   return self.option.EPLRS or self.optionDefault.EPLRS
+end
+
+--- Set the default EPLRS for the group.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
+-- @return #OPSGROUP self
+function OPSGROUP:SetDefaultEmission(OnOffSwitch)
+
+  if OnOffSwitch==nil then
+    self.optionDefault.Emission=true
+  else
+    self.optionDefault.EPLRS=OnOffSwitch
+  end
+
+  return self
+end
+
+--- Switch emission on or off.
+-- @param #OPSGROUP self
+-- @param #boolean OnOffSwitch If `true` or `nil`, switch emission on. If `false` emission switched off.
+-- @return #OPSGROUP self
+function OPSGROUP:SwitchEmission(OnOffSwitch)
+
+  if self:IsAlive() or self:IsInUtero() then
+
+    if OnOffSwitch==nil then
+
+      self.option.Emission=self.optionDefault.Emission
+
+    else
+
+      self.option.Emission=OnOffSwitch
+
+    end
+
+    if self:IsInUtero() then
+      self:T2(self.lid..string.format("Setting current EMISSION=%s when GROUP is SPAWNED", tostring(self.option.Emission)))
+    else
+
+      self.group:EnableEmission(self.option.Emission)
+      self:T(self.lid..string.format("Setting current EMISSION=%s", tostring(self.option.Emission)))
+
+    end
+  else
+    self:E(self.lid.."WARNING: Cannot switch Emission! Group is not alive")
+  end
+
+  return self
+end
+
+--- Get current emission state.
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, emission is on.
+function OPSGROUP:GetEmission()
+  return self.option.Emission or self.optionDefault.Emission
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -10134,7 +10190,7 @@ function OPSGROUP:SwitchFormation(Formation)
     self.option.Formation=Formation
 
     -- Debug info.
-    self:T(self.lid..string.format("Switching formation to %d", self.option.Formation))
+    self:T(self.lid..string.format("Switching formation to %s", tostring(self.option.Formation)))
 
   end
 
@@ -11157,6 +11213,8 @@ function OPSGROUP:_AddElementByName(unitname)
     element.category=unit:GetUnitCategory()
     element.categoryname=unit:GetCategoryName()
     element.typename=unit:GetTypeName()
+    
+    
     --self:I({desc=element.descriptors})
 
     -- Ammo.

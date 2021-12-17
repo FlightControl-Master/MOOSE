@@ -103,7 +103,8 @@ function ARMYGROUP:New(group)
   -- Defaults
   self:SetDefaultROE()
   self:SetDefaultAlarmstate()
-  self:SetDefaultEPLRS(self.isEPLRS)  
+  self:SetDefaultEPLRS(self.isEPLRS)
+  self:SetDefaultEmission()
   self:SetDetection()
   self:SetPatrolAdInfinitum(false)
   self:SetRetreatZones()
@@ -1726,7 +1727,7 @@ function ARMYGROUP:SwitchFormation(Formation, Permanently, NoRouteUpdate)
     self.option.Formation=Formation
     
     if self:IsInUtero() then
-        self:T(self.lid..string.format("Will switch formation to %s (permanently=%s) when group is spawned", self.option.Formation, tostring(Permanently)))
+        self:T(self.lid..string.format("Will switch formation to %s (permanently=%s) when group is spawned", tostring(self.option.Formation), tostring(Permanently)))
     else
     
       -- Update route with the new formation.
@@ -1736,7 +1737,7 @@ function ARMYGROUP:SwitchFormation(Formation, Permanently, NoRouteUpdate)
       end
       
       -- Debug info.
-      self:T(self.lid..string.format("Switching formation to %s (permanently=%s)", self.option.Formation, tostring(Permanently)))
+      self:T(self.lid..string.format("Switching formation to %s (permanently=%s)", tostring(self.option.Formation), tostring(Permanently)))
       
     end
 

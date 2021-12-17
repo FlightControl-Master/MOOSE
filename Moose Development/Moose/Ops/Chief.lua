@@ -1752,12 +1752,12 @@ function CHIEF:CheckOpsZoneQueue()
           self:T3(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets"))
       
           -- Recruit ground assets that
-          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ONGUARD, 1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY, GROUP.Attribute.GROUND_TANK})
-          local recruited1=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ARMOREDGUARD, 1, 1, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_TANK})
+          local recruitedI=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ONGUARD,      1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY})
+          local recruitedT=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ARMOREDGUARD, 1, 1, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_TANK})
           
           -- Debug info.
-          self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets=%s", tostring(recruited)))
-          self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone armored assets=%s", tostring(recruited1)))
+          self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets=%s", tostring(recruitedI)))
+          self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone armored assets=%s",  tostring(recruitedT)))
         end
         
       else
@@ -2198,10 +2198,13 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
   
   if recruited then
   
+    -- Debug messgage.
+    self:T2(self.lid..string.format("Recruited %d assets for %s mission STRATEGIC zone %s", #assets, MissionType, tostring(StratZone.opszone.zoneName)))  
+  
     if MissionType==AUFTRAG.Type.PATROLZONE or MissionType==AUFTRAG.Type.ONGUARD then
               
       -- Debug messgage.
-      self:T2(self.lid..string.format("Recruited %d assets from for PATROL mission", #assets))
+      self:T2(self.lid..string.format("Recruited %d assets for PATROL mission", #assets))
       
       local recruitedTrans=true
       local transport=nil
@@ -2209,8 +2212,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       
         -- Categories. Currently only helicopters are allowed due to problems with ground transports (might get stuck, might not be a land connection.
         -- TODO: Check if ground transport is possible. For example, by trying land.getPathOnRoad or something.
-        local Categories={self.TransportCategories}
-        --local Categories={Group.Category.HELICOPTER, Group.Category.GROUND}
+        local Categories=self.TransportCategories
   
         -- Recruit transport assets for infantry.    
         recruitedTrans, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, assets, 1, 1, StratZone.opszone.zone, nil, Categories)
@@ -2242,9 +2244,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
         self:MissionAssign(mission, legions)
       
         -- Attach mission to ops zone.
-        -- TODO: Need a better way!
-        --StratZone.missionPatrol=mission
-        StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
+        StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
         
         return true
       else
@@ -2281,9 +2281,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       self:MissionAssign(mission, legions)
     
       -- Attach mission to ops zone.
-      -- TODO: Need a better way!
-      --StratZone.missionCAS=mission
-      StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
+      StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
 
       return true
     elseif MissionType==AUFTRAG.Type.ARTY then
@@ -2303,9 +2301,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       self:MissionAssign(mission, legions)
     
       -- Attach mission to ops zone.
-      -- TODO: Need a better way!
-      --StratZone.missionARTY=mission
-      StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
+      StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
     
       return true
     elseif MissionType==AUFTRAG.Type.ARMOREDGUARD then
@@ -2324,14 +2320,15 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       self:MissionAssign(mission, legions)
     
       -- Attach mission to ops zone.
-      -- TODO: Need a better way!
-      --StratZone.missionARTY=mission
-      StratZone.opszone:_AddMission(self.coalition,MissionType,mission)
+      StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
     
       return true  
     end
     
   end
+
+    -- Debug messgage.
+    self:T2(self.lid..string.format("Could NOT recruit assets for %s mission of STRATEGIC zone %s", MissionType, tostring(StratZone.opszone.zoneName)))  
 
   return false
 end

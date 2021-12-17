@@ -4244,13 +4244,7 @@ function AUFTRAG:_TargetFromObject(Object)
       self.engageTarget=TARGET:New(Object)
       
     end   
-      
-    if self.type == AUFTRAG.Type.ALERT5 then
     
-      self.alert5Target = self.engageTarget
-    
-    end
-
   else
   
     -- Target was already specified elsewhere.
@@ -4378,10 +4372,10 @@ function AUFTRAG:GetTargetCoordinate()
     local coord=self.engageTarget:GetCoordinate()
     return coord
     
-  elseif self.alert5Target then
+  elseif self.type==AUFTRAG.Type.ALERT5 then
     
-    local coord=self.alert5Target:GetCoordinate()
-    return coord
+    -- For example, COMMANDER will not assign a coordiante. This will be done later, when the mission is assigned to an airwing.
+    return nil
     
   else  
     self:E(self.lid.."ERROR: Cannot get target coordinate!")
