@@ -2115,9 +2115,8 @@ function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce)
       local data = { groupname=groupname, size=size, coordinate=coordinate, group=GROUP:FindByName(groupname) }
       if reduce then
         local actualgroup = GROUP:FindByName(groupname)
-        local actualsize = actualgroup:CountAliveUnits()
-        if actualsize > size then
-          local reduction = actualsize-size
+        if actualgroup and actualgroup:IsAlive() and actualgroup:CountAliveUnits() > size then
+          local reduction = actualgroup:CountAliveUnits() - size
           BASE:I("Reducing groupsize by ".. reduction .. " units!")
           -- reduce existing group
           local units = actualgroup:GetUnits()
