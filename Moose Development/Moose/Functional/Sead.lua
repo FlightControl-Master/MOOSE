@@ -312,19 +312,22 @@ function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADG
           targetzone:DrawZone(coalition.side.BLUE,{0,0,1},0.2,nil,nil,3,true)
         end  
         
-        local seadset = SET_GROUP:New():FilterPrefixes(self.SEADGroupPrefixes):FilterOnce()
+        local seadset = SET_GROUP:New():FilterPrefixes(self.SEADGroupPrefixes):FilterZones({targetzone}):FilterOnce()
         local tgtcoord = targetzone:GetRandomPointVec2()
-        local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
-        local _targetgroup = nil
-        local _targetgroupname = "none"
-        local _targetskill = "Random"
-        if tgtgrp and tgtgrp:IsAlive() then
-          _targetgroup = tgtgrp
-          _targetgroupname = tgtgrp:GetName() -- group name
-          _targetskill = tgtgrp:GetUnit(1):GetSkill()
-          self:T("*** Found Target = ".. _targetgroupname)
-          self:ManageEvasion(_targetskill,_targetgroup,pos0,"AGM_88",SEADGroup, 20)
-        end
+        --if tgtcoord and tgtcoord.ClassName == "COORDINATE" then
+          --local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
+          local tgtgrp = seadset:GetRandom()
+          local _targetgroup = nil
+          local _targetgroupname = "none"
+          local _targetskill = "Random"
+          if tgtgrp and tgtgrp:IsAlive() then
+            _targetgroup = tgtgrp
+            _targetgroupname = tgtgrp:GetName() -- group name
+            _targetskill = tgtgrp:GetUnit(1):GetSkill()
+            self:T("*** Found Target = ".. _targetgroupname)
+            self:ManageEvasion(_targetskill,_targetgroup,pos0,"AGM_88",SEADGroup, 20)
+          end
+        --end
       end
     end     
   end
