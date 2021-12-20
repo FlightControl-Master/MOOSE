@@ -29,15 +29,14 @@
 -- @module Core.Settings
 -- @image Core_Settings.JPG
 
-
 --- @type SETTINGS
 -- @extends Core.Base#BASE
 
---- Takes care of various settings that influence the behaviour of certain functionalities and classes within the MOOSE framework.
+--- Takes care of various settings that influence the behavior of certain functionalities and classes within the MOOSE framework.
 --
 -- ===
 --
--- The SETTINGS class takes care of various settings that influence the behaviour of certain functionalities and classes within the MOOSE framework.
+-- The SETTINGS class takes care of various settings that influence the behavior of certain functionalities and classes within the MOOSE framework.
 -- SETTINGS can work on 2 levels:
 --
 --   - **Default settings**: A running mission has **Default settings**.
@@ -59,7 +58,7 @@
 --
 -- A menu is created automatically per Command Center that allows to modify the **Default** settings.
 -- So, when joining a CC unit, a menu will be available that allows to change the settings parameters **FOR ALL THE PLAYERS**!
--- Note that the **Default settings** will only be used when a player has not choosen its own settings.
+-- Note that the **Default settings** will only be used when a player has not chosen its own settings.
 --
 -- ## 2.2) Player settings menu
 --
@@ -69,7 +68,7 @@
 --
 -- ## 2.3) Show or Hide the Player Setting menus
 --
--- Of course, it may be requried not to show any setting menus. In this case, a method is available on the **\_SETTINGS object**.
+-- Of course, it may be required not to show any setting menus. In this case, a method is available on the **\_SETTINGS object**.
 -- Use @{#SETTINGS.SetPlayerMenuOff}() to hide the player menus, and use @{#SETTINGS.SetPlayerMenuOn}() show the player menus.
 -- Note that when this method is used, any player already in a slot will not have its menus visibility changed.
 -- The option will only have effect when a player enters a new slot or changes a slot.
@@ -94,8 +93,8 @@
 --
 --   - A2G BR: [Bearing Range](https://en.wikipedia.org/wiki/Bearing_(navigation)).
 --   - A2G MGRS: The [Military Grid Reference System](https://en.wikipedia.org/wiki/Military_Grid_Reference_System). The accuracy can also be adapted.
---   - A2G LL DMS: Lattitude Longitude [Degrees Minutes Seconds](https://en.wikipedia.org/wiki/Geographic_coordinate_conversion). The accuracy can also be adapted.
---   - A2G LL DDM: Lattitude Longitude [Decimal Degrees Minutes](https://en.wikipedia.org/wiki/Decimal_degrees). The accuracy can also be adapted.
+--   - A2G LL DMS: Latitude Longitude [Degrees Minutes Seconds](https://en.wikipedia.org/wiki/Geographic_coordinate_conversion). The accuracy can also be adapted.
+--   - A2G LL DDM: Latitude Longitude [Decimal Degrees Minutes](https://en.wikipedia.org/wiki/Decimal_degrees). The accuracy can also be adapted.
 --
 -- ### 3.1.2) A2G coordinates setting **menu**
 --
@@ -183,7 +182,7 @@
 -- The settings can be changed by using the **Default settings menu** on the Command Center or the **Player settings menu** on the Player Slot.
 --
 -- Each Message Type has specific timings that will be applied when the message is displayed.
--- The Settings Menu will provide for each Message Type a selection of proposed durations from which can be choosen.
+-- The Settings Menu will provide for each Message Type a selection of proposed durations from which can be chosen.
 -- So the player can choose its own amount of seconds how long a message should be displayed of a certain type.
 -- Note that **Update** messages can be chosen not to be displayed at all!
 --
@@ -196,7 +195,7 @@
 --
 -- ## 3.5) **Era** of the battle
 --
--- The threat level metric is scaled according the era of the battle. A target that is AAA, will pose a much greather threat in WWII than on modern warfare.
+-- The threat level metric is scaled according the era of the battle. A target that is AAA, will pose a much greater threat in WWII than on modern warfare.
 -- Therefore, there are 4 era that are defined within the settings:
 --
 --   - **WWII** era: Use for warfare with equipment during the world war II time.
@@ -213,8 +212,8 @@
 SETTINGS = {
   ClassName = "SETTINGS",
   ShowPlayerMenu = true,
-  MenuShort      = false,
-  MenuStatic     = false,
+  MenuShort = false,
+  MenuStatic = false,
 }
 
 SETTINGS.__Enum = {}
@@ -230,7 +229,6 @@ SETTINGS.__Enum.Era = {
   Cold = 3,
   Modern = 4,
 }
-
 
 do -- SETTINGS
 
@@ -268,14 +266,14 @@ do -- SETTINGS
   -- Short text are better suited for, e.g., VR.
   -- @param #SETTINGS self
   -- @param #boolean onoff If *true* use short menu texts. If *false* long ones (default).
-  function SETTINGS:SetMenutextShort(onoff)
+  function SETTINGS:SetMenutextShort( onoff )
     _SETTINGS.MenuShort = onoff
   end
 
   --- Set menu to be static.
   -- @param #SETTINGS self
   -- @param #boolean onoff If *true* menu is static. If *false* menu will be updated after changes (default).
-  function SETTINGS:SetMenuStatic(onoff)
+  function SETTINGS:SetMenuStatic( onoff )
     _SETTINGS.MenuStatic = onoff
   end
 
@@ -289,7 +287,7 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if metric.
   function SETTINGS:IsMetric()
-    return ( self.Metric ~= nil and self.Metric == true ) or ( self.Metric == nil and _SETTINGS:IsMetric() )
+    return (self.Metric ~= nil and self.Metric == true) or (self.Metric == nil and _SETTINGS:IsMetric())
   end
 
   --- Sets the SETTINGS imperial.
@@ -302,7 +300,7 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if imperial.
   function SETTINGS:IsImperial()
-    return ( self.Metric ~= nil and self.Metric == false ) or ( self.Metric == nil and _SETTINGS:IsMetric() )
+    return (self.Metric ~= nil and self.Metric == false) or (self.Metric == nil and _SETTINGS:IsMetric())
   end
 
   --- Sets the SETTINGS LL accuracy.
@@ -344,13 +342,12 @@ do -- SETTINGS
     self.MessageTypeTimings[MessageType] = MessageTime
   end
 
-
   --- Gets the SETTINGS Message Display Timing of a MessageType
   -- @param #SETTINGS self
   -- @param Core.Message#MESSAGE MessageType The type of the message.
   -- @return #number
   function SETTINGS:GetMessageTime( MessageType )
-    return ( self.MessageTypeTimings and self.MessageTypeTimings[MessageType] ) or _SETTINGS:GetMessageTime( MessageType )
+    return (self.MessageTypeTimings and self.MessageTypeTimings[MessageType]) or _SETTINGS:GetMessageTime( MessageType )
   end
 
   --- Sets A2G LL DMS
@@ -371,14 +368,14 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if LL DMS
   function SETTINGS:IsA2G_LL_DMS()
-    return ( self.A2GSystem and self.A2GSystem == "LL DMS" ) or ( not self.A2GSystem and _SETTINGS:IsA2G_LL_DMS() )
+    return (self.A2GSystem and self.A2GSystem == "LL DMS") or (not self.A2GSystem and _SETTINGS:IsA2G_LL_DMS())
   end
 
   --- Is LL DDM
   -- @param #SETTINGS self
   -- @return #boolean true if LL DDM
   function SETTINGS:IsA2G_LL_DDM()
-    return ( self.A2GSystem and self.A2GSystem == "LL DDM" ) or ( not self.A2GSystem and _SETTINGS:IsA2G_LL_DDM() )
+    return (self.A2GSystem and self.A2GSystem == "LL DDM") or (not self.A2GSystem and _SETTINGS:IsA2G_LL_DDM())
   end
 
   --- Sets A2G MGRS
@@ -392,7 +389,7 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if MGRS
   function SETTINGS:IsA2G_MGRS()
-    return ( self.A2GSystem and self.A2GSystem == "MGRS" ) or ( not self.A2GSystem and _SETTINGS:IsA2G_MGRS() )
+    return (self.A2GSystem and self.A2GSystem == "MGRS") or (not self.A2GSystem and _SETTINGS:IsA2G_MGRS())
   end
 
   --- Sets A2G BRA
@@ -406,7 +403,7 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if BRA
   function SETTINGS:IsA2G_BR()
-    return ( self.A2GSystem and self.A2GSystem == "BR" ) or ( not self.A2GSystem and _SETTINGS:IsA2G_BR() )
+    return (self.A2GSystem and self.A2GSystem == "BR") or (not self.A2GSystem and _SETTINGS:IsA2G_BR())
   end
 
   --- Sets A2A BRA
@@ -420,7 +417,7 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if BRA
   function SETTINGS:IsA2A_BRAA()
-    return ( self.A2ASystem and self.A2ASystem == "BRAA" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_BRAA() )
+    return (self.A2ASystem and self.A2ASystem == "BRAA") or (not self.A2ASystem and _SETTINGS:IsA2A_BRAA())
   end
 
   --- Sets A2A BULLS
@@ -434,7 +431,7 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if BULLS
   function SETTINGS:IsA2A_BULLS()
-    return ( self.A2ASystem and self.A2ASystem == "BULLS" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_BULLS() )
+    return (self.A2ASystem and self.A2ASystem == "BULLS") or (not self.A2ASystem and _SETTINGS:IsA2A_BULLS())
   end
 
   --- Sets A2A LL DMS
@@ -455,14 +452,14 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if LL DMS
   function SETTINGS:IsA2A_LL_DMS()
-    return ( self.A2ASystem and self.A2ASystem == "LL DMS" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_LL_DMS() )
+    return (self.A2ASystem and self.A2ASystem == "LL DMS") or (not self.A2ASystem and _SETTINGS:IsA2A_LL_DMS())
   end
 
   --- Is LL DDM
   -- @param #SETTINGS self
   -- @return #boolean true if LL DDM
   function SETTINGS:IsA2A_LL_DDM()
-    return ( self.A2ASystem and self.A2ASystem == "LL DDM" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_LL_DDM() )
+    return (self.A2ASystem and self.A2ASystem == "LL DDM") or (not self.A2ASystem and _SETTINGS:IsA2A_LL_DDM())
   end
 
   --- Sets A2A MGRS
@@ -476,7 +473,7 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if MGRS
   function SETTINGS:IsA2A_MGRS()
-    return ( self.A2ASystem and self.A2ASystem == "MGRS" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_MGRS() )
+    return (self.A2ASystem and self.A2ASystem == "MGRS") or (not self.A2ASystem and _SETTINGS:IsA2A_MGRS())
   end
 
   --- @param #SETTINGS self
@@ -495,37 +492,37 @@ do -- SETTINGS
     -- A2G Coordinate System
     -------
 
-    local text="A2G Coordinate System"
+    local text = "A2G Coordinate System"
     if _SETTINGS.MenuShort then
-      text="A2G Coordinates"
+      text = "A2G Coordinates"
     end
     local A2GCoordinateMenu = MENU_GROUP:New( MenuGroup, text, SettingsMenu ):SetTime( MenuTime )
 
     -- Set LL DMS
     if not self:IsA2G_LL_DMS() then
-      local text="Lat/Lon Degree Min Sec (LL DMS)"
+      local text = "Lat/Lon Degree Min Sec (LL DMS)"
       if _SETTINGS.MenuShort then
-        text="LL DMS"
+        text = "LL DMS"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "LL DMS" ):SetTime( MenuTime )
     end
 
     -- Set LL DDM
     if not self:IsA2G_LL_DDM() then
-      local text="Lat/Lon Degree Dec Min (LL DDM)"
+      local text = "Lat/Lon Degree Dec Min (LL DDM)"
       if _SETTINGS.MenuShort then
-        text="LL DDM"
+        text = "LL DDM"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, "Lat/Lon Degree Dec Min (LL DDM)", A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "LL DDM" ):SetTime( MenuTime )
     end
 
     -- Set LL DMS accuracy.
     if self:IsA2G_LL_DDM() then
-      local text1="LL DDM Accuracy 1"
-      local text2="LL DDM Accuracy 2"
-      local text3="LL DDM Accuracy 3"
+      local text1 = "LL DDM Accuracy 1"
+      local text2 = "LL DDM Accuracy 2"
+      local text3 = "LL DDM Accuracy 3"
       if _SETTINGS.MenuShort then
-        text1="LL DDM"
+        text1 = "LL DDM"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, "LL DDM Accuracy 1", A2GCoordinateMenu, self.MenuLL_DDM_Accuracy, self, MenuGroup, RootMenu, 1 ):SetTime( MenuTime )
       MENU_GROUP_COMMAND:New( MenuGroup, "LL DDM Accuracy 2", A2GCoordinateMenu, self.MenuLL_DDM_Accuracy, self, MenuGroup, RootMenu, 2 ):SetTime( MenuTime )
@@ -534,18 +531,18 @@ do -- SETTINGS
 
     -- Set BR.
     if not self:IsA2G_BR() then
-      local text="Bearing, Range (BR)"
+      local text = "Bearing, Range (BR)"
       if _SETTINGS.MenuShort then
-        text="BR"
+        text = "BR"
       end
-      MENU_GROUP_COMMAND:New( MenuGroup, text , A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "BR" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, text, A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "BR" ):SetTime( MenuTime )
     end
 
     -- Set MGRS.
     if not self:IsA2G_MGRS() then
-      local text="Military Grid (MGRS)"
+      local text = "Military Grid (MGRS)"
       if _SETTINGS.MenuShort then
-        text="MGRS"
+        text = "MGRS"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "MGRS" ):SetTime( MenuTime )
     end
@@ -563,24 +560,24 @@ do -- SETTINGS
     -- A2A Coordinate System
     -------
 
-    local text="A2A Coordinate System"
+    local text = "A2A Coordinate System"
     if _SETTINGS.MenuShort then
-      text="A2A Coordinates"
+      text = "A2A Coordinates"
     end
     local A2ACoordinateMenu = MENU_GROUP:New( MenuGroup, text, SettingsMenu ):SetTime( MenuTime )
 
     if not self:IsA2A_LL_DMS() then
-      local text="Lat/Lon Degree Min Sec (LL DMS)"
+      local text = "Lat/Lon Degree Min Sec (LL DMS)"
       if _SETTINGS.MenuShort then
-        text="LL DMS"
+        text = "LL DMS"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "LL DMS" ):SetTime( MenuTime )
     end
 
     if not self:IsA2A_LL_DDM() then
-      local text="Lat/Lon Degree Dec Min (LL DDM)"
+      local text = "Lat/Lon Degree Dec Min (LL DDM)"
       if _SETTINGS.MenuShort then
-        text="LL DDM"
+        text = "LL DDM"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "LL DDM" ):SetTime( MenuTime )
     end
@@ -593,25 +590,25 @@ do -- SETTINGS
     end
 
     if not self:IsA2A_BULLS() then
-      local text="Bullseye (BULLS)"
+      local text = "Bullseye (BULLS)"
       if _SETTINGS.MenuShort then
-        text="Bulls"
+        text = "Bulls"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BULLS" ):SetTime( MenuTime )
     end
 
     if not self:IsA2A_BRAA() then
-      local text="Bearing Range Altitude Aspect (BRAA)"
+      local text = "Bearing Range Altitude Aspect (BRAA)"
       if _SETTINGS.MenuShort then
-        text="BRAA"
+        text = "BRAA"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BRAA" ):SetTime( MenuTime )
     end
 
     if not self:IsA2A_MGRS() then
-      local text="Military Grid (MGRS)"
+      local text = "Military Grid (MGRS)"
       if _SETTINGS.MenuShort then
-        text="MGRS"
+        text = "MGRS"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "MGRS" ):SetTime( MenuTime )
     end
@@ -624,31 +621,31 @@ do -- SETTINGS
       MENU_GROUP_COMMAND:New( MenuGroup, "MGRS Accuracy 5", A2ACoordinateMenu, self.MenuMGRS_Accuracy, self, MenuGroup, RootMenu, 5 ):SetTime( MenuTime )
     end
 
-    local text="Measures and Weights System"
+    local text = "Measures and Weights System"
     if _SETTINGS.MenuShort then
-      text="Unit System"
+      text = "Unit System"
     end
     local MetricsMenu = MENU_GROUP:New( MenuGroup, text, SettingsMenu ):SetTime( MenuTime )
 
     if self:IsMetric() then
-      local text="Imperial (Miles,Feet)"
+      local text = "Imperial (Miles,Feet)"
       if _SETTINGS.MenuShort then
-        text="Imperial"
+        text = "Imperial"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, MetricsMenu, self.MenuMWSystem, self, MenuGroup, RootMenu, false ):SetTime( MenuTime )
     end
 
     if self:IsImperial() then
-      local text="Metric (Kilometers,Meters)"
+      local text = "Metric (Kilometers,Meters)"
       if _SETTINGS.MenuShort then
-        text="Metric"
+        text = "Metric"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, MetricsMenu, self.MenuMWSystem, self, MenuGroup, RootMenu, true ):SetTime( MenuTime )
     end
 
-    local text="Messages and Reports"
+    local text = "Messages and Reports"
     if _SETTINGS.MenuShort then
-      text="Messages & Reports"
+      text = "Messages & Reports"
     end
     local MessagesMenu = MENU_GROUP:New( MenuGroup, text, SettingsMenu ):SetTime( MenuTime )
 
@@ -688,7 +685,6 @@ do -- SETTINGS
     MENU_GROUP_COMMAND:New( MenuGroup, "1 minute", DetailedReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.DetailedReportsMenu, 60 ):SetTime( MenuTime )
     MENU_GROUP_COMMAND:New( MenuGroup, "2 minutes", DetailedReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.DetailedReportsMenu, 120 ):SetTime( MenuTime )
     MENU_GROUP_COMMAND:New( MenuGroup, "3 minutes", DetailedReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.DetailedReportsMenu, 180 ):SetTime( MenuTime )
-
 
     SettingsMenu:Remove( MenuTime )
 
@@ -733,11 +729,11 @@ do -- SETTINGS
 
       self.PlayerMenu = PlayerMenu
 
-      self:I(string.format("Setting menu for player %s", tostring(PlayerName)))
+      self:I( string.format( "Setting menu for player %s", tostring( PlayerName ) ) )
 
       local submenu = MENU_GROUP:New( PlayerGroup, "LL Accuracy", PlayerMenu )
       MENU_GROUP_COMMAND:New( PlayerGroup, "LL 0 Decimals", submenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 0 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL 1 Decimal",  submenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "LL 1 Decimal", submenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
       MENU_GROUP_COMMAND:New( PlayerGroup, "LL 2 Decimals", submenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
       MENU_GROUP_COMMAND:New( PlayerGroup, "LL 3 Decimals", submenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
       MENU_GROUP_COMMAND:New( PlayerGroup, "LL 4 Decimals", submenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 4 )
@@ -754,40 +750,40 @@ do -- SETTINGS
       -- A2G Coordinate System
       ------
 
-      local text="A2G Coordinate System"
+      local text = "A2G Coordinate System"
       if _SETTINGS.MenuShort then
-        text="A2G Coordinates"
+        text = "A2G Coordinates"
       end
       local A2GCoordinateMenu = MENU_GROUP:New( PlayerGroup, text, PlayerMenu )
 
       if not self:IsA2G_LL_DMS() or _SETTINGS.MenuStatic then
-        local text="Lat/Lon Degree Min Sec (LL DMS)"
+        local text = "Lat/Lon Degree Min Sec (LL DMS)"
         if _SETTINGS.MenuShort then
-          text="A2G LL DMS"
+          text = "A2G LL DMS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
       end
 
       if not self:IsA2G_LL_DDM() or _SETTINGS.MenuStatic then
-        local text="Lat/Lon Degree Dec Min (LL DDM)"
+        local text = "Lat/Lon Degree Dec Min (LL DDM)"
         if _SETTINGS.MenuShort then
-          text="A2G LL DDM"
+          text = "A2G LL DDM"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
       end
 
       if not self:IsA2G_BR() or _SETTINGS.MenuStatic then
-        local text="Bearing, Range (BR)"
+        local text = "Bearing, Range (BR)"
         if _SETTINGS.MenuShort then
-          text="A2G BR"
+          text = "A2G BR"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "BR" )
       end
 
       if not self:IsA2G_MGRS() or _SETTINGS.MenuStatic then
-        local text="Military Grid (MGRS)"
+        local text = "Military Grid (MGRS)"
         if _SETTINGS.MenuShort then
-          text="A2G MGRS"
+          text = "A2G MGRS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
       end
@@ -796,49 +792,48 @@ do -- SETTINGS
       -- A2A Coordinates Menu
       ------
 
-      local text="A2A Coordinate System"
+      local text = "A2A Coordinate System"
       if _SETTINGS.MenuShort then
-        text="A2A Coordinates"
+        text = "A2A Coordinates"
       end
       local A2ACoordinateMenu = MENU_GROUP:New( PlayerGroup, text, PlayerMenu )
 
-
       if not self:IsA2A_LL_DMS() or _SETTINGS.MenuStatic then
-        local text="Lat/Lon Degree Min Sec (LL DMS)"
+        local text = "Lat/Lon Degree Min Sec (LL DMS)"
         if _SETTINGS.MenuShort then
-          text="A2A LL DMS"
+          text = "A2A LL DMS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
       end
 
       if not self:IsA2A_LL_DDM() or _SETTINGS.MenuStatic then
-        local text="Lat/Lon Degree Dec Min (LL DDM)"
+        local text = "Lat/Lon Degree Dec Min (LL DDM)"
         if _SETTINGS.MenuShort then
-          text="A2A LL DDM"
+          text = "A2A LL DDM"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
       end
 
       if not self:IsA2A_BULLS() or _SETTINGS.MenuStatic then
-        local text="Bullseye (BULLS)"
+        local text = "Bullseye (BULLS)"
         if _SETTINGS.MenuShort then
-          text="A2A BULLS"
+          text = "A2A BULLS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BULLS" )
       end
 
       if not self:IsA2A_BRAA() or _SETTINGS.MenuStatic then
-        local text="Bearing Range Altitude Aspect (BRAA)"
+        local text = "Bearing Range Altitude Aspect (BRAA)"
         if _SETTINGS.MenuShort then
-          text="A2A BRAA"
+          text = "A2A BRAA"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRAA" )
       end
 
       if not self:IsA2A_MGRS() or _SETTINGS.MenuStatic then
-        local text="Military Grid (MGRS)"
+        local text = "Military Grid (MGRS)"
         if _SETTINGS.MenuShort then
-          text="A2A MGRS"
+          text = "A2A MGRS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
       end
@@ -847,24 +842,24 @@ do -- SETTINGS
       -- Unit system
       ---
 
-      local text="Measures and Weights System"
+      local text = "Measures and Weights System"
       if _SETTINGS.MenuShort then
-        text="Unit System"
+        text = "Unit System"
       end
       local MetricsMenu = MENU_GROUP:New( PlayerGroup, text, PlayerMenu )
 
       if self:IsMetric() or _SETTINGS.MenuStatic then
-        local text="Imperial (Miles,Feet)"
+        local text = "Imperial (Miles,Feet)"
         if _SETTINGS.MenuShort then
-          text="Imperial"
+          text = "Imperial"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, false )
       end
 
       if self:IsImperial() or _SETTINGS.MenuStatic then
-        local text="Metric (Kilometers,Meters)"
+        local text = "Metric (Kilometers,Meters)"
         if _SETTINGS.MenuShort then
-          text="Metric"
+          text = "Metric"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, true )
       end
@@ -873,9 +868,9 @@ do -- SETTINGS
       -- Messages and Reports
       ---
 
-      local text="Messages and Reports"
+      local text = "Messages and Reports"
       if _SETTINGS.MenuShort then
-        text="Messages & Reports"
+        text = "Messages & Reports"
       end
       local MessagesMenu = MENU_GROUP:New( PlayerGroup, text, PlayerMenu )
 
@@ -935,39 +930,38 @@ do -- SETTINGS
     return self
   end
 
-
   --- @param #SETTINGS self
   function SETTINGS:A2GMenuSystem( MenuGroup, RootMenu, A2GSystem )
     self.A2GSystem = A2GSystem
-    MESSAGE:New( string.format("Settings: Default A2G coordinate system set to %s for all players!", A2GSystem ), 5 ):ToAll()
+    MESSAGE:New( string.format( "Settings: Default A2G coordinate system set to %s for all players!", A2GSystem ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
   function SETTINGS:A2AMenuSystem( MenuGroup, RootMenu, A2ASystem )
     self.A2ASystem = A2ASystem
-    MESSAGE:New( string.format("Settings: Default A2A coordinate system set to %s for all players!", A2ASystem ), 5 ):ToAll()
+    MESSAGE:New( string.format( "Settings: Default A2A coordinate system set to %s for all players!", A2ASystem ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
   function SETTINGS:MenuLL_DDM_Accuracy( MenuGroup, RootMenu, LL_Accuracy )
     self.LL_Accuracy = LL_Accuracy
-    MESSAGE:New( string.format("Settings: Default LL accuracy set to %s for all players!", LL_Accuracy ), 5 ):ToAll()
+    MESSAGE:New( string.format( "Settings: Default LL accuracy set to %s for all players!", LL_Accuracy ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
   function SETTINGS:MenuMGRS_Accuracy( MenuGroup, RootMenu, MGRS_Accuracy )
     self.MGRS_Accuracy = MGRS_Accuracy
-    MESSAGE:New( string.format("Settings: Default MGRS accuracy set to %s for all players!", MGRS_Accuracy ), 5 ):ToAll()
+    MESSAGE:New( string.format( "Settings: Default MGRS accuracy set to %s for all players!", MGRS_Accuracy ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
   function SETTINGS:MenuMWSystem( MenuGroup, RootMenu, MW )
     self.Metric = MW
-    MESSAGE:New( string.format("Settings: Default measurement format set to %s for all players!", MW and "Metric" or "Imperial" ), 5 ):ToAll()
+    MESSAGE:New( string.format( "Settings: Default measurement format set to %s for all players!", MW and "Metric" or "Imperial" ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
@@ -980,12 +974,12 @@ do -- SETTINGS
   do
     --- @param #SETTINGS self
     function SETTINGS:MenuGroupA2GSystem( PlayerUnit, PlayerGroup, PlayerName, A2GSystem )
-      BASE:E( {self, PlayerUnit:GetName(), A2GSystem} )
+      BASE:E( { self, PlayerUnit:GetName(), A2GSystem } )
       self.A2GSystem = A2GSystem
       MESSAGE:New( string.format( "Settings: A2G format set to %s for player %s.", A2GSystem, PlayerName ), 5 ):ToGroup( PlayerGroup )
-      if _SETTINGS.MenuStatic==false then
-        self:RemovePlayerMenu(PlayerUnit)
-        self:SetPlayerMenu(PlayerUnit)
+      if _SETTINGS.MenuStatic == false then
+        self:RemovePlayerMenu( PlayerUnit )
+        self:SetPlayerMenu( PlayerUnit )
       end
     end
 
@@ -993,9 +987,9 @@ do -- SETTINGS
     function SETTINGS:MenuGroupA2ASystem( PlayerUnit, PlayerGroup, PlayerName, A2ASystem )
       self.A2ASystem = A2ASystem
       MESSAGE:New( string.format( "Settings: A2A format set to %s for player %s.", A2ASystem, PlayerName ), 5 ):ToGroup( PlayerGroup )
-      if _SETTINGS.MenuStatic==false then
-        self:RemovePlayerMenu(PlayerUnit)
-        self:SetPlayerMenu(PlayerUnit)
+      if _SETTINGS.MenuStatic == false then
+        self:RemovePlayerMenu( PlayerUnit )
+        self:SetPlayerMenu( PlayerUnit )
       end
     end
 
@@ -1003,9 +997,9 @@ do -- SETTINGS
     function SETTINGS:MenuGroupLL_DDM_AccuracySystem( PlayerUnit, PlayerGroup, PlayerName, LL_Accuracy )
       self.LL_Accuracy = LL_Accuracy
       MESSAGE:New( string.format( "Settings: LL format accuracy set to %d decimal places for player %s.", LL_Accuracy, PlayerName ), 5 ):ToGroup( PlayerGroup )
-      if _SETTINGS.MenuStatic==false then
-        self:RemovePlayerMenu(PlayerUnit)
-        self:SetPlayerMenu(PlayerUnit)
+      if _SETTINGS.MenuStatic == false then
+        self:RemovePlayerMenu( PlayerUnit )
+        self:SetPlayerMenu( PlayerUnit )
       end
     end
 
@@ -1013,9 +1007,9 @@ do -- SETTINGS
     function SETTINGS:MenuGroupMGRS_AccuracySystem( PlayerUnit, PlayerGroup, PlayerName, MGRS_Accuracy )
       self.MGRS_Accuracy = MGRS_Accuracy
       MESSAGE:New( string.format( "Settings: MGRS format accuracy set to %d for player %s.", MGRS_Accuracy, PlayerName ), 5 ):ToGroup( PlayerGroup )
-      if _SETTINGS.MenuStatic==false then
-        self:RemovePlayerMenu(PlayerUnit)
-        self:SetPlayerMenu(PlayerUnit)
+      if _SETTINGS.MenuStatic == false then
+        self:RemovePlayerMenu( PlayerUnit )
+        self:SetPlayerMenu( PlayerUnit )
       end
     end
 
@@ -1023,9 +1017,9 @@ do -- SETTINGS
     function SETTINGS:MenuGroupMWSystem( PlayerUnit, PlayerGroup, PlayerName, MW )
       self.Metric = MW
       MESSAGE:New( string.format( "Settings: Measurement format set to %s for player %s.", MW and "Metric" or "Imperial", PlayerName ), 5 ):ToGroup( PlayerGroup )
-      if _SETTINGS.MenuStatic==false then
-        self:RemovePlayerMenu(PlayerUnit)
-        self:SetPlayerMenu(PlayerUnit)
+      if _SETTINGS.MenuStatic == false then
+        self:RemovePlayerMenu( PlayerUnit )
+        self:SetPlayerMenu( PlayerUnit )
       end
     end
 
@@ -1055,7 +1049,6 @@ do -- SETTINGS
 
   end
 
-
   --- Configures the era of the mission to be Cold war.
   -- @param #SETTINGS self
   -- @return #SETTINGS self
@@ -1065,7 +1058,6 @@ do -- SETTINGS
 
   end
 
-
   --- Configures the era of the mission to be Modern war.
   -- @param #SETTINGS self
   -- @return #SETTINGS self
@@ -1074,8 +1066,5 @@ do -- SETTINGS
     self.Era = SETTINGS.__Enum.Era.Modern
 
   end
-
-
-
 
 end
