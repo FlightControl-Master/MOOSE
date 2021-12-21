@@ -334,7 +334,7 @@ OPSGROUP.TaskType={
 -- @field #number Formation Formation.
 -- @field #boolean EPLRS data link.
 -- @field #boolean Disperse Disperse under fire.
--- @field #boolen Emission Emission on/off.
+-- @field #boolean Emission Emission on/off.
 
 --- Weapon range data.
 -- @type OPSGROUP.WeaponData
