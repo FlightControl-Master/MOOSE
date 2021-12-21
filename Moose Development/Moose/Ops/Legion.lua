@@ -45,7 +45,7 @@ LEGION = {
 
 --- LEGION class version.
 -- @field #string version
-LEGION.version="0.1.0"
+LEGION.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -465,6 +465,19 @@ function LEGION:CheckMissionQueue()
 
     if mission:IsNotOver() and mission:IsReadyToCancel() then
       mission:Cancel()
+    end
+  end
+  
+  -- Check that runway is operational and that carrier is not recovering.
+  if self:IsAirwing() then
+    if self:IsRunwayOperational() then
+      return nil
+    end
+    local airboss=self.airboss --Ops.Airboss#AIRBOSS
+    if airboss then
+      if not airboss:IsIdle() then
+        return nil
+      end
     end
   end
 
@@ -2384,11 +2397,11 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
   score=score-distance
   
   -- Intercepts need to be carried out quickly. We prefer spawned assets.
-  if MissionType==AUFTRAG.Type.INTERCEPT then  
+  --if MissionType==AUFTRAG.Type.INTERCEPT then  
     if asset.spawned then
       score=score+25
     end
-  end
+  --end
   
   -- TRANSPORT specific.
   if MissionType==AUFTRAG.Type.OPSTRANSPORT then

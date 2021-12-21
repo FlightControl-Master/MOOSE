@@ -382,7 +382,7 @@ _AUFTRAGSNR=0
 -- @field #string ONGUARD On guard.
 -- @field #string ARMOREDGUARD On guard - with armored groups.
 -- @field #string BARRAGE Barrage.
--- @field #STRING ARMORATTACK Armor attack.
+-- @field #string ARMORATTACK Armor attack.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -838,17 +838,17 @@ function AUFTRAG:New(Type)
   -- @param #string Event Event.
   -- @param #string To To state.
 
-  --- Triggers the FSM event "Failure".
-  -- @function [parent=#AUFTRAG] Failure
+  --- Triggers the FSM event "Failed".
+  -- @function [parent=#AUFTRAG] Failed
   -- @param #AUFTRAG self
 
-  --- Triggers the FSM event "Failure" after a delay.
-  -- @function [parent=#AUFTRAG] __Failure
+  --- Triggers the FSM event "Failed" after a delay.
+  -- @function [parent=#AUFTRAG] __Failed
   -- @param #AUFTRAG self
   -- @param #number delay Delay in seconds.
 
-  --- On after "Failure" event.
-  -- @function [parent=#AUFTRAG] OnAfterFailure
+  --- On after "Failed" event.
+  -- @function [parent=#AUFTRAG] OnAfterFailed
   -- @param #AUFTRAG self
   -- @param #string From From state.
   -- @param #string Event Event.
@@ -4342,8 +4342,17 @@ end
 -- @param #AUFTRAG self
 -- @return #string The target type.
 function AUFTRAG:GetTargetType()
-  local ttype=self:GetTargetData().Type
-  return ttype
+  local target=self.engageTarget
+  if target then
+    local to=target:GetObjective()
+    if to then
+      return to.Type
+    else
+      return "Unknown"
+    end
+  else
+    return "Unknown"
+  end
 end
 
 --- Get 2D vector of target.

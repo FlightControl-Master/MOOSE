@@ -180,7 +180,7 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.0.3"
+CHIEF.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1935,6 +1935,7 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
   local group=nil      --Wrapper.Group#GROUP
   local airbase=nil    --Wrapper.Airbase#AIRBASE
   local scenery=nil    --Wrapper.Scenery#SCENERY
+  local static=nil     --Wrapper.Static#STATIC
   local coordinate=nil --Core.Point#COORDINATE
   
   -- Get target objective.
@@ -1946,6 +1947,8 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
     group=target:GetGroup()
   elseif target:IsInstanceOf("AIRBASE") then
     airbase=target
+  elseif target:IsInstanceOf("STATIC") then
+    static=target
   elseif target:IsInstanceOf("SCENERY") then
     scenery=target
   end
@@ -2044,6 +2047,17 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
   
     -- Bomb runway.
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBRUNWAY, 100))
+
+  elseif static then
+  
+    ---
+    -- STATIC
+    ---
+
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 70))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBCARPET, 50))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
     
   elseif scenery then
   
