@@ -1182,7 +1182,7 @@ end
 -- @param #ZONE_RADIUS self
 -- @param #number inner (Optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (Optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
+-- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 100 times to find the right type!
 -- @return DCS#Vec2 The random location within the zone.
 function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
 
@@ -1215,7 +1215,7 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
 	local point=_getpoint()
 
 	if surfacetypes then
-	  local N=1 ; local Nmax=1000 ; local gotit=false
+	  local N=1 ; local Nmax=100 ; local gotit=false
     while gotit==false and N<=Nmax do
       gotit=_checkSurface(point)
       if gotit then
