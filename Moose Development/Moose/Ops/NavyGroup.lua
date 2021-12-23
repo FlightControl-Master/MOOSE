@@ -78,6 +78,7 @@ NAVYGROUP = {
 -- @field #number Heading Heading the boat will take in degrees.
 -- @field #boolean Open Currently active.
 -- @field #boolean Over This turn is over.
+-- @field #boolean Recovery If `true` this is a recovery window. If `false`, this is a launch window. If `nil` this is just a turn into the wind.
 
 --- Engage Target.
 -- @type NAVYGROUP.Target
@@ -667,6 +668,36 @@ end
 function NAVYGROUP:IsSteamingIntoWind()
   if self.intowind then
     return true
+  else
+    return false    
+  end
+end
+
+--- Check if the group is currently recovering aircraft.
+-- @param #NAVYGROUP self
+-- @return #boolean If true, group is currently recovering.
+function NAVYGROUP:IsRecovering()
+  if self.intowind then
+    if self.intowind.Recovery==true then
+      return true
+    else
+      return false
+    end
+  else
+    return false    
+  end
+end
+
+--- Check if the group is currently launching aircraft.
+-- @param #NAVYGROUP self
+-- @return #boolean If true, group is currently launching.
+function NAVYGROUP:IsLaunching()
+  if self.intowind then
+    if self.intowind.Recovery==false then
+      return true
+    else
+      return false
+    end
   else
     return false    
   end

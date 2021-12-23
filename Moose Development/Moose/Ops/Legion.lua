@@ -470,7 +470,7 @@ function LEGION:CheckMissionQueue()
   
   -- Check that runway is operational and that carrier is not recovering.
   if self:IsAirwing() then
-    if self:IsRunwayOperational() then
+    if self:IsRunwayOperational()==false then
       return nil
     end
     local airboss=self.airboss --Ops.Airboss#AIRBOSS
