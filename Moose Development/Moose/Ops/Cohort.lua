@@ -141,6 +141,8 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
     self:SetMissionRange(100)
   elseif self.category==Group.Category.TRAIN then
     self:SetMissionRange(100)
+  else
+   self:SetMissionRange(150)
   end    
   
   -- Units.
