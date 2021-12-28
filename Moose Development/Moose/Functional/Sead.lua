@@ -485,7 +485,8 @@ function SEAD:HandleEventShot( EventData )
     elseif targetcat == Object.Category.STATIC then
       self:T("*** Target Category STATIC")
       local seadset = SET_GROUP:New():FilterPrefixes(self.SEADGroupPrefixes):FilterOnce()
-      local tgtcoord = COORDINATE:NewFromVec3(_target:getPoint())
+      local targetpoint = _target:getPoint() or {x=0,y=0,z=0}
+      local tgtcoord = COORDINATE:NewFromVec3(targetpoint)
       local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
       if tgtgrp and tgtgrp:IsAlive() then
         _targetgroup = tgtgrp
