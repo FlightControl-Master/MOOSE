@@ -284,9 +284,11 @@ function SCORING:New( GameName )
 
   -- Default fratricide penalty level (maximum penalty that can be assigned to a player before he gets kicked).
   self:SetFratricide( self.ScaleDestroyPenalty * 3 )
+  self.penaltyonfratricide = true
   
   -- Default penalty when a player changes coalition.
   self:SetCoalitionChangePenalty( self.ScaleDestroyPenalty )
+  self.penaltyoncoalitionchange = true
   
   self:SetDisplayMessagePrefix()
   
@@ -582,6 +584,23 @@ function SCORING:SetFratricide( Fratricide )
   return self
 end
 
+--- Decide if fratricide is leading to penalties (true) or not (false)
+-- @param #SCORING self
+-- @param #boolean OnOff Switch for Fratricide
+-- @return #SCORING
+function SCORING:SwitchFratricide( OnOff )
+  self.penaltyonfratricide = OnOff
+  return self
+end
+
+--- Decide if a change of coalition is leading to penalties (true) or not (false)
+-- @param #SCORING self
+-- @param #boolean OnOff Switch for Coalition Changes.
+-- @return #SCORING
+function SCORING:SwitchTreason( OnOff )
+  self.penaltyoncoalitionchange = OnOff
+  return self
+end
 
 --- When a player changes the coalition, he can receive a penalty score.
 -- Use the method @{#SCORING.SetCoalitionChangePenalty}() to define the penalty when a player changes coalition.
@@ -647,14 +666,15 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     if not self.Players[PlayerName].UnitCoalition then
       self.Players[PlayerName].UnitCoalition = UnitCoalition
     else
-      if self.Players[PlayerName].UnitCoalition ~= UnitCoalition then
-        self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + 50
+      -- TODO: switch for coalition changes, make penalty alterable
+      if self.Players[PlayerName].UnitCoalition ~= UnitCoalition and self.penaltyoncoalitionchange then
+        self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + self.CoalitionChangePenalty or 50
         self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
         MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' changed coalition from " .. _SCORINGCoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. _SCORINGCoalition[UnitCoalition] ..
-          "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.",
+          "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). ".. self.CoalitionChangePenalty .."Penalty points added.",
           MESSAGE.Type.Information
         ):ToAll()
-        self:ScoreCSV( PlayerName, "", "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, _SCORINGCoalition[self.Players[PlayerName].UnitCoalition], _SCORINGCategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
+        self:ScoreCSV( PlayerName, "", "COALITION_PENALTY",  1, -1*self.CoalitionChangePenalty, self.Players[PlayerName].UnitName, _SCORINGCoalition[self.Players[PlayerName].UnitCoalition], _SCORINGCategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
           UnitName, _SCORINGCoalition[UnitCoalition], _SCORINGCategory[UnitCategory], UnitData:GetTypeName() )
       end
     end
@@ -666,10 +686,9 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     self.Players[PlayerName].UNIT = UnitData 
     self.Players[PlayerName].ThreatLevel = UnitThreatLevel
     self.Players[PlayerName].ThreatType = UnitThreatType
-
-    -- TODO: DCS bug concerning Units with skill level client don't get destroyed in multi player. This logic is deactivated until this bug gets fixed.
-    --[[
-    if self.Players[PlayerName].Penalty > self.Fratricide * 0.50 then
+    
+    -- TODO: make fratricide switchable
+    if self.Players[PlayerName].Penalty > self.Fratricide * 0.50 and self.penaltyonfratricide then
       if self.Players[PlayerName].PenaltyWarning < 1 then
         MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than " .. self.Fratricide .. ", you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty,
           MESSAGE.Type.Information
@@ -678,14 +697,12 @@ function SCORING:_AddPlayerFromUnit( UnitData )
       end
     end
 
-    if self.Players[PlayerName].Penalty > self.Fratricide then
+    if self.Players[PlayerName].Penalty > self.Fratricide and self.penaltyonfratricide then
       MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!",
         MESSAGE.Type.Information
       ):ToAll()
       UnitData:GetGroup():Destroy()
     end
-    --]]
-
   end
 end
 
@@ -1125,9 +1142,9 @@ function SCORING:_EventOnHit( Event )
           if InitCoalition then -- A coalition object was hit, probably a static.
             if InitCoalition == TargetCoalition then
               -- TODO: Penalty according scale
-              Player.Penalty = Player.Penalty + 10
-              PlayerHit.Penalty = PlayerHit.Penalty + 10
-              PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1
+              Player.Penalty = Player.Penalty + 10 --* self.ScaleDestroyPenalty
+              PlayerHit.Penalty = PlayerHit.Penalty + 10 --* self.ScaleDestroyPenalty
+              PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1 * self.ScaleDestroyPenalty
       
               MESSAGE
                 :NewType( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit friendly target " .. 
