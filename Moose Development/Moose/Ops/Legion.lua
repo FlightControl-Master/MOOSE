@@ -45,7 +45,7 @@ LEGION = {
 
 --- LEGION class version.
 -- @field #string version
-LEGION.version="0.1.0"
+LEGION.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -467,6 +467,19 @@ function LEGION:CheckMissionQueue()
       mission:Cancel()
     end
   end
+  
+  -- Check that runway is operational and that carrier is not recovering.
+  if self:IsAirwing() then
+    if self:IsRunwayOperational()==false then
+      return nil
+    end
+    local airboss=self.airboss --Ops.Airboss#AIRBOSS
+    if airboss then
+      if not airboss:IsIdle() then
+        return nil
+      end
+    end
+  end
 
   -- Sort results table wrt prio and start time.
   local function _sort(a, b)
@@ -694,7 +707,12 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
             asset.flightgroup:MissionCancel(currM)
           end
           
-  
+          -- Cancel the current mission.
+          if asset.flightgroup:IsArmygroup() then
+            if currM and (currM.type==AUFTRAG.Type.ONGUARD or currM.type==AUFTRAG.Type.ARMOREDGUARD) then
+              asset.flightgroup:MissionCancel(currM)
+            end
+          end
           -- Trigger event.
           self:__OpsOnMission(5, asset.flightgroup, Mission)
   
@@ -721,13 +739,19 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
       asset.requested=true
       asset.isReserved=false
 
-      -- Set missin task so that the group is spawned with the right one.
+      -- Set mission task so that the group is spawned with the right one.
       if Mission.missionTask then
         asset.missionTask=Mission.missionTask
       end
 
     end
-
+    
+    -- Special for reloading brigade units
+    --local coordinate = nil
+   -- if Mission.specialCoordinate then 
+    --  coordinate = Mission.specialCoordinate
+   -- end
+    
     -- TODO: Get/set functions for assignment string.
     local assignment=string.format("Mission-%d", Mission.auftragsnummer)
 
@@ -1087,7 +1111,8 @@ end
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that was spawned.
 -- @param Functional.Warehouse#WAREHOUSE.Pendingitem request The request of the dead asset.
 function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
-
+  self:T({From, Event, To, group:GetName(), asset.assignment, request.assignment})
+  
   -- Call parent warehouse function first.
   self:GetParent(self, LEGION).onafterAssetSpawned(self, From, Event, To, group, asset, request)
 
@@ -2372,11 +2397,11 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
   score=score-distance
   
   -- Intercepts need to be carried out quickly. We prefer spawned assets.
-  if MissionType==AUFTRAG.Type.INTERCEPT then  
+  --if MissionType==AUFTRAG.Type.INTERCEPT then  
     if asset.spawned then
       score=score+25
     end
-  end
+  --end
   
   -- TRANSPORT specific.
   if MissionType==AUFTRAG.Type.OPSTRANSPORT then
