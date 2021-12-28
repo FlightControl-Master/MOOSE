@@ -409,11 +409,7 @@ end
 -- @param #number knots Speed in knots.
 -- @return #number Speed in m/s.
 UTILS.KnotsToMps = function( knots )
-  if type(knots) == "number" then
-    return knots / 1.94384 --* 1852 / 3600
-  else
-   return 0
-  end
+  return knots / 1.94384 --* 1852 / 3600
 end
 
 --- Convert temperature from Celsius to Farenheit.
@@ -2095,8 +2091,7 @@ end
 -- @param #boolean Reduce If false, existing loaded groups will not be reduced to fit the saved number.
 -- @return #table Table of data objects (tables) containing groupname, coordinate and group object. Returns nil when file cannot be read.
 function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce)
-  local reduce = true
-  if Reduce == false then reduce = false end
+  local reduce = Reduce==false and false or true
   local filename = Filename or "StateListofGroups"
   local datatable = {}
   if UTILS.CheckFileExists(Path,filename) then
@@ -2115,8 +2110,9 @@ function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce)
       local data = { groupname=groupname, size=size, coordinate=coordinate, group=GROUP:FindByName(groupname) }
       if reduce then
         local actualgroup = GROUP:FindByName(groupname)
-        if actualgroup and actualgroup:IsAlive() and actualgroup:CountAliveUnits() > size then
-          local reduction = actualgroup:CountAliveUnits() - size
+        local actualsize = actualgroup:CountAliveUnits()
+        if actualsize > size then
+          local reduction = actualsize-size
           BASE:I("Reducing groupsize by ".. reduction .. " units!")
           -- reduce existing group
           local units = actualgroup:GetUnits()
@@ -2141,9 +2137,7 @@ end
 -- @return Core.Set#SET_GROUP Set of GROUP objects. 
 -- Returns nil when file cannot be read. Returns a table of data entries if Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate }`
 function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
-  local spawn = true
-  if Spawn == false then spawn = false end
-  BASE:I("Spawn = "..tostring(spawn))
+  local spawn = SPAWN==false and false or true
   local filename = Filename or "SetOfGroups"
   local setdata = SET_GROUP:New()
   local datatable = {}
@@ -2229,8 +2223,7 @@ end
 -- @return #table Table of data objects (tables) containing staticname, size (0=dead else 1), coordinate and the static object. 
 -- Returns nil when file cannot be read.
 function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce)
-  local reduce = true
-  if Reduce == false then reduce = false end
+  local reduce = Reduce==false and false or true
   local filename = Filename or "StateListofStatics"
   local datatable = {}
   if UTILS.CheckFileExists(Path,filename) then

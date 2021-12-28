@@ -382,7 +382,7 @@ _AUFTRAGSNR=0
 -- @field #string ONGUARD On guard.
 -- @field #string ARMOREDGUARD On guard - with armored groups.
 -- @field #string BARRAGE Barrage.
--- @field #string ARMORATTACK Armor attack.
+-- @field #STRING ARMORATTACK Armor attack.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -838,17 +838,17 @@ function AUFTRAG:New(Type)
   -- @param #string Event Event.
   -- @param #string To To state.
 
-  --- Triggers the FSM event "Failed".
-  -- @function [parent=#AUFTRAG] Failed
+  --- Triggers the FSM event "Failure".
+  -- @function [parent=#AUFTRAG] Failure
   -- @param #AUFTRAG self
 
-  --- Triggers the FSM event "Failed" after a delay.
-  -- @function [parent=#AUFTRAG] __Failed
+  --- Triggers the FSM event "Failure" after a delay.
+  -- @function [parent=#AUFTRAG] __Failure
   -- @param #AUFTRAG self
   -- @param #number delay Delay in seconds.
 
-  --- On after "Failed" event.
-  -- @function [parent=#AUFTRAG] OnAfterFailed
+  --- On after "Failure" event.
+  -- @function [parent=#AUFTRAG] OnAfterFailure
   -- @param #AUFTRAG self
   -- @param #string From From state.
   -- @param #string Event Event.
@@ -1717,7 +1717,7 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
   
   mission:_TargetFromObject(ZoneSet)
   
-  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.RECON)
+ mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.RECON)
     
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.PassiveDefense
@@ -1730,14 +1730,8 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
   mission.categories={AUFTRAG.Category.ALL}
     
   mission.DCStask=mission:GetDCSMissionTask()
-  mission.DCStask.params.adinfinitum=Adinfinitum
+  mission.DCStask.params.adinfitum=Adinfinitum
   mission.DCStask.params.randomly=Randomly
-  
-  if Randomly then
-    local targets = mission.DCStask.params.target.targets -- Ops.Target#TARGET
-    local shuffled = UTILS.ShuffleTable(targets)
-    mission.DCStask.params.target.targets = shuffled
-  end
 
   return mission
 end
@@ -1977,7 +1971,7 @@ function AUFTRAG:_DetermineAuftragType(Target)
       auftrag=AUFTRAG.Type.ANTISHIP
   
     else
-      self:T(self.lid.."ERROR: Unknown Group category!")
+      self:E(self.lid.."ERROR: Unknown Group category!")
     end
     
   elseif airbase then
@@ -3237,7 +3231,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
   
   -- Check for error.  
   if fsmstate~=self.status then
-    self:T(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
+    self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
   
   -- General info.
@@ -3254,7 +3248,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
     local chief=self.chief and self.statusChief or "N/A"
   
     -- Info message.
-    self:T(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, legions=%d, commander=%s, chief=%s", 
+    self:I(self.lid..string.format("Status %s: Target=%s, T=%s-%s, assets=%d, groups=%d, targets=%d, legions=%d, commander=%s, chief=%s", 
     self.status, targetname, Cstart, Cstop, #self.assets, Ngroups, Ntargets, Nlegions, commander, chief))
   end
 
@@ -3366,23 +3360,22 @@ function AUFTRAG:Evaluate()
   end
   
   -- Debug text.
-  if self.verbose > 0 then
-    local text=string.format("Evaluating mission:\n")
-    text=text..string.format("Own casualties = %d/%d\n", self.Ncasualties, self.Nelements)
-    text=text..string.format("Own losses     = %.1f %%\n", owndamage)
-    text=text..string.format("Killed units   = %d\n", self.Nkills)
-    text=text..string.format("--------------------------\n")  
-    text=text..string.format("Targets left   = %d/%d\n", Ntargets, Ntargets0)
-    text=text..string.format("Targets life   = %.1f/%.1f\n", Life, Life0)
-    text=text..string.format("Enemy losses   = %.1f %%\n", targetdamage)
-    text=text..string.format("--------------------------\n")
-    text=text..string.format("Success Cond   = %s\n", tostring(successCondition))
-    text=text..string.format("Failure Cond   = %s\n", tostring(failureCondition))
-    text=text..string.format("--------------------------\n")
-    text=text..string.format("Final Success  = %s\n", tostring(not failed))
-    text=text..string.format("=========================")
-    self:I(self.lid..text)  
-  end
+  local text=string.format("Evaluating mission:\n")
+  text=text..string.format("Own casualties = %d/%d\n", self.Ncasualties, self.Nelements)
+  text=text..string.format("Own losses     = %.1f %%\n", owndamage)
+  text=text..string.format("Killed units   = %d\n", self.Nkills)
+  text=text..string.format("--------------------------\n")  
+  text=text..string.format("Targets left   = %d/%d\n", Ntargets, Ntargets0)
+  text=text..string.format("Targets life   = %.1f/%.1f\n", Life, Life0)
+  text=text..string.format("Enemy losses   = %.1f %%\n", targetdamage)
+  text=text..string.format("--------------------------\n")
+  text=text..string.format("Success Cond   = %s\n", tostring(successCondition))
+  text=text..string.format("Failure Cond   = %s\n", tostring(failureCondition))
+  text=text..string.format("--------------------------\n")
+  text=text..string.format("Final Success  = %s\n", tostring(not failed))
+  text=text..string.format("=========================")
+  self:I(self.lid..text)  
+  
   if failed then
     self:Failed()
   else
@@ -3447,7 +3440,7 @@ function AUFTRAG:SetGroupStatus(opsgroup, status)
     if groupdata then
       groupdata.status=status
     else
-      self:T(self.lid.."WARNING: Could not SET flight data for flight group. Setting status to DONE")
+      self:E(self.lid.."WARNING: Could not SET flight data for flight group. Setting status to DONE")
     end
   end
   
@@ -3484,7 +3477,7 @@ function AUFTRAG:GetGroupStatus(opsgroup)
     return groupdata.status
   else
   
-    self:T(self.lid..string.format("WARNING: Could not GET groupdata for opsgroup %s. Returning status DONE.", opsgroup and opsgroup.groupname or "nil"))
+    self:E(self.lid..string.format("WARNING: Could not GET groupdata for opsgroup %s. Returning status DONE.", opsgroup and opsgroup.groupname or "nil"))
     return AUFTRAG.GroupStatus.DONE
     
   end
@@ -3522,7 +3515,7 @@ function AUFTRAG:RemoveLegion(Legion)
     end
   end
   
-  self:T(self.lid..string.format("ERROR: Legion %s not found and could not be removed!", Legion.alias))
+  self:E(self.lid..string.format("ERROR: Legion %s not found and could not be removed!", Legion.alias))
   return self
 end
 
@@ -3736,7 +3729,7 @@ function AUFTRAG:OnEventUnitLost(EventData)
     for _,_groupdata in pairs(self.groupdata) do
       local groupdata=_groupdata --#AUFTRAG.GroupData
       if groupdata and groupdata.opsgroup and groupdata.opsgroup.groupname==EventData.IniGroupName then
-        self:T(self.lid..string.format("UNIT LOST event for opsgroup %s unit %s", groupdata.opsgroup.groupname, EventData.IniUnitName))
+        self:I(self.lid..string.format("UNIT LOST event for opsgroup %s unit %s", groupdata.opsgroup.groupname, EventData.IniUnitName))
       end
     end
     
@@ -3859,7 +3852,7 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
   -- Number of groups alive. 
   local N=self:CountOpsGroups()
   
-  self:T(self.lid..string.format("Asset %s dead! Number of ops groups remaining %d", tostring(Asset.spawngroupname), N))
+  self:I(self.lid..string.format("Asset %s dead! Number of ops groups remaining %d", tostring(Asset.spawngroupname), N))
   
   -- All assets dead?
   if N==0 then
@@ -3893,7 +3886,7 @@ function AUFTRAG:onafterCancel(From, Event, To)
   local Ngroups = self:CountOpsGroups()
 
   -- Debug info.
-  self:T(self.lid..string.format("CANCELLING mission in status %s. Will wait for %d groups to report mission DONE before evaluation", self.status, Ngroups))
+  self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for %d groups to report mission DONE before evaluation", self.status, Ngroups))
   
   -- Time stamp.
   self.Tover=timer.getAbsTime()
@@ -4011,13 +4004,13 @@ function AUFTRAG:onafterSuccess(From, Event, To)
     local N=math.max(self.NrepeatSuccess, self.Nrepeat)
         
     -- Repeat mission.
-    self:T(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
+    self:I(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
     self:Repeat()
     
   else
   
     -- Stop mission.
-    self:T(self.lid..string.format("Mission SUCCESS! Number of max repeats %d reached  ==> Stopping mission!", self.repeated+1))
+    self:I(self.lid..string.format("Mission SUCCESS! Number of max repeats %d reached  ==> Stopping mission!", self.repeated+1))
     self:Stop()
     
   end
@@ -4053,13 +4046,13 @@ function AUFTRAG:onafterFailed(From, Event, To)
     local N=math.max(self.NrepeatFailure, self.Nrepeat)
         
     -- Repeat mission.
-    self:T(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
+    self:I(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
     self:Repeat()
     
   else
   
     -- Stop mission.
-    self:T(self.lid..string.format("Mission FAILED! Number of max repeats %d reached ==> Stopping mission!", self.repeated+1))
+    self:I(self.lid..string.format("Mission FAILED! Number of max repeats %d reached ==> Stopping mission!", self.repeated+1))
     self:Stop()
     
   end  
@@ -4186,7 +4179,7 @@ end
 function AUFTRAG:onafterStop(From, Event, To)
 
   -- Debug info.
-  self:T(self.lid..string.format("STOPPED mission in status=%s. Removing missions from queues. Stopping CallScheduler!", self.status))
+  self:I(self.lid..string.format("STOPPED mission in status=%s. Removing missions from queues. Stopping CallScheduler!", self.status))
   
   -- TODO: Mission should be OVER! we dont want to remove running missions from any queues.
   
@@ -4240,12 +4233,12 @@ function AUFTRAG:_TargetFromObject(Object)
     
       self.engageTarget=Object
     
-    else --if Object then
-    
+    else
+  
       self.engageTarget=TARGET:New(Object)
       
-    end   
-    
+    end
+
   else
   
     -- Target was already specified elsewhere.
@@ -4342,17 +4335,8 @@ end
 -- @param #AUFTRAG self
 -- @return #string The target type.
 function AUFTRAG:GetTargetType()
-  local target=self.engageTarget
-  if target then
-    local to=target:GetObjective()
-    if to then
-      return to.Type
-    else
-      return "Unknown"
-    end
-  else
-    return "Unknown"
-  end
+  local ttype=self:GetTargetData().Type
+  return ttype
 end
 
 --- Get 2D vector of target.
@@ -4382,13 +4366,8 @@ function AUFTRAG:GetTargetCoordinate()
     local coord=self.engageTarget:GetCoordinate()
     return coord
     
-  elseif self.type==AUFTRAG.Type.ALERT5 then
-    
-    -- For example, COMMANDER will not assign a coordiante. This will be done later, when the mission is assigned to an airwing.
-    return nil
-    
-  else  
-    self:T(self.lid.."ERROR: Cannot get target coordinate!")
+  else
+    self:E(self.lid.."ERROR: Cannot get target coordinate!")
   end
 
   return nil
@@ -4419,7 +4398,7 @@ function AUFTRAG:GetTargetDistance(FromCoord)
   if TargetCoord and FromCoord then
     return TargetCoord:Get2DDistance(FromCoord)
   else
-    self:T(self.lid.."ERROR: TargetCoord or FromCoord does not exist in AUFTRAG:GetTargetDistance() function! Returning 0")
+    self:E(self.lid.."ERROR: TargetCoord or FromCoord does not exist in AUFTRAG:GetTargetDistance() function! Returning 0")
   end
   
   return 0
@@ -5031,7 +5010,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     table.insert(DCStasks, DCStask)    
   
   else
-    self:T(self.lid..string.format("ERROR: Unknown mission task!"))
+    self:E(self.lid..string.format("ERROR: Unknown mission task!"))
     return nil
   end
   

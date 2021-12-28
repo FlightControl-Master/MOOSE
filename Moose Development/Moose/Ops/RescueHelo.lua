@@ -802,7 +802,7 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
       -- Debug.
       local text=string.format("Unit %s crashed or ejected.", unitname)
       MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-      self:T(self.lid..text)
+      self:I(self.lid..text)
 
       -- Get coordinate of unit.      
       local coord=unit:GetCoordinate()

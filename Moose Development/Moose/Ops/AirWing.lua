@@ -33,7 +33,6 @@
 -- @field #table pointsTANKER Table of Tanker points.
 -- @field #table pointsAWACS Table of AWACS points.
 -- @field #boolean markpoints Display markers on the F10 map.
--- @field Ops.Airboss#AIRBOSS airboss Airboss attached to this wing.
 --
 -- @field Ops.RescueHelo#RESCUEHELO rescuehelo The rescue helo.
 -- @field Ops.RecoveryTanker#RECOVERYTANKER recoverytanker The recoverytanker.
@@ -174,7 +173,7 @@ AIRWING.version="0.9.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Spawn in air ==> Needs WAREHOUSE update.
--- DONE: Spawn hot.
+-- DONE: Spawn in air.
 -- TODO: Make special request to transfer squadrons to anther airwing (or warehouse).
 -- TODO: Check that airbase has enough parking spots if a request is BIG.
 -- DONE: Add squadrons to warehouse.
@@ -341,11 +340,13 @@ function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
     payload.unitname=Unit:GetName()
     payload.aircrafttype=Unit:GetTypeName()
     payload.pylons=Unit:GetTemplatePayload()
-    
-    -- Set the number of available payloads.
-    self:SetPayloadAmount(payload, Npayloads)
+    payload.unlimited=Npayloads<0
+    if payload.unlimited then
+      payload.navail=1
+    else
+      payload.navail=Npayloads or 99
+    end
 
-    -- Payload capabilities.
     payload.capabilities={}
     for _,missiontype in pairs(MissionTypes) do
       local capability={} --Ops.Auftrag#AUFTRAG.Capability
@@ -378,29 +379,6 @@ function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
 
   self:E(self.lid.."ERROR: No UNIT found to create PAYLOAD!")
   return nil
-end
-
---- Set the number of payload available.
--- @param #AIRWING self
--- @param #AIRWING.Payload Payload The payload table created by the `:NewPayload` function.
--- @param #number Navailable Number of payloads available to the airwing resources. Default 99 (which should be enough for most scenarios). Set to -1 for unlimited.
--- @return #AIRWING self
-function AIRWING:SetPayloadAmount(Payload, Navailable)
-
-  Navailable=Navailable or 99
-
-  if Payload then
-
-    Payload.unlimited=Navailable<0
-    if Payload.unlimited then
-      Payload.navail=1
-    else
-      Payload.navail=Navailable
-    end
-    
-  end
-
-  return self
 end
 
 --- Add a mission capability to an existing payload.
@@ -794,15 +772,6 @@ function AIRWING:AddPatrolPointAWACS(Coordinate, Altitude, Speed, Heading, LegLe
 
   table.insert(self.pointsAWACS, patrolpoint)
 
-  return self
-end
-
---- Set airboss of this wing. He/she will take care that no missions are launched if the carrier is recovering.
--- @param #AIRWING self
--- @param Ops.Airboss#AIRBOSS airboss The AIRBOSS object.
--- @return #AIRWING self
-function AIRWING:SetAirboss(airboss)
-  self.airboss=airboss
   return self
 end
 

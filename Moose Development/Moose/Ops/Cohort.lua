@@ -141,8 +141,6 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
     self:SetMissionRange(100)
   elseif self.category==Group.Category.TRAIN then
     self:SetMissionRange(100)
-  else
-   self:SetMissionRange(150)
   end    
   
   -- Units.
@@ -822,7 +820,7 @@ end
 -- @return #table Assets that can do the required mission.
 -- @return #number Number of payloads still available after recruiting the assets.
 function COHORT:RecruitAssets(MissionType, Npayloads)
-  self:T("RecruitAssets for " .. MissionType .. " with " ..Npayloads)
+
   -- Debug info.
   self:T3(self.lid..string.format("Recruiting asset for Mission type=%s", MissionType))
 
@@ -833,15 +831,13 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
   for _,_asset in pairs(self.assets) do  
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
-    --self:I("Looking at Asset " .. asset.spawngroupname)
-    
     -- First check that asset is not requested or reserved. This could happen if multiple requests are processed simultaniously.
     if not (asset.requested or asset.isReserved) then
     
-      --self:I("Not requested or reserved")
+    
       -- Check if asset is currently on a mission (STARTED or QUEUED).
       if self.legion:IsAssetOnMission(asset) then
-        --self:I("But on a mission")
+  
         ---
         -- Asset is already on a mission.
         ---
@@ -863,13 +859,13 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
         end
       
       else
-        --self:I("No current mission")
+      
         ---
         -- Asset as NO current mission
         ---
   
         if asset.spawned then
-          --self:I("Is already spawned")
+        
           ---
           -- Asset is already SPAWNED (could be uncontrolled on the airfield or inbound after another mission)
           ---
@@ -879,9 +875,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
           
           
           if flightgroup and flightgroup:IsAlive() and not (flightgroup:IsDead() or flightgroup:IsStopped()) then
-            
-            --self:I("OpsGroup is alive")
-            
+        
             -- Assume we are ready and check if any condition tells us we are not.
             local combatready=true
                 
@@ -934,20 +928,7 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
             end
             
             -- Disable this for now as it can cause problems - at least with transport and cargo assets.
-            --self:I("Attribute is: "..asset.attribute)
-            if flightgroup:IsArmygroup() then
-              -- check for fighting assets
-              if asset.attribute == WAREHOUSE.Attribute.GROUND_ARTILLERY or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_TANK or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_INFANTRY or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_AAA or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_SAM                
-              then
-                 combatready=true 
-              end  
-            else
-              combatready=false
-            end
+            combatready=false
                     
             -- This asset is "combatready".
             if combatready then

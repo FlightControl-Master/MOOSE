@@ -584,7 +584,7 @@ function SCORING:SetFratricide( Fratricide )
   return self
 end
 
---- Decide if fratricide is leading to penalties (true) or not (false)
+--- Decide if Fratricide is leading to penalties (true) or not (fals)
 -- @param #SCORING self
 -- @param #boolean OnOff Switch for Fratricide
 -- @return #SCORING
@@ -593,7 +593,7 @@ function SCORING:SwitchFratricide( OnOff )
   return self
 end
 
---- Decide if a change of coalition is leading to penalties (true) or not (false)
+--- Decide if Coalition Changes is leading to penalties (true) or not (fals)
 -- @param #SCORING self
 -- @param #boolean OnOff Switch for Coalition Changes.
 -- @return #SCORING
