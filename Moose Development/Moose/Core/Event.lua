@@ -32,11 +32,11 @@
 --
 -- ![Objects](..\Presentations\EVENT\Dia5.JPG)
 --
--- There are 5 levels of kind of objects that the _EVENTDISPATCHER services:
+-- There are 5 types/levels of objects that the _EVENTDISPATCHER services:
 --
 --  * _DATABASE object: The core of the MOOSE objects. Any object that is created, deleted or updated, is done in this database.
---  * SET_ derived classes: Subsets of the _DATABASE object. These subsets are updated by the _EVENTDISPATCHER as the second priority.
---  * UNIT objects: UNIT objects can subscribe to DCS events. Each DCS event will be directly published to teh subscribed UNIT object.
+--  * SET_ derived classes: These are subsets of the _DATABASE object. These subsets are updated by the _EVENTDISPATCHER as the second priority.
+--  * UNIT objects: UNIT objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed UNIT object.
 --  * GROUP objects: GROUP objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed GROUP object.
 --  * Any other object: Various other objects can subscribe to DCS events. Each DCS event triggered will be published to each subscribed object.
 --
@@ -131,6 +131,8 @@
 --    * Weapon data: Certain events populate weapon information.
 --    * Place data: Certain events populate place information.
 --
+-- Example code snippet:
+--
 --      --- This function is an Event Handling function that will be called when Tank1 is Dead.
 --      -- EventData is an EVENTDATA structure.
 --      -- We use the EventData.IniUnit to smoke the tank Green.
@@ -150,6 +152,7 @@
 -- In case a STATIC object is involved, the documentation indicates which fields will and won't not be populated.
 -- The fields **IniObjectCategory** and **TgtObjectCategory** contain the indicator which **kind of object is involved** in the event.
 -- You can use the enumerator **Object.Category.UNIT** and **Object.Category.STATIC** to check on IniObjectCategory and TgtObjectCategory.
+--
 -- Example code snippet:
 --
 --      if Event.IniObjectCategory == Object.Category.UNIT then

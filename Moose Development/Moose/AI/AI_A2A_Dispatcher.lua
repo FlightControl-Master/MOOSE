@@ -40,7 +40,7 @@
 -- AI\_A2A\_DISPATCHER is the main A2A defense class that models the A2A defense system.
 -- AI\_A2A\_GCICAP derives or inherits from AI\_A2A\_DISPATCHER and is a more **noob** user friendly class, but is less flexible.
 --
--- Before you start using the AI\_A2A\_DISPATCHER or AI\_A2A\_GCICAP ask youself the following questions.
+-- Before you start using the AI\_A2A\_DISPATCHER or AI\_A2A\_GCICAP ask yourself the following questions.
 --
 -- ## 0. Do I need AI\_A2A\_DISPATCHER or do I need AI\_A2A\_GCICAP?
 --
@@ -82,7 +82,7 @@
 --
 -- A good functioning defense will have a "maximum range" evaluated to the enemy when CAP will be engaged or GCI will be spawned.
 --
--- ## 6. Which Airbases, Carrier Ships, Farps will take part in the defense system for the Coalition?
+-- ## 6. Which Airbases, Carrier Ships, FARPs will take part in the defense system for the Coalition?
 --
 -- Carefully plan which airbases will take part in the coalition. Color each airbase in the color of the coalition.
 --
@@ -91,7 +91,7 @@
 -- The defense system works with Squadrons. Each Squadron must be given a unique name, that forms the **key** to the defense system.
 -- Several options and activities can be set per Squadron.
 --
--- ## 8. Where will the Squadrons be located? On Airbases? On Carrier Ships? On Farps?
+-- ## 8. Where will the Squadrons be located? On Airbases? On Carrier Ships? On FARPs?
 --
 -- Squadrons are placed as the "home base" on an airfield, carrier or farp.
 -- Carefully plan where each Squadron will be located as part of the defense system.
@@ -149,7 +149,7 @@
 --    * From a parking spot with running engines
 --    * From a parking spot with cold engines
 --
--- **The default takeoff method is staight in the air.**
+-- **The default takeoff method is straight in the air.**
 --
 -- ## 17. For each Squadron, which landing method will I use?
 --
@@ -184,8 +184,6 @@
 --
 -- @module AI.AI_A2A_Dispatcher
 -- @image AI_Air_To_Air_Dispatching.JPG
-
-
 
 do -- AI_A2A_DISPATCHER
 
@@ -266,7 +264,7 @@ do -- AI_A2A_DISPATCHER
   -- **DetectionSetGroup** is then being configured to filter all active groups with a group name starting with **DF CCCP AWACS** or **DF CCCP EWR** to be included in the Set.
   -- **DetectionSetGroup** is then being ordered to start the dynamic filtering. Note that any destroy or new spawn of a group with the above names will be removed or added to the Set.
   --
-  -- Then a new Detection object is created from the class DETECTION_AREAS. A grouping radius of 30000 is choosen, which is 30km.
+  -- Then a new Detection object is created from the class DETECTION_AREAS. A grouping radius of 30000 is chosen, which is 30km.
   -- The **Detection** object is then passed to the @{#AI_A2A_DISPATCHER.New}() method to indicate the EWR network configuration and setup the A2A defense detection mechanism.
   --
   -- You could build a **mutual defense system** like this:
@@ -474,7 +472,7 @@ do -- AI_A2A_DISPATCHER
   --   * @{#AI_A2A_DISPATCHER.SetSquadronLandingAtRunway}() will despawn the returning aircraft directly after landing at the runway.
   --   * @{#AI_A2A_DISPATCHER.SetSquadronLandingAtEngineShutdown}() will despawn the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.
   --
-  -- You can use these methods to minimize the airbase coodination overhead and to increase the airbase efficiency.
+  -- You can use these methods to minimize the airbase coordination overhead and to increase the airbase efficiency.
   -- When there are lots of aircraft returning for landing, at the same airbase, the takeoff process will be halted, which can cause a complete failure of the
   -- A2A defense system, as no new CAP or GCI planes can takeoff.
   -- Note that the method @{#AI_A2A_DISPATCHER.SetSquadronLandingNearAirbase}() will only work for returning aircraft, not for damaged or out of fuel aircraft.
@@ -502,7 +500,7 @@ do -- AI_A2A_DISPATCHER
   --
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia12.JPG)
   --
-  -- In the case of GCI, the @{#AI_A2A_DISPATCHER.SetSquadronGrouping}() method has additional behaviour. When there aren't enough CAP flights airborne, a GCI will be initiated for the remaining
+  -- In the case of GCI, the @{#AI_A2A_DISPATCHER.SetSquadronGrouping}() method has additional behavior. When there aren't enough CAP flights airborne, a GCI will be initiated for the remaining
   -- targets to be engaged. Depending on the grouping parameter, the spawned flights for GCI are grouped into this setting.
   -- For example with a group setting of 2, if 3 targets are detected and cannot be engaged by CAP or any airborne flight,
   -- a GCI needs to be started, the GCI flights will be grouped as follows: Group 1 of 2 flights and Group 2 of one flight!
@@ -537,13 +535,13 @@ do -- AI_A2A_DISPATCHER
   --
   -- The **overhead value is set for a Squadron**, and can be **dynamically adjusted** during mission execution, so to adjust the defense overhead when the tactical situation changes.
   --
-  -- ## 6.5. Squadron fuel treshold.
+  -- ## 6.5. Squadron fuel threshold.
   --
-  -- When an airplane gets **out of fuel** to a certain %-tage, which is by default **15% (0.15)**, there are two possible actions that can be taken:
+  -- When an airplane gets **out of fuel** to a certain %, which is by default **15% (0.15)**, there are two possible actions that can be taken:
   --  - The defender will go RTB, and will be replaced with a new defender if possible.
   --  - The defender will refuel at a tanker, if a tanker has been specified for the squadron.
   --
-  -- Use the method @{#AI_A2A_DISPATCHER.SetSquadronFuelThreshold}() to set the **squadron fuel treshold** of spawned airplanes for all squadrons.
+  -- Use the method @{#AI_A2A_DISPATCHER.SetSquadronFuelThreshold}() to set the **squadron fuel threshold** of spawned airplanes for all squadrons.
   --
   -- ## 7. Setup a squadron for CAP
   --
@@ -608,7 +606,7 @@ do -- AI_A2A_DISPATCHER
   --   * The minimum and maximum engage speed
   --   * The type of altitude measurement
   --
-  -- These define how the squadron will perform the CAP while partrolling. Different terrain types requires different types of CAP.
+  -- These define how the squadron will perform the CAP while patrolling. Different terrain types requires different types of CAP.
   --
   -- The @{#AI_A2A_DISPATCHER.SetSquadronCapInterval}() method specifies **how much** and **when** CAP flights will takeoff.
   --
@@ -676,7 +674,7 @@ do -- AI_A2A_DISPATCHER
   -- Essentially this controls how many flights of GCI aircraft can be active at any time.
   -- Note allowing large numbers of active GCI flights can adversely impact mission performance on low or medium specification hosts/servers.
   -- GCI needs to be setup at strategic airbases. Too far will mean that the aircraft need to fly a long way to reach the intruders,
-  -- too short will mean that the intruders may have alraedy passed the ideal interception point!
+  -- too short will mean that the intruders may have already passed the ideal interception point!
   --
   -- For example, the following setup will create a GCI for squadron "Sochi":
   --
@@ -734,17 +732,17 @@ do -- AI_A2A_DISPATCHER
   --
   -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultGrouping}() to set the **default grouping** of spawned airplanes for all squadrons.
   --
-  -- ## 10.5. Default RTB fuel treshold.
+  -- ## 10.5. Default RTB fuel threshold.
   --
-  -- When an airplane gets **out of fuel** to a certain %-tage, which is **15% (0.15)**, it will go RTB, and will be replaced with a new airplane when applicable.
+  -- When an airplane gets **out of fuel** to a certain %, which is **15% (0.15)**, it will go RTB, and will be replaced with a new airplane when applicable.
   --
-  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultFuelThreshold}() to set the **default fuel treshold** of spawned airplanes for all squadrons.
+  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultFuelThreshold}() to set the **default fuel threshold** of spawned airplanes for all squadrons.
   --
-  -- ## 10.6. Default RTB damage treshold.
+  -- ## 10.6. Default RTB damage threshold.
   --
-  -- When an airplane is **damaged** to a certain %-tage, which is **40% (0.40)**, it will go RTB, and will be replaced with a new airplane when applicable.
+  -- When an airplane is **damaged** to a certain %, which is **40% (0.40)**, it will go RTB, and will be replaced with a new airplane when applicable.
   --
-  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultDamageThreshold}() to set the **default damage treshold** of spawned airplanes for all squadrons.
+  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultDamageThreshold}() to set the **default damage threshold** of spawned airplanes for all squadrons.
   --
   -- ## 10.7. Default settings for CAP.
   --
@@ -773,7 +771,7 @@ do -- AI_A2A_DISPATCHER
   --
   -- In the mission editor, setup a group with task Refuelling. A tanker unit of the correct coalition will be automatically selected.
   -- Then, use the method @{#AI_A2A_DISPATCHER.SetDefaultTanker}() to set the tanker for the dispatcher.
-  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultFuelThreshold}() to set the %-tage left in the defender airplane tanks when a refuel action is needed.
+  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultFuelThreshold}() to set the % left in the defender airplane tanks when a refuel action is needed.
   --
   -- When the tanker specified is alive and in the air, the tanker will be used for refuelling.
   --
@@ -787,7 +785,7 @@ do -- AI_A2A_DISPATCHER
   --      A2ADispatcher:SetSquadronCapInterval("Sochi", 2, 30, 600, 1 )
   --      A2ADispatcher:SetSquadronGci( "Sochi", 900, 1200 )
   --
-  --      -- Set the default tanker for refuelling to "Tanker", when the default fuel treshold has reached 90% fuel left.
+  --      -- Set the default tanker for refuelling to "Tanker", when the default fuel threshold has reached 90% fuel left.
   --      A2ADispatcher:SetDefaultFuelThreshold( 0.9 )
   --      A2ADispatcher:SetDefaultTanker( "Tanker" )
   --
@@ -852,7 +850,6 @@ do -- AI_A2A_DISPATCHER
     Detection = nil,
   }
 
-
   --- Squadron data structure.
   -- @type AI_A2A_DISPATCHER.Squadron
   -- @field #string Name Name of the squadron.
@@ -871,7 +868,7 @@ do -- AI_A2A_DISPATCHER
   -- @field #number FuelThreshold Fuel threshold [0,1] for RTB.
   -- @field #string TankerName Name of the refuelling tanker.
   -- @field #table Table of template group names of the squadron.
-  -- @field #table Spawn Table of spaws Core.Spawn#SPAWN.
+  -- @field #table Spawn Table of spawns Core.Spawn#SPAWN.
   -- @field #table TemplatePrefixes
   -- @field #boolean Racetrack If true, CAP flights will perform a racetrack pattern rather than randomly patrolling the zone.
   -- @field #number RacetrackLengthMin Min Length of race track in meters. Default 10,000 m.
@@ -888,7 +885,7 @@ do -- AI_A2A_DISPATCHER
   --- @field #AI_A2A_DISPATCHER.Takeoff Takeoff
   AI_A2A_DISPATCHER.Takeoff = GROUP.Takeoff
 
-  --- Defnes Landing location.
+  --- Defines Landing type/location.
   -- @field Landing
   AI_A2A_DISPATCHER.Landing = {
     NearAirbase = 1,
@@ -897,26 +894,26 @@ do -- AI_A2A_DISPATCHER
   }
 
   --- AI_A2A_DISPATCHER constructor.
-  -- This is defining the A2A DISPATCHER for one coaliton.
+  -- This is defining the A2A DISPATCHER for one coalition.
   -- The Dispatcher works with a @{Functional.Detection#DETECTION_BASE} object that is taking of the detection of targets using the EWR units.
-  -- The Detection object is polymorphic, depending on the type of detection object choosen, the detection will work differently.
+  -- The Detection object is polymorphic, depending on the type of detection object chosen, the detection will work differently.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE Detection The DETECTION object that will detects targets using the the Early Warning Radar network.
   -- @return #AI_A2A_DISPATCHER self
   -- @usage
   --
-  --   -- Setup the Detection, using DETECTION_AREAS.
-  --   -- First define the SET of GROUPs that are defining the EWR network.
-  --   -- Here with prefixes DF CCCP AWACS, DF CCCP EWR.
-  --   DetectionSetGroup = SET_GROUP:New()
-  --   DetectionSetGroup:FilterPrefixes( { "DF CCCP AWACS", "DF CCCP EWR" } )
-  --   DetectionSetGroup:FilterStart()
+  --     -- Setup the Detection, using DETECTION_AREAS.
+  --     -- First define the SET of GROUPs that are defining the EWR network.
+  --     -- Here with prefixes DF CCCP AWACS, DF CCCP EWR.
+  --     DetectionSetGroup = SET_GROUP:New()
+  --     DetectionSetGroup:FilterPrefixes( { "DF CCCP AWACS", "DF CCCP EWR" } )
+  --     DetectionSetGroup:FilterStart()
   --
-  --   -- Define the DETECTION_AREAS, using the DetectionSetGroup, with a 30km grouping radius.
-  --   Detection = DETECTION_AREAS:New( DetectionSetGroup, 30000 )
+  --     -- Define the DETECTION_AREAS, using the DetectionSetGroup, with a 30km grouping radius.
+  --     Detection = DETECTION_AREAS:New( DetectionSetGroup, 30000 )
   --
-  --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
-  --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  --
+  --     -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  --     A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
   --
   function AI_A2A_DISPATCHER:New( Detection )
 
@@ -933,12 +930,12 @@ do -- AI_A2A_DISPATCHER
 
     -- TODO: Check detection through radar.
     self.Detection:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
-    --self.Detection:InitDetectRadar( true )
+    -- self.Detection:InitDetectRadar( true )
     self.Detection:SetRefreshTimeInterval( 30 )
 
     self:SetEngageRadius()
     self:SetGciRadius()
-    self:SetIntercept( 300 )  -- A default intercept delay time of 300 seconds.
+    self:SetIntercept( 300 ) -- A default intercept delay time of 300 seconds.
     self:SetDisengageRadius( 300000 ) -- The default Disengage Radius is 300 km.
 
     self:SetDefaultTakeoff( AI_A2A_DISPATCHER.Takeoff.Air )
@@ -950,7 +947,6 @@ do -- AI_A2A_DISPATCHER
     self:SetDefaultDamageThreshold( 0.4 ) -- When 40% of damage, go RTB.
     self:SetDefaultCapTimeInterval( 180, 600 ) -- Between 180 and 600 seconds.
     self:SetDefaultCapLimit( 1 ) -- Maximum one CAP per squadron.
-
 
     self:AddTransition( "Started", "Assign", "Started" )
 
@@ -1059,17 +1055,14 @@ do -- AI_A2A_DISPATCHER
     -- @param Functional.Detection#DETECTION_BASE.DetectedItem AttackerDetection Detected item.
     -- @param #table Defenders Defenders table.
 
-
     -- Subscribe to the CRASH event so that when planes are shot
     -- by a Unit from the dispatcher, they will be removed from the detection...
     -- This will avoid the detection to still "know" the shot unit until the next detection.
     -- Otherwise, a new intercept or engage may happen for an already shot plane!
 
-
     self:HandleEvent( EVENTS.Crash, self.OnEventCrashOrDead )
     self:HandleEvent( EVENTS.Dead, self.OnEventCrashOrDead )
-    --self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCrashOrDead )
-
+    -- self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCrashOrDead )
 
     self:HandleEvent( EVENTS.Land )
     self:HandleEvent( EVENTS.EngineShutdown )
@@ -1086,7 +1079,6 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- On after "Start" event.
   -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:onafterStart( From, Event, To )
@@ -1094,8 +1086,8 @@ do -- AI_A2A_DISPATCHER
     self:GetParent( self, AI_A2A_DISPATCHER ).onafterStart( self, From, Event, To )
 
     -- Spawn the resources.
-    for SquadronName,_DefenderSquadron in pairs( self.DefenderSquadrons ) do
-      local DefenderSquadron=_DefenderSquadron --#AI_A2A_DISPATCHER.Squadron
+    for SquadronName, _DefenderSquadron in pairs( self.DefenderSquadrons ) do
+      local DefenderSquadron = _DefenderSquadron -- #AI_A2A_DISPATCHER.Squadron
       DefenderSquadron.Resources = {}
       if DefenderSquadron.ResourceCount then
         for Resource = 1, DefenderSquadron.ResourceCount do
@@ -1105,7 +1097,6 @@ do -- AI_A2A_DISPATCHER
     end
   end
 
-
   --- Park defender.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #AI_A2A_DISPATCHER.Squadron DefenderSquadron The squadron.
@@ -1113,7 +1104,7 @@ do -- AI_A2A_DISPATCHER
 
     local TemplateID = math.random( 1, #DefenderSquadron.Spawn )
 
-    local Spawn = DefenderSquadron.Spawn[ TemplateID ] -- Core.Spawn#SPAWN
+    local Spawn = DefenderSquadron.Spawn[TemplateID] -- Core.Spawn#SPAWN
 
     Spawn:InitGrouping( 1 )
 
@@ -1121,11 +1112,11 @@ do -- AI_A2A_DISPATCHER
 
     if self:IsSquadronVisible( DefenderSquadron.Name ) then
 
-      local Grouping=DefenderSquadron.Grouping or self.DefenderDefault.Grouping
+      local Grouping = DefenderSquadron.Grouping or self.DefenderDefault.Grouping
 
-      Grouping=1
+      Grouping = 1
 
-      Spawn:InitGrouping(Grouping)
+      Spawn:InitGrouping( Grouping )
 
       SpawnGroup = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, SPAWN.Takeoff.Cold )
 
@@ -1137,14 +1128,13 @@ do -- AI_A2A_DISPATCHER
       DefenderSquadron.Resources[TemplateID][GroupName] = {}
       DefenderSquadron.Resources[TemplateID][GroupName] = SpawnGroup
 
-      self.uncontrolled=self.uncontrolled or {}
-      self.uncontrolled[DefenderSquadron.Name]=self.uncontrolled[DefenderSquadron.Name] or {}
+      self.uncontrolled = self.uncontrolled or {}
+      self.uncontrolled[DefenderSquadron.Name] = self.uncontrolled[DefenderSquadron.Name] or {}
 
-      table.insert(self.uncontrolled[DefenderSquadron.Name], {group=SpawnGroup, name=GroupName, grouping=Grouping})
+      table.insert( self.uncontrolled[DefenderSquadron.Name], { group = SpawnGroup, name = GroupName, grouping = Grouping } )
     end
 
   end
-
 
   --- Event base captured.
   -- @param #AI_A2A_DISPATCHER self
@@ -1210,8 +1200,7 @@ do -- AI_A2A_DISPATCHER
     if Squadron then
       self:F( { SquadronName = Squadron.Name } )
       local LandingMethod = self:GetSquadronLanding( Squadron.Name )
-      if LandingMethod == AI_A2A_DISPATCHER.Landing.AtEngineShutdown and
-        not DefenderUnit:InAir() then
+      if LandingMethod == AI_A2A_DISPATCHER.Landing.AtEngineShutdown and not DefenderUnit:InAir() then
         local DefenderSize = Defender:GetSize()
         if DefenderSize == 1 then
           self:RemoveDefenderFromSquadron( Squadron, Defender )
@@ -1266,7 +1255,7 @@ do -- AI_A2A_DISPATCHER
   --   A2ADispatcher:SetDisengageRadius( 50000 )
   --
   --   -- Set 100km as the Disengage Radius.
-  --   A2ADispatcher:SetDisngageRadius() -- 300000 is the default value.
+  --   A2ADispatcher:SetDisengageRadius() -- 300000 is the default value.
   --
   function AI_A2A_DISPATCHER:SetDisengageRadius( DisengageRadius )
 
@@ -1274,7 +1263,6 @@ do -- AI_A2A_DISPATCHER
 
     return self
   end
-
 
   --- Define the radius to check if a target can be engaged by an ground controlled intercept.
   -- When targets are detected that are still really far off, you don't want the AI_A2A_DISPATCHER to launch intercepts just yet.
@@ -1309,8 +1297,6 @@ do -- AI_A2A_DISPATCHER
 
     return self
   end
-
-
 
   --- Define a border area to simulate a **cold war** scenario.
   -- A **cold war** is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
@@ -1369,18 +1355,17 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
-  --- Set the default damage treshold when defenders will RTB.
-  -- The default damage treshold is by default set to 40%, which means that when the airplane is 40% damaged, it will go RTB.
+  --- Set the default damage threshold when defenders will RTB.
+  -- The default damage threshold is by default set to 40%, which means that when the airplane is 40% damaged, it will go RTB.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param #number DamageThreshold A decimal number between 0 and 1, that expresses the %-tage of the damage treshold before going RTB.
+  -- @param #number DamageThreshold A decimal number between 0 and 1, that expresses the % of the damage threshold before going RTB.
   -- @return #AI_A2A_DISPATCHER self
   -- @usage
   --
   --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
   --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
   --
-  --   -- Now Setup the default damage treshold.
+  --   -- Now Setup the default damage threshold.
   --   A2ADispatcher:SetDefaultDamageThreshold( 0.90 ) -- Go RTB when the airplane 90% damaged.
   --
   function AI_A2A_DISPATCHER:SetDefaultDamageThreshold( DamageThreshold )
@@ -1389,7 +1374,6 @@ do -- AI_A2A_DISPATCHER
 
     return self
   end
-
 
   --- Set the default CAP time interval for squadrons, which will be used to determine a random CAP timing.
   -- The default CAP time interval is between 180 and 600 seconds.
@@ -1412,7 +1396,6 @@ do -- AI_A2A_DISPATCHER
 
     return self
   end
-
 
   --- Set the default CAP limit for squadrons, which will be used to determine how many CAP can be airborne at the same time for the squadron.
   -- The default CAP limit is 1 CAP, which means one CAP group being spawned.
@@ -1447,7 +1430,6 @@ do -- AI_A2A_DISPATCHER
 
     return self
   end
-
 
   --- Calculates which AI friendlies are nearby the area
   -- @param #AI_A2A_DISPATCHER self
@@ -1508,7 +1490,7 @@ do -- AI_A2A_DISPATCHER
       local Message = "Clearing (" .. self.DefenderTasks[Defender].Type .. ") "
       Message = Message .. Defender:GetName()
       if Target then
-        Message = Message .. ( Target and ( " from " .. Target.Index .. " [" .. Target.Set:Count() .. "]" ) ) or ""
+        Message = Message .. (Target and (" from " .. Target.Index .. " [" .. Target.Set:Count() .. "]")) or ""
       end
       self:F( { Target = Message } )
     end
@@ -1535,16 +1517,15 @@ do -- AI_A2A_DISPATCHER
     if Defender and DefenderTask and DefenderTask.Target then
       DefenderTask.Target = nil
     end
---    if Defender and DefenderTask then
---      if DefenderTask.Fsm:Is( "Fuel" )
---      or DefenderTask.Fsm:Is( "LostControl")
---      or DefenderTask.Fsm:Is( "Damaged" ) then
---        self:ClearDefenderTask( Defender )
---      end
---    end
+    --    if Defender and DefenderTask then
+    --      if DefenderTask.Fsm:Is( "Fuel" )
+    --      or DefenderTask.Fsm:Is( "LostControl")
+    --      or DefenderTask.Fsm:Is( "Damaged" ) then
+    --        self:ClearDefenderTask( Defender )
+    --      end
+    --    end
     return self
   end
-
 
   --- Set defender task.
   -- @param #AI_A2A_DISPATCHER self
@@ -1556,7 +1537,7 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetDefenderTask( SquadronName, Defender, Type, Fsm, Target )
 
-    self:F( { SquadronName = SquadronName, Defender = Defender:GetName(), Type=Type, Target=Target } )
+    self:F( { SquadronName = SquadronName, Defender = Defender:GetName(), Type = Type, Target = Target } )
 
     self.DefenderTasks[Defender] = self.DefenderTasks[Defender] or {}
     self.DefenderTasks[Defender].Type = Type
@@ -1568,7 +1549,6 @@ do -- AI_A2A_DISPATCHER
     end
     return self
   end
-
 
   --- Set defender task target.
   -- @param #AI_A2A_DISPATCHER self
@@ -1586,7 +1566,6 @@ do -- AI_A2A_DISPATCHER
     end
     return self
   end
-
 
   --- This is the main method to define Squadrons programmatically.
   -- Squadrons:
@@ -1630,6 +1609,7 @@ do -- AI_A2A_DISPATCHER
   -- If you have only one prefix name for a squadron, you don't need to use the `{ }`, otherwise you need to use the brackets.
   --
   -- @param #number ResourceCount (optional) A number that specifies how many resources are in stock of the squadron. If not specified, the squadron will have infinite resources available.
+  -- @return #AI_A2A_DISPATCHER self
   --
   -- @usage
   --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
@@ -1656,14 +1636,11 @@ do -- AI_A2A_DISPATCHER
   --   A2ADispatcher:SetSquadron( "104th", "Batumi", "Mig-29" )
   --   A2ADispatcher:SetSquadron( "23th", "Batumi", "Su-27" )
   --
-  --
-  -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetSquadron( SquadronName, AirbaseName, TemplatePrefixes, ResourceCount )
-
 
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {}
 
-    local DefenderSquadron = self.DefenderSquadrons[SquadronName]  --#AI_A2A_DISPATCHER.Squadron
+    local DefenderSquadron = self.DefenderSquadrons[SquadronName] -- #AI_A2A_DISPATCHER.Squadron
 
     DefenderSquadron.Name = SquadronName
     DefenderSquadron.Airbase = AIRBASE:FindByName( AirbaseName )
@@ -1680,7 +1657,7 @@ do -- AI_A2A_DISPATCHER
     else
       for TemplateID, SpawnTemplate in pairs( TemplatePrefixes ) do
         self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ) -- :InitCleanUp( 180 )
-        DefenderSquadron.Spawn[#DefenderSquadron.Spawn+1] = self.DefenderSpawns[SpawnTemplate]
+        DefenderSquadron.Spawn[#DefenderSquadron.Spawn + 1] = self.DefenderSpawns[SpawnTemplate]
       end
     end
     DefenderSquadron.ResourceCount = ResourceCount
@@ -1689,7 +1666,7 @@ do -- AI_A2A_DISPATCHER
 
     self:SetSquadronLanguage( SquadronName, "EN" ) -- Squadrons speak English by default.
 
-    self:F( { Squadron = {SquadronName, AirbaseName, TemplatePrefixes, ResourceCount } } )
+    self:F( { Squadron = { SquadronName, AirbaseName, TemplatePrefixes, ResourceCount } } )
 
     return self
   end
@@ -1708,7 +1685,6 @@ do -- AI_A2A_DISPATCHER
     return DefenderSquadron
   end
 
-
   --- Set the Squadron visible before startup of the dispatcher.
   -- All planes will be spawned as uncontrolled on the parking spot.
   -- They will lock the parking spot.
@@ -1717,33 +1693,33 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER self
   -- @usage
   --
-  --        -- Set the Squadron visible before startup of dispatcher.
-  --        A2ADispatcher:SetSquadronVisible( "Mineralnye" )
+  --   -- Set the Squadron visible before startup of dispatcher.
+  --   A2ADispatcher:SetSquadronVisible( "Mineralnye" )
   --
   function AI_A2A_DISPATCHER:SetSquadronVisible( SquadronName )
 
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {}
 
-    local DefenderSquadron = self:GetSquadron( SquadronName ) --#AI_A2A_DISPATCHER.Squadron
+    local DefenderSquadron = self:GetSquadron( SquadronName ) -- #AI_A2A_DISPATCHER.Squadron
 
     DefenderSquadron.Uncontrolled = true
 
     -- For now, grouping is forced to 1 due to other parts of the class which would not work well with grouping>1.
-    DefenderSquadron.Grouping=1
+    DefenderSquadron.Grouping = 1
 
     -- Get free parking for fighter aircraft.
-    local nfreeparking=DefenderSquadron.Airbase:GetFreeParkingSpotsNumber(AIRBASE.TerminalType.FighterAircraft, true)
+    local nfreeparking = DefenderSquadron.Airbase:GetFreeParkingSpotsNumber( AIRBASE.TerminalType.FighterAircraft, true )
 
     -- Take number of free parking spots if no resource count was specifed.
-    DefenderSquadron.ResourceCount=DefenderSquadron.ResourceCount or nfreeparking
+    DefenderSquadron.ResourceCount = DefenderSquadron.ResourceCount or nfreeparking
 
     -- Check that resource count is not larger than free parking spots.
-    DefenderSquadron.ResourceCount=math.min(DefenderSquadron.ResourceCount, nfreeparking)
+    DefenderSquadron.ResourceCount = math.min( DefenderSquadron.ResourceCount, nfreeparking )
 
     -- Set uncontrolled spawning option.
-    for SpawnTemplate,_DefenderSpawn in pairs( self.DefenderSpawns ) do
-      local DefenderSpawn=_DefenderSpawn --Core.Spawn#SPAWN
-      DefenderSpawn:InitUnControlled(true)
+    for SpawnTemplate, _DefenderSpawn in pairs( self.DefenderSpawns ) do
+      local DefenderSpawn = _DefenderSpawn -- Core.Spawn#SPAWN
+      DefenderSpawn:InitUnControlled( true )
     end
 
   end
@@ -1754,14 +1730,14 @@ do -- AI_A2A_DISPATCHER
   -- @return #boolean true if visible.
   -- @usage
   --
-  --        -- Set the Squadron visible before startup of dispatcher.
-  --        local IsVisible = A2ADispatcher:IsSquadronVisible( "Mineralnye" )
+  --   -- Set the Squadron visible before startup of dispatcher.
+  --   local IsVisible = A2ADispatcher:IsSquadronVisible( "Mineralnye" )
   --
   function AI_A2A_DISPATCHER:IsSquadronVisible( SquadronName )
 
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {}
 
-    local DefenderSquadron = self:GetSquadron( SquadronName ) --#AI_A2A_DISPATCHER.Squadron
+    local DefenderSquadron = self:GetSquadron( SquadronName ) -- #AI_A2A_DISPATCHER.Squadron
 
     if DefenderSquadron then
       return DefenderSquadron.Uncontrolled == true
@@ -1788,24 +1764,24 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER
   -- @usage
   --
-  --        -- CAP Squadron execution.
-  --        CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
-  --        -- Setup a CAP, engaging between 800 and 900 km/h, altitude 30 (above the sea), radio altitude measurement,
-  --        -- patrolling speed between 500 and 600 km/h, altitude between 4000 and 10000 meters, barometric altitude measurement.
-  --        A2ADispatcher:SetSquadronCapV2( "Mineralnye", 800, 900, 30, 30, "RADIO", CAPZoneEast, 500, 600, 4000, 10000, "BARO" )
-  --        A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
+  --   -- CAP Squadron execution.
+  --   CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
+  --   -- Setup a CAP, engaging between 800 and 900 km/h, altitude 30 (above the sea), radio altitude measurement,
+  --   -- patrolling speed between 500 and 600 km/h, altitude between 4000 and 10000 meters, barometric altitude measurement.
+  --   A2ADispatcher:SetSquadronCapV2( "Mineralnye", 800, 900, 30, 30, "RADIO", CAPZoneEast, 500, 600, 4000, 10000, "BARO" )
+  --   A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
   --
-  --        CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
-  --        -- Setup a CAP, engaging between 800 and 1200 km/h, altitude between 4000 and 10000 meters, radio altitude measurement,
-  --        -- patrolling speed between 600 and 800 km/h, altitude between 4000 and 8000, barometric altitude measurement.
-  --        A2ADispatcher:SetSquadronCapV2( "Sochi", 800, 1200, 2000, 3000, "RADIO", CAPZoneWest, 600, 800, 4000, 8000, "BARO" )
-  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --   CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
+  --   -- Setup a CAP, engaging between 800 and 1200 km/h, altitude between 4000 and 10000 meters, radio altitude measurement,
+  --   -- patrolling speed between 600 and 800 km/h, altitude between 4000 and 8000, barometric altitude measurement.
+  --   A2ADispatcher:SetSquadronCapV2( "Sochi", 800, 1200, 2000, 3000, "RADIO", CAPZoneWest, 600, 800, 4000, 8000, "BARO" )
+  --   A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
   --
-  --        CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
-  --        -- Setup a CAP, engaging between 800 and 1200 km/h, altitude between 5000 and 8000 meters, barometric altitude measurement,
-  --        -- patrolling speed between 600 and 800 km/h, altitude between 4000 and 8000, radio altitude.
-  --        A2ADispatcher:SetSquadronCapV2( "Maykop", 800, 1200, 5000, 8000, "BARO", CAPZoneMiddle, 600, 800, 4000, 8000, "RADIO" )
-  --        A2ADispatcher:SetSquadronCapInterval( "Maykop", 2, 30, 120, 1 )
+  --   CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
+  --   -- Setup a CAP, engaging between 800 and 1200 km/h, altitude between 5000 and 8000 meters, barometric altitude measurement,
+  --   -- patrolling speed between 600 and 800 km/h, altitude between 4000 and 8000, radio altitude.
+  --   A2ADispatcher:SetSquadronCapV2( "Maykop", 800, 1200, 5000, 8000, "BARO", CAPZoneMiddle, 600, 800, 4000, 8000, "RADIO" )
+  --   A2ADispatcher:SetSquadronCapInterval( "Maykop", 2, 30, 120, 1 )
   --
   function AI_A2A_DISPATCHER:SetSquadronCap2( SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType, Zone, PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType )
 
@@ -1857,18 +1833,18 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER
   -- @usage
   --
-  --        -- CAP Squadron execution.
-  --        CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
-  --        A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
-  --        A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
+  --   -- CAP Squadron execution.
+  --   CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
+  --   A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --   A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
   --
-  --        CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
-  --        A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
-  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --   CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
+  --   A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
+  --   A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
   --
-  --        CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
-  --        A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
-  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --   CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
+  --   A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
+  --   A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
   --
   function AI_A2A_DISPATCHER:SetSquadronCap( SquadronName, Zone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType )
 
@@ -1885,18 +1861,18 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER
   -- @usage
   --
-  --        -- CAP Squadron execution.
-  --        CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
-  --        A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
-  --        A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
+  --   -- CAP Squadron execution.
+  --   CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
+  --   A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --   A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
   --
-  --        CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
-  --        A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
-  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --   CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
+  --   A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
+  --   A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
   --
-  --        CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
-  --        A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
-  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --   CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
+  --   A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
+  --   A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
   --
   function AI_A2A_DISPATCHER:SetSquadronCapInterval( SquadronName, CapLimit, LowInterval, HighInterval, Probability )
 
@@ -1914,7 +1890,7 @@ do -- AI_A2A_DISPATCHER
       Cap.Scheduler = Cap.Scheduler or SCHEDULER:New( self )
       local Scheduler = Cap.Scheduler -- Core.Scheduler#SCHEDULER
       local ScheduleID = Cap.ScheduleID
-      local Variance = ( Cap.HighInterval - Cap.LowInterval ) / 2
+      local Variance = (Cap.HighInterval - Cap.LowInterval) / 2
       local Repeat = Cap.LowInterval + Variance
       local Randomization = Variance / Repeat
       local Start = math.random( 1, Cap.HighInterval )
@@ -1954,7 +1930,7 @@ do -- AI_A2A_DISPATCHER
   -- @param #string SquadronName The squadron name.
   -- @return #AI_A2A_DISPATCHER.Squadron DefenderSquadron
   function AI_A2A_DISPATCHER:CanCAP( SquadronName )
-    self:F({SquadronName = SquadronName})
+    self:F( { SquadronName = SquadronName } )
 
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {}
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
@@ -1963,7 +1939,7 @@ do -- AI_A2A_DISPATCHER
 
     if DefenderSquadron.Captured == false then -- We can only spawn new CAP if the base has not been captured.
 
-      if ( not DefenderSquadron.ResourceCount ) or ( DefenderSquadron.ResourceCount and DefenderSquadron.ResourceCount > 0  ) then -- And, if there are sufficient resources.
+      if (not DefenderSquadron.ResourceCount) or (DefenderSquadron.ResourceCount and DefenderSquadron.ResourceCount > 0) then -- And, if there are sufficient resources.
 
         local Cap = DefenderSquadron.Cap
         if Cap then
@@ -1981,7 +1957,6 @@ do -- AI_A2A_DISPATCHER
     return nil
   end
 
-
   --- Set race track pattern as default when any squadron is performing CAP.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #number LeglengthMin Min length of the race track leg in meters. Default 10,000 m.
@@ -1992,16 +1967,16 @@ do -- AI_A2A_DISPATCHER
   -- @param #number DurationMax (Optional) Max duration in seconds before switching the orbit position. Default is keep same orbit until RTB or engage.
   -- @param #table CapCoordinates Table of coordinates of first race track point. Second point is determined by leg length and heading.
   -- @return #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:SetDefaultCapRacetrack(LeglengthMin, LeglengthMax, HeadingMin, HeadingMax, DurationMin, DurationMax, CapCoordinates)
+  function AI_A2A_DISPATCHER:SetDefaultCapRacetrack( LeglengthMin, LeglengthMax, HeadingMin, HeadingMax, DurationMin, DurationMax, CapCoordinates )
 
-    self.DefenderDefault.Racetrack=true
-    self.DefenderDefault.RacetrackLengthMin=LeglengthMin
-    self.DefenderDefault.RacetrackLengthMax=LeglengthMax
-    self.DefenderDefault.RacetrackHeadingMin=HeadingMin
-    self.DefenderDefault.RacetrackHeadingMax=HeadingMax
-    self.DefenderDefault.RacetrackDurationMin=DurationMin
-    self.DefenderDefault.RacetrackDurationMax=DurationMax
-    self.DefenderDefault.RacetrackCoordinates=CapCoordinates
+    self.DefenderDefault.Racetrack = true
+    self.DefenderDefault.RacetrackLengthMin = LeglengthMin
+    self.DefenderDefault.RacetrackLengthMax = LeglengthMax
+    self.DefenderDefault.RacetrackHeadingMin = HeadingMin
+    self.DefenderDefault.RacetrackHeadingMax = HeadingMax
+    self.DefenderDefault.RacetrackDurationMin = DurationMin
+    self.DefenderDefault.RacetrackDurationMax = DurationMax
+    self.DefenderDefault.RacetrackCoordinates = CapCoordinates
 
     return self
   end
@@ -2017,31 +1992,30 @@ do -- AI_A2A_DISPATCHER
   -- @param #number DurationMax (Optional) Max duration in seconds before switching the orbit position. Default is keep same orbit until RTB or engage.
   -- @param #table CapCoordinates Table of coordinates of first race track point. Second point is determined by leg length and heading.
   -- @return #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:SetSquadronCapRacetrack(SquadronName, LeglengthMin, LeglengthMax, HeadingMin, HeadingMax, DurationMin, DurationMax, CapCoordinates)
+  function AI_A2A_DISPATCHER:SetSquadronCapRacetrack( SquadronName, LeglengthMin, LeglengthMax, HeadingMin, HeadingMax, DurationMin, DurationMax, CapCoordinates )
 
     local DefenderSquadron = self:GetSquadron( SquadronName )
 
     if DefenderSquadron then
-      DefenderSquadron.Racetrack=true
-      DefenderSquadron.RacetrackLengthMin=LeglengthMin
-      DefenderSquadron.RacetrackLengthMax=LeglengthMax
-      DefenderSquadron.RacetrackHeadingMin=HeadingMin
-      DefenderSquadron.RacetrackHeadingMax=HeadingMax
-      DefenderSquadron.RacetrackDurationMin=DurationMin
-      DefenderSquadron.RacetrackDurationMax=DurationMax
-      DefenderSquadron.RacetrackCoordinates=CapCoordinates
+      DefenderSquadron.Racetrack = true
+      DefenderSquadron.RacetrackLengthMin = LeglengthMin
+      DefenderSquadron.RacetrackLengthMax = LeglengthMax
+      DefenderSquadron.RacetrackHeadingMin = HeadingMin
+      DefenderSquadron.RacetrackHeadingMax = HeadingMax
+      DefenderSquadron.RacetrackDurationMin = DurationMin
+      DefenderSquadron.RacetrackDurationMax = DurationMax
+      DefenderSquadron.RacetrackCoordinates = CapCoordinates
     end
 
     return self
   end
-
 
   --- Check if squadron can do GCI.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @return #table DefenderSquadron
   function AI_A2A_DISPATCHER:CanGCI( SquadronName )
-    self:F({SquadronName = SquadronName})
+    self:F( { SquadronName = SquadronName } )
 
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {}
     self.DefenderSquadrons[SquadronName].Gci = self.DefenderSquadrons[SquadronName].Gci or {}
@@ -2050,7 +2024,7 @@ do -- AI_A2A_DISPATCHER
 
     if DefenderSquadron.Captured == false then -- We can only spawn new CAP if the base has not been captured.
 
-      if ( not DefenderSquadron.ResourceCount ) or ( DefenderSquadron.ResourceCount and DefenderSquadron.ResourceCount > 0  ) then -- And, if there are sufficient resources.
+      if (not DefenderSquadron.ResourceCount) or (DefenderSquadron.ResourceCount and DefenderSquadron.ResourceCount > 0) then -- And, if there are sufficient resources.
         local Gci = DefenderSquadron.Gci
         if Gci then
           return DefenderSquadron
@@ -2068,14 +2042,14 @@ do -- AI_A2A_DISPATCHER
   -- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
   -- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
   -- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
+  -- @return #AI_A2A_DISPATCHER
   -- @usage
   --
-  --        -- GCI Squadron execution.
-  --        A2ADispatcher:SetSquadronGci2( "Mozdok", 900, 1200, 5000, 5000, "BARO" )
-  --        A2ADispatcher:SetSquadronGci2( "Novo", 900, 2100, 30, 30, "RADIO" )
-  --        A2ADispatcher:SetSquadronGci2( "Maykop", 900, 1200, 100, 300, "RADIO" )
+  --   -- GCI Squadron execution.
+  --   A2ADispatcher:SetSquadronGci2( "Mozdok", 900, 1200, 5000, 5000, "BARO" )
+  --   A2ADispatcher:SetSquadronGci2( "Novo", 900, 2100, 30, 30, "RADIO" )
+  --   A2ADispatcher:SetSquadronGci2( "Maykop", 900, 1200, 100, 300, "RADIO" )
   --
-  -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadronGci2( SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
 
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {}
@@ -2097,14 +2071,14 @@ do -- AI_A2A_DISPATCHER
   -- @param #string SquadronName The squadron name.
   -- @param #number EngageMinSpeed The minimum speed [km/h] at which the GCI can be executed.
   -- @param #number EngageMaxSpeed The maximum speed [km/h] at which the GCI can be executed.
+  -- @return #AI_A2A_DISPATCHER
   -- @usage
   --
-  --        -- GCI Squadron execution.
-  --        A2ADispatcher:SetSquadronGci( "Mozdok", 900, 1200 )
-  --        A2ADispatcher:SetSquadronGci( "Novo", 900, 2100 )
-  --        A2ADispatcher:SetSquadronGci( "Maykop", 900, 1200 )
+  --   -- GCI Squadron execution.
+  --   A2ADispatcher:SetSquadronGci( "Mozdok", 900, 1200 )
+  --   A2ADispatcher:SetSquadronGci( "Novo", 900, 2100 )
+  --   A2ADispatcher:SetSquadronGci( "Maykop", 900, 1200 )
   --
-  -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadronGci( SquadronName, EngageMinSpeed, EngageMaxSpeed )
 
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {}
@@ -2120,7 +2094,8 @@ do -- AI_A2A_DISPATCHER
 
   --- Defines the default amount of extra planes that will take-off as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param #number Overhead The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- @param #number Overhead The % of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- @return #AI_A2A_DISPATCHER
   -- The default overhead is 1, so equal balance. The @{#AI_A2A_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
   -- taking into account the plane types of the squadron. For example, a MIG-31 with full long-distance A2A missiles payload, may still be less effective than a F-15C with short missiles...
   -- So in this case, one may want to use the Overhead method to allocate more defending planes as the amount of detected attacking planes.
@@ -2147,7 +2122,6 @@ do -- AI_A2A_DISPATCHER
   --
   --   A2ADispatcher:SetDefaultOverhead( 1.5 )
   --
-  -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetDefaultOverhead( Overhead )
 
     self.DefenderDefault.Overhead = Overhead
@@ -2155,11 +2129,11 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Defines the amount of extra planes that will take-off as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
-  -- @param #number Overhead The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- @param #number Overhead The % of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- @return #AI_A2A_DISPATCHER self
   -- The default overhead is 1, so equal balance. The @{#AI_A2A_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
   -- taking into account the plane types of the squadron. For example, a MIG-31 with full long-distance A2A missiles payload, may still be less effective than a F-15C with short missiles...
   -- So in this case, one may want to use the Overhead method to allocate more defending planes as the amount of detected attacking planes.
@@ -2186,7 +2160,6 @@ do -- AI_A2A_DISPATCHER
   --
   --   A2ADispatcher:SetSquadronOverhead( "SquadronName", 1.5 )
   --
-  -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetSquadronOverhead( SquadronName, Overhead )
 
     local DefenderSquadron = self:GetSquadron( SquadronName )
@@ -2195,11 +2168,11 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets the default grouping of new airplanes spawned.
   -- Grouping will trigger how new airplanes will be grouped if more than one airplane is spawned for defense.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #number Grouping The level of grouping that will be applied of the CAP or GCI defenders.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2207,8 +2180,6 @@ do -- AI_A2A_DISPATCHER
   --   -- Set a grouping by default per 2 airplanes.
   --   A2ADispatcher:SetDefaultGrouping( 2 )
   --
-  --
-  -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetDefaultGrouping( Grouping )
 
     self.DefenderDefault.Grouping = Grouping
@@ -2216,12 +2187,12 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets the grouping of new airplanes spawned.
   -- Grouping will trigger how new airplanes will be grouped if more than one airplane is spawned for defense.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
   -- @param #number Grouping The level of grouping that will be applied of the CAP or GCI defenders.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2229,8 +2200,6 @@ do -- AI_A2A_DISPATCHER
   --   -- Set a grouping per 2 airplanes.
   --   A2ADispatcher:SetSquadronGrouping( "SquadronName", 2 )
   --
-  --
-  -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetSquadronGrouping( SquadronName, Grouping )
 
     local DefenderSquadron = self:GetSquadron( SquadronName )
@@ -2239,10 +2208,10 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Defines the default method at which new flights will spawn and take-off as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #number Takeoff From the airbase hot, from the airbase cold, in the air, from the runway.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2259,9 +2228,6 @@ do -- AI_A2A_DISPATCHER
   --   -- Let new flights by default take-off from the airbase cold.
   --   A2ADispatcher:SetDefaultTakeoff( AI_A2A_Dispatcher.Takeoff.Cold )
   --
-  --
-  -- @return #AI_A2A_DISPATCHER self
-  --
   function AI_A2A_DISPATCHER:SetDefaultTakeoff( Takeoff )
 
     self.DefenderDefault.Takeoff = Takeoff
@@ -2273,6 +2239,7 @@ do -- AI_A2A_DISPATCHER
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
   -- @param #number Takeoff From the airbase hot, from the airbase cold, in the air, from the runway.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2289,9 +2256,6 @@ do -- AI_A2A_DISPATCHER
   --   -- Let new flights take-off from the airbase cold.
   --   A2ADispatcher:SetSquadronTakeoff( "SquadronName", AI_A2A_Dispatcher.Takeoff.Cold )
   --
-  --
-  -- @return #AI_A2A_DISPATCHER self
-  --
   function AI_A2A_DISPATCHER:SetSquadronTakeoff( SquadronName, Takeoff )
 
     local DefenderSquadron = self:GetSquadron( SquadronName )
@@ -2299,7 +2263,6 @@ do -- AI_A2A_DISPATCHER
 
     return self
   end
-
 
   --- Gets the default method at which new flights will spawn and take-off as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
@@ -2314,7 +2277,7 @@ do -- AI_A2A_DISPATCHER
   --     ...
   --   end
   --
-  function AI_A2A_DISPATCHER:GetDefaultTakeoff( )
+  function AI_A2A_DISPATCHER:GetDefaultTakeoff()
 
     return self.DefenderDefault.Takeoff
   end
@@ -2339,17 +2302,15 @@ do -- AI_A2A_DISPATCHER
     return DefenderSquadron.Takeoff or self.DefenderDefault.Takeoff
   end
 
-
   --- Sets flights to default take-off in the air, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
   --
   --   -- Let new flights by default take-off in the air.
   --   A2ADispatcher:SetDefaultTakeoffInAir()
-  --
-  -- @return #AI_A2A_DISPATCHER self
   --
   function AI_A2A_DISPATCHER:SetDefaultTakeoffInAir()
 
@@ -2358,19 +2319,17 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets flights to take-off in the air, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
   -- @param #number TakeoffAltitude (optional) The altitude in meters above the ground. If not given, the default takeoff altitude will be used.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
   --
   --   -- Let new flights take-off in the air.
   --   A2ADispatcher:SetSquadronTakeoffInAir( "SquadronName" )
-  --
-  -- @return #AI_A2A_DISPATCHER self
   --
   function AI_A2A_DISPATCHER:SetSquadronTakeoffInAir( SquadronName, TakeoffAltitude )
 
@@ -2383,17 +2342,15 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets flights by default to take-off from the runway, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
   --
   --   -- Let new flights by default take-off from the runway.
   --   A2ADispatcher:SetDefaultTakeoffFromRunway()
-  --
-  -- @return #AI_A2A_DISPATCHER self
   --
   function AI_A2A_DISPATCHER:SetDefaultTakeoffFromRunway()
 
@@ -2402,18 +2359,16 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets flights to take-off from the runway, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
   --
   --   -- Let new flights take-off from the runway.
   --   A2ADispatcher:SetSquadronTakeoffFromRunway( "SquadronName" )
-  --
-  -- @return #AI_A2A_DISPATCHER self
   --
   function AI_A2A_DISPATCHER:SetSquadronTakeoffFromRunway( SquadronName )
 
@@ -2422,17 +2377,15 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets flights by default to take-off from the airbase at a hot location, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
   --
   --   -- Let new flights by default take-off at a hot parking spot.
   --   A2ADispatcher:SetDefaultTakeoffFromParkingHot()
-  --
-  -- @return #AI_A2A_DISPATCHER self
   --
   function AI_A2A_DISPATCHER:SetDefaultTakeoffFromParkingHot()
 
@@ -2444,14 +2397,13 @@ do -- AI_A2A_DISPATCHER
   --- Sets flights to take-off from the airbase at a hot location, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
   --
   --   -- Let new flights take-off in the air.
   --   A2ADispatcher:SetSquadronTakeoffFromParkingHot( "SquadronName" )
-  --
-  -- @return #AI_A2A_DISPATCHER self
   --
   function AI_A2A_DISPATCHER:SetSquadronTakeoffFromParkingHot( SquadronName )
 
@@ -2460,17 +2412,15 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets flights to by default take-off from the airbase at a cold location, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
   --
   --   -- Let new flights take-off from a cold parking spot.
   --   A2ADispatcher:SetDefaultTakeoffFromParkingCold()
-  --
-  -- @return #AI_A2A_DISPATCHER self
   --
   function AI_A2A_DISPATCHER:SetDefaultTakeoffFromParkingCold()
 
@@ -2479,18 +2429,16 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets flights to take-off from the airbase at a cold location, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
   --
   --   -- Let new flights take-off from a cold parking spot.
   --   A2ADispatcher:SetSquadronTakeoffFromParkingCold( "SquadronName" )
-  --
-  -- @return #AI_A2A_DISPATCHER self
   --
   function AI_A2A_DISPATCHER:SetSquadronTakeoffFromParkingCold( SquadronName )
 
@@ -2499,18 +2447,16 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Defines the default altitude where airplanes will spawn in the air and take-off as part of the defense system, when the take-off in the air method has been selected.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #number TakeoffAltitude The altitude in meters above the ground.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
   --
   --   -- Set the default takeoff altitude when taking off in the air.
   --   A2ADispatcher:SetDefaultTakeoffInAirAltitude( 2000 )  -- This makes planes start at 2000 meters above the ground.
-  --
-  -- @return #AI_A2A_DISPATCHER self
   --
   function AI_A2A_DISPATCHER:SetDefaultTakeoffInAirAltitude( TakeoffAltitude )
 
@@ -2523,14 +2469,13 @@ do -- AI_A2A_DISPATCHER
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
   -- @param #number TakeoffAltitude The altitude in meters above the ground.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
   --
   --   -- Set the default takeoff altitude when taking off in the air.
   --   A2ADispatcher:SetSquadronTakeoffInAirAltitude( "SquadronName", 2000 ) -- This makes planes start at 2000 meters above the ground.
-  --
-  -- @return #AI_A2A_DISPATCHER self
   --
   function AI_A2A_DISPATCHER:SetSquadronTakeoffInAirAltitude( SquadronName, TakeoffAltitude )
 
@@ -2540,10 +2485,10 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Defines the default method at which flights will land and despawn as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #number Landing The landing method which can be NearAirbase, AtRunway, AtEngineShutdown
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2557,7 +2502,6 @@ do -- AI_A2A_DISPATCHER
   --   -- Let new flights by default despawn after landing and parking, and after engine shutdown.
   --   A2ADispatcher:SetDefaultLanding( AI_A2A_Dispatcher.Landing.AtEngineShutdown )
   --
-  -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetDefaultLanding( Landing )
 
     self.DefenderDefault.Landing = Landing
@@ -2565,11 +2509,11 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Defines the method at which flights will land and despawn as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
   -- @param #number Landing The landing method which can be NearAirbase, AtRunway, AtEngineShutdown
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2583,7 +2527,6 @@ do -- AI_A2A_DISPATCHER
   --   -- Let new flights despawn after landing and parking, and after engine shutdown.
   --   A2ADispatcher:SetSquadronLanding( "SquadronName", AI_A2A_Dispatcher.Landing.AtEngineShutdown )
   --
-  -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetSquadronLanding( SquadronName, Landing )
 
     local DefenderSquadron = self:GetSquadron( SquadronName )
@@ -2591,7 +2534,6 @@ do -- AI_A2A_DISPATCHER
 
     return self
   end
-
 
   --- Gets the default method at which flights will land and despawn as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
@@ -2610,7 +2552,6 @@ do -- AI_A2A_DISPATCHER
 
     return self.DefenderDefault.Landing
   end
-
 
   --- Gets the method at which flights will land and despawn as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
@@ -2632,9 +2573,9 @@ do -- AI_A2A_DISPATCHER
     return DefenderSquadron.Landing or self.DefenderDefault.Landing
   end
 
-
   --- Sets flights by default to land and despawn near the airbase in the air, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2642,7 +2583,6 @@ do -- AI_A2A_DISPATCHER
   --   -- Let flights by default to land near the airbase and despawn.
   --   A2ADispatcher:SetDefaultLandingNearAirbase()
   --
-  -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetDefaultLandingNearAirbase()
 
     self:SetDefaultLanding( AI_A2A_DISPATCHER.Landing.NearAirbase )
@@ -2650,10 +2590,10 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets flights to land and despawn near the airbase in the air, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2661,7 +2601,6 @@ do -- AI_A2A_DISPATCHER
   --   -- Let flights to land near the airbase and despawn.
   --   A2ADispatcher:SetSquadronLandingNearAirbase( "SquadronName" )
   --
-  -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetSquadronLandingNearAirbase( SquadronName )
 
     self:SetSquadronLanding( SquadronName, AI_A2A_DISPATCHER.Landing.NearAirbase )
@@ -2669,9 +2608,9 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets flights by default to land and despawn at the runway, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2679,7 +2618,6 @@ do -- AI_A2A_DISPATCHER
   --   -- Let flights by default land at the runway and despawn.
   --   A2ADispatcher:SetDefaultLandingAtRunway()
   --
-  -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetDefaultLandingAtRunway()
 
     self:SetDefaultLanding( AI_A2A_DISPATCHER.Landing.AtRunway )
@@ -2687,10 +2625,10 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets flights to land and despawn at the runway, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2698,7 +2636,6 @@ do -- AI_A2A_DISPATCHER
   --   -- Let flights land at the runway and despawn.
   --   A2ADispatcher:SetSquadronLandingAtRunway( "SquadronName" )
   --
-  -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetSquadronLandingAtRunway( SquadronName )
 
     self:SetSquadronLanding( SquadronName, AI_A2A_DISPATCHER.Landing.AtRunway )
@@ -2706,9 +2643,9 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
   --- Sets flights by default to land and despawn at engine shutdown, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2716,18 +2653,17 @@ do -- AI_A2A_DISPATCHER
   --   -- Let flights by default land and despawn at engine shutdown.
   --   A2ADispatcher:SetDefaultLandingAtEngineShutdown()
   --
-  -- @return #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:SetDefaultLandingAtEngineShutdown()
+    function AI_A2A_DISPATCHER:SetDefaultLandingAtEngineShutdown()
 
     self:SetDefaultLanding( AI_A2A_DISPATCHER.Landing.AtEngineShutdown )
 
     return self
   end
 
-
   --- Sets flights to land and despawn at engine shutdown, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
+  -- @return #AI_A2A_DISPATCHER self
   -- @usage:
   --
   --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -2735,7 +2671,6 @@ do -- AI_A2A_DISPATCHER
   --   -- Let flights land and despawn at engine shutdown.
   --   A2ADispatcher:SetSquadronLandingAtEngineShutdown( "SquadronName" )
   --
-  -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetSquadronLandingAtEngineShutdown( SquadronName )
 
     self:SetSquadronLanding( SquadronName, AI_A2A_DISPATCHER.Landing.AtEngineShutdown )
@@ -2743,17 +2678,17 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-  --- Set the default fuel treshold when defenders will RTB or Refuel in the air.
-  -- The fuel treshold is by default set to 15%, which means that an airplane will stay in the air until 15% of its fuel has been consumed.
+  --- Set the default fuel threshold when defenders will RTB or Refuel in the air.
+  -- The fuel threshold is by default set to 15%, which means that an airplane will stay in the air until 15% of its fuel has been consumed.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the %-tage of the treshold of fuel remaining in the tank when the plane will go RTB or Refuel.
+  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the % of the threshold of fuel remaining in the tank when the plane will go RTB or Refuel.
   -- @return #AI_A2A_DISPATCHER self
   -- @usage
   --
   --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
   --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
   --
-  --   -- Now Setup the default fuel treshold.
+  --   -- Now Setup the default fuel threshold.
   --   A2ADispatcher:SetDefaultFuelThreshold( 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --
   function AI_A2A_DISPATCHER:SetDefaultFuelThreshold( FuelThreshold )
@@ -2763,19 +2698,18 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-
-  --- Set the fuel treshold for the squadron when defenders will RTB or Refuel in the air.
-  -- The fuel treshold is by default set to 15%, which means that an airplane will stay in the air until 15% of its fuel has been consumed.
+  --- Set the fuel threshold for the squadron when defenders will RTB or Refuel in the air.
+  -- The fuel threshold is by default set to 15%, which means that an airplane will stay in the air until 15% of its fuel has been consumed.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
-  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the %-tage of the treshold of fuel remaining in the tank when the plane will go RTB or Refuel.
+  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the % of the threshold of fuel remaining in the tank when the plane will go RTB or Refuel.
   -- @return #AI_A2A_DISPATCHER self
   -- @usage
   --
   --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
   --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
   --
-  --   -- Now Setup the default fuel treshold.
+  --   -- Now Setup the default fuel threshold.
   --   A2ADispatcher:SetSquadronFuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --
   function AI_A2A_DISPATCHER:SetSquadronFuelThreshold( SquadronName, FuelThreshold )
@@ -2795,18 +2729,18 @@ do -- AI_A2A_DISPATCHER
   --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
   --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
   --
-  --   -- Now Setup the default fuel treshold.
+  --   -- Now Setup the default fuel threshold.
   --   A2ADispatcher:SetDefaultFuelThreshold( 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --
   --   -- Now Setup the default tanker.
   --   A2ADispatcher:SetDefaultTanker( "Tanker" ) -- The group name of the tanker is "Tanker" in the Mission Editor.
+  --
   function AI_A2A_DISPATCHER:SetDefaultTanker( TankerName )
 
     self.DefenderDefault.TankerName = TankerName
 
     return self
   end
-
 
   --- Set the squadron tanker where defenders will Refuel in the air.
   -- @param #AI_A2A_DISPATCHER self
@@ -2818,11 +2752,12 @@ do -- AI_A2A_DISPATCHER
   --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
   --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
   --
-  --   -- Now Setup the squadron fuel treshold.
+  --   -- Now Setup the squadron fuel threshold.
   --   A2ADispatcher:SetSquadronFuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --
   --   -- Now Setup the squadron tanker.
   --   A2ADispatcher:SetSquadronTanker( "SquadronName", "Tanker" ) -- The group name of the tanker is "Tanker" in the Mission Editor.
+  --
   function AI_A2A_DISPATCHER:SetSquadronTanker( SquadronName, TankerName )
 
     local DefenderSquadron = self:GetSquadron( SquadronName )
@@ -2830,7 +2765,6 @@ do -- AI_A2A_DISPATCHER
 
     return self
   end
-
 
   --- Set the squadron language.
   -- @param #AI_A2A_DISPATCHER self
@@ -2858,7 +2792,6 @@ do -- AI_A2A_DISPATCHER
 
     return self
   end
-
 
   --- Set the frequency of communication and the mode of communication for voice overs.
   -- @param #AI_A2A_DISPATCHER self
@@ -2894,7 +2827,7 @@ do -- AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:AddDefenderToSquadron( Squadron, Defender, Size )
     self.Defenders = self.Defenders or {}
     local DefenderName = Defender:GetName()
-    self.Defenders[ DefenderName ] = Squadron
+    self.Defenders[DefenderName] = Squadron
     if Squadron.ResourceCount then
       Squadron.ResourceCount = Squadron.ResourceCount - Size
     end
@@ -2911,7 +2844,7 @@ do -- AI_A2A_DISPATCHER
     if Squadron.ResourceCount then
       Squadron.ResourceCount = Squadron.ResourceCount + Defender:GetSize()
     end
-    self.Defenders[ DefenderName ] = nil
+    self.Defenders[DefenderName] = nil
     self:F( { DefenderName = DefenderName, SquadronResourceCount = Squadron.ResourceCount } )
   end
 
@@ -2924,12 +2857,11 @@ do -- AI_A2A_DISPATCHER
     if Defender ~= nil then
       local DefenderName = Defender:GetName()
       self:F( { DefenderName = DefenderName } )
-      return self.Defenders[ DefenderName ]
+      return self.Defenders[DefenderName]
     else
-      return nil        
+      return nil
     end
   end
-
 
   --- Creates an SWEEP task when there are targets for it.
   -- @param #AI_A2A_DISPATCHER self
@@ -2940,7 +2872,6 @@ do -- AI_A2A_DISPATCHER
 
     local DetectedSet = DetectedItem.Set
     local DetectedZone = DetectedItem.Zone
-
 
     if DetectedItem.IsDetected == false then
 
@@ -2971,9 +2902,9 @@ do -- AI_A2A_DISPATCHER
             if AIGroup and AIGroup:IsAlive() then
               -- Check if the CAP is patrolling or engaging. If not, this is not a valid CAP, even if it is alive!
               -- The CAP could be damaged, lost control, or out of fuel!
-              --env.info("FF fsm state "..tostring(DefenderTask.Fsm:GetState()))
+              -- env.info("FF fsm state "..tostring(DefenderTask.Fsm:GetState()))
               if DefenderTask.Fsm:Is( "Patrolling" ) or DefenderTask.Fsm:Is( "Engaging" ) or DefenderTask.Fsm:Is( "Refuelling" ) or DefenderTask.Fsm:Is( "Started" ) then
-                --env.info("FF capcount "..CapCount)
+                -- env.info("FF capcount "..CapCount)
                 CapCount = CapCount + 1
               end
             end
@@ -2985,24 +2916,23 @@ do -- AI_A2A_DISPATCHER
     return CapCount
   end
 
-
   --- Count number of engaging defender groups.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE.DetectedItem AttackerDetection Detection object.
   -- @return #number Number of defender groups engaging.
   function AI_A2A_DISPATCHER:CountDefendersEngaged( AttackerDetection )
 
-    -- First, count the active AIGroups Units, targetting the DetectedSet
+    -- First, count the active AIGroups Units, targeting the DetectedSet
     local DefenderCount = 0
 
     local DetectedSet = AttackerDetection.Set
-    --DetectedSet:Flush()
+    -- DetectedSet:Flush()
 
     local DefenderTasks = self:GetDefenderTasks()
 
     for DefenderGroup, DefenderTask in pairs( DefenderTasks ) do
       local Defender = DefenderGroup -- Wrapper.Group#GROUP
-      local DefenderTaskTarget = DefenderTask.Target --Functional.Detection#DETECTION_BASE.DetectedItem
+      local DefenderTaskTarget = DefenderTask.Target -- Functional.Detection#DETECTION_BASE.DetectedItem
       local DefenderSquadronName = DefenderTask.SquadronName
 
       if DefenderTaskTarget and DefenderTaskTarget.Index == AttackerDetection.Index then
@@ -3069,7 +2999,6 @@ do -- AI_A2A_DISPATCHER
     return Friendlies
   end
 
-
   --- Activate resource.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #AI_A2A_DISPATCHER.Squadron DefenderSquadron The defender squadron.
@@ -3084,36 +3013,36 @@ do -- AI_A2A_DISPATCHER
 
     local DefenderGrouping = DefenderSquadron.Grouping or self.DefenderDefault.Grouping
 
-    DefenderGrouping = ( DefenderGrouping < DefendersNeeded ) and DefenderGrouping or DefendersNeeded
+    DefenderGrouping = (DefenderGrouping < DefendersNeeded) and DefenderGrouping or DefendersNeeded
 
-    --env.info(string.format("FF resource activate: Squadron=%s grouping=%d needed=%d visible=%s", SquadronName, DefenderGrouping, DefendersNeeded, tostring(self:IsSquadronVisible( SquadronName ))))
+    -- env.info(string.format("FF resource activate: Squadron=%s grouping=%d needed=%d visible=%s", SquadronName, DefenderGrouping, DefendersNeeded, tostring(self:IsSquadronVisible( SquadronName ))))
 
     if self:IsSquadronVisible( SquadronName ) then
 
-      local n=#self.uncontrolled[SquadronName]
+      local n = #self.uncontrolled[SquadronName]
 
-      if n>0 then
+      if n > 0 then
         -- Random number 1,...n
-        local id=math.random(n)
+        local id = math.random( n )
 
         -- Pick a random defender group.
-        local Defender=self.uncontrolled[SquadronName][id].group --Wrapper.Group#GROUP
+        local Defender = self.uncontrolled[SquadronName][id].group -- Wrapper.Group#GROUP
 
         -- Start uncontrolled group.
         Defender:StartUncontrolled()
 
         -- Get grouping.
-        DefenderGrouping=self.uncontrolled[SquadronName][id].grouping
+        DefenderGrouping = self.uncontrolled[SquadronName][id].grouping
 
         -- Add defender to squadron.
         self:AddDefenderToSquadron( DefenderSquadron, Defender, DefenderGrouping )
 
         -- Remove defender from uncontrolled table.
-        table.remove(self.uncontrolled[SquadronName], id)
+        table.remove( self.uncontrolled[SquadronName], id )
 
         return Defender, DefenderGrouping
       else
-        return nil,0
+        return nil, 0
       end
 
       -- Here we CAP the new planes.
@@ -3171,7 +3100,7 @@ do -- AI_A2A_DISPATCHER
       --- Squadron not visible ---
       ----------------------------
 
-      local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Core.Spawn#SPAWN
+      local Spawn = DefenderSquadron.Spawn[math.random( 1, #DefenderSquadron.Spawn )] -- Core.Spawn#SPAWN
 
       if DefenderGrouping then
         Spawn:InitGrouping( DefenderGrouping )
@@ -3199,7 +3128,7 @@ do -- AI_A2A_DISPATCHER
   -- @param #string SquadronName Name of the squadron.
   function AI_A2A_DISPATCHER:onafterCAP( From, Event, To, SquadronName )
 
-    self:F({SquadronName = SquadronName})
+    self:F( { SquadronName = SquadronName } )
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {}
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
 
@@ -3223,13 +3152,13 @@ do -- AI_A2A_DISPATCHER
           AI_A2A_Fsm:SetDisengageRadius( self.DisengageRadius )
           AI_A2A_Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
           if DefenderSquadron.Racetrack or self.DefenderDefault.Racetrack then
-            AI_A2A_Fsm:SetRaceTrackPattern(DefenderSquadron.RacetrackLengthMin   or self.DefenderDefault.RacetrackLengthMin,
-                                    DefenderSquadron.RacetrackLengthMax   or self.DefenderDefault.RacetrackLengthMax,
-                                    DefenderSquadron.RacetrackHeadingMin  or self.DefenderDefault.RacetrackHeadingMin,
-                                    DefenderSquadron.RacetrackHeadingMax  or self.DefenderDefault.RacetrackHeadingMax,
-                                    DefenderSquadron.RacetrackDurationMin or self.DefenderDefault.RacetrackDurationMin,
-                                    DefenderSquadron.RacetrackDurationMax or self.DefenderDefault.RacetrackDurationMax,
-                                    DefenderSquadron.RacetrackCoordinates or self.DefenderDefault.RacetrackCoordinates)
+            AI_A2A_Fsm:SetRaceTrackPattern( DefenderSquadron.RacetrackLengthMin or self.DefenderDefault.RacetrackLengthMin,
+                                            DefenderSquadron.RacetrackLengthMax or self.DefenderDefault.RacetrackLengthMax,
+                                            DefenderSquadron.RacetrackHeadingMin or self.DefenderDefault.RacetrackHeadingMin,
+                                            DefenderSquadron.RacetrackHeadingMax or self.DefenderDefault.RacetrackHeadingMax,
+                                            DefenderSquadron.RacetrackDurationMin or self.DefenderDefault.RacetrackDurationMin,
+                                            DefenderSquadron.RacetrackDurationMax or self.DefenderDefault.RacetrackDurationMax,
+                                            DefenderSquadron.RacetrackCoordinates or self.DefenderDefault.RacetrackCoordinates )
           end
           AI_A2A_Fsm:Start()
 
@@ -3238,15 +3167,15 @@ do -- AI_A2A_DISPATCHER
           function AI_A2A_Fsm:onafterTakeoff( DefenderGroup, From, Event, To )
             -- Issue GetCallsign() returns nil, see https://github.com/FlightControl-Master/MOOSE/issues/1228
             if DefenderGroup and DefenderGroup:IsAlive() then
-              self:F({"CAP Takeoff", DefenderGroup:GetName()})
-              --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
+              self:F( { "CAP Takeoff", DefenderGroup:GetName() } )
+              -- self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
 
               local DefenderName = DefenderGroup:GetCallsign()
               local Dispatcher = AI_A2A_Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
               local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
 
               if Squadron then
-                Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " Wheels up.", DefenderGroup )
+                Dispatcher:MessageToPlayers( Squadron, DefenderName .. " Wheels up.", DefenderGroup )
                 AI_A2A_Fsm:__Patrol( 2 ) -- Start Patrolling
               end
             end
@@ -3254,14 +3183,14 @@ do -- AI_A2A_DISPATCHER
 
           function AI_A2A_Fsm:onafterPatrolRoute( DefenderGroup, From, Event, To )
             if DefenderGroup and DefenderGroup:IsAlive() then
-              self:F({"CAP PatrolRoute", DefenderGroup:GetName()})
-              self:GetParent(self).onafterPatrolRoute( self, DefenderGroup, From, Event, To )
+              self:F( { "CAP PatrolRoute", DefenderGroup:GetName() } )
+              self:GetParent( self ).onafterPatrolRoute( self, DefenderGroup, From, Event, To )
 
               local DefenderName = DefenderGroup:GetCallsign()
               local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
               local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
               if Squadron then
-                Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", patrolling.", DefenderGroup )
+                Dispatcher:MessageToPlayers( Squadron, DefenderName .. ", patrolling.", DefenderGroup )
               end
 
               Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
@@ -3270,15 +3199,15 @@ do -- AI_A2A_DISPATCHER
 
           function AI_A2A_Fsm:onafterRTB( DefenderGroup, From, Event, To )
             if DefenderGroup and DefenderGroup:IsAlive() then
-              self:F({"CAP RTB", DefenderGroup:GetName()})
+              self:F( { "CAP RTB", DefenderGroup:GetName() } )
 
-              self:GetParent(self).onafterRTB( self, DefenderGroup, From, Event, To )
+              self:GetParent( self ).onafterRTB( self, DefenderGroup, From, Event, To )
 
               local DefenderName = DefenderGroup:GetCallsign()
               local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
               local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
               if Squadron then
-                Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " returning to base.", DefenderGroup )
+                Dispatcher:MessageToPlayers( Squadron, DefenderName .. " returning to base.", DefenderGroup )
               end
               Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
             end
@@ -3287,8 +3216,8 @@ do -- AI_A2A_DISPATCHER
           --- @param #AI_A2A_DISPATCHER self
           function AI_A2A_Fsm:onafterHome( Defender, From, Event, To, Action )
             if Defender and Defender:IsAlive() then
-              self:F({"CAP Home", Defender:GetName()})
-              self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+              self:F( { "CAP Home", Defender:GetName() } )
+              self:GetParent( self ).onafterHome( self, Defender, From, Event, To )
 
               local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
               local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
@@ -3311,7 +3240,6 @@ do -- AI_A2A_DISPATCHER
 
   end
 
-
   --- On after "ENGAGE" event.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string From From state.
@@ -3320,7 +3248,7 @@ do -- AI_A2A_DISPATCHER
   -- @param Functional.Detection#DETECTION_BASE.DetectedItem AttackerDetection Detected item.
   -- @param #table Defenders Defenders table.
   function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, AttackerDetection, Defenders )
-    self:F("ENGAGING Detection ID="..tostring(AttackerDetection.ID))
+    self:F( "ENGAGING Detection ID=" .. tostring( AttackerDetection.ID ) )
 
     if Defenders then
 
@@ -3347,7 +3275,7 @@ do -- AI_A2A_DISPATCHER
   -- @param #table DefenderFriendlies Friendly defenders.
   function AI_A2A_DISPATCHER:onafterGCI( From, Event, To, AttackerDetection, DefendersMissing, DefenderFriendlies )
 
-    self:F("GCI Detection ID="..tostring(AttackerDetection.ID))
+    self:F( "GCI Detection ID=" .. tostring( AttackerDetection.ID ) )
 
     self:F( { From, Event, To, AttackerDetection.Index, DefendersMissing, DefenderFriendlies } )
 
@@ -3376,7 +3304,7 @@ do -- AI_A2A_DISPATCHER
 
       local BreakLoop = false
 
-      while( DefenderCount > 0 and not BreakLoop ) do
+      while (DefenderCount > 0 and not BreakLoop) do
 
         self:F( { DefenderSquadrons = self.DefenderSquadrons } )
 
@@ -3422,7 +3350,7 @@ do -- AI_A2A_DISPATCHER
               local DefenderGrouping = DefenderSquadron.Grouping or self.DefenderDefault.Grouping
               local DefendersNeeded = math.ceil( DefenderCount * DefenderOverhead )
 
-              self:F( { Overhead = DefenderOverhead, SquadronOverhead = DefenderSquadron.Overhead , DefaultOverhead = self.DefenderDefault.Overhead } )
+              self:F( { Overhead = DefenderOverhead, SquadronOverhead = DefenderSquadron.Overhead, DefaultOverhead = self.DefenderDefault.Overhead } )
               self:F( { Grouping = DefenderGrouping, SquadronGrouping = DefenderSquadron.Grouping, DefaultGrouping = self.DefenderDefault.Grouping } )
               self:F( { DefendersCount = DefenderCount, DefendersNeeded = DefendersNeeded } )
 
@@ -3433,7 +3361,7 @@ do -- AI_A2A_DISPATCHER
                 BreakLoop = true
               end
 
-              while ( DefendersNeeded > 0 ) do
+              while (DefendersNeeded > 0) do
 
                 local DefenderGCI, DefenderGrouping = self:ResourceActivate( DefenderSquadron, DefendersNeeded )
 
@@ -3451,13 +3379,11 @@ do -- AI_A2A_DISPATCHER
                   Fsm:SetDisengageRadius( self.DisengageRadius )
                   Fsm:Start()
 
-
                   self:SetDefenderTask( ClosestDefenderSquadronName, DefenderGCI, "GCI", Fsm, AttackerDetection )
 
-
                   function Fsm:onafterTakeoff( DefenderGroup, From, Event, To )
-                    self:F({"GCI Birth", DefenderGroup:GetName()})
-                    --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
+                    self:F( { "GCI Birth", DefenderGroup:GetName() } )
+                    -- self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
 
                     local DefenderName = DefenderGroup:GetCallsign()
                     local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
@@ -3466,17 +3392,17 @@ do -- AI_A2A_DISPATCHER
 
                     if DefenderTarget then
                       if Squadron.Language == "EN" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " wheels up.", DefenderGroup )
+                        Dispatcher:MessageToPlayers( Squadron, DefenderName .. " wheels up.", DefenderGroup )
                       elseif Squadron.Language == "RU" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " колеса вверх.", DefenderGroup )
+                        Dispatcher:MessageToPlayers( Squadron, DefenderName .. " колеса вверх.", DefenderGroup )
                       end
-                      --Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
+                      -- Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
                       Fsm:EngageRoute( DefenderTarget.Set ) -- Engage on the TargetSetUnit
                     end
                   end
 
                   function Fsm:onafterEngageRoute( DefenderGroup, From, Event, To, AttackSetUnit )
-                    self:F({"GCI Route", DefenderGroup:GetName()})
+                    self:F( { "GCI Route", DefenderGroup:GetName() } )
 
                     local DefenderName = DefenderGroup:GetCallsign()
                     local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
@@ -3487,18 +3413,18 @@ do -- AI_A2A_DISPATCHER
                       local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
 
                       if Squadron.Language == "EN" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", intercepting bogeys at " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                        Dispatcher:MessageToPlayers( Squadron, DefenderName .. ", intercepting bogeys at " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
                       elseif Squadron.Language == "RU" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", перехват самолетов в " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                        Dispatcher:MessageToPlayers( Squadron, DefenderName .. ", перехват самолетов в " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
                       elseif Squadron.Language == "DE" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", Eindringlinge abfangen bei" .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                        Dispatcher:MessageToPlayers( Squadron, DefenderName .. ", Eindringlinge abfangen bei" .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
                       end
                     end
                     self:GetParent( Fsm ).onafterEngageRoute( self, DefenderGroup, From, Event, To, AttackSetUnit )
                   end
 
                   function Fsm:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit )
-                    self:F({"GCI Engage", DefenderGroup:GetName()})
+                    self:F( { "GCI Engage", DefenderGroup:GetName() } )
 
                     local DefenderName = DefenderGroup:GetCallsign()
                     local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
@@ -3509,17 +3435,17 @@ do -- AI_A2A_DISPATCHER
                       local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
 
                       if Squadron.Language == "EN" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", engaging bogeys at " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                        Dispatcher:MessageToPlayers( Squadron, DefenderName .. ", engaging bogeys at " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
                       elseif Squadron.Language == "RU" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", захватывающие самолеты в " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                        Dispatcher:MessageToPlayers( Squadron, DefenderName .. ", захватывающие самолеты в " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
                       end
                     end
                     self:GetParent( Fsm ).onafterEngage( self, DefenderGroup, From, Event, To, AttackSetUnit )
                   end
 
                   function Fsm:onafterRTB( DefenderGroup, From, Event, To )
-                    self:F({"GCI RTB", DefenderGroup:GetName()})
-                    self:GetParent(self).onafterRTB( self, DefenderGroup, From, Event, To )
+                    self:F( { "GCI RTB", DefenderGroup:GetName() } )
+                    self:GetParent( self ).onafterRTB( self, DefenderGroup, From, Event, To )
 
                     local DefenderName = DefenderGroup:GetCallsign()
                     local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
@@ -3527,9 +3453,9 @@ do -- AI_A2A_DISPATCHER
 
                     if Squadron then
                       if Squadron.Language == "EN" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " returning to base.", DefenderGroup )
+                        Dispatcher:MessageToPlayers( Squadron, DefenderName .. " returning to base.", DefenderGroup )
                       elseif Squadron.Language == "RU" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", возвращаясь на базу.", DefenderGroup )
+                        Dispatcher:MessageToPlayers( Squadron, DefenderName .. ", возвращаясь на базу.", DefenderGroup )
                       end
                     end
                     Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
@@ -3537,8 +3463,8 @@ do -- AI_A2A_DISPATCHER
 
                   --- @param #AI_A2A_DISPATCHER self
                   function Fsm:onafterLostControl( Defender, From, Event, To )
-                    self:F({"GCI LostControl", Defender:GetName()})
-                    self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+                    self:F( { "GCI LostControl", Defender:GetName() } )
+                    self:GetParent( self ).onafterHome( self, Defender, From, Event, To )
 
                     local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
@@ -3550,18 +3476,18 @@ do -- AI_A2A_DISPATCHER
 
                   --- @param #AI_A2A_DISPATCHER self
                   function Fsm:onafterHome( DefenderGroup, From, Event, To, Action )
-                    self:F({"GCI Home", DefenderGroup:GetName()})
-                    self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
+                    self:F( { "GCI Home", DefenderGroup:GetName() } )
+                    self:GetParent( self ).onafterHome( self, DefenderGroup, From, Event, To )
 
                     local DefenderName = DefenderGroup:GetCallsign()
                     local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
 
-                      if Squadron.Language == "EN" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " landing at base.", DefenderGroup )
-                      elseif Squadron.Language == "RU" then
-                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", захватывающие самолеты в посадка на базу.", DefenderGroup )
-                      end
+                    if Squadron.Language == "EN" then
+                      Dispatcher:MessageToPlayers( Squadron, DefenderName .. " landing at base.", DefenderGroup )
+                    elseif Squadron.Language == "RU" then
+                      Dispatcher:MessageToPlayers( Squadron, DefenderName .. ", захватывающие самолеты в посадка на базу.", DefenderGroup )
+                    end
 
                     if Action and Action == "Destroy" then
                       Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
@@ -3575,8 +3501,8 @@ do -- AI_A2A_DISPATCHER
                     end
                   end
 
-                end  -- if DefenderGCI then
-              end  -- while ( DefendersNeeded > 0 ) do
+                end -- if DefenderGCI then
+              end -- while ( DefendersNeeded > 0 ) do
             end
           else
             -- No more resources, try something else.
@@ -3592,8 +3518,6 @@ do -- AI_A2A_DISPATCHER
     end -- if AttackerUnit
   end
 
-
-
   --- Creates an ENGAGE task when there are human friendlies airborne near the targets.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem The detected item.
@@ -3601,7 +3525,7 @@ do -- AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:EvaluateENGAGE( DetectedItem )
     self:F( { DetectedItem.ItemID } )
 
-    -- First, count the active AIGroups Units, targetting the DetectedSet
+    -- First, count the active AIGroups Units, targeting the DetectedSet
     local DefenderCount = self:CountDefendersEngaged( DetectedItem )
     local DefenderGroups = self:CountDefendersToBeEngaged( DetectedItem, DefenderCount )
 
@@ -3630,7 +3554,7 @@ do -- AI_A2A_DISPATCHER
     local AttackerSet = DetectedItem.Set
     local AttackerCount = AttackerSet:Count()
 
-    -- First, count the active AIGroups Units, targetting the DetectedSet
+    -- First, count the active AIGroups Units, targeting the DetectedSet
     local DefenderCount = self:CountDefendersEngaged( DetectedItem )
     local DefendersMissing = AttackerCount - DefenderCount
     self:F( { AttackerCount = AttackerCount, DefenderCount = DefenderCount, DefendersMissing = DefendersMissing } )
@@ -3645,12 +3569,11 @@ do -- AI_A2A_DISPATCHER
     return nil, nil
   end
 
-
   --- Assigns A2G AI Tasks in relation to the detected items.
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2A_DISPATCHER:Order( DetectedItem )
 
-    local detection=self.Detection -- Functional.Detection#DETECTION_AREAS
+    local detection = self.Detection -- Functional.Detection#DETECTION_AREAS
 
     local ShortestDistance = 999999999
 
@@ -3679,7 +3602,6 @@ do -- AI_A2A_DISPATCHER
     return ShortestDistance
   end
 
-
   --- Shows the tactical display.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
@@ -3696,8 +3618,10 @@ do -- AI_A2A_DISPATCHER
     local DefenderGroupCount = 0
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
-    --for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
-    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b ) return self:Order(t[a]) <  self:Order(t[b]) end  ) do
+    -- for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b )
+      return self:Order( t[a] ) < self:Order( t[b] )
+    end ) do
 
       local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
       local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
@@ -3712,30 +3636,30 @@ do -- AI_A2A_DISPATCHER
       local DetectedItemChanged = DetectedItem.Changed
 
       -- Show tactical situation
-      Report:Add( string.format( "\n- Target %s (%s): (#%d) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
+      Report:Add( string.format( "\n- Target %s (%s): (#%d) %s", DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
       for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
         local Defender = Defender -- Wrapper.Group#GROUP
-         if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
-           if Defender and Defender:IsAlive() then
-             DefenderGroupCount = DefenderGroupCount + 1
-             local Fuel = Defender:GetFuelMin() * 100
-             local Damage = Defender:GetLife() / Defender:GetLife0() * 100
-             Report:Add( string.format( " - %s*%d/%d (%s - %s): (#%d) F: %3d, D:%3d - %s",
-                                        Defender:GetName(),
-                                        Defender:GetSize(),
-                                        Defender:GetInitialSize(),
-                                        DefenderTask.Type,
-                                        DefenderTask.Fsm:GetState(),
-                                        Defender:GetSize(),
-                                        Fuel,
-                                        Damage,
-                                        Defender:HasTask() == true and "Executing" or "Idle" ) )
-           end
-         end
+        if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
+          if Defender and Defender:IsAlive() then
+            DefenderGroupCount = DefenderGroupCount + 1
+            local Fuel = Defender:GetFuelMin() * 100
+            local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+            Report:Add( string.format( " - %s*%d/%d (%s - %s): (#%d) F: %3d, D:%3d - %s",
+                                       Defender:GetName(),
+                                       Defender:GetSize(),
+                                       Defender:GetInitialSize(),
+                                       DefenderTask.Type,
+                                       DefenderTask.Fsm:GetState(),
+                                       Defender:GetSize(),
+                                       Fuel,
+                                       Damage,
+                                       Defender:HasTask() == true and "Executing" or "Idle" ) )
+          end
+        end
       end
     end
 
-    Report:Add( "\n- No Targets:")
+    Report:Add( "\n- No Targets:" )
     local TaskCount = 0
     for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
       TaskCount = TaskCount + 1
@@ -3780,7 +3704,6 @@ do -- AI_A2A_DISPATCHER
 
     local TaskReport = REPORT:New()
 
-
     for AIGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
       local AIGroup = AIGroup -- Wrapper.Group#GROUP
       if not AIGroup:IsAlive() then
@@ -3814,8 +3737,10 @@ do -- AI_A2A_DISPATCHER
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     -- Closest detected targets to be considered first!
-    --for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
-    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b ) return self:Order(t[a]) <  self:Order(t[b]) end  ) do
+    -- for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b )
+      return self:Order( t[a] ) < self:Order( t[b] )
+    end ) do
 
       local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
       local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
@@ -3874,7 +3799,7 @@ do
       for PlayerUnitName, PlayerUnitData in pairs( PlayersNearBy ) do
         local PlayerUnit = PlayerUnitData -- Wrapper.Unit#UNIT
         local PlayerName = PlayerUnit:GetPlayerName()
-        --self:F( { PlayerName = PlayerName, PlayerUnit = PlayerUnit } )
+        -- self:F( { PlayerName = PlayerName, PlayerUnit = PlayerUnit } )
         if PlayerUnit:IsAirPlane() and PlayerName ~= nil then
           local FriendlyUnitThreatLevel = PlayerUnit:GetThreatLevel()
           PlayersCount = PlayersCount + 1
@@ -3887,18 +3812,17 @@ do
 
     end
 
-    --self:F( { PlayersCount = PlayersCount } )
+    -- self:F( { PlayersCount = PlayersCount } )
 
     local PlayerTypesReport = REPORT:New()
 
     if PlayersCount > 0 then
       for PlayerName, PlayerType in pairs( PlayerTypes ) do
-        PlayerTypesReport:Add( string.format('"%s" in %s', PlayerName, PlayerType ) )
+        PlayerTypesReport:Add( string.format( '"%s" in %s', PlayerName, PlayerType ) )
       end
     else
       PlayerTypesReport:Add( "-" )
     end
-
 
     return PlayersCount, PlayerTypesReport
   end
@@ -3923,7 +3847,7 @@ do
           local FriendlyUnitThreatLevel = FriendlyUnit:GetThreatLevel()
           FriendliesCount = FriendliesCount + 1
           local FriendlyType = FriendlyUnit:GetTypeName()
-          FriendlyTypes[FriendlyType] = FriendlyTypes[FriendlyType] and ( FriendlyTypes[FriendlyType] + 1 ) or 1
+          FriendlyTypes[FriendlyType] = FriendlyTypes[FriendlyType] and (FriendlyTypes[FriendlyType] + 1) or 1
           if DetectedTreatLevel < FriendlyUnitThreatLevel + 2 then
           end
         end
@@ -3931,18 +3855,17 @@ do
 
     end
 
-    --self:F( { FriendliesCount = FriendliesCount } )
+    -- self:F( { FriendliesCount = FriendliesCount } )
 
     local FriendlyTypesReport = REPORT:New()
 
     if FriendliesCount > 0 then
       for FriendlyType, FriendlyTypeCount in pairs( FriendlyTypes ) do
-        FriendlyTypesReport:Add( string.format("%d of %s", FriendlyTypeCount, FriendlyType ) )
+        FriendlyTypesReport:Add( string.format( "%d of %s", FriendlyTypeCount, FriendlyType ) )
       end
     else
       FriendlyTypesReport:Add( "-" )
     end
-
 
     return FriendliesCount, FriendlyTypesReport
   end
@@ -4050,13 +3973,13 @@ do
   --
   -- ![Mission Editor Action](..\Presentations\AI_A2A_DISPATCHER\AI_A2A_GCICAP-ME_4.JPG)
   --
-  -- **All airplane or helicopter groups that are starting with any of the choosen Template Prefixes will result in a squadron created at the airbase.**
+  -- **All airplane or helicopter groups that are starting with any of the chosen Template Prefixes will result in a squadron created at the airbase.**
   --
   -- ### 1.4) Place floating helicopters to create the CAP zones defined by its route points.
   --
   -- ![Mission Editor Action](..\Presentations\AI_A2A_DISPATCHER\AI_A2A_GCICAP-ME_5.JPG)
   --
-  -- **All airplane or helicopter groups that are starting with any of the choosen Template Prefixes will result in a squadron created at the airbase.**
+  -- **All airplane or helicopter groups that are starting with any of the chosen Template Prefixes will result in a squadron created at the airbase.**
   --
   -- The helicopter indicates the start of the CAP zone.
   -- The route points define the form of the CAP zone polygon.
@@ -4069,7 +3992,7 @@ do
   --
   -- ### 2.1) Planes are taking off in the air from the airbases.
   --
-  -- This prevents airbases to get cluttered with airplanes taking off, it also reduces the risk of human players colliding with taxiiing airplanes,
+  -- This prevents airbases to get cluttered with airplanes taking off, it also reduces the risk of human players colliding with taxiing airplanes,
   -- resulting in the airbase to halt operations.
   --
   -- You can change the way how planes take off by using the inherited methods from AI\_A2A\_DISPATCHER:
@@ -4093,7 +4016,7 @@ do
   --
   -- ### 2.2) Planes return near the airbase or will land if damaged.
   --
-  -- When damaged airplanes return to the airbase, they will be routed and will dissapear in the air when they are near the airbase.
+  -- When damaged airplanes return to the airbase, they will be routed and will disappear in the air when they are near the airbase.
   -- There are exceptions to this rule, airplanes that aren't "listening" anymore due to damage or out of fuel, will return to the airbase and land.
   --
   -- You can change the way how planes land by using the inherited methods from AI\_A2A\_DISPATCHER:
@@ -4103,7 +4026,7 @@ do
   --   * @{#AI_A2A_DISPATCHER.SetSquadronLandingAtRunway}() will despawn the returning aircraft directly after landing at the runway.
   --   * @{#AI_A2A_DISPATCHER.SetSquadronLandingAtEngineShutdown}() will despawn the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.
   --
-  -- You can use these methods to minimize the airbase coodination overhead and to increase the airbase efficiency.
+  -- You can use these methods to minimize the airbase coordination overhead and to increase the airbase efficiency.
   -- When there are lots of aircraft returning for landing, at the same airbase, the takeoff process will be halted, which can cause a complete failure of the
   -- A2A defense system, as no new CAP or GCI planes can takeoff.
   -- Note that the method @{#AI_A2A_DISPATCHER.SetSquadronLandingNearAirbase}() will only work for returning aircraft, not for damaged or out of fuel aircraft.
@@ -4126,7 +4049,7 @@ do
   --   * The minimum and maximum engage speed
   --   * The type of altitude measurement
   --
-  -- These define how the squadron will perform the CAP while partrolling. Different terrain types requires different types of CAP.
+  -- These define how the squadron will perform the CAP while patrolling. Different terrain types requires different types of CAP.
   --
   -- The @{#AI_A2A_DISPATCHER.SetSquadronCapInterval}() method specifies **how much** and **when** CAP flights will takeoff.
   --
@@ -4152,7 +4075,7 @@ do
   -- Essentially this controls how many flights of GCI aircraft can be active at any time.
   -- Note allowing large numbers of active GCI flights can adversely impact mission performance on low or medium specification hosts/servers.
   -- GCI needs to be setup at strategic airbases. Too far will mean that the aircraft need to fly a long way to reach the intruders,
-  -- too short will mean that the intruders may have alraedy passed the ideal interception point!
+  -- too short will mean that the intruders may have already passed the ideal interception point!
   --
   -- For example, the following setup will create a GCI for squadron "Sochi":
   --
@@ -4191,8 +4114,7 @@ do
   --      These late activated Groups start with the name `SQUADRON CCCP`. Each Group object contains only one Unit, and defines the weapon payload, skin and skill level.
   --    * `"CAP CCCP"`: CAP Zones are defined using floating, late activated Helicopter Group objects, where the route points define the route of the polygon of the CAP Zone.
   --      These Helicopter Group objects start with the name `CAP CCCP`, and will be the locations wherein CAP will be performed.
-  --    * `2` Defines how many CAP airplanes are patrolling in each CAP zone defined simulateneously.
-  --
+  --    * `2` Defines how many CAP airplanes are patrolling in each CAP zone defined simultaneously.
   --
   -- ### 4.2) A more advanced setup:
   --
@@ -4209,14 +4131,13 @@ do
   --    * `{ "104th CAP" }`: An array of the names of the CAP zones are defined using floating, late activated helicopter group objects,
   --      where the route points define the route of the polygon of the CAP Zone.
   --      These Helicopter Group objects start with the name `104th CAP`, and will be the locations wherein CAP will be performed.
-  --    * `4` Defines how many CAP airplanes are patrolling in each CAP zone defined simulateneously.
+  --    * `4` Defines how many CAP airplanes are patrolling in each CAP zone defined simultaneously.
   --
   -- @field #AI_A2A_GCICAP
   AI_A2A_GCICAP = {
     ClassName = "AI_A2A_GCICAP",
     Detection = nil,
   }
-
 
   --- AI_A2A_GCICAP constructor.
   -- @param #AI_A2A_GCICAP self
@@ -4297,7 +4218,7 @@ do
   --   -- The CAP Zone prefix is nil. No CAP is created.
   --   -- The CAP Limit is nil.
   --   -- The Grouping Radius is nil. The default range of 6km radius will be grouped as a group of targets.
-  --   -- The Engage Radius is set nil. The default Engage Radius will be used to consider a defenser being assigned to a task.
+  --   -- The Engage Radius is set nil. The default Engage Radius will be used to consider a defender being assigned to a task.
   --   -- The GCI Radius is nil. Any target detected within the default GCI Radius will be considered for GCI engagement.
   --   -- The amount of resources for each squadron is set to 30. Thus about 30 resources are allocated to each squadron created.
   --
@@ -4309,7 +4230,7 @@ do
     EWRSetGroup:FilterPrefixes( EWRPrefixes )
     EWRSetGroup:FilterStart()
 
-    local Detection  = DETECTION_AREAS:New( EWRSetGroup, GroupingRadius or 30000 )
+    local Detection = DETECTION_AREAS:New( EWRSetGroup, GroupingRadius or 30000 )
 
     local self = BASE:Inherit( self, AI_A2A_DISPATCHER:New( Detection ) ) -- #AI_A2A_GCICAP
 
@@ -4330,14 +4251,11 @@ do
       end
     end
 
-    self.Templates = SET_GROUP
-      :New()
-      :FilterPrefixes( TemplatePrefixes )
-      :FilterOnce()
+    self.Templates = SET_GROUP:New():FilterPrefixes( TemplatePrefixes ):FilterOnce()
 
     -- Setup squadrons
 
-    self:I( { Airbases = AirbaseNames  } )
+    self:I( { Airbases = AirbaseNames } )
 
     self:I( "Defining Templates for Airbases ..." )
     for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
@@ -4415,7 +4333,7 @@ do
 
     self:HandleEvent( EVENTS.Crash, self.OnEventCrashOrDead )
     self:HandleEvent( EVENTS.Dead, self.OnEventCrashOrDead )
-    --self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCrashOrDead )
+    -- self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCrashOrDead )
 
     self:HandleEvent( EVENTS.Land )
     self:HandleEvent( EVENTS.EngineShutdown )
@@ -4512,7 +4430,7 @@ do
   --   -- The CAP Zone prefix is nil. No CAP is created.
   --   -- The CAP Limit is nil.
   --   -- The Grouping Radius is nil. The default range of 6km radius will be grouped as a group of targets.
-  --   -- The Engage Radius is set nil. The default Engage Radius will be used to consider a defenser being assigned to a task.
+  --   -- The Engage Radius is set nil. The default Engage Radius will be used to consider a defender being assigned to a task.
   --   -- The GCI Radius is nil. Any target detected within the default GCI Radius will be considered for GCI engagement.
   --   -- The amount of resources for each squadron is set to 30. Thus about 30 resources are allocated to each squadron created.
   --

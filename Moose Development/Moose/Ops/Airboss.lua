@@ -6058,7 +6058,7 @@ function AIRBOSS:_RefuelAI( flight )
     -- Guide AI to divert field --
     ------------------------------
 
-    -- Closest Airfield of the coaliton.
+    -- Closest Airfield of the coalition.
     local divertfield = self:GetCoordinate():GetClosestAirbase( Airbase.Category.AIRDROME, self:GetCoalition() )
 
     -- Handle case where there is no divert field of the own coalition and try neutral instead.

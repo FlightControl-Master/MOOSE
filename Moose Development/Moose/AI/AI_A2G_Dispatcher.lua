@@ -3243,17 +3243,17 @@ do -- AI_A2G_DISPATCHER
     return self
   end
   
-  --- Set the default fuel treshold when defenders will RTB or Refuel in the air.
-  -- The fuel treshold is by default set to 15%, which means that an aircraft will stay in the air until 15% of its fuel is remaining.
+  --- Set the default fuel threshold when defenders will RTB or Refuel in the air.
+  -- The fuel threshold is by default set to 15%, which means that an aircraft will stay in the air until 15% of its fuel is remaining.
   -- @param #AI_A2G_DISPATCHER self
-  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the % of the treshold of fuel remaining in the tank when the plane will go RTB or Refuel.
+  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the % of the threshold of fuel remaining in the tank when the plane will go RTB or Refuel.
   -- @return #AI_A2G_DISPATCHER
   -- @usage
   -- 
   --   -- Now Setup the A2G dispatcher, and initialize it using the Detection object.
   --   A2GDispatcher = AI_A2G_DISPATCHER:New( Detection )  
   --   
-  --   -- Now Setup the default fuel treshold.
+  --   -- Now Setup the default fuel threshold.
   --   A2GDispatcher:SetDefaultFuelThreshold( 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --   
   function AI_A2G_DISPATCHER:SetDefaultFuelThreshold( FuelThreshold )
@@ -3264,18 +3264,18 @@ do -- AI_A2G_DISPATCHER
   end  
 
 
-  --- Set the fuel treshold for the squadron when defenders will RTB or Refuel in the air.
-  -- The fuel treshold is by default set to 15%, which means that an aircraft will stay in the air until 15% of its fuel is remaining.
+  --- Set the fuel threshold for the squadron when defenders will RTB or Refuel in the air.
+  -- The fuel threshold is by default set to 15%, which means that an aircraft will stay in the air until 15% of its fuel is remaining.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
-  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the % of the treshold of fuel remaining in the tank when the plane will go RTB or Refuel.
+  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the % of the threshold of fuel remaining in the tank when the plane will go RTB or Refuel.
   -- @return #AI_A2G_DISPATCHER
   -- @usage
   -- 
   --   -- Now Setup the A2G dispatcher, and initialize it using the Detection object.
   --   A2GDispatcher = AI_A2G_DISPATCHER:New( Detection )  
   --   
-  --   -- Now Setup the default fuel treshold.
+  --   -- Now Setup the default fuel threshold.
   --   A2GDispatcher:SetSquadronRefuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --   
   function AI_A2G_DISPATCHER:SetSquadronFuelThreshold( SquadronName, FuelThreshold )
@@ -3295,7 +3295,7 @@ do -- AI_A2G_DISPATCHER
   --   -- Now Setup the A2G dispatcher, and initialize it using the Detection object.
   --   A2GDispatcher = AI_A2G_DISPATCHER:New( Detection )  
   --   
-  --   -- Now Setup the default fuel treshold.
+  --   -- Now Setup the default fuel threshold.
   --   A2GDispatcher:SetDefaultFuelThreshold( 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --   
   --   -- Now Setup the default tanker.
@@ -3318,7 +3318,7 @@ do -- AI_A2G_DISPATCHER
   --   -- Now Setup the A2G dispatcher, and initialize it using the Detection object.
   --   A2GDispatcher = AI_A2G_DISPATCHER:New( Detection )  
   --   
-  --   -- Now Setup the squadron fuel treshold.
+  --   -- Now Setup the squadron fuel threshold.
   --   A2GDispatcher:SetSquadronRefuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --   
   --   -- Now Setup the squadron tanker.
@@ -3421,7 +3421,7 @@ do -- AI_A2G_DISPATCHER
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:CountDefendersEngaged( AttackerDetection, AttackerCount )
 
-    -- First, count the active AIGroups Units, targetting the DetectedSet
+    -- First, count the active AIGroups Units, targeting the DetectedSet
     local DefendersEngaged = 0
     local DefendersTotal = 0
     
