@@ -49,7 +49,7 @@
 -- Upon started, The AI will **Route** itself towards the random 3D point within a patrol zone, 
 -- using a random speed within the given altitude and speed limits.
 -- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
--- This cycle will continue until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
+-- This cycle will continue until a fuel or damage threshold has been reached by the AI, or when the AI is commanded to RTB.
 -- 
 -- ![Route Event](..\Presentations\AI_CAS\Dia5.JPG)
 -- 
@@ -87,7 +87,7 @@
 -- It will keep patrolling there, until it is notified to RTB or move to another CAS Zone.
 -- It can be notified to go RTB through the **RTB** event.
 -- 
--- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
+-- When the fuel threshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
 -- ![Engage Event](..\Presentations\AI_CAS\Dia12.JPG)
 --
@@ -117,7 +117,7 @@
 --   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
 --   * **@{#AI_CAS_ZONE.Destroy}**: The AI has destroyed a target @{Wrapper.Unit}.
 --   * **@{#AI_CAS_ZONE.Destroyed}**: The AI has destroyed all target @{Wrapper.Unit}s assigned in the CAS task.
---   * **Status**: The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
+--   * **Status**: The AI is checking status (fuel and damage). When the thresholds have been reached, the AI will RTB.
 -- 
 -- ===
 -- 
@@ -520,7 +520,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To,
     
     self:SetRefreshTimeInterval( 2 )
     self:SetDetectionActivated()
-    self:__Target( -2 ) -- Start Targetting
+    self:__Target( -2 ) -- Start targeting
   end
 end
 

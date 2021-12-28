@@ -50,7 +50,7 @@
 -- @field #boolean Report If true, send status messages to coalition.
 -- @field Wrapper.Static#STATIC warehouse The phyical warehouse structure.
 -- @field #string alias Alias of the warehouse. Name its called when sending messages.
--- @field Core.Zone#ZONE zone Zone around the warehouse. If this zone is captured, the warehouse and all its assets goes to the capturing coaliton.
+-- @field Core.Zone#ZONE zone Zone around the warehouse. If this zone is captured, the warehouse and all its assets goes to the capturing coalition.
 -- @field Wrapper.Airbase#AIRBASE airbase Airbase the warehouse belongs to.
 -- @field #string airbasename Name of the airbase associated to the warehouse.
 -- @field Core.Point#COORDINATE road Closest point to warehouse on road.
@@ -764,7 +764,7 @@
 --     warehouseBatumi:Load("D:\\My Warehouse Data\\")
 --     warehouseBatumi:Start()
 --
--- This sequence loads all assets from file. If a warehouse was captured in the last mission, it also respawns the static warehouse structure with the right coaliton.
+-- This sequence loads all assets from file. If a warehouse was captured in the last mission, it also respawns the static warehouse structure with the right coalition.
 -- However, it due to DCS limitations it is not possible to set the airbase coalition. This has to be done manually in the mission editor. Or alternatively, one could
 -- spawn some ground units via a self request and let them capture the airbase.
 --
@@ -1811,7 +1811,7 @@ WAREHOUSE.version="1.0.2"
 -- DONE: Add shipping lanes between warehouses.
 -- DONE: Handle cases with immobile units <== should be handled by dispatcher classes.
 -- DONE: Handle cases for aircraft carriers and other ships. Place warehouse on carrier possible? On others probably not - exclude them?
--- DONE: Add general message function for sending to coaliton or debug.
+-- DONE: Add general message function for sending to coalition or debug.
 -- DONE: Fine tune event handlers.
 -- DONE: Improve generalized attributes.
 -- DONE: If warehouse is destroyed, all asssets are gone.
@@ -3155,7 +3155,7 @@ end
 -- @param MinAssets (Optional) Minimum number of assets the warehouse should have. Default 0.
 -- @param #string Descriptor (Optional) Descriptor describing the selected assets which should be in stock. See @{#WAREHOUSE.Descriptor} for possible values.
 -- @param DescriptorValue (Optional) Descriptor value selecting the type of assets which should be in stock.
--- @param DCS#Coalition.side Coalition (Optional) Coalition side of the warehouse. Default is the same coaliton as the present warehouse. Set to false for any coalition.
+-- @param DCS#Coalition.side Coalition (Optional) Coalition side of the warehouse. Default is the same coalition as the present warehouse. Set to false for any coalition.
 -- @param Core.Point#COORDINATE RefCoordinate (Optional) Coordinate to which the closest warehouse is searched. Default is the warehouse calling this function.
 -- @return #WAREHOUSE The the nearest warehouse object. Or nil if no warehouse is found.
 -- @return #number The distance to the nearest warehouse in meters. Or nil if no warehouse is found.
@@ -3267,7 +3267,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
 
   -- Short info.
   local text=string.format("Starting warehouse %s alias %s:\n",self.warehouse:GetName(), self.alias)
-  text=text..string.format("Coaliton = %s\n", self:GetCoalitionName())
+  text=text..string.format("Coalition = %s\n", self:GetCoalitionName())
   text=text..string.format("Country  = %s\n", self:GetCountryName())
   text=text..string.format("Airbase  = %s (category=%d)\n", self:GetAirbaseName(), self:GetAirbaseCategory())
   env.info(text)
@@ -8460,7 +8460,7 @@ function WAREHOUSE:_GetStockAssetsText(messagetoall)
 end
 
 --- Create or update mark text at warehouse, which is displayed in F10 map showing how many assets of each type are in stock.
--- Only the coaliton of the warehouse owner is able to see it.
+-- Only the coalition of the warehouse owner is able to see it.
 -- @param #WAREHOUSE self
 -- @return #string Text about warehouse stock
 function WAREHOUSE:_UpdateWarehouseMarkText()

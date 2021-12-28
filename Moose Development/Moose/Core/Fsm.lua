@@ -18,11 +18,11 @@
 --
 -- A Finite State Machine (FSM) models a process flow that transitions between various **States** through triggered **Events**.
 --
--- A FSM can only be in one of a finite number of states. 
+-- A FSM can only be in one of a finite number of states.
 -- The machine is in only one state at a time; the state it is in at any given time is called the **current state**.
 -- It can change from one state to another when initiated by an **__internal__ or __external__ triggering event**, which is called a **transition**.
--- An **FSM implementation** is defined by **a list of its states**, **its initial state**, and **the triggering events** for **each possible transition**.
--- An FSM implementation is composed out of **two parts**, a set of **state transition rules**, and an implementation set of **state transition handlers**, implementing those transitions.
+-- A **FSM implementation** is defined by **a list of its states**, **its initial state**, and **the triggering events** for **each possible transition**.
+-- A FSM implementation is composed out of **two parts**, a set of **state transition rules**, and an implementation set of **state transition handlers**, implementing those transitions.
 --
 -- The FSM class supports a **hierarchical implementation of a Finite State Machine**,
 -- that is, it allows to **embed existing FSM implementations in a master FSM**.
@@ -34,21 +34,21 @@
 -- orders him to destroy x targets and account the results.
 -- Other examples of ready made FSM could be:
 --
---   * route a plane to a zone flown by a human
---   * detect targets by an AI and report to humans
---   * account for destroyed targets by human players
---   * handle AI infantry to deploy from or embark to a helicopter or airplane or vehicle 
---   * let an AI patrol a zone
+--   * Route a plane to a zone flown by a human.
+--   * Detect targets by an AI and report to humans.
+--   * Account for destroyed targets by human players.
+--   * Handle AI infantry to deploy from or embark to a helicopter or airplane or vehicle.
+--   * Let an AI patrol a zone.
 --
--- The **MOOSE framework** uses extensively the FSM class and derived FSM\_ classes,
+-- The **MOOSE framework** extensively uses the FSM class and derived FSM\_ classes,
 -- because **the goal of MOOSE is to simplify mission design complexity for mission building**.
 -- By efficiently utilizing the FSM class and derived classes, MOOSE allows mission designers to quickly build processes.
 -- **Ready made FSM-based implementations classes** exist within the MOOSE framework that **can easily be re-used,
 -- and tailored** by mission designers through **the implementation of Transition Handlers**.
 -- Each of these FSM implementation classes start either with:
 --
---   * an acronym **AI\_**, which indicates an FSM implementation directing **AI controlled** @{GROUP} and/or @{UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
---   * an acronym **TASK\_**, which indicates an FSM implementation executing a @{TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
+--   * an acronym **AI\_**, which indicates a FSM implementation directing **AI controlled** @{GROUP} and/or @{UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
+--   * an acronym **TASK\_**, which indicates a FSM implementation executing a @{TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
 --   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{TASK}, seated in a @{CLIENT} (slot) or a @{UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
 --
 -- Detailed explanations and API specifics are further below clarified and FSM derived class specifics are described in those class documentation sections.
@@ -59,7 +59,7 @@
 -- I've reworked this development (taken the concept), and created a **hierarchical state machine** out of it, embedded within the DCS simulator.
 -- Additionally, I've added extendability and created an API that allows seamless FSM implementation.
 --
--- The following derived classes are available in the MOOSE framework, that implement a specialised form of a FSM:
+-- The following derived classes are available in the MOOSE framework, that implement a specialized form of a FSM:
 --
 --   * @{#FSM_TASK}: Models Finite State Machines for @{Task}s.
 --   * @{#FSM_PROCESS}: Models Finite State Machines for @{Task} actions, which control @{Client}s.

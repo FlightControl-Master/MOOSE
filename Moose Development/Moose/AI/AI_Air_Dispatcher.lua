@@ -10,11 +10,11 @@
 --    * Setup (CAS) Controlled Air Support squadrons, to attack closeby enemy ground units near friendly installations.
 --    * Setup (BAI) Battleground Air Interdiction squadrons to attack remote enemy ground units and targets.
 --    * Define and use a detection network controlled by recce.
---    * Define AIR defense squadrons at airbases, farps and carriers.
+--    * Define AIR defense squadrons at airbases, FARPs and carriers.
 --    * Enable airbases for AIR defenses.
 --    * Add different planes and helicopter templates to squadrons.
 --    * Assign squadrons to execute a specific engagement type depending on threat level of the detected ground enemy unit composition.
---    * Add multiple squadrons to different airbases, farps or carriers.
+--    * Add multiple squadrons to different airbases, FARPs or carriers.
 --    * Define different ranges to engage upon.
 --    * Establish an automatic in air refuel process for planes using refuel tankers.
 --    * Setup default settings for all squadrons and AIR defenses.
@@ -40,7 +40,7 @@
 -- 
 -- AI_AIR_DISPATCHER is the main AIR defense class that models the AIR defense system.
 -- 
--- Before you start using the AI_AIR_DISPATCHER, ask youself the following questions.
+-- Before you start using the AI_AIR_DISPATCHER, ask yourself the following questions.
 -- 
 -- 
 -- ## 1. Which coalition am I modeling an AIR defense system for? blue or red?
@@ -128,7 +128,7 @@
 -- Depending on the defense type, different payloads will be needed. See further points on squadron definition.
 -- 
 -- 
--- ## 7. Where will the Squadrons be located? On Airbases? On Carrier Ships? On Farps?
+-- ## 7. Where will the Squadrons be located? On Airbases? On Carrier Ships? On FARPs?
 -- 
 -- Squadrons are placed at the **home base** on an **airfield**, **carrier** or **farp**.
 -- Carefully plan where each Squadron will be located as part of the defense system required for mission effective defenses.
@@ -354,7 +354,7 @@ do -- AI_AIR_DISPATCHER
   -- **DetectionSetGroup** is then calling `FilterStart()`, which is starting the dynamic filtering or inclusion of these groups. 
   -- Note that any destroy or new spawn of a group having a name, starting with the above prefix, will be removed or added to the set.
   -- 
-  -- Then a new detection object is created from the class `DETECTION_AREAS`. A grouping radius of 1000 meters (1km) is choosen.
+  -- Then a new detection object is created from the class `DETECTION_AREAS`. A grouping radius of 1000 meters (1km) is chosen.
   -- 
   -- The `Detection` object is then passed to the @{#AI_AIR_DISPATCHER.New}() method to indicate the reconnaissance network 
   -- configuration and setup the AIR defense detection mechanism.
@@ -647,7 +647,7 @@ do -- AI_AIR_DISPATCHER
   --   * @{#AI_AIR_DISPATCHER.SetSquadronLandingAtRunway}() will despawn the returning aircraft directly after landing at the runway.
   --   * @{#AI_AIR_DISPATCHER.SetSquadronLandingAtEngineShutdown}() will despawn the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.
   -- 
-  -- You can use these methods to minimize the airbase coodination overhead and to increase the airbase efficiency.
+  -- You can use these methods to minimize the airbase coordination overhead and to increase the airbase efficiency.
   -- When there are lots of aircraft returning for landing, at the same airbase, the takeoff process will be halted, which can cause a complete failure of the
   -- A2A defense system, as no new CAP or GCI planes can takeoff.
   -- Note that the method @{#AI_AIR_DISPATCHER.SetSquadronLandingNearAirbase}() will only work for returning aircraft, not for damaged or out of fuel aircraft.
@@ -724,13 +724,13 @@ do -- AI_AIR_DISPATCHER
   -- 
   -- Use the method @{#AI_AIR_DISPATCHER.SetSquadronEngageLimit}() to limit the amount of aircraft that will engage with the enemy, per squadron.
   --
-  -- ## 4. Set the **fuel treshold**.
+  -- ## 4. Set the **fuel threshold**.
   -- 
-  -- When aircraft get **out of fuel** to a certain %-tage, which is by default **15% (0.15)**, there are two possible actions that can be taken:
+  -- When aircraft get **out of fuel** to a certain %, which is by default **15% (0.15)**, there are two possible actions that can be taken:
   --  - The aircraft will go RTB, and will be replaced with a new aircraft if possible.
   --  - The aircraft will refuel at a tanker, if a tanker has been specified for the squadron.
   -- 
-  -- Use the method @{#AI_AIR_DISPATCHER.SetSquadronFuelThreshold}() to set the **squadron fuel treshold** of the aircraft for all squadrons.
+  -- Use the method @{#AI_AIR_DISPATCHER.SetSquadronFuelThreshold}() to set the **squadron fuel threshold** of the aircraft for all squadrons.
   -- 
   -- ## 6. Other configuration options
   -- 
@@ -786,17 +786,17 @@ do -- AI_AIR_DISPATCHER
   -- 
   -- Use the method @{#AI_AIR_DISPATCHER.SetDefaultGrouping}() to set the **default grouping** of spawned airplanes for all squadrons.
   -- 
-  -- ## 10.5. Default RTB fuel treshold.
+  -- ## 10.5. Default RTB fuel threshold.
   -- 
-  -- When an airplane gets **out of fuel** to a certain %-tage, which is **15% (0.15)**, it will go RTB, and will be replaced with a new airplane when applicable.
+  -- When an airplane gets **out of fuel** to a certain %, which is **15% (0.15)**, it will go RTB, and will be replaced with a new airplane when applicable.
   -- 
-  -- Use the method @{#AI_AIR_DISPATCHER.SetDefaultFuelThreshold}() to set the **default fuel treshold** of spawned airplanes for all squadrons.
+  -- Use the method @{#AI_AIR_DISPATCHER.SetDefaultFuelThreshold}() to set the **default fuel threshold** of spawned airplanes for all squadrons.
   -- 
-  -- ## 10.6. Default RTB damage treshold.
+  -- ## 10.6. Default RTB damage threshold.
   -- 
-  -- When an airplane is **damaged** to a certain %-tage, which is **40% (0.40)**, it will go RTB, and will be replaced with a new airplane when applicable.
+  -- When an airplane is **damaged** to a certain %, which is **40% (0.40)**, it will go RTB, and will be replaced with a new airplane when applicable.
   -- 
-  -- Use the method @{#AI_AIR_DISPATCHER.SetDefaultDamageThreshold}() to set the **default damage treshold** of spawned airplanes for all squadrons.
+  -- Use the method @{#AI_AIR_DISPATCHER.SetDefaultDamageThreshold}() to set the **default damage threshold** of spawned airplanes for all squadrons.
   -- 
   -- ## 10.7. Default settings for **patrol**.
   -- 
@@ -829,7 +829,7 @@ do -- AI_AIR_DISPATCHER
   -- 
   -- In the mission editor, setup a group with task Refuelling. A tanker unit of the correct coalition will be automatically selected.
   -- Then, use the method @{#AI_AIR_DISPATCHER.SetDefaultTanker}() to set the tanker for the dispatcher.
-  -- Use the method @{#AI_AIR_DISPATCHER.SetDefaultFuelThreshold}() to set the %-tage left in the defender airplane tanks when a refuel action is needed.
+  -- Use the method @{#AI_AIR_DISPATCHER.SetDefaultFuelThreshold}() to set the % left in the defender airplane tanks when a refuel action is needed.
   -- 
   -- When the tanker specified is alive and in the air, the tanker will be used for refuelling.
   -- 
@@ -843,7 +843,7 @@ do -- AI_AIR_DISPATCHER
   --      A2ADispatcher:SetSquadronCapInterval("Sochi", 2, 30, 600, 1 ) 
   --      A2ADispatcher:SetSquadronGci( "Sochi", 900, 1200 )
   --      
-  --      -- Set the default tanker for refuelling to "Tanker", when the default fuel treshold has reached 90% fuel left.
+  --      -- Set the default tanker for refuelling to "Tanker", when the default fuel threshold has reached 90% fuel left.
   --      A2ADispatcher:SetDefaultFuelThreshold( 0.9 )
   --      A2ADispatcher:SetDefaultTanker( "Tanker" )
   --  
@@ -882,10 +882,7 @@ do -- AI_AIR_DISPATCHER
   -- As a result, the GCI and CAP will stop!
   -- However, the squadron will still stay alive. Any airplane that is airborne will continue its operations until all airborne airplanes
   -- of the squadron will be destroyed. This to keep consistency of air operations not to confuse the players.
-  -- 
-  -- 
-  -- 
-  -- 
+  --
   -- @field #AI_AIR_DISPATCHER
   AI_AIR_DISPATCHER = {
     ClassName = "AI_AIR_DISPATCHER",
@@ -914,10 +911,10 @@ do -- AI_AIR_DISPATCHER
   --- Enumerator for spawns at airbases
   -- @type AI_AIR_DISPATCHER.Takeoff
   -- @extends Wrapper.Group#GROUP.Takeoff
-  
+
   --- @field #AI_AIR_DISPATCHER.Takeoff Takeoff
   AI_AIR_DISPATCHER.Takeoff = GROUP.Takeoff
-  
+
   --- Defnes Landing location.
   -- @field #AI_AIR_DISPATCHER.Landing
   AI_AIR_DISPATCHER.Landing = {
@@ -925,7 +922,7 @@ do -- AI_AIR_DISPATCHER
     AtRunway = 2,
     AtEngineShutdown = 3,
   }
-  
+
   --- A defense queue item description
   -- @type AI_AIR_DISPATCHER.DefenseQueueItem
   -- @field Squadron
@@ -936,7 +933,7 @@ do -- AI_AIR_DISPATCHER
   -- @field Functional.Detection#DETECTION_BASE AttackerDetection
   -- @field DefenderGrouping
   -- @field #string SquadronName The name of the squadron.
-  
+
   --- Queue of planned defenses to be launched.
   -- This queue exists because defenses must be launched on FARPS, or in the air, or on an airbase, or on carriers.
   -- And some of these platforms have very limited amount of "launching" platforms.
@@ -945,40 +942,39 @@ do -- AI_AIR_DISPATCHER
   -- This guarantees that launched defenders are also directly existing ...
   -- @type AI_AIR_DISPATCHER.DefenseQueue
   -- @list<#AI_AIR_DISPATCHER.DefenseQueueItem> DefenseQueueItem A list of all defenses being queued ...
-  
+
   --- @field #AI_AIR_DISPATCHER.DefenseQueue DefenseQueue
   AI_AIR_DISPATCHER.DefenseQueue = {}
-  
-  
+
   --- Defense approach types
   -- @type #AI_AIR_DISPATCHER.DefenseApproach
   AI_AIR_DISPATCHER.DefenseApproach = {
     Random = 1,
     Distance = 2,
   }
-  
+
   --- AI_AIR_DISPATCHER constructor.
-  -- This is defining the AIR DISPATCHER for one coaliton.
+  -- This is defining the AIR DISPATCHER for one coalition.
   -- The Dispatcher works with a @{Functional.Detection#DETECTION_BASE} object that is taking of the detection of targets using the EWR units.
-  -- The Detection object is polymorphic, depending on the type of detection object choosen, the detection will work differently.
+  -- The Detection object is polymorphic, depending on the type of detection object chosen, the detection will work differently.
   -- @param #AI_AIR_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE Detection The DETECTION object that will detects targets using the the Early Warning Radar network.
   -- @return #AI_AIR_DISPATCHER self
   -- @usage
-  --   
-  --   -- Setup the Detection, using DETECTION_AREAS.
-  --   -- First define the SET of GROUPs that are defining the EWR network.
-  --   -- Here with prefixes DF CCCP AWACS, DF CCCP EWR.
-  --   DetectionSetGroup = SET_GROUP:New()
-  --   DetectionSetGroup:FilterPrefixes( { "DF CCCP AWACS", "DF CCCP EWR" } )
-  --   DetectionSetGroup:FilterStart()
-  --   
-  --   -- Define the DETECTION_AREAS, using the DetectionSetGroup, with a 30km grouping radius.
-  --   Detection = DETECTION_AREAS:New( DetectionSetGroup, 30000 )
-  -- 
-  --   -- Now Setup the AIR dispatcher, and initialize it using the Detection object.
-  --   AIRDispatcher = AI_AIR_DISPATCHER:New( Detection )  --   
-  -- 
+  --
+  --     -- Setup the Detection, using DETECTION_AREAS.
+  --     -- First define the SET of GROUPs that are defining the EWR network.
+  --     -- Here with prefixes DF CCCP AWACS, DF CCCP EWR.
+  --     DetectionSetGroup = SET_GROUP:New()
+  --     DetectionSetGroup:FilterPrefixes( { "DF CCCP AWACS", "DF CCCP EWR" } )
+  --     DetectionSetGroup:FilterStart()
+  --
+  --     -- Define the DETECTION_AREAS, using the DetectionSetGroup, with a 30km grouping radius.
+  --     Detection = DETECTION_AREAS:New( DetectionSetGroup, 30000 )
+  --
+  --     -- Now Setup the AIR dispatcher, and initialize it using the Detection object.
+  --     AIRDispatcher = AI_AIR_DISPATCHER:New( Detection )
+  --
   function AI_AIR_DISPATCHER:New( Detection )
 
     -- Inherits from DETECTION_MANAGER
@@ -1435,17 +1431,17 @@ do -- AI_AIR_DISPATCHER
   end  
 
 
-  --- Set the default damage treshold when defenders will RTB.
-  -- The default damage treshold is by default set to 40%, which means that when the airplane is 40% damaged, it will go RTB.
+  --- Set the default damage threshold when defenders will RTB.
+  -- The default damage threshold is by default set to 40%, which means that when the airplane is 40% damaged, it will go RTB.
   -- @param #AI_AIR_DISPATCHER self
-  -- @param #number DamageThreshold A decimal number between 0 and 1, that expresses the %-tage of the damage treshold before going RTB.
+  -- @param #number DamageThreshold A decimal number between 0 and 1, that expresses the % of the damage threshold before going RTB.
   -- @return #AI_AIR_DISPATCHER
   -- @usage
   -- 
   --   -- Now Setup the AIR dispatcher, and initialize it using the Detection object.
   --   AIRDispatcher = AI_AIR_DISPATCHER:New( Detection )  
   --   
-  --   -- Now Setup the default damage treshold.
+  --   -- Now Setup the default damage threshold.
   --   AIRDispatcher:SetDefaultDamageThreshold( 0.90 ) -- Go RTB when the airplane 90% damaged.
   --   
   function AI_AIR_DISPATCHER:SetDefaultDamageThreshold( DamageThreshold )
@@ -1989,7 +1985,7 @@ do -- AI_AIR_DISPATCHER
 
   --- Defines the default amount of extra planes that will take-off as part of the defense system.
   -- @param #AI_AIR_DISPATCHER self
-  -- @param #number Overhead The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- @param #number Overhead The % of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
   -- The default overhead is 1, so equal balance. The @{#AI_AIR_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
   -- taking into account the plane types of the squadron. For example, a MIG-31 with full long-distance AIR missiles payload, may still be less effective than a F-15C with short missiles...
   -- So in this case, one may want to use the Overhead method to allocate more defending planes as the amount of detected attacking planes.
@@ -2028,7 +2024,7 @@ do -- AI_AIR_DISPATCHER
   --- Defines the amount of extra planes that will take-off as part of the defense system.
   -- @param #AI_AIR_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
-  -- @param #number Overhead The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- @param #number Overhead The % of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
   -- The default overhead is 1, so equal balance. The @{#AI_AIR_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
   -- taking into account the plane types of the squadron. For example, a MIG-31 with full long-distance AIR missiles payload, may still be less effective than a F-15C with short missiles...
   -- So in this case, one may want to use the Overhead method to allocate more defending planes as the amount of detected attacking planes.
@@ -2068,7 +2064,7 @@ do -- AI_AIR_DISPATCHER
   --- Gets the overhead of planes as part of the defense system, in comparison with the attackers.
   -- @param #AI_AIR_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
-  -- @return #number The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- @return #number The % of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
   -- The default overhead is 1, so equal balance. The @{#AI_AIR_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
   -- taking into account the plane types of the squadron. For example, a MIG-31 with full long-distance AIR missiles payload, may still be less effective than a F-15C with short missiles...
   -- So in this case, one may want to use the Overhead method to allocate more defending planes as the amount of detected attacking planes.
@@ -2674,17 +2670,17 @@ do -- AI_AIR_DISPATCHER
     return self
   end
   
-  --- Set the default fuel treshold when defenders will RTB or Refuel in the air.
-  -- The fuel treshold is by default set to 15%, which means that an airplane will stay in the air until 15% of its fuel has been consumed.
+  --- Set the default fuel threshold when defenders will RTB or Refuel in the air.
+  -- The fuel threshold is by default set to 15%, which means that an airplane will stay in the air until 15% of its fuel has been consumed.
   -- @param #AI_AIR_DISPATCHER self
-  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the %-tage of the treshold of fuel remaining in the tank when the plane will go RTB or Refuel.
+  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the % of the threshold of fuel remaining in the tank when the plane will go RTB or Refuel.
   -- @return #AI_AIR_DISPATCHER
   -- @usage
   -- 
   --   -- Now Setup the AIR dispatcher, and initialize it using the Detection object.
   --   AIRDispatcher = AI_AIR_DISPATCHER:New( Detection )  
   --   
-  --   -- Now Setup the default fuel treshold.
+  --   -- Now Setup the default fuel threshold.
   --   AIRDispatcher:SetDefaultFuelThreshold( 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --   
   function AI_AIR_DISPATCHER:SetDefaultFuelThreshold( FuelThreshold )
@@ -2695,18 +2691,18 @@ do -- AI_AIR_DISPATCHER
   end  
 
 
-  --- Set the fuel treshold for the squadron when defenders will RTB or Refuel in the air.
-  -- The fuel treshold is by default set to 15%, which means that an airplane will stay in the air until 15% of its fuel has been consumed.
+  --- Set the fuel threshold for the squadron when defenders will RTB or Refuel in the air.
+  -- The fuel threshold is by default set to 15%, which means that an airplane will stay in the air until 15% of its fuel has been consumed.
   -- @param #AI_AIR_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
-  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the %-tage of the treshold of fuel remaining in the tank when the plane will go RTB or Refuel.
+  -- @param #number FuelThreshold A decimal number between 0 and 1, that expresses the % of the threshold of fuel remaining in the tank when the plane will go RTB or Refuel.
   -- @return #AI_AIR_DISPATCHER
   -- @usage
   -- 
   --   -- Now Setup the AIR dispatcher, and initialize it using the Detection object.
   --   AIRDispatcher = AI_AIR_DISPATCHER:New( Detection )  
   --   
-  --   -- Now Setup the default fuel treshold.
+  --   -- Now Setup the default fuel threshold.
   --   AIRDispatcher:SetSquadronRefuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --   
   function AI_AIR_DISPATCHER:SetSquadronFuelThreshold( SquadronName, FuelThreshold )
@@ -2726,7 +2722,7 @@ do -- AI_AIR_DISPATCHER
   --   -- Now Setup the AIR dispatcher, and initialize it using the Detection object.
   --   AIRDispatcher = AI_AIR_DISPATCHER:New( Detection )  
   --   
-  --   -- Now Setup the default fuel treshold.
+  --   -- Now Setup the default fuel threshold.
   --   AIRDispatcher:SetDefaultFuelThreshold( 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --   
   --   -- Now Setup the default tanker.
@@ -2749,7 +2745,7 @@ do -- AI_AIR_DISPATCHER
   --   -- Now Setup the AIR dispatcher, and initialize it using the Detection object.
   --   AIRDispatcher = AI_AIR_DISPATCHER:New( Detection )  
   --   
-  --   -- Now Setup the squadron fuel treshold.
+  --   -- Now Setup the squadron fuel threshold.
   --   AIRDispatcher:SetSquadronRefuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   --   
   --   -- Now Setup the squadron tanker.
@@ -2847,7 +2843,7 @@ do -- AI_AIR_DISPATCHER
   -- @param #AI_AIR_DISPATCHER self
   function AI_AIR_DISPATCHER:CountDefendersEngaged( AttackerDetection, AttackerCount )
 
-    -- First, count the active AIGroups Units, targetting the DetectedSet
+    -- First, count the active AIGroups Units, targeting the DetectedSet
     local DefendersEngaged = 0
     local DefendersTotal = 0
     

@@ -370,11 +370,11 @@ end
 
 
 --- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
--- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
--- When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_AIR.
+-- Therefore, with a parameter and a calculation of the distance to the home base, the fuel threshold is calculated.
+-- When the fuel threshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_AIR.
 -- Once the time is finished, the old AI will return to the base.
 -- @param #AI_AIR self
--- @param #number FuelThresholdPercentage The treshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
+-- @param #number FuelThresholdPercentage The threshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
 -- @param #number OutOfFuelOrbitTime The amount of seconds the out of fuel AIControllable will orbit before returning to the base.
 -- @return #AI_AIR self
 function AI_AIR:SetFuelThreshold( FuelThresholdPercentage, OutOfFuelOrbitTime )
@@ -387,14 +387,14 @@ function AI_AIR:SetFuelThreshold( FuelThresholdPercentage, OutOfFuelOrbitTime )
   return self
 end
 
---- When the AI is damaged beyond a certain treshold, it is required that the AI returns to the home base.
+--- When the AI is damaged beyond a certain threshold, it is required that the AI returns to the home base.
 -- However, damage cannot be foreseen early on. 
--- Therefore, when the damage treshold is reached, 
+-- Therefore, when the damage threshold is reached, 
 -- the AI will return immediately to the home base (RTB).
 -- Note that for groups, the average damage of the complete group will be calculated.
--- So, in a group of 4 airplanes, 2 lost and 2 with damage 0.2, the damage treshold will be 0.25.
+-- So, in a group of 4 airplanes, 2 lost and 2 with damage 0.2, the damage threshold will be 0.25.
 -- @param #AI_AIR self
--- @param #number PatrolDamageThreshold The treshold in percentage (between 0 and 1) when the AI is considered to be damaged.
+-- @param #number PatrolDamageThreshold The threshold in percentage (between 0 and 1) when the AI is considered to be damaged.
 -- @return #AI_AIR self
 function AI_AIR:SetDamageThreshold( PatrolDamageThreshold )
 
@@ -476,7 +476,7 @@ function AI_AIR:onafterStatus()
       
       local Fuel = self.Controllable:GetFuelMin()
       
-      -- If the fuel in the controllable is below the treshold percentage,
+      -- If the fuel in the controllable is below the threshold percentage,
       -- then send for refuel in case of a tanker, otherwise RTB.
       if Fuel < self.FuelThresholdPercentage then
       

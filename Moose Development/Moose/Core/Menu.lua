@@ -778,7 +778,7 @@ end
 
 do
   -- This local variable is used to cache the menus registered under groups.
-  -- Menus don't dissapear when groups for players are destroyed and restarted.
+  -- Menus don't disappear when groups for players are destroyed and restarted.
   -- So every menu for a client created must be tracked so that program logic accidentally does not create.
   -- the same menus twice during initialization logic.
   -- These menu classes are handling this logic with this variable.

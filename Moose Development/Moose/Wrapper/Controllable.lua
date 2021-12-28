@@ -1,4 +1,4 @@
-  --- **Wrapper** -- CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".
+--- **Wrapper** -- CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".
 --
 -- ===
 --
@@ -11,13 +11,10 @@
 -- @module Wrapper.Controllable
 -- @image Wrapper_Controllable.JPG
 
-
 --- @type CONTROLLABLE
 -- @field DCS#Controllable DCSControllable The DCS controllable class.
 -- @field #string ControllableName The name of the controllable.
 -- @extends Wrapper.Positionable#POSITIONABLE
-
-
 
 --- Wrapper class to handle the "DCS Controllable objects", which are Groups and Units:
 --
@@ -62,10 +59,10 @@
 --   * @{#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the controllable.
 --   * @{#CONTROLLABLE.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
 --   * @{#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).
---   * @{#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the controllable at a specified alititude.
---   * @{#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
+--   * @{#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the controllable at a specified altitude.
+--   * @{#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified altitude during a specified duration with a specified speed.
 --   * @{#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
---   * @{#CONTROLLABLE.TaskRoute}: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.
+--   * @{#CONTROLLABLE.TaskRoute}: (AIR + GROUND) Return a Mission task to follow a given route defined by Points.
 --   * @{#CONTROLLABLE.TaskRouteToVec2}: (AIR + GROUND) Make the Controllable move to a given point.
 --   * @{#CONTROLLABLE.TaskRouteToVec3}: (AIR + GROUND) Make the Controllable move to a given point.
 --   * @{#CONTROLLABLE.TaskRouteToZone}: (AIR + GROUND) Route the controllable to a given zone.
@@ -86,7 +83,7 @@
 --
 -- ## 2.3) Task preparation
 --
--- There are certain task methods that allow to tailor the task behaviour:
+-- There are certain task methods that allow to tailor the task behavior:
 --
 --   * @{#CONTROLLABLE.TaskWrappedAction}: Return a WrappedAction Task taking a Command.
 --   * @{#CONTROLLABLE.TaskCombo}: Return a Combo Task taking an array of Tasks.
@@ -133,7 +130,7 @@
 --
 -- # 5) Option methods
 --
--- Controllable **Option methods** change the behaviour of the Controllable while being alive.
+-- Controllable **Option methods** change the behavior of the Controllable while being alive.
 --
 -- ## 5.1) Rule of Engagement:
 --
@@ -190,7 +187,7 @@ CONTROLLABLE = {
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:New( ControllableName )
   local self = BASE:Inherit( self, POSITIONABLE:New( ControllableName ) ) -- #CONTROLLABLE
-  --self:F( ControllableName )
+  -- self:F( ControllableName )
   self.ControllableName = ControllableName
 
   self.TaskScheduler = SCHEDULER:New( self )
@@ -214,7 +211,6 @@ function CONTROLLABLE:_GetController()
 end
 
 -- Get methods
-
 
 --- Returns the health. Dead controllables have health <= 1.0.
 -- @param #CONTROLLABLE self
@@ -274,7 +270,7 @@ function CONTROLLABLE:GetLife0()
 end
 
 --- Returns relative minimum amount of fuel (from 0.0 to 1.0) a unit or group has in its internal tanks.
--- This method returns nil to ensure polymorphic behaviour! This method needs to be overridden by GROUP or UNIT.
+-- This method returns nil to ensure polymorphic behavior! This method needs to be overridden by GROUP or UNIT.
 -- @param #CONTROLLABLE self
 -- @return #nil The CONTROLLABLE is not existing or alive.
 function CONTROLLABLE:GetFuelMin()
@@ -284,7 +280,7 @@ function CONTROLLABLE:GetFuelMin()
 end
 
 --- Returns relative average amount of fuel (from 0.0 to 1.0) a unit or group has in its internal tanks.
--- This method returns nil to ensure polymorphic behaviour! This method needs to be overridden by GROUP or UNIT.
+-- This method returns nil to ensure polymorphic behavior! This method needs to be overridden by GROUP or UNIT.
 -- @param #CONTROLLABLE self
 -- @return #nil The CONTROLLABLE is not existing or alive.
 function CONTROLLABLE:GetFuelAve()
@@ -294,14 +290,13 @@ function CONTROLLABLE:GetFuelAve()
 end
 
 --- Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.
--- This method returns nil to ensure polymorphic behaviour! This method needs to be overridden by GROUP or UNIT.
+-- This method returns nil to ensure polymorphic behavior! This method needs to be overridden by GROUP or UNIT.
 -- @param #CONTROLLABLE self
 -- @return #nil The CONTROLLABLE is not existing or alive.
 function CONTROLLABLE:GetFuel()
   self:F( self.ControllableName )
   return nil
 end
-
 
 -- Tasks
 
@@ -320,7 +315,6 @@ function CONTROLLABLE:ClearTasks()
 
   return nil
 end
-
 
 --- Popping current Task from the controllable.
 -- @param #CONTROLLABLE self
@@ -399,7 +393,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
     local function SetTask( Controller, DCSTask )
       if self and self:IsAlive() then
         local Controller = self:_GetController()
-        --self:I( "Before SetTask" )
+        -- self:I( "Before SetTask" )
         Controller:setTask( DCSTask )
         -- AI_FORMATION class (used by RESCUEHELO) calls SetTask twice per second! hence spamming the DCS log file ==> setting this to trace.
         self:T( { ControllableName = self:GetName(), DCSTask = DCSTask } )
@@ -425,7 +419,7 @@ end
 --- Checking the Task Queue of the controllable. Returns false if no task is on the queue. true if there is a task.
 -- @param #CONTROLLABLE self
 -- @return Wrapper.Controllable#CONTROLLABLE self
-function CONTROLLABLE:HasTask() --R2.2
+function CONTROLLABLE:HasTask() -- R2.2
 
   local HasTaskResult = false
 
@@ -440,7 +434,6 @@ function CONTROLLABLE:HasTask() --R2.2
   return HasTaskResult
 end
 
-
 --- Return a condition section for a controlled task.
 -- @param #CONTROLLABLE self
 -- @param DCS#Time time DCS mission time.
@@ -452,7 +445,7 @@ end
 -- return DCS#Task
 function CONTROLLABLE:TaskCondition( time, userFlag, userFlagValue, condition, duration, lastWayPoint )
 
---[[
+  --[[
  StopCondition = {
    time = Time,
    userFlag = string,
@@ -485,8 +478,8 @@ function CONTROLLABLE:TaskControlled( DCSTask, DCSStopCondition )
     id = 'ControlledTask',
     params = {
       task = DCSTask,
-      stopCondition = DCSStopCondition
-    }
+      stopCondition = DCSStopCondition,
+    },
   }
 
   return DCSTaskControlled
@@ -501,8 +494,8 @@ function CONTROLLABLE:TaskCombo( DCSTasks )
   local DCSTaskCombo = {
     id = 'ComboTask',
     params = {
-      tasks = DCSTasks
-    }
+      tasks = DCSTasks,
+    },
   }
 
   return DCSTaskCombo
@@ -540,9 +533,6 @@ function CONTROLLABLE:SetTaskWaypoint( Waypoint, Task )
   return Waypoint.task
 end
 
-
-
-
 --- Executes a command action for the CONTROLLABLE.
 -- @param #CONTROLLABLE self
 -- @param DCS#Command DCSCommand The command to be executed.
@@ -567,17 +557,18 @@ end
 -- @param #number ToWayPoint
 -- @return DCS#Task
 -- @usage
--- --- This test demonstrates the use(s) of the SwitchWayPoint method of the GROUP class.
--- HeliGroup = GROUP:FindByName( "Helicopter" )
 --
--- --- Route the helicopter back to the FARP after 60 seconds.
--- -- We use the SCHEDULER class to do this.
--- SCHEDULER:New( nil,
---   function( HeliGroup )
---    local CommandRTB = HeliGroup:CommandSwitchWayPoint( 2, 8 )
---    HeliGroup:SetCommand( CommandRTB )
---  end, { HeliGroup }, 90
--- )
+--   -- This test demonstrates the use(s) of the SwitchWayPoint method of the GROUP class.
+--   HeliGroup = GROUP:FindByName( "Helicopter" )
+--
+--   -- Route the helicopter back to the FARP after 60 seconds.
+--   -- We use the SCHEDULER class to do this.
+--   SCHEDULER:New( nil,
+--     function( HeliGroup )
+--       local CommandRTB = HeliGroup:CommandSwitchWayPoint( 2, 8 )
+--       HeliGroup:SetCommand( CommandRTB )
+--     end, { HeliGroup }, 90
+--   )
 function CONTROLLABLE:CommandSwitchWayPoint( FromWayPoint, ToWayPoint )
   self:F2( { FromWayPoint, ToWayPoint } )
 
@@ -619,16 +610,15 @@ function CONTROLLABLE:CommandStopRoute( StopRoute )
   return CommandStopRoute
 end
 
-
 --- Give an uncontrolled air controllable the start command.
 -- @param #CONTROLLABLE self
 -- @param #number delay (Optional) Delay before start command in seconds.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:StartUncontrolled(delay)
-  if delay and delay>0 then
-    SCHEDULER:New(nil, CONTROLLABLE.StartUncontrolled, {self}, delay)
+function CONTROLLABLE:StartUncontrolled( delay )
+  if delay and delay > 0 then
+    SCHEDULER:New( nil, CONTROLLABLE.StartUncontrolled, { self }, delay )
   else
-    self:SetCommand({id='Start', params={}})
+    self:SetCommand( { id = 'Start', params = {} } )
   end
   return self
 end
@@ -640,7 +630,7 @@ end
 -- @param Core.Radio#BEACON.Type Type Beacon type (VOR, DME, TACAN, RSBN, ILS etc).
 -- @param Core.Radio#BEACON.System System Beacon system (VOR, DME, TACAN, RSBN, ILS etc).
 -- @param #number Frequency Frequency in Hz the beacon is running on. Use @{#UTILS.TACANToFrequency} to generate a frequency for TACAN beacons.
--- @param #number UnitID The ID of the unit the beacon is attached to. Usefull if more units are in one group.
+-- @param #number UnitID The ID of the unit the beacon is attached to. Useful if more units are in one group.
 -- @param #number Channel Channel the beacon is using. For, e.g. TACAN beacons.
 -- @param #string ModeChannel The TACAN mode of the beacon, i.e. "X" or "Y".
 -- @param #boolean AA If true, create and Air-Air beacon. IF nil, automatically set if CONTROLLABLE depending on whether unit is and aircraft or not.
@@ -648,13 +638,13 @@ end
 -- @param #boolean Bearing If true, beacon provides bearing information - if supported by the unit the beacon is attached to.
 -- @param #number Delay (Optional) Delay in seconds before the beacon is activated.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, ModeChannel, AA, Callsign, Bearing, Delay)
+function CONTROLLABLE:CommandActivateBeacon( Type, System, Frequency, UnitID, Channel, ModeChannel, AA, Callsign, Bearing, Delay )
 
-  AA=AA or self:IsAir()
-  UnitID=UnitID or self:GetID()
+  AA = AA or self:IsAir()
+  UnitID = UnitID or self:GetID()
 
   -- Command
-  local CommandActivateBeacon= {
+  local CommandActivateBeacon = {
     id = "ActivateBeacon",
     params = {
       ["type"] = Type,
@@ -666,13 +656,13 @@ function CONTROLLABLE:CommandActivateBeacon(Type, System, Frequency, UnitID, Cha
       ["AA"] = AA,
       ["callsign"] = Callsign,
       ["bearing"] = Bearing,
-    }
+    },
   }
 
-  if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.CommandActivateBeacon, {self, Type, System, Frequency, UnitID, Channel, ModeChannel, AA, Callsign, Bearing}, Delay)
+  if Delay and Delay > 0 then
+    SCHEDULER:New( nil, self.CommandActivateBeacon, { self, Type, System, Frequency, UnitID, Channel, ModeChannel, AA, Callsign, Bearing }, Delay )
   else
-    self:SetCommand(CommandActivateBeacon)
+    self:SetCommand( CommandActivateBeacon )
   end
 
   return self
@@ -685,42 +675,41 @@ end
 -- @param #string Callsign Morse code identification callsign.
 -- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:CommandActivateICLS(Channel, UnitID, Callsign, Delay)
+function CONTROLLABLE:CommandActivateICLS( Channel, UnitID, Callsign, Delay )
 
   -- Command to activate ICLS system.
-  local CommandActivateICLS= {
+  local CommandActivateICLS = {
     id = "ActivateICLS",
-    params= {
+    params = {
       ["type"] = BEACON.Type.ICLS,
       ["channel"] = Channel,
       ["unitId"] = UnitID,
       ["callsign"] = Callsign,
-    }
+    },
   }
 
-  if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.CommandActivateICLS, {self}, Delay)
+  if Delay and Delay > 0 then
+    SCHEDULER:New( nil, self.CommandActivateICLS, { self }, Delay )
   else
-    self:SetCommand(CommandActivateICLS)
+    self:SetCommand( CommandActivateICLS )
   end
 
   return self
 end
 
-
 --- Deactivate the active beacon of the CONTROLLABLE.
 -- @param #CONTROLLABLE self
 -- @param #number Delay (Optional) Delay in seconds before the beacon is deactivated.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:CommandDeactivateBeacon(Delay)
+function CONTROLLABLE:CommandDeactivateBeacon( Delay )
 
   -- Command to deactivate
-  local CommandDeactivateBeacon={id='DeactivateBeacon', params={}}
+  local CommandDeactivateBeacon = { id = 'DeactivateBeacon', params = {} }
 
-  if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.CommandActivateBeacon, {self}, Delay)
+  if Delay and Delay > 0 then
+    SCHEDULER:New( nil, self.CommandActivateBeacon, { self }, Delay )
   else
-    self:SetCommand(CommandDeactivateBeacon)
+    self:SetCommand( CommandDeactivateBeacon )
   end
 
   return self
@@ -730,15 +719,15 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:CommandDeactivateICLS(Delay)
+function CONTROLLABLE:CommandDeactivateICLS( Delay )
 
   -- Command to deactivate
-  local CommandDeactivateICLS={id='DeactivateICLS', params={}}
+  local CommandDeactivateICLS = { id = 'DeactivateICLS', params = {} }
 
-  if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.CommandDeactivateICLS, {self}, Delay)
+  if Delay and Delay > 0 then
+    SCHEDULER:New( nil, self.CommandDeactivateICLS, { self }, Delay )
   else
-    self:SetCommand(CommandDeactivateICLS)
+    self:SetCommand( CommandDeactivateICLS )
   end
 
   return self
@@ -750,15 +739,15 @@ end
 -- @param #number CallNumber The number value the group will be referred to as. Only valid numbers are 1-9. For example Uzi **5**-1. Default 1.
 -- @param #number Delay (Optional) Delay in seconds before the callsign is set. Default is immediately.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:CommandSetCallsign(CallName, CallNumber, Delay)
+function CONTROLLABLE:CommandSetCallsign( CallName, CallNumber, Delay )
 
   -- Command to set the callsign.
-  local CommandSetCallsign={id='SetCallsign', params={callname=CallName, number=CallNumber or 1}}
+  local CommandSetCallsign = { id = 'SetCallsign', params = { callname = CallName, number = CallNumber or 1 } }
 
-  if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.CommandSetCallsign, {self, CallName, CallNumber}, Delay)
+  if Delay and Delay > 0 then
+    SCHEDULER:New( nil, self.CommandSetCallsign, { self, CallName, CallNumber }, Delay )
   else
-    self:SetCommand(CommandSetCallsign)
+    self:SetCommand( CommandSetCallsign )
   end
 
   return self
@@ -769,26 +758,26 @@ end
 -- @param #boolean SwitchOnOff If true (or nil) switch EPLRS on. If false switch off.
 -- @param #number Delay (Optional) Delay in seconds before the callsign is set. Default is immediately.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:CommandEPLRS(SwitchOnOff, Delay)
+function CONTROLLABLE:CommandEPLRS( SwitchOnOff, Delay )
 
-  if SwitchOnOff==nil then
-    SwitchOnOff=true
+  if SwitchOnOff == nil then
+    SwitchOnOff = true
   end
 
   -- Command to set the callsign.
-  local CommandEPLRS={
-    id='EPLRS',
-    params={
-      value=SwitchOnOff,
-      groupId=self:GetID()
-    }
+  local CommandEPLRS = {
+    id = 'EPLRS',
+    params = {
+      value = SwitchOnOff,
+      groupId = self:GetID(),
+    },
   }
 
-  if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.CommandEPLRS, {self, SwitchOnOff}, Delay)
+  if Delay and Delay > 0 then
+    SCHEDULER:New( nil, self.CommandEPLRS, { self, SwitchOnOff }, Delay )
   else
-    self:T(string.format("EPLRS=%s for controllable %s (id=%s)", tostring(SwitchOnOff), tostring(self:GetName()), tostring(self:GetID())))
-    self:SetCommand(CommandEPLRS)
+    self:T( string.format( "EPLRS=%s for controllable %s (id=%s)", tostring( SwitchOnOff ), tostring( self:GetName() ), tostring( self:GetID() ) ) )
+    self:SetCommand( CommandEPLRS )
   end
 
   return self
@@ -798,51 +787,49 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number Frequency Radio frequency in MHz.
 -- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
--- @param #number Delay (Optional) Delay in seconds before the frequncy is set. Default is immediately.
+-- @param #number Delay (Optional) Delay in seconds before the frequency is set. Default is immediately.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:CommandSetFrequency(Frequency, Modulation, Delay)
+function CONTROLLABLE:CommandSetFrequency( Frequency, Modulation, Delay )
 
   local CommandSetFrequency = {
     id = 'SetFrequency',
     params = {
-      frequency = Frequency*1000000,
+      frequency = Frequency * 1000000,
       modulation = Modulation or radio.modulation.AM,
-    }
+    },
   }
 
-  if Delay and Delay>0 then
-    SCHEDULER:New(nil, self.CommandSetFrequency, {self, Frequency, Modulation}, Delay)
+  if Delay and Delay > 0 then
+    SCHEDULER:New( nil, self.CommandSetFrequency, { self, Frequency, Modulation }, Delay )
   else
-    self:SetCommand(CommandSetFrequency)
+    self:SetCommand( CommandSetFrequency )
   end
 
   return self
 end
-
 
 --- Set EPLRS data link on/off.
 -- @param #CONTROLLABLE self
 -- @param #boolean SwitchOnOff If true (or nil) switch EPLRS on. If false switch off.
 -- @param #number idx Task index. Default 1.
 -- @return #table Task wrapped action.
-function CONTROLLABLE:TaskEPLRS(SwitchOnOff, idx)
+function CONTROLLABLE:TaskEPLRS( SwitchOnOff, idx )
 
-  if SwitchOnOff==nil then
-    SwitchOnOff=true
+  if SwitchOnOff == nil then
+    SwitchOnOff = true
   end
 
   -- Command to set the callsign.
-  local CommandEPLRS={
-    id='EPLRS',
-    params={
-      value=SwitchOnOff,
-      groupId=self:GetID()
-    }
+  local CommandEPLRS = {
+    id = 'EPLRS',
+    params = {
+      value = SwitchOnOff,
+      groupId = self:GetID(),
+    },
   }
 
-  return self:TaskWrappedAction(CommandEPLRS, idx or 1)
+  return self:TaskWrappedAction( CommandEPLRS, idx or 1 )
 end
-
 
 -- TASKS FOR AIR CONTROLLABLES
 
@@ -851,14 +838,14 @@ end
 -- @param Wrapper.Group#GROUP AttackGroup The Group to be attacked.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
--- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param DCS#Distance Altitude (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.
 -- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
 -- @param #boolean GroupAttack (Optional) If true, attack as group.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack )
-  --self:F2( { self.ControllableName, AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
+  -- self:F2( { self.ControllableName, AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
 
   --  AttackGroup = {
   --   id = 'AttackGroup',
@@ -899,12 +886,12 @@ end
 -- @param Wrapper.Unit#UNIT AttackUnit The UNIT to be attacked
 -- @param #boolean GroupAttack (Optional) If true, all units in the group will attack the Unit when found. Default false.
 -- @param DCS#AI.Task.WeaponExpend WeaponExpend (Optional) Determines how many weapons will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
--- @param #number AttackQty (Optional) Limits maximal quantity of attack. The aicraft/controllable will not make more attacks than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param #number AttackQty (Optional) Limits maximal quantity of attack. The aircraft/controllable will not make more attacks than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (Optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction.
 -- @param #number Altitude (Optional) The (minimum) altitude in meters from where to attack. Default is altitude of unit to attack but at least 1000 m.
 -- @param #number WeaponType (optional) The WeaponType. See [DCS Enumerator Weapon Type](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) on Hoggit.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)
+function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType )
 
   local DCSTask = {
     id = 'AttackUnit',
@@ -919,19 +906,18 @@ function CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, Atta
       attackQtyLimit   = AttackQty and true or false,
       attackQty        = AttackQty,
       weaponType       = WeaponType or 1073741822,
-    }
+    },
   }
 
   return DCSTask
 end
-
 
 --- (AIR) Delivering weapon at the point on the ground.
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
 -- @param #boolean GroupAttack (optional) If true, all units in the group will attack the Unit when found.
 -- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
--- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #number Altitude (optional) The altitude from where to attack.
 -- @param #number WeaponType (optional) The WeaponType.
@@ -966,7 +952,7 @@ end
 -- @param DCS#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
 -- @param #boolean GroupAttack (Optional) If true, all units in the group will attack the Unit when found.
 -- @param DCS#AI.Task.WeaponExpend WeaponExpend (Optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit will choose expend on its own discretion.
--- @param #number AttackQty (Optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param #number AttackQty (Optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (Optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #number Altitude (Optional) The altitude [meters] from where to attack. Default 30 m.
 -- @param #number WeaponType (Optional) The WeaponType. Default Auto=1073741822.
@@ -994,19 +980,18 @@ function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, Atta
   return DCSTask
 end
 
-
 --- (AIR) Delivering weapon via CarpetBombing (all bombers in formation release at same time) at the point on the ground.
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
 -- @param #boolean GroupAttack (optional) If true, all units in the group will attack the Unit when found.
 -- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit will choose expend on its own discretion.
--- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #number Altitude (optional) The altitude from where to attack.
 -- @param #number WeaponType (optional) The WeaponType.
 -- @param #number CarpetLength (optional) default to 500 m.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskCarpetBombing(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, CarpetLength)
+function CONTROLLABLE:TaskCarpetBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, CarpetLength )
 
   -- Build Task Structure
   local DCSTask = {
@@ -1025,13 +1010,11 @@ function CONTROLLABLE:TaskCarpetBombing(Vec2, GroupAttack, WeaponExpend, AttackQ
       direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,
       altitude         = Altitude,
-      }
+    },
   }
 
   return DCSTask
 end
-
-
 
 --- (AIR) Following another airborne controllable.
 -- The unit / controllable will follow lead unit of another controllable, wingmens of both controllables will continue following their leaders.
@@ -1041,7 +1024,7 @@ end
 -- @param DCS#Vec3 Vec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
 -- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Follow task is finished.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskFollowBigFormation(FollowControllable, Vec3, LastWaypointIndex )
+function CONTROLLABLE:TaskFollowBigFormation( FollowControllable, Vec3, LastWaypointIndex )
 
   local DCSTask = {
     id = 'FollowBigFormation',
@@ -1049,13 +1032,12 @@ function CONTROLLABLE:TaskFollowBigFormation(FollowControllable, Vec3, LastWaypo
       groupId          = FollowControllable:GetID(),
       pos              = Vec3,
       lastWptIndexFlag = LastWaypointIndex and true or false,
-      lastWptIndex     = LastWaypointIndex
-    }
+      lastWptIndex     = LastWaypointIndex,
+    },
   }
 
   return DCSTask
 end
-
 
 --- (AIR HELICOPTER) Move the controllable to a Vec2 Point, wait for a defined duration and embark infantry groups.
 -- @param #CONTROLLABLE self
@@ -1064,29 +1046,29 @@ end
 -- @param #number Duration (Optional) The maximum duration in seconds to wait until all groups have embarked.
 -- @param #table Distribution (Optional) Distribution used to put the infantry groups into specific carrier units.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskEmbarking(Coordinate, GroupSetForEmbarking, Duration, Distribution)
+function CONTROLLABLE:TaskEmbarking( Coordinate, GroupSetForEmbarking, Duration, Distribution )
 
   -- Table of group IDs for embarking.
-  local g4e={}
+  local g4e = {}
 
   if GroupSetForEmbarking then
-    for _,_group in pairs(GroupSetForEmbarking:GetSet()) do
-      local group=_group --Wrapper.Group#GROUP
-      table.insert(g4e, group:GetID())
+    for _, _group in pairs( GroupSetForEmbarking:GetSet() ) do
+      local group = _group -- Wrapper.Group#GROUP
+      table.insert( g4e, group:GetID() )
     end
   else
-    self:E("ERROR: No groups for embarking specified!")
+    self:E( "ERROR: No groups for embarking specified!" )
     return nil
   end
 
   -- Table of group IDs for embarking.
-  --local Distribution={}
+  -- local Distribution={}
 
   -- Distribution
-  --local distribution={}
-  --distribution[id]=gids
+  -- local distribution={}
+  -- distribution[id]=gids
 
-  local groupID=self and self:GetID()
+  local groupID = self and self:GetID()
 
   local DCSTask = {
     id = 'Embarking',
@@ -1099,12 +1081,11 @@ function CONTROLLABLE:TaskEmbarking(Coordinate, GroupSetForEmbarking, Duration, 
       duration           = Duration,
       distributionFlag   = Distribution and true or false,
       distribution       = Distribution,
-    }
+    },
   }
 
   return DCSTask
 end
-
 
 --- Used in conjunction with the embarking task for a transport helicopter group. The Ground units will move to the specified location and wait to be picked up by a helicopter.
 -- The helicopter will then fly them to their dropoff point defined by another task for the ground forces; DisembarkFromTransport task.
@@ -1114,7 +1095,7 @@ end
 -- @param #number Radius Radius in meters. Default 200 m.
 -- @param #string UnitType The unit type name of the carrier, e.g. "UH-1H". Must not be specified.
 -- @return DCS#Task Embark to transport task.
-function CONTROLLABLE:TaskEmbarkToTransport(Coordinate, Radius, UnitType)
+function CONTROLLABLE:TaskEmbarkToTransport( Coordinate, Radius, UnitType )
 
   local EmbarkToTransport = {
    id = "EmbarkToTransport",
@@ -1123,46 +1104,44 @@ function CONTROLLABLE:TaskEmbarkToTransport(Coordinate, Radius, UnitType)
        y            = Coordinate.z,
        zoneRadius   = Radius or 200,
        selectedType = UnitType,
-     }
+     },
    }
 
   return EmbarkToTransport
 end
 
-
 --- Specifies the location infantry groups that is being transported by helicopters will be unloaded at. Used in conjunction with the EmbarkToTransport task.
 -- @param #CONTROLLABLE self
 -- @param Core.Point#COORDINATE Coordinate Coordinates where AI is expecting to be picked up.
 -- @return DCS#Task Embark to transport task.
-function CONTROLLABLE:TaskDisembarking(Coordinate, GroupSetToDisembark)
+function CONTROLLABLE:TaskDisembarking( Coordinate, GroupSetToDisembark )
 
   -- Table of group IDs for disembarking.
-  local g4e={}
+  local g4e = {}
 
   if GroupSetToDisembark then
-    for _,_group in pairs(GroupSetToDisembark:GetSet()) do
-      local group=_group --Wrapper.Group#GROUP
-      table.insert(g4e, group:GetID())
+    for _, _group in pairs( GroupSetToDisembark:GetSet() ) do
+      local group = _group -- Wrapper.Group#GROUP
+      table.insert( g4e, group:GetID() )
     end
   else
-    self:E("ERROR: No groups for disembarking specified!")
+    self:E( "ERROR: No groups for disembarking specified!" )
     return nil
   end
 
-  local Disembarking={
-   id = "Disembarking",
-   params = {
-     x                  = Coordinate.x,
-     y                  = Coordinate.z,
-     groupsForEmbarking = g4e,            -- This is no bug, the entry is really "groupsForEmbarking" even if we disembark the troops.
-    }
-   }
+  local Disembarking = {
+    id = "Disembarking",
+    params = {
+      x = Coordinate.x,
+      y = Coordinate.z,
+      groupsForEmbarking = g4e, -- This is no bug, the entry is really "groupsForEmbarking" even if we disembark the troops.
+    },
+  }
 
   return Disembarking
 end
 
-
---- (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
+--- (AIR) Orbit at a specified position at a specified altitude during a specified duration with a specified speed.
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Point The point to hold the position.
 -- @param #number Altitude The altitude AGL in meters to hold the position.
@@ -1177,8 +1156,8 @@ function CONTROLLABLE:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
       pattern  = AI.Task.OrbitPattern.CIRCLE,
       point    = Point,
       speed    = Speed,
-      altitude = Altitude + land.getHeight( Point )
-    }
+      altitude = Altitude + land.getHeight( Point ),
+    },
   }
 
   return DCSTask
@@ -1191,15 +1170,15 @@ end
 -- @param #number Speed Speed [m/s] flying the orbit pattern. Default 128 m/s = 250 knots.
 -- @param Core.Point#COORDINATE CoordRaceTrack (Optional) If this coordinate is specified, the CONTROLLABLE will fly a race-track pattern using this and the initial coordinate.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:TaskOrbit(Coord, Altitude, Speed, CoordRaceTrack)
+function CONTROLLABLE:TaskOrbit( Coord, Altitude, Speed, CoordRaceTrack )
 
-  local Pattern=AI.Task.OrbitPattern.CIRCLE
+  local Pattern = AI.Task.OrbitPattern.CIRCLE
 
-  local P1=Coord:GetVec2()
-  local P2=nil
+  local P1 = Coord:GetVec2()
+  local P2 = nil
   if CoordRaceTrack then
-    Pattern=AI.Task.OrbitPattern.RACE_TRACK
-    P2=CoordRaceTrack:GetVec2()
+    Pattern = AI.Task.OrbitPattern.RACE_TRACK
+    P2 = CoordRaceTrack:GetVec2()
   end
 
   local Task = {
@@ -1210,13 +1189,13 @@ function CONTROLLABLE:TaskOrbit(Coord, Altitude, Speed, CoordRaceTrack)
       point2   = P2,
       speed    = Speed or UTILS.KnotsToMps(250),
       altitude = Altitude or Coord.y,
-    }
+    },
   }
 
   return Task
 end
 
---- (AIR) Orbit at the current position of the first unit of the controllable at a specified alititude.
+--- (AIR) Orbit at the current position of the first unit of the controllable at a specified altitude.
 -- @param #CONTROLLABLE self
 -- @param #number Altitude The altitude [m] to hold the position.
 -- @param #number Speed The speed [m/s] flying when holding the position.
@@ -1235,8 +1214,6 @@ function CONTROLLABLE:TaskOrbitCircle( Altitude, Speed, Coordinate )
   return nil
 end
 
-
-
 --- (AIR) Hold position at the current position of the first unit of the controllable.
 -- @param #CONTROLLABLE self
 -- @param #number Duration The maximum duration in seconds to hold the position.
@@ -1246,7 +1223,6 @@ function CONTROLLABLE:TaskHoldPosition()
 
   return self:TaskOrbitCircle( 30, 10 )
 end
-
 
 --- (AIR) Delivering weapon on the runway. See [hoggit](https://wiki.hoggitworld.com/view/DCS_task_bombingRunway)
 --
@@ -1267,7 +1243,7 @@ end
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #boolean GroupAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a group and not to a single aircraft.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskBombingRunway(Airbase, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack)
+function CONTROLLABLE:TaskBombingRunway( Airbase, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack )
 
   local DCSTask = {
     id = 'BombingRunway',
@@ -1284,27 +1260,25 @@ function CONTROLLABLE:TaskBombingRunway(Airbase, WeaponType, WeaponExpend, Attac
   return DCSTask
 end
 
-
 --- (AIR) Refueling from the nearest tanker. No parameters.
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskRefueling()
 
-  local DCSTask={
-    id='Refueling',
-    params={}
+  local DCSTask = {
+    id = 'Refueling',
+    params = {},
   }
 
   return DCSTask
 end
-
 
 --- (AIR HELICOPTER) Landing at the ground. For helicopters only.
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Vec2 The point where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:TaskLandAtVec2(Vec2, Duration)
+function CONTROLLABLE:TaskLandAtVec2( Vec2, Duration )
 
   local DCSTask = {
     id = 'Land',
@@ -1326,14 +1300,12 @@ end
 function CONTROLLABLE:TaskLandAtZone( Zone, Duration, RandomPoint )
 
   -- Get landing point
-  local Point=RandomPoint and Zone:GetRandomVec2() or Zone:GetVec2()
+  local Point = RandomPoint and Zone:GetRandomVec2() or Zone:GetVec2()
 
   local DCSTask = CONTROLLABLE.TaskLandAtVec2( self, Point, Duration )
 
   return DCSTask
 end
-
-
 
 --- (AIR) Following another airborne controllable.
 -- The unit / controllable will follow lead unit of another controllable, wingmens of both controllables will continue following their leaders.
@@ -1346,15 +1318,15 @@ end
 function CONTROLLABLE:TaskFollow( FollowControllable, Vec3, LastWaypointIndex )
   self:F2( { self.ControllableName, FollowControllable, Vec3, LastWaypointIndex } )
 
---  Follow = {
---    id = 'Follow',
---    params = {
---      groupId = Group.ID,
---      pos = Vec3,
---      lastWptIndexFlag = boolean,
---      lastWptIndex = number
---    }
---  }
+  --  Follow = {
+  --    id = 'Follow',
+  --    params = {
+  --      groupId = Group.ID,
+  --      pos = Vec3,
+  --      lastWptIndexFlag = boolean,
+  --      lastWptIndex = number
+  --    }
+  --  }
 
   local LastWaypointIndexFlag = false
   local lastWptIndexFlagChangedManually = false
@@ -1371,13 +1343,12 @@ function CONTROLLABLE:TaskFollow( FollowControllable, Vec3, LastWaypointIndex )
       lastWptIndexFlag                = LastWaypointIndexFlag,
       lastWptIndex                    = LastWaypointIndex,
       lastWptIndexFlagChangedManually = lastWptIndexFlagChangedManually,
-    }
+    },
   }
 
   self:T3( { DCSTask } )
   return DCSTask
 end
-
 
 --- (AIR) Escort another airborne controllable.
 -- The unit / controllable will follow lead unit of another controllable, wingmens of both controllables will continue following their leaders.
@@ -1391,17 +1362,17 @@ end
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes )
 
---  Escort = {
---    id = 'Escort',
---    params = {
---      groupId = Group.ID,
---      pos = Vec3,
---      lastWptIndexFlag = boolean,
---      lastWptIndex = number,
---      engagementDistMax = Distance,
---      targetTypes = array of AttributeName,
---    }
---  }
+  --  Escort = {
+  --    id = 'Escort',
+  --    params = {
+  --      groupId = Group.ID,
+  --      pos = Vec3,
+  --      lastWptIndexFlag = boolean,
+  --      lastWptIndex = number,
+  --      engagementDistMax = Distance,
+  --      targetTypes = array of AttributeName,
+  --    }
+  --  }
 
   local DCSTask
   DCSTask = {
@@ -1418,7 +1389,6 @@ function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, E
 
   return DCSTask
 end
-
 
 -- GROUND TASKS
 
@@ -1443,8 +1413,8 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
       radius           = Radius,
       expendQty        = 100, -- dummy value
       expendQtyEnabled = false,
-      alt_type         = ASL and 0 or 1
-    }
+      alt_type         = ASL and 0 or 1,
+    },
   }
 
   if AmmoCount then
@@ -1453,14 +1423,14 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
   end
 
   if Altitude then
-    DCSTask.params.altitude=Altitude
+    DCSTask.params.altitude = Altitude
   end
 
   if WeaponType then
-    DCSTask.params.weaponType=WeaponType
+    DCSTask.params.weaponType = WeaponType
   end
 
-  --self:I(DCSTask)
+  -- self:I(DCSTask)
 
   return DCSTask
 end
@@ -1469,10 +1439,9 @@ end
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskHold()
-  local DCSTask = {id = 'Hold', params = {}}
+  local DCSTask = { id = 'Hold', params = {} }
   return DCSTask
 end
-
 
 -- TASKS FOR AIRBORNE AND GROUND UNITS/CONTROLLABLES
 
@@ -1503,7 +1472,7 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
       modulation  = Modulation or radio.modulation.AM,
       callname    = CallsignName,
       number      = CallsignNumber,
-    }
+    },
   }
 
   return DCSTask
@@ -1526,13 +1495,11 @@ function CONTROLLABLE:EnRouteTaskEngageTargets( Distance, TargetTypes, Priority 
       maxDist        = Distance,
       targetTypes    = TargetTypes or {"Air"},
       priority       = Priority or 0,
-    }
+    },
   }
 
   return DCSTask
 end
-
-
 
 --- (AIR) Engaging a targets of defined types at circle-shaped zone.
 -- @param #CONTROLLABLE self
@@ -1550,12 +1517,11 @@ function CONTROLLABLE:EnRouteTaskEngageTargetsInZone( Vec2, Radius, TargetTypes,
       zoneRadius  = Radius,
       targetTypes = TargetTypes or {"Air"},
       priority    = Priority or 0
-    }
+    },
   }
 
   return DCSTask
 end
-
 
 --- (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.
 -- @param #CONTROLLABLE self
@@ -1563,7 +1529,7 @@ end
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
--- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param DCS#Distance Altitude (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.
 -- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
@@ -1605,14 +1571,13 @@ function CONTROLLABLE:EnRouteTaskEngageGroup( AttackGroup, Priority, WeaponType,
   return DCSTask
 end
 
-
 --- (AIR) Search and attack the Unit.
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Unit#UNIT EngageUnit The UNIT.
 -- @param #number Priority (optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first.
 -- @param #boolean GroupAttack (optional) If true, all units in the group will attack the Unit when found.
 -- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
--- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param DCS#Distance Altitude (optional) Desired altitude to perform the unit engagement.
 -- @param #boolean Visible (optional) Unit must be visible.
@@ -1641,12 +1606,10 @@ function CONTROLLABLE:EnRouteTaskEngageUnit( EngageUnit, Priority, GroupAttack, 
   return DCSTask
 end
 
-
-
 --- (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskAWACS( )
+function CONTROLLABLE:EnRouteTaskAWACS()
 
   local DCSTask = {
     id = 'AWACS',
@@ -1656,11 +1619,10 @@ function CONTROLLABLE:EnRouteTaskAWACS( )
   return DCSTask
 end
 
-
 --- (AIR) Aircraft will act as a tanker for friendly units. No parameters.
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskTanker( )
+function CONTROLLABLE:EnRouteTaskTanker()
 
   local DCSTask = {
     id = 'Tanker',
@@ -1670,13 +1632,12 @@ function CONTROLLABLE:EnRouteTaskTanker( )
   return DCSTask
 end
 
-
 -- En-route tasks for ground units/controllables
 
 --- (GROUND) Ground unit (EW-radar) will act as an EWR for friendly units (will provide them with information about contacts). No parameters.
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskEWR( )
+function CONTROLLABLE:EnRouteTaskEWR()
 
   local DCSTask = {
     id = 'EWR',
@@ -1685,7 +1646,6 @@ function CONTROLLABLE:EnRouteTaskEWR( )
 
   return DCSTask
 end
-
 
 -- En-route tasks for airborne and ground units/controllables
 
@@ -1709,12 +1669,11 @@ function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponT
       designation = Designation,
       datalink    = Datalink and Datalink or false,
       priority    = Priority or 0,
-    }
+    },
   }
 
   return DCSTask
 end
-
 
 --- (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose a targets (enemy ground controllable) around as well as other assigned targets.
 -- The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
@@ -1725,13 +1684,13 @@ end
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskFAC( Radius, Priority )
 
---  FAC = {
---    id = 'FAC',
---    params = {
---      radius = Distance,
---      priority = number
---    }
---  }
+  --  FAC = {
+  --    id = 'FAC',
+  --    params = {
+  --      radius = Distance,
+  --      priority = number
+  --    }
+  --  }
 
   local DCSTask = {
     id = 'FAC',
@@ -1743,7 +1702,6 @@ function CONTROLLABLE:EnRouteTaskFAC( Radius, Priority )
 
   return DCSTask
 end
-
 
 --- This creates a Task element, with an action to call a function as part of a Wrapped Task.
 -- This Task can then be embedded at a Waypoint by calling the method @{#CONTROLLABLE.SetTaskWaypoint}.
@@ -1797,23 +1755,21 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
 
   -- Script
   local DCSScript = {}
-  DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
+  DCSScript[#DCSScript + 1] = "local MissionControllable = GROUP:Find( ... ) "
   if arg and arg.n > 0 then
-    local ArgumentKey = '_' .. tostring( arg ):match("table: (.*)")
+    local ArgumentKey = '_' .. tostring( arg ):match( "table: (.*)" )
     self:SetState( self, ArgumentKey, arg )
-    DCSScript[#DCSScript+1] = "local Arguments = MissionControllable:GetState( MissionControllable, '" .. ArgumentKey .. "' ) "
-    DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable, unpack( Arguments ) )"
+    DCSScript[#DCSScript + 1] = "local Arguments = MissionControllable:GetState( MissionControllable, '" .. ArgumentKey .. "' ) "
+    DCSScript[#DCSScript + 1] = FunctionString .. "( MissionControllable, unpack( Arguments ) )"
   else
-    DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable )"
+    DCSScript[#DCSScript + 1] = FunctionString .. "( MissionControllable )"
   end
 
   -- DCS task.
-  local DCSTask = self:TaskWrappedAction(self:CommandDoScript(table.concat( DCSScript )))
+  local DCSTask = self:TaskWrappedAction( self:CommandDoScript( table.concat( DCSScript ) ) )
 
   return DCSTask
 end
-
-
 
 --- (AIR + GROUND) Return a mission task from a mission template.
 -- @param #CONTROLLABLE self
@@ -1823,12 +1779,13 @@ function CONTROLLABLE:TaskMission( TaskMission )
 
   local DCSTask = {
     id = 'Mission',
-    params = { TaskMission, },
+    params = {
+      TaskMission,
+    },
   }
 
   return DCSTask
 end
-
 
 do -- Patrol methods
 
@@ -1851,32 +1808,31 @@ do -- Patrol methods
 
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
-      
+
       -- test for submarine
       local depth = 0
       local IsSub = false
       if PatrolGroup:IsShip() then
         local navalvec3 = FromCoord:GetVec3()
-        if navalvec3.y < 0 then 
+        if navalvec3.y < 0 then
           depth = navalvec3.y
           IsSub = true
         end
       end
-      
-     
+
       local Waypoint = Waypoints[1]
       local Speed = Waypoint.speed or (20 / 3.6)
-       local From = FromCoord:WaypointGround( Speed )
-       
-      if IsSub then 
-         From = FromCoord:WaypointNaval( Speed, Waypoint.alt )
+      local From = FromCoord:WaypointGround( Speed )
+
+      if IsSub then
+        From = FromCoord:WaypointNaval( Speed, Waypoint.alt )
       end
-      
+
       table.insert( Waypoints, 1, From )
 
       local TaskRoute = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRoute" )
 
-      self:F({Waypoints = Waypoints})
+      self:F( { Waypoints = Waypoints } )
       local Waypoint = Waypoints[#Waypoints]
       PatrolGroup:SetTaskWaypoint( Waypoint, TaskRoute ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
 
@@ -1916,31 +1872,31 @@ do -- Patrol methods
       local IsSub = false
       if PatrolGroup:IsShip() then
         local navalvec3 = FromCoord:GetVec3()
-        if navalvec3.y < 0 then 
+        if navalvec3.y < 0 then
           depth = navalvec3.y
           IsSub = true
         end
       end
       -- Loop until a waypoint has been found that is not the same as the current waypoint.
-      -- Otherwise the object zon't move or drive in circles and the algorithm would not do exactly
+      -- Otherwise the object won't move, or drive in circles, and the algorithm would not do exactly
       -- what it is supposed to do, which is making groups drive around.
       local ToWaypoint
       repeat
         -- Select a random waypoint and check if it is not the same waypoint as where the object is about.
         ToWaypoint = math.random( 1, #Waypoints )
-      until( ToWaypoint ~= FromWaypoint )
+      until (ToWaypoint ~= FromWaypoint)
       self:F( { FromWaypoint = FromWaypoint, ToWaypoint = ToWaypoint } )
 
-      local  Waypoint = Waypoints[ToWaypoint] -- Select random waypoint.
+      local Waypoint = Waypoints[ToWaypoint] -- Select random waypoint.
       local ToCoord = COORDINATE:NewFromVec2( { x = Waypoint.x, y = Waypoint.y } )
       -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
       local Route = {}
       if IsSub then
-        Route[#Route+1] = FromCoord:WaypointNaval( Speed, depth )
-        Route[#Route+1] = ToCoord:WaypointNaval( Speed, Waypoint.alt )
+        Route[#Route + 1] = FromCoord:WaypointNaval( Speed, depth )
+        Route[#Route + 1] = ToCoord:WaypointNaval( Speed, Waypoint.alt )
       else
-        Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
-        Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
+        Route[#Route + 1] = FromCoord:WaypointGround( Speed, Formation )
+        Route[#Route + 1] = ToCoord:WaypointGround( Speed, Formation )
       end
 
       local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRouteRandom", Speed, Formation, ToWaypoint )
@@ -1972,43 +1928,43 @@ do -- Patrol methods
       PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
     end
 
-    DelayMin=DelayMin or 1
-    if not DelayMax or DelayMax<DelayMin then
-      DelayMax=DelayMin
+    DelayMin = DelayMin or 1
+    if not DelayMax or DelayMax < DelayMin then
+      DelayMax = DelayMin
     end
 
-    local Delay=math.random(DelayMin, DelayMax)
+    local Delay = math.random( DelayMin, DelayMax )
 
     self:F( { PatrolGroup = PatrolGroup:GetName() } )
 
     if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
-    
+
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
-      
+
       -- test for submarine
       local depth = 0
       local IsSub = false
       if PatrolGroup:IsShip() then
         local navalvec3 = FromCoord:GetVec3()
-        if navalvec3.y < 0 then 
+        if navalvec3.y < 0 then
           depth = navalvec3.y
           IsSub = true
         end
       end
 
       -- Select a random Zone and get the Coordinate of the new Zone.
-      local RandomZone = ZoneList[ math.random( 1, #ZoneList ) ] -- Core.Zone#ZONE
+      local RandomZone = ZoneList[math.random( 1, #ZoneList )] -- Core.Zone#ZONE
       local ToCoord = RandomZone:GetRandomCoordinate( 10 )
 
       -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
       local Route = {}
       if IsSub then
-        Route[#Route+1] = FromCoord:WaypointNaval( Speed, depth )
-        Route[#Route+1] = ToCoord:WaypointNaval( Speed, depth )
+        Route[#Route + 1] = FromCoord:WaypointNaval( Speed, depth )
+        Route[#Route + 1] = ToCoord:WaypointNaval( Speed, depth )
       else
-        Route[#Route+1] = FromCoord:WaypointGround( Speed, Formation )
-        Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
+        Route[#Route + 1] = FromCoord:WaypointGround( Speed, Formation )
+        Route[#Route + 1] = ToCoord:WaypointGround( Speed, Formation )
       end
 
       local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolZones", ZoneList, Speed, Formation, DelayMin, DelayMax )
@@ -2021,8 +1977,7 @@ do -- Patrol methods
 
 end
 
-
---- Return a Misson task to follow a given route defined by Points.
+--- Return a Mission task to follow a given route defined by Points.
 -- @param #CONTROLLABLE self
 -- @param #table Points A table of route points.
 -- @return DCS#Task
@@ -2068,7 +2023,6 @@ do -- Route methods
       ["steer"] = 2,
     }
 
-
     local PointTo = {}
     PointTo.x = Point.x
     PointTo.y = Point.y
@@ -2083,7 +2037,6 @@ do -- Route methods
       ["vangle"] = 0,
       ["steer"] = 2,
     }
-
 
     local Points = { PointFrom, PointTo }
 
@@ -2121,7 +2074,6 @@ do -- Route methods
       ["steer"] = 2,
     }
 
-
     local PointTo = {}
     PointTo.x = Point.x
     PointTo.y = Point.z
@@ -2139,7 +2091,6 @@ do -- Route methods
       ["steer"] = 2,
     }
 
-
     local Points = { PointFrom, PointTo }
 
     self:T3( Points )
@@ -2148,8 +2099,6 @@ do -- Route methods
 
     return self
   end
-
-
 
   --- Make the controllable to follow a given route.
   -- @param #CONTROLLABLE self
@@ -2187,12 +2136,11 @@ do -- Route methods
     return nil
   end
 
-
   --- Stops the movement of the vehicle on the route.
   -- @param #CONTROLLABLE self
   -- @return #CONTROLLABLE
   function CONTROLLABLE:RouteStop()
-    self:F(self:GetName() .. " RouteStop")
+    self:F( self:GetName() .. " RouteStop" )
 
     local CommandStop = self:CommandStopRoute( true )
     self:SetCommand( CommandStop )
@@ -2203,7 +2151,7 @@ do -- Route methods
   -- @param #CONTROLLABLE self
   -- @return #CONTROLLABLE
   function CONTROLLABLE:RouteResume()
-    self:F( self:GetName() .. " RouteResume")
+    self:F( self:GetName() .. " RouteResume" )
 
     local CommandResume = self:CommandStopRoute( false )
     self:SetCommand( CommandResume )
@@ -2223,19 +2171,19 @@ do -- Route methods
 
     local FromCoordinate = self:GetCoordinate()
 
-    local FromWP = FromCoordinate:WaypointGround(Speed, Formation)
+    local FromWP = FromCoordinate:WaypointGround( Speed, Formation )
     local ToWP = ToCoordinate:WaypointGround( Speed, Formation )
 
-    local route={FromWP, ToWP}
+    local route = { FromWP, ToWP }
 
     -- Add passing waypoint function.
     if WaypointFunction then
-      local N=#route
-      for n,waypoint in pairs(route) do
+      local N = #route
+      for n, waypoint in pairs( route ) do
         waypoint.task = {}
         waypoint.task.id = "ComboTask"
         waypoint.task.params = {}
-        waypoint.task.params.tasks = {self:TaskFunction("CONTROLLABLE.___PassingWaypoint", n, N, WaypointFunction, unpack(WaypointFunctionArguments or {}))}
+        waypoint.task.params.tasks = { self:TaskFunction( "CONTROLLABLE.___PassingWaypoint", n, N, WaypointFunction, unpack( WaypointFunctionArguments or {} ) ) }
       end
     end
 
@@ -2256,12 +2204,12 @@ do -- Route methods
   function CONTROLLABLE:RouteGroundOnRoad( ToCoordinate, Speed, DelaySeconds, OffRoadFormation, WaypointFunction, WaypointFunctionArguments )
 
     -- Defaults.
-    Speed=Speed or 20
-    DelaySeconds=DelaySeconds or 1
-    OffRoadFormation=OffRoadFormation or "Off Road"
+    Speed = Speed or 20
+    DelaySeconds = DelaySeconds or 1
+    OffRoadFormation = OffRoadFormation or "Off Road"
 
     -- Get the route task.
-    local route=self:TaskGroundOnRoad(ToCoordinate, Speed, OffRoadFormation, nil, nil, WaypointFunction, WaypointFunctionArguments)
+    local route = self:TaskGroundOnRoad( ToCoordinate, Speed, OffRoadFormation, nil, nil, WaypointFunction, WaypointFunctionArguments )
 
     -- Route controllable to destination.
     self:Route( route, DelaySeconds )
@@ -2280,19 +2228,17 @@ do -- Route methods
   function CONTROLLABLE:RouteGroundOnRailRoads( ToCoordinate, Speed, DelaySeconds, WaypointFunction, WaypointFunctionArguments )
 
     -- Defaults.
-    Speed=Speed or 20
-    DelaySeconds=DelaySeconds or 1
+    Speed = Speed or 20
+    DelaySeconds = DelaySeconds or 1
 
     -- Get the route task.
-    local route=self:TaskGroundOnRailRoads(ToCoordinate, Speed, WaypointFunction, WaypointFunctionArguments )
+    local route = self:TaskGroundOnRailRoads( ToCoordinate, Speed, WaypointFunction, WaypointFunctionArguments )
 
     -- Route controllable to destination.
     self:Route( route, DelaySeconds )
 
     return self
   end
-
-
 
   --- Make a task for a GROUND Controllable to drive towards a specific point using (mostly) roads.
   -- @param #CONTROLLABLE self
@@ -2306,49 +2252,49 @@ do -- Route methods
   -- @return DCS#Task Task.
   -- @return #boolean If true, path on road is possible. If false, task will route the group directly to its destination.
   function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed, OffRoadFormation, Shortcut, FromCoordinate, WaypointFunction, WaypointFunctionArguments )
-    self:I({ToCoordinate=ToCoordinate, Speed=Speed, OffRoadFormation=OffRoadFormation, WaypointFunction=WaypointFunction, Args=WaypointFunctionArguments})
+    self:I( { ToCoordinate = ToCoordinate, Speed = Speed, OffRoadFormation = OffRoadFormation, WaypointFunction = WaypointFunction, Args = WaypointFunctionArguments } )
 
     -- Defaults.
-    Speed=Speed or 20
-    OffRoadFormation=OffRoadFormation or "Off Road"
+    Speed = Speed or 20
+    OffRoadFormation = OffRoadFormation or "Off Road"
 
     -- Initial (current) coordinate.
     FromCoordinate = FromCoordinate or self:GetCoordinate()
 
     -- Get path and path length on road including the end points (From and To).
-    local PathOnRoad, LengthOnRoad, GotPath =FromCoordinate:GetPathOnRoad(ToCoordinate, true)
+    local PathOnRoad, LengthOnRoad, GotPath = FromCoordinate:GetPathOnRoad( ToCoordinate, true )
 
     -- Get the length only(!) on the road.
-    local _,LengthRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, false)
+    local _, LengthRoad = FromCoordinate:GetPathOnRoad( ToCoordinate, false )
 
     -- Off road part of the rout: Total=OffRoad+OnRoad.
     local LengthOffRoad
     local LongRoad
 
     -- Calculate the direct distance between the initial and final points.
-    local LengthDirect=FromCoordinate:Get2DDistance(ToCoordinate)
+    local LengthDirect = FromCoordinate:Get2DDistance( ToCoordinate )
 
     if GotPath and LengthRoad then
 
       -- Off road part of the rout: Total=OffRoad+OnRoad.
-      LengthOffRoad=LengthOnRoad-LengthRoad
+      LengthOffRoad = LengthOnRoad - LengthRoad
 
       -- Length on road is 10 times longer than direct route or path on road is very short (<5% of total path).
-      LongRoad=LengthOnRoad and ((LengthOnRoad > LengthDirect*10) or (LengthRoad/LengthOnRoad*100<5))
+      LongRoad = LengthOnRoad and ((LengthOnRoad > LengthDirect * 10) or (LengthRoad / LengthOnRoad * 100 < 5))
 
       -- Debug info.
-      self:T(string.format("Length on road   = %.3f km", LengthOnRoad/1000))
-      self:T(string.format("Length directly  = %.3f km", LengthDirect/1000))
-      self:T(string.format("Length fraction  = %.3f km", LengthOnRoad/LengthDirect))
-      self:T(string.format("Length only road = %.3f km", LengthRoad/1000))
-      self:T(string.format("Length off road  = %.3f km", LengthOffRoad/1000))
-      self:T(string.format("Percent on road  = %.1f", LengthRoad/LengthOnRoad*100))
+      self:T( string.format( "Length on road   = %.3f km", LengthOnRoad / 1000 ) )
+      self:T( string.format( "Length directly  = %.3f km", LengthDirect / 1000 ) )
+      self:T( string.format( "Length fraction  = %.3f km", LengthOnRoad / LengthDirect ) )
+      self:T( string.format( "Length only road = %.3f km", LengthRoad / 1000 ) )
+      self:T( string.format( "Length off road  = %.3f km", LengthOffRoad / 1000 ) )
+      self:T( string.format( "Percent on road  = %.1f", LengthRoad / LengthOnRoad * 100 ) )
 
     end
 
     -- Route, ground waypoints along road.
-    local route={}
-    local canroad=false
+    local route = {}
+    local canroad = false
 
     -- Check if a valid path on road could be found.
     if GotPath and LengthRoad and LengthDirect > 2000 then -- if the length of the movement is less than 1 km, drive directly.
@@ -2357,43 +2303,43 @@ do -- Route methods
 
         -- Road is long ==> we take the short cut.
 
-        table.insert(route, FromCoordinate:WaypointGround(Speed, OffRoadFormation))
-        table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
+        table.insert( route, FromCoordinate:WaypointGround( Speed, OffRoadFormation ) )
+        table.insert( route, ToCoordinate:WaypointGround( Speed, OffRoadFormation ) )
 
       else
 
         -- Create waypoints.
-        table.insert(route, FromCoordinate:WaypointGround(Speed, OffRoadFormation))
-        table.insert(route, PathOnRoad[2]:WaypointGround(Speed, "On Road"))
-        table.insert(route, PathOnRoad[#PathOnRoad-1]:WaypointGround(Speed, "On Road"))
+        table.insert( route, FromCoordinate:WaypointGround( Speed, OffRoadFormation ) )
+        table.insert( route, PathOnRoad[2]:WaypointGround( Speed, "On Road" ) )
+        table.insert( route, PathOnRoad[#PathOnRoad - 1]:WaypointGround( Speed, "On Road" ) )
 
         -- Add the final coordinate because the final might not be on the road.
-        local dist=ToCoordinate:Get2DDistance(PathOnRoad[#PathOnRoad-1])
-        if dist>10 then
-          table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
-          table.insert(route, ToCoordinate:GetRandomCoordinateInRadius(10,5):WaypointGround(5, OffRoadFormation))
-          table.insert(route, ToCoordinate:GetRandomCoordinateInRadius(10,5):WaypointGround(5, OffRoadFormation))
+        local dist = ToCoordinate:Get2DDistance( PathOnRoad[#PathOnRoad - 1] )
+        if dist > 10 then
+          table.insert( route, ToCoordinate:WaypointGround( Speed, OffRoadFormation ) )
+          table.insert( route, ToCoordinate:GetRandomCoordinateInRadius( 10, 5 ):WaypointGround( 5, OffRoadFormation ) )
+          table.insert( route, ToCoordinate:GetRandomCoordinateInRadius( 10, 5 ):WaypointGround( 5, OffRoadFormation ) )
         end
 
       end
 
-      canroad=true
+      canroad = true
     else
 
       -- No path on road could be found (can happen!) ==> Route group directly from A to B.
-      table.insert(route, FromCoordinate:WaypointGround(Speed, OffRoadFormation))
-      table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
+      table.insert( route, FromCoordinate:WaypointGround( Speed, OffRoadFormation ) )
+      table.insert( route, ToCoordinate:WaypointGround( Speed, OffRoadFormation ) )
 
     end
 
     -- Add passing waypoint function.
     if WaypointFunction then
-      local N=#route
-      for n,waypoint in pairs(route) do
+      local N = #route
+      for n, waypoint in pairs( route ) do
         waypoint.task = {}
         waypoint.task.id = "ComboTask"
         waypoint.task.params = {}
-        waypoint.task.params.tasks = {self:TaskFunction("CONTROLLABLE.___PassingWaypoint", n, N, WaypointFunction, unpack(WaypointFunctionArguments or {}))}
+        waypoint.task.params.tasks = { self:TaskFunction( "CONTROLLABLE.___PassingWaypoint", n, N, WaypointFunction, unpack( WaypointFunctionArguments or {} ) ) }
       end
     end
 
@@ -2407,40 +2353,40 @@ do -- Route methods
   -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
   -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
   -- @return Task
-  function CONTROLLABLE:TaskGroundOnRailRoads(ToCoordinate, Speed, WaypointFunction, WaypointFunctionArguments )
-    self:F2({ToCoordinate=ToCoordinate, Speed=Speed})
+  function CONTROLLABLE:TaskGroundOnRailRoads( ToCoordinate, Speed, WaypointFunction, WaypointFunctionArguments )
+    self:F2( { ToCoordinate = ToCoordinate, Speed = Speed } )
 
     -- Defaults.
-    Speed=Speed or 20
+    Speed = Speed or 20
 
     -- Current coordinate.
     local FromCoordinate = self:GetCoordinate()
 
     -- Get path and path length on railroad.
-    local PathOnRail, LengthOnRail=FromCoordinate:GetPathOnRoad(ToCoordinate, false, true)
+    local PathOnRail, LengthOnRail = FromCoordinate:GetPathOnRoad( ToCoordinate, false, true )
 
     -- Debug info.
-    self:T(string.format("Length on railroad = %.3f km", LengthOnRail/1000))
+    self:T( string.format( "Length on railroad = %.3f km", LengthOnRail / 1000 ) )
 
     -- Route, ground waypoints along road.
-    local route={}
+    local route = {}
 
     -- Check if a valid path on railroad could be found.
     if PathOnRail then
 
-      table.insert(route, PathOnRail[1]:WaypointGround(Speed, "On Railroad"))
-      table.insert(route, PathOnRail[2]:WaypointGround(Speed, "On Railroad"))
+      table.insert( route, PathOnRail[1]:WaypointGround( Speed, "On Railroad" ) )
+      table.insert( route, PathOnRail[2]:WaypointGround( Speed, "On Railroad" ) )
 
     end
 
     -- Add passing waypoint function.
     if WaypointFunction then
-      local N=#route
-      for n,waypoint in pairs(route) do
+      local N = #route
+      for n, waypoint in pairs( route ) do
         waypoint.task = {}
         waypoint.task.id = "ComboTask"
         waypoint.task.params = {}
-        waypoint.task.params.tasks = {self:TaskFunction("CONTROLLABLE.___PassingWaypoint", n, N, WaypointFunction, unpack(WaypointFunctionArguments or {}))}
+        waypoint.task.params.tasks = { self:TaskFunction( "CONTROLLABLE.___PassingWaypoint", n, N, WaypointFunction, unpack( WaypointFunctionArguments or {} ) ) }
       end
     end
 
@@ -2452,10 +2398,9 @@ do -- Route methods
   -- @param #number n Current waypoint number passed.
   -- @param #number N Total number of waypoints.
   -- @param #function waypointfunction Function called when a waypoint is passed.
-  function CONTROLLABLE.___PassingWaypoint(controllable, n, N, waypointfunction, ...)
-    waypointfunction(controllable, n, N, ...)
+  function CONTROLLABLE.___PassingWaypoint( controllable, n, N, waypointfunction, ... )
+    waypointfunction( controllable, n, N, ... )
   end
-
 
   --- Make the AIR Controllable fly towards a specific point.
   -- @param #CONTROLLABLE self
@@ -2477,7 +2422,6 @@ do -- Route methods
 
     return self
   end
-
 
   --- (AIR + GROUND) Route the controllable to a given zone.
   -- The controllable final destination point can be randomized.
@@ -2503,7 +2447,6 @@ do -- Route methods
       PointFrom.type = "Turning Point"
       PointFrom.action = Formation or "Cone"
       PointFrom.speed = 20 / 3.6
-
 
       local PointTo = {}
       local ZonePoint
@@ -2564,7 +2507,6 @@ do -- Route methods
       PointFrom.action = Formation or "Cone"
       PointFrom.speed = 20 / 3.6
 
-
       local PointTo = {}
 
       PointTo.x = Vec2.x
@@ -2616,7 +2558,6 @@ function CONTROLLABLE:CommandDoScript( DoScript )
   return DCSDoScript
 end
 
-
 --- Return the mission template of the controllable.
 -- @param #CONTROLLABLE self
 -- @return #table The MissionTemplate
@@ -2635,8 +2576,6 @@ function CONTROLLABLE:GetTaskRoute()
 
   return routines.utils.deepCopy( _DATABASE.Templates.Controllables[self.ControllableName].Template.route.points )
 end
-
-
 
 --- Return the route of a controllable by using the @{Core.Database#DATABASE} class.
 -- @param #CONTROLLABLE self
@@ -2671,7 +2610,7 @@ function CONTROLLABLE:CopyRoute( Begin, End, Randomize, Radius )
 
     for TPointID = Begin + 1, #Template.route.points - End do
       if Template.route.points[TPointID] then
-        Points[#Points+1] = routines.utils.deepCopy( Template.route.points[TPointID] )
+        Points[#Points + 1] = routines.utils.deepCopy( Template.route.points[TPointID] )
         if Randomize then
           if not Radius then
             Radius = 500
@@ -2688,7 +2627,6 @@ function CONTROLLABLE:CopyRoute( Begin, End, Randomize, Radius )
 
   return nil
 end
-
 
 --- Return the detected targets of the controllable.
 -- The optional parametes specify the detection methods that can be applied.
@@ -2708,34 +2646,32 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
 
   if DCSControllable then
 
-    local DetectionVisual = ( DetectVisual and DetectVisual == true ) and Controller.Detection.VISUAL or nil
-    local DetectionOptical = ( DetectOptical and DetectOptical == true ) and Controller.Detection.OPTICAL or nil
-    local DetectionRadar = ( DetectRadar and DetectRadar == true ) and Controller.Detection.RADAR or nil
-    local DetectionIRST = ( DetectIRST and DetectIRST == true ) and Controller.Detection.IRST or nil
-    local DetectionRWR = ( DetectRWR and DetectRWR == true ) and Controller.Detection.RWR or nil
-    local DetectionDLINK = ( DetectDLINK and DetectDLINK == true ) and Controller.Detection.DLINK or nil
-
+    local DetectionVisual = (DetectVisual and DetectVisual == true) and Controller.Detection.VISUAL or nil
+    local DetectionOptical = (DetectOptical and DetectOptical == true) and Controller.Detection.OPTICAL or nil
+    local DetectionRadar = (DetectRadar and DetectRadar == true) and Controller.Detection.RADAR or nil
+    local DetectionIRST = (DetectIRST and DetectIRST == true) and Controller.Detection.IRST or nil
+    local DetectionRWR = (DetectRWR and DetectRWR == true) and Controller.Detection.RWR or nil
+    local DetectionDLINK = (DetectDLINK and DetectDLINK == true) and Controller.Detection.DLINK or nil
 
     local Params = {}
     if DetectionVisual then
-      Params[#Params+1] = DetectionVisual
+      Params[#Params + 1] = DetectionVisual
     end
     if DetectionOptical then
-      Params[#Params+1] = DetectionOptical
+      Params[#Params + 1] = DetectionOptical
     end
     if DetectionRadar then
-      Params[#Params+1] = DetectionRadar
+      Params[#Params + 1] = DetectionRadar
     end
     if DetectionIRST then
-      Params[#Params+1] = DetectionIRST
+      Params[#Params + 1] = DetectionIRST
     end
     if DetectionRWR then
-      Params[#Params+1] = DetectionRWR
+      Params[#Params + 1] = DetectionRWR
     end
     if DetectionDLINK then
-      Params[#Params+1] = DetectionDLINK
+      Params[#Params + 1] = DetectionDLINK
     end
-
 
     self:T2( { DetectionVisual, DetectionOptical, DetectionRadar, DetectionIRST, DetectionRWR, DetectionDLINK } )
 
@@ -2772,12 +2708,12 @@ function CONTROLLABLE:IsTargetDetected( DCSObject, DetectVisual, DetectOptical, 
 
   if DCSControllable then
 
-    local DetectionVisual = ( DetectVisual and DetectVisual == true ) and Controller.Detection.VISUAL or nil
-    local DetectionOptical = ( DetectOptical and DetectOptical == true ) and Controller.Detection.OPTICAL or nil
-    local DetectionRadar = ( DetectRadar and DetectRadar == true ) and Controller.Detection.RADAR or nil
-    local DetectionIRST = ( DetectIRST and DetectIRST == true ) and Controller.Detection.IRST or nil
-    local DetectionRWR = ( DetectRWR and DetectRWR == true ) and Controller.Detection.RWR or nil
-    local DetectionDLINK = ( DetectDLINK and DetectDLINK == true ) and Controller.Detection.DLINK or nil
+    local DetectionVisual = (DetectVisual and DetectVisual == true) and Controller.Detection.VISUAL or nil
+    local DetectionOptical = (DetectOptical and DetectOptical == true) and Controller.Detection.OPTICAL or nil
+    local DetectionRadar = (DetectRadar and DetectRadar == true) and Controller.Detection.RADAR or nil
+    local DetectionIRST = (DetectIRST and DetectIRST == true) and Controller.Detection.IRST or nil
+    local DetectionRWR = (DetectRWR and DetectRWR == true) and Controller.Detection.RWR or nil
+    local DetectionDLINK = (DetectDLINK and DetectDLINK == true) and Controller.Detection.DLINK or nil
 
     local Controller = self:_GetController()
 
@@ -2813,7 +2749,7 @@ function CONTROLLABLE:IsUnitDetected( Unit, DetectVisual, DetectOptical, DetectR
   self:F2( self.ControllableName )
 
   if Unit and Unit:IsAlive() then
-    return self:IsTargetDetected(Unit:GetDCSObject(), DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+    return self:IsTargetDetected( Unit:GetDCSObject(), DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
   end
 
   return nil
@@ -2836,11 +2772,11 @@ function CONTROLLABLE:IsGroupDetected( Group, DetectVisual, DetectOptical, Detec
   self:F2( self.ControllableName )
 
   if Group and Group:IsAlive() then
-    for _,_unit in pairs(Group:GetUnits()) do
-      local unit=_unit --Wrapper.Unit#UNIT
+    for _, _unit in pairs( Group:GetUnits() ) do
+      local unit = _unit -- Wrapper.Unit#UNIT
       if unit and unit:IsAlive() then
 
-        local isdetected=self:IsUnitDetected(unit, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+        local isdetected = self:IsUnitDetected( unit, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
 
         if isdetected then
           return true
@@ -2852,7 +2788,6 @@ function CONTROLLABLE:IsGroupDetected( Group, DetectVisual, DetectOptical, Detec
 
   return nil
 end
-
 
 --- Return the detected targets of the controllable.
 -- The optional parametes specify the detection methods that can be applied.
@@ -2866,23 +2801,23 @@ end
 -- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
 -- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
 -- @return Core.Set#SET_UNIT Set of detected units.
-function CONTROLLABLE:GetDetectedUnitSet(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+function CONTROLLABLE:GetDetectedUnitSet( DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
 
   -- Get detected DCS units.
-  local detectedtargets=self:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+  local detectedtargets = self:GetDetectedTargets( DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
 
-  local unitset=SET_UNIT:New()
+  local unitset = SET_UNIT:New()
 
-  for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
-    local DetectedObject=Detection.object -- DCS#Object
+  for DetectionObjectID, Detection in pairs( detectedtargets or {} ) do
+    local DetectedObject = Detection.object -- DCS#Object
 
-    if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
-      local unit=UNIT:Find(DetectedObject)
+    if DetectedObject and DetectedObject:isExist() and DetectedObject.id_ < 50000000 then
+      local unit = UNIT:Find( DetectedObject )
 
       if unit and unit:IsAlive() then
 
-        if not unitset:FindUnit(unit:GetName()) then
-          unitset:AddUnit(unit)
+        if not unitset:FindUnit( unit:GetName() ) then
+          unitset:AddUnit( unit )
         end
 
       end
@@ -2903,24 +2838,24 @@ end
 -- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
 -- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
 -- @return Core.Set#SET_GROUP Set of detected groups.
-function CONTROLLABLE:GetDetectedGroupSet(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+function CONTROLLABLE:GetDetectedGroupSet( DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
 
   -- Get detected DCS units.
-  local detectedtargets=self:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+  local detectedtargets = self:GetDetectedTargets( DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
 
-  local groupset=SET_GROUP:New()
+  local groupset = SET_GROUP:New()
 
-  for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
-    local DetectedObject=Detection.object -- DCS#Object
+  for DetectionObjectID, Detection in pairs( detectedtargets or {} ) do
+    local DetectedObject = Detection.object -- DCS#Object
 
-    if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
-      local unit=UNIT:Find(DetectedObject)
+    if DetectedObject and DetectedObject:isExist() and DetectedObject.id_ < 50000000 then
+      local unit = UNIT:Find( DetectedObject )
 
       if unit and unit:IsAlive() then
-        local group=unit:GetGroup()
+        local group = unit:GetGroup()
 
-        if group and not groupset:FindGroup(group:GetName()) then
-          groupset:AddGroup(group)
+        if group and not groupset:FindGroup( group:GetName() ) then
+          groupset:AddGroup( group )
         end
 
       end
@@ -2930,7 +2865,6 @@ function CONTROLLABLE:GetDetectedGroupSet(DetectVisual, DetectOptical, DetectRad
   return groupset
 end
 
-
 -- Options
 
 --- Set option.
@@ -2938,7 +2872,7 @@ end
 -- @param #number OptionID ID/Type of the option.
 -- @param #number OptionValue Value of the option
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:SetOption(OptionID, OptionValue)
+function CONTROLLABLE:SetOption( OptionID, OptionValue )
 
   local DCSControllable = self:GetDCSObject()
   if DCSControllable then
@@ -2956,7 +2890,7 @@ end
 -- @param Wrapper.Controllable#CONTROLLABLE self
 -- @param #number ROEvalue ROE value. See ENUMS.ROE.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:OptionROE(ROEvalue)
+function CONTROLLABLE:OptionROE( ROEvalue )
 
   local DCSControllable = self:GetDCSObject()
 
@@ -2965,11 +2899,11 @@ function CONTROLLABLE:OptionROE(ROEvalue)
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption(AI.Option.Air.id.ROE, ROEvalue )
+      Controller:setOption( AI.Option.Air.id.ROE, ROEvalue )
     elseif self:IsGround() then
-      Controller:setOption(AI.Option.Ground.id.ROE, ROEvalue )
+      Controller:setOption( AI.Option.Ground.id.ROE, ROEvalue )
     elseif self:IsShip() then
-      Controller:setOption(AI.Option.Naval.id.ROE, ROEvalue )
+      Controller:setOption( AI.Option.Naval.id.ROE, ROEvalue )
     end
 
     return self
@@ -3199,7 +3133,6 @@ function CONTROLLABLE:OptionROTNoReactionPossible()
   return nil
 end
 
-
 --- No evasion on enemy threats.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
@@ -3224,7 +3157,7 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number ROTvalue ROT value. See ENUMS.ROT.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:OptionROT(ROTvalue)
+function CONTROLLABLE:OptionROT( ROTvalue )
   self:F2( { self.ControllableName } )
 
   local DCSControllable = self:GetDCSObject()
@@ -3297,7 +3230,6 @@ function CONTROLLABLE:OptionROTEvadeFirePossible()
   return nil
 end
 
-
 --- Evade on fire.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
@@ -3336,7 +3268,6 @@ function CONTROLLABLE:OptionROTVerticalPossible()
   return nil
 end
 
-
 --- Evade on fire using vertical manoeuvres.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
@@ -3368,10 +3299,10 @@ function CONTROLLABLE:OptionAlarmStateAuto()
     local Controller = self:_GetController()
 
     if self:IsGround() then
-      Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.AUTO)
+      Controller:setOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.AUTO )
     elseif self:IsShip() then
-      --Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.AUTO)
-      Controller:setOption(9, 0)
+      -- Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.AUTO)
+      Controller:setOption( 9, 0 )
     end
 
     return self
@@ -3394,8 +3325,8 @@ function CONTROLLABLE:OptionAlarmStateGreen()
       Controller:setOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.GREEN )
     elseif self:IsShip() then
       -- AI.Option.Naval.id.ALARM_STATE does not seem to exist!
-      --Controller:setOption( AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.GREEN )
-      Controller:setOption(9, 1)
+      -- Controller:setOption( AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.GREEN )
+      Controller:setOption( 9, 1 )
     end
 
     return self
@@ -3415,10 +3346,10 @@ function CONTROLLABLE:OptionAlarmStateRed()
     local Controller = self:_GetController()
 
     if self:IsGround() then
-      Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.RED)
+      Controller:setOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.RED )
     elseif self:IsShip() then
-      --Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.RED)
-      Controller:setOption(9, 2)
+      -- Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.RED)
+      Controller:setOption( 9, 2 )
     end
 
     return self
@@ -3427,18 +3358,17 @@ function CONTROLLABLE:OptionAlarmStateRed()
   return nil
 end
 
-
 --- Set RTB on bingo fuel.
 -- @param #CONTROLLABLE self
 -- @param #boolean RTB true if RTB on bingo fuel (default), false if no RTB on bingo fuel.
 -- Warning! When you switch this option off, the airborne group will continue to fly until all fuel has been consumed, and will crash.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:OptionRTBBingoFuel( RTB ) --R2.2
+function CONTROLLABLE:OptionRTBBingoFuel( RTB ) -- R2.2
   self:F2( { self.ControllableName } )
 
-  --RTB = RTB or true
-  if RTB==nil then
-    RTB=true
+  -- RTB = RTB or true
+  if RTB == nil then
+    RTB = true
   end
 
   local DCSControllable = self:GetDCSObject()
@@ -3454,7 +3384,6 @@ function CONTROLLABLE:OptionRTBBingoFuel( RTB ) --R2.2
 
   return nil
 end
-
 
 --- Set RTB on ammo.
 -- @param #CONTROLLABLE self
@@ -3477,7 +3406,6 @@ function CONTROLLABLE:OptionRTBAmmo( WeaponsFlag )
   return nil
 end
 
-
 --- Allow to Jettison of weapons upon threat.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
@@ -3497,7 +3425,6 @@ function CONTROLLABLE:OptionAllowJettisonWeaponsOnThreat()
 
   return nil
 end
-
 
 --- Keep weapons upon threat.
 -- @param #CONTROLLABLE self
@@ -3523,15 +3450,15 @@ end
 -- @param #CONTROLLABLE self
 -- @param #boolean Prohibit If true or nil, prohibit. If false, do not prohibit.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:OptionProhibitAfterburner(Prohibit)
+function CONTROLLABLE:OptionProhibitAfterburner( Prohibit )
   self:F2( { self.ControllableName } )
 
-  if Prohibit==nil then
-    Prohibit=true
+  if Prohibit == nil then
+    Prohibit = true
   end
 
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.PROHIBIT_AB, Prohibit)
+    self:SetOption( AI.Option.Air.id.PROHIBIT_AB, Prohibit )
   end
 
   return self
@@ -3544,7 +3471,7 @@ function CONTROLLABLE:OptionECM_Never()
   self:F2( { self.ControllableName } )
 
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 0)
+    self:SetOption( AI.Option.Air.id.ECM_USING, 0 )
   end
 
   return self
@@ -3557,12 +3484,11 @@ function CONTROLLABLE:OptionECM_OnlyLockByRadar()
   self:F2( { self.ControllableName } )
 
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 1)
+    self:SetOption( AI.Option.Air.id.ECM_USING, 1 )
   end
 
   return self
 end
-
 
 --- Defines the usage of Electronic Counter Measures by airborne forces. If the AI is being detected by a radar they will enable their ECM.
 -- @param #CONTROLLABLE self
@@ -3571,7 +3497,7 @@ function CONTROLLABLE:OptionECM_DetectedLockByRadar()
   self:F2( { self.ControllableName } )
 
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 2)
+    self:SetOption( AI.Option.Air.id.ECM_USING, 2 )
   end
 
   return self
@@ -3584,7 +3510,7 @@ function CONTROLLABLE:OptionECM_AlwaysOn()
   self:F2( { self.ControllableName } )
 
   if self:IsAir() then
-    self:SetOption(AI.Option.Air.id.ECM_USING, 3)
+    self:SetOption( AI.Option.Air.id.ECM_USING, 3 )
   end
 
   return self
@@ -3613,7 +3539,7 @@ end
 -- @param #CONTROLLABLE self
 -- @return #table WayPoints If WayPoints is given, then return the WayPoints structure.
 function CONTROLLABLE:GetWayPoints()
-  self:F( )
+  self:F()
 
   if self.WayPoints then
     return self.WayPoints
@@ -3635,7 +3561,6 @@ function CONTROLLABLE:WayPointFunction( WayPoint, WayPointIndex, WayPointFunctio
   self.WayPoints[WayPoint].task.params.tasks[WayPointIndex] = self:TaskFunction( WayPointFunction, arg )
   return self
 end
-
 
 --- Executes the WayPoint plan.
 -- The function gets a WayPoint parameter, that you can use to restart the mission at a specific WayPoint.
@@ -3698,8 +3623,8 @@ end
 --- Sets Controllable Option for Restriction of Afterburner.
 -- @param #CONTROLLABLE self
 -- @param #boolean RestrictBurner If true, restrict burner. If false or nil, allow (unrestrict) burner.
-function CONTROLLABLE:OptionRestrictBurner(RestrictBurner)
-  self:F2({self.ControllableName})
+function CONTROLLABLE:OptionRestrictBurner( RestrictBurner )
+  self:F2( { self.ControllableName } )
 
   local DCSControllable = self:GetDCSObject()
 
@@ -3711,11 +3636,11 @@ function CONTROLLABLE:OptionRestrictBurner(RestrictBurner)
       -- Issue https://github.com/FlightControl-Master/MOOSE/issues/1216
       if RestrictBurner == true then
         if self:IsAir() then
-          Controller:setOption(16, true)
+          Controller:setOption( 16, true )
         end
       else
         if self:IsAir() then
-          Controller:setOption(16, false)
+          Controller:setOption( 16, false )
         end
       end
 
@@ -3729,20 +3654,20 @@ end
 -- @param #number range Defines the range
 -- @return #CONTROLLABLE self
 -- @usage Range can be one of MAX_RANGE = 0, NEZ_RANGE = 1, HALF_WAY_RMAX_NEZ = 2, TARGET_THREAT_EST = 3, RANDOM_RANGE = 4. Defaults to 3. See: https://wiki.hoggitworld.com/view/DCS_option_missileAttack
-function CONTROLLABLE:OptionAAAttackRange(range)
+function CONTROLLABLE:OptionAAAttackRange( range )
   self:F2( { self.ControllableName } )
   -- defaults to 3
   local range = range or 3
-  if range < 0  or range > 4 then
+  if range < 0 or range > 4 then
     range = 3
   end
   local DCSControllable = self:GetDCSObject()
   if DCSControllable then
     local Controller = self:_GetController()
     if Controller then
-     if self:IsAir() then
-        self:SetOption(AI.Option.Air.val.MISSILE_ATTACK, range)
-     end
+      if self:IsAir() then
+        self:SetOption( AI.Option.Air.val.MISSILE_ATTACK, range )
+      end
     end
     return self
   end
@@ -3753,22 +3678,22 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number EngageRange Engage range limit in percent (a number between 0 and 100). Default 100.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:OptionEngageRange(EngageRange)
+function CONTROLLABLE:OptionEngageRange( EngageRange )
   self:F2( { self.ControllableName } )
   -- Set default if not specified.
-  EngageRange=EngageRange or 100
-  if EngageRange < 0  or EngageRange > 100 then
+  EngageRange = EngageRange or 100
+  if EngageRange < 0 or EngageRange > 100 then
     EngageRange = 100
   end
   local DCSControllable = self:GetDCSObject()
   if DCSControllable then
     local Controller = self:_GetController()
     if Controller then
-     if self:IsGround() then
-        self:SetOption(AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION, EngageRange)
-     end
+      if self:IsGround() then
+        self:SetOption( AI.Option.Ground.id.AC_ENGAGEMENT_RANGE_RESTRICTION, EngageRange )
+      end
     end
-   return self
+    return self
   end
   return nil
 end
@@ -3781,26 +3706,26 @@ end
 -- @param  #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
 -- @param #string formation Formation string as in the mission editor, e.g. "Vee", "Diamond", "Line abreast", etc. Defaults to "Off Road"
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:RelocateGroundRandomInRadius(speed, radius, onroad, shortcut, formation)
+function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, shortcut, formation )
   self:F2( { self.ControllableName } )
 
-    local _coord = self:GetCoordinate()
-    local _radius = radius or 500
-    local _speed = speed or 20
-    local _tocoord = _coord:GetRandomCoordinateInRadius(_radius,100)
-    local _onroad = onroad or true
-    local _grptsk = {}
-    local _candoroad = false
-    local _shortcut = shortcut or false
-    local _formation = formation or "Off Road"
+  local _coord = self:GetCoordinate()
+  local _radius = radius or 500
+  local _speed = speed or 20
+  local _tocoord = _coord:GetRandomCoordinateInRadius( _radius, 100 )
+  local _onroad = onroad or true
+  local _grptsk = {}
+  local _candoroad = false
+  local _shortcut = shortcut or false
+  local _formation = formation or "Off Road"
 
-    -- create a DCS Task an push it on the group
-    if onroad then
-      _grptsk, _candoroad = self:TaskGroundOnRoad(_tocoord,_speed,_formation,_shortcut)
-      self:Route(_grptsk,5)
-    else
-      self:TaskRouteToVec2(_tocoord:GetVec2(),_speed,_formation)
-    end
+  -- create a DCS Task an push it on the group
+  if onroad then
+    _grptsk, _candoroad = self:TaskGroundOnRoad( _tocoord, _speed, _formation, _shortcut )
+    self:Route( _grptsk, 5 )
+  else
+    self:TaskRouteToVec2( _tocoord:GetVec2(), _speed, _formation )
+  end
 
   return self
 end
@@ -3809,7 +3734,7 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number Seconds Any positive number: AI will disperse, but only for the specified time before continuing their route. 0: AI will not disperse.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:OptionDisperseOnAttack(Seconds)
+function CONTROLLABLE:OptionDisperseOnAttack( Seconds )
   self:F2( { self.ControllableName } )
   -- Set default if not specified.
   local seconds = Seconds or 0
@@ -3817,11 +3742,11 @@ function CONTROLLABLE:OptionDisperseOnAttack(Seconds)
   if DCSControllable then
     local Controller = self:_GetController()
     if Controller then
-     if self:IsGround() then
-        self:SetOption(AI.Option.Ground.id.DISPERSE_ON_ATTACK, seconds)
-     end
+      if self:IsGround() then
+        self:SetOption( AI.Option.Ground.id.DISPERSE_ON_ATTACK, seconds )
+      end
     end
-   return self
+    return self
   end
   return nil
 end
@@ -3836,11 +3761,11 @@ function POSITIONABLE:IsSubmarine()
 
   if DCSUnit then
     local UnitDescriptor = DCSUnit:getDesc()
-        if UnitDescriptor.attributes["Submarines"] == true then
-            return true
-        else
-            return false
-        end
+    if UnitDescriptor.attributes["Submarines"] == true then
+      return true
+    else
+      return false
+    end
   end
 
   return nil

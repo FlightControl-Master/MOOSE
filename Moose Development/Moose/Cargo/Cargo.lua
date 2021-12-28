@@ -194,7 +194,7 @@
 --    * is of type `Workmaterials`
 --    * will report when a carrier is within 500 meters
 --    * will board to carriers when the carrier is within 500 meters from the cargo object
---    * will dissapear when the cargo is within 25 meters from the carrier during boarding
+--    * will disappear when the cargo is within 25 meters from the carrier during boarding
 -- 
 -- So the overall syntax of the #CARGO naming tag and arguments are:
 -- 
@@ -220,7 +220,7 @@
 --    * is of type `Workmaterials`
 --    * will report when a carrier is within 500 meters
 --    * will board to carriers when the carrier is within 500 meters from the cargo object
---    * will dissapear when the cargo is within 25 meters from the carrier during boarding
+--    * will disappear when the cargo is within 25 meters from the carrier during boarding
 -- 
 -- So the overall syntax of the #CARGO naming tag and arguments are:
 -- 

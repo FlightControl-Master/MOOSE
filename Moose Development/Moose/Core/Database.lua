@@ -903,7 +903,7 @@ function DATABASE:_RegisterPlayers()
   return self
 end
 
---- Private method that registers all Groups and Units within in the mission.
+--- Private method that registers all Groups and Units within the mission.
 -- @param #DATABASE self
 -- @return #DATABASE self
 function DATABASE:_RegisterGroupsAndUnits()
@@ -944,7 +944,7 @@ function DATABASE:_RegisterGroupsAndUnits()
   return self
 end
 
---- Private method that registers all Units of skill Client or Player within in the mission.
+--- Private method that registers all Units of skill Client or Player within the mission.
 -- @param #DATABASE self
 -- @return #DATABASE self
 function DATABASE:_RegisterClients()
@@ -957,7 +957,8 @@ function DATABASE:_RegisterClients()
   return self
 end
 
---- @param #DATABASE self
+--- Private method that registers all Statics within the mission.
+-- @param #DATABASE self
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ), GroupsNeutral = coalition.getStaticObjects( coalition.side.NEUTRAL ) }

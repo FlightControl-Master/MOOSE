@@ -1373,7 +1373,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
           SpawnTemplate.modulation = self.SpawnInitModu
         end
 
-        -- Set country, coaliton and categroy.
+        -- Set country, coalition and category.
         SpawnTemplate.CategoryID = self.SpawnInitCategory or SpawnTemplate.CategoryID
         SpawnTemplate.CountryID = self.SpawnInitCountry or SpawnTemplate.CountryID
         SpawnTemplate.CoalitionID = self.SpawnInitCoalition or SpawnTemplate.CoalitionID
@@ -2360,7 +2360,7 @@ end
 -- The known AIRBASE objects are automatically imported at mission start by MOOSE.
 -- Therefore, there isn't any New() constructor defined for AIRBASE objects.
 --
--- Ships and Farps are added within the mission, and are therefore not known.
+-- Ships and FARPs are added within the mission, and are therefore not known.
 -- For these AIRBASE objects, there isn't an @{Wrapper.Airbase#AIRBASE} enumeration defined.
 -- You need to provide the **exact name** of the airbase as the parameter to the @{Wrapper.Airbase#AIRBASE.FindByName}() method!
 --
