@@ -35,7 +35,7 @@
 -- ## Missions:
 --
 --    * [MAR - On the Range - MOOSE - SC](https://www.digitalcombatsimulator.com/en/files/3317765/) by shagrat
--- 
+--
 -- ===
 --
 -- ## Sound files: [MOOSE Sound Files](https://github.com/FlightControl-Master/MOOSE_SOUND/releases)
@@ -349,6 +349,7 @@ RANGE.Defaults={
   boxlength=3000,
   boxwidth=300,
   goodpass=20,
+  goodhitrange=25,
   foulline=610,
 }
 
@@ -363,6 +364,13 @@ RANGE.TargetType={
   COORD="Coordinate",
 }
 
+--- Default range variables for RangeBoss/Hypeman tie in.
+hypemanStrafeRollIn = "nil"
+StrafeAircraftType = "strafeAircraftTypeNotSet"
+Straferesult={}
+clientRollingIn = false
+clientStrafed = false
+invalidStrafe = false
 --- Player settings.
 -- @type RANGE.PlayerData
 -- @field #boolean smokebombimpact Smoke bomb impact points.
@@ -1658,6 +1666,7 @@ function RANGE:OnEventHit(EventData)
             self:_DisplayMessageToGroup(_unit, text)
             self:T2(self.id..text)
             _currentTarget.pastfoulline=true
+            invalidStrafe = true --Rangeboss Edit
           end
         end
 
@@ -1830,7 +1839,9 @@ function RANGE:OnEventShot(EventData)
               _distance = _temp
               _closetTarget = _bombtarget
               _closeCoord=targetcoord              
-              if _distance <= 0.5*_bombtarget.goodhitrange then
+              if _distance <= 1.53 then -- Rangeboss Edit
+                _hitquality = "SHACK" -- Rangeboss Edit
+              elseif _distance <= 0.5*_bombtarget.goodhitrange then --Rangeboss Edit
                 _hitquality = "EXCELLENT"
               elseif _distance <= _bombtarget.goodhitrange then
                 _hitquality = "GOOD"
@@ -1863,6 +1874,9 @@ function RANGE:OnEventShot(EventData)
           result.player=playerData.playername
           result.time=timer.getAbsTime()
           result.airframe=playerData.airframe
+          result.roundsFired=0  --Rangeboss Edit
+          result.roundsHit=0 --Rangeboss Edit
+          result.roundsQuality="N/A"   --Rangeboss Edit
 
           -- Add to table.
           table.insert(_results, result)
@@ -1903,6 +1917,67 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Functions
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+function RANGE:_SaveTargetSheet(_playername, result) --RangeBoss Specific Function
+
+  --- Function that saves data to file
+  local function _savefile(filename, data)
+    local f = io.open(filename, "wb")
+    if f then
+      f:write(data)
+      f:close()
+    else
+      env.info("RANGEBOSS EDIT - could not save target sheet to file")
+      --self:E(self.lid..string.format("ERROR: could not save target sheet to file %s.\nFile may contain invalid characters.", tostring(filename)))
+    end
+  end
+
+  local path=lfs.writedir()..[[Logs\]]
+
+  -- Create unused file name.
+  local filename=nil
+  for i=1,9999 do
+
+    local name=UTILS.ReplaceIllegalCharacters(_playername, "_")
+		filename=string.format("RANGERESULTS-%s_Targetsheet-%s-%04d.csv",self.rangename,name, i)
+	--end
+
+    -- Set path.
+    if path~=nil then
+      filename=path.."\\"..filename
+    end
+
+    -- Check if file exists.
+    local _exists=UTILS.FileExists(filename)
+    if not _exists then
+      break
+    end
+  end
+
+  -- Header line
+  local data="Name,Target,Distance,Radial,Quality,Rounds Fired,Rounds Hit,Rounds Quality,Attack Heading,Weapon,Airframe,Mission Time,OS Time\n"
+
+  --local result=_result --#RANGE.BombResult
+  local distance=result.distance
+  local weapon=result.weapon
+  local target=result.name
+  local radial=result.radial
+  local quality=result.quality
+  local time=UTILS.SecondsToClock(result.time)
+  local airframe=result.airframe
+  local date="n/a"
+  local roundsFired=result.roundsFired
+  local roundsHit=result.roundsHit
+  local strafeResult=result.roundsQuality          
+  local attackHeading=result.heading
+  if os then
+    date=os.date()
+  end
+  data=data..string.format("%s,%s,%.2f,%03d,%s,%03d,%03d,%s,%03d,%s,%s,%s,%s", _playername, target, distance, radial, quality, roundsFired, roundsHit, strafeResult, attackHeading, weapon, airframe, time, date)
+
+
+  -- Save file.
+  _savefile(filename, data)
+end
 
 --- Check spawn queue and spawn aircraft if necessary.
 -- @param #RANGE self
@@ -2732,6 +2807,7 @@ function RANGE:_CheckInZone(_unitName)
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+  local unitheading = 0 --RangeBoss
 
   if _unit and _playername then
 
@@ -2741,6 +2817,7 @@ function RANGE:_CheckInZone(_unitName)
 
       -- Heading check.
       local unitheading  = _unit:GetHeading()
+      unitheadingStrafe  = _unit:GetHeading() --RangeBoss
       local pitheading   = targetheading-180
       local deltaheading = unitheading-pitheading
       local towardspit   = math.abs(deltaheading)<=90 or math.abs(deltaheading-360)<=90
@@ -2777,7 +2854,7 @@ function RANGE:_CheckInZone(_unitName)
 
       -- Check if player is in strafe zone and below max alt.
       if unitinzone then
-
+        StrafeAircraftType = _unit:GetTypeName() --RangeBoss
         -- Still in zone, keep counting hits. Increase counter.
         _currentStrafeRun.time = _currentStrafeRun.time+1
 
@@ -2809,7 +2886,7 @@ function RANGE:_CheckInZone(_unitName)
           -- Result.
           local _result = self.strafeStatus[_unitID]
           local _sound  = nil --#RANGE.Soundfile
-
+          --[[ --RangeBoss commented out in order to implement strafe quality based on accuracy percentage, not the number of rounds on target
           -- Judge this pass. Text is displayed on summary.
           if _result.hits >= _result.zone.goodPass*2 then
             _result.text = "EXCELLENT PASS"
@@ -2824,7 +2901,7 @@ function RANGE:_CheckInZone(_unitName)
             _result.text = "POOR PASS"
             _sound=RANGE.Sound.RCPoorPass
           end
-
+          ]]
           -- Calculate accuracy of run. Number of hits wrt number of rounds fired.
           local shots=_result.ammo-_ammo
           local accur=0
@@ -2832,6 +2909,29 @@ function RANGE:_CheckInZone(_unitName)
             accur=_result.hits/shots*100
             if accur > 100 then accur = 100 end
           end
+
+          if invalidStrafe == true then--
+            _result.text = "* INVALID - PASSED FOUL LINE *" 
+            _sound=RANGE.Sound.RCPoorPass --
+          else
+            if accur >= 90 then
+              _result.text = "DEADEYE PASS"
+              _sound=RANGE.Sound.RCExcellentPass
+            elseif accur >= 75 then
+              _result.text = "EXCELLENT PASS"
+              _sound=RANGE.Sound.RCExcellentPass  
+            elseif accur >= 50 then
+              _result.text = "GOOD PASS"
+              _sound=RANGE.Sound.RCGoodPass
+            elseif accur >= 25 then
+              _result.text = "INEFFECTIVE PASS"
+              _sound=RANGE.Sound.RCIneffectivePass
+            else
+              _result.text = "POOR PASS"
+              _sound=RANGE.Sound.RCPoorPass
+            end
+          end
+          clientStrafed = true --RANGEBOSS
 
           -- Message text.
           local _text=string.format("%s, hits on target %s: %d", self:_myname(_unitName), _result.zone.name, _result.hits)
@@ -2843,6 +2943,41 @@ function RANGE:_CheckInZone(_unitName)
           -- Send message.
           self:_DisplayMessageToGroup(_unit, _text)
           
+          --RangeBoss Edit for strafe table insert
+          
+          -- Local results.
+
+          local result={} --#RANGE.BombResult
+          result.name=_result.zone.name or "unknown"
+          result.distance=0
+          result.radial=0
+          result.weapon="N/A" 
+          result.quality="N/A" 
+          result.player=_playernamee
+          result.time=timer.getAbsTime()
+          result.airframe=StrafeAircraftType 
+          result.roundsFired=shots  --RANGEBOSS
+          result.roundsHit=_result.hits  --RANGEBOSS
+          result.roundsQuality=_result.text   --RANGEBOSS
+          result.strafeAccuracy=accur
+          result.heading =unitheadingStrafe --RANGEBOSS
+ 
+          Straferesult.name= _result.zone.name or "unknown"
+          Straferesult.distance=0
+          Straferesult.radial=0
+          Straferesult.weapon="N/A" 
+          Straferesult.quality="N/A" 
+          Straferesult.player=_playername
+          Straferesult.time=timer.getAbsTime()
+          Straferesult.airframe=StrafeAircraftType
+          Straferesult.roundsFired=shots
+          Straferesult.roundsHit= _result.hits
+          Straferesult.roundsQuality=_result.text
+          Straferesult.strafeAccuracy=accur
+        
+          self:_SaveTargetSheet(_playername, result)
+          --RangeBoss edit for strafe data saved to file
+
           -- Voice over.
           if self.rangecontrol then                        
             self.rangecontrol:NewTransmission(RANGE.Sound.RCHitsOnTarget.filename, RANGE.Sound.RCHitsOnTarget.duration, self.soundpath)
@@ -2894,9 +3029,11 @@ function RANGE:_CheckInZone(_unitName)
           if self.rangecontrol then
             self.rangecontrol:NewTransmission(RANGE.Sound.RCRollingInOnStrafeTarget.filename, RANGE.Sound.RCRollingInOnStrafeTarget.duration, self.soundpath)
           end          
+          clientRollingIn = true --RANGEBOSS
 
           -- Send message.
           self:_DisplayMessageToGroup(_unit, _msg, 10, true)
+          hypemanStrafeRollIn = _msg --RANGEBOSS
 
           -- We found our player. Skip remaining checks.
           break
