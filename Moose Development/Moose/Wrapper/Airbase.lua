@@ -137,7 +137,7 @@ AIRBASE.Caucasus = {
 --   * AIRBASE.Nevada.Laughlin_Airport
 --   * AIRBASE.Nevada.Lincoln_County
 --   * AIRBASE.Nevada.Mesquite
---   * AIRBASE.Nevada.Mina_Airport_3Q0
+--   * AIRBASE.Nevada.Mina_Airport
 --   * AIRBASE.Nevada.North_Las_Vegas
 --   * AIRBASE.Nevada.Pahute_Mesa_Airstrip
 --   * AIRBASE.Nevada.Tonopah_Airport
@@ -145,23 +145,23 @@ AIRBASE.Caucasus = {
 --
 -- @field Nevada
 AIRBASE.Nevada = {
-  ["Creech_AFB"] = "Creech AFB",
-  ["Groom_Lake_AFB"] = "Groom Lake AFB",
-  ["McCarran_International_Airport"] = "McCarran International Airport",
-  ["Nellis_AFB"] = "Nellis AFB",
-  ["Beatty_Airport"] = "Beatty Airport",
-  ["Boulder_City_Airport"] = "Boulder City Airport",
+  ["Creech_AFB"] = "Creech",
+  ["Groom_Lake_AFB"] = "Groom Lake",
+  ["McCarran_International_Airport"] = "McCarran International",
+  ["Nellis_AFB"] = "Nellis",
+  ["Beatty_Airport"] = "Beatty",
+  ["Boulder_City_Airport"] = "Boulder City",
   ["Echo_Bay"] = "Echo Bay",
-  ["Henderson_Executive_Airport"] = "Henderson Executive Airport",
-  ["Jean_Airport"] = "Jean Airport",
-  ["Laughlin_Airport"] = "Laughlin Airport",
+  ["Henderson_Executive_Airport"] = "Henderson Executive",
+  ["Jean_Airport"] = "Jean",
+  ["Laughlin_Airport"] = "Laughlin",
   ["Lincoln_County"] = "Lincoln County",
   ["Mesquite"] = "Mesquite",
-  ["Mina_Airport_3Q0"] = "Mina Airport 3Q0",
+  ["Mina_Airport"] = "Mina",
   ["North_Las_Vegas"] = "North Las Vegas",
-  ["Pahute_Mesa_Airstrip"] = "Pahute Mesa Airstrip",
-  ["Tonopah_Airport"] = "Tonopah Airport",
-  ["Tonopah_Test_Range_Airfield"] = "Tonopah Test Range Airfield",
+  ["Pahute_Mesa_Airstrip"] = "Pahute Mesa",
+  ["Tonopah_Airport"] = "Tonopah",
+  ["Tonopah_Test_Range_Airfield"] = "Tonopah Test Range",
   }
 
 --- Airbases of the Normandy map:
