@@ -1685,7 +1685,7 @@ do -- AI_A2A_DISPATCHER
     return DefenderSquadron
   end
 
-  --- Set the Squadron visible before startup of the dispatcher.
+  --- [DEPRECATED - Might create problems launching planes] Set the Squadron visible before startup of the dispatcher.
   -- All planes will be spawned as uncontrolled on the parking spot.
   -- They will lock the parking spot.
   -- @param #AI_A2A_DISPATCHER self
