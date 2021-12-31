@@ -70,6 +70,7 @@ Functional/Fox.lua
 Functional/Mantis.lua
 Functional/Shorad.lua
 Functional/Autolase.lua
+Functional/AICSAR.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua
