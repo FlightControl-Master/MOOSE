@@ -1288,7 +1288,7 @@ ATC_GROUND_NEVADA = {
         },
       },
     },
-    [AIRBASE.Nevada.Mina_Airport_3Q0] = {
+    [AIRBASE.Nevada.Mina_Airport] = {
       PointsRunways = {
         [1] = {
           [1] = {["y"]=-290054.57371429,["x"]=-160930.02228572,},
