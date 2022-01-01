@@ -13,7 +13,7 @@
 --
 -- ## Example Missions:
 -- 
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/).
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/CSR-001%20-%20Basics).
 --       
 -- ===
 -- 
@@ -61,7 +61,7 @@
 -- Operational maxdistance can be set as well as the landing radius around the downed pilot.
 -- Keep in mind that AI helicopters cannot hover-load at the time of writing, so rescue operations over water or in the mountains might not
 -- work.
--- Optionally, if you have a CSAR operation with human pilots in your mission, you can set AICSAR to ignore missions when humna helicopter
+-- Optionally, if you have a CSAR operation with human pilots in your mission, you can set AICSAR to ignore missions when human helicopter
 -- pilots are around.
 --
 -- ## Setup
@@ -311,7 +311,7 @@ function AICSAR:OnEventLandingAfterEjection(EventData)
   return self
 end
 
---- [Internal] Get (available?) FlightGroup
+--- [Internal] Get FlightGroup
 -- @param #AICSAR self
 -- @return Ops.FlightGroup#FLIGHTGROUP The FlightGroup
 function AICSAR:_GetFlight()
@@ -397,7 +397,7 @@ function AICSAR:_CheckHelos()
       local name = helo:GetName()
       self:T("Helo group "..name.." in state "..state)
       if state == "Arrived" then
-        helo:__Stop(1)
+        helo:__Stop(5)
         self.helos[_index] = nil
       end
     else
