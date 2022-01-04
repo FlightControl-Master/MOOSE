@@ -1053,7 +1053,7 @@ end
 --    * `AIRBASE.Nevada.Lincoln_County`
 --    * `AIRBASE.Nevada.McCarran_International_Airport`
 --    * `AIRBASE.Nevada.Mesquite`
---    * `AIRBASE.Nevada.Mina_Airport_3Q0`
+--    * `AIRBASE.Nevada.Mina_Airport`
 --    * `AIRBASE.Nevada.Nellis_AFB`
 --    * `AIRBASE.Nevada.North_Las_Vegas`
 --    * `AIRBASE.Nevada.Pahute_Mesa_Airstrip`
