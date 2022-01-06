@@ -81,15 +81,74 @@
 --            my_aicsar.maxdistance -- maximum operational distance in meters. Defaults to 50NM or 92.6km
 --            my_aicsar.rescuezoneradius -- landing zone around downed pilot. Defaults to 200m
 --            my_aicsar.autoonoff -- stop operations when human helicopter pilots are around. Defaults to true.
---            my_aicsar.verbose -- messages coalition side about ongoing operations. Defaults to true.
+--            my_aicsar.verbose -- text messages coalition side about ongoing operations. Defaults to true.
 -- 
+-- ## Radio options
+-- 
+-- Radio messages, soundfile names and (for SRS) lengths are defined in three enumerators, so you can customize messages and soundfiles to your liking:
+-- 
+-- Defaults are:
+-- 
+--            AICSAR.Messages = {
+--              INITIALOK = "Roger, Pilot, we hear you. Stay where you are, a helo is on the way!",
+--              INITIALNOTOK = "Sorry, Pilot. You're behind maximum operational distance! Good Luck!",
+--              PILOTDOWN = "Pilot down at ", -- note that this will be appended with the position
+--              PILOTKIA = "Pilot KIA!",
+--              HELODOWN = "CSAR Helo Down!",
+--              PILOTRESCUED = "Pilot rescued!",
+--              PILOTINHELO = "Pilot picked up!",
+--            }
+-- 
+-- Correspondingly, sound file names are defined as these defaults:
+-- 
+--            AICSAR.RadioMessages = {
+--              INITIALOK = "initialok.ogg",
+--              INITIALNOTOK = "initialnotok.ogg",
+--              PILOTDOWN = "pilotdown.ogg",
+--              PILOTKIA = "pilotkia.ogg", 
+--              HELODOWN = "helodown.ogg", 
+--              PILOTRESCUED = "pilotrescued.ogg", 
+--              PILOTINHELO = "pilotinhelo.ogg", 
+--            }
+-- 
+-- and these default transmission lengths in seconds:
+-- 
+--            AICSAR.RadioLength = {
+--              INITIALOK = 4.1,
+--              INITIALNOTOK = 4.6, 
+--              PILOTDOWN = 2.6,
+--              PILOTKIA = 1.1,
+--              HELODOWN = 2.1,
+--              PILOTRESCUED = 3.5,
+--              PILOTINHELO = 2.6,
+--            }
+--
+-- The easiest way to add a soundfile to your mission is to use the "Sound to..." trigger in the mission editor. This will effectively 
+-- save your sound file inside of the .miz mission file.
+-- 
+-- To customize your sounds, you can take e.g. the following approach:
+-- 
+--           my_aicsar.Messages.INITIALOK = "Copy, Pilot, wir hören Sie. Bleiben Sie, wo Sie sind, ein Hubschrauber sammelt Sie auf!"
+--           my_aicsar.RadioMessages.INITILALOK = "okneu.ogg"
+--           my_aicsar.RadioLength.INITIALOK = 5.0
+--           
+-- Switch on radio transmissions via **either** SRS **or** "normal" DCS radio e.g. like so:
+-- 
+--          my_aicsar:SetSRSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",270,radio.modulation.AM)
+--         
+-- or         
+--          
+--          my_aicsar:SetDCSRadio(true,300,radio.modulation.AM,GROUP:FindByName("FARP-Radio"))
+-- 
+-- See the function documentation for parameter details.
+--                    
 -- ===
 ---
 --
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.0.2",
+  version = "0.0.3",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -112,7 +171,11 @@ AICSAR = {
   SRSFrequency = 243,
   SRSPath = "\\",
   SRSModulation = radio.modulation.AM,
-  SRSSoundPath = nil, -- defaults to "l10n/DEFAULT/", i.e. add messages by "Sount to..." in the ME
+  SRSSoundPath = nil, -- defaults to "l10n/DEFAULT/", i.e. add messages via "Sount to..." in the ME
+  DCSRadio = false,
+  DCSFrequency = 243,
+  DCSModulation = radio.modulation.AM,
+  DCSRadioGroup = nil,
 }
 
 -- TODO Messages
@@ -121,7 +184,7 @@ AICSAR = {
 AICSAR.Messages = {
   INITIALOK = "Roger, Pilot, we hear you. Stay where you are, a helo is on the way!",
   INITIALNOTOK = "Sorry, Pilot. You're behind maximum operational distance! Good Luck!",
-  PILOTDOWN = "Pilot down at %s!",
+  PILOTDOWN = "Pilot down at ",
   PILOTKIA = "Pilot KIA!",
   HELODOWN = "CSAR Helo Down!",
   PILOTRESCUED = "Pilot rescued!",
@@ -183,7 +246,7 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
       self.coalition=coalition.side.NEUTRAL
       self.coalitiontxt = Coalition
     else
-      self:E("ERROR: Unknown coalition in CSAR!")
+      self:E("ERROR: Unknown coalition in AICSAR!")
     end
   else
     self.coalition = Coalition
@@ -216,7 +279,16 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   self.SRSFrequency = 243
   self.SRSPath = "\\"
   self.SRSModulation = radio.modulation.AM
-  self.SRSSoundPath = nil -- defaults to "l10n/DEFAULT/", i.e. add messages by "Sound to..." in the ME
+  self.SRSSoundPath = nil -- defaults to "l10n/DEFAULT/", i.e. add messages via "Sound to..." in the ME
+  
+  -- DCS Radio - add messages via "Sound to..." in the ME
+  self.DCSRadio = false
+  self.DCSFrequency = 243
+  self.DCSModulation = radio.modulation.AM
+  self.DCSRadioGroup = nil
+  self.DCSRadioQueue = nil
+  
+  self.MGRS_Accuracy = 2
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("%s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -318,11 +390,12 @@ end
 -- @param #string Path Path to your SRS Server Component, e.g. "E:\\\\Program Files\\\\DCS-SimpleRadio-Standalone"
 -- @param #number Frequency Defaults to 243 (guard)
 -- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM
--- @param #string SoundPath Where to find the audio files. Defaults to nil, i.e. add messages by "Sound to..." in the Mission Editor.
+-- @param #string SoundPath Where to find the audio files. Defaults to nil, i.e. add messages via "Sound to..." in the Mission Editor.
 -- @return #AICSAR self
 function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath)
+  self:T(self.lid .. "SetSRSRadio")
   self:T(self.lid .. "SetSRSRadio to "..tostring(OnOff))
-  self.SRSRadio = OnOff or true
+  self.SRSRadio = OnOff and true
   self.SRSFrequency = Frequency or 243
   self.SRSPath = Path or "c:\\"
   self.SRSModulation = Modulation or radio.modulation.AM
@@ -330,6 +403,46 @@ function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath)
   if OnOff then
     self.SRS = MSRS:New(Path,Frequency,Modulation)
   end
+  return self
+end
+
+--- [User] Switch sound output on and use normale (DCS) radio
+-- @param #AICSAR self
+-- @param #boolean OnOff Switch on (true) or off (false).
+-- @param #number Frequency Defaults to 243 (guard).
+-- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM.
+-- @param Wrapper.Group#GROUP Group The group to use as sending station.
+-- @return #AICSAR self
+function AICSAR:SetDCSRadio(OnOff,Frequency,Modulation,Group)
+  self:T(self.lid .. "SetDCSRadio")
+  self:T(self.lid .. "SetDCSRadio to "..tostring(OnOff))
+  self.DCSRadio = OnOff and true
+  self.DCSFrequency = Frequency or 243
+  self.DCSModulation = Modulation or radio.modulation.AM
+  self.DCSRadioGroup = Group
+  if self.DCSRadio then
+    self.DCSRadioQueue = RADIOQUEUE:New(Frequency,Modulation,"AI-CSAR")
+    self.DCSRadioQueue:Start(5,5)
+    self.DCSRadioQueue:SetRadioPower(1000)
+    self.DCSRadioQueue:SetSenderCoordinate(Group:GetCoordinate())
+  else
+    if self.DCSRadioQueue then
+      self.DCSRadioQueue:Stop()
+    end
+  end
+  return self
+end
+
+--- [Internal] Sound output via non-SRS Radio. Add message files (.ogg) via "Sound to..." in the ME.
+-- @param #AICSAR self
+-- @param #string Soundfile Name of the soundfile
+-- @param #number Duration Duration of the sound
+-- @param #string Subtitle Text to display
+-- @return #AICSAR self
+function AICSAR:DCSRadioBroadcast(Soundfile,Duration,Subtitle)
+  self:T(self.lid .. "DCSRadioBroadcast")
+  local radioqueue = self.DCSRadioQueue -- Sound.RadioQueue#RADIOQUEUE
+  radioqueue:NewTransmission(Soundfile,Duration,nil,2,nil,Subtitle,10)
   return self
 end
 
@@ -356,7 +469,26 @@ function AICSAR:OnEventLandingAfterEjection(EventData)
   -- DONE: add distance check
   local distancetofarp = _LandingPos:Get2DDistance(self.farp:GetCoordinate())
   
+  -- Mayday Message
+  if _coalition == self.coalition then
+    if self.verbose then
+      local setting = {}
+      setting.MGRS_Accuracy = self.MGRS_Accuracy
+      local location = _LandingPos:ToStringMGRS(setting)
+      local text = AICSAR.Messages.PILOTDOWN .. location .. "!"
+      MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
+    end
+    if self.SRSRadio then
+      local sound = SOUNDFILE:New(AICSAR.RadioMessages.PILOTDOWN,nil,AICSAR.RadioLength.PILOTDOWN)
+      self.SRS:PlaySoundFile(sound,2)
+    elseif self.DCSRadio then
+      self:DCSRadioBroadcast(AICSAR.RadioMessages.PILOTDOWN,AICSAR.RadioLength.PILOTDOWN,AICSAR.Messages.PILOTDOWN)
+    end   
+  end
+  
+  -- further processing
   if _coalition == self.coalition and distancetofarp <= self.maxdistance then
+    -- in reach
     self:T(self.lid .. "Spawning new Pilot")
     self.pilotindex = self.pilotindex + 1
     local newpilot = SPAWN:NewWithAlias(self.template,string.format("%s-AICSAR-%d",self.template, self.pilotindex))
@@ -365,33 +497,15 @@ function AICSAR:OnEventLandingAfterEjection(EventData)
       function (grp)
         self.pilotqueue[self.pilotindex] = grp
       end
-    )    
-    newpilot:SpawnFromCoordinate(_LandingPos)
-    --self.pilotqueue[self.pilotindex] = newpilot
+    )
+    newpilot:SpawnFromCoordinate(_LandingPos) 
+    
     Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
     self:__PilotDown(2,_LandingPos,true)
-    if self.verbose then
-      --local text = "Roger, Pilot, we hear you. Stay where you are, a helo is on the way!"
-      local text = AICSAR.Messages.INITIALOK
-      MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
-    end
-    if self.SRSRadio then
-      local sound = SOUNDFILE:New(AICSAR.RadioMessages.INITIALOK,nil,AICSAR.RadioLength.INITIALOK)
-      self.SRS:PlaySoundFile(sound,2)
-    end
   elseif _coalition == self.coalition and distancetofarp > self.maxdistance then
-    -- apologies, too far off   
+    -- out of reach, apologies, too far off   
     self:T(self.lid .. "Pilot out of reach")
     self:__PilotDown(2,_LandingPos,false)
-    if self.verbose then
-      local text = AICSAR.Messages.INITIALNOTOK
-      --local text = "Sorry, Pilot. You're behind maximum operational distance! Good Luck!"
-      MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
-    end
-    if self.SRSRadio then
-      local sound = SOUNDFILE:New(AICSAR.RadioMessages.INITIALNOTOK,nil,AICSAR.RadioLength.INITIALNOTOK)
-      self.SRS:PlaySoundFile(sound,2)
-    end
   end 
   return self
 end
@@ -571,6 +685,9 @@ end
 function AICSAR:onafterStop(From, Event, To)
   self:T({From, Event, To})
   self:UnHandleEvent(EVENTS.LandingAfterEjection)
+  if self.DCSRadioQueue then
+    self.DCSRadioQueue:Stop()
+  end
   return self
 end
 
@@ -587,15 +704,30 @@ function AICSAR:onafterPilotDown(From, Event, To, Coordinate, InReach)
   local CoordinateText = Coordinate:ToStringMGRS()
   local inreach = tostring(InReach)
   --local text = string.format("Pilot down at %s. In reach = %s",CoordinateText,inreach)
-  
-  local text = string.format(AICSAR.Messages.PILOTDOWN,CoordinateText)
-  self:T(text)
-  if self.verbose then
-    MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
-  end
-  if self.SRSRadio then
-    local sound = SOUNDFILE:New(AICSAR.RadioMessages.PILOTDOWN,nil,AICSAR.RadioLength.PILOTDOWN)
-    self.SRS:PlaySoundFile(sound,2)
+  if InReach then
+    local text = AICSAR.Messages.INITIALOK
+    self:T(text)
+    if self.verbose then
+      MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
+    end
+    if self.SRSRadio then
+      local sound = SOUNDFILE:New(AICSAR.RadioMessages.INITIALOK,nil,AICSAR.RadioLength.INITIALOK)
+      self.SRS:PlaySoundFile(sound,2)
+    elseif self.DCSRadio then
+      self:DCSRadioBroadcast(AICSAR.RadioMessages.INITIALOK,AICSAR.RadioLength.INITIALOK,AICSAR.Messages.INITIALOK)
+    end
+  else
+    local text = AICSAR.Messages.INITIALNOTOK
+    self:T(text)
+    if self.verbose then
+      MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
+    end
+    if self.SRSRadio then
+      local sound = SOUNDFILE:New(AICSAR.RadioMessages.INITIALNOTOK,nil,AICSAR.RadioLength.INITIALNOTOK)
+      self.SRS:PlaySoundFile(sound,2)
+    elseif self.DCSRadio then
+      self:DCSRadioBroadcast(AICSAR.RadioMessages.INITIALNOTOK,AICSAR.RadioLength.INITIALNOTOK,AICSAR.Messages.INITIALNOTOK)
+    end
   end
   return self
 end
@@ -614,6 +746,8 @@ function AICSAR:onafterPilotKIA(From, Event, To)
   if self.SRSRadio then
     local sound = SOUNDFILE:New(AICSAR.RadioMessages.PILOTKIA,nil,AICSAR.RadioLength.PILOTKIA)
     self.SRS:PlaySoundFile(sound,2)
+  elseif self.DCSRadio then
+    self:DCSRadioBroadcast(AICSAR.RadioMessages.PILOTKIA,AICSAR.RadioLength.PILOTKIA,AICSAR.Messages.PILOTKIA)
   end
   return self
 end
@@ -634,6 +768,8 @@ function AICSAR:onafterHeloDown(From, Event, To, Helo, Index)
   if self.SRSRadio then
     local sound = SOUNDFILE:New(AICSAR.RadioMessages.HELODOWN,nil,AICSAR.RadioLength.HELODOWN)
     self.SRS:PlaySoundFile(sound,2)
+  elseif self.DCSRadio then
+    self:DCSRadioBroadcast(AICSAR.RadioMessages.HELODOWN,AICSAR.RadioLength.HELODOWN,AICSAR.Messages.HELODOWN)
   end
   local findex = 0
   local fhname = Helo:GetName()
@@ -682,6 +818,8 @@ function AICSAR:onafterPilotRescued(From, Event, To)
   if self.SRSRadio then
     local sound = SOUNDFILE:New(AICSAR.RadioMessages.PILOTRESCUED,nil,AICSAR.RadioLength.PILOTRESCUED)
     self.SRS:PlaySoundFile(sound,2)
+  elseif self.DCSRadio then
+    self:DCSRadioBroadcast(AICSAR.RadioMessages.PILOTRESCUED,AICSAR.RadioLength.PILOTRESCUED,AICSAR.Messages.PILOTRESCUED)
   end
   return self
 end
@@ -703,6 +841,8 @@ function AICSAR:onafterPilotPickedUp(From, Event, To, Helo, CargoTable, Index)
   if self.SRSRadio then
     local sound = SOUNDFILE:New(AICSAR.RadioMessages.PILOTINHELO,nil,AICSAR.RadioLength.PILOTINHELO)
     self.SRS:PlaySoundFile(sound,2)
+  elseif self.DCSRadio then
+    self:DCSRadioBroadcast(AICSAR.RadioMessages.PILOTINHELO,AICSAR.RadioLength.PILOTINHELO,AICSAR.Messages.PILOTINHELO)
   end
   local findex = 0
   local fhname = Helo:GetName()
