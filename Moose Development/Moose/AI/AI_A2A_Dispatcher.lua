@@ -1510,7 +1510,7 @@ do -- AI_A2A_DISPATCHER
       local Message = "Clearing (" .. DefenderTask.Type .. ") "
       Message = Message .. Defender:GetName()
       if Target then
-        Message = Message .. ( Target and ( " from " .. Target.Index .. " [" .. Target.Set:Count() .. "]" ) ) or ""
+        Message = Message .. ((Target and (" from " .. Target.Index .. " [" .. Target.Set:Count() .. "]")) or "")
       end
       self:F( { Target = Message } )
     end
@@ -1559,7 +1559,7 @@ do -- AI_A2A_DISPATCHER
 
     local Message = "(" .. self.DefenderTasks[Defender].Type .. ") "
     Message = Message .. Defender:GetName()
-    Message = Message .. ( AttackerDetection and ( " target " .. AttackerDetection.Index .. " [" .. AttackerDetection.Set:Count() .. "]" ) ) or ""
+    Message = Message .. ((AttackerDetection and (" target " .. AttackerDetection.Index .. " [" .. AttackerDetection.Set:Count() .. "]")) or "")
     self:F( { AttackerDetection = Message } )
     if AttackerDetection then
       self.DefenderTasks[Defender].Target = AttackerDetection
@@ -2653,7 +2653,7 @@ do -- AI_A2A_DISPATCHER
   --   -- Let flights by default land and despawn at engine shutdown.
   --   A2ADispatcher:SetDefaultLandingAtEngineShutdown()
   --
-    function AI_A2A_DISPATCHER:SetDefaultLandingAtEngineShutdown()
+  function AI_A2A_DISPATCHER:SetDefaultLandingAtEngineShutdown()
 
     self:SetDefaultLanding( AI_A2A_DISPATCHER.Landing.AtEngineShutdown )
 
