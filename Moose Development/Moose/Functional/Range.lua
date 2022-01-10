@@ -1877,6 +1877,7 @@ function RANGE:OnEventShot(EventData)
           result.roundsFired=0  --Rangeboss Edit
           result.roundsHit=0 --Rangeboss Edit
           result.roundsQuality="N/A"   --Rangeboss Edit
+		  result.rangename = self.rangename	
 
           -- Add to table.
           table.insert(_results, result)
@@ -2974,6 +2975,7 @@ function RANGE:_CheckInZone(_unitName)
           Straferesult.roundsHit= _result.hits
           Straferesult.roundsQuality=_result.text
           Straferesult.strafeAccuracy=accur
+		  Straferesult.rangename=self.rangename	
         
           self:_SaveTargetSheet(_playername, result)
           --RangeBoss edit for strafe data saved to file
