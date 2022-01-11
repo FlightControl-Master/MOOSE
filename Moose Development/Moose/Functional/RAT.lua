@@ -1289,7 +1289,7 @@ end
 
 --- Include all airports which lie in a zone as possible destinations.
 -- @param #RAT self
--- @param Core.Zone#ZONE zone Zone in which the departure airports lie. Has to be a MOOSE zone.
+-- @param Core.Zone#ZONE zone Zone in which the destination airports lie. Has to be a MOOSE zone.
 -- @return #RAT RAT self object.
 function RAT:SetDestinationsFromZone(zone)
   self:F2(zone)
@@ -1305,7 +1305,7 @@ end
 
 --- Include all airports which lie in a zone as possible destinations.
 -- @param #RAT self
--- @param Core.Zone#ZONE zone Zone in which the destination airports lie. Has to be a MOOSE zone.
+-- @param Core.Zone#ZONE zone Zone in which the departure airports lie. Has to be a MOOSE zone.
 -- @return #RAT RAT self object.
 function RAT:SetDeparturesFromZone(zone)
   self:F2(zone)
