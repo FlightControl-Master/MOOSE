@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Date: Dec 2021
+-- Date: Jan 2022
 
 do
 ------------------------------------------------------
@@ -672,6 +672,7 @@ do
 --          my_ctld.pilotmustopendoors = false -- force opening of doors
 --          my_ctld.SmokeColor = SMOKECOLOR.Red -- color to use when dropping smoke from heli 
 --          my_ctld.FlareColor = FLARECOLOR.Red -- color to use when flaring from heli
+--          my_ctld.basetype = "container_cargo" -- default shape of the cargo container
 -- 
 -- ## 2.1 User functions
 -- 
@@ -990,7 +991,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.1"
+CTLD.version="1.0.2"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1155,6 +1156,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- slingload
   self.enableslingload = false
+  self.basetype = "container_cargo" -- shape of the container
   
   -- Smokes and Flares
   self.SmokeColor = SMOKECOLOR.Red
@@ -1856,7 +1858,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     local cratecoord = position:Translate(cratedistance,rheading)
     local cratevec2 = cratecoord:GetVec2()
     self.CrateCounter = self.CrateCounter + 1
-    local basetype = "container_cargo"
+    local basetype = self.basetype or "container_cargo"
     if isstatic then
       basetype = cratetemplate
     end
@@ -1934,7 +1936,7 @@ function CTLD:InjectStatics(Zone, Cargo, RandomCoord)
     cratetemplate = cargotype:GetTemplates()
     isstatic = true
   end
-  local basetype = "container_cargo"
+  local basetype = self.basetype or "container_cargo"
   if isstatic then
     basetype = cratetemplate
   end
