@@ -1694,7 +1694,17 @@ function UTILS.IsLoadingDoorOpen( unit_name )
       BASE:T( unit_name .. " door is open" )
       ret_val = true
     end
+  
+    if string.find(type_name, "UH-60L") and (unit:getDrawArgumentValue(401) == 1) or (unit:getDrawArgumentValue(402) == 1) then
+        BASE:T(unit_name .. " cargo door is open")
+        ret_val =  true
+    end
 
+    if string.find(type_name, "UH-60L" ) and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(400) == 1 then
+        BASE:T(unit_name .. " front door(s) are open")
+        ret_val =  true
+    end
+      
     if ret_val == false then
       BASE:T( unit_name .. " all doors are closed" )
     end
