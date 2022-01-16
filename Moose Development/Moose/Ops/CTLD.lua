@@ -696,7 +696,7 @@ do
 --        ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
 --        ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
 --        ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25},
---
+--        ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16},
 --        
 -- ### 2.1.2 Activate and deactivate zones
 -- 
@@ -987,11 +987,12 @@ CTLD.UnitTypes = {
     ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
     ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25}, -- 19t cargo, 64 paratroopers. 
     --Actually it's longer, but the center coord is off-center of the model.
+    ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16}, -- 4t cargo, 20 (unsec) seats
 }
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.2"
+CTLD.version="1.0.3"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
