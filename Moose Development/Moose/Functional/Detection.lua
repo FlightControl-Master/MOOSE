@@ -714,7 +714,7 @@ do -- DETECTION_BASE
               if self.RejectZones then
                 for RejectZoneID, RejectZone in pairs( self.RejectZones ) do
                   local RejectZone = RejectZone -- Core.Zone#ZONE_BASE
-                  if RejectZone:IsPointVec2InZone( DetectedObjectVec2 ) == true then
+                  if RejectZone:IsVec2InZone( DetectedObjectVec2 ) == true then
                     DetectionAccepted = false
                   end
                 end
@@ -759,7 +759,7 @@ do -- DETECTION_BASE
                   local ZoneProbability = ZoneData[2] -- #number
                   ZoneProbability = ZoneProbability * 30 / 300
                   
-                  if ZoneObject:IsPointVec2InZone( DetectedObjectVec2 ) == true then
+                  if ZoneObject:IsVec2InZone( DetectedObjectVec2 ) == true then
                     local Probability =  math.random() -- Selects a number between 0 and 1
                     --self:T( { Probability, ZoneProbability } )
                     if Probability > ZoneProbability then
