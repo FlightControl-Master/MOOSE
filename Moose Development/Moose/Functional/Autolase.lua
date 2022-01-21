@@ -109,7 +109,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.10"
+AUTOLASE.version = "0.0.11"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -736,20 +736,22 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     local contact = _contact -- Ops.Intelligence#INTEL.Contact
     local grp = contact.group
     local coord = contact.position
-    local reccename = contact.recce
+    local reccename = contact.recce or "none"
     local reccegrp = UNIT:FindByName(reccename)
-    local reccecoord = reccegrp:GetCoordinate()
-    local distance = math.floor(reccecoord:Get3DDistance(coord))
-    local text = string.format("%s of %s | Distance %d km | Threatlevel %d",contact.attribute, contact.groupname, math.floor(distance/1000), contact.threatlevel)
-    report:Add(text)
-    self:T(text)
-    if self.debug then self:I(text) end
-    lines = lines  +  1
-    -- sort out groups beyond sight
-    local lasedistance = self:GetLosFromUnit(reccegrp)
-    if grp:IsGround() and lasedistance >= distance then
-      table.insert(groupsbythreat,{contact.group,contact.threatlevel})
-      self.RecceNames[contact.groupname] = contact.recce
+    if reccegrp then
+      local reccecoord = reccegrp:GetCoordinate()
+      local distance = math.floor(reccecoord:Get3DDistance(coord))
+      local text = string.format("%s of %s | Distance %d km | Threatlevel %d",contact.attribute, contact.groupname, math.floor(distance/1000), contact.threatlevel)
+      report:Add(text)
+      self:T(text)
+      if self.debug then self:I(text) end
+      lines = lines  +  1
+      -- sort out groups beyond sight
+      local lasedistance = self:GetLosFromUnit(reccegrp)
+      if grp:IsGround() and lasedistance >= distance then
+        table.insert(groupsbythreat,{contact.group,contact.threatlevel})
+        self.RecceNames[contact.groupname] = contact.recce
+      end
     end
   end
   
