@@ -334,13 +334,13 @@ CTLD_CARGO = {
   -- @type CTLD_CARGO.Enum
   -- @field #string Type Type of Cargo.
   CTLD_CARGO.Enum = {
-    ["VEHICLE"] = "Vehicle", -- #string vehicles
-    ["TROOPS"] = "Troops", -- #string troops
-    ["FOB"] = "FOB", -- #string FOB
-    ["CRATE"] = "Crate", -- #string crate
-    ["REPAIR"] = "Repair", -- #string repair
-    ["ENGINEERS"] = "Engineers", -- #string engineers
-    ["STATIC"] = "Static", -- #string engineers
+    VEHICLE = "Vehicle", -- #string vehicles
+    TROOPS = "Troops", -- #string troops
+    FOB = "FOB", -- #string FOB
+    CRATE = "Crate", -- #string crate
+    REPAIR = "Repair", -- #string repair
+    ENGINEERS = "Engineers", -- #string engineers
+    STATIC = "Static", -- #string engineers
   }
   
   --- Function to create new CTLD_CARGO object.
@@ -670,9 +670,10 @@ do
 --          my_ctld.allowcratepickupagain = true  -- allow re-pickup crates that were dropped.
 --          my_ctld.enableslingload = false -- allow cargos to be slingloaded - might not work for all cargo types
 --          my_ctld.pilotmustopendoors = false -- force opening of doors
---          my_ctld.SmokeColor = SMOKECOLOR.Red -- color to use when dropping smoke from heli 
+--          my_ctld.SmokeColor = SMOKECOLOR.Red -- default color to use when dropping smoke from heli 
 --          my_ctld.FlareColor = FLARECOLOR.Red -- color to use when flaring from heli
 --          my_ctld.basetype = "container_cargo" -- default shape of the cargo container
+--          my_ctld.droppedbeacontimeout = 600 -- dropped beacon lasts 10 minutes
 -- 
 -- ## 2.1 User functions
 -- 
@@ -826,7 +827,7 @@ do
 -- 
 -- Lists what you have loaded. Shows load capabilities for number of crates and number of seats for troops.
 -- 
--- ## 4.4 Smoke & Flare zones nearby or drop smoke or flare from Heli
+-- ## 4.4 Smoke & Flare zones nearby or drop smoke, beacon or flare from Heli
 -- 
 -- Does what it says.
 -- 
@@ -948,6 +949,7 @@ CTLD = {
 -- @field #table vhfbeacon Beacon info as #CTLD.ZoneBeacon
 -- @field #number shiplength For ships - length of ship
 -- @field #number shipwidth For ships - width of ship
+-- @field #number timestamp For dropped beacons - time this was created
 
 --- Zone Type Info.
 -- @type CTLD.CargoZoneType
@@ -956,6 +958,7 @@ CTLD.CargoZoneType = {
   DROP = "drop",
   MOVE = "move",
   SHIP = "ship",
+  BEACON = "beacon",
 }
 
 --- Buildable table info.
@@ -992,7 +995,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.3"
+CTLD.version="1.0.4"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1081,6 +1084,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.dropOffZones = {}
   self.wpZones = {}
   self.shipZones = {}
+  self.droppedBeacons = {}
+  self.droppedbeaconref = {}
+  self.droppedbeacontimeout = 600
   
   -- Cargo
   self.Cargo_Crates = {}
@@ -2920,11 +2926,17 @@ function CTLD:_RefreshF10Menus()
           local listmenu = MENU_GROUP_COMMAND:New(_group,"List boarded cargo",topmenu, self._ListCargo, self, _group, _unit)
           local invtry = MENU_GROUP_COMMAND:New(_group,"Inventory",topmenu, self._ListInventory, self, _group, _unit)
           local rbcns = MENU_GROUP_COMMAND:New(_group,"List active zone beacons",topmenu, self._ListRadioBeacons, self, _group, _unit)
-          local smoketopmenu = MENU_GROUP:New(_group,"Smokes & Flares",topmenu)
+          local smoketopmenu = MENU_GROUP:New(_group,"Smokes, Flares, Beacons",topmenu)
           local smokemenu = MENU_GROUP_COMMAND:New(_group,"Smoke zones nearby",smoketopmenu, self.SmokeZoneNearBy, self, _unit, false)
-          local smokeself = MENU_GROUP_COMMAND:New(_group,"Drop smoke now",smoketopmenu, self.SmokePositionNow, self, _unit, false)
+          local smokeself = MENU_GROUP:New(_group,"Drop smoke now",smoketopmenu)
+          local smokeselfred = MENU_GROUP_COMMAND:New(_group,"Red smoke",smokeself, self.SmokePositionNow, self, _unit, false,SMOKECOLOR.Red)
+          local smokeselfblue = MENU_GROUP_COMMAND:New(_group,"Blue smoke",smokeself, self.SmokePositionNow, self, _unit, false,SMOKECOLOR.Blue)
+          local smokeselfgreen = MENU_GROUP_COMMAND:New(_group,"Green smoke",smokeself, self.SmokePositionNow, self, _unit, false,SMOKECOLOR.Green)
+          local smokeselforange = MENU_GROUP_COMMAND:New(_group,"Orange smoke",smokeself, self.SmokePositionNow, self, _unit, false,SMOKECOLOR.Orange)
+          local smokeselfwhite = MENU_GROUP_COMMAND:New(_group,"White smoke",smokeself, self.SmokePositionNow, self, _unit, false,SMOKECOLOR.White)
           local flaremenu = MENU_GROUP_COMMAND:New(_group,"Flare zones nearby",smoketopmenu, self.SmokeZoneNearBy, self, _unit, true)
-          local flareself = MENU_GROUP_COMMAND:New(_group,"Fire flare now",smoketopmenu, self.SmokePositionNow, self, _unit, true):Refresh()
+          local flareself = MENU_GROUP_COMMAND:New(_group,"Fire flare now",smoketopmenu, self.SmokePositionNow, self, _unit, true)
+          local beaconself = MENU_GROUP_COMMAND:New(_group,"Drop beacon now",smoketopmenu, self.DropBeaconNow, self, _unit):Refresh()
           -- sub menus
           -- sub menu troops management
           if cantroops then 
@@ -3068,7 +3080,9 @@ function CTLD:AddZone(Zone)
   elseif zone.type == CTLD.CargoZoneType.DROP then
     table.insert(self.dropOffZones,zone)
   elseif zone.type == CTLD.CargoZoneType.SHIP then
-    table.insert(self.shipZones,zone)  
+    table.insert(self.shipZones,zone)
+  elseif zone.type == CTLD.CargoZoneType.BEACON then
+    table.insert(self.droppedBeacons,zone)   
   else
     table.insert(self.wpZones,zone)
   end
@@ -3081,7 +3095,7 @@ end
 -- @param #CTLD.CargoZoneType ZoneType Type of zone this belongs to.
 -- @param #boolean NewState (Optional) Set to true to activate, false to switch off.
 function CTLD:ActivateZone(Name,ZoneType,NewState)
-  self:T(self.lid .. " AddZone")
+  self:T(self.lid .. " ActivateZone")
   local newstate = true
   -- set optional in case we\'re deactivating
   if NewState ~= nil then
@@ -3116,7 +3130,7 @@ end
 -- @param #string Name Name of the zone to change in the ME.
 -- @param #CTLD.CargoZoneType ZoneType Type of zone this belongs to.
 function CTLD:DeactivateZone(Name,ZoneType)
-  self:T(self.lid .. " AddZone")
+  self:T(self.lid .. " DeactivateZone")
   self:ActivateZone(Name,ZoneType,false)
   return self
 end
@@ -3225,6 +3239,72 @@ function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon, Shiplength, Ship
   return self
 end
 
+
+--- (Internal) Function to create a dropped beacon
+-- @param #CTLD self
+-- @param Wrapper.Unit#UNIT Unit
+-- @return #CTLD self
+function CTLD:DropBeaconNow(Unit)
+  self:T(self.lid .. " DropBeaconNow")
+  
+  local ctldzone = {} -- #CTLD.CargoZone
+  ctldzone.active = true
+  ctldzone.color = math.random(0,4) -- random color
+  ctldzone.name = "Beacon " .. math.random(1,10000)
+  ctldzone.type = CTLD.CargoZoneType.BEACON -- #CTLD.CargoZoneType
+  ctldzone.hasbeacon = true
+   
+  ctldzone.fmbeacon = self:_GetFMBeacon(ctldzone.name)
+  ctldzone.uhfbeacon = self:_GetUHFBeacon(ctldzone.name)
+  ctldzone.vhfbeacon = self:_GetVHFBeacon(ctldzone.name)
+  ctldzone.timestamp = timer.getTime()
+  
+  self.droppedbeaconref[ctldzone.name] = Unit:GetCoordinate()
+  
+  self:AddZone(ctldzone)
+  
+  local FMbeacon = ctldzone.fmbeacon -- #CTLD.ZoneBeacon
+  local VHFbeacon = ctldzone.vhfbeacon -- #CTLD.ZoneBeacon
+  local UHFbeacon = ctldzone.uhfbeacon -- #CTLD.ZoneBeacon
+  local Name = ctldzone.name
+  local FM = FMbeacon.frequency  -- MHz
+  local VHF = VHFbeacon.frequency * 1000 -- KHz
+  local UHF = UHFbeacon.frequency  -- MHz
+  local text = string.format("Dropped %s | FM %s Mhz | VHF %s KHz | UHF %s Mhz ", Name, FM, VHF, UHF)
+  
+  self:_SendMessage(text,15,false,Unit:GetGroup())
+  
+  return self
+end
+
+--- (Internal) Housekeeping dropped beacons.
+-- @param #CTLD self
+-- @return #CTLD self
+function CTLD:CheckDroppedBeacons()
+  self:T(self.lid .. " CheckDroppedBeacons")
+  
+  -- check for timeout
+  local timeout = self.droppedbeacontimeout or 600
+  local livebeacontable = {}
+  
+  for _,_beacon in pairs (self.droppedBeacons) do
+    local beacon = _beacon -- #CTLD.CargoZone
+    local T0 = beacon.timestamp
+    if timer.getTime() - T0 > timeout then
+      local name = beacon.name
+      self.droppedbeaconref[name] = nil
+      _beacon = nil
+    else
+      table.insert(livebeacontable,beacon)
+    end
+  end
+  
+  self.droppedBeacons = nil
+  self.droppedBeacons = livebeacontable
+  
+  return self
+end
+
 --- (Internal) Function to show list of radio beacons
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
@@ -3233,8 +3313,8 @@ function CTLD:_ListRadioBeacons(Group, Unit)
   self:T(self.lid .. " _ListRadioBeacons")
   local report = REPORT:New("Active Zone Beacons")
   report:Add("------------------------------------------------------------")
-  local zones = {[1] = self.pickupZones, [2] = self.wpZones, [3] = self.dropOffZones, [4] = self.shipZones}
-  for i=1,4 do
+  local zones = {[1] = self.pickupZones, [2] = self.wpZones, [3] = self.dropOffZones, [4] = self.shipZones, [5] = self.droppedBeacons}
+  for i=1,5 do
     for index,cargozone in pairs(zones[i]) do
       -- Get Beacon object from zone
       local czone = cargozone -- #CTLD.CargoZone
@@ -3265,16 +3345,25 @@ end
 -- @param #number Mhz Frequency in Mhz.
 -- @param #number Modulation Modulation AM or FM.
 -- @param #boolean IsShip If true zone is a ship.
-function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip)
+-- @param #boolean IsDropped If true, this isn't a zone but a dropped beacon
+function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
   self:T(self.lid .. " _AddRadioBeacon")
   local Zone = nil
   if IsShip then
     Zone = UNIT:FindByName(Name)
+  elseif IsDropped then
+    Zone = self.droppedbeaconref[Name]
   else
     Zone = ZONE:FindByName(Name)
   end
   local Sound = Sound or "beacon.ogg"
-  if Zone then
+  if IsDropped and Zone then
+    local ZoneCoord = Zone
+    local ZoneVec3 = ZoneCoord:GetVec3()
+    local Frequency = Mhz * 1000000 -- Freq in Hertz
+    local Sound =  "l10n/DEFAULT/"..Sound
+    trigger.action.radioTransmission(Sound, ZoneVec3, Modulation, false, Frequency, 1000) -- Beacon in MP only runs for 30secs straight
+  elseif Zone then
     local ZoneCoord = Zone:GetCoordinate()
     local ZoneVec3 = ZoneCoord:GetVec3()
     local Frequency = Mhz * 1000000 -- Freq in Hertz
@@ -3289,10 +3378,12 @@ end
 function CTLD:_RefreshRadioBeacons()
   self:T(self.lid .. " _RefreshRadioBeacons")
 
-  local zones = {[1] = self.pickupZones, [2] = self.wpZones, [3] = self.dropOffZones, [4] = self.shipZones}
-  for i=1,4 do
+  local zones = {[1] = self.pickupZones, [2] = self.wpZones, [3] = self.dropOffZones, [4] = self.shipZones, [5] = self.droppedBeacons}
+  for i=1,5 do
     local IsShip = false
     if i == 4 then IsShip = true end
+    local IsDropped = false
+    if i == 5 then IsDropped = true end
     for index,cargozone in pairs(zones[i]) do
       -- Get Beacon object from zone
       local czone = cargozone -- #CTLD.CargoZone
@@ -3305,9 +3396,9 @@ function CTLD:_RefreshRadioBeacons()
         local FM = FMbeacon.frequency  -- MHz
         local VHF = VHFbeacon.frequency -- KHz
         local UHF = UHFbeacon.frequency  -- MHz      
-        self:_AddRadioBeacon(Name,Sound,FM,radio.modulation.FM, IsShip)
-        self:_AddRadioBeacon(Name,Sound,VHF,radio.modulation.FM, IsShip)
-        self:_AddRadioBeacon(Name,Sound,UHF,radio.modulation.AM, IsShip)
+        self:_AddRadioBeacon(Name,Sound,FM,radio.modulation.FM, IsShip, IsDropped)
+        self:_AddRadioBeacon(Name,Sound,VHF,radio.modulation.FM, IsShip, IsDropped)
+        self:_AddRadioBeacon(Name,Sound,UHF,radio.modulation.AM, IsShip, IsDropped)
       end
     end
   end
@@ -3362,6 +3453,7 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
       zonewidth = czone.shipwidth
     else
       zone = ZONE:FindByName(zonename)
+      self:T("Checking Zone: "..zonename)
       zonecoord = zone:GetCoordinate()
       zoneradius = zone:GetRadius()
       zonewidth = zoneradius
@@ -3389,9 +3481,13 @@ end
 -- @param #CTLD self
 -- @param Wrapper.Unit#UNIT Unit The Unit.
 -- @param #boolean Flare If true, flare instead.
-function CTLD:SmokePositionNow(Unit, Flare)
+-- @param #number SmokeColor Color enumerator for smoke, e.g. SMOKECOLOR.Red
+function CTLD:SmokePositionNow(Unit, Flare, SmokeColor)
   self:T(self.lid .. " SmokePositionNow")
-  local SmokeColor = self.SmokeColor or SMOKECOLOR.Red
+  local Smokecolor = self.SmokeColor or SMOKECOLOR.Red
+  if SmokeColor then 
+    Smokecolor = SmokeColor
+  end
   local FlareColor = self.FlareColor or FLARECOLOR.Red
   -- table of #CTLD.CargoZone table
   local unitcoord = Unit:GetCoordinate() -- Core.Point#COORDINATE
@@ -3401,7 +3497,7 @@ function CTLD:SmokePositionNow(Unit, Flare)
   else
     local height = unitcoord:GetLandHeight() + 2
     unitcoord.y = height
-    unitcoord:Smoke(SmokeColor)
+    unitcoord:Smoke(Smokecolor)
   end
   return self
 end
@@ -3986,6 +4082,7 @@ end
     self:T({From, Event, To})
     self:CleanDroppedTroops()
     self:_RefreshF10Menus()
+    self:CheckDroppedBeacons()
     self:_RefreshRadioBeacons()
     self:CheckAutoHoverload()
     self:_CheckEngineers()
