@@ -4728,6 +4728,30 @@ do
     local PatrolTaskType = PatrolTaskTypes[math.random(1,3)]
     self:Patrol( SquadronName, PatrolTaskType )    
   end
-
+  
+    --- Add resources to a Squadron
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string Squadron The squadron name.
+  -- @param #number Amount Number of resources to add.
+  function AI_A2G_DISPATCHER:AddToSquadron(Squadron,Amount)
+    local Squadron = self:GetSquadron(Squadron)
+    if Squadron.ResourceCount then
+      Squadron.ResourceCount = Squadron.ResourceCount + Amount
+    end
+    self:T({Squadron = Squadron.Name,SquadronResourceCount = Squadron.ResourceCount})
+  end
+  
+  --- Remove resources from a Squadron
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string Squadron The squadron name.
+  -- @param #number Amount Number of resources to remove.
+  function AI_A2G_DISPATCHER:RemoveFromSquadron(Squadron,Amount)
+    local Squadron = self:GetSquadron(Squadron)
+    if Squadron.ResourceCount then
+      Squadron.ResourceCount = Squadron.ResourceCount - Amount
+    end
+    self:T({Squadron = Squadron.Name,SquadronResourceCount = Squadron.ResourceCount})
+  end
+  
 end
 
