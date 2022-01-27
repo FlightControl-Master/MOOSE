@@ -1409,6 +1409,7 @@ function CTLD:_EventHandler(EventData)
     -- Herc support
     --self:T_unit:GetTypeName())
     if _unit:GetTypeName() == "Hercules" and self.enableHercules then
+      local unitname = event.IniUnitName or "none"
       self.Loaded_Cargo[unitname] = nil
       self:_RefreshF10Menus()
     end
