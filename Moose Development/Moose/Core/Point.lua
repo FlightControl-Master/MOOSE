@@ -1883,82 +1883,101 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param Utilities.Utils#BIGSMOKEPRESET preset Smoke preset (1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke).
   -- @param #number density (Optional) Smoke density. Number in [0,...,1]. Default 0.5.
-  function COORDINATE:BigSmokeAndFire( preset, density )
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFire( preset, density, name )
     self:F2( { preset=preset, density=density } )
     density=density or 0.5
-    trigger.action.effectSmokeBig( self:GetVec3(), preset, density )
+    self.firename = name or "Fire-"..math.random(1,10000)
+    trigger.action.effectSmokeBig( self:GetVec3(), preset, density, self.firename )
+  end
+  
+  --- Stop big smoke and fire at the coordinate.
+  -- @param #COORDINATE self
+  -- @param #string name (Optional) Name of the fire to stop it, if not using the same COORDINATE object.
+  function COORDINATE:StopBigSmokeAndFire( name )
+    self:F2( { name = name } )
+    name = name or self.firename
+    trigger.action.effectSmokeStop( name )
   end
 
   --- Small smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireSmall( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireSmall( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, density, name)
   end
 
   --- Medium smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireMedium( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireMedium( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, density, name)
   end
 
   --- Large smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireLarge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireLarge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, density, name)
   end
 
   --- Huge smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireHuge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireHuge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, density, name)
   end
 
   --- Small smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeSmall( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeSmall( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, density, name)
   end
 
   --- Medium smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeMedium( density )
+  -- @param number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeMedium( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, density, name)
   end
 
   --- Large smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeLarge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeLarge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, density,name)
   end
 
   --- Huge smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeHuge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeHuge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, density,name)
   end
 
   --- Flares the point in a color.
