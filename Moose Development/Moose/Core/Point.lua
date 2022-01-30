@@ -912,7 +912,7 @@ do -- COORDINATE
   -- The text will reflect the temperature like this:
   --
   --   - For Russian and European aircraft using the metric system - Degrees Celcius (°C)
-  --   - For Americain aircraft we link to the imperial system - Degrees Farenheit (°F)
+  --   - For American aircraft we link to the imperial system - Degrees Farenheit (°F)
   --
   -- A text containing a pressure will look like this:
   --
@@ -958,7 +958,7 @@ do -- COORDINATE
   -- The text will contain always the pressure in hPa and:
   --
   --   - For Russian and European aircraft using the metric system - hPa and mmHg
-  --   - For Americain and European aircraft we link to the imperial system - hPa and inHg
+  --   - For American and European aircraft we link to the imperial system - hPa and inHg
   --
   -- A text containing a pressure will look like this:
   --
@@ -1051,7 +1051,7 @@ do -- COORDINATE
   -- The text will reflect the wind like this:
   --
   --   - For Russian and European aircraft using the metric system - Wind direction in degrees (°) and wind speed in meters per second (mps).
-  --   - For Americain aircraft we link to the imperial system - Wind direction in degrees (°) and wind speed in knots per second (kps).
+  --   - For American aircraft we link to the imperial system - Wind direction in degrees (°) and wind speed in knots per second (kps).
   --
   -- A text containing a pressure will look like this:
   --
@@ -2124,7 +2124,7 @@ do -- COORDINATE
     --- Line to all.
     -- Creates a line on the F10 map from one point to another.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Endpoint COORDIANTE to where the line is drawn.
+    -- @param #COORDINATE Endpoint COORDINATE to where the line is drawn.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -2181,7 +2181,7 @@ do -- COORDINATE
     --- Rectangle to all. Creates a rectangle on the map from the COORDINATE in one corner to the end COORDINATE in the opposite corner.
     -- Creates a line on the F10 map from one point to another.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Endpoint COORDIANTE in the opposite corner.
+    -- @param #COORDINATE Endpoint COORDINATE in the opposite corner.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -2209,9 +2209,9 @@ do -- COORDINATE
 
     --- Creates a shape defined by 4 points on the F10 map. The first point is the current COORDINATE. The remaining three points need to be specified.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Coord2 Second COORDIANTE of the quad shape.
-    -- @param #COORDINATE Coord3 Third COORDIANTE of the quad shape.
-    -- @param #COORDINATE Coord4 Fourth COORDIANTE of the quad shape.
+    -- @param #COORDINATE Coord2 Second COORDINATE of the quad shape.
+    -- @param #COORDINATE Coord3 Third COORDINATE of the quad shape.
+    -- @param #COORDINATE Coord4 Fourth COORDINATE of the quad shape.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -3026,7 +3026,7 @@ do -- POINT_VEC3
   -- @type POINT_VEC3
   -- @field #number x The x coordinate in 3D space.
   -- @field #number y The y coordinate in 3D space.
-  -- @field #number z The z coordiante in 3D space.
+  -- @field #number z The z COORDINATE in 3D space.
   -- @field Utilities.Utils#SMOKECOLOR SmokeColor
   -- @field Utilities.Utils#FLARECOLOR FlareColor
   -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
