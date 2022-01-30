@@ -26,17 +26,30 @@
 --
 -- ### Authors:
 --
---   * FlightControl : Design & Programming
+--   * FlightControl (Design & Programming)
 --
 -- ### Contributions:
+-- 
+--   * funkyfranky
+--   * Applevangelist
+--   
+-- ===
 --
 -- @module Core.Point
 -- @image Core_Coordinate.JPG
 
+
 do -- COORDINATE
 
   --- @type COORDINATE
+  -- @field #string ClassName Name of the class
+  -- @field #number x Component of the 3D vector.
+  -- @field #number y Component of the 3D vector.
+  -- @field #number z Component of the 3D vector.
+  -- @field #number Heading Heading in degrees. Needs to be set first.
+  -- @field #number Velocity Velocity in meters per second. Needs to be set first.
   -- @extends Core.Base#BASE
+
 
   --- Defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
   --
@@ -47,6 +60,7 @@ do -- COORDINATE
   --  * @{#COORDINATE.New}(): from a 3D point.
   --  * @{#COORDINATE.NewFromVec2}(): from a @{DCS#Vec2} and possible altitude.
   --  * @{#COORDINATE.NewFromVec3}(): from a @{DCS#Vec3}.
+  --
   --
   -- # 2) Smoke, flare, explode, illuminate at the coordinate.
   --
@@ -77,9 +91,10 @@ do -- COORDINATE
   --
   --   * @{#COORDINATE.IlluminationBomb}(): To illuminate the point.
   --
+  --
   -- # 3) Create markings on the map.
   --
-  -- Place markers (text boxes with clarifications for briefings, target locations or any other reference point) 
+  -- Place markers (text boxes with clarifications for briefings, target locations or any other reference point)
   -- on the map for all players, coalitions or specific groups:
   --
   --   * @{#COORDINATE.MarkToAll}(): Place a mark to all players.
@@ -122,8 +137,8 @@ do -- COORDINATE
   -- ## 4.6) LOS between coordinates.
   --
   -- Calculate if the coordinate has Line of Sight (LOS) with the other given coordinate.
-  -- Mountains, trees and other objects can be positioned between the two 3D points, preventing visibility in a straight continuous line.
-  -- The method @{#COORDINATE.IsLOS}() returns if the two coordinates have LOS.
+  -- Mountains, trees and other objects can be positioned between the two 3D points, preventing visibilty in a straight continuous line.
+  -- The method @{#COORDINATE.IsLOS}() returns if the two coodinates have LOS.
   --
   -- ## 4.7) Check the coordinate position.
   --
@@ -132,6 +147,8 @@ do -- COORDINATE
   --   * @{#COORDINATE.IsInRadius}(): in a give radius.
   --   * @{#COORDINATE.IsInSphere}(): is in a given sphere.
   --   * @{#COORDINATE.IsAtCoordinate2D}(): is in a given coordinate within a specific precision.
+  --
+  --
   --
   -- # 5) Measure the simulation environment at the coordinate.
   --
@@ -177,7 +194,7 @@ do -- COORDINATE
   -- ## 9) Coordinate text generation
   --
   --   * @{#COORDINATE.ToStringBR}(): Generates a Bearing & Range text in the format of DDD for DI where DDD is degrees and DI is distance.
-  --   * @{#COORDINATE.ToStringLL}(): Generates a Latitude & Longitude text.
+  --   * @{#COORDINATE.ToStringLL}(): Generates a Latutude & Longutude text.
   --
   -- ## 10) Drawings on F10 map
   --
@@ -193,43 +210,69 @@ do -- COORDINATE
     ClassName = "COORDINATE",
   }
 
-  --- @field COORDINATE.WaypointAltType
+  --- Waypoint altitude types.
+  -- @type COORDINATE.WaypointAltType
+  -- @field #string BARO Barometric altitude.
+  -- @field #string RADIO Radio altitude.
   COORDINATE.WaypointAltType = {
-    BARO =  "BARO",
+    BARO = "BARO",
     RADIO = "RADIO",
   }
 
-  --- @field COORDINATE.WaypointAction
+  --- Waypoint actions.
+  -- @type COORDINATE.WaypointAction
+  -- @field #string TurningPoint Turning point.
+  -- @field #string FlyoverPoint Fly over point.
+  -- @field #string FromParkingArea From parking area.
+  -- @field #string FromParkingAreaHot From parking area hot.
+  -- @field #string FromGroundAreaHot From ground area hot.
+  -- @field #string FromGroundArea From ground area.
+  -- @field #string FromRunway From runway.
+  -- @field #string Landing Landing.
+  -- @field #string LandingReFuAr Landing and refuel and rearm.
   COORDINATE.WaypointAction = {
     TurningPoint       = "Turning Point",
     FlyoverPoint       = "Fly Over Point",
     FromParkingArea    = "From Parking Area",
     FromParkingAreaHot = "From Parking Area Hot",
+    FromGroundAreaHot  = "From Ground Area Hot",
+    FromGroundArea     = "From Ground Area",
     FromRunway         = "From Runway",
     Landing            = "Landing",
     LandingReFuAr      = "LandingReFuAr",
   }
 
-  --- @field COORDINATE.WaypointType
+  --- Waypoint types.
+  -- @type COORDINATE.WaypointType
+  -- @field #string TakeOffParking Take of parking.
+  -- @field #string TakeOffParkingHot Take of parking hot.
+  -- @field #string TakeOff Take off parking hot.
+  -- @field #string TakeOffGroundHot Take of from ground hot.
+  -- @field #string TurningPoint Turning point.
+  -- @field #string Land Landing point.
+  -- @field #string LandingReFuAr Landing and refuel and rearm.
   COORDINATE.WaypointType = {
     TakeOffParking    = "TakeOffParking",
     TakeOffParkingHot = "TakeOffParkingHot",
     TakeOff           = "TakeOffParkingHot",
+    TakeOffGroundHot  = "TakeOffGroundHot",
+    TakeOffGround     = "TakeOffGround",
     TurningPoint      = "Turning Point",
     Land              = "Land",
-    LandingReFuAr     = "LandingReFuAr",
+    LandingReFuAr     = "LandingReFuAr",    
   }
+
 
   --- COORDINATE constructor.
   -- @param #COORDINATE self
   -- @param DCS#Distance x The x coordinate of the Vec3 point, pointing to the North.
-  -- @param DCS#Distance y The y coordinate of the Vec3 point, pointing to the Right.
-  -- @param DCS#Distance z The z coordinate of the Vec3 point, pointing to the Right.
-  -- @return #COORDINATE
+  -- @param DCS#Distance y The y coordinate of the Vec3 point, pointing to up.
+  -- @param DCS#Distance z The z coordinate of the Vec3 point, pointing to the right.
+  -- @return #COORDINATE self
   function COORDINATE:New( x, y, z )
 
-    -- env.info("FF COORDINATE New")
-    local self = BASE:Inherit( self, BASE:New() ) -- #COORDINATE
+    local self=BASE:Inherit(self, BASE:New()) -- #COORDINATE
+    
     self.x = x
     self.y = y
     self.z = z
@@ -240,7 +283,7 @@ do -- COORDINATE
   --- COORDINATE constructor.
   -- @param #COORDINATE self
   -- @param #COORDINATE Coordinate.
-  -- @return #COORDINATE
+  -- @return #COORDINATE self
   function COORDINATE:NewFromCoordinate( Coordinate )
 
     local self = BASE:Inherit( self, BASE:New() ) -- #COORDINATE
@@ -255,7 +298,7 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param DCS#Vec2 Vec2 The Vec2 point.
   -- @param DCS#Distance LandHeightAdd (Optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
-  -- @return #COORDINATE
+  -- @return #COORDINATE self
   function COORDINATE:NewFromVec2( Vec2, LandHeightAdd )
 
     local LandHeight = land.getHeight( Vec2 )
@@ -265,8 +308,6 @@ do -- COORDINATE
 
     local self = self:New( Vec2.x, LandHeight, Vec2.y ) -- #COORDINATE
 
-    self:F2( self )
-
     return self
 
   end
@@ -274,13 +315,36 @@ do -- COORDINATE
   --- Create a new COORDINATE object from  Vec3 coordinates.
   -- @param #COORDINATE self
   -- @param DCS#Vec3 Vec3 The Vec3 point.
-  -- @return #COORDINATE
+  -- @return #COORDINATE self
   function COORDINATE:NewFromVec3( Vec3 )
 
     local self = self:New( Vec3.x, Vec3.y, Vec3.z ) -- #COORDINATE
 
     self:F2( self )
 
+    return self
+  end
+  
+  --- Create a new COORDINATE object from a waypoint. This uses the components
+  -- 
+  --  * `waypoint.x`
+  --  * `waypoint.alt`
+  --  * `waypoint.y`
+  --  
+  -- @param #COORDINATE self
+  -- @param DCS#Waypoint Waypoint The waypoint.
+  -- @return #COORDINATE self
+  function COORDINATE:NewFromWaypoint(Waypoint)
+
+    local self=self:New(Waypoint.x, Waypoint.alt, Waypoint.y) -- #COORDINATE
+    
+    return self
+  end  
+
+  --- Return the coordinates itself. Sounds stupid but can be useful for compatibility.
+  -- @param #COORDINATE self
+  -- @return #COORDINATE self
+  function COORDINATE:GetCoordinate()
     return self
   end
 
@@ -290,6 +354,7 @@ do -- COORDINATE
   function COORDINATE:GetVec3()
     return { x = self.x, y = self.y, z = self.z }
   end
+
 
   --- Return the coordinates of the COORDINATE in Vec2 format.
   -- @param #COORDINATE self
@@ -302,11 +367,11 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param DCS#Vec3 Vec3 The 3D vector with x,y,z components.
   -- @return #COORDINATE The modified COORDINATE itself.
-  function COORDINATE:UpdateFromVec3( Vec3 )
+  function COORDINATE:UpdateFromVec3(Vec3)
 
-    self.x = Vec3.x
-    self.y = Vec3.y
-    self.z = Vec3.z
+    self.x=Vec3.x
+    self.y=Vec3.y
+    self.z=Vec3.z
 
     return self
   end
@@ -315,11 +380,11 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #COORDINATE Coordinate The coordinate with the new x,y,z positions.
   -- @return #COORDINATE The modified COORDINATE itself.
-  function COORDINATE:UpdateFromCoordinate( Coordinate )
+  function COORDINATE:UpdateFromCoordinate(Coordinate)
 
-    self.x = Coordinate.x
-    self.y = Coordinate.y
-    self.z = Coordinate.z
+    self.x=Coordinate.x
+    self.y=Coordinate.y
+    self.z=Coordinate.z
 
     return self
   end
@@ -328,13 +393,14 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param DCS#Vec2 Vec2 The 2D vector with x,y components. x is overwriting COORDINATE.x while y is overwriting COORDINATE.z.
   -- @return #COORDINATE The modified COORDINATE itself.
-  function COORDINATE:UpdateFromVec2( Vec2 )
+  function COORDINATE:UpdateFromVec2(Vec2)
 
-    self.x = Vec2.x
-    self.z = Vec2.y
+    self.x=Vec2.x
+    self.z=Vec2.y
 
     return self
   end
+
 
   --- Returns the coordinate from the latitude and longitude given in decimal degrees.
   -- @param #COORDINATE self
@@ -342,23 +408,24 @@ do -- COORDINATE
   -- @param #number longitude Longitude in decimal degrees.
   -- @param #number altitude (Optional) Altitude in meters. Default is the land height at the coordinate.
   -- @return #COORDINATE
-  function COORDINATE:NewFromLLDD( latitude, longitude, altitude )
+  function COORDINATE:NewFromLLDD( latitude, longitude, altitude)
 
     -- Returns a point from latitude and longitude in the vec3 format.
-    local vec3 = coord.LLtoLO( latitude, longitude )
+    local vec3=coord.LLtoLO(latitude, longitude)
 
     -- Convert vec3 to coordinate object.
-    local _coord = self:NewFromVec3( vec3 )
+    local _coord=self:NewFromVec3(vec3)
 
     -- Adjust height
-    if altitude == nil then
-      _coord.y = self:GetLandHeight()
+    if altitude==nil then
+      _coord.y=self:GetLandHeight()
     else
-      _coord.y = altitude
+      _coord.y=altitude
     end
 
     return _coord
   end
+
 
   --- Returns if the 2 coordinates are at the same 2D position.
   -- @param #COORDINATE self
@@ -385,53 +452,53 @@ do -- COORDINATE
   -- @return #boolean True if units were found.
   -- @return #boolean True if statics were found.
   -- @return #boolean True if scenery objects were found.
-  -- @return #table Table of MOOSE @[#Wrapper.Unit#UNIT} objects found.
+  -- @return #table Table of MOOSE @{Wrapper.Unit#UNIT} objects found.
   -- @return #table Table of DCS static objects found.
   -- @return #table Table of DCS scenery objects found.
-  function COORDINATE:ScanObjects( radius, scanunits, scanstatics, scanscenery )
-    self:F( string.format( "Scanning in radius %.1f m.", radius or 100 ) )
+  function COORDINATE:ScanObjects(radius, scanunits, scanstatics, scanscenery)
+    self:F(string.format("Scanning in radius %.1f m.", radius or 100))
 
     local SphereSearch = {
       id = world.VolumeType.SPHERE,
-      params = {
+        params = {
         point = self:GetVec3(),
         radius = radius,
-      },
-    }
+        }
+      }
 
     -- Defaults
-    radius = radius or 100
-    if scanunits == nil then
-      scanunits = true
+    radius=radius or 100
+    if scanunits==nil then
+      scanunits=true
     end
-    if scanstatics == nil then
-      scanstatics = true
+    if scanstatics==nil then
+      scanstatics=true
     end
-    if scanscenery == nil then
-      scanscenery = false
+    if scanscenery==nil then
+      scanscenery=false
     end
 
-    -- {Object.Category.UNIT, Object.Category.STATIC, Object.Category.SCENERY}
-    local scanobjects = {}
+    --{Object.Category.UNIT, Object.Category.STATIC, Object.Category.SCENERY}
+    local scanobjects={}
     if scanunits then
-      table.insert( scanobjects, Object.Category.UNIT )
+      table.insert(scanobjects, Object.Category.UNIT)
     end
     if scanstatics then
-      table.insert( scanobjects, Object.Category.STATIC )
+      table.insert(scanobjects, Object.Category.STATIC)
     end
     if scanscenery then
-      table.insert( scanobjects, Object.Category.SCENERY )
+      table.insert(scanobjects, Object.Category.SCENERY)
     end
 
     -- Found stuff.
     local Units = {}
     local Statics = {}
     local Scenery = {}
-    local gotstatics = false
-    local gotunits = false
-    local gotscenery = false
+    local gotstatics=false
+    local gotunits=false
+    local gotscenery=false
 
-    local function EvaluateZone( ZoneObject )
+    local function EvaluateZone(ZoneObject)
 
       if ZoneObject then
 
@@ -439,20 +506,20 @@ do -- COORDINATE
         local ObjectCategory = ZoneObject:getCategory()
 
         -- Check for unit or static objects
-        if ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() then
+        if ObjectCategory==Object.Category.UNIT and ZoneObject:isExist() then
 
-          table.insert( Units, UNIT:Find( ZoneObject ) )
-          gotunits = true
+          table.insert(Units, UNIT:Find(ZoneObject))
+          gotunits=true
 
-        elseif ObjectCategory == Object.Category.STATIC and ZoneObject:isExist() then
+        elseif ObjectCategory==Object.Category.STATIC and ZoneObject:isExist() then
 
-          table.insert( Statics, ZoneObject )
-          gotstatics = true
+          table.insert(Statics, ZoneObject)
+          gotstatics=true
 
-        elseif ObjectCategory == Object.Category.SCENERY then
+        elseif ObjectCategory==Object.Category.SCENERY then
 
-          table.insert( Scenery, ZoneObject )
-          gotscenery = true
+          table.insert(Scenery, ZoneObject)
+          gotscenery=true
 
         end
 
@@ -462,18 +529,18 @@ do -- COORDINATE
     end
 
     -- Search the world.
-    world.searchObjects( scanobjects, SphereSearch, EvaluateZone )
+    world.searchObjects(scanobjects, SphereSearch, EvaluateZone)
 
-    for _, unit in pairs( Units ) do
-      self:T( string.format( "Scan found unit %s", unit:GetName() ) )
+    for _,unit in pairs(Units) do
+      self:T(string.format("Scan found unit %s", unit:GetName()))
     end
-    for _, static in pairs( Statics ) do
-      self:T( string.format( "Scan found static %s", static:getName() ) )
-      _DATABASE:AddStatic( static:getName() )
+    for _,static in pairs(Statics) do
+      self:T(string.format("Scan found static %s", static:getName()))
+      _DATABASE:AddStatic(static:getName())
     end
-    for _, scenery in pairs( Scenery ) do
-      self:T( string.format( "Scan found scenery %s typename=%s", scenery:getName(), scenery:getTypeName() ) )
-      SCENERY:Register( scenery:getName(), scenery )
+    for _,scenery in pairs(Scenery) do
+      self:T(string.format("Scan found scenery %s typename=%s", scenery:getName(), scenery:getTypeName()))
+      --SCENERY:Register(scenery:getName(), scenery)
     end
 
     return gotunits, gotstatics, gotscenery, Units, Statics, Scenery
@@ -483,36 +550,81 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
   -- @return Core.Set#SET_UNIT Set of units.
-  function COORDINATE:ScanUnits( radius )
+  function COORDINATE:ScanUnits(radius)
 
-    local _, _, _, units = self:ScanObjects( radius, true, false, false )
+    local _,_,_,units=self:ScanObjects(radius, true, false, false)
 
-    local set = SET_UNIT:New()
+    local set=SET_UNIT:New()
 
-    for _, unit in pairs( units ) do
-      set:AddUnit( unit )
+    for _,unit in pairs(units) do
+      set:AddUnit(unit)
     end
 
     return set
   end
 
-  --- Find the closest unit to the COORDINATE within a certain radius. 
+  --- Find the closest unit to the COORDINATE within a certain radius.
   -- @param #COORDINATE self
   -- @param #number radius Scan radius in meters. Default 100 m.
   -- @return Wrapper.Unit#UNIT The closest unit or #nil if no unit is inside the given radius.
-  function COORDINATE:FindClosestUnit( radius )
+  function COORDINATE:FindClosestUnit(radius)
 
-    local units = self:ScanUnits( radius )
+    local units=self:ScanUnits(radius)
 
-    local umin = nil -- Wrapper.Unit#UNIT
-    local dmin = math.huge
-    for _, _unit in pairs( units.Set ) do
-      local unit = _unit -- Wrapper.Unit#UNIT
-      local coordinate = unit:GetCoordinate()
-      local d = self:Get2DDistance( coordinate )
-      if d < dmin then
-        dmin = d
-        umin = unit
+    local umin=nil --Wrapper.Unit#UNIT
+    local dmin=math.huge
+    for _,_unit in pairs(units.Set) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      local coordinate=unit:GetCoordinate()
+      local d=self:Get2DDistance(coordinate)
+      if d<dmin then
+        dmin=d
+        umin=unit
+      end
+    end
+
+    return umin
+  end
+
+  --- Scan/find SCENERY objects within a certain radius around the coordinate using the world.searchObjects() DCS API function.
+  -- @param #COORDINATE self
+  -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
+  -- @return table Set of scenery objects.
+  function COORDINATE:ScanScenery(radius)
+
+    local _,_,_,_,_,scenerys=self:ScanObjects(radius, false, false, true)
+
+    local set={}
+
+    for _,_scenery in pairs(scenerys) do
+      local scenery=_scenery --DCS#Object
+
+      local name=scenery:getName()
+      local s=SCENERY:Register(name, scenery)
+      table.insert(set, s)
+
+    end
+
+    return set
+  end
+
+  --- Find the closest scenery to the COORDINATE within a certain radius.
+  -- @param #COORDINATE self
+  -- @param #number radius Scan radius in meters. Default 100 m.
+  -- @return Wrapper.Scenery#SCENERY The closest scenery or #nil if no object is inside the given radius.
+  function COORDINATE:FindClosestScenery(radius)
+
+    local sceneries=self:ScanScenery(radius)
+
+    local umin=nil --Wrapper.Scenery#SCENERY
+    local dmin=math.huge
+    for _,_scenery in pairs(sceneries) do
+      local scenery=_scenery --Wrapper.Scenery#SCENERY
+      local coordinate=scenery:GetCoordinate()
+      local d=self:Get2DDistance(coordinate)
+      if d<dmin then
+        dmin=d
+        umin=scenery
       end
     end
 
@@ -526,7 +638,7 @@ do -- COORDINATE
   function COORDINATE:DistanceFromPointVec2( PointVec2Reference )
     self:F2( PointVec2Reference )
 
-    local Distance = ((PointVec2Reference.x - self.x) ^ 2 + (PointVec2Reference.z - self.z) ^ 2) ^ 0.5
+    local Distance = ( ( PointVec2Reference.x - self.x ) ^ 2 + ( PointVec2Reference.z - self.z ) ^2 ) ^ 0.5
 
     self:T2( Distance )
     return Distance
@@ -536,27 +648,27 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param DCS#Distance Distance The Distance to be added in meters.
   -- @param DCS#Angle Angle The Angle in degrees. Defaults to 0 if not specified (nil).
-  -- @param #boolean KeepAltitude If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
-  -- @param #boolean Overwrite If true, overwrite the original COORDINATE with the translated one. Otherwise, create a new COORDINATE.
+  -- @param #boolean Keepalt If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
+  -- @param #boolean Overwrite If true, overwrite the original COORDINATE with the translated one. Otherwise, create a new COODINATE.
   -- @return #COORDINATE The new calculated COORDINATE.
-  function COORDINATE:Translate( Distance, Angle, KeepAltitude, Overwrite )
+  function COORDINATE:Translate( Distance, Angle, Keepalt, Overwrite )
 
-    -- Angle in rad.  
-    local alpha = math.rad( (Angle or 0) )
+    -- Angle in rad.
+    local alpha = math.rad((Angle or 0))
 
-    local x = Distance * math.cos( alpha ) + self.x -- New x
-    local z = Distance * math.sin( alpha ) + self.z -- New z
+    local x = Distance * math.cos(alpha) + self.x  -- New x
+    local z = Distance * math.sin(alpha) + self.z  -- New z
 
-    local y = KeepAltitude and self.y or land.getHeight( { x = x, y = z } )
+    local y=Keepalt and self.y or land.getHeight({x=x, y=z})
 
     if Overwrite then
-      self.x = x
-      self.y = y
-      self.z = z
+      self.x=x
+      self.y=y
+      self.z=z
       return self
     else
-      -- env.info("FF translate with NEW coordinate T="..timer.getTime())
-      local coord = COORDINATE:New( x, y, z )
+      --env.info("FF translate with NEW coordinate T="..timer.getTime())
+      local coord=COORDINATE:New(x, y, z)
       return coord
     end
 
@@ -566,24 +678,25 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param DCS#Angle Angle Angle of rotation in degrees.
   -- @return Core.Point#COORDINATE The rotated coordinate.
-  function COORDINATE:Rotate2D( Angle )
+  function COORDINATE:Rotate2D(Angle)
 
     if not Angle then
       return self
     end
 
-    local phi = math.rad( Angle )
+    local phi=math.rad(Angle)
 
-    local X = self.z
-    local Y = self.x
+    local X=self.z
+    local Y=self.x
 
-    -- slocal R=math.sqrt(X*X+Y*Y)
+    --slocal R=math.sqrt(X*X+Y*Y)
 
-    local x = X * math.cos( phi ) - Y * math.sin( phi )
-    local y = X * math.sin( phi ) + Y * math.cos( phi )
+    local x=X*math.cos(phi)-Y*math.sin(phi)
+    local y=X*math.sin(phi)+Y*math.cos(phi)
 
     -- Coordinate assignment looks bit strange but is correct.
-    return COORDINATE:NewFromVec3( { x = y, y = self.y, z = x } )
+    local coord=COORDINATE:NewFromVec3({x=y, y=self.y, z=x})
+    return coord
   end
 
   --- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
@@ -602,7 +715,7 @@ do -- COORDINATE
 
     local RadialMultiplier
     if InnerRadius and InnerRadius <= OuterRadius then
-      RadialMultiplier = (OuterRadius - InnerRadius) * Radials + InnerRadius
+      RadialMultiplier = ( OuterRadius - InnerRadius ) * Radials + InnerRadius
     else
       RadialMultiplier = OuterRadius * Radials
     end
@@ -617,6 +730,7 @@ do -- COORDINATE
     return RandomVec2
   end
 
+
   --- Return a random Coordinate within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
   -- @param #COORDINATE self
   -- @param DCS#Distance OuterRadius Outer radius in meters.
@@ -625,8 +739,10 @@ do -- COORDINATE
   function COORDINATE:GetRandomCoordinateInRadius( OuterRadius, InnerRadius )
     self:F2( { OuterRadius, InnerRadius } )
 
-    return COORDINATE:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
+    local coord=COORDINATE:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
+    return coord
   end
+
 
   --- Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
   -- @param #COORDINATE self
@@ -650,11 +766,13 @@ do -- COORDINATE
     return land.getHeight( Vec2 )
   end
 
+
   --- Set the heading of the coordinate, if applicable.
   -- @param #COORDINATE self
   function COORDINATE:SetHeading( Heading )
     self.Heading = Heading
   end
+
 
   --- Get the heading of the coordinate, if applicable.
   -- @param #COORDINATE self
@@ -663,6 +781,7 @@ do -- COORDINATE
     return self.Heading
   end
 
+
   --- Set the velocity of the COORDINATE.
   -- @param #COORDINATE self
   -- @param #string Velocity Velocity in meters per second.
@@ -670,12 +789,21 @@ do -- COORDINATE
     self.Velocity = Velocity
   end
 
+
   --- Return the velocity of the COORDINATE.
   -- @param #COORDINATE self
   -- @return #number Velocity in meters per second.
   function COORDINATE:GetVelocity()
     local Velocity = self.Velocity
     return Velocity or 0
+  end
+
+  --- Return the "name" of the COORDINATE. Obviously, a coordinate does not have a name like a unit, static or group. So here we take the MGRS coordinates of the position.
+  -- @param #COORDINATE self
+  -- @return #string MGRS coordinates.
+  function COORDINATE:GetName()
+    local name=self:ToStringMGRS()
+    return name
   end
 
   --- Return velocity text of the COORDINATE.
@@ -686,7 +814,8 @@ do -- COORDINATE
     return self:GetVelocityText( Settings ) .. ", " .. self:GetHeadingText( Settings )
   end
 
-  --- Return a direction vector Vec3 from this COORDINATE to the target COORDINATE.
+
+  --- Return a direction vector Vec3 from COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
   -- @param #COORDINATE TargetCoordinate The target COORDINATE.
   -- @return DCS#Vec3 DirectionVec3 The direction vector in Vec3 format.
@@ -694,15 +823,17 @@ do -- COORDINATE
     return { x = TargetCoordinate.x - self.x, y = TargetCoordinate.y - self.y, z = TargetCoordinate.z - self.z }
   end
 
+
   --- Get a correction in radians of the real magnetic north of the COORDINATE.
   -- @param #COORDINATE self
   -- @return #number CorrectionRadians The correction in radians.
   function COORDINATE:GetNorthCorrectionRadians()
     local TargetVec3 = self:GetVec3()
-    local lat, lon = coord.LOtoLL( TargetVec3 )
-    local north_posit = coord.LLtoLO( lat + 1, lon )
+    local lat, lon = coord.LOtoLL(TargetVec3)
+    local north_posit = coord.LLtoLO(lat + 1, lon)
     return math.atan2( north_posit.z - TargetVec3.z, north_posit.x - TargetVec3.x )
   end
+
 
   --- Return an angle in radians from the COORDINATE using a direction vector in Vec3 format.
   -- @param #COORDINATE self
@@ -710,9 +841,9 @@ do -- COORDINATE
   -- @return #number DirectionRadians The angle in radians.
   function COORDINATE:GetAngleRadians( DirectionVec3 )
     local DirectionRadians = math.atan2( DirectionVec3.z, DirectionVec3.x )
-    -- DirectionRadians = DirectionRadians + self:GetNorthCorrectionRadians()
+    --DirectionRadians = DirectionRadians + self:GetNorthCorrectionRadians()
     if DirectionRadians < 0 then
-      DirectionRadians = DirectionRadians + 2 * math.pi -- put dir in range of 0 to 2*pi ( the full circle )
+      DirectionRadians = DirectionRadians + 2 * math.pi  -- put dir in range of 0 to 2*pi ( the full circle )
     end
     return DirectionRadians
   end
@@ -734,20 +865,20 @@ do -- COORDINATE
   -- @return #COORDINATE Coordinate between this and the other coordinate.
   function COORDINATE:GetIntermediateCoordinate( ToCoordinate, Fraction )
 
-    local f = Fraction or 0.5
+    local f=Fraction or 0.5
 
-    -- Get the vector from A to B    
-    local vec = UTILS.VecSubstract( ToCoordinate, self )
+    -- Get the vector from A to B
+    local vec=UTILS.VecSubstract(ToCoordinate, self)
 
     -- Scale the vector.
-    vec.x = f * vec.x
-    vec.y = f * vec.y
-    vec.z = f * vec.z
+    vec.x=f*vec.x
+    vec.y=f*vec.y
+    vec.z=f*vec.z
 
     -- Move the vector to start at the end of A.
-    vec = UTILS.VecAdd( self, vec )
+    vec=UTILS.VecAdd(self, vec)
 
-    local coord = COORDINATE:New( vec.x, vec.y, vec.z )
+    local coord=COORDINATE:New(vec.x,vec.y,vec.z)
     return coord
   end
 
@@ -755,55 +886,53 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #COORDINATE TargetCoordinate The target COORDINATE. Can also be a DCS#Vec3.
   -- @return DCS#Distance Distance The distance in meters.
-  function COORDINATE:Get2DDistance( TargetCoordinate )
+  function COORDINATE:Get2DDistance(TargetCoordinate)
 
-    local a = { x = TargetCoordinate.x - self.x, y = 0, z = TargetCoordinate.z - self.z }
+    local a={x=TargetCoordinate.x-self.x, y=0, z=TargetCoordinate.z-self.z}
 
-    local d = UTILS.VecNorm( a )
-
-    return d
-
+    local norm=UTILS.VecNorm(a)
+    return norm
   end
 
   --- Returns the temperature in Degrees Celsius.
   -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL.
   -- @return Temperature in Degrees Celsius.
-  function COORDINATE:GetTemperature( height )
-    self:F2( height )
-    local y = height or self.y
-    local point = { x = self.x, y = height or self.y, z = self.z }
+  function COORDINATE:GetTemperature(height)
+    self:F2(height)
+    local y=height or self.y
+    local point={x=self.x, y=height or self.y, z=self.z}
     -- get temperature [K] and pressure [Pa] at point
-    local T, P = atmosphere.getTemperatureAndPressure( point )
+    local T,P=atmosphere.getTemperatureAndPressure(point)
     -- Return Temperature in Deg C
-    return T - 273.15
+    return T-273.15
   end
 
   --- Returns a text of the temperature according the measurement system @{Settings}.
   -- The text will reflect the temperature like this:
   --
-  --   - For Russian and European aircraft using the metric system - Degrees Celsius (°C)
-  --   - For American aircraft we link to the imperial system - Degrees Fahrenheit (°F)
+  --   - For Russian and European aircraft using the metric system - Degrees Celcius (°C)
+  --   - For American aircraft we link to the imperial system - Degrees Farenheit (°F)
   --
   -- A text containing a pressure will look like this:
   --
   --   - `Temperature: %n.d °C`
   --   - `Temperature: %n.d °F`
   --
-  -- @param #COORDINATE self
+   -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL.
   -- @return #string Temperature according the measurement system @{Settings}.
   function COORDINATE:GetTemperatureText( height, Settings )
 
-    local DegreesCelsius = self:GetTemperature( height )
+    local DegreesCelcius = self:GetTemperature( height )
 
     local Settings = Settings or _SETTINGS
 
-    if DegreesCelsius then
+    if DegreesCelcius then
       if Settings:IsMetric() then
-        return string.format( " %-2.2f °C", DegreesCelsius )
+        return string.format( " %-2.2f °C", DegreesCelcius )
       else
-        return string.format( " %-2.2f °F", UTILS.CelsiusToFahrenheit( DegreesCelsius ) )
+        return string.format( " %-2.2f °F", UTILS.CelciusToFarenheit( DegreesCelcius ) )
       end
     else
       return " no temperature"
@@ -812,23 +941,24 @@ do -- COORDINATE
     return nil
   end
 
+
   --- Returns the pressure in hPa.
   -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL. E.g. set height=0 for QNH.
   -- @return Pressure in hPa.
-  function COORDINATE:GetPressure( height )
-    local point = { x = self.x, y = height or self.y, z = self.z }
+  function COORDINATE:GetPressure(height)
+    local point={x=self.x, y=height or self.y, z=self.z}
     -- get temperature [K] and pressure [Pa] at point
-    local T, P = atmosphere.getTemperatureAndPressure( point )
+    local T,P=atmosphere.getTemperatureAndPressure(point)
     -- Return Pressure in hPa.
-    return P / 100
+    return P/100
   end
 
   --- Returns a text of the pressure according the measurement system @{Settings}.
   -- The text will contain always the pressure in hPa and:
   --
-  --   - For Russian and European aircraft using the metric system - hPa and mmHg.
-  --   - For American and European aircraft we link to the imperial system - hPa and inHg.
+  --   - For Russian and European aircraft using the metric system - hPa and mmHg
+  --   - For American and European aircraft we link to the imperial system - hPa and inHg
   --
   -- A text containing a pressure will look like this:
   --
@@ -859,14 +989,14 @@ do -- COORDINATE
     return nil
   end
 
-  --- Returns the heading from this to another COORDINATE.
+  --- Returns the heading from this to another coordinate.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoordinate
   -- @return #number Heading in degrees.
-  function COORDINATE:HeadingTo( ToCoordinate )
-    local dz = ToCoordinate.z - self.z
-    local dx = ToCoordinate.x - self.x
-    local heading = math.deg( math.atan2( dz, dx ) )
+  function COORDINATE:HeadingTo(ToCoordinate)
+    local dz=ToCoordinate.z-self.z
+    local dx=ToCoordinate.x-self.x
+    local heading=math.deg(math.atan2(dz, dx))
     if heading < 0 then
       heading = 360 + heading
     end
@@ -878,22 +1008,22 @@ do -- COORDINATE
   -- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
   -- @return Direction the wind is blowing from in degrees.
   -- @return Wind strength in m/s.
-  function COORDINATE:GetWind( height )
-    local landheight = self:GetLandHeight() + 0.1 -- we at 0.1 meters to be sure to be above ground since wind is zero below ground level.
-    local point = { x = self.x, y = math.max( height or self.y, landheight ), z = self.z }
+  function COORDINATE:GetWind(height)
+    local landheight=self:GetLandHeight()+0.1 -- we at 0.1 meters to be sure to be above ground since wind is zero below ground level.
+    local point={x=self.x, y=math.max(height or self.y, landheight), z=self.z}
     -- get wind velocity vector
-    local wind = atmosphere.getWind( point )
-    local direction = math.deg( math.atan2( wind.z, wind.x ) )
+    local wind = atmosphere.getWind(point)
+    local direction = math.deg(math.atan2(wind.z, wind.x))
     if direction < 0 then
       direction = 360 + direction
     end
-    -- Convert to direction to from direction 
+    -- Convert to direction to from direction
     if direction > 180 then
-      direction = direction - 180
+      direction = direction-180
     else
-      direction = direction + 180
+      direction = direction+180
     end
-    local strength = math.sqrt( (wind.x) ^ 2 + (wind.z) ^ 2 )
+    local strength=math.sqrt((wind.x)^2+(wind.z)^2)
     -- Return wind direction and strength km/h.
     return direction, strength
   end
@@ -902,19 +1032,20 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
   -- @return Direction the wind is blowing from in degrees.
-  function COORDINATE:GetWindWithTurbulenceVec3( height )
+  function COORDINATE:GetWindWithTurbulenceVec3(height)
 
     -- AGL height if
-    local landheight = self:GetLandHeight() + 0.1 -- we at 0.1 meters to be sure to be above ground since wind is zero below ground level.
+    local landheight=self:GetLandHeight()+0.1 -- we at 0.1 meters to be sure to be above ground since wind is zero below ground level.
 
     -- Point at which the wind is evaluated.
-    local point = { x = self.x, y = math.max( height or self.y, landheight ), z = self.z }
+    local point={x=self.x, y=math.max(height or self.y, landheight), z=self.z}
 
     -- Get wind velocity vector including turbulences.
-    local vec3 = atmosphere.getWindWithTurbulence( point )
+    local vec3 = atmosphere.getWindWithTurbulence(point)
 
     return vec3
   end
+
 
   --- Returns a text documenting the wind direction (from) and strength according the measurement system @{Settings}.
   -- The text will reflect the wind like this:
@@ -956,12 +1087,13 @@ do -- COORDINATE
   function COORDINATE:Get3DDistance( TargetCoordinate )
     local TargetVec3 = TargetCoordinate:GetVec3()
     local SourceVec3 = self:GetVec3()
-    return ((TargetVec3.x - SourceVec3.x) ^ 2 + (TargetVec3.y - SourceVec3.y) ^ 2 + (TargetVec3.z - SourceVec3.z) ^ 2) ^ 0.5
+    return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
   end
+
 
   --- Provides a bearing text in degrees.
   -- @param #COORDINATE self
-  -- @param #number AngleRadians The angle in radians.
+  -- @param #number AngleRadians The angle in randians.
   -- @param #number Precision The precision.
   -- @param Core.Settings#SETTINGS Settings
   -- @return #string The bearing text in degrees.
@@ -989,13 +1121,13 @@ do -- COORDINATE
     local DistanceText
 
     if Settings:IsMetric() then
-      if Language == "EN" then
+      if     Language == "EN" then
         DistanceText = " for " .. UTILS.Round( Distance / 1000, 2 ) .. " km"
       elseif Language == "RU" then
         DistanceText = " за " .. UTILS.Round( Distance / 1000, 2 ) .. " километров"
       end
     else
-      if Language == "EN" then
+      if     Language == "EN" then
         DistanceText = " for " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " miles"
       elseif Language == "RU" then
         DistanceText = " за " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " миль"
@@ -1015,13 +1147,13 @@ do -- COORDINATE
 
     if Altitude ~= 0 then
       if Settings:IsMetric() then
-        if Language == "EN" then
+        if     Language == "EN" then
           return " at " .. UTILS.Round( self.y, -3 ) .. " meters"
         elseif Language == "RU" then
           return " в " .. UTILS.Round( self.y, -3 ) .. " метры"
         end
       else
-        if Language == "EN" then
+        if     Language == "EN" then
           return " at " .. UTILS.Round( UTILS.MetersToFeet( self.y ), -3 ) .. " feet"
         elseif Language == "RU" then
           return " в " .. UTILS.Round( self.y, -3 ) .. " ноги"
@@ -1031,6 +1163,8 @@ do -- COORDINATE
       return ""
     end
   end
+
+
 
   --- Return the velocity text of the COORDINATE.
   -- @param #COORDINATE self
@@ -1049,6 +1183,7 @@ do -- COORDINATE
     end
   end
 
+
   --- Return the heading text of the COORDINATE.
   -- @param #COORDINATE self
   -- @return #string Heading text.
@@ -1061,9 +1196,10 @@ do -- COORDINATE
     end
   end
 
+
   --- Provides a Bearing / Range string
   -- @param #COORDINATE self
-  -- @param #number AngleRadians The angle in radians
+  -- @param #number AngleRadians The angle in randians
   -- @param #number Distance The distance
   -- @param Core.Settings#SETTINGS Settings
   -- @return #string The BR Text
@@ -1081,7 +1217,7 @@ do -- COORDINATE
 
   --- Provides a Bearing / Range / Altitude string
   -- @param #COORDINATE self
-  -- @param #number AngleRadians The angle in radians
+  -- @param #number AngleRadians The angle in randians
   -- @param #number Distance The distance
   -- @param Core.Settings#SETTINGS Settings
   -- @return #string The BRA Text
@@ -1090,27 +1226,28 @@ do -- COORDINATE
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
 
     local BearingText = self:GetBearingText( AngleRadians, 0, Settings, Language )
-    local DistanceText = self:GetDistanceText( Distance, Settings, Language )
-    local AltitudeText = self:GetAltitudeText( Settings, Language )
+    local DistanceText = self:GetDistanceText( Distance, Settings, Language  )
+    local AltitudeText = self:GetAltitudeText( Settings, Language  )
 
     local BRAText = BearingText .. DistanceText .. AltitudeText -- When the POINT is a VEC2, there will be no altitude shown.
 
     return BRAText
   end
 
+
   --- Set altitude.
   -- @param #COORDINATE self
   -- @param #number altitude New altitude in meters.
   -- @param #boolean asl Altitude above sea level. Default is above ground level.
   -- @return #COORDINATE The COORDINATE with adjusted altitude.
-  function COORDINATE:SetAltitude( altitude, asl )
-    local alt = altitude
+  function COORDINATE:SetAltitude(altitude, asl)
+    local alt=altitude
     if asl then
-      alt = altitude
+      alt=altitude
     else
-      alt = self:GetLandHeight() + altitude
+      alt=self:GetLandHeight()+altitude
     end
-    self.y = alt
+    self.y=alt
     return self
   end
 
@@ -1130,15 +1267,15 @@ do -- COORDINATE
     self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
 
     -- Set alttype or "RADIO" which is AGL.
-    AltType = AltType or "RADIO"
+    AltType=AltType or "RADIO"
 
     -- Speedlocked by default
-    if SpeedLocked == nil then
-      SpeedLocked = true
+    if SpeedLocked==nil then
+      SpeedLocked=true
     end
 
     -- Speed or default 500 km/h.
-    Speed = Speed or 500
+    Speed=Speed or 500
 
     -- Waypoint array.
     local RoutePoint = {}
@@ -1156,15 +1293,15 @@ do -- COORDINATE
     RoutePoint.action = Action or nil
 
     -- Speed.
-    RoutePoint.speed = Speed / 3.6
+    RoutePoint.speed = Speed/3.6
     RoutePoint.speed_locked = SpeedLocked
 
     -- ETA.
-    RoutePoint.ETA = 0
-    RoutePoint.ETA_locked = false
+    RoutePoint.ETA=0
+    RoutePoint.ETA_locked=false
 
     -- Waypoint description.
-    RoutePoint.name = description
+    RoutePoint.name=description
 
     -- Airbase parameters for takeoff and landing points.
     if airbase then
@@ -1176,13 +1313,13 @@ do -- COORDINATE
       elseif AirbaseCategory == Airbase.Category.AIRDROME then
         RoutePoint.airdromeId = AirbaseID
       else
-        self:E( "ERROR: Unknown airbase category in COORDINATE:WaypointAir()!" )
+        self:E("ERROR: Unknown airbase category in COORDINATE:WaypointAir()!")
       end
     end
 
-    -- Time in minutes to stay at the airbase before resuming route. 
-    if Type == COORDINATE.WaypointType.LandingReFuAr then
-      RoutePoint.timeReFuAr = timeReFuAr or 10
+    -- Time in minutes to stay at the airbase before resuming route.
+    if Type==COORDINATE.WaypointType.LandingReFuAr then
+      RoutePoint.timeReFuAr=timeReFuAr or 10
     end
 
     -- Waypoint tasks.
@@ -1191,17 +1328,18 @@ do -- COORDINATE
     RoutePoint.task.params = {}
     RoutePoint.task.params.tasks = DCSTasks or {}
 
-    -- RoutePoint.properties={}
-    -- RoutePoint.properties.addopt={}
+    --RoutePoint.properties={}
+    --RoutePoint.properties.addopt={}
 
-    -- RoutePoint.formation_template=""
+    --RoutePoint.formation_template=""
 
     -- Debug.
-    self:T( { RoutePoint = RoutePoint } )
+    self:T({RoutePoint=RoutePoint})
 
     -- Return waypoint.
     return RoutePoint
   end
+
 
   --- Build a Waypoint Air "Turning Point".
   -- @param #COORDINATE self
@@ -1214,6 +1352,7 @@ do -- COORDINATE
     return self:WaypointAir( AltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, description )
   end
 
+
   --- Build a Waypoint Air "Fly Over Point".
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
@@ -1222,6 +1361,7 @@ do -- COORDINATE
   function COORDINATE:WaypointAirFlyOverPoint( AltType, Speed )
     return self:WaypointAir( AltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, Speed )
   end
+
 
   --- Build a Waypoint Air "Take Off Parking Hot".
   -- @param #COORDINATE self
@@ -1232,6 +1372,7 @@ do -- COORDINATE
     return self:WaypointAir( AltType, COORDINATE.WaypointType.TakeOffParkingHot, COORDINATE.WaypointAction.FromParkingAreaHot, Speed )
   end
 
+
   --- Build a Waypoint Air "Take Off Parking".
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
@@ -1241,6 +1382,7 @@ do -- COORDINATE
     return self:WaypointAir( AltType, COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, Speed )
   end
 
+
   --- Build a Waypoint Air "Take Off Runway".
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
@@ -1249,6 +1391,7 @@ do -- COORDINATE
   function COORDINATE:WaypointAirTakeOffRunway( AltType, Speed )
     return self:WaypointAir( AltType, COORDINATE.WaypointType.TakeOff, COORDINATE.WaypointAction.FromRunway, Speed )
   end
+
 
   --- Build a Waypoint Air "Landing".
   -- @param #COORDINATE self
@@ -1265,10 +1408,10 @@ do -- COORDINATE
   --    HeliGroup:Route( { LandWaypoint }, 1 ) -- Start landing the helicopter in one second.
   --
   function COORDINATE:WaypointAirLanding( Speed, airbase, DCSTasks, description )
-    return self:WaypointAir( nil, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, false, airbase, DCSTasks, description )
+    return self:WaypointAir(nil, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, false, airbase, DCSTasks, description)
   end
 
-  --- Build a Waypoint Air "LandingReFuAr". Mimics the aircraft ReFueling and ReArming. 
+  --- Build a Waypoint Air "LandingReFuAr". Mimics the aircraft ReFueling and ReArming.
   -- @param #COORDINATE self
   -- @param DCS#Speed Speed Airspeed in km/h.
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
@@ -1277,8 +1420,9 @@ do -- COORDINATE
   -- @param #string description A text description of the waypoint, which will be shown on the F10 map.
   -- @return #table The route point.
   function COORDINATE:WaypointAirLandingReFu( Speed, airbase, timeReFuAr, DCSTasks, description )
-    return self:WaypointAir( nil, COORDINATE.WaypointType.LandingReFuAr, COORDINATE.WaypointAction.LandingReFuAr, Speed, false, airbase, DCSTasks, description, timeReFuAr or 10 )
+    return self:WaypointAir(nil, COORDINATE.WaypointType.LandingReFuAr, COORDINATE.WaypointAction.LandingReFuAr, Speed, false, airbase, DCSTasks, description, timeReFuAr or 10)
   end
+
 
   --- Build an ground type route point.
   -- @param #COORDINATE self
@@ -1291,21 +1435,21 @@ do -- COORDINATE
 
     local RoutePoint = {}
 
-    RoutePoint.x = self.x
-    RoutePoint.y = self.z
+    RoutePoint.x    = self.x
+    RoutePoint.y    = self.z
 
-    RoutePoint.alt = self:GetLandHeight() + 1
+    RoutePoint.alt      = self:GetLandHeight()+1
     RoutePoint.alt_type = COORDINATE.WaypointAltType.BARO
 
     RoutePoint.type = "Turning Point"
 
     RoutePoint.action = Formation or "Off Road"
-    RoutePoint.formation_template = ""
+    RoutePoint.formation_template=""
 
-    RoutePoint.ETA = 0
-    RoutePoint.ETA_locked = false
+    RoutePoint.ETA=0
+    RoutePoint.ETA_locked=false
 
-    RoutePoint.speed = (Speed or 20) / 3.6
+    RoutePoint.speed = ( Speed or 20 ) / 3.6
     RoutePoint.speed_locked = true
 
     RoutePoint.task = {}
@@ -1327,20 +1471,20 @@ do -- COORDINATE
 
     local RoutePoint = {}
 
-    RoutePoint.x = self.x
-    RoutePoint.y = self.z
+    RoutePoint.x    = self.x
+    RoutePoint.y    = self.z
 
-    RoutePoint.alt = Depth or self.y -- Depth is for submarines only. Ships should have alt=0.
+    RoutePoint.alt  = Depth or self.y  -- Depth is for submarines only. Ships should have alt=0.
     RoutePoint.alt_type = "BARO"
 
-    RoutePoint.type = "Turning Point"
+    RoutePoint.type   = "Turning Point"
     RoutePoint.action = "Turning Point"
     RoutePoint.formation_template = ""
 
-    RoutePoint.ETA = 0
-    RoutePoint.ETA_locked = false
+    RoutePoint.ETA=0
+    RoutePoint.ETA_locked=false
 
-    RoutePoint.speed = (Speed or 20) / 3.6
+    RoutePoint.speed = ( Speed or 20 ) / 3.6
     RoutePoint.speed_locked = true
 
     RoutePoint.task = {}
@@ -1357,30 +1501,30 @@ do -- COORDINATE
   -- @param #number Coalition (Optional) Coalition of the airbase.
   -- @return Wrapper.Airbase#AIRBASE Closest Airbase to the given coordinate.
   -- @return #number Distance to the closest airbase in meters.
-  function COORDINATE:GetClosestAirbase2( Category, Coalition )
+  function COORDINATE:GetClosestAirbase2(Category, Coalition)
 
     -- Get all airbases of the map.
-    local airbases = AIRBASE.GetAllAirbases( Coalition )
+    local airbases=AIRBASE.GetAllAirbases(Coalition)
 
-    local closest = nil
-    local distmin = nil
+    local closest=nil
+    local distmin=nil
     -- Loop over all airbases.
-    for _, _airbase in pairs( airbases ) do
-      local airbase = _airbase -- Wrapper.Airbase#AIRBASE
+    for _,_airbase in pairs(airbases) do
+      local airbase=_airbase --Wrapper.Airbase#AIRBASE
       if airbase then
-        local category = airbase:GetAirbaseCategory()
-        if Category and Category == category or Category == nil then
+        local category=airbase:GetAirbaseCategory()
+        if Category and Category==category or Category==nil then
 
-          -- Distance to airbase.         
-          local dist = self:Get2DDistance( airbase:GetCoordinate() )
+          -- Distance to airbase.
+          local dist=self:Get2DDistance(airbase:GetCoordinate())
 
-          if closest == nil then
-            distmin = dist
-            closest = airbase
+          if closest==nil then
+            distmin=dist
+            closest=airbase
           else
-            if dist < distmin then
-              distmin = dist
-              closest = airbase
+            if dist<distmin then
+              distmin=dist
+              closest=airbase
             end
           end
 
@@ -1388,7 +1532,7 @@ do -- COORDINATE
       end
     end
 
-    return closest, distmin
+    return closest,distmin
   end
 
   --- Gets the nearest airbase with respect to the current coordinates.
@@ -1397,80 +1541,80 @@ do -- COORDINATE
   -- @param #number Coalition (Optional) Coalition of the airbase.
   -- @return Wrapper.Airbase#AIRBASE Closest Airbase to the given coordinate.
   -- @return #number Distance to the closest airbase in meters.
-  function COORDINATE:GetClosestAirbase( Category, Coalition )
+  function COORDINATE:GetClosestAirbase(Category, Coalition)
 
-    local a = self:GetVec3()
+    local a=self:GetVec3()
 
-    local distmin = math.huge
-    local airbase = nil
-    for DCSairbaseID, DCSairbase in pairs( world.getAirbases( Coalition ) ) do
-      local b = DCSairbase:getPoint()
+    local distmin=math.huge
+    local airbase=nil
+    for DCSairbaseID, DCSairbase in pairs(world.getAirbases(Coalition)) do
+      local b=DCSairbase:getPoint()
 
-      local c = UTILS.VecSubstract( a, b )
-      local dist = UTILS.VecNorm( c )
+      local c=UTILS.VecSubstract(a,b)
+      local dist=UTILS.VecNorm(c)
 
-      -- env.info(string.format("Airbase %s dist=%d category=%d", DCSairbase:getName(), dist, DCSairbase:getCategory()))
+      --env.info(string.format("Airbase %s dist=%d category=%d", DCSairbase:getName(), dist, DCSairbase:getCategory()))
 
-      if dist < distmin and (Category == nil or Category == DCSairbase:getDesc().category) then
-        distmin = dist
-        airbase = DCSairbase
+      if dist<distmin and (Category==nil or Category==DCSairbase:getDesc().category) then
+        distmin=dist
+        airbase=DCSairbase
       end
 
     end
 
-    return AIRBASE:Find( airbase )
+    return AIRBASE:Find(airbase)
   end
 
   --- Gets the nearest parking spot.
   -- @param #COORDINATE self
   -- @param Wrapper.Airbase#AIRBASE airbase (Optional) Search only parking spots at this airbase.
-  -- @param Wrapper.Airbase#Terminaltype terminaltype (Optional) Type of the terminal. Default any except valid spawn points on runway.
+  -- @param Wrapper.Airbase#Terminaltype terminaltype (Optional) Type of the terminal. Default any execpt valid spawn points on runway.
   -- @param #boolean free (Optional) If true, returns the closest free spot. If false, returns the closest occupied spot. If nil, returns the closest spot regardless of free or occupied.
   -- @return Core.Point#COORDINATE Coordinate of the nearest parking spot.
   -- @return #number Terminal ID.
   -- @return #number Distance to closest parking spot in meters.
   -- @return Wrapper.Airbase#AIRBASE#ParkingSpot Parking spot table.
-  function COORDINATE:GetClosestParkingSpot( airbase, terminaltype, free )
+  function COORDINATE:GetClosestParkingSpot(airbase, terminaltype, free)
 
     -- Get airbase table.
-    local airbases = {}
+    local airbases={}
     if airbase then
-      table.insert( airbases, airbase )
+      table.insert(airbases,airbase)
     else
-      airbases = AIRBASE.GetAllAirbases()
+      airbases=AIRBASE.GetAllAirbases()
     end
 
     -- Init.
-    local _closest = nil -- Core.Point#COORDINATE
-    local _termID = nil
-    local _distmin = nil
-    local spot = nil -- Wrapper.Airbase#AIRBASE.ParkingSpot
+    local _closest=nil --Core.Point#COORDINATE
+    local _termID=nil
+    local _distmin=nil
+    local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
 
     -- Loop over all airbases.
-    for _, _airbase in pairs( airbases ) do
+    for _,_airbase in pairs(airbases) do
 
-      local mybase = _airbase -- Wrapper.Airbase#AIRBASE
-      local parkingdata = mybase:GetParkingSpotsTable( terminaltype )
+      local mybase=_airbase --Wrapper.Airbase#AIRBASE
+      local parkingdata=mybase:GetParkingSpotsTable(terminaltype)
 
-      for _, _spot in pairs( parkingdata ) do
+      for _,_spot in pairs(parkingdata) do
 
-        -- Check for parameters.        
-        if (free == true and _spot.Free == true) or (free == false and _spot.Free == false) or free == nil then
+        -- Check for parameters.
+        if (free==true and _spot.Free==true) or (free==false and _spot.Free==false) or free==nil then
 
-          local _coord = _spot.Coordinate -- Core.Point#COORDINATE
+          local _coord=_spot.Coordinate --Core.Point#COORDINATE
 
-          local _dist = self:Get2DDistance( _coord )
-          if _distmin == nil then
-            _closest = _coord
-            _distmin = _dist
-            _termID = _spot.TerminalID
-            spot = _spot
+          local _dist=self:Get2DDistance(_coord)
+          if _distmin==nil then
+            _closest=_coord
+            _distmin=_dist
+            _termID=_spot.TerminalID
+            spot=_spot
           else
-            if _dist < _distmin then
-              _distmin = _dist
-              _closest = _coord
-              _termID = _spot.TerminalID
-              spot = _spot
+            if _dist<_distmin then
+              _distmin=_dist
+              _closest=_coord
+              _termID=_spot.TerminalID
+              spot=_spot
             end
           end
 
@@ -1488,8 +1632,8 @@ do -- COORDINATE
   -- @return #COORDINATE Coordinate of the nearest free parking spot.
   -- @return #number Terminal ID.
   -- @return #number Distance to closest free parking spot in meters.
-  function COORDINATE:GetClosestFreeParkingSpot( airbase, terminaltype )
-    return self:GetClosestParkingSpot( airbase, terminaltype, true )
+  function COORDINATE:GetClosestFreeParkingSpot(airbase, terminaltype)
+    return self:GetClosestParkingSpot(airbase, terminaltype, true)
   end
 
   --- Gets the nearest occupied parking spot.
@@ -1499,23 +1643,28 @@ do -- COORDINATE
   -- @return #COORDINATE Coordinate of the nearest occupied parking spot.
   -- @return #number Terminal ID.
   -- @return #number Distance to closest occupied parking spot in meters.
-  function COORDINATE:GetClosestOccupiedParkingSpot( airbase, terminaltype )
-    return self:GetClosestParkingSpot( airbase, terminaltype, false )
+  function COORDINATE:GetClosestOccupiedParkingSpot(airbase, terminaltype)
+    return self:GetClosestParkingSpot(airbase, terminaltype, false)
   end
 
   --- Gets the nearest coordinate to a road (or railroad).
   -- @param #COORDINATE self
   -- @param #boolean Railroad (Optional) If true, closest point to railroad is returned rather than closest point to conventional road. Default false.
   -- @return #COORDINATE Coordinate of the nearest road.
-  function COORDINATE:GetClosestPointToRoad( Railroad )
-    local roadtype = "roads"
-    if Railroad == true then
-      roadtype = "railroads"
+  function COORDINATE:GetClosestPointToRoad(Railroad)
+    local roadtype="roads"
+    if Railroad==true then
+      roadtype="railroads"
     end
-    local x, y = land.getClosestPointOnRoads( roadtype, self.x, self.z )
-    local vec2 = { x = x, y = y }
-    return COORDINATE:NewFromVec2( vec2 )
+    local x,y = land.getClosestPointOnRoads(roadtype, self.x, self.z)
+    local coord=nil
+    if x and y then
+      local vec2={ x = x, y = y }
+      coord=COORDINATE:NewFromVec2(vec2)
+    end
+    return coord
   end
+
 
   --- Returns a table of coordinates to a destination using only roads or railroads.
   -- The first point is the closest point on road of the given coordinate.
@@ -1525,63 +1674,63 @@ do -- COORDINATE
   -- @param #boolean IncludeEndpoints (Optional) Include the coordinate itself and the ToCoordinate in the path.
   -- @param #boolean Railroad (Optional) If true, path on railroad is returned. Default false.
   -- @param #boolean MarkPath (Optional) If true, place markers on F10 map along the path.
-  -- @param #boolean SmokePath (Optional) If true, put (green) smoke along the the path.
+  -- @param #boolean SmokePath (Optional) If true, put (green) smoke along the
   -- @return #table Table of coordinates on road. If no path on road can be found, nil is returned or just the endpoints.
   -- @return #number Tonal length of path.
   -- @return #boolean If true a valid path on road/rail was found. If false, only the direct way is possible.
-  function COORDINATE:GetPathOnRoad( ToCoord, IncludeEndpoints, Railroad, MarkPath, SmokePath )
+  function COORDINATE:GetPathOnRoad(ToCoord, IncludeEndpoints, Railroad, MarkPath, SmokePath)
 
     -- Set road type.
-    local RoadType = "roads"
-    if Railroad == true then
-      RoadType = "railroads"
+    local RoadType="roads"
+    if Railroad==true then
+      RoadType="railroads"
     end
 
     -- DCS API function returning a table of vec2.
-    local path = land.findPathOnRoads( RoadType, self.x, self.z, ToCoord.x, ToCoord.z )
+    local path = land.findPathOnRoads(RoadType, self.x, self.z, ToCoord.x, ToCoord.z)
 
     -- Array holding the path coordinates.
-    local Path = {}
-    local Way = 0
+    local Path={}
+    local Way=0
 
     -- Include currrent position.
     if IncludeEndpoints then
-      Path[1] = self
+      Path[1]=self
     end
 
     -- Assume we could get a valid path.
-    local GotPath = true
+    local GotPath=true
 
     -- Check that DCS routine actually returned a path. There are situations where this is not the case.
     if path then
 
-      -- Include all points on road.      
-      for _i, _vec2 in ipairs( path ) do
+      -- Include all points on road.
+      for _i,_vec2 in ipairs(path) do
 
-        local coord = COORDINATE:NewFromVec2( _vec2 )
+        local coord=COORDINATE:NewFromVec2(_vec2)
 
-        Path[#Path + 1] = coord
+        Path[#Path+1]=coord
       end
 
     else
-      self:E( "Path is nil. No valid path on road could be found." )
-      GotPath = false
+      self:E("Path is nil. No valid path on road could be found.")
+      GotPath=false
     end
 
     -- Include end point, which might not be on road.
     if IncludeEndpoints then
-      Path[#Path + 1] = ToCoord
+      Path[#Path+1]=ToCoord
     end
 
     -- Mark or smoke.
     if MarkPath or SmokePath then
-      for i, c in pairs( Path ) do
-        local coord = c -- #COORDINATE
+      for i,c in pairs(Path) do
+        local coord=c --#COORDINATE
         if MarkPath then
-          coord:MarkToAll( string.format( "Path segment %d", i ) )
+          coord:MarkToAll(string.format("Path segment %d", i))
         end
         if SmokePath then
-          if i == 1 or i == #Path then
+          if i==1 or i==#Path then
             coord:SmokeBlue()
           else
             coord:SmokeGreen()
@@ -1591,13 +1740,13 @@ do -- COORDINATE
     end
 
     -- Sum up distances.
-    if #Path >= 2 then
-      for i = 1, #Path - 1 do
-        Way = Way + Path[i + 1]:Get2DDistance( Path[i] )
+    if #Path>=2 then
+      for i=1,#Path-1 do
+        Way=Way+Path[i+1]:Get2DDistance(Path[i])
       end
     else
       -- There are cases where no path on road can be found.
-      return nil, nil, false
+      return nil,nil,false
     end
 
     return Path, Way, GotPath
@@ -1607,8 +1756,8 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @return DCS#SurfaceType Surface type.
   function COORDINATE:GetSurfaceType()
-    local vec2 = self:GetVec2()
-    local surface = land.getSurfaceType( vec2 )
+    local vec2=self:GetVec2()
+    local surface=land.getSurfaceType(vec2)
     return surface
   end
 
@@ -1616,68 +1765,76 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @return #boolean If true, the surface type at the coordinate is land.
   function COORDINATE:IsSurfaceTypeLand()
-    return self:GetSurfaceType() == land.SurfaceType.LAND
+    return self:GetSurfaceType()==land.SurfaceType.LAND
   end
 
-  --- Checks if the surface type is road.
+  --- Checks if the surface type is land.
   -- @param #COORDINATE self
   -- @return #boolean If true, the surface type at the coordinate is land.
   function COORDINATE:IsSurfaceTypeLand()
-    return self:GetSurfaceType() == land.SurfaceType.LAND
+    return self:GetSurfaceType()==land.SurfaceType.LAND
   end
+
 
   --- Checks if the surface type is road.
   -- @param #COORDINATE self
   -- @return #boolean If true, the surface type at the coordinate is a road.
   function COORDINATE:IsSurfaceTypeRoad()
-    return self:GetSurfaceType() == land.SurfaceType.ROAD
+    return self:GetSurfaceType()==land.SurfaceType.ROAD
   end
 
   --- Checks if the surface type is runway.
   -- @param #COORDINATE self
   -- @return #boolean If true, the surface type at the coordinate is a runway or taxi way.
   function COORDINATE:IsSurfaceTypeRunway()
-    return self:GetSurfaceType() == land.SurfaceType.RUNWAY
+    return self:GetSurfaceType()==land.SurfaceType.RUNWAY
   end
 
   --- Checks if the surface type is shallow water.
   -- @param #COORDINATE self
   -- @return #boolean If true, the surface type at the coordinate is a shallow water.
   function COORDINATE:IsSurfaceTypeShallowWater()
-    return self:GetSurfaceType() == land.SurfaceType.SHALLOW_WATER
+    return self:GetSurfaceType()==land.SurfaceType.SHALLOW_WATER
   end
 
   --- Checks if the surface type is water.
   -- @param #COORDINATE self
   -- @return #boolean If true, the surface type at the coordinate is a deep water.
   function COORDINATE:IsSurfaceTypeWater()
-    return self:GetSurfaceType() == land.SurfaceType.WATER
+    return self:GetSurfaceType()==land.SurfaceType.WATER
   end
+
 
   --- Creates an explosion at the point of a certain intensity.
   -- @param #COORDINATE self
   -- @param #number ExplosionIntensity Intensity of the explosion in kg TNT. Default 100 kg.
-  -- @param #number Delay Delay before explosion in seconds.
+  -- @param #number Delay (Optional) Delay before explosion is triggered in seconds.
   -- @return #COORDINATE self
   function COORDINATE:Explosion( ExplosionIntensity, Delay )
-    self:F2( { ExplosionIntensity } )
-    ExplosionIntensity = ExplosionIntensity or 100
-    if Delay and Delay > 0 then
-      SCHEDULER:New( nil, self.Explosion, { self, ExplosionIntensity }, Delay )
+    ExplosionIntensity=ExplosionIntensity or 100
+    if Delay and Delay>0 then
+      self:ScheduleOnce(Delay, self.Explosion, self, ExplosionIntensity)
     else
-      trigger.action.explosion( self:GetVec3(), ExplosionIntensity )
+      trigger.action.explosion(self:GetVec3(), ExplosionIntensity)
     end
     return self
   end
 
   --- Creates an illumination bomb at the point.
   -- @param #COORDINATE self
-  -- @param #number power Power of illumination bomb in Candela.
+  -- @param #number Power Power of illumination bomb in Candela. Default 1000 cd.
+  -- @param #number Delay (Optional) Delay before bomb is ignited in seconds.
   -- @return #COORDINATE self
-  function COORDINATE:IlluminationBomb( power )
-    self:F2()
-    trigger.action.illuminationBomb( self:GetVec3(), power )
+  function COORDINATE:IlluminationBomb(Power, Delay)
+    Power=Power or 1000
+    if Delay and Delay>0 then
+      self:ScheduleOnce(Delay, self.IlluminationBomb, self, Power)
+    else
+      trigger.action.illuminationBomb(self:GetVec3(), Power)
+    end
+    return self
   end
+
 
   --- Smokes the point in a color.
   -- @param #COORDINATE self
@@ -1724,90 +1881,109 @@ do -- COORDINATE
 
   --- Big smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @param Utilities.Utils#BIGSMOKEPRESET preset Smoke preset (0=small smoke and fire, 1=medium smoke and fire, 2=large smoke and fire, 3=huge smoke and fire, 4=small smoke, 5=medium smoke, 6=large smoke, 7=huge smoke).
-  -- @param #number Density (Optional) Smoke density. Number in [0,...,1]. Default 0.5.
-  function COORDINATE:BigSmokeAndFire( Preset, Density )
-    self:F2( { Preset = Preset, Density = Density } )
-    Density = Density or 0.5
-    trigger.action.effectSmokeBig( self:GetVec3(), Preset, Density )
+  -- @param Utilities.Utils#BIGSMOKEPRESET preset Smoke preset (1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke).
+  -- @param #number density (Optional) Smoke density. Number in [0,...,1]. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFire( preset, density, name )
+    self:F2( { preset=preset, density=density } )
+    density=density or 0.5
+    self.firename = name or "Fire-"..math.random(1,10000)
+    trigger.action.effectSmokeBig( self:GetVec3(), preset, density, self.firename )
+  end
+  
+  --- Stop big smoke and fire at the coordinate.
+  -- @param #COORDINATE self
+  -- @param #string name (Optional) Name of the fire to stop it, if not using the same COORDINATE object.
+  function COORDINATE:StopBigSmokeAndFire( name )
+    self:F2( { name = name } )
+    name = name or self.firename
+    trigger.action.effectSmokeStop( name )
   end
 
   --- Small smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireSmall( Density )
-    self:F2( { Density = Density } )
-    Density = Density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.SmallSmokeAndFire, Density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireSmall( density, name )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, density, name)
   end
 
   --- Medium smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireMedium( Density )
-    self:F2( { Density = Density } )
-    Density = Density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.MediumSmokeAndFire, Density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireMedium( density, name )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, density, name)
   end
 
   --- Large smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireLarge( Density )
-    self:F2( { Density = Density } )
-    Density = Density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.LargeSmokeAndFire, Density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireLarge( density, name )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, density, name)
   end
 
   --- Huge smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireHuge( Density )
-    self:F2( { Density = Density } )
-    Density = Density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.HugeSmokeAndFire, Density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireHuge( density, name )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, density, name)
   end
 
   --- Small smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeSmall( Density )
-    self:F2( { Density = Density } )
-    Density = Density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.SmallSmoke, Density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeSmall( density, name )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, density, name)
   end
 
   --- Medium smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeMedium( Density )
-    self:F2( { Density = Density } )
-    Density = Density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.MediumSmoke, Density )
+  -- @param number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeMedium( density, name )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, density, name)
   end
 
   --- Large smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeLarge( Density )
-    self:F2( { Density = Density } )
-    Density = Density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.LargeSmoke, Density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeLarge( density, name )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, density,name)
   end
 
   --- Huge smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeHuge( Density )
-    self:F2( { Density = Density } )
-    Density = Density or 0.5
-    self:BigSmokeAndFire( BIGSMOKEPRESET.HugeSmoke, Density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeHuge( density, name )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, density,name)
   end
 
   --- Flares the point in a color.
   -- @param #COORDINATE self
   -- @param Utilities.Utils#FLARECOLOR FlareColor
-  -- @param DCS#Azimuth Azimuth (Optional) The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:Flare( FlareColor, Azimuth )
     self:F2( { FlareColor } )
     trigger.action.signalFlare( self:GetVec3(), FlareColor, Azimuth and Azimuth or 0 )
@@ -1815,7 +1991,7 @@ do -- COORDINATE
 
   --- Flare the COORDINATE White.
   -- @param #COORDINATE self
-  -- @param DCS#Azimuth Azimuth (Optional) The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:FlareWhite( Azimuth )
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.White, Azimuth )
@@ -1823,7 +1999,7 @@ do -- COORDINATE
 
   --- Flare the COORDINATE Yellow.
   -- @param #COORDINATE self
-  -- @param DCS#Azimuth Azimuth (Optional) The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:FlareYellow( Azimuth )
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.Yellow, Azimuth )
@@ -1831,7 +2007,7 @@ do -- COORDINATE
 
   --- Flare the COORDINATE Green.
   -- @param #COORDINATE self
-  -- @param DCS#Azimuth Azimuth (Optional) The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:FlareGreen( Azimuth )
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.Green, Azimuth )
@@ -1857,11 +2033,11 @@ do -- COORDINATE
     --   local MarkID = TargetCoord:MarkToAll( "This is a target for all players" )
     function COORDINATE:MarkToAll( MarkText, ReadOnly, Text )
       local MarkID = UTILS.GetMarkID()
-      if ReadOnly == nil then
-        ReadOnly = false
+      if ReadOnly==nil then
+        ReadOnly=false
       end
-      local text = Text or ""
-      trigger.action.markToAll( MarkID, MarkText, self:GetVec3(), ReadOnly, text )
+      local text=Text or ""
+      trigger.action.markToAll( MarkID, MarkText, self:GetVec3(), ReadOnly, text)
       return MarkID
     end
 
@@ -1877,10 +2053,10 @@ do -- COORDINATE
     --   local MarkID = TargetCoord:MarkToCoalition( "This is a target for the red coalition", coalition.side.RED )
     function COORDINATE:MarkToCoalition( MarkText, Coalition, ReadOnly, Text )
       local MarkID = UTILS.GetMarkID()
-      if ReadOnly == nil then
-        ReadOnly = false
+      if ReadOnly==nil then
+        ReadOnly=false
       end
-      local text = Text or ""
+      local text=Text or ""
       trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition, ReadOnly, text )
       return MarkID
     end
@@ -1924,10 +2100,10 @@ do -- COORDINATE
     --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
     function COORDINATE:MarkToGroup( MarkText, MarkGroup, ReadOnly, Text )
       local MarkID = UTILS.GetMarkID()
-      if ReadOnly == nil then
-        ReadOnly = false
+      if ReadOnly==nil then
+        ReadOnly=false
       end
-      local text = Text or ""
+      local text=Text or ""
       trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID(), ReadOnly, text )
       return MarkID
     end
@@ -1956,17 +2132,17 @@ do -- COORDINATE
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
-    function COORDINATE:LineToAll( Endpoint, Coalition, Color, Alpha, LineType, ReadOnly, Text )
+    function COORDINATE:LineToAll(Endpoint, Coalition, Color, Alpha, LineType, ReadOnly, Text)
       local MarkID = UTILS.GetMarkID()
-      if ReadOnly == nil then
-        ReadOnly = false
+      if ReadOnly==nil then
+        ReadOnly=false
       end
-      local vec3 = Endpoint:GetVec3()
-      Coalition = Coalition or -1
-      Color = Color or { 1, 0, 0 }
-      Color[4] = Alpha or 1.0
-      LineType = LineType or 1
-      trigger.action.lineToAll( Coalition, MarkID, self:GetVec3(), vec3, Color, LineType, ReadOnly, Text or "" )
+      local vec3=Endpoint:GetVec3()
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      LineType=LineType or 1
+      trigger.action.lineToAll(Coalition, MarkID, self:GetVec3(), vec3, Color, LineType, ReadOnly, Text or "")
       return MarkID
     end
 
@@ -1983,204 +2159,204 @@ do -- COORDINATE
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
-    function COORDINATE:CircleToAll( Radius, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text )
+    function COORDINATE:CircleToAll(Radius, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text)
       local MarkID = UTILS.GetMarkID()
-      if ReadOnly == nil then
-        ReadOnly = false
+      if ReadOnly==nil then
+        ReadOnly=false
       end
-      local vec3 = self:GetVec3()
-      Radius = Radius or 1000
-      Coalition = Coalition or -1
-      Color = Color or { 1, 0, 0 }
-      Color[4] = Alpha or 1.0
-      LineType = LineType or 1
-      FillColor = FillColor or Color
-      FillColor[4] = FillAlpha or 0.15
-      trigger.action.circleToAll( Coalition, MarkID, vec3, Radius, Color, FillColor, LineType, ReadOnly, Text or "" )
+      local vec3=self:GetVec3()
+      Radius=Radius or 1000
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      LineType=LineType or 1
+      FillColor=FillColor or Color
+      FillColor[4]=FillAlpha or 0.15
+      trigger.action.circleToAll(Coalition, MarkID, vec3, Radius, Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
     end
 
   end -- Markings
 
-  --- Rectangle to all. Creates a rectangle on the map from the COORDINATE in one corner to the end COORDINATE in the opposite corner.
-  -- Creates a line on the F10 map from one point to another.
-  -- @param #COORDINATE self
-  -- @param #COORDINATE Endpoint COORDINATE in the opposite corner.
-  -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-  -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-  -- @param #number Alpha Transparency [0,1]. Default 1.
-  -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-  -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
-  -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
-  -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
-  -- @param #string Text (Optional) Text displayed when mark is added. Default none.
-  -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
-  function COORDINATE:RectToAll( Endpoint, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text )
-    local MarkID = UTILS.GetMarkID()
-    if ReadOnly == nil then
-      ReadOnly = false
-    end
-    local vec3 = Endpoint:GetVec3()
-    Coalition = Coalition or -1
-    Color = Color or { 1, 0, 0 }
-    Color[4] = Alpha or 1.0
-    LineType = LineType or 1
-    FillColor = FillColor or Color
-    FillColor[4] = FillAlpha or 0.15
-    trigger.action.rectToAll( Coalition, MarkID, self:GetVec3(), vec3, Color, FillColor, LineType, ReadOnly, Text or "" )
-    return MarkID
-  end
-
-  --- Creates a shape defined by 4 points on the F10 map. The first point is the current COORDINATE. The remaining three points need to be specified.
-  -- @param #COORDINATE self
-  -- @param #COORDINATE Coord2 Second COORDIANTE of the quad shape.
-  -- @param #COORDINATE Coord3 Third COORDIANTE of the quad shape.
-  -- @param #COORDINATE Coord4 Fourth COORDIANTE of the quad shape.
-  -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-  -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-  -- @param #number Alpha Transparency [0,1]. Default 1.
-  -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-  -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
-  -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid. 
-  -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
-  -- @param #string Text (Optional) Text displayed when mark is added. Default none.
-  -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
-  function COORDINATE:QuadToAll( Coord2, Coord3, Coord4, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text )
-    local MarkID = UTILS.GetMarkID()
-    if ReadOnly == nil then
-      ReadOnly = false
-    end
-    local point1 = self:GetVec3()
-    local point2 = Coord2:GetVec3()
-    local point3 = Coord3:GetVec3()
-    local point4 = Coord4:GetVec3()
-    Coalition = Coalition or -1
-    Color = Color or { 1, 0, 0 }
-    Color[4] = Alpha or 1.0
-    LineType = LineType or 1
-    FillColor = FillColor or Color
-    FillColor[4] = FillAlpha or 0.15
-    trigger.action.quadToAll( Coalition, MarkID, self:GetVec3(), point2, point3, point4, Color, FillColor, LineType, ReadOnly, Text or "" )
-    return MarkID
-  end
-
-  --- Creates a free form shape on the F10 map. The first point is the current COORDINATE. The remaining points need to be specified.
-  -- **NOTE**: A free form polygon must have **at least three points** in total and currently only **up to 10 points** in total are supported.
-  -- @param #COORDINATE self
-  -- @param #table Coordinates Table of coordinates of the remaining points of the shape.
-  -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-  -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-  -- @param #number Alpha Transparency [0,1]. Default 1.
-  -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-  -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
-  -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid. 
-  -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
-  -- @param #string Text (Optional) Text displayed when mark is added. Default none.
-  -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
-  function COORDINATE:MarkupToAllFreeForm( Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text )
-
-    local MarkID = UTILS.GetMarkID()
-    if ReadOnly == nil then
-      ReadOnly = false
+    --- Rectangle to all. Creates a rectangle on the map from the COORDINATE in one corner to the end COORDINATE in the opposite corner.
+    -- Creates a line on the F10 map from one point to another.
+    -- @param #COORDINATE self
+    -- @param #COORDINATE Endpoint COORDINATE in the opposite corner.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:RectToAll(Endpoint, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text)
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local vec3=Endpoint:GetVec3()
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      LineType=LineType or 1
+      FillColor=FillColor or Color
+      FillColor[4]=FillAlpha or 0.15
+      trigger.action.rectToAll(Coalition, MarkID, self:GetVec3(), vec3, Color, FillColor, LineType, ReadOnly, Text or "")
+      return MarkID
     end
 
-    Coalition = Coalition or -1
-
-    Color = Color or { 1, 0, 0 }
-    Color[4] = Alpha or 1.0
-
-    LineType = LineType or 1
-
-    FillColor = FillColor or UTILS.DeepCopy( Color )
-    FillColor[4] = FillAlpha or 0.15
-
-    local vecs = {}
-    vecs[1] = self:GetVec3()
-    for i, coord in ipairs( Coordinates ) do
-      vecs[i + 1] = coord:GetVec3()
+    --- Creates a shape defined by 4 points on the F10 map. The first point is the current COORDINATE. The remaining three points need to be specified.
+    -- @param #COORDINATE self
+    -- @param #COORDINATE Coord2 Second COORDINATE of the quad shape.
+    -- @param #COORDINATE Coord3 Third COORDINATE of the quad shape.
+    -- @param #COORDINATE Coord4 Fourth COORDINATE of the quad shape.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:QuadToAll(Coord2, Coord3, Coord4, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text)
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local point1=self:GetVec3()
+      local point2=Coord2:GetVec3()
+      local point3=Coord3:GetVec3()
+      local point4=Coord4:GetVec3()
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      LineType=LineType or 1
+      FillColor=FillColor or Color
+      FillColor[4]=FillAlpha or 0.15
+      trigger.action.quadToAll(Coalition, MarkID, self:GetVec3(), point2, point3, point4, Color, FillColor, LineType, ReadOnly, Text or "")
+      return MarkID
     end
 
-    if #vecs < 3 then
-      self:E( "ERROR: A free form polygon needs at least three points!" )
-    elseif #vecs == 3 then
-      trigger.action.markupToAll( 7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], Color, FillColor, LineType, ReadOnly, Text or "" )
-    elseif #vecs == 4 then
-      trigger.action.markupToAll( 7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], Color, FillColor, LineType, ReadOnly, Text or "" )
-    elseif #vecs == 5 then
-      trigger.action.markupToAll( 7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], Color, FillColor, LineType, ReadOnly, Text or "" )
-    elseif #vecs == 6 then
-      trigger.action.markupToAll( 7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], Color, FillColor, LineType, Text or "" )
-    elseif #vecs == 7 then
-      trigger.action.markupToAll( 7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], Color, FillColor, LineType, ReadOnly, Text or "" )
-    elseif #vecs == 8 then
-      trigger.action.markupToAll( 7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], Color, FillColor, LineType, ReadOnly, Text or "" )
-    elseif #vecs == 9 then
-      trigger.action.markupToAll( 7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], Color, FillColor, LineType, ReadOnly, Text or "" )
-    elseif #vecs == 10 then
-      trigger.action.markupToAll( 7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10], Color, FillColor, LineType, ReadOnly, Text or "" )
-    else
-      self:E( "ERROR: Currently a free form polygon can only have 10 points in total!" )
-      -- Unfortunately, unpack(vecs) does not work! So no idea how to generalize this :(
-      trigger.action.markupToAll( 7, Coalition, MarkID, unpack( vecs ), Color, FillColor, LineType, ReadOnly, Text or "" )
+    --- Creates a free form shape on the F10 map. The first point is the current COORDINATE. The remaining points need to be specified.
+    -- **NOTE**: A free form polygon must have **at least three points** in total and currently only **up to 10 points** in total are supported.
+    -- @param #COORDINATE self
+    -- @param #table Coordinates Table of coordinates of the remaining points of the shape.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:MarkupToAllFreeForm(Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text)
+
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+
+      Coalition=Coalition or -1
+
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+
+      LineType=LineType or 1
+
+      FillColor=FillColor or UTILS.DeepCopy(Color)
+      FillColor[4]=FillAlpha or 0.15
+
+      local vecs={}
+      vecs[1]=self:GetVec3()
+      for i,coord in ipairs(Coordinates) do
+        vecs[i+1]=coord:GetVec3()
+      end
+
+      if #vecs<3 then
+        self:E("ERROR: A free form polygon needs at least three points!")
+      elseif #vecs==3 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==4 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==5 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==6 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==7 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==8 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==9 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], Color, FillColor, LineType, ReadOnly, Text or "")
+      elseif #vecs==10 then
+        trigger.action.markupToAll(7, Coalition, MarkID, vecs[1], vecs[2], vecs[3], vecs[4], vecs[5], vecs[6], vecs[7], vecs[8], vecs[9], vecs[10], Color, FillColor, LineType, ReadOnly, Text or "")
+      else
+        self:E("ERROR: Currently a free form polygon can only have 10 points in total!")
+        -- Unfortunately, unpack(vecs) does not work! So no idea how to generalize this :(
+        trigger.action.markupToAll(7, Coalition, MarkID, unpack(vecs), Color, FillColor, LineType, ReadOnly, Text or "")
+      end
+
+      return MarkID
     end
 
-    return MarkID
-  end
-
-  --- Text to all. Creates a text imposed on the map at the COORDINATE. Text scales with the map.
-  -- @param #COORDINATE self
-  -- @param #string Text Text displayed on the F10 map.
-  -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-  -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-  -- @param #number Alpha Transparency [0,1]. Default 1.
-  -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-  -- @param #number FillAlpha Transparency [0,1]. Default 0.3.
-  -- @param #number FontSize Font size. Default 14.
-  -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
-  -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
-  function COORDINATE:TextToAll( Text, Coalition, Color, Alpha, FillColor, FillAlpha, FontSize, ReadOnly )
-    local MarkID = UTILS.GetMarkID()
-    if ReadOnly == nil then
-      ReadOnly = false
+    --- Text to all. Creates a text imposed on the map at the COORDINATE. Text scales with the map.
+    -- @param #COORDINATE self
+    -- @param #string Text Text displayed on the F10 map.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.3.
+    -- @param #number FontSize Font size. Default 14.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:TextToAll(Text, Coalition, Color, Alpha, FillColor, FillAlpha, FontSize, ReadOnly)
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      FillColor=FillColor or Color
+      FillColor[4]=FillAlpha or 0.3
+      FontSize=FontSize or 14
+      trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
+      return MarkID
     end
-    Coalition = Coalition or -1
-    Color = Color or { 1, 0, 0 }
-    Color[4] = Alpha or 1.0
-    FillColor = FillColor or Color
-    FillColor[4] = FillAlpha or 0.3
-    FontSize = FontSize or 14
-    trigger.action.textToAll( Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World" )
-    return MarkID
-  end
 
-  --- Arrow to all. Creates an arrow from the COORDINATE to the endpoint COORDINATE on the F10 map. There is no control over other dimensions of the arrow.
-  -- @param #COORDINATE self
-  -- @param #COORDINATE Endpoint COORDINATE where the tip of the arrow is pointing at.
-  -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-  -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-  -- @param #number Alpha Transparency [0,1]. Default 1.
-  -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-  -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
-  -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
-  -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
-  -- @param #string Text (Optional) Text displayed when mark is added. Default none.
-  -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again. 
-  function COORDINATE:ArrowToAll( Endpoint, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text )
-    local MarkID = UTILS.GetMarkID()
-    if ReadOnly == nil then
-      ReadOnly = false
+    --- Arrow to all. Creates an arrow from the COORDINATE to the endpoint COORDINATE on the F10 map. There is no control over other dimensions of the arrow.
+    -- @param #COORDINATE self
+    -- @param #COORDINATE Endpoint COORDINATE where the tip of the arrow is pointing at.
+    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha Transparency [0,1]. Default 1.
+    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
+    -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
+    function COORDINATE:ArrowToAll(Endpoint, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, Text)
+      local MarkID = UTILS.GetMarkID()
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local vec3=Endpoint:GetVec3()
+      Coalition=Coalition or -1
+      Color=Color or {1,0,0}
+      Color[4]=Alpha or 1.0
+      LineType=LineType or 1
+      FillColor=FillColor or Color
+      FillColor[4]=FillAlpha or 0.15
+      --trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
+      trigger.action.arrowToAll(Coalition, MarkID, vec3, self:GetVec3(), Color, FillColor, LineType, ReadOnly, Text or "")
+      return MarkID
     end
-    local vec3 = Endpoint:GetVec3()
-    Coalition = Coalition or -1
-    Color = Color or { 1, 0, 0 }
-    Color[4] = Alpha or 1.0
-    LineType = LineType or 1
-    FillColor = FillColor or Color
-    FillColor[4] = FillAlpha or 0.15
-    -- trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
-    trigger.action.arrowToAll( Coalition, MarkID, vec3, self:GetVec3(), Color, FillColor, LineType, ReadOnly, Text or "" )
-    return MarkID
-  end
 
   --- Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.
   -- @param #COORDINATE self
@@ -2189,7 +2365,7 @@ do -- COORDINATE
   -- @return #boolean true If the ToCoordinate has LOS with the Coordinate, otherwise false.
   function COORDINATE:IsLOS( ToCoordinate, Offset )
 
-    Offset = Offset or 2
+    Offset=Offset or 2
 
     -- Measurement of visibility should not be from the ground, so Adding a hypotethical 2 meters to each Coordinate.
     local FromVec3 = self:GetVec3()
@@ -2203,6 +2379,7 @@ do -- COORDINATE
     return IsLOS
   end
 
+
   --- Returns if a Coordinate is in a certain Radius of this Coordinate in 2D plane using the X and Z axis.
   -- @param #COORDINATE self
   -- @param #COORDINATE Coordinate The coordinate that will be tested if it is in the radius of this coordinate.
@@ -2213,10 +2390,11 @@ do -- COORDINATE
     local InVec2 = self:GetVec2()
     local Vec2 = Coordinate:GetVec2()
 
-    local InRadius = UTILS.IsInRadius( InVec2, Vec2, Radius )
+    local InRadius = UTILS.IsInRadius( InVec2, Vec2, Radius)
 
     return InRadius
   end
+
 
   --- Returns if a Coordinate is in a certain radius of this Coordinate in 3D space using the X, Y and Z axis.
   -- So Radius defines the radius of the a Sphere in 3D space around this coordinate.
@@ -2229,7 +2407,7 @@ do -- COORDINATE
     local InVec3 = self:GetVec3()
     local Vec3 = Coordinate:GetVec3()
 
-    local InSphere = UTILS.IsInSphere( InVec3, Vec3, Radius )
+    local InSphere = UTILS.IsInSphere( InVec3, Vec3, Radius)
 
     return InSphere
   end
@@ -2241,21 +2419,21 @@ do -- COORDINATE
   -- @param #number Year The year.
   -- @param #boolean InSeconds If true, return the sun rise time in seconds.
   -- @return #string Sunrise time, e.g. "05:41".
-  function COORDINATE:GetSunriseAtDate( Day, Month, Year, InSeconds )
+  function COORDINATE:GetSunriseAtDate(Day, Month, Year, InSeconds)
 
-    -- Day of the year.    
-    local DayOfYear = UTILS.GetDayOfYear( Year, Month, Day )
+    -- Day of the year.
+    local DayOfYear=UTILS.GetDayOfYear(Year, Month, Day)
 
-    local Latitude, Longitude = self:GetLLDDM()
+    local Latitude, Longitude=self:GetLLDDM()
 
-    local Tdiff = UTILS.GMTToLocalTimeDifference()
+    local Tdiff=UTILS.GMTToLocalTimeDifference()
 
-    local sunrise = UTILS.GetSunRiseAndSet( DayOfYear, Latitude, Longitude, true, Tdiff )
+    local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
 
     if InSeconds then
       return sunrise
     else
-      return UTILS.SecondsToClock( sunrise, true )
+      return UTILS.SecondsToClock(sunrise, true)
     end
 
   end
@@ -2265,18 +2443,18 @@ do -- COORDINATE
   -- @param #number DayOfYear The day of the year.
   -- @param #boolean InSeconds If true, return the sun rise time in seconds.
   -- @return #string Sunrise time, e.g. "05:41".
-  function COORDINATE:GetSunriseAtDayOfYear( DayOfYear, InSeconds )
+  function COORDINATE:GetSunriseAtDayOfYear(DayOfYear, InSeconds)
 
-    local Latitude, Longitude = self:GetLLDDM()
+    local Latitude, Longitude=self:GetLLDDM()
 
-    local Tdiff = UTILS.GMTToLocalTimeDifference()
+    local Tdiff=UTILS.GMTToLocalTimeDifference()
 
-    local sunrise = UTILS.GetSunRiseAndSet( DayOfYear, Latitude, Longitude, true, Tdiff )
+    local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
 
     if InSeconds then
       return sunrise
     else
-      return UTILS.SecondsToClock( sunrise, true )
+      return UTILS.SecondsToClock(sunrise, true)
     end
 
   end
@@ -2285,29 +2463,29 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #boolean InSeconds If true, return the sun rise time in seconds.
   -- @return #string Sunrise time, e.g. "05:41".
-  function COORDINATE:GetSunrise( InSeconds )
+  function COORDINATE:GetSunrise(InSeconds)
 
-    -- Get current day of the year.    
-    local DayOfYear = UTILS.GetMissionDayOfYear()
+    -- Get current day of the year.
+    local DayOfYear=UTILS.GetMissionDayOfYear()
 
     -- Lat and long at this point.
-    local Latitude, Longitude = self:GetLLDDM()
+    local Latitude, Longitude=self:GetLLDDM()
 
     -- GMT time diff.
-    local Tdiff = UTILS.GMTToLocalTimeDifference()
+    local Tdiff=UTILS.GMTToLocalTimeDifference()
 
     -- Sunrise in seconds of the day.
-    local sunrise = UTILS.GetSunRiseAndSet( DayOfYear, Latitude, Longitude, true, Tdiff )
+    local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
 
-    local date = UTILS.GetDCSMissionDate()
+    local date=UTILS.GetDCSMissionDate()
 
     -- Debug output.
-    -- self:I(string.format("Sun rise at lat=%.3f long=%.3f on %s (DayOfYear=%d): %s (%d sec of the day) (GMT %d)", Latitude, Longitude, date, DayOfYear, tostring(UTILS.SecondsToClock(sunrise)), sunrise, Tdiff))
+    --self:I(string.format("Sun rise at lat=%.3f long=%.3f on %s (DayOfYear=%d): %s (%d sec of the day) (GMT %d)", Latitude, Longitude, date, DayOfYear, tostring(UTILS.SecondsToClock(sunrise)), sunrise, Tdiff))
 
     if InSeconds then
       return sunrise
     else
-      return UTILS.SecondsToClock( sunrise, true )
+      return UTILS.SecondsToClock(sunrise, true)
     end
 
   end
@@ -2316,16 +2494,16 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param OnlyToday If true, only calculate the sun rise of today. If sun has already risen, the time in negative minutes since sunrise is reported.
   -- @return #number Minutes to the next sunrise.
-  function COORDINATE:GetMinutesToSunrise( OnlyToday )
+  function COORDINATE:GetMinutesToSunrise(OnlyToday)
 
     -- Seconds of today
-    local time = UTILS.SecondsOfToday()
+    local time=UTILS.SecondsOfToday()
 
     -- Next Sunrise in seconds.
-    local sunrise = nil
+    local sunrise=nil
 
     -- Time to sunrise.
-    local delta = nil
+    local delta=nil
 
     if OnlyToday then
 
@@ -2333,9 +2511,9 @@ do -- COORDINATE
       -- Sunrise of today
       ---
 
-      sunrise = self:GetSunrise( true )
+      sunrise=self:GetSunrise(true)
 
-      delta = sunrise - time
+      delta=sunrise-time
 
     else
 
@@ -2344,47 +2522,47 @@ do -- COORDINATE
       ---
 
       -- Tomorrows day of the year.
-      local DayOfYear = UTILS.GetMissionDayOfYear() + 1
+      local DayOfYear=UTILS.GetMissionDayOfYear()+1
 
-      local Latitude, Longitude = self:GetLLDDM()
+      local Latitude, Longitude=self:GetLLDDM()
 
-      local Tdiff = UTILS.GMTToLocalTimeDifference()
+      local Tdiff=UTILS.GMTToLocalTimeDifference()
 
-      sunrise = UTILS.GetSunRiseAndSet( DayOfYear, Latitude, Longitude, true, Tdiff )
+      sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
 
-      delta = sunrise + UTILS.SecondsToMidnight()
+      delta=sunrise+UTILS.SecondsToMidnight()
 
     end
 
-    return delta / 60
+    return delta/60
   end
 
   --- Check if it is day, i.e. if the sun has risen about the horizon at this coordinate.
   -- @param #COORDINATE self
   -- @param #string Clock (Optional) Time in format "HH:MM:SS+D", e.g. "05:40:00+3" to check if is day at 5:40 at third day after mission start. Default is to check right now.
   -- @return #boolean If true, it is day. If false, it is night time.
-  function COORDINATE:IsDay( Clock )
+  function COORDINATE:IsDay(Clock)
 
     if Clock then
 
-      local Time = UTILS.ClockToSeconds( Clock )
+      local Time=UTILS.ClockToSeconds(Clock)
 
-      local clock = UTILS.Split( Clock, "+" )[1]
+      local clock=UTILS.Split(Clock, "+")[1]
 
       -- Tomorrows day of the year.
-      local DayOfYear = UTILS.GetMissionDayOfYear( Time )
+      local DayOfYear=UTILS.GetMissionDayOfYear(Time)
 
-      local Latitude, Longitude = self:GetLLDDM()
+      local Latitude, Longitude=self:GetLLDDM()
 
-      local Tdiff = UTILS.GMTToLocalTimeDifference()
+      local Tdiff=UTILS.GMTToLocalTimeDifference()
 
-      local sunrise = UTILS.GetSunRiseAndSet( DayOfYear, Latitude, Longitude, true, Tdiff )
-      local sunset = UTILS.GetSunRiseAndSet( DayOfYear, Latitude, Longitude, false, Tdiff )
+      local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
+      local sunset=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
 
-      local time = UTILS.ClockToSeconds( clock )
+      local time=UTILS.ClockToSeconds(clock)
 
       -- Check if time is between sunrise and sunset.
-      if time > sunrise and time <= sunset then
+      if time>sunrise and time<=sunset then
         return true
       else
         return false
@@ -2393,16 +2571,16 @@ do -- COORDINATE
     else
 
       -- Todays sun rise in sec.
-      local sunrise = self:GetSunrise( true )
+      local sunrise=self:GetSunrise(true)
 
       -- Todays sun set in sec.
-      local sunset = self:GetSunset( true )
+      local sunset=self:GetSunset(true)
 
       -- Seconds passed since midnight.
-      local time = UTILS.SecondsOfToday()
+      local time=UTILS.SecondsOfToday()
 
       -- Check if time is between sunrise and sunset.
-      if time > sunrise and time <= sunset then
+      if time>sunrise and time<=sunset then
         return true
       else
         return false
@@ -2416,8 +2594,8 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #string Clock (Optional) Time in format "HH:MM:SS+D", e.g. "05:40:00+3" to check if is night at 5:40 at third day after mission start. Default is to check right now.
   -- @return #boolean If true, it is night. If false, it is day time.
-  function COORDINATE:IsNight( Clock )
-    return not self:IsDay( Clock )
+  function COORDINATE:IsNight(Clock)
+    return not self:IsDay(Clock)
   end
 
   --- Get sun set time for a specific date at the coordinate.
@@ -2427,21 +2605,21 @@ do -- COORDINATE
   -- @param #number Year The year.
   -- @param #boolean InSeconds If true, return the sun rise time in seconds.
   -- @return #string Sunset time, e.g. "20:41".
-  function COORDINATE:GetSunsetAtDate( Day, Month, Year, InSeconds )
+  function COORDINATE:GetSunsetAtDate(Day, Month, Year, InSeconds)
 
     -- Day of the year.
-    local DayOfYear = UTILS.GetDayOfYear( Year, Month, Day )
+    local DayOfYear=UTILS.GetDayOfYear(Year, Month, Day)
 
-    local Latitude, Longitude = self:GetLLDDM()
+    local Latitude, Longitude=self:GetLLDDM()
 
-    local Tdiff = UTILS.GMTToLocalTimeDifference()
+    local Tdiff=UTILS.GMTToLocalTimeDifference()
 
-    local sunset = UTILS.GetSunRiseAndSet( DayOfYear, Latitude, Longitude, false, Tdiff )
+    local sunset=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
 
     if InSeconds then
       return sunset
     else
-      return UTILS.SecondsToClock( sunset, true )
+      return UTILS.SecondsToClock(sunset, true)
     end
 
   end
@@ -2450,29 +2628,29 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #boolean InSeconds If true, return the sun set time in seconds.
   -- @return #string Sunrise time, e.g. "20:41".
-  function COORDINATE:GetSunset( InSeconds )
+  function COORDINATE:GetSunset(InSeconds)
 
-    -- Get current day of the year.    
-    local DayOfYear = UTILS.GetMissionDayOfYear()
+    -- Get current day of the year.
+    local DayOfYear=UTILS.GetMissionDayOfYear()
 
     -- Lat and long at this point.
-    local Latitude, Longitude = self:GetLLDDM()
+    local Latitude, Longitude=self:GetLLDDM()
 
     -- GMT time diff.
-    local Tdiff = UTILS.GMTToLocalTimeDifference()
+    local Tdiff=UTILS.GMTToLocalTimeDifference()
 
     -- Sunrise in seconds of the day.
-    local sunrise = UTILS.GetSunRiseAndSet( DayOfYear, Latitude, Longitude, false, Tdiff )
+    local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
 
-    local date = UTILS.GetDCSMissionDate()
+    local date=UTILS.GetDCSMissionDate()
 
     -- Debug output.
-    -- self:I(string.format("Sun set at lat=%.3f long=%.3f on %s (DayOfYear=%d): %s (%d sec of the day) (GMT %d)", Latitude, Longitude, date, DayOfYear, tostring(UTILS.SecondsToClock(sunrise)), sunrise, Tdiff))
+    --self:I(string.format("Sun set at lat=%.3f long=%.3f on %s (DayOfYear=%d): %s (%d sec of the day) (GMT %d)", Latitude, Longitude, date, DayOfYear, tostring(UTILS.SecondsToClock(sunrise)), sunrise, Tdiff))
 
     if InSeconds then
       return sunrise
     else
-      return UTILS.SecondsToClock( sunrise, true )
+      return UTILS.SecondsToClock(sunrise, true)
     end
 
   end
@@ -2481,16 +2659,16 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param OnlyToday If true, only calculate the sun set of today. If sun has already set, the time in negative minutes since sunset is reported.
   -- @return #number Minutes to the next sunrise.
-  function COORDINATE:GetMinutesToSunset( OnlyToday )
+  function COORDINATE:GetMinutesToSunset(OnlyToday)
 
     -- Seconds of today
-    local time = UTILS.SecondsOfToday()
+    local time=UTILS.SecondsOfToday()
 
     -- Next Sunset in seconds.
-    local sunset = nil
+    local sunset=nil
 
     -- Time to sunrise.
-    local delta = nil
+    local delta=nil
 
     if OnlyToday then
 
@@ -2498,9 +2676,9 @@ do -- COORDINATE
       -- Sunset of today
       ---
 
-      sunset = self:GetSunset( true )
+      sunset=self:GetSunset(true)
 
-      delta = sunset - time
+      delta=sunset-time
 
     else
 
@@ -2509,29 +2687,30 @@ do -- COORDINATE
       ---
 
       -- Tomorrows day of the year.
-      local DayOfYear = UTILS.GetMissionDayOfYear() + 1
+      local DayOfYear=UTILS.GetMissionDayOfYear()+1
 
-      local Latitude, Longitude = self:GetLLDDM()
+      local Latitude, Longitude=self:GetLLDDM()
 
-      local Tdiff = UTILS.GMTToLocalTimeDifference()
+      local Tdiff=UTILS.GMTToLocalTimeDifference()
 
-      sunset = UTILS.GetSunRiseAndSet( DayOfYear, Latitude, Longitude, false, Tdiff )
+      sunset=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
 
-      delta = sunset + UTILS.SecondsToMidnight()
+      delta=sunset+UTILS.SecondsToMidnight()
 
     end
 
-    return delta / 60
+    return delta/60
   end
+
 
   --- Return a BR string from a COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The BR text.
   function COORDINATE:ToStringBR( FromCoordinate, Settings )
     local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
-    local AngleRadians = self:GetAngleRadians( DirectionVec3 )
+    local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = self:Get2DDistance( FromCoordinate )
     return "BR, " .. self:GetBRText( AngleRadians, Distance, Settings )
   end
@@ -2539,11 +2718,11 @@ do -- COORDINATE
   --- Return a BRAA string from a COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The BR text.
   function COORDINATE:ToStringBRA( FromCoordinate, Settings, Language )
     local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
-    local AngleRadians = self:GetAngleRadians( DirectionVec3 )
+    local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = FromCoordinate:Get2DDistance( self )
     local Altitude = self:GetAltitudeText()
     return "BRA, " .. self:GetBRAText( AngleRadians, Distance, Settings, Language )
@@ -2552,12 +2731,12 @@ do -- COORDINATE
   --- Return a BULLS string out of the BULLS of the coalition to the COORDINATE.
   -- @param #COORDINATE self
   -- @param DCS#coalition.side Coalition The coalition.
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The BR text.
   function COORDINATE:ToStringBULLS( Coalition, Settings )
     local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( Coalition ) )
     local DirectionVec3 = BullsCoordinate:GetDirectionVec3( self )
-    local AngleRadians = self:GetAngleRadians( DirectionVec3 )
+    local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = self:Get2DDistance( BullsCoordinate )
     local Altitude = self:GetAltitudeText()
     return "BULLS, " .. self:GetBRText( AngleRadians, Distance, Settings )
@@ -2600,7 +2779,7 @@ do -- COORDINATE
 
   --- Provides a Lat Lon string in Degree Minute Second format.
   -- @param #COORDINATE self
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The LL DMS Text
   function COORDINATE:ToStringLLDMS( Settings )
 
@@ -2611,7 +2790,7 @@ do -- COORDINATE
 
   --- Provides a Lat Lon string in Degree Decimal Minute format.
   -- @param #COORDINATE self
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The LL DDM Text
   function COORDINATE:ToStringLLDDM( Settings )
 
@@ -2622,9 +2801,9 @@ do -- COORDINATE
 
   --- Provides a MGRS string
   -- @param #COORDINATE self
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The MGRS Text
-  function COORDINATE:ToStringMGRS( Settings ) -- R2.1 Fixes issue #424.
+  function COORDINATE:ToStringMGRS( Settings ) --R2.1 Fixes issue #424.
 
     local MGRS_Accuracy = Settings and Settings.MGRS_Accuracy or _SETTINGS.MGRS_Accuracy
     local lat, lon = coord.LOtoLL( self:GetVec3() )
@@ -2639,24 +2818,24 @@ do -- COORDINATE
   -- @param #COORDINATE ReferenceCoord The refrence coordinate.
   -- @param #string ReferenceName The refrence name.
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToStringFromRP( ReferenceCoord, ReferenceName, Controllable, Settings )
 
     self:F2( { ReferenceCoord = ReferenceCoord, ReferenceName = ReferenceName } )
 
-    local Settings = Settings or (Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() )) or _SETTINGS
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
     local IsAir = Controllable and Controllable:IsAirPlane() or false
 
     if IsAir then
       local DirectionVec3 = ReferenceCoord:GetDirectionVec3( self )
-      local AngleRadians = self:GetAngleRadians( DirectionVec3 )
+      local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
       local Distance = self:Get2DDistance( ReferenceCoord )
       return "Targets are the last seen " .. self:GetBRText( AngleRadians, Distance, Settings ) .. " from " .. ReferenceName
     else
       local DirectionVec3 = ReferenceCoord:GetDirectionVec3( self )
-      local AngleRadians = self:GetAngleRadians( DirectionVec3 )
+      local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
       local Distance = self:Get2DDistance( ReferenceCoord )
       return "Target are located " .. self:GetBRText( AngleRadians, Distance, Settings ) .. " from " .. ReferenceName
     end
@@ -2668,15 +2847,15 @@ do -- COORDINATE
   --- Provides a coordinate string of the point, based on the A2G coordinate format system.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToStringA2G( Controllable, Settings )
 
     self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
-    local Settings = Settings or (Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() )) or _SETTINGS
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
-    if Settings:IsA2G_BR() then
+    if Settings:IsA2G_BR()  then
       -- If no Controllable is given to calculate the BR from, then MGRS will be used!!!
       if Controllable then
         local Coordinate = Controllable:GetCoordinate()
@@ -2685,10 +2864,10 @@ do -- COORDINATE
         return self:ToStringMGRS( Settings )
       end
     end
-    if Settings:IsA2G_LL_DMS() then
+    if Settings:IsA2G_LL_DMS()  then
       return self:ToStringLLDMS( Settings )
     end
-    if Settings:IsA2G_LL_DDM() then
+    if Settings:IsA2G_LL_DDM()  then
       return self:ToStringLLDDM( Settings )
     end
     if Settings:IsA2G_MGRS() then
@@ -2699,18 +2878,19 @@ do -- COORDINATE
 
   end
 
+
   --- Provides a coordinate string of the point, based on the A2A coordinate format system.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToStringA2A( Controllable, Settings, Language ) -- R2.2
 
     self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
-    local Settings = Settings or (Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() )) or _SETTINGS
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
-    if Settings:IsA2A_BRAA() then
+    if Settings:IsA2A_BRAA()  then
       if Controllable then
         local Coordinate = Controllable:GetCoordinate()
         return self:ToStringBRA( Coordinate, Settings, Language )
@@ -2722,10 +2902,10 @@ do -- COORDINATE
       local Coalition = Controllable:GetCoalition()
       return self:ToStringBULLS( Coalition, Settings, Language )
     end
-    if Settings:IsA2A_LL_DMS() then
+    if Settings:IsA2A_LL_DMS()  then
       return self:ToStringLLDMS( Settings, Language )
     end
-    if Settings:IsA2A_LL_DDM() then
+    if Settings:IsA2A_LL_DDM()  then
       return self:ToStringLLDDM( Settings, Language )
     end
     if Settings:IsA2A_MGRS() then
@@ -2741,14 +2921,14 @@ do -- COORDINATE
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable to retrieve the settings from, otherwise the default settings will be chosen.
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @param Tasking.Task#TASK Task The task for which coordinates need to be calculated.
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToString( Controllable, Settings, Task )
 
-    -- self:E( { Controllable = Controllable and Controllable:GetName() } )
+--    self:E( { Controllable = Controllable and Controllable:GetName() } )
 
-    local Settings = Settings or (Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() )) or _SETTINGS
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
     local ModeA2A = nil
 
@@ -2762,21 +2942,23 @@ do -- COORDINATE
           if Task:IsInstanceOf( TASK_CARGO ) then
             ModeA2A = false
           end
-          if Task:IsInstanceOf( TASK_CAPTURE_ZONE ) then
-            ModeA2A = false
-          end
+            if Task:IsInstanceOf( TASK_CAPTURE_ZONE ) then
+              ModeA2A = false
+            end
         end
       end
     end
 
+
     if ModeA2A == nil then
-      local IsAir = Controllable and (Controllable:IsAirPlane() or Controllable:IsHelicopter()) or false
-      if IsAir then
+      local IsAir = Controllable and ( Controllable:IsAirPlane() or Controllable:IsHelicopter() ) or false
+      if IsAir  then
         ModeA2A = true
       else
         ModeA2A = false
       end
     end
+
 
     if ModeA2A == true then
       return self:ToStringA2A( Controllable, Settings )
@@ -2793,13 +2975,13 @@ do -- COORDINATE
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The pressure text in the configured measurement system.
   function COORDINATE:ToStringPressure( Controllable, Settings ) -- R2.3
 
     self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
-    local Settings = Settings or (Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() )) or _SETTINGS
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
     return self:GetPressureText( nil, Settings )
   end
@@ -2809,13 +2991,13 @@ do -- COORDINATE
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The wind text in the configured measurement system.
   function COORDINATE:ToStringWind( Controllable, Settings )
 
     self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
-    local Settings = Settings or (Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() )) or _SETTINGS
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
     return self:GetWindText( nil, Settings )
   end
@@ -2825,13 +3007,13 @@ do -- COORDINATE
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS 
+  -- @param Core.Settings#SETTINGS
   -- @return #string The temperature text in the configured measurement system.
   function COORDINATE:ToStringTemperature( Controllable, Settings )
 
     self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
-    local Settings = Settings or (Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() )) or _SETTINGS
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
     return self:GetTemperatureText( nil, Settings )
   end
@@ -2844,7 +3026,7 @@ do -- POINT_VEC3
   -- @type POINT_VEC3
   -- @field #number x The x coordinate in 3D space.
   -- @field #number y The y coordinate in 3D space.
-  -- @field #number z The z coordiante in 3D space.
+  -- @field #number z The z COORDINATE in 3D space.
   -- @field Utilities.Utils#SMOKECOLOR SmokeColor
   -- @field Utilities.Utils#FLARECOLOR FlareColor
   -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
@@ -2852,12 +3034,14 @@ do -- POINT_VEC3
   -- @field #POINT_VEC3.RoutePointAction RoutePointAction
   -- @extends #COORDINATE
 
+
   --- Defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
   --
   -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
   -- In order to keep the credibility of the the author,
   -- I want to emphasize that the formulas embedded in the MIST framework were created by Grimes or previous authors,
   -- who you can find on the Eagle Dynamics Forums.
+  --
   --
   -- ## POINT_VEC3 constructor
   --
@@ -2880,15 +3064,18 @@ do -- POINT_VEC3
   --
   --      local Vec3 = PointVec3:AddX( 100 ):AddZ( 150 ):GetVec3()
   --
+  --
   -- ## 3D calculation methods
   --
   -- Various calculation methods exist to use or manipulate 3D space. Find below a short description of each method:
+  --
   --
   -- ## Point Randomization
   --
   -- Various methods exist to calculate random locations around a given 3D point.
   --
   --   * @{#POINT_VEC3.GetRandomPointVec3InRadius}(): Provides a random 3D point around the current 3D point, in the given inner to outer band.
+  --
   --
   -- @field #POINT_VEC3
   POINT_VEC3 = {
@@ -2940,7 +3127,7 @@ do -- POINT_VEC3
   --- Create a new POINT_VEC3 object from Vec2 coordinates.
   -- @param #POINT_VEC3 self
   -- @param DCS#Vec2 Vec2 The Vec2 point.
-  -- @param DCS#Distance LandHeightAdd (Optional) Add a landheight.
+  -- @param DCS#Distance LandHeightAdd (optional) Add a landheight.
   -- @return Core.Point#POINT_VEC3 self
   function POINT_VEC3:NewFromVec2( Vec2, LandHeightAdd )
 
@@ -2949,6 +3136,7 @@ do -- POINT_VEC3
 
     return self
   end
+
 
   --- Create a new POINT_VEC3 object from  Vec3 coordinates.
   -- @param #POINT_VEC3 self
@@ -2961,6 +3149,8 @@ do -- POINT_VEC3
 
     return self
   end
+
+
 
   --- Return the x coordinate of the POINT_VEC3.
   -- @param #POINT_VEC3 self
@@ -3033,7 +3223,7 @@ do -- POINT_VEC3
   -- @param #number z The z coordinate value to add to the current z coodinate.
   -- @return #POINT_VEC3
   function POINT_VEC3:AddZ( z )
-    self.z = self.z + z
+    self.z = self.z +z
     return self
   end
 
@@ -3084,11 +3274,13 @@ do -- POINT_VEC2
     ClassName = "POINT_VEC2",
   }
 
+
+
   --- POINT_VEC2 constructor.
   -- @param #POINT_VEC2 self
   -- @param DCS#Distance x The x coordinate of the Vec3 point, pointing to the North.
   -- @param DCS#Distance y The y coordinate of the Vec3 point, pointing to the Right.
-  -- @param DCS#Distance LandHeightAdd (Optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
+  -- @param DCS#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
   -- @return Core.Point#POINT_VEC2
   function POINT_VEC2:New( x, y, LandHeightAdd )
 
@@ -3235,9 +3427,10 @@ do -- POINT_VEC2
   -- @param #number Altitude The Altitude to add. If nothing (nil) is given, then the current land altitude is set.
   -- @return #POINT_VEC2
   function POINT_VEC2:AddAlt( Altitude )
-    self.y = land.getHeight( { x = self.x, y = self.z } ) + (Altitude or 0)
+    self.y = land.getHeight( { x = self.x, y = self.z } ) + Altitude or 0
     return self
   end
+
 
   --- Return a random POINT_VEC2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC2.
   -- @param #POINT_VEC2 self
@@ -3258,11 +3451,10 @@ do -- POINT_VEC2
   function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
     self:F2( PointVec2Reference )
 
-    local Distance = ((PointVec2Reference.x - self.x) ^ 2 + (PointVec2Reference.z - self.z) ^ 2) ^ 0.5
+    local Distance = ( ( PointVec2Reference.x - self.x ) ^ 2 + ( PointVec2Reference.z - self.z ) ^2 ) ^ 0.5
 
     self:T2( Distance )
     return Distance
   end
 
 end
-
