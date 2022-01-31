@@ -22,7 +22,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Date: Jan 2022
+-- Date: Feb 2022
 
 do
 ------------------------------------------------------
@@ -299,6 +299,7 @@ CTLD_ENGINEERING = {
       return -1
     end
   end
+  
 ------------------------------------------------------
 --- **CTLD_CARGO** class, extends Core.Base#BASE
 -- @type CTLD_CARGO
@@ -389,6 +390,7 @@ CTLD_CARGO = {
   function CTLD_CARGO:GetMass()
     return self.PerCrateMass
   end  
+  
   --- Query Name.
   -- @param #CTLD_CARGO self
   -- @return #string Name
@@ -606,7 +608,7 @@ do
 --        -- add vehicle called "Humvee" using template "Humvee", of type VEHICLE, size 2, i.e. needs two crates to be build
 --        -- vehicles and FOB will be spawned as crates in a LOAD zone first. Once transported to DROP zones, they can be build into the objects
 --        my_ctld:AddCratesCargo("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,2)
---        -- if you want to add weight to your Heli, crates can have a weight in kg **per crate**. Currently no max weight checked. Fly carefully.
+--        -- if you want to add weight to your Heli, crates can have a weight in kg **per crate**. Fly carefully.
 --        my_ctld:AddCratesCargo("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,2,2775)
 --        -- if you want to limit your stock, add a number (here: 10) as parameter after weight. No parameter / nil means unlimited stock.
 --        my_ctld:AddCratesCargo("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,2,2775,10)
@@ -614,7 +616,8 @@ do
 --        -- add infantry unit called "Forward Ops Base" using template "FOB", of type FOB, size 4, i.e. needs four crates to be build:
 --        my_ctld:AddCratesCargo("Forward Ops Base",{"FOB"},CTLD_CARGO.Enum.FOB,4)
 --        
---        -- add crates to repair FOB or VEHICLE type units - the 2nd parameter needs to match the template you want to repair
+--        -- add crates to repair FOB or VEHICLE type units - the 2nd parameter needs to match the template you want to repair,
+--        -- e.g. the "Humvee" here refers back to the "Humvee" crates cargo added above (same template!)
 --        my_ctld:AddCratesRepair("Humvee Repair","Humvee",CTLD_CARGO.Enum.REPAIR,1)
 --        my_ctld.repairtime = 300 -- takes 300 seconds to repair something
 -- 
@@ -624,9 +627,9 @@ do
 --        
 -- ## 1.3 Add logistics zones
 --  
---  Add zones for loading troops and crates and dropping, building crates
+--  Add (normal, round!)  zones for loading troops and crates and dropping, building crates
 --  
---        -- Add a zone of type LOAD to our setup. Players can load troops and crates.
+--        -- Add a zone of type LOAD to our setup. Players can load any troops and crates here as defined in 1.2 above.
 --        -- "Loadzone" is the name of the zone from the ME. Players can load, if they are inside the zone.
 --        -- Smoke and Flare color for this zone is blue, it is active (can be used) and has a radio beacon.
 --        my_ctld:AddCTLDZone("Loadzone",CTLD.CargoZoneType.LOAD,SMOKECOLOR.Blue,true,true)
@@ -646,7 +649,7 @@ do
 --        -- "Tarawa" is the unitname (callsign) of the ship from the ME. Players can load, if they are inside the zone.
 --        -- The ship is 240 meters long and 20 meters wide.
 --        -- Note that you need to adjust the max hover height to deck height plus 5 meters or so for loading to work.
---        -- When the ship is moving, forcing hoverload might not be a good idea.
+--        -- When the ship is moving, avoid forcing hoverload.
 --        my_ctld:AddCTLDZone("Tarawa",CTLD.CargoZoneType.SHIP,SMOKECOLOR.Blue,true,true,240,20)
 -- 
 -- ## 2. Options
@@ -682,22 +685,21 @@ do
 -- Use this function to adjust what a heli type can or cannot do:
 -- 
 --        -- E.g. update unit capabilities for testing. Please stay realistic in your mission design.
---        -- Make a Gazelle into a heavy truck, this type can load both crates and troops and eight of each type:
---        my_ctld:UnitCapabilities("SA342L", true, true, 8, 8, 12)
+--        -- Make a Gazelle into a heavy truck, this type can load both crates and troops and eight of each type, up to 4000 kgs:
+--        my_ctld:UnitCapabilities("SA342L", true, true, 8, 8, 12, 4000)
 --        
---        -- Default unit type capabilities are:
---    
---        ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12},
---        ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12},
---        ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12},
---        ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12},
---        ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8, length = 15},
---        ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15},
---        ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 15},
---        ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
---        ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
---        ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25},
---        ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16},
+--        -- Default unit type capabilities are: 
+--        ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12, cargoweightlimit = 400},
+--        ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12, cargoweightlimit = 400},
+--        ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12, cargoweightlimit = 400},
+--        ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12, cargoweightlimit = 400},
+--        ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8, length = 15, cargoweightlimit = 700},
+--        ["Mi-8MT"] = {type="Mi-8MT", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15, cargoweightlimit = 3000},
+--        ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 15, cargoweightlimit = 0},
+--        ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
+--        ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
+--        ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25, cargoweightlimit = 19000},
+--        ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, 
 --        
 -- ### 2.1.2 Activate and deactivate zones
 -- 
@@ -977,25 +979,26 @@ CTLD.CargoZoneType = {
 -- @field #boolean troops Can transport troops.
 -- @field #number cratelimit Number of crates transportable.
 -- @field #number trooplimit Number of troop units transportable.
+-- @field #number cargoweightlimit Max loadable kgs of cargo.
 CTLD.UnitTypes = {
-    ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12},
-    ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12},
-    ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12},
-    ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12},
-    ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8, length = 15},
-    ["Mi-8MTV2"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15},
-    ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15},
-    ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 15},
-    ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
-    ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18},
-    ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25}, -- 19t cargo, 64 paratroopers. 
+    ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12, cargoweightlimit = 400},
+    ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12, cargoweightlimit = 400},
+    ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12, cargoweightlimit = 400},
+    ["SA342Minigun"] = {type="SA342Minigun", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12, cargoweightlimit = 400},
+    ["UH-1H"] = {type="UH-1H", crates=true, troops=true, cratelimit = 1, trooplimit = 8, length = 15, cargoweightlimit = 700},
+    ["Mi-8MTV2"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15, cargoweightlimit = 3000},
+    ["Mi-8MT"] = {type="Mi-8MTV2", crates=true, troops=true, cratelimit = 2, trooplimit = 12, length = 15, cargoweightlimit = 3000},
+    ["Ka-50"] = {type="Ka-50", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 15, cargoweightlimit = 0},
+    ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
+    ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
+    ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25, cargoweightlimit = 19000}, -- 19t cargo, 64 paratroopers. 
     --Actually it's longer, but the center coord is off-center of the model.
-    ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16}, -- 4t cargo, 20 (unsec) seats
+    ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
 }
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.4"
+CTLD.version="1.0.5"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1354,6 +1357,7 @@ function CTLD:_GetUnitCapabilities(Unit)
     capabilities.trooplimit = 0
     capabilities.type = "generic"
     capabilities.length = 20
+    capabilities.cargoweightlimit = 0
   end
   return capabilities
 end
@@ -2050,16 +2054,25 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist)
   -- cycle
   local index = 0
   local found = {}
+  local loadedmass = self:_GetUnitCargoMass(_unit)
+  local unittype = _unit:GetTypeName()
+  local capabilities = self:_GetUnitCapabilities(_unit) -- #CTLD.UnitCapabilities
+  local maxmass = capabilities.cargoweightlimit
+  local maxloadable = maxmass - loadedmass
+  self:T(self.lid .. " Max loadable mass: " .. maxloadable)
   for _,_cargoobject in pairs (existingcrates) do
     local cargo = _cargoobject -- #CTLD_CARGO
     local static = cargo:GetPositionable() -- Wrapper.Static#STATIC -- crates
     local staticid = cargo:GetID()
+    local weight = cargo:GetMass() -- weight in kgs of this cargo
+    self:T(self.lid .. " Found cargo mass: " .. weight)
     if static and static:IsAlive() then
       local staticpos = static:GetCoordinate()
       local distance = self:_GetDistance(location,staticpos)
-      if distance <= finddist and static then
+      if distance <= finddist and static and weight <= maxloadable then
         index = index + 1
         table.insert(found, staticid, cargo)
+        maxloadable = maxloadable - weight
       end
     end
   end
@@ -2105,6 +2118,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
     if self.Loaded_Cargo[unitname] then
       loaded = self.Loaded_Cargo[unitname] -- #CTLD.LoadedCargo
       numberonboard = loaded.Cratesloaded or 0
+      massonboard = self:_GetUnitCargoMass(Unit)
     else
       loaded = {} -- #CTLD.LoadedCargo
       loaded.Troopsloaded = 0
@@ -2114,10 +2128,11 @@ function CTLD:_LoadCratesNearby(Group, Unit)
     -- get nearby crates
     local finddist = self.CrateDistance or 35
     local nearcrates,number = self:_FindCratesNearby(Group,Unit,finddist) -- #table
+    self:T(self.lid .. " Crates found: " .. number)
     if number == 0 and self.hoverautoloading then
       return self -- exit
     elseif number == 0 then
-      self:_SendMessage("Sorry no loadable crates nearby!", 10, false, Group) 
+      self:_SendMessage("Sorry no loadable crates nearby or max cargo weight reached!", 10, false, Group) 
       return self -- exit
     elseif numberonboard == cratelimit then
       self:_SendMessage("Sorry no fully loaded!", 10, false, Group) 
@@ -2986,6 +3001,25 @@ function CTLD:_RefreshF10Menus()
   return self
  end
 
+--- [Internal] Function to check if a template exists in the mission.
+-- @param #CTLD self
+-- @param #table temptable Table of string names
+-- @return #boolen outcome
+function CTLD:_CheckTemplates(temptable)
+  self:T(self.lid .. " _CheckTemplates")
+  local outcome = true
+  if type(temptable) ~= "table" then
+    temptable = {temptable}
+  end
+  for _,_name in pairs(temptable) do
+    if not _DATABASE.Templates.Groups[_name] then
+      outcome = false
+      self:E(self.lid .. "ERROR: Template name " .. _name ..  " is missing!")
+    end
+  end
+  return outcome
+end
+
 --- User function - Add *generic* troop type loadable as cargo. This type will load directly into the heli without crates.
 -- @param #CTLD self
 -- @param #string Name Unique name of this type of troop. E.g. "Anti-Air Small".
@@ -2997,6 +3031,10 @@ function CTLD:_RefreshF10Menus()
 function CTLD:AddTroopsCargo(Name,Templates,Type,NoTroops,PerTroopMass,Stock)
   self:T(self.lid .. " AddTroopsCargo")
   self:T({Name,Templates,Type,NoTroops,PerTroopMass,Stock})
+  if not self:_CheckTemplates(Templates) then
+    self:E(self.lid .. "Troops Cargo for " .. Name .. " has missing template(s)!" )
+    return self
+  end
   self.CargoCounter = self.CargoCounter + 1
   -- Troops are directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,true,NoTroops,nil,nil,PerTroopMass,Stock)
@@ -3014,6 +3052,10 @@ end
 -- @param #number Stock Number of groups in stock. Nil for unlimited.
 function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock)
   self:T(self.lid .. " AddCratesCargo")
+  if not self:_CheckTemplates(Templates) then
+    self:E(self.lid .. "Crates Cargo for " .. Name .. " has missing template(s)!" )
+    return self
+  end
   self.CargoCounter = self.CargoCounter + 1
   -- Crates are not directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,false,NoCrates,nil,nil,PerCrateMass,Stock)
@@ -3056,13 +3098,17 @@ end
 --- User function - Add *generic* repair crates loadable as cargo. This type will create crates that need to be loaded, moved, dropped and built.
 -- @param #CTLD self
 -- @param #string Name Unique name of this type of cargo. E.g. "Humvee".
--- @param #string Template Template of VEHICLE or FOB cargo that this can repair.
+-- @param #string Template Template of VEHICLE or FOB cargo that this can repair. MUST be the same as given in `AddCratesCargo(..)`!
 -- @param #CTLD_CARGO.Enum Type Type of cargo, here REPAIR.
 -- @param #number NoCrates Number of crates needed to build this cargo.
 -- @param #number PerCrateMass Mass in kg of each crate
 -- @param #number Stock Number of groups in stock. Nil for unlimited.
 function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass,Stock)
   self:T(self.lid .. " AddCratesRepair")
+  if not self:_CheckTemplates(Template) then
+    self:E(self.lid .. "Repair Cargo for " .. Name .. " has a missing template!" )
+    return self
+  end
   self.CargoCounter = self.CargoCounter + 1
   -- Crates are not directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Template,Type,false,false,NoCrates,nil,nil,PerCrateMass,Stock)
@@ -3559,7 +3605,8 @@ end
   -- @param #number Cratelimit Unit can carry number of crates. Default 0.
   -- @param #number Trooplimit Unit can carry number of troops. Default 0.
   -- @param #number Length Unit lenght (in mteres) for the load radius. Default 20.
-  function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length)
+  -- @param #number Maxcargoweight Maxmimum weight in kgs this helo can carry. Default 0.
+  function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length, Maxcargoweight)
     self:T(self.lid .. " UnitCapabilities")
     local unittype =  nil
     local unit = nil
@@ -3579,6 +3626,7 @@ end
     capabilities.cratelimit = Cratelimit or  0
     capabilities.trooplimit = Trooplimit or 0
     capabilities.length = Length or 20
+    capabilities.cargoweightlimit = Maxcargoweight or 0
     self.UnitTypes[unittype] = capabilities
     return self
   end
