@@ -570,11 +570,12 @@ do
 --  * Additional events to tailor your mission.
 --  * ANY late activated group can serve as cargo, either as troops, crates, which have to be build on-location, or static like ammo chests.
 --  * Option to persist (save&load) your dropped troops, crates and vehicles.
+--  * Weight checks on loaded cargo.
 -- 
 -- ## 0. Prerequisites
 -- 
 -- You need to load an .ogg soundfile for the pilot\'s beacons into the mission, e.g. "beacon.ogg", use a once trigger, "sound to country" for that.
--- Create the late-activated troops, vehicles (no statics at this point!) that will make up your deployable forces.
+-- Create the late-activated troops, vehicles, that will make up your deployable forces.
 -- 
 -- ## 1. Basic Setup
 -- 
