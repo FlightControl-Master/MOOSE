@@ -2485,13 +2485,13 @@ do -- DETECTION_AREAS
   -- ## 4.1) Retrieve the Detected Unit Sets and Detected Zones
   -- 
   -- The methods to manage the DetectedItems[].Set(s) are implemented in @{Functional.Detection#DECTECTION_BASE} and 
-  -- the methods to manage the DetectedItems[].Zone(s) is implemented in @{Functional.Detection#DETECTION_AREAS}.
+  -- the methods to manage the DetectedItems[].Zone(s) are implemented in @{Functional.Detection#DETECTION_AREAS}.
   -- 
   -- Retrieve the DetectedItems[].Set with the method @{Functional.Detection#DETECTION_BASE.GetDetectedSet}(). A @{Core.Set#SET_UNIT} object will be returned.
   -- 
-  -- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZones}().
-  -- To understand the amount of zones created, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
-  -- If you want to obtain a specific zone from the DetectedZones, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZone}() with a given index.
+  -- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Functional.Detection#DETECTION_AREAS.GetDetectionZones}().
+  -- To understand the amount of zones created, use the method @{Functional.Detection#DETECTION_AREAS.GetDetectionZoneCount}(). 
+  -- If you want to obtain a specific zone from the DetectedZones, use the method @{Functional.Detection#DETECTION_AREAS.GetDetectionZoneByID}() with a given index.
   -- 
   -- ## 4.4) Flare or Smoke detected units
   -- 
@@ -2535,7 +2535,49 @@ do -- DETECTION_AREAS
     return self
   end
 
-
+  --- Retrieve set of detected zones.
+  -- @param #DETECTION_AREAS self
+  -- @return Core.Set#SET_ZONE The @{Set} of ZONE_UNIT objects detected.
+  function DETECTION_AREAS:GetDetectionZones()
+    local zoneset = SET_ZONE:New()
+    for _ID,_Item in pairs (self.DetectedItems) do
+      local item = _Item -- #DETECTION_BASE.DetectedItem
+      if item.Zone then
+        zoneset:AddZone(item.Zone)
+      end
+    end
+    return zoneset
+  end
+  
+  --- Retrieve a specific zone by its ID (number)
+  -- @param #DETECTION_AREAS self
+  -- @param #number ID
+  -- @return Core.Zone#ZONE_UNIT The zone or nil if it does not exist
+  function DETECTION_AREAS:GetDetectionZoneByID(ID)
+    local zone = nil
+    for _ID,_Item in pairs (self.DetectedItems) do
+      local item = _Item -- #DETECTION_BASE.DetectedItem
+      if item.ID == ID then
+        zone = item.Zone
+        break
+      end
+    end
+    return zone
+  end
+  
+  --- Retrieve number of detected zones.
+  -- @param #DETECTION_AREAS self
+  -- @return #number The number of zones.
+  function DETECTION_AREAS:GetDetectionZoneCount()
+    local zoneset = 0
+    for _ID,_Item in pairs (self.DetectedItems) do
+      if _Item.Zone then
+        zoneset = zoneset + 1
+      end
+    end
+    return zoneset
+  end
+  
   --- Report summary of a detected item using a given numeric index.
   -- @param #DETECTION_AREAS self
   -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
