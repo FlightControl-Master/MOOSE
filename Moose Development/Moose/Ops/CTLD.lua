@@ -3476,6 +3476,9 @@ function CTLD:_AddRadioBeacon(Name, Sound, Mhz, Modulation, IsShip, IsDropped)
     Zone = self.droppedbeaconref[Name]
   else
     Zone = ZONE:FindByName(Name)
+    if not Zone then
+      Zone = AIRBASE:FindByName(Name):GetZone()
+    end
   end
   local Sound = Sound or "beacon.ogg"
   if IsDropped and Zone then
@@ -3650,6 +3653,9 @@ function CTLD:SmokeZoneNearBy(Unit, Flare)
         zone = UNIT:FindByName(zonename)
       else
         zone = ZONE:FindByName(zonename)
+        if not zone then
+          zone = AIRBASE:FindByName(zonename):GetZone()
+        end
       end
       local zonecoord = zone:GetCoordinate()
       local active = CZone.active
