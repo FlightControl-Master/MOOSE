@@ -25,9 +25,10 @@
 -- Date: Feb 2022
 
 do
+
 ------------------------------------------------------
 --- **CTLD_ENGINEERING** class, extends Core.Base#BASE
--- @type CTLD_ENGINEERING
+--- @type CTLD_ENGINEERING
 -- @field #string ClassName
 -- @field #string lid
 -- @field #string Name
@@ -37,6 +38,9 @@ do
 -- @field Wrapper.Unit#UNIT HeliUnit
 -- @field #string State
 -- @extends Core.Base#BASE
+
+---
+-- @field #CTLD_ENGINEERING
 CTLD_ENGINEERING = {
   ClassName = "CTLD_ENGINEERING",
   lid = "",
@@ -299,10 +303,14 @@ CTLD_ENGINEERING = {
       return -1
     end
   end
-  
+
+end
+
+do  
 ------------------------------------------------------
 --- **CTLD_CARGO** class, extends Core.Base#BASE
 -- @type CTLD_CARGO
+-- @field #string ClassName Class name.
 -- @field #number ID ID of this cargo.
 -- @field #string Name Name for menu.
 -- @field #table Templates Table of #POSITIONABLE objects.
@@ -312,9 +320,13 @@ CTLD_ENGINEERING = {
 -- @field #number CratesNeeded Crates needed to build.
 -- @field Wrapper.Positionable#POSITIONABLE Positionable Representation of cargo in the mission.
 -- @field #boolean HasBeenDropped True if dropped from heli.
--- @field #number PerCrateMass Mass in kg
--- @field #number Stock Number of builds available, -1 for unlimited
+-- @field #number PerCrateMass Mass in kg.
+-- @field #number Stock Number of builds available, -1 for unlimited.
+-- @field #string Subcategory Sub-category name.
 -- @extends Core.Base#BASE
+
+---
+-- @field #CTLD_CARGO
 CTLD_CARGO = {
   ClassName = "CTLD_CARGO",
   ID = 0,
@@ -331,9 +343,9 @@ CTLD_CARGO = {
   Mark = nil,
   }
   
+  ---
   --- Define cargo types.
-  -- @type CTLD_CARGO.Enum
-  -- @field #string Type Type of Cargo.
+  -- @field Enum
   CTLD_CARGO.Enum = {
     VEHICLE = "Vehicle", -- #string vehicles
     TROOPS = "Troops", -- #string troops
@@ -357,8 +369,9 @@ CTLD_CARGO = {
   -- @param #boolean Dropped Cargo/Troops have been unloaded from a chopper.
   -- @param #number PerCrateMass Mass in kg
   -- @param #number Stock Number of builds available, nil for unlimited
+  -- @param #string Subcategory Name of subcategory, handy if using > 10 types to load.
   -- @return #CTLD_CARGO self
-  function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock)
+  function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory)
     -- Inherit everything from BASE class.
     local self=BASE:Inherit(self, BASE:New()) -- #CTLD
     self:T({ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped})
@@ -374,6 +387,7 @@ CTLD_CARGO = {
     self.PerCrateMass = PerCrateMass or 0 -- #number
     self.Stock = Stock or nil --#number
     self.Mark = nil
+    self.Subcategory = Subcategory or "Other"
     return self
   end
   
@@ -382,6 +396,13 @@ CTLD_CARGO = {
   -- @return #number ID
   function CTLD_CARGO:GetID()
     return self.ID
+  end
+  
+  --- Query Subcategory
+  -- @param #CTLD_CARGO self
+  -- @return #string SubCategory
+  function CTLD_CARGO:GetSubCat()
+    return self.Subcategory
   end
   
   --- Query Mass.
@@ -678,6 +699,7 @@ do
 --          my_ctld.FlareColor = FLARECOLOR.Red -- color to use when flaring from heli
 --          my_ctld.basetype = "container_cargo" -- default shape of the cargo container
 --          my_ctld.droppedbeacontimeout = 600 -- dropped beacon lasts 10 minutes
+--          my_ctld.usesubcats = false -- use sub-category names for crates, adds an extra menu layer in "Get Crates", useful if you have > 10 crate types.
 -- 
 -- ## 2.1 User functions
 -- 
@@ -999,7 +1021,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.5"
+CTLD.version="1.0.6"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1158,6 +1180,10 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.filepath = nil
   self.saveinterval = 600
   self.eventoninject = true
+  
+  -- sub categories
+  self.usesubcats = false
+  self.subcats = {}
   
   local AliaS = string.gsub(self.alias," ","_")
   self.filename = string.format("CTLD_%s_Persist.csv",AliaS)
@@ -1900,13 +1926,14 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
     end
     local templ = cargotype:GetTemplates()
     local sorte = cargotype:GetType()
+    local subcat = cargotype.Subcategory
     self.CargoCounter = self.CargoCounter + 1
     local realcargo = nil
     if drop then
-      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass)
+      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass,subcat)
       table.insert(droppedcargo,realcargo)
     else
-      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass)
+      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass,subcat)
       Cargo:RemoveStock()
     end
     table.insert(self.Spawned_Cargo, realcargo)
@@ -2922,6 +2949,16 @@ function CTLD:_RefreshF10Menus()
   end -- end for
   self.CtldUnits = _UnitList
   
+  -- subcats?
+  if self.usesubcats then
+   for _id,_cargo in pairs(self.Cargo_Crates) do
+    local entry = _cargo -- #CTLD_CARGO
+    if not self.subcats[entry.Subcategory] then
+      self.subcats[entry.Subcategory] = entry.Subcategory
+    end
+   end
+  end
+  
   -- build unit menus
   local menucount = 0
   local menus = {}  
@@ -2970,11 +3007,26 @@ function CTLD:_RefreshF10Menus()
           if cancrates then 
             local loadmenu = MENU_GROUP_COMMAND:New(_group,"Load crates",topcrates, self._LoadCratesNearby, self, _group, _unit)
             local cratesmenu = MENU_GROUP:New(_group,"Get Crates",topcrates)
-            for _,_entry in pairs(self.Cargo_Crates) do
-              local entry = _entry -- #CTLD_CARGO
-              menucount = menucount + 1
-              local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
-              menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
+            
+            if self.usesubcats then
+              local subcatmenus = {}
+              for _name,_entry in pairs(self.subcats) do
+                subcatmenus[_name] = MENU_GROUP:New(_group,_name,cratesmenu)
+              end
+              for _,_entry in pairs(self.Cargo_Crates) do
+                local entry = _entry -- #CTLD_CARGO
+                local subcat = entry.Subcategory
+                menucount = menucount + 1
+                local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
+              end
+            else
+              for _,_entry in pairs(self.Cargo_Crates) do
+                local entry = _entry -- #CTLD_CARGO
+                menucount = menucount + 1
+                local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
+              end
             end
             for _,_entry in pairs(self.Cargo_Statics) do
               local entry = _entry -- #CTLD_CARGO
@@ -3051,7 +3103,8 @@ end
 -- @param #number NoCrates Number of crates needed to build this cargo.
 -- @param #number PerCrateMass Mass in kg of each crate
 -- @param #number Stock Number of groups in stock. Nil for unlimited.
-function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock)
+-- @param #string SubCategory Name of sub-category (optional).
+function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,SubCategory)
   self:T(self.lid .. " AddCratesCargo")
   if not self:_CheckTemplates(Templates) then
     self:E(self.lid .. "Crates Cargo for " .. Name .. " has missing template(s)!" )
@@ -3059,7 +3112,7 @@ function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock)
   end
   self.CargoCounter = self.CargoCounter + 1
   -- Crates are not directly loadable
-  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,false,NoCrates,nil,nil,PerCrateMass,Stock)
+  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,false,NoCrates,nil,nil,PerCrateMass,Stock,SubCategory)
   table.insert(self.Cargo_Crates,cargo)
   return self
 end
@@ -3104,7 +3157,8 @@ end
 -- @param #number NoCrates Number of crates needed to build this cargo.
 -- @param #number PerCrateMass Mass in kg of each crate
 -- @param #number Stock Number of groups in stock. Nil for unlimited.
-function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass,Stock)
+-- @param #string SubCategory Name of the sub-category (optional).
+function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass,Stock,SubCategory)
   self:T(self.lid .. " AddCratesRepair")
   if not self:_CheckTemplates(Template) then
     self:E(self.lid .. "Repair Cargo for " .. Name .. " has a missing template!" )
@@ -3112,7 +3166,7 @@ function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass,Stock)
   end
   self.CargoCounter = self.CargoCounter + 1
   -- Crates are not directly loadable
-  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Template,Type,false,false,NoCrates,nil,nil,PerCrateMass,Stock)
+  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Template,Type,false,false,NoCrates,nil,nil,PerCrateMass,Stock,SubCategory)
   table.insert(self.Cargo_Crates,cargo)
   return self
 end
@@ -3245,7 +3299,7 @@ function CTLD:_GetVHFBeacon(Name)
 end
 
 
---- User function - Crates and adds a #CTLD.CargoZone zone for this CTLD instance.
+--- User function - Creates and adds a #CTLD.CargoZone zone for this CTLD instance.
 --  Zones of type LOAD: Players load crates and troops here.  
 --  Zones of type DROP: Players can drop crates here. Note that troops can be unloaded anywhere.  
 --  Zone of type MOVE: Dropped troops and vehicles will start moving to the nearest zone of this type (also see options).  
@@ -3287,6 +3341,25 @@ function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon, Shiplength, Ship
   return self
 end
 
+--- User function - Creates and adds a #CTLD.CargoZone zone for this CTLD instance from an Airbase or FARP name.
+--  Zones of type LOAD: Players load crates and troops here.  
+--  Zones of type DROP: Players can drop crates here. Note that troops can be unloaded anywhere.  
+--  Zone of type MOVE: Dropped troops and vehicles will start moving to the nearest zone of this type (also see options).  
+-- @param #CTLD self
+-- @param #string AirbaseName Name of the Airbase, can be e.g. AIRBASE.Caucasus.Beslan or "Beslan". For FARPs, this will be the UNIT name.
+-- @param #string Type Type of this zone, #CTLD.CargoZoneType
+-- @param #number Color Smoke/Flare color e.g. #SMOKECOLOR.Red
+-- @param #string Active Is this zone currently active?
+-- @param #string HasBeacon Does this zone have a beacon if it is active?
+-- @return #CTLD self
+function CTLD:AddCTLDZoneFromAirbase(AirbaseName, Type, Color, Active, HasBeacon)
+  self:T(self.lid .. " AddCTLDZoneFromAirbase")
+  local AFB = AIRBASE:FindByName(AirbaseName)
+  local name = AFB:GetZone():GetName()
+  self:T(self.lid .. "AFB " .. AirbaseName .. " ZoneName " .. name)
+  self:AddCTLDZone(name, Type, Color, Active, HasBeacon)
+  return self
+end
 
 --- (Internal) Function to create a dropped beacon
 -- @param #CTLD self
@@ -3499,8 +3572,14 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
       zonecoord = zone:GetCoordinate()
       zoneradius = czone.shiplength
       zonewidth = czone.shipwidth
-    else
+    elseif ZONE:FindByName(zonename) then
       zone = ZONE:FindByName(zonename)
+      self:T("Checking Zone: "..zonename)
+      zonecoord = zone:GetCoordinate()
+      zoneradius = zone:GetRadius()
+      zonewidth = zoneradius
+    elseif AIRBASE:FindByName(zonename) then
+      zone = AIRBASE:FindByName(zonename):GetZone()
       self:T("Checking Zone: "..zonename)
       zonecoord = zone:GetCoordinate()
       zoneradius = zone:GetRadius()
@@ -4595,7 +4674,7 @@ end
     
     for _id,_entry in pairs (loadeddata) do
       local dataset = UTILS.Split(_entry,",")     
-      -- 1=Group,2=x,3=y,4=z,5=CargoName,6=CargoTemplates,7=CargoType,8=CratesNeeded,9=CrateMass
+      -- 1=Group,2=x,3=y,4=z,5=CargoName,6=CargoTemplates,7=CargoType,8=CratesNeeded,9=CrateMass,10=SubCategory
       local groupname = dataset[1]
       local vec2 = {}
       vec2.x = tonumber(dataset[2])
