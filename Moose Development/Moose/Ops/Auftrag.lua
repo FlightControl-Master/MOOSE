@@ -3227,6 +3227,26 @@ function AUFTRAG:onafterStatus(From, Event, To)
       -- Cancel mission if mission targets are gone (if there were any in the beginning).
       -- TODO: I commented this out for some reason but I forgot why...
       self:Cancel()
+      
+    elseif self:IsExecuting() then
+    
+      -- Had the case that mission was in state Executing but all assigned groups were dead.
+      -- TODO: might need to loop over all assigned groups
+      if Ngroups==0 then
+        self:Done()
+      else
+        local done=true
+        for groupname,data in pairs(self.groupdata or {}) do
+          local groupdata=data --#AUFTRAG.GroupData
+          local opsgroup=groupdata.opsgroup
+          if opsgroup:IsAlive() then
+            done=false
+          end
+        end
+        if done then
+          self:Done()
+        end
+      end
             
     end
     
