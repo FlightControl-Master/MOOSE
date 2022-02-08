@@ -22,7 +22,7 @@
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: Dec 2021
+-- Date: Feb 2022
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -248,7 +248,7 @@ CSAR.AircraftType["UH-60L"] = 10
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.2"
+CSAR.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -697,7 +697,7 @@ end
 
 --- (Internal) Function to add a CSAR object into the scene at a zone coordinate. For mission designers wanting to add e.g. PoWs to the scene.
 -- @param #CSAR self
--- @param #string _zone Name of the zone.
+-- @param #string _zone Name of the zone. Can also be passed as a (normal, round) ZONE object.
 -- @param #number _coalition Coalition.
 -- @param #string _description (optional) Description.
 -- @param #boolean _randomPoint (optional) Random yes or no.
@@ -708,7 +708,16 @@ end
 function CSAR:_SpawnCsarAtZone( _zone, _coalition, _description, _randomPoint, _nomessage, unitname, typename, forcedesc)
   self:T(self.lid .. " _SpawnCsarAtZone")
   local freq = self:_GenerateADFFrequency()
-  local _triggerZone = ZONE:New(_zone) -- trigger to use as reference position
+  
+  local _triggerZone = nil
+  if type(_zone) == "string" then
+    _triggerZone = ZONE:New(_zone) -- trigger to use as reference position
+  elseif type(_zone) == "table" and _zone.ClassName then
+    if string.find(_zone.ClassName, "ZONE",1) then
+      _triggerZone = _zone -- is already a zone
+    end
+  end
+  
   if _triggerZone == nil then
     self:E(self.lid.."ERROR: Can\'t find zone called " .. _zone, 10)
     return
@@ -742,7 +751,7 @@ end
 
 --- Function to add a CSAR object into the scene at a zone coordinate. For mission designers wanting to add e.g. PoWs to the scene.
 -- @param #CSAR self
--- @param #string Zone Name of the zone.
+-- @param #string Zone Name of the zone. Can also be passed as a (normal, round) ZONE object.
 -- @param #number Coalition Coalition.
 -- @param #string Description (optional) Description.
 -- @param #boolean RandomPoint (optional) Random yes or no.
