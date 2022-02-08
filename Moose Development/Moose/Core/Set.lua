@@ -326,7 +326,7 @@ do -- SET_BASE
 
     for _,Object in pairs(union.Set) do
       if self:IsIncludeObject(Object) and SetB:IsIncludeObject(Object) then
-        intersection:AddObject(intersection)
+        intersection:AddObject(Object)
       end
     end
 

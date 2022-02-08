@@ -8,6 +8,7 @@
 --    * Starting from a FARP or Airbase
 --    * Dedicated MASH zone
 --    * Some FSM functions to include in your mission scripts
+--    * Limit number of available helos
 --
 -- ===
 --
@@ -45,7 +46,8 @@
 -- @field #table rescued Track number of rescued pilot.
 -- @field #boolean autoonoff Only send a helo when no human heli pilots are available.
 -- @field Core.Set#SET_CLIENT playerset Track if alive heli pilots are available.
--- 
+-- @field #boolean limithelos limit available number of helos going on mission (defaults to true)
+-- @field #number helonumber number of helos available (default: 3)
 -- @extends Core.Fsm#FSM
 
 
@@ -81,7 +83,9 @@
 --            my_aicsar.maxdistance -- maximum operational distance in meters. Defaults to 50NM or 92.6km
 --            my_aicsar.rescuezoneradius -- landing zone around downed pilot. Defaults to 200m
 --            my_aicsar.autoonoff -- stop operations when human helicopter pilots are around. Defaults to true.
---            my_aicsar.verbose -- text messages coalition side about ongoing operations. Defaults to true.
+--            my_aicsar.verbose -- text messages to own coalition about ongoing operations. Defaults to true.
+--            my_aicsarlimithelos -- limit available number of helos going on mission (defaults to true)
+--            my_aicsar.helonumber -- number of helos available (default: 3)
 -- 
 -- ## Radio options
 -- 
@@ -148,7 +152,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.0.3",
+  version = "0.0.4",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -176,6 +180,8 @@ AICSAR = {
   DCSFrequency = 243,
   DCSModulation = radio.modulation.AM,
   DCSRadioGroup = nil,
+  limithelos = true,
+  helonumber = 3,
 }
 
 -- TODO Messages
@@ -290,6 +296,10 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   
   self.MGRS_Accuracy = 2
   
+  -- limit number of available helos at the same time
+  self.limithelos = true
+  self.helonumber = 3
+  
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("%s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
   
@@ -311,7 +321,9 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   
   self:__Start(math.random(2,5))
   
-  self:I(self.lid .. " AI CSAR Starting")
+  local text = string.format("%sAICSAR Version %s Starting",self.lid,self.version)
+  
+  self:I(text)
   
   ------------------------
   --- Pseudo Functions ---
@@ -606,6 +618,18 @@ function AICSAR:_CheckHelos()
   return self
 end
 
+--- [Internal] Count helos queue 
+-- @param #AICSAR self
+-- @return #number Number of helos on mission
+function AICSAR:_CountHelos()
+  self:T(self.lid .. "_CountHelos")
+  local count = 0
+    for _index,_helo in pairs(self.helos) do
+      count = count + 1
+    end
+  return count
+end
+
 --- [Internal] Check pilot queue for next mission
 -- @param #AICSAR self
 -- @return #AICSAR self
@@ -614,11 +638,29 @@ function AICSAR:_CheckQueue()
   for _index, _pilot in pairs(self.pilotqueue) do
     local classname = _pilot.ClassName and _pilot.ClassName or "NONE"
     local name = _pilot.GroupName and _pilot.GroupName or "NONE"
+    local helocount = self:_CountHelos()
     --self:T("Looking at " .. classname .. " " .. name)
     -- find one w/o mission
     if _pilot and _pilot.ClassName and _pilot.ClassName == "GROUP" then
+     local flightgroup = self.helos[_index] -- Ops.FlightGroup#FLIGHTGROUP
+     -- rescued?
+     if self:_CheckInMashZone(_pilot) then
+      self:T("Pilot" .. _pilot.GroupName .. " rescued!") 
+      _pilot:Destroy(false)
+      self.pilotqueue[_index] = nil
+      self.rescued[_index] = true
+      self:__PilotRescued(2)
+      if flightgroup then
+        flightgroup.AICSARReserved = false
+      end
+     end -- end rescued
       -- has no mission assigned?
       if not _pilot.AICSAR then
+        -- helo available?
+        if self.limithelos and helocount >= self.helonumber then
+            -- none free
+            break
+        end -- end limit
         _pilot.AICSAR = {}
         _pilot.AICSAR.Status = "Initiated"
         _pilot.AICSAR.Boarded = false
@@ -626,23 +668,14 @@ function AICSAR:_CheckQueue()
         break
       else 
        -- update status from OPSGROUP
-       local flightgroup = self.helos[_index] -- Ops.FlightGroup#FLIGHTGROUP
        if flightgroup then
          local state = flightgroup:GetState()
          _pilot.AICSAR.Status = state
        end
        --self:T("Flight for " .. _pilot.GroupName .. " in state " .. state)
-       if self:_CheckInMashZone(_pilot) then
-        self:T("Pilot" .. _pilot.GroupName .. " rescued!") 
-        _pilot:Destroy(false)
-        self.pilotqueue[_index] = nil
-        self.rescued[_index] = true
-        self:__PilotRescued(2)
-        flightgroup.AICSARReserved = false
-       end
-      end
-    end
-  end
+      end -- end has mission
+    end -- end if pilot
+  end -- end loop
   return self
 end
 

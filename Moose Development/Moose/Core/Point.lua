@@ -912,7 +912,7 @@ do -- COORDINATE
   -- The text will reflect the temperature like this:
   --
   --   - For Russian and European aircraft using the metric system - Degrees Celcius (°C)
-  --   - For Americain aircraft we link to the imperial system - Degrees Farenheit (°F)
+  --   - For American aircraft we link to the imperial system - Degrees Farenheit (°F)
   --
   -- A text containing a pressure will look like this:
   --
@@ -958,7 +958,7 @@ do -- COORDINATE
   -- The text will contain always the pressure in hPa and:
   --
   --   - For Russian and European aircraft using the metric system - hPa and mmHg
-  --   - For Americain and European aircraft we link to the imperial system - hPa and inHg
+  --   - For American and European aircraft we link to the imperial system - hPa and inHg
   --
   -- A text containing a pressure will look like this:
   --
@@ -1051,7 +1051,7 @@ do -- COORDINATE
   -- The text will reflect the wind like this:
   --
   --   - For Russian and European aircraft using the metric system - Wind direction in degrees (°) and wind speed in meters per second (mps).
-  --   - For Americain aircraft we link to the imperial system - Wind direction in degrees (°) and wind speed in knots per second (kps).
+  --   - For American aircraft we link to the imperial system - Wind direction in degrees (°) and wind speed in knots per second (kps).
   --
   -- A text containing a pressure will look like this:
   --
@@ -1883,82 +1883,101 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param Utilities.Utils#BIGSMOKEPRESET preset Smoke preset (1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke).
   -- @param #number density (Optional) Smoke density. Number in [0,...,1]. Default 0.5.
-  function COORDINATE:BigSmokeAndFire( preset, density )
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFire( preset, density, name )
     self:F2( { preset=preset, density=density } )
     density=density or 0.5
-    trigger.action.effectSmokeBig( self:GetVec3(), preset, density )
+    self.firename = name or "Fire-"..math.random(1,10000)
+    trigger.action.effectSmokeBig( self:GetVec3(), preset, density, self.firename )
+  end
+  
+  --- Stop big smoke and fire at the coordinate.
+  -- @param #COORDINATE self
+  -- @param #string name (Optional) Name of the fire to stop it, if not using the same COORDINATE object.
+  function COORDINATE:StopBigSmokeAndFire( name )
+    self:F2( { name = name } )
+    name = name or self.firename
+    trigger.action.effectSmokeStop( name )
   end
 
   --- Small smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireSmall( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireSmall( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, density, name)
   end
 
   --- Medium smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireMedium( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireMedium( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, density, name)
   end
 
   --- Large smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireLarge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireLarge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, density, name)
   end
 
   --- Huge smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireHuge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireHuge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, density, name)
   end
 
   --- Small smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeSmall( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeSmall( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, density, name)
   end
 
   --- Medium smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeMedium( density )
+  -- @param number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeMedium( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, density, name)
   end
 
   --- Large smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeLarge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeLarge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, density,name)
   end
 
   --- Huge smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeHuge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeHuge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, density,name)
   end
 
   --- Flares the point in a color.
@@ -2105,7 +2124,7 @@ do -- COORDINATE
     --- Line to all.
     -- Creates a line on the F10 map from one point to another.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Endpoint COORDIANTE to where the line is drawn.
+    -- @param #COORDINATE Endpoint COORDINATE to where the line is drawn.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -2162,7 +2181,7 @@ do -- COORDINATE
     --- Rectangle to all. Creates a rectangle on the map from the COORDINATE in one corner to the end COORDINATE in the opposite corner.
     -- Creates a line on the F10 map from one point to another.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Endpoint COORDIANTE in the opposite corner.
+    -- @param #COORDINATE Endpoint COORDINATE in the opposite corner.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -2190,9 +2209,9 @@ do -- COORDINATE
 
     --- Creates a shape defined by 4 points on the F10 map. The first point is the current COORDINATE. The remaining three points need to be specified.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Coord2 Second COORDIANTE of the quad shape.
-    -- @param #COORDINATE Coord3 Third COORDIANTE of the quad shape.
-    -- @param #COORDINATE Coord4 Fourth COORDIANTE of the quad shape.
+    -- @param #COORDINATE Coord2 Second COORDINATE of the quad shape.
+    -- @param #COORDINATE Coord3 Third COORDINATE of the quad shape.
+    -- @param #COORDINATE Coord4 Fourth COORDINATE of the quad shape.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -3007,7 +3026,7 @@ do -- POINT_VEC3
   -- @type POINT_VEC3
   -- @field #number x The x coordinate in 3D space.
   -- @field #number y The y coordinate in 3D space.
-  -- @field #number z The z coordiante in 3D space.
+  -- @field #number z The z COORDINATE in 3D space.
   -- @field Utilities.Utils#SMOKECOLOR SmokeColor
   -- @field Utilities.Utils#FLARECOLOR FlareColor
   -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType

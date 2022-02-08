@@ -99,6 +99,9 @@
 -- @field #string rangecontrolrelayname Name of relay unit.
 -- @field #string instructorrelayname Name of relay unit.
 -- @field #string soundpath Path inside miz file where the sound files are located. Default is "Range Soundfiles/".
+-- @field #boolean targetsheet If true, players can save their target sheets. Rangeboss will not work if targetsheets do not save.
+-- @field #string targetpath Path where to save the target sheets.
+-- @field #string targetprefix File prefix for target sheet files.
 -- @extends Core.Fsm#FSM
 
 --- *Don't only practice your art, but force your way into its secrets; art deserves that, for it and knowledge can raise man to the Divine.* - Ludwig van Beethoven
@@ -267,6 +270,7 @@
 --
 -- The [476th - Air Weapons Range Objects mod](http://www.476vfightergroup.com/downloads.php?do=file&id=287) is (implicitly) used in this example.
 --
+--
 -- # Debugging
 --
 -- In case you have problems, it is always a good idea to have a look at your DCS log file. You find it in your "Saved Games" folder, so for example in
@@ -333,7 +337,10 @@ RANGE={
   instructor          = nil,
   rangecontrolfreq    = nil,
   rangecontrol        = nil,
-  soundpath           = "Range Soundfiles/"
+  soundpath           = "Range Soundfiles/",
+  targetsheet       = nil,
+  targetpath          = nil,
+  targetprefix      = nil,
 }
 
 --- Default range parameters.
@@ -878,6 +885,22 @@ end
 -- @return #RANGE self
 function RANGE:SetAutosaveOff()
   self.autosave=false
+  return self
+end
+
+--- Enable saving of player's target sheets and specify an optional directory path.
+-- @param #RANGE self
+-- @param #string path (Optional) Path where to save the target sheets.
+-- @param #string prefix (Optional) Prefix for target sheet files. File name will be saved as *prefix_aircrafttype-0001.csv*, *prefix_aircrafttype-0002.csv*, etc.
+-- @return #RANGE self
+function RANGE:SetTargetSheet(path, prefix)
+  if io then
+    self.targetsheet=true
+    self.targetpath=path
+    self.targetprefix=prefix
+  else
+    self:E(self.lid.."ERROR: io is not desanitized. Cannot save target sheet.")
+  end
   return self
 end
 
@@ -1877,7 +1900,7 @@ function RANGE:OnEventShot(EventData)
           result.roundsFired=0  --Rangeboss Edit
           result.roundsHit=0 --Rangeboss Edit
           result.roundsQuality="N/A"   --Rangeboss Edit
-		  result.rangename = self.rangename	
+          result.rangename = self.rangename 
 
           -- Add to table.
           table.insert(_results, result)
@@ -1932,15 +1955,24 @@ function RANGE:_SaveTargetSheet(_playername, result) --RangeBoss Specific Functi
     end
   end
 
-  local path=lfs.writedir()..[[Logs\]]
+
+    -- Set path or default.
+  local path=self.targetpath
+  if lfs then
+  path=path or lfs.writedir()..[[Logs\]]
+  end
 
   -- Create unused file name.
   local filename=nil
   for i=1,9999 do
 
+    -- Create file name
+  if self.targetprefix then
+    filename=string.format("%s_%s-%04d.csv", self.targetprefix, playerData.actype, i)
+  else
     local name=UTILS.ReplaceIllegalCharacters(_playername, "_")
-		filename=string.format("RANGERESULTS-%s_Targetsheet-%s-%04d.csv",self.rangename,name, i)
-	--end
+    filename=string.format("RANGERESULTS-%s_Targetsheet-%s-%04d.csv",self.rangename,name, i)
+  end
 
     -- Set path.
     if path~=nil then
@@ -2975,9 +3007,12 @@ function RANGE:_CheckInZone(_unitName)
           Straferesult.roundsHit= _result.hits
           Straferesult.roundsQuality=_result.text
           Straferesult.strafeAccuracy=accur
-		  Straferesult.rangename=self.rangename	
-        
+      Straferesult.rangename=self.rangename 
+      
+      -- Save trap sheet.
+      if playerData.targeton and self.targetsheet then
           self:_SaveTargetSheet(_playername, result)
+      end
           --RangeBoss edit for strafe data saved to file
 
           -- Voice over.
@@ -3084,7 +3119,8 @@ function RANGE:_AddF10Commands(_unitName)
           -- MISSION LEVEL --
           -------------------
 
-         _rangePath = missionCommands.addSubMenuForGroup(_gid, self.rangename, RANGE.MenuF10Root)
+         --_rangePath = missionCommands.addSubMenuForGroup(_gid, self.rangename, RANGE.MenuF10Root)
+         _rangePath = MENU_GROUP:New(group,"On the Range")
 
         else
 
@@ -3094,55 +3130,57 @@ function RANGE:_AddF10Commands(_unitName)
 
           -- Main F10 menu: F10/On the Range/<Range Name>/
           if RANGE.MenuF10[_gid] == nil then
-            RANGE.MenuF10[_gid]=missionCommands.addSubMenuForGroup(_gid, "On the Range")
+            --RANGE.MenuF10[_gid]=missionCommands.addSubMenuForGroup(_gid, "On the Range")
+            RANGE.MenuF10[_gid]=MENU_GROUP:New(group,"On the Range")
           end
-          _rangePath = missionCommands.addSubMenuForGroup(_gid, self.rangename, RANGE.MenuF10[_gid])
-
+          --_rangePath = missionCommands.addSubMenuForGroup(_gid, self.rangename, RANGE.MenuF10[_gid])
+          _rangePath = MENU_GROUP:New(group,self.rangename,RANGE.MenuF10[_gid])  
         end
-
-
-        local _statsPath    = missionCommands.addSubMenuForGroup(_gid, "Statistics",   _rangePath)
-        local _markPath     = missionCommands.addSubMenuForGroup(_gid, "Mark Targets", _rangePath)
-        local _settingsPath = missionCommands.addSubMenuForGroup(_gid, "My Settings",  _rangePath)
-        local _infoPath     = missionCommands.addSubMenuForGroup(_gid, "Range Info",   _rangePath)
+       
+        local _statsPath    = MENU_GROUP:New(group,"Statistics",_rangePath)
+        local _markPath     = MENU_GROUP:New(group,"Mark Targets",_rangePath)
+        local _settingsPath = MENU_GROUP:New(group,"My Settings",_rangePath)
+        local _infoPath     = MENU_GROUP:New(group,"Range Info",_rangePath)
+        
         -- F10/On the Range/<Range Name>/My Settings/
-        local _mysmokePath  = missionCommands.addSubMenuForGroup(_gid, "Smoke Color", _settingsPath)
-        local _myflarePath  = missionCommands.addSubMenuForGroup(_gid, "Flare Color", _settingsPath)
+        local _mysmokePath  = MENU_GROUP:New(group,"Smoke Color",_settingsPath)
+        local _myflarePath  = MENU_GROUP:New(group,"Flare Color",_settingsPath)
 
-        -- F10/On the Range/<Range Name>/Mark Targets/
-        missionCommands.addCommandForGroup(_gid, "Mark On Map",         _markPath, self._MarkTargetsOnMap, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Illuminate Range",    _markPath, self._IlluminateBombTargets, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Smoke Strafe Pits",   _markPath, self._SmokeStrafeTargetBoxes, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Smoke Strafe Tgts",   _markPath, self._SmokeStrafeTargets, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Smoke Bomb Tgts",     _markPath, self._SmokeBombTargets, self, _unitName)
+        --F10/On the Range/<Range Name>/Mark Targets/
+        local _MoMap = MENU_GROUP_COMMAND:New(group,"Mark On Map",_markPath,self._MarkTargetsOnMap, self, _unitName)
+        local _IllRng = MENU_GROUP_COMMAND:New(group, "Illuminate Range", _markPath, self._IlluminateBombTargets, self, _unitName)
+        local _SSpit = MENU_GROUP_COMMAND:New(group, "Smoke Strafe Pits", _markPath, self._SmokeStrafeTargetBoxes, self, _unitName)
+        local _SStgts = MENU_GROUP_COMMAND:New(group, "Smoke Strafe Tgts", _markPath, self._SmokeStrafeTargets, self, _unitName)
+        local _SBtgts = MENU_GROUP_COMMAND:New(group, "Smoke Bomb Tgts", _markPath, self._SmokeBombTargets, self, _unitName)
         -- F10/On the Range/<Range Name>/Stats/
-        missionCommands.addCommandForGroup(_gid, "All Strafe Results",  _statsPath, self._DisplayStrafePitResults, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "All Bombing Results", _statsPath, self._DisplayBombingResults, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "My Strafe Results",   _statsPath, self._DisplayMyStrafePitResults, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "My Bomb Results",     _statsPath, self._DisplayMyBombingResults, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Reset All Stats",     _statsPath, self._ResetRangeStats, self, _unitName)
+        local _AllSR = MENU_GROUP_COMMAND:New(group, "All Strafe Results",  _statsPath, self._DisplayStrafePitResults, self, _unitName)
+        local _AllBR = MENU_GROUP_COMMAND:New(group, "All Bombing Results", _statsPath, self._DisplayBombingResults, self, _unitName)
+        local _MySR = MENU_GROUP_COMMAND:New(group, "My Strafe Results",   _statsPath, self._DisplayMyStrafePitResults, self, _unitName)
+        local _MyBR = MENU_GROUP_COMMAND:New(group, "My Bomb Results",     _statsPath, self._DisplayMyBombingResults, self, _unitName)
+        local _ResetST = MENU_GROUP_COMMAND:New(group, "Reset All Stats",     _statsPath, self._ResetRangeStats, self, _unitName)
         -- F10/On the Range/<Range Name>/My Settings/Smoke Color/
-        missionCommands.addCommandForGroup(_gid, "Blue Smoke",          _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Blue)
-        missionCommands.addCommandForGroup(_gid, "Green Smoke",         _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Green)
-        missionCommands.addCommandForGroup(_gid, "Orange Smoke",        _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Orange)
-        missionCommands.addCommandForGroup(_gid, "Red Smoke",           _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Red)
-        missionCommands.addCommandForGroup(_gid, "White Smoke",         _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.White)
+        local _BlueSM = MENU_GROUP_COMMAND:New(group, "Blue Smoke",          _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Blue)
+        local _GrSM = MENU_GROUP_COMMAND:New(group, "Green Smoke",         _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Green)
+        local _OrSM = MENU_GROUP_COMMAND:New(group, "Orange Smoke",        _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Orange)
+        local _ReSM = MENU_GROUP_COMMAND:New(group, "Red Smoke",           _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Red)
+        local _WhSm = MENU_GROUP_COMMAND:New(group, "White Smoke",         _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.White)
         -- F10/On the Range/<Range Name>/My Settings/Flare Color/
-        missionCommands.addCommandForGroup(_gid, "Green Flares",        _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.Green)
-        missionCommands.addCommandForGroup(_gid, "Red Flares",          _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.Red)
-        missionCommands.addCommandForGroup(_gid, "White Flares",        _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.White)
-        missionCommands.addCommandForGroup(_gid, "Yellow Flares",       _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.Yellow)
+        local _GrFl = MENU_GROUP_COMMAND:New(group, "Green Flares",        _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.Green)
+        local _ReFl = MENU_GROUP_COMMAND:New(group, "Red Flares",          _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.Red)
+        local _WhFl = MENU_GROUP_COMMAND:New(group, "White Flares",        _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.White)
+        local _YeFl = MENU_GROUP_COMMAND:New(group, "Yellow Flares",       _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.Yellow)
         -- F10/On the Range/<Range Name>/My Settings/
-        missionCommands.addCommandForGroup(_gid, "Smoke Delay On/Off",   _settingsPath, self._SmokeBombDelayOnOff, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Smoke Impact On/Off",  _settingsPath, self._SmokeBombImpactOnOff, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Flare Hits On/Off",    _settingsPath, self._FlareDirectHitsOnOff, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "All Messages On/Off",  _settingsPath, self._MessagesToPlayerOnOff, self, _unitName)
+        local _SmDe = MENU_GROUP_COMMAND:New(group, "Smoke Delay On/Off",   _settingsPath, self._SmokeBombDelayOnOff, self, _unitName)
+        local _SmIm = MENU_GROUP_COMMAND:New(group, "Smoke Impact On/Off",  _settingsPath, self._SmokeBombImpactOnOff, self, _unitName)
+        local _FlHi = MENU_GROUP_COMMAND:New(group, "Flare Hits On/Off",    _settingsPath, self._FlareDirectHitsOnOff, self, _unitName)
+        local _AlMeA = MENU_GROUP_COMMAND:New(group, "All Messages On/Off",  _settingsPath, self._MessagesToPlayerOnOff, self, _unitName)
+        local _TrpSh = MENU_GROUP_COMMAND:New(group, "Targetsheet On/Off",    _settingsPath, self._TargetsheetOnOff, self, _unitName)
 
         -- F10/On the Range/<Range Name>/Range Information
-        missionCommands.addCommandForGroup(_gid, "General Info",        _infoPath, self._DisplayRangeInfo, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Weather Report",      _infoPath, self._DisplayRangeWeather, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Bombing Targets",     _infoPath, self._DisplayBombTargets, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Strafe Pits",         _infoPath, self._DisplayStrafePits, self, _unitName)
+        local _WeIn = MENU_GROUP_COMMAND:New(group, "General Info",        _infoPath, self._DisplayRangeInfo, self, _unitName)
+        local _WeRe = MENU_GROUP_COMMAND:New(group, "Weather Report",      _infoPath, self._DisplayRangeWeather, self, _unitName)
+        local _BoTgtgs = MENU_GROUP_COMMAND:New(group, "Bombing Targets",     _infoPath, self._DisplayBombTargets, self, _unitName)
+        local _StrPits = MENU_GROUP_COMMAND:New(group, "Strafe Pits",         _infoPath, self._DisplayStrafePits, self, _unitName):Refresh()
       end
     else
       self:E(self.id.."Could not find group or group ID in AddF10Menu() function. Unit name: ".._unitName)
@@ -3464,6 +3502,49 @@ function RANGE:_MessagesToPlayerOnOff(unitname)
     end
     self:_DisplayMessageToGroup(unit, text, 5, false, true)
     self.PlayerSettings[playername].messages=not self.PlayerSettings[playername].messages
+  end
+
+end
+
+--- Targetsheet saves if player on or off.
+-- @param #RANGE self
+-- @param #string _unitname Name of the player unit.
+function RANGE:_TargetsheetOnOff(_unitname)
+  self:F2(_unitname)
+
+  -- Get player unit and player name.
+  local unit, playername = self:_GetPlayerUnitAndName(_unitname)
+
+  -- Check if we have a player.
+  if unit and playername then
+
+    -- Player data.
+    local playerData=self.PlayerSettings[playername]  --#RANGE.PlayerData
+
+    if playerData then
+
+      -- Check if option is enabled at all.
+      local text=""
+      if self.targetsheet then
+
+        -- Invert current setting.
+        playerData.targeton=not playerData.targeton
+
+        -- Inform player.
+        if playerData.targeton==true then
+          text=string.format("roger, your targetsheets are now SAVED.")
+        else
+          text=string.format("affirm, your targetsheets are NOT SAVED.")
+        end
+
+      else
+        text="negative, target sheet data recorder is broken on this range."
+      end
+
+      -- Message to player.
+      --self:MessageToPlayer(playerData, text, nil, playerData.name, 5)
+      self:_DisplayMessageToGroup(unit,text,5,false,false)
+    end
   end
 
 end

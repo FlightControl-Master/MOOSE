@@ -1,4 +1,4 @@
---- This module contains derived utilities taken from the MIST framework, which are excellent tools to be reused in an OO environment.
+--- This module contains derived utilities taken from the MIST framework, as well as a lot of added helpers from the MOOSE community.
 --
 -- ### Authors:
 --
@@ -7,6 +7,7 @@
 -- ### Contributions:
 --
 --   * FlightControl : Rework to OO framework.
+--   * And many more
 --
 -- @module Utils
 -- @image MOOSE.JPG
@@ -129,6 +130,62 @@ CALLSIGN={
     Warsaw=8,
     Dublin=9,
     Perth=10,
+  },
+  F16={
+    Viper=9,
+    Venom=10,
+    Lobo=11,
+    Cowboy=12,
+    Python=13,
+    Rattler=14,
+    Panther=15,
+    Wolf=16,
+    Weasel=17,
+    Wild=18,
+    Ninja=19,
+    Jedi=20,
+  },
+  F18={
+    Hornet=9,
+    Squid=10,
+    Ragin=11,
+    Roman=12,
+    Sting=13,
+    Jury=14,
+    Jokey=15,
+    Ram=16,
+    Hawk=17,
+    Devil=18,
+    Check=19,
+    Snake=20,
+  },
+  F15E={
+    Dude=9,
+    Thud=10,
+    Gunny=11,
+    Trek=12,
+    Sniper=13,
+    Sled=14,
+    Best=15,
+    Jazz=16,
+    Rage=17,
+    Tahoe=18,
+  },
+  B1B={
+    Bone=9,
+    Dark=10,
+    Vader=11
+  },
+  B52={
+    Buff=9,
+    Dump=10,
+    Kenworth=11,
+  },
+  TransportAircraft={
+    Heavy=9,
+    Trash=10,
+    Cargo=11,
+    Ascot=12,
   },
 } --#CALLSIGN
 
@@ -1683,10 +1740,21 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           BASE:T(unit_name .. " door is open")
           ret_val =  true
       end
+      
+      if string.find(type_name, "UH-60L") and (unit:getDrawArgumentValue(401) == 1) or (unit:getDrawArgumentValue(402) == 1) then
+          BASE:T(unit_name .. " cargo door is open")
+          ret_val =  true
+      end
 
+      if string.find(type_name, "UH-60L" ) and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(400) == 1 then
+          BASE:T(unit_name .. " front door(s) are open")
+          ret_val =  true
+      end
+      
       if ret_val == false then
           BASE:T(unit_name .. " all doors are closed")
       end
+      
       return ret_val
 
   end -- nil
