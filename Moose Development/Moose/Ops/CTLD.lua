@@ -914,8 +914,8 @@ do
 -- @field #CTLD
 CTLD = {
   ClassName       = "CTLD",
-  verbose         =     0,
-  lid             =   "",
+  verbose         = 0,
+  lid             = "",
   coalition       = 1,
   coalitiontxt    = "blue",
   PilotGroups = {}, -- #GROUP_SET of heli pilots
@@ -1021,7 +1021,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.6"
+CTLD.version="1.0.7"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1149,6 +1149,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.smokedistance = 2000
   self.movetroopstowpzone = true
   self.movetroopsdistance = 5000
+  self.troopdropzoneradius = 100
   
   -- added support Hercules Mod
   self.enableHercules = false
@@ -1415,6 +1416,17 @@ function CTLD:_GenerateVHFrequencies()
   self.FreeVHFFrequencies = {}
   self.UsedVHFFrequencies = {}
   self.FreeVHFFrequencies = UTILS.GenerateVHFrequencies()
+  return self
+end
+
+--- (User) Set drop zone radius for troop drops in meters. Minimum distance is 25m for security reasons.
+-- @param #CTLD self
+-- @param #number Radius The radius to use.
+function CTLD:SetTroopDropZoneRadius(Radius)
+  self:T(self.lid .. " SetTroopDropZoneRadius")
+  local tradius = Radius or 100
+  if tradius < 25 then tradius = 25 end
+  self.troopdropzoneradius = tradius
   return self
 end
 
@@ -2482,7 +2494,7 @@ function CTLD:_UnloadTroops(Group, Unit)
           local name = cargo:GetName() or "none"
           local temptable = cargo:GetTemplates() or {}
           local position = Group:GetCoordinate()
-          local zoneradius = 100 -- drop zone radius
+          local zoneradius = self.troopdropzoneradius or 100 -- drop zone radius
           local factor = 1
           if IsHerc then
             factor = cargo:GetCratesNeeded() or 1 -- spread a bit more if airdropping
