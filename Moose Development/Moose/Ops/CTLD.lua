@@ -1021,7 +1021,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.7"
+CTLD.version="1.0.8"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3702,8 +3702,8 @@ end
   -- @param #boolean Cantroops Unit can load troops. Default false.
   -- @param #number Cratelimit Unit can carry number of crates. Default 0.
   -- @param #number Trooplimit Unit can carry number of troops. Default 0.
-  -- @param #number Length Unit lenght (in mteres) for the load radius. Default 20.
-  -- @param #number Maxcargoweight Maxmimum weight in kgs this helo can carry. Default 0.
+  -- @param #number Length Unit lenght (in metres) for the load radius. Default 20.
+  -- @param #number Maxcargoweight Maxmimum weight in kgs this helo can carry. Default 500.
   function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length, Maxcargoweight)
     self:T(self.lid .. " UnitCapabilities")
     local unittype =  nil
@@ -3716,6 +3716,13 @@ end
     else
       return self
     end
+    local length = 20
+    local maxcargo = 500
+    local existingcaps = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+    if existingcaps then
+      length = existingcaps.length or 20
+      maxcargo = existingcaps.cargoweightlimit or 500
+    end
     -- set capabilities
     local capabilities = {} -- #CTLD.UnitCapabilities
     capabilities.type = unittype
@@ -3723,8 +3730,8 @@ end
     capabilities.troops = Cantroops or false
     capabilities.cratelimit = Cratelimit or  0
     capabilities.trooplimit = Trooplimit or 0
-    capabilities.length = Length or 20
-    capabilities.cargoweightlimit = Maxcargoweight or 0
+    capabilities.length = Length or length
+    capabilities.cargoweightlimit = Maxcargoweight or maxcargo
     self.UnitTypes[unittype] = capabilities
     return self
   end
