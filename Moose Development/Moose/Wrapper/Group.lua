@@ -2609,6 +2609,40 @@ function GROUP:GetSkill()
   return skill
 end
 
+--- Get the unit in the group with the highest threat level, which is still alive.
+-- @param #GROUP self
+-- @return Wrapper.Unit#UNIT The most dangerous unit in the group.
+-- @return #number Threat level of the unit.
+function GROUP:GetHighestThreat()
+
+  -- Get units of the group.
+  local units=self:GetUnits()
+
+  if units then
+
+    local threat=nil ; local maxtl=0
+    for _,_unit in pairs(units or {}) do
+      local unit=_unit --Wrapper.Unit#UNIT
+
+      if unit and unit:IsAlive() then
+
+        -- Threat level of group.
+        local tl=unit:GetThreatLevel()
+
+        -- Check if greater the current threat.
+        if tl>maxtl then
+          maxtl=tl
+          threat=unit
+        end        
+      end
+    end
+
+    return threat, maxtl    
+  end
+
+  return nil, nil
+end
+
 --do -- Smoke
 --
 ----- Signal a flare at the position of the GROUP.
