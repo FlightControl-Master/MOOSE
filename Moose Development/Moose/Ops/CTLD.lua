@@ -1021,7 +1021,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.8"
+CTLD.version="1.0.9"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1844,7 +1844,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
   local canloadcratesno = capabilities.cratelimit
   local loaddist = self.CrateDistance or 35
-  local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist)
+  local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist,true)
   if numbernearby >= canloadcratesno and not drop then
     self:_SendMessage("There are enough crates nearby already! Take care of those first!", 10, false, Group)
     return self
@@ -2027,7 +2027,7 @@ end
 function CTLD:_ListCratesNearby( _group, _unit)
   self:T(self.lid .. " _ListCratesNearby")
   local finddist = self.CrateDistance or 35
-  local crates,number = self:_FindCratesNearby(_group,_unit, finddist) -- #table
+  local crates,number = self:_FindCratesNearby(_group,_unit, finddist,true) -- #table
   if number > 0 then
     local text = REPORT:New("Crates Found Nearby:")
     text:Add("------------------------------------------------------------")
@@ -2084,9 +2084,10 @@ end
 -- @param Wrapper.Group#GROUP _group Group
 -- @param Wrapper.Unit#UNIT _unit Unit
 -- @param #number _dist Distance
+-- @param #boolean _ignoreweight Find everything in range, ignore loadable weight
 -- @return #table Table of crates
 -- @return #number Number Number of crates found
-function CTLD:_FindCratesNearby( _group, _unit, _dist)
+function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
   self:T(self.lid .. " _FindCratesNearby")
   local finddist = _dist
   local location = _group:GetCoordinate()
@@ -2109,7 +2110,7 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist)
     if static and static:IsAlive() then
       local staticpos = static:GetCoordinate()
       local distance = self:_GetDistance(location,staticpos)
-      if distance <= finddist and static and weight <= maxloadable then
+      if distance <= finddist and static and (weight <= maxloadable or _ignoreweight) then 
         index = index + 1
         table.insert(found, staticid, cargo)
         maxloadable = maxloadable - weight
@@ -2167,7 +2168,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
     end
     -- get nearby crates
     local finddist = self.CrateDistance or 35
-    local nearcrates,number = self:_FindCratesNearby(Group,Unit,finddist) -- #table
+    local nearcrates,number = self:_FindCratesNearby(Group,Unit,finddist,false) -- #table
     self:T(self.lid .. " Crates found: " .. number)
     if number == 0 and self.hoverautoloading then
       return self -- exit
@@ -2663,7 +2664,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering)
   end
   -- get nearby crates
   local finddist = self.CrateDistance or 35
-  local crates,number = self:_FindCratesNearby(Group,Unit, finddist) -- #table
+  local crates,number = self:_FindCratesNearby(Group,Unit, finddist,true) -- #table
   local buildables = {}
   local foundbuilds = false
   local canbuild = false
@@ -2747,7 +2748,7 @@ function CTLD:_RepairCrates(Group, Unit, Engineering)
   self:T(self.lid .. " _RepairCrates")
   -- get nearby crates
   local finddist = self.CrateDistance or 35
-  local crates,number = self:_FindCratesNearby(Group,Unit,finddist) -- #table
+  local crates,number = self:_FindCratesNearby(Group,Unit,finddist,true) -- #table
   local buildables = {}
   local foundbuilds = false
   local canbuild = false
@@ -4023,7 +4024,7 @@ end
       self:T(_engineers.lid .. _engineers:GetStatus())
       if wrenches and wrenches:IsAlive() then
         if engineers:IsStatus("Running") or engineers:IsStatus("Searching") then
-          local crates,number = self:_FindCratesNearby(wrenches,nil, self.EngineerSearch) -- #table
+          local crates,number = self:_FindCratesNearby(wrenches,nil, self.EngineerSearch,true) -- #table
           engineers:Search(crates,number)
         elseif engineers:IsStatus("Moving") then
           engineers:Move()
