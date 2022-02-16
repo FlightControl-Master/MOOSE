@@ -344,7 +344,7 @@ function AUTOLASE:GetSmokeColor(RecceName)
   if self.RecceSmokeColor[RecceName] == nil then
     self.RecceSmokeColor[RecceName] = color
   else
-    color = self.RecceLaserCode[RecceName]
+    color = self.RecceSmokeColor[RecceName]
   end
   return color
 end

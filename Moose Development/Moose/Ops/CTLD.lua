@@ -914,8 +914,8 @@ do
 -- @field #CTLD
 CTLD = {
   ClassName       = "CTLD",
-  verbose         =     0,
-  lid             =   "",
+  verbose         = 0,
+  lid             = "",
   coalition       = 1,
   coalitiontxt    = "blue",
   PilotGroups = {}, -- #GROUP_SET of heli pilots
@@ -1021,7 +1021,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.6"
+CTLD.version="1.0.9"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1149,6 +1149,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.smokedistance = 2000
   self.movetroopstowpzone = true
   self.movetroopsdistance = 5000
+  self.troopdropzoneradius = 100
   
   -- added support Hercules Mod
   self.enableHercules = false
@@ -1415,6 +1416,17 @@ function CTLD:_GenerateVHFrequencies()
   self.FreeVHFFrequencies = {}
   self.UsedVHFFrequencies = {}
   self.FreeVHFFrequencies = UTILS.GenerateVHFrequencies()
+  return self
+end
+
+--- (User) Set drop zone radius for troop drops in meters. Minimum distance is 25m for security reasons.
+-- @param #CTLD self
+-- @param #number Radius The radius to use.
+function CTLD:SetTroopDropZoneRadius(Radius)
+  self:T(self.lid .. " SetTroopDropZoneRadius")
+  local tradius = Radius or 100
+  if tradius < 25 then tradius = 25 end
+  self.troopdropzoneradius = tradius
   return self
 end
 
@@ -1832,7 +1844,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitCapabilities
   local canloadcratesno = capabilities.cratelimit
   local loaddist = self.CrateDistance or 35
-  local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist)
+  local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist,true)
   if numbernearby >= canloadcratesno and not drop then
     self:_SendMessage("There are enough crates nearby already! Take care of those first!", 10, false, Group)
     return self
@@ -2015,7 +2027,7 @@ end
 function CTLD:_ListCratesNearby( _group, _unit)
   self:T(self.lid .. " _ListCratesNearby")
   local finddist = self.CrateDistance or 35
-  local crates,number = self:_FindCratesNearby(_group,_unit, finddist) -- #table
+  local crates,number = self:_FindCratesNearby(_group,_unit, finddist,true) -- #table
   if number > 0 then
     local text = REPORT:New("Crates Found Nearby:")
     text:Add("------------------------------------------------------------")
@@ -2072,9 +2084,10 @@ end
 -- @param Wrapper.Group#GROUP _group Group
 -- @param Wrapper.Unit#UNIT _unit Unit
 -- @param #number _dist Distance
+-- @param #boolean _ignoreweight Find everything in range, ignore loadable weight
 -- @return #table Table of crates
 -- @return #number Number Number of crates found
-function CTLD:_FindCratesNearby( _group, _unit, _dist)
+function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
   self:T(self.lid .. " _FindCratesNearby")
   local finddist = _dist
   local location = _group:GetCoordinate()
@@ -2097,7 +2110,7 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist)
     if static and static:IsAlive() then
       local staticpos = static:GetCoordinate()
       local distance = self:_GetDistance(location,staticpos)
-      if distance <= finddist and static and weight <= maxloadable then
+      if distance <= finddist and static and (weight <= maxloadable or _ignoreweight) then 
         index = index + 1
         table.insert(found, staticid, cargo)
         maxloadable = maxloadable - weight
@@ -2155,7 +2168,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
     end
     -- get nearby crates
     local finddist = self.CrateDistance or 35
-    local nearcrates,number = self:_FindCratesNearby(Group,Unit,finddist) -- #table
+    local nearcrates,number = self:_FindCratesNearby(Group,Unit,finddist,false) -- #table
     self:T(self.lid .. " Crates found: " .. number)
     if number == 0 and self.hoverautoloading then
       return self -- exit
@@ -2482,7 +2495,7 @@ function CTLD:_UnloadTroops(Group, Unit)
           local name = cargo:GetName() or "none"
           local temptable = cargo:GetTemplates() or {}
           local position = Group:GetCoordinate()
-          local zoneradius = 100 -- drop zone radius
+          local zoneradius = self.troopdropzoneradius or 100 -- drop zone radius
           local factor = 1
           if IsHerc then
             factor = cargo:GetCratesNeeded() or 1 -- spread a bit more if airdropping
@@ -2651,7 +2664,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering)
   end
   -- get nearby crates
   local finddist = self.CrateDistance or 35
-  local crates,number = self:_FindCratesNearby(Group,Unit, finddist) -- #table
+  local crates,number = self:_FindCratesNearby(Group,Unit, finddist,true) -- #table
   local buildables = {}
   local foundbuilds = false
   local canbuild = false
@@ -2735,7 +2748,7 @@ function CTLD:_RepairCrates(Group, Unit, Engineering)
   self:T(self.lid .. " _RepairCrates")
   -- get nearby crates
   local finddist = self.CrateDistance or 35
-  local crates,number = self:_FindCratesNearby(Group,Unit,finddist) -- #table
+  local crates,number = self:_FindCratesNearby(Group,Unit,finddist,true) -- #table
   local buildables = {}
   local foundbuilds = false
   local canbuild = false
@@ -3690,8 +3703,8 @@ end
   -- @param #boolean Cantroops Unit can load troops. Default false.
   -- @param #number Cratelimit Unit can carry number of crates. Default 0.
   -- @param #number Trooplimit Unit can carry number of troops. Default 0.
-  -- @param #number Length Unit lenght (in mteres) for the load radius. Default 20.
-  -- @param #number Maxcargoweight Maxmimum weight in kgs this helo can carry. Default 0.
+  -- @param #number Length Unit lenght (in metres) for the load radius. Default 20.
+  -- @param #number Maxcargoweight Maxmimum weight in kgs this helo can carry. Default 500.
   function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length, Maxcargoweight)
     self:T(self.lid .. " UnitCapabilities")
     local unittype =  nil
@@ -3704,6 +3717,13 @@ end
     else
       return self
     end
+    local length = 20
+    local maxcargo = 500
+    local existingcaps = self.UnitTypes[unittype] -- #CTLD.UnitCapabilities
+    if existingcaps then
+      length = existingcaps.length or 20
+      maxcargo = existingcaps.cargoweightlimit or 500
+    end
     -- set capabilities
     local capabilities = {} -- #CTLD.UnitCapabilities
     capabilities.type = unittype
@@ -3711,8 +3731,8 @@ end
     capabilities.troops = Cantroops or false
     capabilities.cratelimit = Cratelimit or  0
     capabilities.trooplimit = Trooplimit or 0
-    capabilities.length = Length or 20
-    capabilities.cargoweightlimit = Maxcargoweight or 0
+    capabilities.length = Length or length
+    capabilities.cargoweightlimit = Maxcargoweight or maxcargo
     self.UnitTypes[unittype] = capabilities
     return self
   end
@@ -4004,7 +4024,7 @@ end
       self:T(_engineers.lid .. _engineers:GetStatus())
       if wrenches and wrenches:IsAlive() then
         if engineers:IsStatus("Running") or engineers:IsStatus("Searching") then
-          local crates,number = self:_FindCratesNearby(wrenches,nil, self.EngineerSearch) -- #table
+          local crates,number = self:_FindCratesNearby(wrenches,nil, self.EngineerSearch,true) -- #table
           engineers:Search(crates,number)
         elseif engineers:IsStatus("Moving") then
           engineers:Move()
