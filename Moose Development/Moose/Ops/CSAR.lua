@@ -118,8 +118,8 @@
 --       self.SRSModulation = radio.modulation.AM -- modulation
 --       --
 --       self.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection --shagrat
---       self.wetfeettemplate = "man in floating thingy" -- if you use a mod to have a pilot in a rescue float, put the template name in here for wet feet spawns
--- 
+--       self.wetfeettemplate = "man in floating thingy" -- if you use a mod to have a pilot in a rescue float, put the template name in here for wet feet spawns. Note: in conjunction with csarUsePara this might create dual ejected pilots in edge cases.
+--        
 -- ## 3. Results
 -- 
 -- Number of successful landings with save pilots and aggregated number of saved pilots is stored in these variables in the object:
@@ -250,7 +250,7 @@ CSAR.AircraftType["UH-60L"] = 10
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.4"
+CSAR.version="1.0.4a"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -955,9 +955,19 @@ function CSAR:_EventHandler(EventData)
       if self.limitmaxdownedpilots and self:_ReachedPilotLimit() then
         return
       end
-      
+    
+    
+    -- TODO: Over water check --- EVENTS.LandingAfterEjection NOT triggered by DCS, so handle csarUsePara = true case
+    -- might create dual pilots in edge cases
+    
+    local wetfeet = false
+    
+    local surface = _unit:GetCoordinate():GetSurfaceType()
+    if surface == land.SurfaceType.WATER then
+      wetfeet = true
+    end  
       -- all checks passed, get going.
-    if self.csarUsePara == false then --shagrat check parameter LandingAfterEjection, if true don't spawn a Pilot from EJECTION event, wait for the Chute to land
+    if self.csarUsePara == false or (self.csarUsePara and wetfeet ) then --shagrat check parameter LandingAfterEjection, if true don't spawn a Pilot from EJECTION event, wait for the Chute to land
     local _freq = self:_GenerateADFFrequency()
      self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate() , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, "none")
     return true
