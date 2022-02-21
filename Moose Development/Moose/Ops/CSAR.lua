@@ -6,6 +6,14 @@
 -- 
 -- ===
 -- 
+-- ## Missions:--- **Ops** -- Combat Search and Rescue.
+--
+-- ===
+-- 
+-- **CSAR** - MOOSE based Helicopter CSAR Operations.
+-- 
+-- ===
+-- 
 -- ## Missions:
 --
 -- ### [CSAR - Combat Search & Rescue](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20CSAR)
