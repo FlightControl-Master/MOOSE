@@ -19,7 +19,7 @@
 --
 -- ### Authors: **FlightControl**, **applevangelist**
 --
--- Last Update: Nov 2021
+-- Last Update: Feb 2022
 --
 -- ===
 --
@@ -59,6 +59,7 @@ SEAD = {
   Padding = 10,
   CallBack = nil,
   UseCallBack = false,
+  debug = false,
 }
 
   --- Missile enumerators
@@ -76,6 +77,8 @@ SEAD = {
   ["X_25"] = "X_25",
   ["X_31"] = "X_31",
   ["Kh25"] = "Kh25",
+  ["BGM_109"] = "BGM_109",
+  ["AGM_154"] = "AGM_154",
   }
 
   --- Missile enumerators - from DCS ME and Wikipedia
@@ -85,7 +88,7 @@ SEAD = {
   ["AGM_88"] = { 150, 3},
   ["AGM_45"] = { 12, 2},
   ["AGM_122"] = { 16.5, 2.3},
-  ["AGM_84"] = { 280, 0.85},
+  ["AGM_84"] = { 280, 0.8},
   ["ALARM"] = { 45, 2},
   ["LD-10"] = { 60, 4},
   ["X_58"] = { 70, 4},
@@ -93,6 +96,8 @@ SEAD = {
   ["X_25"] = { 25, 0.76},
   ["X_31"] = {150, 3},
   ["Kh25"] = {25, 0.8},
+  ["BGM_109"] = {460, 0.705}, --in-game ~465kn
+  ["AGM_154"] = {130, 0.61},
   }
 
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
@@ -108,8 +113,8 @@ SEAD = {
 -- SEAD_RU_SAM_Defenses = SEAD:New( { 'RU SA-6 Kub', 'RU SA-6 Defenses', 'RU MI-26 Troops', 'RU Attack Gori' } )
 function SEAD:New( SEADGroupPrefixes, Padding )
 
-  local self = BASE:Inherit( self, BASE:New() )
-  self:F( SEADGroupPrefixes )
+  local self = BASE:Inherit( self, FSM:New() )
+  self:T( SEADGroupPrefixes )
 
   if type( SEADGroupPrefixes ) == 'table' then
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
@@ -122,14 +127,21 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   local padding = Padding or 10
   if padding < 10 then padding = 10 end
   self.Padding = padding
-  self.UseEmissionsOnOff = false
+  self.UseEmissionsOnOff = true
+  
+  self.debug = false
   
   self.CallBack = nil
   self.UseCallBack = false
-  
+    
   self:HandleEvent( EVENTS.Shot, self.HandleEventShot )
-
-  self:I("*** SEAD - Started Version 0.3.3")
+  
+  -- Start State.
+  self:SetStartState("Running")
+  self:AddTransition("*",             "ManageEvasion",                "*")
+  self:AddTransition("*",             "CalculateHitZone",             "*")
+  
+  self:I("*** SEAD - Started Version 0.4.3")
   return self
 end
 
@@ -213,7 +225,7 @@ function SEAD:_CheckHarms(WeaponName)
   local hit = false
   local name = ""
     for _,_name in pairs (SEAD.Harms) do
-      if string.find(WeaponName,_name,1) then
+      if string.find(WeaponName,_name,1,true) then
         hit = true
         name = _name
         break
@@ -249,6 +261,186 @@ function SEAD:_GetDistance(_point1, _point2)
   end
 end
 
+--- (Internal) Calculate hit zone of an AGM-88
+-- @param #SEAD self
+-- @param #table SEADWeapon DCS.Weapon object
+-- @param Core.Point#COORDINATE pos0 Position of the plane when it fired
+-- @param #number height Height when the missile was fired
+-- @param Wrapper.Group#GROUP SEADGroup Attacker group
+-- @param #string SEADWeaponName Weapon Name
+-- @return #SEAD self 
+function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADGroup,SEADWeaponName)
+  self:T("**** Calculating hit zone for " .. (SEADWeaponName or "None"))
+  if SEADWeapon and SEADWeapon:isExist() then
+    --local pos = SEADWeapon:getPoint()
+    
+    -- postion and height
+    local position = SEADWeapon:getPosition()
+    local mheight = height
+    -- heading
+    local wph = math.atan2(position.x.z, position.x.x)      
+    if wph < 0 then
+      wph=wph+2*math.pi
+    end   
+    wph=math.deg(wph)
+    
+    -- velocity
+    local wpndata = SEAD.HarmData["AGM_88"]
+    if string.find(SEADWeaponName,"154",1) then
+      wpndata = SEAD.HarmData["AGM_154"]
+    end
+    local mveloc = math.floor(wpndata[2] * 340.29)
+    local c1 = (2*mheight*9.81)/(mveloc^2)
+    local c2 = (mveloc^2) / 9.81
+    local Ropt = c2 * math.sqrt(c1+1) 
+    if height <= 5000 then
+      Ropt = Ropt * 0.72
+    elseif height <= 7500 then
+      Ropt = Ropt * 0.82  
+    elseif height <= 10000 then
+      Ropt = Ropt * 0.87
+    elseif height <= 12500 then
+      Ropt = Ropt * 0.98
+    end
+    
+    -- look at a couple of zones across the trajectory
+    for n=1,3 do
+      local dist = Ropt - ((n-1)*20000)
+      local predpos= pos0:Translate(dist,wph)
+      if predpos then
+  
+        local targetzone = ZONE_RADIUS:New("Target Zone",predpos:GetVec2(),20000)
+        
+        if self.debug then
+          predpos:MarkToAll(string.format("height=%dm | heading=%d | velocity=%ddeg | Ropt=%dm",mheight,wph,mveloc,Ropt),false)
+          targetzone:DrawZone(coalition.side.BLUE,{0,0,1},0.2,nil,nil,3,true)
+        end  
+        
+        local seadset = SET_GROUP:New():FilterPrefixes(self.SEADGroupPrefixes):FilterZones({targetzone}):FilterOnce()
+        local tgtcoord = targetzone:GetRandomPointVec2()
+        --if tgtcoord and tgtcoord.ClassName == "COORDINATE" then
+          --local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
+          local tgtgrp = seadset:GetRandom()
+          local _targetgroup = nil
+          local _targetgroupname = "none"
+          local _targetskill = "Random"
+          if tgtgrp and tgtgrp:IsAlive() then
+            _targetgroup = tgtgrp
+            _targetgroupname = tgtgrp:GetName() -- group name
+            _targetskill = tgtgrp:GetUnit(1):GetSkill()
+            self:T("*** Found Target = ".. _targetgroupname)
+            self:ManageEvasion(_targetskill,_targetgroup,pos0,"AGM_88",SEADGroup, 20)
+          end
+        --end
+      end
+    end     
+  end
+  return self
+end
+
+--- (Internal) Handle Evasion
+-- @param #SEAD self
+-- @param #string _targetskill
+-- @param Wrapper.Group#GROUP _targetgroup
+-- @param Core.Point#COORDINATE SEADPlanePos
+-- @param #string SEADWeaponName
+-- @param Wrapper.Group#GROUP SEADGroup Attacker Group
+-- @param #number timeoffset Offset for tti calc
+-- @return #SEAD self 
+function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,timeoffset)
+  local timeoffset = timeoffset  or 0
+  if _targetskill == "Random" then -- when skill is random, choose a skill
+    local Skills = { "Average", "Good", "High", "Excellent" }
+    _targetskill = Skills[ math.random(1,4) ]
+  end
+  --self:T( _targetskill )
+  if self.TargetSkill[_targetskill] then
+    local _evade = math.random (1,100) -- random number for chance of evading action
+    if (_evade > self.TargetSkill[_targetskill].Evade) then
+      self:T("*** SEAD - Evading")
+      -- calculate distance of attacker
+      local _targetpos = _targetgroup:GetCoordinate()
+      local _distance = self:_GetDistance(SEADPlanePos, _targetpos)
+      -- weapon speed
+      local hit, data = self:_CheckHarms(SEADWeaponName)
+      local wpnspeed = 666 -- ;)
+      local reach = 10
+      if hit then
+        local wpndata = SEAD.HarmData[data]
+        reach = wpndata[1] * 1,1
+        local mach = wpndata[2]
+        wpnspeed = math.floor(mach * 340.29)
+      end
+      -- time to impact
+      local _tti = math.floor(_distance / wpnspeed) - timeoffset -- estimated impact time
+      if _distance > 0 then
+        _distance = math.floor(_distance / 1000) -- km
+      else
+        _distance = 0
+      end
+  
+      self:T( string.format("*** SEAD - target skill %s, distance %dkm, reach %dkm, tti %dsec", _targetskill, _distance,reach,_tti ))
+  
+      if reach >= _distance then
+        self:T("*** SEAD - Shot in Reach")
+  
+        local function SuppressionStart(args)
+          self:T(string.format("*** SEAD - %s Radar Off & Relocating",args[2]))
+          local grp = args[1] -- Wrapper.Group#GROUP
+          local name = args[2] -- #string Group Name
+          local attacker = args[3] -- Wrapper.Group#GROUP
+          if self.UseEmissionsOnOff then
+            grp:EnableEmission(false)
+          end
+          grp:OptionAlarmStateGreen() -- needed else we cannot move around
+          grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond")
+          if self.UseCallBack then
+            local object = self.CallBack
+            object:SeadSuppressionStart(grp,name,attacker)
+          end
+        end
+  
+        local function SuppressionStop(args)
+          self:T(string.format("*** SEAD - %s Radar On",args[2]))
+          local grp = args[1]  -- Wrapper.Group#GROUP
+          local name = args[2] -- #string Group Nam
+          if self.UseEmissionsOnOff then
+            grp:EnableEmission(true)
+          end
+          grp:OptionAlarmStateRed()
+          grp:OptionEngageRange(self.EngagementRange)
+          self.SuppressedGroups[name] = false
+          if self.UseCallBack then
+            local object = self.CallBack
+            object:SeadSuppressionEnd(grp,name)
+          end
+        end
+  
+        -- randomize switch-on time
+        local delay = math.random(self.TargetSkill[_targetskill].DelayOn[1], self.TargetSkill[_targetskill].DelayOn[2])
+        if delay > _tti then delay = delay / 2 end -- speed up
+        if _tti > 600 then delay =  _tti - 90 end -- shot from afar, 600 is default shorad ontime
+  
+        local SuppressionStartTime = timer.getTime() + delay
+        local SuppressionEndTime = timer.getTime() + _tti + self.Padding
+        local _targetgroupname = _targetgroup:GetName()
+        if not self.SuppressedGroups[_targetgroupname] then
+          self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Switch-Off in %ds",_targetgroupname,_tti,delay))
+          timer.scheduleFunction(SuppressionStart,{_targetgroup,_targetgroupname, SEADGroup},SuppressionStartTime)
+          timer.scheduleFunction(SuppressionStop,{_targetgroup,_targetgroupname},SuppressionEndTime)
+          self.SuppressedGroups[_targetgroupname] = true
+          if self.UseCallBack then
+            local object = self.CallBack
+            object:SeadSuppressionPlanned(_targetgroup,_targetgroupname,SuppressionStartTime,SuppressionEndTime, SEADGroup)
+          end
+        end
+  
+      end
+    end
+  end
+  return self
+end
+
 --- (Internal) Detects if an SAM site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @param #SEAD self
 -- @param Core.Event#EVENTDATA EventData
@@ -256,6 +448,7 @@ end
 function SEAD:HandleEventShot( EventData )
   self:T( { EventData.id } )
   local SEADPlane = EventData.IniUnit -- Wrapper.Unit#UNIT
+  local SEADGroup = EventData.IniGroup -- Wrapper.Group#GROUP
   local SEADPlanePos = SEADPlane:GetCoordinate() -- Core.Point#COORDINATE
   local SEADUnit = EventData.IniDCSUnit
   local SEADUnitName = EventData.IniDCSUnitName
@@ -270,114 +463,55 @@ function SEAD:HandleEventShot( EventData )
     local _targetskill = "Random"
     local _targetgroupname = "none"
     local _target = EventData.Weapon:getTarget() -- Identify target
-    local _targetUnit = UNIT:Find(_target) -- Wrapper.Unit#UNIT
+    if not _target or self.debug  then -- AGM-88 or 154 w/o target data
+      self:E("***** SEAD - No target data for " .. (SEADWeaponName or "None"))
+      if string.find(SEADWeaponName,"AGM_88",1,true) or string.find(SEADWeaponName,"AGM_154",1,true) then
+        self:I("**** Tracking AGM-88/154 with no target data.")
+        local pos0 = SEADPlane:GetCoordinate()
+        local fheight = SEADPlane:GetHeight()
+        self:__CalculateHitZone(20,SEADWeapon,pos0,fheight,SEADGroup,SEADWeaponName)
+      end
+      return self
+    end
+    local targetcat = _target:getCategory() -- Identify category
+    local _targetUnit = nil -- Wrapper.Unit#UNIT
     local _targetgroup = nil -- Wrapper.Group#GROUP
-    if _targetUnit and _targetUnit:IsAlive() then
-      _targetgroup = _targetUnit:GetGroup()
-      _targetgroupname = _targetgroup:GetName() -- group name
-      local _targetUnitName = _targetUnit:GetName()
-      _targetUnit:GetSkill()
-      _targetskill = _targetUnit:GetSkill()
+    self:T(string.format("*** Targetcat = %d",targetcat))
+    if targetcat == Object.Category.UNIT then -- UNIT
+      self:T("*** Target Category UNIT")
+      _targetUnit = UNIT:Find(_target) -- Wrapper.Unit#UNIT
+      if _targetUnit and _targetUnit:IsAlive() then
+        _targetgroup = _targetUnit:GetGroup()
+        _targetgroupname = _targetgroup:GetName() -- group name
+        local _targetUnitName = _targetUnit:GetName()
+        _targetUnit:GetSkill()
+        _targetskill = _targetUnit:GetSkill()
+      end
+    elseif targetcat == Object.Category.STATIC then
+      self:T("*** Target Category STATIC")
+      local seadset = SET_GROUP:New():FilterPrefixes(self.SEADGroupPrefixes):FilterOnce()
+      local targetpoint = _target:getPoint() or {x=0,y=0,z=0}
+      local tgtcoord = COORDINATE:NewFromVec3(targetpoint)
+      local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
+      if tgtgrp and tgtgrp:IsAlive() then
+        _targetgroup = tgtgrp
+        _targetgroupname = tgtgrp:GetName() -- group name
+        _targetskill = tgtgrp:GetUnit(1):GetSkill()
+        self:T("*** Found Target = ".. _targetgroupname)
+      end
     end
     -- see if we are shot at
     local SEADGroupFound = false
     for SEADGroupPrefixID, SEADGroupPrefix in pairs( self.SEADGroupPrefixes ) do
-      self:T( _targetgroupname, SEADGroupPrefix )
-      if string.find( _targetgroupname, SEADGroupPrefix, 1, true ) then
+      self:T("Target = ".. _targetgroupname .. " | Prefix = " .. SEADGroupPrefix )
+      if string.find( _targetgroupname, SEADGroupPrefix,1,true ) then
         SEADGroupFound = true
         self:T( '*** SEAD - Group Match Found' )
         break
       end
     end
     if SEADGroupFound == true then -- yes we are being attacked
-      if _targetskill == "Random" then -- when skill is random, choose a skill
-        local Skills = { "Average", "Good", "High", "Excellent" }
-        _targetskill = Skills[ math.random(1,4) ]
-      end
-      --self:T( _targetskill )
-      if self.TargetSkill[_targetskill] then
-        local _evade = math.random (1,100) -- random number for chance of evading action
-        if (_evade > self.TargetSkill[_targetskill].Evade) then
-          self:T("*** SEAD - Evading")
-          -- calculate distance of attacker
-          local _targetpos = _targetgroup:GetCoordinate()
-          local _distance = self:_GetDistance(SEADPlanePos, _targetpos)
-          -- weapon speed
-          local hit, data = self:_CheckHarms(SEADWeaponName)
-          local wpnspeed = 666 -- ;)
-          local reach = 10
-          if hit then
-            local wpndata = SEAD.HarmData[data]
-            reach = wpndata[1] * 1,1
-            local mach = wpndata[2]
-            wpnspeed = math.floor(mach * 340.29)
-          end
-          -- time to impact
-          local _tti = math.floor(_distance / wpnspeed) -- estimated impact time
-          if _distance > 0 then
-            _distance = math.floor(_distance / 1000) -- km
-          else
-            _distance = 0
-          end
-
-          self:T( string.format("*** SEAD - target skill %s, distance %dkm, reach %dkm, tti %dsec", _targetskill, _distance,reach,_tti ))
-
-          if reach >= _distance then
-            self:T("*** SEAD - Shot in Reach")
-
-            local function SuppressionStart(args)
-              self:T(string.format("*** SEAD - %s Radar Off & Relocating",args[2]))
-              local grp = args[1] -- Wrapper.Group#GROUP
-              local name = args[2] -- #string Group Name 
-              if self.UseEmissionsOnOff then
-                grp:EnableEmission(false)
-              end
-              grp:OptionAlarmStateGreen() -- needed else we cannot move around
-              grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond")
-              if self.UseCallBack then
-                local object = self.CallBack
-                object:SeadSuppressionStart(grp,name)
-              end
-            end
-
-            local function SuppressionStop(args)
-              self:T(string.format("*** SEAD - %s Radar On",args[2]))
-              local grp = args[1]  -- Wrapper.Group#GROUP
-              local name = args[2] -- #string Group Nam
-              if self.UseEmissionsOnOff then
-                grp:EnableEmission(true)
-              end
-              grp:OptionAlarmStateAuto()
-              grp:OptionEngageRange(self.EngagementRange)
-              self.SuppressedGroups[name] = false
-              if self.UseCallBack then
-                local object = self.CallBack
-                object:SeadSuppressionEnd(grp,name)
-              end
-            end
-
-            -- randomize switch-on time
-            local delay = math.random(self.TargetSkill[_targetskill].DelayOn[1], self.TargetSkill[_targetskill].DelayOn[2])
-            if delay > _tti then delay = delay / 2 end -- speed up
-            if _tti > (3*delay) then delay = (_tti / 2) * 0.9 end -- shot from afar
-
-            local SuppressionStartTime = timer.getTime() + delay
-            local SuppressionEndTime = timer.getTime() + _tti + self.Padding
-
-            if not self.SuppressedGroups[_targetgroupname] then
-              self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Switch-Off in %ds",_targetgroupname,_tti,delay))
-              timer.scheduleFunction(SuppressionStart,{_targetgroup,_targetgroupname},SuppressionStartTime)
-              timer.scheduleFunction(SuppressionStop,{_targetgroup,_targetgroupname},SuppressionEndTime)
-              self.SuppressedGroups[_targetgroupname] = true
-              if self.UseCallBack then
-                local object = self.CallBack
-                object:SeadSuppressionPlanned(_targetgroup,_targetgroupname,SuppressionStartTime,SuppressionEndTime)
-              end
-            end
-
-          end
-        end
-      end
+      self:ManageEvasion(_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup)
     end
   end
   return self
