@@ -19,7 +19,7 @@
 --   * Bomb, rocket and missile impact points can be marked by smoke.
 --   * Direct hits on targets can trigger flares.
 --   * Smoke and flare colors can be adjusted for each player via radio menu.
---   * Range information and weather report at the range can be reported via radio menu.
+--   * Range information and weather at the range can be obtained via radio menu.
 --   * Persistence: Bombing range results can be saved to disk and loaded the next time the mission is started.
 --   * Range control voice overs (>40) for hit assessment.
 --
@@ -53,7 +53,7 @@
 --- RANGE class
 -- @type RANGE
 -- @field #string ClassName Name of the Class.
--- @field #boolean Debug If true, debug info is send as messages on the screen.
+-- @field #boolean Debug If true, debug info is sent as messages on the screen.
 -- @field #boolean verbose Verbosity level. Higher means more output to DCS log file.
 -- @field #string id String id of range for output in DCS log.
 -- @field #string rangename Name of the range.
@@ -76,13 +76,13 @@
 -- @field #number Tmsg Time [sec] messages to players are displayed. Default 30 sec.
 -- @field #string examinergroupname Name of the examiner group which should get all messages.
 -- @field #boolean examinerexclusive If true, only the examiner gets messages. If false, clients and examiner get messages.
--- @field #number strafemaxalt Maximum altitude above ground for registering for a strafe run. Default is 914 m = 3000 ft.
+-- @field #number strafemaxalt Maximum altitude in meters AGL for registering for a strafe run. Default is 914 m = 3000 ft.
 -- @field #number ndisplayresult Number of (player) results that a displayed. Default is 10.
 -- @field Utilities.Utils#SMOKECOLOR BombSmokeColor Color id used for smoking bomb targets.
 -- @field Utilities.Utils#SMOKECOLOR StrafeSmokeColor Color id used to smoke strafe targets.
 -- @field Utilities.Utils#SMOKECOLOR StrafePitSmokeColor Color id used to smoke strafe pit approach boxes.
--- @field #number illuminationminalt Minimum altitude AGL in meters at which illumination bombs are fired. Default is 500 m.
--- @field #number illuminationmaxalt Maximum altitude AGL in meters at which illumination bombs are fired. Default is 1000 m.
+-- @field #number illuminationminalt Minimum altitude in meters AGL at which illumination bombs are fired. Default is 500 m.
+-- @field #number illuminationmaxalt Maximum altitude in meters AGL at which illumination bombs are fired. Default is 1000 m.
 -- @field #number scorebombdistance Distance from closest target up to which bomb hits are counted. Default 1000 m.
 -- @field #number TdelaySmoke Time delay in seconds between impact of bomb and starting the smoke. Default 3 seconds.
 -- @field #boolean eventmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler. Default true.
@@ -133,12 +133,12 @@
 --
 -- A strafe pit can be added to the range by the @{#RANGE.AddStrafePit}(*targetnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline*) function.
 --
--- * The first parameter *targetnames* defines the target or targets. This has to be given as a lua table which contains the names of @{Wrapper.Unit} or @{Static} objects defined in the mission editor.
+-- * The first parameter *targetnames* defines the target or targets. This can be a single item or a Table with the name(s) of @{Wrapper.Unit} or @{Static} objects defined in the mission editor.
 -- * In order to perform a valid pass on the strafe pit, the pilot has to begin his run from the correct direction. Therefore, an "approach box" is defined in front
---   of the strafe targets. The parameters *boxlength* and *boxwidth* define the size of the box while the parameter *heading* defines its direction.
---   If the parameter *heading* is passed as **nil**, the heading is automatically taken from the heading of the first target unit as defined in the ME.
---   The parameter *inverseheading* turns the heading around by 180 degrees. This is sometimes useful, since the default heading of strafe target units point in the
---   wrong/opposite direction.
+--   of the strafe targets. The parameters *boxlength* and *boxwidth* define the size of the box in meters, while the *heading* parameter defines the heading of the box FROM the target.
+--   For example, if heading 120 is set, the approach box will start FROM the target and extend outwards on heading 120. A strafe run approach must then be flown apx. heading 300 TOWARDS the target.
+--   If the parameter *heading* is passed as **nil**, the heading is automatically taken from the heading set in the ME for the first target unit.
+-- * The parameter *inverseheading* turns the heading around by 180 degrees. This is useful when the default heading of strafe target units point in the wrong/opposite direction.
 -- * The parameter *goodpass* defines the number of hits a pilot has to achieve during a run to be judged as a "good" pass.
 -- * The last parameter *foulline* sets the distance from the pit targets to the foul line. Hit from closer than this line are not counted!
 --
@@ -149,27 +149,26 @@
 -- strafing pits of the range and can be adjusted by the @{#RANGE.SetMaxStrafeAlt}(maxalt) function.
 --
 -- # Bombing targets
--- 
+--
 -- One ore multiple bombing targets can be added to the range by the @{#RANGE.AddBombingTargets}(targetnames, goodhitrange, randommove) function.
 --
--- * The first parameter *targetnames* has to be a lua table, which contains the names of @{Wrapper.Unit} and/or @{Static} objects defined in the mission editor.
---   Note that the @{Range} logic **automatically** determines, if a name belongs to a @{Wrapper.Unit} or @{Static} object now.
--- * The (optional) parameter *goodhitrange* specifies the radius around the target. If a bomb or rocket falls at a distance smaller than this number, the hit is considered to be "good".
+-- * The first parameter *targetnames* defines the target or targets. This can be a single item or a Table with the name(s) of @{Wrapper.Unit} or @{Static} objects defined in the mission editor.
+-- * The (optional) parameter *goodhitrange* specifies the radius in metres around the target within which a bomb/rocket hit is considered to be "good".
 -- * If final (optional) parameter "*randommove*" can be enabled to create moving targets. If this parameter is set to true, the units of this bombing target will randomly move within the range zone.
 --   Note that there might be quirks since DCS units can get stuck in buildings etc. So it might be safer to manually define a route for the units in the mission editor if moving targets are desired.
 --
 -- ## Adding Groups
--- 
+--
 -- Another possibility to add bombing targets is the @{#RANGE.AddBombingTargetGroup}(*group, goodhitrange, randommove*) function. Here the parameter *group* is a MOOSE @{Wrapper.Group} object
 -- and **all** units in this group are defined as bombing targets.
--- 
+--
 -- ## Specifying Coordinates
--- 
+--
 -- It is also possible to specify coordinates rather than unit or static objects as bombing target locations. This has the advantage, that even when the unit/static object is dead, the specified 
 -- coordinate will still be a valid impact point. This can be done via the @{#RANGE.AddBombingTargetCoordinate}(*coord*, *name*, *goodhitrange*) function.
 --
 -- # Fine Tuning
--- 
+--
 -- Many range parameters have good default values. However, the mission designer can change these settings easily with the supplied user functions:
 --
 -- * @{#RANGE.SetMaxStrafeAlt}() sets the max altitude for valid strafing runs.
@@ -185,60 +184,60 @@
 -- * @{#RANGE.TrackMissilesON}() or @{#RANGE.TrackMissilesOFF}() can be used to enable/disable tracking and evaluating of all missile types a player fires.
 --
 -- # Radio Menu
--- 
+--
 -- Each range gets a radio menu with various submenus where each player can adjust his individual settings or request information about the range or his scores.
 --
 -- The main range menu can be found at "F10. Other..." --> "F*X*. On the Range..." --> "F1. <Range Name>...".
 --
--- The range menu contains the following submenues:
--- 
+-- The range menu contains the following submenus:
+--
 -- ![Banner Image](..\Presentations\RANGE\Menu_Main.png)
 --
 -- * "F1. Statistics...": Range results of all players and personal stats.
 -- * "F2. Mark Targets": Mark range targets by smoke or flares.
 -- * "F3. My Settings" Personal settings.
 -- * "F4. Range Info": Information about the range, such as bearing and range.
--- 
+--
 -- ## F1 Statistics
--- 
+--
 -- ![Banner Image](..\Presentations\RANGE\Menu_Stats.png)
--- 
+--
 -- ## F2 Mark Targets
--- 
+--
 -- ![Banner Image](..\Presentations\RANGE\Menu_Stats.png)
--- 
+--
 -- ## F3 My Settings
--- 
+--
 -- ![Banner Image](..\Presentations\RANGE\Menu_MySettings.png)
--- 
+--
 -- ## F4 Range Info
--- 
+--
 -- ![Banner Image](..\Presentations\RANGE\Menu_RangeInfo.png)
--- 
+--
 -- # Voice Overs
--- 
+--
 -- Voice over sound files can be downloaded from the Moose Discord. Check the pinned messages in the *#func-range* channel.
--- 
+--
 -- Instructor radio will inform players when they enter or exit the range zone and provide the radio frequency of the range control for hit assessment.
 -- This can be enabled via the @{#RANGE.SetInstructorRadio}(*frequency*) functions, where *frequency* is the AM frequency in MHz.
--- 
+--
 -- The range control can be enabled via the @{#RANGE.SetRangeControl}(*frequency*) functions, where *frequency* is the AM frequency in MHz.
--- 
+--
 -- By default, the sound files are placed in the "Range Soundfiles/" folder inside the mission (.miz) file. Another folder can be specified via the @{#RANGE.SetSoundfilesPath}(*path*) function.
--- 
+--
 -- # Persistence
--- 
+--
 -- To automatically save bombing results to disk, use the @{#RANGE.SetAutosave}() function. Bombing results will be saved as csv file in your "Saved Games\DCS.openbeta\Logs" directory.
 -- Each range has a separate file, which is named "RANGE-<*RangeName*>_BombingResults.csv".
--- 
+--
 -- The next time you start the mission, these results are also automatically loaded.
--- 
+--
 -- Strafing results are currently **not** saved.
 --
 -- # Examples
 --
 -- ## Goldwater Range
--- 
+--
 -- This example shows hot to set up the [Barry M. Goldwater range](https://en.wikipedia.org/wiki/Barry_M._Goldwater_Air_Force_Range).
 -- It consists of two strafe pits each has two targets plus three bombing targets.
 --
@@ -257,9 +256,9 @@
 --      -- Note that this could also be done manually by simply measuring the distance between the target and the foul line in the ME.
 --      GoldwaterRange:GetFoullineDistance("GWR Strafe Pit Left 1", "GWR Foul Line Left")
 --
---      -- Add strafe pits. Each pit (left and right) consists of two targets.
---      GoldwaterRange:AddStrafePit(strafepit_left, 3000, 300, nil, true, 20, fouldist)
---      GoldwaterRange:AddStrafePit(strafepit_right, nil, nil, nil, true, nil, fouldist)
+--      -- Add strafe pits. Each pit (left and right) consists of two targets. Where "nil" is used as input, the default value is used.
+--      GoldwaterRange:AddStrafePit(strafepit_left, 3000, 300, nil, true, 30, 500)
+--      GoldwaterRange:AddStrafePit(strafepit_right, nil, nil, nil, true, nil, 500)
 --
 --      -- Add bombing targets. A good hit is if the bomb falls less then 50 m from the target.
 --      GoldwaterRange:AddBombingTargets(bombtargets, 50)
@@ -288,8 +287,6 @@
 --
 -- Note that it can happen that the RANGE radio menu is not shown. Check that the range object is defined as a **global** variable rather than a local one.
 -- The could avoid the lua garbage collection to accidentally/falsely deallocate the RANGE objects.
---
---
 --
 -- @field #RANGE
 RANGE = {
@@ -846,7 +843,7 @@ end
 
 --- Set maximal strafing altitude. Player entering a strafe pit above that altitude are not registered for a valid pass.
 -- @param #RANGE self
--- @param #number maxalt Maximum altitude AGL in meters. Default is 914 m= 3000 ft.
+-- @param #number maxalt Maximum altitude in meters AGL. Default is 914 m = 3000 ft.
 -- @return #RANGE self
 function RANGE:SetMaxStrafeAlt( maxalt )
   self.strafemaxalt = maxalt or RANGE.Defaults.strafemaxalt
@@ -1123,7 +1120,7 @@ end
 
 --- Set sound files folder within miz file.
 -- @param #RANGE self
--- @param #string path Path for sound files. Default "ATIS Soundfiles/". Mind the slash "/" at the end!
+-- @param #string path Path for sound files. Default "Range Soundfiles/". Mind the slash "/" at the end!
 -- @return #RANGE self
 function RANGE:SetSoundfilesPath( path )
   self.soundpath = tostring( path or "Range Soundfiles/" )
@@ -1132,16 +1129,16 @@ function RANGE:SetSoundfilesPath( path )
 end
 
 --- Add new strafe pit. For a strafe pit, hits from guns are counted. One pit can consist of several units.
--- Note, an approach is only valid, if the player enters via a zone in front of the pit, which defined by boxlength and boxheading.
+-- A strafe run approach is only valid if the player enters via a zone in front of the pit, which is defined by boxlength, boxwidth, and heading.
 -- Furthermore, the player must not be too high and fly in the direction of the pit to make a valid target apporoach.
 -- @param #RANGE self
--- @param #table targetnames Table of unit or static names defining the strafe targets. The first target in the list determines the approach zone (heading and box).
+-- @param #table targetnames Single or multiple (Table) unit or static names defining the strafe targets. The first target in the list determines the approach box origin (heading and box).
 -- @param #number boxlength (Optional) Length of the approach box in meters. Default is 3000 m.
 -- @param #number boxwidth (Optional) Width of the approach box in meters. Default is 300 m.
--- @param #number heading (Optional) Approach heading in Degrees. Default is heading of the unit as defined in the mission editor.
--- @param #boolean inverseheading (Optional) Take inverse heading (heading --> heading - 180 Degrees). Default is false.
+-- @param #number heading (Optional) Approach box heading in degrees (originating FROM the target). Default is the heading set in the ME for the first target unit
+-- @param #boolean inverseheading (Optional) Use inverse heading (heading --> heading - 180 Degrees). Default is false.
 -- @param #number goodpass (Optional) Number of hits for a "good" strafing pass. Default is 20.
--- @param #number foulline (Optional) Foul line distance. Hits from closer than this distance are not counted. Default 610 m = 2000 ft. Set to 0 for no foul line.
+-- @param #number foulline (Optional) Foul line distance. Hits from closer than this distance are not counted. Default is 610 m = 2000 ft. Set to 0 for no foul line.
 -- @return #RANGE self
 function RANGE:AddStrafePit( targetnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline )
   self:F( { targetnames = targetnames, boxlength = boxlength, boxwidth = boxwidth, heading = heading, inverseheading = inverseheading, goodpass = goodpass, foulline = foulline } )
@@ -1314,7 +1311,7 @@ end
 
 --- Add bombing target(s) to range.
 -- @param #RANGE self
--- @param #table targetnames Table containing names of unit or static objects serving as bomb targets.
+-- @param #table targetnames Single or multiple (Table) names of unit or static objects serving as bomb targets.
 -- @param #number goodhitrange (Optional) Max distance from target unit (in meters) which is considered as a good hit. Default is 25 m.
 -- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
 -- @return #RANGE self
@@ -3797,7 +3794,7 @@ function RANGE:_GetPlayerUnitAndName( _unitName )
   return nil, nil
 end
 
---- Returns a string which consits of this callsign and the player name.
+--- Returns a string which consists of the player name.
 -- @param #RANGE self
 -- @param #string unitname Name of the player unit.
 function RANGE:_myname( unitname )
@@ -3805,7 +3802,7 @@ function RANGE:_myname( unitname )
 
   local unit = UNIT:FindByName( unitname )
   local pname = unit:GetPlayerName()
-  local csign = unit:GetCallsign()
+  -- local csign = unit:GetCallsign()
 
   -- return string.format("%s (%s)", csign, pname)
   return string.format( "%s", pname )
