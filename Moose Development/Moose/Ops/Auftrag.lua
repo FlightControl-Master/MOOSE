@@ -94,6 +94,7 @@
 -- @field Core.Set#SET_GROUP transportGroupSet Groups to be transported.
 -- @field Core.Point#COORDINATE transportPickup Coordinate where to pickup the cargo.
 -- @field Core.Point#COORDINATE transportDropoff Coordinate where to drop off the cargo.
+-- @field #number transportPickupRadius Radius in meters for pickup zone. Default 500 m.
 -- 
 -- @field Ops.OpsTransport#OPSTRANSPORT opstransport OPS transport assignment.
 -- @field #number NcarriersMin Min number of required carrier assets.
@@ -557,7 +558,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.8.1"
+AUFTRAG.version="0.8.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1492,8 +1493,9 @@ end
 -- @param Core.Set#SET_GROUP TransportGroupSet The set group(s) to be transported.
 -- @param Core.Point#COORDINATE DropoffCoordinate Coordinate where the helo will land drop off the the troops.
 -- @param Core.Point#COORDINATE PickupCoordinate Coordinate where the helo will land to pick up the the cargo. Default is the fist transport group.
+-- @param #number PickupRadius Radius around the pickup coordinate in meters. Default 500 m.
 -- @return #AUFTRAG self
-function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupCoordinate)
+function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupCoordinate, PickupRadius)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.TROOPTRANSPORT)
   
@@ -1509,14 +1511,16 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
   
   mission:_TargetFromObject(mission.transportGroupSet)
   
-  mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()  
+  mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()
   mission.transportDropoff=DropoffCoordinate
+  
+  mission.transportPickupRadius=PickupRadius or 500
 
   mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.TROOPTRANSPORT)
   
   -- Debug.
-  mission.transportPickup:MarkToAll("Pickup")
-  mission.transportDropoff:MarkToAll("Drop off")
+  --mission.transportPickup:MarkToAll("Pickup Transport")
+  --mission.transportDropoff:MarkToAll("Drop off")
 
   -- TODO: what's the best ROE here?
   mission.optionROE=ENUMS.ROE.ReturnFire

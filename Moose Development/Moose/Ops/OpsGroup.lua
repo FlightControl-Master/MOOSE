@@ -466,7 +466,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.7.5"
+OPSGROUP.version="0.7.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4580,13 +4580,22 @@ function OPSGROUP:RouteToMission(mission, delay)
 
       -- Refresh DCS task with the known controllable.
       mission.DCStask=mission:GetDCSMissionTask(self.group)
+      
+      -- Create a pickup zone around the pickup coordinate. The troops will go to a random point inside the zone.
+      -- This is necessary so the helos do not try to land at the exact same location where the troops wait.
+      local pradius=500
+      local pickupZone=ZONE_RADIUS:New("Pickup Zone", mission.transportPickup:GetVec2(), pradius)
 
       -- Add task to embark for the troops.
       for _,_group in pairs(mission.transportGroupSet.Set) do
         local group=_group --Wrapper.Group#GROUP
 
         if group and group:IsAlive() then
-          local DCSTask=group:TaskEmbarkToTransport(mission.transportPickup, 500)
+          -- Get random coordinate inside the zone.
+          local pcoord=pickupZone:GetRandomCoordinate(20, pradius, {land.SurfaceType.LAND, land.SurfaceType.ROAD})
+          
+          -- Let the troops embark the transport.
+          local DCSTask=group:TaskEmbarkToTransport(pcoord, pradius)
           group:SetTask(DCSTask, 5)
         end
 
