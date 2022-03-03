@@ -79,6 +79,7 @@ SEAD = {
   ["Kh25"] = "Kh25",
   ["BGM_109"] = "BGM_109",
   ["AGM_154"] = "AGM_154",
+  ["HY-2"] = "HY-2",
   }
 
   --- Missile enumerators - from DCS ME and Wikipedia
@@ -98,6 +99,7 @@ SEAD = {
   ["Kh25"] = {25, 0.8},
   ["BGM_109"] = {460, 0.705}, --in-game ~465kn
   ["AGM_154"] = {130, 0.61},
+  ["HY-2"] = {90,1},
   }
 
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
