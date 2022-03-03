@@ -1021,7 +1021,7 @@ CTLD.UnitTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.9"
+CTLD.version="1.0.10"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2095,11 +2095,18 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
   -- cycle
   local index = 0
   local found = {}
-  local loadedmass = self:_GetUnitCargoMass(_unit)
-  local unittype = _unit:GetTypeName()
-  local capabilities = self:_GetUnitCapabilities(_unit) -- #CTLD.UnitCapabilities
-  local maxmass = capabilities.cargoweightlimit
-  local maxloadable = maxmass - loadedmass
+  local loadedmass = 0
+  local unittype = "none"
+  local capabilities = {}
+  local maxmass = 2000
+  local maxloadable = 2000
+  if not _ignoreweight then
+    loadedmass = self:_GetUnitCargoMass(_unit)
+    unittype = _unit:GetTypeName()
+    capabilities = self:_GetUnitCapabilities(_unit) -- #CTLD.UnitCapabilities
+    maxmass = capabilities.cargoweightlimit
+    maxloadable = maxmass - loadedmass 
+  end
   self:T(self.lid .. " Max loadable mass: " .. maxloadable)
   for _,_cargoobject in pairs (existingcrates) do
     local cargo = _cargoobject -- #CTLD_CARGO
