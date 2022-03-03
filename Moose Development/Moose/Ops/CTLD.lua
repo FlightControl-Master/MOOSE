@@ -2263,6 +2263,7 @@ end
 -- @return #number mass in kgs
 function CTLD:_GetUnitCargoMass(Unit) 
   self:T(self.lid .. " _GetUnitCargoMass")
+  if not Unit then return 0 end
   local unitname = Unit:GetName()
   local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
   local loadedmass = 0 -- #number
