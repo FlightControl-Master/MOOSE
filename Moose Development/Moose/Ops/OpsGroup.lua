@@ -3673,7 +3673,6 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
       -- BARRAGE is special!
       if Task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
-        env.info("FF Barrage")
         local vec2=self:GetVec2()
         local param=Task.dcstask.params
         local heading=param.heading or math.random(1, 360)
@@ -4230,7 +4229,7 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
     -- IMMOBILE Group
     ---
 
-    env.info("FF Immobile GROUP")
+    --env.info("FF Immobile GROUP")
 
     -- Add waypoint task. UpdateRoute is called inside.
     local Clock=Mission.Tpush and UTILS.SecondsToClock(Mission.Tpush) or 5
@@ -5768,6 +5767,32 @@ function OPSGROUP:onafterElementInUtero(From, Event, To, Element)
 
 end
 
+--- On after "ElementDamaged" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Element Element The flight group element.
+function OPSGROUP:onafterElementDamaged(From, Event, To, Element)
+  self:T(self.lid..string.format("Element damaged %s", Element.name))
+  
+  if Element and Element.status~=OPSGROUP.ElementStatus.DEAD then
+
+    local lifepoints=Element.DCSunit:getLife()
+    local lifepoint0=Element.DCSunit:getLife0()
+    
+    self:T(self.lid..string.format("Element life %s: %.2f/%.2f", Element.name, lifepoints, lifepoint0))
+    
+    if lifepoints<=1.0 then
+      self:T(self.lid..string.format("Element %s life %.2f <= 1.0 ==> Destroyed!", Element.name, lifepoints))
+      self:ElementDestroyed(Element)
+    end
+    
+  end
+
+end
+
+
 --- On after "ElementDestroyed" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -5802,10 +5827,18 @@ end
 function OPSGROUP:onafterElementDead(From, Event, To, Element)
 
   -- Debug info.
-  self:T(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
+  self:I(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
+  
+  if self.legion then
+    if not self:IsInUtero() then
+      local asset=self.legion:GetAssetByName(self.groupname)
+      local request=self.legion:GetRequestByID(asset.rid)
+      self.legion:_UnitDead(Element.unit, self.group, request)
+    end
+  end
 
   -- Check if element was lasing and if so, switch to another unit alive to lase.
   if self.spot.On and self.spot.element.name==Element.name then
@@ -6140,12 +6173,18 @@ function OPSGROUP:onafterDead(From, Event, To)
       -- All elements were destroyed ==> Asset group is gone.
       self.cohort:DelGroup(self.groupname)
     end
+    if self.legion then
+      --self.legion:Get
+      --self.legion:AssetDead()
+    end
   else
     -- Not all assets were destroyed (despawn) ==> Add asset back to legion?
   end
 
-  -- Stop in a sec.
-  --self:__Stop(-5)
+  -- Stop in 5 sec to give possible respawn attempts a chance.
+  if self.legion then
+    self:__Stop(-5)
+  end
 end
 
 --- On before "Stop" event.
@@ -6186,6 +6225,11 @@ function OPSGROUP:onafterStop(From, Event, To)
     self:UnHandleEvent(EVENTS.Ejection)
     self:UnHandleEvent(EVENTS.Crash)
     self.currbase=nil
+  end
+  
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    self:MissionCancel(mission)
   end
 
   -- Stop check timers.

@@ -4039,7 +4039,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       self:_DebugMessage(string.format("Removing group %s", group:GetName()), 5)
 
       local opsgroup=_DATABASE:GetOpsGroup(group:GetName())
-      if opsgroup then
+      if opsgroup then      
         opsgroup:Despawn(0, true)
         opsgroup:__Stop(-0.01)
       else
@@ -5452,6 +5452,55 @@ function WAREHOUSE:onafterAssetDead(From, Event, To, asset, request)
   local text=string.format("Asset %s from request id=%d is dead!", asset.templatename, request.uid)
   self:T(self.lid..text)
   self:_DebugMessage(text)
+
+  -- Here I need to get rid of the #CARGO at the end to obtain the original name again!
+  local groupname=asset.spawngroupname --self:_GetNameWithOut(group)
+
+  -- Dont trigger a Remove event for the group sets.
+  local NoTriggerEvent=true
+
+  if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
+
+    ---
+    -- Easy case: Group can simply be removed from the cargogroupset.
+    ---
+
+    -- Remove dead group from cargo group set.
+    request.cargogroupset:Remove(groupname, NoTriggerEvent)
+    self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
+
+  else
+
+    ---
+    -- Complicated case: Dead unit could be:
+    -- 1.) A Cargo unit (e.g. waiting to be picked up).
+    -- 2.) A Transport unit which itself holds cargo groups.
+    ---
+
+    -- Check if this a cargo or transport group.
+    local istransport=not asset.iscargo --self:_GroupIsTransport(group, request)
+
+    if istransport==true then
+
+      -- Whole carrier group is dead. Remove it from the carrier group set.
+      request.transportgroupset:Remove(groupname, NoTriggerEvent)
+      self:T(self.lid..string.format("Removed transport %s: ntransport=%d", groupname, request.transportgroupset:Count()))
+
+    elseif istransport==false then
+
+      -- This must have been an alive cargo group that was killed outside the carrier, e.g. waiting to be transported or waiting to be put back.
+      -- Remove dead group from cargo group set.
+      request.cargogroupset:Remove(groupname, NoTriggerEvent)
+      self:T(self.lid..string.format("Removed transported cargo %s outside carrier: ncargo=%d", groupname, request.cargogroupset:Count()))
+      -- This as well?
+      --request.transportcargoset:RemoveCargosByName(RemoveCargoNames)
+      
+    else
+      --self:E(self.lid..string.format("ERROR: Group %s is neither cargo nor transport!", group:GetName()))
+    end
+  end
+  
+  
 end
 
 
@@ -6556,7 +6605,8 @@ function WAREHOUSE:_OnEventCrashOrDead(EventData)
       end
     end
 
-    --self:I(self.lid..string.format("Warehouse %s captured event dead or crash or unit %s.", self.alias, tostring(EventData.IniUnitName)))
+    -- Debug info.
+    self:T2(self.lid..string.format("Warehouse %s captured event dead or crash or unit %s", self.alias, tostring(EventData.IniUnitName)))
 
     -- Check if an asset unit was destroyed.
     if EventData.IniGroup then
@@ -6571,7 +6621,7 @@ function WAREHOUSE:_OnEventCrashOrDead(EventData)
       if wid==self.uid then
 
         -- Debug message.
-        self:T(self.lid..string.format("Warehouse %s captured event dead or crash of its asset unit %s.", self.alias, EventData.IniUnitName))
+        self:T(self.lid..string.format("Warehouse %s captured event dead or crash of its asset unit %s", self.alias, EventData.IniUnitName))
 
         -- Loop over all pending requests and get the one belonging to this unit.
         for _,request in pairs(self.pending) do
@@ -6581,7 +6631,7 @@ function WAREHOUSE:_OnEventCrashOrDead(EventData)
           if request.uid==rid then
 
             -- Update cargo and transport group sets of this request. We need to know if this job is finished.
-            self:_UnitDead(EventData.IniUnit, request)
+            self:_UnitDead(EventData.IniUnit, EventData.IniGroup, request)
 
           end
         end
@@ -6594,38 +6644,51 @@ end
 -- This is important in order to determine if a job is done and can be removed from the (pending) queue.
 -- @param #WAREHOUSE self
 -- @param Wrapper.Unit#UNIT deadunit Unit that died.
+-- @param Wrapper.Group#GROUP deadgroup Group of unit that died.
 -- @param #WAREHOUSE.Pendingitem request Request that needs to be updated.
-function WAREHOUSE:_UnitDead(deadunit, request)
+function WAREHOUSE:_UnitDead(deadunit, deadgroup, request)
+  --env.info("FF unit dead "..deadunit:GetName())
 
-  -- Flare unit.
-  if self.Debug then
-    deadunit:FlareRed()
+  -- Find asset.  
+  local asset=self:FindAssetInDB(deadgroup)
+  
+  -- Find opsgroup.
+  local opsgroup=_DATABASE:FindOpsGroup(deadgroup)
+  
+  local groupdead=false
+  if opsgroup then
+  
+    if opsgroup:IsDead() then
+      groupdead=true
+    end
+  
+  else
+
+    -- Number of alive units in group.
+    local nalive=deadgroup:CountAliveUnits()
+  
+    -- Whole group is dead?
+    if nalive>0 then
+      groupdead=false
+    else
+      groupdead=true
+    end
+  
   end
-
-  -- Group the dead unit belongs to.
-  local group=deadunit:GetGroup()
-
-  -- Number of alive units in group.
-  local nalive=group:CountAliveUnits()
-
-  -- Whole group is dead?
-  local groupdead=true
-  if nalive>0 then
-    groupdead=false
-  end
+  
 
   -- Here I need to get rid of the #CARGO at the end to obtain the original name again!
   local unitname=self:_GetNameWithOut(deadunit)
-  local groupname=self:_GetNameWithOut(group)
+  local groupname=self:_GetNameWithOut(deadgroup)
 
   -- Group is dead!
   if groupdead then
-    self:T(self.lid..string.format("Group %s (transport=%s) is dead!", groupname, tostring(self:_GroupIsTransport(group,request))))
+    -- Debug output.
+    self:T(self.lid..string.format("Group %s (transport=%s) is dead!", groupname, tostring(self:_GroupIsTransport(deadgroup,request))))
     if self.Debug then
-      group:SmokeWhite()
+      deadgroup:SmokeWhite()
     end
-    -- Trigger AssetDead event.
-    local asset=self:FindAssetInDB(group)
+    -- Trigger AssetDead event.    
     self:AssetDead(asset, request)
   end
 
@@ -6633,19 +6696,7 @@ function WAREHOUSE:_UnitDead(deadunit, request)
   -- Dont trigger a Remove event for the group sets.
   local NoTriggerEvent=true
 
-  if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
-
-    ---
-    -- Easy case: Group can simply be removed from the cargogroupset.
-    ---
-
-    -- Remove dead group from cargo group set.
-    if groupdead==true then
-      request.cargogroupset:Remove(groupname, NoTriggerEvent)
-      self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
-    end
-
-  else
+  if not request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
 
     ---
     -- Complicated case: Dead unit could be:
@@ -6653,10 +6704,7 @@ function WAREHOUSE:_UnitDead(deadunit, request)
     -- 2.) A Transport unit which itself holds cargo groups.
     ---
 
-    -- Check if this a cargo or transport group.
-    local istransport=self:_GroupIsTransport(group,request)
-
-    if istransport==true then
+    if not asset.iscargo then
 
       -- Get the carrier unit table holding the cargo groups inside this carrier.
       local cargogroupnames=request.carriercargo[unitname]
@@ -6671,25 +6719,8 @@ function WAREHOUSE:_UnitDead(deadunit, request)
 
       end
 
-      -- Whole carrier group is dead. Remove it from the carrier group set.
-      if groupdead then
-        request.transportgroupset:Remove(groupname, NoTriggerEvent)
-        self:T(self.lid..string.format("Removed transport %s: ntransport=%d", groupname, request.transportgroupset:Count()))
-      end
-
-    elseif istransport==false then
-
-      -- This must have been an alive cargo group that was killed outside the carrier, e.g. waiting to be transported or waiting to be put back.
-      -- Remove dead group from cargo group set.
-      if groupdead==true then
-        request.cargogroupset:Remove(groupname, NoTriggerEvent)
-        self:T(self.lid..string.format("Removed transported cargo %s outside carrier: ncargo=%d", groupname, request.cargogroupset:Count()))
-        -- This as well?
-        --request.transportcargoset:RemoveCargosByName(RemoveCargoNames)
-      end
-
     else
-      self:E(self.lid..string.format("ERROR: Group %s is neither cargo nor transport!", group:GetName()))
+      self:E(self.lid..string.format("ERROR: Group %s is neither cargo nor transport!", deadgroup:GetName()))
     end
   end
 
@@ -8056,57 +8087,12 @@ end
 -- @return #number Request ID.
 function WAREHOUSE:_GetIDsFromGroup(group)
 
-  ---@param #string text The text to analyse.
-  local function analyse(text)
-
-    -- Get rid of #0001 tail from spawn.
-    local unspawned=UTILS.Split(text, "#")[1]
-
-    -- Split keywords.
-    local keywords=UTILS.Split(unspawned, "_")
-    local _wid=nil  -- warehouse UID
-    local _aid=nil  -- asset UID
-    local _rid=nil  -- request UID
-
-    -- Loop over keys.
-    for _,keys in pairs(keywords) do
-      local str=UTILS.Split(keys, "-")
-      local key=str[1]
-      local val=str[2]
-      if key:find("WID") then
-        _wid=tonumber(val)
-      elseif key:find("AID") then
-        _aid=tonumber(val)
-      elseif key:find("RID") then
-        _rid=tonumber(val)
-      end
-    end
-
-    return _wid,_aid,_rid
-  end
-
   if group then
-
+  
     -- Group name
-    local name=group:GetName()
-
-    -- Get asset id from group name.
-    local wid,aid,rid=analyse(name)
-
-    -- Get Asset.
-    local asset=self:GetAssetByID(aid)
-
-    -- Get warehouse and request id from asset table.
-    if asset then
-      wid=asset.wid
-      rid=asset.rid
-    end
-
-    -- Debug info
-    self:T3(self.lid..string.format("Group Name   = %s", tostring(name)))
-    self:T3(self.lid..string.format("Warehouse ID = %s", tostring(wid)))
-    self:T3(self.lid..string.format("Asset     ID = %s", tostring(aid)))
-    self:T3(self.lid..string.format("Request   ID = %s", tostring(rid)))
+    local groupname=group:GetName()
+    
+    local wid, aid, rid=self:_GetIDsFromGroupName(groupname)
 
     return wid,aid,rid
   else
@@ -8115,14 +8101,13 @@ function WAREHOUSE:_GetIDsFromGroup(group)
 
 end
 
-
 --- Get warehouse id, asset id and request id from group name (alias).
 -- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group from which the info is gathered.
+-- @param #string groupname Name of the group from which the info is gathered.
 -- @return #number Warehouse ID.
 -- @return #number Asset ID.
 -- @return #number Request ID.
-function WAREHOUSE:_GetIDsFromGroupOLD(group)
+function WAREHOUSE:_GetIDsFromGroupName(groupname)
 
   ---@param #string text The text to analyse.
   local function analyse(text)
@@ -8153,25 +8138,26 @@ function WAREHOUSE:_GetIDsFromGroupOLD(group)
     return _wid,_aid,_rid
   end
 
-  if group then
 
-    -- Group name
-    local name=group:GetName()
+  -- Get asset id from group name.
+  local wid,aid,rid=analyse(groupname)
 
-    -- Get ids
-    local wid,aid,rid=analyse(name)
+  -- Get Asset.
+  local asset=self:GetAssetByID(aid)
 
-    -- Debug info
-    self:T3(self.lid..string.format("Group Name   = %s", tostring(name)))
-    self:T3(self.lid..string.format("Warehouse ID = %s", tostring(wid)))
-    self:T3(self.lid..string.format("Asset     ID = %s", tostring(aid)))
-    self:T3(self.lid..string.format("Request   ID = %s", tostring(rid)))
-
-    return wid,aid,rid
-  else
-    self:E("WARNING: Group not found in GetIDsFromGroup() function!")
+  -- Get warehouse and request id from asset table.
+  if asset then
+    wid=asset.wid
+    rid=asset.rid
   end
 
+  -- Debug info
+  self:T3(self.lid..string.format("Group Name   = %s", tostring(groupname)))
+  self:T3(self.lid..string.format("Warehouse ID = %s", tostring(wid)))
+  self:T3(self.lid..string.format("Asset     ID = %s", tostring(aid)))
+  self:T3(self.lid..string.format("Request   ID = %s", tostring(rid)))
+
+  return wid,aid,rid
 end
 
 --- Filter stock assets by descriptor and attribute.

@@ -81,6 +81,10 @@ function LEGION:New(WarehouseName, LegionName)
   -- Defaults:
   -- TODO: What?
   self:SetMarker(false)
+  
+  -- Dead and crash events are handled via opsgroups.
+  self:UnHandleEvent(EVENTS.Crash)
+  self:UnHandleEvent(EVENTS.Dead)
 
   -- Add FSM transitions.
   --                 From State  -->   Event        -->      To State
@@ -882,7 +886,18 @@ function LEGION:onafterTransportCancel(From, Event, To, Transport)
       local cargos=Transport:GetCargoOpsGroups(false)
       for _,_cargo in pairs(cargos) do
         local cargo=_cargo --Ops.OpsGroup#OPSGROUP
+        
+        -- Remover my lift.
         cargo:_DelMyLift(Transport)
+        
+        -- Legion of cargo group
+        local legion=cargo.legion
+        
+        -- Add asset back to legion.
+        if legion then                  
+          legion:T(self.lid..string.format("Adding cargo group %s back to legion", cargo:GetName()))
+          legion:__AddAsset(0.1, cargo.group, 1)
+        end
       end
       
       -- Remove asset from mission.
@@ -993,7 +1008,7 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
 
   -- Debug text.
   local text=string.format("New asset %s with assignment %s and request assignment %s", asset.spawngroupname, tostring(asset.assignment), tostring(assignment))
-  self:T3(self.lid..text)
+  self:T(self.lid..text)
 
   -- Get cohort.
   local cohort=self:_GetCohort(asset.assignment)
@@ -1061,6 +1076,8 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
       -- Asset is returned to the COHORT
       ---
       
+      self:T(self.lid..string.format("Asset returned to legion ==> calling LegionAssetReturned event"))
+      
       -- Trigger event.
       self:LegionAssetReturned(cohort, asset)
 
@@ -1078,7 +1095,7 @@ end
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
 function LEGION:onafterLegionAssetReturned(From, Event, To, Cohort, Asset)
   -- Debug message.
-  self:T(self.lid..string.format("Asset %s from Cohort %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Cohort.name, tostring(Asset.assignment)))
+  self:I(self.lid..string.format("Asset %s from Cohort %s returned! asset.assignment=\"%s\"", Asset.spawngroupname, Cohort.name, tostring(Asset.assignment)))
 
   -- Stop flightgroup.
   if Asset.flightgroup and not Asset.flightgroup:IsStopped() then
@@ -1246,7 +1263,7 @@ function LEGION:onafterAssetDead(From, Event, To, asset, request)
   -- Remove group from the detection set of the CHIEF (INTEL).
   if self.commander and self.commander.chief then
     self.commander.chief.detectionset:RemoveGroupsByName({asset.spawngroupname})
-  end  
+  end
 
   -- Remove asset from mission is done via Mission:AssetDead() call from flightgroup onafterFlightDead function
   -- Remove asset from squadron same
@@ -2396,12 +2413,34 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
   -- Reduce score for legions that are futher away.
   score=score-distance
   
-  -- Intercepts need to be carried out quickly. We prefer spawned assets.
-  --if MissionType==AUFTRAG.Type.INTERCEPT then  
-    if asset.spawned then
-      score=score+25
+  -- Intercepts need to be carried out quickly. We prefer spawned assets.  
+  if asset.spawned and asset.flightgroup and asset.flightgroup:IsAlive() then
+  
+    local currmission=asset.flightgroup:GetMissionCurrent()
+    
+    if currmission then
+    
+      if currmission.type==AUFTRAG.Type.ALERT5 and currmission.alert5MissionType==MissionType then
+        -- Prefer assets that are on ALERT5 for this mission type.
+        score=score+25
+      elseif currmission==AUFTRAG.Type.GCICAP and MissionType==AUFTRAG.Type.INTERCEPT then
+        -- Prefer assets that are on GCICAP to perform INTERCEPTS
+        score=score+25
+      end
     end
-  --end
+  
+    if MissionType==AUFTRAG.Type.OPSTRANSPORT or MissionType==AUFTRAG.Type.AMMOSUPPLY or MissionType==AUFTRAG.Type.AWACS or MissionType==AUFTRAG.Type.FUELSUPPLY or MissionType==AUFTRAG.Type.TANKER then
+      -- TODO: need to check for missions that do not require ammo like transport, recon, awacs, tanker etc.
+      -- We better take a fresh asset. Sometimes spawned assets to something else, which is difficult to check.
+      score=score-10
+    else
+      -- Combat mission.
+      if asset.flightgroup:IsOutOfAmmo() then
+        -- Assets that are out of ammo are not considered.
+        score=score-1000
+      end
+    end
+  end
   
   -- TRANSPORT specific.
   if MissionType==AUFTRAG.Type.OPSTRANSPORT then

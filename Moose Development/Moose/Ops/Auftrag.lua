@@ -384,6 +384,7 @@ _AUFTRAGSNR=0
 -- @field #string ARMOREDGUARD On guard - with armored groups.
 -- @field #string BARRAGE Barrage.
 -- @field #string ARMORATTACK Armor attack.
+-- @field #string CASENHANCED Enhanced CAS.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -416,6 +417,7 @@ AUFTRAG.Type={
   ARMOREDGUARD="Armored Guard",
   BARRAGE="Barrage",
   ARMORATTACK="Armor Attack",
+  CASENHANCED="CAS Enhanced",
 }
 
 --- Mission status of an assigned group.
@@ -558,7 +560,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.8.2"
+AUFTRAG.version="0.8.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1187,6 +1189,45 @@ function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, Targ
   return mission
 end
 
+--- **[AIR]** Create a CASENHANCED mission. Group(s) will go to the zone and patrol it randomly.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE CasZone The CAS zone.
+-- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+-- @param #number Speed Speed in knots.
+-- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
+-- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
+-- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
+-- @return #AUFTRAG self
+function AUFTRAG:NewCASENHANCED(CasZone, Altitude, Speed, RangeMax, NoEngageZoneSet, TargetTypes)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.CASENHANCED)
+  
+  -- Ensure we got a ZONE and not just the zone name.
+  if type(CasZone)=="string" then
+    CasZone=ZONE:New(CasZone)
+  end
+  
+  mission:_TargetFromObject(CasZone)
+  
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.CASENHANCED)
+  
+  mission:SetEngageDetected(RangeMax, TargetTypes or {"Helicopters", "Ground Units", "Light armed ships"}, CasZone, NoEngageZoneSet)
+    
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.EvadeFire
+  
+  mission.missionFraction=1.0  
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
+  
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+
 --- **[AIR]** Create a FACA mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP Target Target group. Must be a GROUP object.
@@ -1677,6 +1718,7 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
 
   return mission
 end
+
 
 --- **[GROUND]** Create a ARMORATTACK mission. Armoured ground group(s) will go to the zone and attack.
 -- @param #AUFTRAG self
@@ -4942,6 +4984,26 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     DCStask.params=param
     
     table.insert(DCStasks, DCStask)
+
+  elseif self.type==AUFTRAG.Type.CASENHANCED then
+
+    -------------------------
+    -- CAS ENHANCED Mission --
+    -------------------------
+  
+    local DCStask={}
+    
+    DCStask.id="PatrolZone"
+    
+    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+    param.altitude=self.missionAltitude
+    param.speed=self.missionSpeed
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)
     
    elseif self.type==AUFTRAG.Type.ARMORATTACK then
 
@@ -5130,6 +5192,8 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
   elseif MissionType==AUFTRAG.Type.CAS then
     mtask=ENUMS.MissionTask.CAS
   elseif MissionType==AUFTRAG.Type.PATROLZONE then
+    mtask=ENUMS.MissionTask.CAS
+  elseif MissionType==AUFTRAG.Type.CASENHANCED then
     mtask=ENUMS.MissionTask.CAS
   elseif MissionType==AUFTRAG.Type.ESCORT then
     mtask=ENUMS.MissionTask.ESCORT

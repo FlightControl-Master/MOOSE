@@ -103,7 +103,7 @@
 -- 
 -- Strategically important zones, which should be captured can be added via the @{#CHIEF.AddStrategicZone}() function.
 -- 
--- If the zone is currently owned by another coalition and enemy ground troops are present in the zone, a CAS mission is lauchned.
+-- If the zone is currently owned by another coalition and enemy ground troops are present in the zone, a CAS and an ARTY mission are lauchned, provided assets are available.
 -- 
 -- Once the zone is cleaned of enemy forces, ground (infantry) troops are send there. These require a transportation via helicopters.
 -- So in order to deploy our own troops, infantry assets with `AUFTRAG.Type.ONGUARD` and helicopters with `AUFTRAG.Type.OPSTRANSPORT` need to be available.
@@ -1731,7 +1731,7 @@ function CHIEF:CheckOpsZoneQueue()
       -- Has a patrol mission?
       local hasMissionPatrol=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ONGUARD) or stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARMOREDGUARD)
       -- Has a CAS mission?
-      local hasMissionCAS=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CAS)
+      local hasMissionCAS=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CASENHANCED)
       -- Has a ARTY mission?
       local hasMissionARTY=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARTY) 
 
@@ -1775,12 +1775,13 @@ function CHIEF:CheckOpsZoneQueue()
 
             
           -- Recruite CAS assets.
-          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.CAS, 1, 1)
+          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.CASENHANCED, 1, 1)
           
           -- Debug message.
           self:T(self.lid..string.format("Zone is NOT empty ==> Recruit CAS assets=%s", tostring(recruited)))
           
         end
+        
         if not hasMissionARTY then
 
           -- Debug message.
@@ -1811,7 +1812,7 @@ function CHIEF:CheckOpsZoneQueue()
     local hasMissionPATROL=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.PATROLZONE)
     
     -- Has a CAS mission?
-    local hasMissionCAS, CASMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CAS)
+    local hasMissionCAS, CASMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CASENHANCED)
     local hasMissionARTY, ARTYMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARTY)
     
     if ownercoalition==self.coalition and stratzone.opszone:IsEmpty() and hasMissionCAS then
@@ -2260,12 +2261,48 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
         -- Attach mission to ops zone.
         StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
         
+        -- Set ops zone to transport.
+        transport.opszone=StratZone.opszone
+        transport.chief=self
+        transport.commander=self.commander
+        
         return true
       else
         LEGION.UnRecruitAssets(assets)
         return false
       end
       
+      
+    elseif MissionType==AUFTRAG.Type.CASENHANCED then
+
+      -- Create Patrol zone mission.
+      local caszone = StratZone.opszone.zone
+      local coord = caszone:GetCoordinate()
+      local height = UTILS.MetersToFeet(coord:GetLandHeight())+2500
+      
+      local Speed = 200      
+      if assets[1] then
+        if assets[1].speedmax then
+          Speed = UTILS.KmphToKnots(assets[1].speedmax * 0.7) or 200
+        end
+      end
+
+      --local mission=AUFTRAG:NewCAS(caszone,height,Speed,coord,math.random(0,359),Leg)
+      local mission=AUFTRAG:NewCASENHANCED(caszone, height, Speed)
+      
+      -- Add assets to mission.
+      for _,asset in pairs(assets) do
+        mission:AddAsset(asset)
+      end
+          
+      -- Assign mission to legions.
+      self:MissionAssign(mission, legions)
+    
+      -- Attach mission to ops zone.
+      StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
+
+      return true
+    
     elseif MissionType==AUFTRAG.Type.CAS then
 
       -- Create Patrol zone mission.

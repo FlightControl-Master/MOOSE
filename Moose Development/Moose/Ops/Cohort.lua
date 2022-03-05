@@ -919,36 +919,38 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
               -- ARMY/NAVYGROUP combat ready?
               ---
             
+              -- Disable this for now as it can cause problems - at least with transport and cargo assets.
+              --self:I("Attribute is: "..asset.attribute)
+              if flightgroup:IsArmygroup() then
+                -- check for fighting assets
+                if asset.attribute == WAREHOUSE.Attribute.GROUND_ARTILLERY or 
+                      asset.attribute == WAREHOUSE.Attribute.GROUND_TANK or 
+                      asset.attribute == WAREHOUSE.Attribute.GROUND_INFANTRY or 
+                      asset.attribute == WAREHOUSE.Attribute.GROUND_AAA or 
+                      asset.attribute == WAREHOUSE.Attribute.GROUND_SAM                
+                then
+                   combatready=true 
+                end  
+              else
+                combatready=false
+              end
+
+              -- Not ready when rearming, retreating or returning!
               if flightgroup:IsRearming() or flightgroup:IsRetreating() or flightgroup:IsReturning() then
                 combatready=false
               end
               
             end
             
-            -- Check transport/cargo for combat readyness!
+            -- Not ready when currently acting as ops transport carrier.
             if flightgroup:IsLoading() or flightgroup:IsTransporting() or flightgroup:IsUnloading() or flightgroup:IsPickingup() or flightgroup:IsCarrier() then
               combatready=false
-            end            
+            end
+            -- Not ready when currently acting as ops transport cargo.
             if flightgroup:IsCargo() or flightgroup:IsBoarding() or flightgroup:IsAwaitingLift() then
               combatready=false
             end
-            
-            -- Disable this for now as it can cause problems - at least with transport and cargo assets.
-            --self:I("Attribute is: "..asset.attribute)
-            if flightgroup:IsArmygroup() then
-              -- check for fighting assets
-              if asset.attribute == WAREHOUSE.Attribute.GROUND_ARTILLERY or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_TANK or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_INFANTRY or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_AAA or 
-                    asset.attribute == WAREHOUSE.Attribute.GROUND_SAM                
-              then
-                 combatready=true 
-              end  
-            else
-              combatready=false
-            end
-                    
+                                
             -- This asset is "combatready".
             if combatready then
               self:T(self.lid.."Adding SPAWNED asset to ANOTHER mission as it is COMBATREADY")

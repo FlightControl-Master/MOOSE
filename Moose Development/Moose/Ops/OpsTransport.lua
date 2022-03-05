@@ -57,6 +57,8 @@
 -- @field #table statusLegion Transport status of all assigned LEGIONs.
 -- @field #string statusCommander Staus of the COMMANDER.
 -- @field Ops.Commander#COMMANDER commander Commander of the transport.
+-- @field Ops.Chief#CHIEF chief Chief of the transport.
+-- @field Ops.OpsZone#OPSZONE opszone OPS zone.
 -- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the transport was cancelled before the request is processed.
 -- 
 -- @extends Core.Fsm#FSM
@@ -1305,7 +1307,7 @@ function OPSTRANSPORT:GetNcarrier()
   return self.Ncarrier
 end
 
---- Add asset to transport.
+--- Add carrier asset to transport.
 -- @param #OPSTRANSPORT self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be added.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
@@ -1323,7 +1325,7 @@ function OPSTRANSPORT:AddAsset(Asset, TransportZoneCombo)
   return self
 end
 
---- Delete asset from mission.
+--- Delete carrier asset from transport.
 -- @param #OPSTRANSPORT self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset to be removed.
 -- @return #OPSTRANSPORT self
@@ -1736,12 +1738,12 @@ function OPSTRANSPORT:onafterDeadCarrierGroup(From, Event, To, OpsGroup)
   -- Increase dead counter.
   self.NcarrierDead=self.NcarrierDead+1
 
-  if #self.carriers==0 then
-    self:DeadCarrierAll()
-  end  
-
   -- Remove group from carrier list/table.  
   self:_DelCarrier(OpsGroup)
+  
+  if #self.carriers==0 then
+    self:DeadCarrierAll()
+  end    
 end
 
 --- On after "DeadCarrierAll" event.
@@ -1750,15 +1752,30 @@ end
 -- @param #string Event Event.
 -- @param #string To To state. 
 function OPSTRANSPORT:onafterDeadCarrierAll(From, Event, To)
-  self:I(self.lid..string.format("ALL Carrier OPSGROUPs are dead! Setting stage to PLANNED if not all cargo was delivered."))
+  self:I(self.lid..string.format("ALL Carrier OPSGROUPs are dead!"))
+
+  if self.opszone then
+
+    self:I(self.lid..string.format("Cancelling transport on CHIEF level"))
+    self.chief:TransportCancel(self)
+    
+    --for _,_legion in pairs(self.legions) do
+    --  local legion=_legion --Ops.Legion#LEGION
+    --  legion:TransportCancel(self)
+    --end
+
+  else
   
-  -- Check if cargo was delivered.
-  self:_CheckDelivered()
+    -- Check if cargo was delivered.
+    self:_CheckDelivered()
+    
+    -- Set state back to PLANNED if not delivered.
+    if not self:IsDelivered() then
+      self:Planned()
+    end
   
-  -- Set state back to PLANNED if not delivered.
-  if not self:IsDelivered() then
-    self:Planned()
   end
+  
 end
 
 --- On after "Cancel" event.
