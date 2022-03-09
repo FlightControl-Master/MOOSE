@@ -3574,7 +3574,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     --Coordinate:MarkToAll("Random Patrol Zone Coordinate")
 
     -- Speed and altitude.
-    local Speed=UTILS.MpsToKnots(Task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
+    local Speed=Task.dcstask.params.speed and UTILS.MpsToKnots(Task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
     --local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil
 
@@ -4909,7 +4909,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     local Coordinate=zone:GetRandomCoordinate(nil, nil, surfacetypes)
 
     -- Speed and altitude.
-    local Speed=UTILS.MpsToKnots(task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
+    local Speed=task.dcstask.params.speed and UTILS.MpsToKnots(task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
    -- local Speed=UTILS.KmphToKnots(speed or self.speedCruise)
     local Altitude=UTILS.MetersToFeet(task.dcstask.params.altitude or self.altitudeCruise)
 
@@ -4946,7 +4946,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       local Coordinate=zone:GetRandomCoordinate()
 
       -- Speed and altitude.
-      local Speed=UTILS.MpsToKnots(task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
+      local Speed=task.dcstask.params.speed and UTILS.MpsToKnots(task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
       --local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)
       local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil
 

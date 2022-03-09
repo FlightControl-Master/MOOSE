@@ -1219,7 +1219,7 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
     while gotit==false and N<=Nmax do
       gotit=_checkSurface(point)
       if gotit then
-        env.info(string.format("Got random coordinate with surface type %d after N=%d/%d iterations", land.getSurfaceType(point), N, Nmax))
+        --env.info(string.format("Got random coordinate with surface type %d after N=%d/%d iterations", land.getSurfaceType(point), N, Nmax))
       else
         point=_getpoint()
         N=N+1      

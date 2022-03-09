@@ -4107,6 +4107,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
   local cargobay={}
   local cargobaytot=0
   local cargobaymax=0
+  local weights={}
   for _i,_unit in pairs(group:GetUnits()) do
     local unit=_unit --Wrapper.Unit#UNIT
     local Desc=unit:GetDesc()
@@ -4115,8 +4116,9 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
     local unitweight=forceweight or Desc.massEmpty
     if unitweight then
       weight=weight+unitweight
+      weights[_i]=unitweight
     end
-
+    
     local cargomax=0
     local massfuel=Desc.fuelMassMax or 0
     local massempty=Desc.massEmpty or 0
@@ -4165,6 +4167,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
     asset.speedmax=SpeedMax
     asset.size=smax
     asset.weight=weight
+    asset.weights=weights
     asset.DCSdesc=Descriptors
     asset.attribute=attribute
     asset.cargobay=cargobay

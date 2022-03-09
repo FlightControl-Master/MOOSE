@@ -534,6 +534,7 @@ function LEGION:CheckMissionQueue()
           local Transport=nil
           if mission.NcarriersMin then
             local Legions=mission.transportLegions or {self}
+                        
             TransportAvail, Transport=self:AssignAssetsForTransport(Legions, assets, mission.NcarriersMin, mission.NcarriersMax, mission.transportDeployZone, mission.transportDisembarkZone)
           end
           
@@ -1025,7 +1026,7 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
       local nunits=#asset.template.units
 
       -- Debug text.
-      local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s, nunits=%d %s", cohort.name, assignment, asset.unittype, asset.attribute, nunits, tostring(cohort.ngrouping))
+      local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s, nunits=%d ngroup=%s", cohort.name, assignment, asset.unittype, asset.attribute, nunits, tostring(cohort.ngrouping))
       self:T(self.lid..text)
 
       -- Adjust number of elements in the group.
@@ -1033,6 +1034,10 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
         local template=asset.template
 
         local N=math.max(#template.units, cohort.ngrouping)
+        
+        -- We need to recalc the total weight and cargo bay.
+        asset.weight=0
+        asset.cargobaytot=0
 
         -- Handle units.
         for i=1,N do
@@ -1043,15 +1048,28 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
           -- If grouping is larger than units present, copy first unit.
           if i>nunits then
             table.insert(template.units, UTILS.DeepCopy(template.units[1]))
+            asset.cargobaytot=asset.cargobaytot+asset.cargobay[1]
+            asset.weight=asset.weight+asset.weights[1]
+            template.units[i].x=template.units[1].x+5*(i-nunits)
+            template.units[i].y=template.units[1].y+5*(i-nunits)
+          else
+            if i<=cohort.ngrouping then
+              asset.weight=asset.weight+asset.weights[i]
+              asset.cargobaytot=asset.cargobaytot+asset.cargobay[i]
+            end
           end
 
           -- Remove units if original template contains more than in grouping.
-          if cohort.ngrouping<nunits and i>nunits then
-            unit=nil
+          if i>cohort.ngrouping then
+            template.units[i]=nil
           end
         end
 
+        -- Set number of units.
         asset.nunits=cohort.ngrouping
+        
+        -- Debug info.
+        self:T(self.lid..string.format("After regrouping: Nunits=%d, weight=%.1f cargobaytot=%.1f kg", #asset.template.units, asset.weight, asset.cargobaytot))
       end
 
       -- Set takeoff type.
@@ -1826,7 +1844,7 @@ function LEGION:RecruitAssetsForMission(Mission)
   end    
   
   -- Recuit assets.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem, nil)
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem)
 
   return recruited, assets, legions
 end
@@ -1843,17 +1861,20 @@ function LEGION:RecruitAssetsForTransport(Transport)
   local cargoOpsGroups=Transport:GetCargoOpsGroups(false)
   
   local weightGroup=0
+  local TotalWeight=nil
   
   -- At least one group should be spawned.
   if #cargoOpsGroups>0 then
   
     -- Calculate the max weight so we know which cohorts can provide carriers.
+    TotalWeight=0
     for _,_opsgroup in pairs(cargoOpsGroups) do
       local opsgroup=_opsgroup --Ops.OpsGroup#OPSGROUP
       local weight=opsgroup:GetWeightTotal()
       if weight>weightGroup then
         weightGroup=weight
       end
+      TotalWeight=TotalWeight+weight
     end
   else
     -- No cargo groups!
@@ -1871,7 +1892,7 @@ function LEGION:RecruitAssetsForTransport(Transport)
   
 
   -- Recruit assets and legions.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(self.cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NreqMin, NreqMax, TargetVec2, nil, nil, nil, weightGroup)
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(self.cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NreqMin, NreqMax, TargetVec2, nil, nil, nil, weightGroup, TotalWeight)
 
   return recruited, assets, legions  
 end
@@ -1932,12 +1953,13 @@ end
 -- @param #number RangeMax Max range in meters.
 -- @param #number RefuelSystem Refuelsystem.
 -- @param #number CargoWeight Cargo weight for recruiting transport carriers.
+-- @param #number TotalWeight Total cargo weight in kg.
 -- @param #table Categories Group categories. 
 -- @param #table Attributes Group attributes. See `GROUP.Attribute.`
 -- @return #boolean If `true` enough assets could be recruited.
 -- @return #table Recruited assets. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
 -- @return #table Legions of recruited assets.
-function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight, Categories, Attributes)
+function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight, TotalWeight, Categories, Attributes)
 
   -- The recruited assets.
   local Assets={}
@@ -2072,10 +2094,30 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     ---
   
     -- Add assets to mission.
+    local cargobay=0
     for i=1,Nassets do
       local asset=Assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+      
       asset.isReserved=true
+      
       Legions[asset.legion.alias]=asset.legion
+      
+      if TotalWeight then
+      
+        -- Number of 
+        local N=math.floor(asset.cargobaytot/asset.nunits / CargoWeight)*asset.nunits
+        --env.info(string.format("cargobaytot=%d, cargoweight=%d ==> N=%d", asset.cargobaytot, CargoWeight, N))
+        
+        cargobay=cargobay + N*CargoWeight        
+        
+        if cargobay>=TotalWeight then
+          --env.info(string.format("FF found enough assets to transport all cargo! N=%d [%d], cargobay=%.1f >= %.1f kg total weight", i, Nassets, cargobay, TotalWeight))
+          Nassets=i
+          break
+        end
+        
+      end
+      
     end
     
     -- Return payloads of not needed assets.
@@ -2170,7 +2212,7 @@ function LEGION:AssignAssetsForEscort(Cohorts, Assets, NescortMin, NescortMax)
       end
       
       -- Recruit escort asset for the mission asset.
-      local Erecruited, eassets, elegions=LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.ESCORT, nil, NescortMin, NescortMax, TargetVec2, nil, nil, nil, nil, Categories)
+      local Erecruited, eassets, elegions=LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.ESCORT, nil, NescortMin, NescortMax, TargetVec2, nil, nil, nil, nil, nil, Categories)
       
       if Erecruited then
         Escorts[asset.spawngroupname]={EscortLegions=elegions, EscortAssets=eassets, ecategory=asset.category, TargetTypes=TargetTypes}
@@ -2281,13 +2323,14 @@ function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, Nca
     end
     
     -- Get all legions and heaviest cargo group weight
-    local CargoLegions={} ; local CargoWeight=nil
+    local CargoLegions={} ; local CargoWeight=nil ; local TotalWeight=0
     for _,_asset in pairs(CargoAssets) do
       local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
       CargoLegions[asset.legion.alias]=asset.legion
       if CargoWeight==nil or asset.weight>CargoWeight then
         CargoWeight=asset.weight
       end
+      TotalWeight=TotalWeight+asset.weight
     end
   
     -- Target is the deploy zone.
@@ -2295,7 +2338,7 @@ function LEGION:AssignAssetsForTransport(Legions, CargoAssets, NcarriersMin, Nca
     
     -- Recruit assets and legions.
     local TransportAvail, CarrierAssets, CarrierLegions=
-    LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NcarriersMin, NcarriersMax, TargetVec2, nil, nil, nil, CargoWeight, Categories, Attributes)
+    LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NcarriersMin, NcarriersMax, TargetVec2, nil, nil, nil, CargoWeight, TotalWeight, Categories, Attributes)
   
     if TransportAvail then
       
