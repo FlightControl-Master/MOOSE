@@ -2104,7 +2104,7 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
     loadedmass = self:_GetUnitCargoMass(_unit)
     unittype = _unit:GetTypeName()
     capabilities = self:_GetUnitCapabilities(_unit) -- #CTLD.UnitCapabilities
-    maxmass = capabilities.cargoweightlimit
+    maxmass = capabilities.cargoweightlimit or 2000
     maxloadable = maxmass - loadedmass 
   end
   self:T(self.lid .. " Max loadable mass: " .. maxloadable)
