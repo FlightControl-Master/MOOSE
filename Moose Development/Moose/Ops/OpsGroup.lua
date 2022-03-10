@@ -541,6 +541,9 @@ function OPSGROUP:New(group)
   else
 
   end
+  
+  -- Set gen attribute.
+  self.attribute=self.group:GetAttribute()
 
   local units=self.group:GetUnits()
 
@@ -864,6 +867,12 @@ function OPSGROUP:GetLifePoints(Element)
   return life, life0
 end
 
+--- Get generalized attribute.
+-- @param #OPSGROUP self
+-- @return #string Generalized attribute.
+function OPSGROUP:GetAttribute()
+  return self.attribute
+end
 
 --- Set verbosity level.
 -- @param #OPSGROUP self

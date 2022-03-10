@@ -132,7 +132,7 @@ COMMANDER = {
 
 --- COMMANDER class version.
 -- @field #string version
-COMMANDER.version="0.1.0"
+COMMANDER.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1190,7 +1190,7 @@ function COMMANDER:RecruitAssetsForMission(Mission)
   local Payloads=Mission.payloads
   
   -- Recruite assets.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem, nil)
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem)
 
   return recruited, assets, legions
 end
@@ -1292,6 +1292,7 @@ function COMMANDER:CheckTransportQueue()
       
       -- Weight of the heaviest cargo group. Necessary condition that this fits into on carrier unit!
       local weightGroup=0
+      local TotalWeight=0
       
       -- Calculate the max weight so we know which cohorts can provide carriers.
       if #cargoOpsGroups>0 then  
@@ -1301,13 +1302,14 @@ function COMMANDER:CheckTransportQueue()
           if weight>weightGroup then
             weightGroup=weight
           end
+          TotalWeight=TotalWeight+weight
         end    
       end
       
       if weightGroup>0 then
     
         -- Recruite assets from legions.      
-        local recruited, assets, legions=self:RecruitAssetsForTransport(transport, weightGroup)
+        local recruited, assets, legions=self:RecruitAssetsForTransport(transport, weightGroup, TotalWeight)
         
         if recruited then
         
@@ -1344,10 +1346,12 @@ end
 --- Recruit assets for a given OPS transport.
 -- @param #COMMANDER self
 -- @param Ops.OpsTransport#OPSTRANSPORT Transport The OPS transport.
+-- @param #number CargoWeight Weight of the heaviest cargo group.
+-- @param #number TotalWeight Total weight of all cargo groups.
 -- @return #boolean If `true`, enough assets could be recruited.
 -- @return #table Recruited assets.
 -- @return #table Legions that have recruited assets.
-function COMMANDER:RecruitAssetsForTransport(Transport, CargoWeight)
+function COMMANDER:RecruitAssetsForTransport(Transport, CargoWeight, TotalWeight)
   
   if CargoWeight==0 then
     -- No cargo groups!
@@ -1381,7 +1385,7 @@ function COMMANDER:RecruitAssetsForTransport(Transport, CargoWeight)
   local NreqMin,NreqMax=Transport:GetRequiredCarriers()
   
   -- Recruit assets and legions.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NreqMin, NreqMax, TargetVec2, nil, nil, nil, CargoWeight)
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, AUFTRAG.Type.OPSTRANSPORT, nil, NreqMin, NreqMax, TargetVec2, nil, nil, nil, CargoWeight, TotalWeight)
 
   return recruited, assets, legions  
 end
