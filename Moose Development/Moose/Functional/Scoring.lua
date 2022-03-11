@@ -1650,7 +1650,7 @@ function SCORING:ReportScoreGroupDetailed( PlayerGroup )
       self:F( { ReportMissions, ScoreMissions, PenaltyMissions } )
 
       local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
-      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
+      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + PenaltyGoals + PenaltyMissions
 
       PlayerMessage = string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )%s%s%s%s%s",
                                      PlayerName,
@@ -1705,7 +1705,7 @@ function SCORING:ReportScoreAllSummary( PlayerGroup )
       self:F( { ReportMissions, ScoreMissions, PenaltyMissions } )
 
       local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
-      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
+      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + PenaltyGoals + PenaltyMissions
 
       PlayerMessage = string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )",
                                      PlayerName,
