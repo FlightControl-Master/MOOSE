@@ -6125,6 +6125,19 @@ function OPSGROUP:onbeforeDead(From, Event, To)
   end
 end
 
+--- Cancel all missions in mission queue.
+-- @param #OPSGROUP self
+function OPSGROUP:CancelAllMissions()
+
+  -- Cancel all missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    self:T(self.lid.."Cancelling mission "..tostring(mission:GetName()))
+    self:MissionCancel(mission)
+  end
+
+end
+
 --- On after "Dead" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -8055,6 +8068,12 @@ end
 -- @param #OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
 function OPSGROUP:onafterUnloaded(From, Event, To, OpsGroupCargo)
   self:T(self.lid..string.format("Unloaded OPSGROUP %s", OpsGroupCargo:GetName()))
+  
+  if OpsGroupCargo.legion and OpsGroupCargo:IsInZone(OpsGroupCargo.legion.spawnzone) then
+    self:T(self.lid..string.format("Unloaded group %s returned to legion", OpsGroupCargo:GetName()))
+    OpsGroupCargo:Returned()
+  end
+  
 end
 
 
@@ -8592,18 +8611,24 @@ function OPSGROUP:_CheckGroupDone(delay)
         return
       end
 
-      -- Group is returning
+      -- Group is returning.
       if self:IsReturning() then
         self:T(self.lid.."Returning! Group NOT done...")
         return
       end
 
-      -- Group is returning
+      -- Group is rearming.
       if self:IsRearming() then
         self:T(self.lid.."Rearming! Group NOT done...")
         return
       end
 
+      -- Group is retreating.
+      if self:IsRetreating() then
+        self:T(self.lid.."Retreating! Group NOT done...")
+        return
+      end
+      
       -- Group is waiting. We deny all updates.
       if self:IsWaiting() then
         -- If group is waiting, we assume that is the way it is meant to be.

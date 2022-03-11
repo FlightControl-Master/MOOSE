@@ -115,6 +115,7 @@ function ARMYGROUP:New(group)
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Cruise along the given route of waypoints.
   
   self:AddTransition("*",             "RTZ",              "Returning")   -- Group is returning to (home) zone.
+  self:AddTransition("Holding",       "Returned",         "Returned")    -- Group is returned to (home) zone, e.g. when unloaded from carrier.
   self:AddTransition("Returning",     "Returned",         "Returned")    -- Group is returned to (home) zone.
     
   self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
@@ -1351,6 +1352,9 @@ function ARMYGROUP:onafterRetreat(From, Event, To, Zone, Formation)
   
   -- Set if we want to resume route after reaching the detour waypoint.
   wp.detour=0
+  
+  -- Cancel all missions.
+  self:CancelAllMissions()
 
 end
 
