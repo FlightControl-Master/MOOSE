@@ -258,7 +258,7 @@ CSAR.AircraftType["UH-60L"] = 10
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.4a"
+CSAR.version="1.0.4c"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1332,7 +1332,8 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                   _time = self.landedStatus[_lookupKeyHeli] - 10
                   self.landedStatus[_lookupKeyHeli] = _time
               end
-              if _time <= 0 or _distance < self.loadDistance then
+              --if _time <= 0 or _distance < self.loadDistance then
+              if _distance < self.loadDistance + 5 or _distance <= 13 then
                  if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
                   self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true)
                   return true
