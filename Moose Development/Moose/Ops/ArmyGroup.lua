@@ -982,6 +982,13 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
   -- Insert a point on road.
   if wp.action==ENUMS.Formation.Vehicle.OnRoad and (wp.coordinate or wp.roadcoord) then
+
+    current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
+    table.insert(waypoints, 2, current)
+  
+    -- Removing this for now as I don't see why it is necessary and it is very CPU intensive.
+    -- You only need the start and end waypoint on the road. Other waypoints on the road are not necessray.
+    --[[
     -- take direct line if on road is too long
     local wptable,length,valid=self:GetCoordinate():GetPathOnRoad(wp.coordinate or wp.roadcoord,true,false,false,false) or {}
     
@@ -1003,7 +1010,8 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
     else
       current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
       table.insert(waypoints, count, current)
-    end
+    end    
+    ]]
   end
   
   -- Debug output.
@@ -1106,16 +1114,6 @@ end
 -- @param #string To To state.
 function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
   self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
-
-  -- Get current task.
-  local task=self:GetTaskCurrent()
-  
-  if task then
-    if task.dcstask.id=="FireAtPoint" or task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
-      self:T(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
-      self:TaskCancel(task)
-    end
-  end
   
   -- Fist, check if we want to rearm once out-of-ammo.
   --TODO: IsMobile() check
@@ -1138,6 +1136,16 @@ function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
   -- Third, check if we want to RTZ once out of ammo.
   if self.rtzOnOutOfAmmo then    
     self:__RTZ(-1)
+  end
+
+  -- Get current task.
+  local task=self:GetTaskCurrent()
+  
+  if task then
+    if task.dcstask.id=="FireAtPoint" or task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
+      self:T(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
+      self:TaskCancel(task)
+    end
   end
     
 end
@@ -1224,9 +1232,6 @@ end
 -- @param Core.Zone#ZONE Zone The zone to return to.
 -- @param #number Formation Formation of the group.
 function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
-
-  -- ID of current waypoint.
-  local uid=self:GetWaypointCurrent().uid
   
   -- Zone.
   local zone=Zone or self.homezone
@@ -1241,6 +1246,9 @@ function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
       self:T(self.lid..string.format("RTZ to Zone %s", zone:GetName()))  
       
       local Coordinate=zone:GetRandomCoordinate()
+
+      -- ID of current waypoint.
+      local uid=self:GetWaypointCurrentUID()
       
       -- Add waypoint after current.
       local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)

@@ -1534,7 +1534,7 @@ end
 -- @param Core.Set#SET_GROUP TransportGroupSet The set group(s) to be transported.
 -- @param Core.Point#COORDINATE DropoffCoordinate Coordinate where the helo will land drop off the the troops.
 -- @param Core.Point#COORDINATE PickupCoordinate Coordinate where the helo will land to pick up the the cargo. Default is the fist transport group.
--- @param #number PickupRadius Radius around the pickup coordinate in meters. Default 500 m.
+-- @param #number PickupRadius Radius around the pickup coordinate in meters. Default 100 m.
 -- @return #AUFTRAG self
 function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupCoordinate, PickupRadius)
 
@@ -1555,7 +1555,7 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
   mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()
   mission.transportDropoff=DropoffCoordinate
   
-  mission.transportPickupRadius=PickupRadius or 500
+  mission.transportPickupRadius=PickupRadius or 100
 
   mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.TROOPTRANSPORT)
   

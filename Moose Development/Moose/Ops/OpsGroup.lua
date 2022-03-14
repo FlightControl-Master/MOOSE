@@ -2627,6 +2627,17 @@ function OPSGROUP:GetWaypointCurrent()
   return self.waypoints[self.currentwp]
 end
 
+--- Get current waypoint UID.
+-- @param #OPSGROUP self
+-- @return #number Current waypoint UID.
+function OPSGROUP:GetWaypointCurrentUID()
+  local wp=self:GetWaypointCurrent()
+  if wp then
+    return wp.uid
+  end
+  return nil
+end
+
 --- Get coordinate of next waypoint of the group.
 -- @param #OPSGROUP self
 -- @param #boolean cyclic If true, return first waypoint if last waypoint was reached.
@@ -4591,7 +4602,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       
       -- Create a pickup zone around the pickup coordinate. The troops will go to a random point inside the zone.
       -- This is necessary so the helos do not try to land at the exact same location where the troops wait.
-      local pradius=500
+      local pradius=mission.transportPickupRadius
       local pickupZone=ZONE_RADIUS:New("Pickup Zone", mission.transportPickup:GetVec2(), pradius)
 
       -- Add task to embark for the troops.
