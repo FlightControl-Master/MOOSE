@@ -1,46 +1,52 @@
 --- **Wrapper** -- STATIC wraps the DCS StaticObject class.
---
+-- 
 -- ===
---
+-- 
 -- ### Author: **FlightControl**
---
+-- 
 -- ### Contributions: **funkyfranky**
---
+-- 
 -- ===
---
+-- 
 -- @module Wrapper.Static
 -- @image Wrapper_Static.JPG
+
+
 --- @type STATIC
 -- @extends Wrapper.Positionable#POSITIONABLE
+
 --- Wrapper class to handle Static objects.
---
+-- 
 -- Note that Statics are almost the same as Units, but they don't have a controller.
 -- The @{Wrapper.Static#STATIC} class is a wrapper class to handle the DCS Static objects:
---
+-- 
 --  * Wraps the DCS Static objects.
 --  * Support all DCS Static APIs.
 --  * Enhance with Static specific APIs not in the DCS API set.
---
+-- 
 -- ## STATIC reference methods
---
+-- 
 -- For each DCS Static will have a STATIC wrapper object (instance) within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts).
---
+--  
 -- The STATIC class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
 -- using the Static Name.
---
+-- 
 -- Another thing to know is that STATIC objects do not "contain" the DCS Static object. 
 -- The STATIc methods will reference the DCS Static object by name when it is needed during API execution.
 -- If the DCS Static object does not exist or is nil, the STATIC methods will return nil and log an exception in the DCS.log file.
---
+--  
 -- The STATIc class provides the following functions to retrieve quickly the relevant STATIC instance:
---
+-- 
 --  * @{#STATIC.FindByName}(): Find a STATIC instance from the _DATABASE object using a DCS Static name.
---
--- IMPORTANT: ONE SHOULD NEVER SANITIZE these STATIC OBJECT REFERENCES! (make the STATIC object references nil).
---
+--  
+-- IMPORTANT: ONE SHOULD NEVER SANATIZE these STATIC OBJECT REFERENCES! (make the STATIC object references nil).
+-- 
 -- @field #STATIC
-STATIC = { ClassName = "STATIC" }
+STATIC = {
+  ClassName = "STATIC",
+}
+
 
 --- Register a static object.
 -- @param #STATIC self
@@ -51,6 +57,7 @@ function STATIC:Register( StaticName )
   self.StaticName = StaticName
   return self
 end
+
 
 --- Finds a STATIC from the _DATABASE using a DCSStatic object.
 -- @param #STATIC self
@@ -76,13 +83,13 @@ function STATIC:FindByName( StaticName, RaiseError )
 
   -- Set static name.
   self.StaticName = StaticName
-
+  
   if StaticFound then
     return StaticFound
   end
-
-  if RaiseError == nil or RaiseError == true then
-    error( "STATIC not found for: " .. StaticName )
+  
+  if RaiseError == nil or RaiseError == true then 
+    error( "STATIC not found for: " .. StaticName ) 
   end
 
   return nil
@@ -90,39 +97,38 @@ end
 
 --- Destroys the STATIC.
 -- @param #STATIC self
--- @param #boolean GenerateEvent (Optional) true to generate a crash or dead event, false to not generate any event. `nil` (default) creates a remove event.
--- @return #nil The DCS StaticObject is not existing or alive.
---
+-- @param #boolean GenerateEvent (Optional) true if you want to generate a crash or dead event for the static.
+-- @return #nil The DCS StaticObject is not existing or alive.  
 -- @usage
 -- -- Air static example: destroy the static Helicopter and generate a S_EVENT_CRASH.
 -- Helicopter = STATIC:FindByName( "Helicopter" )
 -- Helicopter:Destroy( true )
---
+-- 
 -- @usage
 -- -- Ground static example: destroy the static Tank and generate a S_EVENT_DEAD.
 -- Tanks = UNIT:FindByName( "Tank" )
 -- Tanks:Destroy( true )
---
+-- 
 -- @usage
 -- -- Ship static example: destroy the Ship silently.
 -- Ship = STATIC:FindByName( "Ship" )
 -- Ship:Destroy()
---
+-- 
 -- @usage
 -- -- Destroy without event generation example.
 -- Ship = STATIC:FindByName( "Boat" )
--- Ship:Destroy( false ) -- Don't generate any event upon destruction.
---
+-- Ship:Destroy( false ) -- Don't generate an event upon destruction.
+-- 
 function STATIC:Destroy( GenerateEvent )
   self:F2( self.ObjectName )
 
   local DCSObject = self:GetDCSObject()
-
+  
   if DCSObject then
-
+  
     local StaticName = DCSObject:getName()
     self:F( { StaticName = StaticName } )
-
+    
     if GenerateEvent and GenerateEvent == true then
       if self:IsAir() then
         self:CreateEventCrash( timer.getTime(), DCSObject )
@@ -134,7 +140,7 @@ function STATIC:Destroy( GenerateEvent )
     else
       self:CreateEventRemoveUnit( timer.getTime(), DCSObject )
     end
-
+    
     DCSObject:destroy()
     return true
   end
@@ -142,16 +148,17 @@ function STATIC:Destroy( GenerateEvent )
   return nil
 end
 
+
 --- Get DCS object of static of static.
 -- @param #STATIC self
 -- @return DCS static object
 function STATIC:GetDCSObject()
   local DCSStatic = StaticObject.getByName( self.StaticName )
-
+  
   if DCSStatic then
     return DCSStatic
   end
-
+    
   return nil
 end
 
@@ -163,7 +170,7 @@ function STATIC:GetUnits()
   local DCSStatic = self:GetDCSObject()
 
   local Statics = {}
-
+  
   if DCSStatic then
     Statics[1] = STATIC:Find( DCSStatic )
     self:T3( Statics )
@@ -172,6 +179,7 @@ function STATIC:GetUnits()
 
   return nil
 end
+
 
 --- Get threat level of static.
 -- @param #STATIC self
@@ -186,62 +194,65 @@ end
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
 -- @param #number Heading The heading of the static respawn in degrees. Default is 0 deg.
 -- @param #number Delay Delay in seconds before the static is spawned.
-function STATIC:SpawnAt( Coordinate, Heading, Delay )
+function STATIC:SpawnAt(Coordinate, Heading, Delay)
 
-  Heading = Heading or 0
+  Heading=Heading or 0
 
-  if Delay and Delay > 0 then
-    SCHEDULER:New( nil, self.SpawnAt, { self, Coordinate, Heading }, Delay )
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.SpawnAt, {self, Coordinate, Heading}, Delay)
   else
 
-    local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
-
+    local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName)
+  
     SpawnStatic:SpawnFromPointVec2( Coordinate, Heading, self.StaticName )
-
+    
   end
-
+  
   return self
 end
+
 
 --- Respawn the @{Wrapper.Unit} at the same location with the same properties.
 -- This is useful to respawn a cargo after it has been destroyed.
 -- @param #STATIC self
 -- @param DCS#country.id CountryID (Optional) The country ID used for spawning the new static. Default is same as currently.
 -- @param #number Delay (Optional) Delay in seconds before static is respawned. Default now.
-function STATIC:ReSpawn( CountryID, Delay )
+function STATIC:ReSpawn(CountryID, Delay)
 
-  if Delay and Delay > 0 then
-    SCHEDULER:New( nil, self.ReSpawn, { self, CountryID }, Delay )
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.ReSpawn, {self, CountryID}, Delay)
   else
 
-    CountryID = CountryID or self:GetCountry()
+    CountryID=CountryID or self:GetCountry()  
 
-    local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, CountryID )
-
-    SpawnStatic:Spawn( nil, self.StaticName )
-
+    local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName, CountryID)
+    
+    SpawnStatic:Spawn(nil, self.StaticName)
+    
   end
-
+  
   return self
 end
+
 
 --- Respawn the @{Wrapper.Unit} at a defined Coordinate with an optional heading.
 -- @param #STATIC self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
--- @param #number Heading (Optional) The heading of the static respawn in degrees. Default is the current heading.
--- @param #number Delay (Optional) Delay in seconds before static is respawned. Default is now.
-function STATIC:ReSpawnAt( Coordinate, Heading, Delay )
+-- @param #number Heading (Optional) The heading of the static respawn in degrees. Default the current heading.
+-- @param #number Delay (Optional) Delay in seconds before static is respawned. Default now.
+function STATIC:ReSpawnAt(Coordinate, Heading, Delay)
 
-  -- Heading=Heading or 0
+  --Heading=Heading or 0
 
-  if Delay and Delay > 0 then
-    SCHEDULER:New( nil, self.ReSpawnAt, { self, Coordinate, Heading }, Delay )
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.ReSpawnAt, {self, Coordinate, Heading}, Delay)
   else
-    local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, self:GetCountry() )
-
-    SpawnStatic:SpawnFromCoordinate( Coordinate, Heading, self.StaticName )
+  
+    local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName, self:GetCountry())
+    
+    SpawnStatic:SpawnFromCoordinate(Coordinate, Heading, self.StaticName)
+    
   end
-
+  
   return self
 end
-
