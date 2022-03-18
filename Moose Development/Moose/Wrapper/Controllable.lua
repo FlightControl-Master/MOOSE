@@ -3846,10 +3846,10 @@ function POSITIONABLE:IsSubmarine()
 end
 
 
---- Sets the controlled group to go the specified speed in meters per second. 
+--- Sets the controlled group to go at the specified speed in meters per second. 
 -- @param #CONTROLLABLE self
 -- @param #number Speed Speed in meters per second
--- @param #boolean Keep (Optional) When set to true will maintain that speed on passing waypoints. If no present or false the controlled group will return to the speed as defined by their route. 
+-- @param #boolean Keep (Optional) When set to true, will maintain the speed on passing waypoints. If not present or false, the controlled group will return to the speed as defined by their route. 
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:SetSpeed(Speed, Keep)
   self:F2( { self.ControllableName } )
@@ -3865,11 +3865,11 @@ function CONTROLLABLE:SetSpeed(Speed, Keep)
   return self
 end
 
---- [AIR] Sets the controlled aircraft group to the specified altitude in meters.
+--- [AIR] Sets the controlled aircraft group to fly at the specified altitude in meters.
 -- @param #CONTROLLABLE self
--- @param #number Altitude Altitude in meters
--- @param #boolean Keep (Optional) When set to true will maintain that altitude on passing waypoints. If no present or false the controlled group will return to the altitude as defined by their route. 
--- @param #string AltType (Optional) Will specify the altitude type used. If nil the altitude type of the current waypoint will be used. Accepted values are "BARO" and "RADIO".
+-- @param #number Altitude Altitude in meters.
+-- @param #boolean Keep (Optional) When set to true, will maintain the altitude on passing waypoints. If not present or false, the controlled group will return to the altitude as defined by their route. 
+-- @param #string AltType (Optional) Specifies the altitude type used. If nil, the altitude type of the current waypoint will be used. Accepted values are "BARO" and "RADIO".
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:SetAltitude(Altitude, Keep, AltType)
   self:F2( { self.ControllableName } )
