@@ -385,6 +385,16 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Beirut_Rafic_Hariri
 -- * AIRBASE.Syria.An_Nasiriyah
 -- * AIRBASE.Syria.Abu_al_Duhur
+-- * AIRBASE.Syria.At_Tanf
+-- * AIRBASE.Syria.H3
+-- * AIRBASE.Syria.H3_Northwest
+-- * AIRBASE.Syria.H3_Southwest
+-- * AIRBASE.Syria.Kharab_Ishk
+-- * AIRBASE.Syria.Raj_al_Issa_East
+-- * AIRBASE.Syria.Raj_al_Issa_West
+-- * AIRBASE.Syria.Ruwayshid
+-- * AIRBASE.Syria.Sanliurfa
+-- * AIRBASE.Syria.Tal_Siman
 --
 --@field Syria
 AIRBASE.Syria={
@@ -440,9 +450,17 @@ AIRBASE.Syria={
   ["Beirut_Rafic_Hariri"]="Beirut-Rafic Hariri",
   ["An_Nasiriyah"]="An Nasiriyah",
   ["Abu_al_Duhur"]="Abu al-Duhur",
+  ["At_Tanf"]="At Tanf",
+  ["H3"]="H3",
+  ["H3_Northwest"]="H3 Northwest",
+  ["H3_Southwest"]="H3 Southwest",
+  ["Kharab_Ishk"]="Kharab Ishk",
+  ["Raj_al_Issa_East"]="Raj al Issa East",
+  ["Raj_al_Issa_West"]="Raj al Issa West",
+  ["Ruwayshid"]="Ruwayshid",
+  ["Sanliurfa"]="Sanliurfa",
+  ["Tal_Siman"]="Tal Siman",
 }
-
-
 
 --- Airbases of the Mariana Islands map:
 --
