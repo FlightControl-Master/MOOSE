@@ -46,7 +46,7 @@
 --
 -- # The ARMYGROUP Concept
 -- 
--- This class enhances naval groups.
+-- This class enhances ground groups.
 -- 
 -- @field #ARMYGROUP
 ARMYGROUP = {

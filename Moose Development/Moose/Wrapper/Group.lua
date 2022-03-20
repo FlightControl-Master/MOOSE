@@ -765,8 +765,7 @@ end
 
 --- Returns the average velocity Vec3 vector.
 -- @param Wrapper.Group#GROUP self
--- @return DCS#Vec3 The velocity Vec3 vector
--- @return #nil The GROUP is not existing or alive.  
+-- @return DCS#Vec3 The velocity Vec3 vector or `#nil` if the GROUP is not existing or alive.  
 function GROUP:GetVelocityVec3()
   self:F2( self.GroupName )
 
@@ -1009,9 +1008,8 @@ end
 
 --- Returns a random @{DCS#Vec3} vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.
 -- @param #GROUP self
--- @param #number Radius
--- @return DCS#Vec3 The random 3D point vector around the first UNIT of the GROUP.
--- @return #nil The GROUP is invalid or empty
+-- @param #number Radius Radius in meters.
+-- @return DCS#Vec3 The random 3D point vector around the first UNIT of the GROUP or #nil The GROUP is invalid or empty. 
 -- @usage 
 -- -- If Radius is ignored, returns the DCS#Vec3 of first UNIT of the GROUP
 function GROUP:GetRandomVec3(Radius)
@@ -1032,8 +1030,7 @@ end
 
 --- Returns the mean heading of every UNIT in the GROUP in degrees
 -- @param #GROUP self
--- @return #number mean heading of the GROUP
--- @return #nil The first UNIT is not existing or alive.
+-- @return #number Mean heading of the GROUP in degrees or #nil The first UNIT is not existing or alive.
 function GROUP:GetHeading()
   self:F2(self.GroupName)
 
@@ -1061,8 +1058,8 @@ end
 --- Return the fuel state and unit reference for the unit with the least
 -- amount of fuel in the group.
 -- @param #GROUP self
--- @return #number The fuel state of the unit with the least amount of fuel
--- @return #Unit reference to #Unit object for further processing
+-- @return #number The fuel state of the unit with the least amount of fuel.
+-- @return #Unit reference to #Unit object for further processing.
 function GROUP:GetFuelMin()
   self:F3(self.ControllableName)
 
