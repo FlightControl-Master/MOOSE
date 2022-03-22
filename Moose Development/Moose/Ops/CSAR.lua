@@ -254,11 +254,12 @@ CSAR.AircraftType["Mi-8MT"] = 12
 CSAR.AircraftType["Mi-24P"] = 8 
 CSAR.AircraftType["Mi-24V"] = 8
 CSAR.AircraftType["Bell-47"] = 2                
-CSAR.AircraftType["UH-60L"] = 10  
+CSAR.AircraftType["UH-60L"] = 10
+CSAR.AircraftType["AH-64D_BLK_II"] = 2  
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.4c"
+CSAR.version="1.0.4d"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
