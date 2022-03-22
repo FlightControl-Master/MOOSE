@@ -1321,26 +1321,6 @@ function UTILS.GetMissionDayOfYear(Time)
 
 end
 
---- Returns the current date.
--- @return #string Mission date in yyyy/mm/dd format.
--- @return #number The year anno domini.
--- @return #number The month.
--- @return #number The day.
-function UTILS.GetDate()
-
-  -- Mission start date
-  local date, year, month, day=UTILS.GetDCSMissionDate()
-
-  local time=timer.getAbsTime()
-
-  local clock=UTILS.SecondsToClock(time, false)
-
-  local x=tonumber(UTILS.Split(clock, "+")[2])
-
-  local day=day+x
-
-end
-
 --- Returns the magnetic declination of the map.
 -- Returned values for the current maps are:
 --
