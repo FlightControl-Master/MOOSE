@@ -53,12 +53,14 @@
 -- @module Core.Zone
 -- @image Core_Zones.JPG
 
+
 --- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @field #number DrawID Unique ID of the drawn zone on the F10 map.
 -- @field #table Color Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
 -- @extends Core.Fsm#FSM
+
 
 --- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
 --
@@ -105,9 +107,10 @@ ZONE_BASE = {
   ClassName = "ZONE_BASE",
   ZoneName = "",
   ZoneProbability = 1,
-  DrawID = nil,
-  Color = {},
+  DrawID=nil,
+  Color={}
 }
+
 
 --- The ZONE_BASE.BoundingSquare
 -- @type ZONE_BASE.BoundingSquare
@@ -115,6 +118,7 @@ ZONE_BASE = {
 -- @field DCS#Distance y1 The lower y coordinate (left down)
 -- @field DCS#Distance x2 The higher x coordinate (right up)
 -- @field DCS#Distance y2 The higher y coordinate (right up)
+
 
 --- ZONE_BASE constructor
 -- @param #ZONE_BASE self
@@ -125,9 +129,13 @@ function ZONE_BASE:New( ZoneName )
   self:F( ZoneName )
 
   self.ZoneName = ZoneName
-
+  
+  --_DATABASE:AddZone(ZoneName,self)
+  
   return self
 end
+
+
 
 --- Returns the name of the zone.
 -- @param #ZONE_BASE self
@@ -137,6 +145,7 @@ function ZONE_BASE:GetName()
 
   return self.ZoneName
 end
+
 
 --- Sets the name of the zone.
 -- @param #ZONE_BASE self
@@ -194,6 +203,7 @@ function ZONE_BASE:IsPointVec3InZone( PointVec3 )
   return InZone
 end
 
+
 --- Returns the @{DCS#Vec2} coordinate of the zone.
 -- @param #ZONE_BASE self
 -- @return #nil.
@@ -216,6 +226,7 @@ function ZONE_BASE:GetPointVec2()
 
   return PointVec2
 end
+
 
 --- Returns the @{DCS#Vec3} of the zone.
 -- @param #ZONE_BASE self
@@ -255,28 +266,46 @@ end
 -- @param #ZONE_BASE self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Core.Point#COORDINATE The Coordinate of the zone.
-function ZONE_BASE:GetCoordinate( Height ) -- R2.1
-  self:F2( self.ZoneName )
+function ZONE_BASE:GetCoordinate( Height ) --R2.1
+  self:F2(self.ZoneName)
 
   local Vec3 = self:GetVec3( Height )
 
   if self.Coordinate then
 
     -- Update coordinates.
-    self.Coordinate.x = Vec3.x
-    self.Coordinate.y = Vec3.y
-    self.Coordinate.z = Vec3.z
+    self.Coordinate.x=Vec3.x
+    self.Coordinate.y=Vec3.y
+    self.Coordinate.z=Vec3.z
 
-    -- env.info("FF GetCoordinate NEW for ZONE_BASE "..tostring(self.ZoneName))
+    --env.info("FF GetCoordinate NEW for ZONE_BASE "..tostring(self.ZoneName))
   else
 
     -- Create a new coordinate object.
-    self.Coordinate = COORDINATE:NewFromVec3( Vec3 )
+    self.Coordinate=COORDINATE:NewFromVec3(Vec3)
 
-    -- env.info("FF GetCoordinate NEW for ZONE_BASE "..tostring(self.ZoneName))
+    --env.info("FF GetCoordinate NEW for ZONE_BASE "..tostring(self.ZoneName))
   end
 
   return self.Coordinate
+end
+
+--- Get 2D distance to a coordinate.
+-- @param #ZONE_BASE self
+-- @param Core.Point#COORDINATE Coordinate Reference coordinate. Can also be a DCS#Vec2 or DCS#Vec3 object.
+-- @return #number Distance to the reference coordinate in meters.
+function ZONE_BASE:Get2DDistance(Coordinate)
+  local a=self:GetVec2()
+  local b={}
+  if Coordinate.z then
+    b.x=Coordinate.x
+    b.y=Coordinate.z
+  else
+    b.x=Coordinate.x
+    b.y=Coordinate.y
+  end  
+  local dist=UTILS.VecDist2D(a,b)
+  return dist
 end
 
 --- Define a random @{DCS#Vec2} within the zone.
@@ -304,7 +333,7 @@ end
 -- @param #ZONE_BASE self
 -- @return #nil The bounding square.
 function ZONE_BASE:GetBoundingSquare()
-  -- return { x1 = 0, y1 = 0, x2 = 0, y2 = 0 }
+  --return { x1 = 0, y1 = 0, x2 = 0, y2 = 0 }
   return nil
 end
 
@@ -315,21 +344,22 @@ function ZONE_BASE:BoundZone()
 
 end
 
+
 --- Set color of zone.
 -- @param #ZONE_BASE self
 -- @param #table RGBcolor RGB color table. Default `{1, 0, 0}`.
 -- @param #number Alpha Transparacy between 0 and 1. Default 0.15.
 -- @return #ZONE_BASE self
-function ZONE_BASE:SetColor( RGBcolor, Alpha )
+function ZONE_BASE:SetColor(RGBcolor, Alpha)
 
-  RGBcolor = RGBcolor or { 1, 0, 0 }
-  Alpha = Alpha or 0.15
+  RGBcolor=RGBcolor or {1, 0, 0}
+  Alpha=Alpha or 0.15
 
-  self.Color = {}
-  self.Color[1] = RGBcolor[1]
-  self.Color[2] = RGBcolor[2]
-  self.Color[3] = RGBcolor[3]
-  self.Color[4] = Alpha
+  self.Color={}
+  self.Color[1]=RGBcolor[1]
+  self.Color[2]=RGBcolor[2]
+  self.Color[3]=RGBcolor[3]
+  self.Color[4]=Alpha
 
   return self
 end
@@ -345,10 +375,10 @@ end
 -- @param #ZONE_BASE self
 -- @return #table Table with three entries, e.g. {1, 0, 0}, which is the RGB color code.
 function ZONE_BASE:GetColorRGB()
-  local rgb = {}
-  rgb[1] = self.Color[1]
-  rgb[2] = self.Color[2]
-  rgb[3] = self.Color[3]
+  local rgb={}
+  rgb[1]=self.Color[1]
+  rgb[2]=self.Color[2]
+  rgb[3]=self.Color[3]
   return rgb
 end
 
@@ -356,7 +386,7 @@ end
 -- @param #ZONE_BASE self
 -- @return #number Alpha value.
 function ZONE_BASE:GetColorAlpha()
-  local alpha = self.Color[4]
+  local alpha=self.Color[4]
   return alpha
 end
 
@@ -364,12 +394,12 @@ end
 -- @param #ZONE_BASE self
 -- @param #number Delay (Optional) Delay before the drawing is removed.
 -- @return #ZONE_BASE self
-function ZONE_BASE:UndrawZone( Delay )
-  if Delay and Delay > 0 then
-    self:ScheduleOnce( Delay, ZONE_BASE.UndrawZone, self )
+function ZONE_BASE:UndrawZone(Delay)
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, ZONE_BASE.UndrawZone, self)
   else
     if self.DrawID then
-      UTILS.RemoveMark( self.DrawID )
+      UTILS.RemoveMark(self.DrawID)
     end
   end
   return self
@@ -382,6 +412,7 @@ end
 function ZONE_BASE:GetDrawID()
   return self.DrawID
 end
+
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_BASE self
@@ -447,6 +478,7 @@ function ZONE_BASE:GetZoneMaybe()
   end
 end
 
+
 --- The ZONE_RADIUS class, defined by a zone name, a location and a radius.
 -- @type ZONE_RADIUS
 -- @field DCS#Vec2 Vec2 The current location of the zone.
@@ -485,8 +517,8 @@ end
 --
 -- @field #ZONE_RADIUS
 ZONE_RADIUS = {
-  ClassName = "ZONE_RADIUS",
-}
+  ClassName="ZONE_RADIUS",
+  }
 
 --- Constructor of @{#ZONE_RADIUS}, taking the zone name, the zone location and a radius.
 -- @param #ZONE_RADIUS self
@@ -503,7 +535,7 @@ function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
   self.Radius = Radius
   self.Vec2 = Vec2
 
-  -- self.Coordinate=COORDINATE:NewFromVec2(Vec2)
+  --self.Coordinate=COORDINATE:NewFromVec2(Vec2)
 
   return self
 end
@@ -513,13 +545,13 @@ end
 -- @param DCS#Vec2 Vec2 The location of the zone.
 -- @param DCS#Distance Radius The radius of the zone.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:UpdateFromVec2( Vec2, Radius )
+function ZONE_RADIUS:UpdateFromVec2(Vec2, Radius)
 
   -- New center of the zone.
-  self.Vec2 = Vec2
+  self.Vec2=Vec2
 
   if Radius then
-    self.Radius = Radius
+    self.Radius=Radius
   end
 
   return self
@@ -530,14 +562,14 @@ end
 -- @param DCS#Vec3 Vec3 The location of the zone.
 -- @param DCS#Distance Radius The radius of the zone.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:UpdateFromVec3( Vec3, Radius )
+function ZONE_RADIUS:UpdateFromVec3(Vec3, Radius)
 
   -- New center of the zone.
-  self.Vec2.x = Vec3.x
-  self.Vec2.y = Vec3.z
+  self.Vec2.x=Vec3.x
+  self.Vec2.y=Vec3.z
 
   if Radius then
-    self.Radius = Radius
+    self.Radius=Radius
   end
 
   return self
@@ -547,7 +579,7 @@ end
 -- @param #ZONE_RADIUS self
 -- @param #number Points (Optional) The amount of points in the circle. Default 360.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:MarkZone( Points )
+function ZONE_RADIUS:MarkZone(Points)
 
   local Point = {}
   local Vec2 = self:GetVec2()
@@ -555,16 +587,16 @@ function ZONE_RADIUS:MarkZone( Points )
   Points = Points and Points or 360
 
   local Angle
-  local RadialBase = math.pi * 2
+  local RadialBase = math.pi*2
 
-  for Angle = 0, 360, (360 / Points) do
+  for Angle = 0, 360, (360 / Points ) do
 
     local Radial = Angle * RadialBase / 360
 
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
 
-    COORDINATE:NewFromVec2( Point ):MarkToAll( self:GetName() )
+    COORDINATE:NewFromVec2(Point):MarkToAll(self:GetName())
 
   end
 
@@ -580,18 +612,18 @@ end
 -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
 -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:DrawZone( Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly )
+function ZONE_RADIUS:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
 
-  local coordinate = self:GetCoordinate()
+  local coordinate=self:GetCoordinate()
 
-  local Radius = self:GetRadius()
+  local Radius=self:GetRadius()
 
-  Color = Color or self:GetColorRGB()
-  Alpha = Alpha or 1
-  FillColor = FillColor or Color
-  FillAlpha = FillAlpha or self:GetColorAlpha()
+  Color=Color or self:GetColorRGB()
+  Alpha=Alpha or 1
+  FillColor=FillColor or Color
+  FillAlpha=FillAlpha or self:GetColorAlpha()
 
-  self.DrawID = coordinate:CircleToAll( Radius, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly )
+  self.DrawID=coordinate:CircleToAll(Radius, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
 
   return self
 end
@@ -610,10 +642,10 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
   Points = Points and Points or 360
 
   local Angle
-  local RadialBase = math.pi * 2
+  local RadialBase = math.pi*2
 
   --
-  for Angle = 0, 360, (360 / Points) do
+  for Angle = 0, 360, (360 / Points ) do
     local Radial = Angle * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
@@ -621,16 +653,16 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
     local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
 
     local Tire = {
-      ["country"] = CountryName,
-      ["category"] = "Fortifications",
-      ["canCargo"] = false,
-      ["shape_name"] = "H-tyre_B_WF",
-      ["type"] = "Black_Tyre_WF",
-      -- ["unitId"] = Angle + 10000,
-      ["y"] = Point.y,
-      ["x"] = Point.x,
-      ["name"] = string.format( "%s-Tire #%0d", self:GetName(), Angle ),
-      ["heading"] = 0,
+        ["country"] = CountryName,
+        ["category"] = "Fortifications",
+        ["canCargo"] = false,
+        ["shape_name"] = "H-tyre_B_WF",
+        ["type"] = "Black_Tyre_WF",
+        --["unitId"] = Angle + 10000,
+        ["y"] = Point.y,
+        ["x"] = Point.x,
+        ["name"] = string.format( "%s-Tire #%0d", self:GetName(), Angle ),
+        ["heading"] = 0,
     } -- end of ["group"]
 
     local Group = coalition.addStaticObject( CountryID, Tire )
@@ -641,6 +673,7 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
 
   return self
 end
+
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_RADIUS self
@@ -661,10 +694,10 @@ function ZONE_RADIUS:SmokeZone( SmokeColor, Points, AddHeight, AngleOffset )
   Points = Points and Points or 360
 
   local Angle
-  local RadialBase = math.pi * 2
+  local RadialBase = math.pi*2
 
   for Angle = 0, 360, 360 / Points do
-    local Radial = (Angle + AngleOffset) * RadialBase / 360
+    local Radial = ( Angle + AngleOffset ) * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
     POINT_VEC2:New( Point.x, Point.y, AddHeight ):Smoke( SmokeColor )
@@ -672,6 +705,7 @@ function ZONE_RADIUS:SmokeZone( SmokeColor, Points, AddHeight, AngleOffset )
 
   return self
 end
+
 
 --- Flares the zone boundaries in a color.
 -- @param #ZONE_RADIUS self
@@ -691,7 +725,7 @@ function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth, AddHeight )
   Points = Points and Points or 360
 
   local Angle
-  local RadialBase = math.pi * 2
+  local RadialBase = math.pi*2
 
   for Angle = 0, 360, 360 / Points do
     local Radial = Angle * RadialBase / 360
@@ -769,6 +803,10 @@ function ZONE_RADIUS:GetVec3( Height )
   return Vec3
 end
 
+
+
+
+
 --- Scan the zone for the presence of units of the given ObjectCategories.
 -- Note that after a zone has been scanned, the zone can be evaluated by:
 --
@@ -794,27 +832,27 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
   local ZoneCoord = self:GetCoordinate()
   local ZoneRadius = self:GetRadius()
 
-  self:F( { ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS() } )
+  self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
 
   local SphereSearch = {
     id = world.VolumeType.SPHERE,
-    params = {
+      params = {
       point = ZoneCoord:GetVec3(),
       radius = ZoneRadius,
-    },
-  }
+      }
+    }
 
   local function EvaluateZone( ZoneObject )
-    -- if ZoneObject:isExist() then --FF: isExist always returns false for SCENERY objects since DCS 2.2 and still in DCS 2.5
+    --if ZoneObject:isExist() then --FF: isExist always returns false for SCENERY objects since DCS 2.2 and still in DCS 2.5
     if ZoneObject then
 
       local ObjectCategory = ZoneObject:getCategory()
 
-      -- local name=ZoneObject:getName()
-      -- env.info(string.format("Zone object %s", tostring(name)))
-      -- self:E(ZoneObject)
+      --local name=ZoneObject:getName()
+      --env.info(string.format("Zone object %s", tostring(name)))
+      --self:E(ZoneObject)
 
-      if (ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive()) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
+      if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
 
         local CoalitionDCSUnit = ZoneObject:getCoalition()
 
@@ -853,7 +891,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
         local SceneryName = ZoneObject:getName()
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
-        self:F2( { SCENERY = self.ScanData.Scenery[SceneryType][SceneryName] } )
+        self:F2( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
 
     end
@@ -873,6 +911,7 @@ function ZONE_RADIUS:GetScannedUnits()
 
   return self.ScanData.Units
 end
+
 
 --- Get a set of scanned units.
 -- @param #ZONE_RADIUS self
@@ -906,19 +945,19 @@ end
 -- @return Core.Set#SET_GROUP Set of groups.
 function ZONE_RADIUS:GetScannedSetGroup()
 
-  self.ScanSetGroup = self.ScanSetGroup or SET_GROUP:New() -- Core.Set#SET_GROUP
+  self.ScanSetGroup=self.ScanSetGroup or SET_GROUP:New() --Core.Set#SET_GROUP
 
-  self.ScanSetGroup.Set = {}
+  self.ScanSetGroup.Set={}
 
   if self.ScanData then
     for ObjectID, UnitObject in pairs( self.ScanData.Units ) do
       local UnitObject = UnitObject -- DCS#Unit
       if UnitObject:isExist() then
 
-        local FoundUnit = UNIT:FindByName( UnitObject:getName() )
+        local FoundUnit=UNIT:FindByName(UnitObject:getName())
         if FoundUnit then
-          local group = FoundUnit:GetGroup()
-          self.ScanSetGroup:AddGroup( group )
+          local group=FoundUnit:GetGroup()
+          self.ScanSetGroup:AddGroup(group)
         end
       end
     end
@@ -926,6 +965,7 @@ function ZONE_RADIUS:GetScannedSetGroup()
 
   return self.ScanSetGroup
 end
+
 
 --- Count the number of different coalitions inside the zone.
 -- @param #ZONE_RADIUS self
@@ -979,12 +1019,14 @@ function ZONE_RADIUS:GetScannedCoalition( Coalition )
   end
 end
 
+
 --- Get scanned scenery type
 -- @param #ZONE_RADIUS self
 -- @return #table Table of DCS scenery type objects.
 function ZONE_RADIUS:GetScannedSceneryType( SceneryType )
   return self.ScanData.Scenery[SceneryType]
 end
+
 
 --- Get scanned scenery table
 -- @param #ZONE_RADIUS self
@@ -993,8 +1035,9 @@ function ZONE_RADIUS:GetScannedScenery()
   return self.ScanData.Scenery
 end
 
+
 --- Is All in Zone of Coalition?
--- Check if only the specified coalition is inside the zone and noone else.
+-- Check if only the specifed coalition is inside the zone and noone else.
 -- @param #ZONE_RADIUS self
 -- @param #number Coalition Coalition ID of the coalition which is checked to be the only one in the zone.
 -- @return #boolean True, if **only** that coalition is inside the zone and no one else.
@@ -1003,9 +1046,10 @@ end
 --    local IsGuarded = self.Zone:IsAllInZoneOfCoalition( self.Coalition )
 function ZONE_RADIUS:IsAllInZoneOfCoalition( Coalition )
 
-  -- self:E( { Coalitions = self.Coalitions, Count = self:CountScannedCoalitions() } )
+  --self:E( { Coalitions = self.Coalitions, Count = self:CountScannedCoalitions() } )
   return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == true
 end
+
 
 --- Is All in Zone of Other Coalition?
 -- Check if only one coalition is inside the zone and the specified coalition is not the one.
@@ -1019,26 +1063,26 @@ end
 --    local IsCaptured = self.Zone:IsAllInZoneOfOtherCoalition( self.Coalition )
 function ZONE_RADIUS:IsAllInZoneOfOtherCoalition( Coalition )
 
-  -- self:E( { Coalitions = self.Coalitions, Count = self:CountScannedCoalitions() } )
+  --self:E( { Coalitions = self.Coalitions, Count = self:CountScannedCoalitions() } )
   return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == nil
 end
 
+
 --- Is Some in Zone of Coalition?
--- Check if more than one coalition is inside the zone and the specified coalition is one of them.
+-- Check if more than one coaltion is inside the zone and the specifed coalition is one of them.
 -- You first need to use the @{#ZONE_RADIUS.Scan} method to scan the zone before it can be evaluated!
 -- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
 -- @param #ZONE_RADIUS self
--- @param #number Coalition ID of the coalition which is checked to be inside the zone.
+-- @param #number Coalition ID of the coaliton which is checked to be inside the zone.
 -- @return #boolean True if more than one coalition is inside the zone and the specified coalition is one of them.
 -- @usage
---
 --    self.Zone:Scan()
 --    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
---
 function ZONE_RADIUS:IsSomeInZoneOfCoalition( Coalition )
 
   return self:CountScannedCoalitions() > 1 and self:GetScannedCoalition( Coalition ) == true
 end
+
 
 --- Is None in Zone of Coalition?
 -- You first need to use the @{#ZONE_RADIUS.Scan} method to scan the zone before it can be evaluated!
@@ -1047,14 +1091,13 @@ end
 -- @param Coalition
 -- @return #boolean
 -- @usage
---
 --    self.Zone:Scan()
 --    local IsOccupied = self.Zone:IsNoneInZoneOfCoalition( self.Coalition )
---
 function ZONE_RADIUS:IsNoneInZoneOfCoalition( Coalition )
 
   return self:GetScannedCoalition( Coalition ) == nil
 end
+
 
 --- Is None in Zone?
 -- You first need to use the @{#ZONE_RADIUS.Scan} method to scan the zone before it can be evaluated!
@@ -1062,14 +1105,15 @@ end
 -- @param #ZONE_RADIUS self
 -- @return #boolean
 -- @usage
---
 --    self.Zone:Scan()
 --    local IsEmpty = self.Zone:IsNoneInZone()
---
 function ZONE_RADIUS:IsNoneInZone()
 
   return self:CountScannedCoalitions() == 0
 end
+
+
+
 
 --- Searches the zone
 -- @param #ZONE_RADIUS self
@@ -1082,17 +1126,18 @@ function ZONE_RADIUS:SearchZone( EvaluateFunction, ObjectCategories )
   local ZoneCoord = self:GetCoordinate()
   local ZoneRadius = self:GetRadius()
 
-  self:F( { ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS() } )
+  self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
 
   local SphereSearch = {
     id = world.VolumeType.SPHERE,
       params = {
-        point = ZoneCoord:GetVec3(),
-        radius = ZoneRadius / 2,
-      },
+      point = ZoneCoord:GetVec3(),
+      radius = ZoneRadius / 2,
+      }
     }
 
   local function EvaluateZone( ZoneDCSUnit )
+
 
     local ZoneUnit = UNIT:Find( ZoneDCSUnit )
 
@@ -1113,7 +1158,7 @@ function ZONE_RADIUS:IsVec2InZone( Vec2 )
   local ZoneVec2 = self:GetVec2()
 
   if ZoneVec2 then
-    if ((Vec2.x - ZoneVec2.x) ^ 2 + (Vec2.y - ZoneVec2.y) ^ 2) ^ 0.5 <= self:GetRadius() then
+    if (( Vec2.x - ZoneVec2.x )^2 + ( Vec2.y - ZoneVec2.y ) ^2 ) ^ 0.5 <= self:GetRadius() then
       return true
     end
   end
@@ -1135,24 +1180,54 @@ end
 
 --- Returns a random Vec2 location within the zone.
 -- @param #ZONE_RADIUS self
--- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
--- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @param #number inner (Optional) Minimal distance from the center of the zone. Default is 0.
+-- @param #number outer (Optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 100 times to find the right type!
 -- @return DCS#Vec2 The random location within the zone.
-function ZONE_RADIUS:GetRandomVec2( inner, outer )
-  self:F( self.ZoneName, inner, outer )
+function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
 
-  local Point = {}
   local Vec2 = self:GetVec2()
   local _inner = inner or 0
   local _outer = outer or self:GetRadius()
 
-  local angle = math.random() * math.pi * 2;
-  Point.x = Vec2.x + math.cos( angle ) * math.random( _inner, _outer );
-  Point.y = Vec2.y + math.sin( angle ) * math.random( _inner, _outer );
+  if surfacetypes and type(surfacetypes)~="table" then
+    surfacetypes={surfacetypes}
+  end
 
-  self:T( { Point } )
+  local function _getpoint()
+    local point = {}
+    local angle = math.random() * math.pi * 2
+    point.x = Vec2.x + math.cos(angle) * math.random(_inner, _outer)
+    point.y = Vec2.y + math.sin(angle) * math.random(_inner, _outer)
+    return point
+  end
 
-  return Point
+  local function _checkSurface(point)
+    local stype=land.getSurfaceType(point)
+    for _,sf in pairs(surfacetypes) do
+      if sf==stype then
+        return true
+      end
+    end
+    return false
+  end
+
+  local point=_getpoint()
+
+  if surfacetypes then
+    local N=1 ; local Nmax=100 ; local gotit=false
+    while gotit==false and N<=Nmax do
+      gotit=_checkSurface(point)
+      if gotit then
+        --env.info(string.format("Got random coordinate with surface type %d after N=%d/%d iterations", land.getSurfaceType(point), N, Nmax))
+      else
+        point=_getpoint()
+        N=N+1      
+      end
+    end
+  end
+
+  return point
 end
 
 --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
@@ -1185,6 +1260,7 @@ function ZONE_RADIUS:GetRandomVec3( inner, outer )
   return { x = Vec2.x, y = self.y, z = Vec2.y }
 end
 
+
 --- Returns a @{Core.Point#POINT_VEC3} object reflecting a random 3D location within the zone.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
@@ -1200,23 +1276,27 @@ function ZONE_RADIUS:GetRandomPointVec3( inner, outer )
   return PointVec3
 end
 
+
 --- Returns a @{Core.Point#COORDINATE} object reflecting a random 3D location within the zone.
 -- @param #ZONE_RADIUS self
--- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
--- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#COORDINATE
-function ZONE_RADIUS:GetRandomCoordinate( inner, outer )
-  self:F( self.ZoneName, inner, outer )
+-- @param #number inner (Optional) Minimal distance from the center of the zone. Default is 0.
+-- @param #number outer (Optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
+-- @return Core.Point#COORDINATE The random coordinate.
+function ZONE_RADIUS:GetRandomCoordinate(inner, outer, surfacetypes)
 
-  local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2( inner, outer ) )
+  local vec2=self:GetRandomVec2(inner, outer, surfacetypes)
 
-  self:T3( { Coordinate = Coordinate } )
+  local Coordinate = COORDINATE:NewFromVec2(vec2)
 
   return Coordinate
 end
 
+
+
 --- @type ZONE
 -- @extends #ZONE_RADIUS
+
 
 --- The ZONE class, defined by the zone name as defined within the Mission Editor.
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
@@ -1247,8 +1327,9 @@ end
 --
 -- @field #ZONE
 ZONE = {
-  ClassName = "ZONE",
-}
+  ClassName="ZONE",
+  }
+
 
 --- Constructor of ZONE taking the zone name.
 -- @param #ZONE self
@@ -1257,10 +1338,10 @@ ZONE = {
 function ZONE:New( ZoneName )
 
   -- First try to find the zone in the DB.
-  local zone = _DATABASE:FindZone( ZoneName )
+  local zone=_DATABASE:FindZone(ZoneName)
 
   if zone then
-    -- env.info("FF found zone in DB")
+    --env.info("FF found zone in DB")
     return zone
   end
 
@@ -1269,16 +1350,16 @@ function ZONE:New( ZoneName )
 
   -- Error!
   if not Zone then
-    error( "Zone " .. ZoneName .. " does not exist." )
+    env.error( "ERROR: Zone " .. ZoneName .. " does not exist!" )
     return nil
   end
 
   -- Create a new ZONE_RADIUS.
-  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, { x = Zone.point.x, y = Zone.point.z }, Zone.radius ) )
-  self:F( ZoneName )
+  local self=BASE:Inherit( self, ZONE_RADIUS:New(ZoneName, {x=Zone.point.x, y=Zone.point.z}, Zone.radius))
+  self:F(ZoneName)
 
   -- Color of zone.
-  self.Color = { 1, 0, 0, 0.15 }
+  self.Color={1, 0, 0, 0.15}
 
   -- DCS zone.
   self.Zone = Zone
@@ -1296,9 +1377,12 @@ function ZONE:FindByName( ZoneName )
   return ZoneFound
 end
 
+
+
 --- @type ZONE_UNIT
 -- @field Wrapper.Unit#UNIT ZoneUNIT
 -- @extends Core.Zone#ZONE_RADIUS
+
 
 --- # ZONE_UNIT class, extends @{Zone#ZONE_RADIUS}
 --
@@ -1307,8 +1391,8 @@ end
 --
 -- @field #ZONE_UNIT
 ZONE_UNIT = {
-  ClassName = "ZONE_UNIT",
-}
+  ClassName="ZONE_UNIT",
+  }
 
 --- Constructor to create a ZONE_UNIT instance, taking the zone name, a zone unit and a radius and optional offsets in X and Y directions.
 -- @param #ZONE_UNIT self
@@ -1323,12 +1407,12 @@ ZONE_UNIT = {
 --  relative_to_unit If true, theta is measured clockwise from unit's direction else clockwise from north. If using dx, dy setting this to true makes +x parallel to unit heading.
 --  dx, dy OR rho, theta may be used, not both.
 -- @return #ZONE_UNIT self
-function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, Offset )
+function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, Offset)
 
   if Offset then
     -- check if the inputs was reasonable, either (dx, dy) or (rho, theta) can be given, else raise an exception.
     if (Offset.dx or Offset.dy) and (Offset.rho or Offset.theta) then
-      error( "Cannot use (dx, dy) with (rho, theta)" )
+      error("Cannot use (dx, dy) with (rho, theta)")
     end
 
     self.dy = Offset.dy or 0.0
@@ -1351,6 +1435,7 @@ function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, Offset )
   return self
 end
 
+
 --- Returns the current location of the @{Wrapper.Unit#UNIT}.
 -- @param #ZONE_UNIT self
 -- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Unit#UNIT}location and the offset, if any.
@@ -1362,9 +1447,9 @@ function ZONE_UNIT:GetVec2()
 
     local heading
     if self.relative_to_unit then
-      heading = (self.ZoneUNIT:GetHeading() or 0.0) * math.pi / 180.0
-    else
-      heading = 0.0
+        heading = ( self.ZoneUNIT:GetHeading() or 0.0 ) * math.pi / 180.0
+      else
+        heading = 0.0
     end
 
     -- update the zone position with the offsets.
@@ -1378,8 +1463,8 @@ function ZONE_UNIT:GetVec2()
 
     -- if using the polar coordinates
     if (self.rho or self.theta) then
-      ZoneVec2.x = ZoneVec2.x + self.rho * math.cos( self.theta + heading )
-      ZoneVec2.y = ZoneVec2.y + self.rho * math.sin( self.theta + heading )
+       ZoneVec2.x = ZoneVec2.x + self.rho * math.cos( self.theta + heading )
+       ZoneVec2.y = ZoneVec2.y + self.rho * math.sin( self.theta + heading )
     end
 
     self.LastVec2 = ZoneVec2
@@ -1400,14 +1485,14 @@ function ZONE_UNIT:GetRandomVec2()
   self:F( self.ZoneName )
 
   local RandomVec2 = {}
-  -- local Vec2 = self.ZoneUNIT:GetVec2()  -- FF: This does not take care of the new offset feature!
+  --local Vec2 = self.ZoneUNIT:GetVec2()  -- FF: This does not take care of the new offset feature!
   local Vec2 = self:GetVec2()
 
   if not Vec2 then
     Vec2 = self.LastVec2
   end
 
-  local angle = math.random() * math.pi * 2;
+  local angle = math.random() * math.pi*2;
   RandomVec2.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
   RandomVec2.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
 
@@ -1437,13 +1522,14 @@ end
 --- @type ZONE_GROUP
 -- @extends #ZONE_RADIUS
 
+
 --- The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
 -- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 --
 -- @field #ZONE_GROUP
 ZONE_GROUP = {
-  ClassName = "ZONE_GROUP",
-}
+  ClassName="ZONE_GROUP",
+  }
 
 --- Constructor to create a ZONE_GROUP instance, taking the zone name, a zone @{Wrapper.Group#GROUP} and a radius.
 -- @param #ZONE_GROUP self
@@ -1463,6 +1549,7 @@ function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
 
   return self
 end
+
 
 --- Returns the current location of the @{Wrapper.Group}.
 -- @param #ZONE_GROUP self
@@ -1493,7 +1580,7 @@ function ZONE_GROUP:GetRandomVec2()
   local Point = {}
   local Vec2 = self._.ZoneGROUP:GetVec2()
 
-  local angle = math.random() * math.pi * 2;
+  local angle = math.random() * math.pi*2;
   Point.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
   Point.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
 
@@ -1517,9 +1604,11 @@ function ZONE_GROUP:GetRandomPointVec2( inner, outer )
   return PointVec2
 end
 
+
 --- @type ZONE_POLYGON_BASE
 -- --@field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCS#Vec2}.
 -- @extends #ZONE_BASE
+
 
 --- The ZONE_POLYGON_BASE class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
@@ -1531,7 +1620,7 @@ end
 --
 --   * @{#ZONE_POLYGON_BASE.GetRandomVec2}(): Gets a random 2D point in the zone.
 --   * @{#ZONE_POLYGON_BASE.GetRandomPointVec2}(): Return a @{Core.Point#POINT_VEC2} object representing a random 2D point within the zone.
---   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Core.Point#POINT_VEC3} object representing a random 3D point at land height within the zone.
+--   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Core.Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
 --
 -- ## Draw zone
 --
@@ -1541,8 +1630,8 @@ end
 --
 -- @field #ZONE_POLYGON_BASE
 ZONE_POLYGON_BASE = {
-  ClassName = "ZONE_POLYGON_BASE",
-}
+  ClassName="ZONE_POLYGON_BASE",
+  }
 
 --- A 2D points array.
 -- @type ZONE_POLYGON_BASE.ListVec2
@@ -1583,14 +1672,14 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @param #ZONE_POLYGON_BASE.ListVec2 Vec2Array An array of @{DCS#Vec2}, forming a polygon.
 -- @return #ZONE_POLYGON_BASE self
-function ZONE_POLYGON_BASE:UpdateFromVec2( Vec2Array )
+function ZONE_POLYGON_BASE:UpdateFromVec2(Vec2Array)
 
   self._.Polygon = {}
 
-  for i = 1, #Vec2Array do
+  for i=1,#Vec2Array do
     self._.Polygon[i] = {}
-    self._.Polygon[i].x = Vec2Array[i].x
-    self._.Polygon[i].y = Vec2Array[i].y
+    self._.Polygon[i].x=Vec2Array[i].x
+    self._.Polygon[i].y=Vec2Array[i].y
   end
 
   return self
@@ -1600,14 +1689,14 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @param #ZONE_POLYGON_BASE.ListVec3 Vec2Array An array of @{DCS#Vec3}, forming a polygon.
 -- @return #ZONE_POLYGON_BASE self
-function ZONE_POLYGON_BASE:UpdateFromVec3( Vec3Array )
+function ZONE_POLYGON_BASE:UpdateFromVec3(Vec3Array)
 
   self._.Polygon = {}
 
-  for i = 1, #Vec3Array do
+  for i=1,#Vec3Array do
     self._.Polygon[i] = {}
-    self._.Polygon[i].x = Vec3Array[i].x
-    self._.Polygon[i].y = Vec3Array[i].z
+    self._.Polygon[i].x=Vec3Array[i].x
+    self._.Polygon[i].y=Vec3Array[i].z
   end
 
   return self
@@ -1621,14 +1710,14 @@ function ZONE_POLYGON_BASE:GetVec2()
 
   local Bounds = self:GetBoundingSquare()
 
-  return { x = (Bounds.x2 + Bounds.x1) / 2, y = (Bounds.y2 + Bounds.y1) / 2 }
+  return { x = ( Bounds.x2 + Bounds.x1 ) / 2, y = ( Bounds.y2 + Bounds.y1 ) / 2 }
 end
 
 --- Get a vertex of the polygon.
 -- @param #ZONE_POLYGON_BASE self
 -- @param #number Index Index of the vertex. Default 1.
 -- @return DCS#Vec2 Vertex of the polygon.
-function ZONE_POLYGON_BASE:GetVertexVec2( Index )
+function ZONE_POLYGON_BASE:GetVertexVec2(Index)
   return self._.Polygon[Index or 1]
 end
 
@@ -1636,10 +1725,10 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @param #number Index Index of the vertex. Default 1.
 -- @return DCS#Vec3 Vertex of the polygon.
-function ZONE_POLYGON_BASE:GetVertexVec3( Index )
-  local vec2 = self:GetVertexVec2( Index )
+function ZONE_POLYGON_BASE:GetVertexVec3(Index)
+  local vec2=self:GetVertexVec2(Index)
   if vec2 then
-    local vec3 = { x = vec2.x, y = land.getHeight( vec2 ), z = vec2.y }
+    local vec3={x=vec2.x, y=land.getHeight(vec2), z=vec2.y}
     return vec3
   end
   return nil
@@ -1649,14 +1738,15 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @param #number Index Index of the vertex. Default 1.
 -- @return Core.Point#COORDINATE Vertex of the polygon.
-function ZONE_POLYGON_BASE:GetVertexCoordinate( Index )
-  local vec2 = self:GetVertexVec2( Index )
+function ZONE_POLYGON_BASE:GetVertexCoordinate(Index)
+  local vec2=self:GetVertexVec2(Index)
   if vec2 then
-    local coord = COORDINATE:NewFromVec2( vec2 )
+    local coord=COORDINATE:NewFromVec2(vec2)
     return coord
   end
   return nil
 end
+
 
 --- Get a list of verticies of the polygon.
 -- @param #ZONE_POLYGON_BASE self
@@ -1670,11 +1760,11 @@ end
 -- @return #table List of DCS#Vec3 verticies defining the edges of the polygon.
 function ZONE_POLYGON_BASE:GetVerticiesVec3()
 
-  local coords = {}
+  local coords={}
 
-  for i, vec2 in ipairs( self._.Polygon ) do
-    local vec3 = { x = vec2.x, y = land.getHeight( vec2 ), z = vec2.y }
-    table.insert( coords, vec3 )
+  for i,vec2 in ipairs(self._.Polygon) do
+    local vec3={x=vec2.x, y=land.getHeight(vec2), z=vec2.y}
+    table.insert(coords, vec3)
   end
 
   return coords
@@ -1685,11 +1775,11 @@ end
 -- @return #table List of COORDINATES verticies defining the edges of the polygon.
 function ZONE_POLYGON_BASE:GetVerticiesCoordinates()
 
-  local coords = {}
+  local coords={}
 
-  for i, vec2 in ipairs( self._.Polygon ) do
-    local coord = COORDINATE:NewFromVec2( vec2 )
-    table.insert( coords, coord )
+  for i,vec2 in ipairs(self._.Polygon) do
+    local coord=COORDINATE:NewFromVec2(vec2)
+    table.insert(coords, coord)
   end
 
   return coords
@@ -1753,6 +1843,7 @@ function ZONE_POLYGON_BASE:BoundZone( UnBound )
   return self
 end
 
+
 --- Draw the zone on the F10 map.  **NOTE** Currently, only polygons with **exactly four points** are supported!
 -- @param #ZONE_POLYGON_BASE self
 -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
@@ -1763,31 +1854,33 @@ end
 -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
 -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
 -- @return #ZONE_POLYGON_BASE self
-function ZONE_POLYGON_BASE:DrawZone( Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly )
+function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
 
-  local coordinate = COORDINATE:NewFromVec2( self._.Polygon[1] )
+  local coordinate=COORDINATE:NewFromVec2(self._.Polygon[1])
 
-  Color = Color or self:GetColorRGB()
-  Alpha = Alpha or 1
-  FillColor = FillColor or Color
-  FillAlpha = FillAlpha or self:GetColorAlpha()
+  Color=Color or self:GetColorRGB()
+  Alpha=Alpha or 1
+  FillColor=FillColor or Color
+  FillAlpha=FillAlpha or self:GetColorAlpha()
 
-  if #self._.Polygon == 4 then
 
-    local Coord2 = COORDINATE:NewFromVec2( self._.Polygon[2] )
-    local Coord3 = COORDINATE:NewFromVec2( self._.Polygon[3] )
-    local Coord4 = COORDINATE:NewFromVec2( self._.Polygon[4] )
+  if #self._.Polygon==4 then
 
-    self.DrawID = coordinate:QuadToAll( Coord2, Coord3, Coord4, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly )
+    local Coord2=COORDINATE:NewFromVec2(self._.Polygon[2])
+    local Coord3=COORDINATE:NewFromVec2(self._.Polygon[3])
+    local Coord4=COORDINATE:NewFromVec2(self._.Polygon[4])
+
+    self.DrawID=coordinate:QuadToAll(Coord2, Coord3, Coord4, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
 
   else
 
-    local Coordinates = self:GetVerticiesCoordinates()
-    table.remove( Coordinates, 1 )
+    local Coordinates=self:GetVerticiesCoordinates()
+    table.remove(Coordinates, 1)
 
-    self.DrawID = coordinate:MarkupToAllFreeForm( Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly )
+    self.DrawID=coordinate:MarkupToAllFreeForm(Coordinates, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
 
   end
+
 
   return self
 end
@@ -1800,10 +1893,10 @@ end
 function ZONE_POLYGON_BASE:SmokeZone( SmokeColor, Segments )
   self:F2( SmokeColor )
 
-  Segments = Segments or 10
+  Segments=Segments or 10
 
-  local i = 1
-  local j = #self._.Polygon
+  local i=1
+  local j=#self._.Polygon
 
   while i <= #self._.Polygon do
     self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
@@ -1812,8 +1905,8 @@ function ZONE_POLYGON_BASE:SmokeZone( SmokeColor, Segments )
     local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
 
     for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
-      local PointX = self._.Polygon[i].x + (Segment * DeltaX / Segments)
-      local PointY = self._.Polygon[i].y + (Segment * DeltaY / Segments)
+      local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
+      local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
       POINT_VEC2:New( PointX, PointY ):Smoke( SmokeColor )
     end
     j = i
@@ -1823,6 +1916,7 @@ function ZONE_POLYGON_BASE:SmokeZone( SmokeColor, Segments )
   return self
 end
 
+
 --- Flare the zone boundaries in a color.
 -- @param #ZONE_POLYGON_BASE self
 -- @param Utilities.Utils#FLARECOLOR FlareColor The flare color.
@@ -1831,14 +1925,14 @@ end
 -- @param #number AddHeight (optional) The height to be added for the smoke.
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments, Azimuth, AddHeight )
-  self:F2( FlareColor )
+  self:F2(FlareColor)
 
-  Segments = Segments or 10
+  Segments=Segments or 10
 
   AddHeight = AddHeight or 0
 
-  local i = 1
-  local j = #self._.Polygon
+  local i=1
+  local j=#self._.Polygon
 
   while i <= #self._.Polygon do
     self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
@@ -1847,9 +1941,9 @@ function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments, Azimuth, AddHeight )
     local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
 
     for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
-      local PointX = self._.Polygon[i].x + (Segment * DeltaX / Segments)
-      local PointY = self._.Polygon[i].y + (Segment * DeltaY / Segments)
-      POINT_VEC2:New( PointX, PointY, AddHeight ):Flare( FlareColor, Azimuth )
+      local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
+      local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
+      POINT_VEC2:New( PointX, PointY, AddHeight ):Flare(FlareColor, Azimuth)
     end
     j = i
     i = i + 1
@@ -1857,6 +1951,9 @@ function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments, Azimuth, AddHeight )
 
   return self
 end
+
+
+
 
 --- Returns if a location is within the zone.
 -- Source learned and taken from: https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
@@ -1875,9 +1972,10 @@ function ZONE_POLYGON_BASE:IsVec2InZone( Vec2 )
 
   while Next <= #self._.Polygon do
     self:T( { Next, Prev, self._.Polygon[Next], self._.Polygon[Prev] } )
-    if (((self._.Polygon[Next].y > Vec2.y) ~= (self._.Polygon[Prev].y > Vec2.y)) and
-        (Vec2.x < (self._.Polygon[Prev].x - self._.Polygon[Next].x) * (Vec2.y - self._.Polygon[Next].y) / (self._.Polygon[Prev].y - self._.Polygon[Next].y) + self._.Polygon[Next].x)) then
-      InPolygon = not InPolygon
+    if ( ( ( self._.Polygon[Next].y > Vec2.y ) ~= ( self._.Polygon[Prev].y > Vec2.y ) ) and
+         ( Vec2.x < ( self._.Polygon[Prev].x - self._.Polygon[Next].x ) * ( Vec2.y - self._.Polygon[Next].y ) / ( self._.Polygon[Prev].y - self._.Polygon[Next].y ) + self._.Polygon[Next].x )
+       ) then
+       InPolygon = not InPolygon
     end
     self:T2( { InPolygon = InPolygon } )
     Prev = Next
@@ -1892,26 +1990,28 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @return DCS#Vec2 The Vec2 coordinate.
 function ZONE_POLYGON_BASE:GetRandomVec2()
-  self:F2()
 
-  --- It is a bit tricky to find a random point within a polygon. Right now i am doing it the dirty and inefficient way...
-  local Vec2Found = false
-  local Vec2
+  -- It is a bit tricky to find a random point within a polygon. Right now i am doing it the dirty and inefficient way...
+
+  -- Get the bounding square.
   local BS = self:GetBoundingSquare()
 
-  self:T2( BS )
+  local Nmax=1000 ; local n=0
+  while n<Nmax do
 
-  while Vec2Found == false do
-    Vec2 = { x = math.random( BS.x1, BS.x2 ), y = math.random( BS.y1, BS.y2 ) }
-    self:T2( Vec2 )
-    if self:IsVec2InZone( Vec2 ) then
-      Vec2Found = true
+    -- Random point in the bounding square.
+    local Vec2={x=math.random(BS.x1, BS.x2), y=math.random(BS.y1, BS.y2)}
+
+    -- Check if this is in the polygon.
+    if self:IsVec2InZone(Vec2) then
+      return Vec2
     end
+
+    n=n+1
   end
 
-  self:T2( Vec2 )
-
-  return Vec2
+  self:E("Could not find a random point in the polygon zone!")
+  return nil
 end
 
 --- Return a @{Core.Point#POINT_VEC2} object representing a random 2D point at landheight within the zone.
@@ -1940,6 +2040,7 @@ function ZONE_POLYGON_BASE:GetRandomPointVec3()
   return PointVec3
 end
 
+
 --- Return a @{Core.Point#COORDINATE} object representing a random 3D point at landheight within the zone.
 -- @param #ZONE_POLYGON_BASE self
 -- @return Core.Point#COORDINATE
@@ -1953,6 +2054,7 @@ function ZONE_POLYGON_BASE:GetRandomCoordinate()
   return Coordinate
 end
 
+
 --- Get the bounding square the zone.
 -- @param #ZONE_POLYGON_BASE self
 -- @return #ZONE_POLYGON_BASE.BoundingSquare The bounding square.
@@ -1965,10 +2067,10 @@ function ZONE_POLYGON_BASE:GetBoundingSquare()
 
   for i = 2, #self._.Polygon do
     self:T2( { self._.Polygon[i], x1, y1, x2, y2 } )
-    x1 = (x1 > self._.Polygon[i].x) and self._.Polygon[i].x or x1
-    x2 = (x2 < self._.Polygon[i].x) and self._.Polygon[i].x or x2
-    y1 = (y1 > self._.Polygon[i].y) and self._.Polygon[i].y or y1
-    y2 = (y2 < self._.Polygon[i].y) and self._.Polygon[i].y or y2
+    x1 = ( x1 > self._.Polygon[i].x ) and self._.Polygon[i].x or x1
+    x2 = ( x2 < self._.Polygon[i].x ) and self._.Polygon[i].x or x2
+    y1 = ( y1 > self._.Polygon[i].y ) and self._.Polygon[i].y or y1
+    y2 = ( y2 < self._.Polygon[i].y ) and self._.Polygon[i].y or y2
 
   end
 
@@ -1984,51 +2086,52 @@ end
 -- @param #number Segments (Optional) Number of segments within boundary line. Default 10.
 -- @param #boolean Closed (Optional) Link the last point with the first one to obtain a closed boundary. Default false
 -- @return #ZONE_POLYGON_BASE self
-function ZONE_POLYGON_BASE:Boundary( Coalition, Color, Radius, Alpha, Segments, Closed )
-  Coalition = Coalition or -1
-  Color = Color or { 1, 1, 1 }
-  Radius = Radius or 1000
-  Alpha = Alpha or 1
-  Segments = Segments or 10
-  Closed = Closed or false
-  local i = 1
-  local j = #self._.Polygon
-  if (Closed) then
-    Limit = #self._.Polygon + 1
-  else
-    Limit = #self._.Polygon
-  end
-  while i <= #self._.Polygon do
-    self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
-    if j ~= Limit then
-      local DeltaX = self._.Polygon[j].x - self._.Polygon[i].x
-      local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
-      for Segment = 0, Segments do
-        local PointX = self._.Polygon[i].x + (Segment * DeltaX / Segments)
-        local PointY = self._.Polygon[i].y + (Segment * DeltaY / Segments)
-        ZONE_RADIUS:New( "Zone", { x = PointX, y = PointY }, Radius ):DrawZone( Coalition, Color, 1, Color, Alpha, nil, true )
-      end
+function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, Closed)
+    Coalition = Coalition or -1
+    Color = Color or {1, 1, 1}
+    Radius = Radius or 1000
+    Alpha = Alpha or 1
+    Segments = Segments or 10
+    Closed = Closed or false
+    local i = 1
+    local j = #self._.Polygon
+    if (Closed) then
+        Limit = #self._.Polygon + 1
+    else
+        Limit = #self._.Polygon
     end
-    j = i
-    i = i + 1
-  end
-  return self
+    while i <= #self._.Polygon do
+        self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
+        if j ~= Limit then
+            local DeltaX = self._.Polygon[j].x - self._.Polygon[i].x
+            local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
+            for Segment = 0, Segments do
+                local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
+                local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
+                ZONE_RADIUS:New( "Zone", {x = PointX, y = PointY}, Radius ):DrawZone(Coalition, Color, 1, Color, Alpha, nil, true)
+            end
+        end
+        j = i
+        i = i + 1
+    end
+    return self
 end
 
 --- @type ZONE_POLYGON
 -- @extends #ZONE_POLYGON_BASE
+
 
 --- The ZONE_POLYGON class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 --
 -- ## Declare a ZONE_POLYGON directly in the DCS mission editor!
 --
--- You can declare a ZONE_POLYGON using the DCS mission editor by adding the ~ZONE_POLYGON tag in the group name.
+-- You can declare a ZONE_POLYGON using the DCS mission editor by adding the #ZONE_POLYGON tag in the group name.
 --
--- So, imagine you have a group declared in the mission editor, with group name `DefenseZone~ZONE_POLYGON`.
+-- So, imagine you have a group declared in the mission editor, with group name `DefenseZone#ZONE_POLYGON`.
 -- Then during mission startup, when loading Moose.lua, this group will be detected as a ZONE_POLYGON declaration.
 -- Within the background, a ZONE_POLYGON object will be created within the @{Core.Database} using the properties of the group.
--- The ZONE_POLYGON name will be the group name without the ~ZONE_POLYGON tag.
+-- The ZONE_POLYGON name will be the group name without the #ZONE_POLYGON tag.
 --
 -- So, you can search yourself for the ZONE_POLYGON by using the @{#ZONE_POLYGON.FindByName}() method.
 -- In this example, `local PolygonZone = ZONE_POLYGON:FindByName( "DefenseZone" )` would return the ZONE_POLYGON object
@@ -2043,8 +2146,8 @@ end
 --
 -- @field #ZONE_POLYGON
 ZONE_POLYGON = {
-  ClassName = "ZONE_POLYGON",
-}
+  ClassName="ZONE_POLYGON",
+  }
 
 --- Constructor to create a ZONE_POLYGON instance, taking the zone name and the @{Wrapper.Group#GROUP} defined within the Mission Editor.
 -- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
@@ -2064,6 +2167,7 @@ function ZONE_POLYGON:New( ZoneName, ZoneGroup )
 
   return self
 end
+
 
 --- Constructor to create a ZONE_POLYGON instance, taking the zone name and the **name** of the @{Wrapper.Group#GROUP} defined within the Mission Editor.
 -- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
@@ -2085,6 +2189,7 @@ function ZONE_POLYGON:NewFromGroupName( GroupName )
   return self
 end
 
+
 --- Find a polygon zone in the _DATABASE using the name of the polygon zone.
 -- @param #ZONE_POLYGON self
 -- @param #string ZoneName The name of the polygon zone.
@@ -2098,15 +2203,21 @@ end
 do -- ZONE_AIRBASE
 
   --- @type ZONE_AIRBASE
+  -- @field #boolean isShip If `true`, airbase is a ship.
+  -- @field #boolean isHelipad If `true`, airbase is a helipad.
+  -- @field #boolean isAirdrome If `true`, airbase is an airdrome.
   -- @extends #ZONE_RADIUS
+
 
   --- The ZONE_AIRBASE class defines by a zone around a @{Wrapper.Airbase#AIRBASE} with a radius.
   -- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
   --
   -- @field #ZONE_AIRBASE
   ZONE_AIRBASE = {
-    ClassName = "ZONE_AIRBASE",
-  }
+    ClassName="ZONE_AIRBASE",
+    }
+
+
 
   --- Constructor to create a ZONE_AIRBASE instance, taking the zone name, a zone @{Wrapper.Airbase#AIRBASE} and a radius.
   -- @param #ZONE_AIRBASE self
@@ -2115,7 +2226,7 @@ do -- ZONE_AIRBASE
   -- @return #ZONE_AIRBASE self
   function ZONE_AIRBASE:New( AirbaseName, Radius )
 
-    Radius = Radius or 4000
+    Radius=Radius or 4000
 
     local Airbase = AIRBASE:FindByName( AirbaseName )
 
@@ -2123,6 +2234,20 @@ do -- ZONE_AIRBASE
 
     self._.ZoneAirbase = Airbase
     self._.ZoneVec2Cache = self._.ZoneAirbase:GetVec2()
+    
+    if Airbase:IsShip() then
+      self.isShip=true
+      self.isHelipad=false
+      self.isAirdrome=false
+    elseif Airbase:IsHelipad() then
+      self.isShip=false
+      self.isHelipad=true
+      self.isAirdrome=false    
+    elseif Airbase:IsAirdrome() then
+      self.isShip=false
+      self.isHelipad=false
+      self.isAirdrome=true    
+    end
 
     -- Zone objects are added to the _DATABASE and SET_ZONE objects.
     _EVENTDISPATCHER:CreateEventNewZone( self )
@@ -2137,9 +2262,9 @@ do -- ZONE_AIRBASE
     return self._.ZoneAirbase
   end
 
-  --- Returns the current location of the @{Wrapper.Group}.
+  --- Returns the current location of the AIRBASE.
   -- @param #ZONE_AIRBASE self
-  -- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Group} location.
+  -- @return DCS#Vec2 The location of the zone based on the AIRBASE location.
   function ZONE_AIRBASE:GetVec2()
     self:F( self.ZoneName )
 
@@ -2157,24 +2282,6 @@ do -- ZONE_AIRBASE
     return ZoneVec2
   end
 
-  --- Returns a random location within the zone of the @{Wrapper.Group}.
-  -- @param #ZONE_AIRBASE self
-  -- @return DCS#Vec2 The random location of the zone based on the @{Wrapper.Group} location.
-  function ZONE_AIRBASE:GetRandomVec2()
-    self:F( self.ZoneName )
-
-    local Point = {}
-    local Vec2 = self._.ZoneAirbase:GetVec2()
-
-    local angle = math.random() * math.pi * 2;
-    Point.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
-    Point.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
-
-    self:T( { Point } )
-
-    return Point
-  end
-
   --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
   -- @param #ZONE_AIRBASE self
   -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
@@ -2189,5 +2296,6 @@ do -- ZONE_AIRBASE
 
     return PointVec2
   end
+
 
 end
