@@ -418,6 +418,7 @@ AUFTRAG.Type={
   BARRAGE="Barrage",
   ARMORATTACK="Armor Attack",
   CASENHANCED="CAS Enhanced",
+  HOVER="Hover",
 }
 
 --- Mission status of an assigned group.
@@ -440,6 +441,7 @@ AUFTRAG.SpecialTask={
   ARMOREDGUARD="ArmoredGuard",
   BARRAGE="Barrage",
   ARMORATTACK="AmorAttack",
+  HOVER="Hover",
 }
 
 --- Mission status.
@@ -560,7 +562,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.8.4"
+AUFTRAG.version="0.8.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -910,6 +912,44 @@ function AUFTRAG:NewANTISHIP(Target, Altitude)
   
   mission.DCStask=mission:GetDCSMissionTask()
   
+  return mission
+end
+
+--- **[AIR/HELICOPTER]** Create an HOVER mission.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Where to hover.
+-- @param #number Altitude Hover altitude in feet AGL. Default is 50 feet above ground.
+-- @param #number Time Time in seconds to hold the hover. Default 300 seconds.
+-- @param #number Speed Speed in knots to fly to the target coordinate. Default 150kn.
+-- @param #number MissionAlt Altitide to fly towards the mission in feet AGL. Default 1000ft.
+-- @return #AUFTRAG self
+function AUFTRAG:NewHOVER(Coordinate, Altitude, Time, Speed, MissionAlt)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.HOVER)
+  
+  -- Altitude.
+  if Altitude then
+    mission.hoverAltitude=Coordinate:GetLandHeight()+UTILS.FeetToMeters(Altitude)
+  else
+    mission.hoverAltitude=Coordinate:GetLandHeight()+UTILS.FeetToMeters(50)
+  end  
+ 
+  mission:_TargetFromObject(Coordinate)
+
+  mission.hoverSpeed = 0.1 -- the DCS Task itself will shortly be build with this so MPS
+  mission.hoverTime = Time or 300
+  mission.missionSpeed = UTILS.KnotsToMps(Speed or 150) 
+
+  -- Mission options:
+  mission.missionAltitude=mission.MissionAlt or UTILS.FeetToMeters(1000)
+  mission.missionFraction=0.9  
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+  
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+
   return mission
 end
 
@@ -5100,7 +5140,40 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     DCStask.params=param
     
     table.insert(DCStasks, DCStask)    
+  
+    elseif self.type==AUFTRAG.Type.HOVER then
 
+    ---------------------
+    -- HOVER Mission --
+    ---------------------
+  
+    local DCStask={}
+    DCStask.id=AUFTRAG.SpecialTask.HOVER
+    
+    local param={}
+    
+    param.hoverAltitude=self.hoverAltitude
+    param.hoverTime = self.hoverTime
+    param.missionSpeed = self.missionSpeed
+    param.missionAltitude = self.missionAltitude
+    
+    DCStask.params=param
+    
+    --[[ Task script.
+    local DCSScript = {}
+    
+    local altitude = self.hoverAltitude
+    DCSScript[#DCSScript+1] = 'local group = ...'
+    DCSScript[#DCSScript+1] = 'local helo = GROUP:Find(group)'
+    DCSScript[#DCSScript+1] = 'helo:SetSpeed(0.1,true)'
+    DCSScript[#DCSScript+1] = string.format('helo:SetAltitude(UTILS.FeetToMeters(%d),true,"BARO")',altitude)                               -- Call the function, e.g. myfunction.(warehouse,mygroup)
+  
+    -- Create task.
+    local DCSTask=CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
+    --]] 
+    
+    table.insert(DCStasks, DCStask)  
+  
   elseif self.type==AUFTRAG.Type.ONGUARD or self.type==AUFTRAG.Type.ARMOREDGUARD then
 
     ----------------------
@@ -5237,6 +5310,8 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
   elseif MissionType==AUFTRAG.Type.TROOPTRANSPORT then
     mtask=ENUMS.MissionTask.TRANSPORT
   elseif MissionType==AUFTRAG.Type.ARMORATTACK then
+    mtask=ENUMS.MissionTask.NOTHING
+  elseif MissionType==AUFTRAG.Type.HOVER then
     mtask=ENUMS.MissionTask.NOTHING
   end
 
