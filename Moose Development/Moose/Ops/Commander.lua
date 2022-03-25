@@ -1413,6 +1413,26 @@ end
 
 --- Count assets of all assigned legions.
 -- @param #COMMANDER self
+-- @param #table MissionTypes (Optional) Count only missions of these types. Default is all types.
+-- @return #number Amount missions.
+function COMMANDER:CountMissions(MissionTypes)
+
+  local N=0
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+
+    -- Check if this mission type is requested.
+    if AUFTRAG.CheckMissionType(mission.type, MissionTypes) then
+      N=N+1
+    end
+  end
+
+
+  return N
+end
+
+--- Count assets of all assigned legions.
+-- @param #COMMANDER self
 -- @param #boolean InStock If true, only assets that are in the warehouse stock/inventory are counted.
 -- @param #table Legions (Optional) Table of legions. Default is all legions.
 -- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.

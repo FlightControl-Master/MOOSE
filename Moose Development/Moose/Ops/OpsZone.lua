@@ -413,6 +413,13 @@ function OPSZONE:GetOwner()
   return self.ownerCurrent
 end
 
+--- Get coalition name of current owner of the zone.
+-- @param #OPSZONE self
+-- @return #string  Owner coalition.
+function OPSZONE:GetOwnerName()
+  return UTILS.GetCoalitionName(self.ownerCurrent)
+end
+
 --- Get coordinate of zone.
 -- @param #OPSZONE self
 -- @return Core.Point#COORDINATE Coordinate of the zone.
@@ -421,7 +428,7 @@ function OPSZONE:GetCoordinate()
   return coordinate
 end
 
---- Get name.
+--- Get zone name.
 -- @param #OPSZONE self
 -- @return #string Name of the zone.
 function OPSZONE:GetName()

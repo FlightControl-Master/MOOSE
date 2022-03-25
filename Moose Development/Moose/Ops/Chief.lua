@@ -32,6 +32,7 @@
 -- @field #string Defcon Defence condition.
 -- @field #string strategy Strategy of the CHIEF.
 -- @field Ops.Commander#COMMANDER commander Commander of assigned legions.
+-- @field #boolean tacview Tactical overview.
 -- @extends Ops.Intelligence#INTEL
 
 --- *In preparing for battle I have always found that plans are useless, but planning is indispensable* -- Dwight D Eisenhower
@@ -134,6 +135,7 @@ CHIEF = {
   borderzoneset  =   nil,
   yellowzoneset  =   nil,
   engagezoneset  =   nil,
+  tacview        = false,
 }
 
 --- Defence condition.
@@ -600,6 +602,23 @@ end
 function CHIEF:GetDefcon(Defcon)  
   return self.Defcon
 end
+
+--- Set tactical overview on.
+-- @param #CHIEF self
+-- @return #CHIEF self
+function CHIEF:SetTacticalOverviewOn()  
+  self.tacview=true
+  return self
+end
+
+--- Set tactical overview off.
+-- @param #CHIEF self
+-- @return #CHIEF self
+function CHIEF:SetTacticalOverviewOff()  
+  self.tacview=false
+  return self
+end
+
 
 --- Set strategy.
 -- @param #CHIEF self
@@ -1114,7 +1133,7 @@ function CHIEF:onafterStatus(From, Event, To)
   ---
   
   -- Create TARGETs for all new contacts.
-  local Nborder=0 ; local Nconflict=0 ; local Nattack=0
+  self.Nborder=0 ; self.Nconflict=0 ; self.Nattack=0
   for _,_contact in pairs(self.Contacts) do
     local contact=_contact    --Ops.Intelligence#INTEL.Contact
     local group=contact.group --Wrapper.Group#GROUP
@@ -1122,19 +1141,19 @@ function CHIEF:onafterStatus(From, Event, To)
     -- Check if contact inside of our borders.
     local inred=self:CheckGroupInBorder(group)
     if inred then
-      Nborder=Nborder+1
+      self.Nborder=self.Nborder+1
     end
     
     -- Check if contact is in the conflict zones.
     local inyellow=self:CheckGroupInConflict(group)
     if inyellow then
-      Nconflict=Nconflict+1
+      self.Nconflict=self.Nconflict+1
     end
     
     -- Check if contact is in the attack zones.
     local inattack=self:CheckGroupInAttack(group)
     if inattack then
-      Nattack=Nattack+1
+      self.Nattack=self.Nattack+1
     end
     
 
@@ -1162,9 +1181,9 @@ function CHIEF:onafterStatus(From, Event, To)
   ---
   
   -- TODO: Need to introduce time check to avoid fast oscillation between different defcon states in case groups move in and out of the zones.
-  if Nborder>0 then
+  if self.Nborder>0 then
     self:SetDefcon(CHIEF.DEFCON.RED)
-  elseif Nconflict>0 then
+  elseif self.Nconflict>0 then
     self:SetDefcon(CHIEF.DEFCON.YELLOW)
   else
     self:SetDefcon(CHIEF.DEFCON.GREEN)
@@ -1182,7 +1201,11 @@ function CHIEF:onafterStatus(From, Event, To)
   ---
     
   -- Check target queue and assign missions to new targets.
-  self:CheckOpsZoneQueue()  
+  self:CheckOpsZoneQueue()
+  
+  
+  -- Display tactival overview.
+  self:_TacticalOverview()
   
   ---
   -- Info General
@@ -1196,7 +1219,7 @@ function CHIEF:onafterStatus(From, Event, To)
     
     -- Info message
     local text=string.format("Defcon=%s Strategy=%s: Assets=%d, Contacts=%d [Border=%d, Conflict=%d, Attack=%d], Targets=%d, Missions=%d", 
-    self.Defcon, self.strategy, Nassets, Ncontacts, Nborder, Nconflict, Nattack, Ntargets, Nmissions)
+    self.Defcon, self.strategy, Nassets, Ncontacts, self.Nborder, self.Nconflict, self.Nattack, Ntargets, Nmissions)
     self:I(self.lid..text)
     
   end
@@ -1469,6 +1492,59 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Target Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Display tactical overview.
+-- @param #CHIEF self 
+function CHIEF:_TacticalOverview()
+
+  if self.tacview then
+
+    local NassetsTotal=self.commander:CountAssets()
+    local NassetsStock=self.commander:CountAssets(true)
+    local Ncontacts=#self.Contacts
+    local Nmissions=#self.commander.missionqueue
+    local Ntargets=#self.targetqueue
+    local Nzones=#self.zonequeue
+    
+    -- Info message
+    local text=string.format("Tactical Overview\n")
+    text=text..string.format("=================\n")
+    
+    text=text..string.format("Strategy: %s - Defcon: %s\n", self.strategy, self.Defcon)
+    
+    text=text..string.format("Contacts: %d [Border=%d, Conflict=%d, Attack=%d]\n", Ncontacts, self.Nborder, self.Nconflict, self.Nattack)
+    
+    text=text..string.format("Targets: %d\n", Ntargets)
+    
+    text=text..string.format("Missions: %d\n", Nmissions)
+    for _,mtype in pairs(AUFTRAG.Type) do
+      local n=self.commander:CountMissions(mtype)
+      if n>0 then
+        text=text..string.format("  - %s: %d\n", mtype, n)
+      end
+    end
+    
+    text=text..string.format("Assets: %d [Stock %d]\n", NassetsTotal, NassetsStock)
+    
+    text=text..string.format("Strategic Zones: %d\n", Nzones)
+    for _,_stratzone in pairs(self.zonequeue) do
+      local stratzone=_stratzone --#CHIEF.StrategicZone
+      local owner=stratzone.opszone:GetOwnerName()
+      text=text..string.format("  - %s: %s - %s [I=%d, P=%d]\n", stratzone.opszone:GetName(), owner, stratzone.opszone:GetState(), stratzone.importance, stratzone.prio)
+    end
+    
+    -- Message to coalition.
+    MESSAGE:New(text, 60, nil, true):ToCoalition(self.coalition)
+    
+    -- Output to log.
+    if self.verbose>=4 then
+      self:I(self.lid..text)
+    end
+    
+  end
+
+end
+
 
 --- Check target queue and assign ONE valid target by adding it to the mission queue of the COMMANDER.
 -- @param #CHIEF self 
