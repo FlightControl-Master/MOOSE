@@ -1439,37 +1439,46 @@ function NAVYGROUP:_UpdateEngageTarget()
 
     -- Get current position vector.
     local vec3=self.engage.Target:GetVec3()
+    
+    if vec3 then
   
-    -- Distance to last known position of target.
-    local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
-    
-    -- Check if target moved more than 100 meters.
-    if dist>100 then
-    
-      --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
-    
-      -- Update new position.
-      self.engage.Coordinate:UpdateFromVec3(vec3)
-
-      -- ID of current waypoint.
-      local uid=self:GetWaypointCurrent().uid
-    
-      -- Remove current waypoint
-      self:RemoveWaypointByID(self.engage.Waypoint.uid)
+      -- Distance to last known position of target.
+      local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
       
-      local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+      -- Check if target moved more than 100 meters.
+      if dist>100 then
+      
+        --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
+      
+        -- Update new position.
+        self.engage.Coordinate:UpdateFromVec3(vec3)
   
-        -- Add waypoint after current.
-      self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+        -- ID of current waypoint.
+        local uid=self:GetWaypointCurrent().uid
+      
+        -- Remove current waypoint
+        self:RemoveWaypointByID(self.engage.Waypoint.uid)
+        
+        local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
     
-      -- Set if we want to resume route after reaching the detour waypoint.
-      self.engage.Waypoint.detour=0      
+          -- Add waypoint after current.
+        self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+      
+        -- Set if we want to resume route after reaching the detour waypoint.
+        self.engage.Waypoint.detour=0      
+      
+      end
+      
+    else
+
+      -- Could not get position of target (not alive any more?) ==> Disengage.
+      self:Disengage()
     
     end
     
   else
   
-    -- Target not alive any more == Disengage.
+    -- Target not alive any more ==> Disengage.
     self:Disengage()
     
   end
