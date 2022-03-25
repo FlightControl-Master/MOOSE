@@ -7880,7 +7880,9 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       local _coord=unit:GetVec3()
       local _size=self:_GetObjectSize(unit:GetDCSObject())
       local _name=unit:GetName()
-      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="unit"})
+      if unit and unit:IsAlive() then
+        table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="unit"})
+      end
     end
 
     -- Check all statics.
@@ -7922,6 +7924,9 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
     -- Loop over all units - each one needs a spot.
     for i=1,_asset.nunits do
+    
+      -- Asset name
+      local assetname=_asset.spawngroupname.."-"..tostring(i)
 
       -- Loop over all parking spots.
       local gotit=false
@@ -7946,13 +7951,13 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
             -- Spot is blocked.
             if not safe then
-              --env.info(string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is NOT SAFE", _asset.templatename, _asset.uid, _termid, dist))
+              self:T3(self.lid..string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is NOT SAFE", assetname, _asset.uid, _termid, dist))
               free=false
               problem=obstacle
               problem.dist=dist
               break
             else
-              --env.info(string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is SAFE", _asset.templatename, _asset.uid, _termid, dist))
+              --env.info(string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is SAFE", assetname, _asset.uid, _termid, dist))
             end
 
           end
@@ -7964,32 +7969,36 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
             table.insert(parking[_asset.uid], parkingspot)
 
             -- Debug
-            self:T(self.lid..string.format("Parking spot %d is free for asset id=%d!", _termid, _asset.uid))
+            self:T(self.lid..string.format("Parking spot %d is free for asset %s [id=%d]!", _termid, assetname, _asset.uid))
 
             -- Add the unit as obstacle so that this spot will not be available for the next unit.
-            table.insert(obstacles, {coord=_spot, size=_asset.size, name=_asset.templatename, type="asset"})
+            table.insert(obstacles, {coord=_spot, size=_asset.size, name=assetname, type="asset"})
 
             gotit=true
             break
 
           else
 
-            -- Debug output for occupied spots.
-            self:T(self.lid..string.format("Parking spot %d is occupied or not big enough!", _termid))
+            -- Debug output for occupied spots.            
             if self.Debug then
               local coord=problem.coord --Core.Point#COORDINATE
-              local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
+              local text=string.format("Obstacle %s [type=%s] blocking spot=%d! Size=%.1f m and distance=%.1f m.", problem.name, problem.type, _termid, problem.size, problem.dist)
+              self:I(self.lid..text)
               coord:MarkToAll(string.format(text))
+            else
+              self:T(self.lid..string.format("Parking spot %d is occupied or not big enough!", _termid))
             end
 
           end
 
+        else
+          self:T2(self.lid..string.format("Terminal ID=%d: type=%s not supported", parkingspot.TerminalID, parkingspot.TerminalType))
         end -- check terminal type
       end -- loop over parking spots
 
       -- No parking spot for at least one asset :(
       if not gotit then
-        self:I(self.lid..string.format("WARNING: No free parking spot for asset id=%d",_asset.uid))
+        self:I(self.lid..string.format("WARNING: No free parking spot for asset %s [id=%d]", assetname, _asset.uid))
         return nil
       end
     end -- loop over asset units
