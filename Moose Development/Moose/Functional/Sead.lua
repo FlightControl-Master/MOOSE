@@ -19,7 +19,7 @@
 --
 -- ### Authors: **FlightControl**, **applevangelist**
 --
--- Last Update: Nov 2021
+-- Last Update: Feb 2022
 --
 -- ===
 --
@@ -33,7 +33,7 @@
 --- Make SAM sites execute evasive and defensive behaviour when being fired upon.
 --
 -- This class is very easy to use. Just setup a SEAD object by using @{#SEAD.New}() and SAMs will evade and take defensive action when being fired upon.
--- Once a HARM attack is detected, SEADwill shut down the radars of the attacked SAM site and take evasive action by moving the SAM
+-- Once a HARM attack is detected, SEAD will shut down the radars of the attacked SAM site and take evasive action by moving the SAM
 -- vehicles around (*if* they are drivable, that is). There's a component of randomness in detection and evasion, which is based on the
 -- skill set of the SAM set (the higher the skill, the more likely). When a missile is fired from far away, the SAM will stay active for a 
 -- period of time to stay defensive, before it takes evasive actions.
@@ -79,6 +79,7 @@ SEAD = {
   ["Kh25"] = "Kh25",
   ["BGM_109"] = "BGM_109",
   ["AGM_154"] = "AGM_154",
+  ["HY-2"] = "HY-2",
   }
 
   --- Missile enumerators - from DCS ME and Wikipedia
@@ -98,6 +99,7 @@ SEAD = {
   ["Kh25"] = {25, 0.8},
   ["BGM_109"] = {460, 0.705}, --in-game ~465kn
   ["AGM_154"] = {130, 0.61},
+  ["HY-2"] = {90,1},
   }
 
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
@@ -141,7 +143,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.2")
+  self:I("*** SEAD - Started Version 0.4.3")
   return self
 end
 
@@ -267,9 +269,10 @@ end
 -- @param Core.Point#COORDINATE pos0 Position of the plane when it fired
 -- @param #number height Height when the missile was fired
 -- @param Wrapper.Group#GROUP SEADGroup Attacker group
+-- @param #string SEADWeaponName Weapon Name
 -- @return #SEAD self 
-function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADGroup)
-  self:T("**** Calculating hit zone")
+function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADGroup,SEADWeaponName)
+  self:T("**** Calculating hit zone for " .. (SEADWeaponName or "None"))
   if SEADWeapon and SEADWeapon:isExist() then
     --local pos = SEADWeapon:getPoint()
     
@@ -285,6 +288,9 @@ function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADG
     
     -- velocity
     local wpndata = SEAD.HarmData["AGM_88"]
+    if string.find(SEADWeaponName,"154",1) then
+      wpndata = SEAD.HarmData["AGM_154"]
+    end
     local mveloc = math.floor(wpndata[2] * 340.29)
     local c1 = (2*mheight*9.81)/(mveloc^2)
     local c2 = (mveloc^2) / 9.81
@@ -459,14 +465,15 @@ function SEAD:HandleEventShot( EventData )
     local _targetskill = "Random"
     local _targetgroupname = "none"
     local _target = EventData.Weapon:getTarget() -- Identify target
-    if not _target or self.debug  then -- AGM-88 w/o target data
-      if string.find(SEADWeaponName,"AGM_88",1,true) then
-        self:I("**** Tracking AGM-88 with no target data.")
+    if not _target or self.debug  then -- AGM-88 or 154 w/o target data
+      self:E("***** SEAD - No target data for " .. (SEADWeaponName or "None"))
+      if string.find(SEADWeaponName,"AGM_88",1,true) or string.find(SEADWeaponName,"AGM_154",1,true) then
+        self:I("**** Tracking AGM-88/154 with no target data.")
         local pos0 = SEADPlane:GetCoordinate()
         local fheight = SEADPlane:GetHeight()
-        self:__CalculateHitZone(20,SEADWeapon,pos0,fheight,SEADGroup)
-        return self
+        self:__CalculateHitZone(20,SEADWeapon,pos0,fheight,SEADGroup,SEADWeaponName)
       end
+      return self
     end
     local targetcat = _target:getCategory() -- Identify category
     local _targetUnit = nil -- Wrapper.Unit#UNIT

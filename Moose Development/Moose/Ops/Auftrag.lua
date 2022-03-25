@@ -94,6 +94,7 @@
 -- @field Core.Set#SET_GROUP transportGroupSet Groups to be transported.
 -- @field Core.Point#COORDINATE transportPickup Coordinate where to pickup the cargo.
 -- @field Core.Point#COORDINATE transportDropoff Coordinate where to drop off the cargo.
+-- @field #number transportPickupRadius Radius in meters for pickup zone. Default 500 m.
 -- 
 -- @field Ops.OpsTransport#OPSTRANSPORT opstransport OPS transport assignment.
 -- @field #number NcarriersMin Min number of required carrier assets.
@@ -383,6 +384,7 @@ _AUFTRAGSNR=0
 -- @field #string ARMOREDGUARD On guard - with armored groups.
 -- @field #string BARRAGE Barrage.
 -- @field #string ARMORATTACK Armor attack.
+-- @field #string CASENHANCED Enhanced CAS.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -415,6 +417,7 @@ AUFTRAG.Type={
   ARMOREDGUARD="Armored Guard",
   BARRAGE="Barrage",
   ARMORATTACK="Armor Attack",
+  CASENHANCED="CAS Enhanced",
 }
 
 --- Mission status of an assigned group.
@@ -557,7 +560,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.8.1"
+AUFTRAG.version="0.8.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1186,6 +1189,45 @@ function AUFTRAG:NewCAS(ZoneCAS, Altitude, Speed, Coordinate, Heading, Leg, Targ
   return mission
 end
 
+--- **[AIR]** Create a CASENHANCED mission. Group(s) will go to the zone and patrol it randomly.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE CasZone The CAS zone.
+-- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+-- @param #number Speed Speed in knots.
+-- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
+-- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
+-- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
+-- @return #AUFTRAG self
+function AUFTRAG:NewCASENHANCED(CasZone, Altitude, Speed, RangeMax, NoEngageZoneSet, TargetTypes)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.CASENHANCED)
+  
+  -- Ensure we got a ZONE and not just the zone name.
+  if type(CasZone)=="string" then
+    CasZone=ZONE:New(CasZone)
+  end
+  
+  mission:_TargetFromObject(CasZone)
+  
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.CASENHANCED)
+  
+  mission:SetEngageDetected(RangeMax, TargetTypes or {"Helicopters", "Ground Units", "Light armed ships"}, CasZone, NoEngageZoneSet)
+    
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.EvadeFire
+  
+  mission.missionFraction=1.0  
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  mission.missionAltitude=Altitude and UTILS.FeetToMeters(Altitude) or nil
+  
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+
 --- **[AIR]** Create a FACA mission.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP Target Target group. Must be a GROUP object.
@@ -1492,8 +1534,9 @@ end
 -- @param Core.Set#SET_GROUP TransportGroupSet The set group(s) to be transported.
 -- @param Core.Point#COORDINATE DropoffCoordinate Coordinate where the helo will land drop off the the troops.
 -- @param Core.Point#COORDINATE PickupCoordinate Coordinate where the helo will land to pick up the the cargo. Default is the fist transport group.
+-- @param #number PickupRadius Radius around the pickup coordinate in meters. Default 100 m.
 -- @return #AUFTRAG self
-function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupCoordinate)
+function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupCoordinate, PickupRadius)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.TROOPTRANSPORT)
   
@@ -1509,14 +1552,16 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
   
   mission:_TargetFromObject(mission.transportGroupSet)
   
-  mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()  
+  mission.transportPickup=PickupCoordinate or mission:GetTargetCoordinate()
   mission.transportDropoff=DropoffCoordinate
+  
+  mission.transportPickupRadius=PickupRadius or 100
 
   mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.TROOPTRANSPORT)
   
   -- Debug.
-  mission.transportPickup:MarkToAll("Pickup")
-  mission.transportDropoff:MarkToAll("Drop off")
+  --mission.transportPickup:MarkToAll("Pickup Transport")
+  --mission.transportDropoff:MarkToAll("Drop off")
 
   -- TODO: what's the best ROE here?
   mission.optionROE=ENUMS.ROE.ReturnFire
@@ -1645,8 +1690,9 @@ end
 -- @param Core.Zone#ZONE Zone The patrol zone.
 -- @param #number Speed Speed in knots.
 -- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+-- @param #string Formation Formation used during patrol.
 -- @return #AUFTRAG self
-function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
+function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude, Formation)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.PATROLZONE)
   
@@ -1670,9 +1716,12 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
   mission.categories={AUFTRAG.Category.ALL}
   
   mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.DCStask.params.formation=Formation
 
   return mission
 end
+
 
 --- **[GROUND]** Create a ARMORATTACK mission. Armoured ground group(s) will go to the zone and attack.
 -- @param #AUFTRAG self
@@ -3478,7 +3527,7 @@ function AUFTRAG:SetGroupStatus(opsgroup, status)
   local groupsDone=self:CheckGroupsDone()
   
   -- Debug info.
-  self:T2(self.lid..string.format("Setting OPSGROUP %s status to %s. IsNotOver=%s  CheckGroupsDone=%s", opsgroup.groupname, self:GetGroupStatus(opsgroup), tostring(self:IsNotOver()), tostring(self:CheckGroupsDone())))
+  self:T2(self.lid..string.format("Setting OPSGROUP %s status to %s. IsNotOver=%s  CheckGroupsDone=%s", opsgroup.groupname, self:GetGroupStatus(opsgroup), tostring(self:IsNotOver()), tostring(groupsDone)))
 
   -- Check if ALL flights are done with their mission.
   if isNotOver and groupsDone then
@@ -4958,6 +5007,26 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     DCStask.params=param
     
     table.insert(DCStasks, DCStask)
+
+  elseif self.type==AUFTRAG.Type.CASENHANCED then
+
+    -------------------------
+    -- CAS ENHANCED Mission --
+    -------------------------
+  
+    local DCStask={}
+    
+    DCStask.id="PatrolZone"
+    
+    -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
+    local param={}
+    param.zone=self:GetObjective()
+    param.altitude=self.missionAltitude
+    param.speed=self.missionSpeed
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)
     
    elseif self.type==AUFTRAG.Type.ARMORATTACK then
 
@@ -5146,6 +5215,8 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
   elseif MissionType==AUFTRAG.Type.CAS then
     mtask=ENUMS.MissionTask.CAS
   elseif MissionType==AUFTRAG.Type.PATROLZONE then
+    mtask=ENUMS.MissionTask.CAS
+  elseif MissionType==AUFTRAG.Type.CASENHANCED then
     mtask=ENUMS.MissionTask.CAS
   elseif MissionType==AUFTRAG.Type.ESCORT then
     mtask=ENUMS.MissionTask.ESCORT

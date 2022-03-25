@@ -3844,3 +3844,45 @@ function POSITIONABLE:IsSubmarine()
 
   return nil
 end
+
+
+--- Sets the controlled group to go at the specified speed in meters per second. 
+-- @param #CONTROLLABLE self
+-- @param #number Speed Speed in meters per second
+-- @param #boolean Keep (Optional) When set to true, will maintain the speed on passing waypoints. If not present or false, the controlled group will return to the speed as defined by their route. 
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetSpeed(Speed, Keep)
+  self:F2( { self.ControllableName } )
+  -- Set default if not specified.
+  local speed = Speed or 5
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then
+      Controller:setSpeed(speed, Keep)
+    end
+  end
+  return self
+end
+
+--- [AIR] Sets the controlled aircraft group to fly at the specified altitude in meters.
+-- @param #CONTROLLABLE self
+-- @param #number Altitude Altitude in meters.
+-- @param #boolean Keep (Optional) When set to true, will maintain the altitude on passing waypoints. If not present or false, the controlled group will return to the altitude as defined by their route. 
+-- @param #string AltType (Optional) Specifies the altitude type used. If nil, the altitude type of the current waypoint will be used. Accepted values are "BARO" and "RADIO".
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetAltitude(Altitude, Keep, AltType)
+  self:F2( { self.ControllableName } )
+  -- Set default if not specified.
+  local altitude = Altitude or 1000
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then
+      if self:IsAir() then
+        Controller:setAltitude(altitude, Keep, AltType)
+      end
+    end
+  end
+  return self
+end

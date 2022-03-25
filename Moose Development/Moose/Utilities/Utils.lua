@@ -1097,12 +1097,28 @@ function UTILS.VecSubstract(a, b)
   return {x=a.x-b.x, y=a.y-b.y, z=a.z-b.z}
 end
 
+--- Calculate the difference between two 2D vectors by substracting the x,y components from each other.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param DCS#Vec2 b Vector in 2D with x, y components.
+-- @return DCS#Vec2 Vector c=a-b with c(i)=a(i)-b(i), i=x,y.
+function UTILS.Vec2Substract(a, b)
+  return {x=a.x-b.x, y=a.y-b.y}
+end
+
 --- Calculate the total vector of two 3D vectors by adding the x,y,z components of each other.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
 -- @return DCS#Vec3 Vector c=a+b with c(i)=a(i)+b(i), i=x,y,z.
 function UTILS.VecAdd(a, b)
   return {x=a.x+b.x, y=a.y+b.y, z=a.z+b.z}
+end
+
+--- Calculate the total vector of two 2D vectors by adding the x,y components of each other.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param DCS#Vec2 b Vector in 2D with x, y components.
+-- @return DCS#Vec2 Vector c=a+b with c(i)=a(i)+b(i), i=x,y.
+function UTILS.Vec2Add(a, b)
+  return {x=a.x+b.x, y=a.y+b.y}
 end
 
 --- Calculate the angle between two 3D vectors.
@@ -1318,26 +1334,6 @@ function UTILS.GetMissionDayOfYear(Time)
   local d=UTILS.GetMissionDay(Time)
 
   return UTILS.GetDayOfYear(Year, Month, Day)+d
-
-end
-
---- Returns the current date.
--- @return #string Mission date in yyyy/mm/dd format.
--- @return #number The year anno domini.
--- @return #number The month.
--- @return #number The day.
-function UTILS.GetDate()
-
-  -- Mission start date
-  local date, year, month, day=UTILS.GetDCSMissionDate()
-
-  local time=timer.getAbsTime()
-
-  local clock=UTILS.SecondsToClock(time, false)
-
-  local x=tonumber(UTILS.Split(clock, "+")[2])
-
-  local day=day+x
 
 end
 
@@ -1749,6 +1745,11 @@ function UTILS.IsLoadingDoorOpen( unit_name )
       if string.find(type_name, "UH-60L" ) and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(400) == 1 then
           BASE:T(unit_name .. " front door(s) are open")
           ret_val =  true
+      end
+      
+      if string.find(type_name, "AH-64D") then
+         BASE:T(unit_name .. " front door(s) are open")
+         ret_val =  true -- no doors on this one ;)
       end
       
       if ret_val == false then

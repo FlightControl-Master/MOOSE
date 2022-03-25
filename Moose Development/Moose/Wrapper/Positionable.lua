@@ -1494,7 +1494,7 @@ do -- Cargo
         
         -- Fuel. The descriptor provides the max fuel mass in kg. This needs to be multiplied by the relative fuel amount to calculate the actual fuel mass on board.
         local massFuelMax=Desc.fuelMassMax or 0
-        local relFuel=math.max(self:GetFuel() or 1.0, 1.0)  -- We take 1.0 as max in case of external fuel tanks.
+        local relFuel=math.min(self:GetFuel() or 1.0, 1.0)  -- We take 1.0 as max in case of external fuel tanks.
         local massFuel=massFuelMax*relFuel
         
         -- Number of soldiers according to DCS function 

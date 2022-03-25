@@ -6,6 +6,14 @@
 -- 
 -- ===
 -- 
+-- ## Missions:--- **Ops** -- Combat Search and Rescue.
+--
+-- ===
+-- 
+-- **CSAR** - MOOSE based Helicopter CSAR Operations.
+-- 
+-- ===
+-- 
 -- ## Missions:
 --
 -- ### [CSAR - Combat Search & Rescue](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20CSAR)
@@ -118,7 +126,8 @@
 --       self.SRSModulation = radio.modulation.AM -- modulation
 --       --
 --       self.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection --shagrat
---
+--       self.wetfeettemplate = "man in floating thingy" -- if you use a mod to have a pilot in a rescue float, put the template name in here for wet feet spawns. Note: in conjunction with csarUsePara this might create dual ejected pilots in edge cases.
+--        
 -- ## 3. Results
 -- 
 -- Number of successful landings with save pilots and aggregated number of saved pilots is stored in these variables in the object:
@@ -227,8 +236,9 @@ CSAR = {
 -- @field #number frequency Frequency of the NDB.
 -- @field #string player Player name if applicable.
 -- @field Wrapper.Group#GROUP group Spawned group object.
--- @field #number timestamp Timestamp for approach process
--- @field #boolean alive Group is alive or dead/rescued
+-- @field #number timestamp Timestamp for approach process.
+-- @field #boolean alive Group is alive or dead/rescued.
+-- @field #boolean wetfeet Group is spawned over (deep) water.
 
 --- All slot / Limit settings
 -- @type CSAR.AircraftType
@@ -244,11 +254,12 @@ CSAR.AircraftType["Mi-8MT"] = 12
 CSAR.AircraftType["Mi-24P"] = 8 
 CSAR.AircraftType["Mi-24V"] = 8
 CSAR.AircraftType["Bell-47"] = 2                
-CSAR.AircraftType["UH-60L"] = 10  
+CSAR.AircraftType["UH-60L"] = 10
+CSAR.AircraftType["AH-64D_BLK_II"] = 2  
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.3"
+CSAR.version="1.0.4d"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -390,6 +401,10 @@ function CSAR:New(Coalition, Template, Alias)
   
   -- added 0.1.3
   self.csarUsePara = false -- shagrat set to true, will use the LandingAfterEjection Event instead of Ejection
+  
+  -- added 0.1.4
+  self.wetfeettemplate = nil
+  self.usewetfeet = false
       
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -502,8 +517,9 @@ end
 -- @param #string Typename Typename of unit.
 -- @param #number Frequency Frequency of the NDB in Hz
 -- @param #string Playername Name of Player (if applicable)
+-- @param #boolean Wetfeet Ejected over water
 -- @return #CSAR self.
-function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername)
+function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername,Wetfeet)
   self:T({"_CreateDownedPilotTrack",Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername})
   
   -- create new entry
@@ -519,6 +535,7 @@ function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Descript
   DownedPilot.group = Group
   DownedPilot.timestamp = 0
   DownedPilot.alive = true
+  DownedPilot.wetfeet = Wetfeet or false
   
   -- Add Pilot
   local PilotTable = self.downedPilots
@@ -568,17 +585,23 @@ end
 -- @param #number country Country for template.
 -- @param Core.Point#COORDINATE point Coordinate to spawn at.
 -- @param #number frequency Frequency of the pilot's beacon
+-- @param #boolean wetfeet Spawn is over water
 -- @return Wrapper.Group#GROUP group The #GROUP object.
 -- @return #string alias The alias name.
-function CSAR:_SpawnPilotInField(country,point,frequency)
-  self:T({country,point,frequency})
+function CSAR:_SpawnPilotInField(country,point,frequency,wetfeet)
+  self:T({country,point,frequency,tostring(wetfeet)})
   local freq = frequency or 1000
   local freq = freq / 1000 -- kHz
   for i=1,10 do
     math.random(i,10000)
   end
-  if point:IsSurfaceTypeWater() then point.y = 0 end
+  if point:IsSurfaceTypeWater() or wetfeet then 
+    point.y = 0 
+  end
   local template = self.template
+  if self.usewetfeet and wetfeet then
+    template = self.wetfeettemplate
+  end
   local alias = string.format("Pilot %.2fkHz-%d", freq, math.random(1,99))
   local coalition = self.coalition
   local pilotcacontrol = self.allowDownedPilotCAcontrol -- Switch AI on/oof - is this really correct for CA?
@@ -644,13 +667,19 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   self:T({_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description})
 
   local template = self.template
+  local wetfeet = false
+  
+  local surface = _point:GetSurfaceType()
+  if surface == land.SurfaceType.WATER then
+    wetfeet = true
+  end
   
   if not _freq then
     _freq = self:_GenerateADFFrequency()
     if not _freq then _freq = 333000 end --noob catch
   end 
   
-  local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point,_freq)
+  local _spawnedGroup, _alias = self:_SpawnPilotInField(_country,_point,_freq,wetfeet)
   
   local _typeName = _typeName or "Pilot"
   
@@ -688,7 +717,7 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   
   local _GroupName = _spawnedGroup:GetName() or _alias
 
-  self:_CreateDownedPilotTrack(_spawnedGroup,_GroupName,_coalition,_unitName,_text,_typeName,_freq,_playerName)
+  self:_CreateDownedPilotTrack(_spawnedGroup,_GroupName,_coalition,_unitName,_text,_typeName,_freq,_playerName,wetfeet)
 
   self:_InitSARForPilot(_spawnedGroup, _unitName, _freq, noMessage) --shagrat use unitName to have the aircraft callsign / descriptive "name" etc.
   
@@ -935,9 +964,19 @@ function CSAR:_EventHandler(EventData)
       if self.limitmaxdownedpilots and self:_ReachedPilotLimit() then
         return
       end
-      
+    
+    
+    -- TODO: Over water check --- EVENTS.LandingAfterEjection NOT triggered by DCS, so handle csarUsePara = true case
+    -- might create dual pilots in edge cases
+    
+    local wetfeet = false
+    
+    local surface = _unit:GetCoordinate():GetSurfaceType()
+    if surface == land.SurfaceType.WATER then
+      wetfeet = true
+    end  
       -- all checks passed, get going.
-    if self.csarUsePara == false then --shagrat check parameter LandingAfterEjection, if true don't spawn a Pilot from EJECTION event, wait for the Chute to land
+    if self.csarUsePara == false or (self.csarUsePara and wetfeet ) then --shagrat check parameter LandingAfterEjection, if true don't spawn a Pilot from EJECTION event, wait for the Chute to land
     local _freq = self:_GenerateADFFrequency()
      self:_AddCsar(_coalition, _unit:GetCountry(), _unit:GetCoordinate() , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, "none")
     return true
@@ -1294,7 +1333,8 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                   _time = self.landedStatus[_lookupKeyHeli] - 10
                   self.landedStatus[_lookupKeyHeli] = _time
               end
-              if _time <= 0 or _distance < self.loadDistance then
+              --if _time <= 0 or _distance < self.loadDistance then
+              if _distance < self.loadDistance + 5 or _distance <= 13 then
                  if self.pilotmustopendoors and not self:_IsLoadingDoorOpen(_heliName) then
                   self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true)
                   return true
@@ -1999,6 +2039,9 @@ function CSAR:onafterStart(From, Event, To)
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterCategoryHelicopter():FilterStart()
   end
   self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart() -- currently only GROUP objects, maybe support STATICs also?
+  if self.wetfeettemplate then
+    self.usewetfeet = true
+  end
   self:__Status(-10)
   return self
 end

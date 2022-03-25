@@ -46,7 +46,7 @@
 --
 -- # The ARMYGROUP Concept
 -- 
--- This class enhances naval groups.
+-- This class enhances ground groups.
 -- 
 -- @field #ARMYGROUP
 ARMYGROUP = {
@@ -115,6 +115,7 @@ function ARMYGROUP:New(group)
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Cruise along the given route of waypoints.
   
   self:AddTransition("*",             "RTZ",              "Returning")   -- Group is returning to (home) zone.
+  self:AddTransition("Holding",       "Returned",         "Returned")    -- Group is returned to (home) zone, e.g. when unloaded from carrier.
   self:AddTransition("Returning",     "Returned",         "Returned")    -- Group is returned to (home) zone.
     
   self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
@@ -652,7 +653,10 @@ function ARMYGROUP:Status()
         end
       end
     end
-    
+
+  else
+    -- Check damage of elements and group.
+    self:_CheckDamage()    
   end
   
   -- Check that group EXISTS.
@@ -691,7 +695,7 @@ function ARMYGROUP:Status()
       local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
       self:I(self.lid..text)
     end
-  
+    
   end
 
   ---
@@ -706,7 +710,6 @@ function ARMYGROUP:Status()
       local name=element.name
       local status=element.status
       local unit=element.unit
-      --local life=unit:GetLifeRelative() or 0
       local life,life0=self:GetLifePoints(element)
       
       local life0=element.life0
@@ -926,7 +929,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
   
     -- Next waypoint.
     local wp=UTILS.DeepCopy(self.waypoints[i]) --Ops.OpsGroup#OPSGROUP.Waypoint
-    self:T({wp})
+
     -- Speed.
     if Speed then
       wp.speed=UTILS.KnotsToMps(tonumber(Speed))
@@ -981,6 +984,13 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
   -- Insert a point on road.
   if wp.action==ENUMS.Formation.Vehicle.OnRoad and (wp.coordinate or wp.roadcoord) then
+
+    current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
+    table.insert(waypoints, 2, current)
+  
+    -- Removing this for now as I don't see why it is necessary and it is very CPU intensive.
+    -- You only need the start and end waypoint on the road. Other waypoints on the road are not necessray.
+    --[[
     -- take direct line if on road is too long
     local wptable,length,valid=self:GetCoordinate():GetPathOnRoad(wp.coordinate or wp.roadcoord,true,false,false,false) or {}
     
@@ -1002,7 +1012,8 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
     else
       current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
       table.insert(waypoints, count, current)
-    end
+    end    
+    ]]
   end
   
   -- Debug output.
@@ -1105,16 +1116,6 @@ end
 -- @param #string To To state.
 function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
   self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
-
-  -- Get current task.
-  local task=self:GetTaskCurrent()
-  
-  if task then
-    if task.dcstask.id=="FireAtPoint" or task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
-      self:T(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
-      self:TaskCancel(task)
-    end
-  end
   
   -- Fist, check if we want to rearm once out-of-ammo.
   --TODO: IsMobile() check
@@ -1137,6 +1138,16 @@ function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
   -- Third, check if we want to RTZ once out of ammo.
   if self.rtzOnOutOfAmmo then    
     self:__RTZ(-1)
+  end
+
+  -- Get current task.
+  local task=self:GetTaskCurrent()
+  
+  if task then
+    if task.dcstask.id=="FireAtPoint" or task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
+      self:T(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
+      self:TaskCancel(task)
+    end
   end
     
 end
@@ -1223,9 +1234,6 @@ end
 -- @param Core.Zone#ZONE Zone The zone to return to.
 -- @param #number Formation Formation of the group.
 function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
-
-  -- ID of current waypoint.
-  local uid=self:GetWaypointCurrent().uid
   
   -- Zone.
   local zone=Zone or self.homezone
@@ -1240,6 +1248,9 @@ function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
       self:T(self.lid..string.format("RTZ to Zone %s", zone:GetName()))  
       
       local Coordinate=zone:GetRandomCoordinate()
+
+      -- ID of current waypoint.
+      local uid=self:GetWaypointCurrentUID()
       
       -- Add waypoint after current.
       local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
@@ -1351,6 +1362,9 @@ function ARMYGROUP:onafterRetreat(From, Event, To, Zone, Formation)
   
   -- Set if we want to resume route after reaching the detour waypoint.
   wp.detour=0
+  
+  -- Cancel all missions.
+  self:CancelAllMissions()
 
 end
 
@@ -1417,6 +1431,7 @@ end
 function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
   self:T(self.lid.."Engaging Target")
 
+  -- Make sure this is a target.
   if Target:IsInstanceOf("TARGET") then
     self.engage.Target=Target
   else
@@ -1426,11 +1441,9 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
   -- Target coordinate.
   self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate()) 
  
-  
+  -- Get a coordinate close to the target.
   local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
 
-
-  
   -- Backup ROE and alarm state.
   self.engage.roe=self:GetROE()
   self.engage.alarmstate=self:GetAlarmstate()
@@ -1441,6 +1454,10 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
 
   -- ID of current waypoint.
   local uid=self:GetWaypointCurrent().uid
+  
+  -- Set formation.
+  --TODO: make this input.
+  local Formation=ENUMS.Formation.Vehicle.Vee
   
   -- Add waypoint after current.
   self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
@@ -1458,37 +1475,46 @@ function ARMYGROUP:_UpdateEngageTarget()
 
     -- Get current position vector.
     local vec3=self.engage.Target:GetVec3()
+    
+    if vec3 then
   
-    -- Distance to last known position of target.
-    local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
-    
-    -- Check if target moved more than 100 meters.
-    if dist>100 then
-    
-      --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
-    
-      -- Update new position.
-      self.engage.Coordinate:UpdateFromVec3(vec3)
-
-      -- ID of current waypoint.
-      local uid=self:GetWaypointCurrent().uid
-    
-      -- Remove current waypoint
-      self:RemoveWaypointByID(self.engage.Waypoint.uid)
+      -- Distance to last known position of target.
+      local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
       
-      local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+      -- Check if target moved more than 100 meters.
+      if dist>100 then
+      
+        --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
+      
+        -- Update new position.
+        self.engage.Coordinate:UpdateFromVec3(vec3)
   
-        -- Add waypoint after current.
-      self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+        -- ID of current waypoint.
+        local uid=self:GetWaypointCurrent().uid
+      
+        -- Remove current waypoint
+        self:RemoveWaypointByID(self.engage.Waypoint.uid)
+        
+        local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
     
-      -- Set if we want to resume route after reaching the detour waypoint.
-      self.engage.Waypoint.detour=0      
+          -- Add waypoint after current.
+        self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+      
+        -- Set if we want to resume route after reaching the detour waypoint.
+        self.engage.Waypoint.detour=0      
+      
+      end
+      
+    else
+
+      -- Could not get position of target (not alive any more?) ==> Disengage.
+      self:Disengage()
     
     end
     
   else
   
-    -- Target not alive any more == Disengage.
+    -- Target not alive any more ==> Disengage.
     self:Disengage()
     
   end
@@ -1587,8 +1613,7 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
   
-  -- Formation
-  
+  -- Formation. 
   if not Formation then
     if self.formationPerma then
       Formation = self.formationPerma

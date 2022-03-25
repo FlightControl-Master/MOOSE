@@ -674,25 +674,27 @@ end
 function AUTOLASE:CanLase(Recce,Unit)
   local canlase = false
   -- cooldown?
-  local name = Recce:GetName()
-  local cooldown = self.RecceUnits[name].cooldown and self.forcecooldown
-  if cooldown then
-    local Tdiff = timer.getAbsTime() - self.RecceUnits[name].timestamp
-    if Tdiff < self.cooldowntime then
-      return false
-    else
-      self.RecceUnits[name].cooldown = false
+  if Recce and Recce:IsAlive() == true then
+    local name = Recce:GetName()
+    local cooldown = self.RecceUnits[name].cooldown and self.forcecooldown
+    if cooldown then
+      local Tdiff = timer.getAbsTime() - self.RecceUnits[name].timestamp
+      if Tdiff < self.cooldowntime then
+        return false
+      else
+        self.RecceUnits[name].cooldown = false
+      end
     end
-  end
-  -- calculate LOS
-  local reccecoord = Recce:GetCoordinate()
-  local unitcoord = Unit:GetCoordinate()
-  local islos = reccecoord:IsLOS(unitcoord,2.5)
-  -- calculate distance
-  local distance = math.floor(reccecoord:Get3DDistance(unitcoord))
-  local lasedistance = self:GetLosFromUnit(Recce)
-  if distance <= lasedistance and islos then
-    canlase = true
+    -- calculate LOS
+    local reccecoord = Recce:GetCoordinate()
+    local unitcoord = Unit:GetCoordinate()
+    local islos = reccecoord:IsLOS(unitcoord,2.5)
+    -- calculate distance
+    local distance = math.floor(reccecoord:Get3DDistance(unitcoord))
+    local lasedistance = self:GetLosFromUnit(Recce)
+    if distance <= lasedistance and islos then
+      canlase = true
+    end
   end
   return canlase
 end

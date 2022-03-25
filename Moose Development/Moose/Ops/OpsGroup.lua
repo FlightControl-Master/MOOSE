@@ -466,7 +466,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.7.5"
+OPSGROUP.version="0.7.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -541,6 +541,9 @@ function OPSGROUP:New(group)
   else
 
   end
+  
+  -- Set gen attribute.
+  self.attribute=self.group:GetAttribute()
 
   local units=self.group:GetUnits()
 
@@ -864,6 +867,12 @@ function OPSGROUP:GetLifePoints(Element)
   return life, life0
 end
 
+--- Get generalized attribute.
+-- @param #OPSGROUP self
+-- @return #string Generalized attribute.
+function OPSGROUP:GetAttribute()
+  return self.attribute
+end
 
 --- Set verbosity level.
 -- @param #OPSGROUP self
@@ -879,6 +888,7 @@ end
 -- @param Ops.Legion#LEGION Legion The Legion.
 -- @return #OPSGROUP self
 function OPSGROUP:_SetLegion(Legion)
+  self:T2(self.lid..string.format("Adding opsgroup to legion %s", Legion.alias))
   self.legion=Legion
   return self
 end
@@ -1609,13 +1619,6 @@ function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
     self.scheduleIDDespawn=self:ScheduleOnce(Delay, OPSGROUP.Despawn, self, 0, NoEventRemoveUnit)
   else
 
-    if self.legion and not NoEventRemoveUnit then
-      -- Add asset back in 10 seconds.
-      self:T(self.lid..string.format("Despawning Group by adding asset to LEGION!"))
-      self.legion:AddAsset(self.group, 1)
-      return
-    end
-
     -- Debug info.
     self:T(self.lid..string.format("Despawning Group!"))
 
@@ -1647,6 +1650,30 @@ function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
   return self
 end
 
+--- Return group back to the legion it belongs to.
+-- Group is despawned and added back to the stock.
+-- @param #OPSGROUP self
+-- @param #number Delay Delay in seconds before the group will be despawned. Default immediately
+-- @return #OPSGROUP self
+function OPSGROUP:ReturnToLegion(Delay)
+
+  if Delay and Delay>0 then
+    self.scheduleIDDespawn=self:ScheduleOnce(Delay, OPSGROUP.ReturnToLegion, self)
+  else
+
+    if self.legion then
+      -- Add asset back.
+      self:T(self.lid..string.format("Adding asset back to LEGION"))
+      self.legion:AddAsset(self.group, 1)
+    else
+      self:E(self.lid..string.format("ERROR: Group does not belong to a LEGION!"))
+    end
+    
+  end
+
+  return self
+end
+
 --- Destroy a unit of the group. A *Unit Lost* for aircraft or *Dead* event for ground/naval units is generated.
 -- @param #OPSGROUP self
 -- @param #string UnitName Name of the unit which should be destroyed.
@@ -1670,6 +1697,9 @@ function OPSGROUP:DestroyUnit(UnitName, Delay)
       else
         self:CreateEventDead(EventTime, unit)
       end
+      
+      -- Despawn unit.
+      unit:destroy()      
 
     end
 
@@ -2616,6 +2646,17 @@ end
 -- @return #OPSGROUP.Waypoint Current waypoint table.
 function OPSGROUP:GetWaypointCurrent()
   return self.waypoints[self.currentwp]
+end
+
+--- Get current waypoint UID.
+-- @param #OPSGROUP self
+-- @return #number Current waypoint UID.
+function OPSGROUP:GetWaypointCurrentUID()
+  local wp=self:GetWaypointCurrent()
+  if wp then
+    return wp.uid
+  end
+  return nil
 end
 
 --- Get coordinate of next waypoint of the group.
@@ -3574,8 +3615,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     --Coordinate:MarkToAll("Random Patrol Zone Coordinate")
 
     -- Speed and altitude.
-    local Speed=UTILS.MpsToKnots(Task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
-    --local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
+    local Speed=Task.dcstask.params.speed and UTILS.MpsToKnots(Task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil
 
     local currUID=self:GetWaypointCurrent().uid
@@ -3585,7 +3625,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     if self.isFlightgroup then
       wp=FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, currUID, Altitude)
     elseif self.isArmygroup then
-      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Formation)
+      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Task.dcstask.params.formation)
     elseif self.isNavygroup then
       wp=NAVYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Altitude)
     end
@@ -3612,7 +3652,6 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
     -- Speed and altitude.
     local Speed=UTILS.MpsToKnots(Task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
-    --local Speed=UTILS.KmphToKnots(Task.dcstask.params.speed or self.speedCruise)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil
 
     --Coordinate:MarkToAll("Recon Waypoint Execute")
@@ -3673,7 +3712,6 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
       -- BARRAGE is special!
       if Task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
-        env.info("FF Barrage")
         local vec2=self:GetVec2()
         local param=Task.dcstask.params
         local heading=param.heading or math.random(1, 360)
@@ -4230,7 +4268,7 @@ function OPSGROUP:onafterMissionStart(From, Event, To, Mission)
     -- IMMOBILE Group
     ---
 
-    env.info("FF Immobile GROUP")
+    --env.info("FF Immobile GROUP")
 
     -- Add waypoint task. UpdateRoute is called inside.
     local Clock=Mission.Tpush and UTILS.SecondsToClock(Mission.Tpush) or 5
@@ -4580,13 +4618,22 @@ function OPSGROUP:RouteToMission(mission, delay)
 
       -- Refresh DCS task with the known controllable.
       mission.DCStask=mission:GetDCSMissionTask(self.group)
+      
+      -- Create a pickup zone around the pickup coordinate. The troops will go to a random point inside the zone.
+      -- This is necessary so the helos do not try to land at the exact same location where the troops wait.
+      local pradius=mission.transportPickupRadius
+      local pickupZone=ZONE_RADIUS:New("Pickup Zone", mission.transportPickup:GetVec2(), pradius)
 
       -- Add task to embark for the troops.
       for _,_group in pairs(mission.transportGroupSet.Set) do
         local group=_group --Wrapper.Group#GROUP
 
         if group and group:IsAlive() then
-          local DCSTask=group:TaskEmbarkToTransport(mission.transportPickup, 500)
+          -- Get random coordinate inside the zone.
+          local pcoord=pickupZone:GetRandomCoordinate(20, pradius, {land.SurfaceType.LAND, land.SurfaceType.ROAD})
+          
+          -- Let the troops embark the transport.
+          local DCSTask=group:TaskEmbarkToTransport(pcoord, pradius)
           group:SetTask(DCSTask, 5)
         end
 
@@ -4901,7 +4948,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     local Coordinate=zone:GetRandomCoordinate(nil, nil, surfacetypes)
 
     -- Speed and altitude.
-    local Speed=UTILS.MpsToKnots(task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
+    local Speed=task.dcstask.params.speed and UTILS.MpsToKnots(task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
    -- local Speed=UTILS.KmphToKnots(speed or self.speedCruise)
     local Altitude=UTILS.MetersToFeet(task.dcstask.params.altitude or self.altitudeCruise)
 
@@ -4911,7 +4958,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     if self.isFlightgroup then
       wp=FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, currUID, Altitude)
     elseif self.isArmygroup then
-      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Formation)
+      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, task.dcstask.params.formation)
     elseif self.isNavygroup then
       wp=NAVYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Altitude)
     end
@@ -4938,8 +4985,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       local Coordinate=zone:GetRandomCoordinate()
 
       -- Speed and altitude.
-      local Speed=UTILS.MpsToKnots(task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
-      --local Speed=UTILS.KmphToKnots(task.dcstask.params.speed or self.speedCruise)
+      local Speed=task.dcstask.params.speed and UTILS.MpsToKnots(task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
       local Altitude=task.dcstask.params.altitude and UTILS.MetersToFeet(task.dcstask.params.altitude) or nil
 
       -- Debug.
@@ -5759,6 +5805,38 @@ function OPSGROUP:onafterElementInUtero(From, Event, To, Element)
 
 end
 
+--- On after "ElementDamaged" event.
+-- @param #OPSGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #OPSGROUP.Element Element The flight group element.
+function OPSGROUP:onafterElementDamaged(From, Event, To, Element)
+  self:T(self.lid..string.format("Element damaged %s", Element.name))
+  
+  if Element and (Element.status~=OPSGROUP.ElementStatus.DEAD and Element.status~=OPSGROUP.ElementStatus.INUTERO) then
+  
+    local lifepoints=0
+    
+    if Element.DCSunit and Element.DCSunit:isExist() then
+
+      -- Get life of unit
+      lifepoints=Element.DCSunit:getLife()
+    
+      -- Debug output.
+      self:T(self.lid..string.format("Element life %s: %.2f/%.2f", Element.name, lifepoints, Element.life0))
+        
+    end
+    
+    if lifepoints<=1.0 then
+      self:T(self.lid..string.format("Element %s life %.2f <= 1.0 ==> Destroyed!", Element.name, lifepoints))
+      self:ElementDestroyed(Element)
+    end
+    
+  end
+    
+end
+
 --- On after "ElementDestroyed" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -5793,7 +5871,7 @@ end
 function OPSGROUP:onafterElementDead(From, Event, To, Element)
 
   -- Debug info.
-  self:T(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
+  self:I(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
@@ -5890,6 +5968,80 @@ function OPSGROUP:onafterRespawn(From, Event, To, Template)
 
 end
 
+--- Teleport the group to a different location.
+-- @param #OPSGROUP self
+-- @param Core.Point#COORDINATE Coordinate Coordinate where the group is teleported to.
+-- @param #number Delay Delay in seconds before respawn happens. Default 0.
+-- @return #OPSGROUP self
+function OPSGROUP:Teleport(Coordinate, Delay)
+    
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP.Teleport, self, Coordinate)
+  else    
+
+    -- Debug message.
+    self:T(self.lid.."FF Teleporting...")
+    --Coordinate:MarkToAll("Teleport "..self.groupname)
+    
+    -- Check if we have a mission running.
+    if self.currentmission>0 then
+      self:T(self.lid.."Pausing current mission")
+      self:PauseMission()
+    end
+
+    -- Get copy of template.
+    local Template=UTILS.DeepCopy(self.template)  --DCS#Template
+
+    -- Template units.
+    local units=Template.units
+    
+    -- Table with teleported vectors.
+    local d={}
+    for i=1,#units do
+      local unit=units[i]
+      d[i]={x=Coordinate.x+(units[i].x-units[1].x), y=Coordinate.z+units[i].y-units[1].y}
+      --COORDINATE:NewFromVec2(d[i]):MarkToAll(unit.name.." teleported")
+    end    
+
+    for i=#units,1,-1 do
+      local unit=units[i]
+
+      -- Get element.      
+      local element=self:GetElementByName(unit.name)
+      
+      if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+      
+        -- No parking.
+        unit.parking=nil
+        unit.parking_id=nil
+        
+        -- Current position.
+        local vec3=element.unit:GetVec3()
+        
+        -- Current heading.
+        local heading=element.unit:GetHeading()
+        
+        -- Set new x,y.
+        unit.x=d[i].x
+        unit.y=d[i].y
+        
+        -- Set altitude.
+        unit.alt=Coordinate.y
+        
+        -- Set heading.
+        unit.heading=math.rad(heading)
+        unit.psi=-unit.heading
+      else
+        table.remove(units, i)
+      end
+    end
+
+    -- Respawn from new template.  
+    self:_Respawn(0, Template, true)
+    
+  end
+end
+
 --- Respawn the group.
 -- @param #OPSGROUP self
 -- @param #number Delay Delay in seconds before respawn happens. Default 0.
@@ -5905,58 +6057,60 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     -- Debug message.
     self:T2(self.lid.."FF _Respawn")
 
-    -- Given template or get old.
+    -- Given template or get copy of old.
     Template=Template or self:_GetTemplate(true)
+    
+    -- Number of destroyed units.
+    self.Ndestroyed=0
 
+    -- Check if group is currently alive.
     if self:IsAlive() then
 
       ---
       -- Group is ALIVE
       ---
 
-      --[[
-
-      -- Get units.
-      local units=self.group:GetUnits()
-
-      -- Loop over template units.
-      for UnitID, Unit in pairs(Template.units) do
-
-        for _,_unit in pairs(units) do
-          local unit=_unit --Wrapper.Unit#UNIT
-
-          if unit:GetName()==Unit.name then
-            local vec3=unit:GetVec3()
-            local heading=unit:GetHeading()
-            Unit.x=vec3.x
-            Unit.y=vec3.z
-            Unit.alt=vec3.y
-            Unit.heading=math.rad(heading)
-            Unit.psi=-Unit.heading
-          end
-        end
-
-      end
-
-      ]]
-
+      -- Template units.
       local units=Template.units
 
       for i=#units,1,-1 do
         local unit=units[i]
+        
+        -- Get the element.
         local element=self:GetElementByName(unit.name)
+        
         if element and element.status~=OPSGROUP.ElementStatus.DEAD then
-          unit.parking=element.parking and element.parking.TerminalID or unit.parking
-          unit.parking_id=nil
-          local vec3=element.unit:GetVec3()
-          local heading=element.unit:GetHeading()
-          unit.x=vec3.x
-          unit.y=vec3.z
-          unit.alt=vec3.y
-          unit.heading=math.rad(heading)
-          unit.psi=-unit.heading
+        
+          if not Reset then
+        
+            -- Parking ID.
+            unit.parking=element.parking and element.parking.TerminalID or unit.parking
+            unit.parking_id=nil
+            
+            -- Get current position vector.
+            local vec3=element.unit:GetVec3()
+            
+            -- Get heading.
+            local heading=element.unit:GetHeading()
+            
+            -- Set unit position.
+            unit.x=vec3.x
+            unit.y=vec3.z
+            unit.alt=vec3.y
+            
+            -- Set heading in rad.
+            unit.heading=math.rad(heading)
+            unit.psi=-unit.heading
+            
+          end
+          
         else
+        
+          -- Element is dead. Remove from template.
           table.remove(units, i)
+          
+          self.Ndestroyed=self.Ndestroyed+1
+          
         end
       end
 
@@ -5967,7 +6121,7 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     else
 
       ---
-      -- Group is DESPAWNED
+      -- Group is NOT ALIVE
       ---
 
       -- Ensure elements in utero.
@@ -5997,8 +6151,7 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     self.isDestroyed=false
 
 
-    self.groupinitialized=false
-    self.Ndestroyed=0
+    self.groupinitialized=false    
     self.wpcounter=1
     self.currentwp=1
 
@@ -6007,7 +6160,7 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
 
     -- Init Group.
     self:_InitGroup(Template)
-
+    
     -- Reset events.
     --self:ResetEvents()
 
@@ -6074,6 +6227,19 @@ function OPSGROUP:onbeforeDead(From, Event, To)
   end
 end
 
+--- Cancel all missions in mission queue.
+-- @param #OPSGROUP self
+function OPSGROUP:CancelAllMissions()
+
+  -- Cancel all missions.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    self:T(self.lid.."Cancelling mission "..tostring(mission:GetName()))
+    self:MissionCancel(mission)
+  end
+
+end
+
 --- On after "Dead" event.
 -- @param #OPSGROUP self
 -- @param #string From From state.
@@ -6131,12 +6297,31 @@ function OPSGROUP:onafterDead(From, Event, To)
       -- All elements were destroyed ==> Asset group is gone.
       self.cohort:DelGroup(self.groupname)
     end
+    if self.legion then
+      --self.legion:Get
+      --self.legion:AssetDead()
+    end
   else
     -- Not all assets were destroyed (despawn) ==> Add asset back to legion?
   end
-
-  -- Stop in a sec.
-  --self:__Stop(-5)
+  
+  if self.legion then
+    if not self:IsInUtero() then
+    
+      -- Get asset.
+      local asset=self.legion:GetAssetByName(self.groupname)
+      
+      -- Get request.
+      local request=self.legion:GetRequestByID(asset.rid)
+      
+      -- Trigger asset dead event.
+      self.legion:AssetDead(asset, request)
+    end
+  
+    -- Stop in 5 sec to give possible respawn attempts a chance.  
+    self:__Stop(-5)
+  end
+    
 end
 
 --- On before "Stop" event.
@@ -6177,6 +6362,11 @@ function OPSGROUP:onafterStop(From, Event, To)
     self:UnHandleEvent(EVENTS.Ejection)
     self:UnHandleEvent(EVENTS.Crash)
     self.currbase=nil
+  end
+  
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    self:MissionCancel(mission)
   end
 
   -- Stop check timers.
@@ -7993,6 +8183,12 @@ end
 -- @param #OPSGROUP OpsGroupCargo Cargo OPSGROUP that was unloaded from a carrier.
 function OPSGROUP:onafterUnloaded(From, Event, To, OpsGroupCargo)
   self:T(self.lid..string.format("Unloaded OPSGROUP %s", OpsGroupCargo:GetName()))
+  
+  if OpsGroupCargo.legion and OpsGroupCargo:IsInZone(OpsGroupCargo.legion.spawnzone) then
+    self:T(self.lid..string.format("Unloaded group %s returned to legion", OpsGroupCargo:GetName()))
+    OpsGroupCargo:Returned()
+  end
+  
 end
 
 
@@ -8530,18 +8726,24 @@ function OPSGROUP:_CheckGroupDone(delay)
         return
       end
 
-      -- Group is returning
+      -- Group is returning.
       if self:IsReturning() then
         self:T(self.lid.."Returning! Group NOT done...")
         return
       end
 
-      -- Group is returning
+      -- Group is rearming.
       if self:IsRearming() then
         self:T(self.lid.."Rearming! Group NOT done...")
         return
       end
 
+      -- Group is retreating.
+      if self:IsRetreating() then
+        self:T(self.lid.."Retreating! Group NOT done...")
+        return
+      end
+      
       -- Group is waiting. We deny all updates.
       if self:IsWaiting() then
         -- If group is waiting, we assume that is the way it is meant to be.

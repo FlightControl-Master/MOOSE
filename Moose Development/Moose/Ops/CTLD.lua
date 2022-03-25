@@ -1017,11 +1017,12 @@ CTLD.UnitTypes = {
     ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25, cargoweightlimit = 19000}, -- 19t cargo, 64 paratroopers. 
     --Actually it's longer, but the center coord is off-center of the model.
     ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
+    ["AH-64D_BLK_II"] = {type="AH-64D_BLK_II", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 17, cargoweightlimit = 200}, -- 2 ppl **outside** the helo
 }
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.9"
+CTLD.version="1.0.10"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2095,11 +2096,18 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
   -- cycle
   local index = 0
   local found = {}
-  local loadedmass = self:_GetUnitCargoMass(_unit)
-  local unittype = _unit:GetTypeName()
-  local capabilities = self:_GetUnitCapabilities(_unit) -- #CTLD.UnitCapabilities
-  local maxmass = capabilities.cargoweightlimit
-  local maxloadable = maxmass - loadedmass
+  local loadedmass = 0
+  local unittype = "none"
+  local capabilities = {}
+  local maxmass = 2000
+  local maxloadable = 2000
+  if not _ignoreweight then
+    loadedmass = self:_GetUnitCargoMass(_unit)
+    unittype = _unit:GetTypeName()
+    capabilities = self:_GetUnitCapabilities(_unit) -- #CTLD.UnitCapabilities
+    maxmass = capabilities.cargoweightlimit or 2000
+    maxloadable = maxmass - loadedmass 
+  end
   self:T(self.lid .. " Max loadable mass: " .. maxloadable)
   for _,_cargoobject in pairs (existingcrates) do
     local cargo = _cargoobject -- #CTLD_CARGO
@@ -2256,6 +2264,7 @@ end
 -- @return #number mass in kgs
 function CTLD:_GetUnitCargoMass(Unit) 
   self:T(self.lid .. " _GetUnitCargoMass")
+  if not Unit then return 0 end
   local unitname = Unit:GetName()
   local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
   local loadedmass = 0 -- #number

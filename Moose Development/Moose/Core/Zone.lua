@@ -9,7 +9,7 @@
 --   * Create polygon zones.
 --   * Create moving zones around a unit.
 --   * Create moving zones around a group.
---   * Provide the zone behaviour. Some zones are static, while others are moveable.
+--   * Provide the zone behavior. Some zones are static, while others are moveable.
 --   * Enquiry if a coordinate is within a zone.
 --   * Smoke zones.
 --   * Set a zone probability to control zone selection.
@@ -20,10 +20,10 @@
 --   * Draw zones (circular and polygon) on the F10 map.
 --
 --
--- There are essentially two core functions that zones accomodate:
+-- There are essentially two core functions that zones accommodate:
 --
 --   * Test if an object is within the zone boundaries.
---   * Provide the zone behaviour. Some zones are static, while others are moveable.
+--   * Provide the zone behavior. Some zones are static, while others are moveable.
 --
 -- The object classes are using the zone classes to test the zone boundaries, which can take various forms:
 --
@@ -1219,7 +1219,7 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
     while gotit==false and N<=Nmax do
       gotit=_checkSurface(point)
       if gotit then
-        env.info(string.format("Got random coordinate with surface type %d after N=%d/%d iterations", land.getSurfaceType(point), N, Nmax))
+        --env.info(string.format("Got random coordinate with surface type %d after N=%d/%d iterations", land.getSurfaceType(point), N, Nmax))
       else
         point=_getpoint()
         N=N+1      
@@ -2126,12 +2126,12 @@ end
 --
 -- ## Declare a ZONE_POLYGON directly in the DCS mission editor!
 --
--- You can declare a ZONE_POLYGON using the DCS mission editor by adding the ~ZONE_POLYGON tag in the group name.
+-- You can declare a ZONE_POLYGON using the DCS mission editor by adding the #ZONE_POLYGON tag in the group name.
 --
--- So, imagine you have a group declared in the mission editor, with group name `DefenseZone~ZONE_POLYGON`.
+-- So, imagine you have a group declared in the mission editor, with group name `DefenseZone#ZONE_POLYGON`.
 -- Then during mission startup, when loading Moose.lua, this group will be detected as a ZONE_POLYGON declaration.
 -- Within the background, a ZONE_POLYGON object will be created within the @{Core.Database} using the properties of the group.
--- The ZONE_POLYGON name will be the group name without the ~ZONE_POLYGON tag.
+-- The ZONE_POLYGON name will be the group name without the #ZONE_POLYGON tag.
 --
 -- So, you can search yourself for the ZONE_POLYGON by using the @{#ZONE_POLYGON.FindByName}() method.
 -- In this example, `local PolygonZone = ZONE_POLYGON:FindByName( "DefenseZone" )` would return the ZONE_POLYGON object
