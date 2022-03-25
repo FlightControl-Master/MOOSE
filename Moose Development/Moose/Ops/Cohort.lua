@@ -31,7 +31,8 @@
 -- @field #string livery Livery of the cohort.
 -- @field #number skill Skill of cohort members.
 -- @field Ops.Legion#LEGION legion The LEGION object the cohort belongs to.
--- @field #number Ngroups Number of asset OPS groups this cohort has. 
+-- @field #number Ngroups Number of asset OPS groups this cohort has.
+-- @field #number Nkilled Number of destroyed asset groups.
 -- @field #number engageRange Mission range in meters.
 -- @field #string attribute Generalized attribute of the cohort template group.
 -- @field #table tacanChannel List of TACAN channels available to the cohort.
@@ -67,6 +68,7 @@ COHORT = {
   skill          =   nil,
   legion         =   nil,
   Ngroups        =   nil,
+  Ngroups        =     0,
   engageRange    =   nil,
   tacanChannel   =    {},
   weightAsset    = 99999,
@@ -275,12 +277,10 @@ end
 
 --- Set number of units in groups.
 -- @param #COHORT self
--- @param #number nunits Number of units. Must be >=1 and <=4. Default 2.
+-- @param #number nunits Number of units. Default 2.
 -- @return #COHORT self
 function COHORT:SetGrouping(nunits)
   self.ngrouping=nunits or 2
-  if self.ngrouping<1 then self.ngrouping=1 end
-  if self.ngrouping>4 then self.ngrouping=4 end
   return self
 end
 

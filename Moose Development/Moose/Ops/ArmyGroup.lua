@@ -653,7 +653,10 @@ function ARMYGROUP:Status()
         end
       end
     end
-    
+
+  else
+    -- Check damage of elements and group.
+    self:_CheckDamage()    
   end
   
   -- Check that group EXISTS.
@@ -692,7 +695,7 @@ function ARMYGROUP:Status()
       local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
       self:I(self.lid..text)
     end
-  
+    
   end
 
   ---
@@ -707,7 +710,6 @@ function ARMYGROUP:Status()
       local name=element.name
       local status=element.status
       local unit=element.unit
-      --local life=unit:GetLifeRelative() or 0
       local life,life0=self:GetLifePoints(element)
       
       local life0=element.life0
@@ -927,7 +929,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
   
     -- Next waypoint.
     local wp=UTILS.DeepCopy(self.waypoints[i]) --Ops.OpsGroup#OPSGROUP.Waypoint
-    self:T({wp})
+
     -- Speed.
     if Speed then
       wp.speed=UTILS.KnotsToMps(tonumber(Speed))
@@ -1429,6 +1431,7 @@ end
 function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
   self:T(self.lid.."Engaging Target")
 
+  -- Make sure this is a target.
   if Target:IsInstanceOf("TARGET") then
     self.engage.Target=Target
   else
@@ -1438,11 +1441,9 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
   -- Target coordinate.
   self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate()) 
  
-  
+  -- Get a coordinate close to the target.
   local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
 
-
-  
   -- Backup ROE and alarm state.
   self.engage.roe=self:GetROE()
   self.engage.alarmstate=self:GetAlarmstate()
@@ -1453,6 +1454,10 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
 
   -- ID of current waypoint.
   local uid=self:GetWaypointCurrent().uid
+  
+  -- Set formation.
+  --TODO: make this input.
+  local Formation=ENUMS.Formation.Vehicle.Vee
   
   -- Add waypoint after current.
   self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
@@ -1599,8 +1604,7 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
   
-  -- Formation
-  
+  -- Formation. 
   if not Formation then
     if self.formationPerma then
       Formation = self.formationPerma

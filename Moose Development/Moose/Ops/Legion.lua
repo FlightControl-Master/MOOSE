@@ -45,13 +45,14 @@ LEGION = {
 
 --- LEGION class version.
 -- @field #string version
-LEGION.version="0.2.0"
+LEGION.version="0.2.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Create FLEED class.
+-- DONE: Aircraft will not start hot on Alert5.
 -- DONE: OPS transport.
 -- DONE: Make general so it can be inherited by AIRWING and BRIGADE classes.
 
@@ -748,6 +749,10 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
       if Mission.missionTask then
         asset.missionTask=Mission.missionTask
       end
+      
+      if Mission.type==AUFTRAG.Type.ALERT5 then
+        asset.takeoffType=COORDINATE.WaypointType.TakeOffParking
+      end
 
     end
     
@@ -1095,6 +1100,9 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
       ---
       
       self:T(self.lid..string.format("Asset returned to legion ==> calling LegionAssetReturned event"))
+      
+      -- Set takeoff type in case it was overwritten for an ALERT5 mission.
+      asset.takeoffType=cohort.takeoffType
       
       -- Trigger event.
       self:LegionAssetReturned(cohort, asset)

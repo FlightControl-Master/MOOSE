@@ -168,7 +168,7 @@ FLIGHTGROUP.Attribute = {
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.7.0"
+FLIGHTGROUP.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -730,60 +730,6 @@ end
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
----- Update status.
--- @param #FLIGHTGROUP self
-function FLIGHTGROUP:onbeforeStatus(From, Event, To)
-
-  -- First we check if elements are still alive. Could be that they were despawned without notice, e.g. when landing on a too small airbase.
-  for i,_element in pairs(self.elements) do
-    local element=_element --Ops.OpsGroup#OPSGROUP.Element
-
-    -- Check that element is not already dead or not yet alive.
-    if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
-
-      -- Unit shortcut.
-      local unit=element.unit
-
-      local isdead=false
-      if unit and unit:IsAlive() then
-
-        -- Get life points.
-        local life=unit:GetLife() or 0
-
-        -- Units with life <=1 are dead.
-        if life<=1 then
-          --env.info(string.format("FF unit %s: live<=1 in status at T=%.3f", unit:GetName(), timer.getTime()))
-          isdead=true
-        end
-
-      else
-        -- Not alive any more.
-        --env.info(string.format("FF unit %s: NOT alive in status at T=%.3f", unit:GetName(), timer.getTime()))
-        isdead=true
-      end
-
-      -- This one is dead.
-      if isdead then
-        local text=string.format("Element %s is dead at t=%.3f but has status %s! Maybe despawned without notice or landed at a too small airbase. Calling ElementDead in 60 sec to give other events a chance",
-        tostring(element.name), timer.getTime(), tostring(element.status))
-        self:T(self.lid..text)
-        self:__ElementDead(60, element)
-      end
-
-    end
-  end
-
-  if self:IsDead() then
-    self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
-    return false
-  elseif self:IsStopped() then
-    self:T(self.lid..string.format("Onbefore Status STOPPED ==> false"))
-    return false
-  end
-
-  return true
-end
-
 --- Status update.
 -- @param #FLIGHTGROUP self
 function FLIGHTGROUP:Status()
@@ -845,7 +791,10 @@ function FLIGHTGROUP:Status()
         end
       end
     end
-    
+
+  else
+    -- Check damage.
+    self:_CheckDamage()      
   end
     
   ---

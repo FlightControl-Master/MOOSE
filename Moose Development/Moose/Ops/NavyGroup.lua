@@ -90,7 +90,7 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="0.7.0"
+NAVYGROUP.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -760,6 +760,12 @@ function NAVYGROUP:Status(From, Event, To)
     
     -- Check into wind queue.
     self:_CheckTurnsIntoWind()
+
+    -- Check ammo status.
+    self:_CheckAmmoStatus()
+          
+    -- Check damage of elements and group.
+    self:_CheckDamage()
     
     -- Check if group got stuck.
     self:_CheckStuck()
@@ -775,6 +781,9 @@ function NAVYGROUP:Status(From, Event, To)
       end
     end
     
+  else
+    -- Check damage of elements and group.
+    self:_CheckDamage()    
   end
 
   -- Group exists but can also be inactive.  

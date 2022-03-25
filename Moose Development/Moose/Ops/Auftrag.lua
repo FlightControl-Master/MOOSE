@@ -560,7 +560,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.8.3"
+AUFTRAG.version="0.8.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1690,8 +1690,9 @@ end
 -- @param Core.Zone#ZONE Zone The patrol zone.
 -- @param #number Speed Speed in knots.
 -- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
+-- @param #string Formation Formation used during patrol.
 -- @return #AUFTRAG self
-function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
+function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude, Formation)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.PATROLZONE)
   
@@ -1715,6 +1716,8 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude)
   mission.categories={AUFTRAG.Category.ALL}
   
   mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.DCStask.params.formation=Formation
 
   return mission
 end
@@ -3504,7 +3507,7 @@ function AUFTRAG:SetGroupStatus(opsgroup, status)
   local groupsDone=self:CheckGroupsDone()
   
   -- Debug info.
-  self:T2(self.lid..string.format("Setting OPSGROUP %s status to %s. IsNotOver=%s  CheckGroupsDone=%s", opsgroup.groupname, self:GetGroupStatus(opsgroup), tostring(self:IsNotOver()), tostring(self:CheckGroupsDone())))
+  self:T2(self.lid..string.format("Setting OPSGROUP %s status to %s. IsNotOver=%s  CheckGroupsDone=%s", opsgroup.groupname, self:GetGroupStatus(opsgroup), tostring(self:IsNotOver()), tostring(groupsDone)))
 
   -- Check if ALL flights are done with their mission.
   if isNotOver and groupsDone then

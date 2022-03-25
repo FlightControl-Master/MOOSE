@@ -5452,9 +5452,10 @@ end
 -- @param #WAREHOUSE.Assetitem asset The asset that is dead.
 -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 function WAREHOUSE:onafterAssetDead(From, Event, To, asset, request)
+
+  -- Debug message.
   local text=string.format("Asset %s from request id=%d is dead!", asset.templatename, request.uid)
   self:T(self.lid..text)
-  self:_DebugMessage(text)
 
   -- Here I need to get rid of the #CARGO at the end to obtain the original name again!
   local groupname=asset.spawngroupname --self:_GetNameWithOut(group)
@@ -6650,35 +6651,30 @@ end
 -- @param Wrapper.Group#GROUP deadgroup Group of unit that died.
 -- @param #WAREHOUSE.Pendingitem request Request that needs to be updated.
 function WAREHOUSE:_UnitDead(deadunit, deadgroup, request)
-  --env.info("FF unit dead "..deadunit:GetName())
+  self:F(self.lid.."FF unit dead "..deadunit:GetName())
 
-  -- Find asset.  
-  local asset=self:FindAssetInDB(deadgroup)
-  
   -- Find opsgroup.
   local opsgroup=_DATABASE:FindOpsGroup(deadgroup)
   
-  local groupdead=false
-  if opsgroup then
-  
-    if opsgroup:IsDead() then
-      groupdead=true
-    end
-  
-  else
+  -- Check if we have an opsgroup.
+  if opsgroup then  
+    -- Handled in OPSGROUP:onafterDead() now.
+    return nil  
+  end
 
-    -- Number of alive units in group.
-    local nalive=deadgroup:CountAliveUnits()
-  
-    -- Whole group is dead?
-    if nalive>0 then
-      groupdead=false
-    else
-      groupdead=true
-    end
-  
+  -- Number of alive units in group.
+  local nalive=deadgroup:CountAliveUnits()
+
+  -- Whole group is dead?
+  local groupdead=false
+  if nalive>0 then
+    groupdead=false
+  else
+    groupdead=true
   end
   
+  -- Find asset.  
+  local asset=self:FindAssetInDB(deadgroup)  
 
   -- Here I need to get rid of the #CARGO at the end to obtain the original name again!
   local unitname=self:_GetNameWithOut(deadunit)
