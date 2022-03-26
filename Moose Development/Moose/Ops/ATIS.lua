@@ -1459,8 +1459,8 @@ function ATIS:onafterBroadcast(From, Event, To)
 
   -- Convert to °F.
   if self.TDegF then
-    temperature=UTILS.CelsiusToFarenheit(temperature)
-    dewpoint=UTILS.CelsiusToFarenheit(dewpoint)
+    temperature=UTILS.CelsiusToFahrenheit(temperature)
+    dewpoint=UTILS.CelsiusToFahrenheit(dewpoint)
   end
 
   local TEMPERATURE=string.format("%d", math.abs(temperature))
