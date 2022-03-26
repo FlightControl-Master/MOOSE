@@ -476,7 +476,7 @@ end
 --- Convert temperature from Celsius to Farenheit.
 -- @param #number Celcius Temperature in degrees Celsius.
 -- @return #number Temperature in degrees Farenheit.
-UTILS.CelciusToFarenheit = function( Celcius )
+UTILS.CelsiusToFarenheit = function( Celcius )
   return Celcius * 9/5 + 32
 end
 

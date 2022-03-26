@@ -932,7 +932,7 @@ do -- COORDINATE
       if Settings:IsMetric() then
         return string.format( " %-2.2f °C", DegreesCelcius )
       else
-        return string.format( " %-2.2f °F", UTILS.CelciusToFarenheit( DegreesCelcius ) )
+        return string.format( " %-2.2f °F", UTILS.CelsiusToFarenheit( DegreesCelcius ) )
       end
     else
       return " no temperature"
