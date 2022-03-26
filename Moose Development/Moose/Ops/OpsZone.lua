@@ -39,10 +39,10 @@
 -- @field Wrapper.Marker#MARKER marker Marker on the F10 map.
 -- @field #string markerText Text shown in the maker.
 -- @field #table chiefs Chiefs that monitor this zone.
--- @field #table Missions Missions that are attached to this OpsZone
+-- @field #table Missions Missions that are attached to this OpsZone.
 -- @extends Core.Fsm#FSM
 
---- Be surprised!
+--- *Gentlemen, when the enemy is committed to a mistake we must not interrupt him too soon.* --- Horation Nelson
 --
 -- ===
 --
@@ -73,7 +73,7 @@ OPSZONE = {
 
 --- OPSZONE class version.
 -- @field #string version
-OPSZONE.version="0.2.0"
+OPSZONE.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -81,8 +81,8 @@ OPSZONE.version="0.2.0"
 
 -- TODO: Pause/unpause evaluations.
 -- TODO: Capture time, i.e. time how long a single coalition has to be inside the zone to capture it.
--- DONE: Can neutrals capture? No, since they are _neutral_!
 -- TODO: Differentiate between ground attack and boming by air or arty.
+-- DONE: Can neutrals capture? No, since they are _neutral_!
 -- DONE: Capture airbases.
 -- DONE: Can statics capture or hold a zone? No, unless explicitly requested by mission designer.
 
@@ -166,8 +166,7 @@ function OPSZONE:New(Zone, CoalitionOwner)
   -- Status timer.
   self.timerStatus=TIMER:New(OPSZONE.Status, self)
 
-
-  -- FMS start state is EMPTY.
+  -- FMS start state is STOPPED.
   self:SetStartState("Stopped")
   
   -- Add FSM transitions.
@@ -199,6 +198,7 @@ function OPSZONE:New(Zone, CoalitionOwner)
 
 
   --- Triggers the FSM event "Stop".
+  -- @function [parent=#OPSZONE] Stop
   -- @param #OPSZONE self
 
   --- Triggers the FSM event "Stop" after a delay.
@@ -318,13 +318,13 @@ end
 
 --- Set categories of objects that can capture or hold the zone.
 -- 
--- * Default is {Object.Category.UNIT} so only units can capture and hold zones.
--- * Set to `{Object.Category.UNIT, Object.Category.STATIC}` if static objects can capture and hold zones
+-- * Default is {Object.Category.UNIT, Object.Category.STATIC} so units and statics can capture and hold zones.
+-- * Set to `{Object.Category.UNIT}` if only units should be able to capture and hold zones
 -- 
 -- Which units can capture zones can be further refined by `:SetUnitCategories()`.
 -- 
 -- @param #OPSZONE self
--- @param #table Categories Object categories. Default is `{Object.Category.UNIT}`.
+-- @param #table Categories Object categories. Default is `{Object.Category.UNIT, Object.Category.STATIC}`.
 -- @return #OPSZONE self
 function OPSZONE:SetObjectCategories(Categories)
 
@@ -435,6 +435,13 @@ function OPSZONE:GetName()
   return self.zoneName
 end
 
+--- Get the zone object.
+-- @param #OPSZONE self
+-- @return Core.Zone#ZONE The zone.
+function OPSZONE:GetZone()
+  return self.zone
+end
+
 --- Get previous owner of the zone.
 -- @param #OPSZONE self
 -- @return #number Previous owner coalition.
@@ -477,6 +484,15 @@ end
 -- @return #boolean If `true`, zone is neutral.
 function OPSZONE:IsNeutral()
   local is=self.ownerCurrent==coalition.side.NEUTRAL
+  return is
+end
+
+--- Check if a certain coalition is currently owning the zone.
+-- @param #OPSZONE self 
+-- @param #number Coalition The Coalition that is supposed to own the zone.
+-- @return #boolean If `true`, zone is owned by the given coalition.
+function OPSZONE:IsCoalition(Coalition)
+  local is=self.ownerCurrent==Coalition
   return is
 end
 
@@ -559,8 +575,32 @@ function OPSZONE:onafterStop(From, Event, To)
   -- Reinit the timer.
   self.timerStatus:Stop()
   
+  -- Draw zone.
+  if self.drawZone then
+    self.zone:UndrawZone()
+  end
+
+  -- Remove marker.  
+  if self.markZone then
+    self.marker:Remove()
+  end  
+  
   -- Unhandle events.
   self:UnHandleEvent(EVENTS.BaseCaptured)
+  
+  -- Cancel all running missions.
+  for _,_entry in pairs(self.Missions or {}) do
+    local entry = _entry -- Ops.OpsZone#OPSZONE.MISSION
+    if entry.Mission and entry.Mission:IsNotOver() then
+      entry.Mission:Cancel()
+    end
+  end
+
+  -- Stop FSM scheduler.
+  self.CallScheduler:Clear()
+  if self.Scheduler then
+    self.Scheduler:Clear()
+  end
   
 end
 
@@ -1240,13 +1280,13 @@ function OPSZONE:_GetMissions()
   return self.Missions
 end
 
---- Add an entry to the OpsZone mission table
+--- Add an entry to the OpsZone mission table.
 -- @param #OPSZONE self
--- @param #number Coalition Coalition of type e.g. coalition.side.NEUTRAL
--- @param #string Type Type of mission, e.g. AUFTRAG.Type.CAS
--- @return #boolean found True if we have that kind of mission, else false
--- @return #table Missions Table of Ops.Auftrag#AUFTRAG entries
-function OPSZONE:_FindMissions(Coalition,Type)
+-- @param #number Coalition Coalition of type e.g. `coalition.side.NEUTRAL`.
+-- @param #string Type Type of mission, e.g. `AUFTRAG.Type.CAS`.
+-- @return #boolean found True if we have that kind of mission, else false.
+-- @return #table Missions Table of `Ops.Auftrag#AUFTRAG` entries.
+function OPSZONE:_FindMissions(Coalition, Type)
   -- search the table
   local foundmissions = {}
   local found = false
@@ -1260,7 +1300,7 @@ function OPSZONE:_FindMissions(Coalition,Type)
   return found, foundmissions
 end
 
---- Housekeeping
+--- Clean mission table from missions that are over.
 -- @param #OPSZONE self
 -- @return #OPSZONE self
 function OPSZONE:_CleanMissionTable()
