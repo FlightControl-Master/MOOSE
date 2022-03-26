@@ -473,10 +473,10 @@ UTILS.KnotsToMps = function( knots )
   end
 end
 
---- Convert temperature from Celsius to Farenheit.
+--- Convert temperature from Celsius to Fahrenheit.
 -- @param #number Celcius Temperature in degrees Celsius.
--- @return #number Temperature in degrees Farenheit.
-UTILS.CelsiusToFarenheit = function( Celcius )
+-- @return #number Temperature in degrees Fahrenheit.
+UTILS.CelsiusToFahrenheit = function( Celcius )
   return Celcius * 9/5 + 32
 end
 
