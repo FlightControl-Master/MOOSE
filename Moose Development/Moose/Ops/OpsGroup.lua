@@ -697,6 +697,8 @@ function OPSGROUP:New(group)
 
   self:AddTransition("*",             "TransportCancel",  "*")           -- Cancel (current) transport.
 
+  self:AddTransition("*",             "HoverStart",        "*")           -- Helo group is hovering
+  self:AddTransition("*",             "HoverEnd",        "*")           -- Helo group is flying on    
   ------------------------
   --- Pseudo Functions ---
   ------------------------
@@ -798,6 +800,19 @@ function OPSGROUP:New(group)
   -- @param #string To To state.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
+  --- On after "HoverStart" event.
+  -- @function [parent=#OPSGROUP] OnAfterHoverStart
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+    --- On after "HoverEnd" event.
+  -- @function [parent=#OPSGROUP] OnAfterHoverEnd
+  -- @param #OPSGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
   --- Triggers the FSM event "TransportCancel".
   -- @function [parent=#OPSGROUP] TransportCancel
@@ -3542,11 +3557,11 @@ end
 -- @param #string To To state.
 -- @param Ops.OpsGroup#OPSGROUP.Task Task The task.
 function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
-
+  self:T({Task})
   -- Debug message.
   local text=string.format("Task %s ID=%d execute", tostring(Task.description), Task.id)
   self:T(self.lid..text)
-
+  self:T({Task})  
   -- Cancel current task if there is any.
   if self.taskcurrent>0 then
     self:TaskCancel()
@@ -3702,7 +3717,35 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     else
       -- FLIGHTGROUP not implemented (intended!) for this AUFTRAG type.
     end
-
+  
+      ---
+    -- Task "Hover" Mission.
+    ---
+  
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.HOVER then
+    if self.isFlightgroup then
+      self:T("We are Special Auftrag HOVER, hovering now ...")
+      --self:I({Task.dcstask.params})
+      local alt = Task.dcstask.params.hoverAltitude
+      local time =Task.dcstask.params.hoverTime
+      local Speed=UTILS.MpsToKnots(Task.dcstask.params.missionSpeed) or UTILS.KmphToKnots(self.speedCruise)
+      local CruiseAlt = UTILS.FeetToMeters(Task.dcstask.params.missionAltitude)
+      local helo = self:GetGroup()
+      helo:SetSpeed(0.01,true)
+      helo:SetAltitude(alt,true,"BARO")
+      self:HoverStart()
+      local function FlyOn(Helo,Speed,CruiseAlt,Task)
+        if Helo then
+          Helo:SetSpeed(Speed,true)
+          Helo:SetAltitude(CruiseAlt,true,"BARO")
+          self:T("We are Special Auftrag HOVER, end of hovering now ...")
+          self:TaskDone(Task)
+          self:HoverEnd()
+        end
+      end
+      local timer = TIMER:New(FlyOn,helo,Speed,CruiseAlt,Task)
+      timer:Start(time)
+    end
   else
 
     -- If task is scheduled (not waypoint) set task.
@@ -4590,7 +4633,12 @@ function OPSGROUP:RouteToMission(mission, delay)
     else
       waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius, surfacetypes)
     end
-
+    
+    if mission.type==AUFTRAG.Type.HOVER then
+      local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
+      waypointcoord=zone:GetCoordinate()
+    end
+    
     local armorwaypointcoord = nil
     if mission.type==AUFTRAG.Type.ARMORATTACK then
       local target=mission.engageTarget:GetObject() -- Wrapper.Positionable#POSITIONABLE

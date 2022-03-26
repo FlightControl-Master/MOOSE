@@ -912,7 +912,7 @@ do -- COORDINATE
   -- The text will reflect the temperature like this:
   --
   --   - For Russian and European aircraft using the metric system - Degrees Celcius (°C)
-  --   - For American aircraft we link to the imperial system - Degrees Farenheit (°F)
+  --   - For American aircraft we link to the imperial system - Degrees Fahrenheit (°F)
   --
   -- A text containing a pressure will look like this:
   --
@@ -932,7 +932,7 @@ do -- COORDINATE
       if Settings:IsMetric() then
         return string.format( " %-2.2f °C", DegreesCelcius )
       else
-        return string.format( " %-2.2f °F", UTILS.CelciusToFarenheit( DegreesCelcius ) )
+        return string.format( " %-2.2f °F", UTILS.CelsiusToFahrenheit( DegreesCelcius ) )
       end
     else
       return " no temperature"

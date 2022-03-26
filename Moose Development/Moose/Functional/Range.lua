@@ -2762,7 +2762,7 @@ function RANGE:_DisplayRangeWeather(_unitname)
       local tW=string.format("%.1f m/s", Ws)
       local tP=string.format("%.1f mmHg", P*hPa2mmHg)
       if settings:IsImperial() then
-        --tT=string.format("%d°F", UTILS.CelciusToFarenheit(T))
+        --tT=string.format("%d°F", UTILS.CelsiusToFahrenheit(T))
         tW=string.format("%.1f knots", UTILS.MpsToKnots(Ws))
         tP=string.format("%.2f inHg", P*hPa2inHg)
       end
