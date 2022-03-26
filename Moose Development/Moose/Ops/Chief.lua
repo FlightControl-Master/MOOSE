@@ -32,7 +32,8 @@
 -- @field #string Defcon Defence condition.
 -- @field #string strategy Strategy of the CHIEF.
 -- @field Ops.Commander#COMMANDER commander Commander of assigned legions.
--- @field #boolean tacview Tactical overview.
+-- @field #number Nsuccess Number of successful missions.
+-- @field #number Nfailure Number of failed mission.
 -- @extends Ops.Intelligence#INTEL
 
 --- *In preparing for battle I have always found that plans are useless, but planning is indispensable* -- Dwight D Eisenhower
@@ -136,6 +137,8 @@ CHIEF = {
   yellowzoneset  =   nil,
   engagezoneset  =   nil,
   tacview        = false,
+  Nsuccess       =     0,
+  Nfailure       =     0,
 }
 
 --- Defence condition.
@@ -182,16 +185,17 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.1.1"
+CHIEF.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Tactical overview.
+-- TODO: Let user specify amount of resources.
+-- DONE: Tactical overview.
 -- DONE: Add event for opsgroups on mission.
 -- DONE: Add event for zone captured. 
--- TODO: Limits of missions?
+-- DONE: Limits of missions?
 -- DONE: Create a good mission, which can be passed on to the COMMANDER.
 -- DONE: Capture OPSZONEs.
 -- DONE: Get list of own assets and capabilities.
@@ -603,6 +607,16 @@ function CHIEF:GetDefcon(Defcon)
   return self.Defcon
 end
 
+--- Set limit for number of total or specific missions to be executed simultaniously.
+-- @param #CHIEF self
+-- @param #number Limit Number of max. mission of this type. Default 10.
+-- @param #string MissionType Type of mission, e.g. `AUFTRAG.Type.BAI`. Default `"Total"` for total number of missions.
+-- @return #CHIEF self
+function CHIEF:SetLimitMission(Limit, MissionType)
+  self.commander:SetLimitMission(Limit, MissionType)
+  return self
+end
+
 --- Set tactical overview on.
 -- @param #CHIEF self
 -- @return #CHIEF self
@@ -700,6 +714,10 @@ end
 function CHIEF:AddMission(Mission)
 
   Mission.chief=self
+  
+  Mission.statusChief=AUFTRAG.Status.PLANNED
+  
+  self:I(self.lid..string.format("Adding mission #%d", Mission.auftragsnummer))
   
   self.commander:AddMission(Mission)
   
@@ -818,6 +836,48 @@ function CHIEF:AddStrategicZone(OpsZone, Priority, Importance)
   
   -- Add chief so we get informed when something happens.
   OpsZone:_AddChief(self)
+
+  return self
+end
+
+--- Remove strategically important zone. All runing missions are cancelled.
+-- @param #CHIEF self
+-- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
+-- @param #number Delay Delay in seconds before the zone is removed. Default immidiately.
+-- @return #CHIEF self
+function CHIEF:RemoveStrategicZone(OpsZone, Delay)
+
+  if Delay and Delay>0 then
+    -- Delayed call.
+    self:ScheduleOnce(Delay, CHIEF.RemoveStrategicZone, self, OpsZone)  
+  else
+  
+    -- Loop over all zones in the queue.
+    for i=#self.zonequeue,1,-1 do
+      local stratzone=self.zonequeue[i] --#CHIEF.StrategicZone
+      
+      if OpsZone.zoneName==stratzone.opszone.zoneName then
+      
+        -- Debug info.
+        self:T(self.lid..string.format("Removing OPS zone \"%s\" from queue! All running missions will be cancelled", OpsZone.zoneName))
+      
+        -- Cancel all running missions.
+        for _,_entry in pairs(OpsZone.Missions or {}) do
+          local entry = _entry -- Ops.OpsZone#OPSZONE.MISSION
+          if entry.Coalition==self.coalition and entry.Mission and entry.Mission:IsNotOver() then
+            entry.Mission:Cancel()
+          end
+        end
+        
+        -- Remove from table.    
+        table.remove(self.zonequeue, i)
+        
+        -- Done!
+        return self
+      end
+    end
+  
+  end
 
   return self
 end
@@ -1502,7 +1562,8 @@ function CHIEF:_TacticalOverview()
     local NassetsTotal=self.commander:CountAssets()
     local NassetsStock=self.commander:CountAssets(true)
     local Ncontacts=#self.Contacts
-    local Nmissions=#self.commander.missionqueue
+    local NmissionsTotal=#self.commander.missionqueue
+    local NmissionsRunni=self.commander:CountMissions(AUFTRAG.Type, true)
     local Ntargets=#self.targetqueue
     local Nzones=#self.zonequeue
     
@@ -1510,22 +1571,30 @@ function CHIEF:_TacticalOverview()
     local text=string.format("Tactical Overview\n")
     text=text..string.format("=================\n")
     
+    -- Strategy and defcon info.
     text=text..string.format("Strategy: %s - Defcon: %s\n", self.strategy, self.Defcon)
     
+    -- Contact info.
     text=text..string.format("Contacts: %d [Border=%d, Conflict=%d, Attack=%d]\n", Ncontacts, self.Nborder, self.Nconflict, self.Nattack)
     
+    -- Asset info.
+    text=text..string.format("Assets: %d [Active=%d, Stock=%d]\n", NassetsTotal, NassetsTotal-NassetsStock, NassetsStock)
+
+    -- Target info.    
     text=text..string.format("Targets: %d\n", Ntargets)
     
-    text=text..string.format("Missions: %d\n", Nmissions)
+    -- Mission info.
+    text=text..string.format("Missions: %d [Running=%d/%d - Success=%d, Failure=%d]\n", NmissionsTotal, NmissionsRunni, self:GetMissionLimit("Total"), self.Nsuccess, self.Nfailure)
     for _,mtype in pairs(AUFTRAG.Type) do
       local n=self.commander:CountMissions(mtype)
       if n>0 then
-        text=text..string.format("  - %s: %d\n", mtype, n)
+        local N=self.commander:CountMissions(mtype, true)
+        local limit=self:GetMissionLimit(mtype)
+        text=text..string.format("  - %s: %d [Running=%d/%d]\n", mtype, n, N, limit)
       end
     end
     
-    text=text..string.format("Assets: %d [Stock %d]\n", NassetsTotal, NassetsStock)
-    
+    -- Strategic zone info.
     text=text..string.format("Strategic Zones: %d\n", Nzones)
     for _,_stratzone in pairs(self.zonequeue) do
       local stratzone=_stratzone --#CHIEF.StrategicZone
@@ -1557,6 +1626,13 @@ function CHIEF:CheckTargetQueue()
   if Ntargets==0 then
     return nil
   end
+  
+  -- Check if total number of missions is reached.
+  local NoLimit=self:_CheckMissionLimit("Total")
+  --env.info("FF chief total nolimit="..tostring(NoLimit))
+  if NoLimit==false then
+    return nil
+  end  
 
   -- Sort results table wrt prio and threatlevel.
   local function _sort(a, b)
@@ -1699,33 +1775,41 @@ function CHIEF:CheckTargetQueue()
           
           for _,_mp in pairs(MissionPerformances) do
             local mp=_mp --#CHIEF.MissionPerformance
+            
+            -- Check mission type limit.
+            local notlimited=self:_CheckMissionLimit(mp.MissionType)
+            
+            --env.info(string.format("FF chief %s nolimit=%s", mp.MissionType, tostring(NoLimit)))
+            
+            if notlimited then
 
-            -- Debug info.
-            self:T2(self.lid..string.format("Recruiting assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
-            
-            -- Recruit assets.
-            local recruited, assets, legions=self:RecruitAssetsForTarget(target, mp.MissionType, NassetsMin, NassetsMax)
-            
-            if recruited then
-            
-              self:T(self.lid..string.format("Recruited %d assets for mission type %s [performance=%d] of target %s", #assets, mp.MissionType, mp.Performance, target:GetName()))
-            
-              -- Create a mission.
-              mission=AUFTRAG:NewFromTarget(target, mp.MissionType)
-                            
-              -- Add asset to mission.
-              if mission then
-                for _,_asset in pairs(assets) do
-                  local asset=_asset
-                  mission:AddAsset(asset)
+              -- Debug info.
+              self:T2(self.lid..string.format("Recruiting assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
+              
+              -- Recruit assets.
+              local recruited, assets, legions=self:RecruitAssetsForTarget(target, mp.MissionType, NassetsMin, NassetsMax)
+              
+              if recruited then
+              
+                self:T(self.lid..string.format("Recruited %d assets for mission type %s [performance=%d] of target %s", #assets, mp.MissionType, mp.Performance, target:GetName()))
+              
+                -- Create a mission.
+                mission=AUFTRAG:NewFromTarget(target, mp.MissionType)
+                              
+                -- Add asset to mission.
+                if mission then
+                  for _,_asset in pairs(assets) do
+                    local asset=_asset
+                    mission:AddAsset(asset)
+                  end
+                  Legions=legions
+                  
+                  -- We got what we wanted ==> leave loop.
+                  break
                 end
-                Legions=legions
-                
-                -- We got what we wanted ==> leave loop.
-                break
+              else
+                self:T(self.lid..string.format("Could NOT recruit assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
               end
-            else
-              self:T(self.lid..string.format("Could NOT recruit assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
             end
           end
         end
@@ -1754,6 +1838,26 @@ function CHIEF:CheckTargetQueue()
   
 end
 
+--- Check if limit of missions has been reached.
+-- @param #CHIEF self 
+-- @param #string MissionType Type of mission.
+-- @return #boolean If `true`, mission limit has **not** been reached. If `false`, limit has been reached.
+function CHIEF:_CheckMissionLimit(MissionType)
+  return self.commander:_CheckMissionLimit(MissionType)
+end
+
+--- Get mission limit.
+-- @param #CHIEF self 
+-- @param #string MissionType Type of mission.
+-- @return #number Limit. Unlimited mission types are returned as 999.
+function CHIEF:GetMissionLimit(MissionType)
+  local l=self.commander.limitMission[MissionType]
+  if not l then
+    l=999
+  end
+  return l
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Strategic Zone Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1774,6 +1878,13 @@ function CHIEF:CheckOpsZoneQueue()
   if Nzones==0 then
     return nil
   end
+  
+  -- Check if total number of missions is reached.
+  local NoLimit=self:_CheckMissionLimit("Total")
+  --env.info("FF chief zone total nolimit="..tostring(NoLimit))
+  if NoLimit==false then
+    return nil
+  end  
 
   -- Sort results table wrt prio.
   local function _sort(a, b)
@@ -1802,7 +1913,7 @@ function CHIEF:CheckOpsZoneQueue()
     local ownercoalition=stratzone.opszone:GetOwner()
         
     -- Check coalition and importance.
-    if ownercoalition~=self.coalition and (stratzone.importance==nil or stratzone.importance<=vip) then
+    if ownercoalition~=self.coalition and (stratzone.importance==nil or stratzone.importance<=vip) and (not stratzone.opszone:IsStopped()) then
     
       -- Has a patrol mission?
       local hasMissionPatrol=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ONGUARD) or stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARMOREDGUARD)
@@ -1908,7 +2019,15 @@ function CHIEF:CheckOpsZoneQueue()
     end
     
   end
-  
+
+  -- Loop over strategic zone and remove stopped zones.
+  for i=#self.zonequeue, 1, -1 do
+    local stratzone=self.zonequeue[i] --#CHIEF.StrategicZone
+    if stratzone.opszone:IsStopped() then
+      self:RemoveStrategicZone(stratzone.opszone)
+    end
+  end
+    
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

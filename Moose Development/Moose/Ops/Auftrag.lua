@@ -3452,10 +3452,20 @@ function AUFTRAG:Evaluate()
     text=text..string.format("=========================")
     self:I(self.lid..text)  
   end
+  
+  -- Trigger events.
   if failed then
+    self:I(self.lid..string.format("Mission %d [%s] failed!", self.auftragsnummer, self.type))
+    if self.chief then
+      self.chief.Nfailure=self.chief.Nfailure+1
+    end
     self:Failed()
   else
-    self:Success()
+    self:I(self.lid..string.format("Mission %d [%s] success!", self.auftragsnummer, self.type))
+    if self.chief then
+      self.chief.Nsuccess=self.chief.Nsuccess+1
+    end
+    self:Success()    
   end
 
   return self
