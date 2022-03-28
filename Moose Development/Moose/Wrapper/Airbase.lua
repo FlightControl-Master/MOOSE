@@ -315,7 +315,10 @@ AIRBASE.PersianGulf = {
 -- * AIRBASE.TheChannel.Lympne
 -- * AIRBASE.TheChannel.Detling
 -- * AIRBASE.TheChannel.High_Halden
---
+-- * AIRBASE.TheChannel.Biggin_Hill
+-- * AIRBASE.TheChannel.Eastchurch
+-- * AIRBASE.TheChannel.Headcorn
+-- 
 -- @field TheChannel
 AIRBASE.TheChannel = {
   ["Abbeville_Drucat"] = "Abbeville Drucat",
@@ -327,6 +330,9 @@ AIRBASE.TheChannel = {
   ["Lympne"] = "Lympne",
   ["Detling"] = "Detling",
   ["High_Halden"] = "High Halden",
+  ["Biggin_Hill"] = "Biggin Hill",
+  ["Eastchurch"] = "Eastchurch",
+  ["Headcorn"] = "Headcorn",
 }
 
 --- Airbases of the Syria map:
