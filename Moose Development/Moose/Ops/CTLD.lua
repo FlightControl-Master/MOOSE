@@ -899,9 +899,11 @@ do
 -- 
 --            local herccargo = CTLD_HERCULES:New("blue", "Hercules Test", my_ctld)
 --            
--- You also need: 
+-- You also need:
+--  
 -- * A template called "Infantry" for 10 Paratroopers (as set via herccargo.infantrytemplate). 
 -- * Depending on what you are loading with the help of the ground crew, there are 42 more templates for the various vehicles that are loadable. 
+-- 
 -- There's a **quick check output in the `dcs.log`** which tells you what's there and what not.
 -- E.g.:
 --            ...Checking template for APC BTR-82A Air [24998lb] (BTR-82A) ... MISSING)
