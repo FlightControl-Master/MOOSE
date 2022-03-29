@@ -870,8 +870,12 @@ do
 -- 
 -- ## 5. Support for Hercules mod by Anubis
 -- 
--- Basic support for the Hercules mod By Anubis has been build into CTLD. Currently this does **not** cover objects and troops which can
--- be loaded from the Rearm/Refuel menu, i.e. you can drop them into the field, but you cannot use them in functions scripted with this class.
+-- Basic support for the Hercules mod By Anubis has been build into CTLD - that is you can load/drop/build the same objects as the helicopters. 
+-- To also cover objects and troops which can be loaded from the groud crew Rearm/Refuel menu, you need to use @{#CTLD_HERCULES.New}() and link
+-- this object to your CTLD setup. In this case, do **not** use the `Hercules_Cargo.lua` or `Hercules_Cargo_CTLD.lua` which are part of the mod 
+-- in your mission!
+-- 
+-- ### 5.1 Create an own CTLD instance and allow the usage of the Hercules mod:
 --
 --              local my_ctld = CTLD:New(coalition.side.BLUE,{"Helicargo", "Hercules"},"Lufttransportbrigade I")
 -- 
@@ -882,9 +886,30 @@ do
 --              my_ctld.HercMaxAngels = 2000 -- for troop/cargo drop via chute in meters, ca 6000 ft
 --              my_ctld.HercMaxSpeed = 77 -- 77mps or 270kph or 150kn
 -- 
+-- Hint: you can **only** airdrop from the Hercules if you are "in parameters", i.e. at or below `HercMaxSpeed` and in the AGL bracket between
+-- `HercMinAngels` and `HercMaxAngels`!
+-- 
 -- Also, the following options need to be set to `true`:
 -- 
 --              my_ctld.useprefix = true -- this is true by default and MUST BE ON. 
+-- 
+-- ### 5.2 Integrate Hercules ground crew loadable objects 
+-- 
+-- Add ground crew loadable objects to your CTLD instance like so, where `my_ctld` is the previously created CTLD instance:
+-- 
+--            local herccargo = CTLD_HERCULES:New("blue", "Hercules Test", my_ctld)
+--            
+-- You also need: 
+-- * A template called "Infantry" for 10 Paratroopers (as set via herccargo.infantrytemplate). 
+-- * Depending on what you are loading with the help of the ground crew, there are 42 more templates for the various vehicles that are loadable. 
+-- There's a **quick check output in the `dcs.log`** which tells you what's there and what not.
+-- E.g.:
+--            ...Checking template for APC BTR-82A Air [24998lb] (BTR-82A) ... MISSING)
+--            ...Checking template for ART 2S9 NONA Skid [19030lb] (SAU 2-C9) ... MISSING)
+--            ...Checking template for EWR SBORKA Air [21624lb] (Dog Ear radar) ... MISSING)
+--            ...Checking template for Transport Tigr Air [15900lb] (Tigr_233036) ... OK)
+--            
+-- Expected template names are the ones in the rounded brackets.
 -- 
 -- Standard transport capabilities as per the real Hercules are:
 -- 
@@ -3787,8 +3812,8 @@ end
       local ucoord = Unit:GetCoordinate()
       local gheight = ucoord:GetLandHeight()
       local aheight = uheight - gheight -- height above ground
-      local maxh = self.HercMinAngels-- 1500m
-      local minh =  self.HercMaxAngels -- 5000m
+      local minh = self.HercMinAngels-- 1500m
+      local maxh =  self.HercMaxAngels -- 5000m
       local maxspeed =  self.HercMaxSpeed -- 77 mps
       -- DONE: TEST - Speed test for Herc, should not be above 280kph/150kn
       local kmspeed = uspeed * 3.6
