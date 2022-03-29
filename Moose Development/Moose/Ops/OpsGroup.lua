@@ -34,6 +34,7 @@
 -- @field #boolean isDead If true, the whole group is dead.
 -- @field #table waypoints Table of waypoints.
 -- @field #table waypoints0 Table of initial waypoints.
+-- @field #boolean useMEtasks If `true`, use tasks set in the ME. Default `false`.
 -- @field Wrapper.Airbase#AIRBASE homebase The home base of the flight group.
 -- @field Wrapper.Airbase#AIRBASE destbase The destination base of the flight group.
 -- @field Wrapper.Airbase#AIRBASE currbase The current airbase of the flight group, i.e. where it is currently located or landing at.
@@ -190,6 +191,7 @@ OPSGROUP = {
   mycarrier          =    {},
   carrierLoader      =    {},
   carrierUnloader    =    {},
+  useMEtasks         = false,
 }
 
 
@@ -954,6 +956,84 @@ end
 function OPSGROUP:GetCruiseAltitude()
   local alt=UTILS.MetersToFeet(self.altitudeCruise)
   return alt
+end
+
+--- Set current altitude.
+-- @param #OPSGROUP self
+-- @param #number Altitude Altitude in feet. Default is 10,000 ft for airplanes and 1,500 feet for helicopters.
+-- @param #boolean Keep If `true` the group will maintain that speed on passing waypoints. If `nil` or `false` the group will return to the speed as defined by their route.
+-- @return #OPSGROUP self
+function OPSGROUP:SetAltitude(Altitude, Keep, RadarAlt)
+  if Altitude then
+    Altitude=UTILS.FeetToMeters(Altitude)
+  else
+    if self:IsFlightgroup() then
+      if self.isHelo then
+        Altitude=UTILS.FeetToMeters(1500)
+      else
+        Altitude=UTILS.FeetToMeters(10000)
+      end
+    else
+      Altitude=0
+    end
+  end
+  
+  local AltType="BARO"
+  if RadarAlt then
+    AltType="RADIO"
+  end
+  
+  if self.controller then
+    self.controller:setAltitude(Altitude, Keep, AltType)
+  end
+  
+  return self
+end
+
+--- Set current altitude.
+-- @param #OPSGROUP self
+-- @return #number Altitude in feet.
+function OPSGROUP:GetAltitude()
+
+  local alt=0
+  
+  if self.group then
+
+    alt=self.group:GetUnit(1):GetAltitude()
+    
+    alt=UTILS.MetersToFeet(alt)
+    
+  end
+
+  return alt
+end
+
+--- Set current speed.
+-- @param #OPSGROUP self
+-- @param #number Speed Speed in knots. Default is 70% of max speed.
+-- @param #boolean Keep If `true` the group will maintain that speed on passing waypoints. If `nil` or `false` the group will return to the speed as defined by their route.
+-- @param #boolean AltCorrected If `true`, use altitude corrected indicated air speed.
+-- @return #OPSGROUP self
+function OPSGROUP:SetSpeed(Speed, Keep, AltCorrected)
+  if Speed then
+  
+  else
+    Speed=UTILS.KmphToKnots(self.speedMax)
+  end
+  
+  
+  if AltCorrected then
+    local altitude=self:GetAltitude()
+    Speed=UTILS.KnotsToAltKIAS(Speed, altitude)
+  end
+  
+  Speed=UTILS.KnotsToMps(Speed)
+  
+  if self.controller then
+    self.controller:setSpeed(Speed, Keep)
+  end
+  
+  return self
 end
 
 --- Set detection on or off.
@@ -1837,14 +1917,18 @@ end
 -- @param #string Culture Culture, e.g. "en-GB" (default).
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
 -- @param #number Port SRS port. Default 5002.
+-- @param #string PathToGoogleKey Full path to the google credentials JSON file, e.g. `"C:\Users\myUsername\Downloads\key.json"`.
 -- @return #OPSGROUP self
-function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port)
+function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port, PathToGoogleKey)
   self.useSRS=true
   self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
   self.msrs:SetGender(Gender)
   self.msrs:SetCulture(Culture)
   self.msrs:SetVoice(Voice)
   self.msrs:SetPort(Port)
+  if PathToGoogleKey then
+    self.msrs:SetGoogle(PathToGoogleKey)
+  end
   self.msrs:SetCoalition(self:GetCoalition())
   return self
 end
@@ -1853,11 +1937,12 @@ end
 -- @param #OPSGROUP self
 -- @param #string Text Text of transmission.
 -- @param #number Delay Delay in seconds before the transmission is started.
+-- @param #boolean SayCallsign If `true`, the callsign is prepended to the given text. Default `false`.
 -- @return #OPSGROUP self
-function OPSGROUP:RadioTransmission(Text, Delay)
+function OPSGROUP:RadioTransmission(Text, Delay, SayCallsign)
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, OPSGROUP.RadioTransmission, self, Text, 0)
+    self:ScheduleOnce(Delay, OPSGROUP.RadioTransmission, self, Text, 0, SayCallsign)
   else
 
     if self.useSRS and self.msrs then
@@ -1866,9 +1951,14 @@ function OPSGROUP:RadioTransmission(Text, Delay)
 
       self.msrs:SetFrequencies(freq)
       self.msrs:SetModulations(modu)
+      
+      if SayCallsign then
+        local callsign=self:GetCallsignName()
+        Text=string.format("%s, %s", callsign, Text)
+      end
 
       -- Debug info.
-      self:T(self.lid..string.format("Radio transmission on %.3f MHz %s: %s", freq, UTILS.GetModulationName(modu), Text))
+      self:I(self.lid..string.format("Radio transmission on %.3f MHz %s: %s", freq, UTILS.GetModulationName(modu), Text))
 
       self.msrs:PlayText(Text)
     end
@@ -9340,7 +9430,7 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
 
     -- Get DCS waypoint tasks set in the ME. EXPERIMENTAL!
     local DCStasks=wp.task and wp.task.params.tasks or nil
-    if DCStasks then
+    if DCStasks and self.useMEtasks then
       for _,DCStask in pairs(DCStasks) do
         -- Wrapped Actions are commands. We do not take those.
         if DCStask.id and DCStask.id~="WrappedAction" then
@@ -10509,6 +10599,29 @@ function OPSGROUP:SwitchCallsign(CallsignName, CallsignNumber)
   end
 
   return self
+end
+
+--- Get callsign
+-- @param #OPSGROUP self
+-- @return #string Callsign name, e.g. Uzi-1
+function OPSGROUP:GetCallsignName()
+
+  local numberSquad=self.callsign.NumberSquad or self.callsignDefault.NumberSquad
+  local numberGroup=self.callsign.NumberGroup or self.callsignDefault.NumberGroup
+  
+  local callsign="Unknown 1"
+  
+  if numberSquad and numberGroup then
+  
+    local nameSquad=UTILS.GetCallsignName(numberSquad)
+    
+    callsign=string.format("%s %d", nameSquad, numberGroup)
+  
+  else
+  
+  end
+  
+  return callsign
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
