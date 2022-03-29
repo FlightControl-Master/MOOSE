@@ -269,6 +269,10 @@
 -- 
 -- A troop transport mission can be created with the @{#AUFTRAG.NewTROOPTRANSPORT}() function.
 -- 
+-- ## HOVER
+-- 
+-- A mission for a helicoptre or VSTOL plane to Hover at a point for a certain amount of time can be created with the @{#AUFTRAG.NewHOVER}() function.
+-- 
 -- # Ground Missions
 -- 
 -- ## ARTY
@@ -281,7 +285,7 @@
 -- 
 -- # Options and Parameters
 -- 
--- 
+-- TODO
 -- 
 -- # Assigning Missions
 -- 
@@ -385,6 +389,7 @@ _AUFTRAGSNR=0
 -- @field #string BARRAGE Barrage.
 -- @field #string ARMORATTACK Armor attack.
 -- @field #string CASENHANCED Enhanced CAS.
+-- @field #string HOVER Hover at a point.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -431,6 +436,7 @@ AUFTRAG.Type={
 -- @field #string ONGUARD On guard.
 -- @field #string ARMOREDGUARD On guard with armor.
 -- @field #string BARRAGE Barrage.
+-- @field #string HOVER Hover.
 AUFTRAG.SpecialTask={
   PATROLZONE="PatrolZone",
   RECON="ReconMission",
@@ -1765,7 +1771,7 @@ end
 
 --- **[GROUND]** Create a ARMORATTACK mission. Armoured ground group(s) will go to the zone and attack.
 -- @param #AUFTRAG self
--- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
+-- @param Ops.Target#TARGET Target The target to attack. Can be a GROUP, UNIT or STATIC object.
 -- @param #number Speed Speed in knots.
 -- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc. 
 -- @return #AUFTRAG self
@@ -1779,7 +1785,7 @@ function AUFTRAG:NewARMORATTACK(Target, Speed, Formation)
     
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionAlarm=ENUMS.AlarmState.Auto
-  mission.optionFormation="Off Road"
+  mission.optionFormation="On Road"
   mission.optionAttackFormation=Formation or "Wedge"
   
   mission.missionFraction=1.0  
@@ -5091,6 +5097,8 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- We create a "fake" DCS task and pass the parameters to the ARMYGROUP.
     local param={}
     param.zone=self:GetObjective()
+    param.tVec2=param.zone:GetVec2()
+    param.tzone=ZONE_RADIUS:New("ARMORATTACK-Zone-"..self.auftragsnummer,param.tVec2,1000)
     param.action="Wedge"
     param.speed=self.missionSpeed
     
