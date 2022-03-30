@@ -351,7 +351,6 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Wujah_Al_Hajar
 -- * AIRBASE.Syria.Al_Dumayr
 -- * AIRBASE.Syria.Gazipasa
--- * AIRBASE.Syria.Ru_Convoy_4
 -- * AIRBASE.Syria.Hatay
 -- * AIRBASE.Syria.Nicosia
 -- * AIRBASE.Syria.Pinarbashi
@@ -369,7 +368,6 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Akrotiri
 -- * AIRBASE.Syria.Naqoura
 -- * AIRBASE.Syria.Gaziantep
--- * AIRBASE.Syria.CVN_71
 -- * AIRBASE.Syria.Sayqal
 -- * AIRBASE.Syria.Tiyas
 -- * AIRBASE.Syria.Shayrat
@@ -417,7 +415,7 @@ AIRBASE.Syria={
   ["Wujah_Al_Hajar"]="Wujah Al Hajar",
   ["Al_Dumayr"]="Al-Dumayr",
   ["Gazipasa"]="Gazipasa",
-  ["Ru_Convoy_4"]="Ru Convoy-4",
+ -- ["Ru_Convoy_4"]="Ru Convoy-4",
   ["Hatay"]="Hatay",
   ["Nicosia"]="Nicosia",
   ["Pinarbashi"]="Pinarbashi",
@@ -465,6 +463,7 @@ AIRBASE.Syria={
   ["Ruwayshid"]="Ruwayshid",
   ["Sanliurfa"]="Sanliurfa",
   ["Tal_Siman"]="Tal Siman",
+  ["Deir_ez-Zor"] = "Deir ez-Zor",
 }
 
 --- Airbases of the Mariana Islands map:
