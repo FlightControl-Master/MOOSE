@@ -1,8 +1,10 @@
---- **Core** - TEXTANDSOUND system
+--- **Core** - TEXTANDSOUND (MOOSE gettext) system
 --
 -- ## Main Features:
 --
 --    * A GetText for Moose
+--    * Build a set of localized text entries, alongside their sounds and subtitles
+--    * Aimed at class developers to offer localizable language support
 --
 -- ===
 --
@@ -24,9 +26,9 @@
 -- @field #string ClassName Name of this class.
 -- @field #string version Versioning.
 -- @field #string lid LID for log entries.
--- @field #string locale Default locale of this object
--- @field #table entries Table of entries
--- @field #string textclass Name of the class the texts belong to
+-- @field #string locale Default locale of this object.
+-- @field #table entries Table of entries.
+-- @field #string textclass Name of the class the texts belong to.
 -- @extends Core.Base#BASE
 
 ---
@@ -41,19 +43,19 @@ TEXTANDSOUND = {
   textclass = "",
 }
 
---- Text and Sound entry
+--- Text and Sound entry.
 -- @type TEXTANDSOUND.Entry
--- @field #string Classname Name of the class this entry is for
--- @field #string Locale Locale of this entry, defaults to "en"
--- @field #table Data The list of entries
+-- @field #string Classname Name of the class this entry is for.
+-- @field #string Locale Locale of this entry, defaults to "en".
+-- @field #table Data The list of entries.
 
 --- Text and Sound data
 -- @type TEXTANDSOUND.Data
--- @field #string ID ID of this entry for retrieval
--- @field #string Text Text of this entry
--- @field #string Soundfile(optional) Soundfile File name of the corresponding sound file
--- @field #number Soundlength (optional)  Lenght of the sound file in seconds
--- @field #string Subtitle (optional)  Subtitle for the sound file
+-- @field #string ID ID of this entry for retrieval.
+-- @field #string Text Text of this entry.
+-- @field #string Soundfile (optional) Soundfile File name of the corresponding sound file.
+-- @field #number Soundlength (optional)  Length of the sound file in seconds.
+-- @field #string Subtitle (optional)  Subtitle for the sound file.
 
 --- Instantiate a new object
 -- @param #TEXTANDSOUND self
@@ -80,12 +82,12 @@ end
 
 --- Add an entry
 -- @param #TEXTANDSOUND self
--- @param #string Locale Locale to set for this entry, e.g. "de"
--- @param #string ID Unique(!) ID of this entry under this locale (i.e. use the same ID to get localized text for the entry in another language)
--- @param #string Text Text for this entry
--- @param #string Soundfile (Optional) Sound file for this entry
--- @param #number Soundlength (Optional) Lenght of the sound
--- @param #string Subtitle (Optional) Subtitle to be used alongside the sound 
+-- @param #string Locale Locale to set for this entry, e.g. "de".
+-- @param #string ID Unique(!) ID of this entry under this locale (i.e. use the same ID to get localized text for the entry in another language).
+-- @param #string Text Text for this entry.
+-- @param #string Soundfile (Optional) Sound file name for this entry.
+-- @param #number Soundlength (Optional) Length of the sound file in seconds.
+-- @param #string Subtitle (Optional) Subtitle to be used alongside the sound file.
 -- @return #TEXTANDSOUND self
 function TEXTANDSOUND:AddEntry(Locale,ID,Text,Soundfile,Soundlength,Subtitle)
   self:T(self.lid .. "AddEntry")
@@ -110,12 +112,12 @@ end
 
 --- Get an entry
 -- @param #TEXTANDSOUND self
--- @param #string ID The unique ID of the data to be retrieved
--- @param #string Locale (Optional) The locale of the text to be retrieved - defauls to default locale set with `New()`
--- @return #string Text Text or nil if not found and no fallback
--- @return #string Soundfile Filename or nil if not found and no fallback
--- @return #string Soundlength Length of the sound or 0 if not found and no fallback
--- @return #string Subtitle Text for subtitle or nil if not found and no fallback
+-- @param #string ID The unique ID of the data to be retrieved.
+-- @param #string Locale (Optional) The locale of the text to be retrieved - defauls to default locale set with `New()`.
+-- @return #string Text Text or nil if not found and no fallback.
+-- @return #string Soundfile Filename or nil if not found and no fallback.
+-- @return #string Soundlength Length of the sound or 0 if not found and no fallback.
+-- @return #string Subtitle Text for subtitle or nil if not found and no fallback.
 function TEXTANDSOUND:GetEntry(ID,Locale)
   self:T(self.lid .. "GetEntry")
   local locale = Locale or self.locale
