@@ -3006,7 +3006,7 @@ end
 -- @param #number interval Time interval in seconds. Default 1200 sec = 20 min.
 -- @return #AIRBOSS self
 function AIRBOSS:SetBeaconRefresh(interval)
-  self.dTbeacon=interval or 20*60
+  self.dTbeacon=interval or (20*60)
   return self
 end
 
@@ -5872,6 +5872,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
   local skyhawk=playerData.actype==AIRBOSS.AircraftCarrier.A4EC
   local tomcat=playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B
   local harrier=playerData.actype==AIRBOSS.AircraftCarrier.AV8B
+  local goshawk=playerData.actype==AIRBOSS.AircraftCarrier.T45C
 
   -- Return values.
   local alt
