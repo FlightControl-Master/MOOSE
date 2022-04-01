@@ -28,7 +28,7 @@ do
 
 ------------------------------------------------------
 --- **CTLD_ENGINEERING** class, extends Core.Base#BASE
---- @type CTLD_ENGINEERING
+-- @type CTLD_ENGINEERING
 -- @field #string ClassName
 -- @field #string lid
 -- @field #string Name
@@ -951,7 +951,6 @@ CTLD = {
   FreeUHFFrequencies = {}, -- Table of UHF
   FreeFMFrequencies = {}, -- Table of FM
   CargoCounter = 0,
-  wpZones = {},
   Cargo_Troops = {}, -- generic troops objects
   Cargo_Crates = {}, -- generic crate objects
   Loaded_Cargo = {}, -- cargo aboard units
@@ -1850,6 +1849,8 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   local drop = drop or false
   local ship = nil
   local width = 20
+  local distance = nil
+  local zone = nil
   if not drop then 
     inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
     if not inzone then
@@ -5124,7 +5125,7 @@ function CTLD_HERCULES:Cargo_SpawnObjects(Cargo_Drop_initiator,Cargo_Drop_Direct
       self:Soldier_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country, 5)
       self:Soldier_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country, 10)
     else
-      self:Cargo_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country, 0)
+      self:Cargo_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country)
     end
   else
     if all_cargo_gets_destroyed == true or Cargo_over_water == true then
