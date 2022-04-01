@@ -990,8 +990,12 @@ function TARGET:GetTargetVec3(Target)
 
     if object and object:IsAlive() then
       local vec3=object:GetVec3()
-      return vec3
       
+      if vec3 then
+        return vec3
+      else
+        return nil
+      end
     else
     
       return nil

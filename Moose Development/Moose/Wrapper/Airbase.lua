@@ -316,6 +316,9 @@ AIRBASE.PersianGulf = {
 -- * AIRBASE.TheChannel.Lympne
 -- * AIRBASE.TheChannel.Detling
 -- * AIRBASE.TheChannel.High_Halden
+-- * AIRBASE.TheChannel.Biggin_Hill
+-- * AIRBASE.TheChannel.Eastchurch
+-- * AIRBASE.TheChannel.Headcorn
 --
 -- @field TheChannel
 AIRBASE.TheChannel = {
@@ -328,6 +331,9 @@ AIRBASE.TheChannel = {
   ["Lympne"] = "Lympne",
   ["Detling"] = "Detling",
   ["High_Halden"] = "High Halden",
+  ["Biggin_Hill"] = "Biggin Hill",
+  ["Eastchurch"] = "Eastchurch",
+  ["Headcorn"] = "Headcorn",
 }
 
 --- Airbases of the Syria map:
@@ -346,7 +352,6 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Wujah_Al_Hajar
 -- * AIRBASE.Syria.Al_Dumayr
 -- * AIRBASE.Syria.Gazipasa
--- * AIRBASE.Syria.Ru_Convoy_4
 -- * AIRBASE.Syria.Hatay
 -- * AIRBASE.Syria.Nicosia
 -- * AIRBASE.Syria.Pinarbashi
@@ -364,7 +369,6 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Akrotiri
 -- * AIRBASE.Syria.Naqoura
 -- * AIRBASE.Syria.Gaziantep
--- * AIRBASE.Syria.CVN_71
 -- * AIRBASE.Syria.Sayqal
 -- * AIRBASE.Syria.Tiyas
 -- * AIRBASE.Syria.Shayrat
@@ -412,7 +416,7 @@ AIRBASE.Syria={
   ["Wujah_Al_Hajar"]="Wujah Al Hajar",
   ["Al_Dumayr"]="Al-Dumayr",
   ["Gazipasa"]="Gazipasa",
-  ["Ru_Convoy_4"]="Ru Convoy-4",
+  --["Ru_Convoy_4"]="Ru Convoy-4",
   ["Hatay"]="Hatay",
   ["Nicosia"]="Nicosia",
   ["Pinarbashi"]="Pinarbashi",
@@ -460,6 +464,7 @@ AIRBASE.Syria={
   ["Ruwayshid"]="Ruwayshid",
   ["Sanliurfa"]="Sanliurfa",
   ["Tal_Siman"]="Tal Siman",
+  ["Deir_ez-Zor"] = "Deir ez-Zor",
 }
 
 --- Airbases of the Mariana Islands map:

@@ -4748,11 +4748,15 @@ function OPSGROUP:RouteToMission(mission, delay)
     local armorwaypointcoord = nil
     if mission.type==AUFTRAG.Type.ARMORATTACK then
       local target=mission.engageTarget:GetObject() -- Wrapper.Positionable#POSITIONABLE
-      local zone = ZONE_RADIUS:New("AttackZone",target:GetVec2(),1000)
+      --BASE:I({mission.DCStask})
+      --BASE:I({mission.DCStask.params})
+      --local zone = ZONE_RADIUS:New("AttackZone",target:GetVec2(),1000)
+      local zone = mission.DCStask.params.tzone -- Core.Zone#ZONE_RADIUS
       -- final WP
       waypointcoord=zone:GetRandomCoordinate(0, 100, surfacetypes) -- Core.Point#COORDINATE
       -- Ingress - add formation to this one
       armorwaypointcoord = zone:GetRandomCoordinate(1000, 500, surfacetypes) -- Core.Point#COORDINATE
+      self:__EngageTarget(2,target)
     end
 
     -- Add enroute tasks.
