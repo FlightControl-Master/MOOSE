@@ -587,14 +587,6 @@ function OPSZONE:onafterStop(From, Event, To)
   
   -- Unhandle events.
   self:UnHandleEvent(EVENTS.BaseCaptured)
-  
-  -- Cancel all running missions.
-  for _,_entry in pairs(self.Missions or {}) do
-    local entry = _entry -- Ops.OpsZone#OPSZONE.MISSION
-    if entry.Mission and entry.Mission:IsNotOver() then
-      entry.Mission:Cancel()
-    end
-  end
 
   -- Stop FSM scheduler.
   self.CallScheduler:Clear()

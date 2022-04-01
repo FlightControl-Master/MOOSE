@@ -1964,10 +1964,11 @@ end
 -- @param #number TotalWeight Total cargo weight in kg.
 -- @param #table Categories Group categories. 
 -- @param #table Attributes Group attributes. See `GROUP.Attribute.`
+-- @param #table Properties DCS attributes.
 -- @return #boolean If `true` enough assets could be recruited.
 -- @return #table Recruited assets. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
 -- @return #table Legions of recruited assets.
-function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight, TotalWeight, Categories, Attributes)
+function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight, TotalWeight, Categories, Attributes, Properties)
 
   -- The recruited assets.
   local Assets={}
@@ -2006,7 +2007,26 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     else
       return true
     end
-  end  
+  end
+  
+  --- Function to check property.
+  local function CheckProperty(_cohort)
+    local cohort=_cohort --Ops.Cohort#COHORT
+    if Properties and #Properties>0 then
+      for _,Property in pairs(Properties) do
+        for _,property in pairs(cohort.properties) do
+          if Property==property then
+            return true
+          end
+        end
+      end
+    else
+      return true
+    end
+  end
+  
+  --BASE:I({Attributes=Attributes})
+  --BASE:I({Properties=Properties})
   
   -- Loops over cohorts.
   for _,_cohort in pairs(Cohorts) do
@@ -2045,12 +2065,15 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     -- Right attribute.
     local RightAttribute=CheckAttribute(cohort)
     
+    -- Right property (DCS attribute).
+    local RightProperty=CheckProperty(cohort)
+    
     -- Debug info.
-    cohort:T(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, RightCategory=%s, RightAttribute=%s",
-    cohort:GetState(), tostring(Capable), tostring(InRange), tostring(Refuel), tostring(CanCarry), tostring(RightCategory), tostring(RightAttribute)))
+    cohort:T2(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, RightCategory=%s, RightAttribute=%s, RightProperty=%s",
+    cohort:GetState(), tostring(Capable), tostring(InRange), tostring(Refuel), tostring(CanCarry), tostring(RightCategory), tostring(RightAttribute), tostring(RightProperty)))
     
     -- Check OnDuty, capable, in range and refueling type (if TANKER).
-    if cohort:IsOnDuty() and Capable and InRange and Refuel and CanCarry and RightCategory and RightAttribute then
+    if cohort:IsOnDuty() and Capable and InRange and Refuel and CanCarry and RightCategory and RightAttribute and RightProperty then
 
       -- Recruit assets from cohort.
       local assets, npayloads=cohort:RecruitAssets(MissionTypeRecruit, 999)
@@ -2100,7 +2123,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     ---
     -- Found enough assets
     ---
-  
+
     -- Add assets to mission.
     local cargobay=0
     for i=1,Nassets do

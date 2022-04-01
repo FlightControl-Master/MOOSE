@@ -100,15 +100,107 @@
 --       local text=string.format("Strategy changd to %s", Strategy)
 --       MESSAGE:New(text, 120):ToAll()
 --     end
+--     
+-- # Resources
+-- 
+-- A chief needs resources such as air, ground and naval assets. These can be added in form of AIRWINGs, BRIGADEs and FLEETs.
+-- 
+-- Whenever the chief detects a target or receives a mission, he will select the best available assets and assign them to the mission.
+-- The best assets are determined by their mission performance, payload performance (in case of air), distance to the target, skill level, etc.
+-- 
+-- ## Adding Airwings 
+-- 
+-- Airwings can be added via the @{#CHIEF.AddAirwing}() function.
+-- 
+-- ## Adding Brigades
+-- 
+-- Brigades can be added via the @{#CHIEF.AddBrigade}() function.
+-- 
+-- ## Adding Fleets
+-- 
+-- Fleets are not implemented yet.
+-- 
 --  
 -- # Strategic (Capture) Zones
 -- 
--- Strategically important zones, which should be captured can be added via the @{#CHIEF.AddStrategicZone}() function.
+-- Strategically important zones, which should be captured can be added via the @{#CHIEF.AddStrategicZone}(*OpsZone, Prio, Importance*) function.
+-- The first parameter *OpsZone* is an @{Ops.OpsZone#OPSZONE} specifying the zone. This has to be a **circular zone** due to DCS API restrictions.
+-- The second parameter *Prio* is the priority. The zone queue is sorted wrt to lower prio values. By default this is set to 50.
+-- The third parameter *Importance* is the importance of the zone. By default this is `nil`. If you specify one zone with importance 2 and a second zone with
+-- importance 3, then the zone of importance 2 is attacked first and only if that zone has been captured, zones that have importances with higher values are attacked.
 -- 
--- If the zone is currently owned by another coalition and enemy ground troops are present in the zone, a CAS and an ARTY mission are lauchned, provided assets are available.
+-- For example:
 -- 
--- Once the zone is cleaned of enemy forces, ground (infantry) troops are send there. These require a transportation via helicopters.
--- So in order to deploy our own troops, infantry assets with `AUFTRAG.Type.ONGUARD` and helicopters with `AUFTRAG.Type.OPSTRANSPORT` need to be available.
+--     local myStratZone=myChief:AddStrategicZone(myOpsZone, nil , 2)
+-- 
+-- Will at a strategic zone with importance 2.
+-- 
+-- If the zone is currently owned by another coalition and enemy ground troops are present in the zone, a CAS and an ARTY mission are lauchned:
+-- 
+-- * A mission of type `AUFTRAG.Type.CASENHANCED` is started if assets are available that can carry out this mission type.
+-- * A mission of type `AUFTRAG.Type.ARTY` is started provided assets are available.
+-- 
+-- The CAS flight(s) will patrol the zone randomly and take out enemy ground units they detect. It can always be possible that the enemies cannot be detected however.
+-- The assets will shell the zone. However, it is unlikely that they hit anything as they do not have any information about the location of the enemies.
+-- 
+-- Once the zone is cleaned of enemy forces, ground troops are send there. By default, two missions are launched:
+-- 
+-- * First mission is of type `AUFTRAG.Type.ONGUARD` and will send infantry groups. These are transported by helicopters. Therefore, helo assets with `AUFTRAG.Type.OPSTRANSPORT` need to be available.
+-- * The second mission is also of type `AUFTRAG.Type.ONGUARD` but will send tanks if these are available.
+-- 
+-- ## Customized Reaction
+-- 
+-- The default mission types and number of assets can be customized for the two scenarious (zone empty or zone occupied by the enemy).
+-- 
+-- In order to do this, you need to create resource lists (one for each scenario) via the @{#CHIEF.CreateResource}() function.
+-- These list can than be used to replace the default resources employed with
+-- 
+-- * @{CHIEF.SetStrategicZoneResourceOccupied}(*StrateticZone, ResourceOccupied*) for the case that the zone is occupied by the enemy and
+-- * @{CHIEF.SetStrategicZoneResourceEmpty}(*StrateticZone, ResourceEmpty*) for the case that the zone is empty.
+-- 
+-- The first parameter *StrateticZone* is the strategic zone object that is returned by the @{#CHIEF.AddStrategicZone}() function.
+-- The second parameter is the resource list created with the @{#CHIEF.CreateResource}() function.
+-- 
+-- For example:
+--     
+--     -- Create a resource list of mission types and required assets for the case that the zone is occupied.
+--     -- Here, we create an enhanced CAS mission and employ at least on and at most two asset groups.
+--     local ResourceOccupied=myChief:CreateResource(AUFTRAG.Type.CASENHANCED, 1, 2)
+--     -- We also add ARTY missions with at least one and at most two assets. We additionally require these to be MLRS groups (and not howitzers).
+--     myChief:AddToResource(ResourceOccupied, AUFTRAG.Type.ARTY, 1, 2, nil, "MLRS")
+--     -- Add at least one RECON mission that uses UAV type assets.
+--     myChief:AddToResource(ResourceOccupied, AUFTRAG.Type.RECON, 1, nil, GROUP.Attribute.AIR_UAV)
+--     -- Add at least one but at most two BOMBCARPET missions.
+--     myChief:AddToResource(ResourceOccupied, AUFTRAG.Type.BOMBCARPET, 1, 2)
+--     
+--     -- Replace the default list with the customized one.
+--     myChief:SetStrategicZoneResourceOccupied(myStratZone, ResourceOccupied)  
+--     
+--     
+--     -- Create a resource list of mission types and required assets for the case that the zone is empty.
+--     -- Here, we create an ONGUARD mission and employ at least on and at most five infantry assets.
+--     local ResourceEmpty=myChief:CreateResource(AUFTRAG.Type.ONGUARD, 1, 5, GROUP.Attribute.GROUND_INFANTRY)
+--     -- Additionally, we send up to three tank groups.
+--     myChief:AddToResource(ResourceEmpty, AUFTRAG.Type.ONGUARD, 1, 3, GROUP.Attribute.GROUND_TANK)
+--     -- Finally, we send two groups that patrol the zone.
+--     myChief:AddToResource(ResourceEmpty, AUFTRAG.Type.PATROLZONE, 2)
+--     
+--     -- Set this to be the resources employed when the zone is empty.
+--     myChief:SetStrategicZoneResourceEmpty(myStratZone, ResourceEmpty)
+-- 
+-- As the location of the enemies is not known, only mission types that don't require and explicit target group are possible. These are
+-- 
+-- * `AUFTRAG.Type.CASENHANCED`
+-- * `AUFTRAG.Type.ARTY`
+-- * `AUFTRAG.Type.PATROLZONE`
+-- * `AUFTRAG.Type.ONGUARD`
+-- * `AUFTRAG.Type.RECON`
+-- * `AUFTRAG.Type.AMMOSUPPLY`
+-- * `AUFTRAG.Type.BOMBING`
+-- * `AUFTRAG.Type.BOMBCARPET`
+-- * `AUFTRAG.Type.BARRAGE`
+-- 
+-- ## Events
 -- 
 -- Whenever a strategic zone is captured by us the FSM event @{#CHIEF.ZoneCaptured} is triggered and customized further actions can be executed 
 -- with the @{#CHIEF.OnAfterZoneCaptured}() function.
@@ -176,16 +268,23 @@ CHIEF.Strategy = {
 -- @type CHIEF.StrategicZone
 -- @field Ops.OpsZone#OPSZONE opszone OPS zone.
 -- @field #number prio Priority.
--- @field #number importance Importance
--- @field Ops.Auftrag#AUFTRAG missionPatrol Patrol mission.
--- @field Ops.Auftrag#AUFTRAG missionCAS CAS mission.
--- @field Ops.Auftrag#AUFTRAG missionPatrol Patrol mission.
--- @field Ops.Auftrag#AUFTRAG missionARTY Artillery mission.
+-- @field #number importance Importance.
+-- @field #table resourceEmpty Resource list.
+-- @field #table resourceOccup Resource list.
+-- @field #table missions Mission.
 
+--- Resource.
+-- @type CHIEF.Resource
+-- @field #string MissionType Mission type, e.g. `AUFTRAG.Type.BAI`.
+-- @field #number Nmin Min number of assets.
+-- @field #number Nmax Max number of assets.
+-- @field #table Attributes Generalized attribute, e.g. `{GROUP.Attribute.GROUND_INFANTRY}`.
+-- @field #table Properties Properties ([DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)), e.g. `"Attack helicopters"` or `"Mobile AAA"`.
+-- @field Ops.Auftrag#AUFTRAG mission Attached mission.
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.2.0"
+CHIEF.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -600,6 +699,88 @@ function CHIEF:SetDefcon(Defcon)
   return self
 end
 
+--- Create a new resource list of required assets.
+-- @param #CHIEF self
+-- @param #string MissionType The mission type.
+-- @param #number Nmin Min number of required assets. Default 1.
+-- @param #number Nmax Max number of requried assets. Default 1.
+-- @param #table Attributes Generalized attribute(s). Default `nil`.
+-- @param #table Properties DCS attribute(s). Default `nil`.
+-- @return #table The resource object.
+function CHIEF:CreateResource(MissionType, Nmin, Nmax, Attributes, Properties)
+
+  local resource={}
+  
+  self:AddToResource(resource, MissionType, Nmin, Nmax, Attributes, Properties)
+    
+  return resource
+end
+
+--- Add mission type and number of required assets to resource.
+-- @param #CHIEF self
+-- @param #table Resource Resource table.
+-- @param #string MissionType Mission Type.
+-- @param #number Nmin Min number of required assets.
+-- @param #number Nmax Max number of requried assets.
+-- @param #table Attributes Generalized attribute(s).
+-- @param #table Properties DCS attribute(s). Default `nil`.
+-- @return #CHIEF self
+function CHIEF:AddToResource(Resource, MissionType, Nmin, Nmax, Attributes, Properties)
+  
+  -- Ensure table.
+  if Attributes and type(Attributes)~="table" then
+    Attributes={Attributes}
+  end
+  
+  -- Ensure table.
+  if Properties and type(Properties)~="table" then
+    Properties={Properties}
+  end
+  
+  -- Create new resource table.
+  local resource={} --#CHIEF.Resource
+  resource.MissionType=MissionType
+  resource.Nmin=Nmin or 1
+  resource.Nmax=Nmax or 1
+  resource.Attributes=Attributes or {}
+  resource.Properties=Properties or {}
+  
+  -- Add to table.
+  table.insert(Resource, resource)
+  
+  -- Debug output.
+  if self.verbose>10 then
+    local text="Resource:"
+    for _,_r in pairs(Resource) do
+      local r=_r --#CHIEF.Resource
+      text=text..string.format("\nmission=%s, Nmin=%d, Nmax=%d, attribute=%s, properties=%s", r.MissionType, r.Nmin, r.Nmax, tostring(r.Attributes[1]), tostring(r.Properties[1]))
+    end
+    self:I(self.lid..text)
+  end
+    
+  return self
+end
+
+--- Delete mission type from resource list. All running missions are cancelled.
+-- @param #CHIEF self
+-- @param #table Resource Resource table.
+-- @param #string MissionType Mission Type.
+-- @return #CHIEF self
+function CHIEF:DeleteFromResource(Resource, MissionType)
+  
+  for i=#Resource,1,-1 do
+    local resource=Resource[i] --#CHIEF.Resource
+    if resource.MissionType==MissionType then
+      if resource.mission and resource.mission:IsNotOver() then
+        resource.mission:Cancel()
+      end
+      table.remove(Resource, i)
+    end    
+  end
+  
+  return self
+end
+
 --- Get defence condition.
 -- @param #CHIEF self
 -- @param #string Current Defence condition. See @{#CHIEF.DEFCON}, e.g. `CHIEF.DEFCON.RED`.
@@ -813,11 +994,22 @@ function CHIEF:RemoveTarget(Target)
 end
 
 --- Add strategically important zone.
+-- By default two resource lists are created. One for the case that the zone is empty and the other for the case that the zone is occupied
+-- Empty:
+-- 
+-- * `AUFTRAG.Type.ARTY` with Nmin=1, Nmax=2
+-- * `AUFTRAG.Type.CASENHANCED` with Nmin=1, Nmax=2
+-- 
+-- Occupied:
+-- 
+-- * `AUFTRAG.Type.ONGUARD` with Nmin=1 and Nmax=3 assets, Attribute=`GROUP.Attribute.GROUND_INFANTRY`.
+-- * `AUFTRAG.Type.ONGURAD` with Nmin=1 and Nmax=1 assets, Attribute=`GROUP.Attribute.GROUND_TANK`.
+-- 
 -- @param #CHIEF self
 -- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
 -- @param #number Priority Priority.
 -- @param #number Importance Importance.
--- @return #CHIEF self
+-- @return #CHIEF.StrategicZone The strategic zone.
 function CHIEF:AddStrategicZone(OpsZone, Priority, Importance)
 
   local stratzone={} --#CHIEF.StrategicZone
@@ -825,11 +1017,21 @@ function CHIEF:AddStrategicZone(OpsZone, Priority, Importance)
   stratzone.opszone=OpsZone
   stratzone.prio=Priority or 50
   stratzone.importance=Importance
+  
+  stratzone.missions={}
 
   -- Start ops zone.
   if OpsZone:IsStopped() then
     OpsZone:Start()
   end
+  
+  -- Add resources if zone is occupied.
+  stratzone.resourceOccup=self:CreateResource(AUFTRAG.Type.ARTY, 1, 2)
+  self:AddToResource(stratzone.resourceOccup, AUFTRAG.Type.CASENHANCED, 1, 2)
+  
+  -- Add resources if zone is empty
+  stratzone.resourceEmpty=self:CreateResource(AUFTRAG.Type.ONGUARD, 1, 3, GROUP.Attribute.GROUND_INFANTRY)
+  self:AddToResource(stratzone.resourceEmpty, AUFTRAG.Type.ONGUARD, 1, 1, GROUP.Attribute.GROUND_TANK)
 
   -- Add to table.
   table.insert(self.zonequeue, stratzone)
@@ -837,8 +1039,55 @@ function CHIEF:AddStrategicZone(OpsZone, Priority, Importance)
   -- Add chief so we get informed when something happens.
   OpsZone:_AddChief(self)
 
+  return stratzone
+end
+
+--- Set the resource list of missions and assets employed when the zone is empty.
+-- @param #CHIEF self
+-- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
+-- @param #CHIEF.Resource Resource Resource list of missions and assets.
+-- @param #boolean NoCopy If `true`, do **not** create a deep copy of the resource.
+-- @return #CHIEF self
+function CHIEF:SetStrategicZoneResourceEmpty(StrategicZone, Resource, NoCopy)
+  if NoCopy then
+    StrategicZone.resourceEmpty=Resource
+  else
+    StrategicZone.resourceEmpty=UTILS.DeepCopy(Resource)
+  end
   return self
 end
+
+--- Set the resource list of missions and assets employed when the zone is occupied by the enemy.
+-- @param #CHIEF self
+-- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
+-- @param #CHIEF.Resource Resource Resource list of missions and assets.
+-- @param #boolean NoCopy If `true`, do **not** create a deep copy of the resource.
+-- @return #CHIEF self
+function CHIEF:SetStrategicZoneResourceOccupied(StrategicZone, Resource, NoCopy)
+  if NoCopy then
+    StrategicZone.resourceOccup=Resource
+  else
+    StrategicZone.resourceOccup=UTILS.DeepCopy(Resource)
+  end
+  return self
+end
+
+--- Get the resource list of missions and assets employed when the zone is empty.
+-- @param #CHIEF self
+-- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
+-- @return #CHIEF.Resource Resource list of missions and assets.
+function CHIEF:GetStrategicZoneResourceEmpty(StrategicZone)
+  return StrategicZone.resourceEmpty
+end
+
+--- Get the resource list of missions and assets employed when the zone is occupied by the enemy.
+-- @param #CHIEF self
+-- @param #CHIEF.StrategicZone StrategicZone The strategic zone.
+-- @return #CHIEF.Resource Resource list of missions and assets.
+function CHIEF:GetStrategicZoneResourceOccupied(StrategicZone)
+  return StrategicZone.resourceOccup
+end
+
 
 --- Remove strategically important zone. All runing missions are cancelled.
 -- @param #CHIEF self
@@ -860,15 +1109,23 @@ function CHIEF:RemoveStrategicZone(OpsZone, Delay)
       
         -- Debug info.
         self:T(self.lid..string.format("Removing OPS zone \"%s\" from queue! All running missions will be cancelled", OpsZone.zoneName))
-      
-        -- Cancel all running missions.
-        for _,_entry in pairs(OpsZone.Missions or {}) do
-          local entry = _entry -- Ops.OpsZone#OPSZONE.MISSION
-          if entry.Coalition==self.coalition and entry.Mission and entry.Mission:IsNotOver() then
-            entry.Mission:Cancel()
+
+        -- Cancel running missions.
+        for _,_resource in pairs(stratzone.resourceEmpty) do
+          local resource=_resource --#CHIEF.Resource
+          if resource.mission and resource.mission:IsNotOver() then
+            resource.mission:Cancel()
           end
         end
         
+        -- Cancel running missions.
+        for _,_resource in pairs(stratzone.resourceOccup) do
+          local resource=_resource --#CHIEF.Resource
+          if resource.mission and resource.mission:IsNotOver() then
+            resource.mission:Cancel()
+          end
+        end
+                
         -- Remove from table.    
         table.remove(self.zonequeue, i)
         
@@ -1566,13 +1823,14 @@ function CHIEF:_TacticalOverview()
     local NmissionsRunni=self.commander:CountMissions(AUFTRAG.Type, true)
     local Ntargets=#self.targetqueue
     local Nzones=#self.zonequeue
+    local Nagents=self.detectionset:CountAlive()
     
     -- Info message
     local text=string.format("Tactical Overview\n")
     text=text..string.format("=================\n")
     
     -- Strategy and defcon info.
-    text=text..string.format("Strategy: %s - Defcon: %s\n", self.strategy, self.Defcon)
+    text=text..string.format("Strategy: %s - Defcon: %s - Agents=%s\n", self.strategy, self.Defcon, Nagents)
     
     -- Contact info.
     text=text..string.format("Contacts: %d [Border=%d, Conflict=%d, Attack=%d]\n", Ncontacts, self.Nborder, self.Nconflict, self.Nattack)
@@ -1866,11 +2124,6 @@ end
 -- @param #CHIEF self 
 function CHIEF:CheckOpsZoneQueue()
 
-  -- Passive strategy ==> Do not act.
-  if self:IsPassive() then
-    return
-  end
-
   -- Number of zones.
   local Nzones=#self.zonequeue
 
@@ -1878,10 +2131,45 @@ function CHIEF:CheckOpsZoneQueue()
   if Nzones==0 then
     return nil
   end
+
+  -- Loop over strategic zone and remove stopped zones.
+  for i=Nzones, 1, -1 do
+    local stratzone=self.zonequeue[i] --#CHIEF.StrategicZone
+    if stratzone.opszone:IsStopped() then
+      self:RemoveStrategicZone(stratzone.opszone)
+    end
+  end
+  
+  -- Loop over strategic zones and cancel missions for occupied zones if zone is not occupied any more.
+  for _,_startzone in pairs(self.zonequeue) do
+    local stratzone=_startzone --#CHIEF.StrategicZone
+    
+    -- Current owner of the zone.
+    local ownercoalition=stratzone.opszone:GetOwner()
+
+    -- Check if we own the zone or it is empty.
+    if ownercoalition==self.coalition or stratzone.opszone:IsEmpty() then
+
+      -- Loop over resources.
+      for _,_resource in pairs(stratzone.resourceOccup or {}) do
+        local resource=_resource --#CHIEF.Resource
+        
+        -- Cancel running missions.
+        if resource.mission then
+          resource.mission:Cancel()
+        end
+        
+      end
+    end
+  end  
+
+  -- Passive strategy ==> Do not act.
+  if self:IsPassive() then
+    return
+  end
   
   -- Check if total number of missions is reached.
   local NoLimit=self:_CheckMissionLimit("Total")
-  --env.info("FF chief zone total nolimit="..tostring(NoLimit))
   if NoLimit==false then
     return nil
   end  
@@ -1911,19 +2199,15 @@ function CHIEF:CheckOpsZoneQueue()
     
     -- Current owner of the zone.
     local ownercoalition=stratzone.opszone:GetOwner()
+    
+    -- Name of the zone.
+    local zoneName=stratzone.opszone.zone:GetName()
         
     -- Check coalition and importance.
     if ownercoalition~=self.coalition and (stratzone.importance==nil or stratzone.importance<=vip) and (not stratzone.opszone:IsStopped()) then
-    
-      -- Has a patrol mission?
-      local hasMissionPatrol=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ONGUARD) or stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARMOREDGUARD)
-      -- Has a CAS mission?
-      local hasMissionCAS=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CASENHANCED)
-      -- Has a ARTY mission?
-      local hasMissionARTY=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARTY) 
 
       -- Debug info.
-      self:T(self.lid..string.format("Zone %s [%s] is owned by coalition %d", stratzone.opszone.zone:GetName(), stratzone.opszone:GetState(), ownercoalition))
+      self:T(self.lid..string.format("Zone %s [%s] is owned by coalition %d", zoneName, stratzone.opszone:GetState(), ownercoalition))
     
       if stratzone.opszone:IsEmpty() then
       
@@ -1932,19 +2216,29 @@ function CHIEF:CheckOpsZoneQueue()
         -- 
         -- We send ground troops to capture the zone.
         ---
-      
-        if not hasMissionPatrol then
-      
-          -- Debug info.
-          self:T3(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets"))
-      
-          -- Recruit ground assets that
-          local recruitedI=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ONGUARD,      1, 3, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_INFANTRY})
-          local recruitedT=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ARMOREDGUARD, 1, 1, {Group.Category.GROUND}, {GROUP.Attribute.GROUND_TANK})
+
+        for _,_resource in pairs(stratzone.resourceEmpty or {}) do
+          local resource=_resource --#CHIEF.Resource
           
-          -- Debug info.
-          self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone infantry assets=%s", tostring(recruitedI)))
-          self:T(self.lid..string.format("Zone is empty ==> Recruit Patrol zone armored assets=%s",  tostring(recruitedT)))
+          -- Mission type.
+          local missionType=resource.MissionType
+
+          if (not resource.mission) or resource.mission:IsOver() then
+
+            -- Debug info.
+            self:T2(self.lid..string.format("Zone \"%s\" is empty ==> Recruiting for mission type %s: Nmin=%d, Nmax=%d", zoneName, missionType, resource.Nmin, resource.Nmax))          
+          
+            -- Recruit assets.
+            local recruited=self:RecruitAssetsForZone(stratzone, resource)
+            
+            if recruited then
+              self:T(self.lid..string.format("Successfully recruited assets for empty zone \"%s\" [mission type=%s]", zoneName, missionType))
+            else
+              self:T(self.lid..string.format("Could not recruited assets for empty zone \"%s\" [mission type=%s]", zoneName, missionType))
+            end
+            
+          end
+        
         end
         
       else
@@ -1954,78 +2248,34 @@ function CHIEF:CheckOpsZoneQueue()
         -- 
         -- We first send a CAS flight to eliminate enemy activity.
         ---
-      
-        if not hasMissionCAS then
 
-          -- Debug message.
-          self:T3(self.lid..string.format("Zone is NOT empty ==> Recruit CAS assets"))          
+        for _,_resource in pairs(stratzone.resourceOccup or {}) do
+          local resource=_resource --#CHIEF.Resource
+          
+          -- Mission type.
+          local missionType=resource.MissionType
+          
+          if (not resource.mission) or resource.mission:IsOver() then
 
+            -- Debug info.
+            self:T2(self.lid..string.format("Zone %s is NOT empty ==> Recruiting for mission type %s: Nmin=%d, Nmax=%d", zoneName, missionType, resource.Nmin, resource.Nmax))
+          
+            -- Recruit assets.
+            local recruited=self:RecruitAssetsForZone(stratzone, resource)
             
-          -- Recruite CAS assets.
-          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.CASENHANCED, 1, 1)
-          
-          -- Debug message.
-          self:T(self.lid..string.format("Zone is NOT empty ==> Recruit CAS assets=%s", tostring(recruited)))
-          
-        end
+            if recruited then
+              self:T(self.lid..string.format("Successfully recruited assets for occupied zone %s, mission type=%s", zoneName, missionType))
+            else
+              self:T(self.lid..string.format("Could not recruited assets for occupied zone %s, mission type=%s", zoneName, missionType))
+            end            
+            
+          end
         
-        if not hasMissionARTY then
-
-          -- Debug message.
-          self:T3(self.lid..string.format("Zone is NOT empty ==> Recruit ARTY assets"))          
-
-            
-          -- Recruite CAS assets.
-          local recruited=self:RecruitAssetsForZone(stratzone, AUFTRAG.Type.ARTY, 1, 1)
-          
-          -- Debug message.
-          self:T(self.lid..string.format("Zone is NOT empty ==> Recruit ARTY assets=%s", tostring(recruited)))
-          
         end
-      
+
       end
           
     end    
-  end
-
-  -- Loop over strategic zone.
-  for _,_startzone in pairs(self.zonequeue) do
-    local stratzone=_startzone --#CHIEF.StrategicZone
-    
-    -- Current owner of the zone.
-    local ownercoalition=stratzone.opszone:GetOwner()
-            
-    -- Has a patrol mission?
-    local hasMissionPATROL=stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.PATROLZONE)
-    
-    -- Has a CAS mission?
-    local hasMissionCAS, CASMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.CASENHANCED)
-    local hasMissionARTY, ARTYMissions = stratzone.opszone:_FindMissions(self.coalition,AUFTRAG.Type.ARTY)
-    
-    if ownercoalition==self.coalition and stratzone.opszone:IsEmpty() and hasMissionCAS then
-      -- Cancel CAS mission if zone is ours and no enemies are present.
-      -- TODO: Might want to check if we still have CAS capable assets in stock?!
-      --stratzone.missionCAS:Cancel()
-      for _,_auftrag in pairs(CASMissions) do
-        _auftrag:Cancel()
-      end
-    end
-    
-    if ownercoalition==self.coalition and hasMissionARTY then
-      -- Cancel ARTY mission if zone is ours and no enemies are present.
-      for _,_auftrag in pairs(ARTYMissions) do
-        _auftrag:Cancel()
-      end
-    end
-    
-  end
-
-  -- Loop over strategic zone and remove stopped zones.
-  for i=#self.zonequeue, 1, -1 do
-    local stratzone=self.zonequeue[i] --#CHIEF.StrategicZone
-    if stratzone.opszone:IsStopped() then
-      self:RemoveStrategicZone(stratzone.opszone)
-    end
   end
     
 end
@@ -2360,13 +2610,9 @@ end
 --- Recruit assets for a given OPS zone.
 -- @param #CHIEF self
 -- @param #CHIEF.StrategicZone StratZone The strategic zone.
--- @param #string MissionType Mission Type.
--- @param #number NassetsMin Min number of required assets.
--- @param #number NassetsMax Max number of required assets.
--- @param #table Categories Group categories of the assets.
--- @param #table Attributes Generalized group attributes.
+-- @param #CHIEF.Resource Resource The required resources.
 -- @return #boolean If `true` enough assets could be recruited.
-function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsMax, Categories, Attributes)
+function CHIEF:RecruitAssetsForZone(StratZone, Resource)
 
   -- Cohorts.
   local Cohorts={}
@@ -2385,7 +2631,15 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
       end
       
     end
-  end  
+  end
+  
+  -- Shortcuts.
+  local MissionType=Resource.MissionType
+  local NassetsMin=Resource.Nmax
+  local NassetsMax=Resource.Nmax
+  local Categories=Resource.Categories
+  local Attributes=Resource.Attributes
+  local Properties=Resource.Properties
 
   -- Target position.
   local TargetVec2=StratZone.opszone.zone:GetVec2()
@@ -2398,26 +2652,36 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
     RangeMax=UTILS.NMToMeters(250)
   end
   
-    -- Set max range to 50 NM because we use armor
+  -- Set max range to 50 NM because we use armor.
   if MissionType==AUFTRAG.Type.ARMOREDGUARD then
     RangeMax=UTILS.NMToMeters(50)
   end
 
   -- Recruite infantry assets.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, RangeMax, nil, nil, nil, Categories, Attributes)
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, RangeMax, nil, nil, nil, Categories, Attributes, Properties)
   
   if recruited then
   
+    -- Mission for zone.
+    local mission=nil  --Ops.Auftrag#AUFTRAG  
+  
     -- Debug messgage.
-    self:T2(self.lid..string.format("Recruited %d assets for %s mission STRATEGIC zone %s", #assets, MissionType, tostring(StratZone.opszone.zoneName)))  
+    self:T2(self.lid..string.format("Recruited %d assets for %s mission STRATEGIC zone %s", #assets, MissionType, tostring(StratZone.opszone.zoneName)))
+    
+    local TargetZone  = StratZone.opszone.zone
+    local TargetCoord = TargetZone:GetCoordinate()    
   
     if MissionType==AUFTRAG.Type.PATROLZONE or MissionType==AUFTRAG.Type.ONGUARD then
-              
+    
+      ---
+      -- PATROLZONE or ONGUARD
+      ---
+     
       -- Debug messgage.
       self:T2(self.lid..string.format("Recruited %d assets for PATROL mission", #assets))
       
-      local recruitedTrans=true
-      local transport=nil
+      -- First check if we need a transportation.
+      local recruitedTrans=true ; local transport=nil
       if Attributes and Attributes[1]==GROUP.Attribute.GROUND_INFANTRY then
       
         -- Categories. Currently only helicopters are allowed due to problems with ground transports (might get stuck, might not be a land connection.
@@ -2425,55 +2689,66 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
         local Categories=self.TransportCategories
   
         -- Recruit transport assets for infantry.    
-        recruitedTrans, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, assets, 1, 1, StratZone.opszone.zone, nil, Categories)
+        recruitedTrans, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, assets, 1, 1, TargetZone, nil, Categories)
         
       end
       
       if recruitedTrans then
-    
-        -- Create Patrol zone mission.
-        local mission=nil  --Ops.Auftrag#AUFTRAG
         
         if MissionType==AUFTRAG.Type.PATROLZONE then
-          mission=AUFTRAG:NewPATROLZONE(StratZone.opszone.zone)
-          mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})
+          mission=AUFTRAG:NewPATROLZONE(TargetZone)
+          
         elseif MissionType==AUFTRAG.Type.ONGUARD then 
-          mission=AUFTRAG:NewONGUARD(StratZone.opszone.zone:GetRandomCoordinate(), nil, nil, {land.SurfaceType.LAND})
+          mission=AUFTRAG:NewONGUARD(TargetZone:GetRandomCoordinate(nil, nil, {land.SurfaceType.LAND}))
         end
-        mission:SetEngageDetected()            
-            
-        -- Add assets to mission.
-        for _,asset in pairs(assets) do
-          mission:AddAsset(asset)
-        end
-            
+        
+        -- Engage detected targets.
+        mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})            
+                        
         -- Attach OPS transport to mission.
         mission.opstransport=transport
-            
-        -- Assign mission to legions.
-        self:MissionAssign(mission, legions)
-      
-        -- Attach mission to ops zone.
-        StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
-        
+                    
         -- Set ops zone to transport.
-        transport.opszone=StratZone.opszone
-        transport.chief=self
-        transport.commander=self.commander
-        
-        return true
+        if transport then
+          transport.opszone=StratZone.opszone
+          transport.chief=self
+          transport.commander=self.commander
+        end
+
       else
+        -- No transport ==> no mission!
+        self:T(self.lid..string.format("Could not allocate transport of OPSZONE infantry!"))
         LEGION.UnRecruitAssets(assets)
         return false
       end
       
-      
     elseif MissionType==AUFTRAG.Type.CASENHANCED then
+    
+      ---
+      -- CAS ENHANCED
+      ---
 
       -- Create Patrol zone mission.
-      local caszone = StratZone.opszone.zone
-      local coord = caszone:GetCoordinate()
-      local height = UTILS.MetersToFeet(coord:GetLandHeight())+2500
+      local height = UTILS.MetersToFeet(TargetCoord:GetLandHeight())+2500
+      
+      local Speed=200
+      if assets[1] then
+        if assets[1].speedmax then
+          Speed = UTILS.KmphToKnots(assets[1].speedmax * 0.7) or 200
+        end
+      end
+
+      -- CAS mission.
+      mission=AUFTRAG:NewCASENHANCED(TargetZone, height, Speed)
+
+    elseif MissionType==AUFTRAG.Type.CAS then
+    
+      ---
+      -- CAS
+      ---
+
+      -- Create Patrol zone mission.
+      local height = UTILS.MetersToFeet(TargetCoord:GetLandHeight())+2500
       
       local Speed = 200      
       if assets[1] then
@@ -2481,82 +2756,80 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
           Speed = UTILS.KmphToKnots(assets[1].speedmax * 0.7) or 200
         end
       end
-
-      --local mission=AUFTRAG:NewCAS(caszone,height,Speed,coord,math.random(0,359),Leg)
-      local mission=AUFTRAG:NewCASENHANCED(caszone, height, Speed)
       
-      -- Add assets to mission.
-      for _,asset in pairs(assets) do
-        mission:AddAsset(asset)
-      end
-          
-      -- Assign mission to legions.
-      self:MissionAssign(mission, legions)
-    
-      -- Attach mission to ops zone.
-      StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
-
-      return true
-    
-    elseif MissionType==AUFTRAG.Type.CAS then
-
-      -- Create Patrol zone mission.
-      local caszone = StratZone.opszone.zone
-      local coord = caszone:GetCoordinate()
-      local height = UTILS.MetersToFeet(coord:GetLandHeight())+2500
-      local Speed = 200
-      --local mission=AUFTRAG:NewPATROLZONE(caszone)
-      if assets[1] then
-        if assets[1].speedmax then
-          Speed = UTILS.KmphToKnots(assets[1].speedmax * 0.7) or 200
-        end
-      end
-      --local Speed = UTILS.KmphToKnots(assets[1].speedmax * 0.7) or 200
-      local Leg = caszone:GetRadius() <= 10000 and 5 or UTILS.MetersToNM(caszone:GetRadius())
-      local mission=AUFTRAG:NewCAS(caszone,height,Speed,coord,math.random(0,359),Leg)
-      mission:SetEngageDetected(25, {"Ground Units", "Light armed ships", "Helicopters"})
-      mission:SetWeaponExpend(AI.Task.WeaponExpend.ALL)    
-      mission:SetMissionSpeed(Speed)
+      -- Leg length.
+      local Leg = TargetZone:GetRadius() <= 10000 and 5 or UTILS.MetersToNM(TargetZone:GetRadius())
       
-      -- Add assets to mission.
-      for _,asset in pairs(assets) do
-        mission:AddAsset(asset)
-      end
-          
-      -- Assign mission to legions.
-      self:MissionAssign(mission, legions)
-    
-      -- Attach mission to ops zone.
-      StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
+      -- CAS mission.
+      mission=AUFTRAG:NewCAS(TargetZone, height, Speed, TargetCoord, math.random(0,359), Leg)
 
-      return true
     elseif MissionType==AUFTRAG.Type.ARTY then
+    
+      ---
+      -- ARTY
+      ---
       
       -- Create ARTY zone mission.
-      local TargetZone = StratZone.opszone.zone
-      local Target = TargetZone:GetCoordinate()
       local Radius = TargetZone:GetRadius()
-      local mission=AUFTRAG:NewARTY(Target,120,Radius)
-                      
-      -- Add assets to mission.
-      for _,asset in pairs(assets) do
-        mission:AddAsset(asset)
-      end
-          
-      -- Assign mission to legions.
-      self:MissionAssign(mission, legions)
-    
-      -- Attach mission to ops zone.
-      StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
-    
-      return true
+      
+      mission=AUFTRAG:NewARTY(TargetCoord, 120, Radius)
+
     elseif MissionType==AUFTRAG.Type.ARMOREDGUARD then
+    
+      --- 
+      -- ARMORGUARD
+      ---
       
       -- Create Armored on guard mission
-      local TargetZone = StratZone.opszone.zone
-      local Target = TargetZone:GetCoordinate()
-      local mission=AUFTRAG:NewARMOREDGUARD(Target)
-                      
+      mission=AUFTRAG:NewARMOREDGUARD(TargetCoord)
+      
+    elseif MissionType==AUFTRAG.Type.BOMBCARPET then
+    
+      ---
+      -- BOMB CARPET
+      ---
+    
+      -- Create ARTY zone mission.
+      mission=AUFTRAG:NewBOMBCARPET(TargetCoord, nil, 1000)
+
+    elseif MissionType==AUFTRAG.Type.BOMBING then
+
+      ---
+      -- BOMBING
+      ---
+    
+      local coord=TargetZone:GetRandomCoordinate()
+    
+      mission=AUFTRAG:NewBOMBING(TargetCoord)
+      
+    elseif MissionType==AUFTRAG.Type.RECON then
+    
+      ---
+      -- RECON
+      ---    
+    
+      mission=AUFTRAG:NewRECON(TargetZone, nil, 5000)
+      
+    elseif MissionType==AUFTRAG.Type.BARRAGE then
+
+      ---
+      -- BARRAGE
+      ---    
+      
+      mission=AUFTRAG:NewBARRAGE(TargetZone)
+      
+    elseif MissionType==AUFTRAG.Type.AMMOSUPPLY then
+
+      ---
+      -- AMMO SUPPLY
+      ---    
+    
+      mission=AUFTRAG:NewAMMOSUPPLY(TargetZone)
+
+    end
+    
+    if mission then
+
       -- Add assets to mission.
       for _,asset in pairs(assets) do
         mission:AddAsset(asset)
@@ -2567,8 +2840,18 @@ function CHIEF:RecruitAssetsForZone(StratZone, MissionType, NassetsMin, NassetsM
     
       -- Attach mission to ops zone.
       StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
+      
+      -- Attach mission to resource.
+      Resource.mission=mission
     
-      return true  
+      return true      
+    else
+      
+      -- Mission not supported.
+      self:E(self.lid..string.format("ERROR: Mission type not supported for OPSZONE! Unrecruiting assets..."))
+      LEGION.UnRecruitAssets(assets)
+      
+      return false  
     end
     
   end
