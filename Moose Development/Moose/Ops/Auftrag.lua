@@ -389,6 +389,7 @@ _AUFTRAGSNR=0
 -- @field #string BARRAGE Barrage.
 -- @field #string ARMORATTACK Armor attack.
 -- @field #string CASENHANCED Enhanced CAS.
+-- @field #string HOVER Hover.
 -- @field #string GROUNDATTACK Ground attack.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
@@ -437,6 +438,7 @@ AUFTRAG.Type={
 -- @field #string ONGUARD On guard.
 -- @field #string ARMOREDGUARD On guard with armor.
 -- @field #string BARRAGE Barrage.
+-- @field #string HOVER Hover.
 -- @field #string GROUNDATTACK Ground attack.
 AUFTRAG.SpecialTask={
   PATROLZONE="PatrolZone",
