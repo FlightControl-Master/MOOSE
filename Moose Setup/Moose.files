@@ -28,6 +28,7 @@ Core/SpawnStatic.lua
 Core/Timer.lua
 Core/Goal.lua
 Core/Spot.lua
+Core/TextAndSound.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua
