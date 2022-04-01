@@ -166,6 +166,20 @@ FLIGHTGROUP.Attribute = {
   OTHER="Other",
 }
 
+--- Radio Text.
+-- @type FLIGHTGROUP.RadioText
+-- @field #string normal
+-- @field #string enhanced
+
+--- Radio messages.
+-- @type FLIGHTGROUP.RadioMessage
+-- @field #FLIGHTGROUP.RadioText AIRBORNE
+-- @field #FLIGHTGROUP.RadioText TAXIING
+FLIGHTGROUP.RadioMessage = {
+  AIRBORNE={normal="Airborn", enhanced="Airborn"},
+  TAXIING={normal="Taxiing", enhanced="Taxiing"},
+}
+
 --- FLIGHTGROUP class version.
 -- @field #string version
 FLIGHTGROUP.version="0.7.1"

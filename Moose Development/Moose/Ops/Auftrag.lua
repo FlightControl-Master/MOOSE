@@ -385,6 +385,7 @@ _AUFTRAGSNR=0
 -- @field #string BARRAGE Barrage.
 -- @field #string ARMORATTACK Armor attack.
 -- @field #string CASENHANCED Enhanced CAS.
+-- @field #string GROUNDATTACK Ground attack.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -419,6 +420,7 @@ AUFTRAG.Type={
   ARMORATTACK="Armor Attack",
   CASENHANCED="CAS Enhanced",
   HOVER="Hover",
+  GROUNDATTACK="Ground Attack"
 }
 
 --- Mission status of an assigned group.
@@ -431,6 +433,7 @@ AUFTRAG.Type={
 -- @field #string ONGUARD On guard.
 -- @field #string ARMOREDGUARD On guard with armor.
 -- @field #string BARRAGE Barrage.
+-- @field #string GROUNDATTACK Ground attack.
 AUFTRAG.SpecialTask={
   PATROLZONE="PatrolZone",
   RECON="ReconMission",
@@ -442,6 +445,7 @@ AUFTRAG.SpecialTask={
   BARRAGE="Barrage",
   ARMORATTACK="AmorAttack",
   HOVER="Hover",
+  GROUNDATTACK="Ground Attack",
 }
 
 --- Mission status.
@@ -562,7 +566,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.8.5"
+AUFTRAG.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1783,6 +1787,35 @@ function AUFTRAG:NewARMORATTACK(Target, Speed, Formation)
   mission.optionAttackFormation=Formation or "Wedge"
   
   mission.missionFraction=1.0  
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or 20
+  
+  mission.categories={AUFTRAG.Category.GROUND}
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+--- **[GROUND]** Create a GROUNDATTACK mission. Ground group(s) will go to a target object and attack.
+-- @param #AUFTRAG self
+-- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
+-- @param #number Speed Speed in knots.
+-- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc. 
+-- @return #AUFTRAG self
+function AUFTRAG:NewGROUNDATTACK(Target, Speed, Formation)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.GROUNDATTACK)
+  
+  mission:_TargetFromObject(Target)
+  
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.GROUNDATTACK)
+    
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  mission.optionFormation="On Road"
+  mission.optionAttackFormation=Formation or "Wedge"
+  
+  mission.missionFraction=0.75
   mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or 20
   
   mission.categories={AUFTRAG.Category.GROUND}
@@ -3315,6 +3348,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
 
       -- Cancel mission if mission targets are gone (if there were any in the beginning).
       -- TODO: I commented this out for some reason but I forgot why...
+      self:T(self.lid.."No targets left cancelling mission!")
       self:Cancel()
       
     elseif self:IsExecuting() then
@@ -5091,6 +5125,26 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- We create a "fake" DCS task and pass the parameters to the ARMYGROUP.
     local param={}
     param.zone=self:GetObjective()
+    param.action="Wedge"
+    param.speed=self.missionSpeed
+    
+    DCStask.params=param
+    
+    table.insert(DCStasks, DCStask)   
+
+   elseif self.type==AUFTRAG.Type.GROUNDATTACK then
+
+    ---------------------------
+    -- GROUND ATTACK Mission --
+    ---------------------------
+  
+    local DCStask={}
+    
+    DCStask.id=AUFTRAG.SpecialTask.GROUNDATTACK
+    
+    -- We create a "fake" DCS task and pass the parameters to the ARMYGROUP.
+    local param={}
+    param.target=self:GetTargetData()
     param.action="Wedge"
     param.speed=self.missionSpeed
     

@@ -35,6 +35,8 @@
 -- @field #number Nkilled Number of destroyed asset groups.
 -- @field #number engageRange Mission range in meters.
 -- @field #string attribute Generalized attribute of the cohort template group.
+-- @field #table descriptors DCS descriptors.
+-- @field #table properties DCS attributes.
 -- @field #table tacanChannel List of TACAN channels available to the cohort.
 -- @field #number radioFreq Radio frequency in MHz the cohort uses.
 -- @field #number radioModu Radio modulation the cohort uses.
@@ -73,17 +75,20 @@ COHORT = {
   tacanChannel   =    {},
   weightAsset    = 99999,
   cargobayLimit  =     0,
+  descriptors    =    {},
+  properties     =    {},
 }
 
 --- COHORT class version.
 -- @field #string version
-COHORT.version="0.1.0"
+COHORT.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Create FLOTILLA class.
+-- DONE: Added check for properties.
 -- DONE: Make general so that PLATOON and SQUADRON can inherit this class.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -127,6 +132,15 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   
   -- Aircraft type.
   self.aircrafttype=self.templategroup:GetTypeName()
+  
+  -- Get descriptors.
+  self.descriptors=self.templategroup:GetUnit(1):GetDesc()
+  
+  -- Properties (DCS attributes).
+  self.properties=self.descriptors.attributes
+  
+  -- Print properties.
+  --self:I(self.properties)
 
   -- Defaults.
   self.Ngroups=Ngroups or 3  
@@ -319,6 +333,21 @@ function COHORT:AddMissionCapability(MissionTypes, Performance)
   self:T2(self.missiontypes)
   
   return self
+end
+
+--- Check if cohort assets have a given property (DCS attribute).
+-- @param #COHORT self
+-- @param #string Property The property.
+-- @return #boolean If `true`, cohort assets have the attribute.
+function COHORT:HasProperty(Property)
+
+  for _,property in pairs(self.properties) do
+    if Property==property then
+      return true
+    end
+  end
+
+  return false
 end
 
 --- Get mission types this cohort is able to perform.

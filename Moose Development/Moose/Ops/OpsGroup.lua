@@ -3807,12 +3807,26 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     else
       -- FLIGHTGROUP not implemented (intended!) for this AUFTRAG type.
     end
-  
-      ---
+
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK then  
+
+    ---
+    -- Task "Ground Attack" Mission.
+    ---
+    
+    -- Engage target.
+    local target=Task.dcstask.params.target --Ops.Target#TARGET
+    
+    if target then
+      self:EngageTarget(target)
+    end
+    
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.HOVER then
+
+    ---
     -- Task "Hover" Mission.
     ---
-  
-  elseif Task.dcstask.id==AUFTRAG.SpecialTask.HOVER then
+    
     if self.isFlightgroup then
       self:T("We are Special Auftrag HOVER, hovering now ...")
       --self:I({Task.dcstask.params})
@@ -3836,6 +3850,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
       local timer = TIMER:New(FlyOn,helo,Speed,CruiseAlt,Task)
       timer:Start(time)
     end
+    
   else
 
     -- If task is scheduled (not waypoint) set task.
@@ -3951,6 +3966,8 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.ALERT5 then
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD or Task.dcstask.id==AUFTRAG.SpecialTask.ARMOREDGUARD then
+        done=true
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK then
         done=true
       elseif stopflag==1 or (not self:IsAlive()) or self:IsDead() or self:IsStopped() then
         -- Manual call TaskDone if setting flag to one was not successful.
@@ -4714,8 +4731,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
 
     -- Get ingress waypoint.
-    if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE or mission.type==AUFTRAG.Type.AMMOSUPPLY
-      or mission.type.FUELSUPPLY then
+    if mission.type==AUFTRAG.Type.PATROLZONE or mission.type==AUFTRAG.Type.BARRAGE or mission.type==AUFTRAG.Type.AMMOSUPPLY or mission.type.FUELSUPPLY then
       local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
       waypointcoord=zone:GetRandomCoordinate(nil , nil, surfacetypes)
     elseif mission.type==AUFTRAG.Type.ONGUARD or mission.type==AUFTRAG.Type.ARMOREDGUARD then

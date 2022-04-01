@@ -5453,57 +5453,63 @@ end
 -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
 function WAREHOUSE:onafterAssetDead(From, Event, To, asset, request)
 
-  -- Debug message.
-  local text=string.format("Asset %s from request id=%d is dead!", asset.templatename, request.uid)
-  self:T(self.lid..text)
+  if asset and request then
 
-  -- Here I need to get rid of the #CARGO at the end to obtain the original name again!
-  local groupname=asset.spawngroupname --self:_GetNameWithOut(group)
-
-  -- Dont trigger a Remove event for the group sets.
-  local NoTriggerEvent=true
-
-  if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
-
-    ---
-    -- Easy case: Group can simply be removed from the cargogroupset.
-    ---
-
-    -- Remove dead group from cargo group set.
-    request.cargogroupset:Remove(groupname, NoTriggerEvent)
-    self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
-
-  else
-
-    ---
-    -- Complicated case: Dead unit could be:
-    -- 1.) A Cargo unit (e.g. waiting to be picked up).
-    -- 2.) A Transport unit which itself holds cargo groups.
-    ---
-
-    -- Check if this a cargo or transport group.
-    local istransport=not asset.iscargo --self:_GroupIsTransport(group, request)
-
-    if istransport==true then
-
-      -- Whole carrier group is dead. Remove it from the carrier group set.
-      request.transportgroupset:Remove(groupname, NoTriggerEvent)
-      self:T(self.lid..string.format("Removed transport %s: ntransport=%d", groupname, request.transportgroupset:Count()))
-
-    elseif istransport==false then
-
-      -- This must have been an alive cargo group that was killed outside the carrier, e.g. waiting to be transported or waiting to be put back.
+    -- Debug message.
+    local text=string.format("Asset %s from request id=%d is dead!", asset.templatename, request.uid)
+    self:T(self.lid..text)
+  
+    -- Here I need to get rid of the #CARGO at the end to obtain the original name again!
+    local groupname=asset.spawngroupname --self:_GetNameWithOut(group)
+  
+    -- Dont trigger a Remove event for the group sets.
+    local NoTriggerEvent=true
+  
+    if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
+  
+      ---
+      -- Easy case: Group can simply be removed from the cargogroupset.
+      ---
+  
       -- Remove dead group from cargo group set.
       request.cargogroupset:Remove(groupname, NoTriggerEvent)
-      self:T(self.lid..string.format("Removed transported cargo %s outside carrier: ncargo=%d", groupname, request.cargogroupset:Count()))
-      -- This as well?
-      --request.transportcargoset:RemoveCargosByName(RemoveCargoNames)
-      
-    else
-      --self:E(self.lid..string.format("ERROR: Group %s is neither cargo nor transport!", group:GetName()))
-    end
-  end
+      self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
   
+    else
+  
+      ---
+      -- Complicated case: Dead unit could be:
+      -- 1.) A Cargo unit (e.g. waiting to be picked up).
+      -- 2.) A Transport unit which itself holds cargo groups.
+      ---
+  
+      -- Check if this a cargo or transport group.
+      local istransport=not asset.iscargo --self:_GroupIsTransport(group, request)
+  
+      if istransport==true then
+  
+        -- Whole carrier group is dead. Remove it from the carrier group set.
+        request.transportgroupset:Remove(groupname, NoTriggerEvent)
+        self:T(self.lid..string.format("Removed transport %s: ntransport=%d", groupname, request.transportgroupset:Count()))
+  
+      elseif istransport==false then
+  
+        -- This must have been an alive cargo group that was killed outside the carrier, e.g. waiting to be transported or waiting to be put back.
+        -- Remove dead group from cargo group set.
+        request.cargogroupset:Remove(groupname, NoTriggerEvent)
+        self:T(self.lid..string.format("Removed transported cargo %s outside carrier: ncargo=%d", groupname, request.cargogroupset:Count()))
+        -- This as well?
+        --request.transportcargoset:RemoveCargosByName(RemoveCargoNames)
+        
+      else
+        --self:E(self.lid..string.format("ERROR: Group %s is neither cargo nor transport!", group:GetName()))
+      end
+    end
+    
+  else
+    self:E(self.lid.."ERROR: Asset and/or Request is nil in onafterAssetDead")
+  
+  end
   
 end
 

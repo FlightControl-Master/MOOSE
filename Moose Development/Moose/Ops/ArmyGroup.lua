@@ -1405,7 +1405,9 @@ function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target)
   end
   
   -- Pause current mission.
-  if self.currentmission and self.currentmission>0 then
+  local mission=self:GetMissionCurrent()
+  
+  if mission and mission.type~=AUFTRAG.Type.GROUNDATTACK then
     self:T(self.lid.."Engage command but have current mission ==> Pausing mission!")
     self:PauseMission()
     dt=-0.1
@@ -1532,6 +1534,15 @@ function ARMYGROUP:onafterDisengage(From, Event, To)
   -- Restore previous ROE and alarm state.
   self:SwitchROE(self.engage.roe)
   self:SwitchAlarmstate(self.engage.alarmstate)
+  
+  -- Get current task
+  local task=self:GetTaskCurrent()
+  
+  -- Get if current task is ground attack.
+  if task and task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK then
+    self:T(self.lid.."Disengage with current task GROUNDATTACK ==> Task Done!")
+    self:TaskDone(task)
+  end    
   
   -- Remove current waypoint
   if self.engage.Waypoint then
