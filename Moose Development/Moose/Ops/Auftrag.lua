@@ -279,13 +279,9 @@
 --
 -- An arty mission can be created with the @{#AUFTRAG.NewARTY}() function.
 --
--- ## ARMORATTACK
+-- ## GROUNDATTACK
 --
--- A mission to send a tank group can be created with the @{#AUFTRAG.NewARMORATTACK}() function.
---
--- # Options and Parameters
---
--- TODO
+-- A ground attack mission can be created with the @{#AUFTRAG.NewGROUNDATTACK}() function.
 --
 -- # Assigning Missions
 --
@@ -1583,7 +1579,7 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Set#SET_GROUP TransportGroupSet The set group(s) to be transported.
 -- @param Core.Point#COORDINATE DropoffCoordinate Coordinate where the helo will land drop off the the troops.
--- @param Core.Point#COORDINATE PickupCoordinate Coordinate where the helo will land to pick up the the cargo. Default is the fist transport group.
+-- @param Core.Point#COORDINATE PickupCoordinate Coordinate where the helo will land to pick up the the cargo. Default is the first transport group.
 -- @param #number PickupRadius Radius around the pickup coordinate in meters. Default 100 m.
 -- @return #AUFTRAG self
 function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupCoordinate, PickupRadius)
@@ -1740,7 +1736,7 @@ end
 -- @param Core.Zone#ZONE Zone The patrol zone.
 -- @param #number Speed Speed in knots.
 -- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
--- @param #string Formation Formation used during patrol.
+-- @param #string Formation Formation used by ground units during patrol. Default "Off Road".
 -- @return #AUFTRAG self
 function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude, Formation)
 
@@ -1767,13 +1763,14 @@ function AUFTRAG:NewPATROLZONE(Zone, Speed, Altitude, Formation)
 
   mission.DCStask=mission:GetDCSMissionTask()
 
-  mission.DCStask.params.formation=Formation
+  mission.DCStask.params.formation=Formation or "Off Road"
 
   return mission
 end
 
 
---- **[GROUND]** Create a ARMORATTACK mission. Armoured ground group(s) will go to the zone and attack.
+--- **[OBSOLETE]** Create a ARMORATTACK mission.
+-- ** Note that this is actually creating a GROUNDATTACK mission!** 
 -- @param #AUFTRAG self
 -- @param Ops.Target#TARGET Target The target to attack. Can be a GROUP, UNIT or STATIC object.
 -- @param #number Speed Speed in knots.
@@ -1781,23 +1778,10 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:NewARMORATTACK(Target, Speed, Formation)
 
-  local mission=AUFTRAG:New(AUFTRAG.Type.ARMORATTACK)
-
-  mission:_TargetFromObject(Target)
-
-  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.ARMORATTACK)
-
-  mission.optionROE=ENUMS.ROE.OpenFire
-  mission.optionAlarm=ENUMS.AlarmState.Auto
-  mission.optionFormation="On Road"
-  mission.optionAttackFormation=Formation or "Wedge"
-
-  mission.missionFraction=1.0
-  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or 20
-
-  mission.categories={AUFTRAG.Category.GROUND}
-
-  mission.DCStask=mission:GetDCSMissionTask()
+  local mission=AUFTRAG:NewGROUNDATTACK(Target, Speed, Formation)
+  
+  -- Mission type.
+  mission.type=AUFTRAG.Type.ARMORATTACK  
 
   return mission
 end
@@ -1805,8 +1789,8 @@ end
 --- **[GROUND]** Create a GROUNDATTACK mission. Ground group(s) will go to a target object and attack.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
--- @param #number Speed Speed in knots.
--- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc.
+-- @param #number Speed Speed in knots. Default max.
+-- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc. Default `ENUMS.Formation.Vehicle.Vee`.
 -- @return #AUFTRAG self
 function AUFTRAG:NewGROUNDATTACK(Target, Speed, Formation)
 
@@ -1816,18 +1800,20 @@ function AUFTRAG:NewGROUNDATTACK(Target, Speed, Formation)
 
   mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.GROUNDATTACK)
 
+  -- Defaults.
   mission.optionROE=ENUMS.ROE.OpenFire
-  mission.optionAlarm=ENUMS.AlarmState.Auto
+  mission.optionAlarm=ENUMS.AlarmState.Auto  
   mission.optionFormation="On Road"
-  mission.optionAttackFormation=Formation or "Wedge"
-
-  mission.missionFraction=0.75
-  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or 20
+  mission.missionFraction=0.70
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
 
   mission.categories={AUFTRAG.Category.GROUND}
 
   mission.DCStask=mission:GetDCSMissionTask()
-
+  
+  mission.DCStask.params.speed=Speed
+  mission.DCStask.params.formation=Formation or ENUMS.Formation.Vehicle.Vee
+  
   return mission
 end
 
@@ -1836,10 +1822,11 @@ end
 -- @param Core.Set#SET_ZONE ZoneSet The recon zones.
 -- @param #number Speed Speed in knots.
 -- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
--- @param #boolean Adinfinitum If true, the group will start over again after reaching the final zone.
--- @param #boolean Randomly If true, the group will select a random zone.
+-- @param #boolean Adinfinitum If `true`, the group will start over again after reaching the final zone.
+-- @param #boolean Randomly If `true`, the group will select a random zone.
+-- @param #string Formation Formation used during recon route.
 -- @return #AUFTRAG self
-function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
+function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly, Formation)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.RECON)
 
@@ -1860,12 +1847,7 @@ function AUFTRAG:NewRECON(ZoneSet, Speed, Altitude, Adinfinitum, Randomly)
   mission.DCStask=mission:GetDCSMissionTask()
   mission.DCStask.params.adinfinitum=Adinfinitum
   mission.DCStask.params.randomly=Randomly
-
-  if Randomly then
-    local targets = mission.DCStask.params.target.targets -- Ops.Target#TARGET
-    local shuffled = UTILS.ShuffleTable(targets)
-    mission.DCStask.params.target.targets = shuffled
-  end
+  mission.DCStask.params.formation=Formation
 
   return mission
 end
@@ -1978,7 +1960,6 @@ function AUFTRAG:NewARMOREDGUARD(Coordinate,Formation)
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionAlarm=ENUMS.AlarmState.Auto
   mission.optionFormation=Formation or "On Road"
-  --mission.optionAttackFormation=Formation or "Wedge"
 
   mission.missionFraction=1.0
 
@@ -5112,28 +5093,6 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.missionAltitude
-    param.speed=self.missionSpeed
-
-    DCStask.params=param
-
-    table.insert(DCStasks, DCStask)
-
-   elseif self.type==AUFTRAG.Type.ARMORATTACK then
-
-    -------------------------
-    -- ARMOR ATTACK Mission --
-    -------------------------
-
-    local DCStask={}
-
-    DCStask.id=AUFTRAG.SpecialTask.ARMORATTACK
-
-    -- We create a "fake" DCS task and pass the parameters to the ARMYGROUP.
-    local param={}
-    param.zone=self:GetObjective()
-    param.tVec2=param.zone:GetVec2()
-    param.tzone=ZONE_RADIUS:New("ARMORATTACK-Zone-"..self.auftragsnummer,param.tVec2,1000)
-    param.action="Wedge"
     param.speed=self.missionSpeed
 
     DCStask.params=param

@@ -1208,7 +1208,7 @@ function TARGET:GetCoordinate()
 
   end
 
-  self:E(self.lid..string.format("ERROR: Cannot get coordinate of target %s", self.name))
+  self:E(self.lid..string.format("ERROR: Cannot get coordinate of target %s", tostring(self.name)))
   return nil
 end
 

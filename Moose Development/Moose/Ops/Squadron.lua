@@ -48,15 +48,15 @@
 -- @field #table parkingIDs Parking IDs for this squadron.
 -- @extends Ops.Cohort#COHORT
 
---- *It is unbelievable what a squadron of twelve aircraft did to tip the balance.* -- Adolf Galland
+--- *It is unbelievable what a squadron of twelve aircraft did to tip the balance* -- Adolf Galland
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\OPS\Squadron\_Main.png)
---
 -- # The SQUADRON Concept
 -- 
--- A SQUADRON is essential part of an AIRWING and consists of **one** type of aircraft. 
+-- A SQUADRON is essential part of an @{Ops.Airwing#AIRWING} and consists of **one** type of aircraft.
+-- 
+-- 
 --
 --
 --

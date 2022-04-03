@@ -2429,46 +2429,54 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
         -- SEAD/DEAD
           
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
         
       elseif attribute==GROUP.Attribute.GROUND_EWR then
 
         -- EWR
           
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
-        --table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,  100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,  90))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
         
       elseif attribute==GROUP.Attribute.GROUND_AAA then
       
         -- AAA
       
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 40))
         
       elseif attribute==GROUP.Attribute.GROUND_ARTILLERY then
       
         -- ARTY
       
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 75))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 70))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 70))
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 75))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))        
       
       elseif attribute==GROUP.Attribute.GROUND_INFANTRY then
       
         -- Infantry
-        
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 100))
+                
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 40))
           
       elseif attribute==GROUP.Attribute.GROUND_TANK then
       
         -- Tanks
         
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 75))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.CAS, 100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 40))
         
       else
 
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
       
       end
 

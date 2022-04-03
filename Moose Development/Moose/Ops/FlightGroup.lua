@@ -1201,7 +1201,7 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.SPAWNED)
 
-  if Element.unit:InAir(true) then
+  if Element.unit:InAir(not self.isHelo) then  -- Setting check because of problems with helos dynamically spawned where inAir WRONGLY returned true if spawned at an airbase or farp!
     -- Trigger ElementAirborne event. Add a little delay because spawn is also delayed!
     self:__ElementAirborne(0.11, Element)
   else
@@ -1531,6 +1531,12 @@ function FLIGHTGROUP:onafterParking(From, Event, To)
   
   -- Set current airbase.
   self.currbase=airbase
+  
+  -- Set homebase to current airbase if not defined yet.
+  -- This is necessary, e.g, when flights are spawned at an airbase because they do not have a takeoff waypoint.
+  if not self.homebase then
+    self.homebase=airbase
+  end
 
   -- Parking time stamp.
   self.Tparking=timer.getAbsTime()

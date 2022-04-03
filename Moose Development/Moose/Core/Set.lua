@@ -5763,8 +5763,28 @@ do -- SET_ZONE
     return self
   end
 
+  --- Draw all zones in the set on the F10 map.
+  -- @param #SET_ZONE self
+  -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+  -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+  -- @param #number Alpha Transparency [0,1]. Default 1.
+  -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+  -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
+  -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+  -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+  -- @return #SET_ZONE self
+  function SET_ZONE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+  
+    for _,_zone in pairs(self.Set) do
+      local zone=_zone --Core.Zone#ZONE
+      zone:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+    end
 
-  ---
+    return self
+  end
+
+
+  --- Private function.
   -- @param #SET_ZONE self
   -- @param Core.Zone#ZONE_BASE MZone
   -- @return #SET_ZONE self
@@ -5779,7 +5799,8 @@ do -- SET_ZONE
       if self.Filter.Prefixes then
         local MZonePrefix = false
         for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
-          self:T3( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
+          env.info(string.format("zone %s %s", MZoneName, ZonePrefix))
+          self:I( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
           if string.find( MZoneName, ZonePrefix, 1 ) then
             MZonePrefix = true
           end

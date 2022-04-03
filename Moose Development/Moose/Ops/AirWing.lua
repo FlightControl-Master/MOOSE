@@ -40,7 +40,7 @@
 --
 -- @extends Ops.Legion#LEGION
 
---- Be surprised!
+--- *I fly because it releases my mind from the tyranny of petty things* -- Antoine de Saint-Exupery
 --
 -- ===
 --
@@ -96,12 +96,6 @@
 -- This mission will be put into the AIRWING queue. Once the mission start time is reached and all resources (airframes and payloads) are available, the mission is started.
 -- If the mission stop time is over (and the mission is not finished), it will be cancelled and removed from the queue. This applies also to mission that were not even
 -- started.
---
--- # Command an Airwing
---
--- An airwing can receive missions from a WINGCOMMANDER. See docs of that class for details.
---
--- However, you are still free to add missions at anytime.
 --
 --
 -- @field #AIRWING

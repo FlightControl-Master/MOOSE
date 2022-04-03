@@ -1668,8 +1668,8 @@ function UTILS.GetOSTime()
 end
 
 --- Shuffle a table accoring to Fisher Yeates algorithm
---@param #table t Table to be shuffled
---@return #table
+--@param #table t Table to be shuffled.
+--@return #table Shuffled table.
 function UTILS.ShuffleTable(t)
   if t == nil or type(t) ~= "table" then
     BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
@@ -1685,6 +1685,32 @@ function UTILS.ShuffleTable(t)
     table.remove(t,r)
   end
   return TempTable
+end
+
+--- Get a random element of a table.
+--@param #table t Table.
+--@param #boolean replace If `true`, the drawn element is replaced, i.e. not deleted.
+--@return #number Table element.
+function UTILS.GetRandomTableElement(t, replace)
+
+  if t == nil or type(t) ~= "table" then
+    BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
+    return
+  end
+  
+  math.random()
+  math.random()
+  math.random()
+  
+  local r=math.random(#t)
+  
+  local element=t[r]
+  
+  if not replace then
+    table.remove(t, r)
+  end
+  
+  return element
 end
 
 --- (Helicopter) Check if one loading door is open.

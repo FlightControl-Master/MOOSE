@@ -45,7 +45,7 @@
 -- @field #number cargobayLimit Cargo bay capacity in kg.
 -- @extends Core.Fsm#FSM
 
---- *It is unbelievable what a platoon of twelve aircraft did to tip the balance.* -- Adolf Galland
+--- *It is unbelievable what a platoon of twelve aircraft did to tip the balance* -- Adolf Galland
 --
 -- ===
 --

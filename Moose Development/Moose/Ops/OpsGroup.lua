@@ -3021,7 +3021,6 @@ function OPSGROUP:OnEventBirth(EventData)
     local group=EventData.IniGroup
     local unitname=EventData.IniUnitName
 
-
     -- Set homebase if not already set.
     if self.isFlightgroup then
 
@@ -3746,17 +3745,29 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
 
     -- Target
     local target=Task.dcstask.params.target --Ops.Target#TARGET
-    self.lastindex=1
+    
+    -- Init a table.
+    self.reconindecies={}
+    for i=1,#target.targets do
+      table.insert(self.reconindecies, i)
+    end
+    
+    local n=1
+    if Task.dcstask.params.randomly then
+      n=UTILS.GetRandomTableElement(self.reconindecies)
+    else    
+      table.remove(self.reconindecies, n)
+    end        
 
     -- Target object and zone.
-    local object=target.targets[1] --Ops.Target#TARGET.Object
+    local object=target.targets[n] --Ops.Target#TARGET.Object
     local zone=object.Object --Core.Zone#ZONE
 
     -- Random coordinate in zone.
     local Coordinate=zone:GetRandomCoordinate()
 
     -- Speed and altitude.
-    local Speed=UTILS.MpsToKnots(Task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
+    local Speed=Task.dcstask.params.speed and UTILS.MpsToKnots(Task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
     local Altitude=Task.dcstask.params.altitude and UTILS.MetersToFeet(Task.dcstask.params.altitude) or nil
 
     --Coordinate:MarkToAll("Recon Waypoint Execute")
@@ -3768,7 +3779,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     if self.isFlightgroup then
       wp=FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, currUID, Altitude)
     elseif self.isArmygroup then
-      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Formation)
+      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Task.dcstask.params.formation)
     elseif self.isNavygroup then
       wp=NAVYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Altitude)
     end
@@ -3808,7 +3819,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
       -- FLIGHTGROUP not implemented (intended!) for this AUFTRAG type.
     end
 
-  elseif Task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK then  
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK or Task.dcstask.id==AUFTRAG.SpecialTask.ARMORATTACK then  
 
     ---
     -- Task "Ground Attack" Mission.
@@ -3817,8 +3828,14 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- Engage target.
     local target=Task.dcstask.params.target --Ops.Target#TARGET
     
+    -- Set speed. Default max.
+    local speed=self.speedMax and UTILS.KmphToKnots(self.speedMax) or nil
+    if Task.dcstask.params.speed then
+      speed=Task.dcstask.params.speed
+    end
+    
     if target then
-      self:EngageTarget(target)
+      self:EngageTarget(target, speed, Task.dcstask.params.formation)
     end
     
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.HOVER then
@@ -3967,7 +3984,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD or Task.dcstask.id==AUFTRAG.SpecialTask.ARMOREDGUARD then
         done=true
-      elseif Task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK then
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK or Task.dcstask.id==AUFTRAG.SpecialTask.ARMORATTACK then
         done=true
       elseif stopflag==1 or (not self:IsAlive()) or self:IsDead() or self:IsStopped() then
         -- Manual call TaskDone if setting flag to one was not successful.
@@ -4744,20 +4761,6 @@ function OPSGROUP:RouteToMission(mission, delay)
       local zone=mission.engageTarget:GetObject() --Core.Zone#ZONE
       waypointcoord=zone:GetCoordinate()
     end
-    
-    local armorwaypointcoord = nil
-    if mission.type==AUFTRAG.Type.ARMORATTACK then
-      local target=mission.engageTarget:GetObject() -- Wrapper.Positionable#POSITIONABLE
-      --BASE:I({mission.DCStask})
-      --BASE:I({mission.DCStask.params})
-      --local zone = ZONE_RADIUS:New("AttackZone",target:GetVec2(),1000)
-      local zone = mission.DCStask.params.tzone -- Core.Zone#ZONE_RADIUS
-      -- final WP
-      waypointcoord=zone:GetRandomCoordinate(0, 100, surfacetypes) -- Core.Point#COORDINATE
-      -- Ingress - add formation to this one
-      armorwaypointcoord = zone:GetRandomCoordinate(1000, 500, surfacetypes) -- Core.Point#COORDINATE
-      self:__EngageTarget(2,target)
-    end
 
     -- Add enroute tasks.
     for _,task in pairs(mission.enrouteTasks) do
@@ -4851,13 +4854,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     if self:IsFlightgroup() then
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
     elseif self:IsArmygroup() then
-      if mission.type==AUFTRAG.Type.ARMORATTACK then
-        waypoint=ARMYGROUP.AddWaypoint(self, armorwaypointcoord, SpeedToMission, uid, mission.optionFormation, false)
-        local attackformation = mission.optionAttackFormation or "Vee"
-        waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, nil, attackformation, false)
-      else
-        waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
-      end
+      waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
     elseif self:IsNavygroup() then
       waypoint=NAVYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.missionAltitude or self.altitudeCruise, false)
     end
@@ -5107,7 +5104,6 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
     -- Speed and altitude.
     local Speed=task.dcstask.params.speed and UTILS.MpsToKnots(task.dcstask.params.speed) or UTILS.KmphToKnots(self.speedCruise)
-   -- local Speed=UTILS.KmphToKnots(speed or self.speedCruise)
     local Altitude=UTILS.MetersToFeet(task.dcstask.params.altitude or self.altitudeCruise)
 
     local currUID=self:GetWaypointCurrent().uid
@@ -5130,11 +5126,24 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
 
     -- TARGET.
     local target=task.dcstask.params.target --Ops.Target#TARGET
-
-    local n=self.lastindex+1
-
-    if n<=#target.targets then
-
+    
+    -- Init a table.
+    if self.adinfinitum and #self.reconindecies==0 then -- all targets done once
+      self.reconindecies={}
+      for i=1,#target.targets do
+        table.insert(self.reconindecies, i)
+      end
+    end
+    
+    if #self.reconindecies>0 then
+    
+      local n=1
+      if task.dcstask.params.randomly then
+        n=UTILS.GetRandomTableElement(self.reconindecies)
+      else    
+        table.remove(self.reconindecies, n)
+      end
+      
       -- Zone object.
       local object=target.targets[n] --Ops.Target#TARGET.Object
       local zone=object.Object --Core.Zone#ZONE
@@ -5155,17 +5164,12 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       if self.isFlightgroup then
         wp=FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, currUID, Altitude)
       elseif self.isArmygroup then
-        wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Formation)
+        wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, task.dcstask.params.formation)
       elseif self.isNavygroup then
         wp=NAVYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Altitude)
       end
       wp.missionUID=mission and mission.auftragsnummer or nil
-
-      -- Increase counter.
-      self.lastindex=self.lastindex+1
-      if self.adinfinitum and n==#target.targets then -- all targets done once
-        self.lastindex = 1
-      end
+   
     else
 
       -- Get waypoint index.
