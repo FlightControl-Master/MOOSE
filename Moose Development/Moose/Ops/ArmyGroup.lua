@@ -38,12 +38,10 @@
 -- @field Core.Set#SET_ZONE retreatZones Set of retreat zones.
 -- @extends Ops.OpsGroup#OPSGROUP
 
---- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B Sledge
+--- *Your soul may belong to Jesus, but your ass belongs to the marines* -- Eugene B Sledge
 --
 -- ===
---
--- ![Banner Image](..\Presentations\OPS\ArmyGroup\_Main.png)
---
+-- 
 -- # The ARMYGROUP Concept
 -- 
 -- This class enhances ground groups.
@@ -60,6 +58,8 @@ ARMYGROUP = {
 -- @field Ops.Target#TARGET Target The target.
 -- @field Core.Point#COORDINATE Coordinate Last known coordinate of the target.
 -- @field Ops.OpsGroup#OPSGROUP.Waypoint Waypoint the waypoint created to go to the target.
+-- @field #number Speed Speed in knots.
+-- @field #string Formation Formation used in the engagement.
 -- @field #number roe ROE backup.
 -- @field #number alarmstate Alarm state backup.
 
@@ -281,11 +281,16 @@ function ARMYGROUP:New(group)
   --- Triggers the FSM event "EngageTarget".
   -- @function [parent=#ARMYGROUP] EngageTarget
   -- @param #ARMYGROUP self
+  -- @param Wrapper.Group#GROUP Group the group to be engaged.
+  -- @param #string Formation Formation used in the engagement.
 
   --- Triggers the FSM event "EngageTarget" after a delay.
   -- @function [parent=#ARMYGROUP] __EngageTarget
   -- @param #ARMYGROUP self
   -- @param #number delay Delay in seconds.
+  -- @param Wrapper.Group#GROUP Group the group to be engaged.
+  -- @param #string Formation Formation used in the engagement.
+
 
   --- On after "EngageTarget" event.
   -- @function [parent=#ARMYGROUP] OnAfterEngageTarget
@@ -293,6 +298,8 @@ function ARMYGROUP:New(group)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+  -- @param Wrapper.Group#GROUP Group the group to be engaged.
+  -- @param #string Formation Formation used in the engagement.
 
 
   --- Triggers the FSM event "Disengage".
@@ -987,33 +994,6 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
     current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
     table.insert(waypoints, 2, current)
-  
-    -- Removing this for now as I don't see why it is necessary and it is very CPU intensive.
-    -- You only need the start and end waypoint on the road. Other waypoints on the road are not necessray.
-    --[[
-    -- take direct line if on road is too long
-    local wptable,length,valid=self:GetCoordinate():GetPathOnRoad(wp.coordinate or wp.roadcoord,true,false,false,false) or {}
-    
-    local lenghtdirect = self:GetCoordinate():Get2DDistance(wp.coordinate) or 100000
-    
-    if valid and length then
-      if length > lenghtdirect * 8 then
-        valid = false -- rather go directly
-      end
-    end
-    
-    local count = 2
-    if valid then
-      for _,_coord in ipairs(wptable) do
-        local current = _coord:WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
-        table.insert(waypoints, count, current)
-        count=count+1
-      end
-    else
-      current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
-      table.insert(waypoints, count, current)
-    end    
-    ]]
   end
   
   -- Debug output.
@@ -1392,7 +1372,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Group#GROUP Group the group to be engaged.
-function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target)
+-- @param #number Speed Speed in knots.
+-- @param #string Formation Formation used in the engagement. Default `ENUMS.Formation.Vehicle.Vee`.
+function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target, Speed, Formation)
 
   local dt=nil
   local allowed=true
@@ -1430,7 +1412,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Group#GROUP Group the group to be engaged.
-function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
+-- @param #number Speed Attack speed in knots.
+-- @param #string Formation Formation used in the engagement. Default `ENUMS.Formation.Vehicle.Vee`.
+function ARMYGROUP:onafterEngageTarget(From, Event, To, Target, Speed, Formation)
   self:T(self.lid.."Engaging Target")
 
   -- Make sure this is a target.
@@ -1458,11 +1442,13 @@ function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
   local uid=self:GetWaypointCurrent().uid
   
   -- Set formation.
-  --TODO: make this input.
-  local Formation=ENUMS.Formation.Vehicle.Vee
+  self.engage.Formation=Formation or ENUMS.Formation.Vehicle.Vee
+  
+  -- Set speed.
+  self.engage.Speed=Speed
   
   -- Add waypoint after current.
-  self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+  self.engage.Waypoint=self:AddWaypoint(intercoord, self.engage.Speed, uid, self.engage.Formation, true)
   
   -- Set if we want to resume route after reaching the detour waypoint.
   self.engage.Waypoint.detour=1
@@ -1500,7 +1486,7 @@ function ARMYGROUP:_UpdateEngageTarget()
         local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
     
           -- Add waypoint after current.
-        self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+        self.engage.Waypoint=self:AddWaypoint(intercoord, self.engage.Speed, uid, self.engage.Formation, true)
       
         -- Set if we want to resume route after reaching the detour waypoint.
         self.engage.Waypoint.detour=0      
