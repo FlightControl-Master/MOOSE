@@ -2715,6 +2715,8 @@ function CTLD:_BuildCrates(Group, Unit,Engineering)
         local required = Crate:GetCratesNeeded()
         local template = Crate:GetTemplates()
         local ctype = Crate:GetType()
+        local ccoord = Crate:GetPositionable():GetCoordinate() -- Core.Point#COORDINATE
+        --local testmarker = ccoord:MarkToAll("Crate found",true,"Build Position")
         if not buildables[name] then
           local object = {} -- #CTLD.Buildable
           object.Name = name
@@ -2723,6 +2725,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering)
           object.Template = template
           object.CanBuild = false
           object.Type = ctype -- #CTLD_CARGO.Enum
+          object.Coord = ccoord:GetVec2()
           buildables[name] = object
           foundbuilds = true
         else
@@ -2884,7 +2887,8 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation)
       temptable = {temptable}
     end
     local zone = ZONE_GROUP:New(string.format("Unload zone-%s",unitname),Group,100)
-    local randomcoord = zone:GetRandomCoordinate(35):GetVec2()
+    --local randomcoord = zone:GetRandomCoordinate(35):GetVec2()
+    local randomcoord = Build.Coord or zone:GetRandomCoordinate(35):GetVec2()
     if Repair then
       randomcoord = RepairLocation:GetVec2()
     end
@@ -2893,7 +2897,7 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation)
       local alias = string.format("%s-%d", _template, math.random(1,100000))
       if canmove then
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
-          :InitRandomizeUnits(true,20,2)
+          --:InitRandomizeUnits(true,20,2)
           :InitDelayOff()
           :SpawnFromVec2(randomcoord)
       else -- don't random position of e.g. SAM units build as FOB
