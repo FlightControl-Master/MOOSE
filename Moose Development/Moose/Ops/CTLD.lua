@@ -28,7 +28,7 @@ do
 
 ------------------------------------------------------
 --- **CTLD_ENGINEERING** class, extends Core.Base#BASE
---- @type CTLD_ENGINEERING
+-- @type CTLD_ENGINEERING
 -- @field #string ClassName
 -- @field #string lid
 -- @field #string Name
@@ -951,7 +951,6 @@ CTLD = {
   FreeUHFFrequencies = {}, -- Table of UHF
   FreeFMFrequencies = {}, -- Table of FM
   CargoCounter = 0,
-  wpZones = {},
   Cargo_Troops = {}, -- generic troops objects
   Cargo_Crates = {}, -- generic crate objects
   Loaded_Cargo = {}, -- cargo aboard units
@@ -1850,6 +1849,8 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop)
   local drop = drop or false
   local ship = nil
   local width = 20
+  local distance = nil
+  local zone = nil
   if not drop then 
     inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
     if not inzone then
@@ -2714,6 +2715,8 @@ function CTLD:_BuildCrates(Group, Unit,Engineering)
         local required = Crate:GetCratesNeeded()
         local template = Crate:GetTemplates()
         local ctype = Crate:GetType()
+        local ccoord = Crate:GetPositionable():GetCoordinate() -- Core.Point#COORDINATE
+        --local testmarker = ccoord:MarkToAll("Crate found",true,"Build Position")
         if not buildables[name] then
           local object = {} -- #CTLD.Buildable
           object.Name = name
@@ -2722,6 +2725,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering)
           object.Template = template
           object.CanBuild = false
           object.Type = ctype -- #CTLD_CARGO.Enum
+          object.Coord = ccoord:GetVec2()
           buildables[name] = object
           foundbuilds = true
         else
@@ -2883,7 +2887,8 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation)
       temptable = {temptable}
     end
     local zone = ZONE_GROUP:New(string.format("Unload zone-%s",unitname),Group,100)
-    local randomcoord = zone:GetRandomCoordinate(35):GetVec2()
+    --local randomcoord = zone:GetRandomCoordinate(35):GetVec2()
+    local randomcoord = Build.Coord or zone:GetRandomCoordinate(35):GetVec2()
     if Repair then
       randomcoord = RepairLocation:GetVec2()
     end
@@ -2892,7 +2897,7 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation)
       local alias = string.format("%s-%d", _template, math.random(1,100000))
       if canmove then
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
-          :InitRandomizeUnits(true,20,2)
+          --:InitRandomizeUnits(true,20,2)
           :InitDelayOff()
           :SpawnFromVec2(randomcoord)
       else -- don't random position of e.g. SAM units build as FOB
@@ -5124,7 +5129,7 @@ function CTLD_HERCULES:Cargo_SpawnObjects(Cargo_Drop_initiator,Cargo_Drop_Direct
       self:Soldier_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country, 5)
       self:Soldier_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country, 10)
     else
-      self:Cargo_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country, 0)
+      self:Cargo_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country)
     end
   else
     if all_cargo_gets_destroyed == true or Cargo_over_water == true then
