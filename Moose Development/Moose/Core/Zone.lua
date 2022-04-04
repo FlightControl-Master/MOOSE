@@ -59,6 +59,7 @@
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @field #number DrawID Unique ID of the drawn zone on the F10 map.
 -- @field #table Color Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
+-- @field #number ZoneID ID of zone. Only zones defined in the ME have an ID!
 -- @extends Core.Fsm#FSM
 
 
@@ -108,7 +109,8 @@ ZONE_BASE = {
   ZoneName = "",
   ZoneProbability = 1,
   DrawID=nil,
-  Color={}
+  Color={},
+  ZoneID=nil,
 }
 
 

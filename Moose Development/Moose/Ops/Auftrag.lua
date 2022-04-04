@@ -268,6 +268,10 @@
 -- ## TROOPTRANSPORT
 --
 -- A troop transport mission can be created with the @{#AUFTRAG.NewTROOPTRANSPORT}() function.
+-- 
+-- ## CARGOTRANSPORT
+-- 
+-- A cargo transport mission can be created with the @{#AUFTRAG.NewCARGOTRANSPORT}() function.
 --
 -- ## HOVER
 --
@@ -387,6 +391,7 @@ _AUFTRAGSNR=0
 -- @field #string CASENHANCED Enhanced CAS.
 -- @field #string HOVER Hover.
 -- @field #string GROUNDATTACK Ground attack.
+-- @field #string CARGOTRANSPORT Cargo transport.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",
@@ -421,7 +426,8 @@ AUFTRAG.Type={
   ARMORATTACK="Armor Attack",
   CASENHANCED="CAS Enhanced",
   HOVER="Hover",
-  GROUNDATTACK="Ground Attack"
+  GROUNDATTACK="Ground Attack",
+  CARGOTRANSPORT="Cargo Transport"
 }
 
 --- Mission status of an assigned group.
@@ -568,7 +574,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.0"
+AUFTRAG.version="0.9.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1617,6 +1623,38 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
 
   mission.DCStask=mission:GetDCSMissionTask()
 
+  return mission
+end
+
+--- **[AIR ROTARY]** Create a CARGO TRANSPORT mission.
+-- **Important Note:**
+-- The dropoff zone has to be a zone defined in the Mission Editor. This is due to a restriction in the used DCS task, which takes the zone ID as input.
+-- Only ME zones have an ID that can be referenced.
+-- @param #AUFTRAG self
+-- @param Wrapper.Static#STATIC StaticCargo Static cargo object.
+-- @param Core.Zone#ZONE DropZone Zone where to drop off the cargo. **Has to be a zone defined in the ME!**
+-- @return #AUFTRAG self
+function AUFTRAG:NewCARGOTRANSPORT(StaticCargo, DropZone)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.CARGOTRANSPORT)
+
+  mission:_TargetFromObject(StaticCargo)
+
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.CARGOTRANSPORT)
+
+  -- Set ROE and ROT.
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+
+  mission.categories={AUFTRAG.Category.HELICOPTER}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.DCStask.params.groupId=StaticCargo:GetID()
+  mission.DCStask.params.zoneId=DropZone.ZoneID
+  mission.DCStask.params.zone=DropZone
+  mission.DCStask.params.cargo=StaticCargo
+  
   return mission
 end
 
@@ -3452,6 +3490,19 @@ function AUFTRAG:Evaluate()
       if Ntargets<Ntargets0 then
         failed=true
       end
+      
+    elseif self.type==AUFTRAG.Type.CARGOTRANSPORT then
+    
+      -- Get zone and cargo.
+      local zone=self.DCStask.params.zone   --Core.Zone#ZONE
+      local cargo=self.DCStask.params.cargo --Wrapper.Static#STATIC
+      
+      --Check that cargo is in drop zone.
+      if cargo and zone then
+        failed=not cargo:IsInZone(zone)
+      else
+        failed=true
+      end
 
     elseif self.type==AUFTRAG.Type.RESCUEHELO then
 
@@ -5002,6 +5053,19 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
 
     table.insert(DCStasks, DCStask)
 
+  elseif self.type==AUFTRAG.Type.CARGOTRANSPORT then
+
+    ----------------------------
+    -- CARGOTRANSPORT Mission --
+    ----------------------------
+
+    -- Task to transport cargo.
+    local TaskCargoTransportation={
+      id = "CargoTransportation",
+      params = {}
+    }
+    
+    table.insert(DCStasks, TaskCargoTransportation)
 
   elseif self.type==AUFTRAG.Type.RESCUEHELO then
 
@@ -5339,6 +5403,8 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
   elseif MissionType==AUFTRAG.Type.TANKER then
     mtask=ENUMS.MissionTask.REFUELING
   elseif MissionType==AUFTRAG.Type.TROOPTRANSPORT then
+    mtask=ENUMS.MissionTask.TRANSPORT
+  elseif MissionType==AUFTRAG.Type.CARGOTRANSPORT then
     mtask=ENUMS.MissionTask.TRANSPORT
   elseif MissionType==AUFTRAG.Type.ARMORATTACK then
     mtask=ENUMS.MissionTask.NOTHING

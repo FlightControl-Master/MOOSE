@@ -338,6 +338,9 @@ do -- Zones
 
         -- Store color of zone.
         Zone.Color=color
+        
+        -- Store zone ID.
+        Zone.ZoneID=ZoneData.zoneId
 
         -- Store in DB.
         self.ZONENAMES[ZoneName] = ZoneName
