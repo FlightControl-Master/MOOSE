@@ -60,14 +60,14 @@ TEXTANDSOUND = {
 --- Instantiate a new object
 -- @param #TEXTANDSOUND self
 -- @param #string ClassName Name of the class this instance is providing texts for.
--- @param #string Defaultlocale Default locale of this instance, e.g. "en".
+-- @param #string Defaultlocale (Optional) Default locale of this instance, defaults to "en". 
 -- @return #TEXTANDSOUND self
 function TEXTANDSOUND:New(ClassName,Defaultlocale)
     -- Inherit everything from BASE class.
   local self=BASE:Inherit(self, BASE:New())
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("%s (%s) | ", self.ClassName, self.version)
-  self.locale = Defaultlocale or "en"
+  self.locale = Defaultlocale or (_SETTINGS:GetLocale() or "en")
   self.textclass = ClassName or "none"
   self.entries = {}
   local initentry = {} -- #TEXTANDSOUND.Entry
