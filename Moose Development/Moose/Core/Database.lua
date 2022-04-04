@@ -778,7 +778,9 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
 
   local StaticTemplate = UTILS.DeepCopy( StaticTemplate )
 
-  local StaticTemplateName = env.getValueDictByKey(StaticTemplate.name)
+  local StaticTemplateGroupName = env.getValueDictByKey(StaticTemplate.name)
+  
+  local StaticTemplateName=StaticTemplate.units[1].name
 
   self.Templates.Statics[StaticTemplateName] = self.Templates.Statics[StaticTemplateName] or {}
 
@@ -786,7 +788,7 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
   StaticTemplate.CoalitionID = CoalitionID
   StaticTemplate.CountryID = CountryID
 
-  self.Templates.Statics[StaticTemplateName].StaticName = StaticTemplateName
+  self.Templates.Statics[StaticTemplateName].StaticName = StaticTemplateGroupName
   self.Templates.Statics[StaticTemplateName].GroupTemplate = StaticTemplate
   self.Templates.Statics[StaticTemplateName].UnitTemplate = StaticTemplate.units[1]
   self.Templates.Statics[StaticTemplateName].CategoryID = CategoryID
