@@ -46,14 +46,14 @@
 -- @field #number InitOffsetAngle Link offset angle in degrees.
 -- @field #number InitStaticHeading Heading of the static.
 -- @field #string InitStaticLivery Livery for aircraft.
--- @field #string InitStaticShape Shape of teh static.
+-- @field #string InitStaticShape Shape of the static.
 -- @field #string InitStaticType Type of the static.
 -- @field #string InitStaticCategory Categrory of the static.
 -- @field #string InitStaticName Name of the static.
 -- @field Core.Point#COORDINATE InitStaticCoordinate Coordinate where to spawn the static.
--- @field #boolean InitDead Set static to be dead if true.
--- @field #boolean InitCargo If true, static can act as cargo.
--- @field #number InitCargoMass Mass of cargo in kg.
+-- @field #boolean InitStaticDead Set static to be dead if true.
+-- @field #boolean InitStaticCargo If true, static can act as cargo.
+-- @field #number InitStaticCargoMass Mass of cargo in kg.
 -- @extends Core.Base#BASE
 
 
@@ -260,7 +260,7 @@ end
 -- @param #number Mass Mass of the cargo in kg.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:InitCargoMass(Mass)
-  self.InitCargoMass=Mass
+  self.InitStaticCargoMass=Mass
   return self
 end
 
@@ -269,7 +269,16 @@ end
 -- @param #boolean IsCargo If true, this static can act as cargo.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:InitCargo(IsCargo)
-  self.InitCargo=IsCargo
+  self.InitStaticCargo=IsCargo
+  return self
+end
+
+--- Initialize as dead.
+-- @param #SPAWNSTATIC self
+-- @param #boolean IsCargo If true, this static is dead.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitDead(IsDead)
+  self.InitStaticDead=IsDead
   return self
 end
 
@@ -417,16 +426,16 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     Template.livery_id=self.InitStaticLivery
   end
   
-  if self.InitDead~=nil then
-    Template.dead=self.InitDead
+  if self.InitStaticDead~=nil then
+    Template.dead=self.InitStaticDead
   end
   
-  if self.InitCargo~=nil then
-    Template.canCargo=self.InitCargo
+  if self.InitStaticCargo~=nil then
+    Template.canCargo=self.InitStaticCargo
   end
   
-  if self.InitCargoMass~=nil then
-    Template.mass=self.InitCargoMass
+  if self.InitStaticCargoMass~=nil then
+    Template.mass=self.InitStaticCargoMass
   end
   
   if self.InitLinkUnit then
@@ -479,6 +488,8 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     -- ED's dirty way to spawn FARPS.
     Static=coalition.addGroup(CountryID, -1, TemplateGroup)
   else
+    self:T("Spawning Static")        
+    self:T2({Template=Template})  
     Static=coalition.addStaticObject(CountryID, Template)
   end
     
