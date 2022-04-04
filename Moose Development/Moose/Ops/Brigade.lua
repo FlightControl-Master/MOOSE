@@ -23,7 +23,7 @@
 -- @field Core.Set#SET_ZONE retreatZones Retreat zone set.
 -- @extends Ops.Legion#LEGION
 
---- Be surprised!
+--- *I am not afraid of an Army of lions lead by a sheep; I am afraid of sheep lead by a lion* -- Alexander the Great
 --
 -- ===
 --

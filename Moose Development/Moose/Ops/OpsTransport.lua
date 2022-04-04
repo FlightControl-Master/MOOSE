@@ -17,8 +17,7 @@
 --
 -- ### Author: **funkyfranky**
 -- 
--- ==
--- 
+-- ===
 -- @module Ops.OpsTransport
 -- @image OPS_OpsTransport.png
 
@@ -63,7 +62,7 @@
 -- 
 -- @extends Core.Fsm#FSM
 
---- *Victory is the beautiful, bright-colored flower. Transport is the stem without which it could never have blossomed.* -- Winston Churchill
+--- *Victory is the beautiful, bright-colored flower; Transport is the stem without which it could never have blossomed* -- Winston Churchill
 --
 -- ===
 --

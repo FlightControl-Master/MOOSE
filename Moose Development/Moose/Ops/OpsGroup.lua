@@ -6162,7 +6162,6 @@ function OPSGROUP:Teleport(Coordinate, Delay)
     for i=1,#units do
       local unit=units[i]
       d[i]={x=Coordinate.x+(units[i].x-units[1].x), y=Coordinate.z+units[i].y-units[1].y}
-      --COORDINATE:NewFromVec2(d[i]):MarkToAll(unit.name.." teleported")
     end    
 
     for i=#units,1,-1 do
