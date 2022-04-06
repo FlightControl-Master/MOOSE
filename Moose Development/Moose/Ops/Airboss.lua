@@ -36,6 +36,7 @@
 --    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1)) (LHA-1) [**WIP**]
 --    * [USS America](https://en.wikipedia.org/wiki/USS_America_(LHA-6)) (LHA-6) [**WIP**]
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61) [**WIP**]
+--    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_(L02)) (L02) [**WIP**]
 --
 -- **Supported Aircraft:**
 --
@@ -54,7 +55,7 @@
 --
 -- The AV-8B Harrier, HMS Hermes, the USS Tarawa, USS America, HMAS Canberra, and Juan Carlos I are WIP. The AV-8B harrier and the LHA's and LHD can only be used together, i.e. these ships are the only carriers the harrier is supposed to land on and
 -- no other fixed wing aircraft (human or AI controlled) are supposed to land on these ships. Currently only Case I is supported. Case II/III take slightly different steps from the CVN carrier.
--- However, the two Case II/III pattern are very similar so this is not a big drawback.
+-- However, if no offset is used for the holding radial this provides a very close representation of the V/STOL Case III, allowing for an approach to over the deck and a vertical landing.
 --
 -- Heatblur's mighty F-14B Tomcat has been added (March 13th 2019) as well. Same goes for the A version.
 --
@@ -114,10 +115,11 @@
 --    * [Harrier Ship Landing Mission with Auto LSO!](https://www.youtube.com/watch?v=lqmVvpunk2c)
 --    * [Updated Airboss V/STOL Features USS Tarawa](https://youtu.be/K7I4pU6j718)
 --    * [Harrier Practice pattern USS America](https://youtu.be/99NigITYmcI)
+--    * [Harrier CASE III TACAN Approach USS Tarawa](https://www.youtube.com/watch?v=bTgJXZ9Mhdc&t=1s)
 --
 -- ===
 --
--- ### Author: **funkyfranky**
+-- ### Author: **funkyfranky** LHA and LHD V/STOL additions by **Pene**
 -- ### Special Thanks To **Bankler**
 -- For his great [Recovery Trainer](https://forums.eagle.ru/showthread.php?t=221412) mission and script!
 -- His work was the initial inspiration for this class. Also note that this implementation uses some routines for determining the player position in Case I recoveries he developed.
@@ -2817,13 +2819,29 @@ end
 -- @param #number Low
 -- @param #number LOW
 -- @return #AIRBOSS self
-function AIRBOSS:SetGlideslopeErrorThresholds( _max, _min, High, HIGH, Low, LOW )
-  self.gle._max = _max or 0.4
-  self.gle.High = High or 0.8
-  self.gle.HIGH = HIGH or 1.5
-  self.gle._min = _min or -0.3
-  self.gle.Low = Low or -0.6
-  self.gle.LOW = LOW or -0.9
+
+function AIRBOSS:SetGlideslopeErrorThresholds(_max,_min, High, HIGH, Low, LOW)
+
+  --Check if V/STOL Carrier
+  if self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+  
+  -- allow a larger GSE for V/STOL operations --Pene Testing
+  self.gle._max=_max or  0.7
+  self.gle.High=High or  1.4
+  self.gle.HIGH=HIGH or  1.9
+  self.gle._min=_min or -0.5
+  self.gle.Low=Low   or -1.2
+  self.gle.LOW=LOW   or -1.5
+  -- CVN values
+  else
+  self.gle._max=_max or  0.4
+  self.gle.High=High or  0.8
+  self.gle.HIGH=HIGH or  1.5
+  self.gle._min=_min or -0.3
+  self.gle.Low=Low   or -0.6
+  self.gle.LOW=LOW   or -0.9
+  end
+  
   return self
 end
 
@@ -2838,15 +2856,33 @@ end
 -- @param #number RightMed
 -- @param #number RIGHT
 -- @return #AIRBOSS self
-function AIRBOSS:SetLineupErrorThresholds( _max, _min, Left, LeftMed, LEFT, Right, RightMed, RIGHT )
-  self.lue._max = _max or 0.5
-  self.lue._min = _min or -0.5
-  self.lue.Left = Left or -1.0
-  self.lue.LeftMed = LeftMed or -2.0
-  self.lue.LEFT = LEFT or -3.0
-  self.lue.Right = Right or 1.0
-  self.lue.RightMed = RightMed or 2.0
-  self.lue.RIGHT = RIGHT or 3.0
+
+function AIRBOSS:SetLineupErrorThresholds(_max,_min, Left, LeftMed, LEFT, Right, RightMed, RIGHT)
+
+  --Check if V/STOL Carrier -- Pene testing
+  if self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+  
+  -- V/STOL Values -- allow a larger LUE for V/STOL operations
+  self.lue._max=_max   or  1.8
+  self.lue._min=_min   or -1.8
+  self.lue.Left=Left   or -2.8
+  self.lue.LeftMed=LeftMed   or -3.8
+  self.lue.LEFT=LEFT   or -4.5
+  self.lue.Right=Right or  2.8
+  self.lue.RightMed=RightMed or  3.8
+  self.lue.RIGHT=RIGHT or  4.5
+  -- CVN Values
+  else
+  self.lue._max=_max   or  0.5
+  self.lue._min=_min   or -0.5
+  self.lue.Left=Left   or -1.0
+  self.lue.LeftMed=LeftMed   or -2.0
+  self.lue.LEFT=LEFT   or -3.0
+  self.lue.Right=Right or  1.0
+  self.lue.RightMed=RightMed or  2.0
+  self.lue.RIGHT=RIGHT or  3.0
+  end
+  
   return self
 end
 
@@ -5053,14 +5089,16 @@ function AIRBOSS:_GetAircraftAoA( playerData )
     aoa.Fast = 8.25 -- =17.5/2
     aoa.FAST = 8.00 -- =16.5/2
   elseif harrier then
-    -- AV-8B Harrier parameters. Tuning done on the Fast AoA to allow for abeam and ninety at Nozzles 60 - 73.
-    aoa.SLOW = 14.0
-    aoa.Slow = 13.0
-    aoa.OnSpeedMax = 12.0
-    aoa.OnSpeed = 11.0
-    aoa.OnSpeedMin = 10.0
-    aoa.Fast = 8.0
-    aoa.FAST = 7.5
+
+    -- AV-8B Harrier parameters. Tuning done on the Fast AoA to allow for abeam and ninety at Nozzles 55. Pene testing
+    aoa.SLOW       = 16.0
+    aoa.Slow       = 13.5
+    aoa.OnSpeedMax = 12.5
+    aoa.OnSpeed    = 10.0
+    aoa.OnSpeedMin =  9.5
+    aoa.Fast       =  8.0
+    aoa.FAST       =  7.5
+
   end
 
   return aoa
@@ -5319,8 +5357,8 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
     elseif skyhawk then
       alt = UTILS.FeetToMeters( 300 ) -- ?
     elseif harrier then
-      -- 300-325 ft
-      alt = UTILS.FeetToMeters( 300 ) -- Need to verify
+      alt=UTILS.FeetToMeters(312)-- 300-325 ft
+
     end
 
     aoa = aoaac.OnSpeed
@@ -9510,8 +9548,9 @@ function AIRBOSS:_Groove( playerData )
     -- Speed difference.
     local dv = math.abs( vplayer - vcarrier )
 
-    -- Stable when speed difference < 20 km/h.
-    local stable = dv < 20
+
+    -- Stable when speed difference < 30 km/h.(16 Kts)Pene Testing
+    local stable=dv<30
 
     -- Check if player is inside the zone.
     if playerData.unit:IsInZone( ZoneALS ) and stable then
@@ -9543,8 +9582,8 @@ function AIRBOSS:_Groove( playerData )
     -- Speed difference.
     local dv = math.abs( vplayer - vcarrier )
 
-    -- Stable when v<10 km/h.
-    local stable = dv < 10
+    -- Stable when v<15 km/h.
+    local stable=dv<15
 
     -- Radio Transmission "Stabilized" once the aircraft has been cleared to cross and is over the Landing Spot and stable.
     if playerData.unit:IsInZone( ZoneLS ) and stable and playerData.stable == true then
@@ -9583,25 +9622,26 @@ function AIRBOSS:_Groove( playerData )
       -- Nothing else necessary.
       return
     end
-  end
 
-  -- Long V/STOL groove time Wave Off over 75 seconds to IC - TOPGUN level Only. --pene testing (WIP)
-
-  -- if rho>=RAR and rho<=RIC and not playerData.waveoff and playerData.difficulty==AIRBOSS.Difficulty.HARD and  playerData.actype==      AIRBOSS.AircraftCarrier.AV8B then
-  -- Get groove time
-  -- local vSlow=groovedata.time
-  -- If too slow wave off.  
-  -- if vSlow >75 then
-
-  -- LSO Wave off!
-  -- self:RadioTransmission(self.LSORadio, self.LSOCall.WAVEOFF, nil, nil, nil, true)
-  -- playerData.Tlso=timer.getTime()
-
-  -- Player was waved Off
-  -- playerData.waveoff=true
-  -- return
-  -- end	   
-  -- end
+   end   
+	  
+	  -- Long V/STOL groove time Wave Off over 75 seconds to IC - TOPGUN level Only. --pene testing (WIP)--- Need to think more about this.
+	 
+  --if rho>=RAR and rho<=RIC and not playerData.waveoff and playerData.difficulty==AIRBOSS.Difficulty.HARD and  playerData.actype==      AIRBOSS.AircraftCarrier.AV8B then
+   -- Get groove time
+   --local vSlow=groovedata.time
+   -- If too slow wave off.  
+   --if vSlow >75 then
+	
+   -- LSO Wave off!
+     --self:RadioTransmission(self.LSORadio, self.LSOCall.WAVEOFF, nil, nil, nil, true)
+     --playerData.Tlso=timer.getTime()
+	 
+   -- Player was waved Off
+     --playerData.waveoff=true
+     --return
+  --end	   
+ --end
 
   -- Groovedata step.
   groovedata.Step = playerData.step
@@ -9772,8 +9812,9 @@ function AIRBOSS:_CheckWaveOff( glideslopeError, lineupError, AoA, playerData )
   -- For the harrier, we allow a bit more room.
   if playerData.actype == AIRBOSS.AircraftCarrier.AV8B then
     glMax = 2.6
-    glMin = -2.6 -- Testing, @Engines may be just dragging it in on Hermes, or the carrier parameters need adjusting.
-    luAbs = 4.1 -- Testing Pene (WIP) needs feedback to tighten up tolerences.
+    glMin = -2.2 -- Testing, @Engines may be just dragging it in on Hermes, or the carrier parameters need adjusting.
+    luAbs = 4.1 -- Testing Pene.
+
   end
 
   -- Too high or too low?
@@ -9938,17 +9979,23 @@ function AIRBOSS:_GetSternCoord()
   local hdg = self.carrier:GetHeading()
 
   -- Final bearing (true).
-  local FB = self:GetFinalBearing()
+  local FB=self:GetFinalBearing()
+  local case=self.case
 
   -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
   self.sterncoord:UpdateFromCoordinate( self:GetCoordinate() )
   -- local stern=self:GetCoordinate()
 
-  -- Stern coordinate (sterndist<0).
+  -- Stern coordinate (sterndist<0). --Pene testing Case III
   if self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
-    -- Tarawa: Translate 8 meters port.
-    self.sterncoord:Translate( self.carrierparam.sterndist, hdg, true, true ):Translate( 8, FB - 90, true, true )
-  elseif self.carriertype == AIRBOSS.CarrierType.STENNIS then
+    if case==3 then
+    -- CASE III V/STOL translation Due over deck approach if needed.
+    self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
+    elseif case==2 or case==1 then
+    -- V/Stol: Translate 8 meters port.
+    self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
+	end
+  elseif self.carriertype==AIRBOSS.CarrierType.STENNIS then
     -- Stennis: translate 7 meters starboard wrt Final bearing.
     self.sterncoord:Translate( self.carrierparam.sterndist, hdg, true, true ):Translate( 7, FB + 90, true, true )
   elseif self.carriertype == AIRBOSS.CarrierType.FORRESTAL then
@@ -10582,6 +10629,7 @@ function AIRBOSS:_GetZoneRunwayBox()
 end
 
 --- Get zone of primary abeam landing position of HMS Hermes, USS Tarawa, USS America and Juan Carlos. Box length 50 meters and width 30 meters.
+
 --- Allow for Clear to land call from LSO approaching abeam the landing spot if stable as per NATOPS 00-80T
 -- @param #AIRBOSS self
 -- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
@@ -10593,9 +10641,9 @@ function AIRBOSS:_GetZoneAbeamLandingSpot()
   -- Current carrier heading.
   local FB = self:GetFinalBearing( false )
 
-  -- Coordinate array.
-  local p = {}
-
+  -- Coordinate array. Pene Testing extended Abeam landing spot V/STOL.
+  local p={}
+  
   -- Points.
   p[1] = S:Translate( 15, FB ):Translate( 15, FB + 90 ) -- Top-Right
   p[2] = S:Translate( -45, FB ):Translate( 15, FB + 90 ) -- Bottom-Right
@@ -11028,7 +11076,7 @@ function AIRBOSS:_GetAltCarrier( unit )
   return h
 end
 
---- Get optimal landing position of the aircraft. Usually between second and third wire. In case of Tarawa and America we take the abeam landing spot 120 ft abeam the 7.5 position, for the Juan Carlos I it is 120 ft and abeam the 5 position.
+--- Get optimal landing position of the aircraft. Usually between second and third wire. In case of Tarawa, Canberrra, Juan Carlos and America we take the abeam landing spot 120 ft above and 21 ft abeam the 7.5 position, for the Juan Carlos I and HMS Hermes it is 120 ft above and 21 ft abeam the 5 position. For CASE III it is 120ft directly above the landing spot.
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Optimal landing coordinate.
 function AIRBOSS:_GetOptLandingCoordinate()
@@ -11038,53 +11086,27 @@ function AIRBOSS:_GetOptLandingCoordinate()
 
   -- Stern coordinate.
   -- local stern=self:_GetSternCoord()
-
   -- Final bearing.
-  local FB = self:GetFinalBearing( false )
 
-  if self.carriertype == AIRBOSS.CarrierType.HERMES then
-
-    -- Landing 100 ft abeam, 100 ft alt.
-    self.landingcoord:UpdateFromCoordinate( self:_GetLandingSpotCoordinate() ):Translate( 25, FB - 90, true, true )
-    -- stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
-
-    -- Alitude 100 ft.
-    self.landingcoord:SetAltitude( UTILS.FeetToMeters( 100 ) )
-  elseif self.carriertype == AIRBOSS.CarrierType.TARAWA then
-
-    -- Landing 100 ft abeam, 100 ft alt.
-    self.landingcoord:UpdateFromCoordinate( self:_GetLandingSpotCoordinate() ):Translate( 35, FB - 90, true, true )
-    -- stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
-
-    -- Alitude 120 ft.
-    self.landingcoord:SetAltitude( UTILS.FeetToMeters( 120 ) )
-  elseif self.carriertype == AIRBOSS.CarrierType.AMERICA then
-
-    -- Landing 100 ft abeam, 120 ft alt. To allow adjustments to match different deck configurations.
-    self.landingcoord:UpdateFromCoordinate( self:_GetLandingSpotCoordinate() ):Translate( 35, FB - 90, true, true )
-    -- stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
-
-    -- Alitude 120 ft.
-    self.landingcoord:SetAltitude( UTILS.FeetToMeters( 120 ) )
-
-  elseif self.carriertype == AIRBOSS.CarrierType.JCARLOS then
+  local FB=self:GetFinalBearing(false)
+  local case=self.case
+  -- set Case III V/STOL abeam landing spot over deck -- Pene Testing
+  if self.carriertype==AIRBOSS.CarrierType.HERMES or self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
+    if case==3 then
+	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate())
+    -- Altitude 120ft -- is this corect for Case III?
+    self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
+ 
+    elseif case==2 or case==1 then
 
     -- Landing 100 ft abeam, 120 ft alt.
-    self.landingcoord:UpdateFromCoordinate( self:_GetLandingSpotCoordinate() ):Translate( 35, FB - 90, true, true )
-    -- stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
+    self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate()):Translate(35, FB-90, true, true)
+    --stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
 
     -- Alitude 120 ft.
-    self.landingcoord:SetAltitude( UTILS.FeetToMeters( 120 ) )
-
-  elseif self.carriertype == AIRBOSS.CarrierType.CANBERRA then
-
-    -- Landing 100 ft abeam, 120 ft alt.
-    self.landingcoord:UpdateFromCoordinate( self:_GetLandingSpotCoordinate() ):Translate( 35, FB - 90, true, true )
-    -- stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
-
-    -- Alitude 120 ft.
-    self.landingcoord:SetAltitude( UTILS.FeetToMeters( 120 ) )
-
+    self.landingcoord:SetAltitude(UTILS.FeetToMeters(120))
+    end
+	
   else
 
     -- Ideally we want to land between 2nd and 3rd wire.
@@ -11112,7 +11134,7 @@ function AIRBOSS:_GetLandingSpotCoordinate()
   -- Stern coordinate.
   -- local stern=self:_GetSternCoord()
 
-  if self.carriertype == AIRBOSS.CarrierType.HERMES then
+  if self.carriertype==AIRBOSS.CarrierType.HERMES then
 
     -- Landing 100 ft abeam, 100 alt.
     local hdg = self:GetHeading()
@@ -11709,15 +11731,17 @@ function AIRBOSS:_LSOgrade( playerData )
   local G = GXX .. " " .. GIM .. " " .. " " .. GIC .. " " .. GAR
 
   -- Count number of minor, normal and major deviations.
-  local N = nXX + nIM + nIC + nAR
-  local nL = count( G, '_' ) / 2
-  local nS = count( G, '%(' )
-  local nN = N - nS - nL
-
-  -- Groove time 15-18.99 sec for a unicorn. Or 65-70 for V/STOL unicorn.
-  local Tgroove = playerData.Tgroove
-  local TgrooveUnicorn = Tgroove and (Tgroove >= 15.0 and Tgroove <= 18.99) or false
-  local TgrooveVstolUnicorn = Tgroove and (Tgroove >= 60.0 and Tgroove <= 65.0) and playerData.actype == AIRBOSS.AircraftCarrier.AV8B or false
+  local N=nXX+nIM+nIC+nAR
+  local Nv=nXX+nIM
+  local nL=count(G, '_')/2
+  local nS=count(G, '%(')
+  local nN=N-nS-nL
+  local nNv=Nv-nS-nL
+  
+  -- Groove time 15-18.99 sec for a unicorn. Or 60-65 for V/STOL unicorn.
+  local Tgroove=playerData.Tgroove
+  local TgrooveUnicorn=Tgroove and (Tgroove>=15.0 and Tgroove<=18.99) or false
+  local TgrooveVstolUnicorn=Tgroove and (Tgroove>=60.0 and Tgroove<=65.0)and playerData.actype==AIRBOSS.AircraftCarrier.AV8B or false
 
   local grade
   local points
@@ -11728,29 +11752,33 @@ function AIRBOSS:_LSOgrade( playerData )
     G = "Unicorn"
   else
 
-    -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe. (WIP requires feedback)
-    -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
-    if nL > 3 and playerData.actype == AIRBOSS.AircraftCarrier.AV8B then
+    -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe.--Pene testing
+      -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
+  if nL>1 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       -- Larger deviations ==> "No grade" 2.0 points.
-      grade = "--"
-      points = 2.0
-    elseif nN > 2 and playerData.actype == AIRBOSS.AircraftCarrier.AV8B then
+      grade="--"
+      points=2.0
+  elseif nNv=>1 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       -- Only average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
-      grade = "(OK)"
-      points = 3.0
-    elseif nL > 0 then
+      grade="(OK)"
+      points=3.0
+  elseif nNv<1 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+      -- Only minor average deviations ==>  "OK" Pass with minor deviations and corrections. (test nNv<=1 and)
+      grade="OK"
+      points=4.0
+  elseif nL>0 then
       -- Larger deviations ==> "No grade" 2.0 points.
-      grade = "--"
-      points = 2.0
-    elseif nN > 0 then
+      grade="--"
+      points=2.0
+  elseif nN>0 then
       -- No larger but average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
-      grade = "(OK)"
-      points = 3.0
-    else
+      grade="(OK)"
+      points=3.0
+  else
       -- Only minor corrections
-      grade = "OK"
-      points = 4.0
-    end
+      grade="OK"
+      points=4.0
+  end
 
   end
 
