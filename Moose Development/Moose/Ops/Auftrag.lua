@@ -367,7 +367,7 @@ _AUFTRAGSNR=0
 -- @field #string CAS Close Air Support.
 -- @field #string ESCORT Escort mission.
 -- @field #string FACA Forward AirController airborne mission.
--- @field #string FERRY Ferry flight mission.
+-- @field #string FERRY Ferry mission.
 -- @field #string INTERCEPT Intercept mission.
 -- @field #string ORBIT Orbit mission.
 -- @field #string GCICAP Similar to CAP but no auto engage targets.
@@ -392,6 +392,8 @@ _AUFTRAGSNR=0
 -- @field #string HOVER Hover.
 -- @field #string GROUNDATTACK Ground attack.
 -- @field #string CARGOTRANSPORT Cargo transport.
+-- @field #string RELOCATECOHORT Relocate a cohort from one legion to another.
+-- @field #string NOTHING Nothing.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",
@@ -427,10 +429,12 @@ AUFTRAG.Type={
   CASENHANCED="CAS Enhanced",
   HOVER="Hover",
   GROUNDATTACK="Ground Attack",
-  CARGOTRANSPORT="Cargo Transport"
+  CARGOTRANSPORT="Cargo Transport",
+  NOTHING="Nothing",
+  RELOCATECOHORT="Relocate Cohort",  
 }
 
---- Mission status of an assigned group.
+--- Special task description.
 -- @type AUFTRAG.SpecialTask
 -- @field #string PATROLZONE Patrol zone task.
 -- @field #string RECON Recon task
@@ -442,6 +446,9 @@ AUFTRAG.Type={
 -- @field #string BARRAGE Barrage.
 -- @field #string HOVER Hover.
 -- @field #string GROUNDATTACK Ground attack.
+-- @field #string FERRY Ferry mission.
+-- @field #string NOTHING Nothing.
+-- @field #string RELOCATECOHORT Relocate cohort.
 AUFTRAG.SpecialTask={
   PATROLZONE="PatrolZone",
   RECON="ReconMission",
@@ -454,6 +461,9 @@ AUFTRAG.SpecialTask={
   ARMORATTACK="AmorAttack",
   HOVER="Hover",
   GROUNDATTACK="Ground Attack",
+  FERRY="Ferry",
+  NOTHING="Nothing",
+  RELOCATECOHORT="Relocate Cohort",  
 }
 
 --- Mission status.
@@ -574,7 +584,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.1"
+AUFTRAG.version="0.9.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1978,6 +1988,53 @@ function AUFTRAG:NewONGUARD(Coordinate)
   mission.missionFraction=1.0
 
   mission.categories={AUFTRAG.Category.GROUND, AUFTRAG.Category.NAVAL}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+--- **[PRIVATE, AIR, GROUND, NAVAL]** Create a mission to relocate assets to another LEGION.
+-- @param #AUFTRAG self
+-- @param Ops.Legion#LEGION Legion The new legion.
+-- @param Ops.Cohort#COHORT Cohort The new cohort.
+-- @return #AUFTRAG self
+function AUFTRAG:_NewRELOCATECOHORT(Legion, Cohort)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.RELOCATECOHORT)
+  
+  mission:_TargetFromObject(Legion.spawnzone)
+
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+
+  mission.missionFraction=0.0
+
+  mission.categories={AUFTRAG.Category.ALL}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.DCStask.params.legion=Legion
+  mission.DCStask.params.cohort=Cohort
+
+  return mission
+end
+
+--- **[AIR, GROUND, NAVAL]** Create a mission to do NOTHING.
+-- @param #AUFTRAG self
+-- @return #AUFTRAG self
+function AUFTRAG:NewNOTHING()
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.NOTHING)
+
+  --mission:_TargetFromObject(Coordinate)
+
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+
+  mission.missionFraction=1.0
+
+  mission.categories={AUFTRAG.Category.ALL}
 
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -4162,15 +4219,48 @@ function AUFTRAG:onafterDone(From, Event, To)
 
   -- Not executing any more.
   self.Texecuting=nil
-
-  -- Set status for CHIEF, COMMANDER and LEGIONs
+  
+  -- Set status for CHIEF.
   self.statusChief=AUFTRAG.Status.DONE
+  
+  -- Set status for COMMANDER.
   self.statusCommander=AUFTRAG.Status.DONE
+  
+  -- Set status for LEGIONs.
   for _,_legion in pairs(self.legions) do
     local Legion=_legion --Ops.Legion#LEGION
+    
     self:SetLegionStatus(Legion, AUFTRAG.Status.DONE)
+    
+    -- Remove pending request from legion queue.
+    if self.type==AUFTRAG.Type.RELOCATECOHORT then
+    
+      -- Get request ID
+      local requestid=self.requestID[Legion.alias]
+      
+      if requestid then
+      
+        -- Debug info.
+        self:T(self.lid.."Removing request from pending queue")
+        
+        -- Remove request from pending queue.
+        Legion:_DeleteQueueItemByID(requestid, Legion.pending)
+        
+        -- Remove cohort from old legion.
+        local Cohort=self.DCStask.params.cohort --Ops.Cohort#COHORT
+        Legion:DelCohort(Cohort)
+        
+      else
+        self:E(self.lid.."WARNING: Could NOT remove relocation request from from pending queue (all assets were spawned?)")
+      end
+    end
   end
-
+  
+  -- Trigger relocated event.
+  if self.type==AUFTRAG.Type.RELOCATECOHORT then
+    local cohort=self.DCStask.params.cohort --Ops.Cohort#COHORT
+    cohort:Relocated()
+  end
 end
 
 --- On after "Success" event.
@@ -4637,6 +4727,19 @@ function AUFTRAG:AddAsset(Asset)
   return self
 end
 
+--- Add asset to mission.
+-- @param #AUFTRAG self
+-- @param #table Assets List of assets.
+-- @return #AUFTRAG self
+function AUFTRAG:_AddAssets(Assets)
+
+  for _,asset in pairs(Assets) do
+    self:AddAsset(asset)
+  end
+
+  return self
+end
+
 --- Delete asset from mission.
 -- @param #AUFTRAG self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset  The asset to be removed.
@@ -4941,8 +5044,32 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- FERRY Mission --
     -------------------
 
-    -- TODO: Ferry mission type. How?
+    local DCStask={}
 
+    DCStask.id=AUFTRAG.SpecialTask.FERRY
+
+    -- We create a "fake" DCS task.
+    local param={}
+    DCStask.params=param
+
+    table.insert(DCStasks, DCStask)
+    
+  elseif self.type==AUFTRAG.Type.RELOCATECOHORT then
+
+    ----------------------
+    -- RELOCATE Mission --
+    ----------------------
+
+    local DCStask={}
+
+    DCStask.id=AUFTRAG.SpecialTask.RELOCATECOHORT
+
+    -- We create a "fake" DCS task.
+    local param={}
+    DCStask.params=param
+
+    table.insert(DCStasks, DCStask)
+    
   elseif self.type==AUFTRAG.Type.INTERCEPT then
 
     -----------------------
