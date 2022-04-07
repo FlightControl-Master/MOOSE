@@ -9987,7 +9987,7 @@ function AIRBOSS:_GetSternCoord()
   -- local stern=self:GetCoordinate()
 
   -- Stern coordinate (sterndist<0). --Pene testing Case III
-  if self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+  if self.carriertype==AIRBOSS.CarrierType.HERMES or self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
     if case==3 then
     -- CASE III V/STOL translation Due over deck approach if needed.
     self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
@@ -11092,6 +11092,7 @@ function AIRBOSS:_GetOptLandingCoordinate()
   local case=self.case
   -- set Case III V/STOL abeam landing spot over deck -- Pene Testing
   if self.carriertype==AIRBOSS.CarrierType.HERMES or self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
+  
     if case==3 then
 	self.landingcoord:UpdateFromCoordinate(self:_GetLandingSpotCoordinate())
     -- Altitude 120ft -- is this corect for Case III?
@@ -11754,23 +11755,23 @@ function AIRBOSS:_LSOgrade( playerData )
 
     -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe.--Pene testing
       -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
-  if nL>1 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+  if nL > 1 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       -- Larger deviations ==> "No grade" 2.0 points.
       grade="--"
       points=2.0
-  elseif nNv=>1 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+  elseif nNv >= 1 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       -- Only average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
       grade="(OK)"
       points=3.0
-  elseif nNv<1 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+  elseif nNv < 1 and playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
       -- Only minor average deviations ==>  "OK" Pass with minor deviations and corrections. (test nNv<=1 and)
       grade="OK"
       points=4.0
-  elseif nL>0 then
+  elseif nL > 0 then
       -- Larger deviations ==> "No grade" 2.0 points.
       grade="--"
       points=2.0
-  elseif nN>0 then
+  elseif nN> 0 then
       -- No larger but average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
       grade="(OK)"
       points=3.0
