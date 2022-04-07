@@ -4391,9 +4391,16 @@ function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor
 
   -- Add request to queue.
   table.insert(self.queue, request)
+  
+  local descval="assetlist"
+  if request.assetdesc==WAREHOUSE.Descriptor.ASSETLIST then
+  
+  else
+    descval=tostring(request.assetdescval)
+  end
 
-  local text=string.format("Warehouse %s: New request from warehouse %s.\nDescriptor %s=%s, #assets=%s; Transport=%s, #transports =%s.",
-  self.alias, warehouse.alias, request.assetdesc, tostring(request.assetdescval), tostring(request.nasset), request.transporttype, tostring(request.ntransport))
+  local text=string.format("Warehouse %s: New request from warehouse %s.\nDescriptor %s=%s, #assets=%s; Transport=%s, #transports=%s.",
+  self.alias, warehouse.alias, request.assetdesc, descval, tostring(request.nasset), request.transporttype, tostring(request.ntransport))
   self:_DebugMessage(text, 5)
 
 end

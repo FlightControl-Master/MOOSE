@@ -10,6 +10,8 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
+-- 
+-- ===
 -- @module Ops.Cohort
 -- @image OPS_Cohort.png
 
@@ -81,7 +83,7 @@ COHORT = {
 
 --- COHORT class version.
 -- @field #string version
-COHORT.version="0.2.0"
+COHORT.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -186,6 +188,9 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   self:AddTransition("OnDuty",        "Pause",              "Paused")      -- Pause cohort.
   self:AddTransition("Paused",        "Unpause",            "OnDuty")      -- Unpause cohort.
   
+  self:AddTransition("OnDuty",        "Relocate",           "Relocating")  -- Relocate.
+  self:AddTransition("Relocating",    "Relocated",          "OnDuty")      -- Relocated.
+  
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop cohort.
 
 
@@ -193,17 +198,17 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Start". Starts the COHORT. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start". Starts the COHORT.
   -- @function [parent=#COHORT] Start
   -- @param #COHORT self
 
-  --- Triggers the FSM event "Start" after a delay. Starts the COHORT. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start" after a delay. Starts the COHORT.
   -- @function [parent=#COHORT] __Start
   -- @param #COHORT self
   -- @param #number delay Delay in seconds.
 
 
-  --- Triggers the FSM event "Stop". Stops the COHORT and all its event handlers.
+  --- Triggers the FSM event "Stop".
   -- @param #COHORT self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the COHORT and all its event handlers.
@@ -610,25 +615,31 @@ end
 
 --- Check if cohort is "OnDuty".
 -- @param #COHORT self
--- @return #boolean If true, squdron is in state "OnDuty".
+-- @return #boolean If true, cohort is in state "OnDuty".
 function COHORT:IsOnDuty()
   return self:Is("OnDuty")
 end
 
 --- Check if cohort is "Stopped".
 -- @param #COHORT self
--- @return #boolean If true, squdron is in state "Stopped".
+-- @return #boolean If true, cohort is in state "Stopped".
 function COHORT:IsStopped()
   return self:Is("Stopped")
 end
 
 --- Check if cohort is "Paused".
 -- @param #COHORT self
--- @return #boolean If true, squdron is in state "Paused".
+-- @return #boolean If true, cohort is in state "Paused".
 function COHORT:IsPaused()
   return self:Is("Paused")
 end
 
+--- Check if cohort is "Relocating".
+-- @param #COHORT self
+-- @return #boolean If true, cohort is relocating.
+function COHORT:IsRelocating()
+  return self:Is("Relocating")
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -870,7 +881,6 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
       --self:I("Not requested or reserved")
       -- Check if asset is currently on a mission (STARTED or QUEUED).
       if self.legion:IsAssetOnMission(asset) then
-        --self:I("But on a mission")
         ---
         -- Asset is already on a mission.
         ---
@@ -892,13 +902,11 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
         end
       
       else
-        --self:I("No current mission")
         ---
         -- Asset as NO current mission
         ---
   
         if asset.spawned then
-          --self:I("Is already spawned")
           ---
           -- Asset is already SPAWNED (could be uncontrolled on the airfield or inbound after another mission)
           ---

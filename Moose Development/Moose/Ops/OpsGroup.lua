@@ -468,7 +468,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="0.7.6"
+OPSGROUP.version="0.7.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -481,9 +481,9 @@ OPSGROUP.version="0.7.6"
 -- TODO: Add pseudo function.
 -- TODO: Afterburner restrict.
 -- TODO: What more options?
--- TODO: Damage?
 -- TODO: Shot events?
 -- TODO: Marks to add waypoints/tasks on-the-fly.
+-- DONE: Damage?
 -- DONE: Options EPLRS
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3867,6 +3867,38 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
       local timer = TIMER:New(FlyOn,helo,Speed,CruiseAlt,Task)
       timer:Start(time)
     end
+
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
+
+    ---
+    -- Task "RelocateCohort" Mission.
+    ---
+    
+    -- Debug mission.
+    self:T(self.lid.."Executing task for relocation mission")
+    
+    -- The new legion.
+    local legion=Task.dcstask.params.legion --Ops.Legion#LEGION
+    
+    -- Get random coordinate in spawn zone of new legion.
+    local Coordinate=legion.spawnzone:GetRandomCoordinate()
+    
+    -- Get current waypoint ID.
+    local currUID=self:GetWaypointCurrent().uid
+    
+    local wp=nil --#OPSGROUP.Waypoint
+    if self.isArmygroup then
+      self:T2(self.lid.."Routing group to spawn zone of new legion")
+      wp=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, currUID, Formation)
+    elseif self.isFlightgroup then
+      self:T2(self.lid.."Routing group to intermediate point near new legion")
+      Coordinate=self:GetCoordinate():GetIntermediateCoordinate(Coordinate, 0.8)
+      wp=FLIGHTGROUP.AddWaypoint(self, Coordinate, UTILS.KmphToKnots(self.speedCruise), currUID, UTILS.MetersToFeet(self.altitudeCruise))
+    else
+    
+    end
+    
+    wp.missionUID=Mission and Mission.auftragsnummer or nil
     
   else
 
@@ -4060,22 +4092,35 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
   local Mission=self:GetMissionByTaskID(Task.id)
 
   if Mission and Mission:IsNotOver() then
-
+  
+    -- Get mission status of this group.
     local status=Mission:GetGroupStatus(self)
 
+    -- Check if mission is paused.
     if status~=AUFTRAG.GroupStatus.PAUSED then
+      --- 
+      -- Mission is NOT over ==> trigger done
+      ---
+
+      -- Get egress waypoint uid.
       local EgressUID=Mission:GetGroupEgressWaypointUID(self)
+            
       if EgressUID then
+        -- Egress coordinate given ==> wait until we pass that waypoint.
         self:T(self.lid..string.format("Task Done but Egress waypoint defined ==> Will call Mission Done once group passed waypoint UID=%d!", EgressUID))
       else
+        -- Mission done!
         self:T(self.lid.."Task Done ==> Mission Done!")
         self:MissionDone(Mission)
       end
     else
-      --Mission paused. Do nothing! Just set the current mission to nil so we can launch a new one.
+      ---
+      -- Mission Paused: Do nothing! Just set the current mission to nil so we can launch a new one.
+      ---
       if self.currentmission and self.currentmission==Mission.auftragsnummer then
         self.currentmission=nil
       end
+      -- Remove mission waypoints.
       self:T(self.lid.."Remove mission waypoints")
       self:_RemoveMissionWaypoints(Mission, false)
     end
@@ -4091,7 +4136,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       self:T(self.lid.."Taske DONE OnGuard ==> Cruise")
       self:Cruise()
     end
-
+    
     if Task.description=="Task_Land_At" then
       self:T(self.lid.."Taske DONE Task_Land_At ==> Wait")
       self:Wait(20, 100)
@@ -4685,12 +4730,41 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
     self:_SwitchICLS()
   end
 
-  -- We add a 10 sec delay for ARTY. Found that they need some time to readjust the barrel of their gun. Not sure if necessary for all. Needs some more testing!
+  -- Delay before check if group is done.
   local delay=1
+  
+  -- Special mission cases.
   if Mission.type==AUFTRAG.Type.ARTY then
-    delay=60
+    -- We add a 10 sec delay for ARTY. Found that they need some time to readjust the barrel of their gun. Not sure if necessary for all. Needs some more testing!
+    delay=60   
+  elseif Mission.type==AUFTRAG.Type.RELOCATECOHORT then
+  
+    -- New legion.
+    local legion=Mission.DCStask.params.legion --Ops.Legion#LEGION
+    
+    -- Debug message.
+    self:T(self.lid..string.format("Asset relocated to new legion=%s",tostring(legion.alias)))
+    
+    -- Get asset and change its warehouse id.
+    local asset=Mission:GetAssetByName(self.groupname)
+    if asset then
+      asset.wid=legion.uid
+    end
+    
+    -- Set new legion.
+    self.legion=legion
+    
+    if self.isArmygroup then
+      self:T2(self.lid.."Adding asset via ReturnToLegion()")
+      self:ReturnToLegion()
+    elseif self.isFlightgroup then
+      self:T2(self.lid.."Adding asset via RTB to new legion airbase")
+      self:RTB(self.legion.airbase)
+    end
+    
+    return
   end
-
+  
   -- Check if group is done.
   self:_CheckGroupDone(delay)
 
@@ -4753,6 +4827,13 @@ function OPSGROUP:RouteToMission(mission, delay)
       waypointcoord=zone:GetRandomCoordinate(nil , nil, surfacetypes)
     elseif mission.type==AUFTRAG.Type.ONGUARD or mission.type==AUFTRAG.Type.ARMOREDGUARD then
       waypointcoord=mission:GetMissionWaypointCoord(self.group, nil, surfacetypes)
+    elseif mission.type==AUFTRAG.Type.RELOCATECOHORT then 
+      local ToCoordinate=mission.DCStask.params.legion:GetCoordinate()
+      if self.isFlightgroup then
+        waypointcoord=self:GetCoordinate():GetIntermediateCoordinate(ToCoordinate, 0.2):SetAltitude(self.altitudeCruise)
+      else
+        waypointcoord=self:GetCoordinate():GetIntermediateCoordinate(ToCoordinate, 0.05)
+      end
     else
       waypointcoord=mission:GetMissionWaypointCoord(self.group, randomradius, surfacetypes)
     end
@@ -4768,7 +4849,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
 
     -- Speed to mission waypoint.
-    local SpeedToMission=mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise() --UTILS.KmphToKnots(self.speedCruise)
+    local SpeedToMission=mission.missionSpeed and UTILS.KmphToKnots(mission.missionSpeed) or self:GetSpeedCruise()
 
     -- Special for Troop transport.
     if mission.type==AUFTRAG.Type.TROOPTRANSPORT then
@@ -4846,17 +4927,14 @@ function OPSGROUP:RouteToMission(mission, delay)
       end
     end
 
-    -- UID of this waypoint.
-    --local uid=self:GetWaypointCurrent().uid
-
     -- Add waypoint.
     local waypoint=nil --#OPSGROUP.Waypoint
     if self:IsFlightgroup() then
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
     elseif self:IsArmygroup() then
-      waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
+      waypoint=ARMYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
     elseif self:IsNavygroup() then
-      waypoint=NAVYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, mission.missionAltitude or self.altitudeCruise, false)
+      waypoint=NAVYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
     end
     waypoint.missionUID=mission.auftragsnummer
 
@@ -4879,9 +4957,9 @@ function OPSGROUP:RouteToMission(mission, delay)
       if self:IsFlightgroup() then
         Ewaypoint=FLIGHTGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
       elseif self:IsArmygroup() then
-        Ewaypoint=ARMYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, mission.optionFormation, false)
+        Ewaypoint=ARMYGROUP.AddWaypoint(self,   egresscoord, SpeedToMission, waypoint.uid, mission.optionFormation, false)
       elseif self:IsNavygroup() then
-        Ewaypoint=NAVYGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+        Ewaypoint=NAVYGROUP.AddWaypoint(self,   egresscoord, SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
       end
       Ewaypoint.missionUID=mission.auftragsnummer
       mission:SetGroupEgressWaypointUID(self, Ewaypoint.uid)
@@ -5189,6 +5267,20 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       self:TaskDone(task)
 
     end
+
+  elseif task and task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
+
+    ---
+    -- SPECIAL TASK: Relocate Mission
+    ---
+
+    -- TARGET.
+    local legion=task.dcstask.params.legion --Ops.Legion#LEGION
+    
+   self:T(self.lid..string.format("Asset arrived at relocation task waypoint ==> Task Done!"))
+    
+    -- Final zone reached ==> task done.
+    self:TaskDone(task)    
 
   else
 
@@ -8933,6 +9025,21 @@ function OPSGROUP:_CheckGroupDone(delay)
           return
         end
       end
+      
+      -- Number of tasks remaining.
+      local nTasks=self:CountRemainingTasks()
+
+      -- Number of mission remaining.
+      local nMissions=self:CountRemainingMissison()
+
+      -- Number of cargo transports remaining.
+      local nTransports=self:CountRemainingTransports()      
+      
+      -- Number of remaining tasks/missions?
+      if nTasks>0 or nMissions>0 or nTransports>0 then
+        self:T(self.lid..string.format("Group still has tasks, missions or transports ==> NOT DONE"))
+        return
+      end
 
       if self.adinfinitum then
 
@@ -9696,7 +9803,6 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
 
             if opsgroup.cargoTZC.PickupAirbase then
               -- Pickup airbase specified. Land there.
-              --env.info(opsgroup.lid.."FF Land at Pickup Airbase")
               opsgroup:LandAtAirbase(opsgroup.cargoTZC.PickupAirbase)
             else
               -- Land somewhere in the pickup zone. Only helos can do that.
@@ -9726,8 +9832,7 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
           if opsgroup.cargoTZC then
 
             if opsgroup.cargoTZC.DeployAirbase then
-              -- Pickup airbase specified. Land there.
-              --env.info(opsgroup.lid.."FF Land at Deploy Airbase")
+              -- Deploy airbase specified. Land there.
               opsgroup:LandAtAirbase(opsgroup.cargoTZC.DeployAirbase)
             else
               -- Land somewhere in the pickup zone. Only helos can do that.
@@ -10466,7 +10571,6 @@ function OPSGROUP:SwitchRadio(Frequency, Modulation)
     Modulation=Modulation or self.radioDefault.Modu
 
     if self:IsFlightgroup() and not self.radio.On then
-      --env.info("FF radio OFF")
       self.group:SetOption(AI.Option.Air.id.SILENCE, false)
     end
 

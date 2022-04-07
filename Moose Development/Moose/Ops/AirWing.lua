@@ -3,10 +3,20 @@
 -- **Main Features:**
 --
 --    * Manage squadrons.
+--    * Launch A2A and A2G missions (AUFTRAG)
+-- 
+-- 
+-- ===
+--
+-- ## Example Missions:
+--
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Airwing).
 --
 -- ===
 --
 -- ### Author: **funkyfranky**
+-- 
+-- ===
 -- @module Ops.Airwing
 -- @image OPS_AirWing.png
 
@@ -161,16 +171,16 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.9.0"
+AIRWING.version="0.9.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Check that airbase has enough parking spots if a request is BIG.
 -- TODO: Spawn in air ==> Needs WAREHOUSE update.
 -- DONE: Spawn hot.
--- TODO: Make special request to transfer squadrons to anther airwing (or warehouse).
--- TODO: Check that airbase has enough parking spots if a request is BIG.
+-- DONE: Make special request to transfer squadrons to anther airwing (or warehouse).
 -- DONE: Add squadrons to warehouse.
 -- DONE: Build mission queue.
 -- DONE: Find way to start missions.
@@ -355,6 +365,14 @@ function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
       capability.Performance=50
       table.insert(payload.capabilities, capability)
     end
+    
+    -- Add RELOCATION for all.
+    if not AUFTRAG.CheckMissionType(AUFTRAG.Type.RELOCATECOHORT, MissionTypes) then
+      local capability={}  --Ops.Auftrag#AUFTRAG.Capability
+      capability.MissionType=AUFTRAG.Type.RELOCATECOHORT
+      capability.Performance=50
+      table.insert(payload.capabilities, capability)
+    end    
 
     -- Info
     self:T(self.lid..string.format("Adding new payload from unit %s for aircraft type %s: ID=%d, N=%d (unlimited=%s), performance=%d, missions: %s",

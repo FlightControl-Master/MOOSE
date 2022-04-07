@@ -182,7 +182,7 @@ FLIGHTGROUP.RadioMessage = {
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.7.1"
+FLIGHTGROUP.version="0.7.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1924,7 +1924,10 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
         self:T2(self.lid.."Allowing update route for Task: ReconMission")
       elseif task.dcstask.id=="Hover" then
         -- For recon missions, we need to allow the update as we insert new waypoints.
-        self:T2(self.lid.."Allowing update route for Task: Hover")  
+        self:T2(self.lid.."Allowing update route for Task: Hover")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
+        -- For relocate
+        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")          
       elseif task.description and task.description=="Task_Land_At" then
         -- We allow this
         self:T2(self.lid.."Allowing update route for Task: Task_Land_At")
@@ -3393,7 +3396,7 @@ end
 --- Add an AIR waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
 -- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
--- @param #number Speed Speed in knots. Default 350 kts.
+-- @param #number Speed Speed in knots. Default is cruise speed.
 -- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
 -- @param #number Altitude Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
 -- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
@@ -3407,7 +3410,7 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
 
   -- Speed in knots.
-  Speed=Speed or self.speedCruise
+  Speed=Speed or self:GetSpeedCruise()
 
   -- Create air waypoint.
   local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
