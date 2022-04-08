@@ -210,7 +210,7 @@ do -- SET_BASE
     self:F2( { ObjectName = ObjectName } )
     
     local TriggerEvent = true
-    if NoTriggerEvent == false then TriggerEvent = false end
+    if NoTriggerEvent then TriggerEvent = false end
     
     local Object = self.Set[ObjectName]
 
