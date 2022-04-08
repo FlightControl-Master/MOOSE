@@ -136,11 +136,9 @@
 --
 -- @extends Core.Fsm#FSM
 
---- *A small group of determined and like-minded people can change the course of history.* --- Mahatma Gandhi
+--- *A small group of determined and like-minded people can change the course of history* -- Mahatma Gandhi
 --
 -- ===
---
--- ![Banner Image](..\Presentations\OPS\OpsGroup\_Main.png)
 --
 -- # The OPSGROUP Concept
 --
@@ -9081,7 +9079,11 @@ function OPSGROUP:_CheckGroupDone(delay)
           if self.legion then
 
             self:T(self.lid..string.format("Passed final WP, adinfinitum=FALSE, LEGION set ==> RTZ"))
-            self:RTZ(self.legion.spawnzone)
+            if self.isArmygroup then
+              self:RTZ(self.legion.spawnzone)
+            elseif self.isNavygroup then
+              self:RTZ(self.legion.portzone)
+            end
 
           else
 

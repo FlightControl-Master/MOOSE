@@ -540,6 +540,13 @@ function LEGION:IsAirwing()
   return is
 end
 
+--- Check if the FLEET class is calling.
+-- @param #LEGION self
+-- @return #boolean If true, this is a FLEET.
+function LEGION:IsFleet()
+  local is=self.ClassName==FLEET.ClassName
+  return is
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -1567,6 +1574,14 @@ function LEGION:_CreateFlightGroup(asset)
     ---  
   
     opsgroup=ARMYGROUP:New(asset.spawngroupname)
+    
+  elseif self:IsFleet() then
+
+    ---
+    -- NAVYGROUP
+    ---  
+  
+    opsgroup=NAVYGROUP:New(asset.spawngroupname)
     
   else
     self:E(self.lid.."ERROR: not airwing or brigade!")
