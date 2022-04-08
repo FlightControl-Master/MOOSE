@@ -18,7 +18,7 @@
 -- 
 -- ===
 -- @module Ops.Brigade
--- @image OPS_Brigade.png
+-- @image OPS_Brigade_.png
 
 
 --- BRIGADE class.

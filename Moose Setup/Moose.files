@@ -84,9 +84,11 @@ Ops/NavyGroup.lua
 Ops/Cohort.lua
 Ops/Squadron.lua
 Ops/Platoon.lua
+Ops/Flotilla.lua
 Ops/Legion.lua
 Ops/AirWing.lua
 Ops/Brigade.lua
+Ops/Fleet.lua
 Ops/Intelligence.lua
 Ops/Commander.lua
 Ops/Chief.lua

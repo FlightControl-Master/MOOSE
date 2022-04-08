@@ -1506,6 +1506,67 @@ function NAVYGROUP:onafterDisengage(From, Event, To)
   self:_CheckGroupDone(1)
 end
 
+--- On after "RTZ" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE Zone The zone to return to.
+-- @param #number Formation Formation of the group.
+function NAVYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
+  
+  -- Zone.
+  local zone=Zone or self.homezone
+  
+  if zone then
+  
+    if self:IsInZone(zone) then
+      self:Returned()
+    else
+  
+      -- Debug info.
+      self:T(self.lid..string.format("RTZ to Zone %s", zone:GetName()))  
+      
+      local Coordinate=zone:GetRandomCoordinate()
+
+      -- ID of current waypoint.
+      local uid=self:GetWaypointCurrentUID()
+      
+      -- Add waypoint after current.
+      local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
+      
+      -- Set if we want to resume route after reaching the detour waypoint.
+      wp.detour=0
+      
+    end
+        
+  else
+    self:T(self.lid.."ERROR: No RTZ zone given!")
+  end
+
+end
+
+
+--- On after "Returned" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterReturned(From, Event, To)
+
+  -- Debug info.
+  self:T(self.lid..string.format("Group returned"))
+  
+  if self.legion then
+    -- Debug info.
+    self:T(self.lid..string.format("Adding group back to warehouse stock"))
+    
+    -- Add asset back in 10 seconds.
+    self.legion:__AddAsset(10, self.group, 1)
+  end
+
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Routing
