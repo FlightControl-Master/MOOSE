@@ -137,31 +137,31 @@ AIRBASE.Caucasus = {
 --   * AIRBASE.Nevada.Laughlin_Airport
 --   * AIRBASE.Nevada.Lincoln_County
 --   * AIRBASE.Nevada.Mesquite
---   * AIRBASE.Nevada.Mina_Airport_3Q0
+--   * AIRBASE.Nevada.Mina_Airport
 --   * AIRBASE.Nevada.North_Las_Vegas
 --   * AIRBASE.Nevada.Pahute_Mesa_Airstrip
 --   * AIRBASE.Nevada.Tonopah_Airport
 --   * AIRBASE.Nevada.Tonopah_Test_Range_Airfield
---   
+--
 -- @field Nevada
 AIRBASE.Nevada = {
-  ["Creech_AFB"] = "Creech AFB",
-  ["Groom_Lake_AFB"] = "Groom Lake AFB",
-  ["McCarran_International_Airport"] = "McCarran International Airport",
-  ["Nellis_AFB"] = "Nellis AFB",
-  ["Beatty_Airport"] = "Beatty Airport",
-  ["Boulder_City_Airport"] = "Boulder City Airport",
+  ["Creech_AFB"] = "Creech",
+  ["Groom_Lake_AFB"] = "Groom Lake",
+  ["McCarran_International_Airport"] = "McCarran International",
+  ["Nellis_AFB"] = "Nellis",
+  ["Beatty_Airport"] = "Beatty",
+  ["Boulder_City_Airport"] = "Boulder City",
   ["Echo_Bay"] = "Echo Bay",
-  ["Henderson_Executive_Airport"] = "Henderson Executive Airport",
-  ["Jean_Airport"] = "Jean Airport",
-  ["Laughlin_Airport"] = "Laughlin Airport",
+  ["Henderson_Executive_Airport"] = "Henderson Executive",
+  ["Jean_Airport"] = "Jean",
+  ["Laughlin_Airport"] = "Laughlin",
   ["Lincoln_County"] = "Lincoln County",
   ["Mesquite"] = "Mesquite",
-  ["Mina_Airport_3Q0"] = "Mina Airport 3Q0",
+  ["Mina_Airport"] = "Mina",
   ["North_Las_Vegas"] = "North Las Vegas",
-  ["Pahute_Mesa_Airstrip"] = "Pahute Mesa Airstrip",
-  ["Tonopah_Airport"] = "Tonopah Airport",
-  ["Tonopah_Test_Range_Airfield"] = "Tonopah Test Range Airfield",
+  ["Pahute_Mesa_Airstrip"] = "Pahute Mesa",
+  ["Tonopah_Airport"] = "Tonopah",
+  ["Tonopah_Test_Range_Airfield"] = "Tonopah Test Range",
   }
 
 --- Airbases of the Normandy map:
@@ -197,7 +197,7 @@ AIRBASE.Nevada = {
 --   * AIRBASE.Normandy.Funtington
 --   * AIRBASE.Normandy.Tangmere
 --   * AIRBASE.Normandy.Ford_AF
---   
+--
 -- @field Normandy
 AIRBASE.Normandy = {
   ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
@@ -271,7 +271,7 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Sirri_Island
 -- * AIRBASE.PersianGulf.Tunb_Island_AFB
 -- * AIRBASE.PersianGulf.Tunb_Kochak
--- 
+--
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Abu_Dhabi_International_Airport"] = "Abu Dhabi Intl",
@@ -316,6 +316,9 @@ AIRBASE.PersianGulf = {
 -- * AIRBASE.TheChannel.Lympne
 -- * AIRBASE.TheChannel.Detling
 -- * AIRBASE.TheChannel.High_Halden
+-- * AIRBASE.TheChannel.Biggin_Hill
+-- * AIRBASE.TheChannel.Eastchurch
+-- * AIRBASE.TheChannel.Headcorn
 --
 -- @field TheChannel
 AIRBASE.TheChannel = {
@@ -328,6 +331,9 @@ AIRBASE.TheChannel = {
   ["Lympne"] = "Lympne",
   ["Detling"] = "Detling",
   ["High_Halden"] = "High Halden",
+  ["Biggin_Hill"] = "Biggin Hill",
+  ["Eastchurch"] = "Eastchurch",
+  ["Headcorn"] = "Headcorn",
 }
 
 --- Airbases of the Syria map:
@@ -346,7 +352,6 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Wujah_Al_Hajar
 -- * AIRBASE.Syria.Al_Dumayr
 -- * AIRBASE.Syria.Gazipasa
--- * AIRBASE.Syria.Ru_Convoy_4
 -- * AIRBASE.Syria.Hatay
 -- * AIRBASE.Syria.Nicosia
 -- * AIRBASE.Syria.Pinarbashi
@@ -364,7 +369,6 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Akrotiri
 -- * AIRBASE.Syria.Naqoura
 -- * AIRBASE.Syria.Gaziantep
--- * AIRBASE.Syria.CVN_71
 -- * AIRBASE.Syria.Sayqal
 -- * AIRBASE.Syria.Tiyas
 -- * AIRBASE.Syria.Shayrat
@@ -385,6 +389,16 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Beirut_Rafic_Hariri
 -- * AIRBASE.Syria.An_Nasiriyah
 -- * AIRBASE.Syria.Abu_al_Duhur
+-- * AIRBASE.Syria.At_Tanf
+-- * AIRBASE.Syria.H3
+-- * AIRBASE.Syria.H3_Northwest
+-- * AIRBASE.Syria.H3_Southwest
+-- * AIRBASE.Syria.Kharab_Ishk
+-- * AIRBASE.Syria.Raj_al_Issa_East
+-- * AIRBASE.Syria.Raj_al_Issa_West
+-- * AIRBASE.Syria.Ruwayshid
+-- * AIRBASE.Syria.Sanliurfa
+-- * AIRBASE.Syria.Tal_Siman
 --
 --@field Syria
 AIRBASE.Syria={
@@ -402,7 +416,7 @@ AIRBASE.Syria={
   ["Wujah_Al_Hajar"]="Wujah Al Hajar",
   ["Al_Dumayr"]="Al-Dumayr",
   ["Gazipasa"]="Gazipasa",
-  ["Ru_Convoy_4"]="Ru Convoy-4",
+  --["Ru_Convoy_4"]="Ru Convoy-4",
   ["Hatay"]="Hatay",
   ["Nicosia"]="Nicosia",
   ["Pinarbashi"]="Pinarbashi",
@@ -440,9 +454,18 @@ AIRBASE.Syria={
   ["Beirut_Rafic_Hariri"]="Beirut-Rafic Hariri",
   ["An_Nasiriyah"]="An Nasiriyah",
   ["Abu_al_Duhur"]="Abu al-Duhur",
+  ["At_Tanf"]="At Tanf",
+  ["H3"]="H3",
+  ["H3_Northwest"]="H3 Northwest",
+  ["H3_Southwest"]="H3 Southwest",
+  ["Kharab_Ishk"]="Kharab Ishk",
+  ["Raj_al_Issa_East"]="Raj al Issa East",
+  ["Raj_al_Issa_West"]="Raj al Issa West",
+  ["Ruwayshid"]="Ruwayshid",
+  ["Sanliurfa"]="Sanliurfa",
+  ["Tal_Siman"]="Tal Siman",
+  ["Deir_ez-Zor"] = "Deir ez-Zor",
 }
-
-
 
 --- Airbases of the Mariana Islands map:
 --
@@ -473,6 +496,13 @@ AIRBASE.MarianaIslands={
 -- @field #boolean Free This spot is currently free, i.e. there is no alive aircraft on it at the present moment.
 -- @field #number TerminalID0 Unknown what this means. If you know, please tell us!
 -- @field #number DistToRwy Distance to runway in meters. Currently bugged and giving the same number as the TerminalID.
+-- @field #string AirbaseName Name of the airbase.
+-- @field #number MarkerID Numerical ID of marker placed at parking spot.
+-- @field Wrapper.Marker#MARKER Marker The marker on the F10 map.
+-- @field #string ClientSpot Client unit sitting at this spot or *nil*.
+-- @field #string Status Status of spot e.g. AIRBASE.SpotStatus.FREE.
+-- @field #string OccupiedBy Name of the aircraft occupying the spot or "unknown". Can be *nil* if spot is not occupied.
+-- @field #string ReservedBy Name of the aircraft for which this spot is reserved. Can be *nil* if spot is not reserved.
 
 --- Terminal Types of parking spots. See also https://wiki.hoggitworld.com/view/DCS_func_getParking
 --
@@ -507,6 +537,17 @@ AIRBASE.TerminalType = {
   FighterAircraft=244,
 }
 
+--- Status of a parking spot.
+-- @type AIRBASE.SpotStatus
+-- @field #string FREE Spot is free.
+-- @field #string OCCUPIED Spot is occupied.
+-- @field #string RESERVED Spot is reserved.
+AIRBASE.SpotStatus = {
+  FREE="Free",
+  OCCUPIED="Occupied",
+  RESERVED="Reserved",
+}
+
 --- Runway data.
 -- @type AIRBASE.Runway
 -- @field #number heading Heading of the runway in degrees.
@@ -537,6 +578,9 @@ function AIRBASE:Register(AirbaseName)
   -- Get descriptors.
   self.descriptors=self:GetDesc()
 
+  -- Debug info.
+  --self:I({airbase=AirbaseName, descriptors=self.descriptors})
+
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
 
@@ -553,13 +597,15 @@ function AIRBASE:Register(AirbaseName)
       self.isShip=false
       self.category=Airbase.Category.HELIPAD
       _DATABASE:AddStatic(AirbaseName)
-	end
+    end
   else
     self:E("ERROR: Unknown airbase category!")
   end
 
+  -- Init parking spots.
   self:_InitParkingSpots()
 
+  -- Get 2D position vector.
   local vec2=self:GetVec2()
 
   -- Init coordinate.
@@ -1024,6 +1070,8 @@ function AIRBASE:GetParkingSpotsTable(termtype)
 
         spot.Free=_isfree(_spot) -- updated
         spot.TOAC=_spot.TO_AC    -- updated
+        spot.AirbaseName=self.AirbaseName
+        spot.ClientSpot=nil  --TODO
 
         table.insert(spots, spot)
 
@@ -1060,6 +1108,8 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
 
         spot.Free=true -- updated
         spot.TOAC=_spot.TO_AC    -- updated
+        spot.AirbaseName=self.AirbaseName
+        spot.ClientSpot=nil  --TODO
 
         table.insert(freespots, spot)
 
@@ -1141,7 +1191,7 @@ end
 -- @param #table parkingdata (Optional) Parking spots data table. If not given it is automatically derived from the GetParkingSpotsTable() function.
 -- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
 function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nspots, parkingdata)
-  
+
   -- Init default
   scanradius=scanradius or 50
   if scanunits==nil then
@@ -1197,7 +1247,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     az = 17 -- width
   end
 
-    
+
   -- Number of spots we are looking for. Note that, e.g. grouping can require a number different from the group size!
   local _nspots=nspots or group:GetSize()
 
@@ -1325,7 +1375,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
 
   -- Retrun spots we found, even if there were not enough.
   return validspots
-  
+
 end
 
 --- Check black and white lists.
@@ -1344,7 +1394,7 @@ function AIRBASE:_CheckParkingLists(TerminalID)
     end
   end
 
-  
+
   -- Check if a whitelist was defined.
   if self.parkingWhitelist and #self.parkingWhitelist>0 then
     for _,terminalID in pairs(self.parkingWhitelist or {}) do
@@ -1454,7 +1504,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
      name==AIRBASE.PersianGulf.Abu_Dhabi_International_Airport or
      name==AIRBASE.PersianGulf.Dubai_Intl or
      name==AIRBASE.PersianGulf.Shiraz_International_Airport or
-     name==AIRBASE.PersianGulf.Kish_International_Airport or 
+     name==AIRBASE.PersianGulf.Kish_International_Airport or
      name==AIRBASE.MarianaIslands.Andersen_AFB then
 
     -- 1-->4, 2-->3, 3-->2, 4-->1

@@ -30,6 +30,7 @@
 -- * Detect and lase contacts automatically
 -- * Targets are lased by threat priority order
 -- * Use FSM events to link functionality into your scripts
+-- * Set laser codes and smoke colors per Recce unit
 -- * Easy set-up
 -- 
 -- # 2 Basic usage
@@ -46,7 +47,7 @@
 -- 
 --            local autolaser = AUTOLASE:New(FoxSet,coalition.side.BLUE,"Wolfpack",Pilotset)
 --            
--- ## 2.5 Example - Using a fixed laser code for a specific Recce unit:
+-- ## 2.5 Example - Using a fixed laser code and color for a specific Recce unit:
 -- 
 --            local recce = SPAWN:New("Reaper")
 --              :InitDelayOff()
@@ -55,6 +56,7 @@
 --                  local unit = group:GetUnit(1)
 --                  local name = unit:GetName()
 --                  autolaser:SetRecceLaserCode(name,1688)
+--                  autolaser:SetRecceSmokeColor(name,SMOKECOLOR.Red)
 --                end
 --              )
 --              :InitCleanUp(60)
@@ -71,7 +73,7 @@
 -- @module Functional.Autolase
 -- @image Designation.JPG
 --
--- Date: Oct 2021
+-- Date: 24 Oct 2021
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -107,7 +109,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.0.8"
+AUTOLASE.version = "0.0.11"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -169,6 +171,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.UnitsByThreat = {}
   self.RecceNames = {}
   self.RecceLaserCode = {}
+  self.RecceSmokeColor = {}
   self.RecceUnitNames= {}
   self.maxlasing = 4
   self.CurrentLasing = {}
@@ -294,13 +297,15 @@ end
 -- @param #AUTOLASE self
 -- @return #AUTOLASE self 
 function AUTOLASE:SetPilotMenu()
-  local pilottable = self.pilotset:GetSetObjects() or {}
-  for _,_unit in pairs (pilottable) do
-    local Unit = _unit -- Wrapper.Unit#UNIT
-    if Unit and Unit:IsAlive() then
-      local Group = Unit:GetGroup()
-      local lasemenu = MENU_GROUP_COMMAND:New(Group,"Autolase Status",nil,self.ShowStatus,self,Group)
-      lasemenu:Refresh()
+  if self.usepilotset then
+    local pilottable = self.pilotset:GetSetObjects() or {}
+    for _,_unit in pairs (pilottable) do
+      local Unit = _unit -- Wrapper.Unit#UNIT
+      if Unit and Unit:IsAlive() then
+        local Group = Unit:GetGroup()
+        local lasemenu = MENU_GROUP_COMMAND:New(Group,"Autolase Status",nil,self.ShowStatus,self,Group)
+        lasemenu:Refresh()
+      end
     end
   end
   return self
@@ -328,6 +333,20 @@ function AUTOLASE:GetLaserCode(RecceName)
     code = self.RecceLaserCode[RecceName]
   end
   return code
+end
+
+--- (Internal) Function to get a smoke color by recce name
+-- @param #AUTOLASE self
+-- @param #string RecceName Unit(!) name of the Recce
+-- @return #AUTOLASE self 
+function AUTOLASE:GetSmokeColor(RecceName)
+  local color = self.smokecolor
+  if self.RecceSmokeColor[RecceName] == nil then
+    self.RecceSmokeColor[RecceName] = color
+  else
+    color = self.RecceSmokeColor[RecceName]
+  end
+  return color
 end
 
 --- (User) Function enable sending messages via SRS.
@@ -371,6 +390,17 @@ end
 function AUTOLASE:SetRecceLaserCode(RecceName, Code)
   local code = Code or 1688
   self.RecceLaserCode[RecceName] = code
+  return self
+end
+
+--- (User) Function to set a specific smoke color for a Recce.
+-- @param #AUTOLASE self
+-- @param #string RecceName (Unit!) Name of the Recce
+-- @param #number Color The color, e.g. SMOKECOLOR.Red, SMOKECOLOR.Green etc
+-- @return #AUTOLASE self 
+function AUTOLASE:SetRecceSmokeColor(RecceName, Color)
+  local color = Color or self.smokecolor
+  self.RecceSmokeColor[RecceName] = color
   return self
 end
 
@@ -644,25 +674,27 @@ end
 function AUTOLASE:CanLase(Recce,Unit)
   local canlase = false
   -- cooldown?
-  local name = Recce:GetName()
-  local cooldown = self.RecceUnits[name].cooldown and self.forcecooldown
-  if cooldown then
-    local Tdiff = timer.getAbsTime() - self.RecceUnits[name].timestamp
-    if Tdiff < self.cooldowntime then
-      return false
-    else
-      self.RecceUnits[name].cooldown = false
+  if Recce and Recce:IsAlive() == true then
+    local name = Recce:GetName()
+    local cooldown = self.RecceUnits[name].cooldown and self.forcecooldown
+    if cooldown then
+      local Tdiff = timer.getAbsTime() - self.RecceUnits[name].timestamp
+      if Tdiff < self.cooldowntime then
+        return false
+      else
+        self.RecceUnits[name].cooldown = false
+      end
     end
-  end
-  -- calculate LOS
-  local reccecoord = Recce:GetCoordinate()
-  local unitcoord = Unit:GetCoordinate()
-  local islos = reccecoord:IsLOS(unitcoord,2.5)
-  -- calculate distance
-  local distance = math.floor(reccecoord:Get3DDistance(unitcoord))
-  local lasedistance = self:GetLosFromUnit(Recce)
-  if distance <= lasedistance and islos then
-    canlase = true
+    -- calculate LOS
+    local reccecoord = Recce:GetCoordinate()
+    local unitcoord = Unit:GetCoordinate()
+    local islos = reccecoord:IsLOS(unitcoord,2.5)
+    -- calculate distance
+    local distance = math.floor(reccecoord:Get3DDistance(unitcoord))
+    local lasedistance = self:GetLosFromUnit(Recce)
+    if distance <= lasedistance and islos then
+      canlase = true
+    end
   end
   return canlase
 end
@@ -706,20 +738,22 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     local contact = _contact -- Ops.Intelligence#INTEL.Contact
     local grp = contact.group
     local coord = contact.position
-    local reccename = contact.recce
+    local reccename = contact.recce or "none"
     local reccegrp = UNIT:FindByName(reccename)
-    local reccecoord = reccegrp:GetCoordinate()
-    local distance = math.floor(reccecoord:Get3DDistance(coord))
-    local text = string.format("%s of %s | Distance %d km | Threatlevel %d",contact.attribute, contact.groupname, math.floor(distance/1000), contact.threatlevel)
-    report:Add(text)
-    self:T(text)
-    if self.debug then self:I(text) end
-    lines = lines  +  1
-    -- sort out groups beyond sight
-    local lasedistance = self:GetLosFromUnit(reccegrp)
-    if grp:IsGround() and lasedistance >= distance then
-      table.insert(groupsbythreat,{contact.group,contact.threatlevel})
-      self.RecceNames[contact.groupname] = contact.recce
+    if reccegrp then
+      local reccecoord = reccegrp:GetCoordinate()
+      local distance = math.floor(reccecoord:Get3DDistance(coord))
+      local text = string.format("%s of %s | Distance %d km | Threatlevel %d",contact.attribute, contact.groupname, math.floor(distance/1000), contact.threatlevel)
+      report:Add(text)
+      self:T(text)
+      if self.debug then self:I(text) end
+      lines = lines  +  1
+      -- sort out groups beyond sight
+      local lasedistance = self:GetLosFromUnit(reccegrp)
+      if grp:IsGround() and lasedistance >= distance then
+        table.insert(groupsbythreat,{contact.group,contact.threatlevel})
+        self.RecceNames[contact.groupname] = contact.recce
+      end
     end
   end
   
@@ -812,7 +846,8 @@ function AUTOLASE:onafterMonitor(From, Event, To)
           }
        if self.smoketargets then
           local coord = unit:GetCoordinate()
-          coord:Smoke(self.smokecolor)
+          local color = self:GetSmokeColor(reccename)
+          coord:Smoke(color)
        end
        self.lasingindex = self.lasingindex + 1 
        self.CurrentLasing[self.lasingindex] = laserspot

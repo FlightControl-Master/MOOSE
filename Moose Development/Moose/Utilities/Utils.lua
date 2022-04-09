@@ -1,4 +1,4 @@
---- This module contains derived utilities taken from the MIST framework, which are excellent tools to be reused in an OO environment.
+--- This module contains derived utilities taken from the MIST framework, as well as a lot of added helpers from the MOOSE community.
 --
 -- ### Authors:
 --
@@ -7,6 +7,7 @@
 -- ### Contributions:
 --
 --   * FlightControl : Rework to OO framework.
+--   * And many more
 --
 -- @module Utils
 -- @image MOOSE.JPG
@@ -129,6 +130,62 @@ CALLSIGN={
     Warsaw=8,
     Dublin=9,
     Perth=10,
+  },
+  F16={
+    Viper=9,
+    Venom=10,
+    Lobo=11,
+    Cowboy=12,
+    Python=13,
+    Rattler=14,
+    Panther=15,
+    Wolf=16,
+    Weasel=17,
+    Wild=18,
+    Ninja=19,
+    Jedi=20,
+  },
+  F18={
+    Hornet=9,
+    Squid=10,
+    Ragin=11,
+    Roman=12,
+    Sting=13,
+    Jury=14,
+    Jokey=15,
+    Ram=16,
+    Hawk=17,
+    Devil=18,
+    Check=19,
+    Snake=20,
+  },
+  F15E={
+    Dude=9,
+    Thud=10,
+    Gunny=11,
+    Trek=12,
+    Sniper=13,
+    Sled=14,
+    Best=15,
+    Jazz=16,
+    Rage=17,
+    Tahoe=18,
+  },
+  B1B={
+    Bone=9,
+    Dark=10,
+    Vader=11
+  },
+  B52={
+    Buff=9,
+    Dump=10,
+    Kenworth=11,
+  },
+  TransportAircraft={
+    Heavy=9,
+    Trash=10,
+    Cargo=11,
+    Ascot=12,
   },
 } --#CALLSIGN
 
@@ -409,13 +466,17 @@ end
 -- @param #number knots Speed in knots.
 -- @return #number Speed in m/s.
 UTILS.KnotsToMps = function( knots )
-  return knots / 1.94384 --* 1852 / 3600
+  if type(knots) == "number" then
+    return knots / 1.94384 --* 1852 / 3600
+  else
+   return 0
+  end
 end
 
---- Convert temperature from Celsius to Farenheit.
+--- Convert temperature from Celsius to Fahrenheit.
 -- @param #number Celcius Temperature in degrees Celsius.
--- @return #number Temperature in degrees Farenheit.
-UTILS.CelciusToFarenheit = function( Celcius )
+-- @return #number Temperature in degrees Fahrenheit.
+UTILS.CelsiusToFahrenheit = function( Celcius )
   return Celcius * 9/5 + 32
 end
 
@@ -970,11 +1031,27 @@ function UTILS.VecDot(a, b)
   return a.x*b.x + a.y*b.y + a.z*b.z
 end
 
+--- Calculate the [dot product](https://en.wikipedia.org/wiki/Dot_product) of two 2D vectors. The result is a number.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param DCS#Vec2 b Vector in 2D with x, y components.
+-- @return #number Scalar product of the two vectors a*b.
+function UTILS.Vec2Dot(a, b)
+  return a.x*b.x + a.y*b.y
+end
+
+
 --- Calculate the [euclidean norm](https://en.wikipedia.org/wiki/Euclidean_distance) (length) of a 3D vector.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @return #number Norm of the vector.
 function UTILS.VecNorm(a)
   return math.sqrt(UTILS.VecDot(a, a))
+end
+
+--- Calculate the [euclidean norm](https://en.wikipedia.org/wiki/Euclidean_distance) (length) of a 2D vector.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @return #number Norm of the vector.
+function UTILS.Vec2Norm(a)
+  return math.sqrt(UTILS.Vec2Dot(a, a))
 end
 
 --- Calculate the distance between two 2D vectors.
@@ -1020,12 +1097,28 @@ function UTILS.VecSubstract(a, b)
   return {x=a.x-b.x, y=a.y-b.y, z=a.z-b.z}
 end
 
+--- Calculate the difference between two 2D vectors by substracting the x,y components from each other.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param DCS#Vec2 b Vector in 2D with x, y components.
+-- @return DCS#Vec2 Vector c=a-b with c(i)=a(i)-b(i), i=x,y.
+function UTILS.Vec2Substract(a, b)
+  return {x=a.x-b.x, y=a.y-b.y}
+end
+
 --- Calculate the total vector of two 3D vectors by adding the x,y,z components of each other.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
 -- @return DCS#Vec3 Vector c=a+b with c(i)=a(i)+b(i), i=x,y,z.
 function UTILS.VecAdd(a, b)
   return {x=a.x+b.x, y=a.y+b.y, z=a.z+b.z}
+end
+
+--- Calculate the total vector of two 2D vectors by adding the x,y components of each other.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param DCS#Vec2 b Vector in 2D with x, y components.
+-- @return DCS#Vec2 Vector c=a+b with c(i)=a(i)+b(i), i=x,y.
+function UTILS.Vec2Add(a, b)
+  return {x=a.x+b.x, y=a.y+b.y}
 end
 
 --- Calculate the angle between two 3D vectors.
@@ -1053,6 +1146,17 @@ end
 -- @return #number Heading in degrees in [0,360).
 function UTILS.VecHdg(a)
   local h=math.deg(math.atan2(a.z, a.x))
+  if h<0 then
+    h=h+360
+  end
+  return h
+end
+
+--- Calculate "heading" of a 2D vector in the X-Y plane.
+-- @param DCS#Vec2 a Vector in "D with x, y components.
+-- @return #number Heading in degrees in [0,360).
+function UTILS.Vec2Hdg(a)
+  local h=math.deg(math.atan2(a.y, a.x))
   if h<0 then
     h=h+360
   end
@@ -1095,6 +1199,22 @@ function UTILS.VecTranslate(a, distance, angle)
   return {x=TX, y=a.y, z=TY}
 end
 
+--- Translate 2D vector in the 2D (x,z) plane.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param #number distance The distance to translate.
+-- @param #number angle Rotation angle in degrees.
+-- @return DCS#Vec2 Translated vector.
+function UTILS.Vec2Translate(a, distance, angle)
+
+  local SX = a.x
+  local SY = a.y
+  local Radians=math.rad(angle or 0)
+  local TX=distance*math.cos(Radians)+SX
+  local TY=distance*math.sin(Radians)+SY
+
+  return {x=TX, y=TY}
+end
+
 --- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged.
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param #number angle Rotation angle in degrees.
@@ -1111,6 +1231,25 @@ function UTILS.Rotate2D(a, angle)
   local Y=a.y
 
   local A={x=X, y=Y, z=Z}
+
+  return A
+end
+
+--- Rotate 2D vector in the 2D (x,z) plane.
+-- @param DCS#Vec2 a Vector in 2D with x, y components.
+-- @param #number angle Rotation angle in degrees.
+-- @return DCS#Vec2 Vector rotated in the (x,y) plane.
+function UTILS.Vec2Rotate2D(a, angle)
+
+  local phi=math.rad(angle)
+
+  local x=a.x
+  local y=a.y
+
+  local X=x*math.cos(phi)-y*math.sin(phi)
+  local Y=x*math.sin(phi)+y*math.cos(phi)
+
+  local A={x=X, y=Y}
 
   return A
 end
@@ -1195,26 +1334,6 @@ function UTILS.GetMissionDayOfYear(Time)
   local d=UTILS.GetMissionDay(Time)
 
   return UTILS.GetDayOfYear(Year, Month, Day)+d
-
-end
-
---- Returns the current date.
--- @return #string Mission date in yyyy/mm/dd format.
--- @return #number The year anno domini.
--- @return #number The month.
--- @return #number The day.
-function UTILS.GetDate()
-
-  -- Mission start date
-  local date, year, month, day=UTILS.GetDCSMissionDate()
-
-  local time=timer.getAbsTime()
-
-  local clock=UTILS.SecondsToClock(time, false)
-
-  local x=tonumber(UTILS.Split(clock, "+")[2])
-
-  local day=day+x
 
 end
 
@@ -1549,8 +1668,8 @@ function UTILS.GetOSTime()
 end
 
 --- Shuffle a table accoring to Fisher Yeates algorithm
---@param #table t Table to be shuffled
---@return #table
+--@param #table t Table to be shuffled.
+--@return #table Shuffled table.
 function UTILS.ShuffleTable(t)
   if t == nil or type(t) ~= "table" then
     BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
@@ -1566,6 +1685,32 @@ function UTILS.ShuffleTable(t)
     table.remove(t,r)
   end
   return TempTable
+end
+
+--- Get a random element of a table.
+--@param #table t Table.
+--@param #boolean replace If `true`, the drawn element is replaced, i.e. not deleted.
+--@return #number Table element.
+function UTILS.GetRandomTableElement(t, replace)
+
+  if t == nil or type(t) ~= "table" then
+    BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
+    return
+  end
+  
+  math.random()
+  math.random()
+  math.random()
+  
+  local r=math.random(#t)
+  
+  local element=t[r]
+  
+  if not replace then
+    table.remove(t, r)
+  end
+  
+  return element
 end
 
 --- (Helicopter) Check if one loading door is open.
@@ -1617,10 +1762,26 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           BASE:T(unit_name .. " door is open")
           ret_val =  true
       end
+      
+      if string.find(type_name, "UH-60L") and (unit:getDrawArgumentValue(401) == 1) or (unit:getDrawArgumentValue(402) == 1) then
+          BASE:T(unit_name .. " cargo door is open")
+          ret_val =  true
+      end
 
+      if string.find(type_name, "UH-60L" ) and unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(400) == 1 then
+          BASE:T(unit_name .. " front door(s) are open")
+          ret_val =  true
+      end
+      
+      if string.find(type_name, "AH-64D") then
+         BASE:T(unit_name .. " front door(s) are open")
+         ret_val =  true -- no doors on this one ;)
+      end
+      
       if ret_val == false then
           BASE:T(unit_name .. " all doors are closed")
       end
+      
       return ret_val
 
   end -- nil
@@ -1771,4 +1932,426 @@ function UTILS.GenerateLaserCodes()
         _count = _count + 1
     end
     return jtacGeneratedLaserCodes
+end
+
+--- Function to save an object to a file
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file. Existing file will be overwritten.
+-- @param #table Data The LUA data structure to save. This will be e.g. a table of text lines with an \\n at the end of each line.
+-- @return #boolean outcome True if saving is possible, else false.
+function UTILS.SaveToFile(Path,Filename,Data)
+  -- Thanks to @FunkyFranky 
+  -- Check io module is available.
+  if not io then
+    BASE:E("ERROR: io not desanitized. Can't save current file.")
+    return false
+  end
+  
+  -- Check default path.
+  if Path==nil and not lfs then
+    BASE:E("WARNING: lfs not desanitized. File will be saved in DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
+  end
+  
+  -- Set path or default.
+  local path = nil
+  if lfs then
+    path=Path or lfs.writedir()
+  end
+  
+  -- Set file name.
+  local filename=Filename
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+  
+  -- write
+  local f = assert(io.open(filename, "wb"))
+  f:write(Data)
+  f:close()
+  return true
+end
+
+--- Function to save an object to a file
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if reading is possible and successful, else false.
+-- @return #table data The data read from the filesystem (table of lines of text). Each line is one single #string!
+function UTILS.LoadFromFile(Path,Filename)
+  -- Thanks to @FunkyFranky    
+  -- Check io module is available.
+  if not io then
+    BASE:E("ERROR: io not desanitized. Can't save current state.")
+    return false
+  end
+  
+  -- Check default path.
+  if Path==nil and not lfs then
+    BASE:E("WARNING: lfs not desanitized. Loading will look into your DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
+  end
+  
+  -- Set path or default.
+  local path = nil
+  if lfs then
+    path=Path or lfs.writedir()
+  end
+  
+  -- Set file name.
+  local filename=Filename
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+  
+  -- Check if file exists.
+  local exists=UTILS.CheckFileExists(Path,Filename)
+  if not exists then
+    BASE:E(string.format("ERROR: File %s does not exist!",filename))
+    return false
+  end
+    
+  -- read
+  local file=assert(io.open(filename, "rb"))
+  local loadeddata = {}
+  for line in file:lines() do
+      loadeddata[#loadeddata+1] = line
+  end
+  file:close()
+  return true, loadeddata
+end
+
+--- Function to check if a file exists.
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if reading is possible, else false.
+function UTILS.CheckFileExists(Path,Filename)
+  -- Thanks to @FunkyFranky
+  -- Function that check if a file exists.
+  local function _fileexists(name)
+     local f=io.open(name,"r")
+     if f~=nil then
+      io.close(f)
+      return true
+    else
+      return false
+    end
+  end
+     
+  -- Check io module is available.
+  if not io then
+    BASE:E("ERROR: io not desanitized. Can't save current state.")
+    return false
+  end
+  
+  -- Check default path.
+  if Path==nil and not lfs then
+    BASE:E("WARNING: lfs not desanitized. Loading will look into your DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
+  end
+  
+  -- Set path or default.
+  local path = nil
+  if lfs then
+    path=Path or lfs.writedir()
+  end
+  
+  -- Set file name.
+  local filename=Filename
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+  
+  -- Check if file exists.
+  local exists=_fileexists(filename)
+  if not exists then
+    BASE:E(string.format("ERROR: File %s does not exist!",filename))
+    return false
+  else
+    return true
+  end
+end
+
+--- Function to save the state of a list of groups found by name
+-- @param #table List Table of strings with groupnames
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if saving is successful, else false.
+-- @usage
+-- We will go through the list and find the corresponding group and save the current group size (0 when dead).
+-- These groups are supposed to be put on the map in the ME and have *not* moved (e.g. stationary SAM sites). 
+-- Position is still saved for your usage.
+-- The idea is to reduce the number of units when reloading the data again to restart the saved mission.
+-- The data will be a simple comma separated list of groupname and size, with one header line.
+function UTILS.SaveStationaryListOfGroups(List,Path,Filename)
+  local filename = Filename or "StateListofGroups"
+  local data = "--Save Stationary List of Groups: "..Filename .."\n"
+  for _,_group in pairs (List) do
+    local group = GROUP:FindByName(_group) -- Wrapper.Group#GROUP
+    if group and group:IsAlive() then
+      local units = group:CountAliveUnits()
+      local position = group:GetVec3()
+      data = string.format("%s%s,%d,%d,%d,%d\n",data,_group,units,position.x,position.y,position.z)
+    else
+      data = string.format("%s%s,0,0,0,0\n",data,_group)
+    end
+  end
+  -- save the data
+  local outcome = UTILS.SaveToFile(Path,Filename,data)
+  return outcome
+end
+
+--- Function to save the state of a set of Wrapper.Group#GROUP objects.
+-- @param Core.Set#SET_BASE Set of objects to save
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if saving is successful, else false.
+-- @usage
+-- We will go through the set and find the corresponding group and save the current group size and current position.
+-- The idea is to respawn the groups **spawned during an earlier run of the mission** at the given location and reduce 
+-- the number of units in the group when reloading the data again to restart the saved mission. Note that *dead* groups 
+-- cannot be covered with this.
+-- **Note** Do NOT use dashes or hashes in group template names (-,#)!
+-- The data will be a simple comma separated list of groupname and size, with one header line.
+-- The current task/waypoint/etc cannot be restored. 
+function UTILS.SaveSetOfGroups(Set,Path,Filename)
+  local filename = Filename or "SetOfGroups"
+  local data = "--Save SET of groups: "..Filename .."\n"
+  local List = Set:GetSetObjects()
+  for _,_group in pairs (List) do
+    local group = _group -- Wrapper.Group#GROUP
+    if group and group:IsAlive() then
+      local name = group:GetName()
+      local template = string.gsub(name,"-(.+)$","")
+      if string.find(template,"#") then
+       template = string.gsub(name,"#(%d+)$","")
+      end 
+      local units = group:CountAliveUnits()
+      local position = group:GetVec3()
+      data = string.format("%s%s,%s,%d,%d,%d,%d\n",data,name,template,units,position.x,position.y,position.z)
+    end
+  end
+  -- save the data
+  local outcome = UTILS.SaveToFile(Path,Filename,data)
+  return outcome
+end
+
+--- Function to save the state of a set of Wrapper.Static#STATIC objects.
+-- @param Core.Set#SET_BASE Set of objects to save
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if saving is successful, else false.
+-- @usage
+-- We will go through the set and find the corresponding static and save the current name and postion when alive.
+-- The data will be a simple comma separated list of name and state etc, with one header line.
+function UTILS.SaveSetOfStatics(Set,Path,Filename)
+  local filename = Filename or "SetOfStatics"
+  local data = "--Save SET of statics: "..Filename .."\n"
+  local List = Set:GetSetObjects()
+  for _,_group in pairs (List) do
+    local group = _group -- Wrapper.Static#STATIC
+    if group and group:IsAlive() then
+      local name = group:GetName()
+      local position = group:GetVec3()
+      data = string.format("%s%s,%d,%d,%d\n",data,name,position.x,position.y,position.z)
+    end
+  end
+  -- save the data
+  local outcome = UTILS.SaveToFile(Path,Filename,data)
+  return outcome
+end
+
+--- Function to save the state of a list of statics found by name
+-- @param #table List Table of strings with statics names
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #boolean outcome True if saving is successful, else false.
+-- @usage
+-- We will go through the list and find the corresponding static and save the current alive state as 1 (0 when dead).
+-- Position is saved for your usage. **Note** this works on UNIT-name level.
+-- The idea is to reduce the number of units when reloading the data again to restart the saved mission.
+-- The data will be a simple comma separated list of name and state etc, with one header line.
+function UTILS.SaveStationaryListOfStatics(List,Path,Filename)
+  local filename = Filename or "StateListofStatics"
+  local data = "--Save Stationary List of Statics: "..Filename .."\n"
+  for _,_group in pairs (List) do
+    local group = STATIC:FindByName(_group,false) -- Wrapper.Static#STATIC
+    if group and group:IsAlive() then
+      local position = group:GetVec3()
+      data = string.format("%s%s,1,%d,%d,%d\n",data,_group,position.x,position.y,position.z)
+    else
+      data = string.format("%s%s,0,0,0,0\n",data,_group)
+    end
+  end
+  -- save the data
+  local outcome = UTILS.SaveToFile(Path,Filename,data)
+  return outcome
+end
+
+--- Load back a stationary list of groups from file.
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @param #boolean Reduce If false, existing loaded groups will not be reduced to fit the saved number.
+-- @return #table Table of data objects (tables) containing groupname, coordinate and group object. Returns nil when file cannot be read.
+function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce)
+  local reduce = true
+  if Reduce == false then reduce = false end
+  local filename = Filename or "StateListofGroups"
+  local datatable = {}
+  if UTILS.CheckFileExists(Path,filename) then
+    local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
+    -- remove header
+    table.remove(loadeddata, 1)
+    for _id,_entry in pairs (loadeddata) do
+      local dataset = UTILS.Split(_entry,",")
+      -- groupname,units,position.x,position.y,position.z
+      local groupname = dataset[1]
+      local size = tonumber(dataset[2])
+      local posx = tonumber(dataset[3])
+      local posy = tonumber(dataset[4])
+      local posz = tonumber(dataset[5])
+      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
+      local data = { groupname=groupname, size=size, coordinate=coordinate, group=GROUP:FindByName(groupname) }
+      if reduce then
+        local actualgroup = GROUP:FindByName(groupname)
+        if actualgroup and actualgroup:IsAlive() and actualgroup:CountAliveUnits() > size then
+          local reduction = actualgroup:CountAliveUnits() - size
+          BASE:I("Reducing groupsize by ".. reduction .. " units!")
+          -- reduce existing group
+          local units = actualgroup:GetUnits()
+          local units2 = UTILS.ShuffleTable(units) -- randomize table
+          for i=1,reduction do
+            units2[i]:Destroy(false)
+          end
+        end
+      end
+      table.insert(datatable,data)
+    end 
+  else
+    return nil
+  end
+  return datatable
+end
+
+--- Load back a SET of groups from file.
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @param #boolean Spawn If set to false, do not re-spawn the groups loaded in location and reduce to size.
+-- @return Core.Set#SET_GROUP Set of GROUP objects. 
+-- Returns nil when file cannot be read. Returns a table of data entries if Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate }`
+function UTILS.LoadSetOfGroups(Path,Filename,Spawn)
+  local spawn = true
+  if Spawn == false then spawn = false end
+  BASE:I("Spawn = "..tostring(spawn))
+  local filename = Filename or "SetOfGroups"
+  local setdata = SET_GROUP:New()
+  local datatable = {}
+  if UTILS.CheckFileExists(Path,filename) then
+    local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
+    -- remove header
+    table.remove(loadeddata, 1)
+    for _id,_entry in pairs (loadeddata) do
+      local dataset = UTILS.Split(_entry,",")
+      -- groupname,template,units,position.x,position.y,position.z
+      local groupname = dataset[1]
+      local template = dataset[2]
+      local size = tonumber(dataset[3])
+      local posx = tonumber(dataset[4])
+      local posy = tonumber(dataset[5])
+      local posz = tonumber(dataset[6])
+      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
+      local group=nil
+      local data = { groupname=groupname, size=size, coordinate=coordinate }
+      table.insert(datatable,data)
+      if spawn then
+        local group = SPAWN:New(groupname)
+          :InitDelayOff()
+          :OnSpawnGroup(
+            function(spwndgrp)
+              setdata:AddObject(spwndgrp)
+              local actualsize = spwndgrp:CountAliveUnits()
+              if actualsize > size then
+                local reduction = actualsize-size
+                -- reduce existing group
+                local units = spwndgrp:GetUnits()
+                local units2 = UTILS.ShuffleTable(units) -- randomize table
+                for i=1,reduction do
+                  units2[i]:Destroy(false)
+                end
+              end
+            end
+          )
+          :SpawnFromCoordinate(coordinate)
+      end
+    end 
+  else
+    return nil
+  end
+  if spawn then
+    return setdata
+  else
+   return datatable
+  end
+end
+
+--- Load back a SET of statics from file.
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return Core.Set#SET_STATIC Set SET_STATIC containing the static objects.
+function UTILS.LoadSetOfStatics(Path,Filename)
+  local filename = Filename or "SetOfStatics"
+  local datatable = SET_STATIC:New()
+  if UTILS.CheckFileExists(Path,filename) then
+    local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
+    -- remove header
+    table.remove(loadeddata, 1)
+    for _id,_entry in pairs (loadeddata) do
+      local dataset = UTILS.Split(_entry,",")
+      -- staticname,position.x,position.y,position.z
+      local staticname = dataset[1]
+      local posx = tonumber(dataset[2])
+      local posy = tonumber(dataset[3])
+      local posz = tonumber(dataset[4])
+      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
+      datatable:AddObject(STATIC:FindByName(staticname,false))
+    end 
+  else
+    return nil
+  end
+  return datatable
+end
+
+--- Load back a stationary list of statics from file.
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @param #boolean Reduce If false, do not destroy the units with size=0.
+-- @return #table Table of data objects (tables) containing staticname, size (0=dead else 1), coordinate and the static object. 
+-- Returns nil when file cannot be read.
+function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce)
+  local reduce = true
+  if Reduce == false then reduce = false end
+  local filename = Filename or "StateListofStatics"
+  local datatable = {}
+  if UTILS.CheckFileExists(Path,filename) then
+    local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
+    -- remove header
+    table.remove(loadeddata, 1)
+    for _id,_entry in pairs (loadeddata) do
+      local dataset = UTILS.Split(_entry,",")
+      -- staticname,units(1/0),position.x,position.y,position.z)
+      local staticname = dataset[1]
+      local size = tonumber(dataset[2])
+      local posx = tonumber(dataset[3])
+      local posy = tonumber(dataset[4])
+      local posz = tonumber(dataset[5])
+      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
+      local data = { staticname=staticname, size=size, coordinate=coordinate, static=STATIC:FindByName(staticname,false) }
+      table.insert(datatable,data)
+      if size==0 and reduce then
+        local static = STATIC:FindByName(staticname,false)
+        if static then
+          static:Destroy(false)
+        end
+      end
+    end 
+  else
+    return nil
+  end
+  return datatable
 end

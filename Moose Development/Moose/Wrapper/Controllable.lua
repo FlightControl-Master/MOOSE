@@ -1407,7 +1407,7 @@ function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, E
   DCSTask = {
     id = 'Escort',
     params = {
-      groupId           = FollowControllable:GetID(),
+      groupId           = FollowControllable and FollowControllable:GetID() or nil,
       pos               = Vec3,
       lastWptIndexFlag  = LastWaypointIndex and true or false,
       lastWptIndex      = LastWaypointIndex,
@@ -1437,11 +1437,11 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
     id = 'FireAtPoint',
     params = {
       point            = Vec2,
-      x=Vec2.x,
-      y=Vec2.y,
+      x                = Vec2.x,
+      y                = Vec2.y,
       zoneRadius       = Radius,
       radius           = Radius,
-      expendQty        = 100, -- dummy value
+      expendQty        = 1, -- dummy value
       expendQtyEnabled = false,
       alt_type         = ASL and 0 or 1
     }
@@ -1460,7 +1460,8 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Alti
     DCSTask.params.weaponType=WeaponType
   end
 
-  --self:I(DCSTask)
+  --env.info("FF fireatpoint")
+  --BASE:I(DCSTask)
 
   return DCSTask
 end
@@ -2022,22 +2023,20 @@ do -- Patrol methods
 end
 
 
---- Return a Misson task to follow a given route defined by Points.
+--- Return a "Misson" task to follow a given route defined by Points.
 -- @param #CONTROLLABLE self
 -- @param #table Points A table of route points.
--- @return DCS#Task
+-- @return DCS#Task DCS mission task. Has entries `.id="Mission"`, `params`, were params has entries `airborne` and `route`, which is a table of `points`.
 function CONTROLLABLE:TaskRoute( Points )
-  self:F2( Points )
 
   local DCSTask = {
     id = 'Mission',
     params = {
-      airborne = self:IsAir(),
+      airborne = self:IsAir(),  -- This is important to make aircraft land without respawning them (which was a long standing DCS issue).
       route = {points = Points},
     },
   }
-
-  self:T3( { DCSTask } )
+  
   return DCSTask
 end
 
@@ -3844,4 +3843,46 @@ function POSITIONABLE:IsSubmarine()
   end
 
   return nil
+end
+
+
+--- Sets the controlled group to go at the specified speed in meters per second. 
+-- @param #CONTROLLABLE self
+-- @param #number Speed Speed in meters per second
+-- @param #boolean Keep (Optional) When set to true, will maintain the speed on passing waypoints. If not present or false, the controlled group will return to the speed as defined by their route. 
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetSpeed(Speed, Keep)
+  self:F2( { self.ControllableName } )
+  -- Set default if not specified.
+  local speed = Speed or 5
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then
+      Controller:setSpeed(speed, Keep)
+    end
+  end
+  return self
+end
+
+--- [AIR] Sets the controlled aircraft group to fly at the specified altitude in meters.
+-- @param #CONTROLLABLE self
+-- @param #number Altitude Altitude in meters.
+-- @param #boolean Keep (Optional) When set to true, will maintain the altitude on passing waypoints. If not present or false, the controlled group will return to the altitude as defined by their route. 
+-- @param #string AltType (Optional) Specifies the altitude type used. If nil, the altitude type of the current waypoint will be used. Accepted values are "BARO" and "RADIO".
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetAltitude(Altitude, Keep, AltType)
+  self:F2( { self.ControllableName } )
+  -- Set default if not specified.
+  local altitude = Altitude or 1000
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+    if Controller then
+      if self:IsAir() then
+        Controller:setAltitude(altitude, Keep, AltType)
+      end
+    end
+  end
+  return self
 end

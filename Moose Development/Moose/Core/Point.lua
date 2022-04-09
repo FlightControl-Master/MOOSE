@@ -26,19 +26,28 @@
 --
 -- ### Authors:
 --
---   * FlightControl : Design & Programming
+--   * FlightControl (Design & Programming)
 --
 -- ### Contributions:
+-- 
+--   * funkyfranky
+--   * Applevangelist
+--   
+-- ===
 --
 -- @module Core.Point
 -- @image Core_Coordinate.JPG
 
 
-
-
 do -- COORDINATE
 
   --- @type COORDINATE
+  -- @field #string ClassName Name of the class
+  -- @field #number x Component of the 3D vector.
+  -- @field #number y Component of the 3D vector.
+  -- @field #number z Component of the 3D vector.
+  -- @field #number Heading Heading in degrees. Needs to be set first.
+  -- @field #number Velocity Velocity in meters per second. Needs to be set first.
   -- @extends Core.Base#BASE
 
 
@@ -201,44 +210,69 @@ do -- COORDINATE
     ClassName = "COORDINATE",
   }
 
-  --- @field COORDINATE.WaypointAltType
+  --- Waypoint altitude types.
+  -- @type COORDINATE.WaypointAltType
+  -- @field #string BARO Barometric altitude.
+  -- @field #string RADIO Radio altitude.
   COORDINATE.WaypointAltType = {
     BARO = "BARO",
     RADIO = "RADIO",
   }
 
-  --- @field COORDINATE.WaypointAction
+  --- Waypoint actions.
+  -- @type COORDINATE.WaypointAction
+  -- @field #string TurningPoint Turning point.
+  -- @field #string FlyoverPoint Fly over point.
+  -- @field #string FromParkingArea From parking area.
+  -- @field #string FromParkingAreaHot From parking area hot.
+  -- @field #string FromGroundAreaHot From ground area hot.
+  -- @field #string FromGroundArea From ground area.
+  -- @field #string FromRunway From runway.
+  -- @field #string Landing Landing.
+  -- @field #string LandingReFuAr Landing and refuel and rearm.
   COORDINATE.WaypointAction = {
     TurningPoint       = "Turning Point",
     FlyoverPoint       = "Fly Over Point",
     FromParkingArea    = "From Parking Area",
     FromParkingAreaHot = "From Parking Area Hot",
+    FromGroundAreaHot  = "From Ground Area Hot",
+    FromGroundArea     = "From Ground Area",
     FromRunway         = "From Runway",
     Landing            = "Landing",
     LandingReFuAr      = "LandingReFuAr",
   }
 
-  --- @field COORDINATE.WaypointType
+  --- Waypoint types.
+  -- @type COORDINATE.WaypointType
+  -- @field #string TakeOffParking Take of parking.
+  -- @field #string TakeOffParkingHot Take of parking hot.
+  -- @field #string TakeOff Take off parking hot.
+  -- @field #string TakeOffGroundHot Take of from ground hot.
+  -- @field #string TurningPoint Turning point.
+  -- @field #string Land Landing point.
+  -- @field #string LandingReFuAr Landing and refuel and rearm.
   COORDINATE.WaypointType = {
     TakeOffParking    = "TakeOffParking",
     TakeOffParkingHot = "TakeOffParkingHot",
     TakeOff           = "TakeOffParkingHot",
+    TakeOffGroundHot  = "TakeOffGroundHot",
+    TakeOffGround     = "TakeOffGround",
     TurningPoint      = "Turning Point",
     Land              = "Land",
-    LandingReFuAr     = "LandingReFuAr",
+    LandingReFuAr     = "LandingReFuAr",    
   }
 
 
   --- COORDINATE constructor.
   -- @param #COORDINATE self
   -- @param DCS#Distance x The x coordinate of the Vec3 point, pointing to the North.
-  -- @param DCS#Distance y The y coordinate of the Vec3 point, pointing to the Right.
-  -- @param DCS#Distance z The z coordinate of the Vec3 point, pointing to the Right.
-  -- @return #COORDINATE
+  -- @param DCS#Distance y The y coordinate of the Vec3 point, pointing to up.
+  -- @param DCS#Distance z The z coordinate of the Vec3 point, pointing to the right.
+  -- @return #COORDINATE self
   function COORDINATE:New( x, y, z )
 
-    --env.info("FF COORDINATE New")
-    local self = BASE:Inherit( self, BASE:New() ) -- #COORDINATE
+    local self=BASE:Inherit(self, BASE:New()) -- #COORDINATE
+    
     self.x = x
     self.y = y
     self.z = z
@@ -249,7 +283,7 @@ do -- COORDINATE
   --- COORDINATE constructor.
   -- @param #COORDINATE self
   -- @param #COORDINATE Coordinate.
-  -- @return #COORDINATE
+  -- @return #COORDINATE self
   function COORDINATE:NewFromCoordinate( Coordinate )
 
     local self = BASE:Inherit( self, BASE:New() ) -- #COORDINATE
@@ -263,8 +297,8 @@ do -- COORDINATE
   --- Create a new COORDINATE object from  Vec2 coordinates.
   -- @param #COORDINATE self
   -- @param DCS#Vec2 Vec2 The Vec2 point.
-  -- @param DCS#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
-  -- @return #COORDINATE
+  -- @param DCS#Distance LandHeightAdd (Optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
+  -- @return #COORDINATE self
   function COORDINATE:NewFromVec2( Vec2, LandHeightAdd )
 
     local LandHeight = land.getHeight( Vec2 )
@@ -274,8 +308,6 @@ do -- COORDINATE
 
     local self = self:New( Vec2.x, LandHeight, Vec2.y ) -- #COORDINATE
 
-    self:F2( self )
-
     return self
 
   end
@@ -283,7 +315,7 @@ do -- COORDINATE
   --- Create a new COORDINATE object from  Vec3 coordinates.
   -- @param #COORDINATE self
   -- @param DCS#Vec3 Vec3 The Vec3 point.
-  -- @return #COORDINATE
+  -- @return #COORDINATE self
   function COORDINATE:NewFromVec3( Vec3 )
 
     local self = self:New( Vec3.x, Vec3.y, Vec3.z ) -- #COORDINATE
@@ -292,6 +324,22 @@ do -- COORDINATE
 
     return self
   end
+  
+  --- Create a new COORDINATE object from a waypoint. This uses the components
+  -- 
+  --  * `waypoint.x`
+  --  * `waypoint.alt`
+  --  * `waypoint.y`
+  --  
+  -- @param #COORDINATE self
+  -- @param DCS#Waypoint Waypoint The waypoint.
+  -- @return #COORDINATE self
+  function COORDINATE:NewFromWaypoint(Waypoint)
+
+    local self=self:New(Waypoint.x, Waypoint.alt, Waypoint.y) -- #COORDINATE
+    
+    return self
+  end  
 
   --- Return the coordinates itself. Sounds stupid but can be useful for compatibility.
   -- @param #COORDINATE self
@@ -647,7 +695,8 @@ do -- COORDINATE
     local y=X*math.sin(phi)+Y*math.cos(phi)
 
     -- Coordinate assignment looks bit strange but is correct.
-    return COORDINATE:NewFromVec3({x=y, y=self.y, z=x})
+    local coord=COORDINATE:NewFromVec3({x=y, y=self.y, z=x})
+    return coord
   end
 
   --- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
@@ -690,7 +739,8 @@ do -- COORDINATE
   function COORDINATE:GetRandomCoordinateInRadius( OuterRadius, InnerRadius )
     self:F2( { OuterRadius, InnerRadius } )
 
-    return COORDINATE:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
+    local coord=COORDINATE:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
+    return coord
   end
 
 
@@ -862,7 +912,7 @@ do -- COORDINATE
   -- The text will reflect the temperature like this:
   --
   --   - For Russian and European aircraft using the metric system - Degrees Celcius (°C)
-  --   - For Americain aircraft we link to the imperial system - Degrees Farenheit (°F)
+  --   - For American aircraft we link to the imperial system - Degrees Fahrenheit (°F)
   --
   -- A text containing a pressure will look like this:
   --
@@ -882,7 +932,7 @@ do -- COORDINATE
       if Settings:IsMetric() then
         return string.format( " %-2.2f °C", DegreesCelcius )
       else
-        return string.format( " %-2.2f °F", UTILS.CelciusToFarenheit( DegreesCelcius ) )
+        return string.format( " %-2.2f °F", UTILS.CelsiusToFahrenheit( DegreesCelcius ) )
       end
     else
       return " no temperature"
@@ -908,7 +958,7 @@ do -- COORDINATE
   -- The text will contain always the pressure in hPa and:
   --
   --   - For Russian and European aircraft using the metric system - hPa and mmHg
-  --   - For Americain and European aircraft we link to the imperial system - hPa and inHg
+  --   - For American and European aircraft we link to the imperial system - hPa and inHg
   --
   -- A text containing a pressure will look like this:
   --
@@ -1001,7 +1051,7 @@ do -- COORDINATE
   -- The text will reflect the wind like this:
   --
   --   - For Russian and European aircraft using the metric system - Wind direction in degrees (°) and wind speed in meters per second (mps).
-  --   - For Americain aircraft we link to the imperial system - Wind direction in degrees (°) and wind speed in knots per second (kps).
+  --   - For American aircraft we link to the imperial system - Wind direction in degrees (°) and wind speed in knots per second (kps).
   --
   -- A text containing a pressure will look like this:
   --
@@ -1611,8 +1661,8 @@ do -- COORDINATE
     if x and y then
       local vec2={ x = x, y = y }
       coord=COORDINATE:NewFromVec2(vec2)
-    end    
-    return coord 
+    end
+    return coord
   end
 
 
@@ -1718,7 +1768,7 @@ do -- COORDINATE
     return self:GetSurfaceType()==land.SurfaceType.LAND
   end
 
-  --- Checks if the surface type is road.
+  --- Checks if the surface type is land.
   -- @param #COORDINATE self
   -- @return #boolean If true, the surface type at the coordinate is land.
   function COORDINATE:IsSurfaceTypeLand()
@@ -1758,10 +1808,9 @@ do -- COORDINATE
   --- Creates an explosion at the point of a certain intensity.
   -- @param #COORDINATE self
   -- @param #number ExplosionIntensity Intensity of the explosion in kg TNT. Default 100 kg.
-  -- @param #number Delay Delay before explosion in seconds.
+  -- @param #number Delay (Optional) Delay before explosion is triggered in seconds.
   -- @return #COORDINATE self
   function COORDINATE:Explosion( ExplosionIntensity, Delay )
-    self:F2( { ExplosionIntensity } )
     ExplosionIntensity=ExplosionIntensity or 100
     if Delay and Delay>0 then
       self:ScheduleOnce(Delay, self.Explosion, self, ExplosionIntensity)
@@ -1773,11 +1822,17 @@ do -- COORDINATE
 
   --- Creates an illumination bomb at the point.
   -- @param #COORDINATE self
-  -- @param #number power Power of illumination bomb in Candela.
+  -- @param #number Power Power of illumination bomb in Candela. Default 1000 cd.
+  -- @param #number Delay (Optional) Delay before bomb is ignited in seconds.
   -- @return #COORDINATE self
-  function COORDINATE:IlluminationBomb(power)
-    self:F2()
-    trigger.action.illuminationBomb( self:GetVec3(), power )
+  function COORDINATE:IlluminationBomb(Power, Delay)
+    Power=Power or 1000
+    if Delay and Delay>0 then
+      self:ScheduleOnce(Delay, self.IlluminationBomb, self, Power)
+    else
+      trigger.action.illuminationBomb(self:GetVec3(), Power)
+    end
+    return self
   end
 
 
@@ -1828,82 +1883,101 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param Utilities.Utils#BIGSMOKEPRESET preset Smoke preset (1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke).
   -- @param #number density (Optional) Smoke density. Number in [0,...,1]. Default 0.5.
-  function COORDINATE:BigSmokeAndFire( preset, density )
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFire( preset, density, name )
     self:F2( { preset=preset, density=density } )
     density=density or 0.5
-    trigger.action.effectSmokeBig( self:GetVec3(), preset, density )
+    self.firename = name or "Fire-"..math.random(1,10000)
+    trigger.action.effectSmokeBig( self:GetVec3(), preset, density, self.firename )
+  end
+  
+  --- Stop big smoke and fire at the coordinate.
+  -- @param #COORDINATE self
+  -- @param #string name (Optional) Name of the fire to stop it, if not using the same COORDINATE object.
+  function COORDINATE:StopBigSmokeAndFire( name )
+    self:F2( { name = name } )
+    name = name or self.firename
+    trigger.action.effectSmokeStop( name )
   end
 
   --- Small smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireSmall( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireSmall( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, density, name)
   end
 
   --- Medium smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireMedium( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireMedium( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, density, name)
   end
 
   --- Large smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireLarge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireLarge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, density, name)
   end
 
   --- Huge smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeAndFireHuge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeAndFireHuge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, density, name)
   end
 
   --- Small smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeSmall( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeSmall( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, density, name)
   end
 
   --- Medium smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeMedium( density )
+  -- @param number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeMedium( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, density, name)
   end
 
   --- Large smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeLarge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeLarge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, density,name)
   end
 
   --- Huge smoke at the coordinate.
   -- @param #COORDINATE self
-  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  function COORDINATE:BigSmokeHuge( density )
+  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  function COORDINATE:BigSmokeHuge( density, name )
     self:F2( { density=density } )
     density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, density)
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, density,name)
   end
 
   --- Flares the point in a color.
@@ -2050,7 +2124,7 @@ do -- COORDINATE
     --- Line to all.
     -- Creates a line on the F10 map from one point to another.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Endpoint COORDIANTE to where the line is drawn.
+    -- @param #COORDINATE Endpoint COORDINATE to where the line is drawn.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -2075,7 +2149,7 @@ do -- COORDINATE
     --- Circle to all.
     -- Creates a circle on the map with a given radius, color, fill color, and outline.
     -- @param #COORDINATE self
-    -- @param #numberr Radius Radius in meters. Default 1000 m.
+    -- @param #number Radius Radius in meters. Default 1000 m.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -2107,7 +2181,7 @@ do -- COORDINATE
     --- Rectangle to all. Creates a rectangle on the map from the COORDINATE in one corner to the end COORDINATE in the opposite corner.
     -- Creates a line on the F10 map from one point to another.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Endpoint COORDIANTE in the opposite corner.
+    -- @param #COORDINATE Endpoint COORDINATE in the opposite corner.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -2135,9 +2209,9 @@ do -- COORDINATE
 
     --- Creates a shape defined by 4 points on the F10 map. The first point is the current COORDINATE. The remaining three points need to be specified.
     -- @param #COORDINATE self
-    -- @param #COORDINATE Coord2 Second COORDIANTE of the quad shape.
-    -- @param #COORDINATE Coord3 Third COORDIANTE of the quad shape.
-    -- @param #COORDINATE Coord4 Fourth COORDIANTE of the quad shape.
+    -- @param #COORDINATE Coord2 Second COORDINATE of the quad shape.
+    -- @param #COORDINATE Coord3 Third COORDINATE of the quad shape.
+    -- @param #COORDINATE Coord4 Fourth COORDINATE of the quad shape.
     -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
     -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
     -- @param #number Alpha Transparency [0,1]. Default 1.
@@ -2952,7 +3026,7 @@ do -- POINT_VEC3
   -- @type POINT_VEC3
   -- @field #number x The x coordinate in 3D space.
   -- @field #number y The y coordinate in 3D space.
-  -- @field #number z The z coordiante in 3D space.
+  -- @field #number z The z COORDINATE in 3D space.
   -- @field Utilities.Utils#SMOKECOLOR SmokeColor
   -- @field Utilities.Utils#FLARECOLOR FlareColor
   -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType

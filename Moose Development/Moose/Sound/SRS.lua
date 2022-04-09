@@ -88,10 +88,19 @@
 -- 
 -- Use a specific "culture" with the @{#MSRS.SetCulture} function, e.g. `:SetCulture("en-US")` or `:SetCulture("de-DE")`.
 -- 
+-- ## Set Google
+-- 
+-- Use Google's text-to-speech engine with the @{#MSRS.SetGoogle} function, e.g. ':SetGoogle()'.
+-- By enabling this it also allows you to utilize SSML in your text for added flexibilty.
+-- For more information on setting up a cloud account, visit: https://cloud.google.com/text-to-speech
+-- Google's supported SSML reference: https://cloud.google.com/text-to-speech/docs/ssml
+-- 
 -- ## Set Voice
 -- 
 -- Use a specifc voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system.
+-- If enabling SetGoogle(), you can use voices provided by Google
+-- Google's supported voices: https://cloud.google.com/text-to-speech/docs/voices
 -- 
 -- ## Set Coordinate
 -- 
@@ -662,7 +671,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   else
     -- Add gender.
     if gender and gender~="female" then
-      command=command..string.format(" --gender=%s", tostring(gender))
+      command=command..string.format(" -g %s", tostring(gender))
     end
     -- Add culture.
     if culture and culture~="en-GB" then
@@ -678,7 +687,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   
   -- Set google.
   if self.google then
-    command=command..string.format(' -G "%s"', self.google)
+    command=command..string.format(' --ssml -G "%s"', self.google)
   end
   
   -- Debug output.

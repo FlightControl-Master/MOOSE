@@ -152,7 +152,7 @@ _MARKERID=0
 
 --- Marker class version.
 -- @field #string version
-MARKER.version="0.1.0"
+MARKER.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -177,7 +177,7 @@ function MARKER:New(Coordinate, Text)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #MARKER
 
-  self.coordinate=Coordinate
+  self.coordinate=UTILS.DeepCopy(Coordinate)
 
   self.text=Text
 

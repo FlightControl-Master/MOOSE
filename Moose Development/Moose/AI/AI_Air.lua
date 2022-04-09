@@ -585,7 +585,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
   
   if AIGroup and AIGroup:IsAlive() then
 
-    self:I( "Group " .. AIGroup:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
+    self:T( "Group " .. AIGroup:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
     
     self:ClearTargetDistance()
     --AIGroup:ClearTasks()

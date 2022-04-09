@@ -2423,8 +2423,7 @@ end
 -- @param #SPAWN self
 -- @param DCS#Vec3 Vec3 The Vec3 coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
   self:F( { self.SpawnTemplatePrefix, Vec3, SpawnIndex } )
 
@@ -2493,8 +2492,7 @@ end
 -- @param #SPAWN self
 -- @param Core.Point#Coordinate Coordinate The Coordinate coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 function SPAWN:SpawnFromCoordinate( Coordinate, SpawnIndex )
   self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 
@@ -2510,8 +2508,7 @@ end
 -- @param #SPAWN self
 -- @param Core.Point#POINT_VEC3 PointVec3 The PointVec3 coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 -- 
 --   local SpawnPointVec3 = ZONE:New( ZoneName ):GetPointVec3( 2000 ) -- Get the center of the ZONE object at 2000 meters from the ground.
@@ -2535,8 +2532,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 -- 
 --   local SpawnVec2 = ZONE:New( ZoneName ):GetVec2()
@@ -2569,8 +2565,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 -- 
 --   local SpawnPointVec2 = ZONE:New( ZoneName ):GetPointVec2()
@@ -2626,8 +2621,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned.
 -- @usage
 -- 
 --   local SpawnStatic = STATIC:FindByName( StaticName )
@@ -2658,8 +2652,7 @@ end
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil when nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or #nil if nothing was spawned. 
 -- @usage
 -- 
 --   local SpawnZone = ZONE:New( ZoneName )

@@ -28,6 +28,7 @@ Core/SpawnStatic.lua
 Core/Timer.lua
 Core/Goal.lua
 Core/Spot.lua
+Core/TextAndSound.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua
@@ -70,6 +71,7 @@ Functional/Fox.lua
 Functional/Mantis.lua
 Functional/Shorad.lua
 Functional/Autolase.lua
+Functional/AICSAR.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua
@@ -79,9 +81,17 @@ Ops/Auftrag.lua
 Ops/OpsGroup.lua
 Ops/FlightGroup.lua
 Ops/NavyGroup.lua
+Ops/Cohort.lua
 Ops/Squadron.lua
+Ops/Platoon.lua
+Ops/Flotilla.lua
+Ops/Legion.lua
 Ops/AirWing.lua
+Ops/Brigade.lua
+Ops/Fleet.lua
 Ops/Intelligence.lua
+Ops/Commander.lua
+Ops/Chief.lua
 Ops/CSAR.lua
 Ops/CTLD.lua
 

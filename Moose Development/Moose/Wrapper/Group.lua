@@ -310,8 +310,7 @@ end
 
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return DCS#Position The 3D position vectors of the POSITIONABLE.
--- @return #nil The POSITIONABLE is not existing or alive.  
+-- @return DCS#Position The 3D position vectors of the POSITIONABLE or #nil if the groups not existing or alive.  
 function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3()
   self:F2( self.PositionableName )
 
@@ -339,9 +338,7 @@ end
 -- If the first @{Wrapper.Unit} of the group is inactive, it will return false.
 -- 
 -- @param #GROUP self
--- @return #boolean true if the group is alive and active.
--- @return #boolean false if the group is alive but inactive.
--- @return #nil if the group does not exist anymore.
+-- @return #boolean `true` if the group is alive *and* active, `false` if the group is alive but inactive or `#nil` if the group does not exist anymore.
 function GROUP:IsAlive()
   self:F2( self.GroupName )
 
@@ -363,8 +360,7 @@ end
 
 --- Returns if the group is activated.
 -- @param #GROUP self
--- @return #boolean true if group is activated.
--- @return #nil The group is not existing or alive.  
+-- @return #boolean `true` if group is activated or `#nil` The group is not existing or alive.  
 function GROUP:IsActive()
   self:F2( self.GroupName )
 
@@ -388,7 +384,7 @@ end
 -- So all event listeners will catch the destroy event of this group for each unit in the group.
 -- To raise these events, provide the `GenerateEvent` parameter.
 -- @param #GROUP self
--- @param #boolean GenerateEvent If true, a crash or dead event for each unit is generated. If false, if no event is triggered. If nil, a RemoveUnit event is triggered.
+-- @param #boolean GenerateEvent If true, a crash [AIR] or dead [GROUND] event for each unit is generated. If false, if no event is triggered. If nil, a RemoveUnit event is triggered.
 -- @param #number delay Delay in seconds before despawning the group.
 -- @usage
 -- -- Air unit example: destroy the Helicopter and generate a S_EVENT_CRASH for each unit in the Helicopter group.
@@ -412,7 +408,6 @@ function GROUP:Destroy( GenerateEvent, delay )
   self:F2( self.GroupName )
   
   if delay and delay>0 then
-    --SCHEDULER:New(nil, GROUP.Destroy, {self, GenerateEvent}, delay)
     self:ScheduleOnce(delay, GROUP.Destroy, self, GenerateEvent)
   else
 
@@ -568,12 +563,12 @@ function GROUP:GetSpeedMax()
   
     local Units=self:GetUnits()
     
-    local speedmax=nil
+    local speedmax=0
     
     for _,unit in pairs(Units) do
       local unit=unit --Wrapper.Unit#UNIT
       local speed=unit:GetSpeedMax()
-      if speedmax==nil then
+      if speedmax==0 then
         speedmax=speed
       elseif speed<speedmax then
         speedmax=speed
@@ -770,8 +765,7 @@ end
 
 --- Returns the average velocity Vec3 vector.
 -- @param Wrapper.Group#GROUP self
--- @return DCS#Vec3 The velocity Vec3 vector
--- @return #nil The GROUP is not existing or alive.  
+-- @return DCS#Vec3 The velocity Vec3 vector or `#nil` if the GROUP is not existing or alive.  
 function GROUP:GetVelocityVec3()
   self:F2( self.GroupName )
 
@@ -1014,9 +1008,8 @@ end
 
 --- Returns a random @{DCS#Vec3} vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.
 -- @param #GROUP self
--- @param #number Radius
--- @return DCS#Vec3 The random 3D point vector around the first UNIT of the GROUP.
--- @return #nil The GROUP is invalid or empty
+-- @param #number Radius Radius in meters.
+-- @return DCS#Vec3 The random 3D point vector around the first UNIT of the GROUP or #nil The GROUP is invalid or empty. 
 -- @usage 
 -- -- If Radius is ignored, returns the DCS#Vec3 of first UNIT of the GROUP
 function GROUP:GetRandomVec3(Radius)
@@ -1037,8 +1030,7 @@ end
 
 --- Returns the mean heading of every UNIT in the GROUP in degrees
 -- @param #GROUP self
--- @return #number mean heading of the GROUP
--- @return #nil The first UNIT is not existing or alive.
+-- @return #number Mean heading of the GROUP in degrees or #nil The first UNIT is not existing or alive.
 function GROUP:GetHeading()
   self:F2(self.GroupName)
 
@@ -1066,8 +1058,8 @@ end
 --- Return the fuel state and unit reference for the unit with the least
 -- amount of fuel in the group.
 -- @param #GROUP self
--- @return #number The fuel state of the unit with the least amount of fuel
--- @return #Unit reference to #Unit object for further processing
+-- @return #number The fuel state of the unit with the least amount of fuel.
+-- @return #Unit reference to #Unit object for further processing.
 function GROUP:GetFuelMin()
   self:F3(self.ControllableName)
 
@@ -2326,41 +2318,44 @@ function GROUP:GetAttribute()
     local unarmedship=self:HasAttribute("Unarmed ships")
 
 
-    -- Define attribute. Order is important.
-    if transportplane then
-      attribute=GROUP.Attribute.AIR_TRANSPORTPLANE
-    elseif awacs then
-      attribute=GROUP.Attribute.AIR_AWACS
-    elseif fighter then
+    -- Define attribute. Order of attack is important.
+    if fighter then
       attribute=GROUP.Attribute.AIR_FIGHTER
     elseif bomber then
       attribute=GROUP.Attribute.AIR_BOMBER
+    elseif awacs then
+      attribute=GROUP.Attribute.AIR_AWACS  
+    elseif transportplane then
+      attribute=GROUP.Attribute.AIR_TRANSPORTPLANE
     elseif tanker then
       attribute=GROUP.Attribute.AIR_TANKER
+      -- helos
+    elseif attackhelicopter then
+      attribute=GROUP.Attribute.AIR_ATTACKHELO  
     elseif transporthelo then
       attribute=GROUP.Attribute.AIR_TRANSPORTHELO
-    elseif attackhelicopter then
-      attribute=GROUP.Attribute.AIR_ATTACKHELO
     elseif uav then
       attribute=GROUP.Attribute.AIR_UAV
-    elseif apc then
-      attribute=GROUP.Attribute.GROUND_APC
-    elseif infantry then
-      attribute=GROUP.Attribute.GROUND_INFANTRY
-    elseif artillery then
-      attribute=GROUP.Attribute.GROUND_ARTILLERY
-    elseif tank then
-      attribute=GROUP.Attribute.GROUND_TANK
-    elseif aaa then
-      attribute=GROUP.Attribute.GROUND_AAA
+      -- ground - order of attack
     elseif ewr then
       attribute=GROUP.Attribute.GROUND_EWR
     elseif sam then
       attribute=GROUP.Attribute.GROUND_SAM
+    elseif aaa then
+      attribute=GROUP.Attribute.GROUND_AAA
+    elseif artillery then
+      attribute=GROUP.Attribute.GROUND_ARTILLERY         
+    elseif tank then
+      attribute=GROUP.Attribute.GROUND_TANK 
+    elseif apc then
+      attribute=GROUP.Attribute.GROUND_APC
+    elseif infantry then
+      attribute=GROUP.Attribute.GROUND_INFANTRY
     elseif truck then
       attribute=GROUP.Attribute.GROUND_TRUCK
     elseif train then
       attribute=GROUP.Attribute.GROUND_TRAIN
+      -- ships
     elseif aircraftcarrier then
       attribute=GROUP.Attribute.NAVAL_AIRCRAFTCARRIER
     elseif warship then
@@ -2609,6 +2604,41 @@ function GROUP:GetSkill()
   local name = unit:GetName()
   local skill = _DATABASE.Templates.Units[name].Template.skill or "Random"
   return skill
+end
+
+
+--- Get the unit in the group with the highest threat level, which is still alive.
+-- @param #GROUP self
+-- @return Wrapper.Unit#UNIT The most dangerous unit in the group.
+-- @return #number Threat level of the unit.
+function GROUP:GetHighestThreat()
+
+  -- Get units of the group.
+  local units=self:GetUnits()
+
+  if units then
+
+    local threat=nil ; local maxtl=0
+    for _,_unit in pairs(units or {}) do
+      local unit=_unit --Wrapper.Unit#UNIT
+
+      if unit and unit:IsAlive() then
+
+        -- Threat level of group.
+        local tl=unit:GetThreatLevel()
+
+        -- Check if greater the current threat.
+        if tl>maxtl then
+          maxtl=tl
+          threat=unit
+        end        
+      end
+    end
+
+    return threat, maxtl    
+  end
+
+  return nil, nil
 end
 
 --do -- Smoke

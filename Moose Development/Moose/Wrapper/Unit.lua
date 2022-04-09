@@ -442,7 +442,7 @@ function UNIT:GetSpeedMax()
     return SpeedMax*3.6
   end
 
-  return nil
+  return 0
 end
 
 --- Returns the unit's max range in meters derived from the DCS descriptors.
@@ -524,6 +524,63 @@ function UNIT:IsTanker()
   return tanker, system
 end
 
+--- Check if the unit can supply ammo. Currently, we have
+-- 
+-- * M 818
+-- * Ural-375
+-- * ZIL-135
+-- 
+-- This list needs to be extended, if DCS adds other units capable of supplying ammo.
+-- 
+-- @param #UNIT self
+-- @return #boolean If `true`, unit can supply ammo.
+function UNIT:IsAmmoSupply()
+
+  -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
+  local typename=self:GetTypeName()
+  
+  if typename=="M 818" then
+    -- Blue ammo truck.
+    return true
+  elseif typename=="Ural-375" then  
+    -- Red ammo truck.
+    return true
+  elseif typename=="ZIL-135" then
+    -- Red ammo truck. Checked that it can also provide ammo.
+    return true    
+  end
+
+  return false
+end
+
+--- Check if the unit can supply fuel. Currently, we have
+-- 
+-- * M978 HEMTT Tanker
+-- * ATMZ-5
+-- * ATMZ-10
+-- * ATZ-5
+-- 
+-- This list needs to be extended, if DCS adds other units capable of supplying fuel.
+-- 
+-- @param #UNIT self
+-- @return #boolean If `true`, unit can supply fuel.
+function UNIT:IsFuelSupply()
+
+  -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
+  local typename=self:GetTypeName()
+  
+  if typename=="M978 HEMTT Tanker" then
+    return true
+  elseif typename=="ATMZ-5" then
+    return true
+  elseif typename=="ATMZ-10" then
+    return true
+  elseif typename=="ATZ-5" then
+    return true    
+  end
+
+  return false
+end
 
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
@@ -626,8 +683,8 @@ function UNIT:GetAmmunition()
       -- Type name of current weapon.
       local Tammo=ammotable[w]["desc"]["typeName"]
 
-      local _weaponString = UTILS.Split(Tammo,"%.")
-      local _weaponName   = _weaponString[#_weaponString]
+      --local _weaponString = UTILS.Split(Tammo,"%.")
+      --local _weaponName   = _weaponString[#_weaponString]
 
       -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3
       local Category=ammotable[w].desc.category
@@ -655,8 +712,9 @@ function UNIT:GetAmmunition()
         nbombs=nbombs+Nammo
         
       elseif Category==Weapon.Category.MISSILE then
-
-        -- Add up all cruise missiles (category 5)
+        
+        
+        -- Add up all  missiles (category 5)
         if MissileCategory==Weapon.MissileCategory.AAM then
           nmissiles=nmissiles+Nammo
         elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
@@ -664,6 +722,10 @@ function UNIT:GetAmmunition()
         elseif MissileCategory==Weapon.MissileCategory.BM then
           nmissiles=nmissiles+Nammo
         elseif MissileCategory==Weapon.MissileCategory.OTHER then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.SAM then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.CRUISE then
           nmissiles=nmissiles+Nammo
         end
 
@@ -677,8 +739,6 @@ function UNIT:GetAmmunition()
 
   return nammo, nshells, nrockets, nbombs, nmissiles
 end
-
-
 
 --- Returns the unit sensors.
 -- @param #UNIT self
@@ -996,7 +1056,7 @@ function UNIT:GetThreatLevel()
       elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
              not Attributes["ATGM"]                                                   then ThreatLevel = 3
       elseif Attributes["Old Tanks"] or Attributes["APC"] or Attributes["Artillery"]  then ThreatLevel = 2
-      elseif Attributes["Infantry"]                                                   then ThreatLevel = 1
+      elseif Attributes["Infantry"]  or Attributes["EWR"]                             then ThreatLevel = 1
       end
       
       ThreatText = ThreatLevels[ThreatLevel+1]

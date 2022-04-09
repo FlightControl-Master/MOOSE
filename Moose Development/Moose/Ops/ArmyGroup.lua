@@ -38,15 +38,13 @@
 -- @field Core.Set#SET_ZONE retreatZones Set of retreat zones.
 -- @extends Ops.OpsGroup#OPSGROUP
 
---- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B. Sledge
+--- *Your soul may belong to Jesus, but your ass belongs to the marines* -- Eugene B Sledge
 --
 -- ===
---
--- ![Banner Image](..\Presentations\OPS\ArmyGroup\_Main.png)
---
+-- 
 -- # The ARMYGROUP Concept
 -- 
--- This class enhances naval groups.
+-- This class enhances ground groups.
 -- 
 -- @field #ARMYGROUP
 ARMYGROUP = {
@@ -55,33 +53,28 @@ ARMYGROUP = {
   engage          = {},
 }
 
---- Army group element.
--- @type ARMYGROUP.Element
--- @field #string name Name of the element, i.e. the unit.
--- @field Wrapper.Unit#UNIT unit The UNIT object.
--- @field #string status The element status.
--- @field #string typename Type name.
--- @field #number length Length of element in meters.
--- @field #number width Width of element in meters.
--- @field #number height Height of element in meters.
-
---- Target
+--- Engage Target.
 -- @type ARMYGROUP.Target
 -- @field Ops.Target#TARGET Target The target.
 -- @field Core.Point#COORDINATE Coordinate Last known coordinate of the target.
+-- @field Ops.OpsGroup#OPSGROUP.Waypoint Waypoint the waypoint created to go to the target.
+-- @field #number Speed Speed in knots.
+-- @field #string Formation Formation used in the engagement.
+-- @field #number roe ROE backup.
+-- @field #number alarmstate Alarm state backup.
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="0.4.0"
+ARMYGROUP.version="0.7.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Retreat.
 -- TODO: Suppression of fire. 
 -- TODO: Check if group is mobile.
 -- TODO: F10 menu.
+-- DONE: Retreat.
 -- DONE: Rearm. Specify a point where to go and wait until ammo is full.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -90,20 +83,28 @@ ARMYGROUP.version="0.4.0"
 
 --- Create a new ARMYGROUP class object.
 -- @param #ARMYGROUP self
--- @param Wrapper.Group#GROUP Group The group object. Can also be given by its group name as `#string`.
+-- @param Wrapper.Group#GROUP group The GROUP object. Can also be given by its group name as `#string`.
 -- @return #ARMYGROUP self
-function ARMYGROUP:New(Group)
-
+function ARMYGROUP:New(group)
+  
+  -- First check if we already have an OPS group for this group.
+  local og=_DATABASE:GetOpsGroup(group)
+  if og then
+    og:I(og.lid..string.format("WARNING: OPS group already exists in data base!"))
+    return og
+  end
+  
   -- Inherit everything from FSM class.
-  local self=BASE:Inherit(self, OPSGROUP:New(Group)) -- #ARMYGROUP
+  local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #ARMYGROUP
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("ARMYGROUP %s | ", self.groupname)
   
   -- Defaults
-  self.isArmygroup=true
   self:SetDefaultROE()
   self:SetDefaultAlarmstate()
+  self:SetDefaultEPLRS(self.isEPLRS)
+  self:SetDefaultEmission()
   self:SetDetection()
   self:SetPatrolAdInfinitum(false)
   self:SetRetreatZones()
@@ -112,17 +113,21 @@ function ARMYGROUP:New(Group)
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "FullStop",         "Holding")     -- Hold position.
   self:AddTransition("*",             "Cruise",           "Cruising")    -- Cruise along the given route of waypoints.
+  
+  self:AddTransition("*",             "RTZ",              "Returning")   -- Group is returning to (home) zone.
+  self:AddTransition("Holding",       "Returned",         "Returned")    -- Group is returned to (home) zone, e.g. when unloaded from carrier.
+  self:AddTransition("Returning",     "Returned",         "Returned")    -- Group is returned to (home) zone.
     
   self:AddTransition("*",             "Detour",           "OnDetour")    -- Make a detour to a coordinate and resume route afterwards.
   self:AddTransition("OnDetour",      "DetourReached",    "Cruising")    -- Group reached the detour coordinate.
   
-  self:AddTransition("*",             "Retreat",          "Retreating")  --
-  self:AddTransition("Retreating",    "Retreated",        "Retreated")   --
+  self:AddTransition("*",             "Retreat",          "Retreating")  -- Order a retreat.
+  self:AddTransition("Retreating",    "Retreated",        "Retreated")   -- Group retreated.
   
-  self:AddTransition("Cruising",      "EngageTarget",     "Engaging")    -- Engage a target
-  self:AddTransition("Holding",       "EngageTarget",     "Engaging")    -- Engage a target
-  self:AddTransition("OnDetour",      "EngageTarget",     "Engaging")    -- Engage a target
-  self:AddTransition("Engaging",      "Disengage",        "Cruising")    -- Engage a target
+  self:AddTransition("Cruising",      "EngageTarget",     "Engaging")    -- Engage a target from Cruising state
+  self:AddTransition("Holding",       "EngageTarget",     "Engaging")    -- Engage a target from Holding state
+  self:AddTransition("OnDetour",      "EngageTarget",     "Engaging")    -- Engage a target from OnDetour state
+  self:AddTransition("Engaging",      "Disengage",        "Cruising")    -- Disengage and back to cruising.
 
   self:AddTransition("*",             "Rearm",            "Rearm")       -- Group is send to a coordinate and waits until ammo is refilled.
   self:AddTransition("Rearm",         "Rearming",         "Rearming")    -- Group has arrived at the rearming coodinate and is waiting to be fully rearmed.
@@ -131,20 +136,250 @@ function ARMYGROUP:New(Group)
   ------------------------
   --- Pseudo Functions ---
   ------------------------
-
-  --- Triggers the FSM event "Stop". Stops the ARMYGROUP and all its event handlers.
+  --- Triggers the FSM event "Cruise".
+  -- @function [parent=#ARMYGROUP] Cruise
   -- @param #ARMYGROUP self
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+  -- @param #number Formation Formation.
 
-  --- Triggers the FSM event "Stop" after a delay. Stops the ARMYGROUP and all its event handlers.
-  -- @function [parent=#ARMYGROUP] __Stop
+  --- Triggers the FSM event "Cruise" after a delay.
+  -- @function [parent=#ARMYGROUP] __Cruise
   -- @param #ARMYGROUP self
   -- @param #number delay Delay in seconds.
-  
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+  -- @param #number Formation Formation.
+
+  --- On after "Cruise" event.
+  -- @function [parent=#ARMYGROUP] OnAfterCruise
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number Speed Speed in knots until next waypoint is reached.
+  -- @param #number Formation Formation. 
+
+
+  --- Triggers the FSM event "FullStop".
+  -- @function [parent=#ARMYGROUP] FullStop
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "FullStop" after a delay.
+  -- @function [parent=#ARMYGROUP] __FullStop
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "FullStop" event.
+  -- @function [parent=#ARMYGROUP] OnAfterFullStop
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "RTZ".
+  -- @function [parent=#ARMYGROUP] RTZ
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "RTZ" after a delay.
+  -- @function [parent=#ARMYGROUP] __RTZ
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "RTZ" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRTZ
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Returned".
+  -- @function [parent=#ARMYGROUP] Returned
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Returned" after a delay.
+  -- @function [parent=#ARMYGROUP] __Returned
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Returned" event.
+  -- @function [parent=#ARMYGROUP] OnAfterReturned
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Detour".
+  -- @function [parent=#ARMYGROUP] Detour
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Detour" after a delay.
+  -- @function [parent=#ARMYGROUP] __Detour
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Detour" event.
+  -- @function [parent=#ARMYGROUP] OnAfterDetour
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "DetourReached".
+  -- @function [parent=#ARMYGROUP] DetourReached
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "DetourReached" after a delay.
+  -- @function [parent=#ARMYGROUP] __DetourReached
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "DetourReached" event.
+  -- @function [parent=#ARMYGROUP] OnAfterDetourReached
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Retreat".
+  -- @function [parent=#ARMYGROUP] Retreat
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Retreat" after a delay.
+  -- @function [parent=#ARMYGROUP] __Retreat
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Retreat" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRetreat
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Retreated".
+  -- @function [parent=#ARMYGROUP] Retreated
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Retreated" after a delay.
+  -- @function [parent=#ARMYGROUP] __Retreated
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Retreated" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRetreated
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "EngageTarget".
+  -- @function [parent=#ARMYGROUP] EngageTarget
+  -- @param #ARMYGROUP self
+  -- @param Wrapper.Group#GROUP Group the group to be engaged.
+  -- @param #string Formation Formation used in the engagement.
+
+  --- Triggers the FSM event "EngageTarget" after a delay.
+  -- @function [parent=#ARMYGROUP] __EngageTarget
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param Wrapper.Group#GROUP Group the group to be engaged.
+  -- @param #string Formation Formation used in the engagement.
+
+
+  --- On after "EngageTarget" event.
+  -- @function [parent=#ARMYGROUP] OnAfterEngageTarget
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Group#GROUP Group the group to be engaged.
+  -- @param #string Formation Formation used in the engagement.
+
+
+  --- Triggers the FSM event "Disengage".
+  -- @function [parent=#ARMYGROUP] Disengage
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Disengage" after a delay.
+  -- @function [parent=#ARMYGROUP] __Disengage
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Disengage" event.
+  -- @function [parent=#ARMYGROUP] OnAfterDisengage
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Rearm".
+  -- @function [parent=#ARMYGROUP] Rearm
+  -- @param #ARMYGROUP self
+  -- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+  -- @param #number Formation Formation of the group.
+
+  --- Triggers the FSM event "Rearm" after a delay.
+  -- @function [parent=#ARMYGROUP] __Rearm
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+  -- @param #number Formation Formation of the group.
+
+  --- On after "Rearm" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRearm
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+  -- @param #number Formation Formation of the group.
+
+
+  --- Triggers the FSM event "Rearming".
+  -- @function [parent=#ARMYGROUP] Rearming
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Rearming" after a delay.
+  -- @function [parent=#ARMYGROUP] __Rearming
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Rearming" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRearming
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Rearmed".
+  -- @function [parent=#ARMYGROUP] Rearmed
+  -- @param #ARMYGROUP self
+
+  --- Triggers the FSM event "Rearmed" after a delay.
+  -- @function [parent=#ARMYGROUP] __Rearmed
+  -- @param #ARMYGROUP self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Rearmed" event.
+  -- @function [parent=#ARMYGROUP] OnAfterRearmed
+  -- @param #ARMYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
   -- TODO: Add pseudo functions.
 
-
   -- Init waypoints.
-  self:InitWaypoints()
+  self:_InitWaypoints()
   
   -- Initialize the group.
   self:_InitGroup()
@@ -152,18 +387,20 @@ function ARMYGROUP:New(Group)
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
   self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
-  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)
-  
+  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
   --self:HandleEvent(EVENTS.Hit,        self.OnEventHit)
   
   -- Start the status monitoring.
-  self:__Status(-1)
+  self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
   
   -- Start queue update timer.
   self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(2, 5)  
   
   -- Start check zone timer.
   self.timerCheckZone=TIMER:New(self._CheckInZones, self):Start(2, 30)
+  
+  -- Add OPSGROUP to _DATABASE.
+  _DATABASE:AddOpsGroup(self)
    
   return self  
 end
@@ -189,7 +426,8 @@ end
 -- @param #ARMYGROUP self
 -- @return Core.Point#COORDINATE Coordinate of a road closest to the group.
 function ARMYGROUP:GetClosestRoad()
-  return self:GetCoordinate():GetClosestPointToRoad()
+  local coord=self:GetCoordinate():GetClosestPointToRoad()
+  return coord
 end
 
 --- Get 2D distance to the closest road.
@@ -219,6 +457,40 @@ function ARMYGROUP:AddTaskFireAtPoint(Coordinate, Clock, Radius, Nshots, WeaponT
   Coordinate=self:_CoordinateFromObject(Coordinate)
 
   local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, Coordinate:GetVec2(), Radius, Nshots, WeaponType)
+
+  local task=self:AddTask(DCStask, Clock, nil, Prio)
+
+  return task
+end
+
+--- Add a *scheduled* task to fire at a given coordinate.
+-- @param #ARMYGROUP self
+-- @param #string Clock Time when to start the attack.
+-- @param #number Heading Heading min in Degrees.
+-- @param #number Alpha Shooting angle in Degrees.
+-- @param #number Altitude Altitude in meters.
+-- @param #number Radius Radius in meters. Default 100 m.
+-- @param #number Nshots Number of shots to fire. Default nil.
+-- @param #number WeaponType Type of weapon. Default auto.
+-- @param #number Prio Priority of the task.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+function ARMYGROUP:AddTaskBarrage(Clock, Heading, Alpha, Altitude, Radius, Nshots, WeaponType, Prio)
+
+  Heading=Heading or 0
+  
+  Alpha=Alpha or 60
+  
+  Altitude=Altitude or 100
+  
+  local distance=Altitude/math.tan(math.rad(Alpha))
+  
+  local a=self:GetVec2()
+  
+  local vec2=UTILS.Vec2Translate(a, distance, Heading)
+  
+  --local coord=COORDINATE:NewFromVec2(vec2):MarkToAll("Fire At Point",ReadOnly,Text)
+  
+  local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, vec2, Radius, Nshots, WeaponType, Altitude)
 
   local task=self:AddTask(DCStask, Clock, nil, Prio)
 
@@ -258,6 +530,26 @@ end
 function ARMYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clock, Prio)
 
   local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack)
+
+  local task=self:AddTask(DCStask, Clock, nil, Prio)
+
+  return task
+end
+
+--- Add a *scheduled* task to transport group(s).
+-- @param #ARMYGROUP self
+-- @param Core.Set#SET_GROUP GroupSet Set of cargo groups. Can also be a singe @{Wrapper.Group#GROUP} object.
+-- @param Core.Zone#ZONE PickupZone Zone where the cargo is picked up.
+-- @param Core.Zone#ZONE DeployZone Zone where the cargo is delivered to.
+-- @param #string Clock Time when to start the attack.
+-- @param #number Prio Priority of the task.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+function ARMYGROUP:AddTaskCargoGroup(GroupSet, PickupZone, DeployZone, Clock, Prio)
+
+  local DCStask={}
+  DCStask.id="CargoTransport"
+  DCStask.params={}
+  DCStask.params.cargoqueu=1
 
   local task=self:AddTask(DCStask, Clock, nil, Prio)
 
@@ -309,7 +601,11 @@ end
 function ARMYGROUP:IsCombatReady()
   local combatready=true
   
-  if self:IsRearming() or self:IsRetreating() or self.outofAmmo or self:IsEngaging() or self:is("Retreated") or self:IsDead() or self:IsStopped() or self:IsInUtero() then
+  if self:IsRearming() or self:IsRetreating() or self:IsOutOfAmmo() or self:IsEngaging() or self:IsDead() or self:IsStopped() or self:IsInUtero() then
+    combatready=false
+  end
+  
+  if self:IsPickingup() or self:IsLoading() or self:IsTransporting() or self:IsLoaded() or self:IsCargo() or self:IsCarrier() then
     combatready=false
   end
   
@@ -321,55 +617,57 @@ end
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
----- Update status.
--- @param #ARMYGROUP self
-function ARMYGROUP:onbeforeStatus(From, Event, To)
-
-  if self:IsDead() then  
-    self:T(self.lid..string.format("Onbefore Status DEAD ==> false"))
-    return false   
-  elseif self:IsStopped() then
-    self:T(self.lid..string.format("Onbefore Status STOPPED ==> false"))
-    return false
-  end
-
-  return true
-end
-
 --- Update status.
 -- @param #ARMYGROUP self
-function ARMYGROUP:onafterStatus(From, Event, To)
+function ARMYGROUP:Status()
 
   -- FSM state.
   local fsmstate=self:GetState()
   
-  if self:IsAlive() then
+  -- Is group alive?
+  local alive=self:IsAlive()
 
-    ---
-    -- Detection
-    ---
-    
-    -- Check if group has detected any units.
-    if self.detectionOn then
-      self:_CheckDetectedUnits()
-    end
-    
-    -- Check ammo status.
-    self:_CheckAmmoStatus()
+  -- Check that group EXISTS and is ACTIVE.
+  if alive then
 
     -- Update position etc.    
     self:_UpdatePosition()
-      
-    -- Check if group got stuck.
-    self:_CheckStuck()
     
+    -- Check if group has detected any units.
+    self:_CheckDetectedUnits()
+    
+    -- Check ammo status.
+    self:_CheckAmmoStatus()
+          
     -- Check damage of elements and group.
     self:_CheckDamage()
+
+    -- Check if group got stuck.
+    self:_CheckStuck()
     
     -- Update engagement.
     if self:IsEngaging() then
       self:_UpdateEngageTarget()
     end
+    
+    -- Check if group is waiting.
+    if self:IsWaiting() then
+      if self.Twaiting and self.dTwait then
+        if timer.getAbsTime()>self.Twaiting+self.dTwait then
+          self.Twaiting=nil
+          self.dTwait=nil
+          self:Cruise()
+        end
+      end
+    end
+
+  else
+    -- Check damage of elements and group.
+    self:_CheckDamage()    
+  end
+  
+  -- Check that group EXISTS.
+  if alive~=nil then
     
     if self.verbose>=1 then
   
@@ -379,25 +677,84 @@ function ARMYGROUP:onafterStatus(From, Event, To)
       
       local roe=self:GetROE()
       local alarm=self:GetAlarmstate()
-      local speed=UTILS.MpsToKnots(self.velocity)
+      local speed=UTILS.MpsToKnots(self.velocity or 0)
       local speedEx=UTILS.MpsToKnots(self:GetExpectedSpeed())
       local formation=self.option.Formation or "unknown"      
       local ammo=self:GetAmmoTot()
+      
+      local cargo=0
+      for _,_element in pairs(self.elements) do
+        local element=_element --Ops.OpsGroup#OPSGROUP.Element
+        cargo=cargo+element.weightCargo
+      end
     
       -- Info text.
-      local text=string.format("%s [ROE-AS=%d-%d T/M=%d/%d]: Wp=%d/%d-->%d (final %s), Life=%.1f, Speed=%.1f (%d), Heading=%03d, Ammo=%d", 
-      fsmstate, roe, alarm, nTaskTot, nMissions, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), tostring(self.passedfinalwp), self.life or 0, speed, speedEx, self.heading, ammo.Total)
-      self:I(self.lid..text)
+      local text=string.format("%s [ROE-AS=%d-%d T/M=%d/%d]: Wp=%d/%d-->%d (final %s), Life=%.1f, Speed=%.1f (%d), Heading=%03d, Ammo=%d, Cargo=%.1f", 
+      fsmstate, roe, alarm, nTaskTot, nMissions, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), tostring(self.passedfinalwp), self.life or 0, speed, speedEx, self.heading or 0, ammo.Total, cargo)
+      self:T(self.lid..text)
       
     end
     
   else
 
     -- Info text.
-    local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
-    self:T2(self.lid..text)
-  
+    if self.verbose>=1 then
+      local text=string.format("State %s: Alive=%s", fsmstate, tostring(self:IsAlive()))
+      self:I(self.lid..text)
+    end
+    
   end
+
+  ---
+  -- Elements
+  ---
+  
+  if self.verbose>=2 then
+    local text="Elements:"
+    for i,_element in pairs(self.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+
+      local name=element.name
+      local status=element.status
+      local unit=element.unit
+      local life,life0=self:GetLifePoints(element)
+      
+      local life0=element.life0
+
+      -- Get ammo.
+      local ammo=self:GetAmmoElement(element)
+
+      -- Output text for element.
+      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d, cargo=%d/%d kg",
+      i, name, status, life, life0, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles, element.weightCargo, element.weightMaxCargo)
+    end
+    if #self.elements==0 then
+      text=text.." none!"
+    end
+    self:T(self.lid..text)
+  end
+
+  ---
+  -- Engage Detected Targets
+  ---
+  if self:IsCruising() and self.detectionOn and self.engagedetectedOn then
+
+    local targetgroup, targetdist=self:_GetDetectedTarget()
+
+    -- If we found a group, we engage it.
+    if targetgroup then
+      self:T(self.lid..string.format("Engaging target group %s at distance %d meters", targetgroup:GetName(), targetdist))
+      self:EngageTarget(targetgroup)
+    end
+
+  end
+  
+  
+  ---
+  -- Cargo
+  ---
+  
+  self:_CheckCargoTransport()
 
 
   ---
@@ -406,9 +763,26 @@ function ARMYGROUP:onafterStatus(From, Event, To)
 
   self:_PrintTaskAndMissionStatus()
 
+end
 
-  -- Next status update.
-  self:__Status(-30)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- DCS Events ==> See OPSGROUP
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Event function handling when a unit is hit.
+-- @param #ARMYGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function ARMYGROUP:OnEventHit(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+    
+    -- TODO: suppression
+
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -420,7 +794,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #ARMYGROUP.Element Element The group element.
+-- @param Ops.OpsGroup#OPSGROUP.Element Element The group element.
 function ARMYGROUP:onafterElementSpawned(From, Event, To, Element)
   self:T(self.lid..string.format("Element spawned %s", Element.name))
 
@@ -437,8 +811,31 @@ end
 function ARMYGROUP:onafterSpawned(From, Event, To)
   self:T(self.lid..string.format("Group spawned!"))
 
+  -- Debug info.
+  if self.verbose>=1 then
+    local text=string.format("Initialized Army Group %s:\n", self.groupname)
+    text=text..string.format("Unit type    = %s\n", self.actype)
+    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
+    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
+    text=text..string.format("Weight       = %.1f kg\n", self:GetWeightTotal())
+    text=text..string.format("Cargo bay    = %.1f kg\n", self:GetFreeCargobay())
+    text=text..string.format("Has EPLRS    = %s\n", tostring(self.isEPLRS))    
+    text=text..string.format("Elements     = %d\n", #self.elements)
+    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
+    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
+    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles)
+    text=text..string.format("FSM state    = %s\n", self:GetState())
+    text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
+    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
+    self:I(self.lid..text)
+  end
+
   -- Update position.
   self:_UpdatePosition()
+  
+  -- Not dead or destroyed yet.
+  self.isDead=false
+  self.isDestroyed=false  
 
   if self.isAI then
   
@@ -447,6 +844,9 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     
     -- Set default Alarm State.
     self:SwitchAlarmstate(self.option.Alarm)
+    
+    -- Set default EPLRS.
+    self:SwitchEPLRS(self.option.EPLRS)
     
     -- Set TACAN to default.
     self:_SwitchTACAN()
@@ -460,18 +860,50 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     
     -- Formation
     if not self.option.Formation then
-      self.option.Formation=self.optionDefault.Formation
+      -- Will be set in update route.
+      --self.option.Formation=self.optionDefault.Formation
     end
-    
+
+    -- Update route.
+    if #self.waypoints>1 then
+      self:T(self.lid.."Got waypoints on spawn ==> Cruise in -0.1 sec!")
+      self:__Cruise(-1, nil, self.option.Formation)
+    else
+      self:T(self.lid.."No waypoints on spawn ==> Full Stop!")
+      self:FullStop()
+    end
+
   end
   
-  -- Update route.
-  if #self.waypoints>1 then
-    self:Cruise(nil, self.option.Formation or self.optionDefault.Formation)
-  else
-    self:FullStop()
+end
+
+--- On before "UpdateRoute" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+-- @param #number Speed Speed in knots. Default cruise speed.
+-- @param #number Formation Formation of the group.
+function ARMYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Formation)
+  if self:IsWaiting() then
+    self:T(self.lid.."Update route denied. Group is WAIRING!")
+    return false
+  elseif self:IsInUtero() then
+    self:T(self.lid.."Update route denied. Group is INUTERO!")
+    return false
+  elseif self:IsDead() then
+    self:T(self.lid.."Update route denied. Group is DEAD!")
+    return false
+  elseif self:IsStopped() then
+    self:T(self.lid.."Update route denied. Group is STOPPED!")
+    return false
+  elseif self:IsHolding() then
+    self:T(self.lid.."Update route denied. Group is holding position!")
+    return false
   end
-  
+  return true
 end
 
 --- On after "UpdateRoute" event.
@@ -479,91 +911,99 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Waypoint number. Default is next waypoint.
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
 -- @param #number Speed Speed in knots. Default cruise speed.
 -- @param #number Formation Formation of the group.
-function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
+function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
   -- Debug info.
-  local text=string.format("Update route n=%s, Speed=%s, Formation=%s", tostring(n), tostring(Speed), tostring(Formation))
+  local text=string.format("Update route state=%s: n=%s, N=%s, Speed=%s, Formation=%s", self:GetState(), tostring(n), tostring(N), tostring(Speed), tostring(Formation))
   self:T(self.lid..text)
 
   -- Update route from this waypoint number onwards.
   n=n or self:GetWaypointIndexNext(self.adinfinitum)
   
-  -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
-  self:_UpdateWaypointTasks(n)
-
+  -- Max index.
+  N=N or #self.waypoints  
+  N=math.min(N, #self.waypoints)
+  
   -- Waypoints.
   local waypoints={}
   
-  -- Next waypoint.
-  local wp=UTILS.DeepCopy(self.waypoints[n]) --Ops.OpsGroup#OPSGROUP.Waypoint
+  local formationlast=nil
+  for i=n, #self.waypoints do
   
-  -- Do we want to drive on road to the next wp?
-  local onroad=wp.action==ENUMS.Formation.Vehicle.OnRoad
-        
-  -- Speed.
-  if Speed then
-    wp.speed=UTILS.KnotsToMps(Speed)
-  else
+    -- Next waypoint.
+    local wp=UTILS.DeepCopy(self.waypoints[i]) --Ops.OpsGroup#OPSGROUP.Waypoint
+
+    -- Speed.
+    if Speed then
+      wp.speed=UTILS.KnotsToMps(tonumber(Speed))
+    else
     -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
-    if self.adinfinitum and wp.speed<0.1 then
-      wp.speed=UTILS.KmphToMps(self.speedCruise)
+    if wp.speed<0.1 then --self.adinfinitum and 
+        wp.speed=UTILS.KmphToMps(self.speedCruise)
+      end
     end
+    
+    -- Formation.
+    if self.formationPerma then
+      wp.action=self.formationPerma
+    elseif Formation then 
+      wp.action=Formation
+    end
+  
+    -- Add waypoint in between because this waypoint is "On Road" but lies "Off Road".
+    if wp.action==ENUMS.Formation.Vehicle.OnRoad and wp.roaddist>10 then
+    
+      -- The real waypoint is actually off road.
+      wp.action=ENUMS.Formation.Vehicle.OffRoad
+  
+      -- Add "On Road" waypoint in between.
+      local wproad=wp.roadcoord:WaypointGround(UTILS.MpsToKmph(wp.speed), ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
+
+      -- Insert road waypoint.
+      table.insert(waypoints, wproad)
+    end    
+          
+    -- Add waypoint.
+    table.insert(waypoints, wp)
+    
+    -- Last formation.
+    formationlast=wp.action  
   end
   
-  -- Formation.
-  if self.formationPerma then
-    wp.action=self.formationPerma
-  elseif Formation then 
-    wp.action=Formation
-  end
+  -- First (next wp).
+  local wp=waypoints[1] --Ops.OpsGroup#OPSGROUP.Waypoint
   
   -- Current set formation.
   self.option.Formation=wp.action
-  
-  -- Current set speed in m/s.
-  self.speedWp=wp.speed
-
-  -- Add waypoint in between because this waypoint is "On Road" but lies "Off Road".
-  if onroad then
-  
-    -- The real waypoint is actually off road.
-    wp.action=ENUMS.Formation.Vehicle.OffRoad
-
-    -- Add "On Road" waypoint in between.
-    local wproad=wp.roadcoord:WaypointGround(wp.speed, ENUMS.Formation.Vehicle.OnRoad) --Ops.OpsGroup#OPSGROUP.Waypoint
     
-    -- Insert road waypoint.
-    table.insert(waypoints, wproad)
-  end    
-        
-  -- Add waypoint.
-  table.insert(waypoints, wp)
+  -- Current set speed in m/s.
+  self.speedWp=wp.speed  
   
-  -- Apply formation at the current position or it will only be changed when reaching the next waypoint.
-  local formation=ENUMS.Formation.Vehicle.OffRoad
-  if wp.action~=ENUMS.Formation.Vehicle.OnRoad then
-    formation=wp.action
-  end
+  local formation0=wp.action==ENUMS.Formation.Vehicle.OnRoad and ENUMS.Formation.Vehicle.OnRoad or wp.action
 
   -- Current point.
-  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), formation)
+  local current=self:GetCoordinate():WaypointGround(UTILS.MpsToKmph(self.speedWp), formation0)
   table.insert(waypoints, 1, current)
 
   -- Insert a point on road.
-  if onroad then
-    local current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
+  if wp.action==ENUMS.Formation.Vehicle.OnRoad and (wp.coordinate or wp.roadcoord) then
+
+    current=self:GetClosestRoad():WaypointGround(UTILS.MpsToKmph(self.speedWp), ENUMS.Formation.Vehicle.OnRoad)
     table.insert(waypoints, 2, current)
   end
   
   -- Debug output.
-  if false then
+  if self.verbose>=10 then
+  --if true then
     for i,_wp in pairs(waypoints) do
-      local wp=_wp
-      local text=string.format("WP #%d UID=%d type=%s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.uid and wp.uid or 0, wp.type, wp.speed, wp.alt, wp.action)
-      self:T(text)
+      local wp=_wp --Ops.OpsGroup#OPSGROUP.Waypoint
+      local text=string.format("WP #%d UID=%d type=%s: Speed=%d m/s, alt=%d m, Action=%s", i, wp.uid and wp.uid or -1, wp.type, wp.speed, wp.alt, wp.action)
+      local coord=COORDINATE:NewFromWaypoint(wp):MarkToAll(text)
+      self:I(text)
     end
   end
 
@@ -582,7 +1022,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, Speed, Formation)
     -- Passed final WP ==> Full Stop
     ---
   
-    self:E(self.lid..string.format("WARNING: Passed final WP ==> Full Stop!"))
+    self:T(self.lid..string.format("WARNING: Passed final WP when UpdateRoute() ==> Full Stop!"))
     self:FullStop()  
   
   end
@@ -601,26 +1041,13 @@ function ARMYGROUP:onafterGotoWaypoint(From, Event, To, UID, Speed, Formation)
 
   local n=self:GetWaypointIndex(UID)
   
-  --env.info(string.format("FF AG Goto waypoint UID=%s Index=%s, Speed=%s, Formation=%s", tostring(UID), tostring(n), tostring(Speed), tostring(Formation)))
-  
   if n then
-  
-    -- TODO: switch to re-enable waypoint tasks.
-    if false then
-      local tasks=self:GetTasksWaypoint(n)
-      
-      for _,_task in pairs(tasks) do
-        local task=_task --Ops.OpsGroup#OPSGROUP.Task
-        task.status=OPSGROUP.TaskStatus.SCHEDULED
-      end
-      
-    end
     
     -- Speed to waypoint.
     Speed=Speed or self:GetSpeedToWaypoint(n)
         
     -- Update the route.
-    self:UpdateRoute(n, Speed, Formation)
+    self:__UpdateRoute(-0.01, n, nil, Speed, Formation)
     
   end
   
@@ -662,6 +1089,88 @@ function ARMYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Formation, 
 
 end
 
+--- On after "OutOfAmmo" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function ARMYGROUP:onafterOutOfAmmo(From, Event, To)
+  self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
+  
+  -- Fist, check if we want to rearm once out-of-ammo.
+  --TODO: IsMobile() check
+  if self.rearmOnOutOfAmmo then
+    local truck, dist=self:FindNearestAmmoSupply(30)
+    if truck then
+      self:T(self.lid..string.format("Found Ammo Truck %s [%s]", truck:GetName(), truck:GetTypeName()))
+      local Coordinate=truck:GetCoordinate()
+      self:__Rearm(-1, Coordinate)
+      return
+    end
+  end
+  
+  -- Second, check if we want to retreat once out of ammo.
+  if self.retreatOnOutOfAmmo then
+    self:__Retreat(-1)
+    return
+  end
+  
+  -- Third, check if we want to RTZ once out of ammo.
+  if self.rtzOnOutOfAmmo then    
+    self:__RTZ(-1)
+  end
+
+  -- Get current task.
+  local task=self:GetTaskCurrent()
+  
+  if task then
+    if task.dcstask.id=="FireAtPoint" or task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
+      self:T(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
+      self:TaskCancel(task)
+    end
+  end
+    
+end
+
+
+--- On before "Rearm" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Coordinate Coordinate where to rearm.
+-- @param #number Formation Formation of the group.
+function ARMYGROUP:onbeforeRearm(From, Event, To, Coordinate, Formation)
+
+  local dt=nil
+  local allowed=true
+
+  -- Pause current mission.
+  if self.currentmission and self.currentmission>0 then
+    self:T(self.lid.."Rearm command but have current mission ==> Pausing mission!")
+    self:PauseMission()
+    dt=-0.1
+    allowed=false
+  end
+
+  -- Disengage.
+  if self:IsEngaging() then
+    self:T(self.lid.."Rearm command but currently engaging ==> Disengage!")
+    self:Disengage()
+    dt=-0.1
+    allowed=false
+  end
+  
+  -- Try again...
+  if dt then
+    self:T(self.lid..string.format("Trying Rearm again in %.2f sec", dt))
+    self:__Rearm(dt, Coordinate, Formation)
+    allowed=false
+  end
+  
+  return allowed
+end
+
 --- On after "Rearm" event.
 -- @param #ARMYGROUP self
 -- @param #string From From state.
@@ -671,6 +1180,9 @@ end
 -- @param #number Formation Formation of the group.
 function ARMYGROUP:onafterRearm(From, Event, To, Coordinate, Formation)
 
+  -- Debug info.
+  self:T(self.lid..string.format("Group send to rearm"))
+
   -- ID of current waypoint.
   local uid=self:GetWaypointCurrent().uid
   
@@ -679,6 +1191,78 @@ function ARMYGROUP:onafterRearm(From, Event, To, Coordinate, Formation)
   
   -- Set if we want to resume route after reaching the detour waypoint.
   wp.detour=0
+
+end
+
+--- On after "Rearmed" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function ARMYGROUP:onafterRearmed(From, Event, To)
+  self:T(self.lid.."Group rearmed")
+
+  -- Check group done.
+  self:_CheckGroupDone(1)      
+end
+
+--- On after "RTZ" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE Zone The zone to return to.
+-- @param #number Formation Formation of the group.
+function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
+  
+  -- Zone.
+  local zone=Zone or self.homezone
+  
+  if zone then
+  
+    if self:IsInZone(zone) then
+      self:Returned()
+    else
+  
+      -- Debug info.
+      self:T(self.lid..string.format("RTZ to Zone %s", zone:GetName()))  
+      
+      local Coordinate=zone:GetRandomCoordinate()
+
+      -- ID of current waypoint.
+      local uid=self:GetWaypointCurrentUID()
+      
+      -- Add waypoint after current.
+      local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
+      
+      -- Set if we want to resume route after reaching the detour waypoint.
+      wp.detour=0
+      
+    end
+        
+  else
+    self:T(self.lid.."ERROR: No RTZ zone given!")
+  end
+
+end
+
+--- On after "Returned" event.
+-- @param #ARMYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function ARMYGROUP:onafterReturned(From, Event, To)
+
+  -- Debug info.
+  self:T(self.lid..string.format("Group returned"))
+  
+  if self.legion then
+    -- Debug info.
+    self:T(self.lid..string.format("Adding group back to warehouse stock"))
+    
+    -- Add asset back in 10 seconds.
+    self.legion:__AddAsset(10, self.group, 1)
+  end
 
 end
 
@@ -758,6 +1342,9 @@ function ARMYGROUP:onafterRetreat(From, Event, To, Zone, Formation)
   
   -- Set if we want to resume route after reaching the detour waypoint.
   wp.detour=0
+  
+  -- Cancel all missions.
+  self:CancelAllMissions()
 
 end
 
@@ -785,16 +1372,38 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Group#GROUP Group the group to be engaged.
-function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target)
+-- @param #number Speed Speed in knots.
+-- @param #string Formation Formation used in the engagement. Default `ENUMS.Formation.Vehicle.Vee`.
+function ARMYGROUP:onbeforeEngageTarget(From, Event, To, Target, Speed, Formation)
+
+  local dt=nil
+  local allowed=true
 
   local ammo=self:GetAmmoTot()
   
   if ammo.Total==0 then
-    self:E(self.lid.."WARNING: Cannot engage TARGET because no ammo left!")
+    self:T(self.lid.."WARNING: Cannot engage TARGET because no ammo left!")
     return false
   end
+  
+  -- Pause current mission.
+  local mission=self:GetMissionCurrent()
+  
+  if mission and mission.type~=AUFTRAG.Type.GROUNDATTACK then
+    self:T(self.lid.."Engage command but have current mission ==> Pausing mission!")
+    self:PauseMission()
+    dt=-0.1
+    allowed=false
+  end  
 
-  return true
+  -- Try again...
+  if dt then
+    self:T(self.lid..string.format("Trying Engage again in %.2f sec", dt))
+    self:__EngageTarget(dt, Target)
+    allowed=false
+  end
+
+  return allowed
 end
 
 --- On after "EngageTarget" event.
@@ -803,28 +1412,43 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Group#GROUP Group the group to be engaged.
-function ARMYGROUP:onafterEngageTarget(From, Event, To, Target)
+-- @param #number Speed Attack speed in knots.
+-- @param #string Formation Formation used in the engagement. Default `ENUMS.Formation.Vehicle.Vee`.
+function ARMYGROUP:onafterEngageTarget(From, Event, To, Target, Speed, Formation)
+  self:T(self.lid.."Engaging Target")
 
+  -- Make sure this is a target.
   if Target:IsInstanceOf("TARGET") then
     self.engage.Target=Target
   else
     self.engage.Target=TARGET:New(Target)
   end
-
+ 
   -- Target coordinate.
-  self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate())
-  
-  -- TODO: Backup current ROE and alarm state and reset after disengage.
+  self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate()) 
+ 
+  -- Get a coordinate close to the target.
+  local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+
+  -- Backup ROE and alarm state.
+  self.engage.roe=self:GetROE()
+  self.engage.alarmstate=self:GetAlarmstate()
   
   -- Switch ROE and alarm state.
   self:SwitchAlarmstate(ENUMS.AlarmState.Auto)
-  self:SwitchROE(ENUMS.ROE.WeaponFree)
+  self:SwitchROE(ENUMS.ROE.OpenFire)
 
   -- ID of current waypoint.
   local uid=self:GetWaypointCurrent().uid
   
+  -- Set formation.
+  self.engage.Formation=Formation or ENUMS.Formation.Vehicle.Vee
+  
+  -- Set speed.
+  self.engage.Speed=Speed
+  
   -- Add waypoint after current.
-  self.engage.Waypoint=self:AddWaypoint(self.engage.Coordinate, nil, uid, Formation, true)
+  self.engage.Waypoint=self:AddWaypoint(intercoord, self.engage.Speed, uid, self.engage.Formation, true)
   
   -- Set if we want to resume route after reaching the detour waypoint.
   self.engage.Waypoint.detour=1
@@ -836,35 +1460,51 @@ end
 function ARMYGROUP:_UpdateEngageTarget()
 
   if self.engage.Target and self.engage.Target:IsAlive() then
-  
-    --env.info("FF Update Engage Target "..self.engage.Target:GetName())
 
-    local vec3=self.engage.Target:GetCoordinate():GetVec3()
+    -- Get current position vector.
+    local vec3=self.engage.Target:GetVec3()
+    
+    if vec3 then
   
-    local dist=UTILS.VecDist2D(vec3, self.engage.Coordinate:GetVec3())
+      -- Distance to last known position of target.
+      local dist=UTILS.VecDist3D(vec3, self.engage.Coordinate:GetVec3())
+      
+      -- Check if target moved more than 100 meters.
+      if dist>100 then
+      
+        --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
+      
+        -- Update new position.
+        self.engage.Coordinate:UpdateFromVec3(vec3)
+  
+        -- ID of current waypoint.
+        local uid=self:GetWaypointCurrent().uid
+      
+        -- Remove current waypoint
+        self:RemoveWaypointByID(self.engage.Waypoint.uid)
+        
+        local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
     
-    if dist>100 then
-    
-      --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
-    
-      self.engage.Coordinate:UpdateFromVec3(vec3)
+          -- Add waypoint after current.
+        self.engage.Waypoint=self:AddWaypoint(intercoord, self.engage.Speed, uid, self.engage.Formation, true)
+      
+        -- Set if we want to resume route after reaching the detour waypoint.
+        self.engage.Waypoint.detour=0      
+      
+      end
+      
+    else
 
-      -- ID of current waypoint.
-      local uid=self:GetWaypointCurrent().uid
-    
-      -- Remove current waypoint
-      self:RemoveWaypointByID(self.engage.Waypoint.uid)
-  
-        -- Add waypoint after current.
-      self.engage.Waypoint=self:AddWaypoint(self.engage.Coordinate, nil, uid, Formation, true)
-    
-      -- Set if we want to resume route after reaching the detour waypoint.
-      self.engage.Waypoint.detour=0      
+      -- Could not get position of target (not alive any more?) ==> Disengage.
+      self:Disengage()
     
     end
     
   else
+  
+    -- Target not alive any more ==> Disengage.
     self:Disengage()
+    
   end
 
 end
@@ -875,19 +1515,28 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARMYGROUP:onafterDisengage(From, Event, To)
-  -- TODO: Reset ROE and alarm state.
-  self:_CheckGroupDone(1)    
-end
+  self:T(self.lid.."Disengage Target")
 
---- On after "Rearmed" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function ARMYGROUP:onafterRearmed(From, Event, To)
+  -- Restore previous ROE and alarm state.
+  self:SwitchROE(self.engage.roe)
+  self:SwitchAlarmstate(self.engage.alarmstate)
+  
+  -- Get current task
+  local task=self:GetTaskCurrent()
+  
+  -- Get if current task is ground attack.
+  if task and task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK then
+    self:T(self.lid.."Disengage with current task GROUNDATTACK ==> Task Done!")
+    self:TaskDone(task)
+  end    
+  
+  -- Remove current waypoint
+  if self.engage.Waypoint then
+    self:RemoveWaypointByID(self.engage.Waypoint.uid)    
+  end
 
+  -- Check group is done
   self:_CheckGroupDone(1)
-    
 end
 
 --- On after "DetourReached" event.
@@ -896,7 +1545,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARMYGROUP:onafterDetourReached(From, Event, To)
-  self:I(self.lid.."Group reached detour coordinate.")
+  self:T(self.lid.."Group reached detour coordinate")
 end
 
 
@@ -906,6 +1555,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARMYGROUP:onafterFullStop(From, Event, To)
+
+  -- Debug info.
+  self:T(self.lid..string.format("Full stop!"))
 
   -- Get current position.
   local pos=self:GetCoordinate()
@@ -927,129 +1579,12 @@ end
 -- @param #number Formation Formation.
 function ARMYGROUP:onafterCruise(From, Event, To, Speed, Formation)
 
-  self:__UpdateRoute(-1, nil, Speed, Formation)
+  -- Not waiting anymore.
+  self.Twaiting=nil
+  self.dTwait=nil
 
-end
+  self:__UpdateRoute(-0.1, nil, nil, Speed, Formation)
 
---- On after "Stop" event.
--- @param #ARMYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function ARMYGROUP:onafterStop(From, Event, To)
-
-  -- Handle events:
-  self:UnHandleEvent(EVENTS.Birth)
-  self:UnHandleEvent(EVENTS.Dead)
-  self:UnHandleEvent(EVENTS.RemoveUnit)
-  
-  -- Call OPSGROUP function.
-  self:GetParent(self).onafterStop(self, From, Event, To)  
-  
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Events DCS
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Event function handling the birth of a unit.
--- @param #ARMYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function ARMYGROUP:OnEventBirth(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-    
-    if self.respawning then
-    
-      local function reset()
-        self.respawning=nil
-      end
-      
-      -- Reset switch in 1 sec. This should allow all birth events of n>1 groups to have passed.
-      -- TODO: Can I do this more rigorously?
-      self:ScheduleOnce(1, reset)
-    
-    else
-          
-      -- Get element.
-      local element=self:GetElementByName(unitname)
-
-      -- Set element to spawned state.
-      self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", element.name))            
-      self:ElementSpawned(element)
-      
-    end    
-    
-  end
-
-end
-
---- Event function handling the crash of a unit.
--- @param #ARMYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function ARMYGROUP:OnEventDead(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    self:T(self.lid..string.format("EVENT: Unit %s dead!", EventData.IniUnitName))
-    
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-
-    -- Get element.
-    local element=self:GetElementByName(unitname)
-
-    if element then
-      self:T(self.lid..string.format("EVENT: Element %s dead ==> destroyed", element.name))
-      self:ElementDestroyed(element)
-    end
-    
-  end
-
-end
-
---- Event function handling when a unit is removed from the game.
--- @param #ARMYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function ARMYGROUP:OnEventRemoveUnit(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-
-    -- Get element.
-    local element=self:GetElementByName(unitname)
-
-    if element then
-      self:T(self.lid..string.format("EVENT: Element %s removed ==> dead", element.name))
-      self:ElementDead(element)
-    end
-
-  end
-
-end
-
---- Event function handling when a unit is hit.
--- @param #ARMYGROUP self
--- @param Core.Event#EVENTDATA EventData Event data.
-function ARMYGROUP:OnEventHit(EventData)
-
-  -- Check that this is the right group.
-  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
-    local unit=EventData.IniUnit
-    local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName
-    
-    -- TODO: suppression
-
-  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1061,25 +1596,32 @@ end
 -- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint.
 -- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
 -- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Formation Formation the group will use.
+-- @param #string Formation Formation the group will use.
 -- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation, Updateroute)
-
+  self:T(self.lid..string.format("AddWaypoint Formation = %s",tostring(Formation) or "none"))
+  -- Create coordinate.
   local coordinate=self:_CoordinateFromObject(Coordinate)
 
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
 
-  -- Check if final waypoint is still passed.  
-  if wpnumber>self.currentwp then
-    self.passedfinalwp=false
-  end
-  
   -- Speed in knots.
   Speed=Speed or self:GetSpeedCruise()
-
-  -- Create a Naval waypoint.
+  
+  -- Formation. 
+  if not Formation then
+    if self.formationPerma then
+      Formation = self.formationPerma
+    elseif self.option.Formation then
+      Formation = self.option.Formation
+    else
+      Formation = "On Road"
+    end
+  end
+  
+  -- Create a Ground waypoint.
   local wp=coordinate:WaypointGround(UTILS.KnotsToKmph(Speed), Formation)
   
   -- Create waypoint data table.
@@ -1101,7 +1643,7 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   
   -- Update route.
   if Updateroute==nil or Updateroute==true then
-    self:_CheckGroupDone(1)
+    self:__UpdateRoute(-0.01)
   end
   
   return waypoint
@@ -1109,28 +1651,24 @@ end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #ARMYGROUP self
+-- @param #table Template Template used to init the group. Default is `self.template`.
 -- @return #ARMYGROUP self
-function ARMYGROUP:_InitGroup()
+function ARMYGROUP:_InitGroup(Template)
 
   -- First check if group was already initialized.
   if self.groupinitialized then
-    self:E(self.lid.."WARNING: Group was already initialized!")
+    self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
     return
   end
 
   -- Get template of group.
-  self.template=self.group:GetTemplate()
-
-  -- Define category.
-  self.isAircraft=false
-  self.isNaval=false
-  self.isGround=true
+  local template=Template or self:_GetTemplate()
   
   -- Ground are always AI.
   self.isAI=true
   
   -- Is (template) group late activated.
-  self.isLateActivated=self.template.lateActivation
+  self.isLateActivated=template.lateActivation
   
   -- Ground groups cannot be uncontrolled.
   self.isUncontrolled=false
@@ -1153,7 +1691,7 @@ function ARMYGROUP:_InitGroup()
   self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
   
   -- Set default formation from first waypoint.
-  self.optionDefault.Formation=self:GetWaypoint(1).action
+  self.optionDefault.Formation=template.route.points[1].action --self:GetWaypoint(1).action
 
   -- Default TACAN off.
   self:SetDefaultTACAN(nil, nil, nil, nil, true)
@@ -1162,65 +1700,22 @@ function ARMYGROUP:_InitGroup()
   -- Units of the group.
   local units=self.group:GetUnits()
   
-  for _,_unit in pairs(units) do
-    local unit=_unit --Wrapper.Unit#UNIT
-
-    -- TODO: this is wrong when grouping is used!
-    local unittemplate=unit:GetTemplate()
-    
-    local element={} --#ARMYGROUP.Element
-    element.name=unit:GetName()
-    element.unit=unit    
-    element.status=OPSGROUP.ElementStatus.INUTERO
-    element.typename=unit:GetTypeName()
-    element.skill=unittemplate.skill or "Unknown"
-    element.ai=true
-    element.category=element.unit:GetUnitCategory()
-    element.categoryname=element.unit:GetCategoryName()
-    element.size, element.length, element.height, element.width=unit:GetObjectSize()
-    element.ammo0=self:GetAmmoUnit(unit, false)
-    element.life0=unit:GetLife0()
-    element.life=element.life0
-
-    -- Debug text.
-    if self.verbose>=2 then
-      local text=string.format("Adding element %s: status=%s, skill=%s, life=%.3f category=%s (%d), size: %.1f (L=%.1f H=%.1f W=%.1f)",
-      element.name, element.status, element.skill, element.life, element.categoryname, element.category, element.size, element.length, element.height, element.width)
-      self:I(self.lid..text)
-    end
+  -- DCS group.
+  local dcsgroup=Group.getByName(self.groupname)
+  local size0=dcsgroup:getInitialSize()
   
-    -- Add element to table.
-    table.insert(self.elements, element)
-    
-    -- Get Descriptors.
-    self.descriptors=self.descriptors or unit:GetDesc()
-    
-    -- Set type name.
-    self.actype=self.actype or unit:GetTypeName()
-    
-    if unit:IsAlive() then    
-      -- Trigger spawned event.
-      self:ElementSpawned(element)
-    end
-    
+  -- Quick check.
+  if #units~=size0 then
+    self:T(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
   end
+  
+  -- Add elemets.
+  for _,unit in pairs(units) do
+    local unitname=unit:GetName()
+    self:_AddElementByName(unitname)
+  end
+  
 
-  -- Debug info.
-  if self.verbose>=1 then
-    local text=string.format("Initialized Army Group %s:\n", self.groupname)
-    text=text..string.format("Unit type    = %s\n", self.actype)
-    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
-    text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
-    text=text..string.format("Elements     = %d\n", #self.elements)
-    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-    text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
-    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles)
-    text=text..string.format("FSM state    = %s\n", self:GetState())
-    text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
-    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
-    self:I(self.lid..text)
-  end
-    
   -- Init done.
   self.groupinitialized=true
   
@@ -1241,8 +1736,9 @@ function ARMYGROUP:SwitchFormation(Formation, Permanently, NoRouteUpdate)
 
   if self:IsAlive() or self:IsInUtero() then
   
-    Formation=Formation or self.optionDefault.Formation
-
+    Formation=Formation or (self.optionDefault.Formation or "Off road")
+    Permanently = Permanently or false
+    
     if Permanently then
       self.formationPerma=Formation
     else
@@ -1250,10 +1746,10 @@ function ARMYGROUP:SwitchFormation(Formation, Permanently, NoRouteUpdate)
     end    
     
     -- Set current formation.
-    self.option.Formation=Formation
+    self.option.Formation=Formation or "Off road"
     
     if self:IsInUtero() then
-        self:T(self.lid..string.format("Will switch formation to %s (permanently=%s) when group is spawned", self.option.Formation, tostring(Permanently)))
+        self:T(self.lid..string.format("Will switch formation to %s (permanently=%s) when group is spawned", tostring(self.option.Formation), tostring(Permanently)))
     else
     
       -- Update route with the new formation.
@@ -1263,7 +1759,7 @@ function ARMYGROUP:SwitchFormation(Formation, Permanently, NoRouteUpdate)
       end
       
       -- Debug info.
-      self:T(self.lid..string.format("Switching formation to %s (permanently=%s)", self.option.Formation, tostring(Permanently)))
+      self:T(self.lid..string.format("Switching formation to %s (permanently=%s)", tostring(self.option.Formation), tostring(Permanently)))
       
     end
 
@@ -1276,7 +1772,54 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Find the neares ammo supply group within a given radius.
+-- @param #ARMYGROUP self
+-- @param #number Radius Search radius in NM. Default 30 NM.
+-- @return Wrapper.Group#GROUP Closest ammo supplying group or `nil` if no group is in the given radius.
+-- @return #number Distance to closest group in meters.
+function ARMYGROUP:FindNearestAmmoSupply(Radius)
 
+  -- Radius in meters.
+  Radius=UTILS.NMToMeters(Radius or 30)
+
+  -- Current positon.
+  local coord=self:GetCoordinate()
+  
+  -- Get my coalition.
+  local myCoalition=self:GetCoalition()
+
+  -- Scanned units.
+  local units=coord:ScanUnits(Radius)
+
+  -- Find closest 
+  local dmin=math.huge
+  local truck=nil --Wrapper.Unit#UNIT
+  for _,_unit in pairs(units.Set) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    -- Check coaliton and if unit can supply ammo.
+    if unit:IsAlive() and unit:GetCoalition()==myCoalition and unit:IsAmmoSupply() and unit:GetVelocityKMH()<1 then
+
+      -- Distance.
+      local d=coord:Get2DDistance(unit:GetCoord())
+
+      -- Check if distance is smaller.
+      if d<dmin then
+        dmin=d
+        truck=unit
+        -- Debug message.
+        self:T(self.lid..string.format("Ammo truck %s [%s] at dist=%d meters", unit:GetName(), unit:GetTypeName(), d))
+      end
+      
+    end
+  end
+
+  if truck then
+    return truck:GetGroup(), dmin
+  end
+
+  return nil, nil
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -471,6 +471,22 @@ do -- Types
   --@field #boolean lateActivated
   --@field #boolean uncontrolled
 
+  --- DCS template data structure.
+  -- @type Template
+  -- @field #boolean uncontrolled Aircraft is uncontrolled.
+  -- @field #boolean lateActivation Group is late activated.
+  -- @field #number x 2D Position on x-axis in meters.
+  -- @field #number y 2D Position on y-axis in meters.
+  -- @field #table units Unit list.
+  -- 
+  
+  --- Unit data structure.
+  --@type Template.Unit
+  --@field #string name Name of the unit.
+  --@field #number x
+  --@field #number y
+  --@field #number alt
+
 end --
 
 
@@ -496,6 +512,10 @@ do -- Object
   -- @field #Box3 box bounding box of collision geometry
   
   --- @function [parent=#Object] isExist
+  -- @param #Object self
+  -- @return #boolean
+
+  --- @function [parent=#Object] isActive
   -- @param #Object self
   -- @return #boolean
   
@@ -1130,6 +1150,11 @@ do -- Unit
   -- @function [parent=#Unit] getAmmo
   -- @param #Unit self
   -- @return #Unit.Ammo
+
+  --- Returns the number of infantry that can be embark onto the aircraft. Only returns a value if run on airplanes or helicopters. Returns nil if run on ground or ship units.
+  -- @function [parent=#Unit] getDescentCapacity
+  -- @param #Unit self
+  -- @return #number Number of soldiers that embark.
   
   --- Returns the unit sensors. 
   -- @function [parent=#Unit] getSensors

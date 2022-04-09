@@ -23,7 +23,6 @@
 -- @module Functional.FOX
 -- @image Functional_FOX.png
 
-
 --- FOX class.
 -- @type FOX
 -- @field #string ClassName Name of the class.
@@ -47,8 +46,7 @@
 -- @field #number dt10 Time step [sec] for missile position updates if distance to target > 10 km and < 50 km. Default 1 sec.
 -- @field #number dt05 Time step [sec] for missile position updates if distance to target > 5 km and < 10 km. Default 0.5 sec.
 -- @field #number dt01 Time step [sec] for missile position updates if distance to target > 1 km and < 5 km. Default 0.1 sec.
--- @field #number dt00 Time step [sec] for missile position updates if distance to target < 1 km. Default 0.01 sec.
--- @field #boolean 
+-- @field #number dt00 Time step [sec] for missile position updates if distance to target < 1 km. Default 0.01 sec. 
 -- @extends Core.Fsm#FSM
 
 --- Fox 3!
