@@ -124,6 +124,7 @@
 --       self.SRSPath = "E:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
 --       self.SRSchannel = 300 -- radio channel
 --       self.SRSModulation = radio.modulation.AM -- modulation
+--       self.SRSport = 5002  -- and SRS port
 --       --
 --       self.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection --shagrat
 --       self.wetfeettemplate = "man in floating thingy" -- if you use a mod to have a pilot in a rescue float, put the template name in here for wet feet spawns. Note: in conjunction with csarUsePara this might create dual ejected pilots in edge cases.
@@ -259,7 +260,7 @@ CSAR.AircraftType["AH-64D_BLK_II"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.4d"
+CSAR.version="1.0.4e"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -413,6 +414,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.SRSPath = "E:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your server(!)
   self.SRSchannel = 300 -- radio channel
   self.SRSModulation = radio.modulation.AM -- modulation
+  self.SRSport = 5002 -- port
   
   ------------------------
   --- Pseudo Functions ---
@@ -1523,6 +1525,7 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak, _overrid
     local modulation = self.SRSModulation
     local channel = self.SRSchannel
     local msrs = MSRS:New(path,channel,modulation)
+    msrs:SetPort(self.SRSport)
     msrs:PlaySoundText(srstext, 2)
   end
   return self

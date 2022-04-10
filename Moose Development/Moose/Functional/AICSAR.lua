@@ -145,7 +145,7 @@
 --           
 -- Switch on radio transmissions via **either** SRS **or** "normal" DCS radio e.g. like so:
 -- 
---          my_aicsar:SetSRSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",270,radio.modulation.AM)
+--          my_aicsar:SetSRSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",270,radio.modulation.AM,5002)
 --         
 -- or         
 --          
@@ -159,7 +159,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.0.5",
+  version = "0.0.6",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -183,6 +183,7 @@ AICSAR = {
   SRSPath = "\\",
   SRSModulation = radio.modulation.AM,
   SRSSoundPath = nil, -- defaults to "l10n/DEFAULT/", i.e. add messages via "Sount to..." in the ME
+  SRSPort = 5002,
   DCSRadio = false,
   DCSFrequency = 243,
   DCSModulation = radio.modulation.AM,
@@ -310,6 +311,7 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   self.SRSPath = "\\"
   self.SRSModulation = radio.modulation.AM
   self.SRSSoundPath = nil -- defaults to "l10n/DEFAULT/", i.e. add messages via "Sound to..." in the ME
+  self.SRSPort = 5002
   
   -- DCS Radio - add messages via "Sound to..." in the ME
   self.DCSRadio = false
@@ -456,8 +458,9 @@ end
 -- @param #number Frequency Defaults to 243 (guard)
 -- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM
 -- @param #string SoundPath Where to find the audio files. Defaults to nil, i.e. add messages via "Sound to..." in the Mission Editor.
+-- @param #number Port Port of the SRS, defaults to 5002.
 -- @return #AICSAR self
-function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath)
+function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath,Port)
   self:T(self.lid .. "SetSRSRadio")
   self:T(self.lid .. "SetSRSRadio to "..tostring(OnOff))
   self.SRSRadio = OnOff and true
@@ -465,8 +468,10 @@ function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath)
   self.SRSPath = Path or "c:\\"
   self.SRSModulation = Modulation or radio.modulation.AM
   self.SRSSoundPath = SoundPath or nil -- defaults to "l10n/DEFAULT/", i.e. add messages by "Sound to..." in the ME
+  self.SRSPort = Port or 5002
   if OnOff then
     self.SRS = MSRS:New(Path,Frequency,Modulation)
+    self.SRS:SetPort(self.SRSPort)
   end
   return self
 end
