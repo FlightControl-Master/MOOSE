@@ -212,6 +212,7 @@ end
 -- @return #MSRS self
 function MSRS:SetPort(Port)
   self.port=Port or 5002
+  return self
 end
 
 --- Get port.
@@ -227,6 +228,7 @@ end
 -- @return #MSRS self
 function MSRS:SetCoalition(Coalition)
   self.coalition=Coalition or 0
+  return self
 end
 
 --- Get coalition.
