@@ -106,6 +106,10 @@
 -- 
 -- Use @{#MSRS.SetCoordinate} to define the origin from where the transmission is broadcasted.
 --
+-- ## Set SRS Port
+-- 
+-- Use @{#MSRS.SetPort} to define the SRS port. Defaults to 5002.
+--
 -- @field #MSRS
 MSRS = {
   ClassName      =     "MSRS",
