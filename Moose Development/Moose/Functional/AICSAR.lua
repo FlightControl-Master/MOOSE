@@ -159,7 +159,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.0.7",
+  version = "0.0.8",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -467,7 +467,7 @@ function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath,Port)
   self.SRSFrequency = Frequency or 243
   self.SRSPath = Path or "c:\\"
   self.SRSModulation = Modulation or radio.modulation.AM
-  local soundpath = os.getenv('TMP') .. "\\DCS\\Mission\\l10n\DEFAULT" -- defaults to "l10n/DEFAULT/", i.e. add messages by "Sound to..." in the ME
+  local soundpath = os.getenv('TMP') .. "\\DCS\\Mission\\l10n\\DEFAULT" -- defaults to "l10n/DEFAULT/", i.e. add messages by "Sound to..." in the ME
   self.SRSSoundPath = SoundPath or soundpath
   self.SRSPort = Port or 5002
   if OnOff then
