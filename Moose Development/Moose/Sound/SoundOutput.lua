@@ -189,7 +189,11 @@ do -- Sound File
     
     -- Init path.
     self.path=Path or "l10n/DEFAULT/"
-        
+    
+    if not Path and self.useSRS then -- use path to mission temp dir
+      self.path = os.getenv('TMP') .. "\\DCS\\Mission\\l10n\DEFAULT"
+    end    
+    
     -- Remove (back)slashes.
     local nmax=1000 ; local n=1
     while (self.path:sub(-1)=="/" or self.path:sub(-1)==[[\]]) and n<=nmax do
