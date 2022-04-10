@@ -109,7 +109,7 @@
 -- ## Set SRS Port
 -- 
 -- Use @{#MSRS.SetPort} to define the SRS port. Defaults to 5002.
--- 
+--
 -- @field #MSRS
 MSRS = {
   ClassName      =     "MSRS",
@@ -212,6 +212,7 @@ end
 -- @return #MSRS self
 function MSRS:SetPort(Port)
   self.port=Port or 5002
+  return self
 end
 
 --- Get port.
@@ -227,6 +228,7 @@ end
 -- @return #MSRS self
 function MSRS:SetCoalition(Coalition)
   self.coalition=Coalition or 0
+  return self
 end
 
 --- Get coalition.
@@ -395,7 +397,7 @@ function MSRS:PlaySoundFile(Soundfile, Delay)
     local command=self:_GetCommand()
     
     -- Append file.
-    command=command.." --file="..tostring(soundfile)
+    command=command..' --file="'..tostring(soundfile)..'"'
     
     self:_ExecCommand(command)
     
@@ -661,12 +663,12 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   --local command=string.format("%s --freqs=%s --modulations=%s --coalition=%d --port=%d --volume=%.2f --speed=%d", exe, freqs, modus, coal, port, volume, speed)
 
   -- Command from orig STTS script. Works better for some unknown reason!
-  local command=string.format("start /min \"\" /d \"%s\" /b \"%s\" -f %s -m %s -c %s -p %s -n \"%s\" -h", path, exe, freqs, modus, coal, port, "ROBOT")
+  --local command=string.format("start /min \"\" /d \"%s\" /b \"%s\" -f %s -m %s -c %s -p %s -n \"%s\" -h", path, exe, freqs, modus, coal, port, "ROBOT")
   
   --local command=string.format('start /b "" /d "%s" "%s" -f %s -m %s -c %s -p %s -n "%s" > bla.txt', path, exe, freqs, modus, coal, port, "ROBOT")
   
   -- Command.
-  local command=string.format('%s/%s -f %s -m %s -c %s -p %s -n "%s"', path, exe, freqs, modus, coal, port, "ROBOT")
+  local command=string.format('"%s\\%s" -f %s -m %s -c %s -p %s -n "%s"', path, exe, freqs, modus, coal, port, "ROBOT")
 
   -- Set voice or gender/culture.
   if voice then
@@ -675,7 +677,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   else
     -- Add gender.
     if gender and gender~="female" then
-      command=command..string.format(" --gender=%s", tostring(gender))
+      command=command..string.format(" -g %s", tostring(gender))
     end
     -- Add culture.
     if culture and culture~="en-GB" then
