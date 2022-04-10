@@ -159,7 +159,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.0.6",
+  version = "0.0.7",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -467,7 +467,8 @@ function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath,Port)
   self.SRSFrequency = Frequency or 243
   self.SRSPath = Path or "c:\\"
   self.SRSModulation = Modulation or radio.modulation.AM
-  self.SRSSoundPath = SoundPath or nil -- defaults to "l10n/DEFAULT/", i.e. add messages by "Sound to..." in the ME
+  local soundpath = os.getenv('TMP') .. "\\DCS\\Mission\\l10n\DEFAULT" -- defaults to "l10n/DEFAULT/", i.e. add messages by "Sound to..." in the ME
+  self.SRSSoundPath = SoundPath or soundpath
   self.SRSPort = Port or 5002
   if OnOff then
     self.SRS = MSRS:New(Path,Frequency,Modulation)
@@ -551,7 +552,8 @@ function AICSAR:OnEventLandingAfterEjection(EventData)
       MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
     end
     if self.SRSRadio then
-      local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+      local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+      sound:SetPlayWithSRS(true)
       self.SRS:PlaySoundFile(sound,2)
     elseif self.DCSRadio then
       self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -805,7 +807,8 @@ function AICSAR:onafterPilotDown(From, Event, To, Coordinate, InReach)
       MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
     end
     if self.SRSRadio then
-      local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+      local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+      sound:SetPlayWithSRS(true)
       self.SRS:PlaySoundFile(sound,2)
     elseif self.DCSRadio then
       self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -818,7 +821,8 @@ function AICSAR:onafterPilotDown(From, Event, To, Coordinate, InReach)
       MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
     end
     if self.SRSRadio then
-      local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+      local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+      sound:SetPlayWithSRS(true)
       self.SRS:PlaySoundFile(sound,2)
     elseif self.DCSRadio then
       self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -840,7 +844,8 @@ function AICSAR:onafterPilotKIA(From, Event, To)
     MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
   end
   if self.SRSRadio then
-    local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+    local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+    sound:SetPlayWithSRS(true)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -863,7 +868,8 @@ function AICSAR:onafterHeloDown(From, Event, To, Helo, Index)
     MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
   end
   if self.SRSRadio then
-    local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+    local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+    sound:SetPlayWithSRS(true)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -914,7 +920,8 @@ function AICSAR:onafterPilotRescued(From, Event, To)
     MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
   end
   if self.SRSRadio then
-    local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+    local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+    sound:SetPlayWithSRS(true)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -938,7 +945,8 @@ function AICSAR:onafterPilotPickedUp(From, Event, To, Helo, CargoTable, Index)
     MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
   end
   if self.SRSRadio then
-    local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+    local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+    sound:SetPlayWithSRS(true)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
