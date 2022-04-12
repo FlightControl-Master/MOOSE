@@ -1747,7 +1747,7 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           ret_val =  true
       end
       
-      if string.find(type_name, "AH-64D") then
+      if type_name == "AH-64D_BLK_II" then
          BASE:T(unit_name .. " front door(s) are open")
          ret_val =  true -- no doors on this one ;)
       end
