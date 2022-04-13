@@ -75,7 +75,7 @@ function TEXTANDSOUND:New(ClassName,Defaultlocale)
   initentry.Data = {}
   initentry.Locale = self.locale
   self.entries[self.locale] = initentry
-  self:I(self.lid .. "Instatiated.")
+  self:I(self.lid .. "Instantiated.")
   self:T({self.entries[self.locale]})
   return self
 end

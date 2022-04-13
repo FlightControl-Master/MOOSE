@@ -145,7 +145,7 @@
 --           
 -- Switch on radio transmissions via **either** SRS **or** "normal" DCS radio e.g. like so:
 -- 
---          my_aicsar:SetSRSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",270,radio.modulation.AM)
+--          my_aicsar:SetSRSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",270,radio.modulation.AM,5002)
 --         
 -- or         
 --          
@@ -159,7 +159,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.0.5",
+  version = "0.0.8",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -183,6 +183,7 @@ AICSAR = {
   SRSPath = "\\",
   SRSModulation = radio.modulation.AM,
   SRSSoundPath = nil, -- defaults to "l10n/DEFAULT/", i.e. add messages via "Sount to..." in the ME
+  SRSPort = 5002,
   DCSRadio = false,
   DCSFrequency = 243,
   DCSModulation = radio.modulation.AM,
@@ -310,6 +311,7 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   self.SRSPath = "\\"
   self.SRSModulation = radio.modulation.AM
   self.SRSSoundPath = nil -- defaults to "l10n/DEFAULT/", i.e. add messages via "Sound to..." in the ME
+  self.SRSPort = 5002
   
   -- DCS Radio - add messages via "Sound to..." in the ME
   self.DCSRadio = false
@@ -456,17 +458,21 @@ end
 -- @param #number Frequency Defaults to 243 (guard)
 -- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM
 -- @param #string SoundPath Where to find the audio files. Defaults to nil, i.e. add messages via "Sound to..." in the Mission Editor.
+-- @param #number Port Port of the SRS, defaults to 5002.
 -- @return #AICSAR self
-function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath)
+function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath,Port)
   self:T(self.lid .. "SetSRSRadio")
   self:T(self.lid .. "SetSRSRadio to "..tostring(OnOff))
   self.SRSRadio = OnOff and true
   self.SRSFrequency = Frequency or 243
   self.SRSPath = Path or "c:\\"
   self.SRSModulation = Modulation or radio.modulation.AM
-  self.SRSSoundPath = SoundPath or nil -- defaults to "l10n/DEFAULT/", i.e. add messages by "Sound to..." in the ME
+  local soundpath = os.getenv('TMP') .. "\\DCS\\Mission\\l10n\\DEFAULT" -- defaults to "l10n/DEFAULT/", i.e. add messages by "Sound to..." in the ME
+  self.SRSSoundPath = SoundPath or soundpath
+  self.SRSPort = Port or 5002
   if OnOff then
     self.SRS = MSRS:New(Path,Frequency,Modulation)
+    self.SRS:SetPort(self.SRSPort)
   end
   return self
 end
@@ -546,7 +552,8 @@ function AICSAR:OnEventLandingAfterEjection(EventData)
       MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
     end
     if self.SRSRadio then
-      local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+      local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+      sound:SetPlayWithSRS(true)
       self.SRS:PlaySoundFile(sound,2)
     elseif self.DCSRadio then
       self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -800,7 +807,8 @@ function AICSAR:onafterPilotDown(From, Event, To, Coordinate, InReach)
       MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
     end
     if self.SRSRadio then
-      local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+      local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+      sound:SetPlayWithSRS(true)
       self.SRS:PlaySoundFile(sound,2)
     elseif self.DCSRadio then
       self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -813,7 +821,8 @@ function AICSAR:onafterPilotDown(From, Event, To, Coordinate, InReach)
       MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
     end
     if self.SRSRadio then
-      local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+      local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+      sound:SetPlayWithSRS(true)
       self.SRS:PlaySoundFile(sound,2)
     elseif self.DCSRadio then
       self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -835,7 +844,8 @@ function AICSAR:onafterPilotKIA(From, Event, To)
     MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
   end
   if self.SRSRadio then
-    local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+    local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+    sound:SetPlayWithSRS(true)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -858,7 +868,8 @@ function AICSAR:onafterHeloDown(From, Event, To, Helo, Index)
     MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
   end
   if self.SRSRadio then
-    local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+    local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+    sound:SetPlayWithSRS(true)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -909,7 +920,8 @@ function AICSAR:onafterPilotRescued(From, Event, To)
     MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
   end
   if self.SRSRadio then
-    local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+    local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+    sound:SetPlayWithSRS(true)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
@@ -933,7 +945,8 @@ function AICSAR:onafterPilotPickedUp(From, Event, To, Helo, CargoTable, Index)
     MESSAGE:New(text,15,"AICSAR"):ToCoalition(self.coalition)
   end
   if self.SRSRadio then
-    local sound = SOUNDFILE:New(Soundfile,nil,Soundlength)
+    local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
+    sound:SetPlayWithSRS(true)
     self.SRS:PlaySoundFile(sound,2)
   elseif self.DCSRadio then
     self:DCSRadioBroadcast(Soundfile,Soundlength,text)
