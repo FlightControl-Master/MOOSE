@@ -3848,7 +3848,7 @@ end
     else
       local minheight = UTILS.MetersToFeet(self.minimumHoverHeight)
       local maxheight = UTILS.MetersToFeet(self.maximumHoverHeight)
-      text = string.format("Hover parameters (autoload/drop):\n - Min height %dm \n - Max height %dm \n - Max speed 6fts \n - In parameter: %s", minheight, maxheight, htxt)
+      text = string.format("Hover parameters (autoload/drop):\n - Min height %dft \n - Max height %dft \n - Max speed 6ftps \n - In parameter: %s", minheight, maxheight, htxt)
     end
     self:_SendMessage(text, 10, false, Group)
     return self
