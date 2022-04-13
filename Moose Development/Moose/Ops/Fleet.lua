@@ -25,23 +25,44 @@
 -- @field #string ClassName Name of the class.
 -- @field #number verbose Verbosity of output.
 -- @field Core.Set#SET_ZONE retreatZones Retreat zone set.
+-- @field #boolean pathfinding Set pathfinding on for all spawned navy groups.
 -- @extends Ops.Legion#LEGION
 
---- *I am not afraid of an Army of lions lead by a sheep; I am afraid of sheep lead by a lion* -- Alexander the Great
+--- *A fleet of British ships at war are the best negotiators.* -- Horatio Nelson
 --
 -- ===
 --
 -- # The FLEET Concept
 --
 -- A FLEET consists of one or multiple FLOTILLAs. These flotillas "live" in a WAREHOUSE that has a phyiscal struction (STATIC or UNIT) and can be captured or destroyed.
+-- 
+-- # Basic Setup
+-- 
+-- A new `FLEET` object can be created with the @{#FLEET.New}(`WarehouseName`, `FleetName`) function, where `WarehouseName` is the name of the static or unit object hosting the fleet
+-- and `FleetName` is the name you want to give the fleet. This must be *unique*!
+-- 
+--     myFleet=FLEET:New("myWarehouseName", "1st Fleet")
+--     myFleet:SetPortZone(ZonePort1stFleet)
+--     myFleet:Start()
+--     
+-- A fleet needs a *port zone*, which is set via the @{#FLEET.SetPortZone}(`PortZone`) function. This is the zone where the naval assets are spawned and return to.
+-- 
+-- Finally, the fleet needs to be started using the @{#FLEET.Start}() function. If the fleet is not started, it will not process any requests.
+-- 
+-- ## Adding Flotillas
+-- 
+-- Flotillas can be added via the @{#FLEET.AddFlotilla}(`Flotilla`) function. See @{Ops.Flotilla#FLOTILLA} for how to create a flotilla.
+-- 
+--     myFleet:AddFlotilla(FlotillaTiconderoga)
+--     myFleet:AddFlotilla(FlotillaPerry)
+--     
 --
 --
 -- @field #FLEET
 FLEET = {
   ClassName       = "FLEET",
-  verbose         =     0,
-  rearmingZones   =    {},
-  refuellingZones =    {}, 
+  verbose         =       0,
+  pathfinding     =   false,
 }
 
 --- Supply Zone.
@@ -59,7 +80,7 @@ FLEET.version="0.0.1"
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: .
+-- TODO: Add routes?
 -- DONE: Add weapon range.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -196,6 +217,15 @@ function FLEET:AddAssetToFlotilla(Flotilla, Nassets)
     self:E(self.lid.."ERROR: Flotilla does not exit!")
   end
 
+  return self
+end
+
+--- Set pathfinding for all spawned naval groups.
+-- @param #FLEET self
+-- @param #boolean Switch If `true`, pathfinding is used.
+-- @return #FLEET self
+function FLEET:SetPathfinding(Switch)
+  self.pathfinding=Switch
   return self
 end
 

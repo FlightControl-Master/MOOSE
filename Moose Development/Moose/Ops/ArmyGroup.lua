@@ -23,7 +23,6 @@
 -- ### Author: **funkyfranky**
 -- 
 -- ==
--- 
 -- @module Ops.ArmyGroup
 -- @image OPS_ArmyGroup.png
 
@@ -38,7 +37,7 @@
 -- @field Core.Set#SET_ZONE retreatZones Set of retreat zones.
 -- @extends Ops.OpsGroup#OPSGROUP
 
---- *Your soul may belong to Jesus, but your ass belongs to the marines* -- Eugene B Sledge
+--- *Your soul may belong to Jesus, but your ass belongs to the marines.* -- Eugene B Sledge
 --
 -- ===
 -- 

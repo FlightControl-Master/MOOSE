@@ -22,13 +22,13 @@
 -- @field Ops.OpsGroup#OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
 -- @extends Ops.Cohort#COHORT
 
---- *Some cool cohort quote* -- Known Author
+--- *No captain can do very wrong if he places his ship alongside that of an enemy.* -- Horation Nelson
 --
 -- ===
 --
 -- # The FLOTILLA Concept
 -- 
--- A FLOTILLA is essential part of a FLEET.
+-- A FLOTILLA is an essential part of a FLEET.
 --
 --
 --
@@ -64,6 +64,7 @@ function FLOTILLA:New(TemplateGroupName, Ngroups, FlotillaName)
   -- Inherit everything from COHORT class.
   local self=BASE:Inherit(self, COHORT:New(TemplateGroupName, Ngroups, FlotillaName)) -- #FLOTILLA
 
+  self.ammo=self:_CheckAmmo()
 
   return self
 end
@@ -88,41 +89,6 @@ end
 -- @return Ops.Fleet#FLEET The fleet.
 function FLOTILLA:GetFleet()
   return self.legion
-end
-
---- Add a weapon range for ARTY auftrag.
--- @param #FLOTILLA self
--- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
--- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
--- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
--- @return #FLOTILLA self
-function FLOTILLA:AddWeaponRange(RangeMin, RangeMax, BitType)
-
-  RangeMin=UTILS.NMToMeters(RangeMin or 0)
-  RangeMax=UTILS.NMToMeters(RangeMax or 10)
-
-  local weapon={} --Ops.OpsGroup#OPSGROUP.WeaponData
-
-  weapon.BitType=BitType or ENUMS.WeaponFlag.Auto
-  weapon.RangeMax=RangeMax
-  weapon.RangeMin=RangeMin
-
-  self.weaponData=self.weaponData or {}
-  self.weaponData[tostring(weapon.BitType)]=weapon
-  
-  -- Debug info.
-  self:T(self.lid..string.format("Adding weapon data: Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapon.BitType), weapon.RangeMin, weapon.RangeMax))
-  
-  if self.verbose>=2 then
-    local text="Weapon data:"
-    for _,_weapondata in pairs(self.weaponData) do
-      local weapondata=_weapondata
-      text=text..string.format("\n- Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapondata.BitType), weapondata.RangeMin, weapondata.RangeMax)
-    end
-    self:I(self.lid..text)
-  end
-
-  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -157,7 +123,6 @@ function FLOTILLA:onafterStatus(From, Event, To)
     local fsmstate=self:GetState()
   
     local callsign=self.callsignName and UTILS.GetCallsignName(self.callsignName) or "N/A"
-    local modex=self.modex and self.modex or -1
     local skill=self.skill and tostring(self.skill) or "N/A"
     
     local NassetsTot=#self.assets
@@ -168,8 +133,8 @@ function FLOTILLA:onafterStatus(From, Event, To)
     end
     
     -- Short info.
-    local text=string.format("%s [Type=%s, Call=%s, Modex=%d, Skill=%s]: Assets Total=%d, Stock=%d, Mission=%d [Active=%d, Queue=%d]", 
-    fsmstate, self.aircrafttype, callsign, modex, skill, NassetsTot, NassetsInS, NassetsQP, NassetsP, NassetsQ)
+    local text=string.format("%s [Type=%s, Call=%s, Skill=%s]: Assets Total=%d, Stock=%d, Mission=%d [Active=%d, Queue=%d]", 
+    fsmstate, self.aircrafttype, callsign, skill, NassetsTot, NassetsInS, NassetsQP, NassetsP, NassetsQ)
     self:T(self.lid..text)
     
     -- Weapon data info.
@@ -196,7 +161,7 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Misc functions.
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

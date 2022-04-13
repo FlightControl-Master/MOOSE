@@ -47,7 +47,7 @@
 -- @field #number cargobayLimit Cargo bay capacity in kg.
 -- @extends Core.Fsm#FSM
 
---- *It is unbelievable what a platoon of twelve aircraft did to tip the balance* -- Adolf Galland
+--- *I came, I saw, I conquered.* -- Julius Caesar
 --
 -- ===
 --
@@ -89,7 +89,7 @@ COHORT.version="0.3.0"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Create FLOTILLA class.
+-- DONE: Create FLOTILLA class.
 -- DONE: Added check for properties.
 -- DONE: Make general so that PLATOON and SQUADRON can inherit this class.
 
@@ -613,6 +613,49 @@ function COHORT:ReturnTacan(channel)
   self.tacanChannel[channel]=true
 end
 
+--- Add a weapon range for ARTY missions (@{Ops.Auftrag#AUFTRAG}).
+-- @param #COHORT self
+-- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
+-- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
+-- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
+-- @return #COHORT self
+function COHORT:AddWeaponRange(RangeMin, RangeMax, BitType)
+
+  RangeMin=UTILS.NMToMeters(RangeMin or 0)
+  RangeMax=UTILS.NMToMeters(RangeMax or 10)
+
+  local weapon={} --Ops.OpsGroup#OPSGROUP.WeaponData
+
+  weapon.BitType=BitType or ENUMS.WeaponFlag.Auto
+  weapon.RangeMax=RangeMax
+  weapon.RangeMin=RangeMin
+
+  self.weaponData=self.weaponData or {}
+  self.weaponData[tostring(weapon.BitType)]=weapon
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Adding weapon data: Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapon.BitType), weapon.RangeMin, weapon.RangeMax))
+  
+  if self.verbose>=2 then
+    local text="Weapon data:"
+    for _,_weapondata in pairs(self.weaponData) do
+      local weapondata=_weapondata
+      text=text..string.format("\n- Bit=%s, Rmin=%d m, Rmax=%d m", tostring(weapondata.BitType), weapondata.RangeMin, weapondata.RangeMax)
+    end
+    self:I(self.lid..text)
+  end
+
+  return self
+end
+
+--- Get weapon range for given bit type.
+-- @param #COHORT self
+-- @param #number BitType Bit mask of weapon type.
+-- @return Ops.OpsGroup#OPSGROUP.WeaponData Weapon data.
+function COHORT:GetWeaponData(BitType)
+  return self.weaponData[tostring(BitType)]
+end
+
 --- Check if cohort is "OnDuty".
 -- @param #COHORT self
 -- @return #boolean If true, cohort is in state "OnDuty".
@@ -1048,6 +1091,42 @@ function COHORT:GetRepairTime(Asset)
 
 end
 
+--- Get max mission range. We add the largest weapon range, e.g. for arty or naval if weapon data is available.
+-- @param #COHORT self
+-- @param #table WeaponTypes (Optional) Weapon bit type(s) to add to the total range. Default is the max weapon type available.  
+-- @return #number Range in meters.
+function COHORT:GetMissionRange(WeaponTypes)
+
+  if WeaponTypes and type(WeaponTypes)~="table" then
+    WeaponTypes={WeaponTypes}
+  end
+  
+  local function checkWeaponType(Weapon)
+    local weapon=Weapon --Ops.OpsGroup#OPSGROUP.WeaponData
+    if WeaponTypes and #WeaponTypes>0 then
+      for _,weapontype in pairs(WeaponTypes) do
+        if weapontype==weapon.BitType then
+          return true
+        end
+      end
+      return false
+    end
+    return true
+  end
+
+  -- Get max weapon range.  
+  local WeaponRange=0
+  for _,_weapon in pairs(self.weaponData or {}) do
+    local weapon=_weapon --Ops.OpsGroup#OPSGROUP.WeaponData
+    
+    if weapon.RangeMax>WeaponRange and checkWeaponType(weapon) then
+      WeaponRange=weapon.RangeMax
+    end
+  end
+
+  return self.engageRange+WeaponRange
+end
+
 --- Checks if a mission type is contained in a table of possible types.
 -- @param #COHORT self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
@@ -1088,6 +1167,237 @@ function COHORT:CheckAttribute(Attributes)
   return false
 end
 
+--- Check ammo.
+-- @param #COHORT self
+-- @return Ops.OpsGroup#OPSGROUP.Ammo Ammo.
+function COHORT:_CheckAmmo()
+
+  -- Get units of group.
+  local units=self.templategroup:GetUnits()
+
+  -- Init counter.
+  local nammo=0
+  local nguns=0
+  local nshells=0
+  local nrockets=0
+  local nmissiles=0
+  local nmissilesAA=0
+  local nmissilesAG=0
+  local nmissilesAS=0
+  local nmissilesSA=0
+  local nmissilesBM=0
+  local nmissilesCR=0
+  local ntorps=0
+  local nbombs=0
+
+  
+  for _,_unit in pairs(units) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    -- Output.
+    local text=string.format("Unit %s:\n", unit:GetName())
+  
+    -- Get ammo table.
+    local ammotable=unit:GetAmmo()
+  
+    if ammotable then
+    
+      -- Debug info.
+      self:T3(ammotable)
+  
+      -- Loop over all weapons.
+      for w=1,#ammotable do
+      
+        -- Weapon table.
+        local weapon=ammotable[w]
+        
+        -- Descriptors.
+        local Desc=weapon["desc"]
+        
+        -- Warhead.
+        local Warhead=Desc["warhead"]
+  
+        -- Number of current weapon.
+        local Nammo=weapon["count"]
+        
+        -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3, torpedo=4
+        local Category=Desc["category"]
+  
+        -- Get missile category: Weapon.MissileCategory AAM=1, SAM=2, BM=3, ANTI_SHIP=4, CRUISE=5, OTHER=6
+        local MissileCategory = (Category==Weapon.Category.MISSILE) and Desc.missileCategory or nil
+
+        -- Type name of current weapon.
+        local TypeName=Desc["typeName"]
+  
+        -- WeaponName
+        local weaponString = UTILS.Split(TypeName,"%.")
+        local WeaponName   = weaponString[#weaponString]
+  
+             
+        -- Range in meters. Seems only to exist for missiles (not shells).
+        local Rmin=Desc["rangeMin"] or 0
+        local Rmax=Desc["rangeMaxAltMin"] or 0
+        
+        -- Caliber in mm.
+        local Caliber=Warhead and Warhead["caliber"] or 0
+        
+      
+        -- We are specifically looking for shells or rockets here.
+        if Category==Weapon.Category.SHELL then
+          ---
+          -- SHELL
+          ---
+  
+          -- Add up all shells.
+          if Caliber<70 then
+            nguns=nguns+Nammo
+          else
+            nshells=nshells+Nammo            
+          end
+  
+          -- Debug info.
+          text=text..string.format("- %d shells [%s]: caliber=%d mm, range=%d - %d meters\n", Nammo, WeaponName, Caliber, Rmin, Rmax)
+  
+        elseif Category==Weapon.Category.ROCKET then
+          ---
+          -- ROCKET
+          ---
+        
+          -- Add up all rockets.
+          nrockets=nrockets+Nammo
+  
+          -- Debug info.
+          text=text..string.format("- %d rockets [%s]: caliber=%d mm, range=%d - %d meters\n", Nammo, WeaponName, Caliber, Rmin, Rmax)
+  
+        elseif Category==Weapon.Category.BOMB then
+          ---
+          -- BOMB
+          ---
+  
+          -- Add up all rockets.
+          nbombs=nbombs+Nammo
+  
+          -- Debug info.
+          text=text..string.format("- %d bombs [%s]: caliber=%d mm, range=%d - %d meters\n", Nammo, WeaponName, Caliber, Rmin, Rmax)
+  
+        elseif Category==Weapon.Category.MISSILE then
+          ---
+          -- MISSILE
+          ---
+  
+          -- Add up all cruise missiles (category 5)
+          if MissileCategory==Weapon.MissileCategory.AAM then
+            nmissiles=nmissiles+Nammo
+            nmissilesAA=nmissilesAA+Nammo
+            -- Auto add range for AA missles. Useless here as this is not an aircraft.
+            if Rmax>0 then
+              self:AddWeaponRange(UTILS.MetersToNM(Rmin), UTILS.MetersToNM(Rmax), ENUMS.WeaponFlag.AnyAA)
+            end           
+          elseif MissileCategory==Weapon.MissileCategory.SAM then
+            nmissiles=nmissiles+Nammo
+            nmissilesSA=nmissilesSA+Nammo
+            -- Dont think there is a bit type for SAM.
+            if Rmax>0 then
+              --self:AddWeaponRange(Rmin, Rmax, ENUMS.WeaponFlag.AnyASM)
+            end                        
+          elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
+            nmissiles=nmissiles+Nammo
+            nmissilesAS=nmissilesAS+Nammo
+            -- Auto add weapon range for anti-ship missile.
+            if Rmax>0 then
+              self:AddWeaponRange(UTILS.MetersToNM(Rmin), UTILS.MetersToNM(Rmax), ENUMS.WeaponFlag.AntiShipMissile)
+            end                                    
+          elseif MissileCategory==Weapon.MissileCategory.BM then
+            nmissiles=nmissiles+Nammo
+            nmissilesBM=nmissilesBM+Nammo
+            -- Don't think there is a good bit type for ballistic missiles.
+            if Rmax>0 then
+              --self:AddWeaponRange(Rmin, Rmax, ENUMS.WeaponFlag.AnyASM)
+            end                                    
+          elseif MissileCategory==Weapon.MissileCategory.CRUISE then
+            nmissiles=nmissiles+Nammo
+            nmissilesCR=nmissilesCR+Nammo            
+            -- Auto add weapon range for cruise missile.
+            if Rmax>0 then
+              self:AddWeaponRange(UTILS.MetersToNM(Rmin), UTILS.MetersToNM(Rmax), ENUMS.WeaponFlag.CruiseMissile)
+            end                                    
+          elseif MissileCategory==Weapon.MissileCategory.OTHER then
+            nmissiles=nmissiles+Nammo
+            nmissilesAG=nmissilesAG+Nammo
+          end
+  
+          -- Debug info.
+          text=text..string.format("- %d %s missiles [%s]: caliber=%d mm, range=%d - %d meters\n", Nammo, self:_MissileCategoryName(MissileCategory), WeaponName, Caliber, Rmin, Rmax)
+  
+        elseif Category==Weapon.Category.TORPEDO then
+  
+          -- Add up all rockets.
+          ntorps=ntorps+Nammo
+  
+          -- Debug info.
+          text=text..string.format("- %d torpedos [%s]: caliber=%d mm, range=%d - %d meters\n", Nammo, WeaponName, Caliber, Rmin, Rmax)
+  
+        else
+  
+          -- Debug info.
+          text=text..string.format("- %d unknown ammo of type %s (category=%d, missile category=%s)\n", Nammo, TypeName, Category, tostring(MissileCategory))
+  
+        end
+  
+      end
+    end
+      
+    -- Debug text and send message.
+    if self.verbose>=5 then
+      self:I(self.lid..text)
+    else
+      self:T2(self.lid..text)
+    end
+    
+  end
+
+  -- Total amount of ammunition.
+  nammo=nguns+nshells+nrockets+nmissiles+nbombs+ntorps
+
+  local ammo={} --Ops.OpsGroup#OPSGROUP.Ammo
+  ammo.Total=nammo
+  ammo.Guns=nguns
+  ammo.Shells=nshells
+  ammo.Rockets=nrockets
+  ammo.Bombs=nbombs
+  ammo.Torpedos=ntorps
+  ammo.Missiles=nmissiles
+  ammo.MissilesAA=nmissilesAA
+  ammo.MissilesAG=nmissilesAG
+  ammo.MissilesAS=nmissilesAS
+  ammo.MissilesCR=nmissilesCR
+  ammo.MissilesBM=nmissilesBM
+  ammo.MissilesSA=nmissilesSA
+
+  return ammo
+end
+
+--- Returns a name of a missile category.
+-- @param #COHORT self
+-- @param #number categorynumber Number of missile category from weapon missile category enumerator. See https://wiki.hoggitworld.com/view/DCS_Class_Weapon
+-- @return #string Missile category name.
+function COHORT:_MissileCategoryName(categorynumber)
+  local cat="unknown"
+  if categorynumber==Weapon.MissileCategory.AAM then
+    cat="air-to-air"
+  elseif categorynumber==Weapon.MissileCategory.SAM then
+    cat="surface-to-air"
+  elseif categorynumber==Weapon.MissileCategory.BM then
+    cat="ballistic"
+  elseif categorynumber==Weapon.MissileCategory.ANTI_SHIP then
+    cat="anti-ship"
+  elseif categorynumber==Weapon.MissileCategory.CRUISE then
+    cat="cruise"
+  elseif categorynumber==Weapon.MissileCategory.OTHER then
+    cat="other"
+  end
+  return cat
+end  
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

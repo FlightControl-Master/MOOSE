@@ -8,6 +8,8 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
+-- 
+-- ===
 -- @module Ops.Commander
 -- @image OPS_Commander.png
 
@@ -32,7 +34,7 @@
 -- @field #table limitMission Table of limits for mission types.
 -- @extends Core.Fsm#FSM
 
---- *He who has never leared to obey cannot be a good commander* -- Aristotle
+--- *He who has never leared to obey cannot be a good commander.* -- Aristotle
 --
 -- ===
 --

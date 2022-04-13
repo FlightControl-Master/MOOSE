@@ -136,7 +136,7 @@
 --
 -- @extends Core.Fsm#FSM
 
---- *A small group of determined and like-minded people can change the course of history* -- Mahatma Gandhi
+--- *A small group of determined and like-minded people can change the course of history.* -- Mahatma Gandhi
 --
 -- ===
 --
@@ -3671,7 +3671,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
   -- Get mission of this task (if any).
   local Mission=self:GetMissionByTaskID(self.taskcurrent)
 
-  if Task.dcstask.id=="Formation" then
+  if Task.dcstask.id==AUFTRAG.SpecialTask.FORMATION then
 
     -- Set of group(s) to follow Mother.
     local followSet=SET_GROUP:New():AddGroup(self.group)
@@ -3681,7 +3681,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     local followUnit=UNIT:FindByName(param.unitname)
 
     -- Define AI Formation object.
-    Task.formation=AI_FORMATION:New(followUnit, followSet, "Formation", "Follow X at given parameters.")
+    Task.formation=AI_FORMATION:New(followUnit, followSet, AUFTRAG.SpecialTask.FORMATION, "Follow X at given parameters.")
 
     -- Formation parameters.
     Task.formation:FormationCenterWing(-param.offsetX, 50, math.abs(param.altitude), 50, param.offsetZ, 50)
@@ -3695,7 +3695,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- Start formation FSM.
     Task.formation:Start()
 
-  elseif Task.dcstask.id=="PatrolZone" then
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.PATROLZONE then
 
     ---
     -- Task patrol zone.
@@ -3735,7 +3735,7 @@ function OPSGROUP:onafterTaskExecute(From, Event, To, Task)
     -- Set mission UID.
     wp.missionUID=Mission and Mission.auftragsnummer or nil
 
-  elseif Task.dcstask.id=="ReconMission" then
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.RECON then
 
     ---
     -- Task recon.
@@ -3999,12 +3999,12 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
       Task.stopflag:Set(1)
 
       local done=false
-      if Task.dcstask.id=="Formation" then
+      if Task.dcstask.id==AUFTRAG.SpecialTask.FORMATION then
         Task.formation:Stop()
         done=true
-      elseif Task.dcstask.id=="PatrolZone" then
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.PATROLZONE then
         done=true
-      elseif Task.dcstask.id=="ReconMission" then
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.RECON then
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.AMMOSUPPLY then
         done=true
@@ -4885,19 +4885,23 @@ function OPSGROUP:RouteToMission(mission, delay)
       -- ARTY
       ---
 
+      -- Coord 
+      local coord=waypointcoord
+
       -- Get weapon range.
       local weapondata=self:GetWeaponData(mission.engageWeaponType)
 
+      local coordInRange=nil --Core.Point#COORDINATE
       if weapondata then
 
         -- Get target coordinate.
         local targetcoord=mission:GetTargetCoordinate()
 
         -- Heading to target.
-        local heading=self:GetCoordinate():HeadingTo(targetcoord)
+        local heading=coord:HeadingTo(targetcoord)
 
         -- Distance to target.
-        local dist=self:GetCoordinate():Get2DDistance(targetcoord)
+        local dist=coord:Get2DDistance(targetcoord)
 
         -- Check if we are within range.
         if dist>weapondata.RangeMax then
@@ -4905,7 +4909,7 @@ function OPSGROUP:RouteToMission(mission, delay)
           local d=(dist-weapondata.RangeMax)*1.1
 
           -- New waypoint coord.
-          waypointcoord=self:GetCoordinate():Translate(d, heading)
+          coordInRange=coord:Translate(d, heading)
 
           -- Debug info.
           self:T(self.lid..string.format("Out of max range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(mission.engageWeaponType)))
@@ -4914,7 +4918,7 @@ function OPSGROUP:RouteToMission(mission, delay)
           local d=(dist-weapondata.RangeMin)*1.1
 
           -- New waypoint coord.
-          waypointcoord=self:GetCoordinate():Translate(d, heading)
+          coordInRange=coord:Translate(d, heading)
 
           -- Debug info.
           self:T(self.lid..string.format("Out of min range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(mission.engageWeaponType)))
@@ -4923,8 +4927,28 @@ function OPSGROUP:RouteToMission(mission, delay)
       else
         self:T(self.lid..string.format("No weapon data for weapon type %s", tostring(mission.engageWeaponType)))
       end
-    end
+      
+      if coordInRange then
 
+        -- Add waypoint at 
+        local waypoint=nil --#OPSGROUP.Waypoint
+        if self:IsFlightgroup() then
+          waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+        elseif self:IsArmygroup() then
+          waypoint=ARMYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, mission.optionFormation, false)
+        elseif self:IsNavygroup() then
+          waypoint=NAVYGROUP.AddWaypoint(self,   waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+        end
+        waypoint.missionUID=mission.auftragsnummer
+
+        -- Set waypoint coord to be the one in range. Take care of proper waypoint uid.
+        waypointcoord=coordInRange
+        uid=waypoint.uid
+        
+      end
+      
+    end
+    
     -- Add waypoint.
     local waypoint=nil --#OPSGROUP.Waypoint
     if self:IsFlightgroup() then
@@ -5155,7 +5179,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     mission=self:GetMissionByTaskID(task.id)
   end
 
-  if task and task.dcstask.id=="PatrolZone" then
+  if task and task.dcstask.id==AUFTRAG.SpecialTask.PATROLZONE then
 
     ---
     -- SPECIAL TASK: Patrol Zone
@@ -5194,7 +5218,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
     end
     wp.missionUID=mission and mission.auftragsnummer or nil
 
-  elseif task and task.dcstask.id=="ReconMission" then
+  elseif task and task.dcstask.id==AUFTRAG.SpecialTask.RECON then
 
     ---
     -- SPECIAL TASK: Recon Mission
@@ -5216,8 +5240,9 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
       local n=1
       if task.dcstask.params.randomly then
         n=UTILS.GetRandomTableElement(self.reconindecies)
-      else    
-        table.remove(self.reconindecies, n)
+      else
+        n=self.reconindecies[1]
+        table.remove(self.reconindecies, 1)
       end
       
       -- Zone object.
@@ -9160,8 +9185,10 @@ function OPSGROUP:_CheckStuck()
       -- Debug warning.
       self:T(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
 
-      -- Give cruise command again.
-      if self:IsReturning() then
+      -- Check what is happening.
+      if self:IsEngaging() then
+        self:__Disengage(1)        
+      elseif self:IsReturning() then
         self:__RTZ(1)
       else
         self:__Cruise(1)
@@ -9173,7 +9200,6 @@ function OPSGROUP:_CheckStuck()
       self:T(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
 
       --TODO: Stuck event!
-
       -- Look for a current mission and cancel it as we do not seem to be able to perform it.
       local mission=self:GetMissionCurrent()
       if mission then
@@ -11396,6 +11422,8 @@ function OPSGROUP:GetAmmoUnit(unit, display)
   if display==nil then
     display=false
   end
+  
+  unit=unit or self.group:GetUnit(1)
 
   -- Init counter.
   local nammo=0
@@ -11420,12 +11448,18 @@ function OPSGROUP:GetAmmoUnit(unit, display)
   if ammotable then
 
     local weapons=#ammotable
+	
+	--self:I(ammotable)
 
     -- Loop over all weapons.
     for w=1,weapons do
 
       -- Number of current weapon.
       local Nammo=ammotable[w]["count"]
+	  
+	  -- Range in meters. Seems only to exist for missiles (not shells).
+	  local rmin=ammotable[w]["desc"]["rangeMin"] or 0
+	  local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
 
       -- Type name of current weapon.
       local Tammo=ammotable[w]["desc"]["typeName"]
@@ -11449,7 +11483,7 @@ function OPSGROUP:GetAmmoUnit(unit, display)
         nshells=nshells+Nammo
 
         -- Debug info.
-        text=text..string.format("- %d shells of type %s\n", Nammo, _weaponName)
+        text=text..string.format("- %d shells of type %s, range=%d - %d meters\n", Nammo, _weaponName, rmin, rmax)
 
       elseif Category==Weapon.Category.ROCKET then
 
@@ -11457,7 +11491,7 @@ function OPSGROUP:GetAmmoUnit(unit, display)
         nrockets=nrockets+Nammo
 
         -- Debug info.
-        text=text..string.format("- %d rockets of type %s\n", Nammo, _weaponName)
+        text=text..string.format("- %d rockets of type %s, \n", Nammo, _weaponName, rmin, rmax)
 
       elseif Category==Weapon.Category.BOMB then
 
@@ -11491,7 +11525,7 @@ function OPSGROUP:GetAmmoUnit(unit, display)
         end
 
         -- Debug info.
-        text=text..string.format("- %d %s missiles of type %s\n", Nammo, self:_MissileCategoryName(MissileCategory), _weaponName)
+        text=text..string.format("- %d %s missiles of type %s, range=%d - %d meters\n", Nammo, self:_MissileCategoryName(MissileCategory), _weaponName, rmin, rmax)
 
       elseif Category==Weapon.Category.TORPEDO then
 
