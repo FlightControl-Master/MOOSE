@@ -118,7 +118,7 @@
 -- 
 -- ## Adding Fleets
 -- 
--- Fleets are not implemented yet.
+-- Fleets can be added via the @{#CHIEF.AddFleet}() function.
 -- 
 --  
 -- # Strategic (Capture) Zones
@@ -866,8 +866,20 @@ end
 -- @return #CHIEF self
 function CHIEF:AddBrigade(Brigade)
 
-  -- Add brigade to the commander
+  -- Add brigade to the commander.
   self:AddLegion(Brigade)
+  
+  return self
+end
+
+--- Add a FLEET to the chief's commander.
+-- @param #CHIEF self
+-- @param Ops.Fleet#FLEET Fleet The fleet to add.
+-- @return #CHIEF self
+function CHIEF:AddFleet(Fleet)
+
+  -- Add fleet to the commander.
+  self:AddLegion(Fleet)
   
   return self
 end
@@ -2373,7 +2385,7 @@ end
 
 --- Get mission performance for a given TARGET.
 -- @param #CHIEF self
--- @param Ops.Target#TARGET Target
+-- @param Ops.Target#TARGET Target The target.
 -- @return #table Mission performances of type `#CHIEF.MissionPerformance`.
 function CHIEF:_GetMissionPerformanceFromTarget(Target)
 

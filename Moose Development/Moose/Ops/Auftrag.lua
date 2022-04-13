@@ -165,7 +165,7 @@
 --
 -- @extends Core.Fsm#FSM
 
---- *A warrior's mission is to foster the success of others.* - Morihei Ueshiba
+--- *A warrior's mission is to foster the success of others.* -- Morihei Ueshiba
 --
 -- ===
 --
@@ -436,8 +436,9 @@ AUFTRAG.Type={
 
 --- Special task description.
 -- @type AUFTRAG.SpecialTask
+-- @field #string FORMATION AI formation task.
 -- @field #string PATROLZONE Patrol zone task.
--- @field #string RECON Recon task
+-- @field #string RECON Recon task.
 -- @field #string AMMOSUPPLY Ammo Supply.
 -- @field #string FUELSUPPLY Fuel Supply.
 -- @field #string ALERT5 Alert 5 task.
@@ -450,6 +451,7 @@ AUFTRAG.Type={
 -- @field #string NOTHING Nothing.
 -- @field #string RELOCATECOHORT Relocate cohort.
 AUFTRAG.SpecialTask={
+  FORMATION="Formation",
   PATROLZONE="PatrolZone",
   RECON="ReconMission",
   AMMOSUPPLY="Ammo Supply",
@@ -584,7 +586,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.9.2"
+AUFTRAG.version="0.9.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -937,7 +939,7 @@ function AUFTRAG:NewANTISHIP(Target, Altitude)
   return mission
 end
 
---- **[AIR/HELICOPTER]** Create an HOVER mission.
+--- **[AIR ROTARY]** Create an HOVER mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to hover.
 -- @param #number Altitude Hover altitude in feet AGL. Default is 50 feet above ground.
@@ -968,7 +970,7 @@ function AUFTRAG:NewHOVER(Coordinate, Altitude, Time, Speed, MissionAlt)
   mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
 
-  mission.categories={AUFTRAG.Category.AIRCRAFT}
+  mission.categories={AUFTRAG.Category.HELICOPTER}
 
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -1257,8 +1259,8 @@ end
 -- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
 -- @param #number Speed Speed in knots.
 -- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
--- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
 -- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
+-- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default `{"Helicopters", "Ground Units", "Light armed ships"}`.
 -- @return #AUFTRAG self
 function AUFTRAG:NewCASENHANCED(CasZone, Altitude, Speed, RangeMax, NoEngageZoneSet, TargetTypes)
 
@@ -4857,6 +4859,24 @@ function AUFTRAG:GetMissionEgressCoord()
   return self.missionEgressCoord
 end
 
+--- Get coordinate which was set as mission waypoint coordinate.
+-- @param #AUFTRAG self
+-- @return Core.Point#COORDINATE Coordinate where the mission is executed or `#nil`.
+function AUFTRAG:_GetMissionWaypointCoordSet()
+
+  -- Check if a coord has been explicitly set.
+  if self.missionWaypointCoord then
+    local coord=self.missionWaypointCoord
+    if self.missionAltitude then
+      coord.y=self.missionAltitude
+    end
+    
+    
+    return coord
+  end
+
+end
+
 --- Get coordinate of target. First unit/group of the set is used.
 -- @param #AUFTRAG self
 -- @param Wrapper.Group#GROUP group Group.
@@ -5102,7 +5122,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
 
     local DCStask={}
 
-    DCStask.id="ReconMission"
+    DCStask.id=AUFTRAG.SpecialTask.RECON
 
     -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
     local param={}
@@ -5202,7 +5222,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
 
     local DCStask={}
 
-    DCStask.id="Formation"
+    DCStask.id=AUFTRAG.SpecialTask.FORMATION
 
     -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
     local param={}
@@ -5222,9 +5242,30 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     -- ARTY Mission --
     ------------------
 
-    local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, self:GetTargetVec2(), self.artyRadius, self.artyShots, self.engageWeaponType, self.artyAltitude)
+    
+    if self.artyShots==1 or self.artyRadius<10 or true then
+    
+      local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, self:GetTargetVec2(), self.artyRadius, self.artyShots, self.engageWeaponType, self.artyAltitude)
+      table.insert(DCStasks, DCStask)
+    
+    else
+    
+      local Vec2=self:GetTargetVec2()
+      
+      local zone=ZONE_RADIUS:New("temp", Vec2, self.artyRadius)
+      
+      for i=1,self.artyShots do
+      
+        local vec2=zone:GetRandomVec2()
 
-    table.insert(DCStasks, DCStask)
+        local DCStask=CONTROLLABLE.TaskFireAtPoint(nil, vec2, 0, 1, self.engageWeaponType, self.artyAltitude)
+        table.insert(DCStasks, DCStask)
+  
+      end
+    
+    end
+
+    --table.insert(DCStasks, DCStask)
 
   elseif self.type==AUFTRAG.Type.BARRAGE then
 
@@ -5258,7 +5299,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
 
     local DCStask={}
 
-    DCStask.id="PatrolZone"
+    DCStask.id=AUFTRAG.SpecialTask.PATROLZONE
 
     -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
     local param={}
@@ -5278,7 +5319,7 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
 
     local DCStask={}
 
-    DCStask.id="PatrolZone"
+    DCStask.id=AUFTRAG.SpecialTask.PATROLZONE
 
     -- We create a "fake" DCS task and pass the parameters to the FLIGHTGROUP.
     local param={}

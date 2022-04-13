@@ -2164,14 +2164,21 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local vec3=self:GetVec3()
+      
       Radius=Radius or 1000
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
+      
       trigger.action.circleToAll(Coalition, MarkID, vec3, Radius, Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
     end
@@ -2196,13 +2203,19 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local vec3=Endpoint:GetVec3()
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
+      
       trigger.action.rectToAll(Coalition, MarkID, self:GetVec3(), vec3, Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
     end
@@ -2226,17 +2239,23 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local point1=self:GetVec3()
       local point2=Coord2:GetVec3()
       local point3=Coord3:GetVec3()
       local point4=Coord4:GetVec3()
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
-      trigger.action.quadToAll(Coalition, MarkID, self:GetVec3(), point2, point3, point4, Color, FillColor, LineType, ReadOnly, Text or "")
+      
+      trigger.action.quadToAll(Coalition, MarkID, point1, point2, point3, point4, Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
     end
 
@@ -2320,11 +2339,15 @@ do -- COORDINATE
         ReadOnly=false
       end
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.3
+      
       FontSize=FontSize or 14
+      
       trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
       return MarkID
     end
@@ -2346,13 +2369,19 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local vec3=Endpoint:GetVec3()
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
+      
       --trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
       trigger.action.arrowToAll(Coalition, MarkID, vec3, self:GetVec3(), Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID

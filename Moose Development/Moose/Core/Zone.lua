@@ -622,7 +622,7 @@ function ZONE_RADIUS:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, Lin
 
   Color=Color or self:GetColorRGB()
   Alpha=Alpha or 1
-  FillColor=FillColor or Color
+  FillColor=FillColor or UTILS.DeepCopy(Color)
   FillAlpha=FillAlpha or self:GetColorAlpha()
 
   self.DrawID=coordinate:CircleToAll(Radius, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
@@ -1862,7 +1862,8 @@ function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlph
 
   Color=Color or self:GetColorRGB()
   Alpha=Alpha or 1
-  FillColor=FillColor or Color
+  
+  FillColor=FillColor or UTILS.DeepCopy(Color)
   FillAlpha=FillAlpha or self:GetColorAlpha()
 
 

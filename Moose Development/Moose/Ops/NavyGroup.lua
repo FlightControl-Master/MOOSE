@@ -1496,14 +1496,54 @@ function NAVYGROUP:onafterDisengage(From, Event, To)
   -- Restore previous ROE and alarm state.
   self:SwitchROE(self.engage.roe)
   self:SwitchAlarmstate(self.engage.alarmstate)
+
+  -- Get current task
+  local task=self:GetTaskCurrent()
+
+  -- Get if current task is ground attack.
+  if task and task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK then
+    self:T(self.lid.."Disengage with current task GROUNDATTACK ==> Task Done!")
+    self:TaskDone(task)
+  end    
   
   -- Remove current waypoint
   if self.engage.Waypoint then
-    self:RemoveWaypointByID(self.engage.Waypoint.uid)    
+    self:RemoveWaypointByID(self.engage.Waypoint.uid)
   end
 
   -- Check group is done
   self:_CheckGroupDone(1)
+end
+
+--- On after "OutOfAmmo" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterOutOfAmmo(From, Event, To)
+  self:T(self.lid..string.format("Group is out of ammo at t=%.3f", timer.getTime()))
+  
+  -- Check if we want to retreat once out of ammo.
+  if self.retreatOnOutOfAmmo then
+    self:__Retreat(-1)
+    return
+  end
+  
+  -- Third, check if we want to RTZ once out of ammo.
+  if self.rtzOnOutOfAmmo then
+    self:__RTZ(-1)
+  end
+
+  -- Get current task.
+  local task=self:GetTaskCurrent()
+  
+  if task then
+    if task.dcstask.id=="FireAtPoint" or task.dcstask.id==AUFTRAG.SpecialTask.BARRAGE then
+      self:T(self.lid..string.format("Cancelling current %s task because out of ammo!", task.dcstask.id))
+      self:TaskCancel(task)
+    end
+  end
+    
 end
 
 --- On after "RTZ" event.
@@ -1722,17 +1762,11 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
     offsetY=5.01
   end
   
-  -- Current coordinate.
-  --local coordinate=self:GetCoordinate():SetAltitude(offsetY, true)
-  
   local vec3=self:GetVec3()
   vec3.y=offsetY
   
   -- Current heading.
   local heading=self:GetHeading()
-  
-  -- Check from 500 meters in front.
-  --coordinate=coordinate:Translate(500, heading, true)
   
   local function LoS(dist)
     local checkvec3=UTILS.VecTranslate(vec3, dist, heading)
@@ -1780,8 +1814,9 @@ function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
     return 0
   end
 
+  local _check=check()
 
-  return check()
+  return _check
 end
 
 --- Check if group is turning.

@@ -23,7 +23,7 @@
 -- @field Ops.Chief#CHIEF chief Chief of this legion.
 -- @extends Functional.Warehouse#WAREHOUSE
 
---- *Per aspera ad astra*
+--- *Per aspera ad astra.*
 --
 -- ===
 --
@@ -47,13 +47,13 @@ LEGION = {
 
 --- LEGION class version.
 -- @field #string version
-LEGION.version="0.3.0"
+LEGION.version="0.3.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Create FLEED class.
+-- DONE: Create FLEED class.
 -- DONE: Relocate cohorts.
 -- DONE: Aircraft will not start hot on Alert5.
 -- DONE: OPS transport.
@@ -1135,7 +1135,8 @@ function LEGION:onafterOpsOnMission(From, Event, To, OpsGroup, Mission)
     -- Trigger event for Brigades.
     self:ArmyOnMission(OpsGroup, Mission)
   else
-    --TODO: Flotilla
+    -- Trigger event for Fleets.
+    self:NavyOnMission(OpsGroup, Mission)
   end
   
   -- Trigger event for chief.
@@ -1362,6 +1363,11 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
 
     -- Assignment.
     local assignment=request.assignment
+    
+    -- Set pathfinding for naval groups.
+    if self:IsFleet() then
+      flightgroup:SetPathfinding(self.pathfinding)
+    end
     
     if string.find(assignment, "Mission-") then
 
@@ -2029,7 +2035,8 @@ function LEGION:RecruitAssetsForMission(Mission)
   end    
   
   -- Recuit assets.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem)
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, 
+  Mission.engageRange, Mission.refuelSystem, nil, nil, nil, nil, nil, {Mission.engageWeaponType})
 
   return recruited, assets, legions
 end
@@ -2142,10 +2149,11 @@ end
 -- @param #table Categories Group categories. 
 -- @param #table Attributes Group attributes. See `GROUP.Attribute.`
 -- @param #table Properties DCS attributes.
+-- @param #table WeaponTypes Bit of weapon types.
 -- @return #boolean If `true` enough assets could be recruited.
 -- @return #table Recruited assets. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
 -- @return #table Legions of recruited assets.
-function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight, TotalWeight, Categories, Attributes, Properties)
+function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight, TotalWeight, Categories, Attributes, Properties, WeaponTypes)
 
   -- The recruited assets.
   local Assets={}
@@ -2202,8 +2210,23 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     end
   end
   
-  --BASE:I({Attributes=Attributes})
-  --BASE:I({Properties=Properties})
+  --- Function to check weapon type.
+  local function CheckWeapon(_cohort)
+    local cohort=_cohort --Ops.Cohort#COHORT
+    if WeaponTypes and #WeaponTypes>0 then
+      for _,WeaponType in pairs(WeaponTypes) do
+        for _,_weaponData in pairs(cohort.weaponData or {}) do
+          local weaponData=_weaponData --Ops.OpsGroup#OPSGROUP.WeaponData
+          if weaponData.BitType==WeaponType then
+            return true
+          end
+        end
+      end
+      return false
+    else
+      return true
+    end
+  end  
   
   -- Loops over cohorts.
   for _,_cohort in pairs(Cohorts) do
@@ -2213,7 +2236,8 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     local TargetDistance=TargetVec2 and UTILS.VecDist2D(TargetVec2, cohort.legion:GetVec2()) or 0
     
     -- Is in range?
-    local InRange=(RangeMax and math.max(RangeMax, cohort.engageRange) or cohort.engageRange) >= TargetDistance
+    local Rmax=cohort:GetMissionRange(WeaponTypes)
+    local InRange=(RangeMax and math.max(RangeMax, Rmax) or Rmax) >= TargetDistance
     
     -- Has the requested refuelsystem?
     local Refuel=RefuelSystem~=nil and (RefuelSystem==cohort.tankerSystem) or true
@@ -2245,12 +2269,15 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     -- Right property (DCS attribute).
     local RightProperty=CheckProperty(cohort)
     
+    -- Right weapon type.
+    local RightWeapon=CheckWeapon(cohort)
+    
     -- Debug info.
-    cohort:T2(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, RightCategory=%s, RightAttribute=%s, RightProperty=%s",
-    cohort:GetState(), tostring(Capable), tostring(InRange), tostring(Refuel), tostring(CanCarry), tostring(RightCategory), tostring(RightAttribute), tostring(RightProperty)))
+    cohort:T2(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, Category=%s, Attribute=%s, Property=%s, Weapon=%s",
+    cohort:GetState(), tostring(Capable), tostring(InRange), tostring(Refuel), tostring(CanCarry), tostring(RightCategory), tostring(RightAttribute), tostring(RightProperty), tostring(RightWeapon)))
     
     -- Check OnDuty, capable, in range and refueling type (if TANKER).
-    if cohort:IsOnDuty() and Capable and InRange and Refuel and CanCarry and RightCategory and RightAttribute and RightProperty then
+    if cohort:IsOnDuty() and Capable and InRange and Refuel and CanCarry and RightCategory and RightAttribute and RightProperty and RightWeapon then
 
       -- Recruit assets from cohort.
       local assets, npayloads=cohort:RecruitAssets(MissionTypeRecruit, 999)
