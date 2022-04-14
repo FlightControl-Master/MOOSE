@@ -2427,13 +2427,13 @@ function FIFO:Push(Object,UniqueID)
   self:T({Object,UniqueID})
   self.pointer = self.pointer + 1 
   self.counter = self.counter + 1
-  self.stackbypointer[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
-  if UniqueID then
-    self.stackbyid[UniqueID] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
-  else
-   self.uniquecounter = self.uniquecounter + 1
-   self.stackbyid[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = self.uniquecounter }
+  local uniID = UniqueID
+  if not UniqueID then
+    self.uniquecounter = self.uniquecounter + 1
+    uniID = self.uniquecounter
   end
+  self.stackbyid[uniID] = { pointer = self.pointer, data = Object, uniqueID = uniID }
+  self.stackbypointer[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = uniID }
   return self
 end
 
@@ -2564,7 +2564,7 @@ function FIFO:GetIDStackSorted()
   for _id,_entry in pairs(stack) do
     idstack[#idstack+1] = _id
     
-    self:I({"pre",_id})
+    self:T({"pre",_id})
   end
   
   local function sortID(a, b)
@@ -2672,13 +2672,13 @@ function LIFO:Push(Object,UniqueID)
   self:T({Object,UniqueID})
   self.pointer = self.pointer + 1 
   self.counter = self.counter + 1
-  self.stackbypointer[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
-  if UniqueID then
-    self.stackbyid[UniqueID] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
-  else
-   self.uniquecounter = self.uniquecounter + 1
-   self.stackbyid[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = self.uniquecounter }
+  local uniID = UniqueID
+  if not UniqueID then
+    self.uniquecounter = self.uniquecounter + 1
+    uniID = self.uniquecounter
   end
+  self.stackbyid[uniID] = { pointer = self.pointer, data = Object, uniqueID = uniID }
+  self.stackbypointer[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = uniID }
   return self
 end
 
@@ -2801,7 +2801,7 @@ function LIFO:GetIDStackSorted()
   for _id,_entry in pairs(stack) do
     idstack[#idstack+1] = _id
     
-    self:I({"pre",_id})
+    self:T({"pre",_id})
   end
   
   local function sortID(a, b)
@@ -2829,12 +2829,12 @@ function LIFO:Flush()
   self:I("LIFO Flushing Stack by Pointer")
   for _id,_data in pairs (self.stackbypointer) do
     local data = _data -- #LIFO.IDEntry
-    self:I(string.format("Pointer: %s | Entry: Number = %s Data = %s UniID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
+    self:I(string.format("Pointer: %s | Entry: Number = %s Data = %s UniqueID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
   end
   self:I("LIFO Flushing Stack by ID")
   for _id,_data in pairs (self.stackbyid) do
     local data = _data -- #LIFO.IDEntry
-    self:I(string.format("ID: %s | Entry: Number = %s Data = %s UniID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
+    self:I(string.format("ID: %s | Entry: Number = %s Data = %s UniqueID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
   end
   self:I("Counter = " .. self.counter)
   self:I("Pointer = ".. self.pointer)
