@@ -2410,6 +2410,7 @@ function FIFO:New()
   self.counter = 0
   self.stackbypointer = {}
   self.stackbyid = {}
+  self.uniquecounter = 0
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("%s (%s) | ", "FiFo", self.version)
   self:I(self.lid .."Created.") 
@@ -2430,7 +2431,8 @@ function FIFO:Push(Object,UniqueID)
   if UniqueID then
     self.stackbyid[UniqueID] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
   else
-   self.stackbyid[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
+   self.uniquecounter = self.uniquecounter + 1
+   self.stackbyid[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = self.uniquecounter }
   end
   return self
 end
@@ -2540,7 +2542,7 @@ end
 -- @return #boolean exists
 function FIFO:HasUniqueID(UniqueID)
   self:T(self.lid.."HasUniqueID")
-  return  self.stackbyid[UniqueID] and true or false
+  return self.stackbyid[UniqueID] and true or false
 end
 
 --- FIFO Get the data stack by UniqueID
@@ -2582,12 +2584,12 @@ function FIFO:Flush()
   self:I("FIFO Flushing Stack by Pointer")
   for _id,_data in pairs (self.stackbypointer) do
     local data = _data -- #FIFO.IDEntry
-    self:I(string.format("Pointer: %s | Entry: Number = %s Data = %s UniID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
+    self:I(string.format("Pointer: %s | Entry: Number = %s Data = %s UniqueID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
   end
   self:I("FIFO Flushing Stack by ID")
   for _id,_data in pairs (self.stackbyid) do
     local data = _data -- #FIFO.IDEntry
-    self:I(string.format("ID: %s | Entry: Number = %s Data = %s UniID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
+    self:I(string.format("ID: %s | Entry: Number = %s Data = %s UniqueID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
   end
   self:I("Counter = " .. self.counter)
   self:I("Pointer = ".. self.pointer)
@@ -2651,6 +2653,7 @@ function LIFO:New()
   local self=BASE:Inherit(self, BASE:New())
   self.pointer = 0
   self.counter = 0
+  self.uniquecounter = 0
   self.stackbypointer = {}
   self.stackbyid = {}
   -- Set some string id for output to DCS.log file.
@@ -2673,7 +2676,8 @@ function LIFO:Push(Object,UniqueID)
   if UniqueID then
     self.stackbyid[UniqueID] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
   else
-   self.stackbyid[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
+   self.uniquecounter = self.uniquecounter + 1
+   self.stackbyid[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = self.uniquecounter }
   end
   return self
 end
