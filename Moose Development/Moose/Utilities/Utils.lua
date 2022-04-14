@@ -2427,13 +2427,13 @@ function FIFO:Push(Object,UniqueID)
   self:T({Object,UniqueID})
   self.pointer = self.pointer + 1 
   self.counter = self.counter + 1
-  self.stackbypointer[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
-  if UniqueID then
-    self.stackbyid[UniqueID] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
-  else
-   self.uniquecounter = self.uniquecounter + 1
-   self.stackbyid[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = self.uniquecounter }
+  local uniID = UniqueID
+  if not UniqueID then
+    self.uniquecounter = self.uniquecounter + 1
+    uniID = self.uniquecounter
   end
+  self.stackbyid[uniID] = { pointer = self.pointer, data = Object, uniqueID = uniID }
+  self.stackbypointer[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = uniID }
   return self
 end
 
@@ -2672,13 +2672,13 @@ function LIFO:Push(Object,UniqueID)
   self:T({Object,UniqueID})
   self.pointer = self.pointer + 1 
   self.counter = self.counter + 1
-  self.stackbypointer[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
-  if UniqueID then
-    self.stackbyid[UniqueID] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
-  else
-   self.uniquecounter = self.uniquecounter + 1
-   self.stackbyid[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = self.uniquecounter }
+  local uniID = UniqueID
+  if not UniqueID then
+    self.uniquecounter = self.uniquecounter + 1
+    uniID = self.uniquecounter
   end
+  self.stackbyid[uniID] = { pointer = self.pointer, data = Object, uniqueID = uniID }
+  self.stackbypointer[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = uniID }
   return self
 end
 
