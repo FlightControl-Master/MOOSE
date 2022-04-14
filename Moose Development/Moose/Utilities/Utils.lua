@@ -2370,9 +2370,6 @@ do
 -- ===
 --
 -- ### Author: **applevangelist**
--- @module Utils.FiFo
--- @image MOOSE.JPG
-
 
 --- FIFO class.
 -- @type FIFO
@@ -2384,7 +2381,6 @@ do
 -- @field #table stackbypointer
 -- @field #table stackbyid
 -- @extends Core.Base#BASE
--- 
 
 ---
 -- @type FIFO.IDEntry
@@ -2409,7 +2405,7 @@ FIFO = {
 -- @return #FIFO self
 function FIFO:New()
   -- Inherit everything from BASE class.
-  local self=BASE:Inherit(self, BASE:New()) -- #INTEL
+  local self=BASE:Inherit(self, BASE:New())
   self.pointer = 0
   self.counter = 0
   self.stackbypointer = {}
@@ -2600,7 +2596,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 do
---- **UTILS** - FiFo Stack.
+--- **UTILS** - LiFo Stack.
 --
 -- **Main Features:**
 --
@@ -2609,9 +2605,6 @@ do
 -- ===
 --
 -- ### Author: **applevangelist**
--- @module Utils.LiFo
--- @image MOOSE.JPG
-
 
 --- LIFO class.
 -- @type LIFO
@@ -2623,7 +2616,6 @@ do
 -- @field #table stackbypointer
 -- @field #table stackbyid
 -- @extends Core.Base#BASE
--- 
 
 ---
 -- @type LIFO.IDEntry
@@ -2648,7 +2640,7 @@ LIFO = {
 -- @return #LIFO self
 function LIFO:New()
   -- Inherit everything from BASE class.
-  local self=BASE:Inherit(self, BASE:New()) -- #INTEL
+  local self=BASE:Inherit(self, BASE:New())
   self.pointer = 0
   self.counter = 0
   self.stackbypointer = {}

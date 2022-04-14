@@ -3583,7 +3583,7 @@ do -- AI_A2A_DISPATCHER
   end
 
   --- Assigns A2G AI Tasks in relation to the detected items.
-  -- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:Order( DetectedItem )
 
     local detection = self.Detection -- Functional.Detection#DETECTION_AREAS
