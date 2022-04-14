@@ -2356,7 +2356,7 @@ function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce)
   return datatable
 end
 
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FIFO
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2377,13 +2377,10 @@ do
 --- FIFO class.
 -- @type FIFO
 -- @field #string ClassName Name of the class.
--- @field #boolean debug
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string version Version of FiFo
 -- @field #number counter
 -- @field #number pointer
--- @field #number nextin
--- @field #number nextout
 -- @field #table stackbypointer
 -- @field #table stackbyid
 -- @extends Core.Base#BASE
@@ -2399,13 +2396,10 @@ do
 -- @field #FIFO
 FIFO = {
   ClassName = "FIFO",
-  debug = true,
   lid = "",
   version = "0.0.1",
   counter = 0,
   pointer = 0,
-  nextin = 0,
-  nextout = 0,
   stackbypointer = {},
   stackbyid = {}
 }
@@ -2451,10 +2445,12 @@ end
 function FIFO:Pull()
   self:T(self.lid.."Pull")
   if self.counter == 0 then return nil end
-  local object = self.stackbypointer[self.pointer].data
-  self.stackbypointer[self.pointer] = nil
+  --local object = self.stackbypointer[self.pointer].data
+  --self.stackbypointer[self.pointer] = nil
+  local object = self.stackbypointer[1].data
+  self.stackbypointer[1] = nil
   self.counter = self.counter - 1
-  self.pointer = self.pointer - 1
+  --self.pointer = self.pointer - 1
   self:Flatten()
   return object
 end
@@ -2519,6 +2515,14 @@ function FIFO:IsEmpty()
   return self.counter == 0 and true or false
 end
 
+--- FIFO Get stack size
+-- @param #FIFO self
+-- @return #number size
+function FIFO:GetSize()
+  self:T(self.lid.."GetSize")
+  return self.counter
+end
+
 --- FIFO Check Stack is NOT empty
 -- @param #FIFO self
 -- @return #boolean notempty
@@ -2543,6 +2547,29 @@ function FIFO:GetIDStack()
   return self.stackbyid
 end
 
+--- FIFO Get table of UniqueIDs sorthed smallest to largest
+-- @param #FIFO self
+-- @return #table Table of #FIFO.IDEntry entries
+function FIFO:GetIDStackSorted()
+  self:T(self.lid.."GetIDStackSorted")
+  
+  local stack = self:GetIDStack()
+  local idstack = {}
+  for _id,_entry in pairs(stack) do
+    idstack[#idstack+1] = _id
+    
+    self:I({"pre",_id})
+  end
+  
+  local function sortID(a, b)
+      return a < b
+  end
+  
+  table.sort(idstack)
+ 
+  return idstack
+end
+
 --- FIFO Print stacks to dcs.log
 -- @param #FIFO self
 -- @return #FIFO self
@@ -2565,5 +2592,244 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- End FIFO
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- LIFO
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+do
+--- **UTILS** - FiFo Stack.
+--
+-- **Main Features:**
+--
+--    * Build a simple multi-purpose LiFo (Last-In, First-Out) stack for generic data.
+--
+-- ===
+--
+-- ### Author: **applevangelist**
+-- @module Utils.LiFo
+-- @image MOOSE.JPG
+
+
+--- LIFO class.
+-- @type LIFO
+-- @field #string ClassName Name of the class.
+-- @field #string lid Class id string for output to DCS log file.
+-- @field #string version Version of LiFo
+-- @field #number counter
+-- @field #number pointer
+-- @field #table stackbypointer
+-- @field #table stackbyid
+-- @extends Core.Base#BASE
+-- 
+
+---
+-- @type LIFO.IDEntry
+-- @field #number pointer
+-- @field #table data
+-- @field #table uniqueID
+
+---
+-- @field #LIFO
+LIFO = {
+  ClassName = "LIFO",
+  lid = "",
+  version = "0.0.1",
+  counter = 0,
+  pointer = 0,
+  stackbypointer = {},
+  stackbyid = {}
+}
+
+--- Instantiate a new LIFO Stack
+-- @param #LIFO self
+-- @return #LIFO self
+function LIFO:New()
+  -- Inherit everything from BASE class.
+  local self=BASE:Inherit(self, BASE:New()) -- #INTEL
+  self.pointer = 0
+  self.counter = 0
+  self.stackbypointer = {}
+  self.stackbyid = {}
+  -- Set some string id for output to DCS.log file.
+  self.lid=string.format("%s (%s) | ", "LiFo", self.version)
+  self:I(self.lid .."Created.") 
+  return self
+end
+
+--- LIFO Push Object to Stack
+-- @param #LIFO self
+-- @param #table Object
+-- @param #string UniqueID (optional) - will default to current pointer + 1
+-- @return #LIFO self
+function LIFO:Push(Object,UniqueID)
+  self:T(self.lid.."Push")
+  self:T({Object,UniqueID})
+  self.pointer = self.pointer + 1 
+  self.counter = self.counter + 1
+  self.stackbypointer[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
+  if UniqueID then
+    self.stackbyid[UniqueID] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
+  else
+   self.stackbyid[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
+  end
+  return self
+end
+
+--- LIFO Pull Object from Stack
+-- @param #LIFO self
+-- @return #table Object or nil if stack is empty
+function LIFO:Pull()
+  self:T(self.lid.."Pull")
+  if self.counter == 0 then return nil end
+  local object = self.stackbypointer[self.pointer].data
+  self.stackbypointer[self.pointer] = nil
+  --local object = self.stackbypointer[1].data
+  --self.stackbypointer[1] = nil
+  self.counter = self.counter - 1
+  self.pointer = self.pointer - 1
+  self:Flatten()
+  return object
+end
+
+--- LIFO Pull Object from Stack by Pointer
+-- @param #LIFO self
+-- @param #number Pointer
+-- @return #table Object or nil if stack is empty
+function LIFO:PullByPointer(Pointer)
+  self:T(self.lid.."PullByPointer " .. tostring(Pointer))
+  if self.counter == 0 then return nil end
+  local object = self.stackbypointer[Pointer] -- #LIFO.IDEntry
+  self.stackbypointer[Pointer] = nil
+  self.stackbyid[object.uniqueID] = nil
+  self.counter = self.counter - 1
+  self:Flatten()
+  return object.data
+end
+
+--- LIFO Pull Object from Stack by UniqueID
+-- @param #LIFO self
+-- @param #tableUniqueID
+-- @return #table Object or nil if stack is empty
+function LIFO:PullByID(UniqueID)
+  self:T(self.lid.."PullByID " .. tostring(UniqueID))
+  if self.counter == 0 then return nil end
+  local object = self.stackbyid[UniqueID] -- #LIFO.IDEntry
+  --self.stackbyid[UniqueID] = nil
+  return self:PullByPointer(object.pointer)
+end
+
+--- LIFO Housekeeping
+-- @param #LIFO self
+-- @return #LIFO self
+function LIFO:Flatten()
+  self:T(self.lid.."Flatten")
+  -- rebuild stacks
+  local pointerstack = {}
+  local idstack = {}
+  local counter = 0
+  for _ID,_entry in pairs(self.stackbypointer) do
+    counter = counter + 1
+    pointerstack[counter] = { pointer = counter, data = _entry.data, uniqueID = _entry.uniqueID}
+  end
+  for _ID,_entry in pairs(pointerstack) do
+      idstack[_entry.uniqueID] = { pointer = _entry.pointer , data = _entry.data, uniqueID = _entry.uniqueID}
+  end
+  self.stackbypointer = nil
+  self.stackbypointer = pointerstack
+  self.stackbyid = nil
+  self.stackbyid = idstack
+  self.counter = counter
+  self.pointer = counter
+  return self
+end
+
+--- LIFO Check Stack is empty
+-- @param #LIFO self
+-- @return #boolean empty
+function LIFO:IsEmpty()
+  self:T(self.lid.."IsEmpty")
+  return self.counter == 0 and true or false
+end
+
+--- LIFO Get stack size
+-- @param #LIFO self
+-- @return #number size
+function LIFO:GetSize()
+  self:T(self.lid.."GetSize")
+  return self.counter
+end
+
+--- LIFO Check Stack is NOT empty
+-- @param #LIFO self
+-- @return #boolean notempty
+function LIFO:IsNotEmpty()
+  self:T(self.lid.."IsNotEmpty")
+  return not self:IsEmpty()
+end
+
+--- LIFO Get the data stack by pointer
+-- @param #LIFO self
+-- @return #table Table of #LIFO.IDEntry entries
+function LIFO:GetPointerStack()
+  self:T(self.lid.."GetPointerStack")
+  return self.stackbypointer
+end
+
+--- LIFO Get the data stack by UniqueID
+-- @param #LIFO self
+-- @return #table Table of #LIFO.IDEntry entries
+function LIFO:GetIDStack()
+  self:T(self.lid.."GetIDStack")
+  return self.stackbyid
+end
+
+--- LIFO Get table of UniqueIDs sorthed smallest to largest
+-- @param #LIFO self
+-- @return #table Table of #LIFO.IDEntry entries
+function LIFO:GetIDStackSorted()
+  self:T(self.lid.."GetIDStackSorted")
+  
+  local stack = self:GetIDStack()
+  local idstack = {}
+  for _id,_entry in pairs(stack) do
+    idstack[#idstack+1] = _id
+    
+    self:I({"pre",_id})
+  end
+  
+  local function sortID(a, b)
+      return a < b
+  end
+  
+  table.sort(idstack)
+ 
+  return idstack
+end
+
+--- LIFO Print stacks to dcs.log
+-- @param #LIFO self
+-- @return #LIFO self
+function LIFO:Flush()
+  self:T(self.lid.."FiFo Flush")
+  self:I("LIFO Flushing Stack by Pointer")
+  for _id,_data in pairs (self.stackbypointer) do
+    local data = _data -- #LIFO.IDEntry
+    self:I(string.format("Pointer: %s | Entry: Number = %s Data = %s UniID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
+  end
+  self:I("LIFO Flushing Stack by ID")
+  for _id,_data in pairs (self.stackbyid) do
+    local data = _data -- #LIFO.IDEntry
+    self:I(string.format("ID: %s | Entry: Number = %s Data = %s UniID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
+  end
+  self:I("Counter = " .. self.counter)
+  self:I("Pointer = ".. self.pointer)
+  return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- End LIFO
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 end
