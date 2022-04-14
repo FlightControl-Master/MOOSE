@@ -2535,6 +2535,14 @@ function FIFO:GetPointerStack()
   return self.stackbypointer
 end
 
+--- FIFO Check if a certain UniqeID exists
+-- @param #FIFO self
+-- @return #boolean exists
+function FIFO:HasUniqueID(UniqueID)
+  self:T(self.lid.."HasUniqueID")
+  return  self.stackbyid[UniqueID] and true or false
+end
+
 --- FIFO Get the data stack by UniqueID
 -- @param #FIFO self
 -- @return #table Table of #FIFO.IDEntry entries
@@ -2799,6 +2807,14 @@ function LIFO:GetIDStackSorted()
   table.sort(idstack)
  
   return idstack
+end
+
+--- LIFO Check if a certain UniqeID exists
+-- @param #LIFO self
+-- @return #boolean exists
+function LIFO:HasUniqueID(UniqueID)
+  self:T(self.lid.."HasUniqueID")
+  return  self.stackbyid[UniqueID] and true or false
 end
 
 --- LIFO Print stacks to dcs.log
