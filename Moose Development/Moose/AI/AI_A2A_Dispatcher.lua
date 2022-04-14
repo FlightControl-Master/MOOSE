@@ -2361,7 +2361,7 @@ do -- AI_A2A_DISPATCHER
   end
 
   --- Set flashing player messages on or off
-  -- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2A_DISPATCHER self
   -- @param #boolean onoff Set messages on (true) or off (false)
   function AI_A2A_DISPATCHER:SetSendMessages( onoff )
       self.SetSendPlayerMessages = onoff
