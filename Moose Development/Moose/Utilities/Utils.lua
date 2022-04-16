@@ -2413,7 +2413,22 @@ function FIFO:New()
   self.uniquecounter = 0
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("%s (%s) | ", "FiFo", self.version)
-  self:I(self.lid .."Created.") 
+  self:T(self.lid .."Created.") 
+  return self
+end
+
+--- Empty FIFO Stack
+-- @param #FIFO self
+-- @return #FIFO self
+function FIFO:Clear()
+  self:T(self.lid.."Clear")
+  self.pointer = 0
+  self.counter = 0
+  self.stackbypointer = nil
+  self.stackbyid = nil
+  self.stackbypointer = {}
+  self.stackbyid = {}
+  self.uniquecounter = 0
   return self
 end
 
@@ -2658,7 +2673,22 @@ function LIFO:New()
   self.stackbyid = {}
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("%s (%s) | ", "LiFo", self.version)
-  self:I(self.lid .."Created.") 
+  self:T(self.lid .."Created.") 
+  return self
+end
+
+--- Empty LIFO Stack
+-- @param #LIFO self
+-- @return #LIFO self
+function LIFO:Clear()
+  self:T(self.lid.."Clear")
+  self.pointer = 0
+  self.counter = 0
+  self.stackbypointer = nil
+  self.stackbyid = nil
+  self.stackbypointer = {}
+  self.stackbyid = {}
+  self.uniquecounter = 0
   return self
 end
 
