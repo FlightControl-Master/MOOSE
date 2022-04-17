@@ -2393,7 +2393,7 @@ do
 FIFO = {
   ClassName = "FIFO",
   lid = "",
-  version = "0.0.1",
+  version = "0.0.2",
   counter = 0,
   pointer = 0,
   stackbypointer = {},
@@ -2483,6 +2483,29 @@ function FIFO:PullByPointer(Pointer)
   return object.data
 end
 
+
+--- FIFO Read, not Pull, Object from Stack by Pointer
+-- @param #FIFO self
+-- @param #number Pointer
+-- @return #table Object or nil if stack is empty or pointer does not exist
+function FIFO:ReadByPointer(Pointer)
+  self:T(self.lid.."ReadByPointer " .. tostring(Pointer))
+  if self.counter == 0 or not Pointer or not self.stackbypointer[Pointer]  then return nil end
+  local object = self.stackbypointer[Pointer] -- #FIFO.IDEntry
+  return object.data
+end
+
+--- FIFO Read, not Pull, Object from Stack by UniqueID
+-- @param #FIFO self
+-- @param #number UniqueID
+-- @return #table Object or nil if stack is empty or ID does not exist
+function FIFO:ReadByID(UniqueID)
+  self:T(self.lid.."ReadByID " .. tostring(UniqueID))
+  if self.counter == 0 or not UniqueID or not self.stackbyid[UniqueID]  then return nil end
+  local object = self.stackbyid[UniqueID] -- #FIFO.IDEntry
+  return object.data
+end
+
 --- FIFO Pull Object from Stack by UniqueID
 -- @param #FIFO self
 -- @param #tableUniqueID
@@ -2536,6 +2559,14 @@ function FIFO:GetSize()
   return self.counter
 end
 
+--- FIFO Get stack size
+-- @param #FIFO self
+-- @return #number size
+function FIFO:Count()
+  self:T(self.lid.."Count")
+  return self.counter
+end
+
 --- FIFO Check Stack is NOT empty
 -- @param #FIFO self
 -- @return #boolean notempty
@@ -2568,7 +2599,7 @@ function FIFO:GetIDStack()
   return self.stackbyid
 end
 
---- FIFO Get table of UniqueIDs sorthed smallest to largest
+--- FIFO Get table of UniqueIDs sorted smallest to largest
 -- @param #FIFO self
 -- @return #table Table of #FIFO.IDEntry entries
 function FIFO:GetIDStackSorted()
@@ -2653,7 +2684,7 @@ do
 LIFO = {
   ClassName = "LIFO",
   lid = "",
-  version = "0.0.1",
+  version = "0.0.2",
   counter = 0,
   pointer = 0,
   stackbypointer = {},
@@ -2743,6 +2774,28 @@ function LIFO:PullByPointer(Pointer)
   return object.data
 end
 
+--- LIFO Read, not Pull, Object from Stack by Pointer
+-- @param #LIFO self
+-- @param #number Pointer
+-- @return #table Object or nil if stack is empty or pointer does not exist
+function LIFO:ReadByPointer(Pointer)
+  self:T(self.lid.."ReadByPointer " .. tostring(Pointer))
+  if self.counter == 0 or not Pointer or not self.stackbypointer[Pointer]  then return nil end
+  local object = self.stackbypointer[Pointer] -- #LIFO.IDEntry
+  return object.data
+end
+
+--- LIFO Read, not Pull, Object from Stack by UniqueID
+-- @param #LIFO self
+-- @param #number UniqueID
+-- @return #table Object or nil if stack is empty or ID does not exist
+function LIFO:ReadByID(UniqueID)
+  self:T(self.lid.."ReadByID " .. tostring(UniqueID))
+  if self.counter == 0 or not UniqueID or not self.stackbyid[UniqueID]  then return nil end
+  local object = self.stackbyid[UniqueID] -- #LIFO.IDEntry
+  return object.data
+end
+
 --- LIFO Pull Object from Stack by UniqueID
 -- @param #LIFO self
 -- @param #tableUniqueID
@@ -2796,6 +2849,14 @@ function LIFO:GetSize()
   return self.counter
 end
 
+--- LIFO Get stack size
+-- @param #LIFO self
+-- @return #number size
+function LIFO:Count()
+  self:T(self.lid.."Count")
+  return self.counter
+end
+
 --- LIFO Check Stack is NOT empty
 -- @param #LIFO self
 -- @return #boolean notempty
@@ -2820,7 +2881,7 @@ function LIFO:GetIDStack()
   return self.stackbyid
 end
 
---- LIFO Get table of UniqueIDs sorthed smallest to largest
+--- LIFO Get table of UniqueIDs sorted smallest to largest
 -- @param #LIFO self
 -- @return #table Table of #LIFO.IDEntry entries
 function LIFO:GetIDStackSorted()
