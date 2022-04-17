@@ -1,5 +1,7 @@
 --- **Core** - TEXTANDSOUND (MOOSE gettext) system
 --
+-- ===
+-- 
 -- ## Main Features:
 --
 --    * A GetText for Moose
@@ -18,7 +20,8 @@
 -- ## Date: April 2022
 -- 
 -- ===
--- @module Core.TEXTANDSOUND
+-- 
+-- @module Core.TextAndSound
 -- @image MOOSE.JPG
 
 --- Text and Sound class.
