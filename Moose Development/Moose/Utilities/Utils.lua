@@ -1475,7 +1475,49 @@ function UTILS.GetCallsignName(Callsign)
       return name
     end
   end
-
+  
+  for name, value in pairs(CALLSIGN.B1B) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.B52) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.F15E) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.F16) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.F18) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.FARP) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.TransportAircraft) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
   return "Ghostrider"
 end
 
