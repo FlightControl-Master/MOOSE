@@ -64,10 +64,16 @@ do
 -- @field #string AwacsROT
 -- @field Ops.Auftrag#AUFTRAG AwacsMission
 -- @field Ops.Auftrag#AUFTRAG EscortMission
+-- @field Ops.Auftrag#AUFTRAG AwacsMissionReplacement
+-- @field Ops.Auftrag#AUFTRAG EscortMissionReplacement
 -- @field Utils.FiFo#FIFO AICAPMissions FIFO for Ops.Auftrag#AUFTRAG for AI CAP
 -- @field #boolean MenuStrict
 -- @field #number MaxAIonCAP
 -- @field #number AIonCAP
+-- @field #boolean ShiftChangeAwacsFlag
+-- @field #boolean ShiftChangeEscortsFlag
+-- @field #boolean ShiftChangeAwacsRequested
+-- @field #boolean ShiftChangeEscortsRequested
 -- @extends Core.Fsm#FSM
 
 ---
@@ -75,7 +81,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "alpha 0.0.2", -- #string
+  version = "alpha 0.0.3", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -116,6 +122,10 @@ AWACS = {
   MaxAIonCAP = 4,
   AIonCAP = 0,
   AICAPMissions = {}, -- Utils.FiFo#FIFO
+  ShiftChangeAwacsFlag = false,
+  ShiftChangeEscortsFlag = false,
+  ShiftChangeAwacsRequested = false,
+  ShiftChangeEscortsRequested = false,
 }
 
 ---
@@ -191,8 +201,8 @@ AWACS.THREATLEVEL = {
 -- @field #boolean IsAI
 -- @field #string CallSign
 -- @field #number CurrentTask
--- @field #boolean AssignedTask
--- @field #number ID
+-- @field #boolean HasAssignedTask
+-- @field #number GID
 -- @field #number AnchorStackNo
 -- @field #number AnchorStackAngels
 
@@ -218,9 +228,10 @@ AWACS.TaskStatus = {
 
 ---
 -- @type AWACS.ManagedTask
--- @field #number ID
+-- @field #number TID
 -- @field #number AssignedGroupID
 -- @field #boolean IsPlayerTask
+-- @field #boolean IsUnassigned
 -- @field Ops.Target#TARGET Target
 -- @field Ops.Auftrag#AUFTRAG Auftrag
 -- @field #AWACS.TaskStatus Status
@@ -252,6 +263,7 @@ AWACS.TaskStatus = {
 --@field #boolean GroupID
 --@field #number Duration
 --@field #boolean ToScreen
+--@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO-List
@@ -268,13 +280,13 @@ AWACS.TaskStatus = {
 -- DONE - Intel Detection
 -- TODO - CHIEF / COMMANDER / AIRWING connection?
 -- TODO - LotATC / IFF
--- TODO - ROE
+-- DONE - ROE
 -- TODO - Player tasking
 -- TODO - Stack Management
 -- TODO - Reporting
 -- TODO - Missile launch callout
 -- TODO - Localization
--- TODO - Shift Length AWACS/AI
+-- DONE - Shift Length AWACS/AI
 -- TODO - Shift Change, Change on asset RTB or dead or mission done
 -- TODO - Borders for INTEL
 -- TODO - FIFO for checkin/checkout and tasking
@@ -355,7 +367,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   local speed = 250
   self.SpeedBase = speed
   self.Speed = UTILS.KnotsToAltKIAS(speed,self.AwacsAngels*1000)
-  self.CapSpeedBase = 200
+  self.CapSpeedBase = 220
   self.Heading = 0 -- north
   self.Leg = 50 -- nm
   self.invisible = true
@@ -364,9 +376,11 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   
   self.AwacsTimeOnStation = 2
   self.AwacsTimeStamp = 0
-  self.EscortsTimeOnStation = 2
+  self.EscortsTimeOnStation = 0.5
   self.EscortsTimeStamp = 0
-  self.ShiftChangeTime = 0.5
+  self.ShiftChangeTime = 0.25 -- 15mins
+  self.ShiftChangeAwacsFlag = false
+  self.ShiftChangeEscortsFlag = false
   
   self.AwacsROE = AWACS.ROE.POLICE
   self.AwacsROT = AWACS.ROT.PASSIVE
@@ -383,9 +397,15 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self.Culture = "en-US"
   self.Voice = nil
   self.Port = 5002
-  self.clientset = SET_GROUP:New():FilterCategoryAirplane():FilterCoalitions(self.coalitiontxt):FilterStart()
   self.RadioQueue = FIFO:New() -- Utils.FiFo#FIFO
   self.maxspeakentries = 3
+  
+  self.CAPGender = "male"
+  self.CAPCulture = "en-US"
+  self.CAPVoice = nil
+  
+  -- Client SET  
+  self.clientset = SET_GROUP:New():FilterCategoryAirplane():FilterCoalitions(self.coalitiontxt):FilterStart()
   
   -- managed groups
   self.ManagedGrps = {} -- #table of #AWACS.ManagedGroup entries
@@ -411,12 +431,13 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self.OpenTasks = FIFO:New() -- Utils.FiFo#FIFO
   
   -- Pilot lists
-
+  --[[ ToDo - Maybe only 2? Move to managedgroups
   self.CAPIdleAI = FIFO:New() -- Utils.FiFo#FIFO
   self.CAPIdleHuman = FIFO:New() -- Utils.FiFo#FIFO
   self.TaskedCAPAI = FIFO:New() -- Utils.FiFo#FIFO
   self.TaskedCAPHuman = FIFO:New() -- Utils.FiFo#FIFO
-
+  --]]
+  
   -- Picture, Contacts, Bogeys
   self.PictureAO = FIFO:New() -- Utils.FiFo#FIFO
   self.PictureEWR = FIFO:New() -- Utils.FiFo#FIFO
@@ -445,6 +466,9 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self:AddTransition("*",             "LostCluster",        "*")
   self:AddTransition("*",             "LostContact",        "*")
   self:AddTransition("*",             "CheckRadioQueue",    "*")
+  self:AddTransition("*",             "EscortShiftChange",  "*")
+  self:AddTransition("*",             "AwacsShiftChange",   "*")
+  --
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
   -- self:__Start(math.random(2,5))
@@ -540,8 +564,9 @@ end
 
 --- [Internal] Start AWACS Escorts FlightGroup
 -- @param #AWACS self
+-- @param #boolean Shiftchange This is a shift change call
 -- @return #AWACS self
-function AWACS:_StartEscorts()
+function AWACS:_StartEscorts(Shiftchange)
   self:T(self.lid.."_StartEscorts")
   
   local AwacsFG = self.AwacsFG -- Ops.FlightGroup#FLIGHTGROUP
@@ -553,8 +578,12 @@ function AWACS:_StartEscorts()
   mission:SetTime(nil,timeonstation)
   
   self.AirWing:AddMission(mission)
-
-  self.EscortMission = mission
+  
+  if Shiftchange then
+    self.EscortMissionReplacement = mission
+  else
+    self.EscortMission = mission
+  end
   
   return self
 end
@@ -567,11 +596,14 @@ end
 function AWACS:_StartSettings(FlightGroup,Mission)
   self:T(self.lid.."_StartSettings")
   
+  -- called by AW OnafterFlightOnMission(...)
+  
   local Mission = Mission -- Ops.Auftrag#AUFTRAG
   local AwacsFG = FlightGroup -- Ops.FlightGroup#FLIGHTGROUP
   
   -- Is this our Awacs mission?
   if self.AwacsMission:GetName() == Mission:GetName() then
+    
     AwacsFG:SetDefaultRadio(self.Frequency,self.Modulation,false)
     AwacsFG:SwitchRadio(self.Frequency,self.Modulation)
     AwacsFG:SetDefaultAltitude(self.AwacsAngels*1000)
@@ -588,6 +620,9 @@ function AWACS:_StartSettings(FlightGroup,Mission)
     
     group:SetCommandInvisible(self.invisible)
     group:SetCommandImmortal(self.immortal)
+    group:CommandSetCallsign(self.CallSign,self.CallSignNo,2)
+    -- Non AWACS does not seem take AWACS CS in DCS Group
+    --group:CommandSetCallsign(CALLSIGN.Aircraft.Pig,self.CallSignNo,2)
     
     AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,nil)
     self.callsigntxt = string.format("%s %d %d",AWACS.CallSignClear[self.CallSign],1,self.CallSignNo)
@@ -609,14 +644,50 @@ function AWACS:_StartSettings(FlightGroup,Mission)
     self.AwacsTimeStamp = timer.getTime()
     self.EscortsTimeStamp = timer.getTime()
     
-  else
-    -- check for CAP missions, Auftragsnummer id UniqueID in FIFO
-    -- TODO
-    if self.AICAPMissions:HasUniqueID(Mission.auftragsnummer) then
-      -- one of ours
-      -- Register Group
-      --self:_CheckInAI(FlightGroup,FlightGroup:GetGroup(),Mission.auftragsnummer)
+  elseif self.ShiftChangeAwacsRequested and self.AwacsMissionReplacement and self.AwacsMissionReplacement:GetName() == Mission:GetName() then
+    
+    -- manage AWACS Replacement
+    AwacsFG:SetDefaultRadio(self.Frequency,self.Modulation,false)
+    AwacsFG:SwitchRadio(self.Frequency,self.Modulation)
+    AwacsFG:SetDefaultAltitude(self.AwacsAngels*1000)
+    AwacsFG:SetHomebase(self.Airbase)
+    self.CallSignNo = self.CallSignNo+1
+    AwacsFG:SetDefaultCallsign(self.CallSign,self.CallSignNo)
+    AwacsFG:SetDefaultROE(ENUMS.ROE.WeaponHold)
+    AwacsFG:SetDefaultAlarmstate(AI.Option.Ground.val.ALARM_STATE.GREEN)
+    AwacsFG:SetDefaultEPLRS(self.ModernEra)
+    AwacsFG:SetDespawnAfterLanding()
+    AwacsFG:SetFuelLowRTB(true)
+    AwacsFG:SetFuelLowThreshold(20)
+    
+    local group = AwacsFG:GetGroup() -- Wrapper.Group#GROUP
+    
+    group:SetCommandInvisible(self.invisible)
+    group:SetCommandImmortal(self.immortal)
+    group:CommandSetCallsign(self.CallSign,self.CallSignNo,2)
+    -- Non AWACS does not seem take AWACS CS in DCS Group
+    -- group:CommandSetCallsign(CALLSIGN.Aircraft.Pig,self.CallSignNo,2)
+    
+    AwacsFG:SetSRS(self.PathToSRS,self.Gender,self.Culture,self.Voice,self.Port,nil)
+    self.callsigntxt = string.format("%s %d %d",AWACS.CallSignClear[self.CallSign],1,self.CallSignNo)
+    
+    local text = string.format("%s shift change for AO %s control.",self.callsigntxt,self.OpsZone:GetName() or "AO")
+    self:T(self.lid..text)
+    
+    AwacsFG:RadioTransmission(text,1,false)
+    
+    self.AwacsFG = AwacsFG 
+    
+    --self:__CheckRadioQueue(10)
+    
+    if self.HasEscorts then
+      --mission:SetRequiredEscorts(self.EscortNumber)
+      self:_StartEscorts(true)
     end
+    
+    self.AwacsTimeStamp = timer.getTime()
+    self.EscortsTimeStamp = timer.getTime()
+    
   end
   return self
 end
@@ -628,18 +699,18 @@ end
 -- @return #boolean CheckedIn
 function AWACS:_GetManagedGrpID(Group)
   self:T(self.lid.."_GetManagedGrpID for "..Group:GetName())
-  local ID = 0
+  local GID = 0
   local Outcome = false
   local nametocheck = Group:GetName()
   local managedgrps = self.ManagedGrps or {}
   for _,_managed in pairs (managedgrps) do
     local managed = _managed -- #AWACS.ManagedGroup
     if managed.GroupName == nametocheck then
-      ID = managed.ID
+      GID = managed.GID
       Outcome = true
     end
   end
-  return ID, Outcome
+  return GID, Outcome
 end
 
 --- [Internal] AWACS Get TTS compatible callsign
@@ -780,7 +851,7 @@ function AWACS:_Picture(Group)
     return self 
   end
   
-  local ID, Outcome = self:_GetManagedGrpID(Group)
+  local GID, Outcome = self:_GetManagedGrpID(Group)
 
   if Outcome then
     -- Pilot is checked in
@@ -809,7 +880,7 @@ function AWACS:_Picture(Group)
       RadioEntry.IsNew = true
       RadioEntry.TextTTS = text
       RadioEntry.TextScreen = textScreen
-      RadioEntry.GroupID = ID
+      RadioEntry.GroupID = GID
       RadioEntry.IsGroup = Outcome
       RadioEntry.ToScreen = true
       RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
@@ -831,13 +902,13 @@ function AWACS:_Picture(Group)
         RadioEntry.IsNew = true
         RadioEntry.TextTTS = text
         RadioEntry.TextScreen = text
-        RadioEntry.GroupID = ID
+        RadioEntry.GroupID = GID
         RadioEntry.IsGroup = Outcome
         RadioEntry.ToScreen = true
         RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8      
         self.RadioQueue:Push(RadioEntry)
         
-        self:_CreatePicture(true,self:_GetCallSign(Group) or "Unknown 1 1",ID)
+        self:_CreatePicture(true,self:_GetCallSign(Group) or "Unknown 1 1",GID)
       end
       
       if clustersEWR > 0 then
@@ -854,13 +925,13 @@ function AWACS:_Picture(Group)
         RadioEntry.IsNew = true
         RadioEntry.TextTTS = text
         RadioEntry.TextScreen = textScreen
-        RadioEntry.GroupID = ID
+        RadioEntry.GroupID = GID
         RadioEntry.IsGroup = Outcome
         RadioEntry.ToScreen = true
         RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8     
         self.RadioQueue:Push(RadioEntry)
         
-       self:_CreatePicture(false,self:_GetCallSign(Group) or "Unknown 1 1",ID)
+       self:_CreatePicture(false,self:_GetCallSign(Group) or "Unknown 1 1",GID)
       end
     end
     
@@ -871,7 +942,7 @@ function AWACS:_Picture(Group)
     RadioEntry.IsNew = true
     RadioEntry.TextTTS = text
     RadioEntry.TextScreen = text
-    RadioEntry.GroupID = ID
+    RadioEntry.GroupID = GID
     RadioEntry.IsGroup = Outcome
     RadioEntry.ToScreen = true
     RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
@@ -907,12 +978,12 @@ function AWACS:_BogeyDope(Group)
     return self 
   end
   
-  local ID, Outcome = self:_GetManagedGrpID(Group)
+  local GID, Outcome = self:_GetManagedGrpID(Group)
 
   if Outcome then
     -- Pilot is checked in
     
-    local managedgroup = self.ManagedGrps[ID] -- #AWACS.ManagedGroup
+    local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
     local pilotgroup = managedgroup.Group
     local pilotcoord = managedgroup.Group:GetCoordinate()
     
@@ -942,7 +1013,7 @@ function AWACS:_BogeyDope(Group)
       RadioEntry.IsNew = true
       RadioEntry.TextTTS = text
       RadioEntry.TextScreen = textScreen
-      RadioEntry.GroupID = ID
+      RadioEntry.GroupID = GID
       RadioEntry.IsGroup = Outcome
       RadioEntry.ToScreen = Outcome
       RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
@@ -963,13 +1034,13 @@ function AWACS:_BogeyDope(Group)
         RadioEntry.IsNew = true
         RadioEntry.TextTTS = text
         RadioEntry.TextScreen = textScreen
-        RadioEntry.GroupID = ID
+        RadioEntry.GroupID = GID
         RadioEntry.IsGroup = Outcome
         RadioEntry.ToScreen = true
         RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8      
         self.RadioQueue:Push(RadioEntry)
         
-        self:_CreateBogeyDope(self:_GetCallSign(Group) or "Unknown 1 1",ID)
+        self:_CreateBogeyDope(self:_GetCallSign(Group) or "Unknown 1 1",GID)
       end
     end
     
@@ -980,7 +1051,7 @@ function AWACS:_BogeyDope(Group)
     RadioEntry.IsNew = true
     RadioEntry.TextTTS = text
     RadioEntry.TextScreen = text
-    RadioEntry.GroupID = ID
+    RadioEntry.GroupID = GID
     RadioEntry.IsGroup = Outcome
     RadioEntry.ToScreen = true
     RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
@@ -998,7 +1069,7 @@ end
 function AWACS:_Declare(Group)
   self:T(self.lid.."_Declare")
 
-  local ID, Outcome = self:_GetManagedGrpID(Group)
+  local GID, Outcome = self:_GetManagedGrpID(Group)
   local text = "Declare Not yet implemented"
   if Outcome then
     --[[ yes, known
@@ -1013,7 +1084,7 @@ function AWACS:_Declare(Group)
   RadioEntry.IsNew = true
   RadioEntry.TextTTS = text
   RadioEntry.TextScreen = text
-  RadioEntry.GroupID = ID
+  RadioEntry.GroupID = GID
   RadioEntry.IsGroup = Outcome
   RadioEntry.ToScreen = true
   RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
@@ -1030,16 +1101,16 @@ end
 function AWACS:_Showtask(Group)
   self:T(self.lid.."_Showtask")
 
-  local ID, Outcome = self:_GetManagedGrpID(Group)
+  local GID, Outcome = self:_GetManagedGrpID(Group)
   local text = "Showtask WIP"
   
   if Outcome then
    -- known group
    
    -- Do we have a task?
-   local managedgroup = self.ManagedGrps[ID] -- #AWACS.ManagedGroup
+   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
    
-   if managedgroup.IsPlayer and self.TaskedCAPHuman:HasUniqueID(ID) then
+   if managedgroup.IsPlayer and self.TaskedCAPHuman:HasUniqueID(GID) then
 
     if managedgroup.CurrentTask >0 and self.AssignedTasks:HasUniqueID(managedgroup.CurrentTask) then
       -- get task structure
@@ -1077,7 +1148,7 @@ function AWACS:_Showtask(Group)
     RadioEntry.IsNew = true
     RadioEntry.TextTTS = text
     RadioEntry.TextScreen = text
-    RadioEntry.GroupID = ID
+    RadioEntry.GroupID = GID
     RadioEntry.IsGroup = Outcome
     RadioEntry.ToScreen = true
     RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
@@ -1094,7 +1165,7 @@ end
 function AWACS:_CheckIn(Group)
   self:I(self.lid.."_CheckIn "..Group:GetName())
   -- check if already known
-  local ID, Outcome = self:_GetManagedGrpID(Group)
+  local GID, Outcome = self:_GetManagedGrpID(Group)
   local text = ""
   if not Outcome then
     self.ManagedGrpID = self.ManagedGrpID + 1
@@ -1105,13 +1176,13 @@ function AWACS:_CheckIn(Group)
       managedgroup.IsAI = false
       managedgroup.CallSign = self:_GetCallSign(Group) or "Unknown 1 1"
       managedgroup.CurrentTask = 0
-      managedgroup.AssignedTask = false
-      managedgroup.ID = self.ManagedGrpID
-      ID = managedgroup.ID
+      managedgroup.HasAssignedTask = false
+      managedgroup.GID = self.ManagedGrpID
+      GID = managedgroup.GID
     self.ManagedGrps[self.ManagedGrpID]=managedgroup
     text = string.format("%s. Copy %s. Await tasking.",self.callsigntxt,managedgroup.CallSign)
-    self:__CheckedIn(1,managedgroup.ID)
-    self:__AssignAnchor(5,managedgroup.ID)
+    self:__CheckedIn(1,managedgroup.GID)
+    self:__AssignAnchor(5,managedgroup.GID)
   elseif self.AwacsFG then
     text = string.format("%s. Negative %s. You are already checked in.",self.callsigntxt,self:_GetCallSign(Group) or "Unknown 1 1")
   end
@@ -1120,7 +1191,7 @@ function AWACS:_CheckIn(Group)
   RadioEntry.IsNew = true
   RadioEntry.TextTTS = text
   RadioEntry.TextScreen = text
-  RadioEntry.GroupID = ID
+  RadioEntry.GroupID = GID
   RadioEntry.IsGroup = true
   RadioEntry.ToScreen = true
   RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
@@ -1139,7 +1210,7 @@ end
 function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
   self:I(self.lid.."_CheckInAI "..Group:GetName())
   -- check if already known
-  local ID, Outcome = self:_GetManagedGrpID(Group)
+  local GID, Outcome = self:_GetManagedGrpID(Group)
   local text = ""
   if not Outcome then
     self.ManagedGrpID = self.ManagedGrpID + 1
@@ -1151,12 +1222,21 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
       managedgroup.IsAI = true
       managedgroup.CallSign = self:_GetCallSign(Group) or "Unknown 1 1"
       managedgroup.CurrentTask = AuftragsNr
-      managedgroup.AssignedTask = false
-      managedgroup.ID = self.ManagedGrpID
+      managedgroup.HasAssignedTask = false
+      managedgroup.GID = self.ManagedGrpID
+    
+    -- SRS voice for CAP
+    --FlightGroup:SetSRS(PathToSRS,Gender,Culture,Voice,Port,PathToGoogleKey)
+    
+    FlightGroup:SetDefaultRadio(self.Frequency,self.Modulation,false)
+    FlightGroup:SwitchRadio(self.Frequency,self.Modulation)
+    
+    FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,self.CAPVoice,self.Port,nil)
+      
     self.ManagedGrps[self.ManagedGrpID]=managedgroup
     text = string.format("%s. Copy %s. Await tasking.",self.callsigntxt,managedgroup.CallSign)
-    self:__CheckedIn(1,managedgroup.ID)
-    self:__AssignAnchor(5,managedgroup.ID)
+    self:__CheckedIn(1,managedgroup.GID)
+    self:__AssignAnchor(5,managedgroup.GID)
   else
     text = string.format("%s. Negative %s. You are already checked in.",self.callsigntxt,self:_GetCallSign(Group) or "Unknown 1 1")
   end
@@ -1180,17 +1260,17 @@ function AWACS:_CheckOut(Group)
   self:I(self.lid.."_CheckOut")
 
   -- check if already known
-  local ID, Outcome = self:_GetManagedGrpID(Group)
+  local GID, Outcome = self:_GetManagedGrpID(Group)
   local text = ""
   if Outcome then
     -- yes, known
     text = string.format("%s. Copy %s. Have a safe flight home.",self.callsigntxt,self:_GetCallSign(Group) or "Unknown 1 1")
     -- grab some data before we nil the entry
-    local AnchorAssigned = self.ManagedGrps[ID] -- #AWACS.ManagedGroup
+    local AnchorAssigned = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
     local Stack = AnchorAssigned.AnchorStackNo
     local Angels = AnchorAssigned.AnchorStackAngels
-    self.ManagedGrps[ID] = nil
-    self:__CheckedOut(1,ID,Stack,Angels)
+    self.ManagedGrps[GID] = nil
+    self:__CheckedOut(1,GID,Stack,Angels)
   else
     -- no, unknown
     text = string.format("%s. Negative %s. You are not checked in.",self.callsigntxt,self:_GetCallSign(Group) or "Unknown 1 1")
@@ -1383,9 +1463,9 @@ end
 
 --- [Internal] AWACS Assign Anchor Position to a Group
 -- @param #AWACS self
--- @return #number ID Managed Group ID
+-- @return #number GID Managed Group ID
 -- @return #AWACS self
-function AWACS:_AssignAnchorToID(ID)
+function AWACS:_AssignAnchorToID(GID)
   self:T(self.lid.."_AssignAnchorToID")
   local AnchorStackNo, Free = self:_GetFreeAnchorStack()
   if Free then
@@ -1393,8 +1473,8 @@ function AWACS:_AssignAnchorToID(ID)
     local Anchor = self.AnchorStacks:PullByPointer(AnchorStackNo) -- #AWACS.AnchorData
     -- pull one free angels
     local freeangels = Anchor.Anchors:Pull()
-    -- push ID on anchor
-    Anchor.AnchorAssignedID:Push(ID)
+    -- push GID on anchor
+    Anchor.AnchorAssignedID:Push(GID)
     if self.debug then
       --Anchor.AnchorAssignedID:Flush()
       --Anchor.Anchors:Flush()
@@ -1402,28 +1482,28 @@ function AWACS:_AssignAnchorToID(ID)
     -- push back to AnchorStacks
     self.AnchorStacks:Push(Anchor)
     self:T({Anchor,freeangels})
-    self:__AssignedAnchor(5,ID,Anchor,AnchorStackNo,freeangels)
+    self:__AssignedAnchor(5,GID,Anchor,AnchorStackNo,freeangels)
   else
-    self:E(self.lid .. "Cannot assing free anchor stack to ID ".. ID)
+    self:E(self.lid .. "Cannot assing free anchor stack to GID ".. GID)
     -- try again ...
-    self:__AssignAnchor(10,ID)
+    self:__AssignAnchor(10,GID)
   end
   return self
 end
 
---- [Internal] Remove ID (group) from Anchor Stack
+--- [Internal] Remove GID (group) from Anchor Stack
 -- @param #AWACS self
--- @param #AWACS.ManagedGroup.ID ID
+-- @param #AWACS.ManagedGroup.GID ID
 -- @param #number AnchorStackNo
 -- @param #number Angels
 -- @return #AWACS self
-function AWACS:_RemoveIDFromAnchor(ID,AnchorStackNo,Angels)
-  self:I(self.lid.."_RemoveIDFromAnchor for ID="..ID.." Stack="..AnchorStackNo.." Angels="..Angels)
+function AWACS:_RemoveIDFromAnchor(GID,AnchorStackNo,Angels)
+  self:I(self.lid.."_RemoveIDFromAnchor for GID="..GID.." Stack="..AnchorStackNo.." Angels="..Angels)
   -- pull correct anchor
   local AnchorStackNo = AnchorStackNo or 1
   local Anchor = self.AnchorStacks:PullByPointer(AnchorStackNo) -- #AWACS.AnchorData
-  -- pull ID from stack
-  local removedID = Anchor.AnchorAssignedID:PullByID(ID)
+  -- pull GID from stack
+  local removedID = Anchor.AnchorAssignedID:PullByID(GID)
   -- push free angels to stack
   Anchor.Anchors:Push(Angels)
   -- push back AnchorStack
@@ -1534,7 +1614,7 @@ function AWACS:_GetBRAfromBullsOrAO(clustercoordinate)
   return BRAText
 end
 
---- [Internal] Register Task for Group by ID
+--- [Internal] Register Task for Group by GID
 -- @param #AWACS self
 -- @param #number GroupID ManagedGroup ID
 -- @param #AWACS.TaskDescription Description Short Description Task Type
@@ -1546,7 +1626,7 @@ function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object)
    local managedgroup = self.ManagedGrps[GroupID] -- #AWACS.ManagedGroup
    local task = {} -- #AWACS.ManagedTask
    self.ManagedTaskID = self.ManagedTaskID + 1
-   task.ID = self.ManagedTaskID
+   task.TID = self.ManagedTaskID
    task.AssignedGroupID = GroupID
    task.Status = AWACS.TaskStatus.ASSIGNED
    task.ToDo = Description
@@ -1555,31 +1635,46 @@ function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object)
    if Description == AWACS.TaskDescription.ANCHOR or Description == AWACS.TaskDescription.REANCHOR then
     task.Target.Type = TARGET.ObjectType.ZONE
    end
-   self.AssignedTasks:Push(task,task.ID)
+   self.AssignedTasks:Push(task,task.TID)
    --self:I({task})
-   managedgroup.AssignedTask = true
-   managedgroup.CurrentTask = task.ID
+   managedgroup.HasAssignedTask = true
+   managedgroup.CurrentTask = task.TID
    self.ManagedGrps[GroupID] = managedgroup
-   if managedgroup.IsPlayer then
-    self.TaskedCAPHuman:Push(GroupID)
-   elseif managedgroup.IsAI then
-    self.TaskedCAPAI:Push(GroupID)
-   end
+   --if managedgroup.IsPlayer then
+    --self.TaskedCAPHuman:Push(GroupID)
+   --elseif managedgroup.IsAI then
+    --self.TaskedCAPAI:Push(GroupID)
+   --end
    return self
 end 
 
---- [Internal] Get registered Task for Group by its ID
+--- [Internal] Read registered Task for Group by its ID
 -- @param #AWACS self
 -- @param #number GroupID ManagedGroup ID
 -- @return #AWACS.ManagedTask Task or nil if n/e
-function AWACS:_GetAssignedTaskFromID(GroupID)
-   self:T(self.lid.."_GetAssignedTaskFromID "..GroupID)
+function AWACS:_ReadAssignedTaskFromGID(GroupID)
+   self:T(self.lid.."_GetAssignedTaskFromGID "..GroupID)
    local managedgroup = self.ManagedGrps[GroupID] -- #AWACS.ManagedGroup
-   if managedgroup and managedgroup.AssignedTask then
+   if managedgroup and managedgroup.HasAssignedTask then
      local TaskID = managedgroup.CurrentTask
      if self.AssignedTasks:HasUniqueID(TaskID) then
-      return self.AssignedTasks:PullByID(TaskID)
+      return self.AssignedTasks:ReadByID(TaskID)
      end
+   end
+   return nil
+end
+
+--- [Internal] Read assigned Group from a TaskID
+-- @param #AWACS self
+-- @param #number TaskID ManagedTask ID
+-- @return #AWACS.ManagedGroup Group structure or nil if n/e
+function AWACS:_ReadAssignedGroupFromTID(TaskID)
+   self:T(self.lid.."_ReadAssignedGroupFromTID "..TaskID)
+   if self.AssignedTasks:HasUniqueID(TaskID) then
+    local task = self.AssignedTasks:ReadByID(TaskID) -- #AWACS.ManagedTask
+    if task and task.AssignedGroupID and task.AssignedGroupID > 0 then
+      return self.ManagedGrps[task.AssignedGroupID]
+    end
    end
    return nil
 end
@@ -1594,7 +1689,7 @@ function AWACS:_CreateIdleTaskForContact(Description,Object,Contact)
    self:T(self.lid.."_CreateIdleTaskForContact "..Description)
    local task = {} -- #AWACS.ManagedTask
    self.ManagedTaskID = self.ManagedTaskID + 1
-   task.ID = self.ManagedTaskID
+   task.TID = self.ManagedTaskID
    task.AssignedGroupID = 0
    task.Status = AWACS.TaskStatus.IDLE
    task.ToDo = Description
@@ -1605,7 +1700,7 @@ function AWACS:_CreateIdleTaskForContact(Description,Object,Contact)
    if Description == AWACS.TaskDescription.ANCHOR or Description == AWACS.TaskDescription.REANCHOR then
     task.Target.Type = TARGET.ObjectType.ZONE
    end
-   self.OpenTasks:Push(task,task.ID)
+   self.OpenTasks:Push(task,task.TID)
    return self
 end  
 
@@ -1619,7 +1714,7 @@ function AWACS:_CreateIdleTaskForCluster(Description,Object,Cluster)
    self:T(self.lid.."_CreateIdleTaskForCluster "..Description)
    local task = {} -- #AWACS.ManagedTask
    self.ManagedTaskID = self.ManagedTaskID + 1
-   task.ID = self.ManagedTaskID
+   task.TID = self.ManagedTaskID
    task.AssignedGroupID = 0
    task.Status = AWACS.TaskStatus.IDLE
    task.ToDo = Description
@@ -1632,9 +1727,35 @@ function AWACS:_CreateIdleTaskForCluster(Description,Object,Cluster)
    if Description == AWACS.TaskDescription.ANCHOR or Description == AWACS.TaskDescription.REANCHOR then
     task.Target.Type = TARGET.ObjectType.ZONE
    end
-   self.OpenTasks:Push(task,task.ID)
+   self.OpenTasks:Push(task,task.TID)
    return self
 end 
+
+--- [Internal] Create radio entry to tell players that CAP is on station in Anchor
+-- @param #AWACS self
+-- @param #number GID Group ID 
+-- @return #AWACS self
+function AWACS:_MessageAIReadyForTasking(GID)
+  self:I(self.lid.."_MessageAIReadyForTasking")
+  -- obtain group details
+  if GID >0  and self.ManagedGrps[GID] then
+    local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
+    local GFCallsign = self:_GetCallSign(managedgroup.Group)
+    local TextTTS = string.format("%s. %s. On station over anchor %d at angels  %d. Ready for tasking.",GFCallsign,self.callsigntxt,managedgroup.AnchorStackNo or 1,managedgroup.AnchorStackAngels or 25)
+    local RadioEntry = {} -- #AWACS.RadioEntry
+    RadioEntry.TextTTS = TextTTS
+    RadioEntry.TextScreen = ""
+    RadioEntry.IsNew = true
+    RadioEntry.IsGroup = false
+    RadioEntry.GroupID = GID
+    RadioEntry.Duration = STTS.getSpeechTime(TextTTS,1.2,false)+2 or 16
+    RadioEntry.ToScreen = false
+    RadioEntry.FromAI = true
+    
+    self.RadioQueue:Push(RadioEntry)
+  end
+  return self
+end
 
 --- [Internal] Check available tasks and status
 -- @param #AWACS self
@@ -1661,7 +1782,7 @@ function AWACS:_CheckTaskQueue()
           local group = managedgroup.Group
           local groupcoord = group:GetCoordinate()
           local zone = target:GetObject() -- Core.Zone#ZONE
-          self:I({zone})
+          self:T({zone})
           if group:IsInZone(zone) then
             self:I("Open Tasks ANCHOR/REANCHOR success for GroupID "..entry.AssignedGroupID)
             -- made it
@@ -1707,7 +1828,7 @@ function AWACS:_CheckTaskQueue()
           local group = managedgroup.Group
           local groupcoord = group:GetCoordinate()
           local zone = target:GetObject() -- Core.Zone#ZONE
-          self:I({zone})
+          self:T({zone})
           if group:IsInZone(zone) then
             self:I("Open Tasks ANCHOR/REANCHOR success for GroupID "..entry.AssignedGroupID)
             -- made it
@@ -1716,11 +1837,11 @@ function AWACS:_CheckTaskQueue()
             self.AssignedTasks:PullByPointer(_id)
             -- add group to idle stack
             if managedgroup.IsAI then
-              self.TaskedCAPAI:PullByPointer(entry.AssignedGroupID)
-              self.CAPIdleAI:Push(entry.AssignedGroupID)
+              -- message AI on station
+              self:_MessageAIReadyForTasking(managedgroup.GID)
             elseif managedgroup.IsPlayer then
-              self.TaskedCAPHuman:PullByPointer(entry.AssignedGroupID)
-              self.CAPIdleHuman:Push(entry.AssignedGroupID)
+              --self.TaskedCAPHuman:PullByPointer(entry.AssignedGroupID)
+              ---self.CAPIdleHuman:Push(entry.AssignedGroupID)
             end
           else
             -- not there yet
@@ -1756,11 +1877,11 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope)
   self:T(self.lid.."_AnnounceContact")
   -- do we have a group to talk to?
   local isGroup = false
-  local ID = 0
+  local GID = 0
   local grpcallsign = "Unknown 1 1"
   if Group and Group:IsAlive() then
-    ID, isGroup = self:_GetManagedGrpID(Group)
-    self:T("ID="..ID.." CheckedIn = "..tostring(isGroup))
+    GID, isGroup = self:_GetManagedGrpID(Group)
+    self:T("GID="..GID.." CheckedIn = "..tostring(isGroup))
     grpcallsign = self:_GetCallSign(Group) or "Unknown 1 1"
   end
   local contact = Contact -- Ops.Intelligence#INTEL.Contact
@@ -1805,7 +1926,7 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope)
   RadioEntry.TextScreen = TextScreen
   RadioEntry.IsNew = IsNew
   RadioEntry.IsGroup = isGroup
-  RadioEntry.GroupID = ID
+  RadioEntry.GroupID = GID
   RadioEntry.Duration = STTS.getSpeechTime(TextTTS,1.2,false)+2 or 16
   RadioEntry.ToScreen = true
   
@@ -1857,7 +1978,7 @@ function AWACS:_CheckAICAPOnStation()
       mission:__Cancel(5)
       self:_CheckOut(OpsGroup)
     end
-    -- Check Alert5 Mission states
+    -- Check CAP Mission states
     if onstation > 0 then
       local missionIDs = self.AICAPMissions:GetIDStackSorted()
       --self:_CheckInAI(FlightGroup,FlightGroup:GetGroup(),Mission.auftragsnummer)
@@ -1901,15 +2022,21 @@ function AWACS:_CheckAICAPOnStation()
           report:Add(string.format("Mission State %s",mission:GetState()))
           local OpsGroups = mission:GetOpsGroups()
           local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
+          if OpsGroup then
           local OpsName = OpsGroup:GetName() or "Unknown"
-          report:Add(string.format("Mission FG %s",OpsName))
-          report:Add(string.format("Mission FG State %s",mission:GetGroupStatus(OpsGroup)))
+          local OpsCallSign = OpsGroup:GetCallsignName() or "Unknown"
+            report:Add(string.format("Mission FG %s",OpsName))
+            report:Add(string.format("Callsign %s",OpsCallSign))
+            report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
+          else
+            report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
+          end
           report:Add(string.format("Target Type %s",mission:GetTargetType()))
         end
         report:Add("===============") 
       end
       if self.debug then
-        self:I(report:Text())
+        self:T(report:Text())
       end    
     end
   end
@@ -2027,55 +2154,193 @@ function AWACS:onafterStatus(From, Event, To)
       self.RadioQueue:Push(RadioEntry)
       self:_StartIntel(awacs)
     end
-  end  
+  end 
+  
+    --------------------------------
+    --     AWACS
+    --------------------------------
+   
   if (awacs and awacs:IsAlive()) then
+  
     -- Check on Awacs Mission Status
-    if self.debug then
-      local AWmission = self.AwacsMission -- Ops.Auftrag#AUFTRAG
-      local awstatus = AWmission:GetState()
-      local AWmissiontime = (timer.getTime() - self.AwacsTimeStamp)
-      
-      local AWTOSLeft = UTILS.Round((((self.AwacsTimeOnStation+self.ShiftChangeTime)*3600) - AWmissiontime),0) -- seconds
-      
-      AWTOSLeft = UTILS.Round(AWTOSLeft/60,0) -- minutes
-      
+    local AWmission = self.AwacsMission -- Ops.Auftrag#AUFTRAG
+    local awstatus = AWmission:GetState()
+    local AWmissiontime = (timer.getTime() - self.AwacsTimeStamp)
+    
+    local AWTOSLeft = UTILS.Round((((self.AwacsTimeOnStation+self.ShiftChangeTime)*3600) - AWmissiontime),0) -- seconds
+    
+    AWTOSLeft = UTILS.Round(AWTOSLeft/60,0) -- minutes
+    
+    local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
+    
+    local Changedue = "No"
+    
+    if not self.ShiftChangeAwacsFlag and (AWTOSLeft <= ChangeTime or AWmission:IsOver()) then 
+      Changedue = "Yes"
+      self.ShiftChangeAwacsFlag = true
+      self:__AwacsShiftChange(2) 
+    end
+    
+    local report = REPORT:New("AWACS:")
+    report:Add("====================")
+    report:Add("AWACS:")
+    report:Add(string.format("Auftrag Status: %s",awstatus))
+    report:Add(string.format("TOS Left: %d min",AWTOSLeft))
+    report:Add(string.format("Needs ShiftChange: %s",Changedue))
+    
+    local OpsGroups = AWmission:GetOpsGroups()
+    local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
+    if OpsGroup then
+      local OpsName = OpsGroup:GetName() or "Unknown"
+      local OpsCallSign = OpsGroup:GetCallsignName() or "Unknown"
+      report:Add(string.format("Mission FG %s",OpsName))
+      report:Add(string.format("Callsign %s",OpsCallSign))
+      report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
+    else
+      report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
+    end
+    
+    -- Check for replacement mission - if any
+    if self.ShiftChangeAwacsFlag and self.ShiftChangeAwacsRequested then -- Ops.Auftrag#AUFTRAG
+      AWmission = self.EscortMissionReplacement
+      local esstatus = AWmission:GetState()
+      local ESmissiontime = (timer.getTime() - self.AwacsTimeStamp)
+      local ESTOSLeft = UTILS.Round((((self.AwacsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
+      ESTOSLeft = UTILS.Round(ESTOSLeft/60,0) -- minutes
       local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
+      --local Changedue = "No"
       
+      --report:Add("====================")
+      report:Add("AWACS REPLACEMENT:")
+      report:Add(string.format("Auftrag Status: %s",esstatus))
+      report:Add(string.format("TOS Left: %d min",ESTOSLeft))
+      --report:Add(string.format("Needs ShiftChange: %s",Changedue))
+      
+      local OpsGroups = AWmission:GetOpsGroups()
+      local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
+      if OpsGroup then
+        local OpsName = OpsGroup:GetName() or "Unknown"
+        local OpsCallSign = OpsGroup:GetCallsignName() or "Unknown"
+        report:Add(string.format("Mission FG %s",OpsName))
+        report:Add(string.format("Callsign %s",OpsCallSign))
+        report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
+      else
+        report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
+      end
+      
+      if AWmission:IsExecuting() then
+        -- make the actual change in the queue
+        self.ShiftChangeAwacsFlag = false
+        self.ShiftChangeAwacsRequested = false
+        -- cancel old mission
+        if self.AwacsMission and self.AwacsMission:IsNotOver() then
+            self.AwacsMission:Cancel()
+        end
+        self.AwacsMission = self.AwacsMissionReplacement
+        self.AwacsMissionReplacement = nil
+        self.AwacsTimeStamp = timer.getTime()
+        report:Add("*** Replacement DONE ***")
+      end
+      report:Add("====================")
+    end
+    
+    --------------------------------
+    --     ESCORTS
+    --------------------------------
+                       
+    if self.HasEscorts then
+      local ESmission = self.EscortMission -- Ops.Auftrag#AUFTRAG
+      local esstatus = ESmission:GetState()
+      local ESmissiontime = (timer.getTime() - self.EscortsTimeStamp)
+      local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
+      ESTOSLeft = UTILS.Round(ESTOSLeft/60,0) -- minutes
+      local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
       local Changedue = "No"
       
-      if AWTOSLeft <= ChangeTime then Changedue = "Yes" end
+      if (ESTOSLeft <= ChangeTime and not self.ShiftChangeEscortsFlag) or (ESmission:IsOver() and not self.ShiftChangeEscortsFlag) then 
+        Changedue = "Yes" 
+        self.ShiftChangeEscortsFlag = true -- set this back when new Escorts arrived
+        self:__EscortShiftChange(2)
+      end
       
-      local report = REPORT:New("AWACS:")
       report:Add("====================")
-      report:Add(string.format("Auftrag Status: %s",awstatus))
-      report:Add(string.format("TOS Left: %d min",AWTOSLeft))
+      report:Add("ESCORTS:")
+      report:Add(string.format("Auftrag Status: %s",esstatus))
+      report:Add(string.format("TOS Left: %d min",ESTOSLeft))
       report:Add(string.format("Needs ShiftChange: %s",Changedue))
-      if self.HasEscorts then
-        local ESmission = self.EscortMission -- Ops.Auftrag#AUFTRAG
+      
+      local OpsGroups = ESmission:GetOpsGroups()
+      local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
+      if OpsGroup then
+        local OpsName = OpsGroup:GetName() or "Unknown"
+        local OpsCallSign = OpsGroup:GetCallsignName() or "Unknown"
+        report:Add(string.format("Mission FG %s",OpsName))
+        report:Add(string.format("Callsign %s",OpsCallSign))
+        report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
+      else
+        report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
+      end
+      
+      report:Add("====================")
+      
+      -- Check for replacement mission - if any
+      if self.ShiftChangeEscortsFlag and self.ShiftChangeEscortsRequested then -- Ops.Auftrag#AUFTRAG
+        ESmission = self.EscortMissionReplacement
         local esstatus = ESmission:GetState()
         local ESmissiontime = (timer.getTime() - self.EscortsTimeStamp)
         local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
         ESTOSLeft = UTILS.Round(ESTOSLeft/60,0) -- minutes
         local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
-        local Changedue = "No"
-        if ESTOSLeft <= ChangeTime then Changedue = "Yes" end
-        report:Add("====================")
-        report:Add("ESCORTS:")
+        --local Changedue = "No"
+        
+        --report:Add("====================")
+        report:Add("ESCORTS REPLACEMENT:")
         report:Add(string.format("Auftrag Status: %s",esstatus))
         report:Add(string.format("TOS Left: %d min",ESTOSLeft))
-        report:Add(string.format("Needs ShiftChange: %s",Changedue))
+        --report:Add(string.format("Needs ShiftChange: %s",Changedue))
+        
+        local OpsGroups = ESmission:GetOpsGroups()
+        local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
+        if OpsGroup then
+          local OpsName = OpsGroup:GetName() or "Unknown"
+          local OpsCallSign = OpsGroup:GetCallsignName() or "Unknown"
+          report:Add(string.format("Mission FG %s",OpsName))
+          report:Add(string.format("Callsign %s",OpsCallSign))
+          report:Add(string.format("Mission FG State %s",OpsGroup:GetState()))
+        else
+          report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
+        end
+        
+        if ESmission:IsExecuting() then
+          -- make the actual change in the queue
+          self.ShiftChangeEscortsFlag = false
+          self.ShiftChangeEscortsRequested = false
+          -- cancel old mission
+          if self.EscortMission and self.EscortMission:IsNotOver() then
+              self.EscortMission:Cancel()
+          end
+          self.EscortMission = self.EscortMissionReplacement
+          self.EscortMissionReplacement = nil
+          self.EscortsTimeStamp = timer.getTime()
+          report:Add("*** Replacement DONE ***")
+        end
         report:Add("====================")
       end
+    end
+      
+    if self.debug then  
       self:I(report:Text())
     end
+    -- Check on AUFTRAG status for CAP AI
     self:_CheckAICAPOnStation()
   else
    -- do other stuff
+  
   end
-  -- Check task queue
+  
+  -- Check task queue (both)
   self:_CheckTaskQueue()
-  -- Do some stats
-  --self:_LogStatistics()
+
   self:__Status(30)
   return self
 end
@@ -2096,10 +2361,11 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
+-- @param #number GID Group ID
 -- @return #AWACS self
-function AWACS:onafterAssignAnchor(From, Event, To, ID)
-  self:T({From, Event, To, "ID = " .. ID})
-  self:_AssignAnchorToID(ID)
+function AWACS:onafterAssignAnchor(From, Event, To, GID)
+  self:T({From, Event, To, "GID = " .. GID})
+  self:_AssignAnchorToID(GID)
   return self
 end
 
@@ -2108,13 +2374,13 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
--- @param #AWACS.ManagedGroup.ID ID 
+-- @param #AWACS.ManagedGroup.GID Group ID 
 -- @param #number AnchorStackNo
 -- @param #number Angels
 -- @return #AWACS self
-function AWACS:onafterCheckedOut(From, Event, To, ID, AnchorStackNo, Angels)
-  self:T({From, Event, To, "ID = " .. ID})
-  self:_RemoveIDFromAnchor(ID,AnchorStackNo,Angels)
+function AWACS:onafterCheckedOut(From, Event, To, GID, AnchorStackNo, Angels)
+  self:T({From, Event, To, "GID = " .. GID})
+  self:_RemoveIDFromAnchor(GID,AnchorStackNo,Angels)
   return self
 end
 
@@ -2123,17 +2389,17 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
--- @param #number ID Managed Group ID
+-- @param #number GID Managed Group ID
 -- @param #AWACS.AnchorData Anchor
 -- @param #number AnchorStackNo
 -- @return #AWACS self
-function AWACS:onafterAssignedAnchor(From, Event, To, ID, Anchor, AnchorStackNo, AnchorAngels)
-  self:I({From, Event, To, "ID=" .. ID, "Stack=" .. AnchorStackNo})
+function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo, AnchorAngels)
+  self:I({From, Event, To, "GID=" .. GID, "Stack=" .. AnchorStackNo})
   -- TODO
-  local managedgroup = self.ManagedGrps[ID] -- #AWACS.ManagedGroup
+  local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
   managedgroup.AnchorStackNo = AnchorStackNo
   managedgroup.AnchorStackAngels = AnchorAngels
-  self.ManagedGrps[ID] = managedgroup
+  self.ManagedGrps[GID] = managedgroup
   local isPlayer = managedgroup.IsPlayer
   local isAI = managedgroup.IsAI
   local Group = managedgroup.Group
@@ -2141,7 +2407,7 @@ function AWACS:onafterAssignedAnchor(From, Event, To, ID, Anchor, AnchorStackNo,
   local AnchorName = Anchor.AnchorZone:GetName() or "unknown"
   local AnchorCoordTxt = Anchor.AnchorZoneCoordinateText or "unknown"
   local Angels = AnchorAngels or 25
-  local AnchorSpeed = self.CapSpeedBase or 200
+  local AnchorSpeed = self.CapSpeedBase or 220
   local AuftragsNr = managedgroup.CurrentTask
 
   local textTTS = string.format("%s. %s. Anchor at %s at angels %d doing %d knots. Wait for task assignment.",self.callsigntxt,CallSign,AnchorName,Angels,AnchorSpeed)
@@ -2153,14 +2419,14 @@ function AWACS:onafterAssignedAnchor(From, Event, To, ID, Anchor, AnchorStackNo,
   RadioEntry.IsNew = true
   RadioEntry.TextTTS = textTTS
   RadioEntry.TextScreen = textScreen
-  RadioEntry.GroupID = ID
+  RadioEntry.GroupID = GID
   RadioEntry.IsGroup = isPlayer
   RadioEntry.Duration = STTS.getSpeechTime(textTTS,1.0,false) or 10
   RadioEntry.ToScreen = isPlayer
   
   self.RadioQueue:Push(RadioEntry)
       
-  self:_CreateTaskForGroup(ID,AWACS.TaskDescription.ANCHOR,TextTasking,Anchor.AnchorZone)
+  self:_CreateTaskForGroup(GID,AWACS.TaskDescription.ANCHOR,TextTasking,Anchor.AnchorZone)
   
   if isAI and AuftragsNr and AuftragsNr > 0 and self.AICAPMissions:HasUniqueID(AuftragsNr) then
     -- Change current Auftrag to Orbit at Anchor
@@ -2172,8 +2438,7 @@ function AWACS:onafterAssignedAnchor(From, Event, To, ID, Anchor, AnchorStackNo,
     self.AICAPMissions:PullByID(AuftragsNr)
     self.AICAPMissions:Push(AnchorMission,AnchorMission.auftragsnummer)
     managedgroup.CurrentTask = AnchorMission.auftragsnummer
-    self.ManagedGrps[ID] = managedgroup
-    
+    self.ManagedGrps[GID] = managedgroup  
   end
   
   return self
@@ -2241,11 +2506,26 @@ end
 function AWACS:onafterCheckRadioQueue(From,Event,To)
  self:T({From, Event, To})
  -- do we have messages queued?
+ 
  local nextcall = 10
  if self.RadioQueue:IsNotEmpty() then
   local RadioEntry = self.RadioQueue:Pull() -- #AWACS.RadioEntry
+  
   self:T({RadioEntry})
-  self.AwacsFG:RadioTransmission(RadioEntry.TextTTS,1,false)
+  
+  if not RadioEntry.FromAI then
+    -- AI AWACS Speaking
+    self.AwacsFG:RadioTransmission(RadioEntry.TextTTS,1,false)
+  else
+    -- CAP AI speaking
+    if RadioEntry.GroupID and RadioEntry.GroupID ~= 0 then
+      local managedgroup = self.ManagedGrps[RadioEntry.GroupID] -- #AWACS.ManagedGroup
+      if managedgroup and managedgroup.FlightGroup and managedgroup.FlightGroup:IsAlive() then
+        managedgroup.FlightGroup:RadioTransmission(RadioEntry.TextTTS,1,false)
+      end
+    end
+  end
+  
   if RadioEntry.Duration then nextcall = RadioEntry.Duration end
   if RadioEntry.ToScreen and RadioEntry.TextScreen then
     if RadioEntry.GroupID and RadioEntry.GroupID ~= 0 then
@@ -2258,8 +2538,63 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
     end
   end
  end
+ 
  self:__CheckRadioQueue(nextcall+2)
+ 
  return self
+end
+
+--- [Internal] onafterEscortShiftChange
+-- @param #AWACS self
+-- @param #string From 
+-- @param #string Event
+-- @param #string To
+-- @return #AWACS self
+function AWACS:onafterEscortShiftChange(From,Event,To)
+  self:I({From, Event, To})
+  -- request new Escorts, check if AWACS-FG still alive first!
+  if self.AwacsFG and self.ShiftChangeEscortsFlag and not self.ShiftChangeEscortsRequested then
+    local awacs = self.AwacsFG:GetGroup() -- Wrapper.Group#GROUP
+    if awacs and awacs:IsAlive() then
+      -- ok we're good to re-request
+      self.ShiftChangeEscortsRequested = true
+      self.EscortsTimeStamp = timer.getTime()
+      self:_StartEscorts(true)
+    else
+      -- should not happen
+      self:E("**** AWACS group dead at onafterEscortShiftChange!")
+    end
+  end
+  return self
+end
+
+--- [Internal] onafterAwacsShiftChange
+-- @param #AWACS self
+-- @param #string From 
+-- @param #string Event
+-- @param #string To
+-- @return #AWACS self
+function AWACS:onafterAwacsShiftChange(From,Event,To)
+  self:I({From, Event, To})
+  -- request new Escorts, check if AWACS-FG still alive first!
+  if self.AwacsFG and self.ShiftChangeAwacsFlag and not self.ShiftChangeAwacsRequested then
+    
+    -- ok we're good to re-request
+    self.ShiftChangeAwacsRequested = true
+    self.AwacsTimeStamp = timer.getTime()
+    
+    -- set up the AWACS and let it orbit
+    local AwacsAW = self.AirWing -- Ops.AirWing#AIRWING
+    local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
+    local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
+    mission:SetTime(nil,timeonstation)
+  
+    AwacsAW:AddMission(mission)
+    
+    self.AwacsMissionReplacement = mission
+    
+  end
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2291,7 +2626,7 @@ AwacsAW:AddSquadron(Squad_One)
 AwacsAW:NewPayload("Awacs One One",-1,{AUFTRAG.Type.ORBIT},100)
 
 -- Escorts
-local Squad_Two = SQUADRON:New("Escorts",10,"Escorts North")
+local Squad_Two = SQUADRON:New("Escorts",4,"Escorts North")
 Squad_Two:AddMissionCapability({AUFTRAG.Type.ESCORT})
 Squad_Two:SetFuelLowRefuel(true)
 Squad_Two:SetFuelLowThreshold(0.3)
