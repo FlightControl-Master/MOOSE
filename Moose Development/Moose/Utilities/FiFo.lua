@@ -38,7 +38,7 @@ do
 FIFO = {
   ClassName = "FIFO",
   lid = "",
-  version = "0.0.2",
+  version = "0.0.3",
   counter = 0,
   pointer = 0,
   stackbypointer = {},
@@ -80,7 +80,7 @@ end
 --- FIFO Push Object to Stack
 -- @param #FIFO self
 -- @param #table Object
--- @param #string UniqueID (optional) - will default to current pointer + 1
+-- @param #string UniqueID (optional) - will default to current pointer + 1. Note - if you intend to use `FIFO:GetIDStackSorted()` keep the UniqueID numerical!
 -- @return #FIFO self
 function FIFO:Push(Object,UniqueID)
   self:T(self.lid.."Push")
@@ -147,7 +147,7 @@ end
 --- FIFO Read, not Pull, Object from Stack by UniqueID
 -- @param #FIFO self
 -- @param #number UniqueID
--- @return #table Object or nil if stack is empty or ID does not exist
+-- @return #table Object data or nil if stack is empty or ID does not exist
 function FIFO:ReadByID(UniqueID)
   self:T(self.lid.."ReadByID " .. tostring(UniqueID))
   if self.counter == 0 or not UniqueID or not self.stackbyid[UniqueID]  then return nil end
@@ -250,7 +250,7 @@ end
 
 --- FIFO Get table of UniqueIDs sorted smallest to largest
 -- @param #FIFO self
--- @return #table Table of #FIFO.IDEntry entries
+-- @return #table Table with index [1] to [n] of UniqueID entries
 function FIFO:GetIDStackSorted()
   self:T(self.lid.."GetIDStackSorted")
   
@@ -271,6 +271,83 @@ function FIFO:GetIDStackSorted()
   return idstack
 end
 
+--- FIFO Get table of data entries
+-- @param #FIFO self
+-- @return #table Raw table indexed [1] to [n] of object entries - might be empty!
+function FIFO:GetDataTable()
+  self:T(self.lid.."GetDataTable")
+  local datatable = {}
+  for _,_entry in pairs(self.stackbypointer) do
+    datatable[#datatable+1] = _entry.data
+  end
+  return datatable
+end
+
+--- FIFO Get sorted table of data entries by UniqueIDs (must be numerical UniqueIDs only!)
+-- @param #FIFO self
+-- @return #table Table indexed [1] to [n] of sorted object entries - might be empty!
+function FIFO:GetSortedDataTable()
+  self:T(self.lid.."GetSortedDataTable")
+  local datatable = {}
+  local idtablesorted = self:GetIDStackSorted()
+  for _,_entry in pairs(idtablesorted) do
+    datatable[#datatable+1] = self:ReadByID(_entry)
+  end
+  return datatable
+end
+
+--- Iterate the FIFO and call an iterator function for the given FIFO data, providing the object for each element of the stack and optional parameters.
+-- @param #FIFO self
+-- @param #function IteratorFunction The function that will be called.
+-- @param #table Arg (Optional) Further Arguments of the IteratorFunction.
+-- @param #function Function (Optional) A function returning a #boolean true/false. Only if true, the IteratorFunction is called.
+-- @param #table FunctionArguments (Optional) Function arguments.
+-- @return #FIFO self
+function FIFO:ForEach( IteratorFunction, Arg, Function, FunctionArguments )
+  self:T(self.lid.."ForEach")
+
+  local Set = self:GetPointerStack() or {}
+  Arg = Arg or {}
+
+  local function CoRoutine()
+    local Count = 0
+    for ObjectID, ObjectData in pairs( Set ) do
+      local Object = ObjectData.data
+        self:T( {Object} )
+        if Function then
+          if Function( unpack( FunctionArguments or {} ), Object ) == true then
+            IteratorFunction( Object, unpack( Arg ) )
+          end
+        else
+          IteratorFunction( Object, unpack( Arg ) )
+        end
+        Count = Count + 1
+    end
+    return true
+  end
+
+  local co = CoRoutine
+
+  local function Schedule()
+
+    local status, res = co()
+    self:T( { status, res } )
+
+    if status == false then
+      error( res )
+    end
+    if res == false then
+      return true -- resume next time the loop
+    end
+
+    return false
+  end
+
+  Schedule()
+
+  return self
+end
+   
 --- FIFO Print stacks to dcs.log
 -- @param #FIFO self
 -- @return #FIFO self
@@ -582,6 +659,83 @@ function LIFO:Flush()
   end
   self:I("Counter = " .. self.counter)
   self:I("Pointer = ".. self.pointer)
+  return self
+end
+
+--- LIFO Get table of data entries
+-- @param #LIFO self
+-- @return #table Raw table indexed [1] to [n] of object entries - might be empty!
+function LIFO:GetDataTable()
+  self:T(self.lid.."GetDataTable")
+  local datatable = {}
+  for _,_entry in pairs(self.stackbypointer) do
+    datatable[#datatable+1] = _entry.data
+  end
+  return datatable
+end
+
+--- LIFO Get sorted table of data entries by UniqueIDs (must be numerical UniqueIDs only!)
+-- @param #LIFO self
+-- @return #table Table indexed [1] to [n] of sorted object entries - might be empty!
+function LIFO:GetSortedDataTable()
+  self:T(self.lid.."GetSortedDataTable")
+  local datatable = {}
+  local idtablesorted = self:GetIDStackSorted()
+  for _,_entry in pairs(idtablesorted) do
+    datatable[#datatable+1] = self:ReadByID(_entry)
+  end
+  return datatable
+end
+
+--- Iterate the LIFO and call an iterator function for the given LIFO data, providing the object for each element of the stack and optional parameters.
+-- @param #LIFO self
+-- @param #function IteratorFunction The function that will be called.
+-- @param #table Arg (Optional) Further Arguments of the IteratorFunction.
+-- @param #function Function (Optional) A function returning a #boolean true/false. Only if true, the IteratorFunction is called.
+-- @param #table FunctionArguments (Optional) Function arguments.
+-- @return #LIFO self
+function LIFO:ForEach( IteratorFunction, Arg, Function, FunctionArguments )
+  self:T(self.lid.."ForEach")
+
+  local Set = self:GetPointerStack() or {}
+  Arg = Arg or {}
+
+  local function CoRoutine()
+    local Count = 0
+    for ObjectID, ObjectData in pairs( Set ) do
+      local Object = ObjectData.data
+        self:T( {Object} )
+        if Function then
+          if Function( unpack( FunctionArguments or {} ), Object ) == true then
+            IteratorFunction( Object, unpack( Arg ) )
+          end
+        else
+          IteratorFunction( Object, unpack( Arg ) )
+        end
+        Count = Count + 1
+    end
+    return true
+  end
+
+  local co = CoRoutine
+
+  local function Schedule()
+
+    local status, res = co()
+    self:T( { status, res } )
+
+    if status == false then
+      error( res )
+    end
+    if res == false then
+      return true -- resume next time the loop
+    end
+
+    return false
+  end
+
+  Schedule()
+
   return self
 end
 
