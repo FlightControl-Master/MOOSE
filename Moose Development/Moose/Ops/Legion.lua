@@ -47,7 +47,7 @@ LEGION = {
 
 --- LEGION class version.
 -- @field #string version
-LEGION.version="0.3.1"
+LEGION.version="0.3.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1229,7 +1229,7 @@ function LEGION:onafterNewAsset(From, Event, To, asset, assignment)
       end
 
       -- Set takeoff type.
-      asset.takeoffType=cohort.takeoffType
+      asset.takeoffType=cohort.takeoffType~=nil and cohort.takeoffType or self.takeoffType
       
       -- Set parking IDs.
       asset.parkingIDs=cohort.parkingIDs
@@ -1335,6 +1335,7 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
     -- Did not return yet.
     asset.Treturned=nil
 
+
     ---
     -- Cohort
     ---
@@ -1360,7 +1361,7 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
     if cohort.fuellowRefuel then
       flightgroup:SetFuelLowRefuel(cohort.fuellowRefuel)
     end
-
+    
     -- Assignment.
     local assignment=request.assignment
     
@@ -1379,6 +1380,16 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
   
       -- Get Mission (if any).
       local mission=self:GetMissionByID(uid)
+      
+      local despawnLanding=cohort.despawnAfterLanding~=nil and cohort.despawnAfterLanding or self.despawnAfterLanding
+      if despawnLanding then
+        flightgroup:SetDespawnAfterLanding()
+      end
+      
+      local despawnHolding=cohort.despawnAfterHolding~=nil and cohort.despawnAfterHolding or self.despawnAfterHolding
+      if despawnHolding then
+        flightgroup:SetDespawnAfterHolding()
+      end      
   
       -- Add mission to flightgroup queue.
       if mission then

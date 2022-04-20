@@ -44,8 +44,10 @@
 -- @field #table tacanChannel List of TACAN channels available to the squadron.
 -- @field #number radioFreq Radio frequency in MHz the squad uses.
 -- @field #number radioModu Radio modulation the squad uses.
--- @field #number takeoffType Take of type.
+-- @field #string takeoffType Take of type.
 -- @field #table parkingIDs Parking IDs for this squadron.
+-- @field #boolean despawnAfterLanding Aircraft are despawned after landing.
+-- @field #boolean despawnAfterHolding Aircraft are despawned after holding.
 -- @extends Ops.Cohort#COHORT
 
 --- *It is unbelievable what a squadron of twelve aircraft did to tip the balance* -- Adolf Galland
@@ -57,8 +59,6 @@
 -- A SQUADRON is essential part of an @{Ops.Airwing#AIRWING} and consists of **one** type of aircraft.
 -- 
 -- 
---
---
 --
 -- @field #SQUADRON
 SQUADRON = {
@@ -74,7 +74,7 @@ SQUADRON = {
 
 --- SQUADRON class version.
 -- @field #string version
-SQUADRON.version="0.8.0"
+SQUADRON.version="0.8.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -147,7 +147,7 @@ end
 --- Set takeoff type. All assets of this squadron will be spawned with cold (default) or hot engines.
 -- Spawning on runways is not supported.
 -- @param #SQUADRON self
--- @param #string TakeoffType Take off type: "Cold" (default) or "Hot" with engines on.
+-- @param #string TakeoffType Take off type: "Cold" (default) or "Hot" with engines on or "Air" for spawning in air.
 -- @return #SQUADRON self
 function SQUADRON:SetTakeoffType(TakeoffType)
   TakeoffType=TakeoffType or "Cold"
@@ -155,6 +155,8 @@ function SQUADRON:SetTakeoffType(TakeoffType)
     self.takeoffType=COORDINATE.WaypointType.TakeOffParkingHot
   elseif TakeoffType:lower()=="cold" then
     self.takeoffType=COORDINATE.WaypointType.TakeOffParking
+  elseif TakeoffType:lower()=="air" then
+    self.takeoffType=COORDINATE.WaypointType.TurningPoint    
   else
     self.takeoffType=COORDINATE.WaypointType.TakeOffParking
   end
@@ -176,6 +178,43 @@ function SQUADRON:SetTakeoffHot()
   self:SetTakeoffType("Hot")
   return self
 end
+
+--- Set takeoff type air. All assets of this squadron will be spawned in air above the airbase.
+-- @param #SQUADRON self
+-- @return #SQUADRON self
+function SQUADRON:SetTakeoffAir()
+  self:SetTakeoffType("Air")
+  return self
+end
+
+--- Set despawn after landing. Aircraft will be despawned after the landing event.
+-- Can help to avoid DCS AI taxiing issues.
+-- @param #SQUADRON self
+-- @param #boolean Switch If `true` (default), activate despawn after landing.
+-- @return #SQUADRON self
+function SQUADRON:SetDespawnAfterLanding(Switch)
+  if Switch then
+    self.despawnAfterLanding=Switch
+  else
+    self.despawnAfterLanding=true
+  end
+  return self
+end
+
+--- Set despawn after holding. Aircraft will be despawned when they arrive at their holding position at the airbase.
+-- Can help to avoid DCS AI taxiing issues.
+-- @param #SQUADRON self
+-- @param #boolean Switch If `true` (default), activate despawn after holding.
+-- @return #SQUADRON self
+function SQUADRON:SetDespawnAfterHolding(Switch)
+  if Switch then
+    self.despawnAfterHolding=Switch
+  else
+    self.despawnAfterHolding=true
+  end
+  return self
+end
+
 
 --- Set low fuel threshold.
 -- @param #SQUADRON self

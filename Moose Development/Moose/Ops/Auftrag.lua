@@ -2302,7 +2302,7 @@ function AUFTRAG:SetTime(ClockStart, ClockStop)
   return self
 end
 
---- Set time how low the mission is executed. Once this time limit has passed, the mission is cancelled.
+--- Set time how long the mission is executed. Once this time limit has passed, the mission is cancelled.
 -- @param #AUFTRAG self
 -- @param #number Duration Duration in seconds.
 -- @return #AUFTRAG self

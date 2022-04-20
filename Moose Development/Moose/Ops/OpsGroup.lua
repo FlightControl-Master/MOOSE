@@ -1751,7 +1751,7 @@ end
 function OPSGROUP:ReturnToLegion(Delay)
 
   if Delay and Delay>0 then
-    self.scheduleIDDespawn=self:ScheduleOnce(Delay, OPSGROUP.ReturnToLegion, self)
+    self:ScheduleOnce(Delay, OPSGROUP.ReturnToLegion, self)
   else
 
     if self.legion then
@@ -4115,7 +4115,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
       ---
       -- Mission Paused: Do nothing! Just set the current mission to nil so we can launch a new one.
       ---
-      if self.currentmission and self.currentmission==Mission.auftragsnummer then
+      if self:IsOnMission(Mission.auftragsnummer) then
         self.currentmission=nil
       end
       -- Remove mission waypoints.
@@ -4409,9 +4409,23 @@ end
 
 --- Check if group is currently on a mission.
 -- @param #OPSGROUP self
--- @return #boolean If `true`, group is currently on a mission
-function OPSGROUP:IsOnMission()
-  return self.currentmission~=nil
+-- @param #number MissionUID (Optional) Check if group is currently on a mission with this UID. Default is to check for any current mission.
+-- @return #boolean If `true`, group is currently on a mission.
+function OPSGROUP:IsOnMission(MissionUID)
+  if self.currentmission==nil then
+    -- No current mission.
+    return false
+  else
+    if MissionUID then
+      -- Return if on specific mission.
+      return MissionUID==self.currentmission
+    else
+      -- Is on any mission.
+      return true    
+    end
+  end
+  -- Is on any mission.
+  return true
 end
 
 --- On before "MissionStart" event.
@@ -4582,7 +4596,7 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
 function OPSGROUP:onafterMissionCancel(From, Event, To, Mission)
 
-  if self.currentmission and Mission.auftragsnummer==self.currentmission then
+  if self:IsOnMission(Mission.auftragsnummer) then
 
     ---
     -- Current Mission
@@ -4661,7 +4675,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   Mission:SetGroupStatus(self, AUFTRAG.GroupStatus.DONE)
 
   -- Set current mission to nil.
-  if self.currentmission and Mission.auftragsnummer==self.currentmission then
+  if self:IsOnMission(Mission.auftragsnummer) then
     self.currentmission=nil
   end
 
@@ -6261,13 +6275,16 @@ function OPSGROUP:Teleport(Coordinate, Delay)
     --Coordinate:MarkToAll("Teleport "..self.groupname)
     
     -- Check if we have a mission running.
-    if self.currentmission>0 then
+    if self:IsOnMission() then
       self:T(self.lid.."Pausing current mission")
       self:PauseMission()
     end
 
     -- Get copy of template.
     local Template=UTILS.DeepCopy(self.template)  --DCS#Template
+    
+    -- Set late activation of template to current state.
+    Template.lateActivation=self:IsLateActivated()
 
     -- Template units.
     local units=Template.units

@@ -47,10 +47,14 @@
 --
 -- @field Ops.RescueHelo#RESCUEHELO rescuehelo The rescue helo.
 -- @field Ops.RecoveryTanker#RECOVERYTANKER recoverytanker The recoverytanker.
+-- 
+-- @field #string takeoffType Take of type.
+-- @field #boolean despawnAfterLanding Aircraft are despawned after landing.
+-- @field #boolean despawnAfterHolding Aircraft are despawned after holding.
 --
 -- @extends Ops.Legion#LEGION
 
---- *I fly because it releases my mind from the tyranny of petty things* -- Antoine de Saint-Exupery
+--- *I fly because it releases my mind from the tyranny of petty things.* -- Antoine de Saint-Exupery
 --
 -- ===
 --
@@ -171,14 +175,14 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.9.1"
+AIRWING.version="0.9.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Check that airbase has enough parking spots if a request is BIG.
--- TODO: Spawn in air ==> Needs WAREHOUSE update.
+-- DONE: Spawn in air ==> Needs WAREHOUSE update.
 -- DONE: Spawn hot.
 -- DONE: Make special request to transfer squadrons to anther airwing (or warehouse).
 -- DONE: Add squadrons to warehouse.
@@ -815,6 +819,77 @@ end
 -- @return #AIRWING self
 function AIRWING:SetAirboss(airboss)
   self.airboss=airboss
+  return self
+end
+
+--- Set takeoff type. All assets of this squadron will be spawned with cold (default) or hot engines.
+-- Spawning on runways is not supported.
+-- @param #AIRWING self
+-- @param #string TakeoffType Take off type: "Cold" (default) or "Hot" with engines on or "Air" for spawning in air.
+-- @return #AIRWING self
+function AIRWING:SetTakeoffType(TakeoffType)
+  TakeoffType=TakeoffType or "Cold"
+  if TakeoffType:lower()=="hot" then
+    self.takeoffType=COORDINATE.WaypointType.TakeOffParkingHot
+  elseif TakeoffType:lower()=="cold" then
+    self.takeoffType=COORDINATE.WaypointType.TakeOffParking
+  elseif TakeoffType:lower()=="air" then
+    self.takeoffType=COORDINATE.WaypointType.TurningPoint    
+  else
+    self.takeoffType=COORDINATE.WaypointType.TakeOffParking
+  end
+  return self
+end
+
+--- Set takeoff type cold (default). All assets of this squadron will be spawned with engines off (cold).
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:SetTakeoffCold()
+  self:SetTakeoffType("Cold")
+  return self
+end
+
+--- Set takeoff type hot. All assets of this squadron will be spawned with engines on (hot).
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:SetTakeoffHot()
+  self:SetTakeoffType("Hot")
+  return self
+end
+
+--- Set takeoff type air. All assets of this squadron will be spawned in air above the airbase.
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:SetTakeoffAir()
+  self:SetTakeoffType("Air")
+  return self
+end
+
+--- Set despawn after landing. Aircraft will be despawned after the landing event.
+-- Can help to avoid DCS AI taxiing issues.
+-- @param #AIRWING self
+-- @param #boolean Switch If `true` (default), activate despawn after landing.
+-- @return #AIRWING self
+function AIRWING:SetDespawnAfterLanding(Switch)
+  if Switch then
+    self.despawnAfterLanding=Switch
+  else
+    self.despawnAfterLanding=true
+  end
+  return self
+end
+
+--- Set despawn after holding. Aircraft will be despawned when they arrive at their holding position at the airbase.
+-- Can help to avoid DCS AI taxiing issues.
+-- @param #AIRWING self
+-- @param #boolean Switch If `true` (default), activate despawn after landing.
+-- @return #AIRWING self
+function AIRWING:SetDespawnAfterHolding(Switch)
+  if Switch then
+    self.despawnAfterHolding=Switch
+  else
+    self.despawnAfterHolding=true
+  end
   return self
 end
 
