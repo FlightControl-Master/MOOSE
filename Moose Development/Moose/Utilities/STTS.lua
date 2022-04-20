@@ -125,6 +125,9 @@ end
 -- 
 -- * (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 -- 
+-- @param #number length can also be passed as #string
+-- @param #number speed Defaults to 1.0
+-- @param #boolean isGoogle We're using Google TTS
 function STTS.getSpeechTime(length,speed,isGoogle)
 
   local maxRateRatio = 3 

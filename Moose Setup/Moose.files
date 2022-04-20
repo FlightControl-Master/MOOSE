@@ -5,6 +5,7 @@ Utilities/Enums.lua
 Utilities/Profiler.lua
 Utilities/Templates.lua
 Utilities/STTS.lua
+Utilities/FiFo.lua
 
 Core/Base.lua
 Core/Beacon.lua

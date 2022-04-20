@@ -2031,15 +2031,16 @@ function AUFTRAG:NewNOTHING()
 
   --mission:_TargetFromObject(Coordinate)
 
-  mission.optionROE=ENUMS.ROE.ReturnFire
-  mission.optionAlarm=ENUMS.AlarmState.Auto
+  mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionAlarm=ENUMS.AlarmState.Green
 
   mission.missionFraction=1.0
 
   mission.categories={AUFTRAG.Category.ALL}
 
   mission.DCStask=mission:GetDCSMissionTask()
-
+  mission.DCStask.params.adinfinitum=true
+    
   return mission
 end
 
@@ -5403,8 +5404,25 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     DCStask.params=param
 
     table.insert(DCStasks, DCStask)
+ 
+   elseif self.type==AUFTRAG.Type.NOTHING then
 
-    elseif self.type==AUFTRAG.Type.HOVER then
+    ---------------------
+    -- NOTHING Mission --
+    ---------------------
+
+    local DCStask={}
+
+    DCStask.id=AUFTRAG.SpecialTask.NOTHING
+
+    -- We create a "fake" DCS task and pass the parameters to the OPSGROUP.
+    local param={}
+
+    DCStask.params=param
+
+    table.insert(DCStasks, DCStask)   
+
+  elseif self.type==AUFTRAG.Type.HOVER then
 
     ---------------------
     -- HOVER Mission --

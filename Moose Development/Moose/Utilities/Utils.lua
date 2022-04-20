@@ -1475,7 +1475,49 @@ function UTILS.GetCallsignName(Callsign)
       return name
     end
   end
-
+  
+  for name, value in pairs(CALLSIGN.B1B) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.B52) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.F15E) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.F16) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.F18) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.FARP) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.TransportAircraft) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
   return "Ghostrider"
 end
 
@@ -2356,214 +2398,45 @@ function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce)
   return datatable
 end
 
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- FIFO
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-do
---- **UTILS** - FiFo Stack.
---
--- **Main Features:**
---
---    * Build a simple multi-purpose FiFo (First-In, First-Out) stack for generic data.
---
--- ===
---
--- ### Author: **applevangelist**
--- @module Utils.FiFo
--- @image MOOSE.JPG
-
-
---- FIFO class.
--- @type FIFO
--- @field #string ClassName Name of the class.
--- @field #boolean debug
--- @field #string lid Class id string for output to DCS log file.
--- @field #string version Version of FiFo
--- @field #number counter
--- @field #number pointer
--- @field #number nextin
--- @field #number nextout
--- @field #table stackbypointer
--- @field #table stackbyid
--- @extends Core.Base#BASE
--- 
-
----
--- @type FIFO.IDEntry
--- @field #number pointer
--- @field #table data
--- @field #table uniqueID
-
----
--- @field #FIFO
-FIFO = {
-  ClassName = "FIFO",
-  debug = true,
-  lid = "",
-  version = "0.0.1",
-  counter = 0,
-  pointer = 0,
-  nextin = 0,
-  nextout = 0,
-  stackbypointer = {},
-  stackbyid = {}
-}
-
---- Instantiate a new FIFO Stack
--- @param #FIFO self
--- @return #FIFO self
-function FIFO:New()
-  -- Inherit everything from BASE class.
-  local self=BASE:Inherit(self, BASE:New()) -- #INTEL
-  self.pointer = 0
-  self.counter = 0
-  self.stackbypointer = {}
-  self.stackbyid = {}
-  -- Set some string id for output to DCS.log file.
-  self.lid=string.format("%s (%s) | ", "FiFo", self.version)
-  self:I(self.lid .."Created.") 
-  return self
-end
-
---- FIFO Push Object to Stack
--- @param #FIFO self
--- @param #table Object
--- @param #string UniqueID (optional) - will default to current pointer + 1
--- @return #FIFO self
-function FIFO:Push(Object,UniqueID)
-  self:T(self.lid.."Push")
-  self:T({Object,UniqueID})
-  self.pointer = self.pointer + 1 
-  self.counter = self.counter + 1
-  self.stackbypointer[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
-  if UniqueID then
-    self.stackbyid[UniqueID] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
-  else
-   self.stackbyid[self.pointer] = { pointer = self.pointer, data = Object, uniqueID = UniqueID }
+--- Heading Degrees (0-360) to Cardinal
+-- @param #number Heading The heading
+-- @return #string Cardinal, e.g. "NORTH"
+function UTILS.BearingToCardinal(Heading)
+  if     Heading >= 0   and Heading <= 22  then return "North"
+    elseif Heading >= 23  and Heading <= 66  then return "North-East"
+    elseif Heading >= 67  and Heading <= 101 then return "East"
+    elseif Heading >= 102 and Heading <= 146 then return "South-East"
+    elseif Heading >= 147 and Heading <= 201 then return "South"
+    elseif Heading >= 202 and Heading <= 246 then return "South-West"
+    elseif Heading >= 247 and Heading <= 291 then return "West"
+    elseif Heading >= 292 and Heading <= 338 then return "North-West"
+    elseif Heading >= 339 then return "North"
   end
-  return self
 end
 
---- FIFO Pull Object from Stack
--- @param #FIFO self
--- @return #table Object or nil if stack is empty
-function FIFO:Pull()
-  self:T(self.lid.."Pull")
-  if self.counter == 0 then return nil end
-  local object = self.stackbypointer[self.pointer].data
-  self.stackbypointer[self.pointer] = nil
-  self.counter = self.counter - 1
-  self.pointer = self.pointer - 1
-  self:Flatten()
-  return object
-end
-
---- FIFO Pull Object from Stack by Pointer
--- @param #FIFO self
--- @param #number Pointer
--- @return #table Object or nil if stack is empty
-function FIFO:PullByPointer(Pointer)
-  self:T(self.lid.."PullByPointer " .. tostring(Pointer))
-  if self.counter == 0 then return nil end
-  local object = self.stackbypointer[Pointer] -- #FIFO.IDEntry
-  self.stackbypointer[Pointer] = nil
-  self.stackbyid[object.uniqueID] = nil
-  self.counter = self.counter - 1
-  self:Flatten()
-  return object.data
-end
-
---- FIFO Pull Object from Stack by UniqueID
--- @param #FIFO self
--- @param #tableUniqueID
--- @return #table Object or nil if stack is empty
-function FIFO:PullByID(UniqueID)
-  self:T(self.lid.."PullByID " .. tostring(UniqueID))
-  if self.counter == 0 then return nil end
-  local object = self.stackbyid[UniqueID] -- #FIFO.IDEntry
-  --self.stackbyid[UniqueID] = nil
-  return self:PullByPointer(object.pointer)
-end
-
---- FIFO Housekeeping
--- @param #FIFO self
--- @return #FIFO self
-function FIFO:Flatten()
-  self:T(self.lid.."Flatten")
-  -- rebuild stacks
-  local pointerstack = {}
-  local idstack = {}
-  local counter = 0
-  for _ID,_entry in pairs(self.stackbypointer) do
-    counter = counter + 1
-    pointerstack[counter] = { pointer = counter, data = _entry.data, uniqueID = _entry.uniqueID}
+--- Create a BRAA NATO call string BRAA between two GROUP objects
+-- @param Wrapper.Group#GROUP FromGrp GROUP object
+-- @param Wrapper.Group#GROUP ToGrp GROUP object
+-- @return #string Formatted BRAA NATO call
+function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
+  local BRAANATO = "Merged."
+  local GroupNumber = FromGrp:GetSize()
+  local GroupWords = "Singleton"
+  if GroupNumber == 2 then GroupWords = "Two-Ship"
+    elseif GroupNumber >= 3 then GroupWords = "Heavy"
   end
-  for _ID,_entry in pairs(pointerstack) do
-      idstack[_entry.uniqueID] = { pointer = _entry.pointer , data = _entry.data, uniqueID = _entry.uniqueID}
+  local grpLeadUnit = ToGrp:GetUnit(1)
+  local tgtCoord = grpLeadUnit:GetCoordinate()
+  local currentCoord = FromGrp:GetCoordinate()
+  local hdg = UTILS.Round(ToGrp:GetHeading()/100,1)*100
+  local bearing = UTILS.Round(currentCoord:HeadingTo(tgtCoord),0)
+  local rangeMetres = tgtCoord:Get2DDistance(currentCoord)
+  local rangeNM = UTILS.Round( UTILS.MetersToNM(rangeMetres), 0)
+  local aspect = tgtCoord:ToStringAspect(currentCoord)
+  local alt = UTILS.Round(UTILS.MetersToFeet(grpLeadUnit:GetAltitude())/1000,0)--*1000
+  local track = UTILS.BearingToCardinal(hdg)
+  if rangeNM > 3 then
+    BRAANATO = string.format("%s, BRAA, %s, %d miles, Angels %d, %s, Track %s, Spades.",GroupWords,bearing, rangeNM, alt, aspect, track)
   end
-  self.stackbypointer = nil
-  self.stackbypointer = pointerstack
-  self.stackbyid = nil
-  self.stackbyid = idstack
-  self.counter = counter
-  self.pointer = counter
-  return self
-end
-
---- FIFO Check Stack is empty
--- @param #FIFO self
--- @return #boolean empty
-function FIFO:IsEmpty()
-  self:T(self.lid.."IsEmpty")
-  return self.counter == 0 and true or false
-end
-
---- FIFO Check Stack is NOT empty
--- @param #FIFO self
--- @return #boolean notempty
-function FIFO:IsNotEmpty()
-  self:T(self.lid.."IsNotEmpty")
-  return not self:IsEmpty()
-end
-
---- FIFO Get the data stack by pointer
--- @param #FIFO self
--- @return #table Table of #FIFO.IDEntry entries
-function FIFO:GetPointerStack()
-  self:T(self.lid.."GetPointerStack")
-  return self.stackbypointer
-end
-
---- FIFO Get the data stack by UniqueID
--- @param #FIFO self
--- @return #table Table of #FIFO.IDEntry entries
-function FIFO:GetIDStack()
-  self:T(self.lid.."GetIDStack")
-  return self.stackbyid
-end
-
---- FIFO Print stacks to dcs.log
--- @param #FIFO self
--- @return #FIFO self
-function FIFO:Flush()
-  self:T(self.lid.."FiFo Flush")
-  self:I("FIFO Flushing Stack by Pointer")
-  for _id,_data in pairs (self.stackbypointer) do
-    local data = _data -- #FIFO.IDEntry
-    self:I(string.format("Pointer: %s | Entry: Number = %s Data = %s UniID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
-  end
-  self:I("FIFO Flushing Stack by ID")
-  for _id,_data in pairs (self.stackbyid) do
-    local data = _data -- #FIFO.IDEntry
-    self:I(string.format("ID: %s | Entry: Number = %s Data = %s UniID = %s",tostring(_id),tostring(data.pointer),tostring(data.data),tostring(data.uniqueID)))
-  end
-  self:I("Counter = " .. self.counter)
-  self:I("Pointer = ".. self.pointer)
-  return self
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- End FIFO
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  return BRAANATO 
 end

@@ -1029,7 +1029,7 @@ do -- SET_GROUP
 
   --- Gets the Set.
   -- @param #SET_GROUP self
-  -- @return #SET_GROUP self
+  -- @return #table Table of objects
   function SET_GROUP:GetAliveSet()
     self:F2()
 

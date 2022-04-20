@@ -1239,6 +1239,26 @@ function AIRWING:GetTankerForFlight(flightgroup)
   return nil
 end
 
+--- Add the ability to call back an Ops.Awacs#AWACS object with an FSM call "FlightOnMission(FlightGroup, Mission)".
+-- @param #AIRWING self
+-- @param Ops.Awacs#AWACS ConnectecdAwacs
+-- @return #AIRWING self
+function AIRWING:SetUsingOpsAwacs(ConnectecdAwacs)
+  self:I(self.lid .. "Added AWACS Object: "..ConnectecdAwacs:GetName() or "unknown")
+  self.UseConnectedOpsAwacs = true
+  self.ConnectedOpsAwacs = ConnectecdAwacs
+  return self
+end
+
+--- Remove the ability to call back an Ops.Awacs#AWACS object with an FSM call "FlightOnMission(FlightGroup, Mission)".
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:RemoveUsingOpsAwacs()
+  self:I(self.lid .. "Reomve AWACS Object: "..self.ConnectedOpsAwacs:GetName() or "unknown")
+  self.UseConnectedOpsAwacs = false
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1248,11 +1268,14 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.FlightGroup#FLIGHTGROUP ArmyGroup Ops army group on mission.
+-- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup Ops flight group on mission.
 -- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function AIRWING:onafterFlightOnMission(From, Event, To, FlightGroup, Mission)
   -- Debug info.
-  self:T(self.lid..string.format("Group %s on %s mission %s", FlightGroup:GetName(), Mission:GetType(), Mission:GetName()))  
+  self:T(self.lid..string.format("Group %s on %s mission %s", FlightGroup:GetName(), Mission:GetType(), Mission:GetName()))
+  if self.UseConnectedOpsAwacs and self.ConnectedOpsAwacs then
+    self.ConnectedOpsAwacs:__FlightOnMission(2,FlightGroup,Mission)
+  end  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -1956,7 +1956,7 @@ function OPSGROUP:RadioTransmission(Text, Delay, SayCallsign)
       end
 
       -- Debug info.
-      self:I(self.lid..string.format("Radio transmission on %.3f MHz %s: %s", freq, UTILS.GetModulationName(modu), Text))
+      self:T(self.lid..string.format("Radio transmission on %.3f MHz %s: %s", freq, UTILS.GetModulationName(modu), Text))
 
       self.msrs:PlayText(Text)
     end
