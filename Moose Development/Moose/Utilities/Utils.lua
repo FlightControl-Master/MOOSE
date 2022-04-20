@@ -2359,7 +2359,7 @@ end
 --- Heading Degrees (0-360) to Cardinal
 -- @param #number Heading The heading
 -- @return #string Cardinal, e.g. "NORTH"
-function Utils.BearingToCardinal(Heading)
+function UTILS.BearingToCardinal(Heading)
   if     Heading >= 0   and Heading <= 22  then return "North"
     elseif Heading >= 23  and Heading <= 66  then return "North-East"
     elseif Heading >= 67  and Heading <= 101 then return "East"
@@ -2376,7 +2376,7 @@ end
 -- @param Wrapper.Group#GROUP FromGrp GROUP object
 -- @param Wrapper.Group#GROUP ToGrp GROUP object
 -- @return #string Formatted BRAA NATO call
-function Utils.ToStringBRAANATO(FromGrp,ToGrp)
+function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
   local BRAANATO = "Merged."
   local GroupNumber = FromGrp:GetSize()
   local GroupWords = "Singleton"
@@ -2392,7 +2392,7 @@ function Utils.ToStringBRAANATO(FromGrp,ToGrp)
   local rangeNM = UTILS.Round( UTILS.MetersToNM(rangeMetres), 0)
   local aspect = tgtCoord:ToStringAspect(currentCoord)
   local alt = UTILS.Round(UTILS.MetersToFeet(grpLeadUnit:GetAltitude())/1000,0)--*1000
-  local track = Utils.BearingToCardinal(hdg)
+  local track = UTILS.BearingToCardinal(hdg)
   if rangeNM > 3 then
     BRAANATO = string.format("%s, BRAA, %s, %d miles, Angels %d, %s, Track %s, Spades.",GroupWords,bearing, rangeNM, alt, aspect, track)
   end
