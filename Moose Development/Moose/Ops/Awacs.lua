@@ -44,18 +44,19 @@ do
 -- @field #table ManagedGrps
 -- @field #number ManagedGrpID
 -- @field #number ManagedTaskID
--- @field Utils.FiFo#FIFO AnchorStacks
--- @field Utils.FiFo#FIFO CAPIdleAI
--- @field Utils.FiFo#FIFO CAPIdleHuman
--- @field Utils.FiFo#FIFO TaskedCAPAI
--- @field Utils.FiFo#FIFO TaskedCAPHuman
--- @field Utils.FiFo#FIFO OpenTasks
--- @field Utils.FiFo#FIFO AssignedTasks
--- @field Utils.FiFo#FIFO PictureAO
--- @field Utils.FiFo#FIFO PictureEWR
--- @field Utils.FiFo#FIFO Contacts
--- @field Utils.FiFo#FIFO ContactsAO
--- @field Utils.FiFo#FIFO RadioQueue
+-- @field Utilities.FiFo#FIFO AnchorStacks
+-- @field Utilities.FiFo#FIFO CAPIdleAI
+-- @field Utilities.FiFo#FIFO CAPIdleHuman
+-- @field Utilities.FiFo#FIFO TaskedCAPAI
+-- @field Utilities.FiFo#FIFO TaskedCAPHuman
+-- @field Utilities.FiFo#FIFO OpenTasks
+-- @field Utilities.FiFo#FIFO AssignedTasks
+-- @field Utilities.FiFo#FIFO PictureAO
+-- @field Utilities.FiFo#FIFO PictureEWR
+-- @field Utilities.FiFo#FIFO Contacts
+-- @field Utilities.FiFo#FIFO ContactsAO
+-- @field Utilities.FiFo#FIFO RadioQueue
+-- @field Utilities.FiFo#FIFO CAPAirwings
 -- @field #number AwacsTimeOnStation
 -- @field #number AwacsTimeStamp
 -- @field #number EscortsTimeOnStation
@@ -66,7 +67,7 @@ do
 -- @field Ops.Auftrag#AUFTRAG EscortMission
 -- @field Ops.Auftrag#AUFTRAG AwacsMissionReplacement
 -- @field Ops.Auftrag#AUFTRAG EscortMissionReplacement
--- @field Utils.FiFo#FIFO AICAPMissions FIFO for Ops.Auftrag#AUFTRAG for AI CAP
+-- @field Utilities.FiFo#FIFO AICAPMissions FIFO for Ops.Auftrag#AUFTRAG for AI CAP
 -- @field #boolean MenuStrict
 -- @field #number MaxAIonCAP
 -- @field #number AIonCAP
@@ -100,18 +101,18 @@ AWACS = {
   ManagedGrps = {},
   ManagedGrpID = 0, -- #number
   ManagedTaskID = 0, -- #number
-  AnchorStacks = {}, -- Utils.FiFo#FIFO
+  AnchorStacks = {}, -- Utilities.FiFo#FIFO
   CAPIdleAI = {},
   CAPIdleHuman = {},
   TaskedCAPAI = {},
   TaskedCAPHuman = {},
-  OpenTasks = {}, -- Utils.FiFo#FIFO
-  AssignedTasks = {}, -- Utils.FiFo#FIFO
-  PictureAO = {}, -- Utils.FiFo#FIFO
-  PictureEWR = {}, -- Utils.FiFo#FIFO
-  Contacts = {}, -- Utils.FiFo#FIFO
-  ContactsAO = {}, -- Utils.FiFo#FIFO
-  RadioQueue = {}, -- Utils.FiFo#FIFO
+  OpenTasks = {}, -- Utilities.FiFo#FIFO
+  AssignedTasks = {}, -- Utilities.FiFo#FIFO
+  PictureAO = {}, -- Utilities.FiFo#FIFO
+  PictureEWR = {}, -- Utilities.FiFo#FIFO
+  Contacts = {}, -- Utilities.FiFo#FIFO
+  ContactsAO = {}, -- Utilities.FiFo#FIFO
+  RadioQueue = {}, -- Utilities.FiFo#FIFO
   AwacsTimeOnStation = 1,
   AwacsTimeStamp = 0,
   EscortsTimeOnStation = 0.5,
@@ -121,11 +122,12 @@ AWACS = {
   MenuStrict = true,
   MaxAIonCAP = 4,
   AIonCAP = 0,
-  AICAPMissions = {}, -- Utils.FiFo#FIFO
+  AICAPMissions = {}, -- Utilities.FiFo#FIFO
   ShiftChangeAwacsFlag = false,
   ShiftChangeEscortsFlag = false,
   ShiftChangeAwacsRequested = false,
   ShiftChangeEscortsRequested = false,
+  CAPAirwings = {},  -- Utilities.FiFo#FIFO
 }
 
 ---
@@ -251,8 +253,8 @@ AWACS.TaskStatus = {
 -- @field #boolean AnchorZone
 -- @field Core.Point#COORDINATE AnchorZoneCoordinate
 -- @field #boolean AnchorZoneCoordinateText
--- @field Utils.FiFo#FIFO AnchorAssignedID FiFo of #AWACS.AnchorAssignedEntry
--- @field Utils.FiFo#FIFO Anchors FiFo of available stacks
+-- @field Utilities.FiFo#FIFO AnchorAssignedID FiFo of #AWACS.AnchorAssignedEntry
+-- @field Utilities.FiFo#FIFO Anchors FiFo of available stacks
 
 ---
 --@type RadioEntry
@@ -281,13 +283,13 @@ AWACS.TaskStatus = {
 -- TODO - CHIEF / COMMANDER / AIRWING connection?
 -- TODO - LotATC / IFF
 -- DONE - ROE
--- TODO - Player tasking
--- TODO - Stack Management
+-- TODO - Player & AI tasking
+-- DONE - Anchor Stack Management
 -- TODO - Reporting
 -- TODO - Missile launch callout
 -- TODO - Localization
 -- DONE - Shift Length AWACS/AI
--- TODO - Shift Change, Change on asset RTB or dead or mission done
+-- DEBUG - Shift Change, Change on asset RTB or dead or mission done
 -- TODO - Borders for INTEL
 -- TODO - FIFO for checkin/checkout and tasking
 -- TODO - Event detection
@@ -335,6 +337,12 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   -- base setup
   self.Name = Name -- #string
   self.AirWing = AirWing -- Ops.AirWing#AIRWING object
+  
+  AirWing:SetUsingOpsAwacs(self)
+  
+  self.CAPAirwings = FIFO:New() -- Utilities.FiFo#FIFO
+  self.CAPAirwings:Push(AirWing,1)
+  
   self.AwacsFG = nil
   --self.AwacsPayload = PayLoad -- Ops.AirWing#AIRWING.Payload
   self.ModernEra = true -- use of EPLRS
@@ -362,7 +370,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self.NoHelos = true
   self.MaxAIonCAP = 4
   self.AIonCAP = 0
-  self.AICAPMissions = FIFO:New() -- Utils.FiFo#FIFO
+  self.AICAPMissions = FIFO:New() -- Utilities.FiFo#FIFO
   
   local speed = 250
   self.SpeedBase = speed
@@ -376,7 +384,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   
   self.AwacsTimeOnStation = 2
   self.AwacsTimeStamp = 0
-  self.EscortsTimeOnStation = 0.5
+  self.EscortsTimeOnStation = 2
   self.EscortsTimeStamp = 0
   self.ShiftChangeTime = 0.25 -- 15mins
   self.ShiftChangeAwacsFlag = false
@@ -397,7 +405,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self.Culture = "en-US"
   self.Voice = nil
   self.Port = 5002
-  self.RadioQueue = FIFO:New() -- Utils.FiFo#FIFO
+  self.RadioQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.maxspeakentries = 3
   
   self.CAPGender = "male"
@@ -415,7 +423,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self.AICAPCAllNumber = 0
   
   -- Anchor stacks init
-  self.AnchorStacks = FIFO:New() -- Utils.FiFo#FIFO
+  self.AnchorStacks = FIFO:New() -- Utilities.FiFo#FIFO
   self.AnchorBaseAngels = 22
   self.AnchorStackDistance = 2
   self.AnchorMaxStacks = 4
@@ -427,22 +435,22 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self:_CreateAnchorStack()
 
   -- Task lists
-  self.AssignedTasks = FIFO:New() -- Utils.FiFo#FIFO
-  self.OpenTasks = FIFO:New() -- Utils.FiFo#FIFO
+  self.AssignedTasks = FIFO:New() -- Utilities.FiFo#FIFO
+  self.OpenTasks = FIFO:New() -- Utilities.FiFo#FIFO
   
   -- Pilot lists
   --[[ ToDo - Maybe only 2? Move to managedgroups
-  self.CAPIdleAI = FIFO:New() -- Utils.FiFo#FIFO
-  self.CAPIdleHuman = FIFO:New() -- Utils.FiFo#FIFO
-  self.TaskedCAPAI = FIFO:New() -- Utils.FiFo#FIFO
-  self.TaskedCAPHuman = FIFO:New() -- Utils.FiFo#FIFO
+  self.CAPIdleAI = FIFO:New() -- Utilities.FiFo#FIFO
+  self.CAPIdleHuman = FIFO:New() -- Utilities.FiFo#FIFO
+  self.TaskedCAPAI = FIFO:New() -- Utilities.FiFo#FIFO
+  self.TaskedCAPHuman = FIFO:New() -- Utilities.FiFo#FIFO
   --]]
   
   -- Picture, Contacts, Bogeys
-  self.PictureAO = FIFO:New() -- Utils.FiFo#FIFO
-  self.PictureEWR = FIFO:New() -- Utils.FiFo#FIFO
-  self.Contacts = FIFO:New() -- Utils.FiFo#FIFO
-  self.ContactsAO = FIFO:New() -- Utils.FiFo#FIFO
+  self.PictureAO = FIFO:New() -- Utilities.FiFo#FIFO
+  self.PictureEWR = FIFO:New() -- Utilities.FiFo#FIFO
+  self.Contacts = FIFO:New() -- Utilities.FiFo#FIFO
+  self.ContactsAO = FIFO:New() -- Utilities.FiFo#FIFO
 
   -- SET for Intel Detection
   self.DetectionSet=SET_GROUP:New()
@@ -468,6 +476,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self:AddTransition("*",             "CheckRadioQueue",    "*")
   self:AddTransition("*",             "EscortShiftChange",  "*")
   self:AddTransition("*",             "AwacsShiftChange",   "*")
+  self:AddTransition("*",             "FlightOnMission",    "*")
   --
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
@@ -494,6 +503,13 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- [User] Get AWACS Name
+-- @param #AWACS self
+-- @return #string Name of this instance
+function AWACS:GetName()
+  return self.Name or "not set"
+end
 
 --- [User] Set AWACS flight details
 -- @param #AWACS self
@@ -742,7 +758,7 @@ function AWACS:_CreatePicture(AO,Callsign,GID)
   local group = managedgroup.Group -- Wrapper.Group#GROUP
   local groupcoord = group:GetCoordinate()
   
-  local fifo = self.PictureAO -- Utils.FIFO#FIFO
+  local fifo = self.PictureAO -- Utilities.FiFo#FIFO
   local maxentries = self.maxspeakentries
   local counter = 0
   
@@ -802,7 +818,7 @@ function AWACS:_CreateBogeyDope(Callsign,GID)
   local group = managedgroup.Group -- Wrapper.Group#GROUP
   local groupcoord = group:GetCoordinate()
   
-  local fifo = self.ContactsAO -- Utils.FIFO#FIFO
+  local fifo = self.ContactsAO -- Utilities.FiFo#FIFO
   local maxentries = self.maxspeakentries
   local counter = 0
   
@@ -1386,8 +1402,8 @@ function AWACS:_CreateAnchorStack()
   end
   local AnchorStackOne = {} -- #AWACS.AnchorData
   AnchorStackOne.AnchorBaseAngels = self.AnchorBaseAngels
-  AnchorStackOne.Anchors = FIFO:New() -- Utils.FiFo#FIFO
-  AnchorStackOne.AnchorAssignedID = FIFO:New() -- Utils.FiFo#FIFO
+  AnchorStackOne.Anchors = FIFO:New() -- Utilities.FiFo#FIFO
+  AnchorStackOne.AnchorAssignedID = FIFO:New() -- Utilities.FiFo#FIFO
   local newname = ""
   for i=1,self.AnchorMaxStacks do
     AnchorStackOne.Anchors:Push((i-1)*self.AnchorStackDistance+self.AnchorBaseAngels)
@@ -1441,7 +1457,7 @@ function AWACS:_GetFreeAnchorStack()
   --return AnchorStackNo, Free
   local availablestacks = self.AnchorStacks:GetPointerStack() or {} -- #table
   for _id,_entry in pairs(availablestacks) do
-    local entry = _entry -- Utils.FIFO#FIFO.IDEntry
+    local entry = _entry -- Utilities.FiFo#FIFO.IDEntry
     local data = entry.data -- #AWACS.AnchorData
     if data.Anchors:IsNotEmpty() then
       AnchorStackNo = _id
@@ -1449,7 +1465,7 @@ function AWACS:_GetFreeAnchorStack()
       break
     end
   end
-  -- TODO - extension of anchor stacks to max, send AI home
+  -- TODO - if extension of anchor stacks to max, send AI home
   if not Free then
     -- try to create another stack
     local created, number = self:_CreateAnchorStack()
@@ -1531,28 +1547,28 @@ function AWACS:_StartIntel(awacs)
   
   -- Callbacks
   local function NewCluster(Cluster)
-    self:__NewCluster(2,Cluster)
+    self:__NewCluster(5,Cluster)
   end 
   function intel:OnAfterNewCluster(From,Event,To,Cluster)
     NewCluster(Cluster)
   end
   
   local function NewContact(Contact)
-    self:__NewContact(2,Contact)
+    self:__NewContact(5,Contact)
   end 
   function intel:OnAfterNewContact(From,Event,To,Contact)
    NewContact(Contact)
   end
   
   local function LostContact(Contact)
-    self:__LostContact(2,Contact)
+    self:__LostContact(5,Contact)
   end 
   function intel:OnAfterLostContact(From,Event,To,Contact)
     LostContact(Contact)
   end
   
   local function LostCluster(Cluster,Mission)
-    self:__LostCluster(2,Cluster,Mission)
+    self:__LostCluster(5,Cluster,Mission)
   end
   function intel:OnAfterLostCluster(From,Event,To,Cluster,Mission)
     LostCluster(Cluster,Mission)
@@ -1560,7 +1576,7 @@ function AWACS:_StartIntel(awacs)
   
   intel:__Start(2)
   
-  self.intel = intel
+  self.intel = intel -- Ops.Intelligence#INTEL
   return self
 end
 
@@ -1769,7 +1785,7 @@ function AWACS:_CheckTaskQueue()
     self:I("Open Tasks: " .. opentasks)
     local taskstack = self.OpenTasks:GetPointerStack()
     for _id,_entry in pairs(taskstack) do
-      local data = _entry -- Utils.FiFo#FIFO.IDEntry
+      local data = _entry -- Utilities.FiFo#FIFO.IDEntry
       local entry = data.data -- #AWACS.ManagedTask
       local target = entry.Target -- Ops.Target#TARGET
       local description = entry.ToDo
@@ -1815,7 +1831,7 @@ function AWACS:_CheckTaskQueue()
     self:I("Assigned Tasks: " .. opentasks)
     local taskstack = self.AssignedTasks:GetPointerStack()
     for _id,_entry in pairs(taskstack) do
-      local data = _entry -- Utils.FiFo#FIFO.IDEntry
+      local data = _entry -- Utilities.FiFo#FIFO.IDEntry
       local entry = data.data -- #AWACS.ManagedTask
       local target = entry.Target -- Ops.Target#TARGET
       local description = entry.ToDo
@@ -1864,6 +1880,70 @@ end
 function AWACS:_LogStatistics()
   self:T(self.lid.."_LogStatistics")
   return self 
+end
+
+--- [User] Add another AirWing for CAP Flights under management
+-- @param #AWACS self
+-- @param Ops.AirWing#AIRWING AirWing The AirWing to (also) obtain CAP flights from
+-- @return #AWACS self
+function AWACS:AddCAPAirWing(AirWing)
+  self:I(self.lid.."AddCAPAirWing")
+  if AirWing then
+    -- TODO - Test Install callback
+    -- TODO - add distance to AO as UniqueID
+    AirWing:SetUsingOpsAwacs(self)
+    self.CAPAirwings:Push(AirWing)
+  end
+  return self
+end
+
+--- Recruit assets for a given TARGET.
+-- @param #AWACS self
+-- @param #string MissionType Mission Type.
+-- @param #number NassetsMin Min number of required assets.
+-- @param #number NassetsMax Max number of required assets.
+-- @return #boolean If `true` enough assets could be recruited.
+-- @return #table Assets that have been recruited from all legions.
+-- @return #table Legions that have recruited assets.
+function AWACS:RecruitAssets(MissionType, NassetsMin, NassetsMax)
+
+  -- Cohorts.
+  local Cohorts={}
+  local AWFiFo = self.CAPAirwings -- Utilities.FiFo#FIFO
+  local AWStack = AWFiFo:GetPointerStack()
+  local AirWingList = {}
+  
+  for _ID,_AWID in pairs(AWStack) do
+    local SubAW = self.CAPAirwings:ReadByPointer(_ID)
+    if SubAW then
+      table.insert(AirWingList,SubAW)
+    end
+  end
+  
+  for _,_legion in pairs(AirWingList) do
+    local legion=_legion --Ops.Legion#LEGION
+    
+    -- Check that runway is operational
+    local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
+    
+    if legion:IsRunning() and Runway then    
+    
+      -- Loops over cohorts.
+      for _,_cohort in pairs(legion.cohorts) do
+        local cohort=_cohort --Ops.Cohort#COHORT
+        table.insert(Cohorts, cohort)
+      end
+      
+    end
+  end  
+
+  -- Target position.
+  local TargetVec2=self.OpsZone:GetVec2()
+  
+  -- Recruit assets.
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2)
+
+  return recruited, assets, legions
 end
 
 --- [Internal] Announce a new contact
@@ -1965,10 +2045,35 @@ function AWACS:_CheckAICAPOnStation()
       -- not enough
       local AnchorStackNo,free = self:_GetFreeAnchorStack()
       if free then
-        local mission = AUFTRAG:NewCAP(self.AnchorZone,20000,350,self.AnchorZone:GetCoordinate(),nil,nil,{})
-       -- local mission = AUFTRAG:NewNOTHING()
-        self.AirWing:AddMission(mission)
-        self.AICAPMissions:Push(mission,mission.auftragsnummer)
+        -- recruit assets (thanks to FF!)
+        local recruited, assets, airwings = self:RecruitAssets(AUFTRAG.Type.CAP,1,1)
+        if recruited then
+          -- yes, there should be ONE asset and ONE AW
+          
+          self:I(self.lid..string.format("Recruited %d assets for mission type CAP", #assets))
+          local mission = AUFTRAG:NewCAP(self.AnchorZone,20000,350,self.AnchorZone:GetCoordinate(),nil,nil,{})
+          
+          -- Add asset to mission.
+          if mission then
+            for _,_asset in pairs(assets) do
+              local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+              mission:AddAsset(asset)
+              asset.legion:AddMission(mission)
+              -- Debug info.
+              self:I(self.lid..string.format("Assigning mission \"%s\" [%s] to AW \"%s\"", mission.name, mission.type, asset.legion.alias))
+            end
+          end
+          
+          -- TODO - necessary?
+          LEGION.UnRecruitAssets(assets)
+          
+          --self.AirWing:AddMission(mission)
+          self.AICAPMissions:Push(mission,mission.auftragsnummer)
+          
+        else
+          -- no
+          self:I(self.lid.."Could NOT recruit assets for mission type CAP")
+        end
       end
     elseif onstation > self.MaxAIonCAP then
       -- too many, send one home
@@ -2104,7 +2209,7 @@ function AWACS:onafterStart(From, Event, To)
 
   AwacsAW:AddMission(mission)
   
-  -- callback functions
+  --[[ callback functions
   local function StartSettings(FlightGroup,Mission)
     self:_StartSettings(FlightGroup,Mission)
   end
@@ -2112,6 +2217,7 @@ function AWACS:onafterStart(From, Event, To)
   function AwacsAW:OnAfterFlightOnMission(From,Event,To,FlightGroup,Mission)
    StartSettings(FlightGroup,Mission)
   end
+  --]]
   
   self.AwacsMission = mission
   self.AwacsInZone = false -- not yet arrived or gone again
@@ -2353,6 +2459,19 @@ end
 -- @return #AWACS self
 function AWACS:onafterStop(From, Event, To)
   self:T({From, Event, To})
+  -- unhandle stuff, exit intel
+  
+  self.intel:Stop()
+  
+  local AWFiFo = self.CAPAirwings -- Utilities.FiFo#FIFO
+  local AWStack = AWFiFo:GetPointerStack()
+  for _ID,_AWID in pairs(AWStack) do
+    local SubAW = self.CAPAirwings:ReadByPointer(_ID)
+    if SubAW then
+      SubAW:RemoveUsingOpsAwacs()
+    end
+  end
+  
   return self
 end
 
@@ -2539,8 +2658,10 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
   end
  end
  
- self:__CheckRadioQueue(nextcall+2)
- 
+ if self:Is("Running") then
+  -- exit if stopped
+  self:__CheckRadioQueue(nextcall+2)
+ end
  return self
 end
 
@@ -2597,6 +2718,23 @@ function AWACS:onafterAwacsShiftChange(From,Event,To)
   return self
 end
 
+--- On after "FlightOnMission".
+-- @param #AWACS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup on mission.
+-- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
+-- @return #AWACS self
+function AWACS:onafterFlightOnMission(From, Event, To, FlightGroup, Mission)
+  self:I({From, Event, To})
+  -- coming back from AW, set up the flight
+  if self:Is("Running") then
+    self:_StartSettings(FlightGroup,Mission)
+  end
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- END AWACS
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2635,17 +2773,36 @@ AwacsAW:AddSquadron(Squad_Two)
 AwacsAW:NewPayload("Escorts",-1,{AUFTRAG.Type.ESCORT},100)
 
 -- CAP
-local Squad_Three = SQUADRON:New("CAP",10,"CAP North")
+local Squad_Three = SQUADRON:New("CAP",2,"CAP North")
 Squad_Three:AddMissionCapability({AUFTRAG.Type.ALERT5, AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT})
 Squad_Three:SetFuelLowRefuel(true)
 Squad_Three:SetFuelLowThreshold(0.3)
 Squad_Three:SetTurnoverTime(10,20)
 AwacsAW:AddSquadron(Squad_Three)
-AwacsAW:NewPayload("CAP",-1,{AUFTRAG.Type.ALERT5,AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT},100)
+AwacsAW:NewPayload("Aerial-1-2",-1,{AUFTRAG.Type.ALERT5,AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT},100)
+
+
+-- We need a secondary AirWing for testing
+local AwacsAW2 = AIRWING:New("AirForce WH-2","AirForce Two")
+AwacsAW2:SetReportOn()
+AwacsAW2:SetMarker(true)
+AwacsAW2:SetAirbase(AIRBASE:FindByName(AIRBASE.Caucasus.Beslan))
+AwacsAW2:SetRespawnAfterDestroyed(900)
+AwacsAW2:Start()
+
+-- CAP2
+local Squad_ThreeOne = SQUADRON:New("CAP2",4,"CAP West")
+Squad_ThreeOne:AddMissionCapability({AUFTRAG.Type.ALERT5, AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT})
+Squad_ThreeOne:SetFuelLowRefuel(true)
+Squad_ThreeOne:SetFuelLowThreshold(0.3)
+Squad_ThreeOne:SetTurnoverTime(10,20)
+AwacsAW2:AddSquadron(Squad_ThreeOne)
+AwacsAW2:NewPayload("CAP 2-1",-1,{AUFTRAG.Type.ALERT5,AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT},100)
 
 -- Get AWACS started
 local testawacs = AWACS:New("AWACS North",AwacsAW,"blue",AIRBASE.Caucasus.Kutaisi,"Awacs Orbit",ZONE:FindByName("NW Zone"),"Anchor One",255,radio.modulation.AM )
 testawacs:SetEscort(2)
 testawacs:SetAwacsDetails(CALLSIGN.AWACS.Darkstar,1,22,230,61,15)
 testawacs:SetSRS("E:\\Program Files\\DCS-SimpleRadio-Standalone","female","en-GB",5010,nil)
+testawacs:AddCAPAirWing(AwacsAW2)
 testawacs:__Start(5)
