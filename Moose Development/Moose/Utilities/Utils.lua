@@ -2399,7 +2399,7 @@ function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce)
 end
 
 --- Heading Degrees (0-360) to Cardinal
--- @param #number hgd The heading
+-- @param #number Heading The heading
 -- @return #string Cardinal, e.g. "NORTH"
 function Utils.BearingToCardinal(Heading)
   if     Heading >= 0   and Heading <= 22  then return "North"
