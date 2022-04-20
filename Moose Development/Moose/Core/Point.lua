@@ -1117,25 +1117,28 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #number Distance The distance in meters.
   -- @param Core.Settings#SETTINGS Settings
+  -- @param #string Language (optional) "EN" or "RU"
+  -- @param #number Precision (optional) round to this many decimal places
   -- @return #string The distance text expressed in the units of measurement.
-  function COORDINATE:GetDistanceText( Distance, Settings, Language )
+  function COORDINATE:GetDistanceText( Distance, Settings, Language, Precision )
 
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
     local Language = Language or "EN"
-
+    local Precision = Precision or 0
+    
     local DistanceText
 
     if Settings:IsMetric() then
       if     Language == "EN" then
-        DistanceText = " for " .. UTILS.Round( Distance / 1000, 2 ) .. " km"
+        DistanceText = " for " .. UTILS.Round( Distance / 1000, Precision ) .. " km"
       elseif Language == "RU" then
-        DistanceText = " за " .. UTILS.Round( Distance / 1000, 2 ) .. " километров"
+        DistanceText = " за " .. UTILS.Round( Distance / 1000, Precision ) .. " километров"
       end
     else
       if     Language == "EN" then
-        DistanceText = " for " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " miles"
+        DistanceText = " for " .. UTILS.Round( UTILS.MetersToNM( Distance ), Precision ) .. " miles"
       elseif Language == "RU" then
-        DistanceText = " за " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " миль"
+        DistanceText = " за " .. UTILS.Round( UTILS.MetersToNM( Distance ), Precision ) .. " миль"
       end
     end
 
@@ -1213,7 +1216,7 @@ do -- COORDINATE
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
 
     local BearingText = self:GetBearingText( AngleRadians, 0, Settings, Language )
-    local DistanceText = self:GetDistanceText( Distance, Settings, Language )
+    local DistanceText = self:GetDistanceText( Distance, Settings, Language, 0 )
 
     local BRText = BearingText .. DistanceText
 
@@ -1231,7 +1234,7 @@ do -- COORDINATE
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
 
     local BearingText = self:GetBearingText( AngleRadians, 0, Settings, Language )
-    local DistanceText = self:GetDistanceText( Distance, Settings, Language  )
+    local DistanceText = self:GetDistanceText( Distance, Settings, Language, 0  )
     local AltitudeText = self:GetAltitudeText( Settings, Language  )
 
     local BRAText = BearingText .. DistanceText .. AltitudeText -- When the POINT is a VEC2, there will be no altitude shown.
