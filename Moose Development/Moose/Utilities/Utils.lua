@@ -2418,7 +2418,7 @@ end
 -- @param Wrapper.Group#GROUP FromGrp GROUP object
 -- @param Wrapper.Group#GROUP ToGrp GROUP object
 -- @return #string Formatted BRAA NATO call
-function Utils.ToStringBRAANATO(FromGrp,ToGrp )
+function Utils.ToStringBRAANATO(FromGrp,ToGrp)
   local BRAANATO = "Merged."
   local GroupNumber = FromGrp:GetSize()
   local GroupWords = "Singleton"

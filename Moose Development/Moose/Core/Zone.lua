@@ -810,7 +810,7 @@ end
 
 
 --- Scan the zone for the presence of units of the given ObjectCategories.
--- Note that after a zone has been scanned, the zone can be evaluated by:
+-- Note that **only after** a zone has been scanned, the zone can be evaluated by:
 --
 --   * @{ZONE_RADIUS.IsAllInZoneOfCoalition}(): Scan the presence of units in the zone of a coalition.
 --   * @{ZONE_RADIUS.IsAllInZoneOfOtherCoalition}(): Scan the presence of units in the zone of an other coalition.
@@ -819,10 +819,10 @@ end
 --   * @{ZONE_RADIUS.IsNoneInZone}(): Scan if the zone is empty.
 -- @{#ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
--- @param ObjectCategories An array of categories of the objects to find in the zone.
--- @param UnitCategories An array of unit categories of the objects to find in the zone.
+-- @param ObjectCategories An array of categories of the objects to find in the zone. E.g. `{Object.Category.UNIT}`
+-- @param UnitCategories An array of unit categories of the objects to find in the zone. E.g. `{Unit.Category.GROUND_UNIT,Unit.Category.SHIP}`
 -- @usage
---    self.Zone:Scan()
+--    self.Zone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
 --    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
 function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
