@@ -90,18 +90,18 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="0.7.1"
+NAVYGROUP.version="0.7.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add RTZ.
 -- TODO: Add Retreat.
--- TODO: Add EngageTarget.
 -- TODO: Submaries.
 -- TODO: Extend, shorten turn into wind windows.
 -- TODO: Skipper menu.
+-- DONE: Add EngageTarget.
+-- DONE: Add RTZ.
 -- DONE: Collision warning.
 -- DONE: Detour, add temporary waypoint and resume route.
 -- DONE: Stop and resume route.
@@ -790,17 +790,19 @@ function NAVYGROUP:Status(From, Event, To)
   if alive~=nil then
 
     if self.verbose>=1 then
+
+      -- Number of elements.
+      local nelem=self:CountElements()
+      local Nelem=#self.elements
   
       -- Get number of tasks and missions.
       local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
       local nMissions=self:CountRemainingMissison()
-  
-      local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"    
-      local turning=tostring(self:IsTurning())
-      local alt=self.position and self.position.y or 0
-      local speed=UTILS.MpsToKnots(self.velocity or 0)
-      local speedExpected=UTILS.MpsToKnots(self:GetExpectedSpeed())
       
+      -- ROE and Alarm State.
+      local roe=self:GetROE() or -1
+      local als=self:GetAlarmstate() or -1
+
       -- Waypoint stuff.
       local wpidxCurr=self.currentwp
       local wpuidCurr=self:GetWaypointUIDFromIndex(wpidxCurr) or 0
@@ -808,16 +810,40 @@ function NAVYGROUP:Status(From, Event, To)
       local wpuidNext=self:GetWaypointUIDFromIndex(wpidxNext) or 0
       local wpN=#self.waypoints or 0
       local wpF=tostring(self.passedfinalwp)
-      local wpDist=UTILS.MetersToNM(self:GetDistanceToWaypoint() or 0)
-      local wpETA=UTILS.SecondsToClock(self:GetTimeToWaypoint() or 0, true)
       
-      -- Current ROE and alarm state.
-      local roe=self:GetROE() or 0
-      local als=self:GetAlarmstate() or 0
-    
+      -- Speed.
+      local speed=UTILS.MpsToKnots(self.velocity or 0)
+      local speedEx=UTILS.MpsToKnots(self:GetExpectedSpeed())
+      
+      -- Altitude.
+      local alt=self.position and self.position.y or 0
+      
+      -- Heading in degrees.
+      local hdg=self.heading or 0      
+      
+      -- Life points.
+      local life=self.life or 0
+      
+      -- Total ammo.            
+      local ammo=self:GetAmmoTot().Total
+      
+      -- Detected units.
+      local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "OFF"      
+      
+      -- Get cargo weight.
+      local cargo=0
+      for _,_element in pairs(self.elements) do
+        local element=_element --Ops.OpsGroup#OPSGROUP.Element
+        cargo=cargo+element.weightCargo
+      end
+      
+      -- Into wind and turning status.
+      local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"
+      local turning=tostring(self:IsTurning())      
+
       -- Info text.
-      local text=string.format("%s [ROE=%d,AS=%d, T/M=%d/%d]: Wp=%d[%d]-->%d[%d] /%d [%s]  Dist=%.1f NM ETA=%s - Speed=%.1f (%.1f) kts, Depth=%.1f m, Hdg=%03d, Turn=%s Collision=%d IntoWind=%s", 
-      fsmstate, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, wpDist, wpETA, speed, speedExpected, alt, self.heading or 0, turning, freepath, intowind)
+      local text=string.format("%s [%d/%d]: ROE/AS=%d/%d | T/M=%d/%d | Wp=%d[%d]-->%d[%d]/%d [%s] | Life=%.1f | v=%.1f (%d) | Hdg=%03d | Ammo=%d | Detect=%s | Cargo=%.1f | Turn=%s Collision=%d IntoWind=%s",
+      fsmstate, nelem, Nelem, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, life, speed, speedEx, hdg, ammo, ndetected, cargo, turning, freepath, intowind)
       self:I(self.lid..text)
             
     end

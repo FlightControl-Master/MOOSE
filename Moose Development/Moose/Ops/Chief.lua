@@ -2513,6 +2513,7 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
   
     -- Bomb runway.
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBRUNWAY, 100))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY,        30))
 
   elseif static then
   
@@ -2520,10 +2521,10 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
     -- STATIC
     ---
 
-    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
-    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 70))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,       100))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING,    70))
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBCARPET, 50))
-    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY,       30))
     
   elseif scenery then
   
@@ -2531,10 +2532,10 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
     -- SCENERY
     ---
   
-    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.STRIKE, 100))
-    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 70))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.STRIKE,    100))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING,    70))
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBCARPET, 50))
-    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY,       30))
     
   elseif coordinate then
   
@@ -2542,9 +2543,9 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
     -- COORDINATE
     ---
   
-    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING, 100))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBING,   100))
     table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BOMBCARPET, 50))
-    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
+    table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY,       30))
     
   end
 

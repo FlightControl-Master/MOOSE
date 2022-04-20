@@ -51,7 +51,8 @@
 -- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
 -- @field #table menu F10 radio menu.
 -- @field #string controlstatus Flight control status.
--- @field #boolean despawnAfterLanding If true, group is despawned after landed at an airbase.
+-- @field #boolean despawnAfterLanding If `true`, group is despawned after landed at an airbase.
+-- @field #boolean despawnAfterHolding If `true`, group is despawned after reaching the holding point.
 -- @field #number RTBRecallCount Number that counts RTB calls.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
@@ -182,7 +183,7 @@ FLIGHTGROUP.RadioMessage = {
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.7.2"
+FLIGHTGROUP.version="0.7.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -522,6 +523,14 @@ function FLIGHTGROUP:SetDespawnAfterLanding()
   return self
 end
 
+--- Enable that the group is despawned after holding. This can be useful to avoid DCS taxi issues with other AI or players or jamming taxiways.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetDespawnAfterHolding()
+  self.despawnAfterHolding=true
+  return self
+end
+
 
 --- Check if flight is parking.
 -- @param #FLIGHTGROUP self
@@ -818,25 +827,63 @@ function FLIGHTGROUP:Status()
   -- Short info.
   if self.verbose>=1 then
 
+    -- Number of elements.
     local nelem=self:CountElements()
     local Nelem=#self.elements
+
+    -- Get number of tasks and missions.
     local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
     local nMissions=self:CountRemainingMissison()
-    local currT=self.taskcurrent or "None"
-    local currM=self.currentmission or "None"
-    local currW=self.currentwp or 0
-    local nWp=self.waypoints and #self.waypoints or 0
+    
+    -- ROE and Alarm State.
+    local roe=self:GetROE() or -1
+    local als=self:GetAlarmstate() or -1
+
+    -- Waypoint stuff.
+    local wpidxCurr=self.currentwp
+    local wpuidCurr=self:GetWaypointUIDFromIndex(wpidxCurr) or 0
+    local wpidxNext=self:GetWaypointIndexNext() or 0
+    local wpuidNext=self:GetWaypointUIDFromIndex(wpidxNext) or 0
+    local wpN=#self.waypoints or 0
+    local wpF=tostring(self.passedfinalwp)
+    
+    -- Speed.
+    local speed=UTILS.MpsToKnots(self.velocity or 0)
+    local speedEx=UTILS.MpsToKnots(self:GetExpectedSpeed())
+    
+    -- Altitude.
+    local alt=self.position and self.position.y or 0
+    
+    -- Heading in degrees.
+    local hdg=self.heading or 0      
+    
+    -- TODO: GetFormation function.
+    local formation=self.option.Formation or "unknown"
+    
+    -- Life points.
+    local life=self.life or 0
+    
+    -- Total ammo.            
+    local ammo=self:GetAmmoTot().Total
+    
+    -- Detected units.
+    local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "OFF"      
+    
+    -- Get cargo weight.
+    local cargo=0
+    for _,_element in pairs(self.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+        cargo=cargo+element.weightCargo
+      end
+ 
+       -- Home and destination base.
     local home=self.homebase and self.homebase:GetName() or "unknown"
     local dest=self.destbase and self.destbase:GetName() or "unknown"
-    local fc=self.flightcontrol and self.flightcontrol.airbasename or "N/A"
     local curr=self.currbase and self.currbase:GetName() or "N/A"
-    
-    local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "OFF"
-
-    local text=string.format("Status %s [%d/%d]: T/M=%d/%d [Current %s/%s] [%s], Waypoint=%d/%d [%s], Base=%s [%s-->%s]",
-    fsmstate, nelem, Nelem, 
-    nTaskTot, nMissions, currT, currM, tostring(self:HasTaskController()), 
-    currW, nWp, tostring(self.passedfinalwp), curr, home, dest)
+  
+    -- Info text.
+    local text=string.format("%s [%d/%d]: ROE/AS=%d/%d | T/M=%d/%d | Wp=%d[%d]-->%d[%d]/%d [%s] | Life=%.1f | v=%.1f (%d) | Hdg=%03d | Ammo=%d | Detect=%s | Cargo=%.1f | Base=%s [%s-->%s]",
+    fsmstate, nelem, Nelem, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, life, speed, speedEx, hdg, ammo, ndetected, cargo, curr, home, dest)
     self:I(self.lid..text)
 
   end
@@ -1341,31 +1388,46 @@ function FLIGHTGROUP:onafterElementLanded(From, Event, To, Element, airbase)
 
   -- Debug info.
   self:T2(self.lid..string.format("Element landed %s at %s airbase", Element.name, airbase and airbase:GetName() or "unknown"))
+  
+  -- Set element status.
+  self:_UpdateStatus(Element, OPSGROUP.ElementStatus.LANDED, airbase)
 
-  if self.despawnAfterLanding then
+  -- Helos with skids land directly on parking spots.
+  if self.isHelo then
 
-    -- Despawn the element.
-    self:DespawnElement(Element)
+    local Spot=self:GetParkingSpot(Element, 10, airbase)
 
-  else
-
-    -- Set element status.
-    self:_UpdateStatus(Element, OPSGROUP.ElementStatus.LANDED, airbase)
-
-    -- Helos with skids land directly on parking spots.
-    if self.isHelo then
-
-      local Spot=self:GetParkingSpot(Element, 10, airbase)
-
-      if Spot then
-        self:_SetElementParkingAt(Element, Spot)
-        self:_UpdateStatus(Element, OPSGROUP.ElementStatus.ARRIVED)
-      end
-
+    if Spot then
+      self:_SetElementParkingAt(Element, Spot)
+      self:_UpdateStatus(Element, OPSGROUP.ElementStatus.ARRIVED)
     end
 
-  end
-  
+  end  
+
+  -- Despawn after landing.
+  if self.despawnAfterLanding then
+    
+    if self.legion then
+     
+      if airbase and self.legion.airbase and airbase.AirbaseName==self.legion.airbase.AirbaseName then
+    
+        if self:IsLanded() then
+          -- Everybody landed ==> Return to legion. Will despawn the last one.
+          self:ReturnToLegion()
+        else
+          -- Despawn the element.
+          self:DespawnElement(Element)
+        end
+        
+      end
+            
+    else
+
+      -- Despawn the element.
+      self:DespawnElement(Element)
+      
+    end
+  end  
 end
 
 --- On after "ElementArrived" event.
@@ -1744,7 +1806,8 @@ function FLIGHTGROUP:onafterArrived(From, Event, To)
     self:T(self.lid..string.format("Airwing asset group %s arrived ==> Adding asset back to stock of airwing %s", self.groupname, airwing.alias))
   
     -- Add the asset back to the airwing.
-    airwing:AddAsset(self.group, 1)
+    --airwing:AddAsset(self.group, 1)
+    self:ReturnToLegion(1)
         
   elseif self.isLandingAtAirbase then
 
@@ -2687,6 +2750,16 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
 
   -- Set holding flag to 0 (just in case).
   self.flaghold:Set(0)
+  
+  -- Despawn after holding.
+  if self.despawnAfterHolding then
+    if self.legion then
+      self:ReturnToLegion(1)
+    else
+      self:Despawn(1)
+    end
+    return
+  end
 
   -- Holding time stamp.
   self.Tholding=timer.getAbsTime()

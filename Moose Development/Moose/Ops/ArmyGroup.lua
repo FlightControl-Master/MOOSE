@@ -64,7 +64,7 @@ ARMYGROUP = {
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="0.7.2"
+ARMYGROUP.version="0.7.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -669,18 +669,50 @@ function ARMYGROUP:Status()
   if alive~=nil then
     
     if self.verbose>=1 then
+
+      -- Number of elements.
+      local nelem=self:CountElements()
+      local Nelem=#self.elements
   
       -- Get number of tasks and missions.
       local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
       local nMissions=self:CountRemainingMissison()
       
-      local roe=self:GetROE()
-      local alarm=self:GetAlarmstate()
+      -- ROE and Alarm State.
+      local roe=self:GetROE() or -1
+      local als=self:GetAlarmstate() or -1
+
+      -- Waypoint stuff.
+      local wpidxCurr=self.currentwp
+      local wpuidCurr=self:GetWaypointUIDFromIndex(wpidxCurr) or 0
+      local wpidxNext=self:GetWaypointIndexNext() or 0
+      local wpuidNext=self:GetWaypointUIDFromIndex(wpidxNext) or 0
+      local wpN=#self.waypoints or 0
+      local wpF=tostring(self.passedfinalwp)
+      
+      -- Speed.
       local speed=UTILS.MpsToKnots(self.velocity or 0)
       local speedEx=UTILS.MpsToKnots(self:GetExpectedSpeed())
-      local formation=self.option.Formation or "unknown"      
-      local ammo=self:GetAmmoTot()
       
+      -- Altitude.
+      local alt=self.position and self.position.y or 0
+      
+      -- Heading in degrees.
+      local hdg=self.heading or 0      
+      
+      -- TODO: GetFormation function.
+      local formation=self.option.Formation or "unknown"
+      
+      -- Life points.
+      local life=self.life or 0
+      
+      -- Total ammo.            
+      local ammo=self:GetAmmoTot().Total
+      
+      -- Detected units.
+      local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "OFF"      
+      
+      -- Get cargo weight.
       local cargo=0
       for _,_element in pairs(self.elements) do
         local element=_element --Ops.OpsGroup#OPSGROUP.Element
@@ -688,9 +720,9 @@ function ARMYGROUP:Status()
       end
     
       -- Info text.
-      local text=string.format("%s [ROE-AS=%d-%d T/M=%d/%d]: Wp=%d/%d-->%d (final %s), Life=%.1f, Speed=%.1f (%d), Heading=%03d, Ammo=%d, Cargo=%.1f", 
-      fsmstate, roe, alarm, nTaskTot, nMissions, self.currentwp, #self.waypoints, self:GetWaypointIndexNext(), tostring(self.passedfinalwp), self.life or 0, speed, speedEx, self.heading or 0, ammo.Total, cargo)
-      self:T(self.lid..text)
+      local text=string.format("%s [%d/%d]: ROE/AS=%d/%d | T/M=%d/%d | Wp=%d[%d]-->%d[%d]/%d [%s] | Life=%.1f | v=%.1f (%d) | Hdg=%03d | Ammo=%d | Detect=%s | Cargo=%.1f",
+      fsmstate, nelem, Nelem, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, life, speed, speedEx, hdg, ammo, ndetected, cargo)
+      self:I(self.lid..text)
       
     end
     
@@ -843,6 +875,9 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     
     -- Set default Alarm State.
     self:SwitchAlarmstate(self.option.Alarm)
+    
+    -- Set emission.
+    self:SwitchEmission(self.option.Emission)
     
     -- Set default EPLRS.
     self:SwitchEPLRS(self.option.EPLRS)
@@ -1145,7 +1180,7 @@ function ARMYGROUP:onbeforeRearm(From, Event, To, Coordinate, Formation)
   local allowed=true
 
   -- Pause current mission.
-  if self.currentmission and self.currentmission>0 then
+  if self:IsOnMission() then
     self:T(self.lid.."Rearm command but have current mission ==> Pausing mission!")
     self:PauseMission()
     dt=-0.1
