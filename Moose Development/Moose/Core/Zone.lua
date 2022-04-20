@@ -59,6 +59,7 @@
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @field #number DrawID Unique ID of the drawn zone on the F10 map.
 -- @field #table Color Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
+-- @field #number ZoneID ID of zone. Only zones defined in the ME have an ID!
 -- @extends Core.Fsm#FSM
 
 
@@ -108,7 +109,8 @@ ZONE_BASE = {
   ZoneName = "",
   ZoneProbability = 1,
   DrawID=nil,
-  Color={}
+  Color={},
+  ZoneID=nil,
 }
 
 
@@ -620,7 +622,7 @@ function ZONE_RADIUS:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, Lin
 
   Color=Color or self:GetColorRGB()
   Alpha=Alpha or 1
-  FillColor=FillColor or Color
+  FillColor=FillColor or UTILS.DeepCopy(Color)
   FillAlpha=FillAlpha or self:GetColorAlpha()
 
   self.DrawID=coordinate:CircleToAll(Radius, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
@@ -808,7 +810,7 @@ end
 
 
 --- Scan the zone for the presence of units of the given ObjectCategories.
--- Note that after a zone has been scanned, the zone can be evaluated by:
+-- Note that **only after** a zone has been scanned, the zone can be evaluated by:
 --
 --   * @{ZONE_RADIUS.IsAllInZoneOfCoalition}(): Scan the presence of units in the zone of a coalition.
 --   * @{ZONE_RADIUS.IsAllInZoneOfOtherCoalition}(): Scan the presence of units in the zone of an other coalition.
@@ -817,10 +819,10 @@ end
 --   * @{ZONE_RADIUS.IsNoneInZone}(): Scan if the zone is empty.
 -- @{#ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
--- @param ObjectCategories An array of categories of the objects to find in the zone.
--- @param UnitCategories An array of unit categories of the objects to find in the zone.
+-- @param ObjectCategories An array of categories of the objects to find in the zone. E.g. `{Object.Category.UNIT}`
+-- @param UnitCategories An array of unit categories of the objects to find in the zone. E.g. `{Unit.Category.GROUND_UNIT,Unit.Category.SHIP}`
 -- @usage
---    self.Zone:Scan()
+--    self.Zone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
 --    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
 function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
@@ -1860,7 +1862,8 @@ function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlph
 
   Color=Color or self:GetColorRGB()
   Alpha=Alpha or 1
-  FillColor=FillColor or Color
+  
+  FillColor=FillColor or UTILS.DeepCopy(Color)
   FillAlpha=FillAlpha or self:GetColorAlpha()
 
 
