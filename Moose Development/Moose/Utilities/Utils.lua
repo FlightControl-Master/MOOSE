@@ -2397,3 +2397,46 @@ function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce)
   end
   return datatable
 end
+
+--- Heading Degrees (0-360) to Cardinal
+-- @param #number hgd The heading
+-- @return #string Cardinal, e.g. "NORTH"
+function Utils.BearingToCardinal(Heading)
+  if     Heading >= 0   and Heading <= 22  then return "North"
+    elseif Heading >= 23  and Heading <= 66  then return "North-East"
+    elseif Heading >= 67  and Heading <= 101 then return "East"
+    elseif Heading >= 102 and Heading <= 146 then return "South-East"
+    elseif Heading >= 147 and Heading <= 201 then return "South"
+    elseif Heading >= 202 and Heading <= 246 then return "South-West"
+    elseif Heading >= 247 and Heading <= 291 then return "West"
+    elseif Heading >= 292 and Heading <= 338 then return "North-West"
+    elseif Heading >= 339 then return "North"
+  end
+end
+
+--- Create a BRAA NATO call string BRAA between two GROUP objects
+-- @param Wrapper.Group#GROUP FromGrp GROUP object
+-- @param Wrapper.Group#GROUP ToGrp GROUP object
+-- @return #string Formatted BRAA NATO call
+function Utils.ToStringBRAANATO(FromGrp,ToGrp )
+  local BRAANATO = "Merged."
+  local GroupNumber = FromGrp:GetSize()
+  local GroupWords = "Singleton"
+  if GroupNumber == 2 then GroupWords = "Two-Ship"
+    elseif GroupNumber >= 3 then GroupWords = "Heavy"
+  end
+  local grpLeadUnit = ToGrp:GetUnit(1)
+  local tgtCoord = grpLeadUnit:GetCoordinate()
+  local currentCoord = FromGrp:GetCoordinate()
+  local hdg = UTILS.Round(ToGrp:GetHeading()/100,1)*100
+  local bearing = UTILS.Round(currentCoord:HeadingTo(tgtCoord),0)
+  local rangeMetres = tgtCoord:Get2DDistance(currentCoord)
+  local rangeNM = UTILS.Round( UTILS.MetersToNM(rangeMetres), 0)
+  local aspect = tgtCoord:ToStringAspect(currentCoord)
+  local alt = UTILS.Round(UTILS.MetersToFeet(grpLeadUnit:GetAltitude())/1000,0)--*1000
+  local track = Utils.BearingToCardinal(hdg)
+  if rangeNM > 3 then
+    BRAANATO = string.format("%s, BRAA, %s, %d miles, Angels %d, %s, Track %s, Spades.",GroupWords,bearing, rangeNM, alt, aspect, track)
+  end
+  return BRAANATO 
+end
