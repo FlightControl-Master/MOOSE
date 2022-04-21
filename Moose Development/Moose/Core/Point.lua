@@ -2788,7 +2788,7 @@ do -- COORDINATE
 
     local alt = UTILS.Round(UTILS.MetersToFeet(self.y)/1000,0)--*1000
     
-    local track = Utils.BearingToCardinal(bearing)
+    local track = UTILS.BearingToCardinal(bearing)
     
     if rangeNM > 3 then
       BRAANATO = string.format("BRAA, %s, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)
