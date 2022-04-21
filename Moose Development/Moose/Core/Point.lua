@@ -2727,7 +2727,48 @@ do -- COORDINATE
     local Altitude = self:GetAltitudeText()
     return "BRA, " .. self:GetBRAText( AngleRadians, Distance, Settings, Language )
   end
+  
+  --- Create a BRAA NATO call string to this COORDINATE from the FromCOORDINATE. Note - BRA delivered if no aspect can be obtained and "Merged" if range < 3nm
+  -- @param #COORDINATE self
+  -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
+  -- @param #boolean Spades Add "Spades" at the end if true (no IFF/VID ID yet known)
+  -- @return #string The BRAA text.
+  function COORDINATE:ToStringBRAANATO(FromCoordinate,Spades)
+    
+    -- Thanks to @Pikey
+    local BRAANATO = "Merged."
 
+    local currentCoord = FromCoordinate
+    local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
+    local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
+    
+    local bearing = UTILS.Round( UTILS.ToDegree( AngleRadians ),0 )
+    
+    local rangeMetres = self:Get2DDistance(currentCoord)
+    local rangeNM = UTILS.Round( UTILS.MetersToNM(rangeMetres), 0)
+    
+    local aspect = self:ToStringAspect(currentCoord)
+
+    local alt = UTILS.Round(UTILS.MetersToFeet(self.y)/1000,0)--*1000
+    
+    local track = UTILS.BearingToCardinal(bearing) or "North"
+    
+    if rangeNM > 3 then
+      if aspect == "" then
+        BRAANATO = string.format("BRA, %s, %d miles, Angels %d, Track %s",bearing, rangeNM, alt, track)
+      else
+        BRAANATO = string.format("BRAA, %s, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)      
+      end
+      if Spades then
+        BRAANATO = BRAANATO..", Spades."
+      else
+       BRAANATO = BRAANATO.."."
+      end
+    end
+    
+    return BRAANATO 
+  end
+  
   --- Return a BULLS string out of the BULLS of the coalition to the COORDINATE.
   -- @param #COORDINATE self
   -- @param DCS#coalition.side Coalition The coalition.
