@@ -2765,7 +2765,7 @@ do -- COORDINATE
     return "BRA, " .. self:GetBRAText( AngleRadians, Distance, Settings, Language )
   end
   
-  --- Create a BRAA NATO call string to this COORDINATE from the FromCOORDINATE.
+  --- Create a BRAA NATO call string to this COORDINATE from the FromCOORDINATE. Note - BRA delivered if no aspect can be obtained and "Merged" if range < 3nm
   -- @param #COORDINATE self
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
   -- @param #boolean Spades Add "Spades" at the end if true (no IFF/VID ID yet known)
@@ -2788,10 +2788,14 @@ do -- COORDINATE
 
     local alt = UTILS.Round(UTILS.MetersToFeet(self.y)/1000,0)--*1000
     
-    local track = UTILS.BearingToCardinal(bearing)
+    local track = UTILS.BearingToCardinal(bearing) or "North"
     
     if rangeNM > 3 then
-      BRAANATO = string.format("BRAA, %s, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)
+      if aspect == "" then
+        BRAANATO = string.format("BRA, %s, %d miles, Angels %d, Track %s",bearing, rangeNM, alt, track)
+      else
+        BRAANATO = string.format("BRAA, %s, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)      
+      end
       if Spades then
         BRAANATO = BRAANATO..", Spades."
       else
