@@ -2436,7 +2436,11 @@ function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
   local alt = UTILS.Round(UTILS.MetersToFeet(grpLeadUnit:GetAltitude())/1000,0)--*1000
   local track = UTILS.BearingToCardinal(hdg)
   if rangeNM > 3 then
-    BRAANATO = string.format("%s, BRAA, %s, %d miles, Angels %d, %s, Track %s, Spades.",GroupWords,bearing, rangeNM, alt, aspect, track)
+      if aspect == "" then
+        BRAANATO = string.format("%s, BRA, %03d, %d miles, Angels %d, Track %s",GroupWords,bearing, rangeNM, alt, track)
+      else
+        BRAANATO = string.format("%s, BRAA, %03d, %d miles, Angels %d, %s, Track %s",GroupWords, bearing, rangeNM, alt, aspect, track)      
+      end
   end
   return BRAANATO 
 end

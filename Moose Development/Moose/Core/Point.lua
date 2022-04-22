@@ -2792,9 +2792,9 @@ do -- COORDINATE
     
     if rangeNM > 3 then
       if aspect == "" then
-        BRAANATO = string.format("BRA, %s, %d miles, Angels %d, Track %s",bearing, rangeNM, alt, track)
+        BRAANATO = string.format("BRA, %03d, %d miles, Angels %d, Track %s",bearing, rangeNM, alt, track)
       else
-        BRAANATO = string.format("BRAA, %s, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)      
+        BRAANATO = string.format("BRAA, %03d, %d miles, Angels %d, %s, Track %s",bearing, rangeNM, alt, aspect, track)      
       end
       if Spades then
         BRAANATO = BRAANATO..", Spades."
