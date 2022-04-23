@@ -89,7 +89,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "alpha 0.0.7", -- #string
+  version = "alpha 0.0.8", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -371,7 +371,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List
+-- TODO-List 0.0.8
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- DEBUG - Escorts via AirWing not staying on
 -- TODO - System for Players to VID contacts? And put data into contacst fifo
@@ -463,8 +463,8 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   end
   
   self.AOCoordinate = self.OpsZone:GetCoordinate()
-  self.UseBullsAO = false
-  self.ControlZoneRadius = 100 -- nm
+  self.UseBullsAO = false -- as per NATOPS
+  self.ControlZoneRadius = 120 -- nm
   self.AnchorZone = ZONE:New(AnchorZone) -- Core.Zone#ZONE
   self.Frequency = Frequency or 271 -- #number
   self.Modulation = Modulation or radio.modulation.AM
@@ -846,6 +846,35 @@ function AWACS:_StartSettings(FlightGroup,Mission)
   return self
 end
 
+--- [Internal] Return Bullseye BR for Alpha Check etc, returns e.g. "Bullseye 021, 16"
+-- @param #AWACS self
+-- @param Core.Point#COORDINATE Coordinate
+-- @return #string BullseyeBR
+function AWACS:ToStringBULLS( Coordinate )
+  local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.coalition ) )
+  local DirectionVec3 = BullsCoordinate:GetDirectionVec3( Coordinate )
+  local AngleRadians =  Coordinate:GetAngleRadians( DirectionVec3 )
+  local Distance = Coordinate:Get2DDistance( BullsCoordinate )
+  local AngleDegrees = UTILS.Round( UTILS.ToDegree( AngleRadians ), 0 )
+  local Bearing = string.format( '%03d', AngleDegrees )
+  local Distance = UTILS.Round( UTILS.MetersToNM( Distance ), 0 )
+  return string.format("Bullseye %03d, %03d",Bearing,Distance)
+end
+
+--- [Internal] Chnage Bullseye string to be TTS friendly,  "Bullseye 021, 16" returns e.g. "Bulls eye 0-2-1, 1-6"
+-- @param #AWACS self
+-- @param #string Text Input text
+-- @return #string BullseyeBRTTS
+function AWACS:ToStringBullsTTS(Text)
+  local text = Text
+  text=string.gsub(text,"Bullseye","Bulls eye")
+  text=string.gsub(text,"%d","%1 ")
+  text=string.gsub(text,"?," ,",")
+  text=string.gsub(text," $","")
+  return text
+end
+
+
 --- [Internal] Check if a group has checked in
 -- @param #AWACS self
 -- @param Wrapper.Group#GROUP Group Group to check
@@ -908,7 +937,7 @@ function AWACS:_CreatePicture(AO,Callsign,GID)
   local groupcoord = group:GetCoordinate()
   
   local fifo = self.PictureAO -- Utilities.FiFo#FIFO
-  local maxentries = self.maxspeakentries
+  local maxentries = self.maxspeakentries or 3
   local counter = 0
   
   if not AO then 
@@ -919,7 +948,7 @@ function AWACS:_CreatePicture(AO,Callsign,GID)
   
   if entries < maxentries then maxentries = entries end
   
-  local text = "First group."
+  local text = "Group"
   local textScreen = text
   
   while counter < maxentries do
@@ -933,7 +962,7 @@ function AWACS:_CreatePicture(AO,Callsign,GID)
       text = text .. " "..refBRAA.."."
       textScreen = textScreen .." "..refBRAA..".\n"
       if counter < maxentries then
-        text = text .. " Next group."
+        text = text .. " Group"
         textScreen = textScreen .. text .. "\n"
       end
     end
@@ -983,8 +1012,10 @@ function AWACS:_CreateBogeyDope(Callsign,GID)
     local cluster = fifo:PullByID(sortedIDs[counter]) -- Ops.Intelligence#INTEL.Contact
     self:T({cluster})
     if cluster and cluster.position then
+      local tag =  cluster.TargetGroupNaming
+      local reportingname = cluster.group:GetNatoReportingName()
       -- TODO - add tag
-      self:_AnnounceContact(cluster,false,group,true)
+      self:_AnnounceContact(cluster,false,group,true,tag,false,reportingname)
     end
   end
   
@@ -1056,8 +1087,8 @@ function AWACS:_Picture(Group)
     else
     
       if clustersAO > 0 then
-        text = string.format("%s. %s. Picture A O. ",gcallsign, self.callsigntxt)
-        textScreen = string.format("%s. %s. Picture AO. ",gcallsign, self.callsigntxt)
+        text = string.format("%s. %s. Picture. ",gcallsign, self.callsigntxt)
+        textScreen = string.format("%s. %s. Picture. ",gcallsign, self.callsigntxt)
         if clustersAO == 1 then
           text = text .. "One group. "
           textScreen = textScreen .. "One group.\n"
@@ -1080,7 +1111,7 @@ function AWACS:_Picture(Group)
         self.PictureAO:Clear()
       end
       
-      if clustersEWR > 0 then
+      if clustersAO < 3 and clustersEWR > 0 then
        text = string.format("%s. %s. Picture Early Warning. ",gcallsign, self.callsigntxt)
        textScreen = string.format("%s. %s. Picture EWR. ",gcallsign, self.callsigntxt)
        if clustersEWR == 1 then
@@ -1100,7 +1131,7 @@ function AWACS:_Picture(Group)
         RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8     
         self.RadioQueue:Push(RadioEntry)
         
-        self:_CreatePicture(false,gcallsign,GID)
+        --self:_CreatePicture(false,gcallsign,GID)
        
         self.PictureEWR:Clear()
       end
@@ -1522,9 +1553,16 @@ function AWACS:_CheckIn(Group)
       
       GID = managedgroup.GID
     self.ManagedGrps[self.ManagedGrpID]=managedgroup
-    text = string.format("%s. %s. Copy. Await tasking.",managedgroup.CallSign,self.callsigntxt)
+    
+    local alphacheckbulls = self:ToStringBULLS(Group:GetCoordinate())
+    alphacheckbulls = self:ToStringBullsTTS(alphacheckbulls)-- make tts friendly
+      
+    self.ManagedGrps[self.ManagedGrpID]=managedgroup
+    text = string.format("%s. %s. Alpha Check %s",managedgroup.CallSign,self.callsigntxt,alphacheckbulls)
+    
     self:__CheckedIn(1,managedgroup.GID)
     self:__AssignAnchor(5,managedgroup.GID)
+    
   elseif self.AwacsFG then
     text = string.format("%s. %s. Negative. You are already checked in.",self:_GetCallSign(Group,GID) or "Ghost 1 1", self.callsigntxt)
   end
@@ -1584,7 +1622,7 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
     
     FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,self.CAPVoice,self.Port,nil)
     
-    text = string.format("%s. %s. Check in for CAP. Expected playtime %d hours.",managedgroup.CallSign, self.callsigntxt,self.CAPTimeOnStation)
+    text = string.format("%s. %s. Checking in as fragged. Expected playtime %d hours. Request Alpha Check Bulls Eye.",self.callsigntxt, managedgroup.CallSign, self.CAPTimeOnStation)
     local RadioEntry = {} -- #AWACS.RadioEntry
     RadioEntry.IsNew = true
     RadioEntry.TextTTS = text
@@ -1594,9 +1632,12 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
     RadioEntry.GroupID = managedgroup.GID
     
     self.RadioQueue:Push(RadioEntry)
+    
+    local alphacheckbulls = self:ToStringBULLS(Group:GetCoordinate())
+    alphacheckbulls = self:ToStringBullsTTS(alphacheckbulls)-- make tts friendly
       
     self.ManagedGrps[self.ManagedGrpID]=managedgroup
-    text = string.format("%s. %s. Copy. Await tasking.",managedgroup.CallSign,self.callsigntxt)
+    text = string.format("%s. %s. Alpha Check %s",managedgroup.CallSign,self.callsigntxt,alphacheckbulls)
     self:__CheckedIn(1,managedgroup.GID)
     self:__AssignAnchor(5,managedgroup.GID)
   else
@@ -2004,7 +2045,8 @@ function AWACS:_GetBRAfromBullsOrAO(clustercoordinate)
     BRAText = "AO "..refcoord:ToStringBR(clustercoordinate)
   else
     -- get BR from Bulls
-    BRAText = clustercoordinate:ToStringBULLS(self.coalition)
+    BRAText = self:ToStringBULLS(clustercoordinate)
+    -- BRAText = clustercoordinate:ToStringBULLS(self.coalition)
   end
   return BRAText
 end
@@ -2294,12 +2336,14 @@ end
 --- [Internal] Announce a new contact
 -- @param #AWACS self
 -- @param Ops.Intelligence#INTEL.Contact Contact
--- @param #boolean IsNew
+-- @param #boolean IsNew Is a new contact
 -- @param Wrapper.Group#GROUP Group Announce to Group if not nil
 -- @param #boolean IsBogeyDope If true, this is a bogey dope announcement
--- @param #string Tag Tag name for this contact
+-- @param #string Tag Tag name for this contact. Alpha, Brave, Charlie ... 
+-- @param #boolean IsPopup This is a pop-up group
+-- @param #string ReportingName The NATO code reporting name for the contact, e.g. "Foxbat". "Bogey" if unknown.
 -- @return #AWACS self
-function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag)
+function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,ReportingName)
   self:T(self.lid.."_AnnounceContact")
   -- do we have a group to talk to?
   local tag = ""
@@ -2319,6 +2363,7 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag)
     self:T("GID="..GID.." CheckedIn = "..tostring(isGroup))
     grpcallsign = self:_GetCallSign(Group,GID) or "Ghost 1 1"
   end
+  
   local contact = Contact -- Ops.Intelligence#INTEL.Contact
   local intel = self.intel -- Ops.Intelligence#INTEL
   local size = contact.group:CountAliveUnits()
@@ -2329,15 +2374,8 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag)
 
   local BRAfromBulls = self:_GetBRAfromBullsOrAO(clustercoordinate)
   if isGroup then
-    --BRAfromBulls = clustercoordinate:ToStringBRA(Group:GetCoordinate())
     BRAfromBulls = clustercoordinate:ToStringBRAANATO(Group:GetCoordinate(),IsNew)
   end
-  
-  --local Warnlevel = "Early Warning."
-
-  --if self.OpsZone:IsVec2InZone(clustercoordinate:GetVec2()) and not IsBogeyDope then
-    --Warnlevel = "Warning."
-  --end
   
   -- "Uzi 1-1, Magic, BRA, 183 for 10 at 2000, hot"
   -- "<togroup>, <fromgroup>, <New>/<Contact>, <tag>, <shipsize>, BRA, <bearing> for <range> at angels <alt/1000>, <aspect>"
@@ -2354,11 +2392,14 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag)
   end
   
   if IsNew then
-    BRAText = BRAText .. " New contact."
-    TextScreen = TextScreen .. " New contact."
+    BRAText = BRAText .. " New group."
+    TextScreen = TextScreen .. " New group."
+  elseif IsPopup then
+    BRAText = BRAText .. " Pop-up group."
+    TextScreen = TextScreen .. " Pop-up group."
   else
-    BRAText = BRAText .. " Contact."
-    TextScreen = TextScreen .. " Contact."
+    BRAText = BRAText .. " Group."
+    TextScreen = TextScreen .. " Group."
   end
   
   if Tag and Tag ~= "" then
@@ -2369,28 +2410,31 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag)
   BRAText = BRAText .. " "..threatsizetext..". "..BRAfromBulls
   TextScreen = TextScreen .. " "..threatsizetext.."\n"..BRAfromBulls
   
+  if self.ModernEra then
+    -- Platform
+    if ReportingName and ReportingName ~= "Bogey" then
+      BRAText = BRAText .. " "..ReportingName.."."
+      TextScreen = TextScreen .. " "..ReportingName.."."
+    end
+    -- High - > 40k feet
+    local height = contact.group:GetAltitude()
+    local height = UTILS.Round(UTILS.MetersToFeet(height)/1000,0) -- e.g, 25
+    if height >= 40 then
+      BRAText = BRAText .. " High."
+      TextScreen = TextScreen .. " High."
+    end
+    -- Fast (>600kn) or Very fast (>900kn)
+    local speed = contact.group:GetVelocityKNOTS()
+    if speed > 900 then
+      BRAText = BRAText .. " Very Fast."
+      TextScreen = TextScreen .. " Very Fast."
+    elseif speed >= 600 and speed <= 900 then
+      BRAText = BRAText .. " Fast."
+      TextScreen = TextScreen .. " Fast."
+    end
+  end
+  
   self:I(BRAText)
-  self:I(TextScreen)
-  
-  --[[
-  
-  Warnlevel = string.format("%s %s", Warnlevel, threattext)
-  
-  if isGroup then
-    Warnlevel = string.format("%s. %s",grpcallsign,Warnlevel)
-  end
-   
-  -- TTS
-  local TextTTS = string.format("%s. %s %s %s",self.callsigntxt,Warnlevel,threatsizetext,BRAfromBulls)
-  
-  -- TextOutput
-  local TextScreen = string.format("%s. %s. %s\n%s\nThreatlevel %s",self.callsigntxt,Warnlevel,threatsizetext,BRAfromBulls,threattext)
-  
-  if IsBogeyDope then
-    TextTTS = string.format("%s. %s. %s. %s.",self.callsigntxt,grpcallsign,threatsizetext,BRAfromBulls)
-    TextScreen = string.format("%s. %s. %s.\n%s\nThreatlevel %s",self.callsigntxt,grpcallsign,threatsizetext,BRAfromBulls,threattext)
-  end
-  --]]
   
   local RadioEntry = {} -- #AWACS.RadioEntry
   RadioEntry.TextTTS = BRAText
@@ -3128,6 +3172,13 @@ function AWACS:onafterNewContact(From,Event,To,Contact)
   local phoneid = math.fmod(self.Countactcounter,27)
   if phoneid == 0 then phoneid = 1 end
   managedcontact.TargetGroupNaming = AWACS.Phonetic[phoneid]
+  managedcontact.ReportingName = Contact.group:GetNatoReportingName() -- e.g. Foxbat. Bogey if unknown
+  
+  local IsPopup = false
+  -- is this a pop-up group? i.e. appeared inside AO
+  if self.OpsZone:IsVec2InZone(Contact.position:GetVec2()) then
+   IsPopup = true
+  end
   
   -- let's see if we can inject some info into Contact
   Contact.CID = managedcontact.CID
@@ -3136,7 +3187,7 @@ function AWACS:onafterNewContact(From,Event,To,Contact)
   self.Contacts:Push(Contact,self.CID)
   self.ManagedContacts:Push(Contact,self.CID)
   
-  self:_AnnounceContact(Contact,true,nil,false,managedcontact.TargetGroupNaming)
+  self:_AnnounceContact(Contact,true,nil,false,managedcontact.TargetGroupNaming,IsPopup,managedcontact.ReportingName)
   
   return self
 end
