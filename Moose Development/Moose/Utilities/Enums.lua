@@ -449,3 +449,48 @@ ENUMS.Phonetic =
   Y = 'Yankee',
   Z = 'Zulu',
 }
+
+--- Reporting Names (NATO). See the [Wikipedia](https://en.wikipedia.org/wiki/List_of_NATO_reporting_names_for_fighter_aircraft).
+-- DCS known aircraft types
+-- 
+-- @type ENUMS.ReportingName
+ENUMS.ReportingName =
+{
+  NATO = {
+    -- Fighters
+    Dragon = "JF-17", -- China, correct?
+    Fagot = "MiG-15",
+    Farmer = "MiG-19", -- Shenyang J-6 and Mikoyan-Gurevich MiG-19
+    Felon = "Su-57",
+    Fencer = "Su-24",
+    Fishbed = "MiG-21",
+    Fitter = "Su-17", -- Sukhoi Su-7 and Su-17/Su-20/Su-22
+    Flogger = "MiG-23",  --and MiG-27
+    Flogger_D = "MiG-27",  --and MiG-23
+    Flagon = "Su-15",
+    Foxbat = "MiG-25",
+    Fulcrum = "MiG-29",
+    Foxhound = "MiG-31",
+    Flanker = "Su-27", -- Sukhoi Su-27/Su-30/Su-33/Su-35/Su-37 and Shenyang J-11/J-15/J-16
+    Flanker_C = "Su-30",
+    Flanker_E = "Su-35",
+    Flanker_F = "Su-37",
+    Flanker_Dragon = "J-11A",
+    Sea_Flanker = "Su-33",
+    Fullback = "Su-32", -- also Su-34
+    Frogfoot = "Su-25",
+    Tomcat = "F-14", -- Iran
+    Mirage = "Mirage", -- various non-NATO
+    -- Bomber
+    H6J = "H6-J",
+    Bear = "Tu-142", -- also Tu-95
+    Blinder = "Tu-22",
+    Blackjack = "Tu-160",
+    -- AIC / Transport / Other
+    Clank = "An-30",
+    Curl = "An-26",
+    Candid = "IL-76",
+    Midas = "IL-78",
+    Mainstay = "A-50", -- KJ-2000 China 
+  }
+}

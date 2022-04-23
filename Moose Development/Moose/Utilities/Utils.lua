@@ -1447,6 +1447,23 @@ function UTILS.GetModulationName(Modulation)
 
 end
 
+--- Get the NATO reporting name of a unit type name
+-- @param #number Typename The type name.
+-- @return #string The Reporting name or "Bogey".
+function UTILS.GetReportingName(Typename)
+  
+  local typename = string.lower(Typename)
+  
+  for name, value in pairs(ENUMS.ReportingName.NATO) do
+    local svalue = string.lower(value)
+    if string.find(typename,svalue,1,true) then
+      return name
+    end
+  end
+  
+  return "Bogey"  
+end
+
 --- Get the callsign name from its enumerator value
 -- @param #number Callsign The enumerator callsign.
 -- @return #string The callsign name or "Ghostrider".
