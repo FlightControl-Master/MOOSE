@@ -483,7 +483,8 @@ ENUMS.ReportingName =
     Mirage = "Mirage", -- various non-NATO
     -- Bomber
     H6J = "H6-J",
-    Bear = "Tu-142", -- also Tu-95
+    Sea_Bear = "Tu-142", -- also Tu-95
+    Bear = "Tu-95", -- also Tu-142
     Blinder = "Tu-22",
     Blackjack = "Tu-160",
     -- AIC / Transport / Other

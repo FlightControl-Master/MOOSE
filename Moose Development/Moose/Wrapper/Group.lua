@@ -900,6 +900,24 @@ function GROUP:GetTypeName()
   return nil
 end
 
+--- [AIRPLANE] Get the NATO reporting name of a UNIT. Currently airplanes only!
+--@param #UNIT self
+--@return #string NatoReportingName or "Bogey" if unknown.
+function GROUP:GetNatoReportingName()
+  self:F2( self.GroupName )
+  
+  local DCSGroup = self:GetDCSObject()
+  
+  if DCSGroup then
+    local GroupTypeName = DCSGroup:getUnit(1):getTypeName()
+    self:T3( GroupTypeName )
+    return UTILS.GetReportingName(GroupTypeName)
+  end
+  
+  return "Bogey"
+  
+end
+
 --- Gets the player name of the group.
 -- @param #GROUP self
 -- @return #string The player name of the group.
