@@ -1023,6 +1023,8 @@ function GROUP:GetCoordinate()
   
   if FirstUnit then
     local FirstUnitCoordinate = FirstUnit:GetCoordinate()
+    local Heading = self:GetHeading()
+    FirstUnitCoordinate.Heading = Heading
     return FirstUnitCoordinate
   end
   

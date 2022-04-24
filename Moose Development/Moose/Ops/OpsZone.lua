@@ -92,9 +92,15 @@ OPSZONE.version="0.3.0"
 
 --- Create a new OPSZONE class object.
 -- @param #OPSZONE self
--- @param Core.Zone#ZONE Zone The zone.
+-- @param Core.Zone#ZONE Zone The zone. Needs to be a ZONE\_RADIUS (round) zone. Can be passed as ZONE\_AIRBASE or simply as the name of the airbase.
 -- @param #number CoalitionOwner Initial owner of the coaliton. Default `coalition.side.NEUTRAL`.
 -- @return #OPSZONE self
+-- @usage
+--            myopszone = OPSZONE:New(ZONE:FindByName("OpsZoneOne"),coalition.side.RED) -- base zone from the mission editor
+--            myopszone = OPSZONE:New(ZONE_RADIUS:New("OpsZoneTwo",mycoordinate:GetVec2(),5000),coalition.side.BLUE) -- radius zone of 5km at a coordinate
+--            myopszone = OPSZONE:New(ZONE_RADIUS:New("Batumi")) -- airbase zone from Batumi Airbase, ca 2500m radius
+--            myopszone = OPSZONE:New(ZONE_AIRBASE:New("Batumi",6000),coalition.side.BLUE) -- airbase zone from Batumi Airbase, but with a specific radius of 6km
+-- 
 function OPSZONE:New(Zone, CoalitionOwner)
 
   -- Inherit everything from LEGION class.
