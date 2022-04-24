@@ -123,6 +123,7 @@ INTEL = {
 -- @field Ops.Target#TARGET target The Target attached to this contact.
 -- @field #string recce The name of the recce unit that detected this contact.
 -- @field #string ctype Contact type.
+-- @field #string platform [AIR] Contact platform name, e.g. Foxbat, Flanker_E, defaults to Bogey if unknown
 
 --- Cluster info.
 -- @type INTEL.Cluster
@@ -153,7 +154,7 @@ INTEL.Ctype={
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.3.0"
+INTEL.version="0.3.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -866,7 +867,12 @@ function INTEL:_CreateContact(Positionable, RecceName)
       item.isground = group:IsGround() or false
       item.isship = group:IsShip() or false
       item.isStatic=false
-      
+      if group:IsAir() then
+        item.platform=group:GetNatoReportingName()
+      else
+        -- TODO optionally add ground types?
+        item.platform="Unknown"
+      end
       if item.category==Group.Category.AIRPLANE or item.category==Group.Category.HELICOPTER then
         item.ctype=INTEL.Ctype.AIRCRAFT
       elseif item.category==Group.Category.GROUND or item.category==Group.Category.TRAIN then
