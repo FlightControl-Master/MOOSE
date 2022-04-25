@@ -11,7 +11,7 @@
 -- 
 -- DCS itself provides a lot of enumerators for various things. See [Enumerators](https://wiki.hoggitworld.com/view/Category:Enumerators) on Hoggit.
 -- 
--- Other Moose classe also have enumerators. For example, the AIRBASE class has enumerators for airbase names.
+-- Other Moose classes also have enumerators. For example, the AIRBASE class has enumerators for airbase names.
 -- 
 -- @module ENUMS
 -- @image MOOSE.JPG
