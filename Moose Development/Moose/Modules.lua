@@ -4,6 +4,7 @@ __Moose.Include( 'Scripts/Moose/Utilities/Utils.lua' )
 __Moose.Include( 'Scripts/Moose/Utilities/Profiler.lua' )
 __Moose.Include( 'Scripts/Moose/Utilities/Templates.lua' )
 __Moose.Include( 'Scripts/Moose/Utilities/STTS.lua' )
+__Moose.Include( 'Scripts/Moose/Utilities/FiFo.lua' )
 
 __Moose.Include( 'Scripts/Moose/Core/Base.lua' )
 __Moose.Include( 'Scripts/Moose/Core/Beacon.lua' )

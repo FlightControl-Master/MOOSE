@@ -1,18 +1,18 @@
 --- **Utilities** Enumerators.
---
+-- 
 -- An enumerator is a variable that holds a constant value. Enumerators are very useful because they make the code easier to read and to change in general.
---
+-- 
 -- For example, instead of using the same value at multiple different places in your code, you should use a variable set to that value.
 -- If, for whatever reason, the value needs to be changed, you only have to change the variable once and do not have to search through you code and reset
 -- every value by hand.
---
+-- 
 -- Another big advantage is that the LDT intellisense "knows" the enumerators. So you can use the autocompletion feature and do not have to keep all the
--- values in your head or look them up in the docs.
---
+-- values in your head or look them up in the docs. 
+-- 
 -- DCS itself provides a lot of enumerators for various things. See [Enumerators](https://wiki.hoggitworld.com/view/Category:Enumerators) on Hoggit.
---
+-- 
 -- Other Moose classes also have enumerators. For example, the AIRBASE class has enumerators for airbase names.
---
+-- 
 -- @module ENUMS
 -- @image MOOSE.JPG
 
@@ -20,7 +20,7 @@
 -- @type ENUMS
 
 --- Because ENUMS are just better practice.
---
+-- 
 --  The ENUMS class adds some handy variables, which help you to make your code better and more general.
 --
 -- @field #ENUMS
@@ -30,16 +30,16 @@ ENUMS = {}
 -- @type ENUMS.ROE
 -- @field #number WeaponFree AI will engage any enemy group it detects. Target prioritization is based based on the threat of the target.
 -- @field #number OpenFireWeaponFree AI will engage any enemy group it detects, but will prioritize targets specified in the groups tasking.
--- @field #number OpenFire AI will engage only targets specified in its tasking.
+-- @field #number OpenFire AI will engage only targets specified in its taskings.
 -- @field #number ReturnFire AI will only engage threats that shoot first.
 -- @field #number WeaponHold AI will hold fire under all circumstances.
 ENUMS.ROE = {
-  WeaponFree         = 0,
-  OpenFireWeaponFree = 1,
-  OpenFire           = 2,
-  ReturnFire         = 3,
-  WeaponHold         = 4,
-}
+  WeaponFree=0,
+  OpenFireWeaponFree=1,
+  OpenFire=2,
+  ReturnFire=3,
+  WeaponHold=4,
+  }
 
 --- Reaction On Threat.
 -- @type ENUMS.ROT
@@ -49,11 +49,11 @@ ENUMS.ROE = {
 -- @field #number BypassAndEscape AI will attempt to avoid enemy threat zones all together. This includes attempting to fly above or around threats.
 -- @field #number AllowAbortMission If a threat is deemed severe enough the AI will abort its mission and return to base.
 ENUMS.ROT = {
-  NoReaction        = 0,
-  PassiveDefense    = 1,
-  EvadeFire         = 2,
-  BypassAndEscape   = 3,
-  AllowAbortMission = 4,
+  NoReaction=0,
+  PassiveDefense=1,
+  EvadeFire=2,
+  BypassAndEscape=3,
+  AllowAbortMission=4,
 }
 
 --- Alarm state.
@@ -62,12 +62,12 @@ ENUMS.ROT = {
 -- @field #number Green Group is not combat ready. Sensors are stowed if possible.
 -- @field #number Red Group is combat ready and actively searching for targets. Some groups like infantry will not move in this state.
 ENUMS.AlarmState = {
-  Auto  = 0,
-  Green = 1,
-  Red   = 2,
+  Auto=0,
+  Green=1,
+  Red=2,
 }
 
---- Weapon types. See the [Weapon Flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) enumerator on Hoggit wiki.
+--- Weapon types. See the [Weapon Flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) enumerotor on hoggit wiki.
 -- @type ENUMS.WeaponFlag
 ENUMS.WeaponFlag={
   -- Bombs
@@ -111,7 +111,7 @@ ENUMS.WeaponFlag={
   --
   -- Bombs
   GuidedBomb           =         14, -- (LGB + TvGB + SNSGB)
-  AnyUnguidedBomb      = 2147485680, -- (HeBomb + Penetrator + NapalmBomb + FAEBomb + ClusterBomb + Dispenser + CandleBomb + ParachuteBomb)
+  AnyUnguidedBomb      = 2147485680, -- (HeBomb + Penetrator + NapalmBomb + FAEBomb + ClusterBomb + Dispencer + CandleBomb + ParachuteBomb)
   AnyBomb              = 2147485694, -- (GuidedBomb + AnyUnguidedBomb)
   --- Rockets
   AnyRocket            =      30720, -- LightRocket + MarkerRocket + CandleRocket + HeavyRocket
@@ -123,9 +123,11 @@ ENUMS.WeaponFlag={
   --- Air-To-Air Missiles
   AnyAAM               =  264241152, -- IR_AAM + SAR_AAM + AR_AAM + SRAAM + MRAAM + LRAAM
   AnyAutonomousMissile =   36012032, -- IR_AAM + AntiRadarMissile + AntiShipMissile + FireAndForgetASM + CruiseMissile
-  AnyMissile           =  268402688, -- AnyASM + AnyAAM
+  AnyMissile           =  268402688, -- AnyASM + AnyAAM   
   --- Guns
   Cannons              =  805306368, -- GUN_POD + BuiltInCannon
+  --- Torpedo
+  Torpedo              = 4294967296,
   ---
   -- Even More Genral  
   Auto                 = 3221225470, -- Any Weapon (AnyBomb + AnyRocket + AnyMissile + Cannons)
@@ -133,8 +135,95 @@ ENUMS.WeaponFlag={
   AnyAG                = 2956984318, -- Any Air-To-Ground Weapon
   AnyAA                =  264241152, -- Any Air-To-Air Weapon
   AnyUnguided          = 2952822768, -- Any Unguided Weapon
-  AnyGuided            =  268402702, -- Any Guided Weapon
+  AnyGuided            =  268402702, -- Any Guided Weapon   
 }
+
+--- Weapon types by category. See the [Weapon Flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) enumerator on hoggit wiki.
+-- @type ENUMS.WeaponType
+-- @field #table Bomb Bombs.
+-- @field #table Rocket Rocket.
+-- @field #table Gun Guns.
+-- @field #table Missile Missiles.
+-- @field #table AAM Air-to-Air missiles.
+-- @field #table Torpedo Torpedos.
+-- @field #table Any Combinations.
+ENUMS.WeaponType={}
+ENUMS.WeaponType.Bomb={
+  -- Bombs
+  LGB                  =          2,
+  TvGB                 =          4,
+  SNSGB                =          8,
+  HEBomb               =         16,
+  Penetrator           =         32,
+  NapalmBomb           =         64,
+  FAEBomb              =        128,
+  ClusterBomb          =        256,
+  Dispencer            =        512,
+  CandleBomb           =       1024,
+  ParachuteBomb        = 2147483648,
+  -- Combinations
+  GuidedBomb           =         14, -- (LGB + TvGB + SNSGB)
+  AnyUnguidedBomb      = 2147485680, -- (HeBomb + Penetrator + NapalmBomb + FAEBomb + ClusterBomb + Dispencer + CandleBomb + ParachuteBomb)
+  AnyBomb              = 2147485694, -- (GuidedBomb + AnyUnguidedBomb)  
+}
+ENUMS.WeaponType.Rocket={
+  -- Rockets
+  LightRocket          =       2048,
+  MarkerRocket         =       4096,
+  CandleRocket         =       8192,
+  HeavyRocket          =      16384,
+  -- Combinations
+  AnyRocket            =      30720, -- LightRocket + MarkerRocket + CandleRocket + HeavyRocket
+}
+ENUMS.WeaponType.Gun={
+  -- Guns
+  GunPod               =  268435456,
+  BuiltInCannon        =  536870912,
+  -- Combinations
+  Cannons              =  805306368, -- GUN_POD + BuiltInCannon
+}
+ENUMS.WeaponType.Missile={
+  -- Missiles
+  AntiRadarMissile     =      32768,
+  AntiShipMissile      =      65536,
+  AntiTankMissile      =     131072,
+  FireAndForgetASM     =     262144,
+  LaserASM             =     524288,
+  TeleASM              =    1048576,
+  CruiseMissile        =    2097152,
+  AntiRadarMissile2    = 1073741824,
+  -- Combinations
+  GuidedASM            =    1572864, -- (LaserASM + TeleASM)
+  TacticalASM          =    1835008, -- (GuidedASM + FireAndForgetASM)
+  AnyASM               =    4161536, -- (AntiRadarMissile + AntiShipMissile + AntiTankMissile + FireAndForgetASM + GuidedASM + CruiseMissile)
+  AnyASM2              = 1077903360, -- 4161536+1073741824,
+  AnyAutonomousMissile =   36012032, -- IR_AAM + AntiRadarMissile + AntiShipMissile + FireAndForgetASM + CruiseMissile
+  AnyMissile           =  268402688, -- AnyASM + AnyAAM       
+}
+ENUMS.WeaponType.AAM={
+  -- Air-To-Air Missiles
+  SRAM                 =    4194304,
+  MRAAM                =    8388608, 
+  LRAAM                =   16777216,
+  IR_AAM               =   33554432,
+  SAR_AAM              =   67108864,
+  AR_AAM               =  134217728,
+  -- Combinations
+  AnyAAM               =  264241152, -- IR_AAM + SAR_AAM + AR_AAM + SRAAM + MRAAM + LRAAM
+}
+ENUMS.WeaponType.Torpedo={
+  -- Torpedo
+  Torpedo              = 4294967296,
+}
+ENUMS.WeaponType.Any={
+  -- General combinations  
+  Weapon               = 3221225470, -- Any Weapon (AnyBomb + AnyRocket + AnyMissile + Cannons)
+  AG                   = 2956984318, -- Any Air-To-Ground Weapon
+  AA                   =  264241152, -- Any Air-To-Air Weapon
+  Unguided             = 2952822768, -- Any Unguided Weapon
+  Guided               =  268402702, -- Any Guided Weapon   
+}
+
 
 --- Mission tasks.
 -- @type ENUMS.MissionTask
@@ -173,7 +262,7 @@ ENUMS.MissionTask={
   TRANSPORT="Transport",
 }
 
---- Formations (new). See the [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) on Hoggit wiki.
+--- Formations (new). See the [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) on hoggit wiki.
 -- @type ENUMS.Formation
 ENUMS.Formation={}
 ENUMS.Formation.FixedWing={}
@@ -216,23 +305,23 @@ ENUMS.Formation.FixedWing.FighterVic.Close = 917505
 ENUMS.Formation.FixedWing.FighterVic.Open  = 917506
 ENUMS.Formation.RotaryWing={}
 ENUMS.Formation.RotaryWing.Column={}
-ENUMS.Formation.RotaryWing.Column.D70 = 720896
+ENUMS.Formation.RotaryWing.Column.D70=720896
 ENUMS.Formation.RotaryWing.Wedge={}
-ENUMS.Formation.RotaryWing.Wedge.D70 = 8
+ENUMS.Formation.RotaryWing.Wedge.D70=8
 ENUMS.Formation.RotaryWing.FrontRight={}
-ENUMS.Formation.RotaryWing.FrontRight.D300 = 655361
-ENUMS.Formation.RotaryWing.FrontRight.D600 = 655362
+ENUMS.Formation.RotaryWing.FrontRight.D300=655361
+ENUMS.Formation.RotaryWing.FrontRight.D600=655362
 ENUMS.Formation.RotaryWing.FrontLeft={}
-ENUMS.Formation.RotaryWing.FrontLeft.D300 = 655617
-ENUMS.Formation.RotaryWing.FrontLeft.D600 = 655618
+ENUMS.Formation.RotaryWing.FrontLeft.D300=655617
+ENUMS.Formation.RotaryWing.FrontLeft.D600=655618
 ENUMS.Formation.RotaryWing.EchelonRight={}
-ENUMS.Formation.RotaryWing.EchelonRight.D70  = 589825
-ENUMS.Formation.RotaryWing.EchelonRight.D300 = 589826
-ENUMS.Formation.RotaryWing.EchelonRight.D600 = 589827
+ENUMS.Formation.RotaryWing.EchelonRight.D70 =589825
+ENUMS.Formation.RotaryWing.EchelonRight.D300=589826
+ENUMS.Formation.RotaryWing.EchelonRight.D600=589827
 ENUMS.Formation.RotaryWing.EchelonLeft={}
-ENUMS.Formation.RotaryWing.EchelonLeft.D70  = 590081
-ENUMS.Formation.RotaryWing.EchelonLeft.D300 = 590082
-ENUMS.Formation.RotaryWing.EchelonLeft.D600 = 590083
+ENUMS.Formation.RotaryWing.EchelonLeft.D70 =590081
+ENUMS.Formation.RotaryWing.EchelonLeft.D300=590082
+ENUMS.Formation.RotaryWing.EchelonLeft.D600=590083
 ENUMS.Formation.Vehicle={}
 ENUMS.Formation.Vehicle.Vee="Vee"
 ENUMS.Formation.Vehicle.EchelonRight="EchelonR"
@@ -244,34 +333,34 @@ ENUMS.Formation.Vehicle.Cone="Cone"
 ENUMS.Formation.Vehicle.Diamond="Diamond"
 
 --- Formations (old). The old format is a simplified version of the new formation enums, which allow more sophisticated settings.
--- See the [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) on Hoggit wiki.
+-- See the [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) on hoggit wiki.
 -- @type ENUMS.FormationOld
 ENUMS.FormationOld={}
 ENUMS.FormationOld.FixedWing={}
-ENUMS.FormationOld.FixedWing.LineAbreast         = 1
-ENUMS.FormationOld.FixedWing.Trail               = 2
-ENUMS.FormationOld.FixedWing.Wedge               = 3
-ENUMS.FormationOld.FixedWing.EchelonRight        = 4
-ENUMS.FormationOld.FixedWing.EchelonLeft         = 5
-ENUMS.FormationOld.FixedWing.FingerFour          = 6
-ENUMS.FormationOld.FixedWing.SpreadFour          = 7
-ENUMS.FormationOld.FixedWing.BomberElement       = 12
-ENUMS.FormationOld.FixedWing.BomberElementHeight = 13
-ENUMS.FormationOld.FixedWing.FighterVic          = 14
+ENUMS.FormationOld.FixedWing.LineAbreast=1
+ENUMS.FormationOld.FixedWing.Trail=2
+ENUMS.FormationOld.FixedWing.Wedge=3
+ENUMS.FormationOld.FixedWing.EchelonRight=4
+ENUMS.FormationOld.FixedWing.EchelonLeft=5
+ENUMS.FormationOld.FixedWing.FingerFour=6
+ENUMS.FormationOld.FixedWing.SpreadFour=7
+ENUMS.FormationOld.FixedWing.BomberElement=12
+ENUMS.FormationOld.FixedWing.BomberElementHeight=13
+ENUMS.FormationOld.FixedWing.FighterVic=14
 ENUMS.FormationOld.RotaryWing={}
-ENUMS.FormationOld.RotaryWing.Wedge   = 8
-ENUMS.FormationOld.RotaryWing.Echelon = 9
-ENUMS.FormationOld.RotaryWing.Front   = 10
-ENUMS.FormationOld.RotaryWing.Column  = 11
+ENUMS.FormationOld.RotaryWing.Wedge=8
+ENUMS.FormationOld.RotaryWing.Echelon=9
+ENUMS.FormationOld.RotaryWing.Front=10
+ENUMS.FormationOld.RotaryWing.Column=11
 
 
 --- Morse Code. See the [Wikipedia](https://en.wikipedia.org/wiki/Morse_code).
---
+-- 
 -- * Short pulse "*"
 -- * Long pulse "-"
---
+-- 
 -- Pulses are separated by a blank character " ".
---
+-- 
 -- @type ENUMS.Morse
 ENUMS.Morse={}
 ENUMS.Morse.A="* -"
@@ -313,9 +402,9 @@ ENUMS.Morse.N0="- - - - -"
 ENUMS.Morse[" "]=" "
 
 --- ISO (639-1) 2-letter Language Codes. See the [Wikipedia](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).
---
+-- 
 -- @type ENUMS.ISOLang
-ENUMS.ISOLang =
+ENUMS.ISOLang = 
 {
   Arabic    = 'AR',
   Chinese   = 'ZH',
@@ -329,7 +418,7 @@ ENUMS.ISOLang =
 }
 
 --- Phonetic Alphabet (NATO). See the [Wikipedia](https://en.wikipedia.org/wiki/NATO_phonetic_alphabet).
---
+-- 
 -- @type ENUMS.Phonetic
 ENUMS.Phonetic =
 {
@@ -359,4 +448,50 @@ ENUMS.Phonetic =
   X = 'Xray',
   Y = 'Yankee',
   Z = 'Zulu',
+}
+
+--- Reporting Names (NATO). See the [Wikipedia](https://en.wikipedia.org/wiki/List_of_NATO_reporting_names_for_fighter_aircraft).
+-- DCS known aircraft types
+-- 
+-- @type ENUMS.ReportingName
+ENUMS.ReportingName =
+{
+  NATO = {
+    -- Fighters
+    Dragon = "JF-17", -- China, correct?
+    Fagot = "MiG-15",
+    Farmer = "MiG-19", -- Shenyang J-6 and Mikoyan-Gurevich MiG-19
+    Felon = "Su-57",
+    Fencer = "Su-24",
+    Fishbed = "MiG-21",
+    Fitter = "Su-17", -- Sukhoi Su-7 and Su-17/Su-20/Su-22
+    Flogger = "MiG-23",  --and MiG-27
+    Flogger_D = "MiG-27",  --and MiG-23
+    Flagon = "Su-15",
+    Foxbat = "MiG-25",
+    Fulcrum = "MiG-29",
+    Foxhound = "MiG-31",
+    Flanker = "Su-27", -- Sukhoi Su-27/Su-30/Su-33/Su-35/Su-37 and Shenyang J-11/J-15/J-16
+    Flanker_C = "Su-30",
+    Flanker_E = "Su-35",
+    Flanker_F = "Su-37",
+    Flanker_Dragon = "J-11A",
+    Sea_Flanker = "Su-33",
+    Fullback = "Su-32", -- also Su-34
+    Frogfoot = "Su-25",
+    Tomcat = "F-14", -- Iran
+    Mirage = "Mirage", -- various non-NATO
+    -- Bomber
+    H6J = "H6-J",
+    Sea_Bear = "Tu-142", -- also Tu-95
+    Bear = "Tu-95", -- also Tu-142
+    Blinder = "Tu-22",
+    Blackjack = "Tu-160",
+    -- AIC / Transport / Other
+    Clank = "An-30",
+    Curl = "An-26",
+    Candid = "IL-76",
+    Midas = "IL-78",
+    Mainstay = "A-50", -- KJ-2000 China 
+  }
 }

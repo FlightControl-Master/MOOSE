@@ -194,7 +194,12 @@ do -- COORDINATE
   -- ## 9) Coordinate text generation
   --
   --   * @{#COORDINATE.ToStringBR}(): Generates a Bearing & Range text in the format of DDD for DI where DDD is degrees and DI is distance.
-  --   * @{#COORDINATE.ToStringLL}(): Generates a Latutude & Longutude text.
+  --   * @{#COORDINATE.ToStringBRA}(): Generates a Bearing, Range & Altitude text.
+  --   * @{#COORDINATE.ToStringBRAANATO}(): Generates a Generates a Bearing, Range, Aspect & Altitude text in NATOPS.
+  --   * @{#COORDINATE.ToStringLL}(): Generates a Latutide & Longitude text.
+  --   * @{#COORDINATE.ToStringLLDMS}(): Generates a Lat, Lon, Degree, Minute, Second text.
+  --   * @{#COORDINATE.ToStringLLDDM}(): Generates a Lat, Lon, Degree, decimal Minute text.
+  --   * @{#COORDINATE.ToStringMGRS}(): Generates a MGRS grid coordinate text.
   --
   -- ## 10) Drawings on F10 map
   --
@@ -1112,25 +1117,28 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #number Distance The distance in meters.
   -- @param Core.Settings#SETTINGS Settings
+  -- @param #string Language (optional) "EN" or "RU"
+  -- @param #number Precision (optional) round to this many decimal places
   -- @return #string The distance text expressed in the units of measurement.
-  function COORDINATE:GetDistanceText( Distance, Settings, Language )
+  function COORDINATE:GetDistanceText( Distance, Settings, Language, Precision )
 
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
     local Language = Language or "EN"
-
+    local Precision = Precision or 0
+    
     local DistanceText
 
     if Settings:IsMetric() then
       if     Language == "EN" then
-        DistanceText = " for " .. UTILS.Round( Distance / 1000, 2 ) .. " km"
+        DistanceText = " for " .. UTILS.Round( Distance / 1000, Precision ) .. " km"
       elseif Language == "RU" then
-        DistanceText = " за " .. UTILS.Round( Distance / 1000, 2 ) .. " километров"
+        DistanceText = " за " .. UTILS.Round( Distance / 1000, Precision ) .. " километров"
       end
     else
       if     Language == "EN" then
-        DistanceText = " for " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " miles"
+        DistanceText = " for " .. UTILS.Round( UTILS.MetersToNM( Distance ), Precision ) .. " miles"
       elseif Language == "RU" then
-        DistanceText = " за " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " миль"
+        DistanceText = " за " .. UTILS.Round( UTILS.MetersToNM( Distance ), Precision ) .. " миль"
       end
     end
 
@@ -1208,7 +1216,7 @@ do -- COORDINATE
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
 
     local BearingText = self:GetBearingText( AngleRadians, 0, Settings, Language )
-    local DistanceText = self:GetDistanceText( Distance, Settings, Language )
+    local DistanceText = self:GetDistanceText( Distance, Settings, Language, 0 )
 
     local BRText = BearingText .. DistanceText
 
@@ -1226,7 +1234,7 @@ do -- COORDINATE
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
 
     local BearingText = self:GetBearingText( AngleRadians, 0, Settings, Language )
-    local DistanceText = self:GetDistanceText( Distance, Settings, Language  )
+    local DistanceText = self:GetDistanceText( Distance, Settings, Language, 0  )
     local AltitudeText = self:GetAltitudeText( Settings, Language  )
 
     local BRAText = BearingText .. DistanceText .. AltitudeText -- When the POINT is a VEC2, there will be no altitude shown.
@@ -2164,14 +2172,21 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local vec3=self:GetVec3()
+      
       Radius=Radius or 1000
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
+      
       trigger.action.circleToAll(Coalition, MarkID, vec3, Radius, Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
     end
@@ -2196,13 +2211,19 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local vec3=Endpoint:GetVec3()
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
+      
       trigger.action.rectToAll(Coalition, MarkID, self:GetVec3(), vec3, Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
     end
@@ -2226,17 +2247,23 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local point1=self:GetVec3()
       local point2=Coord2:GetVec3()
       local point3=Coord3:GetVec3()
       local point4=Coord4:GetVec3()
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
-      trigger.action.quadToAll(Coalition, MarkID, self:GetVec3(), point2, point3, point4, Color, FillColor, LineType, ReadOnly, Text or "")
+      
+      trigger.action.quadToAll(Coalition, MarkID, point1, point2, point3, point4, Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID
     end
 
@@ -2320,11 +2347,15 @@ do -- COORDINATE
         ReadOnly=false
       end
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.3
+      
       FontSize=FontSize or 14
+      
       trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
       return MarkID
     end
@@ -2346,13 +2377,19 @@ do -- COORDINATE
       if ReadOnly==nil then
         ReadOnly=false
       end
+      
       local vec3=Endpoint:GetVec3()
+      
       Coalition=Coalition or -1
+      
       Color=Color or {1,0,0}
       Color[4]=Alpha or 1.0
+      
       LineType=LineType or 1
-      FillColor=FillColor or Color
+      
+      FillColor=FillColor or UTILS.DeepCopy(Color)
       FillColor[4]=FillAlpha or 0.15
+      
       --trigger.action.textToAll(Coalition, MarkID, self:GetVec3(), Color, FillColor, FontSize, ReadOnly, Text or "Hello World")
       trigger.action.arrowToAll(Coalition, MarkID, vec3, self:GetVec3(), Color, FillColor, LineType, ReadOnly, Text or "")
       return MarkID

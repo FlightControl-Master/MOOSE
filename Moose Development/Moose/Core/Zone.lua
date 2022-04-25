@@ -1989,6 +1989,18 @@ function ZONE_POLYGON_BASE:IsVec2InZone( Vec2 )
   return InPolygon
 end
 
+--- Returns if a point is within the zone.
+-- @param #ZONE_POLYGON_BASE self
+-- @param DCS#Vec3 Vec3 The point to test.
+-- @return #boolean true if the point is within the zone.
+function ZONE_POLYGON_BASE:IsVec3InZone( Vec3 )
+  self:F2( Vec3 )
+
+  local InZone = self:IsVec2InZone( { x = Vec3.x, y = Vec3.z } )
+
+  return InZone
+end
+
 --- Define a random @{DCS#Vec2} within the zone.
 -- @param #ZONE_POLYGON_BASE self
 -- @return DCS#Vec2 The Vec2 coordinate.

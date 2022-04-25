@@ -88,8 +88,8 @@
 -- 
 -- @field #UNIT UNIT
 UNIT = {
-	ClassName="UNIT",
-	UnitName=nil,
+  ClassName="UNIT",
+  UnitName=nil,
 }
 
 
@@ -102,7 +102,7 @@ UNIT = {
 
 
 -- Registration.
-	
+  
 --- Create a new UNIT from DCSUnit.
 -- @param #UNIT self
 -- @param #string UnitName The name of the DCS unit.
@@ -167,6 +167,9 @@ function UNIT:GetDCSObject()
 
   return nil
 end
+
+
+
 
 --- Respawn the @{Wrapper.Unit} using a (tweaked) template of the parent Group.
 -- 
@@ -260,6 +263,8 @@ function UNIT:ReSpawnAt( Coordinate, Heading )
   _DATABASE:Spawn( SpawnGroupTemplate )
 end
 
+
+
 --- Returns if the unit is activated.
 -- @param #UNIT self
 -- @return #boolean `true` if Unit is activated. `nil` The DCS Unit is not existing or alive.  
@@ -295,6 +300,8 @@ function UNIT:IsAlive()
   
   return nil
 end
+
+
 
 --- Returns the Unit's callsign - the localized string.
 -- @param #UNIT self
@@ -400,6 +407,17 @@ function UNIT:GetClient()
 
   return nil
 end
+
+--- [AIRPLANE] Get the NATO reporting name of a UNIT. Currently airplanes only!
+--@param #UNIT self
+--@return #string NatoReportingName or "Bogey" if unknown.
+function UNIT:GetNatoReportingName()
+  
+  local typename = self:GetTypeName()
+  return UTILS.GetReportingName(typename)
+  
+end
+
 
 --- Returns the unit's number in the group. 
 -- The number is the same number the unit has in ME. 
@@ -517,6 +535,63 @@ function UNIT:IsTanker()
   return tanker, system
 end
 
+--- Check if the unit can supply ammo. Currently, we have
+-- 
+-- * M 818
+-- * Ural-375
+-- * ZIL-135
+-- 
+-- This list needs to be extended, if DCS adds other units capable of supplying ammo.
+-- 
+-- @param #UNIT self
+-- @return #boolean If `true`, unit can supply ammo.
+function UNIT:IsAmmoSupply()
+
+  -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
+  local typename=self:GetTypeName()
+  
+  if typename=="M 818" then
+    -- Blue ammo truck.
+    return true
+  elseif typename=="Ural-375" then  
+    -- Red ammo truck.
+    return true
+  elseif typename=="ZIL-135" then
+    -- Red ammo truck. Checked that it can also provide ammo.
+    return true    
+  end
+
+  return false
+end
+
+--- Check if the unit can supply fuel. Currently, we have
+-- 
+-- * M978 HEMTT Tanker
+-- * ATMZ-5
+-- * ATMZ-10
+-- * ATZ-5
+-- 
+-- This list needs to be extended, if DCS adds other units capable of supplying fuel.
+-- 
+-- @param #UNIT self
+-- @return #boolean If `true`, unit can supply fuel.
+function UNIT:IsFuelSupply()
+
+  -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
+  local typename=self:GetTypeName()
+  
+  if typename=="M978 HEMTT Tanker" then
+    return true
+  elseif typename=="ATMZ-5" then
+    return true
+  elseif typename=="ATMZ-10" then
+    return true
+  elseif typename=="ATZ-5" then
+    return true    
+  end
+
+  return false
+end
 
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
@@ -544,14 +619,14 @@ end
 -- @return #string The name of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPrefix()
-	self:F2( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSObject()
-	
+  
   if DCSUnit then
-  	local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
-  	self:T3( UnitPrefix )
-  	return UnitPrefix
+    local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
+    self:T3( UnitPrefix )
+    return UnitPrefix
   end
   
   return nil
@@ -675,8 +750,6 @@ function UNIT:GetAmmunition()
 
   return nammo, nshells, nrockets, nbombs, nmissiles
 end
-
-
 
 --- Returns the unit sensors.
 -- @param #UNIT self
@@ -954,6 +1027,7 @@ end
 -- @return #string Some text.
 function UNIT:GetThreatLevel()
 
+
   local ThreatLevel = 0
   local ThreatText = ""
   
@@ -979,6 +1053,7 @@ function UNIT:GetThreatLevel()
         "LR SAMs"
       }
       
+      
       if     Attributes["LR SAM"]                                                     then ThreatLevel = 10
       elseif Attributes["MR SAM"]                                                     then ThreatLevel = 9
       elseif Attributes["SR SAM"] and
@@ -992,7 +1067,7 @@ function UNIT:GetThreatLevel()
       elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
              not Attributes["ATGM"]                                                   then ThreatLevel = 3
       elseif Attributes["Old Tanks"] or Attributes["APC"] or Attributes["Artillery"]  then ThreatLevel = 2
-      elseif Attributes["Infantry"]                                                   then ThreatLevel = 1
+      elseif Attributes["Infantry"]  or Attributes["EWR"]                             then ThreatLevel = 1
       end
       
       ThreatText = ThreatLevels[ThreatLevel+1]
@@ -1013,6 +1088,7 @@ function UNIT:GetThreatLevel()
         "Multirole Fighter",
         "Fighter"
       }
+      
       
       if     Attributes["Fighters"]                                 then ThreatLevel = 10
       elseif Attributes["Multirole fighters"]                       then ThreatLevel = 9
@@ -1111,25 +1187,31 @@ end
 -- @return true If the other DCS Unit is within the radius of the 2D point of the DCS Unit. 
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
-	self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
+  self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
 
   local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
-  	local UnitVec3 = self:GetVec3()
-  	local AwaitUnitVec3 = AwaitUnit:GetVec3()
+    local UnitVec3 = self:GetVec3()
+    local AwaitUnitVec3 = AwaitUnit:GetVec3()
   
-  	if  (((UnitVec3.x - AwaitUnitVec3.x)^2 + (UnitVec3.z - AwaitUnitVec3.z)^2)^0.5 <= Radius) then
-  		self:T3( "true" )
-  		return true
-  	else
-  		self:T3( "false" )
-  		return false
-  	end
+    if  (((UnitVec3.x - AwaitUnitVec3.x)^2 + (UnitVec3.z - AwaitUnitVec3.z)^2)^0.5 <= Radius) then
+      self:T3( "true" )
+      return true
+    else
+      self:T3( "false" )
+      return false
+    end
   end
 
-	return nil
+  return nil
 end
+
+
+
+
+
+
 
 --- Returns if the unit is a friendly unit.
 -- @param #UNIT self

@@ -382,7 +382,8 @@ function POSITIONABLE:GetCoordinate()
     local PositionableVec3 = self:GetVec3()
 
     local coord = COORDINATE:NewFromVec3( PositionableVec3 )
-
+    local heading = self:GetHeading()
+    coord.Heading = heading
     -- Return a new coordinate object.
     return coord
 
