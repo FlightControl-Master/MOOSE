@@ -908,8 +908,8 @@ function GROUP:GetTypeName()
   return nil
 end
 
---- [AIRPLANE] Get the NATO reporting name of a UNIT. Currently airplanes only!
---@param #UNIT self
+--- [AIRPLANE] Get the NATO reporting name (platform, e.g. "Flanker") of a GROUP (note - first unit the group). "Bogey" if not found. Currently airplanes only!
+--@param #GROUP self
 --@return #string NatoReportingName or "Bogey" if unknown.
 function GROUP:GetNatoReportingName()
   self:F2( self.GroupName )
@@ -1087,7 +1087,7 @@ end
 -- amount of fuel in the group.
 -- @param #GROUP self
 -- @return #number The fuel state of the unit with the least amount of fuel.
--- @return #Unit reference to #Unit object for further processing.
+-- @return Wrapper.Unit#UNIT reference to #Unit object for further processing.
 function GROUP:GetFuelMin()
   self:F3(self.ControllableName)
 
