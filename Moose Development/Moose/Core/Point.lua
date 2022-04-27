@@ -2752,7 +2752,7 @@ do -- COORDINATE
     return "BR, " .. self:GetBRText( AngleRadians, Distance, Settings )
   end
 
-  --- Return a BRAA string from a COORDINATE to the COORDINATE.
+  --- Return a BRA string from a COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.

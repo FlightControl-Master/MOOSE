@@ -31,6 +31,7 @@ do
 -- @field #string coalitiontxt = "blue"
 -- @field Core.Zone#ZONE OpsZone,
 -- @field Core.Zone#ZONE AnchorZone,
+-- @field Core.Zone#ZONE BorderZone,
 -- @field #number Frequency
 -- @field #number Modulation
 -- @field Wrapper.Airbase#AIRBASE Airbase
@@ -91,7 +92,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "alpha 0.0.8", -- #string
+  version = "alpha 0.0.10", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -131,7 +132,7 @@ AWACS = {
   AwacsROE = "",
   AwacsROT = "",
   MenuStrict = true,
-  MaxAIonCAP = 4,
+  MaxAIonCAP = 3,
   AIonCAP = 0,
   AICAPMissions = {}, -- Utilities.FiFo#FIFO
   ShiftChangeAwacsFlag = false,
@@ -149,6 +150,7 @@ AWACS = {
   CatchAllFGs = {},
   PictureInterval = 300,
   PictureTimeStamp = 0,
+  BorderZone = nil,
 }
 
 ---
@@ -272,18 +274,18 @@ AWACS.THREATLEVEL = {
 -- @type AWACS.MenuStructure
 -- @field #boolean menuset
 -- @field #string groupname
--- @field Core.Menu#MENU_GROUP basemenu
--- @field Core.Menu#MENU_GROUP_COMMAND checkin
--- @field Core.Menu#MENU_GROUP_COMMAND checkout
--- @field Core.Menu#MENU_GROUP_COMMAND picture
--- @field Core.Menu#MENU_GROUP_COMMAND bogeydope
--- @field Core.Menu#MENU_GROUP_COMMAND declare
--- @field Core.Menu#MENU_GROUP tasking
--- @field Core.Menu#MENU_GROUP_COMMAND showtask
--- @field Core.Menu#MENU_GROUP_COMMAND judy
--- @field Core.Menu#MENU_GROUP_COMMAND unable
--- @field Core.Menu#MENU_GROUP_COMMAND abort
--- @field Core.Menu#MENU_GROUP_COMMAND commit
+-- @field Core.Menu#MENU_GROUP_DELAYED basemenu
+-- @field Core.Menu#MENU_GROUP_COMMAND_DELAYED checkin
+-- @field Core.Menu#MENU_GROUP_COMMAND_DELAYED checkout
+-- @field Core.Menu#MENU_GROUP_COMMAND_DELAYED picture
+-- @field Core.Menu#MENU_GROUP_COMMAND_DELAYED bogeydope
+-- @field Core.Menu#MENU_GROUP_COMMAND_DELAYED declare
+-- @field Core.Menu#MENU_GROUP_DELAYED tasking
+-- @field Core.Menu#MENU_GROUP_COMMAND_DELAYED showtask
+-- @field Core.Menu#MENU_GROUP_COMMAND_DELAYED judy
+-- @field Core.Menu#MENU_GROUP_COMMAND_DELAYED unable
+-- @field Core.Menu#MENU_GROUP_COMMAND_DELAYED abort
+-- @field Core.Menu#MENU_GROUP_COMMAND_DELAYED commit
 
 ---
 -- @type AWACS.ManagedGroup
@@ -293,8 +295,8 @@ AWACS.THREATLEVEL = {
 -- @field #boolean IsPlayer
 -- @field #boolean IsAI
 -- @field #string CallSign
--- @field #number CurrentAuftrag
--- @field #number CurrentTask
+-- @field #number CurrentAuftrag -- Auftragsnummer for AI
+-- @field #number CurrentTask -- ManagedTask ID
 -- @field #boolean HasAssignedTask
 -- @field #number GID
 -- @field #number AnchorStackNo
@@ -313,6 +315,7 @@ AWACS.THREATLEVEL = {
 -- @field #number LinkedGroup --> GID
 -- @field #string Status - AWACS.TaskStatus....
 -- @field #string TargetGroupNaming
+-- @field #string EngagementTag
 
 ---
 -- @type AWACS.TaskDescription
@@ -362,9 +365,9 @@ AWACS.TaskStatus = {
 ---
 -- @type AWACS.AnchorData
 -- @field #number AnchorBaseAngels
--- @field #boolean AnchorZone
+-- @field Core.Zone#ZONE_RADIUS AnchorZone
 -- @field Core.Point#COORDINATE AnchorZoneCoordinate
--- @field #boolean AnchorZoneCoordinateText
+-- @field #string AnchorZoneCoordinateText
 -- @field Utilities.FiFo#FIFO AnchorAssignedID FiFo of #AWACS.AnchorAssignedEntry
 -- @field Utilities.FiFo#FIFO Anchors FiFo of available stacks
 
@@ -380,21 +383,26 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.0.8
+-- TODO-List 0.0.9
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- DEBUG - Escorts via AirWing not staying on
+--
 -- TODO - System for Players to VID contacts? And put data into contacst fifo
 -- TODO - TripWire
--- DEBUG - Multiple AIRWING connection? Can't really get recruit to work, switched to random round robin
--- TODO - LotATC / IFF
--- TODO - Player & AI tasking
--- TODO - (WIP) Reporting
+--
+-- TODO - (LOW) LotATC / IFF
+-- TODO - Player tasking
+-- TODO - AI Tasking
 -- TODO - Missile launch callout
 -- TODO - Localization
--- DEBUG - Shift Change, Change on asset RTB or dead or mission done
--- TODO - Borders for INTEL. Necessary?
+--
 -- TODO - Event detection, Player joining, eject, crash, dead, leaving; AI shot -> DEFEND
--- 
+-- TODO - Optimizer
+--
+-- DEBUG - Multiple AIRWING connection? Can't really get recruit to work, switched to random round robin
+-- DEBUG - Shift Change, Change on asset RTB or dead or mission done (done for AWACS and Escorts)
+--
+-- DONE - Escorts via AirWing not staying on
+-- DONE - Borders for INTEL. Optional, i.e. land based defense within borders
 -- DONE - Use AO as Anchor of Bulls, AO as default
 -- DONE - SRS TTS output
 -- DONE - Check-In/Out Humans
@@ -407,6 +415,7 @@ AWACS.TaskStatus = {
 -- DONE - ROE
 -- DONE - Anchor Stack Management
 -- DONE - Shift Length AWACS/AI
+-- DONE - (WIP) Reporting
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -473,13 +482,14 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   
   self.AOCoordinate = self.OpsZone:GetCoordinate()
   self.UseBullsAO = false -- as per NATOPS
-  self.ControlZoneRadius = 120 -- nm
+  self.ControlZoneRadius = 100 -- nm
   self.AnchorZone = ZONE:New(AnchorZone) -- Core.Zone#ZONE
   self.Frequency = Frequency or 271 -- #number
   self.Modulation = Modulation or radio.modulation.AM
   self.Airbase = AIRBASE:FindByName(AirbaseName)
   self.AwacsAngels = 25 -- orbit at 25'000 ft
   self.OrbitZone = ZONE:New(AwacsOrbit) -- Core.Zone#ZONE
+  self.BorderZone = nil
   self.CallSign = CALLSIGN.AWACS.Magic -- #number
   self.CallSignNo = 1 -- #number
   self.NoHelos = true
@@ -490,8 +500,10 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self.FlightGroups = FIFO:New() -- Utilities.FiFo#FIFO
   self.Countactcounter = 0
   
-  self.PictureInterval = 300 -- picture every 5 mins
+  self.PictureInterval = 300 -- picture every 5s mins
   self.PictureTimeStamp = 0 -- timestamp
+  
+  self.intelstarted = false
   
   local speed = 250
   self.SpeedBase = speed
@@ -499,8 +511,8 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self.CapSpeedBase = 220
   self.Heading = 0 -- north
   self.Leg = 50 -- nm
-  self.invisible = true
-  self.immortal = true
+  self.invisible = false
+  self.immortal = false
   self.callsigntxt = "AWACS"
   
   self.AwacsTimeOnStation = 2
@@ -589,7 +601,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self.PictureAO = FIFO:New() -- Utilities.FiFo#FIFO
   self.PictureEWR = FIFO:New() -- Utilities.FiFo#FIFO
   self.Contacts = FIFO:New() -- Utilities.FiFo#FIFO
-  self.ManagedContacts = FIFO:New()
+  --self.ManagedContacts = FIFO:New()
   self.CID = 0
   self.ContactsAO = FIFO:New() -- Utilities.FiFo#FIFO
 
@@ -611,6 +623,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self:AddTransition("*",             "CheckedOut",         "*") 
   self:AddTransition("*",             "AssignAnchor",       "*") 
   self:AddTransition("*",             "AssignedAnchor",     "*")
+  self:AddTransition("*",             "ReAnchor",           "*")
   self:AddTransition("*",             "NewCluster",         "*")
   self:AddTransition("*",             "NewContact",         "*")
   self:AddTransition("*",             "LostCluster",        "*")
@@ -619,6 +632,9 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,AnchorZ
   self:AddTransition("*",             "EscortShiftChange",  "*")
   self:AddTransition("*",             "AwacsShiftChange",   "*")
   self:AddTransition("*",             "FlightOnMission",    "*")
+  self:AddTransition("*",             "Intercept",          "*")
+  self:AddTransition("*",             "InterceptSuccess",   "*")
+  self:AddTransition("*",             "InterceptFailure",   "*")
   --
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
@@ -651,6 +667,20 @@ end
 -- @return #string Name of this instance
 function AWACS:GetName()
   return self.Name or "not set"
+end
+
+--- [User] Set Border Zone
+-- @param #AWACS self
+-- @param Core.Zone#ZONE Zone
+-- @return #AWACS self
+function AWACS:SetBorderZone(Zone)
+  self:T(self.lid.."SetBorderZone")
+  self.BorderZone = Zone
+  if self.debug then
+    Zone:DrawZone(-1,{1,0.64,0},1,{1,0.64,0},0.2,1,true)
+    MARKER:New(Zone:GetCoordinate(),"Border Zone"):ToAll()
+  end
+  return self
 end
 
 --- [User] Set AWACS flight details
@@ -720,12 +750,55 @@ function AWACS:SetEscort(EscortNumber)
   return self
 end
 
+--- [Internal] Message a vector BR to a position
+-- @param #AWACS self
+-- @param #number GID Group GID
+-- @param #string Tag (optional) Text to add after Vector, e.g. " to Anchor" - NOTE the leading space
+-- @param Core.Point#COORDINATE Coordinate The Coordinate to use
+-- @param #number Angels (Optional) Add Angels 
+-- @return #AWACS self
+function AWACS:_MessageVector(GID,Tag,Coordinate,Angels)
+  self:I(self.lid.."_MessageVector")
+  
+  local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
+  local Tag = Tag or ""
+  
+  if managedgroup and Coordinate then
+    
+    local tocallsign = managedgroup.CallSign or "Ghost 1 1"
+    local group = managedgroup.Group
+    local groupposition = group:GetCoordinate()
+    
+    local BRtext = Coordinate:ToStringBR(groupposition)
+    
+    local text = string.format("%s, %s. Vector%s. %s",tocallsign, self.callsigntxt,Tag,BRtext)
+    local textScreen = string.format("%s, %s, Vector%s %s",tocallsign, self.callsigntxt,Tag,BRtext)
+    
+    if Angels then
+      text = text .. ". Angels "..tostring(Angels).."."
+      textScreen = textScreen .. ". Angels "..tostring(Angels).."."
+    end
+    
+    local RadioEntry = {} -- #AWACS.RadioEntry
+    RadioEntry.IsNew = true
+    RadioEntry.TextTTS = text
+    RadioEntry.TextScreen = textScreen
+    RadioEntry.GroupID = 0
+    RadioEntry.ToScreen = self.debug 
+    RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8 
+    self.RadioQueue:Push(RadioEntry)
+  
+  end
+  
+  return self
+end
+
 --- [Internal] Start AWACS Escorts FlightGroup
 -- @param #AWACS self
 -- @param #boolean Shiftchange This is a shift change call
 -- @return #AWACS self
 function AWACS:_StartEscorts(Shiftchange)
-  self:I(self.lid.."_StartEscorts")
+  self:T(self.lid.."_StartEscorts")
   
   local AwacsFG = self.AwacsFG -- Ops.FlightGroup#FLIGHTGROUP
   local group = AwacsFG:GetGroup()
@@ -761,7 +834,7 @@ function AWACS:_StartSettings(FlightGroup,Mission)
   
   -- Is this our Awacs mission?
   if self.AwacsMission:GetName() == Mission:GetName() then
-    self:I("Setting up Awacs")
+    self:T("Setting up Awacs")
     AwacsFG:SetDefaultRadio(self.Frequency,self.Modulation,false)
     AwacsFG:SwitchRadio(self.Frequency,self.Modulation)
     AwacsFG:SetDefaultAltitude(self.AwacsAngels*1000)
@@ -803,7 +876,7 @@ function AWACS:_StartSettings(FlightGroup,Mission)
     self.AwacsTimeStamp = timer.getTime()
     self.EscortsTimeStamp = timer.getTime()
 
-    self.PictureTimeStamp = timer.getTime()
+    self.PictureTimeStamp = timer.getTime() + 10*60
     
     self.AwacsReady = true
     -- set FSM to started
@@ -865,7 +938,8 @@ end
 -- @param Core.Point#COORDINATE Coordinate
 -- @return #string BullseyeBR
 function AWACS:ToStringBULLS( Coordinate )
-  local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.coalition ) )
+ -- local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.coalition ) )
+  local BullsCoordinate = self.OpsZone:GetCoordinate()
   local DirectionVec3 = BullsCoordinate:GetDirectionVec3( Coordinate )
   local AngleRadians =  Coordinate:GetAngleRadians( DirectionVec3 )
   local Distance = Coordinate:Get2DDistance( BullsCoordinate )
@@ -883,7 +957,7 @@ function AWACS:ToStringBullsTTS(Text)
   local text = Text
   text=string.gsub(text,"Bullseye","Bulls eye")
   text=string.gsub(text,"%d","%1 ")
-  text=string.gsub(text,"?," ,"\.")
+  text=string.gsub(text,".," ,"\.")
   text=string.gsub(text," $","")
   return text
 end
@@ -923,7 +997,7 @@ end
 -- @param #number GID GID to use
 -- @return #string Callsign
 function AWACS:_GetCallSign(Group,GID)
-  self:I(self.lid.."_GetCallSign - GID "..tostring(GID))
+  self:T(self.lid.."_GetCallSign - GID "..tostring(GID))
   
   if GID and type(GID) == "number" and GID > 0 then
     local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
@@ -937,8 +1011,244 @@ function AWACS:_GetCallSign(Group,GID)
   local callnumbermajor = string.char(string.byte(callnumber,1))
   local callnumberminor = string.char(string.byte(callnumber,2))
   callsign = string.gsub(shortcallsign,callnumber,"").." "..callnumbermajor.." "..callnumberminor
-  self:I("Generated Callsign for TTS = " .. callsign)
+  self:T("Generated Callsign for TTS = " .. callsign)
   return callsign
+end
+
+function AWACS:_CleanUpContacts()
+  self:I(self.lid.."_CleanUpContacts")
+  
+  if self.Contacts:Count() >  0 then
+    local deadcontacts = FIFO:New()   
+    self.Contacts:ForEach(
+      function (Contact)
+        local contact = Contact -- #AWACS.ManagedContact
+        if not contact.Contact.group:IsAlive() then
+          deadcontacts:Push(contact,contact.CID)
+        end
+      end
+    )
+    -- announce VANISHED
+    if deadcontacts:Count() > 0 then
+      -- announce lost
+      deadcontacts:ForEach(
+      function (Contact) 
+        local contact = Contact -- #AWACS.ManagedContact
+        local text = string.format("%s, %s Group. Vanished.",self.callsigntxt, contact.TargetGroupNaming)
+        local textScreen = string.format("%s, %s group vanished.", self.callsigntxt, contact.TargetGroupNaming)
+        local RadioEntry = {} -- #AWACS.RadioEntry
+        RadioEntry.IsNew = true
+        RadioEntry.TextTTS = text
+        RadioEntry.TextScreen = textScreen
+        RadioEntry.GroupID = 0
+        RadioEntry.ToScreen = self.debug 
+        RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8 
+        self.RadioQueue:Push(RadioEntry)
+        
+        -- pull from Contacts
+        self.Contacts:PullByID(contact.CID)        
+      end
+      )
+    end   
+  end
+  return self
+end
+
+--- [Internal] Select pilots available for tasking, return AI and Human
+-- @param #AWACS self
+-- @return #table AIPilots Table of #AWACS.ManagedGroup
+-- @return #table HumanPilots Table of #AWACS.ManagedGroup
+function AWACS:_GetIdlePilots()
+  self:T(self.lid.."_GetIdlePilots")
+  local AIPilots = {}
+  local HumanPilots = {}
+  
+  for _name,_entry in pairs (self.ManagedGrps) do
+    local entry = _entry -- #AWACS.ManagedGroup
+    self:T("Looking at entry "..entry.GID.." Name "..entry.GroupName)
+    local managedtask = self:_ReadAssignedTaskFromGID(entry.GID) -- #AWACS.ManagedTask
+    local overridetask = false
+    if managedtask then
+      self:T("Current task = "..managedtask.ToDo or "Unknown")
+      if managedtask.ToDo == AWACS.TaskDescription.ANCHOR then
+        overridetask = true
+      end
+    end
+    if entry.IsAI then
+      if entry.FlightGroup:IsAirborne() and (not entry.HasAssignedTask or overridetask) then -- must be idle, or?
+        self:T("Adding AI with Callsign: "..entry.CallSign)
+        AIPilots[#AIPilots+1] = _entry
+      end
+    elseif entry.IsPlayer then
+      if not entry.HasAssignedTask or overridetask then -- must be idle, or?
+        self:T("Adding Human with Callsign: "..entry.CallSign)
+        HumanPilots[#HumanPilots+1] = _entry
+      end
+    end
+  end
+  
+  return AIPilots, HumanPilots
+
+end
+
+--- [Internal] Select max 3 targets for picture, bogey dope etc
+-- @param #AWACS self
+-- @param #boolean Untargeted Return not yet targeted contacts only
+-- @return #boolean HaveTargets True if targets could be found, else false
+-- @return Utilities.FiFo#FIFO Targetselection
+function AWACS:_TargetSelectionProcess(Untargeted)
+  self:I(self.lid.."_TargetSelectionProcess")
+  
+  local maxtargets = 3 -- handleable number of callouts
+  local contactstable = self.Contacts:GetDataTable()
+  local targettable = FIFO:New()
+  local sortedtargets = FIFO:New() 
+  local HaveTargets = false
+  
+  -- Bucket sort
+   
+  if Untargeted then
+    -- pre-filter
+    local prefiltered = FIFO:New()
+    self.Contacts:ForEach(
+      function (Contact)
+        local contact = Contact -- #AWACS.ManagedContact
+        if contact.Contact.group:IsAlive() and (contact.Status == AWACS.TaskStatus.IDLE or contact.Status == AWACS.TaskStatus.UNASSIGNED) then
+          prefiltered:Push(contact,contact.CID)
+        end
+      end
+    )
+    contactstable = prefiltered:GetDataTable()
+    --self:T(prefiltered:Flush())
+    prefiltered:Clear()
+  end
+  
+  -- Bucket 1 - close to AIC (HVT) ca ~45nm
+  local HVTCoordinate = self.OrbitZone:GetCoordinate()
+  for _,_contact in pairs(contactstable) do
+    local contact = _contact -- #AWACS.ManagedContact
+    -- get distance
+    local contactcoord = contact.Contact.group:GetCoordinate()
+    local distance = UTILS.NMToMeters(200)
+    if contactcoord then
+      distance = HVTCoordinate:Get2DDistance(contactcoord)
+    end
+    if UTILS.MetersToNM(distance) <= 45 then
+      targettable:Push(contact,distance)
+      sortedtargets:Push(contact,contact.CID)
+    end -- end distance
+  end -- end for
+  
+  -- Bucket 2 - in AO
+  if targettable:Count() < 3 then
+    for _,_contact in pairs(contactstable) do
+      local contact = _contact -- #AWACS.ManagedContact
+      -- get distance
+      local contactcoord = contact.Contact.group:GetCoordinate()
+      local distance = UTILS.NMToMeters(200)
+      if contactcoord then
+        distance = self.OpsZone:Get2DDistance(contactcoord)  
+      end   
+      if contactcoord and self.OpsZone:IsVec2InZone(contactcoord:GetVec2()) then
+        -- TODO prefer heavy groups
+        local groupsize = contact.Contact.group:CountAliveUnits()
+        local threatlevel = contact.Contact.group:GetThreatLevel()
+        if groupsize >= 3 then
+          local threat = groupsize*threatlevel
+          distance = math.abs(math.floor(100-threat))
+        end -- end grpsize
+        if not sortedtargets:HasUniqueID(contact.CID) then
+          targettable:Push(contact,distance)
+        end -- end unique
+      end -- end in zone
+    end -- end for
+  end -- end count
+  
+  if targettable:Count() < 3 then
+    -- Bucket 3 - in Radar(Control)Zone, < 100nm to AO, Aspect HOT on AO
+    for _,_contact in pairs(contactstable) do
+      local contact = _contact -- #AWACS.ManagedContact
+      -- get distance
+      local contactcoord = contact.Contact.group:GetCoordinate()
+      local distance = UTILS.NMToMeters(200)
+      if contactcoord then
+        distance = self.ControlZone:Get2DDistance(contactcoord)
+      end
+      if contactcoord and self.ControlZone:IsVec2InZone(contactcoord:GetVec2()) then
+        if not contactcoord.Heading then
+          contactcoord.Heading = contact.Contact.group:GetHeading()       
+        end -- end heading
+        if contactcoord:ToStringAspect(self.ControlZone:GetCoordinate()) == "Hot" then
+          -- TODO prefer heavy groups
+          local groupsize = contact.Contact.group:CountAliveUnits()
+          local threatlevel = contact.Contact.group:GetThreatLevel()
+          if groupsize >= 3 then
+            local threat = groupsize*threatlevel
+            distance = math.abs(math.floor(100-threat))
+          end -- end sizing
+          if not sortedtargets:HasUniqueID(contact.CID) then
+            targettable:Push(contact,distance)
+          end -- end unique
+        end -- end aspect
+      end -- end in zone
+    end -- end for
+  end -- end count
+  
+  -- Bucket 4 (if set) within the border polyzone to be defended
+  if targettable:Count() < 3 and self.BorderZone then
+    for _,_contact in pairs(contactstable) do
+      local contact = _contact -- #AWACS.ManagedContact
+      -- get distance
+      local contactcoord = contact.Contact.group:GetCoordinate()
+      local distance = UTILS.NMToMeters(200)
+      if contactcoord then
+        distance = self.BorderZone:Get2DDistance(contactcoord)
+      end
+      --local distance = self.BorderZone:Get2DDistance(contactcoord)    
+      if contactcoord and self.BorderZone:IsVec2InZone(contactcoord:GetVec2()) then
+        -- TODO prefer heavy groups
+        local groupsize = contact.Contact.group:CountAliveUnits()
+        local threatlevel = contact.Contact.group:GetThreatLevel()
+        if groupsize >= 3 then
+          local threat = groupsize*threatlevel
+          distance = math.abs(math.floor(100-threat))
+        end -- end size
+        if not sortedtargets:HasUniqueID(contact.CID) then
+          targettable:Push(contact,distance)
+        end -- end unique
+      end -- end in zone
+    end -- end for  
+  end -- end count
+  
+  -- control
+  if self.debug then
+    self:I(string.format("%s**** TargetSelectionProcess outcome %d targets.",self.lid,targettable:Count()))   
+    --targettable:Flush()
+    if not self.TargetMarkers then
+      self.TargetMarkers = {}
+    end
+    for _,_marker in pairs(self.TargetMarkers) do
+      local marker = _marker -- Wrapper.Marker#MARKER
+      marker:Remove(1)
+      self.TargetMarkers = nil
+      self.TargetMarkers = {}
+    end
+    for _,_contact in pairs(targettable:GetDataTable()) do
+      local contact = _contact -- #AWACS.ManagedContact
+      local markerinfo = string.format("CID=%d\nName=%s\nPlatform=%s\nSize=%d",contact.CID,contact.TargetGroupNaming,contact.ReportingName,contact.Contact.group:CountAliveUnits())
+      local markercoord = contact.Contact.group:GetCoordinate()
+      self.TargetMarkers[#self.TargetMarkers+1] = MARKER:New(markercoord,markerinfo):ToAll(1)
+    end
+  end
+  
+  sortedtargets:Clear()
+  --TODO - sort table - but max 3 anyway?
+  
+  if targettable:Count() > 0 then
+    HaveTargets = true
+  end
+  
+  return HaveTargets, targettable
 end
 
 --- [Internal] AWACS Speak Picture AO/EWR entries
@@ -950,87 +1260,121 @@ end
 -- @param #boolean IsGeneral Is a general picture, address all stations
 -- @return #AWACS self
 function AWACS:_CreatePicture(AO,Callsign,GID,MaxEntries,IsGeneral)
-  self:T(self.lid.."_CreatePicture AO="..tostring(AO).." for "..Callsign.." GID "..GID)
+  self:I(self.lid.."_CreatePicture AO="..tostring(AO).." for "..Callsign.." GID "..GID)
   
   local managedgroup = nil
   local group = nil
   local groupcoord = nil
   
-  if IsGeneral then
-   -- local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
-   -- local group = managedgroup.Group -- Wrapper.Group#GROUP
-   -- local groupcoord = group:GetCoordinate()
-  else
+  if not IsGeneral then
     managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
     group = managedgroup.Group -- Wrapper.Group#GROUP
     groupcoord = group:GetCoordinate()
   end
   
-  
   local fifo = self.PictureAO -- Utilities.FiFo#FIFO
+  
   local maxentries = self.maxspeakentries or 3
+  
   if MaxEntries and MaxEntries>0  and MaxEntries <= 3 then
    maxentries = MaxEntries
   end
+  
   local counter = 0
   
   if not AO then 
-    fifo = self.PictureEWR 
+   -- fifo = self.PictureEWR 
   end
   
   local entries = fifo:GetSize()
   
   if entries < maxentries then maxentries = entries end
   
-  local text = "Group"
-  local textScreen = text
+  local text = ""
+  local textScreen = ""
   
+  
+  -- "<tag> group, <shipsize>, BRA, <bearing> for <range> at angels <alt/1000>, <aspect>"
   while counter < maxentries do
     counter = counter + 1
-    local cluster = fifo:Pull() -- Ops.Intelligence#INTEL.Cluster
-    self:T({cluster})
-    if cluster and cluster.coordinate then
-      local clustercoord = cluster.coordinate -- Core.Point#COORDINATE
-      --local refBRAA = clustercoord:ToStringBRA(groupcoord)
+    local contact = fifo:Pull() -- #AWACS.ManagedContact
+    self:T({contact})
+    if contact and contact.Contact.group and contact.Contact.group:IsAlive() then
+      local coordinate = contact.Contact.group:GetCoordinate()
+      if not coordinate.Heading then
+        coordinate.Heading = contact.Contact.group:GetHeading()
+      end
       local refBRAA = ""
+      text = contact.TargetGroupNaming.." group." -- Alpha Group.
+      textScreen = contact.TargetGroupNaming.." group,"
+      --self:I("Step 1")
+      --self:I(text)
+      --self:I(textScreen)
+      -- sizing
+      local size = contact.Contact.group:CountAliveUnits()
+      local threatsize, threatsizetext = self:_GetBlurredSize(size)
+      --local threatlevel = contact.threatlevel
+      --local threattext = self:_GetThreatLevelText(threatlevel)
+      text = text.." "..threatsizetext.."." -- Alpha Group. Heavy.
+      textScreen = textScreen.." "..threatsizetext..","
+      --self:I("Step 2")
+      --self:I(text)
+      --self:I(textScreen)
       if IsGeneral then
-        -- bulls eye reference
-        refBRAA = self:ToStringBULLS(clustercoord)
-        refBRAA = self:ToStringBullsTTS(refBRAA)
-        text = text .. " "..refBRAA.."."
-        textScreen = textScreen .." "..refBRAA..".\n"
+        -- AO/BE Reference
+        refBRAA=self:ToStringBULLS(coordinate)
+        text = text .. " "..self:ToStringBullsTTS(refBRAA).."." -- Alpha Group. Heavy. Bulls eye 0 2 1, 1 6. 
+        textScreen = textScreen .. " "..refBRAA.."," -- Alpha Group, Heavy, Bullseye 021, 16,
+        --self:I("Step 2 - General")
+        --self:I(text)
+        --self:I(textScreen)
       else
         -- pilot reference
-        refBRAA = clustercoord:ToStringBRAANATO(groupcoord,true)
+        refBRAA = coordinate:ToStringBRAANATO(groupcoord,true) -- Charlie group, Singleton, BRAA, 045, 105 miles, Angels 41, Flanking, Track North-East, Spades.
         text = text .. " "..refBRAA
-        textScreen = textScreen .." "..refBRAA.."\n"
+        textScreen = textScreen .." "..refBRAA
+        --self:I("Step 2 - Pilot")
+        --self:I(text)
+        --self:I(textScreen)
       end
-      if counter < maxentries then
-        text = text .. " Group"
-        textScreen = textScreen .. text .. "\n"
+      -- Aspect
+      local aspect = ""
+      if IsGeneral then
+        aspect = coordinate:ToStringAspect(self.OpsZone:GetCoordinate())
+        text = text .. " "..aspect.."." -- Alpha Group. Heavy. Bulls eye 0 2 1, 1 6. Flanking.
+        textScreen = textScreen .. " "..aspect.."." -- Alpha Group, Heavy, Bullseye 021, 16, Flanking.
+        --self:I("Step 3 - General")
+        --self:I(text)
+        --self:I(textScreen)
       end
+      -- engagement tag?
+      if contact.EngagementTag then
+        text = text .. " "..contact.EngagementTag -- Alpha Group. Heavy. Bulls eye 0 2 1, 1 6. Flanking. Targeted by Jazz 1 1.
+        textScreen = textScreen .. " "..contact.EngagementTag -- Alpha Group, Heavy, Bullseye 021, 16, Flanking. Targeted by Jazz 1 1.
+      end
+      
+      -- Transmit Radio
+      local RadioEntry = {} -- #AWACS.RadioEntry
+      RadioEntry.IsNew = true
+      RadioEntry.TextTTS = text
+      RadioEntry.TextScreen = textScreen
+      RadioEntry.GroupID = GID
+      if IsGeneral then
+        RadioEntry.IsGroup = false
+        RadioEntry.ToScreen = self.debug
+      else
+        RadioEntry.IsGroup = managedgroup.IsPlayer
+        RadioEntry.ToScreen = managedgroup.IsPlayer
+      end 
+      RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
+      
+      self.RadioQueue:Push(RadioEntry)
     end
   end
   
   -- empty queue from leftovers
   fifo:Clear()
-  
-  local RadioEntry = {} -- #AWACS.RadioEntry
-  RadioEntry.IsNew = true
-  RadioEntry.TextTTS = text
-  RadioEntry.TextScreen = textScreen
-  RadioEntry.GroupID = GID
-  if IsGeneral then
-    RadioEntry.IsGroup = false
-    RadioEntry.ToScreen = self.debug
-  else
-    RadioEntry.IsGroup = managedgroup.IsPlayer
-    RadioEntry.ToScreen = managedgroup.IsPlayer
-  end 
-  RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
-  
-  self.RadioQueue:Push(RadioEntry)
-  
+ 
   return self
 end
 
@@ -1063,7 +1407,7 @@ function AWACS:_CreateBogeyDope(Callsign,GID)
     if cluster and cluster.position then
       local tag =  cluster.TargetGroupNaming
       local reportingname = cluster.group:GetNatoReportingName()
-      -- TODO - add tag
+      -- DONE - add tag
       self:_AnnounceContact(cluster,false,group,true,tag,false,reportingname)
     end
   end
@@ -1083,13 +1427,17 @@ function AWACS:_Picture(Group,IsGeneral)
   self:T(self.lid.."_Picture")
   local text = ""
   local textScreen = text
-  local GID, Outcome = self:_GetManagedGrpID(Group) 
-  local gcallsign = ""
- 
+  local GID, Outcome, gcallsign = self:_GetManagedGrpID(Group) 
+  --local gcallsign = ""
+  
+  if Outcome then
+    IsGeneral = false
+  end
+  
   if IsGeneral then
     gcallsign = "All Stations"
-  else
-    gcallsign = self:_GetCallSign(Group,GID) or "Ghost 1 1"
+  --else
+    --gcallsign = self:_GetCallSign(Group,GID) or "Ghost 1 1"
   end
     
   if not self.intel then
@@ -1101,7 +1449,7 @@ function AWACS:_Picture(Group,IsGeneral)
     RadioEntry.TextTTS = text
     RadioEntry.TextScreen = text
     RadioEntry.ToScreen = true
-    RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+    RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
     
     self.RadioQueue:Push(RadioEntry) 
     return self 
@@ -1110,21 +1458,52 @@ function AWACS:_Picture(Group,IsGeneral)
   if Outcome or IsGeneral then
     -- Pilot is checked in
     -- get clusters from Intel
-    local clustertable = self.intel:GetClusterTable()
+    
+    -- DONE Use contacts table!
+    local contactstable = self.Contacts:GetDataTable()
+    
+    --local clustertable = self.intel:GetClusterTable() or {}
     -- sort into buckets
-    for _,_cluster in pairs(clustertable) do
-      local cluster = _cluster -- Ops.Intelligence#INTEL.Cluster
-      local coordVec2 = cluster.coordinate:GetVec2()
+    for _,_contact in pairs(contactstable) do
+      
+      local contact  = _contact -- #AWACS.ManagedContact
+      
+      self:T(UTILS.OneLineSerialize(contact))
+      
+      local coordVec2 = contact.Contact.position:GetVec2()  
+      
+      --local coordVec2 = cluster.coordinate:GetVec2()      
       
       if self.OpsZone:IsVec2InZone(coordVec2) then
-        self.PictureAO:Push(cluster)
+        self.PictureAO:Push(contact)
+      elseif self.OrbitZone:IsVec2InZone(coordVec2) then
+        self.PictureAO:Push(contact)
       elseif self.ControlZone:IsVec2InZone(coordVec2) then
-        self.PictureEWR:Push(cluster)
+        local distance = math.floor((contact.Contact.position:Get2DDistance(self.ControlZone:GetCoordinate()) / 1000) + 1) -- km
+        self.PictureEWR:Push(contact,distance)
       end
+      
     end
     
     local clustersAO = self.PictureAO:GetSize()
     local clustersEWR = self.PictureEWR:GetSize()
+    
+    if clustersAO < 3 and clustersEWR > 0 then
+      -- make sure we have 3, can only add 1, 2 or 3
+      local IDstack = self.PictureEWR:GetSortedDataTable()
+      -- how many do we need?
+      local weneed = 3-clustersAO
+      -- do we have enough?
+      self:T(string.format("Picture - adding %d/%d contacts from EWR",weneed,clustersEWR))
+      if weneed > clustersEWR then
+        weneed = clustersEWR
+      end
+      for i=1,weneed do
+        self.PictureAO:Push(IDstack[i])
+      end
+    end
+    
+    clustersAO = self.PictureAO:GetSize()
     
     if clustersAO == 0 and clustersEWR == 0 then
       -- clear
@@ -1137,7 +1516,7 @@ function AWACS:_Picture(Group,IsGeneral)
       RadioEntry.GroupID = GID
       RadioEntry.IsGroup = Outcome
       RadioEntry.ToScreen = true
-      RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+      RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
       
       self.RadioQueue:Push(RadioEntry)
     else
@@ -1159,14 +1538,15 @@ function AWACS:_Picture(Group,IsGeneral)
         RadioEntry.GroupID = GID
         RadioEntry.IsGroup = Outcome
         RadioEntry.ToScreen = true
-        RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8      
+        RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8      
         self.RadioQueue:Push(RadioEntry)
         
         self:_CreatePicture(true,gcallsign,GID,3,IsGeneral)
         
         self.PictureAO:Clear()
+        self.PictureEWR:Clear()
       end
-      
+      --[[
       if clustersAO == 0 and clustersEWR > 0 then
        text = string.format("%s. %s. Picture Early Warning. ",gcallsign, self.callsigntxt)
        textScreen = string.format("%s. %s. Picture EWR. ",gcallsign, self.callsigntxt)
@@ -1175,7 +1555,7 @@ function AWACS:_Picture(Group,IsGeneral)
           textScreen = textScreen .. "One group.\n"
         else
           text = text .. clustersEWR .. " groups. "
-          textScreen = textScreen .. clustersAO .. " groups.\n"
+          textScreen = textScreen .. clustersEWR .. " groups.\n"
         end
         local RadioEntry = {} -- #AWACS.RadioEntry
         RadioEntry.IsNew = true
@@ -1184,13 +1564,14 @@ function AWACS:_Picture(Group,IsGeneral)
         RadioEntry.GroupID = GID
         RadioEntry.IsGroup = Outcome
         RadioEntry.ToScreen = true
-        RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8     
+        RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8     
         self.RadioQueue:Push(RadioEntry)
         
         self:_CreatePicture(false,gcallsign,GID,3,IsGeneral)
        
         self.PictureEWR:Clear()
       end
+      --]]
     end
     
   elseif self.AwacsFG then
@@ -1203,7 +1584,7 @@ function AWACS:_Picture(Group,IsGeneral)
     RadioEntry.GroupID = GID
     RadioEntry.IsGroup = Outcome
     RadioEntry.ToScreen = true
-    RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+    RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
     
     self.RadioQueue:Push(RadioEntry)
   end
@@ -1216,8 +1597,8 @@ end
 -- @return #AWACS self
 function AWACS:_BogeyDope(Group)
   self:T(self.lid.."_BogeyDope")
-  local text = "BogeyDope WIP"
-  local textScreen = "BogeyDope WIP"
+  local text = ""
+  local textScreen = ""
   local GID, Outcome = self:_GetManagedGrpID(Group)
   local gcallsign = self:_GetCallSign(Group,GID) or "Ghost 1 1"
     
@@ -1232,7 +1613,7 @@ function AWACS:_BogeyDope(Group)
     RadioEntry.GroupID = 0
     RadioEntry.IsGroup = false
     RadioEntry.ToScreen = true
-    RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+    RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
     
     self.RadioQueue:Push(RadioEntry) 
     return self 
@@ -1255,9 +1636,16 @@ function AWACS:_BogeyDope(Group)
       
       -- Get distance for sorting
       local dist = pilotcoord:Get2DDistance(cluster.position)
-      
+
       if self.OpsZone:IsVec2InZone(coordVec2) then
         self.ContactsAO:Push(cluster,dist)
+      elseif self.BorderZone and self.BorderZone:IsVec2InZone(coordVec2) then 
+       self.ContactsAO:Push(cluster,dist)
+      else
+        local distance = cluster.position:Get2DDistance(self.OrbitZone:GetCoordinate())
+        if (distance <= UTILS.NMToMeters(45)) then
+          self.ContactsAO:Push(cluster,distance)
+        end
       end     
     end
     
@@ -1274,7 +1662,7 @@ function AWACS:_BogeyDope(Group)
       RadioEntry.GroupID = GID
       RadioEntry.IsGroup = Outcome
       RadioEntry.ToScreen = Outcome
-      RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+      RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
       
       self.RadioQueue:Push(RadioEntry)
     else
@@ -1295,7 +1683,7 @@ function AWACS:_BogeyDope(Group)
         RadioEntry.GroupID = GID
         RadioEntry.IsGroup = Outcome
         RadioEntry.ToScreen = true
-        RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8      
+        RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8      
         self.RadioQueue:Push(RadioEntry)
         
         self:_CreateBogeyDope(self:_GetCallSign(Group,GID) or "Ghost 1 1",GID)
@@ -1312,7 +1700,7 @@ function AWACS:_BogeyDope(Group)
     RadioEntry.GroupID = GID
     RadioEntry.IsGroup = Outcome
     RadioEntry.ToScreen = true
-    RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+    RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
     
     self.RadioQueue:Push(RadioEntry)
   end
@@ -1402,7 +1790,7 @@ function AWACS:_Declare(Group)
     RadioEntry.GroupID = GID
     RadioEntry.IsGroup = Outcome
     RadioEntry.ToScreen = true
-    RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+    RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
     
     self.RadioQueue:Push(RadioEntry)
     
@@ -1418,7 +1806,7 @@ function AWACS:_Declare(Group)
     RadioEntry.GroupID = GID
     RadioEntry.IsGroup = Outcome
     RadioEntry.ToScreen = true
-    RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+    RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
     
     self.RadioQueue:Push(RadioEntry)
   end
@@ -1450,7 +1838,7 @@ function AWACS:_Commit(Group)
   RadioEntry.GroupID = GID
   RadioEntry.IsGroup = Outcome
   RadioEntry.ToScreen = true
-  RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+  RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
   
   self.RadioQueue:Push(RadioEntry)
   
@@ -1482,7 +1870,7 @@ function AWACS:_Judy(Group)
   RadioEntry.GroupID = GID
   RadioEntry.IsGroup = Outcome
   RadioEntry.ToScreen = true
-  RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+  RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
   
   self.RadioQueue:Push(RadioEntry)
   
@@ -1514,7 +1902,7 @@ function AWACS:_Unable(Group)
   RadioEntry.GroupID = GID
   RadioEntry.IsGroup = Outcome
   RadioEntry.ToScreen = true
-  RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+  RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
   
   self.RadioQueue:Push(RadioEntry)
   
@@ -1546,7 +1934,7 @@ function AWACS:_TaskAbort(Group)
   RadioEntry.GroupID = GID
   RadioEntry.IsGroup = Outcome
   RadioEntry.ToScreen = true
-  RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+  RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
   
   self.RadioQueue:Push(RadioEntry)
   
@@ -1610,7 +1998,7 @@ function AWACS:_Showtask(Group)
     RadioEntry.GroupID = GID
     RadioEntry.IsGroup = Outcome
     RadioEntry.ToScreen = true
-    RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+    RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
     
     self.RadioQueue:Push(RadioEntry)
   end
@@ -1622,7 +2010,7 @@ end
 -- @param Wrapper.Group#GROUP Group Group to use
 -- @return #AWACS self
 function AWACS:_CheckIn(Group)
-  self:I(self.lid.."_CheckIn "..Group:GetName())
+  self:T(self.lid.."_CheckIn "..Group:GetName())
   -- check if already known
   local GID, Outcome = self:_GetManagedGrpID(Group)
   local text = ""
@@ -1662,7 +2050,7 @@ function AWACS:_CheckIn(Group)
   RadioEntry.GroupID = GID
   RadioEntry.IsGroup = true
   RadioEntry.ToScreen = true
-  RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+  RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
   
   self.RadioQueue:Push(RadioEntry)
   
@@ -1676,7 +2064,7 @@ end
 -- @param #number AuftragsNr Ops.Auftrag#AUFTRAG.auftragsnummer
 -- @return #AWACS self
 function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
-  self:I(self.lid.."_CheckInAI "..Group:GetName() .. " to Auftrag Nr "..AuftragsNr)
+  self:T(self.lid.."_CheckInAI "..Group:GetName() .. " to Auftrag Nr "..AuftragsNr)
   -- check if already known
   local GID, Outcome = self:_GetManagedGrpID(Group)
   local text = ""
@@ -1694,7 +2082,7 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
       local callsignstring = UTILS.GetCallsignName(self.AICAPCAllName)
       local callsignmajor = math.fmod(self.AICAPCAllNumber,9)
       local callsign = string.format("%s %d 1",callsignstring,callsignmajor)
-      self:I("Assigned Callsign: ".. callsign)
+      self:T("Assigned Callsign: ".. callsign)
       managedgroup.CallSign =  callsign
       managedgroup.CurrentAuftrag = AuftragsNr
       managedgroup.HasAssignedTask = false
@@ -1708,14 +2096,14 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
     FlightGroup:SwitchRadio(self.Frequency,self.Modulation)
     --FlightGroup:SetDefaultCallsign(self.AICAPCAllName,callsignmajor)
     
-    FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,self.CAPVoice,self.Port,nil)
+    FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,self.CAPVoice,self.Port,nil,"FLIGHT")
     
     text = string.format("%s. %s. Checking in as fragged. Expected playtime %d hours. Request Alpha Check Bulls Eye.",self.callsigntxt, managedgroup.CallSign, self.CAPTimeOnStation)
     local RadioEntry = {} -- #AWACS.RadioEntry
     RadioEntry.IsNew = true
     RadioEntry.TextTTS = text
     RadioEntry.ToScreen = false
-    RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+    RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
     RadioEntry.FromAI = true
     RadioEntry.GroupID = managedgroup.GID
     
@@ -1736,7 +2124,7 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
   RadioEntry.IsNew = true
   RadioEntry.TextTTS = text
   RadioEntry.ToScreen = false
-  RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+  RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
   
   self.RadioQueue:Push(RadioEntry)
   
@@ -1749,7 +2137,7 @@ end
 -- @param #number GID GroupID
 -- @return #AWACS self
 function AWACS:_CheckOut(Group,GID)
-  self:I(self.lid.."_CheckOut")
+  self:T(self.lid.."_CheckOut")
 
   -- check if already known
   local GID, Outcome = self:_GetManagedGrpID(Group)
@@ -1757,11 +2145,17 @@ function AWACS:_CheckOut(Group,GID)
   if Outcome then
     -- yes, known
     text = string.format("%s. %s. Copy. Have a safe flight home.",self:_GetCallSign(Group,GID) or "Ghost 1 1", self.callsigntxt)
-    self:I(text)
+    self:T(text)
     -- grab some data before we nil the entry
     local AnchorAssigned = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
     local Stack = AnchorAssigned.AnchorStackNo
     local Angels = AnchorAssigned.AnchorStackAngels
+    -- remove menus
+    if AnchorAssigned.IsPlayer then
+      local menus = self.clientmenus[AnchorAssigned.GroupName] --#AWACS.MenuStructure
+      menus.basemenu:Remove()
+      self.clientmenus[AnchorAssigned.GroupName] = nil
+    end
     self.ManagedGrps[GID] = nil
     self:__CheckedOut(1,GID,Stack,Angels)
   else
@@ -1773,7 +2167,7 @@ function AWACS:_CheckOut(Group,GID)
   RadioEntry.IsNew = true
   RadioEntry.TextTTS = text
   RadioEntry.ToScreen = true
-  RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+  RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
   
   self.RadioQueue:Push(RadioEntry)
   
@@ -1802,24 +2196,28 @@ function AWACS:_SetClientMenus()
         if checkedin then
           -- full menu minus checkin
           clientcheckedin = clientcheckedin + 1
+          
           local hasclientmenu = self.clientmenus[grp:GetName()] -- #AWACS.MenuStructure
-          --local checkinmenu = hasclientmenu.checkin -- Core.Menu#MENU_GROUP_COMMAND 
-          --checkinmenu:Remove(nil,grp:GetName())
-          local basemenu = hasclientmenu.basemenu -- Core.Menu#MENU_GROUP
-          --local basemenu = MENU_GROUP:New(grp.Name,nil)
+
+          local basemenu = hasclientmenu.basemenu -- Core.Menu#MENU_GROUP_DELAYED)
+          
           basemenu:RemoveSubMenus()
-          local picture = MENU_GROUP_COMMAND:New(grp,"Picture",basemenu,self._Picture,self,grp)
-          local bogeydope = MENU_GROUP_COMMAND:New(grp,"Bogey Dope",basemenu,self._BogeyDope,self,grp)
-          local declare = MENU_GROUP_COMMAND:New(grp,"Declare",basemenu,self._Declare,self,grp)
           
-          local tasking = MENU_GROUP:New(grp,"Tasking",basemenu)
-          local showtask = MENU_GROUP_COMMAND:New(grp,"Showtask",tasking,self._Showtask,self,grp)
-          local commit = MENU_GROUP_COMMAND:New(grp,"Commit",tasking,self._Commit,self,grp)
-          local unable = MENU_GROUP_COMMAND:New(grp,"Unable",tasking,self._Unable,self,grp)
-          local abort = MENU_GROUP_COMMAND:New(grp,"Abort",tasking,self._TaskAbort,self,grp)
-          local judy = MENU_GROUP_COMMAND:New(grp,"Judy",tasking,self._Judy,self,grp):Refresh()
+          local picture = MENU_GROUP_COMMAND_DELAYED:New(grp,"Picture",basemenu,self._Picture,self,grp)
+          local bogeydope = MENU_GROUP_COMMAND_DELAYED:New(grp,"Bogey Dope",basemenu,self._BogeyDope,self,grp)
+          local declare = MENU_GROUP_COMMAND_DELAYED:New(grp,"Declare",basemenu,self._Declare,self,grp)
           
-          local checkout = MENU_GROUP_COMMAND:New(grp,"Check Out",basemenu,self._CheckOut,self,grp):Refresh()
+          local tasking = MENU_GROUP_DELAYED:New(grp,"Tasking",basemenu)
+          local showtask = MENU_GROUP_COMMAND_DELAYED:New(grp,"Showtask",tasking,self._Showtask,self,grp)
+          local commit = MENU_GROUP_COMMAND_DELAYED:New(grp,"Commit",tasking,self._Commit,self,grp)
+          local unable = MENU_GROUP_COMMAND_DELAYED:New(grp,"Unable",tasking,self._Unable,self,grp)
+          local abort = MENU_GROUP_COMMAND_DELAYED:New(grp,"Abort",tasking,self._TaskAbort,self,grp)
+          local judy = MENU_GROUP_COMMAND_DELAYED:New(grp,"Judy",tasking,self._Judy,self,grp)
+
+          local checkout = MENU_GROUP_COMMAND_DELAYED:New(grp,"Check Out",basemenu,self._CheckOut,self,grp)
+          
+          basemenu:Set()
+          
           clientmenus[grp:GetName()] = { -- #AWACS.MenuStructure
             groupname =  grp:GetName(),
             menuset = true,
@@ -1837,34 +2235,42 @@ function AWACS:_SetClientMenus()
           }
         elseif not clientmenus[grp:GetName()] then
           -- check in only
-          local basemenu = MENU_GROUP:New(grp,self.Name,nil)
-          local checkin = MENU_GROUP_COMMAND:New(grp,"Check In",basemenu,self._CheckIn,self,grp)
+          local basemenu = MENU_GROUP_DELAYED:New(grp,self.Name,nil)
+          basemenu:RemoveSubMenus()
+          local checkin = MENU_GROUP_COMMAND_DELAYED:New(grp,"Check In",basemenu,self._CheckIn,self,grp)
           checkin:SetTag(grp:GetName())
-          checkin:Refresh()
+          --checkin:Refresh()
+          basemenu:Set()
+          
           clientmenus[grp:GetName()] = { -- #AWACS.MenuStructure
             groupname =  grp:GetName(),
             menuset = true,
             basemenu = basemenu,
             checkin = checkin,
           }
+          
         end
       end
     else
       if grp and grp:IsAlive() and grp:GetUnit(1):IsPlayer() and not clientmenus[grp:GetName()] then
-        local basemenu = MENU_COALITION:New(self.coalition,self.Name,nil)
-        local picture = MENU_COALITION_COMMAND:New(self.coalition,"Picture",basemenu,self._Picture,self,grp)
-        local bogeydope = MENU_COALITION_COMMAND:New(self.coalition,"Bogey Dope",basemenu,self._BogeyDope,self,grp)
-        local declare = MENU_COALITION_COMMAND:New(self.coalition,"Declare",basemenu,self._Declare,self,grp)
+        local basemenu = MENU_GROUP_DELAYED:New(grp,self.Name,nil)
+        basemenu:RemoveSubMenus()
+        local picture = MENU_GROUP_COMMAND_DELAYED:New(grp,"Picture",basemenu,self._Picture,self,grp)
+        local bogeydope = MENU_GROUP_COMMAND_DELAYED:New(grp,"Bogey Dope",basemenu,self._BogeyDope,self,grp)
+        local declare = MENU_GROUP_COMMAND_DELAYED:New(grp,"Declare",basemenu,self._Declare,self,grp)
         
-        local tasking = MENU_GROUP:New(grp,"Tasking",basemenu)
-        local showtask = MENU_GROUP_COMMAND:New(grp,"Showtask",tasking,self._Showtask,self,grp)
-        local commit = MENU_GROUP_COMMAND:New(grp,"Commit",tasking,self._Commit,self,grp)
-        local unable = MENU_GROUP_COMMAND:New(grp,"Unable",tasking,self._Unable,self,grp)
-        local abort = MENU_GROUP_COMMAND:New(grp,"Abort",tasking,self._TaskAbort,self,grp)
-        local judy = MENU_GROUP_COMMAND:New(grp,"Judy",tasking,self._Judy,self,grp):Refresh()
+        local tasking = MENU_GROUP_DELAYED:New(grp,"Tasking",basemenu)
+        local showtask = MENU_GROUP_COMMAND_DELAYED:New(grp,"Showtask",tasking,self._Showtask,self,grp)
+        local commit = MENU_GROUP_COMMAND_DELAYED:New(grp,"Commit",tasking,self._Commit,self,grp)
+        local unable = MENU_GROUP_COMMAND_DELAYED:New(grp,"Unable",tasking,self._Unable,self,grp)
+        local abort = MENU_GROUP_COMMAND_DELAYED:New(grp,"Abort",tasking,self._TaskAbort,self,grp)
+        local judy = MENU_GROUP_COMMAND_DELAYED:New(grp,"Judy",tasking,self._Judy,self,grp)
         
-        local checkin = MENU_COALITION_COMMAND:New(self.coalition,"Check In",basemenu,self._CheckIn,self,grp)
-        local checkout = MENU_COALITION_COMMAND:New(self.coalition,"Check Out",basemenu,self._CheckOut,self,grp):Refresh()
+        local checkin = MENU_GROUP_COMMAND_DELAYED:New(grp,"Check In",basemenu,self._CheckIn,self,grp)
+        local checkout = MENU_GROUP_COMMAND_DELAYED:New(grp,"Check Out",basemenu,self._CheckOut,self,grp)
+        
+        basemenu:Set()
+        
         clientmenus[grp:GetName()] = { -- #AWACS.MenuStructure
           groupname =  grp:GetName(),
           menuset = true,
@@ -2003,7 +2409,7 @@ function AWACS:_AssignAnchorToID(GID)
     self:T({Anchor,freeangels})
     self:__AssignedAnchor(5,GID,Anchor,AnchorStackNo,freeangels)
   else
-    self:E(self.lid .. "Cannot assing free anchor stack to GID ".. GID)
+    self:E(self.lid .. "Cannot assign free anchor stack to GID ".. GID .. " Trying again in 10secs.")
     -- try again ...
     self:__AssignAnchor(10,GID)
   end
@@ -2021,7 +2427,7 @@ function AWACS:_RemoveIDFromAnchor(GID,AnchorStackNo,Angels)
   local stack = AnchorStackNo or 0
   local angels = Angels or 0
   local debugstring = string.format("%s_RemoveIDFromAnchor for GID=%d Stack=%d Angels=%d",self.lid,gid,stack,angels)
-  self:I(debugstring)
+  self:T(debugstring)
   -- pull correct anchor
   if stack > 0 and angels > 0 then
     local AnchorStackNo = AnchorStackNo or 1
@@ -2043,11 +2449,27 @@ end
 function AWACS:_StartIntel(awacs)
   self:T(self.lid.."_StartIntel")
   
+  if self.intelstarted then return self end
+  
   self.DetectionSet:AddGroup(awacs)
   
   local intel = INTEL:New(self.DetectionSet,self.coalition,self.callsigntxt)
   --intel:SetVerbosity(2)
   intel:SetClusterAnalysis(true,false)
+  
+  local acceptzoneset = SET_ZONE:New()
+  acceptzoneset:AddZone(self.ControlZone)
+  --acceptzoneset:AddZone(self.OpsZone)
+  
+  self.OrbitZone:SetRadius(UTILS.NMToMeters(45))
+  acceptzoneset:AddZone(self.OrbitZone)
+  
+  if self.BorderZone then
+    acceptzoneset:AddZone(self.BorderZone)
+  end
+  
+  --self.AwacsInZone
+  --intel:SetAcceptZones(acceptzoneset)
   
   if self.NoHelos then
     intel:SetFilterCategory({Unit.Category.AIRPLANE})
@@ -2083,6 +2505,8 @@ function AWACS:_StartIntel(awacs)
   function intel:OnAfterLostCluster(From,Event,To,Cluster,Mission)
     LostCluster(Cluster,Mission)
   end
+  
+  self.intelstarted = true
   
   intel:__Start(2)
   
@@ -2156,8 +2580,10 @@ end
 -- @param #AWACS.TaskDescription Description Short Description Task Type
 -- @param #string ScreenText Long task description for screen output
 -- @param #table Object Object for Ops.Target#TARGET assignment
--- @return #AWACS self
-function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object)
+-- @param #AWACS.TaskStatus TaskStatus Status of this task
+-- @param Ops.Auftrag#AUFTRAG Auftrag The Auftrag for this task if any
+-- @return #number TID Task ID created
+function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object,TaskStatus,Auftrag)
    self:I(self.lid.."_CreateTaskForGroup "..GroupID .." Description: "..Description)
    
    local managedgroup = self.ManagedGrps[GroupID] -- #AWACS.ManagedGroup
@@ -2165,9 +2591,14 @@ function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object)
    self.ManagedTaskID = self.ManagedTaskID + 1
    task.TID = self.ManagedTaskID
    task.AssignedGroupID = GroupID
-   task.Status = AWACS.TaskStatus.ASSIGNED
+   task.Status = TaskStatus or AWACS.TaskStatus.ASSIGNED
    task.ToDo = Description
-   task.Target = TARGET:New(Object)
+   task.Auftrag = Auftrag
+   if Object and Object:IsInstanceOf("TARGET") then
+    task.Target = Object
+   else
+    task.Target = TARGET:New(Object)
+   end
    task.ScreenText = ScreenText
    if Description == AWACS.TaskDescription.ANCHOR or Description == AWACS.TaskDescription.REANCHOR then
     task.Target.Type = TARGET.ObjectType.ZONE
@@ -2181,7 +2612,7 @@ function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object)
 
    self.ManagedGrps[GroupID] = managedgroup
 
-   return self
+   return task.TID 
 end 
 
 --- [Internal] Read registered Task for Group by its ID
@@ -2272,7 +2703,7 @@ end
 -- @param #number GID Group ID 
 -- @return #AWACS self
 function AWACS:_MessageAIReadyForTasking(GID)
-  self:I(self.lid.."_MessageAIReadyForTasking")
+  self:T(self.lid.."_MessageAIReadyForTasking")
   -- obtain group details
   if GID >0  and self.ManagedGrps[GID] then
     local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
@@ -2284,7 +2715,7 @@ function AWACS:_MessageAIReadyForTasking(GID)
     RadioEntry.IsNew = true
     RadioEntry.IsGroup = false
     RadioEntry.GroupID = GID
-    RadioEntry.Duration = STTS.getSpeechTime(TextTTS,1.2,false)+2 or 16
+    RadioEntry.Duration = STTS.getSpeechTime(TextTTS,0.95,false)+2 or 16
     RadioEntry.ToScreen = false
     RadioEntry.FromAI = true
     
@@ -2293,19 +2724,36 @@ function AWACS:_MessageAIReadyForTasking(GID)
   return self
 end
 
+--- [Internal] Update Contact Tag
+-- @param #AWACS self
+-- @param #number CID Contact ID
+-- @param #string Text Text to be used 
+-- @return #AWACS self
+function AWACS:_UpdateContactEngagementTag(CID,Text)
+  self:I(self.lid.."_UpdateContactEngagementTag")
+  local text = Text or ""
+  -- get contact
+  local contact = self.Contacts:PullByID(CID) -- #AWACS.ManagedContact
+  contact.EngagementTag = text
+  self.Contacts:Push(contact,CID)
+  return self
+end
+
 --- [Internal] Check available tasks and status
 -- @param #AWACS self
 -- @return #AWACS self
 function AWACS:_CheckTaskQueue()
-  self:T(self.lid.."_CheckTaskQueue")
+  self:I(self.lid.."_CheckTaskQueue")
   local opentasks = 0
   local assignedtasks = 0
   
-  --- INTERNAL TASKS
+  ----------------------------------------
+  -- ANCHOR
+  ----------------------------------------
   
   if self.ManagedTasks:IsNotEmpty() then
     opentasks = self.ManagedTasks:GetSize()
-    self:T("Assigned Tasks: " .. opentasks)
+    self:I("Assigned Tasks: " .. opentasks)
     local taskstack = self.ManagedTasks:GetPointerStack()
     for _id,_entry in pairs(taskstack) do
       local data = _entry -- Utilities.FiFo#FIFO.IDEntry
@@ -2314,7 +2762,7 @@ function AWACS:_CheckTaskQueue()
       local description = entry.ToDo
       self:I("ToDo = "..description)
       if description == AWACS.TaskDescription.ANCHOR or description == AWACS.TaskDescription.REANCHOR then
-        self:T("Open Tasks ANCHOR/REANCHOR")
+        self:I("Open Task ANCHOR/REANCHOR")
         -- see if we have reached the anchor zone
         local managedgroup = self.ManagedGrps[entry.AssignedGroupID] -- #AWACS.ManagedGroup
         if managedgroup then
@@ -2323,11 +2771,9 @@ function AWACS:_CheckTaskQueue()
           local zone = target:GetObject() -- Core.Zone#ZONE
           self:T({zone})
           if group:IsInZone(zone) then
-            self:I("Open Tasks ANCHOR/REANCHOR success for GroupID "..entry.AssignedGroupID)
+            self:I("Open Task ANCHOR/REANCHOR success for GroupID "..entry.AssignedGroupID)
             -- made it
             target:Stop()
-            -- pull task from OpenTasks
-            self.ManagedTasks:PullByPointer(_id)
             -- add group to idle stack
             if managedgroup.IsAI then
               -- message AI on station
@@ -2336,15 +2782,110 @@ function AWACS:_CheckTaskQueue()
               --self.TaskedCAPHuman:PullByPointer(entry.AssignedGroupID)
               --self.CAPIdleHuman:Push(entry.AssignedGroupID)
             end
+            managedgroup.HasAssignedTask = false
+            self.ManagedGrps[entry.AssignedGroupID] = managedgroup
+            -- pull task from OpenTasks
+            self.ManagedTasks:PullByPointer(_id)
           else
             -- not there yet
+            self:I("Open Task ANCHOR/REANCHOR executing for GroupID "..entry.AssignedGroupID)
           end
         end
+      
+      ----------------------------------------
+      -- INTERCEPT
+      ----------------------------------------
+        
       elseif description == AWACS.TaskDescription.INTERCEPT then
         -- TODO
+        self:I("Open Tasks INTERCEPT")
+        local taskstatus = entry.Status
+        local targetstatus = entry.Target:GetState()
+        local auftrag = entry.Auftrag -- Ops.Auftrag#AUFTRAG
+        local auftragstatus = "Not Known"
+        if auftrag then
+          auftragstatus = auftrag:GetState()
+        end 
+        local text = string.format("ID=%d | Status=%s | TargetState=%s | AuftragState=%s",entry.TID,taskstatus,targetstatus,auftragstatus)
+        self:I(text)
+        if auftrag then
+          if auftrag:IsExecuting() then
+            entry.Status = AWACS.TaskStatus.EXECUTING
+          elseif auftrag:IsSuccess() then
+            entry.Status = AWACS.TaskStatus.SUCCESS
+          elseif auftrag:GetState() == AUFTRAG.Status.FAILED then 
+            entry.Status = AWACS.TaskStatus.FAILED
+          end 
+          if targetstatus == "Dead" then
+            entry.Status = AWACS.TaskStatus.SUCCESS
+          elseif targetstatus == "Alive" and auftrag:IsOver() then
+            entry.Status = AWACS.TaskStatus.FAILED
+          end
+        else
+          -- Player task
+          -- TODO
+        end
+        
+        local managedgroup = self.ManagedGrps[entry.AssignedGroupID] -- #AWACS.ManagedGroup
+        
+        if entry.Status == AWACS.TaskStatus.SUCCESS then
+          self:I("Open Tasks INTERCEPT success for GroupID "..entry.AssignedGroupID)
+          if managedgroup then
+          
+            self:_UpdateContactEngagementTag(managedgroup.ContactCID,"")
+            
+            managedgroup.HasAssignedTask = false
+            managedgroup.ContactCID = 0
+            
+            if managedgroup.IsAI then
+              managedgroup.CurrentAuftrag = 0
+            else
+              managedgroup.CurrentTask = 0
+            end
+            
+            self.ManagedGrps[entry.AssignedGroupID] = managedgroup
+            self.ManagedTasks:PullByPointer(_id)
+            
+            self:__InterceptSuccess(1)
+            self:__ReAnchor(5,managedgroup.GID)
+          end
+         
+        elseif entry.Status == AWACS.TaskStatus.FAILED then
+          self:I("Open Tasks INTERCEPT failed for GroupID "..entry.AssignedGroupID)
+          if managedgroup then
+            managedgroup.HasAssignedTask = false
+            self:_UpdateContactEngagementTag(managedgroup.ContactCID,"")
+            managedgroup.ContactCID = 0
+            if managedgroup.IsAI then
+              managedgroup.CurrentAuftrag = 0
+            else
+              managedgroup.CurrentTask = 0
+            end
+            if managedgroup.IsPlayer then
+              entry.IsPlayerTask = false
+            end 
+            self.ManagedGrps[entry.AssignedGroupID] = managedgroup
+          end
+          -- re-assign, if possible. FG state? Issue re-anchor
+          entry.IsUnassigned = true
+          entry.CurrentAuftrag = 0
+          entry.Auftrag = nil
+          entry.Status = AWACS.TaskStatus.UNASSIGNED
+          entry.AssignedGroupID = 0           
+          self.ManagedTasks:PullByPointer(_id)
+          --self.ManagedTasks:Push(entry,entry.TID)
+          self:__InterceptFailure(1)
+          self:__ReAnchor(5,managedgroup.GID)
+        end
+        
+      ----------------------------------------
+      -- OTHER
+      ----------------------------------------
+        
       elseif description == AWACS.TaskDescription.RTB then
        -- TODO
       end
+      
     end
   end
   
@@ -2360,7 +2901,7 @@ function AWACS:_LogStatistics()
   local text = string.gsub(text,"{","\n")
   local text = string.gsub(text,"}","")
   local text = string.gsub(text,"="," = ")
-  self:I(text)
+  self:T(text)
   if self.MonitoringOn then
     MESSAGE:New(text,20,"AWACS",false):ToAll()
   end
@@ -2372,7 +2913,7 @@ end
 -- @param Ops.AirWing#AIRWING AirWing The AirWing to (also) obtain CAP flights from
 -- @return #AWACS self
 function AWACS:AddCAPAirWing(AirWing)
-  self:I(self.lid.."AddCAPAirWing")
+  self:T(self.lid.."AddCAPAirWing")
   if AirWing then
     -- TODO - Test Install callback
     -- DONE - add distance to AO as UniqueID
@@ -2469,9 +3010,10 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
   local threatsize, threatsizetext = self:_GetBlurredSize(size)
   local threatlevel = contact.threatlevel
   local threattext = self:_GetThreatLevelText(threatlevel)
-  local clustercoordinate = contact.position
-
-  local BRAfromBulls = self:_GetBRAfromBullsOrAO(clustercoordinate)
+  local clustercoordinate = contact.group:GetCoordinate()
+  clustercoordinate:SetHeading(contact.group:GetHeading())
+  
+  local BRAfromBulls = self:_GetBRAfromBullsOrAO(clustercoordinate).."."
   if isGroup then
     BRAfromBulls = clustercoordinate:ToStringBRAANATO(Group:GetCoordinate(),IsNew)
   end
@@ -2496,25 +3038,30 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
   elseif IsPopup then
     BRAText = BRAText .. " Pop-up group."
     TextScreen = TextScreen .. " Pop-up group."
+  elseif IsBogeyDope and Tag and Tag ~= "" then
+    BRAText = BRAText .. " "..Tag.." group."
+    TextScreen = TextScreen .. " "..Tag.." group."
   else
     BRAText = BRAText .. " Group."
     TextScreen = TextScreen .. " Group."
   end
   
-  if Tag and Tag ~= "" then
-    BRAText = BRAText .. " "..Tag.."."
-    TextScreen = TextScreen .. " "..Tag.."."
+  if not IsBogeyDope then
+    if Tag and Tag ~= "" then
+      BRAText = BRAText .. " "..Tag.."."
+      TextScreen = TextScreen .. " "..Tag.."."
+    end
   end
   
   BRAText = BRAText .. " "..threatsizetext..". "..BRAfromBulls
-  TextScreen = TextScreen .. " "..threatsizetext.."\n"..BRAfromBulls
+  TextScreen = TextScreen .. " "..threatsizetext..". "..BRAfromBulls
   
   if self.ModernEra then
     -- Platform
     if ReportingName and ReportingName ~= "Bogey" then
       ReportingName = string.gsub(ReportingName,"_"," ")
-      BRAText = BRAText .. ". "..ReportingName.."."
-      TextScreen = TextScreen .. ". "..ReportingName.."."
+      BRAText = BRAText .. " "..ReportingName.."."
+      TextScreen = TextScreen .. " "..ReportingName.."."
     end
     -- High - > 40k feet
     local height = contact.group:GetHeight()
@@ -2534,7 +3081,7 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
     end
   end
   
-  self:I(BRAText)
+  --self:I(BRAText)
   
   local RadioEntry = {} -- #AWACS.RadioEntry
   RadioEntry.TextTTS = BRAText
@@ -2542,7 +3089,7 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
   RadioEntry.IsNew = IsNew
   RadioEntry.IsGroup = isGroup
   RadioEntry.GroupID = GID
-  RadioEntry.Duration = STTS.getSpeechTime(BRAText,1.2,false)+2 or 16
+  RadioEntry.Duration = STTS.getSpeechTime(BRAText,0.95,false)+2 or 16
   RadioEntry.ToScreen = true
   
   self.RadioQueue:Push(RadioEntry)
@@ -2572,15 +3119,17 @@ end
 -- @param #AWACS self
 -- @return #number CAPMissions
 -- @return #number Alert5Missions
+-- @return #number InterceptMissions
 function AWACS:_CleanUpAIMissionStack()
-  self:I(self.lid.."_CleanUpAIMissionStack")
+  self:T(self.lid.."_CleanUpAIMissionStack")
   
   local CAPMissions = 0
   local Alert5Missions = 0
+  local InterceptMissions = 0
   
   local MissionStack = FIFO:New()
   
-  self:I("Checking MissionStack")
+  self:T("Checking MissionStack")
   for _,_mission in pairs(self.CatchAllMissions) do
     -- looking for missions of type CAP and ALERT5
     local mission = _mission -- Ops.Auftrag#AUFTRAG
@@ -2591,20 +3140,23 @@ function AWACS:_CleanUpAIMissionStack()
     elseif type == AUFTRAG.Type.CAP then
       MissionStack:Push(mission,mission.auftragsnummer)
       CAPMissions = CAPMissions + 1
+    elseif type == AUFTRAG.Type.INTERCEPT then
+      MissionStack:Push(mission,mission.auftragsnummer)
+      InterceptMissions = InterceptMissions + 1
     end
   end
   
   self.AICAPMissions = nil
   self.AICAPMissions = MissionStack
   
-  return CAPMissions, Alert5Missions
+  return CAPMissions, Alert5Missions, InterceptMissions
   
 end
 
 function AWACS:_ConsistencyCheck()
-  self:I(self.lid.."_ConsistencyCheck")
+  self:T(self.lid.."_ConsistencyCheck")
   if self.debug then
-    self:I("CatchAllMissions")
+    self:T("CatchAllMissions")
     local catchallm = {}
     local report1 = REPORT:New("CatchAll")
     report1:Add("====================")
@@ -2632,7 +3184,7 @@ function AWACS:_ConsistencyCheck()
     
     local catchallfg = {}
     
-    self:I("CatchAllFGs")
+    self:T("CatchAllFGs")
     report1:Add("====================")
     report1:Add("CatchAllFGs")
     report1:Add("====================")
@@ -2654,7 +3206,7 @@ function AWACS:_ConsistencyCheck()
       end
     end
     report1:Add("====================")
-    self:I(report1:Text())
+    self:T(report1:Text())
     
     self.CatchAllFGs = nil
     self.CatchAllFGs = catchallfg
@@ -2667,15 +3219,16 @@ end
 -- @param #AWACS self
 -- @return #AWACS self
 function AWACS:_CheckAICAPOnStation()
-  self:I(self.lid.."_CheckAICAPOnStation")
+  self:T(self.lid.."_CheckAICAPOnStation")
   
   self:_ConsistencyCheck()
   
-  local capmissions, alert5missions = self:_CleanUpAIMissionStack()
-  self:I({capmissions, alert5missions})
+  local capmissions, alert5missions, interceptmissions = self:_CleanUpAIMissionStack()
+  self:T({capmissions, alert5missions, interceptmissions})
   
   if self.MaxAIonCAP > 0 then
-    local onstation = self.AICAPMissions:Count()
+    --local onstation = self.AICAPMissions:Count()
+    local onstation = capmissions + alert5missions
     -- control number of AI CAP Flights
     if self.AIRequested < self.MaxAIonCAP then
       -- not enough
@@ -2691,13 +3244,13 @@ function AWACS:_CheckAICAPOnStation()
         local selectedAW = AWS[math.random(1,availableAWS)]
         selectedAW:AddMission(mission)
         self.AIRequested = self.AIRequested + 1
-        self:I("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
+        self:T("CAP="..capmissions.." ALERT5="..alert5missions.." Requested="..self.AIRequested)
       end
     end
 
     if self.AIRequested > self.MaxAIonCAP then
       -- too many, send one home
-      self:I(string.format("*** Onstation %d > MaxAIOnCAP %d",onstation,self.MaxAIonCAP))
+      self:T(string.format("*** Onstation %d > MaxAIOnCAP %d",onstation,self.MaxAIonCAP))
       local mission = self.AICAPMissions:Pull() -- Ops.Auftrag#AUFTRAG
       local Groups = mission:GetOpsGroups()
       local OpsGroup = self:_GetAliveOpsGroupFromTable(Groups)
@@ -2716,7 +3269,7 @@ function AWACS:_CheckAICAPOnStation()
       for _,_Mission in pairs(missions) do
         --local mission = self.AICAPMissions:ReadByID(_MissionID) -- Ops.Auftrag#AUFTRAG
         local mission = _Mission -- Ops.Auftrag#AUFTRAG
-        self:I("Looking at AuftragsNr " .. mission.auftragsnummer)
+        self:T("Looking at AuftragsNr " .. mission.auftragsnummer)
         local type = mission:GetType()
         local state = mission:GetState()
         --if type == AUFTRAG.Type.CAP or type == AUFTRAG.Type.ALERT5 or type == AUFTRAG.Type.ORBIT then
@@ -2727,7 +3280,7 @@ function AWACS:_CheckAICAPOnStation()
           local FGstate = mission:GetGroupStatus(OpsGroup)
           if OpsGroup then
              FGstate = OpsGroup:GetState()
-             self:I("FG Object in state: " .. FGstate)
+             self:T("FG Object in state: " .. FGstate)
           end
           -- FG ready?
          -- if OpsGroup and (state == AUFTRAG.Status.STARTED or FGstate ==  AUFTRAG.Status.EXECUTING or FGstate ==  AUFTRAG.Status.SCHEDULED) then
@@ -2777,7 +3330,7 @@ function AWACS:_CheckAICAPOnStation()
         report:Add("===============") 
       end
       if self.debug then
-        self:T(report:Text())
+        self:I(report:Text())
       end    
     end
   end
@@ -2817,6 +3370,133 @@ function AWACS:_SetAIROE(FlightGroup,Group)
   return self
 end
 
+--- [Internal] Assign a Pilot to a target
+-- @param #AWACS self
+-- @param #table Pilots Table of #AWACS.ManagedGroup Pilot 
+-- @param #AWACS.ManagedContact Target
+-- @return #AWACS self 
+function AWACS:_AssignPilotToTarget(Pilots,Target)
+  self:I(self.lid.."_AssignPilotToTarget")
+  
+  local inreach = false
+  local Pilot = nil
+  
+  -- Check Distance
+  local targetgroupcoord = Target.Contact.position
+  local closest = UTILS.NMToMeters(101)
+  
+  -- get closest pilot from target
+  for _,_Pilot in pairs(Pilots) do
+    local pilotcoord = _Pilot.Group:GetCoordinate()
+    local targetdist = targetgroupcoord:Get2DDistance(pilotcoord)
+    if UTILS.MetersToNM(targetdist) < 100 and targetdist < closest then
+      self:I(string.format("%sTarget distance %d! Assignment %s!",self.lid,UTILS.Round(UTILS.MetersToNM(targetdist),0),_Pilot.CallSign))
+      inreach = true
+      closest = targetdist
+      Pilot = _Pilot
+    else
+      self:I(self.lid .. "Target distance > 100NM! No Assignment!")
+    end
+  end
+
+  -- TODO Currently doing AI only
+  if inreach and Pilot and Pilot.IsAI then
+    -- Target information
+    local callsign = Pilot.CallSign
+    local FGStatus = Pilot.FlightGroup:GetState()
+    self:I("Pilot AI Callsign: " .. callsign)
+    self:I("Pilot FG State: " .. FGStatus)
+    local targetstatus = Target.Target:GetState()
+    self:I("Target State: " .. targetstatus)
+ 
+    --
+    local currmission = Pilot.FlightGroup:GetMissionCurrent()
+    if currmission then
+      self:I("Current Mission: " .. currmission:GetType())
+    end
+    -- create one intercept Auftrag and one to return to CAP post this one
+    local intercept = AUFTRAG:NewINTERCEPT(Target.Target)
+    intercept:SetWeaponExpend(AI.Task.WeaponExpend.ALL)
+    intercept:SetWeaponType(ENUMS.WeaponFlag.Auto)
+    
+    Pilot.FlightGroup:AddMission(intercept)    
+    
+    local Angels = Pilot.AnchorStackAngels
+    Angels = Angels * 1000
+    local AnchorSpeed = self.CapSpeedBase or 220
+    AnchorSpeed = UTILS.KnotsToAltKIAS(AnchorSpeed,Angels)
+    local Anchor = self.AnchorStacks:ReadByPointer(Pilot.AnchorStackNo) -- #AWACS.AnchorData
+    local capauftrag = AUFTRAG:NewCAP(Anchor.AnchorZone,Angels,AnchorSpeed,Anchor.AnchorZoneCoordinate,0,15,{})
+    capauftrag:SetTime(nil,((self.CAPTimeOnStation*3600)+(15*60)))
+    Pilot.FlightGroup:AddMission(capauftrag) 
+    
+    -- cancel current mission
+    if currmission then
+      currmission:__Cancel(3)
+    end
+    
+    -- update known mission list
+    self.CatchAllMissions[#self.CatchAllMissions+1] = intercept
+    self.CatchAllMissions[#self.CatchAllMissions+1] = capauftrag
+    
+    -- update pilot TaskSheet
+    self.ManagedTasks:PullByID(Pilot.CurrentTask)
+    
+    Pilot.HasAssignedTask = true
+    Pilot.CurrentTask = self:_CreateTaskForGroup(Pilot.GID,AWACS.TaskDescription.INTERCEPT,"Intercept Task",Target.Target,AWACS.TaskStatus.ASSIGNED,intercept)
+    Pilot.CurrentAuftrag = intercept.auftragsnummer
+    Pilot.ContactCID = Target.CID
+    
+    -- update managed group
+    self.ManagedGrps[Pilot.GID] = Pilot
+    
+    -- Update Contact Status
+    Target.LinkedTask = Pilot.CurrentTask
+    Target.LinkedGroup = Pilot.GID
+    Target.Status = AWACS.TaskStatus.ASSIGNED
+    Target.EngagementTag = string.format("Targeted by %s.",Pilot.CallSign)
+    
+    self.Contacts:PullByID(Target.CID)
+    self.Contacts:Push(Target,Target.CID)
+    
+    -- message commit and return commit from AI
+    --[[
+    Controller: “TANGO, TEN GROUPS, GROUP ROCK 250/45, THIRTY-FIVE 
+    THOUSAND, TRACK EAST, HOSTILE, RECOMMEND RAPTOR COMMIT.”
+    Fighter: “RAPTOR COMMIT.
+    --]]
+
+    local bratext = Target.Contact.position:ToStringBRA(Pilot.Group:GetCoordinate())
+    local text = string.format("%s. %s group. %s. %s commit.", self.callsigntxt,Target.TargetGroupNaming,bratext,Pilot.CallSign)
+    
+    local RadioEntry = {} -- #AWACS.RadioEntry
+    RadioEntry.IsNew = true
+    RadioEntry.TextTTS = text
+    RadioEntry.TextScreen = text
+    RadioEntry.ToScreen = self.debug
+    RadioEntry.Duration = (STTS.getSpeechTime(text,0.95,false) or 8) + 5
+    
+    self.RadioQueue:Push(RadioEntry)
+    
+    local text = string.format("%s. Commit.",Pilot.CallSign)
+    local RadioEntry = {} -- #AWACS.RadioEntry
+    RadioEntry.IsNew = true
+    RadioEntry.TextTTS = text
+    RadioEntry.TextScreen = text
+    RadioEntry.ToScreen = self.debug
+    RadioEntry.FromAI = true
+    RadioEntry.GroupID = Pilot.GID
+    RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
+    
+    self.RadioQueue:Push(RadioEntry)
+    
+    self:__Intercept(2)
+    
+  end
+  
+  return self
+end
+
 -- TODO FSMs
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Functions
@@ -2829,7 +3509,7 @@ end
 -- @param #string To
 -- @return #AWACS self
 function AWACS:onafterStart(From, Event, To)
-  self:I({From, Event, To})
+  self:T({From, Event, To})
   
   -- Set up control zone
   self.ControlZone = ZONE_RADIUS:New(self.OpsZone:GetName(),self.OpsZone:GetVec2(),UTILS.NMToMeters(self.ControlZoneRadius))
@@ -2855,16 +3535,8 @@ function AWACS:onafterStart(From, Event, To)
   return self
 end
 
---- [Internal] onafterStatus
--- @param #AWACS self
--- @param #string From 
--- @param #string Event
--- @param #string To
--- @return #AWACS self
-function AWACS:onafterStatus(From, Event, To)
-  self:I({From, Event, To})
-  
-  self:_SetClientMenus()
+function AWACS:_CheckAwacsStatus()
+  self:I(self.lid.."_CheckAwacsStatus")
   
   local awacs = nil
   if self.AwacsFG then
@@ -2881,16 +3553,16 @@ function AWACS:onafterStatus(From, Event, To)
       self.AwacsInZone = true
       self:I(self.lid.."Arrived in Orbit Zone: " .. orbitzone:GetName())
       local text = string.format("%s on station for A O %s control.",self.callsigntxt,self.OpsZone:GetName() or "A O")
-
+      local textScreen = string.format("%s on station for AO %s control.",self.callsigntxt,self.OpsZone:GetName() or "AO")
       local RadioEntry = {} -- #AWACS.RadioEntry
       RadioEntry.IsNew = true
       RadioEntry.TextTTS = text
-      RadioEntry.TextScreen = text
+      RadioEntry.TextScreen = textScreen
       RadioEntry.ToScreen = true
-      RadioEntry.Duration = STTS.getSpeechTime(text,1.1,false) or 8
+      RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8
       
       self.RadioQueue:Push(RadioEntry)
-      self:_StartIntel(awacs)
+      --self:_StartIntel(awacs)
       
     end
   end 
@@ -2900,7 +3572,11 @@ function AWACS:onafterStatus(From, Event, To)
   --------------------------------
    
   if (awacs and awacs:IsAlive()) then
-  
+    
+    if not self.intelstarted then
+      self:_StartIntel(awacs)
+    end
+    
     -- Check on Awacs Mission Status
     local AWmission = self.AwacsMission -- Ops.Auftrag#AUFTRAG
     local awstatus = AWmission:GetState()
@@ -3070,23 +3746,68 @@ function AWACS:onafterStatus(From, Event, To)
     end
       
     if self.debug then  
-      self:I(report:Text())
-    end
-    
-    -- Check on AUFTRAG status for CAP AI
-    if self:Is("Running") then
-      self:_CheckAICAPOnStation()
+      self:T(report:Text())
     end
   
   else
    -- do other stuff, AWACS dead?
-   -- TODO AWACS dead
-  
+   -- TODO AWACS dead, or per EVENT?
+       -- Check on Awacs Mission Status
+    local AWmission = self.AwacsMission -- Ops.Auftrag#AUFTRAG
+    local awstatus = AWmission:GetState()
+    if AWmission:IsOver() then
+      -- yup we're dead
+      self:I(self.lid.."*****AWACS is dead!*****")
+      self.ShiftChangeAwacsFlag = true
+      self:__AwacsShiftChange(2)
+    end 
   end
   
-  -- Check task queue (both)
-  if self:Is("Running") then
+  return monitoringdata
+end
+
+--- [Internal] onafterStatus
+-- @param #AWACS self
+-- @param #string From 
+-- @param #string Event
+-- @param #string To
+-- @return #AWACS self
+function AWACS:onafterStatus(From, Event, To)
+  self:I({From, Event, To})
+  
+  self:_SetClientMenus()
+  
+  local monitoringdata = self:_CheckAwacsStatus()
+  
+  local awacsalive = false
+  if self.AwacsFG then
+    local awacs = self.AwacsFG:GetGroup() -- Wrapper.Group#GROUP
+    if awacs and awacs:IsAlive() then
+      awacsalive= true
+    end
+  end
+  
+  -- Check on AUFTRAG status for CAP AI
+  if self:Is("Running") and (awacsalive or self.AwacsInZone) then
+    
+    self:_CheckAICAPOnStation()
+    
+    self:_CleanUpContacts()
+    
+    if self.debug then
+     --local outcome, targets = self:_TargetSelectionProcess() -- TODO for debug ATM
+    end
+    local outcome, targets = self:_TargetSelectionProcess(true)
+    
     self:_CheckTaskQueue()
+    
+    local AI, Humans = self:_GetIdlePilots()
+    -- assign Pilot if there are targets and available Pilots, prefer Humans to AI
+    -- TODO - Implemented AI First, Humans laters ;)
+    if outcome and #AI > 0 then
+      -- add a task for AI
+      self:_AssignPilotToTarget(AI,targets:Pull())
+    end
   end
   
   monitoringdata.AwacsShiftChange = self.ShiftChangeAwacsFlag
@@ -3182,7 +3903,7 @@ end
 -- @param #number AnchorStackNo
 -- @return #AWACS self
 function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo, AnchorAngels)
-  self:I({From, Event, To, "GID=" .. GID, "Stack=" .. AnchorStackNo})
+  self:T({From, Event, To, "GID=" .. GID, "Stack=" .. AnchorStackNo})
   -- TODO
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
   if not managedgroup then
@@ -3218,7 +3939,7 @@ function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo
   
   self.RadioQueue:Push(RadioEntry)
       
-  self:_CreateTaskForGroup(GID,AWACS.TaskDescription.ANCHOR,TextTasking,Anchor.AnchorZone)
+  managedgroup.CurrentTask = self:_CreateTaskForGroup(GID,AWACS.TaskDescription.ANCHOR,TextTasking,Anchor.AnchorZone)
   
  -- if isAI and AuftragsNr and AuftragsNr > 0 and self.AICAPMissions:HasUniqueID(AuftragsNr) then
  
@@ -3293,10 +4014,22 @@ function AWACS:onafterNewContact(From,Event,To,Contact)
   Contact.CID = managedcontact.CID
   Contact.TargetGroupNaming = managedcontact.TargetGroupNaming
   
-  self.Contacts:Push(Contact,self.CID)
-  self.ManagedContacts:Push(Contact,self.CID)
+  self.Contacts:Push(managedcontact,self.CID)
+  --self.ManagedContacts:Push(managedcontact,self.CID)
   
-  self:_AnnounceContact(Contact,true,nil,false,managedcontact.TargetGroupNaming,IsPopup,managedcontact.ReportingName)
+  -- only announce if in right distance to HVT/AIC or in ControlZone or in BorderZone
+  local ContactCoordinate = Contact.position:GetVec2()
+  local incontrolzone = self.ControlZone:IsVec2InZone(ContactCoordinate)
+  -- distance check to HVT
+  local distance = Contact.position:Get2DDistance(self.OrbitZone:GetCoordinate())
+  local inborderzone = false
+  if self.BorderZone then
+    inborderzone = self.BorderZone:IsVec2InZone(ContactCoordinate)
+  end
+  
+  if incontrolzone or inborderzone or (distance <= UTILS.NMToMeters(45)) then
+    self:_AnnounceContact(Contact,true,nil,false,managedcontact.TargetGroupNaming,IsPopup,managedcontact.ReportingName)
+  end
   
   return self
 end
@@ -3310,7 +4043,7 @@ end
 -- @return #AWACS self
 function AWACS:onafterLostContact(From,Event,To,Contact)
   self:T({From, Event, To, Contact})
-  -- TODO Check Idle, Assigned Tasks for status
+  self:_CleanUpContacts()
   return self
 end
   
@@ -3324,7 +4057,7 @@ end
 -- @return #AWACS self
 function AWACS:onafterLostCluster(From,Event,To,Cluster,Mission)
   self:T({From, Event, To})
-  -- TODO Remove Cluster from Picture
+  self:_CleanUpContacts()
   return self
 end
 
@@ -3347,14 +4080,14 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
   if not RadioEntry.FromAI then
     -- AI AWACS Speaking
     self.AwacsFG:RadioTransmission(RadioEntry.TextTTS,1,false)
-    self:I(RadioEntry.TextTTS)
+    self:T(RadioEntry.TextTTS)
   else
     -- CAP AI speaking
     if RadioEntry.GroupID and RadioEntry.GroupID ~= 0 then
       local managedgroup = self.ManagedGrps[RadioEntry.GroupID] -- #AWACS.ManagedGroup
       if managedgroup and managedgroup.FlightGroup and managedgroup.FlightGroup:IsAlive() then
         managedgroup.FlightGroup:RadioTransmission(RadioEntry.TextTTS,1,false)
-        self:I(RadioEntry.TextTTS)
+        self:T(RadioEntry.TextTTS)
       end
     end
   end
@@ -3365,7 +4098,7 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
       local managedgroup = self.ManagedGrps[RadioEntry.GroupID] -- #AWACS.ManagedGroup
       if managedgroup and managedgroup.Group and managedgroup.Group:IsAlive() then
         MESSAGE:New(RadioEntry.TextScreen,20,"AWACS"):ToGroup(managedgroup.Group)
-        self:I(RadioEntry.TextScreen)
+        self:T(RadioEntry.TextScreen)
       end
     else
       MESSAGE:New(RadioEntry.TextScreen,20,"AWACS"):ToCoalition(self.coalition)
@@ -3412,7 +4145,7 @@ end
 -- @return #AWACS self
 function AWACS:onafterAwacsShiftChange(From,Event,To)
   self:I({From, Event, To})
-  -- request new Escorts, check if AWACS-FG still alive first!
+  -- request new AWACS
   if self.AwacsFG and self.ShiftChangeAwacsFlag and not self.ShiftChangeAwacsRequested then
     
     -- ok we're good to re-request
@@ -3445,16 +4178,90 @@ end
 function AWACS:onafterFlightOnMission(From, Event, To, FlightGroup, Mission)
   self:I({From, Event, To})
   -- coming back from AW, set up the flight
-  self:I("FlightGroup " .. FlightGroup:GetName() .. " Mission " .. Mission:GetName() .. " Type "..Mission:GetType())
+  self:T("FlightGroup " .. FlightGroup:GetName() .. " Mission " .. Mission:GetName() .. " Type "..Mission:GetType())
   self.CatchAllFGs[#self.CatchAllFGs+1] = FlightGroup
   if not self:Is("Stopped") then
     if not self.AwacsReady or self.ShiftChangeAwacsFlag or self.ShiftChangeEscortsFlag then
      self:_StartSettings(FlightGroup,Mission)
     elseif Mission and (Mission:GetType() == AUFTRAG.Type.CAP or Mission:GetType() == AUFTRAG.Type.ALERT5 or Mission:GetType() == AUFTRAG.Type.ORBIT) then
         if not self.FlightGroups:HasUniqueID(FlightGroup:GetName()) then
-          self:I("Pushing FG " .. FlightGroup:GetName() .. " to stack!")
+          self:T("Pushing FG " .. FlightGroup:GetName() .. " to stack!")
           self.FlightGroups:Push(FlightGroup,FlightGroup:GetName())
         end
+    end
+  end
+  return self
+end
+
+--- On after "ReAnchor".
+-- @param #AWACS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number GID Group ID to check and re-anchor if possible
+-- @return #AWACS self
+function AWACS:onafterReAnchor(From, Event, To, GID)
+  self:I({From, Event, To, GID})
+  -- get managedgroup
+  -- check AI FG state
+  -- check weapon state
+  -- check fuel state
+  -- vector back to anchor or RTB
+  local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
+  if managedgroup then
+    if managedgroup.IsAI then
+      -- AI will now have a new CAP AUFTRAG and head back to the stack anyway
+      local AIFG = managedgroup.FlightGroup -- Ops.FlightGroup#FLIGHTGROUP
+      if AIFG and AIFG:IsAlive() then
+        -- check state
+        if AIFG:IsFuelLow() or AIFG:IsOutOfMissiles() or AIFG:IsOutOfAmmo() then
+          local destbase = AIFG.homebase
+          if not destbase then destbase = self.Airbase end
+          -- RTB call needs an AIRBASE
+          AIFG:RTB(destbase)
+          -- Check out
+          self:_CheckOut(AIFG:GetGroup(),GID)
+          self.AIRequested = self.AIRequested - 1
+        else
+          -- re-establish anchor task
+          -- get anchor zone data
+          local Anchor = self.AnchorStacks:ReadByPointer(managedgroup.AnchorStackNo) -- #AWACS.AnchorData
+          local AnchorZone = Anchor.AnchorZone -- Core.Zone#ZONE
+          managedgroup.CurrentTask = self:_CreateTaskForGroup(GID,AWACS.TaskDescription.ANCHOR,"Re-Anchor AI",AnchorZone)
+          managedgroup.HasAssignedTask = true
+          local mission = AIFG:GetMissionCurrent() -- Ops.Auftrag#AUFTRAG
+          if mission then
+            managedgroup.CurrentAuftrag = mission.auftragsnummer or 0
+          else
+            managedgroup.CurrentAuftrag = 0
+          end
+          managedgroup.ContactCID = 0
+          self.ManagedGrps[GID] = managedgroup        
+          self:_MessageVector(GID," to Anchor",Anchor.AnchorZoneCoordinate,managedgroup.AnchorStackAngels)
+        end
+      else
+        -- lost group, remove from known groups, declare vanished
+        -- AI - remove from known FGs! -- done in status loop
+        -- ALL remove from managedgrps
+        
+        -- message loss
+        local savedcallsign = managedgroup.CallSign
+
+        local text = string.format("%s. Lost Flight %s.",self.callsigntxt, savedcallsign)
+        local textScreen = string.format("%s. Lost Flight %s.", self.callsigntxt, savedcallsign)
+        local RadioEntry = {} -- #AWACS.RadioEntry
+        RadioEntry.IsNew = true
+        RadioEntry.TextTTS = text
+        RadioEntry.TextScreen = textScreen
+        RadioEntry.GroupID = 0
+        RadioEntry.ToScreen = self.debug 
+        RadioEntry.Duration = STTS.getSpeechTime(text,0.95,false) or 8 
+        self.RadioQueue:Push(RadioEntry)
+        
+        self.ManagedGrps[GID] = nil
+      end 
+    elseif managedgroup.IsPlayer then
+      -- TODO
     end
   end
   return self
@@ -3476,13 +4283,14 @@ AwacsAW:SetReportOn()
 AwacsAW:SetMarker(true)
 AwacsAW:SetAirbase(AIRBASE:FindByName(AIRBASE.Caucasus.Kutaisi))
 AwacsAW:SetRespawnAfterDestroyed(900)
+AwacsAW:SetTakeoffHot()
 AwacsAW:__Start(2)
 
 -- And a couple of Squads
 -- AWACS itself
 local Squad_One = SQUADRON:New("Awacs One",2,"Awacs North")
 Squad_One:AddMissionCapability({AUFTRAG.Type.ORBIT},100)
-Squad_One:SetFuelLowRefuel(false)
+Squad_One:SetFuelLowRefuel(true)
 Squad_One:SetFuelLowThreshold(0.2)
 Squad_One:SetTurnoverTime(10,20)
 AwacsAW:AddSquadron(Squad_One)
@@ -3494,15 +4302,19 @@ Squad_Two:AddMissionCapability({AUFTRAG.Type.ESCORT})
 Squad_Two:SetFuelLowRefuel(true)
 Squad_Two:SetFuelLowThreshold(0.3)
 Squad_Two:SetTurnoverTime(10,20)
+Squad_Two:SetTakeoffHot()
+Squad_Two:SetRadio(255,radio.modulation.AM)
 AwacsAW:AddSquadron(Squad_Two)
 AwacsAW:NewPayload("Escorts",-1,{AUFTRAG.Type.ESCORT},100)
 
 -- CAP
-local Squad_Three = SQUADRON:New("CAP",2,"CAP North")
+local Squad_Three = SQUADRON:New("CAP",10,"CAP North")
 Squad_Three:AddMissionCapability({AUFTRAG.Type.ALERT5, AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT},80)
 Squad_Three:SetFuelLowRefuel(true)
 Squad_Three:SetFuelLowThreshold(0.3)
 Squad_Three:SetTurnoverTime(10,20)
+Squad_Three:SetTakeoffHot()
+Squad_Two:SetRadio(255,radio.modulation.AM)
 AwacsAW:AddSquadron(Squad_Three)
 AwacsAW:NewPayload("Aerial-1-2",-1,{AUFTRAG.Type.ALERT5,AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT},100)
 
@@ -3510,23 +4322,50 @@ AwacsAW:NewPayload("Aerial-1-2",-1,{AUFTRAG.Type.ALERT5,AUFTRAG.Type.CAP, AUFTRA
 local AwacsAW2 = AIRWING:New("AirForce WH-2","AirForce Two")
 AwacsAW2:SetReportOn()
 AwacsAW2:SetMarker(true)
-AwacsAW2:SetAirbase(AIRBASE:FindByName(AIRBASE.Caucasus.Batumi))
+AwacsAW2:SetAirbase(AIRBASE:FindByName(AIRBASE.Caucasus.Senaki_Kolkhi))
 AwacsAW2:SetRespawnAfterDestroyed(900)
+AwacsAW2:SetTakeoffHot()
 AwacsAW2:__Start(2)
 
 -- CAP2
-local Squad_ThreeOne = SQUADRON:New("CAP2",4,"CAP West")
+local Squad_ThreeOne = SQUADRON:New("CAP2",10,"CAP West")
 Squad_ThreeOne:AddMissionCapability({AUFTRAG.Type.ALERT5, AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT},80)
 Squad_ThreeOne:SetFuelLowRefuel(true)
 Squad_ThreeOne:SetFuelLowThreshold(0.3)
 Squad_ThreeOne:SetTurnoverTime(10,20)
+Squad_ThreeOne:SetTakeoffHot()
+Squad_Two:SetRadio(255,radio.modulation.AM)
 AwacsAW2:AddSquadron(Squad_ThreeOne)
 AwacsAW2:NewPayload("CAP 2-1",-1,{AUFTRAG.Type.ALERT5,AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT},100)
 
 -- Get AWACS started
 local testawacs = AWACS:New("AWACS North",AwacsAW,"blue",AIRBASE.Caucasus.Kutaisi,"Awacs Orbit",ZONE:FindByName("NW Zone"),"Anchor One",255,radio.modulation.AM )
 testawacs:SetEscort(2)
-testawacs:SetAwacsDetails(CALLSIGN.AWACS.Wizard,1,30,300,243,30)
+testawacs:SetAwacsDetails(CALLSIGN.AWACS.Magic,1,30,300,243,20)
 testawacs:SetSRS("E:\\Program Files\\DCS-SimpleRadio-Standalone","female","en-GB",5010,nil)
+testawacs:SetBorderZone(ZONE:FindByName("Blue Border"))
 testawacs:AddCAPAirWing(AwacsAW2)
 testawacs:__Start(5)
+
+-- Red CAP
+function GetRedCAP()
+  local caps = SPAWN:New("Red CAP")
+    :InitLimit(0,1)
+    :InitCleanUp(60)
+    :SpawnScheduled(300,0.1)
+  local TU22 = SPAWN:New("TU-22")
+    :InitLimit(0,1)
+    :InitCleanUp(60)
+    :SpawnScheduled(360,0.1)
+  local Fulcrum = SPAWN:New("Aerial-1")
+    :InitLimit(0,1)
+    :InitCleanUp(60)
+    :SpawnScheduled(420,0.1) 
+  local Bears = SPAWN:New("Aerial-2")
+    :InitLimit(0,1)
+    :InitCleanUp(60)
+    :SpawnScheduled(480,0.1) 
+end
+
+local captimer = TIMER:New(GetRedCAP)
+captimer:Start(600)

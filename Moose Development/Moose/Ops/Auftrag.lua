@@ -3150,9 +3150,9 @@ function AUFTRAG:IsSuccess()
   return self.status==AUFTRAG.Status.SUCCESS
 end
 
---- Check if mission is over. This could be state DONE or CANCELLED.
+--- Check if mission is over. This could be state DONE, CANCELLED, SUCCESS, FAILED.
 -- @param #AUFTRAG self
--- @return #boolean If true, mission is currently executing.
+-- @return #boolean If true, mission is over.
 function AUFTRAG:IsOver()
   local over = self.status==AUFTRAG.Status.DONE or self.status==AUFTRAG.Status.CANCELLED or self.status==AUFTRAG.Status.SUCCESS or self.status==AUFTRAG.Status.FAILED
   return over
