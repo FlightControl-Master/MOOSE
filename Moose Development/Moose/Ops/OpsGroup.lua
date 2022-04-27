@@ -2038,14 +2038,16 @@ end
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
 -- @param #number Port SRS port. Default 5002.
 -- @param #string PathToGoogleKey Full path to the google credentials JSON file, e.g. `"C:\Users\myUsername\Downloads\key.json"`.
+-- @param #string Label Label of the SRS comms for the SRS Radio overlay. Defaults to "ROBOT". No spaces allowed!
 -- @return #OPSGROUP self
-function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port, PathToGoogleKey)
+function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port, PathToGoogleKey, Label)
   self.useSRS=true
   self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
   self.msrs:SetGender(Gender)
   self.msrs:SetCulture(Culture)
   self.msrs:SetVoice(Voice)
   self.msrs:SetPort(Port)
+  self.msrs:SetLabel(Label)
   if PathToGoogleKey then
     self.msrs:SetGoogle(PathToGoogleKey)
   end
@@ -2058,8 +2060,9 @@ end
 -- @param #string Text Text of transmission.
 -- @param #number Delay Delay in seconds before the transmission is started.
 -- @param #boolean SayCallsign If `true`, the callsign is prepended to the given text. Default `false`.
+-- @param #number Frequency Override sender frequency, helpful when you need multiple radios from the same sender. Default is the frequency set for the OpsGroup.
 -- @return #OPSGROUP self
-function OPSGROUP:RadioTransmission(Text, Delay, SayCallsign)
+function OPSGROUP:RadioTransmission(Text, Delay, SayCallsign, Frequency)
 
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, OPSGROUP.RadioTransmission, self, Text, 0, SayCallsign)
@@ -2068,8 +2071,12 @@ function OPSGROUP:RadioTransmission(Text, Delay, SayCallsign)
     if self.useSRS and self.msrs then
 
       local freq, modu, radioon=self:GetRadio()
-
-      self.msrs:SetFrequencies(freq)
+      
+      if Frequency then
+        self.msrs:SetFrequencies(Frequency)
+      else
+        self.msrs:SetFrequencies(freq)
+      end
       self.msrs:SetModulations(modu)
       
       if SayCallsign then
@@ -2078,7 +2085,7 @@ function OPSGROUP:RadioTransmission(Text, Delay, SayCallsign)
       end
 
       -- Debug info.
-      self:T(self.lid..string.format("Radio transmission on %.3f MHz %s: %s", freq, UTILS.GetModulationName(modu), Text))
+      self:I(self.lid..string.format("Radio transmission on %.3f MHz %s: %s", freq, UTILS.GetModulationName(modu), Text))
 
       self.msrs:PlayText(Text)
     end

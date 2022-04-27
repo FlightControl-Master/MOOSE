@@ -1447,6 +1447,23 @@ function UTILS.GetModulationName(Modulation)
 
 end
 
+--- Get the NATO reporting name of a unit type name
+-- @param #number Typename The type name.
+-- @return #string The Reporting name or "Bogey".
+function UTILS.GetReportingName(Typename)
+  
+  local typename = string.lower(Typename)
+  
+  for name, value in pairs(ENUMS.ReportingName.NATO) do
+    local svalue = string.lower(value)
+    if string.find(typename,svalue,1,true) then
+      return name
+    end
+  end
+  
+  return "Bogey"  
+end
+
 --- Get the callsign name from its enumerator value
 -- @param #number Callsign The enumerator callsign.
 -- @return #string The callsign name or "Ghostrider".
@@ -2436,7 +2453,11 @@ function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
   local alt = UTILS.Round(UTILS.MetersToFeet(grpLeadUnit:GetAltitude())/1000,0)--*1000
   local track = UTILS.BearingToCardinal(hdg)
   if rangeNM > 3 then
-    BRAANATO = string.format("%s, BRAA, %s, %d miles, Angels %d, %s, Track %s, Spades.",GroupWords,bearing, rangeNM, alt, aspect, track)
+      if aspect == "" then
+        BRAANATO = string.format("%s, BRA, %03d, %d miles, Angels %d, Track %s",GroupWords,bearing, rangeNM, alt, track)
+      else
+        BRAANATO = string.format("%s, BRAA, %03d, %d miles, Angels %d, %s, Track %s",GroupWords, bearing, rangeNM, alt, aspect, track)      
+      end
   end
   return BRAANATO 
 end

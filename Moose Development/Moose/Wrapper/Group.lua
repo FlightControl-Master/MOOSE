@@ -805,11 +805,19 @@ function GROUP:GetVelocityVec3()
   return nil
 end
 
+--- Returns the average group altitude in meters.
+-- @param Wrapper.Group#GROUP self
+-- @param #boolean FromGround Measure from the ground or from sea level (ASL). Provide **true** for measuring from the ground (AGL). **false** or **nil** if you measure from sea level. 
+-- @return #number The altitude of the group or nil if is not existing or alive.  
+function GROUP:GetAltitude(FromGround)
+  self:F2( self.GroupName )
+  return self:GetHeight(FromGround)
+end
 
 --- Returns the average group height in meters.
 -- @param Wrapper.Group#GROUP self
--- @param #boolean FromGround Measure from the ground or from sea level. Provide **true** for measuring from the ground. **false** or **nil** if you measure from sea level. 
--- @return DCS#Vec3 The height of the group or nil if is not existing or alive.  
+-- @param #boolean FromGround Measure from the ground or from sea level (ASL). Provide **true** for measuring from the ground (AGL). **false** or **nil** if you measure from sea level. 
+-- @return #number The height of the group or nil if is not existing or alive.  
 function GROUP:GetHeight( FromGround )
   self:F2( self.GroupName )
 
@@ -909,6 +917,24 @@ function GROUP:GetTypeName()
   return nil
 end
 
+--- [AIRPLANE] Get the NATO reporting name (platform, e.g. "Flanker") of a GROUP (note - first unit the group). "Bogey" if not found. Currently airplanes only!
+--@param #GROUP self
+--@return #string NatoReportingName or "Bogey" if unknown.
+function GROUP:GetNatoReportingName()
+  self:F2( self.GroupName )
+  
+  local DCSGroup = self:GetDCSObject()
+  
+  if DCSGroup then
+    local GroupTypeName = DCSGroup:getUnit(1):getTypeName()
+    self:T3( GroupTypeName )
+    return UTILS.GetReportingName(GroupTypeName)
+  end
+  
+  return "Bogey"
+  
+end
+
 --- Gets the player name of the group.
 -- @param #GROUP self
 -- @return #string The player name of the group.
@@ -1006,6 +1032,8 @@ function GROUP:GetCoordinate()
   
   if FirstUnit then
     local FirstUnitCoordinate = FirstUnit:GetCoordinate()
+    local Heading = self:GetHeading()
+    FirstUnitCoordinate.Heading = Heading
     return FirstUnitCoordinate
   end
   
@@ -1068,7 +1096,7 @@ end
 -- amount of fuel in the group.
 -- @param #GROUP self
 -- @return #number The fuel state of the unit with the least amount of fuel.
--- @return #Unit reference to #Unit object for further processing.
+-- @return Wrapper.Unit#UNIT reference to #Unit object for further processing.
 function GROUP:GetFuelMin()
   self:F3(self.ControllableName)
 

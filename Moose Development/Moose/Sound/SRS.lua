@@ -45,6 +45,7 @@
 -- @field Core.Point#COORDINATE coordinate Coordinate from where the transmission is send.
 -- @field #string path Path to the SRS exe. This includes the final slash "/".
 -- @field #string google Full path google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json".
+-- @field #string Label Label showing up on the SRS radio overlay. Default is "ROBOT". No spaces allowed.
 -- @extends Core.Base#BASE
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -125,11 +126,12 @@ MSRS = {
   volume         =          1,  
   speed          =          1,
   coordinate     =        nil,
+  Label          =    "ROBOT",
 }
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.0.3"
+MSRS.version="0.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -164,6 +166,7 @@ function MSRS:New(PathToSRS, Frequency, Modulation)
   self:SetModulations(Modulation)
   self:SetGender()
   self:SetCoalition()
+  self:SetLabel()
   
   return self
 end
@@ -204,6 +207,22 @@ end
 -- @return #string Path to the directory. This includes the final slash "/".
 function MSRS:GetPath()
   return self.path
+end
+
+--- Set label.
+-- @param #MSRS self
+-- @param #number Label. Default "ROBOT"
+-- @return #MSRS self
+function MSRS:SetLabel(Label)
+  self.Label=Label or "ROBOT"
+  return self
+end
+
+--- Get label.
+-- @param #MSRS self
+-- @return #number Label.
+function MSRS:GetLabel()
+  return self.Label
 end
 
 --- Set port.
@@ -640,8 +659,9 @@ end
 -- @param #number volume Volume.
 -- @param #number speed Speed.
 -- @param #number port Port.
+-- @param #string label Label, defaults to "ROBOT" (displayed sender name in the radio overlay of SRS) - No spaces allowed!
 -- @return #string Command.
-function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port)
+function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port,label)
 
   local path=self:GetPath() or STTS.DIRECTORY    
   local exe=STTS.EXECUTABLE or "DCS-SR-ExternalAudio.exe"
@@ -654,6 +674,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   volume=volume or self.volume
   speed=speed or self.speed
   port=port or self.port
+  label=label or self.Label
   
   -- Replace modulation
   modus=modus:gsub("0", "AM")
@@ -668,7 +689,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   --local command=string.format('start /b "" /d "%s" "%s" -f %s -m %s -c %s -p %s -n "%s" > bla.txt', path, exe, freqs, modus, coal, port, "ROBOT")
   
   -- Command.
-  local command=string.format('"%s\\%s" -f %s -m %s -c %s -p %s -n "%s"', path, exe, freqs, modus, coal, port, "ROBOT")
+  local command=string.format('"%s\\%s" -f %s -m %s -c %s -p %s -n "%s"', path, exe, freqs, modus, coal, port, label)
 
   -- Set voice or gender/culture.
   if voice then

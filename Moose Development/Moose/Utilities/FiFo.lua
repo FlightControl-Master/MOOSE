@@ -38,7 +38,7 @@ do
 FIFO = {
   ClassName = "FIFO",
   lid = "",
-  version = "0.0.3",
+  version = "0.0.5",
   counter = 0,
   pointer = 0,
   stackbypointer = {},
@@ -141,7 +141,11 @@ function FIFO:ReadByPointer(Pointer)
   self:T(self.lid.."ReadByPointer " .. tostring(Pointer))
   if self.counter == 0 or not Pointer or not self.stackbypointer[Pointer]  then return nil end
   local object = self.stackbypointer[Pointer] -- #FIFO.IDEntry
-  return object.data
+  if object then
+    return object.data
+  else
+    return nil
+  end
 end
 
 --- FIFO Read, not Pull, Object from Stack by UniqueID
@@ -152,7 +156,11 @@ function FIFO:ReadByID(UniqueID)
   self:T(self.lid.."ReadByID " .. tostring(UniqueID))
   if self.counter == 0 or not UniqueID or not self.stackbyid[UniqueID]  then return nil end
   local object = self.stackbyid[UniqueID] -- #FIFO.IDEntry
-  return object.data
+  if object then
+    return object.data
+  else
+    return nil
+  end
 end
 
 --- FIFO Pull Object from Stack by UniqueID
@@ -164,7 +172,11 @@ function FIFO:PullByID(UniqueID)
   if self.counter == 0 then return nil end
   local object = self.stackbyid[UniqueID] -- #FIFO.IDEntry
   --self.stackbyid[UniqueID] = nil
-  return self:PullByPointer(object.pointer)
+  if object then
+    return self:PullByPointer(object.pointer)
+  else
+    return nil
+  end
 end
 
 --- FIFO Housekeeping
@@ -410,7 +422,7 @@ do
 LIFO = {
   ClassName = "LIFO",
   lid = "",
-  version = "0.0.2",
+  version = "0.0.5",
   counter = 0,
   pointer = 0,
   stackbypointer = {},
@@ -512,7 +524,11 @@ function LIFO:ReadByPointer(Pointer)
   self:T(self.lid.."ReadByPointer " .. tostring(Pointer))
   if self.counter == 0 or not Pointer or not self.stackbypointer[Pointer]  then return nil end
   local object = self.stackbypointer[Pointer] -- #LIFO.IDEntry
-  return object.data
+  if object then
+    return object.data
+  else
+    return nil
+  end
 end
 
 --- LIFO Read, not Pull, Object from Stack by UniqueID
@@ -523,7 +539,11 @@ function LIFO:ReadByID(UniqueID)
   self:T(self.lid.."ReadByID " .. tostring(UniqueID))
   if self.counter == 0 or not UniqueID or not self.stackbyid[UniqueID]  then return nil end
   local object = self.stackbyid[UniqueID] -- #LIFO.IDEntry
-  return object.data
+  if object then
+    return object.data
+  else
+    return nil
+  end
 end
 
 --- LIFO Pull Object from Stack by UniqueID
@@ -535,7 +555,11 @@ function LIFO:PullByID(UniqueID)
   if self.counter == 0 then return nil end
   local object = self.stackbyid[UniqueID] -- #LIFO.IDEntry
   --self.stackbyid[UniqueID] = nil
-  return self:PullByPointer(object.pointer)
+  if object then
+    return self:PullByPointer(object.pointer)
+  else
+    return nil
+  end
 end
 
 --- LIFO Housekeeping

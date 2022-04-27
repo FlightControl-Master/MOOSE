@@ -11,7 +11,7 @@
 -- 
 -- DCS itself provides a lot of enumerators for various things. See [Enumerators](https://wiki.hoggitworld.com/view/Category:Enumerators) on Hoggit.
 -- 
--- Other Moose classe also have enumerators. For example, the AIRBASE class has enumerators for airbase names.
+-- Other Moose classes also have enumerators. For example, the AIRBASE class has enumerators for airbase names.
 -- 
 -- @module ENUMS
 -- @image MOOSE.JPG
@@ -448,4 +448,113 @@ ENUMS.Phonetic =
   X = 'Xray',
   Y = 'Yankee',
   Z = 'Zulu',
+}
+
+--- Reporting Names (NATO). See the [Wikipedia](https://en.wikipedia.org/wiki/List_of_NATO_reporting_names_for_fighter_aircraft).
+-- DCS known aircraft types
+-- 
+-- @type ENUMS.ReportingName
+ENUMS.ReportingName =
+{
+  NATO = {
+    -- Fighters
+    Dragon = "JF-17", -- China, correctly Fierce Dragon, Thunder for PAC
+    Fagot = "MiG-15",
+    Farmer = "MiG-19", -- Shenyang J-6 and Mikoyan-Gurevich MiG-19
+    Felon = "Su-57",
+    Fencer = "Su-24",
+    Fishbed = "MiG-21",
+    Fitter = "Su-17", -- Sukhoi Su-7 and Su-17/Su-20/Su-22
+    Flogger = "MiG-23",  --and MiG-27
+    Flogger_D = "MiG-27",  --and MiG-23
+    Flagon = "Su-15",
+    Foxbat = "MiG-25",
+    Fulcrum = "MiG-29",
+    Foxhound = "MiG-31",
+    Flanker = "Su-27", -- Sukhoi Su-27/Su-30/Su-33/Su-35/Su-37 and Shenyang J-11/J-15/J-16
+    Flanker_C = "Su-30",
+    Flanker_E = "Su-35",
+    Flanker_F = "Su-37",
+    Flanker_L = "J-11A",
+    Firebird = "J-10",
+    Sea_Flanker = "Su-33",
+    Fullback = "Su-34", -- also Su-32
+    Frogfoot = "Su-25",
+    Tomcat = "F-14", -- Iran
+    Mirage = "Mirage", -- various non-NATO
+    Codling = "Yak-40",
+    Maya = "L-39",
+    -- Fighters US/NATO
+    Warthog = "A-10",
+    --Mosquito = "A-20",
+    Skyhawk = "A-4E",
+    Viggen = "AJS37",
+    Harrier = "AV-8B",
+    Spirit = "B-2",
+    Aviojet = "C-101",
+    Nighthawk = "F-117A",
+    Eagle = "F-15C",
+    Mudhen = "F-15E",
+    Viper = "F-16",
+    Phantom = "F-4E",
+    Tiger = "F-5", -- was thinkg to name this MiG-25 ;)
+    Sabre = "F-86",
+    Hornet = "A-18", -- avoiding the slash
+    Hawk = "Hawk",
+    Albatros = "L-39",
+    Goshawk = "T-45",
+    Starfighter = "F-104",
+    Tornado = "Tornado",
+    -- Transport / Bomber / Others
+    Atlas = "A400",
+    Lancer = "B1-B",
+    Stratofortress = "B-52H",
+    Hercules = "C-130", -- modded version has type name "Hercules", unfortunately
+    Globemaster = "C-17",
+    Greyhound = "C-2A",
+    Galaxy = "C-5",
+    Hawkexe = "E-2D",
+    Sentry = "E-3A",
+    Stratotanker = "KC-135",
+    Extender = "KC-10",
+    Orion = "P-3C",
+    Viking = "S-3B",
+    Osprey = "V-22",
+    -- Bomber Rus
+    Badger = "H6-J",
+    Bear_J = "Tu-142", -- also Tu-95
+    Bear = "Tu-95", -- also Tu-142
+    Blinder = "Tu-22",
+    Blackjack = "Tu-160",
+    -- AIC / Transport / Other
+    Clank = "An-30",
+    Curl = "An-26",
+    Candid = "IL-76",
+    Midas = "IL-78",
+    Mainstay = "A-50", 
+    Mainring = "KJ-2000", -- A-50 China
+    Yak = "Yak-52",
+    -- Helos
+    Helix = "Ka-27",
+    Shark = "Ka-50",
+    Hind = "Mi-24",
+    Halo = "Mi-26",
+    Hip = "Mi-8",
+    Havoc = "Mi-28",
+    Gazelle = "SA342",
+    -- Helos US
+    Huey = "UH-1H",
+    Cobra = "AH-1",
+    Apache = "AH-64",
+    Chinook = "CH-47",
+    Sea_Stallion = "CH-53",
+    Kiowa = "OH-58",
+    Seahawk = "SH-60",
+    Blackhawk = "UH-60",
+    Sea_King = "S-61",
+    -- Drones
+    UCAV = "WingLoong",
+    Reaper = "MQ-9",
+    Predator = "MQ-1A",
+  }
 }

@@ -408,6 +408,17 @@ function UNIT:GetClient()
   return nil
 end
 
+--- [AIRPLANE] Get the NATO reporting name of a UNIT. Currently airplanes only!
+--@param #UNIT self
+--@return #string NatoReportingName or "Bogey" if unknown.
+function UNIT:GetNatoReportingName()
+  
+  local typename = self:GetTypeName()
+  return UTILS.GetReportingName(typename)
+  
+end
+
+
 --- Returns the unit's number in the group. 
 -- The number is the same number the unit has in ME. 
 -- It may not be changed during the mission. 
