@@ -430,13 +430,16 @@ end
 -- Cohort assets will not be available until relocation is finished.
 -- @param #LEGION self
 -- @param Ops.Cohort#COHORT Cohort The cohort to be relocated.
--- @param Ops.Legion#LEGION Legion.
--- @param #number Delay Delay in seconds before relocation takes place. Default 0 sec.
+-- @param Ops.Legion#LEGION Legion The legion where the cohort is relocated to.
+-- @param #number Delay Delay in seconds before relocation takes place. Default `nil`, *i.e.* ASAP.
+-- @param #number NcarriersMin Min number of transport carriers in case the troops should be transported. Default `nil` for no transport.
+-- @param #number NcarriersMax Max number of transport carriers.
+-- @param #table TransportLegions Legion(s) assigned for transportation. Default is that transport assets can only be recruited from this legion.
 -- @return #LEGION self
-function LEGION:RelocateCohort(Cohort, Legion, Delay)
+function LEGION:RelocateCohort(Cohort, Legion, Delay, NcarriersMin, NcarriersMax, TransportLegions)
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, LEGION.RelocateCohort, self, Cohort, Legion, 0)
+    self:ScheduleOnce(Delay, LEGION.RelocateCohort, self, Cohort, Legion, 0, NcarriersMin, NcarriersMax, TransportLegions)
   else
   
     -- Add cohort to legion.
@@ -465,17 +468,45 @@ function LEGION:RelocateCohort(Cohort, Legion, Delay)
     -- Create a relocation mission.
     local mission=AUFTRAG:_NewRELOCATECOHORT(Legion, Cohort)
     
-    -- Add assets to mission.
-    mission:_AddAssets(Cohort.assets)
-
-    -- Debug info.
-    self:I(self.lid..string.format("Relocating Cohort %s [nassets=%d] to legion %s", Cohort.name, #Cohort.assets, Legion.alias))
+    if false then
+      --- Disabled for now.
     
-    -- Assign mission to this legion.
-    self:MissionAssign(mission, {self})
+      -- Add assets to mission.
+      mission:_AddAssets(Cohort.assets)
+  
+      -- Debug info.
+      self:I(self.lid..string.format("Relocating Cohort %s [nassets=%d] to legion %s", Cohort.name, #Cohort.assets, Legion.alias))
+      
+      -- Assign mission to this legion.
+      self:MissionAssign(mission, {self})
+    
+    else
+    
+      -- Assign cohort to mission.
+      mission:AssignCohort(Cohort)
+      
+      -- All assets required.
+      mission:SetRequiredAssets(#Cohort.assets)
+      
+      -- Set transportation.
+      if NcarriersMin and NcarriersMin>0 then
+        mission:SetRequiredTransport(Legion.spawnzone, NcarriersMin, NcarriersMax)
+      end
+      
+      -- Assign transport legions.
+      if TransportLegions then
+        for _,legion in pairs(TransportLegions) do
+          mission:AssignTransportLegion(legion)
+        end
+      end
+      
+      -- Add mission.
+      self:AddMission(mission)
+    end
       
   end
 
+  return self
 end
 
 --- Get cohort by name.
@@ -810,7 +841,7 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
         ---
   
         if asset.flightgroup then
-  
+          
           -- Add new mission.
           asset.flightgroup:AddMission(Mission)
           
@@ -822,27 +853,29 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
           local currM=asset.flightgroup:GetMissionCurrent()
                               
           if currM then
+          
+            -- Cancel?
             local cancel=false
+            -- Pause?
+            local pause=false
           
             -- Check if mission is INTERCEPT and asset is currently on GCI mission. If so, GCI is paused.
             if currM.type==AUFTRAG.Type.GCICAP and Mission.type==AUFTRAG.Type.INTERCEPT then
-              self:T(self.lid..string.format("Pausing %s mission %s to send flight on intercept mission %s", currM.type, currM.name, Mission.name))
-              asset.flightgroup:PauseMission()            
+              pause=true
+            elseif (currM.type==AUFTRAG.Type.ONGUARD or currM.type==AUFTRAG.Type.PATROLZONE) and (Mission.type==AUFTRAG.Type.ARTY or Mission.type==AUFTRAG.Type.GROUNDATTACK) then
+              pause=true
             end
             
-            -- Cancel current ALERT5 mission
+            -- Cancel current ALERT5 mission.
             if currM.type==AUFTRAG.Type.ALERT5 then
               cancel=true
             end
-            
-            -- Cancel the current mission.
-            if currM.type==AUFTRAG.Type.ONGUARD or currM.type==AUFTRAG.Type.ARMOREDGUARD then
-              cancel=true              
-            end
-            
+                        
+            -- Cancel current mission for relcation.
             if Mission.type==AUFTRAG.Type.RELOCATECOHORT then
               cancel=true
               
+              -- Get request ID.
               local requestID=currM.requestID[self.alias]
               
               -- Get request.
@@ -853,18 +886,26 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
                 request.cargogroupset:Remove(asset.spawngroupname, true)
               else
                 self:E(self.lid.."ERROR: no request for spawned asset!")
-              end
+              end              
+              
             end
             
-            
+            -- Cancel mission.
             if cancel then
+              self:T(self.lid..string.format("Cancel current mission %s [%s] to send group on mission %s [%s]", currM.name, currM.type, Mission.name, Mission.type))
               asset.flightgroup:MissionCancel(currM)
+            elseif pause then
+              self:T(self.lid..string.format("Pausing current mission %s [%s] to send group on mission %s [%s]", currM.name, currM.type, Mission.name, Mission.type))
+              asset.flightgroup:PauseMission()
             end
+            
+            -- Not reserved any more.
+            asset.isReserved=false
           
           end
           
           -- Trigger event.
-          self:__OpsOnMission(5, asset.flightgroup, Mission)
+          self:__OpsOnMission(2, asset.flightgroup, Mission)
   
         else
           self:E(self.lid.."ERROR: OPSGROUP for asset does NOT exist but it seems to be SPAWNED (asset.spawned=true)!")
@@ -893,6 +934,13 @@ function LEGION:onafterMissionRequest(From, Event, To, Mission)
 
       -- Set asset to requested! Important so that new requests do not use this asset!
       asset.requested=true
+      
+      -- Spawned asset are not requested.
+      if asset.spawned then
+        asset.requested=false
+      end
+      
+      -- Not reserved and more.
       asset.isReserved=false
 
       -- Set mission task so that the group is spawned with the right one.
@@ -1344,7 +1392,6 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
     local Tacan=cohort:FetchTacan()
     if Tacan then
       asset.tacan=Tacan
-      --flightgroup:SetDefaultTACAN(Tacan,Morse,UnitName,Band,OffSwitch)
       flightgroup:SwitchTACAN(Tacan, Morse, UnitName, Band)
     end
 
@@ -1400,6 +1447,11 @@ function LEGION:onafterAssetSpawned(From, Event, To, group, asset, request)
         
         -- Add mission to flightgroup queue. If mission has an OPSTRANSPORT attached, all added OPSGROUPS are added as CARGO for a transport.
         flightgroup:AddMission(mission)
+        
+        -- RTZ on out of ammo.
+        if self:IsBrigade() or self:IsFleet() then
+          flightgroup:SetReturnOnOutOfAmmo()
+        end
                   
         -- Trigger event.
         self:__OpsOnMission(5, flightgroup, mission)
@@ -1669,26 +1721,7 @@ function LEGION:IsAssetOnMission(asset, MissionTypes)
     end
 
   end
-
-  -- Alternative: run over all missions and compare to mission assets.
-  --[[
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-
-    if mission:IsNotOver() then
-      for _,_asset in pairs(mission.assets) do
-        local sqasset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-
-        if sqasset.uid==asset.uid then
-          return true
-        end
-
-      end
-    end
-
-  end
-  ]]
-
+  
   return false
 end
 
@@ -1907,7 +1940,6 @@ function LEGION:CountAssetsOnMission(MissionTypes, Cohort)
     end
   end
 
-  --env.info(string.format("FF N=%d Np=%d, Nq=%d", Np+Nq, Np, Nq))
   return Np+Nq, Np, Nq
 end
 
@@ -2043,11 +2075,11 @@ function LEGION:RecruitAssetsForMission(Mission)
   -- No escort cohorts/legions given ==> take own cohorts.    
   if #Cohorts==0 then
     Cohorts=self.cohorts
-  end    
-  
+  end
+    
   -- Recuit assets.
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, 
-  Mission.engageRange, Mission.refuelSystem, nil, nil, nil, nil, nil, {Mission.engageWeaponType})
+  Mission.engageRange, Mission.refuelSystem, nil, nil, nil, Mission.attributes, Mission.properties, {Mission.engageWeaponType})
 
   return recruited, assets, legions
 end
@@ -2226,10 +2258,14 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     local cohort=_cohort --Ops.Cohort#COHORT
     if WeaponTypes and #WeaponTypes>0 then
       for _,WeaponType in pairs(WeaponTypes) do
-        for _,_weaponData in pairs(cohort.weaponData or {}) do
-          local weaponData=_weaponData --Ops.OpsGroup#OPSGROUP.WeaponData
-          if weaponData.BitType==WeaponType then
-            return true
+        if WeaponType==ENUMS.WeaponFlag.Auto then
+          return true
+        else
+          for _,_weaponData in pairs(cohort.weaponData or {}) do
+            local weaponData=_weaponData --Ops.OpsGroup#OPSGROUP.WeaponData
+            if weaponData.BitType==WeaponType then
+              return true
+            end
           end
         end
       end
@@ -2262,9 +2298,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
         Refuel=false
       end
     end
-    
-    --env.info(string.format("Cohort=%s: RefuelSystem=%s, TankerSystem=%s ==> Refuel=%s", cohort.name, tostring(RefuelSystem), tostring(cohort.tankerSystem), tostring(Refuel)))
-    
+        
     -- Is capable of the mission type?
     local Capable=AUFTRAG.CheckMissionCapability({MissionTypeRecruit}, cohort.missiontypes)
     
@@ -2283,12 +2317,19 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     -- Right weapon type.
     local RightWeapon=CheckWeapon(cohort)
     
+    -- Cohort ready to execute mission.
+    local Ready=cohort:IsOnDuty()    
+    if MissionTypeRecruit==AUFTRAG.Type.RELOCATECOHORT then
+      Ready=cohort:IsRelocating()
+      Capable=true
+    end
+    
     -- Debug info.
     cohort:T2(cohort.lid..string.format("State=%s: Capable=%s, InRange=%s, Refuel=%s, CanCarry=%s, Category=%s, Attribute=%s, Property=%s, Weapon=%s",
     cohort:GetState(), tostring(Capable), tostring(InRange), tostring(Refuel), tostring(CanCarry), tostring(RightCategory), tostring(RightAttribute), tostring(RightProperty), tostring(RightWeapon)))
     
     -- Check OnDuty, capable, in range and refueling type (if TANKER).
-    if cohort:IsOnDuty() and Capable and InRange and Refuel and CanCarry and RightCategory and RightAttribute and RightProperty and RightWeapon then
+    if Ready and Capable and InRange and Refuel and CanCarry and RightCategory and RightAttribute and RightProperty and RightWeapon then
 
       -- Recruit assets from cohort.
       local assets, npayloads=cohort:RecruitAssets(MissionTypeRecruit, 999)
@@ -2702,9 +2743,10 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
   -- Reduce score for legions that are futher away.
   score=score-distance
   
-  -- Intercepts need to be carried out quickly. We prefer spawned assets.  
+  -- Check for spawned assets.
   if asset.spawned and asset.flightgroup and asset.flightgroup:IsAlive() then
   
+    -- Get current mission.
     local currmission=asset.flightgroup:GetMissionCurrent()
     
     if currmission then
@@ -2712,10 +2754,13 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
       if currmission.type==AUFTRAG.Type.ALERT5 and currmission.alert5MissionType==MissionType then
         -- Prefer assets that are on ALERT5 for this mission type.
         score=score+25
-      elseif currmission==AUFTRAG.Type.GCICAP and MissionType==AUFTRAG.Type.INTERCEPT then
+      elseif currmission.type==AUFTRAG.Type.GCICAP and MissionType==AUFTRAG.Type.INTERCEPT then
         -- Prefer assets that are on GCICAP to perform INTERCEPTS
         score=score+25
+      elseif (currmission.type==AUFTRAG.Type.ONGUARD or currmission.type==AUFTRAG.Type.PATROLZONE) and (MissionType==AUFTRAG.Type.ARTY  or MissionType==AUFTRAG.Type.GROUNDATTACK) then
+        score=score+25
       end
+      
     end
   
     if MissionType==AUFTRAG.Type.OPSTRANSPORT or MissionType==AUFTRAG.Type.AMMOSUPPLY or MissionType==AUFTRAG.Type.AWACS or MissionType==AUFTRAG.Type.FUELSUPPLY or MissionType==AUFTRAG.Type.TANKER then
@@ -2742,6 +2787,10 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
   -- Max speed of assets.
   -- Fuel amount?
   -- Range of assets?
+  
+  if asset.legion and asset.legion.verbose>=2 then
+    asset.legion:I(asset.legion.lid..string.format("Asset %s [spawned=%s] score=%d", asset.spawngroupname, tostring(asset.spawned), score))
+  end
 
   return score
 end

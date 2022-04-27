@@ -656,58 +656,6 @@ function OPSTRANSPORT:GetEmbarkZone(TransportZoneCombo)
   return TransportZoneCombo.EmbarkZone
 end
 
---[[
-
---- Set transfer carrier(s). These are carrier groups, where the cargo is directly loaded into when disembarked.
--- @param #OPSTRANSPORT self
--- @param Core.Set#SET_GROUP Carriers Carrier set. Can also be passed as a #GROUP, #OPSGROUP or #SET_OPSGROUP object.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #OPSTRANSPORT self
-function OPSTRANSPORT:SetEmbarkCarriers(Carriers, TransportZoneCombo)
-
-  -- Debug info.
-  self:T(self.lid.."Setting embark carriers!")
-  
-  -- Use default TZC if no transport zone combo is provided.
-  TransportZoneCombo=TransportZoneCombo or self.tzcDefault
-
-  if Carriers:IsInstanceOf("GROUP") or Carriers:IsInstanceOf("OPSGROUP") then
-  
-    local carrier=self:_GetOpsGroupFromObject(Carriers)
-    if  carrier then
-      table.insert(TransportZoneCombo.EmbarkCarriers, carrier)
-    end
-      
-  elseif Carriers:IsInstanceOf("SET_GROUP") or Carriers:IsInstanceOf("SET_OPSGROUP") then
-  
-    for _,object in pairs(Carriers:GetSet()) do
-      local carrier=self:_GetOpsGroupFromObject(object)
-      if carrier then
-        table.insert(TransportZoneCombo.EmbarkCarriers, carrier)
-      end
-    end
-    
-  else  
-    self:E(self.lid.."ERROR: Carriers must be a GROUP, OPSGROUP, SET_GROUP or SET_OPSGROUP object!")    
-  end
-
-  return self
-end
-
---- Get embark transfer carrier(s). These are carrier groups, where the cargo is directly loaded into when disembarked.
--- @param #OPSTRANSPORT self
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @return #table Table of carrier OPS groups.
-function OPSTRANSPORT:GetEmbarkCarriers(TransportZoneCombo)
-
-  -- Use default TZC if no transport zone combo is provided.
-  TransportZoneCombo=TransportZoneCombo or self.tzcDefault
-  
-  return TransportZoneCombo.EmbarkCarriers
-end
-
-]]
-
 --- Set disembark zone.
 -- @param #OPSTRANSPORT self
 -- @param Core.Zone#ZONE DisembarkZone Zone where the troops are disembarked.
@@ -1366,6 +1314,25 @@ function OPSTRANSPORT:AddAssetCargo(Asset, TransportZoneCombo)
   return self
 end
 
+--- Get transport zone combo of cargo group.
+-- @param #OPSTRANSPORT self
+-- @param #string GroupName Group name of cargo.
+-- @return #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
+function OPSTRANSPORT:GetTZCofCargo(GroupName)
+
+  for _,_tzc in pairs(self.tzCombos) do
+    local tzc=_tzc --#OPSTRANSPORT.TransportZoneCombo
+    for _,_cargo in pairs(tzc.Cargos) do
+      local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
+      if cargo.opsgroup:GetName()==GroupName then
+        return tzc
+      end
+    end
+  end
+
+  return nil
+end
+
 --- Add LEGION to the transport.
 -- @param #OPSTRANSPORT self
 -- @param Ops.Legion#LEGION Legion The legion.
@@ -1636,6 +1603,24 @@ function OPSTRANSPORT:onafterStatusUpdate(From, Event, To)
   if not self:IsDelivered() then
     self:__StatusUpdate(-30)
   end
+end
+
+--- Check if a cargo group was delivered.
+-- @param #OPSTRANSPORT self
+-- @param #string GroupName Name of the group.
+-- @return #boolean If `true`, cargo was delivered.
+function OPSTRANSPORT:IsCargoDelivered(GroupName)
+
+  for _,_cargo in pairs(self:GetCargos()) do
+    local cargo=_cargo  --Ops.OpsGroup#OPSGROUP.CargoGroup
+    
+    if cargo.opsgroup:GetName()==GroupName then
+      return cargo.delivered
+    end
+    
+  end
+  
+  return nil
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

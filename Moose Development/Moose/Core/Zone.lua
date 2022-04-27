@@ -60,6 +60,7 @@
 -- @field #number DrawID Unique ID of the drawn zone on the F10 map.
 -- @field #table Color Table with four entries, e.g. {1, 0, 0, 0.15}. First three are RGB color code. Fourth is the transparency Alpha value.
 -- @field #number ZoneID ID of zone. Only zones defined in the ME have an ID!
+-- @field #number Surface Type of surface. Only determined at the center of the zone!
 -- @extends Core.Fsm#FSM
 
 
@@ -111,6 +112,7 @@ ZONE_BASE = {
   DrawID=nil,
   Color={},
   ZoneID=nil,
+  Sureface=nil,
 }
 
 
@@ -335,15 +337,22 @@ end
 -- @param #ZONE_BASE self
 -- @return #nil The bounding square.
 function ZONE_BASE:GetBoundingSquare()
-  --return { x1 = 0, y1 = 0, x2 = 0, y2 = 0 }
   return nil
+end
+
+--- Get surface type of the zone.
+-- @param #ZONE_BASE self
+-- @return DCS#SurfaceType Type of surface.
+function ZONE_BASE:GetSurfaceType()
+  local coord=self:GetCoordinate()
+  local surface=coord:GetSurfaceType()
+  return surface
 end
 
 --- Bound the zone boundaries with a tires.
 -- @param #ZONE_BASE self
 function ZONE_BASE:BoundZone()
   self:F2()
-
 end
 
 
@@ -1281,8 +1290,8 @@ end
 
 --- Returns a @{Core.Point#COORDINATE} object reflecting a random 3D location within the zone.
 -- @param #ZONE_RADIUS self
--- @param #number inner (Optional) Minimal distance from the center of the zone. Default is 0.
--- @param #number outer (Optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @param #number inner (Optional) Minimal distance from the center of the zone in meters. Default is 0 m.
+-- @param #number outer (Optional) Maximal distance from the outer edge of the zone in meters. Default is the radius of the zone.
 -- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
 -- @return Core.Point#COORDINATE The random coordinate.
 function ZONE_RADIUS:GetRandomCoordinate(inner, outer, surfacetypes)

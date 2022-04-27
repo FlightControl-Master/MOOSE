@@ -170,6 +170,8 @@ end
 function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
   self:T({channel=Channel, mode=Mode, callsign=Message, bearing=Bearing, duration=Duration})
   
+  Mode=Mode or "Y"
+  
   -- Get frequency.
   local Frequency=UTILS.TACANToFrequency(Channel, Mode)
   
@@ -187,11 +189,16 @@ function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
   
   -- Check if unit is an aircraft and set system accordingly.
   local AA=self.Positionable:IsAir()
+  
+  
   if AA then
     System=5 --NOTE: 5 is how you cat the correct tanker behaviour! --BEACON.System.TACAN_TANKER
     -- Check if "Y" mode is selected for aircraft.
-    if Mode~="Y" then
-      self:E({"WARNING: The POSITIONABLE you want to attach the AA Tacan Beacon is an aircraft: Mode should Y !The BEACON is not emitting.", self.Positionable})
+    if Mode=="X" then
+      --self:E({"WARNING: The POSITIONABLE you want to attach the AA Tacan Beacon is an aircraft: Mode should Y!", self.Positionable})
+      System=BEACON.System.TACAN_TANKER_X
+    else
+      System=BEACON.System.TACAN_TANKER_Y
     end
   end
   
@@ -267,13 +274,12 @@ function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
     IsValid = false
   end
   
-  -- I'm using the beacon type 4 (BEACON_TYPE_TACAN). For System, I'm using 5 (TACAN_TANKER_MODE_Y) if the bearing shows its bearing
-  -- or 14 (TACAN_AA_MODE_Y) if it does not
+  -- I'm using the beacon type 4 (BEACON_TYPE_TACAN). For System, I'm using 5 (TACAN_TANKER_MODE_Y) if the bearing shows its bearing or 14 (TACAN_AA_MODE_Y) if it does not
   local System
   if Bearing then
-    System = 5
+    System = BEACON.System.TACAN_TANKER_Y
   else
-    System = 14
+    System = BEACON.System.TACAN_AA_MODE_Y
   end
   
   if IsValid then -- Starts the BEACON
@@ -281,10 +287,13 @@ function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
     self.Positionable:SetCommand({
       id = "ActivateBeacon",
       params = {
-        type = 4,
+        type = BEACON.Type.TACAN,
         system = System,
         callsign = Message,
+        AA = true,
         frequency = Frequency,
+        bearing = Bearing,
+        modeChannel = "Y",
         }
       })
       

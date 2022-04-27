@@ -529,26 +529,32 @@ function GROUP:HasAttribute(attribute, all)
   -- Get all units of the group.
   local _units=self:GetUnits()
   
-  local _allhave=true
-  local _onehas=false
+  if _units then
   
-  for _,_unit in pairs(_units) do
-    local _unit=_unit --Wrapper.Unit#UNIT
-    if _unit then
-      local _hastit=_unit:HasAttribute(attribute)
-      if _hastit==true then
-        _onehas=true
-      else
-        _allhave=false
-      end
-    end 
+    local _allhave=true
+    local _onehas=false
+    
+    for _,_unit in pairs(_units) do
+      local _unit=_unit --Wrapper.Unit#UNIT
+      if _unit then
+        local _hastit=_unit:HasAttribute(attribute)
+        if _hastit==true then
+          _onehas=true
+        else
+          _allhave=false
+        end
+      end 
+    end
+    
+    if all==true then
+      return _allhave
+    else
+      return _onehas
+    end
+    
   end
   
-  if all==true then
-    return _allhave
-  else
-    return _onehas
-  end
+  return nil
 end
 
 --- Returns the maximum speed of the group.
@@ -563,16 +569,19 @@ function GROUP:GetSpeedMax()
   
     local Units=self:GetUnits()
     
-    local speedmax=0
+    local speedmax=nil
     
     for _,unit in pairs(Units) do
       local unit=unit --Wrapper.Unit#UNIT
+      
       local speed=unit:GetSpeedMax()
-      if speedmax==0 then
-        speedmax=speed
-      elseif speed<speedmax then
+      
+      if speedmax==nil or speed<speedmax then
         speedmax=speed
       end
+      
+      --env.info(string.format("FF unit %s: speed=%.1f, speedmax=%.1f", unit:GetName(), speed, speedmax))
+      
     end
     
     return speedmax

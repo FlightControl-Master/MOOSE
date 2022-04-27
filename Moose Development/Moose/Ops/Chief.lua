@@ -153,17 +153,12 @@
 -- The default mission types and number of assets can be customized for the two scenarious (zone empty or zone occupied by the enemy).
 -- 
 -- In order to do this, you need to create resource lists (one for each scenario) via the @{#CHIEF.CreateResource}() function.
--- These list can than be used to replace the default resources employed with
--- 
--- * @{CHIEF.SetStrategicZoneResourceOccupied}(*StrateticZone, ResourceOccupied*) for the case that the zone is occupied by the enemy and
--- * @{CHIEF.SetStrategicZoneResourceEmpty}(*StrateticZone, ResourceEmpty*) for the case that the zone is empty.
--- 
--- The first parameter *StrateticZone* is the strategic zone object that is returned by the @{#CHIEF.AddStrategicZone}() function.
--- The second parameter is the resource list created with the @{#CHIEF.CreateResource}() function.
+-- These lists can than passed as additional parameters to the @{#CHIEF.AddStrategicZone} function.
 -- 
 -- For example:
 --     
---     -- Create a resource list of mission types and required assets for the case that the zone is occupied.
+--     --- Create a resource list of mission types and required assets for the case that the zone is OCCUPIED.
+--     --
 --     -- Here, we create an enhanced CAS mission and employ at least on and at most two asset groups.
 --     local ResourceOccupied=myChief:CreateResource(AUFTRAG.Type.CASENHANCED, 1, 2)
 --     -- We also add ARTY missions with at least one and at most two assets. We additionally require these to be MLRS groups (and not howitzers).
@@ -173,11 +168,8 @@
 --     -- Add at least one but at most two BOMBCARPET missions.
 --     myChief:AddToResource(ResourceOccupied, AUFTRAG.Type.BOMBCARPET, 1, 2)
 --     
---     -- Replace the default list with the customized one.
---     myChief:SetStrategicZoneResourceOccupied(myStratZone, ResourceOccupied)  
---     
---     
---     -- Create a resource list of mission types and required assets for the case that the zone is empty.
+--     --- Create a resource list of mission types and required assets for the case that the zone is EMPTY.
+--     --
 --     -- Here, we create an ONGUARD mission and employ at least on and at most five infantry assets.
 --     local ResourceEmpty=myChief:CreateResource(AUFTRAG.Type.ONGUARD, 1, 5, GROUP.Attribute.GROUND_INFANTRY)
 --     -- Additionally, we send up to three tank groups.
@@ -185,10 +177,10 @@
 --     -- Finally, we send two groups that patrol the zone.
 --     myChief:AddToResource(ResourceEmpty, AUFTRAG.Type.PATROLZONE, 2)
 --     
---     -- Set this to be the resources employed when the zone is empty.
---     myChief:SetStrategicZoneResourceEmpty(myStratZone, ResourceEmpty)
+--     -- Add stratetic zone with customized reaction.
+--     myChief:AddStrategicZone(myOpsZone, nil , 2, ResourceOccupied, ResourceEmpty)
 -- 
--- As the location of the enemies is not known, only mission types that don't require and explicit target group are possible. These are
+-- As the location of the enemies is not known, only mission types that don't require an explicit target group are possible. These are
 -- 
 -- * `AUFTRAG.Type.CASENHANCED`
 -- * `AUFTRAG.Type.ARTY`
@@ -284,7 +276,7 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.3.0"
+CHIEF.version="0.3.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1006,23 +998,28 @@ function CHIEF:RemoveTarget(Target)
 end
 
 --- Add strategically important zone.
--- By default two resource lists are created. One for the case that the zone is empty and the other for the case that the zone is occupied
--- Empty:
+-- By default two resource lists are created. One for the case that the zone is empty and the other for the case that the zone is occupied.
+-- 
+-- Occupied:
 -- 
 -- * `AUFTRAG.Type.ARTY` with Nmin=1, Nmax=2
 -- * `AUFTRAG.Type.CASENHANCED` with Nmin=1, Nmax=2
 -- 
--- Occupied:
+-- Empty:
 -- 
 -- * `AUFTRAG.Type.ONGUARD` with Nmin=1 and Nmax=3 assets, Attribute=`GROUP.Attribute.GROUND_INFANTRY`.
 -- * `AUFTRAG.Type.ONGURAD` with Nmin=1 and Nmax=1 assets, Attribute=`GROUP.Attribute.GROUND_TANK`.
 -- 
+-- Resources can be created with the @{#CHIEF.CreateResource} and @{#CHIEF.AddToResource} functions.
+-- 
 -- @param #CHIEF self
 -- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
--- @param #number Priority Priority.
--- @param #number Importance Importance.
+-- @param #number Priority Priority. Default 50.
+-- @param #number Importance Importance. Default nil.
+-- @param #CHIEF.Resource ResourceOccupied (Optional) Resources used then zone is occupied by the enemy.
+-- @param #CHIEF.Resource ResourceEmpty (Optional) Resources used then zone is empty.
 -- @return #CHIEF.StrategicZone The strategic zone.
-function CHIEF:AddStrategicZone(OpsZone, Priority, Importance)
+function CHIEF:AddStrategicZone(OpsZone, Priority, Importance, ResourceOccupied, ResourceEmpty)
 
   local stratzone={} --#CHIEF.StrategicZone
   
@@ -1038,12 +1035,20 @@ function CHIEF:AddStrategicZone(OpsZone, Priority, Importance)
   end
   
   -- Add resources if zone is occupied.
-  stratzone.resourceOccup=self:CreateResource(AUFTRAG.Type.ARTY, 1, 2)
-  self:AddToResource(stratzone.resourceOccup, AUFTRAG.Type.CASENHANCED, 1, 2)
+  if ResourceOccupied then
+    stratzone.resourceOccup=UTILS.DeepCopy(ResourceOccupied)
+  else
+    stratzone.resourceOccup=self:CreateResource(AUFTRAG.Type.ARTY, 1, 2)
+    self:AddToResource(stratzone.resourceOccup, AUFTRAG.Type.CASENHANCED, 1, 2)
+  end
   
   -- Add resources if zone is empty
-  stratzone.resourceEmpty=self:CreateResource(AUFTRAG.Type.ONGUARD, 1, 3, GROUP.Attribute.GROUND_INFANTRY)
-  self:AddToResource(stratzone.resourceEmpty, AUFTRAG.Type.ONGUARD, 1, 1, GROUP.Attribute.GROUND_TANK)
+  if ResourceEmpty then
+    stratzone.resourceEmpty=UTILS.DeepCopy(ResourceEmpty)
+  else
+    stratzone.resourceEmpty=self:CreateResource(AUFTRAG.Type.ONGUARD, 1, 3, GROUP.Attribute.GROUND_INFANTRY)
+    self:AddToResource(stratzone.resourceEmpty, AUFTRAG.Type.ONGUARD, 1, 1, GROUP.Attribute.GROUND_TANK)
+  end
 
   -- Add to table.
   table.insert(self.zonequeue, stratzone)
@@ -2442,14 +2447,15 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
           
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
         
       elseif attribute==GROUP.Attribute.GROUND_EWR then
 
         -- EWR
-          
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.SEAD, 100))
-        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,  90))
+        
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI,  100))  
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
         
       elseif attribute==GROUP.Attribute.GROUND_AAA then
       
@@ -2484,11 +2490,13 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.CAS, 100))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARMORATTACK, 40))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
         
       else
 
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
+        table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
       
       end
 
