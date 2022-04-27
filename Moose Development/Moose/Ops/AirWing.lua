@@ -299,6 +299,9 @@ function AIRWING:AddSquadron(Squadron)
   elseif Squadron.attribute==GROUP.Attribute.AIR_TANKER then
     self:NewPayload(Squadron.templategroup, -1, AUFTRAG.Type.TANKER)
   end
+  
+  -- Relocate mission.
+  self:NewPayload(Squadron.templategroup, -1, AUFTRAG.Type.RELOCATECOHORT, 0)
 
   -- Set airwing to squadron.
   Squadron:SetAirwing(self)

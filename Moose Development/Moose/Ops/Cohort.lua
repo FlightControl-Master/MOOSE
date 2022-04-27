@@ -26,6 +26,9 @@
 -- @field #string aircrafttype Type of the units the cohort is using.
 -- @field #number category Group category of the assets: `Group.Category.AIRPLANE`, `Group.Category.HELICOPTER`, `Group.Category.GROUND`, `Group.Category.SHIP`, `Group.Category.TRAIN`.
 -- @field Wrapper.Group#GROUP templategroup Template group.
+-- @field #boolean isAir
+-- @field #boolean isGround Is ground.
+-- @field #boolean isNaval Is naval. 
 -- @field #table assets Cohort assets.
 -- @field #table missiontypes Capabilities (mission types and performances) of the cohort.
 -- @field #number maintenancetime Time in seconds needed for maintenance of a returned flight.
@@ -83,7 +86,7 @@ COHORT = {
 
 --- COHORT class version.
 -- @field #string version
-COHORT.version="0.3.2"
+COHORT.version="0.3.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -225,6 +228,74 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @function [parent=#COHORT] __Status
   -- @param #COHORT self
   -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Pause".
+  -- @function [parent=#COHORT] Pause
+  -- @param #COHORT self
+
+  --- Triggers the FSM event "Pause" after a delay.
+  -- @function [parent=#COHORT] __Pause
+  -- @param #COHORT self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Pause" event.
+  -- @function [parent=#AUFTRAG] OnAfterPause
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Unpause".
+  -- @function [parent=#COHORT] Unpause
+  -- @param #COHORT self
+
+  --- Triggers the FSM event "Unpause" after a delay.
+  -- @function [parent=#COHORT] __Unpause
+  -- @param #COHORT self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Unpause" event.
+  -- @function [parent=#AUFTRAG] OnAfterUnpause
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Relocate".
+  -- @function [parent=#COHORT] Relocate
+  -- @param #COHORT self
+
+  --- Triggers the FSM event "Relocate" after a delay.
+  -- @function [parent=#COHORT] __Relocate
+  -- @param #COHORT self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Relocate" event.
+  -- @function [parent=#AUFTRAG] OnAfterRelocate
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Relocated".
+  -- @function [parent=#COHORT] Relocated
+  -- @param #COHORT self
+
+  --- Triggers the FSM event "Relocated" after a delay.
+  -- @function [parent=#COHORT] __Relocated
+  -- @param #COHORT self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Relocated" event.
+  -- @function [parent=#AUFTRAG] OnAfterRelocated
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
   return self
 end
@@ -905,9 +976,9 @@ end
 -- @return #table Assets that can do the required mission.
 -- @return #number Number of payloads still available after recruiting the assets.
 function COHORT:RecruitAssets(MissionType, Npayloads)
-  self:T("RecruitAssets for " .. MissionType .. " with " ..Npayloads)
+
   -- Debug info.
-  self:T3(self.lid..string.format("Recruiting asset for Mission type=%s", MissionType))
+  self:T2(self.lid..string.format("Recruiting asset for Mission type=%s", MissionType))
 
   -- Recruited assets.
   local assets={}
@@ -916,32 +987,60 @@ function COHORT:RecruitAssets(MissionType, Npayloads)
   for _,_asset in pairs(self.assets) do  
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
-    --self:I("Looking at Asset " .. asset.spawngroupname)
+    -- Get info.
+    local isRequested=asset.requested
+    local isReserved=asset.isReserved
+    local isSpawned=asset.spawned
+    local isOnMission=self.legion:IsAssetOnMission(asset)
+    
+    local opsgroup=asset.flightgroup
+    
+    -- Debug info.
+    self:T(self.lid..string.format("Asset %s: requested=%s, reserved=%s, spawned=%s,  onmission=%s", 
+    asset.spawngroupname, tostring(isRequested), tostring(isReserved), tostring(isSpawned), tostring(isOnMission)))
     
     -- First check that asset is not requested or reserved. This could happen if multiple requests are processed simultaniously.
-    if not (asset.requested or asset.isReserved) then
+    if not (isRequested or isReserved) then
     
-      --self:I("Not requested or reserved")
       -- Check if asset is currently on a mission (STARTED or QUEUED).
-      if self.legion:IsAssetOnMission(asset) then
+      if self.legion:IsAssetOnMission(asset)  then
         ---
         -- Asset is already on a mission.
         ---
-  
+ 
         -- Check if this asset is currently on a GCICAP mission (STARTED or EXECUTING).
-        if self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and MissionType==AUFTRAG.Type.INTERCEPT then
+        if MissionType==AUFTRAG.Type.RELOCATECOHORT then
+        
+          -- Relocation: Take all assets. Mission will be cancelled.
+          table.insert(assets, asset)
+          
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.GCICAP) and MissionType==AUFTRAG.Type.INTERCEPT then
   
           -- Check if the payload of this asset is compatible with the mission.
           -- Note: we do not check the payload as an asset that is on a GCICAP mission should be able to do an INTERCEPT as well!
           self:T(self.lid..string.format("Adding asset on GCICAP mission for an INTERCEPT mission"))
           table.insert(assets, asset)
           
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ONGUARD) and (MissionType==AUFTRAG.Type.ARTY or MissionType==AUFTRAG.Type.GROUNDATTACK) then
+        
+          if not opsgroup:IsOutOfAmmo() then
+            self:T(self.lid..string.format("Adding asset on ONGUARD mission for an XXX mission"))
+            table.insert(assets, asset)
+          end        
+
+        elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.PATROLZONE) and (MissionType==AUFTRAG.Type.ARTY or MissionType==AUFTRAG.Type.GROUNDATTACK) then
+        
+          if not opsgroup:IsOutOfAmmo() then
+            self:T(self.lid..string.format("Adding asset on PATROLZONE mission for an XXX mission"))
+            table.insert(assets, asset)
+          end        
+          
         elseif self.legion:IsAssetOnMission(asset, AUFTRAG.Type.ALERT5) and AUFTRAG.CheckMissionCapability(MissionType, asset.payload.capabilities) then
                   
           -- Check if the payload of this asset is compatible with the mission.
           self:T(self.lid..string.format("Adding asset on ALERT 5 mission for %s mission", MissionType))
-          table.insert(assets, asset)        
-          
+          table.insert(assets, asset)
+                            
         end
       
       else

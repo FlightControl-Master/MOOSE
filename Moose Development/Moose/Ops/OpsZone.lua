@@ -428,6 +428,21 @@ function OPSZONE:GetCoordinate()
   return coordinate
 end
 
+--- Returns a random coordinate in the zone.
+-- @param #OPSZONE self
+-- @param #number inner (Optional) Minimal distance from the center of the zone in meters. Default is 0 m.
+-- @param #number outer (Optional) Maximal distance from the outer edge of the zone in meters. Default is the radius of the zone.
+-- @param #table surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
+-- @return Core.Point#COORDINATE The random coordinate.
+function OPSZONE:GetRandomCoordinate(inner, outer, surfacetypes)
+
+  local zone=self:GetZone()
+  
+  local coord=zone:GetRandomCoordinate(inner, outer, surfacetypes)
+
+  return coord
+end
+
 --- Get zone name.
 -- @param #OPSZONE self
 -- @return #string Name of the zone.

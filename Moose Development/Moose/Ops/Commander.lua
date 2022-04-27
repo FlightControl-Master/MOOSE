@@ -2,7 +2,7 @@
 --
 -- **Main Features:**
 --
---    * Manages AIRWINGS, BRIGADEs and FLOTILLAs
+--    * Manages AIRWINGS, BRIGADEs and FLEETs
 --    * Handles missions (AUFTRAG) and finds the best assets for the job 
 --
 -- ===
@@ -95,7 +95,7 @@
 -- 
 -- The COMMANDER will 
 -- 
--- # OPSGROUP on Mission
+-- ## OPSGROUP on Mission
 -- 
 -- Whenever an OPSGROUP (FLIGHTGROUP, ARMYGROUP or NAVYGROUP) is send on a mission, the `OnAfterOpsOnMission()` event is triggered.
 -- Mission designers can hook into the event with the @{#COMMANDER.OnAfterOpsOnMission}() function
@@ -104,7 +104,7 @@
 --       -- Your code
 --     end
 --     
--- # Canceling a Mission
+-- ## Canceling a Mission
 -- 
 -- A mission can be cancelled with the @{#COMMMANDER.MissionCancel}() function
 -- 
@@ -136,7 +136,7 @@ COMMANDER = {
 
 --- COMMANDER class version.
 -- @field #string version
-COMMANDER.version="0.1.1"
+COMMANDER.version="0.1.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -398,7 +398,7 @@ function COMMANDER:AddAirwing(Airwing)
   return self
 end
 
---- Add an BRIGADE to the commander.
+--- Add a BRIGADE to the commander.
 -- @param #COMMANDER self
 -- @param Ops.Brigade#BRIGADE Brigade The brigade to add.
 -- @return #COMMANDER self
@@ -409,6 +409,19 @@ function COMMANDER:AddBrigade(Brigade)
   
   return self
 end
+
+--- Add a FLEET to the commander.
+-- @param #COMMANDER self
+-- @param Ops.Fleet#FLEET Fleet The fleet to add.
+-- @return #COMMANDER self
+function COMMANDER:AddFleet(Fleet)
+
+  -- Add legion.
+  self:AddLegion(Fleet)
+  
+  return self
+end
+
 
 --- Add a LEGION to the commander.
 -- @param #COMMANDER self
@@ -651,6 +664,83 @@ function COMMANDER:IsMission(Mission)
   end
 
   return false
+end
+
+--- Relocate a cohort to another legion.
+-- Assets in stock are spawned and routed to the new legion.
+-- If assets are spawned, running missions will be cancelled.
+-- Cohort assets will not be available until relocation is finished.
+-- @param #COMMANDER self
+-- @param Ops.Cohort#COHORT Cohort The cohort to be relocated.
+-- @param Ops.Legion#LEGION Legion The legion where the cohort is relocated to.
+-- @param #number Delay Delay in seconds before relocation takes place. Default `nil`, *i.e.* ASAP.
+-- @param #number NcarriersMin Min number of transport carriers in case the troops should be transported. Default `nil` for no transport.
+-- @param #number NcarriersMax Max number of transport carriers.
+-- @param #table TransportLegions Legion(s) assigned for transportation. Default is all legions of the commander.
+-- @return #COMMANDER self
+function COMMANDER:RelocateCohort(Cohort, Legion, Delay, NcarriersMin, NcarriersMax, TransportLegions)
+
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, COMMANDER.RelocateCohort, self, Cohort, Legion, 0, NcarriersMin, NcarriersMax, TransportLegions)
+  else
+  
+    -- Add cohort to legion.
+    if Legion:IsCohort(Cohort.name) then
+      self:E(self.lid..string.format("ERROR: Cohort %s is already part of new legion %s ==> CANNOT Relocate!", Cohort.name, Legion.alias))
+      return self
+    else
+      table.insert(Legion.cohorts, Cohort)      
+    end
+    
+    -- Old legion.
+    local LegionOld=Cohort.legion
+    
+    -- Check that cohort is part of this legion
+    if not LegionOld:IsCohort(Cohort.name) then
+      self:E(self.lid..string.format("ERROR: Cohort %s is NOT part of this legion %s ==> CANNOT Relocate!", Cohort.name, self.alias))
+      return self    
+    end
+    
+    -- Check that legions are different.
+    if LegionOld.alias==Legion.alias then
+      self:E(self.lid..string.format("ERROR: old legion %s is same as new legion %s ==> CANNOT Relocate!", LegionOld.alias, Legion.alias))
+      return self    
+    end
+    
+    -- Trigger Relocate event.
+    Cohort:Relocate()
+    
+    -- Create a relocation mission.
+    local mission=AUFTRAG:_NewRELOCATECOHORT(Legion, Cohort)
+   
+    -- Assign cohort to mission.
+    mission:AssignCohort(Cohort)
+    
+    -- All assets required.
+    mission:SetRequiredAssets(#Cohort.assets)
+    
+    -- Set transportation.
+    if NcarriersMin and NcarriersMin>0 then
+      mission:SetRequiredTransport(Legion.spawnzone, NcarriersMin, NcarriersMax)
+    end
+    
+    -- Assign transport legions.
+    if TransportLegions then
+      for _,legion in pairs(TransportLegions) do
+        mission:AssignTransportLegion(legion)
+      end
+    else
+      for _,legion in pairs(self.legions) do
+        mission:AssignTransportLegion(legion)
+      end      
+    end
+    
+    -- Add mission.
+    self:AddMission(mission)
+      
+  end
+
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -974,7 +1064,7 @@ function COMMANDER:onafterMissionCancel(From, Event, To, Mission)
 
 end
 
---- On after "TransportAssign" event. Transport is added to a LEGION mission queue.
+--- On after "TransportAssign" event. Transport is added to a LEGION transport queue.
 -- @param #COMMANDER self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -1215,7 +1305,8 @@ function COMMANDER:RecruitAssetsForMission(Mission)
   local Payloads=Mission.payloads
   
   -- Recruite assets.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads, Mission.engageRange, Mission.refuelSystem)
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads,
+   Mission.engageRange, Mission.refuelSystem, nil, nil, nil, Mission.attributes, Mission.properties, {Mission.engageWeaponType})
 
   return recruited, assets, legions
 end

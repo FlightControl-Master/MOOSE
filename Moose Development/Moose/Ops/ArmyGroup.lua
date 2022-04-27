@@ -33,7 +33,6 @@
 -- @field #boolean formationPerma Formation that is used permanently and overrules waypoint formations.
 -- @field #boolean isMobile If true, group is mobile.
 -- @field #ARMYGROUP.Target engage Engage target.
--- @field #boolean retreatOnOutOfAmmo If true, the group will automatically retreat when out of ammo. Needs a retreat zone!
 -- @field Core.Set#SET_ZONE retreatZones Set of retreat zones.
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -710,7 +709,7 @@ function ARMYGROUP:Status()
       local ammo=self:GetAmmoTot().Total
       
       -- Detected units.
-      local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "OFF"      
+      local ndetected=self.detectionOn and tostring(self.detectedunits:Count()) or "Off"      
       
       -- Get cargo weight.
       local cargo=0
