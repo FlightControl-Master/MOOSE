@@ -5128,7 +5128,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       ---
       -- Relocation
       ---
-      
+
       -- Roughly go to the new legion. 
       local ToCoordinate=mission.DCStask.params.legion:GetCoordinate()
             
@@ -5137,6 +5137,16 @@ function OPSGROUP:RouteToMission(mission, delay)
       else
         waypointcoord=self:GetCoordinate():GetIntermediateCoordinate(ToCoordinate, 0.05)
       end
+      
+    elseif mission.type==AUFTRAG.Type.RECOVERYTANKER then
+      ---
+      -- Recoverytanker
+      ---
+
+      -- Roughly go to the new legion. 
+      local CarrierCoordinate=mission.DCStask.params.carrier:GetCoordinate()
+      
+      waypointcoord=CarrierCoordinate:Translate(5000, 90):SetAltitude(2000)
       
     else
       ---

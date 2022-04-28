@@ -407,6 +407,7 @@ _AUFTRAGSNR=0
 -- @field #string RELOCATECOHORT Relocate a cohort from one legion to another.
 -- @field #string AIRDEFENSE Air defense.
 -- @field #string EWR Early Warning Radar.
+-- @field #string RECOVERYTANKER Recovery tanker.
 -- @field #string NOTHING Nothing.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
@@ -447,6 +448,7 @@ AUFTRAG.Type={
   RELOCATECOHORT="Relocate Cohort",
   AIRDEFENSE="Air Defence",
   EWR="Early Warning Radar",
+  RECOVERYTANKER="Recovery Tanker",
   NOTHING="Nothing",
 }
 
@@ -466,6 +468,8 @@ AUFTRAG.Type={
 -- @field #string FERRY Ferry mission.
 -- @field #string RELOCATECOHORT Relocate cohort.
 -- @field #string AIRDEFENSE Air defense.
+-- @field #string EWR Early Warning Radar.
+-- @field #string RECOVERYTANKER Recovery tanker.
 -- @field #string NOTHING Nothing.
 AUFTRAG.SpecialTask={
   FORMATION="Formation",
@@ -484,6 +488,7 @@ AUFTRAG.SpecialTask={
   RELOCATECOHORT="Relocate Cohort",
   AIRDEFENSE="Air Defense",
   EWR="Early Warning Radar",
+  RECOVERYTANKER="Recovery Tanker",
   NOTHING="Nothing",
 }
 
@@ -1604,6 +1609,29 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
   mission.optionROT=ENUMS.ROT.NoReaction
 
   mission.categories={AUFTRAG.Category.HELICOPTER}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+--- **[AIRPANE]** Create a RECOVERY TANKER mission.
+-- @param #AUFTRAG self
+-- @param Wrapper.Unit#UNIT Carrier The carrier unit.
+-- @return #AUFTRAG self
+function AUFTRAG:NewRECOVERYTANKER(Carrier)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.RECOVERYTANKER)
+
+  mission:_TargetFromObject(Carrier)
+
+  -- Mission options:
+  mission.missionTask=ENUMS.MissionTask.REFUELING
+  mission.missionFraction=0.5
+  mission.optionROE=ENUMS.ROE.WeaponHold
+  mission.optionROT=ENUMS.ROT.NoReaction
+
+  mission.categories={AUFTRAG.Category.AIRPLANE}
 
   mission.DCStask=mission:GetDCSMissionTask()
 
@@ -5207,6 +5235,36 @@ function AUFTRAG:GetDCSMissionTask(TaskControllable)
     DCStask.params=param
 
     table.insert(DCStasks, DCStask)
+ 
+  elseif self.type==AUFTRAG.Type.RECOVERYTANKER then   
+
+
+    --[[
+    local DCStask={}
+
+    DCStask.id=AUFTRAG.SpecialTask.RECOVERYTANKER
+
+    -- We create a "fake" DCS task.
+    local param={}
+    DCStask.params=param
+    
+    ]]
+    
+    local Carrier=self:GetObjective() --Wrapper.Unit#UNIT
+    
+    local heading=Carrier:GetHeading()
+    
+    local Altitude=2000
+    
+    local Coordinate=Carrier:GetCoordinate():SetAltitude(2000)
+    
+    local RaceTrack=Coordinate:Translate(1000, heading, true)
+
+    local DCStask=CONTROLLABLE.TaskOrbit(nil, Coordinate, Altitude, 300, RaceTrack)
+    
+    DCStask.params.carrier=Carrier
+
+    table.insert(DCStasks, DCStask)    
     
   elseif self.type==AUFTRAG.Type.INTERCEPT then
 
