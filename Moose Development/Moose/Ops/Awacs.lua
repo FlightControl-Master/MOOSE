@@ -1120,12 +1120,13 @@ function AWACS:_StartSettings(FlightGroup,Mission)
   return self
 end
 
---- [Internal] Return Bullseye BR for Alpha Check etc, returns e.g. "Bullseye 021, 16"
+--- [Internal] Return Bullseye BR for Alpha Check etc, returns e.g. "Rock 021, 16" ("Rock" being the set BE name)
 -- @param #AWACS self
 -- @param Core.Point#COORDINATE Coordinate
 -- @return #string BullseyeBR
 function AWACS:ToStringBULLS( Coordinate )
  -- local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.coalition ) )
+  local bullseyename = self.AOName or "Rock"
   local BullsCoordinate = self.OpsZone:GetCoordinate()
   local DirectionVec3 = BullsCoordinate:GetDirectionVec3( Coordinate )
   local AngleRadians =  Coordinate:GetAngleRadians( DirectionVec3 )
@@ -1133,10 +1134,10 @@ function AWACS:ToStringBULLS( Coordinate )
   local AngleDegrees = UTILS.Round( UTILS.ToDegree( AngleRadians ), 0 )
   local Bearing = string.format( '%03d', AngleDegrees )
   local Distance = UTILS.Round( UTILS.MetersToNM( Distance ), 0 )
-  return string.format("Bullseye %03d, %03d",Bearing,Distance)
+  return string.format("%s %03d, %03d",bullseyename,Bearing,Distance)
 end
 
---- [Internal] Chnage Bullseye string to be TTS friendly,  "Bullseye 021, 16" returns e.g. "Bulls eye 0 2 1. 1 6"
+--- [Internal] Change Bullseye string to be TTS friendly,  "Bullseye 021, 16" returns e.g. "Bulls eye 0 2 1. 1 6"
 -- @param #AWACS self
 -- @param #string Text Input text
 -- @return #string BullseyeBRTTS
@@ -1144,7 +1145,7 @@ function AWACS:ToStringBullsTTS(Text)
   local text = Text
   text=string.gsub(text,"Bullseye","Bulls eye")
   text=string.gsub(text,"%d","%1 ")
-  text=string.gsub(text,".," ,"\.")
+  text=string.gsub(text," ," ,".")
   text=string.gsub(text," $","")
   return text
 end
@@ -2772,7 +2773,9 @@ function AWACS:_GetBRAfromBullsOrAO(clustercoordinate)
   local BRAText = ""
   if not self.UseBullsAO then
     -- get BR from AO
-    BRAText = "AO "..refcoord:ToStringBR(clustercoordinate)
+    local bullsname = self.AOName or "Rock"
+    BRAText = string.format("%s %s",bullsname,refcoord:ToStringBR(clustercoordinate))
+    --BRAText = "AO "..refcoord:ToStringBR(clustercoordinate)
   else
     -- get BR from Bulls
     BRAText = self:ToStringBULLS(clustercoordinate)
